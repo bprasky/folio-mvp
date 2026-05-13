@@ -61,8 +61,8 @@ export function SlideThumbnails({ slides, activeIndex, onSelect }: Props) {
                 left: 0,
                 right: 0,
                 textAlign: 'center',
-                fontSize: '6px',
-                letterSpacing: '0.5px',
+                fontSize: '6px', /* folio-design-system: off-scale */
+                letterSpacing: 'var(--ls-wide)',
                 color: isLight ? '#6B5B48' : 'rgba(255,255,255,0.8)',
                 textTransform: 'uppercase',
               }}

@@ -75,7 +75,7 @@ export default function ConciergeRecommendation({
     )}>
       <div className="flex items-start space-x-3">
         <div className="flex-shrink-0">
-          <div className="w-10 h-10 bg-folio-accent rounded-full flex items-center justify-center">
+          <div className="w-10 h-10 bg-folio-gold rounded-full flex items-center justify-center">
             <FaLightbulb className="w-5 h-5 text-white" />
           </div>
         </div>
@@ -100,7 +100,7 @@ export default function ConciergeRecommendation({
           <div className="flex items-center space-x-2">
             <button
               onClick={handleTryConcierge}
-              className="inline-flex items-center px-3 py-1.5 bg-folio-accent text-white text-sm font-medium rounded-md hover:bg-folio-accent-dark transition-colors"
+              className="inline-flex items-center px-3 py-1.5 bg-folio-gold text-white text-sm font-medium rounded-md hover:bg-folio-gold-hover transition-colors"
             >
               <FaRobot className="w-3 h-3 mr-1" />
               {message.cta}
@@ -125,7 +125,7 @@ export default function ConciergeRecommendation({
             <span>1 of 3</span>
           </div>
           <div className="mt-1 w-full bg-surface-ground rounded-full h-1">
-            <div className="bg-folio-accent h-1 rounded-full" style={{ width: '33%' }}></div>
+            <div className="bg-folio-gold h-1 rounded-full" style={{ width: '33%' }}></div>
           </div>
         </div>
       )}

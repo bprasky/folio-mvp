@@ -243,11 +243,11 @@ export default function ThreadPage({
                     {msg.sender.name}
                   </p>
                 )}
-                <p className="text-sm whitespace-pre-wrap" style={{ lineHeight: '1.5' }}>
+                <p className="text-sm whitespace-pre-wrap" style={{ lineHeight: 'var(--lh-body)' }}>
                   {msg.body}
                 </p>
                 <p
-                  className="text-[10px] mt-1"
+                  className="text-[var(--type-fine)] mt-1"
                   style={{ color: isOwn ? 'rgba(255,255,255,0.5)' : '#A69E96' }}
                 >
                   {new Date(msg.createdAt).toLocaleTimeString('en-US', {

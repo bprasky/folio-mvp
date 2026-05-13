@@ -56,7 +56,7 @@ export function DesignerTab({
           <path d="M8 7V11" stroke="#A89880" strokeWidth="1.2" strokeLinecap="round" />
           <circle cx="8" cy="5.5" r="0.5" fill="#A89880" />
         </svg>
-        <span style={{ fontSize: '12px', color: '#8B7B68', lineHeight: 1.4 }}>
+        <span style={{ fontSize: 'var(--type-meta)', color: '#8B7B68', lineHeight: 'var(--lh-meta)' }}>
           Generated from your Folio profile and editorial content
         </span>
       </div>
@@ -64,10 +64,10 @@ export function DesignerTab({
       {/* Bio toggle */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         <div>
-          <div style={{ fontSize: '13px', fontWeight: 500, color: '#2C2420' }}>
+          <div style={{ fontSize: 'var(--type-meta)', fontWeight: 'var(--w-h1)', color: '#2C2420' }}>
             Designer Bio Slide
           </div>
-          <div style={{ fontSize: '12px', color: '#A89880', marginTop: '2px' }}>
+          <div style={{ fontSize: 'var(--type-meta)', color: '#A89880', marginTop: '2px' }}>
             Include a designer intro in the carousel
           </div>
         </div>
@@ -103,7 +103,7 @@ export function DesignerTab({
         <>
           {/* Bio options */}
           <div>
-            <div style={{ fontSize: '11px', letterSpacing: '2px', textTransform: 'uppercase' as const, color: '#8B7B68', marginBottom: '12px', fontWeight: 500 }}>
+            <div style={{ fontSize: 'var(--type-eyebrow)', letterSpacing: 'var(--ls-eyebrow)', textTransform: 'uppercase' as const, color: '#8B7B68', marginBottom: '12px', fontWeight: 'var(--w-h1)' }}>
               Select a Bio Blurb
             </div>
             {loading ? (
@@ -116,7 +116,7 @@ export function DesignerTab({
                   borderTopColor: '#2C2420',
                   animation: 'spin 1s linear infinite',
                 }} />
-                <p style={{ marginTop: '12px', fontSize: '13px', color: '#8B7B68' }}>Generating bio options...</p>
+                <p style={{ marginTop: '12px', fontSize: 'var(--type-meta)', color: '#8B7B68' }}>Generating bio options...</p>
                 <style>{`@keyframes spin { to { transform: rotate(360deg) } }`}</style>
               </div>
             ) : (
@@ -134,8 +134,8 @@ export function DesignerTab({
                       cursor: 'pointer',
                       transition: 'all 0.2s',
                       textAlign: 'left' as const,
-                      fontSize: '14px',
-                      lineHeight: 1.6,
+                      fontSize: 'var(--type-ui)',
+                      lineHeight: 'var(--lh-body)',
                       color: selectedBio === bio ? '#2C2420' : '#8B7B68',
                     }}
                   >
@@ -148,7 +148,7 @@ export function DesignerTab({
 
           {/* Custom bio */}
           <div>
-            <div style={{ fontSize: '11px', letterSpacing: '2px', textTransform: 'uppercase' as const, color: '#8B7B68', marginBottom: '8px', fontWeight: 500 }}>
+            <div style={{ fontSize: 'var(--type-eyebrow)', letterSpacing: 'var(--ls-eyebrow)', textTransform: 'uppercase' as const, color: '#8B7B68', marginBottom: '8px', fontWeight: 'var(--w-h1)' }}>
               Or Write Your Own
             </div>
             <textarea
@@ -162,12 +162,12 @@ export function DesignerTab({
                 border: '1px solid #E8E0D8',
                 background: '#FFFFFF',
                 padding: '10px 14px',
-                fontSize: '14px',
+                fontSize: 'var(--type-ui)',
                 color: '#2C2420',
                 outline: 'none',
                 resize: 'vertical' as const,
                 fontFamily: 'inherit',
-                lineHeight: 1.6,
+                lineHeight: 'var(--lh-body)',
               }}
             />
             <button
@@ -179,8 +179,8 @@ export function DesignerTab({
                 background: '#2C2420',
                 color: '#FFFFFF',
                 padding: '10px 16px',
-                fontSize: '13px',
-                fontWeight: 500,
+                fontSize: 'var(--type-meta)',
+                fontWeight: 'var(--w-h1)',
                 border: 'none',
                 cursor: 'pointer',
                 opacity: customBio.trim() ? 1 : 0.4,
@@ -205,7 +205,7 @@ export function DesignerTab({
                     border: '1px solid #E8E0D8',
                     background: '#FFFFFF',
                     padding: '10px 14px',
-                    fontSize: '14px',
+                    fontSize: 'var(--type-ui)',
                     color: '#2C2420',
                     outline: 'none',
                     resize: 'vertical' as const,
@@ -221,8 +221,8 @@ export function DesignerTab({
                       background: '#2C2420',
                       color: '#FFFFFF',
                       padding: '10px',
-                      fontSize: '13px',
-                      fontWeight: 500,
+                      fontSize: 'var(--type-meta)',
+                      fontWeight: 'var(--w-h1)',
                       border: 'none',
                       cursor: 'pointer',
                     }}
@@ -236,7 +236,7 @@ export function DesignerTab({
                       border: '1px solid #E8E0D8',
                       background: '#FFFFFF',
                       padding: '10px 16px',
-                      fontSize: '13px',
+                      fontSize: 'var(--type-meta)',
                       color: '#8B7B68',
                       cursor: 'pointer',
                     }}
@@ -259,8 +259,8 @@ export function DesignerTab({
                   border: '1px solid #E8E0D8',
                   background: '#FFFFFF',
                   padding: '10px',
-                  fontSize: '13px',
-                  fontWeight: 500,
+                  fontSize: 'var(--type-meta)',
+                  fontWeight: 'var(--w-h1)',
                   color: '#8B7B68',
                   cursor: 'pointer',
                   transition: 'all 0.2s',

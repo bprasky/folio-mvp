@@ -85,7 +85,7 @@ export default function WebsiteImportCard({ defaultUrl, onImported, onSkip }: We
         .bio-card {
           padding: 32px;
           border-radius: 12px;
-          background: var(--bg-base);
+          background: var(--surface-canvas);
           border: 1px solid var(--border);
           text-align: center;
         }
@@ -118,7 +118,7 @@ export default function WebsiteImportCard({ defaultUrl, onImported, onSkip }: We
           padding: 10px 14px;
           border-radius: 8px;
           border: 1px solid var(--border);
-          background: var(--bg-elevated);
+          background: var(--surface-ground);
           color: var(--text-primary);
           font-family: var(--font-body);
           font-size: 14px;

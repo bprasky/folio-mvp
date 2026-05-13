@@ -25,6 +25,15 @@
   --surface-canvas: #FFFFFF;        /* Level 0 — page bg, nav, breadcrumbs */
   --surface-ground: #FAF8F5;        /* Level 1 — filter bars, tab trays, footer */
   --surface-elevated: #F5F0EB;      /* Level 2 — card base before glass */
+  --surface-cream: var(--surface-ground); /* Warm cream — long-form editorial pages.
+                                            Aliases --surface-ground so the article
+                                            field reads as one continuous warm tone
+                                            from the header strip through the body. */
+
+  /* Page-aware surface token. The sticky header's scrolled-state tint reads
+     `--surface` so each route can paint its own backdrop without forking
+     the nav. Layouts that need a different field override this variable. */
+  --surface: var(--surface-canvas);
 
   /* === TEXT === */
   --folio-text-primary: #1a1a1a;    /* Near-black for headings */
@@ -35,22 +44,54 @@
   --folio-border-subtle: #e8e4df;   /* Warm border — ONE border color for subtle divisions */
   --folio-border-strong: #d4cfc8;   /* For emphasized borders */
 
-  /* === ACCENT === */
-  --folio-gold: #c9a96e;            /* Gold — active states, CTAs, selected indicators */
+  /* === ACCENT (canonical) ===
+     Folio has one accent: warm gold.
+     Use --folio-gold for anything functional (buttons, focus, active states, links).
+     Use --folio-gold-ornament for decoration only (rules, dots, charts).
+     --accent / --accent-hover are kept as aliases during migration; remove in Task 01b. */
+  --folio-gold: #B8845C;            /* Functional — WCAG AA on #FCFBF7 */
+  --folio-gold-hover: #A67548;
+  --folio-gold-ornament: #C9A96E;   /* Decorative only — never text or interactive */
+
+  /* === TYPE SCALE (canonical, Task 04) ===
+     Every size, weight, line-height, and letter-spacing in Folio
+     resolves to one of these tokens or an explicit off-scale comment. */
+  --type-h1:        48px;   --lh-h1:    1.10;  --w-h1:    500;
+  --type-h2:        36px;   --lh-h2:    1.15;  --w-h2:    500;
+  --type-h3:        28px;   --lh-h3:    1.20;  --w-h3:    500;
+  --type-h4:        22px;   --lh-h4:    1.25;  --w-h4:    500;
+  --type-quote:     24px;   --lh-quote: 1.40;
+  --type-body:      15px;   --lh-body:  1.60;  --w-body:  400;
+  --type-ui:        14px;   --lh-ui:    1.40;  --w-ui:    500;
+  --type-meta:      13px;   --lh-meta:  1.40;  --w-meta:  400;
+  --type-stat:      28px;   --lh-stat:  1.20;  --w-stat:  600;
+  --type-logo:      22px;   --lh-logo:  1.00;  --w-logo:  500;
+
+  /* Smaller-than-meta scale — uppercase eyebrows and footer fine print only */
+  --type-eyebrow:   11px;
+  --type-fine:      10px;
+
+  /* Letter-spacing scale */
+  --ls-tight:       -0.02em;   /* hero display */
+  --ls-normal:      0;
+  --ls-wide:        0.08em;    /* small uppercase UI */
+  --ls-eyebrow:     0.16em;    /* eyebrow labels */
+  --ls-logo:        0.18em;    /* logo wordmark */
 
   /* ===========================================
      DEPRECATED ALIASES — migrate to canonical
      =========================================== */
 
-  /* Typography */
-  --font-logo: 'Cormorant Garamond', Georgia, serif;
-  --font-headline: 'Cormorant Garamond', Georgia, serif;
-  --font-body: 'Instrument Sans', -apple-system, sans-serif;
+  /* === TYPE (canonical) ===
+     Folio uses two families. Add a third only after design-system review.
+     --font-headline = Cormorant Garamond (editorial display, italic eyebrows, large numerics)
+     --font-body     = Instrument Sans (all UI, body, captions, labels)
+     Both variables are set on <html> by next/font (src/app/layout.tsx) and point to
+     self-hosted, hash-named font families with metric-matched system fallbacks.
+     Do NOT redeclare them here with literal font names — that overrides next/font
+     and forces devices without the font installed locally to fall back to system serif. */
 
-  /* DEPRECATED — migrate to --surface-canvas */
-  --bg-base: var(--surface-canvas);
-  /* DEPRECATED — migrate to --surface-ground */
-  --bg-elevated: var(--surface-ground);
+  /* Surface levels are above. --bg-base and --bg-elevated were aliases removed in Task 02. */
 
   /* Neumorphic shadows - more visible warm gray */
   --shadow-dark: #D4CFC8;
@@ -63,9 +104,9 @@
   /* DEPRECATED — migrate to --folio-text-tertiary */
   --text-tertiary: var(--folio-text-tertiary);
 
-  /* Accent */
-  --accent: #B8845C;
-  --accent-hover: #A67548;
+  /* Accent — DEPRECATED aliases; migrate to --folio-gold / --folio-gold-hover (Task 01b) */
+  --accent: var(--folio-gold);
+  --accent-hover: var(--folio-gold-hover);
 
   /* DEPRECATED — migrate to --folio-border-subtle */
   --border: var(--folio-border-subtle);
@@ -125,7 +166,7 @@
 
   /* Ridge Button - Secondary style */
   .ridge-btn {
-    background: var(--bg-base);
+    background: var(--surface-canvas);
     color: var(--text-primary);
     border: 1px solid var(--ridge-outer);
     border-radius: 10px;
@@ -136,7 +177,7 @@
     position: relative;
     font-family: var(--font-body);
     font-weight: 500;
-    font-size: 14px;
+    font-size: var(--type-ui);
     transition: all 150ms ease;
   }
 
@@ -175,7 +216,7 @@
       inset 0 -1px 0 rgba(0, 0, 0, 0.1);
     font-family: var(--font-body);
     font-weight: 500;
-    font-size: 14px;
+    font-size: var(--type-ui);
     transition: all 150ms ease;
   }
 
@@ -206,12 +247,12 @@
 
   /* Ridge Input - Inset style */
   .ridge-input {
-    background: var(--bg-base);
+    background: var(--surface-canvas);
     border: 1px solid var(--ridge-outer);
     border-radius: 10px;
     box-shadow: var(--neu-inset);
     font-family: var(--font-body);
-    font-size: 15px;
+    font-size: var(--type-body);
     color: var(--text-primary);
     transition: all 150ms ease;
   }
@@ -230,7 +271,7 @@
 
   /* Toggle Group Container */
   .ridge-toggle-group {
-    background: var(--bg-base);
+    background: var(--surface-canvas);
     border: 1px solid var(--ridge-outer);
     border-radius: 14px;
     box-shadow: var(--neu-inset);
@@ -247,7 +288,7 @@
     padding: 8px 16px;
     font-family: var(--font-body);
     font-weight: 500;
-    font-size: 14px;
+    font-size: var(--type-ui);
     color: var(--text-secondary);
     transition: all 150ms ease;
     cursor: pointer;
@@ -256,7 +297,7 @@
   /* Toggle Item - Active */
   .ridge-toggle-item.active,
   .ridge-toggle-item[data-state="active"] {
-    background: var(--bg-base);
+    background: var(--surface-canvas);
     border: 1px solid var(--ridge-outer);
     border-radius: 10px;
     box-shadow:
@@ -273,7 +314,7 @@
 
   .stats-card .stats-value {
     font-family: var(--font-body);
-    font-size: 28px;
+    font-size: var(--type-h3);
     font-weight: 600;
     color: var(--text-primary);
     line-height: 1.2;
@@ -281,7 +322,7 @@
 
   .stats-card .stats-label {
     font-family: var(--font-body);
-    font-size: 10px;
+    font-size: var(--type-fine);
     font-weight: 500;
     text-transform: uppercase;
     letter-spacing: 0.08em;
@@ -320,7 +361,7 @@
   .folio-logo-text {
     font-family: var(--font-headline);
     font-weight: 500;
-    font-size: 22px;
+    font-size: var(--type-h4);
     text-transform: uppercase;
     letter-spacing: 0.18em;
     color: var(--text-primary);
@@ -329,87 +370,117 @@
   /* Headline Typography */
   .folio-h1 {
     font-family: var(--font-headline);
-    font-weight: 500;
-    font-size: 48px;
-    color: var(--text-primary); /* Can be overridden locally with !text-white for image overlays */
-    line-height: 1.1;
+    font-weight: var(--w-h1);
+    font-size: var(--type-h1);
+    color: var(--text-primary);
+    line-height: var(--lh-h1);
   }
 
   .folio-h2 {
     font-family: var(--font-headline);
-    font-weight: 500;
-    font-size: 36px;
-    color: var(--text-primary); /* Can be overridden locally with !text-white for image overlays */
-    line-height: 1.15;
+    font-weight: var(--w-h2);
+    font-size: var(--type-h2);
+    color: var(--text-primary);
+    line-height: var(--lh-h2);
   }
 
   .folio-h3 {
     font-family: var(--font-headline);
-    font-weight: 500;
-    font-size: 28px;
-    color: var(--text-primary); /* Can be overridden locally with !text-white for image overlays */
-    line-height: 1.2;
+    font-weight: var(--w-h3);
+    font-size: var(--type-h3);
+    color: var(--text-primary);
+    line-height: var(--lh-h3);
+  }
+
+  .folio-h4 {
+    font-family: var(--font-headline);
+    font-weight: var(--w-h4);
+    font-size: var(--type-h4);
+    color: var(--text-primary);
+    line-height: var(--lh-h4);
   }
 
   /* Quote Typography */
   .folio-quote {
     font-family: var(--font-headline);
     font-weight: 400;
-    font-size: 24px;
+    font-size: var(--type-quote);
     font-style: italic;
     color: var(--text-primary);
-    line-height: 1.4;
+    line-height: var(--lh-quote);
   }
 
   /* Body Typography */
   .folio-body {
     font-family: var(--font-body);
-    font-weight: 400;
-    font-size: 15px;
+    font-weight: var(--w-body);
+    font-size: var(--type-body);
     color: var(--text-secondary);
-    line-height: 1.6;
+    line-height: var(--lh-body);
   }
 
   /* UI/Button Typography */
   .folio-ui {
     font-family: var(--font-body);
-    font-weight: 500;
-    font-size: 14px;
+    font-weight: var(--w-ui);
+    font-size: var(--type-ui);
+    line-height: var(--lh-ui);
   }
 
   /* Small/Meta Typography */
   .folio-meta {
     font-family: var(--font-body);
-    font-weight: 400;
-    font-size: 13px;
+    font-weight: var(--w-meta);
+    font-size: var(--type-meta);
+    color: var(--text-tertiary);
+    line-height: var(--lh-meta);
+  }
+
+  /* Eyebrow / fine-print Typography (smaller than meta) */
+  .folio-eyebrow {
+    font-family: var(--font-body);
+    font-weight: var(--w-ui);
+    font-size: var(--type-eyebrow);
+    letter-spacing: var(--ls-eyebrow);
+    text-transform: uppercase;
+  }
+
+  .folio-fine {
+    font-family: var(--font-body);
+    font-weight: var(--w-meta);
+    font-size: var(--type-fine);
     color: var(--text-tertiary);
   }
 
   /* Stats/Data Typography */
   .folio-stat {
     font-family: var(--font-body);
-    font-weight: 600;
-    font-size: 28px;
+    font-weight: var(--w-stat);
+    font-size: var(--type-stat);
+    line-height: var(--lh-stat);
+    font-variant-numeric: tabular-nums;
   }
 
   .folio-stat-lg {
     font-family: var(--font-body);
-    font-weight: 600;
-    font-size: 32px;
+    font-weight: var(--w-stat);
+    font-size: 32px;  /* off-scale: display KPI variant */
+    line-height: var(--lh-stat);
+    font-variant-numeric: tabular-nums;
   }
 }
 
 /* Override Tailwind base - make html/body use Folio base background */
 html,
 body {
-  background: var(--bg-base) !important;
+  background: var(--surface-canvas) !important;
   color: var(--text-primary);
 }
 
 /* Ensure root wrapper uses base background */
 #__next,
 [data-reactroot] {
-  background: var(--bg-base) !important;
+  background: var(--surface-canvas) !important;
 }
 
 /* Force transparency on layout wrappers for cinematic pages ONLY */
@@ -442,6 +513,15 @@ body:has([data-testid="cinematic-bg"]) aside {
 .cinematic-page > div,
 body:has([data-testid="cinematic-bg"]) {
   background: transparent !important;
+}
+
+/* Routes that paint a warm cream field instead of pure white. The class is
+   applied to a wrapper that contains both the sticky header and the page
+   content so the header's scrolled-state tint inherits the cream value and
+   the field reads edge-to-edge under the transparent nav and wordmark. */
+.editorial-surface {
+  --surface: var(--surface-cream);
+  background-color: var(--surface-cream);
 }
 
 /* Immersive product page — escape layout padding for full-bleed hero */
@@ -525,9 +605,11 @@ html[data-compact="true"] main { padding-top: 0 !important; }
   --folio-border: color-mix(in srgb, var(--folio-stone-100) 60%, #000 0%);
   --folio-overlay: rgba(22,22,20,0.5);
   
-  /* Typography */
-  --font-serif: "Ethic Serif", "Cormorant Garamond", "Times New Roman", serif;
-  --font-sans: "Montserrat", "Helvetica Neue", Arial, system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+  /* Typography — DEPRECATED. Tailwind .font-serif and .font-sans classes
+     resolve via these aliases. Inline-style use is forbidden by CI; use
+     --font-headline / --font-body directly. */
+  --font-serif: var(--font-headline);
+  --font-sans: var(--font-body);
   
   /* Radius / elevation / motion */
   --radius-sm: 10px;
@@ -571,16 +653,15 @@ html[data-compact="true"] main { padding-top: 0 !important; }
   /* LEGACY FOLIO Brand Colors - Updated System (backward compatibility) */
   --folio-background: #F4F2F0;
   --folio-text: #1E1E1E;
-  --folio-accent: #7C1E3D;
+  /* DEPRECATED — folioDark is broken; remove with Task 09 */
   --folio-system: #4A2C3B;
   --folio-success: #A47B62;
-  
+
   /* DEPRECATED LEGACY — these values are no longer authoritative.
      Canonical values come from --folio-text-primary etc at top of file.
      Keeping for any stray references. */
   --foreground-rgb: 30, 30, 30;
   --background-rgb: 244, 240;
-  --accent-color: #7C1E3D;
   --text-light: #A47B62;
   --folio-muted: #F8F6F4;
   --folio-card: #FFFFFF;
@@ -635,7 +716,7 @@ html[data-compact="true"] main { padding-top: 0 !important; }
 
 @layer base {
   html, body {
-    background: var(--bg-base);
+    background: var(--surface-canvas);
     color: var(--text-primary);
   }
 
@@ -649,17 +730,17 @@ html[data-compact="true"] main { padding-top: 0 !important; }
     color: var(--text-primary);
   }
 
-  h1 { font-size: 48px; font-weight: 500; line-height: 1.1; }
-  h2 { font-size: 36px; font-weight: 500; line-height: 1.15; }
-  h3 { font-size: 28px; font-weight: 500; line-height: 1.2; }
-  h4 { font-size: 22px; font-weight: 500; line-height: 1.25; }
+  h1 { font-size: var(--type-h1); font-weight: 500; line-height: 1.1; }
+  h2 { font-size: var(--type-h2); font-weight: 500; line-height: 1.15; }
+  h3 { font-size: var(--type-h3); font-weight: 500; line-height: 1.2; }
+  h4 { font-size: var(--type-h4); font-weight: 500; line-height: 1.25; }
 
   p, li, small, button, input, textarea, label {
     font-family: var(--font-body);
   }
 
   p {
-    font-size: 15px;
+    font-size: var(--type-body);
     color: var(--text-secondary);
     line-height: 1.6;
   }
@@ -678,7 +759,7 @@ html[data-compact="true"] main { padding-top: 0 !important; }
 
 body {
   font-family: var(--font-body), 'Inter', sans-serif;
-  background-color: var(--bg-base);
+  background-color: var(--surface-canvas);
   color: var(--text-primary);
   overflow-x: hidden;
 }
@@ -734,10 +815,10 @@ body {
 
 @keyframes pulseGlow {
   0% {
-    box-shadow: 0 0 0 0 rgba(124, 30, 61, 0.4);
+    box-shadow: 0 0 0 0 rgba(184, 132, 92, 0.4);
   }
   100% {
-    box-shadow: 0 0 20px 5px rgba(124, 30, 61, 0.2);
+    box-shadow: 0 0 20px 5px rgba(184, 132, 92, 0.2);
   }
 }
 
@@ -763,13 +844,13 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 12px;
+  font-size: var(--type-meta);
   font-weight: 600;
   border: 1px solid var(--folio-border);
 }
 
 .engagement-high {
-  background: var(--folio-accent);
+  background: var(--folio-gold);
   color: white;
 }
 
@@ -787,11 +868,11 @@ body {
   position: absolute;
   top: 12px;
   left: 12px;
-  background: var(--folio-accent);
+  background: var(--folio-gold);
   color: white;
   border-radius: 4px;
   padding: 4px 8px;
-  font-size: 10px;
+  font-size: var(--type-fine);
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.5px;
@@ -814,7 +895,7 @@ body {
 }
 
 .filter-tag.active {
-  background: var(--folio-accent);
+  background: var(--folio-gold);
   color: white;
   font-weight: 600;
 }
@@ -823,11 +904,11 @@ body {
   position: absolute;
   top: 12px;
   left: 12px;
-  background: var(--folio-accent);
+  background: var(--folio-gold);
   color: white;
   border-radius: 4px;
   padding: 4px 8px;
-  font-size: 10px;
+  font-size: var(--type-fine);
   font-weight: 600;
 }
 
@@ -859,7 +940,7 @@ body {
   left: 50%;
   transform: translate(-40%, -50%);
   color: var(--folio-text);
-  font-size: 16px;
+  font-size: var(--type-body);
   z-index: 2;
   opacity: 0;
   transition: opacity 0.3s ease;
@@ -877,7 +958,7 @@ body {
   color: white;
   border-radius: 4px;
   padding: 4px 8px;
-  font-size: 10px;
+  font-size: var(--type-fine);
   font-weight: 600;
   text-transform: uppercase;
 }
@@ -886,18 +967,18 @@ body {
   position: fixed;
   bottom: 20px;
   right: 20px;
-  background: var(--folio-accent);
+  background: var(--folio-gold);
   color: white;
   backdrop-filter: blur(5px);
   border-radius: 50px;
   padding: 8px 16px;
-  font-size: 12px;
+  font-size: var(--type-meta);
   font-weight: 600;
   display: flex;
   align-items: center;
   cursor: pointer;
   z-index: 40;
-  box-shadow: 0 4px 12px rgba(124, 30, 61, 0.3);
+  box-shadow: 0 4px 12px rgba(184, 132, 92, 0.3);
 }
 
 .refresh-indicator.visible {
@@ -948,7 +1029,7 @@ body {
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  font-size: 18px;
+  font-size: var(--type-h4);
   color: var(--folio-text);
   transition: all 0.2s ease;
 }
@@ -971,7 +1052,7 @@ body {
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  font-size: 16px;
+  font-size: var(--type-body);
   color: var(--folio-text);
   transition: all 0.2s ease;
 }
@@ -999,7 +1080,7 @@ body {
   align-items: center;
   justify-content: center;
   color: var(--folio-text);
-  font-size: 24px;
+  font-size: var(--type-quote);
   opacity: 0.6;
 }
 
@@ -1029,7 +1110,7 @@ body {
 }
 
 .card-label {
-  font-size: 12px;
+  font-size: var(--type-meta);
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.5px;
@@ -1038,14 +1119,14 @@ body {
 }
 
 .card-title {
-  font-size: 18px;
+  font-size: var(--type-h4);
   font-weight: 700;
   margin-bottom: 8px;
   line-height: 1.2;
 }
 
 .card-author, .card-price, .card-specialty {
-  font-size: 14px;
+  font-size: var(--type-ui);
   opacity: 0.9;
   margin-bottom: 4px;
 }
@@ -1082,7 +1163,7 @@ body {
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  font-size: 18px;
+  font-size: var(--type-h4);
   color: var(--folio-text);
   transition: all 0.2s ease;
   z-index: 20;
@@ -1119,20 +1200,20 @@ body {
 }
 
 .feed-toggle-btn.active {
-  background: var(--folio-accent);
+  background: var(--folio-gold);
   color: white;
-  box-shadow: 0 2px 8px rgba(124, 30, 61, 0.2);
+  box-shadow: 0 2px 8px rgba(184, 132, 92, 0.2);
 }
 
 .active-link { 
-  background: var(--folio-accent); 
+  background: var(--folio-gold); 
   color: white !important; 
   border-radius: 0.5rem; 
   padding: 0.5rem 1rem; 
 }
 
 .trending-badge { 
-  background: var(--folio-accent); 
+  background: var(--folio-gold); 
   color: white; 
   font-size: 0.8rem; 
   font-weight: 700; 
@@ -1177,9 +1258,9 @@ body {
 }
 
 .tag.active, .tag:hover { 
-  background: var(--folio-accent); 
+  background: var(--folio-gold); 
   color: white; 
-  border-color: var(--folio-accent); 
+  border-color: var(--folio-gold); 
 }
 
 .inspire-card { 
@@ -1245,7 +1326,7 @@ body {
   width: 8px;
   height: 8px;
   border-radius: 50%;
-  background: var(--folio-accent);
+  background: var(--folio-gold);
   margin: 0;
   display: inline-block;
   animation: pulse 2s infinite;
@@ -1267,9 +1348,9 @@ body {
 }
 
 .toggle-btn.active { 
-  background: var(--folio-accent); 
+  background: var(--folio-gold); 
   color: white; 
-  border-color: var(--folio-accent);
+  border-color: var(--folio-gold);
 }
 
 .clear-filter-btn { 
@@ -1326,7 +1407,7 @@ body {
   height: 36px; 
   border-radius: 50%; 
   object-fit: cover; 
-  border: 2px solid var(--folio-accent); 
+  border: 2px solid var(--folio-gold); 
   margin-right: 0.5rem; 
 }
 
@@ -1349,7 +1430,7 @@ body {
 }
 
 .quick-action-btn { 
-  background: var(--folio-accent); 
+  background: var(--folio-gold); 
   color: white; 
   border-radius: 9999px; 
   padding: 0.5rem 1.25rem; 
@@ -1365,26 +1446,26 @@ body {
 }
 
 .quick-action-btn:hover { 
-  background: rgba(124, 30, 61, 0.8); 
+  background: rgba(184, 132, 92, 0.8); 
 }
 
 /* Legacy color utilities - updated to use new theme */
 .bg-primary { background-color: var(--folio-background); }
 .bg-secondary { background-color: var(--folio-text); }
-.bg-accent { background-color: var(--folio-accent); }
+.bg-accent { background-color: var(--folio-gold); }
 .text-primary { color: var(--folio-text); }
 .text-secondary { color: var(--folio-system); }
 .text-light { color: var(--folio-success); }
 .border-primary { border-color: var(--folio-background); }
 .border-secondary { border-color: var(--folio-text); }
-.border-accent { border-color: var(--folio-accent); }
+.border-accent { border-color: var(--folio-gold); }
 
-.active-link { background: var(--folio-accent); color: white !important; border-radius: 0.5rem; padding: 0.5rem 1rem; }
-.trending-badge { background: var(--folio-accent); color: white; font-size: 0.8rem; font-weight: 700; padding: 2px 10px; border-radius: 9999px; margin-left: 0.5rem; }
+.active-link { background: var(--folio-gold); color: white !important; border-radius: 0.5rem; padding: 0.5rem 1rem; }
+.trending-badge { background: var(--folio-gold); color: white; font-size: 0.8rem; font-weight: 700; padding: 2px 10px; border-radius: 9999px; margin-left: 0.5rem; }
 .new-badge { background: var(--folio-success); color: white; font-size: 0.8rem; font-weight: 700; padding: 2px 10px; border-radius: 9999px; margin-left: 0.5rem; }
 .affiliate-badge { background: var(--folio-system); color: white; font-size: 0.8rem; font-weight: 700; padding: 2px 10px; border-radius: 9999px; margin-left: 0.5rem; }
 .tag { background: var(--folio-muted); color: var(--folio-text); font-size: 0.875rem; font-weight: 500; padding: 0.25rem 0.75rem; border-radius: 9999px; margin-right: 0.5rem; margin-bottom: 0.5rem; cursor: pointer; transition: all 0.2s ease; display: inline-block; border: 1px solid var(--folio-border); }
-.tag.active, .tag:hover { background: var(--folio-accent); color: white; border-color: var(--folio-accent); }
+.tag.active, .tag:hover { background: var(--folio-gold); color: white; border-color: var(--folio-gold); }
 .inspire-card { background: white; border: 1px solid var(--folio-border); border-radius: 0.75rem; overflow: hidden; box-shadow: 0 2px 8px rgba(30, 30, 30, 0.08); margin-bottom: 1.5rem; transition: all 0.2s ease; }
 .inspire-card:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(30, 30, 30, 0.12); }
 .inspire-card img { width: 100%; height: 180px; object-fit: cover; }
@@ -1401,12 +1482,12 @@ body {
   right: 8px;
   width: 8px;
   height: 8px;
-  background: var(--folio-accent);
+  background: var(--folio-gold);
   border-radius: 50%;
   box-shadow: 0 0 0 2px white;
 }
 .toggle-btn { font-size: 1rem; font-weight: 600; border-radius: 9999px; padding: 0.5rem 1.5rem; margin-right: 0.5rem; background: var(--folio-muted); color: var(--folio-text); border: 1px solid var(--folio-border); outline: none; transition: all 0.2s ease; cursor: pointer; }
-.toggle-btn.active { background: var(--folio-accent); color: white; border-color: var(--folio-accent); }
+.toggle-btn.active { background: var(--folio-gold); color: white; border-color: var(--folio-gold); }
 .clear-filter-btn { background: var(--folio-text); color: white; border-radius: 9999px; padding: 0.25rem 1rem; font-weight: 600; margin-left: 0.5rem; cursor: pointer; border: none; transition: all 0.2s ease; }
 .clear-filter-btn:hover { background: rgba(30, 30, 30); }
 .collection-header { font-size: 1.2rem; font-weight: 700; color: var(--folio-text); margin-bottom: 0.5rem; margin-top: 2.5rem; }
@@ -1414,23 +1495,23 @@ body {
 .collection-carousel::-webkit-scrollbar { display: none; }
 .project-card { height: 320px; background: white; border: 1px solid var(--folio-border); border-radius: 0.75rem; }
 .product-card { height: 220px; background: white; border: 1px solid var(--folio-border); border-radius: 0.75rem; }
-.designer-avatar { width: 36px; height: 36px; border-radius: 50%; object-fit: cover; border: 2px solid var(--folio-accent); margin-right: 0.5rem; }
+.designer-avatar { width: 36px; height: 36px; border-radius: 50%; object-fit: cover; border: 2px solid var(--folio-gold); margin-right: 0.5rem; }
 .hover-overlay { position: absolute; inset: 0; background: rgba(30, 30, 30, 0.8); opacity: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0.5rem; transition: opacity 0.2s; z-index: 2; }
 .inspire-card:hover .hover-overlay { opacity: 1; }
-.quick-action-btn { background: var(--folio-accent); color: white; border-radius: 9999px; padding: 0.5rem 1.25rem; font-size: 1rem; font-weight: 600; border: none; margin: 0.25rem; cursor: pointer; display: flex; align-items: center; gap: 0.5rem; transition: all 0.2s ease; }
-.quick-action-btn:hover { background: rgba(124, 30, 61, 0.8); }
+.quick-action-btn { background: var(--folio-gold); color: white; border-radius: 9999px; padding: 0.5rem 1.25rem; font-size: 1rem; font-weight: 600; border: none; margin: 0.25rem; cursor: pointer; display: flex; align-items: center; gap: 0.5rem; transition: all 0.2s ease; }
+.quick-action-btn:hover { background: rgba(184, 132, 92, 0.8); }
 .badge-recommended { background: var(--folio-success); color: white; font-size: 0.8rem; font-weight: 700; padding: 2px 10px; border-radius: 9999px; margin-left: 0.5rem; }
-.feed-group-label { font-size: 1.1rem; font-weight: 600; color: var(--folio-accent); margin: 2.5rem 0 2rem 0; position: sticky; top: 0; background: var(--folio-background); z-index: 5; box-shadow: 0 2px 8px rgba(124, 30, 61, 0.15); border-left: 6px solid var(--folio-accent); padding-left: 0.75rem; }
+.feed-group-label { font-size: 1.1rem; font-weight: 600; color: var(--folio-gold); margin: 2.5rem 0 2rem 0; position: sticky; top: 0; background: var(--folio-background); z-index: 5; box-shadow: 0 2px 8px rgba(184, 132, 92, 0.15); border-left: 6px solid var(--folio-gold); padding-left: 0.75rem; }
 .community-feed-item { background: rgba(255, 255, 255, 0.95); border-radius: 1rem; margin-bottom: 2.5rem; padding: 1.75rem 2rem; display: flex; gap: 1.25rem; align-items: flex-start; box-shadow: 0 2px 8px rgba(30, 30, 30, 0.12); transition: transform 0.2s ease; border: 1px solid var(--folio-border); }
 .community-feed-item:hover { transform: translateY(-2px); }
-.community-feed-item .profile-photo { width: 56px; height: 56px; border-radius: 50%; object-fit: cover; border: 2px solid var(--folio-accent); }
+.community-feed-item .profile-photo { width: 56px; height: 56px; border-radius: 50%; object-fit: cover; border: 2px solid var(--folio-gold); }
 .community-feed-item .feed-content { flex: 1; }
 .community-feed-item .feed-action { font-weight: 500; color: var(--folio-text); }
 .community-feed-item .feed-time { font-size: 0.9rem; color: var(--folio-system); margin-top: 0.25rem; }
 .community-feed-item .feed-preview { margin-top: 0.5rem; border-radius: 0.5rem; overflow: hidden; }
 .community-feed-item .feed-preview img { width: 100%; max-width: 320px; height: 180px; object-fit: cover; border-radius: 0.5rem; }
 .community-feed-item .event-preview { background: var(--folio-muted); border-radius: 0.5rem; padding: 0.75rem; margin-top: 0.5rem; }
-.event-card { background: rgba(255, 255, 255, 0.95); border-radius: 1rem; margin-bottom: 2.5rem; padding: 1.75rem 2rem; box-shadow: 0 2px 8px rgba(30, 30, 30, 0.12); display: flex; flex-direction: column; align-items: center; border-left: 8px solid var(--folio-accent); position: relative; overflow: hidden; transition: transform 0.2s ease; max-width: 420px; margin-left: auto; margin-right: auto; }
+.event-card { background: rgba(255, 255, 255, 0.95); border-radius: 1rem; margin-bottom: 2.5rem; padding: 1.75rem 2rem; box-shadow: 0 2px 8px rgba(30, 30, 30, 0.12); display: flex; flex-direction: column; align-items: center; border-left: 8px solid var(--folio-gold); position: relative; overflow: hidden; transition: transform 0.2s ease; max-width: 420px; margin-left: auto; margin-right: auto; }
 .event-card:hover { transform: translateY(-2px); }
 .event-card.status-attending { border-color: var(--folio-success); }
 .event-card.status-noresponse { border-color: var(--folio-system); }
@@ -1440,12 +1521,12 @@ body {
 .event-card .event-title { font-size: 1.25rem; font-weight: 700; margin-bottom: 0.25rem; text-align: center; color: var(--folio-text); }
 .event-card .event-meta, .event-card .event-host { text-align: center; color: var(--folio-system); }
 .event-card .event-attendees { display: flex; gap: 0.25rem; margin-top: 0.5rem; justify-content: center; }
-.event-card .attendee-avatar { width: 28px; height: 28px; border-radius: 50%; object-fit: cover; border: 2px solid var(--folio-accent); }
+.event-card .attendee-avatar { width: 28px; height: 28px; border-radius: 50%; object-fit: cover; border: 2px solid var(--folio-gold); }
 .event-card .event-actions { margin-top: 0.75rem; display: flex; gap: 0.5rem; flex-wrap: wrap; justify-content: center; }
 .event-card .event-action-btn { font-size: 1rem; padding: 0.5rem 1.25rem; border-radius: 9999px; border: none; cursor: pointer; font-weight: 500; transition: background 0.2s; min-width: 44px; min-height: 44px; }
 .event-card .event-action-btn.rsvp { background: var(--folio-success); color: white; }
 .event-card .event-action-btn.guest-list { background: var(--folio-system); color: white; }
-.event-card .event-action-btn.share { background: var(--folio-accent); color: white; }
+.event-card .event-action-btn.share { background: var(--folio-gold); color: white; }
 .event-card .event-action-btn.edit, .event-card .event-action-btn.manage { margin-left: 0; }
 .event-card .event-status-badge { position: absolute; top: 1rem; right: 1rem; font-size: 0.9rem; font-weight: 600; padding: 0.2rem 0.7rem; border-radius: 9999px; z-index: 2; }
 .event-card.status-attending .event-status-badge { background: var(--folio-success); color: white; }
@@ -1458,12 +1539,12 @@ body {
 @media (max-width: 1023px) {
   #events-panel, #events-panel-collapsed { position: static !important; }
 }
-.priority-badge { background: linear-gradient(90deg, var(--folio-accent) 60%, rgba(124, 30, 61, 0.8) 100%); color: white; font-size: 0.85rem; font-weight: 700; padding: 2px 10px; border-radius: 9999px; margin-left: 0.5rem; box-shadow: 0 1px 4px rgba(124, 30, 61, 0.18); }
+.priority-badge { background: linear-gradient(90deg, var(--folio-gold) 60%, rgba(184, 132, 92, 0.8) 100%); color: white; font-size: 0.85rem; font-weight: 700; padding: 2px 10px; border-radius: 9999px; margin-left: 0.5rem; box-shadow: 0 1px 4px rgba(184, 132, 92, 0.18); }
 .event-gallery { display: flex; gap: 0.5rem; margin-top: 0.5rem; flex-wrap: wrap; }
-.event-gallery img { width: 48px; height: 48px; object-fit: cover; border-radius: 0.4rem; border: 2px solid var(--folio-accent); cursor: pointer; transition: transform 0.18s, box-shadow 0.18s; min-height: 44px; min-width: 44px; }
-.event-gallery img:hover { transform: scale(1.08); box-shadow: 0 4px 16px rgba(124, 30, 61, 0.18); }
-.cross-post-btn { background: var(--folio-accent); color: white; font-size: 1rem; font-weight: 600; border: none; border-radius: 9999px; padding: 0.5rem 1.25rem; margin-left: 0.5rem; cursor: pointer; transition: background 0.2s; }
-.cross-post-btn:active { background: rgba(124, 30, 61, 0.8); }
+.event-gallery img { width: 48px; height: 48px; object-fit: cover; border-radius: 0.4rem; border: 2px solid var(--folio-gold); cursor: pointer; transition: transform 0.18s, box-shadow 0.18s; min-height: 44px; min-width: 44px; }
+.event-gallery img:hover { transform: scale(1.08); box-shadow: 0 4px 16px rgba(184, 132, 92, 0.18); }
+.cross-post-btn { background: var(--folio-gold); color: white; font-size: 1rem; font-weight: 600; border: none; border-radius: 9999px; padding: 0.5rem 1.25rem; margin-left: 0.5rem; cursor: pointer; transition: background 0.2s; }
+.cross-post-btn:active { background: rgba(184, 132, 92, 0.8); }
 .rising-badge { background: var(--folio-system); color: white; font-size: 0.8rem; font-weight: 700; padding: 2px 10px; border-radius: 9999px; margin-left: 0.5rem; }
 .local-badge { background: var(--folio-success); color: white; font-size: 0.8rem; font-weight: 700; padding: 2px 10px; border-radius: 9999px; margin-left: 0.5rem; }
 @media (max-width: 640px) {
@@ -1471,16 +1552,16 @@ body {
   .event-action-btn, .cross-post-btn { font-size: 1rem; min-height: 44px; min-width: 44px; }
 }
 .event-type-btn { font-size: 0.95rem; font-weight: 500; color: var(--folio-system); background: none; border: none; outline: none; padding: 0.25rem 1rem; border-radius: 9999px; transition: color 0.2s, background 0.2s; cursor: pointer; margin-right: 0.5rem; }
-.event-type-btn.active { color: white; background: var(--folio-accent); }
+.event-type-btn.active { color: white; background: var(--folio-gold); }
 .event-card { border-left-width: 10px; }
 .event-card .event-title { font-size: 1.25rem; font-weight: 700; margin-bottom: 0.25rem; }
-.event-card .event-meta { font-size: 1.05rem; color: var(--folio-accent); margin-bottom: 0.15rem; font-weight: 500; }
+.event-card .event-meta { font-size: 1.05rem; color: var(--folio-gold); margin-bottom: 0.15rem; font-weight: 500; }
 .event-card .event-invite-type { font-size: 0.95rem; color: white; background: var(--folio-system); border-radius: 0.5rem; padding: 2px 10px; margin-left: 0.5rem; display: inline-block; }
 .event-card .event-invite-type.open { background: var(--folio-success); color: white; }
-.event-card .event-invite-type.invite { background: var(--folio-accent); color: white; }
+.event-card .event-invite-type.invite { background: var(--folio-gold); color: white; }
 .event-card .event-invite-type.attending { background: var(--folio-system); color: white; }
 @media (max-width: 640px) {
-  .sticky-upload-btn { position: fixed !important; bottom: 1.5rem; right: 1.5rem; z-index: 50; width: 56px; height: 56px; border-radius: 9999px; box-shadow: 0 4px 16px rgba(124, 30, 61, 0.3); display: flex; align-items: center; justify-content: center; font-size: 2rem; background: var(--folio-accent); color: white; }
+  .sticky-upload-btn { position: fixed !important; bottom: 1.5rem; right: 1.5rem; z-index: 50; width: 56px; height: 56px; border-radius: 9999px; box-shadow: 0 4px 16px rgba(184, 132, 92, 0.3); display: flex; align-items: center; justify-content: center; font-size: 2rem; background: var(--folio-gold); color: white; }
 }
 .glass { background: rgba(20, 20, 20, 0.7); backdrop-filter: blur(20px); border-radius: 1.5rem; }
 .tooltip { position: absolute; z-index: 30; left: 50%; transform: translateX(-50%); bottom: 110%; background: #232323; color: #fff; padding: 0.3rem 0.7rem; border-radius: 0.5rem; font-size: 0.85rem; white-space: nowrap; opacity: 0; pointer-events: none; transition: opacity 0.2s; }
@@ -1492,13 +1573,13 @@ body {
  /* Custom Tailwind Classes for New Color Scheme */
  .bg-primary { background-color: var(--folio-background); }
  .bg-secondary { background-color: var(--folio-text); }
- .bg-accent { background-color: var(--folio-accent); }
+ .bg-accent { background-color: var(--folio-gold); }
  .text-primary { color: var(--folio-text); }
  .text-secondary { color: var(--folio-system); }
  .text-light { color: var(--folio-success); }
  .border-primary { border-color: var(--folio-background); }
  .border-secondary { border-color: var(--folio-text); }
- .border-accent { border-color: var(--folio-accent); }  
+ .border-accent { border-color: var(--folio-gold); }  
 
 /* Text truncation utilities */
 .line-clamp-1 {
@@ -1542,12 +1623,12 @@ body {
 }
 
 .nav-scrollbar::-webkit-scrollbar-thumb:hover {
-  background-color: var(--folio-accent);
+  background-color: var(--folio-gold);
 }
 
 /* Focus management for navigation */
 .nav-focus-visible:focus-visible {
-  outline: 2px solid var(--folio-accent);
+  outline: 2px solid var(--folio-gold);
   outline-offset: 2px;
 }
 
@@ -1659,17 +1740,17 @@ html {
 }
 
 .h-key { 
-  font-size: 11px; 
+  font-size: var(--type-eyebrow); 
   color: #6B7280; 
 }
 
 .h-legend { 
-  font-size: 12px; 
+  font-size: var(--type-meta); 
   color: #6B7280; 
 }
 
 .axis { 
-  font-size: 11px; 
+  font-size: var(--type-eyebrow); 
   fill: #6B7280; 
 }
 
@@ -1705,19 +1786,18 @@ html {
   box-shadow: var(--shadow, 0 12px 32px rgba(0,0,0,.35));
 }
 
-/* === Folio Design System CSS Classes === */
+/* === Folio Design System CSS Classes ===
+   Legacy .bg-folio-* accent utilities were removed; Tailwind now
+   generates .bg-folio-gold / .text-folio-gold from tailwind.config.js. */
 :root {
   --folio-bg: #F8F6F3;
   --folio-text: #2B2B2B;
   --folio-border: #DAD2CA;
-  --folio-accent: #8B7355;
 }
 
 .bg-folio-bg { background-color: var(--folio-bg); }
 .text-folio-text { color: var(--folio-text); }
-.text-folio-accent { color: var(--folio-accent); }
 .border-folio-border { border-color: var(--folio-border); }
-.bg-folio-accent { background-color: var(--folio-accent); }
 
 /* Editorial Card Styles */
 .editorial-card {
@@ -1989,7 +2069,7 @@ body.frame-dark::before {
 }
 
 .legal-content th {
-  background-color: var(--bg-elevated);
+  background-color: var(--surface-ground);
   font-weight: 600;
   color: var(--text-primary);
 }
@@ -1999,7 +2079,7 @@ body.frame-dark::before {
 }
 
 .legal-content tr:nth-child(even) td {
-  background-color: var(--bg-elevated);
+  background-color: var(--surface-ground);
 }
 
 .legal-content blockquote {
@@ -2019,7 +2099,7 @@ body.frame-dark::before {
 .legal-content code {
   font-family: 'IBM Plex Mono', monospace;
   font-size: 0.875em;
-  background-color: var(--bg-elevated);
+  background-color: var(--surface-ground);
   padding: 0.125rem 0.375rem;
   border-radius: 4px;
   color: var(--text-primary);
@@ -2027,7 +2107,7 @@ body.frame-dark::before {
 
 .legal-content pre {
   font-family: 'IBM Plex Mono', monospace;
-  background-color: var(--bg-elevated);
+  background-color: var(--surface-ground);
   padding: 1rem;
   border-radius: 8px;
   overflow-x: auto;
@@ -2066,7 +2146,7 @@ body.frame-dark::before {
 
 /* Welcome modal → nav link pulse */
 @keyframes folio-nav-pulse {
-  0%   { color: #c9a96e; }
+  0%   { color: var(--folio-gold-ornament); }
   100% { color: inherit; }
 }
 .folio-nav-pulse {

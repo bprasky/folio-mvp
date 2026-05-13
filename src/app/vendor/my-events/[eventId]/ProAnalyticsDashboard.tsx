@@ -98,7 +98,7 @@ export function ProAnalyticsDashboard({ eventId }: ProAnalyticsDashboardProps) {
       <div className="card p-6 mb-6">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-[20px] font-semibold tracking-tight mb-2">
+            <h1 className="text-[var(--type-h4)] font-semibold tracking-tight mb-2">
               {report.name}
             </h1>
             <p className="text-sm subtle">

@@ -39,7 +39,7 @@ export function UpdatesCarousel({ groups }: { groups: UpdatesCarouselItem[] }) {
             className="group relative flex flex-1 min-w-0 flex-col items-center gap-2"
             aria-label={`Open updates: ${(g.designer.studioName || g.designer.name || "Designer")} — ${g.project.title || "Project"}`}
           >
-            <span className="block h-[120px] w-full aspect-square overflow-hidden rounded-lg ring-2 ring-[var(--text-primary)]/60 ring-offset-2 ring-offset-[var(--bg-base)] shadow-sm">
+            <span className="block h-[120px] w-full aspect-square overflow-hidden rounded-lg ring-2 ring-[var(--text-primary)]/60 ring-offset-2 ring-offset-[var(--surface-canvas)] shadow-sm">
               {g.cover ? (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img src={g.cover} alt="" className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.04]" />
@@ -47,7 +47,7 @@ export function UpdatesCarousel({ groups }: { groups: UpdatesCarouselItem[] }) {
                 <span className="h-full w-full bg-surface-ground block" />
               )}
             </span>
-            <span className="text-[11px] text-folio-text-secondary line-clamp-2 text-center w-full max-w-[120px]">
+            <span className="text-[var(--type-eyebrow)] text-folio-text-secondary line-clamp-2 text-center w-full max-w-[120px]">
               {g.designer.studioName || g.designer.name || "Designer"}
             </span>
           </button>

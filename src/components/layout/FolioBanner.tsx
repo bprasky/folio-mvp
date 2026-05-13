@@ -18,8 +18,8 @@ export default function FolioBanner() {
           {/* FOLIO Title - Maximized size, refined thin font weight, clickable link */}
           <Link 
             href="/magazine"
-            className="text-6xl md:text-8xl lg:text-9xl font-light tracking-[-0.02em] text-folio-text-primary leading-[0.95] hover:opacity-80 transition-opacity"
-            style={{ fontFamily: 'var(--brand-font), ui-serif, Georgia, "Times New Roman", serif', fontWeight: 300 }}
+            className="text-6xl md:text-8xl lg:text-9xl font-light tracking-[var(--ls-tight)] text-folio-text-primary leading-[0.95] hover:opacity-80 transition-opacity" /* folio-design-system: off-scale */
+            style={{ fontFamily: 'var(--brand-font), ui-serif, Georgia, "Times New Roman", serif', fontWeight: 300 }} /* folio-design-system: off-scale */
           >
             FOLIO
           </Link>

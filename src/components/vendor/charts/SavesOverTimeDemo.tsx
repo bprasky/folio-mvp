@@ -23,8 +23,8 @@ export function SavesOverTimeDemo({ data }: { data: Point[] }) {
     <motion.div layout transition={springSoft as any}>
       <LineChart width={800} height={260} data={d}>
         <CartesianGrid stroke="#E5E7EB" />
-        <XAxis dataKey="date" tick={{ fontSize: 11 }} />
-        <YAxis tick={{ fontSize: 11 }} />
+        <XAxis dataKey="date" tick={{ fontSize: 'var(--type-eyebrow)' }} />
+        <YAxis tick={{ fontSize: 'var(--type-eyebrow)' }} />
         <Tooltip formatter={(v, k) => [v, k === 'saves' ? 'Saves/day' : 'Tags/day']} />
         <Line type="monotone" dataKey="saves" stroke="#3B82F6" strokeWidth={2} dot={false} isAnimationActive />
         <Line type="monotone" dataKey="tags" stroke="#10B981" strokeWidth={2} dot={false} isAnimationActive />

@@ -39,10 +39,14 @@ const nextConfig = {
       },
     ];
   },
-  // Redirects for route consolidation
+  // Redirects for route consolidation.
+  //
+  // Note: `/` is NOT redirected — it renders the editorial elevation feed
+  // (see src/app/page.tsx). `/magazine` redirects to `/` via app-router
+  // logic in src/app/magazine/page.tsx, not here, so deeplinks resolve at
+  // the same caching layer as the homepage itself.
   async redirects() {
     return [
-      { source: '/', destination: '/magazine', permanent: false },
       { source: '/designer', destination: '/projects', permanent: true },
       { source: '/designer/projects', destination: '/projects', permanent: true },
       { source: '/for-designers/directory', destination: '/for-designers/sourcebook', permanent: true },
@@ -167,7 +171,17 @@ const nextConfig = {
       { protocol: 'http', hostname: 'www.artexplore.net' }, // Art Explore CDN (http)
       { protocol: 'https', hostname: 'pinlighting.com', pathname: '/**' }, // Pin Lighting CDN
       { protocol: 'http', hostname: 'pinlighting.com', pathname: '/**' }, // Pin Lighting CDN (http)
-      { protocol: 'https', hostname: 'cdn.shopify.com', pathname: '/**' }, // Shopify CDN (vendor product images)
+
+      // Vendor product CDNs (homepage boost reel — see scripts/audit-tagged-product-images.ts).
+      // Adding a new hostname here is the unblock for "Product.imageUrl is set
+      // but next/image renders nothing" cases. When extending: run the audit,
+      // copy the unwhitelisted hostnames from the OK bucket.
+      { protocol: 'https', hostname: 'cdn.roveconcepts.com', pathname: '/**' },
+      { protocol: 'https', hostname: 'assets.wfcdn.com', pathname: '/**' }, // Wayfair CDN
+      { protocol: 'https', hostname: 'cdn.shopify.com', pathname: '/**' },
+      { protocol: 'https', hostname: 'source.unsplash.com', pathname: '/**' }, // distinct from images.unsplash.com
+      { protocol: 'https', hostname: 'basstonenyc.com', pathname: '/**' },
+      { protocol: 'https', hostname: 'cdn.designshop.com', pathname: '/**' },
 
       // Additional editorial/press domains can be added here as needed
     ],

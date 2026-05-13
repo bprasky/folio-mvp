@@ -162,7 +162,7 @@ export default function ProfileTabs({
           align-items: center;
           justify-content: center;
           background: linear-gradient(135deg, var(--shadow-dark), var(--text-tertiary));
-          color: var(--bg-base);
+          color: var(--surface-canvas);
           font-size: 11px;
           font-weight: 600;
           letter-spacing: 0.05em;
@@ -195,7 +195,7 @@ export default function ProfileTabs({
           position: sticky;
           top: 0;
           z-index: 40;
-          background: var(--bg-base);
+          background: var(--surface-canvas);
         }
         .tab-item {
           padding: 14px 24px;

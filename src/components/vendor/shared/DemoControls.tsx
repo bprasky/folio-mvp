@@ -35,7 +35,7 @@ export function DemoControls() {
     <div className="fixed bottom-4 right-4 z-50">
       <button
         onClick={() => setOpen(o => !o)}
-        className="rounded-full px-4 py-2 bg-[var(--text-primary)] text-[var(--bg-base)] shadow-lg hover:opacity-90 transition text-sm font-medium"
+        className="rounded-full px-4 py-2 bg-[var(--text-primary)] text-[var(--surface-canvas)] shadow-lg hover:opacity-90 transition text-sm font-medium"
       >
         {open ? 'Close Demo' : 'Demo Controls'}
       </button>
@@ -177,7 +177,7 @@ export function DemoControls() {
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <div className="space-y-2">
-      <div className="font-semibold text-[11px] uppercase tracking-wide text-folio-text-secondary">{title}</div>
+      <div className="font-semibold text-[var(--type-eyebrow)] uppercase tracking-wide text-folio-text-secondary">{title}</div>
       {children}
     </div>
   );

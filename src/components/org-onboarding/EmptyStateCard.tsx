@@ -30,7 +30,7 @@ export function EmptyStateCard({
       )}
       style={{
         borderColor: 'var(--ridge-outer)',
-        background: 'linear-gradient(to bottom, var(--bg-elevated), transparent)'
+        background: 'linear-gradient(to bottom, var(--surface-ground), transparent)'
       }}
     >
       {icon && (

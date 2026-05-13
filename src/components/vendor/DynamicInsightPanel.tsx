@@ -250,7 +250,7 @@ export const DynamicInsightPanel: React.FC<DynamicInsightPanelProps> = ({
             {mode === "strategy" ? "AI Strategy Session" : "Analytics Conversation"}
           </h2>
           {mode === "analytics" && (
-            <p className="text-[11px] uppercase tracking-wide text-folio-text-tertiary">
+            <p className="text-[var(--type-eyebrow)] uppercase tracking-wide text-folio-text-tertiary">
               Ask anything about your events, products, designers, or projects.
             </p>
           )}
@@ -265,7 +265,7 @@ export const DynamicInsightPanel: React.FC<DynamicInsightPanelProps> = ({
 
         {lastUserMessage && (
           <div className="mt-4 flex justify-end">
-            <div className="max-w-xl rounded-2xl bg-[var(--text-primary)] px-3 py-2 text-sm text-[var(--bg-base)]">
+            <div className="max-w-xl rounded-2xl bg-[var(--text-primary)] px-3 py-2 text-sm text-[var(--surface-canvas)]">
               {lastUserMessage.content}
             </div>
           </div>
@@ -323,7 +323,7 @@ export const DynamicInsightPanel: React.FC<DynamicInsightPanelProps> = ({
                     return (
                       <li
                         key={a.actionId + "_reason"}
-                        className="text-[11px] text-folio-text-secondary"
+                        className="text-[var(--type-eyebrow)] text-folio-text-secondary"
                       >
                         <span className="font-medium">{label}</span>
                         {": "}
@@ -379,7 +379,7 @@ export const DynamicInsightPanel: React.FC<DynamicInsightPanelProps> = ({
           />
           <button
             type="submit"
-            className="rounded-full bg-[var(--text-primary)] px-4 py-2 folio-meta font-medium text-[var(--bg-base)] hover:opacity-90"
+            className="rounded-full bg-[var(--text-primary)] px-4 py-2 folio-meta font-medium text-[var(--surface-canvas)] hover:opacity-90"
           >
             Ask
           </button>
@@ -519,7 +519,7 @@ export const DynamicInsightPanel: React.FC<DynamicInsightPanelProps> = ({
             <div className="border-t border-folio-border-subtle px-4 py-3">
               <button
                 type="button"
-                className="w-full rounded-full bg-[var(--text-primary)] py-2 folio-meta font-medium text-[var(--bg-base)] hover:opacity-90"
+                className="w-full rounded-full bg-[var(--text-primary)] py-2 folio-meta font-medium text-[var(--surface-canvas)] hover:opacity-90"
                 onClick={() => setActiveAction(null)}
               >
                 Close (mocked flow for now)

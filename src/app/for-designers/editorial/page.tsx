@@ -20,7 +20,7 @@ export default function EditorialPillarPage() {
       {/* Hero */}
       <section className="pt-12 pb-8 px-6">
         <div className="max-w-3xl mx-auto">
-          <h1 className="font-headline italic text-5xl md:text-6xl text-folio-text-primary leading-[1.1] mb-6">
+          <h1 className="font-headline italic text-5xl md:text-6xl text-folio-text-primary leading-[var(--lh-h1)] mb-6">
             Projects that speak for themselves.
           </h1>
           <p className="text-lg text-folio-text-secondary leading-relaxed">
@@ -66,25 +66,25 @@ export default function EditorialPillarPage() {
             <text x="99" y="128" textAnchor="middle" className="fill-[var(--text-secondary)]" fontSize="11">Your photos</text>
 
             {/* Arrow 1 */}
-            <line x1="194" y1="100" x2="260" y2="100" stroke="#C9A96E" strokeWidth="1.5" />
-            <polygon points="260,95 272,100 260,105" fill="#C9A96E" />
+            <line x1="194" y1="100" x2="260" y2="100" stroke="var(--folio-gold-ornament)" strokeWidth="1.5" />
+            <polygon points="260,95 272,100 260,105" fill="var(--folio-gold-ornament)" />
 
             {/* Node 2: Interview */}
             <rect x="280" y="44" width="150" height="110" rx="12" fill="#FAF9F6" stroke="#D4CFC8" strokeWidth="1.5" />
-            <circle cx="355" cy="80" r="20" fill="#C9A96E" fillOpacity="0.12" stroke="#C9A96E" strokeWidth="1" />
-            <rect x="348" y="72" width="14" height="16" rx="3" fill="#C9A96E" fillOpacity="0.4" />
+            <circle cx="355" cy="80" r="20" fill="var(--folio-gold-ornament)" fillOpacity="0.12" stroke="var(--folio-gold-ornament)" strokeWidth="1" />
+            <rect x="348" y="72" width="14" height="16" rx="3" fill="var(--folio-gold-ornament)" fillOpacity="0.4" />
             <text x="355" y="128" textAnchor="middle" className="fill-[var(--text-secondary)]" fontSize="11">Your interview</text>
 
             {/* Arrow 2 */}
-            <line x1="450" y1="100" x2="516" y2="100" stroke="#C9A96E" strokeWidth="1.5" />
-            <polygon points="516,95 528,100 516,105" fill="#C9A96E" />
+            <line x1="450" y1="100" x2="516" y2="100" stroke="var(--folio-gold-ornament)" strokeWidth="1.5" />
+            <polygon points="516,95 528,100 516,105" fill="var(--folio-gold-ornament)" />
 
             {/* Node 3: Editorial post with tagged products */}
-            <rect x="536" y="44" width="160" height="110" rx="12" fill="#FAF9F6" stroke="#C9A96E" strokeWidth="1.5" />
-            <rect x="552" y="56" width="128" height="8" rx="2" fill="#C9A96E" fillOpacity="0.3" />
+            <rect x="536" y="44" width="160" height="110" rx="12" fill="#FAF9F6" stroke="var(--folio-gold-ornament)" strokeWidth="1.5" />
+            <rect x="552" y="56" width="128" height="8" rx="2" fill="var(--folio-gold-ornament)" fillOpacity="0.3" />
             <rect x="552" y="70" width="128" height="36" rx="4" fill="#EFEBE6" />
             <rect x="552" y="112" width="80" height="6" rx="2" fill="#D4CFC8" />
-            <rect x="638" y="112" width="42" height="6" rx="2" fill="#C9A96E" fillOpacity="0.4" />
+            <rect x="638" y="112" width="42" height="6" rx="2" fill="var(--folio-gold-ornament)" fillOpacity="0.4" />
             <rect x="552" y="122" width="100" height="6" rx="2" fill="#E8E3DD" />
             <text x="616" y="148" textAnchor="middle" className="fill-[var(--text-secondary)]" fontSize="11">Your editorial</text>
           </svg>

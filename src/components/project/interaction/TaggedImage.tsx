@@ -20,6 +20,8 @@ interface TaggedImageProps {
   surface?: TagSurface;
   onProductClick?: (tag: NormalizedTag) => void;
   usePortal?: boolean; // for feed cards with overflow:hidden
+  // Force dots visible regardless of hover state (e.g. when the room is expanded).
+  forceDotsVisible?: boolean;
 }
 
 /**
@@ -37,6 +39,7 @@ export function TaggedImage({
   surface = 'post',
   onProductClick,
   usePortal = false,
+  forceDotsVisible = false,
 }: TaggedImageProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const allTags = normalizeTags(image, tagsProp);
@@ -185,7 +188,7 @@ export function TaggedImage({
         <div className="hidden md:block">
           <TagDotOverlay
             tags={tags}
-            visible={dotsVisible && !activeTag}
+            visible={(dotsVisible || forceDotsVisible) && !activeTag}
             compact={isCompact}
             onTagActivate={handleTagActivate}
           />

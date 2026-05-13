@@ -66,19 +66,19 @@ export function ScenePresetPicker({
           disabled={saving}
           className={`relative flex items-center gap-3 p-3 rounded-xl border transition-colors text-left ${
             selected === null
-              ? 'border-[#c9a96e] bg-[#c9a96e]/5'
-              : 'border-[#E5E0D7] hover:border-[#c9a96e]/30 bg-[#FAF8F5]'
+              ? 'border-[var(--folio-gold-ornament)] bg-[var(--folio-gold-ornament)]/5'
+              : 'border-[#E5E0D7] hover:border-[var(--folio-gold-ornament)]/30 bg-[#FAF8F5]'
           }`}
         >
           <div className="w-8 h-8 rounded-lg bg-gradient-to-b from-stone-200 to-stone-300 shrink-0" />
           <div className="min-w-0">
             <div className="text-sm font-medium text-[#2C2825]">Auto</div>
-            <div className="text-[10px] text-[#8C8278]">
+            <div className="text-[var(--type-fine)] text-[#8C8278]">
               {productCategory ? `Based on "${productCategory}"` : 'Default'}
             </div>
           </div>
           {selected === null && (
-            <Check className="w-4 h-4 text-[#c9a96e] absolute top-2 right-2" />
+            <Check className="w-4 h-4 text-[var(--folio-gold-ornament)] absolute top-2 right-2" />
           )}
         </button>
 
@@ -90,8 +90,8 @@ export function ScenePresetPicker({
             disabled={saving}
             className={`relative flex items-center gap-3 p-3 rounded-xl border transition-colors text-left ${
               selected === preset.id
-                ? 'border-[#c9a96e] bg-[#c9a96e]/5'
-                : 'border-[#E5E0D7] hover:border-[#c9a96e]/30 bg-[#FAF8F5]'
+                ? 'border-[var(--folio-gold-ornament)] bg-[var(--folio-gold-ornament)]/5'
+                : 'border-[#E5E0D7] hover:border-[var(--folio-gold-ornament)]/30 bg-[#FAF8F5]'
             }`}
           >
             {/* Gradient swatch */}
@@ -103,10 +103,10 @@ export function ScenePresetPicker({
             />
             <div className="min-w-0">
               <div className="text-sm font-medium text-[#2C2825]">{preset.name}</div>
-              <div className="text-[10px] text-[#8C8278] italic">{preset.subtitle}</div>
+              <div className="text-[var(--type-fine)] text-[#8C8278] italic">{preset.subtitle}</div>
             </div>
             {selected === preset.id && (
-              <Check className="w-4 h-4 text-[#c9a96e] absolute top-2 right-2" />
+              <Check className="w-4 h-4 text-[var(--folio-gold-ornament)] absolute top-2 right-2" />
             )}
           </button>
         ))}

@@ -21,7 +21,7 @@ export function FriendsGoing({ data, isMock }: FriendsGoingProps) {
     : `${data.count} you follow are going`;
 
   return (
-    <div className="mt-1 text-[12px] md:text-[13px] text-stone-700 font-medium">
+    <div className="mt-1 text-[var(--type-meta)] md:text-[var(--type-meta)] text-stone-700 font-medium">
       {label}
       {isMock && <span className="ml-1 opacity-60 font-normal">[mock]</span>}
     </div>

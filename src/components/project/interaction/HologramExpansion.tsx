@@ -273,8 +273,8 @@ export function HologramExpansion({
               <div
                 className="text-folio-text-primary truncate"
                 style={{
-                  fontFamily: "'Cormorant Garamond', serif",
-                  fontSize: '16px',
+                  fontFamily: "var(--font-headline)",
+                  fontSize: 'var(--type-body)',
                   fontStyle: 'italic',
                 }}
               >
@@ -284,9 +284,8 @@ export function HologramExpansion({
                 <div
                   className="truncate text-folio-text-secondary mt-0.5"
                   style={{
-                    fontFamily: "'Instrument Sans', sans-serif",
-                    fontSize: '11px',
-                    letterSpacing: '0.12em',
+                    fontSize: 'var(--type-eyebrow)',
+                    letterSpacing: 'var(--ls-wide)',
                     textTransform: 'uppercase',
                   }}
                 >
@@ -300,7 +299,7 @@ export function HologramExpansion({
                 className="absolute bottom-2.5 right-3 w-9 h-9 flex items-center justify-center rounded-full transition-colors hover:bg-black/5"
                 style={{
                   color: 'var(--tag-hud-accent)',
-                  fontSize: '18px',
+                  fontSize: 'var(--type-h4)',
                 }}
                 onClick={(e) => {
                   e.stopPropagation();

@@ -97,7 +97,7 @@ export function PartialProductPrompt({
                   <p className="text-sm font-medium text-folio-text-primary">
                     Saved to project
                   </p>
-                  <p className="text-[12px] text-folio-text-secondary mt-1">
+                  <p className="text-[var(--type-meta)] text-folio-text-secondary mt-1">
                     {tag.vendorName
                       ? `Requesting full specs from ${tag.vendorName} for you.`
                       : 'Requesting more info for you.'
@@ -111,12 +111,12 @@ export function PartialProductPrompt({
                     {tag.label}
                   </h3>
                   {tag.vendorName && (
-                    <p className="mt-0.5 text-[10px] uppercase tracking-[0.16em] text-folio-text-secondary">
+                    <p className="mt-0.5 text-[var(--type-fine)] uppercase tracking-[var(--ls-eyebrow)] text-folio-text-secondary">
                       {tag.vendorName}
                     </p>
                   )}
 
-                  <p className="mt-3 text-[12px] text-folio-text-secondary leading-relaxed">
+                  <p className="mt-3 text-[var(--type-meta)] text-folio-text-secondary leading-relaxed">
                     This product has limited details.
                     {tag.vendorName
                       ? ` We'll request complete specs from ${tag.vendorName} when you save.`
@@ -126,7 +126,7 @@ export function PartialProductPrompt({
 
                   <button
                     type="button"
-                    className="mt-4 w-full inline-flex items-center justify-center gap-1.5 rounded-full bg-[var(--text-primary)] px-3 py-2.5 text-[12px] font-medium text-white hover:opacity-90 transition-colors"
+                    className="mt-4 w-full inline-flex items-center justify-center gap-1.5 rounded-full bg-[var(--text-primary)] px-3 py-2.5 text-[var(--type-meta)] font-medium text-white hover:opacity-90 transition-colors"
                     onClick={handleSaveAndRequest}
                   >
                     <span>+</span>
@@ -135,7 +135,7 @@ export function PartialProductPrompt({
 
                   <button
                     type="button"
-                    className="mt-2 w-full text-center text-[11px] text-folio-text-tertiary hover:text-folio-text-secondary py-1 transition-colors"
+                    className="mt-2 w-full text-center text-[var(--type-eyebrow)] text-folio-text-tertiary hover:text-folio-text-secondary py-1 transition-colors"
                     onClick={onClose}
                   >
                     Dismiss

@@ -47,11 +47,11 @@ export function CaptionTab({
       {/* Caption editor */}
       <div>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
-          <div style={{ fontSize: '11px', letterSpacing: '2px', textTransform: 'uppercase' as const, color: '#8B7B68', fontWeight: 500 }}>
+          <div style={{ fontSize: 'var(--type-eyebrow)', letterSpacing: 'var(--ls-eyebrow)', textTransform: 'uppercase' as const, color: '#8B7B68', fontWeight: 'var(--w-h1)' }}>
             Instagram Caption
           </div>
           {caption && (
-            <div style={{ fontSize: '12px', color: '#A89880' }}>
+            <div style={{ fontSize: 'var(--type-meta)', color: '#A89880' }}>
               {caption.length} characters
             </div>
           )}
@@ -66,7 +66,7 @@ export function CaptionTab({
               borderTopColor: '#2C2420',
               animation: 'spin 1s linear infinite',
             }} />
-            <p style={{ marginTop: '12px', fontSize: '13px', color: '#8B7B68' }}>Generating caption...</p>
+            <p style={{ marginTop: '12px', fontSize: 'var(--type-meta)', color: '#8B7B68' }}>Generating caption...</p>
             <style>{`@keyframes spin { to { transform: rotate(360deg) } }`}</style>
           </div>
         ) : (
@@ -81,8 +81,8 @@ export function CaptionTab({
               border: '1px solid #E8E0D8',
               background: '#FFFFFF',
               padding: '12px 14px',
-              fontSize: '14px',
-              lineHeight: 1.6,
+              fontSize: 'var(--type-ui)',
+              lineHeight: 'var(--lh-body)',
               color: '#2C2420',
               outline: 'none',
               resize: 'vertical' as const,
@@ -100,10 +100,10 @@ export function CaptionTab({
           background: '#FAF7F4',
           border: '1px solid #F0EBE4',
         }}>
-          <div style={{ fontSize: '11px', letterSpacing: '2px', textTransform: 'uppercase' as const, color: '#8B7B68', marginBottom: '6px', fontWeight: 500 }}>
+          <div style={{ fontSize: 'var(--type-eyebrow)', letterSpacing: 'var(--ls-eyebrow)', textTransform: 'uppercase' as const, color: '#8B7B68', marginBottom: '6px', fontWeight: 'var(--w-h1)' }}>
             Auto-appended CTA
           </div>
-          <div style={{ fontFamily: "'Playfair Display', Georgia, serif", fontSize: '13px', fontStyle: 'italic', color: '#2C2420' }}>
+          <div style={{ fontFamily: "var(--font-headline)", fontSize: 'var(--type-meta)', fontStyle: 'italic', color: '#2C2420' }}>
             {ctaText}
           </div>
         </div>
@@ -122,8 +122,8 @@ export function CaptionTab({
             gap: '8px',
             borderRadius: '10px',
             padding: '10px',
-            fontSize: '13px',
-            fontWeight: 500,
+            fontSize: 'var(--type-meta)',
+            fontWeight: 'var(--w-h1)',
             border: copied ? '1px solid #bbf7d0' : 'none',
             cursor: fullCaption ? 'pointer' : 'default',
             transition: 'all 0.2s',
@@ -158,8 +158,8 @@ export function CaptionTab({
             border: '1px solid #E8E0D8',
             background: '#FFFFFF',
             padding: '10px 16px',
-            fontSize: '13px',
-            fontWeight: 500,
+            fontSize: 'var(--type-meta)',
+            fontWeight: 'var(--w-h1)',
             color: '#8B7B68',
             cursor: 'pointer',
             transition: 'all 0.2s',
@@ -177,10 +177,10 @@ export function CaptionTab({
           borderRadius: '10px',
           border: '1px solid #E8E0D8',
         }}>
-          <div style={{ fontSize: '11px', letterSpacing: '2px', textTransform: 'uppercase' as const, color: '#8B7B68', marginBottom: '8px', fontWeight: 500 }}>
+          <div style={{ fontSize: 'var(--type-eyebrow)', letterSpacing: 'var(--ls-eyebrow)', textTransform: 'uppercase' as const, color: '#8B7B68', marginBottom: '8px', fontWeight: 'var(--w-h1)' }}>
             Full Caption Preview
           </div>
-          <div style={{ whiteSpace: 'pre-wrap' as const, fontSize: '13px', lineHeight: 1.6, color: '#2C2420' }}>
+          <div style={{ whiteSpace: 'pre-wrap' as const, fontSize: 'var(--type-meta)', lineHeight: 'var(--lh-body)', color: '#2C2420' }}>
             {fullCaption}
           </div>
         </div>

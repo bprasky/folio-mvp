@@ -176,7 +176,7 @@ export function ProcessBuilderModal({
                     borderColor:
                       draggedIndex === index ? 'var(--accent)' : 'var(--ridge-outer)',
                     backgroundColor:
-                      draggedIndex === index ? 'var(--bg-elevated)' : 'transparent',
+                      draggedIndex === index ? 'var(--surface-ground)' : 'transparent',
                     cursor: 'grab'
                   }}
                 >
@@ -185,7 +185,7 @@ export function ProcessBuilderModal({
                   </div>
                   <div
                     className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 text-sm font-medium"
-                    style={{ backgroundColor: 'var(--bg-elevated)' }}
+                    style={{ backgroundColor: 'var(--surface-ground)' }}
                   >
                     {index + 1}
                   </div>

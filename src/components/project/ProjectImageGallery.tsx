@@ -20,7 +20,7 @@ export function ProjectImageGallery({ project }: ProjectImageGalleryProps) {
   return (
     <section className="mt-10 space-y-4">
       <header className="flex items-center justify-between gap-2">
-        <h2 className="folio-ui tracking-[0.18em] uppercase text-folio-text-secondary">
+        <h2 className="folio-ui tracking-[var(--ls-logo)] uppercase text-folio-text-secondary">
           Project Gallery
         </h2>
         <span className="folio-meta text-folio-text-tertiary">

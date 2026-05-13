@@ -94,7 +94,7 @@ export function InContextBoostDashboard({ boosts, isAdmin }: InContextBoostDashb
         </h1>
         <p
           className="font-body mt-2"
-          style={{ fontSize: "14px", color: "var(--folio-text-secondary, #6b6b6b)" }}
+          style={{ fontSize: 'var(--type-ui)', color: "var(--folio-text-secondary, #6b6b6b)" }}
         >
           When designers feature your products in their projects, review and boost to earn placement on your product pages.
         </p>
@@ -121,8 +121,8 @@ export function InContextBoostDashboard({ boosts, isAdmin }: InContextBoostDashb
             onClick={() => setFilter(tab.key)}
             className="font-body px-3 py-1.5 rounded-full cursor-pointer transition-colors"
             style={{
-              fontSize: "12px",
-              fontWeight: 500,
+              fontSize: 'var(--type-meta)',
+              fontWeight: 'var(--w-h1)',
               background: filter === tab.key ? "#3a2a1a" : "rgba(245, 239, 232, 0.6)",
               color: filter === tab.key ? "#f5efe8" : "var(--folio-text-secondary, #6b6b6b)",
               border: "none",
@@ -137,7 +137,7 @@ export function InContextBoostDashboard({ boosts, isAdmin }: InContextBoostDashb
       {filtered.length === 0 ? (
         <div
           className="text-center py-16 font-body"
-          style={{ color: "var(--folio-text-tertiary, #9b9b9b)", fontSize: "14px" }}
+          style={{ color: "var(--folio-text-tertiary, #9b9b9b)", fontSize: 'var(--type-ui)' }}
         >
           No boost opportunities {filter !== "all" ? "with this status" : "yet"}.
         </div>
@@ -166,11 +166,11 @@ function StatCard({ label, value, color }: { label: string; value: number; color
     >
       <div
         className="font-body"
-        style={{ fontSize: "10px", letterSpacing: "1px", textTransform: "uppercase", color: "var(--folio-text-tertiary, #9b9b9b)" }}
+        style={{ fontSize: 'var(--type-fine)', letterSpacing: "1px", textTransform: "uppercase", color: "var(--folio-text-tertiary, #9b9b9b)" }} /* folio-design-system: off-scale */
       >
         {label}
       </div>
-      <div className="font-body mt-1" style={{ fontSize: "22px", fontWeight: 500, color }}>
+      <div className="font-body mt-1" style={{ fontSize: 'var(--type-h4)', fontWeight: 'var(--w-h1)', color }}>
         {value}
       </div>
     </div>
@@ -217,10 +217,10 @@ function BoostCard({
       <div className="flex-1 min-w-0">
         <div className="flex items-start justify-between gap-2 mb-1">
           <div>
-            <div className="font-body font-medium" style={{ fontSize: "14px", color: "var(--folio-text-primary)" }}>
+            <div className="font-body font-medium" style={{ fontSize: 'var(--type-ui)', color: "var(--folio-text-primary)" }}>
               {boost.product.name}
             </div>
-            <div className="font-body" style={{ fontSize: "12px", color: "var(--folio-text-secondary)" }}>
+            <div className="font-body" style={{ fontSize: 'var(--type-meta)', color: "var(--folio-text-secondary)" }}>
               {boost.projectTitle} · by {boost.designer.name}
             </div>
           </div>
@@ -228,8 +228,8 @@ function BoostCard({
           <span
             className="font-body flex-shrink-0 px-2 py-0.5 rounded-full"
             style={{
-              fontSize: "10px",
-              fontWeight: 500,
+              fontSize: 'var(--type-fine)',
+              fontWeight: 'var(--w-h1)',
               color: statusConfig.color,
               background: statusConfig.bg,
             }}
@@ -240,7 +240,7 @@ function BoostCard({
 
         {/* Metrics (for active boosts) */}
         {isActive && (
-          <div className="flex gap-4 mt-2 font-body" style={{ fontSize: "11px", color: "var(--folio-text-tertiary)" }}>
+          <div className="flex gap-4 mt-2 font-body" style={{ fontSize: 'var(--type-eyebrow)', color: "var(--folio-text-tertiary)" }}>
             <span>{boost.impressions.toLocaleString()} impressions</span>
             <span>{boost.clicks.toLocaleString()} clicks</span>
             {boost.vendorSpendCents > 0 && (
@@ -253,12 +253,12 @@ function BoostCard({
         {isActive && boost.followUpAnswer && (
           <div
             className="mt-2 rounded-lg px-3 py-2 font-body"
-            style={{ background: "rgba(201, 169, 110, 0.08)", fontSize: "12px" }}
+            style={{ background: "rgba(201, 169, 110, 0.08)", fontSize: 'var(--type-meta)' }}
           >
             <span style={{ color: "var(--folio-text-tertiary)" }}>Q: </span>
             <span style={{ color: "var(--folio-text-secondary)" }}>{boost.followUpQuestion}</span>
             <br />
-            <span style={{ color: "#c9a96e" }}>A: </span>
+            <span style={{ color: "var(--folio-gold-ornament)" }}>A: </span>
             <span className="italic" style={{ color: "var(--folio-text-primary)" }}>{boost.followUpAnswer}</span>
           </div>
         )}
@@ -271,8 +271,8 @@ function BoostCard({
               disabled={isLoading}
               className="font-body px-4 py-1.5 rounded-lg cursor-pointer"
               style={{
-                fontSize: "12px",
-                fontWeight: 500,
+                fontSize: 'var(--type-meta)',
+                fontWeight: 'var(--w-h1)',
                 background: "#3a2a1a",
                 color: "#f5efe8",
                 border: "none",
@@ -286,8 +286,8 @@ function BoostCard({
               disabled={isLoading}
               className="font-body px-4 py-1.5 rounded-lg cursor-pointer"
               style={{
-                fontSize: "12px",
-                fontWeight: 500,
+                fontSize: 'var(--type-meta)',
+                fontWeight: 'var(--w-h1)',
                 background: "transparent",
                 color: "var(--folio-text-secondary)",
                 border: "0.5px solid var(--folio-border-strong, #d4cfc8)",
@@ -301,8 +301,8 @@ function BoostCard({
                 href={`/p/${boost.articleSlug}`}
                 className="font-body px-3 py-1.5 rounded-lg"
                 style={{
-                  fontSize: "12px",
-                  fontWeight: 500,
+                  fontSize: 'var(--type-meta)',
+                  fontWeight: 'var(--w-h1)',
                   color: "#8a7044",
                 }}
               >

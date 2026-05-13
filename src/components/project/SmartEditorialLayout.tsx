@@ -124,7 +124,7 @@ function CinemaSpread({ chapter }: { chapter: EditorialChapter }) {
           <TaggedImage surface="post" image={chapter.primaryImage} />
           <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/40 via-black/5 to-transparent" />
           <div className="absolute bottom-6 left-6 right-6 flex flex-wrap items-end justify-between gap-3">
-            <div className="rounded-full bg-surface-canvas/90 backdrop-blur-sm px-3 py-1 folio-meta uppercase tracking-[0.18em] text-folio-text-secondary">
+            <div className="rounded-full bg-surface-canvas/90 backdrop-blur-sm px-3 py-1 folio-meta uppercase tracking-[var(--ls-logo)] text-folio-text-secondary">
               {(chapter.title ? formatRoomName(chapter.title) : null) || "Project Chapter"}
             </div>
             {getSelectedPullQuoteText(chapter.pullQuote) && (
@@ -182,7 +182,7 @@ function DetailGridSpread({ chapter }: { chapter: EditorialChapter }) {
         <RidgeTextBlock chapter={chapter} variant="narrative" />
         <div className="p-4 space-y-3">
           <div className="flex items-center justify-between gap-2">
-            <h3 className="folio-meta uppercase tracking-[0.18em] text-folio-text-secondary">
+            <h3 className="folio-meta uppercase tracking-[var(--ls-logo)] text-folio-text-secondary">
               In the Details
             </h3>
             <span className="folio-meta text-folio-text-tertiary">
@@ -228,7 +228,7 @@ function RidgeTextBlock({
   return (
     <div className="px-5 py-4 md:px-6 md:py-5 space-y-3">
       {chapter.title && (
-        <h2 className="folio-meta uppercase tracking-[0.16em] text-folio-text-secondary">
+        <h2 className="folio-meta uppercase tracking-[var(--ls-eyebrow)] text-folio-text-secondary">
           {formatRoomName(chapter.title)}
         </h2>
       )}

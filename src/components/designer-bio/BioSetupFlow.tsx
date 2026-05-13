@@ -121,7 +121,7 @@ export default function BioSetupFlow({ designerBio, userWebsite, onPublished }: 
           .bio-setup-scratch-btn {
             padding: 32px;
             border-radius: 12px;
-            background: var(--bg-base);
+            background: var(--surface-canvas);
             border: 1px solid var(--border);
             text-align: center;
             cursor: pointer;

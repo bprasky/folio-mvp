@@ -202,7 +202,7 @@ export default function OrgSettingsPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: '#FAF9F7' }}>
+      <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: 'var(--surface-ground)' }}>
         <p className="text-sm" style={{ color: '#8B8178' }}>Loading...</p>
       </div>
     );
@@ -210,7 +210,7 @@ export default function OrgSettingsPage() {
 
   if (!isAuthorized) {
     return (
-      <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: '#FAF9F7' }}>
+      <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: 'var(--surface-ground)' }}>
         <div className="text-center">
           <h3 className="text-lg font-medium mb-2" style={{ color: '#2C2825' }}>Access Denied</h3>
           <p className="text-sm mb-4" style={{ color: '#8B8178' }}>
@@ -219,7 +219,7 @@ export default function OrgSettingsPage() {
           <button
             onClick={() => router.push(`/org/${orgId}`)}
             className="px-5 py-2 text-sm rounded-full transition-all hover:opacity-80"
-            style={{ backgroundColor: '#2C2825', color: '#FAF9F7' }}
+            style={{ backgroundColor: '#2C2825', color: 'var(--surface-ground)' }}
           >
             Go Back
           </button>
@@ -229,17 +229,17 @@ export default function OrgSettingsPage() {
   }
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: '#FAF9F7' }}>
+    <div className="min-h-screen" style={{ backgroundColor: 'var(--surface-ground)' }}>
       <div className="max-w-2xl mx-auto px-6 py-12">
         {/* Header */}
         <div className="mb-8">
           <h1
             className="text-3xl italic mb-2"
-            style={{ fontFamily: 'var(--font-headline)', color: '#2C2825', fontWeight: 400 }}
+            style={{ fontFamily: 'var(--font-headline)', color: '#2C2825', fontWeight: 'var(--w-body)' }}
           >
             {profileSourced ? 'Review What We Heard' : 'Studio Profile'}
           </h1>
-          <p className="text-sm" style={{ color: '#8B8178', fontFamily: 'var(--font-body)' }}>
+          <p className="text-sm" style={{ color: '#8B8178' }}>
             {profileSourced
               ? 'These fields were populated from your interview. Edit anything that needs adjusting.'
               : 'This is what designers, vendors, and clients see when they visit your profile.'}
@@ -248,7 +248,7 @@ export default function OrgSettingsPage() {
             <button
               onClick={() => router.push(`/org/${orgId}/settings/about-interview?returnTo=profile`)}
               className="mt-3 flex items-center gap-2 text-xs transition-opacity hover:opacity-70"
-              style={{ color: '#B8845C' }}
+              style={{ color: 'var(--folio-gold)' }}
             >
               <RefreshCw size={12} />
               Re-do interview to refresh profile
@@ -374,7 +374,7 @@ export default function OrgSettingsPage() {
             <div className="flex items-center justify-between mb-1.5">
               <label
                 className="text-xs font-medium"
-                style={{ color: '#6B635B', fontFamily: 'var(--font-body)' }}
+                style={{ color: '#6B635B' }}
               >
                 Specialties
               </label>
@@ -418,13 +418,12 @@ export default function OrgSettingsPage() {
                 onChange={(e) => setSpecialtyInput(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), addSpecialty())}
                 placeholder="Add a specialty..."
-                className="flex-1 px-4 py-2.5 text-sm rounded-xl border outline-none transition-colors focus:border-[#B8845C]"
+                className="flex-1 px-4 py-2.5 text-sm rounded-xl border outline-none transition-colors focus:border-[var(--folio-gold)]"
                 style={{
                   borderColor: '#E8E4DF',
-                  backgroundColor: '#FAF9F7',
-                  color: '#2C2825',
-                  fontFamily: 'var(--font-body)',
-                }}
+                  backgroundColor: 'var(--surface-ground)',
+                  color: '#2C2825'
+                  }}
               />
               <button
                 onClick={addSpecialty}
@@ -450,7 +449,7 @@ export default function OrgSettingsPage() {
             onClick={handleSave}
             disabled={saving}
             className="px-6 py-2.5 text-sm rounded-full transition-all hover:opacity-80 disabled:opacity-50"
-            style={{ backgroundColor: '#2C2825', color: '#FAF9F7' }}
+            style={{ backgroundColor: '#2C2825', color: 'var(--surface-ground)' }}
           >
             {saving ? 'Saving...' : 'Save Profile'}
           </button>

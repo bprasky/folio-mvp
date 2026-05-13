@@ -64,10 +64,10 @@ export function VendorIntelligence({ productId }: VendorIntelligenceProps) {
           top: "-8px",
           right: "16px",
           background: "#3a2a1a",
-          color: "#c9a96e",
-          fontSize: "9px",
-          fontWeight: 500,
-          letterSpacing: "1.5px",
+          color: "var(--folio-gold-ornament)",
+          fontSize: "9px", /* folio-design-system: off-scale */
+          fontWeight: 'var(--w-h1)',
+          letterSpacing: 'var(--ls-wide)',
           textTransform: "uppercase",
           padding: "3px 10px",
           borderRadius: "4px",
@@ -105,10 +105,10 @@ function StatCard({ label, value }: { label: string; value: number | string }) {
       <div
         className="font-body"
         style={{
-          fontSize: "10px",
-          fontWeight: 500,
+          fontSize: 'var(--type-fine)',
+          fontWeight: 'var(--w-h1)',
           textTransform: "uppercase",
-          letterSpacing: "1px",
+          letterSpacing: "1px", /* folio-design-system: off-scale */
           color: "var(--folio-text-tertiary, #9b9b9b)",
         }}
       >
@@ -117,8 +117,8 @@ function StatCard({ label, value }: { label: string; value: number | string }) {
       <div
         className="font-body mt-1"
         style={{
-          fontSize: "22px",
-          fontWeight: 500,
+          fontSize: 'var(--type-h4)',
+          fontWeight: 'var(--w-h1)',
           color: "var(--folio-text-primary, #1a1a1a)",
         }}
       >
@@ -136,10 +136,10 @@ function MiniBarChart({ label, items }: { label: string; items: { label: string;
       <div
         className="font-body mb-3"
         style={{
-          fontSize: "10px",
-          fontWeight: 500,
+          fontSize: 'var(--type-fine)',
+          fontWeight: 'var(--w-h1)',
           textTransform: "uppercase",
-          letterSpacing: "1px",
+          letterSpacing: "1px", /* folio-design-system: off-scale */
           color: "var(--folio-text-tertiary, #9b9b9b)",
         }}
       >
@@ -151,13 +151,13 @@ function MiniBarChart({ label, items }: { label: string; items: { label: string;
             <div className="flex items-center justify-between mb-1">
               <span
                 className="font-body"
-                style={{ fontSize: "12px", color: "var(--folio-text-secondary, #6b6b6b)" }}
+                style={{ fontSize: 'var(--type-meta)', color: "var(--folio-text-secondary, #6b6b6b)" }}
               >
                 {item.label}
               </span>
               <span
                 className="font-body"
-                style={{ fontSize: "11px", color: "var(--folio-text-tertiary, #9b9b9b)" }}
+                style={{ fontSize: 'var(--type-eyebrow)', color: "var(--folio-text-tertiary, #9b9b9b)" }}
               >
                 {item.pct}%
               </span>
@@ -175,7 +175,7 @@ function MiniBarChart({ label, items }: { label: string; items: { label: string;
                   height: "100%",
                   width: `${(item.pct / maxPct) * 100}%`,
                   borderRadius: "2px",
-                  background: "#c9a96e",
+                  background: "var(--folio-gold-ornament)",
                   transition: "width 0.6s ease-out",
                 }}
               />

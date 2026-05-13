@@ -1,9 +1,8 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { motion, useScroll, useTransform } from "framer-motion";
 import { GlobalSearch } from "./GlobalSearch";
 import { NavLinks } from "./NavLinks";
 import { UserMenu } from "./UserMenu";
@@ -12,144 +11,100 @@ import { CreateButton } from "./CreateButton";
 import { BadgeButton } from "./BadgeButton";
 import { InboxButton } from "./InboxButton";
 
-const SCROLL_THRESHOLD = 100; // Trigger point for state change (50-100px as specified)
-const MAGAZINE_SCROLL_THRESHOLD = 200; // Higher threshold for magazine page (waits for hero scroll)
+// Fallback scroll threshold for routes that don't render the big wordmark
+// (designer/product/magazine). The wordmark-bearing routes use an
+// IntersectionObserver against the wordmark element instead.
+const SCROLL_THRESHOLD = 40;
 
 export function EditorialMasthead() {
-  const [isScrolled, setIsScrolled] = useState(false);
-  const { scrollY } = useScroll();
   const pathname = usePathname();
+  const [isScrolled, setIsScrolled] = useState(false);
+  const wordmarkRef = useRef<HTMLDivElement | null>(null);
 
-  // Check if we're on the magazine page - hide large masthead and adjust header
-  const isMagazinePage = pathname === "/magazine" || pathname?.startsWith("/magazine?");
-  // Hide large masthead on designer/dashboard pages — the nav-bar logo is sufficient context
+  // Pages with their own immersive treatment / dashboards. These suppress the
+  // big FOLIO wordmark; the corner mark stays visible at all times.
   const isDesignerPage = pathname === "/designer" || pathname?.startsWith("/designer/");
-  // Product pages use immersive 3D viewport — nav should be transparent glass, no large masthead
   const isProductPage = pathname?.startsWith("/products/");
-  const isImmersivePage = isMagazinePage || isProductPage;
-  const hidesMasthead = isMagazinePage || isDesignerPage || isProductPage;
-  const effectiveThreshold = isImmersivePage ? MAGAZINE_SCROLL_THRESHOLD : SCROLL_THRESHOLD;
+  const isMagazinePage = pathname === "/magazine" || pathname?.startsWith("/magazine/");
+  // /p/[slug] (StoryRenderer article route) renders its own editorial hero;
+  // the corner mark in the topbar is the only Folio mark on that page.
+  const isArticlePage = pathname?.startsWith("/p/");
+  const hidesMasthead = isDesignerPage || isProductPage || isMagazinePage || isArticlePage;
 
-  // Track scroll position with requestAnimationFrame for smooth performance
   useEffect(() => {
-    let ticking = false;
+    if (!hidesMasthead && wordmarkRef.current) {
+      const observer = new IntersectionObserver(
+        ([entry]) => setIsScrolled(!entry.isIntersecting),
+        { rootMargin: "-40px 0px 0px 0px", threshold: 0 },
+      );
+      observer.observe(wordmarkRef.current);
+      return () => observer.disconnect();
+    }
 
-    const updateScrollState = () => {
-      const scrollPosition = window.scrollY;
-      setIsScrolled(scrollPosition > effectiveThreshold);
+    // No wordmark to anchor against — fall back to a plain scroll threshold so
+    // the header still picks up the surface tint past the fold.
+    let ticking = false;
+    const update = () => {
+      setIsScrolled(window.scrollY > SCROLL_THRESHOLD);
       ticking = false;
     };
-
-    const handleScroll = () => {
+    const onScroll = () => {
       if (!ticking) {
-        window.requestAnimationFrame(updateScrollState);
+        window.requestAnimationFrame(update);
         ticking = true;
       }
     };
+    update();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, [hidesMasthead, pathname]);
 
-    window.addEventListener("scroll", handleScroll, { passive: true });
-    // Check initial state
-    updateScrollState();
-
-    return () => {
-      window.removeEventListener("scroll", handleScroll);
-    };
-  }, [effectiveThreshold]);
-
-  // Transform values for smooth animations - using CSS transforms for performance
-  const mastheadScale = useTransform(
-    scrollY,
-    [0, effectiveThreshold],
-    [1, 0.25]
-  );
-  const mastheadOpacity = useTransform(
-    scrollY,
-    [0, effectiveThreshold],
-    [1, 0]
-  );
-  const mastheadY = useTransform(
-    scrollY,
-    [0, effectiveThreshold],
-    [0, -120]
-  );
-  const navLogoOpacity = useTransform(
-    scrollY,
-    [0, effectiveThreshold],
-    [0, 1]
-  );
-  const navLogoScale = useTransform(
-    scrollY,
-    [0, effectiveThreshold],
-    [0.8, 1]
-  );
-  // Header background opacity for immersive pages - transparent initially
-  const headerBgOpacity = useTransform(
-    scrollY,
-    [0, effectiveThreshold],
-    isImmersivePage ? [0, 0.95] : [0.95, 0.95]
-  );
+  // Corner FOLIO mark is hidden whenever the big wordmark is visible at the
+  // top of the page (i.e. wordmark-bearing route + not yet scrolled past it).
+  const showCornerMark = isScrolled || hidesMasthead;
 
   return (
     <>
-      {/* Sticky Navigation Bar */}
-      <motion.header
-        className={`editorial-masthead-header sticky top-0 z-50 w-full transition-colors duration-300 ${
-          isImmersivePage && !isScrolled
-            ? 'border-b border-transparent'
-            : 'border-b border-white/15'
-        }`}
+      <header
+        data-scrolled={isScrolled ? "true" : "false"}
+        className="editorial-masthead-header sticky top-0 z-50 w-full"
         style={{
           height: "64px",
-          backgroundColor: isImmersivePage
-            ? `rgba(245, 242, 237, ${isScrolled ? 0.45 : 0})`
-            : 'rgba(245, 242, 237, 0.45)',
-          backdropFilter: isImmersivePage && !isScrolled
-            ? 'none'
-            : 'blur(40px) saturate(160%) brightness(1.08)',
-          WebkitBackdropFilter: isImmersivePage && !isScrolled
-            ? 'none'
-            : 'blur(40px) saturate(160%) brightness(1.08)',
+          // Reserve a transparent 1px bottom border at rest so the scrolled
+          // state doesn't introduce a layout shift when the hairline appears.
+          borderBottom: "1px solid transparent",
+          transition:
+            "background-color 200ms ease, border-color 200ms ease, backdrop-filter 200ms ease, -webkit-backdrop-filter 200ms ease",
+          ...(isScrolled
+            ? {
+                backgroundColor:
+                  "color-mix(in oklab, var(--surface) 70%, transparent)",
+                backdropFilter: "blur(12px)",
+                WebkitBackdropFilter: "blur(12px)",
+                borderBottomColor:
+                  "color-mix(in oklab, currentColor 6%, transparent)",
+              }
+            : {}),
         }}
       >
         <nav className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
-          {/* Left: Mobile Menu + Logo (in scrolled state) */}
           <div className="flex items-center gap-4 min-w-0">
             <MobileMenu />
 
-            {/* FOLIO Logo - mobile: always visible, clickable */}
+            {/* Corner FOLIO mark — hidden while the big wordmark is in view */}
             <Link
               href="/"
-              className="md:hidden font-serif text-xl tracking-tight font-semibold text-folio-text-primary hover:text-folio-text-primary"
+              aria-hidden={!showCornerMark}
+              tabIndex={showCornerMark ? 0 : -1}
+              className="font-serif text-xl tracking-tight font-semibold text-folio-text-primary hover:text-folio-text-primary whitespace-nowrap"
+              style={{
+                opacity: showCornerMark ? 1 : 0,
+                pointerEvents: showCornerMark ? "auto" : "none",
+                transition: "opacity 200ms ease",
+              }}
             >
               FOLIO
             </Link>
-
-            {/* FOLIO Logo - desktop: appears in nav when scrolled (or always on magazine page) */}
-            <motion.div
-              className="hidden md:block"
-              style={{
-                // On immersive pages: always visible, else: fade in on scroll
-                opacity: isImmersivePage ? 1 : navLogoOpacity,
-                scale: isImmersivePage ? 1 : navLogoScale,
-                pointerEvents: isImmersivePage || isScrolled ? "auto" : "none",
-              }}
-            >
-              <Link
-                href="/"
-                className={`font-serif text-xl tracking-tight font-semibold transition-colors whitespace-nowrap ${
-                  isImmersivePage && !isScrolled
-                    ? 'text-white hover:text-white/80 drop-shadow-[0_1px_2px_rgba(0,0,0,0.3)]'
-                    : 'text-folio-text-primary hover:text-folio-text-primary'
-                }`}
-              >
-                <motion.span
-                  layoutId="folio-masthead"
-                  className="block"
-                >
-                  FOLIO
-                </motion.span>
-              </Link>
-            </motion.div>
 
             {/* Search Bar - always visible in nav */}
             <div className="flex-1 max-w-md mx-4 hidden md:block">
@@ -173,45 +128,26 @@ export function EditorialMasthead() {
             <UserMenu />
           </div>
         </nav>
-      </motion.header>
+      </header>
 
-      {/* Large Editorial Masthead - initial state, animates into nav */}
-      {/* Hidden on magazine & designer pages — nav-bar logo is sufficient context */}
+      {/* Large FOLIO wordmark — sits below the sticky nav as page content.
+          Rendered on homepage + editorial article pages so the brand expression
+          is consistent. Suppressed on dashboard / product / magazine routes. */}
       {!hidesMasthead && (
         <div
-          className="relative w-full bg-surface-canvas"
-          style={{
-            paddingTop: "20px",
-            paddingBottom: "20px",
-          }}
+          ref={wordmarkRef}
+          className="relative w-full"
+          style={{ paddingTop: "8px", paddingBottom: "0" }}
         >
           <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 h-full">
             <div className="flex flex-col items-center justify-center text-center h-full">
-              {/* Large FOLIO Masthead - smoothly transforms into nav logo */}
-              <motion.div
-                style={{
-                  scale: mastheadScale,
-                  opacity: mastheadOpacity,
-                  y: mastheadY,
-                }}
-                className="will-change-transform"
+              <h1
+                className="block font-serif text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-light uppercase text-folio-text-primary"
+                style={{ letterSpacing: "var(--ls-wide)", fontWeight: 300, lineHeight: 1 }}
               >
-                <Link
-                  href="/"
-                  className="block font-serif text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-light uppercase text-folio-text-primary hover:text-folio-text-primary transition-colors cursor-pointer"
-                  style={{
-                    letterSpacing: "0.05em",
-                    fontWeight: 300,
-                  }}
-                >
-                  <motion.span
-                    layoutId="folio-masthead"
-                    className="block"
-                  >
-                    FOLIO
-                  </motion.span>
-                </Link>
-              </motion.div>
+                <span className="sr-only">Folio</span>
+                <span aria-hidden="true">FOLIO</span>
+              </h1>
             </div>
           </div>
         </div>
@@ -219,4 +155,3 @@ export function EditorialMasthead() {
     </>
   );
 }
-

@@ -113,7 +113,7 @@ export default function EditableParagraph({
             e.stopPropagation();
             onRevert?.();
           }}
-          className="absolute -top-2 -right-1 px-1.5 py-0.5 text-[10px] font-medium bg-surface-ground border border-folio-border-subtle rounded-full text-folio-text-tertiary cursor-pointer hover:text-folio-text-primary hover:border-[var(--accent)] transition-colors"
+          className="absolute -top-2 -right-1 px-1.5 py-0.5 text-[var(--type-fine)] font-medium bg-surface-ground border border-folio-border-subtle rounded-full text-folio-text-tertiary cursor-pointer hover:text-folio-text-primary hover:border-[var(--accent)] transition-colors"
           title="Click to revert to original"
         >
           Edited

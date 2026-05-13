@@ -53,7 +53,7 @@ const themeConfigs: Record<AestheticTheme, ThemeConfig> = {
       M: "text-lg font-light tracking-wide",
       S: "text-sm font-light tracking-wide",
     },
-    metaClass: "text-white/70 text-[11px]",
+    metaClass: "text-white/70 text-[var(--type-eyebrow)]",
   },
   editorial: {
     containerClass: "auto-rows-[10px]",
@@ -66,7 +66,7 @@ const themeConfigs: Record<AestheticTheme, ThemeConfig> = {
       M: "text-lg font-serif font-medium tracking-tight",
       S: "text-sm font-serif font-medium tracking-tight",
     },
-    metaClass: "text-white/80 text-[11px] font-medium",
+    metaClass: "text-white/80 text-[var(--type-eyebrow)] font-medium",
   },
   warm: {
     containerClass: "auto-rows-[10px]",
@@ -79,7 +79,7 @@ const themeConfigs: Record<AestheticTheme, ThemeConfig> = {
       M: "text-lg font-serif italic font-normal tracking-wide",
       S: "text-sm font-serif italic font-normal tracking-wide",
     },
-    metaClass: "text-white/85 text-[11px]",
+    metaClass: "text-white/85 text-[var(--type-eyebrow)]",
   },
   moody: {
     containerClass: "auto-rows-[10px]",
@@ -92,7 +92,7 @@ const themeConfigs: Record<AestheticTheme, ThemeConfig> = {
       M: "text-lg font-medium tracking-normal text-gray-100",
       S: "text-sm font-medium tracking-normal text-white/80",
     },
-    metaClass: "text-folio-text-tertiary text-[11px]",
+    metaClass: "text-folio-text-tertiary text-[var(--type-eyebrow)]",
   },
   bold: {
     containerClass: "auto-rows-[10px]",
@@ -105,7 +105,7 @@ const themeConfigs: Record<AestheticTheme, ThemeConfig> = {
       M: "text-lg font-bold tracking-tight uppercase",
       S: "text-sm font-bold tracking-tight uppercase",
     },
-    metaClass: "text-white text-[11px] font-semibold",
+    metaClass: "text-white text-[var(--type-eyebrow)] font-semibold",
   },
   coastal: {
     containerClass: "auto-rows-[10px]",
@@ -118,7 +118,7 @@ const themeConfigs: Record<AestheticTheme, ThemeConfig> = {
       M: "text-lg font-light tracking-wide",
       S: "text-sm font-light tracking-wide",
     },
-    metaClass: "text-white/80 text-[11px]",
+    metaClass: "text-white/80 text-[var(--type-eyebrow)]",
   },
   eclectic: {
     containerClass: "auto-rows-[10px]",
@@ -131,7 +131,7 @@ const themeConfigs: Record<AestheticTheme, ThemeConfig> = {
       M: "text-lg font-semibold tracking-normal",
       S: "text-sm font-semibold tracking-normal",
     },
-    metaClass: "text-white/85 text-[11px]",
+    metaClass: "text-white/85 text-[var(--type-eyebrow)]",
   },
   default: {
     containerClass: "auto-rows-[8px]",
@@ -144,7 +144,7 @@ const themeConfigs: Record<AestheticTheme, ThemeConfig> = {
       M: "text-lg font-semibold leading-tight",
       S: "text-sm font-semibold leading-tight",
     },
-    metaClass: "text-white/85 text-[11px]",
+    metaClass: "text-white/85 text-[var(--type-eyebrow)]",
   },
 };
 
@@ -328,7 +328,7 @@ export default function ProjectMosaic({ projects, theme, viewer, canEdit = false
                 <div className="absolute top-2 right-2 z-40 pointer-events-auto">
                   <Link
                     href={`/project/${item.id}?view=media`}
-                    className="pointer-events-auto rounded bg-black/60 text-white text-[11px] px-2 py-1 hover:bg-black/80"
+                    className="pointer-events-auto rounded bg-black/60 text-white text-[var(--type-eyebrow)] px-2 py-1 hover:bg-black/80"
                     onClick={(e) => e.stopPropagation()}
                   >
                     ✎ Edit

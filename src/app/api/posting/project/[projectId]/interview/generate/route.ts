@@ -1890,7 +1890,10 @@ export async function POST(
       : (Array.isArray(interview.payload.followups) ? interview.payload.followups : []);
     
     // Build follow-ups array for narrative composer
+    // Preserve original questionId so downstream filters (e.g. spliceHookQuote's
+    // `hook-followup-` startsWith check) can identify hook follow-up answers.
     const followupsArray = followupsAnswers.map((a: any) => ({
+      questionId: a.questionId || a.id,
       question: a.question || a.prompt || a.q || '',
       answer: a.answer || a.a || '',
     })).filter((f: { question: string; answer: string }) => f.question && f.answer);
@@ -1935,9 +1938,13 @@ export async function POST(
     }
 
     // Normalize answers and followups for composition
-    // Use prompt/questionText for the question text (not questionId which is an opaque ID)
-    // Preserve roomName so the prompt can group answers by room
+    // - `questionId` preserves the original opaque id (e.g. `hook-opener-…`) so
+    //   spliceHookQuote can identify the hook-anchor pair.
+    // - `q` carries the human-readable question text used as a label in the LLM
+    //   prompt (mapped to `questionText` on GenInput).
+    // Preserve roomName so the prompt can group answers by room.
     const normalizedAnswers = answers.map((a: any) => ({
+      questionId: a.questionId,
       q: a.prompt || a.questionText || a.questionId || 'Question',
       a: a.answer || '',
       roomName: a.roomName || undefined,
@@ -1945,6 +1952,7 @@ export async function POST(
     })).filter((x: { q: string; a: string }) => x.a.trim());
 
     const normalizedFollowUps = followupsArray.map((f: any) => ({
+      questionId: f.questionId,
       q: f.question || f.prompt || 'Follow-up',
       a: f.answer || '',
       roomName: f.roomName || undefined,
@@ -2175,7 +2183,8 @@ export async function POST(
         }))
       ),
       answers: [...normalizedAnswers, ...normalizedFollowUps].map((a: any) => ({
-        questionId: a.q || 'Question',
+        questionId: a.questionId || a.q || 'Question',
+        questionText: a.q || undefined,
         section: a.roomName || 'General',
         role: 'DESIGNER' as const,
         answer: a.a || '',
@@ -2192,11 +2201,9 @@ export async function POST(
     };
 
     let composed: any;
-    let usedFallback = false;
     try {
       const result = await generateEditorialDraft(genInput);
       composed = result.blocks;
-      usedFallback = result.usedFallback;
     } catch (e: any) {
       console.error("[generate] generation failed:", { code: e?.code, message: e?.message, _cid });
 
@@ -2238,7 +2245,6 @@ export async function POST(
       })),
       pullQuotesCount: composed.pullQuotes?.length || 0,
       materialsCount: composed.materialsLedger?.items?.length || 0,
-      usedFallback,
       durationMs: duration,
       _cid,
     });
@@ -2250,7 +2256,6 @@ export async function POST(
           note: "Dry-run only. Nothing saved.",
           projectId,
           callSource,
-          usedFallback,
         },
         composedPreview: {
           lead: composed.lead,

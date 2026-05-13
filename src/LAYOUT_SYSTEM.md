@@ -21,13 +21,13 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body className={`${inter.className} bg-folio-background text-folio-text min-h-screen`}>
+      <body className={`${inter.className} bg-surface-canvas text-folio-text min-h-screen`}>
         <Providers>
           <SessionRoleSync />
           {/* Global Navigation Sidebar - Fixed position with z-50 */}
           <GlobalNavigation />
           {/* Main Content Area - Left margin to prevent overlap with sidebar */}
-          <main className="bg-folio-background ml-0 lg:ml-64 transition-all duration-300 min-h-screen">
+          <main className="bg-surface-canvas ml-0 lg:ml-64 transition-all duration-300 min-h-screen">
             {children}
           </main>
         </Providers>

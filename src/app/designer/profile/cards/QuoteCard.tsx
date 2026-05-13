@@ -12,7 +12,7 @@ export default function QuoteCard({ quote, attribution }: QuoteCardProps) {
         className="leading-none mb-1"
         style={{
           fontFamily: 'var(--font-headline)',
-          fontSize: '28px',
+          fontSize: 'var(--type-h3)',
           color: 'var(--accent)',
         }}
       >
@@ -20,18 +20,18 @@ export default function QuoteCard({ quote, attribution }: QuoteCardProps) {
       </div>
       <p
         className="folio-quote"
-        style={{ fontSize: '15px', margin: 0, lineHeight: 1.5 }}
+        style={{ fontSize: 'var(--type-body)', margin: 0, lineHeight: 'var(--lh-body)' }}
       >
         {quote}
       </p>
       {attribution && (
-        <div className="folio-meta mt-2" style={{ letterSpacing: '0.05em' }}>
+        <div className="folio-meta mt-2" style={{ letterSpacing: 'var(--ls-wide)' }}>
           {attribution}
         </div>
       )}
       <style jsx>{`
         .quote-card {
-          background: var(--bg-elevated);
+          background: var(--surface-ground);
           border: 1px solid var(--border);
           min-height: 140px;
         }

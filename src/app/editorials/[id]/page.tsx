@@ -89,10 +89,10 @@ const EditorialDetailPage = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-surface-ground pl-20 lg:pl-56">
+      <div className="min-h-screen pl-20 lg:pl-56" style={{ backgroundColor: "var(--surface)" }}>
         <div className="p-8">
           <div className="flex items-center justify-center h-64">
-            <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-folio-accent"></div>
+            <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-folio-gold"></div>
           </div>
         </div>
       </div>
@@ -101,14 +101,14 @@ const EditorialDetailPage = () => {
 
   if (!editorial) {
     return (
-      <div className="min-h-screen bg-surface-ground pl-20 lg:pl-56">
+      <div className="min-h-screen pl-20 lg:pl-56" style={{ backgroundColor: "var(--surface)" }}>
         <div className="p-8">
           <div className="text-center py-12">
             <h1 className="text-2xl font-bold text-folio-text mb-4">Editorial Not Found</h1>
             <p className="text-folio-text-muted mb-8">The editorial you're looking for doesn't exist or has been removed.</p>
             <button
               onClick={() => router.push('/editorials')}
-              className="px-6 py-3 bg-folio-accent text-white rounded-lg hover:bg-folio-accent-dark transition-colors"
+              className="px-6 py-3 bg-folio-gold text-white rounded-lg hover:bg-folio-gold-hover transition-colors"
             >
               Back to Editorials
             </button>
@@ -119,13 +119,13 @@ const EditorialDetailPage = () => {
   }
 
   return (
-    <div className="min-h-screen bg-surface-ground pl-20 lg:pl-56">
+    <div className="min-h-screen pl-20 lg:pl-56" style={{ backgroundColor: "var(--surface)" }}>
       <div className="p-4 lg:p-8">
         {/* Header */}
         <div className="flex items-center mb-8">
           <button
             onClick={() => router.back()}
-            className="flex items-center text-folio-text hover:text-folio-accent mr-4"
+            className="flex items-center text-folio-text hover:text-folio-gold mr-4"
           >
             <FaArrowLeft className="mr-2" />
             Back
@@ -137,7 +137,7 @@ const EditorialDetailPage = () => {
           {/* Editorial Header */}
           <div className="bg-white rounded-lg shadow-sm border border-folio-border p-6 mb-6">
             <div className="flex items-center justify-between mb-4">
-              <span className="px-3 py-1 bg-folio-accent text-white text-sm font-medium rounded-full">
+              <span className="px-3 py-1 bg-folio-gold text-white text-sm font-medium rounded-full">
                 {editorial.category}
               </span>
               
@@ -153,12 +153,12 @@ const EditorialDetailPage = () => {
                 <button
                   onClick={handleBookmark}
                   className={`p-2 rounded-full transition-colors ${
-                    isBookmarked ? 'text-folio-accent bg-folio-accent bg-opacity-10' : 'text-folio-text hover:text-folio-accent'
+                    isBookmarked ? 'text-folio-gold bg-folio-gold bg-opacity-10' : 'text-folio-text hover:text-folio-gold'
                   }`}
                 >
                   <FaBookmark className="w-5 h-5" />
                 </button>
-                <button className="p-2 text-folio-text hover:text-folio-accent">
+                <button className="p-2 text-folio-text hover:text-folio-gold">
                   <FaShare className="w-5 h-5" />
                 </button>
               </div>
@@ -212,7 +212,7 @@ const EditorialDetailPage = () => {
                 {editorial.tags.map((tag, index) => (
                   <span
                     key={index}
-                    className="px-3 py-1 bg-folio-muted text-folio-text text-sm rounded-full hover:bg-folio-accent hover:text-white transition-colors cursor-pointer"
+                    className="px-3 py-1 bg-folio-muted text-folio-text text-sm rounded-full hover:bg-folio-gold hover:text-white transition-colors cursor-pointer"
                   >
                     {tag}
                   </span>
@@ -225,7 +225,7 @@ const EditorialDetailPage = () => {
           <div className="bg-white rounded-lg shadow-sm border border-folio-border p-6">
             <h2 className="text-xl font-bold text-folio-text mb-4">About the Author</h2>
             <div className="flex items-center">
-              <div className="w-16 h-16 bg-folio-accent rounded-full flex items-center justify-center text-white font-bold text-xl mr-4">
+              <div className="w-16 h-16 bg-folio-gold rounded-full flex items-center justify-center text-white font-bold text-xl mr-4">
                 {editorial.author.charAt(0)}
               </div>
               <div>

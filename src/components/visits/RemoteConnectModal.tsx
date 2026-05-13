@@ -94,8 +94,8 @@ export default function RemoteConnectModal({ open, onOpenChange }: RemoteConnect
           className="text-folio-text-primary"
           style={{
             fontFamily: 'Georgia, serif',
-            fontSize: '20px',
-            fontWeight: 400,
+            fontSize: 'var(--type-h4)',
+            fontWeight: 'var(--w-body)',
             margin: '0 0 16px',
           }}
         >
@@ -105,9 +105,8 @@ export default function RemoteConnectModal({ open, onOpenChange }: RemoteConnect
         <p
           className="text-folio-text-secondary"
           style={{
-            fontFamily: 'var(--font-body, "Instrument Sans", sans-serif)',
-            fontSize: '13px',
-            margin: '0 0 16px',
+            fontSize: 'var(--type-meta)',
+            margin: '0 0 16px'
           }}
         >
           Search by name or email to connect with someone on Folio.
@@ -122,8 +121,7 @@ export default function RemoteConnectModal({ open, onOpenChange }: RemoteConnect
           autoFocus
           className="w-full px-4 py-3 rounded-xl border text-sm border-folio-border-subtle bg-surface-ground text-folio-text-primary"
           style={{
-            fontFamily: 'var(--font-body, "Instrument Sans", sans-serif)',
-            outline: 'none',
+            outline: 'none'
           }}
         />
 

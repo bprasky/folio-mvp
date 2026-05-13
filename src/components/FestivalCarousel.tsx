@@ -21,7 +21,7 @@ export default function FestivalCarousel({ festivals, className = '', canEdit = 
         <p className="text-folio-text-secondary mb-4">Be the first to create an amazing design festival!</p>
         <Link 
           href="/admin/festivals/create"
-          className="inline-block bg-folio-accent text-white px-4 py-2 rounded-md hover:bg-folio-accent-dark transition-colors"
+          className="inline-block bg-folio-gold text-white px-4 py-2 rounded-md hover:bg-folio-gold-hover transition-colors"
         >
           Create Festival
         </Link>
@@ -35,7 +35,7 @@ export default function FestivalCarousel({ festivals, className = '', canEdit = 
         <h2 className="text-2xl font-bold text-folio-text-primary">Featured Festivals</h2>
         <Link 
           href="/admin/festivals/create"
-          className="text-folio-accent hover:text-folio-accent-dark font-medium"
+          className="text-folio-gold hover:text-folio-gold-hover font-medium"
         >
           Create New Festival →
         </Link>

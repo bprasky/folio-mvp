@@ -141,10 +141,9 @@ function DimensionLabel({ x, y, text }: { x: number; y: number; text: string }) 
         y={y + 4}
         textAnchor="middle"
         style={{
-          fontSize: "10px",
-          fontFamily: "var(--font-body), Instrument Sans, sans-serif",
-          fontWeight: 500,
-          letterSpacing: "0.5px",
+          fontSize: 'var(--type-fine)',
+          fontWeight: 'var(--w-h1)',
+          letterSpacing: 'var(--ls-wide)',
           fill: "rgba(60, 40, 20, 0.9)",
         }}
       >

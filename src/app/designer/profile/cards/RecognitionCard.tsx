@@ -22,8 +22,8 @@ export default function RecognitionCard({ item }: RecognitionCardProps) {
           className="mt-1.5 mb-0 text-white leading-tight"
           style={{
             fontFamily: 'var(--font-headline)',
-            fontSize: '16px',
-            fontWeight: 500,
+            fontSize: 'var(--type-body)',
+            fontWeight: 'var(--w-h1)',
           }}
         >
           {item.title}
@@ -32,7 +32,7 @@ export default function RecognitionCard({ item }: RecognitionCardProps) {
       {item.excerpt && (
         <p className="recognition-excerpt mt-2 mb-0">&ldquo;{item.excerpt}&rdquo;</p>
       )}
-      <div className="text-[10px] text-white/40 mt-2">
+      <div className="text-[var(--type-fine)] text-white/40 mt-2">
         {item.source} &middot; {dateStr}
       </div>
       <style jsx>{`

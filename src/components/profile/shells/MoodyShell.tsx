@@ -16,7 +16,7 @@ export default function MoodyShell({ designer, projects, aesthetic, viewerContex
             fill
             className="object-cover opacity-80"
           />
-          <div className="absolute inset-0 bg-gradient-to-t from-[var(--bg-base)] via-[var(--bg-base)]/50 to-transparent" />
+          <div className="absolute inset-0 bg-gradient-to-t from-[var(--surface-canvas)] via-[var(--surface-canvas)]/50 to-transparent" />
           <div className="absolute bottom-0 left-0 right-0 p-12">
             <h1 className="text-5xl font-medium text-gray-100 mb-3">{designer.name}</h1>
             {designer.title && (

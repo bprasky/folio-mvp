@@ -323,7 +323,7 @@ export default function FestivalFibonacciFeed({ events, canEdit = false, viewMod
             <Link
               key={event.id}
               href={`/events/${event.id}`}
-              className="group block bg-white rounded-lg shadow-sm border border-folio-border overflow-hidden hover:shadow-lg hover:border-folio-accent transition-all duration-300"
+              className="group block bg-white rounded-lg shadow-sm border border-folio-border overflow-hidden hover:shadow-lg hover:border-folio-gold transition-all duration-300"
             >
               {/* Event Image */}
               <div className="relative overflow-hidden h-48">
@@ -352,7 +352,7 @@ export default function FestivalFibonacciFeed({ events, canEdit = false, viewMod
                 
                 {/* RSVP Badge */}
                 <div className="absolute top-2 right-2 bg-white/90 backdrop-blur-sm rounded-full px-2 py-1 text-xs font-medium text-folio-text-primary flex items-center gap-1">
-                  <FaHeart className="text-folio-accent" />
+                  <FaHeart className="text-folio-gold" />
                   {event.rsvp_count}
                 </div>
                 
@@ -361,7 +361,7 @@ export default function FestivalFibonacciFeed({ events, canEdit = false, viewMod
 
                 {/* Admin-only "needs type" badge */}
                 {canEdit && isUntyped(event) && (
-                  <div className="absolute left-2 top-2 z-10 pointer-events-none text-[10px] font-medium rounded bg-yellow-400/90 text-black px-2 py-0.5">
+                  <div className="absolute left-2 top-2 z-10 pointer-events-none text-[var(--type-fine)] font-medium rounded bg-yellow-400/90 text-black px-2 py-0.5">
                     needs type
                   </div>
                 )}
@@ -369,18 +369,18 @@ export default function FestivalFibonacciFeed({ events, canEdit = false, viewMod
 
               {/* Event Content */}
               <div className="p-4 space-y-3">
-                <h3 className="font-semibold text-folio-text-primary group-hover:text-folio-accent transition-colors text-lg">
+                <h3 className="font-semibold text-folio-text-primary group-hover:text-folio-gold transition-colors text-lg">
                   {getTitle(event)}
                 </h3>
 
                 <div className="space-y-2 text-folio-text-secondary text-sm">
                   <div className="flex items-center gap-2">
-                    <FaCalendarAlt className="text-folio-accent flex-shrink-0" />
+                    <FaCalendarAlt className="text-folio-gold flex-shrink-0" />
                                                <span>{formatDate(event.startsAt ?? event.date)} at {formatTime(event.time)}</span>
                   </div>
                   
                   <div className="flex items-center gap-2">
-                    <FaMapMarkerAlt className="text-folio-accent flex-shrink-0" />
+                    <FaMapMarkerAlt className="text-folio-gold flex-shrink-0" />
                     <span className="truncate">{event.city ?? event.venue ?? event.location}</span>
                   </div>
 
@@ -397,7 +397,7 @@ export default function FestivalFibonacciFeed({ events, canEdit = false, viewMod
                   if (!authorName) return null;
                   return (
                     <div className="flex items-center gap-2 text-folio-text-secondary text-sm">
-                      <FaUsers className="text-folio-accent" />
+                      <FaUsers className="text-folio-gold" />
                       <span className="truncate">{authorName}</span>
                     </div>
                   );
@@ -415,7 +415,7 @@ export default function FestivalFibonacciFeed({ events, canEdit = false, viewMod
             <Link
               key={event.id}
               href={`/events/${event.id}`}
-              className="group block bg-white rounded-lg shadow-sm border border-folio-border overflow-hidden hover:shadow-lg hover:border-folio-accent transition-all duration-300"
+              className="group block bg-white rounded-lg shadow-sm border border-folio-border overflow-hidden hover:shadow-lg hover:border-folio-gold transition-all duration-300"
             >
               <div className="flex">
                 {/* Event Image */}
@@ -448,7 +448,7 @@ export default function FestivalFibonacciFeed({ events, canEdit = false, viewMod
 
                   {/* Admin-only "needs type" badge */}
                   {canEdit && isUntyped(event) && (
-                    <div className="absolute left-2 top-2 z-10 pointer-events-none text-[10px] font-medium rounded bg-yellow-400/90 text-black px-2 py-0.5">
+                    <div className="absolute left-2 top-2 z-10 pointer-events-none text-[var(--type-fine)] font-medium rounded bg-yellow-400/90 text-black px-2 py-0.5">
                       needs type
                     </div>
                   )}
@@ -458,18 +458,18 @@ export default function FestivalFibonacciFeed({ events, canEdit = false, viewMod
                 <div className="flex-1 p-4">
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
-                      <h3 className="font-semibold text-folio-text-primary group-hover:text-folio-accent transition-colors text-lg mb-2">
+                      <h3 className="font-semibold text-folio-text-primary group-hover:text-folio-gold transition-colors text-lg mb-2">
                         {getTitle(event)}
                       </h3>
 
                       <div className="space-y-2 text-folio-text-secondary text-sm">
                         <div className="flex items-center gap-2">
-                          <FaCalendarAlt className="text-folio-accent flex-shrink-0" />
+                          <FaCalendarAlt className="text-folio-gold flex-shrink-0" />
                           <span>{formatDate(event.startsAt ?? event.date)} at {formatTime(event.time)}</span>
                         </div>
                         
                         <div className="flex items-center gap-2">
-                          <FaMapMarkerAlt className="text-folio-accent flex-shrink-0" />
+                          <FaMapMarkerAlt className="text-folio-gold flex-shrink-0" />
                           <span>{event.city ?? event.venue ?? event.location}</span>
                         </div>
 
@@ -486,7 +486,7 @@ export default function FestivalFibonacciFeed({ events, canEdit = false, viewMod
                         if (!authorName) return null;
                         return (
                           <div className="flex items-center gap-2 text-folio-text-secondary text-sm mt-2">
-                            <FaUsers className="text-folio-accent" />
+                            <FaUsers className="text-folio-gold" />
                             <span>{authorName}</span>
                           </div>
                         );
@@ -495,7 +495,7 @@ export default function FestivalFibonacciFeed({ events, canEdit = false, viewMod
 
                     {/* RSVP Count */}
                     <div className="flex items-center gap-1 text-folio-text-primary ml-4">
-                      <FaHeart className="text-folio-accent" />
+                      <FaHeart className="text-folio-gold" />
                       <span className="font-medium">{event.rsvp_count}</span>
                     </div>
                   </div>
@@ -510,7 +510,7 @@ export default function FestivalFibonacciFeed({ events, canEdit = false, viewMod
       <div className="text-center pt-6">
         <Link
           href={`/events?festival=${eventsWithBadges[0]?.id}`}
-          className="inline-flex items-center px-6 py-3 bg-folio-accent text-white rounded-lg font-semibold hover:bg-folio-accent/90 transition-colors"
+          className="inline-flex items-center px-6 py-3 bg-folio-gold text-white rounded-lg font-semibold hover:bg-folio-gold/90 transition-colors"
         >
           View All Events
         </Link>

@@ -272,7 +272,7 @@ export function TagDiagnosticModal({
         <DialogHeader>
           <DialogTitle
             className="font-[var(--font-headline)] text-xl"
-            style={{ fontFamily: 'var(--font-headline, Cormorant Garamond, serif)' }}
+            style={{ fontFamily: 'var(--font-headline)' }}
           >
             Preparing Your Interview
           </DialogTitle>
@@ -415,7 +415,7 @@ export function TagDiagnosticModal({
                     disabled={selectedRoomIds.size === 0 || autoTagging}
                     className="w-full rounded-[10px] px-4 py-2 text-sm font-medium text-white transition-all duration-150 disabled:opacity-50 disabled:cursor-not-allowed"
                     style={{
-                      background: 'var(--accent, #B8845C)',
+                      background: 'var(--accent)',
                       boxShadow: 'var(--neu-raised, 0 1px 3px rgba(0,0,0,0.1))',
                     }}
                   >
@@ -444,7 +444,7 @@ export function TagDiagnosticModal({
                       onClick={handleStartInterview}
                       className="flex-1 rounded-[10px] px-4 py-2.5 text-sm font-medium text-white transition-all duration-150"
                       style={{
-                        background: 'var(--accent, #B8845C)',
+                        background: 'var(--accent)',
                         boxShadow: 'var(--neu-raised, 0 1px 3px rgba(0,0,0,0.1))',
                       }}
                     >
@@ -464,7 +464,7 @@ export function TagDiagnosticModal({
                       disabled={classifying || autoTagging}
                       className="flex-1 rounded-[10px] px-4 py-2.5 text-sm font-medium text-white transition-all duration-150 disabled:opacity-50"
                       style={{
-                        background: 'var(--accent, #B8845C)',
+                        background: 'var(--accent)',
                         boxShadow: 'var(--neu-raised, 0 1px 3px rgba(0,0,0,0.1))',
                       }}
                     >
@@ -491,7 +491,7 @@ export function TagDiagnosticModal({
                 onClick={() => onOpenChange(false)}
                 className="rounded-[10px] px-4 py-2.5 text-sm font-medium text-white transition-all duration-150"
                 style={{
-                  background: 'var(--accent, #B8845C)',
+                  background: 'var(--accent)',
                   boxShadow: 'var(--neu-raised, 0 1px 3px rgba(0,0,0,0.1))',
                 }}
               >

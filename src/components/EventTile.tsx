@@ -198,7 +198,7 @@ export default function EventTile({
           {/* Festival Badge - only show for larger tiles */}
           {(size === 'XL' || size === 'L') && event.parentFestival && (
             <div className="pt-2 border-t border-gray-100">
-              <span className="inline-flex items-center px-2 py-1 text-xs font-medium text-folio-accent bg-folio-accent/10 rounded-full">
+              <span className="inline-flex items-center px-2 py-1 text-xs font-medium text-folio-gold bg-folio-gold/10 rounded-full">
                 {event.parentFestival.title}
               </span>
             </div>

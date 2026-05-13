@@ -76,13 +76,12 @@ function EmptyState() {
     <div className="flex flex-col items-center justify-center py-24 text-center">
       <h3
         className="text-2xl italic text-folio-text-primary"
-        style={{ fontFamily: "var(--font-cormorant, 'Cormorant Garamond', serif)" }}
+        style={{ fontFamily: "var(--font-headline)" }}
       >
         Nothing here yet
       </h3>
       <p
         className="mt-2 text-sm text-folio-text-secondary"
-        style={{ fontFamily: "var(--font-instrument, 'Instrument Sans', sans-serif)" }}
       >
         Be the first to publish in this collection.
       </p>
@@ -238,8 +237,7 @@ export default function MagazineFeedClient({
           <button
             onClick={handleLoadMore}
             className="folio-ui px-6 py-2.5 text-sm font-medium text-folio-text-secondary hover:text-folio-text-primary border border-[var(--border-subtle)] rounded-full transition-all duration-200 hover:border-folio-border-subtle"
-            style={{ fontFamily: "var(--font-instrument, 'Instrument Sans', sans-serif)" }}
-          >
+              >
             More stories
           </button>
         </div>

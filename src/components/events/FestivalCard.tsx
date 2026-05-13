@@ -66,7 +66,7 @@ export default function FestivalCard({ festival, isPast, isNext }: FestivalCardP
       {!isPast && (
         <div className="absolute right-5 top-5 flex flex-col items-end gap-2 text-white z-30">
           <div className="rounded-xl bg-[rgba(30,30,30,0.7)] backdrop-blur px-3 py-2 text-right pointer-events-none">
-            <div className="text-[11px] uppercase tracking-wide opacity-90">Starts in</div>
+            <div className="text-[var(--type-eyebrow)] uppercase tracking-wide opacity-90">Starts in</div>
             <div className="text-lg font-medium tabular-nums">
               {days}d {hours}h {minutes}m
             </div>
@@ -90,7 +90,7 @@ export default function FestivalCard({ festival, isPast, isNext }: FestivalCardP
 
       {/* Past badge - above link */}
       {isPast && (
-        <div className="absolute right-4 top-4 rounded-full bg-[rgba(30,30,30,0.7)] px-3 py-1 text-[12px] uppercase tracking-wide text-white z-30 pointer-events-none">
+        <div className="absolute right-4 top-4 rounded-full bg-[rgba(30,30,30,0.7)] px-3 py-1 text-[var(--type-meta)] uppercase tracking-wide text-white z-30 pointer-events-none">
           Past event
         </div>
       )}

@@ -76,8 +76,8 @@ export function ImmersiveProductPage({
         <p
           className="font-body leading-relaxed max-w-2xl"
           style={{
-            fontSize: "15px",
-            lineHeight: 1.7,
+            fontSize: 'var(--type-body)',
+            lineHeight: 1.7, /* folio-design-system: off-scale */
             color: "var(--folio-text-secondary, #6b6b6b)",
           }}
         >

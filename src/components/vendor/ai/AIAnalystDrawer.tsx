@@ -61,7 +61,7 @@ export function AIAnalystDrawer({ open, onClose, sectionId, context }: AIAnalyst
         <div className="p-4 border-b border-folio-border-subtle flex items-center justify-between bg-surface-canvas/95 backdrop-blur-xl">
           <div>
             <div className="folio-ui font-semibold text-folio-text-primary">AI Analyst</div>
-            <div className="text-[11px] text-folio-text-secondary">
+            <div className="text-[var(--type-eyebrow)] text-folio-text-secondary">
               Discuss this recommendation based on your actual Folio data.
             </div>
           </div>
@@ -78,7 +78,7 @@ export function AIAnalystDrawer({ open, onClose, sectionId, context }: AIAnalyst
               key={idx}
               className={`max-w-[85%] px-3 py-2 rounded-2xl ${
                 m.role === 'user'
-                  ? 'bg-[var(--text-primary)] text-[var(--bg-base)] ml-auto'
+                  ? 'bg-[var(--text-primary)] text-[var(--surface-canvas)] ml-auto'
                   : 'bg-surface-ground text-folio-text-primary'
               }`}
             >
@@ -103,7 +103,7 @@ export function AIAnalystDrawer({ open, onClose, sectionId, context }: AIAnalyst
           <button
             onClick={send}
             disabled={loading || !input.trim()}
-            className="rounded-xl px-3 py-2 bg-[var(--text-primary)] text-[var(--bg-base)] folio-meta disabled:opacity-50 disabled:cursor-not-allowed hover:opacity-90 transition"
+            className="rounded-xl px-3 py-2 bg-[var(--text-primary)] text-[var(--surface-canvas)] folio-meta disabled:opacity-50 disabled:cursor-not-allowed hover:opacity-90 transition"
           >
             {loading ? '…' : 'Send'}
           </button>

@@ -171,7 +171,7 @@ const AdminEventsClient: React.FC<AdminEventsClientProps> = ({ events, stats, us
         
         <Link
           href="/admin/events/create"
-          className="flex items-center px-6 py-3 bg-folio-accent text-white rounded-lg hover:bg-folio-accent-dark transition-colors mt-4 lg:mt-0"
+          className="flex items-center px-6 py-3 bg-folio-gold text-white rounded-lg hover:bg-folio-gold-hover transition-colors mt-4 lg:mt-0"
         >
           <FaPlus className="mr-2" />
           Create Festival or Event
@@ -255,7 +255,7 @@ const AdminEventsClient: React.FC<AdminEventsClientProps> = ({ events, stats, us
             onClick={() => setFilter(tab.key as any)}
             className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
               filter === tab.key
-                ? 'bg-folio-accent text-white'
+                ? 'bg-folio-gold text-white'
                 : 'bg-white text-folio-text hover:bg-folio-muted border border-folio-border'
             }`}
           >
@@ -275,7 +275,7 @@ const AdminEventsClient: React.FC<AdminEventsClientProps> = ({ events, stats, us
             </p>
             <Link
               href="/admin/events/create"
-              className="inline-flex items-center px-4 py-2 bg-folio-accent text-white rounded-lg hover:bg-folio-accent-dark transition-colors"
+              className="inline-flex items-center px-4 py-2 bg-folio-gold text-white rounded-lg hover:bg-folio-gold-hover transition-colors"
             >
               <FaPlus className="mr-2" />
               Create Your First Event
@@ -305,7 +305,7 @@ const AdminEventsClient: React.FC<AdminEventsClientProps> = ({ events, stats, us
                 <div className="flex space-x-2">
                   <Link
                     href={`/events/${event.id}`}
-                    className="p-2 text-folio-text-muted hover:text-folio-accent transition-colors"
+                    className="p-2 text-folio-text-muted hover:text-folio-gold transition-colors"
                   >
                     <FaEye className="w-4 h-4" />
                   </Link>

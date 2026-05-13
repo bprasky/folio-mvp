@@ -221,9 +221,9 @@ export function isPullQuoteSelection(pullQuote: unknown): pullQuote is PullQuote
 /** Sync top-level pullQuotes array from per-chapter selections.
  *
  * When `blocks.hookQuote` is present it is prepended WITHOUT a `sourceSection`
- * — downstream readers (`buildRoomTiles.ts`, `buildRoomCards.ts`) prefer the
- * first entry without a `sourceSection` as the project-level lead quote, so
- * this guarantees the spliced hook quote wins the top-of-post slot.
+ * — `buildRoomTiles.ts` prefers the first entry without a `sourceSection` as
+ * the project-level lead quote, so this guarantees the spliced hook quote
+ * wins the top-of-post slot.
  */
 export function syncPullQuotesFromChapters(blocks: Record<string, any>): void {
   const chapters = blocks.galleryChapters as Array<{ title?: string; pullQuote?: string | PullQuoteSelection | null }> | undefined;

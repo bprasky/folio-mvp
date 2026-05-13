@@ -20,7 +20,7 @@ export default function ProcurementPillarPage() {
       {/* Hero */}
       <section className="pt-12 pb-8 px-6">
         <div className="max-w-3xl mx-auto">
-          <h1 className="font-headline italic text-5xl md:text-6xl text-folio-text-primary leading-[1.1] mb-6">
+          <h1 className="font-headline italic text-5xl md:text-6xl text-folio-text-primary leading-[var(--lh-h1)] mb-6">
             Pricing, lead times, and deadlines &mdash; from one board.
           </h1>
           <p className="text-lg text-folio-text-secondary leading-relaxed">
@@ -59,8 +59,8 @@ export default function ProcurementPillarPage() {
         <div className="max-w-2xl mx-auto">
           <svg viewBox="0 0 720 220" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full">
             {/* Budget bar at top */}
-            <rect x="60" y="16" width="600" height="32" rx="8" fill="#FAF9F6" stroke="#C9A96E" strokeWidth="1.5" />
-            <rect x="64" y="20" width="360" height="24" rx="6" fill="#C9A96E" fillOpacity="0.2" />
+            <rect x="60" y="16" width="600" height="32" rx="8" fill="#FAF9F6" stroke="var(--folio-gold-ornament)" strokeWidth="1.5" />
+            <rect x="64" y="20" width="360" height="24" rx="6" fill="var(--folio-gold-ornament)" fillOpacity="0.2" />
             <text x="360" y="37" textAnchor="middle" className="fill-folio-text-primary" fontSize="11" fontWeight="500">Budget: $42,800 / $65,000</text>
 
             {/* Room columns */}
@@ -74,7 +74,7 @@ export default function ProcurementPillarPage() {
             <circle cx="92" cy="144" r="5" fill="#FF9800" fillOpacity="0.6" />
             <text x="104" y="148" className="fill-[var(--text-secondary)]" fontSize="10">Rug — awaiting</text>
             <rect x="76" y="164" width="153" height="28" rx="6" fill="#EFEBE6" />
-            <circle cx="92" cy="178" r="5" fill="#C9A96E" fillOpacity="0.4" />
+            <circle cx="92" cy="178" r="5" fill="var(--folio-gold-ornament)" fillOpacity="0.4" />
             <text x="104" y="182" className="fill-[var(--text-secondary)]" fontSize="10">Sconces — quoted</text>
 
             {/* Kitchen */}
@@ -91,7 +91,7 @@ export default function ProcurementPillarPage() {
             <rect x="475" y="64" width="185" height="140" rx="10" fill="#FAF9F6" stroke="#D4CFC8" strokeWidth="1.5" />
             <text x="567" y="86" textAnchor="middle" className="fill-folio-text-primary" fontSize="12" fontWeight="500">Primary Suite</text>
             <rect x="491" y="96" width="153" height="28" rx="6" fill="#EFEBE6" />
-            <circle cx="507" cy="110" r="5" fill="#C9A96E" fillOpacity="0.4" />
+            <circle cx="507" cy="110" r="5" fill="var(--folio-gold-ornament)" fillOpacity="0.4" />
             <text x="519" y="114" className="fill-[var(--text-secondary)]" fontSize="10">Bed — quoted</text>
             <rect x="491" y="130" width="153" height="28" rx="6" fill="#EFEBE6" />
             <circle cx="507" cy="144" r="5" fill="#4CAF50" fillOpacity="0.6" />

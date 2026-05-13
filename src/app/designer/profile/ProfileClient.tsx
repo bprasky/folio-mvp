@@ -31,7 +31,7 @@ export default function ProfileClient({ data }: { data: ProfilePageData }) {
   const tagline = profileInterview?.shortBio || user.bio;
 
   return (
-    <div style={{ background: 'var(--bg-base)', minHeight: '100vh', fontFamily: 'var(--font-body)' }}>
+    <div style={{ background: 'var(--surface-canvas)', minHeight: '100vh' }}>
       <ProfileHero
         user={user}
         organization={organization}
@@ -90,11 +90,10 @@ function SavesEmptyState() {
     >
       <p
         style={{
-          fontFamily: 'var(--font-body)',
-          fontSize: '16px',
+          fontSize: 'var(--type-body)',
           color: 'var(--text-secondary)',
-          lineHeight: 1.6,
-          marginBottom: '28px',
+          lineHeight: 'var(--lh-body)',
+          marginBottom: '28px'
         }}
       >
         Start saving projects and products you love.
@@ -104,13 +103,13 @@ function SavesEmptyState() {
       <div style={{ display: 'flex', gap: '12px', justifyContent: 'center' }}>
         <Link
           href="/feed"
-          className="accent-btn pill-btn px-6 py-2.5 text-[13px] no-underline inline-block"
+          className="accent-btn pill-btn px-6 py-2.5 text-[var(--type-meta)] no-underline inline-block"
         >
           Browse the Feed
         </Link>
         <Link
           href="/directory"
-          className="ridge-btn pill-btn px-6 py-2.5 text-[13px] no-underline inline-block"
+          className="ridge-btn pill-btn px-6 py-2.5 text-[var(--type-meta)] no-underline inline-block"
         >
           Explore the Directory
         </Link>

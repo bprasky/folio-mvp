@@ -31,16 +31,16 @@ export default function OrgProjectsGrid({ projects, isOwner }: OrgProjectsGridPr
             <path d="M21 15l-5-5L5 21" strokeLinecap="round" strokeLinejoin="round" />
           </svg>
         </div>
-        <p style={{ fontFamily: 'var(--font-body, "Instrument Sans", sans-serif)', fontSize: '15px', color: '#8B8178' }}>
+        <p style={{ fontSize: 'var(--type-body)', color: '#8B8178' }}>
           No projects yet
         </p>
-        <p style={{ fontFamily: 'var(--font-body, "Instrument Sans", sans-serif)', fontSize: '13px', color: '#A69E96', marginTop: '4px' }}>
+        <p style={{ fontSize: 'var(--type-meta)', color: '#A69E96', marginTop: '4px' }}>
           Projects will appear here once published.
         </p>
         {isOwner && (
           <Link
             href="/projects/new"
-            className="inline-block mt-6 px-6 py-2.5 rounded-full text-[13px] font-medium text-white no-underline"
+            className="inline-block mt-6 px-6 py-2.5 rounded-full text-[var(--type-meta)] font-medium text-white no-underline"
             style={{ backgroundColor: '#2C2825' }}
           >
             Create Your First Project
@@ -81,7 +81,7 @@ export default function OrgProjectsGrid({ projects, isOwner }: OrgProjectsGridPr
                 <div className={`font-semibold leading-tight ${isFirst ? 'text-xl' : 'text-base'}`}>
                   {project.title}
                 </div>
-                <div className="mt-1 text-white/80 text-[12px]">
+                <div className="mt-1 text-white/80 text-[var(--type-meta)]">
                   {[project.location, project.year].filter(Boolean).join(' · ')}
                 </div>
               </div>

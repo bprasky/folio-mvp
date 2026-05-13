@@ -415,7 +415,7 @@ export default async function OrgProfilePage({ params, searchParams }: Props) {
   }));
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: '#FAF9F7' }}>
+    <div className="min-h-screen" style={{ backgroundColor: 'var(--surface-ground)' }}>
       <OrgProfileHero
         org={orgData}
         projectCount={projectCount}

@@ -151,11 +151,11 @@ export default function OrgDesignerRelationships({ orgId, isAdmin }: OrgDesigner
                 <div>
                   <div className="flex items-center gap-2 mb-1">
                     <h3 className="text-sm font-medium text-stone-900">{displayName}</h3>
-                    <span className={`text-[10px] px-2 py-0.5 rounded-full ${sc.bg} ${sc.text}`}>
+                    <span className={`text-[var(--type-fine)] px-2 py-0.5 rounded-full ${sc.bg} ${sc.text}`}>
                       {sc.label}
                     </span>
                     {assignedRep && (
-                      <span className="text-[10px] px-2 py-0.5 rounded-full bg-purple-50 text-purple-700">
+                      <span className="text-[var(--type-fine)] px-2 py-0.5 rounded-full bg-purple-50 text-purple-700">
                         Assigned: {assignedRep.repName}
                       </span>
                     )}

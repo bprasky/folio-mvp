@@ -1,0 +1,151 @@
+name: Design System Discipline
+
+on:
+  pull_request:
+    paths:
+      - 'src/**'
+      - 'tailwind.config.js'
+      - '.github/workflows/design-system-discipline.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'src/**'
+      - 'tailwind.config.js'
+      - '.github/workflows/design-system-discipline.yml'
+  workflow_dispatch:
+
+jobs:
+  accent-discipline:
+    name: Accent color discipline
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Forbid burgundy accent regression
+        run: |
+          if git grep -nE "#7[Cc]1[Ee]3[Dd]" src/ tailwind.config.js; then
+            echo "::error::Burgundy accent #7C1E3D is forbidden. Use var(--folio-gold)."
+            exit 1
+          fi
+
+      - name: Forbid hardcoded gold accents
+        run: |
+          # Email templates and PDF generators are exempt: CSS vars don't resolve in
+          # mail clients or pdfkit. SVG gradient strings in AttributionFlowChart are
+          # multi-stop literals that can't carry a single var().
+          MATCHES=$(git grep -nEi "#c9a96e|#b8845c" src/ \
+            | grep -v "src/lib/email/" \
+            | grep -v "src/lib/boost/inContextBoost" \
+            | grep -v "src/components/vendor/charts/AttributionFlowChart.tsx" \
+            | grep -v "src/app/api/products/\[productId\]/spec-sheet/route.ts" \
+            | grep -v "src/app/globals.css:.*--folio-gold:" \
+            | grep -v "src/app/globals.css:.*--folio-gold-ornament:" \
+            | grep -v "src/components/ui/folio-design-system.ts:.*\*" \
+            || true)
+          if [ -n "$MATCHES" ]; then
+            echo "::error::Hardcoded gold hex found outside the canonical token. Use var(--folio-gold) or var(--folio-gold-ornament)."
+            echo "$MATCHES"
+            exit 1
+          fi
+
+      - name: Forbid hardcoded canvas colors
+        run: |
+          # Email templates, in-context-boost emails, the pdfkit spec-sheet, and the
+          # qrcode generator (FolioBadgeModal) are exempt: CSS vars don't resolve in
+          # mail clients, PDF rendering contexts, or qrcode color options.
+          # /product/* warm wash is deliberate (see Task 06 — product page rework).
+          # Canonical token declarations (--surface-*, --folio-background) in
+          # globals.css are exempt — that's where the hex literals belong.
+          BAD=$(git grep -nEi "#[Ff][Aa][Ff]9[Ff]7|#[Ff]4[Ff]2[Ff]0|#[Ff][Aa][Ff]8[Ff]5" src/ \
+            | grep -v "src/lib/email/" \
+            | grep -v "src/lib/boost/inContextBoost" \
+            | grep -v "src/lib/messaging/notifications.ts" \
+            | grep -v "src/components/badge/FolioBadgeModal.tsx" \
+            | grep -v "src/app/api/products/\[productId\]/spec-sheet/" \
+            | grep -v "src/components/product/" \
+            | grep -v "src/app/globals.css:.*--surface-" \
+            | grep -v "src/app/globals.css:.*--folio-background:" \
+            || true)
+          if [ -n "$BAD" ]; then
+            echo "::error::Hardcoded canvas hex found. Use var(--surface-canvas), var(--surface-ground), or var(--surface-elevated)."
+            echo "$BAD"
+            exit 1
+          fi
+
+      - name: Forbid deprecated bg aliases
+        run: |
+          if git grep -nE "var\(--bg-base\)|var\(--bg-elevated\)" src/; then
+            echo "::error::--bg-base and --bg-elevated were removed in Task 02. Use --surface-canvas / --surface-ground."
+            exit 1
+          fi
+
+      - name: Forbid hardcoded font families outside carve-outs
+        run: |
+          # Email templates, in-context boost, the pdfkit spec-sheet, the qrcode
+          # FolioBadgeModal, and the print-tearsheet HTML all run outside DOM context
+          # where CSS vars don't resolve. The tearsheet HTML uses Helvetica/Arial
+          # for print-driver compatibility.
+          BAD=$(git grep -nE "'Playfair Display'|\"Playfair Display\"|'Cormorant Garamond'|\"Cormorant Garamond\"|'Instrument Sans'|\"Instrument Sans\"" src/ \
+            | grep -v "src/lib/email/" \
+            | grep -v "src/lib/boost/inContextBoost" \
+            | grep -v "src/lib/messaging/notifications.ts" \
+            | grep -v "src/components/badge/FolioBadgeModal" \
+            | grep -v "src/app/api/products/\[productId\]/spec-sheet/" \
+            | grep -v "src/app/api/export-tearsheet/" \
+            | grep -v "src/app/globals.css:.*--font-" \
+            || true)
+          if [ -n "$BAD" ]; then
+            echo "::error::Hardcoded font family found. Use var(--font-headline) or var(--font-body)."
+            echo "$BAD"
+            exit 1
+          fi
+
+      - name: Forbid phantom and deprecated font aliases
+        run: |
+          if git grep -nE "var\(--font-cormorant\)|var\(--font-instrument\)|var\(--font-logo\)" src/; then
+            echo "::error::Phantom or deprecated font alias used. Canonical: --font-headline, --font-body."
+            exit 1
+          fi
+          # Inline-style use of --font-serif / --font-sans is forbidden; the CSS
+          # vars themselves remain only for the Tailwind .font-serif / .font-sans
+          # classes.
+          INLINE=$(git grep -nE "fontFamily:\s*['\"]var\(--font-(serif|sans)\)['\"]" src/ || true)
+          if [ -n "$INLINE" ]; then
+            echo "::error::Inline style with --font-serif / --font-sans is forbidden. Use --font-headline / --font-body."
+            echo "$INLINE"
+            exit 1
+          fi
+
+      - name: Forbid raw type literals outside carve-outs
+        run: |
+          # Email templates, in-context boost, the pdfkit spec-sheet, the QR
+          # FolioBadgeModal, the print-tearsheet HTML, OG image render, the
+          # canonical token block in globals.css, Markdown docs, and lines
+          # explicitly marked with `folio-design-system: off-scale` are exempt.
+          CARVEOUT='lib/email/|lib/boost/inContextBoost|api/products/.*/spec-sheet|components/badge/FolioBadgeModal|export-tearsheet|api/og/|globals\.css|\.md:|folio-design-system: off-scale'
+
+          # Scope to TS/TSX/JS/JSX/CSS files only
+          GLOB="src/*.{ts,tsx,js,jsx,css} src/**/*.{ts,tsx,js,jsx,css}"
+
+          # POSIX-extended regex (no lookarounds available); use character classes.
+          BAD_SIZE=$(git grep -nE "fontSize:\s*['\"][0-9]+(px|rem|em)['\"]" -- "src/**/*.tsx" "src/**/*.ts" "src/**/*.jsx" "src/**/*.js" "src/**/*.css" | grep -vE "$CARVEOUT" || true)
+          BAD_WEIGHT=$(git grep -nE "fontWeight:\s*['\"]?[0-9]{3}['\"]?[,}: ]" -- "src/**/*.tsx" "src/**/*.ts" "src/**/*.jsx" "src/**/*.js" | grep -vE "$CARVEOUT" || true)
+          BAD_LH=$(git grep -nE "lineHeight:\s*['\"][0-9]+(\.[0-9]+)?['\"]" -- "src/**/*.tsx" "src/**/*.ts" "src/**/*.jsx" "src/**/*.js" | grep -vE "$CARVEOUT" || true)
+          BAD_LS=$(git grep -nE "letterSpacing:\s*['\"][\-]?[0-9]+(\.[0-9]+)?(em|px|rem)['\"]" -- "src/**/*.tsx" "src/**/*.ts" "src/**/*.jsx" "src/**/*.js" | grep -vE "$CARVEOUT" || true)
+          BAD_TW_TEXT=$(git grep -nE "text-\[[0-9]+(px|rem)\]" -- "src/**/*.tsx" "src/**/*.ts" "src/**/*.jsx" "src/**/*.js" | grep -vE "$CARVEOUT" || true)
+          BAD_TW_LEADING=$(git grep -nE "leading-\[[0-9.]+\]" -- "src/**/*.tsx" "src/**/*.ts" "src/**/*.jsx" "src/**/*.js" | grep -vE "$CARVEOUT" || true)
+          BAD_TW_TRACKING=$(git grep -nE "tracking-\[[\-]?[0-9.]+(em|px|rem)\]" -- "src/**/*.tsx" "src/**/*.ts" "src/**/*.jsx" "src/**/*.js" | grep -vE "$CARVEOUT" || true)
+          BAD_TW_FONT=$(git grep -nE "font-\[[0-9]+\]" -- "src/**/*.tsx" "src/**/*.ts" "src/**/*.jsx" "src/**/*.js" | grep -vE "$CARVEOUT" || true)
+
+          if [ -n "$BAD_SIZE$BAD_WEIGHT$BAD_LH$BAD_LS$BAD_TW_TEXT$BAD_TW_LEADING$BAD_TW_TRACKING$BAD_TW_FONT" ]; then
+            echo "::error::Raw type literal found. Use --type-*, --w-*, --lh-*, --ls-* tokens or .folio-* utility classes. Mark intentional outliers with /* folio-design-system: off-scale */."
+            [ -n "$BAD_SIZE" ] && echo "=== fontSize ===" && echo "$BAD_SIZE"
+            [ -n "$BAD_WEIGHT" ] && echo "=== fontWeight ===" && echo "$BAD_WEIGHT"
+            [ -n "$BAD_LH" ] && echo "=== lineHeight ===" && echo "$BAD_LH"
+            [ -n "$BAD_LS" ] && echo "=== letterSpacing ===" && echo "$BAD_LS"
+            [ -n "$BAD_TW_TEXT" ] && echo "=== text-[Npx] ===" && echo "$BAD_TW_TEXT"
+            [ -n "$BAD_TW_LEADING" ] && echo "=== leading-[N] ===" && echo "$BAD_TW_LEADING"
+            [ -n "$BAD_TW_TRACKING" ] && echo "=== tracking-[N] ===" && echo "$BAD_TW_TRACKING"
+            [ -n "$BAD_TW_FONT" ] && echo "=== font-[N] ===" && echo "$BAD_TW_FONT"
+            exit 1
+          fi

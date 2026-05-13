@@ -66,11 +66,11 @@ export function SavesOverTime({ data, onHover }: SavesOverTimeProps) {
           <CartesianGrid strokeDasharray="3 3" stroke="#E5E0D7" />
           <XAxis 
             dataKey="date" 
-            tick={{ fontSize: 12, fill: '#8C8278' }}
+            tick={{ fontSize: 'var(--type-meta)', fill: '#8C8278' }}
             axisLine={{ stroke: '#DAD2CA' }}
           />
           <YAxis 
-            tick={{ fontSize: 12, fill: '#8C8278' }}
+            tick={{ fontSize: 'var(--type-meta)', fill: '#8C8278' }}
             axisLine={{ stroke: '#DAD2CA' }}
           />
           <Tooltip content={<TooltipContent />} />

@@ -71,7 +71,7 @@ export default function EventTypeFilter({ selectedTypes, onTypeChange, className
             className={clsx(
               "px-3 py-1 rounded-full text-sm font-medium border transition-all duration-200",
               selectedTypes.includes(value)
-                ? "bg-folio-accent text-white border-folio-accent shadow-sm"
+                ? "bg-folio-gold text-white border-folio-gold shadow-sm"
                 : "bg-white text-folio-text-primary border-folio-border-subtle hover:bg-surface-ground hover:border-gray-400"
             )}
           >

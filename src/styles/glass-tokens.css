@@ -128,7 +128,7 @@
   display: inline-flex;
   align-items: center;
   padding: 6px 14px;
-  font-size: 11px;
+  font-size: var(--type-eyebrow);
   font-weight: 600;
   letter-spacing: 0.06em;
   text-transform: uppercase;
@@ -280,6 +280,6 @@
 
   --tag-hud-bg: rgba(255, 252, 247, 0.85);
   --tag-hud-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
-  --tag-hud-accent: #c9a96e;
+  --tag-hud-accent: var(--folio-gold-ornament);
   --tag-hud-radial-clearance: 120px;
 }

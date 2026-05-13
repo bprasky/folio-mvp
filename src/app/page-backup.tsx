@@ -10,11 +10,11 @@ export default function Home() {
       maxWidth: '800px',
       margin: '0 auto'
     }}>
-      <h1 style={{ fontSize: '32px', marginBottom: '20px' }}>FOLIO MVP - Home Page</h1>
-      <p style={{ fontSize: '18px', lineHeight: '1.6', marginBottom: '20px' }}>
+      <h1 style={{ fontSize: 'var(--type-stat)', marginBottom: '20px' }}>FOLIO MVP - Home Page</h1>
+      <p style={{ fontSize: 'var(--type-h4)', lineHeight: 'var(--lh-body)', marginBottom: '20px' }}>
         This is a minimal test page to verify Next.js routing works.
       </p>
-      <p style={{ fontSize: '18px', lineHeight: '1.6', marginBottom: '30px' }}>
+      <p style={{ fontSize: 'var(--type-h4)', lineHeight: 'var(--lh-body)', marginBottom: '30px' }}>
         If you can see this, the basic routing is working.
       </p>
       <div style={{ 
@@ -23,7 +23,7 @@ export default function Home() {
         borderRadius: '8px',
         marginTop: '40px'
       }}>
-        <h2 style={{ fontSize: '20px', marginBottom: '10px' }}>Quick Links:</h2>
+        <h2 style={{ fontSize: 'var(--type-h4)', marginBottom: '10px' }}>Quick Links:</h2>
         <ul style={{ listStyle: 'none', padding: 0 }}>
           <li style={{ marginBottom: '10px' }}>
             <a href="/auth/signin" style={{ color: '#0066cc', textDecoration: 'none' }}>

@@ -162,7 +162,7 @@ function VendorGroupCard({
           {group.vendorName}
         </h3>
         <span
-          className="text-[10px] px-1.5 py-0.5 rounded-full"
+          className="text-[var(--type-fine)] px-1.5 py-0.5 rounded-full"
           style={{ backgroundColor: style.bg, color: style.color }}
         >
           {CONFIDENCE_LABELS[confidence] || 'Match'}
@@ -189,7 +189,7 @@ function VendorGroupCard({
                 <p className="text-sm text-folio-text-primary">
                   {contact.name}
                   {isGeneric && (
-                    <span className="text-[10px] text-folio-text-tertiary ml-2">General</span>
+                    <span className="text-[var(--type-fine)] text-folio-text-tertiary ml-2">General</span>
                   )}
                 </p>
                 <p className="text-xs text-folio-text-tertiary truncate">
@@ -198,7 +198,7 @@ function VendorGroupCard({
                 </p>
               </div>
               {isSelected && (
-                <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-folio-text-primary text-white whitespace-nowrap">
+                <span className="text-[var(--type-fine)] px-1.5 py-0.5 rounded-full bg-folio-text-primary text-white whitespace-nowrap">
                   My Rep
                 </span>
               )}

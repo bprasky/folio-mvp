@@ -88,20 +88,20 @@ function QuoteCard({ testimonial }: { testimonial: Testimonial }) {
       className="rounded-xl px-5 py-4"
       style={{
         background: "rgba(245, 239, 232, 0.6)",
-        borderLeft: "2px solid #c9a96e",
+        borderLeft: "2px solid var(--folio-gold-ornament)",
       }}
     >
       {/* Quote text */}
       <blockquote
         className="font-headline italic"
         style={{
-          fontSize: "15px",
-          lineHeight: 1.5,
+          fontSize: 'var(--type-body)',
+          lineHeight: 'var(--lh-body)',
           color: "var(--folio-text-primary, #1a1a1a)",
         }}
       >
         {testimonial.isFeatured && (
-          <span style={{ color: "#c9a96e", marginRight: "4px" }}>&#9733;</span>
+          <span style={{ color: "var(--folio-gold-ornament)", marginRight: "4px" }}>&#9733;</span>
         )}
         &ldquo;{testimonial.quote}&rdquo;
       </blockquote>
@@ -127,8 +127,8 @@ function QuoteCard({ testimonial }: { testimonial: Testimonial }) {
               style={{
                 backgroundColor: "rgba(201, 169, 110, 0.15)",
                 color: "#8a7044",
-                fontSize: "11px",
-                fontWeight: 500,
+                fontSize: 'var(--type-eyebrow)',
+                fontWeight: 'var(--w-h1)',
               }}
             >
               {(testimonial.designer.name || 'D').charAt(0).toUpperCase()}
@@ -137,7 +137,7 @@ function QuoteCard({ testimonial }: { testimonial: Testimonial }) {
         </Link>
 
         {/* Name + project link + shop link */}
-        <div className="flex items-center gap-1.5 flex-wrap font-body" style={{ fontSize: "11px" }}>
+        <div className="flex items-center gap-1.5 flex-wrap font-body" style={{ fontSize: 'var(--type-eyebrow)' }}>
           <Link
             href={`/designer/${testimonial.designer.id}?tab=shop`}
             className="hover:underline"

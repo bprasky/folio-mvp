@@ -34,7 +34,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({
       <div className="p-4">
         <h3 className="text-lg font-semibold text-folio-text">{name}</h3>
         <p className="text-sm text-folio-border">{brand}</p>
-        <p className="text-lg font-bold text-folio-accent mt-2">{price}</p>
+        <p className="text-lg font-bold text-folio-gold mt-2">{price}</p>
         <div className="flex flex-wrap gap-2 mt-3">
           {tags.map((tag) => (
             <span
@@ -50,7 +50,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({
             onClick={onSave}
             className={`mt-4 w-full py-2 px-4 rounded-lg font-medium transition-all duration-200 ${
               isSaved
-                ? 'bg-folio-accent text-white'
+                ? 'bg-folio-gold text-white'
                 : 'bg-folio-muted text-folio-text hover:bg-folio-card border border-folio-border'
             }`}
           >

@@ -438,7 +438,7 @@ export function ProjectImageTagger({ projectId, onClose }: Props) {
                               {tag.product?.name ?? "Product"}
                             </span>
                             {tag.product?.brand && (
-                              <span className="text-[10px] text-folio-text-secondary truncate">
+                              <span className="text-[var(--type-fine)] text-folio-text-secondary truncate">
                                 {tag.product.brand}
                               </span>
                             )}

@@ -170,7 +170,7 @@ export default function FlowMosaic({ events, canEdit = false }: FlowMosaicProps)
                     const dt = fmtDateTime(item);
                     const rsvps = hasRSVP(item);
                     return (
-                      <div className="mt-1 flex items-center gap-2 text-white/85 text-[11px]">
+                      <div className="mt-1 flex items-center gap-2 text-white/85 text-[var(--type-eyebrow)]">
                         {dt && (
                           <span className="inline-flex items-center gap-1 rounded bg-black/45 px-1.5 py-0.5 backdrop-blur-sm">
                             {/* calendar icon (inline svg, no new deps) */}
@@ -200,7 +200,7 @@ export default function FlowMosaic({ events, canEdit = false }: FlowMosaicProps)
                 <div className="absolute top-2 right-2 z-40 pointer-events-auto">
                   <Link
                     href={`/admin/events/${item.id}`}
-                    className="pointer-events-auto rounded bg-black/60 text-white text-[11px] px-2 py-1 hover:bg-black/80"
+                    className="pointer-events-auto rounded bg-black/60 text-white text-[var(--type-eyebrow)] px-2 py-1 hover:bg-black/80"
                     onClick={(e)=>e.stopPropagation()}
                   >
                     ✎ Edit

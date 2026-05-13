@@ -54,7 +54,7 @@ export function EditorialProductFloat({ products, roomName }: EditorialProductFl
       className="w-full py-10 md:py-14 col-span-12 md:col-span-4 md:col-start-9 lg:col-span-4 lg:col-start-9"
     >
       {roomName && (
-        <p className="text-[10px] uppercase tracking-[0.16em] text-folio-text-secondary mb-4">
+        <p className="text-[var(--type-fine)] uppercase tracking-[var(--ls-eyebrow)] text-folio-text-secondary mb-4">
           {products.length} {products.length === 1 ? 'piece' : 'pieces'} selected for {roomName}
         </p>
       )}
@@ -101,7 +101,7 @@ export function EditorialProductFloat({ products, roomName }: EditorialProductFl
                   </span>
                 </a>
                 {vendorName && (
-                  <p className="text-[10px] uppercase tracking-[0.16em] text-folio-text-secondary mt-0.5">
+                  <p className="text-[var(--type-fine)] uppercase tracking-[var(--ls-eyebrow)] text-folio-text-secondary mt-0.5">
                     {vendorName}
                   </p>
                 )}

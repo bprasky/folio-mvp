@@ -94,7 +94,7 @@ export default function EventModalBodyClient({
         {/* Hero section */}
         <div className="pt-12 md:pt-16">
           <p className="text-sm md:text-base tracking-wide opacity-90">Please join us at:</p>
-          <h1 className="mt-2 text-3xl md:text-5xl font-semibold leading-[1.1]">{data.title}</h1>
+          <h1 className="mt-2 text-3xl md:text-5xl font-semibold leading-[var(--lh-h1)]">{data.title}</h1>
 
           {/* Meta row */}
           <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-2 text-sm md:text-base opacity-95">

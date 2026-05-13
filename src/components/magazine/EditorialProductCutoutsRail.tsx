@@ -33,8 +33,7 @@ export default function EditorialProductCutoutsRail({ products }: Props) {
   return (
     <section className="space-y-6">
       <h3
-        className="text-[13px] font-normal uppercase tracking-[0.12em]"
-        style={{ fontFamily: 'var(--font-body)' }}
+        className="text-[var(--type-meta)] font-normal uppercase tracking-[var(--ls-wide)]"
       >
         Featured Products
       </h3>
@@ -93,7 +92,7 @@ export default function EditorialProductCutoutsRail({ products }: Props) {
                   {decodeHtmlEntities(product.name)}
                 </p>
                 {product.vendorName && (
-                  <p className={`text-[11px] mt-0.5 capitalize ${has3D ? 'text-folio-text-secondary' : 'text-white/80'}`}>
+                  <p className={`text-[var(--type-eyebrow)] mt-0.5 capitalize ${has3D ? 'text-folio-text-secondary' : 'text-white/80'}`}>
                     {product.vendorName}
                   </p>
                 )}

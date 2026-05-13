@@ -41,7 +41,7 @@ export async function SideAISuggested() {
     <section className="space-y-3">
       <div className="flex items-center justify-between">
         <h4 className="folio-ui text-folio-text-secondary">Folio AI: Suggested Matches</h4>
-        <span className="text-[10px] uppercase tracking-wide text-folio-text-tertiary">Labs</span>
+        <span className="text-[var(--type-fine)] uppercase tracking-wide text-folio-text-tertiary">Labs</span>
       </div>
       {suggestions.length > 0 ? (
         suggestions.map((item) => (

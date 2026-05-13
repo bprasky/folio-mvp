@@ -95,7 +95,7 @@ export default function ShopFeed({ products }: ShopFeedProps) {
       <div className="text-center py-16">
         <div
           className="w-16 h-16 mx-auto mb-4 rounded-full flex items-center justify-center"
-          style={{ background: 'var(--bg-elevated)' }}
+          style={{ background: 'var(--surface-ground)' }}
         >
           <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="var(--text-tertiary)" strokeWidth="1.5">
             <path d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" strokeLinecap="round" strokeLinejoin="round" />
@@ -157,7 +157,7 @@ export default function ShopFeed({ products }: ShopFeedProps) {
                     <div className={`font-semibold leading-tight ${size === 'L' ? 'text-lg' : size === 'M' ? 'text-base' : 'text-sm'}`}>
                       {item.name}
                     </div>
-                    <div className="mt-0.5 flex items-center gap-2 text-white/80 text-[11px]">
+                    <div className="mt-0.5 flex items-center gap-2 text-white/80 text-[var(--type-eyebrow)]">
                       {item.vendor && <span>{item.vendor}</span>}
                       {item.projectCount > 1 && (
                         <span className="inline-flex items-center gap-1 rounded bg-black/40 px-1.5 py-0.5 backdrop-blur-sm">
@@ -210,7 +210,7 @@ export default function ShopFeed({ products }: ShopFeedProps) {
         .shop-filter-pill[data-active='true'] {
           border-color: var(--text-primary);
           background: var(--text-primary);
-          color: var(--bg-base);
+          color: var(--surface-canvas);
         }
         .shop-filter-pill:hover:not([data-active='true']) {
           border-color: var(--text-tertiary);
@@ -285,7 +285,7 @@ function ShopProductContextModal({
                 />
               ) : (
                 <div className="absolute inset-0 flex items-center justify-center">
-                  <span className="font-['Instrument_Sans'] text-2xl font-medium text-stone-300">
+                  <span className="font-body text-2xl font-medium text-stone-300">
                     {product.name.slice(0, 2).toUpperCase()}
                   </span>
                 </div>
@@ -306,7 +306,7 @@ function ShopProductContextModal({
                     <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
                     {product.projectTitle && (
                       <div className="absolute bottom-2 left-3">
-                        <span className="text-white/90 text-[11px] font-medium">
+                        <span className="text-white/90 text-[var(--type-eyebrow)] font-medium">
                           From: {product.projectTitle}
                         </span>
                       </div>
@@ -321,16 +321,16 @@ function ShopProductContextModal({
           <div className="md:w-2/5 flex flex-col overflow-y-auto p-6 md:p-8">
             {/* Product info */}
             <div className="mb-6">
-              <h2 className="font-['Instrument_Sans'] text-xl font-semibold text-stone-800">
+              <h2 className="font-body text-xl font-semibold text-stone-800">
                 {product.name}
               </h2>
               {product.vendor && (
-                <p className="font-['Instrument_Sans'] text-[14px] text-stone-400 mt-1">
+                <p className="font-body text-[var(--type-ui)] text-stone-400 mt-1">
                   {product.vendor}
                 </p>
               )}
               {formattedPrice && (
-                <p className="font-['Instrument_Sans'] text-[14px] text-stone-600 mt-1 font-medium">
+                <p className="font-body text-[var(--type-ui)] text-stone-600 mt-1 font-medium">
                   {formattedPrice}
                 </p>
               )}
@@ -339,7 +339,7 @@ function ShopProductContextModal({
             {/* Category badge */}
             {product.category && (
               <div className="mb-6">
-                <span className="inline-block px-3 py-1 rounded-full bg-stone-100 font-['Instrument_Sans'] text-[12px] text-stone-500">
+                <span className="inline-block px-3 py-1 rounded-full bg-stone-100 font-body text-[var(--type-meta)] text-stone-500">
                   {getCategoryLabel(product.category)}
                 </span>
               </div>
@@ -348,7 +348,7 @@ function ShopProductContextModal({
             {/* Project count */}
             {product.projectCount > 0 && (
               <div className="mb-6 p-4 rounded-xl bg-stone-50">
-                <p className="font-['Instrument_Sans'] text-[13px] text-stone-500">
+                <p className="font-body text-[var(--type-meta)] text-stone-500">
                   Featured in <span className="font-medium text-stone-700">{product.projectCount} project{product.projectCount !== 1 ? 's' : ''}</span> by this designer
                 </p>
               </div>
@@ -358,7 +358,7 @@ function ShopProductContextModal({
             <div className="mt-auto space-y-3 pt-4">
               <button
                 onClick={onAddToProject}
-                className="w-full py-3 px-6 rounded-xl font-['Instrument_Sans'] text-[14px] font-medium text-white transition-colors"
+                className="w-full py-3 px-6 rounded-xl font-body text-[var(--type-ui)] font-medium text-white transition-colors"
                 style={{ backgroundColor: '#2C2825' }}
               >
                 Add to Project
@@ -367,7 +367,7 @@ function ShopProductContextModal({
               {product.projectId && (
                 <a
                   href={`/project/${product.projectId}`}
-                  className="w-full py-3 px-6 rounded-xl font-['Instrument_Sans'] text-[14px] font-medium border border-stone-200 text-stone-600 hover:bg-stone-50 transition-colors text-center block"
+                  className="w-full py-3 px-6 rounded-xl font-body text-[var(--type-ui)] font-medium border border-stone-200 text-stone-600 hover:bg-stone-50 transition-colors text-center block"
                 >
                   View in Project
                 </a>

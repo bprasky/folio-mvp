@@ -211,7 +211,7 @@ export default function EventForm({
               {...register('title')}
               type="text"
               id="title"
-              className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-folio-accent ${
+              className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-folio-gold ${
                 errors.title ? 'border-red-500' : 'border-folio-border-subtle'
               }`}
               placeholder="Enter event title"
@@ -230,7 +230,7 @@ export default function EventForm({
               {...register('description')}
               id="description"
               rows={4}
-              className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-folio-accent ${
+              className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-folio-gold ${
                 errors.description ? 'border-red-500' : 'border-folio-border-subtle'
               }`}
               placeholder="Enter event description"
@@ -251,7 +251,7 @@ export default function EventForm({
                 {...register('startsAt')}
                 type="datetime-local"
                 id="startsAt"
-                className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-folio-accent ${
+                className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-folio-gold ${
                   errors.startsAt ? 'border-red-500' : 'border-folio-border-subtle'
                 }`}
               />
@@ -269,7 +269,7 @@ export default function EventForm({
                 {...register('endsAt')}
                 type="datetime-local"
                 id="endsAt"
-                className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-folio-accent ${
+                className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-folio-gold ${
                   errors.endsAt ? 'border-red-500' : 'border-folio-border-subtle'
                 }`}
               />
@@ -303,7 +303,7 @@ export default function EventForm({
                 placeholder="Address line 1" 
                 defaultValue={effective.address1} 
                 disabled={inheritFestivalLocation} 
-                className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-folio-accent ${
+                className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-folio-gold ${
                   inheritFestivalLocation ? 'bg-surface-ground text-folio-text-tertiary' : 'border-folio-border-subtle'
                 }`} 
               />
@@ -313,7 +313,7 @@ export default function EventForm({
                 placeholder="Address line 2" 
                 defaultValue={effective.address2} 
                 disabled={inheritFestivalLocation} 
-                className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-folio-accent ${
+                className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-folio-gold ${
                   inheritFestivalLocation ? 'bg-surface-ground text-folio-text-tertiary' : 'border-folio-border-subtle'
                 }`} 
               />
@@ -323,7 +323,7 @@ export default function EventForm({
                 placeholder="City" 
                 defaultValue={effective.city} 
                 disabled={inheritFestivalLocation} 
-                className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-folio-accent ${
+                className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-folio-gold ${
                   inheritFestivalLocation ? 'bg-surface-ground text-folio-text-tertiary' : 'border-folio-border-subtle'
                 }`} 
               />
@@ -333,7 +333,7 @@ export default function EventForm({
                 placeholder="State/Region" 
                 defaultValue={effective.state} 
                 disabled={inheritFestivalLocation} 
-                className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-folio-accent ${
+                className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-folio-gold ${
                   inheritFestivalLocation ? 'bg-surface-ground text-folio-text-tertiary' : 'border-folio-border-subtle'
                 }`} 
               />
@@ -343,7 +343,7 @@ export default function EventForm({
                 placeholder="Postal code" 
                 defaultValue={effective.postalCode} 
                 disabled={inheritFestivalLocation} 
-                className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-folio-accent ${
+                className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-folio-gold ${
                   inheritFestivalLocation ? 'bg-surface-ground text-folio-text-tertiary' : 'border-folio-border-subtle'
                 }`} 
               />
@@ -353,7 +353,7 @@ export default function EventForm({
                 placeholder="Country" 
                 defaultValue={effective.country} 
                 disabled={inheritFestivalLocation} 
-                className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-folio-accent ${
+                className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-folio-gold ${
                   inheritFestivalLocation ? 'bg-surface-ground text-folio-text-tertiary' : 'border-folio-border-subtle'
                 }`} 
               />
@@ -364,7 +364,7 @@ export default function EventForm({
                   placeholder="Latitude" 
                   defaultValue={effective.latitude} 
                   disabled={inheritFestivalLocation} 
-                  className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-folio-accent ${
+                  className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-folio-gold ${
                     inheritFestivalLocation ? 'bg-surface-ground text-folio-text-tertiary' : 'border-folio-border-subtle'
                   }`} 
                 />
@@ -374,7 +374,7 @@ export default function EventForm({
                   placeholder="Longitude" 
                   defaultValue={effective.longitude} 
                   disabled={inheritFestivalLocation} 
-                  className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-folio-accent ${
+                  className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-folio-gold ${
                     inheritFestivalLocation ? 'bg-surface-ground text-folio-text-tertiary' : 'border-folio-border-subtle'
                   }`} 
                 />
@@ -397,7 +397,7 @@ export default function EventForm({
               <select
                 {...register('festivalId')}
                 id="festivalId"
-                className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-folio-accent ${
+                className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-folio-gold ${
                   errors.festivalId ? 'border-red-500' : 'border-folio-border-subtle'
                 }`}
               >
@@ -435,7 +435,7 @@ export default function EventForm({
                     type="checkbox"
                     checked={watchedEventTypes?.includes(eventType) || false}
                     onChange={() => toggleEventType(eventType)}
-                    className="rounded border-folio-border-subtle text-folio-accent focus:ring-folio-accent"
+                    className="rounded border-folio-border-subtle text-folio-gold focus:ring-folio-gold"
                   />
                   <span className="text-sm text-folio-text-primary">{eventType.replace(/_/g, ' ')}</span>
                 </label>
@@ -460,7 +460,7 @@ export default function EventForm({
                 {...register('heroImageUrl')}
                 type="url"
                 id="heroImageUrl"
-                className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-folio-accent ${
+                className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-folio-gold ${
                   errors.heroImageUrl ? 'border-red-500' : 'border-folio-border-subtle'
                 }`}
                 placeholder="https://example.com/image.jpg"
@@ -479,7 +479,7 @@ export default function EventForm({
                 {...register('coverImageUrl')}
                 type="url"
                 id="coverImageUrl"
-                className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-folio-accent ${
+                className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-folio-gold ${
                   errors.coverImageUrl ? 'border-red-500' : 'border-folio-border-subtle'
                 }`}
                 placeholder="https://example.com/cover.jpg"
@@ -520,7 +520,7 @@ export default function EventForm({
               <button
                 type="submit"
                 disabled={isSubmitting}
-                className="flex items-center px-6 py-2 bg-folio-accent text-white rounded-md hover:bg-folio-accent-dark transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                className="flex items-center px-6 py-2 bg-folio-gold text-white rounded-md hover:bg-folio-gold-hover transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <FaSave className="mr-2" />
                 {isSubmitting ? 'Saving...' : mode === "edit" ? "Update Event" : "Create Event"}

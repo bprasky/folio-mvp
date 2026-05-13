@@ -37,20 +37,20 @@ export default function TeamCard({ member }: TeamCardProps) {
         )}
       </div>
       <div>
-        <div className="text-[13px] font-semibold" style={{ color: 'var(--text-primary)' }}>
+        <div className="text-[var(--type-meta)] font-semibold" style={{ color: 'var(--text-primary)' }}>
           {member.name}
         </div>
         <div className="folio-meta">{member.role}</div>
       </div>
       <style jsx>{`
         .team-card {
-          background: var(--bg-base);
+          background: var(--surface-canvas);
           border: 1px solid var(--border);
           min-height: 80px;
         }
         .team-avatar {
           background: linear-gradient(135deg, var(--shadow-dark) 0%, var(--text-tertiary) 100%);
-          color: var(--bg-base);
+          color: var(--surface-canvas);
           letter-spacing: 0.05em;
         }
       `}</style>

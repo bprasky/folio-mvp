@@ -280,7 +280,7 @@ export default function FestivalCard({
         <div className="flex items-center space-x-3">
           <Link
             href={`/festivals/${festival.id}`}
-            className="flex-1 bg-folio-accent text-white text-center py-2 px-4 rounded-lg hover:bg-folio-accent-dark transition-colors font-medium"
+            className="flex-1 bg-folio-gold text-white text-center py-2 px-4 rounded-lg hover:bg-folio-gold-hover transition-colors font-medium"
           >
             View Details
           </Link>
@@ -304,7 +304,7 @@ export default function FestivalCard({
                   <div key={sub.id} className="flex items-center justify-between p-2 bg-surface-ground rounded-lg">
                     <Link 
                       href={`/festivals/${festival.id}/events/${sub.id}`} 
-                      className="text-sm text-folio-text-primary hover:text-folio-accent transition-colors flex-1"
+                      className="text-sm text-folio-text-primary hover:text-folio-gold transition-colors flex-1"
                     >
                       {sub.title}
                     </Link>

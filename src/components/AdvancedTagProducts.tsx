@@ -234,7 +234,7 @@ export default function AdvancedTagProducts({
             >
               {/* Tag Dot */}
               <div className="relative">
-                <div className="w-6 h-6 bg-folio-accent border-2 border-white text-white rounded-full flex items-center justify-center text-xs font-bold shadow-lg cursor-pointer hover:bg-folio-text transition-colors">
+                <div className="w-6 h-6 bg-folio-gold border-2 border-white text-white rounded-full flex items-center justify-center text-xs font-bold shadow-lg cursor-pointer hover:bg-folio-text transition-colors">
                   <FaTag className="w-3 h-3" />
                 </div>
                 
@@ -261,7 +261,7 @@ export default function AdvancedTagProducts({
                             {product.name}
                           </h4>
                           <p className="text-folio-border text-xs">{product.brand}</p>
-                          <p className="text-folio-accent font-semibold text-sm">{product.price}</p>
+                          <p className="text-folio-gold font-semibold text-sm">{product.price}</p>
                         </div>
                         {isEditable && (
                           <button
@@ -299,7 +299,7 @@ export default function AdvancedTagProducts({
             initial={{ scale: 0 }}
             animate={{ scale: 1 }}
           >
-            <div className="w-6 h-6 bg-folio-accent border-2 border-white text-white rounded-full flex items-center justify-center text-xs font-bold shadow-lg animate-pulse">
+            <div className="w-6 h-6 bg-folio-gold border-2 border-white text-white rounded-full flex items-center justify-center text-xs font-bold shadow-lg animate-pulse">
               <FaTag className="w-3 h-3" />
             </div>
           </motion.div>
@@ -358,7 +358,7 @@ export default function AdvancedTagProducts({
                   placeholder="Search products by name, brand, or category..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full pl-10 pr-4 py-3 border border-folio-border rounded-lg focus:ring-1 focus:ring-folio-accent focus:border-folio-accent bg-white text-folio-text placeholder-folio-border"
+                  className="w-full pl-10 pr-4 py-3 border border-folio-border rounded-lg focus:ring-1 focus:ring-folio-gold focus:border-folio-gold bg-white text-folio-text placeholder-folio-border"
                 />
               </div>
 
@@ -370,8 +370,8 @@ export default function AdvancedTagProducts({
                       key={product.id}
                       className={`border rounded-xl p-4 cursor-pointer transition-all duration-200 ${
                         selectedProductId === product.id
-                          ? 'border-folio-accent bg-folio-muted shadow-sm'
-                          : 'border-folio-border hover:border-folio-accent hover:shadow-sm'
+                          ? 'border-folio-gold bg-folio-muted shadow-sm'
+                          : 'border-folio-border hover:border-folio-gold hover:shadow-sm'
                       }`}
                       onClick={() => setSelectedProductId(product.id)}
                       whileHover={{ scale: 1.02 }}
@@ -390,7 +390,7 @@ export default function AdvancedTagProducts({
                             {product.name}
                           </h3>
                           <p className="text-folio-border text-xs mb-1">{product.brand}</p>
-                          <p className="text-folio-accent font-semibold text-sm mb-2">{product.price}</p>
+                          <p className="text-folio-gold font-semibold text-sm mb-2">{product.price}</p>
                           <div className="flex flex-wrap gap-1">
                             {(product.tags || []).slice(0, 3).map((tag, index) => (
                               <span
@@ -428,10 +428,10 @@ export default function AdvancedTagProducts({
                       type="checkbox"
                       checked={addToShop}
                       onChange={(e) => setAddToShop(e.target.checked)}
-                      className="w-5 h-5 rounded border-folio-border text-folio-accent focus:ring-folio-accent"
+                      className="w-5 h-5 rounded border-folio-border text-folio-gold focus:ring-folio-gold"
                     />
                     <div className="flex items-center gap-2">
-                      <FaStore className="w-4 h-4 text-folio-accent" />
+                      <FaStore className="w-4 h-4 text-folio-gold" />
                       <span className="font-medium text-folio-text">Add to my Shop</span>
                     </div>
                   </label>
@@ -456,7 +456,7 @@ export default function AdvancedTagProducts({
                             disabled={addQuoteLater}
                             maxLength={500}
                             rows={3}
-                            className={`w-full px-3 py-2 border border-folio-border rounded-lg focus:ring-1 focus:ring-folio-accent focus:border-folio-accent bg-white text-folio-text placeholder-folio-border resize-none ${
+                            className={`w-full px-3 py-2 border border-folio-border rounded-lg focus:ring-1 focus:ring-folio-gold focus:border-folio-gold bg-white text-folio-text placeholder-folio-border resize-none ${
                               addQuoteLater ? 'opacity-50' : ''
                             }`}
                           />
@@ -475,7 +475,7 @@ export default function AdvancedTagProducts({
                               setAddQuoteLater(e.target.checked);
                               if (e.target.checked) setShopQuote("");
                             }}
-                            className="w-4 h-4 rounded border-folio-border text-folio-accent focus:ring-folio-accent"
+                            className="w-4 h-4 rounded border-folio-border text-folio-gold focus:ring-folio-gold"
                           />
                           <span className="text-sm text-folio-border">
                             I&apos;ll add thoughts later
@@ -498,7 +498,7 @@ export default function AdvancedTagProducts({
                 <button
                   onClick={handleTagProduct}
                   disabled={!selectedProductId || isLoading}
-                  className="flex-1 px-6 py-3 bg-folio-text text-white rounded-lg hover:bg-folio-accent disabled:bg-folio-border disabled:cursor-not-allowed transition-colors font-medium flex items-center justify-center gap-2"
+                  className="flex-1 px-6 py-3 bg-folio-text text-white rounded-lg hover:bg-folio-gold disabled:bg-folio-border disabled:cursor-not-allowed transition-colors font-medium flex items-center justify-center gap-2"
                 >
                   {isLoading ? (
                     <>
@@ -526,7 +526,7 @@ export default function AdvancedTagProducts({
           animate={{ opacity: 1, y: 0 }}
         >
           <h3 className="font-semibold text-folio-text mb-3 flex items-center gap-2">
-            <FaTag className="w-4 h-4 text-folio-accent" />
+            <FaTag className="w-4 h-4 text-folio-gold" />
             Tagged Products ({tags.length})
           </h3>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
@@ -548,7 +548,7 @@ export default function AdvancedTagProducts({
                   />
                   <div className="flex-1 min-w-0">
                     <p className="font-medium text-folio-text text-sm truncate">{product.name}</p>
-                    <p className="text-folio-accent text-xs">{product.price}</p>
+                    <p className="text-folio-gold text-xs">{product.price}</p>
                   </div>
                   {isEditable && (
                     <button

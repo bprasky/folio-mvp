@@ -18,7 +18,7 @@ export default function AvatarRow({ names, count }: { names: string[]; count: nu
         return (
           <div
             key={i}
-            className="h-7 w-7 rounded-full bg-[var(--accent)]/30 text-[10px] flex items-center justify-center ring-2 ring-[var(--bg-base)]/50 backdrop-blur-sm font-medium text-white"
+            className="h-7 w-7 rounded-full bg-[var(--accent)]/30 text-[var(--type-fine)] flex items-center justify-center ring-2 ring-[var(--surface-canvas)]/50 backdrop-blur-sm font-medium text-white"
             title={n}
           >
             {initials || "•"}
@@ -26,7 +26,7 @@ export default function AvatarRow({ names, count }: { names: string[]; count: nu
         );
       })}
       {count > show.length ? (
-        <div className="h-7 w-7 rounded-full bg-[var(--accent)]/30 text-[10px] flex items-center justify-center ring-2 ring-[var(--bg-base)]/50 backdrop-blur-sm font-medium text-white">
+        <div className="h-7 w-7 rounded-full bg-[var(--accent)]/30 text-[var(--type-fine)] flex items-center justify-center ring-2 ring-[var(--surface-canvas)]/50 backdrop-blur-sm font-medium text-white">
           +{count - show.length}
         </div>
       ) : null}

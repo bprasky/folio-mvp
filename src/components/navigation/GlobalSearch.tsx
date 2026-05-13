@@ -50,7 +50,11 @@ export function GlobalSearch({ placeholder = "Search..." }: GlobalSearchProps) {
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           placeholder={placeholder}
-          className="h-10 w-full rounded-full border border-folio-border-subtle bg-surface-ground pl-10 pr-10 folio-ui text-folio-text-primary placeholder:text-folio-text-secondary focus:border-folio-border-subtle focus:bg-surface-canvas focus:outline-none focus:ring-1 focus:ring-[var(--ridge-outer)] transition-colors"
+          // Pill background is a tinted overlay rather than a fixed surface
+          // colour so the input adapts to whichever surface --surface is
+          // pointing at (white on the homepage, cream on article pages).
+          style={{ backgroundColor: "color-mix(in oklab, currentColor 5%, transparent)" }}
+          className="h-10 w-full rounded-full border border-folio-border-subtle pl-10 pr-10 folio-ui text-folio-text-primary placeholder:text-folio-text-secondary focus:border-folio-border-subtle focus:outline-none focus:ring-1 focus:ring-[var(--ridge-outer)] transition-colors"
         />
         {query && (
           <button

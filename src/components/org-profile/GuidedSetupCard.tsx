@@ -99,7 +99,7 @@ export default function GuidedSetupCard({
         style={{
           fontFamily: 'var(--font-headline)',
           color: '#2C2825',
-          fontWeight: 400,
+          fontWeight: 'var(--w-body)',
         }}
       >
         Welcome to Folio
@@ -109,9 +109,8 @@ export default function GuidedSetupCard({
       <p
         className="text-sm md:text-base mb-8"
         style={{
-          fontFamily: 'var(--font-body)',
           color: '#6B635B',
-          lineHeight: 1.6,
+          lineHeight: 'var(--lh-body)'
         }}
       >
         Your profile is your portfolio&apos;s front door.
@@ -158,7 +157,7 @@ function StepRow({
           ? '1px solid rgba(184, 132, 92, 0.2)'
           : '1px solid rgba(232, 228, 223, 0.5)',
         borderLeft: isNext
-          ? '3px solid #B8845C'
+          ? '3px solid var(--folio-gold)'
           : '1px solid rgba(232, 228, 223, 0.5)',
       }}
     >
@@ -168,14 +167,14 @@ function StepRow({
           {isComplete ? (
             <div
               className="w-5 h-5 rounded-full flex items-center justify-center text-xs"
-              style={{ backgroundColor: 'rgba(184, 132, 92, 0.15)', color: '#B8845C' }}
+              style={{ backgroundColor: 'rgba(184, 132, 92, 0.15)', color: 'var(--folio-gold)' }}
             >
               &#10003;
             </div>
           ) : (
             <div
               className="w-5 h-5 rounded-full border-2"
-              style={{ borderColor: isNext ? '#B8845C' : '#D4CEC6' }}
+              style={{ borderColor: isNext ? 'var(--folio-gold)' : '#D4CEC6' }}
             />
           )}
         </div>
@@ -185,8 +184,7 @@ function StepRow({
           <p
             className="text-sm font-medium"
             style={{
-              fontFamily: 'var(--font-body)',
-              color: isComplete ? '#8B8178' : '#2C2825',
+              color: isComplete ? '#8B8178' : '#2C2825'
             }}
           >
             {isComplete ? step.completeSummary : step.title}
@@ -196,9 +194,8 @@ function StepRow({
             <p
               className="text-xs mt-1"
               style={{
-                fontFamily: 'var(--font-body)',
                 color: '#8B8178',
-                lineHeight: 1.5,
+                lineHeight: 'var(--lh-body)'
               }}
             >
               {step.description}
@@ -215,10 +212,9 @@ function StepRow({
                 className="px-4 py-1.5 text-xs rounded-full transition-all hover:opacity-80"
                 style={{
                   backgroundColor: isNext ? '#2C2825' : 'transparent',
-                  color: isNext ? '#FAF9F7' : '#6B635B',
+                  color: isNext ? 'var(--surface-ground)' : '#6B635B',
                   border: isNext ? 'none' : '1px solid #D4CEC6',
-                  fontFamily: 'var(--font-body)',
-                  fontWeight: 500,
+                  fontWeight: 'var(--w-h1)'
                 }}
               >
                 {step.cta.label}
@@ -229,10 +225,9 @@ function StepRow({
                 className="px-4 py-1.5 text-xs rounded-full transition-all hover:opacity-80"
                 style={{
                   backgroundColor: isNext ? '#2C2825' : 'transparent',
-                  color: isNext ? '#FAF9F7' : '#6B635B',
+                  color: isNext ? 'var(--surface-ground)' : '#6B635B',
                   border: isNext ? 'none' : '1px solid #D4CEC6',
-                  fontFamily: 'var(--font-body)',
-                  fontWeight: 500,
+                  fontWeight: 'var(--w-h1)'
                 }}
               >
                 {step.cta.label}

@@ -32,7 +32,7 @@ function ActionButton({
   const classes =
     variant === "outline"
       ? `${baseClasses} border border-folio-border-subtle bg-surface-canvas text-folio-text-primary hover:bg-surface-ground`
-      : `${baseClasses} bg-[var(--text-primary)] text-[var(--bg-base)] hover:opacity-90`;
+      : `${baseClasses} bg-[var(--text-primary)] text-[var(--surface-canvas)] hover:opacity-90`;
 
   return (
     <button type="button" onClick={onClick} className={classes}>

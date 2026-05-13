@@ -56,11 +56,11 @@ export function EventsCompareBar({ events, averages, onEventClick, onHover }: Ev
           <CartesianGrid strokeDasharray="3 3" stroke="#E5E0D7" />
           <XAxis 
             dataKey="name" 
-            tick={{ fontSize: 12, fill: '#8C8278' }}
+            tick={{ fontSize: 'var(--type-meta)', fill: '#8C8278' }}
             axisLine={{ stroke: '#DAD2CA' }}
           />
           <YAxis 
-            tick={{ fontSize: 12, fill: '#8C8278' }}
+            tick={{ fontSize: 'var(--type-meta)', fill: '#8C8278' }}
             axisLine={{ stroke: '#DAD2CA' }}
           />
           <Tooltip
@@ -96,7 +96,7 @@ export function EventsCompareBar({ events, averages, onEventClick, onHover }: Ev
             stroke="#8C8278" 
             strokeDasharray="5 5" 
             strokeOpacity={0.6}
-            label={{ value: "Avg RSVPs", position: "topRight", fontSize: 11, fill: "#8C8278" }}
+            label={{ value: "Avg RSVPs", position: "topRight", fontSize: 'var(--type-eyebrow)', fill: "#8C8278" }}
           />
           {/* Bars */}
           <Bar 

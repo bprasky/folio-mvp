@@ -265,7 +265,7 @@ export default function SourcebookPage() {
         {/* Header */}
         <div className="mb-4">
           <h1 className="folio-h1 text-folio-text-primary mb-2">Sourcebook</h1>
-          <p className="text-[13px] text-folio-text-tertiary">
+          <p className="text-[var(--type-meta)] text-folio-text-tertiary">
             {stats.totalProducts} products &middot; {stats.totalVendors} vendors &middot; {stats.totalProjects} projects
           </p>
         </div>
@@ -289,16 +289,16 @@ export default function SourcebookPage() {
         {loading ? (
           <div className="text-center py-20">
             <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-[var(--accent)]" />
-            <p className="mt-4 text-[13px] text-folio-text-secondary">Loading sourcebook...</p>
+            <p className="mt-4 text-[var(--type-meta)] text-folio-text-secondary">Loading sourcebook...</p>
           </div>
         ) : error ? (
           <div className="text-center py-20">
-            <p className="text-red-600 mb-4 text-[13px]">{error}</p>
+            <p className="text-red-600 mb-4 text-[var(--type-meta)]">{error}</p>
             <Button variant="ridge" onClick={loadSourcebook}>Retry</Button>
           </div>
         ) : sortedEntries.length === 0 ? (
           <div className="text-center py-20">
-            <p className="text-[14px] text-folio-text-secondary mb-4">
+            <p className="text-[var(--type-ui)] text-folio-text-secondary mb-4">
               {hasActiveFilters
                 ? 'No products matching these filters.'
                 : 'Your Sourcebook builds itself as you tag products in projects.'}
@@ -306,7 +306,7 @@ export default function SourcebookPage() {
             {hasActiveFilters ? (
               <button
                 onClick={clearFilters}
-                className="text-[13px] text-[#c9a96e] hover:underline"
+                className="text-[var(--type-meta)] text-[var(--folio-gold-ornament)] hover:underline"
               >
                 Clear Filters
               </button>

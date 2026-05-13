@@ -47,7 +47,7 @@ export default function FeedFilters({
             className="px-4 py-1.5 text-xs rounded-full transition-all"
             style={{
               backgroundColor: activeFilter === filter.id ? '#2C2825' : 'transparent',
-              color: activeFilter === filter.id ? '#FAF9F7' : '#6B635B',
+              color: activeFilter === filter.id ? 'var(--surface-ground)' : '#6B635B',
               border: activeFilter === filter.id ? 'none' : '1px solid #D4CEC6',
             }}
           >

@@ -65,7 +65,7 @@ export function AIInlinePane({ sectionId, className }: Props) {
         <div className="flex items-center justify-between gap-2">
           <div className="flex items-center gap-2">
             <AIBadge />
-            <span className="uppercase tracking-wide text-[10px] text-folio-text-secondary">
+            <span className="uppercase tracking-wide text-[var(--type-fine)] text-folio-text-secondary">
               AI for this section
             </span>
           </div>
@@ -78,9 +78,9 @@ export function AIInlinePane({ sectionId, className }: Props) {
                     type="button"
                     onClick={() => handleTabClick(tab)}
                     className={
-                      'px-2.5 py-1 rounded-full capitalize text-[10px] transition ' +
+                      'px-2.5 py-1 rounded-full capitalize text-[var(--type-fine)] transition ' +
                       (activeTab === tab && aiUnlocked
-                        ? 'bg-[var(--text-primary)] text-[var(--bg-base)]'
+                        ? 'bg-[var(--text-primary)] text-[var(--surface-canvas)]'
                         : 'bg-surface-ground text-folio-text-primary hover:bg-[var(--ridge-inner)]')
                     }
                   >
@@ -88,7 +88,7 @@ export function AIInlinePane({ sectionId, className }: Props) {
                   </button>
                 </PopoverTrigger>
                 {aiUnlocked && (
-                  <PopoverContent className="text-[11px] leading-relaxed">
+                  <PopoverContent className="text-[var(--type-eyebrow)] leading-relaxed">
                     <div className="font-semibold mb-2 capitalize text-folio-text-primary">{tab}</div>
                     <p className="text-folio-text-primary">{content.details[tab]}</p>
                   </PopoverContent>
@@ -99,7 +99,7 @@ export function AIInlinePane({ sectionId, className }: Props) {
         </div>
 
         <div className="flex items-center justify-between gap-3">
-          <div className="text-[11px] leading-snug text-folio-text-primary flex-1 line-clamp-2">
+          <div className="text-[var(--type-eyebrow)] leading-snug text-folio-text-primary flex-1 line-clamp-2">
             {aiUnlocked
               ? content.summary[activeTab]
               : 'Unlock Folio AI to interpret this metric, compare you to peers, and recommend the next steps.'}
@@ -107,7 +107,7 @@ export function AIInlinePane({ sectionId, className }: Props) {
           <button
             type="button"
             onClick={handleWhyClick}
-            className="shrink-0 text-[11px] underline underline-offset-4 text-folio-text-secondary hover:text-folio-text-primary transition opacity-70 hover:opacity-100"
+            className="shrink-0 text-[var(--type-eyebrow)] underline underline-offset-4 text-folio-text-secondary hover:text-folio-text-primary transition opacity-70 hover:opacity-100"
           >
             Why this?
           </button>

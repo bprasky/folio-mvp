@@ -143,7 +143,7 @@ export default function OrgProfileHero({
                     <Link
                       href={`/org/${org.id}/settings`}
                       className="px-5 py-2 text-sm rounded-full transition-all hover:opacity-80"
-                      style={{ backgroundColor: '#2C2825', color: '#FAF9F7' }}
+                      style={{ backgroundColor: '#2C2825', color: 'var(--surface-ground)' }}
                     >
                       Edit Profile
                     </Link>
@@ -151,7 +151,7 @@ export default function OrgProfileHero({
                     <>
                       <button
                         className="px-5 py-2 text-sm rounded-full transition-all hover:opacity-80"
-                        style={{ backgroundColor: '#2C2825', color: '#FAF9F7' }}
+                        style={{ backgroundColor: '#2C2825', color: 'var(--surface-ground)' }}
                       >
                         Follow
                       </button>

@@ -48,7 +48,7 @@ export function RSVPPresence({ data }: RSVPPresenceProps) {
                 className="w-full h-full object-cover"
               />
             ) : (
-              <span className="text-[10px] font-medium text-stone-700">
+              <span className="text-[var(--type-fine)] font-medium text-stone-700">
                 {initials(attendee.name)}
               </span>
             )}

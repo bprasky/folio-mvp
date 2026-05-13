@@ -5,7 +5,6 @@
 // images are large and immersive. Collapsing returns to the mosaic.
 // Rule 4: Expand Is the Only Way to Get Depth.
 
-import { useRef, useEffect } from "react";
 import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
 import { TaggedImage } from "@/components/project/interaction/TaggedImage";
@@ -26,23 +25,10 @@ export function RoomExpand({
   onProductClick,
   reducedMotion,
 }: RoomExpandProps) {
-  const contentRef = useRef<HTMLDivElement>(null);
-
-  // Scroll expanded section into view
-  useEffect(() => {
-    if (isOpen && contentRef.current) {
-      const timer = setTimeout(() => {
-        contentRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
-      }, 300);
-      return () => clearTimeout(timer);
-    }
-  }, [isOpen]);
-
   return (
     <AnimatePresence initial={false}>
       {isOpen && (
         <motion.div
-          ref={contentRef}
           className="col-span-2 overflow-hidden"
           initial={{ height: 0, opacity: 0 }}
           animate={{ height: "auto", opacity: 1 }}
@@ -54,61 +40,32 @@ export function RoomExpand({
           }
         >
           <div className="py-6">
-            {/* Expanded hero — room photo fills the full width, never cropped */}
-            <div className="relative w-full overflow-hidden rounded-[14px] mb-6">
-              <Image
-                src={room.heroImage.url}
-                alt={room.roomLabel}
-                width={1920}
-                height={1080}
-                className="w-full h-auto"
-                sizes="100vw"
-                priority
-              />
-              <TaggedImage surface="post" image={room.heroImage} />
-            </div>
-
             {/* Room label + collapse */}
             <div className="flex items-center justify-between mb-6">
               <span
-                className="uppercase tracking-[1.5px]"
+                className="uppercase tracking-[1.5px]" /* folio-design-system: off-scale */
                 style={{
-                  fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)",
-                  fontSize: "10px",
-                  fontWeight: 500,
-                  color: "rgba(87, 75, 67, 0.55)",
+                  fontSize: 'var(--type-fine)',
+                  fontWeight: 'var(--w-h1)',
+                  color: "rgba(87, 75, 67, 0.55)"
                 }}
               >
                 {room.roomLabel}
               </span>
               <button
                 onClick={onCollapse}
-                className="text-[11px] transition-colors hover:opacity-70"
+                className="text-[var(--type-eyebrow)] transition-colors hover:opacity-70"
                 style={{
-                  fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)",
-                  color: "rgba(87, 75, 67, 0.3)",
+                  color: "rgba(87, 75, 67, 0.3)"
                 }}
               >
                 Collapse ↑
               </button>
             </div>
 
-            {/* Editorial narrative */}
-            {room.editorialNarrative && (
-              <div className="max-w-[720px] mb-8">
-                <p
-                  className="whitespace-pre-line"
-                  style={{
-                    fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)",
-                    fontSize: "15px",
-                    lineHeight: 1.75,
-                    color: "rgba(87, 75, 67, 0.85)",
-                  }}
-                >
-                  {room.editorialNarrative}
-                </p>
-              </div>
-            )}
+            {/* Editorial narrative now lives inside QuoteTile (in-place
+                expansion); RoomExpand only carries the gallery and tagged
+                products as a full-width strip below the row. */}
 
             {/* Gallery — large immersive images, not thumbnails */}
             {room.additionalImages.length > 0 && (
@@ -139,28 +96,39 @@ export function RoomExpand({
             {room.products.length > 0 && (
               <div className="mb-6">
                 <h4
-                  className="mb-3 uppercase tracking-[1.5px]"
+                  className="mb-3 uppercase tracking-[1.5px]" /* folio-design-system: off-scale */
                   style={{
-                    fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)",
-                    fontSize: "10px",
-                    fontWeight: 500,
-                    color: "rgba(87, 75, 67, 0.3)",
+                    fontSize: 'var(--type-fine)',
+                    fontWeight: 'var(--w-h1)',
+                    color: "rgba(87, 75, 67, 0.3)"
                   }}
                 >
                   Tagged Products
                 </h4>
                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
-                  {room.products.map((product: any) => (
+                  {room.products.map((product: any) => {
+                    // Same thumbnail fallback rule as elsewhere in the
+                    // interaction system: prefer any URL-based product image,
+                    // otherwise fall back to the cropped section of the
+                    // source photo (cutoutImageUrl).
+                    const thumbSrc =
+                      product.thumbnailUrl ||
+                      product.imageThumb ||
+                      product.imageUrl ||
+                      product.primaryImageUrl ||
+                      product.cutoutImageUrl ||
+                      null;
+                    return (
                     <button
                       key={product.id}
                       onClick={() => onProductClick(product)}
                       className="flex items-center gap-2.5 p-2 rounded-[10px] text-left transition-colors hover:bg-[rgba(87,75,67,0.04)]"
                     >
-                      {(product.imageUrl || product.primaryImageUrl || product.thumbnailUrl) && (
+                      {thumbSrc && (
                         <div className="h-9 w-9 flex-shrink-0 rounded-lg overflow-hidden bg-[rgba(87,75,67,0.04)]">
                           {/* eslint-disable-next-line @next/next/no-img-element */}
                           <img
-                            src={product.imageUrl || product.primaryImageUrl || product.thumbnailUrl}
+                            src={thumbSrc}
                             alt={product.name}
                             className="h-full w-full object-cover"
                           />
@@ -170,10 +138,9 @@ export function RoomExpand({
                         <div
                           className="truncate"
                           style={{
-                            fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)",
-                            fontSize: "12px",
-                            fontWeight: 500,
-                            color: "rgba(87, 75, 67, 0.85)",
+                            fontSize: 'var(--type-meta)',
+                            fontWeight: 'var(--w-h1)',
+                            color: "rgba(87, 75, 67, 0.85)"
                           }}
                         >
                           {product.name}
@@ -182,9 +149,8 @@ export function RoomExpand({
                           <div
                             className="truncate"
                             style={{
-                              fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)",
-                              fontSize: "11px",
-                              color: "rgba(87, 75, 67, 0.45)",
+                              fontSize: 'var(--type-eyebrow)',
+                              color: "rgba(87, 75, 67, 0.45)"
                             }}
                           >
                             {product.vendor.name || product.vendor.companyName}
@@ -192,7 +158,8 @@ export function RoomExpand({
                         )}
                       </div>
                     </button>
-                  ))}
+                    );
+                  })}
                 </div>
               </div>
             )}
@@ -204,10 +171,9 @@ export function RoomExpand({
             >
               <button
                 onClick={onCollapse}
-                className="text-[11px] transition-colors hover:opacity-70"
+                className="text-[var(--type-eyebrow)] transition-colors hover:opacity-70"
                 style={{
-                  fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)",
-                  color: "rgba(87, 75, 67, 0.3)",
+                  color: "rgba(87, 75, 67, 0.3)"
                 }}
               >
                 Collapse ↑

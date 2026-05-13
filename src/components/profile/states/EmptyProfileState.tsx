@@ -50,7 +50,7 @@ export default function EmptyProfileState({ designer, isOwner }: Props) {
 
   // Owner view - prompt to get started
   return (
-    <div className="min-h-screen bg-gradient-to-b from-[var(--bg-base)] to-[var(--bg-base)]">
+    <div className="min-h-screen bg-gradient-to-b from-[var(--surface-canvas)] to-[var(--surface-canvas)]">
       <div className="max-w-2xl mx-auto px-6 py-24 text-center">
         <h1 className="text-3xl font-semibold text-folio-text-primary">
           Welcome to Folio, {designer.name.split(' ')[0]}

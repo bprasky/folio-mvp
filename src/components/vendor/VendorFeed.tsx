@@ -69,8 +69,8 @@ export function VendorFeed({ orgId }: VendorFeedProps) {
             onClick={() => setFilter(pill.key)}
             className="font-body px-3.5 py-1.5 rounded-full cursor-pointer transition-colors flex-shrink-0"
             style={{
-              fontSize: "12px",
-              fontWeight: 500,
+              fontSize: 'var(--type-meta)',
+              fontWeight: 'var(--w-h1)',
               background: filter === pill.key ? "#3a2a1a" : "rgba(245, 239, 232, 0.6)",
               color: filter === pill.key ? "#f5efe8" : "var(--folio-text-secondary, #6b6b6b)",
               border: "none",
@@ -85,14 +85,14 @@ export function VendorFeed({ orgId }: VendorFeedProps) {
       {loading && (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {Array.from({ length: 4 }).map((_, i) => (
-            <div key={i} className="rounded-xl animate-pulse h-64" style={{ background: "var(--surface-ground, #faf8f5)" }} />
+            <div key={i} className="rounded-xl animate-pulse h-64" style={{ background: "var(--surface-ground)" }} />
           ))}
         </div>
       )}
 
       {/* Empty state */}
       {!loading && items.length === 0 && (
-        <div className="text-center py-16 font-body" style={{ color: "var(--folio-text-tertiary)", fontSize: "14px" }}>
+        <div className="text-center py-16 font-body" style={{ color: "var(--folio-text-tertiary)", fontSize: 'var(--type-ui)' }}>
           No content yet. Boost designer projects or create articles to populate the feed.
         </div>
       )}
@@ -124,7 +124,7 @@ function MosaicCard({ item }: { item: FeedItem }) {
   const Wrapper = href ? Link : "div";
 
   return (
-    <Wrapper {...(href ? { href } : {})} className="block rounded-xl overflow-hidden group" style={{ background: "var(--surface-ground, #faf8f5)" }}>
+    <Wrapper {...(href ? { href } : {})} className="block rounded-xl overflow-hidden group" style={{ background: "var(--surface-ground)" }}>
       {/* Mosaic: product + project side by side */}
       <div className="flex" style={{ height: 200 }}>
         {/* Product image */}
@@ -140,12 +140,12 @@ function MosaicCard({ item }: { item: FeedItem }) {
           )}
           {/* Room badge */}
           {item.room && (
-            <div className="absolute top-2.5 left-2.5 font-body" style={{ fontSize: "9px", fontWeight: 500, letterSpacing: "0.5px", textTransform: "uppercase", padding: "2px 7px", borderRadius: "4px", background: "rgba(255,255,255,0.9)", color: "#5a4a3a" }}>
+            <div className="absolute top-2.5 left-2.5 font-body" style={{ fontSize: "9px", fontWeight: 'var(--w-h1)', letterSpacing: 'var(--ls-wide)', textTransform: "uppercase", padding: "2px 7px", borderRadius: "4px", background: "rgba(255,255,255,0.9)", color: "#5a4a3a" }}> /* folio-design-system: off-scale */
               {item.room}
             </div>
           )}
           {item.hasQA && (
-            <div className="absolute top-2.5 right-2.5 font-body" style={{ fontSize: "9px", fontWeight: 500, padding: "2px 7px", borderRadius: "4px", background: "rgba(201,169,110,0.9)", color: "white" }}>
+            <div className="absolute top-2.5 right-2.5 font-body" style={{ fontSize: "9px", fontWeight: 'var(--w-h1)', padding: "2px 7px", borderRadius: "4px", background: "rgba(201,169,110,0.9)", color: "white" }}> /* folio-design-system: off-scale */
               Q&A
             </div>
           )}
@@ -153,10 +153,10 @@ function MosaicCard({ item }: { item: FeedItem }) {
       </div>
       {/* Info bar */}
       <div className="px-4 py-3">
-        <div className="font-body font-medium truncate" style={{ fontSize: "13px", color: "var(--folio-text-primary)" }}>
+        <div className="font-body font-medium truncate" style={{ fontSize: 'var(--type-meta)', color: "var(--folio-text-primary)" }}>
           {item.productName}
         </div>
-        <div className="font-body truncate" style={{ fontSize: "11px", color: "var(--folio-text-tertiary)" }}>
+        <div className="font-body truncate" style={{ fontSize: 'var(--type-eyebrow)', color: "var(--folio-text-tertiary)" }}>
           {item.projectTitle} · {item.designerName}
         </div>
       </div>
@@ -170,25 +170,25 @@ function ArticleCard({ item }: { item: FeedItem }) {
   const isVendor = item.type === "vendor_article";
 
   return (
-    <div className="rounded-xl overflow-hidden" style={{ background: "var(--surface-ground, #faf8f5)" }}>
+    <div className="rounded-xl overflow-hidden" style={{ background: "var(--surface-ground)" }}>
       {item.heroImage && (
         <div className="relative" style={{ height: 180 }}>
           <Image src={item.heroImage} alt={item.title || ""} fill className="object-cover" sizes="400px" />
-          <div className="absolute top-2.5 left-2.5 font-body" style={{ fontSize: "9px", fontWeight: 500, letterSpacing: "0.5px", textTransform: "uppercase", padding: "2px 7px", borderRadius: "4px", background: isVendor ? "rgba(201,169,110,0.9)" : "rgba(255,255,255,0.9)", color: isVendor ? "white" : "#5a4a3a" }}>
+          <div className="absolute top-2.5 left-2.5 font-body" style={{ fontSize: "9px", fontWeight: 'var(--w-h1)', letterSpacing: 'var(--ls-wide)', textTransform: "uppercase", padding: "2px 7px", borderRadius: "4px", background: isVendor ? "rgba(201,169,110,0.9)" : "rgba(255,255,255,0.9)", color: isVendor ? "white" : "#5a4a3a" }}> /* folio-design-system: off-scale */
             {isVendor ? (item.contentType === "product_launch" ? "Launch" : "Article") : "Collaboration"}
           </div>
         </div>
       )}
       <div className="px-4 py-3">
-        <div className="font-body font-medium" style={{ fontSize: "14px", color: "var(--folio-text-primary)", lineHeight: 1.3 }}>
+        <div className="font-body font-medium" style={{ fontSize: 'var(--type-ui)', color: "var(--folio-text-primary)", lineHeight: 'var(--lh-h4)' }}>
           {href ? <Link href={href} className="hover:underline">{item.title || item.projectTitle}</Link> : (item.title || item.projectTitle)}
         </div>
         {item.excerpt && (
-          <p className="font-body mt-1 line-clamp-2" style={{ fontSize: "12px", color: "var(--folio-text-secondary)", lineHeight: 1.5 }}>
+          <p className="font-body mt-1 line-clamp-2" style={{ fontSize: 'var(--type-meta)', color: "var(--folio-text-secondary)", lineHeight: 'var(--lh-body)' }}>
             {item.excerpt}
           </p>
         )}
-        <div className="font-body mt-2" style={{ fontSize: "11px", color: "var(--folio-text-tertiary)" }}>
+        <div className="font-body mt-2" style={{ fontSize: 'var(--type-eyebrow)', color: "var(--folio-text-tertiary)" }}>
           {item.designerName || item.authorName}
           {item.views ? ` · ${item.views} views` : ""}
         </div>
@@ -200,18 +200,18 @@ function ArticleCard({ item }: { item: FeedItem }) {
 /** Product launch card */
 function ProductLaunchCard({ item }: { item: FeedItem }) {
   return (
-    <Link href={`/products/${item.id}`} className="block rounded-xl overflow-hidden group" style={{ background: "var(--surface-ground, #faf8f5)" }}>
+    <Link href={`/products/${item.id}`} className="block rounded-xl overflow-hidden group" style={{ background: "var(--surface-ground)" }}>
       <div className="relative" style={{ height: 200 }}>
         {item.productImage && (
           <Image src={item.productImage} alt={item.productName || ""} fill className="object-cover transition-transform duration-300 group-hover:scale-105" sizes="400px" />
         )}
-        <div className="absolute top-2.5 left-2.5 font-body" style={{ fontSize: "9px", fontWeight: 500, letterSpacing: "0.5px", textTransform: "uppercase", padding: "2px 7px", borderRadius: "4px", background: "#639922", color: "white" }}>
+        <div className="absolute top-2.5 left-2.5 font-body" style={{ fontSize: "9px", fontWeight: 'var(--w-h1)', letterSpacing: 'var(--ls-wide)', textTransform: "uppercase", padding: "2px 7px", borderRadius: "4px", background: "#639922", color: "white" }}> /* folio-design-system: off-scale */
           New
         </div>
       </div>
       <div className="px-4 py-3">
-        <div className="font-body font-medium" style={{ fontSize: "13px", color: "var(--folio-text-primary)" }}>{item.productName}</div>
-        <div className="font-body" style={{ fontSize: "11px", color: "var(--folio-text-tertiary)" }}>{item.category || item.brand}</div>
+        <div className="font-body font-medium" style={{ fontSize: 'var(--type-meta)', color: "var(--folio-text-primary)" }}>{item.productName}</div>
+        <div className="font-body" style={{ fontSize: 'var(--type-eyebrow)', color: "var(--folio-text-tertiary)" }}>{item.category || item.brand}</div>
       </div>
     </Link>
   );

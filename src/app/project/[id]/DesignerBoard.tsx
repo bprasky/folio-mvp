@@ -367,51 +367,63 @@ export default function DesignerBoard({
 
   return (
     <div className="w-full space-y-6">
-      {/* Controls Bar */}
-      <div className="ridge-card p-4 flex items-center justify-between">
-        <div className="flex items-center space-x-4">
-          <label htmlFor="room-filter" className="folio-ui font-medium text-folio-text-primary">
-            Filter by room:
-          </label>
-          <select
-            id="room-filter"
-            value={selectedRoomId || ''}
-            onChange={(e) => setSelectedRoomId(e.target.value || null)}
-            className="ridge-input px-3 py-1.5 folio-ui"
-          >
-            <option value="">All Rooms</option>
-            {project.rooms.map(room => (
-              <option key={room.id} value={room.id}>
-                {formatRoomName(room.name)}
-              </option>
-            ))}
-          </select>
-        </div>
-
-        <div className="flex items-center space-x-4">
-          <div className="folio-ui text-folio-text-secondary">
-            {filteredRooms.length} room{filteredRooms.length !== 1 ? 's' : ''} • {filteredRooms.reduce((sum, room) => sum + room.selections.length, 0)} items
-          </div>
-
-          {/* Export Spec Button */}
-          <button
-            onClick={() => setExportModalOpen(true)}
-            className="ridge-btn px-4 py-2"
-          >
-            Export Spec
-          </button>
-
-          {/* Generate Images Button */}
-          {selectedRoomId && (
-            <button
-              onClick={handleGenerateImages}
-              className="accent-btn px-4 py-2 inline-flex items-center gap-2"
-            >
-              <FaImage className="w-4 h-4" />
-              Generate Images
-            </button>
+      {/* Room filter pills */}
+      <div className="flex items-center gap-3 flex-wrap">
+        <button
+          aria-pressed={selectedRoomId === null}
+          onClick={() => setSelectedRoomId(null)}
+          className={clsx(
+            'px-3.5 py-1.5 rounded-full text-sm transition-colors duration-[220ms]',
+            selectedRoomId === null
+              ? 'bg-folio-text-primary text-white border border-folio-text-primary'
+              : 'bg-surface-canvas text-folio-text-secondary border border-folio-border-subtle hover:border-folio-border-strong hover:text-folio-text-primary',
           )}
-        </div>
+        >
+          All rooms{' '}
+          <span className="opacity-60 ml-1.5 tabular-nums">{project.rooms.length}</span>
+        </button>
+        {project.rooms.map(room => (
+          <button
+            key={room.id}
+            aria-pressed={selectedRoomId === room.id}
+            onClick={() => setSelectedRoomId(room.id)}
+            className={clsx(
+              'px-3.5 py-1.5 rounded-full text-sm transition-colors duration-[220ms]',
+              selectedRoomId === room.id
+                ? 'bg-folio-text-primary text-white border border-folio-text-primary'
+                : 'bg-surface-canvas text-folio-text-secondary border border-folio-border-subtle hover:border-folio-border-strong hover:text-folio-text-primary',
+            )}
+          >
+            {formatRoomName(room.name)}{' '}
+            <span className="opacity-60 ml-1.5 tabular-nums">{room.selections.length}</span>
+          </button>
+        ))}
+
+        <div className="flex-1" />
+
+        <span className="text-sm text-folio-text-tertiary mr-1">
+          {filteredRooms.reduce((sum, room) => sum + room.selections.length, 0)}{' '}
+          {filteredRooms.reduce((sum, room) => sum + room.selections.length, 0) === 1
+            ? 'item'
+            : 'items'}
+        </span>
+
+        <button
+          onClick={() => setExportModalOpen(true)}
+          className="px-3.5 py-1.5 rounded-full text-sm border border-folio-border-subtle text-folio-text-secondary transition-colors duration-[220ms] hover:border-folio-border-strong hover:text-folio-text-primary"
+        >
+          Export spec
+        </button>
+
+        {selectedRoomId && (
+          <button
+            onClick={handleGenerateImages}
+            className="px-3.5 py-1.5 rounded-full text-sm border border-folio-border-subtle text-folio-text-secondary transition-colors duration-[220ms] hover:border-folio-border-strong hover:text-folio-text-primary inline-flex items-center gap-2"
+          >
+            <FaImage className="w-3.5 h-3.5" />
+            Generate images
+          </button>
+        )}
       </div>
 
       {/* Room Groups */}

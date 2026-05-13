@@ -54,11 +54,11 @@ export function BreatherQuote({
       <blockquote
         className="mx-auto max-w-[600px] px-6"
         style={{
-          fontFamily: "var(--font-headline, 'Cormorant Garamond', serif)",
+          fontFamily: "var(--font-headline)",
           fontSize: "clamp(22px, 3vw, 26px)",
           fontStyle: "italic",
-          fontWeight: 400,
-          lineHeight: 1.45,
+          fontWeight: 'var(--w-body)',
+          lineHeight: 1.45, /* folio-design-system: off-scale */
           color: "rgba(87, 75, 67, 0.55)",
           transform: reducedMotion
             ? undefined
@@ -76,13 +76,12 @@ export function BreatherQuote({
       <footer
         className="mt-4"
         style={{
-          fontFamily: "var(--font-body, 'Instrument Sans', sans-serif)",
-          fontSize: "12px",
+          fontSize: 'var(--type-meta)',
           color: "rgba(87, 75, 67, 0.35)",
           opacity: revealed ? 1 : 0,
           transition: reducedMotion
             ? undefined
-            : "opacity 500ms ease 300ms",
+            : "opacity 500ms ease 300ms"
         }}
       >
         &mdash; {attribution}

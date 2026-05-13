@@ -12,6 +12,7 @@ import Image from "next/image";
 import { useRef, useState, useCallback } from "react";
 import { motion, useScroll, useTransform } from "framer-motion";
 import { TaggedImage } from "@/components/project/interaction/TaggedImage";
+import { useImageAspect } from "./useImageAspect";
 
 interface PhotoTileProps {
   imageUrl: string;
@@ -23,6 +24,19 @@ interface PhotoTileProps {
   reducedMotion?: boolean;
   isExpanded?: boolean;
 }
+
+// Desktop column caps per aspect variant. Combined with --story-photo-vmax
+// they ensure no photo ever overflows the viewport vertically.
+//   - landscape stays edge-to-edge horizontally up to the height cap
+//   - portrait contained inside the prose reading column
+//   - square contained inside a slightly wider column
+// On mobile (≤768px) the viewport is narrower than every cap, so the rule
+// has no effect and photos stay full-width.
+const FRAME_COLUMN_CAP: Record<"landscape" | "portrait" | "square", string> = {
+  landscape: "100%",
+  portrait: "var(--story-prose-width)",
+  square: "var(--story-wide-width)",
+};
 
 export function PhotoTile({
   imageUrl,
@@ -37,6 +51,25 @@ export function PhotoTile({
   const ref = useRef<HTMLDivElement>(null);
   const [showDots, setShowDots] = useState(false);
   const holdTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Aspect-aware framing only applies to full-bleed photos. Half-width
+  // mosaic tiles already live inside the 2-col grid and are not at risk of
+  // overflowing the viewport. Unknown dimensions → fall back to full-bleed.
+  const aspect = useImageAspect(imageUrl, image?.width, image?.height);
+  const aspectKnown = aspect.frame !== null;
+  const frame = aspectKnown ? aspect.frame! : "landscape";
+  // Pass natural dimensions to next/image only on the full-bleed path; the
+  // half-width mosaic tiles are out of scope and keep their 1200×800 hint.
+  const naturalWidth = fullWidth ? aspect.width ?? 1200 : 1200;
+  const naturalHeight = fullWidth ? aspect.height ?? 800 : 800;
+  const aspectRatio = (aspect.width ?? 0) / (aspect.height ?? 1);
+  // Cap the photo so it always fits within the viewport: take the smaller of
+  // the column cap and the height-derived width (vmax × aspect). Landscape
+  // photos that would otherwise overflow vertically scale down here too.
+  const wrapperMaxWidth =
+    fullWidth && aspectKnown && aspectRatio > 0
+      ? `min(${FRAME_COLUMN_CAP[frame]}, calc(var(--story-photo-vmax) * ${aspectRatio.toFixed(4)}))`
+      : null;
 
   const { scrollYProgress } = useScroll({
     target: ref,
@@ -78,7 +111,7 @@ export function PhotoTile({
     }
   }, [showDots]);
 
-  return (
+  const tile = (
     <div
       ref={ref}
       className="relative overflow-hidden rounded-[12px] cursor-pointer group"
@@ -103,19 +136,27 @@ export function PhotoTile({
         <Image
           src={imageUrl}
           alt={alt}
-          width={1200}
-          height={800}
+          width={naturalWidth}
+          height={naturalHeight}
           className="w-full h-auto transition-transform duration-300 group-hover:scale-[1.01]"
-          sizes={fullWidth ? "100vw" : "(max-width: 768px) 100vw, 50vw"}
+          sizes={
+            fullWidth
+              ? frame === "portrait"
+                ? "(max-width: 768px) 100vw, 720px"
+                : frame === "square"
+                  ? "(max-width: 768px) 100vw, 920px"
+                  : "100vw"
+              : "(max-width: 768px) 100vw, 50vw"
+          }
         />
       </motion.div>
 
-      {/* Product tag dots — fade in on hover (desktop) or tap-hold (mobile) */}
+      {/* Product tag dots — fade in on hover (desktop) or tap-hold (mobile); persistent while expanded */}
       {hasTags && (
         <div
           className="absolute inset-0 z-10 pointer-events-none"
           style={{
-            opacity: showDots ? 1 : 0,
+            opacity: showDots || isExpanded ? 1 : 0,
             transition: "opacity 300ms ease",
           }}
         >
@@ -123,10 +164,21 @@ export function PhotoTile({
             className="pointer-events-auto absolute inset-0"
             onClick={(e) => e.stopPropagation()}
           >
-            <TaggedImage image={image} surface="post" />
+            <TaggedImage image={image} surface="post" forceDotsVisible={isExpanded} />
           </div>
         </div>
       )}
+    </div>
+  );
+
+  if (!wrapperMaxWidth) return tile;
+
+  // Constrain the photo so it fits the viewport on desktop (height-capped by
+  // --story-photo-vmax, width-capped by the column variant). Mobile viewports
+  // are narrower than every cap so the wrapper resolves to full width.
+  return (
+    <div className="mx-auto w-full" style={{ maxWidth: wrapperMaxWidth }}>
+      {tile}
     </div>
   );
 }

@@ -67,7 +67,7 @@ export function StoryViewer({ groups, index: startIndex, onClose }: Props) {
         <div className="relative h-full w-full max-w-[900px]" onClick={(e) => e.stopPropagation()}>
           {/* HEADER: Designer — Project */}
           <div className="absolute left-0 right-0 top-0 z-10 flex items-center justify-between p-3">
-            <div className="rounded-full bg-white/85 px-3 py-1 text-[12px] text-folio-text-primary shadow">
+            <div className="rounded-full bg-white/85 px-3 py-1 text-[var(--type-meta)] text-folio-text-primary shadow">
               {g.designer.name ? (
                 <Link href={getMonographUrl({ name: g.designer.name })} className="hover:underline">
                   {designerName}
@@ -86,7 +86,7 @@ export function StoryViewer({ groups, index: startIndex, onClose }: Props) {
                 </Link>
               )}
             </div>
-            <button onClick={onClose} className="rounded-full bg-white/80 px-3 py-1 text-[12px]">Close</button>
+            <button onClick={onClose} className="rounded-full bg-white/80 px-3 py-1 text-[var(--type-meta)]">Close</button>
           </div>
 
           {/* PROGRESS BARS */}

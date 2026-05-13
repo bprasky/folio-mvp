@@ -49,7 +49,7 @@ export default function SourcebookFilters({
           placeholder="Search..."
           value={searchTerm}
           onChange={(e) => onSearchChange(e.target.value)}
-          className="w-full pl-8 pr-3 py-1.5 text-[13px] rounded-lg border border-neutral-200 bg-white h-8 focus:border-[#c9a96e] focus:ring-0 focus:outline-none transition-colors"
+          className="w-full pl-8 pr-3 py-1.5 text-[var(--type-meta)] rounded-lg border border-neutral-200 bg-white h-8 focus:border-[var(--folio-gold-ornament)] focus:ring-0 focus:outline-none transition-colors"
         />
       </div>
 
@@ -82,12 +82,12 @@ export default function SourcebookFilters({
       />
 
       {/* Archive toggle */}
-      <label className="ml-auto flex items-center gap-1.5 text-[12px] text-neutral-400 cursor-pointer select-none">
+      <label className="ml-auto flex items-center gap-1.5 text-[var(--type-meta)] text-neutral-400 cursor-pointer select-none">
         <input
           type="checkbox"
           checked={showArchived}
           onChange={(e) => onShowArchivedChange(e.target.checked)}
-          className="rounded accent-[#c9a96e]"
+          className="rounded accent-[var(--folio-gold-ornament)]"
         />
         Show archived
       </label>

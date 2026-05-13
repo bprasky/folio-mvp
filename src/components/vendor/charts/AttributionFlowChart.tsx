@@ -66,7 +66,7 @@ export function AttributionFlowChart({ stages, className }: AttributionFlowChart
               {/* Arrow + conversion rate between stages */}
               {i < stages.length - 1 && (
                 <div className="flex flex-col items-center px-1 shrink-0">
-                  <span className="text-[10px] font-medium text-[#8C8278] mb-0.5">
+                  <span className="text-[var(--type-fine)] font-medium text-[#8C8278] mb-0.5">
                     {conversionRate > 0 ? `${conversionRate.toFixed(0)}%` : '—'}
                   </span>
                   <ArrowRight className="w-3 h-3 text-[#DAD2CA]" />

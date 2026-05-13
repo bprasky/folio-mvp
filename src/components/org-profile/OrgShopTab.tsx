@@ -93,10 +93,10 @@ export default function OrgShopTab({ products }: OrgShopTabProps) {
             <path d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" strokeLinecap="round" strokeLinejoin="round" />
           </svg>
         </div>
-        <p style={{ fontFamily: 'var(--font-body, "Instrument Sans", sans-serif)', fontSize: '15px', color: '#8B8178' }}>
+        <p style={{ fontSize: 'var(--type-body)', color: '#8B8178' }}>
           No products yet
         </p>
-        <p style={{ fontFamily: 'var(--font-body, "Instrument Sans", sans-serif)', fontSize: '13px', color: '#A69E96', marginTop: '4px' }}>
+        <p style={{ fontSize: 'var(--type-meta)', color: '#A69E96', marginTop: '4px' }}>
           Products tagged in projects will appear here.
         </p>
       </div>
@@ -111,13 +111,12 @@ export default function OrgShopTab({ products }: OrgShopTabProps) {
             <button
               key={c}
               onClick={() => setCategory(c)}
-              className="px-3.5 py-1.5 rounded-full text-[12px] border transition-colors"
+              className="px-3.5 py-1.5 rounded-full text-[var(--type-meta)] border transition-colors"
               style={{
                 borderColor: category === c ? '#2C2825' : '#E8E4DF',
                 backgroundColor: category === c ? '#2C2825' : 'transparent',
-                color: category === c ? '#FAF9F7' : '#8B8178',
-                fontFamily: 'var(--font-body, "Instrument Sans", sans-serif)',
-                cursor: 'pointer',
+                color: category === c ? 'var(--surface-ground)' : '#8B8178',
+                cursor: 'pointer'
               }}
             >
               {c === 'All' ? 'All' : getCategoryLabel(c)}
@@ -153,7 +152,7 @@ export default function OrgShopTab({ products }: OrgShopTabProps) {
                     <div className={`font-semibold leading-tight ${size === 'L' ? 'text-lg' : size === 'M' ? 'text-base' : 'text-sm'}`}>
                       {item.name}
                     </div>
-                    <div className="mt-0.5 flex items-center gap-2 text-white/80 text-[11px]">
+                    <div className="mt-0.5 flex items-center gap-2 text-white/80 text-[var(--type-eyebrow)]">
                       {item.vendor && <span>{item.vendor}</span>}
                       {item.projectCount > 1 && (
                         <span className="inline-flex items-center gap-1 rounded bg-black/40 px-1.5 py-0.5 backdrop-blur-sm">
@@ -246,7 +245,7 @@ function OrgProductModal({
                   <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
                   {product.projectTitle && (
                     <div className="absolute bottom-2 left-3">
-                      <span className="text-white/90 text-[11px] font-medium">
+                      <span className="text-white/90 text-[var(--type-eyebrow)] font-medium">
                         From: {product.projectTitle}
                       </span>
                     </div>
@@ -260,22 +259,22 @@ function OrgProductModal({
             <div className="mb-6">
               <h2 className="text-xl font-semibold" style={{ color: '#2C2825' }}>{product.name}</h2>
               {product.vendor && (
-                <p className="text-[14px] mt-1" style={{ color: '#A69E96' }}>{product.vendor}</p>
+                <p className="text-[var(--type-ui)] mt-1" style={{ color: '#A69E96' }}>{product.vendor}</p>
               )}
               {formattedPrice && (
-                <p className="text-[14px] mt-1 font-medium" style={{ color: '#5C554D' }}>{formattedPrice}</p>
+                <p className="text-[var(--type-ui)] mt-1 font-medium" style={{ color: '#5C554D' }}>{formattedPrice}</p>
               )}
             </div>
             {product.category && (
               <div className="mb-6">
-                <span className="inline-block px-3 py-1 rounded-full text-[12px]" style={{ backgroundColor: '#F0EDE9', color: '#8B8178' }}>
+                <span className="inline-block px-3 py-1 rounded-full text-[var(--type-meta)]" style={{ backgroundColor: '#F0EDE9', color: '#8B8178' }}>
                   {getCategoryLabel(product.category)}
                 </span>
               </div>
             )}
             {product.projectCount > 0 && (
-              <div className="mb-6 p-4 rounded-xl" style={{ backgroundColor: '#FAF9F7' }}>
-                <p className="text-[13px]" style={{ color: '#8B8178' }}>
+              <div className="mb-6 p-4 rounded-xl" style={{ backgroundColor: 'var(--surface-ground)' }}>
+                <p className="text-[var(--type-meta)]" style={{ color: '#8B8178' }}>
                   Featured in <span className="font-medium" style={{ color: '#5C554D' }}>{product.projectCount} project{product.projectCount !== 1 ? 's' : ''}</span>
                 </p>
               </div>
@@ -284,7 +283,7 @@ function OrgProductModal({
               <div className="mt-auto pt-4">
                 <a
                   href={`/project/${product.projectId}`}
-                  className="w-full py-3 px-6 rounded-xl text-[14px] font-medium border text-center block no-underline transition-colors"
+                  className="w-full py-3 px-6 rounded-xl text-[var(--type-ui)] font-medium border text-center block no-underline transition-colors"
                   style={{ borderColor: '#E8E4DF', color: '#5C554D' }}
                 >
                   View in Project

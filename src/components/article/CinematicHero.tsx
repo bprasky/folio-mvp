@@ -32,7 +32,7 @@ export default function CinematicHero({ imageUrl, title, deck }: Props) {
         />
       </motion.div>
       {/* light-bleed divider */}
-      <div className="pointer-events-none h-8 w-full -mt-4 rounded-2xl bg-gradient-to-b from-[var(--bg-base)]/70 to-transparent" />
+      <div className="pointer-events-none h-8 w-full -mt-4 rounded-2xl bg-gradient-to-b from-[var(--surface-canvas)]/70 to-transparent" />
       {/* optional subhead slip-in on first scroll */}
       {deck ? (
         <motion.p
@@ -40,7 +40,7 @@ export default function CinematicHero({ imageUrl, title, deck }: Props) {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, margin: "-20% 0px -10% 0px" }}
           transition={{ duration: 0.5 }}
-          className="mt-3 text-[15px] text-folio-text-secondary"
+          className="mt-3 text-[var(--type-body)] text-folio-text-secondary"
         >
           {deck}
         </motion.p>

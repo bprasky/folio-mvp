@@ -48,8 +48,8 @@ export function InboxButton() {
           className="absolute -top-1 -right-1 w-4 h-4 rounded-full text-white flex items-center justify-center"
           style={{
             backgroundColor: '#2C2825',
-            fontSize: '10px',
-            lineHeight: 1,
+            fontSize: 'var(--type-fine)',
+            lineHeight: 'var(--lh-logo)',
           }}
         >
           {unreadCount > 9 ? '9+' : unreadCount}

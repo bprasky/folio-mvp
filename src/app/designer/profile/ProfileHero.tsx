@@ -98,7 +98,7 @@ export default function ProfileHero({
           {tagline && (
             <p
               className="folio-quote mb-3"
-              style={{ fontSize: '17px', color: 'var(--text-secondary)', margin: '0 0 12px 0' }}
+              style={{ fontSize: 'var(--type-body)', color: 'var(--text-secondary)', margin: '0 0 12px 0' }}
             >
               &ldquo;{tagline}&rdquo;
             </p>
@@ -119,7 +119,7 @@ export default function ProfileHero({
               <>
                 <Link
                   href="/profile"
-                  className="accent-btn pill-btn px-7 py-2.5 text-[13px] no-underline inline-block"
+                  className="accent-btn pill-btn px-7 py-2.5 text-[var(--type-meta)] no-underline inline-block"
                 >
                   Edit Profile
                 </Link>
@@ -144,7 +144,7 @@ export default function ProfileHero({
                 {organization && (
                   <Link
                     href={`/org/${organization.id}`}
-                    className="ridge-btn pill-btn px-6 py-2 text-[13px] no-underline inline-block"
+                    className="ridge-btn pill-btn px-6 py-2 text-[var(--type-meta)] no-underline inline-block"
                   >
                     View {organization.name} ↗
                   </Link>
@@ -152,10 +152,10 @@ export default function ProfileHero({
               </>
             ) : (
               <>
-                <button className="accent-btn pill-btn px-7 py-2.5 text-[13px]">
+                <button className="accent-btn pill-btn px-7 py-2.5 text-[var(--type-meta)]">
                   Contact
                 </button>
-                <button className="ridge-btn pill-btn px-6 py-2 text-[13px]">
+                <button className="ridge-btn pill-btn px-6 py-2 text-[var(--type-meta)]">
                   Follow
                 </button>
               </>
@@ -173,7 +173,7 @@ export default function ProfileHero({
           align-items: center;
           justify-content: center;
           background: linear-gradient(135deg, var(--shadow-dark) 0%, var(--text-tertiary) 100%);
-          color: var(--bg-base);
+          color: var(--surface-canvas);
           font-size: 34px;
           font-weight: 600;
           letter-spacing: 0.05em;
@@ -215,10 +215,10 @@ function StatPill({ value, label }: { value: number; label: string }) {
   const formatted = value >= 1000 ? `${(value / 1000).toFixed(1)}k` : value.toString();
   return (
     <div className="text-center">
-      <div className="folio-h3" style={{ fontSize: '22px' }}>{formatted}</div>
+      <div className="folio-h3" style={{ fontSize: 'var(--type-h4)' }}>{formatted}</div>
       <div
         className="folio-meta"
-        style={{ fontSize: '10px', letterSpacing: '0.1em', textTransform: 'uppercase', marginTop: '1px' }}
+        style={{ fontSize: 'var(--type-fine)', letterSpacing: 'var(--ls-wide)', textTransform: 'uppercase', marginTop: '1px' }}
       >
         {label}
       </div>

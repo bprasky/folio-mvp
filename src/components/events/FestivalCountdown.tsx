@@ -27,7 +27,7 @@ export function FestivalCountdown({
   if (state === 'live') {
     return (
       <div
-        className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-medium text-stone-800 bg-[rgba(0,0,0,0.04)] dark:bg-[rgba(255,255,255,0.06)]"
+        className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[var(--type-fine)] font-medium text-stone-800 bg-[rgba(0,0,0,0.04)] dark:bg-[rgba(255,255,255,0.06)]"
         role="status"
         aria-label="Happening now"
       >
@@ -60,7 +60,7 @@ export function FestivalCountdown({
   // Pre-event state: Show countdown
   return (
     <div className="inline-flex items-baseline gap-1.5">
-      <span className="text-[11px] uppercase tracking-wide text-stone-600 font-sans">
+      <span className="text-[var(--type-eyebrow)] uppercase tracking-wide text-stone-600 font-sans">
         Starts in
       </span>
       <span

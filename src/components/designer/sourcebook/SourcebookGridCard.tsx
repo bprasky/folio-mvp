@@ -56,7 +56,7 @@ export default function SourcebookGridCard({
   return (
     <div
       className={`
-        rounded-xl overflow-hidden bg-[#FAF8F5] transition-all duration-200
+        rounded-xl overflow-hidden bg-[var(--surface-ground)] transition-all duration-200
         border border-[rgba(0,0,0,0.06)]
         hover:bg-[rgba(250,249,246,0.82)] hover:border-[rgba(201,169,110,0.25)]
         hover:shadow-[0_4px_24px_rgba(0,0,0,0.08)]
@@ -84,7 +84,7 @@ export default function SourcebookGridCard({
 
         {/* Category badge */}
         {entry.productCategory && (
-          <span className="absolute top-2 right-2 bg-[rgba(255,255,255,0.85)] rounded-md px-2 py-0.5 text-[11px] text-[#888]">
+          <span className="absolute top-2 right-2 bg-[rgba(255,255,255,0.85)] rounded-md px-2 py-0.5 text-[var(--type-eyebrow)] text-[#888]">
             {entry.productCategory}
           </span>
         )}
@@ -93,23 +93,23 @@ export default function SourcebookGridCard({
       {/* Body */}
       <div className="px-3.5 pt-3 pb-3.5">
         {/* Product name */}
-        <h3 className="text-[14px] font-medium text-folio-text-primary truncate">
+        <h3 className="text-[var(--type-ui)] font-medium text-folio-text-primary truncate">
           {entry.productName}
         </h3>
 
         {/* Vendor line */}
-        <p className="text-[12px] text-[#c9a96e] truncate mt-0.5">
+        <p className="text-[var(--type-meta)] text-[var(--folio-gold-ornament)] truncate mt-0.5">
           {entry.productBrand || '\u00A0'}
         </p>
 
         {/* Metadata pills */}
         <div className="flex flex-wrap gap-1.5 mt-2">
           {uniqueProjects.length > 0 && (
-            <span className="inline-block text-[11px] bg-[rgba(0,0,0,0.04)] rounded px-1.5 py-0.5 text-folio-text-secondary">
+            <span className="inline-block text-[var(--type-eyebrow)] bg-[rgba(0,0,0,0.04)] rounded px-1.5 py-0.5 text-folio-text-secondary">
               {uniqueProjects.length} {uniqueProjects.length === 1 ? 'project' : 'projects'}
             </span>
           )}
-          <span className="inline-block text-[11px] bg-[rgba(0,0,0,0.04)] rounded px-1.5 py-0.5 text-folio-text-secondary">
+          <span className="inline-block text-[var(--type-eyebrow)] bg-[rgba(0,0,0,0.04)] rounded px-1.5 py-0.5 text-folio-text-secondary">
             Last: {formatDate(entry.lastUsedAt)}
           </span>
         </div>
@@ -119,14 +119,14 @@ export default function SourcebookGridCard({
           <button
             type="button"
             onClick={() => onRequestQuote(entry)}
-            className="flex-1 text-[11px] py-1.5 rounded-md bg-transparent border border-[rgba(0,0,0,0.12)] text-folio-text-secondary cursor-pointer transition-all duration-150 hover:border-[rgba(201,169,110,0.4)] hover:text-[#c9a96e]"
+            className="flex-1 text-[var(--type-eyebrow)] py-1.5 rounded-md bg-transparent border border-[rgba(0,0,0,0.12)] text-folio-text-secondary cursor-pointer transition-all duration-150 hover:border-[rgba(201,169,110,0.4)] hover:text-[var(--folio-gold-ornament)]"
           >
             Quote
           </button>
           <button
             type="button"
             onClick={() => onRequestSample(entry)}
-            className="flex-1 text-[11px] py-1.5 rounded-md bg-transparent border border-[rgba(0,0,0,0.12)] text-folio-text-secondary cursor-pointer transition-all duration-150 hover:border-[rgba(201,169,110,0.4)] hover:text-[#c9a96e]"
+            className="flex-1 text-[var(--type-eyebrow)] py-1.5 rounded-md bg-transparent border border-[rgba(0,0,0,0.12)] text-folio-text-secondary cursor-pointer transition-all duration-150 hover:border-[rgba(201,169,110,0.4)] hover:text-[var(--folio-gold-ornament)]"
           >
             Sample
           </button>
@@ -136,7 +136,7 @@ export default function SourcebookGridCard({
             <button
               type="button"
               onClick={() => setMoreOpen(!moreOpen)}
-              className="w-full text-[11px] py-1.5 rounded-md bg-transparent border border-[rgba(0,0,0,0.12)] text-folio-text-secondary cursor-pointer transition-all duration-150 hover:border-[rgba(201,169,110,0.4)] hover:text-[#c9a96e]"
+              className="w-full text-[var(--type-eyebrow)] py-1.5 rounded-md bg-transparent border border-[rgba(0,0,0,0.12)] text-folio-text-secondary cursor-pointer transition-all duration-150 hover:border-[rgba(201,169,110,0.4)] hover:text-[var(--folio-gold-ornament)]"
             >
               More &#9662;
             </button>
@@ -146,21 +146,21 @@ export default function SourcebookGridCard({
                 <button
                   type="button"
                   onClick={() => { onContactRep(entry); setMoreOpen(false); }}
-                  className="w-full text-left px-3 py-1.5 text-[12px] text-folio-text-primary hover:bg-[rgba(0,0,0,0.03)] transition-colors"
+                  className="w-full text-left px-3 py-1.5 text-[var(--type-meta)] text-folio-text-primary hover:bg-[rgba(0,0,0,0.03)] transition-colors"
                 >
                   Contact Rep
                 </button>
                 <button
                   type="button"
                   onClick={() => { onUseInProject(entry); setMoreOpen(false); }}
-                  className="w-full text-left px-3 py-1.5 text-[12px] text-folio-text-primary hover:bg-[rgba(0,0,0,0.03)] transition-colors"
+                  className="w-full text-left px-3 py-1.5 text-[var(--type-meta)] text-folio-text-primary hover:bg-[rgba(0,0,0,0.03)] transition-colors"
                 >
                   Use in Project
                 </button>
                 <button
                   type="button"
                   onClick={() => { onEditNotes(entry); setMoreOpen(false); }}
-                  className="w-full text-left px-3 py-1.5 text-[12px] text-folio-text-primary hover:bg-[rgba(0,0,0,0.03)] transition-colors"
+                  className="w-full text-left px-3 py-1.5 text-[var(--type-meta)] text-folio-text-primary hover:bg-[rgba(0,0,0,0.03)] transition-colors"
                 >
                   {entry.notes ? 'Edit Notes' : 'Add Notes'}
                 </button>
@@ -168,7 +168,7 @@ export default function SourcebookGridCard({
                 <button
                   type="button"
                   onClick={() => { onArchive(entry.productId, !entry.archived); setMoreOpen(false); }}
-                  className="w-full text-left px-3 py-1.5 text-[12px] text-folio-text-primary hover:bg-[rgba(0,0,0,0.03)] transition-colors"
+                  className="w-full text-left px-3 py-1.5 text-[var(--type-meta)] text-folio-text-primary hover:bg-[rgba(0,0,0,0.03)] transition-colors"
                 >
                   {entry.archived ? 'Unarchive' : 'Archive'}
                 </button>

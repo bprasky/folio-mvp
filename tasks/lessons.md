@@ -137,3 +137,180 @@ you must, use the `.folio-h*`, `.folio-body`, `.folio-ui`, `.folio-meta`,
 
 **Full-codebase scope at time of lesson:** `grep -r font-bold src` returned
 ~205 hits — sweep them in a dedicated pass, not piecemeal.
+
+
+---
+
+## 2026-05-01 — accent consolidation: rename, do not redefine
+
+When introducing a token that supersedes another with the same name, give it a
+new name. `--folio-gold` was previously `#C9A96E` (ornamental); reusing the
+same variable name for the new functional value (`#B8845C`) would silently
+shift the rendered color of every existing `var(--folio-gold)` reference.
+Resolved by renaming the ornamental value to `--folio-gold-ornament` so the
+rename is explicit and grep-able.
+
+**Codemod gotcha:** A bulk `s/#C9A96E/var(--folio-gold-ornament)/g` will
+rewrite the *definition itself* (`--folio-gold-ornament: #C9A96E;` →
+`--folio-gold-ornament: var(--folio-gold-ornament);`), creating an infinite
+self-reference. Always grep for the new var name after a hex codemod and
+restore the literal in the canonical definition.
+
+**Why CI guards matter:** the burgundy `#7C1E3D` had been "removed" multiple
+times during pre-launch design iterations and kept reappearing through
+copy-paste. The `design-system-discipline.yml` workflow now scans `src/` and
+`tailwind.config.js` on every PR. Email templates and the pdfkit spec-sheet
+renderer are explicit exemptions because CSS variables don't resolve in
+mail clients or PDF generators.
+
+
+---
+
+## 2026-05-01 — canvas consolidation: deprecated aliases die with their introducer
+
+`--bg-base` was kept as an alias for `--surface-canvas` "for migration safety,"
+but six months later 50 callsites still leaned on the alias instead of the
+canonical token. The alias gives no signal that migration is incomplete —
+new code copy-pastes the alias because it works.
+
+**Better pattern:** when introducing a successor token, scan the codebase and
+migrate every callsite in the same PR, then delete the alias. The alias buys
+nothing if it survives the PR that introduced it.
+
+**Codemod nuance:** when migrating hex literals to CSS vars, audit the
+non-DOM rendering paths — pdfkit (PDF generation), `qrcode` (QR codes), and
+HTML email templates can't resolve `var()`. Add them to the CI guard's
+exemption list explicitly with a comment explaining why; otherwise a future
+contributor will "fix" them and break PDF / QR / email rendering.
+
+
+---
+
+## 2026-05-01 — typography: phantom aliases hide behind fallback chains
+
+`var(--font-cormorant, 'Cormorant Garamond', serif)` rendered correctly in
+the browser and read fine in code review, but `--font-cormorant` was never
+defined anywhere — the literal fallback was doing all the work. CSS variable
+typos fail silently when fallbacks exist.
+
+**Rule:** every `var(--token-*)` reference's token name must match a
+declaration in `globals.css`. The CI guard for Task 03 forbids
+`var(--font-cormorant)`, `var(--font-instrument)`, and `var(--font-logo)` by
+name. When introducing a new CSS variable, remember to grep the codebase for
+any existing typo of the name; rename your declaration to match callers, not
+the other way round, if the typo is widespread.
+
+**Inline declarations that restate inherited defaults are pure noise.**
+`<body>` already sets `font-[var(--font-body)]`. The 80+ inline
+`style={{ fontFamily: 'var(--font-body)' }}` declarations existed because
+authors defensively re-asserted the body font — they didn't change anything,
+they just obscured which elements actually wanted a font *switch* (the
+`var(--font-headline)` ones). 87 callsites collapsed to 4 (FolioBadgeModal
+QR-export carve-out) by deleting redundant declarations.
+
+**Codemod nuance:** a regex that matches `style={{ ... }}` on a single line
+won't catch the multiline JSX form
+```jsx
+<p
+  className="..."
+  style={{ fontFamily: "var(--font-body)" }}
+>
+```
+because the prop is its own line. Audit the post-codemod grep count and
+clean up the long-tail manually. (For Task 03 this was 4 callsites in
+MagazineFeedClient and project/interaction.)
+
+
+---
+
+## 2026-05-01 — type scale: off-scale near-duplicates accumulate silently
+
+The audit before Task 04 found 224 inline `fontSize` literals, 109
+`fontWeight`, 43 `lineHeight`, 61 `letterSpacing`, plus 394 `text-[Npx]`,
+21 `leading-[N]`, 57 `tracking-[N]`, and 109 `font-[N]` Tailwind arbitrary
+class hits. Many were near-duplicates of canonical sizes — `30px`, `34px`,
+`38px`, `42px`, `44px`, `17px`, `12px` — that designers eyeballed in dev
+tools without checking the token list.
+
+**A snap-to-nearest map with explicit FLAG buckets is the right migration
+shape.** The codemod converts confident matches (15→body, 28→h3 etc.) and
+leaves outliers in place for human triage. For Task 04 about 90% of inline
+literals (~397/441) snapped cleanly; 49 outliers (9px badges, 8px IG-export
+labels, 72px OG image, 1.7-line-height taglines) got
+`/* folio-design-system: off-scale */` markers and the CI guard skips
+those lines.
+
+**`FLAG` is a feature, not a hedge.** A migration script that "tries its
+best" and silently maps everything is worse than one that explicitly
+refuses on uncertainty. The flag count (49) was small enough to triage
+individually; the alternative — a bigger snap radius — would have
+silently shifted real design intent (a deliberate 9px vendor badge becoming
+an 11px eyebrow ruins layout density).
+
+**CSS utility classes ARE the API for type.** The existing `.folio-h1`
+through `.folio-stat` classes already existed in `globals.css` but were
+hard-coded with literal hex values. Refactoring them to use the new
+`--type-*` / `--lh-*` / `--w-*` tokens means every `<element class="folio-h2">`
+in the codebase now traces back to one canonical declaration. Designers
+can rename what `h2` means in one place and the whole product follows.
+
+**POSIX-extended regex is what `git grep -E` accepts.** `(?!...)` negative
+lookahead and `\d`/`\w` shortcuts don't work in `git grep -E`. Use
+character classes (`[^a-z0-9]`) and explicit alternations. Tested locally
+before pushing CI rules so the workflow doesn't fail on the first PR.
+
+
+---
+
+## 2026-05-01 — homepage editorial elevation feed (Task 05)
+
+**Don't put commerce inside the photograph.** Spec's first prototype put the
+boost reel as an opaque strip across the bottom of the editorial XL — made the
+photo unreadable, and on a portfolio platform the photo *is* the product.
+Pulling the reel out into a tethered row 16px below the hero solved the
+optical problem and made the boost mechanic *more* visible, not less.
+Proximity tethers; chrome doesn't.
+
+**The seam matters more than the sections.** The boost reel is the seam where
+editorial-curation meets algorithmic-feed AND it's Folio's monetization. Three
+jobs, one component. Don't introduce a "Sponsored products" section header —
+the per-product Boosted badge is enough disclosure. A header announces the
+seam and breaks reading flow.
+
+**Don't extend a uniqueness-constrained model for a different business
+object.** `InContextBoost.productTagId @unique` encodes "one boost per tag" —
+a contract worth preserving. Adding a homepage-reel placement to that model
+would have forced dropping the constraint and entangling two billing flows.
+Sibling model (`HomepageReelBoost`) keyed on `(projectPostId, productId,
+vendorId)` keeps lifecycles orthogonal — auction semantics on one side,
+tag-negotiation on the other.
+
+**Editorial-window data beats algorithmic-feature data for hero slots.** "Top
+engagement post" is mathematically right and editorially wrong — it surfaces
+what was already popular last week, not what should be popular this week. The
+scheduled `homepage_xl_starts_at` / `homepage_xl_ends_at` window gives
+editorial leverage; algorithmic fallback (highest-engagement in last 14 days)
+is real but should rarely fire.
+
+**Auth-state branching belongs server-side.** `useSession()` ternaries flicker
+visibly above the editorial hero on slow connections. Read session in the
+server component (`HomepagePage` calls `await auth()`), pass `isOut` as a
+prop, branch in the markup. One render, no flicker. The InviteRibbon's
+localStorage 24h-dismissal can't be checked server-side, so it renders with
+`visibility: hidden` and reveals on mount — same effect, different mechanism.
+
+**Audit-driven plans correct silent assumptions.** The spec assumed a
+`MagazinePost` model existed and that `product_boosts` was the table. Neither
+was true — posts are `ProjectPost` (variant `PROJECT_FEATURE`), and the boost
+landscape is two unrelated models (`Boost` for vendor testimonials, `InContextBoost`
+for designer tag negotiations). The exploration phase caught both before any
+schema migration was authored. Always grep for the model name before trusting
+a spec's "this already exists" framing.
+
+**Routing consolidation has a cost.** User chose `/magazine → /` redirect.
+That deletes the surface where `GatheringVoicesSection` and
+`PromptedQuestionsSection` lived. Mitigation: preserved the legacy MagazinePage
+shell at `/magazine/community` so the sections stay reachable for direct
+linking. The redirect handles email/newsletter deeplinks. Existing `/magazine`
+intra-site links flow through the redirect — accept the one extra hop in
+exchange for a cleaner mental model.

@@ -6,63 +6,36 @@ import Link from 'next/link';
 import { useSession } from 'next-auth/react';
 import {
   Sparkles,
-  TrendingUp,
-  BadgeCheck,
-  FolderKanban,
-  BookOpenText,
-  Newspaper,
-  Filter,
-  Layers,
   MoreVertical,
   Edit,
   Trash2,
-  X,
   Eye,
   EyeOff,
   Search,
   ExternalLink,
   ChevronDown,
-  User,
-  Building2,
-  MousePointerClick,
-  Users,
-  Plus
+  Plus,
+  Download,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useUserCapabilities } from '@/hooks/useUserCapabilities';
 import { EmptyStateHero, GuideCard, UpgradePrompt } from '@/components/projects';
-import { RidgeCard } from '@/components/ui/ridge-card';
 import { Button } from '@/components/ui/button';
 
 // ============================================================================
-// TYPE DEFINITIONS — Lifecycle + Overlays Model
+// TYPES
 // ============================================================================
 
-/**
- * Lifecycle: The fundamental state of a project (3 states only)
- * - DRAFT: Has no substance yet (empty shell)
- * - ACTIVE: Has substance (images, rooms, tags, etc.)
- * - ARCHIVED: Explicitly archived by user
- */
 export type Lifecycle = 'DRAFT' | 'ACTIVE' | 'ARCHIVED';
 
-/**
- * Overlays: Status badges that can apply to any lifecycle state
- * Editorial is NOT a phase — it's an overlay/recognition layer
- */
 export type Overlays = {
   isPublished: boolean;
   isEditorialCandidate: boolean;
   isEditorialFeatured: boolean;
 };
 
-/**
- * UI Section: How projects are grouped for display
- * (derived from Lifecycle + Overlays, not stored)
- */
 export type UISection = 'IN_PROGRESS' | 'PUBLISHED' | 'DRAFTS' | 'ARCHIVED';
 
-// Editorial thresholds (configurable constants)
 const EDITORIAL_SAVES_THRESHOLD = 25;
 const EDITORIAL_TAGGED_THRESHOLD = 10;
 
@@ -82,772 +55,505 @@ export type ProjectLite = {
   publishedAt: Date | null;
   archivedAt?: Date | null;
   deletedAt?: Date | null;
-  // Optional fields for enhanced lifecycle detection
   imageCount?: number;
   roomCount?: number;
   noteCount?: number;
   skeletonCount?: number;
-  // Computed fields (added during mapping)
   lifecycle?: Lifecycle;
   overlays?: Overlays;
   uiSection?: UISection;
-  // Ownership context
   ownershipContext?: 'personal' | 'organization';
   organizationId?: string | null;
   organizationName?: string | null;
 };
+
+type StatusTab = 'all' | 'progress' | 'published' | 'drafts';
+type SortOption = 'Recent' | 'Name A–Z' | 'Most items';
 
 interface ProjectsPageClientProps {
   projectsRaw: ProjectLite[];
   operatingAsOrgId?: string | null;
 }
 
+// ============================================================================
+// COVER GRADIENTS — deterministic by project id
+// ============================================================================
+
+const COVER_GRADIENTS = [
+  'bg-[linear-gradient(160deg,#B89B7A_0%,#6E5642_100%)]',
+  'bg-[linear-gradient(160deg,#C9A96E_0%,#8A6B47_100%)]',
+  'bg-[linear-gradient(160deg,#A89378_0%,#4F3A2A_100%)]',
+  'bg-[linear-gradient(160deg,#5C6B4E_0%,#2E3B2A_100%)]',
+  'bg-[linear-gradient(160deg,#B8845C_0%,#724A31_100%)]',
+];
+
+function hashToIndex(str: string, mod: number): number {
+  let h = 0;
+  for (let i = 0; i < str.length; i++) {
+    h = (h * 31 + str.charCodeAt(i)) >>> 0;
+  }
+  return h % mod;
+}
+
+function coverGradient(id: string): string {
+  return COVER_GRADIENTS[hashToIndex(id, COVER_GRADIENTS.length)];
+}
+
+// ============================================================================
+// MAIN CLIENT COMPONENT
+// ============================================================================
+
 export default function ProjectsPageClient({ projectsRaw, operatingAsOrgId }: ProjectsPageClientProps) {
   const { data: session } = useSession();
   const capabilities = useUserCapabilities();
   const [projectsState, setProjectsState] = useState<ProjectLite[]>(projectsRaw);
   const [searchQuery, setSearchQuery] = useState('');
+  const [statusTab, setStatusTab] = useState<StatusTab>('all');
+  const [sort, setSort] = useState<SortOption>('Recent');
   const [activeContextTab, setActiveContextTab] = useState<'all' | 'personal' | 'organization'>('all');
 
-  const projects: ProjectLite[] = useMemo(() =>
-    (projectsState ?? []).map(mapToProjectLite),
+  const projects: ProjectLite[] = useMemo(
+    () => (projectsState ?? []).map(mapToProjectLite),
     [projectsState]
   );
 
-  // Filter projects by search query and context tab
-  const filteredProjects = useMemo(() => {
-    let filtered = projects;
+  const contextFiltered = useMemo(() => {
+    if (activeContextTab === 'personal') return projects.filter(p => p.ownershipContext !== 'organization');
+    if (activeContextTab === 'organization') return projects.filter(p => p.ownershipContext === 'organization');
+    return projects;
+  }, [projects, activeContextTab]);
 
-    // Filter by context tab
-    if (activeContextTab === 'personal') {
-      filtered = filtered.filter(p => p.ownershipContext !== 'organization');
-    } else if (activeContextTab === 'organization') {
-      filtered = filtered.filter(p => p.ownershipContext === 'organization');
-    }
+  const searchFiltered = useMemo(() => {
+    if (!searchQuery.trim()) return contextFiltered;
+    const q = searchQuery.toLowerCase();
+    return contextFiltered.filter(p => p.title?.toLowerCase().includes(q));
+  }, [contextFiltered, searchQuery]);
 
-    // Filter by search query
-    if (searchQuery.trim()) {
-      const query = searchQuery.toLowerCase();
-      filtered = filtered.filter(p =>
-        p.title?.toLowerCase().includes(query)
+  const sortedProjects = useMemo(() => {
+    const arr = [...searchFiltered];
+    if (sort === 'Name A–Z') {
+      arr.sort((a, b) => (a.title ?? '').localeCompare(b.title ?? ''));
+    } else if (sort === 'Most items') {
+      arr.sort((a, b) =>
+        ((b.taggedCount ?? 0) + (b.roomCount ?? 0)) - ((a.taggedCount ?? 0) + (a.roomCount ?? 0))
       );
+    } else {
+      arr.sort((a, b) => {
+        const da = new Date(a.updatedAt ?? a.createdAt ?? 0).getTime();
+        const db = new Date(b.updatedAt ?? b.createdAt ?? 0).getTime();
+        return db - da;
+      });
     }
+    return arr;
+  }, [searchFiltered, sort]);
 
-    return filtered;
-  }, [projects, searchQuery, activeContextTab]);
+  const allGrouped = useMemo(() => groupBySection(sortedProjects), [sortedProjects]);
 
-  const grouped = useMemo(() => groupBySection(filteredProjects), [filteredProjects]);
+  const visibleGroups = useMemo(() => {
+    if (statusTab === 'progress') return { ...allGrouped, PUBLISHED: [], DRAFTS: [], ARCHIVED: [] };
+    if (statusTab === 'published') return { ...allGrouped, IN_PROGRESS: [], DRAFTS: [], ARCHIVED: [] };
+    if (statusTab === 'drafts') return { ...allGrouped, IN_PROGRESS: [], PUBLISHED: [], ARCHIVED: [] };
+    return allGrouped;
+  }, [allGrouped, statusTab]);
 
-  // Group projects by ownership context for counts
   const contextCounts = useMemo(() => {
     const personal = projects.filter(p => p.ownershipContext !== 'organization').length;
     const organization = projects.filter(p => p.ownershipContext === 'organization').length;
     return { personal, organization, total: projects.length };
   }, [projects]);
 
-  // Get unique org names for display
   const orgName = useMemo(() => {
     const orgProject = projects.find(p => p.organizationName);
-    return orgProject?.organizationName || session?.user?.operatingAsOrg?.name || 'My Firm';
+    return orgProject?.organizationName || (session?.user as any)?.operatingAsOrg?.name || 'My Firm';
   }, [projects, session]);
 
-  // Determine page title based on operating context
-  const pageTitle = useMemo(() => {
-    const userName = session?.user?.name || 'My';
-    const operatingAsOrg = session?.user?.operatingAsOrg;
-
-    if (operatingAsOrg) {
-      return `${operatingAsOrg.name} Projects`;
-    }
-    return `${userName}'s Projects`;
-  }, [session]);
-
-  // Handler for renaming projects
-  const handleRename = async (projectId: string, newTitle: string) => {
-    try {
-      const response = await fetch(`/api/projects/${projectId}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ title: newTitle }),
-      });
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || 'Failed to rename project');
-      }
-
-      // Update local state
-      setProjectsState(prev =>
-        prev.map(p => p.id === projectId ? { ...p, title: newTitle } : p)
-      );
-    } catch (error) {
-      console.error('Error renaming project:', error);
-      throw error;
-    }
-  };
-
-  // Handler for deleting/archiving projects
-  const handleDelete = async (projectId: string) => {
-    try {
-      const response = await fetch(`/api/projects/${projectId}`, {
-        method: 'DELETE',
-      });
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || 'Failed to delete project');
-      }
-
-      const result = await response.json();
-
-      // If project was deleted (not archived), remove from state
-      if (result.deleted) {
-        setProjectsState(prev => prev.filter(p => p.id !== projectId));
-      } else if (result.archived) {
-        // If archived, update status
-        setProjectsState(prev =>
-          prev.map(p => p.id === projectId ? { ...p, status: 'archived', lifecycle: 'ARCHIVED' as Lifecycle } : p)
-        );
-        alert(result.message);
-      }
-    } catch (error) {
-      console.error('Error deleting project:', error);
-      throw error;
-    }
-  };
-
-  // Handler for force deleting archived projects
-  const handleForceDelete = async (projectId: string) => {
-    try {
-      const response = await fetch(`/api/projects/${projectId}/force-delete`, {
-        method: 'DELETE',
-      });
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || 'Failed to force delete project');
-      }
-
-      // Remove from state
-      setProjectsState(prev => prev.filter(p => p.id !== projectId));
-    } catch (error) {
-      console.error('Error force deleting project:', error);
-      throw error;
-    }
-  };
-
   const totals = useMemo(() => {
-    const totalProjects = projects.length;
-    const publishedProjects = projects.filter(p => p.isPublic || p.publishedAt || p.status === 'published');
-    const totalPublished = publishedProjects.length;
-    const totalTagged = projects.reduce((a, p) => a + (p.taggedCount ?? 0), 0);
-    const totalViews = publishedProjects.reduce((a, p) => a + (p.views ?? 0), 0);
-    return { totalProjects, totalPublished, totalTagged, totalViews };
-  }, [projects]);
+    const totalProjects = sortedProjects.length;
+    const published = allGrouped.PUBLISHED;
+    const totalPublished = published.length;
+    const totalTagged = sortedProjects.reduce((a, p) => a + (p.taggedCount ?? 0), 0);
+    const totalViews = published.reduce((a, p) => a + (p.views ?? 0), 0);
+    const inProgress = allGrouped.IN_PROGRESS.length;
+    const drafts = allGrouped.DRAFTS.length;
+    const lastPublishedAt = published.reduce<Date | null>((latest, p) => {
+      const d = p.publishedAt ? new Date(p.publishedAt) : null;
+      if (!d) return latest;
+      return !latest || d > latest ? d : latest;
+    }, null);
+    return { totalProjects, totalPublished, totalTagged, totalViews, inProgress, drafts, lastPublishedAt };
+  }, [sortedProjects, allGrouped]);
+
+  const summarySentence = useMemo(() => {
+    if (totals.totalProjects === 0) return 'Nothing in progress yet — start your first project.';
+    if (totals.inProgress === 0) return `${spellNumber(totals.totalPublished)} published, nothing active`;
+    const uniqueStages = new Set(allGrouped.IN_PROGRESS.map(p => p.stage).filter(Boolean));
+    const stageCount = uniqueStages.size || 1;
+    return `${spellNumber(totals.inProgress)} active across ${spellNumber(stageCount)} ${stageCount === 1 ? 'phase' : 'phases'}`;
+  }, [totals, allGrouped]);
+
+  // ── Handlers (unchanged logic) ──
+
+  const handleRename = async (projectId: string, newTitle: string) => {
+    const response = await fetch(`/api/projects/${projectId}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ title: newTitle }),
+    });
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || 'Failed to rename project');
+    }
+    setProjectsState(prev => prev.map(p => p.id === projectId ? { ...p, title: newTitle } : p));
+  };
+
+  const handleDelete = async (projectId: string) => {
+    const response = await fetch(`/api/projects/${projectId}`, { method: 'DELETE' });
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || 'Failed to delete project');
+    }
+    const result = await response.json();
+    if (result.deleted) {
+      setProjectsState(prev => prev.filter(p => p.id !== projectId));
+    } else if (result.archived) {
+      setProjectsState(prev =>
+        prev.map(p => p.id === projectId ? { ...p, status: 'archived', lifecycle: 'ARCHIVED' as Lifecycle } : p)
+      );
+      alert(result.message);
+    }
+  };
+
+  const handleForceDelete = async (projectId: string) => {
+    const response = await fetch(`/api/projects/${projectId}/force-delete`, { method: 'DELETE' });
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || 'Failed to force delete project');
+    }
+    setProjectsState(prev => prev.filter(p => p.id !== projectId));
+  };
+
+  // ── Derived display data ──
+
+  const STATUS_TABS: { value: StatusTab; label: string; count: number }[] = [
+    { value: 'all', label: 'All', count: totals.totalProjects },
+    { value: 'progress', label: 'In progress', count: totals.inProgress },
+    { value: 'published', label: 'Published', count: totals.totalPublished },
+    { value: 'drafts', label: 'Drafts', count: totals.drafts },
+  ];
+
+  const stats = [
+    { label: 'Projects', value: String(totals.totalProjects), delta: `${totals.inProgress} in progress` },
+    {
+      label: 'Published',
+      value: String(totals.totalPublished),
+      delta: totals.lastPublishedAt ? `last on ${formatShort(totals.lastPublishedAt)}` : 'none yet',
+    },
+    { label: 'Products tagged', value: formatCount(totals.totalTagged), delta: 'across projects' },
+    { label: 'Total views', value: formatCount(totals.totalViews), delta: 'since publishing' },
+    { label: 'Affiliate clicks', value: '—', delta: 'trailing 30 days' },
+  ];
+
+  const userName = session?.user?.name ?? '';
+  const operatingAsOrg = (session?.user as any)?.operatingAsOrg;
+  const studioName = operatingAsOrg?.name ?? (userName ? `${userName.split(' ')[0]} Design Studio` : 'My Studio');
+  const totalForNew = sortedProjects.length;
 
   return (
     <div className="min-h-screen w-full -mx-6">
-      <div className="relative w-full">
-        {/* Designer Header */}
-        <div className="border-b border-folio-border-subtle">
-          <div className="max-w-7xl mx-auto px-4 md:px-8 py-8">
-            <div className="flex items-center gap-6 mb-6">
-              {/* Designer Avatar */}
-              <div className="relative">
-                <div className="w-20 h-20 rounded-full bg-gradient-to-br from-[var(--accent)] to-[var(--accent-hover)] flex items-center justify-center shadow-[var(--neu-raised)] border-2 border-folio-border-subtle">
-                  {session?.user?.image ? (
-                    <Image
-                      src={session.user.image}
-                      alt={session.user.name || 'Profile'}
-                      width={80}
-                      height={80}
-                      className="rounded-full object-cover"
-                    />
-                  ) : (
-                    <User className="w-10 h-10 text-white" />
-                  )}
-                </div>
-              </div>
+      <div className="max-w-[1280px] mx-auto px-10 pt-9 pb-24">
 
-              {/* Designer Info */}
-              <div className="flex-1">
-                <h1 className="folio-h1 text-folio-text-primary mb-1">
-                  {pageTitle}
-                </h1>
-                <p className="folio-body text-folio-text-secondary">
-                  {totals.totalProjects} {totals.totalProjects === 1 ? 'project' : 'projects'} in portfolio
-                </p>
-              </div>
-
-              {/* Create Button */}
+        {/* ── Page header ── */}
+        <header className="grid grid-cols-[1fr_auto] items-end gap-6 pb-7 border-b border-folio-border-subtle">
+          <div>
+            <div className="flex items-center gap-2.5 mb-3">
+              <span className="folio-eyebrow text-folio-text-secondary">My workspace</span>
+              <span className="w-1 h-1 rounded-full bg-folio-text-tertiary" aria-hidden />
+              <span className="folio-eyebrow text-folio-text-tertiary">{studioName}</span>
+            </div>
+            <h1 className="font-headline italic font-medium text-[56px] leading-[1.02] tracking-[-0.01em] text-folio-text-primary">
+              Projects
+            </h1>
+            <div className="mt-2.5 flex items-center gap-4 text-sm text-folio-text-secondary">
+              <span>{summarySentence}</span>
+              <span className="w-1 h-1 rounded-full bg-folio-text-tertiary" aria-hidden />
               <Link
-                href="/projects/new"
-                className="accent-btn px-5 py-2.5 inline-flex items-center gap-2"
+                href="/designer/profile"
+                className="text-folio-gold no-underline hover:text-folio-gold-hover transition-colors"
               >
-                <Plus className="h-5 w-5" />
-                <span>Create Project</span>
+                View directory listing →
               </Link>
             </div>
+          </div>
+          <div className="flex items-center gap-2.5">
+            <Button
+              variant="ridge"
+              className="inline-flex items-center gap-2 px-4 py-2.5 text-[13px] font-medium rounded-[10px]"
+            >
+              <Download className="w-3.5 h-3.5" />
+              Import
+            </Button>
+            <Link
+              href="/projects/new"
+              className="accent-btn inline-flex items-center gap-2 px-4 py-2.5 text-[13px] font-medium rounded-[10px]"
+            >
+              <Plus className="w-3.5 h-3.5" />
+              New project
+            </Link>
+          </div>
+        </header>
 
-            {/* Context Tabs - only show if user has mixed contexts (not filtered by operatingAsOrgId) */}
-            {!operatingAsOrgId && contextCounts.organization > 0 && (
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={() => setActiveContextTab('all')}
-                  className={cn(
-                    "px-4 py-2 folio-ui font-medium rounded-full transition-colors",
-                    activeContextTab === 'all'
-                      ? "bg-[var(--text-primary)] text-[var(--bg-elevated)]"
-                      : "bg-surface-canvas text-folio-text-secondary hover:bg-surface-ground"
-                  )}
-                >
-                  All ({contextCounts.total})
-                </button>
-                <button
-                  onClick={() => setActiveContextTab('personal')}
-                  className={cn(
-                    "px-4 py-2 folio-ui font-medium rounded-full transition-colors flex items-center gap-2",
-                    activeContextTab === 'personal'
-                      ? "bg-[var(--text-primary)] text-[var(--bg-elevated)]"
-                      : "bg-surface-canvas text-folio-text-secondary hover:bg-surface-ground"
-                  )}
-                >
-                  <User className="h-4 w-4" />
-                  Personal ({contextCounts.personal})
-                </button>
-                <button
-                  onClick={() => setActiveContextTab('organization')}
-                  className={cn(
-                    "px-4 py-2 folio-ui font-medium rounded-full transition-colors flex items-center gap-2",
-                    activeContextTab === 'organization'
-                      ? "bg-[var(--text-primary)] text-[var(--bg-elevated)]"
-                      : "bg-surface-canvas text-folio-text-secondary hover:bg-surface-ground"
-                  )}
-                >
-                  <Building2 className="h-4 w-4" />
-                  {orgName} ({contextCounts.organization})
-                </button>
+        {/* ── Stats baseline (designer only) ── */}
+        {!capabilities.isIndividual && (
+          <div className="flex gap-9 items-end py-[22px] border-b border-folio-border-subtle overflow-x-auto">
+            {stats.map((s, i) => (
+              <div
+                key={s.label}
+                className={cn(
+                  'flex flex-col gap-1 flex-shrink-0',
+                  i < stats.length - 1 && 'pr-9 border-r border-folio-border-subtle'
+                )}
+              >
+                <span className="text-[11px] font-medium tracking-[0.16em] uppercase text-folio-text-tertiary">
+                  {s.label}
+                </span>
+                <span className="font-headline text-[30px] font-medium leading-none tabular-nums text-folio-text-primary">
+                  {s.value}
+                </span>
+                <span className="text-xs text-folio-text-secondary">{s.delta}</span>
               </div>
-            )}
-          </div>
-        </div>
-
-        {/* Top Designer Impact Bar */}
-        <TopImpactBar totals={totals} capabilities={capabilities} />
-
-        {/* Search/Filter Bar */}
-        <div className="px-4 md:px-8 pt-6 pb-4">
-          <div className="max-w-7xl mx-auto">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-folio-text-secondary" />
-              <input
-                type="text"
-                placeholder="Search projects by name..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="glass-inset w-full pl-10 pr-4 py-3 rounded-lg text-folio-text-primary placeholder:text-folio-text-tertiary focus:outline-none focus:ring-2 focus:ring-[var(--accent)]/20"
-              />
-            </div>
-          </div>
-        </div>
-
-        {/* Empty State - Show when user has no projects */}
-        {projects.length === 0 && (
-          <div className="px-4 md:px-8 pb-8 pt-4 space-y-6">
-            <div className="max-w-7xl mx-auto">
-              <EmptyStateHero
-                userType={capabilities.userType}
-                userName={session?.user?.name ?? undefined}
-              />
-              {/* Guide card for designers */}
-              {capabilities.isDesigner && (
-                <div className="mt-6">
-                  <GuideCard
-                    projectCount={0}
-                    taggedCount={0}
-                    hasInterviewed={false}
-                    publishedCount={0}
-                  />
-                </div>
-              )}
-              {/* Subtle upgrade prompt for free designers */}
-              {capabilities.isFreeDesigner && (
-                <div className="mt-6">
-                  <UpgradePrompt variant="subtle" />
-                </div>
-              )}
-            </div>
+            ))}
           </div>
         )}
 
-        {/* Sections: Drafts first (inbox behavior), then In Progress, Published, Archived */}
+        {/* Context tabs — only when user has projects in multiple contexts */}
+        {!operatingAsOrgId && contextCounts.organization > 0 && (
+          <div className="flex items-center gap-2 pt-5">
+            {(['all', 'personal', 'organization'] as const).map((tab) => {
+              const label =
+                tab === 'all' ? `All (${contextCounts.total})` :
+                tab === 'personal' ? `Personal (${contextCounts.personal})` :
+                `${orgName} (${contextCounts.organization})`;
+              return (
+                <button
+                  key={tab}
+                  onClick={() => setActiveContextTab(tab)}
+                  className={cn(
+                    'px-4 py-2 text-sm font-medium rounded-full transition-colors',
+                    activeContextTab === tab
+                      ? 'bg-folio-text-primary text-surface-canvas'
+                      : 'bg-surface-canvas text-folio-text-secondary hover:bg-surface-ground'
+                  )}
+                >
+                  {label}
+                </button>
+              );
+            })}
+          </div>
+        )}
+
+        {/* ── Filter strip ── */}
+        <div className="flex items-center gap-2.5 py-5 pb-6">
+          <div role="tablist" className="inline-flex bg-surface-ground border border-folio-border-subtle rounded-full p-[3px]">
+            {STATUS_TABS.map(tab => (
+              <button
+                key={tab.value}
+                role="tab"
+                aria-selected={statusTab === tab.value}
+                onClick={() => setStatusTab(tab.value)}
+                className={cn(
+                  'px-3.5 py-1.5 rounded-full text-sm font-medium transition-colors duration-150',
+                  statusTab === tab.value
+                    ? 'bg-surface-canvas text-folio-text-primary shadow-[0_1px_2px_rgba(22,22,20,0.06)]'
+                    : 'text-folio-text-secondary hover:text-folio-text-primary'
+                )}
+              >
+                {tab.label}
+                <span className="ml-1 text-folio-text-tertiary tabular-nums">{tab.count}</span>
+              </button>
+            ))}
+          </div>
+
+          <div className="flex-1" />
+
+          <label
+            className="inline-flex items-center gap-2 px-3.5 py-2 rounded-full border border-folio-border-subtle bg-surface-canvas min-w-[240px] hover:border-folio-border-strong focus-within:border-folio-border-strong transition-colors"
+          >
+            <Search className="w-3.5 h-3.5 text-folio-text-tertiary flex-shrink-0" />
+            <input
+              type="search"
+              placeholder="Search projects by name…"
+              value={searchQuery}
+              onChange={e => setSearchQuery(e.target.value)}
+              aria-label="Search projects"
+              className="bg-transparent border-0 outline-none text-sm text-folio-text-primary placeholder:text-folio-text-tertiary w-full"
+            />
+          </label>
+
+          <SortMenu value={sort} onChange={setSort} />
+        </div>
+
+        {/* ── Empty state ── */}
+        {projects.length === 0 && (
+          <div className="py-12">
+            <EmptyStateHero
+              userType={capabilities.userType}
+              userName={session?.user?.name ?? undefined}
+            />
+            {capabilities.isDesigner && (
+              <div className="mt-6">
+                <GuideCard projectCount={0} taggedCount={0} hasInterviewed={false} publishedCount={0} />
+              </div>
+            )}
+            {capabilities.isFreeDesigner && (
+              <div className="mt-6">
+                <UpgradePrompt variant="subtle" />
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* ── Sections ── */}
         {projects.length > 0 && (
-          <>
-            <div className="space-y-6 px-4 md:px-8 pb-8 pt-4 mx-4 md:mx-8">
-              {/* Drafts section - appears first, expands if has projects */}
-              <CollapsibleSectionBand
-                section="DRAFTS"
-                projects={grouped.DRAFTS}
-                defaultExpanded={grouped.DRAFTS.length > 0}
+          <div className="space-y-10">
+            {capabilities.isDesigner && totals.totalProjects > 0 && totals.totalPublished === 0 && (
+              <GuideCard
+                projectCount={totals.totalProjects}
+                taggedCount={totals.totalTagged}
+                hasInterviewed={false}
+                publishedCount={totals.totalPublished}
+              />
+            )}
+
+            {(statusTab === 'all' || statusTab === 'drafts') && (
+              <CollapsibleSection
+                title="Drafts"
+                projects={visibleGroups.DRAFTS}
+                defaultExpanded={visibleGroups.DRAFTS.length > 0}
                 onRename={handleRename}
                 onDelete={handleDelete}
                 onForceDelete={handleForceDelete}
               />
+            )}
 
-              {/* Guide card for designers with some projects but incomplete workflow */}
-              {capabilities.isDesigner && totals.totalProjects > 0 && totals.totalPublished === 0 && (
-                <GuideCard
-                  projectCount={totals.totalProjects}
-                  taggedCount={totals.totalTagged}
-                  hasInterviewed={false}
-                  publishedCount={totals.totalPublished}
-                />
-              )}
-            </div>
-
-            {/* Primary Sections: In Progress + Published */}
-            <div className="space-y-10 px-4 md:px-8 pb-8">
-              <SectionBand
-                section="IN_PROGRESS"
-                projects={grouped.IN_PROGRESS}
-                defaultExpanded={grouped.IN_PROGRESS.length > 0 || grouped.PUBLISHED.length === 0}
+            {(statusTab === 'all' || statusTab === 'progress') && visibleGroups.IN_PROGRESS.length > 0 && (
+              <ProjectSection
+                title="In progress"
+                projects={visibleGroups.IN_PROGRESS}
+                showNewTile={totalForNew < 9}
                 onRename={handleRename}
                 onDelete={handleDelete}
                 onForceDelete={handleForceDelete}
               />
-              <SectionBand
-                section="PUBLISHED"
-                projects={grouped.PUBLISHED}
-                defaultExpanded={grouped.PUBLISHED.length > 0 || grouped.IN_PROGRESS.length === 0}
+            )}
+
+            {(statusTab === 'all' || statusTab === 'published') && visibleGroups.PUBLISHED.length > 0 && (
+              <ProjectSection
+                title="Published"
+                projects={visibleGroups.PUBLISHED}
+                showNewTile={false}
                 onRename={handleRename}
                 onDelete={handleDelete}
                 onForceDelete={handleForceDelete}
               />
-            </div>
+            )}
 
-            {/* Secondary Section: Archived (collapsible) */}
-            <div className="space-y-6 px-4 md:px-8 pb-8">
-              <CollapsibleSectionBand
-                section="ARCHIVED"
-                projects={grouped.ARCHIVED}
+            {statusTab === 'all' && (
+              <CollapsibleSection
+                title="Archived"
+                projects={visibleGroups.ARCHIVED}
                 defaultExpanded={false}
                 onRename={handleRename}
                 onDelete={handleDelete}
                 onForceDelete={handleForceDelete}
               />
-            </div>
+            )}
 
-            {/* Upgrade prompt for free designers at bottom */}
             {capabilities.isFreeDesigner && totals.totalProjects > 0 && (
-              <div className="px-4 md:px-8 pb-20">
-                <div className="max-w-7xl mx-auto">
-                  <UpgradePrompt variant="prominent" />
-                </div>
+              <div className="pt-4">
+                <UpgradePrompt variant="prominent" />
               </div>
             )}
-
-            {/* Spacer for non-free designers */}
-            {!capabilities.isFreeDesigner && <div className="pb-12" />}
-          </>
+          </div>
         )}
-
-        {/* Folio Index Drawer trigger (right rail) */}
-        <FolioIndexDrawer projects={projects} />
       </div>
+
+      <FolioIndexDrawer projects={projects} />
     </div>
   );
 }
 
 // ============================================================================
-// LIFECYCLE + OVERLAYS COMPUTATION (Source of Truth)
+// SECTION HEAD
 // ============================================================================
 
-/**
- * Compute the lifecycle state of a project
- * Rules (in priority order):
- * 1. If explicitly archived → ARCHIVED
- * 2. If no substance (no images, rooms, tags, notes) → DRAFT
- * 3. Otherwise → ACTIVE
- *
- * IMPORTANT: ProjectStage is NOT used for lifecycle determination.
- * Stage is only a sorting hint, not the truth layer.
- */
-function computeLifecycle(p: ProjectLite): Lifecycle {
-  // Check for explicit archive signal (archivedAt field or status)
-  if (p.archivedAt || (p.status ?? '').toLowerCase() === 'archived') {
-    return 'ARCHIVED';
-  }
-
-  // Determine "substance" using available fields
-  // Use coverUrl as proxy for hasImages when imageCount isn't available
-  const hasImages = (p.imageCount ?? 0) > 0 || p.coverUrl != null;
-  const hasRooms = (p.roomCount ?? 0) > 0;
-  const hasTags = (p.taggedCount ?? 0) > 0;
-  const hasNotes = (p.noteCount ?? 0) > 0;
-  const hasSkeletons = (p.skeletonCount ?? 0) > 0;
-
-  const hasSubstance = hasImages || hasRooms || hasTags || hasNotes || hasSkeletons;
-
-  if (!hasSubstance) {
-    return 'DRAFT';
-  }
-
-  return 'ACTIVE';
-}
-
-/**
- * Compute overlay flags for a project
- * - isPublished: Project is publicly visible
- * - isEditorialCandidate: Meets engagement thresholds (requires published)
- * - isEditorialFeatured: Has been elevated to editorial (actual publication)
- */
-function computeOverlays(p: ProjectLite): Overlays {
-  const isPublished = Boolean(p.isPublic || p.publishedAt);
-
-  // Editorial Featured: Check for actual editorial publication
-  // TODO: Wire to editorial post model when available (e.g., p.editorialPost?.publishedAt)
-  // For now, we don't have this field, so default to false
-  const isEditorialFeatured = false;
-
-  // Editorial Candidate: Must be published AND meet engagement thresholds
-  const saves = p.savesByOthers ?? 0;
-  const tagged = p.taggedCount ?? 0;
-  const isEditorialCandidate = isPublished &&
-    saves >= EDITORIAL_SAVES_THRESHOLD &&
-    tagged >= EDITORIAL_TAGGED_THRESHOLD;
-
-  return {
-    isPublished,
-    isEditorialCandidate,
-    isEditorialFeatured,
-  };
-}
-
-/**
- * Derive UI section from lifecycle + overlays
- * Priority rule: Published always wins (shows in Published section)
- */
-function computeUISection(lifecycle: Lifecycle, overlays: Overlays): UISection {
-  // Archived always goes to Archived (even if published)
-  if (lifecycle === 'ARCHIVED') {
-    return 'ARCHIVED';
-  }
-
-  // Published projects go to Published section
-  if (overlays.isPublished) {
-    return 'PUBLISHED';
-  }
-
-  // Drafts (no substance) go to Drafts section
-  if (lifecycle === 'DRAFT') {
-    return 'DRAFTS';
-  }
-
-  // Active unpublished projects go to In Progress
-  return 'IN_PROGRESS';
-}
-
-// ---------- Helpers / Components ----------
-
-function mapToProjectLite(p: ProjectLite): ProjectLite {
-  const taggedCount = Number(p.taggedCount ?? 0);
-  const savesByOthers = Number(p.savesByOthers ?? 0);
-  const influenceValueUsd = Number(p.influenceValueUsd ?? 0);
-  const views = Number(p.views ?? 0);
-
-  // Compute lifecycle and overlays (the new truth layer)
-  const lifecycle = computeLifecycle({ ...p, taggedCount, savesByOthers });
-  const overlays = computeOverlays({ ...p, taggedCount, savesByOthers });
-  const uiSection = computeUISection(lifecycle, overlays);
-
-  return {
-    ...p,
-    taggedCount,
-    savesByOthers,
-    influenceValueUsd,
-    views,
-    lifecycle,
-    overlays,
-    uiSection,
-  };
-}
-
-/**
- * Group projects by UI section for display
- */
-function groupBySection(projects: ProjectLite[]) {
-  return projects.reduce<Record<UISection, ProjectLite[]>>((acc, p) => {
-    const section = p.uiSection ?? 'IN_PROGRESS';
-    (acc[section] ??= []).push(p);
-    return acc;
-  }, {
-    IN_PROGRESS: [],
-    PUBLISHED: [],
-    DRAFTS: [],
-    ARCHIVED: []
-  });
-}
-
-interface TopImpactBarProps {
-  totals: {
-    totalProjects: number;
-    totalPublished: number;
-    totalTagged: number;
-    totalViews: number;
-    affiliateClicks?: number;
-    collectionsCount?: number;
-    savedProductsCount?: number;
-  };
-  capabilities: ReturnType<typeof useUserCapabilities>;
-}
-
-function TopImpactBar({ totals, capabilities }: TopImpactBarProps) {
-  const [isExpanded, setIsExpanded] = useState(() => {
-    if (typeof window !== 'undefined') {
-      const saved = localStorage.getItem('projects-metrics-expanded');
-      return saved !== null ? saved === 'true' : false;
-    }
-    return false;
-  });
-
-  // Persist expanded state
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      localStorage.setItem('projects-metrics-expanded', String(isExpanded));
-    }
-  }, [isExpanded]);
-
-  const {
-    isIndividual,
-    showPublishedStat,
-    showProductsTaggedStat,
-    showAffiliateClicks,
-    showDirectoryLink
-  } = capabilities;
-
-  // Individual users see Collections and Saved Products only
-  if (isIndividual) {
-    return (
-      <RidgeCard className="mx-4 md:mx-8 mt-4">
-        <button
-          onClick={() => setIsExpanded(!isExpanded)}
-          className="w-full px-4 py-3 flex items-center justify-between hover:bg-surface-canvas transition-all duration-150 rounded-2xl"
-        >
-          <div className="flex items-center gap-3">
-            <div className="p-1.5 rounded-lg bg-surface-canvas border border-folio-border-subtle">
-              <TrendingUp className="h-4 w-4 text-folio-text-secondary" />
-            </div>
-            <h3 className="folio-h3 text-folio-text-primary">Portfolio Stats</h3>
-          </div>
-          <div className={cn(
-            "text-folio-text-secondary transition-transform",
-            isExpanded ? "rotate-180" : ""
-          )}>
-            <ChevronDown className="h-4 w-4" />
-          </div>
-        </button>
-
-        {isExpanded && (
-          <div className="px-4 pb-4">
-            <div className="grid grid-cols-2 gap-3">
-              <MetricPill icon={Layers} label="COLLECTIONS" value={formatNumber(totals.collectionsCount ?? 0)} />
-              <MetricPill icon={BookOpenText} label="SAVED PRODUCTS" value={formatNumber(totals.savedProductsCount ?? 0)} />
-            </div>
-          </div>
-        )}
-      </RidgeCard>
-    );
-  }
-
-  // Designers see the full stats bar (collapsible)
+function ProjectsSectionHead({ title, count }: { title: string; count: number }) {
   return (
-    <RidgeCard className="mx-4 md:mx-8 mt-4">
-      <button
-        onClick={() => setIsExpanded(!isExpanded)}
-        className="w-full px-4 py-3 flex items-center justify-between hover:bg-surface-canvas transition-all duration-150 rounded-2xl"
-      >
-        <div className="flex items-center gap-3">
-          <div className="p-1.5 rounded-lg bg-surface-canvas border border-folio-border-subtle">
-            <TrendingUp className="h-4 w-4 text-folio-text-secondary" />
-          </div>
-          <h3 className="folio-h3 text-folio-text-primary">Portfolio Stats</h3>
-          <span className="folio-meta text-folio-text-secondary">
-            {formatNumber(totals.totalProjects)} projects, {formatNumber(totals.totalViews)} views
-          </span>
-        </div>
-        <div className={cn(
-          "text-folio-text-secondary transition-transform",
-          isExpanded ? "rotate-180" : ""
-        )}>
-          <ChevronDown className="h-4 w-4" />
-        </div>
-      </button>
-
-      {isExpanded && (
-        <div className="px-4 pb-4">
-          <div className={cn(
-            "grid gap-3",
-            showAffiliateClicks ? "grid-cols-2 md:grid-cols-5" : "grid-cols-2 md:grid-cols-4"
-          )}>
-            <MetricPill icon={FolderKanban} label="PROJECTS" value={formatNumber(totals.totalProjects)} />
-            {showPublishedStat && (
-              <MetricPill icon={BadgeCheck} label="PUBLISHED" value={formatNumber(totals.totalPublished)} />
-            )}
-            {showProductsTaggedStat && (
-              <MetricPill icon={Layers} label="PRODUCTS TAGGED" value={formatNumber(totals.totalTagged)} />
-            )}
-            <MetricPill icon={Eye} label="TOTAL VIEWS" value={formatNumber(totals.totalViews)} />
-            {showAffiliateClicks && (
-              <MetricPill
-                icon={MousePointerClick}
-                label="AFFILIATE CLICKS"
-                value={formatNumber(totals.affiliateClicks ?? 0)}
-                emphasis={true}
-              />
-            )}
-          </div>
-          {showDirectoryLink && (
-            <div className="mt-3 flex justify-end">
-              <Link
-                href="/designer/profile"
-                className="inline-flex items-center gap-1.5 folio-meta text-folio-text-secondary hover:text-folio-text-primary transition-colors"
-              >
-                <Users className="h-3.5 w-3.5" />
-                View your directory listing
-              </Link>
-            </div>
-          )}
-        </div>
-      )}
-    </RidgeCard>
-  );
-}
-
-function MetricPill({
-  icon: Icon,
-  label,
-  value,
-  emphasis = false,
-  muted = false
-}: {
-  icon: any;
-  label: string;
-  value: any;
-  emphasis?: boolean;
-  muted?: boolean;
-}) {
-  return (
-    <div className={cn(
-      "px-4 py-3 flex items-center gap-3 rounded-lg border border-folio-border-subtle bg-surface-canvas",
-      muted && "opacity-60"
-    )}>
-      <Icon className={cn(
-        "h-5 w-5 text-folio-text-secondary",
-        emphasis && "text-[var(--accent)]"
-      )} />
-      <div className="flex flex-col leading-tight">
-        <span className="folio-meta uppercase tracking-wider text-folio-text-secondary">{label}</span>
-        <span className={cn(
-          "folio-h3",
-          muted ? "text-folio-text-tertiary" : "text-folio-text-primary",
-          emphasis && "text-[var(--accent)]"
-        )}>{value}</span>
-      </div>
+    <div className="flex items-baseline gap-3.5 mt-3 mb-5">
+      <h2 className="font-headline italic font-medium text-2xl leading-none text-folio-text-primary">
+        {title}
+      </h2>
+      <span className="text-sm text-folio-text-tertiary">
+        {count} {count === 1 ? 'project' : 'projects'}
+      </span>
+      <span className="flex-1 h-px bg-folio-border-subtle self-center" />
     </div>
   );
 }
 
-const SECTION_CONFIG: Record<UISection, { title: string; emptyMessage: string; icon: any }> = {
-  IN_PROGRESS: {
-    title: 'In Progress',
-    emptyMessage: 'No active projects. Start one by uploading your latest completed work.',
-    icon: FolderKanban
-  },
-  PUBLISHED: {
-    title: 'Published',
-    emptyMessage: 'Nothing published yet. When you\'re ready to share, your work will appear here.',
-    icon: BadgeCheck
-  },
-  DRAFTS: {
-    title: 'Drafts',
-    emptyMessage: 'No empty drafts.',
-    icon: Filter
-  },
-  ARCHIVED: {
-    title: 'Archived',
-    emptyMessage: 'No archived projects.',
-    icon: Filter
-  },
-};
+// ============================================================================
+// PROJECT SECTION (non-collapsible)
+// ============================================================================
 
-function SectionBand({
-  section,
+function ProjectSection({
+  title,
   projects,
-  defaultExpanded = true,
+  showNewTile,
   onRename,
   onDelete,
-  onForceDelete
+  onForceDelete,
 }: {
-  section: UISection;
+  title: string;
   projects: ProjectLite[];
-  defaultExpanded?: boolean;
-  onRename?: (projectId: string, newTitle: string) => void;
-  onDelete?: (projectId: string) => void;
-  onForceDelete?: (projectId: string) => void;
+  showNewTile?: boolean;
+  onRename?: (id: string, t: string) => void;
+  onDelete?: (id: string) => void;
+  onForceDelete?: (id: string) => void;
 }) {
-  const config = SECTION_CONFIG[section];
+  if (projects.length === 0 && !showNewTile) return null;
 
   return (
     <div>
-      <header className="flex items-center justify-between mb-4">
-        <div className="flex items-center gap-3">
-          <div className="p-2 rounded-lg bg-surface-canvas border border-folio-border-subtle">
-            <config.icon className="h-5 w-5 text-folio-text-secondary" />
-          </div>
-          <h2 className="folio-h2 text-folio-text-primary">
-            {config.title}
-          </h2>
-        </div>
-        <div className="flex items-center gap-2 folio-meta text-folio-text-secondary">
-          {projects.length} {projects.length === 1 ? 'project' : 'projects'}
-        </div>
-      </header>
-
-      {projects.length === 0 ? (
-        <div className="folio-body text-folio-text-secondary italic py-8 px-2">{config.emptyMessage}</div>
-      ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-          {projects.map(p => (
-            <ProjectCard
-              key={p.id}
-              p={p}
-              onRename={onRename}
-              onDelete={onDelete}
-              onForceDelete={onForceDelete}
-            />
-          ))}
-        </div>
-      )}
+      <ProjectsSectionHead title={title} count={projects.length} />
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-6 gap-y-7">
+        {projects.map(p => (
+          <ProjectCard key={p.id} p={p} onRename={onRename} onDelete={onDelete} onForceDelete={onForceDelete} />
+        ))}
+        {showNewTile && <NewProjectTile />}
+      </div>
     </div>
   );
 }
 
-function CollapsibleSectionBand({
-  section,
+// ============================================================================
+// COLLAPSIBLE SECTION
+// ============================================================================
+
+function CollapsibleSection({
+  title,
   projects,
-  defaultExpanded = false,
+  defaultExpanded,
   onRename,
   onDelete,
-  onForceDelete
+  onForceDelete,
 }: {
-  section: UISection;
+  title: string;
   projects: ProjectLite[];
-  defaultExpanded?: boolean;
-  onRename?: (projectId: string, newTitle: string) => void;
-  onDelete?: (projectId: string) => void;
-  onForceDelete?: (projectId: string) => void;
+  defaultExpanded: boolean;
+  onRename?: (id: string, t: string) => void;
+  onDelete?: (id: string) => void;
+  onForceDelete?: (id: string) => void;
 }) {
-  const storageKey = `projects-section-${section}-expanded`;
+  const storageKey = `projects-section-${title}-expanded`;
   const [isExpanded, setIsExpanded] = useState(() => {
     if (typeof window !== 'undefined') {
       const saved = localStorage.getItem(storageKey);
@@ -855,80 +561,121 @@ function CollapsibleSectionBand({
     }
     return defaultExpanded;
   });
-  const config = SECTION_CONFIG[section];
 
-  // Persist expanded state to localStorage
   useEffect(() => {
     if (typeof window !== 'undefined') {
       localStorage.setItem(storageKey, String(isExpanded));
     }
   }, [isExpanded, storageKey]);
 
-  // Don't render empty collapsible sections (cleaner UI)
-  if (projects.length === 0) {
-    return null;
-  }
+  if (projects.length === 0) return null;
 
   return (
-    <div className={cn(
-      "overflow-hidden transition-all",
-      isExpanded && "pt-2"
-    )}>
+    <div>
       <button
         onClick={() => setIsExpanded(!isExpanded)}
-        className="w-full px-4 py-3 flex items-center justify-between hover:bg-surface-canvas transition-all duration-150 rounded-lg"
+        className="w-full flex items-baseline gap-3.5 mt-3 mb-5 text-left"
       >
-        <div className="flex items-center gap-3">
-          <div className="p-1.5 rounded-lg bg-surface-canvas border border-folio-border-subtle">
-            <config.icon className="h-4 w-4 text-folio-text-secondary" />
-          </div>
-          <h3 className="folio-h3 text-folio-text-primary">
-            {config.title}
-          </h3>
-          <span className="folio-meta text-folio-text-secondary">
-            ({projects.length})
-          </span>
-        </div>
-        <div className={cn(
-          "text-folio-text-secondary transition-transform",
-          isExpanded ? "rotate-180" : ""
-        )}>
-          <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-          </svg>
-        </div>
+        <h2 className="font-headline italic font-medium text-2xl leading-none text-folio-text-primary">
+          {title}
+        </h2>
+        <span className="text-sm text-folio-text-tertiary">
+          {projects.length} {projects.length === 1 ? 'project' : 'projects'}
+        </span>
+        <span className="flex-1 h-px bg-folio-border-subtle self-center" />
+        <ChevronDown
+          className={cn('w-4 h-4 text-folio-text-tertiary flex-shrink-0 transition-transform self-center', isExpanded && 'rotate-180')}
+        />
       </button>
 
       {isExpanded && (
-        <div className="px-4 pb-4">
-          {projects.length === 0 ? (
-            <div className="folio-body text-folio-text-secondary italic py-8">{config.emptyMessage}</div>
-          ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-              {projects.map(p => (
-                <ProjectCard
-                  key={p.id}
-                  p={p}
-                  onRename={onRename}
-                  onDelete={onDelete}
-                  onForceDelete={onForceDelete}
-                />
-              ))}
-            </div>
-          )}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-6 gap-y-7">
+          {projects.map(p => (
+            <ProjectCard key={p.id} p={p} onRename={onRename} onDelete={onDelete} onForceDelete={onForceDelete} />
+          ))}
         </div>
       )}
     </div>
   );
 }
 
+// ============================================================================
+// NEW PROJECT TILE
+// ============================================================================
+
+function NewProjectTile() {
+  return (
+    <Link href="/projects/new" className="opacity-60 hover:opacity-100 transition-opacity block">
+      <div className="aspect-[4/3] rounded-xl border border-dashed border-folio-border-strong bg-surface-ground flex items-center justify-center text-sm text-folio-text-tertiary">
+        + New project
+      </div>
+      <div className="pt-3.5 px-1">
+        <div className="font-headline italic text-[19px] text-folio-text-tertiary">Untitled</div>
+        <div className="text-xs text-folio-text-tertiary mt-0.5">Start a new board</div>
+      </div>
+    </Link>
+  );
+}
+
+// ============================================================================
+// SORT MENU
+// ============================================================================
+
+const SORT_OPTIONS: SortOption[] = ['Recent', 'Name A–Z', 'Most items'];
+
+function SortMenu({ value, onChange }: { value: SortOption; onChange: (v: SortOption) => void }) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    function handler(e: MouseEvent) {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    }
+    if (open) document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, [open]);
+
+  return (
+    <div ref={ref} className="relative">
+      <button
+        onClick={() => setOpen(!open)}
+        className="inline-flex items-center gap-2 px-3.5 py-2 rounded-full border border-folio-border-subtle bg-surface-canvas text-sm font-medium text-folio-text-secondary hover:border-folio-border-strong transition-colors"
+      >
+        {value}
+        <ChevronDown className="w-3.5 h-3.5" />
+      </button>
+      {open && (
+        <div className="absolute right-0 top-full mt-1 w-40 bg-surface-canvas border border-folio-border-subtle rounded-lg shadow-lg py-1 z-20">
+          {SORT_OPTIONS.map(opt => (
+            <button
+              key={opt}
+              onClick={() => { onChange(opt); setOpen(false); }}
+              className={cn(
+                'w-full text-left px-3.5 py-2 text-sm transition-colors',
+                opt === value
+                  ? 'text-folio-text-primary font-medium bg-surface-ground'
+                  : 'text-folio-text-secondary hover:text-folio-text-primary hover:bg-surface-ground'
+              )}
+            >
+              {opt}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ============================================================================
+// PROJECT CARD
+// ============================================================================
+
 function ProjectCard({ p, onRename, onDelete, onForceDelete }: {
   p: ProjectLite;
-  onRename?: (projectId: string, newTitle: string) => void;
-  onDelete?: (projectId: string) => void;
-  onForceDelete?: (projectId: string) => void;
+  onRename?: (id: string, t: string) => void;
+  onDelete?: (id: string) => void;
+  onForceDelete?: (id: string) => void;
 }) {
-  const overlays = p.overlays ?? { isPublished: false, isEditorialCandidate: false, isEditorialFeatured: false };
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isRenaming, setIsRenaming] = useState(false);
   const [newTitle, setNewTitle] = useState(p.title);
@@ -937,33 +684,27 @@ function ProjectCard({ p, onRename, onDelete, onForceDelete }: {
   const menuRef = useRef<HTMLDivElement>(null);
   const renameInputRef = useRef<HTMLInputElement>(null);
 
-  // Determine project status
-  const getProjectStatus = () => {
-    if (p.lifecycle === 'DRAFT') return 'Draft';
-    if (p.isPublic || p.publishedAt || p.status === 'published') return 'Published';
-    // Check if has images (ready to publish) - use coverUrl as proxy or imageCount
-    const hasImages = (p.imageCount && p.imageCount > 0) || p.coverUrl != null;
-    if (hasImages) return 'Ready to Publish';
-    return 'Draft';
-  };
+  const isArchived = p.lifecycle === 'ARCHIVED' || p.status === 'archived';
+  const isPublished = !!(p.isPublic || p.publishedAt || p.status === 'published');
+  const isDraft = p.lifecycle === 'DRAFT';
 
-  const projectStatus = getProjectStatus();
+  const statusLabel = isPublished ? 'Published' : isDraft ? 'Draft' : 'In progress';
+  const statusDot = isPublished ? 'bg-[#6FA67A]' : isDraft ? 'bg-folio-text-tertiary' : 'bg-folio-gold-ornament';
 
-  // Close menu when clicking outside
+  const itemCount = (p.taggedCount ?? 0) + (p.roomCount ?? 0);
+  const category = p.stage ? stageLabelShort(p.stage) : '';
+  const subline = isPublished && p.publishedAt
+    ? formatShort(new Date(p.publishedAt))
+    : `${p.roomCount ?? 0} ${(p.roomCount ?? 0) === 1 ? 'room' : 'rooms'}`;
+
   useEffect(() => {
-    function handleClickOutside(event: MouseEvent) {
-      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
-        setIsMenuOpen(false);
-      }
+    function handleClickOutside(e: MouseEvent) {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) setIsMenuOpen(false);
     }
-
-    if (isMenuOpen) {
-      document.addEventListener('mousedown', handleClickOutside);
-      return () => document.removeEventListener('mousedown', handleClickOutside);
-    }
+    if (isMenuOpen) document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [isMenuOpen]);
 
-  // Focus input when renaming starts
   useEffect(() => {
     if (isRenaming && renameInputRef.current) {
       renameInputRef.current.focus();
@@ -971,432 +712,227 @@ function ProjectCard({ p, onRename, onDelete, onForceDelete }: {
     }
   }, [isRenaming]);
 
-  const handleRename = async () => {
+  const doRename = async () => {
     if (!onRename || !newTitle.trim()) return;
-
     try {
       await onRename(p.id, newTitle.trim());
       setIsRenaming(false);
       setIsMenuOpen(false);
-    } catch (error) {
-      console.error('Failed to rename project:', error);
+    } catch {
       alert('Failed to rename project. Please try again.');
     }
   };
 
-  const handleDelete = async () => {
+  const doDelete = async () => {
     if (!onDelete) return;
-
     const confirmed = window.confirm(
       'Are you sure you want to delete this project? ' +
       (p.lifecycle === 'ARCHIVED'
         ? 'This will permanently delete the project.'
         : 'If the project has content, it will be archived for 30 days before permanent deletion.')
     );
-
     if (!confirmed) return;
-
     try {
       setIsDeleting(true);
       await onDelete(p.id);
       setIsMenuOpen(false);
-    } catch (error) {
-      console.error('Failed to delete project:', error);
+    } catch {
       alert('Failed to delete project. Please try again.');
       setIsDeleting(false);
     }
   };
 
-  const handleForceDelete = async () => {
+  const doForceDelete = async () => {
     if (!onForceDelete) return;
-
     const confirmed = window.confirm(
-      'Are you sure you want to permanently delete this archived project? This action cannot be undone.'
+      'Permanently delete this archived project? This cannot be undone.'
     );
-
     if (!confirmed) return;
-
     try {
       setIsDeleting(true);
       await onForceDelete(p.id);
       setIsMenuOpen(false);
-    } catch (error) {
-      console.error('Failed to force delete project:', error);
+    } catch {
       alert('Failed to delete project. Please try again.');
       setIsDeleting(false);
     }
   };
 
-  const handleTogglePublish = async () => {
-    const newPublishState = !p.isPublic;
-
+  const doTogglePublish = async () => {
     try {
       setIsPublishing(true);
       const response = await fetch(`/api/projects/${p.id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ isPublic: newPublishState }),
+        body: JSON.stringify({ isPublic: !p.isPublic }),
       });
-
-      if (!response.ok) {
-        throw new Error('Failed to update publish status');
-      }
-
-      // Update local state - refresh projects to get updated data
-      const refreshResponse = await fetch('/api/projects');
-      if (refreshResponse.ok) {
-        const updatedProjects = await refreshResponse.json();
-        // Note: This would require passing setProjectsState down or using a context
-        // For now, reload to ensure consistency
-        window.location.reload();
-      } else {
-        window.location.reload();
-      }
-    } catch (error) {
-      console.error('Failed to toggle publish:', error);
+      if (!response.ok) throw new Error('Failed to update publish status');
+      window.location.reload();
+    } catch {
       alert('Failed to update publish status. Please try again.');
       setIsPublishing(false);
     }
   };
 
-  const isArchived = p.lifecycle === 'ARCHIVED' || p.status === 'archived';
-
   return (
-    <div className="group relative">
-      <article className="glass-surface rounded-2xl transition-all duration-300">
-        <Link href={`/project/${p.id}`} className="block">
-          <div className="relative aspect-[3/4]">
-            {p.coverUrl ? (
-              <Image
-                src={p.coverUrl}
-                alt={p.title || 'Project image'}
-                fill
-                className="object-cover transition-transform duration-500 group-hover:scale-105"
-                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+    <article
+      className="group transition-transform duration-[220ms] hover:-translate-y-0.5"
+      aria-label={`${p.title}, ${statusLabel}, ${itemCount} items`}
+    >
+      <Link href={`/project/${p.id}`} className="block">
+        {/* Cover */}
+        <div className="relative aspect-[4/3] rounded-xl overflow-hidden border border-folio-border-subtle transition-shadow duration-[220ms] group-hover:shadow-[0_6px_24px_rgba(22,22,20,0.08)]">
+          {p.coverUrl ? (
+            <Image
+              src={p.coverUrl}
+              alt=""
+              fill
+              className="object-cover"
+              sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+            />
+          ) : (
+            <div className={cn('absolute inset-0', coverGradient(p.id))}>
+              <div
+                className="absolute inset-0 opacity-[0.06]"
+                style={{ backgroundImage: 'repeating-linear-gradient(135deg, #fff 0px, #fff 1px, transparent 1px, transparent 8px)' }}
               />
-            ) : (
-              <div className="w-full h-full bg-surface-canvas flex items-center justify-center">
-                <div className="folio-meta text-folio-text-tertiary">No image</div>
+            </div>
+          )}
+
+          {/* Status pill */}
+          <span className="absolute top-3 left-3 inline-flex items-center gap-1.5 px-2.5 py-1 bg-white/[0.92] backdrop-blur-md rounded-full border border-folio-border-subtle text-[11px] font-medium tracking-[0.04em] text-folio-text-primary">
+            <span className={cn('w-1.5 h-1.5 rounded-full flex-shrink-0', statusDot)} aria-hidden />
+            {statusLabel}
+          </span>
+
+          {/* Context menu */}
+          <div
+            ref={menuRef}
+            className="absolute top-3 right-3 z-20"
+            onClick={e => e.stopPropagation()}
+            onMouseDown={e => e.stopPropagation()}
+          >
+            <button
+              onClick={e => { e.preventDefault(); e.stopPropagation(); setIsMenuOpen(!isMenuOpen); }}
+              className="p-1.5 bg-black/60 hover:bg-black/80 text-white rounded-full transition-all opacity-0 group-hover:opacity-100"
+              title="Project options"
+            >
+              <MoreVertical className="w-4 h-4" />
+            </button>
+
+            {isMenuOpen && (
+              <div className="absolute right-0 top-full mt-1 w-48 bg-surface-ground border border-folio-border-subtle rounded-lg shadow-lg py-1 z-50">
+                {!isRenaming ? (
+                  <>
+                    <Link
+                      href={`/project/${p.id}`}
+                      onClick={e => { e.stopPropagation(); setIsMenuOpen(false); }}
+                      className="w-full text-left px-3 py-2 folio-ui hover:bg-surface-canvas text-folio-text-primary flex items-center gap-2"
+                    >
+                      <Edit className="w-4 h-4" /> Edit
+                    </Link>
+                    <Link
+                      href={`/project/${p.id}`}
+                      onClick={e => { e.stopPropagation(); setIsMenuOpen(false); }}
+                      className="w-full text-left px-3 py-2 folio-ui hover:bg-surface-canvas text-folio-text-primary flex items-center gap-2"
+                    >
+                      <ExternalLink className="w-4 h-4" /> Preview
+                    </Link>
+                    {!isArchived && (
+                      <button
+                        onClick={e => { e.preventDefault(); e.stopPropagation(); doTogglePublish(); setIsMenuOpen(false); }}
+                        disabled={isPublishing}
+                        className="w-full text-left px-3 py-2 folio-ui hover:bg-surface-canvas text-folio-text-primary flex items-center gap-2 disabled:opacity-50"
+                      >
+                        {p.isPublic ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                        {isPublishing ? 'Updating…' : p.isPublic ? 'Unpublish' : 'Publish'}
+                      </button>
+                    )}
+                    <button
+                      onClick={e => { e.preventDefault(); e.stopPropagation(); setIsRenaming(true); }}
+                      className="w-full text-left px-3 py-2 folio-ui hover:bg-surface-canvas text-folio-text-primary flex items-center gap-2"
+                    >
+                      <Edit className="w-4 h-4" /> Rename
+                    </button>
+                    {isArchived ? (
+                      <button
+                        onClick={e => { e.preventDefault(); e.stopPropagation(); doForceDelete(); }}
+                        disabled={isDeleting}
+                        className="w-full text-left px-3 py-2 folio-ui hover:bg-surface-canvas text-red-600 flex items-center gap-2 disabled:opacity-50"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                        {isDeleting ? 'Deleting…' : 'Permanently delete'}
+                      </button>
+                    ) : (
+                      <button
+                        onClick={e => { e.preventDefault(); e.stopPropagation(); doDelete(); }}
+                        disabled={isDeleting}
+                        className="w-full text-left px-3 py-2 folio-ui hover:bg-surface-canvas text-red-600 flex items-center gap-2 disabled:opacity-50"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                        {isDeleting ? 'Deleting…' : 'Delete'}
+                      </button>
+                    )}
+                  </>
+                ) : (
+                  <div className="px-3 py-2">
+                    <input
+                      ref={renameInputRef}
+                      type="text"
+                      value={newTitle}
+                      onChange={e => setNewTitle(e.target.value)}
+                      onKeyDown={e => {
+                        if (e.key === 'Enter') doRename();
+                        else if (e.key === 'Escape') { setNewTitle(p.title); setIsRenaming(false); }
+                      }}
+                      className="w-full px-2 py-1 folio-ui border border-folio-border-subtle rounded bg-surface-ground text-folio-text-primary focus:outline-none focus:ring-2 focus:ring-[var(--accent)]/20"
+                      onClick={e => e.stopPropagation()}
+                    />
+                    <div className="flex gap-2 mt-2">
+                      <button
+                        onClick={e => { e.preventDefault(); e.stopPropagation(); doRename(); }}
+                        className="flex-1 px-2 py-1 folio-meta bg-[var(--text-primary)] text-[var(--surface-ground)] rounded hover:opacity-90"
+                      >
+                        Save
+                      </button>
+                      <button
+                        onClick={e => { e.preventDefault(); e.stopPropagation(); setNewTitle(p.title); setIsRenaming(false); }}
+                        className="flex-1 px-2 py-1 folio-meta bg-surface-canvas text-folio-text-secondary rounded hover:bg-surface-ground"
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
             )}
+          </div>
+        </div>
 
-            {/* Quick Actions on Hover */}
-            <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-all duration-200 flex items-center justify-center gap-2 opacity-0 group-hover:opacity-100">
-              <Link
-                href={`/project/${p.id}`}
-                onClick={(e) => e.stopPropagation()}
-                className="px-3 py-1.5 bg-surface-ground text-folio-text-primary rounded-lg folio-ui font-medium hover:bg-surface-canvas transition-colors flex items-center gap-1.5"
-              >
-                <Edit className="w-4 h-4" />
-                Edit
-              </Link>
-              <Link
-                href={`/project/${p.id}`}
-                onClick={(e) => e.stopPropagation()}
-                className="px-3 py-1.5 bg-surface-ground text-folio-text-primary rounded-lg folio-ui font-medium hover:bg-surface-canvas transition-colors flex items-center gap-1.5"
-              >
-                <ExternalLink className="w-4 h-4" />
-                Preview
-              </Link>
-              {!isArchived && (
-                <button
-                  onClick={(e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    handleTogglePublish();
-                  }}
-                  disabled={isPublishing}
-                  className="px-3 py-1.5 bg-surface-ground text-folio-text-primary rounded-lg folio-ui font-medium hover:bg-surface-canvas transition-colors flex items-center gap-1.5 disabled:opacity-50"
-                >
-                  {p.isPublic ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                  {isPublishing ? '...' : p.isPublic ? 'Unpublish' : 'Publish'}
-                </button>
-              )}
+        {/* Body — text under image, no card chrome */}
+        <div className="pt-3.5 px-1 flex justify-between items-start gap-3">
+          <div className="min-w-0">
+            <div className="font-headline font-medium text-[19px] leading-tight text-folio-text-primary mb-1 truncate">
+              {p.title}
             </div>
-
-            {/* Status Badge */}
-            <div className="absolute top-3 left-3 z-10">
-              <StatusBadge status={projectStatus} />
-            </div>
-
-            {/* Action Menu Button */}
-            <div
-              ref={menuRef}
-              className="absolute top-3 right-3 z-20"
-              onClick={(e) => e.stopPropagation()}
-              onMouseDown={(e) => e.stopPropagation()}
-            >
-              <button
-                onClick={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  setIsMenuOpen(!isMenuOpen);
-                }}
-                className="p-1.5 bg-black/60 hover:bg-black/80 text-white rounded-full transition-all opacity-0 group-hover:opacity-100"
-                title="Project options"
-              >
-                <MoreVertical className="w-4 h-4" />
-              </button>
-
-              {/* Dropdown Menu */}
-              {isMenuOpen && (
-                <div className="absolute right-0 top-full mt-1 w-48 bg-surface-ground border border-folio-border-subtle rounded-lg shadow-lg py-1 z-50">
-                  {!isRenaming ? (
-                    <>
-                      <Link
-                        href={`/project/${p.id}`}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setIsMenuOpen(false);
-                        }}
-                        className="w-full text-left px-3 py-2 folio-ui hover:bg-surface-canvas text-folio-text-primary flex items-center gap-2"
-                      >
-                        <Edit className="w-4 h-4" />
-                        Edit
-                      </Link>
-                      <Link
-                        href={`/project/${p.id}`}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setIsMenuOpen(false);
-                        }}
-                        className="w-full text-left px-3 py-2 folio-ui hover:bg-surface-canvas text-folio-text-primary flex items-center gap-2"
-                      >
-                        <ExternalLink className="w-4 h-4" />
-                        Preview
-                      </Link>
-                      {!isArchived && (
-                        <button
-                          onClick={(e) => {
-                            e.preventDefault();
-                            e.stopPropagation();
-                            handleTogglePublish();
-                            setIsMenuOpen(false);
-                          }}
-                          disabled={isPublishing}
-                          className="w-full text-left px-3 py-2 folio-ui hover:bg-surface-canvas text-folio-text-primary flex items-center gap-2 disabled:opacity-50"
-                        >
-                          {p.isPublic ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                          {isPublishing ? 'Updating...' : p.isPublic ? 'Unpublish' : 'Publish'}
-                        </button>
-                      )}
-                      <button
-                        onClick={(e) => {
-                          e.preventDefault();
-                          e.stopPropagation();
-                          setIsRenaming(true);
-                        }}
-                        className="w-full text-left px-3 py-2 folio-ui hover:bg-surface-canvas text-folio-text-primary flex items-center gap-2"
-                      >
-                        <Edit className="w-4 h-4" />
-                        Rename
-                      </button>
-                      {isArchived ? (
-                        <button
-                          onClick={(e) => {
-                            e.preventDefault();
-                            e.stopPropagation();
-                            handleForceDelete();
-                          }}
-                          disabled={isDeleting}
-                          className="w-full text-left px-3 py-2 folio-ui hover:bg-surface-canvas text-red-600 flex items-center gap-2 disabled:opacity-50"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                          {isDeleting ? 'Deleting...' : 'Permanently Delete'}
-                        </button>
-                      ) : (
-                        <button
-                          onClick={(e) => {
-                            e.preventDefault();
-                            e.stopPropagation();
-                            handleDelete();
-                          }}
-                          disabled={isDeleting}
-                          className="w-full text-left px-3 py-2 folio-ui hover:bg-surface-canvas text-red-600 flex items-center gap-2 disabled:opacity-50"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                          {isDeleting ? 'Deleting...' : 'Delete'}
-                        </button>
-                      )}
-                    </>
-                  ) : (
-                    <div className="px-3 py-2">
-                      <input
-                        ref={renameInputRef}
-                        type="text"
-                        value={newTitle}
-                        onChange={(e) => setNewTitle(e.target.value)}
-                        onKeyDown={(e) => {
-                          if (e.key === 'Enter') {
-                            handleRename();
-                          } else if (e.key === 'Escape') {
-                            setNewTitle(p.title);
-                            setIsRenaming(false);
-                          }
-                        }}
-                        className="w-full px-2 py-1 folio-ui border border-folio-border-subtle rounded bg-surface-ground text-folio-text-primary focus:outline-none focus:ring-2 focus:ring-[var(--accent)]/20"
-                        onClick={(e) => e.stopPropagation()}
-                      />
-                      <div className="flex gap-2 mt-2">
-                        <button
-                          onClick={(e) => {
-                            e.preventDefault();
-                            e.stopPropagation();
-                            handleRename();
-                          }}
-                          className="flex-1 px-2 py-1 folio-meta bg-[var(--text-primary)] text-[var(--bg-elevated)] rounded hover:opacity-90"
-                        >
-                          Save
-                        </button>
-                        <button
-                          onClick={(e) => {
-                            e.preventDefault();
-                            e.stopPropagation();
-                            setNewTitle(p.title);
-                            setIsRenaming(false);
-                          }}
-                          className="flex-1 px-2 py-1 folio-meta bg-surface-canvas text-folio-text-secondary rounded hover:bg-surface-ground"
-                        >
-                          Cancel
-                        </button>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              )}
-            </div>
-
-            {/* bottom overlay for text legibility */}
-            <div className="absolute inset-x-0 bottom-0 p-4">
-              <div className="rounded-xl bg-gradient-to-t from-black/70 via-black/50 to-transparent px-4 py-3">
-                <div className="folio-ui font-semibold text-white truncate mb-1">
-                  {p.title}
-                </div>
-                <div className="flex items-center justify-between folio-meta text-white/90">
-                  <span>Updated {formatTimeAgo(p.updatedAt || p.createdAt)}</span>
-                </div>
-              </div>
+            <div className="flex items-center gap-2 text-xs text-folio-text-tertiary">
+              {category && <span>{category}</span>}
+              {category && <span className="w-[3px] h-[3px] rounded-full bg-folio-text-tertiary flex-shrink-0" />}
+              <span>{subline}</span>
             </div>
           </div>
-        </Link>
-      </article>
-    </div>
+          <span className="font-mono text-[11px] text-folio-text-secondary tracking-[0.02em] whitespace-nowrap pt-0.5 flex-shrink-0">
+            {itemCount} items
+          </span>
+        </div>
+      </Link>
+    </article>
   );
 }
 
-function StatusBadge({ status }: { status: string }) {
-  // Simplified status labels: Draft or Published only
-  const displayStatus = status === 'Published' ? 'Published' : 'Draft';
-
-  const styles = {
-    'Draft': 'bg-surface-canvas/80 text-folio-text-secondary border-folio-border-subtle backdrop-blur-sm',
-    'Published': 'bg-[var(--accent)]/90 text-white border-[var(--accent)] backdrop-blur-sm',
-  };
-
-  const style = styles[displayStatus as keyof typeof styles] || styles['Draft'];
-
-  return (
-    <span className={cn(
-      "folio-meta uppercase tracking-wider px-2.5 py-1 rounded-full border font-medium",
-      style
-    )}>
-      {displayStatus}
-    </span>
-  );
-}
-
-/**
- * Editorial Badge - Shows editorial status as an overlay, NOT a phase
- */
-function EditorialBadge({ variant }: { variant: 'featured' | 'candidate' }) {
-  if (variant === 'featured') {
-    return (
-      <div className="flex items-center gap-1.5 rounded-full px-3 py-1 folio-meta border border-[var(--accent)] bg-[var(--accent)]/10 text-[var(--accent)]">
-        <Sparkles className="h-3.5 w-3.5" />
-        <span>Editorial</span>
-      </div>
-    );
-  }
-
-  return (
-    <div className="flex items-center gap-1.5 rounded-full px-3 py-1 folio-meta border border-folio-border-subtle bg-surface-canvas text-folio-text-secondary">
-      <Newspaper className="h-3.5 w-3.5" />
-      <span>Editorial Candidate</span>
-    </div>
-  );
-}
-
-function Badge({ label, icon: Icon }: { label: string; icon: any }) {
-  return (
-    <div className="flex items-center gap-1.5 rounded-full px-3 py-1 folio-meta border border-folio-border-subtle bg-surface-canvas text-folio-text-secondary">
-      <Icon className="h-3.5 w-3.5" />
-      <span>{label}</span>
-    </div>
-  );
-}
-
-function EditorialProgress({ value }: { value: number }) {
-  // 0..100
-  return (
-    <div className="mt-2">
-      <div className="h-2 w-full rounded-full bg-surface-canvas overflow-hidden">
-        <div
-          className="h-full rounded-full bg-[var(--accent)] transition-all duration-500"
-          style={{ width: `${Math.min(100, Math.max(0, value))}%` }}
-        />
-      </div>
-      <div className="mt-1 folio-meta text-folio-text-secondary">
-        Editorial readiness: {Math.round(value)}%
-      </div>
-    </div>
-  );
-}
-
-function editorialScore(p: ProjectLite) {
-  // purely derived client-side; tune safely without schema edits
-  const s = (p.savesByOthers ?? 0);
-  const t = (p.taggedCount ?? 0);
-  const v = (p.influenceValueUsd ?? 0);
-  const base = Math.min(100, (s * 2) + (t * 3) + Math.log10(v + 1) * 10);
-  // Use overlay-based editorial candidate detection
-  const isEditorialCandidate = p.overlays?.isEditorialCandidate ?? false;
-  return Math.max(base, isEditorialCandidate ? 75 : 0);
-}
-
-function formatMoney(n: number) {
-  if (!Number.isFinite(n)) return '0';
-  return n.toLocaleString(undefined, { maximumFractionDigits: 0 });
-}
-
-function formatNumber(n: number) {
-  if (!Number.isFinite(n)) return '0';
-  return n.toLocaleString(undefined, { maximumFractionDigits: 0 });
-}
-
-function formatTimeAgo(date: string | Date | null | undefined): string {
-  if (!date) return 'recently';
-
-  const dateObj = typeof date === 'string' ? new Date(date) : date;
-  if (isNaN(dateObj.getTime())) return 'recently';
-
-  const now = new Date();
-  const diffMs = now.getTime() - dateObj.getTime();
-  const diffMins = Math.floor(diffMs / (1000 * 60));
-  const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
-  const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-  const diffWeeks = Math.floor(diffDays / 7);
-  const diffMonths = Math.floor(diffDays / 30);
-
-  if (diffMins < 1) return 'just now';
-  if (diffMins < 60) return `${diffMins} ${diffMins === 1 ? 'minute' : 'minutes'} ago`;
-  if (diffHours < 24) return `${diffHours} ${diffHours === 1 ? 'hour' : 'hours'} ago`;
-  if (diffDays < 7) return `${diffDays} ${diffDays === 1 ? 'day' : 'days'} ago`;
-  if (diffWeeks < 4) return `${diffWeeks} ${diffWeeks === 1 ? 'week' : 'weeks'} ago`;
-  if (diffMonths < 12) return `${diffMonths} ${diffMonths === 1 ? 'month' : 'months'} ago`;
-
-  const diffYears = Math.floor(diffMonths / 12);
-  return `${diffYears} ${diffYears === 1 ? 'year' : 'years'} ago`;
-}
+// ============================================================================
+// FOLIO INDEX DRAWER
+// ============================================================================
 
 function FolioIndexDrawer({ projects }: { projects: ProjectLite[] }) {
   const [open, setOpen] = useState(false);
@@ -1405,107 +941,60 @@ function FolioIndexDrawer({ projects }: { projects: ProjectLite[] }) {
     const total = projects.length || 1;
     const avgSaves = projects.reduce((a, p) => a + (p.savesByOthers ?? 0), 0) / total;
     const avgTagged = projects.reduce((a, p) => a + (p.taggedCount ?? 0), 0) / total;
-
-    // Use section-based grouping (new model)
     const grouped = groupBySection(projects);
-    const sectionEntries = Object.entries(grouped) as [UISection, ProjectLite[]][];
-    const topSection = sectionEntries
-      .filter(([key]) => key !== 'ARCHIVED') // Exclude archived from "top" calculation
-      .sort((a, b) => (b[1]?.length ?? 0) - (a[1]?.length ?? 0))[0]?.[0] ?? 'IN_PROGRESS';
-
-    // Editorial stats
     const editorialCandidates = projects.filter(p => p.overlays?.isEditorialCandidate).length;
     const editorialFeatured = projects.filter(p => p.overlays?.isEditorialFeatured).length;
-
-    return {
-      avgSaves: Math.round(avgSaves),
-      avgTagged: Math.round(avgTagged),
-      topSection,
-      editorialCandidates,
-      editorialFeatured,
-      bySection: grouped,
-    };
+    return { avgSaves: Math.round(avgSaves), avgTagged: Math.round(avgTagged), editorialCandidates, editorialFeatured, bySection: grouped };
   }, [projects]);
 
   return (
     <>
-      <Button
+      <button
         onClick={() => setOpen(v => !v)}
-        variant="outline"
-        className="fixed right-4 bottom-6 z-30 shadow-lg"
         aria-label="Open Folio Index"
+        className="fixed right-4 bottom-6 z-30 inline-flex items-center gap-2 pl-[14px] pr-4 py-[10px] rounded-full bg-surface-canvas border border-folio-border-strong shadow-[var(--neu-raised)] hover:-translate-y-px hover:shadow-[var(--neu-raised-lg)] transition-all duration-150 text-sm font-medium text-folio-text-primary"
       >
-        <Sparkles className="h-5 w-5 inline mr-2" />
+        <Sparkles className="h-4 w-4 text-[var(--accent)]" />
         Folio Index
-      </Button>
+      </button>
 
       {open && (
-        <div
-          className="fixed inset-0 z-40 bg-surface-canvas/80 backdrop-blur-sm"
-          onClick={() => setOpen(false)}
-        >
+        <div className="fixed inset-0 z-40 bg-surface-canvas/80 backdrop-blur-sm" onClick={() => setOpen(false)}>
           <aside
             onClick={e => e.stopPropagation()}
             className="absolute right-0 top-0 h-full w-[360px] bg-surface-ground border-l border-folio-border-subtle p-5 overflow-y-auto shadow-lg"
           >
-            <h3 className="folio-h3 mb-4 text-folio-text-primary">Portfolio Intelligence</h3>
+            <h3 className="folio-h3 mb-4 text-folio-text-primary">Portfolio intelligence</h3>
 
-            {/* Section Breakdown */}
             <div className="mb-6">
-              <h4 className="folio-meta uppercase tracking-wider text-folio-text-secondary mb-2">By Section</h4>
+              <h4 className="folio-meta uppercase tracking-wider text-folio-text-secondary mb-2">By section</h4>
               <ul className="space-y-2 folio-body">
-                <li className="flex justify-between text-folio-text-primary">
-                  <span>Drafts</span>
-                  <span className="font-medium">{aggregates.bySection.DRAFTS.length}</span>
-                </li>
-                <li className="flex justify-between text-folio-text-primary">
-                  <span>In Progress</span>
-                  <span className="font-medium">{aggregates.bySection.IN_PROGRESS.length}</span>
-                </li>
-                <li className="flex justify-between text-folio-text-primary">
-                  <span>Published</span>
-                  <span className="font-medium">{aggregates.bySection.PUBLISHED.length}</span>
-                </li>
-                <li className="flex justify-between text-folio-text-secondary">
-                  <span>Archived</span>
-                  <span className="font-medium">{aggregates.bySection.ARCHIVED.length}</span>
-                </li>
+                <li className="flex justify-between text-folio-text-primary"><span>Drafts</span><span className="font-medium">{aggregates.bySection.DRAFTS.length}</span></li>
+                <li className="flex justify-between text-folio-text-primary"><span>In progress</span><span className="font-medium">{aggregates.bySection.IN_PROGRESS.length}</span></li>
+                <li className="flex justify-between text-folio-text-primary"><span>Published</span><span className="font-medium">{aggregates.bySection.PUBLISHED.length}</span></li>
+                <li className="flex justify-between text-folio-text-secondary"><span>Archived</span><span className="font-medium">{aggregates.bySection.ARCHIVED.length}</span></li>
               </ul>
             </div>
 
-            {/* Engagement Stats */}
             <div className="mb-6">
               <h4 className="folio-meta uppercase tracking-wider text-folio-text-secondary mb-2">Engagement</h4>
               <ul className="space-y-2 folio-body text-folio-text-primary">
-                <li className="flex justify-between">
-                  <span>Avg Saves / Project</span>
-                  <span className="font-medium">{aggregates.avgSaves}</span>
-                </li>
-                <li className="flex justify-between">
-                  <span>Avg Tagged Products</span>
-                  <span className="font-medium">{aggregates.avgTagged}</span>
-                </li>
+                <li className="flex justify-between"><span>Avg saves / project</span><span className="font-medium">{aggregates.avgSaves}</span></li>
+                <li className="flex justify-between"><span>Avg tagged products</span><span className="font-medium">{aggregates.avgTagged}</span></li>
               </ul>
             </div>
 
-            {/* Editorial Overlay Stats */}
             <div className="mb-6">
-              <h4 className="folio-meta uppercase tracking-wider text-folio-text-secondary mb-2">Editorial Status</h4>
+              <h4 className="folio-meta uppercase tracking-wider text-folio-text-secondary mb-2">Editorial status</h4>
               <ul className="space-y-2 folio-body text-folio-text-primary">
-                <li className="flex justify-between">
-                  <span>Editorial Candidates</span>
-                  <span className="font-medium">{aggregates.editorialCandidates}</span>
-                </li>
-                <li className="flex justify-between">
-                  <span>Editorial Featured</span>
-                  <span className="font-medium">{aggregates.editorialFeatured}</span>
-                </li>
+                <li className="flex justify-between"><span>Editorial candidates</span><span className="font-medium">{aggregates.editorialCandidates}</span></li>
+                <li className="flex justify-between"><span>Editorial featured</span><span className="font-medium">{aggregates.editorialFeatured}</span></li>
               </ul>
             </div>
 
-            <div className="mt-6 folio-meta text-folio-text-tertiary">
-              *All metrics computed non-destructively from current data. No uploads or schema changes required.
-            </div>
+            <p className="folio-meta text-folio-text-tertiary">
+              All metrics computed non-destructively from current data.
+            </p>
           </aside>
         </div>
       )}
@@ -1513,11 +1002,89 @@ function FolioIndexDrawer({ projects }: { projects: ProjectLite[] }) {
   );
 }
 
-function formatSectionName(s: UISection): string {
-  return {
-    IN_PROGRESS: 'In Progress',
-    PUBLISHED: 'Published',
-    DRAFTS: 'Drafts',
-    ARCHIVED: 'Archived',
-  }[s] ?? 'In Progress';
+// ============================================================================
+// LIFECYCLE + OVERLAYS (unchanged logic)
+// ============================================================================
+
+function computeLifecycle(p: ProjectLite): Lifecycle {
+  if (p.archivedAt || (p.status ?? '').toLowerCase() === 'archived') return 'ARCHIVED';
+  const hasSubstance =
+    (p.imageCount ?? 0) > 0 || p.coverUrl != null ||
+    (p.roomCount ?? 0) > 0 || (p.taggedCount ?? 0) > 0 ||
+    (p.noteCount ?? 0) > 0 || (p.skeletonCount ?? 0) > 0;
+  return hasSubstance ? 'ACTIVE' : 'DRAFT';
+}
+
+function computeOverlays(p: ProjectLite): Overlays {
+  const isPublished = Boolean(p.isPublic || p.publishedAt);
+  const saves = p.savesByOthers ?? 0;
+  const tagged = p.taggedCount ?? 0;
+  const isEditorialCandidate = isPublished && saves >= EDITORIAL_SAVES_THRESHOLD && tagged >= EDITORIAL_TAGGED_THRESHOLD;
+  return { isPublished, isEditorialCandidate, isEditorialFeatured: false };
+}
+
+function computeUISection(lifecycle: Lifecycle, overlays: Overlays): UISection {
+  if (lifecycle === 'ARCHIVED') return 'ARCHIVED';
+  if (overlays.isPublished) return 'PUBLISHED';
+  if (lifecycle === 'DRAFT') return 'DRAFTS';
+  return 'IN_PROGRESS';
+}
+
+function mapToProjectLite(p: ProjectLite): ProjectLite {
+  const taggedCount = Number(p.taggedCount ?? 0);
+  const savesByOthers = Number(p.savesByOthers ?? 0);
+  const influenceValueUsd = Number(p.influenceValueUsd ?? 0);
+  const views = Number(p.views ?? 0);
+  const lifecycle = computeLifecycle({ ...p, taggedCount, savesByOthers });
+  const overlays = computeOverlays({ ...p, taggedCount, savesByOthers });
+  const uiSection = computeUISection(lifecycle, overlays);
+  return { ...p, taggedCount, savesByOthers, influenceValueUsd, views, lifecycle, overlays, uiSection };
+}
+
+function groupBySection(projects: ProjectLite[]) {
+  return projects.reduce<Record<UISection, ProjectLite[]>>(
+    (acc, p) => {
+      const section = p.uiSection ?? 'IN_PROGRESS';
+      (acc[section] ??= []).push(p);
+      return acc;
+    },
+    { IN_PROGRESS: [], PUBLISHED: [], DRAFTS: [], ARCHIVED: [] }
+  );
+}
+
+// ============================================================================
+// FORMAT HELPERS
+// ============================================================================
+
+function formatShort(date: Date | string): string {
+  const d = typeof date === 'string' ? new Date(date) : date;
+  if (isNaN(d.getTime())) return '';
+  const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  const suffix = d.getFullYear() === new Date().getFullYear() ? '' : `, ${d.getFullYear()}`;
+  return `${months[d.getMonth()]} ${d.getDate()}${suffix}`;
+}
+
+function formatCount(n: number): string {
+  if (!Number.isFinite(n) || n === 0) return '0';
+  if (n > 999) return new Intl.NumberFormat('en', { notation: 'compact', maximumFractionDigits: 1 }).format(n);
+  return String(n);
+}
+
+const SPELL = ['zero', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten', 'eleven', 'twelve'];
+
+function spellNumber(n: number): string {
+  return n >= 0 && n <= 12 ? SPELL[n] : String(n);
+}
+
+function stageLabelShort(stage: string): string {
+  const map: Record<string, string> = {
+    concept: 'Concept',
+    schematic: 'Schematic',
+    design_development: 'DD',
+    cd_pre_spec: 'CD / pre-spec',
+    spec_locked: 'Spec locked',
+    in_procurement: 'Procurement',
+    install: 'Install',
+  };
+  return map[stage] ?? stage;
 }

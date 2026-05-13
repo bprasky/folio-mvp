@@ -47,7 +47,7 @@ export function SceneShopStrip({ products, dense }: SceneShopStripProps) {
                 {p.name ?? "Product"}
               </div>
               {p.vendorName && (
-                <div className="folio-meta uppercase tracking-[0.16em]">
+                <div className="folio-meta uppercase tracking-[var(--ls-eyebrow)]">
                   {p.vendorName}
                 </div>
               )}

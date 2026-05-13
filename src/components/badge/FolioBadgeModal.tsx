@@ -147,7 +147,7 @@ export default function FolioBadgeModal({
             <p
               className="text-folio-text-secondary"
               style={{
-                fontFamily: 'var(--font-body, "Instrument Sans", sans-serif)',
+                fontFamily: 'var(--font-body)',
                 fontSize: '13px',
                 margin: '0 0 8px',
               }}
@@ -162,7 +162,7 @@ export default function FolioBadgeModal({
             <p
               className="text-folio-text-tertiary"
               style={{
-                fontFamily: 'var(--font-body, "Instrument Sans", sans-serif)',
+                fontFamily: 'var(--font-body)',
                 fontSize: '13px',
                 lineHeight: 1.5,
                 margin: 0,
@@ -217,7 +217,7 @@ export default function FolioBadgeModal({
             <p
               className="text-folio-text-secondary"
               style={{
-                fontFamily: 'var(--font-body, "Instrument Sans", sans-serif)',
+                fontFamily: 'var(--font-body)',
                 fontSize: '12px',
                 margin: 0,
               }}
@@ -234,7 +234,7 @@ export default function FolioBadgeModal({
               <p
                 className="text-folio-text-tertiary"
                 style={{
-                  fontFamily: 'var(--font-body, "Instrument Sans", sans-serif)',
+                  fontFamily: 'var(--font-body)',
                   fontSize: '11px',
                   margin: '4px 0 0',
                 }}
