@@ -202,21 +202,17 @@ function LandscapeHero({ story, publishedAt }: { story: StoryData; publishedAt: 
   const captionText = story.heroImage?.name || story.subtitle || null;
   const totalRooms = story.roomCount || story.roomTiles.length || 0;
 
-  // Stack every stat in the byline column. Credits collapse by role so two
-  // photographers render as one "Photography" line with names joined.
-  const creditsByRole = new Map<string, string[]>();
-  for (const c of story.credits) {
-    const list = creditsByRole.get(c.role) ?? [];
-    list.push(c.name);
-    creditsByRole.set(c.role, list);
-  }
+  // Four-row credit block: Rooms / Designer / Photography / Published.
+  // Each row appears at most once; rows with no value are dropped entirely.
+  const photoNames = Array.from(
+    new Set(story.credits.filter((c) => /photo/i.test(c.role)).map((c) => c.name)),
+  );
   const stats: Array<{ label: string; value: string }> = [];
-  if (story.location) stats.push({ label: "Location", value: story.location });
-  if (totalRooms) stats.push({ label: "Rooms", value: String(totalRooms) });
-  stats.push({ label: "Designer", value: story.designerName });
-  creditsByRole.forEach((names, role) => {
-    stats.push({ label: role, value: names.join(", ") });
-  });
+  if (totalRooms > 0) stats.push({ label: "Rooms", value: String(totalRooms) });
+  if (story.designerName && story.designerName !== "Designer") {
+    stats.push({ label: "Designer", value: story.designerName });
+  }
+  if (photoNames.length > 0) stats.push({ label: "Photography", value: photoNames.join(", ") });
   if (dateLabel) stats.push({ label: "Published", value: dateLabel });
 
   return (
