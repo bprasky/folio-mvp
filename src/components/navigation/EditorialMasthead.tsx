@@ -26,7 +26,10 @@ export function EditorialMasthead() {
   const isDesignerPage = pathname === "/designer" || pathname?.startsWith("/designer/");
   const isProductPage = pathname?.startsWith("/products/");
   const isMagazinePage = pathname === "/magazine" || pathname?.startsWith("/magazine/");
-  const hidesMasthead = isDesignerPage || isProductPage || isMagazinePage;
+  // /p/[slug] (StoryRenderer article route) renders its own editorial hero;
+  // the corner mark in the topbar is the only Folio mark on that page.
+  const isArticlePage = pathname?.startsWith("/p/");
+  const hidesMasthead = isDesignerPage || isProductPage || isMagazinePage || isArticlePage;
 
   useEffect(() => {
     if (!hidesMasthead && wordmarkRef.current) {
