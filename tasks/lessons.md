@@ -314,3 +314,16 @@ shell at `/magazine/community` so the sections stay reachable for direct
 linking. The redirect handles email/newsletter deeplinks. Existing `/magazine`
 intra-site links flow through the redirect — accept the one extra hop in
 exchange for a cleaner mental model.
+
+**Static review can't catch flex height collapse from absolute children.**
+Phase 2a's WelcomeModal had `max-h-[92vh] flex flex-col` on the panel and
+`relative flex-1 overflow-hidden` wrapping `absolute inset-0` content for
+the cross-fade. The flex-1 child collapsed to 0 because absolute children
+have no intrinsic height and the parent only had max-h, not h. The modal
+opened in production with an empty body — header + footer only. Type-check
+and SSR passed. I called PASS* on "Modal opens on page load" based on
+reading the component code; a real browser would have shown it immediately.
+Rule: when reviewing a flex container with `max-h-*` (not `h-*`) and a
+`flex-1` child whose content is `absolute inset-0`, flag it as a height
+collapse risk and require a browser run before reporting PASS. AnimatePresence
+`mode="wait"` + in-flow children avoids the trap entirely.
