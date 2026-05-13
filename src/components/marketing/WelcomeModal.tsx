@@ -243,10 +243,8 @@ function FrameVideo({ videoBase }: { videoBase: string }) {
       aria-hidden="true"
       onError={() => setVideoError(true)}
       className="w-full aspect-[16/10] object-cover rounded-xl"
-    >
-      <source src={`${videoBase}.webm`} type="video/webm" />
-      <source src={`${videoBase}.mp4`} type="video/mp4" />
-    </video>
+      src={`${videoBase}.mp4`}
+    />
   );
 }
 
