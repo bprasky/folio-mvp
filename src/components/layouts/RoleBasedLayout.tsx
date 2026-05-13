@@ -64,7 +64,9 @@ export default function RoleBasedLayout({ children }: RoleBasedLayoutProps) {
 
   // Long-form editorial routes paint a warm cream field. The class overrides
   // --surface so the sticky header's scrolled-state tint matches the page.
-  const isEditorialRoute = pathname?.startsWith('/editorials/');
+  const isEditorialRoute =
+    pathname?.startsWith('/editorials/') ||
+    pathname?.startsWith('/p/');
 
   // Use new top navigation instead of NavFrame/GlassNavRail
   return (
