@@ -195,13 +195,29 @@ const HERO_DOT = (
 );
 
 function LandscapeHero({ story, publishedAt }: { story: StoryData; publishedAt: string | Date | null }) {
-  const photographerCredit = story.credits.find((c) => /photo/i.test(c.role));
   const dateLabel = publishedAt
-    ? new Date(publishedAt).toLocaleString("en-US", { month: "long" })
+    ? new Date(publishedAt).toLocaleString("en-US", { month: "long", year: "numeric" })
     : null;
   const heroRoom = story.heroImage?.room || story.roomTiles[0]?.roomLabel || null;
   const captionText = story.heroImage?.name || story.subtitle || null;
   const totalRooms = story.roomCount || story.roomTiles.length || 0;
+
+  // Stack every stat in the byline column. Credits collapse by role so two
+  // photographers render as one "Photography" line with names joined.
+  const creditsByRole = new Map<string, string[]>();
+  for (const c of story.credits) {
+    const list = creditsByRole.get(c.role) ?? [];
+    list.push(c.name);
+    creditsByRole.set(c.role, list);
+  }
+  const stats: Array<{ label: string; value: string }> = [];
+  if (story.location) stats.push({ label: "Location", value: story.location });
+  if (totalRooms) stats.push({ label: "Rooms", value: String(totalRooms) });
+  stats.push({ label: "Designer", value: story.designerName });
+  creditsByRole.forEach((names, role) => {
+    stats.push({ label: role, value: names.join(", ") });
+  });
+  if (dateLabel) stats.push({ label: "Published", value: dateLabel });
 
   return (
     <section
@@ -212,27 +228,7 @@ function LandscapeHero({ story, publishedAt }: { story: StoryData; publishedAt: 
         paddingRight: 56, /* folio-design-system: off-scale */
       }}
     >
-      {/* Eyebrow */}
-      <div
-        style={{
-          fontSize: 11, /* folio-design-system: off-scale */
-          textTransform: "uppercase",
-          letterSpacing: "0.18em",
-          color: "rgba(87, 75, 67, 0.55)",
-          marginBottom: 18, /* folio-design-system: off-scale */
-        }}
-      >
-        {[story.location, totalRooms ? `${totalRooms} ${totalRooms === 1 ? "room" : "rooms"}` : null]
-          .filter(Boolean)
-          .map((part, i, arr) => (
-            <span key={i}>
-              {part}
-              {i < arr.length - 1 && HERO_DOT}
-            </span>
-          ))}
-      </div>
-
-      {/* Title row: 8fr title + 4fr byline, baselined to bottom */}
+      {/* Title row: 8fr title + 4fr stats stack, baselined to bottom */}
       <div
         className="grid"
         style={{
@@ -261,20 +257,16 @@ function LandscapeHero({ story, publishedAt }: { story: StoryData; publishedAt: 
           style={{
             fontFamily: "var(--font-body)",
             fontSize: 13, /* folio-design-system: off-scale */
-            lineHeight: 1.7, /* folio-design-system: off-scale */
+            lineHeight: 1.5, /* folio-design-system: off-scale */
             color: "rgba(87, 75, 67, 0.45)",
             display: "flex",
             flexDirection: "column",
-            gap: 12, /* folio-design-system: off-scale */
+            gap: 14, /* folio-design-system: off-scale */
           }}
         >
-          <BylineRow label="Designer" value={story.designerName} />
-          {photographerCredit && (
-            <BylineRow
-              label="Photography"
-              value={[photographerCredit.name, dateLabel].filter(Boolean).join(" · ")}
-            />
-          )}
+          {stats.map((s) => (
+            <BylineRow key={s.label} label={s.label} value={s.value} />
+          ))}
         </div>
       </div>
 
