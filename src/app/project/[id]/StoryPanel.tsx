@@ -262,11 +262,21 @@ export default function StoryPanel({ projectId, project, images, isOwner }: Stor
     }
   }
 
-  async function commitReflectionEdit(target: QA, value: string) {
+  async function commitReflectionEdit(
+    target: QA,
+    nextAnswer: string,
+    nextQuestion: string
+  ) {
     const idx = answers.indexOf(target);
     if (idx === -1) return;
     const next = [...answers];
-    next[idx] = { ...next[idx], a: value, answer: value };
+    next[idx] = {
+      ...next[idx],
+      a: nextAnswer,
+      answer: nextAnswer,
+      q: nextQuestion,
+      question: nextQuestion,
+    };
     setAnswers(next);
     await saveAnswers(next);
   }
@@ -499,10 +509,12 @@ export default function StoryPanel({ projectId, project, images, isOwner }: Stor
         <EditReflectionModal
           question={editingReflection.q || editingReflection.question || ""}
           initialValue={editingReflection.a || editingReflection.answer || ""}
+          questionId={editingReflection.questionId || ""}
+          section={editingReflection.section || ""}
           saving={saving}
           onCancel={() => setEditingReflection(null)}
-          onConfirm={async (value) => {
-            await commitReflectionEdit(editingReflection, value);
+          onConfirm={async (nextAnswer, nextQuestion) => {
+            await commitReflectionEdit(editingReflection, nextAnswer, nextQuestion);
             setEditingReflection(null);
           }}
         />
@@ -609,21 +621,38 @@ function EditorialContextSection({ projectId }: { projectId: string }) {
   );
 }
 
+function parseCategoryLabel(questionId: string): string {
+  // questionId shape: "project-CLIENT_BRIEF-<uuid>" or "room-<roomId>-<CATEGORY>-<uuid>"
+  const m = questionId.match(/-([A-Z_]+)-/);
+  if (!m) return "";
+  return m[1]
+    .toLowerCase()
+    .split("_")
+    .map((w) => (w ? w[0].toUpperCase() + w.slice(1) : ""))
+    .join(" ");
+}
+
 function EditReflectionModal({
   question,
   initialValue,
+  questionId,
+  section,
   saving,
   onCancel,
   onConfirm,
 }: {
   question: string;
   initialValue: string;
+  questionId: string;
+  section: string;
   saving: boolean;
   onCancel: () => void;
-  onConfirm: (value: string) => void | Promise<void>;
+  onConfirm: (answer: string, question: string) => void | Promise<void>;
 }) {
   const [draft, setDraft] = useState(initialValue);
-  const dirty = draft !== initialValue;
+  const [questionDraft, setQuestionDraft] = useState(question);
+  const dirty = draft !== initialValue || questionDraft !== question;
+  const category = parseCategoryLabel(questionId);
 
   function attemptDismiss() {
     if (saving) return;
@@ -636,13 +665,13 @@ function EditReflectionModal({
       if (e.key === "Escape") {
         attemptDismiss();
       } else if ((e.metaKey || e.ctrlKey) && e.key === "Enter") {
-        if (dirty && !saving && draft.trim()) onConfirm(draft);
+        if (dirty && !saving && draft.trim()) onConfirm(draft, questionDraft);
       }
     }
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [dirty, saving, draft]);
+  }, [dirty, saving, draft, questionDraft]);
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
@@ -663,13 +692,22 @@ function EditReflectionModal({
 
         {/* Layout mirrors TextInterview/QuestionCard */}
         <div className="flex flex-col h-full min-h-[600px]">
-          {/* Question section — JSX inlined from shared/InterviewQuestion so a missing
-              question prop is impossible to hide as a render no-op. */}
+          {/* Question section */}
           <div className="flex-1 flex flex-col justify-center px-6 md:px-8 py-8">
-            <div className="max-w-2xl mx-auto px-4">
-              <h2 className="text-2xl md:text-3xl font-serif italic text-folio-text-primary leading-relaxed text-center md:text-left">
-                {question.trim() || "Edit your reflection"}
-              </h2>
+            <div className="max-w-2xl mx-auto w-full px-4">
+              {(category || section) && (
+                <div className="folio-meta text-folio-text-tertiary uppercase tracking-wider mb-3 text-center md:text-left">
+                  {[category, section].filter(Boolean).join(" · ")}
+                </div>
+              )}
+              <textarea
+                value={questionDraft}
+                onChange={(e) => setQuestionDraft(e.target.value)}
+                rows={2}
+                disabled={saving}
+                placeholder="Question text (click to add)…"
+                className="w-full bg-transparent text-2xl md:text-3xl font-serif italic text-folio-text-primary leading-relaxed text-center md:text-left placeholder:text-folio-text-tertiary border-transparent focus:outline-none focus:ring-2 focus:ring-gray-200 focus:bg-surface-ground/40 rounded-lg p-2 resize-none transition-all"
+              />
             </div>
           </div>
 
@@ -712,7 +750,7 @@ function EditReflectionModal({
 
               <button
                 type="button"
-                onClick={() => onConfirm(draft)}
+                onClick={() => onConfirm(draft, questionDraft)}
                 disabled={saving || !dirty || !draft.trim()}
                 className={cn(
                   "py-3 px-6 rounded-lg font-medium transition-all",
