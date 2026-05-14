@@ -2,7 +2,7 @@
 
 import { useState, useCallback, useEffect } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { X } from "lucide-react";
+import { X, Loader2 } from "lucide-react";
 import { GenerationProgress } from "@/components/ui/GenerationProgress";
 import { ModeSelection } from "./ModeSelection";
 import { TextInterview } from "./TextInterview/TextInterview";

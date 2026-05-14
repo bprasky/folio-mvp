@@ -62,6 +62,9 @@ export default function StoryPanel({ projectId, project, images, isOwner }: Stor
   const [showTagDiagnostic, setShowTagDiagnostic] = useState(false);
   const [showInterviewModal, setShowInterviewModal] = useState(false);
 
+  // Reflection edit modal state
+  const [editingReflectionIndex, setEditingReflectionIndex] = useState<number | null>(null);
+
   // Deduplicate answers by question and answer content
   const dedupeAnswers = (answers: QA[]): QA[] => {
     const seen = new Map<string, QA>();
@@ -165,14 +168,17 @@ export default function StoryPanel({ projectId, project, images, isOwner }: Stor
     (qa) => (qa.q || qa.question || "").trim() || (qa.a || qa.answer || "").trim()
   );
 
-  async function saveAnswers() {
+  async function saveAnswers(answersOverride?: QA[]) {
     try {
       setSaving(true);
+      const answersToSave = (answersOverride ?? answers).filter(
+        (qa) => (qa.q || qa.question || "").trim() || (qa.a || qa.answer || "").trim()
+      );
       const res = await fetch(`/api/posting/project/${projectId}/interview`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          answers: filteredAnswers.map((qa) => ({
+          answers: answersToSave.map((qa) => ({
             questionId: qa.questionId || qa.q || qa.question,
             answer: qa.a || qa.answer || "",
             question: qa.q || qa.question || "",
@@ -254,14 +260,11 @@ export default function StoryPanel({ projectId, project, images, isOwner }: Stor
     }
   }
 
-  function setAnswer(i: number, key: "a", value: string) {
+  async function commitReflectionEdit(i: number, value: string) {
     const next = [...answers];
-    next[i] = {
-      ...next[i],
-      [key]: value,
-      answer: value,
-    };
+    next[i] = { ...next[i], a: value, answer: value };
     setAnswers(next);
+    await saveAnswers(next);
   }
 
   function removeAnswer(i: number) {
@@ -385,15 +388,21 @@ export default function StoryPanel({ projectId, project, images, isOwner }: Stor
                   </p>
                 </div>
               )}
-              <textarea
-                value={qa.a || qa.answer || ""}
-                onChange={(e) => setAnswer(i, "a", e.target.value)}
-                className={`w-full min-h-[80px] p-2 border border-folio-border-subtle rounded-[20px] resize-y bg-surface-canvas focus:ring-1 focus:ring-[var(--accent)] focus:border-[var(--accent)] ${
-                  qa.isFeatured ? "min-h-[60px]" : ""
+              <div
+                onDoubleClick={() => setEditingReflectionIndex(i)}
+                role="button"
+                tabIndex={0}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") setEditingReflectionIndex(i);
+                }}
+                title="Double-click to edit"
+                className={`w-full min-h-[80px] p-3 border border-folio-border-subtle rounded-[20px] bg-surface-canvas hover:border-[var(--accent)] hover:bg-[var(--accent)]/[0.02] cursor-pointer transition-colors whitespace-pre-wrap break-words ${
+                  (qa.a || qa.answer || "").trim() ? "text-folio-text-primary" : "text-folio-text-tertiary"
                 }`}
                 style={{ fontFamily: "var(--font-headline)", fontStyle: "italic", fontSize: 'var(--type-body)', lineHeight: 'var(--lh-body)' }}
-                placeholder="Share your thoughts..."
-              />
+              >
+                {(qa.a || qa.answer || "").trim() || "Double-click to add your thoughts..."}
+              </div>
               <div className="flex items-center justify-between mt-2">
                 {qa.isFeatured && (
                   <span className="folio-meta text-[var(--accent)] font-medium">
@@ -475,11 +484,26 @@ export default function StoryPanel({ projectId, project, images, isOwner }: Stor
         <button
           className="px-4 py-2 folio-ui font-medium text-white bg-[var(--accent)] rounded-lg hover:bg-[var(--accent-hover)] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           disabled={saving}
-          onClick={saveAnswers}
+          onClick={() => saveAnswers()}
         >
           {saving ? "Saving..." : "Save"}
         </button>
       </div>
+
+      {/* Reflection Edit Modal */}
+      {editingReflectionIndex !== null && answers[editingReflectionIndex] && (
+        <EditReflectionModal
+          question={answers[editingReflectionIndex].q || answers[editingReflectionIndex].question || ""}
+          initialValue={answers[editingReflectionIndex].a || answers[editingReflectionIndex].answer || ""}
+          saving={saving}
+          onCancel={() => setEditingReflectionIndex(null)}
+          onConfirm={async (value) => {
+            const idx = editingReflectionIndex;
+            await commitReflectionEdit(idx, value);
+            setEditingReflectionIndex(null);
+          }}
+        />
+      )}
 
       {/* Tag Diagnostic Modal */}
       {showTagDiagnostic && (
@@ -578,6 +602,79 @@ function EditorialContextSection({ projectId }: { projectId: string }) {
           {regenBusy ? "Regenerating..." : "Regenerate with updated context"}
         </button>
       )}
+    </div>
+  );
+}
+
+function EditReflectionModal({
+  question,
+  initialValue,
+  saving,
+  onCancel,
+  onConfirm,
+}: {
+  question: string;
+  initialValue: string;
+  saving: boolean;
+  onCancel: () => void;
+  onConfirm: (value: string) => void | Promise<void>;
+}) {
+  const [draft, setDraft] = useState(initialValue);
+  const dirty = draft !== initialValue;
+
+  function attemptDismiss() {
+    if (saving) return;
+    if (dirty && !window.confirm("Discard your changes?")) return;
+    onCancel();
+  }
+
+  useEffect(() => {
+    function onKey(e: KeyboardEvent) {
+      if (e.key === "Escape") attemptDismiss();
+    }
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [dirty, saving]);
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center">
+      <div
+        className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+        onClick={attemptDismiss}
+      />
+      <div className="relative bg-white rounded-[20px] shadow-2xl w-full max-w-2xl mx-4 max-h-[90vh] flex flex-col overflow-hidden">
+        <div className="px-6 py-4 border-b border-folio-border-subtle">
+          <h3 className="folio-h3 text-folio-text-primary">Edit reflection</h3>
+          <p className="folio-ui text-folio-text-secondary mt-1">{question}</p>
+        </div>
+        <div className="px-6 py-4 flex-1 overflow-y-auto">
+          <textarea
+            autoFocus
+            value={draft}
+            onChange={(e) => setDraft(e.target.value)}
+            className="w-full min-h-[200px] p-3 border border-folio-border-subtle rounded-[20px] resize-y bg-surface-canvas focus:ring-1 focus:ring-[var(--accent)] focus:border-[var(--accent)]"
+            style={{ fontFamily: "var(--font-headline)", fontStyle: "italic", fontSize: 'var(--type-body)', lineHeight: 'var(--lh-body)' }}
+            placeholder="Share your thoughts..."
+          />
+        </div>
+        <div className="px-6 py-4 border-t border-folio-border-subtle flex items-center justify-end gap-3">
+          <button
+            onClick={attemptDismiss}
+            disabled={saving}
+            className="px-4 py-2 folio-ui font-medium text-folio-text-primary bg-surface-canvas border border-folio-border-subtle rounded-lg hover:bg-surface-ground disabled:opacity-50 transition-colors"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={() => onConfirm(draft)}
+            disabled={saving || !dirty}
+            className="px-4 py-2 folio-ui font-medium text-white bg-[var(--accent)] rounded-lg hover:bg-[var(--accent-hover)] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+          >
+            {saving ? "Saving..." : "Confirm changes"}
+          </button>
+        </div>
+      </div>
     </div>
   );
 }
