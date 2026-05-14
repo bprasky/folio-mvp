@@ -6,7 +6,8 @@ import { X, Mic, Quote } from "lucide-react";
 import { CreditsEditor } from "@/components/posting/CreditsEditor";
 import type { CreditEntry } from "@/lib/posting/creditsSchema";
 import { TagDiagnosticModal } from "@/components/posting/interview/TagDiagnosticModal";
-import { InterviewFlow } from "@/components/interview";
+import { InterviewFlow, InterviewQuestion } from "@/components/interview";
+import { cn } from "@/lib/utils";
 import { usePublishFlow } from "@/hooks/usePublishFlow";
 
 type QA = {
@@ -630,12 +631,16 @@ function EditReflectionModal({
 
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
-      if (e.key === "Escape") attemptDismiss();
+      if (e.key === "Escape") {
+        attemptDismiss();
+      } else if ((e.metaKey || e.ctrlKey) && e.key === "Enter") {
+        if (dirty && !saving && draft.trim()) onConfirm(draft);
+      }
     }
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [dirty, saving]);
+  }, [dirty, saving, draft]);
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
@@ -643,36 +648,76 @@ function EditReflectionModal({
         className="absolute inset-0 bg-black/50 backdrop-blur-sm"
         onClick={attemptDismiss}
       />
-      <div className="relative bg-white rounded-[20px] shadow-2xl w-full max-w-2xl mx-4 max-h-[90vh] flex flex-col overflow-hidden">
-        <div className="px-6 py-4 border-b border-folio-border-subtle">
-          <h3 className="folio-h3 text-folio-text-primary">Edit reflection</h3>
-          <p className="folio-ui text-folio-text-secondary mt-1">{question}</p>
-        </div>
-        <div className="px-6 py-4 flex-1 overflow-y-auto">
-          <textarea
-            autoFocus
-            value={draft}
-            onChange={(e) => setDraft(e.target.value)}
-            className="w-full min-h-[200px] p-3 border border-folio-border-subtle rounded-[20px] resize-y bg-surface-canvas focus:ring-1 focus:ring-[var(--accent)] focus:border-[var(--accent)]"
-            style={{ fontFamily: "var(--font-headline)", fontStyle: "italic", fontSize: 'var(--type-body)', lineHeight: 'var(--lh-body)' }}
-            placeholder="Share your thoughts..."
-          />
-        </div>
-        <div className="px-6 py-4 border-t border-folio-border-subtle flex items-center justify-end gap-3">
-          <button
-            onClick={attemptDismiss}
-            disabled={saving}
-            className="px-4 py-2 folio-ui font-medium text-folio-text-primary bg-surface-canvas border border-folio-border-subtle rounded-lg hover:bg-surface-ground disabled:opacity-50 transition-colors"
-          >
-            Cancel
-          </button>
-          <button
-            onClick={() => onConfirm(draft)}
-            disabled={saving || !dirty}
-            className="px-4 py-2 folio-ui font-medium text-white bg-[var(--accent)] rounded-lg hover:bg-[var(--accent-hover)] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-          >
-            {saving ? "Saving..." : "Confirm changes"}
-          </button>
+      <div className="relative bg-white rounded-[20px] shadow-2xl w-full max-w-3xl mx-4 max-h-[90vh] overflow-hidden">
+        {/* Close button — matches InterviewFlow */}
+        <button
+          type="button"
+          onClick={attemptDismiss}
+          className="absolute top-4 right-4 z-10 p-2 text-folio-text-tertiary hover:text-folio-text-secondary transition-colors"
+          aria-label="Close editor"
+        >
+          <X className="w-5 h-5" />
+        </button>
+
+        {/* Layout mirrors TextInterview/QuestionCard */}
+        <div className="flex flex-col h-full min-h-[600px]">
+          {/* Question section */}
+          <div className="flex-1 flex flex-col justify-center px-6 md:px-8 py-8">
+            <InterviewQuestion question={question} />
+          </div>
+
+          {/* Input section */}
+          <div className="px-6 md:px-8 pb-6 space-y-4">
+            <div className="max-w-2xl mx-auto w-full">
+              <textarea
+                autoFocus
+                value={draft}
+                onChange={(e) => setDraft(e.target.value)}
+                rows={6}
+                className={cn(
+                  "w-full min-h-[160px] md:min-h-[200px] p-4 md:p-6",
+                  "bg-surface-ground/50 rounded-xl text-lg",
+                  "placeholder:text-folio-text-tertiary",
+                  "border-transparent focus:border-folio-border-subtle",
+                  "focus:outline-none focus:ring-2 focus:ring-gray-200",
+                  "resize-none leading-relaxed transition-all"
+                )}
+                placeholder="Share your thoughts..."
+                disabled={saving}
+              />
+
+              {/* Helper text */}
+              <p className="text-sm text-folio-text-tertiary mt-2">
+                Write as much or as little as you'd like
+              </p>
+            </div>
+
+            {/* Action row */}
+            <div className="flex items-center justify-between max-w-2xl mx-auto w-full">
+              <button
+                type="button"
+                onClick={attemptDismiss}
+                disabled={saving}
+                className="text-folio-text-secondary hover:text-folio-text-primary text-sm py-2 px-3 transition-colors disabled:opacity-50"
+              >
+                Cancel
+              </button>
+
+              <button
+                type="button"
+                onClick={() => onConfirm(draft)}
+                disabled={saving || !dirty || !draft.trim()}
+                className={cn(
+                  "py-3 px-6 rounded-lg font-medium transition-all",
+                  dirty && draft.trim() && !saving
+                    ? "bg-[var(--accent)] text-white hover:bg-[var(--accent-hover)]"
+                    : "bg-surface-ground text-folio-text-tertiary cursor-not-allowed"
+                )}
+              >
+                {saving ? "..." : "Continue →"}
+              </button>
+            </div>
+          </div>
         </div>
       </div>
     </div>
