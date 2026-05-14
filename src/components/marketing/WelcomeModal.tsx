@@ -19,8 +19,8 @@ const frames: Array<{
 }> = [
   {
     videoBase: '/onboarding/01-published-project',
-    headline: 'Your portfolio, working for you',
-    body: 'Folio turns your projects into editorial articles that publish to your profile, your directory page, and your magazine feed. The portfolio section of your website becomes a publication that keeps writing itself.',
+    headline: 'Your living, breathing portfolio',
+    body: 'Every project becomes a story worth telling. Upload your work and walk through an interview that goes deeper than any reporter would. The story you worked so hard to create, finally told the way you would tell it.',
   },
   {
     videoBase: '/onboarding/02-interview-moment',
