@@ -393,10 +393,7 @@ export default function StoryPanel({ projectId, project, images, isOwner }: Stor
                 </div>
               )}
               <div
-                onDoubleClick={() => {
-                  console.log("[StoryPanel] opening reflection editor for:", qa);
-                  setEditingReflection(qa);
-                }}
+                onDoubleClick={() => setEditingReflection(qa)}
                 role="button"
                 tabIndex={0}
                 onKeyDown={(e) => {
