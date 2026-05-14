@@ -4,7 +4,7 @@ Drop video files into this directory to activate the demo modal frames.
 
 | Frame | Filename (base) | Headline |
 |---|---|---|
-| 1 | `01-published-project` | Your portfolio, working for you |
+| 1 | `01-published-project` | Your living, breathing portfolio |
 | 2 | `02-interview-moment` | Folio asks questions a reporter can't |
 | 3 | `03-sourcebook-fills` | Your Sourcebook fills itself |
 
