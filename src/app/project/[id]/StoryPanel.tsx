@@ -63,8 +63,9 @@ export default function StoryPanel({ projectId, project, images, isOwner }: Stor
   const [showTagDiagnostic, setShowTagDiagnostic] = useState(false);
   const [showInterviewModal, setShowInterviewModal] = useState(false);
 
-  // Reflection edit modal state
-  const [editingReflectionIndex, setEditingReflectionIndex] = useState<number | null>(null);
+  // Reflection edit modal state — store the entry by reference (filteredAnswers
+  // indexes don't map 1:1 to `answers` when empty entries are filtered out).
+  const [editingReflection, setEditingReflection] = useState<QA | null>(null);
 
   // Deduplicate answers by question and answer content
   const dedupeAnswers = (answers: QA[]): QA[] => {
@@ -261,9 +262,11 @@ export default function StoryPanel({ projectId, project, images, isOwner }: Stor
     }
   }
 
-  async function commitReflectionEdit(i: number, value: string) {
+  async function commitReflectionEdit(target: QA, value: string) {
+    const idx = answers.indexOf(target);
+    if (idx === -1) return;
     const next = [...answers];
-    next[i] = { ...next[i], a: value, answer: value };
+    next[idx] = { ...next[idx], a: value, answer: value };
     setAnswers(next);
     await saveAnswers(next);
   }
@@ -390,11 +393,11 @@ export default function StoryPanel({ projectId, project, images, isOwner }: Stor
                 </div>
               )}
               <div
-                onDoubleClick={() => setEditingReflectionIndex(i)}
+                onDoubleClick={() => setEditingReflection(qa)}
                 role="button"
                 tabIndex={0}
                 onKeyDown={(e) => {
-                  if (e.key === "Enter") setEditingReflectionIndex(i);
+                  if (e.key === "Enter") setEditingReflection(qa);
                 }}
                 title="Double-click to edit"
                 className={`w-full min-h-[80px] p-3 border border-folio-border-subtle rounded-[20px] bg-surface-canvas hover:border-[var(--accent)] hover:bg-[var(--accent)]/[0.02] cursor-pointer transition-colors whitespace-pre-wrap break-words ${
@@ -492,16 +495,15 @@ export default function StoryPanel({ projectId, project, images, isOwner }: Stor
       </div>
 
       {/* Reflection Edit Modal */}
-      {editingReflectionIndex !== null && answers[editingReflectionIndex] && (
+      {editingReflection && (
         <EditReflectionModal
-          question={answers[editingReflectionIndex].q || answers[editingReflectionIndex].question || ""}
-          initialValue={answers[editingReflectionIndex].a || answers[editingReflectionIndex].answer || ""}
+          question={editingReflection.q || editingReflection.question || ""}
+          initialValue={editingReflection.a || editingReflection.answer || ""}
           saving={saving}
-          onCancel={() => setEditingReflectionIndex(null)}
+          onCancel={() => setEditingReflection(null)}
           onConfirm={async (value) => {
-            const idx = editingReflectionIndex;
-            await commitReflectionEdit(idx, value);
-            setEditingReflectionIndex(null);
+            await commitReflectionEdit(editingReflection, value);
+            setEditingReflection(null);
           }}
         />
       )}
@@ -667,7 +669,7 @@ function EditReflectionModal({
           </div>
 
           {/* Input section */}
-          <div className="px-6 md:px-8 pb-6 space-y-4">
+          <div className="px-6 md:px-8 pb-4 space-y-4">
             <div className="max-w-2xl mx-auto w-full">
               <textarea
                 autoFocus
