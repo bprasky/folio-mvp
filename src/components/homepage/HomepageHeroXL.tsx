@@ -54,6 +54,31 @@ export function HomepageHeroXL({ hero }: Props) {
           }}
         />
 
+        {/* Embossed FOLIO masthead — replaces the standalone banner.
+            data-folio-wordmark-sentinel is observed by EditorialMasthead's
+            IntersectionObserver to drive the corner-mark fade. */}
+        <div
+          data-folio-wordmark-sentinel
+          className="absolute inset-x-0 top-4 sm:top-6 md:top-8 z-10 pointer-events-none text-center"
+        >
+          <span
+            aria-hidden="true"
+            className="font-serif text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-light uppercase text-white"
+            style={{
+              letterSpacing: "var(--ls-wide)",
+              fontWeight: 300,
+              lineHeight: 1,
+              mixBlendMode: "overlay",
+              textShadow:
+                "0 1px 0 rgba(255,255,255,0.35), 0 -1px 0 rgba(0,0,0,0.25)",
+              opacity: 0.92,
+            }}
+          >
+            FOLIO
+          </span>
+          <span className="sr-only">Folio</span>
+        </div>
+
         {/* Eyebrow badge — top-left */}
         <div className="absolute top-6 left-6 sm:top-9 sm:left-9">
           <span

@@ -30,9 +30,25 @@ export function EditorialMasthead() {
   // the corner mark in the topbar is the only Folio mark on that page.
   const isArticlePage = pathname?.startsWith("/p/");
   const hidesMasthead = isDesignerPage || isProductPage || isMagazinePage || isArticlePage;
+  // Homepage embosses FOLIO into the hero image instead of rendering the
+  // standalone wordmark — the corner-mark observer watches the in-hero element.
+  const isHomePage = pathname === "/";
 
   useEffect(() => {
-    if (!hidesMasthead && wordmarkRef.current) {
+    if (isHomePage) {
+      const sentinel = document.querySelector<HTMLElement>(
+        "[data-folio-wordmark-sentinel]",
+      );
+      if (sentinel) {
+        const observer = new IntersectionObserver(
+          ([entry]) => setIsScrolled(!entry.isIntersecting),
+          { rootMargin: "-40px 0px 0px 0px", threshold: 0 },
+        );
+        observer.observe(sentinel);
+        return () => observer.disconnect();
+      }
+      // fall through to scroll threshold if the hero hasn't mounted yet
+    } else if (!hidesMasthead && wordmarkRef.current) {
       const observer = new IntersectionObserver(
         ([entry]) => setIsScrolled(!entry.isIntersecting),
         { rootMargin: "-40px 0px 0px 0px", threshold: 0 },
@@ -57,7 +73,7 @@ export function EditorialMasthead() {
     update();
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
-  }, [hidesMasthead, pathname]);
+  }, [hidesMasthead, isHomePage, pathname]);
 
   // Corner FOLIO mark is hidden whenever the big wordmark is visible at the
   // top of the page (i.e. wordmark-bearing route + not yet scrolled past it).
@@ -131,9 +147,10 @@ export function EditorialMasthead() {
       </header>
 
       {/* Large FOLIO wordmark — sits below the sticky nav as page content.
-          Rendered on homepage + editorial article pages so the brand expression
-          is consistent. Suppressed on dashboard / product / magazine routes. */}
-      {!hidesMasthead && (
+          The homepage embosses FOLIO into the hero image instead (see
+          HomepageHeroXL), so this block is suppressed there. Suppressed on
+          dashboard / product / magazine / article routes as well. */}
+      {!hidesMasthead && !isHomePage && (
         <div
           ref={wordmarkRef}
           className="relative w-full"
