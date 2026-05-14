@@ -35,14 +35,55 @@ export async function GET(
     const interview = provenance.interview || {};
     const payload = interview.payload || {};
 
-    // Extract interview data - normalize answers and followUps to consistent format
-    const normalizeQA = (items: any[]): Array<{ q: string; a: string; isFeatured: boolean }> => {
+    // Build a recovery map from EditorialInterviewAnswer so we can restore
+    // missing question text when provenance was overwritten without prompts
+    // (e.g. an older Save path that posted empty `question` fields and the
+    // server auto-assigned `auto-N` ids with empty prompt).
+    const editorialInterview = await prisma.editorialInterview.findUnique({
+      where: { projectId },
+      select: {
+        answers: {
+          orderBy: { createdAt: "asc" },
+          select: {
+            questionId: true,
+            questionText: true,
+            answerText: true,
+            isFollowUp: true,
+          },
+        },
+      },
+    });
+
+    const questionTextByQuestionId = new Map<string, string>();
+    const questionTextByAnswerText = new Map<string, string>();
+    for (const a of editorialInterview?.answers ?? []) {
+      if (a.questionText) {
+        if (a.questionId) questionTextByQuestionId.set(a.questionId, a.questionText);
+        if (a.answerText) questionTextByAnswerText.set(a.answerText.trim(), a.questionText);
+      }
+    }
+
+    // Extract interview data - normalize answers and followUps to consistent format.
+    // Preserves questionId/section/isFollowUp and recovers question text from
+    // EditorialInterviewAnswer when the provenance copy is empty.
+    const normalizeQA = (items: any[]) => {
       return (items || []).map((item: any) => {
-        const q = item.question || item.q || item.prompt || '';
+        let q = item.question || item.q || item.prompt || "";
+        const a = item.answer || item.a || "";
+        const questionId = item.questionId || item.id || "";
+        if (!q && questionId && questionTextByQuestionId.has(questionId)) {
+          q = questionTextByQuestionId.get(questionId)!;
+        }
+        if (!q && a && questionTextByAnswerText.has(a.trim())) {
+          q = questionTextByAnswerText.get(a.trim())!;
+        }
         return {
           q,
-          a: item.answer || item.a || '',
+          a,
           isFeatured: !!item.isFeatured,
+          questionId,
+          section: item.section || "",
+          isFollowUp: !!item.isFollowUp,
         };
       }).filter((qa: any) => qa.q || qa.a);
     };
