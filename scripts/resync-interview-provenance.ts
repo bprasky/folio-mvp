@@ -24,17 +24,42 @@ async function inspect(projectId: string) {
     where: { projectId },
     select: { provenance: true },
   });
-  const payload = ((post?.provenance as any)?.interview?.payload) || {};
-  const provenanceAnswers: any[] = payload.answers || [];
+  const provenance = (post?.provenance as any) || {};
+  const interview = provenance.interview || {};
+  const payload = interview.payload || {};
+  const provenanceAnswers: any[] = payload.answers || interview.answers || [];
+  const selectedQuestionIds: any[] = payload.selectedQuestionIds || interview.selectedQuestionIds || [];
 
   console.log(`\n=== Project ${projectId} ===`);
   console.log(`  EditorialInterviewAnswer rows: ${ei?.answers.length ?? 0}`);
   console.log(`  provenance.payload.answers   : ${provenanceAnswers.length}`);
+  console.log(`  selectedQuestionIds (count)  : ${selectedQuestionIds.length}`);
+  if (selectedQuestionIds.length) {
+    console.log(`  selectedQuestionIds (first 6): ${selectedQuestionIds.slice(0, 6).join(", ")}`);
+  }
 
-  const missingPromptInProvenance = provenanceAnswers.filter((a) => !a.prompt).length;
+  const missingPromptInProvenance = provenanceAnswers.filter((a) => !a.prompt && !a.question && !a.q).length;
   const missingTextInEditorial = (ei?.answers ?? []).filter((a) => !a.questionText).length;
   console.log(`  provenance entries missing prompt: ${missingPromptInProvenance}`);
   console.log(`  editorial entries missing questionText: ${missingTextInEditorial}`);
+
+  if (provenanceAnswers.length) {
+    console.log(`\n  Field availability across provenance answers:`);
+    const has = (k: string) => provenanceAnswers.filter((a) => a && a[k] !== undefined && a[k] !== "").length;
+    for (const k of ["questionId", "id", "prompt", "question", "q", "section", "isFollowUp", "answer", "a", "linkedImageId", "questionSource"]) {
+      console.log(`    ${k.padEnd(16)}: ${has(k)}/${provenanceAnswers.length} have it`);
+    }
+
+    console.log(`\n  First 3 provenance entries (raw):`);
+    for (const [idx, a] of provenanceAnswers.slice(0, 3).entries()) {
+      const trimmed: any = {};
+      for (const [k, v] of Object.entries(a)) {
+        if (typeof v === "string" && v.length > 80) trimmed[k] = v.slice(0, 80) + "…";
+        else trimmed[k] = v;
+      }
+      console.log(`    [${idx}]`, JSON.stringify(trimmed));
+    }
+  }
 
   return { ei, missingPromptInProvenance };
 }
