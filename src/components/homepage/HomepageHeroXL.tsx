@@ -63,15 +63,17 @@ export function HomepageHeroXL({ hero }: Props) {
         >
           <span
             aria-hidden="true"
-            className="font-serif text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-light uppercase text-white"
+            className="font-serif text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-light uppercase"
             style={{
               letterSpacing: "var(--ls-wide)",
               fontWeight: 300,
               lineHeight: 1,
-              mixBlendMode: "overlay",
+              // Tone-on-tone deboss: transparent fill, dark shadow on the
+              // top edge + light highlight on the bottom edge fakes light
+              // hitting a recessed stamp.
+              color: "transparent",
               textShadow:
-                "0 1px 0 rgba(255,255,255,0.35), 0 -1px 0 rgba(0,0,0,0.25)",
-              opacity: 0.92,
+                "0 1px 0 rgba(255,255,255,0.28), 0 -1px 0 rgba(0,0,0,0.48)",
             }}
           >
             FOLIO
