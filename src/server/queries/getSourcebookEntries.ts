@@ -73,17 +73,20 @@ export async function getSourcebookEntries(
       }>;
       lastUsedAt: Date;
       tagCount: number;
-      // Best project tag image (most recent tag with a valid image URL)
-      bestTagImage: { url: string; x: number; y: number; createdAt: Date } | null;
+      // Best project tag image — prefers a pre-cropped tag image (cropUrl) over the
+      // full source image with focal positioning so the sourcebook always has a
+      // usable thumbnail when the catalog imageUrl is missing.
+      bestTagImage: { url: string; cropped: boolean; x: number; y: number; createdAt: Date } | null;
     }>();
 
     productTags.forEach(tag => {
       const existing = productMap.get(tag.productId);
       const projectKey = `${tag.image.projectId}-${tag.image.room || 'no-room'}`;
 
-      // Track the most recent tag with a valid image URL for fallback
-      const tagImageCandidate = tag.image.url
-        ? { url: tag.image.url, x: tag.x, y: tag.y, createdAt: tag.createdAt }
+      // Prefer a pre-cropped tag image when present, fall back to the source image.
+      const tagImageUrl = tag.cropUrl || tag.image.url || null;
+      const tagImageCandidate = tagImageUrl
+        ? { url: tagImageUrl, cropped: !!tag.cropUrl, x: tag.x, y: tag.y, createdAt: tag.createdAt }
         : null;
 
       if (existing) {
@@ -91,8 +94,16 @@ export async function getSourcebookEntries(
         if (tag.createdAt > existing.lastUsedAt) {
           existing.lastUsedAt = tag.createdAt;
         }
-        if (tagImageCandidate && (!existing.bestTagImage || tag.createdAt > existing.bestTagImage.createdAt)) {
-          existing.bestTagImage = tagImageCandidate;
+        if (tagImageCandidate) {
+          const current = existing.bestTagImage;
+          const preferCropped = tagImageCandidate.cropped && !current?.cropped;
+          const sameCropStatusAndNewer =
+            !!current &&
+            current.cropped === tagImageCandidate.cropped &&
+            tag.createdAt > current.createdAt;
+          if (!current || preferCropped || sameCropStatusAndNewer) {
+            existing.bestTagImage = tagImageCandidate;
+          }
         }
         if (!existing.projects.has(projectKey)) {
           existing.projects.set(projectKey, {
@@ -218,7 +229,8 @@ export async function getSourcebookEntries(
         const category = inferCategory(item.product.name, item.product.category);
         const sbEntry = sourcebookMap.get(item.product.id);
 
-        // Resolve image: catalog → project tag → placeholder
+        // Resolve image: catalog URL → project tag (cropped jpg if present, else
+        // source image with focal positioning) → placeholder.
         let resolvedImage: SourcebookEntry['resolvedImage'];
         if (item.product.imageUrl) {
           resolvedImage = { url: item.product.imageUrl, type: 'catalog' };
@@ -226,8 +238,11 @@ export async function getSourcebookEntries(
           resolvedImage = {
             url: item.bestTagImage.url,
             type: 'project',
-            focalX: item.bestTagImage.x,
-            focalY: item.bestTagImage.y,
+            // Pre-cropped images don't need focal positioning; only emit
+            // focalX/focalY when the renderer needs to crop via object-position.
+            ...(item.bestTagImage.cropped
+              ? {}
+              : { focalX: item.bestTagImage.x, focalY: item.bestTagImage.y }),
           };
         } else {
           resolvedImage = { url: null, type: 'placeholder' };
