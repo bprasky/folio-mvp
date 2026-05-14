@@ -6,7 +6,7 @@ import { X, Mic, Quote } from "lucide-react";
 import { CreditsEditor } from "@/components/posting/CreditsEditor";
 import type { CreditEntry } from "@/lib/posting/creditsSchema";
 import { TagDiagnosticModal } from "@/components/posting/interview/TagDiagnosticModal";
-import { InterviewFlow, InterviewQuestion } from "@/components/interview";
+import { InterviewFlow } from "@/components/interview";
 import { cn } from "@/lib/utils";
 import { usePublishFlow } from "@/hooks/usePublishFlow";
 
@@ -393,7 +393,10 @@ export default function StoryPanel({ projectId, project, images, isOwner }: Stor
                 </div>
               )}
               <div
-                onDoubleClick={() => setEditingReflection(qa)}
+                onDoubleClick={() => {
+                  console.log("[StoryPanel] opening reflection editor for:", qa);
+                  setEditingReflection(qa);
+                }}
                 role="button"
                 tabIndex={0}
                 onKeyDown={(e) => {
@@ -663,9 +666,14 @@ function EditReflectionModal({
 
         {/* Layout mirrors TextInterview/QuestionCard */}
         <div className="flex flex-col h-full min-h-[600px]">
-          {/* Question section */}
+          {/* Question section — JSX inlined from shared/InterviewQuestion so a missing
+              question prop is impossible to hide as a render no-op. */}
           <div className="flex-1 flex flex-col justify-center px-6 md:px-8 py-8">
-            <InterviewQuestion question={question} />
+            <div className="max-w-2xl mx-auto px-4">
+              <h2 className="text-2xl md:text-3xl font-serif italic text-folio-text-primary leading-relaxed text-center md:text-left">
+                {question.trim() || "Edit your reflection"}
+              </h2>
+            </div>
           </div>
 
           {/* Input section */}
