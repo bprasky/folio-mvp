@@ -56,10 +56,12 @@ export function HomepageHeroXL({ hero }: Props) {
 
         {/* Embossed FOLIO masthead — replaces the standalone banner.
             data-folio-wordmark-sentinel is observed by EditorialMasthead's
-            IntersectionObserver to drive the corner-mark fade. */}
+            IntersectionObserver to drive the corner-mark fade.
+            Mobile: dropped to ~30% so the embossed mark stops competing with
+            the hero title in the same vertical band. Desktop unchanged. */}
         <div
           data-folio-wordmark-sentinel
-          className="absolute inset-x-0 top-4 sm:top-6 md:top-8 z-10 pointer-events-none text-center"
+          className="absolute inset-x-0 top-4 sm:top-6 md:top-8 z-10 pointer-events-none text-center opacity-30 sm:opacity-100"
         >
           <span
             aria-hidden="true"
@@ -82,7 +84,7 @@ export function HomepageHeroXL({ hero }: Props) {
         </div>
 
         {/* Eyebrow badge — top-left */}
-        <div className="absolute top-6 left-6 sm:top-9 sm:left-9">
+        <div className="absolute top-4 left-4 sm:top-9 sm:left-9">
           <span
             className="inline-block px-3 sm:px-4 py-1 sm:py-1.5 rounded-full backdrop-blur-md folio-eyebrow"
             style={{
@@ -97,20 +99,20 @@ export function HomepageHeroXL({ hero }: Props) {
         {/* Title + meta — bottom-left.
             Mobile: 24px from bottom, h2-scale title, tighter side margins.
             Desktop: 36px from bottom, h1-scale title. */}
-        <div className="absolute left-6 right-6 sm:left-9 sm:right-9 bottom-6 sm:bottom-9">
+        <div className="absolute left-4 right-4 sm:left-9 sm:right-9 bottom-6 sm:bottom-9">
           <h1
             className={[
-              "text-white max-w-[800px]",
-              // Mobile uses h3 (28px) + line-clamp-3 because the 5:4 card is
-              // ~274px tall on a 343px-wide viewport — h2 (36px) wraps to
-              // 5 lines and clips above the card edge. Desktop's 21:10 card
-              // (600px+ tall) easily holds h1.
+              "text-white max-w-[800px] break-words",
+              // Mobile: clamp scales smoothly from ~28px at 360vw to the
+              // h1 token at sm+. line-clamp-3 caps overflow on the 5:4 card.
+              // Desktop's 21:10 card (600px+ tall) easily holds the full h1.
               "line-clamp-3 sm:line-clamp-none",
               "[font-family:var(--font-headline)]",
               "[letter-spacing:var(--ls-tight)]",
-              "[font-size:var(--type-h3)] sm:[font-size:var(--type-h1)]",
+              "[font-size:clamp(1.75rem,6vw,3.5rem)] sm:[font-size:var(--type-h1)]",
               "[line-height:var(--lh-h3)] sm:[line-height:var(--lh-h1)]",
               "[font-weight:var(--w-h3)] sm:[font-weight:var(--w-h1)]",
+              "[overflow-wrap:break-word] [hyphens:auto]",
             ].join(" ")}
           >
             {hero.title}

@@ -96,10 +96,11 @@ export function BoostReel({ items, totalTagged, postSlug }: Props) {
     <div
       ref={containerRef}
       // Desktop: 8 cells in one row (7 product + optional +N).
-      // Mobile (<sm): 4 cells per row, wrapping into 2 rows. The
+      // Mobile (<sm): 2 cells per row — 4-up was too narrow to render the
+      // product / vendor names without truncating to ~7 characters. The
       // IntersectionObserver targets each cell individually, so the layout
       // change doesn't affect viewability tracking.
-      className="grid grid-cols-4 sm:grid-cols-8 gap-3 sm:gap-4"
+      className="grid grid-cols-2 sm:grid-cols-8 gap-3 sm:gap-4"
       role="list"
       aria-label="Products tagged in this editorial"
     >

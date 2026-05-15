@@ -71,15 +71,15 @@ export function FoundingCTABar() {
       <div
         className="bg-[var(--surface-ground)] border-t border-[rgba(190,175,155,0.12)] shadow-[0_-2px_8px_rgba(0,0,0,0.04)]"
       >
-        <div className="max-w-7xl mx-auto px-6 py-3 flex flex-col sm:flex-row items-center justify-between gap-2 sm:gap-4">
-          <p className="font-body text-sm text-[#1a1a1a]">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-2 sm:py-3 flex flex-row items-center justify-between gap-3 sm:gap-4">
+          <p className="font-body text-xs sm:text-sm text-[#1a1a1a] min-w-0 truncate sm:whitespace-normal">
             Folio is accepting founding designers
           </p>
 
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 sm:gap-3 shrink-0">
             <Link
               href="/auth/signup"
-              className="accent-btn px-6 py-2 text-sm whitespace-nowrap"
+              className="accent-btn px-4 sm:px-6 py-1.5 sm:py-2 text-xs sm:text-sm whitespace-nowrap"
             >
               Apply to Join
             </Link>

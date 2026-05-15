@@ -59,7 +59,10 @@ export function InviteRibbon() {
     <div
       role="region"
       aria-label="Folio invitation"
-      className="fixed bottom-0 inset-x-0 z-40"
+      // Hidden on mobile (<sm) — FoundingCTABar covers the conversion ask
+      // with a single, shorter CTA. Two stacked banners ate ~18% of the
+      // viewport. Desktop retains both rails.
+      className="hidden sm:block fixed bottom-0 inset-x-0 z-40"
       style={{
         // Hide on initial paint and during the first frame post-hydration.
         // `visible === null` covers SSR + first client render; once the effect

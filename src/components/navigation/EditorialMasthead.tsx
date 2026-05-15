@@ -107,12 +107,17 @@ export function EditorialMasthead() {
           <div className="flex items-center gap-4 min-w-0">
             <MobileMenu />
 
-            {/* Corner FOLIO mark — hidden while the big wordmark is in view */}
+            {/* Corner FOLIO mark — hidden while the big wordmark is in view.
+                Mobile on article pages: suppressed entirely. The hamburger
+                establishes brand context and the topbar was crowding the
+                search + buttons row. Desktop unchanged. */}
             <Link
               href="/"
               aria-hidden={!showCornerMark}
               tabIndex={showCornerMark ? 0 : -1}
-              className="font-serif text-xl tracking-tight font-semibold text-folio-text-primary hover:text-folio-text-primary whitespace-nowrap"
+              className={`font-serif text-xl tracking-tight font-semibold text-folio-text-primary hover:text-folio-text-primary whitespace-nowrap ${
+                isArticlePage ? "hidden md:inline-block" : ""
+              }`}
               style={{
                 opacity: showCornerMark ? 1 : 0,
                 pointerEvents: showCornerMark ? "auto" : "none",

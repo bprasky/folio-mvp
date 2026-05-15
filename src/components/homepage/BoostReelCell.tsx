@@ -87,14 +87,14 @@ export function BoostReelCell({ item, onClick }: ProductCellProps) {
       </div>
       <div className="mt-2 px-0.5">
         <p
-          className="folio-ui truncate text-folio-text-primary"
+          className="folio-ui line-clamp-2 sm:truncate text-folio-text-primary"
           title={item.name}
         >
           {item.name}
         </p>
         {item.vendorName && (
           <p
-            className="folio-meta truncate text-folio-text-secondary"
+            className="folio-meta line-clamp-1 sm:truncate text-folio-text-secondary"
             title={item.vendorName}
           >
             {item.vendorName}

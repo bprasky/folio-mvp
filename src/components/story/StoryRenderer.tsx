@@ -147,8 +147,10 @@ export function StoryRenderer({ post }: StoryRendererProps) {
           <LandscapeHero story={story} publishedAt={post?.publishedAt ?? null} />
         )}
 
-        {/* Mosaic: Room grid with expand-to-detail */}
-        <div className="mt-10">
+        {/* Mosaic: Room grid with expand-to-detail.
+            Mobile (<md): tighter top gap (~40% less) to keep the first
+            scroll productive after the editorial hero. */}
+        <div className="mt-6 md:mt-10">
           <Mosaic
             roomTiles={story.roomTiles}
             breathers={story.breathers}
@@ -217,63 +219,77 @@ function LandscapeHero({ story, publishedAt }: { story: StoryData; publishedAt: 
 
   return (
     <section
-      className="mx-auto"
+      className="mx-auto px-4 md:px-14"
       style={{
         maxWidth: 1168, /* folio-design-system: off-scale */
-        paddingLeft: 56, /* folio-design-system: off-scale */
-        paddingRight: 56, /* folio-design-system: off-scale */
       }}
     >
-      {/* Title row: 8fr title + 4fr stats stack, baselined to bottom */}
+      {/* Title row.
+          Mobile: flex column — title first, meta strip below as a 3-up row.
+          Desktop (md+): 8fr/4fr grid with title left, stats sidebar right
+          baselined to bottom (original E4 layout). */}
       <div
-        className="grid"
+        className="flex flex-col gap-4 md:grid md:items-end md:gap-14"
         style={{
           gridTemplateColumns: "8fr 4fr",
-          gap: 56, /* folio-design-system: off-scale */
-          alignItems: "end",
         }}
       >
         <h1
+          // Font size: mobile uses fluid clamp (~40px floor, 6rem cap at
+          // ≥1200px); md+ snaps to the original 60px design-system value.
+          // Tailwind arbitrary values land both rules in the cascade so we
+          // don't need a media-queried inline style.
+          className="[font-size:clamp(2.5rem,8vw,6rem)] md:[font-size:60px] [line-height:1.05] md:[line-height:1.02]"
           style={{
             fontFamily: "var(--font-headline)",
             fontStyle: "italic",
             fontWeight: "var(--w-body)",
-            fontSize: 60, /* folio-design-system: off-scale */
-            lineHeight: 1.02, /* folio-design-system: off-scale */
             letterSpacing: "-0.012em",
             textWrap: "balance" as any,
             color: "rgba(87, 75, 67, 0.92)",
             margin: 0,
+            overflowWrap: "break-word",
           }}
         >
           {story.title}
         </h1>
 
+        {/* Meta block.
+            Mobile: horizontal strip of label/value pairs (Rooms · Designer ·
+            Published) below the title, above the hero image.
+            Desktop: vertical right-column sidebar baselined to title bottom. */}
         <div
+          className="flex flex-row flex-wrap gap-x-5 gap-y-2 md:flex-col md:gap-x-0 md:gap-y-[14px]"
           style={{
             fontFamily: "var(--font-body)",
             fontSize: 13, /* folio-design-system: off-scale */
             lineHeight: 1.5, /* folio-design-system: off-scale */
             color: "rgba(87, 75, 67, 0.45)",
-            display: "flex",
-            flexDirection: "column",
-            gap: 14, /* folio-design-system: off-scale */
           }}
         >
           {stats.map((s) => (
-            <BylineRow key={s.label} label={s.label} value={s.value} />
+            <BylineRow
+              key={s.label}
+              label={s.label}
+              value={s.value}
+              // Photography is the longest row and rarely critical on a
+              // 360px-wide meta strip; suppressed below md to keep the
+              // mobile pattern to Rooms / Designer / Published.
+              hideOnMobile={s.label === "Photography"}
+            />
           ))}
         </div>
       </div>
 
-      {/* Hero photo — 16:9 cover, flush below the title block */}
+      {/* Hero photo — 16:9 cover, flush below the title block.
+          Mobile: edge-to-edge via negative margins, square corners.
+          Desktop: contained, 12px rounded corners (matches PhotoTile). */}
       <div
+        className="-mx-4 md:mx-0 mt-6 md:mt-9 rounded-none md:rounded-[12px]"
         style={{
-          marginTop: 36, /* folio-design-system: off-scale */
           aspectRatio: "16 / 9",
           position: "relative",
           overflow: "hidden",
-          borderRadius: 12, /* matches PhotoTile / RoomExpand gallery */
           background: "rgba(87, 75, 67, 0.04)",
         }}
       >
@@ -289,8 +305,8 @@ function LandscapeHero({ story, publishedAt }: { story: StoryData; publishedAt: 
 
       {/* Caption row */}
       <div
+        className="mt-2 md:mt-[14px]"
         style={{
-          marginTop: 14, /* folio-design-system: off-scale */
           display: "flex",
           justifyContent: "space-between",
           alignItems: "baseline",
@@ -341,11 +357,13 @@ function LandscapeHero({ story, publishedAt }: { story: StoryData; publishedAt: 
       </div>
 
       {/* Introduction — pull quote + lede paragraph below the caption row,
-          same container width, sized for comfortable reading. */}
+          same container width, sized for comfortable reading.
+          Mobile drops the section gap ~40% so the lede sits closer to the
+          hero image and the first scroll lands on body copy. */}
       {(story.projectPullQuote || story.introText) && (
         <div
+          className="mt-7 md:mt-12"
           style={{
-            marginTop: 48, /* folio-design-system: off-scale */
             display: "flex",
             flexDirection: "column",
             gap: 24, /* folio-design-system: off-scale */
@@ -413,9 +431,20 @@ function LandscapeHero({ story, publishedAt }: { story: StoryData; publishedAt: 
   );
 }
 
-function BylineRow({ label, value }: { label: string; value: string }) {
+function BylineRow({
+  label,
+  value,
+  hideOnMobile = false,
+}: {
+  label: string;
+  value: string;
+  hideOnMobile?: boolean;
+}) {
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
+    <div
+      className={hideOnMobile ? "hidden md:flex" : "flex"}
+      style={{ flexDirection: "column", gap: 2 }}
+    >
       <span
         style={{
           fontSize: 10, /* folio-design-system: off-scale */
