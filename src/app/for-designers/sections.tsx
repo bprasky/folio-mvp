@@ -52,8 +52,8 @@ const frames = [
   },
   {
     videoBase: "/onboarding/02-interview-moment",
-    headline: "Folio asks questions a reporter can't",
-    body: "Every project starts with an interview that goes deeper than any journalist would. Your answers become editorial in your voice, under your name. You talk, Folio writes.",
+    headline: "An interview that writes itself into editorial",
+    body: "Every project starts with questions designed around your work, surfacing the choices and instincts behind each decision. Your answers become a story in your voice, under your name. You talk, Folio writes.",
   },
   {
     videoBase: "/onboarding/03-sourcebook-fills",
