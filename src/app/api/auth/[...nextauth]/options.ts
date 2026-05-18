@@ -9,6 +9,10 @@ declare module 'next-auth' {
     role?: string;
     accountStatus?: string;
     onboardingCompletedAt?: Date | null;
+    onboardingDiagnosticAt?: Date | null;
+    onboardingFirmContextAt?: Date | null;
+    onboardingBioCaptureAt?: Date | null;
+    onboardingProfilePreviewAt?: Date | null;
     operatingAsOrgId?: string | null;
     operatingAsOrg?: {
       id: string;
@@ -27,6 +31,10 @@ declare module 'next-auth' {
       role: string;
       accountStatus: string;
       onboardingCompletedAt: Date | null;
+      onboardingDiagnosticAt: Date | null;
+      onboardingFirmContextAt: Date | null;
+      onboardingBioCaptureAt: Date | null;
+      onboardingProfilePreviewAt: Date | null;
       name?: string | null;
       email?: string | null;
       image?: string | null;
@@ -53,6 +61,10 @@ declare module 'next-auth/jwt' {
     role?: string;
     accountStatus?: string;
     onboardingCompletedAt?: Date | null;
+    onboardingDiagnosticAt?: Date | null;
+    onboardingFirmContextAt?: Date | null;
+    onboardingBioCaptureAt?: Date | null;
+    onboardingProfilePreviewAt?: Date | null;
     operatingAsOrgId?: string | null;
     operatingAsOrg?: {
       id: string;
@@ -205,6 +217,10 @@ export const authOptions: NextAuthOptions = {
               role: true,
               accountStatus: true,
               onboardingCompletedAt: true,
+              onboardingDiagnosticAt: true,
+              onboardingFirmContextAt: true,
+              onboardingBioCaptureAt: true,
+              onboardingProfilePreviewAt: true,
               subscriptionTier: true,
               subscriptionExpiresAt: true,
             },
@@ -212,6 +228,10 @@ export const authOptions: NextAuthOptions = {
           token.role = u?.role ?? "GUEST";
           token.accountStatus = u?.accountStatus ?? "APPROVED";
           token.onboardingCompletedAt = u?.onboardingCompletedAt ?? null;
+          token.onboardingDiagnosticAt = u?.onboardingDiagnosticAt ?? null;
+          token.onboardingFirmContextAt = u?.onboardingFirmContextAt ?? null;
+          token.onboardingBioCaptureAt = u?.onboardingBioCaptureAt ?? null;
+          token.onboardingProfilePreviewAt = u?.onboardingProfilePreviewAt ?? null;
           token.subscriptionTier = u?.subscriptionTier ?? "FREE";
           token.subscriptionExpiresAt = u?.subscriptionExpiresAt ?? null;
           // Founding designers have Pro tier with null expiry (lifetime)
@@ -249,6 +269,10 @@ export const authOptions: NextAuthOptions = {
           token.role = (token as any).role ?? "GUEST";
           token.accountStatus = (token as any).accountStatus ?? "APPROVED";
           token.onboardingCompletedAt = (token as any).onboardingCompletedAt ?? null;
+          token.onboardingDiagnosticAt = (token as any).onboardingDiagnosticAt ?? null;
+          token.onboardingFirmContextAt = (token as any).onboardingFirmContextAt ?? null;
+          token.onboardingBioCaptureAt = (token as any).onboardingBioCaptureAt ?? null;
+          token.onboardingProfilePreviewAt = (token as any).onboardingProfilePreviewAt ?? null;
           token.operatingAsOrgId = (token as any).operatingAsOrgId ?? null;
           token.operatingAsOrg = (token as any).operatingAsOrg ?? null;
           token.subscriptionTier = (token as any).subscriptionTier ?? "FREE";
@@ -259,6 +283,10 @@ export const authOptions: NextAuthOptions = {
         token.role = (token as any).role ?? "GUEST";
         token.accountStatus = (token as any).accountStatus ?? "APPROVED";
         token.onboardingCompletedAt = (token as any).onboardingCompletedAt ?? null;
+        token.onboardingDiagnosticAt = (token as any).onboardingDiagnosticAt ?? null;
+        token.onboardingFirmContextAt = (token as any).onboardingFirmContextAt ?? null;
+        token.onboardingBioCaptureAt = (token as any).onboardingBioCaptureAt ?? null;
+        token.onboardingProfilePreviewAt = (token as any).onboardingProfilePreviewAt ?? null;
         token.operatingAsOrgId = (token as any).operatingAsOrgId ?? null;
         token.operatingAsOrg = (token as any).operatingAsOrg ?? null;
         token.subscriptionTier = (token as any).subscriptionTier ?? "FREE";
@@ -283,6 +311,10 @@ export const authOptions: NextAuthOptions = {
       (session.user as any).role = (token as any).role || 'GUEST';
       (session.user as any).accountStatus = (token as any).accountStatus || 'APPROVED';
       (session.user as any).onboardingCompletedAt = (token as any).onboardingCompletedAt || null;
+      (session.user as any).onboardingDiagnosticAt = (token as any).onboardingDiagnosticAt || null;
+      (session.user as any).onboardingFirmContextAt = (token as any).onboardingFirmContextAt || null;
+      (session.user as any).onboardingBioCaptureAt = (token as any).onboardingBioCaptureAt || null;
+      (session.user as any).onboardingProfilePreviewAt = (token as any).onboardingProfilePreviewAt || null;
       (session.user as any).operatingAsOrgId = (token as any).operatingAsOrgId || null;
       (session.user as any).operatingAsOrg = (token as any).operatingAsOrg || null;
       (session.user as any).subscriptionTier = (token as any).subscriptionTier || 'FREE';
