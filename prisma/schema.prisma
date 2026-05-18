@@ -44,6 +44,11 @@ model User {
   onboardingCompletedAt          DateTime?
   // Designer onboarding tracking
   onboardingBrandStepCompletedAt DateTime?
+  // Granular onboarding flow (17_ONBOARDING_FLOW)
+  onboardingDiagnosticAt         DateTime?
+  onboardingFirmContextAt        DateTime?
+  onboardingBioCaptureAt         DateTime?
+  onboardingProfilePreviewAt     DateTime?
   // Brand profile relation (for designers)
   brandProfile                   DesignerBrandProfile?
   // Aesthetic detection

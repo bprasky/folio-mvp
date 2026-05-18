@@ -157,8 +157,8 @@ export async function POST(request: NextRequest) {
       throw new Error(`Database error creating user: ${createError instanceof Error ? createError.message : String(createError)}`);
     }
 
-    // Redirect to home - individuals can browse immediately
-    const redirectUrl = '/';
+    // New users enter the guided onboarding sequence (17_ONBOARDING_FLOW).
+    const redirectUrl = '/onboarding/diagnostic';
 
     // Return success response
     return NextResponse.json({
