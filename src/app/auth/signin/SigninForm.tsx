@@ -53,7 +53,7 @@ export function SigninForm({ showGoogle, showApple }: SigninFormProps) {
       <h1 className={styles.headline}>Welcome — sign back in.</h1>
       <p className={styles.subhead}>
         A working archive for designers. Sign in to keep your projects, materials,
-        and studio rooms at hand.
+        and rooms at hand.
       </p>
 
       {hasSso && (
@@ -103,7 +103,7 @@ export function SigninForm({ showGoogle, showApple }: SigninFormProps) {
             required
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            placeholder="you@studio.com"
+            placeholder="you@example.com"
             autoComplete="email"
             className={`${styles.input} ${err ? styles.inputError : ''}`}
           />
