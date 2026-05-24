@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import { Cormorant_Garamond, Instrument_Sans } from 'next/font/google';
+import { Cormorant_Garamond, Instrument_Sans, IBM_Plex_Mono } from 'next/font/google';
 import './globals.css';
 import Providers from './providers';
 import SessionRoleSync from '../components/SessionRoleSync';
@@ -24,6 +24,13 @@ const instrumentSans = Instrument_Sans({
   display: 'swap',
 });
 
+const plexMono = IBM_Plex_Mono({
+  subsets: ['latin'],
+  weight: ['400', '500'],
+  variable: '--font-mono',
+  display: 'swap',
+});
+
 export const metadata: Metadata = {
   title: 'Folio — Interior design, in detail',
   description:
@@ -36,7 +43,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" className={`${cormorant.variable} ${instrumentSans.variable}`}>
+    <html lang="en" className={`${cormorant.variable} ${instrumentSans.variable} ${plexMono.variable}`}>
       <body className="bg-surface-canvas text-folio-text-primary min-h-screen antialiased font-[var(--font-body)]">
         <Providers>
           <SessionRoleSync />
