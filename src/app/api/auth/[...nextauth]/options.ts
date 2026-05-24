@@ -1,6 +1,9 @@
 import { NextAuthOptions } from 'next-auth';
 import CredentialsProvider from 'next-auth/providers/credentials';
+import GoogleProvider from 'next-auth/providers/google';
+import AppleProvider from 'next-auth/providers/apple';
 import bcrypt from 'bcryptjs';
+import { AccountStatus } from '@prisma/client';
 import { prisma } from '@/lib/prisma';
 import { checkRateLimit, RateLimitPresets } from '@/lib/rateLimit';
 
@@ -94,6 +97,26 @@ if (process.env.NODE_ENV !== 'production') {
 
 export const authOptions: NextAuthOptions = {
   providers: [
+    // OAuth providers are registered only when their credentials are set so that
+    // local/preview environments without OAuth env vars still boot cleanly.
+    ...(process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET
+      ? [
+          GoogleProvider({
+            clientId: process.env.GOOGLE_CLIENT_ID,
+            clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+            allowDangerousEmailAccountLinking: true,
+          }),
+        ]
+      : []),
+    ...(process.env.APPLE_CLIENT_ID && process.env.APPLE_CLIENT_SECRET
+      ? [
+          AppleProvider({
+            clientId: process.env.APPLE_CLIENT_ID,
+            clientSecret: process.env.APPLE_CLIENT_SECRET,
+            allowDangerousEmailAccountLinking: true,
+          }),
+        ]
+      : []),
     CredentialsProvider({
       name: 'credentials',
       credentials: {
@@ -193,9 +216,65 @@ export const authOptions: NextAuthOptions = {
     })
   ],
   callbacks: {
-    async jwt({ token, user, trigger }) {
+    async signIn({ user, account }) {
+      // Credentials path is unchanged.
+      if (!account || account.provider === 'credentials') {
+        return true;
+      }
+      // OAuth (Google / Apple): we don't use the NextAuth Prisma adapter, so
+      // materialize the User row ourselves so the rest of the app's
+      // prisma.user-driven machinery (role, accountStatus, onboarding flags)
+      // works on first OAuth sign-in.
+      if (!user?.email) return false;
+      const email = user.email.toLowerCase().trim();
+      const now = new Date();
+      try {
+        await prisma.user.upsert({
+          where: { email },
+          create: {
+            email,
+            name: user.name ?? '',
+            // OAuth users sign in via the provider, never via credentials.
+            // Empty hash is treated as "no password" by the credentials authorize().
+            passwordHash: '',
+            role: 'INDIVIDUAL',
+            accountStatus: AccountStatus.APPROVED,
+            tosAcceptedAt: now,
+            privacyAcceptedAt: now,
+            tosVersion: '2026-01-19',
+            privacyVersion: '2026-01-19',
+          },
+          update: {},
+        });
+        return true;
+      } catch (err) {
+        console.error('OAuth signIn upsert failed:', err);
+        return false;
+      }
+    },
+    async jwt({ token, user, account, trigger }) {
       if (process.env.NODE_ENV !== 'production') {
         console.log("DEBUG: Entering JWT callback");
+      }
+
+      // For OAuth first sign-in, resolve the Folio user id by email so the
+      // hydration block below (which queries by token.sub) finds the right row.
+      if (
+        (account?.provider === 'google' || account?.provider === 'apple') &&
+        user?.email
+      ) {
+        try {
+          const dbUser = await prisma.user.findUnique({
+            where: { email: user.email.toLowerCase().trim() },
+            select: { id: true },
+          });
+          if (dbUser) {
+            token.id = dbUser.id;
+            token.sub = dbUser.id;
+          }
+        } catch (e) {
+          console.error('Error resolving OAuth user to Folio id:', e);
+        }
       }
 
       // Persist id on initial sign-in
@@ -329,7 +408,14 @@ export const authOptions: NextAuthOptions = {
       return session;
     },
     async redirect({ url, baseUrl }) {
-      // Always redirect to homepage after login
+      // Honor relative same-origin callbackUrls (e.g. OAuth signIn passing
+      // '/onboarding/diagnostic'); reject anything off-origin.
+      if (url.startsWith('/')) return `${baseUrl}${url}`;
+      try {
+        if (new URL(url).origin === baseUrl) return url;
+      } catch {
+        // fall through
+      }
       return `${baseUrl}/`;
     }
   },
