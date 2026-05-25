@@ -137,9 +137,10 @@ export default function SignupPage() {
           </div>
           <h1 className="auth-title">Join Folio — on the trade&rsquo;s own terms.</h1>
           <p className="auth-sub">
-            Folio is a private network for designers, studios, and the brands they
-            specify. Tell us a little about your practice; applications are reviewed
-            weekly.
+            Read the design story straight from the studios that wrote it —
+            every room credits its designer, every piece its maker. The private
+            network for studios and the brands they specify opens once your
+            organization joins.
           </p>
 
           <SsoRow onGoogleClick={handleGoogle} onAppleClick={handleApple} disabled={isLoading} />
