@@ -562,6 +562,170 @@
   color: #2e6b2e;
 }
 
+/* ---- Org-setup search + results --------------------------- */
+.auth-search {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 13px 14px;
+  border-radius: 10px;
+  background: var(--surface-canvas);
+  border: 1px solid var(--folio-border-strong);
+  margin-bottom: 16px;
+  transition: border-color var(--dur-fast) var(--ease), box-shadow var(--dur-fast) var(--ease);
+}
+.auth-search:focus-within {
+  border-color: var(--auth-copper);
+  box-shadow: 0 0 0 3px var(--auth-copper-glow);
+}
+.auth-search__icon {
+  width: 16px;
+  height: 16px;
+  flex: 0 0 16px;
+  color: var(--folio-text-tertiary);
+}
+.auth-search__input {
+  flex: 1;
+  border: 0;
+  background: transparent;
+  font-family: var(--font-body);
+  font-size: 15px;
+  color: var(--folio-text-primary);
+  outline: none;
+}
+.auth-search__input::placeholder { color: var(--folio-text-tertiary); }
+.auth-search__hint {
+  font-family: var(--auth-font-mono);
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--folio-text-tertiary);
+}
+.auth-search__empty {
+  margin: 0 0 16px;
+  padding: 14px 16px;
+  border-radius: 10px;
+  background: var(--surface-ground);
+  font-family: var(--font-body);
+  font-size: 13px;
+  color: var(--folio-text-secondary);
+}
+.auth-results {
+  list-style: none;
+  margin: 0 0 18px;
+  padding: 0;
+  border: 1px solid var(--folio-border-subtle);
+  border-radius: 10px;
+  overflow: hidden;
+}
+.auth-result {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+  background: var(--surface-canvas);
+  border-bottom: 1px solid var(--folio-border-subtle);
+  transition: background var(--dur-fast) var(--ease);
+}
+.auth-result:last-child { border-bottom: none; }
+.auth-result:hover { background: var(--surface-ground); }
+.auth-result__main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+.auth-result__name {
+  font-family: var(--font-body);
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--folio-text-primary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.auth-result__meta {
+  font-family: var(--font-body);
+  font-size: 12px;
+  color: var(--folio-text-tertiary);
+  letter-spacing: 0.04em;
+}
+.auth-result__cta {
+  flex: 0 0 auto;
+  padding: 8px 14px;
+  border-radius: 999px;
+  background: transparent;
+  border: 1px solid var(--folio-border-strong);
+  color: var(--folio-text-primary);
+  font-family: var(--font-body);
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: border-color var(--dur-fast) var(--ease), color var(--dur-fast) var(--ease), background var(--dur-fast) var(--ease);
+}
+.auth-result__cta:hover:not(:disabled) {
+  border-color: var(--auth-copper);
+  color: var(--auth-copper);
+}
+.auth-result__cta:disabled { opacity: 0.5; cursor: not-allowed; }
+
+/* When the row represents an org the user already belongs to, allow it to
+   grow vertically so we can stack a hint/status under the meta line. */
+.auth-results--ownsorgs .auth-result { align-items: flex-start; padding: 14px 16px; }
+.auth-result__hint {
+  display: block;
+  margin-top: 6px;
+  font-family: var(--font-body);
+  font-size: 12px;
+  color: var(--folio-text-tertiary);
+}
+.auth-result__hint--success { color: #2e6b2e; }
+.auth-result__hint--error { color: #8a2a2a; }
+
+/* Ghost-style secondary action (e.g. "create new") */
+.auth-secondary {
+  width: 100%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 12px 16px;
+  border-radius: 10px;
+  background: var(--surface-canvas);
+  border: 1px dashed var(--folio-border-strong);
+  color: var(--folio-text-primary);
+  font-family: var(--font-body);
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: border-color var(--dur-fast) var(--ease), color var(--dur-fast) var(--ease), background var(--dur-fast) var(--ease);
+}
+.auth-secondary:hover:not(:disabled) {
+  border-color: var(--auth-copper);
+  color: var(--auth-copper);
+}
+.auth-secondary:disabled { opacity: 0.5; cursor: not-allowed; }
+
+/* Inline link-style <button> for "back to search" etc. */
+.auth-linklike {
+  background: transparent;
+  border: 0;
+  padding: 0;
+  font: inherit;
+  color: var(--folio-text-primary);
+  text-decoration: none;
+  border-bottom: 1px solid var(--folio-border-strong);
+  cursor: pointer;
+  transition: color var(--dur-fast) var(--ease), border-color var(--dur-fast) var(--ease);
+}
+.auth-linklike:hover:not(:disabled) {
+  color: var(--auth-copper);
+  border-bottom-color: var(--auth-copper);
+}
+.auth-linklike:disabled { opacity: 0.5; cursor: not-allowed; }
+
 /* ---- Form foot -------------------------------------------- */
 .auth-form-foot {
   margin-top: 22px;

@@ -1,78 +1,89 @@
-import Link from 'next/link';
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@/app/api/auth/[...nextauth]/options';
+import { prisma } from '@/lib/prisma';
 import { Topbar } from '../_components/Topbar';
 import { PhotoPanel } from '../_components/PhotoPanel';
 import { PageFooter } from '../_components/PageFooter';
+import { ScenarioA, type OrgIntent } from './_ScenarioA';
+import { ScenarioB, type UserOrg } from './_ScenarioB';
 import '../_components/auth.css';
 
-type OrgType = 'designer' | 'architect' | 'builder' | 'vendor';
+export const dynamic = 'force-dynamic';
 
-const TYPE_COPY: Record<OrgType, { noun: string; capability: string }> = {
-  designer: { noun: 'studio', capability: 'designer' },
-  architect: { noun: 'practice', capability: 'architect' },
-  builder: { noun: 'company', capability: 'builder' },
-  vendor: { noun: 'brand', capability: 'vendor' },
-};
-
-function parseType(raw: string | string[] | undefined): OrgType | null {
-  if (typeof raw !== 'string') return null;
-  return raw in TYPE_COPY ? (raw as OrgType) : null;
+function isOrgIntent(v: string | string[] | undefined): v is OrgIntent {
+  return v === 'designer' || v === 'architect' || v === 'builder' || v === 'vendor';
 }
 
-export default function OrgSetupPage({
+export default async function OrgSetupPage({
   searchParams,
 }: {
   searchParams: { type?: string };
 }) {
-  const type = parseType(searchParams.type);
-  const copy = type ? TYPE_COPY[type] : null;
+  let session: Awaited<ReturnType<typeof getServerSession>> = null;
+  try {
+    session = await getServerSession(authOptions);
+  } catch (err) {
+    // Missing NEXTAUTH_SECRET in non-prod envs would throw here; degrade to
+    // anonymous rather than erroring the whole page.
+    console.error('[/auth/org-setup] getServerSession failed:', err);
+  }
+
+  // Logged-in users: fetch their existing org memberships. Anonymous users
+  // get an empty list and land in scenario A (the page still lets the org
+  // create/join endpoints reject them with 401 if they try to submit).
+  let userOrgs: UserOrg[] = [];
+  if (session?.user?.id) {
+    try {
+      const memberships = await prisma.organizationUser.findMany({
+        where: { userId: session.user.id, isActive: true },
+        select: {
+          role: true,
+          organization: {
+            select: { id: true, name: true, type: true, capabilities: true },
+          },
+        },
+        orderBy: { joinedAt: 'asc' },
+      });
+      userOrgs = memberships.map((m) => ({
+        id: m.organization.id,
+        name: m.organization.name,
+        type: m.organization.type,
+        capabilities: m.organization.capabilities,
+        membershipRole: m.role,
+      }));
+    } catch (err) {
+      // DB hiccup: degrade gracefully to scenario A rather than crashing the
+      // page. The "no orgs" branch still works for everyone.
+      console.error('[/auth/org-setup] Failed to load memberships:', err);
+    }
+  }
+
+  const initialIntent = isOrgIntent(searchParams.type) ? searchParams.type : null;
+  const isScenarioB = userOrgs.length > 0;
+
+  const photoDescription = isScenarioB
+    ? 'Stack another capability on the page you already run, or stand up a new one alongside it. Either way, the credit line stays with the people who did the work.'
+    : 'Where the work gets named. Your organization becomes the credit line on every project you bring to Folio — pieces tagged, rooms attributed, story intact.';
 
   return (
     <div className="auth-shell">
       <Topbar />
-
       <main className="auth-stage">
         <PhotoPanel
           imageSrc="https://images.unsplash.com/photo-1618220179428-22790b461013?auto=format&fit=crop&w=1800&q=80"
           imageAlt="Sitting room in cream linen and oak, soft afternoon light"
           eyebrow="From Issue 09 · Cape Town"
-          description="Where the work gets named. Your studio becomes the credit line on every project you bring to Folio — pieces tagged, rooms attributed, story intact."
+          description={photoDescription}
           counter="04 / 04"
         />
-
         <section className="auth-form-panel" aria-label="Organization setup">
-          <div className="auth-eyebrow">
-            <span className="auth-eyebrow__gold">Almost there</span>
-            <span className="auth-eyebrow__dot" />
-            <span>Step two</span>
-          </div>
-          <h1 className="auth-title">
-            {copy ? `Let's find your ${copy.noun}.` : "Let's set up your organization."}
-          </h1>
-          <p className="auth-sub">
-            We&rsquo;re building organization lookup next — soon you&rsquo;ll be
-            able to search for your{' '}
-            {copy ? copy.noun : 'organization'} and join the people you already
-            work with, or start a new one. For now, jump into Folio and we&rsquo;ll
-            invite you back to claim your{' '}
-            {copy ? `${copy.capability} profile` : 'profile'} the moment it&rsquo;s
-            ready.
-          </p>
-
-          <Link href="/onboarding/diagnostic" className="auth-submit">
-            Continue to Folio
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
-              <path d="M5 12h14" />
-              <path d="m13 6 6 6-6 6" />
-            </svg>
-          </Link>
-
-          <div className="auth-form-foot">
-            Wrong choice?{' '}
-            <Link href="/auth/signup">Go back to sign-up</Link>.
-          </div>
+          {isScenarioB ? (
+            <ScenarioB initialIntent={initialIntent} userOrgs={userOrgs} />
+          ) : (
+            <ScenarioA initialIntent={initialIntent} />
+          )}
         </section>
       </main>
-
       <PageFooter />
     </div>
   );

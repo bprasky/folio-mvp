@@ -858,15 +858,16 @@ model ProjectFile {
 }
 
 model Organization {
-  id          String      @id @default(uuid())
-  name        String
-  type        OrgType     @default(DESIGN_FIRM)
-  description String?
-  website     String?
-  logo        String?
-  vendorTier  VendorTier? // Subscription tier for vendor organizations
-  createdAt   DateTime    @default(now())
-  updatedAt   DateTime    @updatedAt
+  id           String      @id @default(uuid())
+  name         String
+  type         OrgType     @default(DESIGN_FIRM)
+  capabilities OrgType[]   @default([]) // Multi-capability tags; includes `type` plus any later additions via the hybrid flow. Use this for "designer + vendor" / "design + build" orgs while keeping `type` as the primary affinity.
+  description  String?
+  website      String?
+  logo         String?
+  vendorTier   VendorTier? // Subscription tier for vendor organizations
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
 
   // Profile fields
   tagline       String?
