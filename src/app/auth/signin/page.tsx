@@ -1,127 +1,77 @@
-'use client';
-
-import React, { useState } from 'react';
-import { signIn } from 'next-auth/react';
-import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { RidgeCard } from '@/components/ui/ridge-card';
-import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
+import { getSigninHero } from '@/lib/auth/getSigninHero';
+import { SigninForm } from './SigninForm';
+import styles from './signin.module.css';
 
-export default function SigninPage() {
-  const router = useRouter();
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [err, setErr] = useState<string|null>(null);
-  const [loading, setLoading] = useState(false);
+export const dynamic = 'force-dynamic';
 
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    setErr(null);
-    setLoading(true);
-    try {
-      const res = await signIn('credentials', {
-        redirect: false,
-        email: email.trim().toLowerCase(),
-        password,
-      });
-      if (res?.error) {
-        setErr(res.error || 'Invalid email or password');
-      } else {
-        router.replace('/');
-        router.refresh();
-      }
-    } finally {
-      setLoading(false);
-    }
-  }
+export default async function SigninPage() {
+  const [hero] = await Promise.all([getSigninHero()]);
+
+  const showGoogle = Boolean(process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET);
+  const showApple = Boolean(process.env.APPLE_CLIENT_ID && process.env.APPLE_CLIENT_SECRET);
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-surface-canvas px-4 py-12">
-      <div className="w-full max-w-md">
-        {/* Logo */}
-        <div className="text-center mb-8">
-          <span className="folio-logo-text">Folio</span>
+    <div className={styles.page}>
+      <header className={styles.topbar}>
+        <Link href="/" className={styles.wordmark} aria-label="Folio home">
+          FOLIO
+        </Link>
+
+        <div className={styles.topbarCenter}>
+          <Link href="/search" className={styles.searchPill} aria-label="Search Folio">
+            <span>Search Folio</span>
+            <span className={styles.searchKbd} aria-hidden="true">⌘K</span>
+          </Link>
+          <nav aria-label="Primary">
+            <ul className={styles.navList}>
+              <li><Link href="/magazine" className={styles.navLink}>Magazine</Link></li>
+              <li><Link href="/about" className={styles.navLink}>About</Link></li>
+              <li><Link href="/for-designers" className={styles.navLink}>For professionals</Link></li>
+            </ul>
+          </nav>
         </div>
 
-        <RidgeCard size="lg" padding="xl">
-          <div className="text-center mb-8">
-            <h1 className="folio-h2 mb-2">Welcome back</h1>
-            <p className="folio-body">
-              Sign in to continue to Folio
-            </p>
-          </div>
+        <Link href="/auth/signup" className={styles.invitePill}>
+          Request invite
+        </Link>
+      </header>
 
-          <form className="space-y-5" onSubmit={handleSubmit}>
-            <div>
-              <label htmlFor="email" className="block folio-ui text-folio-text-primary mb-1.5">
-                Email
-              </label>
-              <Input
-                id="email"
-                name="email"
-                type="email"
-                required
-                value={email}
-                onChange={e => setEmail(e.target.value)}
-                placeholder="you@example.com"
-                autoComplete="email"
-                error={!!err}
-              />
-            </div>
-
-            <div>
-              <label htmlFor="password" className="block folio-ui text-folio-text-primary mb-1.5">
-                Password
-              </label>
-              <Input
-                id="password"
-                name="password"
-                type="password"
-                required
-                value={password}
-                onChange={e => setPassword(e.target.value)}
-                placeholder="••••••••"
-                autoComplete="current-password"
-                error={!!err}
-              />
-            </div>
-
-            {err && (
-              <div className="ridge-card ridge-card-sm p-3 bg-red-50 border-red-200 text-red-700 text-sm">
-                {err}
+      <main className={styles.stage}>
+        <section className={styles.photoPanel} aria-label="Featured project">
+          <div className={styles.photo}>
+            {hero ? (
+              // eslint-disable-next-line @next/next/no-img-element -- external storage urls; cover-fit
+              <img src={hero.url} alt={hero.alt} />
+            ) : (
+              <div className={styles.photoFallback}>
+                <span className={styles.photoFallbackMark}>Folio</span>
               </div>
             )}
+          </div>
 
-            <Button
-              type="submit"
-              variant="accent"
-              size="lg"
-              className="w-full"
-              disabled={loading}
-            >
-              {loading ? 'Signing In...' : 'Sign In'}
-            </Button>
-          </form>
+          {hero && (
+            <div className={styles.photoCaption}>
+              <div>
+                <span className={styles.photoCaptionLabel}>Featured project</span>
+                <span className={styles.photoCaptionDescription}>{hero.caption}</span>
+              </div>
+              <span className={styles.photoCounter}>{hero.counter}</span>
+            </div>
+          )}
+        </section>
 
-          <div className="my-6 h-px bg-[var(--ridge-outer)]" />
+        <SigninForm showGoogle={showGoogle} showApple={showApple} />
+      </main>
 
-          <p className="text-center folio-body">
-            Don't have an account?{" "}
-            <Link href="/auth/signup" className="text-[var(--accent)] hover:text-[var(--accent-hover)] font-medium">
-              Create one
-            </Link>
-          </p>
-        </RidgeCard>
-
-        {/* Footer */}
-        <p className="text-center folio-meta mt-8">
-          By signing in, you agree to our{" "}
-          <a href="/terms" className="underline hover:text-folio-text-secondary">Terms</a>
-          {" "}and{" "}
-          <a href="/privacy" className="underline hover:text-folio-text-secondary">Privacy Policy</a>
-        </p>
-      </div>
+      <footer className={styles.pageFooter}>
+        <span className={styles.pageFooterIssue}>Folio — Issue 09 · May 2026</span>
+        <div className={styles.pageFooterLinks}>
+          <Link href="/terms" className={styles.pageFooterLink}>Terms</Link>
+          <Link href="/privacy" className={styles.pageFooterLink}>Privacy</Link>
+          <Link href="/contact" className={styles.pageFooterLink}>Contact</Link>
+        </div>
+      </footer>
     </div>
   );
-} 
+}
