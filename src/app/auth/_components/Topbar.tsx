@@ -2,7 +2,7 @@ import Link from 'next/link';
 import './auth.css';
 
 type TopbarProps = {
-  rightCta: { label: string; href: string };
+  rightCta?: { label: string; href: string };
 };
 
 export function Topbar({ rightCta }: TopbarProps) {
@@ -28,9 +28,13 @@ export function Topbar({ rightCta }: TopbarProps) {
           <li><Link href="/for-professionals">For Professionals</Link></li>
         </ul>
       </nav>
-      <Link href={rightCta.href} className="auth-topbar__cta">
-        {rightCta.label}
-      </Link>
+      {rightCta ? (
+        <Link href={rightCta.href} className="auth-topbar__cta">
+          {rightCta.label}
+        </Link>
+      ) : (
+        <span />
+      )}
     </header>
   );
 }

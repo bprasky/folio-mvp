@@ -239,6 +239,75 @@
   max-width: 40ch;
 }
 
+/* ---- Intent selector -------------------------------------- */
+.auth-intent {
+  border: 0;
+  padding: 0;
+  margin: 0 0 22px;
+}
+.auth-intent__legend {
+  display: block;
+  padding: 0;
+  margin: 0 0 10px;
+  font-family: var(--font-body);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--folio-text-tertiary);
+}
+.auth-intent__chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.auth-intent__chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 8px 14px;
+  border-radius: 999px;
+  background: var(--surface-canvas);
+  border: 1px solid var(--folio-border-strong);
+  color: var(--folio-text-secondary);
+  font-family: var(--font-body);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  user-select: none;
+  transition: border-color var(--dur-fast) var(--ease),
+              background var(--dur-fast) var(--ease),
+              color var(--dur-fast) var(--ease);
+}
+.auth-intent__chip:hover {
+  border-color: var(--auth-copper);
+  color: var(--folio-text-primary);
+}
+.auth-intent__chip--on {
+  background: var(--folio-ink);
+  border-color: var(--folio-ink);
+  color: #fff;
+}
+.auth-intent__chip--on:hover {
+  border-color: var(--folio-ink);
+  color: #fff;
+}
+.auth-intent__chip input {
+  /* Visually hide the radio but keep it in the a11y tree. */
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+.auth-intent__chip:focus-within {
+  outline: 2px solid var(--auth-copper);
+  outline-offset: 2px;
+}
+
 /* ---- SSO row ---------------------------------------------- */
 .auth-sso {
   display: grid;
@@ -453,6 +522,7 @@
   font-size: 15px;
   font-weight: 500;
   letter-spacing: 0.01em;
+  text-decoration: none;
   cursor: pointer;
   transition: background var(--dur-fast) var(--ease), transform var(--dur-fast) var(--ease), box-shadow var(--dur-fast) var(--ease);
 }
