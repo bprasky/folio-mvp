@@ -12,10 +12,14 @@ export default function ProfessionalsPage() {
   const router = useRouter();
 
   const handleRoleSelect = (role: 'designer' | 'vendor') => {
+    // All "join as a pro" CTAs now funnel through the single org-setup flow.
+    // Unsigned users land in scenario A's "tell us who you are" fallback;
+    // signed users with no orgs see the search/create flow; signed users
+    // with existing orgs see the scenario B hybrid choice.
     if (!session) {
-      router.push(`/auth/signup?callbackUrl=/professionals/${role}/organization`);
+      router.push(`/auth/signup`);
     } else {
-      router.push(`/professionals/${role}/organization`);
+      router.push(`/auth/org-setup?type=${role}`);
     }
   };
 

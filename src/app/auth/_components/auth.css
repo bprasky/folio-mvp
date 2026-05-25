@@ -671,6 +671,19 @@
 }
 .auth-result__cta:disabled { opacity: 0.5; cursor: not-allowed; }
 
+/* When the row represents an org the user already belongs to, allow it to
+   grow vertically so we can stack a hint/status under the meta line. */
+.auth-results--ownsorgs .auth-result { align-items: flex-start; padding: 14px 16px; }
+.auth-result__hint {
+  display: block;
+  margin-top: 6px;
+  font-family: var(--font-body);
+  font-size: 12px;
+  color: var(--folio-text-tertiary);
+}
+.auth-result__hint--success { color: #2e6b2e; }
+.auth-result__hint--error { color: #8a2a2a; }
+
 /* Ghost-style secondary action (e.g. "create new") */
 .auth-secondary {
   width: 100%;

@@ -1,3 +1,5 @@
+'use client';
+
 import './auth.css';
 
 type PhotoPanelProps = {

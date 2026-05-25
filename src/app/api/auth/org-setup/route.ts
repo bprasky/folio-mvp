@@ -59,6 +59,10 @@ export async function POST(request: NextRequest) {
         data: {
           name: trimmedName,
           type: orgType,
+          // Seed capabilities with the primary type so capability-based queries
+          // (and the future hybrid flow) treat new orgs consistently with
+          // backfilled existing orgs.
+          capabilities: [orgType],
           status: OrgStatus.UNCLAIMED,
           website: website?.trim() || null,
           location: location?.trim() || null,
