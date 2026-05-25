@@ -18,10 +18,26 @@ import '../_components/auth.css';
 // Individual-First Architecture: All users sign up as individuals.
 // Org membership (designer/vendor) is additive and handled separately.
 
-const POST_SIGNUP_REDIRECT = '/onboarding/diagnostic';
+const POST_SIGNUP_REDIRECT_BROWSING = '/onboarding/diagnostic';
+
+type UserIntent = 'browsing' | 'designer' | 'architect' | 'builder' | 'vendor';
+
+const INTENT_OPTIONS: { value: UserIntent; label: string }[] = [
+  { value: 'browsing', label: 'Just browsing' },
+  { value: 'designer', label: 'Designer' },
+  { value: 'architect', label: 'Architect' },
+  { value: 'builder', label: 'Builder' },
+  { value: 'vendor', label: 'Vendor' },
+];
+
+function intentToRedirect(intent: UserIntent): string {
+  if (intent === 'browsing') return POST_SIGNUP_REDIRECT_BROWSING;
+  return `/auth/org-setup?type=${intent}`;
+}
 
 export default function SignupPage() {
   const router = useRouter();
+  const [intent, setIntent] = useState<UserIntent>('browsing');
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [email, setEmail] = useState('');
@@ -100,8 +116,9 @@ export default function SignupPage() {
         return;
       }
 
-      const redirectPath = data.redirectUrl || POST_SIGNUP_REDIRECT;
-      router.replace(redirectPath);
+      // Intent overrides the API's onboarding redirect: pros go to org setup,
+      // browsers continue to the existing onboarding diagnostic.
+      router.replace(intentToRedirect(intent));
       router.refresh();
     } catch (error) {
       console.error('Signup error:', error);
@@ -112,9 +129,9 @@ export default function SignupPage() {
   };
 
   const handleGoogle = () =>
-    signIn('google', { callbackUrl: POST_SIGNUP_REDIRECT });
+    signIn('google', { callbackUrl: intentToRedirect(intent) });
   const handleApple = () =>
-    signIn('apple', { callbackUrl: POST_SIGNUP_REDIRECT });
+    signIn('apple', { callbackUrl: intentToRedirect(intent) });
 
   return (
     <div className="auth-shell">
@@ -137,10 +154,32 @@ export default function SignupPage() {
           </div>
           <h1 className="auth-title">Join Folio — on the trade&rsquo;s own terms.</h1>
           <p className="auth-sub">
-            Folio is a private network for designers, studios, and the brands they
-            specify. Tell us a little about your practice; applications are reviewed
-            weekly.
+            Read the design story straight from the studios that wrote it —
+            every room credits its designer, every piece its maker. The private
+            network for studios and the brands they specify opens once your
+            organization joins.
           </p>
+
+          <fieldset className="auth-intent">
+            <legend className="auth-intent__legend">Describe yourself</legend>
+            <div className="auth-intent__chips" role="radiogroup" aria-label="Describe yourself">
+              {INTENT_OPTIONS.map((opt) => (
+                <label
+                  key={opt.value}
+                  className={`auth-intent__chip${intent === opt.value ? ' auth-intent__chip--on' : ''}`}
+                >
+                  <input
+                    type="radio"
+                    name="intent"
+                    value={opt.value}
+                    checked={intent === opt.value}
+                    onChange={() => setIntent(opt.value)}
+                  />
+                  <span>{opt.label}</span>
+                </label>
+              ))}
+            </div>
+          </fieldset>
 
           <SsoRow onGoogleClick={handleGoogle} onAppleClick={handleApple} disabled={isLoading} />
 
