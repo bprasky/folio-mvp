@@ -4,273 +4,246 @@ import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { signIn } from 'next-auth/react';
-import { RidgeCard } from '@/components/ui/ridge-card';
-import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
 
-// Individual-First Architecture: All users sign up as individuals
-// Org membership (designer/vendor) is additive and handled separately
+import { Topbar } from '../_components/Topbar';
+import { PhotoPanel } from '../_components/PhotoPanel';
+import { PageFooter } from '../_components/PageFooter';
+import { AuthFormField } from '../_components/AuthFormField';
+import { SsoRow } from '../_components/SsoRow';
+import { AuthDivider } from '../_components/AuthDivider';
+import { AgreementCheckbox } from '../_components/AgreementCheckbox';
+import { PasswordStrengthMeter } from '../_components/PasswordStrengthMeter';
+import '../_components/auth.css';
+
+// Individual-First Architecture: All users sign up as individuals.
+// Org membership (designer/vendor) is additive and handled separately.
+
+const POST_SIGNUP_REDIRECT = '/onboarding/diagnostic';
 
 export default function SignupPage() {
   const router = useRouter();
-  const [formData, setFormData] = useState({
-    name: '',
-    email: '',
-    password: '',
-    confirmPassword: '',
-  });
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [acceptedTerms, setAcceptedTerms] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [message, setMessage] = useState('');
+  const [messageType, setMessageType] = useState<'error' | 'success' | null>(null);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value,
-    });
-  };
+  const canSubmit =
+    firstName.trim().length > 0 &&
+    lastName.trim().length > 0 &&
+    email.trim().length > 0 &&
+    password.length >= 8 &&
+    acceptedTerms &&
+    !isLoading;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
     setMessage('');
+    setMessageType(null);
 
-    if (formData.password !== formData.confirmPassword) {
-      setMessage('Passwords do not match');
-      setIsLoading(false);
-      return;
-    }
-
-    if (formData.password.length < 8) {
+    if (password.length < 8) {
       setMessage('Password must be at least 8 characters');
+      setMessageType('error');
       setIsLoading(false);
       return;
     }
-
     if (!acceptedTerms) {
       setMessage('You must agree to the Terms of Service and Privacy Policy');
+      setMessageType('error');
       setIsLoading(false);
       return;
     }
 
     try {
-      // Individual-First: All users created as INDIVIDUAL role
+      const name = `${firstName.trim()} ${lastName.trim()}`.trim();
       const requestBody = {
-        name: formData.name,
-        email: formData.email,
-        password: formData.password,
+        name,
+        email,
+        password,
         acceptedTerms: true,
         tosVersion: '2026-01-19',
         privacyVersion: '2026-01-19',
       };
-      console.log('[Signup] Sending request with body:', { ...requestBody, password: '[REDACTED]' });
 
       const response = await fetch('/api/auth/signup', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(requestBody),
       });
 
-      console.log('[Signup] Response status:', response.status);
       const data = await response.json();
-      console.log('[Signup] Response data:', data);
 
-      if (response.ok) {
-        setMessage('Account created successfully! Signing you in...');
-
-        // Immediately sign in with the new credentials
-        const signInResult = await signIn('credentials', {
-          redirect: false,
-          email: formData.email,
-          password: formData.password,
-        });
-
-        if (signInResult?.error) {
-          setMessage('Account created but sign-in failed. Please sign in manually.');
-        } else {
-          setMessage('Account created and signed in successfully! Redirecting...');
-          // Redirect to home - individuals can browse immediately
-          const redirectPath = data.redirectUrl || '/';
-          setTimeout(() => {
-            router.replace(redirectPath);
-            router.refresh();
-          }, 1500);
-        }
-      } else {
+      if (!response.ok) {
         setMessage(data.error || 'Failed to create account');
+        setMessageType('error');
+        setIsLoading(false);
+        return;
       }
+
+      setMessage('Account created. Signing you in…');
+      setMessageType('success');
+
+      const signInResult = await signIn('credentials', {
+        redirect: false,
+        email,
+        password,
+      });
+
+      if (signInResult?.error) {
+        setMessage('Account created but sign-in failed. Please sign in manually.');
+        setMessageType('error');
+        setIsLoading(false);
+        return;
+      }
+
+      const redirectPath = data.redirectUrl || POST_SIGNUP_REDIRECT;
+      router.replace(redirectPath);
+      router.refresh();
     } catch (error) {
       console.error('Signup error:', error);
       setMessage('Error creating account. Please try again.');
-    } finally {
+      setMessageType('error');
       setIsLoading(false);
     }
   };
 
-  const renderDetailsForm = () => (
-    <form onSubmit={handleSubmit} className="space-y-5">
-      <div>
-        <label htmlFor="name" className="block folio-ui text-folio-text-primary mb-1.5">
-          Full Name *
-        </label>
-        <Input
-          id="name"
-          name="name"
-          type="text"
-          required
-          value={formData.name}
-          onChange={handleChange}
-          placeholder="John Doe"
-          autoComplete="name"
-          autoCapitalize="words"
-          autoCorrect="off"
-        />
-      </div>
-
-      <div>
-        <label htmlFor="email" className="block folio-ui text-folio-text-primary mb-1.5">
-          Email Address *
-        </label>
-        <Input
-          id="email"
-          name="email"
-          type="email"
-          required
-          value={formData.email}
-          onChange={handleChange}
-          placeholder="you@example.com"
-          autoComplete="email"
-        />
-      </div>
-
-      <div>
-        <label htmlFor="password" className="block folio-ui text-folio-text-primary mb-1.5">
-          Password *
-        </label>
-        <Input
-          id="password"
-          name="password"
-          type="password"
-          required
-          value={formData.password}
-          onChange={handleChange}
-          placeholder="********"
-          autoComplete="new-password"
-        />
-        <p className="folio-meta mt-1">
-          At least 8 characters
-        </p>
-      </div>
-
-      <div>
-        <label htmlFor="confirmPassword" className="block folio-ui text-folio-text-primary mb-1.5">
-          Confirm Password *
-        </label>
-        <Input
-          id="confirmPassword"
-          name="confirmPassword"
-          type="password"
-          required
-          value={formData.confirmPassword}
-          onChange={handleChange}
-          placeholder="********"
-          autoComplete="new-password"
-          error={formData.password !== formData.confirmPassword && formData.confirmPassword.length > 0}
-        />
-      </div>
-
-      {/* Terms and Privacy Consent */}
-      <div className="flex items-start gap-3">
-        <input
-          id="acceptedTerms"
-          name="acceptedTerms"
-          type="checkbox"
-          checked={acceptedTerms}
-          onChange={(e) => setAcceptedTerms(e.target.checked)}
-          className="mt-1 h-4 w-4 rounded border-folio-border-subtle text-[var(--accent)] focus:ring-[var(--accent)] focus:ring-offset-0 cursor-pointer"
-        />
-        <label htmlFor="acceptedTerms" className="text-sm text-folio-text-secondary cursor-pointer">
-          I agree to the{' '}
-          <Link
-            href="/terms"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-[var(--accent)] hover:text-[var(--accent-hover)] underline underline-offset-2"
-          >
-            Terms of Service
-          </Link>
-          {' '}and{' '}
-          <Link
-            href="/privacy"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-[var(--accent)] hover:text-[var(--accent-hover)] underline underline-offset-2"
-          >
-            Privacy Policy
-          </Link>
-          {' '}*
-        </label>
-      </div>
-
-      {message && (
-        <div className={`ridge-card ridge-card-sm p-3 ${
-          message.includes('Error') || message.includes('Failed') || message.includes('do not match')
-            ? 'bg-red-50 border-red-200 text-red-700'
-            : 'bg-green-50 border-green-200 text-green-700'
-        }`}>
-          {message}
-        </div>
-      )}
-
-      <Button
-        type="submit"
-        variant="accent"
-        size="lg"
-        className="w-full"
-        disabled={isLoading}
-      >
-        {isLoading ? 'Creating Account...' : 'Create Account'}
-      </Button>
-    </form>
-  );
+  const handleGoogle = () =>
+    signIn('google', { callbackUrl: POST_SIGNUP_REDIRECT });
+  const handleApple = () =>
+    signIn('apple', { callbackUrl: POST_SIGNUP_REDIRECT });
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-surface-canvas px-4 py-12">
-      <div className="w-full max-w-md">
-        {/* Logo */}
-        <div className="text-center mb-8">
-          <span className="folio-logo-text">Folio</span>
-        </div>
+    <div className="auth-shell">
+      <Topbar rightCta={{ label: 'Sign in', href: '/auth/signin' }} />
 
-        <RidgeCard size="lg" padding="xl">
-          <div className="text-center mb-8">
-            <h1 className="folio-h2 mb-2">Join Folio</h1>
-            <p className="folio-body">
-              Create your account to get started
-            </p>
+      <main className="auth-stage">
+        <PhotoPanel
+          imageSrc="https://images.unsplash.com/photo-1618220179428-22790b461013?auto=format&fit=crop&w=1800&q=80"
+          imageAlt="Sitting room in cream linen and oak, soft afternoon light"
+          eyebrow="From Issue 09 · Cape Town"
+          description="The sitting room — pared back to one long bench of bleached oak, a pair of woven cane chairs, and the linen drape that softens the afternoon. Restraint as a posture, not an absence."
+          counter="03 / 04"
+        />
+
+        <section className="auth-form-panel" aria-label="Join Folio">
+          <div className="auth-eyebrow">
+            <span className="auth-eyebrow__gold">Apply</span>
+            <span className="auth-eyebrow__dot" />
+            <span>By invitation</span>
           </div>
-
-          <div className="space-y-6">
-            {renderDetailsForm()}
-          </div>
-
-          <div className="my-6 h-px bg-[var(--ridge-outer)]" />
-          <p className="text-center folio-body">
-            Already have an account?{" "}
-            <Link href="/auth/signin" className="text-[var(--accent)] hover:text-[var(--accent-hover)] font-medium">
-              Sign in
-            </Link>
+          <h1 className="auth-title">Join Folio — on the trade&rsquo;s own terms.</h1>
+          <p className="auth-sub">
+            Folio is a private network for designers, studios, and the brands they
+            specify. Tell us a little about your practice; applications are reviewed
+            weekly.
           </p>
-        </RidgeCard>
 
-        <p className="text-center folio-meta mt-8">
-          Read our{" "}
-          <Link href="/cookies" className="underline hover:text-folio-text-secondary">Cookie Policy</Link>
-          {" "}for information about how we use cookies.
-        </p>
-      </div>
+          <SsoRow onGoogleClick={handleGoogle} onAppleClick={handleApple} disabled={isLoading} />
+
+          <AuthDivider />
+
+          <form className="auth-form" onSubmit={handleSubmit} noValidate>
+            <div className="auth-row-2">
+              <AuthFormField
+                id="firstName"
+                name="firstName"
+                label="First name"
+                type="text"
+                placeholder="Lena"
+                autoComplete="given-name"
+                value={firstName}
+                onChange={(e) => setFirstName(e.target.value)}
+                required
+              />
+              <AuthFormField
+                id="lastName"
+                name="lastName"
+                label="Last name"
+                type="text"
+                placeholder="Caldera"
+                autoComplete="family-name"
+                value={lastName}
+                onChange={(e) => setLastName(e.target.value)}
+                required
+              />
+            </div>
+
+            <AuthFormField
+              id="email"
+              name="email"
+              label="Work email"
+              type="email"
+              placeholder="you@studio.com"
+              autoComplete="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+            />
+
+            <AuthFormField
+              id="password"
+              name="password"
+              label="Password"
+              helperRight="Minimum 8 characters"
+              type="password"
+              placeholder="••••••••"
+              autoComplete="new-password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+              minLength={8}
+            />
+            <PasswordStrengthMeter password={password} />
+
+            <AgreementCheckbox
+              id="acceptedTerms"
+              checked={acceptedTerms}
+              onChange={setAcceptedTerms}
+            >
+              I agree to the{' '}
+              <Link href="/terms" target="_blank" rel="noopener noreferrer">
+                Terms of Service
+              </Link>{' '}
+              and{' '}
+              <Link href="/privacy" target="_blank" rel="noopener noreferrer">
+                Privacy Policy
+              </Link>
+              , and consent to occasional editorial updates from Folio.
+            </AgreementCheckbox>
+
+            {message ? (
+              <div
+                className={`auth-message ${
+                  messageType === 'success' ? 'auth-message--success' : 'auth-message--error'
+                }`}
+                role={messageType === 'error' ? 'alert' : 'status'}
+              >
+                {message}
+              </div>
+            ) : null}
+
+            <button type="submit" className="auth-submit" disabled={!canSubmit}>
+              {isLoading ? 'Requesting access…' : 'Request access'}
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+                <path d="M5 12h14" />
+                <path d="m13 6 6 6-6 6" />
+              </svg>
+            </button>
+          </form>
+
+          <div className="auth-form-foot">
+            Already with us?{' '}
+            <Link href="/auth/signin">Sign in</Link>{' '}
+            — we&rsquo;ll take you back to your projects.
+          </div>
+        </section>
+      </main>
+
+      <PageFooter />
     </div>
   );
 }
