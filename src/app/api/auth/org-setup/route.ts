@@ -2,7 +2,7 @@ export const dynamic = 'force-dynamic';
 
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
-import { OrgType, OrgStatus, OrgUserRole } from '@prisma/client';
+import { OrgType, OrgStatus, OrgUserRole, Role } from '@prisma/client';
 import { z } from 'zod';
 import { authOptions } from '@/app/api/auth/[...nextauth]/options';
 import { prisma } from '@/lib/prisma';
@@ -14,6 +14,13 @@ const INTENT_TO_ORG_TYPE: Record<string, OrgType> = {
   architect: OrgType.ARCHITECTURE_FIRM,
   builder: OrgType.CONTRACTOR,
   vendor: OrgType.VENDOR,
+};
+
+const INTENT_TO_ROLE: Record<string, Role> = {
+  designer: Role.DESIGNER,
+  architect: Role.ARCHITECT,
+  builder: Role.BUILDER,
+  vendor: Role.VENDOR,
 };
 
 const createSchema = z.object({
@@ -68,6 +75,15 @@ export async function POST(request: NextRequest) {
           isActive: true,
           showOnProfile: true,
         },
+      });
+
+      // Auto-promote: INDIVIDUAL → matching pro role. updateMany with the
+      // role guard makes this a no-op for users already on a non-individual
+      // role (e.g. they founded a design firm before, now founding a vendor
+      // brand — keep their original promotion).
+      await tx.user.updateMany({
+        where: { id: session.user.id, role: Role.INDIVIDUAL },
+        data: { role: INTENT_TO_ROLE[type] },
       });
 
       return org;

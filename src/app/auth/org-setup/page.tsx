@@ -121,20 +121,20 @@ export default function OrgSetupPage() {
     setStatusMessage('');
     setStatusType(null);
     try {
-      const res = await fetch(`/api/orgs/${org.id}/join`, {
+      const res = await fetch('/api/auth/org-setup/join', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({}),
+        body: JSON.stringify({ organizationId: org.id }),
       });
       const data = await res.json();
       if (!res.ok) {
-        setStatusMessage(data.error || 'Could not send your request.');
+        setStatusMessage(data.error || 'Could not join the organization.');
         setStatusType('error');
         setSubmitting(false);
         return;
       }
       setStatusMessage(
-        `Request sent to ${org.name}. We’ll let you know when an admin reviews it. Taking you to Folio…`
+        `You’re now part of ${org.name}. Taking you to onboarding next…`
       );
       setStatusType('success');
       setDone(true);
@@ -330,7 +330,7 @@ export default function OrgSetupPage() {
                         onClick={() => handleJoin(org)}
                         disabled={submitting || done}
                       >
-                        {submitting ? 'Sending…' : 'Request to join'}
+                        {submitting ? 'Joining…' : 'Join'}
                       </button>
                     </li>
                   ))}

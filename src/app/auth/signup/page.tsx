@@ -149,8 +149,6 @@ export default function SignupPage() {
         <section className="auth-form-panel" aria-label="Join Folio">
           <div className="auth-eyebrow">
             <span className="auth-eyebrow__gold">Apply</span>
-            <span className="auth-eyebrow__dot" />
-            <span>By invitation</span>
           </div>
           <h1 className="auth-title">Join Folio — on the trade&rsquo;s own terms.</h1>
           <p className="auth-sub">
