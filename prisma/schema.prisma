@@ -82,6 +82,8 @@ model User {
   collaborationStories           CollaborationStory[]      @relation("CollaborationStoryDesigner")
   // Phase 2: Org join requests
   orgJoinRequests                OrgJoinRequest[]
+  mintedOrgClaimInvites          OrgClaimInvite[]          @relation("ClaimInviteCreator")
+  claimedOrgInvites              OrgClaimInvite[]          @relation("ClaimInviteClaimer")
 
   // Workspace context: null = operating as individual, orgId = operating as that org
   operatingAsOrgId String?
@@ -908,6 +910,7 @@ model Organization {
   projectParticipants  ProjectParticipant[]
   collaborationStories CollaborationStory[] @relation("CollaborationStoryVendor")
   joinRequests         OrgJoinRequest[]
+  claimInvites         OrgClaimInvite[]
   usersOperatingAs     User[]               @relation("UserOperatingAs")
 
   // Commerce & Credit relations
@@ -1045,6 +1048,30 @@ model OrgJoinRequest {
   @@unique([userId, organizationId])
   @@index([organizationId, status])
   @@map("org_join_requests")
+}
+
+// Phase 2: Claim invites — a MEMBER signs up, can't find their firm, picks
+// "I work here, someone else will set up the page". The org is created
+// UNCLAIMED + a single-use claim invite is minted with a bearer token. The
+// rightful admin clicks the link, authenticates, and claims the org as OWNER.
+// See docs/AUTH_ORG_ENROLLMENT_FLOW.md.
+model OrgClaimInvite {
+  id             String       @id @default(uuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  token          String       @unique
+  invitedEmail   String? // optional — populated when delivered via email
+  status         ClaimStatus  @default(PENDING)
+  createdById    String // the MEMBER who minted the invite
+  createdBy      User         @relation("ClaimInviteCreator", fields: [createdById], references: [id])
+  claimedById    String?
+  claimedBy      User?        @relation("ClaimInviteClaimer", fields: [claimedById], references: [id])
+  createdAt      DateTime     @default(now())
+  claimedAt      DateTime?
+  expiresAt      DateTime
+
+  @@index([organizationId, status])
+  @@map("org_claim_invites")
 }
 
 model Quote {
@@ -1246,6 +1273,16 @@ enum OrgJoinRequestStatus {
   PENDING
   APPROVED
   REJECTED
+}
+
+// Phase 2: Status for OrgClaimInvite (the "I work here, send setup link"
+// founder/member fork). PENDING → CLAIMED when consumed, EXPIRED when past
+// expiresAt, REVOKED when an admin invalidates it.
+enum ClaimStatus {
+  PENDING
+  CLAIMED
+  EXPIRED
+  REVOKED
 }
 
 enum EventType {

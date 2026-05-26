@@ -1,4 +1,4 @@
-import { getServerSession } from 'next-auth';
+import { getServerSession, type Session } from 'next-auth';
 import { authOptions } from '@/app/api/auth/[...nextauth]/options';
 import { prisma } from '@/lib/prisma';
 import { Topbar } from '../_components/Topbar';
@@ -19,7 +19,7 @@ export default async function OrgSetupPage({
 }: {
   searchParams: { type?: string };
 }) {
-  let session: Awaited<ReturnType<typeof getServerSession>> = null;
+  let session: Session | null = null;
   try {
     session = await getServerSession(authOptions);
   } catch (err) {

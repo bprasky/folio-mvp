@@ -434,3 +434,66 @@ export async function canPerformAction(
       return false;
   }
 }
+
+/**
+ * Publishing gate: can this user push something to PUBLISHED right now?
+ *
+ * Rule: publishing requires the backing organization to be CLAIMED or
+ * PROFESSIONAL. UNCLAIMED orgs are placeholders the firm's actual admin
+ * hasn't set up yet — designers attached to one can draft and use Folio,
+ * but they can't broadcast on a page that isn't really configured. See
+ * docs/AUTH_ORG_ENROLLMENT_FLOW.md.
+ *
+ * Two call shapes:
+ *   - organizationId provided  → gate that specific org's status.
+ *   - organizationId is null   → user-scoped content (collections, stories
+ *                                etc.). Fall back to the user's
+ *                                operatingAsOrgId, or to "any CLAIMED org
+ *                                membership" as a last resort.
+ *
+ * Returns a reason code so callers can surface a specific UI message instead
+ * of a generic 403.
+ */
+export type PublishGateResult =
+  | { ok: true }
+  | { ok: false; reason: 'org_unclaimed' | 'no_org' | 'not_a_member' | 'org_not_found' };
+
+export async function canPublishFromOrg(
+  userId: string,
+  organizationId: string | null
+): Promise<PublishGateResult> {
+  if (organizationId) {
+    const org = await prisma.organization.findUnique({
+      where: { id: organizationId },
+      select: { status: true },
+    });
+    if (!org) return { ok: false, reason: 'org_not_found' };
+    if (org.status === 'CLAIMED' || org.status === 'PROFESSIONAL') return { ok: true };
+    return { ok: false, reason: 'org_unclaimed' };
+  }
+
+  // User-scoped content: prefer the user's operatingAs context, otherwise
+  // look for any CLAIMED+ membership.
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { operatingAsOrgId: true },
+  });
+
+  if (user?.operatingAsOrgId) {
+    return canPublishFromOrg(userId, user.operatingAsOrgId);
+  }
+
+  const claimedMembership = await prisma.organizationUser.findFirst({
+    where: {
+      userId,
+      isActive: true,
+      organization: { status: { in: ['CLAIMED', 'PROFESSIONAL'] } },
+    },
+    select: { id: true },
+  });
+  if (claimedMembership) return { ok: true };
+
+  // No org context at all: deny with no_org so callers can prompt sign-up
+  // into a firm before publishing. INDIVIDUAL users always land here.
+  return { ok: false, reason: 'no_org' };
+}

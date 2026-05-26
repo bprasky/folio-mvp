@@ -5,6 +5,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/options";
 import { prisma } from "@/lib/prisma";
 import { assertProjectWrite } from "@/lib/authz/access";
+import { canPublishFromOrg, type PublishGateResult } from "@/lib/permissions";
 import { z } from "zod";
 import { revalidatePath } from "next/cache";
 import { notifyTaggedVendors } from "@/lib/email/notifyVendorTagged";
@@ -69,7 +70,7 @@ export async function PATCH(
 
     const project = await prisma.project.findUnique({
       where: { id: projectId },
-      select: { title: true, description: true },
+      select: { title: true, description: true, designerOrgId: true },
     });
 
     if (!project) {
@@ -111,6 +112,31 @@ export async function PATCH(
     // unpublish on the legacy (flag-off) Path B as well.
     if (targetStatus === "PUBLISHED" && !POSTING_V1_ENABLED) {
       return NextResponse.json({ error: "Posting V1 not enabled" }, { status: 404 });
+    }
+
+    // Org-status gate: publishing requires the backing organization to be
+    // CLAIMED or PROFESSIONAL. Designers tied to an UNCLAIMED placeholder
+    // (the "I work here, someone else will set up the page" path) can draft
+    // and stage projects, but they can't broadcast on a firm page that
+    // hasn't been claimed yet. See docs/AUTH_ORG_ENROLLMENT_FLOW.md.
+    if (targetStatus === "PUBLISHED") {
+      const gate: PublishGateResult = await canPublishFromOrg(
+        session.user.id,
+        project.designerOrgId
+      );
+      if (gate.ok === false) {
+        console.error(`[${correlationId}] Publish gate: ${gate.reason}`);
+        const message =
+          gate.reason === 'org_unclaimed'
+            ? "Your firm page isn't set up yet — drafts only until it's claimed."
+            : gate.reason === 'no_org'
+            ? "You need to be a member of a Folio organization before you can publish."
+            : 'You can\'t publish from this organization yet.';
+        return NextResponse.json(
+          { error: 'Forbidden', reason: gate.reason, message },
+          { status: 403 }
+        );
+      }
     }
 
     // Get current post with expandedBlocks
