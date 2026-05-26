@@ -65,11 +65,31 @@ export function ScenarioA({ initialIntent, headingOverride, hideEyebrow, onBack 
   const [createName, setCreateName] = useState('');
   const [createWebsite, setCreateWebsite] = useState('');
   const [createLocation, setCreateLocation] = useState('');
+  // Founder/member fork. Default = "I'm setting this up" (owner). The
+  // member branch lets a teammate stand up a placeholder org and email a
+  // claim invite to whoever can actually configure the page. See
+  // docs/AUTH_ORG_ENROLLMENT_FLOW.md.
+  const [createRole, setCreateRole] = useState<'owner' | 'member'>('owner');
 
   const [submitting, setSubmitting] = useState(false);
   const [statusMessage, setStatusMessage] = useState('');
   const [statusType, setStatusType] = useState<'error' | 'success' | null>(null);
   const [done, setDone] = useState(false);
+
+  // Populated after a successful member-branch create. Renders the
+  // claim-link confirmation panel; clears all other UI.
+  const [inviteResult, setInviteResult] = useState<{
+    organizationId: string;
+    organizationName: string;
+    claimUrl: string;
+    claimToken: string;
+  } | null>(null);
+  const [copied, setCopied] = useState(false);
+  const [inviteEmail, setInviteEmail] = useState('');
+  const [inviteEmailStatus, setInviteEmailStatus] = useState<
+    'idle' | 'sending' | 'sent' | 'error'
+  >('idle');
+  const [inviteEmailMessage, setInviteEmailMessage] = useState('');
 
   const searchAbortRef = useRef<AbortController | null>(null);
 
@@ -121,27 +141,34 @@ export function ScenarioA({ initialIntent, headingOverride, hideEyebrow, onBack 
     setStatusMessage('');
     setStatusType(null);
     try {
-      const res = await fetch('/api/auth/org-setup/join', {
+      // Request-based join: creates an OrgJoinRequest (PENDING). Admin
+      // approves via PATCH /api/orgs/[orgId]/join. User.role is promoted on
+      // approval, not on request. See docs/AUTH_ORG_ENROLLMENT_FLOW.md.
+      const res = await fetch(`/api/orgs/${org.id}/join`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ organizationId: org.id }),
+        body: JSON.stringify({}),
       });
       const data = await res.json();
       if (!res.ok) {
-        setStatusMessage(data.error || 'Could not join the organization.');
+        setStatusMessage(data.error || 'Could not send your request.');
         setStatusType('error');
         setSubmitting(false);
         return;
       }
-      setStatusMessage(`You’re now part of ${org.name}. Taking you to onboarding next…`);
+      setStatusMessage(
+        `Request sent to ${org.name}. We’ll let you know when an admin reviews it. Taking you home…`
+      );
       setStatusType('success');
       setDone(true);
       setTimeout(() => {
-        router.replace(ONBOARDING_REDIRECT);
+        // User stays INDIVIDUAL until approved, so don't push them into
+        // pro-onboarding yet — drop them on the magazine.
+        router.replace('/');
         router.refresh();
       }, 1400);
     } catch {
-      setStatusMessage('Could not join the organization. Please try again.');
+      setStatusMessage('Could not send your request. Please try again.');
       setStatusType('error');
       setSubmitting(false);
     }
@@ -165,6 +192,7 @@ export function ScenarioA({ initialIntent, headingOverride, hideEyebrow, onBack 
         body: JSON.stringify({
           name: createName.trim(),
           type: intent,
+          role: createRole,
           website: createWebsite.trim() || undefined,
           location: createLocation.trim() || undefined,
         }),
@@ -176,17 +204,87 @@ export function ScenarioA({ initialIntent, headingOverride, hideEyebrow, onBack 
         setSubmitting(false);
         return;
       }
-      setStatusMessage(`${data.organizationName} is on Folio. Taking you to onboarding next…`);
-      setStatusType('success');
-      setDone(true);
-      setTimeout(() => {
-        router.replace(ONBOARDING_REDIRECT);
-        router.refresh();
-      }, 1400);
+
+      // Owner branch: jump into pro onboarding. Member branch: stay on this
+      // page and surface the claim-link confirmation panel — there's still
+      // work the user can do (paste link into Slack, type a recipient
+      // email) before they leave.
+      if (createRole === 'owner') {
+        setStatusMessage(
+          `${data.organizationName} is on Folio. Taking you to onboarding next…`
+        );
+        setStatusType('success');
+        setDone(true);
+        setTimeout(() => {
+          router.replace(ONBOARDING_REDIRECT);
+          router.refresh();
+        }, 1400);
+      } else {
+        setInviteResult({
+          organizationId: data.organizationId,
+          organizationName: data.organizationName,
+          claimUrl: data.claimUrl,
+          claimToken: data.claimInviteToken,
+        });
+        setSubmitting(false);
+      }
     } catch {
       setStatusMessage('Could not create your organization. Please try again.');
       setStatusType('error');
       setSubmitting(false);
+    }
+  };
+
+  const handleCopyClaim = async () => {
+    if (!inviteResult) return;
+    try {
+      await navigator.clipboard.writeText(inviteResult.claimUrl);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      // Clipboard unavailable (insecure context, focus issues) — fall back
+      // to inline message so users can copy the visible URL manually.
+      setCopied(false);
+    }
+  };
+
+  const handleSendInvite = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!inviteResult || inviteEmailStatus === 'sending') return;
+    if (!inviteEmail.trim() || !inviteEmail.includes('@')) {
+      setInviteEmailStatus('error');
+      setInviteEmailMessage('Enter a valid email.');
+      return;
+    }
+    setInviteEmailStatus('sending');
+    setInviteEmailMessage('');
+    try {
+      const res = await fetch(
+        `/api/orgs/${inviteResult.organizationId}/claim-invite/email`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            token: inviteResult.claimToken,
+            recipientEmail: inviteEmail.trim(),
+          }),
+        }
+      );
+      const data = await res.json();
+      if (!res.ok) {
+        setInviteEmailStatus('error');
+        setInviteEmailMessage(data.error || 'Could not send the email.');
+        return;
+      }
+      setInviteEmailStatus('sent');
+      setInviteEmailMessage(
+        data.delivered
+          ? `Sent to ${inviteEmail.trim()}.`
+          : `Saved. (Outbound email isn’t wired yet, but we recorded the recipient.)`
+      );
+    } catch {
+      setInviteEmailStatus('error');
+      setInviteEmailMessage('Could not send the email. Please try again.');
     }
   };
 
@@ -340,6 +438,80 @@ export function ScenarioA({ initialIntent, headingOverride, hideEyebrow, onBack 
             )}
           </div>
         </>
+      ) : inviteResult ? (
+        <>
+          <h1 className="auth-title">{inviteResult.organizationName} is saved as a placeholder.</h1>
+          <p className="auth-sub">
+            Send this setup link to whoever can configure {inviteResult.organizationName}&rsquo;s
+            page on Folio. You can keep drafting in the meantime — you just
+            can&rsquo;t publish until someone claims the firm.
+          </p>
+
+          <div className="auth-claim-link">
+            <code className="auth-claim-link__url">{inviteResult.claimUrl}</code>
+            <button
+              type="button"
+              className="auth-claim-link__copy"
+              onClick={handleCopyClaim}
+            >
+              {copied ? 'Copied' : 'Copy link'}
+            </button>
+          </div>
+
+          <form className="auth-form" onSubmit={handleSendInvite} noValidate>
+            <div className="auth-field">
+              <div className="auth-field__head">
+                <label htmlFor="invite-email" className="auth-field__label">
+                  Email the link
+                </label>
+                <span className="auth-field__helper">Optional</span>
+              </div>
+              <input
+                id="invite-email"
+                name="invite-email"
+                type="email"
+                className="auth-field__input"
+                placeholder="founder@studiox.com"
+                value={inviteEmail}
+                onChange={(e) => setInviteEmail(e.target.value)}
+                disabled={inviteEmailStatus === 'sending'}
+                autoComplete="off"
+              />
+            </div>
+
+            {inviteEmailStatus !== 'idle' && inviteEmailMessage ? (
+              <div
+                className={`auth-message ${
+                  inviteEmailStatus === 'sent'
+                    ? 'auth-message--success'
+                    : inviteEmailStatus === 'error'
+                    ? 'auth-message--error'
+                    : ''
+                }`}
+                role={inviteEmailStatus === 'error' ? 'alert' : 'status'}
+              >
+                {inviteEmailMessage}
+              </div>
+            ) : null}
+
+            <button
+              type="submit"
+              className="auth-submit"
+              disabled={inviteEmailStatus === 'sending' || !inviteEmail.trim()}
+            >
+              {inviteEmailStatus === 'sending' ? 'Sending…' : 'Send setup link'}
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+                <path d="M5 12h14" />
+                <path d="m13 6 6 6-6 6" />
+              </svg>
+            </button>
+          </form>
+
+          <div className="auth-form-foot">
+            <Link href="/">Continue to Folio</Link> — you can resend the link from
+            your firm settings later.
+          </div>
+        </>
       ) : (
         <>
           <h1 className="auth-title">Add your {copy!.noun}.</h1>
@@ -349,6 +521,42 @@ export function ScenarioA({ initialIntent, headingOverride, hideEyebrow, onBack 
           </p>
 
           <form className="auth-form" onSubmit={handleCreate} noValidate>
+            <fieldset className="auth-intent" style={{ marginBottom: 18 }}>
+              <legend className="auth-intent__legend">
+                Are you setting up this {copy!.noun}?
+              </legend>
+              <div className="auth-role-choice">
+                <label className={`auth-role-option${createRole === 'owner' ? ' auth-role-option--on' : ''}`}>
+                  <input
+                    type="radio"
+                    name="create-role"
+                    value="owner"
+                    checked={createRole === 'owner'}
+                    onChange={() => setCreateRole('owner')}
+                  />
+                  <span className="auth-role-option__title">Yes, I&rsquo;m the founder or an admin</span>
+                  <span className="auth-role-option__sub">
+                    You&rsquo;ll be the owner of the page and can publish right away.
+                  </span>
+                </label>
+                <label className={`auth-role-option${createRole === 'member' ? ' auth-role-option--on' : ''}`}>
+                  <input
+                    type="radio"
+                    name="create-role"
+                    value="member"
+                    checked={createRole === 'member'}
+                    onChange={() => setCreateRole('member')}
+                  />
+                  <span className="auth-role-option__title">I work here — someone else will set up the page</span>
+                  <span className="auth-role-option__sub">
+                    We&rsquo;ll save the {copy!.noun} as a placeholder and give you a
+                    link to send to whoever can configure it. You can draft in
+                    the meantime, but you can&rsquo;t publish until it&rsquo;s claimed.
+                  </span>
+                </label>
+              </div>
+            </fieldset>
+
             <div className="auth-field">
               <div className="auth-field__head">
                 <label htmlFor="org-name" className="auth-field__label">

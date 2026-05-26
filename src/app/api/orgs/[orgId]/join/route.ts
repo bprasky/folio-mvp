@@ -4,6 +4,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/app/api/auth/[...nextauth]/options';
 import { prisma } from '@/lib/prisma';
+import { roleForOrgType } from '@/lib/onboarding/role-org-mapping';
 
 /**
  * POST /api/orgs/[orgId]/join - Request to join an organization
@@ -246,7 +247,19 @@ export async function PATCH(
     }
 
     if (action === 'approve') {
-      // Create membership and update request in transaction
+      // Need the org's type to derive the role to promote the joiner to.
+      // Done as a separate fetch (rather than expanding the include above)
+      // to keep the reject branch's transaction minimal.
+      const org = await prisma.organization.findUnique({
+        where: { id: orgId },
+        select: { type: true },
+      });
+      const targetRole = org ? roleForOrgType(org.type) : null;
+
+      // Create membership + approve request + promote role (if still
+      // INDIVIDUAL) atomically. The `updateMany` with role guard makes
+      // role-promotion a no-op for already-promoted users, never overwriting.
+      // See docs/AUTH_ORG_ENROLLMENT_FLOW.md.
       await prisma.$transaction([
         prisma.organizationUser.create({
           data: {
@@ -264,7 +277,15 @@ export async function PATCH(
             reviewedBy: session.user.id,
             reviewedAt: new Date(),
           }
-        })
+        }),
+        ...(targetRole
+          ? [
+              prisma.user.updateMany({
+                where: { id: joinRequest.userId, role: 'INDIVIDUAL' },
+                data: { role: targetRole },
+              }),
+            ]
+          : []),
       ]);
 
       return NextResponse.json({

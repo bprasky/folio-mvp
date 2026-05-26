@@ -5,6 +5,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/app/api/auth/[...nextauth]/options';
 import { prisma } from '@/lib/prisma';
 import { assertCollaborationStoryEdit } from '@/lib/collaboration/auth';
+import { canPublishFromOrg, type PublishGateResult } from '@/lib/permissions';
 
 /**
  * POST /api/collaboration/stories/[id]/publish
@@ -61,6 +62,24 @@ export async function POST(
     const isReady =
       story.status === 'PUBLISHED' ||
       (story.publishedAt !== null);
+
+    // Org-status gate: collaboration stories publish on behalf of the
+    // vendor org. UNCLAIMED vendor orgs (placeholders) can't broadcast.
+    // See docs/AUTH_ORG_ENROLLMENT_FLOW.md.
+    const publishGate: PublishGateResult = await canPublishFromOrg(
+      session.user.id,
+      story.vendorOrg.id
+    );
+    if (publishGate.ok === false) {
+      const message =
+        publishGate.reason === 'org_unclaimed'
+          ? 'The vendor brand page must be claimed before this story can publish.'
+          : "You can't publish from this organization yet.";
+      return NextResponse.json(
+        { error: 'Forbidden', reason: publishGate.reason, message },
+        { status: 403 }
+      );
+    }
 
     if (!isReady) {
       // Determine what's missing
