@@ -1,3 +1,4 @@
+import { redirect } from 'next/navigation';
 import { getServerSession, type Session } from 'next-auth';
 import { authOptions } from '@/app/api/auth/[...nextauth]/options';
 import { prisma } from '@/lib/prisma';
@@ -28,34 +29,43 @@ export default async function OrgSetupPage({
     console.error('[/auth/org-setup] getServerSession failed:', err);
   }
 
-  // Logged-in users: fetch their existing org memberships. Anonymous users
-  // get an empty list and land in scenario A (the page still lets the org
-  // create/join endpoints reject them with 401 if they try to submit).
+  // Auth is required. Without a session every action on this page (search,
+  // request-to-join, create, claim-invite mint) returns 401 from the API and
+  // the user sees a button that just silently does nothing. Bounce to
+  // signin with a callback so we end back here when the cookie is real.
+  // The most common cause: the signup page's auto-signIn('credentials')
+  // call after POST /api/auth/signup races or silently fails (the API
+  // doesn't set a session itself).
+  if (!session?.user?.id) {
+    const typeQs = isOrgIntent(searchParams.type) ? `?type=${searchParams.type}` : '';
+    const callback = `/auth/org-setup${typeQs}`;
+    redirect(`/auth/signin?callbackUrl=${encodeURIComponent(callback)}`);
+  }
+
+  // Logged-in path: fetch existing memberships to decide scenario A vs B.
   let userOrgs: UserOrg[] = [];
-  if (session?.user?.id) {
-    try {
-      const memberships = await prisma.organizationUser.findMany({
-        where: { userId: session.user.id, isActive: true },
-        select: {
-          role: true,
-          organization: {
-            select: { id: true, name: true, type: true, capabilities: true },
-          },
+  try {
+    const memberships = await prisma.organizationUser.findMany({
+      where: { userId: session.user.id, isActive: true },
+      select: {
+        role: true,
+        organization: {
+          select: { id: true, name: true, type: true, capabilities: true },
         },
-        orderBy: { joinedAt: 'asc' },
-      });
-      userOrgs = memberships.map((m) => ({
-        id: m.organization.id,
-        name: m.organization.name,
-        type: m.organization.type,
-        capabilities: m.organization.capabilities,
-        membershipRole: m.role,
-      }));
-    } catch (err) {
-      // DB hiccup: degrade gracefully to scenario A rather than crashing the
-      // page. The "no orgs" branch still works for everyone.
-      console.error('[/auth/org-setup] Failed to load memberships:', err);
-    }
+      },
+      orderBy: { joinedAt: 'asc' },
+    });
+    userOrgs = memberships.map((m) => ({
+      id: m.organization.id,
+      name: m.organization.name,
+      type: m.organization.type,
+      capabilities: m.organization.capabilities,
+      membershipRole: m.role,
+    }));
+  } catch (err) {
+    // DB hiccup: degrade gracefully to scenario A rather than crashing the
+    // page. The "no orgs" branch still works for everyone.
+    console.error('[/auth/org-setup] Failed to load memberships:', err);
   }
 
   const initialIntent = isOrgIntent(searchParams.type) ? searchParams.type : null;
