@@ -6,6 +6,76 @@ import { authOptions } from '@/app/api/auth/[...nextauth]/options';
 import { prisma } from '@/lib/prisma';
 import { roleForOrgType } from '@/lib/onboarding/role-org-mapping';
 
+// Best-effort inbox ping for the org's admins when a join request lands.
+// Lands as a Conversation row so the mailbox icon (which polls
+// /api/messages/unread-count and sums ConversationParticipant.unreadCount)
+// surfaces the badge — keeping all "needs your attention" pings in one place.
+// Wrapped in try/catch and called after the join request is committed; if
+// the notification fails the request still stands.
+async function pingAdminsOnJoinRequest(args: {
+  orgId: string;
+  orgName: string;
+  requesterId: string;
+}) {
+  const { orgId, orgName, requesterId } = args;
+  try {
+    const [admins, requester] = await Promise.all([
+      prisma.organizationUser.findMany({
+        where: {
+          organizationId: orgId,
+          role: { in: ['OWNER', 'ADMIN'] },
+          isActive: true,
+          userId: { not: requesterId },
+        },
+        select: { userId: true },
+      }),
+      prisma.user.findUnique({
+        where: { id: requesterId },
+        select: { name: true, email: true },
+      }),
+    ]);
+    if (admins.length === 0 || !requester) return;
+
+    const requesterName = requester.name?.trim() || requester.email;
+    const subject = `${requesterName} requested to join ${orgName}`;
+    const body = `${requesterName} (${requester.email}) wants to join ${orgName}. Approve or decline from your organization settings.`;
+    const now = new Date();
+
+    await prisma.$transaction(async (tx) => {
+      const conversation = await tx.conversation.create({
+        data: {
+          initiatorUserId: requesterId,
+          recipientOrgId: orgId,
+          subject,
+          context: 'PLATFORM',
+          category: 'GENERAL',
+          status: 'ACTIVE',
+          lastMessageAt: now,
+        },
+      });
+
+      await tx.message.create({
+        data: {
+          conversationId: conversation.id,
+          senderUserId: requesterId,
+          body,
+        },
+      });
+
+      await tx.conversationParticipant.createMany({
+        data: admins.map((a) => ({
+          conversationId: conversation.id,
+          userId: a.userId,
+          orgId,
+          unreadCount: 1,
+        })),
+      });
+    });
+  } catch (err) {
+    console.error('[POST /api/orgs/[orgId]/join] inbox ping failed:', err);
+  }
+}
+
 /**
  * POST /api/orgs/[orgId]/join - Request to join an organization
  * Body: { message?: string }
@@ -83,6 +153,8 @@ export async function POST(
           }
         });
 
+        await pingAdminsOnJoinRequest({ orgId, orgName: org.name, requesterId: session.user.id });
+
         return NextResponse.json({
           message: 'Join request submitted successfully',
         });
@@ -98,6 +170,8 @@ export async function POST(
         message: message?.trim() || null,
       }
     });
+
+    await pingAdminsOnJoinRequest({ orgId, orgName: org.name, requesterId: session.user.id });
 
     return NextResponse.json({
       message: 'Join request submitted successfully',

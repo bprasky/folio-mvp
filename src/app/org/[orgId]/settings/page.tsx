@@ -15,6 +15,41 @@ interface FieldSourceMap {
   };
 }
 
+interface PendingJoinRequest {
+  id: string;
+  message: string | null;
+  createdAt: string;
+  user: {
+    id: string;
+    name: string | null;
+    email: string;
+    profileImage: string | null;
+  };
+}
+
+type OrgRole = 'OWNER' | 'ADMIN' | 'MANAGER' | 'MEMBER' | 'VIEWER';
+
+interface Member {
+  id: string;
+  userId: string;
+  name: string | null;
+  email: string;
+  profileImage: string | null;
+  orgRole: OrgRole;
+  joinedAt: string;
+}
+
+// OWNER > ADMIN > MANAGER > MEMBER > VIEWER. Mirrors the server-side ordering
+// in /api/orgs/[orgId]/members so the UI doesn't offer actions the API rejects.
+const ROLE_ORDER: OrgRole[] = ['OWNER', 'ADMIN', 'MANAGER', 'MEMBER', 'VIEWER'];
+const ROLE_LABEL: Record<OrgRole, string> = {
+  OWNER: 'Owner',
+  ADMIN: 'Admin',
+  MANAGER: 'Manager',
+  MEMBER: 'Member',
+  VIEWER: 'Viewer',
+};
+
 export default function OrgSettingsPage() {
   const params = useParams();
   const router = useRouter();
@@ -46,6 +81,21 @@ export default function OrgSettingsPage() {
   // Track which fields the user has edited (for source tracking)
   const [editedFields, setEditedFields] = useState<Set<string>>(new Set());
 
+  const [pendingRequests, setPendingRequests] = useState<PendingJoinRequest[]>([]);
+  const [requestActioningId, setRequestActioningId] = useState<string | null>(null);
+  const [requestError, setRequestError] = useState<string | null>(null);
+
+  const [currentUserOrgRole, setCurrentUserOrgRole] = useState<OrgRole | null>(null);
+  const [members, setMembers] = useState<Member[]>([]);
+  const [memberActioningId, setMemberActioningId] = useState<string | null>(null);
+  const [memberError, setMemberError] = useState<string | null>(null);
+  const [inviteEmail, setInviteEmail] = useState('');
+  const [inviteRole, setInviteRole] = useState<OrgRole>('MEMBER');
+  const [inviteSubmitting, setInviteSubmitting] = useState(false);
+  const [inviteMessage, setInviteMessage] = useState<
+    { tone: 'success' | 'error'; text: string } | null
+  >(null);
+
   useEffect(() => {
     async function loadOrg() {
       try {
@@ -71,6 +121,11 @@ export default function OrgSettingsPage() {
           );
           setIsAuthorized(
             userMember && ['OWNER', 'ADMIN'].includes(userMember.role)
+          );
+          setCurrentUserOrgRole(
+            userMember?.role && ROLE_ORDER.includes(userMember.role)
+              ? (userMember.role as OrgRole)
+              : null
           );
 
           // Check interview status
@@ -107,6 +162,171 @@ export default function OrgSettingsPage() {
       loadOrg();
     }
   }, [orgId, session, router]);
+
+  useEffect(() => {
+    if (!isAuthorized) return;
+    let cancelled = false;
+    fetch(`/api/orgs/${orgId}/join?status=PENDING`)
+      .then((res) => (res.ok ? res.json() : { requests: [] }))
+      .then((data) => {
+        if (!cancelled) setPendingRequests(data.requests || []);
+      })
+      .catch(() => {
+        // Soft-fail: the rest of settings still works without this section.
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [orgId, isAuthorized]);
+
+  useEffect(() => {
+    if (!isAuthorized) return;
+    let cancelled = false;
+    fetch(`/api/orgs/${orgId}/members`)
+      .then((res) => (res.ok ? res.json() : { members: [] }))
+      .then((data) => {
+        if (!cancelled) setMembers(data.members || []);
+      })
+      .catch(() => {
+        // Soft-fail: profile editing still works.
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [orgId, isAuthorized]);
+
+  const handleRoleChange = async (member: Member, newRole: OrgRole) => {
+    if (newRole === member.orgRole) return;
+    if (newRole === 'OWNER') {
+      const confirmed = window.confirm(
+        `Transfer ownership of this organization to ${member.name || member.email}? You'll be demoted to Admin.`
+      );
+      if (!confirmed) return;
+    }
+    setMemberActioningId(member.id);
+    setMemberError(null);
+    try {
+      const res = await fetch(`/api/orgs/${orgId}/members/${member.userId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ role: newRole }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setMemberError(data.error || 'Could not update role.');
+        return;
+      }
+      if (newRole === 'OWNER') {
+        // Ownership transferred — the old owner (current user) is now ADMIN.
+        // Reload the full list so the new ordering and our own role stick.
+        const reload = await fetch(`/api/orgs/${orgId}/members`);
+        if (reload.ok) {
+          const reloaded = await reload.json();
+          setMembers(reloaded.members || []);
+        }
+        setCurrentUserOrgRole('ADMIN');
+        return;
+      }
+      setMembers((prev) =>
+        prev.map((m) => (m.id === member.id ? { ...m, orgRole: newRole } : m))
+      );
+    } catch {
+      setMemberError('Could not update role. Please try again.');
+    } finally {
+      setMemberActioningId(null);
+    }
+  };
+
+  const handleRemoveMember = async (member: Member) => {
+    const isSelf = member.userId === session?.user?.id;
+    const verb = isSelf ? 'leave the organization' : `remove ${member.name || member.email}`;
+    if (!window.confirm(`Are you sure you want to ${verb}?`)) return;
+    setMemberActioningId(member.id);
+    setMemberError(null);
+    try {
+      const res = await fetch(`/api/orgs/${orgId}/members/${member.userId}`, {
+        method: 'DELETE',
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setMemberError(data.error || 'Could not remove member.');
+        return;
+      }
+      if (isSelf) {
+        router.replace('/');
+        return;
+      }
+      setMembers((prev) => prev.filter((m) => m.id !== member.id));
+    } catch {
+      setMemberError('Could not remove member. Please try again.');
+    } finally {
+      setMemberActioningId(null);
+    }
+  };
+
+  const handleInvite = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (inviteSubmitting) return;
+    const email = inviteEmail.trim();
+    if (!email || !email.includes('@')) {
+      setInviteMessage({ tone: 'error', text: 'Enter a valid email.' });
+      return;
+    }
+    setInviteSubmitting(true);
+    setInviteMessage(null);
+    try {
+      const res = await fetch(`/api/orgs/${orgId}/members`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, role: inviteRole }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setInviteMessage({ tone: 'error', text: data.error || 'Could not add member.' });
+        return;
+      }
+      setInviteMessage({
+        tone: 'success',
+        text: data.message || `${data.membership?.name || email} added.`,
+      });
+      setInviteEmail('');
+      // Refresh the members list so the new row shows up.
+      const reload = await fetch(`/api/orgs/${orgId}/members`);
+      if (reload.ok) {
+        const reloaded = await reload.json();
+        setMembers(reloaded.members || []);
+      }
+    } catch {
+      setInviteMessage({ tone: 'error', text: 'Could not add member. Please try again.' });
+    } finally {
+      setInviteSubmitting(false);
+    }
+  };
+
+  const handleRequestAction = async (
+    requestId: string,
+    action: 'approve' | 'reject'
+  ) => {
+    setRequestActioningId(requestId);
+    setRequestError(null);
+    try {
+      const res = await fetch(`/api/orgs/${orgId}/join`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ requestId, action }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setRequestError(data.error || `Could not ${action} the request.`);
+        return;
+      }
+      setPendingRequests((prev) => prev.filter((r) => r.id !== requestId));
+    } catch {
+      setRequestError(`Could not ${action} the request. Please try again.`);
+    } finally {
+      setRequestActioningId(null);
+    }
+  };
 
   const handleFieldChange = useCallback((fieldName: string, value: string) => {
     setForm((f) => ({ ...f, [fieldName]: value }));
@@ -231,6 +451,297 @@ export default function OrgSettingsPage() {
   return (
     <div className="min-h-screen" style={{ backgroundColor: 'var(--surface-ground)' }}>
       <div className="max-w-2xl mx-auto px-6 py-12">
+        {pendingRequests.length > 0 && (
+          <section
+            className="mb-10 p-5 rounded-2xl border"
+            style={{ borderColor: '#E8E4DF', backgroundColor: '#FFFFFF' }}
+            aria-label="Pending join requests"
+          >
+            <div className="flex items-baseline justify-between mb-4">
+              <h2
+                className="text-lg italic"
+                style={{ fontFamily: 'var(--font-headline)', color: '#2C2825', fontWeight: 'var(--w-body)' }}
+              >
+                Pending requests
+              </h2>
+              <span className="text-xs" style={{ color: '#8B8178' }}>
+                {pendingRequests.length} waiting
+              </span>
+            </div>
+
+            <ul className="flex flex-col gap-3">
+              {pendingRequests.map((req) => {
+                const isPending = requestActioningId === req.id;
+                const name = req.user.name?.trim() || req.user.email;
+                const initials = name
+                  .split(' ')
+                  .map((n) => n[0])
+                  .join('')
+                  .slice(0, 2)
+                  .toUpperCase();
+                return (
+                  <li
+                    key={req.id}
+                    className="flex items-center gap-3 p-3 rounded-xl"
+                    style={{ backgroundColor: '#F5F3F0' }}
+                  >
+                    <div
+                      className="w-10 h-10 rounded-full flex items-center justify-center shrink-0 text-sm overflow-hidden"
+                      style={{ backgroundColor: '#E8E4DF', color: '#6B635B' }}
+                    >
+                      {req.user.profileImage ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img
+                          src={req.user.profileImage}
+                          alt={name}
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        initials
+                      )}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium truncate" style={{ color: '#2C2825' }}>
+                        {name}
+                      </p>
+                      <p className="text-xs truncate" style={{ color: '#8B8178' }}>
+                        {req.user.email}
+                      </p>
+                      {req.message ? (
+                        <p
+                          className="text-xs mt-1 italic"
+                          style={{ color: '#6B635B' }}
+                        >
+                          &ldquo;{req.message}&rdquo;
+                        </p>
+                      ) : null}
+                    </div>
+                    <div className="flex gap-2 shrink-0">
+                      <button
+                        type="button"
+                        onClick={() => handleRequestAction(req.id, 'reject')}
+                        disabled={isPending}
+                        className="px-3 py-1.5 text-xs rounded-full transition-all hover:opacity-80 disabled:opacity-50"
+                        style={{ color: '#6B635B', border: '1px solid #D4CEC6' }}
+                      >
+                        {isPending ? '…' : 'Decline'}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleRequestAction(req.id, 'approve')}
+                        disabled={isPending}
+                        className="px-3 py-1.5 text-xs rounded-full transition-all hover:opacity-80 disabled:opacity-50"
+                        style={{ backgroundColor: '#2C2825', color: 'var(--surface-ground)' }}
+                      >
+                        {isPending ? 'Saving…' : 'Approve'}
+                      </button>
+                    </div>
+                  </li>
+                );
+              })}
+            </ul>
+
+            {requestError ? (
+              <p className="text-xs mt-3" style={{ color: '#A14040' }} role="alert">
+                {requestError}
+              </p>
+            ) : null}
+          </section>
+        )}
+
+        {members.length > 0 && currentUserOrgRole && (
+          <section
+            className="mb-10 p-5 rounded-2xl border"
+            style={{ borderColor: '#E8E4DF', backgroundColor: '#FFFFFF' }}
+            aria-label="Members"
+          >
+            <div className="flex items-baseline justify-between mb-4">
+              <h2
+                className="text-lg italic"
+                style={{ fontFamily: 'var(--font-headline)', color: '#2C2825', fontWeight: 'var(--w-body)' }}
+              >
+                Members
+              </h2>
+              <span className="text-xs" style={{ color: '#8B8178' }}>
+                {members.length} total
+              </span>
+            </div>
+
+            <ul className="flex flex-col gap-3">
+              {members.map((m) => {
+                const isSelf = m.userId === session?.user?.id;
+                const isTargetOwner = m.orgRole === 'OWNER';
+                const actorIsOwner = currentUserOrgRole === 'OWNER';
+                const actorIsAdmin = currentUserOrgRole === 'ADMIN';
+                // PATCH /members/[userId] forbids non-owners from modifying the
+                // owner, and only OWNER can transfer ownership. Mirror that here.
+                const canEditRole = (actorIsOwner || actorIsAdmin) && !isSelf && (!isTargetOwner || actorIsOwner);
+                const canRemove = (!isTargetOwner) && (isSelf || actorIsOwner || actorIsAdmin);
+                const name = m.name?.trim() || m.email;
+                const initials = name
+                  .split(' ')
+                  .map((n) => n[0])
+                  .join('')
+                  .slice(0, 2)
+                  .toUpperCase();
+                const isPending = memberActioningId === m.id;
+
+                return (
+                  <li
+                    key={m.id}
+                    className="flex items-center gap-3 p-3 rounded-xl"
+                    style={{ backgroundColor: '#F5F3F0' }}
+                  >
+                    <div
+                      className="w-10 h-10 rounded-full flex items-center justify-center shrink-0 text-sm overflow-hidden"
+                      style={{ backgroundColor: '#E8E4DF', color: '#6B635B' }}
+                    >
+                      {m.profileImage ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img src={m.profileImage} alt={name} className="w-full h-full object-cover" />
+                      ) : (
+                        initials
+                      )}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium truncate" style={{ color: '#2C2825' }}>
+                        {name}
+                        {isSelf ? (
+                          <span className="ml-2 text-xs" style={{ color: '#8B8178' }}>
+                            (you)
+                          </span>
+                        ) : null}
+                      </p>
+                      <p className="text-xs truncate" style={{ color: '#8B8178' }}>
+                        {m.email}
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-2 shrink-0">
+                      {canEditRole ? (
+                        <select
+                          value={m.orgRole}
+                          onChange={(e) => handleRoleChange(m, e.target.value as OrgRole)}
+                          disabled={isPending}
+                          className="text-xs rounded-full px-3 py-1.5 border outline-none disabled:opacity-50"
+                          style={{
+                            borderColor: '#D4CEC6',
+                            backgroundColor: 'var(--surface-ground)',
+                            color: '#2C2825',
+                          }}
+                          aria-label={`Role for ${name}`}
+                        >
+                          {ROLE_ORDER.map((r) => {
+                            // Non-owner actors can't promote anyone to OWNER.
+                            if (r === 'OWNER' && !actorIsOwner) return null;
+                            return (
+                              <option key={r} value={r}>
+                                {ROLE_LABEL[r]}
+                              </option>
+                            );
+                          })}
+                        </select>
+                      ) : (
+                        <span
+                          className="text-xs px-3 py-1.5 rounded-full"
+                          style={{ backgroundColor: '#E8E4DF', color: '#5C554D' }}
+                        >
+                          {ROLE_LABEL[m.orgRole]}
+                        </span>
+                      )}
+                      {canRemove ? (
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveMember(m)}
+                          disabled={isPending}
+                          className="px-3 py-1.5 text-xs rounded-full transition-all hover:opacity-80 disabled:opacity-50"
+                          style={{ color: '#6B635B', border: '1px solid #D4CEC6' }}
+                        >
+                          {isPending ? '…' : isSelf ? 'Leave' : 'Remove'}
+                        </button>
+                      ) : null}
+                    </div>
+                  </li>
+                );
+              })}
+            </ul>
+
+            {memberError ? (
+              <p className="text-xs mt-3" style={{ color: '#A14040' }} role="alert">
+                {memberError}
+              </p>
+            ) : null}
+
+            {/* Invite form — only OWNER/ADMIN/MANAGER can call POST /members
+                per the API. Roles offered are strictly below the actor's,
+                mirroring the server-side hierarchy check. */}
+            {(currentUserOrgRole === 'OWNER' ||
+              currentUserOrgRole === 'ADMIN' ||
+              currentUserOrgRole === 'MANAGER') && (
+              <form
+                onSubmit={handleInvite}
+                className="mt-5 pt-5 border-t flex flex-col gap-2"
+                style={{ borderColor: '#E8E4DF' }}
+              >
+                <label className="text-xs font-medium" style={{ color: '#6B635B' }}>
+                  Add a member by email
+                </label>
+                <div className="flex gap-2">
+                  <input
+                    type="email"
+                    value={inviteEmail}
+                    onChange={(e) => setInviteEmail(e.target.value)}
+                    placeholder="teammate@studio.com"
+                    disabled={inviteSubmitting}
+                    className="flex-1 px-4 py-2 text-sm rounded-full border outline-none transition-colors focus:border-[var(--folio-gold)]"
+                    style={{
+                      borderColor: '#E8E4DF',
+                      backgroundColor: 'var(--surface-ground)',
+                      color: '#2C2825',
+                    }}
+                  />
+                  <select
+                    value={inviteRole}
+                    onChange={(e) => setInviteRole(e.target.value as OrgRole)}
+                    disabled={inviteSubmitting}
+                    className="text-xs rounded-full px-3 py-2 border outline-none"
+                    style={{
+                      borderColor: '#D4CEC6',
+                      backgroundColor: 'var(--surface-ground)',
+                      color: '#2C2825',
+                    }}
+                  >
+                    {ROLE_ORDER.filter(
+                      (r) =>
+                        ROLE_ORDER.indexOf(r) > ROLE_ORDER.indexOf(currentUserOrgRole)
+                    ).map((r) => (
+                      <option key={r} value={r}>
+                        {ROLE_LABEL[r]}
+                      </option>
+                    ))}
+                  </select>
+                  <button
+                    type="submit"
+                    disabled={inviteSubmitting || !inviteEmail.trim()}
+                    className="px-4 py-2 text-xs rounded-full transition-all hover:opacity-80 disabled:opacity-50"
+                    style={{ backgroundColor: '#2C2825', color: 'var(--surface-ground)' }}
+                  >
+                    {inviteSubmitting ? 'Adding…' : 'Add'}
+                  </button>
+                </div>
+                {inviteMessage ? (
+                  <p
+                    className="text-xs"
+                    style={{ color: inviteMessage.tone === 'success' ? '#3A6B47' : '#A14040' }}
+                    role={inviteMessage.tone === 'error' ? 'alert' : 'status'}
+                  >
+                    {inviteMessage.text}
+                  </p>
+                ) : null}
+              </form>
+            )}
+          </section>
+        )}
+
         {/* Header */}
         <div className="mb-8">
           <h1
