@@ -21,6 +21,15 @@ interface ConversationData {
   subject: string | null;
   context: string;
   attributionNote: string | null;
+  // Marker for special conversation kinds (join requests, etc.) — see
+  // pingAdminsOnJoinRequest in /api/orgs/[orgId]/join/route.ts for the
+  // shape written. Unknown shapes are tolerated.
+  structuredData: {
+    kind?: string;
+    joinRequestId?: string | null;
+    organizationId?: string;
+    requesterUserId?: string;
+  } | null;
   initiatorUser: { id: string; name: string; profileImage: string | null } | null;
   recipientOrg: { id: string; name: string; logo: string | null } | null;
   recipientUser: { id: string; name: string; profileImage: string | null } | null;
@@ -45,6 +54,9 @@ export default function ThreadPage({
   const [loading, setLoading] = useState(true);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const [resolvedId, setResolvedId] = useState<string | null>(null);
+  // Inline Approve / Decline state for join-request conversations.
+  const [joinAction, setJoinAction] = useState<'idle' | 'pending' | 'approved' | 'declined'>('idle');
+  const [joinError, setJoinError] = useState<string | null>(null);
 
   useEffect(() => {
     (async () => {
@@ -125,6 +137,30 @@ export default function ThreadPage({
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
       sendReply();
+    }
+  }
+
+  async function handleJoinAction(action: 'approve' | 'reject') {
+    const sd = conversation?.structuredData;
+    if (!sd || sd.kind !== 'orgJoinRequest' || !sd.organizationId || !sd.joinRequestId) return;
+    setJoinAction('pending');
+    setJoinError(null);
+    try {
+      const res = await fetch(`/api/orgs/${sd.organizationId}/join`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ requestId: sd.joinRequestId, action }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setJoinError(data.error || `Could not ${action} the request.`);
+        setJoinAction('idle');
+        return;
+      }
+      setJoinAction(action === 'approve' ? 'approved' : 'declined');
+    } catch {
+      setJoinError(`Could not ${action} the request. Please try again.`);
+      setJoinAction('idle');
     }
   }
 
@@ -221,6 +257,70 @@ export default function ThreadPage({
           <span>{conversation.attributionNote}</span>
         </div>
       )}
+
+      {/* Inline Approve / Decline for org join-request conversations.
+          The banner appears only for admins (the requester themself sees the
+          thread but no action bar, since they're matched out below). The
+          PATCH endpoint enforces OWNER/ADMIN role server-side. */}
+      {conversation.structuredData?.kind === 'orgJoinRequest' &&
+        conversation.structuredData.organizationId &&
+        conversation.structuredData.joinRequestId &&
+        currentUserId !== conversation.structuredData.requesterUserId && (
+          <div
+            className="rounded-xl px-4 py-3 mt-4 flex items-center gap-3"
+            style={{
+              backgroundColor: '#F5F3F0',
+              border: '1px solid #E8E4DF',
+              color: '#2C2825',
+            }}
+          >
+            <div className="flex-1 min-w-0">
+              {joinAction === 'approved' ? (
+                <p className="text-sm" style={{ color: '#3A6B47' }}>
+                  Approved. They&rsquo;re now a member.
+                </p>
+              ) : joinAction === 'declined' ? (
+                <p className="text-sm" style={{ color: '#A14040' }}>
+                  Declined.
+                </p>
+              ) : (
+                <>
+                  <p className="text-sm font-medium">Request to join</p>
+                  <p className="text-xs" style={{ color: '#8B8178' }}>
+                    Approve to add as a member. Decline to dismiss.
+                  </p>
+                </>
+              )}
+              {joinError ? (
+                <p className="text-xs mt-1" style={{ color: '#A14040' }} role="alert">
+                  {joinError}
+                </p>
+              ) : null}
+            </div>
+            {joinAction !== 'approved' && joinAction !== 'declined' ? (
+              <div className="flex gap-2 shrink-0">
+                <button
+                  type="button"
+                  onClick={() => handleJoinAction('reject')}
+                  disabled={joinAction === 'pending'}
+                  className="px-3 py-1.5 text-xs rounded-full transition-all hover:opacity-80 disabled:opacity-50"
+                  style={{ color: '#6B635B', border: '1px solid #D4CEC6' }}
+                >
+                  {joinAction === 'pending' ? '…' : 'Decline'}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleJoinAction('approve')}
+                  disabled={joinAction === 'pending'}
+                  className="px-3 py-1.5 text-xs rounded-full transition-all hover:opacity-80 disabled:opacity-50"
+                  style={{ backgroundColor: '#2C2825', color: '#fff' }}
+                >
+                  {joinAction === 'pending' ? 'Saving…' : 'Approve'}
+                </button>
+              </div>
+            ) : null}
+          </div>
+        )}
 
       {/* Messages */}
       <div className="flex-1 overflow-y-auto py-6 space-y-4">

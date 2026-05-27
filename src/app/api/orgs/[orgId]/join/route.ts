@@ -38,8 +38,15 @@ async function pingAdminsOnJoinRequest(args: {
 
     const requesterName = requester.name?.trim() || requester.email;
     const subject = `${requesterName} requested to join ${orgName}`;
-    const body = `${requesterName} (${requester.email}) wants to join ${orgName}. Approve or decline from your organization settings.`;
+    const body = `${requesterName} (${requester.email}) wants to join ${orgName}.`;
     const now = new Date();
+
+    // Find or reuse a pending join-request row id so the inbox conversation
+    // can resolve to the same OrgJoinRequest for inline Approve / Decline.
+    const joinRequestRow = await prisma.orgJoinRequest.findFirst({
+      where: { userId: requesterId, organizationId: orgId, status: 'PENDING' },
+      select: { id: true },
+    });
 
     await prisma.$transaction(async (tx) => {
       const conversation = await tx.conversation.create({
@@ -51,6 +58,15 @@ async function pingAdminsOnJoinRequest(args: {
           category: 'GENERAL',
           status: 'ACTIVE',
           lastMessageAt: now,
+          // Marker the inbox thread reads to decide whether to render inline
+          // Approve / Decline. Tied to the OrgJoinRequest row so PATCHing is
+          // a single round-trip from the conversation.
+          structuredData: {
+            kind: 'orgJoinRequest',
+            joinRequestId: joinRequestRow?.id ?? null,
+            organizationId: orgId,
+            requesterUserId: requesterId,
+          },
         },
       });
 
