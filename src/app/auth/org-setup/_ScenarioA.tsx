@@ -20,6 +20,13 @@ const INTENT_TO_SEARCH_TYPE: Record<OrgIntent, string> = {
   vendor: 'VENDOR',
 };
 
+const INTENT_OPTIONS: { value: OrgIntent; label: string }[] = [
+  { value: 'designer', label: 'Designer' },
+  { value: 'architect', label: 'Architect' },
+  { value: 'builder', label: 'Builder' },
+  { value: 'vendor', label: 'Vendor' },
+];
+
 const ORG_TYPE_LABEL: Record<string, string> = {
   DESIGN_FIRM: 'Design firm',
   ARCHITECTURE_FIRM: 'Architecture firm',
@@ -53,7 +60,7 @@ type Props = {
 
 export function ScenarioA({ initialIntent, headingOverride, hideEyebrow, onBack }: Props) {
   const router = useRouter();
-  const intent = initialIntent;
+  const [intent, setIntent] = useState<OrgIntent | null>(initialIntent);
   const copy = intent ? TYPE_COPY[intent] : null;
 
   const [query, setQuery] = useState('');
@@ -301,32 +308,47 @@ export function ScenarioA({ initialIntent, headingOverride, hideEyebrow, onBack 
     setStatusType(null);
   };
 
-  // Missing/invalid intent fallback — only reachable when ScenarioA is the
-  // sole renderer (page.tsx Server Component sends users with no orgs here).
+  // No intent yet — render an inline picker so a logged-in individual user
+  // (e.g., arriving from the "Go Professional" link in UserMenu) can choose
+  // their role without being bounced back to /auth/signup, which would put
+  // them through the name/email/password form a second time.
   if (!intent) {
     return (
       <>
         {!hideEyebrow ? (
           <div className="auth-eyebrow">
-            <span className="auth-eyebrow__gold">One more step</span>
+            <span className="auth-eyebrow__gold">Almost there</span>
+            <span className="auth-eyebrow__dot" />
+            <span>Step two</span>
           </div>
         ) : null}
-        <h1 className="auth-title">Tell us who you are first.</h1>
+        <h1 className="auth-title">Which kind of professional are you?</h1>
         <p className="auth-sub">
-          We need to know whether you&rsquo;re a designer, architect, builder, or
-          vendor before we can find your organization. Head back to sign-up and
-          choose a role.
+          Pick the role that fits your practice. We&rsquo;ll help you find your
+          organization on Folio or add a new one in a moment.
         </p>
-        <Link href="/auth/signup" className="auth-submit">
-          Back to sign-up
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
-            <path d="M5 12h14" />
-            <path d="m13 6 6 6-6 6" />
-          </svg>
-        </Link>
+
+        <fieldset className="auth-intent">
+          <legend className="auth-intent__legend">I&rsquo;m a</legend>
+          <div className="auth-intent__chips" role="radiogroup" aria-label="I'm a">
+            {INTENT_OPTIONS.map((opt) => (
+              <label key={opt.value} className="auth-intent__chip">
+                <input
+                  type="radio"
+                  name="org-setup-intent"
+                  value={opt.value}
+                  checked={false}
+                  onChange={() => setIntent(opt.value)}
+                />
+                <span>{opt.label}</span>
+              </label>
+            ))}
+          </div>
+        </fieldset>
+
         <div className="auth-form-foot">
-          <Link href={ONBOARDING_REDIRECT}>Skip for now</Link> — you can add an
-          organization later from your profile.
+          <Link href={ONBOARDING_REDIRECT}>I&rsquo;ll do this later</Link> — you
+          can add an organization any time from your profile.
         </div>
       </>
     );
