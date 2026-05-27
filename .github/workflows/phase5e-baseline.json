@@ -1,5 +1,5 @@
 {
-  "looseSql": 33,
+  "looseSql": 32,
   "phantomCalls": 0,
   "missingSql": 0,
   "nonIdempotent": 0,
