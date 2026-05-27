@@ -15,6 +15,18 @@ interface FieldSourceMap {
   };
 }
 
+interface PendingJoinRequest {
+  id: string;
+  message: string | null;
+  createdAt: string;
+  user: {
+    id: string;
+    name: string | null;
+    email: string;
+    profileImage: string | null;
+  };
+}
+
 export default function OrgSettingsPage() {
   const params = useParams();
   const router = useRouter();
@@ -45,6 +57,10 @@ export default function OrgSettingsPage() {
 
   // Track which fields the user has edited (for source tracking)
   const [editedFields, setEditedFields] = useState<Set<string>>(new Set());
+
+  const [pendingRequests, setPendingRequests] = useState<PendingJoinRequest[]>([]);
+  const [requestActioningId, setRequestActioningId] = useState<string | null>(null);
+  const [requestError, setRequestError] = useState<string | null>(null);
 
   useEffect(() => {
     async function loadOrg() {
@@ -107,6 +123,47 @@ export default function OrgSettingsPage() {
       loadOrg();
     }
   }, [orgId, session, router]);
+
+  useEffect(() => {
+    if (!isAuthorized) return;
+    let cancelled = false;
+    fetch(`/api/orgs/${orgId}/join?status=PENDING`)
+      .then((res) => (res.ok ? res.json() : { requests: [] }))
+      .then((data) => {
+        if (!cancelled) setPendingRequests(data.requests || []);
+      })
+      .catch(() => {
+        // Soft-fail: the rest of settings still works without this section.
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [orgId, isAuthorized]);
+
+  const handleRequestAction = async (
+    requestId: string,
+    action: 'approve' | 'reject'
+  ) => {
+    setRequestActioningId(requestId);
+    setRequestError(null);
+    try {
+      const res = await fetch(`/api/orgs/${orgId}/join`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ requestId, action }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setRequestError(data.error || `Could not ${action} the request.`);
+        return;
+      }
+      setPendingRequests((prev) => prev.filter((r) => r.id !== requestId));
+    } catch {
+      setRequestError(`Could not ${action} the request. Please try again.`);
+    } finally {
+      setRequestActioningId(null);
+    }
+  };
 
   const handleFieldChange = useCallback((fieldName: string, value: string) => {
     setForm((f) => ({ ...f, [fieldName]: value }));
@@ -231,6 +288,104 @@ export default function OrgSettingsPage() {
   return (
     <div className="min-h-screen" style={{ backgroundColor: 'var(--surface-ground)' }}>
       <div className="max-w-2xl mx-auto px-6 py-12">
+        {pendingRequests.length > 0 && (
+          <section
+            className="mb-10 p-5 rounded-2xl border"
+            style={{ borderColor: '#E8E4DF', backgroundColor: '#FFFFFF' }}
+            aria-label="Pending join requests"
+          >
+            <div className="flex items-baseline justify-between mb-4">
+              <h2
+                className="text-lg italic"
+                style={{ fontFamily: 'var(--font-headline)', color: '#2C2825', fontWeight: 'var(--w-body)' }}
+              >
+                Pending requests
+              </h2>
+              <span className="text-xs" style={{ color: '#8B8178' }}>
+                {pendingRequests.length} waiting
+              </span>
+            </div>
+
+            <ul className="flex flex-col gap-3">
+              {pendingRequests.map((req) => {
+                const isPending = requestActioningId === req.id;
+                const name = req.user.name?.trim() || req.user.email;
+                const initials = name
+                  .split(' ')
+                  .map((n) => n[0])
+                  .join('')
+                  .slice(0, 2)
+                  .toUpperCase();
+                return (
+                  <li
+                    key={req.id}
+                    className="flex items-center gap-3 p-3 rounded-xl"
+                    style={{ backgroundColor: '#F5F3F0' }}
+                  >
+                    <div
+                      className="w-10 h-10 rounded-full flex items-center justify-center shrink-0 text-sm overflow-hidden"
+                      style={{ backgroundColor: '#E8E4DF', color: '#6B635B' }}
+                    >
+                      {req.user.profileImage ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img
+                          src={req.user.profileImage}
+                          alt={name}
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        initials
+                      )}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium truncate" style={{ color: '#2C2825' }}>
+                        {name}
+                      </p>
+                      <p className="text-xs truncate" style={{ color: '#8B8178' }}>
+                        {req.user.email}
+                      </p>
+                      {req.message ? (
+                        <p
+                          className="text-xs mt-1 italic"
+                          style={{ color: '#6B635B' }}
+                        >
+                          &ldquo;{req.message}&rdquo;
+                        </p>
+                      ) : null}
+                    </div>
+                    <div className="flex gap-2 shrink-0">
+                      <button
+                        type="button"
+                        onClick={() => handleRequestAction(req.id, 'reject')}
+                        disabled={isPending}
+                        className="px-3 py-1.5 text-xs rounded-full transition-all hover:opacity-80 disabled:opacity-50"
+                        style={{ color: '#6B635B', border: '1px solid #D4CEC6' }}
+                      >
+                        {isPending ? '…' : 'Decline'}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleRequestAction(req.id, 'approve')}
+                        disabled={isPending}
+                        className="px-3 py-1.5 text-xs rounded-full transition-all hover:opacity-80 disabled:opacity-50"
+                        style={{ backgroundColor: '#2C2825', color: 'var(--surface-ground)' }}
+                      >
+                        {isPending ? 'Saving…' : 'Approve'}
+                      </button>
+                    </div>
+                  </li>
+                );
+              })}
+            </ul>
+
+            {requestError ? (
+              <p className="text-xs mt-3" style={{ color: '#A14040' }} role="alert">
+                {requestError}
+              </p>
+            ) : null}
+          </section>
+        )}
+
         {/* Header */}
         <div className="mb-8">
           <h1
