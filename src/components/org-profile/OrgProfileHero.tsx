@@ -141,7 +141,7 @@ export default function OrgProfileHero({
                 <div className="flex gap-3 items-center">
                   {isOwner ? (
                     <Link
-                      href={`/org/${org.id}/settings`}
+                      href={`/org/${org.id}/edit`}
                       className="px-5 py-2 text-sm rounded-full transition-all hover:opacity-80"
                       style={{ backgroundColor: '#2C2825', color: 'var(--surface-ground)' }}
                     >

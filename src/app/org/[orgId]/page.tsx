@@ -5,6 +5,7 @@ import { PUBLISHED_PROJECT_FILTER } from '@/server/queries/filters';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/app/api/auth/[...nextauth]/options';
 import OrgProfileHero from '@/components/org-profile/OrgProfileHero';
+import { OrgMemberNotices } from '@/components/org-profile/OrgMemberNotices';
 import OrgProfileTabs from '@/components/org-profile/OrgProfileTabs';
 import OrgProfileFeed from '@/components/org-profile/OrgProfileFeed';
 import OrgProjectsGrid from '@/components/org-profile/OrgProjectsGrid';
@@ -180,6 +181,10 @@ export default async function OrgProfilePage({ params, searchParams }: Props) {
   let isOwner = false;
   let isAdmin = false;
   let isMember = false;
+  // True when the viewer is a member of this org AND their own Folio
+  // profile is missing the data the team card pulls from (photo or bio).
+  // Drives the self-nudge banner; default false when not signed in.
+  let currentUserNeedsProfile = false;
 
   if (session?.user?.id) {
     try {
@@ -193,6 +198,15 @@ export default async function OrgProfilePage({ params, searchParams }: Props) {
       isOwner = membership?.role === 'OWNER';
       isAdmin = membership?.role === 'OWNER' || membership?.role === 'ADMIN';
       isMember = membership !== null;
+
+      if (isMember) {
+        const viewer = await prisma.user.findUnique({
+          where: { id: session.user.id },
+          select: { bio: true, profileImage: true },
+        });
+        currentUserNeedsProfile =
+          !viewer?.bio?.trim() || !viewer?.profileImage;
+      }
     } catch (err) {
       console.error('[OrgProfilePage] Error checking membership:', err);
       // Continue with default isOwner/isAdmin = false
@@ -423,6 +437,13 @@ export default async function OrgProfilePage({ params, searchParams }: Props) {
         followerCount={followerCount}
         isOwner={isOwner}
         isMember={isMember}
+      />
+
+      <OrgMemberNotices
+        orgId={resolvedParams.orgId}
+        isOwner={isOwner}
+        isMember={isMember}
+        currentUserNeedsProfile={currentUserNeedsProfile}
       />
 
       {pinnedItems.length > 0 && <PinnedCarousel items={pinnedItems} />}
