@@ -35,6 +35,7 @@ export const CanonicalCreateSchema = z.object({
   city: z.string().optional().nullable(),        // ← optional for now
   regionState: z.string().optional().nullable(), // ← optional for now
   description: z.string().optional().nullable(),
+  timeline: z.enum(['PAST', 'PRESENT', 'FUTURE']).optional().nullable(), // project timeline orientation
   credits: z.array(CreditSchema).optional(),     // ← credits for ProjectPost
 });
 

@@ -15,7 +15,7 @@ import { useForm, Controller } from 'react-hook-form';
 import toast from 'react-hot-toast';
 import { Settings2, ChevronDown, X, ArrowRight } from 'lucide-react';
 
-type ProjectStatus = 'in_progress' | 'completed';
+type ProjectStatus = 'in_progress' | 'completed' | 'concept';
 type Visibility = 'private' | 'unlisted' | 'public';
 
 type FormValues = {
@@ -139,13 +139,22 @@ export default function CreateProjectPage() {
       const uiStatus = overrideStatus ?? v.status;
       // Existing API expects projectStatus in {'new_project','completed_project'};
       // internally maps new_project → DB status 'draft', completed_project → 'active'.
+      // Completed AND In progress are real (active) projects; Concept and explicit
+      // draft saves stay 'new_project' → draft. The 'draft' override is used by the
+      // save-draft / autosave paths to keep a work-in-progress project private.
       const projectStatus: 'new_project' | 'completed_project' =
-        uiStatus === 'completed' ? 'completed_project' : 'new_project';
+        uiStatus === 'draft' || uiStatus === 'concept' ? 'new_project' : 'completed_project';
+
+      // Timeline reflects the user's actual radio selection (not the draft override),
+      // so a saved draft still records the intended orientation.
+      const timeline: 'PAST' | 'PRESENT' | 'FUTURE' =
+        v.status === 'completed' ? 'PAST' : v.status === 'concept' ? 'FUTURE' : 'PRESENT';
 
       return {
         title: v.title.trim(),
         description: v.description?.trim() || null,
         projectStatus,
+        timeline,
         projectType: v.projectType
           ? PROJECT_TYPE_TO_ENUM[v.projectType] ?? 'OTHER'
           : 'UNSPECIFIED',
@@ -214,7 +223,7 @@ export default function CreateProjectPage() {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           credentials: 'same-origin',
-          body: JSON.stringify(buildPayload('in_progress')),
+          body: JSON.stringify(buildPayload('draft')),
         });
         if (!res.ok) throw new Error('Draft save failed.');
         const json = await res.json();
@@ -796,7 +805,7 @@ export default function CreateProjectPage() {
                 className="fpn-tile-grid"
                 style={{
                   display: 'grid',
-                  gridTemplateColumns: '1fr 1fr',
+                  gridTemplateColumns: '1fr 1fr 1fr',
                   gap: 14,
                 }}
                 role="radiogroup"
@@ -819,6 +828,15 @@ export default function CreateProjectPage() {
                   title="Completed"
                   tag="Ready to publish"
                   subtitle="The work is installed. Ready to showcase in your portfolio and the directory."
+                />
+                <StatusTile
+                  selected={field.value === 'concept'}
+                  value="concept"
+                  name="status"
+                  onSelect={() => field.onChange('concept')}
+                  title="Concept"
+                  tag="Exploring"
+                  subtitle="An idea you're shaping. Private while you browse and ideate."
                 />
               </div>
             )}

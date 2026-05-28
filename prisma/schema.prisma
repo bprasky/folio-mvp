@@ -426,6 +426,7 @@ model Project {
   handoffInvitedAt          DateTime?
   handoffClaimedAt          DateTime?
   title                     String                     @default("")
+  timeline                  ProjectTimeline?
   projectType               ProjectType                @default(UNSPECIFIED)
   clientType                ClientType                 @default(RESIDENTIAL)
   budgetBand                BudgetBand                 @default(UNSPECIFIED)
@@ -1361,6 +1362,14 @@ enum ProjectStage {
   spec_locked
   in_procurement
   install
+}
+
+// Project timeline orientation captured at creation.
+// PAST = completed work (drives the New Project Wizard); PRESENT = in progress; FUTURE = concept.
+enum ProjectTimeline {
+  PAST
+  PRESENT
+  FUTURE
 }
 
 enum ClientType {

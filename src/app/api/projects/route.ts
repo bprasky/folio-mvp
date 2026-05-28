@@ -12,6 +12,7 @@ import { logDbEnv } from '@/lib/dbEnv';
 import { assertProjectView, assertProjectWrite } from "@/lib/authz/access";
 import { CLIENT_BY_LABEL, PROJECT_TYPE_BY_LABEL, DEFAULTS } from '@/domain/project/enums';
 import { makeSlug } from '@/lib/posting/slug';
+import { PUBLISHED_PROJECT_FILTER } from '@/server/queries/filters';
 
 const isDev = process.env.NODE_ENV !== 'production';
 
@@ -37,9 +38,12 @@ export async function GET(request: NextRequest) {
         whereClause.designerId = designerId;
       }
 
-      // Filter out drafts unless specifically requested
+      // Public/non-owner listing: only surface published projects. This guards
+      // unpublished 'active' projects (e.g. "In progress" timeline) from leaking,
+      // since draft is no longer the only private status. `includeDrafts` keeps the
+      // legacy opt-in that returns everything (drafts + active + published).
       if (!includeDrafts) {
-        whereClause.status = { not: 'draft' };
+        Object.assign(whereClause, PUBLISHED_PROJECT_FILTER);
       }
     }
     
@@ -170,6 +174,7 @@ export async function POST(req: Request) {
         city: data.city ?? null,
         regionState: data.regionState ?? null,
         description: data.description ?? null,
+        timeline: data.timeline ?? null,
         designerId: userId,
         ownerId: userId,
         designerOrgId: validatedOrgId,

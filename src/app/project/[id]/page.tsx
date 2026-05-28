@@ -14,6 +14,7 @@ import StagingPublishPanel, { NoDraftState } from './StagingPublishPanel';
 import { getPostForStaging } from '@/lib/post/getPostForStaging';
 import ProjectEmptyState from './ProjectEmptyState';
 import ProjectEmptyStateDiscovery from './ProjectEmptyStateDiscovery';
+import NewProjectWizard from './NewProjectWizard';
 import ActionItemsPanel from './ActionItemsPanel';
 import { getEditorialState, type EditorialState } from '@/lib/editorial/getEditorialState';
 
@@ -61,6 +62,7 @@ export default async function ProjectPage({
       createdAt: true,
       category: true,
       status: true,
+      timeline: true,
       isPublic: true,
       publishedAt: true,
       views: true,
@@ -181,6 +183,12 @@ export default async function ProjectPage({
   const isProjectEmpty = !hasMedia && !hasRooms;
 
   if (isProjectEmpty) {
+    // Completed ("PAST") projects get the guided New Project Wizard in every context.
+    // Checked before the org/individual split so individual designers get it too.
+    if (sanitizedProject.timeline === 'PAST') {
+      // canScrape is wired in Phase 3b (premium gate); defaults closed until then.
+      return <NewProjectWizard project={sanitizedProject} canScrape={false} />;
+    }
     const isOrganizationContext = !!operatingAsOrgId;
     if (isOrganizationContext) {
       return <ProjectEmptyState project={sanitizedProject} />;
