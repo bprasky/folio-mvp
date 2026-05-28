@@ -4,9 +4,11 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 
 // Two banners that sit between the org hero and the tabs:
-//   1. Owner-only — "you have members not on your team page; add them."
-//      Pulls from GET /api/orgs/[orgId]/members/missing-from-team and posts
-//      to /api/orgs/[orgId]/team/promote-member which copies the User's
+//   1. canAddToTeam — "you have members not on your team page; add them."
+//      Visible to anyone with the 'add_to_team_page' capability
+//      (Owner/Admin/Manager per src/lib/orgPermissions.ts). Pulls from
+//      GET /api/orgs/[orgId]/members/missing-from-team and posts to
+//      /api/orgs/[orgId]/team/promote-member, which copies the User's
 //      headshot / bio / title into a TeamMember row.
 //   2. Self — if the current user is a member of this org and their own
 //      User.bio or User.profileImage is empty, nudge them to /profile so
@@ -26,14 +28,14 @@ interface MissingMember {
 
 type Props = {
   orgId: string;
-  isOwner: boolean;
+  canAddToTeam: boolean;
   isMember: boolean;
   currentUserNeedsProfile: boolean;
 };
 
 export function OrgMemberNotices({
   orgId,
-  isOwner,
+  canAddToTeam,
   isMember,
   currentUserNeedsProfile,
 }: Props) {
@@ -43,7 +45,7 @@ export function OrgMemberNotices({
   const [dismissedSelfNudge, setDismissedSelfNudge] = useState(false);
 
   useEffect(() => {
-    if (!isOwner) return;
+    if (!canAddToTeam) return;
     let cancelled = false;
     fetch(`/api/orgs/${orgId}/members/missing-from-team`)
       .then((r) => (r.ok ? r.json() : { missing: [] }))
@@ -56,7 +58,7 @@ export function OrgMemberNotices({
     return () => {
       cancelled = true;
     };
-  }, [orgId, isOwner]);
+  }, [orgId, canAddToTeam]);
 
   const handleAdd = async (userId: string) => {
     setActioningUserId(userId);
@@ -82,13 +84,13 @@ export function OrgMemberNotices({
 
   const showSelfNudge =
     isMember && currentUserNeedsProfile && !dismissedSelfNudge;
-  const showOwnerBanner = isOwner && missing.length > 0;
+  const showTeamBanner = canAddToTeam && missing.length > 0;
 
-  if (!showSelfNudge && !showOwnerBanner) return null;
+  if (!showSelfNudge && !showTeamBanner) return null;
 
   return (
     <div className="max-w-6xl mx-auto px-6 mt-6 flex flex-col gap-4">
-      {showOwnerBanner && (
+      {showTeamBanner && (
         <section
           className="p-4 rounded-2xl border"
           style={{

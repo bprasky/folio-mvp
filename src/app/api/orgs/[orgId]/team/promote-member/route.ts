@@ -4,14 +4,17 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/app/api/auth/[...nextauth]/options';
 import { prisma } from '@/lib/prisma';
+import { can, isOrgRole } from '@/lib/orgPermissions';
 
 /**
  * POST /api/orgs/[orgId]/team/promote-member
  *
  * Body: { userId }
  *
- * Owner-only. Takes an existing OrganizationUser and creates a public
- * TeamMember row for them, pulling display data from their User profile:
+ * Gated by the 'add_to_team_page' capability (Owner/Admin/Manager per the
+ * matrix in src/lib/orgPermissions.ts). Takes an existing
+ * OrganizationUser and creates a public TeamMember row for them, pulling
+ * display data from their User profile:
  *
  *   - name         ← User.name
  *   - headshotUrl  ← User.profileImage
@@ -46,18 +49,21 @@ export async function POST(
       return NextResponse.json({ error: 'userId required' }, { status: 400 });
     }
 
-    const ownerMembership = await prisma.organizationUser.findFirst({
+    const actorMembership = await prisma.organizationUser.findFirst({
       where: {
         userId: session.user.id,
         organizationId: orgId,
-        role: 'OWNER',
         isActive: true,
       },
-      select: { id: true },
+      select: { role: true },
     });
-    if (!ownerMembership) {
+    if (
+      !actorMembership ||
+      !isOrgRole(actorMembership.role) ||
+      !can(actorMembership.role, 'add_to_team_page')
+    ) {
       return NextResponse.json(
-        { error: 'Only the owner can add members to the team page.' },
+        { error: 'You do not have permission to add members to the team page.' },
         { status: 403 }
       );
     }

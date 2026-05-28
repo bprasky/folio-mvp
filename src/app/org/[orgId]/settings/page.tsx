@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';
+import { RolePermissionsMatrix } from '@/components/org-profile/RolePermissionsMatrix';
 
 // /org/[orgId]/settings is the org admin console: pending join requests
 // and member management. Profile-field editing lives at /org/[orgId]/edit,
@@ -590,6 +591,8 @@ export default function OrgSettingsPage() {
             )}
           </section>
         )}
+
+        <RolePermissionsMatrix />
       </div>
     </div>
   );
