@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { Prisma } from "@prisma/client";
+import { can, isOrgRole, type OrgCapability } from "@/lib/orgPermissions";
 
 const E = (Prisma as any).$Enums ?? (Prisma as any);
 const ParticipantSide = E.ParticipantSide ?? {};
@@ -204,4 +205,95 @@ export async function assertProjectWrite(
   if (participant) return;
 
   throw new Error("Forbidden");
+}
+
+/**
+ * Capability-scoped project assertion. Single source of truth: the matrix
+ * in src/lib/orgPermissions.ts. Used by assertProjectPublish and
+ * assertProjectDelete below — splitting them out as named exports keeps
+ * call sites self-documenting.
+ *
+ * Behavior:
+ *   - Global ADMIN role always allowed.
+ *   - Non-org project (designerOrgId null): only the project's creator
+ *     (ownerId or designerId) is allowed. The org matrix doesn't apply
+ *     when there's no org to apply it to.
+ *   - Org-associated project: the actor's OrganizationUser role must
+ *     have the requested capability per can() in orgPermissions.
+ *   - ProjectParticipant.role === 'OWNER' is an explicit project-level
+ *     grant that supersedes the org check.
+ */
+async function assertProjectCapability(
+  userId: string,
+  projectId: string,
+  capability: OrgCapability
+): Promise<void> {
+  const project = await prisma.project.findUnique({
+    where: { id: projectId },
+    select: { ownerId: true, designerId: true, designerOrgId: true },
+  });
+  if (!project) throw new Error("NotFound");
+
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { role: true },
+  });
+  if (user?.role === "ADMIN") return;
+
+  // Non-org project: creator-only. The org matrix doesn't apply.
+  if (!project.designerOrgId) {
+    if (project.ownerId === userId || project.designerId === userId) return;
+    throw new Error("Forbidden");
+  }
+
+  // Org-associated: gate by the org role's capability.
+  const membership = await prisma.organizationUser.findFirst({
+    where: {
+      userId,
+      organizationId: project.designerOrgId,
+      isActive: true,
+    },
+    select: { role: true },
+  });
+  if (
+    membership &&
+    isOrgRole(membership.role) &&
+    can(membership.role, capability)
+  ) {
+    return;
+  }
+
+  // Project-level OWNER grant (e.g., a designer brought in from outside
+  // the org via ProjectParticipant) supersedes org-role gating.
+  const participant = await prisma.projectParticipant
+    .findFirst({
+      where: { projectId, userId, role: "OWNER" },
+    })
+    .catch(() => null);
+  if (participant) return;
+
+  throw new Error("Forbidden");
+}
+
+/**
+ * Publish gate: Owner/Admin/Manager of the project's org, OR creator of
+ * a non-org project, OR global admin, OR ProjectParticipant OWNER.
+ */
+export async function assertProjectPublish(
+  userId: string,
+  projectId: string
+): Promise<void> {
+  return assertProjectCapability(userId, projectId, "publish_projects");
+}
+
+/**
+ * Delete gate: Owner/Admin of the project's org, OR creator of a non-org
+ * project, OR global admin, OR ProjectParticipant OWNER. Stricter than
+ * publish — Manager cannot delete.
+ */
+export async function assertProjectDelete(
+  userId: string,
+  projectId: string
+): Promise<void> {
+  return assertProjectCapability(userId, projectId, "delete_projects");
 }

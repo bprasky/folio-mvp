@@ -4,14 +4,16 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/app/api/auth/[...nextauth]/options';
 import { prisma } from '@/lib/prisma';
+import { can, isOrgRole } from '@/lib/orgPermissions';
 
 /**
  * GET /api/orgs/[orgId]/members/missing-from-team
  *
- * Owner-only. Returns active OrganizationUser rows for this org whose
- * userId is NOT yet on the public TeamMember display. Surfaces the
- * "you have new joiners, add them to the team page" prompt on the org
- * profile so the owner doesn't have to remember manually.
+ * Gated by the 'add_to_team_page' capability (Owner/Admin/Manager per the
+ * matrix in src/lib/orgPermissions.ts). Returns active OrganizationUser
+ * rows for this org whose userId is NOT yet on the public TeamMember
+ * display, so the org-profile banner can prompt the team-page manager to
+ * add new joiners.
  */
 export async function GET(
   _request: NextRequest,
@@ -29,14 +31,13 @@ export async function GET(
       where: {
         userId: session.user.id,
         organizationId: orgId,
-        role: 'OWNER',
         isActive: true,
       },
-      select: { id: true },
+      select: { role: true },
     });
-    if (!membership) {
+    if (!membership || !isOrgRole(membership.role) || !can(membership.role, 'add_to_team_page')) {
       return NextResponse.json(
-        { error: 'Only the owner can see this list.' },
+        { error: 'You do not have permission to manage the team page.' },
         { status: 403 }
       );
     }

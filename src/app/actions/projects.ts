@@ -3,6 +3,7 @@
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/app/api/auth/[...nextauth]/options';
 import { normalizeRole, canCreateProject } from '@/lib/permissions';
+import { assertProjectPublish } from '@/lib/authz/access';
 import { prisma } from '@/lib/prisma';
 import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
@@ -118,8 +119,11 @@ export async function publishEditorial({ projectId }: { projectId: string }) {
       return { ok: false, message: 'No draft found to publish' };
     }
 
-    // Check user has access
-    if (post.project.ownerId !== session.user.id && post.project.designerId !== session.user.id) {
+    // Matrix-gated authorization via assertProjectPublish — see
+    // src/lib/orgPermissions.ts for the role/capability matrix.
+    try {
+      await assertProjectPublish(session.user.id, projectId);
+    } catch {
       return { ok: false, message: 'Access denied' };
     }
 
@@ -302,8 +306,14 @@ export async function publishProjectAction(raw: unknown) {
     throw new Error('Project not found');
   }
 
-  // Authorization: user must be owner or designer
-  if (project.ownerId !== userId && project.designerId !== userId) {
+  // Authorization: matrix-gated via assertProjectPublish (src/lib/authz).
+  // Allows org Owner/Admin/Manager (per src/lib/orgPermissions.ts), the
+  // creator of a non-org project, global admins, and project-level OWNER
+  // participants. Previously was creator-only, which blocked partner-led
+  // studios from publishing junior designers' work.
+  try {
+    await assertProjectPublish(userId, projectId);
+  } catch {
     throw new Error('Not authorized to publish this project');
   }
 

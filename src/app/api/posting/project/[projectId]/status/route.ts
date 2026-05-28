@@ -4,7 +4,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/options";
 import { prisma } from "@/lib/prisma";
-import { assertProjectWrite } from "@/lib/authz/access";
+import { assertProjectWrite, assertProjectPublish } from "@/lib/authz/access";
 import { canPublishFromOrg, type PublishGateResult } from "@/lib/permissions";
 import { z } from "zod";
 import { revalidatePath } from "next/cache";
@@ -179,6 +179,17 @@ export async function PATCH(
 
     // Validate publishing requirements
     if (targetStatus === "PUBLISHED") {
+      // Publish capability gate (Owner/Admin/Manager of org, or non-org
+      // creator, or global admin). The top-of-route assertProjectWrite
+      // already checked write access; this narrows further to publish.
+      try {
+        await assertProjectPublish(session.user.id, projectId);
+      } catch {
+        return NextResponse.json(
+          { error: "Forbidden", message: "You do not have permission to publish this project." },
+          { status: 403 }
+        );
+      }
       // Auto-populate missing fields before validation
       const blocks = post.expandedBlocks as any;
       const lead = blocks?.lead || {};
@@ -502,6 +513,16 @@ export async function PATCH(
     // Note: ProjectPost.publishedAt is PRESERVED (distinguishes UNPUBLISHED from GENERATED)
     //       Project.publishedAt is CLEARED (controls public visibility)
     if (targetStatus === "DRAFT" && post.status === "PUBLISHED") {
+      // Unpublish is a publish-state change — gate by publish capability
+      // so a Member can't yank a published project off the site.
+      try {
+        await assertProjectPublish(session.user.id, projectId);
+      } catch {
+        return NextResponse.json(
+          { error: "Forbidden", message: "You do not have permission to unpublish this project." },
+          { status: 403 }
+        );
+      }
       const [updated] = await prisma.$transaction([
         prisma.projectPost.update({
           where: { projectId },
