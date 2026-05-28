@@ -2,7 +2,7 @@ export const dynamic = 'force-dynamic';
 
 import { NextRequest, NextResponse } from 'next/server';
 import { PrismaClient } from '@prisma/client';
-import { assertProjectView, assertProjectWrite } from "@/lib/authz/access";
+import { assertProjectView, assertProjectWrite, assertProjectDelete } from "@/lib/authz/access";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 
@@ -82,7 +82,9 @@ export async function DELETE(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    await assertProjectWrite(session.user.id, projectId);
+    // Delete capability is Owner/Admin only (or non-org project creator).
+    // See src/lib/orgPermissions.ts for the matrix.
+    await assertProjectDelete(session.user.id, projectId);
 
     await prisma.project.delete({
       where: { id: projectId },

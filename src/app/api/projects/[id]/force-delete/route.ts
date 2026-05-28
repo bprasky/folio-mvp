@@ -2,7 +2,7 @@ export const dynamic = 'force-dynamic';
 
 import { NextRequest, NextResponse } from 'next/server';
 import { PrismaClient } from '@prisma/client';
-import { assertProjectWrite } from "@/lib/authz/access";
+import { assertProjectDelete } from "@/lib/authz/access";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 
@@ -24,14 +24,15 @@ export async function DELETE(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // Check project write access (owner, designer, org member, or admin)
+    // Delete capability: Owner/Admin of the org (or non-org project
+    // creator, or global admin). Matrix in src/lib/orgPermissions.ts.
     try {
-      await assertProjectWrite(session.user.id, projectId);
+      await assertProjectDelete(session.user.id, projectId);
     } catch (e: any) {
       if (e.message === "NotFound") {
         return NextResponse.json({ error: 'Project not found' }, { status: 404 });
       }
-      return NextResponse.json({ error: 'Forbidden: Only project owner can force delete' }, { status: 403 });
+      return NextResponse.json({ error: 'Forbidden: You do not have permission to delete this project' }, { status: 403 });
     }
 
     // Check if project is archived
