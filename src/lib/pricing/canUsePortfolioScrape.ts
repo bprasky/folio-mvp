@@ -13,6 +13,12 @@ const SCRAPE_TIERS = ['PRO', 'STUDIO', 'ENTERPRISE'] as const;
  * subscription tier must be one of the paid tiers.
  */
 export async function canUsePortfolioScrape(userId: string): Promise<boolean> {
+  // PRE-LAUNCH: portfolio URL import is open to every signed-in designer. Access
+  // is still bounded by project ownership in the route. To re-gate it as a paid
+  // feature, delete this early return and the founding-designer + paid-tier check
+  // below takes over again.
+  if (userId) return true;
+
   if (await isFoundingDesigner(userId)) return true;
 
   const user = await prisma.user.findUnique({
