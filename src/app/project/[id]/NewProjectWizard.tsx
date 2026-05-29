@@ -47,7 +47,17 @@ interface NewProjectWizardProps {
   canScrape: boolean;
 }
 
-const STEPS = ['Photos', 'Rooms', 'Done'];
+const STEPS = ['Photos', 'Rooms', 'Specs', 'Done'];
+
+interface SpecTag {
+  id: string;
+  description: string;
+  extractedVendor?: string | null;
+  extractedPrice?: number | null; // cents
+  extractedDimensions?: string | null;
+  extractedSku?: string | null;
+  extractedMaterial?: string | null;
+}
 
 function fileToBase64(file: File): Promise<string> {
   return new Promise((resolve, reject) => {
@@ -83,12 +93,90 @@ export default function NewProjectWizard({ project, canScrape }: NewProjectWizar
   const [rooms, setRooms] = useState<string[]>([]);
   const [newRoom, setNewRoom] = useState('');
 
-  // ---- Step 3 ----
+  // ---- Step 3: specs ----
+  const [specUploading, setSpecUploading] = useState(false);
+  const [specSessionId, setSpecSessionId] = useState<string | null>(null);
+  const [specTags, setSpecTags] = useState<SpecTag[]>([]);
+  const [removedSpecIds, setRemovedSpecIds] = useState<Set<string>>(new Set());
+  const [specError, setSpecError] = useState<string | null>(null);
+  const [specFinalizing, setSpecFinalizing] = useState(false);
+  const [specsSaved, setSpecsSaved] = useState(0);
+
+  // ---- Step 4 ----
   const [interviewOpen, setInterviewOpen] = useState(false);
 
   const goToProject = useCallback(() => {
     router.push(`/project/${project.id}?view=media`);
   }, [router, project.id]);
+
+  // ---------------- Specs ----------------
+  const onSpecFile = useCallback(
+    async (files: FileList | null) => {
+      const file = files?.[0];
+      if (!file) return;
+      if (!file.name.toLowerCase().endsWith('.pdf')) {
+        setSpecError('Please upload a PDF spec sheet.');
+        return;
+      }
+      setSpecUploading(true);
+      setSpecError(null);
+      try {
+        const form = new FormData();
+        form.append('file', file);
+        const res = await fetch(`/api/projects/${project.id}/import-spec`, { method: 'POST', body: form });
+        const data = await res.json();
+        if (!res.ok) {
+          setSpecError(data.error || 'Could not read that PDF.');
+          return;
+        }
+        if (!data.tagCount) {
+          setSpecError('No product specifications were found in that PDF.');
+          return;
+        }
+        setSpecSessionId(data.sessionId);
+        const tagsRes = await fetch(`/api/import/${data.sessionId}/pending-tags?limit=200`).then((r) => r.json());
+        setSpecTags(tagsRes.pendingTags || []);
+        setRemovedSpecIds(new Set());
+      } catch {
+        setSpecError('Something went wrong reading that PDF.');
+      } finally {
+        setSpecUploading(false);
+      }
+    },
+    [project.id]
+  );
+
+  const toggleSpecRemoved = (id: string) => {
+    setRemovedSpecIds((prev) => {
+      const next = new Set(prev);
+      next.has(id) ? next.delete(id) : next.add(id);
+      return next;
+    });
+  };
+
+  const finalizeSpecs = useCallback(async () => {
+    if (!specSessionId) return;
+    const kept = specTags.filter((t) => !removedSpecIds.has(t.id));
+    setSpecFinalizing(true);
+    try {
+      const res = await fetch(`/api/import/${specSessionId}/finalize`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          projectId: project.id,
+          rooms: [{ type: 'other', name: 'Specifications' }],
+          products: kept.map((t) => ({ pendingTagId: t.id, roomType: 'other' })),
+        }),
+      });
+      const data = await res.json();
+      setSpecsSaved(data.selectionsCreated ?? kept.length);
+    } catch {
+      /* non-blocking: still advance */
+    } finally {
+      setSpecFinalizing(false);
+      setStep(4);
+    }
+  }, [specSessionId, specTags, removedSpecIds, project.id]);
 
   // ---------------- Scrape ----------------
   const startScrape = useCallback(async () => {
@@ -534,14 +622,105 @@ export default function NewProjectWizard({ project, canScrape }: NewProjectWizar
                 Back
               </button>
               <button onClick={() => setStep(3)} className="accent-btn px-8 py-3">
-                {rooms.length === 0 ? 'Skip for now' : 'Done'}
+                Next: Specs
               </button>
             </div>
           </div>
         )}
 
-        {/* ---------------- STEP 3: DONE ---------------- */}
+        {/* ---------------- STEP 3: SPECS ---------------- */}
         {step === 3 && (
+          <div>
+            <h2 className="folio-body text-lg text-folio-text-primary text-center mb-2">Import product specs</h2>
+            <p className="folio-meta text-folio-text-tertiary text-center mb-8">
+              Upload a spec sheet or FF&amp;E PDF and we&apos;ll pull out the products. Optional — you can skip this.
+            </p>
+
+            {specTags.length === 0 ? (
+              <>
+                <label className="block border-2 border-dashed border-folio-border-subtle rounded-2xl p-10 text-center cursor-pointer hover:border-[var(--accent)] transition-colors">
+                  <input
+                    type="file"
+                    accept=".pdf"
+                    className="hidden"
+                    onChange={(e) => onSpecFile(e.target.files)}
+                    disabled={specUploading}
+                  />
+                  <FaCloudUploadAlt
+                    className={`w-10 h-10 mx-auto mb-3 ${specUploading ? 'text-[var(--accent)] animate-pulse' : 'text-folio-text-tertiary'}`}
+                  />
+                  <p className="folio-body text-folio-text-primary">
+                    {specUploading ? 'Reading specs… this can take a minute' : 'Click to upload a spec PDF'}
+                  </p>
+                  <p className="folio-meta text-folio-text-tertiary mt-1">PDF up to 50MB</p>
+                </label>
+                {specError && (
+                  <p className="mt-3 text-center folio-meta text-folio-text-secondary">{specError}</p>
+                )}
+              </>
+            ) : (
+              <div>
+                <p className="folio-meta text-folio-text-secondary mb-3">
+                  Found {specTags.length} product{specTags.length === 1 ? '' : 's'} —{' '}
+                  {specTags.length - removedSpecIds.size} will be added. Uncheck anything you don&apos;t want.
+                </p>
+                <div className="space-y-2">
+                  {specTags.map((t) => {
+                    const removed = removedSpecIds.has(t.id);
+                    return (
+                      <label
+                        key={t.id}
+                        className={`flex items-start gap-3 p-3 rounded-xl border cursor-pointer transition-colors ${
+                          removed ? 'border-folio-border-subtle opacity-50' : 'border-folio-border-subtle bg-surface-ground'
+                        }`}
+                      >
+                        <input
+                          type="checkbox"
+                          checked={!removed}
+                          onChange={() => toggleSpecRemoved(t.id)}
+                          className="mt-1"
+                        />
+                        <div className="min-w-0">
+                          <p className="folio-body text-folio-text-primary truncate">{t.description}</p>
+                          <p className="folio-meta text-folio-text-tertiary">
+                            {[
+                              t.extractedVendor,
+                              typeof t.extractedPrice === 'number' ? `$${(t.extractedPrice / 100).toLocaleString()}` : null,
+                              t.extractedDimensions,
+                              t.extractedSku ? `SKU ${t.extractedSku}` : null,
+                              t.extractedMaterial,
+                            ]
+                              .filter(Boolean)
+                              .join(' · ') || 'No additional details extracted'}
+                          </p>
+                        </div>
+                      </label>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            <div className="flex justify-between mt-10">
+              <button onClick={() => setStep(2)} className="ridge-btn px-6 py-3">
+                Back
+              </button>
+              {specTags.length === 0 ? (
+                <button onClick={() => setStep(4)} className="accent-btn px-8 py-3">
+                  Skip for now
+                </button>
+              ) : (
+                <button onClick={finalizeSpecs} disabled={specFinalizing} className="accent-btn px-8 py-3 disabled:opacity-50 flex items-center gap-2">
+                  {specFinalizing ? <FaSpinner className="w-4 h-4 animate-spin" /> : null}
+                  {specFinalizing ? 'Saving…' : `Add ${specTags.length - removedSpecIds.size} to project`}
+                </button>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* ---------------- STEP 4: DONE ---------------- */}
+        {step === 4 && (
           <div className="text-center pt-6">
             <div className="w-14 h-14 mx-auto rounded-full bg-[var(--accent)]/15 text-[var(--accent)] flex items-center justify-center mb-5">
               <FaCheck className="w-6 h-6" />
@@ -549,8 +728,9 @@ export default function NewProjectWizard({ project, canScrape }: NewProjectWizar
             <h2 className="font-serif italic text-2xl text-folio-text-primary mb-2">Your project is set up</h2>
             <p className="folio-body text-folio-text-secondary max-w-md mx-auto">
               {images.length} photo{images.length === 1 ? '' : 's'}
-              {rooms.length > 0 ? ` across ${rooms.length} room${rooms.length === 1 ? '' : 's'}` : ''} added. Add
-              presentations, specs, and product tags any time from the project&apos;s media tab.
+              {rooms.length > 0 ? ` across ${rooms.length} room${rooms.length === 1 ? '' : 's'}` : ''}
+              {specsSaved > 0 ? `, ${specsSaved} product spec${specsSaved === 1 ? '' : 's'}` : ''} added. Add more
+              photos, specs, and product tags any time from the project&apos;s media tab.
             </p>
 
             <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-4">

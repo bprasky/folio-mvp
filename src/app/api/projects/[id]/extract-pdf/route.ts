@@ -85,7 +85,7 @@ export async function POST(
         fileName: file.name,
         result: result as unknown as Record<string, unknown>,
         status: 'pending_review',
-        createdBy: userId
+        createdBy: session.user.id
       }
     })
 

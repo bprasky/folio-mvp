@@ -2247,6 +2247,9 @@ model PendingProductTag {
   status PendingTagStatus @default(UNREVIEWED)
   // UNREVIEWED → CONFIRMED → CORRECTED → DISMISSED
 
+  // Which pipeline produced this tag: VISION (image analysis) or SPEC (PDF text).
+  source PendingTagSource @default(VISION)
+
   // If confirmed/corrected, link to actual product
   confirmedProductId String?
 
@@ -2283,6 +2286,12 @@ enum PendingTagStatus {
   CONFIRMED
   CORRECTED
   DISMISSED
+}
+
+// Which import pipeline produced a PendingProductTag.
+enum PendingTagSource {
+  VISION
+  SPEC
 }
 
 // ============================================================

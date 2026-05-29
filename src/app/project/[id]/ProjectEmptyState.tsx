@@ -4,7 +4,7 @@ import { useState, useCallback, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { HiOutlineDotsHorizontal } from 'react-icons/hi';
-import { FaCloudUploadAlt, FaFileImport, FaGlobe, FaDoorOpen, FaImage, FaFileAlt, FaCalendarAlt, FaArrowLeft } from 'react-icons/fa';
+import { FaCloudUploadAlt, FaFileImport, FaDoorOpen, FaCalendarAlt, FaArrowLeft } from 'react-icons/fa';
 import OverviewModal from './OverviewModal';
 import ProjectCreationModal from '@/components/ProjectCreationModal';
 import { PresentationImportModal } from '@/components/import/PresentationImportModal';
@@ -210,11 +210,6 @@ export default function ProjectEmptyState({ project }: ProjectEmptyStateProps) {
   // Determine if this is a new/draft project (starting from scratch)
   // vs a completed project (importing existing work)
   const isDraftProject = !project.status || project.status === 'draft';
-
-  const handlePublish = useCallback(() => {
-    // Navigate to media section for publishing workflow
-    router.push(`/project/${project.id}?view=media`);
-  }, [project.id, router]);
 
   // Format status for display
   const formatStatus = (status: string | null | undefined) => {
@@ -428,15 +423,6 @@ export default function ProjectEmptyState({ project }: ProjectEmptyStateProps) {
                   <FaCalendarAlt className="w-4 h-4" />
                   Import PDF Specs
                 </button>
-
-                {/* Secondary CTA - Publish Project */}
-                <button
-                  onClick={handlePublish}
-                  className="ridge-btn px-6 py-3 flex items-center gap-2"
-                >
-                  <FaGlobe className="w-4 h-4" />
-                  Publish Project
-                </button>
               </div>
 
               {/* Add Room as tertiary option */}
@@ -452,54 +438,6 @@ export default function ProjectEmptyState({ project }: ProjectEmptyStateProps) {
               </div>
             </>
           )}
-
-          {/* Helper Cards */}
-          <div className="mt-16 grid grid-cols-1 sm:grid-cols-3 gap-6">
-            {/* Photos Card */}
-            <div className="ridge-card ridge-card-sm p-5">
-              <div className="flex items-start gap-3">
-                <div className="p-2 rounded-lg bg-surface-ground">
-                  <FaImage className="w-5 h-5 text-[var(--accent)]" />
-                </div>
-                <div>
-                  <h3 className="folio-ui text-folio-text-primary mb-1">Photos</h3>
-                  <p className="folio-meta leading-relaxed">
-                    Upload project images to create a visual story and publish to your portfolio.
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            {/* Presentations Card */}
-            <div className="ridge-card ridge-card-sm p-5">
-              <div className="flex items-start gap-3">
-                <div className="p-2 rounded-lg bg-surface-ground">
-                  <FaFileAlt className="w-5 h-5 text-[var(--accent)]" />
-                </div>
-                <div>
-                  <h3 className="folio-ui text-folio-text-primary mb-1">Presentations</h3>
-                  <p className="folio-meta leading-relaxed">
-                    Import decks to automatically extract rooms, products, and selections.
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            {/* Schedules Card */}
-            <div className="ridge-card ridge-card-sm p-5">
-              <div className="flex items-start gap-3">
-                <div className="p-2 rounded-lg bg-surface-ground">
-                  <FaCalendarAlt className="w-5 h-5 text-[var(--accent)]" />
-                </div>
-                <div>
-                  <h3 className="folio-ui text-folio-text-primary mb-1">Schedules</h3>
-                  <p className="folio-meta leading-relaxed">
-                    Upload finish schedules to populate your spec library with product data.
-                  </p>
-                </div>
-              </div>
-            </div>
-          </div>
         </main>
       </div>
 
