@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import {
@@ -11,6 +11,7 @@ import {
   FaSpinner,
   FaExclamationTriangle,
   FaTrash,
+  FaMagic,
 } from 'react-icons/fa';
 import { InterviewModal } from '@/components/posting/interview/InterviewModal';
 
@@ -92,6 +93,9 @@ export default function NewProjectWizard({ project, canScrape }: NewProjectWizar
   // ---- Step 2: rooms ----
   const [rooms, setRooms] = useState<string[]>([]);
   const [newRoom, setNewRoom] = useState('');
+  const [detecting, setDetecting] = useState(false);
+  const [detectError, setDetectError] = useState<string | null>(null);
+  const [detectedOnce, setDetectedOnce] = useState(false);
 
   // ---- Step 3: specs ----
   const [specUploading, setSpecUploading] = useState(false);
@@ -346,6 +350,41 @@ export default function NewProjectWizard({ project, canScrape }: NewProjectWizar
     [project.id]
   );
 
+  // AI room detection: classify every photo's room type and pre-fill labels.
+  const runDetect = useCallback(async () => {
+    if (images.length === 0) return;
+    setDetecting(true);
+    setDetectError(null);
+    try {
+      const res = await fetch(`/api/projects/${project.id}/detect-rooms`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({}),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setDetectError(data.error || 'Could not detect rooms.');
+        return;
+      }
+      const assignments: Record<string, string> = data.assignments || {};
+      const detectedRooms: string[] = data.rooms || [];
+      setRooms((prev) => Array.from(new Set([...prev, ...detectedRooms])));
+      setImages((prev) => prev.map((i) => (assignments[i.id] ? { ...i, room: assignments[i.id] } : i)));
+    } catch {
+      setDetectError('Something went wrong detecting rooms.');
+    } finally {
+      setDetecting(false);
+      setDetectedOnce(true);
+    }
+  }, [images.length, project.id]);
+
+  // Auto-run detection once when the designer first reaches the Rooms step.
+  useEffect(() => {
+    if (step === 2 && images.length > 0 && !detectedOnce && !detecting) {
+      runDetect();
+    }
+  }, [step, images.length, detectedOnce, detecting, runDetect]);
+
   // ---------------- Render ----------------
   return (
     <div className="min-h-screen bg-surface-canvas">
@@ -564,9 +603,34 @@ export default function NewProjectWizard({ project, canScrape }: NewProjectWizar
         {step === 2 && (
           <div>
             <h2 className="folio-body text-lg text-folio-text-primary text-center mb-2">Organize photos into rooms</h2>
-            <p className="folio-meta text-folio-text-tertiary text-center mb-8">
-              Create room labels, then assign each photo. You can skip this and do it later.
+            <p className="folio-meta text-folio-text-tertiary text-center mb-4">
+              {detecting
+                ? 'AI is sorting your photos into rooms…'
+                : detectedOnce
+                  ? 'We sorted your photos into rooms — review and refine below.'
+                  : 'Create room labels, then assign each photo. You can skip this and do it later.'}
             </p>
+
+            {/* AI auto-detect */}
+            <div className="flex justify-center mb-8">
+              {detecting ? (
+                <span className="inline-flex items-center gap-2 folio-meta text-[var(--accent)]">
+                  <FaSpinner className="w-4 h-4 animate-spin" /> Detecting rooms with AI…
+                </span>
+              ) : (
+                <button
+                  onClick={runDetect}
+                  disabled={images.length === 0}
+                  className="ridge-btn px-5 py-2 flex items-center gap-2 disabled:opacity-50"
+                >
+                  <FaMagic className="w-3.5 h-3.5" />
+                  {detectedOnce ? 'Re-detect rooms' : 'Auto-detect rooms with AI'}
+                </button>
+              )}
+            </div>
+            {detectError && (
+              <p className="text-center folio-meta text-folio-text-secondary mb-6">{detectError}</p>
+            )}
 
             {/* Add room label */}
             <div className="flex gap-2 mb-6 max-w-md mx-auto">
