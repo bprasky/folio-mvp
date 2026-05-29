@@ -15,6 +15,7 @@ import { getPostForStaging } from '@/lib/post/getPostForStaging';
 import ProjectEmptyState from './ProjectEmptyState';
 import ProjectEmptyStateDiscovery from './ProjectEmptyStateDiscovery';
 import NewProjectWizard from './NewProjectWizard';
+import { canUsePortfolioScrape } from '@/lib/pricing/canUsePortfolioScrape';
 import ActionItemsPanel from './ActionItemsPanel';
 import { getEditorialState, type EditorialState } from '@/lib/editorial/getEditorialState';
 
@@ -186,8 +187,8 @@ export default async function ProjectPage({
     // Completed ("PAST") projects get the guided New Project Wizard in every context.
     // Checked before the org/individual split so individual designers get it too.
     if (sanitizedProject.timeline === 'PAST') {
-      // canScrape is wired in Phase 3b (premium gate); defaults closed until then.
-      return <NewProjectWizard project={sanitizedProject} canScrape={false} />;
+      const canScrape = viewerId ? await canUsePortfolioScrape(viewerId) : false;
+      return <NewProjectWizard project={sanitizedProject} canScrape={canScrape} />;
     }
     const isOrganizationContext = !!operatingAsOrgId;
     if (isOrganizationContext) {
