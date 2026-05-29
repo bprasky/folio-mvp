@@ -82,3 +82,53 @@ export async function DELETE(
   }
 }
 
+/**
+ * PATCH /api/projects/[id]/images/[imageId]
+ * Update mutable fields on an image. Currently supports `room` (the room label
+ * used to group photos in the New Project Wizard's "Label Rooms" step).
+ */
+export async function PATCH(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string; imageId: string }> }
+) {
+  try {
+    const session = await getServerSession(authOptions);
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const { id: projectId, imageId } = await params;
+
+    try {
+      await assertProjectWrite(session.user.id, projectId);
+    } catch {
+      return NextResponse.json({ error: 'Project not found' }, { status: 404 });
+    }
+
+    const body = await request.json();
+    const { room } = body as { room?: string | null };
+
+    if (room === undefined) {
+      return NextResponse.json({ error: 'Nothing to update' }, { status: 400 });
+    }
+
+    const image = await prisma.projectImage.findFirst({
+      where: { id: imageId, projectId },
+      select: { id: true },
+    });
+    if (!image) {
+      return NextResponse.json({ error: 'Image not found' }, { status: 404 });
+    }
+
+    const updated = await prisma.projectImage.update({
+      where: { id: imageId },
+      data: { room: room?.trim() || null },
+    });
+
+    return NextResponse.json({ success: true, image: updated });
+  } catch (error: any) {
+    console.error('[PATCH image] Failed to update image:', error);
+    return NextResponse.json({ error: 'Failed to update image' }, { status: 500 });
+  }
+}
+

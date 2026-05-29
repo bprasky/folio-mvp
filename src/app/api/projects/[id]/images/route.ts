@@ -26,10 +26,29 @@ export async function POST(
 
     const body = await request.json();
     let { url, name, room } = body;
+    const { imageData, mimeType } = body;
+
+    // Path B (manual upload): no url, but raw base64 image data. Store it to
+    // Supabase first, then proceed as if a url had been supplied.
+    if (!url && imageData) {
+      try {
+        const buffer = Buffer.from(imageData, 'base64');
+        const { publicUrl } = await saveBufferToProjectStorage({
+          projectId,
+          roomId: room || 'default',
+          buffer,
+          mime: mimeType || 'image/jpeg',
+        });
+        url = publicUrl;
+      } catch (uploadError: any) {
+        console.error('[POST /api/projects/[id]/images] base64 upload failed:', uploadError?.message);
+        return NextResponse.json({ error: 'Failed to store uploaded image' }, { status: 500 });
+      }
+    }
 
     if (!url) {
       return NextResponse.json(
-        { error: 'Image URL is required' },
+        { error: 'Image URL or image data is required' },
         { status: 400 }
       );
     }

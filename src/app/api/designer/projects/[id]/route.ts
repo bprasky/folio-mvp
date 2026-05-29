@@ -79,11 +79,12 @@ export async function PATCH(
     await assertProjectWrite(session.user.id, params.id);
 
     const body = await request.json();
-    const { isPublic, status } = body;
+    const { isPublic, status, description } = body;
 
     const updateData: any = {};
     if (typeof isPublic === 'boolean') updateData.isPublic = isPublic;
     if (status) updateData.status = status;
+    if (typeof description === 'string') updateData.description = description.trim() || null;
 
     const project = await prisma.project.update({
       where: { id: params.id },
