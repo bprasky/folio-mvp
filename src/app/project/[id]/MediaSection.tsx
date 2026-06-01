@@ -11,6 +11,8 @@ import { PdfSpecImportModal } from '@/components/import/PdfSpecImportModal';
 import { InterviewModal } from '@/components/posting/interview/InterviewModal';
 import { ProjectImageTagger } from '@/components/project/ProjectImageTagger';
 import PublishSpine from './PublishSpine';
+import MaterialsStep from './MaterialsStep';
+import TagReviewPanel from './TagReviewPanel';
 import { publishProjectAction } from '@/app/actions/projects';
 import type { EditorialState } from '@/lib/editorial/getEditorialState';
 import type { CtaAction, PublishReadiness } from '@/lib/publish/computePublishReadiness';
@@ -33,6 +35,7 @@ interface ProjectImage {
   room?: string | null;
   roomId?: string | null;
   inclusion?: 'INCLUDED' | 'EXCLUDED';
+  tagState?: 'UNREVIEWED' | 'REVIEWED';
   aiSpaces?: string[];
   tags: ProductTag[];
 }
@@ -59,6 +62,8 @@ export default function MediaSection({ project, isOwner, images, projectPost, pu
   const [showUploadModal, setShowUploadModal] = useState(false);
   const [showInterviewModal, setShowInterviewModal] = useState(false);
   const [showTagger, setShowTagger] = useState(false);
+  const [showMaterials, setShowMaterials] = useState(false);
+  const [showTagReview, setShowTagReview] = useState(false);
   const [isPublishing, setIsPublishing] = useState(false);
   const [selectedHeroImageId, setSelectedHeroImageId] = useState<string | null>(null);
   const [existingPost, setExistingPost] = useState<any>(null);
@@ -212,9 +217,10 @@ export default function MediaSection({ project, isOwner, images, projectPost, pu
             ?.scrollIntoView({ behavior: 'smooth', block: 'start' });
           break;
         case 'openMaterials':
+          setShowMaterials(true);
+          break;
         case 'openTagReview':
-          // Phase 3d replaces this with the Materials step / tag review panel.
-          setShowTagger(true);
+          setShowTagReview(true);
           break;
         case 'startInterview':
           setShowInterviewModal(true);
@@ -529,7 +535,27 @@ export default function MediaSection({ project, isOwner, images, projectPost, pu
         onDraftGenerated={handleDraftGenerated}
       />
 
-      {/* Manual product tagger — opened by the spine's Tags CTA (interim until 3d). */}
+      {/* Materials step — in-brand replacement for the blue modal (spec 20 §3d). */}
+      <MaterialsStep
+        open={showMaterials}
+        onClose={() => setShowMaterials(false)}
+        onUploadFinishSchedule={handleImportPdfSpecs}
+        onTagByHand={() => setShowTagger(true)}
+      />
+
+      {/* Tag review — drives every included photo to REVIEWED. */}
+      <TagReviewPanel
+        open={showTagReview}
+        onClose={() => setShowTagReview(false)}
+        images={images}
+        onTagPhoto={() => {
+          setShowTagReview(false);
+          setShowTagger(true);
+        }}
+        onChanged={() => router.refresh()}
+      />
+
+      {/* Manual product tagger — opened from Materials / tag review. */}
       {showTagger && (
         <ProjectImageTagger
           projectId={project.id}

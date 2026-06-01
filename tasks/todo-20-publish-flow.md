@@ -17,10 +17,12 @@ Branch: `claude/beautiful-euler-Naoo1`. One commit per phase. Phase 0 signed off
 - [x] readiness: roomId authoritative once column exists; page passes inclusion/roomId/tagState
 - [x] Wire `rooms` gate to roomId
 
-## Phase 3d — Materials step + tag review
-- [ ] `MaterialsStep` (3 cards) replaces blue FinishScheduleOptionsModal
-- [ ] `TagReviewPanel` wraps VerificationQueue; markReviewed / markNoProducts
-- [ ] Wire `tags` gate to tagState
+## Phase 3d — Materials step + tag review  ✅ committed
+- [x] `MaterialsStep` (3 cards, warm canvas, gold outline) replaces blue FinishScheduleOptionsModal
+- [x] `TagReviewPanel` per-photo review → markImageReviewed (Confirm / No products in this photo)
+- [x] Deleted FinishScheduleOptionsModal.tsx + orphaned GuidedPublishFlow.tsx
+- [x] Wire `tags` gate to tagState (markImageReviewed action)
+- note: AI Confirm/Correct/Dismiss queue stays in the existing import flow (finish-schedule card routes there); TagReviewPanel is the per-photo sign-off
 
 ## Phase 3e — Publish gate + CTA finalize + Boards fork
 - [ ] `publishProjectAction` backstop: refuse unless rooms+tags complete

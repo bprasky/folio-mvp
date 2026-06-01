@@ -86,6 +86,24 @@ export async function includeImage(raw: unknown) {
   return { ok: true };
 }
 
+/**
+ * Mark a photo as tag-reviewed (spec 20 §3d). Set after the designer confirms
+ * the photo's product tags or declares "no products in this photo". Both paths
+ * — spec import and manual tagging — land here.
+ */
+export async function markImageReviewed(raw: unknown) {
+  const { imageId } = ImageInput.parse(raw);
+  const image = await authorizeImage(imageId);
+
+  await prisma.projectImage.update({
+    where: { id: imageId },
+    data: { tagState: 'REVIEWED' },
+  });
+
+  revalidatePath(`/project/${image.projectId}`);
+  return { ok: true };
+}
+
 const CreateRoomInput = z.object({
   projectId: z.string().uuid(),
   name: z.string().trim().min(1).max(120),
