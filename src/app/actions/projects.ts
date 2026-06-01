@@ -8,6 +8,7 @@ import { prisma } from '@/lib/prisma';
 import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
 import { notifyIncompleteProductVendors } from '@/lib/notifications/notifyIncompleteProductVendors';
+import { computePublishReadiness, isDocumentImage } from '@/lib/publish/computePublishReadiness';
 
 // Type definitions for project-related data
 interface ProjectWithImages {
@@ -315,6 +316,31 @@ export async function publishProjectAction(raw: unknown) {
     await assertProjectPublish(userId, projectId);
   } catch {
     throw new Error('Not authorized to publish this project');
+  }
+
+  // Publish gate backstop (spec 20 §3e). The spine never surfaces "Publish"
+  // while blocked, but the server enforces rooms + tags completeness as the
+  // source of truth. Idempotent re-publish of an already-public project is
+  // still allowed (the gate only guards the first transition to public).
+  if (!project.isPublic) {
+    const readiness = computePublishReadiness({
+      photos: project.images
+        .filter(img => !isDocumentImage(img.name))
+        .map(img => ({
+          id: img.id,
+          inclusion: img.inclusion,
+          roomId: img.roomId,
+          room: img.room,
+          tagState: img.tagState,
+          tagCount: img.tags.length,
+        })),
+      roomCount: 0, // unused for canPublish
+      storyComplete: true, // story is optional for publish
+    });
+
+    if (!readiness.canPublish) {
+      throw new Error('Sort rooms and confirm tags before publishing.');
+    }
   }
 
   // Idempotent publish - only set publishedAt if not already set

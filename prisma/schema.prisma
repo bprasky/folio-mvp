@@ -511,6 +511,17 @@ model Project {
   @@map("projects")
 }
 
+// Publish flow (spec 20 §4): per-photo inclusion + tag-review state.
+enum ImageInclusion {
+  INCLUDED
+  EXCLUDED
+}
+
+enum ImageTagState {
+  UNREVIEWED // not yet looked at for products
+  REVIEWED // has product tags, or designer marked "no products to tag"
+}
+
 model ProjectImage {
   id           String       @id @default(uuid())
   url          String
@@ -522,6 +533,14 @@ model ProjectImage {
   projectId    String
   tags         ProductTag[]
   project      Project      @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  // --- Publish flow (spec 20 §4) — ADD-only, idempotent ---
+  // inclusion / tagState back-fill to defaults; roomId is the structured
+  // room assignment (backfilled from the legacy free-text `room` field).
+  inclusion    ImageInclusion @default(INCLUDED)
+  tagState     ImageTagState  @default(UNREVIEWED)
+  roomId       String?
+  assignedRoom Room?          @relation("RoomProjectImages", fields: [roomId], references: [id], onDelete: SetNull)
 
   // Search indexing fields
   searchVector String? // Full-text search vector
@@ -801,6 +820,9 @@ model Room {
   // --- Phase 5H1 Bucket A inverse relations ---
   actionItems     ActionItem[]
   noteAttachments NoteAttachment[]
+
+  // --- Publish flow (spec 20 §4) — structured photo→room assignment ---
+  projectImages ProjectImage[] @relation("RoomProjectImages")
 
   @@map("rooms")
 }

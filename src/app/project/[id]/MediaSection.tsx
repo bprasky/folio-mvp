@@ -2,14 +2,20 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
-import Image from 'next/image';
-import { FaUpload, FaImages, FaImage, FaTag, FaCheckCircle, FaCloudUploadAlt, FaFileImport, FaTrash } from 'react-icons/fa';
+import { FaUpload, FaCheckCircle, FaCloudUploadAlt, FaFileImport } from 'react-icons/fa';
 import { Camera, FileSpreadsheet, Presentation } from 'lucide-react';
+import RoomGroupedMedia from './RoomGroupedMedia';
 import ProjectCreationModal from '@/components/ProjectCreationModal';
 import { PresentationImportModal } from '@/components/import/PresentationImportModal';
 import { PdfSpecImportModal } from '@/components/import/PdfSpecImportModal';
-import GuidedPublishFlow from './GuidedPublishFlow';
+import { InterviewModal } from '@/components/posting/interview/InterviewModal';
+import { ProjectImageTagger } from '@/components/project/ProjectImageTagger';
+import PublishSpine from './PublishSpine';
+import MaterialsStep from './MaterialsStep';
+import TagReviewPanel from './TagReviewPanel';
+import { publishProjectAction } from '@/app/actions/projects';
 import type { EditorialState } from '@/lib/editorial/getEditorialState';
+import type { CtaAction, PublishReadiness } from '@/lib/publish/computePublishReadiness';
 
 interface ProductTag {
   id: string;
@@ -26,7 +32,11 @@ interface ProjectImage {
   id: string;
   url: string;
   name?: string;
-  room?: string;
+  room?: string | null;
+  roomId?: string | null;
+  inclusion?: 'INCLUDED' | 'EXCLUDED';
+  tagState?: 'UNREVIEWED' | 'REVIEWED';
+  aiSpaces?: string[];
   tags: ProductTag[];
 }
 
@@ -44,11 +54,17 @@ interface MediaSectionProps {
   projectPost?: any;
   isPublished?: boolean;
   editorialState?: EditorialState;
+  publishReadiness: PublishReadiness;
 }
 
-export default function MediaSection({ project, isOwner, images, projectPost, isPublished, editorialState }: MediaSectionProps) {
+export default function MediaSection({ project, isOwner, images, projectPost, publishReadiness }: MediaSectionProps) {
   const router = useRouter();
   const [showUploadModal, setShowUploadModal] = useState(false);
+  const [showInterviewModal, setShowInterviewModal] = useState(false);
+  const [showTagger, setShowTagger] = useState(false);
+  const [showMaterials, setShowMaterials] = useState(false);
+  const [showTagReview, setShowTagReview] = useState(false);
+  const [isPublishing, setIsPublishing] = useState(false);
   const [selectedHeroImageId, setSelectedHeroImageId] = useState<string | null>(null);
   const [existingPost, setExistingPost] = useState<any>(null);
 
@@ -175,6 +191,52 @@ export default function MediaSection({ project, isOwner, images, projectPost, is
     input.click();
   }, []);
 
+  // --- Publish spine (spec 20) — single CTA dispatch ---------------------
+  const handlePublish = useCallback(async () => {
+    setIsPublishing(true);
+    try {
+      await publishProjectAction({ projectId: project.id });
+      router.refresh();
+    } catch (err) {
+      console.error('[MediaSection] publish failed:', err);
+      alert(err instanceof Error ? err.message : 'Failed to publish project');
+    } finally {
+      setIsPublishing(false);
+    }
+  }, [project.id, router]);
+
+  const handleSpineAction = useCallback(
+    (action: CtaAction) => {
+      switch (action) {
+        case 'openUploader':
+          setShowUploadModal(true);
+          break;
+        case 'scrollToUncategorized':
+          document
+            .getElementById('uploaded-media-section')
+            ?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          break;
+        case 'openMaterials':
+          setShowMaterials(true);
+          break;
+        case 'openTagReview':
+          setShowTagReview(true);
+          break;
+        case 'startInterview':
+          setShowInterviewModal(true);
+          break;
+        case 'publish':
+          handlePublish();
+          break;
+      }
+    },
+    [handlePublish],
+  );
+
+  const handleDraftGenerated = useCallback(() => {
+    router.push(`/project/${project.id}?view=publish`);
+  }, [router, project.id]);
+
   const handleSetCover = useCallback(async (imageId: string) => {
     setSelectedHeroImageId(imageId);
     try {
@@ -256,28 +318,20 @@ export default function MediaSection({ project, isOwner, images, projectPost, is
 
   return (
     <div className="space-y-6">
+      {/* Publish spine — the gated spine + single CTA (spec 20 §2, §5). */}
+      {isOwner && images.length > 0 && (
+        <PublishSpine
+          readiness={publishReadiness}
+          onAction={handleSpineAction}
+          onSkipStory={handlePublish}
+          isBusy={isPublishing}
+        />
+      )}
+
       {/* Intro */}
       <p className="folio-body text-folio-text-secondary">
         Upload your project materials. We'll extract products, rooms, and specifications automatically.
       </p>
-
-      {/* Publish prompt banner — shown when enough images exist but no interview yet */}
-      {images.length >= 3 && (!editorialState || editorialState === 'EMPTY' || editorialState === 'INTERVIEWED') && isOwner && (
-        <div className="flex items-center justify-between px-4 py-3 rounded-xl border border-[var(--accent)]/20 bg-[var(--accent)]/5">
-          <span className="folio-ui text-folio-text-primary">
-            {photoCount} photos uploaded &middot; Ready to publish
-          </span>
-          <button
-            onClick={() => {
-              const section = document.querySelector('[data-publish-flow]');
-              if (section) section.scrollIntoView({ behavior: 'smooth' });
-            }}
-            className="px-4 py-1.5 folio-ui font-semibold text-white bg-[var(--accent)] rounded-lg hover:bg-[var(--accent-hover)] transition-colors text-sm whitespace-nowrap"
-          >
-            Start Interview &rarr;
-          </button>
-        </div>
-      )}
 
       {/* Media Type Skeleton Cards */}
       {isOwner && (
@@ -343,6 +397,7 @@ export default function MediaSection({ project, isOwner, images, projectPost, is
 
       {/* Uploaded Media Section */}
       <section
+        id="uploaded-media-section"
         ref={images.length > 0 ? dropZoneRef : undefined}
         onDragEnter={images.length > 0 ? handleDragEnter : undefined}
         onDragLeave={images.length > 0 ? handleDragLeave : undefined}
@@ -454,88 +509,61 @@ export default function MediaSection({ project, isOwner, images, projectPost, is
                 </div>
               </div>
             )}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {images.map((image) => {
-              const isCover = selectedHeroImageId === image.id || existingPost?.heroAssetId === image.id;
-              const tagCount = image.tags.length;
-
-              return (
-                <div
-                  key={image.id}
-                  className={`relative group aspect-[4/3] bg-surface-canvas rounded-[20px] overflow-hidden border-2 ${
-                    isCover ? 'border-[var(--accent)]' : 'border-folio-border-subtle hover:border-[var(--accent)]'
-                  } transition-all`}
-                >
-                  {/* Designed empty state fallback — visible when image fails to load */}
-                  <div className="absolute inset-0 bg-stone-100 border border-stone-200 rounded-[20px] flex flex-col items-center justify-center">
-                    <FaImage className="w-8 h-8 text-stone-300 mb-2" />
-                    <span className="folio-meta text-stone-400">Image unavailable</span>
-                  </div>
-                  <Image
-                    src={image.url}
-                    alt={image.name || 'Project image'}
-                    fill
-                    className="object-cover relative z-[1]"
-                    sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                  />
-
-                  {/* Tag Count Badge */}
-                  {tagCount > 0 && (
-                    <div className="absolute top-2 right-2 bg-black/70 text-white px-2 py-1 rounded-full text-xs flex items-center gap-1">
-                      <FaTag className="w-3 h-3" />
-                      {tagCount}
-                    </div>
-                  )}
-
-                  {/* Cover Badge */}
-                  {isCover && (
-                    <div className="absolute top-2 left-2 bg-[var(--accent)] text-white px-2 py-1 rounded-full text-xs font-medium flex items-center gap-1">
-                      <FaCheckCircle className="w-3 h-3" />
-                      Cover
-                    </div>
-                  )}
-
-                  {/* Overlay Actions */}
-                  {isOwner && (
-                    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/50 transition-all flex items-center justify-center gap-2 opacity-0 group-hover:opacity-100">
-                      <button
-                        onClick={() => handleSetCover(image.id)}
-                        className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
-                          isCover
-                            ? 'bg-[var(--accent)] text-white'
-                            : 'bg-surface-canvas text-folio-text-primary hover:bg-surface-ground'
-                        }`}
-                      >
-                        {isCover ? 'Cover Selected' : 'Set as Cover'}
-                      </button>
-                      <button
-                        onClick={() => handleDeleteImage(image.id)}
-                        className="px-3 py-2 rounded-lg text-sm font-medium bg-[rgb(74,44,59)] text-white hover:bg-[rgb(74,44,59)]/80 transition-colors"
-                      >
-                        <FaTrash className="w-4 h-4" />
-                      </button>
-                    </div>
-                  )}
-                </div>
-              );
-            })}
-            </div>
+            <RoomGroupedMedia
+              projectId={project.id}
+              isOwner={isOwner}
+              images={images}
+              rooms={(project.rooms ?? []) as Array<{ id: string; name: string; type?: string | null }>}
+              selectedHeroImageId={selectedHeroImageId}
+              heroAssetId={existingPost?.heroAssetId ?? null}
+              onSetCover={handleSetCover}
+              onDelete={handleDeleteImage}
+              onChanged={() => router.refresh()}
+            />
           </div>
         )}
       </section>
 
-      {/* Guided Publish Flow — only for EMPTY (with images) and INTERVIEWED states.
-          GENERATED/UNPUBLISHED/PUBLISHED have the Publish tab visible instead. */}
-      {images.length > 0 && (!editorialState || editorialState === 'EMPTY' || editorialState === 'INTERVIEWED') && isOwner && (
-        <div data-publish-flow>
-          <GuidedPublishFlow
-            project={project}
-            imageCount={images.length}
-            images={images.map(img => ({ id: img.id, url: img.url, name: img.name }))}
-            projectPost={projectPost}
-            editorialState={editorialState}
-          />
-        </div>
+      {/* Interview — opened by the spine's Story CTA (spec 20 §5). */}
+      <InterviewModal
+        open={showInterviewModal}
+        onOpenChange={setShowInterviewModal}
+        projectId={project.id}
+        projectName={project.title}
+        images={images.map(img => ({ id: img.id, url: img.url, name: img.name }))}
+        post={projectPost}
+        onDraftGenerated={handleDraftGenerated}
+      />
+
+      {/* Materials step — in-brand replacement for the blue modal (spec 20 §3d). */}
+      <MaterialsStep
+        open={showMaterials}
+        onClose={() => setShowMaterials(false)}
+        onUploadFinishSchedule={handleImportPdfSpecs}
+        onTagByHand={() => setShowTagger(true)}
+      />
+
+      {/* Tag review — drives every included photo to REVIEWED. */}
+      <TagReviewPanel
+        open={showTagReview}
+        onClose={() => setShowTagReview(false)}
+        images={images}
+        onTagPhoto={() => {
+          setShowTagReview(false);
+          setShowTagger(true);
+        }}
+        onChanged={() => router.refresh()}
+      />
+
+      {/* Manual product tagger — opened from Materials / tag review. */}
+      {showTagger && (
+        <ProjectImageTagger
+          projectId={project.id}
+          onClose={() => {
+            setShowTagger(false);
+            router.refresh();
+          }}
+        />
       )}
 
       {/* Upload Modal */}
