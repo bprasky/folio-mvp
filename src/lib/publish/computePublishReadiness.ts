@@ -57,8 +57,13 @@ export interface ReadinessInput {
 
 const isIncluded = (img: ReadinessImage) => (img.inclusion ?? 'INCLUDED') === 'INCLUDED';
 
-const isAssignedToRoom = (img: ReadinessImage) =>
-  Boolean(img.roomId) || Boolean(img.room && img.room.trim().length > 0);
+const isAssignedToRoom = (img: ReadinessImage) => {
+  // roomId is authoritative once the column exists (it is `null` when
+  // unassigned, a value when assigned). Only fall back to the legacy free-text
+  // `room` field before the Phase 3c migration, when roomId is `undefined`.
+  if (img.roomId !== undefined) return Boolean(img.roomId);
+  return Boolean(img.room && img.room.trim().length > 0);
+};
 
 const isReviewed = (img: ReadinessImage) => {
   // Authoritative once the tagState column exists. Before then, fall back to

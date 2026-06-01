@@ -2,9 +2,9 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
-import Image from 'next/image';
-import { FaUpload, FaImages, FaImage, FaTag, FaCheckCircle, FaCloudUploadAlt, FaFileImport, FaTrash } from 'react-icons/fa';
+import { FaUpload, FaCheckCircle, FaCloudUploadAlt, FaFileImport } from 'react-icons/fa';
 import { Camera, FileSpreadsheet, Presentation } from 'lucide-react';
+import RoomGroupedMedia from './RoomGroupedMedia';
 import ProjectCreationModal from '@/components/ProjectCreationModal';
 import { PresentationImportModal } from '@/components/import/PresentationImportModal';
 import { PdfSpecImportModal } from '@/components/import/PdfSpecImportModal';
@@ -30,7 +30,10 @@ interface ProjectImage {
   id: string;
   url: string;
   name?: string;
-  room?: string;
+  room?: string | null;
+  roomId?: string | null;
+  inclusion?: 'INCLUDED' | 'EXCLUDED';
+  aiSpaces?: string[];
   tags: ProductTag[];
 }
 
@@ -500,72 +503,17 @@ export default function MediaSection({ project, isOwner, images, projectPost, pu
                 </div>
               </div>
             )}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {images.map((image) => {
-              const isCover = selectedHeroImageId === image.id || existingPost?.heroAssetId === image.id;
-              const tagCount = image.tags.length;
-
-              return (
-                <div
-                  key={image.id}
-                  className={`relative group aspect-[4/3] bg-surface-canvas rounded-[20px] overflow-hidden border-2 ${
-                    isCover ? 'border-[var(--accent)]' : 'border-folio-border-subtle hover:border-[var(--accent)]'
-                  } transition-all`}
-                >
-                  {/* Designed empty state fallback — visible when image fails to load */}
-                  <div className="absolute inset-0 bg-stone-100 border border-stone-200 rounded-[20px] flex flex-col items-center justify-center">
-                    <FaImage className="w-8 h-8 text-stone-300 mb-2" />
-                    <span className="folio-meta text-stone-400">Image unavailable</span>
-                  </div>
-                  <Image
-                    src={image.url}
-                    alt={image.name || 'Project image'}
-                    fill
-                    className="object-cover relative z-[1]"
-                    sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                  />
-
-                  {/* Tag Count Badge */}
-                  {tagCount > 0 && (
-                    <div className="absolute top-2 right-2 bg-black/70 text-white px-2 py-1 rounded-full text-xs flex items-center gap-1">
-                      <FaTag className="w-3 h-3" />
-                      {tagCount}
-                    </div>
-                  )}
-
-                  {/* Cover Badge */}
-                  {isCover && (
-                    <div className="absolute top-2 left-2 bg-[var(--accent)] text-white px-2 py-1 rounded-full text-xs font-medium flex items-center gap-1">
-                      <FaCheckCircle className="w-3 h-3" />
-                      Cover
-                    </div>
-                  )}
-
-                  {/* Overlay Actions */}
-                  {isOwner && (
-                    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/50 transition-all flex items-center justify-center gap-2 opacity-0 group-hover:opacity-100">
-                      <button
-                        onClick={() => handleSetCover(image.id)}
-                        className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
-                          isCover
-                            ? 'bg-[var(--accent)] text-white'
-                            : 'bg-surface-canvas text-folio-text-primary hover:bg-surface-ground'
-                        }`}
-                      >
-                        {isCover ? 'Cover Selected' : 'Set as Cover'}
-                      </button>
-                      <button
-                        onClick={() => handleDeleteImage(image.id)}
-                        className="px-3 py-2 rounded-lg text-sm font-medium bg-[rgb(74,44,59)] text-white hover:bg-[rgb(74,44,59)]/80 transition-colors"
-                      >
-                        <FaTrash className="w-4 h-4" />
-                      </button>
-                    </div>
-                  )}
-                </div>
-              );
-            })}
-            </div>
+            <RoomGroupedMedia
+              projectId={project.id}
+              isOwner={isOwner}
+              images={images}
+              rooms={(project.rooms ?? []) as Array<{ id: string; name: string; type?: string | null }>}
+              selectedHeroImageId={selectedHeroImageId}
+              heroAssetId={existingPost?.heroAssetId ?? null}
+              onSetCover={handleSetCover}
+              onDelete={handleDeleteImage}
+              onChanged={() => router.refresh()}
+            />
           </div>
         )}
       </section>

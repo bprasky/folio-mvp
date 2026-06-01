@@ -10,11 +10,12 @@ Branch: `claude/beautiful-euler-Naoo1`. One commit per phase. Phase 0 signed off
 - [x] Acceptance: true counts, one primary CTA = next gate, top button gone, no scroll-to-second-button
 - note: GuidedPublishFlow.tsx now orphaned; delete in 3d alongside FinishScheduleOptionsModal
 
-## Phase 3c — Rooms (migration + grouping + exclude)
-- [ ] Migration: ADD `inclusion`, `tagState` enums + cols, `roomId` FK on ProjectImage; backfill roomId from legacy `room` string
-- [ ] `RoomGroup`, `RoomHeader`, `UncategorizedGroup`, `UncategorizedResolver`, `AddRoomAffordance`, `ExcludedGroup`
-- [ ] Server actions: assignImageToRoom, excludeImage, includeImage, createRoom (participant-gated)
-- [ ] Wire `rooms` gate to roomId
+## Phase 3c — Rooms (migration + grouping + exclude)  ✅ committed
+- [x] Migration: ADD `inclusion`, `tagState` enums + cols, `roomId` FK on ProjectImage; backfill roomId from legacy `room` string (idempotent, passes phase5e CI)
+- [x] RoomGroupedMedia: RoomGroup/RoomHeader/UncategorizedGroup/UncategorizedResolver/AddRoomAffordance/ExcludedGroup (one file)
+- [x] Server actions: assignImageToRoom, excludeImage, includeImage, createRoom (assertProjectWrite-gated)
+- [x] readiness: roomId authoritative once column exists; page passes inclusion/roomId/tagState
+- [x] Wire `rooms` gate to roomId
 
 ## Phase 3d — Materials step + tag review
 - [ ] `MaterialsStep` (3 cards) replaces blue FinishScheduleOptionsModal

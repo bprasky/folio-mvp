@@ -190,9 +190,10 @@ export default async function ProjectPage({
       .filter(img => !isDocumentImage(img.name))
       .map(img => ({
         id: img.id,
-        // inclusion / tagState / roomId arrive with the Phase 3c migration;
-        // until then the selector falls back to defaults + legacy signals.
+        inclusion: img.inclusion,
+        roomId: img.roomId,
         room: img.room ?? null,
+        tagState: img.tagState,
         tagCount: img.tags.length,
       })),
     roomCount: base.rooms.length,
