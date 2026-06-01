@@ -8,8 +8,12 @@ import { Camera, FileSpreadsheet, Presentation } from 'lucide-react';
 import ProjectCreationModal from '@/components/ProjectCreationModal';
 import { PresentationImportModal } from '@/components/import/PresentationImportModal';
 import { PdfSpecImportModal } from '@/components/import/PdfSpecImportModal';
-import GuidedPublishFlow from './GuidedPublishFlow';
+import { InterviewModal } from '@/components/posting/interview/InterviewModal';
+import { ProjectImageTagger } from '@/components/project/ProjectImageTagger';
+import PublishSpine from './PublishSpine';
+import { publishProjectAction } from '@/app/actions/projects';
 import type { EditorialState } from '@/lib/editorial/getEditorialState';
+import type { CtaAction, PublishReadiness } from '@/lib/publish/computePublishReadiness';
 
 interface ProductTag {
   id: string;
@@ -44,11 +48,15 @@ interface MediaSectionProps {
   projectPost?: any;
   isPublished?: boolean;
   editorialState?: EditorialState;
+  publishReadiness: PublishReadiness;
 }
 
-export default function MediaSection({ project, isOwner, images, projectPost, isPublished, editorialState }: MediaSectionProps) {
+export default function MediaSection({ project, isOwner, images, projectPost, publishReadiness }: MediaSectionProps) {
   const router = useRouter();
   const [showUploadModal, setShowUploadModal] = useState(false);
+  const [showInterviewModal, setShowInterviewModal] = useState(false);
+  const [showTagger, setShowTagger] = useState(false);
+  const [isPublishing, setIsPublishing] = useState(false);
   const [selectedHeroImageId, setSelectedHeroImageId] = useState<string | null>(null);
   const [existingPost, setExistingPost] = useState<any>(null);
 
@@ -175,6 +183,51 @@ export default function MediaSection({ project, isOwner, images, projectPost, is
     input.click();
   }, []);
 
+  // --- Publish spine (spec 20) — single CTA dispatch ---------------------
+  const handlePublish = useCallback(async () => {
+    setIsPublishing(true);
+    try {
+      await publishProjectAction({ projectId: project.id });
+      router.refresh();
+    } catch (err) {
+      console.error('[MediaSection] publish failed:', err);
+      alert(err instanceof Error ? err.message : 'Failed to publish project');
+    } finally {
+      setIsPublishing(false);
+    }
+  }, [project.id, router]);
+
+  const handleSpineAction = useCallback(
+    (action: CtaAction) => {
+      switch (action) {
+        case 'openUploader':
+          setShowUploadModal(true);
+          break;
+        case 'scrollToUncategorized':
+          document
+            .getElementById('uploaded-media-section')
+            ?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          break;
+        case 'openMaterials':
+        case 'openTagReview':
+          // Phase 3d replaces this with the Materials step / tag review panel.
+          setShowTagger(true);
+          break;
+        case 'startInterview':
+          setShowInterviewModal(true);
+          break;
+        case 'publish':
+          handlePublish();
+          break;
+      }
+    },
+    [handlePublish],
+  );
+
+  const handleDraftGenerated = useCallback(() => {
+    router.push(`/project/${project.id}?view=publish`);
+  }, [router, project.id]);
+
   const handleSetCover = useCallback(async (imageId: string) => {
     setSelectedHeroImageId(imageId);
     try {
@@ -256,28 +309,20 @@ export default function MediaSection({ project, isOwner, images, projectPost, is
 
   return (
     <div className="space-y-6">
+      {/* Publish spine — the gated spine + single CTA (spec 20 §2, §5). */}
+      {isOwner && images.length > 0 && (
+        <PublishSpine
+          readiness={publishReadiness}
+          onAction={handleSpineAction}
+          onSkipStory={handlePublish}
+          isBusy={isPublishing}
+        />
+      )}
+
       {/* Intro */}
       <p className="folio-body text-folio-text-secondary">
         Upload your project materials. We'll extract products, rooms, and specifications automatically.
       </p>
-
-      {/* Publish prompt banner — shown when enough images exist but no interview yet */}
-      {images.length >= 3 && (!editorialState || editorialState === 'EMPTY' || editorialState === 'INTERVIEWED') && isOwner && (
-        <div className="flex items-center justify-between px-4 py-3 rounded-xl border border-[var(--accent)]/20 bg-[var(--accent)]/5">
-          <span className="folio-ui text-folio-text-primary">
-            {photoCount} photos uploaded &middot; Ready to publish
-          </span>
-          <button
-            onClick={() => {
-              const section = document.querySelector('[data-publish-flow]');
-              if (section) section.scrollIntoView({ behavior: 'smooth' });
-            }}
-            className="px-4 py-1.5 folio-ui font-semibold text-white bg-[var(--accent)] rounded-lg hover:bg-[var(--accent-hover)] transition-colors text-sm whitespace-nowrap"
-          >
-            Start Interview &rarr;
-          </button>
-        </div>
-      )}
 
       {/* Media Type Skeleton Cards */}
       {isOwner && (
@@ -343,6 +388,7 @@ export default function MediaSection({ project, isOwner, images, projectPost, is
 
       {/* Uploaded Media Section */}
       <section
+        id="uploaded-media-section"
         ref={images.length > 0 ? dropZoneRef : undefined}
         onDragEnter={images.length > 0 ? handleDragEnter : undefined}
         onDragLeave={images.length > 0 ? handleDragLeave : undefined}
@@ -524,18 +570,26 @@ export default function MediaSection({ project, isOwner, images, projectPost, is
         )}
       </section>
 
-      {/* Guided Publish Flow — only for EMPTY (with images) and INTERVIEWED states.
-          GENERATED/UNPUBLISHED/PUBLISHED have the Publish tab visible instead. */}
-      {images.length > 0 && (!editorialState || editorialState === 'EMPTY' || editorialState === 'INTERVIEWED') && isOwner && (
-        <div data-publish-flow>
-          <GuidedPublishFlow
-            project={project}
-            imageCount={images.length}
-            images={images.map(img => ({ id: img.id, url: img.url, name: img.name }))}
-            projectPost={projectPost}
-            editorialState={editorialState}
-          />
-        </div>
+      {/* Interview — opened by the spine's Story CTA (spec 20 §5). */}
+      <InterviewModal
+        open={showInterviewModal}
+        onOpenChange={setShowInterviewModal}
+        projectId={project.id}
+        projectName={project.title}
+        images={images.map(img => ({ id: img.id, url: img.url, name: img.name }))}
+        post={projectPost}
+        onDraftGenerated={handleDraftGenerated}
+      />
+
+      {/* Manual product tagger — opened by the spine's Tags CTA (interim until 3d). */}
+      {showTagger && (
+        <ProjectImageTagger
+          projectId={project.id}
+          onClose={() => {
+            setShowTagger(false);
+            router.refresh();
+          }}
+        />
       )}
 
       {/* Upload Modal */}

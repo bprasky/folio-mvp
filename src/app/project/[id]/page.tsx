@@ -18,6 +18,10 @@ import NewProjectWizard from './NewProjectWizard';
 import { canUsePortfolioScrape } from '@/lib/pricing/canUsePortfolioScrape';
 import ActionItemsPanel from './ActionItemsPanel';
 import { getEditorialState, type EditorialState } from '@/lib/editorial/getEditorialState';
+import {
+  computePublishReadiness,
+  isDocumentImage,
+} from '@/lib/publish/computePublishReadiness';
 
 type TabView = 'overview' | 'media' | 'boards' | 'drafts' | 'files' | 'publish' | 'story' | 'actions';
 
@@ -179,6 +183,22 @@ export default async function ProjectPage({
     })),
   };
 
+  // Publish readiness — single source of truth for the spine (spec 20 §6).
+  // Computed server-side from already-fetched data, hydrated to the client.
+  const publishReadiness = computePublishReadiness({
+    photos: base.images
+      .filter(img => !isDocumentImage(img.name))
+      .map(img => ({
+        id: img.id,
+        // inclusion / tagState / roomId arrive with the Phase 3c migration;
+        // until then the selector falls back to defaults + legacy signals.
+        room: img.room ?? null,
+        tagCount: img.tags.length,
+      })),
+    roomCount: base.rooms.length,
+    storyComplete: editorialState !== 'EMPTY',
+  });
+
   const hasMedia = base.images && base.images.length > 0;
   const hasRooms = base.rooms && base.rooms.length > 0;
   const isProjectEmpty = !hasMedia && !hasRooms;
@@ -272,6 +292,7 @@ export default async function ProjectPage({
               images={base.images}
               isPublished={isPublished}
               editorialState={editorialState}
+              publishReadiness={publishReadiness}
             />
           )}
 
