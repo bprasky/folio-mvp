@@ -151,7 +151,33 @@ export default async function ProjectPage({
     ['GENERATED', 'PUBLISHED', 'UNPUBLISHED'] as EditorialState[]
   ).includes(editorialState);
 
-  const defaultView: TabView = isPublished ? 'boards' : 'media';
+  // Publish readiness — single source of truth for the spine (spec 20 §6).
+  // Computed server-side from already-fetched data, hydrated to the client.
+  const publishReadiness = computePublishReadiness({
+    photos: base.images
+      .filter(img => !isDocumentImage(img.name))
+      .map(img => ({
+        id: img.id,
+        inclusion: img.inclusion,
+        roomId: img.roomId,
+        room: img.room ?? null,
+        tagState: img.tagState,
+        tagCount: img.tags.length,
+      })),
+    roomCount: base.rooms.length,
+    storyComplete: editorialState !== 'EMPTY',
+  });
+
+  // Boards timeline fork (spec 20 §8). Completed (PAST) projects lead with
+  // Media and lock Boards until products are tagged — empty rooms shouldn't
+  // make a finished upload feel broken. Concept/in-progress lead with Boards.
+  const isCompleted = base.timeline === 'PAST';
+  const isProspective = base.timeline === 'PRESENT' || base.timeline === 'FUTURE';
+  const boardsLocked = isCompleted && !publishReadiness.gates.tags.complete;
+
+  // Published → Boards. Concept/in-progress lead with Boards. Completed (and
+  // legacy null-timeline) lead with Media.
+  const defaultView: TabView = isPublished || isProspective ? 'boards' : 'media';
   let currentView: TabView = (searchParams.view as TabView) || defaultView;
 
   if (currentView === 'files') currentView = 'media';
@@ -159,6 +185,7 @@ export default async function ProjectPage({
 
   if (!isPublished && currentView === 'story') currentView = 'media';
   if (!hasDraftOrPublished && currentView === 'publish') currentView = 'media';
+  if (currentView === 'boards' && boardsLocked) currentView = 'media';
 
   const validViews: TabView[] = [
     'overview',
@@ -182,24 +209,6 @@ export default async function ProjectPage({
       })),
     })),
   };
-
-  // Publish readiness — single source of truth for the spine (spec 20 §6).
-  // Computed server-side from already-fetched data, hydrated to the client.
-  const publishReadiness = computePublishReadiness({
-    photos: base.images
-      .filter(img => !isDocumentImage(img.name))
-      .map(img => ({
-        id: img.id,
-        inclusion: img.inclusion,
-        roomId: img.roomId,
-        room: img.room ?? null,
-        tagState: img.tagState,
-        tagCount: img.tags.length,
-      })),
-    roomCount: base.rooms.length,
-    storyComplete: editorialState !== 'EMPTY',
-  });
-
   const hasMedia = base.images && base.images.length > 0;
   const hasRooms = base.rooms && base.rooms.length > 0;
   const isProjectEmpty = !hasMedia && !hasRooms;
@@ -269,6 +278,7 @@ export default async function ProjectPage({
           isPublished={isPublished}
           hasDraftOrPublished={hasDraftOrPublished}
           editorialState={editorialState}
+          boardsLocked={boardsLocked}
         />
       </div>
 

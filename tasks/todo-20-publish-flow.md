@@ -24,10 +24,10 @@ Branch: `claude/beautiful-euler-Naoo1`. One commit per phase. Phase 0 signed off
 - [x] Wire `tags` gate to tagState (markImageReviewed action)
 - note: AI Confirm/Correct/Dismiss queue stays in the existing import flow (finish-schedule card routes there); TagReviewPanel is the per-photo sign-off
 
-## Phase 3e — Publish gate + CTA finalize + Boards fork
-- [ ] `publishProjectAction` backstop: refuse unless rooms+tags complete
-- [ ] Spine secondary "Skip story for now" → Publish
-- [ ] Boards tab fork on `timeline` (PAST locked until tags complete)
+## Phase 3e — Publish gate + CTA finalize + Boards fork  ✅ committed
+- [x] `publishProjectAction` backstop: refuse first publish unless rooms+tags complete ("Sort rooms and confirm tags before publishing.")
+- [x] Spine secondary "Skip story for now" → handlePublish (wired in 3b)
+- [x] Boards tab fork on `timeline`: completed (PAST) leads with Media, Boards locked until tags complete with note; concept/in-progress lead with Boards; null-timeline → Media (no regression)
 
 ## Notes / decisions
 - Reuse `--surface-canvas`/`--surface-ground`/`--folio-gold (#B8845C)`; no new hexes.
