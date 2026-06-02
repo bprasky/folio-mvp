@@ -151,6 +151,34 @@ export async function markRoomNoProducts(raw: unknown) {
   return { ok: true, count: result.count };
 }
 
+const RenameRoomInput = z.object({
+  roomId: z.string().uuid(),
+  name: z.string().trim().min(1).max(120),
+});
+
+/**
+ * Rename a room (spec 20 follow-up). Room names are referenced in the
+ * published editorial, so the designer is nudged to make them specific.
+ */
+export async function renameRoom(raw: unknown) {
+  const { roomId, name } = RenameRoomInput.parse(raw);
+
+  const session = await getServerSession(authOptions);
+  if (!session?.user?.id) throw new Error('Unauthorized');
+
+  const room = await prisma.room.findUnique({
+    where: { id: roomId },
+    select: { projectId: true },
+  });
+  if (!room) throw new Error('Room not found');
+  await assertProjectWrite(session.user.id, room.projectId);
+
+  await prisma.room.update({ where: { id: roomId }, data: { name } });
+
+  revalidatePath(`/project/${room.projectId}`);
+  return { ok: true };
+}
+
 const CreateRoomInput = z.object({
   projectId: z.string().uuid(),
   name: z.string().trim().min(1).max(120),

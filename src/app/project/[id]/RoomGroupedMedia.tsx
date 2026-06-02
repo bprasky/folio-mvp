@@ -10,6 +10,7 @@ import {
   includeImage,
   createRoom,
   setImageNoProducts,
+  renameRoom,
 } from '@/app/actions/projectImages';
 import { isDocumentImage } from '@/lib/publish/computePublishReadiness';
 
@@ -147,12 +148,27 @@ export default function RoomGroupedMedia({
         </section>
       )}
 
+      {/* Room names appear in the published article — nudge to make them specific. */}
+      {roomBuckets.length > 0 && (
+        <p className="folio-meta text-folio-text-tertiary">
+          Room names appear in your published article. We sorted your photos and numbered any
+          repeats — rename rooms to be specific (e.g. “Primary Bath”, “Powder Room”).
+        </p>
+      )}
+
       {/* One group per room with photos */}
       {roomBuckets.map(({ room, photos: roomPhotos }) => {
         const tagged = roomPhotos.filter(img => img.tags.length > 0).length;
         return (
           <section key={room.id} className="space-y-4">
-            <RoomHeader name={room.name} photoCount={roomPhotos.length} taggedCount={tagged} />
+            <RoomHeader
+              roomId={room.id}
+              name={room.name}
+              photoCount={roomPhotos.length}
+              taggedCount={tagged}
+              isOwner={isOwner}
+              onRenamed={onChanged}
+            />
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {roomPhotos.map(img => (
                 <PhotoCard
@@ -228,17 +244,72 @@ export default function RoomGroupedMedia({
 }
 
 function RoomHeader({
+  roomId,
   name,
   photoCount,
   taggedCount,
+  isOwner,
+  onRenamed,
 }: {
+  roomId: string;
   name: string;
   photoCount: number;
   taggedCount: number;
+  isOwner: boolean;
+  onRenamed: () => void;
 }) {
+  const [editing, setEditing] = useState(false);
+  const [value, setValue] = useState(name);
+  const [busy, setBusy] = useState(false);
+
+  async function save() {
+    const next = value.trim();
+    if (!next || next === name) {
+      setEditing(false);
+      setValue(name);
+      return;
+    }
+    setBusy(true);
+    try {
+      await renameRoom({ roomId, name: next });
+      setEditing(false);
+      onRenamed();
+    } catch (err) {
+      console.error('[RoomHeader] rename failed:', err);
+      alert(err instanceof Error ? err.message : 'Failed to rename room');
+      setValue(name);
+    } finally {
+      setBusy(false);
+    }
+  }
+
   return (
     <div className="flex items-baseline justify-between gap-3 border-b border-folio-border-subtle pb-2">
-      <h3 className="font-headline italic text-2xl text-folio-text-primary">{name}</h3>
+      {editing ? (
+        <input
+          autoFocus
+          value={value}
+          disabled={busy}
+          onChange={e => setValue(e.target.value)}
+          onBlur={save}
+          onKeyDown={e => {
+            if (e.key === 'Enter') save();
+            if (e.key === 'Escape') { setEditing(false); setValue(name); }
+          }}
+          className="font-headline italic text-2xl text-folio-text-primary bg-transparent border-b border-[var(--accent)] focus:outline-none min-w-0 flex-1"
+        />
+      ) : (
+        <button
+          type="button"
+          onClick={() => isOwner && setEditing(true)}
+          title={isOwner ? 'Rename — appears in your article' : undefined}
+          className={`font-headline italic text-2xl text-folio-text-primary text-left ${
+            isOwner ? 'hover:text-[var(--accent)] transition-colors cursor-text' : 'cursor-default'
+          }`}
+        >
+          {name}
+        </button>
+      )}
       <span className="folio-meta text-folio-text-tertiary tabular-nums whitespace-nowrap">
         {photoCount} {photoCount === 1 ? 'photo' : 'photos'} · {taggedCount} tagged
       </span>

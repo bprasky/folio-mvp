@@ -49,6 +49,9 @@ export interface RoomAnalysis {
   styleIndicators: string[];     // "mid-century modern", "coastal", etc.
   dominantColors: string[];
   materials: string[];
+  // --- Room differentiation (spec 20 follow-up) ---
+  roomLabel?: string;            // specific, article-ready name e.g. "Primary Bathroom"
+  roomGroup?: string;            // stable key shared by photos of the SAME physical room
 }
 
 export interface ProductAttribution {
