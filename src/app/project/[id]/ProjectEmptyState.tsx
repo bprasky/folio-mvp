@@ -4,11 +4,12 @@ import { useState, useCallback, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { HiOutlineDotsHorizontal } from 'react-icons/hi';
-import { FaCloudUploadAlt, FaFileImport, FaDoorOpen, FaCalendarAlt, FaArrowLeft } from 'react-icons/fa';
+import { FaCloudUploadAlt, FaFileImport, FaDoorOpen, FaCalendarAlt, FaArrowLeft, FaGlobe } from 'react-icons/fa';
 import OverviewModal from './OverviewModal';
 import ProjectCreationModal from '@/components/ProjectCreationModal';
 import { PresentationImportModal } from '@/components/import/PresentationImportModal';
 import { PdfSpecImportModal } from '@/components/import/PdfSpecImportModal';
+import { WebsiteImportModal } from '@/components/import/WebsiteImportModal';
 
 interface Project {
   id: string;
@@ -30,14 +31,17 @@ interface Project {
 
 interface ProjectEmptyStateProps {
   project: Project;
+  /** Pro flag (canUsePortfolioScrape) — gates the URL import, same as the wizard. */
+  canScrape?: boolean;
 }
 
-export default function ProjectEmptyState({ project }: ProjectEmptyStateProps) {
+export default function ProjectEmptyState({ project, canScrape = false }: ProjectEmptyStateProps) {
   const router = useRouter();
   const [showOverviewModal, setShowOverviewModal] = useState(false);
   const [showUploadModal, setShowUploadModal] = useState(false);
   const [showPresentationImport, setShowPresentationImport] = useState(false);
   const [showPdfSpecImport, setShowPdfSpecImport] = useState(false);
+  const [showWebsiteImport, setShowWebsiteImport] = useState(false);
   const [pendingFiles, setPendingFiles] = useState<File[]>([]);
   const [rooms, setRooms] = useState<Array<{ id: string; name: string; type?: string | null }>>([]);
   const [isDragOver, setIsDragOver] = useState(false);
@@ -354,6 +358,16 @@ export default function ProjectEmptyState({ project }: ProjectEmptyStateProps) {
                     <FaCalendarAlt className="w-4 h-4" />
                     Import PDF Specs
                   </button>
+                  {canScrape && (
+                    <button
+                      onClick={() => setShowWebsiteImport(true)}
+                      className="ridge-btn px-5 py-2.5 flex items-center gap-2"
+                      title="Pull photos from a project or portfolio URL"
+                    >
+                      <FaGlobe className="w-4 h-4" />
+                      Import from URL
+                    </button>
+                  )}
                 </div>
               </div>
             </>
@@ -423,6 +437,17 @@ export default function ProjectEmptyState({ project }: ProjectEmptyStateProps) {
                   <FaCalendarAlt className="w-4 h-4" />
                   Import PDF Specs
                 </button>
+
+                {canScrape && (
+                  <button
+                    onClick={() => setShowWebsiteImport(true)}
+                    className="ridge-btn px-6 py-3 flex items-center gap-2"
+                    title="Pull photos from a project or portfolio URL"
+                  >
+                    <FaGlobe className="w-4 h-4" />
+                    Import from URL
+                  </button>
+                )}
               </div>
 
               {/* Add Room as tertiary option */}
@@ -494,6 +519,13 @@ export default function ProjectEmptyState({ project }: ProjectEmptyStateProps) {
         rooms={rooms}
         initialFile={pendingFiles.length > 0 ? pendingFiles[0] : undefined}
         onComplete={handlePdfSpecImportComplete}
+      />
+
+      <WebsiteImportModal
+        open={showWebsiteImport}
+        onOpenChange={setShowWebsiteImport}
+        projectId={project.id}
+        onComplete={() => router.refresh()}
       />
     </>
   );
