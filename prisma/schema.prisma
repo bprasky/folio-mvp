@@ -535,10 +535,15 @@ model ProjectImage {
   project      Project      @relation(fields: [projectId], references: [id], onDelete: Cascade)
 
   // --- Publish flow (spec 20 §4) — ADD-only, idempotent ---
-  // inclusion / tagState back-fill to defaults; roomId is the structured
-  // room assignment (backfilled from the legacy free-text `room` field).
+  // inclusion / roomId drive the photo/room gates. Review state is DERIVED as
+  // `tags.length > 0 || noProducts` (see computePublishReadiness) — a confirmed
+  // tag auto-satisfies it, dismissing the last tag auto-reverts it.
   inclusion    ImageInclusion @default(INCLUDED)
+  // Retained for migration/DB consistency; superseded by the derived review
+  // gate above and no longer read. Safe to drop in a future deliberate migration.
   tagState     ImageTagState  @default(UNREVIEWED)
+  // "This photo has no products to tag" — the only persisted review signal.
+  noProducts   Boolean        @default(false)
   roomId       String?
   assignedRoom Room?          @relation("RoomProjectImages", fields: [roomId], references: [id], onDelete: SetNull)
 

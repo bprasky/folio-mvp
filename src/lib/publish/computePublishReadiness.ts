@@ -5,9 +5,12 @@
  * project page RSC) and hydrated to the client spine as a plain object. The
  * client never recomputes; mutations call router.refresh() to re-derive.
  *
- * Phase-tolerant: reads `inclusion` / `tagState` / `roomId` when present on a
- * row, otherwise falls back to defaults + legacy signals so the spine shows
- * truthful counts before the Phase 3c migration lands.
+ * Migration ordering is a HARD requirement, not a nicety: the project page's
+ * Prisma query selects `roomId` / `inclusion` / `noProducts` unconditionally,
+ * so the read path THROWS against a database that has not had the spec-20
+ * migrations applied. There is no graceful pre-migration read path — deploy
+ * `migrate deploy` before serving this code. The `roomId === undefined`
+ * fallback below is defensive only (it never fires once the column exists).
  */
 
 export type Gate = 'photos' | 'rooms' | 'tags' | 'story' | 'publish';
@@ -41,7 +44,8 @@ export interface ReadinessImage {
   roomId?: string | null;
   /** Legacy free-text room field, used as a fallback before roomId backfill. */
   room?: string | null;
-  tagState?: 'UNREVIEWED' | 'REVIEWED' | null;
+  /** Designer marked "no products to tag" on this photo. */
+  noProducts?: boolean | null;
   /** Count of product tags on this image. */
   tagCount: number;
 }
@@ -66,10 +70,12 @@ const isAssignedToRoom = (img: ReadinessImage) => {
 };
 
 const isReviewed = (img: ReadinessImage) => {
-  // Authoritative once the tagState column exists. Before then, fall back to
-  // "has at least one tag" so the count is not misleadingly zero.
-  if (img.tagState) return img.tagState === 'REVIEWED';
-  return img.tagCount > 0;
+  // Derived, not stored. A confirmed tag auto-satisfies review; dismissing the
+  // last tag auto-reverts it. `noProducts` covers architectural/detail shots
+  // the designer has explicitly declared product-free. This makes it impossible
+  // for a photo to sit "reviewed" with zero attribution unless the designer
+  // said so on purpose.
+  return img.tagCount > 0 || img.noProducts === true;
 };
 
 export function computePublishReadiness(input: ReadinessInput): PublishReadiness {

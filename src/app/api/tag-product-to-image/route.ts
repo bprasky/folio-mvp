@@ -195,6 +195,13 @@ export async function POST(request: NextRequest) {
       }
     });
 
+    // A tagged photo cannot be "no products" — clearing keeps the derived
+    // review gate honest if this tag is later dismissed (spec 20 §3d).
+    await prisma.projectImage.update({
+      where: { id: imageId },
+      data: { noProducts: false },
+    });
+
     console.log('[ProductTag] Created:', { tagId: tag.id, projectId, imageId, productId });
 
     // Backfill: link an existing Selection to this tag (or create one)

@@ -86,22 +86,69 @@ export async function includeImage(raw: unknown) {
   return { ok: true };
 }
 
+const NoProductsInput = z.object({
+  imageId: z.string().uuid(),
+  value: z.boolean(),
+});
+
 /**
- * Mark a photo as tag-reviewed (spec 20 §3d). Set after the designer confirms
- * the photo's product tags or declares "no products in this photo". Both paths
- * — spec import and manual tagging — land here.
+ * Set / clear the "no products in this photo" flag (spec 20 §3d).
+ *
+ * Review state is derived (`tags.length > 0 || noProducts`), so this is the
+ * only persisted review signal. value=true marks a product-free shot reviewed;
+ * value=false reopens it for tagging. Reversible by design — a swept photo can
+ * always be brought back.
  */
-export async function markImageReviewed(raw: unknown) {
-  const { imageId } = ImageInput.parse(raw);
+export async function setImageNoProducts(raw: unknown) {
+  const { imageId, value } = NoProductsInput.parse(raw);
   const image = await authorizeImage(imageId);
 
   await prisma.projectImage.update({
     where: { id: imageId },
-    data: { tagState: 'REVIEWED' },
+    data: { noProducts: value },
   });
 
   revalidatePath(`/project/${image.projectId}`);
   return { ok: true };
+}
+
+const RoomNoProductsInput = z.object({
+  projectId: z.string().uuid(),
+  roomId: z.string().uuid(),
+});
+
+/**
+ * Per-room sweep: mark every remaining untagged, INCLUDED photo in a room as
+ * "no products" (spec 20 §3d, item 2). Only touches photos with zero tags, so
+ * it never overrides real attribution. Reversible per-photo via
+ * setImageNoProducts(false). Returns how many were swept.
+ */
+export async function markRoomNoProducts(raw: unknown) {
+  const { projectId, roomId } = RoomNoProductsInput.parse(raw);
+
+  const session = await getServerSession(authOptions);
+  if (!session?.user?.id) throw new Error('Unauthorized');
+  await assertProjectWrite(session.user.id, projectId);
+
+  const room = await prisma.room.findFirst({
+    where: { id: roomId, projectId },
+    select: { id: true },
+  });
+  if (!room) throw new Error('Room not found for this project');
+
+  const result = await prisma.projectImage.updateMany({
+    where: {
+      projectId,
+      roomId,
+      inclusion: 'INCLUDED',
+      noProducts: false,
+      tags: { none: {} },
+    },
+    data: { noProducts: true },
+  });
+
+  revalidatePath(`/project/${projectId}`);
+  return { ok: true, count: result.count };
 }
 
 const CreateRoomInput = z.object({

@@ -29,7 +29,15 @@ Branch: `claude/beautiful-euler-Naoo1`. One commit per phase. Phase 0 signed off
 - [x] Spine secondary "Skip story for now" → handlePublish (wired in 3b)
 - [x] Boards tab fork on `timeline`: completed (PAST) leads with Media, Boards locked until tags complete with note; concept/in-progress lead with Boards; null-timeline → Media (no regression)
 
+## Post-audit revision (derived tags gate)  ✅ committed
+- [x] (1) Derived review gate: ADD-only `noProducts` boolean; gate = `tagCount > 0 || noProducts`. Auto-flip + dismiss-revert fall out for free. `tagState` retired (kept for DB consistency, no longer read).
+- [x] (1) Clear `noProducts` on tag-create (manual + import-confirmed paths) so a swept-then-tagged photo can't keep a stale flag through a later dismiss.
+- [x] (2) Per-room "Mark remaining N as no products" sweep (markRoomNoProducts; only zero-tag INCLUDED photos). Durable reversal: "Reopen to tag" on the photo card clears the flag. Dropped "confirm all tagged" (redundant under auto-flip).
+- [x] (4) Corrected the misleading "phase-tolerant" comments: migrate-before-serve is a HARD ordering requirement; no graceful pre-migration read path.
+- [ ] (3) HELD — backstop predicate stays `!isPublic` (correctly re-gates republish-after-unpublish). No concrete blocked-republish case motivated the flag.
+
 ## Notes / decisions
 - Reuse `--surface-canvas`/`--surface-ground`/`--folio-gold (#B8845C)`; no new hexes.
 - story gate complete = editorialState !== 'EMPTY' (interview has happened).
 - Spine "Publish" = `publishProjectAction` (Posted Project public), distinct from editorial draft publish (Publish tab).
+- Review state is DERIVED (`tagCount > 0 || noProducts`), not stored. Only `noProducts` is persisted.

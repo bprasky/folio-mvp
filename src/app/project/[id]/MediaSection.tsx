@@ -35,7 +35,7 @@ interface ProjectImage {
   room?: string | null;
   roomId?: string | null;
   inclusion?: 'INCLUDED' | 'EXCLUDED';
-  tagState?: 'UNREVIEWED' | 'REVIEWED';
+  noProducts?: boolean;
   aiSpaces?: string[];
   tags: ProductTag[];
 }
@@ -547,7 +547,9 @@ export default function MediaSection({ project, isOwner, images, projectPost, pu
       <TagReviewPanel
         open={showTagReview}
         onClose={() => setShowTagReview(false)}
+        projectId={project.id}
         images={images}
+        rooms={(project.rooms ?? []) as Array<{ id: string; name: string }>}
         onTagPhoto={() => {
           setShowTagReview(false);
           setShowTagger(true);
