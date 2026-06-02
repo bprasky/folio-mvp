@@ -1,13 +1,14 @@
 'use client';
 
-import { useState, useMemo, useTransition } from 'react';
+import { useState, useMemo, useTransition, useRef, useEffect } from 'react';
 import Image from 'next/image';
 import { FaImage, FaTag, FaCheckCircle, FaTrash } from 'react-icons/fa';
-import { ChevronDown, ChevronRight, Plus, X, Undo2 } from 'lucide-react';
+import { ChevronDown, ChevronRight, Plus, X, Undo2, MoreVertical } from 'lucide-react';
 import {
   assignImageToRoom,
   excludeImage,
   includeImage,
+  unassignImage,
   createRoom,
   setImageNoProducts,
   renameRoom,
@@ -171,20 +172,31 @@ export default function RoomGroupedMedia({
             />
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {roomPhotos.map(img => (
-                <PhotoCard
-                  key={img.id}
-                  img={img}
-                  isOwner={isOwner}
-                  cover={isCover(img.id)}
-                  badge={img.noProducts && img.tags.length === 0 ? 'No products' : undefined}
-                  onClearNoProducts={
-                    img.noProducts
-                      ? () => run(() => setImageNoProducts({ imageId: img.id, value: false }))
-                      : undefined
-                  }
-                  onSetCover={onSetCover}
-                  onDelete={onDelete}
-                />
+                <div key={img.id} className="relative">
+                  <PhotoCard
+                    img={img}
+                    isOwner={isOwner}
+                    cover={isCover(img.id)}
+                    badge={img.noProducts && img.tags.length === 0 ? 'No products' : undefined}
+                    onClearNoProducts={
+                      img.noProducts
+                        ? () => run(() => setImageNoProducts({ imageId: img.id, value: false }))
+                        : undefined
+                    }
+                    onSetCover={onSetCover}
+                    onDelete={onDelete}
+                  />
+                  {isOwner && (
+                    <PhotoRoomMenu
+                      currentRoomId={room.id}
+                      rooms={rooms}
+                      disabled={isPending}
+                      onAssign={roomId => run(() => assignImageToRoom({ imageId: img.id, roomId }))}
+                      onUnassign={() => run(() => unassignImage({ imageId: img.id }))}
+                      onExclude={() => run(() => excludeImage({ imageId: img.id }))}
+                    />
+                  )}
+                </div>
               ))}
             </div>
           </section>
@@ -355,7 +367,7 @@ function PhotoCard({
       />
 
       {tagCount > 0 && (
-        <div className="absolute top-2 right-2 z-[2] bg-black/70 text-white px-2 py-1 rounded-full text-xs flex items-center gap-1">
+        <div className="absolute bottom-2 right-2 z-[2] bg-black/70 text-white px-2 py-1 rounded-full text-xs flex items-center gap-1">
           <FaTag className="w-3 h-3" />
           {tagCount}
         </div>
@@ -400,6 +412,83 @@ function PhotoCard({
               Reopen to tag
             </button>
           )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function PhotoRoomMenu({
+  currentRoomId,
+  rooms,
+  disabled,
+  onAssign,
+  onUnassign,
+  onExclude,
+}: {
+  currentRoomId: string;
+  rooms: RoomLite[];
+  disabled: boolean;
+  onAssign: (roomId: string) => void;
+  onUnassign: () => void;
+  onExclude: () => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    function onDown(e: MouseEvent) {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    }
+    document.addEventListener('mousedown', onDown);
+    return () => document.removeEventListener('mousedown', onDown);
+  }, [open]);
+
+  const others = rooms.filter(r => r.id !== currentRoomId);
+
+  return (
+    <div ref={ref} className="absolute top-2 right-2 z-[20]">
+      <button
+        onClick={() => setOpen(o => !o)}
+        disabled={disabled}
+        aria-label="Move photo"
+        className="inline-flex items-center justify-center w-7 h-7 rounded-full bg-black/55 text-white hover:bg-black/75 transition-colors disabled:opacity-50"
+      >
+        <MoreVertical className="w-4 h-4" />
+      </button>
+
+      {open && (
+        <div className="absolute right-0 mt-1 w-48 max-h-72 overflow-y-auto rounded-xl bg-surface-canvas border border-folio-border-subtle shadow-lg py-1">
+          {others.length > 0 && (
+            <>
+              <p className="px-3 py-1.5 folio-meta text-folio-text-tertiary uppercase tracking-wider">
+                Move to
+              </p>
+              {others.map(r => (
+                <button
+                  key={r.id}
+                  onClick={() => { onAssign(r.id); setOpen(false); }}
+                  className="w-full text-left px-3 py-2 folio-meta text-folio-text-primary hover:bg-surface-ground transition-colors truncate"
+                >
+                  {r.name}
+                </button>
+              ))}
+              <div className="my-1 border-t border-folio-border-subtle" />
+            </>
+          )}
+          <button
+            onClick={() => { onUnassign(); setOpen(false); }}
+            className="w-full text-left px-3 py-2 folio-meta text-folio-text-secondary hover:bg-surface-ground transition-colors"
+          >
+            Move to Uncategorized
+          </button>
+          <button
+            onClick={() => { onExclude(); setOpen(false); }}
+            className="w-full text-left px-3 py-2 folio-meta text-folio-text-secondary hover:bg-surface-ground transition-colors"
+          >
+            Leave out
+          </button>
         </div>
       )}
     </div>
