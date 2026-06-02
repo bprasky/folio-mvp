@@ -148,35 +148,70 @@ export async function POST(
       }
     }
 
-    // ── Phase 2: Room Creation ──
-    // Collect unique room types from all analyses
-    const roomTypeSet = new Set(results.map(r => r.analysis.roomType));
-    const roomMap = new Map<string, string>(); // roomType -> roomId
+    // ── Phase 2: Room Creation (differentiated, spec 20 follow-up) ──
+    // Group photos by PHYSICAL room (roomGroup), not just type, so two
+    // different bathrooms become two rooms. Use the AI's descriptive label
+    // as-is; number only when base names collide (Bathroom 1, Bathroom 2).
+    // Then auto-assign each photo to its room (designer renames/refines later).
+    const groupKeyFor = (a: { roomGroup?: string; roomLabel?: string; roomType: string }): string => {
+      if (a.roomGroup) return `grp:${a.roomGroup}`;
+      if (a.roomLabel) return `lbl:${a.roomLabel.toLowerCase().trim()}`;
+      return `typ:${a.roomType}`;
+    };
 
-    for (const roomType of roomTypeSet) {
-      const enumType = ROOM_TYPE_TO_ENUM[roomType] || 'OTHER';
-      const displayName = ROOM_TYPE_DISPLAY_NAMES[roomType] || 'Other';
+    interface GroupInfo { roomType: string; baseName: string; imageIds: string[]; }
+    const groups = new Map<string, GroupInfo>();
+    for (const r of results) {
+      const a = r.analysis;
+      const key = groupKeyFor(a);
+      const baseName =
+        (a.roomLabel && a.roomLabel.trim()) ||
+        ROOM_TYPE_DISPLAY_NAMES[a.roomType] ||
+        'Other';
+      const g = groups.get(key);
+      if (g) g.imageIds.push(r.imageId);
+      else groups.set(key, { roomType: a.roomType, baseName, imageIds: [r.imageId] });
+    }
 
-      // Check if room already exists for this project + type
+    // Number only base names shared by more than one distinct room.
+    const baseNameCounts = new Map<string, number>();
+    for (const g of Array.from(groups.values())) {
+      baseNameCounts.set(g.baseName, (baseNameCounts.get(g.baseName) || 0) + 1);
+    }
+    const baseNameSeq = new Map<string, number>();
+
+    const roomMap = new Map<string, string>(); // groupKey -> roomId
+    for (const [key, g] of Array.from(groups.entries())) {
+      const enumType = ROOM_TYPE_TO_ENUM[g.roomType] || 'OTHER';
+      let name = g.baseName;
+      if ((baseNameCounts.get(g.baseName) || 0) > 1) {
+        const n = (baseNameSeq.get(g.baseName) || 0) + 1;
+        baseNameSeq.set(g.baseName, n);
+        name = `${g.baseName} ${n}`;
+      }
+
+      // Reuse a same-named room if one already exists; otherwise create it.
       const existing = await prisma.room.findFirst({
-        where: { projectId, type: enumType },
+        where: { projectId, name },
         select: { id: true },
       });
+      const roomId =
+        existing?.id ??
+        (
+          await prisma.room.create({
+            data: { projectId, name, type: enumType },
+            select: { id: true },
+          })
+        ).id;
+      roomMap.set(key, roomId);
 
-      if (existing) {
-        roomMap.set(roomType, existing.id);
-      } else {
-        const newRoom = await prisma.room.create({
-          data: {
-            projectId,
-            name: displayName,
-            type: enumType,
-          },
-          select: { id: true },
-        });
-        roomMap.set(roomType, newRoom.id);
-        console.log(`[analyze-images] Created room "${displayName}" (${enumType}) -> ${newRoom.id.slice(0, 8)}`);
-      }
+      // Auto-sort: assign every photo in this group to the room. Reversible
+      // in the UI (reassign / leave out / rename).
+      await prisma.projectImage.updateMany({
+        where: { id: { in: g.imageIds }, projectId },
+        data: { roomId },
+      });
+      console.log(`[analyze-images] Room "${name}" (${enumType}) <- ${g.imageIds.length} photo(s)`);
     }
 
     // ── Phase 3 & 4: Selection + Product + Tag Creation ──
@@ -184,7 +219,7 @@ export async function POST(
     let tagsCreated = 0;
 
     for (const result of results) {
-      const roomId = roomMap.get(result.analysis.roomType);
+      const roomId = roomMap.get(groupKeyFor(result.analysis));
       if (!roomId) continue;
 
       for (const product of result.products) {
@@ -268,11 +303,6 @@ export async function POST(
           : null;
       })
     );
-
-    const newRoomsCreated = roomTypeSet.size - Array.from(roomMap.values()).filter(async (id) => {
-      // This is approximate — count is correct from roomMap creation logic
-      return true;
-    }).length;
 
     console.log(`[analyze-images] Done: analyzed=${results.length} skipped=${skipped} rooms=${roomMap.size} selections=${selectionsCreated} tags=${tagsCreated} errors=${errors.length}`);
 

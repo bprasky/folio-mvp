@@ -255,6 +255,10 @@ ${context?.projectStyle ? `Project style: ${context.projectStyle}` : ''}
 
 For EACH image, detect the room type and products. If an image is NOT an interior design photo (e.g. title slide, text-only, floor plan, mood board), set "skip": true.
 
+ROOM IDENTITY — read carefully:
+- "roomGroup": a short id (e.g. "g1", "g2") shared by every photo of the SAME physical room. Multiple angles/details of one room share one roomGroup. Two genuinely different rooms of the same type (e.g. a primary bathroom and a powder room) MUST get different roomGroup ids. Decide by fixtures, finishes, layout, scale, and window/view — not just room type.
+- "roomLabel": a specific, article-ready name for that room ("Primary Bathroom", "Powder Room", "Pool Bath", "Kitchen", "Front Exterior"). Photos in the same roomGroup MUST share the same roomLabel. Be specific when you can tell rooms apart; if you truly cannot, a plain type name is fine and we will number duplicates.
+
 Return ONLY a valid JSON object:
 {
   "images": [
@@ -262,6 +266,8 @@ Return ONLY a valid JSON object:
       "index": 1,
       "skip": false,
       "roomType": "living_room" | "bedroom" | "kitchen" | "bathroom" | "dining_room" | "office" | "entry" | "outdoor" | "hallway" | "laundry" | "closet" | "other",
+      "roomGroup": "g1",
+      "roomLabel": "Primary Bathroom",
       "products": [
         {
           "description": "detailed description (e.g., 'Navy velvet sofa with brass legs')",
@@ -309,6 +315,10 @@ Be conservative with confidence - only use "high" when clearly identifiable.`,
         styleIndicators: result.styleIndicators || [],
         dominantColors: result.dominantColors || [],
         materials: result.materials || [],
+        roomLabel: typeof result.roomLabel === 'string' && result.roomLabel.trim()
+          ? result.roomLabel.trim()
+          : undefined,
+        roomGroup: result.roomGroup != null ? String(result.roomGroup) : undefined,
       });
     }
   }
