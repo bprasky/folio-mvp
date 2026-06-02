@@ -331,7 +331,7 @@ export async function publishProjectAction(raw: unknown) {
           inclusion: img.inclusion,
           roomId: img.roomId,
           room: img.room,
-          tagState: img.tagState,
+          noProducts: img.noProducts,
           tagCount: img.tags.length,
         })),
       roomCount: 0, // unused for canPublish

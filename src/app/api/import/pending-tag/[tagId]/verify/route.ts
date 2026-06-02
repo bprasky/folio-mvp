@@ -143,6 +143,13 @@ export async function POST(
           y: pendingTag.y,
         },
       });
+
+      // A tagged photo cannot be "no products" — clearing keeps the derived
+      // review gate honest if this tag is later dismissed (spec 20 §3d).
+      await prisma.projectImage.update({
+        where: { id: pendingTag.projectImageId },
+        data: { noProducts: false },
+      });
     }
 
     // Update pending tag

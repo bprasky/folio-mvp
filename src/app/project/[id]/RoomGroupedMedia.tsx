@@ -9,6 +9,7 @@ import {
   excludeImage,
   includeImage,
   createRoom,
+  setImageNoProducts,
 } from '@/app/actions/projectImages';
 import { isDocumentImage } from '@/lib/publish/computePublishReadiness';
 
@@ -19,6 +20,7 @@ interface WorkspaceImage {
   room?: string | null;
   roomId?: string | null;
   inclusion?: 'INCLUDED' | 'EXCLUDED';
+  noProducts?: boolean;
   aiSpaces?: string[];
   tags: Array<{ id: string }>;
 }
@@ -158,6 +160,12 @@ export default function RoomGroupedMedia({
                   img={img}
                   isOwner={isOwner}
                   cover={isCover(img.id)}
+                  badge={img.noProducts && img.tags.length === 0 ? 'No products' : undefined}
+                  onClearNoProducts={
+                    img.noProducts
+                      ? () => run(() => setImageNoProducts({ imageId: img.id, value: false }))
+                      : undefined
+                  }
                   onSetCover={onSetCover}
                   onDelete={onDelete}
                 />
@@ -243,6 +251,7 @@ function PhotoCard({
   isOwner,
   cover,
   badge,
+  onClearNoProducts,
   onSetCover,
   onDelete,
 }: {
@@ -250,6 +259,8 @@ function PhotoCard({
   isOwner: boolean;
   cover: boolean;
   badge?: string;
+  /** When set, the card offers a reopen action that clears the no-products flag. */
+  onClearNoProducts?: () => void;
   onSetCover: (imageId: string) => void;
   onDelete: (imageId: string) => void;
 }) {
@@ -310,6 +321,14 @@ function PhotoCard({
           >
             <FaTrash className="w-4 h-4" />
           </button>
+          {onClearNoProducts && (
+            <button
+              onClick={onClearNoProducts}
+              className="px-3 py-2 rounded-lg text-sm font-medium bg-surface-canvas text-folio-text-primary hover:bg-surface-ground transition-colors"
+            >
+              Reopen to tag
+            </button>
+          )}
         </div>
       )}
     </div>

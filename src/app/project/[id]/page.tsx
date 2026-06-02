@@ -161,7 +161,7 @@ export default async function ProjectPage({
         inclusion: img.inclusion,
         roomId: img.roomId,
         room: img.room ?? null,
-        tagState: img.tagState,
+        noProducts: img.noProducts,
         tagCount: img.tags.length,
       })),
     roomCount: base.rooms.length,
