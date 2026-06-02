@@ -36,6 +36,9 @@ type ImageError = {
  *
  * Body (optional):
  *   imageIds?: string[]  — analyze only these images (default: all unanalyzed)
+ *   force?: boolean      — re-analyze already-analyzed images too (re-sort rooms).
+ *                          Product tags are never duplicated: photos that already
+ *                          have tags are skipped in the product/selection phase.
  */
 export async function POST(
   request: NextRequest,
@@ -54,6 +57,7 @@ export async function POST(
 
     const body = await request.json().catch(() => ({}));
     const requestedImageIds: string[] | undefined = body.imageIds;
+    const force: boolean = body.force === true;
 
     // Fetch project images
     const project = await prisma.project.findUnique({
@@ -77,12 +81,12 @@ export async function POST(
       return NextResponse.json({ error: 'Project not found' }, { status: 404 });
     }
 
-    // Filter to target images: specific IDs or all unanalyzed
+    // Filter to target images: specific IDs, all (force re-sort), or all unanalyzed
     let targetImages = project.images;
     if (requestedImageIds?.length) {
       targetImages = targetImages.filter(img => requestedImageIds.includes(img.id));
-    } else {
-      // Only analyze images that haven't been analyzed yet
+    } else if (!force) {
+      // Only analyze images that haven't been analyzed yet (unless forcing a re-sort)
       targetImages = targetImages.filter(img => !img.aiSpaces || img.aiSpaces.length === 0);
     }
 
@@ -218,7 +222,20 @@ export async function POST(
     let selectionsCreated = 0;
     let tagsCreated = 0;
 
+    // Never double-tag: skip product/selection creation for photos that already
+    // carry tags (e.g. a prior analysis, or a force re-sort). Room assignment
+    // above still re-runs for every photo.
+    const alreadyTaggedImageIds = new Set(
+      (
+        await prisma.productTag.findMany({
+          where: { imageId: { in: results.map(r => r.imageId) } },
+          select: { imageId: true },
+        })
+      ).map(t => t.imageId),
+    );
+
     for (const result of results) {
+      if (alreadyTaggedImageIds.has(result.imageId)) continue;
       const roomId = roomMap.get(groupKeyFor(result.analysis));
       if (!roomId) continue;
 
