@@ -86,6 +86,20 @@ export async function includeImage(raw: unknown) {
   return { ok: true };
 }
 
+/** Move an included photo back to Uncategorized (clears its room, keeps it in). */
+export async function unassignImage(raw: unknown) {
+  const { imageId } = ImageInput.parse(raw);
+  const image = await authorizeImage(imageId);
+
+  await prisma.projectImage.update({
+    where: { id: imageId },
+    data: { roomId: null },
+  });
+
+  revalidatePath(`/project/${image.projectId}`);
+  return { ok: true };
+}
+
 const NoProductsInput = z.object({
   imageId: z.string().uuid(),
   value: z.boolean(),
