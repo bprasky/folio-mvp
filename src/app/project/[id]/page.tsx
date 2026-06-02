@@ -214,15 +214,17 @@ export default async function ProjectPage({
   const isProjectEmpty = !hasMedia && !hasRooms;
 
   if (isProjectEmpty) {
+    // URL/portfolio import is a Pro feature; it's available on any project,
+    // not just completed ones (spec follow-up). Compute once.
+    const canScrape = viewerId ? await canUsePortfolioScrape(viewerId) : false;
     // Completed ("PAST") projects get the guided New Project Wizard in every context.
     // Checked before the org/individual split so individual designers get it too.
     if (sanitizedProject.timeline === 'PAST') {
-      const canScrape = viewerId ? await canUsePortfolioScrape(viewerId) : false;
       return <NewProjectWizard project={sanitizedProject} canScrape={canScrape} />;
     }
     const isOrganizationContext = !!operatingAsOrgId;
     if (isOrganizationContext) {
-      return <ProjectEmptyState project={sanitizedProject} />;
+      return <ProjectEmptyState project={sanitizedProject} canScrape={canScrape} />;
     } else {
       return <ProjectEmptyStateDiscovery project={sanitizedProject} />;
     }
