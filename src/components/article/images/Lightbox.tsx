@@ -6,6 +6,7 @@ export default function Lightbox({
   images,
   openIndex,
   onClose,
+  dim = true,
 }: {
   images: {
     url: string;
@@ -15,6 +16,8 @@ export default function Lightbox({
   }[];
   openIndex: number;
   onClose: () => void;
+  /** Dim/frost the page behind the photo. Set false to just pop the photo out. */
+  dim?: boolean;
 }) {
   const [idx, setIdx] = useState(openIndex);
 
@@ -35,7 +38,9 @@ export default function Lightbox({
 
   return (
     <div
-      className="fixed inset-0 z-[80] glass-backdrop flex items-center justify-center p-4"
+      className={`fixed inset-0 z-[80] flex items-center justify-center p-4 ${
+        dim ? "glass-backdrop" : ""
+      }`}
       onClick={onClose}
     >
       <div
@@ -46,7 +51,9 @@ export default function Lightbox({
         <img
           src={im.url}
           alt={im.alt || ""}
-          className="w-full max-h-[80vh] object-contain rounded-xl"
+          className={`w-full max-h-[80vh] object-contain rounded-xl ${
+            dim ? "" : "shadow-2xl ring-1 ring-black/10"
+          }`}
         />
         <button
           onClick={onClose}
