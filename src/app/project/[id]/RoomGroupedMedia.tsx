@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo, useTransition } from 'react';
+import { useState, useMemo, useTransition, useEffect } from 'react';
 import Image from 'next/image';
 import { FaImage, FaTag, FaCheckCircle, FaTrash } from 'react-icons/fa';
 import { ChevronDown, ChevronRight, Plus, X, Undo2, DoorOpen, Ban } from 'lucide-react';
@@ -12,6 +12,8 @@ import {
   useSensors,
   useDraggable,
   useDroppable,
+  MeasuringStrategy,
+  pointerWithin,
   type DragEndEvent,
   type DragStartEvent,
 } from '@dnd-kit/core';
@@ -152,7 +154,15 @@ export default function RoomGroupedMedia({
   }
 
   return (
-    <DndContext sensors={sensors} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
+    <DndContext
+      sensors={sensors}
+      collisionDetection={pointerWithin}
+      onDragStart={handleDragStart}
+      onDragEnd={handleDragEnd}
+      onDragCancel={() => setActiveImage(null)}
+      autoScroll={false}
+      measuring={{ droppable: { strategy: MeasuringStrategy.Always } }}
+    >
       <div className="space-y-8">
         {/* Uncategorized — pinned top, only when non-empty */}
         {uncategorized.length > 0 && (
@@ -292,9 +302,11 @@ export default function RoomGroupedMedia({
         )}
       </div>
 
-      {/* Room dock — rises while dragging, every room is a drop target */}
+      {/* Sorting overlay — covers the page while dragging (no page scroll),
+          every room is a big drop target laid out at once. */}
       {activeImage && (
-        <RoomDock
+        <SortOverlay
+          image={activeImage}
           rooms={rooms}
           roomCounts={roomCounts}
           currentRoomId={activeImage.roomId ?? null}
@@ -302,13 +314,13 @@ export default function RoomGroupedMedia({
       )}
 
       {/* Floating preview of the dragged photo */}
-      <DragOverlay dropAnimation={null}>
+      <DragOverlay dropAnimation={null} zIndex={60}>
         {activeImage ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img
             src={activeImage.url}
             alt=""
-            className="w-36 h-28 object-cover rounded-xl shadow-2xl ring-2 ring-[var(--accent)] rotate-2"
+            className="w-40 h-32 object-cover rounded-xl shadow-2xl ring-2 ring-[var(--accent)] rotate-2"
           />
         ) : null}
       </DragOverlay>
@@ -349,43 +361,70 @@ function DraggablePhoto({
   );
 }
 
-function RoomDock({
+function SortOverlay({
+  image,
   rooms,
   roomCounts,
   currentRoomId,
 }: {
+  image: WorkspaceImage;
   rooms: RoomLite[];
   roomCounts: Map<string, number>;
   currentRoomId: string | null;
 }) {
+  // Lock page scroll while sorting so the cursor stays glued to the photo.
+  useEffect(() => {
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = prev;
+    };
+  }, []);
+
   return (
-    <div className="fixed inset-x-0 bottom-0 z-40 glass-sticky border-t border-folio-border-subtle">
-      <div className="max-w-[1280px] mx-auto px-6 py-3">
-        <div className="flex items-center gap-3 overflow-x-auto pb-1">
-          <span className="folio-meta text-folio-text-tertiary uppercase tracking-wider whitespace-nowrap shrink-0">
-            Drop into
-          </span>
-          {rooms.map(r => (
-            <DropTile
-              key={r.id}
-              id={`room:${r.id}`}
-              label={r.name}
-              sub={`${roomCounts.get(r.id) ?? 0}`}
-              muted={r.id === currentRoomId}
-            />
-          ))}
-          <DropTile id="new-room" label="New room" icon={<Plus className="w-4 h-4" />} accent />
-          {currentRoomId && (
-            <DropTile id="uncategorized" label="Uncategorized" icon={<DoorOpen className="w-4 h-4" />} />
-          )}
-          <DropTile id="exclude" label="Leave out" icon={<Ban className="w-4 h-4" />} />
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-6">
+      <div className="absolute inset-0 glass-backdrop" />
+
+      <div className="relative warm-mesh rounded-3xl bg-surface-ground border border-folio-border-subtle shadow-2xl w-full max-w-3xl max-h-[88vh] overflow-hidden flex flex-col">
+        <div className="relative z-[1] flex items-center gap-4 px-7 pt-6 pb-4 shrink-0">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={image.url}
+            alt=""
+            className="w-20 h-16 object-cover rounded-lg ring-2 ring-[var(--accent)] shrink-0"
+          />
+          <div>
+            <h3 className="font-headline italic text-2xl text-folio-text-primary">Drop into a room</h3>
+            <p className="folio-meta text-folio-text-secondary mt-0.5">
+              Drag the photo onto a room. Release to move it.
+            </p>
+          </div>
+        </div>
+
+        <div className="relative z-[1] px-7 pb-7 overflow-y-auto">
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+            {rooms.map(r => (
+              <OverlayTile
+                key={r.id}
+                id={`room:${r.id}`}
+                label={r.name}
+                sub={`${roomCounts.get(r.id) ?? 0} photos`}
+                muted={r.id === currentRoomId}
+              />
+            ))}
+            <OverlayTile id="new-room" label="New room" sub="name it next" icon={<Plus className="w-5 h-5" />} accent />
+            {currentRoomId && (
+              <OverlayTile id="uncategorized" label="Uncategorized" icon={<DoorOpen className="w-5 h-5" />} />
+            )}
+            <OverlayTile id="exclude" label="Leave out" icon={<Ban className="w-5 h-5" />} />
+          </div>
         </div>
       </div>
     </div>
   );
 }
 
-function DropTile({
+function OverlayTile({
   id,
   label,
   sub,
@@ -404,20 +443,18 @@ function DropTile({
   return (
     <div
       ref={setNodeRef}
-      className={`shrink-0 min-w-[120px] rounded-xl border px-3 py-2 transition-all ${
+      className={`flex flex-col items-center justify-center text-center gap-1 rounded-2xl border-2 px-3 py-6 min-h-[96px] transition-all ${
         isOver
-          ? 'border-[var(--accent)] bg-[var(--accent)]/10 scale-105'
+          ? 'border-[var(--accent)] bg-[var(--accent)]/15 scale-[1.03]'
           : accent
             ? 'border-dashed border-[var(--accent)]/50 bg-[var(--accent)]/5'
-            : `border-dashed ${muted ? 'border-folio-border-subtle/60 opacity-60' : 'border-folio-border-subtle'}`
+            : `border-dashed ${muted ? 'border-folio-border-subtle/60 opacity-60' : 'border-folio-border-subtle bg-surface-canvas'}`
       }`}
     >
-      <div className="flex items-center gap-1.5">
-        {icon && <span className="text-folio-text-secondary">{icon}</span>}
-        <span className="folio-meta font-medium text-folio-text-primary truncate">{label}</span>
-      </div>
+      {icon && <span className="text-folio-text-secondary">{icon}</span>}
+      <span className="folio-ui font-medium text-folio-text-primary leading-tight">{label}</span>
       {sub !== undefined && (
-        <span className="folio-meta text-folio-text-tertiary tabular-nums">{sub} photos</span>
+        <span className="folio-meta text-folio-text-tertiary tabular-nums">{sub}</span>
       )}
     </div>
   );
