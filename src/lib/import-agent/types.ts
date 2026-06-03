@@ -52,6 +52,9 @@ export interface RoomAnalysis {
   // --- Room differentiation (spec 20 follow-up) ---
   roomLabel?: string;            // specific, article-ready name e.g. "Primary Bathroom"
   roomGroup?: string;            // stable key shared by photos of the SAME physical room
+  // How sure the model is about the room call. Below the sort threshold we
+  // leave the photo unassigned rather than guess — a bad miss erodes trust.
+  roomConfidence?: ConfidenceLevel;
 }
 
 export interface ProductAttribution {

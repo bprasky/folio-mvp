@@ -79,6 +79,7 @@ ${context?.projectStyle ? `Project style: ${context.projectStyle}` : ''}
 Return ONLY a valid JSON object with this structure:
 {
   "roomType": "living_room" | "bedroom" | "kitchen" | "bathroom" | "dining_room" | "office" | "entry" | "outdoor" | "hallway" | "laundry" | "closet" | "other",
+  "roomConfidence": "high" | "medium" | "low",
   "products": [
     {
       "description": "detailed description for search (e.g., 'Navy velvet sofa with brass legs')",
@@ -93,6 +94,7 @@ Return ONLY a valid JSON object with this structure:
   "materials": ["material1", "material2"]
 }
 
+"roomConfidence" reflects how sure you are about the room type — use "low" for cropped detail shots or ambiguous spaces.
 Focus on major furniture pieces, lighting fixtures, rugs, art, and notable design elements.
 Position coordinates should be normalized (0-1) representing the center of where a tag should appear.
 Maximum ${IMPORT_AGENT_CONFIG.maxProductsPerImage} products per image.
@@ -114,6 +116,7 @@ Be conservative with confidence - only use "high" when the product is clearly id
         styleIndicators: parsed.styleIndicators || [],
         dominantColors: parsed.dominantColors || [],
         materials: parsed.materials || [],
+        roomConfidence: validateConfidence(parsed.roomConfidence),
       };
     }
 
@@ -258,6 +261,7 @@ For EACH image, detect the room type and products. If an image is NOT an interio
 ROOM IDENTITY — read carefully:
 - "roomGroup": a short id (e.g. "g1", "g2") shared by every photo of the SAME physical room. Multiple angles/details of one room share one roomGroup. Two genuinely different rooms of the same type (e.g. a primary bathroom and a powder room) MUST get different roomGroup ids. Decide by fixtures, finishes, layout, scale, and window/view — not just room type.
 - "roomLabel": a specific, article-ready name for that room ("Primary Bathroom", "Powder Room", "Pool Bath", "Kitchen", "Front Exterior"). Photos in the same roomGroup MUST share the same roomLabel. Be specific when you can tell rooms apart; if you truly cannot, a plain type name is fine and we will number duplicates.
+- "roomConfidence": how sure you are about the room call ("high" | "medium" | "low"). Use "high" only when the room type is unmistakable. Use "low" for cropped detail shots, ambiguous spaces, or anything you're guessing — those photos will be left for the designer to sort by hand instead of auto-filed.
 
 Return ONLY a valid JSON object:
 {
@@ -268,6 +272,7 @@ Return ONLY a valid JSON object:
       "roomType": "living_room" | "bedroom" | "kitchen" | "bathroom" | "dining_room" | "office" | "entry" | "outdoor" | "hallway" | "laundry" | "closet" | "other",
       "roomGroup": "g1",
       "roomLabel": "Primary Bathroom",
+      "roomConfidence": "high" | "medium" | "low",
       "products": [
         {
           "description": "detailed description (e.g., 'Navy velvet sofa with brass legs')",
@@ -319,6 +324,7 @@ Be conservative with confidence - only use "high" when clearly identifiable.`,
           ? result.roomLabel.trim()
           : undefined,
         roomGroup: result.roomGroup != null ? String(result.roomGroup) : undefined,
+        roomConfidence: validateConfidence(result.roomConfidence),
       });
     }
   }
@@ -336,6 +342,17 @@ function validateRoomType(value: unknown): RoomType {
     return value as RoomType;
   }
   return 'other';
+}
+
+// Default to 'low' when the model omits or garbles the field, so an unstated
+// confidence falls below the sort threshold and the photo waits for the
+// designer rather than being filed on a guess.
+function validateConfidence(value: unknown): ConfidenceLevel {
+  const valid: ConfidenceLevel[] = ['high', 'medium', 'low'];
+  if (typeof value === 'string' && valid.includes(value as ConfidenceLevel)) {
+    return value as ConfidenceLevel;
+  }
+  return 'low';
 }
 
 function validateProduct(product: unknown): DetectedProduct | null {
