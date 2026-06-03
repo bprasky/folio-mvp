@@ -3,7 +3,8 @@
 import { useState, useMemo, useTransition, useEffect } from 'react';
 import Image from 'next/image';
 import { FaImage, FaTag, FaCheckCircle, FaTrash } from 'react-icons/fa';
-import { ChevronDown, ChevronRight, Plus, X, Undo2, DoorOpen, Ban } from 'lucide-react';
+import { ChevronDown, ChevronRight, Plus, X, Undo2, DoorOpen, Ban, Maximize2 } from 'lucide-react';
+import Lightbox from '@/components/article/images/Lightbox';
 import {
   DndContext,
   DragOverlay,
@@ -94,6 +95,7 @@ export default function RoomGroupedMedia({
   const [excludedOpen, setExcludedOpen] = useState(false);
   const [activeImage, setActiveImage] = useState<WorkspaceImage | null>(null);
   const [namingForImageId, setNamingForImageId] = useState<string | null>(null);
+  const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
@@ -129,6 +131,18 @@ export default function RoomGroupedMedia({
     });
 
   const isCover = (id: string) => selectedHeroImageId === id || heroAssetId === id;
+
+  // Flat list in display order, for the full-photo lightbox + its prev/next.
+  const orderedPhotos = [
+    ...uncategorized,
+    ...roomBuckets.flatMap(b => b.photos),
+    ...excluded,
+  ];
+  const lightboxImages = orderedPhotos.map(p => ({ url: p.url, alt: p.name ?? '' }));
+  const openExpand = (id: string) => {
+    const i = orderedPhotos.findIndex(p => p.id === id);
+    if (i >= 0) setLightboxIndex(i);
+  };
 
   function handleDragStart(event: DragStartEvent) {
     const img = active.find(i => i.id === event.active.id) ?? null;
@@ -192,6 +206,7 @@ export default function RoomGroupedMedia({
                       badge="Not in a room yet"
                       onSetCover={onSetCover}
                       onDelete={onDelete}
+                      onExpand={() => openExpand(img.id)}
                     />
                   </DraggablePhoto>
                   {isOwner && (
@@ -248,6 +263,7 @@ export default function RoomGroupedMedia({
                       }
                       onSetCover={onSetCover}
                       onDelete={onDelete}
+                      onExpand={() => openExpand(img.id)}
                     />
                   </DraggablePhoto>
                 ))}
@@ -332,6 +348,15 @@ export default function RoomGroupedMedia({
           imageId={namingForImageId}
           onClose={() => setNamingForImageId(null)}
           onDone={onChanged}
+        />
+      )}
+
+      {/* Full (uncropped) photo viewer — thumbnails crop to a uniform grid */}
+      {lightboxIndex !== null && (
+        <Lightbox
+          images={lightboxImages}
+          openIndex={lightboxIndex}
+          onClose={() => setLightboxIndex(null)}
         />
       )}
     </DndContext>
@@ -609,6 +634,7 @@ function PhotoCard({
   onClearNoProducts,
   onSetCover,
   onDelete,
+  onExpand,
 }: {
   img: WorkspaceImage;
   isOwner: boolean;
@@ -618,10 +644,14 @@ function PhotoCard({
   onClearNoProducts?: () => void;
   onSetCover: (imageId: string) => void;
   onDelete: (imageId: string) => void;
+  /** Open the full (uncropped) photo in the lightbox. */
+  onExpand?: () => void;
 }) {
   const tagCount = img.tags.length;
   return (
     <div
+      onClick={() => onExpand?.()}
+      title={onExpand ? 'View full photo' : undefined}
       className={`relative group aspect-[4/3] bg-surface-canvas rounded-[20px] overflow-hidden border-2 ${
         cover ? 'border-[var(--accent)]' : 'border-folio-border-subtle hover:border-[var(--accent)]'
       } transition-all`}
@@ -638,6 +668,17 @@ function PhotoCard({
         sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
         draggable={false}
       />
+
+      {/* Expand to full photo (thumbnails are cropped to a uniform grid) */}
+      {onExpand && (
+        <button
+          onClick={e => { e.stopPropagation(); onExpand(); }}
+          aria-label="View full photo"
+          className="absolute top-2 right-2 z-[3] inline-flex items-center justify-center w-7 h-7 rounded-full bg-black/55 text-white hover:bg-black/75 transition-colors opacity-0 group-hover:opacity-100"
+        >
+          <Maximize2 className="w-3.5 h-3.5" />
+        </button>
+      )}
 
       {tagCount > 0 && (
         <div className="absolute bottom-2 right-2 z-[2] bg-black/70 text-white px-2 py-1 rounded-full text-xs flex items-center gap-1">
@@ -662,7 +703,7 @@ function PhotoCard({
       {isOwner && (
         <div className="absolute inset-0 z-[2] bg-black/0 group-hover:bg-black/50 transition-all flex items-center justify-center gap-2 opacity-0 group-hover:opacity-100">
           <button
-            onClick={() => onSetCover(img.id)}
+            onClick={e => { e.stopPropagation(); onSetCover(img.id); }}
             className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
               cover
                 ? 'bg-[var(--accent)] text-white'
@@ -672,14 +713,14 @@ function PhotoCard({
             {cover ? 'Cover Selected' : 'Set as Cover'}
           </button>
           <button
-            onClick={() => onDelete(img.id)}
+            onClick={e => { e.stopPropagation(); onDelete(img.id); }}
             className="px-3 py-2 rounded-lg text-sm font-medium bg-[rgb(74,44,59)] text-white hover:bg-[rgb(74,44,59)]/80 transition-colors"
           >
             <FaTrash className="w-4 h-4" />
           </button>
           {onClearNoProducts && (
             <button
-              onClick={onClearNoProducts}
+              onClick={e => { e.stopPropagation(); onClearNoProducts(); }}
               className="px-3 py-2 rounded-lg text-sm font-medium bg-surface-canvas text-folio-text-primary hover:bg-surface-ground transition-colors"
             >
               Reopen to tag
