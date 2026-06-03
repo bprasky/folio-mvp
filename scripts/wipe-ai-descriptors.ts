@@ -13,13 +13,14 @@
  *
  * Dry-run by default — prints what it WOULD delete. Pass --apply to execute.
  *
- * Usage:
+ * Loads .env automatically (DATABASE_URL). Usage:
  *   npx tsx scripts/wipe-ai-descriptors.ts                       # dry-run, La Gorce
  *   npx tsx scripts/wipe-ai-descriptors.ts --apply               # execute, La Gorce
  *   npx tsx scripts/wipe-ai-descriptors.ts --title="My Project"  # different title
  *   npx tsx scripts/wipe-ai-descriptors.ts --project=<id> --apply
  */
 
+import "dotenv/config";
 import { PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();
