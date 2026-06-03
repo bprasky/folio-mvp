@@ -1,9 +1,20 @@
 'use client';
 
-import { useState, useMemo, useTransition, useRef, useEffect } from 'react';
+import { useState, useMemo, useTransition } from 'react';
 import Image from 'next/image';
 import { FaImage, FaTag, FaCheckCircle, FaTrash } from 'react-icons/fa';
-import { ChevronDown, ChevronRight, Plus, X, Undo2, MoreVertical } from 'lucide-react';
+import { ChevronDown, ChevronRight, Plus, X, Undo2, DoorOpen, Ban } from 'lucide-react';
+import {
+  DndContext,
+  DragOverlay,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  useDraggable,
+  useDroppable,
+  type DragEndEvent,
+  type DragStartEvent,
+} from '@dnd-kit/core';
 import {
   assignImageToRoom,
   excludeImage,
@@ -59,10 +70,12 @@ function suggestRoomId(img: WorkspaceImage, rooms: RoomLite[]): string {
 
 /**
  * Room-grouped media workspace (spec 20 §3c). Photos render grouped by room.
- * Uncategorized is pinned to the top; Excluded collapses to the bottom. Every
- * photo lives in exactly one of: a room, Uncategorized, or Excluded.
+ * Uncategorized is pinned to the top; Excluded collapses to the bottom.
  *
- * Photos are sacred — cards are bare, no glass/mesh/overlay over the image.
+ * Re-sorting is drag-and-drop: grab any photo and a room dock rises from the
+ * bottom with every room as a drop target (plus New room and Leave out), so
+ * you never have to scroll to the destination. Photos stay bare — no
+ * glass/mesh/overlay over the image.
  */
 export default function RoomGroupedMedia({
   projectId,
@@ -77,6 +90,12 @@ export default function RoomGroupedMedia({
 }: RoomGroupedMediaProps) {
   const [isPending, startTransition] = useTransition();
   const [excludedOpen, setExcludedOpen] = useState(false);
+  const [activeImage, setActiveImage] = useState<WorkspaceImage | null>(null);
+  const [namingForImageId, setNamingForImageId] = useState<string | null>(null);
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
+  );
 
   // Only photos are sorted into rooms; source documents are not portfolio shots.
   const photos = useMemo(() => images.filter(img => !isDocumentImage(img.name)), [images]);
@@ -88,6 +107,13 @@ export default function RoomGroupedMedia({
   const roomBuckets = rooms
     .map(room => ({ room, photos: active.filter(img => img.roomId === room.id) }))
     .filter(bucket => bucket.photos.length > 0);
+
+  // Counts for every room (including empty ones) so the dock can offer them all.
+  const roomCounts = useMemo(() => {
+    const m = new Map<string, number>();
+    for (const r of rooms) m.set(r.id, active.filter(img => img.roomId === r.id).length);
+    return m;
+  }, [rooms, active]);
 
   const run = (fn: () => Promise<unknown>) =>
     startTransition(async () => {
@@ -102,155 +128,364 @@ export default function RoomGroupedMedia({
 
   const isCover = (id: string) => selectedHeroImageId === id || heroAssetId === id;
 
+  function handleDragStart(event: DragStartEvent) {
+    const img = active.find(i => i.id === event.active.id) ?? null;
+    setActiveImage(img);
+  }
+
+  function handleDragEnd(event: DragEndEvent) {
+    const imageId = String(event.active.id);
+    const overId = event.over ? String(event.over.id) : null;
+    setActiveImage(null);
+    if (!overId) return;
+
+    if (overId === 'new-room') {
+      setNamingForImageId(imageId);
+    } else if (overId === 'exclude') {
+      run(() => excludeImage({ imageId }));
+    } else if (overId === 'uncategorized') {
+      run(() => unassignImage({ imageId }));
+    } else if (overId.startsWith('room:')) {
+      const roomId = overId.slice('room:'.length);
+      run(() => assignImageToRoom({ imageId, roomId }));
+    }
+  }
+
   return (
-    <div className="space-y-8">
-      {/* Uncategorized — pinned top, only when non-empty */}
-      {uncategorized.length > 0 && (
-        <section id="uncategorized-group" className="space-y-4">
-          <div className="glass-surface warm-mesh rounded-2xl px-5 py-4">
-            <div className="relative z-[1]">
-              <h3 className="font-headline italic text-2xl text-folio-text-primary">
-                Sort your photos
-              </h3>
-              <p className="folio-meta text-folio-text-secondary mt-1">
-                Every photo joins a room or steps out of this project. Nothing stays unsorted.
-                <span className="ml-1 text-folio-text-tertiary">
-                  ({uncategorized.length} left)
-                </span>
-              </p>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {uncategorized.map(img => (
-              <div key={img.id} className="space-y-2">
-                <PhotoCard
-                  img={img}
-                  isOwner={isOwner}
-                  cover={isCover(img.id)}
-                  badge="Not in a room yet"
-                  onSetCover={onSetCover}
-                  onDelete={onDelete}
-                />
-                {isOwner && (
-                  <UncategorizedResolver
-                    img={img}
-                    rooms={rooms}
-                    projectId={projectId}
-                    disabled={isPending}
-                    onAssign={(roomId) => run(() => assignImageToRoom({ imageId: img.id, roomId }))}
-                    onExclude={() => run(() => excludeImage({ imageId: img.id }))}
-                    onChanged={onChanged}
-                  />
-                )}
+    <DndContext sensors={sensors} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
+      <div className="space-y-8">
+        {/* Uncategorized — pinned top, only when non-empty */}
+        {uncategorized.length > 0 && (
+          <section id="uncategorized-group" className="space-y-4">
+            <div className="glass-surface warm-mesh rounded-2xl px-5 py-4">
+              <div className="relative z-[1]">
+                <h3 className="font-headline italic text-2xl text-folio-text-primary">
+                  Sort your photos
+                </h3>
+                <p className="folio-meta text-folio-text-secondary mt-1">
+                  Drag a photo onto a room, or use the menu below each one.
+                  <span className="ml-1 text-folio-text-tertiary">
+                    ({uncategorized.length} left)
+                  </span>
+                </p>
               </div>
-            ))}
-          </div>
-        </section>
-      )}
+            </div>
 
-      {/* Room names appear in the published article — nudge to make them specific. */}
-      {roomBuckets.length > 0 && (
-        <p className="folio-meta text-folio-text-tertiary">
-          Room names appear in your published article. We sorted your photos and numbered any
-          repeats — rename rooms to be specific (e.g. “Primary Bath”, “Powder Room”).
-        </p>
-      )}
-
-      {/* One group per room with photos */}
-      {roomBuckets.map(({ room, photos: roomPhotos }) => {
-        const tagged = roomPhotos.filter(img => img.tags.length > 0).length;
-        return (
-          <section key={room.id} className="space-y-4">
-            <RoomHeader
-              roomId={room.id}
-              name={room.name}
-              photoCount={roomPhotos.length}
-              taggedCount={tagged}
-              isOwner={isOwner}
-              onRenamed={onChanged}
-            />
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {roomPhotos.map(img => (
-                <div key={img.id} className="relative">
-                  <PhotoCard
-                    img={img}
-                    isOwner={isOwner}
-                    cover={isCover(img.id)}
-                    badge={img.noProducts && img.tags.length === 0 ? 'No products' : undefined}
-                    onClearNoProducts={
-                      img.noProducts
-                        ? () => run(() => setImageNoProducts({ imageId: img.id, value: false }))
-                        : undefined
-                    }
-                    onSetCover={onSetCover}
-                    onDelete={onDelete}
-                  />
+              {uncategorized.map(img => (
+                <div key={img.id} className="space-y-2">
+                  <DraggablePhoto id={img.id} disabled={!isOwner}>
+                    <PhotoCard
+                      img={img}
+                      isOwner={isOwner}
+                      cover={isCover(img.id)}
+                      badge="Not in a room yet"
+                      onSetCover={onSetCover}
+                      onDelete={onDelete}
+                    />
+                  </DraggablePhoto>
                   {isOwner && (
-                    <PhotoRoomMenu
-                      currentRoomId={room.id}
+                    <UncategorizedResolver
+                      img={img}
                       rooms={rooms}
+                      projectId={projectId}
                       disabled={isPending}
-                      onAssign={roomId => run(() => assignImageToRoom({ imageId: img.id, roomId }))}
-                      onUnassign={() => run(() => unassignImage({ imageId: img.id }))}
+                      onAssign={(roomId) => run(() => assignImageToRoom({ imageId: img.id, roomId }))}
                       onExclude={() => run(() => excludeImage({ imageId: img.id }))}
+                      onChanged={onChanged}
                     />
                   )}
                 </div>
               ))}
             </div>
           </section>
-        );
-      })}
+        )}
 
-      {/* Add room inline */}
-      {isOwner && (
-        <AddRoomAffordance
-          projectId={projectId}
-          disabled={isPending}
-          onCreated={onChanged}
+        {/* Room names appear in the published article — nudge to make them specific. */}
+        {roomBuckets.length > 0 && (
+          <p className="folio-meta text-folio-text-tertiary">
+            Room names appear in your published article. We sorted your photos and numbered any
+            repeats — rename rooms to be specific (e.g. “Primary Bath”, “Powder Room”). Drag any
+            photo to move it.
+          </p>
+        )}
+
+        {/* One group per room with photos */}
+        {roomBuckets.map(({ room, photos: roomPhotos }) => {
+          const tagged = roomPhotos.filter(img => img.tags.length > 0).length;
+          return (
+            <section key={room.id} className="space-y-4">
+              <RoomHeader
+                roomId={room.id}
+                name={room.name}
+                photoCount={roomPhotos.length}
+                taggedCount={tagged}
+                isOwner={isOwner}
+                onRenamed={onChanged}
+              />
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {roomPhotos.map(img => (
+                  <DraggablePhoto key={img.id} id={img.id} disabled={!isOwner}>
+                    <PhotoCard
+                      img={img}
+                      isOwner={isOwner}
+                      cover={isCover(img.id)}
+                      badge={img.noProducts && img.tags.length === 0 ? 'No products' : undefined}
+                      onClearNoProducts={
+                        img.noProducts
+                          ? () => run(() => setImageNoProducts({ imageId: img.id, value: false }))
+                          : undefined
+                      }
+                      onSetCover={onSetCover}
+                      onDelete={onDelete}
+                    />
+                  </DraggablePhoto>
+                ))}
+              </div>
+            </section>
+          );
+        })}
+
+        {/* Add room inline */}
+        {isOwner && (
+          <AddRoomAffordance projectId={projectId} disabled={isPending} onCreated={onChanged} />
+        )}
+
+        {/* Excluded — collapsed, restorable */}
+        {excluded.length > 0 && (
+          <section className="border-t border-folio-border-subtle pt-5">
+            <button
+              onClick={() => setExcludedOpen(o => !o)}
+              className="flex items-center gap-2 folio-ui font-medium text-folio-text-secondary hover:text-folio-text-primary transition-colors"
+            >
+              {excludedOpen ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
+              Left out of this project ({excluded.length})
+            </button>
+            {excludedOpen && (
+              <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4 mt-4">
+                {excluded.map(img => (
+                  <div key={img.id} className="space-y-2">
+                    <div className="relative aspect-[4/3] bg-surface-canvas rounded-xl overflow-hidden border border-folio-border-subtle opacity-70">
+                      <Image
+                        src={img.url}
+                        alt={img.name || 'Excluded photo'}
+                        fill
+                        className="object-cover grayscale"
+                        sizes="(max-width: 768px) 50vw, 16vw"
+                      />
+                    </div>
+                    {isOwner && (
+                      <button
+                        onClick={() => run(() => includeImage({ imageId: img.id }))}
+                        disabled={isPending}
+                        className="w-full inline-flex items-center justify-center gap-1.5 px-2 py-1.5 folio-meta font-medium text-folio-text-secondary border border-folio-border-subtle rounded-lg hover:bg-surface-ground transition-colors disabled:opacity-50"
+                      >
+                        <Undo2 className="w-3 h-3" />
+                        Bring back
+                      </button>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+          </section>
+        )}
+      </div>
+
+      {/* Room dock — rises while dragging, every room is a drop target */}
+      {activeImage && (
+        <RoomDock
+          rooms={rooms}
+          roomCounts={roomCounts}
+          currentRoomId={activeImage.roomId ?? null}
         />
       )}
 
-      {/* Excluded — collapsed, restorable */}
-      {excluded.length > 0 && (
-        <section className="border-t border-folio-border-subtle pt-5">
-          <button
-            onClick={() => setExcludedOpen(o => !o)}
-            className="flex items-center gap-2 folio-ui font-medium text-folio-text-secondary hover:text-folio-text-primary transition-colors"
-          >
-            {excludedOpen ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
-            Left out of this project ({excluded.length})
-          </button>
-          {excludedOpen && (
-            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4 mt-4">
-              {excluded.map(img => (
-                <div key={img.id} className="space-y-2">
-                  <div className="relative aspect-[4/3] bg-surface-canvas rounded-xl overflow-hidden border border-folio-border-subtle opacity-70">
-                    <Image
-                      src={img.url}
-                      alt={img.name || 'Excluded photo'}
-                      fill
-                      className="object-cover grayscale"
-                      sizes="(max-width: 768px) 50vw, 16vw"
-                    />
-                  </div>
-                  {isOwner && (
-                    <button
-                      onClick={() => run(() => includeImage({ imageId: img.id }))}
-                      disabled={isPending}
-                      className="w-full inline-flex items-center justify-center gap-1.5 px-2 py-1.5 folio-meta font-medium text-folio-text-secondary border border-folio-border-subtle rounded-lg hover:bg-surface-ground transition-colors disabled:opacity-50"
-                    >
-                      <Undo2 className="w-3 h-3" />
-                      Bring back
-                    </button>
-                  )}
-                </div>
-              ))}
-            </div>
-          )}
-        </section>
+      {/* Floating preview of the dragged photo */}
+      <DragOverlay dropAnimation={null}>
+        {activeImage ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={activeImage.url}
+            alt=""
+            className="w-36 h-28 object-cover rounded-xl shadow-2xl ring-2 ring-[var(--accent)] rotate-2"
+          />
+        ) : null}
+      </DragOverlay>
+
+      {/* Drop-on-"New room" → create + assign */}
+      {namingForImageId && (
+        <NewRoomNamer
+          projectId={projectId}
+          imageId={namingForImageId}
+          onClose={() => setNamingForImageId(null)}
+          onDone={onChanged}
+        />
       )}
+    </DndContext>
+  );
+}
+
+function DraggablePhoto({
+  id,
+  disabled,
+  children,
+}: {
+  id: string;
+  disabled: boolean;
+  children: React.ReactNode;
+}) {
+  const { listeners, setNodeRef, isDragging } = useDraggable({ id, disabled });
+  return (
+    <div
+      ref={setNodeRef}
+      {...listeners}
+      className={`${disabled ? '' : 'cursor-grab active:cursor-grabbing touch-none'} ${
+        isDragging ? 'opacity-40' : ''
+      }`}
+    >
+      {children}
+    </div>
+  );
+}
+
+function RoomDock({
+  rooms,
+  roomCounts,
+  currentRoomId,
+}: {
+  rooms: RoomLite[];
+  roomCounts: Map<string, number>;
+  currentRoomId: string | null;
+}) {
+  return (
+    <div className="fixed inset-x-0 bottom-0 z-40 glass-sticky border-t border-folio-border-subtle">
+      <div className="max-w-[1280px] mx-auto px-6 py-3">
+        <div className="flex items-center gap-3 overflow-x-auto pb-1">
+          <span className="folio-meta text-folio-text-tertiary uppercase tracking-wider whitespace-nowrap shrink-0">
+            Drop into
+          </span>
+          {rooms.map(r => (
+            <DropTile
+              key={r.id}
+              id={`room:${r.id}`}
+              label={r.name}
+              sub={`${roomCounts.get(r.id) ?? 0}`}
+              muted={r.id === currentRoomId}
+            />
+          ))}
+          <DropTile id="new-room" label="New room" icon={<Plus className="w-4 h-4" />} accent />
+          {currentRoomId && (
+            <DropTile id="uncategorized" label="Uncategorized" icon={<DoorOpen className="w-4 h-4" />} />
+          )}
+          <DropTile id="exclude" label="Leave out" icon={<Ban className="w-4 h-4" />} />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function DropTile({
+  id,
+  label,
+  sub,
+  icon,
+  accent,
+  muted,
+}: {
+  id: string;
+  label: string;
+  sub?: string;
+  icon?: React.ReactNode;
+  accent?: boolean;
+  muted?: boolean;
+}) {
+  const { setNodeRef, isOver } = useDroppable({ id });
+  return (
+    <div
+      ref={setNodeRef}
+      className={`shrink-0 min-w-[120px] rounded-xl border px-3 py-2 transition-all ${
+        isOver
+          ? 'border-[var(--accent)] bg-[var(--accent)]/10 scale-105'
+          : accent
+            ? 'border-dashed border-[var(--accent)]/50 bg-[var(--accent)]/5'
+            : `border-dashed ${muted ? 'border-folio-border-subtle/60 opacity-60' : 'border-folio-border-subtle'}`
+      }`}
+    >
+      <div className="flex items-center gap-1.5">
+        {icon && <span className="text-folio-text-secondary">{icon}</span>}
+        <span className="folio-meta font-medium text-folio-text-primary truncate">{label}</span>
+      </div>
+      {sub !== undefined && (
+        <span className="folio-meta text-folio-text-tertiary tabular-nums">{sub} photos</span>
+      )}
+    </div>
+  );
+}
+
+function NewRoomNamer({
+  projectId,
+  imageId,
+  onClose,
+  onDone,
+}: {
+  projectId: string;
+  imageId: string;
+  onClose: () => void;
+  onDone: () => void;
+}) {
+  const [name, setName] = useState('');
+  const [busy, setBusy] = useState(false);
+
+  async function create() {
+    if (!name.trim()) return;
+    setBusy(true);
+    try {
+      const res = await createRoom({ projectId, name: name.trim() });
+      if (res?.room?.id) {
+        await assignImageToRoom({ imageId, roomId: res.room.id });
+      }
+      onDone();
+      onClose();
+    } catch (err) {
+      console.error('[NewRoomNamer] create+assign failed:', err);
+      alert(err instanceof Error ? err.message : 'Failed to add room');
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+      <div className="absolute inset-0 glass-backdrop" onClick={onClose} />
+      <div className="relative warm-mesh rounded-2xl bg-surface-ground border border-folio-border-subtle shadow-2xl max-w-sm w-full p-6">
+        <div className="relative z-[1]">
+          <h3 className="font-headline italic text-2xl text-folio-text-primary mb-1">Name the room</h3>
+          <p className="folio-meta text-folio-text-secondary mb-4">
+            This photo moves in, and the name appears in your article.
+          </p>
+          <div className="flex items-center gap-2">
+            <input
+              autoFocus
+              value={name}
+              onChange={e => setName(e.target.value)}
+              onKeyDown={e => {
+                if (e.key === 'Enter') create();
+                if (e.key === 'Escape') onClose();
+              }}
+              placeholder="e.g. Primary Bath"
+              className="flex-1 min-w-0 px-3 py-2 folio-ui rounded-xl border border-folio-border-subtle bg-surface-canvas focus:outline-none focus:border-[var(--accent)]"
+            />
+            <button
+              onClick={create}
+              disabled={busy || !name.trim()}
+              className="px-4 py-2 folio-ui font-semibold text-white bg-[var(--accent)] rounded-xl hover:bg-[var(--accent-hover)] disabled:opacity-50"
+            >
+              Create
+            </button>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
@@ -362,8 +597,9 @@ function PhotoCard({
         src={img.url}
         alt={img.name || 'Project photo'}
         fill
-        className="object-cover relative z-[1]"
+        className="object-cover relative z-[1] pointer-events-none"
         sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+        draggable={false}
       />
 
       {tagCount > 0 && (
@@ -412,83 +648,6 @@ function PhotoCard({
               Reopen to tag
             </button>
           )}
-        </div>
-      )}
-    </div>
-  );
-}
-
-function PhotoRoomMenu({
-  currentRoomId,
-  rooms,
-  disabled,
-  onAssign,
-  onUnassign,
-  onExclude,
-}: {
-  currentRoomId: string;
-  rooms: RoomLite[];
-  disabled: boolean;
-  onAssign: (roomId: string) => void;
-  onUnassign: () => void;
-  onExclude: () => void;
-}) {
-  const [open, setOpen] = useState(false);
-  const ref = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    if (!open) return;
-    function onDown(e: MouseEvent) {
-      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
-    }
-    document.addEventListener('mousedown', onDown);
-    return () => document.removeEventListener('mousedown', onDown);
-  }, [open]);
-
-  const others = rooms.filter(r => r.id !== currentRoomId);
-
-  return (
-    <div ref={ref} className="absolute top-2 right-2 z-[20]">
-      <button
-        onClick={() => setOpen(o => !o)}
-        disabled={disabled}
-        aria-label="Move photo"
-        className="inline-flex items-center justify-center w-7 h-7 rounded-full bg-black/55 text-white hover:bg-black/75 transition-colors disabled:opacity-50"
-      >
-        <MoreVertical className="w-4 h-4" />
-      </button>
-
-      {open && (
-        <div className="absolute right-0 mt-1 w-48 max-h-72 overflow-y-auto rounded-xl bg-surface-canvas border border-folio-border-subtle shadow-lg py-1">
-          {others.length > 0 && (
-            <>
-              <p className="px-3 py-1.5 folio-meta text-folio-text-tertiary uppercase tracking-wider">
-                Move to
-              </p>
-              {others.map(r => (
-                <button
-                  key={r.id}
-                  onClick={() => { onAssign(r.id); setOpen(false); }}
-                  className="w-full text-left px-3 py-2 folio-meta text-folio-text-primary hover:bg-surface-ground transition-colors truncate"
-                >
-                  {r.name}
-                </button>
-              ))}
-              <div className="my-1 border-t border-folio-border-subtle" />
-            </>
-          )}
-          <button
-            onClick={() => { onUnassign(); setOpen(false); }}
-            className="w-full text-left px-3 py-2 folio-meta text-folio-text-secondary hover:bg-surface-ground transition-colors"
-          >
-            Move to Uncategorized
-          </button>
-          <button
-            onClick={() => { onExclude(); setOpen(false); }}
-            className="w-full text-left px-3 py-2 folio-meta text-folio-text-secondary hover:bg-surface-ground transition-colors"
-          >
-            Leave out
-          </button>
         </div>
       )}
     </div>
