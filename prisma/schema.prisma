@@ -522,6 +522,35 @@ enum ImageTagState {
   REVIEWED // has product tags, or designer marked "no products to tag"
 }
 
+// Vision label events (training-data flywheel). Append-only log of every model
+// PREDICTION and every human CORRECTION, tagged with the model that produced it,
+// so the prediction→correction delta is computable across whatever vision tool
+// is in use. Kept relation-free (plain ids) — this is an export/analysis sink,
+// not an app-query model.
+enum LabelSource {
+  MODEL
+  HUMAN
+}
+
+model VisionLabelEvent {
+  id        String      @id @default(uuid())
+  createdAt DateTime    @default(now())
+  projectId String
+  imageId   String?
+  roomId    String?
+  userId    String? // who made a HUMAN correction
+  source    LabelSource
+  model     String? // e.g. "claude-sonnet-4-20250514" — for MODEL events
+  taskType  String // ROOM | ROOM_NAME | INCLUSION | NO_PRODUCTS | PRODUCT_TAG
+  action    String? // predict | assign | unassign | exclude | include | rename | confirm | correct | dismiss | no_products
+  value     Json // the predicted label or the human-chosen value (+ AI context)
+
+  @@index([projectId])
+  @@index([imageId])
+  @@index([source, taskType])
+  @@map("vision_label_events")
+}
+
 model ProjectImage {
   id           String       @id @default(uuid())
   url          String

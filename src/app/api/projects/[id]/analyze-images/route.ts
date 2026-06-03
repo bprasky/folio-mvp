@@ -8,6 +8,8 @@ import { assertProjectView } from '@/lib/authz/access';
 import { analyzeImagesBatch } from '@/lib/import-agent/analyze';
 import { ensureProductForSelection } from '@/lib/tagging/ensureProductForSelection';
 import { ROOM_TYPE_TO_ENUM, ROOM_TYPE_DISPLAY_NAMES } from '@/lib/import-agent/roomTypes';
+import { IMPORT_AGENT_CONFIG } from '@/lib/import-agent/config';
+import { recordLabelEvent } from '@/lib/vision/recordLabelEvent';
 import type { RoomAnalysis, DetectedProduct } from '@/lib/import-agent/types';
 
 export const runtime = 'nodejs';
@@ -134,6 +136,21 @@ export async function POST(
             aiMaterials: analysis.materials,
             aiColors: analysis.dominantColors,
             indexedAt: new Date(),
+          },
+        });
+
+        // Record the model's room prediction — the "before" of the delta.
+        await recordLabelEvent({
+          projectId,
+          imageId: image.id,
+          source: 'MODEL',
+          model: IMPORT_AGENT_CONFIG.model,
+          taskType: 'ROOM',
+          action: 'predict',
+          value: {
+            roomType: analysis.roomType,
+            roomLabel: analysis.roomLabel ?? null,
+            roomGroup: analysis.roomGroup ?? null,
           },
         });
 

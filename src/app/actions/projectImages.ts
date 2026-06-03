@@ -15,19 +15,35 @@ import { revalidatePath } from 'next/cache';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { assertProjectWrite } from '@/lib/authz/access';
+import { recordLabelEvent } from '@/lib/vision/recordLabelEvent';
 
-async function authorizeImage(imageId: string): Promise<{ id: string; projectId: string }> {
+interface AuthorizedImage {
+  id: string;
+  projectId: string;
+  userId: string;
+  /** AI's room guess for this photo — context for the correction delta. */
+  aiSpaces: string[];
+  aiRoom: string | null;
+}
+
+async function authorizeImage(imageId: string): Promise<AuthorizedImage> {
   const session = await getServerSession(authOptions);
   if (!session?.user?.id) throw new Error('Unauthorized');
 
   const image = await prisma.projectImage.findUnique({
     where: { id: imageId },
-    select: { id: true, projectId: true },
+    select: { id: true, projectId: true, aiSpaces: true, room: true },
   });
   if (!image) throw new Error('Image not found');
 
   await assertProjectWrite(session.user.id, image.projectId);
-  return image;
+  return {
+    id: image.id,
+    projectId: image.projectId,
+    userId: session.user.id,
+    aiSpaces: image.aiSpaces ?? [],
+    aiRoom: image.room ?? null,
+  };
 }
 
 const AssignInput = z.object({
@@ -43,13 +59,24 @@ export async function assignImageToRoom(raw: unknown) {
   // Room must belong to the same project — prevents cross-project assignment.
   const room = await prisma.room.findFirst({
     where: { id: roomId, projectId: image.projectId },
-    select: { id: true },
+    select: { id: true, name: true },
   });
   if (!room) throw new Error('Room not found for this project');
 
   await prisma.projectImage.update({
     where: { id: imageId },
     data: { roomId, inclusion: 'INCLUDED' },
+  });
+
+  await recordLabelEvent({
+    projectId: image.projectId,
+    imageId,
+    roomId,
+    userId: image.userId,
+    source: 'HUMAN',
+    taskType: 'ROOM',
+    action: 'assign',
+    value: { roomName: room.name, aiSpaces: image.aiSpaces, aiRoom: image.aiRoom },
   });
 
   revalidatePath(`/project/${image.projectId}`);
@@ -68,6 +95,16 @@ export async function excludeImage(raw: unknown) {
     data: { inclusion: 'EXCLUDED' },
   });
 
+  await recordLabelEvent({
+    projectId: image.projectId,
+    imageId,
+    userId: image.userId,
+    source: 'HUMAN',
+    taskType: 'INCLUSION',
+    action: 'exclude',
+    value: { aiSpaces: image.aiSpaces, aiRoom: image.aiRoom },
+  });
+
   revalidatePath(`/project/${image.projectId}`);
   return { ok: true };
 }
@@ -82,6 +119,16 @@ export async function includeImage(raw: unknown) {
     data: { inclusion: 'INCLUDED', roomId: null },
   });
 
+  await recordLabelEvent({
+    projectId: image.projectId,
+    imageId,
+    userId: image.userId,
+    source: 'HUMAN',
+    taskType: 'INCLUSION',
+    action: 'include',
+    value: { aiSpaces: image.aiSpaces, aiRoom: image.aiRoom },
+  });
+
   revalidatePath(`/project/${image.projectId}`);
   return { ok: true };
 }
@@ -94,6 +141,16 @@ export async function unassignImage(raw: unknown) {
   await prisma.projectImage.update({
     where: { id: imageId },
     data: { roomId: null },
+  });
+
+  await recordLabelEvent({
+    projectId: image.projectId,
+    imageId,
+    userId: image.userId,
+    source: 'HUMAN',
+    taskType: 'ROOM',
+    action: 'unassign',
+    value: { aiSpaces: image.aiSpaces, aiRoom: image.aiRoom },
   });
 
   revalidatePath(`/project/${image.projectId}`);
@@ -120,6 +177,16 @@ export async function setImageNoProducts(raw: unknown) {
   await prisma.projectImage.update({
     where: { id: imageId },
     data: { noProducts: value },
+  });
+
+  await recordLabelEvent({
+    projectId: image.projectId,
+    imageId,
+    userId: image.userId,
+    source: 'HUMAN',
+    taskType: 'NO_PRODUCTS',
+    action: 'no_products',
+    value: { noProducts: value },
   });
 
   revalidatePath(`/project/${image.projectId}`);
@@ -182,12 +249,24 @@ export async function renameRoom(raw: unknown) {
 
   const room = await prisma.room.findUnique({
     where: { id: roomId },
-    select: { projectId: true },
+    select: { projectId: true, name: true },
   });
   if (!room) throw new Error('Room not found');
   await assertProjectWrite(session.user.id, room.projectId);
 
   await prisma.room.update({ where: { id: roomId }, data: { name } });
+
+  if (room.name !== name) {
+    await recordLabelEvent({
+      projectId: room.projectId,
+      roomId,
+      userId: session.user.id,
+      source: 'HUMAN',
+      taskType: 'ROOM_NAME',
+      action: 'rename',
+      value: { from: room.name, to: name },
+    });
+  }
 
   revalidatePath(`/project/${room.projectId}`);
   return { ok: true };
