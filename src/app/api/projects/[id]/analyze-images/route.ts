@@ -6,11 +6,20 @@ import { authOptions } from '@/app/api/auth/[...nextauth]/options';
 import { prisma } from '@/lib/prisma';
 import { assertProjectView } from '@/lib/authz/access';
 import { analyzeImagesBatch } from '@/lib/import-agent/analyze';
-import { ensureProductForSelection } from '@/lib/tagging/ensureProductForSelection';
 import { ROOM_TYPE_TO_ENUM, ROOM_TYPE_DISPLAY_NAMES } from '@/lib/import-agent/roomTypes';
 import { IMPORT_AGENT_CONFIG } from '@/lib/import-agent/config';
 import { recordLabelEvent } from '@/lib/vision/recordLabelEvent';
-import type { RoomAnalysis, DetectedProduct } from '@/lib/import-agent/types';
+import type { RoomAnalysis, ConfidenceLevel } from '@/lib/import-agent/types';
+
+// Auto-sort a photo into a room only when the model is at least this sure of
+// the room call. Photos below the bar (cropped detail shots, ambiguous spaces,
+// or an omitted confidence) are left unassigned for the designer to sort by
+// hand — a confident-but-wrong auto-file erodes trust more than an empty slot.
+const ROOM_SORT_MIN_CONFIDENCE: ConfidenceLevel = 'medium';
+const ROOM_CONFIDENCE_RANK: Record<ConfidenceLevel, number> = { low: 0, medium: 1, high: 2 };
+const meetsRoomSortBar = (a: RoomAnalysis): boolean =>
+  ROOM_CONFIDENCE_RANK[a.roomConfidence ?? 'low'] >=
+  ROOM_CONFIDENCE_RANK[ROOM_SORT_MIN_CONFIDENCE];
 
 export const runtime = 'nodejs';
 // Allow up to 5 minutes for analyzing many images
@@ -19,7 +28,6 @@ export const maxDuration = 300;
 type AnalysisResult = {
   imageId: string;
   analysis: RoomAnalysis;
-  products: DetectedProduct[];
 };
 
 type ImageError = {
@@ -32,15 +40,17 @@ type ImageError = {
  *
  * Analyzes uploaded project images using Claude vision to:
  * 1. Detect room types and update ProjectImage metadata
- * 2. Create Room records for each unique detected room type
- * 3. Create Selection records with linked Product records for each detected product
- * 4. Create ProductTag records positioning products on their source images
+ * 2. Create Room records and auto-sort photos — but only for photos the model
+ *    is confident about (>= ROOM_SORT_MIN_CONFIDENCE). Low-confidence photos are
+ *    left unassigned for the designer to sort by hand.
+ *
+ * It intentionally does NOT create Selection/ProductTag "descriptor" guesses.
+ * Boards shows real selections only, and those come from the designer's tagging
+ * pass — not from auto-generated product descriptions.
  *
  * Body (optional):
  *   imageIds?: string[]  — analyze only these images (default: all unanalyzed)
  *   force?: boolean      — re-analyze already-analyzed images too (re-sort rooms).
- *                          Product tags are never duplicated: photos that already
- *                          have tags are skipped in the product/selection phase.
  */
 export async function POST(
   request: NextRequest,
@@ -157,7 +167,6 @@ export async function POST(
         results.push({
           imageId: image.id,
           analysis,
-          products: analysis.products,
         });
       }
     } catch (err) {
@@ -180,9 +189,17 @@ export async function POST(
       return `typ:${a.roomType}`;
     };
 
+    // Only auto-sort photos the model is confident about. Low-confidence calls
+    // are left unassigned (designer sorts them by hand) rather than guessed.
+    const sortable = results.filter(r => meetsRoomSortBar(r.analysis));
+    const heldBack = results.length - sortable.length;
+    if (heldBack > 0) {
+      console.log(`[analyze-images] Holding ${heldBack} low-confidence photo(s) back from auto-sort`);
+    }
+
     interface GroupInfo { roomType: string; baseName: string; imageIds: string[]; }
     const groups = new Map<string, GroupInfo>();
-    for (const r of results) {
+    for (const r of sortable) {
       const a = r.analysis;
       const key = groupKeyFor(a);
       const baseName =
@@ -235,90 +252,11 @@ export async function POST(
       console.log(`[analyze-images] Room "${name}" (${enumType}) <- ${g.imageIds.length} photo(s)`);
     }
 
-    // ── Phase 3 & 4: Selection + Product + Tag Creation ──
-    let selectionsCreated = 0;
-    let tagsCreated = 0;
-
-    // Never double-tag: skip product/selection creation for photos that already
-    // carry tags (e.g. a prior analysis, or a force re-sort). Room assignment
-    // above still re-runs for every photo.
-    const alreadyTaggedImageIds = new Set(
-      (
-        await prisma.productTag.findMany({
-          where: { imageId: { in: results.map(r => r.imageId) } },
-          select: { imageId: true },
-        })
-      ).map(t => t.imageId),
-    );
-
-    for (const result of results) {
-      if (alreadyTaggedImageIds.has(result.imageId)) continue;
-      const roomId = roomMap.get(groupKeyFor(result.analysis));
-      if (!roomId) continue;
-
-      for (const product of result.products) {
-        try {
-          const productName = product.extractedProductName || product.description;
-
-          // Ensure Product record exists
-          const productId = await ensureProductForSelection({
-            productName,
-            vendorName: product.extractedVendor || null,
-            unitPrice: product.extractedPrice
-              ? parseFloat(product.extractedPrice.replace(/[$,]/g, ''))
-              : null,
-          });
-
-          if (!productId) {
-            console.warn(`[analyze-images] Could not create product for "${productName}"`);
-            continue;
-          }
-
-          // Convert position from 0-1 to 0-100 percentage, clamped to 5-95
-          const x = Math.max(5, Math.min(95, product.position.x * 100));
-          const y = Math.max(5, Math.min(95, product.position.y * 100));
-
-          // Create ProductTag and Selection in a transaction
-          const { tag, selection } = await prisma.$transaction(async (tx) => {
-            const tag = await tx.productTag.create({
-              data: {
-                x,
-                y,
-                productId,
-                imageId: result.imageId,
-              },
-            });
-
-            const selection = await tx.selection.create({
-              data: {
-                projectId,
-                roomId,
-                productName,
-                vendorName: product.extractedVendor || null,
-                tags: [product.category.toLowerCase()],
-                source: 'ai_analysis',
-                productTagId: tag.id,
-                uiMeta: {
-                  productId,
-                  position: product.position,
-                  confidence: product.confidence,
-                  analysisSource: 'import_agent',
-                },
-              },
-            });
-
-            return { tag, selection };
-          });
-
-          tagsCreated++;
-          selectionsCreated++;
-          console.log(`[analyze-images] Tagged "${productName}" at (${x.toFixed(1)}, ${y.toFixed(1)}) on image ${result.imageId.slice(0, 8)}`);
-        } catch (err) {
-          const msg = err instanceof Error ? err.message : 'Unknown error';
-          console.error(`[analyze-images] Product creation failed for "${product.description}":`, msg);
-        }
-      }
-    }
+    // Product detection is intentionally NOT persisted here. Boards shows real
+    // selections only — those come from the designer's tagging pass, not from
+    // auto-generated "descriptor" guesses. This route's job ends at room sorting.
+    const selectionsCreated = 0;
+    const tagsCreated = 0;
 
     // Build room summary
     const roomSummary = await Promise.all(

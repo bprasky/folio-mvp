@@ -1,35 +1,49 @@
-# Product Bank — Three-dot Menu, Crop Adjuster, Shop Tab Integration
+# Task: Stop AI board "descriptors", gate Boards on real tags
 
-## Phase 3C: Three-dot Menu on ProductBank Cards
+## Context
+Boards currently auto-fills with AI "descriptor" Selections (`source: 'ai_analysis'`)
+created by `POST /api/projects/[id]/analyze-images`. Because the tagging gate counts
+ALL ProductTags regardless of source, those AI tags auto-satisfy the gate, so fake
+selections land on Boards. The founder wants real (manually tagged) selections only.
 
-- [ ] Add `isOwner` prop to ProductBank (thread from ImmersiveProjectPage → page.tsx)
-- [ ] Add three-dot (ellipsis) icon button to ProductCard overlay (top-right, owner-only)
-- [ ] Build dropdown menu with options: "Adjust crop", "View product page" (external link)
-- [ ] Wire menu state (open/close), close on outside click
+## Decisions (confirmed with user)
+- Keep room detection + auto-sort, but only sort photos above a confidence
+  threshold (recommend: skip `low`; sort `high`/`medium`). Don't sort bad misses.
+- Drop the descriptor selections that land on Boards entirely (stop creating them).
+- Boards tab shows ONLY if real tags/selections exist. No timeline gating.
 
-## Phase 3D: Crop Adjuster UI
+## Plan
+- [x] 1. `analyze-images/route.ts`: delete Phases 3 & 4 (Selection + ProductTag
+      descriptor creation). Keep Phases 1-2 (room detect + sort).
+- [x] 2. Room-sort confidence threshold: add `roomConfidence` to RoomAnalysis +
+      batch/single prompts + validation; route Phase 2 only assigns confident photos.
+- [x] 3. `ProjectTabs.tsx`: Boards `visible: totalSelections > 0`; remove the
+      lock UI + `boardsLocked` prop.
+- [x] 4. `page.tsx`: drop `boardsLocked`; default-view + redirect respect
+      `boardsVisible` (totalSelections > 0).
+- [x] 5. Wipe script `scripts/wipe-ai-descriptors.ts` (dry-run default, --apply)
+      + console command for La Gorce.
+- [x] 6. Typecheck, verify, commit, push.
 
-- [ ] Create `CropAdjusterModal` component — modal overlay with:
-  - Full source image displayed with current crop region highlighted
-  - Drag to pan crop center (cropX, cropY)
-  - Slider or pinch to zoom (cropScale, 0.15–1.0)
-  - Live preview of resulting crop (1:1 square)
-  - "Reset" button (returns to category default)
-  - "Save" button → calls `POST /api/products/tags/{tagId}/crop`
-- [ ] Wire CropAdjusterModal into three-dot menu "Adjust crop" action
-- [ ] Pass tagId + source image URL + current crop params to modal
-- [ ] On save success: update local state optimistically, then router.refresh()
+## Review
+- **Descriptors stopped at the root.** Removed the Selection/ProductTag creation
+  from the analyze-images route, so NO caller (board view, presentation import,
+  upload modal) produces `ai_analysis` descriptors anymore. The route now stops
+  at room sorting.
+- **Room sorting kept + made honest.** Added a `roomConfidence` signal from the
+  vision model. Threshold = `medium` (constant `ROOM_SORT_MIN_CONFIDENCE`): photos
+  the model is `high`/`medium` sure of get auto-sorted; `low`/omitted are held back
+  for manual sorting. "Misses badly" no longer auto-files. Tunable in one place.
+- **Boards gated on real tags.** Boards tab is `visible` only when the project has
+  selections (`totalSelections > 0`), regardless of timeline. Default-view and the
+  boards→media redirect respect the same rule. Removed the old timeline-based
+  `boardsLocked` lock UI entirely.
+- **Room auto-sort still fires** at upload time (ProjectCreationModal:700,
+  MediaSection:171/578) with the new threshold. The old board-view auto-trigger is
+  now an unreachable no-op (Boards only shows once selections exist → rooms exist).
+- Verified: `tsc` adds zero new errors (only the pre-existing es5/Map-iteration
+  artifact remains); phase5e CI check passes (phantomCalls=0).
 
-## Phase 4: Shop Tab Integration
-
-- [ ] Update ShopFeed to display contextual crops instead of catalog images
-- [ ] Fetch crop data for products in the designer profile page query
-- [ ] Update ProfileProduct type to include cropUrl
-- [ ] Update profile ProductCard to render crop when available, fall back to catalog image
-
-## Verification
-
-- [ ] Three-dot menu only shows for project owners
-- [ ] Crop adjuster saves and regenerates crop correctly
-- [ ] Shop tab shows crops where available
-- [ ] No regressions on public/visitor view of ProductBank
+## Wipe command (run against the DB)
+    npx tsx scripts/wipe-ai-descriptors.ts            # dry-run, shows counts
+    npx tsx scripts/wipe-ai-descriptors.ts --apply    # deletes ai_analysis sels + tags

@@ -168,16 +168,20 @@ export default async function ProjectPage({
     storyComplete: editorialState !== 'EMPTY',
   });
 
-  // Boards timeline fork (spec 20 §8). Completed (PAST) projects lead with
-  // Media and lock Boards until products are tagged — empty rooms shouldn't
-  // make a finished upload feel broken. Concept/in-progress lead with Boards.
-  const isCompleted = base.timeline === 'PAST';
+  // Boards is a real-selections surface — it only exists once products have
+  // been tagged. No tags → no Boards tab, no default-routing to it, no landing
+  // on it. Until then an upload leads with Media (sort + tag the photos there).
+  const totalSelections = base.rooms.reduce(
+    (sum, room) => sum + room.selections.length,
+    0,
+  );
+  const boardsVisible = totalSelections > 0;
   const isProspective = base.timeline === 'PRESENT' || base.timeline === 'FUTURE';
-  const boardsLocked = isCompleted && !publishReadiness.gates.tags.complete;
 
-  // Published → Boards. Concept/in-progress lead with Boards. Completed (and
-  // legacy null-timeline) lead with Media.
-  const defaultView: TabView = isPublished || isProspective ? 'boards' : 'media';
+  // Published/concept/in-progress lead with Boards once it exists; otherwise
+  // (and for completed archives before tagging) lead with Media.
+  const defaultView: TabView =
+    boardsVisible && (isPublished || isProspective) ? 'boards' : 'media';
   let currentView: TabView = (searchParams.view as TabView) || defaultView;
 
   if (currentView === 'files') currentView = 'media';
@@ -185,7 +189,7 @@ export default async function ProjectPage({
 
   if (!isPublished && currentView === 'story') currentView = 'media';
   if (!hasDraftOrPublished && currentView === 'publish') currentView = 'media';
-  if (currentView === 'boards' && boardsLocked) currentView = 'media';
+  if (currentView === 'boards' && !boardsVisible) currentView = 'media';
 
   const validViews: TabView[] = [
     'overview',
@@ -280,7 +284,6 @@ export default async function ProjectPage({
           isPublished={isPublished}
           hasDraftOrPublished={hasDraftOrPublished}
           editorialState={editorialState}
-          boardsLocked={boardsLocked}
         />
       </div>
 
