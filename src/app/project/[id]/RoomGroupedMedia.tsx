@@ -3,8 +3,7 @@
 import { useState, useMemo, useTransition, useEffect } from 'react';
 import Image from 'next/image';
 import { FaImage, FaTag, FaCheckCircle, FaTrash } from 'react-icons/fa';
-import { ChevronDown, ChevronRight, Plus, X, Undo2, DoorOpen, Ban, Maximize2 } from 'lucide-react';
-import Lightbox from '@/components/article/images/Lightbox';
+import { ChevronDown, ChevronRight, Plus, X, Undo2, DoorOpen, Ban, Maximize2, ChevronLeft } from 'lucide-react';
 import {
   DndContext,
   DragOverlay,
@@ -351,13 +350,13 @@ export default function RoomGroupedMedia({
         />
       )}
 
-      {/* Full (uncropped) photo viewer — thumbnails crop to a uniform grid */}
+      {/* Full (uncropped) photo viewer — just the photo, no window/fog */}
       {lightboxIndex !== null && (
-        <Lightbox
+        <PhotoPopout
           images={lightboxImages}
-          openIndex={lightboxIndex}
+          index={lightboxIndex}
           onClose={() => setLightboxIndex(null)}
-          dim={false}
+          onIndex={setLightboxIndex}
         />
       )}
     </DndContext>
@@ -383,6 +382,83 @@ function DraggablePhoto({
       }`}
     >
       {children}
+    </div>
+  );
+}
+
+function PhotoPopout({
+  images,
+  index,
+  onClose,
+  onIndex,
+}: {
+  images: Array<{ url: string; alt: string }>;
+  index: number;
+  onClose: () => void;
+  onIndex: (i: number) => void;
+}) {
+  const hasPrev = index > 0;
+  const hasNext = index < images.length - 1;
+
+  useEffect(() => {
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    function onKey(e: KeyboardEvent) {
+      if (e.key === 'Escape') onClose();
+      if (e.key === 'ArrowRight' && index < images.length - 1) onIndex(index + 1);
+      if (e.key === 'ArrowLeft' && index > 0) onIndex(index - 1);
+    }
+    window.addEventListener('keydown', onKey);
+    return () => {
+      window.removeEventListener('keydown', onKey);
+      document.body.style.overflow = prevOverflow;
+    };
+  }, [index, images.length, onClose, onIndex]);
+
+  const im = images[index];
+  if (!im) return null;
+
+  const ctl =
+    'fixed z-[81] inline-flex items-center justify-center rounded-full bg-black/55 text-white hover:bg-black/75 transition-colors';
+
+  return (
+    // Transparent layer: click anywhere off the photo to close. No fog.
+    <div className="fixed inset-0 z-[80] flex items-center justify-center p-4" onClick={onClose}>
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        src={im.url}
+        alt={im.alt}
+        onClick={e => e.stopPropagation()}
+        className="max-h-[92vh] max-w-[94vw] w-auto object-contain shadow-2xl"
+      />
+
+      <button onClick={onClose} aria-label="Close" className={`${ctl} top-4 right-4 w-9 h-9`}>
+        <X className="w-5 h-5" />
+      </button>
+
+      {hasPrev && (
+        <button
+          onClick={e => { e.stopPropagation(); onIndex(index - 1); }}
+          aria-label="Previous"
+          className={`${ctl} left-4 top-1/2 -translate-y-1/2 w-10 h-10`}
+        >
+          <ChevronLeft className="w-5 h-5" />
+        </button>
+      )}
+      {hasNext && (
+        <button
+          onClick={e => { e.stopPropagation(); onIndex(index + 1); }}
+          aria-label="Next"
+          className={`${ctl} right-4 top-1/2 -translate-y-1/2 w-10 h-10`}
+        >
+          <ChevronRight className="w-5 h-5" />
+        </button>
+      )}
+      {images.length > 1 && (
+        <div className="fixed z-[81] bottom-4 left-1/2 -translate-x-1/2 px-3 py-1 rounded-full bg-black/55 text-white folio-meta tabular-nums">
+          {index + 1} / {images.length}
+        </div>
+      )}
     </div>
   );
 }
