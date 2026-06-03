@@ -357,6 +357,7 @@ export default function RoomGroupedMedia({
           images={lightboxImages}
           openIndex={lightboxIndex}
           onClose={() => setLightboxIndex(null)}
+          dim={false}
         />
       )}
     </DndContext>
