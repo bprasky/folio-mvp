@@ -69,8 +69,6 @@ export default function ProjectHeader({
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   const canShare = project.isPublic && !!project.publishedAt && images.length > 0;
-  const roomCount = project.rooms.length;
-  const itemCount = project.rooms.reduce((sum, r) => sum + r.selections.length, 0);
   const sLabel = editorialStatusLabel(editorialState);
   const dotClass = editorialStatusDotClass(editorialState);
 
@@ -106,14 +104,10 @@ export default function ProjectHeader({
             {project.title}
           </h1>
 
-          {/* Meta row */}
+          {/* Meta row — room/item counts intentionally omitted: the progress
+              tracker's stepper is the single owner of project counts. */}
           <div className="mt-4 flex items-center gap-4 text-sm text-folio-text-secondary">
             <span>Started {formatMonthYear(project.createdAt)}</span>
-            <Sep />
-            <span>
-              {roomCount} {roomCount === 1 ? 'room' : 'rooms'} · {itemCount}{' '}
-              {itemCount === 1 ? 'item' : 'items'}
-            </span>
             <Sep />
             <span>Last edit {formatRelative(project.updatedAt)}</span>
           </div>

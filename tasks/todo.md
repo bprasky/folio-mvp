@@ -1,49 +1,59 @@
-# Task: Stop AI board "descriptors", gate Boards on real tags
+# Task: Project Progress Tracker (top of project detail view)
 
 ## Context
-Boards currently auto-fills with AI "descriptor" Selections (`source: 'ai_analysis'`)
-created by `POST /api/projects/[id]/analyze-images`. Because the tagging gate counts
-ALL ProductTags regardless of source, those AI tags auto-satisfy the gate, so fake
-selections land on Boards. The founder wants real (manually tagged) selections only.
+Guided "what's next" region at the top of the project detail view. A wizard sets
+project type (Completed / In Progress / Concept); the tracker picks up from there.
+Recreate the reference design in our existing design system (Tailwind tokens), not
+raw HTML. Timeline enum maps: PAST→Completed, PRESENT→In Progress, FUTURE→Concept.
 
-## Decisions (confirmed with user)
-- Keep room detection + auto-sort, but only sort photos above a confidence
-  threshold (recommend: skip `low`; sort `high`/`medium`). Don't sort bad misses.
-- Drop the descriptor selections that land on Boards entirely (stop creating them).
-- Boards tab shows ONLY if real tags/selections exist. No timeline gating.
+## Seven non-negotiable rules
+1. One stepper is the spine and owns all counts. Nothing else restates a number.
+2. Each step done/current/upcoming; current unmistakable.
+3. One next-action zone directly below the stepper; content changes with current step.
+4. Import cards aren't permanent — fill the zone on the materials step, collapse to
+   "Add more" bar once materials exist and the user moves on.
+5. Next action is the most prominent interactive element — no greyed-out CTA.
+6. Room-naming guidance is contextual to the Rooms step body copy, never floating.
+7. Tracker adapts to type — different sequences + copy; never show steps that don't apply.
 
 ## Plan
-- [x] 1. `analyze-images/route.ts`: delete Phases 3 & 4 (Selection + ProductTag
-      descriptor creation). Keep Phases 1-2 (room detect + sort).
-- [x] 2. Room-sort confidence threshold: add `roomConfidence` to RoomAnalysis +
-      batch/single prompts + validation; route Phase 2 only assigns confident photos.
-- [x] 3. `ProjectTabs.tsx`: Boards `visible: totalSelections > 0`; remove the
-      lock UI + `boardsLocked` prop.
-- [x] 4. `page.tsx`: drop `boardsLocked`; default-view + redirect respect
-      `boardsVisible` (totalSelections > 0).
-- [x] 5. Wipe script `scripts/wipe-ai-descriptors.ts` (dry-run default, --apply)
-      + console command for La Gorce.
-- [x] 6. Typecheck, verify, commit, push.
+- [x] 1. `src/lib/publish/computeTrackerState.ts` — pure derivation + TRACKER_TYPES
+      (sequences, materialsKey, end-cap notes, exact copy per step). currentStep =
+      first incomplete step. materialsExist flag. No React.
+- [x] 2. `src/app/project/[id]/ProjectProgressTracker.tsx` — client component.
+      `.tracker` card: stepper (top) + next-action zone (bottom). Step states, 2px
+      track + down-tick, two zone modes (normal / materials grid), collapsed bar.
+      CTAs navigate to the relevant `?view=` (where the real action UI lives).
+- [x] 3. `src/app/project/[id]/page.tsx` — derive tracker inputs from existing data
+      (publishReadiness gates + totalSelections + isPublished), mount between
+      ProjectHeader and ProjectTabs.
+- [x] 4. `src/app/project/[id]/ProjectHeader.tsx` — drop "X rooms · Y items" from the
+      meta row (rule 1: the stepper owns those counts now; matches reference meta).
+- [x] 5. Typecheck (clean on changed files; repo has a pre-existing 1052-error
+      baseline unrelated to this work), derivation sanity-checked, commit, push.
 
 ## Review
-- **Descriptors stopped at the root.** Removed the Selection/ProductTag creation
-  from the analyze-images route, so NO caller (board view, presentation import,
-  upload modal) produces `ai_analysis` descriptors anymore. The route now stops
-  at room sorting.
-- **Room sorting kept + made honest.** Added a `roomConfidence` signal from the
-  vision model. Threshold = `medium` (constant `ROOM_SORT_MIN_CONFIDENCE`): photos
-  the model is `high`/`medium` sure of get auto-sorted; `low`/omitted are held back
-  for manual sorting. "Misses badly" no longer auto-files. Tunable in one place.
-- **Boards gated on real tags.** Boards tab is `visible` only when the project has
-  selections (`totalSelections > 0`), regardless of timeline. Default-view and the
-  boards→media redirect respect the same rule. Removed the old timeline-based
-  `boardsLocked` lock UI entirely.
-- **Room auto-sort still fires** at upload time (ProjectCreationModal:700,
-  MediaSection:171/578) with the new threshold. The old board-view auto-trigger is
-  now an unreachable no-op (Boards only shows once selections exist → rooms exist).
-- Verified: `tsc` adds zero new errors (only the pre-existing es5/Map-iteration
-  artifact remains); phase5e CI check passes (phantomCalls=0).
-
-## Wipe command (run against the DB)
-    npx tsx scripts/wipe-ai-descriptors.ts            # dry-run, shows counts
-    npx tsx scripts/wipe-ai-descriptors.ts --apply    # deletes ai_analysis sels + tags
+- **Adaptive, type-driven tracker.** `TRACKER_TYPES` encodes the three sequences,
+  materials step, end-cap notes, and exact copy. `deriveTrackerState` derives the
+  current step from real completion (first incomplete), never from clicking.
+  Verified all three types + the screenshot state via a throwaway tsx harness.
+- **Reused the readiness gates.** Completion comes from `computePublishReadiness`
+  gates + selection count + publish state, so the tracker and the in-context spine
+  never disagree. No new data model, no schema change.
+- **Seven rules honored.** (1) Stepper owns counts; header meta now reads
+  "Started … · Last edit …" only. (2) done/current/upcoming with gold-only current
+  + soft ring + ink-filled done. (3) one zone below the stepper, content keyed to
+  current step. (4) import cards only on the materials step before materials exist,
+  then collapse to the "Add more" bar — matches the screenshot exactly. (5) primary
+  CTA on accent, never disabled. (6) room-naming guidance lives in the Rooms-step
+  body copy. (7) sequences differ per type; inapplicable steps never render.
+- **Tokens.** Used canonical design-system tokens (folio-stone-100/700,
+  folio-accent-700, folio-gold-ornament, --accent/--accent-hover, surface-*,
+  folio-border-*, font-metricsMono for formats). No raw HTML, no new globals.
+- **CTA wiring.** Routes to the surface that already hosts each action (Media for
+  upload/materials/tag/interview, Publish for publish/share). No dead, greyed CTA.
+- **Follow-up (flagged, out of scope):** the in-context `PublishSpine` inside the
+  Media tab still restates a status line. The top tracker is now the canonical
+  spine; a later pass could retire that status line to fully satisfy rule 1 across
+  every surface.
+</content>
