@@ -123,4 +123,21 @@ picks a file type — they drop one document and we call the right backend.
 session but the parse step is an existing server-side TODO ("Integrate with actual
 import agent"), so spreadsheet extraction into products is not implemented yet. The
 upload + dedicated call are wired; the parser is a backend follow-up.
+
+---
+
+## Update — tag a product by URL inside the manual tagger
+
+This is where per-photo URL tagging belongs (the materials-step "From a website"
+card was removed precisely because it was project-wide, not photo-specific). The
+"Select Product" dialog now has a Search / Paste a link toggle:
+
+- **Paste a link** → `POST /api/scrape-product` `{url}` returns name / image / price
+  / brand for a preview the designer confirms.
+- On "Tag Product", in URL mode we `POST /api/products` (`isPending: true`) to
+  create the product stub, then `POST /api/tag-product-to-image` with the new id at
+  the placed dot. Search mode is unchanged.
+
+The product lands at the exact `{x, y}` the designer clicked, on the specific photo
+— the URL is now in reference to a photo, as intended.
 </content>
