@@ -1,13 +1,14 @@
 'use client';
 
 import Link from 'next/link';
-import { Check, ArrowRight, Plus, Presentation, Globe, Images } from 'lucide-react';
+import { Check, ArrowRight, Plus, Presentation, Globe, FileSpreadsheet } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import {
   TRACKER_TYPES,
   IMPORT_CARDS,
   type TrackerState,
   type TrackerStep,
+  type TrackerAction,
   type ImportCard,
 } from '@/lib/publish/computeTrackerState';
 
@@ -19,20 +20,22 @@ interface ProjectProgressTrackerProps {
 const IMPORT_ICONS = {
   presentation: Presentation,
   globe: Globe,
-  images: Images,
+  sheet: FileSpreadsheet,
 } as const;
 
 /**
- * Where each step's primary action lives. The tracker stays decoupled from the
- * action UIs: it routes the user to the surface that hosts them (Media hosts
- * uploader / materials / tag-review / interview; Publish hosts the publish and
- * share flows). This keeps a single set of action handlers in the codebase.
+ * Turn a CTA action into a route. The tracker stays decoupled from the action
+ * UIs: it routes to the surface that hosts them and names the flow via the
+ * `action` query param. The Media surface reads that param and opens the
+ * matching existing flow (uploader / imports / materials / tag review /
+ * interview). Publish routes to the Publish view instead. This keeps a single
+ * set of action handlers in the codebase.
  */
-function actionHref(projectId: string, stepKey: string): string {
-  if (stepKey === 'publish' || stepKey === 'share') {
+function actionHref(projectId: string, action: TrackerAction): string {
+  if (action === 'publish') {
     return `/project/${projectId}?view=publish`;
   }
-  return `/project/${projectId}?view=media`;
+  return `/project/${projectId}?view=media&action=${action}`;
 }
 
 /**
@@ -69,7 +72,6 @@ export default function ProjectProgressTracker({
         ) : (
           <NextActionZone
             projectId={projectId}
-            stepKey={current.key}
             copy={copy}
             showCollapsedBar={showCollapsedBar}
           />
@@ -189,12 +191,10 @@ function StepMarker({ step }: { step: TrackerStep }) {
 
 function NextActionZone({
   projectId,
-  stepKey,
   copy,
   showCollapsedBar,
 }: {
   projectId: string;
-  stepKey: string;
   copy: import('@/lib/publish/computeTrackerState').StepCopy;
   showCollapsedBar: boolean;
 }) {
@@ -213,7 +213,7 @@ function NextActionZone({
       </p>
 
       <div className="mt-5 flex items-center gap-5">
-        <PrimaryCta href={actionHref(projectId, stepKey)}>{copy.cta}</PrimaryCta>
+        <PrimaryCta href={actionHref(projectId, copy.action)}>{copy.cta}</PrimaryCta>
         {copy.secondary && (
           <Link
             href={`/project/${projectId}?view=publish`}
@@ -268,7 +268,7 @@ function MaterialsZone({
             key={card.key}
             card={card}
             primary={i === 0}
-            href={`/project/${projectId}?view=media`}
+            href={actionHref(projectId, card.action)}
           />
         ))}
       </div>
@@ -333,7 +333,7 @@ function CollapsedMaterialsBar({ projectId }: { projectId: string }) {
     <div className="mb-6 flex items-center gap-4 rounded-[14px] bg-surface-ground px-5 py-3.5">
       {/* Overlapping icon chips */}
       <div className="flex items-center -space-x-2">
-        {(['images', 'globe', 'presentation'] as const).map(key => {
+        {(['sheet', 'globe', 'presentation'] as const).map(key => {
           const Icon = IMPORT_ICONS[key];
           return (
             <span
@@ -352,7 +352,7 @@ function CollapsedMaterialsBar({ projectId }: { projectId: string }) {
       </p>
 
       <Link
-        href={`/project/${projectId}?view=media`}
+        href={actionHref(projectId, 'materials')}
         className="inline-flex items-center gap-1.5 rounded-[10px] border border-folio-border-subtle bg-surface-canvas px-3.5 py-2 text-[14px] font-medium text-folio-text-secondary transition-colors duration-[220ms] hover:border-folio-border-strong hover:text-folio-text-primary"
       >
         <Plus className="w-3.5 h-3.5" aria-hidden />

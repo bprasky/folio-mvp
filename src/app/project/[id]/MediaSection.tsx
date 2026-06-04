@@ -1,21 +1,18 @@
 'use client';
 
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { useRouter } from 'next/navigation';
-import { FaUpload, FaCheckCircle, FaCloudUploadAlt, FaFileImport } from 'react-icons/fa';
-import { Camera, FileSpreadsheet, Presentation } from 'lucide-react';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { FaUpload, FaCloudUploadAlt, FaFileImport } from 'react-icons/fa';
 import RoomGroupedMedia from './RoomGroupedMedia';
 import ProjectCreationModal from '@/components/ProjectCreationModal';
 import { PresentationImportModal } from '@/components/import/PresentationImportModal';
 import { PdfSpecImportModal } from '@/components/import/PdfSpecImportModal';
+import { WebsiteImportModal } from '@/components/import/WebsiteImportModal';
 import { InterviewModal } from '@/components/posting/interview/InterviewModal';
 import { ProjectImageTagger } from '@/components/project/ProjectImageTagger';
-import PublishSpine from './PublishSpine';
 import MaterialsStep from './MaterialsStep';
 import TagReviewPanel from './TagReviewPanel';
-import { publishProjectAction } from '@/app/actions/projects';
 import type { EditorialState } from '@/lib/editorial/getEditorialState';
-import type { CtaAction, PublishReadiness } from '@/lib/publish/computePublishReadiness';
 
 interface ProductTag {
   id: string;
@@ -54,17 +51,16 @@ interface MediaSectionProps {
   projectPost?: any;
   isPublished?: boolean;
   editorialState?: EditorialState;
-  publishReadiness: PublishReadiness;
 }
 
-export default function MediaSection({ project, isOwner, images, projectPost, publishReadiness }: MediaSectionProps) {
+export default function MediaSection({ project, isOwner, images, projectPost }: MediaSectionProps) {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [showUploadModal, setShowUploadModal] = useState(false);
   const [showInterviewModal, setShowInterviewModal] = useState(false);
   const [showTagger, setShowTagger] = useState(false);
   const [showMaterials, setShowMaterials] = useState(false);
   const [showTagReview, setShowTagReview] = useState(false);
-  const [isPublishing, setIsPublishing] = useState(false);
   const [selectedHeroImageId, setSelectedHeroImageId] = useState<string | null>(null);
   const [existingPost, setExistingPost] = useState<any>(null);
 
@@ -72,6 +68,7 @@ export default function MediaSection({ project, isOwner, images, projectPost, pu
   const [isDragOver, setIsDragOver] = useState(false);
   const [showPresentationImport, setShowPresentationImport] = useState(false);
   const [showPdfSpecImport, setShowPdfSpecImport] = useState(false);
+  const [showWebsiteImport, setShowWebsiteImport] = useState(false);
   const [pendingFiles, setPendingFiles] = useState<File[]>([]);
   const [rooms, setRooms] = useState<Array<{ id: string; name: string; type?: string | null }>>([]);
   const dropZoneRef = useRef<HTMLDivElement>(null);
@@ -191,47 +188,48 @@ export default function MediaSection({ project, isOwner, images, projectPost, pu
     input.click();
   }, []);
 
-  // --- Publish spine (spec 20) — single CTA dispatch ---------------------
-  const handlePublish = useCallback(async () => {
-    setIsPublishing(true);
-    try {
-      await publishProjectAction({ projectId: project.id });
-      router.refresh();
-    } catch (err) {
-      console.error('[MediaSection] publish failed:', err);
-      alert(err instanceof Error ? err.message : 'Failed to publish project');
-    } finally {
-      setIsPublishing(false);
-    }
-  }, [project.id, router]);
+  // --- Progress tracker dispatch -----------------------------------------
+  // The tracker (top of the page) names a flow via `?action=` and routes here.
+  // Open the matching existing flow, then strip the param so a refresh or a
+  // back-navigation does not re-trigger it. Each import modal self-serves file
+  // selection, so opening it directly is enough.
+  useEffect(() => {
+    const action = searchParams.get('action');
+    if (!action) return;
 
-  const handleSpineAction = useCallback(
-    (action: CtaAction) => {
-      switch (action) {
-        case 'openUploader':
-          setShowUploadModal(true);
-          break;
-        case 'scrollToUncategorized':
-          document
-            .getElementById('uploaded-media-section')
-            ?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-          break;
-        case 'openMaterials':
-          setShowMaterials(true);
-          break;
-        case 'openTagReview':
-          setShowTagReview(true);
-          break;
-        case 'startInterview':
-          setShowInterviewModal(true);
-          break;
-        case 'publish':
-          handlePublish();
-          break;
-      }
-    },
-    [handlePublish],
-  );
+    const params = new URLSearchParams(searchParams.toString());
+    params.delete('action');
+    router.replace(`/project/${project.id}?${params.toString()}`, { scroll: false });
+
+    switch (action) {
+      case 'upload':
+        setShowUploadModal(true);
+        break;
+      case 'sort-rooms':
+        document
+          .getElementById('uploaded-media-section')
+          ?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        break;
+      case 'import-presentation':
+        setShowPresentationImport(true);
+        break;
+      case 'import-website':
+        setShowWebsiteImport(true);
+        break;
+      case 'import-specs':
+        setShowPdfSpecImport(true);
+        break;
+      case 'materials':
+        setShowMaterials(true);
+        break;
+      case 'tag':
+        setShowTagReview(true);
+        break;
+      case 'interview':
+        setShowInterviewModal(true);
+        break;
+    }
+  }, [searchParams, router, project.id]);
 
   const handleDraftGenerated = useCallback(() => {
     router.push(`/project/${project.id}?view=publish`);
@@ -312,88 +310,11 @@ export default function MediaSection({ project, isOwner, images, projectPost, pu
     }
   }, [projectPost]);
 
-  // Count uploaded media by type
-  const photoCount = images.filter(img => !img.name?.match(/\.(pdf|pptx|xlsx|csv)$/i)).length;
-  const presentationCount = images.filter(img => img.name?.match(/\.(pdf|pptx)$/i)).length;
-
   return (
     <div className="space-y-6">
-      {/* Publish spine — the gated spine + single CTA (spec 20 §2, §5). */}
-      {isOwner && images.length > 0 && (
-        <PublishSpine
-          readiness={publishReadiness}
-          onAction={handleSpineAction}
-          onSkipStory={handlePublish}
-          isBusy={isPublishing}
-        />
-      )}
-
-      {/* Intro */}
-      <p className="folio-body text-folio-text-secondary">
-        Upload your project materials. We'll extract products, rooms, and specifications automatically.
-      </p>
-
-      {/* Media Type Skeleton Cards */}
-      {isOwner && (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          {/* Photos Card */}
-          <button
-            onClick={() => setShowUploadModal(true)}
-            className="group text-left rounded-[20px] border border-folio-border-subtle bg-surface-ground p-5 hover:border-[var(--accent)] hover:shadow-sm transition-all"
-          >
-            <Camera className="w-6 h-6 text-[var(--accent)] mb-3" />
-            <h3 className="folio-ui font-semibold text-folio-text-primary mb-1">Photos</h3>
-            <p className="folio-meta text-folio-text-tertiary mb-3">
-              JPG, PNG, HEIC, WebP
-            </p>
-            {photoCount > 0 ? (
-              <span className="folio-meta text-[var(--accent)] flex items-center gap-1">
-                <FaCheckCircle className="w-3 h-3" /> {photoCount} photos uploaded
-              </span>
-            ) : (
-              <span className="folio-meta text-[var(--accent)] group-hover:text-[var(--accent-hover)]">
-                Upload
-              </span>
-            )}
-          </button>
-
-          {/* Presentation Card */}
-          <button
-            onClick={handleImportPresentation}
-            className="group text-left rounded-[20px] border border-folio-border-subtle bg-surface-ground p-5 hover:border-[var(--accent)] hover:shadow-sm transition-all"
-          >
-            <Presentation className="w-6 h-6 text-[var(--accent)] mb-3" />
-            <h3 className="folio-ui font-semibold text-folio-text-primary mb-1">Presentation</h3>
-            <p className="folio-meta text-folio-text-tertiary mb-3">
-              PPTX, PDF, Keynote
-            </p>
-            {presentationCount > 0 ? (
-              <span className="folio-meta text-[var(--accent)] flex items-center gap-1">
-                <FaCheckCircle className="w-3 h-3" /> {presentationCount} imported
-              </span>
-            ) : (
-              <span className="folio-meta text-[var(--accent)] group-hover:text-[var(--accent-hover)]">
-                Import
-              </span>
-            )}
-          </button>
-
-          {/* Material Schedule Card */}
-          <button
-            onClick={handleImportPdfSpecs}
-            className="group text-left rounded-[20px] border border-folio-border-subtle bg-surface-ground p-5 hover:border-[var(--accent)] hover:shadow-sm transition-all"
-          >
-            <FileSpreadsheet className="w-6 h-6 text-[var(--accent)] mb-3" />
-            <h3 className="folio-ui font-semibold text-folio-text-primary mb-1">Material Schedule</h3>
-            <p className="folio-meta text-folio-text-tertiary mb-3">
-              XLSX, CSV, PDF specs
-            </p>
-            <span className="folio-meta text-[var(--accent)] group-hover:text-[var(--accent-hover)]">
-              Import
-            </span>
-          </button>
-        </div>
-      )}
+      {/* The progress tracker at the top of the page now owns the "what's next"
+          guidance and every import entry point. This surface is just the media
+          itself plus the flows the tracker routes into. */}
 
       {/* Uploaded Media Section */}
       <section
@@ -611,6 +532,17 @@ export default function MediaSection({ project, isOwner, images, projectPost, pu
         rooms={rooms}
         initialFile={pendingFiles.length > 0 ? pendingFiles[0] : undefined}
         onComplete={handlePdfSpecImportComplete}
+      />
+
+      {/* Website Import Modal — products scraped from a URL. */}
+      <WebsiteImportModal
+        open={showWebsiteImport}
+        onOpenChange={setShowWebsiteImport}
+        projectId={project.id}
+        onComplete={() => {
+          setShowWebsiteImport(false);
+          router.refresh();
+        }}
       />
     </div>
   );

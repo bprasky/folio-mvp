@@ -22,6 +22,22 @@
 export type TrackerType = 'completed' | 'inProgress' | 'concept';
 export type StepState = 'done' | 'current' | 'upcoming';
 
+/**
+ * The action a CTA dispatches. The tracker turns these into a route that the
+ * Media surface consumes (`?view=media&action=<X>`) to open the matching
+ * existing flow. `publish` is the exception: it routes to the Publish view.
+ */
+export type TrackerAction =
+  | 'upload'
+  | 'sort-rooms'
+  | 'import-presentation'
+  | 'import-website'
+  | 'import-specs'
+  | 'materials'
+  | 'tag'
+  | 'interview'
+  | 'publish';
+
 /** Copy for one step's next-action zone. Conviction-driven, direct, no hedging. */
 export interface StepCopy {
   /** The phrase after the "Next ·" / "Ready ·" eyebrow, e.g. "Tag products". */
@@ -30,6 +46,8 @@ export interface StepCopy {
   body: string;
   /** Primary CTA label. The most prominent interactive element — never disabled. */
   cta: string;
+  /** The flow the primary CTA opens. */
+  action: TrackerAction;
   /** Optional secondary text button. */
   secondary?: string;
   /** Final step: the eyebrow reads "Ready ·" instead of "Next ·". */
@@ -54,12 +72,18 @@ export interface TypeDef {
 export interface ImportCard {
   key: string;
   /** Lucide icon name resolved by the component. */
-  icon: 'presentation' | 'globe' | 'images';
+  icon: 'presentation' | 'globe' | 'sheet';
   name: string;
   formats: string;
   cta: string;
+  /** The import flow this card opens. */
+  action: TrackerAction;
 }
 
+/**
+ * The materials step brings products into the project. Each card maps to an
+ * existing import flow: a presentation deck, a website, or a spec sheet.
+ */
 export const IMPORT_CARDS: ImportCard[] = [
   {
     key: 'presentation',
@@ -67,6 +91,7 @@ export const IMPORT_CARDS: ImportCard[] = [
     name: 'From a presentation',
     formats: 'PDF · PPTX · KEY',
     cta: 'Import deck',
+    action: 'import-presentation',
   },
   {
     key: 'website',
@@ -74,13 +99,15 @@ export const IMPORT_CARDS: ImportCard[] = [
     name: 'From a website',
     formats: 'URL',
     cta: 'Paste a link',
+    action: 'import-website',
   },
   {
-    key: 'images',
-    icon: 'images',
-    name: 'From your files',
-    formats: 'JPG · PNG · HEIC',
-    cta: 'Upload files',
+    key: 'specs',
+    icon: 'sheet',
+    name: 'From a spec sheet',
+    formats: 'XLSX · CSV · PDF',
+    cta: 'Import specs',
+    action: 'import-specs',
   },
 ];
 
@@ -106,24 +133,28 @@ export const TRACKER_TYPES: Record<TrackerType, TypeDef> = {
         headline: 'Bring the finished work in',
         body: 'Upload the photography that shows the project at its best. This is the foundation every reader sees first.',
         cta: 'Add photos',
+        action: 'upload',
       },
       rooms: {
         eyebrow: 'Sort into rooms',
         headline: 'Group the photos by room',
         body: 'Name each room the way you spoke about it on site. "Primary Bath," not "Bathroom 2." Specific names read like a designer wrote them, because one did.',
         cta: 'Sort rooms',
+        action: 'sort-rooms',
       },
       tags: {
         eyebrow: 'Tag products',
         headline: 'Tag the products in your photos',
         body: 'A tagged photo tells readers exactly what they are looking at and where to buy it. Untagged photos still publish, but they cannot earn.',
         cta: 'Tag products',
+        action: 'tag',
       },
       story: {
         eyebrow: 'Tell the story',
         headline: 'Say why this project matters',
         body: 'A short interview turns a gallery into an editorial. Answer a few questions and we write the draft for you.',
         cta: 'Start interview',
+        action: 'interview',
         secondary: 'Skip story for now',
       },
       publish: {
@@ -131,6 +162,7 @@ export const TRACKER_TYPES: Record<TrackerType, TypeDef> = {
         headline: 'Send it to the world',
         body: 'Everything is in place. Publish to make this project public, shareable, and ready to earn.',
         cta: 'Publish project',
+        action: 'publish',
         ready: true,
       },
     },
@@ -151,18 +183,21 @@ export const TRACKER_TYPES: Record<TrackerType, TypeDef> = {
         headline: 'Start with what you have',
         body: 'Progress shots, samples, installs in flight. Add whatever documents the project as it stands today.',
         cta: 'Add photos',
+        action: 'upload',
       },
       rooms: {
         eyebrow: 'Sort into rooms',
         headline: 'Group the photos by room',
         body: 'Name each room the way you spoke about it on site. "Primary Bath," not "Bathroom 2." Specific names keep the project legible as it grows.',
         cta: 'Sort rooms',
+        action: 'sort-rooms',
       },
       products: {
         eyebrow: 'Add products',
         headline: 'Build the product list as you go',
         body: 'Import the deck or the links you are already working from. Every product you add now is one you will not chase down at the finish.',
         cta: 'Add products',
+        action: 'materials',
       },
     },
   },
@@ -183,24 +218,28 @@ export const TRACKER_TYPES: Record<TrackerType, TypeDef> = {
         headline: 'Collect the direction',
         body: 'Pull together the images that set the tone. References are the language you will use to pitch the idea.',
         cta: 'Add references',
+        action: 'upload',
       },
       spaces: {
         eyebrow: 'Define spaces',
         headline: 'Name the spaces you are designing',
         body: 'Group references by the space they belong to. Name each one plainly, the way you would describe it to the client.',
         cta: 'Add spaces',
+        action: 'sort-rooms',
       },
       products: {
         eyebrow: 'Add products',
         headline: 'Specify the pieces you have in mind',
         body: 'Import the deck or the links you are sourcing from. A concept with real products reads as a plan, not a mood board.',
         cta: 'Add products',
+        action: 'materials',
       },
       share: {
         eyebrow: 'Share',
         headline: 'Send the concept to your client',
         body: 'Share a private link so the client sees the direction exactly as you built it. Nothing goes public.',
         cta: 'Share concept',
+        action: 'publish',
         ready: true,
       },
     },
