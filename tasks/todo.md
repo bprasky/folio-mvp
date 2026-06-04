@@ -80,4 +80,47 @@ tracker to drive every existing flow.
 - Verified every CTA/card resolves to a concrete action route + derivation still
   correct; typecheck clean on changed files. The earlier rule-1 follow-up is now
   resolved: the only spine left is the top tracker.
+
+---
+
+## Update — collapse the materials-step cards to import + manual
+
+Audited the backends: presentation (`/api/import/*`, PDF+PPTX) creates pending
+photo tags; spec (`/api/projects/{id}/extract-pdf`, PDF only) extracts a spec
+list; no XLSX/CSV product parser exists; the website modal scrapes a page for
+images (not a per-photo product tag). Acted on the founder's direction:
+
+- **One "Import a document" card** (PDF · PPTX, primary) → the presentation
+  pipeline. One upload, we parse it; the designer no longer picks a file type.
+  The pipeline produces pending product tags on photos, which is the Tags-step
+  goal. (PDF deck-vs-schedule auto-detection is a backend follow-up; the
+  finish-schedule extractor stays reachable via the Materials chooser.)
+- **New "Tag by hand" card** → opens the existing `ProjectImageTagger`.
+- **Removed the website/URL card** — it dumped page images into the project, not
+  a product onto a specific photo. Per-photo URL tagging belongs inside the
+  manual tagger (follow-up), not as a project-wide import here.
+- Dropped the now-unused `WebsiteImportModal` mount and the `import-website` /
+  `import-specs` actions.
+
+---
+
+## Update — one document upload, routed to the dedicated call by file type
+
+New `DocumentImportModal`: a single dropzone (PDF · PPTX · XLSX · CSV). Selection
+happens inside the modal, so no native-picker gesture is needed. `MediaSection`'s
+`routeDocument` dispatches by extension:
+
+- **`.pdf` → `PdfSpecImportModal`** (`/api/projects/{id}/extract-pdf`).
+- **`.pptx` / `.ppt` → `PresentationImportModal`** (`/api/import/presentation`).
+- **`.xlsx` / `.xls` / `.csv` → `/api/import/finish-schedule`** (posted directly;
+  no review modal exists for spreadsheets).
+
+`PdfSpecImportModal` is keyed on the handed file so a routed upload mounts fresh
+and seeds its `initialFile` (the modal only reads it on mount). The designer never
+picks a file type — they drop one document and we call the right backend.
+
+**Server caveat:** `/api/import/finish-schedule` stores the file and creates a
+session but the parse step is an existing server-side TODO ("Integrate with actual
+import agent"), so spreadsheet extraction into products is not implemented yet. The
+upload + dedicated call are wired; the parser is a backend follow-up.
 </content>

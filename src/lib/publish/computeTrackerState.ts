@@ -30,11 +30,10 @@ export type StepState = 'done' | 'current' | 'upcoming';
 export type TrackerAction =
   | 'upload'
   | 'sort-rooms'
-  | 'import-presentation'
-  | 'import-website'
-  | 'import-specs'
+  | 'import-doc'
   | 'materials'
   | 'tag'
+  | 'tag-by-hand'
   | 'interview'
   | 'publish';
 
@@ -72,42 +71,38 @@ export interface TypeDef {
 export interface ImportCard {
   key: string;
   /** Lucide icon name resolved by the component. */
-  icon: 'presentation' | 'globe' | 'sheet';
+  icon: 'document' | 'cursor';
   name: string;
+  /** Short sub-line under the name (formats, or a hint for the manual path). */
   formats: string;
   cta: string;
-  /** The import flow this card opens. */
+  /** The flow this card opens. */
   action: TrackerAction;
 }
 
 /**
- * The materials step brings products into the project. Each card maps to an
- * existing import flow: a presentation deck, a website, or a spec sheet.
+ * The materials step gets products onto photos two ways: import a document and
+ * let us extract the products, or tag by hand. We take one document upload and
+ * parse it ourselves rather than making the designer pick a file type. URL
+ * tagging is intentionally absent here — it belongs to a specific photo inside
+ * the manual tagger, not as a project-wide import.
  */
 export const IMPORT_CARDS: ImportCard[] = [
   {
-    key: 'presentation',
-    icon: 'presentation',
-    name: 'From a presentation',
-    formats: 'PDF · PPTX · KEY',
-    cta: 'Import deck',
-    action: 'import-presentation',
+    key: 'document',
+    icon: 'document',
+    name: 'Import a document',
+    formats: 'PDF · PPTX · XLSX · CSV',
+    cta: 'Import',
+    action: 'import-doc',
   },
   {
-    key: 'website',
-    icon: 'globe',
-    name: 'From a website',
-    formats: 'URL',
-    cta: 'Paste a link',
-    action: 'import-website',
-  },
-  {
-    key: 'specs',
-    icon: 'sheet',
-    name: 'From a spec sheet',
-    formats: 'XLSX · CSV · PDF',
-    cta: 'Import specs',
-    action: 'import-specs',
+    key: 'manual',
+    icon: 'cursor',
+    name: 'Tag by hand',
+    formats: 'Click products on each photo',
+    cta: 'Start tagging',
+    action: 'tag-by-hand',
   },
 ];
 

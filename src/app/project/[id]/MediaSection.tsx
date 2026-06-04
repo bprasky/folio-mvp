@@ -7,10 +7,10 @@ import RoomGroupedMedia from './RoomGroupedMedia';
 import ProjectCreationModal from '@/components/ProjectCreationModal';
 import { PresentationImportModal } from '@/components/import/PresentationImportModal';
 import { PdfSpecImportModal } from '@/components/import/PdfSpecImportModal';
-import { WebsiteImportModal } from '@/components/import/WebsiteImportModal';
 import { InterviewModal } from '@/components/posting/interview/InterviewModal';
 import { ProjectImageTagger } from '@/components/project/ProjectImageTagger';
 import MaterialsStep from './MaterialsStep';
+import DocumentImportModal from './DocumentImportModal';
 import TagReviewPanel from './TagReviewPanel';
 import type { EditorialState } from '@/lib/editorial/getEditorialState';
 
@@ -68,7 +68,7 @@ export default function MediaSection({ project, isOwner, images, projectPost }: 
   const [isDragOver, setIsDragOver] = useState(false);
   const [showPresentationImport, setShowPresentationImport] = useState(false);
   const [showPdfSpecImport, setShowPdfSpecImport] = useState(false);
-  const [showWebsiteImport, setShowWebsiteImport] = useState(false);
+  const [showDocImport, setShowDocImport] = useState(false);
   const [pendingFiles, setPendingFiles] = useState<File[]>([]);
   const [rooms, setRooms] = useState<Array<{ id: string; name: string; type?: string | null }>>([]);
   const dropZoneRef = useRef<HTMLDivElement>(null);
@@ -188,6 +188,46 @@ export default function MediaSection({ project, isOwner, images, projectPost }: 
     input.click();
   }, []);
 
+  // Spreadsheets have no review modal; post straight to the finish-schedule call.
+  const handleFinishScheduleUpload = useCallback(
+    async (file: File) => {
+      try {
+        const fd = new FormData();
+        fd.append('file', file);
+        fd.append('projectId', project.id);
+        const res = await fetch('/api/import/finish-schedule', { method: 'POST', body: fd });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Import failed');
+        router.refresh();
+      } catch (err) {
+        console.error('[MediaSection] finish-schedule import failed:', err);
+        alert(err instanceof Error ? err.message : 'Failed to import that file');
+      }
+    },
+    [project.id, router],
+  );
+
+  // Single document upload, routed to the dedicated pipeline by file type:
+  // PDF -> the PDF spec extractor, PowerPoint -> the presentation importer,
+  // spreadsheet -> the finish-schedule call.
+  const routeDocument = useCallback(
+    (file: File) => {
+      setShowDocImport(false);
+      const lower = file.name.toLowerCase();
+      if (/\.(xlsx|xls|csv)$/.test(lower)) {
+        handleFinishScheduleUpload(file);
+        return;
+      }
+      setPendingFiles([file]);
+      if (lower.endsWith('.pdf')) {
+        setShowPdfSpecImport(true);
+      } else {
+        setShowPresentationImport(true);
+      }
+    },
+    [handleFinishScheduleUpload],
+  );
+
   // --- Progress tracker dispatch -----------------------------------------
   // The tracker (top of the page) names a flow via `?action=` and routes here.
   // Open the matching existing flow, then strip the param so a refresh or a
@@ -210,20 +250,20 @@ export default function MediaSection({ project, isOwner, images, projectPost }: 
           .getElementById('uploaded-media-section')
           ?.scrollIntoView({ behavior: 'smooth', block: 'start' });
         break;
-      case 'import-presentation':
-        setShowPresentationImport(true);
-        break;
-      case 'import-website':
-        setShowWebsiteImport(true);
-        break;
-      case 'import-specs':
-        setShowPdfSpecImport(true);
+      case 'import-doc':
+        // One upload for every document type. DocumentImportModal hands the file
+        // back to routeDocument, which dispatches to the dedicated pipeline by
+        // file type.
+        setShowDocImport(true);
         break;
       case 'materials':
         setShowMaterials(true);
         break;
       case 'tag':
         setShowTagReview(true);
+        break;
+      case 'tag-by-hand':
+        setShowTagger(true);
         break;
       case 'interview':
         setShowInterviewModal(true);
@@ -518,8 +558,17 @@ export default function MediaSection({ project, isOwner, images, projectPost }: 
         onComplete={handlePresentationImportComplete}
       />
 
-      {/* PDF Spec Import Modal */}
+      {/* Document import — one upload, routed to the dedicated pipeline by type. */}
+      <DocumentImportModal
+        open={showDocImport}
+        onClose={() => setShowDocImport(false)}
+        onSelect={routeDocument}
+      />
+
+      {/* PDF Spec Import Modal. Keyed on the handed file so a routed upload loads
+          into a fresh instance (the modal seeds its file from initialFile once). */}
       <PdfSpecImportModal
+        key={pendingFiles[0]?.name ?? 'pdf-spec'}
         open={showPdfSpecImport}
         onOpenChange={(open) => {
           setShowPdfSpecImport(open);
@@ -532,17 +581,6 @@ export default function MediaSection({ project, isOwner, images, projectPost }: 
         rooms={rooms}
         initialFile={pendingFiles.length > 0 ? pendingFiles[0] : undefined}
         onComplete={handlePdfSpecImportComplete}
-      />
-
-      {/* Website Import Modal — products scraped from a URL. */}
-      <WebsiteImportModal
-        open={showWebsiteImport}
-        onOpenChange={setShowWebsiteImport}
-        projectId={project.id}
-        onComplete={() => {
-          setShowWebsiteImport(false);
-          router.refresh();
-        }}
       />
     </div>
   );

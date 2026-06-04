@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { Check, ArrowRight, Plus, Presentation, Globe, FileSpreadsheet } from 'lucide-react';
+import { Check, ArrowRight, Plus, FileText, MousePointerClick } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import {
   TRACKER_TYPES,
@@ -18,9 +18,8 @@ interface ProjectProgressTrackerProps {
 }
 
 const IMPORT_ICONS = {
-  presentation: Presentation,
-  globe: Globe,
-  sheet: FileSpreadsheet,
+  document: FileText,
+  cursor: MousePointerClick,
 } as const;
 
 /**
@@ -262,7 +261,7 @@ function MaterialsZone({
         {copy.body}
       </p>
 
-      <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-3">
+      <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2">
         {IMPORT_CARDS.map((card, i) => (
           <ImportCardView
             key={card.key}
@@ -333,7 +332,7 @@ function CollapsedMaterialsBar({ projectId }: { projectId: string }) {
     <div className="mb-6 flex items-center gap-4 rounded-[14px] bg-surface-ground px-5 py-3.5">
       {/* Overlapping icon chips */}
       <div className="flex items-center -space-x-2">
-        {(['sheet', 'globe', 'presentation'] as const).map(key => {
+        {(['document', 'cursor'] as const).map(key => {
           const Icon = IMPORT_ICONS[key];
           return (
             <span
