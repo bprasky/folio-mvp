@@ -1,437 +1,445 @@
 // @idor-allow: public-read reason="Public product metadata scraper used during onboarding flows"
 export const dynamic = 'force-dynamic';
+export const runtime = 'nodejs';
+export const maxDuration = 60;
 
 import { NextRequest, NextResponse } from 'next/server';
+import * as cheerio from 'cheerio';
 
-// Enhanced function to scrape product data from various sites
-async function scrapeProductData(url: string) {
+const FETCH_TIMEOUT_MS = 15000;
+const RENDER_TIMEOUT_MS = 45000;
+
+/* ----------------------------------------------------------------------------
+ * Layered fetch — same approach as the designer-website photo scraper
+ * (src/app/api/import/website/route.ts): Browserless rendered HTML when
+ * configured, direct fetch otherwise.
+ * ------------------------------------------------------------------------- */
+
+/** Resolve a possibly-relative URL against the page URL; null if unusable. */
+function resolveUrl(src: string | undefined | null, base: string): string | null {
+  if (!src) return null;
+  const trimmed = src.trim();
+  if (!trimmed || trimmed.startsWith('data:')) return null;
   try {
-    const response = await fetch(url, {
+    return new URL(trimmed, base).toString();
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Tier 1 fetch: rendered HTML via Browserless /content if configured, else a
+ * direct fetch (works for server-rendered product pages).
+ */
+async function fetchHtml(url: string): Promise<string | null> {
+  const token = process.env.BROWSERLESS_API_KEY;
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
+  try {
+    if (token) {
+      const res = await fetch(`https://production-sfo.browserless.io/content?token=${token}`, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ url }),
+        signal: controller.signal,
+      });
+      if (res.ok) return await res.text();
+      console.error('[scrape-product] Browserless /content failed:', res.status);
+      // fall through to direct fetch
+    }
+    const direct = await fetch(url, {
       headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+        'User-Agent':
+          'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        Accept: 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
         'Accept-Language': 'en-US,en;q=0.5',
-        'Accept-Encoding': 'gzip, deflate, br',
-        'DNT': '1',
-        'Connection': 'keep-alive',
-        'Upgrade-Insecure-Requests': '1',
-      }
+      },
+      signal: controller.signal,
     });
-    
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-    
-    const html = await response.text();
-    const urlObj = new URL(url);
-    const hostname = urlObj.hostname.replace('www.', '');
-    
-    // Site-specific parsing
-    if (hostname.includes('artistictile.com')) {
-      return parseArtisticTile(html, url);
-    }
-    
-    // Generic parsing for other sites
-    return parseGenericSite(html, url);
-    
-  } catch (error) {
-    console.error('Error scraping product data:', error);
-    throw error;
+    if (!direct.ok) return null;
+    return await direct.text();
+  } catch (err: any) {
+    if (err?.name === 'AbortError') console.log('[scrape-product] fetch timed out');
+    else console.error('[scrape-product] fetch error:', err?.message);
+    return null;
+  } finally {
+    clearTimeout(timeoutId);
   }
 }
 
-// Specific parser for Artistic Tile
-function parseArtisticTile(html: string, url: string) {
-  // Extract title from h1 or title tag
-  const nameMatches = [
-    html.match(/<h1[^>]*class="[^"]*"[^>]*>([^<]+)<\/h1>/i),
-    html.match(/<h1[^>]*>([^<]+)<\/h1>/i),
-    html.match(/<title[^>]*>([^<]+)<\/title>/i)
-  ];
-  
-  let name = 'Artistic Tile Product';
-  for (const match of nameMatches) {
-    if (match && match[1]) {
-      name = match[1].trim().replace(/\s+/g, ' ');
-      break;
-    }
-  }
-  
-  // Extract price - Artistic Tile uses specific patterns like "$32.00 S/F"
-  const pricePatterns = [
-    /\$[\d,]+\.?\d*\s*(?:S\/F|per\s+S\/F|square\s+foot)/gi,
-    /\$[\d,]+\.?\d*\s*(?:per\s+box|\/box)/gi,
-    /\$[\d,]+\.?\d*/g
-  ];
-  
-  let price = '';
-  for (const pattern of pricePatterns) {
-    const matches = html.match(pattern);
-    if (matches && matches.length > 0) {
-      price = matches[0].trim();
-      break;
-    }
-  }
-  
-  // Extract description from meta tags or product details
-  const description = extractMetaContent(html, 'og:description') || 
-                     extractMetaContent(html, 'description') || 
-                     extractTextFromSelector(html, '.product-description') ||
-                     extractTextFromSelector(html, '.product-details') ||
-                     'Premium tile product from Artistic Tile';
-  
-  // Extract image
-  const image = extractMetaContent(html, 'og:image') || 
-                extractImageFromSelector(html, '.product-image img') ||
-                '';
-  
-  // Extract specifications
-  const dimensions = extractSpecification(html, 'Size') || 
-                    extractDimensionsFromText(html) || '';
-  
-  const materials = extractMaterials(html, name);
-  const colors = extractColors(html, name);
-  
-  // Determine category based on content
-  let category = 'Tile';
-  if (name.toLowerCase().includes('marble')) category = 'Natural Stone';
-  if (name.toLowerCase().includes('porcelain')) category = 'Porcelain';
-  if (name.toLowerCase().includes('glass')) category = 'Glass';
-  if (name.toLowerCase().includes('mosaic')) category = 'Mosaic';
-  
-  // Generate tags
-  const tags = generateTags(name, description, url);
-  
-  return {
-    name: name.trim(),
-    price: price || '$0.00',
-    image: image,
-    description: description.trim(),
-    brand: 'Artistic Tile',
-    category: category,
-    tags: tags,
-    materials: materials,
-    dimensions: dimensions,
-    colors: colors
-  };
+/* ----------------------------------------------------------------------------
+ * Single-product field extraction
+ * ------------------------------------------------------------------------- */
+
+interface ProductFields {
+  name: string | null;
+  image: string | null;
+  description: string | null;
+  brand: string | null;
+  price: string | null;
+  currency: string | null;
 }
 
-// Generic parser for other sites
-function parseGenericSite(html: string, url: string) {
-  const urlObj = new URL(url);
-  const hostname = urlObj.hostname.replace('www.', '');
-  const brand = hostname.split('.')[0];
-  
-  // Extract basic product information
-  const name = extractMetaContent(html, 'og:title') || 
-               extractMetaContent(html, 'twitter:title') || 
-               extractTitle(html) || 
-               'Untitled Product';
-  
-  const image = extractMetaContent(html, 'og:image') || 
-                extractMetaContent(html, 'twitter:image') || 
-                '';
-  
-  const description = extractMetaContent(html, 'og:description') || 
-                     extractMetaContent(html, 'twitter:description') || 
-                     extractMetaContent(html, 'description') || 
-                     '';
-  
-  // Enhanced price extraction
-  const pricePatterns = [
-    /\$[\d,]+\.?\d*\s*(?:each|ea\.?|per\s+piece)/gi,
-    /\$[\d,]+\.?\d*\s*(?:S\/F|per\s+S\/F|square\s+foot)/gi,
-    /\$[\d,]+\.?\d*/g,
-    /price[^>]*>[\s]*\$?[\d,]+\.?\d*/gi,
-    /cost[^>]*>[\s]*\$?[\d,]+\.?\d*/gi
-  ];
-  
-  let price = '';
-  for (const pattern of pricePatterns) {
-    const matches = html.match(pattern);
-    if (matches && matches.length > 0) {
-      price = matches[0].replace(/[^\d.,$\/\s]/g, '').trim();
-      if (price && price.includes('$')) {
-        break;
+const EMPTY_FIELDS: ProductFields = {
+  name: null,
+  image: null,
+  description: null,
+  brand: null,
+  price: null,
+  currency: null,
+};
+
+/** First usable image URL out of a JSON-LD `image` value (string | array | object). */
+function ldImage(node: any): string | null {
+  const img = node?.image;
+  if (!img) return null;
+  if (typeof img === 'string') return img;
+  if (Array.isArray(img)) {
+    const first = img[0];
+    return typeof first === 'string' ? first : first?.url ?? null;
+  }
+  return img.url ?? null;
+}
+
+function ldBrand(node: any): string | null {
+  const b = node?.brand;
+  if (!b) return null;
+  if (typeof b === 'string') return b;
+  return b.name ?? null;
+}
+
+function ldOffer(node: any): any | null {
+  const o = node?.offers;
+  if (!o) return null;
+  return Array.isArray(o) ? o[0] ?? null : o;
+}
+
+/**
+ * Tier 1: cheerio multi-strategy. JSON-LD Product schema is the gold standard;
+ * OpenGraph / Twitter / meta tags and the page title fill anything missing.
+ */
+function extractProductFromHtml(html: string, baseUrl: string): ProductFields {
+  const $ = cheerio.load(html);
+
+  // JSON-LD Product node, if present.
+  let ld: any = null;
+  $('script[type="application/ld+json"]').each((_, el) => {
+    if (ld) return;
+    try {
+      const json = JSON.parse($(el).contents().text() || '{}');
+      const nodes = Array.isArray(json)
+        ? json
+        : Array.isArray(json['@graph'])
+          ? json['@graph']
+          : [json];
+      for (const node of nodes) {
+        const t = node?.['@type'];
+        if (t === 'Product' || (Array.isArray(t) && t.includes('Product'))) {
+          ld = node;
+          break;
+        }
+      }
+    } catch {
+      /* ignore malformed JSON-LD */
+    }
+  });
+
+  const offer = ldOffer(ld);
+
+  const meta = (sel: string) => $(sel).attr('content')?.trim() || null;
+
+  const name =
+    (ld?.name && String(ld.name).trim()) ||
+    meta('meta[property="og:title"]') ||
+    meta('meta[name="twitter:title"]') ||
+    $('h1').first().text().trim() ||
+    $('title').text().trim() ||
+    null;
+
+  const image = resolveUrl(
+    ldImage(ld) ||
+      meta('meta[property="og:image"]') ||
+      meta('meta[name="twitter:image"]') ||
+      $('img').first().attr('src'),
+    baseUrl,
+  );
+
+  const description =
+    (ld?.description && String(ld.description).trim()) ||
+    meta('meta[property="og:description"]') ||
+    meta('meta[name="twitter:description"]') ||
+    meta('meta[name="description"]') ||
+    null;
+
+  const brand =
+    ldBrand(ld) ||
+    meta('meta[property="og:brand"]') ||
+    meta('meta[property="product:brand"]') ||
+    null;
+
+  // Price: structured first, then a `$` fallback scanned from the page text.
+  let price: string | null = null;
+  let currency: string | null = null;
+  if (offer?.price != null) {
+    price = String(offer.price);
+    currency = offer.priceCurrency ?? null;
+  } else if (offer?.lowPrice != null) {
+    price = String(offer.lowPrice);
+    currency = offer.priceCurrency ?? null;
+  } else {
+    const metaAmount =
+      meta('meta[property="product:price:amount"]') || meta('meta[property="og:price:amount"]');
+    if (metaAmount) {
+      price = metaAmount;
+      currency =
+        meta('meta[property="product:price:currency"]') ||
+        meta('meta[property="og:price:currency"]');
+    } else {
+      const m = $('body').text().match(/\$[\d,]+\.?\d{0,2}/);
+      if (m) {
+        price = m[0];
+        currency = 'USD';
       }
     }
   }
-  
-  // Generate tags and category
-  const tags = generateTags(name, description, url);
-  const category = determineCategory(tags, name);
-  const materials = extractMaterials(html, name);
-  
+
+  return { name, image, description, brand, price, currency };
+}
+
+/* ----------------------------------------------------------------------------
+ * Tier 2: rendered DOM via Browserless /function (JS-hydrated product pages)
+ * ------------------------------------------------------------------------- */
+
+const PRODUCT_HARVEST_CODE = `export default async function ({ page, context }) {
+  const { url } = context;
+  await page.goto(url, { waitUntil: 'networkidle2', timeout: 30000 }).catch(() => {});
+  await new Promise((r) => setTimeout(r, 600));
+  const data = await page.evaluate(() => {
+    const metaC = (sel) => { const e = document.querySelector(sel); return e ? e.getAttribute('content') : null; };
+    let ld = null;
+    document.querySelectorAll('script[type="application/ld+json"]').forEach((s) => {
+      if (ld) return;
+      try {
+        const j = JSON.parse(s.textContent || '{}');
+        const nodes = Array.isArray(j) ? j : (Array.isArray(j['@graph']) ? j['@graph'] : [j]);
+        for (const n of nodes) {
+          const t = n && n['@type'];
+          if (t === 'Product' || (Array.isArray(t) && t.indexOf('Product') !== -1)) { ld = n; break; }
+        }
+      } catch (e) {}
+    });
+    const ldImg = ld && ld.image
+      ? (Array.isArray(ld.image)
+          ? (typeof ld.image[0] === 'string' ? ld.image[0] : (ld.image[0] && ld.image[0].url))
+          : (typeof ld.image === 'string' ? ld.image : ld.image.url))
+      : null;
+    const offer = ld && ld.offers ? (Array.isArray(ld.offers) ? ld.offers[0] : ld.offers) : null;
+    const h1 = document.querySelector('h1');
+    return {
+      name: (ld && ld.name) || metaC('meta[property="og:title"]') || (h1 && h1.textContent ? h1.textContent.trim() : null) || (document.title || '').trim() || null,
+      image: ldImg || metaC('meta[property="og:image"]') || metaC('meta[name="twitter:image"]') || null,
+      description: (ld && ld.description) || metaC('meta[property="og:description"]') || metaC('meta[name="description"]') || null,
+      brand: (ld && ld.brand && (ld.brand.name || ld.brand)) || metaC('meta[property="product:brand"]') || null,
+      price: (offer && (offer.price != null ? offer.price : offer.lowPrice)) || metaC('meta[property="product:price:amount"]') || metaC('meta[property="og:price:amount"]') || null,
+      currency: (offer && offer.priceCurrency) || metaC('meta[property="product:price:currency"]') || null,
+    };
+  });
+  return { data, type: 'application/json' };
+}`;
+
+/** Tier 2: only runs when Browserless is configured and Tier 1 missed. */
+async function renderedExtract(url: string): Promise<ProductFields> {
+  const token = process.env.BROWSERLESS_API_KEY;
+  if (!token) return { ...EMPTY_FIELDS };
+
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), RENDER_TIMEOUT_MS);
+  try {
+    const res = await fetch(`https://production-sfo.browserless.io/function?token=${token}`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ code: PRODUCT_HARVEST_CODE, context: { url } }),
+      signal: controller.signal,
+    });
+    if (!res.ok) {
+      console.error('[scrape-product] Browserless /function failed:', res.status);
+      return { ...EMPTY_FIELDS };
+    }
+    const payload = await res.json();
+    const d = payload?.data ?? payload ?? {};
+    return {
+      name: d.name ? String(d.name).trim() : null,
+      image: resolveUrl(d.image, url),
+      description: d.description ? String(d.description).trim() : null,
+      brand: d.brand ? String(d.brand).trim() : null,
+      price: d.price != null ? String(d.price) : null,
+      currency: d.currency ?? null,
+    };
+  } catch (err: any) {
+    if (err?.name === 'AbortError') console.log('[scrape-product] /function timed out');
+    else console.error('[scrape-product] /function error:', err?.message);
+    return { ...EMPTY_FIELDS };
+  } finally {
+    clearTimeout(timeoutId);
+  }
+}
+
+/** Prefer the primary field, fall back to the secondary one. */
+function merge(primary: ProductFields, secondary: ProductFields): ProductFields {
   return {
-    name: name.trim(),
-    price: price || '$0.00',
-    image: image,
-    description: description.trim(),
-    brand: brand.charAt(0).toUpperCase() + brand.slice(1),
-    category: category,
-    tags: tags,
-    materials: materials,
-    dimensions: extractDimensionsFromText(html),
-    colors: extractColors(html, name)
+    name: primary.name || secondary.name,
+    image: primary.image || secondary.image,
+    description: primary.description || secondary.description,
+    brand: primary.brand || secondary.brand,
+    price: primary.price || secondary.price,
+    currency: primary.currency || secondary.currency,
   };
 }
 
-// Helper functions
-function extractMetaContent(html: string, property: string): string {
-  const regex = new RegExp(`<meta[^>]*(?:property|name)=["']${property}["'][^>]*content=["']([^"']*)["']`, 'i');
-  const match = html.match(regex);
-  return match ? match[1] : '';
+function formatPrice(amount: string | null, currency: string | null): string {
+  if (!amount) return '$0.00';
+  const num = parseFloat(String(amount).replace(/[^0-9.]/g, ''));
+  if (!Number.isFinite(num)) return String(amount);
+  if (!currency || /usd|\$/i.test(currency)) return `$${num.toFixed(2)}`;
+  return `${num.toFixed(2)} ${currency.toUpperCase()}`;
 }
 
-function extractTitle(html: string): string {
-  const titleMatch = html.match(/<title[^>]*>([^<]+)<\/title>/i);
-  return titleMatch ? titleMatch[1] : '';
-}
-
-function extractTextFromSelector(html: string, selector: string): string {
-  // Simple text extraction - in production, use a proper HTML parser
-  const classMatch = selector.match(/\.([^.\s]+)/);
-  if (classMatch) {
-    const className = classMatch[1];
-    const regex = new RegExp(`class=["'][^"']*${className}[^"']*["'][^>]*>([^<]+)`, 'i');
-    const match = html.match(regex);
-    return match ? match[1].trim() : '';
-  }
-  return '';
-}
-
-function extractImageFromSelector(html: string, selector: string): string {
-  // Extract image src from selector
-  const imgRegex = /<img[^>]+src=["']([^"']+)["'][^>]*>/gi;
-  const matches = html.match(imgRegex);
-  if (matches && matches.length > 0) {
-    const srcMatch = matches[0].match(/src=["']([^"']+)["']/);
-    return srcMatch ? srcMatch[1] : '';
-  }
-  return '';
-}
-
-function extractSpecification(html: string, specName: string): string {
-  const regex = new RegExp(`${specName}[^>]*>([^<]+)`, 'i');
-  const match = html.match(regex);
-  return match ? match[1].trim() : '';
-}
+/* ----------------------------------------------------------------------------
+ * Lightweight enrichment (category / tags / materials / colors / dimensions),
+ * kept so the response shape is unchanged for existing callers.
+ * ------------------------------------------------------------------------- */
 
 function extractDimensionsFromText(html: string): string {
-  // Look for dimension patterns
-  const dimensionPatterns = [
+  const patterns = [
     /\d+["']\s*[xX×]\s*\d+["']\s*[xX×]\s*\d+["']/g,
     /\d+["']\s*[xX×]\s*\d+["']/g,
     /\d+\s*[xX×]\s*\d+\s*[xX×]\s*\d+/g,
-    /\d+\s*[xX×]\s*\d+/g
+    /\d+\s*[xX×]\s*\d+/g,
   ];
-  
-  for (const pattern of dimensionPatterns) {
+  for (const pattern of patterns) {
     const matches = html.match(pattern);
-    if (matches && matches.length > 0) {
-      return matches[0];
-    }
+    if (matches && matches.length > 0) return matches[0];
   }
   return '';
 }
 
-function extractMaterials(html: string, name: string): string[] {
-  const materials = [];
-  const content = (html + ' ' + name).toLowerCase();
-  
-  const materialKeywords = {
-    'marble': 'Marble',
-    'granite': 'Granite',
-    'porcelain': 'Porcelain',
-    'ceramic': 'Ceramic',
-    'glass': 'Glass',
-    'wood': 'Wood',
-    'metal': 'Metal',
-    'fabric': 'Fabric',
-    'stone': 'Stone',
-    'travertine': 'Travertine',
-    'limestone': 'Limestone',
-    'slate': 'Slate',
-    'quartzite': 'Quartzite'
-  };
-  
-  for (const [keyword, material] of Object.entries(materialKeywords)) {
-    if (content.includes(keyword)) {
-      materials.push(material);
-    }
+function keywordHits(content: string, map: Record<string, string>): string[] {
+  const out: string[] = [];
+  for (const [keyword, label] of Object.entries(map)) {
+    if (content.includes(keyword)) out.push(label);
   }
-  
-  return Array.from(new Set(materials)); // Remove duplicates
+  return Array.from(new Set(out));
+}
+
+function extractMaterials(html: string, name: string): string[] {
+  return keywordHits((html + ' ' + name).toLowerCase(), {
+    marble: 'Marble', granite: 'Granite', porcelain: 'Porcelain', ceramic: 'Ceramic',
+    glass: 'Glass', wood: 'Wood', metal: 'Metal', fabric: 'Fabric', stone: 'Stone',
+    travertine: 'Travertine', limestone: 'Limestone', slate: 'Slate', quartzite: 'Quartzite',
+  });
 }
 
 function extractColors(html: string, name: string): string[] {
-  const colors = [];
-  const content = (html + ' ' + name).toLowerCase();
-  
-  const colorKeywords = {
-    'white': 'White',
-    'black': 'Black',
-    'gray': 'Gray',
-    'grey': 'Gray',
-    'brown': 'Brown',
-    'beige': 'Beige',
-    'blue': 'Blue',
-    'green': 'Green',
-    'red': 'Red',
-    'yellow': 'Yellow',
-    'gold': 'Gold',
-    'silver': 'Silver',
-    'bronze': 'Bronze',
-    'cream': 'Cream',
-    'ivory': 'Ivory',
-    'tan': 'Tan',
-    'charcoal': 'Charcoal'
-  };
-  
-  for (const [keyword, color] of Object.entries(colorKeywords)) {
-    if (content.includes(keyword)) {
-      colors.push(color);
-    }
-  }
-  
-  return Array.from(new Set(colors)); // Remove duplicates
+  return keywordHits((html + ' ' + name).toLowerCase(), {
+    white: 'White', black: 'Black', gray: 'Gray', grey: 'Gray', brown: 'Brown',
+    beige: 'Beige', blue: 'Blue', green: 'Green', red: 'Red', yellow: 'Yellow',
+    gold: 'Gold', silver: 'Silver', bronze: 'Bronze', cream: 'Cream', ivory: 'Ivory',
+    tan: 'Tan', charcoal: 'Charcoal',
+  });
 }
 
 function generateTags(name: string, description: string, url: string): string[] {
-  const tags = [];
   const content = (name + ' ' + description + ' ' + url).toLowerCase();
-  const urlPath = new URL(url).pathname.toLowerCase();
-  
-  // Product type tags
-  const productTypes = {
-    'chair': ['chair', 'seating'],
-    'sofa': ['sofa', 'seating'],
-    'table': ['table', 'furniture'],
-    'lamp': ['lamp', 'lighting'],
-    'rug': ['rug', 'textile'],
-    'bed': ['bed', 'bedroom'],
-    'tile': ['tile', 'flooring'],
-    'marble': ['marble', 'stone'],
-    'mosaic': ['mosaic', 'tile'],
-    'backsplash': ['backsplash', 'kitchen'],
-    'bathroom': ['bathroom'],
-    'kitchen': ['kitchen'],
-    'floor': ['flooring'],
-    'wall': ['wall']
+  const urlPath = (() => { try { return new URL(url).pathname.toLowerCase(); } catch { return ''; } })();
+  const productTypes: Record<string, string[]> = {
+    chair: ['chair', 'seating'], sofa: ['sofa', 'seating'], table: ['table', 'furniture'],
+    lamp: ['lamp', 'lighting'], rug: ['rug', 'textile'], bed: ['bed', 'bedroom'],
+    tile: ['tile', 'flooring'], marble: ['marble', 'stone'], mosaic: ['mosaic', 'tile'],
+    backsplash: ['backsplash', 'kitchen'], bathroom: ['bathroom'], kitchen: ['kitchen'],
+    floor: ['flooring'], wall: ['wall'],
   };
-  
+  const tags: string[] = [];
   for (const [keyword, tagList] of Object.entries(productTypes)) {
-    if (content.includes(keyword) || urlPath.includes(keyword)) {
-      tags.push(...tagList);
-    }
+    if (content.includes(keyword) || urlPath.includes(keyword)) tags.push(...tagList);
   }
-  
-  return Array.from(new Set(tags)); // Remove duplicates
+  return Array.from(new Set(tags));
 }
 
 function determineCategory(tags: string[], name: string): string {
-  if (tags.some(tag => ['tile', 'marble', 'mosaic'].includes(tag))) {
-    return 'Tile & Stone';
-  }
-  if (tags.some(tag => ['chair', 'sofa', 'table', 'bed'].includes(tag))) {
-    return 'Furniture';
-  }
-  if (tags.includes('lighting')) {
-    return 'Lighting';
-  }
-  if (tags.includes('textile')) {
-    return 'Textiles';
-  }
+  if (tags.some(t => ['tile', 'marble', 'mosaic'].includes(t))) return 'Tile & Stone';
+  if (tags.some(t => ['chair', 'sofa', 'table', 'bed'].includes(t))) return 'Furniture';
+  if (tags.includes('lighting')) return 'Lighting';
+  if (tags.includes('textile')) return 'Textiles';
   return 'Decor';
 }
+
+/* ------------------------------------------------------------------------- */
 
 export async function POST(request: NextRequest) {
   try {
     const { url } = await request.json();
-    
+
     if (!url) {
       return NextResponse.json({ error: 'URL is required' }, { status: 400 });
     }
-    
-    // Validate URL format
     try {
       new URL(url);
     } catch {
       return NextResponse.json({ error: 'Invalid URL format' }, { status: 400 });
     }
-    
-    // For demo purposes, return mock data for some common sites
-    if (url.includes('westelm.com') || url.includes('cb2.com') || url.includes('wayfair.com') || 
-        url.includes('ikea.com') || url.includes('target.com') || url.includes('amazon.com')) {
-      
-      const mockData = await generateMockProductData(url);
-      return NextResponse.json(mockData);
+
+    // Tier 1 — static / Browserless-rendered HTML + cheerio.
+    const html = await fetchHtml(url);
+    let fields: ProductFields = html ? extractProductFromHtml(html, url) : { ...EMPTY_FIELDS };
+
+    // Tier 2 — rendered DOM harvest, only when Tier 1 missed the essentials.
+    if (!fields.name || !fields.image) {
+      const rendered = await renderedExtract(url);
+      fields = merge(fields, rendered);
     }
-    
-    // For all other URLs including Artistic Tile, try actual scraping
-    const productData = await scrapeProductData(url);
-    return NextResponse.json(productData);
-    
+
+    if (!fields.name && !fields.image && !fields.price) {
+      return NextResponse.json(
+        { error: 'Could not read product details from that link.' },
+        { status: 502 },
+      );
+    }
+
+    const name = (fields.name || 'Untitled Product').trim();
+    const description = fields.description?.trim() || '';
+    const enrichHtml = html || '';
+    const tags = generateTags(name, description, url);
+
+    let brand = fields.brand?.trim() || null;
+    if (!brand) {
+      try {
+        const host = new URL(url).hostname.replace('www.', '').split('.')[0];
+        brand = host.charAt(0).toUpperCase() + host.slice(1);
+      } catch {
+        brand = null;
+      }
+    }
+
+    const image = fields.image || '';
+
+    return NextResponse.json({
+      name,
+      price: formatPrice(fields.price, fields.currency),
+      image,
+      imageUrls: image ? [image] : [],
+      description,
+      brand,
+      category: determineCategory(tags, name),
+      tags,
+      materials: extractMaterials(enrichHtml, name),
+      dimensions: extractDimensionsFromText(enrichHtml),
+      colors: extractColors(enrichHtml, name),
+    });
   } catch (error) {
-    console.error('API Error:', error);
+    console.error('[scrape-product] error:', error);
     return NextResponse.json(
       { error: 'Failed to scrape product data. Please check the URL and try again.' },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
-
-// Mock data generator for demo purposes
-async function generateMockProductData(url: string) {
-  const urlObj = new URL(url);
-  const hostname = urlObj.hostname.replace('www.', '');
-  const brand = hostname.split('.')[0];
-  
-  // Mock product data based on common patterns
-  const mockProducts = [
-    {
-      name: 'Modern Accent Chair',
-      price: '$399.00',
-      image: 'https://source.unsplash.com/800x600?modern,chair,furniture',
-      description: 'A sleek and comfortable accent chair perfect for modern living spaces. Features premium upholstery and solid wood legs.',
-      brand: brand.charAt(0).toUpperCase() + brand.slice(1),
-      category: 'Furniture',
-      tags: ['chair', 'accent', 'modern', 'seating'],
-      materials: ['Fabric', 'Wood'],
-      dimensions: '28"W x 30"D x 32"H',
-      colors: ['Gray', 'Navy', 'Beige']
-    },
-    {
-      name: 'Contemporary Floor Lamp',
-      price: '$199.00',
-      image: 'https://source.unsplash.com/800x600?floor,lamp,lighting',
-      description: 'Elegant floor lamp with adjustable height and warm LED lighting. Perfect for reading nooks and living areas.',
-      brand: brand.charAt(0).toUpperCase() + brand.slice(1),
-      category: 'Lighting',
-      tags: ['lamp', 'floor', 'lighting', 'contemporary'],
-      materials: ['Metal', 'Fabric'],
-      dimensions: '15"W x 15"D x 58"H',
-      colors: ['Black', 'Brass', 'White']
-    },
-    {
-      name: 'Handwoven Area Rug',
-      price: '$299.00',
-      image: 'https://source.unsplash.com/800x600?area,rug,textile',
-      description: 'Beautiful handwoven area rug with geometric patterns. Made from sustainable materials and perfect for any room.',
-      brand: brand.charAt(0).toUpperCase() + brand.slice(1),
-      category: 'Textiles',
-      tags: ['rug', 'handwoven', 'geometric', 'sustainable'],
-      materials: ['Wool', 'Cotton'],
-      dimensions: '8\' x 10\'',
-      colors: ['Multi', 'Blue', 'Neutral']
-    }
-  ];
-  
-  // Return a random mock product
-  const randomProduct = mockProducts[Math.floor(Math.random() * mockProducts.length)];
-  
-  // Simulate processing delay
-  await new Promise(resolve => setTimeout(resolve, 1500));
-  
-  return randomProduct;
-} 
