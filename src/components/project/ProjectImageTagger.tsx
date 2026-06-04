@@ -52,6 +52,20 @@ export function ProjectImageTagger({ projectId, onClose }: Props) {
   const [selectedProduct, setSelectedProduct] = useState<SearchProduct | null>(null);
   const [saving, setSaving] = useState(false);
   const [hoveredTagId, setHoveredTagId] = useState<string | null>(null);
+
+  // "Paste a link" mode — scrape a product URL, then tag it at the dot.
+  const [tagMode, setTagMode] = useState<"search" | "url">("search");
+  const [productUrl, setProductUrl] = useState("");
+  const [urlFetching, setUrlFetching] = useState(false);
+  const [urlPreview, setUrlPreview] = useState<{
+    name: string;
+    imageUrl: string | null;
+    price: string | null;
+    brand: string | null;
+    url: string;
+  } | null>(null);
+  const [urlError, setUrlError] = useState<string | null>(null);
+
   const imageRef = useRef<HTMLImageElement | null>(null);
   const searchTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -158,27 +172,101 @@ export function ProjectImageTagger({ projectId, onClose }: Props) {
     setShowProductSearch(true);
     setSearchTerm("");
     setSelectedProduct(null);
+    setTagMode("search");
+    setProductUrl("");
+    setUrlPreview(null);
+    setUrlError(null);
+  };
+
+  const closeProductPicker = () => {
+    setShowProductSearch(false);
+    setPendingDot(null);
+    setSelectedProduct(null);
+    setTagMode("search");
+    setProductUrl("");
+    setUrlPreview(null);
+    setUrlError(null);
+  };
+
+  // Scrape a product URL into a preview the designer can confirm before tagging.
+  const handleFetchUrl = async () => {
+    const url = productUrl.trim();
+    if (!url) return;
+    setUrlFetching(true);
+    setUrlError(null);
+    setUrlPreview(null);
+    try {
+      const res = await fetch("/api/scrape-product", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ url }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setUrlError(data.error || "Could not read that link.");
+        return;
+      }
+      setUrlPreview({
+        name: data.name || "Untitled product",
+        imageUrl: data.image || data.imageUrl || null,
+        price: data.price || null,
+        brand: data.brand || null,
+        url,
+      });
+    } catch {
+      setUrlError("Could not read that link.");
+    } finally {
+      setUrlFetching(false);
+    }
   };
 
   const handleSaveTag = async () => {
-    if (!pendingDot || !selectedProduct || !activeImage) return;
+    if (!pendingDot || !activeImage) return;
+    if (tagMode === "search" && !selectedProduct) return;
+    if (tagMode === "url" && !urlPreview) return;
     setSaving(true);
     try {
+      // In URL mode, create the product from the scraped preview first. It
+      // lands as a pending stub awaiting vendor claim.
+      let productId: string;
+      if (tagMode === "url" && urlPreview) {
+        const priceNum = parseFloat(
+          String(urlPreview.price ?? "").replace(/[^0-9.]/g, ""),
+        );
+        const createRes = await fetch("/api/products", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            name: urlPreview.name,
+            imageUrl: urlPreview.imageUrl,
+            price: Number.isFinite(priceNum) ? priceNum : undefined,
+            brand: urlPreview.brand,
+            url: urlPreview.url,
+            isPending: true,
+          }),
+        });
+        const created = await createRes.json();
+        if (!createRes.ok || !created.id) {
+          throw new Error(created.error || "Failed to create product");
+        }
+        productId = created.id;
+      } else {
+        productId = selectedProduct!.id;
+      }
+
       const res = await fetch("/api/tag-product-to-image", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           x: pendingDot.x,
           y: pendingDot.y,
-          productId: selectedProduct.id,
+          productId,
           imageId: activeImage.id,
           projectId,
         }),
       });
       if (res.ok) {
-        setPendingDot(null);
-        setShowProductSearch(false);
-        setSelectedProduct(null);
+        closeProductPicker();
         // Refresh image data — the useEffect watching `images` will
         // re-sync activeImage on the next render, so no need to do it here.
         await fetchImages();
@@ -502,32 +590,120 @@ export function ProjectImageTagger({ projectId, onClose }: Props) {
                 </p>
               </div>
               <button
-                onClick={() => {
-                  setShowProductSearch(false);
-                  setPendingDot(null);
-                }}
+                onClick={closeProductPicker}
                 className="text-folio-text-secondary hover:text-folio-text-primary"
               >
                 <FaTimes className="w-4 h-4" />
               </button>
             </div>
 
-            {/* Search input */}
-            <div className="px-5 py-3 border-b border-folio-border-subtle">
-              <div className="relative">
-                <FaSearch className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-folio-text-tertiary" />
-                <input
-                  type="text"
-                  placeholder="Search products..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full pl-9 pr-4 py-2 ridge-input text-sm"
-                  autoFocus
-                />
+            {/* Mode toggle — search the catalog, or paste a product link */}
+            <div className="px-5 pt-3">
+              <div className="inline-flex rounded-lg bg-surface-ground p-1 text-sm">
+                <button
+                  onClick={() => setTagMode("search")}
+                  className={`px-3 py-1.5 rounded-md font-medium transition-colors ${
+                    tagMode === "search"
+                      ? "bg-surface-canvas text-folio-text-primary shadow-sm"
+                      : "text-folio-text-secondary hover:text-folio-text-primary"
+                  }`}
+                >
+                  Search
+                </button>
+                <button
+                  onClick={() => setTagMode("url")}
+                  className={`px-3 py-1.5 rounded-md font-medium transition-colors ${
+                    tagMode === "url"
+                      ? "bg-surface-canvas text-folio-text-primary shadow-sm"
+                      : "text-folio-text-secondary hover:text-folio-text-primary"
+                  }`}
+                >
+                  Paste a link
+                </button>
               </div>
             </div>
 
+            {/* Search input */}
+            {tagMode === "search" && (
+              <div className="px-5 py-3 border-b border-folio-border-subtle">
+                <div className="relative">
+                  <FaSearch className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-folio-text-tertiary" />
+                  <input
+                    type="text"
+                    placeholder="Search products..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="w-full pl-9 pr-4 py-2 ridge-input text-sm"
+                    autoFocus
+                  />
+                </div>
+              </div>
+            )}
+
+            {/* Paste-a-link panel */}
+            {tagMode === "url" && (
+              <div className="flex-1 overflow-y-auto px-5 py-3 space-y-3">
+                <div className="flex gap-2">
+                  <input
+                    type="url"
+                    placeholder="https://vendor.com/product"
+                    value={productUrl}
+                    onChange={(e) => setProductUrl(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") handleFetchUrl();
+                    }}
+                    className="flex-1 px-3 py-2 ridge-input text-sm"
+                    autoFocus
+                  />
+                  <button
+                    onClick={handleFetchUrl}
+                    disabled={urlFetching || !productUrl.trim()}
+                    className="px-4 py-2 rounded-lg bg-[var(--accent)] text-white text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed hover:opacity-90 transition-opacity whitespace-nowrap"
+                  >
+                    {urlFetching ? "Reading…" : "Fetch"}
+                  </button>
+                </div>
+
+                {urlError && (
+                  <p className="folio-meta text-red-500">{urlError}</p>
+                )}
+
+                {!urlPreview && !urlFetching && !urlError && (
+                  <p className="text-center folio-meta text-folio-text-tertiary py-4">
+                    Paste a product link and we&apos;ll pull the details.
+                  </p>
+                )}
+
+                {urlPreview && (
+                  <div className="flex items-center gap-3 p-3 rounded-lg ring-2 ring-[var(--accent)] bg-[var(--accent)]/5">
+                    {urlPreview.imageUrl && (
+                      <div className="h-12 w-12 flex-shrink-0 overflow-hidden rounded-lg bg-surface-ground">
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img
+                          src={urlPreview.imageUrl}
+                          alt=""
+                          className="h-full w-full object-cover"
+                        />
+                      </div>
+                    )}
+                    <div className="flex-1 min-w-0">
+                      <div className="text-sm font-medium text-folio-text-primary truncate">
+                        {urlPreview.name}
+                      </div>
+                      <div className="text-xs text-folio-text-secondary truncate">
+                        {[urlPreview.brand, urlPreview.price]
+                          .filter(Boolean)
+                          .join(" · ") || "New product"}
+                      </div>
+                    </div>
+                    <FaCheck className="w-4 h-4 text-[var(--accent)] flex-shrink-0" />
+                  </div>
+                )}
+              </div>
+            )}
+
             {/* Results */}
+            {tagMode === "search" && (
             <div className="flex-1 overflow-y-auto px-5 py-3">
               {searching && (
                 <p className="text-center folio-meta text-folio-text-tertiary py-4">
@@ -582,21 +758,21 @@ export function ProjectImageTagger({ projectId, onClose }: Props) {
                 ))}
               </div>
             </div>
+            )}
 
             {/* Actions */}
             <div className="flex gap-3 px-5 py-4 border-t border-folio-border-subtle">
               <button
-                onClick={() => {
-                  setShowProductSearch(false);
-                  setPendingDot(null);
-                }}
+                onClick={closeProductPicker}
                 className="flex-1 px-4 py-2 ridge-card text-sm font-medium text-folio-text-primary hover:bg-surface-ground transition-colors text-center"
               >
                 Cancel
               </button>
               <button
                 onClick={handleSaveTag}
-                disabled={!selectedProduct || saving}
+                disabled={
+                  saving || (tagMode === "search" ? !selectedProduct : !urlPreview)
+                }
                 className="flex-1 px-4 py-2 rounded-lg bg-[var(--accent)] text-white text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed hover:opacity-90 transition-opacity flex items-center justify-center gap-2"
               >
                 {saving ? (
