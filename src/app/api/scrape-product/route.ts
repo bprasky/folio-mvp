@@ -5,6 +5,7 @@ export const maxDuration = 60;
 
 import { NextRequest, NextResponse } from 'next/server';
 import * as cheerio from 'cheerio';
+import { aiExtractProduct } from '@/lib/products/aiExtractProduct';
 
 const FETCH_TIMEOUT_MS = 15000;
 const RENDER_TIMEOUT_MS = 45000;
@@ -398,6 +399,24 @@ export async function POST(request: NextRequest) {
       fields = merge(fields, rendered);
     }
 
+    // Tier 3 — AI (Claude + web_search), only when the result is still thin
+    // (no name or no price). Cached + key-gated, so most scrapes never reach it.
+    let aiConfidence: string | null = null;
+    if (!fields.name || !fields.price) {
+      const ai = await aiExtractProduct(url);
+      if (ai) {
+        aiConfidence = ai.confidence;
+        fields = {
+          name: fields.name || ai.name,
+          image: fields.image, // AI is text-only; image stays with the cheap tiers
+          description: fields.description || ai.description,
+          brand: fields.brand || ai.brand,
+          price: fields.price || (ai.price != null ? String(ai.price) : null),
+          currency: fields.currency || ai.currency,
+        };
+      }
+    }
+
     if (!fields.name && !fields.image && !fields.price) {
       return NextResponse.json(
         { error: 'Could not read product details from that link.' },
@@ -434,6 +453,8 @@ export async function POST(request: NextRequest) {
       materials: extractMaterials(enrichHtml, name),
       dimensions: extractDimensionsFromText(enrichHtml),
       colors: extractColors(enrichHtml, name),
+      // Present only when Tier 3 (AI) ran; lets the UI flag low-confidence scrapes.
+      confidence: aiConfidence,
     });
   } catch (error) {
     console.error('[scrape-product] error:', error);
