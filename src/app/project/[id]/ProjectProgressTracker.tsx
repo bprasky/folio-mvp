@@ -1,0 +1,363 @@
+'use client';
+
+import Link from 'next/link';
+import { Check, ArrowRight, Plus, Presentation, Globe, Images } from 'lucide-react';
+import { cn } from '@/lib/utils';
+import {
+  TRACKER_TYPES,
+  IMPORT_CARDS,
+  type TrackerState,
+  type TrackerStep,
+  type ImportCard,
+} from '@/lib/publish/computeTrackerState';
+
+interface ProjectProgressTrackerProps {
+  projectId: string;
+  state: TrackerState;
+}
+
+const IMPORT_ICONS = {
+  presentation: Presentation,
+  globe: Globe,
+  images: Images,
+} as const;
+
+/**
+ * Where each step's primary action lives. The tracker stays decoupled from the
+ * action UIs: it routes the user to the surface that hosts them (Media hosts
+ * uploader / materials / tag-review / interview; Publish hosts the publish and
+ * share flows). This keeps a single set of action handlers in the codebase.
+ */
+function actionHref(projectId: string, stepKey: string): string {
+  if (stepKey === 'publish' || stepKey === 'share') {
+    return `/project/${projectId}?view=publish`;
+  }
+  return `/project/${projectId}?view=media`;
+}
+
+/**
+ * ProjectProgressTracker — the guided "what's next" region at the top of the
+ * project detail view. One stepper owns the counts (rule 1); one next-action
+ * zone sits directly below it and changes with the current step (rule 3).
+ */
+export default function ProjectProgressTracker({
+  projectId,
+  state,
+}: ProjectProgressTrackerProps) {
+  const { steps, currentIndex, materialsIndex, materialsExist, type, endCap } = state;
+  const def = TRACKER_TYPES[type];
+  const current = steps[currentIndex];
+  const copy = def.copy[current.key];
+
+  // Materials mode: the import cards fill the zone only on the materials step
+  // and only until materials exist. Once they exist, the zone shows that step's
+  // normal next-action and the cards collapse to a compact bar (rule 4).
+  const showImportCards = currentIndex === materialsIndex && !materialsExist;
+  const showCollapsedBar = materialsExist && !showImportCards;
+  const onLastStep = currentIndex === steps.length - 1;
+
+  return (
+    <section
+      aria-label="Project progress"
+      className="rounded-[20px] border border-folio-border-subtle bg-surface-canvas overflow-hidden"
+    >
+      <Stepper steps={steps} currentIndex={currentIndex} />
+
+      <div className="px-8 pb-8 pt-2">
+        {showImportCards ? (
+          <MaterialsZone projectId={projectId} copy={copy} />
+        ) : (
+          <NextActionZone
+            projectId={projectId}
+            stepKey={current.key}
+            copy={copy}
+            showCollapsedBar={showCollapsedBar}
+          />
+        )}
+
+        {endCap && onLastStep && (
+          <p className="mt-6 text-[13px] text-folio-text-tertiary">{endCap}</p>
+        )}
+      </div>
+    </section>
+  );
+}
+
+/* ----------------------------------------------------------------------------
+ * Stepper
+ * ------------------------------------------------------------------------- */
+
+const MARKER = 40; // px — circle diameter
+const MARKER_CENTER = MARKER / 2;
+
+function Stepper({ steps, currentIndex }: { steps: TrackerStep[]; currentIndex: number }) {
+  const n = steps.length;
+  // Marker centers sit at (i + 0.5)/n of the row width. The track spans the
+  // first center to the last center; the filled portion runs to the current
+  // center.
+  const edge = 50 / n; // % from row edge to first/last marker center
+  const filledWidth = (currentIndex / n) * 100; // % of row width
+
+  return (
+    <div className="relative px-8 pt-8 pb-7">
+      <div className="relative flex">
+        {/* 2px track behind the markers */}
+        <div
+          className="absolute h-0.5 bg-folio-stone-100"
+          style={{ top: MARKER_CENTER - 1, left: `${edge}%`, right: `${edge}%` }}
+          aria-hidden
+        />
+        <div
+          className="absolute h-0.5 bg-folio-stone-700"
+          style={{ top: MARKER_CENTER - 1, left: `${edge}%`, width: `${filledWidth}%` }}
+          aria-hidden
+        />
+
+        {steps.map(step => (
+          <StepMarker key={step.key} step={step} />
+        ))}
+
+        {/* Down-tick: a rotated square centered under the current step, pointing
+            into the next-action zone below. */}
+        <span
+          className="absolute -bottom-[7px] w-3 h-3 rotate-45 bg-surface-canvas border-r border-b border-folio-border-subtle"
+          style={{
+            left: `${((currentIndex + 0.5) / n) * 100}%`,
+            transform: 'translateX(-50%) rotate(45deg)',
+          }}
+          aria-hidden
+        />
+      </div>
+    </div>
+  );
+}
+
+function StepMarker({ step }: { step: TrackerStep }) {
+  const { state, label, count, index } = step;
+  const isDone = state === 'done';
+  const isCurrent = state === 'current';
+
+  return (
+    <div className="relative flex-1 flex flex-col items-center gap-2.5 z-[1]">
+      {/* Soft gold backing behind the current marker + label */}
+      {isCurrent && (
+        <span
+          className="absolute -inset-x-1 -top-1.5 -bottom-1.5 rounded-2xl bg-folio-gold-ornament/12"
+          aria-hidden
+        />
+      )}
+
+      <span
+        className={cn(
+          'relative inline-flex items-center justify-center rounded-full text-sm font-semibold transition-all duration-[220ms]',
+          isDone && 'bg-[#161614] text-white',
+          isCurrent &&
+            'bg-folio-gold-ornament text-white ring-4 ring-folio-gold-ornament/20',
+          !isDone && !isCurrent &&
+            'border border-folio-stone-100 text-folio-text-tertiary',
+        )}
+        style={{ width: MARKER, height: MARKER }}
+      >
+        {isDone ? <Check className="w-5 h-5" aria-hidden /> : index + 1}
+      </span>
+
+      <div className="relative flex flex-col items-center">
+        <span
+          className={cn(
+            'text-[14px] leading-none',
+            isDone && 'font-medium text-folio-text-primary',
+            isCurrent && 'font-semibold text-folio-accent-700',
+            !isDone && !isCurrent && 'text-folio-text-tertiary',
+          )}
+          aria-current={isCurrent ? 'step' : undefined}
+        >
+          {label}
+        </span>
+        {isDone && typeof count === 'number' && (
+          <span className="mt-1 text-[12px] text-folio-text-tertiary tabular-nums">
+            {count}
+          </span>
+        )}
+      </div>
+    </div>
+  );
+}
+
+/* ----------------------------------------------------------------------------
+ * Next-action zone — normal mode
+ * ------------------------------------------------------------------------- */
+
+function NextActionZone({
+  projectId,
+  stepKey,
+  copy,
+  showCollapsedBar,
+}: {
+  projectId: string;
+  stepKey: string;
+  copy: import('@/lib/publish/computeTrackerState').StepCopy;
+  showCollapsedBar: boolean;
+}) {
+  return (
+    <div>
+      {showCollapsedBar && <CollapsedMaterialsBar projectId={projectId} />}
+
+      <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-folio-gold-ornament">
+        {copy.ready ? 'Ready' : 'Next'} · {copy.eyebrow}
+      </p>
+      <h2 className="mt-2.5 text-[27px] font-semibold leading-tight text-folio-text-primary">
+        {copy.headline}
+      </h2>
+      <p className="mt-2 max-w-2xl text-[15px] leading-relaxed text-folio-text-secondary">
+        {copy.body}
+      </p>
+
+      <div className="mt-5 flex items-center gap-5">
+        <PrimaryCta href={actionHref(projectId, stepKey)}>{copy.cta}</PrimaryCta>
+        {copy.secondary && (
+          <Link
+            href={`/project/${projectId}?view=publish`}
+            className="text-[14px] font-medium text-folio-text-tertiary transition-colors duration-150 hover:text-folio-text-secondary"
+          >
+            {copy.secondary}
+          </Link>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function PrimaryCta({ href, children }: { href: string; children: React.ReactNode }) {
+  return (
+    <Link
+      href={href}
+      className="group inline-flex items-center gap-2 rounded-[12px] bg-[var(--accent)] px-6 py-3.5 text-[16px] font-semibold text-white shadow-[0_4px_14px_rgba(184,132,92,0.30)] transition-all duration-[220ms] hover:bg-[var(--accent-hover)] hover:shadow-[0_6px_18px_rgba(184,132,92,0.38)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)]/40"
+    >
+      {children}
+      <ArrowRight className="w-4 h-4 transition-transform duration-[220ms] group-hover:translate-x-0.5" />
+    </Link>
+  );
+}
+
+/* ----------------------------------------------------------------------------
+ * Next-action zone — materials mode (import cards)
+ * ------------------------------------------------------------------------- */
+
+function MaterialsZone({
+  projectId,
+  copy,
+}: {
+  projectId: string;
+  copy: import('@/lib/publish/computeTrackerState').StepCopy;
+}) {
+  return (
+    <div>
+      <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-folio-gold-ornament">
+        Next · {copy.eyebrow}
+      </p>
+      <h2 className="mt-2.5 text-[27px] font-semibold leading-tight text-folio-text-primary">
+        {copy.headline}
+      </h2>
+      <p className="mt-2 max-w-2xl text-[15px] leading-relaxed text-folio-text-secondary">
+        {copy.body}
+      </p>
+
+      <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-3">
+        {IMPORT_CARDS.map((card, i) => (
+          <ImportCardView
+            key={card.key}
+            card={card}
+            primary={i === 0}
+            href={`/project/${projectId}?view=media`}
+          />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function ImportCardView({
+  card,
+  primary,
+  href,
+}: {
+  card: ImportCard;
+  primary: boolean;
+  href: string;
+}) {
+  const Icon = IMPORT_ICONS[card.icon];
+  return (
+    <div
+      className={cn(
+        'flex flex-col rounded-[14px] border bg-surface-canvas p-5 transition-colors duration-[220ms]',
+        primary ? 'border-[var(--accent)]' : 'border-folio-border-subtle',
+      )}
+    >
+      <span
+        className={cn(
+          'inline-flex h-10 w-10 items-center justify-center rounded-[10px]',
+          primary
+            ? 'bg-[var(--accent)]/10 text-[var(--accent)]'
+            : 'bg-surface-ground text-folio-text-secondary',
+        )}
+      >
+        <Icon className="w-5 h-5" aria-hidden />
+      </span>
+      <h3 className="mt-3.5 text-[15px] font-semibold text-folio-text-primary">
+        {card.name}
+      </h3>
+      <p className="mt-1 font-metricsMono text-[12px] tracking-tight text-folio-text-tertiary">
+        {card.formats}
+      </p>
+      <Link
+        href={href}
+        className={cn(
+          'mt-5 inline-flex items-center justify-center rounded-[10px] px-4 py-2.5 text-[14px] font-semibold transition-colors duration-[220ms]',
+          primary
+            ? 'bg-[var(--accent)] text-white hover:bg-[var(--accent-hover)]'
+            : 'border border-folio-border-subtle text-folio-text-secondary hover:border-folio-border-strong hover:text-folio-text-primary',
+        )}
+      >
+        {card.cta}
+      </Link>
+    </div>
+  );
+}
+
+/* ----------------------------------------------------------------------------
+ * Collapsed materials bar
+ * ------------------------------------------------------------------------- */
+
+function CollapsedMaterialsBar({ projectId }: { projectId: string }) {
+  return (
+    <div className="mb-6 flex items-center gap-4 rounded-[14px] bg-surface-ground px-5 py-3.5">
+      {/* Overlapping icon chips */}
+      <div className="flex items-center -space-x-2">
+        {(['images', 'globe', 'presentation'] as const).map(key => {
+          const Icon = IMPORT_ICONS[key];
+          return (
+            <span
+              key={key}
+              className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-folio-border-subtle bg-surface-canvas text-folio-text-secondary"
+            >
+              <Icon className="w-3.5 h-3.5" aria-hidden />
+            </span>
+          );
+        })}
+      </div>
+
+      <p className="flex-1 text-[14px] text-folio-text-secondary">
+        <span className="font-semibold text-folio-text-primary">Materials imported.</span>{' '}
+        Counts live in the tracker above.
+      </p>
+
+      <Link
+        href={`/project/${projectId}?view=media`}
+        className="inline-flex items-center gap-1.5 rounded-[10px] border border-folio-border-subtle bg-surface-canvas px-3.5 py-2 text-[14px] font-medium text-folio-text-secondary transition-colors duration-[220ms] hover:border-folio-border-strong hover:text-folio-text-primary"
+      >
+        <Plus className="w-3.5 h-3.5" aria-hidden />
+        Add more
+      </Link>
+    </div>
+  );
+}

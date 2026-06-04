@@ -22,6 +22,12 @@ import {
   computePublishReadiness,
   isDocumentImage,
 } from '@/lib/publish/computePublishReadiness';
+import ProjectProgressTracker from './ProjectProgressTracker';
+import {
+  deriveTrackerState,
+  type TrackerState,
+  type TrackerType,
+} from '@/lib/publish/computeTrackerState';
 
 type TabView = 'overview' | 'media' | 'boards' | 'drafts' | 'files' | 'publish' | 'story' | 'actions';
 
@@ -35,6 +41,63 @@ function statusCrumbLabel(state: EditorialState): string {
   if (state === 'PUBLISHED') return 'Published';
   if (state === 'EMPTY') return 'Drafts';
   return 'In progress';
+}
+
+/**
+ * Build the Project Progress Tracker state from the data already loaded for the
+ * page. The wizard's timeline drives the type (PAST→completed, PRESENT→in
+ * progress, FUTURE→concept). Completion comes from the publish-readiness gates
+ * plus selections, so the tracker and the spine never disagree. Returns null
+ * once every step is complete — the guided "what's next" region has nothing
+ * left to guide.
+ */
+function buildTrackerState(args: {
+  timeline: string | null;
+  readiness: ReturnType<typeof computePublishReadiness>;
+  photoCount: number;
+  roomCount: number;
+  totalSelections: number;
+  isPublished: boolean;
+}): TrackerState | null {
+  const { timeline, readiness, photoCount, roomCount, totalSelections, isPublished } =
+    args;
+  const materialsExist = totalSelections > 0;
+
+  const type: TrackerType =
+    timeline === 'PRESENT' ? 'inProgress' : timeline === 'FUTURE' ? 'concept' : 'completed';
+
+  let complete: Record<string, boolean>;
+  let counts: Record<string, number | undefined>;
+
+  if (type === 'inProgress') {
+    complete = {
+      photos: photoCount > 0,
+      rooms: readiness.gates.rooms.complete,
+      products: materialsExist,
+    };
+    counts = { photos: photoCount, rooms: roomCount, products: totalSelections };
+  } else if (type === 'concept') {
+    complete = {
+      references: photoCount > 0,
+      spaces: roomCount > 0,
+      products: materialsExist,
+      share: isPublished,
+    };
+    counts = { references: photoCount, spaces: roomCount, products: totalSelections };
+  } else {
+    complete = {
+      photos: readiness.gates.photos.complete,
+      rooms: readiness.gates.rooms.complete,
+      tags: readiness.gates.tags.complete,
+      story: readiness.gates.story.complete,
+      publish: isPublished,
+    };
+    counts = { photos: photoCount, rooms: roomCount, tags: totalSelections };
+  }
+
+  if (Object.values(complete).every(Boolean)) return null;
+
+  return deriveTrackerState({ type, complete, counts, materialsExist });
 }
 
 export default async function ProjectPage({
@@ -178,6 +241,17 @@ export default async function ProjectPage({
   const boardsVisible = totalSelections > 0;
   const isProspective = base.timeline === 'PRESENT' || base.timeline === 'FUTURE';
 
+  // Project Progress Tracker — guided "what's next" region (top of page).
+  const photoCount = base.images.filter(img => !isDocumentImage(img.name)).length;
+  const trackerState = buildTrackerState({
+    timeline: base.timeline ?? null,
+    readiness: publishReadiness,
+    photoCount,
+    roomCount: base.rooms.length,
+    totalSelections,
+    isPublished,
+  });
+
   // Published/concept/in-progress lead with Boards once it exists; otherwise
   // (and for completed archives before tagging) lead with Media.
   const defaultView: TabView =
@@ -276,6 +350,13 @@ export default async function ProjectPage({
           images={base.images.map(img => ({ id: img.id, url: img.url, name: img.name }))}
           expandedBlocks={base.post?.expandedBlocks}
         />
+
+        {/* Project Progress Tracker — adaptive guided next-action region */}
+        {trackerState && (
+          <div className="mt-2 mb-2">
+            <ProjectProgressTracker projectId={sanitizedProject.id} state={trackerState} />
+          </div>
+        )}
 
         {/* Flat tab strip */}
         <ProjectTabs
