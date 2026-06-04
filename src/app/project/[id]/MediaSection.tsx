@@ -7,7 +7,6 @@ import RoomGroupedMedia from './RoomGroupedMedia';
 import ProjectCreationModal from '@/components/ProjectCreationModal';
 import { PresentationImportModal } from '@/components/import/PresentationImportModal';
 import { PdfSpecImportModal } from '@/components/import/PdfSpecImportModal';
-import { WebsiteImportModal } from '@/components/import/WebsiteImportModal';
 import { InterviewModal } from '@/components/posting/interview/InterviewModal';
 import { ProjectImageTagger } from '@/components/project/ProjectImageTagger';
 import MaterialsStep from './MaterialsStep';
@@ -68,7 +67,6 @@ export default function MediaSection({ project, isOwner, images, projectPost }: 
   const [isDragOver, setIsDragOver] = useState(false);
   const [showPresentationImport, setShowPresentationImport] = useState(false);
   const [showPdfSpecImport, setShowPdfSpecImport] = useState(false);
-  const [showWebsiteImport, setShowWebsiteImport] = useState(false);
   const [pendingFiles, setPendingFiles] = useState<File[]>([]);
   const [rooms, setRooms] = useState<Array<{ id: string; name: string; type?: string | null }>>([]);
   const dropZoneRef = useRef<HTMLDivElement>(null);
@@ -210,20 +208,20 @@ export default function MediaSection({ project, isOwner, images, projectPost }: 
           .getElementById('uploaded-media-section')
           ?.scrollIntoView({ behavior: 'smooth', block: 'start' });
         break;
-      case 'import-presentation':
+      case 'import-doc':
+        // One upload for decks and spec PDFs. The presentation pipeline accepts
+        // both PDF and PPTX and produces pending product tags on the photos,
+        // which is exactly what the Tags step needs.
         setShowPresentationImport(true);
-        break;
-      case 'import-website':
-        setShowWebsiteImport(true);
-        break;
-      case 'import-specs':
-        setShowPdfSpecImport(true);
         break;
       case 'materials':
         setShowMaterials(true);
         break;
       case 'tag':
         setShowTagReview(true);
+        break;
+      case 'tag-by-hand':
+        setShowTagger(true);
         break;
       case 'interview':
         setShowInterviewModal(true);
@@ -532,17 +530,6 @@ export default function MediaSection({ project, isOwner, images, projectPost }: 
         rooms={rooms}
         initialFile={pendingFiles.length > 0 ? pendingFiles[0] : undefined}
         onComplete={handlePdfSpecImportComplete}
-      />
-
-      {/* Website Import Modal — products scraped from a URL. */}
-      <WebsiteImportModal
-        open={showWebsiteImport}
-        onOpenChange={setShowWebsiteImport}
-        projectId={project.id}
-        onComplete={() => {
-          setShowWebsiteImport(false);
-          router.refresh();
-        }}
       />
     </div>
   );
