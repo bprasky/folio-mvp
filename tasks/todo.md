@@ -101,4 +101,26 @@ images (not a per-photo product tag). Acted on the founder's direction:
   manual tagger (follow-up), not as a project-wide import here.
 - Dropped the now-unused `WebsiteImportModal` mount and the `import-website` /
   `import-specs` actions.
+
+---
+
+## Update — one document upload, routed to the dedicated call by file type
+
+New `DocumentImportModal`: a single dropzone (PDF · PPTX · XLSX · CSV). Selection
+happens inside the modal, so no native-picker gesture is needed. `MediaSection`'s
+`routeDocument` dispatches by extension:
+
+- **`.pdf` → `PdfSpecImportModal`** (`/api/projects/{id}/extract-pdf`).
+- **`.pptx` / `.ppt` → `PresentationImportModal`** (`/api/import/presentation`).
+- **`.xlsx` / `.xls` / `.csv` → `/api/import/finish-schedule`** (posted directly;
+  no review modal exists for spreadsheets).
+
+`PdfSpecImportModal` is keyed on the handed file so a routed upload mounts fresh
+and seeds its `initialFile` (the modal only reads it on mount). The designer never
+picks a file type — they drop one document and we call the right backend.
+
+**Server caveat:** `/api/import/finish-schedule` stores the file and creates a
+session but the parse step is an existing server-side TODO ("Integrate with actual
+import agent"), so spreadsheet extraction into products is not implemented yet. The
+upload + dedicated call are wired; the parser is a backend follow-up.
 </content>

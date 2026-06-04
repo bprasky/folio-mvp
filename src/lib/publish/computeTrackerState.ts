@@ -92,7 +92,7 @@ export const IMPORT_CARDS: ImportCard[] = [
     key: 'document',
     icon: 'document',
     name: 'Import a document',
-    formats: 'PDF · PPTX',
+    formats: 'PDF · PPTX · XLSX · CSV',
     cta: 'Import',
     action: 'import-doc',
   },
