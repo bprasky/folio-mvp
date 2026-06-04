@@ -56,4 +56,28 @@ raw HTML. Timeline enum maps: PAST→Completed, PRESENT→In Progress, FUTURE→
   Media tab still restates a status line. The top tracker is now the canonical
   spine; a later pass could retire that status line to fully satisfy rule 1 across
   every surface.
+
+---
+
+## Update — make the tracker the single flow driver
+
+Removed the old in-context tracker + duplicate upload areas and wired the top
+tracker to drive every existing flow.
+
+- **Deleted** `PublishSpine.tsx` (the old gated spine) and removed the intro line
+  + 3 skeleton upload cards from `MediaSection`. The Media surface is now just the
+  media grid + the flows the tracker routes into.
+- **Action routing.** Each CTA / import card carries a `TrackerAction`. The tracker
+  links to `?view=media&action=<X>` (publish/share → `?view=publish`). `MediaSection`
+  reads `?action=` on mount, opens the matching existing modal, then strips the
+  param so refresh/back doesn't re-fire. Map: upload→ProjectCreationModal,
+  sort-rooms→scroll to grid, tag→TagReviewPanel, interview→InterviewModal,
+  materials→MaterialsStep, import-presentation→PresentationImportModal,
+  import-website→WebsiteImportModal (newly mounted), import-specs→PdfSpecImportModal.
+- **Materials cards repointed.** The 3rd import card now targets the spec-sheet flow
+  (the materials step imports products, not photos), so all three cards bring in
+  products via real flows.
+- Verified every CTA/card resolves to a concrete action route + derivation still
+  correct; typecheck clean on changed files. The earlier rule-1 follow-up is now
+  resolved: the only spine left is the top tracker.
 </content>

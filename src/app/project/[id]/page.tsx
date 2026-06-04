@@ -389,7 +389,6 @@ export default async function ProjectPage({
               images={base.images}
               isPublished={isPublished}
               editorialState={editorialState}
-              publishReadiness={publishReadiness}
             />
           )}
 
