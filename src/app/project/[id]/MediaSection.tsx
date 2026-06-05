@@ -522,6 +522,7 @@ export default function MediaSection({ project, isOwner, images, projectPost }: 
       {showTagger && (
         <ProjectImageTagger
           projectId={project.id}
+          images={images}
           onClose={() => {
             setShowTagger(false);
             router.refresh();

@@ -475,6 +475,7 @@ export default function StagingPublishPanel({
       {showTagger && (
         <ProjectImageTagger
           projectId={projectId}
+          images={images}
           onClose={() => {
             setShowTagger(false);
             router.refresh();
