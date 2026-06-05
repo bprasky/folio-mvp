@@ -28,19 +28,71 @@ type SearchProduct = {
   vendorName: string | null;
 };
 
+// Images may be handed in by the parent (the project page already loads them
+// with tags). Shape is intentionally loose so both the Media and Publish
+// surfaces can pass their existing image lists without reshaping.
+type IncomingImage = {
+  id: string;
+  url: string;
+  room?: string | null;
+  tags?: Array<{
+    id: string;
+    x: number;
+    y: number;
+    productId?: string;
+    product?: {
+      id: string;
+      name: string;
+      imageUrl?: string | null;
+      brand?: string | null;
+    } | null;
+  }>;
+};
+
 type Props = {
   projectId: string;
+  /**
+   * Images already loaded by the parent (same data the project page renders).
+   * When provided, the tagger seeds from these so it never shows "no photos"
+   * for a project whose images are visible on the page, regardless of whether
+   * the standalone fetch endpoints succeed.
+   */
+  images?: IncomingImage[];
   onClose: () => void;
 };
+
+function normalizeImages(incoming: IncomingImage[]): ImageWithTags[] {
+  return incoming.map((img) => ({
+    id: img.id,
+    url: img.url,
+    room: img.room ?? null,
+    tags: (img.tags ?? []).map((t) => ({
+      id: t.id,
+      x: t.x,
+      y: t.y,
+      productId: t.productId ?? t.product?.id ?? "",
+      product: t.product
+        ? {
+            id: t.product.id,
+            name: t.product.name,
+            imageUrl: t.product.imageUrl ?? null,
+            brand: t.product.brand ?? null,
+          }
+        : null,
+    })),
+  }));
+}
 
 /**
  * ProjectImageTagger — a modal-style UI for manually tagging products on
  * project images. Shows all project images, lets the designer pick one,
  * click to place a dot, then search/select a product.
  */
-export function ProjectImageTagger({ projectId, onClose }: Props) {
-  const [images, setImages] = useState<ImageWithTags[]>([]);
-  const [loading, setLoading] = useState(true);
+export function ProjectImageTagger({ projectId, images: providedImages, onClose }: Props) {
+  const [images, setImages] = useState<ImageWithTags[]>(() =>
+    providedImages ? normalizeImages(providedImages) : []
+  );
+  const [loading, setLoading] = useState(!providedImages);
   const [activeImage, setActiveImage] = useState<ImageWithTags | null>(null);
 
   // Tagging state
@@ -76,38 +128,40 @@ export function ProjectImageTagger({ projectId, onClose }: Props) {
   const justFinishedDrag = useRef(false);
 
   const fetchImages = useCallback(async () => {
+    const imageMap = new Map<string, ImageWithTags>();
+
+    // 1. Existing tags. Best-effort: a failure here must not hide the
+    //    project's untagged photos (the previous version threw and left the
+    //    tagger showing "no photos" whenever this call hiccuped).
     try {
       const res = await fetch(
         `/api/tag-product-to-image?projectId=${projectId}`
       );
-      if (!res.ok) throw new Error("Failed to fetch tags");
-      const tags: any[] = await res.json();
+      if (res.ok) {
+        const tags: any[] = await res.json();
+        for (const tag of tags) {
+          const imgId = tag.imageId ?? tag.image?.id;
+          const imgUrl = tag.image?.url;
+          if (!imgId || !imgUrl) continue;
 
-      // Group tags by image
-      const imageMap = new Map<string, ImageWithTags>();
-      for (const tag of tags) {
-        const imgId = tag.imageId ?? tag.image?.id;
-        const imgUrl = tag.image?.url;
-        if (!imgId || !imgUrl) continue;
-
-        if (!imageMap.has(imgId)) {
-          imageMap.set(imgId, {
-            id: imgId,
-            url: imgUrl,
-            room: null,
-            tags: [],
+          if (!imageMap.has(imgId)) {
+            imageMap.set(imgId, { id: imgId, url: imgUrl, room: null, tags: [] });
+          }
+          imageMap.get(imgId)!.tags.push({
+            id: tag.id,
+            x: tag.x,
+            y: tag.y,
+            productId: tag.productId,
+            product: tag.product,
           });
         }
-        imageMap.get(imgId)!.tags.push({
-          id: tag.id,
-          x: tag.x,
-          y: tag.y,
-          productId: tag.productId,
-          product: tag.product,
-        });
       }
+    } catch (err) {
+      console.error("[ProjectImageTagger] tag fetch error:", err);
+    }
 
-      // Also fetch project images that may have NO tags yet
+    // 2. All project images, including any with no tags yet. Best-effort.
+    try {
       const projRes = await fetch(`/api/designer/projects/${projectId}`);
       if (projRes.ok) {
         const projData = await projRes.json();
@@ -123,14 +177,28 @@ export function ProjectImageTagger({ projectId, onClose }: Props) {
           }
         }
       }
-
-      setImages(Array.from(imageMap.values()));
     } catch (err) {
-      console.error("[ProjectImageTagger] fetch error:", err);
-    } finally {
-      setLoading(false);
+      console.error("[ProjectImageTagger] project image fetch error:", err);
     }
-  }, [projectId]);
+
+    // 3. Fall back to the images handed in by the parent. This is the same
+    //    list the project page renders, so the tagger can never report "no
+    //    photos" for images the user can plainly see — even if the fetch
+    //    endpoints above return nothing (e.g. a brand-new, untagged project).
+    if (providedImages?.length) {
+      if (imageMap.size === 0) {
+        setImages(normalizeImages(providedImages));
+        setLoading(false);
+        return;
+      }
+      for (const img of normalizeImages(providedImages)) {
+        if (!imageMap.has(img.id)) imageMap.set(img.id, img);
+      }
+    }
+
+    setImages(Array.from(imageMap.values()));
+    setLoading(false);
+  }, [projectId, providedImages]);
 
   useEffect(() => {
     fetchImages();

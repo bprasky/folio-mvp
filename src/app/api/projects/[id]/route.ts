@@ -86,15 +86,41 @@ export async function DELETE(
     // See src/lib/orgPermissions.ts for the matrix.
     await assertProjectDelete(session.user.id, projectId);
 
-    await prisma.project.delete({
-      where: { id: projectId },
-    });
+    // Most of Project's children cascade on delete, but seven optional
+    // relations (Story, Order, Media, Recognition, Collaboration,
+    // Contribution, PendingRepInvite) are declared without `onDelete` in the
+    // schema. Their projectId is nullable, so a stray row in any of them
+    // raises a foreign-key violation and the delete fails with "failed to
+    // delete". Unlink them first — these are optional associations, so
+    // nulling the link (SetNull semantics) preserves the records while
+    // letting the project go. Wrapped in a transaction so the unlink and the
+    // delete succeed or fail together.
+    await prisma.$transaction([
+      prisma.story.updateMany({ where: { projectId }, data: { projectId: null } }),
+      prisma.order.updateMany({ where: { projectId }, data: { projectId: null } }),
+      prisma.media.updateMany({ where: { projectId }, data: { projectId: null } }),
+      prisma.recognition.updateMany({ where: { projectId }, data: { projectId: null } }),
+      prisma.collaboration.updateMany({ where: { projectId }, data: { projectId: null } }),
+      prisma.contribution.updateMany({ where: { projectId }, data: { projectId: null } }),
+      prisma.pendingRepInvite.updateMany({ where: { projectId }, data: { projectId: null } }),
+      prisma.project.delete({ where: { id: projectId } }),
+    ]);
 
     return NextResponse.json({ message: 'Project deleted successfully', deleted: true });
   } catch (error) {
+    const message = error instanceof Error ? error.message : 'Unknown error';
     console.error('Error deleting project:', error);
+    if (message === 'NotFound') {
+      return NextResponse.json({ error: 'Project not found' }, { status: 404 });
+    }
+    if (message === 'Forbidden') {
+      return NextResponse.json(
+        { error: 'You do not have permission to delete this project' },
+        { status: 403 }
+      );
+    }
     return NextResponse.json(
-      { error: 'Failed to delete project: ' + (error instanceof Error ? error.message : 'Unknown error') },
+      { error: 'Failed to delete project: ' + message },
       { status: 500 }
     );
   }
