@@ -1,13 +1,11 @@
 export const dynamic = 'force-dynamic';
 
 import { NextRequest, NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client';
+import { prisma } from '@/lib/prisma';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { assertProjectView, assertProjectWrite } from '@/lib/authz/access';
 import { MOCK_PROJECTS } from '@/lib/mock/designer';
-
-const prisma = new PrismaClient();
 
 export async function GET(
   _req: NextRequest,

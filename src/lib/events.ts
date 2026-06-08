@@ -1,7 +1,5 @@
-import { PrismaClient } from '@prisma/client';
+import { prisma } from '@/lib/prisma';
 import { EVENT_SELECT_FULL } from '@/lib/db/selects';
-
-const prisma = new PrismaClient();
 
 export interface EventWithRelations {
   id: string;
