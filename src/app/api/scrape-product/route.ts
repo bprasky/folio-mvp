@@ -376,6 +376,34 @@ function determineCategory(tags: string[], name: string): string {
 
 /* ------------------------------------------------------------------------- */
 
+// Anti-scrape walls (PerimeterX, Cloudflare, Incapsula, Akamai…) return a denial
+// page instead of the product. Its <title>/description would otherwise become
+// the "product" — e.g. name: "Access to this page has been denied". Detect those
+// so we never surface a bot wall as a real product.
+const BOT_WALL_SIGNATURES = [
+  'access to this page has been denied',
+  'access denied',
+  'px-captcha',
+  'perimeterx',
+  'pardon our interruption',
+  'are you a human',
+  'verify you are a human',
+  'enable javascript and cookies to continue',
+  'attention required', // Cloudflare
+  'checking your browser before accessing',
+  'request unsuccessful. incapsula',
+  'incapsula incident',
+  'unusual traffic from your',
+  'bot detection',
+  'captcha',
+];
+
+function looksLikeBotWall(text: string | null | undefined): boolean {
+  if (!text) return false;
+  const t = text.toLowerCase();
+  return BOT_WALL_SIGNATURES.some(sig => t.includes(sig));
+}
+
 export async function POST(request: NextRequest) {
   try {
     const { url } = await request.json();
@@ -393,10 +421,24 @@ export async function POST(request: NextRequest) {
     const html = await fetchHtml(url);
     let fields: ProductFields = html ? extractProductFromHtml(html, url) : { ...EMPTY_FIELDS };
 
+    // If Tier 1 hit an anti-scrape wall, the extracted name/description are the
+    // denial page, not the product. Discard them so the later tiers (and the AI
+    // web_search fallback) get a clean shot instead of "winning" with garbage.
+    const pageBlocked =
+      looksLikeBotWall(html) ||
+      looksLikeBotWall(fields.name) ||
+      looksLikeBotWall(fields.description);
+    if (pageBlocked) {
+      fields = { ...EMPTY_FIELDS };
+    }
+
     // Tier 2 — rendered DOM harvest, only when Tier 1 missed the essentials.
     if (!fields.name || !fields.image) {
       const rendered = await renderedExtract(url);
       fields = merge(fields, rendered);
+      // The rendered DOM can be the same wall — don't let it back in.
+      if (looksLikeBotWall(fields.name)) fields.name = '';
+      if (looksLikeBotWall(fields.description)) fields.description = '';
     }
 
     // Tier 3 — AI (Claude + web_search), only when the result is still thin
@@ -415,6 +457,19 @@ export async function POST(request: NextRequest) {
           currency: fields.currency || ai.currency,
         };
       }
+    }
+
+    // Blocked page and nothing recovered: tell the user plainly and actionably,
+    // rather than returning "Access to this page has been denied" as a product.
+    if (pageBlocked && !fields.name && !fields.price && !fields.image) {
+      return NextResponse.json(
+        {
+          error:
+            'This retailer blocked automated access to that page. Please enter the product details manually.',
+          blocked: true,
+        },
+        { status: 422 },
+      );
     }
 
     if (!fields.name && !fields.image && !fields.price) {
