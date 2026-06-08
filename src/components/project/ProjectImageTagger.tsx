@@ -127,6 +127,30 @@ export function ProjectImageTagger({ projectId, images: providedImages, onClose 
   const dragDidMove = useRef(false);
   const justFinishedDrag = useRef(false);
 
+  // Keep the hover popup reachable: moving the cursor from the dot up to the
+  // popup briefly leaves the dot's hit-area, so hide on a short grace delay that
+  // any re-entry (dot or popup) cancels. Without this the popup vanishes before
+  // you can click its edit/delete controls.
+  const hoverHideTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const cancelHideTag = useCallback(() => {
+    if (hoverHideTimer.current) {
+      clearTimeout(hoverHideTimer.current);
+      hoverHideTimer.current = null;
+    }
+  }, []);
+  const showTag = useCallback((id: string) => {
+    cancelHideTag();
+    setHoveredTagId(id);
+  }, [cancelHideTag]);
+  const scheduleHideTag = useCallback(() => {
+    cancelHideTag();
+    hoverHideTimer.current = setTimeout(() => {
+      setHoveredTagId(null);
+      hoverHideTimer.current = null;
+    }, 280);
+  }, [cancelHideTag]);
+  useEffect(() => () => cancelHideTag(), [cancelHideTag]);
+
   const fetchImages = useCallback(async () => {
     const imageMap = new Map<string, ImageWithTags>();
 
@@ -569,16 +593,22 @@ export function ProjectImageTagger({ projectId, images: providedImages, onClose 
                     }}
                     onMouseDown={(e) => handleDragStart(tag.id, e)}
                     onTouchStart={(e) => handleDragStart(tag.id, e)}
-                    onMouseEnter={() => { if (!draggingTagId) setHoveredTagId(tag.id); }}
-                    onMouseLeave={() => setHoveredTagId(null)}
+                    onMouseEnter={() => { if (!draggingTagId) showTag(tag.id); }}
+                    onMouseLeave={scheduleHideTag}
                   >
                     <div className={`flex h-5 w-5 items-center justify-center rounded-full bg-[var(--accent)] border-2 border-white shadow-lg transition-transform ${isDragging ? "scale-125" : ""}`}>
                       <FaTag className="w-2.5 h-2.5 text-white" />
                     </div>
 
                     {hoveredTagId === tag.id && !isDragging && (
-                      <div className="absolute left-1/2 bottom-full mb-2 -translate-x-1/2 w-max max-w-[220px] ridge-card px-3 py-2 shadow-lg z-20">
-                        <div className="flex items-center gap-2">
+                      <div
+                        className="absolute left-1/2 bottom-full -translate-x-1/2 pb-2 z-20"
+                        onMouseEnter={() => showTag(tag.id)}
+                        onMouseLeave={scheduleHideTag}
+                        onMouseDown={(e) => e.stopPropagation()}
+                        onTouchStart={(e) => e.stopPropagation()}
+                      >
+                        <div className="w-max max-w-[220px] ridge-card px-3 py-2 shadow-lg flex items-center gap-2">
                           {tag.product?.imageUrl && (
                             <div className="h-8 w-8 flex-shrink-0 overflow-hidden rounded bg-surface-ground">
                               {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -604,10 +634,10 @@ export function ProjectImageTagger({ projectId, images: providedImages, onClose 
                               e.stopPropagation();
                               handleDeleteTag(tag.id);
                             }}
-                            className="ml-auto p-1 text-red-400 hover:text-red-600 transition-colors"
+                            className="ml-auto flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full text-red-400 hover:text-red-600 hover:bg-red-50 transition-colors"
                             title="Remove tag"
                           >
-                            <FaTrash className="w-2.5 h-2.5" />
+                            <FaTrash className="w-3 h-3" />
                           </button>
                         </div>
                       </div>
