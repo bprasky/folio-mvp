@@ -3,6 +3,7 @@ import { authOptions } from '@/app/api/auth/[...nextauth]/options';
 import { normalizeRole } from '@/lib/permissions';
 import { redirect } from 'next/navigation';
 import { getMyProjectsWithStats } from '@/server/queries/getMyProjectsWithStats';
+import { getPendingDeletionRequests } from '@/server/queries/getPendingDeletionRequests';
 import ProjectsPageClient from './ProjectsPageClient';
 
 export const dynamic = 'force-dynamic';
@@ -39,7 +40,19 @@ export default async function ProjectsPage({ searchParams }: ProjectsPageProps) 
     // Fetch projects with computed stats, filtered by operating context
     const projects = await getMyProjectsWithStats(operatingAsOrgId);
 
-    return <ProjectsPageClient projectsRaw={projects} operatingAsOrgId={operatingAsOrgId} />;
+    // Pending deletion requests this user can approve (org Owner/Admin).
+    const pendingDeletionRequests = await getPendingDeletionRequests(
+      session.user.id,
+      session.user.role as string | null | undefined,
+    );
+
+    return (
+      <ProjectsPageClient
+        projectsRaw={projects}
+        operatingAsOrgId={operatingAsOrgId}
+        pendingDeletionRequests={pendingDeletionRequests}
+      />
+    );
   } catch (error) {
     console.error('[ProjectsPage] Error:', error);
     // Re-throw to show error page instead of 404

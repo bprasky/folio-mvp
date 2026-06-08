@@ -16,6 +16,8 @@ import {
   ChevronDown,
   Plus,
   Download,
+  Check,
+  X,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useUserCapabilities } from '@/hooks/useUserCapabilities';
@@ -65,6 +67,19 @@ export type ProjectLite = {
   ownershipContext?: 'personal' | 'organization';
   organizationId?: string | null;
   organizationName?: string | null;
+  // False when the viewer can't delete directly (org Member/Manager/Viewer);
+  // the card then offers "Request deletion" instead of "Delete".
+  canDelete?: boolean;
+};
+
+// A pending deletion request the current user (an org Owner/Admin) can resolve.
+export type DeletionRequestLite = {
+  id: string;
+  projectId: string;
+  projectTitle: string;
+  requesterName: string;
+  reason: string | null;
+  orgName: string | null;
 };
 
 type StatusTab = 'all' | 'progress' | 'published' | 'drafts';
@@ -73,6 +88,7 @@ type SortOption = 'Recent' | 'Name A–Z' | 'Most items';
 interface ProjectsPageClientProps {
   projectsRaw: ProjectLite[];
   operatingAsOrgId?: string | null;
+  pendingDeletionRequests?: DeletionRequestLite[];
 }
 
 // ============================================================================
@@ -103,10 +119,11 @@ function coverGradient(id: string): string {
 // MAIN CLIENT COMPONENT
 // ============================================================================
 
-export default function ProjectsPageClient({ projectsRaw, operatingAsOrgId }: ProjectsPageClientProps) {
+export default function ProjectsPageClient({ projectsRaw, operatingAsOrgId, pendingDeletionRequests = [] }: ProjectsPageClientProps) {
   const { data: session } = useSession();
   const capabilities = useUserCapabilities();
   const [projectsState, setProjectsState] = useState<ProjectLite[]>(projectsRaw);
+  const [deletionRequests, setDeletionRequests] = useState<DeletionRequestLite[]>(pendingDeletionRequests);
   const [searchQuery, setSearchQuery] = useState('');
   const [statusTab, setStatusTab] = useState<StatusTab>('all');
   const [sort, setSort] = useState<SortOption>('Recent');
@@ -230,6 +247,41 @@ export default function ProjectsPageClient({ projectsRaw, operatingAsOrgId }: Pr
       throw new Error(error.error || 'Failed to force delete project');
     }
     setProjectsState(prev => prev.filter(p => p.id !== projectId));
+  };
+
+  // Member without delete rights asks an Owner/Admin to delete. On success we
+  // hide the project from this viewer ("hide for you") — it reappears only if
+  // an admin declines and the page is reloaded.
+  const handleRequestDeletion = async (projectId: string, reason?: string) => {
+    const response = await fetch(`/api/projects/${projectId}/deletion-request`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ reason }),
+    });
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({}));
+      throw new Error(error.error || 'Failed to submit deletion request');
+    }
+    setProjectsState(prev => prev.filter(p => p.id !== projectId));
+  };
+
+  // Owner/Admin resolves a pending request from the queue.
+  const handleResolveRequest = async (requestId: string, action: 'approve' | 'decline') => {
+    const response = await fetch(`/api/deletion-requests/${requestId}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action }),
+    });
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({}));
+      throw new Error(error.error || 'Failed to resolve request');
+    }
+    const resolved = deletionRequests.find(r => r.id === requestId);
+    setDeletionRequests(prev => prev.filter(r => r.id !== requestId));
+    // If approved, the project is gone — drop it from the grid too.
+    if (action === 'approve' && resolved) {
+      setProjectsState(prev => prev.filter(p => p.id !== resolved.projectId));
+    }
   };
 
   // ── Derived display data ──
@@ -392,6 +444,14 @@ export default function ProjectsPageClient({ projectsRaw, operatingAsOrgId }: Pr
           <SortMenu value={sort} onChange={setSort} />
         </div>
 
+        {/* ── Pending deletion requests (approvers only) ── */}
+        {deletionRequests.length > 0 && (
+          <DeletionRequestsQueue
+            requests={deletionRequests}
+            onResolve={handleResolveRequest}
+          />
+        )}
+
         {/* ── Empty state ── */}
         {projects.length === 0 && (
           <div className="py-12">
@@ -432,6 +492,7 @@ export default function ProjectsPageClient({ projectsRaw, operatingAsOrgId }: Pr
                 onRename={handleRename}
                 onDelete={handleDelete}
                 onForceDelete={handleForceDelete}
+                onRequestDeletion={handleRequestDeletion}
               />
             )}
 
@@ -443,6 +504,7 @@ export default function ProjectsPageClient({ projectsRaw, operatingAsOrgId }: Pr
                 onRename={handleRename}
                 onDelete={handleDelete}
                 onForceDelete={handleForceDelete}
+                onRequestDeletion={handleRequestDeletion}
               />
             )}
 
@@ -454,6 +516,7 @@ export default function ProjectsPageClient({ projectsRaw, operatingAsOrgId }: Pr
                 onRename={handleRename}
                 onDelete={handleDelete}
                 onForceDelete={handleForceDelete}
+                onRequestDeletion={handleRequestDeletion}
               />
             )}
 
@@ -465,6 +528,7 @@ export default function ProjectsPageClient({ projectsRaw, operatingAsOrgId }: Pr
                 onRename={handleRename}
                 onDelete={handleDelete}
                 onForceDelete={handleForceDelete}
+                onRequestDeletion={handleRequestDeletion}
               />
             )}
 
@@ -479,6 +543,90 @@ export default function ProjectsPageClient({ projectsRaw, operatingAsOrgId }: Pr
 
       <FolioIndexDrawer projects={projects} />
     </div>
+  );
+}
+
+// ============================================================================
+// DELETION REQUEST QUEUE (Owner/Admin)
+// ============================================================================
+
+function DeletionRequestsQueue({
+  requests,
+  onResolve,
+}: {
+  requests: DeletionRequestLite[];
+  onResolve: (id: string, action: 'approve' | 'decline') => Promise<void>;
+}) {
+  return (
+    <section className="mb-8 rounded-xl border border-folio-border-subtle bg-surface-canvas p-5">
+      <h2 className="folio-ui font-semibold text-folio-text-secondary uppercase tracking-wider mb-4">
+        Deletion requests
+        <span className="ml-2 text-folio-text-tertiary normal-case tracking-normal">
+          {requests.length} pending
+        </span>
+      </h2>
+      <ul className="space-y-3">
+        {requests.map(r => (
+          <DeletionRequestRow key={r.id} request={r} onResolve={onResolve} />
+        ))}
+      </ul>
+    </section>
+  );
+}
+
+function DeletionRequestRow({
+  request,
+  onResolve,
+}: {
+  request: DeletionRequestLite;
+  onResolve: (id: string, action: 'approve' | 'decline') => Promise<void>;
+}) {
+  const [busy, setBusy] = useState<null | 'approve' | 'decline'>(null);
+
+  const resolve = async (action: 'approve' | 'decline') => {
+    if (action === 'approve' && !window.confirm(
+      `Permanently delete "${request.projectTitle}"? This cannot be undone.`
+    )) return;
+    try {
+      setBusy(action);
+      await onResolve(request.id, action);
+    } catch (e) {
+      alert(e instanceof Error ? e.message : 'Failed to resolve request.');
+      setBusy(null);
+    }
+  };
+
+  return (
+    <li className="flex items-center justify-between gap-4 rounded-lg border border-folio-border-subtle bg-surface-ground px-4 py-3">
+      <div className="min-w-0">
+        <div className="folio-ui text-folio-text-primary font-medium truncate">
+          {request.projectTitle}
+        </div>
+        <div className="folio-meta text-folio-text-tertiary truncate">
+          Requested by {request.requesterName}
+          {request.orgName ? ` · ${request.orgName}` : ''}
+          {request.reason ? ` · "${request.reason}"` : ''}
+        </div>
+      </div>
+      <div className="flex items-center gap-2 flex-shrink-0">
+        <button
+          onClick={() => resolve('decline')}
+          disabled={busy !== null}
+          className="flex items-center gap-1.5 px-3 py-1.5 folio-meta font-medium text-folio-text-secondary border border-folio-border-subtle rounded-lg hover:bg-surface-canvas transition-colors disabled:opacity-50"
+        >
+          <X className="w-3.5 h-3.5" />
+          {busy === 'decline' ? 'Declining…' : 'Decline'}
+        </button>
+        <button
+          onClick={() => resolve('approve')}
+          disabled={busy !== null}
+          className="flex items-center gap-1.5 px-3 py-1.5 folio-meta font-medium text-white bg-red-600 rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50"
+        >
+          <Check className="w-3.5 h-3.5" />
+          {busy === 'approve' ? 'Deleting…' : 'Approve & delete'}
+        </button>
+      </div>
+    </li>
   );
 }
 
@@ -511,6 +659,7 @@ function ProjectSection({
   onRename,
   onDelete,
   onForceDelete,
+  onRequestDeletion,
 }: {
   title: string;
   projects: ProjectLite[];
@@ -518,6 +667,7 @@ function ProjectSection({
   onRename?: (id: string, t: string) => void;
   onDelete?: (id: string) => void;
   onForceDelete?: (id: string) => void;
+  onRequestDeletion?: (id: string, reason?: string) => Promise<void>;
 }) {
   if (projects.length === 0 && !showNewTile) return null;
 
@@ -526,7 +676,7 @@ function ProjectSection({
       <ProjectsSectionHead title={title} count={projects.length} />
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-6 gap-y-7">
         {projects.map(p => (
-          <ProjectCard key={p.id} p={p} onRename={onRename} onDelete={onDelete} onForceDelete={onForceDelete} />
+          <ProjectCard key={p.id} p={p} onRename={onRename} onDelete={onDelete} onForceDelete={onForceDelete} onRequestDeletion={onRequestDeletion} />
         ))}
         {showNewTile && <NewProjectTile />}
       </div>
@@ -545,6 +695,7 @@ function CollapsibleSection({
   onRename,
   onDelete,
   onForceDelete,
+  onRequestDeletion,
 }: {
   title: string;
   projects: ProjectLite[];
@@ -552,6 +703,7 @@ function CollapsibleSection({
   onRename?: (id: string, t: string) => void;
   onDelete?: (id: string) => void;
   onForceDelete?: (id: string) => void;
+  onRequestDeletion?: (id: string, reason?: string) => Promise<void>;
 }) {
   const storageKey = `projects-section-${title}-expanded`;
   const [isExpanded, setIsExpanded] = useState(() => {
@@ -591,7 +743,7 @@ function CollapsibleSection({
       {isExpanded && (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-6 gap-y-7">
           {projects.map(p => (
-            <ProjectCard key={p.id} p={p} onRename={onRename} onDelete={onDelete} onForceDelete={onForceDelete} />
+            <ProjectCard key={p.id} p={p} onRename={onRename} onDelete={onDelete} onForceDelete={onForceDelete} onRequestDeletion={onRequestDeletion} />
           ))}
         </div>
       )}
@@ -670,17 +822,21 @@ function SortMenu({ value, onChange }: { value: SortOption; onChange: (v: SortOp
 // PROJECT CARD
 // ============================================================================
 
-function ProjectCard({ p, onRename, onDelete, onForceDelete }: {
+function ProjectCard({ p, onRename, onDelete, onForceDelete, onRequestDeletion }: {
   p: ProjectLite;
   onRename?: (id: string, t: string) => void;
   onDelete?: (id: string) => void;
   onForceDelete?: (id: string) => void;
+  onRequestDeletion?: (id: string, reason?: string) => Promise<void>;
 }) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isRenaming, setIsRenaming] = useState(false);
   const [newTitle, setNewTitle] = useState(p.title);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [isRequesting, setIsRequesting] = useState(false);
   const [isPublishing, setIsPublishing] = useState(false);
+  // Members of an org who lack delete rights can't delete directly.
+  const canDelete = p.canDelete !== false;
   const menuRef = useRef<HTMLDivElement>(null);
   const renameInputRef = useRef<HTMLInputElement>(null);
 
@@ -739,6 +895,23 @@ function ProjectCard({ p, onRename, onDelete, onForceDelete }: {
     } catch {
       alert('Failed to delete project. Please try again.');
       setIsDeleting(false);
+    }
+  };
+
+  const doRequestDeletion = async () => {
+    if (!onRequestDeletion) return;
+    const reason = window.prompt(
+      'Ask an org Owner/Admin to delete this project. Add an optional note for them:',
+      ''
+    );
+    if (reason === null) return; // cancelled
+    try {
+      setIsRequesting(true);
+      await onRequestDeletion(p.id, reason.trim() || undefined);
+      setIsMenuOpen(false);
+    } catch (e) {
+      alert(e instanceof Error ? e.message : 'Failed to submit deletion request. Please try again.');
+      setIsRequesting(false);
     }
   };
 
@@ -854,7 +1027,17 @@ function ProjectCard({ p, onRename, onDelete, onForceDelete }: {
                     >
                       <Edit className="w-4 h-4" /> Rename
                     </button>
-                    {isArchived ? (
+                    {!canDelete ? (
+                      <button
+                        onClick={e => { e.preventDefault(); e.stopPropagation(); doRequestDeletion(); }}
+                        disabled={isRequesting}
+                        className="w-full text-left px-3 py-2 folio-ui hover:bg-surface-canvas text-folio-text-secondary flex items-center gap-2 disabled:opacity-50"
+                        title="You don't have permission to delete; this asks an org Owner/Admin"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                        {isRequesting ? 'Requesting…' : 'Request deletion'}
+                      </button>
+                    ) : isArchived ? (
                       <button
                         onClick={e => { e.preventDefault(); e.stopPropagation(); doForceDelete(); }}
                         disabled={isDeleting}

@@ -96,11 +96,13 @@ model User {
   consultationBuyer     ConsultationBuyer?
 
   // Boost system relations
-  boostOpportunities BoostOpportunity[] @relation("DesignerBoostOpportunities")
-  approvedBoosts     Boost[]            @relation("UserBoosts")
-  inContextBoosts    InContextBoost[]   @relation("DesignerInContextBoosts")
-  vendorPosts        VendorPost[]       @relation("UserVendorPosts")
-  notifications      Notification[]
+  boostOpportunities       BoostOpportunity[]       @relation("DesignerBoostOpportunities")
+  approvedBoosts           Boost[]                  @relation("UserBoosts")
+  inContextBoosts          InContextBoost[]         @relation("DesignerInContextBoosts")
+  vendorPosts              VendorPost[]             @relation("UserVendorPosts")
+  notifications            Notification[]
+  deletionRequestsMade     ProjectDeletionRequest[] @relation("DeletionRequestsMade")
+  deletionRequestsResolved ProjectDeletionRequest[] @relation("DeletionRequestsResolved")
 
   // Architect-specific profile fields
   architectLicenseNumber   String? // Professional license number
@@ -507,6 +509,7 @@ model Project {
   roomIntents         RoomIntent[]
   projectIntent       ProjectIntent?
   editorialDrafts     EditorialDraft[]
+  deletionRequests    ProjectDeletionRequest[]
 
   @@map("projects")
 }
@@ -7401,4 +7404,36 @@ model EditorialDraft {
   @@index([projectId])
   @@index([status])
   @@map("editorial_drafts")
+}
+
+// A member who lacks `delete_projects` in an org can request that an
+// Owner/Admin delete a project. Approving deletes the project (which cascades
+// this row away); declining keeps the project and resolves the request.
+enum ProjectDeletionRequestStatus {
+  PENDING
+  APPROVED
+  DECLINED
+}
+
+model ProjectDeletionRequest {
+  id            String                       @id @default(uuid())
+  projectId     String
+  requestedById String
+  // Snapshot of the project's org at request time, so the approval queue can be
+  // scoped to the org's Owners/Admins even if the project is later reassigned.
+  orgId         String?
+  status        ProjectDeletionRequestStatus @default(PENDING)
+  reason        String?
+  resolvedById  String?
+  createdAt     DateTime                     @default(now())
+  resolvedAt    DateTime?
+
+  project     Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  requestedBy User    @relation("DeletionRequestsMade", fields: [requestedById], references: [id], onDelete: Cascade)
+  resolvedBy  User?   @relation("DeletionRequestsResolved", fields: [resolvedById], references: [id], onDelete: SetNull)
+
+  @@index([orgId, status])
+  @@index([projectId, status])
+  @@index([requestedById, status])
+  @@map("project_deletion_requests")
 }
