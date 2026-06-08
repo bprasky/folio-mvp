@@ -8,6 +8,7 @@
 import { prisma } from '@/lib/prisma';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/app/api/auth/[...nextauth]/options';
+import { can, isOrgRole } from '@/lib/orgPermissions';
 
 export type ProjectWithStats = {
   id: string;
@@ -31,6 +32,9 @@ export type ProjectWithStats = {
   ownershipContext: 'personal' | 'organization';
   organizationId?: string | null;
   organizationName?: string | null;
+  // Whether the current viewer may delete this project outright. When false, the
+  // UI offers "Request deletion" instead (org Owner/Admin must approve).
+  canDelete: boolean;
 };
 
 export async function getMyProjectsWithStats(operatingAsOrgId?: string | null): Promise<ProjectWithStats[]> {
@@ -125,7 +129,64 @@ export async function getMyProjectsWithStats(operatingAsOrgId?: string | null): 
       return [];
     }
 
-    const projectIds = projects.map(p => p.id);
+    let projectIds = projects.map(p => p.id);
+
+    // Deletion capability + "hide my pending requests" context.
+    // Mirrors assertProjectCapability(delete_projects): global admin, non-org
+    // owner/designer, org role with the capability, or a project-level OWNER grant.
+    let visibleProjects = projects;
+    let canDeleteByProject = new Map<string, boolean>();
+    try {
+      const viewer = await prisma.user.findUnique({
+        where: { id: userId },
+        select: { role: true },
+      });
+      const isGlobalAdmin = viewer?.role === 'ADMIN';
+
+      const memberships = await prisma.organizationUser.findMany({
+        where: { userId, isActive: true },
+        select: { organizationId: true, role: true },
+      });
+      const roleByOrg = new Map(memberships.map(m => [m.organizationId, m.role as string]));
+
+      const ownerGrants = await prisma.projectParticipant.findMany({
+        where: { userId, role: 'OWNER', projectId: { in: projectIds } },
+        select: { projectId: true },
+      }).catch(() => [] as { projectId: string }[]);
+      const ownerGrantIds = new Set(ownerGrants.map(g => g.projectId));
+
+      for (const p of projects) {
+        let allowed: boolean;
+        if (isGlobalAdmin) {
+          allowed = true;
+        } else if (!p.designerOrgId) {
+          allowed = p.ownerId === userId || p.designerId === userId;
+        } else {
+          const role = roleByOrg.get(p.designerOrgId);
+          allowed = (isOrgRole(role) && can(role, 'delete_projects')) || ownerGrantIds.has(p.id);
+        }
+        canDeleteByProject.set(p.id, allowed);
+      }
+
+      // Hide projects this viewer has already requested deletion for ("hide for you").
+      const myPending = await prisma.projectDeletionRequest.findMany({
+        where: { requestedById: userId, status: 'PENDING', projectId: { in: projectIds } },
+        select: { projectId: true },
+      });
+      const myPendingIds = new Set(myPending.map(r => r.projectId));
+      if (myPendingIds.size > 0) {
+        visibleProjects = projects.filter(p => !myPendingIds.has(p.id));
+        projectIds = visibleProjects.map(p => p.id);
+      }
+    } catch (error) {
+      console.warn('[getMyProjectsWithStats] Deletion-context computation failed:', error);
+      // Fail-soft: default to no direct delete (UI offers request flow).
+      for (const p of projects) canDeleteByProject.set(p.id, false);
+    }
+
+    if (visibleProjects.length === 0) {
+      return [];
+    }
 
     // Fetch images for these projects (including cover image)
     const images = await prisma.projectImage.findMany({
@@ -188,7 +249,7 @@ export async function getMyProjectsWithStats(operatingAsOrgId?: string | null): 
     });
 
     // Transform and compute stats
-    const projectsWithStats: ProjectWithStats[] = projects.map(project => {
+    const projectsWithStats: ProjectWithStats[] = visibleProjects.map(project => {
       const projectImages = imagesByProject.get(project.id) || [];
       const projectTags = tagsByProject.get(project.id) || [];
 
@@ -230,6 +291,7 @@ export async function getMyProjectsWithStats(operatingAsOrgId?: string | null): 
         ownershipContext,
         organizationId: project.designerOrgId,
         organizationName: project.designerOrg?.name || null,
+        canDelete: canDeleteByProject.get(project.id) ?? false,
       };
     });
 

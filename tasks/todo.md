@@ -1,3 +1,37 @@
+# Task: Project deletion requests + permission-aware delete UX (ACTIVE)
+
+## Context
+Org members who lack `delete_projects` (Manager/Member/Viewer) can *see* org
+projects but can't delete them. The dashboard showed a Delete action that
+hard-failed with "You do not have permission." Decision (user-confirmed):
+- **Org matrix governs** deletion (reverted PR #628's owner/designer override).
+- Build **request + full approval queue**: members request deletion → Owner/Admin
+  approve/decline. Requested projects are hidden from the requester.
+
+## Plan
+- [x] Revert #628 auth change (org matrix only)
+- [x] Schema: `ProjectDeletionRequest` + `ProjectDeletionRequestStatus` enum; inverses
+- [x] Migration: idempotent enum + table + FKs + indexes
+- [x] Loader: per-project `canDelete`; hide viewer's PENDING-requested projects;
+      load pending requests the viewer can approve
+- [x] API: POST create request; PATCH approve/decline
+- [x] UI: "Request deletion" in ProjectCard; "Pending deletion requests" queue
+- [x] Verify (prisma validate/generate, tsc, phase5e), commit, push, update PR
+
+Note: no prod DB in this env → migration authored idempotently, applies on deploy.
+
+## Review
+- assertProjectCapability reverted to org-matrix-only (PR #628 superseded).
+- New `project_deletion_requests` table; FKs cascade from project/requester, set
+  null on resolver.
+- Request authz is org-membership-aware (assertProjectView was too strict for
+  plain org members, who are exactly the requesters).
+- "Hide for you" = loader filters out the viewer's own PENDING-requested projects.
+- Approver queue scoped to orgs where viewer holds delete_projects; global admin
+  sees all. Approve → project.delete() (cascades the request); decline → DECLINED.
+
+---
+
 # Task: Project Progress Tracker (top of project detail view)
 
 ## Context

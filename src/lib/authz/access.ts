@@ -240,21 +240,13 @@ async function assertProjectCapability(
   });
   if (user?.role === "ADMIN") return;
 
-  // Individual-first: the project's owner or assigned designer always has full
-  // capability over their own project, regardless of any org association. This
-  // mirrors the view-access rule in getProjectAccess and the project page's
-  // isOwner check. Without it, an org-associated project (one with a
-  // designerOrgId) becomes undeletable/unpublishable by its own owner whenever
-  // they lack an active org membership carrying the capability — the exact
-  // "can view it but can't delete it" asymmetry this resolves.
-  if (project.ownerId === userId || project.designerId === userId) return;
-
-  // Beyond the owner/designer, a non-org project has no other grantees.
+  // Non-org project: creator-only. The org matrix doesn't apply.
   if (!project.designerOrgId) {
+    if (project.ownerId === userId || project.designerId === userId) return;
     throw new Error("Forbidden");
   }
 
-  // Org-associated: gate other members by the org role's capability.
+  // Org-associated: gate by the org role's capability.
   const membership = await prisma.organizationUser.findFirst({
     where: {
       userId,
