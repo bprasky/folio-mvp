@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useRef, useCallback } from "react";
-import { FaTimes, FaTag, FaSearch, FaCheck, FaTrash, FaGripLines } from "react-icons/fa";
+import { FaTimes, FaTag, FaSearch, FaCheck, FaTrash, FaGripLines, FaImage, FaExternalLinkAlt } from "react-icons/fa";
 
 type ImageWithTags = {
   id: string;
@@ -117,6 +117,17 @@ export function ProjectImageTagger({ projectId, images: providedImages, onClose 
     url: string;
   } | null>(null);
   const [urlError, setUrlError] = useState<string | null>(null);
+
+  // Guided manual capture — fallback when a retailer blocks the scraper. The
+  // designer pastes the product copy or drops a screenshot; we parse it (and,
+  // for screenshots, host the image) into the same preview the URL path yields.
+  const [showManual, setShowManual] = useState(false);
+  const [manual, setManual] = useState<{ name: string; brand: string; price: string; imageUrl: string | null; description: string }>(
+    { name: "", brand: "", price: "", imageUrl: null, description: "" },
+  );
+  const [pasteText, setPasteText] = useState("");
+  const [parsing, setParsing] = useState<null | "text" | "image">(null);
+  const [captureError, setCaptureError] = useState<string | null>(null);
 
   const imageRef = useRef<HTMLImageElement | null>(null);
   const searchTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -278,6 +289,11 @@ export function ProjectImageTagger({ projectId, images: providedImages, onClose 
     setProductUrl("");
     setUrlPreview(null);
     setUrlError(null);
+    setShowManual(false);
+    setManual({ name: "", brand: "", price: "", imageUrl: null, description: "" });
+    setPasteText("");
+    setParsing(null);
+    setCaptureError(null);
   };
 
   // Scrape a product URL into a preview the designer can confirm before tagging.
@@ -296,6 +312,10 @@ export function ProjectImageTagger({ projectId, images: providedImages, onClose 
       const data = await res.json();
       if (!res.ok) {
         setUrlError(data.error || "Could not read that link.");
+        // Blocked or unreadable: open guided manual capture instead of dead-ending.
+        if (data.blocked || res.status === 422 || res.status === 502) {
+          setShowManual(true);
+        }
         return;
       }
       setUrlPreview({
@@ -307,33 +327,131 @@ export function ProjectImageTagger({ projectId, images: providedImages, onClose 
       });
     } catch {
       setUrlError("Could not read that link.");
+      setShowManual(true);
     } finally {
       setUrlFetching(false);
     }
   };
 
+  // ── Guided manual capture helpers ──
+
+  const composeDescription = (f: {
+    description?: string | null;
+    dimensions?: string | null;
+    materials?: string[];
+    colors?: string[];
+  }): string => {
+    const parts: string[] = [];
+    if (f.description) parts.push(f.description);
+    if (f.dimensions) parts.push(`Dimensions: ${f.dimensions}`);
+    if (f.materials?.length) parts.push(`Materials: ${f.materials.join(", ")}`);
+    if (f.colors?.length) parts.push(`Colors: ${f.colors.join(", ")}`);
+    return parts.join("\n");
+  };
+
+  const applyParsed = (f: any, image?: string | null) => {
+    setManual((prev) => ({
+      name: f?.name ?? prev.name,
+      brand: f?.brand ?? prev.brand,
+      price: f?.price != null ? String(f.price) : prev.price,
+      imageUrl: image ?? prev.imageUrl,
+      description: composeDescription(f ?? {}) || prev.description,
+    }));
+  };
+
+  const handleParseText = async () => {
+    if (!pasteText.trim()) return;
+    setParsing("text");
+    setCaptureError(null);
+    try {
+      const res = await fetch("/api/products/parse-text", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text: pasteText, url: productUrl.trim() || undefined }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setCaptureError(data.error || "Couldn't read that text.");
+        return;
+      }
+      applyParsed(data.fields);
+    } catch {
+      setCaptureError("Couldn't read that text.");
+    } finally {
+      setParsing(null);
+    }
+  };
+
+  const handleScreenshot = async (file: File | null | undefined) => {
+    if (!file || !file.type.startsWith("image/")) return;
+    setParsing("image");
+    setCaptureError(null);
+    try {
+      const dataUrl: string = await new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(String(reader.result));
+        reader.onerror = () => reject(new Error("read failed"));
+        reader.readAsDataURL(file);
+      });
+      // Show the screenshot immediately while vision runs.
+      setManual((prev) => ({ ...prev, imageUrl: prev.imageUrl ?? dataUrl }));
+      const res = await fetch("/api/products/parse-image", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ imageDataUrl: dataUrl, url: productUrl.trim() || undefined }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setCaptureError(data.error || "Couldn't read that screenshot.");
+        return;
+      }
+      applyParsed(data.fields, data.image || null);
+    } catch {
+      setCaptureError("Couldn't read that screenshot.");
+    } finally {
+      setParsing(null);
+    }
+  };
+
+  // The product to save in URL mode: the scraped preview, or the manually
+  // captured one (paste/screenshot) when scraping was blocked.
+  const urlModeProduct = urlPreview
+    ? urlPreview
+    : showManual && manual.name.trim()
+      ? {
+          name: manual.name.trim(),
+          // Only persist a hosted URL — never a raw data: URL (screenshot preview).
+          imageUrl: manual.imageUrl && !manual.imageUrl.startsWith("data:") ? manual.imageUrl : null,
+          price: manual.price,
+          brand: manual.brand.trim() || null,
+          url: productUrl.trim(),
+          description: manual.description.trim() || null,
+        }
+      : null;
+
   const handleSaveTag = async () => {
     if (!pendingDot || !activeImage) return;
     if (tagMode === "search" && !selectedProduct) return;
-    if (tagMode === "url" && !urlPreview) return;
+    if (tagMode === "url" && !urlModeProduct) return;
     setSaving(true);
     try {
-      // In URL mode, create the product from the scraped preview first. It
-      // lands as a pending stub awaiting vendor claim.
+      // In URL mode, create the product from the preview/manual capture first.
+      // It lands as a pending stub awaiting vendor claim.
       let productId: string;
-      if (tagMode === "url" && urlPreview) {
+      if (tagMode === "url" && urlModeProduct) {
         const priceNum = parseFloat(
-          String(urlPreview.price ?? "").replace(/[^0-9.]/g, ""),
+          String(urlModeProduct.price ?? "").replace(/[^0-9.]/g, ""),
         );
         const createRes = await fetch("/api/products", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            name: urlPreview.name,
-            imageUrl: urlPreview.imageUrl,
+            name: urlModeProduct.name,
+            imageUrl: urlModeProduct.imageUrl,
             price: Number.isFinite(priceNum) ? priceNum : undefined,
-            brand: urlPreview.brand,
-            url: urlPreview.url,
+            brand: urlModeProduct.brand,
+            url: urlModeProduct.url,
+            description: (urlModeProduct as any).description ?? undefined,
             isPending: true,
           }),
         });
@@ -766,10 +884,122 @@ export function ProjectImageTagger({ projectId, images: providedImages, onClose 
                   <p className="folio-meta text-red-500">{urlError}</p>
                 )}
 
-                {!urlPreview && !urlFetching && !urlError && (
+                {!urlPreview && !urlFetching && !urlError && !showManual && (
                   <p className="text-center folio-meta text-folio-text-tertiary py-4">
                     Paste a product link and we&apos;ll pull the details.
                   </p>
+                )}
+
+                {!showManual && !urlFetching && !urlPreview && (
+                  <button
+                    type="button"
+                    onClick={() => setShowManual(true)}
+                    className="folio-meta text-[var(--accent)] hover:underline"
+                  >
+                    Can&apos;t fetch it? Enter the details manually
+                  </button>
+                )}
+
+                {showManual && (
+                  <div
+                    className="rounded-lg border border-folio-border-subtle bg-surface-ground p-3 space-y-3"
+                    onPaste={(e) => {
+                      const file = Array.from(e.clipboardData?.items || [])
+                        .find((it) => it.type.startsWith("image/"))
+                        ?.getAsFile();
+                      if (file) {
+                        e.preventDefault();
+                        handleScreenshot(file);
+                      }
+                    }}
+                  >
+                    <div className="flex items-center justify-between">
+                      <span className="folio-ui text-folio-text-primary">Capture it manually</span>
+                      {productUrl.trim() && (
+                        <a
+                          href={productUrl.trim()}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="folio-meta text-[var(--accent)] hover:underline inline-flex items-center gap-1"
+                        >
+                          Open page <FaExternalLinkAlt className="w-2.5 h-2.5" />
+                        </a>
+                      )}
+                    </div>
+
+                    {/* Paste specs → autofill */}
+                    <div className="space-y-1.5">
+                      <textarea
+                        value={pasteText}
+                        onChange={(e) => setPasteText(e.target.value)}
+                        placeholder="Paste the product name, specs, price… from the page"
+                        rows={3}
+                        className="w-full px-3 py-2 ridge-input text-sm resize-y"
+                      />
+                      <button
+                        type="button"
+                        onClick={handleParseText}
+                        disabled={parsing !== null || !pasteText.trim()}
+                        className="px-3 py-1.5 rounded-lg bg-surface-canvas border border-folio-border-subtle text-folio-text-primary folio-meta font-medium disabled:opacity-50 hover:bg-surface-ground transition-colors"
+                      >
+                        {parsing === "text" ? "Reading…" : "Autofill from text"}
+                      </button>
+                    </div>
+
+                    {/* Screenshot → vision autofill + image */}
+                    <label className="flex items-center justify-center gap-2 px-3 py-2 rounded-lg border border-dashed border-folio-border-subtle cursor-pointer hover:bg-surface-canvas transition-colors folio-meta text-folio-text-secondary">
+                      <FaImage className="w-3.5 h-3.5" />
+                      {parsing === "image" ? "Reading screenshot…" : "Upload or paste a screenshot"}
+                      <input
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        onChange={(e) => {
+                          handleScreenshot(e.target.files?.[0]);
+                          e.target.value = "";
+                        }}
+                      />
+                    </label>
+
+                    {captureError && (
+                      <p className="folio-meta text-red-500">{captureError}</p>
+                    )}
+
+                    {/* Editable fields — always correctable */}
+                    <div className="space-y-2">
+                      <div className="flex gap-2">
+                        {manual.imageUrl && (
+                          <div className="h-12 w-12 flex-shrink-0 overflow-hidden rounded-lg bg-surface-canvas">
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                            <img src={manual.imageUrl} alt="" className="h-full w-full object-cover" />
+                          </div>
+                        )}
+                        <input
+                          type="text"
+                          value={manual.name}
+                          onChange={(e) => setManual((p) => ({ ...p, name: e.target.value }))}
+                          placeholder="Product name *"
+                          className="flex-1 px-3 py-2 ridge-input text-sm"
+                        />
+                      </div>
+                      <div className="flex gap-2">
+                        <input
+                          type="text"
+                          value={manual.brand}
+                          onChange={(e) => setManual((p) => ({ ...p, brand: e.target.value }))}
+                          placeholder="Brand"
+                          className="flex-1 px-3 py-2 ridge-input text-sm"
+                        />
+                        <input
+                          type="text"
+                          value={manual.price}
+                          onChange={(e) => setManual((p) => ({ ...p, price: e.target.value }))}
+                          placeholder="Price"
+                          className="w-28 px-3 py-2 ridge-input text-sm"
+                        />
+                      </div>
+                    </div>
+                  </div>
                 )}
 
                 {urlPreview && (
@@ -869,7 +1099,7 @@ export function ProjectImageTagger({ projectId, images: providedImages, onClose 
               <button
                 onClick={handleSaveTag}
                 disabled={
-                  saving || (tagMode === "search" ? !selectedProduct : !urlPreview)
+                  saving || (tagMode === "search" ? !selectedProduct : !urlModeProduct)
                 }
                 className="flex-1 px-4 py-2 rounded-lg bg-[var(--accent)] text-white text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed hover:opacity-90 transition-opacity flex items-center justify-center gap-2"
               >
