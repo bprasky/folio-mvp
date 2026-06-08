@@ -1,12 +1,10 @@
 // @idor-allow: public-read reason="Public festival directory viewable anonymously"
 import { NextRequest, NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client';
+import { prisma } from '@/lib/prisma';
 import { EVENT_SELECT_BASE } from '@/lib/db/selects';
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
-
-const prisma = new PrismaClient();
 
 export async function GET(request: NextRequest) {
   try {

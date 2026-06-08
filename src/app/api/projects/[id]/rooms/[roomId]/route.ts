@@ -1,14 +1,12 @@
 export const dynamic = 'force-dynamic';
 
 import { NextRequest, NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client';
+import { prisma } from '@/lib/prisma';
 import { formatRoomName } from '@/lib/utils/formatRoomName';
 import { inferRoomType } from '@/lib/rooms/utils';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { assertProjectView, assertProjectWrite } from '@/lib/authz/access';
-
-const prisma = new PrismaClient();
 
 function escapeRegExp(s: string) {
   return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');

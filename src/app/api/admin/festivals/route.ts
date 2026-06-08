@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client';
+import { prisma } from '@/lib/prisma';
 import { uploadDataUrlToSupabase, buildObjectPath } from '@/lib/uploadToSupabase';
 
 // Define EventType locally since it may not be in Prisma schema yet
@@ -92,7 +92,6 @@ async function parseFestivalRequest(req: Request) {
   catch { throw new Error(`Unsupported Content-Type: ${ct}`); }
 }
 
-const prisma = new PrismaClient();
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 

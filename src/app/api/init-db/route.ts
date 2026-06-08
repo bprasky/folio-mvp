@@ -2,9 +2,7 @@
 export const dynamic = 'force-dynamic';
 
 import { NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client';
-
-const prisma = new PrismaClient();
+import { prisma } from '@/lib/prisma';
 
 export async function POST() {
   if (process.env.NODE_ENV === 'production') {
@@ -129,8 +127,6 @@ export async function POST() {
       },
       { status: 500 }
     );
-  } finally {
-    await prisma.$disconnect();
   }
 }
 
@@ -152,7 +148,5 @@ export async function GET() {
       tablesExist: false,
       error: error instanceof Error ? error.message : 'Unknown error'
     });
-  } finally {
-    await prisma.$disconnect();
   }
 } 
