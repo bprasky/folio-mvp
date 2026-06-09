@@ -45,10 +45,21 @@ The guard is `if (cronSecret && authHeader !== \`Bearer ${cronSecret}\`) return 
 **Fix:** Invert to fail-closed: `if (!cronSecret || authHeader !== \`Bearer ${cronSecret}\`) return 401`. Treat a missing secret as "deny," and add a deploy-time assertion that `CRON_SECRET` is set in production.
 **Resolution:** Inverted both guards to fail closed. Also fixed a third route with the same class of bug, **`src/app/api/cron/process-boost-revenue/route.ts:23`** (`if (cronSecret && NODE_ENV === 'production')` skipped auth when the secret was unset in production) — now requires a valid secret in production while preserving its intentional dev-skip. **`src/app/api/admin/commerce/release-credits/route.ts:23`** uses the same env secret but was already fail-closed (default-deny `isAuthorized` flag + admin-session fallback), so it was left unchanged.
 
-### HIGH — Unauthenticated server-side URL fetcher (SSRF + AI-budget burn)
+### ✅ RESOLVED (commit 207fbd5) — HIGH — Unauthenticated server-side URL fetcher (SSRF + AI-budget burn)
 **`src/app/api/scrape-product/route.ts:1`** (no session import anywhere in the file; `@idor-allow: public-read` annotation present but it performs outbound fetches + AI extraction)
 No auth. The route fetches an arbitrary user-supplied URL server-side (optionally via Browserless) and runs `aiExtractProduct()`. Two problems: (1) **SSRF** — an attacker can point it at internal/metadata addresses or use the server as a fetch proxy; (2) **cost** — anyone can loop this to burn Browserless + model spend. `maxDuration = 60`, so each call can hold a function for a minute.
 **Fix:** Require a session. Add an allow/deny list that blocks private IP ranges, `localhost`, and link-local/metadata addresses before fetching. Rate-limit per user.
+**Resolution:** Added a `getServerSession` check (401 if unauthenticated) before any work, a per-user rate limit (60 scrapes/hour, via the existing `rateLimit` helper in `src/lib/rateLimit.ts`), and an SSRF guard. The guard is a new helper **`src/lib/security/ssrf.ts`** (`assertPublicUrl`) that allows only http/https and **resolves the hostname, then rejects if any resolved IP is loopback/private/link-local/CGNAT/multicast/reserved or a cloud-metadata address (169.254.169.254, AWS IMDSv6 `fd00:ec2::254`, IPv4-mapped IPv6, etc.)** — i.e. it validates the resolved IP, not just the URL string. Validated with 22 unit cases. The `@idor-allow: public-read` annotation was removed since the route is now authenticated (the idor-scan heuristic recognizes `getServerSession`).
+
+**Rate limiting (per task step 3):** none existed for this route before this change. A reusable limiter (`rateLimit` / `checkRateLimit` in `src/lib/rateLimit.ts`) did exist, so it was applied. Note the limiter is in-memory/per-instance (documented best-effort), so under multi-instance Vercel it's a speed bump, not a hard cap — moving it to Upstash/Redis is the standing follow-up tracked under §4 MEDIUM.
+
+**Other server-side URL fetchers (task step 4 — reported, not fixed):** these take a user-supplied URL and `fetch()` it without the SSRF guard. They share the same DNS-rebinding/metadata exposure and should get `assertPublicUrl` next:
+- **`src/app/api/og-fetch/route.ts`** — **unauthenticated** (`{ url } = body` → `fetch(url)`), open SSRF/proxy. Highest priority of this set.
+- **`src/app/api/instagram/proxy-image/route.ts`** — **unauthenticated** image proxy (`searchParams.get('url')` → `fetch`), open SSRF/proxy.
+- **`src/app/api/profile/fetch-bio-url/route.ts`** — authenticated; fetches user URL (has a timeout, no IP guard).
+- **`src/app/api/import/website/route.ts`** — authenticated; direct `fetch(url)` fallback + Browserless.
+- **`src/app/api/import/product/route.ts`** — authenticated; fetches via Browserless.
+(The `projects/*/images*` and `import/presentation` routes also `fetch()` but resolve Supabase-storage paths / trusted URLs, so they're lower concern.)
 
 ### MEDIUM — Public org inquiry form: no rate limit, unsanitized stored content
 **`src/app/api/orgs/[orgId]/inquiry/route.ts:10`** (POST handler)
