@@ -1,11 +1,14 @@
-// @idor-allow: public-read reason="Public product metadata scraper used during onboarding flows"
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
 export const maxDuration = 60;
 
 import { NextRequest, NextResponse } from 'next/server';
+import { getServerSession } from 'next-auth';
 import * as cheerio from 'cheerio';
+import { authOptions } from '@/app/api/auth/[...nextauth]/options';
 import { aiExtractProduct } from '@/lib/products/aiExtractProduct';
+import { rateLimit } from '@/lib/rateLimit';
+import { assertPublicUrl, BlockedUrlError } from '@/lib/security/ssrf';
 
 const FETCH_TIMEOUT_MS = 15000;
 const RENDER_TIMEOUT_MS = 45000;
@@ -406,15 +409,45 @@ function looksLikeBotWall(text: string | null | undefined): boolean {
 
 export async function POST(request: NextRequest) {
   try {
+    // Require an authenticated session before any fetch or AI work: this route
+    // fans out to Browserless + the Claude tier, so it must not be open to the
+    // public (SSRF proxy + API-budget burn).
+    const session = await getServerSession(authOptions);
+    const userId = (session?.user as { id?: string })?.id;
+    if (!userId) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
     const { url } = await request.json();
 
     if (!url) {
       return NextResponse.json({ error: 'URL is required' }, { status: 400 });
     }
+
+    // Per-user rate limit — caps how fast one user can burn Browserless/AI spend.
+    const limit = rateLimit({
+      userId,
+      scope: 'scrape-product',
+      limit: 60,
+      windowMs: 60 * 60 * 1000, // 60 scrapes per hour per user
+    });
+    if (!limit.ok) {
+      return NextResponse.json(
+        { error: 'Too many scrape requests. Please slow down and try again shortly.' },
+        { status: 429 },
+      );
+    }
+
+    // SSRF guard — only http/https, and reject hosts that resolve to private,
+    // loopback, link-local, or cloud-metadata addresses. Validates the resolved
+    // IP, not just the URL string.
     try {
-      new URL(url);
-    } catch {
-      return NextResponse.json({ error: 'Invalid URL format' }, { status: 400 });
+      await assertPublicUrl(url);
+    } catch (err) {
+      if (err instanceof BlockedUrlError) {
+        return NextResponse.json({ error: 'That URL is not allowed.' }, { status: 400 });
+      }
+      throw err;
     }
 
     // Tier 1 — static / Browserless-rendered HTML + cheerio.
