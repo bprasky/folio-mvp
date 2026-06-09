@@ -8,6 +8,7 @@ import * as cheerio from 'cheerio';
 import { aiExtractProduct } from '@/lib/products/aiExtractProduct';
 import { getContent, runFunction, directFetch, hasBrowserlessKey } from '@/lib/browserless/client';
 import { looksLikeBotWall } from '@/lib/browserless/classify';
+import { recordScrapeAttempt } from '@/lib/browserless/record';
 
 const FETCH_TIMEOUT_MS = 15000;
 const RENDER_TIMEOUT_MS = 45000;
@@ -37,6 +38,7 @@ function resolveUrl(src: string | undefined | null, base: string): string | null
 async function fetchHtml(url: string): Promise<string | null> {
   if (hasBrowserlessKey()) {
     const res = await getContent(url, { timeoutMs: FETCH_TIMEOUT_MS });
+    await recordScrapeAttempt({ url, consumer: 'PRODUCT_SCRAPE', result: res });
     if (res.ok) return res.payload;
     console.error('[scrape-product] Browserless /content failed:', res.status);
     // fall through to direct fetch
@@ -50,6 +52,7 @@ async function fetchHtml(url: string): Promise<string | null> {
       'Accept-Language': 'en-US,en;q=0.5',
     },
   });
+  await recordScrapeAttempt({ url, consumer: 'PRODUCT_SCRAPE', result: direct });
   if (!direct.ok) return null;
   return direct.payload;
 }
@@ -199,7 +202,8 @@ function extractProductFromHtml(html: string, baseUrl: string): ProductFields {
 
 const PRODUCT_HARVEST_CODE = `export default async function ({ page, context }) {
   const { url } = context;
-  await page.goto(url, { waitUntil: 'networkidle2', timeout: 30000 }).catch(() => {});
+  const navResponse = await page.goto(url, { waitUntil: 'networkidle2', timeout: 30000 }).catch(() => null);
+  const httpStatus = navResponse ? navResponse.status() : null;
   await new Promise((r) => setTimeout(r, 600));
   const data = await page.evaluate(() => {
     const metaC = (sel) => { const e = document.querySelector(sel); return e ? e.getAttribute('content') : null; };
@@ -231,6 +235,7 @@ const PRODUCT_HARVEST_CODE = `export default async function ({ page, context }) 
       currency: (offer && offer.priceCurrency) || metaC('meta[property="product:price:currency"]') || null,
     };
   });
+  data._httpStatus = httpStatus;
   return { data, type: 'application/json' };
 }`;
 
@@ -240,6 +245,7 @@ async function renderedExtract(url: string): Promise<ProductFields> {
 
   const res = await runFunction(PRODUCT_HARVEST_CODE, { url }, { timeoutMs: RENDER_TIMEOUT_MS });
   if (!res.ok) {
+    await recordScrapeAttempt({ url, consumer: 'PRODUCT_SCRAPE', result: res });
     console.error('[scrape-product] Browserless /function failed:', res.status);
     return { ...EMPTY_FIELDS };
   }
@@ -247,10 +253,11 @@ async function renderedExtract(url: string): Promise<ProductFields> {
   try {
     payload = JSON.parse(res.payload);
   } catch {
+    await recordScrapeAttempt({ url, consumer: 'PRODUCT_SCRAPE', result: res });
     return { ...EMPTY_FIELDS };
   }
   const d = payload?.data ?? payload ?? {};
-  return {
+  const fields: ProductFields = {
     name: d.name ? String(d.name).trim() : null,
     image: resolveUrl(d.image, url),
     description: d.description ? String(d.description).trim() : null,
@@ -258,6 +265,14 @@ async function renderedExtract(url: string): Promise<ProductFields> {
     price: d.price != null ? String(d.price) : null,
     currency: d.currency ?? null,
   };
+  await recordScrapeAttempt({
+    url,
+    consumer: 'PRODUCT_SCRAPE',
+    result: res,
+    targetStatus: typeof d._httpStatus === 'number' ? d._httpStatus : null,
+    emptyResult: !(fields.name || fields.image),
+  });
+  return fields;
 }
 
 /** Prefer the primary field, fall back to the secondary one. */

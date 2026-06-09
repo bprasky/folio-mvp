@@ -8,6 +8,7 @@ import Anthropic from '@anthropic-ai/sdk';
 import * as cheerio from 'cheerio';
 import { trackDesignerProductUse } from '@/lib/designer-fingerprint';
 import { getContent, hasBrowserlessKey } from '@/lib/browserless/client';
+import { recordScrapeAttempt } from '@/lib/browserless/record';
 
 export const runtime = 'nodejs';
 
@@ -69,6 +70,7 @@ async function extractImageFromUrl(url: string): Promise<string | null> {
     const htmlRes = await getContent(url, { timeoutMs: 15000 });
 
     if (!htmlRes.ok) {
+      await recordScrapeAttempt({ url, consumer: 'IMPORT_IMAGE', result: htmlRes });
       console.error('Browserless fetch failed:', htmlRes.status);
       return null;
     }
@@ -76,56 +78,71 @@ async function extractImageFromUrl(url: string): Promise<string | null> {
     const html = htmlRes.payload;
     const $ = cheerio.load(html);
 
-    // Try multiple strategies to find the main product image
+    // Try multiple strategies to find the main product image, in precedence
+    // order, keeping the first valid hit. Accumulate into one variable (rather
+    // than returning early) so the scrape attempt is recorded exactly once.
     let imageUrl: string | null = null;
 
     // 1. OpenGraph image
-    imageUrl = $('meta[property="og:image"]').attr('content') || null;
-    if (imageUrl && isValidImageUrl(imageUrl)) return imageUrl;
+    const ogImage = $('meta[property="og:image"]').attr('content') || null;
+    if (ogImage && isValidImageUrl(ogImage)) imageUrl = ogImage;
 
     // 2. Twitter image
-    imageUrl = $('meta[name="twitter:image"]').attr('content') || null;
-    if (imageUrl && isValidImageUrl(imageUrl)) return imageUrl;
+    if (!imageUrl) {
+      const twImage = $('meta[name="twitter:image"]').attr('content') || null;
+      if (twImage && isValidImageUrl(twImage)) imageUrl = twImage;
+    }
 
     // 3. JSON-LD Product schema
-    $('script[type="application/ld+json"]').each((_, el) => {
-      try {
-        const json = JSON.parse($(el).contents().text() || '{}');
-        const product = Array.isArray(json)
-          ? json.find((j) => j['@type'] === 'Product')
-          : (json['@type'] === 'Product' ? json : json['@graph']?.find((n: any) => n['@type'] === 'Product'));
+    if (!imageUrl) {
+      let ldImage: string | null = null;
+      $('script[type="application/ld+json"]').each((_, el) => {
+        try {
+          const json = JSON.parse($(el).contents().text() || '{}');
+          const product = Array.isArray(json)
+            ? json.find((j) => j['@type'] === 'Product')
+            : (json['@type'] === 'Product' ? json : json['@graph']?.find((n: any) => n['@type'] === 'Product'));
 
-        if (product?.image) {
-          imageUrl = Array.isArray(product.image) ? product.image[0] : product.image;
+          if (product?.image) {
+            ldImage = Array.isArray(product.image) ? product.image[0] : product.image;
+          }
+        } catch {
+          // Ignore JSON parse errors
         }
-      } catch {
-        // Ignore JSON parse errors
-      }
-    });
-    if (imageUrl && isValidImageUrl(imageUrl)) return imageUrl;
+      });
+      if (ldImage && isValidImageUrl(ldImage)) imageUrl = ldImage;
+    }
 
     // 4. Look for large images in common product image containers
-    const selectors = [
-      '[data-testid="product-image"] img',
-      '.product-image img',
-      '.product-gallery img',
-      '#product-image img',
-      '.pdp-image img',
-      '[class*="ProductImage"] img',
-      '[class*="product-image"] img',
-      'main img[src*="product"]',
-      'main img[src*="Product"]',
-    ];
+    if (!imageUrl) {
+      const selectors = [
+        '[data-testid="product-image"] img',
+        '.product-image img',
+        '.product-gallery img',
+        '#product-image img',
+        '.pdp-image img',
+        '[class*="ProductImage"] img',
+        '[class*="product-image"] img',
+        'main img[src*="product"]',
+        'main img[src*="Product"]',
+      ];
 
-    for (const selector of selectors) {
-      const img = $(selector).first();
-      const src = img.attr('src') || img.attr('data-src');
-      if (src && isValidImageUrl(src)) {
-        imageUrl = src;
-        break;
+      for (const selector of selectors) {
+        const img = $(selector).first();
+        const src = img.attr('src') || img.attr('data-src');
+        if (src && isValidImageUrl(src)) {
+          imageUrl = src;
+          break;
+        }
       }
     }
 
+    await recordScrapeAttempt({
+      url,
+      consumer: 'IMPORT_IMAGE',
+      result: htmlRes,
+      emptyResult: !imageUrl,
+    });
     return imageUrl;
   } catch (error: any) {
     if (error.name === 'AbortError') {

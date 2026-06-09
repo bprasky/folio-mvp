@@ -8,6 +8,8 @@
 import Anthropic from '@anthropic-ai/sdk';
 import { callLLM } from '@/lib/posting/llmClient';
 import { directFetch } from '@/lib/browserless/client';
+import { classifyScrapeOutcome, isBlockedOutcome } from '@/lib/browserless/classify';
+import { recordScrapeAttempt } from '@/lib/browserless/record';
 
 export type ScrapedDesignerData = {
   name?: string;
@@ -38,6 +40,17 @@ export async function scrapeDesignerWebsite(url: string): Promise<ScrapedDesigne
       'Accept-Language': 'en-US,en;q=0.5',
     },
   });
+
+  const outcome = classifyScrapeOutcome(response);
+  await recordScrapeAttempt({ url, consumer: 'DESIGNER_BIO', result: response, outcome });
+
+  // A 200-status challenge page would otherwise be handed to Claude as if it
+  // were real bio content. Stop it here once the classifier flags a block.
+  if (isBlockedOutcome(outcome)) {
+    throw new Error(
+      'This website blocked automated access, so its content could not be read. Try a different page or enter your details manually.',
+    );
+  }
 
   if (!response.ok) {
     throw new Error(`Failed to fetch website: HTTP ${response.status}`);

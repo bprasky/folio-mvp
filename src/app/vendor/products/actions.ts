@@ -6,6 +6,7 @@ import { authOptions } from '@/lib/auth';
 import { normalizeUrl, isValidImageUrl, validateImageList } from '@/lib/url/normalizeUrl';
 import { getContent, hasBrowserlessKey } from '@/lib/browserless/client';
 import { looksLikeBotWall } from '@/lib/browserless/classify';
+import { recordScrapeAttempt } from '@/lib/browserless/record';
 
 export type ProductListParams = {
   q?: string | null;
@@ -151,6 +152,7 @@ export async function scrapeProduct(url: string): Promise<any> {
     // Call Browserless to get HTML through the shared client (which applies the
     // same AbortController timeout the other scrape paths already had).
     const response = await getContent(url);
+    await recordScrapeAttempt({ url, consumer: 'VENDOR_WIZARD', result: response });
 
     if (!response.ok) {
       console.error('Browserless API Error:', {
