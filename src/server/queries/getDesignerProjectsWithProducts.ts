@@ -34,6 +34,7 @@
  */
 
 import { prisma } from '@/lib/prisma';
+import { resolveProductImage } from '@/lib/products/imageProvenance';
 import { PUBLISHED_PROJECT_FILTER } from '@/server/queries/filters';
 
 /**
@@ -115,6 +116,8 @@ export async function getTaggedProductsForDesigner(designerId: string) {
           name: true,
           price: true,
           imageUrl: true,
+          cutoutImageUrl: true,
+          imageSource: true,
           brand: true,
           category: true,
           description: true,
@@ -129,10 +132,11 @@ export async function getTaggedProductsForDesigner(designerId: string) {
   });
 
   // 3. Aggregate by product ID (count occurrences)
-  const productCounts = new Map<string, { 
-    count: number; 
+  const productCounts = new Map<string, {
+    count: number;
     product: typeof productTags[0]['product'];
     projectIds: Set<string>;
+    cropUrl: string | null;
   }>();
 
   productTags.forEach(tag => {
@@ -140,11 +144,13 @@ export async function getTaggedProductsForDesigner(designerId: string) {
     if (existing) {
       existing.count += 1;
       existing.projectIds.add(tag.image.projectId);
+      if (!existing.cropUrl && tag.cropUrl) existing.cropUrl = tag.cropUrl;
     } else {
       productCounts.set(tag.productId, {
         count: 1,
         product: tag.product,
         projectIds: new Set([tag.image.projectId]),
+        cropUrl: tag.cropUrl ?? null,
       });
     }
   });
@@ -153,18 +159,23 @@ export async function getTaggedProductsForDesigner(designerId: string) {
     const topProducts = Array.from(productCounts.values())
       .sort((a, b) => b.count - a.count)
       .slice(0, 10)
-      .map(item => ({
+      .map(item => {
+        // Provenance gate (spec 17): public profile — suppress VENDOR_REFERENCE,
+        // substitute the designer's in-situ crop.
+        const publicImage = resolveProductImage(item.product, item.cropUrl, 'PUBLIC');
+        return {
         id: item.product.id,
         name: item.product.name,
         vendor: item.product.brand || 'Unknown Vendor',
-        imageUrl: item.product.imageUrl,
-        thumbnail: item.product.imageUrl,
+        imageUrl: publicImage,
+        thumbnail: publicImage,
         price: item.product.price,
         category: item.product.category,
         description: item.product.description,
         tagCount: item.count,
         projectCount: item.projectIds.size,
-      }));
+      };
+      });
 
     return topProducts;
   } catch (error: any) {

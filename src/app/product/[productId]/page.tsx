@@ -4,6 +4,7 @@
 
 import type { Metadata } from "next";
 import { prisma } from "@/lib/prisma";
+import { isPubliclyDisplayable } from "@/lib/products/imageProvenance";
 import { notFound } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
@@ -21,6 +22,7 @@ export async function generateMetadata({ params }: { params: { productId: string
       description: true,
       brand: true,
       imageUrl: true,
+      imageSource: true,
       vendor: { select: { name: true } },
       vendorRecord: { select: { name: true } },
     },
@@ -34,7 +36,8 @@ export async function generateMetadata({ params }: { params: { productId: string
     : `${product.name} | Folio`;
   const description = product.description
     || `Discover ${product.name}${vendorName ? ` by ${vendorName}` : ""} — sourced and tagged by the design community on Folio.`;
-  const ogImage = product.imageUrl || null;
+  // Provenance gate (spec 17): never put a VENDOR_REFERENCE image in public OG meta.
+  const ogImage = isPubliclyDisplayable(product.imageSource) ? product.imageUrl || null : null;
 
   return {
     title,
@@ -116,14 +119,21 @@ export default async function ProductPage({ params }: ProductPageProps) {
     notFound();
   }
 
+  // Provenance gate (spec 17): the public product page must not serve a
+  // VENDOR_REFERENCE catalog image. Substitute the designer's in-situ crop.
+  const publishableImages = isPubliclyDisplayable(product.imageSource);
+  const insituCrop = product.projectTags?.find((t: any) => t.cropUrl)?.cropUrl ?? null;
+
   // Get all images for the product
-  const productImages = product.imageUrls && product.imageUrls.length > 0
-    ? product.imageUrls
-    : product.primaryImageUrl
-      ? [product.primaryImageUrl]
-      : product.imageUrl
-        ? [product.imageUrl]
-        : [];
+  const productImages = !publishableImages
+    ? (insituCrop ? [insituCrop] : [])
+    : product.imageUrls && product.imageUrls.length > 0
+      ? product.imageUrls
+      : product.primaryImageUrl
+        ? [product.primaryImageUrl]
+        : product.imageUrl
+          ? [product.imageUrl]
+          : [];
 
   // Parse specs from JSON
   const specs = product.specsJson as any || {};

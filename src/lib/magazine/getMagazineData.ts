@@ -15,6 +15,7 @@
 
 import { getEditionConfig, type MagazineEditionConfig } from "./editions";
 import { prisma } from "@/lib/prisma";
+import { isPubliclyDisplayable } from "@/lib/products/imageProvenance";
 
 export interface MagazineHero {
   id: string;
@@ -108,6 +109,7 @@ export async function getMagazineData(
                       name: true,
                       imageUrl: true,
                       cutoutImageUrl: true,
+                      imageSource: true,
                       threeDAssetUrl: true,
                       category: true,
                       vendor: {
@@ -236,11 +238,15 @@ export async function getMagazineData(
       if (image.tags) {
         for (const tag of image.tags) {
           if (tag.product && !productMap.has(tag.product.id)) {
+            // Provenance gate (spec 17): editorial is public — suppress the
+            // VENDOR_REFERENCE catalog image and its cutout derivative; the
+            // designer's in-situ cropUrl remains the public substitute.
+            const publishable = isPubliclyDisplayable(tag.product.imageSource);
             productMap.set(tag.product.id, {
               id: tag.product.id,
               name: tag.product.name,
-              imageUrl: tag.product.imageUrl ?? null,
-              cutoutImageUrl: tag.product.cutoutImageUrl ?? null,
+              imageUrl: publishable ? tag.product.imageUrl ?? null : null,
+              cutoutImageUrl: publishable ? tag.product.cutoutImageUrl ?? null : null,
               cropUrl: tag.cropUrl ?? null,
               vendorName: tag.product.vendor?.name ?? tag.product.vendor?.companyName ?? null,
               threeDAssetUrl: tag.product.threeDAssetUrl ?? null,
