@@ -18,11 +18,12 @@ import { processAllBoostRevenue } from '@/lib/boost/calculateBoostRevenue';
  * Protected by CRON_SECRET header to prevent unauthorized access.
  */
 export async function POST(request: NextRequest) {
-  // Verify cron secret (skip in development)
+  // Verify cron secret (skip in development). In production the secret is
+  // mandatory: a missing CRON_SECRET fails closed rather than skipping auth.
   const cronSecret = process.env.CRON_SECRET;
-  if (cronSecret && process.env.NODE_ENV === 'production') {
+  if (process.env.NODE_ENV === 'production') {
     const authHeader = request.headers.get('authorization');
-    if (authHeader !== `Bearer ${cronSecret}`) {
+    if (!cronSecret || authHeader !== `Bearer ${cronSecret}`) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
   }

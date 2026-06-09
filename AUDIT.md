@@ -22,10 +22,11 @@ Architecture note that governs the whole report: **`middleware.ts` exempts every
 
 ## 1. Security & Access Control
 
-### BLOCKER — Unauthenticated user/account creation
+### ✅ RESOLVED (commit 158b523) — BLOCKER — Unauthenticated user/account creation
 **`src/app/api/profiles/route.ts:129`** (POST handler)
 Anyone can `POST /api/profiles` with `{ role: "designer" | "vendor" | "individual", ... }` and the handler calls `prisma.user.create()` with **no session check**. An attacker can mint unlimited real `User` rows of any role, including spoofed designer/vendor profiles. The body is also stuffed with demo-era junk (random follower counts, `randomuser.me` avatars, `source.unsplash.com` logos) so the created accounts are visibly fake but real rows.
 **Fix:** Require an authenticated admin session, or delete this route — it looks like leftover demo-seeding code. The real signup path is `src/app/api/auth/signup/route.ts`, which is separate.
+**Resolution:** Removed the POST handler entirely — no caller existed in the codebase. The read-only `GET` directory listing in the same file was kept intact.
 
 ### BLOCKER — Inbound email webhook has no signature verification
 **`src/app/api/email/inbound/route.ts:22`** (POST handler; the file's own header TODO at lines 1–6 admits this)
@@ -37,10 +38,11 @@ The Resend inbound webhook processes `request.json()` and calls `matchInboundToT
 No session check. With a `previewTokenId` (handed out in vendor-preview links and thus shareable/guessable), an unauthenticated caller can claim a product, create or overwrite a `Vendor` record's name/website/email, attach it to the product, and mark the token used to cover tracks. There is no verification that the claimer controls the vendor email.
 **Fix:** Require an authenticated vendor session and verify the claimed email matches the session user (or an email-verification round-trip) before mutating `Vendor`/product state.
 
-### HIGH — Cron endpoints fail *open* when the secret is unset
+### ✅ RESOLVED — HIGH — Cron endpoints fail *open* when the secret is unset
 **`src/app/api/cron/dormancy-check/route.ts:24`** and **`src/app/api/cron/process-boost-opportunities/route.ts`** (~line 24)
 The guard is `if (cronSecret && authHeader !== \`Bearer ${cronSecret}\`) return 401`. If `CRON_SECRET` is empty/undefined in the environment, the condition short-circuits to `false` and the route runs **unauthenticated** — anyone can trigger dormancy notifications (spam designers) or boost-opportunity processing.
 **Fix:** Invert to fail-closed: `if (!cronSecret || authHeader !== \`Bearer ${cronSecret}\`) return 401`. Treat a missing secret as "deny," and add a deploy-time assertion that `CRON_SECRET` is set in production.
+**Resolution:** Inverted both guards to fail closed. Also fixed a third route with the same class of bug, **`src/app/api/cron/process-boost-revenue/route.ts:23`** (`if (cronSecret && NODE_ENV === 'production')` skipped auth when the secret was unset in production) — now requires a valid secret in production while preserving its intentional dev-skip. **`src/app/api/admin/commerce/release-credits/route.ts:23`** uses the same env secret but was already fail-closed (default-deny `isAuthorized` flag + admin-session fallback), so it was left unchanged.
 
 ### HIGH — Unauthenticated server-side URL fetcher (SSRF + AI-budget burn)
 **`src/app/api/scrape-product/route.ts:1`** (no session import anywhere in the file; `@idor-allow: public-read` annotation present but it performs outbound fetches + AI extraction)
