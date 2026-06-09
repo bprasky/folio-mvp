@@ -1,12 +1,8 @@
-// @idor-allow: public-read reason="Resend inbound-email webhook; bearer-credential auth via webhook signature (see TODO)"
-// TODO(security): verify Resend webhook signature before processing. Resend
-// sends an `svix-id`, `svix-timestamp`, and `svix-signature` header set; use
-// the `svix` package with process.env.RESEND_WEBHOOK_SECRET to verify. Until
-// then, anyone who finds this URL can POST fake inbound-email events and
-// trigger `matchInboundToThread`.
+// @idor-allow: public-read reason="Resend inbound-email webhook; authenticated via Svix signature verification against RESEND_WEBHOOK_SECRET"
 export const dynamic = 'force-dynamic';
 
 import { NextRequest, NextResponse } from 'next/server';
+import { Webhook } from 'svix';
 import { prisma } from '@/lib/prisma';
 import { matchInboundToThread } from '@/lib/email/match-inbound';
 
@@ -18,10 +14,40 @@ import { matchInboundToThread } from '@/lib/email/match-inbound';
  *
  * Resend posts the parsed email with fields:
  *   from, to, subject, text, html, headers, ...
+ *
+ * Authenticated via Svix signature: the `svix-id`, `svix-timestamp`, and
+ * `svix-signature` headers are verified against RESEND_WEBHOOK_SECRET over the
+ * RAW request body before any parsing or DB work. Unsigned/invalid requests
+ * are rejected with 401.
  */
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json();
+    // Verify the Resend (Svix) signature over the raw body BEFORE parsing.
+    const webhookSecret = process.env.RESEND_WEBHOOK_SECRET;
+    if (!webhookSecret) {
+      console.error('[Inbound] RESEND_WEBHOOK_SECRET is not set; rejecting webhook');
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const rawBody = await request.text();
+    const svixHeaders = {
+      'svix-id': request.headers.get('svix-id') ?? '',
+      'svix-timestamp': request.headers.get('svix-timestamp') ?? '',
+      'svix-signature': request.headers.get('svix-signature') ?? '',
+    };
+
+    if (!svixHeaders['svix-id'] || !svixHeaders['svix-timestamp'] || !svixHeaders['svix-signature']) {
+      console.warn('[Inbound] Missing Svix signature headers; rejecting webhook');
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    let body: any;
+    try {
+      body = new Webhook(webhookSecret).verify(rawBody, svixHeaders);
+    } catch (verifyError) {
+      console.warn('[Inbound] Svix signature verification failed; rejecting webhook');
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
 
     // Resend webhook events have a 'type' field
     // For email.received events, the data contains email fields
