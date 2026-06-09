@@ -6,9 +6,17 @@ import { prisma } from '@/lib/prisma';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/app/api/auth/[...nextauth]/options';
 import { triggerMeshGeneration } from '@/lib/three-d/triggerMeshGeneration';
+import { resolveProductImage } from '@/lib/products/imageProvenance';
 
 export async function GET(request: NextRequest) {
   try {
+    // Provenance gate (spec 17): this endpoint is public-read but its UI
+    // consumers are authenticated workspace tools. Anonymous callers get the
+    // public view (VENDOR_REFERENCE images suppressed); authenticated callers
+    // keep the workspace view (vendor image preferred). No anonymous leak.
+    const session = await getServerSession(authOptions);
+    const renderContext = session?.user?.id ? 'INTERNAL' : 'PUBLIC';
+
     const { searchParams } = new URL(request.url);
     const search = searchParams.get('search')?.toLowerCase();
     const category = searchParams.get('category');
@@ -64,7 +72,7 @@ export async function GET(request: NextRequest) {
       name: product.name,
       description: product.description,
       price: product.price,
-      image: product.imageUrl,
+      image: resolveProductImage(product, null, renderContext),
       category: product.category,
       brand: product.brand,
       vendor: product.vendor?.name || product.vendor?.companyName || product.brand,
