@@ -28,10 +28,11 @@ Anyone can `POST /api/profiles` with `{ role: "designer" | "vendor" | "individua
 **Fix:** Require an authenticated admin session, or delete this route — it looks like leftover demo-seeding code. The real signup path is `src/app/api/auth/signup/route.ts`, which is separate.
 **Resolution:** Removed the POST handler entirely — no caller existed in the codebase. The read-only `GET` directory listing in the same file was kept intact.
 
-### BLOCKER — Inbound email webhook has no signature verification
+### ✅ RESOLVED (commit f5cad40) — BLOCKER — Inbound email webhook has no signature verification
 **`src/app/api/email/inbound/route.ts:22`** (POST handler; the file's own header TODO at lines 1–6 admits this)
 The Resend inbound webhook processes `request.json()` and calls `matchInboundToThread()` with **no Svix signature check**. Anyone who finds the URL can POST fake inbound emails: inject forged vendor replies into conversation threads, flip `EmailThread` status to `REPLIED`, and corrupt rep response-time metrics. Designers would see fabricated vendor messages as genuine.
 **Fix:** Verify `svix-id` / `svix-timestamp` / `svix-signature` headers with the `svix` package against `RESEND_WEBHOOK_SECRET` before processing. Reject if absent/invalid.
+**Resolution:** The Svix signature is now verified against `RESEND_WEBHOOK_SECRET` over the **raw** request body before any parsing or DB work; missing secret, missing headers, or failed verification all return 401. `svix` was promoted from a transitive dependency to a direct one. Searched for other inbound webhook handlers (Resend/Stripe/other) — none exist; this was the only one. The Stripe references in the codebase are outbound Connect onboarding (session-authenticated), not webhooks.
 
 ### HIGH — Unauthenticated product claim / vendor record mutation
 **`src/app/api/vendor/claim-product/route.ts:6`** (POST handler)
