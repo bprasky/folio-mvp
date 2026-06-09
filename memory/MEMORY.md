@@ -1,3 +1,4 @@
+- [Scraping infra (spec 17) escalation fork + Phase 1 notes](scraping_infra_escalation_fork.md): vendor-own-site no-escalation exemption is decided at the wizard entry point from domain ownership, not from the consumer enum (PRODUCT_SCRAPE exposed this); also records that /content null targetStatus is expected and the Phase 1 row-landing acceptance check
 - [Atelier stub overlaps presale_infrastructure](migration_atelier_stub_overlap.md) — version+snapshot columns appear in both by design; don't "clean up"
 - [atelier VARCHAR vs TEXT drift risk](migration_atelier_varchar_drift.md) — designerId/vendorId columns are VARCHAR in prod; may flag on migrate dev against shadow
 - [priceUsd uses DOUBLE PRECISION (tech debt)](migration_priceusd_double_techdebt.md) — should be DECIMAL(10,2); stub preserves prod, fix in separate migration
