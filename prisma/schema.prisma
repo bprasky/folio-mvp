@@ -664,6 +664,19 @@ model MomentIndex {
   @@map("moment_index")
 }
 
+// Image provenance gate (spec 17_IMAGE_PROVENANCE_GATE).
+enum ImageSource {
+  VENDOR_REFERENCE // captured/scraped/pasted/linked or a derivative. Internal only. Default for unknown provenance.
+  VENDOR_LICENSED // vendor uploaded or granted for public display (Phase 1B).
+  DESIGNER_ORIGINAL // designer's own photography.
+  FOLIO_COMMISSIONED // Folio produced.
+}
+
+enum DisplayScope {
+  INTERNAL // workspace and project files only
+  PUBLIC // eligible for public and attribution surfaces
+}
+
 model Product {
   id                String             @id @default(uuid())
   name              String
@@ -671,6 +684,10 @@ model Product {
   price             Float?
   imageUrl          String?
   cutoutImageUrl    String?
+  // Image provenance gate (spec 17). Defaults keep every row internal-only on
+  // public surfaces until promoted — the fail-safe for the live exposure.
+  imageSource       ImageSource        @default(VENDOR_REFERENCE)
+  displayScope      DisplayScope       @default(INTERNAL)
   threeDAssetUrl    String?
   mesh3dStatus      String?
   mesh3dError       String?

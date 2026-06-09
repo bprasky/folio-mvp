@@ -19,6 +19,7 @@
 // callers (Following=true) skip cache.
 
 import { prisma } from "@/lib/prisma";
+import { resolveProductImage } from "@/lib/products/imageProvenance";
 import { getFilteredPosts, type FeedFilter } from "@/lib/magazine/getFilteredPosts";
 import type { MagazineMosaicItem } from "@/lib/magazine/getMagazineData";
 
@@ -293,6 +294,8 @@ async function buildBoostReel(
           id: true,
           name: true,
           imageUrl: true,
+          cutoutImageUrl: true,
+          imageSource: true,
           vendor: { select: { name: true } },
         },
       },
@@ -367,7 +370,9 @@ async function buildBoostReel(
     // Allow products with no catalog image through; the cell falls back
     // through cropUrl → focal-cropped project image → name+vendor text
     // so every slot is filled even while Phase 4 backfill catches up.
-    const imageUrl = tag.product.imageUrl ?? "";
+    // Provenance gate (spec 17): the homepage is public, so a VENDOR_REFERENCE
+    // catalog image is suppressed here and the cell's cropUrl fallback takes over.
+    const imageUrl = resolveProductImage(tag.product, null, "PUBLIC") ?? "";
     const boost = winningBoostByProduct.get(pid);
     const isBoosted = i < REEL_PAID_SLOTS && !!boost;
     items.push({

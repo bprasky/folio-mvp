@@ -1,12 +1,20 @@
 // @idor-allow: public-read reason="Public bulk product fetch for directory pages"
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/app/api/auth/[...nextauth]/options";
+import { resolveProductImage, PRODUCT_PROVENANCE_SELECT } from "@/lib/products/imageProvenance";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 export async function GET(request: NextRequest) {
   try {
+    // Provenance gate (spec 17): anonymous callers get VENDOR_REFERENCE
+    // suppressed; authenticated callers keep the workspace view.
+    const session = await getServerSession(authOptions);
+    const renderContext = session?.user?.id ? 'INTERNAL' : 'PUBLIC';
+
     const { searchParams } = new URL(request.url);
     const idsParam = searchParams.get('ids');
     
@@ -31,7 +39,7 @@ export async function GET(request: NextRequest) {
         select: {
           id: true,
           name: true,
-          imageUrl: true,
+          ...PRODUCT_PROVENANCE_SELECT,
           vendor: {
             select: {
               id: true,
@@ -45,7 +53,7 @@ export async function GET(request: NextRequest) {
       const results = products.map(product => ({
         id: product.id,
         name: product.name,
-        imageUrl: product.imageUrl,
+        imageUrl: resolveProductImage(product, null, renderContext),
         vendorName: product.vendor?.companyName || product.vendor?.name || null,
       }));
 

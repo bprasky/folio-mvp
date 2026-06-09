@@ -3,6 +3,9 @@ export const dynamic = 'force-dynamic';
 
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@/app/api/auth/[...nextauth]/options';
+import { resolveProductImage, PRODUCT_PROVENANCE_SELECT } from '@/lib/products/imageProvenance';
 
 interface ShopProductResult {
   id: string;
@@ -32,6 +35,12 @@ export async function GET(
   try {
     const resolvedParams = params instanceof Promise ? await params : params;
     const userId = resolvedParams.userId;
+
+    // Provenance gate (spec 17): the public shop suppresses VENDOR_REFERENCE
+    // images and substitutes the designer's own in-situ crop. The owner viewing
+    // their own shop keeps the workspace (vendor-image) view.
+    const session = await getServerSession(authOptions);
+    const renderContext = session?.user?.id === userId ? 'INTERNAL' : 'PUBLIC';
 
     const { searchParams } = new URL(request.url);
     const productType = searchParams.get('productType') || 'all';
@@ -76,7 +85,7 @@ export async function GET(
           select: {
             id: true,
             name: true,
-            imageUrl: true,
+            ...PRODUCT_PROVENANCE_SELECT,
             brand: true,
             category: true,
             vendorId: true,
@@ -117,13 +126,41 @@ export async function GET(
       projectCountMap.set(pc.productId, pc._count._all);
     }
 
+    // A representative in-situ crop (a crop of the designer's own room photo) per
+    // product — the public substitute when the vendor image is suppressed.
+    const cropMap = new Map<string, string>();
+    if (renderContext === 'PUBLIC' && productIds.length > 0) {
+      const crops = await prisma.productTag.findMany({
+        where: {
+          productId: { in: productIds },
+          cropUrl: { not: null },
+          image: { project: { designerId: userId, isPublic: true } },
+        },
+        select: { productId: true, cropUrl: true },
+      });
+      for (const c of crops) {
+        if (c.cropUrl && !cropMap.has(c.productId)) cropMap.set(c.productId, c.cropUrl);
+      }
+    }
+
     // Format results
     const products: ShopProductResult[] = shopProducts.map(sp => ({
       id: sp.id,
       productId: sp.productId,
       quote: sp.quote,
       isFeatured: sp.isFeatured,
-      product: sp.product,
+      product: {
+        id: sp.product.id,
+        name: sp.product.name,
+        imageUrl: resolveProductImage(
+          sp.product,
+          cropMap.get(sp.productId) ?? null,
+          renderContext,
+        ),
+        brand: sp.product.brand,
+        category: sp.product.category,
+        vendorId: sp.product.vendorId,
+      },
       projectCount: projectCountMap.get(sp.productId) || 0,
       hasActiveBoost: sp.boosts.length > 0,
     }));
