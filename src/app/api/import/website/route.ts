@@ -7,6 +7,7 @@ import { authOptions } from '@/app/api/auth/[...nextauth]/options';
 import { prisma } from '@/lib/prisma';
 import { canUsePortfolioScrape } from '@/lib/pricing/canUsePortfolioScrape';
 import * as cheerio from 'cheerio';
+import { getContent, runFunction, directFetch, hasBrowserlessKey } from '@/lib/browserless/client';
 
 const MAX_CANDIDATES = 40;
 const FETCH_TIMEOUT_MS = 15000;
@@ -41,34 +42,18 @@ function resolveUrl(src: string | undefined, base: string): string | null {
  * direct fetch (works for server-rendered pages without JS hydration).
  */
 async function fetchHtml(url: string): Promise<string | null> {
-  const token = process.env.BROWSERLESS_API_KEY;
-  const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
-  try {
-    if (token) {
-      const res = await fetch(`https://production-sfo.browserless.io/content?token=${token}`, {
-        method: 'POST',
-        headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ url }),
-        signal: controller.signal,
-      });
-      if (res.ok) return await res.text();
-      console.error('[import/website] Browserless /content failed:', res.status);
-      // fall through to direct fetch
-    }
-    const direct = await fetch(url, {
-      headers: { 'User-Agent': 'Mozilla/5.0 (compatible; FolioBot/1.0)' },
-      signal: controller.signal,
-    });
-    if (!direct.ok) return null;
-    return await direct.text();
-  } catch (err: any) {
-    if (err?.name === 'AbortError') console.log('[import/website] /content fetch timed out');
-    else console.error('[import/website] /content fetch error:', err?.message);
-    return null;
-  } finally {
-    clearTimeout(timeoutId);
+  if (hasBrowserlessKey()) {
+    const res = await getContent(url, { timeoutMs: FETCH_TIMEOUT_MS });
+    if (res.ok) return res.payload;
+    console.error('[import/website] Browserless /content failed:', res.status);
+    // fall through to direct fetch
   }
+  const direct = await directFetch(url, {
+    timeoutMs: FETCH_TIMEOUT_MS,
+    headers: { 'User-Agent': 'Mozilla/5.0 (compatible; FolioBot/1.0)' },
+  });
+  if (!direct.ok) return null;
+  return direct.payload;
 }
 
 interface ScrapeResult {
@@ -193,23 +178,20 @@ const HARVEST_CODE = `export default async function ({ page, context }) {
  * miss; needs Browserless (JS rendering) to work.
  */
 async function renderedHarvest(url: string): Promise<ScrapeResult> {
-  const token = process.env.BROWSERLESS_API_KEY;
-  if (!token) return { images: [], description: null };
+  if (!hasBrowserlessKey()) return { images: [], description: null };
 
-  const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), RENDER_TIMEOUT_MS);
+  const res = await runFunction(HARVEST_CODE, { url }, { timeoutMs: RENDER_TIMEOUT_MS });
+  if (!res.ok) {
+    console.error('[import/website] Browserless /function failed:', res.status);
+    return { images: [], description: null };
+  }
+  let payload: any;
   try {
-    const res = await fetch(`https://production-sfo.browserless.io/function?token=${token}`, {
-      method: 'POST',
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ code: HARVEST_CODE, context: { url } }),
-      signal: controller.signal,
-    });
-    if (!res.ok) {
-      console.error('[import/website] Browserless /function failed:', res.status);
-      return { images: [], description: null };
-    }
-    const payload = await res.json();
+    payload = JSON.parse(res.payload);
+  } catch {
+    return { images: [], description: null };
+  }
+  {
     const raw: Array<{ url: string; w: number; h: number; alt?: string }> = payload?.images || [];
 
     const seen = new Set<string>();
@@ -232,12 +214,6 @@ async function renderedHarvest(url: string): Promise<ScrapeResult> {
       images: images.slice(0, MAX_CANDIDATES),
       description: typeof payload?.description === 'string' ? payload.description.trim() || null : null,
     };
-  } catch (err: any) {
-    if (err?.name === 'AbortError') console.log('[import/website] /function timed out');
-    else console.error('[import/website] /function error:', err?.message);
-    return { images: [], description: null };
-  } finally {
-    clearTimeout(timeoutId);
   }
 }
 
@@ -330,7 +306,7 @@ export async function POST(req: NextRequest) {
         rendered: { imageCount: rendered.images.length, durationMs: renderMs },
         cheerio: cheerioMeta,
         finalStrategy,
-        usedBrowserless: !!process.env.BROWSERLESS_API_KEY,
+        usedBrowserless: hasBrowserlessKey(),
       },
     };
 
