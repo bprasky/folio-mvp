@@ -7,6 +7,7 @@ import { prisma } from '@/lib/prisma';
 import Anthropic from '@anthropic-ai/sdk';
 import * as cheerio from 'cheerio';
 import { trackDesignerProductUse } from '@/lib/designer-fingerprint';
+import { getContent, hasBrowserlessKey } from '@/lib/browserless/client';
 
 export const runtime = 'nodejs';
 
@@ -59,31 +60,20 @@ async function logProductSearch(params: {
  * Extract image URL from HTML using Browserless
  */
 async function extractImageFromUrl(url: string): Promise<string | null> {
-  const token = process.env.BROWSERLESS_API_KEY;
-  if (!token) {
+  if (!hasBrowserlessKey()) {
     console.log('No Browserless API key, skipping image extraction');
     return null;
   }
 
   try {
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 15000); // 15 second timeout
-
-    const htmlRes = await fetch(`https://production-sfo.browserless.io/content?token=${token}`, {
-      method: 'POST',
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ url }),
-      signal: controller.signal,
-    });
-
-    clearTimeout(timeoutId);
+    const htmlRes = await getContent(url, { timeoutMs: 15000 });
 
     if (!htmlRes.ok) {
       console.error('Browserless fetch failed:', htmlRes.status);
       return null;
     }
 
-    const html = await htmlRes.text();
+    const html = htmlRes.payload;
     const $ = cheerio.load(html);
 
     // Try multiple strategies to find the main product image

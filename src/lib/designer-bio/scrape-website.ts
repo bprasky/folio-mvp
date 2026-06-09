@@ -7,6 +7,7 @@
 
 import Anthropic from '@anthropic-ai/sdk';
 import { callLLM } from '@/lib/posting/llmClient';
+import { directFetch } from '@/lib/browserless/client';
 
 export type ScrapedDesignerData = {
   name?: string;
@@ -26,22 +27,23 @@ export type ScrapedDesignerData = {
  * Scrape a designer's website and extract structured data using AI.
  */
 export async function scrapeDesignerWebsite(url: string): Promise<ScrapedDesignerData> {
-  // Fetch the website HTML
-  const response = await fetch(url, {
+  // Fetch the website HTML through the shared client (plain-fetch consumer for
+  // now; Phase 1 adds challenge-page detection on this path).
+  const response = await directFetch(url, {
+    timeoutMs: 15000,
     headers: {
       'User-Agent':
         'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
       Accept: 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
       'Accept-Language': 'en-US,en;q=0.5',
     },
-    signal: AbortSignal.timeout(15000),
   });
 
   if (!response.ok) {
     throw new Error(`Failed to fetch website: HTTP ${response.status}`);
   }
 
-  const html = await response.text();
+  const html = response.payload;
 
   // Extract text content from HTML (basic approach)
   const textContent = extractTextFromHTML(html);

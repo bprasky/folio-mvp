@@ -4,6 +4,8 @@ import { prisma } from '@/lib/prisma';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { normalizeUrl, isValidImageUrl, validateImageList } from '@/lib/url/normalizeUrl';
+import { getContent, hasBrowserlessKey } from '@/lib/browserless/client';
+import { looksLikeBotWall } from '@/lib/browserless/classify';
 
 export type ProductListParams = {
   q?: string | null;
@@ -135,9 +137,7 @@ export async function listVendors() {
  */
 export async function scrapeProduct(url: string): Promise<any> {
   try {
-    const browserlessKey = process.env.BROWSERLESS_API_KEY;
-    
-    if (!browserlessKey) {
+    if (!hasBrowserlessKey()) {
       return createEmptyScrapeResult(url, 'Browserless API key not configured. Please set BROWSERLESS_API_KEY in environment variables.');
     }
 
@@ -148,34 +148,32 @@ export async function scrapeProduct(url: string): Promise<any> {
       return createEmptyScrapeResult(url, 'Invalid URL format');
     }
 
-    // Call Browserless to get HTML (using current production endpoint)
-    const response = await fetch(`https://production-sfo.browserless.io/content?token=${browserlessKey}`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        url,
-      }),
-    });
+    // Call Browserless to get HTML through the shared client (which applies the
+    // same AbortController timeout the other scrape paths already had).
+    const response = await getContent(url);
 
     if (!response.ok) {
-      const errorText = await response.text();
       console.error('Browserless API Error:', {
         status: response.status,
-        statusText: response.statusText,
-        body: errorText,
-        url: `https://production-sfo.browserless.io/content?token=${browserlessKey.substring(0, 10)}...`
+        error: response.error,
+        body: response.payload,
       });
-      
+
       if (response.status === 401 || response.status === 403) {
         return createEmptyScrapeResult(url, `Browserless API key invalid or expired. Please check your BROWSERLESS_API_KEY in .env.local`);
       }
-      
-      return createEmptyScrapeResult(url, `Browserless request failed: ${response.statusText} - ${errorText}`);
+
+      return createEmptyScrapeResult(url, `Browserless request failed: HTTP ${response.status}${response.error ? ` - ${response.error}` : ''}`);
     }
 
-    const html = await response.text();
+    const html = response.payload;
+
+    // A bot wall returns a denial page, not the product. Use the shared
+    // classifier so this path no longer turns a denial page title into a
+    // low-confidence product, matching the /api/scrape-product route.
+    if (looksLikeBotWall(html)) {
+      return createEmptyScrapeResult(url, 'This retailer blocked automated access to that page. Please enter the product details manually.');
+    }
 
     // Extract product information with confidence scoring
     const { extractProductData } = await import('@/lib/vendor/extractProductData');

@@ -1,7 +1,7 @@
 const axios = require('axios');
 
-// Your Browserless token (set BROWSERLESS_TOKEN env var)
-const BROWSERLESS_TOKEN = process.env.BROWSERLESS_TOKEN;
+// Browserless key (set BROWSERLESS_API_KEY; BROWSERLESS_TOKEN accepted as alias)
+const BROWSERLESS_TOKEN = process.env.BROWSERLESS_API_KEY || process.env.BROWSERLESS_TOKEN;
 
 // Test URLs for different types of designer websites
 const testUrls = [

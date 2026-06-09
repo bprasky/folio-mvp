@@ -6,6 +6,8 @@ export const maxDuration = 60;
 import { NextRequest, NextResponse } from 'next/server';
 import * as cheerio from 'cheerio';
 import { aiExtractProduct } from '@/lib/products/aiExtractProduct';
+import { getContent, runFunction, directFetch, hasBrowserlessKey } from '@/lib/browserless/client';
+import { looksLikeBotWall } from '@/lib/browserless/classify';
 
 const FETCH_TIMEOUT_MS = 15000;
 const RENDER_TIMEOUT_MS = 45000;
@@ -33,39 +35,23 @@ function resolveUrl(src: string | undefined | null, base: string): string | null
  * direct fetch (works for server-rendered product pages).
  */
 async function fetchHtml(url: string): Promise<string | null> {
-  const token = process.env.BROWSERLESS_API_KEY;
-  const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
-  try {
-    if (token) {
-      const res = await fetch(`https://production-sfo.browserless.io/content?token=${token}`, {
-        method: 'POST',
-        headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ url }),
-        signal: controller.signal,
-      });
-      if (res.ok) return await res.text();
-      console.error('[scrape-product] Browserless /content failed:', res.status);
-      // fall through to direct fetch
-    }
-    const direct = await fetch(url, {
-      headers: {
-        'User-Agent':
-          'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-        Accept: 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
-        'Accept-Language': 'en-US,en;q=0.5',
-      },
-      signal: controller.signal,
-    });
-    if (!direct.ok) return null;
-    return await direct.text();
-  } catch (err: any) {
-    if (err?.name === 'AbortError') console.log('[scrape-product] fetch timed out');
-    else console.error('[scrape-product] fetch error:', err?.message);
-    return null;
-  } finally {
-    clearTimeout(timeoutId);
+  if (hasBrowserlessKey()) {
+    const res = await getContent(url, { timeoutMs: FETCH_TIMEOUT_MS });
+    if (res.ok) return res.payload;
+    console.error('[scrape-product] Browserless /content failed:', res.status);
+    // fall through to direct fetch
   }
+  const direct = await directFetch(url, {
+    timeoutMs: FETCH_TIMEOUT_MS,
+    headers: {
+      'User-Agent':
+        'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+      Accept: 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+      'Accept-Language': 'en-US,en;q=0.5',
+    },
+  });
+  if (!direct.ok) return null;
+  return direct.payload;
 }
 
 /* ----------------------------------------------------------------------------
@@ -250,39 +236,28 @@ const PRODUCT_HARVEST_CODE = `export default async function ({ page, context }) 
 
 /** Tier 2: only runs when Browserless is configured and Tier 1 missed. */
 async function renderedExtract(url: string): Promise<ProductFields> {
-  const token = process.env.BROWSERLESS_API_KEY;
-  if (!token) return { ...EMPTY_FIELDS };
+  if (!hasBrowserlessKey()) return { ...EMPTY_FIELDS };
 
-  const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), RENDER_TIMEOUT_MS);
-  try {
-    const res = await fetch(`https://production-sfo.browserless.io/function?token=${token}`, {
-      method: 'POST',
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ code: PRODUCT_HARVEST_CODE, context: { url } }),
-      signal: controller.signal,
-    });
-    if (!res.ok) {
-      console.error('[scrape-product] Browserless /function failed:', res.status);
-      return { ...EMPTY_FIELDS };
-    }
-    const payload = await res.json();
-    const d = payload?.data ?? payload ?? {};
-    return {
-      name: d.name ? String(d.name).trim() : null,
-      image: resolveUrl(d.image, url),
-      description: d.description ? String(d.description).trim() : null,
-      brand: d.brand ? String(d.brand).trim() : null,
-      price: d.price != null ? String(d.price) : null,
-      currency: d.currency ?? null,
-    };
-  } catch (err: any) {
-    if (err?.name === 'AbortError') console.log('[scrape-product] /function timed out');
-    else console.error('[scrape-product] /function error:', err?.message);
+  const res = await runFunction(PRODUCT_HARVEST_CODE, { url }, { timeoutMs: RENDER_TIMEOUT_MS });
+  if (!res.ok) {
+    console.error('[scrape-product] Browserless /function failed:', res.status);
     return { ...EMPTY_FIELDS };
-  } finally {
-    clearTimeout(timeoutId);
   }
+  let payload: any;
+  try {
+    payload = JSON.parse(res.payload);
+  } catch {
+    return { ...EMPTY_FIELDS };
+  }
+  const d = payload?.data ?? payload ?? {};
+  return {
+    name: d.name ? String(d.name).trim() : null,
+    image: resolveUrl(d.image, url),
+    description: d.description ? String(d.description).trim() : null,
+    brand: d.brand ? String(d.brand).trim() : null,
+    price: d.price != null ? String(d.price) : null,
+    currency: d.currency ?? null,
+  };
 }
 
 /** Prefer the primary field, fall back to the secondary one. */
@@ -375,34 +350,6 @@ function determineCategory(tags: string[], name: string): string {
 }
 
 /* ------------------------------------------------------------------------- */
-
-// Anti-scrape walls (PerimeterX, Cloudflare, Incapsula, Akamai…) return a denial
-// page instead of the product. Its <title>/description would otherwise become
-// the "product" — e.g. name: "Access to this page has been denied". Detect those
-// so we never surface a bot wall as a real product.
-const BOT_WALL_SIGNATURES = [
-  'access to this page has been denied',
-  'access denied',
-  'px-captcha',
-  'perimeterx',
-  'pardon our interruption',
-  'are you a human',
-  'verify you are a human',
-  'enable javascript and cookies to continue',
-  'attention required', // Cloudflare
-  'checking your browser before accessing',
-  'request unsuccessful. incapsula',
-  'incapsula incident',
-  'unusual traffic from your',
-  'bot detection',
-  'captcha',
-];
-
-function looksLikeBotWall(text: string | null | undefined): boolean {
-  if (!text) return false;
-  const t = text.toLowerCase();
-  return BOT_WALL_SIGNATURES.some(sig => t.includes(sig));
-}
 
 export async function POST(request: NextRequest) {
   try {
