@@ -7454,3 +7454,72 @@ model ProjectDeletionRequest {
   @@index([requestedById, status])
   @@map("project_deletion_requests")
 }
+
+// ---------------------------------------------------------------------------
+// Scrape instrumentation (spec 17 Phase 1). One row per Browserless or direct
+// scrape attempt, so the per-domain failure mode (render vs block vs captcha)
+// is observable instead of lost to console.error. Append-only sink with no
+// relations: the join ids are plain and nullable so a write never blocks the
+// scrape path. The table name is intentionally left PascalCase (no @@map) to
+// match the spec's diagnosis query:
+//   select domain, outcome, count(*) from "ScrapeAttempt" group by 1, 2.
+// ---------------------------------------------------------------------------
+model ScrapeAttempt {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+
+  url             String
+  domain          String // host only, for grouping
+  consumer        ScrapeConsumer
+  endpoint        ScrapeEndpoint
+  escalationLevel ScrapeEscalation
+
+  targetStatus Int? // the page's HTTP status, not Browserless's
+  outcome      ScrapeOutcome
+  durationMs   Int
+
+  // optional joins, nullable so this never blocks a write
+  importSessionId String?
+  productId       String?
+
+  @@index([domain, outcome])
+  @@index([createdAt])
+}
+
+enum ScrapeConsumer {
+  VENDOR_WIZARD
+  IMPORT_IMAGE
+  IMPORT_WEBSITE
+  DESIGNER_BIO
+  PRODUCT_SCRAPE // /api/scrape-product route (designer product tagging + upsert)
+}
+
+enum ScrapeEndpoint {
+  CONTENT
+  FUNCTION
+  SMART_SCRAPE
+  UNBLOCK
+  BQL
+  DIRECT_FETCH
+}
+
+enum ScrapeEscalation {
+  NONE
+  BASIC
+  STEALTH
+  RESIDENTIAL
+  UNBLOCK
+  BQL_SOLVE
+}
+
+enum ScrapeOutcome {
+  RENDERED_OK
+  THIN_CONTENT
+  BLOCKED_403
+  BLOCKED_429
+  CHALLENGE_PAGE
+  CAPTCHA_PRESENT
+  BROWSERLESS_ERROR
+  DIRECT_FETCH_FALLBACK
+  TIMEOUT
+}
