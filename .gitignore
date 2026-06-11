@@ -39,3 +39,6 @@ import-report-*.json
 # OS
 .DS_Store
 Thumbs.db
+
+# spec 17 Phase 2a: BQL probe is run locally only, never committed
+scripts/bql-probe.ts

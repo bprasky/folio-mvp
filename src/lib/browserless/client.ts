@@ -13,11 +13,61 @@
  * (`{ url }` for /content, `{ code, context }` for /function). The mapping from
  * these options onto real Browserless params is confirmed against
  * docs.browserless.io and turned on in Phase 2, not here. Until then the options
- * are accepted and ignored, and `smartScrape` / `bql` are inert stubs.
+ * are accepted and ignored, and `smartScrape` is an inert stub. As of Phase 2a
+ * the `bql` rung is live: it maps the stealth / residential-proxy / conditional
+ * solve options onto a confirmed BrowserQL mutation. It is not yet wired into
+ * the scrape path, which still runs the Phase 0 byte-for-byte bodies.
  */
 
 const BROWSERLESS_HOST = 'https://production-sfo.browserless.io';
 const DEFAULT_TIMEOUT_MS = 20000;
+// BrowserQL needs a higher ceiling than the REST endpoints: a navigation plus a
+// conditional captcha solve can legitimately run long (the solve mutation alone
+// defaults to a 30s wait), so a 20s abort would cut off a real challenge clear.
+const BQL_DEFAULT_TIMEOUT_MS = 90000;
+
+// Single BrowserQL mutation for the escalation rung. Confirmed against the BQL
+// reference on docs.browserless.io (goto / if / solve / html operations):
+//
+//   - goto(url, waitUntil: load) { status }  navigates and surfaces the page
+//     status. Stealth is the BQL endpoint default, and the residential proxy is
+//     selected via query params on the endpoint URL (see bql() below), not as a
+//     mutation argument.
+//   - if(selector) { solve { ... } }  is a point-in-time presence check that
+//     runs the nested solve ONLY when a captcha/challenge widget is in the DOM.
+//     This is what keeps the 10-unit solve charge gated to an actual challenge:
+//     on a clean page the if branch is skipped and solve never fires. The
+//     compound selector mirrors the markers the classifier already keys on
+//     (px-captcha for Wayfair's PerimeterX, plus reCAPTCHA / Turnstile /
+//     hCaptcha / Cloudflare).
+//   - solve { found solved time }  auto-detects the captcha type when `type` is
+//     omitted, so one rung covers every widget above.
+//   - html { html }  returns the final page HTML, which the classifier consumes
+//     exactly like the /content payload.
+//
+// Caveat surfaced for Phase 2: goto.status reflects only the first navigation,
+// so a challenge that is cleared by the solve still reports its handshake status
+// (e.g. 403). The probe prints `solved` alongside the status so a cleared
+// challenge is legible even when the recorded outcome keys off the 403.
+const BQL_CAPTCHA_SELECTOR =
+  "#px-captcha, [id^='px-captcha'], .g-recaptcha, iframe[src*='recaptcha'], " +
+  ".cf-turnstile, iframe[src*='challenges.cloudflare.com'], .h-captcha, iframe[src*='hcaptcha']";
+
+const BQL_SCRAPE_MUTATION = `mutation FolioBqlScrape($url: String!) {
+  goto(url: $url, waitUntil: load) {
+    status
+  }
+  challenge: if(selector: ${JSON.stringify(BQL_CAPTCHA_SELECTOR)}) {
+    solve {
+      found
+      solved
+      time
+    }
+  }
+  content: html {
+    html
+  }
+}`;
 
 export type ScrapeEndpoint =
   | 'content'
@@ -64,6 +114,12 @@ export interface BrowserlessResult {
   durationMs: number;
   /** Set when the request threw or timed out. "timeout" | "no-key" | message. */
   error?: string;
+  /**
+   * BQL only: true when the conditional rung detected a captcha and the solve
+   * succeeded (the only path that incurs the 10-unit solve charge). Left
+   * undefined for every non-BQL endpoint, which never runs a solve.
+   */
+  solved?: boolean;
 }
 
 let aliasWarned = false;
@@ -201,13 +257,99 @@ export async function smartScrape(_url: string, _opts: BrowserlessOptions = {}):
 }
 
 /**
- * BrowserQL endpoint, including the conditional captcha solve. Inert until
- * Phase 2 enables it.
+ * BrowserQL escalation rung (spec 17 Phase 2a). Runs the single
+ * BQL_SCRAPE_MUTATION above against the /bql GraphQL endpoint: navigate with
+ * stealth (the BQL default) over a residential proxy, conditionally solve a
+ * captcha only when one is present, then return the page HTML.
+ *
+ * The residential proxy is selected via query params on the endpoint URL, the
+ * documented way to use Browserless's built-in proxy from BQL. `opts.stealth`
+ * is accepted for signature parity but needs no wire mapping: the BQL endpoint
+ * is stealth-first by default.
+ *
+ * Result shape matches the other client methods so it flows straight through
+ * the classifier and recorder: `payload` carries the page HTML (so the bot-wall
+ * signatures match real page text), `targetStatus` carries goto.status, and
+ * `ok` reflects BQL transport success, not the page status. A GraphQL `errors`
+ * array comes back on a 200, so it is treated as a failure, not an ok response.
  */
-export async function bql(
-  _query: string,
-  _vars: Record<string, unknown> = {},
-  _opts: BrowserlessOptions = {},
-): Promise<BrowserlessResult> {
-  throw new Error('[browserless] bql is not enabled until Phase 2');
+export async function bql(url: string, opts: BrowserlessOptions = {}): Promise<BrowserlessResult> {
+  const key = readKey();
+  if (!key) {
+    return { ok: false, status: 0, targetStatus: null, payload: '', endpoint: 'bql', durationMs: 0, error: 'no-key' };
+  }
+
+  // Token plus the built-in residential proxy ride as query params on the BQL
+  // endpoint URL. Default to a US residential exit for this rung; honor an
+  // explicit datacenter choice if a caller asks for it.
+  const params = new URLSearchParams({ token: key });
+  if (opts.proxy === 'datacenter') {
+    params.set('proxy', 'datacenter');
+  } else {
+    params.set('proxy', 'residential');
+    params.set('proxyCountry', opts.proxyCountry ?? 'us');
+  }
+
+  const timeoutMs = opts.timeoutMs ?? BQL_DEFAULT_TIMEOUT_MS;
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  const started = Date.now();
+  try {
+    const res = await fetch(`${BROWSERLESS_HOST}/bql?${params.toString()}`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ query: BQL_SCRAPE_MUTATION, variables: { url } }),
+      signal: controller.signal,
+    });
+    const raw = await res.text();
+    const durationMs = Date.now() - started;
+
+    // Parse the GraphQL envelope. BQL returns 200 with an `errors` array when a
+    // mutation throws (bad navigation, malformed query), so a 200 alone is not
+    // success.
+    let data: any = null;
+    let gqlError: string | undefined;
+    try {
+      const parsed = JSON.parse(raw);
+      data = parsed?.data ?? null;
+      if (Array.isArray(parsed?.errors) && parsed.errors.length > 0) {
+        gqlError = parsed.errors.map((e: any) => e?.message).filter(Boolean).join('; ') || 'bql-error';
+      }
+    } catch {
+      gqlError = 'bql-parse-error';
+    }
+
+    const targetStatus: number | null = typeof data?.goto?.status === 'number' ? data.goto.status : null;
+    const html: string = typeof data?.content?.html === 'string' ? data.content.html : '';
+    // `challenge` is null when the if branch was skipped (no captcha present), so
+    // a truthy solved field means a captcha was both found and solved.
+    const solved = data?.challenge?.solve?.solved === true;
+    const ok = res.ok && !gqlError;
+
+    return {
+      ok,
+      status: res.status,
+      targetStatus,
+      // On success surface the page HTML for the classifier; on failure surface
+      // the raw envelope so the error is debuggable.
+      payload: ok ? html : raw,
+      endpoint: 'bql',
+      durationMs,
+      error: gqlError,
+      solved,
+    };
+  } catch (err: any) {
+    const aborted = err?.name === 'AbortError';
+    return {
+      ok: false,
+      status: 0,
+      targetStatus: null,
+      payload: '',
+      endpoint: 'bql',
+      durationMs: Date.now() - started,
+      error: aborted ? 'timeout' : err?.message || 'error',
+    };
+  } finally {
+    clearTimeout(timer);
+  }
 }
