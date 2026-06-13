@@ -44,7 +44,7 @@ const BQL_DEFAULT_TIMEOUT_MS = 90000;
 //     docs.browserless.io: recaptcha / recaptchaV3, cloudflare (which also
 //     covers Turnstile), datadome, and others. Notably absent: hCaptcha and
 //     PerimeterX (Wayfair's px-captcha). Those are intentionally given no solve
-//     branch — an unsupported challenge falls through to the returned HTML and
+//     branch: an unsupported challenge falls through to the returned HTML and
 //     is recorded as a failure by the classifier rather than looping on a type
 //     solve cannot handle. In practice Wayfair clears on the residential proxy +
 //     stealth without ever presenting a captcha, so neither if branch fires.
