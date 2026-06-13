@@ -45,41 +45,19 @@ export function HomepageHeroXL({ hero }: Props) {
           className="object-cover"
         />
 
-        {/* Subtle gradient at the bottom only — keep the photo readable */}
+        {/* Photo scrim — strengthened (0.82) so the serif title reads over
+            busy interiors. Two gradients: a bottom-up ramp (0.82 → 0.41 →
+            0.082 → transparent at 68%) anchoring the title block, plus a soft
+            top wash (0.35 → transparent at 22%) for the eyebrow badge. Spans
+            the full hero (inset-0); the bottom alphas are scrim, scrim×0.5,
+            scrim×0.1. See design_handoff_homepage_v2 correction #5. */}
         <div
-          className="absolute inset-x-0 bottom-0 h-2/5 pointer-events-none"
+          className="absolute inset-0 pointer-events-none"
           style={{
             background:
-              "linear-gradient(to top, rgba(20,20,20,0.58) 0%, rgba(20,20,20,0.0) 100%)",
+              "linear-gradient(0deg, rgba(0,0,0,0.82) 0%, rgba(0,0,0,0.41) 30%, rgba(0,0,0,0.082) 52%, transparent 68%), linear-gradient(180deg, rgba(0,0,0,0.35) 0%, transparent 22%)",
           }}
         />
-
-        {/* Embossed FOLIO masthead — replaces the standalone banner.
-            data-folio-wordmark-sentinel is observed by EditorialMasthead's
-            IntersectionObserver to drive the corner-mark fade. */}
-        <div
-          data-folio-wordmark-sentinel
-          className="absolute inset-x-0 top-4 sm:top-6 md:top-8 z-10 pointer-events-none text-center"
-        >
-          <span
-            aria-hidden="true"
-            className="font-serif text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-light uppercase"
-            style={{
-              letterSpacing: "var(--ls-wide)",
-              fontWeight: 300,
-              lineHeight: 1,
-              // Tone-on-tone deboss: transparent fill, dark shadow on the
-              // top edge + light highlight on the bottom edge fakes light
-              // hitting a recessed stamp.
-              color: "transparent",
-              textShadow:
-                "0 1px 0 rgba(255,255,255,0.28), 0 -1px 0 rgba(0,0,0,0.48)",
-            }}
-          >
-            FOLIO
-          </span>
-          <span className="sr-only">Folio</span>
-        </div>
 
         {/* Eyebrow badge — top-left */}
         <div className="absolute top-6 left-6 sm:top-9 sm:left-9">

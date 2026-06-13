@@ -30,25 +30,13 @@ export function EditorialMasthead() {
   // the corner mark in the topbar is the only Folio mark on that page.
   const isArticlePage = pathname?.startsWith("/p/");
   const hidesMasthead = isDesignerPage || isProductPage || isMagazinePage || isArticlePage;
-  // Homepage embosses FOLIO into the hero image instead of rendering the
-  // standalone wordmark — the corner-mark observer watches the in-hero element.
+  // Homepage renders a solid canvas-background bar above the editorial hero
+  // with the corner FOLIO wordmark always visible — one wordmark, in the nav.
+  // (The hero no longer embosses a second FOLIO into the photo.)
   const isHomePage = pathname === "/";
 
   useEffect(() => {
-    if (isHomePage) {
-      const sentinel = document.querySelector<HTMLElement>(
-        "[data-folio-wordmark-sentinel]",
-      );
-      if (sentinel) {
-        const observer = new IntersectionObserver(
-          ([entry]) => setIsScrolled(!entry.isIntersecting),
-          { rootMargin: "-40px 0px 0px 0px", threshold: 0 },
-        );
-        observer.observe(sentinel);
-        return () => observer.disconnect();
-      }
-      // fall through to scroll threshold if the hero hasn't mounted yet
-    } else if (!hidesMasthead && wordmarkRef.current) {
+    if (!hidesMasthead && !isHomePage && wordmarkRef.current) {
       const observer = new IntersectionObserver(
         ([entry]) => setIsScrolled(!entry.isIntersecting),
         { rootMargin: "-40px 0px 0px 0px", threshold: 0 },
@@ -77,7 +65,8 @@ export function EditorialMasthead() {
 
   // Corner FOLIO mark is hidden whenever the big wordmark is visible at the
   // top of the page (i.e. wordmark-bearing route + not yet scrolled past it).
-  const showCornerMark = isScrolled || hidesMasthead;
+  // On the homepage it is always shown — the nav is the only Folio wordmark.
+  const showCornerMark = isScrolled || hidesMasthead || isHomePage;
 
   return (
     <>
@@ -91,16 +80,24 @@ export function EditorialMasthead() {
           borderBottom: "1px solid transparent",
           transition:
             "background-color 200ms ease, border-color 200ms ease, backdrop-filter 200ms ease, -webkit-backdrop-filter 200ms ease",
-          ...(isScrolled
+          // Homepage: a solid canvas-background bar anchored above the hero
+          // (not a glass bar floating over the photo). Other routes keep the
+          // transparent-at-rest → glass-on-scroll treatment.
+          ...(isHomePage
             ? {
-                backgroundColor:
-                  "color-mix(in oklab, var(--surface) 70%, transparent)",
-                backdropFilter: "blur(12px)",
-                WebkitBackdropFilter: "blur(12px)",
-                borderBottomColor:
-                  "color-mix(in oklab, currentColor 6%, transparent)",
+                backgroundColor: "var(--surface-canvas)",
+                borderBottomColor: "var(--folio-border-subtle)",
               }
-            : {}),
+            : isScrolled
+              ? {
+                  backgroundColor:
+                    "color-mix(in oklab, var(--surface) 70%, transparent)",
+                  backdropFilter: "blur(12px)",
+                  WebkitBackdropFilter: "blur(12px)",
+                  borderBottomColor:
+                    "color-mix(in oklab, currentColor 6%, transparent)",
+                }
+              : {}),
         }}
       >
         <nav className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
@@ -147,9 +144,8 @@ export function EditorialMasthead() {
       </header>
 
       {/* Large FOLIO wordmark — sits below the sticky nav as page content.
-          The homepage embosses FOLIO into the hero image instead (see
-          HomepageHeroXL), so this block is suppressed there. Suppressed on
-          dashboard / product / magazine / article routes as well. */}
+          Suppressed on the homepage (the solid nav carries the only wordmark)
+          and on dashboard / product / magazine / article routes. */}
       {!hidesMasthead && !isHomePage && (
         <div
           ref={wordmarkRef}
