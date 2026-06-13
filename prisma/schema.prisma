@@ -693,6 +693,10 @@ model Product {
   mesh3dError       String?
   mesh3dGeneratedAt DateTime?
   mesh3dSourceTagId String?
+  // Flagged-domain BQL scrape lifecycle (spec 17 Phase 2b). Mirrors the
+  // mesh3dStatus shape: 'pending' | 'complete' | 'failed', null for products
+  // that never needed the escalation rung.
+  scrapeStatus      String?
   scenePresetId     String? // e.g. 'sunset', 'dawn', 'concrete'. Null = auto-select by category
   category          String?
   brand             String?

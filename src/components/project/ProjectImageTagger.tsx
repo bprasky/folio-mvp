@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useRef, useCallback } from "react";
 import { FaTimes, FaTag, FaSearch, FaCheck, FaTrash, FaGripLines, FaImage, FaExternalLinkAlt } from "react-icons/fa";
+import { isFlaggedDomain } from "@/lib/browserless/flaggedDomains";
 
 type ImageWithTags = {
   id: string;
@@ -115,8 +116,14 @@ export function ProjectImageTagger({ projectId, images: providedImages, onClose 
     price: string | null;
     brand: string | null;
     url: string;
+    /** Flagged hard domain: skip the inline scrape, fill via the BQL rung after tagging. */
+    deferred?: boolean;
   } | null>(null);
   const [urlError, setUrlError] = useState<string | null>(null);
+
+  // Products currently being filled by the background BQL rung (flagged domains).
+  // The tag shows a pending state until the scrape resolves.
+  const [scrapingIds, setScrapingIds] = useState<Set<string>>(new Set());
 
   // Guided manual capture — fallback when a retailer blocks the scraper. The
   // designer pastes the product copy or drops a screenshot; we parse it (and,
@@ -239,6 +246,51 @@ export function ProjectImageTagger({ projectId, images: providedImages, onClose 
     fetchImages();
   }, [fetchImages]);
 
+  // Background BQL rung for flagged hard domains: kick the dedicated route, then
+  // poll the product until its scrapeStatus leaves 'pending', refreshing the
+  // tags so the filled product (name, image, price) replaces the pending stub.
+  const runBqlScrape = useCallback(
+    (productId: string) => {
+      setScrapingIds((prev) => new Set(prev).add(productId));
+
+      const clear = () =>
+        setScrapingIds((prev) => {
+          const next = new Set(prev);
+          next.delete(productId);
+          return next;
+        });
+
+      // Kick the rung. It runs inline server-side (~34s) under a raised
+      // maxDuration; completion is observed via the poll below, not by awaiting.
+      fetch(`/api/products/${productId}/scrape-bql`, { method: "POST" }).catch(() => {});
+
+      const deadline = Date.now() + 130000;
+      const poll = async () => {
+        try {
+          const r = await fetch(`/api/products/${productId}`);
+          if (r.ok) {
+            const d = await r.json();
+            if (d.scrapeStatus && d.scrapeStatus !== "pending") {
+              clear();
+              await fetchImages();
+              return;
+            }
+          }
+        } catch {
+          /* transient; keep polling until the deadline */
+        }
+        if (Date.now() < deadline) {
+          setTimeout(poll, 3000);
+        } else {
+          clear();
+          await fetchImages();
+        }
+      };
+      setTimeout(poll, 3000);
+    },
+    [fetchImages],
+  );
+
   // Debounced product search
   useEffect(() => {
     if (!searchTerm.trim()) {
@@ -300,6 +352,33 @@ export function ProjectImageTagger({ projectId, images: providedImages, onClose 
   const handleFetchUrl = async () => {
     const url = productUrl.trim();
     if (!url) return;
+
+    // Flagged hard domains (e.g. Wayfair) block the cheap tiers and take ~34s on
+    // the BQL rung, too slow to run inline here. Defer: stage a pending preview,
+    // tag a pending product on save, then let the scrape-bql route fill it in the
+    // background. Mirrors how website import and the analyze step hand slow work
+    // to a dedicated route.
+    if (isFlaggedDomain(url)) {
+      let brand: string | null = null;
+      try {
+        const host = new URL(url).hostname.replace(/^www\./, "").split(".")[0];
+        brand = host ? host.charAt(0).toUpperCase() + host.slice(1) : null;
+      } catch {
+        /* keep brand null */
+      }
+      setUrlError(null);
+      setShowManual(false);
+      setUrlPreview({
+        name: brand ? `${brand} product` : "Product",
+        imageUrl: null,
+        price: null,
+        brand,
+        url,
+        deferred: true,
+      });
+      return;
+    }
+
     setUrlFetching(true);
     setUrlError(null);
     setUrlPreview(null);
@@ -433,6 +512,9 @@ export function ProjectImageTagger({ projectId, images: providedImages, onClose 
     if (!pendingDot || !activeImage) return;
     if (tagMode === "search" && !selectedProduct) return;
     if (tagMode === "url" && !urlModeProduct) return;
+    // Flagged hard domain: the product is tagged immediately in a pending state,
+    // then the BQL rung fills it in the background.
+    const deferred = tagMode === "url" && urlPreview?.deferred === true;
     setSaving(true);
     try {
       // In URL mode, create the product from the preview/manual capture first.
@@ -453,6 +535,8 @@ export function ProjectImageTagger({ projectId, images: providedImages, onClose 
             url: urlModeProduct.url,
             description: (urlModeProduct as any).description ?? undefined,
             isPending: true,
+            // Hard domains return immediately as pending; scrape-bql fills them.
+            scrapeStatus: deferred ? "pending" : undefined,
           }),
         });
         const created = await createRes.json();
@@ -480,6 +564,9 @@ export function ProjectImageTagger({ projectId, images: providedImages, onClose 
         // Refresh image data — the useEffect watching `images` will
         // re-sync activeImage on the next render, so no need to do it here.
         await fetchImages();
+        // Kick the background rung after the tag lands, then poll until it
+        // resolves. Mirrors how ImportWizard kicks analyze and polls.
+        if (deferred) runBqlScrape(productId);
       }
     } catch (err) {
       console.error("[ProjectImageTagger] save error:", err);
@@ -697,6 +784,7 @@ export function ProjectImageTagger({ projectId, images: providedImages, onClose 
               {/* Existing tag dots — draggable */}
               {activeImage.tags.map((tag) => {
                 const isDragging = draggingTagId === tag.id;
+                const isScraping = scrapingIds.has(tag.productId);
                 const xPct = isDragging && dragPos ? dragPos.x : (tag.x <= 1 ? tag.x * 100 : tag.x);
                 const yPct = isDragging && dragPos ? dragPos.y : (tag.y <= 1 ? tag.y * 100 : tag.y);
                 return (
@@ -714,7 +802,7 @@ export function ProjectImageTagger({ projectId, images: providedImages, onClose 
                     onMouseEnter={() => { if (!draggingTagId) showTag(tag.id); }}
                     onMouseLeave={scheduleHideTag}
                   >
-                    <div className={`flex h-5 w-5 items-center justify-center rounded-full bg-[var(--accent)] border-2 border-white shadow-lg transition-transform ${isDragging ? "scale-125" : ""}`}>
+                    <div className={`flex h-5 w-5 items-center justify-center rounded-full bg-[var(--accent)] border-2 border-white shadow-lg transition-transform ${isDragging ? "scale-125" : ""} ${isScraping ? "animate-pulse" : ""}`}>
                       <FaTag className="w-2.5 h-2.5 text-white" />
                     </div>
 
@@ -741,10 +829,16 @@ export function ProjectImageTagger({ projectId, images: providedImages, onClose 
                             <span className="text-xs font-medium truncate text-folio-text-primary">
                               {tag.product?.name ?? "Product"}
                             </span>
-                            {tag.product?.brand && (
-                              <span className="text-[var(--type-fine)] text-folio-text-secondary truncate">
-                                {tag.product.brand}
+                            {isScraping ? (
+                              <span className="text-[var(--type-fine)] text-[var(--accent)] truncate">
+                                Fetching details…
                               </span>
+                            ) : (
+                              tag.product?.brand && (
+                                <span className="text-[var(--type-fine)] text-folio-text-secondary truncate">
+                                  {tag.product.brand}
+                                </span>
+                              )
                             )}
                           </div>
                           <button
@@ -1019,9 +1113,11 @@ export function ProjectImageTagger({ projectId, images: providedImages, onClose 
                         {urlPreview.name}
                       </div>
                       <div className="text-xs text-folio-text-secondary truncate">
-                        {[urlPreview.brand, urlPreview.price]
-                          .filter(Boolean)
-                          .join(" · ") || "New product"}
+                        {urlPreview.deferred
+                          ? "We'll fetch the full details in the background after you tag it."
+                          : [urlPreview.brand, urlPreview.price]
+                              .filter(Boolean)
+                              .join(" · ") || "New product"}
                       </div>
                     </div>
                     <FaCheck className="w-4 h-4 text-[var(--accent)] flex-shrink-0" />

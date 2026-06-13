@@ -102,7 +102,7 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { name, imageUrl, price, brand, category, url, isPending, description } = body;
+    const { name, imageUrl, price, brand, category, url, isPending, description, scrapeStatus } = body;
 
     if (!name) {
       return NextResponse.json(
@@ -122,6 +122,9 @@ export async function POST(request: NextRequest) {
         category: category || null,
         url: url || null,
         isPending: isPending ?? false,
+        // Flagged-domain BQL lifecycle: the tagging UI creates the product as
+        // 'pending' for hard domains, then fires the scrape-bql route to fill it.
+        scrapeStatus: scrapeStatus ?? null,
         vendorId: null, // Can be set later if needed
       },
     });

@@ -14,6 +14,7 @@
 
 import Anthropic from '@anthropic-ai/sdk';
 import { prisma } from '@/lib/prisma';
+import { normalizeProductUrl } from '@/lib/products/normalizeProductUrl';
 
 export interface AiProductFields {
   name: string | null;
@@ -30,11 +31,6 @@ export interface AiProductFields {
   confidence: string | null;
   /** True when served from CachedProduct rather than a fresh AI call. */
   cached: boolean;
-}
-
-/** Cache key — drop the query string and trailing slashes. Matches import/product. */
-function normalizeUrl(url: string): string {
-  return url.split('?')[0].replace(/\/+$/, '');
 }
 
 function num(v: unknown): number | undefined {
@@ -83,7 +79,7 @@ If you cannot find specific information, omit that field rather than guessing.`;
 
 export async function aiExtractProduct(url: string): Promise<AiProductFields | null> {
   if (!process.env.ANTHROPIC_API_KEY) return null;
-  const normalizedUrl = normalizeUrl(url);
+  const normalizedUrl = normalizeProductUrl(url);
 
   // 1. Cache hit — never pay twice for the same URL.
   try {

@@ -33,32 +33,45 @@ const BQL_DEFAULT_TIMEOUT_MS = 90000;
 //     status. Stealth is the BQL endpoint default, and the residential proxy is
 //     selected via query params on the endpoint URL (see bql() below), not as a
 //     mutation argument.
-//   - if(selector) { solve { ... } }  is a point-in-time presence check that
-//     runs the nested solve ONLY when a captcha/challenge widget is in the DOM.
-//     This is what keeps the 10-unit solve charge gated to an actual challenge:
-//     on a clean page the if branch is skipped and solve never fires. The
-//     compound selector mirrors the markers the classifier already keys on
-//     (px-captcha for Wayfair's PerimeterX, plus reCAPTCHA / Turnstile /
-//     hCaptcha / Cloudflare).
-//   - solve { found solved time }  auto-detects the captcha type when `type` is
-//     omitted, so one rung covers every widget above.
+//   - if(selector) { solve(type) { ... } }  is a point-in-time presence check
+//     that runs the nested solve ONLY when that widget is in the DOM. This keeps
+//     the 10-unit solve charge gated to an actual challenge: on a clean page the
+//     if branch is skipped and solve never fires.
+//   - solve(type: CaptchaTypes) { found solved time }  takes an explicit captcha
+//     type. solve runs once per call against a single type, so the conditional
+//     rung is split per widget, each passing the matching enum value. The
+//     supported types were confirmed against the BQL CaptchaTypes enum on
+//     docs.browserless.io: recaptcha / recaptchaV3, cloudflare (which also
+//     covers Turnstile), datadome, and others. Notably absent: hCaptcha and
+//     PerimeterX (Wayfair's px-captcha). Those are intentionally given no solve
+//     branch: an unsupported challenge falls through to the returned HTML and
+//     is recorded as a failure by the classifier rather than looping on a type
+//     solve cannot handle. In practice Wayfair clears on the residential proxy +
+//     stealth without ever presenting a captcha, so neither if branch fires.
 //   - html { html }  returns the final page HTML, which the classifier consumes
 //     exactly like the /content payload.
 //
 // Caveat surfaced for Phase 2: goto.status reflects only the first navigation,
 // so a challenge that is cleared by the solve still reports its handshake status
-// (e.g. 403). The probe prints `solved` alongside the status so a cleared
-// challenge is legible even when the recorded outcome keys off the 403.
-const BQL_CAPTCHA_SELECTOR =
-  "#px-captcha, [id^='px-captcha'], .g-recaptcha, iframe[src*='recaptcha'], " +
-  ".cf-turnstile, iframe[src*='challenges.cloudflare.com'], .h-captcha, iframe[src*='hcaptcha']";
+// (e.g. 403). The recorder keys BQL success on usable content, not status, so a
+// solved 403 is not mislabeled as a block. `solved` is surfaced alongside the
+// status so a cleared challenge stays legible.
+const BQL_RECAPTCHA_SELECTOR = ".g-recaptcha, iframe[src*='recaptcha']";
+const BQL_CLOUDFLARE_SELECTOR = ".cf-turnstile, iframe[src*='challenges.cloudflare.com']";
 
 const BQL_SCRAPE_MUTATION = `mutation FolioBqlScrape($url: String!) {
   goto(url: $url, waitUntil: load) {
     status
   }
-  challenge: if(selector: ${JSON.stringify(BQL_CAPTCHA_SELECTOR)}) {
-    solve {
+  recaptcha: if(selector: ${JSON.stringify(BQL_RECAPTCHA_SELECTOR)}) {
+    solve(type: recaptcha) {
+      found
+      solved
+      time
+    }
+  }
+  cloudflare: if(selector: ${JSON.stringify(BQL_CLOUDFLARE_SELECTOR)}) {
+    solve(type: cloudflare) {
       found
       solved
       time
@@ -321,9 +334,11 @@ export async function bql(url: string, opts: BrowserlessOptions = {}): Promise<B
 
     const targetStatus: number | null = typeof data?.goto?.status === 'number' ? data.goto.status : null;
     const html: string = typeof data?.content?.html === 'string' ? data.content.html : '';
-    // `challenge` is null when the if branch was skipped (no captcha present), so
-    // a truthy solved field means a captcha was both found and solved.
-    const solved = data?.challenge?.solve?.solved === true;
+    // Each alias is null when its if branch was skipped (that widget absent), so
+    // a truthy solved on either means a captcha was both found and solved.
+    const solved =
+      data?.recaptcha?.solve?.solved === true ||
+      data?.cloudflare?.solve?.solved === true;
     const ok = res.ok && !gqlError;
 
     return {

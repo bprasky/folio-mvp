@@ -46,7 +46,9 @@ export async function GET(
       brand: product.brand,
       vendorName: product.vendor?.name || product.vendor?.companyName || product.brand,
       url: product.url,
-      currency: 'USD' // Default currency
+      currency: 'USD', // Default currency
+      // Flagged-domain BQL scrape lifecycle, for the tagging UI to poll on.
+      scrapeStatus: product.scrapeStatus,
     };
 
     // Log context signal for product view (async, non-blocking)
