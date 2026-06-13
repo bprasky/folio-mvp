@@ -1,4 +1,58 @@
-# Task: Project deletion requests + permission-aware delete UX (ACTIVE)
+# Phase 2b: BQL rung for flagged hard domains (ACTIVE)
+
+Mirror the inline-under-maxDuration pattern (website import + ImportWizard analyze).
+Branch: claude/audit-background-jobs-8uqrlm. No PR. ADD-only idempotent migration. Prisma pinned.
+
+## Plan
+
+- [ ] 1. Flagged-domain policy: `src/lib/browserless/flaggedDomains.ts` (registrableDomain,
+      isFlaggedDomain, FLAGGED_DOMAINS=['wayfair.com']; match registrable domain not host).
+- [ ] 2. Schema ADD-only: Product.scrapeStatus String? (mirror mesh3dStatus); migration
+      20260613120000_add_product_scrape_status (ALTER ... ADD COLUMN IF NOT EXISTS).
+- [ ] 3. Shared extraction: move pure extractors from scrape-product/route.ts into
+      `src/lib/products/extractProductFields.ts`; route imports them (single source).
+- [ ] 4. BQL correctness (client.ts): per-type conditional solve with valid CaptchaTypes
+      (recaptcha, cloudflare). Drop px-captcha/hcaptcha from solve (unsupported -> recorded
+      failure, no loop). Update solved parsing.
+- [ ] 5. Recorder fix (classify.ts): BQL content-first not status-first, so a solved 403 is
+      not logged as BLOCKED_403. Basic tiers unchanged.
+- [ ] 6. Route: `src/app/api/products/[productId]/scrape-bql/route.ts` maxDuration=120; auth;
+      URL-keyed CachedProduct cache (no re-scrape); bql() -> extract -> usable check -> fill
+      product + cache -> complete else failed; record ScrapeAttempt endpoint BQL.
+- [ ] 7. Wire tagging UI (ProjectImageTagger.tsx): flagged URL -> create product scrapeStatus
+      pending + tag now, fire scrape-bql, poll until terminal, show pending. Non-flagged untouched.
+- [ ] 8. Verify: typecheck touched files, prisma validate + generate.
+
+## Review
+
+Done. All 8 plan items implemented and verified.
+
+- Policy `src/lib/browserless/flaggedDomains.ts`: registrable-domain match, seeded wayfair.com.
+- Schema: `Product.scrapeStatus String?` + idempotent ADD-only migration
+  `20260613120000_add_product_scrape_status`. `prisma validate` clean, client regenerated.
+- Extraction moved to `src/lib/products/extractProductFields.ts`; scrape-product/route.ts and the
+  BQL route share it verbatim (no divergence). Cache key shared via `normalizeProductUrl.ts`,
+  with aiExtractProduct refactored onto it.
+- BQL correctness: per-widget conditional solve with valid CaptchaTypes (recaptcha, cloudflare);
+  px-captcha/hcaptcha dropped from solve so unsupported challenges fall through to a recorded
+  failure. solved parsing reads both aliases. Types confirmed via the BQL CaptchaTypes enum
+  (docs.browserless.io is itself 403-walled, so confirmed via search of that schema page).
+- Recorder fix: classify.ts is content-first for endpoint==='bql', so a solved 403 records
+  RENDERED_OK, not BLOCKED_403. Basic tiers unchanged.
+- Route `api/products/[productId]/scrape-bql` (maxDuration 120): auth, flagged-domain cost gate,
+  URL-keyed CachedProduct cache (read + write-through), bql() -> extract -> usable check -> fill
+  product + complete, else failed; one ScrapeAttempt row endpoint BQL.
+- UI: flagged URL stages a deferred preview, tags a pending product immediately, kicks scrape-bql
+  and polls product GET until terminal, showing a pulsing "Fetching details…" tag. Non-flagged
+  domains untouched (still use /api/scrape-product basic tiers).
+
+Verification: `tsc --noEmit` clean for every touched file (pre-existing framer-motion errors in
+about/content.tsx are unrelated). `prisma validate` valid. phase5e migration-discipline OK
+(nonIdempotent=0). No DB in this env, so a live Wayfair run was not executed.
+
+---
+
+# Task: Project deletion requests + permission-aware delete UX (ARCHIVED)
 
 ## Context
 Org members who lack `delete_projects` (Manager/Member/Viewer) can *see* org
