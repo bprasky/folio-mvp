@@ -100,6 +100,19 @@ export function classifyScrapeOutcome(result: BrowserlessResult): ScrapeOutcome 
   const body = (result.payload || '').toLowerCase();
   const status = result.targetStatus;
 
+  // BQL is content-first, not status-first. A solved challenge clears the page
+  // yet goto.status still reports the original handshake (often 403), so keying
+  // off status would log a real success as BLOCKED_403. Decide on the HTML: a
+  // lingering captcha or wall is a failure, otherwise usable HTML is success
+  // regardless of the reported status. Only the BQL rung uses this; the basic
+  // tiers keep the status-first logic below.
+  if (result.endpoint === 'bql') {
+    if (hasAny(body, CAPTCHA_MARKERS)) return 'CAPTCHA_PRESENT';
+    if (hasAny(body, CHALLENGE_SIGNATURES) || looksLikeBotWall(result.payload)) return 'CHALLENGE_PAGE';
+    if (result.payload.trim().length < MIN_USABLE_BODY) return 'THIN_CONTENT';
+    return 'RENDERED_OK';
+  }
+
   // CAPTCHA is the most specific signal.
   if (hasAny(body, CAPTCHA_MARKERS)) return 'CAPTCHA_PRESENT';
 
