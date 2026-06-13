@@ -1,231 +1,50 @@
-# Phase 2b: BQL rung for flagged hard domains (ACTIVE)
+# Homepage v2 — Editorial Elevation Feed UI-fidelity corrections
 
-Mirror the inline-under-maxDuration pattern (website import + ImportWizard analyze).
-Branch: claude/audit-background-jobs-8uqrlm. No PR. ADD-only idempotent migration. Prisma pinned.
+Branch: claude/dazzling-noether-lypt3w. Handoff: Folio_Design_System_2 (design_handoff_homepage_v2).
+Scope: the five UI-fidelity corrections in the v2 handoff. The data layer / components
+(Task 05) already shipped — this is the correction pass for implementation drift.
+
+## Audit result (ran AUDIT.md, read-only)
+
+- #1 Nav anchored + remove in-hero wordmark — **DRIFT**: nav transparent at rest with
+  corner wordmark hidden until scroll; a second "FOLIO" is embossed inside the hero
+  (HomepageHeroXL:57-82, the `data-folio-wordmark-sentinel`).
+- #2 Filter bar below editorial — ✅ already correct (HomepagePage order: hero → reel → filter → mosaic).
+- #3 Boost reel fills row (7 + "+N"), no entity leak — ✅ already correct (BoostReel grid 8 cells,
+  names React-escaped + truncated with title tooltip; no `&quot;`/Hopson string anywhere).
+- #4 Dense mosaic (spanFor + grid-flow-dense, ≥12) — ✅ already correct (MagazineMosaicGrid, take:12).
+- #5 Scrim strength 0.82 — **DRIFT**: currently 0.58 single bottom gradient (HomepageHeroXL:49-55).
 
 ## Plan
 
-- [ ] 1. Flagged-domain policy: `src/lib/browserless/flaggedDomains.ts` (registrableDomain,
-      isFlaggedDomain, FLAGGED_DOMAINS=['wayfair.com']; match registrable domain not host).
-- [ ] 2. Schema ADD-only: Product.scrapeStatus String? (mirror mesh3dStatus); migration
-      20260613120000_add_product_scrape_status (ALTER ... ADD COLUMN IF NOT EXISTS).
-- [ ] 3. Shared extraction: move pure extractors from scrape-product/route.ts into
-      `src/lib/products/extractProductFields.ts`; route imports them (single source).
-- [ ] 4. BQL correctness (client.ts): per-type conditional solve with valid CaptchaTypes
-      (recaptcha, cloudflare). Drop px-captcha/hcaptcha from solve (unsupported -> recorded
-      failure, no loop). Update solved parsing.
-- [ ] 5. Recorder fix (classify.ts): BQL content-first not status-first, so a solved 403 is
-      not logged as BLOCKED_403. Basic tiers unchanged.
-- [ ] 6. Route: `src/app/api/products/[productId]/scrape-bql/route.ts` maxDuration=120; auth;
-      URL-keyed CachedProduct cache (no re-scrape); bql() -> extract -> usable check -> fill
-      product + cache -> complete else failed; record ScrapeAttempt endpoint BQL.
-- [ ] 7. Wire tagging UI (ProjectImageTagger.tsx): flagged URL -> create product scrapeStatus
-      pending + tag now, fire scrape-bql, poll until terminal, show pending. Non-flagged untouched.
-- [ ] 8. Verify: typecheck touched files, prisma validate + generate.
+- [ ] 1. HomepageHeroXL: remove the embossed in-hero FOLIO wordmark block (correction #1).
+- [ ] 2. HomepageHeroXL: replace the 0.58 bottom-only scrim with the spec's full-inset
+      0.82 two-gradient overlay (correction #5).
+- [ ] 3. EditorialMasthead: on the homepage, render a solid canvas-background bar with the
+      corner FOLIO wordmark always visible; drop the now-removed in-hero sentinel observer
+      branch (correction #1). Other routes unchanged.
+- [ ] 4. Verify: tsc on touched files, grep no remaining sentinel refs, build sanity.
 
 ## Review
 
-Done. All 8 plan items implemented and verified.
+Done. Two of the five corrections were live drift; the other three already shipped correctly
+(verified, not assumed).
 
-- Policy `src/lib/browserless/flaggedDomains.ts`: registrable-domain match, seeded wayfair.com.
-- Schema: `Product.scrapeStatus String?` + idempotent ADD-only migration
-  `20260613120000_add_product_scrape_status`. `prisma validate` clean, client regenerated.
-- Extraction moved to `src/lib/products/extractProductFields.ts`; scrape-product/route.ts and the
-  BQL route share it verbatim (no divergence). Cache key shared via `normalizeProductUrl.ts`,
-  with aiExtractProduct refactored onto it.
-- BQL correctness: per-widget conditional solve with valid CaptchaTypes (recaptcha, cloudflare);
-  px-captcha/hcaptcha dropped from solve so unsupported challenges fall through to a recorded
-  failure. solved parsing reads both aliases. Types confirmed via the BQL CaptchaTypes enum
-  (docs.browserless.io is itself 403-walled, so confirmed via search of that schema page).
-- Recorder fix: classify.ts is content-first for endpoint==='bql', so a solved 403 records
-  RENDERED_OK, not BLOCKED_403. Basic tiers unchanged.
-- Route `api/products/[productId]/scrape-bql` (maxDuration 120): auth, flagged-domain cost gate,
-  URL-keyed CachedProduct cache (read + write-through), bql() -> extract -> usable check -> fill
-  product + complete, else failed; one ScrapeAttempt row endpoint BQL.
-- UI: flagged URL stages a deferred preview, tags a pending product immediately, kicks scrape-bql
-  and polls product GET until terminal, showing a pulsing "Fetching details…" tag. Non-flagged
-  domains untouched (still use /api/scrape-product basic tiers).
+- **#1 (HomepageHeroXL):** removed the embossed in-hero `FOLIO` wordmark + its
+  `data-folio-wordmark-sentinel`. The audit had marked #1 "correct" because the wordmark
+  wasn't *duplicated* — but the spec says to *remove* it. Re-reading the literal correction
+  caught the gap.
+- **#1 (EditorialMasthead):** homepage now renders a solid `--surface-canvas` bar with a
+  `--folio-border-subtle` hairline and the corner FOLIO mark always visible (`showCornerMark`
+  includes `isHomePage`). Dropped the now-dead in-hero sentinel observer branch; the homepage
+  falls through to the harmless scroll-threshold fallback. Other routes unchanged
+  (transparent-at-rest → glass-on-scroll preserved).
+- **#5 (HomepageHeroXL):** replaced the 0.58 bottom-only gradient with the spec's full-inset
+  0.82 two-gradient overlay (bottom ramp 0.82→0.41→0.082→transparent@68% + top wash
+  0.35→transparent@22%).
+- **#2/#3/#4:** confirmed already correct — filter bar sits below the editorial; BoostReel is
+  7 + "+N" with React-escaped, title-tooltipped names (no `&quot;`/Hopson leak); mosaic uses
+  `MagazineMosaicGrid` `spanFor()` + `grid-flow-dense` with 12 tiles.
 
-Verification: `tsc --noEmit` clean for every touched file (pre-existing framer-motion errors in
-about/content.tsx are unrelated). `prisma validate` valid. phase5e migration-discipline OK
-(nonIdempotent=0). No DB in this env, so a live Wayfair run was not executed.
-
----
-
-# Task: Project deletion requests + permission-aware delete UX (ARCHIVED)
-
-## Context
-Org members who lack `delete_projects` (Manager/Member/Viewer) can *see* org
-projects but can't delete them. The dashboard showed a Delete action that
-hard-failed with "You do not have permission." Decision (user-confirmed):
-- **Org matrix governs** deletion (reverted PR #628's owner/designer override).
-- Build **request + full approval queue**: members request deletion → Owner/Admin
-  approve/decline. Requested projects are hidden from the requester.
-
-## Plan
-- [x] Revert #628 auth change (org matrix only)
-- [x] Schema: `ProjectDeletionRequest` + `ProjectDeletionRequestStatus` enum; inverses
-- [x] Migration: idempotent enum + table + FKs + indexes
-- [x] Loader: per-project `canDelete`; hide viewer's PENDING-requested projects;
-      load pending requests the viewer can approve
-- [x] API: POST create request; PATCH approve/decline
-- [x] UI: "Request deletion" in ProjectCard; "Pending deletion requests" queue
-- [x] Verify (prisma validate/generate, tsc, phase5e), commit, push, update PR
-
-Note: no prod DB in this env → migration authored idempotently, applies on deploy.
-
-## Review
-- assertProjectCapability reverted to org-matrix-only (PR #628 superseded).
-- New `project_deletion_requests` table; FKs cascade from project/requester, set
-  null on resolver.
-- Request authz is org-membership-aware (assertProjectView was too strict for
-  plain org members, who are exactly the requesters).
-- "Hide for you" = loader filters out the viewer's own PENDING-requested projects.
-- Approver queue scoped to orgs where viewer holds delete_projects; global admin
-  sees all. Approve → project.delete() (cascades the request); decline → DECLINED.
-
----
-
-# Task: Project Progress Tracker (top of project detail view)
-
-## Context
-Guided "what's next" region at the top of the project detail view. A wizard sets
-project type (Completed / In Progress / Concept); the tracker picks up from there.
-Recreate the reference design in our existing design system (Tailwind tokens), not
-raw HTML. Timeline enum maps: PAST→Completed, PRESENT→In Progress, FUTURE→Concept.
-
-## Seven non-negotiable rules
-1. One stepper is the spine and owns all counts. Nothing else restates a number.
-2. Each step done/current/upcoming; current unmistakable.
-3. One next-action zone directly below the stepper; content changes with current step.
-4. Import cards aren't permanent — fill the zone on the materials step, collapse to
-   "Add more" bar once materials exist and the user moves on.
-5. Next action is the most prominent interactive element — no greyed-out CTA.
-6. Room-naming guidance is contextual to the Rooms step body copy, never floating.
-7. Tracker adapts to type — different sequences + copy; never show steps that don't apply.
-
-## Plan
-- [x] 1. `src/lib/publish/computeTrackerState.ts` — pure derivation + TRACKER_TYPES
-      (sequences, materialsKey, end-cap notes, exact copy per step). currentStep =
-      first incomplete step. materialsExist flag. No React.
-- [x] 2. `src/app/project/[id]/ProjectProgressTracker.tsx` — client component.
-      `.tracker` card: stepper (top) + next-action zone (bottom). Step states, 2px
-      track + down-tick, two zone modes (normal / materials grid), collapsed bar.
-      CTAs navigate to the relevant `?view=` (where the real action UI lives).
-- [x] 3. `src/app/project/[id]/page.tsx` — derive tracker inputs from existing data
-      (publishReadiness gates + totalSelections + isPublished), mount between
-      ProjectHeader and ProjectTabs.
-- [x] 4. `src/app/project/[id]/ProjectHeader.tsx` — drop "X rooms · Y items" from the
-      meta row (rule 1: the stepper owns those counts now; matches reference meta).
-- [x] 5. Typecheck (clean on changed files; repo has a pre-existing 1052-error
-      baseline unrelated to this work), derivation sanity-checked, commit, push.
-
-## Review
-- **Adaptive, type-driven tracker.** `TRACKER_TYPES` encodes the three sequences,
-  materials step, end-cap notes, and exact copy. `deriveTrackerState` derives the
-  current step from real completion (first incomplete), never from clicking.
-  Verified all three types + the screenshot state via a throwaway tsx harness.
-- **Reused the readiness gates.** Completion comes from `computePublishReadiness`
-  gates + selection count + publish state, so the tracker and the in-context spine
-  never disagree. No new data model, no schema change.
-- **Seven rules honored.** (1) Stepper owns counts; header meta now reads
-  "Started … · Last edit …" only. (2) done/current/upcoming with gold-only current
-  + soft ring + ink-filled done. (3) one zone below the stepper, content keyed to
-  current step. (4) import cards only on the materials step before materials exist,
-  then collapse to the "Add more" bar — matches the screenshot exactly. (5) primary
-  CTA on accent, never disabled. (6) room-naming guidance lives in the Rooms-step
-  body copy. (7) sequences differ per type; inapplicable steps never render.
-- **Tokens.** Used canonical design-system tokens (folio-stone-100/700,
-  folio-accent-700, folio-gold-ornament, --accent/--accent-hover, surface-*,
-  folio-border-*, font-metricsMono for formats). No raw HTML, no new globals.
-- **CTA wiring.** Routes to the surface that already hosts each action (Media for
-  upload/materials/tag/interview, Publish for publish/share). No dead, greyed CTA.
-- **Follow-up (flagged, out of scope):** the in-context `PublishSpine` inside the
-  Media tab still restates a status line. The top tracker is now the canonical
-  spine; a later pass could retire that status line to fully satisfy rule 1 across
-  every surface.
-
----
-
-## Update — make the tracker the single flow driver
-
-Removed the old in-context tracker + duplicate upload areas and wired the top
-tracker to drive every existing flow.
-
-- **Deleted** `PublishSpine.tsx` (the old gated spine) and removed the intro line
-  + 3 skeleton upload cards from `MediaSection`. The Media surface is now just the
-  media grid + the flows the tracker routes into.
-- **Action routing.** Each CTA / import card carries a `TrackerAction`. The tracker
-  links to `?view=media&action=<X>` (publish/share → `?view=publish`). `MediaSection`
-  reads `?action=` on mount, opens the matching existing modal, then strips the
-  param so refresh/back doesn't re-fire. Map: upload→ProjectCreationModal,
-  sort-rooms→scroll to grid, tag→TagReviewPanel, interview→InterviewModal,
-  materials→MaterialsStep, import-presentation→PresentationImportModal,
-  import-website→WebsiteImportModal (newly mounted), import-specs→PdfSpecImportModal.
-- **Materials cards repointed.** The 3rd import card now targets the spec-sheet flow
-  (the materials step imports products, not photos), so all three cards bring in
-  products via real flows.
-- Verified every CTA/card resolves to a concrete action route + derivation still
-  correct; typecheck clean on changed files. The earlier rule-1 follow-up is now
-  resolved: the only spine left is the top tracker.
-
----
-
-## Update — collapse the materials-step cards to import + manual
-
-Audited the backends: presentation (`/api/import/*`, PDF+PPTX) creates pending
-photo tags; spec (`/api/projects/{id}/extract-pdf`, PDF only) extracts a spec
-list; no XLSX/CSV product parser exists; the website modal scrapes a page for
-images (not a per-photo product tag). Acted on the founder's direction:
-
-- **One "Import a document" card** (PDF · PPTX, primary) → the presentation
-  pipeline. One upload, we parse it; the designer no longer picks a file type.
-  The pipeline produces pending product tags on photos, which is the Tags-step
-  goal. (PDF deck-vs-schedule auto-detection is a backend follow-up; the
-  finish-schedule extractor stays reachable via the Materials chooser.)
-- **New "Tag by hand" card** → opens the existing `ProjectImageTagger`.
-- **Removed the website/URL card** — it dumped page images into the project, not
-  a product onto a specific photo. Per-photo URL tagging belongs inside the
-  manual tagger (follow-up), not as a project-wide import here.
-- Dropped the now-unused `WebsiteImportModal` mount and the `import-website` /
-  `import-specs` actions.
-
----
-
-## Update — one document upload, routed to the dedicated call by file type
-
-New `DocumentImportModal`: a single dropzone (PDF · PPTX · XLSX · CSV). Selection
-happens inside the modal, so no native-picker gesture is needed. `MediaSection`'s
-`routeDocument` dispatches by extension:
-
-- **`.pdf` → `PdfSpecImportModal`** (`/api/projects/{id}/extract-pdf`).
-- **`.pptx` / `.ppt` → `PresentationImportModal`** (`/api/import/presentation`).
-- **`.xlsx` / `.xls` / `.csv` → `/api/import/finish-schedule`** (posted directly;
-  no review modal exists for spreadsheets).
-
-`PdfSpecImportModal` is keyed on the handed file so a routed upload mounts fresh
-and seeds its `initialFile` (the modal only reads it on mount). The designer never
-picks a file type — they drop one document and we call the right backend.
-
-**Server caveat:** `/api/import/finish-schedule` stores the file and creates a
-session but the parse step is an existing server-side TODO ("Integrate with actual
-import agent"), so spreadsheet extraction into products is not implemented yet. The
-upload + dedicated call are wired; the parser is a backend follow-up.
-
----
-
-## Update — tag a product by URL inside the manual tagger
-
-This is where per-photo URL tagging belongs (the materials-step "From a website"
-card was removed precisely because it was project-wide, not photo-specific). The
-"Select Product" dialog now has a Search / Paste a link toggle:
-
-- **Paste a link** → `POST /api/scrape-product` `{url}` returns name / image / price
-  / brand for a preview the designer confirms.
-- On "Tag Product", in URL mode we `POST /api/products` (`isPending: true`) to
-  create the product stub, then `POST /api/tag-product-to-image` with the new id at
-  the placed dot. Search mode is unchanged.
-
-The product lands at the exact `{x, y}` the designer clicked, on the specific photo
-— the URL is now in reference to a photo, as intended.
-</content>
+Verification: `tsc` clean on both touched files (repo has unrelated pre-existing type drift);
+no remaining `folio-wordmark-sentinel` refs in `src/`; no tests depend on the touched files.
