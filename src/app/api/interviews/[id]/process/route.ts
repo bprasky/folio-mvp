@@ -8,6 +8,7 @@ import { callLLM } from "@/lib/posting/llmClient";
 import OpenAI from "openai";
 import Anthropic from "@anthropic-ai/sdk";
 import { z } from "zod";
+import { MODELS } from '@/lib/ai/models';
 
 export async function POST(
   request: NextRequest,
@@ -239,7 +240,7 @@ Return JSON array:
 ]`;
 
       const anthropic = new Anthropic();
-      const modelName = "claude-sonnet-4-20250514";
+      const modelName = MODELS.sonnet;
 
       const extractionResult = await callLLM(
         async () => {

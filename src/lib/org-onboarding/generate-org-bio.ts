@@ -1,5 +1,6 @@
 import Anthropic from '@anthropic-ai/sdk';
 import { prisma } from '@/lib/prisma';
+import { MODELS } from '@/lib/ai/models';
 
 interface BioGenerationInput {
   organizationId: string;
@@ -98,7 +99,7 @@ Respond in JSON format:
 }`;
 
   const response = await anthropic.messages.create({
-    model: 'claude-sonnet-4-20250514',
+    model: MODELS.sonnet,
     max_tokens: 2000,
     messages: [{ role: 'user', content: prompt }]
   });

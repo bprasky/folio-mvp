@@ -1,10 +1,11 @@
 import Anthropic from '@anthropic-ai/sdk';
+import { MODELS } from '@/lib/ai/models';
 
 // Initialize Claude client - uses ANTHROPIC_API_KEY env var automatically
 export const anthropic = new Anthropic();
 
 export const IMPORT_AGENT_CONFIG = {
-  model: 'claude-sonnet-4-20250514' as const,
+  model: MODELS.sonnet,
   maxTokens: 4096,
   maxImagesPerBatch: 5, // For batch processing
   maxProductsPerImage: 10,

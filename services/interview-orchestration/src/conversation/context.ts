@@ -1,5 +1,6 @@
 import Anthropic from '@anthropic-ai/sdk';
 import type { ConversationContext, ConversationExchange } from '../types.js';
+import { MODELS } from '../models.js';
 
 /**
  * Brief data loaded from ProjectPost.provenance.interviewBrief.
@@ -145,7 +146,7 @@ Return ONLY the updated summary, incorporating the new exchanges.`;
 
     try {
       const response = await this.anthropic.messages.create({
-        model: 'claude-sonnet-4-20250514',
+        model: MODELS.sonnet,
         max_tokens: 300,
         messages: [{ role: 'user', content: compressionPrompt }],
       });

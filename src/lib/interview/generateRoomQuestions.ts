@@ -9,6 +9,7 @@ import { randomUUID } from 'crypto';
 import Anthropic from '@anthropic-ai/sdk';
 import type { ContextLevel } from './contextLevel';
 import type { GeneratedQuestion, QuestionType } from './generateQuestions';
+import { MODELS } from '@/lib/ai/models';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -137,7 +138,7 @@ Return ONLY a JSON object:
   ];
 
   const response = await anthropic.messages.create({
-    model: 'claude-sonnet-4-20250514',
+    model: MODELS.sonnet,
     max_tokens: 2048,
     messages: [{ role: 'user', content }],
   });

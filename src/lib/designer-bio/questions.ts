@@ -11,6 +11,7 @@
 import Anthropic from '@anthropic-ai/sdk';
 import { callLLM } from '@/lib/posting/llmClient';
 import type { InterviewAnswer } from './constants';
+import { MODELS } from '@/lib/ai/models';
 
 // ── Static base questions (Blank Slate) ──────────────────────────
 
@@ -132,7 +133,7 @@ export async function generateWebsiteContextQuestions(
   const result = await callLLM(
     async () => {
       const message = await anthropic.messages.create({
-        model: 'claude-sonnet-4-20250514',
+        model: MODELS.sonnet,
         system: `You are an editorial interviewer for a design industry publication. You've read a ${roleLabel}'s website and need to generate interview questions that go DEEPER than what the website already tells us.
 
 Guidelines:
@@ -161,7 +162,7 @@ Return a JSON array of objects: [{ "id": "web-q-1", "question": "..." }, ...]`,
       return JSON.parse(cleaned);
     },
     {
-      modelName: 'claude-sonnet-4-20250514',
+      modelName: MODELS.sonnet,
       maxRetries: 2,
       contextHint: 'bio_website_questions',
     }
@@ -209,7 +210,7 @@ export async function generateFollowUpQuestions(
         : '';
 
       const message = await anthropic.messages.create({
-        model: 'claude-sonnet-4-20250514',
+        model: MODELS.sonnet,
         system: `You are an editorial interviewer for a design publication. You've just heard a ${roleLabel}'s initial answers and now need to generate follow-up questions that dig deeper into the most interesting threads.
 
 Guidelines:
@@ -236,7 +237,7 @@ Return a JSON array: [{ "id": "followup-1", "question": "..." }, ...]`,
       return JSON.parse(cleaned);
     },
     {
-      modelName: 'claude-sonnet-4-20250514',
+      modelName: MODELS.sonnet,
       maxRetries: 2,
       contextHint: 'bio_followup_questions',
     }

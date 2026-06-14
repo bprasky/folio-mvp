@@ -9,6 +9,7 @@ import { randomUUID } from "crypto";
 import Anthropic from "@anthropic-ai/sdk";
 import { HOOK_OPENER_ID_PREFIX, HOOK_FOLLOWUP_ID_PREFIX } from "@/lib/interview/generateQuestions";
 import { scorePullQuote } from "@/lib/posting/generateEditorialDraft";
+import { MODELS } from '@/lib/ai/models';
 
 // Answers scoring at or above this already carry a hook-quality signal
 // (first-person voice + length, or first-person + metaphor). Above the bar,
@@ -92,7 +93,7 @@ async function generateFollowUp(
 
   try {
     const message = await anthropic.messages.create({
-      model: "claude-sonnet-4-20250514",
+      model: MODELS.sonnet,
       system: isHookParent ? HOOK_FOLLOWUP_SYSTEM : GENERIC_FOLLOWUP_SYSTEM,
       messages: [
         {
@@ -138,7 +139,7 @@ async function generatePreviewDraft(
 
   try {
     const message = await anthropic.messages.create({
-      model: "claude-sonnet-4-20250514",
+      model: MODELS.sonnet,
       system: `You are writing a preview excerpt for an interior design editorial. Based on interview responses, generate a compelling title and first paragraph.
 
 Guidelines:

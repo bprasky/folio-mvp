@@ -7,6 +7,7 @@
 
 import Anthropic from '@anthropic-ai/sdk';
 import type { SpatialRelationship, RoomContext } from './contextLevel';
+import { MODELS } from '@/lib/ai/models';
 
 const anthropic = new Anthropic();
 
@@ -82,7 +83,7 @@ export async function analyzeFloorPlan(
           : 'image/png';
 
     const response = await anthropic.messages.create({
-      model: 'claude-sonnet-4-20250514',
+      model: MODELS.sonnet,
       max_tokens: 2048,
       messages: [
         {

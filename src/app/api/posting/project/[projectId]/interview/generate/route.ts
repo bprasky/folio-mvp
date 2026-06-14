@@ -17,6 +17,7 @@ import { formatRoomName } from '@/lib/utils/formatRoomName';
 import { callLLM } from "@/lib/posting/llmClient";
 import { z } from "zod";
 import { LlmComposedLooseSchema, ComposedDraftSchema } from "@/lib/posting/schemas";
+import { MODELS } from '@/lib/ai/models';
 
 const USER_DAILY_LIMIT = 5;
 const PROJECT_MINUTE_LIMIT = 1;
@@ -636,7 +637,7 @@ async function composeEditorialHard({
   try {
     // Call Claude API
     const response = await anthropic.messages.create({
-      model: 'claude-sonnet-4-20250514',
+      model: MODELS.sonnet,
       max_tokens: 4096,
       system: systemPrompt,
       messages: [
@@ -1278,7 +1279,7 @@ async function composeEditorial(input: {
   ].join("\n");
 
   const anthropicClient = new Anthropic();
-  const modelName = 'claude-sonnet-4-20250514';
+  const modelName = MODELS.sonnet;
 
   const llmResult = await callLLM(
     async () => {

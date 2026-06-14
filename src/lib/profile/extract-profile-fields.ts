@@ -1,4 +1,5 @@
 import Anthropic from '@anthropic-ai/sdk';
+import { MODELS } from '@/lib/ai/models';
 
 const anthropic = new Anthropic();
 
@@ -34,7 +35,7 @@ const ORG_FIELD_SCHEMA = {
 
 export async function extractOrgProfileFields(transcript: string): Promise<ExtractedOrgFields> {
   const response = await anthropic.messages.create({
-    model: 'claude-sonnet-4-20250514',
+    model: MODELS.sonnet,
     max_tokens: 1500,
     messages: [{
       role: 'user',
@@ -89,7 +90,7 @@ const PERSONAL_FIELD_SCHEMA = {
 
 export async function extractPersonalProfileFields(transcript: string): Promise<ExtractedPersonalFields> {
   const response = await anthropic.messages.create({
-    model: 'claude-sonnet-4-20250514',
+    model: MODELS.sonnet,
     max_tokens: 1500,
     messages: [{
       role: 'user',

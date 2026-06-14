@@ -8,6 +8,7 @@ import { assertProjectWrite } from "@/lib/authz/access";
 import { callLLM } from "@/lib/posting/llmClient";
 import { cid } from "@/lib/utils/correlation";
 import { z } from "zod";
+import { MODELS } from '@/lib/ai/models';
 
 /**
  * Lightweight background evaluation endpoint.
@@ -98,7 +99,7 @@ export async function POST(
     }
     prompt += `\nReturn only questions that are "covered" or "morphed". Omit unaffected questions.`;
 
-    const modelName = 'claude-sonnet-4-20250514';
+    const modelName = MODELS.sonnet;
 
     const { default: Anthropic } = await import("@anthropic-ai/sdk");
     const anthropic = new Anthropic();

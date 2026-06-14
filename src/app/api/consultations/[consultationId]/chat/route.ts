@@ -7,6 +7,7 @@ import { authOptions } from "@/app/api/auth/[...nextauth]/options";
 import Anthropic from "@anthropic-ai/sdk";
 import { buildConsultationPrompt } from "@/lib/atelier/buildConsultationPrompt";
 import { ConsultationStatus } from "@prisma/client";
+import { MODELS } from '@/lib/ai/models';
 
 type Params = { params: { consultationId: string } };
 
@@ -192,7 +193,7 @@ export async function POST(req: NextRequest, { params }: Params) {
     const anthropic = new Anthropic();
 
     let response = await anthropic.messages.create({
-      model: "claude-sonnet-4-20250514",
+      model: MODELS.sonnet,
       max_tokens: 1024,
       system: systemPrompt,
       tools: CONSULTATION_TOOLS,
@@ -225,7 +226,7 @@ export async function POST(req: NextRequest, { params }: Params) {
 
       // Continue conversation with tool results
       response = await anthropic.messages.create({
-        model: "claude-sonnet-4-20250514",
+        model: MODELS.sonnet,
         max_tokens: 1024,
         system: systemPrompt,
         tools: CONSULTATION_TOOLS,

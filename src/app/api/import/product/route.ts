@@ -9,6 +9,7 @@ import * as cheerio from 'cheerio';
 import { trackDesignerProductUse } from '@/lib/designer-fingerprint';
 import { getContent, hasBrowserlessKey } from '@/lib/browserless/client';
 import { recordScrapeAttempt } from '@/lib/browserless/record';
+import { MODELS } from '@/lib/ai/models';
 
 export const runtime = 'nodejs';
 
@@ -266,7 +267,7 @@ export async function POST(req: NextRequest) {
     const [aiResponse, imageUrl] = await Promise.all([
       // AI web search for product data
       anthropic.messages.create({
-        model: 'claude-sonnet-4-20250514',
+        model: MODELS.sonnet,
         max_tokens: 2048,
         tools: [
           {

@@ -11,6 +11,7 @@ import { compactImages, compactProducts, softModerate } from "@/lib/posting/prom
 import { cid } from "@/lib/utils/correlation";
 import { z } from "zod";
 import { randomUUID } from "crypto";
+import { MODELS } from '@/lib/ai/models';
 
 // ---------------------------------------------------------------------------
 // Schema
@@ -264,7 +265,7 @@ Stay focused on THIS room: ${validated.roomName}. Do not drift to project-level 
     console.info('[followups-batch] budget(tokens)', { _cid, budget });
 
     // Call LLM
-    const modelName = 'claude-sonnet-4-20250514';
+    const modelName = MODELS.sonnet;
 
     const { default: Anthropic } = await import("@anthropic-ai/sdk");
     const anthropic = new Anthropic();

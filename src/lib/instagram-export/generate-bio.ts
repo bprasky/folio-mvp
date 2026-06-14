@@ -1,5 +1,6 @@
 import Anthropic from '@anthropic-ai/sdk';
 import { extractTextFromBlocks } from './generate-quotes';
+import { MODELS } from '@/lib/ai/models';
 
 const anthropic = new Anthropic();
 
@@ -61,7 +62,7 @@ ${input.feedback ? `Direction: ${input.feedback}` : ''}
 Return ONLY a JSON array of 4 strings.`;
 
   const response = await anthropic.messages.create({
-    model: 'claude-sonnet-4-20250514',
+    model: MODELS.sonnet,
     max_tokens: 600,
     messages: [{ role: 'user', content: prompt }],
   });

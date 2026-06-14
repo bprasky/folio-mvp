@@ -8,6 +8,7 @@ import {
   ORG_ABOUT_QUESTIONS,
   PERSONAL_ABOUT_QUESTIONS,
 } from '@/lib/org-onboarding/conversational-interview-questions';
+import { MODELS } from '@/lib/ai/models';
 
 const anthropic = new Anthropic();
 
@@ -43,7 +44,7 @@ export async function POST(request: NextRequest) {
     const questions = context === 'org' ? ORG_ABOUT_QUESTIONS : PERSONAL_ABOUT_QUESTIONS;
 
     const response = await anthropic.messages.create({
-      model: 'claude-sonnet-4-20250514',
+      model: MODELS.sonnet,
       max_tokens: 2000,
       messages: [{
         role: 'user',

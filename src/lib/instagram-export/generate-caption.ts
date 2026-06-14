@@ -1,5 +1,6 @@
 import Anthropic from '@anthropic-ai/sdk';
 import { extractTextFromBlocks } from './generate-quotes';
+import { MODELS } from '@/lib/ai/models';
 
 const anthropic = new Anthropic();
 
@@ -46,7 +47,7 @@ Include 5-8 relevant hashtags at the end.
 Return ONLY the caption text, nothing else.`;
 
   const response = await anthropic.messages.create({
-    model: 'claude-sonnet-4-20250514',
+    model: MODELS.sonnet,
     max_tokens: 500,
     messages: [{ role: 'user', content: prompt }],
   });

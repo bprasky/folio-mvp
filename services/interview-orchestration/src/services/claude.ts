@@ -1,5 +1,6 @@
 import Anthropic from '@anthropic-ai/sdk';
 import type { SofiaResponse } from '../types.js';
+import { MODELS } from '../models.js';
 
 /**
  * Service for Claude AI interactions
@@ -26,7 +27,7 @@ export class ClaudeService {
     userPrompt: string
   ): Promise<SofiaResponse> {
     const response = await this.client.messages.create({
-      model: 'claude-sonnet-4-20250514',
+      model: MODELS.sonnet,
       max_tokens: 1024,
       system: systemPrompt,
       messages: [{ role: 'user', content: userPrompt }],

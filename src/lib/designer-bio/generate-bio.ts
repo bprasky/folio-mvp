@@ -8,6 +8,7 @@
 import Anthropic from '@anthropic-ai/sdk';
 import { callLLM } from '@/lib/posting/llmClient';
 import type { InterviewAnswer } from './constants';
+import { MODELS } from '@/lib/ai/models';
 
 type GenerateBioInput = {
   role: string;
@@ -38,7 +39,7 @@ export async function generateFolioBio(input: GenerateBioInput): Promise<string>
   const result = await callLLM(
     async () => {
       const message = await anthropic.messages.create({
-        model: 'claude-sonnet-4-20250514',
+        model: MODELS.sonnet,
         system: `You are writing a magazine-quality profile bio for a ${roleLabel} named ${designerName}. Write in third person. This bio will appear on their professional profile page.
 
 REQUIREMENTS:
@@ -77,7 +78,7 @@ Return ONLY the bio text. No headers, no labels, no markdown.`,
       return content.trim();
     },
     {
-      modelName: 'claude-sonnet-4-20250514',
+      modelName: MODELS.sonnet,
       maxRetries: 2,
       contextHint: 'folio_bio_generation',
     }

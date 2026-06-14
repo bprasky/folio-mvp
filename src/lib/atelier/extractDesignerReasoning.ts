@@ -8,6 +8,7 @@
 
 import { prisma } from "@/lib/prisma";
 import Anthropic from "@anthropic-ai/sdk";
+import { MODELS } from '@/lib/ai/models';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -513,7 +514,7 @@ async function analyzeContentWithLLM(
     const anthropic = new Anthropic();
 
     const response = await anthropic.messages.create({
-      model: "claude-sonnet-4-20250514",
+      model: MODELS.sonnet,
       max_tokens: 2048,
       messages: [
         {

@@ -6,6 +6,7 @@ import {
   EDITORIAL_CURATOR_THRESHOLDS,
   EDITORIAL_SCHEDULER_PROMPT,
 } from "./constants";
+import { MODELS } from '@/lib/ai/models';
 
 // [Editorial Curator Integration] Edition publishing orchestrator
 
@@ -66,7 +67,7 @@ async function generateEditionCopy(payload: {
 
   try {
     const res = await client.messages.create({
-      model: "claude-sonnet-4-20250514",
+      model: MODELS.sonnet,
       temperature: 0.4,
       max_tokens: 320,
       system: "You are Folio's Editorial Edition curator. Maintain an elegant, professional, timeless tone. Respond with JSON only.",

@@ -8,6 +8,7 @@
 
 import Anthropic from '@anthropic-ai/sdk';
 import type { ProjectContext, SpatialRelationship, RoomContext } from './contextLevel';
+import { MODELS } from '@/lib/ai/models';
 
 const anthropic = new Anthropic();
 
@@ -49,7 +50,7 @@ export async function generateSpatialNarrative(
 
   try {
     const response = await anthropic.messages.create({
-      model: 'claude-sonnet-4-20250514',
+      model: MODELS.sonnet,
       max_tokens: 1024,
       system: `You are writing transitional copy for an interior design editorial.
 Your job is to describe movement through a space—how one room leads to another,
@@ -133,7 +134,7 @@ export async function generateDesignNarrative(
     const contextDetails = buildContextDetails(context);
 
     const response = await anthropic.messages.create({
-      model: 'claude-sonnet-4-20250514',
+      model: MODELS.sonnet,
       max_tokens: 512,
       system: `You are writing a design narrative for an interior design publication.
 Create a cohesive 2-3 sentence summary that captures the essence of the project.
@@ -297,7 +298,7 @@ export async function generateRoomIntroductions(
 
   try {
     const response = await anthropic.messages.create({
-      model: 'claude-sonnet-4-20250514',
+      model: MODELS.sonnet,
       max_tokens: 1024,
       system: `You are writing room introductions for an interior design editorial.
 Each introduction should be one evocative sentence that sets up the room.
@@ -421,7 +422,7 @@ export async function generateMaterialStories(
 
   try {
     const response = await anthropic.messages.create({
-      model: 'claude-sonnet-4-20250514',
+      model: MODELS.sonnet,
       max_tokens: 1024,
       system: `You are writing about materials for an interior design publication.
 Create evocative 1-2 sentence descriptions of how materials are used.

@@ -8,6 +8,7 @@ import Anthropic from '@anthropic-ai/sdk';
 import { callLLM } from '@/lib/posting/llmClient';
 import { Round1Response, CollaborationQuestion } from './round1';
 import { Round2Question } from './generateRound2';
+import { MODELS } from '@/lib/ai/models';
 
 export type Round3Question = CollaborationQuestion & {
   referencesParty: 'VENDOR' | 'DESIGNER'; // Which party's response this references
@@ -88,7 +89,7 @@ Return a JSON array of 3-4 questions.`;
   const result = await callLLM(
     async () => {
       const message = await anthropic.messages.create({
-        model: 'claude-sonnet-4-20250514',
+        model: MODELS.sonnet,
         system: ROUND3_SYSTEM_PROMPT,
         messages: [
           { role: 'user', content: userPrompt },
@@ -105,7 +106,7 @@ Return a JSON array of 3-4 questions.`;
       return parsed.questions || parsed;
     },
     {
-      modelName: 'claude-sonnet-4-20250514',
+      modelName: MODELS.sonnet,
       maxRetries: 2,
       contextHint: 'collaboration_round3_generation',
     }

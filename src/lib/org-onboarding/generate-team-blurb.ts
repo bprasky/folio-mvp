@@ -1,5 +1,6 @@
 import Anthropic from '@anthropic-ai/sdk';
 import { prisma } from '@/lib/prisma';
+import { MODELS } from '@/lib/ai/models';
 
 interface TeamBlurbInput {
   orgUserId: string;
@@ -101,7 +102,7 @@ Respond in JSON:
 }`;
 
   const response = await anthropic.messages.create({
-    model: 'claude-sonnet-4-20250514',
+    model: MODELS.sonnet,
     max_tokens: 1000,
     messages: [{ role: 'user', content: prompt }]
   });
