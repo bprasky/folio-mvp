@@ -2,6 +2,7 @@ import Anthropic from '@anthropic-ai/sdk';
 import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/app/api/auth/[...nextauth]/options';
+import { MODELS } from '@/lib/ai/models';
 
 const anthropic = new Anthropic({
   apiKey: process.env.ANTHROPIC_API_KEY,
@@ -77,7 +78,7 @@ export async function POST(request: Request) {
     }
 
     const response = await anthropic.messages.create({
-      model: 'claude-sonnet-4-20250514',
+      model: MODELS.sonnet,
       max_tokens: 1024,
       system: SUPPORT_SYSTEM_PROMPT,
       messages: messages.map((m: { role: string; content: string }) => ({

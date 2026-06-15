@@ -5,6 +5,7 @@ import { z } from "zod";
 import { callLLM } from "./llmClient";
 import { formatRoomName } from "@/lib/utils/formatRoomName";
 import { HOOK_OPENER_ID_PREFIX, HOOK_FOLLOWUP_ID_PREFIX } from "@/lib/interview/generateQuestions";
+import { MODELS } from '@/lib/ai/models';
 
 const client = new Anthropic();
 
@@ -429,7 +430,7 @@ Return JSON only: {"quote": "..."} or {"quote": null}. Do not wrap the quote in 
   try {
     console.log('[VERIFY] spliceHookQuote: AI SPLICE path');
     const message = await client.messages.create({
-      model: 'claude-sonnet-4-20250514',
+      model: MODELS.sonnet,
       system,
       messages: [
         { role: 'user', content: sourceLines },
@@ -1126,14 +1127,14 @@ async function fixSentenceOpeners(
   const rewriteResult = await callLLM(
     async () => {
       return await client.messages.create({
-        model: 'claude-haiku-4-5-20251001',
+        model: MODELS.haiku,
         temperature: 0.6,
         max_tokens: Math.max(1024, toFix.length * 500),
         system: `You are a copy editor. For each numbered paragraph below, rewrite ONLY its opening sentence so it does NOT start with "The". Keep the same meaning, tone, and all content after the first sentence. Use one of: a prepositional phrase, an action verb, the designer's name, a dependent clause, or a spatial/temporal marker. Return all rewritten paragraphs in the same numbered format (e.g., "1. [rewritten paragraph]").`,
         messages: [{ role: 'user', content: numberedInput }],
       });
     },
-    { modelName: 'claude-haiku-4-5-20251001', contextHint: `fix-openers:${_cid}`, maxRetries: 1, baseDelayMs: 300 },
+    { modelName: MODELS.haiku, contextHint: `fix-openers:${_cid}`, maxRetries: 1, baseDelayMs: 300 },
   );
 
   if (!rewriteResult.ok) {
@@ -1220,7 +1221,7 @@ export async function generateEditorialDraft(input: GenInput): Promise<{
   const { systemPrompt, userPrompt, imageIds, rooms, imagesByRoom } = buildPrompt(input, uniqueAnswers);
 
   const interviewedRoomCount = Array.from(new Set(uniqueAnswers.map(a => a.section))).filter(r => r !== 'About This Project' && r !== 'General').length;
-  const modelName = 'claude-sonnet-4-20250514';
+  const modelName = MODELS.sonnet;
 
   const llmResult = await callLLM(
     async () => {

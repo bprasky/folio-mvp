@@ -10,6 +10,7 @@
  */
 
 import { fal } from '@fal-ai/client';
+import { recordCostEvent, falCostUsd } from '@/lib/ai/cost';
 
 // --- Shared interfaces (consumed by API routes) ---
 
@@ -244,6 +245,8 @@ export async function callSam3DService(req: Sam3DRequest): Promise<Sam3DResponse
     }
   }
 
+  void recordCostEvent({ provider: 'fal', operation: 'mesh', units: 1, costUsdEstimate: falCostUsd(1) });
+
   return { glbBuffer, confidence: 1.0 };
 }
 
@@ -439,6 +442,8 @@ export async function callSam3DTagService(req: Sam3DTagRequest): Promise<Sam3DTa
     usedCatalog: hasCatalogImage,
     depthEstimate,
   });
+
+  void recordCostEvent({ provider: 'fal', operation: 'mesh-tag', units: 1, costUsdEstimate: falCostUsd(1) });
 
   return { glbBuffer, maskPngBuffer, confidence, boundingBox, depthEstimate, meshSource, trellisError: trellisErrorMsg, dominantColor };
 }

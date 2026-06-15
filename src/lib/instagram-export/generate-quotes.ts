@@ -1,4 +1,5 @@
 import Anthropic from '@anthropic-ai/sdk';
+import { MODELS } from '@/lib/ai/models';
 
 const anthropic = new Anthropic();
 
@@ -66,7 +67,7 @@ ${input.feedback ? `Direction from the designer: ${input.feedback}` : ''}
 Return ONLY a JSON array of 5 strings. No other text.`;
 
   const response = await anthropic.messages.create({
-    model: 'claude-sonnet-4-20250514',
+    model: MODELS.sonnet,
     max_tokens: 500,
     messages: [{ role: 'user', content: prompt }],
   });

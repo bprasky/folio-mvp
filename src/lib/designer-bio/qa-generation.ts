@@ -13,6 +13,7 @@ import { callLLM } from '@/lib/posting/llmClient';
 import { prisma } from '@/lib/prisma';
 import { QA_MAX_PENDING, QA_MIN_GAP_DAYS, QA_INITIAL_SEED_COUNT } from './constants';
 import type { QACategory, QASource } from './constants';
+import { MODELS } from '@/lib/ai/models';
 
 type GeneratedQuestion = {
   question: string;
@@ -72,7 +73,7 @@ export async function generateInitialSeedQuestions(
   const result = await callLLM(
     async () => {
       const message = await anthropic.messages.create({
-        model: 'claude-sonnet-4-20250514',
+        model: MODELS.sonnet,
         system: `You are generating profile interview questions for a designer's "In Their Words" section. These questions will appear on their public profile for visitors to read.
 
 The goal: questions that reveal personality, taste, conviction, and character. Think magazine interview — the questions that make readers feel like they KNOW this person.
@@ -100,7 +101,7 @@ Return JSON array: [{ "question": "...", "category": "personality|preference|con
       return JSON.parse(cleaned);
     },
     {
-      modelName: 'claude-sonnet-4-20250514',
+      modelName: MODELS.sonnet,
       maxRetries: 2,
       contextHint: 'qa_initial_seed',
     }
@@ -156,7 +157,7 @@ export async function generateProjectQuestions(
   const result = await callLLM(
     async () => {
       const message = await anthropic.messages.create({
-        model: 'claude-sonnet-4-20250514',
+        model: MODELS.sonnet,
         system: `Generate 0-2 profile interview questions for a designer who just published a new project. Only generate questions if genuinely interesting ones emerge — don't force it.
 
 Context:
@@ -184,7 +185,7 @@ Return empty array [] if no genuinely interesting question comes to mind.`,
       return JSON.parse(cleaned);
     },
     {
-      modelName: 'claude-sonnet-4-20250514',
+      modelName: MODELS.sonnet,
       maxRetries: 1,
       contextHint: 'qa_project_trigger',
     }

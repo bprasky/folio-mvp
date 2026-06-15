@@ -1,4 +1,5 @@
 import { Resend } from "resend";
+import { recordCostEvent } from "@/lib/ai/cost";
 
 const resend = process.env.RESEND_API_KEY
   ? new Resend(process.env.RESEND_API_KEY)
@@ -31,6 +32,8 @@ export async function sendEmail({
       console.error(`[Email] Failed to send to ${to}:`, error);
       return { success: false, error: error.message };
     }
+    // Resend has no per-email rate in the cost audit; record volume (units=1), cost 0.
+    void recordCostEvent({ provider: "resend", operation: "email", units: 1, costUsdEstimate: 0 });
     return { success: true };
   } catch (e: any) {
     console.error(`[Email] Exception sending to ${to}:`, e);
@@ -76,6 +79,8 @@ export async function sendProxyEmail({
       console.error(`[Email] Proxy send failed to ${to}:`, error);
       return { success: false, error: error.message };
     }
+    // Resend has no per-email rate in the cost audit; record volume (units=1), cost 0.
+    void recordCostEvent({ provider: "resend", operation: "email-proxy", units: 1, costUsdEstimate: 0 });
     return { success: true, resendMessageId: data?.id };
   } catch (e: any) {
     console.error(`[Email] Proxy send exception to ${to}:`, e);

@@ -5,6 +5,7 @@
 
 import Anthropic from '@anthropic-ai/sdk';
 import { Blocks } from '@/lib/posting/schemas';
+import { MODELS } from '@/lib/ai/models';
 
 interface CaptionInput {
   projectTitle: string;
@@ -118,7 +119,7 @@ Requirements:
 - Keep it under 2000 characters`;
 
       const message = await anthropic.messages.create({
-        model: 'claude-sonnet-4-20250514',
+        model: MODELS.sonnet,
         system: 'You are a copywriter for Folio, a premium interior design platform. Write elegant, concise captions that match the brand\'s quiet sophistication.',
         messages: [
           {

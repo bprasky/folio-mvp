@@ -5,6 +5,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/options";
 import { prisma } from "@/lib/prisma";
 import Anthropic from "@anthropic-ai/sdk";
+import { MODELS } from '@/lib/ai/models';
 
 const ANTHROPIC_ENABLED = !!process.env.ANTHROPIC_API_KEY && process.env.ANTHROPIC_ENABLED !== "false";
 
@@ -111,7 +112,7 @@ async function callLLM(question: string, nodeId?: string): Promise<OrbAgentRespo
       : question;
 
     const message = await client.messages.create({
-      model: "claude-sonnet-4-20250514",
+      model: MODELS.sonnet,
       system: SYSTEM_PROMPT,
       messages: [
         { role: "user", content: userMessage },

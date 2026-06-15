@@ -13,6 +13,7 @@ import { compactImages, compactProducts, frameFollowupsPrompt, softModerate } fr
 import { cid } from "@/lib/utils/correlation";
 import { z } from "zod";
 import { randomUUID } from "crypto";
+import { MODELS } from '@/lib/ai/models';
 
 // Cache last good follow-ups in-memory (dev/runtime only)
 const lastGoodFollowups = new Map<string, Array<{ id: string; prompt: string }>>();
@@ -264,7 +265,7 @@ export async function POST(
     console.info('[followups] budget(tokens)', { _cid, budget });
 
     // Call Anthropic with LLM client wrapper
-    const modelName = 'claude-sonnet-4-20250514';
+    const modelName = MODELS.sonnet;
 
     const { default: Anthropic } = await import("@anthropic-ai/sdk");
     const anthropic = new Anthropic();

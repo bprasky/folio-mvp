@@ -10,6 +10,7 @@
 import Anthropic from '@anthropic-ai/sdk';
 import { callLLM } from '@/lib/posting/llmClient';
 import { prisma } from '@/lib/prisma';
+import { MODELS } from '@/lib/ai/models';
 
 const MAX_PENDING_QUESTIONS = 3;
 const QUESTIONS_PER_BATCH = 3;
@@ -82,7 +83,7 @@ export async function generateBioReflectiveQuestions(userId: string) {
   const result = await callLLM(
     async () => {
       const message = await anthropic.messages.create({
-        model: 'claude-sonnet-4-20250514',
+        model: MODELS.sonnet,
         system: `You are generating questions for verified design professionals on Folio, a design publication platform. These questions appear as editorial-quality cards in the magazine feed.
 
 FRAMING PRINCIPLE: The bio is EVIDENCE of the designer's perspective, not the SUBJECT. Every question should be about a broader design theme, philosophy, or industry conversation. The designer's bio details are referenced because they prove the designer has a distinctive point of view — but the question asks for the principle, philosophy, or transferable insight, not a retelling of their story.
@@ -138,7 +139,7 @@ Return a JSON array of exactly ${QUESTIONS_PER_BATCH} objects:
       return JSON.parse(cleaned) as GeneratedQuestion[];
     },
     {
-      modelName: 'claude-sonnet-4-20250514',
+      modelName: MODELS.sonnet,
       maxRetries: 2,
       contextHint: 'prompted_content_bio_reflective',
     }
@@ -282,7 +283,7 @@ export async function generateProjectReflectiveQuestions(userId: string) {
   const result = await callLLM(
     async () => {
       const message = await anthropic.messages.create({
-        model: 'claude-sonnet-4-20250514',
+        model: MODELS.sonnet,
         system: `You are generating questions for verified design professionals on Folio, a design publication platform. These questions appear as editorial-quality cards in the magazine feed.
 
 FRAMING PRINCIPLE: The project is the EVIDENCE, not the SUBJECT. Every question should be about a broader design theme, trend, or expertise area. The designer's specific project is referenced because it proves they have real experience with the topic — but the question asks them to share the principle, philosophy, or approach behind the decision, not to describe the decision itself.
@@ -339,7 +340,7 @@ Return a JSON array of exactly ${QUESTIONS_PER_BATCH} objects:
       return JSON.parse(cleaned) as ProjectReflectiveQuestion[];
     },
     {
-      modelName: 'claude-sonnet-4-20250514',
+      modelName: MODELS.sonnet,
       maxRetries: 2,
       contextHint: 'prompted_content_project_reflective',
     }

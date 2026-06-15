@@ -17,7 +17,7 @@ export interface LabelEventInput {
   roomId?: string | null;
   userId?: string | null;
   source: 'MODEL' | 'HUMAN';
-  /** Model id for MODEL events, e.g. "claude-sonnet-4-20250514". */
+  /** Model id for MODEL events, e.g. "claude-sonnet-4-6". */
   model?: string | null;
   /** ROOM | ROOM_NAME | INCLUSION | NO_PRODUCTS | PRODUCT_TAG */
   taskType: string;

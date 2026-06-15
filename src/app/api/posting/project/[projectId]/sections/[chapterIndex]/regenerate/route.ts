@@ -9,6 +9,7 @@ import { callLLM } from '@/lib/posting/llmClient';
 import Anthropic from '@anthropic-ai/sdk';
 import type { SectionHistoryEntry, SectionOverride } from '@/lib/posting/editingTypes';
 import { FOLIO_TONE } from '@/lib/posting/generateEditorialDraft';
+import { MODELS } from '@/lib/ai/models';
 
 const anthropic = new Anthropic();
 
@@ -203,7 +204,7 @@ This section MUST include the designer's voice. The interview answers above are 
 - Only reference products listed above
 - Return ONLY a JSON array of paragraph strings: ["paragraph 1", "paragraph 2", ...]`;
 
-    const modelName = 'claude-sonnet-4-20250514';
+    const modelName = MODELS.sonnet;
     const llmResult = await callLLM(
       async () => {
         return await anthropic.messages.create({

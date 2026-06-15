@@ -10,6 +10,7 @@ import { callLLM } from '@/lib/posting/llmClient';
 import { directFetch } from '@/lib/browserless/client';
 import { classifyScrapeOutcome, isBlockedOutcome } from '@/lib/browserless/classify';
 import { recordScrapeAttempt } from '@/lib/browserless/record';
+import { MODELS } from '@/lib/ai/models';
 
 export type ScrapedDesignerData = {
   name?: string;
@@ -119,7 +120,7 @@ async function extractStructuredData(
   const result = await callLLM(
     async () => {
       const message = await anthropic.messages.create({
-        model: 'claude-sonnet-4-20250514',
+        model: MODELS.sonnet,
         system: `You are extracting structured profile data from a design professional's website. Extract whatever information is available. If a field isn't found, omit it.
 
 Return JSON with these optional fields:
@@ -153,7 +154,7 @@ Only include fields you can confidently extract. Do not make up information.`,
       return JSON.parse(cleaned);
     },
     {
-      modelName: 'claude-sonnet-4-20250514',
+      modelName: MODELS.sonnet,
       maxRetries: 2,
       contextHint: 'designer_website_scrape',
     }

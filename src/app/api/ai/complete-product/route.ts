@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/app/api/auth/[...nextauth]/options';
 import { prisma } from '@/lib/prisma';
 import Anthropic from '@anthropic-ai/sdk';
+import { MODELS } from '@/lib/ai/models';
 
 export const runtime = 'nodejs';
 
@@ -78,7 +79,7 @@ export async function POST(req: NextRequest) {
     console.log('AI Complete Product - Search context:', searchContext);
 
     const response = await anthropic.messages.create({
-      model: 'claude-sonnet-4-20250514',
+      model: MODELS.sonnet,
       max_tokens: 2048,
       tools: [
         {

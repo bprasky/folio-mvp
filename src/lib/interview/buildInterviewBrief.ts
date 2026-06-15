@@ -13,6 +13,7 @@ import Anthropic from '@anthropic-ai/sdk';
 import { prisma } from '@/lib/prisma';
 import { assessProjectContext, classifyProjectSize, type ProjectContext } from './contextLevel';
 import { computeRoomBudget } from '@/lib/editorial/roomPacing';
+import { MODELS } from '@/lib/ai/models';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -622,7 +623,7 @@ Return a JSON object with this structure:
     ];
 
     const response = await anthropic.messages.create({
-      model: 'claude-sonnet-4-20250514',
+      model: MODELS.sonnet,
       max_tokens: 4096,
       messages: [{ role: 'user', content }],
     });

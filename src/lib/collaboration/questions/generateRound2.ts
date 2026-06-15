@@ -6,6 +6,7 @@
 import Anthropic from '@anthropic-ai/sdk';
 import { callLLM } from '@/lib/posting/llmClient';
 import { Round1Response, CollaborationQuestion, getRound1Questions } from './round1';
+import { MODELS } from '@/lib/ai/models';
 
 export type Round2Question = CollaborationQuestion & {
   derivedFrom: string; // ID of the Round 1 question this follows up on
@@ -71,7 +72,7 @@ Return a JSON array of 4-6 questions.`;
   const result = await callLLM(
     async () => {
       const message = await anthropic.messages.create({
-        model: 'claude-sonnet-4-20250514',
+        model: MODELS.sonnet,
         system: ROUND2_SYSTEM_PROMPT,
         messages: [
           { role: 'user', content: userPrompt },
@@ -88,7 +89,7 @@ Return a JSON array of 4-6 questions.`;
       return parsed.questions || parsed;
     },
     {
-      modelName: 'claude-sonnet-4-20250514',
+      modelName: MODELS.sonnet,
       maxRetries: 2,
       contextHint: 'collaboration_round2_generation',
     }

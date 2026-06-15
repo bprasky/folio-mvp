@@ -15,6 +15,7 @@
 import Anthropic from '@anthropic-ai/sdk';
 import { prisma } from '@/lib/prisma';
 import { normalizeProductUrl } from '@/lib/products/normalizeProductUrl';
+import { MODELS } from '@/lib/ai/models';
 
 export interface AiProductFields {
   name: string | null;
@@ -113,7 +114,7 @@ export async function aiExtractProduct(url: string): Promise<AiProductFields | n
   try {
     const anthropic = new Anthropic();
     const aiResponse = await anthropic.messages.create({
-      model: 'claude-sonnet-4-20250514',
+      model: MODELS.sonnet,
       max_tokens: 2048,
       tools: [{ type: 'web_search_20250305', name: 'web_search' }],
       messages: [{ role: 'user', content: buildPrompt(url) }],

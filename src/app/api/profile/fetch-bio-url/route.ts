@@ -4,6 +4,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/app/api/auth/[...nextauth]/options';
 import Anthropic from '@anthropic-ai/sdk';
+import { MODELS } from '@/lib/ai/models';
 
 const anthropic = new Anthropic();
 
@@ -81,7 +82,7 @@ export async function POST(request: NextRequest) {
 
     // Use Claude to extract the bio passage
     const response = await anthropic.messages.create({
-      model: 'claude-sonnet-4-20250514',
+      model: MODELS.sonnet,
       max_tokens: 1500,
       messages: [{
         role: 'user',

@@ -7,6 +7,7 @@ import { prisma } from "@/lib/prisma";
 import { z } from "zod";
 import { randomUUID } from "crypto";
 import Anthropic from "@anthropic-ai/sdk";
+import { MODELS } from '@/lib/ai/models';
 
 /**
  * POST /api/interview/generate-draft
@@ -64,7 +65,7 @@ async function generateEditorial(
 
   try {
     const message = await anthropic.messages.create({
-      model: "claude-sonnet-4-20250514",
+      model: MODELS.sonnet,
       system: `You are an editor for a prestigious interior design publication. Create a polished editorial from designer interview responses.
 
 Structure:

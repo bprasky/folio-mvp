@@ -8,6 +8,7 @@ import { callLLM } from '@/lib/posting/llmClient';
 import { Round1Response, CollaborationQuestion } from '../questions/round1';
 import { Round2Question } from '../questions/generateRound2';
 import { Round3Question } from '../questions/generateRound3';
+import { MODELS } from '@/lib/ai/models';
 
 // Types for the narrative structure
 export type NarrativeSection = {
@@ -127,7 +128,7 @@ Craft a compelling narrative that weaves both perspectives into a cohesive story
   const result = await callLLM(
     async () => {
       const message = await anthropic.messages.create({
-        model: 'claude-sonnet-4-20250514',
+        model: MODELS.sonnet,
         system: NARRATIVE_SYSTEM_PROMPT,
         messages: [
           { role: 'user', content: userPrompt },
@@ -143,7 +144,7 @@ Craft a compelling narrative that weaves both perspectives into a cohesive story
       return JSON.parse(cleaned);
     },
     {
-      modelName: 'claude-sonnet-4-20250514',
+      modelName: MODELS.sonnet,
       maxRetries: 2,
       contextHint: 'collaboration_narrative_assembly',
     }
@@ -273,7 +274,7 @@ export async function generateStoryMeta(
   const result = await callLLM(
     async () => {
       const message = await anthropic.messages.create({
-        model: 'claude-sonnet-4-20250514',
+        model: MODELS.sonnet,
         system: 'Generate a compelling title and excerpt for a design collaboration story. Return JSON with "title" (max 80 chars) and "excerpt" (max 200 chars).',
         messages: [
           {
@@ -294,7 +295,7 @@ Designer's perspective: "${designerQuote}"`,
       return JSON.parse(cleaned);
     },
     {
-      modelName: 'claude-sonnet-4-20250514',
+      modelName: MODELS.sonnet,
       maxRetries: 1,
       contextHint: 'collaboration_story_meta',
     }
