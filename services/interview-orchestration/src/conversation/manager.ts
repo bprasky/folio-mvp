@@ -478,6 +478,37 @@ export class ConversationManager {
         },
       });
 
+      // Cost instrumentation (API cost hardening Phase 3). The voice service is
+      // undeployed today, so this only executes once a real session runs. Both
+      // Deepgram (transcription) and LiveKit (transport) bill per minute of the
+      // session's wall-clock duration. Rates per the cost audit; service-local
+      // so no shared package is wired. Fire-and-forget — never block teardown.
+      if (totalDuration && totalDuration > 0) {
+        const minutes = totalDuration / 60000;
+        const DEEPGRAM_PER_MINUTE = 0.0077;
+        const LIVEKIT_PER_MINUTE = 0.011;
+        prisma.costEvent
+          .createMany({
+            data: [
+              {
+                provider: 'deepgram',
+                operation: 'realtime-transcription',
+                projectId: this.projectId,
+                units: minutes,
+                costUsdEstimate: minutes * DEEPGRAM_PER_MINUTE,
+              },
+              {
+                provider: 'livekit',
+                operation: 'realtime-transport',
+                projectId: this.projectId,
+                units: minutes,
+                costUsdEstimate: minutes * LIVEKIT_PER_MINUTE,
+              },
+            ],
+          })
+          .catch((err) => console.warn('[cost] failed to record voice CostEvents', err));
+      }
+
       this.sendMessage({ type: 'complete' });
       this.setState('ended');
     } catch (error) {
