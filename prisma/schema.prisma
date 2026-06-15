@@ -7490,6 +7490,24 @@ model ScrapeAttempt {
   @@index([createdAt])
 }
 
+model CostEvent {
+  id                       String   @id @default(cuid())
+  projectId                String?
+  provider                 String // 'anthropic' | 'fal' | 'resend' | 'deepgram' | 'livekit'
+  operation                String // e.g. 'generateEditorialDraft', 'mesh', 'vendor-email'
+  model                    String?
+  inputTokens              Int?
+  outputTokens             Int?
+  cacheReadInputTokens     Int?
+  cacheCreationInputTokens Int?
+  units                    Float? // minutes, generations, or bytes depending on provider
+  costUsdEstimate          Float
+  createdAt                DateTime @default(now())
+
+  @@index([projectId])
+  @@index([provider, createdAt])
+}
+
 enum ScrapeConsumer {
   VENDOR_WIZARD
   IMPORT_IMAGE
