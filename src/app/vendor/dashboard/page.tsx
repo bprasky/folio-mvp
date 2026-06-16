@@ -1,5 +1,6 @@
 import React from 'react';
 import { prisma } from '@/lib/prisma';
+import ReviewQueueBanner from '@/components/vendor/ReviewQueueBanner';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/auth';
 import { getVendorContext } from '@/lib/auth/vendorContext';
@@ -156,6 +157,7 @@ export default async function VendorDashboard() {
       <section className="p-8 space-y-6 -mx-6 -mt-0 bg-surface-canvas">
         <div className="mx-6">
           <h1 className="folio-h1 mb-6">Vendor Dashboard</h1>
+          <div className="mb-6"><ReviewQueueBanner /></div>
           <VendorAnalyticsDashboard />
         </div>
       </section>
@@ -169,6 +171,7 @@ export default async function VendorDashboard() {
       <p className="folio-body text-folio-text-secondary">
         Showing projects you own or have selections on.
       </p>
+      <ReviewQueueBanner />
       <VendorDashboardClient
         user={{
           id: session.user.id,
