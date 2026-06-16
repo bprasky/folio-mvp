@@ -42,17 +42,26 @@ specced here for sequencing.
 - No schema change, no dedup yet — each paste still creates its own row, so the
   add-only rule does not bite until Phase 4.
 
-## Phase 2 — claim turnover
+## Phase 2 — claim turnover  ✅ BUILT (auto, domain-match only)
 
-- Build on existing org-claim infra (`/api/auth/claim`, `OrgClaimInvite`,
-  `Organization`). A claimed vendor org maps to a `User` (role VENDOR) that owns
-  products.
-- On claim, set `vendorId` on every unclaimed product whose `brand` (and/or URL
-  host) matches the claimed brand. Decide the match key explicitly (brand string
-  match is fuzzy; prefer a normalized brand + domain map).
-- After turnover, the Phase 1 gate already enforces vendor-only edits.
-- **Open:** brand→vendor matching is the risky part. Needs a deterministic key
-  (e.g. domain allowlist per vendor) + an admin review step, not fuzzy `brand`.
+- Hooks into the existing vendor claim flow (`POST /api/vendor/claim`), right
+  after the org transitions UNCLAIMED → CLAIMED. `Product.vendorId` is a `User`
+  FK, so turnover sets `vendorId = session.user.id` (the claiming user), matching
+  how vendors own products they create.
+- **Deterministic domain match only** (`src/lib/vendor/claimTurnover.ts`): an
+  unclaimed product turns over iff its URL's registrable domain equals one of the
+  org's verified domains — the *same* `inferVendorDomains(orgId)` set that
+  authorized the claim in `canClaimOrganization`. Fuzzy brand-name matches are
+  intentionally excluded (no false turnovers).
+- **Attribution preserved:** only `Product.vendorId` changes; tags are never
+  read or written, so tag count and per-designer attribution survive intact.
+- After turnover the Phase 1 gate already enforces vendor-only edits on the now
+  claimed products. Best-effort: a turnover failure never blocks the claim.
+  Response returns `productsAssigned`.
+- **Not done (deferred):** brand-only matches (no domain) are left unclaimed —
+  they belong in the Phase 3 admin review queue. A future indexed
+  normalized-domain column would let turnover filter in SQL instead of scanning
+  unclaimed-with-URL products (fine at MVP scale today).
 
 ## Phase 3 — vendor review queue
 

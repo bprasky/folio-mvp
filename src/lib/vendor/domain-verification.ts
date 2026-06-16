@@ -22,7 +22,7 @@ function extractDomain(email: string): string {
 /**
  * Infer vendor domains from organization website and product URLs.
  */
-async function inferVendorDomains(organizationId: string): Promise<string[]> {
+export async function inferVendorDomains(organizationId: string): Promise<string[]> {
   const domains = new Set<string>();
 
   // Get org website domain
