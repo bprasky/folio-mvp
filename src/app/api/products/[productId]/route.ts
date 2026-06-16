@@ -94,8 +94,14 @@ export async function PUT(
     }
 
     const isAdmin = session.user.role === 'ADMIN';
+    const isClaimed = existingProduct.vendorId !== null;
     const isVendorOwner = existingProduct.vendorId === session.user.id;
-    if (!isAdmin && !isVendorOwner) {
+    // Ownership model (see PRODUCT_TAG_LIFECYCLE spec): an UNCLAIMED product
+    // (vendorId null) is collaboratively editable by any signed-in user — this
+    // is the designer enrichment phase, where a designer who tags a product can
+    // fill in details. Once a vendor CLAIMS it (vendorId set), edit rights turn
+    // over to that vendor (or an admin) and designers can no longer change it.
+    if (isClaimed && !isAdmin && !isVendorOwner) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
@@ -106,6 +112,7 @@ export async function PUT(
       priceCents,
       imageUrl,
       brand,
+      category,
       url,
       vendorName,
       currency = 'USD'
@@ -138,6 +145,7 @@ export async function PUT(
         price,
         imageUrl,
         brand,
+        category,
         url,
         vendorId: vendorId
       },

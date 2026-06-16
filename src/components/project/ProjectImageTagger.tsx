@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useRef, useCallback } from "react";
-import { FaTimes, FaTag, FaSearch, FaCheck, FaTrash, FaGripLines, FaImage, FaExternalLinkAlt, FaChevronDown, FaChevronUp, FaExclamationCircle } from "react-icons/fa";
+import { FaTimes, FaTag, FaSearch, FaCheck, FaTrash, FaGripLines, FaImage, FaExternalLinkAlt, FaChevronDown, FaChevronUp, FaExclamationCircle, FaPen } from "react-icons/fa";
 import { isFlaggedDomain } from "@/lib/browserless/flaggedDomains";
 
 type ImageWithTags = {
@@ -139,6 +139,20 @@ export function ProjectImageTagger({ projectId, images: providedImages, onClose 
   // Deferred scrapes that finished with gaps: productId -> missing field labels.
   // The tag is highlighted so the designer can see what didn't come through.
   const [reviewFlags, setReviewFlags] = useState<Record<string, string[]>>({});
+  // Edit-an-existing-tagged-product modal (designer enrichment of unclaimed
+  // products). Null when closed.
+  const [editTarget, setEditTarget] = useState<null | {
+    id: string;
+    name: string;
+    brand: string;
+    price: string;
+    category: string;
+    description: string;
+    imageUrl: string;
+    url: string;
+  }>(null);
+  const [editSaving, setEditSaving] = useState(false);
+  const [editError, setEditError] = useState<string | null>(null);
 
   // Guided manual capture — fallback when a retailer blocks the scraper. The
   // designer pastes the product copy or drops a screenshot; we parse it (and,
@@ -697,6 +711,78 @@ export function ProjectImageTagger({ projectId, images: providedImages, onClose 
     }
   };
 
+  // Open the edit modal for an already-tagged product, pre-filled from the
+  // current record. Designers can enrich unclaimed products (e.g. fill a
+  // dimension the deferred scrape missed); the server rejects edits to a
+  // claimed product.
+  const openEditProduct = async (productId: string) => {
+    setEditError(null);
+    try {
+      const r = await fetch(`/api/products/${productId}`);
+      if (!r.ok) return;
+      const d = await r.json();
+      setEditTarget({
+        id: productId,
+        name: d.name && d.name !== "Untitled product" ? d.name : "",
+        brand: d.brand ?? "",
+        price: d.price != null ? String(d.price) : "",
+        category: d.category ?? "",
+        description: d.description ?? "",
+        imageUrl: d.imageUrl ?? "",
+        url: d.url ?? "",
+      });
+    } catch {
+      /* ignore — modal just won't open */
+    }
+  };
+
+  const updateEdit = (patch: Partial<NonNullable<typeof editTarget>>) =>
+    setEditTarget((prev) => (prev ? { ...prev, ...patch } : prev));
+
+  const saveEditProduct = async () => {
+    if (!editTarget) return;
+    setEditSaving(true);
+    setEditError(null);
+    try {
+      const priceNum = parseFloat(editTarget.price.replace(/[^0-9.]/g, ""));
+      const res = await fetch(`/api/products/${editTarget.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: editTarget.name.trim() || editTarget.brand.trim() || "Untitled product",
+          brand: editTarget.brand.trim() || null,
+          priceCents: Number.isFinite(priceNum) ? Math.round(priceNum * 100) : null,
+          category: editTarget.category.trim() || null,
+          description: editTarget.description.trim() || null,
+          imageUrl: editTarget.imageUrl.trim() || null,
+          url: editTarget.url.trim() || null,
+        }),
+      });
+      if (!res.ok) {
+        const d = await res.json().catch(() => ({}));
+        setEditError(
+          res.status === 403
+            ? "This product has been claimed by its vendor and can no longer be edited here."
+            : d.error || "Could not save changes.",
+        );
+        return;
+      }
+      // A human confirmed the details — clear any "needs review" flag.
+      setReviewFlags((prev) => {
+        if (!(editTarget.id in prev)) return prev;
+        const next = { ...prev };
+        delete next[editTarget.id];
+        return next;
+      });
+      setEditTarget(null);
+      await fetchImages();
+    } catch {
+      setEditError("Could not save changes.");
+    } finally {
+      setEditSaving(false);
+    }
+  };
+
   // --- Drag-to-reposition handlers ---
   const handleDragStart = useCallback((tagId: string, e: React.MouseEvent | React.TouchEvent) => {
     e.preventDefault();
@@ -963,9 +1049,19 @@ export function ProjectImageTagger({ projectId, images: providedImages, onClose 
                           <button
                             onClick={(e) => {
                               e.stopPropagation();
+                              openEditProduct(tag.productId);
+                            }}
+                            className="ml-auto flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full text-folio-text-tertiary hover:text-[var(--accent)] hover:bg-[var(--accent)]/10 transition-colors"
+                            title="Edit details"
+                          >
+                            <FaPen className="w-3 h-3" />
+                          </button>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
                               handleDeleteTag(tag.id);
                             }}
-                            className="ml-auto flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full text-red-400 hover:text-red-600 hover:bg-red-50 transition-colors"
+                            className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full text-red-400 hover:text-red-600 hover:bg-red-50 transition-colors"
                             title="Remove tag"
                           >
                             <FaTrash className="w-3 h-3" />
@@ -1391,6 +1487,67 @@ export function ProjectImageTagger({ projectId, images: providedImages, onClose 
                     Tag Product
                   </>
                 )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Edit-an-existing-tagged-product modal */}
+      {editTarget && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
+          onClick={() => !editSaving && setEditTarget(null)}
+        >
+          <div
+            className="w-full max-w-md rounded-2xl bg-surface-card shadow-xl overflow-hidden"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between px-5 py-4 border-b border-folio-border-subtle">
+              <h3 className="text-sm font-semibold text-folio-text-primary">Edit product details</h3>
+              <button
+                onClick={() => setEditTarget(null)}
+                className="text-folio-text-tertiary hover:text-folio-text-primary"
+                title="Close"
+              >
+                <FaTimes className="w-4 h-4" />
+              </button>
+            </div>
+            <div className="px-5 py-4 space-y-3 max-h-[60vh] overflow-y-auto">
+              {editError && (
+                <div className="flex items-start gap-2 rounded-md bg-red-50 text-red-600 px-2 py-1.5 text-xs">
+                  <FaExclamationCircle className="w-3.5 h-3.5 mt-0.5 flex-shrink-0" />
+                  <span>{editError}</span>
+                </div>
+              )}
+              {renderPreviewField("Name", editTarget.name, (v) => updateEdit({ name: v }))}
+              <div className="grid grid-cols-2 gap-3">
+                {renderPreviewField("Brand", editTarget.brand, (v) => updateEdit({ brand: v }))}
+                {renderPreviewField("Price", editTarget.price, (v) => updateEdit({ price: v }))}
+              </div>
+              {renderPreviewField("Category", editTarget.category, (v) => updateEdit({ category: v }))}
+              {renderPreviewField(
+                "Description",
+                editTarget.description,
+                (v) => updateEdit({ description: v }),
+                true,
+              )}
+              {renderPreviewField("Image URL", editTarget.imageUrl, (v) => updateEdit({ imageUrl: v }))}
+            </div>
+            <div className="flex gap-3 px-5 py-4 border-t border-folio-border-subtle">
+              <button
+                onClick={() => setEditTarget(null)}
+                disabled={editSaving}
+                className="flex-1 rounded-lg py-2.5 text-sm font-medium text-folio-text-secondary hover:bg-surface-ground transition-colors disabled:opacity-50"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={saveEditProduct}
+                disabled={editSaving}
+                className="flex-1 rounded-lg py-2.5 text-sm font-medium text-white bg-[var(--accent)] hover:opacity-90 transition-opacity disabled:opacity-50"
+              >
+                {editSaving ? "Saving…" : "Save"}
               </button>
             </div>
           </div>
