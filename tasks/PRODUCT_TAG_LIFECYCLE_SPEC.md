@@ -65,23 +65,39 @@ specced here for sequencing.
 
 ## Phase 4 — canonical dedup + cascade
 
-- **Dedup on create.** In `POST /api/products`, normalize the URL and
-  `findFirst` an existing product for it. If found and UNCLAIMED → reuse that row
-  and apply an **add-only** merge of any new non-empty fields. If found and
-  CLAIMED → reuse read-only (designer cannot edit). Else create.
-- **Add-only merge rule.** `field = existing ?? incoming` for every scalar; never
-  `incoming ?? existing`. Empty string / null counts as "missing".
-- **Tag preservation.** Tag creation is unchanged and always points at the
-  canonical product id. Dedup must never delete or merge tag rows.
-- **Backfill (one-time):** existing duplicate rows for the same normalized URL
-  must be merged carefully — repoint tags to a chosen canonical row (preserving
-  count + attribution), add-only merge fields, then soft-delete the losers.
-  This is a migration with the usual Folio discipline (audit first, gated).
-- **Cascade** is then automatic: vendor edits the shared row; all tags see it.
-- **Open / watch:** under a shared row, a designer's add-only edit becomes
-  visible on another designer's tag. That is intended for *enrichment* (filling
-  blanks) but means we must keep edits strictly add-only pre-claim, and likely
-  record per-field provenance (who set what) for the vendor's review context.
+### Dedup on create  ✅ BUILT (forward-looking; backfill deferred)
+
+- `POST /api/products` normalizes the URL (`normalizeProductUrl`) and
+  `findFirst`s an existing product for it. Found + UNCLAIMED → reuse that row and
+  **add-only** merge any blank fields the new paste supplies. Found + CLAIMED →
+  reuse read-only (no edit). Else create. Returns `deduped: true` on reuse.
+- **Add-only merge rule:** a field is written only when `incoming` is non-empty
+  AND `existing` is null/blank — never overwrite a populated field. `name` only
+  replaces the `"Untitled product"` placeholder.
+- **Tag preservation:** tag creation is unchanged and always points at the
+  canonical product id. Dedup never reads, deletes, or merges tag rows, so tag
+  count and per-designer attribution are fully preserved.
+- **Canonical-URL storage fix:** both POST and PUT now store the normalized URL
+  in `product.url`. This was also a latent bug fix — `getProductById` enriches
+  via `cachedProduct.findUnique({ url: product.url })`, which only hit when the
+  stored URL was already query-stripped. Variant query-params collapse to one
+  product, consistent with how `CachedProduct` already caches.
+
+### Still to do
+
+- **Backfill (one-time, deferred):** historical duplicate rows for the same
+  normalized URL must be merged — repoint tags to the chosen canonical row
+  (preserving count + attribution), add-only merge fields, soft-delete losers.
+  Migration with the usual Folio discipline (audit first, gated). Also normalize
+  existing `product.url` values so old rows hit the CachedProduct join.
+- **Unique index** on normalized `product.url` to close the concurrent-paste
+  race (two first-time pastes can still create two rows). Schema change → gated.
+- **Cascade** then works end-to-end: vendor edits the shared row; all tags see
+  it. (Already true for any tags sharing a row today.)
+- **Per-field provenance:** under a shared row, a designer's add-only edit is
+  visible on every tag. Intended for enrichment, but argues for a
+  `ProductFieldEdit` log (who set what) + a verified flag before cascade — see
+  Phase 3 and the risks below.
 
 ## Risks / decisions still open
 

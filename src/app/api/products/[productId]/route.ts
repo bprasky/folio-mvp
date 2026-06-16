@@ -8,6 +8,7 @@ import { authOptions } from '@/app/api/auth/[...nextauth]/options';
 import { prisma } from '@/lib/prisma';
 import { logSignal, extractTags } from '@/lib/telemetry/context-signal';
 import { triggerMeshGeneration } from '@/lib/three-d/triggerMeshGeneration';
+import { normalizeProductUrl } from '@/lib/products/normalizeProductUrl';
 
 export async function GET(
   request: NextRequest,
@@ -121,6 +122,10 @@ export async function PUT(
     // Convert priceCents back to decimal
     const price = priceCents ? priceCents / 100 : null;
 
+    // Keep product.url canonical (query-stripped) so it stays the dedup key and
+    // matches the CachedProduct cache key. See products/route.ts POST.
+    const normalizedUrl = url ? normalizeProductUrl(url) : url;
+
     // Find vendor by name (vendor is a User with role VENDOR)
     let vendorId: string | undefined;
     if (vendorName) {
@@ -146,7 +151,7 @@ export async function PUT(
         imageUrl,
         brand,
         category,
-        url,
+        url: normalizedUrl,
         vendorId: vendorId
       },
       include: {
