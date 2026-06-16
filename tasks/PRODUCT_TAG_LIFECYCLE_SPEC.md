@@ -63,14 +63,26 @@ specced here for sequencing.
   normalized-domain column would let turnover filter in SQL instead of scanning
   unclaimed-with-URL products (fine at MVP scale today).
 
-## Phase 3 — vendor review queue
+## Phase 3 — vendor review queue  ✅ BUILT
 
-- Reuse `PendingAction` (already related to `Product`) or add a dedicated
-  `ProductReview` queue. Vendor sees their attributed products, each with the
-  designer-supplied values and which fields are unverified.
-- Confirm = mark reviewed; Correct = overwrite (vendor is canonical).
-- Surface tag usage on each item ("used in N tags across M designers") — reads
-  straight from the tag tables; do not denormalize.
+- New `ProductClaimCandidate` model (`@@map("product_claim_candidates")`): one row
+  per (product, org). String `matchType` ("DOMAIN"|"BRAND") and `status`
+  ("PENDING"|"CONFIRMED"|"REJECTED") — String, not enums, so the migration is a
+  single idempotent `CREATE TABLE`/`CREATE INDEX` with no `CREATE TYPE`.
+  Migration `20260616120000_add_product_claim_candidate` (hand-authored
+  idempotent SQL; FK names match Prisma convention to avoid drift).
+- Phase 2 turnover now also writes this table: DOMAIN matches → CONFIRMED rows
+  (full turnover audit trail); brand-only matches → PENDING rows for review
+  (not assigned).
+- `GET/POST /api/vendor/review-queue` (scoped + authorized via
+  `getVendorContext`): lists PENDING candidates with tag-usage attribution
+  (tag count + distinct designers, read-only from `ProjectProductTag`). Confirm
+  → set `Product.vendorId`, mark CONFIRMED. Reject → mark REJECTED (stays
+  unclaimed, won't resurface). Correct = existing PUT once owned.
+- Vendor-facing surface at `/vendor/review` (`ReviewQueueClient`).
+- Tag rows are never read for mutation or written — attribution preserved.
+- **Note:** migration is committed but applied by the deploy pipeline
+  (`migrate deploy`), not from the dev container (no DB connection here).
 
 ## Phase 4 — canonical dedup + cascade
 

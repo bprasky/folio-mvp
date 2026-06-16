@@ -93,9 +93,11 @@ export async function POST(request: NextRequest) {
     // the claiming user. Deterministic domain match only; tags are untouched so
     // attribution is preserved. Best-effort — never block the claim on it.
     let productsAssigned = 0;
+    let productsToReview = 0;
     try {
       const turnover = await turnoverUnclaimedProducts(organizationId, session.user.id);
       productsAssigned = turnover.matched;
+      productsToReview = turnover.candidates;
     } catch (e) {
       console.error('[vendor/claim] product turnover failed:', e);
     }
@@ -173,6 +175,7 @@ export async function POST(request: NextRequest) {
       success: true,
       vendorInviteId: vendorInvite.id,
       productsAssigned,
+      productsToReview,
       message: 'Organization claimed successfully. An admin must activate to unlock full features.',
     });
   } catch (error) {

@@ -286,6 +286,7 @@ model User {
   incomingFollows              Follow[]                      @relation("follows_followingIdTousers")
   pendingRepInvitesAsDesigner  PendingRepInvite[]            @relation("pending_rep_invites_designerIdTousers")
   pendingRepInvitesAsRep       PendingRepInvite[]            @relation("pending_rep_invites_repUserIdTousers")
+  productClaimReviews          ProductClaimCandidate[]
 
   @@map("users")
 }
@@ -764,6 +765,8 @@ model Product {
   projectProductTags  ProjectProductTag[]
   vendorPreviewTokens VendorPreviewToken[]
 
+  productClaimCandidates ProductClaimCandidate[]
+
   @@map("products")
 }
 
@@ -1081,6 +1084,8 @@ model Organization {
 
   // --- Phase 5H2 Bucket B inverse relations ---
   pendingRepInvites PendingRepInvite[]
+
+  productClaimCandidates ProductClaimCandidate[]
 
   @@index([status])
   @@index([type])
@@ -7544,4 +7549,29 @@ enum ScrapeOutcome {
   BROWSERLESS_ERROR
   DIRECT_FETCH_FALLBACK
   TIMEOUT
+}
+
+// Product Tag Lifecycle Phase 3: vendor review queue backing.
+// One row per (product, organization) claim candidate. matchType "DOMAIN" rows
+// are recorded CONFIRMED on Phase 2 turnover (audit trail); "BRAND" rows are
+// PENDING for vendor review. String fields (not enums) keep the migration a
+// single idempotent CREATE TABLE with no CREATE TYPE.
+model ProductClaimCandidate {
+  id             String    @id @default(cuid())
+  productId      String
+  organizationId String
+  matchType      String // "DOMAIN" | "BRAND"
+  status         String    @default("PENDING") // "PENDING" | "CONFIRMED" | "REJECTED"
+  reviewedById   String?
+  reviewedAt     DateTime?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  product      Product      @relation(fields: [productId], references: [id], onDelete: Cascade)
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  reviewedBy   User?        @relation(fields: [reviewedById], references: [id])
+
+  @@unique([productId, organizationId])
+  @@index([organizationId, status])
+  @@map("product_claim_candidates")
 }

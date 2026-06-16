@@ -34,43 +34,87 @@ function urlDomain(url: string): string | null {
 }
 
 /**
- * Assign unclaimed products on the org's domain to the claiming vendor user.
- * Returns the number of products turned over.
+ * Turn unclaimed products over to the claiming vendor.
+ *
+ * - DOMAIN match (product URL domain == an org domain): auto-assign vendorId and
+ *   record a CONFIRMED ProductClaimCandidate row (turnover audit trail).
+ * - BRAND-only match (product.brand == org name, no domain match): do NOT
+ *   assign — queue a PENDING ProductClaimCandidate for vendor review (Phase 3).
+ *
+ * Returns counts of each. Tags are never touched, so attribution is preserved.
  */
 export async function turnoverUnclaimedProducts(
   organizationId: string,
   vendorUserId: string,
-): Promise<{ matched: number }> {
+): Promise<{ matched: number; candidates: number }> {
   const orgDomains = new Set(
     (await inferVendorDomains(organizationId))
       .map(registrableDomain)
       .filter(Boolean),
   );
-  if (orgDomains.size === 0) return { matched: 0 };
+  const org = await prisma.organization.findUnique({
+    where: { id: organizationId },
+    select: { name: true },
+  });
+  const orgName = org?.name?.trim().toLowerCase() ?? '';
 
-  // URL is a free-form string, so we can't filter by domain in SQL — scan the
-  // unclaimed products that have a URL and match registrable domains in app
-  // code. Bounded by the unclaimed-with-URL set, which is small at MVP scale.
+  // URL/brand are free-form strings, so we can't filter the match in SQL — scan
+  // unclaimed products and classify in app code. Bounded by the unclaimed set,
+  // which is small at MVP scale.
   const candidates = await prisma.product.findMany({
-    where: { vendorId: null, url: { not: null } },
-    select: { id: true, url: true },
+    where: { vendorId: null },
+    select: { id: true, url: true, brand: true },
   });
 
-  const toAssign = candidates
-    .filter((p) => {
-      const d = p.url ? urlDomain(p.url) : null;
-      return d != null && orgDomains.has(d);
-    })
-    .map((p) => p.id);
+  const domainMatchIds: string[] = [];
+  const brandOnlyIds: string[] = [];
+  for (const p of candidates) {
+    const d = p.url ? urlDomain(p.url) : null;
+    if (d != null && orgDomains.has(d)) {
+      domainMatchIds.push(p.id);
+    } else if (orgName && p.brand && p.brand.trim().toLowerCase() === orgName) {
+      brandOnlyIds.push(p.id);
+    }
+  }
 
-  if (toAssign.length === 0) return { matched: 0 };
+  // Domain matches: assign + record a CONFIRMED candidate (audit). Re-guard
+  // vendorId null so a concurrent claim can't clobber an assigned product.
+  if (domainMatchIds.length > 0) {
+    await prisma.product.updateMany({
+      where: { id: { in: domainMatchIds }, vendorId: null },
+      data: { vendorId: vendorUserId },
+    });
+    const now = new Date();
+    for (const productId of domainMatchIds) {
+      await prisma.productClaimCandidate.upsert({
+        where: { productId_organizationId: { productId, organizationId } },
+        create: {
+          productId,
+          organizationId,
+          matchType: 'DOMAIN',
+          status: 'CONFIRMED',
+          reviewedById: vendorUserId,
+          reviewedAt: now,
+        },
+        update: {
+          matchType: 'DOMAIN',
+          status: 'CONFIRMED',
+          reviewedById: vendorUserId,
+          reviewedAt: now,
+        },
+      });
+    }
+  }
 
-  // Re-guard vendorId null in the write so a concurrent claim can't clobber an
-  // already-assigned product.
-  await prisma.product.updateMany({
-    where: { id: { in: toAssign }, vendorId: null },
-    data: { vendorId: vendorUserId },
-  });
+  // Brand-only matches: queue for review without assigning. Leave any existing
+  // decision intact on re-claim.
+  for (const productId of brandOnlyIds) {
+    await prisma.productClaimCandidate.upsert({
+      where: { productId_organizationId: { productId, organizationId } },
+      create: { productId, organizationId, matchType: 'BRAND', status: 'PENDING' },
+      update: {},
+    });
+  }
 
-  return { matched: toAssign.length };
+  return { matched: domainMatchIds.length, candidates: brandOnlyIds.length };
 }
