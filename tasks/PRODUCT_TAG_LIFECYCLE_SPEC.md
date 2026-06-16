@@ -85,11 +85,15 @@ specced here for sequencing.
 
 ### Still to do
 
-- **Backfill (one-time, deferred):** historical duplicate rows for the same
-  normalized URL must be merged — repoint tags to the chosen canonical row
-  (preserving count + attribution), add-only merge fields, soft-delete losers.
-  Migration with the usual Folio discipline (audit first, gated). Also normalize
-  existing `product.url` values so old rows hit the CachedProduct join.
+- **Backfill of historical duplicates — NOT needed.** Founder confirmed there
+  are no duplicate product rows, so there is nothing to merge. Dedup is purely
+  forward-looking.
+- **Optional one-time URL normalization (low priority):** pre-change rows store
+  the raw URL. If any existing `product.url` carries query params, a future
+  paste of that same product would normalize, miss the raw row, and create one
+  new duplicate. A 1-line `UPDATE` stripping `?...` from existing `product.url`s
+  closes that (and lets old rows hit the CachedProduct enrichment join). Run
+  only if a stray dup ever appears — not worth a gated migration up front.
 - **Unique index** on normalized `product.url` to close the concurrent-paste
   race (two first-time pastes can still create two rows). Schema change → gated.
 - **Cascade** then works end-to-end: vendor edits the shared row; all tags see
