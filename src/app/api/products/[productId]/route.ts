@@ -8,6 +8,7 @@ import { authOptions } from '@/app/api/auth/[...nextauth]/options';
 import { prisma } from '@/lib/prisma';
 import { logSignal, extractTags } from '@/lib/telemetry/context-signal';
 import { triggerMeshGeneration } from '@/lib/three-d/triggerMeshGeneration';
+import { normalizeProductUrl } from '@/lib/products/normalizeProductUrl';
 
 export async function GET(
   request: NextRequest,
@@ -94,8 +95,14 @@ export async function PUT(
     }
 
     const isAdmin = session.user.role === 'ADMIN';
+    const isClaimed = existingProduct.vendorId !== null;
     const isVendorOwner = existingProduct.vendorId === session.user.id;
-    if (!isAdmin && !isVendorOwner) {
+    // Ownership model (see PRODUCT_TAG_LIFECYCLE spec): an UNCLAIMED product
+    // (vendorId null) is collaboratively editable by any signed-in user — this
+    // is the designer enrichment phase, where a designer who tags a product can
+    // fill in details. Once a vendor CLAIMS it (vendorId set), edit rights turn
+    // over to that vendor (or an admin) and designers can no longer change it.
+    if (isClaimed && !isAdmin && !isVendorOwner) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
@@ -106,6 +113,7 @@ export async function PUT(
       priceCents,
       imageUrl,
       brand,
+      category,
       url,
       vendorName,
       currency = 'USD'
@@ -113,6 +121,10 @@ export async function PUT(
 
     // Convert priceCents back to decimal
     const price = priceCents ? priceCents / 100 : null;
+
+    // Keep product.url canonical (query-stripped) so it stays the dedup key and
+    // matches the CachedProduct cache key. See products/route.ts POST.
+    const normalizedUrl = url ? normalizeProductUrl(url) : url;
 
     // Find vendor by name (vendor is a User with role VENDOR)
     let vendorId: string | undefined;
@@ -138,7 +150,8 @@ export async function PUT(
         price,
         imageUrl,
         brand,
-        url,
+        category,
+        url: normalizedUrl,
         vendorId: vendorId
       },
       include: {

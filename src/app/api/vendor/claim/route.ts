@@ -5,6 +5,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/app/api/auth/[...nextauth]/options';
 import { prisma } from '@/lib/prisma';
 import { canClaimOrganization } from '@/lib/vendor/domain-verification';
+import { turnoverUnclaimedProducts } from '@/lib/vendor/claimTurnover';
 import { mergeVendorShadow, mergeRepShadow } from '@/lib/intelligence/shadow-merge';
 import { deliverPendingActions } from '@/lib/messaging/pending-actions';
 
@@ -88,6 +89,19 @@ export async function POST(request: NextRequest) {
       },
     });
 
+    // Phase 2 turnover: hand unclaimed products on this vendor's domain over to
+    // the claiming user. Deterministic domain match only; tags are untouched so
+    // attribution is preserved. Best-effort — never block the claim on it.
+    let productsAssigned = 0;
+    let productsToReview = 0;
+    try {
+      const turnover = await turnoverUnclaimedProducts(organizationId, session.user.id);
+      productsAssigned = turnover.matched;
+      productsToReview = turnover.candidates;
+    } catch (e) {
+      console.error('[vendor/claim] product turnover failed:', e);
+    }
+
     // Snapshot product completeness BEFORE merge (Flywheel 5: Enrichment Tracking)
     const orgProducts = await prisma.product.findMany({
       where: { vendor: { organizationUsers: { some: { organizationId } } } },
@@ -160,6 +174,8 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       success: true,
       vendorInviteId: vendorInvite.id,
+      productsAssigned,
+      productsToReview,
       message: 'Organization claimed successfully. An admin must activate to unlock full features.',
     });
   } catch (error) {

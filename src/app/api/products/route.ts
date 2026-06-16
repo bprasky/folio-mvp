@@ -7,6 +7,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/app/api/auth/[...nextauth]/options';
 import { triggerMeshGeneration } from '@/lib/three-d/triggerMeshGeneration';
 import { resolveProductImage } from '@/lib/products/imageProvenance';
+import { normalizeProductUrl } from '@/lib/products/normalizeProductUrl';
 
 export async function GET(request: NextRequest) {
   try {
@@ -111,6 +112,62 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Store the canonical (query-stripped) URL so product identity matches the
+    // CachedProduct cache key — getProductById enriches via
+    // cachedProduct.findUnique({ url: product.url }), which only hits when
+    // product.url is normalized. This is also the dedup key below.
+    const normalizedUrl = url ? normalizeProductUrl(url) : null;
+
+    // Canonical dedup: one Product per normalized URL. When a URL was already
+    // tagged, reuse that row so every tag of the same product shares it (the
+    // vendor's later edits then cascade to all tags) and we never spawn
+    // duplicates. Tags are created separately by the caller and are never
+    // touched here — tag count and attribution are fully preserved.
+    // (Concurrent first-time pastes can still race to two rows; a future unique
+    // index on the normalized URL + the historical backfill close that gap —
+    // see tasks/PRODUCT_TAG_LIFECYCLE_SPEC.md.)
+    if (normalizedUrl) {
+      const existing = await prisma.product.findFirst({
+        where: { url: normalizedUrl },
+        orderBy: { createdAt: 'asc' }, // oldest row is canonical
+      });
+      if (existing) {
+        // Add-only merge: fill fields this paste supplies that are still blank,
+        // but NEVER overwrite a value already present (it may be another
+        // designer's contribution) and NEVER edit a CLAIMED product (the vendor
+        // owns it). Vendors overwrite via PUT; designers may only enrich.
+        if (existing.vendorId === null) {
+          const addOnly: Record<string, any> = {};
+          const incoming: Record<string, any> = {
+            description: description || null,
+            imageUrl: imageUrl || null,
+            price: price ? parseFloat(String(price)) : null,
+            brand: brand || null,
+            category: category || null,
+          };
+          for (const [field, value] of Object.entries(incoming)) {
+            if (value != null && value !== '' && (existing as any)[field] == null) {
+              addOnly[field] = value;
+            }
+          }
+          // Only replace a placeholder name, never a real one another designer set.
+          if (name?.trim() && (!existing.name || existing.name === 'Untitled product')) {
+            addOnly.name = name.trim();
+          }
+          if (Object.keys(addOnly).length > 0) {
+            await prisma.product.update({ where: { id: existing.id }, data: addOnly });
+            // Generate a mesh if this paste supplied the product's first image.
+            if (addOnly.imageUrl) triggerMeshGeneration(existing.id, addOnly.imageUrl);
+          }
+        }
+        const merged = await prisma.product.findUnique({ where: { id: existing.id } });
+        return NextResponse.json(
+          { success: true, id: existing.id, product: merged, deduped: true },
+          { status: 200 }
+        );
+      }
+    }
+
     // Create product in database
     const product = await prisma.product.create({
       data: {
@@ -120,7 +177,7 @@ export async function POST(request: NextRequest) {
         price: price ? parseFloat(String(price)) : null,
         brand: brand || null,
         category: category || null,
-        url: url || null,
+        url: normalizedUrl,
         isPending: isPending ?? false,
         // Flagged-domain BQL lifecycle: the tagging UI creates the product as
         // 'pending' for hard domains, then fires the scrape-bql route to fill it.

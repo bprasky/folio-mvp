@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useRef, useCallback } from "react";
-import { FaTimes, FaTag, FaSearch, FaCheck, FaTrash, FaGripLines, FaImage, FaExternalLinkAlt } from "react-icons/fa";
+import { FaTimes, FaTag, FaSearch, FaCheck, FaTrash, FaGripLines, FaImage, FaExternalLinkAlt, FaChevronDown, FaChevronUp, FaExclamationCircle, FaPen } from "react-icons/fa";
 import { isFlaggedDomain } from "@/lib/browserless/flaggedDomains";
 
 type ImageWithTags = {
@@ -116,14 +116,43 @@ export function ProjectImageTagger({ projectId, images: providedImages, onClose 
     price: string | null;
     brand: string | null;
     url: string;
+    // Full scraped detail, surfaced in the expandable confirm panel so nothing
+    // is hidden. Optional because the deferred (flagged-domain) path has no
+    // fields until the background rung fills them.
+    description?: string | null;
+    category?: string | null;
+    dimensions?: string | null;
+    materials?: string[];
+    colors?: string[];
+    /** Set only when Tier 3 (AI) ran — flags a low-confidence scrape to verify. */
+    confidence?: string | null;
     /** Flagged hard domain: skip the inline scrape, fill via the BQL rung after tagging. */
     deferred?: boolean;
   } | null>(null);
   const [urlError, setUrlError] = useState<string | null>(null);
+  // Expandable confirm panel for an inline scrape preview.
+  const [previewExpanded, setPreviewExpanded] = useState(false);
 
   // Products currently being filled by the background BQL rung (flagged domains).
   // The tag shows a pending state until the scrape resolves.
   const [scrapingIds, setScrapingIds] = useState<Set<string>>(new Set());
+  // Deferred scrapes that finished with gaps: productId -> missing field labels.
+  // The tag is highlighted so the designer can see what didn't come through.
+  const [reviewFlags, setReviewFlags] = useState<Record<string, string[]>>({});
+  // Edit-an-existing-tagged-product modal (designer enrichment of unclaimed
+  // products). Null when closed.
+  const [editTarget, setEditTarget] = useState<null | {
+    id: string;
+    name: string;
+    brand: string;
+    price: string;
+    category: string;
+    description: string;
+    imageUrl: string;
+    url: string;
+  }>(null);
+  const [editSaving, setEditSaving] = useState(false);
+  const [editError, setEditError] = useState<string | null>(null);
 
   // Guided manual capture — fallback when a retailer blocks the scraper. The
   // designer pastes the product copy or drops a screenshot; we parse it (and,
@@ -271,6 +300,25 @@ export function ProjectImageTagger({ projectId, images: providedImages, onClose 
           if (r.ok) {
             const d = await r.json();
             if (d.scrapeStatus && d.scrapeStatus !== "pending") {
+              // Highlight what the stealth scrape couldn't recover so the
+              // designer can review/fix it after it lands (confirm-after).
+              const missing =
+                d.scrapeStatus === "failed"
+                  ? ["details"]
+                  : [
+                      !d.imageUrl && "image",
+                      d.price == null && "price",
+                      !d.description && "description",
+                    ].filter(Boolean as any as (x: unknown) => x is string);
+              setReviewFlags((prev) => {
+                if (missing.length === 0) {
+                  if (!(productId in prev)) return prev;
+                  const next = { ...prev };
+                  delete next[productId];
+                  return next;
+                }
+                return { ...prev, [productId]: missing };
+              });
               clear();
               await fetchImages();
               return;
@@ -352,6 +400,8 @@ export function ProjectImageTagger({ projectId, images: providedImages, onClose 
   const handleFetchUrl = async () => {
     const url = productUrl.trim();
     if (!url) return;
+    // Each fetch starts collapsed; only an inline scrape with fields opens it.
+    setPreviewExpanded(false);
 
     // Flagged hard domains (e.g. Wayfair) block the cheap tiers and take ~34s on
     // the BQL rung, too slow to run inline here. Defer: stage a pending preview,
@@ -414,12 +464,21 @@ export function ProjectImageTagger({ projectId, images: providedImages, onClose 
         return;
       }
       setUrlPreview({
-        name: data.name || "Untitled product",
+        name: data.name && data.name !== "Untitled Product" ? data.name : "",
         imageUrl: data.image || data.imageUrl || null,
         price: data.price || null,
         brand: data.brand || null,
         url,
+        description: data.description || null,
+        category: data.category || null,
+        dimensions: data.dimensions || null,
+        materials: Array.isArray(data.materials) ? data.materials : [],
+        colors: Array.isArray(data.colors) ? data.colors : [],
+        confidence: data.confidence || null,
       });
+      // Open the detail panel so every captured field — and any gaps — are
+      // visible to confirm, instead of collapsing to a one-line label.
+      setPreviewExpanded(true);
     } catch {
       setUrlError("Could not read that link.");
       setShowManual(true);
@@ -442,6 +501,42 @@ export function ProjectImageTagger({ projectId, images: providedImages, onClose 
     if (f.materials?.length) parts.push(`Materials: ${f.materials.join(", ")}`);
     if (f.colors?.length) parts.push(`Colors: ${f.colors.join(", ")}`);
     return parts.join("\n");
+  };
+
+  // Patch a field on the live scrape preview (the confirm panel edits in place).
+  const updatePreview = (patch: Partial<NonNullable<typeof urlPreview>>) =>
+    setUrlPreview((prev) => (prev ? { ...prev, ...patch } : prev));
+
+  // Comma-separated text <-> string[] for the materials / colors fields.
+  const splitList = (v: string) =>
+    v.split(",").map((s) => s.trim()).filter(Boolean);
+
+  // One labeled, editable field in the confirm panel. Empty values are
+  // highlighted so a designer can see at a glance what the scrape missed.
+  const renderPreviewField = (
+    label: string,
+    value: string,
+    onChange: (v: string) => void,
+    multiline = false,
+  ) => {
+    const missing = !value.trim();
+    const ring = missing
+      ? "ring-1 ring-amber-300 bg-amber-50/50"
+      : "ring-1 ring-folio-border-subtle bg-white";
+    const cls = `w-full rounded-md px-2 py-1.5 text-sm ${ring} focus:outline-none focus:ring-2 focus:ring-[var(--accent)]`;
+    return (
+      <label className="block">
+        <span className="flex items-center gap-1.5 text-[11px] font-medium text-folio-text-secondary mb-1">
+          {label}
+          {missing && <span className="text-amber-600 text-[10px]">• missing</span>}
+        </span>
+        {multiline ? (
+          <textarea value={value} onChange={(e) => onChange(e.target.value)} rows={3} className={cls} />
+        ) : (
+          <input value={value} onChange={(e) => onChange(e.target.value)} className={cls} />
+        )}
+      </label>
+    );
   };
 
   const applyParsed = (f: any, image?: string | null) => {
@@ -544,12 +639,24 @@ export function ProjectImageTagger({ projectId, images: providedImages, onClose 
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            name: urlModeProduct.name,
+            // Name is required by the create endpoint; fall back so a confirmed
+            // scrape with the name field left blank still tags cleanly.
+            name: urlModeProduct.name?.trim() || urlModeProduct.brand?.trim() || "Untitled product",
             imageUrl: urlModeProduct.imageUrl,
             price: Number.isFinite(priceNum) ? priceNum : undefined,
             brand: urlModeProduct.brand,
             url: urlModeProduct.url,
-            description: (urlModeProduct as any).description ?? undefined,
+            category: (urlModeProduct as any).category ?? undefined,
+            // Fold the confirmed dimensions / materials / colors into the
+            // description (the Product model has no structured columns for them),
+            // matching the manual-capture path.
+            description:
+              composeDescription({
+                description: (urlModeProduct as any).description,
+                dimensions: (urlModeProduct as any).dimensions,
+                materials: (urlModeProduct as any).materials,
+                colors: (urlModeProduct as any).colors,
+              }) || undefined,
             isPending: true,
             // Hard domains return immediately as pending; scrape-bql fills them.
             scrapeStatus: deferred ? "pending" : undefined,
@@ -601,6 +708,78 @@ export function ProjectImageTagger({ projectId, images: providedImages, onClose 
       }
     } catch (err) {
       console.error("[ProjectImageTagger] delete error:", err);
+    }
+  };
+
+  // Open the edit modal for an already-tagged product, pre-filled from the
+  // current record. Designers can enrich unclaimed products (e.g. fill a
+  // dimension the deferred scrape missed); the server rejects edits to a
+  // claimed product.
+  const openEditProduct = async (productId: string) => {
+    setEditError(null);
+    try {
+      const r = await fetch(`/api/products/${productId}`);
+      if (!r.ok) return;
+      const d = await r.json();
+      setEditTarget({
+        id: productId,
+        name: d.name && d.name !== "Untitled product" ? d.name : "",
+        brand: d.brand ?? "",
+        price: d.price != null ? String(d.price) : "",
+        category: d.category ?? "",
+        description: d.description ?? "",
+        imageUrl: d.imageUrl ?? "",
+        url: d.url ?? "",
+      });
+    } catch {
+      /* ignore — modal just won't open */
+    }
+  };
+
+  const updateEdit = (patch: Partial<NonNullable<typeof editTarget>>) =>
+    setEditTarget((prev) => (prev ? { ...prev, ...patch } : prev));
+
+  const saveEditProduct = async () => {
+    if (!editTarget) return;
+    setEditSaving(true);
+    setEditError(null);
+    try {
+      const priceNum = parseFloat(editTarget.price.replace(/[^0-9.]/g, ""));
+      const res = await fetch(`/api/products/${editTarget.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: editTarget.name.trim() || editTarget.brand.trim() || "Untitled product",
+          brand: editTarget.brand.trim() || null,
+          priceCents: Number.isFinite(priceNum) ? Math.round(priceNum * 100) : null,
+          category: editTarget.category.trim() || null,
+          description: editTarget.description.trim() || null,
+          imageUrl: editTarget.imageUrl.trim() || null,
+          url: editTarget.url.trim() || null,
+        }),
+      });
+      if (!res.ok) {
+        const d = await res.json().catch(() => ({}));
+        setEditError(
+          res.status === 403
+            ? "This product has been claimed by its vendor and can no longer be edited here."
+            : d.error || "Could not save changes.",
+        );
+        return;
+      }
+      // A human confirmed the details — clear any "needs review" flag.
+      setReviewFlags((prev) => {
+        if (!(editTarget.id in prev)) return prev;
+        const next = { ...prev };
+        delete next[editTarget.id];
+        return next;
+      });
+      setEditTarget(null);
+      await fetchImages();
+    } catch {
+      setEditError("Could not save changes.");
+    } finally {
+      setEditSaving(false);
     }
   };
 
@@ -801,6 +980,8 @@ export function ProjectImageTagger({ projectId, images: providedImages, onClose 
               {activeImage.tags.map((tag) => {
                 const isDragging = draggingTagId === tag.id;
                 const isScraping = scrapingIds.has(tag.productId);
+                const reviewMissing = !isScraping ? reviewFlags[tag.productId] : undefined;
+                const needsReview = !!reviewMissing?.length;
                 const xPct = isDragging && dragPos ? dragPos.x : (tag.x <= 1 ? tag.x * 100 : tag.x);
                 const yPct = isDragging && dragPos ? dragPos.y : (tag.y <= 1 ? tag.y * 100 : tag.y);
                 return (
@@ -818,8 +999,12 @@ export function ProjectImageTagger({ projectId, images: providedImages, onClose 
                     onMouseEnter={() => { if (!draggingTagId) showTag(tag.id); }}
                     onMouseLeave={scheduleHideTag}
                   >
-                    <div className={`flex h-5 w-5 items-center justify-center rounded-full bg-[var(--accent)] border-2 border-white shadow-lg transition-transform ${isDragging ? "scale-125" : ""} ${isScraping ? "animate-pulse" : ""}`}>
-                      <FaTag className="w-2.5 h-2.5 text-white" />
+                    <div className={`flex h-5 w-5 items-center justify-center rounded-full border-2 border-white shadow-lg transition-transform ${needsReview ? "bg-amber-500" : "bg-[var(--accent)]"} ${isDragging ? "scale-125" : ""} ${isScraping ? "animate-pulse" : ""}`}>
+                      {needsReview ? (
+                        <FaExclamationCircle className="w-2.5 h-2.5 text-white" />
+                      ) : (
+                        <FaTag className="w-2.5 h-2.5 text-white" />
+                      )}
                     </div>
 
                     {hoveredTagId === tag.id && !isDragging && (
@@ -849,6 +1034,10 @@ export function ProjectImageTagger({ projectId, images: providedImages, onClose 
                               <span className="text-[var(--type-fine)] text-[var(--accent)] truncate">
                                 Fetching details…
                               </span>
+                            ) : needsReview ? (
+                              <span className="text-[var(--type-fine)] text-amber-600 truncate">
+                                Needs review: {reviewMissing!.join(", ")}
+                              </span>
                             ) : (
                               tag.product?.brand && (
                                 <span className="text-[var(--type-fine)] text-folio-text-secondary truncate">
@@ -860,9 +1049,19 @@ export function ProjectImageTagger({ projectId, images: providedImages, onClose 
                           <button
                             onClick={(e) => {
                               e.stopPropagation();
+                              openEditProduct(tag.productId);
+                            }}
+                            className="ml-auto flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full text-folio-text-tertiary hover:text-[var(--accent)] hover:bg-[var(--accent)]/10 transition-colors"
+                            title="Edit details"
+                          >
+                            <FaPen className="w-3 h-3" />
+                          </button>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
                               handleDeleteTag(tag.id);
                             }}
-                            className="ml-auto flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full text-red-400 hover:text-red-600 hover:bg-red-50 transition-colors"
+                            className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full text-red-400 hover:text-red-600 hover:bg-red-50 transition-colors"
                             title="Remove tag"
                           >
                             <FaTrash className="w-3 h-3" />
@@ -1113,30 +1312,92 @@ export function ProjectImageTagger({ projectId, images: providedImages, onClose 
                 )}
 
                 {urlPreview && (
-                  <div className="flex items-center gap-3 p-3 rounded-lg ring-2 ring-[var(--accent)] bg-[var(--accent)]/5">
-                    {urlPreview.imageUrl && (
-                      <div className="h-12 w-12 flex-shrink-0 overflow-hidden rounded-lg bg-surface-ground">
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img
-                          src={urlPreview.imageUrl}
-                          alt=""
-                          className="h-full w-full object-cover"
-                        />
+                  <div className="rounded-lg ring-2 ring-[var(--accent)] bg-[var(--accent)]/5 overflow-hidden">
+                    <div className="flex items-center gap-3 p-3">
+                      {urlPreview.imageUrl ? (
+                        <div className="h-12 w-12 flex-shrink-0 overflow-hidden rounded-lg bg-surface-ground">
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img src={urlPreview.imageUrl} alt="" className="h-full w-full object-cover" />
+                        </div>
+                      ) : (
+                        !urlPreview.deferred && (
+                          <div className="h-12 w-12 flex-shrink-0 flex items-center justify-center rounded-lg bg-surface-ground text-folio-text-tertiary">
+                            <FaImage className="w-4 h-4" />
+                          </div>
+                        )
+                      )}
+                      <div className="flex-1 min-w-0">
+                        <div className="text-sm font-medium text-folio-text-primary truncate">
+                          {urlPreview.name || "Untitled product"}
+                        </div>
+                        <div className="text-xs text-folio-text-secondary truncate">
+                          {urlPreview.deferred
+                            ? "We'll fetch the full details in the background after you tag it."
+                            : [urlPreview.brand, urlPreview.price]
+                                .filter(Boolean)
+                                .join(" · ") || "New product"}
+                        </div>
+                      </div>
+                      {!urlPreview.deferred ? (
+                        <button
+                          type="button"
+                          onClick={() => setPreviewExpanded((v) => !v)}
+                          className="flex items-center gap-1 text-xs text-folio-text-secondary hover:text-folio-text-primary flex-shrink-0"
+                        >
+                          {previewExpanded ? "Hide" : "Details"}
+                          {previewExpanded ? (
+                            <FaChevronUp className="w-3 h-3" />
+                          ) : (
+                            <FaChevronDown className="w-3 h-3" />
+                          )}
+                        </button>
+                      ) : (
+                        <FaCheck className="w-4 h-4 text-[var(--accent)] flex-shrink-0" />
+                      )}
+                    </div>
+
+                    {!urlPreview.deferred && previewExpanded && (
+                      <div className="border-t border-[var(--accent)]/20 px-3 py-3 space-y-3">
+                        {urlPreview.confidence && (
+                          <div className="flex items-start gap-2 rounded-md bg-amber-50 text-amber-700 px-2 py-1.5 text-xs">
+                            <FaExclamationCircle className="w-3.5 h-3.5 mt-0.5 flex-shrink-0" />
+                            <span>These details were estimated by AI — please verify before tagging.</span>
+                          </div>
+                        )}
+                        {renderPreviewField("Name", urlPreview.name, (v) => updatePreview({ name: v }))}
+                        <div className="grid grid-cols-2 gap-3">
+                          {renderPreviewField("Brand", urlPreview.brand ?? "", (v) =>
+                            updatePreview({ brand: v }),
+                          )}
+                          {renderPreviewField("Price", urlPreview.price ?? "", (v) =>
+                            updatePreview({ price: v }),
+                          )}
+                        </div>
+                        <div className="grid grid-cols-2 gap-3">
+                          {renderPreviewField("Category", urlPreview.category ?? "", (v) =>
+                            updatePreview({ category: v }),
+                          )}
+                          {renderPreviewField("Dimensions", urlPreview.dimensions ?? "", (v) =>
+                            updatePreview({ dimensions: v }),
+                          )}
+                        </div>
+                        {renderPreviewField("Materials", (urlPreview.materials ?? []).join(", "), (v) =>
+                          updatePreview({ materials: splitList(v) }),
+                        )}
+                        {renderPreviewField("Colors", (urlPreview.colors ?? []).join(", "), (v) =>
+                          updatePreview({ colors: splitList(v) }),
+                        )}
+                        {renderPreviewField(
+                          "Description",
+                          urlPreview.description ?? "",
+                          (v) => updatePreview({ description: v }),
+                          true,
+                        )}
+                        {renderPreviewField("Image URL", urlPreview.imageUrl ?? "", (v) =>
+                          updatePreview({ imageUrl: v || null }),
+                        )}
                       </div>
                     )}
-                    <div className="flex-1 min-w-0">
-                      <div className="text-sm font-medium text-folio-text-primary truncate">
-                        {urlPreview.name}
-                      </div>
-                      <div className="text-xs text-folio-text-secondary truncate">
-                        {urlPreview.deferred
-                          ? "We'll fetch the full details in the background after you tag it."
-                          : [urlPreview.brand, urlPreview.price]
-                              .filter(Boolean)
-                              .join(" · ") || "New product"}
-                      </div>
-                    </div>
-                    <FaCheck className="w-4 h-4 text-[var(--accent)] flex-shrink-0" />
                   </div>
                 )}
               </div>
@@ -1226,6 +1487,67 @@ export function ProjectImageTagger({ projectId, images: providedImages, onClose 
                     Tag Product
                   </>
                 )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Edit-an-existing-tagged-product modal */}
+      {editTarget && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
+          onClick={() => !editSaving && setEditTarget(null)}
+        >
+          <div
+            className="w-full max-w-md rounded-2xl bg-surface-card shadow-xl overflow-hidden"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between px-5 py-4 border-b border-folio-border-subtle">
+              <h3 className="text-sm font-semibold text-folio-text-primary">Edit product details</h3>
+              <button
+                onClick={() => setEditTarget(null)}
+                className="text-folio-text-tertiary hover:text-folio-text-primary"
+                title="Close"
+              >
+                <FaTimes className="w-4 h-4" />
+              </button>
+            </div>
+            <div className="px-5 py-4 space-y-3 max-h-[60vh] overflow-y-auto">
+              {editError && (
+                <div className="flex items-start gap-2 rounded-md bg-red-50 text-red-600 px-2 py-1.5 text-xs">
+                  <FaExclamationCircle className="w-3.5 h-3.5 mt-0.5 flex-shrink-0" />
+                  <span>{editError}</span>
+                </div>
+              )}
+              {renderPreviewField("Name", editTarget.name, (v) => updateEdit({ name: v }))}
+              <div className="grid grid-cols-2 gap-3">
+                {renderPreviewField("Brand", editTarget.brand, (v) => updateEdit({ brand: v }))}
+                {renderPreviewField("Price", editTarget.price, (v) => updateEdit({ price: v }))}
+              </div>
+              {renderPreviewField("Category", editTarget.category, (v) => updateEdit({ category: v }))}
+              {renderPreviewField(
+                "Description",
+                editTarget.description,
+                (v) => updateEdit({ description: v }),
+                true,
+              )}
+              {renderPreviewField("Image URL", editTarget.imageUrl, (v) => updateEdit({ imageUrl: v }))}
+            </div>
+            <div className="flex gap-3 px-5 py-4 border-t border-folio-border-subtle">
+              <button
+                onClick={() => setEditTarget(null)}
+                disabled={editSaving}
+                className="flex-1 rounded-lg py-2.5 text-sm font-medium text-folio-text-secondary hover:bg-surface-ground transition-colors disabled:opacity-50"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={saveEditProduct}
+                disabled={editSaving}
+                className="flex-1 rounded-lg py-2.5 text-sm font-medium text-white bg-[var(--accent)] hover:opacity-90 transition-opacity disabled:opacity-50"
+              >
+                {editSaving ? "Saving…" : "Save"}
               </button>
             </div>
           </div>
