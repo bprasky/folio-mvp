@@ -389,6 +389,22 @@ export function ProjectImageTagger({ projectId, images: providedImages, onClose 
         body: JSON.stringify({ url }),
       });
       const data = await res.json();
+      // The cheap path detected a bot wall and is handing off to the stealth
+      // rung. Defer exactly like a flagged domain: stage a pending preview so the
+      // tag lands immediately and the background BQL rung fills in the details.
+      if (res.ok && data?.escalate) {
+        setUrlError(null);
+        setShowManual(false);
+        setUrlPreview({
+          name: data.brand ? `${data.brand} product` : "Product",
+          imageUrl: null,
+          price: null,
+          brand: data.brand ?? null,
+          url,
+          deferred: true,
+        });
+        return;
+      }
       if (!res.ok) {
         setUrlError(data.error || "Could not read that link.");
         // Blocked or unreadable: open guided manual capture instead of dead-ending.
