@@ -20,6 +20,7 @@ import type { BrowserlessResult } from './client';
 export const BOT_WALL_SIGNATURES = [
   'access to this page has been denied',
   'access denied',
+  'restricted access',
   'px-captcha',
   'perimeterx',
   'pardon our interruption',

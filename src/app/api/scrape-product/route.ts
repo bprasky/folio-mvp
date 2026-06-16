@@ -6,7 +6,7 @@ export const maxDuration = 60;
 import { NextRequest, NextResponse } from 'next/server';
 import { aiExtractProduct } from '@/lib/products/aiExtractProduct';
 import { getContent, runFunction, directFetch, hasBrowserlessKey } from '@/lib/browserless/client';
-import { looksLikeBotWall } from '@/lib/browserless/classify';
+import { looksLikeBotWall, classifyScrapeOutcome, isBlockedOutcome } from '@/lib/browserless/classify';
 import { recordScrapeAttempt } from '@/lib/browserless/record';
 import {
   type ProductFields,
@@ -35,13 +35,19 @@ const RENDER_TIMEOUT_MS = 45000;
  * Tier 1 fetch: rendered HTML via Browserless /content if configured, else a
  * direct fetch (works for server-rendered product pages).
  */
-async function fetchHtml(url: string): Promise<string | null> {
+async function fetchHtml(url: string): Promise<{ html: string | null; blocked: boolean }> {
+  let blocked = false;
   if (hasBrowserlessKey()) {
     const res = await getContent(url, { timeoutMs: FETCH_TIMEOUT_MS });
     await recordScrapeAttempt({ url, consumer: 'PRODUCT_SCRAPE', result: res });
-    if (res.ok) return res.payload;
-    console.error('[scrape-product] Browserless /content failed:', res.status);
-    // fall through to direct fetch
+    if (res.ok) {
+      // /content returns 200 even for a denial page, so classify the body.
+      if (isBlockedOutcome(classifyScrapeOutcome(res))) blocked = true;
+      else return { html: res.payload, blocked };
+      // Blocked content: fall through to a direct fetch but keep the flag.
+    } else {
+      console.error('[scrape-product] Browserless /content failed:', res.status);
+    }
   }
   const direct = await directFetch(url, {
     timeoutMs: FETCH_TIMEOUT_MS,
@@ -53,8 +59,10 @@ async function fetchHtml(url: string): Promise<string | null> {
     },
   });
   await recordScrapeAttempt({ url, consumer: 'PRODUCT_SCRAPE', result: direct });
-  if (!direct.ok) return null;
-  return direct.payload;
+  // directFetch carries the real target status, so a 403/429 surfaces here.
+  if (isBlockedOutcome(classifyScrapeOutcome(direct))) blocked = true;
+  if (!direct.ok) return { html: null, blocked };
+  return { html: direct.payload, blocked };
 }
 
 /* ----------------------------------------------------------------------------
@@ -101,21 +109,21 @@ const PRODUCT_HARVEST_CODE = `export default async function ({ page, context }) 
 }`;
 
 /** Tier 2: only runs when Browserless is configured and Tier 1 missed. */
-async function renderedExtract(url: string): Promise<ProductFields> {
-  if (!hasBrowserlessKey()) return { ...EMPTY_FIELDS };
+async function renderedExtract(url: string): Promise<{ fields: ProductFields; blocked: boolean }> {
+  if (!hasBrowserlessKey()) return { fields: { ...EMPTY_FIELDS }, blocked: false };
 
   const res = await runFunction(PRODUCT_HARVEST_CODE, { url }, { timeoutMs: RENDER_TIMEOUT_MS });
   if (!res.ok) {
     await recordScrapeAttempt({ url, consumer: 'PRODUCT_SCRAPE', result: res });
     console.error('[scrape-product] Browserless /function failed:', res.status);
-    return { ...EMPTY_FIELDS };
+    return { fields: { ...EMPTY_FIELDS }, blocked: false };
   }
   let payload: any;
   try {
     payload = JSON.parse(res.payload);
   } catch {
     await recordScrapeAttempt({ url, consumer: 'PRODUCT_SCRAPE', result: res });
-    return { ...EMPTY_FIELDS };
+    return { fields: { ...EMPTY_FIELDS }, blocked: false };
   }
   const d = payload?.data ?? payload ?? {};
   const fields: ProductFields = {
@@ -126,14 +134,22 @@ async function renderedExtract(url: string): Promise<ProductFields> {
     price: d.price != null ? String(d.price) : null,
     currency: d.currency ?? null,
   };
+  // The harvest captures the real navigation status, so classify against it —
+  // a 403/429 denial page (whose <title> would otherwise become the product
+  // name) is recognized as a block here, not surfaced as a $0 product.
+  const targetStatus = typeof d._httpStatus === 'number' ? d._httpStatus : null;
+  const blocked =
+    isBlockedOutcome(classifyScrapeOutcome({ ...res, targetStatus })) ||
+    looksLikeBotWall(fields.name) ||
+    looksLikeBotWall(fields.description);
   await recordScrapeAttempt({
     url,
     consumer: 'PRODUCT_SCRAPE',
     result: res,
-    targetStatus: typeof d._httpStatus === 'number' ? d._httpStatus : null,
+    targetStatus,
     emptyResult: !(fields.name || fields.image),
   });
-  return fields;
+  return { fields, blocked };
 }
 
 /** Prefer the primary field, fall back to the secondary one. */
@@ -164,33 +180,43 @@ export async function POST(request: NextRequest) {
     }
 
     // Tier 1 — static / Browserless-rendered HTML + cheerio.
-    const html = await fetchHtml(url);
+    const { html, blocked: tier1Blocked } = await fetchHtml(url);
     let fields: ProductFields = html ? extractProductFromHtml(html, url) : { ...EMPTY_FIELDS };
 
-    // If Tier 1 hit an anti-scrape wall, the extracted name/description are the
-    // denial page, not the product. Discard them so the later tiers (and the AI
-    // web_search fallback) get a clean shot instead of "winning" with garbage.
-    const pageBlocked =
+    // Track whether any tier saw the target actively block us (status 403/429,
+    // a challenge/captcha, or a denial-page signature). A block means the cheap
+    // path can't read this retailer and we should escalate to the stealth rung,
+    // not surface the denial page's title as a $0 product.
+    let blocked =
+      tier1Blocked ||
       looksLikeBotWall(html) ||
       looksLikeBotWall(fields.name) ||
       looksLikeBotWall(fields.description);
-    if (pageBlocked) {
+    // If Tier 1 hit a wall, the extracted name/description are the denial page,
+    // not the product. Discard them so the later tiers get a clean shot.
+    if (blocked) {
       fields = { ...EMPTY_FIELDS };
     }
 
     // Tier 2 — rendered DOM harvest, only when Tier 1 missed the essentials.
     if (!fields.name || !fields.image) {
-      const rendered = await renderedExtract(url);
+      const { fields: rendered, blocked: tier2Blocked } = await renderedExtract(url);
       fields = merge(fields, rendered);
+      if (tier2Blocked) blocked = true;
       // The rendered DOM can be the same wall — don't let it back in.
       if (looksLikeBotWall(fields.name)) fields.name = '';
       if (looksLikeBotWall(fields.description)) fields.description = '';
     }
 
+    // When the page was blocked and the stealth rung is available, we'll escalate
+    // below regardless — so skip the (paid) AI tier and let the rung get the real
+    // page. Only fall through to AI here if there's no rung to escalate to.
+    const willEscalate = blocked && hasBrowserlessKey();
+
     // Tier 3 — AI (Claude + web_search), only when the result is still thin
     // (no name or no price). Cached + key-gated, so most scrapes never reach it.
     let aiConfidence: string | null = null;
-    if (!fields.name || !fields.price) {
+    if (!willEscalate && (!fields.name || !fields.price)) {
       const ai = await aiExtractProduct(url);
       if (ai) {
         aiConfidence = ai.confidence;
@@ -205,9 +231,31 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Blocked page and nothing recovered: tell the user plainly and actionably,
-    // rather than returning "Access to this page has been denied" as a product.
-    if (pageBlocked && !fields.name && !fields.price && !fields.image) {
+    // Derive a brand label up front; the escalation hand-off uses it as the
+    // pending product's name ("<Brand> product") while the rung fills the rest.
+    let brand = fields.brand?.trim() || null;
+    if (!brand) {
+      try {
+        const host = new URL(url).hostname.replace('www.', '').split('.')[0];
+        brand = host.charAt(0).toUpperCase() + host.slice(1);
+      } catch {
+        brand = null;
+      }
+    }
+
+    const usableForTag = !!(fields.name && fields.image);
+
+    // Blocked, and the cheap tiers didn't recover a tag-ready result: hand off to
+    // the stealth (BQL) rung instead of dead-ending. The client stages a pending
+    // product and the background rung fills it — the same path a flagged domain
+    // takes. recordScrapeAttempt above logged the block, which authorizes the rung.
+    if (blocked && !usableForTag && hasBrowserlessKey()) {
+      return NextResponse.json({ escalate: true, url, brand }, { status: 200 });
+    }
+
+    // Blocked with no stealth rung available (Browserless unconfigured) and
+    // nothing recovered: fall back to guided manual capture, not a denial title.
+    if (blocked && !fields.name && !fields.price && !fields.image) {
       return NextResponse.json(
         {
           error:
@@ -229,16 +277,6 @@ export async function POST(request: NextRequest) {
     const description = fields.description?.trim() || '';
     const enrichHtml = html || '';
     const tags = generateTags(name, description, url);
-
-    let brand = fields.brand?.trim() || null;
-    if (!brand) {
-      try {
-        const host = new URL(url).hostname.replace('www.', '').split('.')[0];
-        brand = host.charAt(0).toUpperCase() + host.slice(1);
-      } catch {
-        brand = null;
-      }
-    }
 
     const image = fields.image || '';
 

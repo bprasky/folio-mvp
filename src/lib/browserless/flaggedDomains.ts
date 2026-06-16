@@ -8,14 +8,18 @@
  * the rung pulls multi-megabyte pages over a residential proxy and is gated to
  * keep that cost off the default path.
  *
- * Seeded with wayfair.com from the Phase 1 ScrapeAttempt observation window.
- * Expand this list later from the recorded `domain, outcome` distribution.
+ * Seeded with wayfair.com from the Phase 1 ScrapeAttempt observation window;
+ * potterybarn.com added after it was observed returning a 403 denial page.
+ * This list is now a fast-path optimization rather than the sole escalation
+ * trigger: any domain whose cheap scrape records a block auto-escalates via the
+ * scrape-bql route (see hasRecentBlockedAttempt). Listing a known-hard domain
+ * here just skips the doomed cheap attempt up front.
  *
  * Matching is on the registrable domain, not the exact host, so subdomains
  * (www.wayfair.com, secure.wayfair.com) all resolve to the same policy entry.
  */
 
-export const FLAGGED_DOMAINS: readonly string[] = ['wayfair.com'];
+export const FLAGGED_DOMAINS: readonly string[] = ['wayfair.com', 'potterybarn.com'];
 
 /**
  * Reduce a URL to its registrable domain (last two labels), lowercased, with a

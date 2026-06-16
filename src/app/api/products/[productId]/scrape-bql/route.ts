@@ -13,7 +13,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/app/api/auth/[...nextauth]/options';
 import { prisma } from '@/lib/prisma';
 import { bql, hasBrowserlessKey } from '@/lib/browserless/client';
-import { recordScrapeAttempt } from '@/lib/browserless/record';
+import { recordScrapeAttempt, hasRecentBlockedAttempt } from '@/lib/browserless/record';
 import { isFlaggedDomain } from '@/lib/browserless/flaggedDomains';
 import { normalizeProductUrl } from '@/lib/products/normalizeProductUrl';
 import {
@@ -64,10 +64,14 @@ export async function POST(
   }
 
   // Cost gate: the rung spends a residential proxy and pulls multi-megabyte
-  // pages, so it is only ever allowed for flagged domains. Enforce it here too,
-  // not just in the UI, so a direct call cannot spend the rung on the default
-  // path.
-  if (!isFlaggedDomain(product.url)) {
+  // pages, so it is allowed only when the spend is justified — either the domain
+  // is statically flagged (a known-hard retailer, fast-pathed in the UI) or the
+  // cheap path recently recorded a block for this exact URL (auto-escalation).
+  // Enforced here, not just in the UI, so a direct call cannot spend the rung on
+  // the default path.
+  const authorized =
+    isFlaggedDomain(product.url) || (await hasRecentBlockedAttempt(product.url));
+  if (!authorized) {
     return NextResponse.json(
       { error: 'This domain does not use the escalation rung. Use the standard scrape path.' },
       { status: 400 },

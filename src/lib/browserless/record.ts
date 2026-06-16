@@ -59,6 +59,38 @@ export interface RecordScrapeInput {
   productId?: string | null;
 }
 
+/** The four outcomes that mean the target actively blocked us. */
+const BLOCKED_OUTCOMES: ScrapeOutcome[] = [
+  'BLOCKED_403',
+  'BLOCKED_429',
+  'CHALLENGE_PAGE',
+  'CAPTCHA_PRESENT',
+];
+
+/**
+ * True when a recent scrape of this exact URL was recorded as blocked. This is
+ * the authorization breadcrumb for auto-escalation: the cheap path records a
+ * blocked attempt, and the expensive BQL rung reads it to confirm the spend is
+ * justified, without the domain needing to be on the static flagged list.
+ * Best effort — a read failure returns false rather than throwing into the path.
+ */
+export async function hasRecentBlockedAttempt(url: string, withinMs = 30 * 60 * 1000): Promise<boolean> {
+  try {
+    const row = await prisma.scrapeAttempt.findFirst({
+      where: {
+        url,
+        outcome: { in: BLOCKED_OUTCOMES as any },
+        createdAt: { gte: new Date(Date.now() - withinMs) },
+      },
+      select: { id: true },
+    });
+    return row != null;
+  } catch (err) {
+    console.error('[scrapeAttempt] recent-block lookup failed:', err);
+    return false;
+  }
+}
+
 function domainOf(url: string): string {
   try {
     return new URL(url).hostname;
