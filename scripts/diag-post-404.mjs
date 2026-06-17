@@ -17,6 +17,32 @@ const prisma = new PrismaClient({ datasourceUrl: url });
 const slugs = process.argv.slice(2);
 if (slugs.length === 0) slugs.push('meru-XB4XBK', 'lucas-house-VRBWUP');
 
+// Client-agnostic check: does the actual prod DB have the columns the
+// CURRENT (main) Prisma client selects via `include`? $queryRawUnsafe hits
+// information_schema directly, so it does NOT depend on the generated client
+// being up to date — unlike the include queries below.
+async function columnCheck() {
+  console.log('=== raw column existence (information_schema, client-agnostic) ===');
+  const checks = [
+    ['product_tags', 'reviewedAt'], // added by PR #646 migration 20260617120000
+    ['products', 'scrapeStatus'],
+    ['products', 'isPending'],
+  ];
+  for (const [table, col] of checks) {
+    try {
+      const r = await prisma.$queryRawUnsafe(
+        `SELECT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema='public' AND table_name=$1 AND column_name=$2) AS present`,
+        table, col
+      );
+      const present = r[0].present;
+      console.log(`  ${table}.${col}: ${present ? 'PRESENT' : '*** MISSING ***'}`);
+    } catch (e) {
+      console.log(`  ${table}.${col}: check failed: ${e.message}`);
+    }
+  }
+}
+await columnCheck();
+
 async function diagOne(slug) {
   console.log(`\n=== ${slug} ===`);
 
