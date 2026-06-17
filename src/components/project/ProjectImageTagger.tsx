@@ -161,6 +161,12 @@ export function ProjectImageTagger({ projectId, images: providedImages, onClose 
   const [editError, setEditError] = useState<string | null>(null);
   // Tag whose edit modal is open (so saving can also mark it reviewed).
   const [editTagId, setEditTagId] = useState<string | null>(null);
+  // Manual autofill inside the edit modal — the rescue path when the deferred
+  // scrape returned nothing. The designer pastes the product copy or drops a
+  // screenshot; we parse it into the edit fields via the same endpoints the
+  // pre-tag manual capture uses.
+  const [editPasteText, setEditPasteText] = useState("");
+  const [editParsing, setEditParsing] = useState<null | "text" | "image">(null);
   // Dismissible "fetching in the background" banner shown while scrapes run.
   const [bannerDismissed, setBannerDismissed] = useState(false);
 
@@ -730,6 +736,8 @@ export function ProjectImageTagger({ projectId, images: providedImages, onClose 
   const openEditProduct = async (productId: string, tagId?: string) => {
     setEditError(null);
     setEditTagId(tagId ?? null);
+    setEditPasteText("");
+    setEditParsing(null);
     try {
       const r = await fetch(`/api/products/${productId}`);
       if (!r.ok) return;
@@ -751,6 +759,77 @@ export function ProjectImageTagger({ projectId, images: providedImages, onClose 
 
   const updateEdit = (patch: Partial<NonNullable<typeof editTarget>>) =>
     setEditTarget((prev) => (prev ? { ...prev, ...patch } : prev));
+
+  // Merge a parsed result into the open edit modal. Only fills fields the parse
+  // actually returned, so it never blanks a value the designer already typed.
+  const applyParsedToEdit = (f: any, image?: string | null) =>
+    setEditTarget((prev) =>
+      prev
+        ? {
+            ...prev,
+            name: f?.name ?? prev.name,
+            brand: f?.brand ?? prev.brand,
+            price: f?.price != null ? String(f.price) : prev.price,
+            category: f?.category ?? prev.category,
+            description: composeDescription(f ?? {}) || prev.description,
+            // Only adopt a hosted image URL, never a raw data: URL.
+            imageUrl:
+              image && !image.startsWith("data:") ? image : prev.imageUrl,
+          }
+        : prev,
+    );
+
+  const handleEditParseText = async () => {
+    if (!editPasteText.trim() || !editTarget) return;
+    setEditParsing("text");
+    setEditError(null);
+    try {
+      const res = await fetch("/api/products/parse-text", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text: editPasteText, url: editTarget.url || undefined }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setEditError(data.error || "Couldn't read that text.");
+        return;
+      }
+      applyParsedToEdit(data.fields);
+    } catch {
+      setEditError("Couldn't read that text.");
+    } finally {
+      setEditParsing(null);
+    }
+  };
+
+  const handleEditScreenshot = async (file: File | null | undefined) => {
+    if (!file || !file.type.startsWith("image/") || !editTarget) return;
+    setEditParsing("image");
+    setEditError(null);
+    try {
+      const dataUrl: string = await new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(String(reader.result));
+        reader.onerror = () => reject(new Error("read failed"));
+        reader.readAsDataURL(file);
+      });
+      const res = await fetch("/api/products/parse-image", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ imageDataUrl: dataUrl, url: editTarget.url || undefined }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setEditError(data.error || "Couldn't read that screenshot.");
+        return;
+      }
+      applyParsedToEdit(data.fields, data.image || null);
+    } catch {
+      setEditError("Couldn't read that screenshot.");
+    } finally {
+      setEditParsing(null);
+    }
+  };
 
   const saveEditProduct = async () => {
     if (!editTarget) return;
@@ -823,6 +902,13 @@ export function ProjectImageTagger({ projectId, images: providedImages, onClose 
 
   // Tags awaiting review: their product went through a deferred scrape
   // (scrapeStatus set) and the designer hasn't confirmed them yet.
+  //
+  // `fetching` reflects only a poll THIS session is actively running
+  // (`scrapingIds`) — NOT a bare DB `scrapeStatus === "pending"`. The deferred
+  // scrape is fire-and-forget; if its serverless function dies (the designer
+  // navigated away or closed the tagger) the row stays `pending` with nobody
+  // polling. On reopen that tag is stalled, not fetching, so it must be
+  // reviewable/editable instead of stuck behind a perpetual "Fetching…".
   const pendingTags = images.flatMap((img) =>
     img.tags
       .filter((t) => t.product?.scrapeStatus != null && !t.reviewedAt)
@@ -832,7 +918,7 @@ export function ProjectImageTagger({ projectId, images: providedImages, onClose 
         imageId: img.id,
         name: t.product?.name ?? "Product",
         productImageUrl: t.product?.imageUrl ?? null,
-        fetching: t.product?.scrapeStatus === "pending" || scrapingIds.has(t.productId),
+        fetching: scrapingIds.has(t.productId),
       })),
   );
 
@@ -1046,15 +1132,19 @@ export function ProjectImageTagger({ projectId, images: providedImages, onClose 
                     {p.fetching ? "Fetching…" : "Ready"}
                   </span>
                 </div>
-                {!p.fetching && (
-                  <div className="flex items-center gap-1">
-                    <button
-                      onClick={() => openEditProduct(p.productId, p.tagId)}
-                      title="Edit details"
-                      className="flex h-6 w-6 items-center justify-center rounded text-folio-text-tertiary hover:text-[var(--accent)]"
-                    >
-                      <FaPen className="w-2.5 h-2.5" />
-                    </button>
+                {/* Edit is always available — even while a scrape is still
+                    running — so the designer can fill details by hand at any
+                    time. Confirm appears once the (best-effort) scrape isn't
+                    actively polling. */}
+                <div className="flex items-center gap-1">
+                  <button
+                    onClick={() => openEditProduct(p.productId, p.tagId)}
+                    title="Edit details"
+                    className="flex h-6 w-6 items-center justify-center rounded text-folio-text-tertiary hover:text-[var(--accent)]"
+                  >
+                    <FaPen className="w-2.5 h-2.5" />
+                  </button>
+                  {!p.fetching && (
                     <button
                       onClick={() => confirmTag(p.tagId)}
                       title="Confirm tag"
@@ -1062,8 +1152,8 @@ export function ProjectImageTagger({ projectId, images: providedImages, onClose 
                     >
                       <FaCheck className="w-2.5 h-2.5" />
                     </button>
-                  </div>
-                )}
+                  )}
+                </div>
               </div>
             ))}
           </div>
@@ -1127,7 +1217,10 @@ export function ProjectImageTagger({ projectId, images: providedImages, onClose 
               {/* Existing tag dots — draggable */}
               {activeImage.tags.map((tag) => {
                 const isDragging = draggingTagId === tag.id;
-                const isScraping = scrapingIds.has(tag.productId) || tag.product?.scrapeStatus === "pending";
+                // Only an active in-session poll counts as "scraping". A bare DB
+                // `pending` with no live poll is a stalled fire-and-forget — it
+                // should read as needs-review (amber + editable), not a spinner.
+                const isScraping = scrapingIds.has(tag.productId);
                 const reviewMissing = !isScraping ? reviewFlags[tag.productId] : undefined;
                 // A deferred-scrape tag (scrapeStatus set) needs review until the
                 // designer confirms it (reviewedAt). Drives the amber pin + panel.
@@ -1670,6 +1763,57 @@ export function ProjectImageTagger({ projectId, images: providedImages, onClose 
                   <span>{editError}</span>
                 </div>
               )}
+
+              {/* Autofill rescue — when the scrape returned nothing, paste the
+                  product copy or drop a screenshot and we fill the fields below. */}
+              <div className="rounded-lg border border-folio-border-subtle bg-surface-ground p-3 space-y-2.5">
+                <div className="flex items-center justify-between">
+                  <span className="folio-meta font-medium text-folio-text-primary">
+                    Autofill from the product page
+                  </span>
+                  {editTarget.url && (
+                    <a
+                      href={editTarget.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="folio-meta text-[var(--accent)] hover:underline inline-flex items-center gap-1"
+                    >
+                      Open page <FaExternalLinkAlt className="w-2.5 h-2.5" />
+                    </a>
+                  )}
+                </div>
+                <textarea
+                  value={editPasteText}
+                  onChange={(e) => setEditPasteText(e.target.value)}
+                  placeholder="Paste the product name, specs, price… from the page"
+                  rows={3}
+                  className="w-full px-3 py-2 ridge-input text-sm resize-y"
+                />
+                <div className="flex flex-wrap gap-2">
+                  <button
+                    type="button"
+                    onClick={handleEditParseText}
+                    disabled={editParsing !== null || !editPasteText.trim()}
+                    className="px-3 py-1.5 rounded-lg bg-surface-canvas border border-folio-border-subtle text-folio-text-primary folio-meta font-medium disabled:opacity-50 hover:bg-surface-ground transition-colors"
+                  >
+                    {editParsing === "text" ? "Reading…" : "Autofill from text"}
+                  </button>
+                  <label className="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-dashed border-folio-border-subtle cursor-pointer hover:bg-surface-canvas transition-colors folio-meta text-folio-text-secondary">
+                    <FaImage className="w-3.5 h-3.5" />
+                    {editParsing === "image" ? "Reading screenshot…" : "Upload a screenshot"}
+                    <input
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={(e) => {
+                        handleEditScreenshot(e.target.files?.[0]);
+                        e.target.value = "";
+                      }}
+                    />
+                  </label>
+                </div>
+              </div>
+
               {renderPreviewField("Name", editTarget.name, (v) => updateEdit({ name: v }))}
               <div className="grid grid-cols-2 gap-3">
                 {renderPreviewField("Brand", editTarget.brand, (v) => updateEdit({ brand: v }))}
