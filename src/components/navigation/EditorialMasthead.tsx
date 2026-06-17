@@ -10,6 +10,7 @@ import { MobileMenu } from "./MobileMenu";
 import { CreateButton } from "./CreateButton";
 import { BadgeButton } from "./BadgeButton";
 import { InboxButton } from "./InboxButton";
+import { NotificationBell } from "./NotificationBell";
 
 // Fallback scroll threshold for routes that don't render the big wordmark
 // (designer/product/magazine). The wordmark-bearing routes use an
@@ -135,6 +136,7 @@ export function EditorialMasthead() {
             <div className="md:hidden">
               <GlobalSearch placeholder="Search..." />
             </div>
+            <NotificationBell />
             <InboxButton />
             <BadgeButton />
             <CreateButton />

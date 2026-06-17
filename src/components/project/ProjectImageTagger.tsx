@@ -13,11 +13,13 @@ type ImageWithTags = {
     x: number;
     y: number;
     productId: string;
+    reviewedAt: string | null;
     product: {
       id: string;
       name: string;
       imageUrl: string | null;
       brand: string | null;
+      scrapeStatus?: string | null;
     } | null;
   }>;
 };
@@ -41,11 +43,13 @@ type IncomingImage = {
     x: number;
     y: number;
     productId?: string;
+    reviewedAt?: string | null;
     product?: {
       id: string;
       name: string;
       imageUrl?: string | null;
       brand?: string | null;
+      scrapeStatus?: string | null;
     } | null;
   }>;
 };
@@ -72,12 +76,14 @@ function normalizeImages(incoming: IncomingImage[]): ImageWithTags[] {
       x: t.x,
       y: t.y,
       productId: t.productId ?? t.product?.id ?? "",
+      reviewedAt: t.reviewedAt ?? null,
       product: t.product
         ? {
             id: t.product.id,
             name: t.product.name,
             imageUrl: t.product.imageUrl ?? null,
             brand: t.product.brand ?? null,
+            scrapeStatus: t.product.scrapeStatus ?? null,
           }
         : null,
     })),
@@ -153,6 +159,10 @@ export function ProjectImageTagger({ projectId, images: providedImages, onClose 
   }>(null);
   const [editSaving, setEditSaving] = useState(false);
   const [editError, setEditError] = useState<string | null>(null);
+  // Tag whose edit modal is open (so saving can also mark it reviewed).
+  const [editTagId, setEditTagId] = useState<string | null>(null);
+  // Dismissible "fetching in the background" banner shown while scrapes run.
+  const [bannerDismissed, setBannerDismissed] = useState(false);
 
   // Guided manual capture — fallback when a retailer blocks the scraper. The
   // designer pastes the product copy or drops a screenshot; we parse it (and,
@@ -223,6 +233,7 @@ export function ProjectImageTagger({ projectId, images: providedImages, onClose 
             x: tag.x,
             y: tag.y,
             productId: tag.productId,
+            reviewedAt: tag.reviewedAt ?? null,
             product: tag.product,
           });
         }
@@ -281,6 +292,7 @@ export function ProjectImageTagger({ projectId, images: providedImages, onClose 
   const runBqlScrape = useCallback(
     (productId: string) => {
       setScrapingIds((prev) => new Set(prev).add(productId));
+      setBannerDismissed(false);
 
       const clear = () =>
         setScrapingIds((prev) => {
@@ -715,8 +727,9 @@ export function ProjectImageTagger({ projectId, images: providedImages, onClose 
   // current record. Designers can enrich unclaimed products (e.g. fill a
   // dimension the deferred scrape missed); the server rejects edits to a
   // claimed product.
-  const openEditProduct = async (productId: string) => {
+  const openEditProduct = async (productId: string, tagId?: string) => {
     setEditError(null);
+    setEditTagId(tagId ?? null);
     try {
       const r = await fetch(`/api/products/${productId}`);
       if (!r.ok) return;
@@ -774,7 +787,10 @@ export function ProjectImageTagger({ projectId, images: providedImages, onClose 
         delete next[editTarget.id];
         return next;
       });
+      // Editing from the review queue counts as confirming the tag.
+      if (editTagId) await confirmTag(editTagId);
       setEditTarget(null);
+      setEditTagId(null);
       await fetchImages();
     } catch {
       setEditError("Could not save changes.");
@@ -782,6 +798,60 @@ export function ProjectImageTagger({ projectId, images: providedImages, onClose 
       setEditSaving(false);
     }
   };
+
+  // Confirm a tag — marks it reviewed so it leaves the review queue and its
+  // pin turns from amber back to normal. Optimistically updates local state.
+  const confirmTag = async (tagId: string) => {
+    try {
+      const res = await fetch("/api/tag-product-to-image", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: tagId, reviewed: true }),
+      });
+      if (!res.ok) return;
+      const now = new Date().toISOString();
+      setImages((prev) =>
+        prev.map((img) => ({
+          ...img,
+          tags: img.tags.map((t) => (t.id === tagId ? { ...t, reviewedAt: now } : t)),
+        })),
+      );
+    } catch {
+      /* best-effort */
+    }
+  };
+
+  // Tags awaiting review: their product went through a deferred scrape
+  // (scrapeStatus set) and the designer hasn't confirmed them yet.
+  const pendingTags = images.flatMap((img) =>
+    img.tags
+      .filter((t) => t.product?.scrapeStatus != null && !t.reviewedAt)
+      .map((t) => ({
+        tagId: t.id,
+        productId: t.productId,
+        imageId: img.id,
+        name: t.product?.name ?? "Product",
+        productImageUrl: t.product?.imageUrl ?? null,
+        fetching: t.product?.scrapeStatus === "pending" || scrapingIds.has(t.productId),
+      })),
+  );
+
+  // Leaving the tagger with tags still awaiting review drops an inbox reminder
+  // so the designer can be pulled back in.
+  const handleClose = useCallback(async () => {
+    if (pendingTags.length > 0) {
+      try {
+        await fetch("/api/notifications/tag-review-reminder", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ projectId }),
+        });
+      } catch {
+        /* best-effort — don't block closing */
+      }
+    }
+    onClose();
+  }, [pendingTags.length, projectId, onClose]);
 
   // --- Drag-to-reposition handlers ---
   const handleDragStart = useCallback((tagId: string, e: React.MouseEvent | React.TouchEvent) => {
@@ -915,12 +985,90 @@ export function ProjectImageTagger({ projectId, images: providedImages, onClose 
           </h2>
         </div>
         <button
-          onClick={onClose}
+          onClick={handleClose}
           className="p-2 text-folio-text-secondary hover:text-folio-text-primary transition-colors"
         >
           <FaTimes className="w-5 h-5" />
         </button>
       </div>
+
+      {/* Async scrape banner: shown while deferred scrapes run in the background */}
+      {scrapingIds.size > 0 && !bannerDismissed && (
+        <div className="flex items-center gap-3 px-6 py-3 bg-[var(--accent)]/5 border-b border-[var(--accent)]/20">
+          <span className="h-2 w-2 flex-shrink-0 rounded-full bg-[var(--accent)] animate-pulse" />
+          <p className="folio-meta flex-1 text-folio-text-secondary">
+            Fetching full product details in the background — keep tagging. We&apos;ll flag each tag below
+            when it&apos;s ready to review, and message your inbox if you leave first.
+          </p>
+          <button
+            onClick={() => setBannerDismissed(true)}
+            className="flex-shrink-0 text-folio-text-tertiary hover:text-folio-text-primary"
+            title="Dismiss"
+          >
+            <FaTimes className="w-4 h-4" />
+          </button>
+        </div>
+      )}
+
+      {/* Pending-review panel: tags whose scrape finished but aren't confirmed */}
+      {pendingTags.length > 0 && (
+        <div className="border-b border-folio-border-subtle bg-surface-ground/50 px-6 py-3">
+          <div className="mb-2 flex items-center gap-2">
+            <FaExclamationCircle className="w-3.5 h-3.5 text-amber-500" />
+            <span className="folio-meta font-medium text-folio-text-primary">
+              {pendingTags.length} tag{pendingTags.length !== 1 ? "s" : ""} awaiting review
+            </span>
+          </div>
+          <div className="flex gap-2 overflow-x-auto pb-1">
+            {pendingTags.map((p) => (
+              <div
+                key={p.tagId}
+                className="flex flex-shrink-0 items-center gap-2 rounded-lg border border-folio-border-subtle bg-surface-card px-2 py-1.5"
+              >
+                {p.productImageUrl ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={p.productImageUrl} alt="" className="h-8 w-8 rounded object-cover bg-surface-ground" />
+                ) : (
+                  <div className="h-8 w-8 rounded bg-surface-ground" />
+                )}
+                <div className="min-w-0 max-w-[140px]">
+                  <button
+                    onClick={() => {
+                      const img = images.find((i) => i.id === p.imageId);
+                      if (img) setActiveImage(img);
+                    }}
+                    className="block truncate text-left text-xs font-medium text-folio-text-primary hover:underline"
+                    title={p.name}
+                  >
+                    {p.name}
+                  </button>
+                  <span className={`text-[var(--type-fine)] ${p.fetching ? "text-[var(--accent)]" : "text-amber-600"}`}>
+                    {p.fetching ? "Fetching…" : "Ready"}
+                  </span>
+                </div>
+                {!p.fetching && (
+                  <div className="flex items-center gap-1">
+                    <button
+                      onClick={() => openEditProduct(p.productId, p.tagId)}
+                      title="Edit details"
+                      className="flex h-6 w-6 items-center justify-center rounded text-folio-text-tertiary hover:text-[var(--accent)]"
+                    >
+                      <FaPen className="w-2.5 h-2.5" />
+                    </button>
+                    <button
+                      onClick={() => confirmTag(p.tagId)}
+                      title="Confirm tag"
+                      className="flex h-6 w-6 items-center justify-center rounded bg-[var(--accent)] text-white hover:opacity-90"
+                    >
+                      <FaCheck className="w-2.5 h-2.5" />
+                    </button>
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Content */}
       <div className="flex-1 overflow-auto p-6">
@@ -979,9 +1127,11 @@ export function ProjectImageTagger({ projectId, images: providedImages, onClose 
               {/* Existing tag dots — draggable */}
               {activeImage.tags.map((tag) => {
                 const isDragging = draggingTagId === tag.id;
-                const isScraping = scrapingIds.has(tag.productId);
+                const isScraping = scrapingIds.has(tag.productId) || tag.product?.scrapeStatus === "pending";
                 const reviewMissing = !isScraping ? reviewFlags[tag.productId] : undefined;
-                const needsReview = !!reviewMissing?.length;
+                // A deferred-scrape tag (scrapeStatus set) needs review until the
+                // designer confirms it (reviewedAt). Drives the amber pin + panel.
+                const needsReview = !isScraping && tag.product?.scrapeStatus != null && !tag.reviewedAt;
                 const xPct = isDragging && dragPos ? dragPos.x : (tag.x <= 1 ? tag.x * 100 : tag.x);
                 const yPct = isDragging && dragPos ? dragPos.y : (tag.y <= 1 ? tag.y * 100 : tag.y);
                 return (
@@ -1036,7 +1186,7 @@ export function ProjectImageTagger({ projectId, images: providedImages, onClose 
                               </span>
                             ) : needsReview ? (
                               <span className="text-[var(--type-fine)] text-amber-600 truncate">
-                                Needs review: {reviewMissing!.join(", ")}
+                                {reviewMissing?.length ? `Needs review: ${reviewMissing.join(", ")}` : "Ready to review"}
                               </span>
                             ) : (
                               tag.product?.brand && (
@@ -1049,7 +1199,7 @@ export function ProjectImageTagger({ projectId, images: providedImages, onClose 
                           <button
                             onClick={(e) => {
                               e.stopPropagation();
-                              openEditProduct(tag.productId);
+                              openEditProduct(tag.productId, tag.id);
                             }}
                             className="ml-auto flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full text-folio-text-tertiary hover:text-[var(--accent)] hover:bg-[var(--accent)]/10 transition-colors"
                             title="Edit details"
