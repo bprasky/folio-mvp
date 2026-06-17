@@ -778,6 +778,9 @@ model ProductTag {
   updatedAt DateTime     @updatedAt
   productId String
   imageId   String
+  // Async tagging review: when a deferred-scrape tag has been confirmed by the
+  // designer. Null = still needs review. See ProjectImageTagger / notifications.
+  reviewedAt DateTime?
   image     ProjectImage @relation(fields: [imageId], references: [id], onDelete: Cascade)
   product   Product      @relation(fields: [productId], references: [id], onDelete: Cascade)
   selection Selection? // Selection created from this tag

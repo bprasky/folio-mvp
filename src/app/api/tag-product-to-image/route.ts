@@ -658,11 +658,14 @@ export async function PATCH(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { id, x, y } = await request.json();
+    const { id, x, y, reviewed } = await request.json();
 
-    if (!id || x == null || y == null) {
+    // Two modes: reposition (x, y) or mark-reviewed (reviewed: true). The
+    // reviewed flag confirms a deferred-scrape tag so it leaves the review queue.
+    const isReviewMode = reviewed === true;
+    if (!id || (!isReviewMode && (x == null || y == null))) {
       return NextResponse.json(
-        { error: 'Missing required fields: id, x, y' },
+        { error: 'Missing required fields: id and either (x, y) or reviewed' },
         { status: 400 }
       );
     }
@@ -690,7 +693,7 @@ export async function PATCH(request: NextRequest) {
 
     const updated = await prisma.productTag.update({
       where: { id },
-      data: { x, y },
+      data: isReviewMode ? { reviewedAt: new Date() } : { x, y },
     });
 
     return NextResponse.json(updated);
