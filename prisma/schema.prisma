@@ -7489,6 +7489,7 @@ model ScrapeAttempt {
   targetStatus Int? // the page's HTTP status, not Browserless's
   outcome      ScrapeOutcome
   durationMs   Int
+  error        String? // failure detail (caught message or parsed GraphQL error); null on success
 
   // optional joins, nullable so this never blocks a write
   importSessionId String?
