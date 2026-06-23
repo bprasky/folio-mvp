@@ -99,6 +99,16 @@ function domainOf(url: string): string {
   }
 }
 
+// Keep error detail legible without bloating the row. The client already folds
+// the caught message and any parsed GraphQL error into result.error, so this
+// just caps the length.
+const MAX_ERROR_LENGTH = 1000;
+
+function truncateError(error: string | undefined): string | null {
+  if (!error) return null;
+  return error.length > MAX_ERROR_LENGTH ? error.slice(0, MAX_ERROR_LENGTH) : error;
+}
+
 export async function recordScrapeAttempt(input: RecordScrapeInput): Promise<void> {
   try {
     const { result } = input;
@@ -128,6 +138,8 @@ export async function recordScrapeAttempt(input: RecordScrapeInput): Promise<voi
         targetStatus: targetStatus ?? null,
         outcome: outcome as any,
         durationMs: result.durationMs,
+        // Persist failure detail; result.error is unset on success, so this is null then.
+        error: truncateError(result.error),
         importSessionId: input.importSessionId ?? null,
         productId: input.productId ?? null,
       },
