@@ -17,6 +17,7 @@ module.exports = {
           canvas: 'var(--surface-canvas)',     // Level 0 — page bg, nav
           ground: 'var(--surface-ground)',     // Level 1 — filter bars, tabs
           elevated: 'var(--surface-elevated)', // Level 2 — card base
+          card: 'var(--surface-elevated)',     // Level 2 — alias used by cards/modals
         },
 
         // ========================================
