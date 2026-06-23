@@ -1739,15 +1739,15 @@ export function ProjectImageTagger({ projectId, images: providedImages, onClose 
       {/* Edit-an-existing-tagged-product modal */}
       {editTarget && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
+          className="fixed inset-0 z-[60] flex items-center justify-center bg-black/40 p-4"
           onClick={() => !editSaving && setEditTarget(null)}
         >
           <div
-            className="w-full max-w-md rounded-2xl bg-surface-card shadow-xl overflow-hidden"
+            className="ridge-card w-full max-w-md max-h-[80vh] flex flex-col overflow-hidden"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between px-5 py-4 border-b border-folio-border-subtle">
-              <h3 className="text-sm font-semibold text-folio-text-primary">Edit product details</h3>
+              <h3 className="folio-ui text-folio-text-primary">Edit product details</h3>
               <button
                 onClick={() => setEditTarget(null)}
                 className="text-folio-text-tertiary hover:text-folio-text-primary"
@@ -1756,7 +1756,7 @@ export function ProjectImageTagger({ projectId, images: providedImages, onClose 
                 <FaTimes className="w-4 h-4" />
               </button>
             </div>
-            <div className="px-5 py-4 space-y-3 max-h-[60vh] overflow-y-auto">
+            <div className="flex-1 min-h-0 px-5 py-4 space-y-3 overflow-y-auto">
               {editError && (
                 <div className="flex items-start gap-2 rounded-md bg-red-50 text-red-600 px-2 py-1.5 text-xs">
                   <FaExclamationCircle className="w-3.5 h-3.5 mt-0.5 flex-shrink-0" />
@@ -1832,14 +1832,14 @@ export function ProjectImageTagger({ projectId, images: providedImages, onClose 
               <button
                 onClick={() => setEditTarget(null)}
                 disabled={editSaving}
-                className="flex-1 rounded-lg py-2.5 text-sm font-medium text-folio-text-secondary hover:bg-surface-ground transition-colors disabled:opacity-50"
+                className="flex-1 px-4 py-2 ridge-card text-sm font-medium text-folio-text-primary hover:bg-surface-ground transition-colors text-center disabled:opacity-50"
               >
                 Cancel
               </button>
               <button
                 onClick={saveEditProduct}
                 disabled={editSaving}
-                className="flex-1 rounded-lg py-2.5 text-sm font-medium text-white bg-[var(--accent)] hover:opacity-90 transition-opacity disabled:opacity-50"
+                className="flex-1 px-4 py-2 rounded-lg bg-[var(--accent)] text-white text-sm font-medium hover:opacity-90 transition-opacity disabled:opacity-50"
               >
                 {editSaving ? "Saving…" : "Save"}
               </button>
