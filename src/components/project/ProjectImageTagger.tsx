@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useRef, useCallback } from "react";
-import { FaTimes, FaTag, FaSearch, FaCheck, FaTrash, FaGripLines, FaImage, FaExternalLinkAlt, FaChevronDown, FaChevronUp, FaExclamationCircle, FaPen } from "react-icons/fa";
+import { FaTimes, FaTag, FaSearch, FaCheck, FaTrash, FaGripLines, FaImage, FaExternalLinkAlt, FaChevronDown, FaChevronUp, FaExclamationCircle } from "react-icons/fa";
 import { isFlaggedDomain } from "@/lib/browserless/flaggedDomains";
 
 type ImageWithTags = {
@@ -1107,9 +1107,22 @@ export function ProjectImageTagger({ projectId, images: providedImages, onClose 
           </div>
           <div className="flex gap-2 overflow-x-auto pb-1">
             {pendingTags.map((p) => (
+              // The whole chip is clickable to open the edit/review modal —
+              // not just the pencil. Confirm + discard are explicit buttons
+              // that stop propagation so they don't also trigger the edit.
               <div
                 key={p.tagId}
-                className="flex flex-shrink-0 items-center gap-2 rounded-lg border border-folio-border-subtle bg-surface-card px-2 py-1.5"
+                role="button"
+                tabIndex={0}
+                onClick={() => openEditProduct(p.productId, p.tagId)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault();
+                    openEditProduct(p.productId, p.tagId);
+                  }
+                }}
+                title="Click to review & edit"
+                className="group flex flex-shrink-0 cursor-pointer items-center gap-2 rounded-lg border border-folio-border-subtle bg-surface-card px-2 py-1.5 text-left transition-colors hover:border-[var(--accent)] hover:bg-surface-ground focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
               >
                 {p.productImageUrl ? (
                   // eslint-disable-next-line @next/next/no-img-element
@@ -1118,41 +1131,38 @@ export function ProjectImageTagger({ projectId, images: providedImages, onClose 
                   <div className="h-8 w-8 rounded bg-surface-ground" />
                 )}
                 <div className="min-w-0 max-w-[140px]">
-                  <button
-                    onClick={() => {
-                      const img = images.find((i) => i.id === p.imageId);
-                      if (img) setActiveImage(img);
-                    }}
-                    className="block truncate text-left text-xs font-medium text-folio-text-primary hover:underline"
-                    title={p.name}
-                  >
+                  <span className="block truncate text-xs font-medium text-folio-text-primary" title={p.name}>
                     {p.name}
-                  </button>
+                  </span>
                   <span className={`text-[var(--type-fine)] ${p.fetching ? "text-[var(--accent)]" : "text-amber-600"}`}>
-                    {p.fetching ? "Fetching…" : "Ready"}
+                    {p.fetching ? "Fetching…" : "Ready · click to edit"}
                   </span>
                 </div>
-                {/* Edit is always available — even while a scrape is still
-                    running — so the designer can fill details by hand at any
-                    time. Confirm appears once the (best-effort) scrape isn't
-                    actively polling. */}
+                {/* Confirm appears once the (best-effort) scrape isn't actively
+                    polling; discard is always available. */}
                 <div className="flex items-center gap-1">
-                  <button
-                    onClick={() => openEditProduct(p.productId, p.tagId)}
-                    title="Edit details"
-                    className="flex h-6 w-6 items-center justify-center rounded text-folio-text-tertiary hover:text-[var(--accent)]"
-                  >
-                    <FaPen className="w-2.5 h-2.5" />
-                  </button>
                   {!p.fetching && (
                     <button
-                      onClick={() => confirmTag(p.tagId)}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        confirmTag(p.tagId);
+                      }}
                       title="Confirm tag"
                       className="flex h-6 w-6 items-center justify-center rounded bg-[var(--accent)] text-white hover:opacity-90"
                     >
                       <FaCheck className="w-2.5 h-2.5" />
                     </button>
                   )}
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleDeleteTag(p.tagId);
+                    }}
+                    title="Discard tag"
+                    className="flex h-6 w-6 items-center justify-center rounded text-red-400 hover:bg-red-50 hover:text-red-600"
+                  >
+                    <FaTrash className="w-2.5 h-2.5" />
+                  </button>
                 </div>
               </div>
             ))}
@@ -1258,7 +1268,24 @@ export function ProjectImageTagger({ projectId, images: providedImages, onClose 
                         onMouseDown={(e) => e.stopPropagation()}
                         onTouchStart={(e) => e.stopPropagation()}
                       >
-                        <div className="w-max max-w-[220px] ridge-card px-3 py-2 shadow-lg flex items-center gap-2">
+                        {/* The whole popup is clickable to edit/review the
+                            tagged product; discard is an explicit button. */}
+                        <div
+                          role="button"
+                          tabIndex={0}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            openEditProduct(tag.productId, tag.id);
+                          }}
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter" || e.key === " ") {
+                              e.preventDefault();
+                              openEditProduct(tag.productId, tag.id);
+                            }
+                          }}
+                          title="Click to review & edit"
+                          className="w-max max-w-[220px] ridge-card px-3 py-2 shadow-lg flex items-center gap-2 cursor-pointer transition-shadow hover:ring-1 hover:ring-[var(--accent)]"
+                        >
                           {tag.product?.imageUrl && (
                             <div className="h-8 w-8 flex-shrink-0 overflow-hidden rounded bg-surface-ground">
                               {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -1282,30 +1309,18 @@ export function ProjectImageTagger({ projectId, images: providedImages, onClose 
                                 {reviewMissing?.length ? `Needs review: ${reviewMissing.join(", ")}` : "Ready to review"}
                               </span>
                             ) : (
-                              tag.product?.brand && (
-                                <span className="text-[var(--type-fine)] text-folio-text-secondary truncate">
-                                  {tag.product.brand}
-                                </span>
-                              )
+                              <span className="text-[var(--type-fine)] text-folio-text-secondary truncate">
+                                {tag.product?.brand || "Click to edit"}
+                              </span>
                             )}
                           </div>
                           <button
                             onClick={(e) => {
                               e.stopPropagation();
-                              openEditProduct(tag.productId, tag.id);
-                            }}
-                            className="ml-auto flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full text-folio-text-tertiary hover:text-[var(--accent)] hover:bg-[var(--accent)]/10 transition-colors"
-                            title="Edit details"
-                          >
-                            <FaPen className="w-3 h-3" />
-                          </button>
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
                               handleDeleteTag(tag.id);
                             }}
-                            className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full text-red-400 hover:text-red-600 hover:bg-red-50 transition-colors"
-                            title="Remove tag"
+                            className="ml-auto flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full text-red-400 hover:text-red-600 hover:bg-red-50 transition-colors"
+                            title="Discard tag"
                           >
                             <FaTrash className="w-3 h-3" />
                           </button>
