@@ -19,6 +19,8 @@
  * the scrape path, which still runs the Phase 0 byte-for-byte bodies.
  */
 
+import { hasUsablePageContent } from './classify';
+
 const BROWSERLESS_HOST = 'https://production-sfo.browserless.io';
 const DEFAULT_TIMEOUT_MS = 20000;
 // BrowserQL needs a higher ceiling than the REST endpoints: a navigation plus a
@@ -29,10 +31,16 @@ const BQL_DEFAULT_TIMEOUT_MS = 90000;
 // Single BrowserQL mutation for the escalation rung. Confirmed against the BQL
 // reference on docs.browserless.io (goto / if / solve / html operations):
 //
-//   - goto(url, waitUntil: load) { status }  navigates and surfaces the page
-//     status. Stealth is engaged via the /stealth/bql endpoint path (see bql()
-//     below), and the residential proxy is selected via query params on the
-//     endpoint URL, not as a mutation argument.
+//   - goto(url, waitUntil: domContentLoaded) { status }  navigates and surfaces
+//     the page status. waitUntil is a documented BQL goto enum
+//     (commit / domContentLoaded / load / networkIdle / firstMeaningfulPaint);
+//     we wait only for the DOM, not for every sub-resource (load) or the network
+//     to quiet (networkIdle). Heavy retailer pages (e.g. a 3.4MB Pottery Barn
+//     PDP) render usable HTML long before then, and a stricter wait just burns
+//     the goto navigation timeout while the page is already there. Stealth is
+//     engaged via the /stealth/bql endpoint path (see bql() below), and the
+//     residential proxy is selected via query params on the endpoint URL, not as
+//     a mutation argument.
 //   - if(selector) { solve(type) { ... } }  is a point-in-time presence check
 //     that runs the nested solve ONLY when that widget is in the DOM. This keeps
 //     the 10-unit solve charge gated to an actual challenge: on a clean page the
@@ -60,7 +68,7 @@ const BQL_RECAPTCHA_SELECTOR = ".g-recaptcha, iframe[src*='recaptcha']";
 const BQL_CLOUDFLARE_SELECTOR = ".cf-turnstile, iframe[src*='challenges.cloudflare.com']";
 
 const BQL_SCRAPE_MUTATION = `mutation FolioBqlScrape($url: String!) {
-  goto(url: $url, waitUntil: load) {
+  goto(url: $url, waitUntil: domContentLoaded) {
     status
   }
   recaptcha: if(selector: ${JSON.stringify(BQL_RECAPTCHA_SELECTOR)}) {
@@ -127,6 +135,13 @@ export interface BrowserlessResult {
   durationMs: number;
   /** Set when the request threw or timed out. "timeout" | "no-key" | message. */
   error?: string;
+  /**
+   * Non-fatal diagnostic that did NOT make the result a failure. Used by the BQL
+   * rung to record a goto navigation-wait timeout that still returned a usable
+   * page: `ok` stays true, the page flows to the classifier, and this carries the
+   * timeout note for observability. Distinct from `error`, which means failure.
+   */
+  note?: string;
   /**
    * BQL only: true when the conditional rung detected a captcha and the solve
    * succeeded (the only path that incurs the 10-unit solve charge). Left
@@ -339,7 +354,19 @@ export async function bql(url: string, opts: BrowserlessOptions = {}): Promise<B
     const solved =
       data?.recaptcha?.solve?.solved === true ||
       data?.cloudflare?.solve?.solved === true;
-    const ok = res.ok && !gqlError;
+
+    // A goto navigation-wait timeout (or any step that throws once the page is
+    // already up) comes back as a GraphQL `errors` array on a 200, but the
+    // `content: html` field still carries the fully rendered page. This rung is
+    // content-first: if a usable page came back, a wait condition that didn't
+    // fully settle is not a failure. Recover those: flip to ok, surface the
+    // HTML, and downgrade the step error to a non-fatal note. Genuinely empty,
+    // thin, or challenge/captcha responses do NOT qualify (hasUsablePageContent
+    // gates on real content length and the absence of challenge markers, the
+    // same rule the classifier's BQL branch uses), so they stay failures.
+    const recoveredFromStepError =
+      res.ok && !!gqlError && hasUsablePageContent(html);
+    const ok = res.ok && (!gqlError || recoveredFromStepError);
 
     return {
       ok,
@@ -350,7 +377,11 @@ export async function bql(url: string, opts: BrowserlessOptions = {}): Promise<B
       payload: ok ? html : raw,
       endpoint: 'bql',
       durationMs,
-      error: gqlError,
+      // Only a genuine failure carries `error`. A recovered step timeout is
+      // non-fatal and rides along as `note` instead, so the classifier does not
+      // mislabel a usable page as TIMEOUT/BROWSERLESS_ERROR.
+      error: recoveredFromStepError ? undefined : gqlError,
+      note: recoveredFromStepError ? gqlError : undefined,
       solved,
     };
   } catch (err: any) {
