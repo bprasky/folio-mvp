@@ -79,6 +79,11 @@ if (!KEY) {
   process.exit(1);
 }
 
+// Sanity-check what was actually received (no secret exposed): the length and
+// first 3 chars let you compare against the key shown in the dashboard, ruling
+// out a truncated paste or pasting the wrong thing entirely.
+console.log(`Token received: length=${KEY.length}, starts with "${KEY.slice(0, 3)}"`);
+
 // Minimal mutation: just navigate and grab HTML. Isolates connectivity / auth /
 // endpoint / proxy from the conditional captcha rung.
 const MINIMAL = `mutation Probe($url: String!) {
