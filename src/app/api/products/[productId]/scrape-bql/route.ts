@@ -115,6 +115,27 @@ export async function POST(
   // Run the rung inline (the ~34s part).
   const res = await bql(product.url);
 
+  // Diagnostic: a flagged-domain scrape that returns fast with no content is the
+  // symptom we are chasing. Log the BQL outcome so prod logs show the exact
+  // failure (auth, bad param, GraphQL error, empty html) instead of just a
+  // silent 'failed' on the product. payload is logged by length + a short head,
+  // never in full.
+  console.log(
+    '[scrape-bql] result',
+    JSON.stringify({
+      productId,
+      url: product.url,
+      ok: res.ok,
+      httpStatus: res.status,
+      targetStatus: res.targetStatus,
+      durationMs: res.durationMs,
+      error: res.error ?? null,
+      note: res.note ?? null,
+      payloadLength: res.payload?.length ?? 0,
+      payloadHead: (res.payload ?? '').slice(0, 200),
+    }),
+  );
+
   const fields = res.ok ? extractProductFromHtml(res.payload, product.url) : null;
   const usable = !!(fields && (fields.name || fields.image));
 
