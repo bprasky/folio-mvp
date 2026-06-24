@@ -30,9 +30,9 @@ const BQL_DEFAULT_TIMEOUT_MS = 90000;
 // reference on docs.browserless.io (goto / if / solve / html operations):
 //
 //   - goto(url, waitUntil: load) { status }  navigates and surfaces the page
-//     status. Stealth is the BQL endpoint default, and the residential proxy is
-//     selected via query params on the endpoint URL (see bql() below), not as a
-//     mutation argument.
+//     status. Stealth is engaged via the /stealth/bql endpoint path (see bql()
+//     below), and the residential proxy is selected via query params on the
+//     endpoint URL, not as a mutation argument.
 //   - if(selector) { solve(type) { ... } }  is a point-in-time presence check
 //     that runs the nested solve ONLY when that widget is in the DOM. This keeps
 //     the 10-unit solve charge gated to an actual challenge: on a clean page the
@@ -271,14 +271,14 @@ export async function smartScrape(_url: string, _opts: BrowserlessOptions = {}):
 
 /**
  * BrowserQL escalation rung (spec 17 Phase 2a). Runs the single
- * BQL_SCRAPE_MUTATION above against the /bql GraphQL endpoint: navigate with
- * stealth (the BQL default) over a residential proxy, conditionally solve a
- * captcha only when one is present, then return the page HTML.
+ * BQL_SCRAPE_MUTATION above against the /stealth/bql GraphQL endpoint: navigate
+ * with stealth over a residential proxy, conditionally solve a captcha only when
+ * one is present, then return the page HTML.
  *
  * The residential proxy is selected via query params on the endpoint URL, the
  * documented way to use Browserless's built-in proxy from BQL. `opts.stealth`
- * is accepted for signature parity but needs no wire mapping: the BQL endpoint
- * is stealth-first by default.
+ * is accepted for signature parity but needs no wire mapping: stealth is engaged
+ * by the /stealth/bql endpoint path itself.
  *
  * Result shape matches the other client methods so it flows straight through
  * the classifier and recorder: `payload` carries the page HTML (so the bot-wall
@@ -308,7 +308,7 @@ export async function bql(url: string, opts: BrowserlessOptions = {}): Promise<B
   const timer = setTimeout(() => controller.abort(), timeoutMs);
   const started = Date.now();
   try {
-    const res = await fetch(`${BROWSERLESS_HOST}/bql?${params.toString()}`, {
+    const res = await fetch(`${BROWSERLESS_HOST}/stealth/bql?${params.toString()}`, {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
       body: JSON.stringify({ query: BQL_SCRAPE_MUTATION, variables: { url } }),
