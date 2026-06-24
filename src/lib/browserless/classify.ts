@@ -79,6 +79,25 @@ function hasAny(haystack: string, needles: string[]): boolean {
 }
 
 /**
+ * Content-first usability check for a returned page body. A body is usable when
+ * it is non-trivial (at least MIN_USABLE_BODY chars) and free of a lingering
+ * captcha or challenge wall. Status is intentionally ignored: a solved challenge
+ * clears the page yet goto.status still reports the original handshake.
+ *
+ * Shared between the BQL branch of classifyScrapeOutcome and the bql() recovery
+ * path, so both decide "did a usable page come back?" by the same rule. This is
+ * what lets bql() keep a content-bearing response that a goto navigation-wait
+ * timeout would otherwise have discarded.
+ */
+export function hasUsablePageContent(payload: string | null | undefined): boolean {
+  if (!payload) return false;
+  const body = payload.toLowerCase();
+  if (hasAny(body, CAPTCHA_MARKERS)) return false;
+  if (hasAny(body, CHALLENGE_SIGNATURES) || looksLikeBotWall(payload)) return false;
+  return payload.trim().length >= MIN_USABLE_BODY;
+}
+
+/**
  * Classify a scrape attempt into a ScrapeOutcome, keyed on the target HTTP
  * status plus content signature. Status is the primary signal; the bot-wall
  * phrase list (looksLikeBotWall) is a secondary signal behind it. The caller
