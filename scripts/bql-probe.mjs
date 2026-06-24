@@ -24,7 +24,7 @@
 
 import readline from 'node:readline';
 
-const HOST = 'https://production-sfo.browserless.io';
+let HOST = 'https://production-sfo.browserless.io';
 const URL_TO_SCRAPE =
   process.argv[2] ||
   'https://www.potterybarn.com/products/york-leather-sofa/';
@@ -51,10 +51,28 @@ function askHidden(query) {
   });
 }
 
-const KEY =
-  process.env.BROWSERLESS_API_KEY ||
-  process.env.BROWSERLESS_TOKEN ||
-  (await askHidden('Paste your Browserless token and press Enter: '));
+let KEY = process.env.BROWSERLESS_API_KEY || process.env.BROWSERLESS_TOKEN;
+
+if (!KEY) {
+  const entered = await askHidden(
+    'Paste your Browserless token OR the full BrowserQL connect URL, then press Enter: ',
+  );
+  // If they pasted the whole dashboard URL, pull the token and host out of it so
+  // there is no chance of a copy error or a region mismatch.
+  if (/^https?:\/\//i.test(entered)) {
+    try {
+      const u = new URL(entered);
+      HOST = u.origin;
+      KEY = u.searchParams.get('token') || '';
+      console.log(`Parsed host from URL: ${HOST}`);
+    } catch {
+      console.error('That looked like a URL but could not be parsed. Aborting.');
+      process.exit(1);
+    }
+  } else {
+    KEY = entered;
+  }
+}
 
 if (!KEY) {
   console.error('No token provided. Aborting.');
