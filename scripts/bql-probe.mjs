@@ -14,22 +14,50 @@
  * it runs a deliberately small set, cheapest first.
  *
  * Usage:
- *   BROWSERLESS_API_KEY=... node scripts/bql-probe.mjs [url]
- *   (BROWSERLESS_TOKEN is accepted as an alias, same as the app.)
+ *   node scripts/bql-probe.mjs [url]
+ *
+ * It prompts for your Browserless token (input is hidden). If you'd rather not
+ * be prompted, set BROWSERLESS_API_KEY or BROWSERLESS_TOKEN and it uses that.
  *
  * Default URL is a Pottery Barn PDP, the domain that prompted this.
  */
 
+import readline from 'node:readline';
+
 const HOST = 'https://production-sfo.browserless.io';
-const KEY = process.env.BROWSERLESS_API_KEY || process.env.BROWSERLESS_TOKEN;
 const URL_TO_SCRAPE =
   process.argv[2] ||
   'https://www.potterybarn.com/products/york-leather-sofa/';
 
+/** Ask for a secret on the terminal without echoing the keystrokes. */
+function askHidden(query) {
+  return new Promise((resolve) => {
+    const rl = readline.createInterface({
+      input: process.stdin,
+      output: process.stdout,
+      terminal: true,
+    });
+    // Suppress echo of the typed token (the query itself still prints).
+    let muted = false;
+    rl._writeToOutput = (str) => {
+      if (!muted) rl.output.write(str);
+    };
+    rl.question(query, (val) => {
+      rl.close();
+      process.stdout.write('\n');
+      resolve(val.trim());
+    });
+    muted = true;
+  });
+}
+
+const KEY =
+  process.env.BROWSERLESS_API_KEY ||
+  process.env.BROWSERLESS_TOKEN ||
+  (await askHidden('Paste your Browserless token and press Enter: '));
+
 if (!KEY) {
-  console.error(
-    'No key. Set BROWSERLESS_API_KEY (or BROWSERLESS_TOKEN) in the environment.',
-  );
+  console.error('No token provided. Aborting.');
   process.exit(1);
 }
 
