@@ -1,11 +1,12 @@
 // @idor-allow: public-read reason="Authenticated designer tagging action; spends the BQL rung only for products on flagged domains"
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
-// The BQL rung (residential proxy + stealth + conditional solve) can legitimately
-// run ~30-40s for a flagged hard domain. Raise the ceiling the same way the
-// website import and ImportWizard analyze steps do, and run it inline here so the
-// result is written back when it finishes. The tagging request itself stays fast:
-// it creates the product as scrapeStatus 'pending' and fires this route after.
+// The BQL rung runs a real headless browser navigation plus a conditional captcha
+// solve, which can take ~10-40s for a heavy retailer page. Raise the ceiling the
+// same way the website import and ImportWizard analyze steps do, and run it inline
+// here so the result is written back when it finishes. The tagging request itself
+// stays fast: it creates the product as scrapeStatus 'pending' and fires this
+// route after.
 export const maxDuration = 120;
 
 import { NextRequest, NextResponse } from 'next/server';
