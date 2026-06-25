@@ -91,9 +91,10 @@ const MINIMAL = `mutation Probe($url: String!) {
   content: html { html }
 }`;
 
-// The exact rung the app sends, including the gated solve branches.
+// The exact rung the app sends, including the gated solve branches and the 45s
+// goto timeout.
 const FULL = `mutation FolioBqlScrape($url: String!) {
-  goto(url: $url, waitUntil: domContentLoaded) { status }
+  goto(url: $url, waitUntil: domContentLoaded, timeout: 45000) { status }
   recaptcha: if(selector: ".g-recaptcha, iframe[src*='recaptcha']") {
     solve(type: recaptcha) { found solved time }
   }
@@ -163,30 +164,23 @@ async function probe(label, { path, params, mutation }) {
 
 console.log(`Probing: ${URL_TO_SCRAPE}`);
 
-// Cheapest first. A → does basic BQL even work (auth/endpoint, no proxy).
-// B → does the stealth + residential proxy path the app uses work.
-// C → does the full app mutation (with the if/solve rung) work.
-await probe('A: minimal, /chromium/bql, no proxy', {
+// A → the EXACT config the app now ships (full mutation, plain endpoint, no
+//     proxy, 45s goto timeout). This is the one that matters.
+// B → stealth endpoint, still no residential proxy: the fallback if a domain
+//     ever needs anti-detection without the slow residential exit.
+await probe('A: SHIPPING config — full mutation, /chromium/bql, no proxy', {
   path: '/chromium/bql',
   params: {},
-  mutation: MINIMAL,
+  mutation: FULL,
 });
-await probe('B: minimal, /stealth/bql, residential proxy', {
+await probe('B: full mutation, /stealth/bql, no proxy', {
   path: '/stealth/bql',
-  params: { proxy: 'residential', proxyCountry: 'us' },
-  mutation: MINIMAL,
-});
-await probe('C: full app mutation, /stealth/bql, residential proxy', {
-  path: '/stealth/bql',
-  params: { proxy: 'residential', proxyCountry: 'us' },
+  params: {},
   mutation: FULL,
 });
 
 console.log('\n' + '='.repeat(72));
 console.log('Read-out:');
-console.log('  - All HTTP 401          -> bad/missing token.');
-console.log('  - A 404 / non-JSON      -> wrong endpoint path for this host.');
-console.log('  - B 400 + GraphQL error -> a proxy query param is rejected.');
-console.log('  - A/B ok, C fails       -> the if/solve rung is the problem.');
-console.log('  - All ok, html > 0      -> BQL works; the bug is downstream (route/extract).');
-console.log('  - All fast + html = 0   -> the call is not reaching a real browser navigation.');
+console.log('  - A is HTTP 200 + big html + real product <title> -> ship it; this is the app config.');
+console.log('  - A times out / thin html                         -> tell me; we raise the goto timeout or add the proxy back.');
+console.log('  - All HTTP 401                                     -> stale token (clear $env:BROWSERLESS_API_KEY).');

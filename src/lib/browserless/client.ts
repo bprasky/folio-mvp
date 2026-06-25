@@ -31,16 +31,18 @@ const BQL_DEFAULT_TIMEOUT_MS = 90000;
 // Single BrowserQL mutation for the escalation rung. Confirmed against the BQL
 // reference on docs.browserless.io (goto / if / solve / html operations):
 //
-//   - goto(url, waitUntil: domContentLoaded) { status }  navigates and surfaces
-//     the page status. waitUntil is a documented BQL goto enum
-//     (commit / domContentLoaded / load / networkIdle / firstMeaningfulPaint);
+//   - goto(url, waitUntil: domContentLoaded, timeout: 45000) { status }
+//     navigates and surfaces the page status. waitUntil is a documented BQL goto
+//     enum (commit / domContentLoaded / load / networkIdle / firstMeaningfulPaint);
 //     we wait only for the DOM, not for every sub-resource (load) or the network
-//     to quiet (networkIdle). Heavy retailer pages (e.g. a 3.4MB Pottery Barn
+//     to quiet (networkIdle). Heavy retailer pages (e.g. a 2.8MB Pottery Barn
 //     PDP) render usable HTML long before then, and a stricter wait just burns
-//     the goto navigation timeout while the page is already there. Stealth is
-//     engaged via the /stealth/bql endpoint path (see bql() below), and the
-//     residential proxy is selected via query params on the endpoint URL, not as
-//     a mutation argument.
+//     the goto navigation timeout while the page is already there. The explicit
+//     45s goto timeout is headroom over the ~9s a plain-endpoint nav takes; it
+//     replaces BQL's default 30s, which a slow exit could otherwise blow past.
+//     By default bql() hits the plain /chromium/bql endpoint with NO residential
+//     proxy (the proven-fast Pottery Barn path); stealth (/stealth/bql) and the
+//     residential proxy are explicit opt-ins for domains that need them.
 //   - if(selector) { solve(type) { ... } }  is a point-in-time presence check
 //     that runs the nested solve ONLY when that widget is in the DOM. This keeps
 //     the 10-unit solve charge gated to an actual challenge: on a clean page the
@@ -68,7 +70,7 @@ const BQL_RECAPTCHA_SELECTOR = ".g-recaptcha, iframe[src*='recaptcha']";
 const BQL_CLOUDFLARE_SELECTOR = ".cf-turnstile, iframe[src*='challenges.cloudflare.com']";
 
 const BQL_SCRAPE_MUTATION = `mutation FolioBqlScrape($url: String!) {
-  goto(url: $url, waitUntil: domContentLoaded) {
+  goto(url: $url, waitUntil: domContentLoaded, timeout: 45000) {
     status
   }
   recaptcha: if(selector: ${JSON.stringify(BQL_RECAPTCHA_SELECTOR)}) {
@@ -307,15 +309,18 @@ export async function bql(url: string, opts: BrowserlessOptions = {}): Promise<B
     return { ok: false, status: 0, targetStatus: null, payload: '', endpoint: 'bql', durationMs: 0, error: 'no-key' };
   }
 
-  // Token plus the built-in residential proxy ride as query params on the BQL
-  // endpoint URL. Default to a US residential exit for this rung; honor an
-  // explicit datacenter choice if a caller asks for it.
+  // The token rides as a query param. The built-in residential proxy is OFF by
+  // default: in testing it roughly tripled latency and pushed a heavy retailer
+  // PDP (Pottery Barn) past the goto navigation timeout, returning an empty page
+  // shell, while a plain datacenter exit loaded the same page fully in ~9s.
+  // Residential stays available for a caller that explicitly needs it (a domain
+  // that blocks datacenter IPs) via opts.proxy; it is no longer forced on.
   const params = new URLSearchParams({ token: key });
-  if (opts.proxy === 'datacenter') {
-    params.set('proxy', 'datacenter');
-  } else {
+  if (opts.proxy === 'residential') {
     params.set('proxy', 'residential');
     params.set('proxyCountry', opts.proxyCountry ?? 'us');
+  } else if (opts.proxy === 'datacenter') {
+    params.set('proxy', 'datacenter');
   }
 
   const timeoutMs = opts.timeoutMs ?? BQL_DEFAULT_TIMEOUT_MS;
@@ -323,7 +328,11 @@ export async function bql(url: string, opts: BrowserlessOptions = {}): Promise<B
   const timer = setTimeout(() => controller.abort(), timeoutMs);
   const started = Date.now();
   try {
-    const res = await fetch(`${BROWSERLESS_HOST}/stealth/bql?${params.toString()}`, {
+    // Default to the plain /chromium/bql endpoint, which cleared Pottery Barn in
+    // testing (full PDP, HTTP 200, ~9s). Escalate to the stealth endpoint only
+    // when a caller explicitly asks via opts.stealth.
+    const path = opts.stealth ? '/stealth/bql' : '/chromium/bql';
+    const res = await fetch(`${BROWSERLESS_HOST}${path}?${params.toString()}`, {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
       body: JSON.stringify({ query: BQL_SCRAPE_MUTATION, variables: { url } }),
