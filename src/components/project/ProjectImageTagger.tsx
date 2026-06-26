@@ -181,6 +181,23 @@ export function ProjectImageTagger({ projectId, images: providedImages, onClose 
   const [parsing, setParsing] = useState<null | "text" | "image">(null);
   const [captureError, setCaptureError] = useState<string | null>(null);
 
+  // Dedup: when a pasted URL already maps to an existing product, offer to reuse
+  // it ("we already have this — is this it?") instead of silently creating a
+  // duplicate or inheriting an earlier faulty scrape. `lookupChecked` is set once
+  // the designer says "not the same" so the next fetch scrapes fresh.
+  const [existingMatch, setExistingMatch] = useState<null | {
+    id: string;
+    name: string | null;
+    imageUrl: string | null;
+    price: number | null;
+    brand: string | null;
+    claimed: boolean;
+    complete: boolean;
+    missing: string[];
+  }>(null);
+  const [lookupChecked, setLookupChecked] = useState(false);
+  const [reusing, setReusing] = useState(false);
+
   const imageRef = useRef<HTMLImageElement | null>(null);
   const searchTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -412,6 +429,9 @@ export function ProjectImageTagger({ projectId, images: providedImages, onClose 
     setPasteText("");
     setParsing(null);
     setCaptureError(null);
+    setExistingMatch(null);
+    setLookupChecked(false);
+    setReusing(false);
   };
 
   // Scrape a product URL into a preview the designer can confirm before tagging.
@@ -420,6 +440,30 @@ export function ProjectImageTagger({ projectId, images: providedImages, onClose 
     if (!url) return;
     // Each fetch starts collapsed; only an inline scrape with fields opens it.
     setPreviewExpanded(false);
+    setExistingMatch(null);
+
+    // Dedup first: if we already have a product for this URL, surface it so the
+    // designer can reuse it ("is this the one?") rather than creating a duplicate
+    // or silently inheriting an earlier faulty scrape. Skipped once they've said
+    // "not the same" (lookupChecked). Best-effort: a lookup failure falls through
+    // to the normal scrape path.
+    if (!lookupChecked) {
+      try {
+        const r = await fetch(`/api/products/lookup?url=${encodeURIComponent(url)}`);
+        if (r.ok) {
+          const d = await r.json();
+          if (d?.match) {
+            setExistingMatch(d.match);
+            setUrlError(null);
+            setUrlPreview(null);
+            setShowManual(false);
+            return;
+          }
+        }
+      } catch {
+        /* fall through to a normal scrape */
+      }
+    }
 
     // Flagged hard domains (e.g. Wayfair) block the cheap tiers and take ~34s on
     // the BQL rung, too slow to run inline here. Defer: stage a pending preview,
@@ -636,6 +680,46 @@ export function ProjectImageTagger({ projectId, images: providedImages, onClose 
           description: manual.description.trim() || null,
         }
       : null;
+
+  // Reuse an existing product (a dedup hit) at the pending dot instead of
+  // creating a new one. If it's missing details, open the editor right after so
+  // the designer can complete/correct the shared product — post-save enrichment.
+  const useExistingProduct = async () => {
+    if (!pendingDot || !activeImage || !existingMatch) return;
+    const { id, complete, claimed } = existingMatch;
+    setReusing(true);
+    try {
+      const res = await fetch("/api/tag-product-to-image", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          x: pendingDot.x,
+          y: pendingDot.y,
+          productId: id,
+          imageId: activeImage.id,
+          projectId,
+        }),
+      });
+      if (res.ok) {
+        closeProductPicker();
+        await fetchImages();
+        // Incomplete shared product → route into the editor to fill the gaps.
+        // Skipped for vendor-claimed products, which can't be edited here.
+        if (!complete && !claimed) openEditProduct(id);
+      }
+    } catch (err) {
+      console.error("[ProjectImageTagger] reuse error:", err);
+    } finally {
+      setReusing(false);
+    }
+  };
+
+  // "Not the same product" — drop the dedup match and scrape this URL fresh.
+  const scrapeFreshInstead = () => {
+    setExistingMatch(null);
+    setLookupChecked(true);
+    handleFetchUrl();
+  };
 
   const handleSaveTag = async () => {
     if (!pendingDot || !activeImage) return;
@@ -1447,17 +1531,79 @@ export function ProjectImageTagger({ projectId, images: providedImages, onClose 
                   </button>
                 </div>
 
+                {/* Dedup hit: we already have this product — reuse it instead of
+                    creating a duplicate / re-scraping. */}
+                {existingMatch && (
+                  <div className="rounded-lg ring-2 ring-[var(--accent)] bg-[var(--accent)]/5 overflow-hidden">
+                    <div className="flex items-center gap-2 px-3 pt-3">
+                      <FaCheck className="w-3.5 h-3.5 text-[var(--accent)]" />
+                      <span className="folio-meta font-medium text-folio-text-primary">
+                        Already in your catalog · is this it?
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-3 p-3">
+                      {existingMatch.imageUrl ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img
+                          src={existingMatch.imageUrl}
+                          alt=""
+                          className="h-12 w-12 flex-shrink-0 rounded-lg object-cover bg-surface-ground"
+                        />
+                      ) : (
+                        <div className="h-12 w-12 flex-shrink-0 flex items-center justify-center rounded-lg bg-surface-ground text-folio-text-tertiary">
+                          <FaImage className="w-4 h-4" />
+                        </div>
+                      )}
+                      <div className="flex-1 min-w-0">
+                        <div className="text-sm font-medium text-folio-text-primary truncate">
+                          {existingMatch.name || "Untitled product"}
+                        </div>
+                        <div className="text-xs text-folio-text-secondary truncate">
+                          {[
+                            existingMatch.brand,
+                            existingMatch.price != null ? `$${existingMatch.price}` : null,
+                          ]
+                            .filter(Boolean)
+                            .join(" · ") || "Existing product"}
+                        </div>
+                        {!existingMatch.complete && (
+                          <div className="text-[var(--type-fine)] text-amber-600 mt-0.5">
+                            Missing {existingMatch.missing.join(", ")} — you can complete it after tagging.
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                    <div className="flex gap-2 border-t border-[var(--accent)]/20 px-3 py-2.5">
+                      <button
+                        type="button"
+                        onClick={scrapeFreshInstead}
+                        className="flex-1 rounded-lg py-2 text-sm font-medium text-folio-text-secondary hover:bg-surface-ground transition-colors"
+                      >
+                        Not the same
+                      </button>
+                      <button
+                        type="button"
+                        onClick={useExistingProduct}
+                        disabled={reusing}
+                        className="flex-1 rounded-lg py-2 text-sm font-medium text-white bg-[var(--accent)] hover:opacity-90 transition-opacity disabled:opacity-50"
+                      >
+                        {reusing ? "Tagging…" : "Use this product"}
+                      </button>
+                    </div>
+                  </div>
+                )}
+
                 {urlError && (
                   <p className="folio-meta text-red-500">{urlError}</p>
                 )}
 
-                {!urlPreview && !urlFetching && !urlError && !showManual && (
+                {!existingMatch && !urlPreview && !urlFetching && !urlError && !showManual && (
                   <p className="text-center folio-meta text-folio-text-tertiary py-4">
                     Paste a product link and we&apos;ll pull the details.
                   </p>
                 )}
 
-                {!showManual && !urlFetching && !urlPreview && (
+                {!existingMatch && !showManual && !urlFetching && !urlPreview && (
                   <button
                     type="button"
                     onClick={() => setShowManual(true)}
