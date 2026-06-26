@@ -33,6 +33,30 @@ export const EMPTY_FIELDS: ProductFields = {
   currency: null,
 };
 
+/**
+ * Render a value that may be an HTML fragment down to clean, single-spaced plain
+ * text. Some retailers (e.g. Pottery Barn) put marked-up copy in their JSON-LD
+ * `description`, which would otherwise land in the product description verbatim
+ * as `<div class="column-left"><h3>Construction</h3>…`. Plain-text input passes
+ * through unchanged (just whitespace-collapsed). Entities are decoded by cheerio.
+ */
+export function htmlToText(value: string | null | undefined): string | null {
+  if (!value) return null;
+  let text = value;
+  if (value.includes('<')) {
+    // Turn block boundaries into spaces first so adjacent blocks don't fuse
+    // ("…glassConstruction…"), then let cheerio strip the remaining tags and
+    // decode entities. Loading the fragment and reading the document root (not a
+    // selector) avoids double-counting nested elements.
+    const spaced = value
+      .replace(/<\/(p|div|li|ul|ol|h[1-6]|tr|section|article)>/gi, ' ')
+      .replace(/<br\s*\/?>/gi, ' ');
+    text = cheerio.load(spaced).root().text();
+  }
+  const cleaned = text.replace(/\s+/g, ' ').trim();
+  return cleaned || null;
+}
+
 /** Resolve a possibly-relative URL against the page URL; null if unusable. */
 export function resolveUrl(src: string | undefined | null, base: string): string | null {
   if (!src) return null;
@@ -120,12 +144,13 @@ export function extractProductFromHtml(html: string, baseUrl: string): ProductFi
     baseUrl,
   );
 
-  const description =
+  const description = htmlToText(
     (ld?.description && String(ld.description).trim()) ||
-    meta('meta[property="og:description"]') ||
-    meta('meta[name="twitter:description"]') ||
-    meta('meta[name="description"]') ||
-    null;
+      meta('meta[property="og:description"]') ||
+      meta('meta[name="twitter:description"]') ||
+      meta('meta[name="description"]') ||
+      null,
+  );
 
   const brand =
     ldBrand(ld) ||
