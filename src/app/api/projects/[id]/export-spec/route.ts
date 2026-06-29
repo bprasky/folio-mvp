@@ -6,7 +6,6 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { assertProjectView } from '@/lib/authz/access';
 import ExcelJS from 'exceljs';
-import PDFDocument from 'pdfkit';
 import { getRoomTemplate, getRoomTemplateByType } from '@/app/project/[id]/roomTemplates';
 
 export async function POST(
@@ -211,78 +210,132 @@ export async function POST(
         }
       });
     } else if (format === 'pdf') {
-      // Generate PDF
-      const doc = new PDFDocument({ margin: 50 });
-      const chunks: Buffer[] = [];
+      // Generate PDF with pdf-lib. Unlike pdfkit, pdf-lib embeds the standard
+      // fonts without reading any files at runtime, so it works on serverless
+      // (no Helvetica.afm ENOENT). StandardFonts use WinAnsi encoding, so we
+      // sanitize cell text to ASCII to avoid "cannot encode" errors on stray
+      // unicode (smart quotes, em dashes) in product/vendor names.
+      const { PDFDocument, StandardFonts, rgb } = await import('pdf-lib');
 
-      doc.on('data', (chunk) => chunks.push(chunk));
-      doc.on('end', () => {});
+      const pageWidth = 612; // US Letter, points
+      const pageHeight = 792;
+      const marginX = 50;
+      const black = rgb(0, 0, 0);
 
-      // Header
-      doc.fontSize(20).text(project.title || 'Project Specification', { align: 'center' });
-      doc.moveDown();
-      doc.fontSize(12).text(`Generated: ${new Date().toLocaleDateString()}`, { align: 'center' });
-      doc.moveDown(2);
+      const pdfDoc = await PDFDocument.create();
+      const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
+      const fontBold = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
 
-      // Table headers
-      const tableTop = doc.y;
-      const rowHeight = 20;
-      const colWidths = [80, 60, 70, 100, 70, 60, 120, 50, 40, 50, 100];
       const headers = ['Project', 'Room', 'Section', 'Product', 'Vendor', 'SKU', 'URL', 'Price', 'Unit', 'Qty', 'Notes'];
+      // Widths sum to 512 (= pageWidth - 2*marginX) so the table fits the page.
+      const colWidths = [55, 40, 45, 80, 50, 45, 75, 32, 22, 22, 46];
+      const tableWidth = colWidths.reduce((a, b) => a + b, 0);
 
-      doc.fontSize(10).font('Helvetica-Bold');
-      let x = 50;
-      headers.forEach((header, i) => {
-        doc.text(header, x, tableTop, { width: colWidths[i], align: 'left' });
-        x += colWidths[i];
-      });
+      // Replace common typographic chars, then drop anything outside printable
+      // ASCII so StandardFonts can always encode it.
+      const ascii = (text: unknown): string =>
+        (text ?? '')
+          .toString()
+          .replace(/[‘’]/g, "'")
+          .replace(/[“”]/g, '"')
+          .replace(/[–—]/g, '-')
+          .replace(/…/g, '...')
+          .replace(/ /g, ' ')
+          .replace(/[^\x20-\x7E]/g, '');
 
-      // Draw header underline
-      doc.moveTo(50, tableTop + rowHeight).lineTo(50 + colWidths.reduce((a, b) => a + b, 0), tableTop + rowHeight).stroke();
-
-      // Table rows
-      doc.font('Helvetica').fontSize(8);
-      let y = tableTop + rowHeight + 5;
-      
-      exportData.forEach((row, idx) => {
-        if (y > 750) { // New page if needed
-          doc.addPage();
-          y = 50;
+      // Trim a cell to fit its column width, adding an ellipsis when truncated.
+      const fit = (text: unknown, f: typeof font, size: number, maxWidth: number): string => {
+        let t = ascii(text);
+        if (!t || f.widthOfTextAtSize(t, size) <= maxWidth) return t;
+        while (t.length > 1 && f.widthOfTextAtSize(t + '...', size) > maxWidth) {
+          t = t.slice(0, -1);
         }
+        return t + '...';
+      };
 
-        x = 50;
-        const values = [
-          row.projectName.substring(0, 15),
-          row.room.substring(0, 12),
-          row.boardSection.substring(0, 15),
-          row.productName.substring(0, 20),
-          row.vendorBrand.substring(0, 12),
-          row.sku.substring(0, 10),
-          row.url.substring(0, 25),
-          row.price,
-          row.unit,
-          row.quantity,
-          row.notes.substring(0, 25)
-        ];
+      let page = pdfDoc.addPage([pageWidth, pageHeight]);
+      let cursor = 50; // distance from top of page
 
+      const drawRow = (values: unknown[], f: typeof font, size: number) => {
+        let x = marginX;
         values.forEach((value, i) => {
-          doc.text(value || '', x, y, { width: colWidths[i], align: 'left' });
+          page.drawText(fit(value, f, size, colWidths[i] - 4), {
+            x: x + 2,
+            y: pageHeight - cursor - size,
+            size,
+            font: f,
+            color: black,
+          });
           x += colWidths[i];
         });
+      };
 
-        y += rowHeight;
+      // Title (centered)
+      const title = ascii(project.title || 'Project Specification');
+      const titleSize = 20;
+      page.drawText(title, {
+        x: (pageWidth - fontBold.widthOfTextAtSize(title, titleSize)) / 2,
+        y: pageHeight - cursor - titleSize,
+        size: titleSize,
+        font: fontBold,
+        color: black,
       });
+      cursor += titleSize + 10;
 
-      doc.end();
-
-      // Wait for PDF to finish
-      await new Promise<void>((resolve) => {
-        doc.on('end', resolve);
+      const genText = ascii(`Generated: ${new Date().toLocaleDateString()}`);
+      const genSize = 11;
+      page.drawText(genText, {
+        x: (pageWidth - font.widthOfTextAtSize(genText, genSize)) / 2,
+        y: pageHeight - cursor - genSize,
+        size: genSize,
+        font,
+        color: black,
       });
+      cursor += genSize + 24;
 
-      const pdfBuffer = Buffer.concat(chunks);
+      // Header row + underline
+      const headerSize = 9;
+      drawRow(headers, fontBold, headerSize);
+      cursor += headerSize + 4;
+      page.drawLine({
+        start: { x: marginX, y: pageHeight - cursor },
+        end: { x: marginX + tableWidth, y: pageHeight - cursor },
+        thickness: 0.5,
+        color: black,
+      });
+      cursor += 6;
 
-      return new NextResponse(pdfBuffer, {
+      // Data rows
+      const rowSize = 8;
+      const rowHeight = 14;
+      for (const row of exportData) {
+        if (cursor + rowHeight > pageHeight - marginX) {
+          page = pdfDoc.addPage([pageWidth, pageHeight]);
+          cursor = marginX;
+        }
+        drawRow(
+          [
+            row.projectName,
+            row.room,
+            row.boardSection,
+            row.productName,
+            row.vendorBrand,
+            row.sku,
+            row.url,
+            row.price,
+            row.unit,
+            row.quantity,
+            row.notes,
+          ],
+          font,
+          rowSize,
+        );
+        cursor += rowHeight;
+      }
+
+      const pdfBytes = await pdfDoc.save();
+
+      return new NextResponse(Buffer.from(pdfBytes), {
         headers: {
           'Content-Type': 'application/pdf',
           'Content-Disposition': `attachment; filename="${filename}"`
