@@ -17,6 +17,7 @@ import { bql, hasBrowserlessKey } from '@/lib/browserless/client';
 import { recordScrapeAttempt, hasRecentBlockedAttempt } from '@/lib/browserless/record';
 import { isFlaggedDomain } from '@/lib/browserless/flaggedDomains';
 import { normalizeProductUrl } from '@/lib/products/normalizeProductUrl';
+import { assessProductHealth } from '@/lib/products/productHealth';
 import {
   extractProductFromHtml,
   parsePriceNumber,
@@ -35,10 +36,16 @@ import {
  * maxDuration and persists the outcome.
  */
 export async function POST(
-  _req: NextRequest,
+  req: NextRequest,
   { params }: { params: { productId: string } },
 ) {
   const { productId } = params;
+
+  // `?force=1` re-runs the scrape over a product that's already 'complete' or
+  // cached, overwriting stale fields. Used by the "refresh from the web" action
+  // when a shared product's scrape is wrong/stale (e.g. an old HTML description
+  // before the cleanup landed). Without it the rung is idempotent.
+  const force = req.nextUrl.searchParams.get('force') === '1';
 
   const session = await getServerSession(authOptions);
   if (!session?.user?.id) {
@@ -54,8 +61,8 @@ export async function POST(
     return NextResponse.json({ error: 'Product not found' }, { status: 404 });
   }
 
-  // Idempotent: a completed scrape is never re-run.
-  if (product.scrapeStatus === 'complete') {
+  // Idempotent: a completed scrape is never re-run unless forced.
+  if (!force && product.scrapeStatus === 'complete') {
     return NextResponse.json({ status: 'complete', cached: true });
   }
 
@@ -88,7 +95,9 @@ export async function POST(
   // CachedProduct table is keyed on the normalized URL and shared with the AI
   // extractor, so a prior scrape of the same product fills this one for free.
   try {
-    const cached = await prisma.cachedProduct.findUnique({ where: { url: normalizedUrl } });
+    const cached = force
+      ? null
+      : await prisma.cachedProduct.findUnique({ where: { url: normalizedUrl } });
     if (cached && (cached.productName || cached.imageUrl)) {
       await prisma.product.update({
         where: { id: productId },
@@ -165,22 +174,47 @@ export async function POST(
   const category = determineCategory(tags, name);
 
   // Write-through to the shared cache so the next tag of this URL skips the rung.
+  // Upsert (not create) so a forced refresh replaces stale cached fields instead
+  // of leaving the old row to re-serve them on the next non-forced scrape.
   try {
-    await prisma.cachedProduct.create({
-      data: {
-        url: normalizedUrl,
-        productName: name || null,
-        brand: fields.brand ?? null,
-        imageUrl: fields.image ?? null,
-        priceCents: price != null ? Math.round(price * 100) : null,
-        currency: fields.currency || 'USD',
-        description: fields.description ?? null,
-        extractionConfidence: 'medium',
-      },
+    const cacheData = {
+      productName: name || null,
+      brand: fields.brand ?? null,
+      imageUrl: fields.image ?? null,
+      priceCents: price != null ? Math.round(price * 100) : null,
+      currency: fields.currency || 'USD',
+      description: fields.description ?? null,
+      extractionConfidence: 'medium',
+    };
+    await prisma.cachedProduct.upsert({
+      where: { url: normalizedUrl },
+      create: { url: normalizedUrl, ...cacheData },
+      update: cacheData,
     });
   } catch (err: any) {
-    // Ignore unique races; the row already existing is fine.
-    if (err?.code !== 'P2002') console.error('[scrape-bql] cache write failed:', err);
+    console.error('[scrape-bql] cache write failed:', err);
+  }
+
+  // Pre-flag a bad import: a scrape can "succeed" yet land suspicious fields
+  // (raw-HTML description, homepage name). Surface it now so it's visible the
+  // record needs attention rather than discovered later. Non-blocking.
+  const health = assessProductHealth({
+    name: name || undefined,
+    brand: fields.brand,
+    price,
+    imageUrl: fields.image,
+    description: fields.description,
+  });
+  if (!health.ok) {
+    console.warn(
+      '[product-health] import flagged',
+      JSON.stringify({
+        productId,
+        url: product.url,
+        score: health.score,
+        flags: health.flags.map((f) => `${f.field}: ${f.message}`),
+      }),
+    );
   }
 
   // Fill the product. Only overwrite name when the scrape found one, so a useful
@@ -198,5 +232,5 @@ export async function POST(
     },
   });
 
-  return NextResponse.json({ status: 'complete' });
+  return NextResponse.json({ status: 'complete', health });
 }

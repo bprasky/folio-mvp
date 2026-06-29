@@ -3,6 +3,7 @@
 import { useEffect, useState, useRef, useCallback } from "react";
 import { FaTimes, FaTag, FaSearch, FaCheck, FaTrash, FaGripLines, FaImage, FaExternalLinkAlt, FaChevronDown, FaChevronUp, FaExclamationCircle } from "react-icons/fa";
 import { isFlaggedDomain } from "@/lib/browserless/flaggedDomains";
+import { assessProductHealth } from "@/lib/products/productHealth";
 
 type ImageWithTags = {
   id: string;
@@ -167,6 +168,9 @@ export function ProjectImageTagger({ projectId, images: providedImages, onClose 
   // pre-tag manual capture uses.
   const [editPasteText, setEditPasteText] = useState("");
   const [editParsing, setEditParsing] = useState<null | "text" | "image">(null);
+  // Force a fresh scrape over a stale/faulty shared product (e.g. an old HTML
+  // description), overwriting its fields with the current extraction.
+  const [rescraping, setRescraping] = useState(false);
   // Dismissible "fetching in the background" banner shown while scrapes run.
   const [bannerDismissed, setBannerDismissed] = useState(false);
 
@@ -193,7 +197,7 @@ export function ProjectImageTagger({ projectId, images: providedImages, onClose 
     brand: string | null;
     claimed: boolean;
     complete: boolean;
-    missing: string[];
+    flags: { field: string; severity: "missing" | "suspicious"; message: string }[];
   }>(null);
   const [lookupChecked, setLookupChecked] = useState(false);
   const [reusing, setReusing] = useState(false);
@@ -684,7 +688,7 @@ export function ProjectImageTagger({ projectId, images: providedImages, onClose 
   // Reuse an existing product (a dedup hit) at the pending dot instead of
   // creating a new one. If it's missing details, open the editor right after so
   // the designer can complete/correct the shared product — post-save enrichment.
-  const useExistingProduct = async () => {
+  const useExistingProduct = async (forceEdit = false) => {
     if (!pendingDot || !activeImage || !existingMatch) return;
     const { id, complete, claimed } = existingMatch;
     setReusing(true);
@@ -703,9 +707,12 @@ export function ProjectImageTagger({ projectId, images: providedImages, onClose 
       if (res.ok) {
         closeProductPicker();
         await fetchImages();
-        // Incomplete shared product → route into the editor to fill the gaps.
-        // Skipped for vendor-claimed products, which can't be edited here.
-        if (!complete && !claimed) openEditProduct(id);
+        // Open the editor when the shared product needs attention — missing
+        // fields, or the designer explicitly chose "use & fix" because the data
+        // looks wrong (the right answer to "same product, bad scrape": correct it
+        // in place, never duplicate). Vendor-claimed products are canonical and
+        // not editable here.
+        if (!claimed && (forceEdit || !complete)) openEditProduct(id);
       }
     } catch (err) {
       console.error("[ProjectImageTagger] reuse error:", err);
@@ -912,6 +919,49 @@ export function ProjectImageTagger({ projectId, images: providedImages, onClose 
       setEditError("Couldn't read that screenshot.");
     } finally {
       setEditParsing(null);
+    }
+  };
+
+  // Force a fresh scrape of the product's URL and pull the refreshed fields back
+  // into the open editor. The fix for a shared product whose stored scrape is
+  // stale or wrong (e.g. raw-HTML description) — overwrite it at the source so
+  // every designer gets the corrected data, no duplicate needed.
+  const rescrapeProduct = async () => {
+    if (!editTarget?.url) return;
+    setRescraping(true);
+    setEditError(null);
+    try {
+      const res = await fetch(`/api/products/${editTarget.id}/scrape-bql?force=1`, {
+        method: "POST",
+      });
+      const d = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setEditError(d.error || "Couldn't refresh from the web. You can still edit the fields by hand.");
+        return;
+      }
+      // Re-pull the refreshed record into the editor.
+      const r = await fetch(`/api/products/${editTarget.id}`);
+      if (r.ok) {
+        const p = await r.json();
+        setEditTarget((prev) =>
+          prev
+            ? {
+                ...prev,
+                name: p.name && p.name !== "Untitled product" ? p.name : prev.name,
+                brand: p.brand ?? prev.brand,
+                price: p.price != null ? String(p.price) : prev.price,
+                category: p.category ?? prev.category,
+                description: p.description ?? prev.description,
+                imageUrl: p.imageUrl ?? prev.imageUrl,
+              }
+            : prev,
+        );
+      }
+      await fetchImages();
+    } catch {
+      setEditError("Couldn't refresh from the web. You can still edit the fields by hand.");
+    } finally {
+      setRescraping(false);
     }
   };
 
@@ -1566,14 +1616,27 @@ export function ProjectImageTagger({ projectId, images: providedImages, onClose 
                             .filter(Boolean)
                             .join(" · ") || "Existing product"}
                         </div>
-                        {!existingMatch.complete && (
-                          <div className="text-[var(--type-fine)] text-amber-600 mt-0.5">
-                            Missing {existingMatch.missing.join(", ")} — you can complete it after tagging.
+                        {existingMatch.flags.length > 0 && (
+                          <div className="mt-1 space-y-0.5">
+                            {existingMatch.flags.slice(0, 3).map((f, i) => (
+                              <div
+                                key={i}
+                                className={`flex items-center gap-1 text-[var(--type-fine)] ${
+                                  f.severity === "suspicious" ? "text-red-500" : "text-amber-600"
+                                }`}
+                              >
+                                <FaExclamationCircle className="w-2.5 h-2.5 flex-shrink-0" />
+                                <span className="truncate">{f.message}</span>
+                              </div>
+                            ))}
+                            <div className="text-[var(--type-fine)] text-folio-text-tertiary">
+                              You can fix this after tagging.
+                            </div>
                           </div>
                         )}
                       </div>
                     </div>
-                    <div className="flex gap-2 border-t border-[var(--accent)]/20 px-3 py-2.5">
+                    <div className="flex gap-2 border-t border-[var(--accent)]/20 px-3 pt-2.5">
                       <button
                         type="button"
                         onClick={scrapeFreshInstead}
@@ -1583,13 +1646,25 @@ export function ProjectImageTagger({ projectId, images: providedImages, onClose 
                       </button>
                       <button
                         type="button"
-                        onClick={useExistingProduct}
+                        onClick={() => useExistingProduct(false)}
                         disabled={reusing}
                         className="flex-1 rounded-lg py-2 text-sm font-medium text-white bg-[var(--accent)] hover:opacity-90 transition-opacity disabled:opacity-50"
                       >
                         {reusing ? "Tagging…" : "Use this product"}
                       </button>
                     </div>
+                    {/* Same product, but its scrape looks wrong? Reuse it and fix
+                        the shared record — never duplicate. */}
+                    {!existingMatch.claimed && (
+                      <button
+                        type="button"
+                        onClick={() => useExistingProduct(true)}
+                        disabled={reusing}
+                        className="w-full px-3 pb-2.5 pt-1.5 text-center folio-meta text-[var(--accent)] hover:underline disabled:opacity-50"
+                      >
+                        Use it, but the details look wrong — let me fix them
+                      </button>
+                    )}
                   </div>
                 )}
 
@@ -1925,6 +2000,37 @@ export function ProjectImageTagger({ projectId, images: providedImages, onClose 
                 </div>
               )}
 
+              {/* Live health flags — what looks off about this record right now.
+                  Updates as the designer edits, so a fix visibly clears them. */}
+              {(() => {
+                const h = assessProductHealth({
+                  name: editTarget.name,
+                  brand: editTarget.brand,
+                  price: editTarget.price,
+                  imageUrl: editTarget.imageUrl,
+                  description: editTarget.description,
+                });
+                if (h.flags.length === 0) return null;
+                return (
+                  <div className="rounded-md bg-amber-50 px-2.5 py-2 space-y-1">
+                    <div className="flex items-center gap-1.5 text-[11px] font-medium text-amber-700">
+                      <FaExclamationCircle className="w-3 h-3" />
+                      This product&apos;s details look incomplete or off:
+                    </div>
+                    {h.flags.map((f, i) => (
+                      <div
+                        key={i}
+                        className={`pl-4.5 text-[11px] ${
+                          f.severity === "suspicious" ? "text-red-600" : "text-amber-700"
+                        }`}
+                      >
+                        • {f.message}
+                      </div>
+                    ))}
+                  </div>
+                );
+              })()}
+
               {/* Autofill rescue — when the scrape returned nothing, paste the
                   product copy or drop a screenshot and we fill the fields below. */}
               <div className="rounded-lg border border-folio-border-subtle bg-surface-ground p-3 space-y-2.5">
@@ -1951,6 +2057,17 @@ export function ProjectImageTagger({ projectId, images: providedImages, onClose 
                   className="w-full px-3 py-2 ridge-input text-sm resize-y"
                 />
                 <div className="flex flex-wrap gap-2">
+                  {editTarget.url && (
+                    <button
+                      type="button"
+                      onClick={rescrapeProduct}
+                      disabled={rescraping}
+                      title="Re-scrape the product page and overwrite the stored details"
+                      className="px-3 py-1.5 rounded-lg bg-[var(--accent)] text-white folio-meta font-medium disabled:opacity-50 hover:opacity-90 transition-opacity inline-flex items-center gap-1.5"
+                    >
+                      {rescraping ? "Refreshing…" : "Refresh from the web"}
+                    </button>
+                  )}
                   <button
                     type="button"
                     onClick={handleEditParseText}
