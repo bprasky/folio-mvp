@@ -149,6 +149,39 @@ The agent uses **Anthropic's Claude API** (your existing keys) as the intelligen
 4. Results queued for verification
 ```
 
+### 4. Finish Schedule Import (Targeted Locate)
+
+**Input:** one structured document. Typically an Excel finish schedule, also a PDF table export. Products are already named and grouped by room.
+
+This source differs from the other three in one way that matters. The other three do open detection: find whatever products appear in an image. The finish schedule already names the products for each room, so the work is targeted localization, not search. Known target, locate on the photo.
+
+**Processing flow:**
+```
+1. Designer drops one finish book / Excel at the project level
+2. Parse stage: extract rows {roomLabel, productDescription, vendor?, sku?}
+3. Match roomLabel to the project's existing Rooms
+4. Locate stage: per room, one vision call over that room's ProjectImages
+   - Input:  the room's photo(s) + the room's product rows
+   - Output: per product -> {projectImageId, x, y, confidence, found}
+5. Queue results as PendingProductTag rows
+   - found      -> x/y set, renders with a pin, awaits one confirm
+   - not found  -> x/y null, renders in the per-photo list as "place manually"
+6. Results surface in the inline per-photo lists (05_WORKFLOWS), not a
+   standalone verification queue
+```
+
+A room may hold several photos. The locate call ranges over the whole room photo set and returns, per product, the single best photo and coordinate. Products named for a room with no usable photo queue unlocated.
+
+> **Audit note (`AUDIT_autotag_vision_findings.md`):** the locate stage reuses the existing
+> targeted vision capability `estimateProductCoordinates(imageUrl, productNames)` +
+> `matchProductsToLocations(...)` in `src/lib/tagging/estimateProductCoordinates.ts` (already
+> called in targeted mode by `auto-tag/route.ts`). It is a new *route*, not a new vision call.
+> A room's photos are enumerated via the structured `Room.projectImages` relation
+> (`ProjectImage.roomId` / `@relation("RoomProjectImages")`). The current
+> `/api/import/finish-schedule` route is a stub (upload + mark COMPLETE); the parse and
+> locate stages are the net-new build, with `exceljs` / `papaparse` / `pdf-parse` already
+> installed.
+
 ---
 
 ## The Claude Agent Implementation
@@ -456,6 +489,22 @@ enum PendingTagStatus {
   DISMISSED
 }
 ```
+
+### Finish Schedule additions (ADD-only, with one widening)
+
+Confirmed against `AUDIT_autotag_vision_findings.md`, then migrate:
+
+- `ImportSourceType`: add `FINISH_SCHEDULE`. (Today the finish-schedule route mislabels its
+  session `PRESENTATION` because the value does not exist yet.)
+- `PendingProductTag`:
+  - `x` and `y` become **nullable** to support the unlocated fallback. This is the one
+    relaxation, not a pure ADD. Audit confirms both are currently required (`x Float`,
+    `y Float`). Widening a required column to nullable is non-destructive.
+  - Add `isLocated Boolean @default(true)`. Unlocated rows set `false` and render in the
+    per-photo list with a place-manually prompt.
+
+No other model changes are required. Confirm-and-dismiss reuse the existing pending-tag
+verify path (`/api/import/pending-tag/[tagId]/verify`).
 
 ---
 
@@ -858,6 +907,31 @@ export async function POST(
   });
 }
 ```
+
+### Finish Schedule: Targeted Locate
+
+```
+POST /api/import/locate-from-schedule
+
+Body:
+  sessionId        string   (FINISH_SCHEDULE ImportSession)
+  roomId           string
+  projectImageIds  string[] (the room's photos)
+  products         { tempId, description, vendor?, sku? }[]
+
+Returns:
+  located:    { tempId, projectImageId, x, y, confidence }[]
+  unlocated:  { tempId, reason }[]
+```
+
+This route is the one net-new vision *surface* in the finish-schedule flow. Per the audit
+(`AUDIT_autotag_vision_findings.md`), the existing analysis call **does** support a targeted
+mode: `estimateProductCoordinates(imageUrl, productNames)` matches detections against a
+supplied product list and returns coordinates only for matches. So this route **wraps the
+existing targeted call** (over each `projectImageId`, with the room's product descriptions as
+`productNames`) rather than introducing a new prompt. `located` rows set `x/y` and
+`isLocated = true`; `unlocated` rows set `x/y = null`, `isLocated = false`, and surface in the
+per-photo list with a place-manually prompt.
 
 ---
 
@@ -1323,6 +1397,10 @@ Only include links that appear to be individual project pages, not category page
 - Web search for product attribution
 - Verification queue UI
 - Completeness scoring integration
+
+**Finish Schedule Import** ships behind the same import infrastructure. Parse stage and
+targeted locate stage are separable. Parse can land first and queue unlocated rows that the
+designer places by hand, with the locate stage added after.
 
 ### Phase 2: Enhanced Attribution (Month 2)
 - Integration with existing Folio product catalog

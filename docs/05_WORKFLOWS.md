@@ -53,7 +53,14 @@ This document describes the main user workflows and business processes implement
 **Setup Wizard Steps (ProjectCreationModal):**
 - Step 1: Project Details (name, description, client, category)
 - Step 2: Upload Images (URL-based, room assignment, validation)
-- Step 3: Tag Products (click-to-tag, product search, affiliate URL generation)
+- Step 3: Tag Products (inline on the room-organized media page, no separate modal). Two paths on one screen: a project-level finish book or Excel drop at the top that locates and queues every product, and manual click-to-tag per photo below. Tags for each photo render in a list beside the photo with edit and delete controls.
+
+> Audit note (`AUDIT_autotag_vision_findings.md`): the room-organized page (`MediaSection`)
+> and the auto-vs-manual chooser (`MaterialsStep`) already exist; the top-of-page locate
+> drop target and the per-photo tag list are the net-new pieces. The Tags step is currently
+> still mounted as `ProjectCreationModal` at `/project/[id]/setup`.
+
+**Tags step — single review surface:** The Tags step renders the same per-photo list whether tags arrive manually or from a finish book. The list is the single review surface. The standalone import verification queue is retired for the finish-schedule source and routes its results into these per-photo lists instead.
 
 **Project Fields Observed:**
 - `stage`: ProjectStage enum (default: concept)
@@ -148,12 +155,28 @@ This document describes the main user workflows and business processes implement
 
 ## Product Tagging Workflow
 
-**Image-Based Tagging:**
+The Tags step renders on the existing room-organized media page. Photos stay grouped by room. The step does not navigate to a separate route.
+
+Why a designer tags: a tag gives the interview a concrete detail to ask about, so the generated editorial returns specific instead of generic. Shoppability is secondary. The page leads with the interview benefit.
+
+**Two paths, one screen:**
+
+1. **Auto path (top of page, project scope).** A single drop target accepts one finish book or Excel file. It runs the parse-then-locate pipeline (see `13_IMPORT_AGENT_SPEC.md` → Finish Schedule Import) and queues a pending tag per scheduled product on the room photo where the product is found. Located products carry coordinates. Products the model cannot place queue without coordinates and prompt manual placement.
+2. **Manual path (room sections, per photo).** Clicking a photo enters an inline working state for that photo only. The photo enlarges in place, the designer clicks the photo to drop a single transient pin, then searches a product or pastes a URL. The tag persists via the existing manual write path (`POST /api/tag-product-to-image`) and appears in the photo's tag list.
+
+**Per-photo tag list:**
+
+- Tags render beside the photo, never on it. The only mark on photography is the transient pin during active placement. This holds the photos-are-sacred rule inside the workspace.
+- Each tag row shows the product, its category, a placement indicator, and edit and delete controls.
+- A manually placed tag renders confirmed. An imported tag renders in a pending-confirm state and clears with a single confirm action, reusing the existing pending-tag verify path (`POST /api/import/pending-tag/[tagId]/verify`).
+
+Tag write paths are unchanged. Manual tags use `POST /api/tag-product-to-image` with affiliate URL generation. Imported tags flow through the import pipeline and the existing verify endpoint.
+
+**Image-Based Tagging (implemented primitives):**
 - ProductTag model links products to ProjectImage via x/y coordinates
 - Tags created via `POST /api/tag-product-to-image`
 - Tags persist to database (ProductTag table)
 - Affiliate URLs auto-generated per tag
-- Tags displayed as visual markers with product info on hover
 
 **Skeleton Items:**
 - SkeletonItem model for AI-detected products in images
