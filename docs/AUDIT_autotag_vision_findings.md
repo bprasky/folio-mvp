@@ -85,3 +85,66 @@ Two links exist on `ProjectImage` (`prisma/schema.prisma` ~L558):
    vendor?, sku?}`), replacing the stub in `/api/import/finish-schedule`.
 4. Per-photo tag list UI on `MediaSection`, rendering manual (confirmed) and imported
    (pending-confirm) tags beside each photo.
+
+## Locate miss behavior
+
+> The decision input for how `isLocated` keys off the locate result in the gated step-two
+> migration. Derived from the call contract in
+> `src/lib/tagging/estimateProductCoordinates.ts`; the validation harness
+> (`scripts/validate-finish-schedule.ts`, stage D3) captures the empirical numbers when run
+> with `ANTHROPIC_API_KEY` + a real project photo (neither is available in the audit
+> environment, so the observed-confidence figures below are marked PENDING a keyed run).
+
+**What a miss returns.** In targeted mode the prompt instructs the model: *"If a product from
+the list is not visible, do not include it."* So a miss is **absence from the returned
+array** — there is no null coordinate, no empty sentinel, no `found: false`. The return is
+`{ description, x, y, confidence }[]` where every returned item has real coordinates
+(clamped to 5–95) and a confidence. **Presence-in-the-array is the locate signal; absence is
+the miss signal.**
+
+**Confidence is present but is NOT a reliable miss discriminator.** `confidence` is one of
+`'high' | 'medium' | 'low'`, and the parser coerces any missing/invalid value to `'medium'`
+(`estimateProductCoordinates.ts:79–81`). A hallucinated detection can therefore carry
+`medium` or even `high`. Do not gate `isLocated` on a confidence threshold alone.
+
+**The trap to avoid.** `matchProductsToLocations(productNames, detections)` (the helper
+auto-tag uses at `auto-tag/route.ts:245`) **always returns a coordinate for every input
+product** — unmatched products get evenly-spaced fallback positions (`computeFallbackPositions`),
+never null. If `isLocated` were derived from that helper's output, **every** scheduled product
+would look located. The locate stage must read the **raw** `estimateProductCoordinates`
+output and decide located/unlocated by whether the product description actually matched a
+returned detection above the fuzzy threshold. The harness does exactly this in
+`scripts/finish-schedule/locate.ts` (`bestDetection()` returns `null` on a miss — no
+fallback), deliberately diverging from `matchProductsToLocations`.
+
+**Step-two rule this licenses.**
+- `located` = the product's description fuzzy-matched a returned detection (in raw output,
+  best across the room's photos) → `isLocated = true`, set `x/y` from the detection, store
+  `confidence`.
+- otherwise → `isLocated = false`, `x/y = null`, render "place manually".
+- `confidence` may be persisted for display/review ordering, but the **gate is
+  presence-of-match, not confidence**. (Optional refinement: keep `low`-confidence matches as
+  located-but-flagged rather than unlocated.)
+
+**Empirical confirmation (PENDING keyed run).** Harness D3 calls the targeted vision over a
+real project photo with a deliberately-absent product (`"vintage red British telephone
+booth"`) plus a present hint (`"flooring"`), then prints the raw return and whether the
+absent product appears. Expected per the contract: the absent product is **absent** from the
+array; the present hint returns with a coordinate. Record the observed confidence on the
+deliberate miss vs the true hit here once captured.
+
+## Harness validation results (this environment)
+
+- **CSV** (`scripts/finish-schedule/fixtures/sample-finish-schedule.csv`): parsed clean —
+  header detected at row 4 (title rows skipped), section-header rooms tracked, notes column
+  borrowed when description empty, `sku`/`vendor` captured; the one row with no description
+  landed in `unparsed` with a reason. 8 rows / 1 unparsed.
+- **XLSX** (generated with a vertically-merged room cell): parsed clean — merged "Kitchen"
+  cell filled down across its rows, header-not-row-1 handled, a vendor-less/sku-less row kept
+  as a valid product. 4 rows / 0 unparsed.
+- **PDF**: code-complete (pdf-parse v2 `getTable()` primary, positioned-text fallback); not
+  exercised in this environment — drop a real PDF finish schedule through the harness to
+  validate.
+- **Locate (D2)** and **miss check (D3)**: not runnable here (`DATABASE_URL` and
+  `ANTHROPIC_API_KEY` both absent). Code mirrors the confirmed call site; run the harness in
+  an environment with both to exercise.
