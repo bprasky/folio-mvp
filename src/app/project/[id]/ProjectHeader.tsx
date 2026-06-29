@@ -102,7 +102,17 @@ export default function ProjectHeader({
       );
 
       if (!response.ok) {
-        throw new Error('Export failed');
+        // Surface the route's real status + { error } body instead of a
+        // generic failure, so the actual cause (401/403/404/500) is visible.
+        let serverMessage = '';
+        try {
+          serverMessage = ((await response.json()) as { error?: string })?.error || '';
+        } catch {
+          /* non-JSON body */
+        }
+        throw new Error(
+          `Export failed (${response.status})${serverMessage ? `: ${serverMessage}` : ''}`,
+        );
       }
 
       // Get filename from Content-Disposition header or generate one
@@ -129,7 +139,7 @@ export default function ProjectHeader({
       toast.success('Export ready');
     } catch (error) {
       console.error('Export error:', error);
-      toast.error('Failed to export spec');
+      toast.error(error instanceof Error ? error.message : 'Failed to export spec');
       throw error;
     }
   };

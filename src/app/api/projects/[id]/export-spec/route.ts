@@ -26,14 +26,24 @@ export async function POST(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    // Check edit permissions
-    const access = await assertProjectView(session.user.id, projectId);
-    if (!['OWNER', 'EDITOR'].includes(access.role)) {
+    // Export is read-only, so it requires only VIEW access: the owner/designer
+    // or any participant (including org-level VIEWERs) may export. Edit-level
+    // role is not required to read the spec.
+    let access;
+    try {
+      access = await assertProjectView(session.user.id, projectId);
+    } catch {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
-    const includePricing = searchParams.get('includePricing') === 'true';
-    const includeLeadTime = searchParams.get('includeLeadTime') === 'true';
+    // Trade pricing and lead time are business-sensitive (wholesale cost), so
+    // only OWNER/EDITOR may include them. Viewers get the base spec without
+    // these columns even if they pass the query flags.
+    const canIncludePricing = ['OWNER', 'EDITOR'].includes(access.role);
+    const includePricing =
+      canIncludePricing && searchParams.get('includePricing') === 'true';
+    const includeLeadTime =
+      canIncludePricing && searchParams.get('includeLeadTime') === 'true';
 
     // Fetch project with rooms and selections
     const project = await prisma.project.findUnique({
