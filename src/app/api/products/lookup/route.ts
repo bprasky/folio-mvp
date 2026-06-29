@@ -7,6 +7,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/app/api/auth/[...nextauth]/options';
 import { prisma } from '@/lib/prisma';
 import { normalizeProductUrl } from '@/lib/products/normalizeProductUrl';
+import { assessProductHealth } from '@/lib/products/productHealth';
 
 /**
  * GET /api/products/lookup?url=...
@@ -44,6 +45,7 @@ export async function GET(req: NextRequest) {
       imageUrl: true,
       price: true,
       brand: true,
+      description: true,
       vendorId: true,
     },
   });
@@ -52,13 +54,16 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ match: null });
   }
 
-  // What a designer would expect on a usable product. Drives whether the reuse
-  // flow routes straight into the editor to fill the gaps.
-  const missing = [
-    !existing.imageUrl && 'image',
-    existing.price == null && 'price',
-    (!existing.name || existing.name === 'Untitled product') && 'name',
-  ].filter(Boolean) as string[];
+  // Health check: surface BOTH missing and suspicious fields (e.g. an HTML
+  // description), so the dedup card can say *why* the existing data looks off and
+  // a re-scan decision is informed rather than blind.
+  const health = assessProductHealth({
+    name: existing.name,
+    brand: existing.brand,
+    price: existing.price != null ? Number(existing.price) : null,
+    imageUrl: existing.imageUrl,
+    description: existing.description,
+  });
 
   return NextResponse.json({
     match: {
@@ -70,8 +75,8 @@ export async function GET(req: NextRequest) {
       brand: existing.brand,
       // A vendor-claimed product is canonical and shouldn't be edited here.
       claimed: existing.vendorId != null,
-      complete: missing.length === 0,
-      missing,
+      complete: health.ok,
+      flags: health.flags,
     },
   });
 }

@@ -9,6 +9,7 @@ import { prisma } from '@/lib/prisma';
 import { logSignal, extractTags } from '@/lib/telemetry/context-signal';
 import { triggerMeshGeneration } from '@/lib/three-d/triggerMeshGeneration';
 import { normalizeProductUrl } from '@/lib/products/normalizeProductUrl';
+import { assessProductHealth, isHealthRegression } from '@/lib/products/productHealth';
 
 export async function GET(
   request: NextRequest,
@@ -85,10 +86,19 @@ export async function PUT(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    // Verify product exists and check permissions
+    // Verify product exists and check permissions. Pull the current fields too so
+    // we can health-check the edit (did this change make the record worse?).
     const existingProduct = await prisma.product.findUnique({
       where: { id: params.productId },
-      select: { vendorId: true, threeDAssetUrl: true },
+      select: {
+        vendorId: true,
+        threeDAssetUrl: true,
+        name: true,
+        brand: true,
+        price: true,
+        imageUrl: true,
+        description: true,
+      },
     });
     if (!existingProduct) {
       return NextResponse.json({ error: 'Not found' }, { status: 404 });
@@ -139,6 +149,30 @@ export async function PUT(
         }
       });
       vendorId = vendor?.id;
+    }
+
+    // Submit safeguard: health-check the edit. If it made the record meaningfully
+    // worse, flag it (structured, admin-visible log) — without blocking the save,
+    // so a genuine fix is never stopped, but a reckless/degrading edit is on the
+    // record. A persistent admin review queue + per-user capability revocation is
+    // the planned Phase 3; this is the lightweight signal it will build on.
+    const before = assessProductHealth(existingProduct);
+    const after = assessProductHealth({ name, brand, price, imageUrl, description });
+    const healthRegressed = isHealthRegression(before, after);
+    if (healthRegressed) {
+      console.warn(
+        '[product-health] edit degraded the record',
+        JSON.stringify({
+          productId: params.productId,
+          userId: session.user.id,
+          isAdmin,
+          scoreBefore: before.score,
+          scoreAfter: after.score,
+          newSuspicious: after.flags
+            .filter((f) => f.severity === 'suspicious')
+            .map((f) => `${f.field}: ${f.message}`),
+        }),
+      );
     }
 
     // Update the product

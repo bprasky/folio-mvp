@@ -17,6 +17,7 @@ import { bql, hasBrowserlessKey } from '@/lib/browserless/client';
 import { recordScrapeAttempt, hasRecentBlockedAttempt } from '@/lib/browserless/record';
 import { isFlaggedDomain } from '@/lib/browserless/flaggedDomains';
 import { normalizeProductUrl } from '@/lib/products/normalizeProductUrl';
+import { assessProductHealth } from '@/lib/products/productHealth';
 import {
   extractProductFromHtml,
   parsePriceNumber,
@@ -194,6 +195,28 @@ export async function POST(
     console.error('[scrape-bql] cache write failed:', err);
   }
 
+  // Pre-flag a bad import: a scrape can "succeed" yet land suspicious fields
+  // (raw-HTML description, homepage name). Surface it now so it's visible the
+  // record needs attention rather than discovered later. Non-blocking.
+  const health = assessProductHealth({
+    name: name || undefined,
+    brand: fields.brand,
+    price,
+    imageUrl: fields.image,
+    description: fields.description,
+  });
+  if (!health.ok) {
+    console.warn(
+      '[product-health] import flagged',
+      JSON.stringify({
+        productId,
+        url: product.url,
+        score: health.score,
+        flags: health.flags.map((f) => `${f.field}: ${f.message}`),
+      }),
+    );
+  }
+
   // Fill the product. Only overwrite name when the scrape found one, so a useful
   // placeholder is never blanked by a thin result.
   await prisma.product.update({
@@ -209,5 +232,5 @@ export async function POST(
     },
   });
 
-  return NextResponse.json({ status: 'complete' });
+  return NextResponse.json({ status: 'complete', health });
 }
