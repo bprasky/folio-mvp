@@ -7,8 +7,10 @@ import { MdDownload, MdCampaign } from 'react-icons/md';
 import { format, formatDistanceToNowStrict } from 'date-fns';
 import { cn } from '@/lib/utils';
 import OverviewModal from './OverviewModal';
+import ExportSpecModal from './ExportSpecModal';
 import InstagramExportModal from '@/components/instagram/InstagramExportModal';
 import { CampaignWizard } from '@/components/instagram/CampaignWizard';
+import { toast } from 'sonner';
 import type { EditorialState } from '@/lib/editorial/getEditorialState';
 
 function editorialStatusLabel(state: EditorialState): string {
@@ -63,6 +65,7 @@ export default function ProjectHeader({
   expandedBlocks,
 }: ProjectHeaderProps) {
   const [showOverviewModal, setShowOverviewModal] = useState(false);
+  const [showExportModal, setShowExportModal] = useState(false);
   const [showInstagramModal, setShowInstagramModal] = useState(false);
   const [showCampaignWizard, setShowCampaignWizard] = useState(false);
   const [showShareDropdown, setShowShareDropdown] = useState(false);
@@ -81,6 +84,55 @@ export default function ProjectHeader({
     document.addEventListener('mousedown', onOutsideClick);
     return () => document.removeEventListener('mousedown', onOutsideClick);
   }, []);
+
+  const handleExport = async (
+    scope: 'current' | 'all',
+    format: 'xlsx' | 'pdf',
+    roomId?: string,
+  ) => {
+    try {
+      const params = new URLSearchParams({ scope, format });
+      if (roomId) {
+        params.set('roomId', roomId);
+      }
+
+      const response = await fetch(
+        `/api/projects/${project.id}/export-spec?${params.toString()}`,
+        { method: 'POST' },
+      );
+
+      if (!response.ok) {
+        throw new Error('Export failed');
+      }
+
+      // Get filename from Content-Disposition header or generate one
+      const contentDisposition = response.headers.get('Content-Disposition');
+      let filename = `folio-spec-${project.id}-${new Date().toISOString().split('T')[0]}.${format}`;
+      if (contentDisposition) {
+        const filenameMatch = contentDisposition.match(/filename="?(.+)"?/);
+        if (filenameMatch) {
+          filename = filenameMatch[1];
+        }
+      }
+
+      // Download the file
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+
+      toast.success('Export ready');
+    } catch (error) {
+      console.error('Export error:', error);
+      toast.error('Failed to export spec');
+      throw error;
+    }
+  };
 
   return (
     <>
@@ -173,7 +225,10 @@ export default function ProjectHeader({
             </button>
           )}
 
-          <button className="inline-flex items-center gap-2 px-3.5 py-2 rounded-lg border border-folio-border-subtle text-folio-text-secondary text-sm font-medium transition-colors duration-[220ms] hover:text-folio-text-primary hover:border-folio-border-strong focus:outline-none focus:ring-2 focus:ring-[var(--accent)]/30">
+          <button
+            onClick={() => setShowExportModal(true)}
+            className="inline-flex items-center gap-2 px-3.5 py-2 rounded-lg border border-folio-border-subtle text-folio-text-secondary text-sm font-medium transition-colors duration-[220ms] hover:text-folio-text-primary hover:border-folio-border-strong focus:outline-none focus:ring-2 focus:ring-[var(--accent)]/30"
+          >
             Export spec
           </button>
 
@@ -196,6 +251,13 @@ export default function ProjectHeader({
         open={showOverviewModal}
         onClose={() => setShowOverviewModal(false)}
         project={project}
+      />
+
+      <ExportSpecModal
+        open={showExportModal}
+        onClose={() => setShowExportModal(false)}
+        projectId={project.id}
+        onExport={handleExport}
       />
 
       {canShare && (
