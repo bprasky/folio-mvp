@@ -6,7 +6,6 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { assertProjectView } from '@/lib/authz/access';
 import ExcelJS from 'exceljs';
-import { getRoomTemplate, getRoomTemplateByType } from '@/app/project/[id]/roomTemplates';
 
 export async function POST(
   request: NextRequest,
@@ -44,20 +43,39 @@ export async function POST(
     const includeLeadTime =
       canIncludePricing && searchParams.get('includeLeadTime') === 'true';
 
-    // Fetch project with rooms and selections
+    // Fetch project (title only — products now come from ProductTags).
     const project = await prisma.project.findUnique({
       where: { id: projectId },
+      select: { id: true, title: true },
+    });
+
+    if (!project) {
+      return NextResponse.json({ error: 'Project not found' }, { status: 404 });
+    }
+
+    // Source the export from ProductTags on the project's images rather than
+    // room Selections. Every product the designer tagged on a photo is
+    // included, grouped by that photo's room. This tracks tags directly, so
+    // deleting a project's tags empties the export (closed-loop import test).
+    const tags = await prisma.productTag.findMany({
+      where: {
+        image: {
+          projectId,
+          ...(scope === 'current' && roomId ? { roomId } : {}),
+        },
+      },
       select: {
-        id: true,
-        title: true,
-        rooms: {
-          include: {
-            selections: {
-              orderBy: { createdAt: 'asc' }
-            }
-          }
-        }
-      }
+        productId: true,
+        product: { select: { name: true, brand: true, url: true, price: true } },
+        image: {
+          select: {
+            room: true,
+            roomId: true,
+            assignedRoom: { select: { name: true } },
+          },
+        },
+      },
+      orderBy: { createdAt: 'asc' },
     });
 
     // Fetch pricing data if requested
@@ -76,17 +94,8 @@ export async function POST(
       }
     }
 
-    if (!project) {
-      return NextResponse.json({ error: 'Project not found' }, { status: 404 });
-    }
-
-    // Filter rooms based on scope
-    let roomsToExport = project.rooms;
-    if (scope === 'current' && roomId) {
-      roomsToExport = project.rooms.filter(r => r.id === roomId);
-    }
-
-    // Build export data - only items on boards (selections with slotKey or in rooms)
+    // Build export data — one row per product per room (a product tagged on
+    // several photos in the same room collapses to a single line).
     const exportData: Array<{
       projectName: string;
       room: string;
@@ -104,44 +113,40 @@ export async function POST(
       notes: string;
     }> = [];
 
-    for (const room of roomsToExport) {
-      const roomTemplate = room.type
-        ? getRoomTemplateByType(room.type)
-        : getRoomTemplate(room.name);
+    const seen = new Set<string>();
+    for (const tag of tags) {
+      const roomLabel = tag.image.assignedRoom?.name || tag.image.room || 'Unspecified';
+      const dedupeKey = `${tag.image.roomId || roomLabel}-${tag.productId}`;
+      if (seen.has(dedupeKey)) continue;
+      seen.add(dedupeKey);
 
-      for (const selection of room.selections) {
-        let boardSection = 'General';
-        if (selection.slotKey && roomTemplate) {
-          const slot = roomTemplate.slots.find(s => s.key === selection.slotKey);
-          boardSection = slot?.label || selection.slotKey;
-        } else if (selection.tags && selection.tags.length > 0) {
-          boardSection = selection.tags[0];
-        }
+      // Look up pricing from ProjectProductPricing
+      const pricingKey = `${tag.productId}-${tag.image.roomId || ''}`;
+      const pricingKeyNoRoom = `${tag.productId}-`;
+      const pricing = pricingMap.get(pricingKey) || pricingMap.get(pricingKeyNoRoom);
 
-        // Look up pricing from ProjectProductPricing
-        const productId = selection.vendorProductId || selection.id;
-        const pricingKey = `${productId}-${room.id}`;
-        const pricingKeyNoRoom = `${productId}-`;
-        const pricing = pricingMap.get(pricingKey) || pricingMap.get(pricingKeyNoRoom);
-
-        exportData.push({
-          projectName: project.title || 'Untitled Project',
-          room: room.name,
-          boardSection,
-          productName: selection.productName || 'Untitled Product',
-          vendorBrand: selection.vendorName || '',
-          sku: selection.vendorProductId || '',
-          url: selection.productUrl || '',
-          price: selection.unitPrice ? `$${Number(selection.unitPrice).toFixed(2)}` : '',
-          tradePricing: pricing?.unitPriceTrade ? `$${pricing.unitPriceTrade.toFixed(2)}` : '',
-          leadTime: pricing?.leadTimeWeeks ? `${pricing.leadTimeWeeks} wk` : '',
-          availability: pricing?.availability || '',
-          unit: 'ea',
-          quantity: selection.quantity ? String(selection.quantity) : '',
-          notes: selection.notes || ''
-        });
-      }
+      exportData.push({
+        projectName: project.title || 'Untitled Project',
+        room: roomLabel,
+        boardSection: '',
+        productName: tag.product?.name || 'Untitled Product',
+        vendorBrand: tag.product?.brand || '',
+        sku: '',
+        url: tag.product?.url || '',
+        price: tag.product?.price ? `$${Number(tag.product.price).toFixed(2)}` : '',
+        tradePricing: pricing?.unitPriceTrade ? `$${pricing.unitPriceTrade.toFixed(2)}` : '',
+        leadTime: pricing?.leadTimeWeeks ? `${pricing.leadTimeWeeks} wk` : '',
+        availability: pricing?.availability || '',
+        unit: 'ea',
+        quantity: '',
+        notes: '',
+      });
     }
+
+    // Group rooms together, products alphabetical within a room.
+    exportData.sort(
+      (a, b) => a.room.localeCompare(b.room) || a.productName.localeCompare(b.productName),
+    );
 
     // Generate filename
     const dateStr = new Date().toISOString().split('T')[0].replace(/-/g, '');
