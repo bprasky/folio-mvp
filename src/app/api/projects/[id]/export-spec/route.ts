@@ -217,27 +217,37 @@ export async function POST(
     } else if (format === 'pdf') {
       // Generate PDF with pdf-lib. Unlike pdfkit, pdf-lib embeds the standard
       // fonts without reading any files at runtime, so it works on serverless
-      // (no Helvetica.afm ENOENT). StandardFonts use WinAnsi encoding, so we
-      // sanitize cell text to ASCII to avoid "cannot encode" errors on stray
-      // unicode (smart quotes, em dashes) in product/vendor names.
-      const { PDFDocument, StandardFonts, rgb } = await import('pdf-lib');
+      // (no Helvetica.afm ENOENT). The title uses Times-Italic and the body
+      // Helvetica — both StandardFonts, no embedding. StandardFonts use WinAnsi
+      // encoding, so we sanitize text to ASCII (plus the middot separator, which
+      // is valid WinAnsi) to avoid "cannot encode" errors on stray unicode.
+      //
+      // Layout (see docs/17_SPEC_SHEET_EXPORT.md): no flat grid. Products group
+      // under room section headers; each product is a wrapped two-line entry
+      // with a fixed right rail for price. Nothing truncates — long names wrap.
+      const { PDFDocument, StandardFonts, rgb, PDFName, PDFString } = await import('pdf-lib');
 
       const pageWidth = 612; // US Letter, points
       const pageHeight = 792;
       const marginX = 50;
-      const black = rgb(0, 0, 0);
+      const contentWidth = pageWidth - 2 * marginX; // 512
+      const bottomLimit = 60; // content must not cross into the footer band
+
+      // Brand tokens (docs/17): ink #1A1A1A, gold #C9A96E, taupe #8A7E70,
+      // warm header band #FAF8F5. Gold is reserved for header/room rules only.
+      const ink = rgb(0.102, 0.102, 0.102);
+      const gold = rgb(0.788, 0.663, 0.431);
+      const taupe = rgb(0.541, 0.494, 0.439);
+      const warm = rgb(0.98, 0.973, 0.961);
 
       const pdfDoc = await PDFDocument.create();
       const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
       const fontBold = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
-
-      const headers = ['Project', 'Room', 'Section', 'Product', 'Vendor', 'SKU', 'URL', 'Price', 'Unit', 'Qty', 'Notes'];
-      // Widths sum to 512 (= pageWidth - 2*marginX) so the table fits the page.
-      const colWidths = [55, 40, 45, 80, 50, 45, 75, 32, 22, 22, 46];
-      const tableWidth = colWidths.reduce((a, b) => a + b, 0);
+      const titleFont = await pdfDoc.embedFont(StandardFonts.TimesRomanItalic);
 
       // Replace common typographic chars, then drop anything outside printable
-      // ASCII so StandardFonts can always encode it.
+      // ASCII — but keep U+00B7 (middot), the meta separator, which WinAnsi can
+      // encode. Without this carve-out the separator would silently vanish.
       const ascii = (text: unknown): string =>
         (text ?? '')
           .toString()
@@ -246,97 +256,351 @@ export async function POST(
           .replace(/[–—]/g, '-')
           .replace(/…/g, '...')
           .replace(/ /g, ' ')
-          .replace(/[^\x20-\x7E]/g, '');
+          .replace(/[^\x20-\x7E·]/g, '');
 
-      // Trim a cell to fit its column width, adding an ellipsis when truncated.
-      const fit = (text: unknown, f: typeof font, size: number, maxWidth: number): string => {
-        let t = ascii(text);
-        if (!t || f.widthOfTextAtSize(t, size) <= maxWidth) return t;
-        while (t.length > 1 && f.widthOfTextAtSize(t + '...', size) > maxWidth) {
-          t = t.slice(0, -1);
+      // Break text into lines that each fit maxWidth. Never truncates: a single
+      // word wider than maxWidth gets its own (over-wide) line rather than a cut.
+      const wrap = (text: unknown, f: typeof font, size: number, maxWidth: number): string[] => {
+        const clean = ascii(text);
+        if (!clean) return [];
+        const words = clean.split(/\s+/).filter(Boolean);
+        const lines: string[] = [];
+        let current = '';
+        for (const word of words) {
+          const candidate = current ? `${current} ${word}` : word;
+          if (!current || f.widthOfTextAtSize(candidate, size) <= maxWidth) {
+            current = candidate;
+          } else {
+            lines.push(current);
+            current = word;
+          }
         }
-        return t + '...';
+        if (current) lines.push(current);
+        return lines;
       };
 
-      let page = pdfDoc.addPage([pageWidth, pageHeight]);
-      let cursor = 50; // distance from top of page
+      // Currency: thousands separator + two decimals, correctly rounded. Manual
+      // (not toLocaleString) so output is deterministic regardless of ICU build.
+      const formatCurrency = (n: number): string => {
+        const [whole, frac] = (Math.round(n * 100) / 100).toFixed(2).split('.');
+        return `$${whole.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}.${frac}`;
+      };
 
-      const drawRow = (values: unknown[], f: typeof font, size: number) => {
-        let x = marginX;
-        values.forEach((value, i) => {
-          page.drawText(fit(value, f, size, colWidths[i] - 4), {
-            x: x + 2,
-            y: pageHeight - cursor - size,
-            size,
-            font: f,
-            color: black,
-          });
-          x += colWidths[i];
+      // exportData carries price as a pre-formatted "$384.00" string (shared
+      // with the XLSX branch). Parse the number back out for re-formatting and
+      // for totals; '' means no price.
+      const parsePrice = (s: string): number | null => {
+        if (!s) return null;
+        const n = parseFloat(s.replace(/[^0-9.]/g, ''));
+        return Number.isFinite(n) ? n : null;
+      };
+      const parseQty = (s: string): number | null => {
+        if (!s) return null;
+        const n = parseInt(s.replace(/[^0-9]/g, ''), 10);
+        return Number.isFinite(n) && n > 0 ? n : null;
+      };
+
+      // Bare hostname (www stripped) for display; full row.url stays the href.
+      const domainOf = (url: string): string => {
+        if (!url) return '';
+        try {
+          return new URL(url).hostname.replace(/^www\./, '');
+        } catch {
+          return ascii(url);
+        }
+      };
+
+      // --- type sizes / line heights ---------------------------------------
+      const nameSize = 12;
+      const nameLH = 15;
+      const metaSize = 9;
+      const metaLH = 13;
+      const priceSize = 11;
+      const priceLH = 14;
+      const railSize = 8.5;
+      const railLH = 12;
+      const roomLabelSize = 12;
+      const entryGap = 9;
+
+      const rightRailWidth = 130;
+      const railGap = 18;
+      const nameWidth = contentWidth - rightRailWidth - railGap; // 364
+      const railRight = pageWidth - marginX; // right edge of the rail
+
+      const titleText = ascii(project.title || 'Project Specification');
+      const genDate = new Date().toLocaleDateString();
+      const roomCount = new Set(exportData.map((r) => r.room)).size;
+      const itemCount = exportData.length;
+
+      // Add a clickable URI link annotation over a drawn run of text.
+      // pdf-lib 1.17.1 has no high-level link API, so build the annotation dict
+      // by hand: /Subtype /Link, a /Rect over the text, /A a /URI action.
+      const addLink = (
+        pg: ReturnType<typeof pdfDoc.addPage>,
+        x: number,
+        baseline: number,
+        width: number,
+        size: number,
+        url: string,
+      ) => {
+        const annot = pdfDoc.context.obj({
+          Type: 'Annot',
+          Subtype: 'Link',
+          Rect: [x, baseline - 2, x + width, baseline + size],
+          Border: [0, 0, 0],
+          A: { Type: 'Action', S: 'URI', URI: PDFString.of(url) },
         });
+        const ref = pdfDoc.context.register(annot);
+        const existing = pg.node.Annots();
+        if (existing) {
+          existing.push(ref);
+        } else {
+          pg.node.set(PDFName.of('Annots'), pdfDoc.context.obj([ref]));
+        }
       };
 
-      // Title (centered)
-      const title = ascii(project.title || 'Project Specification');
-      const titleSize = 20;
-      page.drawText(title, {
-        x: (pageWidth - fontBold.widthOfTextAtSize(title, titleSize)) / 2,
-        y: pageHeight - cursor - titleSize,
-        size: titleSize,
-        font: fontBold,
-        color: black,
-      });
-      cursor += titleSize + 10;
+      type Entry = {
+        nameLines: string[];
+        metaRuns: Array<{ text: string; link?: string }>;
+        notesLines: string[];
+        priceStr: string;
+        priceNum: number | null;
+        qtyStr: string;
+        tradeStr: string;
+        leadStr: string;
+      };
 
-      const genText = ascii(`Generated: ${new Date().toLocaleDateString()}`);
-      const genSize = 11;
-      page.drawText(genText, {
-        x: (pageWidth - font.widthOfTextAtSize(genText, genSize)) / 2,
-        y: pageHeight - cursor - genSize,
-        size: genSize,
-        font,
-        color: black,
-      });
-      cursor += genSize + 24;
+      const buildEntry = (row: (typeof exportData)[number]): Entry => {
+        const nameLines = wrap(row.productName || 'Untitled Product', font, nameSize, nameWidth);
+        const metaRuns: Entry['metaRuns'] = [];
+        const vendor = ascii(row.vendorBrand);
+        const sku = ascii(row.sku);
+        const domain = domainOf(row.url);
+        if (vendor) metaRuns.push({ text: vendor });
+        if (sku) metaRuns.push({ text: sku });
+        if (domain) metaRuns.push({ text: domain, link: row.url });
 
-      // Header row + underline
-      const headerSize = 9;
-      drawRow(headers, fontBold, headerSize);
-      cursor += headerSize + 4;
-      page.drawLine({
-        start: { x: marginX, y: pageHeight - cursor },
-        end: { x: marginX + tableWidth, y: pageHeight - cursor },
-        thickness: 0.5,
-        color: black,
-      });
-      cursor += 6;
+        const priceNum = parsePrice(row.price);
+        const priceStr = priceNum != null ? formatCurrency(priceNum) : 'Price on request';
 
-      // Data rows
-      const rowSize = 8;
-      const rowHeight = 14;
-      for (const row of exportData) {
-        if (cursor + rowHeight > pageHeight - marginX) {
-          page = pdfDoc.addPage([pageWidth, pageHeight]);
-          cursor = marginX;
+        const qtyNum = parseQty(row.quantity);
+        const qtyStr = qtyNum != null ? `${qtyNum} ${ascii(row.unit) || 'ea'}` : '';
+
+        const tradeNum = includePricing ? parsePrice(row.tradePricing) : null;
+        const tradeStr = tradeNum != null ? `Trade ${formatCurrency(tradeNum)}` : '';
+
+        let leadStr = '';
+        if (includeLeadTime) {
+          const bits: string[] = [];
+          if (row.leadTime) bits.push(ascii(row.leadTime));
+          if (row.availability) bits.push(ascii(row.availability));
+          leadStr = bits.join(' · ');
         }
-        drawRow(
-          [
-            row.projectName,
-            row.room,
-            row.boardSection,
-            row.productName,
-            row.vendorBrand,
-            row.sku,
-            row.url,
-            row.price,
-            row.unit,
-            row.quantity,
-            row.notes,
-          ],
-          font,
-          rowSize,
-        );
-        cursor += rowHeight;
+
+        const notesLines = row.notes ? wrap(row.notes, font, metaSize, nameWidth) : [];
+        return { nameLines, metaRuns, notesLines, priceStr, priceNum, qtyStr, tradeStr, leadStr };
+      };
+
+      const measureEntry = (e: Entry): number => {
+        const leftH =
+          e.nameLines.length * nameLH +
+          (e.metaRuns.length ? metaLH : 0) +
+          e.notesLines.length * metaLH;
+        let railLines = 1; // price always
+        if (e.qtyStr) railLines += 1;
+        if (e.tradeStr) railLines += 1;
+        if (e.leadStr) railLines += 1;
+        const rightH = priceLH + (railLines - 1) * railLH;
+        return Math.max(leftH, rightH) + entryGap;
+      };
+
+      // --- page state ------------------------------------------------------
+      let page = pdfDoc.addPage([pageWidth, pageHeight]);
+      let y = pageHeight; // pen position, measured from the page bottom
+
+      const drawRunningHeader = () => {
+        const hy = pageHeight - 44;
+        page.drawText(titleText, { x: marginX, y: hy, size: 11, font: titleFont, color: ink });
+        const eyebrow = 'S P E C I F I C A T I O N';
+        const ew = fontBold.widthOfTextAtSize(eyebrow, 8);
+        page.drawText(eyebrow, { x: pageWidth - marginX - ew, y: hy, size: 8, font: fontBold, color: taupe });
+        const ry = hy - 9;
+        page.drawLine({ start: { x: marginX, y: ry }, end: { x: pageWidth - marginX, y: ry }, thickness: 0.75, color: gold });
+        y = ry - 22;
+      };
+
+      const drawDocumentHeader = () => {
+        const bandH = 92;
+        page.drawRectangle({ x: 0, y: pageHeight - bandH, width: pageWidth, height: bandH, color: warm });
+        const eyebrow = 'S P E C I F I C A T I O N';
+        page.drawText(eyebrow, { x: marginX, y: pageHeight - 36, size: 9, font: fontBold, color: taupe });
+        page.drawText(titleText, { x: marginX, y: pageHeight - 66, size: 24, font: titleFont, color: ink });
+        const metaLines = [
+          `${itemCount} ${itemCount === 1 ? 'item' : 'items'}`,
+          `${roomCount} ${roomCount === 1 ? 'room' : 'rooms'}`,
+          `Generated ${genDate}`,
+        ];
+        let my = pageHeight - 36;
+        for (const ln of metaLines) {
+          const w = font.widthOfTextAtSize(ln, 9);
+          page.drawText(ln, { x: pageWidth - marginX - w, y: my, size: 9, font, color: taupe });
+          my -= 13;
+        }
+        const ry = pageHeight - bandH;
+        page.drawLine({ start: { x: marginX, y: ry }, end: { x: pageWidth - marginX, y: ry }, thickness: 1, color: gold });
+        y = ry - 26;
+      };
+
+      const newPage = () => {
+        page = pdfDoc.addPage([pageWidth, pageHeight]);
+        drawRunningHeader();
+      };
+
+      // Reserve space; start a fresh page if `needed` points won't fit.
+      const ensureSpace = (needed: number) => {
+        if (y - needed < bottomLimit) newPage();
+      };
+
+      const drawRoomHeader = (roomName: string) => {
+        page.drawText(ascii(roomName).toUpperCase(), { x: marginX, y: y - roomLabelSize, size: roomLabelSize, font: fontBold, color: gold });
+        const ry = y - roomLabelSize - 6;
+        page.drawLine({ start: { x: marginX, y: ry }, end: { x: pageWidth - marginX, y: ry }, thickness: 0.75, color: gold });
+        y = ry - 14;
+      };
+      const roomHeaderHeight = roomLabelSize + 6 + 14;
+
+      const drawRight = (text: string, baseline: number, size: number, f: typeof font, color: typeof ink) => {
+        const w = f.widthOfTextAtSize(text, size);
+        page.drawText(text, { x: railRight - w, y: baseline, size, font: f, color });
+      };
+
+      const drawEntry = (e: Entry) => {
+        const top = y;
+        // Left column: wrapped name, then meta runs, then notes.
+        let ly = top;
+        for (const line of e.nameLines) {
+          page.drawText(line, { x: marginX, y: ly - nameSize, size: nameSize, font, color: ink });
+          ly -= nameLH;
+        }
+        if (e.metaRuns.length) {
+          const baseline = ly - metaSize;
+          let mx = marginX;
+          const sep = ' · ';
+          e.metaRuns.forEach((run, i) => {
+            if (i > 0) {
+              page.drawText(sep, { x: mx, y: baseline, size: metaSize, font, color: taupe });
+              mx += font.widthOfTextAtSize(sep, metaSize);
+            }
+            page.drawText(run.text, { x: mx, y: baseline, size: metaSize, font, color: taupe });
+            const w = font.widthOfTextAtSize(run.text, metaSize);
+            if (run.link) addLink(page, mx, baseline, w, metaSize, run.link);
+            mx += w;
+          });
+          ly -= metaLH;
+        }
+        for (const line of e.notesLines) {
+          page.drawText(line, { x: marginX, y: ly - metaSize, size: metaSize, font, color: taupe });
+          ly -= metaLH;
+        }
+
+        // Right rail: price, optional qty, optional trade, optional lead/avail.
+        let ry = top;
+        drawRight(e.priceStr, ry - priceSize, priceSize, fontBold, ink);
+        ry -= priceLH;
+        if (e.qtyStr) { drawRight(e.qtyStr, ry - railSize, railSize, font, taupe); ry -= railLH; }
+        if (e.tradeStr) { drawRight(e.tradeStr, ry - railSize, railSize, font, taupe); ry -= railLH; }
+        if (e.leadStr) { drawRight(e.leadStr, ry - railSize, railSize, font, taupe); ry -= railLH; }
+
+        const bottom = Math.min(ly, ry);
+        y = bottom - entryGap;
+      };
+
+      const drawSubtotal = (sum: number, unpriced: number) => {
+        const baseline = y - metaSize;
+        const label = 'Subtotal — sum of listed prices';
+        page.drawText(label, { x: marginX, y: baseline, size: metaSize, font, color: taupe });
+        drawRight(formatCurrency(sum), baseline, metaSize, fontBold, ink);
+        y -= metaLH;
+        if (unpriced > 0) {
+          const note = `${unpriced} priced on request`;
+          page.drawText(note, { x: marginX, y: y - metaSize, size: metaSize, font, color: taupe });
+          y -= metaLH;
+        }
+        y -= 10; // breathing room before the next room
+      };
+      const subtotalHeight = metaLH * 2 + 10;
+
+      const drawProjectTotal = (sum: number, unpriced: number) => {
+        page.drawLine({ start: { x: marginX, y }, end: { x: pageWidth - marginX, y }, thickness: 1, color: gold });
+        y -= 18;
+        const label = 'Project total — sum of listed prices';
+        page.drawText(label, { x: marginX, y: y - 11, size: 11, font: fontBold, color: ink });
+        drawRight(formatCurrency(sum), y - 11, 12, fontBold, ink);
+        y -= 16;
+        if (unpriced > 0) {
+          const note = `${unpriced} ${unpriced === 1 ? 'item' : 'items'} priced on request`;
+          page.drawText(note, { x: marginX, y: y - metaSize, size: metaSize, font, color: taupe });
+          y -= metaLH;
+        }
+      };
+      const projectTotalHeight = 18 + 16 + metaLH + 8;
+
+      // --- build the document ---------------------------------------------
+      drawDocumentHeader();
+
+      if (exportData.length === 0) {
+        page.drawText('No products tagged in this project yet.', { x: marginX, y: y - metaSize, size: 11, font, color: taupe });
+      } else {
+        let currentRoom: string | null = null;
+        let roomSum = 0;
+        let roomUnpriced = 0;
+        let projectSum = 0;
+        let projectUnpriced = 0;
+
+        for (const row of exportData) {
+          const entry = buildEntry(row);
+          const entryH = measureEntry(entry);
+
+          if (row.room !== currentRoom) {
+            if (currentRoom !== null) {
+              ensureSpace(subtotalHeight);
+              drawSubtotal(roomSum, roomUnpriced);
+            }
+            // Keep the room label with its first entry — never strand it.
+            ensureSpace(roomHeaderHeight + entryH);
+            drawRoomHeader(row.room);
+            currentRoom = row.room;
+            roomSum = 0;
+            roomUnpriced = 0;
+          } else {
+            ensureSpace(entryH);
+          }
+
+          drawEntry(entry);
+          if (entry.priceNum != null) {
+            roomSum += entry.priceNum;
+            projectSum += entry.priceNum;
+          } else {
+            roomUnpriced += 1;
+            projectUnpriced += 1;
+          }
+        }
+
+        // Final room subtotal, then the project total.
+        ensureSpace(subtotalHeight);
+        drawSubtotal(roomSum, roomUnpriced);
+        ensureSpace(projectTotalHeight);
+        drawProjectTotal(projectSum, projectUnpriced);
       }
+
+      // Second pass: now that the page count is known, stamp "Page i of N".
+      const pages = pdfDoc.getPages();
+      const pageTotal = pages.length;
+      pages.forEach((p, i) => {
+        const label = `Page ${i + 1} of ${pageTotal}`;
+        const w = font.widthOfTextAtSize(label, 8);
+        p.drawText(label, { x: pageWidth - marginX - w, y: 34, size: 8, font, color: taupe });
+      });
 
       const pdfBytes = await pdfDoc.save();
 
