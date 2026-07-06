@@ -1,9 +1,9 @@
 "use client";
 
 import { useEffect, useState, useRef, useCallback } from "react";
-import { FaTimes, FaTag, FaSearch, FaCheck, FaTrash, FaGripLines, FaImage, FaExternalLinkAlt, FaChevronDown, FaChevronUp, FaExclamationCircle } from "react-icons/fa";
-import { isFlaggedDomain } from "@/lib/browserless/flaggedDomains";
-import { assessProductHealth } from "@/lib/products/productHealth";
+import { FaTimes, FaTag, FaCheck, FaTrash, FaExclamationCircle } from "react-icons/fa";
+import { ProductTagPicker } from "./ProductTagPicker";
+import { ProductEditModal } from "./ProductEditModal";
 
 type ImageWithTags = {
   id: string;
@@ -23,13 +23,6 @@ type ImageWithTags = {
       scrapeStatus?: string | null;
     } | null;
   }>;
-};
-
-type SearchProduct = {
-  id: string;
-  name: string;
-  imageUrl: string | null;
-  vendorName: string | null;
 };
 
 // Images may be handed in by the parent (the project page already loads them
@@ -94,7 +87,7 @@ function normalizeImages(incoming: IncomingImage[]): ImageWithTags[] {
 /**
  * ProjectImageTagger — a modal-style UI for manually tagging products on
  * project images. Shows all project images, lets the designer pick one,
- * click to place a dot, then search/select a product.
+ * click to place a dot, then search/select a product via ProductTagPicker.
  */
 export function ProjectImageTagger({ projectId, images: providedImages, onClose }: Props) {
   const [images, setImages] = useState<ImageWithTags[]>(() =>
@@ -103,107 +96,23 @@ export function ProjectImageTagger({ projectId, images: providedImages, onClose 
   const [loading, setLoading] = useState(!providedImages);
   const [activeImage, setActiveImage] = useState<ImageWithTags | null>(null);
 
-  // Tagging state
+  // Tagging state — a placed dot opens the product picker for that dot.
   const [pendingDot, setPendingDot] = useState<{ x: number; y: number } | null>(null);
   const [showProductSearch, setShowProductSearch] = useState(false);
-  const [searchTerm, setSearchTerm] = useState("");
-  const [searchResults, setSearchResults] = useState<SearchProduct[]>([]);
-  const [searching, setSearching] = useState(false);
-  const [selectedProduct, setSelectedProduct] = useState<SearchProduct | null>(null);
-  const [saving, setSaving] = useState(false);
   const [hoveredTagId, setHoveredTagId] = useState<string | null>(null);
-
-  // "Paste a link" mode — scrape a product URL, then tag it at the dot.
-  const [tagMode, setTagMode] = useState<"search" | "url">("search");
-  const [productUrl, setProductUrl] = useState("");
-  const [urlFetching, setUrlFetching] = useState(false);
-  const [urlPreview, setUrlPreview] = useState<{
-    name: string;
-    imageUrl: string | null;
-    price: string | null;
-    brand: string | null;
-    url: string;
-    // Full scraped detail, surfaced in the expandable confirm panel so nothing
-    // is hidden. Optional because the deferred (flagged-domain) path has no
-    // fields until the background rung fills them.
-    description?: string | null;
-    category?: string | null;
-    dimensions?: string | null;
-    materials?: string[];
-    colors?: string[];
-    /** Set only when Tier 3 (AI) ran — flags a low-confidence scrape to verify. */
-    confidence?: string | null;
-    /** Flagged hard domain: skip the inline scrape, fill via the BQL rung after tagging. */
-    deferred?: boolean;
-  } | null>(null);
-  const [urlError, setUrlError] = useState<string | null>(null);
-  // Expandable confirm panel for an inline scrape preview.
-  const [previewExpanded, setPreviewExpanded] = useState(false);
 
   // Products currently being filled by the background BQL rung (flagged domains).
   // The tag shows a pending state until the scrape resolves.
   const [scrapingIds, setScrapingIds] = useState<Set<string>>(new Set());
   // Deferred scrapes that finished with gaps: productId -> missing field labels.
-  // The tag is highlighted so the designer can see what didn't come through.
   const [reviewFlags, setReviewFlags] = useState<Record<string, string[]>>({});
-  // Edit-an-existing-tagged-product modal (designer enrichment of unclaimed
-  // products). Null when closed.
-  const [editTarget, setEditTarget] = useState<null | {
-    id: string;
-    name: string;
-    brand: string;
-    price: string;
-    category: string;
-    description: string;
-    imageUrl: string;
-    url: string;
-  }>(null);
-  const [editSaving, setEditSaving] = useState(false);
-  const [editError, setEditError] = useState<string | null>(null);
-  // Tag whose edit modal is open (so saving can also mark it reviewed).
-  const [editTagId, setEditTagId] = useState<string | null>(null);
-  // Manual autofill inside the edit modal — the rescue path when the deferred
-  // scrape returned nothing. The designer pastes the product copy or drops a
-  // screenshot; we parse it into the edit fields via the same endpoints the
-  // pre-tag manual capture uses.
-  const [editPasteText, setEditPasteText] = useState("");
-  const [editParsing, setEditParsing] = useState<null | "text" | "image">(null);
-  // Force a fresh scrape over a stale/faulty shared product (e.g. an old HTML
-  // description), overwriting its fields with the current extraction.
-  const [rescraping, setRescraping] = useState(false);
   // Dismissible "fetching in the background" banner shown while scrapes run.
   const [bannerDismissed, setBannerDismissed] = useState(false);
 
-  // Guided manual capture — fallback when a retailer blocks the scraper. The
-  // designer pastes the product copy or drops a screenshot; we parse it (and,
-  // for screenshots, host the image) into the same preview the URL path yields.
-  const [showManual, setShowManual] = useState(false);
-  const [manual, setManual] = useState<{ name: string; brand: string; price: string; imageUrl: string | null; description: string }>(
-    { name: "", brand: "", price: "", imageUrl: null, description: "" },
-  );
-  const [pasteText, setPasteText] = useState("");
-  const [parsing, setParsing] = useState<null | "text" | "image">(null);
-  const [captureError, setCaptureError] = useState<string | null>(null);
-
-  // Dedup: when a pasted URL already maps to an existing product, offer to reuse
-  // it ("we already have this — is this it?") instead of silently creating a
-  // duplicate or inheriting an earlier faulty scrape. `lookupChecked` is set once
-  // the designer says "not the same" so the next fetch scrapes fresh.
-  const [existingMatch, setExistingMatch] = useState<null | {
-    id: string;
-    name: string | null;
-    imageUrl: string | null;
-    price: number | null;
-    brand: string | null;
-    claimed: boolean;
-    complete: boolean;
-    flags: { field: string; severity: "missing" | "suspicious"; message: string }[];
-  }>(null);
-  const [lookupChecked, setLookupChecked] = useState(false);
-  const [reusing, setReusing] = useState(false);
+  // Edit-an-existing-tagged-product modal (designer enrichment). Null when closed.
+  const [editState, setEditState] = useState<{ productId: string; tagId: string | null } | null>(null);
 
   const imageRef = useRef<HTMLImageElement | null>(null);
-  const searchTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Drag state — refs to avoid re-renders during drag
   const [draggingTagId, setDraggingTagId] = useState<string | null>(null);
@@ -213,8 +122,7 @@ export function ProjectImageTagger({ projectId, images: providedImages, onClose 
 
   // Keep the hover popup reachable: moving the cursor from the dot up to the
   // popup briefly leaves the dot's hit-area, so hide on a short grace delay that
-  // any re-entry (dot or popup) cancels. Without this the popup vanishes before
-  // you can click its edit/delete controls.
+  // any re-entry (dot or popup) cancels.
   const hoverHideTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const cancelHideTag = useCallback(() => {
     if (hoverHideTimer.current) {
@@ -239,12 +147,9 @@ export function ProjectImageTagger({ projectId, images: providedImages, onClose 
     const imageMap = new Map<string, ImageWithTags>();
 
     // 1. Existing tags. Best-effort: a failure here must not hide the
-    //    project's untagged photos (the previous version threw and left the
-    //    tagger showing "no photos" whenever this call hiccuped).
+    //    project's untagged photos.
     try {
-      const res = await fetch(
-        `/api/tag-product-to-image?projectId=${projectId}`
-      );
+      const res = await fetch(`/api/tag-product-to-image?projectId=${projectId}`);
       if (res.ok) {
         const tags: any[] = await res.json();
         for (const tag of tags) {
@@ -290,10 +195,7 @@ export function ProjectImageTagger({ projectId, images: providedImages, onClose 
       console.error("[ProjectImageTagger] project image fetch error:", err);
     }
 
-    // 3. Fall back to the images handed in by the parent. This is the same
-    //    list the project page renders, so the tagger can never report "no
-    //    photos" for images the user can plainly see — even if the fetch
-    //    endpoints above return nothing (e.g. a brand-new, untagged project).
+    // 3. Fall back to the images handed in by the parent.
     if (providedImages?.length) {
       if (imageMap.size === 0) {
         setImages(normalizeImages(providedImages));
@@ -315,7 +217,7 @@ export function ProjectImageTagger({ projectId, images: providedImages, onClose 
 
   // Background BQL rung for flagged hard domains: kick the dedicated route, then
   // poll the product until its scrapeStatus leaves 'pending', refreshing the
-  // tags so the filled product (name, image, price) replaces the pending stub.
+  // tags so the filled product replaces the pending stub.
   const runBqlScrape = useCallback(
     (productId: string) => {
       setScrapingIds((prev) => new Set(prev).add(productId));
@@ -328,8 +230,7 @@ export function ProjectImageTagger({ projectId, images: providedImages, onClose 
           return next;
         });
 
-      // Kick the rung. It runs inline server-side (~34s) under a raised
-      // maxDuration; completion is observed via the poll below, not by awaiting.
+      // Kick the rung. Completion is observed via the poll below, not by awaiting.
       fetch(`/api/products/${productId}/scrape-bql`, { method: "POST" }).catch(() => {});
 
       const deadline = Date.now() + 130000;
@@ -339,8 +240,7 @@ export function ProjectImageTagger({ projectId, images: providedImages, onClose 
           if (r.ok) {
             const d = await r.json();
             if (d.scrapeStatus && d.scrapeStatus !== "pending") {
-              // Highlight what the stealth scrape couldn't recover so the
-              // designer can review/fix it after it lands (confirm-after).
+              // Highlight what the stealth scrape couldn't recover.
               const missing =
                 d.scrapeStatus === "failed"
                   ? ["details"]
@@ -378,31 +278,6 @@ export function ProjectImageTagger({ projectId, images: providedImages, onClose 
     [fetchImages],
   );
 
-  // Debounced product search
-  useEffect(() => {
-    if (!searchTerm.trim()) {
-      setSearchResults([]);
-      return;
-    }
-    if (searchTimeoutRef.current) clearTimeout(searchTimeoutRef.current);
-    searchTimeoutRef.current = setTimeout(async () => {
-      setSearching(true);
-      try {
-        const res = await fetch(
-          `/api/products/search?q=${encodeURIComponent(searchTerm)}&limit=12`
-        );
-        if (res.ok) {
-          const data = await res.json();
-          setSearchResults(Array.isArray(data) ? data : []);
-        }
-      } catch {
-        // ignore
-      } finally {
-        setSearching(false);
-      }
-    }, 300);
-  }, [searchTerm]);
-
   const handleImageClick = (e: React.MouseEvent<HTMLImageElement>) => {
     // Don't place a new tag if we just finished dragging
     if (justFinishedDrag.current) return;
@@ -412,603 +287,21 @@ export function ProjectImageTagger({ projectId, images: providedImages, onClose 
     const y = ((e.clientY - rect.top) / rect.height) * 100;
     setPendingDot({ x, y });
     setShowProductSearch(true);
-    setSearchTerm("");
-    setSelectedProduct(null);
-    setTagMode("search");
-    setProductUrl("");
-    setUrlPreview(null);
-    setUrlError(null);
   };
 
   const closeProductPicker = () => {
     setShowProductSearch(false);
     setPendingDot(null);
-    setSelectedProduct(null);
-    setTagMode("search");
-    setProductUrl("");
-    setUrlPreview(null);
-    setUrlError(null);
-    setShowManual(false);
-    setManual({ name: "", brand: "", price: "", imageUrl: null, description: "" });
-    setPasteText("");
-    setParsing(null);
-    setCaptureError(null);
-    setExistingMatch(null);
-    setLookupChecked(false);
-    setReusing(false);
-  };
-
-  // Scrape a product URL into a preview the designer can confirm before tagging.
-  const handleFetchUrl = async () => {
-    const url = productUrl.trim();
-    if (!url) return;
-    // Each fetch starts collapsed; only an inline scrape with fields opens it.
-    setPreviewExpanded(false);
-    setExistingMatch(null);
-
-    // Dedup first: if we already have a product for this URL, surface it so the
-    // designer can reuse it ("is this the one?") rather than creating a duplicate
-    // or silently inheriting an earlier faulty scrape. Skipped once they've said
-    // "not the same" (lookupChecked). Best-effort: a lookup failure falls through
-    // to the normal scrape path.
-    if (!lookupChecked) {
-      try {
-        const r = await fetch(`/api/products/lookup?url=${encodeURIComponent(url)}`);
-        if (r.ok) {
-          const d = await r.json();
-          if (d?.match) {
-            setExistingMatch(d.match);
-            setUrlError(null);
-            setUrlPreview(null);
-            setShowManual(false);
-            return;
-          }
-        }
-      } catch {
-        /* fall through to a normal scrape */
-      }
-    }
-
-    // Flagged hard domains (e.g. Wayfair) block the cheap tiers and take ~34s on
-    // the BQL rung, too slow to run inline here. Defer: stage a pending preview,
-    // tag a pending product on save, then let the scrape-bql route fill it in the
-    // background. Mirrors how website import and the analyze step hand slow work
-    // to a dedicated route.
-    if (isFlaggedDomain(url)) {
-      let brand: string | null = null;
-      try {
-        const host = new URL(url).hostname.replace(/^www\./, "").split(".")[0];
-        brand = host ? host.charAt(0).toUpperCase() + host.slice(1) : null;
-      } catch {
-        /* keep brand null */
-      }
-      setUrlError(null);
-      setShowManual(false);
-      setUrlPreview({
-        name: brand ? `${brand} product` : "Product",
-        imageUrl: null,
-        price: null,
-        brand,
-        url,
-        deferred: true,
-      });
-      return;
-    }
-
-    setUrlFetching(true);
-    setUrlError(null);
-    setUrlPreview(null);
-    try {
-      const res = await fetch("/api/scrape-product", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ url }),
-      });
-      const data = await res.json();
-      // The cheap path detected a bot wall and is handing off to the stealth
-      // rung. Defer exactly like a flagged domain: stage a pending preview so the
-      // tag lands immediately and the background BQL rung fills in the details.
-      if (res.ok && data?.escalate) {
-        setUrlError(null);
-        setShowManual(false);
-        setUrlPreview({
-          name: data.brand ? `${data.brand} product` : "Product",
-          imageUrl: null,
-          price: null,
-          brand: data.brand ?? null,
-          url,
-          deferred: true,
-        });
-        return;
-      }
-      if (!res.ok) {
-        setUrlError(data.error || "Could not read that link.");
-        // Blocked or unreadable: open guided manual capture instead of dead-ending.
-        if (data.blocked || res.status === 422 || res.status === 502) {
-          setShowManual(true);
-        }
-        return;
-      }
-      setUrlPreview({
-        name: data.name && data.name !== "Untitled Product" ? data.name : "",
-        imageUrl: data.image || data.imageUrl || null,
-        price: data.price || null,
-        brand: data.brand || null,
-        url,
-        description: data.description || null,
-        category: data.category || null,
-        dimensions: data.dimensions || null,
-        materials: Array.isArray(data.materials) ? data.materials : [],
-        colors: Array.isArray(data.colors) ? data.colors : [],
-        confidence: data.confidence || null,
-      });
-      // Open the detail panel so every captured field — and any gaps — are
-      // visible to confirm, instead of collapsing to a one-line label.
-      setPreviewExpanded(true);
-    } catch {
-      setUrlError("Could not read that link.");
-      setShowManual(true);
-    } finally {
-      setUrlFetching(false);
-    }
-  };
-
-  // ── Guided manual capture helpers ──
-
-  const composeDescription = (f: {
-    description?: string | null;
-    dimensions?: string | null;
-    materials?: string[];
-    colors?: string[];
-  }): string => {
-    const parts: string[] = [];
-    if (f.description) parts.push(f.description);
-    if (f.dimensions) parts.push(`Dimensions: ${f.dimensions}`);
-    if (f.materials?.length) parts.push(`Materials: ${f.materials.join(", ")}`);
-    if (f.colors?.length) parts.push(`Colors: ${f.colors.join(", ")}`);
-    return parts.join("\n");
-  };
-
-  // Patch a field on the live scrape preview (the confirm panel edits in place).
-  const updatePreview = (patch: Partial<NonNullable<typeof urlPreview>>) =>
-    setUrlPreview((prev) => (prev ? { ...prev, ...patch } : prev));
-
-  // Comma-separated text <-> string[] for the materials / colors fields.
-  const splitList = (v: string) =>
-    v.split(",").map((s) => s.trim()).filter(Boolean);
-
-  // One labeled, editable field in the confirm panel. Empty values are
-  // highlighted so a designer can see at a glance what the scrape missed.
-  const renderPreviewField = (
-    label: string,
-    value: string,
-    onChange: (v: string) => void,
-    multiline = false,
-  ) => {
-    const missing = !value.trim();
-    const ring = missing
-      ? "ring-1 ring-amber-300 bg-amber-50/50"
-      : "ring-1 ring-folio-border-subtle bg-white";
-    const cls = `w-full rounded-md px-2 py-1.5 text-sm ${ring} focus:outline-none focus:ring-2 focus:ring-[var(--accent)]`;
-    return (
-      <label className="block">
-        <span className="flex items-center gap-1.5 text-[11px] font-medium text-folio-text-secondary mb-1">
-          {label}
-          {missing && <span className="text-amber-600 text-[10px]">• missing</span>}
-        </span>
-        {multiline ? (
-          <textarea value={value} onChange={(e) => onChange(e.target.value)} rows={3} className={cls} />
-        ) : (
-          <input value={value} onChange={(e) => onChange(e.target.value)} className={cls} />
-        )}
-      </label>
-    );
-  };
-
-  const applyParsed = (f: any, image?: string | null) => {
-    setManual((prev) => ({
-      name: f?.name ?? prev.name,
-      brand: f?.brand ?? prev.brand,
-      price: f?.price != null ? String(f.price) : prev.price,
-      imageUrl: image ?? prev.imageUrl,
-      description: composeDescription(f ?? {}) || prev.description,
-    }));
-  };
-
-  const handleParseText = async () => {
-    if (!pasteText.trim()) return;
-    setParsing("text");
-    setCaptureError(null);
-    try {
-      const res = await fetch("/api/products/parse-text", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ text: pasteText, url: productUrl.trim() || undefined }),
-      });
-      const data = await res.json();
-      if (!res.ok) {
-        setCaptureError(data.error || "Couldn't read that text.");
-        return;
-      }
-      applyParsed(data.fields);
-    } catch {
-      setCaptureError("Couldn't read that text.");
-    } finally {
-      setParsing(null);
-    }
-  };
-
-  const handleScreenshot = async (file: File | null | undefined) => {
-    if (!file || !file.type.startsWith("image/")) return;
-    setParsing("image");
-    setCaptureError(null);
-    try {
-      const dataUrl: string = await new Promise((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onload = () => resolve(String(reader.result));
-        reader.onerror = () => reject(new Error("read failed"));
-        reader.readAsDataURL(file);
-      });
-      // Show the screenshot immediately while vision runs.
-      setManual((prev) => ({ ...prev, imageUrl: prev.imageUrl ?? dataUrl }));
-      const res = await fetch("/api/products/parse-image", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ imageDataUrl: dataUrl, url: productUrl.trim() || undefined }),
-      });
-      const data = await res.json();
-      if (!res.ok) {
-        setCaptureError(data.error || "Couldn't read that screenshot.");
-        return;
-      }
-      applyParsed(data.fields, data.image || null);
-    } catch {
-      setCaptureError("Couldn't read that screenshot.");
-    } finally {
-      setParsing(null);
-    }
-  };
-
-  // The product to save in URL mode: the scraped preview, or the manually
-  // captured one (paste/screenshot) when scraping was blocked.
-  const urlModeProduct = urlPreview
-    ? urlPreview
-    : showManual && manual.name.trim()
-      ? {
-          name: manual.name.trim(),
-          // Only persist a hosted URL — never a raw data: URL (screenshot preview).
-          imageUrl: manual.imageUrl && !manual.imageUrl.startsWith("data:") ? manual.imageUrl : null,
-          price: manual.price,
-          brand: manual.brand.trim() || null,
-          url: productUrl.trim(),
-          description: manual.description.trim() || null,
-        }
-      : null;
-
-  // Reuse an existing product (a dedup hit) at the pending dot instead of
-  // creating a new one. If it's missing details, open the editor right after so
-  // the designer can complete/correct the shared product — post-save enrichment.
-  const useExistingProduct = async (forceEdit = false) => {
-    if (!pendingDot || !activeImage || !existingMatch) return;
-    const { id, complete, claimed } = existingMatch;
-    setReusing(true);
-    try {
-      const res = await fetch("/api/tag-product-to-image", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          x: pendingDot.x,
-          y: pendingDot.y,
-          productId: id,
-          imageId: activeImage.id,
-          projectId,
-        }),
-      });
-      if (res.ok) {
-        closeProductPicker();
-        await fetchImages();
-        // Open the editor when the shared product needs attention — missing
-        // fields, or the designer explicitly chose "use & fix" because the data
-        // looks wrong (the right answer to "same product, bad scrape": correct it
-        // in place, never duplicate). Vendor-claimed products are canonical and
-        // not editable here.
-        if (!claimed && (forceEdit || !complete)) openEditProduct(id);
-      }
-    } catch (err) {
-      console.error("[ProjectImageTagger] reuse error:", err);
-    } finally {
-      setReusing(false);
-    }
-  };
-
-  // "Not the same product" — drop the dedup match and scrape this URL fresh.
-  const scrapeFreshInstead = () => {
-    setExistingMatch(null);
-    setLookupChecked(true);
-    handleFetchUrl();
-  };
-
-  const handleSaveTag = async () => {
-    if (!pendingDot || !activeImage) return;
-    if (tagMode === "search" && !selectedProduct) return;
-    if (tagMode === "url" && !urlModeProduct) return;
-    // Flagged hard domain: the product is tagged immediately in a pending state,
-    // then the BQL rung fills it in the background.
-    const deferred = tagMode === "url" && urlPreview?.deferred === true;
-    setSaving(true);
-    try {
-      // In URL mode, create the product from the preview/manual capture first.
-      // It lands as a pending stub awaiting vendor claim.
-      let productId: string;
-      if (tagMode === "url" && urlModeProduct) {
-        const priceNum = parseFloat(
-          String(urlModeProduct.price ?? "").replace(/[^0-9.]/g, ""),
-        );
-        const createRes = await fetch("/api/products", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            // Name is required by the create endpoint; fall back so a confirmed
-            // scrape with the name field left blank still tags cleanly.
-            name: urlModeProduct.name?.trim() || urlModeProduct.brand?.trim() || "Untitled product",
-            imageUrl: urlModeProduct.imageUrl,
-            price: Number.isFinite(priceNum) ? priceNum : undefined,
-            brand: urlModeProduct.brand,
-            url: urlModeProduct.url,
-            category: (urlModeProduct as any).category ?? undefined,
-            // Fold the confirmed dimensions / materials / colors into the
-            // description (the Product model has no structured columns for them),
-            // matching the manual-capture path.
-            description:
-              composeDescription({
-                description: (urlModeProduct as any).description,
-                dimensions: (urlModeProduct as any).dimensions,
-                materials: (urlModeProduct as any).materials,
-                colors: (urlModeProduct as any).colors,
-              }) || undefined,
-            isPending: true,
-            // Hard domains return immediately as pending; scrape-bql fills them.
-            scrapeStatus: deferred ? "pending" : undefined,
-          }),
-        });
-        const created = await createRes.json();
-        if (!createRes.ok || !created.id) {
-          throw new Error(created.error || "Failed to create product");
-        }
-        productId = created.id;
-      } else {
-        productId = selectedProduct!.id;
-      }
-
-      const res = await fetch("/api/tag-product-to-image", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          x: pendingDot.x,
-          y: pendingDot.y,
-          productId,
-          imageId: activeImage.id,
-          projectId,
-        }),
-      });
-      if (res.ok) {
-        closeProductPicker();
-        // Refresh image data — the useEffect watching `images` will
-        // re-sync activeImage on the next render, so no need to do it here.
-        await fetchImages();
-        // Kick the background rung after the tag lands, then poll until it
-        // resolves. Mirrors how ImportWizard kicks analyze and polls.
-        if (deferred) runBqlScrape(productId);
-      }
-    } catch (err) {
-      console.error("[ProjectImageTagger] save error:", err);
-    } finally {
-      setSaving(false);
-    }
   };
 
   const handleDeleteTag = async (tagId: string) => {
     try {
-      const res = await fetch(`/api/tag-product-to-image?id=${tagId}`, {
-        method: "DELETE",
-      });
+      const res = await fetch(`/api/tag-product-to-image?id=${tagId}`, { method: "DELETE" });
       if (res.ok) {
         await fetchImages();
       }
     } catch (err) {
       console.error("[ProjectImageTagger] delete error:", err);
-    }
-  };
-
-  // Open the edit modal for an already-tagged product, pre-filled from the
-  // current record. Designers can enrich unclaimed products (e.g. fill a
-  // dimension the deferred scrape missed); the server rejects edits to a
-  // claimed product.
-  const openEditProduct = async (productId: string, tagId?: string) => {
-    setEditError(null);
-    setEditTagId(tagId ?? null);
-    setEditPasteText("");
-    setEditParsing(null);
-    try {
-      const r = await fetch(`/api/products/${productId}`);
-      if (!r.ok) return;
-      const d = await r.json();
-      setEditTarget({
-        id: productId,
-        name: d.name && d.name !== "Untitled product" ? d.name : "",
-        brand: d.brand ?? "",
-        price: d.price != null ? String(d.price) : "",
-        category: d.category ?? "",
-        description: d.description ?? "",
-        imageUrl: d.imageUrl ?? "",
-        url: d.url ?? "",
-      });
-    } catch {
-      /* ignore — modal just won't open */
-    }
-  };
-
-  const updateEdit = (patch: Partial<NonNullable<typeof editTarget>>) =>
-    setEditTarget((prev) => (prev ? { ...prev, ...patch } : prev));
-
-  // Merge a parsed result into the open edit modal. Only fills fields the parse
-  // actually returned, so it never blanks a value the designer already typed.
-  const applyParsedToEdit = (f: any, image?: string | null) =>
-    setEditTarget((prev) =>
-      prev
-        ? {
-            ...prev,
-            name: f?.name ?? prev.name,
-            brand: f?.brand ?? prev.brand,
-            price: f?.price != null ? String(f.price) : prev.price,
-            category: f?.category ?? prev.category,
-            description: composeDescription(f ?? {}) || prev.description,
-            // Only adopt a hosted image URL, never a raw data: URL.
-            imageUrl:
-              image && !image.startsWith("data:") ? image : prev.imageUrl,
-          }
-        : prev,
-    );
-
-  const handleEditParseText = async () => {
-    if (!editPasteText.trim() || !editTarget) return;
-    setEditParsing("text");
-    setEditError(null);
-    try {
-      const res = await fetch("/api/products/parse-text", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ text: editPasteText, url: editTarget.url || undefined }),
-      });
-      const data = await res.json();
-      if (!res.ok) {
-        setEditError(data.error || "Couldn't read that text.");
-        return;
-      }
-      applyParsedToEdit(data.fields);
-    } catch {
-      setEditError("Couldn't read that text.");
-    } finally {
-      setEditParsing(null);
-    }
-  };
-
-  const handleEditScreenshot = async (file: File | null | undefined) => {
-    if (!file || !file.type.startsWith("image/") || !editTarget) return;
-    setEditParsing("image");
-    setEditError(null);
-    try {
-      const dataUrl: string = await new Promise((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onload = () => resolve(String(reader.result));
-        reader.onerror = () => reject(new Error("read failed"));
-        reader.readAsDataURL(file);
-      });
-      const res = await fetch("/api/products/parse-image", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ imageDataUrl: dataUrl, url: editTarget.url || undefined }),
-      });
-      const data = await res.json();
-      if (!res.ok) {
-        setEditError(data.error || "Couldn't read that screenshot.");
-        return;
-      }
-      applyParsedToEdit(data.fields, data.image || null);
-    } catch {
-      setEditError("Couldn't read that screenshot.");
-    } finally {
-      setEditParsing(null);
-    }
-  };
-
-  // Force a fresh scrape of the product's URL and pull the refreshed fields back
-  // into the open editor. The fix for a shared product whose stored scrape is
-  // stale or wrong (e.g. raw-HTML description) — overwrite it at the source so
-  // every designer gets the corrected data, no duplicate needed.
-  const rescrapeProduct = async () => {
-    if (!editTarget?.url) return;
-    setRescraping(true);
-    setEditError(null);
-    try {
-      const res = await fetch(`/api/products/${editTarget.id}/scrape-bql?force=1`, {
-        method: "POST",
-      });
-      const d = await res.json().catch(() => ({}));
-      if (!res.ok) {
-        setEditError(d.error || "Couldn't refresh from the web. You can still edit the fields by hand.");
-        return;
-      }
-      // Re-pull the refreshed record into the editor.
-      const r = await fetch(`/api/products/${editTarget.id}`);
-      if (r.ok) {
-        const p = await r.json();
-        setEditTarget((prev) =>
-          prev
-            ? {
-                ...prev,
-                name: p.name && p.name !== "Untitled product" ? p.name : prev.name,
-                brand: p.brand ?? prev.brand,
-                price: p.price != null ? String(p.price) : prev.price,
-                category: p.category ?? prev.category,
-                description: p.description ?? prev.description,
-                imageUrl: p.imageUrl ?? prev.imageUrl,
-              }
-            : prev,
-        );
-      }
-      await fetchImages();
-    } catch {
-      setEditError("Couldn't refresh from the web. You can still edit the fields by hand.");
-    } finally {
-      setRescraping(false);
-    }
-  };
-
-  const saveEditProduct = async () => {
-    if (!editTarget) return;
-    setEditSaving(true);
-    setEditError(null);
-    try {
-      const priceNum = parseFloat(editTarget.price.replace(/[^0-9.]/g, ""));
-      const res = await fetch(`/api/products/${editTarget.id}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          name: editTarget.name.trim() || editTarget.brand.trim() || "Untitled product",
-          brand: editTarget.brand.trim() || null,
-          priceCents: Number.isFinite(priceNum) ? Math.round(priceNum * 100) : null,
-          category: editTarget.category.trim() || null,
-          description: editTarget.description.trim() || null,
-          imageUrl: editTarget.imageUrl.trim() || null,
-          url: editTarget.url.trim() || null,
-        }),
-      });
-      if (!res.ok) {
-        const d = await res.json().catch(() => ({}));
-        setEditError(
-          res.status === 403
-            ? "This product has been claimed by its vendor and can no longer be edited here."
-            : d.error || "Could not save changes.",
-        );
-        return;
-      }
-      // A human confirmed the details — clear any "needs review" flag.
-      setReviewFlags((prev) => {
-        if (!(editTarget.id in prev)) return prev;
-        const next = { ...prev };
-        delete next[editTarget.id];
-        return next;
-      });
-      // Editing from the review queue counts as confirming the tag.
-      if (editTagId) await confirmTag(editTagId);
-      setEditTarget(null);
-      setEditTagId(null);
-      await fetchImages();
-    } catch {
-      setEditError("Could not save changes.");
-    } finally {
-      setEditSaving(false);
     }
   };
 
@@ -1036,13 +329,6 @@ export function ProjectImageTagger({ projectId, images: providedImages, onClose 
 
   // Tags awaiting review: their product went through a deferred scrape
   // (scrapeStatus set) and the designer hasn't confirmed them yet.
-  //
-  // `fetching` reflects only a poll THIS session is actively running
-  // (`scrapingIds`) — NOT a bare DB `scrapeStatus === "pending"`. The deferred
-  // scrape is fire-and-forget; if its serverless function dies (the designer
-  // navigated away or closed the tagger) the row stays `pending` with nobody
-  // polling. On reopen that tag is stalled, not fetching, so it must be
-  // reviewable/editable instead of stuck behind a perpetual "Fetching…".
   const pendingTags = images.flatMap((img) =>
     img.tags
       .filter((t) => t.product?.scrapeStatus != null && !t.reviewedAt)
@@ -1056,8 +342,7 @@ export function ProjectImageTagger({ projectId, images: providedImages, onClose 
       })),
   );
 
-  // Leaving the tagger with tags still awaiting review drops an inbox reminder
-  // so the designer can be pulled back in.
+  // Leaving the tagger with tags still awaiting review drops an inbox reminder.
   const handleClose = useCallback(async () => {
     if (pendingTags.length > 0) {
       try {
@@ -1201,7 +486,7 @@ export function ProjectImageTagger({ projectId, images: providedImages, onClose 
         <div className="flex items-center gap-3">
           <FaTag className="w-4 h-4 text-[var(--accent)]" />
           <h2 className="folio-ui text-folio-text-primary">
-            {activeImage ? "Click to place a tag \u00B7 Drag to reposition" : "Select an image to tag"}
+            {activeImage ? "Click to place a tag · Drag to reposition" : "Select an image to tag"}
           </h2>
         </div>
         <button
@@ -1241,18 +526,15 @@ export function ProjectImageTagger({ projectId, images: providedImages, onClose 
           </div>
           <div className="flex gap-2 overflow-x-auto pb-1">
             {pendingTags.map((p) => (
-              // The whole chip is clickable to open the edit/review modal —
-              // not just the pencil. Confirm + discard are explicit buttons
-              // that stop propagation so they don't also trigger the edit.
               <div
                 key={p.tagId}
                 role="button"
                 tabIndex={0}
-                onClick={() => openEditProduct(p.productId, p.tagId)}
+                onClick={() => setEditState({ productId: p.productId, tagId: p.tagId })}
                 onKeyDown={(e) => {
                   if (e.key === "Enter" || e.key === " ") {
                     e.preventDefault();
-                    openEditProduct(p.productId, p.tagId);
+                    setEditState({ productId: p.productId, tagId: p.tagId });
                   }
                 }}
                 title="Click to review & edit"
@@ -1272,8 +554,6 @@ export function ProjectImageTagger({ projectId, images: providedImages, onClose 
                     {p.fetching ? "Fetching…" : "Ready · click to edit"}
                   </span>
                 </div>
-                {/* Confirm appears once the (best-effort) scrape isn't actively
-                    polling; discard is always available. */}
                 <div className="flex items-center gap-1">
                   {!p.fetching && (
                     <button
@@ -1316,11 +596,7 @@ export function ProjectImageTagger({ projectId, images: providedImages, onClose 
                 className="group relative aspect-[4/3] rounded-xl overflow-hidden ring-1 ring-[var(--ridge-outer)] hover:ring-[var(--accent)] transition-all"
               >
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src={img.url}
-                  alt=""
-                  className="h-full w-full object-cover"
-                />
+                <img src={img.url} alt="" className="h-full w-full object-cover" />
                 {img.tags.length > 0 && (
                   <div className="absolute top-2 right-2 bg-[var(--accent)] text-white text-xs px-2 py-0.5 rounded-full">
                     {img.tags.length} tag{img.tags.length !== 1 ? "s" : ""}
@@ -1361,13 +637,9 @@ export function ProjectImageTagger({ projectId, images: providedImages, onClose 
               {/* Existing tag dots — draggable */}
               {activeImage.tags.map((tag) => {
                 const isDragging = draggingTagId === tag.id;
-                // Only an active in-session poll counts as "scraping". A bare DB
-                // `pending` with no live poll is a stalled fire-and-forget — it
-                // should read as needs-review (amber + editable), not a spinner.
+                // Only an active in-session poll counts as "scraping".
                 const isScraping = scrapingIds.has(tag.productId);
                 const reviewMissing = !isScraping ? reviewFlags[tag.productId] : undefined;
-                // A deferred-scrape tag (scrapeStatus set) needs review until the
-                // designer confirms it (reviewedAt). Drives the amber pin + panel.
                 const needsReview = !isScraping && tag.product?.scrapeStatus != null && !tag.reviewedAt;
                 const xPct = isDragging && dragPos ? dragPos.x : (tag.x <= 1 ? tag.x * 100 : tag.x);
                 const yPct = isDragging && dragPos ? dragPos.y : (tag.y <= 1 ? tag.y * 100 : tag.y);
@@ -1402,19 +674,17 @@ export function ProjectImageTagger({ projectId, images: providedImages, onClose 
                         onMouseDown={(e) => e.stopPropagation()}
                         onTouchStart={(e) => e.stopPropagation()}
                       >
-                        {/* The whole popup is clickable to edit/review the
-                            tagged product; discard is an explicit button. */}
                         <div
                           role="button"
                           tabIndex={0}
                           onClick={(e) => {
                             e.stopPropagation();
-                            openEditProduct(tag.productId, tag.id);
+                            setEditState({ productId: tag.productId, tagId: tag.id });
                           }}
                           onKeyDown={(e) => {
                             if (e.key === "Enter" || e.key === " ") {
                               e.preventDefault();
-                              openEditProduct(tag.productId, tag.id);
+                              setEditState({ productId: tag.productId, tagId: tag.id });
                             }
                           }}
                           title="Click to review & edit"
@@ -1423,11 +693,7 @@ export function ProjectImageTagger({ projectId, images: providedImages, onClose 
                           {tag.product?.imageUrl && (
                             <div className="h-8 w-8 flex-shrink-0 overflow-hidden rounded bg-surface-ground">
                               {/* eslint-disable-next-line @next/next/no-img-element */}
-                              <img
-                                src={tag.product.imageUrl}
-                                alt=""
-                                className="h-full w-full object-cover"
-                              />
+                              <img src={tag.product.imageUrl} alt="" className="h-full w-full object-cover" />
                             </div>
                           )}
                           <div className="flex flex-col min-w-0">
@@ -1492,638 +758,48 @@ export function ProjectImageTagger({ projectId, images: providedImages, onClose 
         )}
       </div>
 
-      {/* Product Search Modal */}
-      {showProductSearch && pendingDot && (
-        <div className="fixed inset-0 z-[60] bg-black/40 flex items-center justify-center p-4">
-          <div
-            className="ridge-card w-full max-w-lg max-h-[70vh] flex flex-col overflow-hidden"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="flex items-center justify-between px-5 py-4 border-b border-folio-border-subtle">
-              <div>
-                <h3 className="folio-ui text-folio-text-primary">Select Product</h3>
-                <p className="folio-meta text-folio-text-tertiary">
-                  Position: {pendingDot.x.toFixed(1)}%, {pendingDot.y.toFixed(1)}%
-                </p>
-              </div>
-              <button
-                onClick={closeProductPicker}
-                className="text-folio-text-secondary hover:text-folio-text-primary"
-              >
-                <FaTimes className="w-4 h-4" />
-              </button>
-            </div>
-
-            {/* Mode toggle — search the catalog, or paste a product link */}
-            <div className="px-5 pt-3">
-              <div className="inline-flex rounded-lg bg-surface-ground p-1 text-sm">
-                <button
-                  onClick={() => setTagMode("search")}
-                  className={`px-3 py-1.5 rounded-md font-medium transition-colors ${
-                    tagMode === "search"
-                      ? "bg-surface-canvas text-folio-text-primary shadow-sm"
-                      : "text-folio-text-secondary hover:text-folio-text-primary"
-                  }`}
-                >
-                  Search
-                </button>
-                <button
-                  onClick={() => setTagMode("url")}
-                  className={`px-3 py-1.5 rounded-md font-medium transition-colors ${
-                    tagMode === "url"
-                      ? "bg-surface-canvas text-folio-text-primary shadow-sm"
-                      : "text-folio-text-secondary hover:text-folio-text-primary"
-                  }`}
-                >
-                  Paste a link
-                </button>
-              </div>
-            </div>
-
-            {/* Search input */}
-            {tagMode === "search" && (
-              <div className="px-5 py-3 border-b border-folio-border-subtle">
-                <div className="relative">
-                  <FaSearch className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-folio-text-tertiary" />
-                  <input
-                    type="text"
-                    placeholder="Search products..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="w-full pl-9 pr-4 py-2 ridge-input text-sm"
-                    autoFocus
-                  />
-                </div>
-              </div>
-            )}
-
-            {/* Paste-a-link panel */}
-            {tagMode === "url" && (
-              <div className="flex-1 overflow-y-auto px-5 py-3 space-y-3">
-                <div className="flex gap-2">
-                  <input
-                    type="url"
-                    placeholder="https://vendor.com/product"
-                    value={productUrl}
-                    onChange={(e) => setProductUrl(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter") handleFetchUrl();
-                    }}
-                    className="flex-1 px-3 py-2 ridge-input text-sm"
-                    autoFocus
-                  />
-                  <button
-                    onClick={handleFetchUrl}
-                    disabled={urlFetching || !productUrl.trim()}
-                    className="px-4 py-2 rounded-lg bg-[var(--accent)] text-white text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed hover:opacity-90 transition-opacity whitespace-nowrap"
-                  >
-                    {urlFetching ? "Reading…" : "Fetch"}
-                  </button>
-                </div>
-
-                {/* Dedup hit: we already have this product — reuse it instead of
-                    creating a duplicate / re-scraping. */}
-                {existingMatch && (
-                  <div className="rounded-lg ring-2 ring-[var(--accent)] bg-[var(--accent)]/5 overflow-hidden">
-                    <div className="flex items-center gap-2 px-3 pt-3">
-                      <FaCheck className="w-3.5 h-3.5 text-[var(--accent)]" />
-                      <span className="folio-meta font-medium text-folio-text-primary">
-                        Already in your catalog · is this it?
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-3 p-3">
-                      {existingMatch.imageUrl ? (
-                        // eslint-disable-next-line @next/next/no-img-element
-                        <img
-                          src={existingMatch.imageUrl}
-                          alt=""
-                          className="h-12 w-12 flex-shrink-0 rounded-lg object-cover bg-surface-ground"
-                        />
-                      ) : (
-                        <div className="h-12 w-12 flex-shrink-0 flex items-center justify-center rounded-lg bg-surface-ground text-folio-text-tertiary">
-                          <FaImage className="w-4 h-4" />
-                        </div>
-                      )}
-                      <div className="flex-1 min-w-0">
-                        <div className="text-sm font-medium text-folio-text-primary truncate">
-                          {existingMatch.name || "Untitled product"}
-                        </div>
-                        <div className="text-xs text-folio-text-secondary truncate">
-                          {[
-                            existingMatch.brand,
-                            existingMatch.price != null ? `$${existingMatch.price}` : null,
-                          ]
-                            .filter(Boolean)
-                            .join(" · ") || "Existing product"}
-                        </div>
-                        {existingMatch.flags.length > 0 && (
-                          <div className="mt-1 space-y-0.5">
-                            {existingMatch.flags.slice(0, 3).map((f, i) => (
-                              <div
-                                key={i}
-                                className={`flex items-center gap-1 text-[var(--type-fine)] ${
-                                  f.severity === "suspicious" ? "text-red-500" : "text-amber-600"
-                                }`}
-                              >
-                                <FaExclamationCircle className="w-2.5 h-2.5 flex-shrink-0" />
-                                <span className="truncate">{f.message}</span>
-                              </div>
-                            ))}
-                            <div className="text-[var(--type-fine)] text-folio-text-tertiary">
-                              You can fix this after tagging.
-                            </div>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                    <div className="flex gap-2 border-t border-[var(--accent)]/20 px-3 pt-2.5">
-                      <button
-                        type="button"
-                        onClick={scrapeFreshInstead}
-                        className="flex-1 rounded-lg py-2 text-sm font-medium text-folio-text-secondary hover:bg-surface-ground transition-colors"
-                      >
-                        Not the same
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => useExistingProduct(false)}
-                        disabled={reusing}
-                        className="flex-1 rounded-lg py-2 text-sm font-medium text-white bg-[var(--accent)] hover:opacity-90 transition-opacity disabled:opacity-50"
-                      >
-                        {reusing ? "Tagging…" : "Use this product"}
-                      </button>
-                    </div>
-                    {/* Same product, but its scrape looks wrong? Reuse it and fix
-                        the shared record — never duplicate. */}
-                    {!existingMatch.claimed && (
-                      <button
-                        type="button"
-                        onClick={() => useExistingProduct(true)}
-                        disabled={reusing}
-                        className="w-full px-3 pb-2.5 pt-1.5 text-center folio-meta text-[var(--accent)] hover:underline disabled:opacity-50"
-                      >
-                        Use it, but the details look wrong — let me fix them
-                      </button>
-                    )}
-                  </div>
-                )}
-
-                {urlError && (
-                  <p className="folio-meta text-red-500">{urlError}</p>
-                )}
-
-                {!existingMatch && !urlPreview && !urlFetching && !urlError && !showManual && (
-                  <p className="text-center folio-meta text-folio-text-tertiary py-4">
-                    Paste a product link and we&apos;ll pull the details.
-                  </p>
-                )}
-
-                {!existingMatch && !showManual && !urlFetching && !urlPreview && (
-                  <button
-                    type="button"
-                    onClick={() => setShowManual(true)}
-                    className="folio-meta text-[var(--accent)] hover:underline"
-                  >
-                    Can&apos;t fetch it? Enter the details manually
-                  </button>
-                )}
-
-                {showManual && (
-                  <div
-                    className="rounded-lg border border-folio-border-subtle bg-surface-ground p-3 space-y-3"
-                    onPaste={(e) => {
-                      const file = Array.from(e.clipboardData?.items || [])
-                        .find((it) => it.type.startsWith("image/"))
-                        ?.getAsFile();
-                      if (file) {
-                        e.preventDefault();
-                        handleScreenshot(file);
-                      }
-                    }}
-                  >
-                    <div className="flex items-center justify-between">
-                      <span className="folio-ui text-folio-text-primary">Capture it manually</span>
-                      {productUrl.trim() && (
-                        <a
-                          href={productUrl.trim()}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="folio-meta text-[var(--accent)] hover:underline inline-flex items-center gap-1"
-                        >
-                          Open page <FaExternalLinkAlt className="w-2.5 h-2.5" />
-                        </a>
-                      )}
-                    </div>
-
-                    {/* Paste specs → autofill */}
-                    <div className="space-y-1.5">
-                      <textarea
-                        value={pasteText}
-                        onChange={(e) => setPasteText(e.target.value)}
-                        placeholder="Paste the product name, specs, price… from the page"
-                        rows={3}
-                        className="w-full px-3 py-2 ridge-input text-sm resize-y"
-                      />
-                      <button
-                        type="button"
-                        onClick={handleParseText}
-                        disabled={parsing !== null || !pasteText.trim()}
-                        className="px-3 py-1.5 rounded-lg bg-surface-canvas border border-folio-border-subtle text-folio-text-primary folio-meta font-medium disabled:opacity-50 hover:bg-surface-ground transition-colors"
-                      >
-                        {parsing === "text" ? "Reading…" : "Autofill from text"}
-                      </button>
-                    </div>
-
-                    {/* Screenshot → vision autofill + image */}
-                    <label className="flex items-center justify-center gap-2 px-3 py-2 rounded-lg border border-dashed border-folio-border-subtle cursor-pointer hover:bg-surface-canvas transition-colors folio-meta text-folio-text-secondary">
-                      <FaImage className="w-3.5 h-3.5" />
-                      {parsing === "image" ? "Reading screenshot…" : "Upload or paste a screenshot"}
-                      <input
-                        type="file"
-                        accept="image/*"
-                        className="hidden"
-                        onChange={(e) => {
-                          handleScreenshot(e.target.files?.[0]);
-                          e.target.value = "";
-                        }}
-                      />
-                    </label>
-
-                    {captureError && (
-                      <p className="folio-meta text-red-500">{captureError}</p>
-                    )}
-
-                    {/* Editable fields — always correctable */}
-                    <div className="space-y-2">
-                      <div className="flex gap-2">
-                        {manual.imageUrl && (
-                          <div className="h-12 w-12 flex-shrink-0 overflow-hidden rounded-lg bg-surface-canvas">
-                            {/* eslint-disable-next-line @next/next/no-img-element */}
-                            <img src={manual.imageUrl} alt="" className="h-full w-full object-cover" />
-                          </div>
-                        )}
-                        <input
-                          type="text"
-                          value={manual.name}
-                          onChange={(e) => setManual((p) => ({ ...p, name: e.target.value }))}
-                          placeholder="Product name *"
-                          className="flex-1 px-3 py-2 ridge-input text-sm"
-                        />
-                      </div>
-                      <div className="flex gap-2">
-                        <input
-                          type="text"
-                          value={manual.brand}
-                          onChange={(e) => setManual((p) => ({ ...p, brand: e.target.value }))}
-                          placeholder="Brand"
-                          className="flex-1 px-3 py-2 ridge-input text-sm"
-                        />
-                        <input
-                          type="text"
-                          value={manual.price}
-                          onChange={(e) => setManual((p) => ({ ...p, price: e.target.value }))}
-                          placeholder="Price"
-                          className="w-28 px-3 py-2 ridge-input text-sm"
-                        />
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                {urlPreview && (
-                  <div className="rounded-lg ring-2 ring-[var(--accent)] bg-[var(--accent)]/5 overflow-hidden">
-                    <div className="flex items-center gap-3 p-3">
-                      {urlPreview.imageUrl ? (
-                        <div className="h-12 w-12 flex-shrink-0 overflow-hidden rounded-lg bg-surface-ground">
-                          {/* eslint-disable-next-line @next/next/no-img-element */}
-                          <img src={urlPreview.imageUrl} alt="" className="h-full w-full object-cover" />
-                        </div>
-                      ) : (
-                        !urlPreview.deferred && (
-                          <div className="h-12 w-12 flex-shrink-0 flex items-center justify-center rounded-lg bg-surface-ground text-folio-text-tertiary">
-                            <FaImage className="w-4 h-4" />
-                          </div>
-                        )
-                      )}
-                      <div className="flex-1 min-w-0">
-                        <div className="text-sm font-medium text-folio-text-primary truncate">
-                          {urlPreview.name || "Untitled product"}
-                        </div>
-                        <div className="text-xs text-folio-text-secondary truncate">
-                          {urlPreview.deferred
-                            ? "We'll fetch the full details in the background after you tag it."
-                            : [urlPreview.brand, urlPreview.price]
-                                .filter(Boolean)
-                                .join(" · ") || "New product"}
-                        </div>
-                      </div>
-                      {!urlPreview.deferred ? (
-                        <button
-                          type="button"
-                          onClick={() => setPreviewExpanded((v) => !v)}
-                          className="flex items-center gap-1 text-xs text-folio-text-secondary hover:text-folio-text-primary flex-shrink-0"
-                        >
-                          {previewExpanded ? "Hide" : "Details"}
-                          {previewExpanded ? (
-                            <FaChevronUp className="w-3 h-3" />
-                          ) : (
-                            <FaChevronDown className="w-3 h-3" />
-                          )}
-                        </button>
-                      ) : (
-                        <FaCheck className="w-4 h-4 text-[var(--accent)] flex-shrink-0" />
-                      )}
-                    </div>
-
-                    {!urlPreview.deferred && previewExpanded && (
-                      <div className="border-t border-[var(--accent)]/20 px-3 py-3 space-y-3">
-                        {urlPreview.confidence && (
-                          <div className="flex items-start gap-2 rounded-md bg-amber-50 text-amber-700 px-2 py-1.5 text-xs">
-                            <FaExclamationCircle className="w-3.5 h-3.5 mt-0.5 flex-shrink-0" />
-                            <span>These details were estimated by AI — please verify before tagging.</span>
-                          </div>
-                        )}
-                        {renderPreviewField("Name", urlPreview.name, (v) => updatePreview({ name: v }))}
-                        <div className="grid grid-cols-2 gap-3">
-                          {renderPreviewField("Brand", urlPreview.brand ?? "", (v) =>
-                            updatePreview({ brand: v }),
-                          )}
-                          {renderPreviewField("Price", urlPreview.price ?? "", (v) =>
-                            updatePreview({ price: v }),
-                          )}
-                        </div>
-                        <div className="grid grid-cols-2 gap-3">
-                          {renderPreviewField("Category", urlPreview.category ?? "", (v) =>
-                            updatePreview({ category: v }),
-                          )}
-                          {renderPreviewField("Dimensions", urlPreview.dimensions ?? "", (v) =>
-                            updatePreview({ dimensions: v }),
-                          )}
-                        </div>
-                        {renderPreviewField("Materials", (urlPreview.materials ?? []).join(", "), (v) =>
-                          updatePreview({ materials: splitList(v) }),
-                        )}
-                        {renderPreviewField("Colors", (urlPreview.colors ?? []).join(", "), (v) =>
-                          updatePreview({ colors: splitList(v) }),
-                        )}
-                        {renderPreviewField(
-                          "Description",
-                          urlPreview.description ?? "",
-                          (v) => updatePreview({ description: v }),
-                          true,
-                        )}
-                        {renderPreviewField("Image URL", urlPreview.imageUrl ?? "", (v) =>
-                          updatePreview({ imageUrl: v || null }),
-                        )}
-                      </div>
-                    )}
-                  </div>
-                )}
-              </div>
-            )}
-
-            {/* Results */}
-            {tagMode === "search" && (
-            <div className="flex-1 overflow-y-auto px-5 py-3">
-              {searching && (
-                <p className="text-center folio-meta text-folio-text-tertiary py-4">
-                  Searching...
-                </p>
-              )}
-              {!searching && searchResults.length === 0 && searchTerm.trim() && (
-                <p className="text-center folio-meta text-folio-text-tertiary py-4">
-                  No products found. Try a different search.
-                </p>
-              )}
-              {!searching && !searchTerm.trim() && (
-                <p className="text-center folio-meta text-folio-text-tertiary py-4">
-                  Type to search for a product
-                </p>
-              )}
-              <div className="space-y-2">
-                {searchResults.map((product) => (
-                  <button
-                    key={product.id}
-                    onClick={() => setSelectedProduct(product)}
-                    className={`w-full flex items-center gap-3 p-3 rounded-lg text-left transition-all ${
-                      selectedProduct?.id === product.id
-                        ? "ring-2 ring-[var(--accent)] bg-[var(--accent)]/5"
-                        : "hover:bg-surface-ground"
-                    }`}
-                  >
-                    {product.imageUrl && (
-                      <div className="h-10 w-10 flex-shrink-0 overflow-hidden rounded-lg bg-surface-ground">
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img
-                          src={product.imageUrl}
-                          alt=""
-                          className="h-full w-full object-cover"
-                        />
-                      </div>
-                    )}
-                    <div className="flex-1 min-w-0">
-                      <div className="text-sm font-medium text-folio-text-primary truncate">
-                        {product.name}
-                      </div>
-                      {product.vendorName && (
-                        <div className="text-xs text-folio-text-secondary truncate">
-                          {product.vendorName}
-                        </div>
-                      )}
-                    </div>
-                    {selectedProduct?.id === product.id && (
-                      <FaCheck className="w-4 h-4 text-[var(--accent)] flex-shrink-0" />
-                    )}
-                  </button>
-                ))}
-              </div>
-            </div>
-            )}
-
-            {/* Actions */}
-            <div className="flex gap-3 px-5 py-4 border-t border-folio-border-subtle">
-              <button
-                onClick={closeProductPicker}
-                className="flex-1 px-4 py-2 ridge-card text-sm font-medium text-folio-text-primary hover:bg-surface-ground transition-colors text-center"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleSaveTag}
-                disabled={
-                  saving || (tagMode === "search" ? !selectedProduct : !urlModeProduct)
-                }
-                className="flex-1 px-4 py-2 rounded-lg bg-[var(--accent)] text-white text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed hover:opacity-90 transition-opacity flex items-center justify-center gap-2"
-              >
-                {saving ? (
-                  <>
-                    <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                    Saving...
-                  </>
-                ) : (
-                  <>
-                    <FaCheck className="w-3 h-3" />
-                    Tag Product
-                  </>
-                )}
-              </button>
-            </div>
+      {/* Product picker — the search / URL-paste / write panel (shared). */}
+      {showProductSearch && pendingDot && activeImage && (
+        <div
+          className="fixed inset-0 z-[60] bg-black/40 flex items-center justify-center p-4"
+          onClick={closeProductPicker}
+        >
+          <div className="w-full max-w-lg" onClick={(e) => e.stopPropagation()}>
+            <ProductTagPicker
+              projectId={projectId}
+              imageId={activeImage.id}
+              pendingDot={pendingDot}
+              onCancel={closeProductPicker}
+              onTagged={async ({ productId, deferred, openEdit }) => {
+                closeProductPicker();
+                await fetchImages();
+                if (deferred) runBqlScrape(productId);
+                if (openEdit) setEditState({ productId, tagId: null });
+              }}
+            />
           </div>
         </div>
       )}
 
-      {/* Edit-an-existing-tagged-product modal */}
-      {editTarget && (
-        <div
-          className="fixed inset-0 z-[60] flex items-center justify-center bg-black/40 p-4"
-          onClick={() => !editSaving && setEditTarget(null)}
-        >
-          <div
-            className="ridge-card w-full max-w-md max-h-[80vh] flex flex-col overflow-hidden"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="flex items-center justify-between px-5 py-4 border-b border-folio-border-subtle">
-              <h3 className="folio-ui text-folio-text-primary">Edit product details</h3>
-              <button
-                onClick={() => setEditTarget(null)}
-                className="text-folio-text-tertiary hover:text-folio-text-primary"
-                title="Close"
-              >
-                <FaTimes className="w-4 h-4" />
-              </button>
-            </div>
-            <div className="flex-1 min-h-0 px-5 py-4 space-y-3 overflow-y-auto">
-              {editError && (
-                <div className="flex items-start gap-2 rounded-md bg-red-50 text-red-600 px-2 py-1.5 text-xs">
-                  <FaExclamationCircle className="w-3.5 h-3.5 mt-0.5 flex-shrink-0" />
-                  <span>{editError}</span>
-                </div>
-              )}
-
-              {/* Live health flags — what looks off about this record right now.
-                  Updates as the designer edits, so a fix visibly clears them. */}
-              {(() => {
-                const h = assessProductHealth({
-                  name: editTarget.name,
-                  brand: editTarget.brand,
-                  price: editTarget.price,
-                  imageUrl: editTarget.imageUrl,
-                  description: editTarget.description,
-                });
-                if (h.flags.length === 0) return null;
-                return (
-                  <div className="rounded-md bg-amber-50 px-2.5 py-2 space-y-1">
-                    <div className="flex items-center gap-1.5 text-[11px] font-medium text-amber-700">
-                      <FaExclamationCircle className="w-3 h-3" />
-                      This product&apos;s details look incomplete or off:
-                    </div>
-                    {h.flags.map((f, i) => (
-                      <div
-                        key={i}
-                        className={`pl-4.5 text-[11px] ${
-                          f.severity === "suspicious" ? "text-red-600" : "text-amber-700"
-                        }`}
-                      >
-                        • {f.message}
-                      </div>
-                    ))}
-                  </div>
-                );
-              })()}
-
-              {/* Autofill rescue — when the scrape returned nothing, paste the
-                  product copy or drop a screenshot and we fill the fields below. */}
-              <div className="rounded-lg border border-folio-border-subtle bg-surface-ground p-3 space-y-2.5">
-                <div className="flex items-center justify-between">
-                  <span className="folio-meta font-medium text-folio-text-primary">
-                    Autofill from the product page
-                  </span>
-                  {editTarget.url && (
-                    <a
-                      href={editTarget.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="folio-meta text-[var(--accent)] hover:underline inline-flex items-center gap-1"
-                    >
-                      Open page <FaExternalLinkAlt className="w-2.5 h-2.5" />
-                    </a>
-                  )}
-                </div>
-                <textarea
-                  value={editPasteText}
-                  onChange={(e) => setEditPasteText(e.target.value)}
-                  placeholder="Paste the product name, specs, price… from the page"
-                  rows={3}
-                  className="w-full px-3 py-2 ridge-input text-sm resize-y"
-                />
-                <div className="flex flex-wrap gap-2">
-                  {editTarget.url && (
-                    <button
-                      type="button"
-                      onClick={rescrapeProduct}
-                      disabled={rescraping}
-                      title="Re-scrape the product page and overwrite the stored details"
-                      className="px-3 py-1.5 rounded-lg bg-[var(--accent)] text-white folio-meta font-medium disabled:opacity-50 hover:opacity-90 transition-opacity inline-flex items-center gap-1.5"
-                    >
-                      {rescraping ? "Refreshing…" : "Refresh from the web"}
-                    </button>
-                  )}
-                  <button
-                    type="button"
-                    onClick={handleEditParseText}
-                    disabled={editParsing !== null || !editPasteText.trim()}
-                    className="px-3 py-1.5 rounded-lg bg-surface-canvas border border-folio-border-subtle text-folio-text-primary folio-meta font-medium disabled:opacity-50 hover:bg-surface-ground transition-colors"
-                  >
-                    {editParsing === "text" ? "Reading…" : "Autofill from text"}
-                  </button>
-                  <label className="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-dashed border-folio-border-subtle cursor-pointer hover:bg-surface-canvas transition-colors folio-meta text-folio-text-secondary">
-                    <FaImage className="w-3.5 h-3.5" />
-                    {editParsing === "image" ? "Reading screenshot…" : "Upload a screenshot"}
-                    <input
-                      type="file"
-                      accept="image/*"
-                      className="hidden"
-                      onChange={(e) => {
-                        handleEditScreenshot(e.target.files?.[0]);
-                        e.target.value = "";
-                      }}
-                    />
-                  </label>
-                </div>
-              </div>
-
-              {renderPreviewField("Name", editTarget.name, (v) => updateEdit({ name: v }))}
-              <div className="grid grid-cols-2 gap-3">
-                {renderPreviewField("Brand", editTarget.brand, (v) => updateEdit({ brand: v }))}
-                {renderPreviewField("Price", editTarget.price, (v) => updateEdit({ price: v }))}
-              </div>
-              {renderPreviewField("Category", editTarget.category, (v) => updateEdit({ category: v }))}
-              {renderPreviewField(
-                "Description",
-                editTarget.description,
-                (v) => updateEdit({ description: v }),
-                true,
-              )}
-              {renderPreviewField("Image URL", editTarget.imageUrl, (v) => updateEdit({ imageUrl: v }))}
-            </div>
-            <div className="flex gap-3 px-5 py-4 border-t border-folio-border-subtle">
-              <button
-                onClick={() => setEditTarget(null)}
-                disabled={editSaving}
-                className="flex-1 px-4 py-2 ridge-card text-sm font-medium text-folio-text-primary hover:bg-surface-ground transition-colors text-center disabled:opacity-50"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={saveEditProduct}
-                disabled={editSaving}
-                className="flex-1 px-4 py-2 rounded-lg bg-[var(--accent)] text-white text-sm font-medium hover:opacity-90 transition-opacity disabled:opacity-50"
-              >
-                {editSaving ? "Saving…" : "Save"}
-              </button>
-            </div>
-          </div>
-        </div>
+      {/* Edit-an-existing-tagged-product modal (shared). */}
+      {editState && (
+        <ProductEditModal
+          productId={editState.productId}
+          tagId={editState.tagId}
+          onClose={() => setEditState(null)}
+          onSaved={async (tagId) => {
+            // A human confirmed the details — clear any "needs review" flag.
+            setReviewFlags((prev) => {
+              if (!editState || !(editState.productId in prev)) return prev;
+              const next = { ...prev };
+              delete next[editState.productId];
+              return next;
+            });
+            // Editing from the review queue counts as confirming the tag.
+            if (tagId) await confirmTag(tagId);
+            await fetchImages();
+          }}
+        />
       )}
     </div>
   );

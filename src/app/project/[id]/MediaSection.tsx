@@ -8,7 +8,7 @@ import ProjectCreationModal from '@/components/ProjectCreationModal';
 import { PresentationImportModal } from '@/components/import/PresentationImportModal';
 import { PdfSpecImportModal } from '@/components/import/PdfSpecImportModal';
 import { InterviewModal } from '@/components/posting/interview/InterviewModal';
-import { ProjectImageTagger } from '@/components/project/ProjectImageTagger';
+import TaggingSection from './TaggingSection';
 import MaterialsStep from './MaterialsStep';
 import DocumentImportModal from './DocumentImportModal';
 import TagReviewPanel from './TagReviewPanel';
@@ -356,6 +356,19 @@ export default function MediaSection({ project, isOwner, images, projectPost }: 
           guidance and every import entry point. This surface is just the media
           itself plus the flows the tracker routes into. */}
 
+      {/* Tags step — the inline manual tagging surface renders here in place of
+          the media workspace (no modal, no separate route). */}
+      {showTagger ? (
+        <TaggingSection
+          projectId={project.id}
+          images={images}
+          rooms={(project.rooms ?? []) as Array<{ id: string; name: string; type?: string | null }>}
+          isOwner={isOwner}
+          onChanged={() => router.refresh()}
+          onExit={() => setShowTagger(false)}
+        />
+      ) : (
+      <>
       {/* Uploaded Media Section */}
       <section
         id="uploaded-media-section"
@@ -484,6 +497,8 @@ export default function MediaSection({ project, isOwner, images, projectPost }: 
           </div>
         )}
       </section>
+      </>
+      )}
 
       {/* Interview — opened by the spine's Story CTA (spec 20 §5). */}
       <InterviewModal
@@ -517,18 +532,6 @@ export default function MediaSection({ project, isOwner, images, projectPost }: 
         }}
         onChanged={() => router.refresh()}
       />
-
-      {/* Manual product tagger — opened from Materials / tag review. */}
-      {showTagger && (
-        <ProjectImageTagger
-          projectId={project.id}
-          images={images}
-          onClose={() => {
-            setShowTagger(false);
-            router.refresh();
-          }}
-        />
-      )}
 
       {/* Upload Modal */}
       {showUploadModal && (
