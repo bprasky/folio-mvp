@@ -1,0 +1,532 @@
+'use client';
+
+import { useRef, useState } from 'react';
+import Image from 'next/image';
+import {
+  FaTag,
+  FaTrash,
+  FaPen,
+  FaCheck,
+  FaMapMarkerAlt,
+  FaCheckCircle,
+  FaRegClock,
+} from 'react-icons/fa';
+import { Sparkles, ArrowLeft } from 'lucide-react';
+import { isDocumentImage } from '@/lib/publish/computePublishReadiness';
+import { ProductTagPicker } from '@/components/project/ProductTagPicker';
+import { ProductEditModal } from '@/components/project/ProductEditModal';
+
+/** Tag rows carry the full product so the list can show name + category. */
+type TagRow = {
+  id: string;
+  x: number;
+  y: number;
+  reviewedAt?: string | null;
+  product?: {
+    id: string;
+    name: string;
+    category?: string | null;
+    imageUrl?: string | null;
+    brand?: string | null;
+    scrapeStatus?: string | null;
+  } | null;
+};
+
+type Photo = {
+  id: string;
+  url: string;
+  name?: string | null;
+  room?: string | null;
+  roomId?: string | null;
+  inclusion?: 'INCLUDED' | 'EXCLUDED';
+  tags: TagRow[];
+};
+
+type Room = { id: string; name: string; type?: string | null };
+
+interface TaggingSectionProps {
+  projectId: string;
+  images: Photo[];
+  rooms: Room[];
+  isOwner: boolean;
+  /** Refresh the project data after a write (router.refresh in the parent). */
+  onChanged: () => void;
+  /** Leave the tagging surface, back to the media workspace. */
+  onExit?: () => void;
+}
+
+/**
+ * TaggingSection — the inline manual tagging surface (spec: inline two-path).
+ *
+ * Renders directly on the media page: an interview-first lede, the (inert)
+ * finish-book fast path, a divider, then photos grouped by room. Clicking a
+ * photo expands it in place; the designer drops a single transient pin and
+ * tags a product via the shared ProductTagPicker. Each photo's tags render in
+ * a list *beside* the photo — never over it.
+ */
+export default function TaggingSection({
+  projectId,
+  images,
+  rooms,
+  isOwner,
+  onChanged,
+  onExit,
+}: TaggingSectionProps) {
+  // Only one photo is in its working (expanded) state at a time.
+  const [activePhotoId, setActivePhotoId] = useState<string | null>(null);
+  // Product being edited/enriched (from a tag row, or the picker's reuse path).
+  const [editState, setEditState] = useState<{ productId: string; tagId: string | null } | null>(null);
+
+  // Included portfolio photos only, grouped by room (uncategorized pinned top),
+  // mirroring the room workspace so the two views stay consistent.
+  const photos = images.filter(
+    (img) => img.inclusion !== 'EXCLUDED' && !isDocumentImage(img.name ?? undefined),
+  );
+  const uncategorized = photos.filter((p) => !p.roomId);
+  const roomBuckets = rooms
+    .map((room) => ({ room, photos: photos.filter((p) => p.roomId === room.id) }))
+    .filter((bucket) => bucket.photos.length > 0);
+
+  const collapse = () => setActivePhotoId(null);
+
+  // Confirm a tag — clears the deferred "needs confirm" state (reused picker can
+  // create a pending product for flagged domains / bot-walled scrapes).
+  const confirmTag = async (tagId: string) => {
+    try {
+      await fetch('/api/tag-product-to-image', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: tagId, reviewed: true }),
+      });
+      onChanged();
+    } catch (err) {
+      console.error('[TaggingSection] confirm error:', err);
+    }
+  };
+
+  // Leaving with tags still awaiting review drops the same inbox reminder the
+  // modal surface did, so a deferred tag can't be silently forgotten.
+  const handleExit = async () => {
+    const pendingCount = photos.reduce(
+      (n, p) => n + p.tags.filter((t) => t.product?.scrapeStatus != null && !t.reviewedAt).length,
+      0,
+    );
+    if (pendingCount > 0) {
+      try {
+        await fetch('/api/notifications/tag-review-reminder', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ projectId }),
+        });
+      } catch {
+        /* best-effort — don't block leaving */
+      }
+    }
+    onExit?.();
+  };
+
+  return (
+    <div className="space-y-8">
+      {/* Lede — interview-first: every tag gives the interview a real detail. */}
+      <header className="space-y-2">
+        {onExit && (
+          <button
+            onClick={handleExit}
+            className="inline-flex items-center gap-1.5 folio-meta text-folio-text-secondary hover:text-folio-text-primary transition-colors"
+          >
+            <ArrowLeft className="w-3.5 h-3.5" />
+            Back to your photos
+          </button>
+        )}
+        <h2 className="font-headline italic text-3xl text-folio-text-primary">
+          Tag the products in your rooms
+        </h2>
+        <p className="folio-body text-folio-text-secondary max-w-2xl">
+          Every product you tag gives the interview a real detail to ask about — so the published
+          piece comes back sharper. Untagged photos still publish; they just stay quiet.
+        </p>
+      </header>
+
+      {/* Two-path shell — fast path (inert here) + divider + tag-by-hand below. */}
+      <FinishBookDropZone />
+
+      <div className="flex items-center gap-4" role="separator">
+        <span className="h-px flex-1 bg-folio-border-subtle" />
+        <span className="folio-meta text-folio-text-tertiary whitespace-nowrap">
+          or tag by hand, room by room
+        </span>
+        <span className="h-px flex-1 bg-folio-border-subtle" />
+      </div>
+
+      {photos.length === 0 ? (
+        <p className="folio-body text-folio-text-secondary text-center py-10">
+          Upload photos first, then come back to tag the products in them.
+        </p>
+      ) : (
+        <div className="space-y-10">
+          {/* Uncategorized — pinned to the top when present */}
+          {uncategorized.length > 0 && (
+            <section className="space-y-4">
+              <RoomLabel name="Not in a room yet" count={uncategorized.length} />
+              <div className="space-y-4">
+                {uncategorized.map((photo) => (
+                  <PhotoTagger
+                    key={photo.id}
+                    projectId={projectId}
+                    photo={photo}
+                    isOwner={isOwner}
+                    active={activePhotoId === photo.id}
+                    onActivate={() => setActivePhotoId(photo.id)}
+                    onCollapse={collapse}
+                    onChanged={onChanged}
+                    onEditProduct={(productId, tagId) => setEditState({ productId, tagId })}
+                    onConfirm={confirmTag}
+                  />
+                ))}
+              </div>
+            </section>
+          )}
+
+          {/* One group per room with photos */}
+          {roomBuckets.map(({ room, photos: roomPhotos }) => {
+            const tagged = roomPhotos.filter((p) => p.tags.length > 0).length;
+            return (
+              <section key={room.id} className="space-y-4">
+                <RoomLabel name={room.name} count={roomPhotos.length} tagged={tagged} />
+                <div className="space-y-4">
+                  {roomPhotos.map((photo) => (
+                    <PhotoTagger
+                      key={photo.id}
+                      projectId={projectId}
+                      photo={photo}
+                      isOwner={isOwner}
+                      active={activePhotoId === photo.id}
+                      onActivate={() => setActivePhotoId(photo.id)}
+                      onCollapse={collapse}
+                      onChanged={onChanged}
+                      onEditProduct={(productId, tagId) => setEditState({ productId, tagId })}
+                      onConfirm={confirmTag}
+                    />
+                  ))}
+                </div>
+              </section>
+            );
+          })}
+        </div>
+      )}
+
+      {/* Shared product editor — enrich/correct a tagged product. */}
+      {editState && (
+        <ProductEditModal
+          productId={editState.productId}
+          tagId={editState.tagId}
+          onClose={() => setEditState(null)}
+          onSaved={async (tagId) => {
+            // Editing a deferred tag's product counts as confirming it.
+            if (tagId) await confirmTag(tagId);
+            onChanged();
+          }}
+        />
+      )}
+    </div>
+  );
+}
+
+/**
+ * The finish-book fast path. Present but inert here — visibly disabled with a
+ * "coming soon" affordance. It must never POST to the import stub.
+ */
+function FinishBookDropZone() {
+  return (
+    <div
+      aria-disabled="true"
+      className="relative rounded-2xl border-2 border-dashed border-folio-border-subtle bg-surface-ground/60 px-6 py-8 text-center opacity-70 cursor-not-allowed select-none"
+    >
+      <span className="absolute top-3 right-3 inline-flex items-center gap-1 rounded-full bg-surface-canvas border border-folio-border-subtle px-2.5 py-1 folio-meta text-folio-text-tertiary">
+        <FaRegClock className="w-3 h-3" />
+        Coming soon
+      </span>
+      <Sparkles className="w-8 h-8 mx-auto mb-3 text-[var(--folio-gold-ornament)]" />
+      <h3 className="folio-ui font-semibold text-folio-text-primary">Tag everything at once</h3>
+      <p className="folio-meta text-folio-text-secondary mt-1 max-w-md mx-auto">
+        Drop your finish book and we&apos;ll match every product to your photos automatically. The
+        fast path is on the way — for now, tag by hand below.
+      </p>
+    </div>
+  );
+}
+
+function RoomLabel({ name, count, tagged }: { name: string; count: number; tagged?: number }) {
+  return (
+    <div className="flex items-baseline justify-between gap-3 border-b border-folio-border-subtle pb-2">
+      <h3 className="font-headline italic text-2xl text-folio-text-primary">{name}</h3>
+      <span className="folio-meta text-folio-text-tertiary tabular-nums whitespace-nowrap">
+        {count} {count === 1 ? 'photo' : 'photos'}
+        {tagged !== undefined ? ` · ${tagged} tagged` : ''}
+      </span>
+    </div>
+  );
+}
+
+/**
+ * A single photo with its tag list beside it. Collapsed by default; clicking
+ * the photo expands it in place for pin-drop + product tagging.
+ */
+function PhotoTagger({
+  projectId,
+  photo,
+  isOwner,
+  active,
+  onActivate,
+  onCollapse,
+  onChanged,
+  onEditProduct,
+  onConfirm,
+}: {
+  projectId: string;
+  photo: Photo;
+  isOwner: boolean;
+  active: boolean;
+  onActivate: () => void;
+  onCollapse: () => void;
+  onChanged: () => void;
+  onEditProduct: (productId: string, tagId: string | null) => void;
+  onConfirm: (tagId: string) => void;
+}) {
+  const [pendingDot, setPendingDot] = useState<{ x: number; y: number } | null>(null);
+  const imageRef = useRef<HTMLImageElement | null>(null);
+
+  const placePin = (e: React.MouseEvent<HTMLImageElement>) => {
+    const rect = imageRef.current?.getBoundingClientRect();
+    if (!rect) return;
+    const x = ((e.clientX - rect.left) / rect.width) * 100;
+    const y = ((e.clientY - rect.top) / rect.height) * 100;
+    setPendingDot({ x, y });
+  };
+
+  const handleDelete = async (tagId: string) => {
+    try {
+      const res = await fetch(`/api/tag-product-to-image?id=${tagId}`, { method: 'DELETE' });
+      if (res.ok) onChanged();
+    } catch (err) {
+      console.error('[TaggingSection] delete error:', err);
+    }
+  };
+
+  const leave = () => {
+    setPendingDot(null);
+    onCollapse();
+  };
+
+  if (!active) {
+    // Collapsed row: photo left, tags beside it (never over the photo).
+    return (
+      <div className="grid grid-cols-1 sm:grid-cols-[minmax(0,340px)_1fr] gap-4 items-start">
+        <button
+          onClick={isOwner ? onActivate : undefined}
+          className="group relative aspect-[4/3] w-full rounded-[20px] overflow-hidden border-2 border-folio-border-subtle hover:border-[var(--accent)] transition-all"
+          title={isOwner ? 'Click to tag products' : undefined}
+        >
+          <Image
+            src={photo.url}
+            alt={photo.name || 'Project photo'}
+            fill
+            className="object-cover"
+            sizes="(max-width: 640px) 100vw, 340px"
+          />
+          {photo.tags.length > 0 && (
+            <div className="absolute bottom-2 right-2 bg-black/70 text-white px-2 py-1 rounded-full text-xs flex items-center gap-1">
+              <FaTag className="w-3 h-3" />
+              {photo.tags.length}
+            </div>
+          )}
+          {isOwner && (
+            <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-colors flex items-center justify-center">
+              <span className="opacity-0 group-hover:opacity-100 bg-white/90 px-3 py-1.5 rounded-full text-sm font-medium text-folio-text-primary transition-opacity">
+                Tag products
+              </span>
+            </div>
+          )}
+        </button>
+
+        <TagList tags={photo.tags} isOwner={isOwner} onEdit={onEditProduct} onDelete={handleDelete} onConfirm={onConfirm} />
+      </div>
+    );
+  }
+
+  // Active (expanded) working state — enlarges in place, pushing the room down.
+  return (
+    <div className="rounded-2xl border-2 border-[var(--accent)] bg-surface-canvas p-4 sm:p-5">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+        {/* Photo — the transient pin is the only mark placed on it */}
+        <div>
+          <div className="relative w-full">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              ref={imageRef}
+              src={photo.url}
+              alt={photo.name || 'Project photo'}
+              onClick={placePin}
+              className="w-full rounded-xl cursor-crosshair"
+            />
+            {/* Photos are sacred: the transient placement pin is the only mark
+                we put on photography. Existing tags live in the list beside it. */}
+            {pendingDot && (
+              <div
+                className="absolute z-20"
+                style={{
+                  left: `${pendingDot.x}%`,
+                  top: `${pendingDot.y}%`,
+                  transform: 'translate(-50%, -50%)',
+                }}
+              >
+                <div className="flex h-5 w-5 items-center justify-center rounded-full bg-[var(--accent)] border-2 border-white shadow-lg animate-pulse">
+                  <FaTag className="w-2.5 h-2.5 text-white" />
+                </div>
+              </div>
+            )}
+          </div>
+          <div className="mt-3 flex items-center justify-between gap-3">
+            <p className="folio-meta text-folio-text-secondary">
+              {pendingDot ? 'Pin placed — pick the product beside it.' : 'Click the photo where a product is.'}
+            </p>
+            <button
+              onClick={leave}
+              className="folio-meta font-medium text-folio-text-secondary hover:text-folio-text-primary transition-colors whitespace-nowrap"
+            >
+              Done
+            </button>
+          </div>
+        </div>
+
+        {/* Right column — the picker while placing, otherwise the tag list */}
+        <div>
+          {pendingDot ? (
+            <ProductTagPicker
+              projectId={projectId}
+              imageId={photo.id}
+              pendingDot={pendingDot}
+              onCancel={() => setPendingDot(null)}
+              onTagged={async ({ productId, deferred, openEdit }) => {
+                setPendingDot(null);
+                // Flagged/hard-domain products land pending; kick the background
+                // fill best-effort. (Confirm-after UI is the next, gated step.)
+                if (deferred) {
+                  fetch(`/api/products/${productId}/scrape-bql`, { method: 'POST' }).catch(() => {});
+                }
+                onChanged();
+                if (openEdit) onEditProduct(productId, null);
+              }}
+            />
+          ) : (
+            <div className="space-y-3">
+              <TagList tags={photo.tags} isOwner={isOwner} onEdit={onEditProduct} onDelete={handleDelete} onConfirm={onConfirm} />
+              <p className="folio-meta text-folio-text-tertiary">
+                Click the photo to add another product.
+              </p>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/**
+ * The per-photo tag list. Rows sit beside the photo. Manual tags render in a
+ * confirmed state; the `pending` branch is left in place (structurally) for the
+ * imported confirm-after state to fill later without reworking the list.
+ */
+function TagList({
+  tags,
+  isOwner,
+  onEdit,
+  onDelete,
+  onConfirm,
+}: {
+  tags: TagRow[];
+  isOwner: boolean;
+  onEdit: (productId: string, tagId: string | null) => void;
+  onDelete: (tagId: string) => void;
+  onConfirm: (tagId: string) => void;
+}) {
+  if (tags.length === 0) {
+    return (
+      <p className="folio-meta text-folio-text-tertiary py-2">
+        No products tagged yet.
+      </p>
+    );
+  }
+
+  return (
+    <ul className="space-y-2">
+      {tags.map((tag) => {
+        const product = tag.product;
+        // Imported/deferred tags await confirmation; manual tags are confirmed.
+        const pending = product?.scrapeStatus != null && !tag.reviewedAt;
+        return (
+          <li
+            key={tag.id}
+            className="flex items-center gap-3 rounded-xl border border-folio-border-subtle bg-surface-canvas px-3 py-2"
+          >
+            <div className="min-w-0 flex-1">
+              <p className="folio-ui font-medium text-folio-text-primary truncate">
+                {product?.name ?? 'Product'}
+              </p>
+              <div className="flex items-center gap-2 mt-0.5">
+                {product?.category && (
+                  <span className="folio-meta text-folio-text-secondary truncate">
+                    {product.category}
+                  </span>
+                )}
+                <span className="inline-flex items-center gap-1 folio-meta text-folio-text-tertiary">
+                  <FaMapMarkerAlt className="w-2.5 h-2.5 text-[var(--accent)]" />
+                  Placed
+                </span>
+                {pending ? (
+                  <span className="inline-flex items-center gap-1 folio-meta text-amber-600">
+                    <FaRegClock className="w-2.5 h-2.5" />
+                    Needs confirm
+                  </span>
+                ) : (
+                  <span className="inline-flex items-center gap-1 folio-meta text-[var(--accent)]">
+                    <FaCheckCircle className="w-2.5 h-2.5" />
+                    Confirmed
+                  </span>
+                )}
+              </div>
+            </div>
+            {isOwner && (
+              <div className="flex items-center gap-1 flex-shrink-0">
+                {pending && (
+                  <button
+                    onClick={() => onConfirm(tag.id)}
+                    title="Confirm this tag"
+                    className="flex h-7 w-7 items-center justify-center rounded-full text-[var(--accent)] hover:bg-[var(--accent)]/10 transition-colors"
+                  >
+                    <FaCheck className="w-3 h-3" />
+                  </button>
+                )}
+                <button
+                  onClick={() => product && onEdit(product.id, tag.id)}
+                  disabled={!product}
+                  title="Edit product details"
+                  className="flex h-7 w-7 items-center justify-center rounded-full text-folio-text-secondary hover:text-folio-text-primary hover:bg-surface-ground transition-colors disabled:opacity-40"
+                >
+                  <FaPen className="w-3 h-3" />
+                </button>
+                <button
+                  onClick={() => onDelete(tag.id)}
+                  title="Remove tag"
+                  className="flex h-7 w-7 items-center justify-center rounded-full text-red-400 hover:text-red-600 hover:bg-red-50 transition-colors"
+                >
+                  <FaTrash className="w-3 h-3" />
+                </button>
+              </div>
+            )}
+          </li>
+        );
+      })}
+    </ul>
+  );
+}
