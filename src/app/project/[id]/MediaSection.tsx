@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { FaUpload, FaCloudUploadAlt, FaFileImport } from 'react-icons/fa';
+import { FaUpload, FaCloudUploadAlt, FaFileImport, FaTag } from 'react-icons/fa';
 import RoomGroupedMedia from './RoomGroupedMedia';
 import ProjectCreationModal from '@/components/ProjectCreationModal';
 import { PresentationImportModal } from '@/components/import/PresentationImportModal';
@@ -371,6 +371,20 @@ export default function MediaSection({ project, isOwner, images, projectPost, in
         />
       ) : (
       <>
+      {/* Re-entry into tagging after stepping back on the Tags step (the tracker
+          no longer carries a redundant tag-by-hand card there). */}
+      {initialTagging && isOwner && (
+        <div className="flex justify-end">
+          <button
+            onClick={() => setShowTagger(true)}
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-[var(--accent)] text-white folio-meta font-medium hover:bg-[var(--accent-hover)] transition-colors"
+          >
+            <FaTag className="w-3 h-3" />
+            Tag products
+          </button>
+        </div>
+      )}
+
       {/* Uploaded Media Section */}
       <section
         id="uploaded-media-section"
