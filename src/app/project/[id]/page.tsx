@@ -362,7 +362,11 @@ export default async function ProjectPage({
         {/* Project Progress Tracker — adaptive guided next-action region */}
         {trackerState && (
           <div className="mt-2 mb-2">
-            <ProjectProgressTracker projectId={sanitizedProject.id} state={trackerState} />
+            <ProjectProgressTracker
+              projectId={sanitizedProject.id}
+              state={trackerState}
+              hideNextAction={startInTagging}
+            />
           </div>
         )}
 

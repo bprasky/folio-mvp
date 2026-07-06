@@ -15,6 +15,12 @@ import {
 interface ProjectProgressTrackerProps {
   projectId: string;
   state: TrackerState;
+  /**
+   * When the step's surface already owns its next-action inline (the Tags step
+   * opens straight into the tagging surface), collapse to just the stepper so
+   * the tracker's cards don't duplicate it.
+   */
+  hideNextAction?: boolean;
 }
 
 const IMPORT_ICONS = {
@@ -45,6 +51,7 @@ function actionHref(projectId: string, action: TrackerAction): string {
 export default function ProjectProgressTracker({
   projectId,
   state,
+  hideNextAction = false,
 }: ProjectProgressTrackerProps) {
   const { steps, currentIndex, materialsIndex, materialsExist, type, endCap } = state;
   const def = TRACKER_TYPES[type];
@@ -57,6 +64,18 @@ export default function ProjectProgressTracker({
   const showImportCards = currentIndex === materialsIndex && !materialsExist;
   const showCollapsedBar = materialsExist && !showImportCards;
   const onLastStep = currentIndex === steps.length - 1;
+
+  // The surface below owns this step's next-action inline — show only progress.
+  if (hideNextAction) {
+    return (
+      <section
+        aria-label="Project progress"
+        className="rounded-[20px] border border-folio-border-subtle bg-surface-canvas overflow-hidden"
+      >
+        <Stepper steps={steps} currentIndex={currentIndex} hideDownTick />
+      </section>
+    );
+  }
 
   return (
     <section
@@ -91,7 +110,15 @@ export default function ProjectProgressTracker({
 const MARKER = 40; // px — circle diameter
 const MARKER_CENTER = MARKER / 2;
 
-function Stepper({ steps, currentIndex }: { steps: TrackerStep[]; currentIndex: number }) {
+function Stepper({
+  steps,
+  currentIndex,
+  hideDownTick = false,
+}: {
+  steps: TrackerStep[];
+  currentIndex: number;
+  hideDownTick?: boolean;
+}) {
   const n = steps.length;
   // Marker centers sit at (i + 0.5)/n of the row width. The track spans the
   // first center to the last center; the filled portion runs to the current
@@ -119,15 +146,17 @@ function Stepper({ steps, currentIndex }: { steps: TrackerStep[]; currentIndex: 
         ))}
 
         {/* Down-tick: a rotated square centered under the current step, pointing
-            into the next-action zone below. */}
-        <span
-          className="absolute -bottom-[7px] w-3 h-3 rotate-45 bg-surface-canvas border-r border-b border-folio-border-subtle"
-          style={{
-            left: `${((currentIndex + 0.5) / n) * 100}%`,
-            transform: 'translateX(-50%) rotate(45deg)',
-          }}
-          aria-hidden
-        />
+            into the next-action zone below. Hidden when there is no zone. */}
+        {!hideDownTick && (
+          <span
+            className="absolute -bottom-[7px] w-3 h-3 rotate-45 bg-surface-canvas border-r border-b border-folio-border-subtle"
+            style={{
+              left: `${((currentIndex + 0.5) / n) * 100}%`,
+              transform: 'translateX(-50%) rotate(45deg)',
+            }}
+            aria-hidden
+          />
+        )}
       </div>
     </div>
   );
