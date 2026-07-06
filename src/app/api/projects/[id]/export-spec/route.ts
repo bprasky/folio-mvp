@@ -515,35 +515,30 @@ export async function POST(
         y = bottom - entryGap;
       };
 
-      const drawSubtotal = (sum: number, unpriced: number) => {
-        const baseline = y - metaSize;
-        const label = 'Subtotal — sum of listed prices';
-        page.drawText(label, { x: marginX, y: baseline, size: metaSize, font, color: taupe });
-        drawRight(formatCurrency(sum), baseline, metaSize, fontBold, ink);
-        y -= metaLH;
-        if (unpriced > 0) {
-          const note = `${unpriced} priced on request`;
-          page.drawText(note, { x: marginX, y: y - metaSize, size: metaSize, font, color: taupe });
-          y -= metaLH;
-        }
-        y -= 10; // breathing room before the next room
-      };
-      const subtotalHeight = metaLH * 2 + 10;
+      const footerNoteText =
+        'Pricing shown is per listing. Some items are priced per unit, per square foot or linear foot, where the listed price is a rate rather than a line cost. Request vendor quotes for material takeoffs and final pricing.';
 
-      const drawProjectTotal = (sum: number, unpriced: number) => {
-        page.drawLine({ start: { x: marginX, y }, end: { x: pageWidth - marginX, y }, thickness: 1, color: gold });
-        y -= 18;
-        const label = 'Project total — sum of listed prices';
-        page.drawText(label, { x: marginX, y: y - 11, size: 11, font: fontBold, color: ink });
-        drawRight(formatCurrency(sum), y - 11, 12, fontBold, ink);
-        y -= 16;
+      // Draw the closing note once, at the very end of the document. product.price
+      // is unitless: a per-each cost (a chandelier) and a per-SF rate (a slab)
+      // share the field, so any sum across items would mix units and mislead on a
+      // client-facing quote. We keep every per-item price as displayed reference
+      // and replace the former room subtotals / project total with this note.
+      // See docs/17a_SPEC_SHEET_TOTALS_DELTA.md.
+      const drawFooterNote = (unpriced: number) => {
+        const noteLines = wrap(footerNoteText, font, metaSize, contentWidth);
+        const blockH = noteLines.length * metaLH + (unpriced > 0 ? metaLH : 0) + 16;
+        ensureSpace(blockH);
+        y -= 16; // separate the note from the last entry
+        for (const line of noteLines) {
+          page.drawText(line, { x: marginX, y: y - metaSize, size: metaSize, font, color: taupe });
+          y -= metaLH;
+        }
         if (unpriced > 0) {
-          const note = `${unpriced} ${unpriced === 1 ? 'item' : 'items'} priced on request`;
-          page.drawText(note, { x: marginX, y: y - metaSize, size: metaSize, font, color: taupe });
+          const count = `${unpriced} ${unpriced === 1 ? 'item' : 'items'} priced on request`;
+          page.drawText(count, { x: marginX, y: y - metaSize, size: metaSize, font, color: taupe });
           y -= metaLH;
         }
       };
-      const projectTotalHeight = 18 + 16 + metaLH + 8;
 
       // --- build the document ---------------------------------------------
       drawDocumentHeader();
@@ -552,9 +547,6 @@ export async function POST(
         page.drawText('No products tagged in this project yet.', { x: marginX, y: y - metaSize, size: 11, font, color: taupe });
       } else {
         let currentRoom: string | null = null;
-        let roomSum = 0;
-        let roomUnpriced = 0;
-        let projectSum = 0;
         let projectUnpriced = 0;
 
         for (const row of exportData) {
@@ -562,35 +554,21 @@ export async function POST(
           const entryH = measureEntry(entry);
 
           if (row.room !== currentRoom) {
-            if (currentRoom !== null) {
-              ensureSpace(subtotalHeight);
-              drawSubtotal(roomSum, roomUnpriced);
-            }
-            // Keep the room label with its first entry — never strand it.
+            // Keep the room label with its first entry so it never strands.
             ensureSpace(roomHeaderHeight + entryH);
             drawRoomHeader(row.room);
             currentRoom = row.room;
-            roomSum = 0;
-            roomUnpriced = 0;
           } else {
             ensureSpace(entryH);
           }
 
           drawEntry(entry);
-          if (entry.priceNum != null) {
-            roomSum += entry.priceNum;
-            projectSum += entry.priceNum;
-          } else {
-            roomUnpriced += 1;
-            projectUnpriced += 1;
-          }
+          if (entry.priceNum == null) projectUnpriced += 1;
         }
 
-        // Final room subtotal, then the project total.
-        ensureSpace(subtotalHeight);
-        drawSubtotal(roomSum, roomUnpriced);
-        ensureSpace(projectTotalHeight);
-        drawProjectTotal(projectSum, projectUnpriced);
+        // No summed totals: per-item prices mix units, so a sum would be
+        // dishonest. Render the closing note (plus an unpriced count if any).
+        drawFooterNote(projectUnpriced);
       }
 
       // Second pass: now that the page count is known, stamp "Page i of N".
