@@ -277,6 +277,14 @@ export default async function ProjectPage({
   ];
   const view = validViews.includes(currentView) ? currentView : defaultView;
 
+  // On the Tags step, the media view *is* the manual tagging surface (spec:
+  // inline two-path, no separate route/modal). Landing here shows it directly;
+  // the designer can still step back to the plain photo workspace.
+  const currentStepKey = trackerState
+    ? trackerState.steps[trackerState.currentIndex]?.key ?? null
+    : null;
+  const startInTagging = isOwner && view === 'media' && currentStepKey === 'tags';
+
   const sanitizedProject = {
     ...base,
     rooms: base.rooms.map(room => ({
@@ -389,6 +397,7 @@ export default async function ProjectPage({
               images={base.images}
               isPublished={isPublished}
               editorialState={editorialState}
+              initialTagging={startInTagging}
             />
           )}
 

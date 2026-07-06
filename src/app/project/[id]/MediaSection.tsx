@@ -51,14 +51,16 @@ interface MediaSectionProps {
   projectPost?: any;
   isPublished?: boolean;
   editorialState?: EditorialState;
+  /** On the Tags step the media view opens directly into the tagging surface. */
+  initialTagging?: boolean;
 }
 
-export default function MediaSection({ project, isOwner, images, projectPost }: MediaSectionProps) {
+export default function MediaSection({ project, isOwner, images, projectPost, initialTagging = false }: MediaSectionProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [showUploadModal, setShowUploadModal] = useState(false);
   const [showInterviewModal, setShowInterviewModal] = useState(false);
-  const [showTagger, setShowTagger] = useState(false);
+  const [showTagger, setShowTagger] = useState(initialTagging);
   const [showMaterials, setShowMaterials] = useState(false);
   const [showTagReview, setShowTagReview] = useState(false);
   const [selectedHeroImageId, setSelectedHeroImageId] = useState<string | null>(null);
