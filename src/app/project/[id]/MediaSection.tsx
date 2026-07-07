@@ -200,6 +200,14 @@ export default function MediaSection({ project, isOwner, images, projectPost, in
         const res = await fetch('/api/import/finish-schedule', { method: 'POST', body: fd });
         const data = await res.json();
         if (!res.ok) throw new Error(data.error || 'Import failed');
+        // Real feedback that the file was read. The in-brand review queue for
+        // confirming these into tags is the next step.
+        const n = data.tagCount ?? 0;
+        alert(
+          n > 0
+            ? `Read ${n} product${n === 1 ? '' : 's'} from your finish schedule. They're saved to this import — the review step to place them on your photos is coming next.`
+            : 'That file imported, but no product rows were found.',
+        );
         router.refresh();
       } catch (err) {
         console.error('[MediaSection] finish-schedule import failed:', err);
