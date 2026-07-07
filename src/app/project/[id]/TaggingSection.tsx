@@ -1,12 +1,13 @@
 'use client';
 
-import { useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import Image from 'next/image';
 import {
   FaTag,
   FaTrash,
   FaPen,
   FaCheck,
+  FaTimes,
   FaMapMarkerAlt,
   FaCheckCircle,
   FaRegClock,
@@ -43,6 +44,20 @@ type Photo = {
 };
 
 type Room = { id: string; name: string; type?: string | null };
+
+/** An unplaced finish-schedule product awaiting placement on a photo. */
+type SpecTag = {
+  id: string;
+  description: string;
+  category: string | null;
+  roomType: string | null;
+  extractedVendor: string | null;
+  extractedPrice: number | null;
+  extractedSku: string | null;
+  extractedDimensions: string | null;
+  extractedMaterial: string | null;
+  extractedProductUrl: string | null;
+};
 
 interface TaggingSectionProps {
   projectId: string;
@@ -83,6 +98,65 @@ export default function TaggingSection({
   const [activePhotoId, setActivePhotoId] = useState<string | null>(null);
   // Product being edited/enriched (from a tag row, or the picker's reuse path).
   const [editState, setEditState] = useState<{ productId: string; tagId: string | null } | null>(null);
+
+  // Finish-schedule products parsed but not yet placed on a photo, and the one
+  // the designer is currently placing (click a photo to anchor it).
+  const [unplaced, setUnplaced] = useState<SpecTag[]>([]);
+  const [placingTag, setPlacingTag] = useState<SpecTag | null>(null);
+
+  const refetchUnplaced = useCallback(async () => {
+    try {
+      const res = await fetch(`/api/projects/${projectId}/pending-spec-tags`);
+      if (res.ok) {
+        const data = await res.json();
+        setUnplaced(Array.isArray(data.tags) ? data.tags : []);
+      }
+    } catch {
+      /* best-effort — the tray just stays as-is */
+    }
+  }, [projectId]);
+
+  // Load on mount and whenever the project data refreshes (e.g. after an import
+  // completes or a product is placed, which re-renders with new images).
+  useEffect(() => {
+    refetchUnplaced();
+  }, [refetchUnplaced, images]);
+
+  // Place the active finish-schedule product onto a photo at the given spot.
+  const placeProduct = async (tagId: string, imageId: string, x: number, y: number) => {
+    try {
+      const res = await fetch(`/api/import/pending-tag/${tagId}/place`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ imageId, x, y }),
+      });
+      if (!res.ok) {
+        const d = await res.json().catch(() => ({}));
+        alert(d.error || 'Could not place that product.');
+        return;
+      }
+      setPlacingTag(null);
+      await refetchUnplaced();
+      onChanged();
+    } catch (err) {
+      console.error('[TaggingSection] place error:', err);
+    }
+  };
+
+  // Drop a parsed product we don't want to place.
+  const dismissUnplaced = async (tagId: string) => {
+    try {
+      await fetch(`/api/import/pending-tag/${tagId}/verify`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'dismiss' }),
+      });
+      if (placingTag?.id === tagId) setPlacingTag(null);
+      await refetchUnplaced();
+    } catch (err) {
+      console.error('[TaggingSection] dismiss error:', err);
+    }
+  };
 
   // Included portfolio photos only, grouped by room (uncategorized pinned top),
   // mirroring the room workspace so the two views stay consistent.
@@ -165,6 +239,34 @@ export default function TaggingSection({
         <span className="h-px flex-1 bg-folio-border-subtle" />
       </div>
 
+      {/* Products parsed from a finish schedule, waiting to be placed on a photo. */}
+      {isOwner && unplaced.length > 0 && (
+        <UnplacedTray
+          tags={unplaced}
+          placingId={placingTag?.id ?? null}
+          onPlace={(tag) => setPlacingTag((cur) => (cur?.id === tag.id ? null : tag))}
+          onDismiss={dismissUnplaced}
+        />
+      )}
+
+      {/* Sticky prompt while placing a finish-schedule product. */}
+      {placingTag && (
+        <div className="sticky top-2 z-30 flex items-center gap-3 rounded-xl border border-[var(--accent)] bg-[var(--accent)]/10 px-4 py-2.5 shadow-sm">
+          <FaMapMarkerAlt className="w-4 h-4 text-[var(--accent)] flex-shrink-0" />
+          <p className="folio-meta text-folio-text-primary flex-1 min-w-0">
+            Placing <span className="font-semibold">{placingTag.description}</span>
+            {placingTag.roomType ? ` · suggested room: ${placingTag.roomType}` : ''} — open a photo
+            and click where it goes.
+          </p>
+          <button
+            onClick={() => setPlacingTag(null)}
+            className="folio-meta font-medium text-folio-text-secondary hover:text-folio-text-primary whitespace-nowrap"
+          >
+            Cancel
+          </button>
+        </div>
+      )}
+
       {photos.length === 0 ? (
         <p className="folio-body text-folio-text-secondary text-center py-10">
           Upload photos first, then come back to tag the products in them.
@@ -188,6 +290,10 @@ export default function TaggingSection({
                     onChanged={onChanged}
                     onEditProduct={(productId, tagId) => setEditState({ productId, tagId })}
                     onConfirm={confirmTag}
+                    placing={placingTag}
+                    onPlace={(imageId, x, y) =>
+                      placingTag && placeProduct(placingTag.id, imageId, x, y)
+                    }
                   />
                 ))}
               </div>
@@ -213,6 +319,10 @@ export default function TaggingSection({
                       onChanged={onChanged}
                       onEditProduct={(productId, tagId) => setEditState({ productId, tagId })}
                       onConfirm={confirmTag}
+                      placing={placingTag}
+                      onPlace={(imageId, x, y) =>
+                        placingTag && placeProduct(placingTag.id, imageId, x, y)
+                      }
                     />
                   ))}
                 </div>
@@ -324,6 +434,81 @@ function FinishBookDropZone({ onFile }: { onFile?: (file: File) => void }) {
   );
 }
 
+/**
+ * The tray of finish-schedule products parsed but not yet placed on a photo.
+ * "Place" arms placement for that product; the designer then clicks the photo
+ * where it appears. "Dismiss" drops a row we don't want.
+ */
+function UnplacedTray({
+  tags,
+  placingId,
+  onPlace,
+  onDismiss,
+}: {
+  tags: SpecTag[];
+  placingId: string | null;
+  onPlace: (tag: SpecTag) => void;
+  onDismiss: (tagId: string) => void;
+}) {
+  const fmtPrice = (cents: number | null) =>
+    cents == null ? null : `$${(cents / 100).toLocaleString(undefined, { maximumFractionDigits: 0 })}`;
+
+  return (
+    <section className="rounded-2xl border border-folio-border-subtle bg-surface-ground/60 p-4 sm:p-5 space-y-3">
+      <div>
+        <h3 className="folio-ui font-semibold text-folio-text-primary">
+          From your finish schedule · {tags.length} to place
+        </h3>
+        <p className="folio-meta text-folio-text-secondary mt-0.5">
+          Place each product on the photo where it appears. Anything you don&apos;t need, dismiss.
+        </p>
+      </div>
+      <ul className="grid grid-cols-1 md:grid-cols-2 gap-2">
+        {tags.map((tag) => {
+          const isPlacing = placingId === tag.id;
+          const meta = [tag.extractedVendor, tag.category, tag.extractedDimensions, fmtPrice(tag.extractedPrice)]
+            .filter(Boolean)
+            .join(' · ');
+          return (
+            <li
+              key={tag.id}
+              className={`flex items-center gap-3 rounded-xl border bg-surface-canvas px-3 py-2 transition-colors ${
+                isPlacing ? 'border-[var(--accent)] ring-1 ring-[var(--accent)]/30' : 'border-folio-border-subtle'
+              }`}
+            >
+              <div className="min-w-0 flex-1">
+                <p className="folio-ui font-medium text-folio-text-primary truncate">{tag.description}</p>
+                <p className="folio-meta text-folio-text-secondary truncate">
+                  {tag.roomType ? `${tag.roomType}${meta ? ' · ' : ''}` : ''}
+                  {meta || (!tag.roomType ? 'From your finish schedule' : '')}
+                </p>
+              </div>
+              <button
+                onClick={() => onPlace(tag)}
+                className={`flex-shrink-0 inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 folio-meta font-medium transition-colors ${
+                  isPlacing
+                    ? 'bg-[var(--accent)] text-white'
+                    : 'border border-folio-border-subtle text-folio-text-primary hover:border-[var(--accent)]'
+                }`}
+              >
+                <FaMapMarkerAlt className="w-3 h-3" />
+                {isPlacing ? 'Placing…' : 'Place'}
+              </button>
+              <button
+                onClick={() => onDismiss(tag.id)}
+                title="Dismiss"
+                className="flex-shrink-0 flex h-7 w-7 items-center justify-center rounded-full text-folio-text-tertiary hover:text-red-600 hover:bg-red-50 transition-colors"
+              >
+                <FaTimes className="w-3 h-3" />
+              </button>
+            </li>
+          );
+        })}
+      </ul>
+    </section>
+  );
+}
+
 function RoomLabel({ name, count, tagged }: { name: string; count: number; tagged?: number }) {
   return (
     <div className="flex items-baseline justify-between gap-3 border-b border-folio-border-subtle pb-2">
@@ -350,6 +535,8 @@ function PhotoTagger({
   onChanged,
   onEditProduct,
   onConfirm,
+  placing,
+  onPlace,
 }: {
   projectId: string;
   photo: Photo;
@@ -360,9 +547,18 @@ function PhotoTagger({
   onChanged: () => void;
   onEditProduct: (productId: string, tagId: string | null) => void;
   onConfirm: (tagId: string) => void;
+  /** A finish-schedule product being placed; clicking the photo anchors it. */
+  placing: SpecTag | null;
+  onPlace: (imageId: string, x: number, y: number) => void;
 }) {
   const [pendingDot, setPendingDot] = useState<{ x: number; y: number } | null>(null);
   const imageRef = useRef<HTMLImageElement | null>(null);
+
+  // Starting/stopping/switching a placement clears any stale pin so it can't
+  // leak into the manual product picker.
+  useEffect(() => {
+    setPendingDot(null);
+  }, [placing]);
 
   const placePin = (e: React.MouseEvent<HTMLImageElement>) => {
     const rect = imageRef.current?.getBoundingClientRect();
@@ -392,8 +588,10 @@ function PhotoTagger({
       <div className="grid grid-cols-1 sm:grid-cols-[minmax(0,340px)_1fr] gap-4 items-start">
         <button
           onClick={isOwner ? onActivate : undefined}
-          className="group relative aspect-[4/3] w-full rounded-[20px] overflow-hidden border-2 border-folio-border-subtle hover:border-[var(--accent)] transition-all"
-          title={isOwner ? 'Click to tag products' : undefined}
+          className={`group relative aspect-[4/3] w-full rounded-[20px] overflow-hidden border-2 transition-all ${
+            placing ? 'border-[var(--accent)] ring-2 ring-[var(--accent)]/30' : 'border-folio-border-subtle hover:border-[var(--accent)]'
+          }`}
+          title={isOwner ? (placing ? 'Click to place here' : 'Click to tag products') : undefined}
         >
           <Image
             src={photo.url}
@@ -411,7 +609,7 @@ function PhotoTagger({
           {isOwner && (
             <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-colors flex items-center justify-center">
               <span className="opacity-0 group-hover:opacity-100 bg-white/90 px-3 py-1.5 rounded-full text-sm font-medium text-folio-text-primary transition-opacity">
-                Tag products
+                {placing ? 'Place here' : 'Tag products'}
               </span>
             </div>
           )}
@@ -456,7 +654,13 @@ function PhotoTagger({
           </div>
           <div className="mt-3 flex items-center justify-between gap-3">
             <p className="folio-meta text-folio-text-secondary">
-              {pendingDot ? 'Pin placed — pick the product beside it.' : 'Click the photo where a product is.'}
+              {placing
+                ? pendingDot
+                  ? 'Spot marked — confirm it beside.'
+                  : `Click where ${placing.description} goes.`
+                : pendingDot
+                  ? 'Pin placed — pick the product beside it.'
+                  : 'Click the photo where a product is.'}
             </p>
             <button
               onClick={leave}
@@ -467,9 +671,42 @@ function PhotoTagger({
           </div>
         </div>
 
-        {/* Right column — the picker while placing, otherwise the tag list */}
+        {/* Right column — placement confirm, the picker, or the tag list */}
         <div>
-          {pendingDot ? (
+          {placing ? (
+            pendingDot ? (
+              <div className="rounded-xl border border-[var(--accent)] bg-[var(--accent)]/5 p-4 space-y-3">
+                <div>
+                  <p className="folio-ui font-medium text-folio-text-primary">{placing.description}</p>
+                  <p className="folio-meta text-folio-text-secondary">
+                    {[placing.extractedVendor, placing.category].filter(Boolean).join(' · ') || 'From your finish schedule'}
+                  </p>
+                </div>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => setPendingDot(null)}
+                    className="flex-1 px-4 py-2 rounded-lg border border-folio-border-subtle folio-meta font-medium text-folio-text-secondary hover:bg-surface-ground transition-colors"
+                  >
+                    Move pin
+                  </button>
+                  <button
+                    onClick={() => onPlace(photo.id, pendingDot.x, pendingDot.y)}
+                    className="flex-1 px-4 py-2 rounded-lg bg-[var(--accent)] text-white folio-meta font-medium hover:bg-[var(--accent-hover)] transition-colors inline-flex items-center justify-center gap-1.5"
+                  >
+                    <FaMapMarkerAlt className="w-3 h-3" />
+                    Place here
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div className="rounded-xl border border-dashed border-[var(--accent)]/50 bg-[var(--accent)]/5 p-4">
+                <p className="folio-ui font-medium text-folio-text-primary">{placing.description}</p>
+                <p className="folio-meta text-folio-text-secondary mt-0.5">
+                  Click the photo where this product appears to place it.
+                </p>
+              </div>
+            )
+          ) : pendingDot ? (
             <ProductTagPicker
               projectId={projectId}
               imageId={photo.id}

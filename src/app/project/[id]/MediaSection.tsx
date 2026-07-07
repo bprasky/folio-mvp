@@ -205,7 +205,7 @@ export default function MediaSection({ project, isOwner, images, projectPost, in
         const n = data.tagCount ?? 0;
         alert(
           n > 0
-            ? `Read ${n} product${n === 1 ? '' : 's'} from your finish schedule. They're saved to this import — the review step to place them on your photos is coming next.`
+            ? `Read ${n} product${n === 1 ? '' : 's'} from your finish schedule. Place them on your photos from the tray below.`
             : 'That file imported, but no product rows were found.',
         );
         router.refresh();
