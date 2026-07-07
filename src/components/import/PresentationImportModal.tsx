@@ -6,6 +6,26 @@ import { Button } from '@/components/ui/button';
 import { FaCloudUploadAlt, FaCheck, FaSpinner, FaTimes, FaImage, FaDoorOpen, FaTag, FaExclamationTriangle } from 'react-icons/fa';
 import { createClient } from '@supabase/supabase-js';
 
+/**
+ * MIME type for a Supabase upload. Prefers the File's own type, but a File
+ * dragged in from some contexts reports empty or "application/octet-stream" —
+ * which the imports bucket rejects — so fall back to the (normalized) extension.
+ */
+function uploadContentType(file: File, ext: string): string {
+  if (file.type && file.type !== 'application/octet-stream') return file.type;
+  const byExt: Record<string, string> = {
+    pdf: 'application/pdf',
+    pptx: 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+    ppt: 'application/vnd.ms-powerpoint',
+    png: 'image/png',
+    jpg: 'image/jpeg',
+    jpeg: 'image/jpeg',
+    webp: 'image/webp',
+    gif: 'image/gif',
+  };
+  return byExt[ext] || 'application/pdf';
+}
+
 type ImportStep = 'upload' | 'extracting' | 'analyzing' | 'review' | 'creating';
 
 interface DetectedRoom {
@@ -188,8 +208,17 @@ export function PresentationImportModal({
 
       for (let i = 0; i < filesToProcess.length; i++) {
         const file = filesToProcess[i];
-        const ext = file.name.split('.').pop()?.toLowerCase() || 'pdf';
+        // Normalize the extension: some downloads carry trailing junk (e.g.
+        // "report.pdf_"), which would otherwise upload as an unknown type.
+        const rawExt = file.name.split('.').pop()?.toLowerCase() || 'pdf';
+        const ext = rawExt.replace(/[^a-z0-9]/g, '') || 'pdf';
         const path = `imports/${newSessionId}/source-${i}.${ext}`;
+
+        // Supabase's imports bucket allowlists MIME types, and a File dragged in
+        // from some contexts reports an empty / octet-stream type. Send an
+        // explicit contentType derived from the extension so PDFs/PPTX upload
+        // as their real type instead of being rejected as octet-stream.
+        const contentType = uploadContentType(file, ext);
 
         setProgress({
           current: 5 + (i / filesToProcess.length) * 10,
@@ -199,7 +228,7 @@ export function PresentationImportModal({
 
         const { error: uploadError } = await supabase.storage
           .from(bucket)
-          .upload(path, file, { upsert: true });
+          .upload(path, file, { upsert: true, contentType });
 
         if (uploadError) {
           console.error('Supabase upload error:', uploadError);
