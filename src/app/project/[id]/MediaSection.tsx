@@ -223,7 +223,11 @@ export default function MediaSection({ project, isOwner, images, projectPost, in
   const routeDocument = useCallback(
     (file: File) => {
       setShowDocImport(false);
-      const lower = file.name.toLowerCase();
+      // Strip trailing junk some downloads add (e.g. "spec.pdf_") so the type
+      // check still recognizes the real extension and routes to the right
+      // importer — a finish-book PDF must reach the spec extractor, not the
+      // presentation image importer.
+      const lower = file.name.toLowerCase().replace(/[^a-z0-9.]+$/, '');
       if (/\.(xlsx|xls|csv)$/.test(lower)) {
         handleFinishScheduleUpload(file);
         return;
