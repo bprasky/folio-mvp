@@ -21,7 +21,28 @@ const nextConfig = {
       watchOptions: {
         ignored: ['**/node_modules/**', '**/.git/**', '**/.next/**']
       }
-    }
+    },
+    // pdfjs-dist / pdf-to-png-converter load @napi-rs/canvas (a native module)
+    // at runtime to provide DOMMatrix/ImageData/Path2D and page rendering.
+    // Externalize it so webpack doesn't bundle the .node binary, and force its
+    // platform binary into the PDF routes' serverless bundles — nft can't
+    // follow @napi-rs/canvas's dynamic platform-binary require, so on Vercel it
+    // was missing, giving "DOMMatrix is not defined".
+    serverComponentsExternalPackages: ['@napi-rs/canvas'],
+    outputFileTracingIncludes: {
+      '/api/projects/[id]/extract-pdf': [
+        './node_modules/@napi-rs/canvas-linux-x64-gnu/**',
+        './node_modules/@napi-rs/canvas-linux-x64-musl/**',
+      ],
+      '/api/projects/[id]/import-spec': [
+        './node_modules/@napi-rs/canvas-linux-x64-gnu/**',
+        './node_modules/@napi-rs/canvas-linux-x64-musl/**',
+      ],
+      '/api/import/[sessionId]/analyze': [
+        './node_modules/@napi-rs/canvas-linux-x64-gnu/**',
+        './node_modules/@napi-rs/canvas-linux-x64-musl/**',
+      ],
+    },
   },
   // Disable automatic static optimization to prevent file overwrites
   staticPageGenerationTimeout: 60,
