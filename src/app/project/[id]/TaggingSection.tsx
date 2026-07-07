@@ -53,6 +53,12 @@ interface TaggingSectionProps {
   onChanged: () => void;
   /** Leave the tagging surface, back to the media workspace. */
   onExit?: () => void;
+  /**
+   * Hand a dropped finish-book file to the existing document-import pipeline
+   * (PDF → spec extractor, PPTX → presentation importer, spreadsheet → the
+   * finish-schedule call). When omitted, the fast-path drop stays inert.
+   */
+  onImportFinishBook?: (file: File) => void;
 }
 
 /**
@@ -71,6 +77,7 @@ export default function TaggingSection({
   isOwner,
   onChanged,
   onExit,
+  onImportFinishBook,
 }: TaggingSectionProps) {
   // Only one photo is in its working (expanded) state at a time.
   const [activePhotoId, setActivePhotoId] = useState<string | null>(null);
@@ -147,8 +154,8 @@ export default function TaggingSection({
         </p>
       </header>
 
-      {/* Two-path shell — fast path (inert here) + divider + tag-by-hand below. */}
-      <FinishBookDropZone />
+      {/* Two-path shell — finish-book fast path + divider + tag-by-hand below. */}
+      <FinishBookDropZone onFile={onImportFinishBook} />
 
       <div className="flex items-center gap-4" role="separator">
         <span className="h-px flex-1 bg-folio-border-subtle" />
@@ -233,24 +240,85 @@ export default function TaggingSection({
 }
 
 /**
- * The finish-book fast path. Present but inert here — visibly disabled with a
- * "coming soon" affordance. It must never POST to the import stub.
+ * The finish-book fast path. Accepts a finish schedule by drag-and-drop or file
+ * picker and hands it to the existing document-import pipeline (PDF spec
+ * extractor / presentation importer / finish-schedule call) via `onFile`.
+ * Falls back to an inert affordance when no handler is wired.
  */
-function FinishBookDropZone() {
+function FinishBookDropZone({ onFile }: { onFile?: (file: File) => void }) {
+  const [isOver, setIsOver] = useState(false);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  const take = (files: FileList | null) => {
+    const file = files?.[0];
+    if (file && onFile) onFile(file);
+  };
+
+  if (!onFile) {
+    return (
+      <div
+        aria-disabled="true"
+        className="relative rounded-2xl border-2 border-dashed border-folio-border-subtle bg-surface-ground/60 px-6 py-8 text-center opacity-70 cursor-not-allowed select-none"
+      >
+        <span className="absolute top-3 right-3 inline-flex items-center gap-1 rounded-full bg-surface-canvas border border-folio-border-subtle px-2.5 py-1 folio-meta text-folio-text-tertiary">
+          <FaRegClock className="w-3 h-3" />
+          Coming soon
+        </span>
+        <Sparkles className="w-8 h-8 mx-auto mb-3 text-[var(--folio-gold-ornament)]" />
+        <h3 className="folio-ui font-semibold text-folio-text-primary">Tag everything at once</h3>
+        <p className="folio-meta text-folio-text-secondary mt-1 max-w-md mx-auto">
+          Drop your finish book and we&apos;ll pull the products out for you.
+        </p>
+      </div>
+    );
+  }
+
   return (
     <div
-      aria-disabled="true"
-      className="relative rounded-2xl border-2 border-dashed border-folio-border-subtle bg-surface-ground/60 px-6 py-8 text-center opacity-70 cursor-not-allowed select-none"
+      role="button"
+      tabIndex={0}
+      onClick={() => inputRef.current?.click()}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          inputRef.current?.click();
+        }
+      }}
+      onDragOver={(e) => {
+        e.preventDefault();
+        setIsOver(true);
+      }}
+      onDragLeave={(e) => {
+        e.preventDefault();
+        setIsOver(false);
+      }}
+      onDrop={(e) => {
+        e.preventDefault();
+        setIsOver(false);
+        take(e.dataTransfer.files);
+      }}
+      className={`relative rounded-2xl border-2 border-dashed px-6 py-8 text-center cursor-pointer transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)]/40 ${
+        isOver
+          ? 'border-[var(--accent)] bg-[var(--accent)]/5'
+          : 'border-folio-border-subtle bg-surface-ground/60 hover:border-[var(--accent)]'
+      }`}
     >
-      <span className="absolute top-3 right-3 inline-flex items-center gap-1 rounded-full bg-surface-canvas border border-folio-border-subtle px-2.5 py-1 folio-meta text-folio-text-tertiary">
-        <FaRegClock className="w-3 h-3" />
-        Coming soon
-      </span>
+      <input
+        ref={inputRef}
+        type="file"
+        accept=".pdf,.pptx,.ppt,.xlsx,.xls,.csv"
+        className="hidden"
+        onChange={(e) => {
+          take(e.target.files);
+          e.currentTarget.value = '';
+        }}
+      />
       <Sparkles className="w-8 h-8 mx-auto mb-3 text-[var(--folio-gold-ornament)]" />
       <h3 className="folio-ui font-semibold text-folio-text-primary">Tag everything at once</h3>
       <p className="folio-meta text-folio-text-secondary mt-1 max-w-md mx-auto">
-        Drop your finish book and we&apos;ll match every product to your photos automatically. The
-        fast path is on the way — for now, tag by hand below.
+        {isOver
+          ? 'Drop to import your finish book…'
+          : "Drop your finish book — PDF, PowerPoint, or spreadsheet — and we'll pull the products out for you. Or tag by hand below."}
       </p>
     </div>
   );
