@@ -3,10 +3,20 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/app/api/auth/[...nextauth]/options';
 import { prisma } from '@/lib/prisma';
 import { supabaseServer } from '@/lib/supabaseServer';
+import { parseFinishSchedule } from '@/lib/import-agent/parseFinishSchedule';
+import { finishScheduleToPendingTags } from '@/lib/import-agent/finishScheduleToPendingTags';
+
+// exceljs / papaparse need the Node runtime; give parsing a little headroom.
+export const runtime = 'nodejs';
+export const maxDuration = 60;
 
 /**
  * POST /api/import/finish-schedule
- * Upload and process a finish schedule for automated product tagging
+ *
+ * Parse an uploaded finish schedule (XLSX/CSV) into products and stage them as
+ * reviewable PendingProductTag rows (source = SPEC) on a new ImportSession —
+ * the same review queue the PDF spec importer feeds. The client then reviews
+ * and finalizes them. Mirrors /api/projects/[id]/import-spec.
  */
 export async function POST(req: NextRequest) {
   try {
@@ -91,31 +101,68 @@ export async function POST(req: NextRequest) {
       fileUrl = urlData?.publicUrl || null;
     }
 
-    // For now, mark session as complete
-    // TODO: Integrate with actual import agent processing
-    // The import agent would:
-    // 1. Parse the finish schedule (PDF/PPTX/Excel)
-    // 2. Extract product information
-    // 3. Match products to project images using AI
-    // 4. Create PendingProductTag records for verification
+    // Parse the finish schedule into products and stage them as reviewable
+    // PendingProductTag rows (source = SPEC), the same queue import-spec feeds.
+    let tagCount = 0;
+    let rows: Awaited<ReturnType<typeof parseFinishSchedule>> = [];
+    try {
+      rows = await parseFinishSchedule(Buffer.from(fileBuffer), file.name);
+      tagCount = await finishScheduleToPendingTags(importSession.id, rows);
+    } catch (parseErr: any) {
+      console.error('[finish-schedule] parse failed:', parseErr?.message);
+      await prisma.importSession.update({
+        where: { id: importSession.id },
+        data: {
+          status: 'FAILED',
+          errorMessage: parseErr?.message || 'We couldn’t read products from that file.',
+        },
+      });
+      return NextResponse.json(
+        { error: parseErr?.message || 'We couldn’t read products from that finish schedule.' },
+        { status: 422 },
+      );
+    }
 
     await prisma.importSession.update({
       where: { id: importSession.id },
       data: {
-        status: 'COMPLETED',
-        completedAt: new Date(),
+        status: tagCount > 0 ? 'READY_FOR_REVIEW' : 'FAILED',
+        errorMessage:
+          tagCount > 0
+            ? null
+            : 'No product rows were found. Make sure the file has a header row (e.g. Product, Brand, Price).',
+        completedAt: tagCount > 0 ? null : new Date(),
       },
     });
 
-    // Return success with session info
-    return NextResponse.json({
-      sessionId: importSession.id,
-      status: 'COMPLETED',
-      fileUrl,
-      projectId,
-      imageCount: project.images.length,
-      message: 'Finish schedule processed. AI tagging suggestions will appear on your images.',
-    }, { status: 201 });
+    if (tagCount === 0) {
+      return NextResponse.json(
+        {
+          error:
+            'No product rows were found. Make sure the file has a header row with columns like Product, Brand, and Price.',
+        },
+        { status: 422 },
+      );
+    }
+
+    return NextResponse.json(
+      {
+        sessionId: importSession.id,
+        status: 'READY_FOR_REVIEW',
+        fileUrl,
+        projectId,
+        tagCount,
+        imageCount: project.images.length,
+        // A lightweight preview so the client can confirm the file was read.
+        products: rows.slice(0, 200).map((r) => ({
+          name: r.name,
+          brand: r.brand,
+          room: r.room,
+          price: r.price,
+        })),
+      },
+      { status: 201 },
+    );
 
   } catch (error) {
     console.error('Error processing finish schedule:', error);
