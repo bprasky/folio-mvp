@@ -16,6 +16,25 @@ import type { TextItem, TextMarkedContent } from 'pdfjs-dist/types/src/display/a
 // Disable worker in Node.js environment
 pdfjsLib.GlobalWorkerOptions.workerSrc = ''
 
+// Node's serverless runtime (Vercel) has no DOMMatrix / ImageData / Path2D,
+// which pdfjs needs while parsing/rendering — without them it crashes with
+// "DOMMatrix is not defined". Provide them from @napi-rs/canvas (already used by
+// pdf-to-png-converter) rather than relying on pdfjs's own canvas auto-detection.
+// Best-effort: if the native module isn't present, pdfjs degrades with a warning.
+try {
+  const g = globalThis as unknown as Record<string, unknown>;
+  if (typeof g.DOMMatrix === 'undefined') {
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    const canvas = require('@napi-rs/canvas');
+    if (canvas?.DOMMatrix) g.DOMMatrix = canvas.DOMMatrix;
+    if (canvas?.ImageData) g.ImageData = canvas.ImageData;
+    if (canvas?.Path2D) g.Path2D = canvas.Path2D;
+    console.log('[extractText.ts] Installed DOMMatrix/ImageData/Path2D from @napi-rs/canvas');
+  }
+} catch (err) {
+  console.warn('[extractText.ts] Could not load @napi-rs/canvas for DOM polyfills:', (err as Error)?.message);
+}
+
 export interface TextBlock {
   content: string
   bounds: {
