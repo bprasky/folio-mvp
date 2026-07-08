@@ -31,6 +31,13 @@ const nextConfig = {
     serverComponentsExternalPackages: ['@napi-rs/canvas'],
     outputFileTracingIncludes: {
       '/api/projects/[id]/extract-pdf': [
+        // The main @napi-rs/canvas package (its index.js is what
+        // `require('@napi-rs/canvas')` loads to polyfill DOMMatrix/ImageData/
+        // Path2D). nft doesn't trace it into the Lambda on its own, so without
+        // this the route dies at runtime with "Cannot find module
+        // '@napi-rs/canvas'" → "DOMMatrix is not defined". The platform-binary
+        // packages below are its native .node payload for linux x64.
+        './node_modules/@napi-rs/canvas/**',
         './node_modules/@napi-rs/canvas-linux-x64-gnu/**',
         './node_modules/@napi-rs/canvas-linux-x64-musl/**',
         // pdfjs loads its fake worker from this file at runtime (workerSrc in
@@ -39,11 +46,13 @@ const nextConfig = {
         './node_modules/pdfjs-dist/legacy/build/pdf.worker.mjs',
       ],
       '/api/projects/[id]/import-spec': [
+        './node_modules/@napi-rs/canvas/**',
         './node_modules/@napi-rs/canvas-linux-x64-gnu/**',
         './node_modules/@napi-rs/canvas-linux-x64-musl/**',
         './node_modules/pdfjs-dist/legacy/build/pdf.worker.mjs',
       ],
       '/api/import/[sessionId]/analyze': [
+        './node_modules/@napi-rs/canvas/**',
         './node_modules/@napi-rs/canvas-linux-x64-gnu/**',
         './node_modules/@napi-rs/canvas-linux-x64-musl/**',
         './node_modules/pdfjs-dist/legacy/build/pdf.worker.mjs',
