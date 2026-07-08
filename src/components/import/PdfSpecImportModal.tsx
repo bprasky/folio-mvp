@@ -6,7 +6,7 @@
  * Integrates with the PDF extraction pipeline for brand, price, dimensions, etc.
  */
 
-import { useState, useCallback, useRef } from 'react';
+import { useState, useCallback, useRef, useEffect } from 'react';
 import { GlassModal, GlassModalHeader, GlassModalBody } from '@/components/ui/glass-modal';
 import { Button } from '@/components/ui/button';
 import { FaCloudUploadAlt, FaCheck, FaSpinner, FaTimes, FaExclamationTriangle, FaFileAlt, FaMagic, FaSearch } from 'react-icons/fa';
@@ -61,6 +61,20 @@ export function PdfSpecImportModal({
 
   const [isProcessing, setIsProcessing] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // When the modal is opened with a file already chosen upstream (the tagging
+  // surface's finish-book drop zone routes the file here), extract it straight
+  // away instead of asking the designer to pick the same PDF a second time.
+  // The modal is keyed on the file name in the parent, so a fresh instance
+  // mounts per routed file and this guard resets with it.
+  const autoStartedRef = useRef(false);
+  useEffect(() => {
+    if (open && initialFile && !autoStartedRef.current) {
+      autoStartedRef.current = true;
+      startExtraction(initialFile);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, initialFile]);
 
   const resetState = useCallback(() => {
     setStep('upload');

@@ -33,14 +33,20 @@ const nextConfig = {
       '/api/projects/[id]/extract-pdf': [
         './node_modules/@napi-rs/canvas-linux-x64-gnu/**',
         './node_modules/@napi-rs/canvas-linux-x64-musl/**',
+        // pdfjs loads its fake worker from this file at runtime (workerSrc in
+        // src/lib/pdf/extractText.ts). nft can't follow the dynamic resolve, so
+        // force it into the bundle or extraction 500s with a fake-worker error.
+        './node_modules/pdfjs-dist/legacy/build/pdf.worker.mjs',
       ],
       '/api/projects/[id]/import-spec': [
         './node_modules/@napi-rs/canvas-linux-x64-gnu/**',
         './node_modules/@napi-rs/canvas-linux-x64-musl/**',
+        './node_modules/pdfjs-dist/legacy/build/pdf.worker.mjs',
       ],
       '/api/import/[sessionId]/analyze': [
         './node_modules/@napi-rs/canvas-linux-x64-gnu/**',
         './node_modules/@napi-rs/canvas-linux-x64-musl/**',
+        './node_modules/pdfjs-dist/legacy/build/pdf.worker.mjs',
       ],
     },
   },
