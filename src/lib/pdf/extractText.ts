@@ -13,8 +13,25 @@ import * as pdfjsLib from 'pdfjs-dist/legacy/build/pdf.mjs'
 console.log('[extractText.ts] pdfjs-dist imported successfully');
 import type { TextItem, TextMarkedContent } from 'pdfjs-dist/types/src/display/api'
 
-// Disable worker in Node.js environment
-pdfjsLib.GlobalWorkerOptions.workerSrc = ''
+// pdfjs still spins up a "fake worker" on the main thread even server-side, and
+// it loads that worker from GlobalWorkerOptions.workerSrc. An empty string is
+// treated as "unset", so pdfjs tries to auto-resolve one and dies with
+// "Setting up fake worker failed: No GlobalWorkerOptions.workerSrc specified".
+// Point it at the legacy worker file that ships with pdfjs-dist (resolved at
+// runtime so the path is correct wherever the bundle lands). The file is force-
+// included into the serverless bundle via outputFileTracingIncludes in
+// next.config.js — nft can't follow this dynamic require on its own. `require`
+// is used bare (as with @napi-rs/canvas below) since this module compiles to
+// CJS in the Next.js server bundle.
+try {
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
+  pdfjsLib.GlobalWorkerOptions.workerSrc = require.resolve(
+    'pdfjs-dist/legacy/build/pdf.worker.mjs'
+  )
+  console.log('[extractText.ts] workerSrc =', pdfjsLib.GlobalWorkerOptions.workerSrc)
+} catch (err) {
+  console.warn('[extractText.ts] Could not resolve pdfjs worker:', (err as Error)?.message)
+}
 
 // Node's serverless runtime (Vercel) has no DOMMatrix / ImageData / Path2D,
 // which pdfjs needs while parsing/rendering — without them it crashes with
