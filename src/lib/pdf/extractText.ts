@@ -23,18 +23,37 @@ import type { TextItem, TextMarkedContent } from 'pdfjs-dist/types/src/display/a
 // it loads that worker from GlobalWorkerOptions.workerSrc. An empty string is
 // treated as "unset", so pdfjs tries to auto-resolve one and dies with
 // "Setting up fake worker failed: No GlobalWorkerOptions.workerSrc specified".
-// Point it at the legacy worker file that ships with pdfjs-dist (resolved at
-// runtime so the path is correct wherever the bundle lands). The file is force-
-// included into the serverless bundle via outputFileTracingIncludes in
-// next.config.js — nft can't follow this dynamic require on its own. `require`
-// is used bare (as with @napi-rs/canvas below) since this module compiles to
-// CJS in the Next.js server bundle.
+//
+// It has to be a real filesystem PATH string. We can't use
+// `require.resolve('pdfjs-dist/legacy/build/pdf.worker.mjs')`: in the Next.js /
+// webpack server bundle that gets rewritten to a numeric module id, which pdfjs
+// rejects with "Invalid `workerSrc` type". Instead, locate the worker file on
+// disk — it's force-copied into the Lambda's node_modules via
+// outputFileTracingIncludes in next.config.js, alongside the running process.
 try {
+  // node builtins stay as real runtime requires in the server bundle
   // eslint-disable-next-line @typescript-eslint/no-var-requires
-  pdfjsLib.GlobalWorkerOptions.workerSrc = require.resolve(
-    'pdfjs-dist/legacy/build/pdf.worker.mjs'
-  )
-  console.log('[extractText.ts] workerSrc =', pdfjsLib.GlobalWorkerOptions.workerSrc)
+  const path = require('path') as typeof import('path')
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
+  const fs = require('fs') as typeof import('fs')
+  const rel = path.join('node_modules', 'pdfjs-dist', 'legacy', 'build', 'pdf.worker.mjs')
+  const candidates = [
+    path.join(process.cwd(), rel),
+    path.join('/var/task', rel), // Vercel serverless root, in case cwd differs
+  ]
+  const workerSrc = candidates.find((p) => {
+    try {
+      return fs.existsSync(p)
+    } catch {
+      return false
+    }
+  })
+  if (workerSrc) {
+    pdfjsLib.GlobalWorkerOptions.workerSrc = workerSrc
+    console.log('[extractText.ts] workerSrc =', workerSrc)
+  } else {
+    console.warn('[extractText.ts] pdf.worker.mjs not found; candidates:', candidates)
+  }
 } catch (err) {
   console.warn('[extractText.ts] Could not resolve pdfjs worker:', (err as Error)?.message)
 }
