@@ -28,6 +28,16 @@ CREATE TABLE IF NOT EXISTS "pdf_extractions" (
     CONSTRAINT "pdf_extractions_pkey" PRIMARY KEY ("id")
 );
 
+-- Converge the table if a partial version already existed (same guard as
+-- skeleton_items below).
+ALTER TABLE "pdf_extractions" ADD COLUMN IF NOT EXISTS "projectId" TEXT;
+ALTER TABLE "pdf_extractions" ADD COLUMN IF NOT EXISTS "fileName" TEXT;
+ALTER TABLE "pdf_extractions" ADD COLUMN IF NOT EXISTS "result" JSONB;
+ALTER TABLE "pdf_extractions" ADD COLUMN IF NOT EXISTS "status" TEXT NOT NULL DEFAULT 'pending_review';
+ALTER TABLE "pdf_extractions" ADD COLUMN IF NOT EXISTS "createdBy" TEXT;
+ALTER TABLE "pdf_extractions" ADD COLUMN IF NOT EXISTS "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP;
+ALTER TABLE "pdf_extractions" ADD COLUMN IF NOT EXISTS "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP;
+
 CREATE INDEX IF NOT EXISTS "pdf_extractions_projectId_idx" ON "pdf_extractions"("projectId");
 CREATE INDEX IF NOT EXISTS "pdf_extractions_createdBy_idx" ON "pdf_extractions"("createdBy");
 CREATE INDEX IF NOT EXISTS "pdf_extractions_status_idx" ON "pdf_extractions"("status");
@@ -62,6 +72,30 @@ CREATE TABLE IF NOT EXISTS "skeleton_items" (
 
     CONSTRAINT "skeleton_items_pkey" PRIMARY KEY ("id")
 );
+
+-- If an older/partial skeleton_items already exists (an earlier `db push` created
+-- it before these fields were added), CREATE TABLE IF NOT EXISTS above is a no-op
+-- and the table can be missing newer columns — which made the unique index on
+-- resultingSelectionId fail (P3018, "column resultingSelectionId does not
+-- exist"). Add every non-PK column idempotently so the table converges to the
+-- schema whether it was just created or pre-existed incomplete.
+ALTER TABLE "skeleton_items" ADD COLUMN IF NOT EXISTS "roomId" TEXT;
+ALTER TABLE "skeleton_items" ADD COLUMN IF NOT EXISTS "projectId" TEXT;
+ALTER TABLE "skeleton_items" ADD COLUMN IF NOT EXISTS "searchQuery" TEXT;
+ALTER TABLE "skeleton_items" ADD COLUMN IF NOT EXISTS "description" TEXT;
+ALTER TABLE "skeleton_items" ADD COLUMN IF NOT EXISTS "imageData" TEXT;
+ALTER TABLE "skeleton_items" ADD COLUMN IF NOT EXISTS "imageUrl" TEXT;
+ALTER TABLE "skeleton_items" ADD COLUMN IF NOT EXISTS "extractedBrand" TEXT;
+ALTER TABLE "skeleton_items" ADD COLUMN IF NOT EXISTS "extractedPrice" INTEGER;
+ALTER TABLE "skeleton_items" ADD COLUMN IF NOT EXISTS "extractedMaterial" TEXT;
+ALTER TABLE "skeleton_items" ADD COLUMN IF NOT EXISTS "extractedDimensions" JSONB;
+ALTER TABLE "skeleton_items" ADD COLUMN IF NOT EXISTS "sourceExtractionId" TEXT;
+ALTER TABLE "skeleton_items" ADD COLUMN IF NOT EXISTS "sourcePage" INTEGER;
+ALTER TABLE "skeleton_items" ADD COLUMN IF NOT EXISTS "confirmedProductId" TEXT;
+ALTER TABLE "skeleton_items" ADD COLUMN IF NOT EXISTS "resultingSelectionId" TEXT;
+ALTER TABLE "skeleton_items" ADD COLUMN IF NOT EXISTS "status" "SkeletonItemStatus" NOT NULL DEFAULT 'UNCONFIRMED';
+ALTER TABLE "skeleton_items" ADD COLUMN IF NOT EXISTS "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP;
+ALTER TABLE "skeleton_items" ADD COLUMN IF NOT EXISTS "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP;
 
 -- resultingSelectionId String? @unique
 CREATE UNIQUE INDEX IF NOT EXISTS "skeleton_items_resultingSelectionId_key" ON "skeleton_items"("resultingSelectionId");
