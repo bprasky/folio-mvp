@@ -171,8 +171,12 @@ export async function extractSpecificationsFromPDF(
     }
   }
 
-  // Step 5: Use visual analysis to find additional products (optional)
-  if (opts.useVisualAnalysis && items.length < opts.maxItemsPerPage * pdfContent.pageCount) {
+  // Step 5: Visual analysis — only as a last resort when text produced nothing.
+  // It renders pages to PNGs (needs @napi-rs/canvas, absent in the serverless
+  // bundle) and asks a vision model to spot products. Once segmentation/clustering
+  // has found items, running it just wastes time and spams "Failed to render PDF
+  // page" errors, so skip it unless we have zero items.
+  if (opts.useVisualAnalysis && items.length === 0) {
     console.log('Step 5: Running visual analysis on pages...')
 
     for (let pageNum = 1; pageNum <= pdfContent.pageCount; pageNum++) {
