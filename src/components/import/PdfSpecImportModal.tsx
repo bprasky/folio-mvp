@@ -233,6 +233,21 @@ export function PdfSpecImportModal({
       }
 
       const result = await res.json();
+
+      // Auto-place the imported products onto their rooms' photos with the vision
+      // tagger, scoped to the rooms this import touched. Best-effort: the import
+      // already succeeded, so a tagging failure/timeout must not fail the import.
+      setProgress({ current: 85, message: 'Placing products on your photos…' });
+      try {
+        await fetch(`/api/posting/project/${projectId}/auto-tag`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(result.roomIds?.length ? { roomIds: result.roomIds } : {}),
+        });
+      } catch (tagErr) {
+        console.warn('Auto-tag after import failed (non-fatal):', tagErr);
+      }
+
       setProgress({ current: 100, message: 'Import complete!' });
 
       onComplete?.({

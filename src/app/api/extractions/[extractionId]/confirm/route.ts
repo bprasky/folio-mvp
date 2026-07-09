@@ -141,6 +141,10 @@ export async function POST(
       errors: []
     }
 
+    // Rooms we actually wrote into — returned so the client can scope the
+    // vision auto-tagger to just the rooms this import touched.
+    const usedRoomIds = new Set<string>()
+
     // Process each selected item, sorting it into its own room. Items that carry
     // a room from the PDF go there (matched/created by name); anything without one
     // falls back to the caller's roomId, else a "General" room.
@@ -149,6 +153,7 @@ export async function POST(
         const targetRoomId = item.room
           ? await resolveRoomId(item.room)
           : roomId || (await resolveRoomId(null))
+        usedRoomIds.add(targetRoomId)
 
         if (item.type === 'specification') {
           // Create selection directly for specifications
@@ -173,6 +178,7 @@ export async function POST(
 
     return NextResponse.json({
       created,
+      roomIds: Array.from(usedRoomIds),
       message: `Imported ${created.selections.length} specifications and ${created.skeletons.length} placeholders`
     })
 
