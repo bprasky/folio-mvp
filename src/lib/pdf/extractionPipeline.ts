@@ -13,6 +13,7 @@ import {
   calculateStats
 } from './confidence'
 import { generateInspirationSearchQuery, analyzePageImage } from './aiEnhancement'
+import { segmentProductsFromText } from './aiSegmentation'
 
 export interface ExtractionOptions {
   generateImageSearchQueries?: boolean  // default: true
@@ -75,57 +76,97 @@ export async function extractSpecificationsFromPDF(
   const pdfContent = await extractPDFContent(pdfBuffer)
   console.log(`  Found ${pdfContent.textBlocks.length} text blocks, ${pdfContent.imageRegions.length} images across ${pdfContent.pageCount} pages`)
 
-  // Step 2: Cluster text blocks
-  console.log('Step 2: Clustering text blocks...')
-  const textClusters = clusterTextBlocks(pdfContent.textBlocks, opts.clusteringThresholds)
-  console.log(`  Created ${textClusters.length} text clusters`)
-
-  // Filter to likely product clusters
-  const productClusters = filterProductClusters(textClusters)
-  console.log(`  ${productClusters.length} clusters contain product information`)
-
-  // Step 3: Associate clusters with images
-  console.log('Step 3: Associating clusters with images...')
-  const associations = associateClustersWithImages(
-    productClusters,
-    pdfContent.imageRegions,
-    { maxDistance: opts.associationDistance, preferredDirection: 'any' }
-  )
-  console.log(`  Created ${associations.length} item associations`)
-
-  // Step 4: Process each association into an ExtractedItem
-  console.log('Step 4: Processing associations into items...')
   const items: ExtractedItem[] = []
 
-  for (const assoc of associations) {
-    const spec = assoc.specification
-
-    // Extract image data if present
-    let imageData: string | null = null
-    if (assoc.image) {
-      imageData = await extractImageFromPDF(pdfBuffer, assoc.image)
+  // Step 2 (primary): AI segmentation of the extracted text into products.
+  // The gap-based clustering below collapses tightly-spaced spec sheets into one
+  // blob, so we let Claude split the text into individual products first and only
+  // fall back to clustering if segmentation yields nothing.
+  console.log('Step 2: AI segmentation of extracted text...')
+  try {
+    const segmented = await segmentProductsFromText(
+      pdfContent.textBlocks.map(b => ({
+        text: b.content,
+        page: b.page,
+        x: b.bounds.x,
+        y: b.bounds.y,
+        fontSize: b.fontSize,
+      }))
+    )
+    console.log(`  Segmented ${segmented.length} products`)
+    for (const p of segmented) {
+      items.push(
+        createExtractedItem(generateId(), {
+          productName: p.productName,
+          brand: p.brand,
+          vendor: p.vendor,
+          sku: p.sku,
+          price: p.price,
+          currency: p.currency,
+          dimensions: p.dimensions,
+          material: p.material,
+          finish: p.finish,
+          description: null,
+          productUrl: p.productUrl,
+          quantity: p.quantity,
+          imageData: null,
+          imageBounds: null,
+          sourceText: p.room ? [p.room] : [],
+          page: p.page,
+        })
+      )
     }
+  } catch (err) {
+    console.warn('  AI segmentation failed, will fall back to clustering:', (err as Error)?.message)
+  }
 
-    const item = createExtractedItem(generateId(), {
-      productName: spec.productName,
-      brand: spec.brand,
-      vendor: spec.brand, // Default vendor to brand
-      sku: spec.sku,
-      price: spec.price,
-      currency: spec.currency,
-      dimensions: spec.dimensions,
-      material: spec.material,
-      finish: spec.finish,
-      description: null,
-      productUrl: spec.productUrl,
-      quantity: spec.quantity,
-      imageData,
-      imageBounds: assoc.image?.bounds || null,
-      sourceText: assoc.textCluster?.blocks.map(b => b.content) || [],
-      page: assoc.page
-    })
+  // Fallback: legacy gap-based clustering when segmentation produced nothing.
+  if (items.length === 0) {
+    console.log('Step 2b: Clustering text blocks (fallback)...')
+    const textClusters = clusterTextBlocks(pdfContent.textBlocks, opts.clusteringThresholds)
+    console.log(`  Created ${textClusters.length} text clusters`)
 
-    items.push(item)
+    const productClusters = filterProductClusters(textClusters)
+    console.log(`  ${productClusters.length} clusters contain product information`)
+
+    console.log('Step 3: Associating clusters with images...')
+    const associations = associateClustersWithImages(
+      productClusters,
+      pdfContent.imageRegions,
+      { maxDistance: opts.associationDistance, preferredDirection: 'any' }
+    )
+    console.log(`  Created ${associations.length} item associations`)
+
+    console.log('Step 4: Processing associations into items...')
+    for (const assoc of associations) {
+      const spec = assoc.specification
+
+      let imageData: string | null = null
+      if (assoc.image) {
+        imageData = await extractImageFromPDF(pdfBuffer, assoc.image)
+      }
+
+      items.push(
+        createExtractedItem(generateId(), {
+          productName: spec.productName,
+          brand: spec.brand,
+          vendor: spec.brand, // Default vendor to brand
+          sku: spec.sku,
+          price: spec.price,
+          currency: spec.currency,
+          dimensions: spec.dimensions,
+          material: spec.material,
+          finish: spec.finish,
+          description: null,
+          productUrl: spec.productUrl,
+          quantity: spec.quantity,
+          imageData,
+          imageBounds: assoc.image?.bounds || null,
+          sourceText: assoc.textCluster?.blocks.map(b => b.content) || [],
+          page: assoc.page,
+        })
+      )
+    }
   }
 
   // Step 5: Use visual analysis to find additional products (optional)
