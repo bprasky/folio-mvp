@@ -28,6 +28,7 @@ export interface ExtractedItem {
   description: string | null
   productUrl: string | null
   quantity: number | null
+  room: string | null           // Room the product belongs to (for auto-sorting on import)
 
   // Source data
   imageData: string | null      // Base64 of cropped image

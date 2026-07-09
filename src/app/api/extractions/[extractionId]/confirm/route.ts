@@ -19,7 +19,20 @@ import { ensureProductForSelection } from '@/lib/tagging/ensureProductForSelecti
 
 interface ConfirmRequest {
   selectedItems: string[]  // Item IDs to import
-  roomId: string
+  roomId?: string          // Optional fallback room for items with no room of their own
+}
+
+/** Normalize a room name for matching ("DINING ROOM" == "Dining Room"). */
+function normalizeRoomName(name: string): string {
+  return name.trim().toLowerCase().replace(/\s+/g, ' ')
+}
+
+/** Title-case a raw room name for display when creating ("DINING ROOM" -> "Dining Room"). */
+function titleCaseRoomName(name: string): string {
+  return name
+    .trim()
+    .replace(/\s+/g, ' ')
+    .replace(/\S+/g, (w) => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase())
 }
 
 interface ConfirmResult {
@@ -53,13 +66,6 @@ export async function POST(
       )
     }
 
-    if (!roomId) {
-      return NextResponse.json(
-        { error: 'roomId is required' },
-        { status: 400 }
-      )
-    }
-
     // Fetch the extraction with project info
     const extraction = await prisma.pdfExtraction.findFirst({
       where: {
@@ -84,19 +90,34 @@ export async function POST(
       )
     }
 
-    // Verify room belongs to project
-    const room = await prisma.room.findFirst({
-      where: {
-        id: roomId,
-        projectId: extraction.projectId
-      }
+    // Load the project's rooms so each item can be sorted into its own room
+    // (matched by name, created on demand). Verify the optional fallback room.
+    const existingRooms = await prisma.room.findMany({
+      where: { projectId: extraction.projectId },
+      select: { id: true, name: true },
     })
+    const roomIdByName = new Map<string, string>()
+    for (const r of existingRooms) roomIdByName.set(normalizeRoomName(r.name), r.id)
 
-    if (!room) {
+    if (roomId && !existingRooms.some((r) => r.id === roomId)) {
       return NextResponse.json(
         { error: 'Room not found in this project' },
         { status: 404 }
       )
+    }
+
+    // Find-or-create the room for a given name, caching results so we only
+    // create each room once across the whole import.
+    const resolveRoomId = async (roomName: string | null): Promise<string> => {
+      const raw = roomName?.trim()
+      const norm = normalizeRoomName(raw || 'General')
+      const cached = roomIdByName.get(norm)
+      if (cached) return cached
+      const created = await prisma.room.create({
+        data: { name: raw ? titleCaseRoomName(raw) : 'General', projectId: extraction.projectId },
+      })
+      roomIdByName.set(norm, created.id)
+      return created.id
     }
 
     // Parse the result
@@ -120,15 +141,21 @@ export async function POST(
       errors: []
     }
 
-    // Process each selected item
+    // Process each selected item, sorting it into its own room. Items that carry
+    // a room from the PDF go there (matched/created by name); anything without one
+    // falls back to the caller's roomId, else a "General" room.
     for (const item of toImport) {
       try {
+        const targetRoomId = item.room
+          ? await resolveRoomId(item.room)
+          : roomId || (await resolveRoomId(null))
+
         if (item.type === 'specification') {
           // Create selection directly for specifications
-          await createSelection(item, roomId, extraction.projectId, extraction.id, created)
+          await createSelection(item, targetRoomId, extraction.projectId, extraction.id, created)
         } else {
           // Create skeleton item for inspiration/incomplete items
-          await createSkeletonItem(item, roomId, extraction.projectId, extraction.id, created)
+          await createSkeletonItem(item, targetRoomId, extraction.projectId, extraction.id, created)
         }
       } catch (err) {
         console.error(`Failed to process item ${item.id}:`, err)

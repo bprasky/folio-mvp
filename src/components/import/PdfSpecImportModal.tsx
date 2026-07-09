@@ -35,7 +35,6 @@ export function PdfSpecImportModal({
   onOpenChange,
   projectId,
   projectTitle,
-  rooms,
   initialFile,
   onComplete,
 }: PdfSpecImportModalProps) {
@@ -51,13 +50,7 @@ export function PdfSpecImportModal({
 
   // Selection state
   const [selected, setSelected] = useState<Set<string>>(new Set());
-  const [selectedRoomId, setSelectedRoomId] = useState<string>(rooms[0]?.id || '');
   const [loadingItems, setLoadingItems] = useState<Set<string>>(new Set());
-
-  // Room creation state (for empty projects)
-  const [availableRooms, setAvailableRooms] = useState<Room[]>(rooms);
-  const [isCreatingRoom, setIsCreatingRoom] = useState(false);
-  const [newRoomName, setNewRoomName] = useState('General');
 
   const [isProcessing, setIsProcessing] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -180,34 +173,6 @@ export function PdfSpecImportModal({
     });
   }, []);
 
-  // Create a new room for the project
-  const createRoom = useCallback(async (roomName: string): Promise<string | null> => {
-    setIsCreatingRoom(true);
-    try {
-      const res = await fetch(`/api/projects/${projectId}/rooms`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name: roomName || 'General' }),
-      });
-
-      if (!res.ok) {
-        const data = await res.json().catch(() => ({}));
-        throw new Error(data.error || 'Failed to create room');
-      }
-
-      const room = await res.json();
-      setAvailableRooms(prev => [...prev, room]);
-      setSelectedRoomId(room.id);
-      return room.id;
-    } catch (err: any) {
-      console.error('Failed to create room:', err);
-      setError(err.message || 'Failed to create room');
-      return null;
-    } finally {
-      setIsCreatingRoom(false);
-    }
-  }, [projectId]);
-
   const completeWithAI = useCallback(async (item: ExtractedItem) => {
     if (!extractionId) return;
 
@@ -248,30 +213,17 @@ export function PdfSpecImportModal({
 
     setStep('importing');
     setIsProcessing(true);
-
-    let roomIdToUse = selectedRoomId;
-
-    // If no room selected, create one first
-    if (!roomIdToUse) {
-      setProgress({ current: 20, message: 'Creating room...' });
-      const createdRoomId = await createRoom(newRoomName || 'General');
-      if (!createdRoomId) {
-        setStep('review');
-        setIsProcessing(false);
-        return;
-      }
-      roomIdToUse = createdRoomId;
-    }
-
-    setProgress({ current: 50, message: 'Creating items...' });
+    setProgress({ current: 50, message: 'Sorting items into rooms...' });
 
     try {
+      // Each item carries its own room from the PDF; the API sorts them into
+      // those rooms (matched/created by name). Items with no room fall back to a
+      // "General" room server-side.
       const res = await fetch(`/api/extractions/${extractionId}/confirm`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           selectedItems: Array.from(selected),
-          roomId: roomIdToUse,
         }),
       });
 
@@ -302,6 +254,13 @@ export function PdfSpecImportModal({
   };
 
   const totalItems = items.high.length + items.medium.length + items.low.length;
+
+  // Rooms the selected items will be auto-sorted into (from each item's own room).
+  const selectedItemsList = [...items.high, ...items.medium, ...items.low].filter(i => selected.has(i.id));
+  const sortRooms = Array.from(
+    new Set(selectedItemsList.map(i => i.room?.trim()).filter((r): r is string => !!r)),
+  );
+  const hasUnroomed = selectedItemsList.some(i => !i.room?.trim());
 
   return (
     <GlassModal open={open} onOpenChange={handleClose} size="xl">
@@ -427,35 +386,22 @@ export function PdfSpecImportModal({
               </div>
             </div>
 
-            {/* Room selector */}
-            <div>
-              <label className="block text-sm font-medium text-stone-700 mb-1">Import to room</label>
-              {availableRooms.length > 0 ? (
-                <select
-                  value={selectedRoomId}
-                  onChange={(e) => setSelectedRoomId(e.target.value)}
-                  className="w-full border rounded-md px-3 py-2 text-sm"
-                >
-                  {availableRooms.map(room => (
-                    <option key={room.id} value={room.id}>
-                      {room.name} {room.type ? `(${room.type})` : ''}
-                    </option>
-                  ))}
-                </select>
+            {/* Auto-sort summary — each product goes to its own room from the PDF */}
+            <div className="p-3 bg-stone-50 border border-stone-200 rounded-lg">
+              <p className="text-sm font-medium text-stone-700">Sorted into rooms automatically</p>
+              {sortRooms.length > 0 ? (
+                <p className="text-xs text-stone-500 mt-1">
+                  {sortRooms.length} room{sortRooms.length === 1 ? '' : 's'}: {sortRooms.join(' · ')}
+                  {hasUnroomed ? ' · General' : ''}
+                </p>
               ) : (
-                <div className="space-y-2">
-                  <div className="p-3 bg-amber-50 border border-amber-200 rounded-lg text-sm text-amber-800">
-                    No rooms in this project yet. A room will be created when you import.
-                  </div>
-                  <input
-                    type="text"
-                    value={newRoomName}
-                    onChange={(e) => setNewRoomName(e.target.value)}
-                    placeholder="Room name (e.g., Living Room, Kitchen)"
-                    className="w-full border rounded-md px-3 py-2 text-sm"
-                  />
-                </div>
+                <p className="text-xs text-stone-500 mt-1">
+                  These items don&apos;t name a room, so they&apos;ll go to a “General” room.
+                </p>
               )}
+              <p className="text-xs text-stone-400 mt-1">
+                Rooms are matched by name and created if they don&apos;t exist yet.
+              </p>
             </div>
 
             {/* Items list */}
@@ -516,9 +462,9 @@ export function PdfSpecImportModal({
               <Button
                 variant="accent"
                 onClick={handleImport}
-                disabled={selected.size === 0 || isCreatingRoom}
+                disabled={selected.size === 0}
               >
-                {isCreatingRoom ? 'Creating room...' : `Import ${selected.size} Items`}
+                Import {selected.size} Items
               </Button>
             </div>
           </div>
