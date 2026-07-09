@@ -109,9 +109,10 @@ export async function extractSpecificationsFromPDF(
           description: null,
           productUrl: p.productUrl,
           quantity: p.quantity,
+          room: p.room,
           imageData: null,
           imageBounds: null,
-          sourceText: p.room ? [p.room] : [],
+          sourceText: [],
           page: p.page,
         })
       )
@@ -160,6 +161,7 @@ export async function extractSpecificationsFromPDF(
           description: null,
           productUrl: spec.productUrl,
           quantity: spec.quantity,
+          room: null,
           imageData,
           imageBounds: assoc.image?.bounds || null,
           sourceText: assoc.textCluster?.blocks.map(b => b.content) || [],
@@ -203,6 +205,7 @@ export async function extractSpecificationsFromPDF(
               description: product.description,
               productUrl: null,
               quantity: null,
+              room: null,
               imageData: pageImage, // Use full page image
               imageBounds: {
                 x: product.estimatedBounds.x,
