@@ -6,6 +6,12 @@
 
 console.log('[extractText.ts] Starting module load...');
 
+// MUST come before the pdfjs import: pdf.mjs evaluates `new DOMMatrix()` at
+// module-load time, so DOMMatrix has to be on globalThis first. This installs
+// it (real @napi-rs/canvas when bundled, a JS stub otherwise). ES imports run
+// top-to-bottom, so keeping this line above the pdfjs import is load-bearing.
+import './canvasPolyfill'
+
 // Use the legacy build for Node.js environments (no DOMMatrix dependency)
 // @ts-ignore - Legacy build types
 import * as pdfjsLib from 'pdfjs-dist/legacy/build/pdf.mjs'
@@ -31,25 +37,6 @@ try {
   console.log('[extractText.ts] workerSrc =', pdfjsLib.GlobalWorkerOptions.workerSrc)
 } catch (err) {
   console.warn('[extractText.ts] Could not resolve pdfjs worker:', (err as Error)?.message)
-}
-
-// Node's serverless runtime (Vercel) has no DOMMatrix / ImageData / Path2D,
-// which pdfjs needs while parsing/rendering — without them it crashes with
-// "DOMMatrix is not defined". Provide them from @napi-rs/canvas (already used by
-// pdf-to-png-converter) rather than relying on pdfjs's own canvas auto-detection.
-// Best-effort: if the native module isn't present, pdfjs degrades with a warning.
-try {
-  const g = globalThis as unknown as Record<string, unknown>;
-  if (typeof g.DOMMatrix === 'undefined') {
-    // eslint-disable-next-line @typescript-eslint/no-var-requires
-    const canvas = require('@napi-rs/canvas');
-    if (canvas?.DOMMatrix) g.DOMMatrix = canvas.DOMMatrix;
-    if (canvas?.ImageData) g.ImageData = canvas.ImageData;
-    if (canvas?.Path2D) g.Path2D = canvas.Path2D;
-    console.log('[extractText.ts] Installed DOMMatrix/ImageData/Path2D from @napi-rs/canvas');
-  }
-} catch (err) {
-  console.warn('[extractText.ts] Could not load @napi-rs/canvas for DOM polyfills:', (err as Error)?.message);
 }
 
 export interface TextBlock {
