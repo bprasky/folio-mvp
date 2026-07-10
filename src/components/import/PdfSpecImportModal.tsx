@@ -30,6 +30,11 @@ interface PdfSpecImportModalProps {
   onComplete?: (result: { selectionsCreated: number; skeletonsCreated: number }) => void;
 }
 
+/** Room+product key for duplicate detection, mirroring the server's dedup. */
+const normRoom = (s: string) => s.trim().toLowerCase().replace(/\s+/g, ' ');
+const dupKey = (room: string | null | undefined, name: string | null | undefined) =>
+  `${normRoom(room || 'General')}::${(name || '').trim().toLowerCase()}`;
+
 export function PdfSpecImportModal({
   open,
   onOpenChange,
@@ -54,6 +59,11 @@ export function PdfSpecImportModal({
   const [loadingItems, setLoadingItems] = useState<Set<string>>(new Set());
   // Per-item room chosen in the review modal (overrides the segmented room).
   const [roomOverrides, setRoomOverrides] = useState<Record<string, string>>({});
+  // Products already in the project, keyed room+name, for duplicate detection;
+  // and the reviewer's per-item choice for each duplicate.
+  const [existingKeys, setExistingKeys] = useState<Set<string>>(new Set());
+  const [dupActions, setDupActions] = useState<Record<string, 'skip' | 'merge' | 'keep'>>({});
+  const [reviewDups, setReviewDups] = useState(false);
 
   const [isProcessing, setIsProcessing] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -71,6 +81,33 @@ export function PdfSpecImportModal({
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, initialFile]);
+
+  // Once we reach the review step, load the products already in the project so we
+  // can flag duplicates (matched by room name + product name, mirroring the
+  // server's dedup). Uses the rooms endpoint which returns rooms with selections.
+  useEffect(() => {
+    if (step !== 'review') return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await fetch(`/api/projects/${projectId}/rooms`);
+        if (!res.ok) return;
+        const roomsData = await res.json();
+        const keys = new Set<string>();
+        for (const r of Array.isArray(roomsData) ? roomsData : []) {
+          for (const sel of r.selections || []) {
+            keys.add(dupKey(r.name, sel.productName));
+          }
+        }
+        if (!cancelled) setExistingKeys(keys);
+      } catch {
+        /* best-effort — no duplicate warnings if this fails */
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [step, projectId]);
 
   const resetState = useCallback(() => {
     setStep('upload');
@@ -228,6 +265,14 @@ export function PdfSpecImportModal({
         body: JSON.stringify({
           selectedItems: Array.from(selected),
           ...(Object.keys(roomOverrides).length ? { roomOverrides } : {}),
+          // Explicit action for every selected duplicate (default merge).
+          ...(duplicateSelected.length
+            ? {
+                duplicateActions: Object.fromEntries(
+                  duplicateSelected.map(i => [i.id, dupActionFor(i.id)]),
+                ),
+              }
+            : {}),
         }),
       });
 
@@ -288,6 +333,17 @@ export function PdfSpecImportModal({
     setRoomOverrides(prev => ({ ...prev, [id]: room }));
 
   const allItems = [...items.high, ...items.medium, ...items.low];
+
+  // Duplicate detection: a product already present in its (effective) room.
+  const isDuplicate = (it: ExtractedItem) =>
+    existingKeys.has(dupKey(effectiveRoom(it), it.productName));
+  // Default action for a duplicate is "merge" (fill the existing one's blanks).
+  const dupActionFor = (id: string) => dupActions[id] ?? 'merge';
+  const changeDupAction = (id: string, action: 'skip' | 'merge' | 'keep') =>
+    setDupActions(prev => ({ ...prev, [id]: action }));
+  const duplicateSelected = allItems.filter(
+    i => selected.has(i.id) && i.type !== 'inspiration' && isDuplicate(i),
+  );
 
   // Group every extracted item by its (effective) target room, in first-appearance
   // order, so the review list shows products pre-sorted into the rooms they'll
@@ -458,6 +514,42 @@ export function PdfSpecImportModal({
               </p>
             </div>
 
+            {/* Duplicate prompt — products already in the project */}
+            {duplicateSelected.length > 0 && (
+              <div className="p-3 bg-amber-50 border border-amber-200 rounded-lg">
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <p className="text-sm font-medium text-amber-900">
+                      {duplicateSelected.length} product{duplicateSelected.length === 1 ? '' : 's'} already in this project
+                    </p>
+                    <p className="text-xs text-amber-800 mt-0.5">
+                      By default these are <strong>merged</strong> — the existing product is kept and any new details are filled in.
+                    </p>
+                  </div>
+                  <div className="flex gap-2 flex-shrink-0">
+                    <button
+                      onClick={() => setDupActions(Object.fromEntries(duplicateSelected.map(i => [i.id, 'skip'])))}
+                      className="text-xs px-2 py-1 rounded border border-amber-300 text-amber-900 hover:bg-amber-100"
+                    >
+                      Skip all
+                    </button>
+                    <button
+                      onClick={() => setDupActions(Object.fromEntries(duplicateSelected.map(i => [i.id, 'merge'])))}
+                      className="text-xs px-2 py-1 rounded border border-amber-300 text-amber-900 hover:bg-amber-100"
+                    >
+                      Merge all
+                    </button>
+                    <button
+                      onClick={() => setReviewDups(v => !v)}
+                      className="text-xs px-2 py-1 rounded bg-amber-600 text-white hover:bg-amber-700"
+                    >
+                      {reviewDups ? 'Hide options' : 'Review individually'}
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+
             {/* Items list */}
             <div className="space-y-4 max-h-[400px] overflow-y-auto">
               {/* Grouped by room — products pre-sorted into the rooms they'll import to */}
@@ -474,6 +566,10 @@ export function PdfSpecImportModal({
                   roomOptions={roomOptions}
                   getRoom={effectiveRoom}
                   onChangeRoom={changeItemRoom}
+                  isDuplicate={isDuplicate}
+                  dupActionFor={dupActionFor}
+                  onDupAction={changeDupAction}
+                  reviewDups={reviewDups}
                 />
               ))}
 
@@ -528,6 +624,10 @@ function ItemSection({
   roomOptions,
   getRoom,
   onChangeRoom,
+  isDuplicate,
+  dupActionFor,
+  onDupAction,
+  reviewDups,
 }: {
   title: string;
   subtitle: string;
@@ -539,6 +639,10 @@ function ItemSection({
   roomOptions: string[];
   getRoom: (item: ExtractedItem) => string;
   onChangeRoom: (id: string, room: string) => void;
+  isDuplicate: (item: ExtractedItem) => boolean;
+  dupActionFor: (id: string) => 'skip' | 'merge' | 'keep';
+  onDupAction: (id: string, action: 'skip' | 'merge' | 'keep') => void;
+  reviewDups: boolean;
 }) {
   const [expanded, setExpanded] = useState(true);
 
@@ -571,6 +675,10 @@ function ItemSection({
               roomOptions={roomOptions}
               room={getRoom(item)}
               onChangeRoom={(room) => onChangeRoom(item.id, room)}
+              isDuplicate={isDuplicate(item)}
+              dupAction={dupActionFor(item.id)}
+              onDupAction={(a) => onDupAction(item.id, a)}
+              reviewDups={reviewDups}
             />
           ))}
         </div>
@@ -590,6 +698,10 @@ function ExtractedItemRow({
   roomOptions,
   room,
   onChangeRoom,
+  isDuplicate,
+  dupAction,
+  onDupAction,
+  reviewDups,
 }: {
   item: ExtractedItem;
   selected: boolean;
@@ -600,6 +712,10 @@ function ExtractedItemRow({
   roomOptions: string[];
   room: string;
   onChangeRoom: (room: string) => void;
+  isDuplicate: boolean;
+  dupAction: 'skip' | 'merge' | 'keep';
+  onDupAction: (action: 'skip' | 'merge' | 'keep') => void;
+  reviewDups: boolean;
 }) {
   return (
     <div
@@ -663,6 +779,34 @@ function ExtractedItemRow({
                   <option key={r} value={r}>{r}</option>
                 ))}
               </select>
+            </div>
+          )}
+
+          {/* Duplicate indicator + per-item action */}
+          {!isInspiration && isDuplicate && (
+            <div className="mt-2" onClick={(e) => e.stopPropagation()}>
+              <span className="inline-flex items-center gap-1 text-xs text-amber-700">
+                <FaExclamationTriangle className="w-3 h-3" />
+                Already in this room —{' '}
+                {dupAction === 'skip' ? 'will skip' : dupAction === 'keep' ? 'will add a copy' : 'will merge'}
+              </span>
+              {reviewDups && (
+                <div className="flex gap-1 mt-1">
+                  {(['merge', 'skip', 'keep'] as const).map(a => (
+                    <button
+                      key={a}
+                      onClick={() => onDupAction(a)}
+                      className={`text-xs px-2 py-0.5 rounded border ${
+                        dupAction === a
+                          ? 'bg-amber-600 text-white border-amber-600'
+                          : 'border-stone-300 text-stone-600 hover:bg-stone-50'
+                      }`}
+                    >
+                      {a === 'merge' ? 'Merge (recommended)' : a === 'skip' ? 'Skip' : 'Keep both'}
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
           )}
 
