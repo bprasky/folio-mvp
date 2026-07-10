@@ -20,6 +20,7 @@ import { ensureProductForSelection } from '@/lib/tagging/ensureProductForSelecti
 interface ConfirmRequest {
   selectedItems: string[]  // Item IDs to import
   roomId?: string          // Optional fallback room for items with no room of their own
+  roomOverrides?: Record<string, string>  // itemId -> room name, chosen in the review modal
 }
 
 /** Normalize a room name for matching ("DINING ROOM" == "Dining Room"). */
@@ -63,7 +64,7 @@ export async function POST(
 
     // Parse request body
     const body: ConfirmRequest = await request.json()
-    const { selectedItems, roomId } = body
+    const { selectedItems, roomId, roomOverrides } = body
 
     if (!selectedItems || !Array.isArray(selectedItems) || selectedItems.length === 0) {
       return NextResponse.json(
@@ -168,8 +169,10 @@ export async function POST(
     // falls back to the caller's roomId, else a "General" room.
     for (const item of toImport) {
       try {
-        const targetRoomId = item.room
-          ? await resolveRoomId(item.room)
+        // A room chosen in the review modal wins over the segmented room.
+        const roomName = roomOverrides?.[item.id] ?? item.room
+        const targetRoomId = roomName
+          ? await resolveRoomId(roomName)
           : roomId || (await resolveRoomId(null))
         usedRoomIds.add(targetRoomId)
 
