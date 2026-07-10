@@ -298,7 +298,7 @@ export async function POST(
           } else {
             const result = await prisma.$transaction(async (tx) => {
               const tag = await tx.productTag.create({
-                data: { x, y, productId, imageId: image.id },
+                data: { x, y, aiX: x, aiY: y, productId, imageId: image.id },
               });
               await tx.selection.update({
                 where: { id: selectionId },
@@ -390,7 +390,7 @@ export async function POST(
         } else {
           const result = await prisma.$transaction(async (tx) => {
             const tag = await tx.productTag.create({
-              data: { x, y, productId, imageId: image.id },
+              data: { x, y, aiX: x, aiY: y, productId, imageId: image.id },
             });
             await tx.selection.update({
               where: { id: selectionId },
