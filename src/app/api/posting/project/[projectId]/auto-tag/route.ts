@@ -169,9 +169,16 @@ export async function POST(
       roomId: string,
       roomName: string,
     ) => {
-      if (img.roomId && img.roomId === roomId) return true;
+      // Generated images encode their target roomId in the `room` string field.
       if (img.room && img.room === roomId) return true;
-      if (!img.roomId && !img.room && (!img.aiSpaces || img.aiSpaces.length === 0)) return true;
+      // A photo explicitly assigned to a room belongs to EXACTLY that room — no
+      // fuzzy bleed into other rooms. This is what keeps a room's products from
+      // landing on another room's photo.
+      if (img.roomId) return img.roomId === roomId;
+      // Unassigned + unclassified photos are available to any room.
+      if (!img.room && (!img.aiSpaces || img.aiSpaces.length === 0)) return true;
+      // Fuzzy classification match, only for photos with no explicit assignment:
+      // "dining_room" → "Dining Room", "living room" ⊂ "formal living room".
       const rn = normalizeRoom(roomName);
       const contains = (a: string, b: string) => b.length >= 4 && a.includes(b);
       return [img.room, ...(img.aiSpaces || [])]
