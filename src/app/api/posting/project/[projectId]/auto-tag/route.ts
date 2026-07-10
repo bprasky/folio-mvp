@@ -226,8 +226,11 @@ export async function POST(
         console.log(`[auto-tag]     Resolve "${sel.productName}" → ${match ? `${match.matchMethod} (${match.productId.slice(0, 8)})` : 'NULL'}`);
       }
 
-      // Track which selections have been linked to avoid double-linking
+      // Track which selections have been linked to avoid double-linking, and
+      // which PRODUCTS have already been pinned in this room so duplicate
+      // selections of the same product don't stack multiple pins on the photo.
       const linkedSelectionIds = new Set<string>();
+      const taggedProductIds = new Set<string>();
 
       // Process each untagged image
       for (const image of untaggedImages) {
@@ -252,12 +255,15 @@ export async function POST(
 
         for (const sel of selectionsForImage) {
           const match = resolutionCache.get(sel.id);
-          if (match) {
+          // Skip a selection whose product is already pinned in this room
+          // (a duplicate) so we place at most one pin per product.
+          if (match && !taggedProductIds.has(match.productId)) {
             resolved.push({
               selectionId: sel.id,
               productId: match.productId,
               productName: sel.productName,
             });
+            taggedProductIds.add(match.productId);
           }
         }
 
