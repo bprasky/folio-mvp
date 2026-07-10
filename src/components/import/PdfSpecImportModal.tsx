@@ -35,6 +35,7 @@ export function PdfSpecImportModal({
   onOpenChange,
   projectId,
   projectTitle,
+  rooms,
   initialFile,
   onComplete,
 }: PdfSpecImportModalProps) {
@@ -51,6 +52,8 @@ export function PdfSpecImportModal({
   // Selection state
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [loadingItems, setLoadingItems] = useState<Set<string>>(new Set());
+  // Per-item room chosen in the review modal (overrides the segmented room).
+  const [roomOverrides, setRoomOverrides] = useState<Record<string, string>>({});
 
   const [isProcessing, setIsProcessing] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -224,6 +227,7 @@ export function PdfSpecImportModal({
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           selectedItems: Array.from(selected),
+          ...(Object.keys(roomOverrides).length ? { roomOverrides } : {}),
         }),
       });
 
@@ -277,13 +281,22 @@ export function PdfSpecImportModal({
   );
   const hasUnroomed = selectedItemsList.some(i => !i.room?.trim());
 
-  // Group every extracted item by its target room, in first-appearance order,
-  // so the review list shows products pre-sorted into the rooms they'll import to.
+  // A product's target room: the modal override if set, else the segmented room.
+  const effectiveRoom = (it: ExtractedItem) =>
+    roomOverrides[it.id] ?? (it.room?.trim() || 'General');
+  const changeItemRoom = (id: string, room: string) =>
+    setRoomOverrides(prev => ({ ...prev, [id]: room }));
+
+  const allItems = [...items.high, ...items.medium, ...items.low];
+
+  // Group every extracted item by its (effective) target room, in first-appearance
+  // order, so the review list shows products pre-sorted into the rooms they'll
+  // import to. Editing a product's room re-groups it live.
   const roomGroups = (() => {
     const order: string[] = [];
     const byRoom = new Map<string, ExtractedItem[]>();
-    for (const it of [...items.high, ...items.medium, ...items.low]) {
-      const room = it.room?.trim() || 'General';
+    for (const it of allItems) {
+      const room = effectiveRoom(it);
       if (!byRoom.has(room)) {
         byRoom.set(room, []);
         order.push(room);
@@ -292,6 +305,16 @@ export function PdfSpecImportModal({
     }
     return order.map(room => ({ room, items: byRoom.get(room)! }));
   })();
+
+  // Room choices for the per-product selector: every room the products already
+  // map to, plus the project's existing rooms, plus General.
+  const roomOptions = Array.from(
+    new Set([
+      ...allItems.map(effectiveRoom),
+      ...rooms.map(r => r.name),
+      'General',
+    ]),
+  ).sort((a, b) => a.localeCompare(b));
 
   return (
     <GlassModal open={open} onOpenChange={handleClose} size="xl">
@@ -431,7 +454,7 @@ export function PdfSpecImportModal({
                 </p>
               )}
               <p className="text-xs text-stone-400 mt-1">
-                Rooms are matched by name and created if they don&apos;t exist yet.
+                Change any product&apos;s room below. Rooms are matched by name and created if new.
               </p>
             </div>
 
@@ -448,6 +471,9 @@ export function PdfSpecImportModal({
                   loadingItems={loadingItems}
                   onToggle={toggleItem}
                   onCompleteWithAI={completeWithAI}
+                  roomOptions={roomOptions}
+                  getRoom={effectiveRoom}
+                  onChangeRoom={changeItemRoom}
                 />
               ))}
 
@@ -499,6 +525,9 @@ function ItemSection({
   loadingItems,
   onToggle,
   onCompleteWithAI,
+  roomOptions,
+  getRoom,
+  onChangeRoom,
 }: {
   title: string;
   subtitle: string;
@@ -507,6 +536,9 @@ function ItemSection({
   loadingItems: Set<string>;
   onToggle: (id: string) => void;
   onCompleteWithAI: (item: ExtractedItem) => void;
+  roomOptions: string[];
+  getRoom: (item: ExtractedItem) => string;
+  onChangeRoom: (id: string, room: string) => void;
 }) {
   const [expanded, setExpanded] = useState(true);
 
@@ -536,6 +568,9 @@ function ItemSection({
               onToggle={() => onToggle(item.id)}
               onCompleteWithAI={() => onCompleteWithAI(item)}
               isInspiration={item.type === 'inspiration'}
+              roomOptions={roomOptions}
+              room={getRoom(item)}
+              onChangeRoom={(room) => onChangeRoom(item.id, room)}
             />
           ))}
         </div>
@@ -552,6 +587,9 @@ function ExtractedItemRow({
   onToggle,
   onCompleteWithAI,
   isInspiration,
+  roomOptions,
+  room,
+  onChangeRoom,
 }: {
   item: ExtractedItem;
   selected: boolean;
@@ -559,6 +597,9 @@ function ExtractedItemRow({
   onToggle: () => void;
   onCompleteWithAI: () => void;
   isInspiration: boolean;
+  roomOptions: string[];
+  room: string;
+  onChangeRoom: (room: string) => void;
 }) {
   return (
     <div
@@ -608,6 +649,22 @@ function ExtractedItemRow({
               </span>
             )}
           </div>
+
+          {/* Room selector — change where this product imports to */}
+          {!isInspiration && (
+            <div className="mt-2 flex items-center gap-1.5" onClick={(e) => e.stopPropagation()}>
+              <span className="text-xs text-stone-500">Room</span>
+              <select
+                value={room}
+                onChange={(e) => onChangeRoom(e.target.value)}
+                className="text-xs border border-stone-300 rounded px-1.5 py-0.5 bg-white max-w-[180px]"
+              >
+                {(roomOptions.includes(room) ? roomOptions : [room, ...roomOptions]).map(r => (
+                  <option key={r} value={r}>{r}</option>
+                ))}
+              </select>
+            </div>
+          )}
 
           {/* Field badges */}
           {!isInspiration && (

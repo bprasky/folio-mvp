@@ -99,7 +99,8 @@ Split the text into individual products and return ONLY a JSON array (no prose, 
 
 Rules:
 - Only use information present in the text. Do NOT invent brands, prices, SKUs, dimensions, or URLs.
-- Exclude document headers/footers (titles, "Generated <date>", item/room counts).
+- Rooms carry across page breaks: a product with no room header above it on its page inherits the most recent room header from an earlier page. Only fall back to null room if no room header has appeared before it anywhere.
+- Exclude document headers/footers (titles, "SPECIFICATION", "Generated <date>", "Page X of Y", item/room counts) — these are never rooms or products.
 - If a value isn't present, use null.
 - Return [] if there are no products.`
 
