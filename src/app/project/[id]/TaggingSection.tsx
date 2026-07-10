@@ -600,6 +600,16 @@ function PhotoTagger({
             className="object-cover"
             sizes="(max-width: 640px) 100vw, 340px"
           />
+          {/* Numbered pins for an at-a-glance view of where products are tagged. */}
+          {photo.tags.map((t, i) => (
+            <span
+              key={t.id}
+              className="pointer-events-none absolute z-10 flex h-4 w-4 items-center justify-center rounded-full bg-[var(--accent)] border border-white text-[9px] font-semibold text-white shadow"
+              style={{ left: `${t.x}%`, top: `${t.y}%`, transform: 'translate(-50%, -50%)' }}
+            >
+              {i + 1}
+            </span>
+          ))}
           {photo.tags.length > 0 && (
             <div className="absolute bottom-2 right-2 bg-black/70 text-white px-2 py-1 rounded-full text-xs flex items-center gap-1">
               <FaTag className="w-3 h-3" />
@@ -635,8 +645,23 @@ function PhotoTagger({
               onClick={placePin}
               className="w-full rounded-xl cursor-crosshair"
             />
-            {/* Photos are sacred: the transient placement pin is the only mark
-                we put on photography. Existing tags live in the list beside it. */}
+            {/* Placed product tags, shown as numbered pins so the designer can
+                see exactly where each product sits and how they line up with the
+                list beside (pin #n === list row #n). Editing/removing still
+                happens in the list. */}
+            {photo.tags.map((t, i) => (
+              <div
+                key={t.id}
+                className="absolute z-10"
+                style={{ left: `${t.x}%`, top: `${t.y}%`, transform: 'translate(-50%, -50%)' }}
+                title={t.product?.name ?? undefined}
+              >
+                <div className="flex h-5 w-5 items-center justify-center rounded-full bg-[var(--accent)] border-2 border-white shadow-md">
+                  <span className="text-[10px] font-semibold leading-none text-white">{i + 1}</span>
+                </div>
+              </div>
+            ))}
+            {/* The transient placement pin while adding a new product. */}
             {pendingDot && (
               <div
                 className="absolute z-20"
@@ -765,7 +790,7 @@ function TagList({
 
   return (
     <ul className="space-y-2">
-      {tags.map((tag) => {
+      {tags.map((tag, i) => {
         const product = tag.product;
         // Imported/deferred tags await confirmation; manual tags are confirmed.
         const pending = product?.scrapeStatus != null && !tag.reviewedAt;
@@ -774,6 +799,10 @@ function TagList({
             key={tag.id}
             className="flex items-center gap-3 rounded-xl border border-folio-border-subtle bg-surface-canvas px-3 py-2"
           >
+            {/* Matches the numbered pin on the photo. */}
+            <span className="flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full bg-[var(--accent)] text-[10px] font-semibold text-white">
+              {i + 1}
+            </span>
             <div className="min-w-0 flex-1">
               <p className="folio-ui font-medium text-folio-text-primary truncate">
                 {product?.name ?? 'Product'}
