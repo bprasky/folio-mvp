@@ -611,6 +611,10 @@ function ExtractedItemRow({
                 <>
                   <p className="font-medium text-stone-900 text-sm">{item.productName || 'Unknown Product'}</p>
                   {item.brand && <p className="text-xs text-stone-600">{item.brand}</p>}
+                  {/* Target room — lets the designer verify the sort before import */}
+                  <p className="text-xs font-medium text-[var(--accent)] mt-0.5">
+                    Room: {item.room || 'General'}
+                  </p>
                 </>
               )}
             </div>
