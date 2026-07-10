@@ -552,7 +552,33 @@ function PhotoTagger({
   onPlace: (imageId: string, x: number, y: number) => void;
 }) {
   const [pendingDot, setPendingDot] = useState<{ x: number; y: number } | null>(null);
+  // A tag being dragged to a new spot; its live position overrides the stored one.
+  const [drag, setDrag] = useState<{ id: string; x: number; y: number } | null>(null);
   const imageRef = useRef<HTMLImageElement | null>(null);
+
+  // Persist a dragged tag's new position. The stored AI position (aiX/aiY) is
+  // left untouched so the AI-vs-designer delta is captured for later training.
+  const moveTag = async (tagId: string, x: number, y: number) => {
+    try {
+      await fetch('/api/tag-product-to-image', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: tagId, x, y }),
+      });
+      onChanged();
+    } catch (err) {
+      console.error('[TaggingSection] move tag error:', err);
+    }
+  };
+
+  const clientToPct = (clientX: number, clientY: number) => {
+    const rect = imageRef.current?.getBoundingClientRect();
+    if (!rect) return null;
+    return {
+      x: Math.min(100, Math.max(0, ((clientX - rect.left) / rect.width) * 100)),
+      y: Math.min(100, Math.max(0, ((clientY - rect.top) / rect.height) * 100)),
+    };
+  };
 
   // Starting/stopping/switching a placement clears any stale pin so it can't
   // leak into the manual product picker.
@@ -645,22 +671,42 @@ function PhotoTagger({
               onClick={placePin}
               className="w-full rounded-xl cursor-crosshair"
             />
-            {/* Placed product tags, shown as numbered pins so the designer can
-                see exactly where each product sits and how they line up with the
-                list beside (pin #n === list row #n). Editing/removing still
-                happens in the list. */}
-            {photo.tags.map((t, i) => (
-              <div
-                key={t.id}
-                className="absolute z-10"
-                style={{ left: `${t.x}%`, top: `${t.y}%`, transform: 'translate(-50%, -50%)' }}
-                title={t.product?.name ?? undefined}
-              >
-                <div className="flex h-5 w-5 items-center justify-center rounded-full bg-[var(--accent)] border-2 border-white shadow-md">
-                  <span className="text-[10px] font-semibold leading-none text-white">{i + 1}</span>
+            {/* Placed product tags, shown as numbered pins (pin #n === list row
+                #n). Drag a pin to reposition it — the new spot is saved and the
+                AI's original guess is kept for training. */}
+            {photo.tags.map((t, i) => {
+              const pos = drag?.id === t.id ? drag : { x: t.x, y: t.y };
+              return (
+                <div
+                  key={t.id}
+                  className="absolute z-10 cursor-grab touch-none active:cursor-grabbing"
+                  style={{ left: `${pos.x}%`, top: `${pos.y}%`, transform: 'translate(-50%, -50%)' }}
+                  title={t.product?.name ? `${t.product.name} — drag to move` : 'Drag to move'}
+                  onPointerDown={(e) => {
+                    e.stopPropagation();
+                    e.preventDefault();
+                    e.currentTarget.setPointerCapture(e.pointerId);
+                    setDrag({ id: t.id, x: t.x, y: t.y });
+                  }}
+                  onPointerMove={(e) => {
+                    if (drag?.id !== t.id) return;
+                    const p = clientToPct(e.clientX, e.clientY);
+                    if (p) setDrag({ id: t.id, ...p });
+                  }}
+                  onPointerUp={(e) => {
+                    if (drag?.id !== t.id) return;
+                    e.currentTarget.releasePointerCapture(e.pointerId);
+                    const finalPos = drag;
+                    setDrag(null);
+                    moveTag(t.id, finalPos.x, finalPos.y);
+                  }}
+                >
+                  <div className="flex h-5 w-5 items-center justify-center rounded-full bg-[var(--accent)] border-2 border-white shadow-md">
+                    <span className="text-[10px] font-semibold leading-none text-white">{i + 1}</span>
+                  </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
             {/* The transient placement pin while adding a new product. */}
             {pendingDot && (
               <div
@@ -685,7 +731,9 @@ function PhotoTagger({
                   : `Click where ${placing.description} goes.`
                 : pendingDot
                   ? 'Pin placed — pick the product beside it.'
-                  : 'Click the photo where a product is.'}
+                  : photo.tags.length > 0
+                    ? 'Click to add a product, or drag a pin to move it.'
+                    : 'Click the photo where a product is.'}
             </p>
             <button
               onClick={leave}

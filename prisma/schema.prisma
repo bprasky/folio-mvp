@@ -774,6 +774,11 @@ model ProductTag {
   id        String       @id @default(uuid())
   x         Float
   y         Float
+  // The auto-tagger's original guessed position, kept even after the designer
+  // drags the pin (x/y). The (aiX,aiY) -> (x,y) delta is captured as training
+  // data for improving auto-placement. Null for manually-placed tags.
+  aiX       Float?
+  aiY       Float?
   createdAt DateTime     @default(now())
   updatedAt DateTime     @updatedAt
   productId String
