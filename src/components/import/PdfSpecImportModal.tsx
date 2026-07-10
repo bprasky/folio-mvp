@@ -277,6 +277,22 @@ export function PdfSpecImportModal({
   );
   const hasUnroomed = selectedItemsList.some(i => !i.room?.trim());
 
+  // Group every extracted item by its target room, in first-appearance order,
+  // so the review list shows products pre-sorted into the rooms they'll import to.
+  const roomGroups = (() => {
+    const order: string[] = [];
+    const byRoom = new Map<string, ExtractedItem[]>();
+    for (const it of [...items.high, ...items.medium, ...items.low]) {
+      const room = it.room?.trim() || 'General';
+      if (!byRoom.has(room)) {
+        byRoom.set(room, []);
+        order.push(room);
+      }
+      byRoom.get(room)!.push(it);
+    }
+    return order.map(room => ({ room, items: byRoom.get(room)! }));
+  })();
+
   return (
     <GlassModal open={open} onOpenChange={handleClose} size="xl">
       <GlassModalHeader>
@@ -421,45 +437,19 @@ export function PdfSpecImportModal({
 
             {/* Items list */}
             <div className="space-y-4 max-h-[400px] overflow-y-auto">
-              {/* High confidence */}
-              {items.high.length > 0 && (
+              {/* Grouped by room — products pre-sorted into the rooms they'll import to */}
+              {roomGroups.map(({ room, items: roomItems }) => (
                 <ItemSection
-                  title="Ready to Import"
-                  subtitle="Complete specifications"
-                  items={items.high}
+                  key={room}
+                  title={room}
+                  subtitle={`${roomItems.length} product${roomItems.length === 1 ? '' : 's'}`}
+                  items={roomItems}
                   selected={selected}
                   loadingItems={loadingItems}
                   onToggle={toggleItem}
                   onCompleteWithAI={completeWithAI}
                 />
-              )}
-
-              {/* Medium confidence */}
-              {items.medium.length > 0 && (
-                <ItemSection
-                  title="Needs Review"
-                  subtitle="Partial data - can complete with AI"
-                  items={items.medium}
-                  selected={selected}
-                  loadingItems={loadingItems}
-                  onToggle={toggleItem}
-                  onCompleteWithAI={completeWithAI}
-                />
-              )}
-
-              {/* Low confidence */}
-              {items.low.length > 0 && (
-                <ItemSection
-                  title="Inspiration Images"
-                  subtitle="Save as search placeholders"
-                  items={items.low}
-                  selected={selected}
-                  loadingItems={loadingItems}
-                  onToggle={toggleItem}
-                  onCompleteWithAI={completeWithAI}
-                  isInspiration
-                />
-              )}
+              ))}
 
               {totalItems === 0 && (
                 <div className="text-center py-8">
@@ -509,7 +499,6 @@ function ItemSection({
   loadingItems,
   onToggle,
   onCompleteWithAI,
-  isInspiration = false,
 }: {
   title: string;
   subtitle: string;
@@ -518,7 +507,6 @@ function ItemSection({
   loadingItems: Set<string>;
   onToggle: (id: string) => void;
   onCompleteWithAI: (item: ExtractedItem) => void;
-  isInspiration?: boolean;
 }) {
   const [expanded, setExpanded] = useState(true);
 
@@ -547,7 +535,7 @@ function ItemSection({
               loading={loadingItems.has(item.id)}
               onToggle={() => onToggle(item.id)}
               onCompleteWithAI={() => onCompleteWithAI(item)}
-              isInspiration={isInspiration}
+              isInspiration={item.type === 'inspiration'}
             />
           ))}
         </div>
@@ -611,10 +599,6 @@ function ExtractedItemRow({
                 <>
                   <p className="font-medium text-stone-900 text-sm">{item.productName || 'Unknown Product'}</p>
                   {item.brand && <p className="text-xs text-stone-600">{item.brand}</p>}
-                  {/* Target room — lets the designer verify the sort before import */}
-                  <p className="text-xs font-medium text-[var(--accent)] mt-0.5">
-                    Room: {item.room || 'General'}
-                  </p>
                 </>
               )}
             </div>
