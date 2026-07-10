@@ -39,7 +39,13 @@ interface ConfirmResult {
   products: string[]      // Created product IDs
   selections: string[]    // Created selection IDs
   skeletons: string[]     // Created skeleton item IDs
+  duplicates: string[]    // Products skipped because they already exist in the room
   errors: string[]        // Any errors during processing
+}
+
+/** Dedup key for a product within a room (case-insensitive name). */
+function selectionDedupKey(roomId: string, productName: string | null): string {
+  return `${roomId}::${(productName || '').trim().toLowerCase()}`
 }
 
 export async function POST(
@@ -138,8 +144,20 @@ export async function POST(
       products: [],
       selections: [],
       skeletons: [],
+      duplicates: [],
       errors: []
     }
+
+    // Re-importing the same finish schedule shouldn't stack duplicate products.
+    // Pre-load existing selections so a product already present in its target
+    // room is skipped rather than created again.
+    const existingSelections = await prisma.selection.findMany({
+      where: { projectId: extraction.projectId },
+      select: { roomId: true, productName: true },
+    })
+    const seenSelectionKeys = new Set(
+      existingSelections.map((s) => selectionDedupKey(s.roomId ?? '', s.productName)),
+    )
 
     // Rooms we actually wrote into — returned so the client can scope the
     // vision auto-tagger to just the rooms this import touched.
@@ -156,6 +174,13 @@ export async function POST(
         usedRoomIds.add(targetRoomId)
 
         if (item.type === 'specification') {
+          // Skip products already present in this room (idempotent re-import)
+          const key = selectionDedupKey(targetRoomId, item.productName)
+          if (seenSelectionKeys.has(key)) {
+            created.duplicates.push(item.productName || item.brand || 'Unknown')
+            continue
+          }
+          seenSelectionKeys.add(key)
           // Create selection directly for specifications
           await createSelection(item, targetRoomId, extraction.projectId, extraction.id, created)
         } else {
@@ -176,10 +201,13 @@ export async function POST(
 
     console.log(`Extraction ${extractionId} confirmed: ${created.selections.length} selections, ${created.skeletons.length} skeletons`)
 
+    const dupNote = created.duplicates.length
+      ? `, skipped ${created.duplicates.length} already imported`
+      : ''
     return NextResponse.json({
       created,
       roomIds: Array.from(usedRoomIds),
-      message: `Imported ${created.selections.length} specifications and ${created.skeletons.length} placeholders`
+      message: `Imported ${created.selections.length} specifications and ${created.skeletons.length} placeholders${dupNote}`
     })
 
   } catch (error) {

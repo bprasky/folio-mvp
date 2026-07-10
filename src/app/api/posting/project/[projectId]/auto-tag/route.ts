@@ -91,6 +91,7 @@ export async function POST(
             id: true,
             url: true,
             room: true,
+            roomId: true,
             name: true,
             aiSpaces: true,
             tags: { select: { id: true } },
@@ -149,16 +150,34 @@ export async function POST(
     const created: CreatedTag[] = [];
     const skipped: SkippedSelection[] = [];
 
-    // Helper: check if an image matches a room by room field, room ID, or aiSpaces
-    // Generated images store roomId in the room field; uploaded photos store the room name
-    // Images with no room assignment are available for ANY room
-    const imageMatchesRoom = (img: { room: string | null; aiSpaces: string[] }, roomId: string, roomName: string) => {
-      if (!img.room && (!img.aiSpaces || img.aiSpaces.length === 0)) return true;
+    // Normalize a room label so snake_case classifications and display names
+    // compare equal: "dining_room" -> "dining room", "Primary Bathroom" -> "primary bathroom".
+    const normalizeRoom = (s: string) =>
+      s.toLowerCase().replace(/[_-]+/g, ' ').replace(/[^a-z0-9 ]/g, '').replace(/\s+/g, ' ').trim();
+
+    // Check if an image belongs to a room. Priority:
+    //  1. Explicit assignment — img.roomId === room.id (most reliable).
+    //  2. Generated images store the roomId in the `room` string field.
+    //  3. Truly unassigned + unclassified photos are available to any room.
+    //  4. Fuzzy: the photo's classification (room string / aiSpaces) matches the
+    //     room name — exact after normalization, or a coarse type contained in a
+    //     specific name ("living room" ⊂ "formal living room", "bathroom" ⊂
+    //     "primary bathroom"). This is what was missing: photos are classified
+    //     "dining_room" while the imported room is named "Dining Room".
+    const imageMatchesRoom = (
+      img: { room: string | null; roomId: string | null; aiSpaces: string[] },
+      roomId: string,
+      roomName: string,
+    ) => {
+      if (img.roomId && img.roomId === roomId) return true;
       if (img.room && img.room === roomId) return true;
-      const rn = roomName.toLowerCase();
-      if (img.room && img.room.toLowerCase() === rn) return true;
-      if (img.aiSpaces?.some((s) => s.toLowerCase() === rn)) return true;
-      return false;
+      if (!img.roomId && !img.room && (!img.aiSpaces || img.aiSpaces.length === 0)) return true;
+      const rn = normalizeRoom(roomName);
+      const contains = (a: string, b: string) => b.length >= 4 && a.includes(b);
+      return [img.room, ...(img.aiSpaces || [])]
+        .filter((v): v is string => !!v)
+        .map(normalizeRoom)
+        .some((c) => c === rn || contains(rn, c) || contains(c, rn));
     };
 
     for (const room of project.rooms) {
