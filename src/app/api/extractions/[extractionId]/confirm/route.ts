@@ -21,6 +21,11 @@ interface ConfirmRequest {
   selectedItems: string[]  // Item IDs to import
   roomId?: string          // Optional fallback room for items with no room of their own
   roomOverrides?: Record<string, string>  // itemId -> room name, chosen in the review modal
+  // itemId -> what to do when the product already exists in its target room.
+  // 'skip' = leave the existing one, 'merge' = fill the existing one's blanks
+  // from this import, 'keep' = create a second copy. Default when a product is a
+  // duplicate and no action is given: 'skip'.
+  duplicateActions?: Record<string, 'skip' | 'merge' | 'keep'>
 }
 
 /** Normalize a room name for matching ("DINING ROOM" == "Dining Room"). */
@@ -41,6 +46,7 @@ interface ConfirmResult {
   selections: string[]    // Created selection IDs
   skeletons: string[]     // Created skeleton item IDs
   duplicates: string[]    // Products skipped because they already exist in the room
+  merged: string[]        // Existing products enriched with this import's data
   errors: string[]        // Any errors during processing
 }
 
@@ -64,7 +70,7 @@ export async function POST(
 
     // Parse request body
     const body: ConfirmRequest = await request.json()
-    const { selectedItems, roomId, roomOverrides } = body
+    const { selectedItems, roomId, roomOverrides, duplicateActions } = body
 
     if (!selectedItems || !Array.isArray(selectedItems) || selectedItems.length === 0) {
       return NextResponse.json(
@@ -146,19 +152,33 @@ export async function POST(
       selections: [],
       skeletons: [],
       duplicates: [],
+      merged: [],
       errors: []
     }
 
-    // Re-importing the same finish schedule shouldn't stack duplicate products.
-    // Pre-load existing selections so a product already present in its target
-    // room is skipped rather than created again.
+    // Pre-load existing selections (with the fields we can merge) so a product
+    // already present in its target room can be skipped, merged, or kept per the
+    // caller's duplicateActions. Keyed by room + normalized product name.
     const existingSelections = await prisma.selection.findMany({
       where: { projectId: extraction.projectId },
-      select: { roomId: true, productName: true },
+      select: {
+        id: true,
+        roomId: true,
+        productName: true,
+        vendorName: true,
+        vendorProductId: true,
+        colorFinish: true,
+        notes: true,
+        unitPrice: true,
+        productUrl: true,
+        uiMeta: true,
+      },
     })
-    const seenSelectionKeys = new Set(
-      existingSelections.map((s) => selectionDedupKey(s.roomId ?? '', s.productName)),
-    )
+    const existingByKey = new Map<string, (typeof existingSelections)[number]>()
+    for (const s of existingSelections) {
+      existingByKey.set(selectionDedupKey(s.roomId ?? '', s.productName), s)
+    }
+    const seenSelectionKeys = new Set(existingByKey.keys())
 
     // Rooms we actually wrote into — returned so the client can scope the
     // vision auto-tagger to just the rooms this import touched.
@@ -177,12 +197,24 @@ export async function POST(
         usedRoomIds.add(targetRoomId)
 
         if (item.type === 'specification') {
-          // Skip products already present in this room (idempotent re-import)
           const key = selectionDedupKey(targetRoomId, item.productName)
-          if (seenSelectionKeys.has(key)) {
-            created.duplicates.push(item.productName || item.brand || 'Unknown')
-            continue
+          const existing = existingByKey.get(key)
+          const label = item.productName || item.brand || 'Unknown'
+
+          if (existing) {
+            // Product already in this room — do what the reviewer chose.
+            const action = duplicateActions?.[item.id] ?? 'skip'
+            if (action === 'skip') {
+              created.duplicates.push(label)
+              continue
+            }
+            if (action === 'merge') {
+              await mergeSelection(existing, item, created)
+              continue
+            }
+            // 'keep' falls through to create a second copy.
           }
+
           seenSelectionKeys.add(key)
           // Create selection directly for specifications
           await createSelection(item, targetRoomId, extraction.projectId, extraction.id, created)
@@ -204,13 +236,14 @@ export async function POST(
 
     console.log(`Extraction ${extractionId} confirmed: ${created.selections.length} selections, ${created.skeletons.length} skeletons`)
 
-    const dupNote = created.duplicates.length
-      ? `, skipped ${created.duplicates.length} already imported`
-      : ''
+    const parts = [`Imported ${created.selections.length} specifications`]
+    if (created.merged.length) parts.push(`merged ${created.merged.length}`)
+    if (created.duplicates.length) parts.push(`skipped ${created.duplicates.length} already imported`)
+    if (created.skeletons.length) parts.push(`${created.skeletons.length} placeholders`)
     return NextResponse.json({
       created,
       roomIds: Array.from(usedRoomIds),
-      message: `Imported ${created.selections.length} specifications and ${created.skeletons.length} placeholders${dupNote}`
+      message: parts.join(', '),
     })
 
   } catch (error) {
@@ -281,6 +314,50 @@ async function createSelection(
   })
 
   created.selections.push(selection.id)
+}
+
+/**
+ * Enriches an existing selection with this import's data, filling only its blank
+ * fields (never overwriting values the existing record already has). The result
+ * is the union of both — i.e. "keep the more complete information".
+ */
+async function mergeSelection(
+  existing: {
+    id: string
+    vendorName: string | null
+    vendorProductId: string | null
+    colorFinish: string | null
+    notes: string | null
+    unitPrice: unknown
+    productUrl: string | null
+    uiMeta: unknown
+  },
+  item: ExtractedItem,
+  created: ConfirmResult,
+): Promise<void> {
+  const label = item.productName || item.brand || 'Unknown'
+  const data: Record<string, unknown> = {}
+  const fillStr = (field: string, cur: string | null, incoming: string | null | undefined) => {
+    if ((cur == null || cur === '') && incoming) data[field] = incoming
+  }
+
+  fillStr('vendorName', existing.vendorName, item.vendor || item.brand)
+  fillStr('vendorProductId', existing.vendorProductId, item.sku)
+  fillStr('colorFinish', existing.colorFinish, item.finish || item.material)
+  fillStr('notes', existing.notes, item.description)
+  fillStr('productUrl', existing.productUrl, item.productUrl)
+  if (existing.unitPrice == null && item.price != null) data.unitPrice = item.price / 100
+
+  // Dimensions live in uiMeta.
+  const meta = (existing.uiMeta as Record<string, unknown> | null) || {}
+  if (item.dimensions && meta.dimensions == null) {
+    data.uiMeta = { ...meta, dimensions: item.dimensions }
+  }
+
+  if (Object.keys(data).length > 0) {
+    await prisma.selection.update({ where: { id: existing.id }, data })
+  }
+  created.merged.push(label)
 }
 
 /**
