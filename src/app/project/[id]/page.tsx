@@ -58,8 +58,9 @@ function buildTrackerState(args: {
   roomCount: number;
   totalSelections: number;
   isPublished: boolean;
+  interviewInProgress: boolean;
 }): TrackerState | null {
-  const { timeline, readiness, photoCount, roomCount, totalSelections, isPublished } =
+  const { timeline, readiness, photoCount, roomCount, totalSelections, isPublished, interviewInProgress } =
     args;
   const materialsExist = totalSelections > 0;
 
@@ -97,7 +98,7 @@ function buildTrackerState(args: {
 
   if (Object.values(complete).every(Boolean)) return null;
 
-  return deriveTrackerState({ type, complete, counts, materialsExist });
+  return deriveTrackerState({ type, complete, counts, materialsExist, interviewInProgress });
 }
 
 export default async function ProjectPage({
@@ -258,6 +259,8 @@ export default async function ProjectPage({
     roomCount: base.rooms.length,
     totalSelections,
     isPublished,
+    // INTERVIEWED = answers saved but no draft generated yet → "Continue interview".
+    interviewInProgress: editorialState === 'INTERVIEWED',
   });
 
   // Published/concept/in-progress lead with Boards once it exists; otherwise
@@ -269,7 +272,12 @@ export default async function ProjectPage({
   if (currentView === 'files') currentView = 'media';
   else if (currentView === 'drafts') currentView = 'publish';
 
-  if (!isPublished && currentView === 'story') currentView = 'media';
+  // The owner keeps access to their Story tab as soon as an interview exists
+  // (INTERVIEWED, or a generated/published draft) so they can always return to
+  // resume or adjust it. Everyone else only sees Story once it's published.
+  const storyTabVisible =
+    editorialState === 'PUBLISHED' || (isOwner && editorialState !== 'EMPTY');
+  if (currentView === 'story' && !storyTabVisible) currentView = 'media';
   if (!hasDraftOrPublished && currentView === 'publish') currentView = 'media';
   if (currentView === 'boards' && !boardsVisible) currentView = 'media';
 
@@ -385,6 +393,7 @@ export default async function ProjectPage({
           isPublished={isPublished}
           hasDraftOrPublished={hasDraftOrPublished}
           editorialState={editorialState}
+          storyTabVisible={storyTabVisible}
         />
       </div>
 

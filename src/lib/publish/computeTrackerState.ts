@@ -241,6 +241,20 @@ export const TRACKER_TYPES: Record<TrackerType, TypeDef> = {
   },
 };
 
+/**
+ * Copy shown on the interview/Story step when an interview is already in
+ * progress (answers saved, no draft generated yet). Swaps the "start" framing
+ * for a "continue" one so a designer who stepped out mid-interview is told,
+ * plainly, that their progress is kept and reachable. Lives here with the rest
+ * of the tracker copy so there is one source of truth.
+ */
+export const STORY_IN_PROGRESS_COPY: Partial<StepCopy> = {
+  eyebrow: 'Continue your story',
+  headline: 'Pick up where you left off',
+  body: 'Your interview answers are saved. Continue where you stopped or adjust what you have — nothing is lost.',
+  cta: 'Continue interview',
+};
+
 export interface TrackerStep {
   key: string;
   label: string;
@@ -258,6 +272,12 @@ export interface TrackerInput {
   counts?: Record<string, number | undefined>;
   /** True once any product/material has been added to the project. */
   materialsExist: boolean;
+  /**
+   * True when an interview is in progress (answers saved but no draft generated
+   * yet). When the current step is the interview step, its copy switches to the
+   * "continue" variant (STORY_IN_PROGRESS_COPY).
+   */
+  interviewInProgress?: boolean;
 }
 
 export interface TrackerState {
@@ -269,6 +289,11 @@ export interface TrackerState {
   materialsIndex: number;
   materialsExist: boolean;
   endCap?: string;
+  /**
+   * Copy to merge over the CURRENT step's default copy (partial). Set when the
+   * interview is in progress so the Story step reads "Continue interview".
+   */
+  currentCopyOverride?: Partial<StepCopy>;
 }
 
 /**
@@ -278,7 +303,7 @@ export interface TrackerState {
  */
 export function deriveTrackerState(input: TrackerInput): TrackerState {
   const def = TRACKER_TYPES[input.type];
-  const { complete, counts = {}, materialsExist } = input;
+  const { complete, counts = {}, materialsExist, interviewInProgress = false } = input;
 
   const firstIncomplete = def.steps.findIndex(s => !complete[s.key]);
   const currentIndex = firstIncomplete === -1 ? def.steps.length - 1 : firstIncomplete;
@@ -292,6 +317,15 @@ export function deriveTrackerState(input: TrackerInput): TrackerState {
     return { key: s.key, label: s.label, state, index, count: counts[s.key] };
   });
 
+  // Switch the interview step's copy to the "continue" variant only when that
+  // step is the one currently surfaced. Keyed off the action (not a hardcoded
+  // step key) so it stays correct across tracker types.
+  const currentStepKey = steps[currentIndex]?.key;
+  const currentCopyOverride =
+    interviewInProgress && currentStepKey && def.copy[currentStepKey]?.action === 'interview'
+      ? STORY_IN_PROGRESS_COPY
+      : undefined;
+
   return {
     type: input.type,
     label: def.label,
@@ -300,5 +334,6 @@ export function deriveTrackerState(input: TrackerInput): TrackerState {
     materialsIndex,
     materialsExist,
     endCap: def.endCap,
+    currentCopyOverride,
   };
 }

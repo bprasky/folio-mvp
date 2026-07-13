@@ -56,7 +56,9 @@ export default function ProjectProgressTracker({
   const { steps, currentIndex, materialsIndex, materialsExist, type, endCap } = state;
   const def = TRACKER_TYPES[type];
   const current = steps[currentIndex];
-  const copy = def.copy[current.key];
+  // Merge any per-render override (e.g. the "Continue interview" variant when an
+  // interview is already in progress) over the step's default copy.
+  const copy = { ...def.copy[current.key], ...(state.currentCopyOverride ?? {}) };
 
   // Materials mode: the import cards fill the zone only on the materials step
   // and only until materials exist. Once they exist, the zone shows that step's

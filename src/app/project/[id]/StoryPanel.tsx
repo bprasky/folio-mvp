@@ -323,6 +323,24 @@ export default function StoryPanel({ projectId, project, images, isOwner }: Stor
         Tell us about this project. Your reflections and credits shape the published post.
       </p>
 
+      {/* Resume the live interview. Routes to the Media surface's InterviewModal
+          (the primary flow, with native draft-resume) so a designer can always
+          pick up an in-progress interview from here — no answers are lost. */}
+      {isOwner && (
+        <button
+          onClick={() => router.push(`/project/${projectId}?view=media&action=interview`)}
+          className="w-full flex items-center justify-center gap-3 px-6 py-4 bg-[var(--accent)] text-white rounded-2xl hover:bg-[var(--accent-hover)] transition-colors shadow-sm"
+        >
+          <Mic className="w-5 h-5" />
+          <div className="text-left">
+            <span className="folio-ui font-semibold block">Continue interview</span>
+            <span className="folio-meta opacity-80">
+              Pick up where you left off — your answers are saved
+            </span>
+          </div>
+        </button>
+      )}
+
       {/* Project Credits */}
       <div className="rounded-[20px] border border-folio-border-subtle bg-surface-ground p-6 shadow-sm">
         <h2 className="folio-h3 text-folio-text-primary mb-1">Project Credits</h2>
