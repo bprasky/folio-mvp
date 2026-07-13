@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import type { RoomQuestionsGroup, RoomGroupedQuestions } from '@/lib/editorial/roomPacing';
 import type { ProjectSizeClassification } from '@/lib/interview/contextLevel';
 import { readQuestionsCache, writeQuestionsCache } from '@/lib/interview/questionsCache';
@@ -13,6 +13,21 @@ export interface RoomInterviewQuestionsResult {
   projectSize: ProjectSizeClassification;
   loading: boolean;
   error: string | null;
+  /**
+   * True while room groups are expected but haven't arrived yet (two-phase
+   * generation: the About This Project group loads first; room questions are
+   * generated later, informed by the designer's About answers).
+   */
+  roomsPending: boolean;
+  /** Set when the rooms-phase fetch failed — lets the UI degrade instead of hang. */
+  roomsError: string | null;
+  /**
+   * Trigger the rooms phase (idempotent — repeat calls while a fetch is in
+   * flight or after success are no-ops; a failed attempt may be retried).
+   * Call once the About This Project base answers are saved, so room
+   * questions are generated WITH the designer's answers as context.
+   */
+  loadRooms: () => void;
 }
 
 /**
@@ -43,8 +58,17 @@ function pinProjectFirst(rooms: RoomQuestionsGroup[]): RoomQuestionsGroup[] {
 }
 
 /**
- * Fetches interview questions grouped by room from the API.
- * Used by InterviewModal when room pacing is active.
+ * Fetches interview questions grouped by room from the API, in two phases:
+ *
+ * Phase 1 (on mount): `phase=project` — just the About This Project group.
+ * One fast LLM call, so the designer starts answering almost immediately.
+ *
+ * Phase 2 (via loadRooms(), called by the modal once the About base answers
+ * are saved): `phase=rooms` — room questions generated server-side WITH a
+ * fact digest of the designer's About answers, then appended to `rooms`.
+ *
+ * A fresh full-set localStorage cache short-circuits both phases (instant,
+ * free re-opens with stable question IDs).
  */
 export function useRoomInterviewQuestions(
   projectId: string,
@@ -67,14 +91,39 @@ export function useRoomInterviewQuestions(
   });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [roomsLoaded, setRoomsLoaded] = useState(false);
+  const [roomsError, setRoomsError] = useState<string | null>(null);
+
+  // Idempotency + merge bookkeeping for the rooms phase
+  const roomsRequestedRef = useRef(false);
+  const phase1DataRef = useRef<any>(null);
+  const mountedRef = useRef(true);
+  // Fetch epoch: bumped whenever projectId/cacheSignature restarts the cycle,
+  // so an in-flight loadRooms() from a previous signature can't merge stale
+  // room results into (or cache them under) the new signature.
+  const epochRef = useRef(0);
+
+  const cacheKey = `folio.interview.qcache.grouped.${projectId}`;
+  const signature = cacheSignature ?? 'default';
+
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => {
+      mountedRef.current = false;
+    };
+  }, []);
 
   useEffect(() => {
     if (!projectId) return;
 
     let cancelled = false;
 
-    const cacheKey = `folio.interview.qcache.grouped.${projectId}`;
-    const signature = cacheSignature ?? 'default';
+    // New signature (photos/tags changed) → full regeneration cycle
+    epochRef.current += 1;
+    roomsRequestedRef.current = false;
+    phase1DataRef.current = null;
+    setRoomsLoaded(false);
+    setRoomsError(null);
 
     const applyData = (data: any) => {
       setRooms(pinProjectFirst(deduplicateRooms(data.rooms || [])));
@@ -91,23 +140,32 @@ export function useRoomInterviewQuestions(
       });
     };
 
-    // Serve instantly from cache (and skip the slow LLM refetch) when fresh — no
-    // wait, no repeated API spend. Only trust a cache that actually has rooms.
+    // Serve instantly from cache (and skip the LLM refetch) when fresh — no
+    // wait, no repeated API spend. Only trust a cache that holds the FULL set:
+    // more than just the project group, or a 0-room project where the project
+    // group IS the full set. A project-only cache from an interrupted phase-1
+    // session must not suppress the rooms phase.
     const cached = readQuestionsCache<any>(cacheKey, signature);
     if (cached && Array.isArray(cached.rooms) && cached.rooms.length > 0) {
-      applyData(cached);
-      setLoading(false);
-      return () => {
-        cancelled = true;
-      };
+      const isFullSet =
+        cached.rooms.length > 1 || (cached.projectSize?.roomCount ?? 0) === 0;
+      if (isFullSet) {
+        applyData(cached);
+        phase1DataRef.current = cached;
+        setRoomsLoaded(true);
+        setLoading(false);
+        return () => {
+          cancelled = true;
+        };
+      }
     }
 
-    async function fetchGroupedQuestions() {
+    async function fetchProjectPhase() {
       try {
         setLoading(true);
         setError(null);
         const response = await fetch(
-          `/api/posting/project/${projectId}/interview/questions?grouped=true`
+          `/api/posting/project/${projectId}/interview/questions?grouped=true&phase=project`
         );
 
         if (!response.ok) {
@@ -118,8 +176,13 @@ export function useRoomInterviewQuestions(
         if (cancelled) return;
 
         applyData(data);
-        if (Array.isArray(data.rooms) && data.rooms.length > 0) {
-          writeQuestionsCache(cacheKey, signature, data);
+        phase1DataRef.current = data;
+        // 0-room project: the project group is the complete set — nothing pending.
+        if ((data.projectSize?.roomCount ?? 0) === 0) {
+          setRoomsLoaded(true);
+          if (Array.isArray(data.rooms) && data.rooms.length > 0) {
+            writeQuestionsCache(cacheKey, signature, data);
+          }
         }
       } catch (err) {
         if (!cancelled) {
@@ -131,11 +194,65 @@ export function useRoomInterviewQuestions(
       }
     }
 
-    fetchGroupedQuestions();
+    fetchProjectPhase();
 
     return () => {
       cancelled = true;
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [projectId, cacheSignature]);
+
+  const loadRooms = useCallback(() => {
+    if (!projectId) return;
+    if (roomsRequestedRef.current) return;
+    roomsRequestedRef.current = true;
+    const epoch = epochRef.current;
+
+    (async () => {
+      try {
+        const response = await fetch(
+          `/api/posting/project/${projectId}/interview/questions?grouped=true&phase=rooms`
+        );
+        if (!response.ok) {
+          throw new Error('Failed to fetch room questions');
+        }
+        const data = await response.json();
+        // A signature change restarted the cycle while this fetch was in
+        // flight — these results belong to the old signature. Drop them.
+        if (!mountedRef.current || epoch !== epochRef.current) return;
+
+        const phase1 = phase1DataRef.current;
+        const mergedRooms = pinProjectFirst(
+          deduplicateRooms([...(phase1?.rooms || []), ...(data.rooms || [])])
+        );
+        setRooms(mergedRooms);
+        if (data.globalGates) setGlobalGates(data.globalGates);
+        setRoomsError(null);
+        setRoomsLoaded(true);
+
+        // Cache the assembled full set so re-opens are instant with stable
+        // IDs — but only when room generation actually produced questions.
+        // Caching all-empty room groups (every per-room LLM call failed)
+        // would serve a broken set on every reopen with no retry path.
+        const hasRoomQuestions = (data.rooms || []).some(
+          (r: any) => Array.isArray(r?.questions) && r.questions.length > 0
+        );
+        if (phase1 && mergedRooms.length > 1 && hasRoomQuestions) {
+          writeQuestionsCache(cacheKey, signature, {
+            ...phase1,
+            rooms: mergedRooms,
+            globalGates: data.globalGates ?? phase1.globalGates,
+          });
+        }
+      } catch (err) {
+        if (!mountedRef.current || epoch !== epochRef.current) return;
+        // Allow a later trigger to retry rather than dead-ending the interview
+        roomsRequestedRef.current = false;
+        setRoomsError(err instanceof Error ? err.message : 'Unknown error');
+        console.error('[useRoomInterviewQuestions] loadRooms error:', err);
+      }
+    })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [projectId, cacheSignature]);
 
   return {
@@ -148,5 +265,8 @@ export function useRoomInterviewQuestions(
     projectSize,
     loading,
     error,
+    roomsPending: !roomsLoaded && (projectSize.roomCount ?? 0) > 0,
+    roomsError,
+    loadRooms,
   };
 }

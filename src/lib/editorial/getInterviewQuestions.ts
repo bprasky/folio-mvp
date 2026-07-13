@@ -12,6 +12,8 @@ import {
 import { generateAllRoomQuestions } from '@/lib/interview/generateAllRoomQuestions';
 import { generateProjectQuestions, buildFallbackProjectQuestions } from '@/lib/interview/generateProjectQuestions';
 import type { GeneratedQuestion } from '@/lib/interview/generateQuestions';
+import { assessProjectContext, type ProjectContext } from '@/lib/interview/contextLevel';
+import { distillInterviewFacts, type KnownFacts } from '@/lib/interview/distillInterviewFacts';
 import { prisma } from '@/lib/prisma';
 
 export interface InterviewQuestion {
@@ -108,15 +110,10 @@ export async function getInterviewQuestionsWithContext(
   };
 }
 
-/**
- * Get interview questions grouped by room with per-room budgets.
- * Used when `?grouped=true` is passed to the questions API.
- *
- * With per-room generation, questions arrive pre-grouped — no post-hoc distribution needed.
- */
-export async function getInterviewQuestionsGroupedByRoom(
-  projectId: string,
-): Promise<{
+/** Which slice of the grouped interview to generate. */
+export type InterviewGenerationPhase = 'project' | 'rooms' | 'full';
+
+export interface GroupedQuestionsResult {
   grouped: true;
   rooms: RoomQuestionsGroup[];
   crossRoomQuestions: InterviewQuestion[];
@@ -125,37 +122,38 @@ export async function getInterviewQuestionsGroupedByRoom(
   contextDescription: string;
   upgradeSuggestion: string | null;
   projectSize: ProjectSizeClassification;
-}> {
-  // Generate room questions and project questions in parallel
-  const [roomResult, projectMeta] = await Promise.all([
-    generateAllRoomQuestions(projectId),
-    prisma.project.findUnique({
-      where: { id: projectId },
-      select: {
-        title: true,
-        description: true,
-        city: true,
-        regionState: true,
-        projectType: true,
-        clientType: true,
-        designer: { select: { name: true, studio: true } },
-        images: {
-          select: { url: true },
-          orderBy: { displayOrder: 'asc' as const },
-          take: 3,
-        },
+}
+
+/**
+ * Build the "About This Project" group. The project section is ALWAYS built:
+ * the LLM enriches it, but on failure or an empty result we fall back to a
+ * deterministic base set. This guarantees a stable "About This Project" group
+ * at index 0 on every request — the fix for the "dining room flashes first,
+ * then corrects" flicker, which happened when a failed LLM call produced a
+ * room-only (dining-first) response.
+ */
+async function buildProjectGroup(
+  projectId: string,
+  context: ProjectContext,
+): Promise<RoomQuestionsGroup> {
+  const projectMeta = await prisma.project.findUnique({
+    where: { id: projectId },
+    select: {
+      title: true,
+      description: true,
+      city: true,
+      regionState: true,
+      projectType: true,
+      clientType: true,
+      designer: { select: { name: true, studio: true } },
+      images: {
+        select: { url: true },
+        orderBy: { displayOrder: 'asc' as const },
+        take: 3,
       },
-    }),
-  ]);
+    },
+  });
 
-  const { roomResults, context } = roomResult;
-
-  // Generate project-level questions (fire after we have context for metadata).
-  // The project section is ALWAYS built: the LLM enriches it, but on failure or
-  // an empty result we fall back to a deterministic base set. This guarantees a
-  // stable "About This Project" group at index 0 on every request — the fix for
-  // the "dining room flashes first, then corrects" flicker, which happened when
-  // a failed LLM call produced a room-only (dining-first) response.
   let projectGenQuestions: GeneratedQuestion[] = [];
   try {
     const locationParts = [projectMeta?.city, projectMeta?.regionState].filter(Boolean);
@@ -200,7 +198,7 @@ export async function getInterviewQuestionsGroupedByRoom(
     };
   });
 
-  const projectGroup: RoomQuestionsGroup = {
+  return {
     roomId: 'project',
     roomName: 'About This Project',
     roomType: null,
@@ -215,8 +213,16 @@ export async function getInterviewQuestionsGroupedByRoom(
     },
     questions: projectInterviewQuestions,
   };
+}
 
-  // Convert per-room results to RoomQuestionsGroup format
+/** Convert per-room generation results to RoomQuestionsGroup format. */
+function buildRoomGroupsFromResults(
+  roomResults: Array<{ roomName: string; questions: GeneratedQuestion[] }>,
+  context: ProjectContext,
+): {
+  roomGroups: RoomQuestionsGroup[];
+  gateRooms: Array<{ roomId: string; roomName: string; imageCount: number; tagCount: number }>;
+} {
   const roomGroups: RoomQuestionsGroup[] = [];
   const gateRooms: Array<{ roomId: string; roomName: string; imageCount: number; tagCount: number }> = [];
 
@@ -278,18 +284,163 @@ export async function getInterviewQuestionsGroupedByRoom(
     });
   }
 
-  // Prepend project-level questions as synthetic room at index 0. Always present
-  // (deterministic fallback above), so the ordering is stable across requests.
-  roomGroups.unshift(projectGroup);
+  return { roomGroups, gateRooms };
+}
 
-  const globalGates = computeGlobalGates(gateRooms);
+/**
+ * Read the designer's saved "About This Project" answers from provenance.
+ * Project-level question IDs are always `project-<CATEGORY>-<uuid>`.
+ */
+async function readAboutProjectAnswers(
+  projectId: string,
+): Promise<Array<{ prompt: string; answer: string }>> {
+  const post = await prisma.projectPost.findUnique({
+    where: { projectId },
+    select: { provenance: true },
+  });
+  const interview = (post?.provenance as any)?.interview || {};
+  const answers = interview.payload?.answers ?? interview.answers ?? [];
+  if (!Array.isArray(answers)) return [];
+  return answers
+    .filter(
+      (a: any) =>
+        typeof a?.questionId === 'string' &&
+        a.questionId.startsWith('project-') &&
+        typeof a?.answer === 'string' &&
+        a.answer.trim().length > 0,
+    )
+    .map((a: any) => ({ prompt: a.prompt || '', answer: a.answer }));
+}
+
+/**
+ * Persist the fact digest to provenance so follow-up generation can reuse it
+ * without re-distilling. Fresh-read before write to shrink the window for
+ * clobbering concurrent answer saves (same pattern as the followups routes).
+ */
+async function persistKnownFacts(projectId: string, knownFacts: KnownFacts): Promise<void> {
+  try {
+    const freshPost = await prisma.projectPost.findUnique({
+      where: { projectId },
+      select: { provenance: true },
+    });
+    if (!freshPost) return;
+    const freshProvenance = (freshPost.provenance as any) || {};
+    const freshInterview = { ...(freshProvenance.interview || {}), knownFacts };
+    await prisma.projectPost.update({
+      where: { projectId },
+      data: {
+        provenance: {
+          ...freshProvenance,
+          interview: freshInterview,
+        },
+      },
+    });
+  } catch (err) {
+    console.warn('[getInterviewQuestionsGroupedByRoom] Failed to persist knownFacts (non-blocking):', err);
+  }
+}
+
+/**
+ * Get interview questions grouped by room with per-room budgets.
+ * Used when `?grouped=true` is passed to the questions API.
+ *
+ * Phases (two-phase interview generation):
+ * - 'project': ONLY the "About This Project" group — one fast LLM call, no
+ *   room generation. Served first so the designer can start answering while
+ *   nothing else is spent.
+ * - 'rooms': ONLY the room groups. Reads the designer's saved About answers,
+ *   distills them into a neutral fact digest (facts, not narrative — so the
+ *   foundation informs room question wording without re-steering topics),
+ *   and generates every room with that digest.
+ * - 'full' (default): both at once, no digest — the original single-shot
+ *   behavior, kept for backward compatibility (flat endpoint, older clients).
+ */
+export async function getInterviewQuestionsGroupedByRoom(
+  projectId: string,
+  options?: {
+    phase?: InterviewGenerationPhase;
+    /**
+     * Allow persisting the fact digest to provenance. The caller (route
+     * layer) must only set this when the requester has WRITE access to the
+     * project — this function is reachable from a view-gated GET, and a
+     * viewer must never trigger a DB mutation.
+     */
+    persistFacts?: boolean;
+  },
+): Promise<GroupedQuestionsResult> {
+  const phase = options?.phase ?? 'full';
   const { getContextLevelDescription, getContextUpgradeSuggestion } = await import('@/lib/interview');
+
+  if (phase === 'project') {
+    const context = await assessProjectContext(projectId);
+    const projectGroup = await buildProjectGroup(projectId, context);
+    // Real gates from context so the client sees correct minimums before rooms arrive
+    // (same selectionCount approximation the full path uses).
+    const gateRooms = context.rooms.map((r) => ({
+      roomId: r.id,
+      roomName: r.name,
+      imageCount: r.selectionCount,
+      tagCount: r.selectionCount,
+    }));
+    return {
+      grouped: true,
+      rooms: [projectGroup],
+      crossRoomQuestions: [],
+      globalGates: computeGlobalGates(gateRooms),
+      contextLevel: context.level,
+      contextDescription: getContextLevelDescription(context.level),
+      upgradeSuggestion: getContextUpgradeSuggestion(context.level),
+      projectSize: context.projectSize,
+    };
+  }
+
+  if (phase === 'rooms') {
+    // Distill the About answers into the fact digest. Enhancement, never a
+    // dependency: any failure here degrades to digest-free room generation.
+    let knownFacts: KnownFacts | null = null;
+    try {
+      const aboutAnswers = await readAboutProjectAnswers(projectId);
+      knownFacts = await distillInterviewFacts(aboutAnswers);
+      if (knownFacts && options?.persistFacts) {
+        await persistKnownFacts(projectId, knownFacts);
+      }
+      console.info('[getInterviewQuestionsGroupedByRoom] rooms phase', {
+        projectId,
+        aboutAnswerCount: aboutAnswers.length,
+        digestFields: knownFacts ? Object.keys(knownFacts) : [],
+      });
+    } catch (err) {
+      console.warn('[getInterviewQuestionsGroupedByRoom] Fact digest failed, generating rooms without it:', err);
+    }
+
+    const { roomResults, context } = await generateAllRoomQuestions(projectId, { knownFacts });
+    const { roomGroups, gateRooms } = buildRoomGroupsFromResults(roomResults, context);
+    return {
+      grouped: true,
+      rooms: roomGroups,
+      crossRoomQuestions: [],
+      globalGates: computeGlobalGates(gateRooms),
+      contextLevel: context.level,
+      contextDescription: getContextLevelDescription(context.level),
+      upgradeSuggestion: getContextUpgradeSuggestion(context.level),
+      projectSize: context.projectSize,
+    };
+  }
+
+  // phase === 'full' — original single-shot behavior (no digest)
+  const { roomResults, context } = await generateAllRoomQuestions(projectId);
+  const projectGroup = await buildProjectGroup(projectId, context);
+  const { roomGroups, gateRooms } = buildRoomGroupsFromResults(roomResults, context);
+
+  // Prepend project-level questions as synthetic room at index 0. Always present
+  // (deterministic fallback in buildProjectGroup), so ordering is stable across requests.
+  roomGroups.unshift(projectGroup);
 
   return {
     grouped: true,
     rooms: roomGroups,
     crossRoomQuestions: [], // Cross-room questions are embedded in rooms now (1 per room)
-    globalGates,
+    globalGates: computeGlobalGates(gateRooms),
     contextLevel: context.level,
     contextDescription: getContextLevelDescription(context.level),
     upgradeSuggestion: getContextUpgradeSuggestion(context.level),

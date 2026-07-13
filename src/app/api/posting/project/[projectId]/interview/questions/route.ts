@@ -4,7 +4,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/app/api/auth/[...nextauth]/options';
 import { getInterviewQuestionsWithContext, getInterviewQuestionsGroupedByRoom } from '@/lib/editorial/getInterviewQuestions';
-import { assertProjectView } from '@/lib/authz/access';
+import { assertProjectView, assertProjectWrite } from '@/lib/authz/access';
 
 export async function GET(
   request: NextRequest,
@@ -24,10 +24,32 @@ export async function GET(
     const grouped = url.searchParams.get('grouped');
     const maxQuestions = url.searchParams.get('maxQuestions');
     const prioritizeBoostable = url.searchParams.get('prioritizeBoostable');
+    const phaseParam = url.searchParams.get('phase');
 
-    // Room-grouped response for Phase B interview pacing
+    // Room-grouped response for Phase B interview pacing.
+    // Two-phase generation: `phase=project` returns just the About This Project
+    // group (fast); `phase=rooms` generates room questions informed by the
+    // designer's saved About answers. No phase = original single-shot behavior.
     if (grouped === 'true') {
-      const result = await getInterviewQuestionsGroupedByRoom(projectId);
+      const phase = phaseParam === 'project' || phaseParam === 'rooms' ? phaseParam : undefined;
+
+      // Persisting the fact digest is a DB write — only allow it when the
+      // requester has WRITE access, since this GET is view-gated and viewers
+      // (e.g. vendor participants) must never trigger a mutation.
+      let persistFacts = false;
+      if (phase === 'rooms') {
+        try {
+          await assertProjectWrite(session.user.id, projectId);
+          persistFacts = true;
+        } catch {
+          persistFacts = false;
+        }
+      }
+
+      const result = await getInterviewQuestionsGroupedByRoom(
+        projectId,
+        phase ? { phase, persistFacts } : undefined,
+      );
       return NextResponse.json(result);
     }
 

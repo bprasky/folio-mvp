@@ -9,6 +9,7 @@ import { callLLM } from "@/lib/posting/llmClient";
 import { ensureUnder, summarizeBudget } from "@/lib/posting/contextBudget";
 import { compactImages, compactProducts, softModerate } from "@/lib/posting/promptBuilders";
 import { cid } from "@/lib/utils/correlation";
+import { formatKnownFacts, type KnownFacts } from "@/lib/interview/distillInterviewFacts";
 import { z } from "zod";
 import { randomUUID } from "crypto";
 import { MODELS } from '@/lib/ai/models';
@@ -121,8 +122,9 @@ export async function POST(
       );
     }
 
-    // Fetch project context
-    const projectData = await prisma.project.findUnique({
+    // Fetch project context (+ stored fact digest from the About This Project answers)
+    const [projectData, projectPost] = await Promise.all([
+      prisma.project.findUnique({
       where: { id: projectId },
       select: {
         title: true,
@@ -151,7 +153,12 @@ export async function POST(
           orderBy: { createdAt: "desc" },
         },
       },
-    });
+      }),
+      prisma.projectPost.findUnique({
+        where: { projectId },
+        select: { provenance: true },
+      }),
+    ]);
 
     // Build images and products context
     const imagesCompact = compactImages(
@@ -226,6 +233,17 @@ These follow-ups produce the richest editorial material: anecdotes, turning poin
 Room follow-ups should reference BOTH the photos AND what the designer said in their base answer. If the designer mentioned a specific product, ask why that one and what they considered instead. If they described a material or finish, ask about the tactile or experiential quality. If they mentioned a vendor relationship, push on that story.
 
 Stay focused on THIS room: ${validated.roomName}. Do not drift to project-level narrative or other rooms unless the designer explicitly connected them.\n`;
+
+      // Established project facts (distilled from the About This Project answers).
+      // Wording aid only — stops room follow-ups re-asking settled ground.
+      const knownFacts = ((projectPost?.provenance as any)?.interview?.knownFacts ?? null) as KnownFacts | null;
+      const knownFactsLines = formatKnownFacts(knownFacts);
+      if (knownFactsLines) {
+        prompt += `\nESTABLISHED PROJECT FACTS (from the designer's earlier project-level answers):
+${knownFactsLines}
+
+Do NOT re-ask any of this — it is settled ground. Use it only to sharpen wording. It must not pull your follow-ups toward project-level topics: this room's answers and photos decide what you chase.\n`;
+      }
     }
 
     // Designer's answers from the previous round

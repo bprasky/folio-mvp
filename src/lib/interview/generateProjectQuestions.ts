@@ -213,7 +213,7 @@ If VENDOR:
   4. SIGNATURE_IDENTITY → "What makes this particular application of your product special?"
   5. SURPRISE_PIVOT → "Were there any spec changes or surprises during the project?"
 
-AVAILABLE CONTEXT (use to decide what to ask — you may reference details, but ATTRIBUTE the source):
+AVAILABLE CONTEXT (use to decide what to ask — you may weave details in as your own impression, but never by citing the notes/description; see the rules below):
 - Project description: ${input.projectDescription || 'Not provided'}
 - Location: ${locationStr}
 - Project type: ${input.projectType || 'Not specified'}
@@ -233,33 +233,41 @@ REQUIRED CATEGORIES (generate exactly one question per category, adapted to ${ro
 4. SIGNATURE_IDENTITY — What in this project is most YOU?
 5. SURPRISE_PIVOT — What changed along the way?
 
-RULES FOR CONTEXTUAL ADAPTATION (ATTRIBUTE, DON'T ASSERT):
-NEVER assert metadata as absolute fact. The project description is the designer's own notes — it may be approximate, shorthand, or incomplete. Your job is to use it as a jumping-off point and get the ${role.toLowerCase()} to confirm, correct, or expand on it in their own words.
+RULES FOR USING WHAT YOU KNOW (HOLD IT LIGHTLY, NEVER NARRATE IT):
+The project description is the ${role.toLowerCase()}'s own shorthand — approximate, incomplete, notes-to-self. Treat every detail as a lead to open up in their own words, never a fact to recite and never a source to cite.
 
-The key rule: ATTRIBUTE where the detail came from. "Your project description mentions this took 14 months" is good — it shows you did your homework and invites them to confirm or correct. "This 14-month renovation" stated as fact is bad — you're treating unverified notes as gospel.
+There are two ways to bring a detail into a question. Only one sounds human:
 
-Use metadata to ask informed questions WITH attribution:
-- Description says "14 months" → "Your project description mentions about 14 months — walk me through the timeline."
-- Description says "family from Chicago" → "The project notes mention a relocation — tell me about these clients and what brought them to you."
-- Description says "full renovation" → "It sounds like this was a full gut — what were you starting with?"
+1. NATURAL — voice it as your own impression or a hunch, softened so they can push back: "sounds like…", "it reads like…", "I get the sense…", "seems like…". A person who did their homework talks this way. The tentative opener is what leaves room for them to confirm, correct, or expand — it does the same job the old citation did, without the robot voice.
+2. ROBOTIC — announce where the detail came from ("the project notes mention…", "your description says…", "the file lists…") or read details back verbatim. This exposes the machinery and reads like an AI narrating a dossier. NEVER phrase a question this way.
+
+ONE exception, because it's genuinely how people talk: observing the PHOTOS out loud is natural and encouraged — "Looking at the photos, the stair feels resolved from the bones up — what were you actually working with?" Citing NOTES, a DESCRIPTION, or a FILE is not. If a detail came from the text and not the photos, turn it into your own read of the project instead of pointing at the document.
+
+NEVER recite proper names (clients, kids, pets) back, and NEVER state a private inference about the household as fact ("so there are kids in this house"). If the notes hint at a family, ask about "the family you were designing for" or "who this home was really for" — don't perform the deduction.
+
+Turn details into natural questions:
+- Notes hint at a relocation → "Sounds like a move was part of the story — tell me about these clients and what brought them to you."
+- Notes suggest a long timeline → "I get the sense this one ran long — walk me through how it actually played out."
+- Notes say "full renovation" → "It reads like a full gut — what were you starting with?"
+- Notes list a family / kids' names → "Tell me about the family you were designing for — who was this home really for?"
 - Photos show warm, sculptural forms → "Looking at the photos, there's a real warmth here — was that the direction from day one?"
 
-Do NOT state metadata as unattributed fact:
-- BAD: "This 14-month full gut renovation must have been an undertaking" (states duration and scope as fact)
-- BAD: "Your clients, a young family with two kids under five from Chicago" (recites their file back at them as if you know these people)
-- BAD: "With a $500K budget for a 3,200 square foot home" (asserts numbers as truth)
-- BAD: "Over 14 months with a family with small children, what evolved?" (embeds unverified details as given)
-- GOOD: "Your project description mentions about 14 months — walk me through that timeline."
-- GOOD: "The notes mention a relocation — tell me about these clients."
+Do NOT:
+- BAD: "The project notes mention names like Sofie and Connor — so there are kids in this house." (narrates the data source AND recites private names AND performs a deduction — the worst version)
+- BAD: "Your project description mentions about 14 months — walk me through the timeline." (announces the source; say "I get the sense this ran long" instead)
+- BAD: "This 14-month full gut renovation must have been an undertaking." (asserts unverified notes as settled fact)
+- BAD: "With a $500K budget for a 3,200 square foot home…" (recites numbers as truth)
+- GOOD: "Sounds like this one ran long — walk me through the timeline."
+- GOOD: "It reads like a relocation was in the mix — tell me about these clients."
 - GOOD: "What was the budget reality on this one?"
 - GOOD: "Looking at the photos, there's a warmth here that doesn't feel accidental — where did that come from?"
 
-The distinction: "Your project description mentioned X — tell me about that" gives them a chance to say "actually it was 16 months" or add context. "This X project" treats the metadata as settled fact and skips the confirmation.
+The distinction: a soft impression ("sounds like this ran long") lets them say "actually it was 16 months." Asserting it as fact locks in unverified data; citing where you read it sounds like a robot. Avoid both.
 
 - For SIGNATURE_IDENTITY: Use the designer's name if available. "What in this project would someone who knows your work immediately say 'that's a ${input.designerName || '[Designer]'} project'?"
 
 WHAT MAKES A GOOD QUESTION:
-- References metadata WITH attribution ("your description mentions…", "the notes say…", "looking at the photos…") so the respondent can confirm, correct, or expand
+- Surfaces what you know as a soft impression or a photo observation ("sounds like…", "it reads like…", "looking at the photos…") — NEVER by citing notes or a description — so the respondent can confirm, correct, or expand
 - Asks ONE thing clearly (not compound questions)
 - Opens space for storytelling, not yes/no answers
 - Focuses on wins and arrivals, not compromises or failures
@@ -271,7 +279,8 @@ WHAT MAKES A BAD QUESTION:
 - "What inspired you?" (lazy, generic)
 - "Tell me about the challenges you faced." (focuses on negatives)
 - "Can you walk me through the project?" (too broad)
-- "This 14-month renovation must have been complex" (asserts metadata as unattributed fact)
+- "This 14-month renovation must have been complex" (asserts unverified notes as fact)
+- "The project notes mention names like Sofie and Connor…" (narrates the data source and recites private names — sounds like an AI reading a file)
 - "Your clients, a young family with two kids under five from Chicago" (recites their file back as if you know these people)
 - Anything that ignores the available context and could be asked about any project
 - Anything that addresses the ${role.toLowerCase()} as if they're a different role
@@ -281,8 +290,8 @@ Return ONLY a JSON object:
   "questions": [
     {
       "category": "CLIENT_BRIEF",
-      "question": "The project notes mention a relocation — tell me about these clients and what they came to you with.",
-      "intent": "Get the human story and original brief, letting the designer confirm and expand on the metadata"
+      "question": "Sounds like a move was part of the story here — tell me about these clients and what they came to you with.",
+      "intent": "Get the human story and original brief, framed as a soft impression the designer can confirm, correct, or expand"
     },
     {
       "category": "SCOPE_PARAMETERS",
