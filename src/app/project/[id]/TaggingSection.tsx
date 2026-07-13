@@ -11,6 +11,7 @@ import {
   FaMapMarkerAlt,
   FaCheckCircle,
   FaRegClock,
+  FaArrowRight,
 } from 'react-icons/fa';
 import { Sparkles, ArrowLeft } from 'lucide-react';
 import { isDocumentImage } from '@/lib/publish/computePublishReadiness';
@@ -312,6 +313,7 @@ export default function TaggingSection({
                       key={photo.id}
                       projectId={projectId}
                       photo={photo}
+                      siblingPhotos={roomPhotos.filter((p) => p.id !== photo.id)}
                       isOwner={isOwner}
                       active={activePhotoId === photo.id}
                       onActivate={() => setActivePhotoId(photo.id)}
@@ -528,6 +530,7 @@ function RoomLabel({ name, count, tagged }: { name: string; count: number; tagge
 function PhotoTagger({
   projectId,
   photo,
+  siblingPhotos = [],
   isOwner,
   active,
   onActivate,
@@ -540,6 +543,8 @@ function PhotoTagger({
 }: {
   projectId: string;
   photo: Photo;
+  /** Other photos in the same room, so a tag can be moved between them. */
+  siblingPhotos?: Photo[];
   isOwner: boolean;
   active: boolean;
   onActivate: () => void;
@@ -603,6 +608,20 @@ function PhotoTagger({
     }
   };
 
+  // Move a tag to another photo in the same room (centered; drag to fine-tune).
+  const handleMove = async (tagId: string, targetImageId: string) => {
+    try {
+      const res = await fetch('/api/tag-product-to-image', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: tagId, imageId: targetImageId }),
+      });
+      if (res.ok) onChanged();
+    } catch (err) {
+      console.error('[TaggingSection] move tag error:', err);
+    }
+  };
+
   const leave = () => {
     setPendingDot(null);
     onCollapse();
@@ -651,7 +670,7 @@ function PhotoTagger({
           )}
         </button>
 
-        <TagList tags={photo.tags} isOwner={isOwner} onEdit={onEditProduct} onDelete={handleDelete} onConfirm={onConfirm} />
+        <TagList tags={photo.tags} isOwner={isOwner} onEdit={onEditProduct} onDelete={handleDelete} onConfirm={onConfirm} siblingPhotos={siblingPhotos} onMove={handleMove} />
       </div>
     );
   }
@@ -798,7 +817,7 @@ function PhotoTagger({
             />
           ) : (
             <div className="space-y-3">
-              <TagList tags={photo.tags} isOwner={isOwner} onEdit={onEditProduct} onDelete={handleDelete} onConfirm={onConfirm} />
+              <TagList tags={photo.tags} isOwner={isOwner} onEdit={onEditProduct} onDelete={handleDelete} onConfirm={onConfirm} siblingPhotos={siblingPhotos} onMove={handleMove} />
               <p className="folio-meta text-folio-text-tertiary">
                 Click the photo to add another product.
               </p>
@@ -821,12 +840,17 @@ function TagList({
   onEdit,
   onDelete,
   onConfirm,
+  siblingPhotos = [],
+  onMove,
 }: {
   tags: TagRow[];
   isOwner: boolean;
   onEdit: (productId: string, tagId: string | null) => void;
   onDelete: (tagId: string) => void;
   onConfirm: (tagId: string) => void;
+  /** Other photos in the room, so a tag can be moved to the right one. */
+  siblingPhotos?: Photo[];
+  onMove?: (tagId: string, targetImageId: string) => void;
 }) {
   if (tags.length === 0) {
     return (
@@ -880,6 +904,31 @@ function TagList({
             </div>
             {isOwner && (
               <div className="flex items-center gap-1 flex-shrink-0">
+                {/* Move this tag to another photo in the same room (wrong-photo fix) */}
+                {onMove && siblingPhotos.length === 1 && (
+                  <button
+                    onClick={() => onMove(tag.id, siblingPhotos[0].id)}
+                    title="Move to the other photo in this room"
+                    className="flex h-7 w-7 items-center justify-center rounded-full text-folio-text-secondary hover:text-[var(--accent)] hover:bg-surface-ground transition-colors"
+                  >
+                    <FaArrowRight className="w-3 h-3" />
+                  </button>
+                )}
+                {onMove && siblingPhotos.length > 1 && (
+                  <select
+                    value=""
+                    onChange={(e) => e.target.value && onMove(tag.id, e.target.value)}
+                    title="Move to another photo in this room"
+                    className="h-7 rounded-full border border-folio-border-subtle bg-surface-canvas px-2 text-xs text-folio-text-secondary"
+                  >
+                    <option value="">Move…</option>
+                    {siblingPhotos.map((p, i) => (
+                      <option key={p.id} value={p.id}>
+                        Photo {i + 2}
+                      </option>
+                    ))}
+                  </select>
+                )}
                 {pending && (
                   <button
                     onClick={() => onConfirm(tag.id)}

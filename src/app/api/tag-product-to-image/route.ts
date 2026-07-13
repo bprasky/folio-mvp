@@ -658,14 +658,15 @@ export async function PATCH(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { id, x, y, reviewed } = await request.json();
+    const { id, x, y, reviewed, imageId: targetImageId } = await request.json();
 
-    // Two modes: reposition (x, y) or mark-reviewed (reviewed: true). The
-    // reviewed flag confirms a deferred-scrape tag so it leaves the review queue.
+    // Three modes: reposition (x, y), mark-reviewed (reviewed: true), or move to
+    // another photo (imageId). The reviewed flag confirms a deferred-scrape tag.
     const isReviewMode = reviewed === true;
-    if (!id || (!isReviewMode && (x == null || y == null))) {
+    const isMoveMode = typeof targetImageId === 'string' && !!targetImageId;
+    if (!id || (!isReviewMode && !isMoveMode && (x == null || y == null))) {
       return NextResponse.json(
-        { error: 'Missing required fields: id and either (x, y) or reviewed' },
+        { error: 'Missing required fields: id and either (x, y), imageId, or reviewed' },
         { status: 400 }
       );
     }
@@ -691,10 +692,28 @@ export async function PATCH(request: NextRequest) {
       );
     }
 
-    const updated = await prisma.productTag.update({
-      where: { id },
-      data: isReviewMode ? { reviewedAt: new Date() } : { x, y },
-    });
+    let data: { reviewedAt: Date } | { x: number; y: number } | { imageId: string; x: number; y: number };
+    if (isReviewMode) {
+      data = { reviewedAt: new Date() };
+    } else if (isMoveMode) {
+      // Move the tag to another photo in the SAME project. Keep x/y if given
+      // (else center) so the designer can drag it into place on the new photo.
+      const target = await prisma.projectImage.findFirst({
+        where: { id: targetImageId, projectId: tag.image.projectId },
+        select: { id: true },
+      });
+      if (!target) {
+        return NextResponse.json(
+          { error: 'Target photo not found in this project' },
+          { status: 404 }
+        );
+      }
+      data = { imageId: targetImageId, x: x ?? 50, y: y ?? 50 };
+    } else {
+      data = { x, y };
+    }
+
+    const updated = await prisma.productTag.update({ where: { id }, data });
 
     return NextResponse.json(updated);
 
