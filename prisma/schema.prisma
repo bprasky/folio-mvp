@@ -1579,6 +1579,12 @@ enum PostVariant {
   DESIGNER_PROFILE
   EVENT_ESSAY
   PROMPTED_ARTICLE
+  // Editorial Queue formats (docs/17_EDITORIAL_QUEUE.md) — format is the
+  // container assigned after angle extraction; completed queue pieces flow
+  // through the existing ProjectPost publishing path.
+  QA
+  THIS_OR_THAT
+  GET_TO_KNOW
 }
 
 model ProjectPost {
