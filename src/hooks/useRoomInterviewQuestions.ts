@@ -29,6 +29,19 @@ function deduplicateRooms(rooms: RoomQuestionsGroup[]): RoomQuestionsGroup[] {
 }
 
 /**
+ * Pin the "About This Project" group (roomId 'project') to index 0. The server
+ * already emits it first, but this is order-preserving defense-in-depth so the
+ * project section can never render after a real room — no matter the response
+ * order — keeping the section list stable and flicker-free.
+ */
+function pinProjectFirst(rooms: RoomQuestionsGroup[]): RoomQuestionsGroup[] {
+  const projectIdx = rooms.findIndex((r) => r.roomId === 'project');
+  if (projectIdx <= 0) return rooms;
+  const project = rooms[projectIdx];
+  return [project, ...rooms.slice(0, projectIdx), ...rooms.slice(projectIdx + 1)];
+}
+
+/**
  * Fetches interview questions grouped by room from the API.
  * Used by InterviewModal when room pacing is active.
  */
@@ -71,7 +84,7 @@ export function useRoomInterviewQuestions(projectId: string): RoomInterviewQuest
         const data = await response.json();
         if (cancelled) return;
 
-        setRooms(deduplicateRooms(data.rooms || []));
+        setRooms(pinProjectFirst(deduplicateRooms(data.rooms || [])));
         setCrossRoomQuestions(data.crossRoomQuestions || []);
         setGlobalGates(data.globalGates || { minimumTotalAnswers: 5, warnings: [] });
         setContextLevel(data.contextLevel ?? 0);

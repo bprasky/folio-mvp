@@ -54,6 +54,56 @@ export interface ProjectQuestionOutput {
 }
 
 // ---------------------------------------------------------------------------
+// Deterministic fallback
+// ---------------------------------------------------------------------------
+
+/**
+ * Base "About This Project" questions — one per fixed category, worded warmly and
+ * generically (no project metadata required). Used when the LLM call fails or
+ * returns nothing so the project-level section is ALWAYS present. This keeps the
+ * grouped-questions response deterministic (project section at index 0 on every
+ * request), which is what prevents the "dining room flashes first, then corrects
+ * to About This Project" flicker: a room-only response can no longer be produced.
+ */
+const FALLBACK_PROJECT_QUESTIONS: Record<ProjectQuestionCategory, string> = {
+  CLIENT_BRIEF:
+    'Who was this project for, and what did they come to you wanting?',
+  SCOPE_PARAMETERS:
+    'What were you working within on this one — the space, the timeline, the realities that shaped your decisions?',
+  DESIGN_DIRECTION:
+    'What was the big idea? When you picture this project, what ties it all together?',
+  SIGNATURE_IDENTITY:
+    'What in this project would someone who knows your work immediately recognize as yours?',
+  SURPRISE_PIVOT:
+    'What changed along the way — a decision or discovery that took the project somewhere you did not expect?',
+};
+
+/**
+ * Build the deterministic fallback question set (all five categories). Shape
+ * matches the LLM path exactly (same id format `project-<CATEGORY>-<uuid>`,
+ * `type: 'generic'`, high pull-quote potential for the identity/pivot pair).
+ */
+export function buildFallbackProjectQuestions(
+  contextLevel: ContextLevel,
+): GeneratedQuestion[] {
+  return PROJECT_QUESTION_CATEGORIES.map((category) => {
+    const isHighPQ = category === 'SIGNATURE_IDENTITY' || category === 'SURPRISE_PIVOT';
+    return {
+      id: `project-${category}-${randomUUID()}`,
+      text: FALLBACK_PROJECT_QUESTIONS[category],
+      contextLevel,
+      type: 'generic' as const,
+      rooms: [],
+      products: [],
+      vendors: [],
+      boostable: false,
+      pullQuotePotential: isHighPQ ? ('high' as const) : ('medium' as const),
+      topic: `project_${category.toLowerCase()}`,
+    };
+  });
+}
+
+// ---------------------------------------------------------------------------
 // LLM call
 // ---------------------------------------------------------------------------
 
