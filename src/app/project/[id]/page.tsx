@@ -228,7 +228,15 @@ export default async function ProjectPage({
         tagCount: img.tags.length,
       })),
     roomCount: base.rooms.length,
-    storyComplete: editorialState !== 'EMPTY',
+    // The Story gate is complete only once a draft has actually been generated —
+    // NOT the moment the first interview answer is saved. Marking it complete on
+    // INTERVIEWED advanced the tracker/spine past the interview step, unmounting
+    // the tagging surface (and its "Continue to interview" button) and removing
+    // every entry point back into the in-progress interview, even though the
+    // answers were safely persisted. Keep the step current while the interview
+    // is in progress so the "Start interview" CTA stays visible and reopens the
+    // modal (which resumes from the saved draft).
+    storyComplete: hasDraftOrPublished,
   });
 
   // Boards is a real-selections surface — it only exists once products have
