@@ -10,7 +10,8 @@ import {
   type RoomGroupedQuestions,
 } from './roomPacing';
 import { generateAllRoomQuestions } from '@/lib/interview/generateAllRoomQuestions';
-import { generateProjectQuestions } from '@/lib/interview/generateProjectQuestions';
+import { generateProjectQuestions, buildFallbackProjectQuestions } from '@/lib/interview/generateProjectQuestions';
+import type { GeneratedQuestion } from '@/lib/interview/generateQuestions';
 import { prisma } from '@/lib/prisma';
 
 export interface InterviewQuestion {
@@ -149,11 +150,16 @@ export async function getInterviewQuestionsGroupedByRoom(
 
   const { roomResults, context } = roomResult;
 
-  // Generate project-level questions (fire after we have context for metadata)
-  let projectGroup: RoomQuestionsGroup | null = null;
+  // Generate project-level questions (fire after we have context for metadata).
+  // The project section is ALWAYS built: the LLM enriches it, but on failure or
+  // an empty result we fall back to a deterministic base set. This guarantees a
+  // stable "About This Project" group at index 0 on every request — the fix for
+  // the "dining room flashes first, then corrects" flicker, which happened when
+  // a failed LLM call produced a room-only (dining-first) response.
+  let projectGenQuestions: GeneratedQuestion[] = [];
   try {
     const locationParts = [projectMeta?.city, projectMeta?.regionState].filter(Boolean);
-    const { questions: projectGenQuestions } = await generateProjectQuestions({
+    const result = await generateProjectQuestions({
       projectTitle: context.projectTitle,
       projectDescription: context.projectDescription,
       designerName: projectMeta?.designer?.name || undefined,
@@ -168,44 +174,47 @@ export async function getInterviewQuestionsGroupedByRoom(
       contextLevel: context.level,
       respondentRole: 'DESIGNER',
     });
-
-    if (projectGenQuestions.length > 0) {
-      const projectInterviewQuestions: InterviewQuestion[] = projectGenQuestions.map((q) => {
-        const converted = toInterviewQuestion(q);
-        return {
-          id: converted.id,
-          questionText: converted.questionText,
-          questionType: converted.questionType,
-          source: 'ai_classification' as const,
-          boostable: converted.boostable,
-          pullQuotePotential: converted.pullQuotePotential,
-          contextLevel: converted.contextLevel,
-          questionCategory: converted.questionCategory,
-          vendors: q.vendors,
-          rooms: q.rooms,
-          products: q.products,
-        };
-      });
-
-      projectGroup = {
-        roomId: 'project',
-        roomName: 'About This Project',
-        roomType: null,
-        budget: {
-          roomId: 'project',
-          roomName: 'About This Project',
-          roomType: null,
-          imageCount: 0,
-          tagCount: 0,
-          baseQuestions: projectInterviewQuestions.length,
-          maxFollowUps: 3,
-        },
-        questions: projectInterviewQuestions,
-      };
-    }
+    projectGenQuestions = result.questions;
   } catch (err) {
-    console.warn('[getInterviewQuestionsGroupedByRoom] Project question generation failed, proceeding with room-only flow:', err);
+    console.warn('[getInterviewQuestionsGroupedByRoom] Project question generation failed, using deterministic fallback:', err);
   }
+
+  if (projectGenQuestions.length === 0) {
+    projectGenQuestions = buildFallbackProjectQuestions(context.level);
+  }
+
+  const projectInterviewQuestions: InterviewQuestion[] = projectGenQuestions.map((q) => {
+    const converted = toInterviewQuestion(q);
+    return {
+      id: converted.id,
+      questionText: converted.questionText,
+      questionType: converted.questionType,
+      source: 'ai_classification' as const,
+      boostable: converted.boostable,
+      pullQuotePotential: converted.pullQuotePotential,
+      contextLevel: converted.contextLevel,
+      questionCategory: converted.questionCategory,
+      vendors: q.vendors,
+      rooms: q.rooms,
+      products: q.products,
+    };
+  });
+
+  const projectGroup: RoomQuestionsGroup = {
+    roomId: 'project',
+    roomName: 'About This Project',
+    roomType: null,
+    budget: {
+      roomId: 'project',
+      roomName: 'About This Project',
+      roomType: null,
+      imageCount: 0,
+      tagCount: 0,
+      baseQuestions: projectInterviewQuestions.length,
+      maxFollowUps: 3,
+    },
+    questions: projectInterviewQuestions,
+  };
 
   // Convert per-room results to RoomQuestionsGroup format
   const roomGroups: RoomQuestionsGroup[] = [];
@@ -269,10 +278,9 @@ export async function getInterviewQuestionsGroupedByRoom(
     });
   }
 
-  // Prepend project-level questions as synthetic room at index 0
-  if (projectGroup) {
-    roomGroups.unshift(projectGroup);
-  }
+  // Prepend project-level questions as synthetic room at index 0. Always present
+  // (deterministic fallback above), so the ordering is stable across requests.
+  roomGroups.unshift(projectGroup);
 
   const globalGates = computeGlobalGates(gateRooms);
   const { getContextLevelDescription, getContextUpgradeSuggestion } = await import('@/lib/interview');

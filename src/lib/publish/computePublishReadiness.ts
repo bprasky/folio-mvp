@@ -55,7 +55,12 @@ export interface ReadinessInput {
   photos: ReadinessImage[];
   /** Distinct room count for the project (Room model rows), for the status line. */
   roomCount: number;
-  /** Story gate: true once the interview has happened (editorialState !== 'EMPTY'). */
+  /**
+   * Story gate: true once a story draft has actually been generated
+   * (editorialState is GENERATED/PUBLISHED/UNPUBLISHED). An interview that is
+   * merely in progress (INTERVIEWED, answers saved but no draft) does NOT satisfy
+   * this — the step stays current so the interview remains reachable.
+   */
   storyComplete: boolean;
 }
 

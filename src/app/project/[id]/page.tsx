@@ -58,8 +58,9 @@ function buildTrackerState(args: {
   roomCount: number;
   totalSelections: number;
   isPublished: boolean;
+  interviewInProgress: boolean;
 }): TrackerState | null {
-  const { timeline, readiness, photoCount, roomCount, totalSelections, isPublished } =
+  const { timeline, readiness, photoCount, roomCount, totalSelections, isPublished, interviewInProgress } =
     args;
   const materialsExist = totalSelections > 0;
 
@@ -97,7 +98,7 @@ function buildTrackerState(args: {
 
   if (Object.values(complete).every(Boolean)) return null;
 
-  return deriveTrackerState({ type, complete, counts, materialsExist });
+  return deriveTrackerState({ type, complete, counts, materialsExist, interviewInProgress });
 }
 
 export default async function ProjectPage({
@@ -228,7 +229,15 @@ export default async function ProjectPage({
         tagCount: img.tags.length,
       })),
     roomCount: base.rooms.length,
-    storyComplete: editorialState !== 'EMPTY',
+    // The Story gate is complete only once a draft has actually been generated —
+    // NOT the moment the first interview answer is saved. Marking it complete on
+    // INTERVIEWED advanced the tracker/spine past the interview step, unmounting
+    // the tagging surface (and its "Continue to interview" button) and removing
+    // every entry point back into the in-progress interview, even though the
+    // answers were safely persisted. Keep the step current while the interview
+    // is in progress so the "Start interview" CTA stays visible and reopens the
+    // modal (which resumes from the saved draft).
+    storyComplete: hasDraftOrPublished,
   });
 
   // Boards is a real-selections surface — it only exists once products have
@@ -250,6 +259,8 @@ export default async function ProjectPage({
     roomCount: base.rooms.length,
     totalSelections,
     isPublished,
+    // INTERVIEWED = answers saved but no draft generated yet → "Continue interview".
+    interviewInProgress: editorialState === 'INTERVIEWED',
   });
 
   // Published/concept/in-progress lead with Boards once it exists; otherwise
@@ -261,7 +272,12 @@ export default async function ProjectPage({
   if (currentView === 'files') currentView = 'media';
   else if (currentView === 'drafts') currentView = 'publish';
 
-  if (!isPublished && currentView === 'story') currentView = 'media';
+  // The owner keeps access to their Story tab as soon as an interview exists
+  // (INTERVIEWED, or a generated/published draft) so they can always return to
+  // resume or adjust it. Everyone else only sees Story once it's published.
+  const storyTabVisible =
+    editorialState === 'PUBLISHED' || (isOwner && editorialState !== 'EMPTY');
+  if (currentView === 'story' && !storyTabVisible) currentView = 'media';
   if (!hasDraftOrPublished && currentView === 'publish') currentView = 'media';
   if (currentView === 'boards' && !boardsVisible) currentView = 'media';
 
@@ -377,6 +393,7 @@ export default async function ProjectPage({
           isPublished={isPublished}
           hasDraftOrPublished={hasDraftOrPublished}
           editorialState={editorialState}
+          storyTabVisible={storyTabVisible}
         />
       </div>
 

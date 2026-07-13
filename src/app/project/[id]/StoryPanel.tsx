@@ -63,9 +63,32 @@ export default function StoryPanel({ projectId, project, images, isOwner }: Stor
   const [showTagDiagnostic, setShowTagDiagnostic] = useState(false);
   const [showInterviewModal, setShowInterviewModal] = useState(false);
 
+  // Rooms the last generation withheld because they weren't fully answered.
+  // Stashed by InterviewModal in sessionStorage; shown once, then cleared.
+  const [excludedRooms, setExcludedRooms] = useState<string[]>([]);
+
   // Reflection edit modal state — store the entry by reference (filteredAnswers
   // indexes don't map 1:1 to `answers` when empty entries are filtered out).
   const [editingReflection, setEditingReflection] = useState<QA | null>(null);
+
+  // Surface (once) any rooms the last generation left out for being unfinished.
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    // Key mirrors getExcludedRoomsStorageKey in InterviewModal.
+    const key = `folio.interview.excludedRooms.${projectId}`;
+    try {
+      const raw = window.sessionStorage.getItem(key);
+      if (raw) {
+        const names = JSON.parse(raw);
+        if (Array.isArray(names) && names.length > 0) {
+          setExcludedRooms(names.filter((n): n is string => typeof n === "string"));
+        }
+        window.sessionStorage.removeItem(key);
+      }
+    } catch {
+      /* noop */
+    }
+  }, [projectId]);
 
   // Deduplicate answers by question and answer content
   const dedupeAnswers = (answers: QA[]): QA[] => {
@@ -322,6 +345,49 @@ export default function StoryPanel({ projectId, project, images, isOwner }: Stor
       <p className="folio-body text-folio-text-secondary">
         Tell us about this project. Your reflections and credits shape the published post.
       </p>
+
+      {/* Resume the live interview. Routes to the Media surface's InterviewModal
+          (the primary flow, with native draft-resume) so a designer can always
+          pick up an in-progress interview from here — no answers are lost. */}
+      {isOwner && (
+        <button
+          onClick={() => router.push(`/project/${projectId}?view=media&action=interview`)}
+          className="w-full flex items-center justify-center gap-3 px-6 py-4 bg-[var(--accent)] text-white rounded-2xl hover:bg-[var(--accent-hover)] transition-colors shadow-sm"
+        >
+          <Mic className="w-5 h-5" />
+          <div className="text-left">
+            <span className="folio-ui font-semibold block">Continue interview</span>
+            <span className="folio-meta opacity-80">
+              Pick up where you left off — your answers are saved
+            </span>
+          </div>
+        </button>
+      )}
+
+      {/* Rooms left out of the last generation for being unfinished */}
+      {isOwner && excludedRooms.length > 0 && (
+        <div className="rounded-2xl border border-folio-border-subtle bg-surface-ground p-5">
+          <div className="flex items-start justify-between gap-4">
+            <div>
+              <p className="folio-ui font-semibold text-folio-text-primary">
+                {excludedRooms.length === 1 ? 'A room was' : 'Some rooms were'} left out of your story
+              </p>
+              <p className="folio-meta text-folio-text-secondary mt-1">
+                {excludedRooms.join(', ')} {excludedRooms.length === 1 ? "wasn't" : "weren't"} finished,
+                so {excludedRooms.length === 1 ? 'it was' : 'they were'} left out to keep the quality high.
+                Continue the interview to finish {excludedRooms.length === 1 ? 'it' : 'them'} and regenerate.
+              </p>
+            </div>
+            <button
+              onClick={() => setExcludedRooms([])}
+              className="shrink-0 text-folio-text-tertiary hover:text-folio-text-primary transition-colors"
+              aria-label="Dismiss"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Project Credits */}
       <div className="rounded-[20px] border border-folio-border-subtle bg-surface-ground p-6 shadow-sm">

@@ -17,6 +17,12 @@ interface ProjectTabsProps {
   isPublished: boolean;
   hasDraftOrPublished?: boolean;
   editorialState?: EditorialState;
+  /**
+   * Whether the Story tab should be shown. Derived on the server (owner keeps it
+   * once an interview exists; others only after publish). Falls back to the
+   * published-only rule when not provided.
+   */
+  storyTabVisible?: boolean;
 }
 
 export default function ProjectTabs({
@@ -25,6 +31,7 @@ export default function ProjectTabs({
   isPublished,
   hasDraftOrPublished,
   editorialState,
+  storyTabVisible,
 }: ProjectTabsProps) {
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -40,7 +47,7 @@ export default function ProjectTabs({
   const totalSelections =
     project.rooms?.reduce((sum: number, room: any) => sum + (room.selections?.length || 0), 0) || 0;
 
-  const showStory = editorialState === 'PUBLISHED';
+  const showStory = storyTabVisible ?? editorialState === 'PUBLISHED';
   const showPublish =
     editorialState === 'GENERATED' ||
     editorialState === 'PUBLISHED' ||
