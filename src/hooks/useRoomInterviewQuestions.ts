@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import type { RoomQuestionsGroup, RoomGroupedQuestions } from '@/lib/editorial/roomPacing';
 import type { ProjectSizeClassification } from '@/lib/interview/contextLevel';
+import { readQuestionsCache, writeQuestionsCache } from '@/lib/interview/questionsCache';
 
 export interface RoomInterviewQuestionsResult {
   rooms: RoomQuestionsGroup[];
@@ -45,7 +46,10 @@ function pinProjectFirst(rooms: RoomQuestionsGroup[]): RoomQuestionsGroup[] {
  * Fetches interview questions grouped by room from the API.
  * Used by InterviewModal when room pacing is active.
  */
-export function useRoomInterviewQuestions(projectId: string): RoomInterviewQuestionsResult {
+export function useRoomInterviewQuestions(
+  projectId: string,
+  cacheSignature?: string,
+): RoomInterviewQuestionsResult {
   const [rooms, setRooms] = useState<RoomQuestionsGroup[]>([]);
   const [crossRoomQuestions, setCrossRoomQuestions] = useState<RoomGroupedQuestions['crossRoomQuestions']>([]);
   const [globalGates, setGlobalGates] = useState<RoomGroupedQuestions['globalGates']>({
@@ -69,6 +73,35 @@ export function useRoomInterviewQuestions(projectId: string): RoomInterviewQuest
 
     let cancelled = false;
 
+    const cacheKey = `folio.interview.qcache.grouped.${projectId}`;
+    const signature = cacheSignature ?? 'default';
+
+    const applyData = (data: any) => {
+      setRooms(pinProjectFirst(deduplicateRooms(data.rooms || [])));
+      setCrossRoomQuestions(data.crossRoomQuestions || []);
+      setGlobalGates(data.globalGates || { minimumTotalAnswers: 5, warnings: [] });
+      setContextLevel(data.contextLevel ?? 0);
+      setContextDescription(data.contextDescription || '');
+      setUpgradeSuggestion(data.upgradeSuggestion || null);
+      setProjectSize(data.projectSize || {
+        size: 'focused',
+        targetQuestionCount: 6,
+        roomCount: 0,
+        selectionCount: 0,
+      });
+    };
+
+    // Serve instantly from cache (and skip the slow LLM refetch) when fresh — no
+    // wait, no repeated API spend. Only trust a cache that actually has rooms.
+    const cached = readQuestionsCache<any>(cacheKey, signature);
+    if (cached && Array.isArray(cached.rooms) && cached.rooms.length > 0) {
+      applyData(cached);
+      setLoading(false);
+      return () => {
+        cancelled = true;
+      };
+    }
+
     async function fetchGroupedQuestions() {
       try {
         setLoading(true);
@@ -84,18 +117,10 @@ export function useRoomInterviewQuestions(projectId: string): RoomInterviewQuest
         const data = await response.json();
         if (cancelled) return;
 
-        setRooms(pinProjectFirst(deduplicateRooms(data.rooms || [])));
-        setCrossRoomQuestions(data.crossRoomQuestions || []);
-        setGlobalGates(data.globalGates || { minimumTotalAnswers: 5, warnings: [] });
-        setContextLevel(data.contextLevel ?? 0);
-        setContextDescription(data.contextDescription || '');
-        setUpgradeSuggestion(data.upgradeSuggestion || null);
-        setProjectSize(data.projectSize || {
-          size: 'focused',
-          targetQuestionCount: 6,
-          roomCount: 0,
-          selectionCount: 0,
-        });
+        applyData(data);
+        if (Array.isArray(data.rooms) && data.rooms.length > 0) {
+          writeQuestionsCache(cacheKey, signature, data);
+        }
       } catch (err) {
         if (!cancelled) {
           setError(err instanceof Error ? err.message : 'Unknown error');
@@ -111,7 +136,7 @@ export function useRoomInterviewQuestions(projectId: string): RoomInterviewQuest
     return () => {
       cancelled = true;
     };
-  }, [projectId]);
+  }, [projectId, cacheSignature]);
 
   return {
     rooms,
