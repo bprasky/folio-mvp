@@ -381,6 +381,10 @@ export default function MediaSection({ project, isOwner, images, projectPost, in
           onChanged={() => router.refresh()}
           onExit={() => setShowTagger(false)}
           onImportFinishBook={routeDocument}
+          onProceed={() => {
+            setShowTagger(false);
+            setShowInterviewModal(true);
+          }}
         />
       ) : (
       <>
