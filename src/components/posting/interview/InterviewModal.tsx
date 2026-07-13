@@ -482,9 +482,20 @@ export function InterviewModal({
   // Fetch questions using the new hook
   const { questions: fetchedQuestions, loading: questionsLoading, context: questionsContext } = useInterviewQuestions(projectId, questionsCacheSignature);
 
-  // Room pacing: fetch room-grouped questions (Phase B)
+  // Room pacing: fetch room-grouped questions (Phase B).
+  // Two-phase generation: phase 1 delivers only the "About This Project" group,
+  // so pacing must activate on a single (project) group when real rooms are
+  // known to be coming (roomCount >= 1) — not just when rooms.length > 1.
   const roomData = useRoomInterviewQuestions(projectId, questionsCacheSignature);
-  const hasRoomPacing = roomData.rooms.length > 1 && !roomData.loading;
+  const hasRoomPacing =
+    !roomData.loading &&
+    roomData.rooms.length > 0 &&
+    (roomData.rooms.length > 1 || (roomData.projectSize?.roomCount ?? 0) >= 1);
+
+  // While room groups are still being generated (and haven't failed), the
+  // interview must not be finishable — otherwise canFinish flips true with
+  // only the project group present and the interview ends after About.
+  const roomsBlocked = hasRoomPacing && roomData.roomsPending && !roomData.roomsError;
 
   // The flat questions endpoint returns fast (and room-first), while the grouped
   // room-paced endpoint is slow. Without this guard the modal renders the flat
@@ -500,6 +511,15 @@ export function InterviewModal({
     roomData.crossRoomQuestions,
     roomData.globalGates,
   );
+
+  // Two-phase generation: the designer finished About This Project but the
+  // room groups (generated from those answers) haven't arrived yet — hold on
+  // an interstitial rather than re-showing the last question or offering Finish.
+  const waitingForRooms =
+    roomsBlocked &&
+    !roomFlow.pendingRoundTransition &&
+    roomFlow.currentRoom?.roomId === 'project' &&
+    roomFlow.roomProgress['project']?.status === 'complete';
 
   // Room-completeness signal for the quality gate. A room counts as "complete"
   // only when all its questions are answered (roomProgress status 'complete').
@@ -604,12 +624,13 @@ export function InterviewModal({
   const isLastQuestion = hasRoomPacing
     ? roomFlow.currentQuestionIndex >= roomFlow.totalQuestionsInRoom - 1
     : currentQuestionIndex >= totalQuestions - 1;
-  // isInterviewComplete: true only when ALL rooms/rounds are done AND we're on the last question
+  // isInterviewComplete: true only when ALL rooms/rounds are done AND we're on the last question.
+  // Never while room groups are still pending (two-phase generation).
   const isInterviewComplete = hasRoomPacing
-    ? roomFlow.canFinish && isLastQuestion
+    ? roomFlow.canFinish && !roomsBlocked && isLastQuestion
     : isLastQuestion;
   const isNearFinish = !isLastQuestion && totalQuestions > 1 && (hasRoomPacing
-    ? roomFlow.canFinish && roomFlow.currentQuestionIndex >= roomFlow.totalQuestionsInRoom - 2
+    ? roomFlow.canFinish && !roomsBlocked && roomFlow.currentQuestionIndex >= roomFlow.totalQuestionsInRoom - 2
     : currentQuestionIndex >= totalQuestions - 2);
 
   // Auto-generate: when the last question answer is saved, trigger generation automatically
@@ -882,6 +903,44 @@ export function InterviewModal({
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [roomFlow.pendingRoundTransition]);
 
+  // Two-phase generation, phase 2 trigger: once the About This Project BASE
+  // answers are saved, kick room-question generation. It runs server-side
+  // (informed by a fact digest of those answers) while the designer answers
+  // the project follow-ups — by the time they reach the first room, questions
+  // are usually ready. Idempotent: loadRooms() no-ops after success; a failed
+  // attempt retries on the next answer-driven progress change (bounded by
+  // user actions, so no hot loop).
+  useEffect(() => {
+    if (!hasRoomPacing || !roomData.roomsPending) return;
+    const projectProgress = roomFlow.roomProgress['project'];
+    if (!projectProgress) return;
+    const projectGroup = roomFlow.rooms.find((r) => r.roomId === 'project');
+    const baseCount = projectGroup?.budget.baseQuestions ?? 0;
+    const baseAnswersDone = baseCount > 0 && projectProgress.answeredCount >= baseCount;
+    if (baseAnswersDone || projectProgress.status === 'complete') {
+      logClient('two-phase:load-rooms', {
+        answeredCount: projectProgress.answeredCount,
+        baseCount,
+        projectStatus: projectProgress.status,
+      });
+      roomData.loadRooms();
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [hasRoomPacing, roomData.roomsPending, roomData.loadRooms, roomFlow.roomProgress, roomFlow.rooms]);
+
+  // Two-phase generation, arrival: when room groups land and the project
+  // section is already finished, advance into the first real room (the
+  // project group is pinned at index 0). Guards make this idempotent.
+  useEffect(() => {
+    if (!hasRoomPacing || roomData.roomsPending) return;
+    if (roomFlow.rooms.length <= 1) return;
+    if (roomFlow.currentRoom?.roomId !== 'project') return;
+    if (roomFlow.roomProgress['project']?.status !== 'complete') return;
+    logClient('two-phase:enter-first-room', { roomCount: roomFlow.rooms.length - 1 });
+    roomFlow.goToRoom(1);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [hasRoomPacing, roomData.roomsPending, roomFlow.rooms.length, roomFlow.currentRoom?.roomId, roomFlow.roomProgress]);
+
   // Handle sequential question answer submission
   const handleQuestionAnswerSubmit = useCallback(async () => {
     if (!currentQuestion || !currentAnswer.trim()) {
@@ -1000,8 +1059,10 @@ export function InterviewModal({
         // Room pacing: record answer and advance within room
         roomFlow.recordAnswer(currentQuestion.id);
         roomFlow.advanceQuestion();
-        // Check if all rooms done — if so, trigger generation
-        if (roomFlow.canFinish) {
+        // Check if all rooms done — if so, trigger generation.
+        // Never auto-complete while room groups are still pending (two-phase
+        // generation) — the About section alone must not end the interview.
+        if (roomFlow.canFinish && !roomsBlocked) {
           autoGenerateRef.current = true;
           setPhase("complete");
         }
@@ -1021,7 +1082,7 @@ export function InterviewModal({
     } finally {
       setIsSubmitting(false);
     }
-  }, [currentQuestion, currentAnswer, currentQuestionIndex, totalQuestions, persistAnswers, generateSingleFollowUp, handleBanner, followUps]);
+  }, [currentQuestion, currentAnswer, currentQuestionIndex, totalQuestions, persistAnswers, generateSingleFollowUp, handleBanner, followUps, roomsBlocked]);
 
   // Handle regeneration prompt choices when a previous answer was changed
   const handleKeepExistingFollowUps = useCallback(async () => {
@@ -1974,6 +2035,21 @@ export function InterviewModal({
                 {roomFlow.isProjectPhase
                   ? "A few follow-ups before we get into the rooms..."
                   : "A couple more questions based on what you shared..."}
+              </p>
+              <div className="flex justify-center pt-2">
+                <div className="animate-spin rounded-full h-5 w-5 border-2 border-[var(--accent)] border-t-transparent" />
+              </div>
+            </div>
+          </div>
+        ) : phase === "question" && hasRoomPacing && waitingForRooms ? (
+          /* Two-phase generation: rooms are being built from the About answers */
+          <div className="flex-1 flex flex-col items-center justify-center px-8 py-16">
+            <div className="max-w-md text-center space-y-4">
+              <p className="text-lg font-serif text-folio-text-primary">
+                Your project story is set.
+              </p>
+              <p className="text-sm text-folio-text-secondary">
+                Preparing questions for each room based on what you&apos;ve shared...
               </p>
               <div className="flex justify-center pt-2">
                 <div className="animate-spin rounded-full h-5 w-5 border-2 border-[var(--accent)] border-t-transparent" />

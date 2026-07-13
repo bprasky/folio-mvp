@@ -10,6 +10,7 @@ import { assessProjectContext, type ProjectContext } from './contextLevel';
 import { computeRoomBudget } from '@/lib/editorial/roomPacing';
 import { generateRoomQuestions, type RoomQuestionOutput } from './generateRoomQuestions';
 import type { GeneratedQuestion } from './generateQuestions';
+import type { KnownFacts } from './distillInterviewFacts';
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -27,6 +28,10 @@ const MIN_QUESTIONS_PER_ROOM = 2;
 
 export async function generateAllRoomQuestions(
   projectId: string,
+  options?: {
+    /** Fact digest from the project-level answers — informs room question wording */
+    knownFacts?: KnownFacts | null;
+  },
 ): Promise<{
   roomResults: RoomQuestionOutput[];
   context: ProjectContext;
@@ -151,6 +156,7 @@ export async function generateAllRoomQuestions(
         overallStyle,
         materialPalette,
         otherRoomNames,
+        knownFacts: options?.knownFacts ?? null,
       },
     });
   });

@@ -24,10 +24,15 @@ export async function GET(
     const grouped = url.searchParams.get('grouped');
     const maxQuestions = url.searchParams.get('maxQuestions');
     const prioritizeBoostable = url.searchParams.get('prioritizeBoostable');
+    const phaseParam = url.searchParams.get('phase');
 
-    // Room-grouped response for Phase B interview pacing
+    // Room-grouped response for Phase B interview pacing.
+    // Two-phase generation: `phase=project` returns just the About This Project
+    // group (fast); `phase=rooms` generates room questions informed by the
+    // designer's saved About answers. No phase = original single-shot behavior.
     if (grouped === 'true') {
-      const result = await getInterviewQuestionsGroupedByRoom(projectId);
+      const phase = phaseParam === 'project' || phaseParam === 'rooms' ? phaseParam : undefined;
+      const result = await getInterviewQuestionsGroupedByRoom(projectId, phase ? { phase } : undefined);
       return NextResponse.json(result);
     }
 
