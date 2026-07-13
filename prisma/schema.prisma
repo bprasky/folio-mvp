@@ -7603,16 +7603,48 @@ model DesignerAngle {
   designerId     String
   organizationId String?
 
-  angleType String // 'material_loyalty', 'evolution', 'anatomy_of_room', 'process', 'philosophy', 'client_dynamic', 'regional_identity'
-  summary   String // One-line editorial framing of the angle
-  signalIds String[] // Computed signal IDs cited by the model; validated against the digest before persistence
-  evidence  Json // References resolved from cited signals: productTagIds, imageIds, projectIds, interviewAnswerIds
+  angleType  String // 'material_loyalty', 'evolution', 'anatomy_of_room', 'process', 'philosophy', 'client_dynamic', 'regional_identity'
+  summary    String // One-line editorial framing of the angle
+  signalIds  String[] // Computed signal IDs cited by the model; validated against the digest before persistence
+  evidence   Json // References resolved from cited signals: productTagIds, imageIds, projectIds, interviewAnswerIds
   confidence Float
-  isFresh    Boolean @default(true) // False once consumed by a queue item
+  isFresh    Boolean  @default(true) // False once consumed by a queue item
 
   extractedAt DateTime  @default(now())
   expiresAt   DateTime?
 
+  queueItems EditorialQueueItem[]
+
   @@index([designerId, isFresh])
   @@map("designer_angles")
+}
+
+model EditorialQueueItem {
+  id         String @id @default(cuid())
+  designerId String
+  angleId    String
+
+  format  String // PostVariant value assigned to this piece
+  prompts Json // Generated questions/prompt structure, stored not rendered
+  status  String // 'recommended', 'in_progress', 'completed', 'scheduled', 'published', 'dismissed', 'expired'
+
+  // Consent (references docs/16_ATTRIBUTION_CONSENT.md)
+  distributionConsent Boolean   @default(false)
+  consentScope        String? // 'feed_only', 'feed_and_social'
+  consentAt           DateTime?
+
+  // Output linkage
+  projectPostId String? // Set when completed piece becomes a ProjectPost
+
+  // Calendar
+  scheduledSlot DateTime?
+
+  createdAt   DateTime  @default(now())
+  completedAt DateTime?
+
+  angle DesignerAngle @relation(fields: [angleId], references: [id])
+
+  @@index([designerId, status])
+  @@index([status, scheduledSlot])
+  @@map("editorial_queue_items")
 }
