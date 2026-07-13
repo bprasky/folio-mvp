@@ -13,7 +13,7 @@ import {
   FaRegClock,
   FaArrowRight,
 } from 'react-icons/fa';
-import { Sparkles, ArrowLeft } from 'lucide-react';
+import { Sparkles, ArrowLeft, ArrowRight } from 'lucide-react';
 import { isDocumentImage } from '@/lib/publish/computePublishReadiness';
 import { ProductTagPicker } from '@/components/project/ProductTagPicker';
 import { ProductEditModal } from '@/components/project/ProductEditModal';
@@ -75,6 +75,8 @@ interface TaggingSectionProps {
    * finish-schedule call). When omitted, the fast-path drop stays inert.
    */
   onImportFinishBook?: (file: File) => void;
+  /** Advance from tagging to the interview / question-generation step. */
+  onProceed?: () => void;
 }
 
 /**
@@ -94,6 +96,7 @@ export default function TaggingSection({
   onChanged,
   onExit,
   onImportFinishBook,
+  onProceed,
 }: TaggingSectionProps) {
   // Only one photo is in its working (expanded) state at a time.
   const [activePhotoId, setActivePhotoId] = useState<string | null>(null);
@@ -211,15 +214,28 @@ export default function TaggingSection({
     <div className="space-y-8">
       {/* Lede — interview-first: every tag gives the interview a real detail. */}
       <header className="space-y-2">
-        {onExit && (
-          <button
-            onClick={handleExit}
-            className="inline-flex items-center gap-1.5 folio-meta text-folio-text-secondary hover:text-folio-text-primary transition-colors"
-          >
-            <ArrowLeft className="w-3.5 h-3.5" />
-            Back to your photos
-          </button>
-        )}
+        <div className="flex items-center justify-between gap-3">
+          {onExit ? (
+            <button
+              onClick={handleExit}
+              className="inline-flex items-center gap-1.5 folio-meta text-folio-text-secondary hover:text-folio-text-primary transition-colors"
+            >
+              <ArrowLeft className="w-3.5 h-3.5" />
+              Back to your photos
+            </button>
+          ) : (
+            <span />
+          )}
+          {onProceed && isOwner && (
+            <button
+              onClick={onProceed}
+              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-[var(--accent)] text-white folio-meta font-medium hover:bg-[var(--accent-hover)] transition-colors"
+            >
+              Continue to interview
+              <ArrowRight className="w-3.5 h-3.5" />
+            </button>
+          )}
+        </div>
         <h2 className="font-headline italic text-3xl text-folio-text-primary">
           Tag the products in your rooms
         </h2>
@@ -331,6 +347,22 @@ export default function TaggingSection({
               </section>
             );
           })}
+        </div>
+      )}
+
+      {/* Done tagging — advance to the interview (question generation). */}
+      {onProceed && isOwner && photos.length > 0 && (
+        <div className="flex items-center justify-between gap-3 border-t border-folio-border-subtle pt-6">
+          <p className="folio-meta text-folio-text-secondary">
+            Done tagging? Your tags give the interview real details to ask about.
+          </p>
+          <button
+            onClick={onProceed}
+            className="inline-flex items-center gap-1.5 px-5 py-2.5 rounded-lg bg-[var(--accent)] text-white folio-ui font-medium hover:bg-[var(--accent-hover)] transition-colors whitespace-nowrap"
+          >
+            Continue to interview
+            <ArrowRight className="w-4 h-4" />
+          </button>
         </div>
       )}
 
