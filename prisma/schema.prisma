@@ -7590,3 +7590,29 @@ model ProductClaimCandidate {
   @@index([organizationId, status])
   @@map("product_claim_candidates")
 }
+
+// ─── Editorial Queue (docs/17_EDITORIAL_QUEUE.md) ─────────────────────────────
+// Proactive content generation: code computes corpus signals, one Anthropic
+// call ranks them into angles, formats are assigned afterward as containers.
+// designerId/organizationId are intentionally plain strings (no User/
+// Organization relation) per the spec's ADD-only schema — the only relation
+// is queue item → angle.
+
+model DesignerAngle {
+  id             String  @id @default(cuid())
+  designerId     String
+  organizationId String?
+
+  angleType String // 'material_loyalty', 'evolution', 'anatomy_of_room', 'process', 'philosophy', 'client_dynamic', 'regional_identity'
+  summary   String // One-line editorial framing of the angle
+  signalIds String[] // Computed signal IDs cited by the model; validated against the digest before persistence
+  evidence  Json // References resolved from cited signals: productTagIds, imageIds, projectIds, interviewAnswerIds
+  confidence Float
+  isFresh    Boolean @default(true) // False once consumed by a queue item
+
+  extractedAt DateTime  @default(now())
+  expiresAt   DateTime?
+
+  @@index([designerId, isFresh])
+  @@map("designer_angles")
+}
