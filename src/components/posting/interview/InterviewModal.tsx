@@ -474,11 +474,16 @@ export function InterviewModal({
     bannerTimeoutRef.current = setTimeout(() => setBanner(null), 4000);
   }, []);
 
+  // Cache signature: re-use generated questions across opens, but regenerate when
+  // the project's photos or tags change (which is what the questions are built
+  // from). Keeps re-opens instant and avoids re-burning the LLM call.
+  const questionsCacheSignature = `${images.length}:${tags.length}`;
+
   // Fetch questions using the new hook
-  const { questions: fetchedQuestions, loading: questionsLoading, context: questionsContext } = useInterviewQuestions(projectId);
+  const { questions: fetchedQuestions, loading: questionsLoading, context: questionsContext } = useInterviewQuestions(projectId, questionsCacheSignature);
 
   // Room pacing: fetch room-grouped questions (Phase B)
-  const roomData = useRoomInterviewQuestions(projectId);
+  const roomData = useRoomInterviewQuestions(projectId, questionsCacheSignature);
   const hasRoomPacing = roomData.rooms.length > 1 && !roomData.loading;
 
   // The flat questions endpoint returns fast (and room-first), while the grouped

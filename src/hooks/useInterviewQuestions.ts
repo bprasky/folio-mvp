@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { InterviewQuestion } from '@/types/interview';
+import { readQuestionsCache, writeQuestionsCache } from '@/lib/interview/questionsCache';
 
 export type ContextLevel = 0 | 1 | 2 | 3 | 4 | 5;
 
@@ -17,7 +18,7 @@ export interface InterviewQuestionsContext {
   projectSize: ProjectSizeInfo;
 }
 
-export function useInterviewQuestions(projectId: string) {
+export function useInterviewQuestions(projectId: string, cacheSignature?: string) {
   const [questions, setQuestions] = useState<InterviewQuestion[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -30,6 +31,33 @@ export function useInterviewQuestions(projectId: string) {
 
   useEffect(() => {
     if (!projectId) return;
+
+    let cancelled = false;
+
+    const cacheKey = `folio.interview.qcache.flat.${projectId}`;
+    const signature = cacheSignature ?? 'default';
+
+    const applyData = (data: any) => {
+      setQuestions(data.questions || []);
+      if (data.contextLevel !== undefined) {
+        setContext({
+          contextLevel: data.contextLevel as ContextLevel,
+          contextDescription: data.contextDescription || 'No project context available',
+          upgradeSuggestion: data.upgradeSuggestion || null,
+          projectSize: data.projectSize || { size: 'focused', targetQuestionCount: 6, roomCount: 0, selectionCount: 0 },
+        });
+      }
+    };
+
+    // Instant, free re-open when the cache is fresh and non-empty.
+    const cached = readQuestionsCache<any>(cacheKey, signature);
+    if (cached && Array.isArray(cached.questions) && cached.questions.length > 0) {
+      applyData(cached);
+      setLoading(false);
+      return () => {
+        cancelled = true;
+      };
+    }
 
     async function fetchQuestions() {
       try {
@@ -44,27 +72,27 @@ export function useInterviewQuestions(projectId: string) {
         }
 
         const data = await response.json();
-        setQuestions(data.questions || []);
-
-        // Extract context information from response
-        if (data.contextLevel !== undefined) {
-          setContext({
-            contextLevel: data.contextLevel as ContextLevel,
-            contextDescription: data.contextDescription || 'No project context available',
-            upgradeSuggestion: data.upgradeSuggestion || null,
-            projectSize: data.projectSize || { size: 'focused', targetQuestionCount: 6, roomCount: 0, selectionCount: 0 },
-          });
+        if (cancelled) return;
+        applyData(data);
+        if (Array.isArray(data.questions) && data.questions.length > 0) {
+          writeQuestionsCache(cacheKey, signature, data);
         }
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'Unknown error');
-        console.error('[useInterviewQuestions] Error:', err);
+        if (!cancelled) {
+          setError(err instanceof Error ? err.message : 'Unknown error');
+          console.error('[useInterviewQuestions] Error:', err);
+        }
       } finally {
-        setLoading(false);
+        if (!cancelled) setLoading(false);
       }
     }
 
     fetchQuestions();
-  }, [projectId]);
+
+    return () => {
+      cancelled = true;
+    };
+  }, [projectId, cacheSignature]);
 
   return { questions, loading, error, context };
 }
