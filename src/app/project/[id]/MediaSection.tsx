@@ -388,16 +388,26 @@ export default function MediaSection({ project, isOwner, images, projectPost, in
         />
       ) : (
       <>
-      {/* Re-entry into tagging after stepping back on the Tags step (the tracker
-          no longer carries a redundant tag-by-hand card there). */}
+      {/* Re-entry controls on the Tags step (the tracker's CTA and the tab strip
+          are hidden here to keep tagging focused). "Continue to interview" is the
+          always-available way into (or back into) the interview — without it,
+          exiting the interview leaves no visible path back on this step. Shown
+          unconditionally so it survives the same-session case where the server's
+          editorialState prop hasn't re-rendered yet. */}
       {initialTagging && isOwner && (
-        <div className="flex justify-end">
+        <div className="flex justify-end gap-3">
           <button
             onClick={() => setShowTagger(true)}
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-[var(--accent)] text-white folio-meta font-medium hover:bg-[var(--accent-hover)] transition-colors"
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-folio-border-subtle text-folio-text-secondary folio-meta font-medium hover:text-folio-text-primary transition-colors"
           >
             <FaTag className="w-3 h-3" />
             Tag products
+          </button>
+          <button
+            onClick={() => setShowInterviewModal(true)}
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-[var(--accent)] text-white folio-meta font-medium hover:bg-[var(--accent-hover)] transition-colors"
+          >
+            Continue to interview
           </button>
         </div>
       )}
