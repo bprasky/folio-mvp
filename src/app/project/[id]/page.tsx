@@ -386,15 +386,19 @@ export default async function ProjectPage({
           </div>
         )}
 
-        {/* Flat tab strip */}
-        <ProjectTabs
-          project={sanitizedProject}
-          currentView={view}
-          isPublished={isPublished}
-          hasDraftOrPublished={hasDraftOrPublished}
-          editorialState={editorialState}
-          storyTabVisible={storyTabVisible}
-        />
+        {/* Flat tab strip. Hidden on the Tags step: that surface is the focused
+            inline tagging flow, and Boards / Action items / Media are cross-project
+            navigation that only distracts from the active posting flow. */}
+        {!startInTagging && (
+          <ProjectTabs
+            project={sanitizedProject}
+            currentView={view}
+            isPublished={isPublished}
+            hasDraftOrPublished={hasDraftOrPublished}
+            editorialState={editorialState}
+            storyTabVisible={storyTabVisible}
+          />
+        )}
       </div>
 
       {/* PUBLISH tab — full-bleed immersive preview */}
