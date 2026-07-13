@@ -1456,6 +1456,15 @@ export async function POST(
     const force = Boolean(body.force);
     const answersOverride = Array.isArray(body.answersOverride) ? body.answersOverride : undefined;
     const followupsOverride = Array.isArray(body.followupsOverride) ? body.followupsOverride : undefined;
+    // Quality gate: the client (room-paced interview) sends the Room IDs whose
+    // questions are fully answered. Images for any real room NOT in this set are
+    // withheld from generation so an unfinished room can't emit a placeholder
+    // chapter. Only enforced when a non-empty set is provided — absent/empty
+    // means "no gating" (unchanged behaviour), which biases toward inclusion so
+    // a completed room is never accidentally dropped.
+    const completedRoomIds = Array.isArray(body.completedRoomIds)
+      ? (body.completedRoomIds as unknown[]).filter((x): x is string => typeof x === 'string')
+      : undefined;
 
     // Editorial context toggles (default: include everything available)
     const includeBio = body.includeBio !== false;
@@ -2147,6 +2156,46 @@ export async function POST(
       });
     }
 
+    // --- Quality gate: withhold images for rooms that aren't fully answered ---
+    // generateEditorialDraft derives one gallery chapter per image-room and
+    // force-fills any room lacking editorial content with placeholder prose. To
+    // stop a half-finished room from leaking that placeholder, we drop its images
+    // here so no chapter is ever created for it. Real project rooms only:
+    // unassigned/General images always pass through (they never form a chapter).
+    // roomId → Room.name matching (roomIdToName) is authoritative, so a completed
+    // room can't be dropped by name drift. No-op when completedRoomIds is absent.
+    let gatedImages = imagesWithRoomData;
+    let gatedValidImageIds = validImageIds;
+    const excludedRooms: Array<{ roomName: string; imageCount: number }> = [];
+    if (completedRoomIds && completedRoomIds.length > 0) {
+      const completedRoomNames = new Set(
+        completedRoomIds.map(id => roomIdToName.get(id)).filter((n): n is string => !!n)
+      );
+      const realRoomNames = new Set(currentRoomNames);
+      const excludedCounts: Record<string, number> = {};
+      gatedImages = imagesWithRoomData.filter(img => {
+        const rn = img.room;
+        if (rn && realRoomNames.has(rn) && !completedRoomNames.has(rn)) {
+          excludedCounts[rn] = (excludedCounts[rn] || 0) + 1;
+          return false; // incomplete real room → withhold its images
+        }
+        return true;
+      });
+      const keptIds = new Set(gatedImages.map(i => i.id));
+      gatedValidImageIds = validImageIds.filter(id => keptIds.has(id));
+      for (const roomName of Object.keys(excludedCounts)) {
+        excludedRooms.push({ roomName, imageCount: excludedCounts[roomName] });
+      }
+      if (excludedRooms.length > 0) {
+        console.log('[ROOM QUALITY GATE] Withholding incomplete rooms from generation:', {
+          excludedRooms,
+          completed: Array.from(completedRoomNames),
+          _cid,
+        });
+      }
+    }
+    const gatedKeptIds = new Set(gatedImages.map(i => i.id));
+
     // --- Normalize inputs to GenInput for the unified generateEditorialDraft ---
     const genInput: GenInput = {
       project: {
@@ -2163,11 +2212,11 @@ export async function POST(
         name: designerName || projectData.designer.name || 'Designer',
         studio: projectData.designer.studio,
       } : undefined,
-      images: imagesWithRoomData.map(img => ({
+      images: gatedImages.map(img => ({
         id: img.id,
         room: img.room || undefined,
       })),
-      tags: validImages.flatMap(img =>
+      tags: validImages.filter(img => gatedKeptIds.has(img.id)).flatMap(img =>
         (img.tags || []).map((tag: any) => ({
           id: tag.id,
           imageId: img.id,
@@ -2193,7 +2242,7 @@ export async function POST(
         roomId: undefined,
       })).filter(a => a.answer.trim()),
       rooms: projectRooms.map(r => ({ id: r.id, name: r.name })),
-      imageOrder: validImageIds,
+      imageOrder: gatedValidImageIds,
       correlationId: _cid,
       designerBio,
       projectHistory,
@@ -2590,6 +2639,9 @@ export async function POST(
 
     return NextResponse.json({
       ok: true,
+      // Rooms withheld from the story because they weren't fully answered. The
+      // client surfaces these to the designer ("finish these to include them").
+      excludedRooms,
       meta: {
         designerBioMissing: !designerBio,
         hasProjectHistory: !!projectHistory,

@@ -164,6 +164,12 @@ export function InterviewModal({
   const [showRegeneratePrompt, setShowRegeneratePrompt] = useState(false);
   const [pendingResubmitQuestionId, setPendingResubmitQuestionId] = useState<string | null>(null);
 
+  // Quality gate: rooms that aren't fully answered are withheld from generation
+  // so no placeholder prose leaks into the story. This prompt confirms the
+  // exclusion before we spend the generation call.
+  const [showGenerateConfirm, setShowGenerateConfirm] = useState(false);
+  const generateConfirmedRef = useRef(false);
+
   const baseAnswers = useMemo(() => answers.filter((answer) => !answer.isFollowUp), [answers]);
   const followUpAnswersState = useMemo(() => answers.filter((answer) => answer.isFollowUp), [answers]);
   
@@ -479,7 +485,30 @@ export function InterviewModal({
     roomData.crossRoomQuestions,
     roomData.globalGates,
   );
-  
+
+  // Room-completeness signal for the quality gate. A room counts as "complete"
+  // only when all its questions are answered (roomProgress status 'complete').
+  // The project pseudo-room ('project') never maps to image chapters, so it's
+  // irrelevant to what gets withheld and is excluded from the "left out" list.
+  const completedRoomIds = useMemo(() => {
+    if (!hasRoomPacing) return undefined;
+    return Object.entries(roomFlow.roomProgress)
+      .filter(([, p]) => p?.status === 'complete')
+      .map(([roomId]) => roomId);
+  }, [hasRoomPacing, roomFlow.roomProgress]);
+
+  const excludedRoomNames = useMemo(() => {
+    if (!hasRoomPacing) return [] as string[];
+    return roomFlow.rooms
+      .filter(
+        (r) =>
+          r.roomId !== 'project' &&
+          (roomFlow.roomProgress[r.roomId]?.status ?? 'not_started') !== 'complete',
+      )
+      .map((r) => r.roomName);
+  }, [hasRoomPacing, roomFlow.rooms, roomFlow.roomProgress]);
+
+
   // Convert fetched questions to InterviewQuestion format for compatibility
   const contextualQuestions = useMemo(() => {
     return fetchedQuestions
@@ -1198,6 +1227,15 @@ export function InterviewModal({
   const canClickGenerate = useMemo(() => !isGenerating, [isGenerating]);
 
   const handleGenerate = useCallback(async () => {
+    // Quality gate: if some rooms aren't fully answered, confirm before spending
+    // the generation call. Incomplete rooms are withheld so no placeholder prose
+    // leaks into the story. Once confirmed this session, don't re-prompt.
+    if (excludedRoomNames.length > 0 && !generateConfirmedRef.current) {
+      logClient('generate:gated-incomplete-rooms', { excluded: excludedRoomNames });
+      setShowGenerateConfirm(true);
+      return;
+    }
+
     const now = Date.now();
     if (now - lastClickRef.current < DEBOUNCE_MS) {
       logClient('generate:blocked:debounce');
@@ -1287,6 +1325,10 @@ export function InterviewModal({
           body: JSON.stringify({
             forceOverwriteDraft: true,
             mode: 'recomposition',
+            // Only fully-answered rooms compose into the story; the server
+            // withholds images for any room not in this set (incomplete rooms
+            // never emit placeholder chapters). Omitted when not room-paced.
+            completedRoomIds,
             answersOverride: baseAnswers.map(a => ({
               questionId: a.questionId,
               section: a.section,
@@ -1424,6 +1466,7 @@ export function InterviewModal({
           setBanner('Generated a base story draft while AI was unavailable. You can refine this later.');
         }
 
+        stashExcludedRooms(projectId, retryData?.excludedRooms);
         onOpenChange(false);
         if (onDraftGenerated) {
           onDraftGenerated();
@@ -1478,6 +1521,7 @@ export function InterviewModal({
         setBanner('Generated a base draft while AI was unavailable. You can refine this later.');
       }
 
+      stashExcludedRooms(projectId, data?.excludedRooms);
       onOpenChange(false);
       if (onDraftGenerated) {
         onDraftGenerated();
@@ -1496,7 +1540,23 @@ export function InterviewModal({
     } finally {
       setIsGenerating(false);
     }
-  }, [projectId, isGenerating, generationAttempts, baseAnswers, followUpAnswersState, step, router, onOpenChange, onDraftGenerated, handleBanner, persistAnswers]);
+  }, [projectId, isGenerating, generationAttempts, baseAnswers, followUpAnswersState, step, router, onOpenChange, onDraftGenerated, handleBanner, persistAnswers, excludedRoomNames, completedRoomIds]);
+
+  // Quality-gate confirmation: proceed with only the completed rooms, or return
+  // to the interview to finish the incomplete ones.
+  const handleConfirmGenerate = useCallback(() => {
+    generateConfirmedRef.current = true;
+    setShowGenerateConfirm(false);
+    handleGenerate();
+  }, [handleGenerate]);
+
+  const handleCancelGenerate = useCallback(() => {
+    // Bail without generating. All answers are already persisted, so closing is
+    // lossless; the designer can reopen (Continue interview) to finish the
+    // remaining rooms before generating.
+    setShowGenerateConfirm(false);
+    onOpenChange(false);
+  }, [onOpenChange]);
 
   // Auto-trigger generation when phase transitions to "complete" from the last question
   useEffect(() => {
@@ -1910,6 +1970,41 @@ export function InterviewModal({
               images={images}
             />
           </div>
+        ) : phase === "complete" && showGenerateConfirm ? (
+          /* Quality gate: some rooms aren't finished — confirm before generating */
+          <div className="flex-1 flex flex-col items-center justify-center px-8 py-12">
+            <div className="max-w-md text-center space-y-6">
+              <h3 className="text-xl font-serif text-folio-text-primary">
+                A few rooms aren’t finished
+              </h3>
+              <p className="text-sm text-folio-text-secondary leading-relaxed">
+                These rooms don’t have all their questions answered yet, so we’ll leave
+                them out of your story for now — a half-finished room reads as low quality.
+              </p>
+              <ul className="text-sm font-medium text-folio-text-primary space-y-1">
+                {excludedRoomNames.map((name) => (
+                  <li key={name}>{name}</li>
+                ))}
+              </ul>
+              <p className="text-sm text-folio-text-secondary leading-relaxed">
+                Finish them now, or generate with your completed rooms and add these later.
+              </p>
+              <div className="flex flex-col gap-3 pt-2">
+                <button
+                  onClick={handleConfirmGenerate}
+                  className="px-6 py-3 text-sm font-medium text-white bg-[var(--accent)] rounded-full hover:bg-[var(--accent-hover)] transition-colors"
+                >
+                  Generate with completed rooms
+                </button>
+                <button
+                  onClick={handleCancelGenerate}
+                  className="px-6 py-3 text-sm font-medium text-folio-text-secondary hover:text-folio-text-primary transition-colors"
+                >
+                  Not now — I’ll finish these first
+                </button>
+              </div>
+            </div>
+          </div>
         ) : phase === "complete" ? (
           /* Generation in progress — auto-triggered after last question */
           <GenerationProgress
@@ -1961,7 +2056,7 @@ export function InterviewModal({
               </div>
             )}
 
-            {!showDraftResume && !(phase === "complete" && isGenerating) && <FooterBar
+            {!showDraftResume && !(phase === "complete" && (isGenerating || showGenerateConfirm)) && <FooterBar
               phase={phase}
               onBack={
                 phase === "question" && (hasRoomPacing ? roomFlow.canGoBack : currentQuestionIndex > 0)
@@ -2038,6 +2133,35 @@ export function InterviewModal({
 
 function getValidationStorageKey(projectId: string) {
   return `folio.interview.validation.${projectId}`;
+}
+
+/** Key the Story tab reads to surface a "these rooms were left out" notice. */
+export function getExcludedRoomsStorageKey(projectId: string) {
+  return `folio.interview.excludedRooms.${projectId}`;
+}
+
+/**
+ * Persist the rooms the server withheld from generation so the Story surface can
+ * tell the designer which rooms weren't included (and why). Cleared once shown.
+ */
+function stashExcludedRooms(
+  projectId: string,
+  excludedRooms: Array<{ roomName: string }> | undefined,
+) {
+  if (typeof window === "undefined") return;
+  try {
+    const names = Array.isArray(excludedRooms)
+      ? excludedRooms.map((r) => r?.roomName).filter((n): n is string => !!n)
+      : [];
+    const key = getExcludedRoomsStorageKey(projectId);
+    if (names.length > 0) {
+      window.sessionStorage.setItem(key, JSON.stringify(names));
+    } else {
+      window.sessionStorage.removeItem(key);
+    }
+  } catch {
+    /* noop */
+  }
 }
 
 function sanitizeAnswerForSend(

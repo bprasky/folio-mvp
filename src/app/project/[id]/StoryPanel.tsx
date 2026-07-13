@@ -63,9 +63,32 @@ export default function StoryPanel({ projectId, project, images, isOwner }: Stor
   const [showTagDiagnostic, setShowTagDiagnostic] = useState(false);
   const [showInterviewModal, setShowInterviewModal] = useState(false);
 
+  // Rooms the last generation withheld because they weren't fully answered.
+  // Stashed by InterviewModal in sessionStorage; shown once, then cleared.
+  const [excludedRooms, setExcludedRooms] = useState<string[]>([]);
+
   // Reflection edit modal state — store the entry by reference (filteredAnswers
   // indexes don't map 1:1 to `answers` when empty entries are filtered out).
   const [editingReflection, setEditingReflection] = useState<QA | null>(null);
+
+  // Surface (once) any rooms the last generation left out for being unfinished.
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    // Key mirrors getExcludedRoomsStorageKey in InterviewModal.
+    const key = `folio.interview.excludedRooms.${projectId}`;
+    try {
+      const raw = window.sessionStorage.getItem(key);
+      if (raw) {
+        const names = JSON.parse(raw);
+        if (Array.isArray(names) && names.length > 0) {
+          setExcludedRooms(names.filter((n): n is string => typeof n === "string"));
+        }
+        window.sessionStorage.removeItem(key);
+      }
+    } catch {
+      /* noop */
+    }
+  }, [projectId]);
 
   // Deduplicate answers by question and answer content
   const dedupeAnswers = (answers: QA[]): QA[] => {
@@ -339,6 +362,31 @@ export default function StoryPanel({ projectId, project, images, isOwner }: Stor
             </span>
           </div>
         </button>
+      )}
+
+      {/* Rooms left out of the last generation for being unfinished */}
+      {isOwner && excludedRooms.length > 0 && (
+        <div className="rounded-2xl border border-folio-border-subtle bg-surface-ground p-5">
+          <div className="flex items-start justify-between gap-4">
+            <div>
+              <p className="folio-ui font-semibold text-folio-text-primary">
+                {excludedRooms.length === 1 ? 'A room was' : 'Some rooms were'} left out of your story
+              </p>
+              <p className="folio-meta text-folio-text-secondary mt-1">
+                {excludedRooms.join(', ')} {excludedRooms.length === 1 ? "wasn't" : "weren't"} finished,
+                so {excludedRooms.length === 1 ? 'it was' : 'they were'} left out to keep the quality high.
+                Continue the interview to finish {excludedRooms.length === 1 ? 'it' : 'them'} and regenerate.
+              </p>
+            </div>
+            <button
+              onClick={() => setExcludedRooms([])}
+              className="shrink-0 text-folio-text-tertiary hover:text-folio-text-primary transition-colors"
+              aria-label="Dismiss"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
       )}
 
       {/* Project Credits */}
