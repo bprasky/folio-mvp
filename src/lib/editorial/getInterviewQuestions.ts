@@ -357,7 +357,16 @@ async function persistKnownFacts(projectId: string, knownFacts: KnownFacts): Pro
  */
 export async function getInterviewQuestionsGroupedByRoom(
   projectId: string,
-  options?: { phase?: InterviewGenerationPhase },
+  options?: {
+    phase?: InterviewGenerationPhase;
+    /**
+     * Allow persisting the fact digest to provenance. The caller (route
+     * layer) must only set this when the requester has WRITE access to the
+     * project — this function is reachable from a view-gated GET, and a
+     * viewer must never trigger a DB mutation.
+     */
+    persistFacts?: boolean;
+  },
 ): Promise<GroupedQuestionsResult> {
   const phase = options?.phase ?? 'full';
   const { getContextLevelDescription, getContextUpgradeSuggestion } = await import('@/lib/interview');
@@ -392,7 +401,7 @@ export async function getInterviewQuestionsGroupedByRoom(
     try {
       const aboutAnswers = await readAboutProjectAnswers(projectId);
       knownFacts = await distillInterviewFacts(aboutAnswers);
-      if (knownFacts) {
+      if (knownFacts && options?.persistFacts) {
         await persistKnownFacts(projectId, knownFacts);
       }
       console.info('[getInterviewQuestionsGroupedByRoom] rooms phase', {

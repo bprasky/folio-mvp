@@ -98,6 +98,10 @@ export function useRoomInterviewQuestions(
   const roomsRequestedRef = useRef(false);
   const phase1DataRef = useRef<any>(null);
   const mountedRef = useRef(true);
+  // Fetch epoch: bumped whenever projectId/cacheSignature restarts the cycle,
+  // so an in-flight loadRooms() from a previous signature can't merge stale
+  // room results into (or cache them under) the new signature.
+  const epochRef = useRef(0);
 
   const cacheKey = `folio.interview.qcache.grouped.${projectId}`;
   const signature = cacheSignature ?? 'default';
@@ -115,6 +119,7 @@ export function useRoomInterviewQuestions(
     let cancelled = false;
 
     // New signature (photos/tags changed) → full regeneration cycle
+    epochRef.current += 1;
     roomsRequestedRef.current = false;
     phase1DataRef.current = null;
     setRoomsLoaded(false);
@@ -201,6 +206,7 @@ export function useRoomInterviewQuestions(
     if (!projectId) return;
     if (roomsRequestedRef.current) return;
     roomsRequestedRef.current = true;
+    const epoch = epochRef.current;
 
     (async () => {
       try {
@@ -211,7 +217,9 @@ export function useRoomInterviewQuestions(
           throw new Error('Failed to fetch room questions');
         }
         const data = await response.json();
-        if (!mountedRef.current) return;
+        // A signature change restarted the cycle while this fetch was in
+        // flight — these results belong to the old signature. Drop them.
+        if (!mountedRef.current || epoch !== epochRef.current) return;
 
         const phase1 = phase1DataRef.current;
         const mergedRooms = pinProjectFirst(
@@ -222,8 +230,14 @@ export function useRoomInterviewQuestions(
         setRoomsError(null);
         setRoomsLoaded(true);
 
-        // Cache the assembled full set so re-opens are instant with stable IDs
-        if (phase1 && mergedRooms.length > 1) {
+        // Cache the assembled full set so re-opens are instant with stable
+        // IDs — but only when room generation actually produced questions.
+        // Caching all-empty room groups (every per-room LLM call failed)
+        // would serve a broken set on every reopen with no retry path.
+        const hasRoomQuestions = (data.rooms || []).some(
+          (r: any) => Array.isArray(r?.questions) && r.questions.length > 0
+        );
+        if (phase1 && mergedRooms.length > 1 && hasRoomQuestions) {
           writeQuestionsCache(cacheKey, signature, {
             ...phase1,
             rooms: mergedRooms,
@@ -231,7 +245,7 @@ export function useRoomInterviewQuestions(
           });
         }
       } catch (err) {
-        if (!mountedRef.current) return;
+        if (!mountedRef.current || epoch !== epochRef.current) return;
         // Allow a later trigger to retry rather than dead-ending the interview
         roomsRequestedRef.current = false;
         setRoomsError(err instanceof Error ? err.message : 'Unknown error');

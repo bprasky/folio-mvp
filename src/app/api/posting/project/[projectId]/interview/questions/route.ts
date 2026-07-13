@@ -4,7 +4,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/app/api/auth/[...nextauth]/options';
 import { getInterviewQuestionsWithContext, getInterviewQuestionsGroupedByRoom } from '@/lib/editorial/getInterviewQuestions';
-import { assertProjectView } from '@/lib/authz/access';
+import { assertProjectView, assertProjectWrite } from '@/lib/authz/access';
 
 export async function GET(
   request: NextRequest,
@@ -32,7 +32,24 @@ export async function GET(
     // designer's saved About answers. No phase = original single-shot behavior.
     if (grouped === 'true') {
       const phase = phaseParam === 'project' || phaseParam === 'rooms' ? phaseParam : undefined;
-      const result = await getInterviewQuestionsGroupedByRoom(projectId, phase ? { phase } : undefined);
+
+      // Persisting the fact digest is a DB write — only allow it when the
+      // requester has WRITE access, since this GET is view-gated and viewers
+      // (e.g. vendor participants) must never trigger a mutation.
+      let persistFacts = false;
+      if (phase === 'rooms') {
+        try {
+          await assertProjectWrite(session.user.id, projectId);
+          persistFacts = true;
+        } catch {
+          persistFacts = false;
+        }
+      }
+
+      const result = await getInterviewQuestionsGroupedByRoom(
+        projectId,
+        phase ? { phase, persistFacts } : undefined,
+      );
       return NextResponse.json(result);
     }
 

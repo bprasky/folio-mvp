@@ -71,6 +71,16 @@ Two-phase generation is live end-to-end. Design decisions that matter:
 - **Known accepted races** (documented in code): provenance read-modify-write
   between knownFacts persist and concurrent answer/follow-up saves — same
   fresh-read pattern and blast radius as the existing followups routes.
+- **Post-review fixes (folio-code-reviewer):** (1) BLOCKER: `persistKnownFacts`
+  was a DB write reachable through the view-gated questions GET — now the route
+  checks `assertProjectWrite` and passes `persistFacts`; viewers can never
+  trigger the mutation. (2) `loadRooms()` gained a fetch-epoch guard so an
+  in-flight rooms fetch from a stale cacheSignature can't merge/cache under the
+  new signature. (3) The full-set cache write now requires actual room
+  questions — an all-rooms-failed generation is no longer cached as success.
+  Deliberately skipped: reviewer's nit about lost `Promise.all` parallelism on
+  the legacy no-phase path (one ~10ms serialized findUnique vs a multi-second
+  LLM pipeline, on a path the frontend no longer calls).
 - **Follow-up (not done, deliberate):** the flat `useInterviewQuestions` hook
   still triggers a full digest-free room generation server-side on modal open
   (pre-existing double-spend; its results only feed legacy/metadata paths).
