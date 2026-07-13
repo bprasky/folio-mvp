@@ -480,6 +480,16 @@ export function InterviewModal({
   // Room pacing: fetch room-grouped questions (Phase B)
   const roomData = useRoomInterviewQuestions(projectId);
   const hasRoomPacing = roomData.rooms.length > 1 && !roomData.loading;
+
+  // The flat questions endpoint returns fast (and room-first), while the grouped
+  // room-paced endpoint is slow. Without this guard the modal renders the flat
+  // questions (e.g. "Dining Room") for the whole time the grouped call is
+  // generating, then jarringly reorders to "About This Project". When the flat
+  // context says the project has multiple rooms, room pacing IS coming — so hold
+  // on the loading state until the grouped questions resolve instead of showing
+  // the soon-to-be-replaced flat questions.
+  const expectRoomPacing = (questionsContext?.projectSize?.roomCount ?? 0) > 1;
+  const roomQuestionsPending = expectRoomPacing && roomData.loading;
   const roomFlow = useRoomInterviewFlow(
     roomData.rooms,
     roomData.crossRoomQuestions,
@@ -1764,18 +1774,28 @@ export function InterviewModal({
         )}
 
         {/* Text Interview Flow (existing) */}
-        {interviewMode === "text" && (
-          <>
-            {/* Loading state for questions */}
-            {questionsLoading && (
-              <div className="flex items-center justify-center p-12">
-                <div className="animate-spin h-8 w-8 border-2 border-stone-900 border-t-transparent rounded-full" />
-                <span className="ml-3 text-sm text-stone-500">Preparing your interview...</span>
-              </div>
-            )}
+        {/* Loading state — held until questions are ready, including the slow
+            room-paced generation, so we never flash the flat (room-first)
+            questions before "About This Project" settles in. */}
+        {interviewMode === "text" && (questionsLoading || roomQuestionsPending) && (
+          <div className="flex-1 flex flex-col items-center justify-center px-8 py-16 text-center">
+            <div className="max-w-md space-y-5">
+              <div className="mx-auto h-10 w-10 animate-spin rounded-full border-2 border-[var(--accent)] border-t-transparent" />
+              <h3 className="text-xl font-serif text-folio-text-primary">
+                Preparing your interview
+              </h3>
+              <p className="text-sm text-folio-text-secondary leading-relaxed">
+                We’re reading {projectName} — your rooms and the pieces you tagged — to
+                shape questions worth answering. This only takes a moment.
+              </p>
+            </div>
+          </div>
+        )}
 
+        {interviewMode === "text" && !questionsLoading && !roomQuestionsPending && (
+          <>
             {/* Error state for questions */}
-            {!questionsLoading && fetchedQuestions.length === 0 && phase === "question" && (
+            {!hasRoomPacing && fetchedQuestions.length === 0 && phase === "question" && (
           <div className="p-8 text-center">
             <p className="text-stone-600 mb-4">
               No questions available for this project. Please ensure your project has images or product selections.
