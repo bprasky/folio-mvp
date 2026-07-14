@@ -8,7 +8,9 @@
 
 import { validateAngles } from '../src/lib/editorial-queue/validateAngles';
 import { buildAngleUserPrompt, parseAngleResponse } from '../src/lib/editorial-queue/extractAngles';
-import type { CandidateAngle, ComputedSignal, CorpusDigest } from '../src/lib/editorial-queue/types';
+import { assignFormat } from '../src/lib/editorial-queue/assignFormat';
+import { buildPromptGenUserPrompt, parsePromptResponse } from '../src/lib/editorial-queue/generatePrompts';
+import type { CandidateAngle, ComputedSignal, CorpusDigest, ExtractedAngle } from '../src/lib/editorial-queue/types';
 
 let failures = 0;
 function check(name: string, condition: boolean, context?: unknown) {
@@ -132,6 +134,54 @@ const e2e = validateAngles(
   signals,
 );
 check('parse→validate accepts the grounded angle only', e2e.accepted.length === 1 && e2e.rejected.length === 1);
+
+// ─── Format assignment (Component 3) ─────────────────────────────────────────
+
+console.log('\nassignFormat — container follows the angle');
+
+check('material_loyalty → MATERIAL_STUDY on mature corpus', assignFormat('material_loyalty', 8) === 'MATERIAL_STUDY');
+check('anatomy_of_room → QA', assignFormat('anatomy_of_room', 8) === 'QA');
+check('philosophy → GET_TO_KNOW', assignFormat('philosophy', 3) === 'GET_TO_KNOW');
+check('regional_identity → DESIGNER_PROFILE on mature corpus', assignFormat('regional_identity', 8) === 'DESIGNER_PROFILE');
+check('minimum corpus lightens MATERIAL_STUDY → THIS_OR_THAT', assignFormat('material_loyalty', 3) === 'THIS_OR_THAT');
+check('minimum corpus lightens DESIGNER_PROFILE → GET_TO_KNOW', assignFormat('regional_identity', 4) === 'GET_TO_KNOW');
+check('assignFormat is deterministic', assignFormat('process', 8) === assignFormat('process', 8));
+
+// ─── Prompt generation parse (Component 3) ───────────────────────────────────
+
+console.log('\nbuildPromptGenUserPrompt / parsePromptResponse');
+
+const sampleAngle: ExtractedAngle = {
+  angleType: 'material_loyalty',
+  summary: 'The brass thread across three kitchens',
+  signalIds: ['rep:finish:brass'],
+  confidence: 0.8,
+  evidence: { productTagIds: ['tag-1'], projectIds: ['proj-1'], facts: { 'rep:finish:brass.finishFamily': 'brass' } },
+  isFresh: true,
+};
+
+const promptUser = buildPromptGenUserPrompt(sampleAngle, 'MATERIAL_STUDY');
+check('prompt-gen input carries the angle framing', promptUser.includes('brass thread'));
+check('prompt-gen input carries the format brief', promptUser.includes('MATERIAL_STUDY'));
+check('prompt-gen input surfaces evidence facts', promptUser.includes('brass'));
+
+const promptStruct = parsePromptResponse(
+  '```json\n{"intro":"On the brass you keep coming back to","items":[{"prompt":"What do you tell clients about patina?","hint":"material philosophy"},{"prompt":"Where do you source it?"}]}\n```',
+  'MATERIAL_STUDY',
+);
+check('parses prompt structure with intro + items', !!promptStruct && promptStruct.items.length === 2, promptStruct);
+check('every prompt item gets a stable id', !!promptStruct && promptStruct.items.every((i) => typeof i.id === 'string' && i.id.length > 0));
+check('format stamped on structure', promptStruct?.format === 'MATERIAL_STUDY');
+check('items with no prompt text are dropped', parsePromptResponse('{"intro":"x","items":[{"prompt":""},{"prompt":"real"}]}', 'QA')?.items.length === 1);
+check('empty items list → null', parsePromptResponse('{"intro":"x","items":[]}', 'QA') === null);
+check('malformed prompt JSON → null', parsePromptResponse('nope', 'QA') === null);
+check('missing intro falls back, does not fail', parsePromptResponse('{"items":[{"prompt":"q"}]}', 'GET_TO_KNOW')?.intro !== undefined);
+
+const thisOrThat = parsePromptResponse(
+  '{"intro":"Pick a lane","items":[{"prompt":"Which anchors a room?","optionA":"unlacquered brass","optionB":"polished nickel"}]}',
+  'THIS_OR_THAT',
+);
+check('this_or_that options preserved', thisOrThat?.items[0].optionA === 'unlacquered brass' && thisOrThat?.items[0].optionB === 'polished nickel');
 
 // ─── Result ──────────────────────────────────────────────────────────────────
 
