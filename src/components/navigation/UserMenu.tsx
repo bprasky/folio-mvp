@@ -15,7 +15,8 @@ import {
   Headphones,
   Building2,
   Briefcase,
-  Check
+  Check,
+  Sparkles
 } from "lucide-react";
 import SupportModal from "../SupportModal";
 import { normalizeRole } from "@/lib/permissions";
@@ -302,6 +303,16 @@ export function UserMenu() {
 
           {/* Secondary links */}
           <div className="py-2">
+            {isDesigner && (
+              <MenuLink
+                href="/designer/queue"
+                icon={<Sparkles className="h-4 w-4" />}
+                onClick={() => setIsOpen(false)}
+              >
+                Editorial Queue
+              </MenuLink>
+            )}
+
             {isDesigner && (
               <MenuLink
                 href="/designer/sourcebook"

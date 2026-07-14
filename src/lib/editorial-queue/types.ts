@@ -148,3 +148,74 @@ export interface CorpusDigest {
   raw: RawCorpusLayer;
   signals: ComputedSignal[];
 }
+
+// ─── Angle extraction (Component 2) ──────────────────────────────────────────
+
+// The seven angle types the model may assign, per docs/17_EDITORIAL_QUEUE.md.
+// Stored verbatim on DesignerAngle.angleType.
+export const ANGLE_TYPES = [
+  'material_loyalty',
+  'evolution',
+  'anatomy_of_room',
+  'process',
+  'philosophy',
+  'client_dynamic',
+  'regional_identity',
+] as const;
+
+export type AngleType = typeof ANGLE_TYPES[number];
+
+// Raw shape the model returns, before validation. Citations are unverified here.
+export interface CandidateAngle {
+  angleType: string;
+  summary: string;
+  signalIds: string[];
+  confidence: number;
+}
+
+// A candidate that passed the validation-reject rule: every cited signal ID
+// resolves to a signal in the digest, and evidence is the union of those
+// signals' row-level evidence. This is what persists as a DesignerAngle.
+export interface ExtractedAngle {
+  angleType: AngleType;
+  summary: string;
+  signalIds: string[];
+  confidence: number;
+  evidence: SignalEvidence;
+  isFresh: boolean;
+}
+
+// Outcome of a rejected candidate, kept for observability (why did the guard
+// fire) rather than silently dropped.
+export interface RejectedAngle {
+  candidate: CandidateAngle;
+  reason: 'no_valid_citation' | 'fabricated_citation' | 'unknown_angle_type' | 'empty_summary';
+  fabricatedIds?: string[];
+}
+
+export interface AngleValidationResult {
+  accepted: ExtractedAngle[];
+  rejected: RejectedAngle[];
+}
+
+// ─── Prompt generation (Component 3) ─────────────────────────────────────────
+
+// One designer-facing prompt. `hint` is the private "what we're listening for"
+// note shown as guidance; `optionA`/`optionB` are populated only for
+// THIS_OR_THAT items.
+export interface QueuePromptItem {
+  id: string;
+  prompt: string;
+  hint?: string;
+  optionA?: string;
+  optionB?: string;
+}
+
+// The generated prompt structure stored on EditorialQueueItem.prompts (Json),
+// not rendered at read time. `format` is the assigned PostVariant/QueueFormat
+// value (string here to avoid a module cycle with assignFormat).
+export interface PromptStructure {
+  format: string;
+  intro: string;
+  items: QueuePromptItem[];
+}

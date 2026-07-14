@@ -9,6 +9,7 @@ import { canPublishFromOrg, type PublishGateResult } from "@/lib/permissions";
 import { z } from "zod";
 import { revalidatePath } from "next/cache";
 import { notifyTaggedVendors } from "@/lib/email/notifyVendorTagged";
+import { triggerQueueUnlockForProject } from "@/lib/editorial-queue/unlock";
 
 // Accept {action:"publish"}, {action:"unpublish"}, {status:...}, or legacy {to:...}
 const BodySchema = z
@@ -496,6 +497,12 @@ export async function PATCH(
       // Notify vendors of tagged products (async, non-blocking)
       notifyTaggedVendors({ projectId }).catch((err) => {
         console.error(`[${correlationId}] Failed to notify vendors:`, err);
+      });
+
+      // Editorial Queue three-story gate (async, non-blocking): if this publish
+      // just earned the designer their queue, generate and notify.
+      triggerQueueUnlockForProject(projectId).catch((err) => {
+        console.error(`[${correlationId}] Editorial Queue unlock failed:`, err);
       });
 
       return NextResponse.json(
