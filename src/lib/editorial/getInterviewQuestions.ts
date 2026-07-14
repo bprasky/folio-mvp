@@ -146,6 +146,11 @@ async function buildProjectGroup(
       projectType: true,
       clientType: true,
       designer: { select: { name: true, studio: true } },
+      // Org-posted projects carry designerOrg (set from the operating org at
+      // creation). The interview byline belongs to the brand being published,
+      // so the org name — not the individual member filling out the form —
+      // is the identity the SIGNATURE_IDENTITY question should name.
+      designerOrg: { select: { name: true } },
       images: {
         select: { url: true },
         orderBy: { displayOrder: 'asc' as const },
@@ -154,14 +159,18 @@ async function buildProjectGroup(
     },
   });
 
+  // Brand identity for the interview: the org when this project is org-posted,
+  // otherwise the individual designer.
+  const brandIdentity = projectMeta?.designerOrg?.name || projectMeta?.designer?.name || undefined;
+
   let projectGenQuestions: GeneratedQuestion[] = [];
   try {
     const locationParts = [projectMeta?.city, projectMeta?.regionState].filter(Boolean);
     const result = await generateProjectQuestions({
       projectTitle: context.projectTitle,
       projectDescription: context.projectDescription,
-      designerName: projectMeta?.designer?.name || undefined,
-      studioName: projectMeta?.designer?.studio || undefined,
+      designerName: brandIdentity,
+      studioName: projectMeta?.designerOrg?.name || projectMeta?.designer?.studio || undefined,
       location: locationParts.join(', ') || undefined,
       projectType: projectMeta?.projectType || undefined,
       clientType: projectMeta?.clientType || undefined,
