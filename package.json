@@ -20,6 +20,7 @@
     "audit:product:rove": "cross-env AUDIT_NAME=\"Terra Travertine Side Table\" AUDIT_VENDOR=\"Rove Concepts\" node scripts/audit-product.mjs",
     "check:digest": "tsx scripts/check-editorial-queue-digest.ts",
     "check:angles": "tsx scripts/check-editorial-queue-angles.ts",
+    "check:naming": "tsx scripts/check-product-naming.ts",
     "check:vendors": "node scripts/check-vendors.mjs",
     "create:vendor": "node scripts/create-vendor.mjs",
     "create:vendor:rove": "cross-env VENDOR_NAME=\"Rove Concepts\" VENDOR_EMAIL=\"rove@example.com\" node scripts/create-vendor.mjs",
