@@ -47,7 +47,10 @@ The digest builder has two layers.
 - Finishes and finish categories per project
 - Room types and room-level composition per project
 - Project timeline (createdAt, publishedAt sequence, ProjectStage where present)
-- Save counts per image and per project (where engagement data exists)
+- Save activity derived per image and per project (where engagement data
+  exists). No image-level save table exists: Save is product-level and
+  PostSave is post-level. Image-level interest is derived by joining
+  product-level saves through the ProductTags placed on each image.
 - All prior interview answers from `EditorialInterviewAnswer` (never discarded per 15_SUPER_ARTICLES; source of truth for regeneration)
 - Prior completed queue pieces (feedback loop; see Maturity Ladder)
 
@@ -59,10 +62,10 @@ The digest builder has two layers.
 | Distribution | Room type spread, project type and budget band spread, finish category concentration (share of tags per category) | Concentration reveals what the designer cares about versus what the project required |
 | Claim-versus-evidence | Bio positioning terms checked against actual finish and product data; output is a match or a tension with the supporting rows | The gap or the match writes the question; either could only be asked of this designer |
 | Outlier | The project, room, or spec that breaks the pattern of the others | At three projects an outlier is loud |
-| Save-delta | Image or room whose save count materially exceeds corpus baseline | Observed audience interest points at anatomy-of-a-room pieces (requires engagement data; see Maturity Ladder) |
+| Save-delta | Image or room whose derived save activity materially exceeds corpus baseline, computed by joining product-level Save records through the image's ProductTags | Observed audience interest points at anatomy-of-a-room pieces (requires engagement data; see Maturity Ladder) |
 | Evolution | Directional change in palette, material family, or finish category across the project timeline | Requires timeline depth; unlocks at higher corpus maturity |
 
-Output is a single structured digest (raw layer + computed signals with IDs) passed to angle extraction. V1 is deterministic assembly, no embeddings, no graph work.
+Output is a single structured digest (raw layer + computed signals with IDs) passed to angle extraction. V1 is deterministic assembly, no embeddings, no graph work. The save-delta derivation is philosophically consistent with the saves-as-edges principle: the signal is "people saved products that live in this image," a directional interest measure grounded in the lineage graph rather than a vanity metric.
 
 ### Component 2: Angle Extraction
 
@@ -203,7 +206,9 @@ All generation in this system uses the Anthropic API through the centralized `MO
 1. **Angle extraction:** corpus digest in, candidate angles out (structured JSON)
 2. **Prompt generation:** angle + evidence + format in, designer-facing prompts out
 
-The existing OpenAI editorial generation call is switched to Anthropic as part of this workstream. One provider for all editorial intelligence.
+Editorial generation was already on Anthropic via MODELS at spec time,
+confirmed by the step-1 audit. One provider for all editorial intelligence is
+the standing state, not a migration task.
 
 ## Rejected and Deferred
 
@@ -227,6 +232,11 @@ Audit before implement. No step combines audit and implementation.
 7. **Prompt generation call.**
 8. **Queue surface UI** (designer-facing: recommended pieces, completion flow, consent capture).
 9. **Publishing calendar job** (constraint solver, feed mixing).
-10. **OpenAI to Anthropic switch** for existing editorial generation (can run parallel to steps 5-9).
+10. **OpenAI to Anthropic switch: COMPLETE BEFORE START.** The step-1 audit
+    (tasks/EDITORIAL_QUEUE_STEP1_AUDIT.md) confirmed all editorial generation
+    (generateEditorialDraft, the daily scheduler) already runs on Anthropic via
+    the centralized MODELS constants. Remaining OpenAI usage is Whisper
+    transcription, moderation, embeddings, and image generation. None of it is
+    editorial generation and all of it is out of scope for this system.
 
 Steps 1 through 4 are the immediate Claude Code session. Steps 5 onward are surface-scoped commits per the standard workflow.
