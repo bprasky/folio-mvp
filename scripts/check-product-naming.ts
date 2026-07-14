@@ -138,6 +138,21 @@ check(
 // BlocksSchema.parse — a string-only transform must keep the shape valid.
 check('scrubbed blocks remain BlocksSchema-valid', BlocksSchema.safeParse(scrubbed).success);
 
+// Source-1: a generator-emitted descriptor (fed via the `emitted` hint) is used
+// verbatim, not reduced to a single finish keyword.
+const emittedOut = scrubProseNaming(
+  { introduction: ['The Halcyon Sconce is lovely.'], mode: 'recomposition' } as Blocks,
+  new Map<string, ProductNaming>([
+    ['x', { productId: 'x', named: false, reason: 'not_eligible', name: 'Halcyon Sconce', brand: null, vendorName: null, category: 'sconce' }],
+  ]),
+  new Map<string, DescriptorHint>([['x', { emitted: 'a hand-blown opal glass sconce' }]])
+).blocks;
+check(
+  'generator-emitted descriptor (source 1) used verbatim in prose',
+  (emittedOut.introduction ?? []).join(' ').toLowerCase().includes('a hand-blown opal glass sconce'),
+  emittedOut.introduction
+);
+
 // ─── 4. Shared-brand safety ──────────────────────────────────────────────────
 // A brand used by BOTH an eligible and an ineligible product must NOT be
 // scrubbed — it can't be attributed to the ineligible one alone in free prose.

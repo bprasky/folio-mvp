@@ -204,12 +204,22 @@ async function applyProseNamingGate(
     postingUserId: input.designer?.id ?? null,
   });
 
-  // Descriptor hints: the model's materials-ledger finish sharpens the swap text
-  // without any schema change. The deterministic fallback (category + finish
-  // derived from the name) still applies when no hint is present.
+  // Descriptor hints (source 1): the model emits a brand-free descriptor per
+  // materials-ledger item in its `finish` field. Match each ledger item back to
+  // a product — by productId if the model echoed one, otherwise by exact name
+  // (the prompt requires exact product names) — and feed it as the emitted
+  // descriptor. The deterministic category+finish assembly (source 2) still
+  // applies for anything unmatched.
+  const nameToProductId = new Map<string, string>();
+  for (const n of Array.from(naming.values())) {
+    if (n.name) nameToProductId.set(n.name.trim().toLowerCase(), n.productId);
+  }
   const hints = new Map<string, DescriptorHint>();
   for (const item of blocks.materialsLedger?.items ?? []) {
-    if (item.productId) hints.set(item.productId, { colorFinish: item.finish ?? null });
+    const emitted = typeof item.finish === 'string' ? item.finish.trim() : '';
+    if (!emitted) continue;
+    const pid = item.productId ?? (item.name ? nameToProductId.get(item.name.trim().toLowerCase()) : undefined);
+    if (pid) hints.set(pid, { emitted });
   }
 
   const { blocks: scrubbed, replacements } = scrubProseNaming(blocks, naming, hints);
@@ -218,9 +228,19 @@ async function applyProseNamingGate(
     cid, products: naming.size, gated, replacements,
   });
 
-  // Re-validate: the scrub is a string-only transform that only shortens
-  // strings, so the shape holds; parse guards against any regression.
-  return BlocksSchema.parse(scrubbed);
+  // Re-validate as a guard. The scrub is a structure-preserving string transform,
+  // but swapping a short name for a longer descriptor can push a field past a
+  // soft length cap (e.g. lead.kicker max 120). That is not a reason to fail
+  // generation or — worse — to fall back to un-scrubbed prose, so on a validation
+  // miss we keep the scrubbed (leak-free) blocks and log rather than throw.
+  const revalidated = BlocksSchema.safeParse(scrubbed);
+  if (!revalidated.success) {
+    console.warn('[generate] product_naming_gate_revalidation', {
+      cid, issues: revalidated.error.issues.slice(0, 3),
+    });
+    return scrubbed;
+  }
+  return revalidated.data;
 }
 
 // Score a pull quote candidate using heuristics.

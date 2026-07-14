@@ -64,7 +64,10 @@ export async function resolveProductNaming(
         select: {
           name: true,
           companyName: true,
+          // Only active memberships count — a soft-removed vendor user
+          // (isActive false) must not inherit the org's subscription.
           organizationUsers: {
+            where: { isActive: true },
             select: {
               organization: {
                 select: { vendorSubscription: { select: { status: true } } },

@@ -92,7 +92,10 @@ export async function generateRoomQuestions(
 
   const descriptorSummary = descriptorTags.length > 0
     ? descriptorTags.map((t) => {
-        const desc = t.descriptor?.trim() || t.category || t.productName;
+        // Never fall back to the product name here — this block is labeled
+        // "descriptor only", so a missing descriptor must degrade to the generic
+        // category or a bare floor, never leak the name it is meant to withhold.
+        const desc = t.descriptor?.trim() || t.category?.trim() || 'the piece';
         return `- ${desc}`;
       }).join('\n')
     : 'None.';
