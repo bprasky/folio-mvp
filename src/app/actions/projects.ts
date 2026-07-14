@@ -8,6 +8,7 @@ import { prisma } from '@/lib/prisma';
 import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
 import { notifyIncompleteProductVendors } from '@/lib/notifications/notifyIncompleteProductVendors';
+import { triggerQueueUnlockForProject } from '@/lib/editorial-queue/unlock';
 import { computePublishReadiness, isDocumentImage } from '@/lib/publish/computePublishReadiness';
 
 // Type definitions for project-related data
@@ -153,6 +154,12 @@ export async function publishEditorial({ projectId }: { projectId: string }) {
 
     // Fire-and-forget: notify vendors of incomplete product specs
     notifyIncompleteProductVendors(projectId);
+
+    // Fire-and-forget: Editorial Queue three-story gate — generate + notify if
+    // this publish just earned the designer their queue.
+    triggerQueueUnlockForProject(projectId).catch((err) => {
+      console.error('[publishEditorial] Editorial Queue unlock failed:', err);
+    });
 
     return { ok: true, message: 'Published successfully', projectPostId: updated.id, slug: updated.slug };
   } catch (error) {
