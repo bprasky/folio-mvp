@@ -26,6 +26,12 @@ export interface RoomQuestionInput {
     productName: string;
     vendorName?: string;
     category?: string;
+    // Product Naming Gate (spec 20): a subscribed vendor's product may be named
+    // and spotlighted as a question subject; a non-subscribed product must be
+    // referred to by descriptor only. Defaults to descriptor-only when unset.
+    named?: boolean;
+    /** Brand-free swap text used when the product may not be named. */
+    descriptor?: string;
   }>;
   budget: number;
   contextLevel: ContextLevel;
@@ -69,15 +75,30 @@ export async function generateRoomQuestions(
     }
   }
 
-  // Build tag summary
-  const tagSummary = input.roomTags.length > 0
-    ? input.roomTags.map((t) => {
+  // Build tag summary, split by naming eligibility (Product Naming Gate, spec 20).
+  // Subscribed vendors' products may be named and spotlighted; everything else is
+  // referred to by descriptor only, and only when the designer's story surfaces it.
+  const namedTags = input.roomTags.filter((t) => t.named);
+  const descriptorTags = input.roomTags.filter((t) => !t.named);
+
+  const nameableSummary = namedTags.length > 0
+    ? namedTags.map((t) => {
         const parts = [t.productName];
         if (t.vendorName) parts.push(`by ${t.vendorName}`);
         if (t.category) parts.push(`(${t.category})`);
         return `- ${parts.join(' ')}`;
       }).join('\n')
-    : 'No tagged products.';
+    : 'None.';
+
+  const descriptorSummary = descriptorTags.length > 0
+    ? descriptorTags.map((t) => {
+        // Never fall back to the product name here — this block is labeled
+        // "descriptor only", so a missing descriptor must degrade to the generic
+        // category or a bare floor, never leak the name it is meant to withhold.
+        const desc = t.descriptor?.trim() || t.category?.trim() || 'the piece';
+        return `- ${desc}`;
+      }).join('\n')
+    : 'None.';
 
   // Build classification summary from images
   const classificationNotes: string[] = [];
@@ -125,8 +146,11 @@ CONTEXT LEVEL: ${input.contextLevel}/5
 AI-DETECTED DETAILS:
 ${classificationSummary}
 
-TAGGED PRODUCTS IN THIS ROOM:
-${tagSummary}
+PRODUCTS YOU MAY NAME AND SPOTLIGHT (vendor is subscribed — name the brand/product freely and a dedicated question about one is welcome):
+${nameableSummary}
+
+PRODUCTS TO REFERENCE BY DESCRIPTOR ONLY (never name the brand or product; use the descriptor, and only raise one if the designer's own story makes it the point — never as a product spotlight):
+${descriptorSummary}
 
 ${input.projectContext.overallStyle ? `PROJECT STYLE: ${input.projectContext.overallStyle}` : ''}
 ${input.projectContext.materialPalette?.length ? `MATERIAL PALETTE: ${input.projectContext.materialPalette.join(', ')}` : ''}
@@ -135,12 +159,13 @@ ${knownFactsBlock}
 Generate exactly ${input.budget} interview questions for the ${input.roomName}.
 
 RULES:
-1. Every question must reference a specific product, vendor, material, or visual detail BY NAME from the data above or visible in the images.
-2. Every question sets up an answer the designer would be proud to publish. Ask about arrivals, not departures. Wins, not compromises.
-3. No generic questions. "Tell us about your color choices" is NEVER acceptable. "The brass hardware against the navy millwork — walk us through that pairing" is editorial.
-4. If a vendor name is unknown, ask about the product or material itself — never say "Unknown Brand."
-5. Mix question types: 1 warm opening, then deep dives into specific products/materials/decisions, and 1 closing philosophy question if budget >= 4.
-${crossRoomInstruction ? `6. ${crossRoomInstruction}` : ''}
+1. Every question must reference a specific product, material, or visual detail from the data above or visible in the images.
+2. NAMING: You may name — and build a dedicated question around — any product in the "MAY NAME AND SPOTLIGHT" list. For a product in the "BY DESCRIPTOR ONLY" list, refer to it by its descriptor (form / material / finish) and NEVER by its brand or product name; raise one only if the designer's own story (a standout room, a repeated material) makes it the point — never introduce it as a named product spotlight.
+3. Every question sets up an answer the designer would be proud to publish. Ask about arrivals, not departures. Wins, not compromises.
+4. No generic questions. "Tell us about your color choices" is NEVER acceptable. "The brass hardware against the navy millwork — walk us through that pairing" is editorial.
+5. If a vendor name is unknown, ask about the product or material itself — never say "Unknown Brand."
+6. Mix question types: 1 warm opening, then deep dives into specific products/materials/decisions, and 1 closing philosophy question if budget >= 4.
+${crossRoomInstruction ? `7. ${crossRoomInstruction}` : ''}
 
 Return ONLY a JSON object:
 {

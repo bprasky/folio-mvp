@@ -6,6 +6,8 @@ import { callLLM } from "./llmClient";
 import { formatRoomName } from "@/lib/utils/formatRoomName";
 import { HOOK_OPENER_ID_PREFIX, HOOK_FOLLOWUP_ID_PREFIX } from "@/lib/interview/generateQuestions";
 import { MODELS } from '@/lib/ai/models';
+import { resolveProductNaming } from '@/lib/naming/resolveProductNaming';
+import { scrubProseNaming, type DescriptorHint } from '@/lib/naming/scrubProse';
 
 const client = new Anthropic();
 
@@ -171,6 +173,74 @@ function buildCredits(input: GenInput): Array<{ role: string; name: string }> {
     credits.push({ role: 'Studio', name: input.designer.studio });
   }
   return credits;
+}
+
+// Product Naming Gate (spec 20) — the compose-time prose chokepoint.
+//
+// Resolves naming eligibility for every tagged product from the three paid
+// signals (vendor subscription, approved boost on this post, ENTERPRISE poster)
+// and scrubs non-eligible names out of the final prose, replacing them with
+// descriptors. Self-contained: reads everything it needs from `input` (tags,
+// project id, designer id), so BOTH callers of generateEditorialDraft pass
+// through this one chokepoint. Credits and the materials ledger are never
+// scrubbed (handled inside scrubProseNaming).
+//
+// Errors are intentionally NOT swallowed: a gate failure must fail generation
+// (the caller surfaces a retryable error) rather than silently persist
+// un-scrubbed prose. Over-suppression is the correct error, per spec 17/20.
+async function applyProseNamingGate(
+  blocks: z.infer<typeof BlocksSchema>,
+  input: GenInput,
+  cid: string
+): Promise<z.infer<typeof BlocksSchema>> {
+  const productIds: string[] = (input.tags ?? [])
+    .map((t: any) => t?.product?.id ?? t?.productId)
+    .filter((id: any): id is string => typeof id === 'string');
+  if (productIds.length === 0) return blocks;
+
+  const naming = await resolveProductNaming(productIds, {
+    mode: 'prose',
+    projectId: input.project?.id ?? null,
+    postingUserId: input.designer?.id ?? null,
+  });
+
+  // Descriptor hints (source 1): the model emits a brand-free descriptor per
+  // materials-ledger item in its `finish` field. Match each ledger item back to
+  // a product — by productId if the model echoed one, otherwise by exact name
+  // (the prompt requires exact product names) — and feed it as the emitted
+  // descriptor. The deterministic category+finish assembly (source 2) still
+  // applies for anything unmatched.
+  const nameToProductId = new Map<string, string>();
+  for (const n of Array.from(naming.values())) {
+    if (n.name) nameToProductId.set(n.name.trim().toLowerCase(), n.productId);
+  }
+  const hints = new Map<string, DescriptorHint>();
+  for (const item of blocks.materialsLedger?.items ?? []) {
+    const emitted = typeof item.finish === 'string' ? item.finish.trim() : '';
+    if (!emitted) continue;
+    const pid = item.productId ?? (item.name ? nameToProductId.get(item.name.trim().toLowerCase()) : undefined);
+    if (pid) hints.set(pid, { emitted });
+  }
+
+  const { blocks: scrubbed, replacements } = scrubProseNaming(blocks, naming, hints);
+  const gated = Array.from(naming.values()).filter((n) => !n.named).length;
+  console.info('[generate] product_naming_gate', {
+    cid, products: naming.size, gated, replacements,
+  });
+
+  // Re-validate as a guard. The scrub is a structure-preserving string transform,
+  // but swapping a short name for a longer descriptor can push a field past a
+  // soft length cap (e.g. lead.kicker max 120). That is not a reason to fail
+  // generation or — worse — to fall back to un-scrubbed prose, so on a validation
+  // miss we keep the scrubbed (leak-free) blocks and log rather than throw.
+  const revalidated = BlocksSchema.safeParse(scrubbed);
+  if (!revalidated.success) {
+    console.warn('[generate] product_naming_gate_revalidation', {
+      cid, issues: revalidated.error.issues.slice(0, 3),
+    });
+    return scrubbed;
+  }
+  return revalidated.data;
 }
 
 // Score a pull quote candidate using heuristics.
@@ -1014,10 +1084,13 @@ Produce a JSON object with this structure:
   ],
   "credits": [{ "role": "Designer", "name": "${designerNameForPrompt}" }],
   "materialsLedger": {
-    "items": [{ "name": "Product Name", "finish": "finish/color", "note": "Vendor: Name | Used in: Room" }]
+    "items": [{ "name": "Product Name", "finish": "brand-free descriptor: form + material + finish", "note": "Vendor: Name | Used in: Room" }]
   },
   "mode": "recomposition"
 }
+
+MATERIALS LEDGER — DESCRIPTOR FIELD:
+For every item, the "finish" field must be a short brand-free descriptor of the piece — its form, material, and finish only (e.g. "clear glass globe pendant", "unlacquered brass bridge faucet"), never the brand or collection name. Naming eligibility is enforced downstream; this descriptor is the swap text used when a product may not be named in the published prose.
 
 ## Writing Instructions
 
@@ -1290,6 +1363,15 @@ export async function generateEditorialDraft(input: GenInput): Promise<{
     let blocks = await repairAndBuildBlocks(composed, { ...input, answers: uniqueAnswers }, imageIds, rooms, imagesByRoom, _cid);
     // Post-processing: fix "The [noun]..." sentence openers
     blocks = await fixSentenceOpeners(blocks, _cid);
+
+    // Product Naming Gate (spec 20): the single deterministic chokepoint over
+    // final prose. A product name survives into published prose only if its
+    // vendor is subscribed, an approved boost exists for it on this post, or the
+    // posting account is ENTERPRISE — otherwise the name is replaced with a
+    // descriptor. Credits and the materials ledger are never scrubbed. This
+    // catches names from the designer's own answer, not just the model's.
+    blocks = await applyProseNamingGate(blocks, input, _cid);
+
     return { blocks };
   } catch (repairError: any) {
     console.log('[GENERATE] repairAndBuildBlocks THREW:', repairError?.message ?? repairError, { _cid });

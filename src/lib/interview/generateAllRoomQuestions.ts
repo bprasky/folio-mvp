@@ -11,6 +11,8 @@ import { computeRoomBudget } from '@/lib/editorial/roomPacing';
 import { generateRoomQuestions, type RoomQuestionOutput } from './generateRoomQuestions';
 import type { GeneratedQuestion } from './generateQuestions';
 import type { KnownFacts } from './distillInterviewFacts';
+import { resolveProductNaming } from '@/lib/naming/resolveProductNaming';
+import { buildDescriptor } from '@/lib/naming/descriptor';
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -57,6 +59,9 @@ export async function generateAllRoomQuestions(
               productName: true,
               vendorName: true,
               colorFinish: true,
+              // Product Naming Gate (spec 20): resolve back to the tagged Product
+              // so we can check whether the vendor is subscribed.
+              productTag: { select: { productId: true } },
             },
           },
         },
@@ -130,6 +135,16 @@ export async function generateAllRoomQuestions(
     ? undefined // We don't have designer name in context, brief does
     : undefined;
 
+  // 4b. Product Naming Gate (spec 20): resolve which tagged products may be
+  // named and spotlighted in the questions. A product is nameable only if its
+  // vendor is subscribed; everything else is referred to by descriptor, and
+  // only when the designer's own story surfaces it. The designer's editorial
+  // story is never gated — only commercial naming.
+  const allProductIds = project.rooms.flatMap((room) =>
+    room.selections.map((s) => s.productTag?.productId).filter((id): id is string => !!id)
+  );
+  const naming = await resolveProductNaming(allProductIds, { mode: 'subscription' });
+
   // 5. Fire parallel LLM calls
   const promises = roomBudgets.map((rb) => {
     const otherRoomNames = allRoomNames.filter((n) => n !== rb.room.name);
@@ -137,10 +152,23 @@ export async function generateAllRoomQuestions(
       url: img.url,
       classification: img.aiClassification as Record<string, unknown> | null,
     }));
-    const roomTags = rb.room.selections.map((s) => ({
-      productName: s.productName || s.colorFinish || 'Product',
-      vendorName: s.vendorName || undefined,
-    }));
+    const roomTags = rb.room.selections.map((s) => {
+      const productId = s.productTag?.productId ?? null;
+      const info = productId ? naming.get(productId) : undefined;
+      const named = !!info?.named;
+      return {
+        productName: s.productName || s.colorFinish || 'Product',
+        vendorName: s.vendorName || undefined,
+        named,
+        descriptor: named
+          ? undefined
+          : buildDescriptor({
+              category: info?.category,
+              colorFinish: s.colorFinish,
+              name: s.productName,
+            }),
+      };
+    });
 
     console.info(`[QUESTION_GEN] ${rb.room.name}: budget=${rb.budget}, images=${rb.images.length}, tags=${roomTags.length}`);
 
