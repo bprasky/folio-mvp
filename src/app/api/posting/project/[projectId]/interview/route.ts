@@ -308,13 +308,32 @@ export async function POST(
       body?.interview?.followups ??
       [];
 
-    // Room skips (A3): optional [{ roomId, skipped }]. Merged non-destructively
-    // into EditorialInterview.roomProgress below. `skipped` defaults to true.
-    const roomSkips: Array<{ roomId: string; skipped: boolean }> = (
-      Array.isArray(body?.roomSkips) ? body.roomSkips : []
+    // Room statuses (C0): optional [{ roomId, status }] where status is the
+    // roomPacing enum. Generalizes A3's roomSkips — the client now sends it from
+    // BOTH skipRoom ('skipped') and finalizeRoomAndAdvance ('complete'), so the
+    // server can tell finalized from in-progress. Merged non-destructively into
+    // EditorialInterview.roomProgress below, with a never-downgrade rank rule.
+    const ROOM_STATUS_VALUES = ['not_started', 'in_progress', 'complete', 'skipped'] as const;
+    type RoomStatusValue = (typeof ROOM_STATUS_VALUES)[number];
+    // Rank orders the states so a lower status can never clobber a higher one:
+    // complete (3) > skipped (2) > in_progress (1) > not_started (0).
+    const STATUS_RANK: Record<RoomStatusValue, number> = {
+      not_started: 0,
+      in_progress: 1,
+      skipped: 2,
+      complete: 3,
+    };
+    const roomStatuses: Array<{ roomId: string; status: RoomStatusValue }> = (
+      Array.isArray(body?.roomStatuses) ? body.roomStatuses : []
     )
-      .filter((s: any) => s && typeof s.roomId === 'string' && s.roomId.length > 0)
-      .map((s: any) => ({ roomId: s.roomId, skipped: s.skipped !== false }));
+      .filter(
+        (s: any) =>
+          s &&
+          typeof s.roomId === 'string' &&
+          s.roomId.length > 0 &&
+          (ROOM_STATUS_VALUES as readonly string[]).includes(s.status),
+      )
+      .map((s: any) => ({ roomId: s.roomId, status: s.status as RoomStatusValue }));
 
     // Extract metadata fields from answers before normalization
     const extractMetadata = (qa: any) => ({
@@ -570,8 +589,8 @@ export async function POST(
         a.metadata?.linkedImageId || a.metadata?.linkedProductId || a.metadata?.questionSource || a.metadata?.aiClassificationAttribute
       );
 
-      // Run the sync when answer metadata is present OR an explicit skip arrived.
-      const shouldSync = hasNewFields || roomSkips.length > 0;
+      // Run the sync when answer metadata is present OR an explicit status arrived.
+      const shouldSync = hasNewFields || roomStatuses.length > 0;
 
       if (shouldSync) {
         // Get or create EditorialInterview
@@ -616,12 +635,12 @@ export async function POST(
           }
         }
 
-        // --- Room progress (Phase B) — merge non-destructively (A3) ---
+        // --- Room progress (Phase B) — merge non-destructively (A3/C0) ---
         // Start from what's stored, overlay answer-derived counts, then overlay
-        // explicit skips. An explicit skip survives the recompute; every status
-        // written is a valid member of the client enum in roomPacing.ts:13
+        // explicit statuses. An explicit status survives the recompute; every
+        // status written is a valid member of the client enum in roomPacing.ts:13
         // (not_started | in_progress | complete | skipped).
-        const VALID_STATUSES = new Set(['not_started', 'in_progress', 'complete', 'skipped']);
+        const VALID_STATUSES = new Set(ROOM_STATUS_VALUES);
         const existingRP =
           interview.roomProgress && typeof interview.roomProgress === 'object'
             ? (interview.roomProgress as Record<string, any>)
@@ -657,20 +676,20 @@ export async function POST(
           };
         }
 
-        // Explicit skips are authoritative. `skipped: false` reverts to computed.
-        for (const s of roomSkips) {
+        // Explicit statuses (C0) — authoritative, but never downgrade: apply an
+        // incoming status only when it ranks >= the stored one. This lets skip
+        // ('skipped') and finalize ('complete') land, while a stray lower status
+        // can't clobber a room that's already complete or skipped. Counts are
+        // preserved from the answer-derived overlay above.
+        for (const s of roomStatuses) {
           const cur = nextRP[s.roomId];
-          if (s.skipped) {
+          const curRank = cur ? STATUS_RANK[cur.status as RoomStatusValue] ?? -1 : -1;
+          if (STATUS_RANK[s.status] >= curRank) {
             nextRP[s.roomId] = {
-              status: 'skipped',
+              status: s.status,
               answeredCount: cur?.answeredCount || 0,
               totalQuestions: cur?.totalQuestions || 0,
               baseQuestions: cur?.baseQuestions || 0,
-            };
-          } else if (cur) {
-            nextRP[s.roomId] = {
-              ...cur,
-              status: cur.answeredCount > 0 ? 'in_progress' : 'not_started',
             };
           }
         }

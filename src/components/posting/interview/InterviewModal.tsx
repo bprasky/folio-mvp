@@ -29,6 +29,7 @@ import { RoomProgressBar } from "./RoomProgressBar";
 import { RoomPhotoStrip } from "./RoomPhotoStrip";
 import { GenerationProgress } from "@/components/ui/GenerationProgress";
 import { computeRoundBudget } from "@/lib/editorial/roomPacing";
+import type { RoomProgressStatus } from "@/lib/editorial/roomPacing";
 import type { InterviewQuestion as ContextualQuestion } from "@/types/interview";
 
 interface InterviewModalProps {
@@ -182,10 +183,23 @@ export function InterviewModal({
   // Skip (A2): the choice sheet has two views — the initial choice, and the
   // "skip this room" confirmation. `false` means closed.
   const [skipSheet, setSkipSheet] = useState<false | "choice" | "confirmRoom">(false);
-  // Skip persistence (A3): roomId → skipped. Hydrated from server roomProgress
-  // and the localStorage draft; sent back to the server on skip.
-  const [roomSkips, setRoomSkips] = useState<Record<string, boolean>>({});
+  // Room status persistence (C0, generalizes A3's roomSkips): roomId → status.
+  // Hydrated from server roomProgress and the localStorage draft; sent back to
+  // the server whenever a room finalizes ('complete') or is skipped ('skipped').
+  const [roomStatuses, setRoomStatuses] = useState<Record<string, RoomProgressStatus>>({});
   const serverRoomProgressRef = useRef<Record<string, any> | null>(null);
+  // Latest "persist a single room status" fn — kept in a ref so the callback we
+  // hand the flow hook stays stable while still closing over fresh answers.
+  const persistRoomStatusRef = useRef<
+    ((roomId: string, status: RoomProgressStatus) => void) | null
+  >(null);
+  const handleRoomStatusChange = useCallback(
+    (roomId: string, status: RoomProgressStatus) => {
+      setRoomStatuses((prev) => (prev[roomId] === status ? prev : { ...prev, [roomId]: status }));
+      persistRoomStatusRef.current?.(roomId, status);
+    },
+    [],
+  );
 
   const baseAnswers = useMemo(() => answers.filter((answer) => !answer.isFollowUp), [answers]);
   const followUpAnswersState = useMemo(() => answers.filter((answer) => answer.isFollowUp), [answers]);
@@ -233,7 +247,7 @@ export function InterviewModal({
           followups: followUps,
           currentQuestionIndex,
           phase,
-          roomSkips,
+          roomStatuses,
         }));
       } catch (error) {
         console.warn('[InterviewModal] Failed to autosave to localStorage', error);
@@ -245,7 +259,7 @@ export function InterviewModal({
         clearTimeout(autosaveTimeoutRef.current);
       }
     };
-  }, [open, projectId, answers, followUps, currentQuestionIndex, phase, roomSkips]);
+  }, [open, projectId, answers, followUps, currentQuestionIndex, phase, roomStatuses]);
 
   // Preload answers from server and localStorage on open
   useEffect(() => {
@@ -535,6 +549,7 @@ export function InterviewModal({
     roomData.rooms,
     roomData.crossRoomQuestions,
     roomData.globalGates,
+    { onRoomStatusChange: handleRoomStatusChange },
   );
 
   // Two-phase generation: the designer finished About This Project but the
@@ -966,42 +981,46 @@ export function InterviewModal({
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [hasRoomPacing, roomData.roomsPending, roomFlow.rooms.length, roomFlow.currentRoom?.roomId, roomFlow.roomProgress]);
 
-  // Skip hydration (A3): once room groups exist, re-apply any persisted skips
-  // (from server roomProgress and the localStorage draft) so a skipped room
-  // survives reload without moving the designer. Keyed on rooms.length so it
-  // reruns when phase-2 room questions land.
+  // Status hydration (C0): once room groups exist, re-apply persisted terminal
+  // statuses (from server roomProgress and the localStorage draft) so a skipped
+  // or completed room survives reload without moving the designer. Keyed on
+  // rooms.length so it reruns when phase-2 room questions land.
   useEffect(() => {
     if (!open || !hasRoomPacing) return;
-    const skipped = new Set<string>();
+    const map = new Map<string, RoomProgressStatus>();
     const rp = serverRoomProgressRef.current;
     if (rp) {
       for (const [id, v] of Object.entries(rp)) {
-        if ((v as any)?.status === 'skipped') skipped.add(id);
+        const st = (v as any)?.status;
+        if (st === 'complete' || st === 'skipped') map.set(id, st);
       }
     }
     try {
       const raw = localStorage.getItem(`interviewDraft:${projectId}`);
       if (raw) {
         const d = JSON.parse(raw);
-        if (d?.roomSkips && typeof d.roomSkips === 'object') {
-          for (const [id, s] of Object.entries(d.roomSkips)) if (s) skipped.add(id);
+        if (d?.roomStatuses && typeof d.roomStatuses === 'object') {
+          for (const [id, st] of Object.entries(d.roomStatuses)) {
+            if (st === 'complete' || st === 'skipped') map.set(id, st as RoomProgressStatus);
+          }
         }
       }
     } catch { /* ignore */ }
-    if (skipped.size > 0) {
-      const ids = Array.from(skipped);
-      setRoomSkips((prev) => {
+    if (map.size > 0) {
+      const entries = Array.from(map.entries()).map(([roomId, status]) => ({ roomId, status }));
+      setRoomStatuses((prev) => {
         const next = { ...prev };
-        for (const id of ids) next[id] = true;
+        for (const e of entries) next[e.roomId] = e.status;
         return next;
       });
-      roomFlow.hydrateSkips(ids);
+      roomFlow.hydrateStatuses(entries);
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, hasRoomPacing, roomFlow.rooms.length]);
 
   // Skip actions (A2). Skip-question advances without recording an answer;
-  // skip-room marks the room skipped, persists it, and advances.
+  // skip-room marks the room skipped and advances. Both 'skipped' and 'complete'
+  // are persisted via the flow hook's onRoomStatusChange (C0) — no manual POST.
   const handleSkipQuestion = useCallback(() => {
     setSkipSheet(false);
     if (hasRoomPacing) {
@@ -1016,22 +1035,12 @@ export function InterviewModal({
 
   const handleSkipRoom = useCallback(() => {
     setSkipSheet(false);
-    const roomId = roomFlow.currentRoom?.roomId;
-    roomFlow.skipRoom();
-    if (roomId && roomId !== 'project') {
-      setRoomSkips((prev) => ({ ...prev, [roomId]: true }));
-      // Persist the skip (fire-and-forget). Carries current answers so the
-      // server merge has full context; roomSkips survives the recompute.
-      void persistAnswers([...baseAnswers, ...followUpAnswersState], {
-        includeFollowUps: true,
-        roomSkips: [{ roomId, skipped: true }],
-      });
-    }
+    roomFlow.skipRoom(); // fires onRoomStatusChange('skipped') → persists
     if (roomFlow.canFinish) {
       autoGenerateRef.current = true;
       setPhase("complete");
     }
-  }, [roomFlow, baseAnswers, followUpAnswersState]);
+  }, [roomFlow]);
 
   // Handle sequential question answer submission
   const handleQuestionAnswerSubmit = useCallback(async () => {
@@ -1233,7 +1242,7 @@ export function InterviewModal({
     answersToPersist: InterviewAnswer[],
     options: {
       includeFollowUps?: boolean;
-      roomSkips?: Array<{ roomId: string; skipped: boolean }>;
+      roomStatuses?: Array<{ roomId: string; status: RoomProgressStatus }>;
     } = {}
   ): Promise<SaveResult | void> {
     const sanitized = answersToPersist
@@ -1243,20 +1252,20 @@ export function InterviewModal({
           value !== null
       );
 
-    // Merge known skips (state) with any this call is explicitly asserting; the
-    // explicit call wins per roomId. Re-asserting known skips on every save
-    // defends the server roomProgress against a stale recompute clobbering them.
-    const mergedRoomSkips = (() => {
-      const map = new Map<string, boolean>();
-      for (const [roomId, skipped] of Object.entries(roomSkips)) map.set(roomId, skipped);
-      for (const s of options.roomSkips ?? []) map.set(s.roomId, s.skipped);
-      return Array.from(map.entries()).map(([roomId, skipped]) => ({ roomId, skipped }));
+    // Merge known statuses (state) with any this call is explicitly asserting;
+    // the explicit call wins per roomId. Re-asserting known statuses on every
+    // save defends server roomProgress against a stale recompute clobbering them.
+    const mergedRoomStatuses = (() => {
+      const map = new Map<string, RoomProgressStatus>();
+      for (const [roomId, status] of Object.entries(roomStatuses)) map.set(roomId, status);
+      for (const s of options.roomStatuses ?? []) map.set(s.roomId, s.status);
+      return Array.from(map.entries()).map(([roomId, status]) => ({ roomId, status }));
     })();
 
     if (
       sanitized.length === 0 &&
       !options.includeFollowUps &&
-      mergedRoomSkips.length === 0
+      mergedRoomStatuses.length === 0
     ) {
       setFieldErrors({});
       return { ok: true, savedCount: 0, totalCount: 0 };
@@ -1318,9 +1327,9 @@ export function InterviewModal({
                 isCrossRoom: questionMeta?.isCrossRoom || false,
               };
             }),
-          // Skip persistence (A3) — merged into EditorialInterview.roomProgress
-          // server-side, non-destructively.
-          ...(mergedRoomSkips.length > 0 ? { roomSkips: mergedRoomSkips } : {}),
+          // Room status persistence (C0) — merged into
+          // EditorialInterview.roomProgress server-side, non-destructively.
+          ...(mergedRoomStatuses.length > 0 ? { roomStatuses: mergedRoomStatuses } : {}),
         };
 
       console.log("[InterviewModal] Saving answers:", {
@@ -1409,6 +1418,17 @@ export function InterviewModal({
       includeFollowUps: true,
     });
   }
+
+  // C0: keep the room-status persister pointing at the latest answers + persist
+  // fn, so the stable onRoomStatusChange callback always POSTs current context.
+  useEffect(() => {
+    persistRoomStatusRef.current = (roomId, status) => {
+      void persistAnswers([...baseAnswers, ...followUpAnswersState], {
+        includeFollowUps: true,
+        roomStatuses: [{ roomId, status }],
+      });
+    };
+  });
 
   const lastClickRef = useRef<number>(0);
   const DEBOUNCE_MS = 1000;

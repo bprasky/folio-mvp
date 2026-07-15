@@ -100,8 +100,10 @@ export interface RoomInterviewFlowState {
     answeredQuestionIds: Set<string>,
     savedProgress: RoomProgressMap | null,
   ) => void;
-  /** Mark rooms skipped without navigating — hydrates persisted skips on load. */
-  hydrateSkips: (roomIds: string[]) => void;
+  /** Apply persisted room statuses without navigating — hydrates on load (C0). */
+  hydrateStatuses: (
+    entries: Array<{ roomId: string; status: RoomProgressStatus }>,
+  ) => void;
 }
 
 // ---------------------------------------------------------------------------
@@ -112,7 +114,16 @@ export function useRoomInterviewFlow(
   rooms: RoomQuestionsGroup[],
   crossRoomQuestions: InterviewQuestion[],
   globalGates: RoomGroupedQuestions["globalGates"],
+  options?: {
+    /**
+     * Fired when a room reaches a terminal status the server must learn (C0):
+     * 'complete' from finalizeRoomAndAdvance, 'skipped' from skipRoom. The modal
+     * persists it into EditorialInterview.roomProgress. Must be stable.
+     */
+    onRoomStatusChange?: (roomId: string, status: RoomProgressStatus) => void;
+  },
 ): RoomInterviewFlowState {
+  const onRoomStatusChange = options?.onRoomStatusChange;
   const [currentRoomIndex, setCurrentRoomIndex] = useState(0);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [roomProgress, setRoomProgress] = useState<RoomProgressMap>(() => {
@@ -294,6 +305,9 @@ export function useRoomInterviewFlow(
           status: "complete",
         },
       }));
+      // C0: tell the server this room finalized so roomProgress can carry
+      // 'complete', not just 'skipped'.
+      onRoomStatusChange?.(currentRoom.roomId, "complete");
     }
 
     // Check if we should enter cross-room phase
@@ -311,7 +325,7 @@ export function useRoomInterviewFlow(
       setCurrentQuestionIndex(0);
     }
     // If no next room, canFinish will be true and the UI shows "Finish interview"
-  }, [currentRoom, completedRoomCount, crossRoomQuestions.length, crossRoomPhase, currentRoomIndex, findNextRoom]);
+  }, [currentRoom, completedRoomCount, crossRoomQuestions.length, crossRoomPhase, currentRoomIndex, findNextRoom, onRoomStatusChange]);
 
   // Advance to next question in room, or trigger round transition / next room
   const advanceQuestion = useCallback(() => {
@@ -361,6 +375,8 @@ export function useRoomInterviewFlow(
         status: "skipped",
       },
     }));
+    // C0: persist the skip via the same status channel as completion.
+    onRoomStatusChange?.(currentRoom.roomId, "skipped");
 
     const nextIdx = findNextRoom(currentRoomIndex + 1);
     if (nextIdx !== null) {
@@ -368,7 +384,7 @@ export function useRoomInterviewFlow(
       setCurrentQuestionIndex(0);
     }
     // If no next room, canFinish check handles the rest
-  }, [currentRoom, currentRoomIndex, findNextRoom]);
+  }, [currentRoom, currentRoomIndex, findNextRoom, onRoomStatusChange]);
 
   // Go to a specific room
   const goToRoom = useCallback((roomIndex: number) => {
@@ -517,25 +533,37 @@ export function useRoomInterviewFlow(
     [rooms, roomProgress],
   );
 
-  // Apply persisted skips (from server roomProgress / localStorage draft) without
-  // moving the designer. Never overrides a room they have since completed.
-  const hydrateSkips = useCallback((roomIds: string[]) => {
-    if (!roomIds.length) return;
-    setRoomProgress((prev) => {
-      const next = { ...prev };
-      for (const id of roomIds) {
-        const cur = next[id];
-        if (cur?.status === "complete") continue;
-        next[id] = {
-          status: "skipped",
-          answeredCount: cur?.answeredCount ?? 0,
-          totalQuestions: cur?.totalQuestions ?? 0,
-          baseQuestions: cur?.baseQuestions ?? 0,
-        };
-      }
-      return next;
-    });
-  }, []);
+  // Apply persisted statuses (from server roomProgress / localStorage draft)
+  // without moving the designer — hydrates 'complete' and 'skipped' on resume
+  // (C0). Never downgrades: an incoming status applies only when it ranks >= the
+  // current one, so stale hydration can't undo progress made this session.
+  const hydrateStatuses = useCallback(
+    (entries: Array<{ roomId: string; status: RoomProgressStatus }>) => {
+      if (!entries.length) return;
+      const rank: Record<RoomProgressStatus, number> = {
+        not_started: 0,
+        in_progress: 1,
+        skipped: 2,
+        complete: 3,
+      };
+      setRoomProgress((prev) => {
+        const next = { ...prev };
+        for (const { roomId, status } of entries) {
+          const cur = next[roomId];
+          const curRank = cur ? rank[cur.status] : -1;
+          if (rank[status] < curRank) continue;
+          next[roomId] = {
+            status,
+            answeredCount: cur?.answeredCount ?? 0,
+            totalQuestions: cur?.totalQuestions ?? 0,
+            baseQuestions: cur?.baseQuestions ?? 0,
+          };
+        }
+        return next;
+      });
+    },
+    [],
+  );
 
   // Build room progress array for the progress bar
   const roomProgressForBar = useMemo(
@@ -601,6 +629,6 @@ export function useRoomInterviewFlow(
     insertRoundQuestions,
     completeRoundTransition,
     initFromSavedState,
-    hydrateSkips,
+    hydrateStatuses,
   };
 }
