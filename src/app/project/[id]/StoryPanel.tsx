@@ -370,12 +370,14 @@ export default function StoryPanel({ projectId, project, images, isOwner }: Stor
           <div className="flex items-start justify-between gap-4">
             <div>
               <p className="folio-ui font-semibold text-folio-text-primary">
-                {excludedRooms.length === 1 ? 'A room was' : 'Some rooms were'} left out of your story
+                {excludedRooms.join(', ')}
               </p>
+              {/* C5 — verbatim: rooms without a write-up now appear as photo-only
+                  gallery chapters, not dropped. Published rooms are frozen. */}
               <p className="folio-meta text-folio-text-secondary mt-1">
-                {excludedRooms.join(', ')} {excludedRooms.length === 1 ? "wasn't" : "weren't"} finished,
-                so {excludedRooms.length === 1 ? 'it was' : 'they were'} left out to keep the quality high.
-                Continue the interview to finish {excludedRooms.length === 1 ? 'it' : 'them'} and regenerate.
+                Photos from {excludedRooms.length} rooms will appear in the gallery at the bottom of your
+                article. Come back anytime to write them up. The rooms you&apos;ve already published won&apos;t
+                change.
               </p>
             </div>
             <button
