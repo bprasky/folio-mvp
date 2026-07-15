@@ -31,6 +31,7 @@ interface ProjectImage {
   name?: string;
   room?: string | null;
   roomId?: string | null;
+  displayOrder?: number | null;
   inclusion?: 'INCLUDED' | 'EXCLUDED';
   noProducts?: boolean;
   aiSpaces?: string[];
@@ -549,7 +550,7 @@ export default function MediaSection({ project, isOwner, images, projectPost, in
         onOpenChange={setShowInterviewModal}
         projectId={project.id}
         projectName={project.title}
-        images={images.map(img => ({ id: img.id, url: img.url, name: img.name }))}
+        images={images.map(img => ({ id: img.id, url: img.url, name: img.name, room: img.room ?? null, displayOrder: img.displayOrder ?? null }))}
         post={projectPost}
         onDraftGenerated={handleDraftGenerated}
       />

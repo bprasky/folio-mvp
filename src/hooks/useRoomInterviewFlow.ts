@@ -100,6 +100,8 @@ export interface RoomInterviewFlowState {
     answeredQuestionIds: Set<string>,
     savedProgress: RoomProgressMap | null,
   ) => void;
+  /** Mark rooms skipped without navigating — hydrates persisted skips on load. */
+  hydrateSkips: (roomIds: string[]) => void;
 }
 
 // ---------------------------------------------------------------------------
@@ -178,12 +180,10 @@ export function useRoomInterviewFlow(
     return Math.ceil(currentRoom.budget.baseQuestions * 0.6);
   }, [currentRoom]);
 
-  const canSkipRoom = useMemo(() => {
-    if (!currentRoom) return false;
-    if (currentRoomIndex === 0) return false; // Never skip first room
-    const progress = roomProgress[currentRoom.roomId];
-    return progress ? progress.answeredCount >= skipMinimumForRoom : false;
-  }, [currentRoom, currentRoomIndex, roomProgress, skipMinimumForRoom]);
+  // Skip is now always available in the question phase (A2). The 60% answer gate
+  // and the index-0 gate are intentionally removed — the room-vs-question choice
+  // (and the About-group exception) is decided by the skip sheet UI, not here.
+  const canSkipRoom = useMemo(() => !!currentRoom, [currentRoom]);
 
   // How many more answers needed before skip is available (for UI label)
   const answersUntilSkip = useMemo(() => {
@@ -517,6 +517,26 @@ export function useRoomInterviewFlow(
     [rooms, roomProgress],
   );
 
+  // Apply persisted skips (from server roomProgress / localStorage draft) without
+  // moving the designer. Never overrides a room they have since completed.
+  const hydrateSkips = useCallback((roomIds: string[]) => {
+    if (!roomIds.length) return;
+    setRoomProgress((prev) => {
+      const next = { ...prev };
+      for (const id of roomIds) {
+        const cur = next[id];
+        if (cur?.status === "complete") continue;
+        next[id] = {
+          status: "skipped",
+          answeredCount: cur?.answeredCount ?? 0,
+          totalQuestions: cur?.totalQuestions ?? 0,
+          baseQuestions: cur?.baseQuestions ?? 0,
+        };
+      }
+      return next;
+    });
+  }, []);
+
   // Build room progress array for the progress bar
   const roomProgressForBar = useMemo(
     () =>
@@ -581,5 +601,6 @@ export function useRoomInterviewFlow(
     insertRoundQuestions,
     completeRoundTransition,
     initFromSavedState,
+    hydrateSkips,
   };
 }
