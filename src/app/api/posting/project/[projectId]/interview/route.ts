@@ -344,6 +344,8 @@ export async function POST(
       // Room pacing fields (Phase B)
       roomId: qa?.roomId || qa?.room_id || null,
       isCrossRoom: qa?.isCrossRoom || qa?.is_cross_room || false,
+      // inputModality (Pass B): 'text' | 'voice' | 'mixed', resolved client-side.
+      inputModality: qa?.inputModality || qa?.input_modality || null,
     });
 
     const answers = normalizeQA(answersRaw).map((a, i) => {
@@ -623,7 +625,7 @@ export async function POST(
                 questionId: answer.questionId,
                 answerText: answer.answer,
                 isFollowUp: answer.isFollowUp || false,
-                inputModality: 'text',
+                inputModality: metadata.inputModality || 'text',
                 linkedImageId: metadata.linkedImageId || null,
                 linkedProductId: metadata.linkedProductId || null,
                 questionSource: metadata.questionSource || (answer.isFollowUp ? 'follow_up' : 'base_question'),

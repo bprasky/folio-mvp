@@ -188,6 +188,13 @@ export function InterviewModal({
   // the server whenever a room finalizes ('complete') or is skipped ('skipped').
   const [roomStatuses, setRoomStatuses] = useState<Record<string, RoomProgressStatus>>({});
   const serverRoomProgressRef = useRef<Record<string, any> | null>(null);
+  // inputModality (Pass B fold-in): per-question source flags. `hasVoice` = a
+  // Whisper transcript was merged; `hasTyping` = a real keystroke fired. Resolved
+  // to 'mixed' | 'voice' | 'text' at persist time and carried in the draft so a
+  // reload never silently downgrades a spoken answer to 'text'.
+  const [answerModality, setAnswerModality] = useState<
+    Record<string, { hasVoice: boolean; hasTyping: boolean }>
+  >({});
   // Latest "persist a single room status" fn — kept in a ref so the callback we
   // hand the flow hook stays stable while still closing over fresh answers.
   const persistRoomStatusRef = useRef<
@@ -248,6 +255,7 @@ export function InterviewModal({
           currentQuestionIndex,
           phase,
           roomStatuses,
+          answerModality,
         }));
       } catch (error) {
         console.warn('[InterviewModal] Failed to autosave to localStorage', error);
@@ -259,7 +267,7 @@ export function InterviewModal({
         clearTimeout(autosaveTimeoutRef.current);
       }
     };
-  }, [open, projectId, answers, followUps, currentQuestionIndex, phase, roomStatuses]);
+  }, [open, projectId, answers, followUps, currentQuestionIndex, phase, roomStatuses, answerModality]);
 
   // Preload answers from server and localStorage on open
   useEffect(() => {
@@ -452,6 +460,21 @@ export function InterviewModal({
     return () => {
       cancelled = true;
     };
+  }, [open, projectId]);
+
+  // inputModality: restore per-question source flags from the draft on open, so
+  // a reload doesn't downgrade a previously-spoken answer to 'text'.
+  useEffect(() => {
+    if (!open) return;
+    try {
+      const raw = localStorage.getItem(`interviewDraft:${projectId}`);
+      if (raw) {
+        const d = JSON.parse(raw);
+        if (d?.answerModality && typeof d.answerModality === 'object') {
+          setAnswerModality(d.answerModality);
+        }
+      }
+    } catch { /* ignore */ }
   }, [open, projectId]);
 
   useEffect(() => {
@@ -712,6 +735,36 @@ export function InterviewModal({
     const answer = baseAnswers.find((a) => a.questionId === currentQuestion.id);
     return answer?.answer || "";
   }, [currentQuestion, baseAnswers]);
+
+  // inputModality: record the source of input against the current question.
+  // Flags are keyed by questionId, so switching questions starts fresh and
+  // revisiting a question keeps its resolved modality.
+  const handleInputSource = useCallback(
+    (source: "voice" | "typing") => {
+      const qid = currentQuestion?.id;
+      if (!qid) return;
+      setAnswerModality((prev) => {
+        const cur = prev[qid] ?? { hasVoice: false, hasTyping: false };
+        const next = source === "voice"
+          ? { ...cur, hasVoice: true }
+          : { ...cur, hasTyping: true };
+        if (cur.hasVoice === next.hasVoice && cur.hasTyping === next.hasTyping) return prev;
+        return { ...prev, [qid]: next };
+      });
+    },
+    [currentQuestion?.id],
+  );
+
+  const resolveInputModality = useCallback(
+    (questionId: string): "text" | "voice" | "mixed" => {
+      const m = answerModality[questionId];
+      if (!m) return "text";
+      if (m.hasVoice && m.hasTyping) return "mixed";
+      if (m.hasVoice) return "voice";
+      return "text";
+    },
+    [answerModality],
+  );
 
   // Display question with morphed text overlay (if LLM rewrote it based on prior answers)
   const displayQuestion = useMemo(() => {
@@ -1295,6 +1348,8 @@ export function InterviewModal({
                 category: item.category,
                 answer: item.answer,
                 isFollowUp: item.isFollowUp,
+                // inputModality (Pass B): resolved 'text' | 'voice' | 'mixed'.
+                inputModality: resolveInputModality(item.questionId),
                 // Include question text so it persists in provenance (prevents UUID display)
                 prompt: morphedText || questionDef?.prompt || '',
                 // Metadata fields
@@ -1473,12 +1528,22 @@ export function InterviewModal({
       // Check if answers were just saved by checking if we're coming from the answer step
       // Always save when we have answers — ensures provenance is up to date
       const needsSave = baseAnswers.length > 0;
-      
+
+      // Addition 4: close the status race. Persist the FULL room-status map
+      // (derived from roomFlow.roomProgress, not a delta) and await it before
+      // generating. A dropped 'complete' would turn a finished room into a photo
+      // block, so if this write fails we must NOT generate — the persist error
+      // propagates out of this try and aborts handleGenerate.
+      const fullRoomStatuses = hasRoomPacing
+        ? Object.entries(roomFlow.roomProgress).map(([roomId, p]) => ({ roomId, status: p.status }))
+        : [];
+
       if (needsSave) {
         try {
-          // Save all answers including follow-ups in one call
+          // Save all answers including follow-ups (and the full status map) in one call
           const allAnswersResult = await persistAnswers([...baseAnswers, ...followUpAnswersState], {
             includeFollowUps: true,
+            ...(fullRoomStatuses.length > 0 ? { roomStatuses: fullRoomStatuses } : {}),
           });
           console.log("[InterviewModal] All answers save result:", allAnswersResult);
           
@@ -2215,6 +2280,7 @@ export function InterviewModal({
               question={displayQuestion}
               answer={currentAnswer}
               onAnswerChange={handleCurrentAnswerChange}
+              onInputSource={handleInputSource}
               onSubmit={handleQuestionAnswerSubmit}
               isSubmitting={isSubmitting || isLoadingFollowUps}
               fieldError={fieldErrors[currentQuestion?.id || ""]}
