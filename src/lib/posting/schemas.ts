@@ -137,6 +137,14 @@ export const BlocksSchema = z.object({
       z.string().max(300),       // Legacy format (backward compat)
       PullQuoteSelectionSchema,  // New format with alternatives
     ]).optional().nullable(),
+    // Append-only room chapters (ADR append-only-room-chapters, C1). All three
+    // are OPTIONAL so legacy blocks (5 rows in prod, none carrying `kind`) still
+    // parse. `kind` distinguishes an editorial write-up from a photo-only gallery
+    // block; `roomId` ties an editorial chapter to its Room so it can be frozen
+    // across regenerations; `generatedAt` records the pass that wrote it.
+    roomId: z.string().nullable().optional(),
+    generatedAt: z.number().optional(),
+    kind: z.enum(['editorial', 'gallery']).optional(),
   })).optional(),
   pullQuotes: z.array(
     z.union([
