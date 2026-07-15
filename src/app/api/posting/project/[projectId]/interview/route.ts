@@ -308,6 +308,14 @@ export async function POST(
       body?.interview?.followups ??
       [];
 
+    // Room skips (A3): optional [{ roomId, skipped }]. Merged non-destructively
+    // into EditorialInterview.roomProgress below. `skipped` defaults to true.
+    const roomSkips: Array<{ roomId: string; skipped: boolean }> = (
+      Array.isArray(body?.roomSkips) ? body.roomSkips : []
+    )
+      .filter((s: any) => s && typeof s.roomId === 'string' && s.roomId.length > 0)
+      .map((s: any) => ({ roomId: s.roomId, skipped: s.skipped !== false }));
+
     // Extract metadata fields from answers before normalization
     const extractMetadata = (qa: any) => ({
       linkedImageId: qa?.linkedImageId || qa?.linked_image_id || null,
@@ -556,14 +564,16 @@ export async function POST(
       console.warn('[interview/POST] Write verification failed (non-blocking):', verifyErr);
     }
 
-    // Sync answers to EditorialInterviewAnswer if new fields are present
+    // Sync answers to EditorialInterviewAnswer + merge room progress (incl. skips)
     try {
-      const { syncAnswersToEditorialInterview } = await import('@/lib/editorial/syncInterviewAnswers');
-      const hasNewFields = incomingAnswers.some((a: any) => 
+      const hasNewFields = incomingAnswers.some((a: any) =>
         a.metadata?.linkedImageId || a.metadata?.linkedProductId || a.metadata?.questionSource || a.metadata?.aiClassificationAttribute
       );
-      
-      if (hasNewFields) {
+
+      // Run the sync when answer metadata is present OR an explicit skip arrived.
+      const shouldSync = hasNewFields || roomSkips.length > 0;
+
+      if (shouldSync) {
         // Get or create EditorialInterview
         let interview = await prisma.editorialInterview.findUnique({
           where: { projectId },
@@ -579,49 +589,97 @@ export async function POST(
           });
         }
 
-        // Delete existing answers and recreate with new metadata
-        await prisma.editorialInterviewAnswer.deleteMany({
-          where: { interviewId: interview.id },
-        });
-
-        // Create answer records with metadata
-        for (const answer of mergedAnswers) {
-          const metadata = (answer as any).metadata || {};
-          await prisma.editorialInterviewAnswer.create({
-            data: {
-              interviewId: interview.id,
-              questionId: answer.questionId,
-              answerText: answer.answer,
-              isFollowUp: answer.isFollowUp || false,
-              inputModality: 'text',
-              linkedImageId: metadata.linkedImageId || null,
-              linkedProductId: metadata.linkedProductId || null,
-              questionSource: metadata.questionSource || (answer.isFollowUp ? 'follow_up' : 'base_question'),
-              aiClassificationAttribute: metadata.aiClassificationAttribute || null,
-              roomId: metadata.roomId || null,
-              isCrossRoom: metadata.isCrossRoom || false,
-            },
+        // Only rewrite answer rows when answer metadata changed — a skip-only
+        // save must not wipe and recreate the answer set.
+        if (hasNewFields) {
+          await prisma.editorialInterviewAnswer.deleteMany({
+            where: { interviewId: interview.id },
           });
-        }
 
-        // Compute and update room progress (Phase B)
-        const roomProgressMap: Record<string, { status: string; answeredCount: number; totalQuestions: number; baseQuestions: number }> = {};
-        for (const answer of mergedAnswers) {
-          const meta = (answer as any).metadata || {};
-          const rid = meta.roomId;
-          if (!rid) continue;
-          if (!roomProgressMap[rid]) {
-            roomProgressMap[rid] = { status: 'in_progress', answeredCount: 0, totalQuestions: 0, baseQuestions: 0 };
+          for (const answer of mergedAnswers) {
+            const metadata = (answer as any).metadata || {};
+            await prisma.editorialInterviewAnswer.create({
+              data: {
+                interviewId: interview.id,
+                questionId: answer.questionId,
+                answerText: answer.answer,
+                isFollowUp: answer.isFollowUp || false,
+                inputModality: 'text',
+                linkedImageId: metadata.linkedImageId || null,
+                linkedProductId: metadata.linkedProductId || null,
+                questionSource: metadata.questionSource || (answer.isFollowUp ? 'follow_up' : 'base_question'),
+                aiClassificationAttribute: metadata.aiClassificationAttribute || null,
+                roomId: metadata.roomId || null,
+                isCrossRoom: metadata.isCrossRoom || false,
+              },
+            });
           }
-          roomProgressMap[rid].answeredCount++;
         }
 
-        // Update selectedQuestionIds + roomProgress
+        // --- Room progress (Phase B) — merge non-destructively (A3) ---
+        // Start from what's stored, overlay answer-derived counts, then overlay
+        // explicit skips. An explicit skip survives the recompute; every status
+        // written is a valid member of the client enum in roomPacing.ts:13
+        // (not_started | in_progress | complete | skipped).
+        const VALID_STATUSES = new Set(['not_started', 'in_progress', 'complete', 'skipped']);
+        const existingRP =
+          interview.roomProgress && typeof interview.roomProgress === 'object'
+            ? (interview.roomProgress as Record<string, any>)
+            : {};
+
+        const nextRP: Record<string, { status: string; answeredCount: number; totalQuestions: number; baseQuestions: number }> = {};
+        for (const [rid, v] of Object.entries(existingRP)) {
+          const s = (v as any)?.status;
+          nextRP[rid] = {
+            status: VALID_STATUSES.has(s) ? s : 'in_progress',
+            answeredCount: Number((v as any)?.answeredCount) || 0,
+            totalQuestions: Number((v as any)?.totalQuestions) || 0,
+            baseQuestions: Number((v as any)?.baseQuestions) || 0,
+          };
+        }
+
+        // Answer-derived counts — a room with answers is at least in_progress,
+        // but never downgrade a room already complete or skipped.
+        const derived: Record<string, number> = {};
+        for (const answer of mergedAnswers) {
+          const rid = (answer as any).metadata?.roomId;
+          if (!rid) continue;
+          derived[rid] = (derived[rid] || 0) + 1;
+        }
+        for (const [rid, count] of Object.entries(derived)) {
+          const cur = nextRP[rid];
+          const keep = cur && (cur.status === 'complete' || cur.status === 'skipped');
+          nextRP[rid] = {
+            status: keep ? cur!.status : 'in_progress',
+            answeredCount: count,
+            totalQuestions: cur?.totalQuestions || 0,
+            baseQuestions: cur?.baseQuestions || 0,
+          };
+        }
+
+        // Explicit skips are authoritative. `skipped: false` reverts to computed.
+        for (const s of roomSkips) {
+          const cur = nextRP[s.roomId];
+          if (s.skipped) {
+            nextRP[s.roomId] = {
+              status: 'skipped',
+              answeredCount: cur?.answeredCount || 0,
+              totalQuestions: cur?.totalQuestions || 0,
+              baseQuestions: cur?.baseQuestions || 0,
+            };
+          } else if (cur) {
+            nextRP[s.roomId] = {
+              ...cur,
+              status: cur.answeredCount > 0 ? 'in_progress' : 'not_started',
+            };
+          }
+        }
+
         await prisma.editorialInterview.update({
           where: { id: interview.id },
           data: {
             selectedQuestionIds,
-            ...(Object.keys(roomProgressMap).length > 0 ? { roomProgress: roomProgressMap } : {}),
+            ...(Object.keys(nextRP).length > 0 ? { roomProgress: nextRP } : {}),
           },
         });
       }
