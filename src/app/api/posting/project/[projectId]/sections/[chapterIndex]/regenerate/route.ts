@@ -76,6 +76,11 @@ export async function POST(
     }
 
     const chapter = chapters[chapterIndex];
+    // Gallery chapters (photo blocks) are not editable; only editorial chapters
+    // regenerate. Legacy chapters carry no `kind` and stay editable.
+    if (chapter?.kind === 'gallery') {
+      return NextResponse.json({ error: 'Gallery chapters are not editable' }, { status: 400 });
+    }
     const previousBody = [...(chapter.body || [])];
 
     // Fetch designer name for quote attribution
