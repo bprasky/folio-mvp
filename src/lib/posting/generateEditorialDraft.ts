@@ -81,6 +81,35 @@ export type GenInput = {
   projectHistory?: string;
   atelierSummary?: string;
   imageSelections?: Record<string, string[]>;
+
+  // --- Append-only room chapters (ADR append-only-room-chapters, C2/C3/C4) ---
+  // Omitting all of these keeps the legacy single-pass behavior (every room
+  // gets a fresh editorial chapter) — so the other caller
+  // (getOrCreateEditorialDraft) is unaffected.
+  /** 'initial' = write every room; 'append' = only write `writeRoomNames`. */
+  mode?: 'initial' | 'append';
+  /** Editorial chapters kept verbatim from prior passes, in order, at the front. */
+  frozenChapters?: Array<{
+    title?: string;
+    roomId: string | null;
+    imageIds: string[];
+    body: string[];
+    pullQuote?: PullQuoteSelection | string | null;
+    generatedAt?: number;
+    kind: 'editorial';
+  }>;
+  /** Room NAMES to write NEW editorial prose for this pass (default: all rooms). */
+  writeRoomNames?: string[];
+  /** Room NAMES to emit as photo-only gallery chapters (tail). */
+  galleryRoomNames?: string[];
+  /** Room NAME → Room.id, so assembled chapters can carry roomId. */
+  roomNameToId?: Record<string, string>;
+  /** Lead fields frozen by a designer override — passed as fixed, not generated. */
+  frozenLead?: { kicker?: string; deck?: string };
+  /** Introduction frozen by a designer override — passed as fixed, not generated. */
+  frozenIntroduction?: string[];
+  /** Timestamp stamped on chapters written this pass (route supplies it). */
+  generatedAt?: number;
 };
 
 const ANTHROPIC_ENABLED = !!process.env.ANTHROPIC_API_KEY && process.env.ANTHROPIC_ENABLED !== "false";
@@ -651,135 +680,139 @@ async function repairAndBuildBlocks(
   _cid: string,
 ): z.infer<typeof BlocksSchema> {
   const designerName = input.designer?.name;
-  const finalChapters: Array<{ title: string; imageIds: string[]; body: string[] }> = [];
+  const knownImageIdSet = new Set(imageIds);
+  const gen = input.generatedAt ?? 0;
+  const roomNameToId = input.roomNameToId ?? {};
+  const frozenChapters = input.frozenChapters ?? [];
+  // Rooms to write NEW editorial prose for (default: every image-room — legacy).
+  const writeRooms = input.writeRoomNames
+    ? input.writeRoomNames.filter((r) => r && r !== 'General')
+    : rooms;
 
-  // Pull quotes are now extracted mechanically from body text AFTER chapters are built (see below)
+  const composedChapters: any[] = Array.isArray(composed.galleryChapters) ? composed.galleryChapters : [];
 
-  // --- Post-LLM repair: enforce room-based titles and correct image IDs ---
-  if (rooms.length > 0 && rooms[0] !== 'General' && Array.isArray(composed.galleryChapters)) {
-    const chapters = composed.galleryChapters as any[];
-    // Match chapters to rooms by position (prompt lists rooms in order)
-    for (let i = 0; i < Math.min(chapters.length, rooms.length); i++) {
-      const room = rooms[i];
-      const roomImages = (imagesByRoom[room] || []).map((img: { id: string }) => img.id);
-      chapters[i].title = formatRoomName(room);
-      if (roomImages.length > 0) {
-        chapters[i].imageIds = roomImages.slice(0, 8);
+  const proofBody = (rawBody: any): string[] => {
+    const out: string[] = [];
+    if (Array.isArray(rawBody)) {
+      for (const para of rawBody) {
+        const processed = proofOutsideQuotes((typeof para === 'string' ? para : String(para || '')).trim());
+        if (!processed) continue;
+        if (processed.length > 4500) out.push(...splitLongParagraph(processed, 4000));
+        else out.push(processed);
+      }
+    } else if (typeof rawBody === 'string' && rawBody.trim()) {
+      for (const para of proofOutsideQuotes(rawBody.trim()).split(/\n\s*\n/).map((p) => p.trim()).filter(Boolean)) {
+        if (para.length > 4500) out.push(...splitLongParagraph(para, 4000));
+        else out.push(para);
       }
     }
-    // Add missing rooms as chapters
-    for (let i = chapters.length; i < rooms.length; i++) {
-      const room = rooms[i];
-      const roomImages = (imagesByRoom[room] || []).map((img: { id: string }) => img.id);
-      if (roomImages.length > 0) {
-        chapters.push({
-          title: formatRoomName(room),
-          imageIds: roomImages.slice(0, 8),
-          body: ['Editorial content for this room is being developed.'],
+    return out;
+  };
+
+  // --- Build NEW editorial chapters, one per writeRoom (C2/C3) ---
+  // Room-keyed, positional match (prompt lists writeRooms in order). No
+  // placeholder filler: a room the model returns no prose for is demoted to a
+  // photo-only gallery chapter and logged — never "Content pending."
+  const newEditorialAssembled: Array<Record<string, any>> = [];
+  const demotedRooms: string[] = [];
+  for (let i = 0; i < writeRooms.length; i++) {
+    const roomName = writeRooms[i];
+    const roomImageIds = (imagesByRoom[roomName] || [])
+      .map((img) => img.id)
+      .filter((id) => knownImageIdSet.has(id))
+      .slice(0, 8);
+    const bodyParas = proofBody(composedChapters[i]?.body);
+    if (roomImageIds.length === 0 || bodyParas.length === 0) {
+      demotedRooms.push(roomName);
+      continue;
+    }
+    newEditorialAssembled.push({
+      title: formatRoomName(roomName),
+      imageIds: roomImageIds,
+      body: bodyParas,
+      // Only the first chapter OVERALL is the article lead. In append mode that's
+      // a frozen chapter, so no new chapter is treated as the lead.
+      pullQuote: extractPullQuotesForChapter(bodyParas, designerName, {
+        isLeadChapter: frozenChapters.length === 0 && newEditorialAssembled.length === 0,
+      }),
+      roomId: roomNameToId[roomName] ?? null,
+      generatedAt: gen,
+      kind: 'editorial' as const,
+    });
+  }
+  if (demotedRooms.length > 0) {
+    console.warn('[generateEditorialDraft] editorial rooms demoted to gallery (no prose)', { _cid, demotedRooms });
+  }
+
+  // Legacy resilience: if nothing frozen and nothing new landed but the model put
+  // real narrative in `sections`, salvage one editorial chapter from it (real
+  // prose, not a placeholder). Prepended before any gallery so editorial-first holds.
+  if (frozenChapters.length === 0 && newEditorialAssembled.length === 0) {
+    const paras: string[] = [];
+    for (const s of composed.sections || []) {
+      if (s.type === 'narrative' && s.body) paras.push(...proofBody(s.body));
+    }
+    if (paras.length >= 3) {
+      const firstName = writeRooms[0];
+      const imgIds = (firstName ? (imagesByRoom[firstName] || []).map((i) => i.id) : imageIds)
+        .filter((id) => knownImageIdSet.has(id))
+        .slice(0, 8);
+      if (imgIds.length > 0) {
+        newEditorialAssembled.push({
+          title: firstName ? formatRoomName(firstName) : (input.project?.title || 'The Space'),
+          imageIds: imgIds,
+          body: paras,
+          pullQuote: extractPullQuotesForChapter(paras, designerName, { isLeadChapter: true }),
+          roomId: firstName ? (roomNameToId[firstName] ?? null) : null,
+          generatedAt: gen,
+          kind: 'editorial' as const,
         });
       }
     }
-    console.log('[generateEditorialDraft] Post-LLM room repair applied', {
-      _cid, roomCount: rooms.length, chapterCount: chapters.length,
-      titles: chapters.map((ch: any) => ch.title),
-    });
   }
 
-  // --- Process gallery chapters ---
-  const knownImageIdSet = new Set(imageIds);
-  if (Array.isArray(composed.galleryChapters)) {
-    for (const chapter of composed.galleryChapters as any[]) {
-      if (!chapter.imageIds || !Array.isArray(chapter.imageIds) || chapter.imageIds.length === 0) {
-        continue;
-      }
-      // Validate imageIds against known set
-      const validImageIds = chapter.imageIds
-        .filter((id: any) => typeof id === 'string' && knownImageIdSet.has(id))
-        .slice(0, 8);
-      if (validImageIds.length === 0) continue;
-
-      // Process body paragraphs
-      let bodyParas: string[] = [];
-      const chapterBody: any = chapter.body;
-      if (Array.isArray(chapterBody) && chapterBody.length > 0) {
-        for (const para of chapterBody) {
-          const text: string = typeof para === 'string' ? para : String(para || '');
-          const processed = proofOutsideQuotes(text.trim());
-          if (processed.length > 0) bodyParas.push(processed);
-        }
-      } else if (chapterBody && typeof chapterBody === 'string') {
-        const bodyText = proofOutsideQuotes(String(chapterBody).trim());
-        const paragraphs = bodyText.split(/\n\s*\n/).filter(p => p.trim().length > 0);
-        for (const para of paragraphs) {
-          const trimmed = para.trim();
-          if (trimmed.length > 4500) {
-            bodyParas.push(...splitLongParagraph(trimmed, 4000));
-          } else {
-            bodyParas.push(trimmed);
-          }
-        }
-      }
-
-      finalChapters.push({
-        title: chapter.title || 'Untitled',
-        imageIds: validImageIds,
-        body: bodyParas.length > 0 ? bodyParas : ['Content pending.'],
-      });
-    }
-  }
-
-  // --- Fallback: if no chapters with body, extract from sections ---
-  if (finalChapters.length === 0 || finalChapters.every(ch => ch.body.length === 0 || ch.body[0] === 'Content pending.')) {
-    const paras: string[] = [];
-    for (const s of composed.sections || []) {
-      if (s.type === "narrative" && s.body) {
-        const bodyText = proofOutsideQuotes(s.body.trim());
-        const paragraphs = bodyText.split(/\n\s*\n/).filter(p => p.trim().length > 0);
-        for (const para of paragraphs) {
-          const trimmed = para.trim();
-          if (trimmed.length > 4500) {
-            paras.push(...splitLongParagraph(trimmed, 4000));
-          } else {
-            paras.push(trimmed);
-          }
-        }
-      }
-    }
-    if (paras.length >= 3) {
-      const firstChapter = composed.galleryChapters?.[0];
-      const chapterImageIds = firstChapter?.imageIds?.filter((id: any) =>
-        typeof id === 'string' && knownImageIdSet.has(id)
-      ).slice(0, 8) || imageIds.slice(0, 8);
-      finalChapters.length = 0;
-      finalChapters.push({
-        title: firstChapter?.title || input.project?.title || 'The Space',
-        imageIds: chapterImageIds,
-        body: paras,
-      });
-    }
-  }
-
-  // --- Ensure we have at least one chapter ---
-  if (finalChapters.length === 0) {
-    // Use fallback with image grouping
-    const fallbackChapters = groupImagesIntoChapters(input.images, input.imageOrder);
-    for (const ch of fallbackChapters) {
-      finalChapters.push({
-        title: ch.title,
-        imageIds: ch.imageIds,
-        body: ['Editorial content is being generated.'],
-      });
-    }
-  }
-
-  // Extract pull quotes PER CHAPTER from each chapter's own body text
-  // A dining room pull quote stays in the dining room.
-  // Chapter 0 is the article's lead — use hook-aware selection so the top-of-post
-  // pull quote reflects the narrative opening instead of a mid-chapter detail.
-  const finalChaptersWithQuotes = finalChapters.map((ch, idx) => ({
-    ...ch,
-    pullQuote: extractPullQuotesForChapter(ch.body, designerName, { isLeadChapter: idx === 0 }),
+  // Frozen editorial chapters kept verbatim, at the front, in order.
+  const frozenAssembled = frozenChapters.map((ch) => ({
+    title: ch.title,
+    imageIds: ch.imageIds,
+    body: ch.body,
+    pullQuote: ch.pullQuote ?? null,
+    roomId: ch.roomId,
+    generatedAt: ch.generatedAt,
+    kind: 'editorial' as const,
   }));
+
+  // Gallery tail (C2 + Addition 2): rooms with NO editorial chapter (frozen OR
+  // new). Rebuilt from scratch every pass so a room that earns an editorial
+  // chapter loses its stale photo block. Rooms already editorial are subtracted
+  // (never print twice); rooms with no images render nothing. Project room order.
+  const editorialRoomIds = new Set(
+    [...frozenAssembled, ...newEditorialAssembled]
+      .map((c) => c.roomId)
+      .filter((x): x is string => !!x),
+  );
+  const roomOrderIndex = new Map((input.rooms ?? []).map((r, i) => [r.name, i] as const));
+  const galleryTail = Array.from(new Set([...(input.galleryRoomNames ?? []), ...demotedRooms]))
+    .filter((name) => name && name !== 'General')
+    .map((name) => ({ name, roomId: roomNameToId[name] ?? null }))
+    .filter((g) => !(g.roomId && editorialRoomIds.has(g.roomId)))
+    .map((g) => ({
+      ...g,
+      imageIds: (imagesByRoom[g.name] || []).map((img) => img.id).filter((id) => knownImageIdSet.has(id)).slice(0, 8),
+    }))
+    .filter((g) => g.imageIds.length > 0)
+    .sort((a, b) => (roomOrderIndex.get(a.name) ?? 9999) - (roomOrderIndex.get(b.name) ?? 9999))
+    .map((g) => ({
+      title: formatRoomName(g.name),
+      imageIds: g.imageIds,
+      pullQuote: null,
+      roomId: g.roomId,
+      generatedAt: gen,
+      kind: 'gallery' as const,
+    }));
+
+  // Final order: frozen editorial → new editorial → gallery tail.
+  const finalChaptersWithQuotes = [...frozenAssembled, ...newEditorialAssembled, ...galleryTail];
 
   const ledger = buildMaterialContext(input.tags);
 
@@ -820,6 +853,20 @@ async function repairAndBuildBlocks(
       : buildCredits(input),
     mode: 'recomposition' as const,
   };
+
+  // Frozen lead/intro (C3, Q1): a designer-edited lead field or introduction is
+  // reproduced from the override, not from the model output. The model already
+  // saw it as FIXED context (so the unfrozen field was written to fit), and this
+  // is the belt-and-suspenders assertion that the edit wins.
+  if (input.frozenLead?.kicker || input.frozenLead?.deck) {
+    blocks.lead = {
+      kicker: input.frozenLead?.kicker ?? blocks.lead?.kicker,
+      deck: input.frozenLead?.deck ?? blocks.lead?.deck,
+    };
+  }
+  if (input.frozenIntroduction && input.frozenIntroduction.length > 0) {
+    (blocks as Record<string, any>).introduction = input.frozenIntroduction.slice(0, 4);
+  }
 
   // Lead pull quote preference (must always be project-level, never piece-specific):
   //  1. Spliced hook-opener + follow-up (richest; requires hook flow answers)
@@ -911,6 +958,15 @@ function buildPrompt(input: GenInput, uniqueAnswers: GenInput['answers']): {
   const rooms = Object.keys(imagesByRoom).filter(r => r !== 'General');
   const imageIds = orderedImages.map(i => i.id);
 
+  // Append-only (C4): the model writes prose ONLY for `writeRooms`. When
+  // writeRoomNames is omitted (legacy caller), that's every image-room — today's
+  // behavior. Frozen chapters and the gallery tail are assembled after the call,
+  // never generated.
+  const isAppend = input.mode === 'append';
+  const writeRooms = input.writeRoomNames
+    ? input.writeRoomNames.filter((r) => r && r !== 'General')
+    : rooms;
+
   // Product grouping by room
   const allTags = orderedImages.flatMap(img => {
     const imgTags = tags.filter(t => t.imageId === img.id || (t.image && t.image.id === img.id));
@@ -924,8 +980,9 @@ function buildPrompt(input: GenInput, uniqueAnswers: GenInput['answers']): {
     orderedImages.map(img => ({ id: img.id, room: img.room || null })),
   );
 
-  const interviewedRoomCount = Array.from(roomAnswerCounts.keys()).filter(r => r !== 'About This Project' && r !== 'General').length;
-  const requiredChapterCount = Math.max(rooms.length, interviewedRoomCount, 1);
+  // Required chapters this pass = the rooms we're writing (writeRooms), not every
+  // image-room. In initial mode writeRooms === rooms, so this is unchanged.
+  const requiredChapterCount = Math.max(writeRooms.length, isAppend ? 0 : 1);
 
   // Structural variation: assign varied paragraph counts per room
   const paraDistributions = [
@@ -936,7 +993,7 @@ function buildPrompt(input: GenInput, uniqueAnswers: GenInput['answers']): {
     [3, 3, 2, 4, 2],
   ];
   const chosenDist = paraDistributions[Math.floor(Math.random() * paraDistributions.length)];
-  const roomNames = rooms.length > 0 ? rooms : ['General'];
+  const roomNames = writeRooms.length > 0 ? writeRooms : ['General'];
   const paragraphCountsPerRoom = roomNames.map((room, i) => ({
     room: formatRoomName(room),
     count: chosenDist[i % chosenDist.length],
@@ -970,7 +1027,33 @@ function buildPrompt(input: GenInput, uniqueAnswers: GenInput['answers']): {
   const materialsList = products.map(p => p.name).join(', ');
 
   // --- Build user prompt ---
+  // Append-mode context (C4): published chapters (verbatim, do-not-touch),
+  // fixed lead/intro fields, and the append rules.
+  const frozenChaptersBlock = isAppend && (input.frozenChapters?.length ?? 0) > 0
+    ? `\n## PUBLISHED CHAPTERS — DO NOT REWRITE, SUMMARIZE, OR REFERENCE AS PRIOR TEXT
+These rooms are already published. Treat them as fixed. Do NOT write about them again, do NOT reintroduce a product or material they already covered unless a NEW room's story genuinely turns on it, and match their register.
+${input.frozenChapters!.map((ch, i) => `--- Published chapter ${i + 1}${ch.title ? `: ${ch.title}` : ''} ---\n${(ch.body || []).join('\n\n')}`).join('\n\n')}
+`
+    : '';
+  const frozenLeadIntroBlock = (() => {
+    const parts: string[] = [];
+    if (input.frozenLead?.kicker) parts.push(`FIXED HEADLINE (kicker) — reproduce exactly: ${input.frozenLead.kicker}`);
+    if (input.frozenLead?.deck) parts.push(`FIXED SUBTITLE (deck) — reproduce exactly: ${input.frozenLead.deck}`);
+    if (input.frozenIntroduction?.length) parts.push(`FIXED INTRODUCTION — reproduce exactly:\n${input.frozenIntroduction.join('\n\n')}`);
+    return parts.length
+      ? `\n## FIXED FIELDS (the designer edited these — reproduce verbatim and write everything else to fit them)\n${parts.join('\n\n')}\n`
+      : '';
+  })();
+  const appendInstructions = isAppend
+    ? `\n## APPEND MODE — CRITICAL
+- The editorial-hierarchy rule (spend 60-70% of the word budget on 1-2 rooms) does NOT apply. Give each REQUIRED room the space its own interview content earns.
+- Write only the REQUIRED rooms. The lead and introduction regenerate against the published chapters plus the new ones together — but any FIXED field above must be reproduced verbatim.
+- Every accuracy rule still applies.
+`
+    : '';
+
   const userPrompt = `Write a feature article about this project.
+${frozenChaptersBlock}${frozenLeadIntroBlock}${appendInstructions}
 
 ## Designer's Interview Responses (grouped by room)
 
@@ -1125,8 +1208,8 @@ Never start more than 2 paragraphs in the entire article with "The [noun]..." Va
 Each section should use at least 2 different opening structures across its paragraphs. If you notice yourself starting consecutive paragraphs with "The," rewrite one of them.
 
 FOR GALLERY CHAPTERS:
-- You MUST create exactly ${requiredChapterCount} gallery chapters — one for each room that has interview content or images.
-- REQUIRED rooms (do NOT omit or merge any): ${rooms.length > 0 ? rooms.join(', ') : 'General'}
+- You MUST create exactly ${requiredChapterCount} gallery chapters — one for each REQUIRED room listed below.
+- REQUIRED rooms (do NOT omit or merge any): ${writeRooms.length > 0 ? writeRooms.join(', ') : 'None — write no gallery chapters this pass'}${isAppend ? `\n- Do NOT write chapters for any room not in that list. Other rooms are either already published (shown above as PUBLISHED CHAPTERS) or will appear as photo-only galleries — leave them out entirely.` : ''}
 - Each chapter title MUST include the room name.
 - Use the designer's exact room name as the section heading — do not rename or reinterpret rooms.
 - Do NOT create thematic chapters that span multiple rooms. Each chapter = one room.
