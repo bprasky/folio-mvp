@@ -96,10 +96,6 @@ export interface RoomInterviewFlowState {
   goToPreviousQuestion: () => void;
   /** Whether the user can go back to a previous question */
   canGoBack: boolean;
-  initFromSavedState: (
-    answeredQuestionIds: Set<string>,
-    savedProgress: RoomProgressMap | null,
-  ) => void;
   /** Apply persisted room statuses without navigating — hydrates on load (C0). */
   hydrateStatuses: (
     entries: Array<{ roomId: string; status: RoomProgressStatus }>,
@@ -298,16 +294,32 @@ export function useRoomInterviewFlow(
   // Helper: finalize room and move to next
   const finalizeRoomAndAdvance = useCallback(() => {
     if (currentRoom) {
+      // D1: a room reaches finalize with zero answers only when the designer
+      // skipped every question individually (skip-question, not skip-room) —
+      // recordAnswer was never called for it. Classify that as 'skipped', not
+      // 'complete', so C0 never records a finished room that has no answers
+      // (the caveat-4 contradiction). Any answered room finalizes 'complete'.
+      //
+      // Staleness note: answeredCount is read from the closure's roomProgress.
+      // In the single path where the last answer is recorded in the SAME tick as
+      // finalize (round 3+ via advanceQuestion), that count is stale by one — but
+      // it never flips the zero-vs-nonzero decision: that path only runs at
+      // round 3+, where the count is already well above zero, while the zero case
+      // arises solely from skip-question, which calls no recordAnswer and so
+      // carries an accurate 0.
+      const answeredCount = roomProgress[currentRoom.roomId]?.answeredCount ?? 0;
+      const finalStatus: RoomProgressStatus =
+        answeredCount === 0 ? "skipped" : "complete";
       setRoomProgress((prev) => ({
         ...prev,
         [currentRoom.roomId]: {
           ...prev[currentRoom.roomId],
-          status: "complete",
+          status: finalStatus,
         },
       }));
-      // C0: tell the server this room finalized so roomProgress can carry
-      // 'complete', not just 'skipped'.
-      onRoomStatusChange?.(currentRoom.roomId, "complete");
+      // C0/D1: emit the SAME status written locally — the local write and the
+      // server emit must never disagree.
+      onRoomStatusChange?.(currentRoom.roomId, finalStatus);
     }
 
     // Check if we should enter cross-room phase
@@ -325,7 +337,7 @@ export function useRoomInterviewFlow(
       setCurrentQuestionIndex(0);
     }
     // If no next room, canFinish will be true and the UI shows "Finish interview"
-  }, [currentRoom, completedRoomCount, crossRoomQuestions.length, crossRoomPhase, currentRoomIndex, findNextRoom, onRoomStatusChange]);
+  }, [currentRoom, roomProgress, completedRoomCount, crossRoomQuestions.length, crossRoomPhase, currentRoomIndex, findNextRoom, onRoomStatusChange]);
 
   // Advance to next question in room, or trigger round transition / next room
   const advanceQuestion = useCallback(() => {
@@ -494,45 +506,6 @@ export function useRoomInterviewFlow(
     finalizeRoomAndAdvance();
   }, [finalizeRoomAndAdvance]);
 
-  // Initialize from saved state (resume)
-  const initFromSavedState = useCallback(
-    (answeredQuestionIds: Set<string>, savedProgress: RoomProgressMap | null) => {
-      if (savedProgress) {
-        setRoomProgress(savedProgress);
-      } else {
-        // Compute room progress from answered question IDs
-        const computed: RoomProgressMap = {};
-        for (const room of rooms) {
-          const answered = room.questions.filter((q) => answeredQuestionIds.has(q.id)).length;
-          const isComplete = answered >= room.budget.baseQuestions;
-          computed[room.roomId] = {
-            status: answered === 0 ? "not_started" : isComplete ? "complete" : "in_progress",
-            answeredCount: answered,
-            totalQuestions: room.budget.baseQuestions,
-            baseQuestions: room.budget.baseQuestions,
-          };
-        }
-        setRoomProgress(computed);
-      }
-
-      // Find first incomplete room
-      const progress = savedProgress || roomProgress;
-      for (let i = 0; i < rooms.length; i++) {
-        const p = progress[rooms[i].roomId];
-        if (!p || p.status === "in_progress" || p.status === "not_started") {
-          setCurrentRoomIndex(i);
-          // Find first unanswered question in this room
-          const firstUnanswered = rooms[i].questions.findIndex(
-            (q) => !answeredQuestionIds.has(q.id),
-          );
-          setCurrentQuestionIndex(firstUnanswered >= 0 ? firstUnanswered : 0);
-          break;
-        }
-      }
-    },
-    [rooms, roomProgress],
-  );
-
   // Apply persisted statuses (from server roomProgress / localStorage draft)
   // without moving the designer — hydrates 'complete' and 'skipped' on resume
   // (C0). Never downgrades: an incoming status applies only when it ranks >= the
@@ -628,7 +601,6 @@ export function useRoomInterviewFlow(
     insertFollowUpQuestions,
     insertRoundQuestions,
     completeRoundTransition,
-    initFromSavedState,
     hydrateStatuses,
   };
 }

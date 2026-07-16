@@ -2201,6 +2201,25 @@ export async function POST(
       imagesWithRoomData.map((img) => img.room).filter((n): n is string => !!n && currentRoomNames.includes(n)),
     );
 
+    // D2: answer counts grouped by roomId, read from the CANONICAL provenance
+    // payload. The read/record split (D5b): provenance.interview.payload.answers
+    // is canonical and atomic — anything that DECIDES reads it. EditorialInterviewAnswer
+    // is a queryable projection; nothing decides on it. Eligibility is a decision,
+    // so it counts provenance rows, not projection rows, and keys strictly by
+    // roomId. We do NOT join roomProgress (keyed by roomId) against roomsWithAnswers
+    // (keyed by NAME): answersOverride carries no roomName, so that map is empty on
+    // the modal path and every room would wrongly fall to gallery. Names are for the
+    // prompt and image mapping — downstream of this decision, never an input to it.
+    const provenanceAnswers: any[] = Array.isArray(interview?.payload?.answers)
+      ? interview.payload.answers
+      : [];
+    const answerCountsByRoomId = new Map<string, number>();
+    for (const a of provenanceAnswers) {
+      const rid = (a as any).roomId;
+      if (!rid) continue; // project-level answers (roomId null) map to no room chapter
+      answerCountsByRoomId.set(rid, (answerCountsByRoomId.get(rid) || 0) + 1);
+    }
+
     // Split real rooms into new-editorial vs gallery; log client/server disagreement.
     const writeRoomNames: string[] = [];
     const galleryRoomNames: string[] = [];
@@ -2211,7 +2230,8 @@ export async function POST(
       roomNameToId[r.name] = r.id;
       if (!roomsWithImages.has(r.name)) continue; // no images → no chapter at all
       const status: string = serverRoomProgress[r.id]?.status ?? 'not_started';
-      const answered = (roomsWithAnswers.get(r.name) ?? 0) > 0;
+      // D2: eligibility joins by roomId only (never name).
+      const answered = (answerCountsByRoomId.get(r.id) ?? 0) > 0;
       const clientSaysComplete = clientCompletedIds.has(r.id);
       if (clientSaysComplete !== (status === 'complete')) {
         disagreements.push({ roomId: r.id, roomName: r.name, serverStatus: status, clientSaysComplete });

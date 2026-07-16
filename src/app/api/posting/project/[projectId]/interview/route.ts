@@ -16,7 +16,7 @@ import { z } from "zod";
 import { randomUUID } from "crypto";
 
 // Helper types and functions for tolerant normalization
-type QA = { id?: string; question?: string; prompt?: string; answer: string; isFollowUp?: boolean; section?: string; category?: string };
+type QA = { id?: string; question?: string; prompt?: string; answer: string; isFollowUp?: boolean; section?: string; category?: string; roomId?: string | null; questionSource?: string; isCrossRoom?: boolean; inputModality?: string };
 
 function pickStr(obj: any, keys: string[]): string | undefined {
   for (const k of keys) {
@@ -41,7 +41,12 @@ function normalizeQA(input: any): QA[] {
           // Preserve section and category from the original object
           const section = pickStr(v, ['section']);
           const category = pickStr(v, ['category']);
-          return ans ? { id, question: q, prompt: (v as any).prompt ?? q, answer: ans, isFollowUp: fu, section, category } : null;
+          // Room attribution + provenance (D5) — carried first-class, not stripped.
+          const roomId = (v as any).roomId ?? (v as any).room_id ?? null;
+          const questionSource = pickStr(v, ['questionSource', 'question_source']);
+          const isCrossRoom = !!((v as any).isCrossRoom ?? (v as any).is_cross_room);
+          const inputModality = pickStr(v, ['inputModality', 'input_modality']);
+          return ans ? { id, question: q, prompt: (v as any).prompt ?? q, answer: ans, isFollowUp: fu, section, category, roomId, questionSource, isCrossRoom, inputModality } : null;
         }
         return null;
       })
@@ -66,7 +71,11 @@ function normalizeQA(input: any): QA[] {
         const fu  = !!(v as any).isFollowUp;
         const section = pickStr(v, ['section']);
         const category = pickStr(v, ['category']);
-        if (ans) out.push({ id, question: q, prompt: (v as any).prompt ?? q, answer: ans, isFollowUp: fu, section, category });
+        const roomId = (v as any).roomId ?? (v as any).room_id ?? null;
+        const questionSource = pickStr(v, ['questionSource', 'question_source']);
+        const isCrossRoom = !!((v as any).isCrossRoom ?? (v as any).is_cross_room);
+        const inputModality = pickStr(v, ['inputModality', 'input_modality']);
+        if (ans) out.push({ id, question: q, prompt: (v as any).prompt ?? q, answer: ans, isFollowUp: fu, section, category, roomId, questionSource, isCrossRoom, inputModality });
       }
     }
     return out;
@@ -119,6 +128,12 @@ function ensureAnswerShape(a: any, idx: number) {
     answer: String(answer ?? '').trim(),
     isFollowUp: !!a?.isFollowUp,
     isFeatured: !!a?.isFeatured,
+    // Room attribution + provenance (D5) — first-class so they survive into the
+    // canonical store (provenance.interview.payload.answers), not dropped here.
+    roomId: a?.roomId ?? a?.room_id ?? null,
+    questionSource: a?.questionSource ?? a?.question_source ?? undefined,
+    isCrossRoom: !!(a?.isCrossRoom ?? a?.is_cross_room),
+    inputModality: a?.inputModality ?? a?.input_modality ?? undefined,
   };
 }
 
@@ -376,7 +391,14 @@ export async function POST(
         answer: qa.answer,
         isFollowUp: qa.isFollowUp || false,
         prompt: qa.prompt || '',
-        // Preserve metadata
+        // Room attribution + provenance (D5) — first-class, declared in the schema
+        // so normalizeAnswers preserves them (metadata is still stripped).
+        roomId: (qa as any).roomId ?? null,
+        questionSource: (qa as any).questionSource ?? undefined,
+        isCrossRoom: !!(qa as any).isCrossRoom,
+        inputModality: (qa as any).inputModality ?? undefined,
+        // Preserve metadata (supplementary; not schema-declared, so it is dropped
+        // by normalizeAnswers — kept here only for the catch fallback path).
         metadata: (qa as any).metadata || {},
       }));
       incomingAnswers = normalizeAnswers(normalized as any);
@@ -393,6 +415,11 @@ export async function POST(
         answer: qa.answer,
         isFollowUp: qa.isFollowUp || false,
         prompt: qa.prompt || '',
+        // Room attribution + provenance (D5) — first-class (see try path).
+        roomId: (qa as any).roomId ?? null,
+        questionSource: (qa as any).questionSource ?? undefined,
+        isCrossRoom: !!(qa as any).isCrossRoom,
+        inputModality: (qa as any).inputModality ?? undefined,
         // Preserve metadata
         metadata: (qa as any).metadata || {},
       }));
@@ -585,13 +612,26 @@ export async function POST(
       console.warn('[interview/POST] Write verification failed (non-blocking):', verifyErr);
     }
 
-    // Sync answers to EditorialInterviewAnswer + merge room progress (incl. skips)
+    // Sync answers to EditorialInterviewAnswer + merge room progress.
+    //
+    // The read/record split (D5b): provenance.interview.payload.answers (written
+    // atomically just above) is CANONICAL — anything that decides reads it.
+    // EditorialInterviewAnswer is a queryable PROJECTION of that provenance —
+    // nothing decides on it, and it is exactly as complete as provenance, never
+    // more. That is the intended direction of the dependency.
     try {
+      // D5: room attribution now rides as declared first-class fields (roomId,
+      // questionSource, isCrossRoom, inputModality), so `hasNewFields` reads them
+      // directly. Declaring roomId trips this gate for the first time, switching
+      // ON the deleteMany + create rebuild for every answer-bearing save — see the
+      // commit message. It rebuilds from `mergedAnswers` (the full merged set), so
+      // a single-answer save never drops the others.
       const hasNewFields = incomingAnswers.some((a: any) =>
-        a.metadata?.linkedImageId || a.metadata?.linkedProductId || a.metadata?.questionSource || a.metadata?.aiClassificationAttribute
+        a.roomId || a.questionSource || a.isCrossRoom ||
+        a.metadata?.linkedImageId || a.metadata?.linkedProductId || a.metadata?.aiClassificationAttribute
       );
 
-      // Run the sync when answer metadata is present OR an explicit status arrived.
+      // Run the sync when answer fields are present OR an explicit status arrived.
       const shouldSync = hasNewFields || roomStatuses.length > 0;
 
       if (shouldSync) {
@@ -610,31 +650,34 @@ export async function POST(
           });
         }
 
-        // Only rewrite answer rows when answer metadata changed — a skip-only
-        // save must not wipe and recreate the answer set.
+        // Only rewrite answer rows when answer fields are present — a skip-only
+        // save must not wipe and recreate the answer set. The delete + recreate
+        // is wrapped in a single transaction (D5a) so a concurrent reader can
+        // never observe the projection mid-rewrite (half-written is worse than
+        // stale).
         if (hasNewFields) {
-          await prisma.editorialInterviewAnswer.deleteMany({
-            where: { interviewId: interview.id },
-          });
-
-          for (const answer of mergedAnswers) {
-            const metadata = (answer as any).metadata || {};
-            await prisma.editorialInterviewAnswer.create({
-              data: {
-                interviewId: interview.id,
-                questionId: answer.questionId,
-                answerText: answer.answer,
-                isFollowUp: answer.isFollowUp || false,
-                inputModality: metadata.inputModality || 'text',
-                linkedImageId: metadata.linkedImageId || null,
-                linkedProductId: metadata.linkedProductId || null,
-                questionSource: metadata.questionSource || (answer.isFollowUp ? 'follow_up' : 'base_question'),
-                aiClassificationAttribute: metadata.aiClassificationAttribute || null,
-                roomId: metadata.roomId || null,
-                isCrossRoom: metadata.isCrossRoom || false,
-              },
-            });
-          }
+          const interviewId = interview.id;
+          await prisma.$transaction([
+            prisma.editorialInterviewAnswer.deleteMany({ where: { interviewId } }),
+            ...mergedAnswers.map((answer) => {
+              const metadata = (answer as any).metadata || {};
+              return prisma.editorialInterviewAnswer.create({
+                data: {
+                  interviewId,
+                  questionId: answer.questionId,
+                  answerText: answer.answer,
+                  isFollowUp: answer.isFollowUp || false,
+                  inputModality: (answer as any).inputModality || 'text',
+                  linkedImageId: metadata.linkedImageId || null,
+                  linkedProductId: metadata.linkedProductId || null,
+                  questionSource: (answer as any).questionSource || (answer.isFollowUp ? 'follow_up' : 'base_question'),
+                  aiClassificationAttribute: metadata.aiClassificationAttribute || null,
+                  roomId: (answer as any).roomId || null,
+                  isCrossRoom: (answer as any).isCrossRoom || false,
+                },
+              });
+            }),
+          ]);
         }
 
         // --- Room progress (Phase B) — merge non-destructively (A3/C0) ---
@@ -663,7 +706,7 @@ export async function POST(
         // but never downgrade a room already complete or skipped.
         const derived: Record<string, number> = {};
         for (const answer of mergedAnswers) {
-          const rid = (answer as any).metadata?.roomId;
+          const rid = (answer as any).roomId; // D5: first-class, no longer metadata
           if (!rid) continue;
           derived[rid] = (derived[rid] || 0) + 1;
         }

@@ -195,6 +195,12 @@ export function InterviewModal({
   const [answerModality, setAnswerModality] = useState<
     Record<string, { hasVoice: boolean; hasTyping: boolean }>
   >({});
+  // Per-answer roomId (D5): the room an answer was given in, captured at answer
+  // time. Bulk saves and answersOverride must NOT re-derive from the current room
+  // (which is the LAST room by then) — they'd stamp every answer with it and
+  // corrupt provenance. Keyed by questionId; carried in the draft; hydrated from
+  // server answers (which carry roomId post-D5) on load.
+  const [answerRoomIds, setAnswerRoomIds] = useState<Record<string, string | null>>({});
   // Latest "persist a single room status" fn — kept in a ref so the callback we
   // hand the flow hook stays stable while still closing over fresh answers.
   const persistRoomStatusRef = useRef<
@@ -256,6 +262,7 @@ export function InterviewModal({
           phase,
           roomStatuses,
           answerModality,
+          answerRoomIds,
         }));
       } catch (error) {
         console.warn('[InterviewModal] Failed to autosave to localStorage', error);
@@ -267,7 +274,7 @@ export function InterviewModal({
         clearTimeout(autosaveTimeoutRef.current);
       }
     };
-  }, [open, projectId, answers, followUps, currentQuestionIndex, phase, roomStatuses, answerModality]);
+  }, [open, projectId, answers, followUps, currentQuestionIndex, phase, roomStatuses, answerModality, answerRoomIds]);
 
   // Preload answers from server and localStorage on open
   useEffect(() => {
@@ -301,6 +308,21 @@ export function InterviewModal({
           
           const serverAnswers = normalizeIncomingAnswers(data?.answers || []);
           const serverFollowUps = Array.isArray(data?.followUps) ? data.followUps : [];
+
+          // D5: hydrate the per-answer roomId map from server answers (which
+          // carry roomId post-D5). Merge under any draft-restored values (prev
+          // wins) so a local edit isn't clobbered by a stale server read.
+          if (Array.isArray(data?.answers)) {
+            const serverRoomIds: Record<string, string | null> = {};
+            for (const a of data.answers) {
+              if (a && a.questionId != null && 'roomId' in a) {
+                serverRoomIds[String(a.questionId)] = (a as any).roomId ?? null;
+              }
+            }
+            if (Object.keys(serverRoomIds).length > 0 && !cancelled) {
+              setAnswerRoomIds((prev) => ({ ...serverRoomIds, ...prev }));
+            }
+          }
           
           if (cancelled) return;
           
@@ -472,6 +494,11 @@ export function InterviewModal({
         const d = JSON.parse(raw);
         if (d?.answerModality && typeof d.answerModality === 'object') {
           setAnswerModality(d.answerModality);
+        }
+        // D5: restore per-answer roomId map so a reload doesn't lose room
+        // attribution before the next persist.
+        if (d?.answerRoomIds && typeof d.answerRoomIds === 'object') {
+          setAnswerRoomIds(d.answerRoomIds);
         }
       }
     } catch { /* ignore */ }
@@ -1260,10 +1287,29 @@ export function InterviewModal({
     handleQuestionAnswerSubmit();
   }, [pendingResubmitQuestionId, currentQuestion, handleQuestionAnswerSubmit]);
 
+  // Per-answer roomId (D5): resolve the room the CURRENT question belongs to, at
+  // answer time. Only correct while the designer is on the question — bulk saves
+  // later must read the captured map, never re-derive from roomFlow.currentRoom
+  // (which is the last room by then). 'project' collapses to null (project-level
+  // answers have no room).
+  const resolveCurrentRoomId = useCallback((): string | null => {
+    if (!hasRoomPacing) return null;
+    const q = roomFlow.currentQuestion as { roomId?: string } | undefined;
+    const rid = (q?.roomId) || roomFlow.currentRoom?.roomId || null;
+    return rid === "project" ? null : rid;
+  }, [hasRoomPacing, roomFlow.currentQuestion, roomFlow.currentRoom?.roomId]);
+
   // Handle answer change for current question
   const handleCurrentAnswerChange = useCallback(
     (value: string) => {
       if (!currentQuestion) return;
+
+      // D5: stamp the answer with the room it's being given in, captured now
+      // while roomFlow.currentRoom is still correct for this question.
+      const rid = resolveCurrentRoomId();
+      setAnswerRoomIds((prev) =>
+        prev[currentQuestion.id] === rid ? prev : { ...prev, [currentQuestion.id]: rid },
+      );
 
       // Update answers state
       setAnswers((prev) => {
@@ -1279,7 +1325,7 @@ export function InterviewModal({
         return [...filtered, answerData];
       });
     },
-    [currentQuestion]
+    [currentQuestion, resolveCurrentRoomId]
   );
 
   async function persistBaseAnswers(
@@ -1374,8 +1420,14 @@ export function InterviewModal({
                     ? `${questionMeta.attributeType}:${questionMeta.attributeValue}`
                     : null;
                 })(),
-                // Room pacing fields — project-level answers get roomId: null in DB
+                // Room pacing fields — project-level answers get roomId: null in DB.
+                // D5: prefer the per-answer roomId captured at answer time. Bulk
+                // saves (handleGenerate, room-status persists) must NOT re-derive
+                // from roomFlow.currentRoom — that's the LAST room by then and
+                // would stamp every answer with it, corrupting provenance.
                 roomId: (() => {
+                  const captured = answerRoomIds[item.questionId];
+                  if (captured !== undefined) return captured; // already null for 'project'
                   const resolvedRoomId = hasRoomPacing ? (questionMeta?.roomId || roomFlow.currentRoom?.roomId || null) : null;
                   return resolvedRoomId === 'project' ? null : resolvedRoomId;
                 })(),
@@ -1609,6 +1661,9 @@ export function InterviewModal({
               answer: a.answer,
               role: a.role || 'DESIGNER',
               isFollowUp: false,
+              // D5: carry roomId so the override path and the provenance path
+              // agree on room attribution (eligibility groups by roomId).
+              roomId: answerRoomIds[a.questionId] ?? null,
             })),
             followupsOverride: followUpAnswersState
               .filter(a => a.answer?.trim())
@@ -1619,6 +1674,7 @@ export function InterviewModal({
                 answer: a.answer,
                 role: a.role || 'DESIGNER',
                 isFollowUp: true,
+                roomId: answerRoomIds[a.questionId] ?? null,
               })),
           }),
         }
@@ -1674,6 +1730,7 @@ export function InterviewModal({
                 answer: a.answer,
                 role: a.role || 'DESIGNER',
                 isFollowUp: false,
+                roomId: answerRoomIds[a.questionId] ?? null,
               })),
               followupsOverride: followUpAnswersState
                 .filter(a => a.answer?.trim())
@@ -1684,6 +1741,7 @@ export function InterviewModal({
                   answer: a.answer,
                   role: a.role || 'DESIGNER',
                   isFollowUp: true,
+                  roomId: answerRoomIds[a.questionId] ?? null,
                 })),
             }),
           }
