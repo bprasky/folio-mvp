@@ -40,6 +40,11 @@ export async function POST(
 
     const blocks = post.expandedBlocks as Record<string, any>;
     const chapters = blocks.galleryChapters as any[];
+    // Gallery chapters are not editable; nothing to undo on a photo block.
+    // Legacy chapters carry no `kind` and stay editable.
+    if (chapters?.[chapterIndex]?.kind === 'gallery') {
+      return NextResponse.json({ error: 'Gallery chapters are not editable' }, { status: 400 });
+    }
     const history = ((post.sectionHistory ?? []) as SectionHistoryEntry[]).slice();
 
     const entryIdx = history.findIndex((h) => h.chapterIndex === chapterIndex);

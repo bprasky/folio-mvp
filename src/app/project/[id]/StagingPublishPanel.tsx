@@ -38,6 +38,7 @@ interface ProjectImage {
   url: string;
   name?: string;
   room?: string;
+  displayOrder?: number | null;
   tags: ProductTag[];
 }
 
@@ -463,7 +464,7 @@ export default function StagingPublishPanel({
         onOpenChange={setShowInterviewModal}
         projectId={projectId}
         projectName={project.title}
-        images={images.map(img => ({ id: img.id, url: img.url, name: img.name }))}
+        images={images.map(img => ({ id: img.id, url: img.url, name: img.name, room: img.room ?? null, displayOrder: img.displayOrder ?? null }))}
         post={initialPostData}
         onDraftGenerated={() => {
           setShowInterviewModal(false);

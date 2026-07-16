@@ -48,6 +48,12 @@ export async function PATCH(
     const blocks = (post.expandedBlocks ?? {}) as Record<string, any>;
     const overrides = ((post.sectionOverrides ?? []) as SectionOverride[]).slice();
 
+    // Section editing targets editorial chapters only. Gallery chapters (photo
+    // blocks) are not editable. Legacy chapters carry no `kind` and stay editable.
+    if (chapterIndex >= 0 && blocks.galleryChapters?.[chapterIndex]?.kind === 'gallery') {
+      return NextResponse.json({ error: 'Gallery chapters are not editable' }, { status: 400 });
+    }
+
     // Capture original text from expandedBlocks
     const originalBody = getFieldValue(blocks, chapterIndex, paragraphIndex, field);
 
@@ -133,6 +139,11 @@ export async function DELETE(
 
     const blocks = (post.expandedBlocks ?? {}) as Record<string, any>;
     const overrides = ((post.sectionOverrides ?? []) as SectionOverride[]).slice();
+
+    // Gallery chapters are not editable (see POST). Legacy chapters stay editable.
+    if (chapterIndex >= 0 && blocks.galleryChapters?.[chapterIndex]?.kind === 'gallery') {
+      return NextResponse.json({ error: 'Gallery chapters are not editable' }, { status: 400 });
+    }
 
     const idx = overrides.findIndex(
       (o) => o.chapterIndex === chapterIndex && o.paragraphIndex === paragraphIndex && o.field === field

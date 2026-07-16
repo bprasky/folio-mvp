@@ -9,8 +9,8 @@ interface FooterBarProps {
   onSubmit?: () => void;
   onGenerate?: () => void;
   onSkip?: () => void;
-  onSkipRoom?: () => void;
-  skipRoomLabel?: string;
+  /** Question-phase Skip (A2). Always present; opens the skip choice sheet. */
+  onQuestionSkip?: () => void;
   canProceed: boolean;
   isSubmitting?: boolean;
   isGenerating?: boolean;
@@ -29,8 +29,7 @@ export function FooterBar({
   onSubmit,
   onGenerate,
   onSkip,
-  onSkipRoom,
-  skipRoomLabel,
+  onQuestionSkip,
   canProceed,
   isSubmitting = false,
   isGenerating = false,
@@ -72,14 +71,6 @@ export function FooterBar({
         <div className="flex gap-3">
           {phase === "question" && (
             <>
-              {onSkipRoom && (
-                <button
-                  onClick={onSkipRoom}
-                  className="px-4 py-2 text-sm font-medium text-folio-text-secondary hover:text-folio-text-primary transition-colors"
-                >
-                  {skipRoomLabel || "Skip room \u2192"}
-                </button>
-              )}
               {onSubmit && (
                 <button
                   onClick={onSubmit}
@@ -107,6 +98,19 @@ export function FooterBar({
                       <span className="text-xs opacity-75 ml-1">(⌘+Enter)</span>
                     </>
                   )}
+                </button>
+              )}
+              {/* Single Skip control (A2) — always present in the question phase,
+                  every room. Quiet, to the right of Continue. Opens the choice
+                  sheet (skip question / skip room). */}
+              {onQuestionSkip && (
+                <button
+                  type="button"
+                  onClick={onQuestionSkip}
+                  disabled={isSubmitting || isLoadingFollowUps}
+                  className="px-4 py-2 text-sm font-medium text-folio-text-secondary hover:text-folio-text-primary disabled:opacity-50 transition-colors"
+                >
+                  Skip
                 </button>
               )}
             </>

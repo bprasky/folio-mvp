@@ -1,5 +1,7 @@
 "use client";
 
+import { useEffect, useRef } from "react";
+import type { CSSProperties } from "react";
 import type { RoomProgressStatus } from "@/lib/editorial/roomPacing";
 
 interface RoomProgressBarProps {
@@ -19,40 +21,63 @@ interface RoomProgressBarProps {
   baseQuestionCount?: number;
 }
 
-function StatusIcon({ status }: { status: RoomProgressStatus }) {
+// Folio palette (A4). Four visually distinct states.
+const TAUPE = "#8A7E70";
+const INK = "#1A1A1A";
+const GOLD = "#C9A96E";
+
+// Edge fade so the rail reads as scrollable on both sides.
+const FADE =
+  "linear-gradient(to right, transparent 0, black 24px, black calc(100% - 24px), transparent 100%)";
+
+function StatusGlyph({ status }: { status: RoomProgressStatus }) {
   switch (status) {
     case "complete":
-      return (
-        <span className="text-[var(--accent)] text-xs font-bold">&#10003;</span>
-      );
+      return <span className="text-xs font-bold">&#10003;</span>; // check
     case "in_progress":
-      return (
-        <span className="text-[var(--accent)] text-xs">&#9684;</span>
-      );
+      return <span className="text-[10px] leading-none">&#9679;</span>; // filled dot (light on ink)
     case "skipped":
-      return (
-        <span className="text-folio-text-tertiary text-xs line-through">&#8709;</span>
-      );
+      return <span className="text-xs line-through">&#8709;</span>; // struck empty-set
     case "not_started":
     default:
-      return (
-        <span className="text-folio-text-tertiary text-xs">&#9675;</span>
-      );
+      return <span className="text-xs">&#9675;</span>; // outline circle
   }
 }
 
-function statusBorderClass(status: RoomProgressStatus, isCurrent: boolean): string {
-  if (isCurrent) return "border-[var(--accent)] bg-[var(--accent)]/5";
+// Fill / outline / glyph tone per state. One 400ms transition carries the
+// complete → gold fill when a room turns complete.
+function pillStyle(status: RoomProgressStatus, isCurrent: boolean): CSSProperties {
+  const base: CSSProperties = {
+    borderWidth: 1,
+    borderStyle: "solid",
+    transition:
+      "background-color 400ms ease, border-color 400ms ease, color 400ms ease",
+    // Current-room distinction sits on top of the four states.
+    boxShadow: isCurrent ? "0 0 0 2px var(--accent)" : "none",
+  };
+
   switch (status) {
     case "complete":
-      return "border-[var(--accent)]/40 bg-[var(--accent)]/5";
+      return { ...base, backgroundColor: GOLD, borderColor: GOLD, color: INK };
     case "in_progress":
-      return "border-[var(--accent)]/20 bg-transparent";
+      return { ...base, backgroundColor: INK, borderColor: INK, color: "#FFFFFF" };
     case "skipped":
-      return "border-folio-border-subtle bg-surface-ground/50 opacity-60";
+      return {
+        ...base,
+        backgroundColor: "transparent",
+        borderColor: TAUPE,
+        borderStyle: "dashed",
+        color: TAUPE,
+        opacity: 0.6,
+      };
     case "not_started":
     default:
-      return "border-folio-border-subtle bg-transparent";
+      return {
+        ...base,
+        backgroundColor: "transparent",
+        borderColor: TAUPE,
+        color: TAUPE,
+      };
   }
 }
 
@@ -65,49 +90,75 @@ export function RoomProgressBar({
   baseQuestionCount = 0,
 }: RoomProgressBarProps) {
   const currentRoom = rooms[currentRoomIndex];
+  const pillRefs = useRef<Record<string, HTMLButtonElement | null>>({});
+
+  // Recenter: keep the active pill centered as the designer moves through rooms,
+  // so what remains stays visible to the right. Horizontal only (block: nearest).
+  useEffect(() => {
+    const room = rooms[currentRoomIndex];
+    if (!room) return;
+    pillRefs.current[room.roomId]?.scrollIntoView({
+      inline: "center",
+      behavior: "smooth",
+      block: "nearest",
+    });
+  }, [currentRoomIndex, rooms]);
 
   return (
-    <div className="flex flex-col gap-2">
-      {/* Room pills row */}
-      <div className="flex items-center gap-1.5 overflow-x-auto scrollbar-hide px-1">
-        {rooms.map((room, idx) => {
-          const isProject = room.roomId === 'project';
-          const showSeparator = isProject && rooms.length > 1;
-          return (
-            <div key={room.roomId} className="flex items-center gap-1.5 shrink-0">
-              <button
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full border text-xs font-medium whitespace-nowrap transition-colors ${isProject ? 'italic' : ''} ${statusBorderClass(room.status, idx === currentRoomIndex)}`}
-                disabled
-                aria-current={idx === currentRoomIndex ? "step" : undefined}
-              >
-                <StatusIcon status={room.status} />
-                <span
-                  className={
-                    idx === currentRoomIndex
-                      ? "text-folio-text-primary"
-                      : "text-folio-text-secondary"
-                  }
+    <div className="flex items-center gap-3 min-w-0">
+      {/* Scrollable pill rail with edge fades */}
+      <div
+        className="flex-1 min-w-0 overflow-x-auto scrollbar-hide"
+        style={{ WebkitMaskImage: FADE, maskImage: FADE }}
+      >
+        <div className="flex items-center gap-1.5 px-1 w-max">
+          {rooms.map((room, idx) => {
+            const isProject = room.roomId === "project";
+            const showSeparator = isProject && rooms.length > 1;
+            const isCurrent = idx === currentRoomIndex;
+            return (
+              <div key={room.roomId} className="flex items-center gap-1.5 shrink-0">
+                <button
+                  ref={(el) => {
+                    pillRefs.current[room.roomId] = el;
+                  }}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap ${
+                    isProject ? "italic" : ""
+                  }`}
+                  style={pillStyle(room.status, isCurrent)}
+                  disabled
+                  aria-current={isCurrent ? "step" : undefined}
                 >
-                  {room.roomName}
-                </span>
-              </button>
-              {showSeparator && (
-                <span className="h-4 w-px bg-[var(--ridge-outer)] shrink-0" />
-              )}
-            </div>
-          );
-        })}
+                  <StatusGlyph status={room.status} />
+                  <span
+                    className={room.status === "skipped" ? "line-through" : ""}
+                  >
+                    {room.roomName}
+                  </span>
+                </button>
+                {showSeparator && (
+                  <span className="h-4 w-px bg-[var(--ridge-outer)] shrink-0" />
+                )}
+              </div>
+            );
+          })}
+        </div>
       </div>
 
-      {/* Current room progress text */}
-      {currentRoom && (
-        <span className="text-xs text-folio-text-secondary px-1">
-          {currentRoom.roomName} &mdash;{" "}
-          {currentRound > 1 && baseQuestionCount > 0
-            ? `Follow-up ${currentQuestionInRoom + 1 - baseQuestionCount} of ${totalQuestionsInRoom - baseQuestionCount}`
-            : `${currentQuestionInRoom + 1} of ${totalQuestionsInRoom} questions`}
-        </span>
-      )}
+      {/* Fixed counter — never scrolls, so the designer keeps their place. */}
+      <div className="shrink-0 text-right leading-tight whitespace-nowrap">
+        <div className="text-[11px] font-medium text-folio-text-primary">
+          Room {currentRoomIndex + 1} of {rooms.length}
+        </div>
+        {currentRoom && (
+          <div className="text-[11px] text-folio-text-secondary">
+            {currentRoom.roomName} &mdash;{" "}
+            {currentRound > 1 && baseQuestionCount > 0
+              ? `Follow-up ${currentQuestionInRoom + 1 - baseQuestionCount} of ${totalQuestionsInRoom - baseQuestionCount}`
+              : `${currentQuestionInRoom + 1} of ${totalQuestionsInRoom} questions`}
+          </div>
+        )}
+      </div>
     </div>
   );
 }

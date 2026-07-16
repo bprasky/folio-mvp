@@ -1592,6 +1592,8 @@ export async function POST(
         heroAssetId: true,
         excerpt: true,
         credits: true,
+        sectionOverrides: true,
+        sectionHistory: true,
       },
     });
 
@@ -1668,6 +1670,8 @@ export async function POST(
           heroAssetId: true,
           excerpt: true,
           credits: true,
+          sectionOverrides: true,
+          sectionHistory: true,
         },
       });
     }
@@ -2156,45 +2160,126 @@ export async function POST(
       });
     }
 
-    // --- Quality gate: withhold images for rooms that aren't fully answered ---
-    // generateEditorialDraft derives one gallery chapter per image-room and
-    // force-fills any room lacking editorial content with placeholder prose. To
-    // stop a half-finished room from leaking that placeholder, we drop its images
-    // here so no chapter is ever created for it. Real project rooms only:
-    // unassigned/General images always pass through (they never form a chapter).
-    // roomId → Room.name matching (roomIdToName) is authoritative, so a completed
-    // room can't be dropped by name drift. No-op when completedRoomIds is absent.
-    let gatedImages = imagesWithRoomData;
-    let gatedValidImageIds = validImageIds;
-    const excludedRooms: Array<{ roomName: string; imageCount: number }> = [];
-    if (completedRoomIds && completedRoomIds.length > 0) {
-      const completedRoomNames = new Set(
-        completedRoomIds.map(id => roomIdToName.get(id)).filter((n): n is string => !!n)
-      );
-      const realRoomNames = new Set(currentRoomNames);
-      const excludedCounts: Record<string, number> = {};
-      gatedImages = imagesWithRoomData.filter(img => {
-        const rn = img.room;
-        if (rn && realRoomNames.has(rn) && !completedRoomNames.has(rn)) {
-          excludedCounts[rn] = (excludedCounts[rn] || 0) + 1;
-          return false; // incomplete real room → withhold its images
-        }
-        return true;
+    // --- Append-only eligibility (C2/C3) — replaces the old ROOM QUALITY GATE ---
+    // Images are NEVER withheld now. Every real room with photos yields a chapter;
+    // this split only decides its KIND. A room earns an EDITORIAL chapter only
+    // when the server says it's finalized (roomProgress status 'complete') AND it
+    // has at least one recorded answer (grounded in the answer rows we loaded,
+    // not the client tally). Everything else — skipped, in-progress, not-started,
+    // complete-but-empty — gets a photo-only GALLERY chapter. Published editorial
+    // chapters are frozen and never rewritten.
+    const gatedImages = imagesWithRoomData;
+    const gatedValidImageIds = validImageIds;
+    const gatedKeptIds = new Set(gatedImages.map(i => i.id));
+
+    // Server room status — authoritative for finalized-vs-in-progress (C0 taught
+    // the server 'complete'). Missing/failed load ⇒ treat all rooms as unfinalized.
+    let serverRoomProgress: Record<string, any> = {};
+    try {
+      const ei = await prisma.editorialInterview.findUnique({
+        where: { projectId },
+        select: { roomProgress: true },
       });
-      const keptIds = new Set(gatedImages.map(i => i.id));
-      gatedValidImageIds = validImageIds.filter(id => keptIds.has(id));
-      for (const roomName of Object.keys(excludedCounts)) {
-        excludedRooms.push({ roomName, imageCount: excludedCounts[roomName] });
+      serverRoomProgress = (ei?.roomProgress && typeof ei.roomProgress === 'object')
+        ? (ei.roomProgress as Record<string, any>)
+        : {};
+    } catch (e: any) {
+      console.warn('[generate] roomProgress load failed — treating all rooms as unfinalized', { _cid, error: e?.message });
+    }
+
+    // Existing published chapters → frozen set (editorial + roomId), in order.
+    const existingChapters: any[] = Array.isArray((post?.expandedBlocks as any)?.galleryChapters)
+      ? (post!.expandedBlocks as any).galleryChapters
+      : [];
+    const frozenChapters = existingChapters.filter(
+      (ch) => ch?.kind === 'editorial' && typeof ch?.roomId === 'string' && ch.roomId,
+    );
+    const frozenRoomIds = new Set<string>(frozenChapters.map((ch) => ch.roomId));
+
+    // Only rooms with at least one image can form a chapter.
+    const roomsWithImages = new Set(
+      imagesWithRoomData.map((img) => img.room).filter((n): n is string => !!n && currentRoomNames.includes(n)),
+    );
+
+    // D2: answer counts grouped by roomId, read from the CANONICAL provenance
+    // payload. The read/record split (D5b): provenance.interview.payload.answers
+    // is canonical and atomic — anything that DECIDES reads it. EditorialInterviewAnswer
+    // is a queryable projection; nothing decides on it. Eligibility is a decision,
+    // so it counts provenance rows, not projection rows, and keys strictly by
+    // roomId. We do NOT join roomProgress (keyed by roomId) against roomsWithAnswers
+    // (keyed by NAME): answersOverride carries no roomName, so that map is empty on
+    // the modal path and every room would wrongly fall to gallery. Names are for the
+    // prompt and image mapping — downstream of this decision, never an input to it.
+    const provenanceAnswers: any[] = Array.isArray(interview?.payload?.answers)
+      ? interview.payload.answers
+      : [];
+    const answerCountsByRoomId = new Map<string, number>();
+    for (const a of provenanceAnswers) {
+      const rid = (a as any).roomId;
+      if (!rid) continue; // project-level answers (roomId null) map to no room chapter
+      answerCountsByRoomId.set(rid, (answerCountsByRoomId.get(rid) || 0) + 1);
+    }
+
+    // Split real rooms into new-editorial vs gallery; log client/server disagreement.
+    const writeRoomNames: string[] = [];
+    const galleryRoomNames: string[] = [];
+    const roomNameToId: Record<string, string> = {};
+    const clientCompletedIds = new Set(completedRoomIds ?? []);
+    const disagreements: Array<{ roomId: string; roomName: string; serverStatus: string; clientSaysComplete: boolean }> = [];
+    for (const r of projectRooms) {
+      roomNameToId[r.name] = r.id;
+      if (!roomsWithImages.has(r.name)) continue; // no images → no chapter at all
+      const status: string = serverRoomProgress[r.id]?.status ?? 'not_started';
+      // D2: eligibility joins by roomId only (never name).
+      const answered = (answerCountsByRoomId.get(r.id) ?? 0) > 0;
+      const clientSaysComplete = clientCompletedIds.has(r.id);
+      if (clientSaysComplete !== (status === 'complete')) {
+        disagreements.push({ roomId: r.id, roomName: r.name, serverStatus: status, clientSaysComplete });
       }
-      if (excludedRooms.length > 0) {
-        console.log('[ROOM QUALITY GATE] Withholding incomplete rooms from generation:', {
-          excludedRooms,
-          completed: Array.from(completedRoomNames),
-          _cid,
-        });
+      if (frozenRoomIds.has(r.id)) continue; // already published → frozen; no new chapter, no gallery
+      if (status === 'complete' && answered) writeRoomNames.push(r.name);
+      else galleryRoomNames.push(r.name);
+    }
+    if (disagreements.length > 0) {
+      console.warn('[generate] completedRoomIds vs server roomProgress disagreement', { _cid, disagreements });
+    }
+
+    const composeMode: 'initial' | 'append' = frozenChapters.length > 0 ? 'append' : 'initial';
+    const passGeneratedAt = Date.now();
+
+    // Frozen lead/intro from preserved -1/-2 overrides (Q1): reproduced verbatim,
+    // passed as fixed context so the model never regenerates an edited field.
+    const existingOverrides: any[] = Array.isArray(post?.sectionOverrides) ? (post!.sectionOverrides as any[]) : [];
+    const existingHistory: any[] = Array.isArray(post?.sectionHistory) ? (post!.sectionHistory as any[]) : [];
+    const frozenLead: { kicker?: string; deck?: string } = {};
+    for (const o of existingOverrides) {
+      if (o?.chapterIndex === -1 && (o.field === 'kicker' || o.field === 'deck') && typeof o.editedBody === 'string') {
+        frozenLead[o.field as 'kicker' | 'deck'] = o.editedBody;
       }
     }
-    const gatedKeptIds = new Set(gatedImages.map(i => i.id));
+    let frozenIntroduction: string[] | undefined;
+    const introOverrides = existingOverrides.filter((o) => o?.chapterIndex === -2 && o.field === 'introduction');
+    if (introOverrides.length > 0) {
+      const introArr: string[] = Array.isArray((post?.expandedBlocks as any)?.introduction)
+        ? [...(post!.expandedBlocks as any).introduction]
+        : [];
+      for (const o of introOverrides) {
+        if (typeof o.paragraphIndex === 'number' && typeof o.editedBody === 'string') introArr[o.paragraphIndex] = o.editedBody;
+      }
+      const cleaned = introArr.filter((p) => typeof p === 'string' && p.trim());
+      if (cleaned.length > 0) frozenIntroduction = cleaned;
+    }
+
+    // excludedRooms for the Story-tab notice = the rooms that became gallery this pass.
+    const excludedRooms: Array<{ roomName: string; imageCount: number }> = galleryRoomNames.map((name) => ({
+      roomName: name,
+      imageCount: imagesWithRoomData.filter((img) => img.room === name).length,
+    }));
+
+    console.log('[generate] append-only split', {
+      _cid, mode: composeMode, frozen: frozenChapters.length,
+      writeRooms: writeRoomNames, galleryRooms: galleryRoomNames,
+    });
 
     // --- Normalize inputs to GenInput for the unified generateEditorialDraft ---
     const genInput: GenInput = {
@@ -2248,6 +2333,23 @@ export async function POST(
       projectHistory,
       atelierSummary,
       imageSelections,
+      // --- Append-only room chapters (C2/C3/C4) ---
+      mode: composeMode,
+      frozenChapters: frozenChapters.map((ch) => ({
+        title: ch.title,
+        roomId: ch.roomId ?? null,
+        imageIds: Array.isArray(ch.imageIds) ? ch.imageIds : [],
+        body: Array.isArray(ch.body) ? ch.body : [],
+        pullQuote: ch.pullQuote ?? null,
+        generatedAt: typeof ch.generatedAt === 'number' ? ch.generatedAt : undefined,
+        kind: 'editorial' as const,
+      })),
+      writeRoomNames,
+      galleryRoomNames,
+      roomNameToId,
+      frozenLead: (frozenLead.kicker || frozenLead.deck) ? frozenLead : undefined,
+      frozenIntroduction,
+      generatedAt: passGeneratedAt,
     };
 
     let composed: any;
@@ -2410,6 +2512,56 @@ export async function POST(
     // expandedBlocks is the validated structure ready to save
     const expandedBlocks = validatedBlocks;
 
+    // --- Assembly-order invariant (Addition 1) — the frozenCount override rule
+    // depends entirely on this holding. A violation means sectionOverrides are
+    // about to repoint at the wrong chapter and corrupt published text. Throw,
+    // do NOT persist, do NOT warn. ---
+    {
+      const chapters: any[] = Array.isArray(expandedBlocks.galleryChapters) ? expandedBlocks.galleryChapters : [];
+      const arrEq = (a: any, b: any) =>
+        Array.isArray(a) && Array.isArray(b) && a.length === b.length && a.every((x: any, i: number) => x === b[i]);
+      // (a) the first frozenCount chapters are byte-identical to the frozen set
+      for (let i = 0; i < frozenChapters.length; i++) {
+        const p = chapters[i];
+        const f = frozenChapters[i];
+        if (!p || p.kind !== 'editorial' || p.roomId !== f.roomId || !arrEq(p.body, f.body) || !arrEq(p.imageIds, f.imageIds)) {
+          throw Object.assign(new Error(`Assembly invariant violated: frozen chapter ${i} was mutated or reordered`), {
+            code: 'FROZEN_CHAPTER_MUTATED', status: 500,
+          });
+        }
+      }
+      // (b) no gallery chapter precedes any editorial chapter; and
+      // (c) every chapter carries kind, every editorial chapter carries roomId
+      let seenGallery = false;
+      for (let i = 0; i < chapters.length; i++) {
+        const ch = chapters[i];
+        if (ch?.kind !== 'editorial' && ch?.kind !== 'gallery') {
+          throw Object.assign(new Error(`Assembly invariant violated: chapter ${i} has no kind`), { code: 'CHAPTER_MISSING_KIND', status: 500 });
+        }
+        if (ch.kind === 'gallery') seenGallery = true;
+        else if (ch.kind === 'editorial') {
+          if (seenGallery) {
+            throw Object.assign(new Error(`Assembly invariant violated: editorial chapter ${i} follows a gallery chapter`), { code: 'GALLERY_BEFORE_EDITORIAL', status: 500 });
+          }
+          if (!ch.roomId) {
+            throw Object.assign(new Error(`Assembly invariant violated: editorial chapter ${i} has no roomId`), { code: 'EDITORIAL_MISSING_ROOMID', status: 500 });
+          }
+        }
+      }
+    }
+
+    // --- Merge, not replace (C3) — preserve override/history entries that still
+    // point at a stable index: lead/intro (chapterIndex < 0) or a frozen editorial
+    // chapter (chapterIndex < frozenCount). Everything else is dropped. On a legacy
+    // post frozenCount is 0, so only -1/-2 survive — the one full reweave, no branch. ---
+    const frozenCount = frozenChapters.length;
+    const preservedOverrides = existingOverrides.filter(
+      (o) => typeof o?.chapterIndex === 'number' && (o.chapterIndex < 0 || o.chapterIndex < frozenCount),
+    );
+    const preservedHistory = existingHistory.filter(
+      (h) => typeof h?.chapterIndex === 'number' && (h.chapterIndex < 0 || h.chapterIndex < frozenCount),
+    );
+
     // SAVE (replace existing draft using upsert)
     // IMPORTANT: Do NOT clear interview answers - they persist for future AI training
     
@@ -2482,9 +2634,10 @@ export async function POST(
       update: {
         status: 'DRAFT',
         expandedBlocks: expandedBlocks,
-        // Clear stale overrides/history — fresh expandedBlocks invalidate old indices & originalBody
-        sectionOverrides: [],
-        sectionHistory: [],
+        // Merge, not replace (C3): keep override/history entries pointing at
+        // lead/intro or a frozen chapter (stable indices); drop the rest.
+        sectionOverrides: preservedOverrides as any,
+        sectionHistory: preservedHistory as any,
         ...(heroAssetId ? { heroAssetId } : {}),
         ...(excerpt ? { excerpt } : {}),
         ...(credits ? { credits: credits as any } : {}),

@@ -27,6 +27,15 @@ const AnswerBaseSchema = z.object({
   category: SIX_W_ENUM.optional(),
   isFollowUp: z.boolean().optional(),
   prompt: z.string().optional(),
+  // Room attribution + provenance (D5). Declared first-class so `normalizeAnswers`
+  // preserves them instead of stripping them as unknown keys — the canonical
+  // store (provenance.interview.payload.answers) must know which room an answer
+  // belongs to, independent of eligibility. No `.passthrough()`: if a field
+  // matters, it is declared.
+  roomId: z.string().nullable().optional(),
+  questionSource: z.string().optional(),
+  isCrossRoom: z.boolean().optional(),
+  inputModality: z.enum(["text", "voice", "mixed"]).optional(),
   answer: z
     .string()
     .transform((s) => s.trim())

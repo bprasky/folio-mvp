@@ -13,6 +13,12 @@ interface QuestionCardProps {
   question: InterviewQuestion;
   answer: string;
   onAnswerChange: (answer: string) => void;
+  /**
+   * Reports the SOURCE of an input event so the parent can resolve inputModality
+   * ('voice' | 'typing'). Keystrokes come through the textarea onChange; the
+   * Whisper transcript merge writes state directly and must NOT count as typing.
+   */
+  onInputSource?: (source: "voice" | "typing") => void;
   onSubmit: () => void;
   isSubmitting?: boolean;
   fieldError?: string;
@@ -25,6 +31,7 @@ export function QuestionCard({
   question,
   answer,
   onAnswerChange,
+  onInputSource,
   onSubmit,
   isSubmitting = false,
   fieldError,
@@ -52,7 +59,9 @@ export function QuestionCard({
     isTranscribing,
   } = useVoiceRecording({
     onTranscriptionComplete: (transcript) => {
-      // Merge transcript with existing answer
+      // Merge transcript with existing answer. This is a direct state write, not
+      // a keystroke — flag it as voice, never as typing.
+      onInputSource?.("voice");
       const merged = answer.trim()
         ? `${answer}\n\n${transcript}`
         : transcript;
@@ -131,7 +140,10 @@ export function QuestionCard({
           <textarea
             ref={textareaRef}
             value={answer}
-            onChange={(e) => onAnswerChange(e.target.value)}
+            onChange={(e) => {
+              onInputSource?.("typing");
+              onAnswerChange(e.target.value);
+            }}
             onFocus={() => setIsFocused(true)}
             onBlur={() => {
               if (!answer.trim()) {

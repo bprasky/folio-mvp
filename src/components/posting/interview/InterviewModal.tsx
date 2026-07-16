@@ -26,8 +26,10 @@ import { useRoomInterviewFlow } from "@/hooks/useRoomInterviewFlow";
 import { useBackgroundEvaluation } from "@/hooks/useBackgroundEvaluation";
 import { LinkedImagePreview } from "@/components/editorial/LinkedImagePreview";
 import { RoomProgressBar } from "./RoomProgressBar";
+import { RoomPhotoStrip } from "./RoomPhotoStrip";
 import { GenerationProgress } from "@/components/ui/GenerationProgress";
 import { computeRoundBudget } from "@/lib/editorial/roomPacing";
+import type { RoomProgressStatus } from "@/lib/editorial/roomPacing";
 import type { InterviewQuestion as ContextualQuestion } from "@/types/interview";
 
 interface InterviewModalProps {
@@ -35,7 +37,15 @@ interface InterviewModalProps {
   onOpenChange: (open: boolean) => void;
   projectId: string;
   projectName?: string;
-  images: Array<{ id: string; url: string; name?: string }>;
+  images: Array<{
+    id: string;
+    url: string;
+    name?: string;
+    /** Free-text room (Room.id or room name), used to scope the room photo strip. */
+    room?: string | null;
+    /** Sort key mirroring the generator's `orderBy: displayOrder asc`. */
+    displayOrder?: number | null;
+  }>;
   post?: any;
   hasVendors?: boolean;
   tags?: Array<{
@@ -170,6 +180,40 @@ export function InterviewModal({
   const [showGenerateConfirm, setShowGenerateConfirm] = useState(false);
   const generateConfirmedRef = useRef(false);
 
+  // Skip (A2): the choice sheet has two views — the initial choice, and the
+  // "skip this room" confirmation. `false` means closed.
+  const [skipSheet, setSkipSheet] = useState<false | "choice" | "confirmRoom">(false);
+  // Room status persistence (C0, generalizes A3's roomSkips): roomId → status.
+  // Hydrated from server roomProgress and the localStorage draft; sent back to
+  // the server whenever a room finalizes ('complete') or is skipped ('skipped').
+  const [roomStatuses, setRoomStatuses] = useState<Record<string, RoomProgressStatus>>({});
+  const serverRoomProgressRef = useRef<Record<string, any> | null>(null);
+  // inputModality (Pass B fold-in): per-question source flags. `hasVoice` = a
+  // Whisper transcript was merged; `hasTyping` = a real keystroke fired. Resolved
+  // to 'mixed' | 'voice' | 'text' at persist time and carried in the draft so a
+  // reload never silently downgrades a spoken answer to 'text'.
+  const [answerModality, setAnswerModality] = useState<
+    Record<string, { hasVoice: boolean; hasTyping: boolean }>
+  >({});
+  // Per-answer roomId (D5): the room an answer was given in, captured at answer
+  // time. Bulk saves and answersOverride must NOT re-derive from the current room
+  // (which is the LAST room by then) — they'd stamp every answer with it and
+  // corrupt provenance. Keyed by questionId; carried in the draft; hydrated from
+  // server answers (which carry roomId post-D5) on load.
+  const [answerRoomIds, setAnswerRoomIds] = useState<Record<string, string | null>>({});
+  // Latest "persist a single room status" fn — kept in a ref so the callback we
+  // hand the flow hook stays stable while still closing over fresh answers.
+  const persistRoomStatusRef = useRef<
+    ((roomId: string, status: RoomProgressStatus) => void) | null
+  >(null);
+  const handleRoomStatusChange = useCallback(
+    (roomId: string, status: RoomProgressStatus) => {
+      setRoomStatuses((prev) => (prev[roomId] === status ? prev : { ...prev, [roomId]: status }));
+      persistRoomStatusRef.current?.(roomId, status);
+    },
+    [],
+  );
+
   const baseAnswers = useMemo(() => answers.filter((answer) => !answer.isFollowUp), [answers]);
   const followUpAnswersState = useMemo(() => answers.filter((answer) => answer.isFollowUp), [answers]);
   
@@ -216,6 +260,9 @@ export function InterviewModal({
           followups: followUps,
           currentQuestionIndex,
           phase,
+          roomStatuses,
+          answerModality,
+          answerRoomIds,
         }));
       } catch (error) {
         console.warn('[InterviewModal] Failed to autosave to localStorage', error);
@@ -227,7 +274,7 @@ export function InterviewModal({
         clearTimeout(autosaveTimeoutRef.current);
       }
     };
-  }, [open, projectId, answers, followUps, currentQuestionIndex, phase]);
+  }, [open, projectId, answers, followUps, currentQuestionIndex, phase, roomStatuses, answerModality, answerRoomIds]);
 
   // Preload answers from server and localStorage on open
   useEffect(() => {
@@ -249,11 +296,33 @@ export function InterviewModal({
             contextualQuestionsCount: data?.contextualQuestions?.length || 0
           });
           
+          // Skip persistence (A3): stash server roomProgress so the hydration
+          // effect can re-apply persisted skips once room groups have loaded.
+          serverRoomProgressRef.current =
+            data?.roomProgress && typeof data.roomProgress === 'object'
+              ? data.roomProgress
+              : null;
+
           // Contextual questions are now loaded via useInterviewQuestions hook
           // No need to load from this endpoint anymore
           
           const serverAnswers = normalizeIncomingAnswers(data?.answers || []);
           const serverFollowUps = Array.isArray(data?.followUps) ? data.followUps : [];
+
+          // D5: hydrate the per-answer roomId map from server answers (which
+          // carry roomId post-D5). Merge under any draft-restored values (prev
+          // wins) so a local edit isn't clobbered by a stale server read.
+          if (Array.isArray(data?.answers)) {
+            const serverRoomIds: Record<string, string | null> = {};
+            for (const a of data.answers) {
+              if (a && a.questionId != null && 'roomId' in a) {
+                serverRoomIds[String(a.questionId)] = (a as any).roomId ?? null;
+              }
+            }
+            if (Object.keys(serverRoomIds).length > 0 && !cancelled) {
+              setAnswerRoomIds((prev) => ({ ...serverRoomIds, ...prev }));
+            }
+          }
           
           if (cancelled) return;
           
@@ -415,6 +484,26 @@ export function InterviewModal({
     };
   }, [open, projectId]);
 
+  // inputModality: restore per-question source flags from the draft on open, so
+  // a reload doesn't downgrade a previously-spoken answer to 'text'.
+  useEffect(() => {
+    if (!open) return;
+    try {
+      const raw = localStorage.getItem(`interviewDraft:${projectId}`);
+      if (raw) {
+        const d = JSON.parse(raw);
+        if (d?.answerModality && typeof d.answerModality === 'object') {
+          setAnswerModality(d.answerModality);
+        }
+        // D5: restore per-answer roomId map so a reload doesn't lose room
+        // attribution before the next persist.
+        if (d?.answerRoomIds && typeof d.answerRoomIds === 'object') {
+          setAnswerRoomIds(d.answerRoomIds);
+        }
+      }
+    } catch { /* ignore */ }
+  }, [open, projectId]);
+
   useEffect(() => {
     if (open) {
       setIsChecking(true);
@@ -510,6 +599,7 @@ export function InterviewModal({
     roomData.rooms,
     roomData.crossRoomQuestions,
     roomData.globalGates,
+    { onRoomStatusChange: handleRoomStatusChange },
   );
 
   // Two-phase generation: the designer finished About This Project but the
@@ -672,6 +762,36 @@ export function InterviewModal({
     const answer = baseAnswers.find((a) => a.questionId === currentQuestion.id);
     return answer?.answer || "";
   }, [currentQuestion, baseAnswers]);
+
+  // inputModality: record the source of input against the current question.
+  // Flags are keyed by questionId, so switching questions starts fresh and
+  // revisiting a question keeps its resolved modality.
+  const handleInputSource = useCallback(
+    (source: "voice" | "typing") => {
+      const qid = currentQuestion?.id;
+      if (!qid) return;
+      setAnswerModality((prev) => {
+        const cur = prev[qid] ?? { hasVoice: false, hasTyping: false };
+        const next = source === "voice"
+          ? { ...cur, hasVoice: true }
+          : { ...cur, hasTyping: true };
+        if (cur.hasVoice === next.hasVoice && cur.hasTyping === next.hasTyping) return prev;
+        return { ...prev, [qid]: next };
+      });
+    },
+    [currentQuestion?.id],
+  );
+
+  const resolveInputModality = useCallback(
+    (questionId: string): "text" | "voice" | "mixed" => {
+      const m = answerModality[questionId];
+      if (!m) return "text";
+      if (m.hasVoice && m.hasTyping) return "mixed";
+      if (m.hasVoice) return "voice";
+      return "text";
+    },
+    [answerModality],
+  );
 
   // Display question with morphed text overlay (if LLM rewrote it based on prior answers)
   const displayQuestion = useMemo(() => {
@@ -941,6 +1061,67 @@ export function InterviewModal({
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [hasRoomPacing, roomData.roomsPending, roomFlow.rooms.length, roomFlow.currentRoom?.roomId, roomFlow.roomProgress]);
 
+  // Status hydration (C0): once room groups exist, re-apply persisted terminal
+  // statuses (from server roomProgress and the localStorage draft) so a skipped
+  // or completed room survives reload without moving the designer. Keyed on
+  // rooms.length so it reruns when phase-2 room questions land.
+  useEffect(() => {
+    if (!open || !hasRoomPacing) return;
+    const map = new Map<string, RoomProgressStatus>();
+    const rp = serverRoomProgressRef.current;
+    if (rp) {
+      for (const [id, v] of Object.entries(rp)) {
+        const st = (v as any)?.status;
+        if (st === 'complete' || st === 'skipped') map.set(id, st);
+      }
+    }
+    try {
+      const raw = localStorage.getItem(`interviewDraft:${projectId}`);
+      if (raw) {
+        const d = JSON.parse(raw);
+        if (d?.roomStatuses && typeof d.roomStatuses === 'object') {
+          for (const [id, st] of Object.entries(d.roomStatuses)) {
+            if (st === 'complete' || st === 'skipped') map.set(id, st as RoomProgressStatus);
+          }
+        }
+      }
+    } catch { /* ignore */ }
+    if (map.size > 0) {
+      const entries = Array.from(map.entries()).map(([roomId, status]) => ({ roomId, status }));
+      setRoomStatuses((prev) => {
+        const next = { ...prev };
+        for (const e of entries) next[e.roomId] = e.status;
+        return next;
+      });
+      roomFlow.hydrateStatuses(entries);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, hasRoomPacing, roomFlow.rooms.length]);
+
+  // Skip actions (A2). Skip-question advances without recording an answer;
+  // skip-room marks the room skipped and advances. Both 'skipped' and 'complete'
+  // are persisted via the flow hook's onRoomStatusChange (C0) — no manual POST.
+  const handleSkipQuestion = useCallback(() => {
+    setSkipSheet(false);
+    if (hasRoomPacing) {
+      roomFlow.advanceQuestion();
+    } else if (currentQuestionIndex < totalQuestions - 1) {
+      setCurrentQuestionIndex((prev) => prev + 1);
+    } else {
+      autoGenerateRef.current = true;
+      setPhase("complete");
+    }
+  }, [hasRoomPacing, roomFlow, currentQuestionIndex, totalQuestions]);
+
+  const handleSkipRoom = useCallback(() => {
+    setSkipSheet(false);
+    roomFlow.skipRoom(); // fires onRoomStatusChange('skipped') → persists
+    if (roomFlow.canFinish) {
+      autoGenerateRef.current = true;
+      setPhase("complete");
+    }
+  }, [roomFlow]);
+
   // Handle sequential question answer submission
   const handleQuestionAnswerSubmit = useCallback(async () => {
     if (!currentQuestion || !currentAnswer.trim()) {
@@ -1106,10 +1287,29 @@ export function InterviewModal({
     handleQuestionAnswerSubmit();
   }, [pendingResubmitQuestionId, currentQuestion, handleQuestionAnswerSubmit]);
 
+  // Per-answer roomId (D5): resolve the room the CURRENT question belongs to, at
+  // answer time. Only correct while the designer is on the question — bulk saves
+  // later must read the captured map, never re-derive from roomFlow.currentRoom
+  // (which is the last room by then). 'project' collapses to null (project-level
+  // answers have no room).
+  const resolveCurrentRoomId = useCallback((): string | null => {
+    if (!hasRoomPacing) return null;
+    const q = roomFlow.currentQuestion as { roomId?: string } | undefined;
+    const rid = (q?.roomId) || roomFlow.currentRoom?.roomId || null;
+    return rid === "project" ? null : rid;
+  }, [hasRoomPacing, roomFlow.currentQuestion, roomFlow.currentRoom?.roomId]);
+
   // Handle answer change for current question
   const handleCurrentAnswerChange = useCallback(
     (value: string) => {
       if (!currentQuestion) return;
+
+      // D5: stamp the answer with the room it's being given in, captured now
+      // while roomFlow.currentRoom is still correct for this question.
+      const rid = resolveCurrentRoomId();
+      setAnswerRoomIds((prev) =>
+        prev[currentQuestion.id] === rid ? prev : { ...prev, [currentQuestion.id]: rid },
+      );
 
       // Update answers state
       setAnswers((prev) => {
@@ -1125,7 +1325,7 @@ export function InterviewModal({
         return [...filtered, answerData];
       });
     },
-    [currentQuestion]
+    [currentQuestion, resolveCurrentRoomId]
   );
 
   async function persistBaseAnswers(
@@ -1139,7 +1339,10 @@ export function InterviewModal({
 
   async function persistAnswers(
     answersToPersist: InterviewAnswer[],
-    options: { includeFollowUps?: boolean } = {}
+    options: {
+      includeFollowUps?: boolean;
+      roomStatuses?: Array<{ roomId: string; status: RoomProgressStatus }>;
+    } = {}
   ): Promise<SaveResult | void> {
     const sanitized = answersToPersist
       .map((answer) => sanitizeAnswerForSend(answer))
@@ -1148,7 +1351,21 @@ export function InterviewModal({
           value !== null
       );
 
-    if (sanitized.length === 0 && !options.includeFollowUps) {
+    // Merge known statuses (state) with any this call is explicitly asserting;
+    // the explicit call wins per roomId. Re-asserting known statuses on every
+    // save defends server roomProgress against a stale recompute clobbering them.
+    const mergedRoomStatuses = (() => {
+      const map = new Map<string, RoomProgressStatus>();
+      for (const [roomId, status] of Object.entries(roomStatuses)) map.set(roomId, status);
+      for (const s of options.roomStatuses ?? []) map.set(s.roomId, s.status);
+      return Array.from(map.entries()).map(([roomId, status]) => ({ roomId, status }));
+    })();
+
+    if (
+      sanitized.length === 0 &&
+      !options.includeFollowUps &&
+      mergedRoomStatuses.length === 0
+    ) {
       setFieldErrors({});
       return { ok: true, savedCount: 0, totalCount: 0 };
     }
@@ -1177,6 +1394,8 @@ export function InterviewModal({
                 category: item.category,
                 answer: item.answer,
                 isFollowUp: item.isFollowUp,
+                // inputModality (Pass B): resolved 'text' | 'voice' | 'mixed'.
+                inputModality: resolveInputModality(item.questionId),
                 // Include question text so it persists in provenance (prevents UUID display)
                 prompt: morphedText || questionDef?.prompt || '',
                 // Metadata fields
@@ -1201,16 +1420,25 @@ export function InterviewModal({
                     ? `${questionMeta.attributeType}:${questionMeta.attributeValue}`
                     : null;
                 })(),
-                // Room pacing fields — project-level answers get roomId: null in DB
+                // Room pacing fields — project-level answers get roomId: null in DB.
+                // D5: prefer the per-answer roomId captured at answer time. Bulk
+                // saves (handleGenerate, room-status persists) must NOT re-derive
+                // from roomFlow.currentRoom — that's the LAST room by then and
+                // would stamp every answer with it, corrupting provenance.
                 roomId: (() => {
+                  const captured = answerRoomIds[item.questionId];
+                  if (captured !== undefined) return captured; // already null for 'project'
                   const resolvedRoomId = hasRoomPacing ? (questionMeta?.roomId || roomFlow.currentRoom?.roomId || null) : null;
                   return resolvedRoomId === 'project' ? null : resolvedRoomId;
                 })(),
                 isCrossRoom: questionMeta?.isCrossRoom || false,
               };
             }),
+          // Room status persistence (C0) — merged into
+          // EditorialInterview.roomProgress server-side, non-destructively.
+          ...(mergedRoomStatuses.length > 0 ? { roomStatuses: mergedRoomStatuses } : {}),
         };
-      
+
       console.log("[InterviewModal] Saving answers:", {
         projectId,
         answerCount: sanitized.length,
@@ -1298,6 +1526,17 @@ export function InterviewModal({
     });
   }
 
+  // C0: keep the room-status persister pointing at the latest answers + persist
+  // fn, so the stable onRoomStatusChange callback always POSTs current context.
+  useEffect(() => {
+    persistRoomStatusRef.current = (roomId, status) => {
+      void persistAnswers([...baseAnswers, ...followUpAnswersState], {
+        includeFollowUps: true,
+        roomStatuses: [{ roomId, status }],
+      });
+    };
+  });
+
   const lastClickRef = useRef<number>(0);
   const DEBOUNCE_MS = 1000;
   const canClickGenerate = useMemo(() => !isGenerating, [isGenerating]);
@@ -1341,12 +1580,22 @@ export function InterviewModal({
       // Check if answers were just saved by checking if we're coming from the answer step
       // Always save when we have answers — ensures provenance is up to date
       const needsSave = baseAnswers.length > 0;
-      
+
+      // Addition 4: close the status race. Persist the FULL room-status map
+      // (derived from roomFlow.roomProgress, not a delta) and await it before
+      // generating. A dropped 'complete' would turn a finished room into a photo
+      // block, so if this write fails we must NOT generate — the persist error
+      // propagates out of this try and aborts handleGenerate.
+      const fullRoomStatuses = hasRoomPacing
+        ? Object.entries(roomFlow.roomProgress).map(([roomId, p]) => ({ roomId, status: p.status }))
+        : [];
+
       if (needsSave) {
         try {
-          // Save all answers including follow-ups in one call
+          // Save all answers including follow-ups (and the full status map) in one call
           const allAnswersResult = await persistAnswers([...baseAnswers, ...followUpAnswersState], {
             includeFollowUps: true,
+            ...(fullRoomStatuses.length > 0 ? { roomStatuses: fullRoomStatuses } : {}),
           });
           console.log("[InterviewModal] All answers save result:", allAnswersResult);
           
@@ -1412,6 +1661,9 @@ export function InterviewModal({
               answer: a.answer,
               role: a.role || 'DESIGNER',
               isFollowUp: false,
+              // D5: carry roomId so the override path and the provenance path
+              // agree on room attribution (eligibility groups by roomId).
+              roomId: answerRoomIds[a.questionId] ?? null,
             })),
             followupsOverride: followUpAnswersState
               .filter(a => a.answer?.trim())
@@ -1422,6 +1674,7 @@ export function InterviewModal({
                 answer: a.answer,
                 role: a.role || 'DESIGNER',
                 isFollowUp: true,
+                roomId: answerRoomIds[a.questionId] ?? null,
               })),
           }),
         }
@@ -1477,6 +1730,7 @@ export function InterviewModal({
                 answer: a.answer,
                 role: a.role || 'DESIGNER',
                 isFollowUp: false,
+                roomId: answerRoomIds[a.questionId] ?? null,
               })),
               followupsOverride: followUpAnswersState
                 .filter(a => a.answer?.trim())
@@ -1487,6 +1741,7 @@ export function InterviewModal({
                   answer: a.answer,
                   role: a.role || 'DESIGNER',
                   isFollowUp: true,
+                  roomId: answerRoomIds[a.questionId] ?? null,
                 })),
             }),
           }
@@ -1936,6 +2191,26 @@ export function InterviewModal({
           </div>
         )}
 
+        {/* Room photo strip (A1) — the exact photos the model saw for this room,
+            recomputed client-side. Room-level: keyed on roomId so it persists
+            across questions and only changes at room boundaries. Sits outside the
+            question scroll container, so it never scrolls away or remounts per
+            question. Nothing is stated about what any photo contains. */}
+        {phase === "question" && !showDraftResume && (
+          <RoomPhotoStrip
+            key={roomFlow.currentRoom?.roomId ?? "project"}
+            images={images}
+            currentRoom={
+              roomFlow.currentRoom
+                ? {
+                    roomId: roomFlow.currentRoom.roomId,
+                    roomName: roomFlow.currentRoom.roomName,
+                  }
+                : null
+            }
+          />
+        )}
+
         {/* Draft resume prompt */}
         {showDraftResume ? (
           <div className="flex-1 flex flex-col items-center justify-center px-8 py-12">
@@ -2063,6 +2338,7 @@ export function InterviewModal({
               question={displayQuestion}
               answer={currentAnswer}
               onAnswerChange={handleCurrentAnswerChange}
+              onInputSource={handleInputSource}
               onSubmit={handleQuestionAnswerSubmit}
               isSubmitting={isSubmitting || isLoadingFollowUps}
               fieldError={fieldErrors[currentQuestion?.id || ""]}
@@ -2191,23 +2467,8 @@ export function InterviewModal({
                   ? handleGenerate
                   : undefined
               }
-              onSkipRoom={
-                hasRoomPacing && roomFlow.canSkipRoom
-                  ? () => {
-                      roomFlow.skipRoom();
-                      if (roomFlow.canFinish) {
-                        autoGenerateRef.current = true;
-                        setPhase("complete");
-                      }
-                    }
-                  : undefined
-              }
-              skipRoomLabel={
-                hasRoomPacing && roomFlow.canSkipRoom
-                  ? roomFlow.remainingInRoom > 0
-                    ? `Skip (${roomFlow.remainingInRoom} remaining) \u2192`
-                    : 'Move to next room \u2192'
-                  : undefined
+              onQuestionSkip={
+                phase === "question" ? () => setSkipSheet("choice") : undefined
               }
               canProceed={
                 phase === "question"
@@ -2225,6 +2486,72 @@ export function InterviewModal({
               generationProgressMessage={isGenerating ? GENERATION_MESSAGES[generationStep] : undefined}
               generationAttempts={generationAttempts}
             />}
+
+            {/* Skip choice sheet (A2). Two options; the "skip this room" option is
+                omitted for the About This Project group (roomId 'project'), which
+                frames the article and has no gallery fallback. */}
+            {skipSheet && (
+              <div
+                className="fixed inset-0 z-[70] flex items-center justify-center p-4"
+                onClick={() => setSkipSheet(false)}
+              >
+                <div className="absolute inset-0 bg-black/30" />
+                <div
+                  className="relative w-full max-w-sm rounded-2xl bg-surface-canvas glass-overlay shadow-2xl p-6 space-y-4"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  {skipSheet === "choice" ? (
+                    <>
+                      <h3 className="text-lg font-serif text-folio-text-primary">Skip</h3>
+                      <div className="flex flex-col gap-2">
+                        <button
+                          onClick={handleSkipQuestion}
+                          className="w-full px-4 py-3 text-sm font-medium text-left text-folio-text-primary rounded-xl border border-folio-border-subtle hover:border-folio-border-subtle/80 hover:bg-surface-ground/50 transition-colors"
+                        >
+                          Skip this question
+                        </button>
+                        {roomFlow.currentRoom && roomFlow.currentRoom.roomId !== "project" && (
+                          <button
+                            onClick={() => setSkipSheet("confirmRoom")}
+                            className="w-full px-4 py-3 text-sm font-medium text-left text-folio-text-primary rounded-xl border border-folio-border-subtle hover:border-folio-border-subtle/80 hover:bg-surface-ground/50 transition-colors"
+                          >
+                            Skip this room
+                          </button>
+                        )}
+                        <button
+                          onClick={() => setSkipSheet(false)}
+                          className="w-full px-4 py-2 text-sm font-medium text-folio-text-secondary hover:text-folio-text-primary transition-colors"
+                        >
+                          Cancel
+                        </button>
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <p className="text-sm text-folio-text-secondary leading-relaxed">
+                        The photos from this room will still appear in the gallery at the
+                        bottom of the article. No write-up will be generated for it. You
+                        can come back and complete it later.
+                      </p>
+                      <div className="flex gap-3 justify-end">
+                        <button
+                          onClick={() => setSkipSheet("choice")}
+                          className="px-4 py-2 text-sm font-medium text-folio-text-secondary hover:text-folio-text-primary transition-colors"
+                        >
+                          Back
+                        </button>
+                        <button
+                          onClick={handleSkipRoom}
+                          className="px-6 py-2 text-sm font-medium text-white bg-[var(--accent)] rounded-full hover:bg-[var(--accent-hover)] transition-colors"
+                        >
+                          Skip room
+                        </button>
+                      </div>
+                    </>
+                  )}
+                </div>
+              </div>
+            )}
           </>
         )}
       </DialogContent>
