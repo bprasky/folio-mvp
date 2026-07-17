@@ -94,7 +94,7 @@ export function QuestionCard({
       : null;
 
   return (
-    <div className="flex h-full flex-col px-8 py-9 md:px-12 md:py-11">
+    <div className="flex h-full max-w-[760px] flex-col px-8 py-9 md:px-12 md:py-11">
       {/* Eyebrow — question number · section, with a hairline rule beneath. */}
       <div>
         <p className="text-[11px] font-medium uppercase tracking-[0.16em] text-folio-text-tertiary">
