@@ -1,5 +1,7 @@
 "use client";
 
+import { Clock, ChevronLeft } from "lucide-react";
+
 const MAX_GENERATION_ATTEMPTS = 3;
 
 interface FooterBarProps {
@@ -20,7 +22,16 @@ interface FooterBarProps {
   isNearFinish?: boolean;
   generationProgressMessage?: string;
   generationAttempts?: number;
+  /** Question-phase meta shown on the left (clock + "N of M rooms"). */
+  roomMeta?: { index: number; total: number };
 }
+
+// Copper gradient primary pill — the one loud control in the footer.
+const CONTINUE_STYLE: React.CSSProperties = {
+  background:
+    "linear-gradient(135deg, var(--accent) 0%, var(--accent-hover) 100%)",
+  boxShadow: "var(--shadow-2)",
+};
 
 export function FooterBar({
   phase,
@@ -39,78 +50,89 @@ export function FooterBar({
   isNearFinish = false,
   generationProgressMessage,
   generationAttempts = 0,
+  roomMeta,
 }: FooterBarProps) {
   const maxAttemptsReached = generationAttempts >= MAX_GENERATION_ATTEMPTS;
 
   return (
-    <div className="px-8 py-4 border-t border-folio-border-subtle/50 bg-white/25">
+    <div
+      className="border-t px-8 py-5 md:px-12"
+      style={{ borderColor: "var(--folio-border-subtle)" }}
+    >
       {/* Near-finish hint — one question before "Finish & Generate Story" appears */}
       {phase === "question" && isNearFinish && (
         <p
-          className="text-xs text-folio-text-secondary text-center mb-3 max-w-md mx-auto"
-          style={{ fontFamily: "var(--font-headline)", fontStyle: "italic" }}
+          className="mx-auto mb-4 max-w-md text-center text-xs italic text-folio-text-secondary"
+          style={{ fontFamily: "var(--font-headline)" }}
         >
-          You&apos;ve answered enough for a great story. One more question, then you can finish or keep going for more depth.
+          You&apos;ve answered enough for a great story. One more question, then
+          you can finish or keep going for more depth.
         </p>
       )}
-      <div className="flex items-center justify-between max-w-3xl mx-auto">
-        <div>
-          {/* Back button — go to previous question to review/revise */}
+
+      <div className="flex items-center justify-between gap-4">
+        {/* Left — question-phase meta (clock + rooms), with an optional Back. */}
+        <div className="flex min-w-0 items-center gap-3">
           {phase === "question" && onBack && (
             <button
               onClick={onBack}
-              className="flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-folio-text-secondary hover:text-folio-text-primary border border-folio-border-subtle/30 rounded-full hover:border-folio-border-subtle/60 transition-colors"
+              className="flex items-center gap-1 text-sm font-medium text-folio-text-secondary transition-colors hover:text-folio-text-primary"
+              aria-label="Previous question"
             >
-              <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" className="opacity-70">
-                <path d="M10 12L6 8L10 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-              </svg>
-              Previous
+              <ChevronLeft className="h-4 w-4" />
+              Back
             </button>
           )}
+          {phase === "question" && roomMeta && (
+            <span className="flex items-center gap-1.5 text-xs text-folio-text-secondary">
+              <Clock className="h-3.5 w-3.5 text-folio-text-tertiary" />
+              {roomMeta.index} of {roomMeta.total} rooms
+            </span>
+          )}
         </div>
-        <div className="flex gap-3">
+
+        {/* Right — actions. */}
+        <div className="flex items-center gap-2">
           {phase === "question" && (
             <>
-              {onSubmit && (
-                <button
-                  onClick={onSubmit}
-                  disabled={!canProceed || isSubmitting || isLoadingFollowUps}
-                  className="px-6 py-2 text-sm font-medium text-white bg-[var(--accent)] rounded-full hover:bg-[var(--accent-hover)] disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center gap-2"
-                >
-                  {isLoadingFollowUps ? (
-                    <>
-                      <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
-                      Loading follow-ups...
-                    </>
-                  ) : isSubmitting ? (
-                    <>
-                      <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
-                      Saving...
-                    </>
-                  ) : isInterviewComplete && isLastQuestion ? (
-                    <>
-                      Finish & Generate Story
-                      <span className="text-xs opacity-75 ml-1">(⌘+Enter)</span>
-                    </>
-                  ) : (
-                    <>
-                      Continue
-                      <span className="text-xs opacity-75 ml-1">(⌘+Enter)</span>
-                    </>
-                  )}
-                </button>
-              )}
-              {/* Single Skip control (A2) — always present in the question phase,
-                  every room. Quiet, to the right of Continue. Opens the choice
-                  sheet (skip question / skip room). */}
               {onQuestionSkip && (
                 <button
                   type="button"
                   onClick={onQuestionSkip}
                   disabled={isSubmitting || isLoadingFollowUps}
-                  className="px-4 py-2 text-sm font-medium text-folio-text-secondary hover:text-folio-text-primary disabled:opacity-50 transition-colors"
+                  className="px-4 py-2 text-sm font-medium text-folio-text-secondary transition-colors hover:text-folio-text-primary disabled:opacity-50"
                 >
                   Skip
+                </button>
+              )}
+              {onSubmit && (
+                <button
+                  onClick={onSubmit}
+                  disabled={!canProceed || isSubmitting || isLoadingFollowUps}
+                  className="flex items-center gap-2 rounded-full px-6 py-2.5 text-sm font-medium text-white transition-all duration-200 hover:-translate-y-px disabled:translate-y-0 disabled:cursor-not-allowed disabled:opacity-50"
+                  style={CONTINUE_STYLE}
+                >
+                  {isLoadingFollowUps ? (
+                    <>
+                      <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                      Loading follow-ups…
+                    </>
+                  ) : isSubmitting ? (
+                    <>
+                      <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                      Saving…
+                    </>
+                  ) : isInterviewComplete && isLastQuestion ? (
+                    <>
+                      Finish &amp; generate story
+                      <span className="ml-1 text-xs opacity-75">⌘↵</span>
+                    </>
+                  ) : (
+                    <>
+                      Continue
+                      <span className="ml-1 text-xs opacity-75">⌘↵</span>
+                    </>
+                  )}
                 </button>
               )}
             </>
@@ -121,7 +143,7 @@ export function FooterBar({
                 <button
                   onClick={onSkip}
                   disabled={isGenerating}
-                  className="px-4 py-2 text-sm font-medium text-folio-text-secondary hover:text-folio-text-primary disabled:opacity-50 transition-colors"
+                  className="px-4 py-2 text-sm font-medium text-folio-text-secondary transition-colors hover:text-folio-text-primary disabled:opacity-50"
                 >
                   Skip
                 </button>
@@ -130,9 +152,10 @@ export function FooterBar({
                 <button
                   onClick={onNext}
                   disabled={!canProceed || isSubmitting}
-                  className="px-6 py-2 text-sm font-medium text-white bg-[var(--accent)] rounded-full hover:bg-[var(--accent-hover)] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  className="rounded-full px-6 py-2.5 text-sm font-medium text-white transition-all duration-200 hover:-translate-y-px disabled:translate-y-0 disabled:cursor-not-allowed disabled:opacity-50"
+                  style={CONTINUE_STYLE}
                 >
-                  {isSubmitting ? "Saving..." : "Continue"}
+                  {isSubmitting ? "Saving…" : "Continue"}
                 </button>
               )}
             </>
@@ -141,18 +164,19 @@ export function FooterBar({
             <button
               onClick={maxAttemptsReached ? undefined : onGenerate}
               disabled={maxAttemptsReached}
-              className={`px-6 py-2 text-sm font-medium rounded-full transition-colors ${
+              className={`rounded-full px-6 py-2.5 text-sm font-medium transition-all duration-200 ${
                 maxAttemptsReached
-                  ? "text-folio-text-tertiary bg-surface-canvas border border-folio-border-subtle cursor-not-allowed"
-                  : "text-white bg-[var(--accent)] hover:bg-[var(--accent-hover)]"
+                  ? "cursor-not-allowed border border-folio-border-subtle bg-surface-canvas text-folio-text-tertiary"
+                  : "text-white hover:-translate-y-px"
               }`}
+              style={maxAttemptsReached ? undefined : CONTINUE_STYLE}
               type="button"
             >
               {maxAttemptsReached
-                ? "Contact Support"
+                ? "Contact support"
                 : generationAttempts > 0
-                ? `Retry Generation (${generationAttempts}/${MAX_GENERATION_ATTEMPTS})`
-                : "Retry Generation"}
+                ? `Retry generation (${generationAttempts}/${MAX_GENERATION_ATTEMPTS})`
+                : "Retry generation"}
             </button>
           )}
         </div>

@@ -550,7 +550,7 @@ export default function MediaSection({ project, isOwner, images, projectPost, in
         onOpenChange={setShowInterviewModal}
         projectId={project.id}
         projectName={project.title}
-        images={images.map(img => ({ id: img.id, url: img.url, name: img.name, room: img.room ?? null, displayOrder: img.displayOrder ?? null }))}
+        images={images.map(img => ({ id: img.id, url: img.url, name: img.name, room: img.room ?? null, roomId: img.roomId ?? null, displayOrder: img.displayOrder ?? null }))}
         post={projectPost}
         onDraftGenerated={handleDraftGenerated}
       />
