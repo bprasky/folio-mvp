@@ -25,7 +25,7 @@ import { useRoomInterviewQuestions } from "@/hooks/useRoomInterviewQuestions";
 import { useRoomInterviewFlow } from "@/hooks/useRoomInterviewFlow";
 import { useBackgroundEvaluation } from "@/hooks/useBackgroundEvaluation";
 import { RoomChips } from "./RoomChips";
-import { RoomPhoto } from "./RoomPhoto";
+import { RoomPhoto, computeRoomHeroImage } from "./RoomPhoto";
 import { GenerationProgress } from "@/components/ui/GenerationProgress";
 import { computeRoundBudget } from "@/lib/editorial/roomPacing";
 import type { RoomProgressStatus } from "@/lib/editorial/roomPacing";
@@ -2068,6 +2068,11 @@ export function InterviewModal({
     (roomFlow.currentQuestion as { linkedImageId?: string | null } | undefined)?.linkedImageId ??
     questionMetadataMap.get(currentQuestion?.id || "")?.linkedImageId ??
     null;
+  // Only mount the left photo column when there's an actual photo to show. A
+  // project question with no linked image (or a room with no matching photos)
+  // renders single-column rather than an empty panel.
+  const heroImage = computeRoomHeroImage(images, currentRoomForPhoto, currentLinkedImageId);
+  const hasHeroPhoto = heroImage !== null;
 
   // Footer bar — shared across phases. Rendered inside the right column of the
   // two-column grid during the question phase, and at the modal root otherwise.
@@ -2390,17 +2395,24 @@ export function InterviewModal({
             </div>
           </div>
         ) : phase === "question" && displayQuestion ? (
-          /* Two-column editorial layout: room photo left, question + answer right. */
-          <div className="grid min-h-0 flex-1 grid-cols-1 md:grid-cols-[430px_1fr]">
+          /* Editorial layout: room photo left (only when there's one), question
+             + answer right. Falls back to a single column with no left panel. */
+          <div
+            className={`grid min-h-0 flex-1 ${
+              hasHeroPhoto ? "grid-cols-1 md:grid-cols-[430px_1fr]" : "grid-cols-1"
+            }`}
+          >
             {/* Left — the room reference photo, full-bleed to the card edge. */}
-            <div className="hidden md:block">
-              <RoomPhoto
-                key={currentRoomForPhoto?.roomId ?? "project"}
-                images={images}
-                currentRoom={currentRoomForPhoto}
-                linkedImageId={currentLinkedImageId}
-              />
-            </div>
+            {hasHeroPhoto && (
+              <div className="hidden md:block">
+                <RoomPhoto
+                  key={currentRoomForPhoto?.roomId ?? "project"}
+                  images={images}
+                  currentRoom={currentRoomForPhoto}
+                  linkedImageId={currentLinkedImageId}
+                />
+              </div>
+            )}
 
             {/* Right — question, answer, and the footer row. */}
             <div className="flex min-h-0 flex-col">
