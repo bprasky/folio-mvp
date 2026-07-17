@@ -1,12 +1,9 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
 import { Mic, Square, Loader2 } from "lucide-react";
 import type { InterviewQuestion } from "@/lib/posting/interviewSchemas";
-import type { InterviewAnswer } from "@/lib/posting/interviewSchemas";
 import { useVoiceRecording } from "./useVoiceRecording";
-import { LinkedImagePreview } from "@/components/editorial/LinkedImagePreview";
-import { formatRoomName } from "@/lib/utils/formatRoomName";
 import type { InterviewQuestion as ContextualQuestion } from "@/types/interview";
 
 interface QuestionCardProps {
@@ -24,7 +21,10 @@ interface QuestionCardProps {
   fieldError?: string;
   projectId: string; // Phase D: Required for transcription
   questionMetadata?: ContextualQuestion; // Contextual question metadata
-  images?: Array<{ id: string; url: string; name?: string }>; // Project images for preview
+  /** 1-based position of this question, for the eyebrow (e.g. "QUESTION 01"). */
+  questionNumber?: number;
+  /** Section label for the eyebrow (room name, or "About this project"). */
+  sectionLabel?: string;
 }
 
 export function QuestionCard({
@@ -36,17 +36,14 @@ export function QuestionCard({
   isSubmitting = false,
   fieldError,
   projectId,
-  questionMetadata,
-  images = [],
+  questionNumber,
+  sectionLabel = "About this project",
 }: QuestionCardProps) {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
-  const [isFocused, setIsFocused] = useState(false);
   const maxLength = Math.min(question.maxLen ?? 2000, 2000);
-  const charCount = answer.length;
 
   // Phase D: Voice recording
   const {
-    status: recordingStatus,
     recordingTime,
     error: recordingError,
     formatTime,
@@ -62,9 +59,7 @@ export function QuestionCard({
       // Merge transcript with existing answer. This is a direct state write, not
       // a keystroke — flag it as voice, never as typing.
       onInputSource?.("voice");
-      const merged = answer.trim()
-        ? `${answer}\n\n${transcript}`
-        : transcript;
+      const merged = answer.trim() ? `${answer}\n\n${transcript}` : transcript;
       onAnswerChange(merged.slice(0, maxLength));
     },
     onError: (error) => {
@@ -93,50 +88,67 @@ export function QuestionCard({
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [onSubmit, isSubmitting]);
 
+  const eyebrowNumber =
+    typeof questionNumber === "number"
+      ? String(questionNumber).padStart(2, "0")
+      : null;
+
   return (
-    <div className="flex flex-col h-full">
-      {/* Question section */}
-      <div className="px-8 md:px-16 pt-4 pb-6 space-y-4">
-        {/* Contextual question metadata */}
-        {questionMetadata && questionMetadata.questionType === 'contextual' && (
-          <div className="mb-6 space-y-3">
-            <div className="flex items-center gap-2 flex-wrap">
-              {questionMetadata.attributeType && questionMetadata.attributeValue && (
-                <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${
-                  questionMetadata.attributeType === 'color' ? 'bg-[var(--accent)]/10 text-[var(--accent-hover)]' :
-                  questionMetadata.attributeType === 'material' ? 'bg-amber-100 text-amber-700' :
-                  questionMetadata.attributeType === 'style' ? 'bg-purple-100 text-purple-700' :
-                  questionMetadata.attributeType === 'mood' ? 'bg-rose-100 text-rose-700' :
-                  'bg-emerald-100 text-emerald-700'
-                }`}>
-                  <span className="capitalize">{questionMetadata.attributeType}</span>
-                  <span className="mx-1">•</span>
-                  {questionMetadata.attributeValue}
-                </span>
-              )}
-              {questionMetadata.roomContext && (
-                <span className="text-xs text-folio-text-secondary">• {formatRoomName(questionMetadata.roomContext)}</span>
-              )}
-            </div>
-            {questionMetadata.linkedImageId && images.length > 0 && (
-              <LinkedImagePreview 
-                imageId={questionMetadata.linkedImageId} 
-                images={images}
-              />
-            )}
-          </div>
-        )}
-        <h2 className="font-serif text-3xl md:text-4xl lg:text-5xl italic text-folio-text-primary leading-tight mb-8 max-w-3xl">
-          {question.prompt}
-        </h2>
-        {question.helper && (
-          <p className="text-sm text-folio-text-secondary max-w-2xl">{question.helper}</p>
-        )}
+    <div className="flex h-full flex-col px-8 py-9 md:px-12 md:py-11">
+      {/* Eyebrow — question number · section, with a hairline rule beneath. */}
+      <div>
+        <p className="text-[11px] font-medium uppercase tracking-[0.16em] text-folio-text-tertiary">
+          {eyebrowNumber ? `Question ${eyebrowNumber} · ` : ""}
+          <span style={{ color: "var(--folio-gold)" }}>{sectionLabel}</span>
+        </p>
+        <div
+          className="mt-4 h-px w-full"
+          style={{ background: "var(--folio-border-subtle)" }}
+        />
       </div>
 
-      {/* Input section */}
-      <div className="flex-1 flex flex-col justify-end px-8 md:px-16 py-6 space-y-4">
-        <div className="relative max-w-3xl">
+      {/* Question — Cormorant italic with a gold→parchment accent bar. */}
+      <div className="mt-8 flex gap-5">
+        <span
+          className="mt-1 w-[3px] shrink-0 self-stretch rounded-full"
+          style={{
+            background:
+              "linear-gradient(to bottom, var(--folio-gold) 0%, var(--surface-elevated) 100%)",
+          }}
+        />
+        <h2
+          className="italic text-folio-text-primary"
+          style={{
+            fontFamily: "var(--font-headline)",
+            fontSize: "29px",
+            lineHeight: 1.34,
+          }}
+        >
+          {question.prompt}
+        </h2>
+      </div>
+
+      {question.helper && (
+        <p className="mt-4 max-w-xl pl-8 text-sm leading-relaxed text-folio-text-secondary">
+          {question.helper}
+        </p>
+      )}
+
+      {/* Answer — pushed to the bottom of the column. */}
+      <div className="mt-auto pt-10">
+        <div className="mb-3 flex items-baseline justify-between gap-4">
+          <span
+            className="text-[11px] font-semibold uppercase tracking-[0.14em]"
+            style={{ color: "var(--folio-gold)" }}
+          >
+            Your response
+          </span>
+          <span className="text-xs text-folio-text-tertiary">
+            Speak or type — a sentence or two is plenty
+          </span>
+        </div>
+
+        <div className="relative">
           <textarea
             ref={textareaRef}
             value={answer}
@@ -144,31 +156,31 @@ export function QuestionCard({
               onInputSource?.("typing");
               onAnswerChange(e.target.value);
             }}
-            onFocus={() => setIsFocused(true)}
-            onBlur={() => {
-              if (!answer.trim()) {
-                setIsFocused(false);
-              }
-            }}
             maxLength={maxLength}
-            rows={isFocused || answer.trim() ? 8 : 2}
-            className={`w-full p-4 bg-surface-ground/50 border rounded-xl text-lg placeholder:text-folio-text-tertiary focus:outline-none focus:ring-2 focus:ring-[var(--accent)]/30 focus:border-[var(--accent)]/50 leading-relaxed transition-all duration-200 ease-in-out ${
-              isFocused || answer.trim() ? "min-h-[200px] resize-y" : "min-h-[56px] resize-none"
-            } ${
-              fieldError ? "border-red-400 focus:border-red-500" : "border-folio-border-subtle"
+            rows={5}
+            className={`w-full resize-y rounded-[16px] border p-4 pr-14 text-[15px] leading-relaxed text-folio-text-primary placeholder:text-folio-text-tertiary shadow-[inset_0_2px_6px_rgba(180,160,140,0.10)] transition-shadow duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 ${
+              fieldError
+                ? "border-red-400 focus:ring-red-400/60"
+                : "focus:ring-[var(--accent)]"
             }`}
+            style={{
+              background: "var(--surface-ground)",
+              borderColor: fieldError ? undefined : "var(--folio-border-subtle)",
+              minHeight: 148,
+            }}
             placeholder="Type your answer here…"
             disabled={isSubmitting || isRecording || isTranscribing}
           />
-          {/* Phase D: Voice recording button */}
-          <div className="absolute right-3 bottom-3 flex items-center gap-2">
+
+          {/* Circular voice-input control, bottom-right inside the field. */}
+          <div className="absolute bottom-3 right-3 flex items-center gap-2">
             {isRecording && (
-              <span className="text-xs text-red-600 font-mono">
+              <span className="font-mono text-xs text-red-600">
                 {formatTime(recordingTime)}
               </span>
             )}
             {isTranscribing && (
-              <Loader2 className="h-4 w-4 text-[var(--accent)] animate-spin" />
+              <Loader2 className="h-4 w-4 animate-spin text-[var(--accent)]" />
             )}
             {!isRecording && !isTranscribing && (
               <button
@@ -177,8 +189,13 @@ export function QuestionCard({
                   await startRecording();
                 }}
                 disabled={isSubmitting}
-                className="p-2 rounded-full transition-colors bg-surface-ground text-folio-text-secondary hover:bg-surface-ground disabled:opacity-50 disabled:cursor-not-allowed"
+                className="flex h-9 w-9 items-center justify-center rounded-full border text-folio-text-secondary transition-all duration-200 hover:-translate-y-px hover:text-folio-text-primary focus:outline-none focus:ring-2 focus:ring-[var(--accent)] focus:ring-offset-2 disabled:opacity-50"
+                style={{
+                  background: "var(--surface-canvas)",
+                  borderColor: "var(--folio-border-subtle)",
+                }}
                 title="Record voice answer"
+                aria-label="Record voice answer"
               >
                 <Mic className="h-4 w-4" />
               </button>
@@ -195,16 +212,16 @@ export function QuestionCard({
                     }, 300);
                   }}
                   disabled={isSubmitting}
-                  className="p-2 rounded-full transition-colors bg-red-100 text-red-600 hover:bg-red-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="flex h-9 w-9 items-center justify-center rounded-full bg-red-100 text-red-600 transition-colors hover:bg-red-200 disabled:opacity-50"
                   title="Stop recording and transcribe"
+                  aria-label="Stop recording and transcribe"
                 >
                   <Square className="h-4 w-4" />
                 </button>
                 <button
                   type="button"
                   onClick={cancelRecording}
-                  className="p-1.5 text-xs text-folio-text-secondary hover:text-folio-text-primary"
-                  title="Cancel recording"
+                  className="px-1.5 text-xs text-folio-text-secondary transition-colors hover:text-folio-text-primary"
                 >
                   Cancel
                 </button>
@@ -213,26 +230,12 @@ export function QuestionCard({
           </div>
         </div>
 
-        {/* Character count and error */}
-        <div className="flex justify-between items-center text-sm text-folio-text-tertiary max-w-3xl">
-          <div>
-            {fieldError && (
-              <p className="text-red-600">{fieldError}</p>
-            )}
-            {recordingError && (
-              <p className="text-red-600">{recordingError}</p>
-            )}
-          </div>
-          <div className="flex items-center gap-4">
-            <span>Press ⌘ + Enter to submit</span>
-            <span>{charCount} / {maxLength} characters</span>
-            {charCount > maxLength * 0.9 && (
-              <span className="text-yellow-600">Approaching limit</span>
-            )}
-          </div>
-        </div>
+        {(fieldError || recordingError) && (
+          <p className="mt-2 text-sm text-red-600">
+            {fieldError || recordingError}
+          </p>
+        )}
       </div>
     </div>
   );
 }
-

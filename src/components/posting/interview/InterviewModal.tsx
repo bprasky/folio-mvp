@@ -24,9 +24,8 @@ import { useInterviewQuestions } from "@/hooks/useInterviewQuestions";
 import { useRoomInterviewQuestions } from "@/hooks/useRoomInterviewQuestions";
 import { useRoomInterviewFlow } from "@/hooks/useRoomInterviewFlow";
 import { useBackgroundEvaluation } from "@/hooks/useBackgroundEvaluation";
-import { LinkedImagePreview } from "@/components/editorial/LinkedImagePreview";
-import { RoomProgressBar } from "./RoomProgressBar";
-import { RoomPhotoStrip } from "./RoomPhotoStrip";
+import { RoomChips } from "./RoomChips";
+import { RoomPhoto } from "./RoomPhoto";
 import { GenerationProgress } from "@/components/ui/GenerationProgress";
 import { computeRoundBudget } from "@/lib/editorial/roomPacing";
 import type { RoomProgressStatus } from "@/lib/editorial/roomPacing";
@@ -43,6 +42,8 @@ interface InterviewModalProps {
     name?: string;
     /** Free-text room (Room.id or room name), used to scope the room photo strip. */
     room?: string | null;
+    /** FK to the Room model — the reliable way to match an image to its room. */
+    roomId?: string | null;
     /** Sort key mirroring the generator's `orderBy: displayOrder asc`. */
     displayOrder?: number | null;
   }>;
@@ -2047,12 +2048,95 @@ export function InterviewModal({
 
   const hasTaggedProducts = materials.length > 0;
 
+  // --- Two-column editorial layout derivations (question phase) ---
+  // The room the current question belongs to, for the left-column photo + chips.
+  const currentRoomForPhoto = roomFlow.currentRoom
+    ? { roomId: roomFlow.currentRoom.roomId, roomName: roomFlow.currentRoom.roomName }
+    : null;
+  const isProjectRoom = !currentRoomForPhoto || currentRoomForPhoto.roomId === "project";
+  // Eyebrow: "Question NN · <section>". Section is the room name, or a plain
+  // "About this project" for the project group / non-room-paced flows.
+  const displayedQuestionNumber = hasRoomPacing
+    ? roomFlow.currentQuestionIndex + 1
+    : currentQuestionIndex + 1;
+  const sectionLabel = isProjectRoom
+    ? "About this project"
+    : currentRoomForPhoto!.roomName;
+  // Only surface a left-column photo for a project question when the question is
+  // genuinely linked to an image; room questions resolve their own room photo.
+  const currentLinkedImageId =
+    (roomFlow.currentQuestion as { linkedImageId?: string | null } | undefined)?.linkedImageId ??
+    questionMetadataMap.get(currentQuestion?.id || "")?.linkedImageId ??
+    null;
+
+  // Footer bar — shared across phases. Rendered inside the right column of the
+  // two-column grid during the question phase, and at the modal root otherwise.
+  const footerBar =
+    !showDraftResume && !(phase === "complete" && (isGenerating || showGenerateConfirm)) ? (
+      <FooterBar
+        phase={phase}
+        onBack={
+          phase === "question" && (hasRoomPacing ? roomFlow.canGoBack : currentQuestionIndex > 0)
+            ? () => {
+                // Snapshot the current question's persisted answer before navigating back
+                if (currentQuestion) {
+                  const existing = baseAnswers.find((a) => a.questionId === currentQuestion.id);
+                  if (existing?.answer) {
+                    answerSnapshotsRef.current.set(currentQuestion.id, existing.answer);
+                  }
+                }
+                if (hasRoomPacing) {
+                  roomFlow.goToPreviousQuestion();
+                } else {
+                  setCurrentQuestionIndex((prev) => prev - 1);
+                }
+              }
+            : step === "followups"
+            ? () => setStep("answer")
+            : undefined
+        }
+        onNext={undefined}
+        onSubmit={phase === "question" ? handleQuestionAnswerSubmit : undefined}
+        onGenerate={phase === "complete" || step === "followups" ? handleGenerate : undefined}
+        onSkip={
+          phase === "followup"
+            ? handleGenerate
+            : step === "followups"
+            ? handleGenerate
+            : banner && followupsTried && step === "answer"
+            ? handleGenerate
+            : undefined
+        }
+        onQuestionSkip={phase === "question" ? () => setSkipSheet("choice") : undefined}
+        canProceed={
+          phase === "question"
+            ? canProceedFromQuestion
+            : step === "answer"
+            ? canProceedFromAnswer
+            : true
+        }
+        isSubmitting={isSubmitting}
+        isGenerating={isGenerating}
+        isLoadingFollowUps={isLoadingFollowUps}
+        isLastQuestion={isLastQuestion}
+        isInterviewComplete={isInterviewComplete}
+        isNearFinish={isNearFinish}
+        generationProgressMessage={isGenerating ? GENERATION_MESSAGES[generationStep] : undefined}
+        generationAttempts={generationAttempts}
+        roomMeta={
+          phase === "question" && hasRoomPacing
+            ? { index: roomFlow.currentRoomIndex + 1, total: roomFlow.rooms.length }
+            : undefined
+        }
+      />
+    ) : null;
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
         className={
           phase === "question" || phase === "followup"
-            ? "w-full max-w-5xl h-[90vh] max-h-[90vh] mx-auto my-auto rounded-[20px] flex flex-col glass-overlay shadow-2xl overflow-hidden"
+            ? "relative flex h-[90vh] max-h-[90vh] w-full max-w-[1120px] flex-col !overflow-hidden border !rounded-[24px] !border-[color:var(--folio-border-subtle)] !bg-[var(--surface-canvas)] shadow-[var(--shadow-3)]"
             : "max-w-6xl max-h-[90vh] overflow-y-auto glass-overlay shadow-2xl rounded-[20px]"
         }
       >
@@ -2126,43 +2210,36 @@ export function InterviewModal({
             </button>
           </div>
         )}
-        {/* Modal header with close button and progress */}
+        {/* Top bar — close, a warm divider, then the room-selector chips. */}
         {(phase === "question" || phase === "followup" || phase === "complete") && (
-          <div className="flex items-center justify-between px-8 py-4 border-b border-folio-border-subtle/50 bg-white/25">
-            <button 
+          <div
+            className="flex shrink-0 items-center gap-4 border-b px-5 py-3.5"
+            style={{ borderColor: "var(--folio-border-subtle)" }}
+          >
+            <button
               onClick={() => onOpenChange(false)}
-              className="text-folio-text-secondary hover:text-folio-text-primary transition-colors p-1 rounded-full hover:bg-surface-ground"
+              className="rounded-full p-1 text-folio-text-secondary transition-colors hover:bg-surface-ground hover:text-folio-text-primary"
               aria-label="Close"
             >
-              <X className="w-6 h-6" />
+              <X className="h-5 w-5" />
             </button>
-            
-            {phase === "question" && currentQuestion && !showDraftResume && (
-              hasRoomPacing ? (
-                <div className="flex-1 px-4">
-                  <RoomProgressBar
-                    rooms={roomFlow.rooms.map((room) => ({
-                      roomId: room.roomId,
-                      roomName: room.roomName,
-                      status: roomFlow.roomProgress[room.roomId]?.status ?? 'not_started',
-                      answeredCount: roomFlow.roomProgress[room.roomId]?.answeredCount ?? 0,
-                      totalQuestions: room.budget.baseQuestions,
-                    }))}
-                    currentRoomIndex={roomFlow.currentRoomIndex}
-                    currentQuestionInRoom={roomFlow.currentQuestionIndex}
-                    totalQuestionsInRoom={roomFlow.totalQuestionsInRoom}
-                    currentRound={roomFlow.currentRound}
-                    baseQuestionCount={roomFlow.currentRoom?.questions.length ?? 0}
-                  />
-                </div>
-              ) : (
-                <span className="text-sm text-folio-text-secondary">
-                  Question {currentQuestionIndex + 1} of {displayTotal}
-                </span>
-              )
-            )}
 
-            <div className="w-6" /> {/* Spacer for alignment */}
+            {phase === "question" && currentQuestion && !showDraftResume && hasRoomPacing && (
+              <>
+                <span
+                  className="h-6 w-px shrink-0"
+                  style={{ background: "var(--folio-border-subtle)" }}
+                />
+                <RoomChips
+                  rooms={roomFlow.rooms.map((room) => ({
+                    roomId: room.roomId,
+                    roomName: room.roomName,
+                    status: roomFlow.roomProgress[room.roomId]?.status ?? "not_started",
+                  }))}
+                  currentRoomIndex={roomFlow.currentRoomIndex}
+                />
+              </>
+            )}
           </div>
         )}
 
@@ -2191,25 +2268,6 @@ export function InterviewModal({
           </div>
         )}
 
-        {/* Room photo strip (A1) — the exact photos the model saw for this room,
-            recomputed client-side. Room-level: keyed on roomId so it persists
-            across questions and only changes at room boundaries. Sits outside the
-            question scroll container, so it never scrolls away or remounts per
-            question. Nothing is stated about what any photo contains. */}
-        {phase === "question" && !showDraftResume && (
-          <RoomPhotoStrip
-            key={roomFlow.currentRoom?.roomId ?? "project"}
-            images={images}
-            currentRoom={
-              roomFlow.currentRoom
-                ? {
-                    roomId: roomFlow.currentRoom.roomId,
-                    roomName: roomFlow.currentRoom.roomName,
-                  }
-                : null
-            }
-          />
-        )}
 
         {/* Draft resume prompt */}
         {showDraftResume ? (
@@ -2332,20 +2390,37 @@ export function InterviewModal({
             </div>
           </div>
         ) : phase === "question" && displayQuestion ? (
-          /* Phase A: Sequential flow - question phase */
-          <div ref={scrollContainerRef} className="flex-1 flex flex-col min-h-0 overflow-y-auto">
-            <QuestionCard
-              question={displayQuestion}
-              answer={currentAnswer}
-              onAnswerChange={handleCurrentAnswerChange}
-              onInputSource={handleInputSource}
-              onSubmit={handleQuestionAnswerSubmit}
-              isSubmitting={isSubmitting || isLoadingFollowUps}
-              fieldError={fieldErrors[currentQuestion?.id || ""]}
-              projectId={projectId}
-              questionMetadata={questionMetadataMap.get(currentQuestion?.id || "")}
-              images={images}
-            />
+          /* Two-column editorial layout: room photo left, question + answer right. */
+          <div className="grid min-h-0 flex-1 grid-cols-1 md:grid-cols-[430px_1fr]">
+            {/* Left — the room reference photo, full-bleed to the card edge. */}
+            <div className="hidden md:block">
+              <RoomPhoto
+                key={currentRoomForPhoto?.roomId ?? "project"}
+                images={images}
+                currentRoom={currentRoomForPhoto}
+                linkedImageId={currentLinkedImageId}
+              />
+            </div>
+
+            {/* Right — question, answer, and the footer row. */}
+            <div className="flex min-h-0 flex-col">
+              <div ref={scrollContainerRef} className="min-h-0 flex-1 overflow-y-auto">
+                <QuestionCard
+                  question={displayQuestion}
+                  answer={currentAnswer}
+                  onAnswerChange={handleCurrentAnswerChange}
+                  onInputSource={handleInputSource}
+                  onSubmit={handleQuestionAnswerSubmit}
+                  isSubmitting={isSubmitting || isLoadingFollowUps}
+                  fieldError={fieldErrors[currentQuestion?.id || ""]}
+                  projectId={projectId}
+                  questionMetadata={questionMetadataMap.get(currentQuestion?.id || "")}
+                  questionNumber={displayedQuestionNumber}
+                  sectionLabel={sectionLabel}
+                />
+              </div>
+              {footerBar}
+            </div>
           </div>
         ) : phase === "complete" && showGenerateConfirm ? (
           /* Quality gate: some rooms aren't finished — confirm before generating */
@@ -2433,59 +2508,9 @@ export function InterviewModal({
               </div>
             )}
 
-            {!showDraftResume && !(phase === "complete" && (isGenerating || showGenerateConfirm)) && <FooterBar
-              phase={phase}
-              onBack={
-                phase === "question" && (hasRoomPacing ? roomFlow.canGoBack : currentQuestionIndex > 0)
-                  ? () => {
-                      // Snapshot the current question's persisted answer before navigating back
-                      if (currentQuestion) {
-                        const existing = baseAnswers.find(a => a.questionId === currentQuestion.id);
-                        if (existing?.answer) {
-                          answerSnapshotsRef.current.set(currentQuestion.id, existing.answer);
-                        }
-                      }
-                      if (hasRoomPacing) {
-                        roomFlow.goToPreviousQuestion();
-                      } else {
-                        setCurrentQuestionIndex((prev) => prev - 1);
-                      }
-                    }
-                  : step === "followups"
-                  ? () => setStep("answer")
-                  : undefined
-              }
-              onNext={undefined}
-              onSubmit={phase === "question" ? handleQuestionAnswerSubmit : undefined}
-              onGenerate={phase === "complete" || step === "followups" ? handleGenerate : undefined}
-              onSkip={
-                phase === "followup"
-                  ? handleGenerate
-                  : step === "followups"
-                  ? handleGenerate
-                  : (banner && followupsTried && step === "answer")
-                  ? handleGenerate
-                  : undefined
-              }
-              onQuestionSkip={
-                phase === "question" ? () => setSkipSheet("choice") : undefined
-              }
-              canProceed={
-                phase === "question"
-                  ? canProceedFromQuestion
-                  : step === "answer"
-                  ? canProceedFromAnswer
-                  : true
-              }
-              isSubmitting={isSubmitting}
-              isGenerating={isGenerating}
-              isLoadingFollowUps={isLoadingFollowUps}
-              isLastQuestion={isLastQuestion}
-              isInterviewComplete={isInterviewComplete}
-              isNearFinish={isNearFinish}
-              generationProgressMessage={isGenerating ? GENERATION_MESSAGES[generationStep] : undefined}
-              generationAttempts={generationAttempts}
-            />}
+            {/* The question phase renders its footer inside the grid's right
+                column; every other phase renders it here at the modal root. */}
+            {phase !== "question" && footerBar}
 
             {/* Skip choice sheet (A2). Two options; the "skip this room" option is
                 omitted for the About This Project group (roomId 'project'), which
