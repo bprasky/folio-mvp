@@ -215,6 +215,14 @@ export function InterviewModal({
     [],
   );
 
+  // Cinematic backdrop source — the reference photo currently shown in the left
+  // column, reported up from RoomPhoto and mirrored blurred behind the modal.
+  const [activeRefImageUrl, setActiveRefImageUrl] = useState<string | null>(null);
+  const handleActiveRefImage = useCallback(
+    (img: { url: string } | null) => setActiveRefImageUrl(img?.url ?? null),
+    [],
+  );
+
   const baseAnswers = useMemo(() => answers.filter((answer) => !answer.isFollowUp), [answers]);
   const followUpAnswersState = useMemo(() => answers.filter((answer) => answer.isFollowUp), [answers]);
   
@@ -2136,8 +2144,35 @@ export function InterviewModal({
       />
     ) : null;
 
+  // Cinematic backdrop: mirror the reference photo currently shown in the left
+  // column as a blurred, dimmed full-screen layer behind the modal, so the sharp
+  // reference reads as floating over its own room rather than a sterile white
+  // scrim. Only present while a room reference photo is showing (question phase);
+  // otherwise the Dialog falls back to its default frosted backdrop.
+  const cinematicBackdrop = activeRefImageUrl ? (
+    <div className="absolute inset-0 overflow-hidden" aria-hidden="true">
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        key={activeRefImageUrl}
+        src={activeRefImageUrl}
+        alt=""
+        className="absolute inset-0 h-full w-full scale-110 object-cover blur-2xl"
+      />
+      {/* Scrim + top/bottom gradient: dim enough that a bright photo never washes
+          out the screen or fights the modal's edges, but light enough that the
+          room still reads through — the point is warmth, not a black void. */}
+      <div className="absolute inset-0 bg-black/45" />
+      <div className="absolute inset-0 bg-gradient-to-t from-black/45 via-transparent to-black/20" />
+    </div>
+  ) : null;
+
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog
+      open={open}
+      onOpenChange={onOpenChange}
+      backdropClassName={cinematicBackdrop ? "bg-black/70" : undefined}
+      backgroundLayer={cinematicBackdrop}
+    >
       <DialogContent
         className={
           phase === "question" || phase === "followup"
@@ -2410,6 +2445,7 @@ export function InterviewModal({
                   images={images}
                   currentRoom={currentRoomForPhoto}
                   linkedImageId={currentLinkedImageId}
+                  onActiveImageChange={handleActiveRefImage}
                 />
               </div>
             )}
