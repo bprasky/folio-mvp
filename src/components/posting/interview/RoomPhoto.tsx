@@ -1,6 +1,7 @@
 "use client";
 
-import { useMemo } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { ChevronLeft, ChevronRight, Pause, Play } from "lucide-react";
 
 export interface RoomPhotoImage {
   id: string;
@@ -17,21 +18,25 @@ function normalizeRoom(value: string): string {
   return value.toLowerCase().replace(/[_\s]+/g, " ").trim();
 }
 
+/** How long each photo holds before the carousel advances (ms). */
+const ROTATE_INTERVAL_MS = 5000;
+
 /**
- * Resolve the single reference photo shown alongside a question.
+ * Resolve the ordered list of reference photos shown alongside a question.
  *
- * - Room questions: the room's own photo, matched by `roomId` FK first (reliable),
- *   then by free-text room label as a fallback. Prefers the question's linked
- *   image when it belongs to the room, else the first image by displayOrder.
- * - Project ("about this project") questions: only a photo the question is
+ * - Room questions: every photo that belongs to the room, matched by `roomId` FK
+ *   first (reliable), then by free-text room label as a fallback, ordered by
+ *   displayOrder. The question's linked image (if any) is floated to the front so
+ *   the carousel opens on the most relevant shot.
+ * - Project ("about this project") questions: only the photo the question is
  *   genuinely linked to — otherwise nothing (the caller shows a warm fallback).
  *   A project question shouldn't borrow an unrelated room photo.
  */
-export function computeRoomHeroImage(
+export function computeRoomHeroImages(
   images: RoomPhotoImage[],
   currentRoom: { roomId: string; roomName: string } | null,
   linkedImageId?: string | null,
-): RoomPhotoImage | null {
+): RoomPhotoImage[] {
   const byDisplayOrder = [...images].sort((a, b) => {
     const ao = a.displayOrder;
     const bo = b.displayOrder;
@@ -46,9 +51,10 @@ export function computeRoomHeroImage(
   if (isProject) {
     // Relevant if shown: only surface a photo the question points at.
     if (linkedImageId) {
-      return byDisplayOrder.find((img) => img.id === linkedImageId) ?? null;
+      const found = byDisplayOrder.find((img) => img.id === linkedImageId);
+      return found ? [found] : [];
     }
-    return null;
+    return [];
   }
 
   const roomImages = byDisplayOrder.filter((img) => {
@@ -68,20 +74,43 @@ export function computeRoomHeroImage(
     );
   });
 
-  if (roomImages.length === 0) return null;
+  if (roomImages.length === 0) return [];
 
+  // Float the linked image to the front so the carousel opens on it, but keep the
+  // rest so it can still rotate through the whole room.
   if (linkedImageId) {
-    const linked = roomImages.find((img) => img.id === linkedImageId);
-    if (linked) return linked;
+    const idx = roomImages.findIndex((img) => img.id === linkedImageId);
+    if (idx > 0) {
+      return [
+        roomImages[idx],
+        ...roomImages.slice(0, idx),
+        ...roomImages.slice(idx + 1),
+      ];
+    }
   }
 
-  return roomImages[0];
+  return roomImages;
+}
+
+/**
+ * Resolve the single lead reference photo. Thin wrapper over
+ * {@link computeRoomHeroImages} — used by callers that only need to know whether a
+ * photo exists (e.g. whether to mount the left column at all).
+ */
+export function computeRoomHeroImage(
+  images: RoomPhotoImage[],
+  currentRoom: { roomId: string; roomName: string } | null,
+  linkedImageId?: string | null,
+): RoomPhotoImage | null {
+  return computeRoomHeroImages(images, currentRoom, linkedImageId)[0] ?? null;
 }
 
 /**
  * The left column of the interview modal — a full-bleed room reference photo with
- * a glass caption pill. Renders a warm fallback surface when no relevant photo
- * exists so the two-column layout never collapses.
+ * a glass caption pill. When the room has more than one photo it becomes a gentle
+ * auto-rotating carousel: click the photo to pause/resume, and hover to reveal
+ * prev/next arrows. Renders a warm fallback surface (nothing) when no relevant
+ * photo exists so the two-column layout never collapses.
  */
 export function RoomPhoto({
   images,
@@ -92,44 +121,160 @@ export function RoomPhoto({
   currentRoom: { roomId: string; roomName: string } | null;
   linkedImageId?: string | null;
 }) {
-  const hero = useMemo(
-    () => computeRoomHeroImage(images, currentRoom, linkedImageId),
+  const roomImages = useMemo(
+    () => computeRoomHeroImages(images, currentRoom, linkedImageId),
     [images, currentRoom, linkedImageId],
   );
 
+  const count = roomImages.length;
+  const [index, setIndex] = useState(0);
+  const [paused, setPaused] = useState(false);
+  const [hovering, setHovering] = useState(false);
+
+  // Reset to the first photo whenever the underlying set changes (room switch).
+  // The parent also remounts via `key`, but this keeps state sane if it doesn't.
+  useEffect(() => {
+    setIndex(0);
+    setPaused(false);
+  }, [currentRoom?.roomId, count]);
+
+  const safeIndex = count > 0 ? index % count : 0;
+
+  const goNext = useCallback(() => {
+    setIndex((i) => (count > 0 ? (i + 1) % count : 0));
+  }, [count]);
+  const goPrev = useCallback(() => {
+    setIndex((i) => (count > 0 ? (i - 1 + count) % count : 0));
+  }, [count]);
+
+  // Auto-advance — only when there's more than one photo and not paused.
+  useEffect(() => {
+    if (paused || count <= 1) return;
+    const id = setInterval(goNext, ROTATE_INTERVAL_MS);
+    return () => clearInterval(id);
+  }, [paused, count, goNext]);
+
   const isProject = !currentRoom || currentRoom.roomId === "project";
   const captionLabel = isProject ? "This project" : currentRoom!.roomName;
+  const hasCarousel = count > 1;
+
+  if (count === 0) {
+    return (
+      <div
+        className="relative min-h-[560px] h-full w-full overflow-hidden"
+        style={{ background: "var(--surface-elevated)" }}
+      />
+    );
+  }
 
   return (
+    // Click the photo body to pause/resume rotation. The nested controls (arrows,
+    // dots) stopPropagation, so only clicks on the image itself toggle. A title
+    // gives the affordance a tooltip; keyboard users drive rotation via the real
+    // arrow/dot buttons below.
+    // eslint-disable-next-line jsx-a11y/no-static-element-interactions, jsx-a11y/click-events-have-key-events
     <div
-      className="relative min-h-[560px] h-full w-full overflow-hidden"
+      className={`relative min-h-[560px] h-full w-full overflow-hidden ${
+        hasCarousel ? "cursor-pointer" : ""
+      }`}
       style={{ background: "var(--surface-elevated)" }}
+      title={hasCarousel ? (paused ? "Click to resume" : "Click to pause") : undefined}
+      onMouseEnter={() => setHovering(true)}
+      onMouseLeave={() => setHovering(false)}
+      onClick={hasCarousel ? () => setPaused((p) => !p) : undefined}
     >
-      {hero ? (
+      {/* Crossfade stack — all room photos are mounted and preloaded; only the
+          active one is opaque, so advancing is a smooth dissolve. */}
+      {roomImages.map((img, i) => (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          key={img.id}
+          src={img.url}
+          alt=""
+          className={`absolute inset-0 h-full w-full object-cover transition-opacity duration-700 ${
+            i === safeIndex ? "opacity-100" : "opacity-0"
+          }`}
+        />
+      ))}
+
+      {/* Prev / next — revealed on hover, only when there's more than one photo. */}
+      {hasCarousel && (
         <>
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src={hero.url}
-            alt=""
-            className="absolute inset-0 h-full w-full object-cover"
-          />
-          {/* Bottom-left glass caption pill — gold dot + room name + reference. */}
-          <div className="absolute bottom-5 left-5 z-10">
-            <div className="glass-overlay flex items-center gap-2.5 rounded-full px-4 py-2">
-              <span
-                className="h-1.5 w-1.5 shrink-0 rounded-full"
-                style={{ background: "var(--folio-gold-ornament)" }}
+          <button
+            type="button"
+            aria-label="Previous photo"
+            onClick={(e) => {
+              e.stopPropagation();
+              goPrev();
+            }}
+            className={`glass-overlay absolute left-3 top-1/2 z-20 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full text-folio-text-primary transition-opacity duration-200 ${
+              hovering ? "opacity-100" : "opacity-0"
+            }`}
+          >
+            <ChevronLeft className="h-4 w-4" />
+          </button>
+          <button
+            type="button"
+            aria-label="Next photo"
+            onClick={(e) => {
+              e.stopPropagation();
+              goNext();
+            }}
+            className={`glass-overlay absolute right-3 top-1/2 z-20 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full text-folio-text-primary transition-opacity duration-200 ${
+              hovering ? "opacity-100" : "opacity-0"
+            }`}
+          >
+            <ChevronRight className="h-4 w-4" />
+          </button>
+
+          {/* Play/pause state cue — appears on hover, top-right. */}
+          <div
+            className={`glass-overlay absolute right-3 top-3 z-20 flex h-8 w-8 items-center justify-center rounded-full text-folio-text-primary transition-opacity duration-200 ${
+              hovering ? "opacity-100" : "opacity-0"
+            }`}
+            aria-hidden="true"
+          >
+            {paused ? <Play className="h-3.5 w-3.5" /> : <Pause className="h-3.5 w-3.5" />}
+          </div>
+
+          {/* Progress dots — bottom-right, so they never collide with the caption. */}
+          <div className="absolute bottom-6 right-5 z-20 flex items-center gap-1.5">
+            {roomImages.map((img, i) => (
+              <button
+                key={img.id}
+                type="button"
+                aria-label={`Show photo ${i + 1} of ${count}`}
+                aria-current={i === safeIndex}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setIndex(i);
+                }}
+                className={`h-1.5 rounded-full transition-all duration-300 ${
+                  i === safeIndex
+                    ? "w-4 bg-white"
+                    : "w-1.5 bg-white/50 hover:bg-white/80"
+                }`}
               />
-              <span className="text-[11px] font-medium uppercase tracking-[0.16em] text-folio-text-primary">
-                {captionLabel}
-              </span>
-              <span className="text-[11px] uppercase tracking-[0.16em] text-folio-text-tertiary">
-                Reference
-              </span>
-            </div>
+            ))}
           </div>
         </>
-      ) : null}
+      )}
+
+      {/* Bottom-left glass caption pill — gold dot + room name + reference. */}
+      <div className="absolute bottom-5 left-5 z-10">
+        <div className="glass-overlay flex items-center gap-2.5 rounded-full px-4 py-2">
+          <span
+            className="h-1.5 w-1.5 shrink-0 rounded-full"
+            style={{ background: "var(--folio-gold-ornament)" }}
+          />
+          <span className="text-[11px] font-medium uppercase tracking-[0.16em] text-folio-text-primary">
+            {captionLabel}
+          </span>
+          <span className="text-[11px] uppercase tracking-[0.16em] text-folio-text-tertiary">
+            Reference
+          </span>
+        </div>
+      </div>
     </div>
   );
 }
