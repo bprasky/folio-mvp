@@ -1,7 +1,7 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
-import { ChevronLeft, ChevronRight, Pause, Play } from "lucide-react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 
 export interface RoomPhotoImage {
   id: string;
@@ -17,9 +17,6 @@ export interface RoomPhotoImage {
 function normalizeRoom(value: string): string {
   return value.toLowerCase().replace(/[_\s]+/g, " ").trim();
 }
-
-/** How long each photo holds before the carousel advances (ms). */
-const ROTATE_INTERVAL_MS = 5000;
 
 /**
  * Resolve the ordered list of reference photos shown alongside a question.
@@ -77,7 +74,7 @@ export function computeRoomHeroImages(
   if (roomImages.length === 0) return [];
 
   // Float the linked image to the front so the carousel opens on it, but keep the
-  // rest so it can still rotate through the whole room.
+  // rest so it can still page through the whole room.
   if (linkedImageId) {
     const idx = roomImages.findIndex((img) => img.id === linkedImageId);
     if (idx > 0) {
@@ -107,19 +104,25 @@ export function computeRoomHeroImage(
 
 /**
  * The left column of the interview modal — a full-bleed room reference photo with
- * a glass caption pill. When the room has more than one photo it becomes a gentle
- * auto-rotating carousel: click the photo to pause/resume, and hover to reveal
- * prev/next arrows. Renders a warm fallback surface (nothing) when no relevant
- * photo exists so the two-column layout never collapses.
+ * a glass caption pill. When the room has more than one photo it becomes a
+ * manually-paged gallery: click the photo (or the hover arrows) to advance, and
+ * the dots show position. Advancing is a soft crossfade. Rotation is intentionally
+ * manual, not timed, so the reference never moves on its own while the designer is
+ * composing an answer.
+ *
+ * `onActiveImageChange` reports the currently-shown photo up to the modal, which
+ * mirrors it as a blurred full-screen backdrop for a cinematic feel.
  */
 export function RoomPhoto({
   images,
   currentRoom,
   linkedImageId,
+  onActiveImageChange,
 }: {
   images: RoomPhotoImage[];
   currentRoom: { roomId: string; roomName: string } | null;
   linkedImageId?: string | null;
+  onActiveImageChange?: (image: RoomPhotoImage | null) => void;
 }) {
   const roomImages = useMemo(
     () => computeRoomHeroImages(images, currentRoom, linkedImageId),
@@ -128,14 +131,12 @@ export function RoomPhoto({
 
   const count = roomImages.length;
   const [index, setIndex] = useState(0);
-  const [paused, setPaused] = useState(false);
   const [hovering, setHovering] = useState(false);
 
   // Reset to the first photo whenever the underlying set changes (room switch).
   // The parent also remounts via `key`, but this keeps state sane if it doesn't.
   useEffect(() => {
     setIndex(0);
-    setPaused(false);
   }, [currentRoom?.roomId, count]);
 
   const safeIndex = count > 0 ? index % count : 0;
@@ -147,16 +148,19 @@ export function RoomPhoto({
     setIndex((i) => (count > 0 ? (i - 1 + count) % count : 0));
   }, [count]);
 
-  // Auto-advance — only when there's more than one photo and not paused.
+  // Report the active photo up (for the modal's blurred backdrop). Kept in a ref
+  // so a changing callback identity never churns the effect, and cleared on
+  // unmount so the backdrop reverts when the left column goes away.
+  const reportRef = useRef(onActiveImageChange);
+  reportRef.current = onActiveImageChange;
   useEffect(() => {
-    if (paused || count <= 1) return;
-    const id = setInterval(goNext, ROTATE_INTERVAL_MS);
-    return () => clearInterval(id);
-  }, [paused, count, goNext]);
+    reportRef.current?.(roomImages[safeIndex] ?? null);
+  }, [roomImages, safeIndex]);
+  useEffect(() => () => reportRef.current?.(null), []);
 
   const isProject = !currentRoom || currentRoom.roomId === "project";
   const captionLabel = isProject ? "This project" : currentRoom!.roomName;
-  const hasCarousel = count > 1;
+  const hasGallery = count > 1;
 
   if (count === 0) {
     return (
@@ -168,23 +172,22 @@ export function RoomPhoto({
   }
 
   return (
-    // Click the photo body to pause/resume rotation. The nested controls (arrows,
-    // dots) stopPropagation, so only clicks on the image itself toggle. A title
-    // gives the affordance a tooltip; keyboard users drive rotation via the real
+    // Click the photo body to advance. Nested controls (arrows, dots) stopPropagation.
+    // A title gives the affordance a tooltip; keyboard users page via the real
     // arrow/dot buttons below.
     // eslint-disable-next-line jsx-a11y/no-static-element-interactions, jsx-a11y/click-events-have-key-events
     <div
       className={`relative min-h-[560px] h-full w-full overflow-hidden ${
-        hasCarousel ? "cursor-pointer" : ""
+        hasGallery ? "cursor-pointer" : ""
       }`}
       style={{ background: "var(--surface-elevated)" }}
-      title={hasCarousel ? (paused ? "Click to resume" : "Click to pause") : undefined}
+      title={hasGallery ? "Click for next photo" : undefined}
       onMouseEnter={() => setHovering(true)}
       onMouseLeave={() => setHovering(false)}
-      onClick={hasCarousel ? () => setPaused((p) => !p) : undefined}
+      onClick={hasGallery ? goNext : undefined}
     >
       {/* Crossfade stack — all room photos are mounted and preloaded; only the
-          active one is opaque, so advancing is a smooth dissolve. */}
+          active one is opaque, so paging is a smooth dissolve. */}
       {roomImages.map((img, i) => (
         // eslint-disable-next-line @next/next/no-img-element
         <img
@@ -198,7 +201,7 @@ export function RoomPhoto({
       ))}
 
       {/* Prev / next — revealed on hover, only when there's more than one photo. */}
-      {hasCarousel && (
+      {hasGallery && (
         <>
           <button
             type="button"
@@ -226,16 +229,6 @@ export function RoomPhoto({
           >
             <ChevronRight className="h-4 w-4" />
           </button>
-
-          {/* Play/pause state cue — appears on hover, top-right. */}
-          <div
-            className={`glass-overlay absolute right-3 top-3 z-20 flex h-8 w-8 items-center justify-center rounded-full text-folio-text-primary transition-opacity duration-200 ${
-              hovering ? "opacity-100" : "opacity-0"
-            }`}
-            aria-hidden="true"
-          >
-            {paused ? <Play className="h-3.5 w-3.5" /> : <Pause className="h-3.5 w-3.5" />}
-          </div>
 
           {/* Progress dots — bottom-right, so they never collide with the caption. */}
           <div className="absolute bottom-6 right-5 z-20 flex items-center gap-1.5">

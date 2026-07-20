@@ -8,6 +8,19 @@ interface DialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   children: React.ReactNode;
+  /**
+   * Class for the full-screen backdrop layer. Defaults to the frosted
+   * `glass-backdrop`. Pass a custom class (e.g. a dark scrim) when rendering a
+   * `backgroundLayer` so the two read as one surface.
+   */
+  backdropClassName?: string;
+  /**
+   * Optional node painted behind the centered content, filling the backdrop —
+   * e.g. a blurred hero image for a cinematic effect. Clicks on it fall through
+   * to the backdrop, so click-outside-to-close still works. Keep it decorative
+   * (aria-hidden, no interactive children).
+   */
+  backgroundLayer?: React.ReactNode;
 }
 
 interface DialogContentProps {
@@ -25,7 +38,13 @@ interface DialogTitleProps {
   children: React.ReactNode;
 }
 
-export function Dialog({ open, onOpenChange, children }: DialogProps) {
+export function Dialog({
+  open,
+  onOpenChange,
+  children,
+  backdropClassName = 'glass-backdrop',
+  backgroundLayer,
+}: DialogProps) {
   const [mounted, setMounted] = React.useState(false);
 
   React.useEffect(() => {
@@ -48,9 +67,13 @@ export function Dialog({ open, onOpenChange, children }: DialogProps) {
 
   return createPortal(
     <div
-      className="fixed inset-0 z-[70] flex items-center justify-center p-4 md:p-8 lg:p-12 glass-backdrop"
+      className={cn(
+        'fixed inset-0 z-[70] flex items-center justify-center p-4 md:p-8 lg:p-12',
+        backdropClassName,
+      )}
       onClick={() => onOpenChange(false)}
     >
+      {backgroundLayer}
       <div className="relative" onClick={(e) => e.stopPropagation()}>
         {children}
       </div>
