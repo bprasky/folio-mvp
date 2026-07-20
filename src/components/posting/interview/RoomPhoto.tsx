@@ -51,13 +51,22 @@ export function computeRoomHeroImage(
     return null;
   }
 
-  const roomImages = byDisplayOrder.filter(
-    (img) =>
-      (!!img.roomId && img.roomId === currentRoom.roomId) ||
-      (!!img.room &&
-        (img.room === currentRoom.roomId ||
-          normalizeRoom(img.room) === normalizeRoom(currentRoom.roomName))),
-  );
+  const roomImages = byDisplayOrder.filter((img) => {
+    // Explicit assignment wins: a photo sorted into a room (roomId) belongs to
+    // EXACTLY that room — no free-text bleed. Mirrors auto-tag's imageMatchesRoom
+    // and the RoomGroupedMedia workspace, which both key off roomId alone. Without
+    // this, a photo sorted elsewhere (or left uncategorized) whose stale legacy
+    // `room` text still reads e.g. "kitchen" leaks in as the kitchen reference,
+    // because assignImageToRoom updates roomId but never clears the old `room`.
+    if (img.roomId) return img.roomId === currentRoom.roomId;
+    // Legacy/unsorted photos (no roomId): fall back to the free-text `room` label,
+    // matched by the room's id-in-string (generated images) or normalized name.
+    return (
+      !!img.room &&
+      (img.room === currentRoom.roomId ||
+        normalizeRoom(img.room) === normalizeRoom(currentRoom.roomName))
+    );
+  });
 
   if (roomImages.length === 0) return null;
 
