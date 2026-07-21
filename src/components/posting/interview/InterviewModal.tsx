@@ -135,6 +135,9 @@ export function InterviewModal({
   // Draft resume: when reopening with an existing draft, show a choice
   const [showDraftResume, setShowDraftResume] = useState(false);
   const [draftAnswerCount, setDraftAnswerCount] = useState(0);
+  // Set when the designer picks "Continue where I left off" — arms the resume
+  // navigation effect (which then jumps to the room they actually reached).
+  const [resumeRequested, setResumeRequested] = useState(false);
   // Keep step for backward compatibility during transition
   const [step, setStep] = useState<"answer" | "followups">("answer");
   const [selectedQuestionIds, setSelectedQuestionIds] = useState<string[]>([]);
@@ -651,25 +654,62 @@ export function InterviewModal({
       .map((r) => r.roomName);
   }, [hasRoomPacing, roomFlow.rooms, roomFlow.roomProgress]);
 
-  // Every room accounted for (complete or skipped) with at least one complete —
-  // i.e. the interview was already finished before this render. This is a
-  // status-only signal, distinct from roomFlow.canFinish: on resume the flow
-  // hook's answeredCount isn't rehydrated (hydrateStatuses restores status only),
-  // so canFinish stays false even for a finished interview. Room statuses ARE
-  // rehydrated, so this reliably detects the "reopened a done interview" case.
-  // Gated on !roomsBlocked so the About-only two-phase window can't read as done.
-  const allRoomsTerminal = useMemo(() => {
-    if (!hasRoomPacing || roomsBlocked) return false;
+  // Answer-driven resume plan. The earlier fix relied on roomProgress to decide
+  // where to resume, but roomProgress lives in a SEPARATE EditorialInterview
+  // record that is frequently null or stale (its column is even read behind a
+  // "migration may not be applied" guard) — so on reopen it gave nothing and the
+  // designer stayed pinned on About Q1. The persisted ANSWERS are the reliable
+  // ground truth (stored in post provenance), and each carries a first-class
+  // roomId (D5); every room declares a baseQuestions budget. So we reconstruct
+  // progress from the answers: a room is "done" when its status is terminal OR it
+  // already holds >= baseQuestions answers. Resume lands on the furthest room the
+  // designer actually reached — and never on About once About is answered, no
+  // matter what roomProgress says. (Question IDs can't be matched directly: they
+  // carry a regenerated uuid, so we attribute by roomId + count, not by id.)
+  const resumePlan = useMemo(() => {
+    if (!hasRoomPacing || roomsBlocked) return null;
     const rooms = roomFlow.rooms;
-    if (rooms.length === 0) return false;
-    let completeCount = 0;
-    for (const r of rooms) {
-      const status = roomFlow.roomProgress[r.roomId]?.status ?? 'not_started';
-      if (status === 'complete') completeCount++;
-      else if (status !== 'skipped') return false;
+    if (rooms.length === 0) return null;
+
+    const roomKeyOf = (qid: string): string | null => {
+      const rid = answerRoomIds[qid];
+      if (typeof rid === 'string' && rid) return rid;
+      if (qid.startsWith('project-')) return 'project';
+      return null;
+    };
+    const baseCountByRoom: Record<string, number> = {};
+    for (const a of baseAnswers) {
+      const key = roomKeyOf(a.questionId);
+      if (key) baseCountByRoom[key] = (baseCountByRoom[key] || 0) + 1;
     }
-    return completeCount > 0;
-  }, [hasRoomPacing, roomsBlocked, roomFlow.rooms, roomFlow.roomProgress]);
+
+    const isTerminal = (roomId: string) => {
+      const s = roomFlow.roomProgress[roomId]?.status;
+      return s === 'complete' || s === 'skipped';
+    };
+    const isTouched = (r: (typeof rooms)[number]) =>
+      (baseCountByRoom[r.roomId] || 0) > 0 || isTerminal(r.roomId);
+    const isDone = (r: (typeof rooms)[number]) => {
+      if (isTerminal(r.roomId)) return true;
+      const need = r.budget.baseQuestions;
+      return need > 0 && (baseCountByRoom[r.roomId] || 0) >= need;
+    };
+
+    let lastTouched = -1;
+    for (let i = 0; i < rooms.length; i++) {
+      if (isTouched(rooms[i])) lastTouched = i;
+    }
+    if (lastTouched < 0) {
+      return { hasProgress: false, allDone: false, targetIndex: 0 };
+    }
+    // If the furthest room is finished, resume at the NEXT room; otherwise land
+    // back in the partially-answered room the designer stopped in.
+    const target = isDone(rooms[lastTouched]) ? lastTouched + 1 : lastTouched;
+    if (target >= rooms.length) {
+      return { hasProgress: true, allDone: true, targetIndex: rooms.length - 1 };
+    }
+    return { hasProgress: true, allDone: false, targetIndex: target };
+  }, [hasRoomPacing, roomsBlocked, roomFlow.rooms, roomFlow.roomProgress, baseAnswers, answerRoomIds]);
 
 
   // Convert fetched questions to InterviewQuestion format for compatibility
@@ -1071,84 +1111,124 @@ export function InterviewModal({
   useEffect(() => {
     if (!hasRoomPacing || !roomData.roomsPending) return;
     const projectProgress = roomFlow.roomProgress['project'];
-    if (!projectProgress) return;
     const projectGroup = roomFlow.rooms.find((r) => r.roomId === 'project');
     const baseCount = projectGroup?.budget.baseQuestions ?? 0;
-    const baseAnswersDone = baseCount > 0 && projectProgress.answeredCount >= baseCount;
-    if (baseAnswersDone || projectProgress.status === 'complete') {
+    const baseAnswersDone =
+      !!projectProgress && baseCount > 0 && projectProgress.answeredCount >= baseCount;
+
+    // Resume without a fresh questions cache: the room set must load or the whole
+    // interview hangs on About. The hook's in-session roomProgress isn't hydrated
+    // on reopen (server roomProgress is often null), so ALSO trigger off the saved
+    // answers. Only when About is genuinely finished — every project question
+    // answered, OR a real-room answer already exists — so a FRESH interview never
+    // loads rooms early (which would generate room questions from partial About
+    // context). loadRooms() is idempotent.
+    const projectAnswerCount = baseAnswers.filter((a) =>
+      a.questionId.startsWith('project-'),
+    ).length;
+    const projectAnswersComplete = baseCount > 0 && projectAnswerCount >= baseCount;
+    const hasRoomAnswers = baseAnswers.some((a) => {
+      const rid = answerRoomIds[a.questionId];
+      return typeof rid === 'string' && !!rid && rid !== 'project';
+    });
+
+    if (
+      baseAnswersDone ||
+      projectProgress?.status === 'complete' ||
+      projectAnswersComplete ||
+      hasRoomAnswers
+    ) {
       logClient('two-phase:load-rooms', {
-        answeredCount: projectProgress.answeredCount,
+        answeredCount: projectProgress?.answeredCount ?? 0,
         baseCount,
-        projectStatus: projectProgress.status,
+        projectStatus: projectProgress?.status,
+        projectAnswersComplete,
+        hasRoomAnswers,
       });
       roomData.loadRooms();
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [hasRoomPacing, roomData.roomsPending, roomData.loadRooms, roomFlow.roomProgress, roomFlow.rooms]);
+  }, [hasRoomPacing, roomData.roomsPending, roomData.loadRooms, roomFlow.roomProgress, roomFlow.rooms, baseAnswers, answerRoomIds]);
 
-  // Resume / two-phase navigation: once the full room set is loaded, move the
-  // cursor to the FIRST room that still needs work. This is the single entry
-  // point for both cases the flow hook can't handle on its own, because it
-  // always initializes at room 0 ('project'):
-  //   • live two-phase — the designer just finished About; room questions land;
-  //     jump into the first real room.
-  //   • resume — reopening a partially-answered interview; jump to where they
-  //     left off instead of being pinned on "About This Project" Q1.
-  // Runs once per open (didResumeNavRef), only after the interview has prior
-  // progress (some room already terminal). If every room is terminal there is
-  // nothing to resume TO — the finish effect below takes it to generation.
+  // Live two-phase entry: on a FRESH interview the designer finishes About, the
+  // room questions land, and finalizeRoomAndAdvance normally steps into room 1 —
+  // but if the room set loads AFTER About was completed there was no next room to
+  // advance to, so the cursor stays stuck on 'project'. This nudges it into the
+  // first real room. It uses the hook's in-session roomProgress (updated live by
+  // finalizeRoomAndAdvance, not the unreliable server record), and defers to the
+  // resume flow below when that owns navigation.
+  useEffect(() => {
+    if (!hasRoomPacing || roomsBlocked) return;
+    if (resumeRequested) return; // resume path owns navigation
+    if (roomFlow.rooms.length <= 1) return;
+    if (roomFlow.currentRoom?.roomId !== 'project') return;
+    if (roomFlow.roomProgress['project']?.status !== 'complete') return;
+    logClient('two-phase:enter-first-room', { roomCount: roomFlow.rooms.length - 1 });
+    roomFlow.goToRoom(1);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [hasRoomPacing, roomsBlocked, resumeRequested, roomFlow.rooms.length, roomFlow.currentRoom?.roomId, roomFlow.roomProgress]);
+
+  // Resume navigation. Fires once after the designer chooses "Continue where I
+  // left off" (resumeRequested) and the room set + answers have loaded. Uses the
+  // answer-driven resumePlan (NOT roomProgress, which is often null on reopen) to
+  // jump to the furthest room actually reached — fixing the report where reopen
+  // pinned the designer on About Q1 despite 31 saved answers. If every room is
+  // already done, it goes straight to completion + generation, matching the
+  // designer's intent to regenerate. Guarded to run only once per open.
   const didResumeNavRef = useRef(false);
   useEffect(() => {
     if (!open) {
       didResumeNavRef.current = false;
+      setResumeRequested(false);
     }
   }, [open]);
   useEffect(() => {
-    if (!open || !hasRoomPacing || roomsBlocked) return;
+    if (!resumeRequested || !hasRoomPacing || roomsBlocked) return;
     if (didResumeNavRef.current) return;
-    if (showDraftResume) return; // hold until the designer chooses to continue
-    const rooms = roomFlow.rooms;
-    if (rooms.length === 0) return;
-    const statusOf = (roomId: string) =>
-      roomFlow.roomProgress[roomId]?.status ?? 'not_started';
-    const anyTerminal = rooms.some((r) => {
-      const s = statusOf(r.roomId);
-      return s === 'complete' || s === 'skipped';
-    });
-    if (!anyTerminal) return; // fresh interview — leave the cursor at the start
+    if (!resumePlan || !resumePlan.hasProgress) return; // wait for answers to load
     didResumeNavRef.current = true;
-    const targetIndex = rooms.findIndex((r) => {
-      const s = statusOf(r.roomId);
-      return s !== 'complete' && s !== 'skipped';
+    logClient('resume:plan', {
+      roomCount: roomFlow.rooms.length,
+      currentRoomIndex: roomFlow.currentRoomIndex,
+      targetIndex: resumePlan.targetIndex,
+      allDone: resumePlan.allDone,
+      baseAnswers: baseAnswers.length,
     });
-    if (targetIndex >= 0 && targetIndex !== roomFlow.currentRoomIndex) {
-      logClient('resume:enter-room', { targetIndex, roomId: rooms[targetIndex].roomId });
-      roomFlow.goToRoom(targetIndex);
+    if (resumePlan.allDone) {
+      logClient('resume:all-done-generate', {});
+      autoGenerateRef.current = true;
+      setPhase('complete');
+      return;
+    }
+    if (resumePlan.targetIndex !== roomFlow.currentRoomIndex) {
+      logClient('resume:enter-room', {
+        targetIndex: resumePlan.targetIndex,
+        roomId: roomFlow.rooms[resumePlan.targetIndex]?.roomId,
+      });
+      roomFlow.goToRoom(resumePlan.targetIndex);
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open, hasRoomPacing, roomsBlocked, showDraftResume, roomFlow.rooms, roomFlow.roomProgress, roomFlow.currentRoomIndex]);
+  }, [resumeRequested, hasRoomPacing, roomsBlocked, resumePlan, roomFlow.currentRoomIndex]);
 
-  // Finish detection (single source of truth). When the interview is finished —
-  // either roomFlow.canFinish (accurate in-session) or every room terminal
-  // (status-only, survives a resume where answeredCount isn't rehydrated) —
-  // move to completion and auto-generate. Doing this in an effect (rather than
-  // synchronously in the skip/answer handlers) is what fixes skipping the LAST
-  // room: skipRoom()/advanceQuestion() only schedule state, so a synchronous
-  // canFinish read there is stale and misses the final room. Gated so it never
-  // fires on the draft-resume screen, mid-generation, or while rooms are still
-  // being generated (two-phase). handleGenerate still gates on skipped/incomplete
-  // rooms, so the designer confirms before any skipped room is left out.
+  // Finish detection for the IN-SESSION path (single source of truth). When
+  // roomFlow.canFinish flips true — after skipping the last room or answering the
+  // last question — move to completion and auto-generate. Doing this in an effect
+  // rather than synchronously in the skip/answer handlers is what fixes skipping
+  // the LAST room: skipRoom()/advanceQuestion() only schedule state, so a
+  // synchronous canFinish read there is stale and misses the final room. canFinish
+  // is accurate in-session (recordAnswer/skipRoom update the hook's own progress
+  // live); the resume-all-done case is handled by the resume effect above instead,
+  // since canFinish can't be trusted after a reopen. Gated so it never fires on the
+  // draft-resume screen, mid-generation, or while rooms are still being generated.
   useEffect(() => {
     if (!hasRoomPacing) return;
     if (phase !== 'question') return;
     if (showDraftResume || roomsBlocked || isGenerating) return;
-    if (!(roomFlow.canFinish || allRoomsTerminal)) return;
-    logClient('interview:finished', {
-      via: roomFlow.canFinish ? 'canFinish' : 'allRoomsTerminal',
-    });
+    if (!roomFlow.canFinish) return;
+    logClient('interview:finished', { via: 'canFinish' });
     autoGenerateRef.current = true;
     setPhase('complete');
-  }, [hasRoomPacing, phase, showDraftResume, roomsBlocked, isGenerating, roomFlow.canFinish, allRoomsTerminal]);
+  }, [hasRoomPacing, phase, showDraftResume, roomsBlocked, isGenerating, roomFlow.canFinish]);
 
   // Status hydration (C0): once room groups exist, re-apply persisted terminal
   // statuses (from server roomProgress and the localStorage draft) so a skipped
@@ -2405,7 +2485,10 @@ export function InterviewModal({
                   disabled={isClearing}
                   onClick={() => {
                     setShowDraftResume(false);
-                    // Phase/index already set from preload — just dismiss the prompt
+                    // Arm resume navigation: the effect jumps room-paced flows to
+                    // the room the designer actually reached (non-room-paced flows
+                    // keep the preload-restored currentQuestionIndex).
+                    setResumeRequested(true);
                     console.log('[InterviewModal] Resuming draft at index:', currentQuestionIndex);
                   }}
                   className="px-6 py-3 text-sm font-medium text-white bg-[var(--accent)] rounded-full hover:bg-[var(--accent-hover)] transition-colors disabled:opacity-50"
@@ -2440,15 +2523,14 @@ export function InterviewModal({
                       setPendingResubmitQuestionId(null);
                       // Reset room-pacing flow + client status map so cleared
                       // progress can't leak into resume nav / finish detection.
-                      // reset() and setShowDraftResume(false) batch into one
-                      // commit, so when resume-nav re-evaluates it sees a fresh
-                      // (all not_started) roomProgress and correctly stays at
-                      // room 0 instead of the pre-reset terminal statuses. Also
-                      // drop the persisted server snapshot and re-arm the
-                      // one-time resume-nav guard so the NEW interview's live
-                      // two-phase "enter first room" transition still works.
+                      // Clearing resumeRequested disarms the resume effect, and
+                      // roomFlow.reset() restores a pristine (all not_started)
+                      // flow so the fresh interview starts at room 0. Drop the
+                      // persisted server snapshot and re-arm the one-time guard so
+                      // the NEW interview's live two-phase entry still works.
                       roomFlow.reset();
                       setRoomStatuses({});
+                      setResumeRequested(false);
                       serverRoomProgressRef.current = null;
                       didResumeNavRef.current = false;
 
