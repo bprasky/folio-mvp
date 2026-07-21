@@ -1,87 +1,65 @@
-# Two-Phase Interview Generation (Option B) — About answers inform room questions
+# Fix: interview skip-last-room + resume override (branch: claude/interview-room-skip-q1-override-179v3b)
 
-Branch: claude/question-generation-tuning-xrisl9
+## Symptoms (reported)
+1. Reached end, skipped the LAST room — didn't register / never proceeded to article generation.
+2. Re-entered interview, recognized 31 answers, clicked "pick up where I left off" — but an
+   override keeps the user on Question 1 of "About This Project".
 
-## Goal
-Generate the "About This Project" section first (fast initial load). When its base
-answers are in, distill them into a schema-constrained fact digest (facts, not
-narrative — the anti-drift mechanism) and generate room questions WITH that digest.
-Room topics stay pinned to each room's photos/tags; the digest only informs wording
-and prevents re-asking. The story's angle never re-steers.
+## Root causes
+- Bug 1: `handleSkipRoom` (and `handleQuestionAnswerSubmit`) read `roomFlow.canFinish`
+  synchronously right after mutating flow state. `skipRoom()`/`advanceQuestion()` only schedule
+  React state updates, so `canFinish` in the closure is STALE and misses the just-finished room.
+  Skipping the last room therefore never sets phase=complete / triggers generation.
+- Bug 2: `useRoomInterviewFlow` always starts at room 0 ('project' = "About This Project"), Q0, and
+  has no resume navigation. `hydrateStatuses` restores statuses but deliberately never moves the
+  cursor, and never restores `answeredCount` (so `canFinish` is false on resume even when done).
+  Result: resume dumps the user on About Q1.
 
-## Plan
+## Plan (all changes in InterviewModal.tsx; no hook API change needed)
+- [ ] Add `allRoomsTerminal` (status-only: every room complete/skipped, >=1 complete, rooms loaded).
+      Needed because hydration doesn't restore answeredCount, so canFinish can't be trusted on resume.
+- [ ] Add a finish effect: when in question phase and (canFinish || allRoomsTerminal) and not
+      generating / not roomsBlocked / not on draft-resume screen -> autoGenerate + phase=complete.
+      Single source of truth for "interview finished" — fixes the stale-read (Bug 1) across skip-room,
+      skip-question, and answer-last-question (async round transitions) paths.
+- [ ] Remove the stale synchronous `canFinish` finish-checks from handleSkipRoom and
+      handleQuestionAnswerSubmit (effect owns it now).
+- [ ] Replace the narrow two-phase `goToRoom(1)` effect with a one-time-per-open resume-nav effect:
+      once rooms are loaded, if any room is terminal, navigate to the FIRST non-terminal room
+      (covers both the live two-phase "enter first room" transition and resume). If all terminal,
+      leave it to the finish effect. Reset the one-time guard when the modal closes.
 
-### Backend
-- [x] 1. New `src/lib/interview/distillInterviewFacts.ts` — `KnownFacts` type
-      (fixed fields: client, scope, timeline, direction, corrections) +
-      `distillInterviewFacts()` (Haiku, neutral-facts-only prompt, null on failure).
-- [x] 2. `generateRoomQuestions.ts` — optional `knownFacts` in projectContext;
-      prompt gains "WHAT WE ALREADY KNOW" block + lane contract
-      (informs wording, never topics; photos/tags choose topics).
-- [x] 3. `generateAllRoomQuestions.ts` — accept optional `knownFacts`, pass through.
-- [x] 4. `getInterviewQuestions.ts` — phase-aware `getInterviewQuestionsGroupedByRoom`:
-      `phase: 'project'` → project group only (no room LLM calls; real gates from context);
-      `phase: 'rooms'` → read saved About answers from provenance → distill →
-      generate rooms with digest; persist digest to `provenance.interview.knownFacts`;
-      no phase → current full behavior (back-compat for flat callers/cache).
-- [x] 5. Questions route — parse `?phase=` and pass through.
-- [x] 6. `followups/batch/route.ts` — include stored digest in room-level prompts
-      (stops room follow-ups re-asking established project facts).
+## Verify
+- [ ] `npm run typecheck` / build clean.
+- [ ] Reason through: skip last room -> generates; resume mid-interview -> first incomplete room;
+      resume fully-done -> Continue -> generate (with skipped-room confirm).
 
-### Frontend
-- [x] 7. `useRoomInterviewQuestions.ts` — two-phase: initial fetch `phase=project`;
-      expose `roomsPending`/`roomsError` + idempotent `loadRooms()` that fetches
-      `phase=rooms` and appends groups; full-set localStorage cache still
-      short-circuits both (project-only caches are NOT trusted as full).
-- [x] 8. `InterviewModal.tsx` —
-      (a) pacing gate: active with a lone project group when roomCount >= 1,
-      (b) `loadRooms()` effect fires when About BASE answers are all saved, so
-          rooms generate while the designer answers project follow-ups,
-      (c) `roomsBlocked` gates canFinish auto-complete/isInterviewComplete/
-          isNearFinish; "Preparing questions for each room" interstitial when
-          About is done but rooms haven't arrived,
-      (d) arrival effect advances into room index 1 when groups land.
+## Review (results)
+Implemented all four items in InterviewModal.tsx. tsc: no NEW errors introduced
+(8 errors in this file are pre-existing on baseline bc8ccf8b — verified via stash).
 
-### Verify
-- [x] 9. `tsc --noEmit`: identical error sets before/after (1055 pre-existing,
-      0 new). `phase5e-check-plan --ci` passes. `next lint` not configured in
-      repo (interactive setup prompt); `guard:client-imports` script missing on
-      this branch (pre-existing).
-- [x] 10. Traced: fresh phased flow (About → round-1 trigger → follow-ups answer
-      time hides room generation → arrival advance), cached full-set path,
-      0-room flat fallback, rooms-failure degrade (roomsError unblocks Finish,
-      bounded answer-driven retries — no hot loop).
+### Behavior walkthrough
+- Skip last room: handleSkipRoom -> skipRoom() commits -> allRoomsTerminal true ->
+  finish effect -> phase=complete + autoGenerate -> handleGenerate (skipped rooms make
+  excludedRoomNames non-empty -> confirm dialog -> generate). FIXED.
+- Answer last question of last room: recordAnswer + advanceQuestion -> async round
+  transitions -> finalizeRoomAndAdvance -> canFinish true -> finish effect. FIXED
+  (previously the synchronous canFinish read missed this async path too).
+- Resume, some rooms incomplete: hydrateStatuses restores terminal statuses ->
+  resume-nav effect navigates to first non-terminal room (not About Q1). FIXED.
+- Resume, all rooms done: Continue dismisses draft-resume -> allRoomsTerminal true ->
+  finish effect -> generate (matches "retrigger it" intent). FIXED.
+- Fresh interview: no terminal rooms until the true end -> neither effect fires early.
+- Live two-phase: resume-nav subsumes the old goToRoom(1); finalizeRoomAndAdvance still
+  handles the normal in-session transition; resume-nav no-ops when already on target.
 
-## Review
-
-Two-phase generation is live end-to-end. Design decisions that matter:
-
-- **Anti-drift digest.** Room prompts never see raw About answers — only a
-  Haiku-distilled, schema-constrained fact digest (client/scope/timeline/
-  direction/corrections, no names, no narrative). The room prompt's lane
-  contract makes it explicit: the digest informs WORDING, the room's own
-  photos/tags choose TOPICS. Same digest feeds room-level batch follow-ups
-  ("settled ground — don't re-ask").
-- **Digest is enhancement, never dependency.** Any failure (no answers, LLM
-  error, parse fail) degrades to digest-free room generation; the deterministic
-  About fallback and the full-path behavior are unchanged.
-- **Latency hiding.** Room generation kicks off the moment the 5 About base
-  answers are saved and runs during the project follow-up round. The
-  interstitial only shows if the designer outruns it.
-- **Known accepted races** (documented in code): provenance read-modify-write
-  between knownFacts persist and concurrent answer/follow-up saves — same
-  fresh-read pattern and blast radius as the existing followups routes.
-- **Post-review fixes (folio-code-reviewer):** (1) BLOCKER: `persistKnownFacts`
-  was a DB write reachable through the view-gated questions GET — now the route
-  checks `assertProjectWrite` and passes `persistFacts`; viewers can never
-  trigger the mutation. (2) `loadRooms()` gained a fetch-epoch guard so an
-  in-flight rooms fetch from a stale cacheSignature can't merge/cache under the
-  new signature. (3) The full-set cache write now requires actual room
-  questions — an all-rooms-failed generation is no longer cached as success.
-  Deliberately skipped: reviewer's nit about lost `Promise.all` parallelism on
-  the legacy no-phase path (one ~10ms serialized findUnique vs a multi-second
-  LLM pipeline, on a path the frontend no longer calls).
-- **Follow-up (not done, deliberate):** the flat `useInterviewQuestions` hook
-  still triggers a full digest-free room generation server-side on modal open
-  (pre-existing double-spend; its results only feed legacy/metadata paths).
-  Worth removing in a separate cost-cut pass.
+## Review round 2 (folio-code-reviewer findings addressed)
+Reviewer verdict: iterate — no blockers, two should-fix items. Both fixed:
+- Start Over now resets the flow hook (new useRoomInterviewFlow.reset()) + clears
+  roomStatuses + serverRoomProgressRef + re-arms didResumeNavRef, so cleared progress
+  can't leak into resume-nav/finish detection (previously would jump mid-list / mis-fire).
+- Closed the hydration race: serverRoomProgressRef is populated by a separate async GET;
+  added serverProgressVersion state (bumped when the snapshot lands) to the hydration
+  effect deps so persisted statuses always hydrate even if the GET resolves late.
+Nits (redundant !roomsBlocked guard; question-level within-room resume) left as-is /
+noted to user. tsc: still only the 8 pre-existing baseline errors; hook compiles clean.
