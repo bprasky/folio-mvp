@@ -100,6 +100,12 @@ export interface RoomInterviewFlowState {
   hydrateStatuses: (
     entries: Array<{ roomId: string; status: RoomProgressStatus }>,
   ) => void;
+  /**
+   * Reset all internal flow state to a pristine interview — used by "Start over"
+   * so a cleared interview doesn't retain stale room progress (which would make
+   * resume navigation / finish detection fire off the old, deleted state).
+   */
+  reset: () => void;
 }
 
 // ---------------------------------------------------------------------------
@@ -120,9 +126,10 @@ export function useRoomInterviewFlow(
   },
 ): RoomInterviewFlowState {
   const onRoomStatusChange = options?.onRoomStatusChange;
-  const [currentRoomIndex, setCurrentRoomIndex] = useState(0);
-  const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
-  const [roomProgress, setRoomProgress] = useState<RoomProgressMap>(() => {
+  // Build the pristine per-room progress map (all rooms not_started). Shared by
+  // the initial state and reset() so "Start over" restores exactly the same
+  // shape the hook mounts with.
+  const buildInitialProgress = useCallback((): RoomProgressMap => {
     const initial: RoomProgressMap = {};
     for (const room of rooms) {
       initial[room.roomId] = {
@@ -133,7 +140,11 @@ export function useRoomInterviewFlow(
       };
     }
     return initial;
-  });
+  }, [rooms]);
+
+  const [currentRoomIndex, setCurrentRoomIndex] = useState(0);
+  const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
+  const [roomProgress, setRoomProgress] = useState<RoomProgressMap>(buildInitialProgress);
   const [crossRoomPhase, setCrossRoomPhase] = useState(false);
   const [crossRoomQuestionIndex, setCrossRoomQuestionIndex] = useState(0);
 
@@ -538,6 +549,19 @@ export function useRoomInterviewFlow(
     [],
   );
 
+  // Reset to a pristine interview (Start over). Mirrors the hook's mount state.
+  const reset = useCallback(() => {
+    setCurrentRoomIndex(0);
+    setCurrentQuestionIndex(0);
+    setRoomProgress(buildInitialProgress());
+    setCrossRoomPhase(false);
+    setCrossRoomQuestionIndex(0);
+    setFollowUpCounts({});
+    setRoomQuestionOverrides({});
+    setRoomRound({});
+    setPendingRoundTransition(false);
+  }, [buildInitialProgress]);
+
   // Build room progress array for the progress bar
   const roomProgressForBar = useMemo(
     () =>
@@ -602,5 +626,6 @@ export function useRoomInterviewFlow(
     insertRoundQuestions,
     completeRoundTransition,
     hydrateStatuses,
+    reset,
   };
 }
