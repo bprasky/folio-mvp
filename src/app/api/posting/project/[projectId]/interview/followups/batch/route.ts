@@ -52,7 +52,7 @@ RULES:
 - Reference specific things the designer said. Not generic questions.
 - Chase stories: if they mentioned changing their mind, ask what the original choice was. If they mentioned a compromise, ask what the client wanted vs what they wanted.
 - Chase details: if they mentioned a specific product, ask why that one and what they considered instead.
-- Chase emotion: if they expressed pride or frustration, go there.
+- Chase the decision behind the feeling: if they expressed pride in a choice, go there. If they raised a tension or compromise, chase how they resolved it — the arrival, not the grievance.
 - Do NOT ask questions that could be answered by looking at photos.
 - Do NOT ask generic design questions unrelated to what they said.
 - Each question should start with a reference to their answer: "You mentioned [X]..." or "You said [X]..." or "Tell me more about [X]..."

@@ -270,7 +270,7 @@ WHAT MAKES A GOOD QUESTION:
 - Surfaces what you know as a soft impression or a photo observation ("sounds like…", "it reads like…", "looking at the photos…") — NEVER by citing notes or a description — so the respondent can confirm, correct, or expand
 - Asks ONE thing clearly (not compound questions)
 - Opens space for storytelling, not yes/no answers
-- Focuses on wins and arrivals, not compromises or failures
+- Favors arrivals: contrast is welcome when it resolves to the choice made (what they tried first, the alternative set aside), but never dwells on regret, grievance, or failure
 - Sounds like a colleague asking over coffee, not a form field
 - Is calibrated to the ${role} role — asks about things this person actually controlled or experienced
 
