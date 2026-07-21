@@ -8,7 +8,7 @@ import { assertProjectWrite } from '@/lib/authz/access';
 import { callLLM } from '@/lib/posting/llmClient';
 import Anthropic from '@anthropic-ai/sdk';
 import type { SectionHistoryEntry, SectionOverride } from '@/lib/posting/editingTypes';
-import { FOLIO_TONE } from '@/lib/posting/generateEditorialDraft';
+import { FOLIO_TONE } from '@/lib/interview/prompts/editorialTone';
 import { MODELS } from '@/lib/ai/models';
 
 const anthropic = new Anthropic();
