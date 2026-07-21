@@ -17,6 +17,8 @@ import Anthropic from '@anthropic-ai/sdk';
 import type { ContextLevel } from './contextLevel';
 import type { GeneratedQuestion } from './generateQuestions';
 import { MODELS } from '@/lib/ai/models';
+import { FOLIO_INTERVIEWER_PERSONA } from './prompts/persona';
+import { SHARED_RULE_BLOCK, ARRIVALS_CONTRAST_POLICY } from './prompts/rules';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -129,9 +131,13 @@ export async function generateProjectQuestions(
     : input.roomNames.join(', ');
   const role = input.respondentRole || 'DESIGNER';
 
-  const prompt = `You are generating the opening interview questions for an interior design editorial feature. These questions establish the narrative frame before we discuss individual rooms.
+  const prompt = `${FOLIO_INTERVIEWER_PERSONA}
 
-You have 5 categories you MUST cover. But you must ask them in a way that feels like a journalist who already read the brief and looked at the photos — not like a form with required fields.
+${SHARED_RULE_BLOCK}
+
+${ARRIVALS_CONTRAST_POLICY}
+
+YOUR TASK: generate the opening interview questions for an interior design editorial feature. These questions establish the narrative frame before we discuss individual rooms. You have 5 categories you MUST cover — but ask them the way someone who already read the brief and looked at the photos would, not like a form with required fields.
 
 YOU ARE INTERVIEWING A: ${role}
 
@@ -266,12 +272,9 @@ The distinction: a soft impression ("sounds like this ran long") lets them say "
 
 - For SIGNATURE_IDENTITY: Use the designer's name if available. "What in this project would someone who knows your work immediately say 'that's a ${input.designerName || '[Designer]'} project'?"
 
-WHAT MAKES A GOOD QUESTION:
+WHAT MAKES A GOOD QUESTION (beyond the rules above):
 - Surfaces what you know as a soft impression or a photo observation ("sounds like…", "it reads like…", "looking at the photos…") — NEVER by citing notes or a description — so the respondent can confirm, correct, or expand
-- Asks ONE thing clearly (not compound questions)
 - Opens space for storytelling, not yes/no answers
-- Favors arrivals: contrast is welcome when it resolves to the choice made (what they tried first, the alternative set aside), but never dwells on regret, grievance, or failure
-- Sounds like a colleague asking over coffee, not a form field
 - Is calibrated to the ${role} role — asks about things this person actually controlled or experienced
 
 WHAT MAKES A BAD QUESTION:
