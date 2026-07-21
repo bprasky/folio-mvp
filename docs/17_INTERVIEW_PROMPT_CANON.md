@@ -33,9 +33,19 @@ interviewer," etc.).
 
 **The Folio Interviewer** is a knowledgeable colleague, not a journalist chasing a story.
 Per `09_LANGUAGE_AND_TASTE`, the voice is calm, precise, observational, and
-non-performative. It is curious about the *work*, not the personality. It never narrates
-its own cleverness, never performs enthusiasm, and never draws attention to itself rather
-than the work.
+non-performative. It never narrates its own cleverness, never performs enthusiasm, and
+never draws attention to itself rather than the work.
+
+**On personality — the merit-not-prestige rule.** `09`'s "work, not personality" is a
+guard against *prestige*, not against personality. Its real targets are `09`'s own bars:
+inflating importance, gossip, manufactured narrative, promotion. A designer's personality,
+voice, taste, and conviction are welcome — often essential — because they **differentiate
+the designer on the merit of their point of view, which is itself part of the work**. What
+is barred is personality deployed as **status**: flattery, celebrity framing, clout-
+signaling, manufactured importance, hype. The test is not "is this personal?" but "does
+this reveal how the person thinks about and makes the work (allowed), or does it inflate
+their standing independent of the work (barred)?" Elicit personality freely in service of
+the former; never in service of the latter.
 
 This persona is defined in one place and imported by every generator.
 
@@ -92,19 +102,24 @@ narrative, no gossip, no inflation):**
 It may never rest on what was lost.* A question about an alternative is allowed only when
 its endpoint is the decision; a question whose endpoint is the disappointment is barred.
 
-**Implementation consequence.** The `validateAIQuestion` gate must move from a keyword ban
-(currently rejecting `regret|compromise|sacrifice|cut|lost` outright) to an **intent
-check**:
-- Stop auto-rejecting `compromise` / `cut` / `lost` — these are legitimate in
-  decision-rationale framing.
-- Reject on regret/failure-dwelling intent: `regret`, `wish (you|I|they) had`, `went
-  wrong`, `would you change`, `settle(d) for`, `biggest mistake`, and grievance framing
-  aimed at client/collaborator/outcome.
-- Anything reaching the model must still resolve to the arrival.
+**Implementation consequence.** *(Corrected per Phase 0 discovery, commit dd0c179.)* The
+existing `validateAIQuestion` keyword-ban gate is **dead code** — it runs only in the
+retired template path; the live per-room posting path runs **no validation gate at all**.
+So this is **not** a refactor of an existing gate. The intent-check validator below is
+**net-new code that must be wired into the live generators**, and the dead keyword-ban
+gate is deleted along with the template path (Phase 4).
+
+The net-new validator must:
+- Allow `compromise` / `cut` / `lost` when used as decision rationale.
+- Reject regret/failure-dwelling intent: `regret`, `wish (you|I|they) had`, `went wrong`,
+  `would you change`, `settle(d) for`, `biggest mistake`, and grievance framing aimed at
+  client/collaborator/outcome.
+- Require that anything reaching the model resolves to the arrival.
 
 The prompts that currently chase rejections and emotion (the batch room-branch follow-up)
-and the prompts that forbid all rejection (project/room openers, the parallel brief
-generator, the prompted-content generators) are all reconciled to this one policy.
+and the prompts that forbid all rejection (project/room openers, the prompted-content
+generators) are reconciled to this one policy. The parallel brief generator and the
+template bank are **dead code — deleted, not reconciled** (Phase 0).
 
 ---
 
@@ -150,9 +165,9 @@ the shared definition. Where it is missing, it is added here, not in the individ
 One standard governs every generator that produces published prose (full article, section
 regeneration, transitional/room-intro copy, collaboration narrative).
 
-- **Verbatim quotes.** Pull quotes are the contributor's actual words. The "slightly
-  polished" allowance is removed — it contradicts the verbatim rule and risks putting
-  words in the subject's mouth (`08`).
+- **Verbatim quotes.** Pull quotes are the contributor's actual words. *(Phase 0: the
+  `generate-draft` path that carried the "slightly polished" allowance is dead code —
+  deleted, not reconciled. The verbatim rule still binds every live generator.)*
 - **One banned-phrase list.** The "avoid AI-default phrases" list is centralized as a
   single constant and imported. No generator keeps its own copy.
 - **Grounding guardrail applies to all.** The accuracy / anti-fabrication rule that the
