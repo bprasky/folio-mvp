@@ -63,3 +63,27 @@ Reviewer verdict: iterate — no blockers, two should-fix items. Both fixed:
   effect deps so persisted statuses always hydrate even if the GET resolves late.
 Nits (redundant !roomsBlocked guard; question-level within-room resume) left as-is /
 noted to user. tsc: still only the 8 pre-existing baseline errors; hook compiles clean.
+
+## Round 3 — "merged and it still didn't work" (root cause found)
+The PR #704 fix gated EVERYTHING on `roomProgress` — but roomProgress lives in a
+SEPARATE EditorialInterview record (read behind a "migration may not be applied"
+guard) that is frequently null/stale on reopen. When it's null, every gate was a
+no-op and the designer stayed pinned on About Q1. Answers, by contrast, are the
+reliable ground truth (post provenance) and carry a first-class roomId (D5).
+
+Redesign (answer-driven, roomProgress only as a supplement):
+- resumePlan (useMemo): reconstruct per-room progress from saved answers
+  (attribute by roomId + baseQuestions budget; project via 'project-' id prefix).
+  Resume jumps to the furthest room actually reached; all-done -> generate.
+- resumeRequested state: armed by "Continue where I left off"; the resume effect
+  fires once off it (not off roomProgress statuses).
+- loadRooms trigger: also fire when saved answers show About is done
+  (projectAnswersComplete || hasRoomAnswers), so resume-without-cache doesn't hang
+  on About when hook roomProgress isn't hydrated. Guarded so a FRESH interview
+  never loads rooms early from partial About context.
+- In-session finish stays on canFinish (accurate live); removed allRoomsTerminal.
+- Restored a dedicated live two-phase enter-first-room effect (fresh interviews).
+- Start Over also clears resumeRequested.
+- Added resume:plan / resume:enter-room / resume:all-done-generate logs for prod
+  diagnosis if anything still misbehaves.
+tsc: still only the 8 pre-existing baseline errors; no new errors.
