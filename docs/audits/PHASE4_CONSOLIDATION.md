@@ -137,5 +137,74 @@ gate (step 2) and the new persona coexist with no over-block:
   Team/Enterprise). Harness + procedure ready in `docs/audits/PHASE4_LIVE_PREPOST.md`. Per your
   direction, the sweep continues on validator-based verification.
 
-**Next generator: (3) posting follow-ups** — `followups/route.ts`, `followups/single`,
-`followups/batch` (batch already had its arrivals language reconciled in step 2).
+---
+
+## Generator 3 — posting follow-ups (F1 `followups/route.ts`, F2 `followups/single`, F3 `followups/batch`)
+
+Treated as one generator group, one commit.
+
+**⚠️ Correction to the brief:** the task said "F3 already routes through the gate." It does
+**not** — a grep for `isArrivalSafe`/`validateInterviewQuestion` across all three routes
+returned nothing. Step 2 only reconciled F3's *prompt* wording, never wired the validator. So
+this run wires the gate into **all three** (F1, F2, F3), not just F1/F2.
+
+**Imports added (all three):** `FOLIO_INTERVIEWER_PERSONA`, `SHARED_RULE_BLOCK`,
+`ARRIVALS_CONTRAST_POLICY`, `isArrivalSafe`.
+
+### (i) Persona / rules text diff — old bespoke → new canonical
+- **Persona (drifted voices resolved):** F1 & F2 said *"You are **an editorial interviewer for
+  a design magazine**…"*, F3 said *"**You are interviewing a designer** … for a design magazine
+  feature."* All three now lead with the module `FOLIO_INTERVIEWER_PERSONA` (colleague, not
+  journalist; merit-not-prestige), followed by a plain task line.
+- **Rule spine:** prepended `SHARED_RULE_BLOCK` + `ARRIVALS_CONTRAST_POLICY` to each.
+- **Arrivals dedupe (policy now from the module only):**
+  - F1: removed the rule line *"Ask about ARRIVALS, not departures. 'What clicked…' not 'Why
+    did you reject the alternatives?'"*
+  - F2: removed the same clause from its system-prompt paragraph **and** from the per-answer
+    user-prompt line.
+  - F3: system-prompt persona swapped; its "chase" rules were already §3-reconciled in step 2
+    and are kept as craft (see below).
+  - **Note — intended §3 alignment, not a silent change:** F1/F2's old "not why did you reject"
+    was *more* restrictive than §3 (which allows "the alternative you considered and set aside").
+    Sourcing the policy from the module makes F1/F2 permit contrast-that-resolves-to-the-choice,
+    matching F3 and the room/project generators. The **"what clicked" framing is preserved** via
+    the retained example questions in F1.
+
+**KEPT (follow-up craft):** F1's project-level "30,000-feet / cover all five categories / don't
+chase room specifics" scope and its examples; F2's coverage-morphing + dedupe-against-covered
+logic and the 0–2 / hard-cap-at-2 shape; F3's "chase the decision / the arrival not the
+grievance" heuristics; one-follow-up-at-a-time everywhere.
+
+### (ii) Gate wiring (net for F1/F2/F3 — was absent on all three)
+Each route now filters its emitted follow-ups through `isArrivalSafe` with drop-logging,
+matching the generateRoomQuestions pattern (F1 filters the nested per-question arrays; F2 filters
+the 0–2 list; F3 filters before the maxFollowUps slice).
+
+### (iii) Representative-question check (real validator; live gen still deferred)
+```
+✅ PASS  (contrast→arrival)          "…before you landed on the RH Cloud. What clicked about this one?"
+✅ PASS  (compromise-as-rationale)   "…the island was a compromise with the budget — how did you make it feel intentional?"
+✅ PASS  (coverage-morph)            "You mentioned the warm oak in the kitchen — how did you carry that into the living room?"
+✅ PASS  (benign)                    "Waterworks appears throughout the bathrooms. What keeps you coming back to them?"
+🚫 BLOCK [frustration] (grievance)   "What frustrated you most in the primary suite?"
+🚫 BLOCK [do differently] (regret)   "Anything you'd have done differently in the kitchen?"
+```
+Contrast/compromise/morph/benign pass; clear grievance/regret block. No over-block.
+
+### 🚩 Deferred cleanup (flagged, NOT built this commit)
+F3 references known facts via `formatKnownFacts` (the lane contract). Per instruction #4, I did
+NOT create a new source-handling block. Open question for a later cleanup: promote generator #1's
+source-narration masterclass and the lane-contract approach to a **shared module export**
+(e.g., `prompts/sourceHandling.ts`) so they stop living per-generator. Deferred, not this commit.
+
+### Verification
+- Representative validator check: correct pass/block above.
+- No NEW `tsc` errors in the three routes — the errors present are the pre-existing
+  `LLMResult.code/.status/.message` family in the error branches (and one unrelated `events`
+  route matched by path substring), all ignored via `next.config.js` `ignoreBuildErrors`.
+- Validator unit tests: 3/3 pass.
+- Live LLM pre/post: still deferred to a single pre-ship run (no usable key). Harness ready in
+  `docs/audits/PHASE4_LIVE_PREPOST.md`.
+
+**Next: (4) the second-surface routes in `/api/interview/respond` (I1/I2/I3) — REWIRE, not
+delete** (`NEXT_PUBLIC_POSTING_V1=true`, the surface is live).
