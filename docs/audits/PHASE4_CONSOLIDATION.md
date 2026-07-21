@@ -87,5 +87,55 @@ landing the enum migration; do not fold that into the prompt pass.
 - Validator unit tests: 3/3 pass.
 - Live LLM pre/post: not run (no API key + seeded project here).
 
-**Next generator: (2) generateRoomQuestions.ts** — validator already wired in step 2, so this
-is persona/rules unification only.
+---
+
+## Generator 2 — `src/lib/interview/generateRoomQuestions.ts` (live per-room)
+
+Persona/rules unification only — the validator was already wired here in step 2 (66f57c0).
+
+**Imports added:** `FOLIO_INTERVIEWER_PERSONA`, `SHARED_RULE_BLOCK`, `ARRIVALS_CONTRAST_POLICY`.
+
+### (i) Persona / rules text diff — old bespoke → new canonical
+
+**Persona (drifted voice resolved):**
+- OLD: *"You are **a senior editorial journalist** at an interior design publication interviewing a designer about the {room}…"*
+- NEW: leads with the module `FOLIO_INTERVIEWER_PERSONA` (*"knowledgeable colleague, not a journalist…"* + merit-not-prestige), followed by a plain TASK line (*"interview the designer about the {room}… grounded in this room's photos and tagged products"*).
+
+**Rule spine:** prepended `SHARED_RULE_BLOCK` + `ARRIVALS_CONTRAST_POLICY`.
+
+**Deduped:** rule 3's inline arrivals clause (added in step 2) → collapsed to *"Every question sets
+up an answer the designer would be proud to publish (arrivals/contrast policy above applies)."*
+The policy now lives once, at the top, from the module.
+
+**KEPT (generator-specific craft):** the Product Naming Gate (rules 2 & 5 — nameable-vs-descriptor,
+"never say Unknown Brand"), the anti-generic rule with its editorial example (rule 4), the
+question-type mix (rule 6), the cross-room instruction (rule 7), the lane-contract known-facts
+block, the AI-detected-details block, and the JSON contract.
+
+**No rule-7 tension here:** unlike generator #1, this prompt is designer-only ("interview the
+designer") — it carries no BUILDER/HOMEOWNER role labels, so importing rule 7 ("use Contractor")
+introduces no terminology conflict.
+
+### (ii) Representative-question check (real validator; live gen still blocked — no key)
+All representative Kitchen questions pass, including a contrast question — confirming the arrivals
+gate (step 2) and the new persona coexist with no over-block:
+```
+✅ PASS  "The Waterworks bridge faucet in unlacquered brass — walk us through choosing that over a polished finish."
+✅ PASS  "The honed marble island top sets a quiet tone — how did you land on honing it rather than a polish?"
+✅ PASS  "You mentioned white oak runs through the house — how does it carry from the kitchen into the primary bath?"
+✅ PASS  "What did you try first for the island before the honed marble landed?"   (contrast → arrival)
+✅ PASS  "The brass against the oak millwork — was that pairing an early decision or something that emerged?"
+```
+
+### Verification
+- Representative validator check: all pass (above).
+- No NEW `tsc` errors in `generateRoomQuestions.ts` (pre-existing repo errors ignored via
+  `ignoreBuildErrors`).
+- Validator unit tests: 3/3 pass.
+- Live LLM pre/post: **still not run** — no usable `ANTHROPIC_API_KEY` in this environment
+  (`.env.local` is gitignored and absent from the fresh clone; env-var config is gated to
+  Team/Enterprise). Harness + procedure ready in `docs/audits/PHASE4_LIVE_PREPOST.md`. Per your
+  direction, the sweep continues on validator-based verification.
+
+**Next generator: (3) posting follow-ups** — `followups/route.ts`, `followups/single`,
+`followups/batch` (batch already had its arrivals language reconciled in step 2).

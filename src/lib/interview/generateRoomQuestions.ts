@@ -12,6 +12,8 @@ import type { GeneratedQuestion, QuestionType } from './generateQuestions';
 import { formatKnownFacts, type KnownFacts } from './distillInterviewFacts';
 import { MODELS } from '@/lib/ai/models';
 import { isArrivalSafe } from './prompts/validateQuestion';
+import { FOLIO_INTERVIEWER_PERSONA } from './prompts/persona';
+import { SHARED_RULE_BLOCK, ARRIVALS_CONTRAST_POLICY } from './prompts/rules';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -138,7 +140,13 @@ HOW TO USE THIS BACKGROUND — THE LANE CONTRACT:
     ? `Include exactly 1 question that references how this room relates to an adjacent space (${input.projectContext.otherRoomNames.slice(0, 3).join(', ')}). This cross-room question still belongs to ${input.roomName}.`
     : '';
 
-  const prompt = `You are a senior editorial journalist at an interior design publication interviewing a designer about the ${input.roomName} in their project${input.projectContext.projectTitle ? ` "${input.projectContext.projectTitle}"` : ''}.
+  const prompt = `${FOLIO_INTERVIEWER_PERSONA}
+
+${SHARED_RULE_BLOCK}
+
+${ARRIVALS_CONTRAST_POLICY}
+
+YOUR TASK: interview the designer about the ${input.roomName} in their project${input.projectContext.projectTitle ? ` "${input.projectContext.projectTitle}"` : ''}. Generate room-level questions grounded in this room's photos and tagged products.
 
 ROOM: ${input.roomName}
 IMAGES: ${input.roomImages.length} photos of this room (shown above)
@@ -162,7 +170,7 @@ Generate exactly ${input.budget} interview questions for the ${input.roomName}.
 RULES:
 1. Every question must reference a specific product, material, or visual detail from the data above or visible in the images.
 2. NAMING: You may name — and build a dedicated question around — any product in the "MAY NAME AND SPOTLIGHT" list. For a product in the "BY DESCRIPTOR ONLY" list, refer to it by its descriptor (form / material / finish) and NEVER by its brand or product name; raise one only if the designer's own story (a standout room, a repeated material) makes it the point — never introduce it as a named product spotlight.
-3. Every question sets up an answer the designer would be proud to publish. Favor arrivals — a question may explore a contrast (what they tried first, the alternative they set aside, why this over that) as long as it resolves to the choice they made. Never dwell on regret, grievance, or what was lost.
+3. Every question sets up an answer the designer would be proud to publish (arrivals/contrast policy above applies).
 4. No generic questions. "Tell us about your color choices" is NEVER acceptable. "The brass hardware against the navy millwork — walk us through that pairing" is editorial.
 5. If a vendor name is unknown, ask about the product or material itself — never say "Unknown Brand."
 6. Mix question types: 1 warm opening, then deep dives into specific products/materials/decisions, and 1 closing philosophy question if budget >= 4.
