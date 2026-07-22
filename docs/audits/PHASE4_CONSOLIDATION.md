@@ -274,5 +274,58 @@ the emotional and intentional aspects" with no anti-invention rule). Flagged, no
 - Validator unit tests: 3/3.
 - Live LLM pre/post: still deferred to a single pre-ship run.
 
-**Next options:** the **confirmed-dead deletion batch** (`buildInterviewBrief` + the
-`generateQuestions` template cluster + `generate-draft`) and/or **generator #5 (prompted-content)**.
+---
+
+## Dead-code deletion batch (Phase 0 SAFE-TO-DELETE, re-verified post-rewire)
+
+Importer graphs were **re-grepped now** (rewires #1–#4 changed them) — not trusted from the
+Phase 0 snapshot. Each item was confirmed to have zero live importers immediately before removal.
+
+### 1. `/api/interview/generate-draft/route.ts` — WHOLE ROUTE deleted (I4, the dead "polished" path)
+Evidence: `grep -rn "interview/generate-draft" src` → **no fetchers, no importers**; the route
+exported only `dynamic` + `POST`. Removing it also removes the "pull quotes … slightly polished"
+editorial path the audit flagged (SOFT conflict #7) — it dies rather than needing reconciliation.
+
+### 2. `src/lib/interview/buildInterviewBrief.ts` — WHOLE FILE deleted
+Evidence: the only importers were the `index.ts` barrel re-export and `generateQuestions.ts:21`
+(used only inside the dead `generateInterviewQuestions` pipeline). No live consumer of
+`buildInterviewBrief`, `InterviewBrief`, `NarrativeBrief`, `AIGeneratedQuestion`, `VendorMapEntry`,
+`HeroMoment`, `EditorialLayoutHints`, `PriorWorkConnection` (grep excluding self+barrel → empty).
+The barrel's two `buildInterviewBrief` export blocks were removed with it.
+
+### 3. `src/lib/interview/generateQuestions.ts` — SURGICAL (dead pipeline excised, live kept)
+Removed (lines 88–1286): the `TOPICS` map, `LEVEL_0_QUESTIONS` + `PROSPECTIVE_QUESTIONS`,
+`generateContextualOpener`, `generateProspectiveQuestions`, `generateLevel0…5Questions`, the
+`prioritizeQuestions`/`specificityScore`/`topicQualifier`/`deduplicateSimilar` helpers +
+`PrioritizationOptions`, `GenerateQuestionsOptions`, **`validateAIQuestion` (the dead keyword-ban
+gate: `/(regret|compromise|sacrifice|didn't make|cut|lost|wish you had)/`)**, `convertAIQuestionToGenerated`,
+`generateInterviewQuestions`, `generateTemplateQuestions`, and `orderByRoom`. Trimmed the now-unused
+imports (`randomUUID`, `formatRoomName`, the `contextLevel` types except `ContextLevel`, and the
+`buildInterviewBrief` import). File: **1320 → 121 lines.**
+
+KEPT (live, verified importers intact): `QuestionType`, `HOOK_OPENER_ID_PREFIX` /
+`HOOK_FOLLOWUP_ID_PREFIX` (imported by `respond/route.ts` + `generateEditorialDraft.ts`),
+`GeneratedQuestion` (type-imported by the live per-room path), and `toInterviewQuestion` (called by
+`getInterviewQuestions.ts`). Barrel re-export of `GenerateQuestionsOptions` removed; `toInterviewQuestion`
+/ `GeneratedQuestion` / `QuestionType` re-exports kept.
+
+**This completes canon §3's implementation consequence:** the dead keyword-ban gate is now deleted;
+the net-new `validateInterviewQuestion` (§3 intent gate, wired into the live generators in #2–#4) is
+the only question gate in the codebase.
+
+### Dangling-reference proof (repo-wide, post-deletion)
+- `buildInterviewBrief` import/path: **none**.
+- `interview/generate-draft` fetch/import: **none**.
+- Removed `generateQuestions` symbols: **none** — the sole match is
+  `logAttributeVerification.ts` importing `ContextualQuestion` from the *unrelated*
+  `src/lib/editorial/generateInterviewQuestions.ts` (a different, still-present file).
+
+### Verification
+- No NEW `tsc` errors in `generateQuestions.ts` / `index.ts` (touched-file grep empty; pre-existing
+  `LLMResult`/`z.infer` noise elsewhere is ignored via `next.config.js` `ignoreBuildErrors`).
+- Validator unit tests: 3/3 pass.
+
+**Next options:** generator #5 (`prompted-content/generateQuestions.ts`) · #6 (`editorial-queue`) ·
+#7 (`designer-bio`). Note: `src/lib/editorial/generateInterviewQuestions.ts` (`generateContextualQuestions`,
+a separate deterministic attribute-question generator, type-only importer) is a candidate for a later
+dead-code check — not part of this batch.
