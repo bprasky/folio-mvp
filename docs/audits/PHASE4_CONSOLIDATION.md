@@ -422,6 +422,75 @@ dropped it returns `null`, same graceful path as a parse miss.
 MATERIAL_STUDY / METHOD / DESIGNER_PROFILE) all pass the real validator — no over-block. No new tsc
 errors; validator tests 3/3. Live LLM pre/post still deferred to pre-ship.
 
-**Next: generator #7 — `designer-bio` (`questions.ts` + `qa-generation.ts`), the last question
-generator in the sweep** (carries the personality-focused "In Their Words" seed + milestone-flattery
-the original audit flagged; real reconciliation expected).
+---
+
+## Generator 7 — `designer-bio` (`questions.ts`, `qa-generation.ts`, `generate-bio.ts`) — the sweep's most reconciliation
+
+**Persona/rules unified** onto the four LLM question generators — B4 website-context, B4 follow-up
+(`questions.ts`), B5 "In Their Words" seed, and the bio project-trigger (`qa-generation.ts`): each now
+leads with `FOLIO_INTERVIEWER_PERSONA` + `SHARED_RULE_BLOCK` + `ARRIVALS_CONTRAST_POLICY`. **Gate**
+(`isArrivalSafe`, drop-log) wired into all four free-form emitters. The **static** base questions
+(B1/B2/B3), the vendor-affinity one-liner, and the milestone map are hardcoded/curated — not free-form,
+so not gated (milestone reconciled by hand, below).
+
+### Terminology (enum-leak fixed)
+`roleLabel`'s `role === 'BUILDER' ? 'builder'` rendered **`builder`** into prompt-visible copy in all
+three files → now `'contractor'` (canonical, docs/17 §7). **Enum KEY lookups unchanged** —
+`BASE_QUESTIONS_BY_ROLE.BUILDER` and every `role === 'BUILDER'` key check stay (data-coupled; the
+`Role` enum rename is the separate migration, docs/audits/PHASE1_TERMINOLOGY.md). Verified: **no raw
+enum value renders into user-visible prompt text** after this change.
+
+### Reconciliations (§1 merit-not-prestige; flagged as intended, not silent)
+- **B5 "In Their Words" — KEPT the personality/taste/conviction questions** (personality that reveals
+  how they work is welcome). RECONCILED only the framing: *"the questions that make readers feel like
+  they KNOW this person"* → *"questions that reveal personality, taste, conviction … **how this person
+  thinks about and makes their work** … help a reader understand their point of view, not just collect
+  facts about them."*
+- **B6 milestone — removed the flattery/status framing.** *"…saved 500 times. **That's real influence.**
+  What does it mean to you to shape how people think…"* and *"Your work is **starting to get noticed**…"*
+  → all four milestone questions reframed to the WORK/insight with neutral milestone context (e.g.
+  saves_500 → *"Your projects have been saved 500 times. Looking at the work, what do you think keeps
+  drawing people back?"*). Removes §9 reach/hype and the §1 status-side. (`replace(/your projects/i…)`
+  context-substitution still applies.)
+
+### Source model (rule 5 carve-out — public bio as evidence)
+B4 (website-context) and B5 (seed) reference the person's **PUBLIC website/bio as evidence** — the
+evidence-reflective model, rule 5's carve-out. Kept the website-gap technique; added an inline note in
+B4 that citing the public bio is correct here (the "never narrate the source" rule governs *private*
+notes, not public evidence). Did **not** apply source-blind narration there.
+
+### B7 — the bio WRITER (`generate-bio.ts`, prose, not questions)
+- Sourced `FOLIO_TONE` for voice; **did NOT** inject the interviewer persona (it's a writer, same call
+  as I3). **No** question validator (emits prose).
+- **KEPT B7's own banned-phrase list** (credential clichés: "passionate about", "award-winning", …).
+- **🚩 Flagged:** B7's banned list **differs** from `editorialTone`'s `EDITORIAL_BANNED_PHRASES`
+  (bio credential-clichés vs editorial-article phrases). Per instruction, **not merged** — that's a
+  Phase 5 decision. Also flagged: B7 has no explicit grounding/anti-fabrication rule (Phase 5).
+
+### Verification
+- Representative B1–B6 (incl. a merit-not-prestige personality question and a reframed milestone) all
+  pass the real validator — no over-block.
+- Enum-leak check: no lowercase `builder` label remains; `'BUILDER'` keys intact.
+- No NEW `tsc` errors in the three files — the 5 present are the pre-existing `LLMResult.code/.message`
+  family in the `!result.ok` branches (ignored via `ignoreBuildErrors`).
+- Validator unit tests: 3/3.
+
+---
+
+## Sweep complete — all 7 question generators consolidated
+
+✅ #1 project openers · ✅ #2 per-room · ✅ #3 posting follow-ups (F1/F2/F3) · ✅ #4 `/api/interview/respond`
+(I1/I2/I3) · ✅ dead-code deletion batch · ✅ sourceHandling promotion · ✅ #5 prompted-content ·
+✅ #6 editorial-queue (EQ2) · ✅ #7 designer-bio.
+
+Every live interview/question generator now composes persona + rules + arrivals policy from
+`src/lib/interview/prompts/` and gates free-form output through the one `validateInterviewQuestion`.
+
+**Remaining, out of this sweep's scope (separate reviewed tracks):**
+- **Collaboration module rewrite** (docs/17 §8 — presumptive/leading, stacked questions).
+- **Phase 5 editorial-prose standard** — verbatim quotes everywhere, one banned-phrase list (the B7 /
+  narrativeGeneration / assembleStory divergences), grounding guardrail on the prose generators
+  (narrativeGeneration, assembleStory, I3, B7), and the editorial-writer-persona decision.
+- **HOMEOWNER/BUILDER enum data migration** (docs/audits/PHASE1_TERMINOLOGY.md).
+- **The single live LLM pre/post run** before ship (docs/audits/PHASE4_LIVE_PREPOST.md — needs a key).
+- **Instagram export prompts** audit (original audit OPEN QUESTION #8).

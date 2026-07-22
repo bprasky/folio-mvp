@@ -12,6 +12,9 @@ import Anthropic from '@anthropic-ai/sdk';
 import { callLLM } from '@/lib/posting/llmClient';
 import type { InterviewAnswer } from './constants';
 import { MODELS } from '@/lib/ai/models';
+import { FOLIO_INTERVIEWER_PERSONA } from '@/lib/interview/prompts/persona';
+import { SHARED_RULE_BLOCK, ARRIVALS_CONTRAST_POLICY } from '@/lib/interview/prompts/rules';
+import { isArrivalSafe } from '@/lib/interview/prompts/validateQuestion';
 
 // ── Static base questions (Blank Slate) ──────────────────────────
 
@@ -128,13 +131,21 @@ export async function generateWebsiteContextQuestions(
 ): Promise<BioQuestion[]> {
   const anthropic = new Anthropic();
 
-  const roleLabel = role === 'ARCHITECT' ? 'architect' : role === 'BUILDER' ? 'builder' : 'interior designer';
+  // Canonical prompt-visible label (docs/17 §7). Enum KEY lookups stay 'BUILDER' — the
+  // Role enum rename is the separate data migration (docs/audits/PHASE1_TERMINOLOGY.md).
+  const roleLabel = role === 'ARCHITECT' ? 'architect' : role === 'BUILDER' ? 'contractor' : 'interior designer';
 
   const result = await callLLM(
     async () => {
       const message = await anthropic.messages.create({
         model: MODELS.sonnet,
-        system: `You are an editorial interviewer for a design industry publication. You've read a ${roleLabel}'s website and need to generate interview questions that go DEEPER than what the website already tells us.
+        system: `${FOLIO_INTERVIEWER_PERSONA}
+
+${SHARED_RULE_BLOCK}
+
+${ARRIVALS_CONTRAST_POLICY}
+
+You've read a ${roleLabel}'s website and need to generate interview questions that go DEEPER than what the website already tells us. (The website is the ${roleLabel}'s own PUBLIC bio — referencing what it says or leaves unsaid is correct here; the "never narrate the source" rule is about private notes, not public evidence.)
 
 Guidelines:
 - Skip anything the website already answers clearly (name, location, firm name, basic specialties)
@@ -176,7 +187,10 @@ Return a JSON array of objects: [{ "id": "web-q-1", "question": "..." }, ...]`,
   }
 
   const questions = Array.isArray(result.data) ? result.data : [];
-  return questions.map((q: { id?: string; question: string }, i: number) => ({
+  // Arrivals/contrast gate (docs/17 §3): drop grievance/regret questions.
+  const gated = questions.filter((q: { question?: string }) => !!q?.question && isArrivalSafe(q.question));
+  if (gated.length < questions.length) console.info('[generateWebsiteContextQuestions] arrivals gate dropped', questions.length - gated.length);
+  return gated.map((q: { id?: string; question: string }, i: number) => ({
     id: q.id || `web-q-${i + 1}`,
     question: q.question,
     round: 'base' as const,
@@ -197,7 +211,9 @@ export async function generateFollowUpQuestions(
   }
 
   const anthropic = new Anthropic();
-  const roleLabel = role === 'ARCHITECT' ? 'architect' : role === 'BUILDER' ? 'builder' : 'interior designer';
+  // Canonical prompt-visible label (docs/17 §7). Enum KEY lookups stay 'BUILDER' — the
+  // Role enum rename is the separate data migration (docs/audits/PHASE1_TERMINOLOGY.md).
+  const roleLabel = role === 'ARCHITECT' ? 'architect' : role === 'BUILDER' ? 'contractor' : 'interior designer';
 
   const result = await callLLM(
     async () => {
@@ -211,7 +227,13 @@ export async function generateFollowUpQuestions(
 
       const message = await anthropic.messages.create({
         model: MODELS.sonnet,
-        system: `You are an editorial interviewer for a design publication. You've just heard a ${roleLabel}'s initial answers and now need to generate follow-up questions that dig deeper into the most interesting threads.
+        system: `${FOLIO_INTERVIEWER_PERSONA}
+
+${SHARED_RULE_BLOCK}
+
+${ARRIVALS_CONTRAST_POLICY}
+
+You've just heard a ${roleLabel}'s initial answers and now need to generate follow-up questions that dig deeper into the most interesting threads.
 
 Guidelines:
 - Reference specific things the designer said in their answers
@@ -249,7 +271,10 @@ Return a JSON array: [{ "id": "followup-1", "question": "..." }, ...]`,
   }
 
   const questions = Array.isArray(result.data) ? result.data : [];
-  return questions.map((q: { id?: string; question: string }, i: number) => ({
+  // Arrivals/contrast gate (docs/17 §3): drop grievance/regret questions.
+  const gated = questions.filter((q: { question?: string }) => !!q?.question && isArrivalSafe(q.question));
+  if (gated.length < questions.length) console.info('[generateFollowUpQuestions] arrivals gate dropped', questions.length - gated.length);
+  return gated.map((q: { id?: string; question: string }, i: number) => ({
     id: q.id || `followup-${i + 1}`,
     question: q.question,
     round: 'followup' as const,
