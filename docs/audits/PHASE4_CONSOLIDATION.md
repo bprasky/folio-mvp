@@ -329,3 +329,66 @@ the only question gate in the codebase.
 #7 (`designer-bio`). Note: `src/lib/editorial/generateInterviewQuestions.ts` (`generateContextualQuestions`,
 a separate deterministic attribute-question generator, type-only importer) is a candidate for a later
 dead-code check — not part of this batch.
+
+---
+
+## Part A — source-handling promotion → `prompts/sourceHandling.ts` (behavior-preserving)
+
+Two source-handling blocks now live once in the module, imported by the generators that used to
+declare them locally. Committed alone.
+
+- `sourceNarrationGuide(roleLower)` — generator #1's "hold it lightly / never narrate the source"
+  masterclass, promoted **verbatim**. `generateProjectQuestions` imports it.
+- `laneContract(knownFactsLines)` — generator #2's known-facts lane contract, promoted **verbatim**
+  (empty-branch preserved). `generateRoomQuestions` imports it.
+
+**Why functions, not bare consts:** each block carries a runtime interpolation
+(`${role.toLowerCase()}`, `${knownFactsLines}`) that a plain const can't reproduce — a function with
+the interpolation as a parameter is the byte-identical form. **Kept as two separate blocks** — merging
+them is a later intended-change decision, not this promotion.
+
+**No-op proof:** rendered each module function and diffed against the HEAD inline block with the same
+interpolation value → **byte-identical: true** for both; `laneContract('') === ''` (empty branch)
+preserved. No new tsc errors; validator tests 3/3.
+
+---
+
+## Generator 5 — `prompted-content/generateQuestions.ts` (bio-reflective + project-reflective) — INTENDED CHANGE
+
+Both prompts unified onto the module; the two audit SOFT conflicts reconciled via §1 merit-not-prestige.
+
+**Persona/rules:** both led with *"You are generating questions … a design publication platform"* and a
+TONE line *"read like a thoughtful design journalist"* → now lead with `FOLIO_INTERVIEWER_PERSONA` +
+`SHARED_RULE_BLOCK` + `ARRIVALS_CONTRAST_POLICY`; TONE reworded *journalist → colleague*.
+
+**KEPT (the canon-aligned good part — untouched):** the bio/project-**as-EVIDENCE** framing (ask for the
+transferable principle, reference the bio/project as proof, don't retell), the A/B framing, and the
+peer-framing technique.
+
+**Reconciliations (§1 merit-not-prestige as the governing rule):**
+- **Peer-framing — KEPT** (distinctiveness of *approach* is merit). Meta reworded: *"positions the
+  designer as distinctive"* → *"surfaces the distinctiveness of their approach and point of view (anchor
+  to how they work and think, never to status or fame)."*
+- **Trend-audience — RECONCILED (intended change, flagged).** *"'A lot of designers are rethinking X' …
+  this tells the designer their answer has an audience"* and the project variant's *"Seamless storage is
+  one of the most searched topics"* → both now: *"this signals the question is a live, current one in the
+  field, worth their point of view. Motivate by the work … never by reach, search volume, or audience
+  size."* This removes the engagement/reach bait (§9 non-virality) and the status side of §1.
+- **Bio arrivals line deduped:** *"Do NOT ask about failures, compromises, or regrets unless framed as…"*
+  → defers to the module arrivals/contrast policy (its blanket "compromises" bar contradicted §3).
+
+**Gate:** `isArrivalSafe` wired into both emit loops (drop-log, `continue`).
+
+**🚩 Deviation from the brief (flagged):** the brief said "import the sourceHandling block for the
+bio/project evidence grounding." I **did not** — `sourceNarrationGuide`'s core rule is *never cite/narrate
+the source; voice it as your own impression*, which is the **opposite** of prompted-content's model, where
+referencing the bio/project as proof ("you mentioned X", "your [Project] achieved this") is the whole
+technique. Importing it would contradict the prompt. Prompted-content's own evidence-grounding rules
+(FRAMING PRINCIPLE + "reference as proof" + "don't quote the bio back as the subject") are canon-aligned
+and were kept. Open question: whether a *separate* evidence-grounding shared block is worth extracting
+later — the two source models are genuinely different, so I did not force a merge.
+
+**Verification:** representative bio/project/peer/A-B/trend questions all PASS the real validator (no
+over-block); no new tsc errors; validator tests 3/3. Live LLM pre/post still deferred to pre-ship.
+
+**Next: generator #6 (`editorial-queue/generatePrompts.ts`) or #7 (`designer-bio`).**
