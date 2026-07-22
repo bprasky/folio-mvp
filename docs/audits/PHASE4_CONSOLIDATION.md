@@ -206,5 +206,73 @@ source-narration masterclass and the lane-contract approach to a **shared module
 - Live LLM pre/post: still deferred to a single pre-ship run (no usable key). Harness ready in
   `docs/audits/PHASE4_LIVE_PREPOST.md`.
 
-**Next: (4) the second-surface routes in `/api/interview/respond` (I1/I2/I3) — REWIRE, not
-delete** (`NEXT_PUBLIC_POSTING_V1=true`, the surface is live).
+---
+
+## Generator 4 — second-surface `/api/interview/respond` (I1 generic, I2 hook, I3 preview)
+
+REWIRE, not delete (`NEXT_PUBLIC_POSTING_V1=true`, live). One commit.
+
+**Scope confirmations:**
+- `/api/interview/generate-draft` (I4) — **untouched**: confirmed dead (Phase 0, zero fetchers);
+  belongs to the separate dead-code deletion batch.
+- `/api/interview/start` — **left as-is**: it carries no interviewer prompt; it just sets up the
+  session and delegates to `getInterviewQuestionsWithContext` (already routed through the unified
+  #1/#2 generators). Nothing to unify.
+
+**Imports added:** `FOLIO_INTERVIEWER_PERSONA`, `SHARED_RULE_BLOCK`, `ARRIVALS_CONTRAST_POLICY`,
+`isArrivalSafe` (for I1/I2), `FOLIO_TONE` (for I3).
+
+### Question generators — I1 (generic) & I2 (hook)
+**Persona/rules diff:** both said *"You are an interviewer for an interior design publication…"*
+→ now lead with `FOLIO_INTERVIEWER_PERSONA` + `SHARED_RULE_BLOCK` + `ARRIVALS_CONTRAST_POLICY`.
+
+**Intended changes (flagged, not silent):**
+- **I2 §3 reconciliation.** *"Invite the EMOTIONAL stakes: what they hoped someone would feel,
+  **what was at risk**, what made it personal, what told them they'd gotten it right"* →
+  *"Invite the emotional stakes **of the win** … the moment they knew they'd gotten it right.
+  **Reach for the arrival, not what was at risk.**"* Drops the loss/risk framing per §3; keeps the
+  hook's emotional depth pointed at the arrival.
+- **Voice unification:** I2's *"Sound like a journalist"* → *"Sound like a colleague who was in
+  the room"* (matches the module persona).
+- **I1 minor:** *"Focus on emotion, intention, and process"* → *"Focus on intention and process"*
+  — trims the bare "emotion" focus toward the work (§4 labeling / merit-not-prestige); the
+  why/intention/process depth is preserved.
+
+**KEPT craft:** I2's "echo the theme, splice into the opening pull quote" move and its
+no-specific-product / no-therapist-question rules; I1's why/intention/process depth and the
+skip-if-already-publication-quality short-circuit.
+
+**Gate:** wired `isArrivalSafe` into `generateFollowUp` (covers both I1 and I2) — a blocked
+question returns `null`, so no follow-up is shown (graceful degrade), with a drop-log.
+
+### Editorial output — I3 (preview draft: title + first paragraph)
+- **Tone from the module:** prepended `FOLIO_TONE` (editorialTone.ts) as the canonical editorial
+  voice.
+- **Verbatim-quote rule applied now:** *"If you quote the designer, use their exact words … do
+  not polish or paraphrase into a quote."*
+- **No question validator** (it emits prose, not questions) — per instruction.
+
+**🚩 Deviation from the brief (flagged for your call):** the brief said "unify its persona from
+prompts/persona.ts." I did **not** inject `FOLIO_INTERVIEWER_PERSONA` into I3 — persona.ts is the
+*interviewer* voice ("You are the Folio Interviewer… interviewing"), which is incoherent for an
+editorial *writer*. Per canon, editorial prose voice is `FOLIO_TONE` (§5), which is what I used.
+The module has **no dedicated editorial-writer persona**; whether to add one is a Phase 5 decision.
+
+**🚩 I3 still needs the full Phase 5 editorial-standard pass:** the grounding / anti-fabrication
+guardrail and the centralized banned-phrase list are NOT applied here (I3 currently says "Focus on
+the emotional and intentional aspects" with no anti-invention rule). Flagged, not built.
+
+### Verification
+```
+✅ PASS  (I2 contrast→arrival)  "You said you were chasing calm — what did you hope someone would feel walking in?"
+✅ PASS  (I1 contrast)          "The oak went a few directions before this one — what made it click?"
+✅ PASS  (I1 benign)            "Why did the brass feel right for this space?"
+🚫 BLOCK [frustration]          "What frustrated you most about how it turned out?"
+🚫 BLOCK [regret]               "Anything you regret about the opening?"
+```
+- No `tsc` errors in `respond/route.ts` (clean — no pre-existing or new).
+- Validator unit tests: 3/3.
+- Live LLM pre/post: still deferred to a single pre-ship run.
+
+**Next options:** the **confirmed-dead deletion batch** (`buildInterviewBrief` + the
+`generateQuestions` template cluster + `generate-draft`) and/or **generator #5 (prompted-content)**.
