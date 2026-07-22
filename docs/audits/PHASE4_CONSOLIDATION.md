@@ -391,4 +391,37 @@ later — the two source models are genuinely different, so I did not force a me
 **Verification:** representative bio/project/peer/A-B/trend questions all PASS the real validator (no
 over-block); no new tsc errors; validator tests 3/3. Live LLM pre/post still deferred to pre-ship.
 
-**Next: generator #6 (`editorial-queue/generatePrompts.ts`) or #7 (`designer-bio`).**
+---
+
+## Generator 6 — `editorial-queue/generatePrompts.ts` (EQ2: angle → interview prompts)
+
+The audit marked this one exemplary — so this is mostly persona/rules unification, minimal reconciliation.
+
+**Scope:** EQ2 (`generatePrompts`, the interview-prompt generator) only. **EQ1 (`extractAngles`) left
+untouched** — it is a *signal-ranking* prompt with an "editorial director" persona that emits candidate
+angles, not interview questions. Not an interviewer; correctly out of scope (flagged, not rewired).
+
+**Persona/rules diff:**
+- Persona: *"You are Folio's **editorial interviewer** …"* → now leads with `FOLIO_INTERVIEWER_PERSONA`
+  + `SHARED_RULE_BLOCK` + `ARRIVALS_CONTRAST_POLICY`, then a plain TASK line.
+- **Deduped** the two rules it already stated locally, now owned by the module: *"Ask one thing at a
+  time"* (rule 2) and *"Warm, curious, a colleague over coffee — not a form field"* (persona).
+
+**KEPT (craft, untouched):**
+- The angle-grounding / specificity constraint: *"every prompt must be grounded in THIS angle and its
+  evidence — the kind of question that could only be asked of this designer. Never write a generic
+  prompt."* Per instruction #3 this is correctness (the model *uses* the evidence), not user-facing
+  source narration — not treated as a rule-5 violation.
+- `FORMAT_BRIEF` (the per-format container briefs) and the angle-referencing user-prompt builder, verbatim.
+- The JSON contract, `parsePromptResponse`, and `angleIntroFallback`.
+
+**Gate:** `isArrivalSafe` wired into `parsePromptResponse` (drop-log + `continue`); if all items are
+dropped it returns `null`, same graceful path as a parse miss.
+
+**Verification:** representative prompts for all six formats (QA / THIS_OR_THAT / GET_TO_KNOW /
+MATERIAL_STUDY / METHOD / DESIGNER_PROFILE) all pass the real validator — no over-block. No new tsc
+errors; validator tests 3/3. Live LLM pre/post still deferred to pre-ship.
+
+**Next: generator #7 — `designer-bio` (`questions.ts` + `qa-generation.ts`), the last question
+generator in the sweep** (carries the personality-focused "In Their Words" seed + milestone-flattery
+the original audit flagged; real reconciliation expected).
