@@ -19,6 +19,7 @@ import type { GeneratedQuestion } from './generateQuestions';
 import { MODELS } from '@/lib/ai/models';
 import { FOLIO_INTERVIEWER_PERSONA } from './prompts/persona';
 import { SHARED_RULE_BLOCK, ARRIVALS_CONTRAST_POLICY } from './prompts/rules';
+import { sourceNarrationGuide } from './prompts/sourceHandling';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -239,36 +240,7 @@ REQUIRED CATEGORIES (generate exactly one question per category, adapted to ${ro
 4. SIGNATURE_IDENTITY — What in this project is most YOU?
 5. SURPRISE_PIVOT — What changed along the way?
 
-RULES FOR USING WHAT YOU KNOW (HOLD IT LIGHTLY, NEVER NARRATE IT):
-The project description is the ${role.toLowerCase()}'s own shorthand — approximate, incomplete, notes-to-self. Treat every detail as a lead to open up in their own words, never a fact to recite and never a source to cite.
-
-There are two ways to bring a detail into a question. Only one sounds human:
-
-1. NATURAL — voice it as your own impression or a hunch, softened so they can push back: "sounds like…", "it reads like…", "I get the sense…", "seems like…". A person who did their homework talks this way. The tentative opener is what leaves room for them to confirm, correct, or expand — it does the same job the old citation did, without the robot voice.
-2. ROBOTIC — announce where the detail came from ("the project notes mention…", "your description says…", "the file lists…") or read details back verbatim. This exposes the machinery and reads like an AI narrating a dossier. NEVER phrase a question this way.
-
-ONE exception, because it's genuinely how people talk: observing the PHOTOS out loud is natural and encouraged — "Looking at the photos, the stair feels resolved from the bones up — what were you actually working with?" Citing NOTES, a DESCRIPTION, or a FILE is not. If a detail came from the text and not the photos, turn it into your own read of the project instead of pointing at the document.
-
-NEVER recite proper names (clients, kids, pets) back, and NEVER state a private inference about the household as fact ("so there are kids in this house"). If the notes hint at a family, ask about "the family you were designing for" or "who this home was really for" — don't perform the deduction.
-
-Turn details into natural questions:
-- Notes hint at a relocation → "Sounds like a move was part of the story — tell me about these clients and what brought them to you."
-- Notes suggest a long timeline → "I get the sense this one ran long — walk me through how it actually played out."
-- Notes say "full renovation" → "It reads like a full gut — what were you starting with?"
-- Notes list a family / kids' names → "Tell me about the family you were designing for — who was this home really for?"
-- Photos show warm, sculptural forms → "Looking at the photos, there's a real warmth here — was that the direction from day one?"
-
-Do NOT:
-- BAD: "The project notes mention names like Sofie and Connor — so there are kids in this house." (narrates the data source AND recites private names AND performs a deduction — the worst version)
-- BAD: "Your project description mentions about 14 months — walk me through the timeline." (announces the source; say "I get the sense this ran long" instead)
-- BAD: "This 14-month full gut renovation must have been an undertaking." (asserts unverified notes as settled fact)
-- BAD: "With a $500K budget for a 3,200 square foot home…" (recites numbers as truth)
-- GOOD: "Sounds like this one ran long — walk me through the timeline."
-- GOOD: "It reads like a relocation was in the mix — tell me about these clients."
-- GOOD: "What was the budget reality on this one?"
-- GOOD: "Looking at the photos, there's a warmth here that doesn't feel accidental — where did that come from?"
-
-The distinction: a soft impression ("sounds like this ran long") lets them say "actually it was 16 months." Asserting it as fact locks in unverified data; citing where you read it sounds like a robot. Avoid both.
+${sourceNarrationGuide(role.toLowerCase())}
 
 - For SIGNATURE_IDENTITY: Use the designer's name if available. "What in this project would someone who knows your work immediately say 'that's a ${input.designerName || '[Designer]'} project'?"
 

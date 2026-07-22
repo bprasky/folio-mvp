@@ -14,6 +14,7 @@ import { MODELS } from '@/lib/ai/models';
 import { isArrivalSafe } from './prompts/validateQuestion';
 import { FOLIO_INTERVIEWER_PERSONA } from './prompts/persona';
 import { SHARED_RULE_BLOCK, ARRIVALS_CONTRAST_POLICY } from './prompts/rules';
+import { laneContract } from './prompts/sourceHandling';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -122,18 +123,7 @@ export async function generateRoomQuestions(
   // answered "About This Project" already). Wording aid only — the lane
   // contract below keeps topic selection pinned to this room's photos/tags.
   const knownFactsLines = formatKnownFacts(input.projectContext.knownFacts);
-  const knownFactsBlock = knownFactsLines
-    ? `
-WHAT WE ALREADY KNOW (the designer told us this in the opening conversation about the project):
-${knownFactsLines}
-
-HOW TO USE THIS BACKGROUND — THE LANE CONTRACT:
-- It informs your WORDING, never your TOPICS. This room's photos and tagged products decide what you ask about; the background only makes those questions land like they come from someone who was in the room for the opening conversation.
-- Do NOT re-ask anything covered above (who the clients are, the scope, the timeline, the overall direction). That ground is covered.
-- Do NOT import themes from the background that aren't visible in this room's photos or products. If the background says "relocation" and nothing in this room relates to it, the relocation does not appear in your questions.
-- Referencing it conversationally is fine and encouraged ("Given the pace this project ran at, ..."). Citing it as a record is not ("You mentioned in the earlier section...", "According to your answers...").
-`
-    : '';
+  const knownFactsBlock = laneContract(knownFactsLines);
 
   // Cross-room reference instruction
   const crossRoomInstruction = input.projectContext.otherRoomNames.length > 0
