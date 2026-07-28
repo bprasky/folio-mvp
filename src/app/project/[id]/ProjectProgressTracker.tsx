@@ -21,6 +21,14 @@ interface ProjectProgressTrackerProps {
    * the tracker's cards don't duplicate it.
    */
   hideNextAction?: boolean;
+  /**
+   * Optional "Your story so far" region rendered inside the tracker card, below
+   * the stepper. Present once the designer has saved interview answers so they
+   * can resume/restart the interview and edit answers without leaving the page.
+   * Shown regardless of `hideNextAction` — the interview runs in parallel to the
+   * Tags step, so it stays reachable even while tagging is the active step.
+   */
+  storyFooter?: React.ReactNode;
 }
 
 const IMPORT_ICONS = {
@@ -52,6 +60,7 @@ export default function ProjectProgressTracker({
   projectId,
   state,
   hideNextAction = false,
+  storyFooter,
 }: ProjectProgressTrackerProps) {
   const { steps, currentIndex, materialsIndex, materialsExist, type, endCap } = state;
   const def = TRACKER_TYPES[type];
@@ -75,6 +84,9 @@ export default function ProjectProgressTracker({
         className="rounded-[20px] border border-folio-border-subtle bg-surface-canvas overflow-hidden"
       >
         <Stepper steps={steps} currentIndex={currentIndex} hideDownTick />
+        {storyFooter && (
+          <div className="border-t border-folio-border-subtle">{storyFooter}</div>
+        )}
       </section>
     );
   }
@@ -101,6 +113,10 @@ export default function ProjectProgressTracker({
           <p className="mt-6 text-[13px] text-folio-text-tertiary">{endCap}</p>
         )}
       </div>
+
+      {storyFooter && (
+        <div className="border-t border-folio-border-subtle">{storyFooter}</div>
+      )}
     </section>
   );
 }

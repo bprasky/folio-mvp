@@ -86,6 +86,11 @@ export interface RoomInterviewFlowState {
   skipRoom: () => void;
   recordAnswer: (questionId: string) => void;
   goToRoom: (roomIndex: number) => void;
+  /**
+   * Navigate to a specific question by id (for editing one saved answer in
+   * place). Returns false when the id isn't in the current question set.
+   */
+  goToQuestionId: (questionId: string) => boolean;
   /** Insert follow-up questions into the current room's question queue (legacy single mode) */
   insertFollowUpQuestions: (questions: InterviewQuestion[]) => void;
   /** Insert batch follow-up questions for the next round */
@@ -417,6 +422,36 @@ export function useRoomInterviewFlow(
     }
   }, [rooms.length]);
 
+  // Navigate to a specific question by id — the room that holds it and the
+  // question's index within that room (or the cross-room queue). Used to edit
+  // one saved answer in place: with persisted (stable) question IDs, the saved
+  // answer's questionId still matches a live question, so we can land on it and
+  // pre-fill it. Returns false when the id isn't in the current set (e.g. the
+  // project changed and questions regenerated), so the caller can fall back.
+  const goToQuestionId = useCallback(
+    (questionId: string): boolean => {
+      for (let ri = 0; ri < rooms.length; ri++) {
+        const room = rooms[ri];
+        const list = roomQuestionOverrides[room.roomId] || room.questions;
+        const qi = list.findIndex((q) => q.id === questionId);
+        if (qi >= 0) {
+          setCrossRoomPhase(false);
+          setCurrentRoomIndex(ri);
+          setCurrentQuestionIndex(qi);
+          return true;
+        }
+      }
+      const ci = crossRoomQuestions.findIndex((q) => q.id === questionId);
+      if (ci >= 0) {
+        setCrossRoomPhase(true);
+        setCrossRoomQuestionIndex(ci);
+        return true;
+      }
+      return false;
+    },
+    [rooms, roomQuestionOverrides, crossRoomQuestions],
+  );
+
   // Insert follow-up questions into the current room's question queue.
   // Respects the room's maxFollowUps budget — only inserts up to the remaining budget.
   const insertFollowUpQuestions = useCallback(
@@ -621,6 +656,7 @@ export function useRoomInterviewFlow(
     skipRoom,
     recordAnswer,
     goToRoom,
+    goToQuestionId,
     goToPreviousQuestion,
     insertFollowUpQuestions,
     insertRoundQuestions,
