@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { generateEditorialDraft } from "@/lib/posting/generateEditorialDraft";
+import { buildRoomResolver } from "@/lib/posting/resolveImageRoom";
 import { BlocksSchema, type Blocks } from "@/lib/posting/schemas";
 
 /**
@@ -98,6 +99,14 @@ export async function getOrCreateEditorialDraft(projectId: string): Promise<{
           studio: true,
         },
       },
+      // Org that owns this project — credits/byline follow the org (person stays
+      // the quoted voice). Mirrors the interview/generate route.
+      designerOrg: {
+        select: {
+          id: true,
+          name: true,
+        },
+      },
       images: {
         orderBy: { createdAt: 'asc' },
         include: {
@@ -158,6 +167,11 @@ export async function getOrCreateEditorialDraft(projectId: string): Promise<{
     roomIdToName.set(room.id, room.name);
   }
 
+  // FK-first room resolution (shared with the interview/generate route) so a
+  // stale/mislabeled ProjectImage.room string never files a photo under the
+  // wrong chapter heading.
+  const resolveRoomName = buildRoomResolver(project.rooms);
+
   // Build input for generateEditorialDraft
   const input = {
     project: {
@@ -174,11 +188,17 @@ export async function getOrCreateEditorialDraft(projectId: string): Promise<{
       name: project.designer.name || 'Designer',
       studio: project.designer.studio,
     } : undefined,
+    // Org attribution: org-owned projects are credited to the org; the person
+    // stays the quoted voice (see generateEditorialDraft).
+    org: project.designerOrg ? {
+      id: project.designerOrg.id,
+      name: project.designerOrg.name,
+    } : null,
     vendors: [] as any[], // Can be populated if needed
     images: project.images.map(img => ({
       id: img.id,
       caption: img.name || undefined,
-      room: img.room || undefined, // Include room for chapter grouping
+      room: resolveRoomName(img) ?? undefined, // FK-first room for chapter grouping
     })),
     tags: project.images.flatMap(img =>
       img.tags.map(tag => ({
@@ -234,11 +254,17 @@ export async function getOrCreateEditorialDraft(projectId: string): Promise<{
       error: error instanceof Error ? error.message : String(error),
     });
     // Return fallback blocks in canonical format (matching composeEditorialHard output)
+    const orgName = project.designerOrg?.name;
     const designerName = project.designer?.name;
     const studioName = project.designer?.studio;
     const credits: Array<{ role: string; name: string }> = [];
-    if (designerName) credits.push({ role: 'Designer', name: designerName });
-    if (studioName && studioName !== designerName) credits.push({ role: 'Studio', name: studioName });
+    if (orgName) {
+      // Org-owned → credit the firm (matches buildCredits in generateEditorialDraft).
+      credits.push({ role: 'Designer', name: orgName });
+    } else {
+      if (designerName) credits.push({ role: 'Designer', name: designerName });
+      if (studioName && studioName !== designerName) credits.push({ role: 'Studio', name: studioName });
+    }
 
     blocks = {
       lead: {
