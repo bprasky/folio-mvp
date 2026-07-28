@@ -327,3 +327,18 @@ Rule: when reviewing a flex container with `max-h-*` (not `h-*`) and a
 `flex-1` child whose content is `absolute inset-0`, flag it as a height
 collapse risk and require a browser run before reporting PASS. AnimatePresence
 `mode="wait"` + in-flow children avoids the trap entirely.
+
+**Heuristic JSON "repair" silently ships corrupted prose — prefer a recoverable hard-fail.**
+Editorial generation was 502'ing when the LLM emitted invalid JSON (unescaped
+`"` inside body strings, e.g. `It"s`, `doesn"T`). PR #709 added a `jsonrepair`
+fallback so the draft would "survive" instead of failing. That was strictly
+worse: jsonrepair guesses string boundaries and, on unescaped quotes, re-brackets
+the wrong spans — merging adjacent chapters and splicing raw JSON structure
+(`], }, { "title": ... "body": [`) into a body paragraph as literal text. The
+mangled draft then shipped to the designer, desynced the positional room→body
+mapping, and poisoned the regex pull-quote extractor (stray quotes → fabricated
+"quotes"). User: "I would much rather hard fail than output this to users."
+Rule: never auto-repair model JSON destined for user-facing content. Hard-fail
+with a *diagnostic* error (parse position + a window of the raw text around it)
+so the malformed span is actionable from logs, and let the user regenerate. A
+recoverable 502 beats a silently corrupted publish.

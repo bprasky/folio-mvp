@@ -1,5 +1,4 @@
 import Anthropic from "@anthropic-ai/sdk";
-import { jsonrepair } from "jsonrepair";
 import { BlocksSchema, syncPullQuotesFromChapters } from "./schemas";
 import type { PullQuoteSelection, PullQuoteAlternative } from "./schemas";
 import { z } from "zod";
@@ -1343,6 +1342,28 @@ async function fixSentenceOpeners(
 // MAIN GENERATION FUNCTION — unified canonical path
 // ============================================================================
 
+// Turn a JSON.parse failure into an actionable diagnostic. V8 reports the byte
+// offset in the error message ("... in JSON at position 1234"); we pull it out
+// and return a whitespace-collapsed window of the raw text around that offset,
+// with a ⟪HERE⟫ marker at the exact failure point. That window is almost always
+// the malformed span itself — an unescaped quote, a stray control char — so the
+// log line alone tells us what the model did wrong without replaying the run.
+export function describeJsonParseFailure(
+  raw: string,
+  error: any,
+): { position: number | null; snippet: string } {
+  const msg = typeof error?.message === 'string' ? error.message : '';
+  const match = msg.match(/position (\d+)/i);
+  const position = match ? Number(match[1]) : null;
+  if (position === null || !Number.isFinite(position)) {
+    return { position: null, snippet: raw.slice(0, 240).replace(/\s+/g, ' ') };
+  }
+  const start = Math.max(0, position - 120);
+  const end = Math.min(raw.length, position + 120);
+  const snippet = `${raw.slice(start, position)}⟪HERE⟫${raw.slice(position, end)}`.replace(/\s+/g, ' ');
+  return { position, snippet };
+}
+
 // Hard-fail error class for editorial generation failures.
 // The route's outer try/catch reads `code`, `status`, and `message` and
 // surfaces them to the UI. Throwing keeps the designer from shipping a
@@ -1453,27 +1474,43 @@ export async function generateEditorialDraft(input: GenInput): Promise<{
     );
   }
 
-  // Parse JSON output. Strict parse is the happy path; when the model emits
-  // syntactically invalid JSON (an unescaped quote or control char inside a
-  // prose string, a missing comma — the model FINISHED, this is not truncation)
-  // fall back to jsonrepair rather than hard-failing the whole generation. The
-  // repaired draft is still fully editable downstream; a 502 is not recoverable.
+  // Parse JSON output. Strict JSON.parse is the ONLY accepted path — we HARD-FAIL
+  // on malformed output rather than "repairing" it.
+  //
+  // We tried a jsonrepair fallback (keep the draft instead of 502'ing) and it was
+  // strictly worse: jsonrepair is a heuristic that guesses where each string
+  // begins and ends, and it has no idea where a prose paragraph was *meant* to
+  // start or stop. When the model emits an unescaped quote inside a body string
+  // (e.g. It"s, doesn"T — the model using " where an apostrophe belongs), the
+  // repair re-brackets the wrong spans: it merges adjacent chapters and splices
+  // the raw JSON structure ("], }, { "title": ... "body": [ ...) into a body
+  // paragraph as literal text. That corrupted draft then shipped to the designer,
+  // desynced the positional room→body mapping downstream, and poisoned the
+  // regex pull-quote extractor (stray quotes → fabricated "quotes"). A
+  // recoverable 502 the designer can regenerate is far better than publishing
+  // that. So: no repair. On a parse error we emit a rich diagnostic (parse
+  // position + the offending window of raw text) so the malformed span is
+  // actionable server-side without replaying the whole generation, then throw.
   let composed: any;
   const cleaned = rawText.replace(/```json\n?|\n?```/g, '').trim();
   try {
     composed = JSON.parse(cleaned);
   } catch (parseError: any) {
-    console.warn('[generate] JSON parse error — attempting repair', { _cid, error: parseError?.message });
-    try {
-      composed = JSON.parse(jsonrepair(cleaned));
-      console.warn('[generate] JSON repaired successfully', { _cid });
-    } catch (repairError: any) {
-      console.warn('[generate] JSON repair failed', { _cid, error: repairError?.message });
-      throw new EditorialGenerationError(
-        'LLM_JSON_PARSE',
-        'The AI model returned malformed output. Try regenerating.',
-      );
-    }
+    const diag = describeJsonParseFailure(cleaned, parseError);
+    console.error('[generate] JSON parse failed — hard-failing (no repair)', {
+      _cid,
+      projectId: input.project?.id,
+      error: parseError?.message,
+      position: diag.position,
+      snippet: diag.snippet,
+      rawLength: cleaned.length,
+      stopReason: llmResult.data.stop_reason,
+      outputTokens: llmResult.data.usage?.output_tokens,
+    });
+    throw new EditorialGenerationError(
+      'LLM_JSON_PARSE',
+      'The AI model returned malformed output (invalid JSON). Try regenerating.',
+    );
   }
 
   // Validate room structure (monitoring only)
