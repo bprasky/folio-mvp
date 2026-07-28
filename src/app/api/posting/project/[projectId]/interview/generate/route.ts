@@ -21,6 +21,7 @@ import { summarizeBudget, ensureUnder } from "@/lib/posting/contextBudget";
 import { compactImages, compactProducts, frameNarrativePrompt, softModerate } from "@/lib/posting/promptBuilders";
 import Anthropic from '@anthropic-ai/sdk';
 import { formatRoomName } from '@/lib/utils/formatRoomName';
+import { buildRoomResolver } from "@/lib/posting/resolveImageRoom";
 import { callLLM } from "@/lib/posting/llmClient";
 import { z } from "zod";
 import { LlmComposedLooseSchema, ComposedDraftSchema } from "@/lib/posting/schemas";
@@ -1553,6 +1554,15 @@ export async function POST(
             bio: true,
           },
         },
+        // Org that owns this project (set at creation when the poster operates as
+        // an org). When present, the article is CREDITED to the org — the person
+        // stays the quoted voice. See genInput.org below.
+        designerOrg: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
         images: {
           include: {
             tags: {
@@ -1991,58 +2001,21 @@ export async function POST(
     // Prepare images with room data for room-based organization
     const validImages = images.filter(img => validImageIds.includes(img.id));
 
-    // Reconcile stale ProjectImage.room strings with current Room.name values.
-    // ProjectImage.room is denormalized and can go stale after room renames.
-    // Build a mapping: stale image room string → current Room.name
+    // Resolve each image to a CURRENT Room, FK-first. ProjectImage carries both a
+    // real `roomId` (authoritative) and a denormalized `room` string that goes
+    // stale after renames/merges and is written in three different shapes (type,
+    // label, or UUID) by different pipelines. buildRoomResolver prefers the FK,
+    // then matches the string by name/UUID, and otherwise keeps the raw value —
+    // it NEVER pairs a leftover image-room to a leftover Room name by position.
+    // The old by-elimination pairing did exactly that and could file a bathroom
+    // photo under a "Stairway" heading. Shared with the published /p/[slug] path
+    // (getOrCreateEditorialDraft) so both generation paths resolve identically.
     const currentRoomNames = projectRooms.map(r => r.name);
-    const normalizeForMatch = (s: string) => s.replace(/_/g, ' ').trim().toLowerCase();
-    const roomNameByNormalized = new Map(currentRoomNames.map(n => [normalizeForMatch(n), n]));
-
-    // Also map Room IDs to names (some images store roomId as room string)
-    const roomNameById = new Map(projectRooms.map(r => [r.id, r.name]));
-
-    // Collect all unique image room values
-    const imageRoomValues = [...new Set(validImages.map(img => img.room).filter(Boolean))] as string[];
-    const staleToCurrentRoom = new Map<string, string>();
-    const unmatchedImageRooms: string[] = [];
-    const matchedRoomNames = new Set<string>();
-
-    for (const imgRoom of imageRoomValues) {
-      // Try direct normalized name match
-      const normalized = normalizeForMatch(imgRoom);
-      const match = roomNameByNormalized.get(normalized);
-      if (match) {
-        staleToCurrentRoom.set(imgRoom, match);
-        matchedRoomNames.add(match);
-        continue;
-      }
-      // Try UUID match (some images store roomId)
-      const byId = roomNameById.get(imgRoom);
-      if (byId) {
-        staleToCurrentRoom.set(imgRoom, byId);
-        matchedRoomNames.add(byId);
-        continue;
-      }
-      unmatchedImageRooms.push(imgRoom);
-    }
-
-    // Pair unmatched image rooms with unmatched Room names by elimination
-    const unmatchedRoomNames = currentRoomNames.filter(n => !matchedRoomNames.has(n));
-    for (let i = 0; i < Math.min(unmatchedImageRooms.length, unmatchedRoomNames.length); i++) {
-      staleToCurrentRoom.set(unmatchedImageRooms[i], unmatchedRoomNames[i]);
-    }
-
-    if (staleToCurrentRoom.size > 0) {
-      const remapped = Object.fromEntries(staleToCurrentRoom.entries());
-      const hasRenames = imageRoomValues.some(v => staleToCurrentRoom.get(v) !== formatRoomName(v));
-      if (hasRenames) {
-        console.log('[ROOM RECONCILIATION] Mapped stale image rooms to current Room names:', { remapped, _cid });
-      }
-    }
+    const resolveRoomName = buildRoomResolver(projectRooms);
 
     const imagesWithRoomData = validImages.map(img => ({
       id: img.id,
-      room: img.room ? (staleToCurrentRoom.get(img.room) || img.room) : null,
+      room: resolveRoomName(img),
       tags: img.tags || [],
     }));
 
@@ -2304,6 +2277,12 @@ export async function POST(
         name: designerName || projectData.designer.name || 'Designer',
         studio: projectData.designer.studio,
       } : undefined,
+      // Org attribution: when the project is org-owned, credits/byline become the
+      // org while the interviewee stays the quoted voice (see generateEditorialDraft).
+      org: projectData.designerOrg ? {
+        id: projectData.designerOrg.id,
+        name: projectData.designerOrg.name,
+      } : null,
       images: gatedImages.map(img => ({
         id: img.id,
         room: img.room || undefined,

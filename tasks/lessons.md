@@ -342,3 +342,30 @@ Rule: never auto-repair model JSON destined for user-facing content. Hard-fail
 with a *diagnostic* error (parse position + a window of the raw text around it)
 so the malformed span is actionable from logs, and let the user regenerate. A
 recoverable 502 beats a silently corrupted publish.
+
+**`ProjectImage.room` is a denormalized free-text trap — resolve room FK-first, never guess by position.**
+The editorial generator grouped gallery chapters by `ProjectImage.room` (a
+free-text string), which is separate from the real `roomId` FK and is written in
+three shapes by different pipelines (type "bathroom", label "Bathroom", or a Room
+UUID) and goes stale after renames. Worse, the reconciliation in
+`interview/generate/route.ts` had a fallback that paired leftover image-rooms to
+leftover Room names *by array index* — no semantic basis — which could file a
+bathroom photo under a "Stairway" heading. Fix: `src/lib/posting/resolveImageRoom.ts`
+resolves FK-first (roomId → Room.name), then string match by name/UUID, then keeps
+the raw value; the by-elimination guess is gone. Both generation paths
+(interview/generate + getOrCreateEditorialDraft) share the one resolver so they
+can't drift. Rule: when a denormalized label exists alongside its FK, trust the
+FK; and never "repair" unknown data by positional pairing — an ungrouped item is
+a lesser evil than a confidently-wrong one.
+
+**Org-owned projects must attribute to the org, but generation only read `project.designer`.**
+`Project.designerOrgId` is populated when a poster operates as an org, but the
+editorial generator fetched only the individual `designer`, so every byline,
+credit, and voice was the person (e.g. "Diano Matto"), never the firm ("BP
+Design"). Fix (product decision: org credit, person's voice): pass `org` into
+GenInput; `buildCredits` and the prompt's credit example use the org name; the
+prompt keeps the person as the quoted voice and introduces them once as
+"{person} of {org}". Note: `ProjectPost.credits` is user-editable and sticky
+(auto-filled only when empty) and the preview byline renders from it — so
+existing posts keep their old credit until re-derived; the generation fix governs
+new drafts and the article's own credits/voice.

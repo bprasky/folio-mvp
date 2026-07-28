@@ -55,6 +55,14 @@ The article should make a reader want to visit this space, not inventory it.`;
 export type GenInput = {
   project: any;
   designer?: any;
+  /**
+   * Owning organization, when the project is org-owned (designerOrgId set).
+   * Attribution model (product decision): the article is CREDITED to the org
+   * and the org is the byline, but the interviewee remains the quoted voice —
+   * direct quotes stay "{surname} says", introduced once as "{full name} of
+   * {org name}". Absent/null → individual designer attribution (legacy).
+   */
+  org?: { id: string; name: string } | null;
   vendors?: any[];
   images: { id: string; caption?: string; room?: string }[];
   tags: any[];
@@ -191,9 +199,18 @@ function groupImagesIntoChapters(
   return chapters;
 }
 
-// Build credits array from input designer/vendor data
+// Build credits array from input designer/vendor data.
+// Org-owned projects are credited to the ORG (the byline is the firm, e.g.
+// "BP Design"); the individual is not repeated as a separate Designer credit
+// because they appear as the quoted voice in the prose. Individual-owned
+// projects keep the legacy Designer (+ Studio) credit.
 function buildCredits(input: GenInput): Array<{ role: string; name: string }> {
   const credits: Array<{ role: string; name: string }> = [];
+  const orgName = input.org?.name?.trim();
+  if (orgName) {
+    credits.push({ role: 'Designer', name: orgName });
+    return credits;
+  }
   if (input.designer?.name) {
     credits.push({ role: 'Designer', name: input.designer.name });
   }
@@ -905,6 +922,15 @@ function buildPrompt(input: GenInput, uniqueAnswers: GenInput['answers']): {
   const designerNameForPrompt = rawDesignerName
     ? rawDesignerName.replace(/\b[a-z]/g, c => c.toUpperCase())
     : 'the designer';
+  // Org attribution (product decision: org credit, person's voice). When the
+  // project is org-owned, `creditName` — the byline and the credits example — is
+  // the org; the person (`designerNameForPrompt`) stays the quoted voice.
+  const orgName = input.org?.name?.trim() || '';
+  const creditName = orgName || designerNameForPrompt;
+  const attributionNote = orgName
+    ? `\n## ATTRIBUTION — CREDIT THIS PROJECT TO ${orgName}
+The design of this project is credited to the firm ${orgName}, not to an individual. ${designerNameForPrompt} is the person interviewed and remains the speaking voice for every direct quote and attributed paraphrase. On the FIRST mention in the introduction, introduce them as "${designerNameForPrompt} of ${orgName}"; use the surname alone thereafter. NEVER attribute a spoken quote to the firm (do not write "${orgName} says"). The byline and credits belong to ${orgName}.\n`
+    : '';
 
   // --- Build room-answer summary ---
   const roomAnswerCounts = new Map<string, number>();
@@ -1005,8 +1031,8 @@ function buildPrompt(input: GenInput, uniqueAnswers: GenInput['answers']): {
   const locationParts = [project?.city, project?.regionState].filter(Boolean);
   const locationStr = locationParts.join(', ') || '';
   const designerLine = designer?.name
-    ? `${designer.name}${designer.studio ? ` / ${designer.studio}` : ''}`
-    : '';
+    ? `${designer.name}${orgName ? ` (${orgName})` : designer.studio ? ` / ${designer.studio}` : ''}`
+    : orgName || '';
 
   // Room context for image/product mapping
   const roomContexts = Object.entries(imagesByRoom).map(([room, imgs]) => {
@@ -1053,7 +1079,7 @@ ${input.frozenChapters!.map((ch, i) => `--- Published chapter ${i + 1}${ch.title
     : '';
 
   const userPrompt = `Write a feature article about this project.
-${frozenChaptersBlock}${frozenLeadIntroBlock}${appendInstructions}
+${frozenChaptersBlock}${frozenLeadIntroBlock}${appendInstructions}${attributionNote}
 
 ## Designer's Interview Responses (grouped by room)
 
@@ -1165,7 +1191,7 @@ Produce a JSON object with this structure:
       "body": ["paragraph1", "paragraph2", "paragraph3"]
     }
   ],
-  "credits": [{ "role": "Designer", "name": "${designerNameForPrompt}" }],
+  "credits": [{ "role": "Designer", "name": "${creditName}" }],
   "materialsLedger": {
     "items": [{ "name": "Product Name", "finish": "brand-free descriptor: form + material + finish", "note": "Vendor: Name | Used in: Room" }]
   },
