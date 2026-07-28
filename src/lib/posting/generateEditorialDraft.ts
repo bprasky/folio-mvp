@@ -896,6 +896,7 @@ function buildPrompt(input: GenInput, uniqueAnswers: GenInput['answers']): {
   userPrompt: string;
   imageIds: string[];
   rooms: string[];
+  writeRooms: string[];
   imagesByRoom: Record<string, Array<{ id: string }>>;
 } {
   const { project, designer, images, tags } = input;
@@ -1234,7 +1235,7 @@ CRITICAL RULES:
 
 Begin.`;
 
-  return { systemPrompt: EDITORIAL_SYSTEM_PROMPT, userPrompt, imageIds, rooms, imagesByRoom };
+  return { systemPrompt: EDITORIAL_SYSTEM_PROMPT, userPrompt, imageIds, rooms, writeRooms, imagesByRoom };
 }
 
 // ============================================================================
@@ -1373,9 +1374,16 @@ export async function generateEditorialDraft(input: GenInput): Promise<{
   }
 
   // Build prompt
-  const { systemPrompt, userPrompt, imageIds, rooms, imagesByRoom } = buildPrompt(input, uniqueAnswers);
+  const { systemPrompt, userPrompt, imageIds, rooms, writeRooms, imagesByRoom } = buildPrompt(input, uniqueAnswers);
 
-  const interviewedRoomCount = Array.from(new Set(uniqueAnswers.map(a => a.section))).filter(r => r !== 'About This Project' && r !== 'General').length;
+  // Size the output budget off the rooms we actually write prose for this pass
+  // (writeRooms), NOT the count of rooms that happen to have interview answers.
+  // Project-level answers all land in "About This Project"/"General", so an
+  // answer-based count collapses to 0 and starves an image-driven multi-room
+  // draft — the model then truncates mid-JSON and the parse fails as
+  // LLM_JSON_PARSE. Each written chapter needs ~800 tokens of prose+structure.
+  const outputRoomCount = Math.max(writeRooms.length, 1);
+  const maxTokens = Math.min(16000, Math.max(4096, outputRoomCount * 800 + 2000));
   const modelName = MODELS.sonnet;
 
   const llmResult = await callLLM(
@@ -1383,7 +1391,7 @@ export async function generateEditorialDraft(input: GenInput): Promise<{
       return await client.messages.create({
         model: modelName,
         temperature: 0.7,
-        max_tokens: Math.max(4096, interviewedRoomCount * 800 + 2000),
+        max_tokens: maxTokens,
         system: systemPrompt,
         messages: [
           { role: "user", content: userPrompt },
@@ -1406,7 +1414,28 @@ export async function generateEditorialDraft(input: GenInput): Promise<{
   }
 
   console.log('[GENERATE] LLM call complete, proceeding to repair', { _cid });
-  console.info('[generate] llm_ok', { _cid, model: llmResult.usedModel });
+  console.info('[generate] llm_ok', {
+    _cid,
+    model: llmResult.usedModel,
+    stopReason: llmResult.data.stop_reason,
+    outputTokens: llmResult.data.usage?.output_tokens,
+    maxTokens,
+  });
+
+  // Truncation guard: if the model hit the token ceiling, the JSON is cut off
+  // mid-structure. Detect it here so it surfaces as an actionable LLM_TRUNCATED
+  // (raise the budget) instead of a misleading LLM_JSON_PARSE ("regenerate",
+  // which deterministically hits the same cap). See maxTokens sizing above.
+  if (llmResult.data.stop_reason === 'max_tokens') {
+    console.warn('[generate] output truncated at max_tokens', {
+      _cid, maxTokens, outputRoomCount, outputTokens: llmResult.data.usage?.output_tokens,
+    });
+    throw new EditorialGenerationError(
+      'LLM_TRUNCATED',
+      'The AI model ran out of room before finishing this draft. Try regenerating, or split the project into fewer rooms.',
+    );
+  }
+
   const rawText = llmResult.data.content[0]?.type === 'text' ? llmResult.data.content[0].text : "";
 
   if (!rawText || rawText.trim().length === 0) {
