@@ -15,6 +15,9 @@ import { z } from "zod";
 import { randomUUID } from "crypto";
 import { digestInterviewAnswer } from "@/lib/interview/digestInterviewAnswer";
 import { MODELS } from '@/lib/ai/models';
+import { FOLIO_INTERVIEWER_PERSONA } from "@/lib/interview/prompts/persona";
+import { SHARED_RULE_BLOCK, ARRIVALS_CONTRAST_POLICY } from "@/lib/interview/prompts/rules";
+import { isArrivalSafe } from "@/lib/interview/prompts/validateQuestion";
 
 // Cache last good follow-ups per question (dev/runtime only)
 const lastGoodFollowups = new Map<string, Array<{ id: string; prompt: string }>>();
@@ -51,9 +54,15 @@ const POSTING_V1_ENABLED =
 const ANTHROPIC_ENABLED =
   !!process.env.ANTHROPIC_API_KEY && process.env.ANTHROPIC_ENABLED !== "false";
 
-const SYSTEM_PROMPT = `You are an editorial interviewer for a design magazine. Based on the designer's answer below, generate follow-up questions that dig deeper into the most interesting aspects of their work.
+const SYSTEM_PROMPT = `${FOLIO_INTERVIEWER_PERSONA}
 
-Focus on: specific design decisions that reveal process, material relationships that tell a story, moments of evolution during the project, and spatial experiences. Ask about ARRIVALS, not departures — "What clicked?" not "Why did you reject alternatives?" Frame questions to elicit quotable, publishable answers. Be specific — reference actual products, rooms, or details. Keep each under 180 characters. Do not repeat or rephrase the original question. Do NOT ask about topics the designer has already covered in previous answers.
+${SHARED_RULE_BLOCK}
+
+${ARRIVALS_CONTRAST_POLICY}
+
+Based on the designer's answer below, generate follow-up questions that dig deeper into the most interesting aspects of their work.
+
+Focus on: specific design decisions that reveal process, material relationships that tell a story, moments of evolution during the project, and spatial experiences. Frame questions to elicit quotable, publishable answers. Be specific — reference actual products, rooms, or details. Keep each under 180 characters. Do not repeat or rephrase the original question. Do NOT ask about topics the designer has already covered in previous answers.
 
 Optionally, provide a brief acknowledgment sentence (1-2 sentences, under 150 characters) that naturally transitions to the follow-up questions. This should feel conversational and acknowledge what the designer shared.
 
@@ -298,7 +307,7 @@ export async function POST(
       prompt += `\nFor each remaining question affected by prior answers, add to "questionUpdates": { id, status: "covered"|"morphed", morphedText? }. Morph (don't skip) questions the designer partially addressed — reference what they said and ask about the new angle.`;
     }
 
-    prompt += `\n\nGenerate 0-2 follow-up questions that dig deeper into the most interesting aspects of this answer. Reference specific products, rooms, or details from what the designer said. Frame questions to elicit quotable, publishable answers. Ask about arrivals ("What clicked?"), not departures ("Why not X?"). Keep each under 180 characters.`;
+    prompt += `\n\nGenerate 0-2 follow-up questions that dig deeper into the most interesting aspects of this answer. Reference specific products, rooms, or details from what the designer said. Frame questions to elicit quotable, publishable answers. Keep each under 180 characters.`;
 
     // Run answer digestion for adaptive follow-up context
     const vendorNames = taggedProducts
@@ -454,6 +463,15 @@ export async function POST(
           return fu.prompt.length > 0 && fu.prompt.length <= 180;
         })
         .slice(0, 2); // Hard cap at 2 follow-ups
+    }
+
+    // Arrivals/contrast gate (docs/17 §3): drop grievance/regret follow-ups.
+    {
+      const before = followUpsRaw.length;
+      followUpsRaw = followUpsRaw.filter((fu) => isArrivalSafe(fu.prompt));
+      if (followUpsRaw.length < before) {
+        console.info(`[followups-single] arrivals gate dropped ${before - followUpsRaw.length} follow-up(s)`, { _cid });
+      }
     }
 
     // Convert to required return format with dedupe keys

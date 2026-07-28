@@ -8,14 +8,13 @@ import { HOOK_OPENER_ID_PREFIX, HOOK_FOLLOWUP_ID_PREFIX } from "@/lib/interview/
 import { MODELS } from '@/lib/ai/models';
 import { resolveProductNaming } from '@/lib/naming/resolveProductNaming';
 import { scrubProseNaming, type DescriptorHint } from '@/lib/naming/scrubProse';
+import { FOLIO_TONE } from '@/lib/interview/prompts/editorialTone';
 
 const client = new Anthropic();
 
-export const FOLIO_TONE = `
-Warm, confident, minimalist, design-literate.
-Describe process, intent, and materials poetically but concretely.
-Avoid marketing speak; prefer quiet authority and authenticity.
-`;
+// FOLIO_TONE is now the canonical constant from the prompt module (docs/17 §5).
+// Re-exported here (byte-identical value) so existing importers keep working.
+export { FOLIO_TONE };
 
 // Unified system prompt — merges EDITORIAL_SYSTEM_PROMPT (route.ts) with voice weaving
 const EDITORIAL_SYSTEM_PROMPT = `You are a senior writer for a prestigious design magazine, writing a feature article about an interior design project. Your writing style is:

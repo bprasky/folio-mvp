@@ -14,6 +14,9 @@ import { prisma } from '@/lib/prisma';
 import { QA_MAX_PENDING, QA_MIN_GAP_DAYS, QA_INITIAL_SEED_COUNT } from './constants';
 import type { QACategory, QASource } from './constants';
 import { MODELS } from '@/lib/ai/models';
+import { FOLIO_INTERVIEWER_PERSONA } from '@/lib/interview/prompts/persona';
+import { SHARED_RULE_BLOCK, ARRIVALS_CONTRAST_POLICY } from '@/lib/interview/prompts/rules';
+import { isArrivalSafe } from '@/lib/interview/prompts/validateQuestion';
 
 type GeneratedQuestion = {
   question: string;
@@ -74,9 +77,15 @@ export async function generateInitialSeedQuestions(
     async () => {
       const message = await anthropic.messages.create({
         model: MODELS.sonnet,
-        system: `You are generating profile interview questions for a designer's "In Their Words" section. These questions will appear on their public profile for visitors to read.
+        system: `${FOLIO_INTERVIEWER_PERSONA}
 
-The goal: questions that reveal personality, taste, conviction, and character. Think magazine interview — the questions that make readers feel like they KNOW this person.
+${SHARED_RULE_BLOCK}
+
+${ARRIVALS_CONTRAST_POLICY}
+
+You are generating profile interview questions for a designer's "In Their Words" section. These questions will appear on their public profile for visitors to read.
+
+The goal: questions that reveal personality, taste, conviction, and character — how this person thinks about and makes their work. Think magazine interview: the questions that help a reader understand their point of view, not just collect facts about them.
 
 DO NOT ask questions that the bio already answers well.
 DO NOT ask generic questions that could apply to anyone.
@@ -116,6 +125,11 @@ Return JSON array: [{ "question": "...", "category": "personality|preference|con
 
   // Save to database
   for (const q of questions.slice(0, QA_INITIAL_SEED_COUNT.max)) {
+    // Arrivals/contrast gate (docs/17 §3): drop grievance/regret questions.
+    if (!q?.question || !isArrivalSafe(q.question)) {
+      if (q?.question) console.info('[generateInitialSeedQuestions] arrivals gate dropped a question');
+      continue;
+    }
     await prisma.profileQA.create({
       data: {
         userId,
@@ -158,7 +172,13 @@ export async function generateProjectQuestions(
     async () => {
       const message = await anthropic.messages.create({
         model: MODELS.sonnet,
-        system: `Generate 0-2 profile interview questions for a designer who just published a new project. Only generate questions if genuinely interesting ones emerge — don't force it.
+        system: `${FOLIO_INTERVIEWER_PERSONA}
+
+${SHARED_RULE_BLOCK}
+
+${ARRIVALS_CONTRAST_POLICY}
+
+Generate 0-2 profile interview questions for a designer who just published a new project. Only generate questions if genuinely interesting ones emerge — don't force it.
 
 Context:
 - This is their project #${projectCount} on the platform
@@ -195,6 +215,11 @@ Return empty array [] if no genuinely interesting question comes to mind.`,
 
   const questions = Array.isArray(result.data) ? result.data : [];
   for (const q of questions.slice(0, 2)) {
+    // Arrivals/contrast gate (docs/17 §3): drop grievance/regret questions.
+    if (!q?.question || !isArrivalSafe(q.question)) {
+      if (q?.question) console.info('[generateProjectQuestions] arrivals gate dropped a question');
+      continue;
+    }
     await prisma.profileQA.create({
       data: {
         userId,
@@ -243,11 +268,13 @@ export async function generateMilestoneQuestion(
 ): Promise<void> {
   if (!(await canGenerateQuestions(userId))) return;
 
+  // Milestone context is a neutral trigger — the question anchors to the WORK, never to
+  // clout/reach/recognition (docs/17 §1 status-side, §9 non-hyped).
   const milestoneQuestions: Record<string, string> = {
-    editorial_feature: 'You just made the editorial edition. What does that kind of recognition mean to you?',
-    saves_50: 'Your work is starting to get noticed — 50 saves across your projects. What resonates most with the people saving your work?',
-    saves_100: 'Over 100 saves on your projects. Why do you think your work connects with people?',
-    saves_500: 'Your projects have been saved 500 times. That\'s real influence. What does it mean to you to shape how people think about their spaces?',
+    editorial_feature: 'You just reached the editorial edition — what about this project do you think earned it?',
+    saves_50: 'Your projects have passed 50 saves. What do you think is coming through in the work that people connect with?',
+    saves_100: 'Your projects have crossed 100 saves. What is it about how you approach a space that you think resonates?',
+    saves_500: 'Your projects have been saved 500 times. Looking at the work, what do you think keeps drawing people back?',
   };
 
   const question = milestoneQuestions[milestoneType];

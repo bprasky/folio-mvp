@@ -9,6 +9,7 @@ import Anthropic from '@anthropic-ai/sdk';
 import { callLLM } from '@/lib/posting/llmClient';
 import type { InterviewAnswer } from './constants';
 import { MODELS } from '@/lib/ai/models';
+import { FOLIO_TONE } from '@/lib/interview/prompts/editorialTone';
 
 type GenerateBioInput = {
   role: string;
@@ -24,7 +25,8 @@ type GenerateBioInput = {
 export async function generateFolioBio(input: GenerateBioInput): Promise<string> {
   const { role, designerName, interviewAnswers, scrapedData } = input;
 
-  const roleLabel = role === 'ARCHITECT' ? 'architect' : role === 'BUILDER' ? 'builder' : 'interior designer';
+  // Canonical prompt-visible label (docs/17 §7); enum KEY lookup stays 'BUILDER' (data migration).
+  const roleLabel = role === 'ARCHITECT' ? 'architect' : role === 'BUILDER' ? 'contractor' : 'interior designer';
 
   const anthropic = new Anthropic();
 
@@ -40,7 +42,9 @@ export async function generateFolioBio(input: GenerateBioInput): Promise<string>
     async () => {
       const message = await anthropic.messages.create({
         model: MODELS.sonnet,
-        system: `You are writing a magazine-quality profile bio for a ${roleLabel} named ${designerName}. Write in third person. This bio will appear on their professional profile page.
+        system: `${FOLIO_TONE}
+
+You are writing a magazine-quality profile bio for a ${roleLabel} named ${designerName}. Write in third person. This bio will appear on their professional profile page.
 
 REQUIREMENTS:
 - 200-400 words

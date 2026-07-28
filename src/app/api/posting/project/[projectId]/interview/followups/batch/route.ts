@@ -13,6 +13,9 @@ import { formatKnownFacts, type KnownFacts } from "@/lib/interview/distillInterv
 import { z } from "zod";
 import { randomUUID } from "crypto";
 import { MODELS } from '@/lib/ai/models';
+import { FOLIO_INTERVIEWER_PERSONA } from "@/lib/interview/prompts/persona";
+import { SHARED_RULE_BLOCK, ARRIVALS_CONTRAST_POLICY } from "@/lib/interview/prompts/rules";
+import { isArrivalSafe } from "@/lib/interview/prompts/validateQuestion";
 
 // ---------------------------------------------------------------------------
 // Schema
@@ -46,13 +49,19 @@ const POSTING_V1_ENABLED =
 // System prompt — dedicated follow-up prompt (NOT the editorial system prompt)
 // ---------------------------------------------------------------------------
 
-const BATCH_FOLLOWUP_SYSTEM_PROMPT = `You are interviewing a designer about their project for a design magazine feature. Based on the designer's answers to the previous round of questions, generate follow-up questions that dig deeper into the most interesting and story-rich aspects of what they shared.
+const BATCH_FOLLOWUP_SYSTEM_PROMPT = `${FOLIO_INTERVIEWER_PERSONA}
+
+${SHARED_RULE_BLOCK}
+
+${ARRIVALS_CONTRAST_POLICY}
+
+Interview the designer about their project for a design magazine feature. Based on the designer's answers to the previous round of questions, generate follow-up questions that dig deeper into the most interesting and story-rich aspects of what they shared.
 
 RULES:
 - Reference specific things the designer said. Not generic questions.
 - Chase stories: if they mentioned changing their mind, ask what the original choice was. If they mentioned a compromise, ask what the client wanted vs what they wanted.
 - Chase details: if they mentioned a specific product, ask why that one and what they considered instead.
-- Chase emotion: if they expressed pride or frustration, go there.
+- Chase the decision behind the feeling: if they expressed pride in a choice, go there. If they raised a tension or compromise, chase how they resolved it — the arrival, not the grievance.
 - Do NOT ask questions that could be answered by looking at photos.
 - Do NOT ask generic design questions unrelated to what they said.
 - Each question should start with a reference to their answer: "You mentioned [X]..." or "You said [X]..." or "Tell me more about [X]..."
@@ -332,7 +341,13 @@ Do NOT re-ask any of this — it is settled ground. Use it only to sharpen wordi
         )
       : [];
 
-    const followUps = followUpsRaw.slice(0, validated.maxFollowUps).map((fu) => ({
+    // Arrivals/contrast gate (docs/17 §3): drop grievance/regret follow-ups.
+    const followUpsGated = followUpsRaw.filter((fu) => isArrivalSafe(fu.question));
+    if (followUpsGated.length < followUpsRaw.length) {
+      console.info(`[followups-batch] arrivals gate dropped ${followUpsRaw.length - followUpsGated.length} follow-up(s)`, { _cid });
+    }
+
+    const followUps = followUpsGated.slice(0, validated.maxFollowUps).map((fu) => ({
       id: `fu-batch-${validated.roomId}-${randomUUID().slice(0, 8)}`,
       question: fu.question.trim(),
       roomId: validated.roomId,

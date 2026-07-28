@@ -10,6 +10,10 @@ import Anthropic from "@anthropic-ai/sdk";
 import { HOOK_OPENER_ID_PREFIX, HOOK_FOLLOWUP_ID_PREFIX } from "@/lib/interview/generateQuestions";
 import { scorePullQuote } from "@/lib/posting/generateEditorialDraft";
 import { MODELS } from '@/lib/ai/models';
+import { FOLIO_INTERVIEWER_PERSONA } from "@/lib/interview/prompts/persona";
+import { SHARED_RULE_BLOCK, ARRIVALS_CONTRAST_POLICY } from "@/lib/interview/prompts/rules";
+import { isArrivalSafe } from "@/lib/interview/prompts/validateQuestion";
+import { FOLIO_TONE } from "@/lib/interview/prompts/editorialTone";
 
 // Answers scoring at or above this already carry a hook-quality signal
 // (first-person voice + length, or first-person + metaphor). Above the bar,
@@ -41,11 +45,17 @@ if (process.env.ANTHROPIC_API_KEY) {
   anthropic = new Anthropic();
 }
 
-const GENERIC_FOLLOWUP_SYSTEM = `You are an interviewer for an interior design publication. Based on a designer's answer, generate one thoughtful follow-up question that will elicit a more detailed, quotable response.
+const GENERIC_FOLLOWUP_SYSTEM = `${FOLIO_INTERVIEWER_PERSONA}
+
+${SHARED_RULE_BLOCK}
+
+${ARRIVALS_CONTRAST_POLICY}
+
+Based on a designer's answer, generate one thoughtful follow-up question that will elicit a more detailed, quotable response.
 
 Guidelines:
 - Ask about the "why" behind their decisions
-- Focus on emotion, intention, and process
+- Focus on intention and process
 - Avoid yes/no questions
 - Keep questions concise (under 20 words)
 - Questions should lead to answers a designer would be proud to publish
@@ -53,13 +63,19 @@ Guidelines:
 Return JSON: { "question": "...", "context": "..." }
 The context is a brief lead-in phrase like "You mentioned the light." (optional, can be empty string)`;
 
-const HOOK_FOLLOWUP_SYSTEM = `You are an interviewer for an interior design publication. The designer just answered the opening "what were you chasing with this project" question. Your job is to generate ONE deepening follow-up whose answer, spliced with the first answer, will become the article's opening pull quote.
+const HOOK_FOLLOWUP_SYSTEM = `${FOLIO_INTERVIEWER_PERSONA}
+
+${SHARED_RULE_BLOCK}
+
+${ARRIVALS_CONTRAST_POLICY}
+
+The designer just answered the opening "what were you chasing with this project" question. Your job is to generate ONE deepening follow-up whose answer, spliced with the first answer, will become the article's opening pull quote.
 
 Rules (strict — every word counts):
 - Echo the designer's own theme back to them in their words before asking.
-- Invite the EMOTIONAL stakes: what they hoped someone would feel, what was at risk, what made it personal, what told them they'd gotten it right.
+- Invite the emotional stakes of the win: what they hoped someone would feel walking in, what made it personal, the moment they knew they'd gotten it right. Reach for the arrival, not what was at risk.
 - Do NOT ask about any specific room, product, brand, vendor, material, color, or process step. The opening quote is about the idea and the feeling, not the details.
-- Do NOT ask "can you tell me more about" or any therapist-style meta question. Sound like a journalist.
+- Do NOT ask "can you tell me more about" or any therapist-style meta question. Sound like a colleague who was in the room.
 - Under 25 words.
 
 Return JSON: { "question": "...", "context": "..." }
@@ -115,6 +131,14 @@ Generate a follow-up question.`,
 
     const parsed = JSON.parse(content);
     if (!parsed.question) return null;
+
+    // Arrivals/contrast gate (docs/17 §3): drop grievance/regret follow-ups
+    // (return null → no follow-up is shown, a graceful degrade).
+    if (!isArrivalSafe(parsed.question)) {
+      console.info(`[generateFollowUp] arrivals gate dropped a ${isHookParent ? "hook" : "generic"} follow-up`);
+      return null;
+    }
+
     return {
       text: parsed.question,
       context: parsed.context || "",
@@ -140,13 +164,16 @@ async function generatePreviewDraft(
   try {
     const message = await anthropic.messages.create({
       model: MODELS.sonnet,
-      system: `You are writing a preview excerpt for an interior design editorial. Based on interview responses, generate a compelling title and first paragraph.
+      system: `${FOLIO_TONE}
+
+You are writing a preview excerpt for an interior design editorial. Based on interview responses, generate a compelling title and first paragraph.
 
 Guidelines:
 - Title should be evocative, not literal (e.g., "Where Light Meets History" not "A Modern Renovation")
 - Excerpt should be 2-3 sentences, magazine-quality prose
 - Focus on the emotional and intentional aspects
 - Write in third person
+- If you quote the designer, use their exact words from the interview responses — do not polish or paraphrase into a quote.
 
 Return JSON: { "title": "...", "excerpt": "..." }`,
       messages: [

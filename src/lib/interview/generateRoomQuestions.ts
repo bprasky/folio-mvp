@@ -11,6 +11,10 @@ import type { ContextLevel } from './contextLevel';
 import type { GeneratedQuestion, QuestionType } from './generateQuestions';
 import { formatKnownFacts, type KnownFacts } from './distillInterviewFacts';
 import { MODELS } from '@/lib/ai/models';
+import { isArrivalSafe } from './prompts/validateQuestion';
+import { FOLIO_INTERVIEWER_PERSONA } from './prompts/persona';
+import { SHARED_RULE_BLOCK, ARRIVALS_CONTRAST_POLICY } from './prompts/rules';
+import { laneContract } from './prompts/sourceHandling';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -119,25 +123,20 @@ export async function generateRoomQuestions(
   // answered "About This Project" already). Wording aid only — the lane
   // contract below keeps topic selection pinned to this room's photos/tags.
   const knownFactsLines = formatKnownFacts(input.projectContext.knownFacts);
-  const knownFactsBlock = knownFactsLines
-    ? `
-WHAT WE ALREADY KNOW (the designer told us this in the opening conversation about the project):
-${knownFactsLines}
-
-HOW TO USE THIS BACKGROUND — THE LANE CONTRACT:
-- It informs your WORDING, never your TOPICS. This room's photos and tagged products decide what you ask about; the background only makes those questions land like they come from someone who was in the room for the opening conversation.
-- Do NOT re-ask anything covered above (who the clients are, the scope, the timeline, the overall direction). That ground is covered.
-- Do NOT import themes from the background that aren't visible in this room's photos or products. If the background says "relocation" and nothing in this room relates to it, the relocation does not appear in your questions.
-- Referencing it conversationally is fine and encouraged ("Given the pace this project ran at, ..."). Citing it as a record is not ("You mentioned in the earlier section...", "According to your answers...").
-`
-    : '';
+  const knownFactsBlock = laneContract(knownFactsLines);
 
   // Cross-room reference instruction
   const crossRoomInstruction = input.projectContext.otherRoomNames.length > 0
     ? `Include exactly 1 question that references how this room relates to an adjacent space (${input.projectContext.otherRoomNames.slice(0, 3).join(', ')}). This cross-room question still belongs to ${input.roomName}.`
     : '';
 
-  const prompt = `You are a senior editorial journalist at an interior design publication interviewing a designer about the ${input.roomName} in their project${input.projectContext.projectTitle ? ` "${input.projectContext.projectTitle}"` : ''}.
+  const prompt = `${FOLIO_INTERVIEWER_PERSONA}
+
+${SHARED_RULE_BLOCK}
+
+${ARRIVALS_CONTRAST_POLICY}
+
+YOUR TASK: interview the designer about the ${input.roomName} in their project${input.projectContext.projectTitle ? ` "${input.projectContext.projectTitle}"` : ''}. Generate room-level questions grounded in this room's photos and tagged products.
 
 ROOM: ${input.roomName}
 IMAGES: ${input.roomImages.length} photos of this room (shown above)
@@ -161,7 +160,7 @@ Generate exactly ${input.budget} interview questions for the ${input.roomName}.
 RULES:
 1. Every question must reference a specific product, material, or visual detail from the data above or visible in the images.
 2. NAMING: You may name — and build a dedicated question around — any product in the "MAY NAME AND SPOTLIGHT" list. For a product in the "BY DESCRIPTOR ONLY" list, refer to it by its descriptor (form / material / finish) and NEVER by its brand or product name; raise one only if the designer's own story (a standout room, a repeated material) makes it the point — never introduce it as a named product spotlight.
-3. Every question sets up an answer the designer would be proud to publish. Ask about arrivals, not departures. Wins, not compromises.
+3. Every question sets up an answer the designer would be proud to publish (arrivals/contrast policy above applies).
 4. No generic questions. "Tell us about your color choices" is NEVER acceptable. "The brass hardware against the navy millwork — walk us through that pairing" is editorial.
 5. If a vendor name is unknown, ask about the product or material itself — never say "Unknown Brand."
 6. Mix question types: 1 warm opening, then deep dives into specific products/materials/decisions, and 1 closing philosophy question if budget >= 4.
@@ -228,8 +227,17 @@ Return ONLY a JSON object:
     topic: q.topic || 'general',
   }));
 
+  // Arrivals/contrast gate (docs/17 §3, docs/17_INTERVIEW_PROMPT_CANON.md). The live
+  // per-room path had no validation gate before this; grievance/regret framing is dropped.
+  const gated = questions.filter((q) => isArrivalSafe(q.text));
+  if (gated.length < questions.length) {
+    console.info(
+      `[generateRoomQuestions] arrivals gate dropped ${questions.length - gated.length} question(s) for ${input.roomName}`,
+    );
+  }
+
   return {
     roomName: input.roomName,
-    questions,
+    questions: gated,
   };
 }

@@ -164,7 +164,7 @@ ${formatCurrentSelections(currentSelections)}
 
 ## Your Task
 
-Help the buyer think through their finish selections for this unit.
+Help the Individual think through their finish selections for this unit.
 
 DO:
 - Ask about how they'll use the space before recommending
@@ -306,7 +306,7 @@ function buildReasoningExamples(
     | null;
 
   if (!explanationExamples || explanationExamples.length === 0) {
-    return "Explain your reasoning clearly. Connect recommendations to how the buyer will actually use the space.";
+    return "Explain your reasoning clearly. Connect recommendations to how the Individual will actually use the space.";
   }
 
   const examples = explanationExamples.slice(0, 2);
@@ -322,7 +322,7 @@ function buildBuyerContextSection(buyerContext: {
 
   if (buyerContext.statedPreferences.length > 0) {
     parts.push(
-      `**Buyer preferences noted:** ${buyerContext.statedPreferences.join(", ")}`
+      `**Individual's preferences noted:** ${buyerContext.statedPreferences.join(", ")}`
     );
   }
 
@@ -340,7 +340,7 @@ function buildBuyerContextSection(buyerContext: {
 
   if (parts.length === 0) return "";
 
-  return `\n---\n\n## What We Know About the Buyer\n\n${parts.join("\n")}`;
+  return `\n---\n\n## What We Know About the Individual\n\n${parts.join("\n")}`;
 }
 
 // ---------------------------------------------------------------------------

@@ -11,6 +11,9 @@ import Anthropic from '@anthropic-ai/sdk';
 import { callLLM } from '@/lib/posting/llmClient';
 import { prisma } from '@/lib/prisma';
 import { MODELS } from '@/lib/ai/models';
+import { FOLIO_INTERVIEWER_PERSONA } from '@/lib/interview/prompts/persona';
+import { SHARED_RULE_BLOCK, ARRIVALS_CONTRAST_POLICY } from '@/lib/interview/prompts/rules';
+import { isArrivalSafe } from '@/lib/interview/prompts/validateQuestion';
 
 const MAX_PENDING_QUESTIONS = 3;
 const QUESTIONS_PER_BATCH = 3;
@@ -84,7 +87,13 @@ export async function generateBioReflectiveQuestions(userId: string) {
     async () => {
       const message = await anthropic.messages.create({
         model: MODELS.sonnet,
-        system: `You are generating questions for verified design professionals on Folio, a design publication platform. These questions appear as editorial-quality cards in the magazine feed.
+        system: `${FOLIO_INTERVIEWER_PERSONA}
+
+${SHARED_RULE_BLOCK}
+
+${ARRIVALS_CONTRAST_POLICY}
+
+YOUR TASK: generate questions for verified design professionals on Folio. These questions appear as editorial-quality cards in the magazine feed.
 
 FRAMING PRINCIPLE: The bio is EVIDENCE of the designer's perspective, not the SUBJECT. Every question should be about a broader design theme, philosophy, or industry conversation. The designer's bio details are referenced because they prove the designer has a distinctive point of view — but the question asks for the principle, philosophy, or transferable insight, not a retelling of their story.
 
@@ -95,14 +104,14 @@ QUESTION STRUCTURE:
 
 OPTIONAL TECHNIQUES:
 - A/B framing: "Is that more of an A or a B?" gives the designer a starting point. Examples: "Is that instinct or something you learned?" / "Does that come from your training or from client work?"
-- Trend context: "A lot of designers are rethinking X right now" — this tells the designer their answer has an audience.
-- Peer framing: "Most designers come at this from Y — your path was completely different" — positions the designer as distinctive.
+- Trend context: "A lot of designers are rethinking X right now" — this signals the question is a live, current one in the field, worth their point of view. Motivate by the work (it's a real design question), never by reach or audience size.
+- Peer framing: "Most designers come at this from Y — your path was completely different" — surfaces the distinctiveness of their approach and point of view (anchor to how they work and think, never to status or fame).
 
 BANNED PATTERNS:
 - Do NOT ask them to retell or elaborate on something they already said in their bio
 - Do NOT quote their bio back at them as the main subject ("You said X — tell us more")
 - Do NOT use "Can you share...", "Tell us about a time...", "What insights can you offer..."
-- Do NOT ask about failures, compromises, or regrets unless framed as "what did that teach you"
+- Do NOT dwell on failure or regret for its own sake — the arrivals/contrast policy above governs (contrast that resolves to the insight is welcome; grievance is not)
 
 EXAMPLES:
 BAD: "You mentioned that your grandmother's home inspired your love of design — how does that early memory influence your work today?"
@@ -111,7 +120,7 @@ GOOD: "A lot of designers talk about spaces from childhood that shaped how they 
 BAD: "Your transition from fashion to interiors is unusual — what skills transferred?"
 GOOD: "The crossover between fashion and interiors is getting more attention lately. When you think about material and drape and texture, are you drawing on the same instinct in both worlds or are they fundamentally different disciplines?"
 
-TONE: Questions should read like a thoughtful design journalist who has studied the designer's background and wants to understand the thinking behind their perspective — not a platform extracting more bio content.
+TONE: Questions should read like a thoughtful colleague who has studied the designer's background and wants to understand the thinking behind their perspective — not a platform extracting more bio content.
 
 Maximum 2 sentences per question. One sentence is often better.
 Questions should be answerable in 30-90 seconds of speaking or 2-4 sentences of typing.
@@ -156,6 +165,11 @@ Return a JSON array of exactly ${QUESTIONS_PER_BATCH} objects:
   const created = [];
   for (const q of questions.slice(0, QUESTIONS_PER_BATCH)) {
     if (!q.questionText) continue;
+    // Arrivals/contrast gate (docs/17 §3): drop any grievance/regret question.
+    if (!isArrivalSafe(q.questionText)) {
+      console.info('[prompted-content] arrivals gate dropped a question');
+      continue;
+    }
 
     const record = await prisma.promptedQuestion.create({
       data: {
@@ -284,7 +298,13 @@ export async function generateProjectReflectiveQuestions(userId: string) {
     async () => {
       const message = await anthropic.messages.create({
         model: MODELS.sonnet,
-        system: `You are generating questions for verified design professionals on Folio, a design publication platform. These questions appear as editorial-quality cards in the magazine feed.
+        system: `${FOLIO_INTERVIEWER_PERSONA}
+
+${SHARED_RULE_BLOCK}
+
+${ARRIVALS_CONTRAST_POLICY}
+
+YOUR TASK: generate questions for verified design professionals on Folio. These questions appear as editorial-quality cards in the magazine feed.
 
 FRAMING PRINCIPLE: The project is the EVIDENCE, not the SUBJECT. Every question should be about a broader design theme, trend, or expertise area. The designer's specific project is referenced because it proves they have real experience with the topic — but the question asks them to share the principle, philosophy, or approach behind the decision, not to describe the decision itself.
 
@@ -295,8 +315,8 @@ QUESTION STRUCTURE:
 
 OPTIONAL TECHNIQUES:
 - A/B framing: "Is that more of an A or a B?" gives the designer a starting point and creates natural follow-up energy. Examples: "Is that an architectural move or a furniture move?" / "Do you design for how it looks now or how it'll look in ten years?" / "Is that about the client's lifestyle or the space's proportions?"
-- Trend context: "A lot of designers are rethinking X right now" or "Seamless storage is one of the most searched topics in residential design" — this tells the designer their answer has an audience.
-- Peer framing: "Most designers solve this with Y — you went a completely different direction" — this positions the designer as distinctive.
+- Trend context: "A lot of designers are rethinking X right now" — this signals the question is a live, current one in the field, worth their point of view. Motivate by the work (it's a real design question), never by reach, search volume, or audience size.
+- Peer framing: "Most designers solve this with Y — you went a completely different direction" — surfaces the distinctiveness of their approach and point of view (anchor to how they work and think, never to status or fame).
 
 BANNED PATTERNS:
 - Do NOT ask about specific project details as the main subject ("what drew you to pair X with Y in Project Z")
@@ -312,7 +332,7 @@ GOOD: "A lot of designers are rethinking hidden storage right now. Your prep kit
 BAD: "Luca's House features a fluid layout that 'invites interaction' — how did you achieve that openness?"
 GOOD: "Open layouts are everywhere, but most of them feel like one big room instead of distinct spaces that flow. Your approach in Luca's House kept the openness without losing the rooms — is that an architectural move or a furniture move?"
 
-TONE: Questions should read like a thoughtful design journalist who has studied the designer's portfolio and wants to understand the thinking behind the work — not a platform asking for more content about a specific room.
+TONE: Questions should read like a thoughtful colleague who has studied the designer's portfolio and wants to understand the thinking behind the work — not a platform asking for more content about a specific room.
 
 Maximum 2 sentences per question. One sentence is often better.
 Questions should be answerable in 30-90 seconds of speaking or 2-4 sentences of typing.
@@ -357,6 +377,11 @@ Return a JSON array of exactly ${QUESTIONS_PER_BATCH} objects:
   const created = [];
   for (const q of questions.slice(0, QUESTIONS_PER_BATCH)) {
     if (!q.questionText) continue;
+    // Arrivals/contrast gate (docs/17 §3): drop any grievance/regret question.
+    if (!isArrivalSafe(q.questionText)) {
+      console.info('[prompted-content] arrivals gate dropped a question');
+      continue;
+    }
 
     const record = await prisma.promptedQuestion.create({
       data: {

@@ -269,12 +269,6 @@ export function CreateAppreciationDinnerModal({
                   ))}
                 </div>
               </section>
-
-              <div className="pt-6 border-t border-folio-border-subtle text-right">
-                <p className="text-xs text-folio-text-secondary">
-                  Powered by <span className="font-medium">Grok-4</span>
-                </p>
-              </div>
             </div>
           )}
         </div>

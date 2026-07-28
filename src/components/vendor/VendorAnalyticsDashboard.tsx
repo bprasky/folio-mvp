@@ -2,16 +2,13 @@
 
 import { useState } from "react";
 import { mockVendorAnalyticsData } from "@/lib/vendorAnalyticsMock";
-import { defaultDemoControls, DemoControls } from "@/lib/vendorAnalyticsDemoState";
 import AnalyticsQuestionHero from "./AnalyticsQuestionHero";
-import { DynamicInsightPanel } from "./DynamicInsightPanel";
 import { InfluenceValueCard } from "./insight-cards/InfluenceValueCard";
 import { TopEngagedDesignersCard } from "./insight-cards/TopEngagedDesignersCard";
 import { EventsThatMovedMetalCard } from "./insight-cards/EventsThatMovedMetalCard";
 
 export default function VendorAnalyticsDashboard() {
   const vendor = mockVendorAnalyticsData.vendor;
-  const [controls] = useState<DemoControls>(defaultDemoControls);
   const [activeQuestion, setActiveQuestion] = useState<string | null>(null);
   const [hasConversation, setHasConversation] = useState(false);
 
@@ -48,16 +45,19 @@ export default function VendorAnalyticsDashboard() {
         </div>
       </div>
 
-      {/* AI Conversation – appears only after first question */}
+      {/* AI conversation panel removed with the Grok chat. Placeholder keeps the
+          ask flow from dead-ending until the insights engine is rebuilt. */}
       {hasConversation && (
         <div className="max-w-7xl mx-auto px-6 pb-12">
-          <DynamicInsightPanel
-            initialQuestion={activeQuestion}
-            vendorId={vendor.vendorId}
-            scenarioControls={controls}
-            mode="analytics"
-            onConversationStart={() => setHasConversation(true)}
-          />
+          <div className="rounded-lg border border-folio-border bg-surface-raised p-6 text-center">
+            <p className="font-medium text-folio-text-primary">
+              AI analytics is being rebuilt.
+            </p>
+            <p className="folio-meta text-folio-text-secondary mt-1">
+              {activeQuestion ? `You asked: "${activeQuestion}." ` : ""}
+              Conversational insights will return soon.
+            </p>
+          </div>
         </div>
       )}
     </div>

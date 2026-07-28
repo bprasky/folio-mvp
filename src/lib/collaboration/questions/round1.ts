@@ -12,21 +12,23 @@ export type CollaborationQuestion = {
   maxLen?: number;
 };
 
-// Vendor Round 1 Questions - Focus on partnership and product perspective
+// Vendor Round 1 Questions — observational, single-topic. The working relationship is the
+// legitimate subject; questions ask for specifics and let the substance emerge (no presumptive
+// praise). docs/17 §1 (merit-not-prestige), §2 rule 2 (one question at a time).
 export const VENDOR_ROUND1_QUESTIONS: CollaborationQuestion[] = [
   // Relationship
   {
     id: 'v1-relationship-1',
     role: 'VENDOR',
     category: 'relationship',
-    prompt: 'How did you first connect with this designer, and what stood out about their approach?',
-    helper: 'Think about the initial interaction or project that brought you together.',
+    prompt: 'How did you first start working with this designer?',
+    helper: 'Think about the initial project or interaction that brought you together.',
   },
   {
     id: 'v1-relationship-2',
     role: 'VENDOR',
     category: 'relationship',
-    prompt: 'What makes this designer particularly effective to work with from a vendor perspective?',
+    prompt: 'From a vendor\'s side, walk us through what it\'s actually like to work with this designer.',
   },
 
   // Project
@@ -34,13 +36,13 @@ export const VENDOR_ROUND1_QUESTIONS: CollaborationQuestion[] = [
     id: 'v1-project-1',
     role: 'VENDOR',
     category: 'project',
-    prompt: 'Describe a project where this collaboration really clicked. What made it special?',
+    prompt: 'Walk us through a specific project the two of you worked on together.',
   },
   {
     id: 'v1-project-2',
     role: 'VENDOR',
     category: 'project',
-    prompt: 'How did your products contribute to the designer\'s vision in memorable ways?',
+    prompt: 'Tell us about a specific place one of your products ended up in this designer\'s work.',
   },
 
   // Process
@@ -48,14 +50,19 @@ export const VENDOR_ROUND1_QUESTIONS: CollaborationQuestion[] = [
     id: 'v1-process-1',
     role: 'VENDOR',
     category: 'process',
-    prompt: 'Walk us through how you typically collaborate on specifications and selections.',
-    helper: 'Consider communication style, decision-making, and problem-solving.',
+    prompt: 'How do the two of you communicate day-to-day on a project?',
   },
   {
     id: 'v1-process-2',
     role: 'VENDOR',
     category: 'process',
-    prompt: 'How do you handle requests for customization or unique applications of your products?',
+    prompt: 'When there\'s a decision to make on a specification, how do you land on it together?',
+  },
+  {
+    id: 'v1-process-3',
+    role: 'VENDOR',
+    category: 'process',
+    prompt: 'When a spec needs adjusting mid-project, how do you work through it together?',
   },
 
   // Philosophy
@@ -63,7 +70,7 @@ export const VENDOR_ROUND1_QUESTIONS: CollaborationQuestion[] = [
     id: 'v1-philosophy-1',
     role: 'VENDOR',
     category: 'philosophy',
-    prompt: 'What do you believe makes a vendor-designer relationship truly successful?',
+    prompt: 'What do you think makes a vendor-designer relationship work?',
   },
 
   // Outcome
@@ -71,25 +78,27 @@ export const VENDOR_ROUND1_QUESTIONS: CollaborationQuestion[] = [
     id: 'v1-outcome-1',
     role: 'VENDOR',
     category: 'outcome',
-    prompt: 'Has this collaboration influenced how you develop or present your products?',
+    prompt: 'How has working with this designer shown up in how you develop your products, if at all?',
   },
 ];
 
-// Designer Round 1 Questions - Focus on creative process and partnership value
+// Designer Round 1 Questions — observational, single-topic. The working relationship is the
+// legitimate subject; questions ask for specifics and let the substance emerge (no presumptive
+// praise). docs/17 §1 (merit-not-prestige), §2 rule 2 (one question at a time).
 export const DESIGNER_ROUND1_QUESTIONS: CollaborationQuestion[] = [
   // Relationship
   {
     id: 'd1-relationship-1',
     role: 'DESIGNER',
     category: 'relationship',
-    prompt: 'How did you discover this vendor, and what initially drew you to their work?',
-    helper: 'Consider what set them apart from other options.',
+    prompt: 'How did you first come across this vendor?',
+    helper: 'Think about the project or moment you started working with them.',
   },
   {
     id: 'd1-relationship-2',
     role: 'DESIGNER',
     category: 'relationship',
-    prompt: 'What qualities do you value most in your relationship with this vendor?',
+    prompt: 'Walk us through how you and this vendor actually work together.',
   },
 
   // Project
@@ -97,13 +106,13 @@ export const DESIGNER_ROUND1_QUESTIONS: CollaborationQuestion[] = [
     id: 'd1-project-1',
     role: 'DESIGNER',
     category: 'project',
-    prompt: 'Tell us about a project where their products became central to your design narrative.',
+    prompt: 'Tell us about a specific project where you used their products.',
   },
   {
     id: 'd1-project-2',
     role: 'DESIGNER',
     category: 'project',
-    prompt: 'Have their products ever surprised you or opened new creative directions?',
+    prompt: 'Tell us about a specific time one of their products shaped a decision in your work.',
   },
 
   // Process
@@ -111,14 +120,19 @@ export const DESIGNER_ROUND1_QUESTIONS: CollaborationQuestion[] = [
     id: 'd1-process-1',
     role: 'DESIGNER',
     category: 'process',
-    prompt: 'How do you approach sourcing and specifying with this vendor differently than others?',
+    prompt: 'How do you and this vendor communicate through a project?',
   },
   {
     id: 'd1-process-2',
     role: 'DESIGNER',
     category: 'process',
-    prompt: 'Describe a time when they went above and beyond to support your vision.',
-    helper: 'Could be customization, timing, problem-solving, etc.',
+    prompt: 'When you\'re specifying with them and a choice comes up, how do you land on it?',
+  },
+  {
+    id: 'd1-process-3',
+    role: 'DESIGNER',
+    category: 'process',
+    prompt: 'When something on an order needs sorting out, how do the two of you handle it?',
   },
 
   // Philosophy
@@ -126,7 +140,7 @@ export const DESIGNER_ROUND1_QUESTIONS: CollaborationQuestion[] = [
     id: 'd1-philosophy-1',
     role: 'DESIGNER',
     category: 'philosophy',
-    prompt: 'How do strong vendor relationships elevate your work for clients?',
+    prompt: 'How do your vendor relationships show up in the work you deliver to clients?',
   },
 
   // Outcome
@@ -134,7 +148,7 @@ export const DESIGNER_ROUND1_QUESTIONS: CollaborationQuestion[] = [
     id: 'd1-outcome-1',
     role: 'DESIGNER',
     category: 'outcome',
-    prompt: 'How has this partnership shaped your approach to material selection or sourcing?',
+    prompt: 'How has working with this vendor shaped how you select materials?',
   },
 ];
 

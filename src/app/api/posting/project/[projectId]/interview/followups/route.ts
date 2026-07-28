@@ -14,6 +14,9 @@ import { cid } from "@/lib/utils/correlation";
 import { z } from "zod";
 import { randomUUID } from "crypto";
 import { MODELS } from '@/lib/ai/models';
+import { FOLIO_INTERVIEWER_PERSONA } from "@/lib/interview/prompts/persona";
+import { SHARED_RULE_BLOCK, ARRIVALS_CONTRAST_POLICY } from "@/lib/interview/prompts/rules";
+import { isArrivalSafe } from "@/lib/interview/prompts/validateQuestion";
 
 // Cache last good follow-ups in-memory (dev/runtime only)
 const lastGoodFollowups = new Map<string, Array<{ id: string; prompt: string }>>();
@@ -34,7 +37,13 @@ const POSTING_V1_ENABLED =
   process.env.NODE_ENV !== "production";
 const ANTHROPIC_ENABLED =
   !!process.env.ANTHROPIC_API_KEY && process.env.ANTHROPIC_ENABLED !== "false";
-const SYSTEM_PROMPT = `You are an editorial interviewer for a design magazine. Based on the designer's initial answers about their project, generate follow-up questions that dig deeper into the most interesting aspects of their work.
+const SYSTEM_PROMPT = `${FOLIO_INTERVIEWER_PERSONA}
+
+${SHARED_RULE_BLOCK}
+
+${ARRIVALS_CONTRAST_POLICY}
+
+Based on the designer's initial answers about their project, generate follow-up questions that dig deeper into the most interesting aspects of their work.
 
 Focus on:
 - Specific design decisions that reveal creative process (not just product selection)
@@ -44,7 +53,6 @@ Focus on:
 - Spatial experiences: how does moving through the space feel? What reveals itself?
 
 Rules:
-- Ask about ARRIVALS, not departures. "What clicked about this choice?" not "Why did you reject the alternatives?"
 - Frame questions to elicit quotable, publishable answers
 - Be specific — reference actual products, rooms, or details from their answers
 - Avoid generic questions like "What inspired you?" — dig into specifics
@@ -360,6 +368,19 @@ export async function POST(
             };
           })
           .filter((item) => item.followUps.length);
+      }
+
+      // Arrivals/contrast gate (docs/17 §3): drop grievance/regret follow-ups.
+      {
+        let dropped = 0;
+        followUpsRaw = followUpsRaw
+          .map((item) => {
+            const kept = item.followUps.filter((fu) => isArrivalSafe(fu.prompt));
+            dropped += item.followUps.length - kept.length;
+            return { ...item, followUps: kept };
+          })
+          .filter((item) => item.followUps.length);
+        if (dropped > 0) console.info(`[followups] arrivals gate dropped ${dropped} follow-up(s)`, { _cid });
       }
 
       // Convert to required return format with dedupe keys

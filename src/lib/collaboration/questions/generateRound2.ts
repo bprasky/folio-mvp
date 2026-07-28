@@ -7,6 +7,9 @@ import Anthropic from '@anthropic-ai/sdk';
 import { callLLM } from '@/lib/posting/llmClient';
 import { Round1Response, CollaborationQuestion, getRound1Questions } from './round1';
 import { MODELS } from '@/lib/ai/models';
+import { FOLIO_INTERVIEWER_PERSONA } from '@/lib/interview/prompts/persona';
+import { SHARED_RULE_BLOCK, ARRIVALS_CONTRAST_POLICY } from '@/lib/interview/prompts/rules';
+import { isArrivalSafe } from '@/lib/interview/prompts/validateQuestion';
 
 export type Round2Question = CollaborationQuestion & {
   derivedFrom: string; // ID of the Round 1 question this follows up on
@@ -19,13 +22,18 @@ export type Round2Data = {
   completedAt?: string;
 };
 
-const ROUND2_SYSTEM_PROMPT = `You are an expert editorial interviewer for a design industry publication. Your role is to generate thoughtful follow-up questions that dig deeper into the stories and themes that emerged from initial interview responses.
+const ROUND2_SYSTEM_PROMPT = `${FOLIO_INTERVIEWER_PERSONA}
+
+${SHARED_RULE_BLOCK}
+
+${ARRIVALS_CONTRAST_POLICY}
+
+You are generating the second round of a collaboration-story interview: thoughtful follow-up questions that dig deeper into the stories and themes that emerged from the initial responses.
 
 Guidelines:
 - Ask questions that elicit specific stories, examples, and details
 - Build on interesting threads from the initial responses
-- Maintain a conversational but professional tone
-- Focus on the human elements of collaboration
+- Focus on the human elements of how these two actually worked together
 - Avoid generic or surface-level questions
 - Each question should feel natural and connected to what was shared
 
@@ -103,7 +111,10 @@ Return a JSON array of 4-6 questions.`;
 
   // Validate and transform response
   const questions = Array.isArray(result.data) ? result.data : [];
-  return questions.map((q: any, index: number) => ({
+  // Arrivals/contrast gate (docs/17 §3): drop grievance/regret follow-ups.
+  const gated = questions.filter((q: any) => !!q?.prompt && isArrivalSafe(q.prompt));
+  if (gated.length < questions.length) console.info('[generateRound2] arrivals gate dropped', questions.length - gated.length);
+  return gated.map((q: any, index: number) => ({
     id: q.id || `r2-${role.toLowerCase()}-${index + 1}`,
     role,
     category: q.category || 'project',
@@ -122,7 +133,7 @@ function getFallbackRound2Questions(role: 'VENDOR' | 'DESIGNER'): Round2Question
         id: 'r2-vendor-1',
         role: 'VENDOR',
         category: 'project',
-        prompt: 'Can you walk us through a specific moment in a project where the collaboration felt particularly rewarding?',
+        prompt: 'Can you walk us through a specific moment in a project with this designer that stands out to you?',
         derivedFrom: 'v1-project-1',
         context: 'Seeks concrete story',
       },
@@ -158,7 +169,7 @@ function getFallbackRound2Questions(role: 'VENDOR' | 'DESIGNER'): Round2Question
       id: 'r2-designer-1',
       role: 'DESIGNER',
       category: 'project',
-      prompt: 'Tell us about a specific design challenge where this vendor\'s products provided an unexpected solution.',
+      prompt: 'Tell us about a specific design decision where this vendor\'s products played a part.',
       derivedFrom: 'd1-project-2',
       context: 'Seeks concrete story',
     },
@@ -174,7 +185,7 @@ function getFallbackRound2Questions(role: 'VENDOR' | 'DESIGNER'): Round2Question
       id: 'r2-designer-3',
       role: 'DESIGNER',
       category: 'relationship',
-      prompt: 'What\'s a conversation or interaction that exemplifies why this partnership works?',
+      prompt: 'What\'s a conversation or interaction that captures how this partnership actually works?',
       derivedFrom: 'd1-relationship-2',
       context: 'Concrete example',
     },

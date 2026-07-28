@@ -14,6 +14,9 @@ import { MODELS } from '@/lib/ai/models';
 import { callLLM } from '@/lib/posting/llmClient';
 import type { QueueFormat } from './assignFormat';
 import type { ExtractedAngle, PromptStructure, QueuePromptItem } from './types';
+import { FOLIO_INTERVIEWER_PERSONA } from '@/lib/interview/prompts/persona';
+import { SHARED_RULE_BLOCK, ARRIVALS_CONTRAST_POLICY } from '@/lib/interview/prompts/rules';
+import { isArrivalSafe } from '@/lib/interview/prompts/validateQuestion';
 
 const PROMPT_GEN_MAX_TOKENS = 1200;
 const PROMPT_GEN_TEMPERATURE = 0.6;
@@ -37,9 +40,15 @@ function evidenceFactLines(angle: ExtractedAngle): string {
     .join('; ');
 }
 
-const SYSTEM_PROMPT = `You are Folio's editorial interviewer. You are handed ONE editorial angle about a designer's body of work, plus the FORMAT the finished piece will take. Write the specific prompts the designer will answer.
+const SYSTEM_PROMPT = `${FOLIO_INTERVIEWER_PERSONA}
 
-The whole point is specificity: every prompt must be grounded in THIS angle and its evidence, the kind of question that could only be asked of this designer. Never write a generic prompt ("what inspires you?"). Ask one thing at a time. Warm, curious, a colleague over coffee — not a form field.
+${SHARED_RULE_BLOCK}
+
+${ARRIVALS_CONTRAST_POLICY}
+
+YOUR TASK: you are handed ONE editorial angle about a designer's body of work, plus the FORMAT the finished piece will take. Write the specific prompts the designer will answer.
+
+The whole point is specificity: every prompt must be grounded in THIS angle and its evidence — the kind of question that could only be asked of this designer. Never write a generic prompt ("what inspires you?").
 
 Return ONLY a JSON object, no prose, no markdown fences:
 {"intro": "one-line framing shown to the designer", "items": [{"prompt": "...", "hint": "what we're listening for", "optionA": "only for this_or_that", "optionB": "only for this_or_that"}]}
@@ -73,6 +82,11 @@ export function parsePromptResponse(raw: string, format: QueueFormat): PromptStr
     if (!raw || typeof raw !== 'object') continue;
     const row = raw as Record<string, unknown>;
     if (typeof row.prompt !== 'string' || !row.prompt.trim()) continue;
+    // Arrivals/contrast gate (docs/17 §3): drop any grievance/regret prompt.
+    if (!isArrivalSafe(row.prompt.trim())) {
+      console.info('[generatePrompts] arrivals gate dropped a prompt');
+      continue;
+    }
     const item: QueuePromptItem = { id: randomUUID(), prompt: row.prompt.trim() };
     if (typeof row.hint === 'string' && row.hint.trim()) item.hint = row.hint.trim();
     if (typeof row.optionA === 'string' && row.optionA.trim()) item.optionA = row.optionA.trim();
