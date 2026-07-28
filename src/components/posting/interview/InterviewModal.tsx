@@ -520,7 +520,11 @@ export function InterviewModal({
             } else if (jumpToQuestionId) {
               // Editing one saved answer — skip the "Welcome back" screen; the
               // jump effect navigates to that question once questions have loaded.
+              // Force the question phase: a persisted draft with savedPhase
+              // 'complete' would otherwise flash the generation screen (that
+              // screen was previously masked by the draft-resume overlay we skip).
               setShowDraftResume(false);
+              setPhase('question');
               console.log('[InterviewModal] Edit-jump requested, skipping draft resume:', { jumpToQuestionId });
             } else {
               // Show draft resume prompt so user can choose: continue or start over
@@ -1268,23 +1272,35 @@ export function InterviewModal({
   useEffect(() => {
     if (!jumpToQuestionId || jumpDone) return;
     if (!preloadComplete) return;
-    // Room-paced: wait for the room set so room-level questions exist to land on.
-    if (hasRoomPacing && roomsBlocked) return;
 
-    const found = hasRoomPacing ? roomFlow.goToQuestionId(jumpToQuestionId) : false;
+    let found = false;
+    if (hasRoomPacing) {
+      // Wait for the room set so room-level questions exist to land on.
+      if (roomsBlocked) return;
+      found = roomFlow.goToQuestionId(jumpToQuestionId);
+    } else {
+      // Flat interview: wait for questions to load, then find it in the flat list.
+      if (questionsLoading) return;
+      const idx = selectedQuestions.findIndex((q) => q.id === jumpToQuestionId);
+      if (idx >= 0) {
+        setCurrentQuestionIndex(idx);
+        found = true;
+      }
+    }
+
     setShowDraftResume(false);
     if (found) {
       setPhase('question');
-      logClient('edit:jump-to-question', { questionId: jumpToQuestionId });
+      logClient('edit:jump-to-question', { questionId: jumpToQuestionId, mode: hasRoomPacing ? 'room' : 'flat' });
     } else {
-      // Not room-paced, or the question is gone from the current set — resume
-      // instead of hanging on a spinner.
+      // The question is gone from the current set (project changed since it was
+      // answered) — resume instead of hanging on a spinner.
       setResumeRequested(true);
       logClient('edit:jump-fallback-resume', { questionId: jumpToQuestionId, hasRoomPacing });
     }
     setJumpDone(true);
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [jumpToQuestionId, jumpDone, preloadComplete, hasRoomPacing, roomsBlocked, roomFlow.rooms.length]);
+  }, [jumpToQuestionId, jumpDone, preloadComplete, hasRoomPacing, roomsBlocked, roomFlow.rooms.length, questionsLoading, selectedQuestions]);
 
   // Finish detection for the IN-SESSION path (single source of truth). When
   // roomFlow.canFinish flips true — after skipping the last room or answering the
@@ -1506,6 +1522,17 @@ export function InterviewModal({
       // Save answer
       await persistAnswers([answerData], { includeFollowUps: false });
 
+      // Edit mode: the designer opened the modal to fix ONE saved answer. Persist
+      // it and close — never generate follow-ups, sweep to the next question, or
+      // (re)generate the draft. Without this, resubmitting one edited answer would
+      // continue the whole interview and fire LLM calls the designer didn't ask
+      // for. (jumpToQuestionId is cleared by the caller on close.)
+      if (jumpToQuestionId) {
+        logClient('edit:answer-saved-close', { questionId: currentQuestion.id });
+        onOpenChange(false);
+        return; // finally clears isSubmitting
+      }
+
       // Flush background evaluation results first (speculative, pre-computed while user typed)
       const bgUpdates = bgFlush();
 
@@ -1599,7 +1626,7 @@ export function InterviewModal({
     } finally {
       setIsSubmitting(false);
     }
-  }, [currentQuestion, currentAnswer, currentQuestionIndex, totalQuestions, persistAnswers, generateSingleFollowUp, handleBanner, followUps, roomsBlocked]);
+  }, [currentQuestion, currentAnswer, currentQuestionIndex, totalQuestions, persistAnswers, generateSingleFollowUp, handleBanner, followUps, roomsBlocked, jumpToQuestionId, onOpenChange]);
 
   // Handle regeneration prompt choices when a previous answer was changed
   const handleKeepExistingFollowUps = useCallback(async () => {

@@ -368,8 +368,12 @@ interface PersistedQuestionSet {
  * Hash the project state that a phase's questions are derived from. Pure DB reads
  * (no LLM), so it's cheap enough to gate every request. Regeneration happens only
  * when this changes — i.e. when the project MATERIALLY changes:
- *  - both phases: project meta + the image→room assignments + rooms + per-room
- *    selection (tag) counts, which drive room budgets and question wording.
+ *  - both phases: project meta + brand identity + the image→room assignments
+ *    (and their order, which picks the representative images) + rooms + per-room
+ *    tag CONTENT (product/vendor/finish + named-vs-descriptor). The content — not
+ *    just the count — matters: room questions name specific products and vendors,
+ *    so retagging a product must invalidate the persisted set even though the
+ *    count is unchanged.
  *  - rooms phase additionally folds in the saved "About This Project" answers,
  *    since the room questions are generated from a digest of them.
  */
@@ -386,13 +390,22 @@ async function computeQuestionSignature(
       regionState: true,
       projectType: true,
       clientType: true,
-      images: { select: { id: true, room: true, roomId: true } },
+      designer: { select: { name: true, studio: true } },
+      designerOrg: { select: { name: true } },
+      images: { select: { id: true, room: true, roomId: true, displayOrder: true } },
       rooms: {
         select: {
           id: true,
           name: true,
           type: true,
-          _count: { select: { selections: true } },
+          selections: {
+            select: {
+              productName: true,
+              vendorName: true,
+              colorFinish: true,
+              productTagId: true,
+            },
+          },
         },
       },
     },
@@ -406,13 +419,26 @@ async function computeQuestionSignature(
       regionState: proj?.regionState ?? '',
       projectType: proj?.projectType ?? '',
       clientType: proj?.clientType ?? '',
+      // Brand identity feeds the SIGNATURE_IDENTITY project question.
+      brand: proj?.designerOrg?.name ?? proj?.designer?.name ?? '',
+      studio: proj?.designerOrg?.name ?? proj?.designer?.studio ?? '',
     },
     // Sort so ordering churn never invalidates an otherwise-identical project.
+    // displayOrder is kept because the project questions use the top-N images.
     images: (proj?.images ?? [])
-      .map((i) => `${i.id}:${i.room ?? ''}:${i.roomId ?? ''}`)
+      .map((i) => `${i.id}:${i.room ?? ''}:${i.roomId ?? ''}:${i.displayOrder ?? ''}`)
       .sort(),
+    // Per-room tag content, not just counts — a retag changes wording, not count.
     rooms: (proj?.rooms ?? [])
-      .map((r) => `${r.id}:${r.name}:${r.type ?? ''}:${r._count.selections}`)
+      .map((r) => {
+        const sels = (r.selections ?? [])
+          .map(
+            (s) =>
+              `${s.productName ?? ''}|${s.vendorName ?? ''}|${s.colorFinish ?? ''}|${s.productTagId ? 'named' : 'descriptor'}`,
+          )
+          .sort();
+        return `${r.id}:${r.name}:${r.type ?? ''}:[${sels.join(',')}]`;
+      })
       .sort(),
   };
 
