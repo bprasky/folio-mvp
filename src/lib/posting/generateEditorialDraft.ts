@@ -1,4 +1,5 @@
 import Anthropic from "@anthropic-ai/sdk";
+import { jsonrepair } from "jsonrepair";
 import { BlocksSchema, syncPullQuotesFromChapters } from "./schemas";
 import type { PullQuoteSelection, PullQuoteAlternative } from "./schemas";
 import { z } from "zod";
@@ -1452,17 +1453,27 @@ export async function generateEditorialDraft(input: GenInput): Promise<{
     );
   }
 
-  // Parse JSON output
+  // Parse JSON output. Strict parse is the happy path; when the model emits
+  // syntactically invalid JSON (an unescaped quote or control char inside a
+  // prose string, a missing comma — the model FINISHED, this is not truncation)
+  // fall back to jsonrepair rather than hard-failing the whole generation. The
+  // repaired draft is still fully editable downstream; a 502 is not recoverable.
   let composed: any;
+  const cleaned = rawText.replace(/```json\n?|\n?```/g, '').trim();
   try {
-    const cleaned = rawText.replace(/```json\n?|\n?```/g, '').trim();
     composed = JSON.parse(cleaned);
   } catch (parseError: any) {
-    console.warn('[generate] JSON parse error', { _cid, error: parseError?.message });
-    throw new EditorialGenerationError(
-      'LLM_JSON_PARSE',
-      'The AI model returned malformed output. Try regenerating.',
-    );
+    console.warn('[generate] JSON parse error — attempting repair', { _cid, error: parseError?.message });
+    try {
+      composed = JSON.parse(jsonrepair(cleaned));
+      console.warn('[generate] JSON repaired successfully', { _cid });
+    } catch (repairError: any) {
+      console.warn('[generate] JSON repair failed', { _cid, error: repairError?.message });
+      throw new EditorialGenerationError(
+        'LLM_JSON_PARSE',
+        'The AI model returned malformed output. Try regenerating.',
+      );
+    }
   }
 
   // Validate room structure (monitoring only)
