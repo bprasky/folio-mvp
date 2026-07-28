@@ -1382,8 +1382,15 @@ export async function generateEditorialDraft(input: GenInput): Promise<{
   // answer-based count collapses to 0 and starves an image-driven multi-room
   // draft — the model then truncates mid-JSON and the parse fails as
   // LLM_JSON_PARSE. Each written chapter needs ~800 tokens of prose+structure.
+  // Cap note: the Sonnet model ceiling is 128K output tokens, so this cap is
+  // NOT a model limit — it's a wall-clock guard. This call is non-streaming, and
+  // a generation that runs for many minutes risks an HTTP timeout / serverless
+  // maxDuration 502 before the JSON returns. 32K (~37 rooms at 800/room) covers
+  // any realistic project while staying inside a completable window. To size for
+  // genuinely unbounded projects, switch this call to `.stream()` +
+  // getFinalMessage() and the cap can safely rise toward 128K.
   const outputRoomCount = Math.max(writeRooms.length, 1);
-  const maxTokens = Math.min(16000, Math.max(4096, outputRoomCount * 800 + 2000));
+  const maxTokens = Math.min(32000, Math.max(4096, outputRoomCount * 800 + 2000));
   const modelName = MODELS.sonnet;
 
   const llmResult = await callLLM(
