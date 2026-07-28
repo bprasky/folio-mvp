@@ -61,6 +61,14 @@ interface InterviewModalProps {
   }>;
   /** When provided, called instead of router.push on successful draft generation. */
   onDraftGenerated?: () => void;
+  /**
+   * When set, the caller has already presented the resume/restart choice (e.g.
+   * the Project Progress Tracker's "Your story so far" section), so the modal
+   * skips its own "Welcome back" screen and acts on the intent directly:
+   *  - 'resume'  → jump straight to where the designer left off (no Q1 flash).
+   *  - 'restart' → clear saved answers and begin a fresh interview.
+   */
+  initialIntent?: 'resume' | 'restart' | null;
 }
 
 const SIX_W_SECTIONS = new Set(["why", "who", "what", "where", "when", "how"]);
@@ -123,6 +131,7 @@ export function InterviewModal({
   hasVendors = false,
   tags = [],
   onDraftGenerated,
+  initialIntent = null,
 }: InterviewModalProps) {
   const router = useRouter();
   // Interview mode: 'select' shows mode picker, 'realtime' for voice, 'text' for traditional
@@ -135,6 +144,11 @@ export function InterviewModal({
   // Draft resume: when reopening with an existing draft, show a choice
   const [showDraftResume, setShowDraftResume] = useState(false);
   const [draftAnswerCount, setDraftAnswerCount] = useState(0);
+  // Gates the initial question render until the preload GET resolves, so the
+  // modal never flashes "About Q1" before it knows the designer already has
+  // saved progress — the "first question pops up, then a minute to register my
+  // progress" report. Reset to false on each open; set true when preload lands.
+  const [preloadComplete, setPreloadComplete] = useState(false);
   // Set when the designer picks "Continue where I left off" — arms the resume
   // navigation effect (which then jumps to the room they actually reached).
   const [resumeRequested, setResumeRequested] = useState(false);
@@ -296,6 +310,9 @@ export function InterviewModal({
     if (!open) return;
 
     let cancelled = false;
+    // Re-arm the render gate: hold the question phase on a spinner until this
+    // GET resolves so Q1 never flashes ahead of the resume decision.
+    setPreloadComplete(false);
 
     (async () => {
       try {
@@ -468,11 +485,9 @@ export function InterviewModal({
             setFollowUps([]);
             console.log('[InterviewModal] Skipping draft resume (starting fresh)');
           } else if (hasBaseAnswers && !cancelled) {
-            // Show draft resume prompt so user can choose: continue or start over
+            // Pre-set the resume state (used whether we auto-resume or prompt).
             const baseCount = finalAnswers.filter((a: any) => !a.isFollowUp).length;
             setDraftAnswerCount(baseCount);
-            setShowDraftResume(true);
-            // Pre-set the resume state (will be used if user chooses "Continue")
             setStep("answer");
             if (savedPhase === 'complete') {
               setPhase("complete");
@@ -483,7 +498,18 @@ export function InterviewModal({
               setPhase("question");
               setCurrentQuestionIndex(savedQuestionIndex);
             }
-            console.log('[InterviewModal] Showing draft resume prompt:', { baseCount, savedQuestionIndex, savedPhase });
+            if (initialIntent === 'resume') {
+              // The caller (tracker "Your story so far") already offered the
+              // resume/restart choice — skip our own "Welcome back" screen and
+              // jump straight to where they left off.
+              setShowDraftResume(false);
+              setResumeRequested(true);
+              console.log('[InterviewModal] Auto-resuming (initialIntent=resume):', { baseCount, savedQuestionIndex, savedPhase });
+            } else {
+              // Show draft resume prompt so user can choose: continue or start over
+              setShowDraftResume(true);
+              console.log('[InterviewModal] Showing draft resume prompt:', { baseCount, savedQuestionIndex, savedPhase });
+            }
           } else if (hasFollowUps && !cancelled) {
             setStep("followups");
             setPhase("followup");
@@ -497,13 +523,17 @@ export function InterviewModal({
         if (!cancelled) {
           console.error('[InterviewModal] Failed to preload answers', error);
         }
+      } finally {
+        // Preload settled (success or failure) — lift the render gate so the
+        // question phase (or resume nav) can proceed instead of hanging.
+        if (!cancelled) setPreloadComplete(true);
       }
     })();
 
     return () => {
       cancelled = true;
     };
-  }, [open, projectId]);
+  }, [open, projectId, initialIntent]);
 
   // inputModality: restore per-question source flags from the draft on open, so
   // a reload doesn't downgrade a previously-spoken answer to 'text'.
@@ -1268,6 +1298,93 @@ export function InterviewModal({
   // server snapshot, closing the race where this settled before the GET landed.
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, hasRoomPacing, roomFlow.rooms.length, serverProgressVersion]);
+
+  // Start over — clear the saved interview (client + server) and begin fresh.
+  // Extracted so both the "Welcome back" screen's button AND the restart intent
+  // (tracker "Restart interview") drive the exact same reset, with no drift.
+  const handleStartOver = useCallback(
+    async (opts?: { skipConfirm?: boolean }) => {
+      if (!opts?.skipConfirm) {
+        const confirmed = window.confirm(
+          "This will clear your current reflections and begin a new interview. Continue?",
+        );
+        if (!confirmed) return;
+      }
+
+      setIsClearing(true);
+      // Flag so the preload effect skips draft resume if it races.
+      startingFreshRef.current = true;
+      try {
+        // Clear client state
+        localStorage.removeItem(`interviewDraft:${projectId}`);
+        localStorage.removeItem(`interview-draft-${projectId}`);
+        setAnswers([]);
+        setFollowUps([]);
+        setMorphedQuestions(new Map());
+        setSelectedQuestionIds([]);
+        setCurrentQuestionIndex(0);
+        setPhase("question");
+        setStep("answer");
+        setShowDraftResume(false);
+        answerSnapshotsRef.current.clear();
+        setShowRegeneratePrompt(false);
+        setPendingResubmitQuestionId(null);
+        // Reset room-pacing flow + client status map so cleared progress can't
+        // leak into resume nav / finish detection. Clearing resumeRequested
+        // disarms the resume effect, and roomFlow.reset() restores a pristine
+        // (all not_started) flow so the fresh interview starts at room 0. Drop
+        // the persisted server snapshot and re-arm the one-time guard so the NEW
+        // interview's live two-phase entry still works.
+        roomFlow.reset();
+        setRoomStatuses({});
+        setResumeRequested(false);
+        serverRoomProgressRef.current = null;
+        didResumeNavRef.current = false;
+
+        // Clear server-side answers (matches DraftsPanel pattern)
+        const clearRes = await fetch(`/api/posting/project/${projectId}/interview`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ answers: [], followUps: [], selectedQuestionIds: [] }),
+        });
+
+        if (!clearRes.ok) {
+          const data = await clearRes.json().catch(() => ({}));
+          throw new Error(data.error || "Failed to clear answers");
+        }
+
+        console.log('[InterviewModal] Starting over — draft and server answers cleared');
+      } catch (err) {
+        console.error('[InterviewModal] Start over error:', err);
+        alert("Failed to reset interview: " + (err instanceof Error ? err.message : "Unknown error"));
+      } finally {
+        setIsClearing(false);
+      }
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [projectId, roomFlow],
+  );
+
+  // Restart intent (tracker "Restart interview"): clear and begin fresh on open,
+  // skipping the "Welcome back" prompt. Runs once per open; startingFreshRef (set
+  // inside handleStartOver) makes the racing preload GET skip draft resume too.
+  const restartIntentRef = useRef(false);
+  useEffect(() => {
+    if (!open) {
+      restartIntentRef.current = false;
+      return;
+    }
+    if (initialIntent !== 'restart' || restartIntentRef.current) return;
+    restartIntentRef.current = true;
+    // Arm the fresh-start guard SYNCHRONOUSLY, before kicking off the async
+    // clear. This effect runs right after the preload effect's synchronous body
+    // (which only *starts* the GET), so startingFreshRef is set before that GET
+    // can resolve — the preload's `else if (startingFreshRef.current)` branch
+    // then forces the fresh path regardless of who wins the network race. Do not
+    // rely on handleStartOver's internal timing to set it.
+    startingFreshRef.current = true;
+    void handleStartOver({ skipConfirm: true });
+  }, [open, initialIntent, handleStartOver]);
 
   // Skip actions (A2). Skip-question advances without recording an answer;
   // skip-room marks the room skipped and advances. Both 'skipped' and 'complete'
@@ -2497,73 +2614,23 @@ export function InterviewModal({
                 </button>
                 <button
                   disabled={isClearing}
-                  onClick={async () => {
-                    const confirmed = window.confirm(
-                      "This will clear your current reflections and begin a new interview. Continue?"
-                    );
-                    if (!confirmed) return;
-
-                    setIsClearing(true);
-                    // Flag so preload effect skips draft resume if it races
-                    startingFreshRef.current = true;
-                    try {
-                      // Clear client state
-                      localStorage.removeItem(`interviewDraft:${projectId}`);
-                      localStorage.removeItem(`interview-draft-${projectId}`);
-                      setAnswers([]);
-                      setFollowUps([]);
-                      setMorphedQuestions(new Map());
-                      setSelectedQuestionIds([]);
-                      setCurrentQuestionIndex(0);
-                      setPhase("question");
-                      setStep("answer");
-                      setShowDraftResume(false);
-                      answerSnapshotsRef.current.clear();
-                      setShowRegeneratePrompt(false);
-                      setPendingResubmitQuestionId(null);
-                      // Reset room-pacing flow + client status map so cleared
-                      // progress can't leak into resume nav / finish detection.
-                      // Clearing resumeRequested disarms the resume effect, and
-                      // roomFlow.reset() restores a pristine (all not_started)
-                      // flow so the fresh interview starts at room 0. Drop the
-                      // persisted server snapshot and re-arm the one-time guard so
-                      // the NEW interview's live two-phase entry still works.
-                      roomFlow.reset();
-                      setRoomStatuses({});
-                      setResumeRequested(false);
-                      serverRoomProgressRef.current = null;
-                      didResumeNavRef.current = false;
-
-                      // Clear server-side answers (matches DraftsPanel pattern)
-                      const clearRes = await fetch(`/api/posting/project/${projectId}/interview`, {
-                        method: "POST",
-                        headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({
-                          answers: [],
-                          followUps: [],
-                          selectedQuestionIds: []
-                        })
-                      });
-
-                      if (!clearRes.ok) {
-                        const data = await clearRes.json().catch(() => ({}));
-                        throw new Error(data.error || "Failed to clear answers");
-                      }
-
-                      console.log('[InterviewModal] Starting over — draft and server answers cleared');
-                    } catch (err) {
-                      console.error('[InterviewModal] Start over error:', err);
-                      alert("Failed to reset interview: " + (err instanceof Error ? err.message : "Unknown error"));
-                    } finally {
-                      setIsClearing(false);
-                    }
-                  }}
+                  onClick={() => handleStartOver()}
                   className="px-6 py-3 text-sm font-medium text-folio-text-secondary hover:text-folio-text-primary transition-colors disabled:opacity-50"
                 >
                   {isClearing ? "Clearing..." : "Start over"}
                 </button>
               </div>
             </div>
+          </div>
+        ) : phase === "question" && !preloadComplete && baseAnswers.length === 0 ? (
+          /* Preload in flight and no answers loaded yet — hold on a spinner
+             instead of flashing About Q1 before we know whether the designer
+             already has saved progress (the "first question pops up, then a
+             minute to register" report). Scoped to `baseAnswers.length === 0` so
+             a reopen with already-loaded state shows content immediately rather
+             than a spinner flash while the GET refreshes. */
+          <div className="flex-1 flex items-center justify-center py-16">
+            <div className="animate-spin rounded-full h-5 w-5 border-2 border-[var(--accent)] border-t-transparent" />
           </div>
         ) : phase === "question" && !displayQuestion && allQuestions.length > 0 ? (
           /* Question set loading / resolving — prevents blank screen during ID realignment */

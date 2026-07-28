@@ -1,89 +1,51 @@
-# Fix: interview skip-last-room + resume override (branch: claude/interview-room-skip-q1-override-179v3b)
+# Progress Tracker — Story step: resume/restart + editable Q&A (branch: claude/progress-tracker-interview-flow-x8ykfp)
 
-## Symptoms (reported)
-1. Reached end, skipped the LAST room — didn't register / never proceeded to article generation.
-2. Re-entered interview, recognized 31 answers, clicked "pick up where I left off" — but an
-   override keeps the user on Question 1 of "About This Project".
+## Problem (reported)
+Designer has saved interview answers, but the Progress Tracker never surfaces the
+Story step (it's gated behind the incomplete Tags step). Re-entering the interview
+via "Continue to interview" is ugly: the first question flashes, then it takes ~a
+minute to register that progress exists. Two asks:
+1. With saved answers, surface a Story area in the tracker with Resume/Restart.
+2. Show the Q&A there, editable — editing opens an existing modal, not inline.
 
 ## Root causes
-- Bug 1: `handleSkipRoom` (and `handleQuestionAnswerSubmit`) read `roomFlow.canFinish`
-  synchronously right after mutating flow state. `skipRoom()`/`advanceQuestion()` only schedule
-  React state updates, so `canFinish` in the closure is STALE and misses the just-finished room.
-  Skipping the last room therefore never sets phase=complete / triggers generation.
-- Bug 2: `useRoomInterviewFlow` always starts at room 0 ('project' = "About This Project"), Q0, and
-  has no resume navigation. `hydrateStatuses` restores statuses but deliberately never moves the
-  cursor, and never restores `answeredCount` (so `canFinish` is false on resume even when done).
-  Result: resume dumps the user on About Q1.
+- Tracker `currentIndex` = first incomplete step (Tags), so the Story step's
+  `STORY_IN_PROGRESS_COPY` override never shows while Tags is incomplete.
+- InterviewModal renders `phase="question"` immediately on open, before the preload
+  GET resolves → Q1 flashes, then the "Welcome back" resume screen appears late.
+- Interview question IDs regenerate each session (`project-<CAT>-<uuid>`,
+  `randomUUID()` for rooms), so the full modal CANNOT reopen pinned to one past
+  answer, pre-filled. Editing one answer needs the dedicated reflection editor.
 
-## Plan (all changes in InterviewModal.tsx; no hook API change needed)
-- [ ] Add `allRoomsTerminal` (status-only: every room complete/skipped, >=1 complete, rooms loaded).
-      Needed because hydration doesn't restore answeredCount, so canFinish can't be trusted on resume.
-- [ ] Add a finish effect: when in question phase and (canFinish || allRoomsTerminal) and not
-      generating / not roomsBlocked / not on draft-resume screen -> autoGenerate + phase=complete.
-      Single source of truth for "interview finished" — fixes the stale-read (Bug 1) across skip-room,
-      skip-question, and answer-last-question (async round transitions) paths.
-- [ ] Remove the stale synchronous `canFinish` finish-checks from handleSkipRoom and
-      handleQuestionAnswerSubmit (effect owns it now).
-- [ ] Replace the narrow two-phase `goToRoom(1)` effect with a one-time-per-open resume-nav effect:
-      once rooms are loaded, if any room is terminal, navigate to the FIRST non-terminal room
-      (covers both the live two-phase "enter first room" transition and resume). If all terminal,
-      leave it to the finish effect. Reset the one-time guard when the modal closes.
+## Implementation
+- [x] Extract `EditReflectionModal` (+ `parseCategoryLabel`) from StoryPanel into
+      `src/components/posting/interview/EditReflectionModal.tsx`; StoryPanel imports it
+      (removed local dup + now-unused `cn` import).
+- [x] `InterviewModal`: add `initialIntent?: 'resume'|'restart'|null`.
+      - resume → skip "Welcome back", arm `resumeRequested` (no Q1 flash).
+      - restart → extracted `handleStartOver({skipConfirm})`, driven by a once-per-open
+        effect; the inline "Start over" button now calls the same callback.
+      - `preloadComplete` gate: hold the question phase on a spinner until the preload
+        GET settles (finally-set), so Q1 never precedes the resume decision.
+- [x] `ProjectStorySection` (NEW): "Your story so far" in the tracker card — Resume /
+      Restart + editable Q&A list. Opens InterviewModal (intent) / EditReflectionModal
+      (pre-filled). Mounts InterviewModal ONLY while open so its question-gen hooks
+      don't fire LLM calls on page load. Refetches + router.refresh() on close.
+- [x] `ProjectProgressTracker`: add `storyFooter?: ReactNode`, rendered inside the card
+      in BOTH the collapsed (Tags-step) and normal branches.
+- [x] `page.tsx`: pass `<ProjectStorySection>` as `storyFooter` when
+      `isOwner && interviewAnswerCount > 0`.
 
 ## Verify
-- [ ] `npm run typecheck` / build clean.
-- [ ] Reason through: skip last room -> generates; resume mid-interview -> first incomplete room;
-      resume fully-done -> Continue -> generate (with skipped-room confirm).
+- [x] `npx tsc --noEmit`: 1050 errors WITH changes == 1050 on clean baseline (stash
+      compare). Zero new type errors. The 8 InterviewModal errors are pre-existing.
+- [ ] folio-code-reviewer pass (running) — address findings before commit.
+- [ ] Manual: INTERVIEWED project shows the section on Tags step; Resume goes straight
+      to where left off (no Q1 flash); Restart clears; editing a Q&A opens pre-filled
+      modal and saves.
 
-## Review (results)
-Implemented all four items in InterviewModal.tsx. tsc: no NEW errors introduced
-(8 errors in this file are pre-existing on baseline bc8ccf8b — verified via stash).
-
-### Behavior walkthrough
-- Skip last room: handleSkipRoom -> skipRoom() commits -> allRoomsTerminal true ->
-  finish effect -> phase=complete + autoGenerate -> handleGenerate (skipped rooms make
-  excludedRoomNames non-empty -> confirm dialog -> generate). FIXED.
-- Answer last question of last room: recordAnswer + advanceQuestion -> async round
-  transitions -> finalizeRoomAndAdvance -> canFinish true -> finish effect. FIXED
-  (previously the synchronous canFinish read missed this async path too).
-- Resume, some rooms incomplete: hydrateStatuses restores terminal statuses ->
-  resume-nav effect navigates to first non-terminal room (not About Q1). FIXED.
-- Resume, all rooms done: Continue dismisses draft-resume -> allRoomsTerminal true ->
-  finish effect -> generate (matches "retrigger it" intent). FIXED.
-- Fresh interview: no terminal rooms until the true end -> neither effect fires early.
-- Live two-phase: resume-nav subsumes the old goToRoom(1); finalizeRoomAndAdvance still
-  handles the normal in-session transition; resume-nav no-ops when already on target.
-
-## Review round 2 (folio-code-reviewer findings addressed)
-Reviewer verdict: iterate — no blockers, two should-fix items. Both fixed:
-- Start Over now resets the flow hook (new useRoomInterviewFlow.reset()) + clears
-  roomStatuses + serverRoomProgressRef + re-arms didResumeNavRef, so cleared progress
-  can't leak into resume-nav/finish detection (previously would jump mid-list / mis-fire).
-- Closed the hydration race: serverRoomProgressRef is populated by a separate async GET;
-  added serverProgressVersion state (bumped when the snapshot lands) to the hydration
-  effect deps so persisted statuses always hydrate even if the GET resolves late.
-Nits (redundant !roomsBlocked guard; question-level within-room resume) left as-is /
-noted to user. tsc: still only the 8 pre-existing baseline errors; hook compiles clean.
-
-## Round 3 — "merged and it still didn't work" (root cause found)
-The PR #704 fix gated EVERYTHING on `roomProgress` — but roomProgress lives in a
-SEPARATE EditorialInterview record (read behind a "migration may not be applied"
-guard) that is frequently null/stale on reopen. When it's null, every gate was a
-no-op and the designer stayed pinned on About Q1. Answers, by contrast, are the
-reliable ground truth (post provenance) and carry a first-class roomId (D5).
-
-Redesign (answer-driven, roomProgress only as a supplement):
-- resumePlan (useMemo): reconstruct per-room progress from saved answers
-  (attribute by roomId + baseQuestions budget; project via 'project-' id prefix).
-  Resume jumps to the furthest room actually reached; all-done -> generate.
-- resumeRequested state: armed by "Continue where I left off"; the resume effect
-  fires once off it (not off roomProgress statuses).
-- loadRooms trigger: also fire when saved answers show About is done
-  (projectAnswersComplete || hasRoomAnswers), so resume-without-cache doesn't hang
-  on About when hook roomProgress isn't hydrated. Guarded so a FRESH interview
-  never loads rooms early from partial About context.
-- In-session finish stays on canFinish (accurate live); removed allRoomsTerminal.
-- Restored a dedicated live two-phase enter-first-room effect (fresh interviews).
-- Start Over also clears resumeRequested.
-- Added resume:plan / resume:enter-room / resume:all-done-generate logs for prod
-  diagnosis if anything still misbehaves.
-tsc: still only the 8 pre-existing baseline errors; no new errors.
+## Notes / decisions
+- User confirmed: placement = in the tracker card (top); edit = jump to that answer,
+  pre-filled. Pre-filled single-answer edit is only reliable via the reflection modal
+  (ID regeneration), so Resume/Restart use the full InterviewModal and per-answer edit
+  uses EditReflectionModal.

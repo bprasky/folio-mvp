@@ -23,6 +23,7 @@ import {
   isDocumentImage,
 } from '@/lib/publish/computePublishReadiness';
 import ProjectProgressTracker from './ProjectProgressTracker';
+import ProjectStorySection from './ProjectStorySection';
 import {
   deriveTrackerState,
   type TrackerState,
@@ -375,13 +376,34 @@ export default async function ProjectPage({
           expandedBlocks={base.post?.expandedBlocks}
         />
 
-        {/* Project Progress Tracker — adaptive guided next-action region */}
+        {/* Project Progress Tracker — adaptive guided next-action region.
+            Once the owner has saved interview answers, the tracker card also
+            hosts the "Your story so far" region: resume/restart the interview
+            and edit answers in place, without the laggy "Continue to interview"
+            round-trip. Kept reachable even on the Tags step (the interview runs
+            in parallel to tagging). */}
         {trackerState && (
           <div className="mt-2 mb-2">
             <ProjectProgressTracker
               projectId={sanitizedProject.id}
               state={trackerState}
               hideNextAction={startInTagging}
+              storyFooter={
+                isOwner && interviewAnswerCount > 0 ? (
+                  <ProjectStorySection
+                    projectId={sanitizedProject.id}
+                    projectName={sanitizedProject.title}
+                    images={base.images.map(img => ({
+                      id: img.id,
+                      url: img.url,
+                      name: img.name,
+                      room: img.room ?? null,
+                      roomId: img.roomId ?? null,
+                      displayOrder: img.displayOrder ?? null,
+                    }))}
+                  />
+                ) : null
+              }
             />
           </div>
         )}
