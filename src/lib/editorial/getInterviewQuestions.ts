@@ -15,6 +15,7 @@ import type { GeneratedQuestion } from '@/lib/interview/generateQuestions';
 import { assessProjectContext, type ProjectContext } from '@/lib/interview/contextLevel';
 import { distillInterviewFacts, type KnownFacts } from '@/lib/interview/distillInterviewFacts';
 import { prisma } from '@/lib/prisma';
+import { createHash } from 'crypto';
 
 export interface InterviewQuestion {
   id: string;
@@ -350,6 +351,149 @@ async function persistKnownFacts(projectId: string, knownFacts: KnownFacts): Pro
 }
 
 /**
+ * One persisted, phase-scoped snapshot of a generated question set. Stored under
+ * `provenance.interview.questionSet.<phase>` so a generation survives across
+ * sessions and devices: the same `signature` (a hash of the project state the
+ * questions were built from) returns the SAME question objects — same IDs — with
+ * no repeat LLM spend. Stable IDs are also what let a saved answer stay bound to
+ * its question (editing, resume, recall).
+ */
+interface PersistedQuestionSet {
+  signature: string;
+  generatedAt: string;
+  result: GroupedQuestionsResult;
+}
+
+/**
+ * Hash the project state that a phase's questions are derived from. Pure DB reads
+ * (no LLM), so it's cheap enough to gate every request. Regeneration happens only
+ * when this changes — i.e. when the project MATERIALLY changes:
+ *  - both phases: project meta + the image→room assignments + rooms + per-room
+ *    selection (tag) counts, which drive room budgets and question wording.
+ *  - rooms phase additionally folds in the saved "About This Project" answers,
+ *    since the room questions are generated from a digest of them.
+ */
+async function computeQuestionSignature(
+  projectId: string,
+  phase: InterviewGenerationPhase,
+): Promise<string> {
+  const proj = await prisma.project.findUnique({
+    where: { id: projectId },
+    select: {
+      title: true,
+      description: true,
+      city: true,
+      regionState: true,
+      projectType: true,
+      clientType: true,
+      images: { select: { id: true, room: true, roomId: true } },
+      rooms: {
+        select: {
+          id: true,
+          name: true,
+          type: true,
+          _count: { select: { selections: true } },
+        },
+      },
+    },
+  });
+
+  const structural = {
+    meta: {
+      title: proj?.title ?? '',
+      description: proj?.description ?? '',
+      city: proj?.city ?? '',
+      regionState: proj?.regionState ?? '',
+      projectType: proj?.projectType ?? '',
+      clientType: proj?.clientType ?? '',
+    },
+    // Sort so ordering churn never invalidates an otherwise-identical project.
+    images: (proj?.images ?? [])
+      .map((i) => `${i.id}:${i.room ?? ''}:${i.roomId ?? ''}`)
+      .sort(),
+    rooms: (proj?.rooms ?? [])
+      .map((r) => `${r.id}:${r.name}:${r.type ?? ''}:${r._count.selections}`)
+      .sort(),
+  };
+
+  let payload = JSON.stringify(structural);
+  if (phase === 'rooms') {
+    // Room questions are built from a digest of the About answers, so a change
+    // to those answers must invalidate the persisted room set.
+    const about = await readAboutProjectAnswers(projectId);
+    const aboutPart = about.map((a) => `${a.prompt}=>${a.answer}`).sort();
+    payload += '|about:' + JSON.stringify(aboutPart);
+  }
+
+  return createHash('sha1').update(`${phase}|${payload}`).digest('hex');
+}
+
+/** Read the persisted question set for a phase, if any. */
+async function readPersistedQuestionSet(
+  projectId: string,
+  phase: InterviewGenerationPhase,
+): Promise<PersistedQuestionSet | null> {
+  try {
+    const post = await prisma.projectPost.findUnique({
+      where: { projectId },
+      select: { provenance: true },
+    });
+    const qs = (post?.provenance as any)?.interview?.questionSet?.[phase];
+    if (qs && typeof qs.signature === 'string' && qs.result) {
+      return qs as PersistedQuestionSet;
+    }
+  } catch (err) {
+    console.warn('[getInterviewQuestionsGroupedByRoom] Failed to read persisted questionSet (non-blocking):', err);
+  }
+  return null;
+}
+
+/**
+ * Persist a freshly generated question set for a phase. Fresh-read-before-write
+ * (mirrors persistKnownFacts) and only touches `interview.questionSet.<phase>`,
+ * so it preserves the other phase's snapshot and every other provenance sibling
+ * (answers, knownFacts). No-ops when no ProjectPost exists yet.
+ */
+async function persistQuestionSet(
+  projectId: string,
+  phase: InterviewGenerationPhase,
+  signature: string,
+  result: GroupedQuestionsResult,
+): Promise<void> {
+  try {
+    const freshPost = await prisma.projectPost.findUnique({
+      where: { projectId },
+      select: { provenance: true },
+    });
+    if (!freshPost) return;
+    const freshProvenance = (freshPost.provenance as any) || {};
+    const freshInterview = freshProvenance.interview || {};
+    const freshQuestionSet = freshInterview.questionSet || {};
+    await prisma.projectPost.update({
+      where: { projectId },
+      data: {
+        provenance: {
+          ...freshProvenance,
+          interview: {
+            ...freshInterview,
+            questionSet: {
+              ...freshQuestionSet,
+              [phase]: {
+                signature,
+                generatedAt: new Date().toISOString(),
+                result,
+              },
+            },
+          },
+        },
+      },
+    });
+  } catch (err) {
+    console.warn('[getInterviewQuestionsGroupedByRoom] Failed to persist questionSet (non-blocking):', err);
+  }
+}
+
+/**
  * Get interview questions grouped by room with per-room budgets.
  * Used when `?grouped=true` is passed to the questions API.
  *
@@ -375,12 +519,26 @@ export async function getInterviewQuestionsGroupedByRoom(
      * viewer must never trigger a DB mutation.
      */
     persistFacts?: boolean;
+    /**
+     * Allow persisting the generated question set to provenance so it survives
+     * across sessions/devices with stable IDs and no repeat LLM spend. Like
+     * persistFacts, WRITE-access only — this is reachable from a view-gated GET.
+     */
+    persistQuestions?: boolean;
   },
 ): Promise<GroupedQuestionsResult> {
   const phase = options?.phase ?? 'full';
   const { getContextLevelDescription, getContextUpgradeSuggestion } = await import('@/lib/interview');
 
   if (phase === 'project') {
+    // Serve the persisted set when the project hasn't materially changed —
+    // same IDs, no LLM call.
+    const signature = await computeQuestionSignature(projectId, 'project');
+    const persisted = await readPersistedQuestionSet(projectId, 'project');
+    if (persisted && persisted.signature === signature) {
+      return persisted.result;
+    }
+
     const context = await assessProjectContext(projectId);
     const projectGroup = await buildProjectGroup(projectId, context);
     // Real gates from context so the client sees correct minimums before rooms arrive
@@ -391,7 +549,7 @@ export async function getInterviewQuestionsGroupedByRoom(
       imageCount: r.selectionCount,
       tagCount: r.selectionCount,
     }));
-    return {
+    const result: GroupedQuestionsResult = {
       grouped: true,
       rooms: [projectGroup],
       crossRoomQuestions: [],
@@ -401,9 +559,22 @@ export async function getInterviewQuestionsGroupedByRoom(
       upgradeSuggestion: getContextUpgradeSuggestion(context.level),
       projectSize: context.projectSize,
     };
+    if (options?.persistQuestions) {
+      await persistQuestionSet(projectId, 'project', signature, result);
+    }
+    return result;
   }
 
   if (phase === 'rooms') {
+    // Serve the persisted room set when nothing that feeds it (project state or
+    // the About answers) has changed — same IDs, and we skip both the fact
+    // digest and the per-room generation LLM calls entirely.
+    const signature = await computeQuestionSignature(projectId, 'rooms');
+    const persisted = await readPersistedQuestionSet(projectId, 'rooms');
+    if (persisted && persisted.signature === signature) {
+      return persisted.result;
+    }
+
     // Distill the About answers into the fact digest. Enhancement, never a
     // dependency: any failure here degrades to digest-free room generation.
     let knownFacts: KnownFacts | null = null;
@@ -424,7 +595,7 @@ export async function getInterviewQuestionsGroupedByRoom(
 
     const { roomResults, context } = await generateAllRoomQuestions(projectId, { knownFacts });
     const { roomGroups, gateRooms } = buildRoomGroupsFromResults(roomResults, context);
-    return {
+    const result: GroupedQuestionsResult = {
       grouped: true,
       rooms: roomGroups,
       crossRoomQuestions: [],
@@ -434,6 +605,10 @@ export async function getInterviewQuestionsGroupedByRoom(
       upgradeSuggestion: getContextUpgradeSuggestion(context.level),
       projectSize: context.projectSize,
     };
+    if (options?.persistQuestions) {
+      await persistQuestionSet(projectId, 'rooms', signature, result);
+    }
+    return result;
   }
 
   // phase === 'full' — original single-shot behavior (no digest)

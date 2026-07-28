@@ -33,22 +33,24 @@ export async function GET(
     if (grouped === 'true') {
       const phase = phaseParam === 'project' || phaseParam === 'rooms' ? phaseParam : undefined;
 
-      // Persisting the fact digest is a DB write — only allow it when the
-      // requester has WRITE access, since this GET is view-gated and viewers
-      // (e.g. vendor participants) must never trigger a mutation.
-      let persistFacts = false;
-      if (phase === 'rooms') {
-        try {
-          await assertProjectWrite(session.user.id, projectId);
-          persistFacts = true;
-        } catch {
-          persistFacts = false;
-        }
+      // Persisting the fact digest AND the generated question set are DB writes —
+      // only allow them when the requester has WRITE access, since this GET is
+      // view-gated and viewers (e.g. vendor participants) must never trigger a
+      // mutation. Persisting the question set is what gives stable IDs and skips
+      // repeat LLM spend on unchanged projects.
+      let canWrite = false;
+      try {
+        await assertProjectWrite(session.user.id, projectId);
+        canWrite = true;
+      } catch {
+        canWrite = false;
       }
 
       const result = await getInterviewQuestionsGroupedByRoom(
         projectId,
-        phase ? { phase, persistFacts } : undefined,
+        phase
+          ? { phase, persistFacts: phase === 'rooms' && canWrite, persistQuestions: canWrite }
+          : { persistQuestions: canWrite },
       );
       return NextResponse.json(result);
     }
