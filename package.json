@@ -99,7 +99,6 @@
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.71.2",
-    "@napi-rs/canvas": "^0.1.80",
     "@dnd-kit/core": "^6.1.0",
     "@dnd-kit/sortable": "^8.0.0",
     "@dnd-kit/utilities": "^3.2.2",
@@ -110,6 +109,7 @@
     "@google/generative-ai": "^0.24.1",
     "@headlessui/react": "^2.2.9",
     "@hookform/resolvers": "^5.2.1",
+    "@napi-rs/canvas": "^0.1.80",
     "@prisma/client": "^6.18.0",
     "@radix-ui/react-accordion": "^1.2.12",
     "@radix-ui/react-dialog": "^1.1.15",
@@ -137,6 +137,7 @@
     "framer-motion": "^12.23.21",
     "html5-qrcode": "^2.3.8",
     "isomorphic-dompurify": "^3.7.1",
+    "jsonrepair": "^3.15.0",
     "jszip": "^3.10.1",
     "lucide-react": "^0.539.0",
     "nanoid": "^5.1.6",
