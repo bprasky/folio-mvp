@@ -1,4 +1,11 @@
 export const dynamic = 'force-dynamic';
+// Editorial generation is the heaviest LLM call in the app — a multi-room draft
+// runs for minutes. Without an explicit ceiling this route inherits Vercel's
+// implicit default and can be killed mid-generation (platform 502). 800s is the
+// Pro + Fluid Compute cap (Fluid Compute is enabled on this project); it gives
+// the largest multi-room drafts room to finish synchronously. If Fluid Compute
+// is ever turned off, this MUST drop back to 300 or the build fails.
+export const maxDuration = 800;
 
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
