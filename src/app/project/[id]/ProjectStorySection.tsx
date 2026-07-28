@@ -52,6 +52,10 @@ export default function ProjectStorySection({
   const [saving, setSaving] = useState(false);
   const [interviewOpen, setInterviewOpen] = useState(false);
   const [intent, setIntent] = useState<"resume" | "restart" | null>(null);
+  // Set when editing one answer: opens the full interview modal jumped to that
+  // question, pre-filled. Falls back to the reflection editor only for answers
+  // with no questionId to jump to.
+  const [jumpQuestionId, setJumpQuestionId] = useState<string | null>(null);
   const [editing, setEditing] = useState<QA | null>(null);
 
   const fetchAnswers = useCallback(async () => {
@@ -83,8 +87,21 @@ export default function ProjectStorySection({
   }, [fetchAnswers]);
 
   function openResume() {
+    setJumpQuestionId(null);
     setIntent("resume");
     setInterviewOpen(true);
+  }
+
+  function editAnswer(qa: QA) {
+    if (qa.questionId) {
+      // Open the full interview modal jumped to this question, pre-filled.
+      setIntent(null);
+      setJumpQuestionId(qa.questionId);
+      setInterviewOpen(true);
+    } else {
+      // No id to jump to — fall back to the standalone pre-filled editor.
+      setEditing(qa);
+    }
   }
 
   function openRestart() {
@@ -92,6 +109,7 @@ export default function ProjectStorySection({
       "This clears your saved interview answers and starts a new interview. Continue?",
     );
     if (!ok) return;
+    setJumpQuestionId(null);
     setIntent("restart");
     setInterviewOpen(true);
   }
@@ -100,9 +118,11 @@ export default function ProjectStorySection({
     setInterviewOpen(open);
     if (!open) {
       // Re-sync once the modal closes: answers may have changed (resume added
-      // some, restart cleared them). router.refresh() re-derives the tracker /
-      // editorial state so this section appears or disappears accordingly.
+      // some, restart cleared them, an edit updated one). router.refresh()
+      // re-derives the tracker / editorial state so this section appears or
+      // disappears accordingly.
       setIntent(null);
+      setJumpQuestionId(null);
       fetchAnswers();
       router.refresh();
     }
@@ -192,7 +212,7 @@ export default function ProjectStorySection({
             <li key={qa.questionId || i}>
               <button
                 type="button"
-                onClick={() => setEditing(qa)}
+                onClick={() => editAnswer(qa)}
                 title="Edit this answer"
                 className="group w-full rounded-[12px] border border-folio-border-subtle bg-surface-canvas px-4 py-3 text-left transition-colors duration-[220ms] hover:border-[var(--accent)]"
               >
@@ -240,6 +260,7 @@ export default function ProjectStorySection({
             displayOrder: img.displayOrder ?? null,
           }))}
           initialIntent={intent}
+          jumpToQuestionId={jumpQuestionId}
         />
       )}
 

@@ -69,6 +69,13 @@ interface InterviewModalProps {
    *  - 'restart' → clear saved answers and begin a fresh interview.
    */
   initialIntent?: 'resume' | 'restart' | null;
+  /**
+   * When set, open directly on this question (by id) so the designer can edit
+   * one saved answer in place, pre-filled. Relies on persisted (stable) question
+   * IDs — if the id is no longer in the current set (project changed since it was
+   * answered), the modal falls back to the normal resume so it never hangs.
+   */
+  jumpToQuestionId?: string | null;
 }
 
 const SIX_W_SECTIONS = new Set(["why", "who", "what", "where", "when", "how"]);
@@ -132,6 +139,7 @@ export function InterviewModal({
   tags = [],
   onDraftGenerated,
   initialIntent = null,
+  jumpToQuestionId = null,
 }: InterviewModalProps) {
   const router = useRouter();
   // Interview mode: 'select' shows mode picker, 'realtime' for voice, 'text' for traditional
@@ -149,6 +157,10 @@ export function InterviewModal({
   // saved progress — the "first question pops up, then a minute to register my
   // progress" report. Reset to false on each open; set true when preload lands.
   const [preloadComplete, setPreloadComplete] = useState(false);
+  // Edit-jump: while opening on a specific question (jumpToQuestionId), hold the
+  // question render until we've navigated to (or fallen back from) that question,
+  // so the modal doesn't flash room-0 Q1 first. Reset on each open.
+  const [jumpDone, setJumpDone] = useState(false);
   // Set when the designer picks "Continue where I left off" — arms the resume
   // navigation effect (which then jumps to the room they actually reached).
   const [resumeRequested, setResumeRequested] = useState(false);
@@ -505,6 +517,11 @@ export function InterviewModal({
               setShowDraftResume(false);
               setResumeRequested(true);
               console.log('[InterviewModal] Auto-resuming (initialIntent=resume):', { baseCount, savedQuestionIndex, savedPhase });
+            } else if (jumpToQuestionId) {
+              // Editing one saved answer — skip the "Welcome back" screen; the
+              // jump effect navigates to that question once questions have loaded.
+              setShowDraftResume(false);
+              console.log('[InterviewModal] Edit-jump requested, skipping draft resume:', { jumpToQuestionId });
             } else {
               // Show draft resume prompt so user can choose: continue or start over
               setShowDraftResume(true);
@@ -533,7 +550,7 @@ export function InterviewModal({
     return () => {
       cancelled = true;
     };
-  }, [open, projectId, initialIntent]);
+  }, [open, projectId, initialIntent, jumpToQuestionId]);
 
   // inputModality: restore per-question source flags from the draft on open, so
   // a reload doesn't downgrade a previously-spoken answer to 'text'.
@@ -1190,6 +1207,7 @@ export function InterviewModal({
   useEffect(() => {
     if (!hasRoomPacing || roomsBlocked) return;
     if (resumeRequested) return; // resume path owns navigation
+    if (jumpToQuestionId) return; // edit-jump owns navigation
     if (roomFlow.rooms.length <= 1) return;
     if (roomFlow.currentRoom?.roomId !== 'project') return;
     if (roomFlow.roomProgress['project']?.status !== 'complete') return;
@@ -1210,6 +1228,7 @@ export function InterviewModal({
     if (!open) {
       didResumeNavRef.current = false;
       setResumeRequested(false);
+      setJumpDone(false);
     }
   }, [open]);
   useEffect(() => {
@@ -1240,6 +1259,33 @@ export function InterviewModal({
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [resumeRequested, hasRoomPacing, roomsBlocked, resumePlan, roomFlow.currentRoomIndex]);
 
+  // Edit-jump navigation. When opened to edit one saved answer (jumpToQuestionId),
+  // wait until answers have preloaded and — for room-paced interviews — the room
+  // set has settled, then navigate to that question (persisted stable IDs make
+  // the saved answer's id match a live question, so QuestionCard pre-fills it).
+  // If the id isn't in the current set (project changed since it was answered),
+  // fall back to the normal resume so the modal never hangs. Runs once per open.
+  useEffect(() => {
+    if (!jumpToQuestionId || jumpDone) return;
+    if (!preloadComplete) return;
+    // Room-paced: wait for the room set so room-level questions exist to land on.
+    if (hasRoomPacing && roomsBlocked) return;
+
+    const found = hasRoomPacing ? roomFlow.goToQuestionId(jumpToQuestionId) : false;
+    setShowDraftResume(false);
+    if (found) {
+      setPhase('question');
+      logClient('edit:jump-to-question', { questionId: jumpToQuestionId });
+    } else {
+      // Not room-paced, or the question is gone from the current set — resume
+      // instead of hanging on a spinner.
+      setResumeRequested(true);
+      logClient('edit:jump-fallback-resume', { questionId: jumpToQuestionId, hasRoomPacing });
+    }
+    setJumpDone(true);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [jumpToQuestionId, jumpDone, preloadComplete, hasRoomPacing, roomsBlocked, roomFlow.rooms.length]);
+
   // Finish detection for the IN-SESSION path (single source of truth). When
   // roomFlow.canFinish flips true — after skipping the last room or answering the
   // last question — move to completion and auto-generate. Doing this in an effect
@@ -1254,11 +1300,15 @@ export function InterviewModal({
     if (!hasRoomPacing) return;
     if (phase !== 'question') return;
     if (showDraftResume || roomsBlocked || isGenerating) return;
+    // Editing a single answer: don't auto-finish/generate just because the
+    // interview happens to be fully answered — the designer is here to edit, and
+    // finishes explicitly. (Cleared once the edit modal closes.)
+    if (jumpToQuestionId) return;
     if (!roomFlow.canFinish) return;
     logClient('interview:finished', { via: 'canFinish' });
     autoGenerateRef.current = true;
     setPhase('complete');
-  }, [hasRoomPacing, phase, showDraftResume, roomsBlocked, isGenerating, roomFlow.canFinish]);
+  }, [hasRoomPacing, phase, showDraftResume, roomsBlocked, isGenerating, roomFlow.canFinish, jumpToQuestionId]);
 
   // Status hydration (C0): once room groups exist, re-apply persisted terminal
   // statuses (from server roomProgress and the localStorage draft) so a skipped
@@ -2621,6 +2671,13 @@ export function InterviewModal({
                 </button>
               </div>
             </div>
+          </div>
+        ) : phase === "question" && jumpToQuestionId && !jumpDone ? (
+          /* Edit-jump in flight — hold on a spinner until we've navigated to the
+             specific question being edited (or fallen back), so the modal doesn't
+             flash room-0 Q1 before landing on the right one. */
+          <div className="flex-1 flex items-center justify-center py-16">
+            <div className="animate-spin rounded-full h-5 w-5 border-2 border-[var(--accent)] border-t-transparent" />
           </div>
         ) : phase === "question" && !preloadComplete && baseAnswers.length === 0 ? (
           /* Preload in flight and no answers loaded yet — hold on a spinner
