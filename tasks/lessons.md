@@ -390,3 +390,44 @@ a step, the surface that step links to must be reachable by construction, not by
 parallel boolean that happens to agree; (3) a silent `currentView = 'media'`
 fallback hides this class of bug — when a coercion fires on a link the app itself
 renders, that's the bug, not the recovery.
+
+**A prompt that mandates quoted prose must also remove the escaping burden — curly quotes, not "remember to escape".**
+Editorial generation 502'd on `LLM_JSON_PARSE` after a clean 2-minute run
+(`end_turn`, well under the token cap — not truncation). The model wrote a nested
+quotation with a raw `"` inside a body string (`…became "it."'`), which
+terminated the JSON string 15,799 bytes into a 20KB response. The prompt made
+this near-inevitable: it demanded a direct attributed quote in every paragraph of
+every chapter, and its own examples were written as string literals
+(`'"[Quote]," ${designer} says.'`), so the model copied the mixed delimiters it
+saw — `'` outside, `"` inside — while the only formatting instruction was
+"Return ONLY valid JSON". No instruction anywhere on escaping.
+Fix: `JSON_PROSE_QUOTING_RULE` (in `editorialTone.ts`, next to `FOLIO_TONE`)
+mandates typographic curly quotes in prose, and every prompt example was rewritten
+to model them. Curly quotes carry no meaning in JSON, so there is nothing to
+escape and no way to terminate a string early — the failure class is designed out
+rather than warned against. Bonus: correct magazine typography.
+Rules: (1) when a prompt asks a model to hand-serialize prose into JSON, state the
+character-level rule that makes the prose *unable* to break the format — do not
+just say "valid JSON" and hope; (2) prompt examples are training data — a `'…'`
+wrapper borrowed from the host language teaches the model to write `'…'` in the
+output, so write examples in the exact form you want back; (3) before switching a
+generator's quote characters, audit every regex that reads the prose
+(`extractPullQuotesForChapter`, `proofOutsideQuotes`) — the extractors here
+already matched `“`/`”`, but `proofOutsideQuotes` split on `"` only and would have
+started rewriting inside the designer's quoted words.
+
+**Resampling is not repairing — one automatic retry is the honest version of "Try regenerating".**
+Corollary to the jsonrepair lesson above. Hard-failing on malformed JSON is
+right, but making the designer click regenerate for a failure they cannot
+influence is a UX tax, not a safety property. A fresh full sample carries none of
+the corruption risk of a repair, because the draft is authored whole by the model
+instead of stitched together by us. Implemented as `MAX_PARSE_ATTEMPTS = 2` with
+temperature dropped 0.7 → 0.3 on the retry.
+Rules: (1) resample on *parse* failures only — `LLM_TRUNCATED` and
+`LLM_EMPTY_RESPONSE` are deterministic ceilings and a retry just burns tokens to
+fail identically; (2) never feed the broken output back to the model asking it to
+fix the JSON — it will re-bracket around whatever prose it can salvage, which is
+the corrupting repair path wearing a different hat; resend the original prompt
+plus the rule that was violated; (3) log the recovery
+(`json_parse_recovered_on_resample`) so a silently-retrying path can still be
+measured — an invisible retry hides a worsening prompt.

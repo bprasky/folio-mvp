@@ -43,3 +43,28 @@ export const EDITORIAL_ACCURACY_RULES = `ACCURACY RULES — NON-NEGOTIABLE:
 - Do not invent lifestyle details about the clients (how they entertain, family routines, number of guests) unless the designer explicitly described this in their interview answers.
 - Do not describe what you cannot verify from the provided data.
 - When referencing a product, use the EXACT product name and vendor name from the tag data. Do not paraphrase product names.`;
+
+/**
+ * JSON string safety for every generator that hand-serializes PROSE into JSON.
+ *
+ * Why this exists: our editorial prompts mandate at least one direct attributed
+ * quote per chapter, so almost every body paragraph contains quotation marks. A
+ * straight `"` inside a JSON string value is only legal when escaped as `\"`, and
+ * the model reliably forgets when the quotation nests (e.g. an inner aside inside
+ * a longer quote). One unescaped `"` at character 15,799 invalidates the entire
+ * 20KB response — the designer sees a 502 and loses a two-minute generation.
+ *
+ * The fix is to remove the escaping requirement instead of restating it: curly
+ * quotes carry no meaning in JSON, so they need no escape and cannot terminate a
+ * string early. They are also correct magazine typography, which is why this is a
+ * net win rather than a workaround. Downstream pull-quote extraction already
+ * matches U+201C/U+201D alongside the straight quote, so nothing needs to change
+ * to read the result.
+ *
+ * Include this in any prompt whose response is prose inside JSON.
+ */
+export const JSON_PROSE_QUOTING_RULE = `JSON STRING SAFETY — NON-NEGOTIABLE:
+- Use typographic curly quotes for ALL quotation marks inside prose: “ ” around direct speech, and ‘ ’ for a quotation nested inside another quotation.
+- NEVER emit a straight double quote (") inside a string value. That character belongs to JSON syntax only; an unescaped one makes the entire response unparseable and the work is discarded.
+- Apostrophes are the straight ' character (didn't, designer's, clients'). Never substitute a double quote for an apostrophe.
+- Never put a literal line break inside a string. Each paragraph is its own array element.`;
