@@ -1511,6 +1511,10 @@ export function InterviewModal({
         category: deriveCategory(currentQuestion.section),
         answer: trimmedAnswer,
         isFollowUp: false,
+        // Persist the question text the designer actually answered (morphed text
+        // when the LLM rewrote it). Without this the answer saves with an empty
+        // prompt and every list of saved answers reads "Untitled question".
+        prompt: (displayQuestion as any)?.prompt || (currentQuestion as any)?.prompt || "",
       };
 
       // Update answers state

@@ -114,6 +114,103 @@ function deriveSection(qid?: string, prompt?: string): string {
   return 'how';
 }
 
+/**
+ * Flatten every persisted question set (both generation phases) into a
+ * questionId → question text map. Used to backfill the question text on saved
+ * answers that were stored without one. Tolerant of partial/missing snapshots.
+ */
+function buildQuestionTextMap(questionSet: any): Map<string, string> {
+  const map = new Map<string, string>();
+  if (!questionSet || typeof questionSet !== 'object') return map;
+
+  const addQuestion = (q: any) => {
+    const id = q?.id;
+    const text = q?.questionText ?? q?.prompt;
+    if (typeof id === 'string' && typeof text === 'string' && text.trim()) {
+      // First writer wins: a later phase re-listing the same id shouldn't
+      // overwrite text already resolved from an earlier one.
+      if (!map.has(id)) map.set(id, text.trim());
+    }
+  };
+
+  for (const snapshot of Object.values(questionSet)) {
+    const result = (snapshot as any)?.result;
+    if (!result) continue;
+    for (const room of Array.isArray(result.rooms) ? result.rooms : []) {
+      for (const q of Array.isArray(room?.questions) ? room.questions : []) addQuestion(q);
+    }
+    for (const q of Array.isArray(result.crossRoomQuestions) ? result.crossRoomQuestions : []) {
+      addQuestion(q);
+    }
+  }
+
+  return map;
+}
+
+/**
+ * Which room an answer belongs to. Answers carry a first-class roomId (D5);
+ * project-level answers have none and are identified by their id prefix.
+ */
+function answerRoomKey(a: any): string | null {
+  const rid = a?.roomId;
+  if (typeof rid === 'string' && rid) return rid;
+  if (typeof a?.questionId === 'string' && a.questionId.startsWith('project-')) return 'project';
+  return null;
+}
+
+/**
+ * Per-room interview coverage, derived from the persisted question set and the
+ * saved answers. Drives the Story tab's "what will be included / what can't be
+ * written up yet" advisory and the completedRoomIds passed to generation.
+ *
+ * A room counts as complete once it holds at least as many answers as its base
+ * question budget — the same answer-driven rule the modal's resume plan uses,
+ * since the separate roomProgress record is frequently null or stale.
+ */
+function buildCoverage(
+  questionSet: any,
+  answers: any[],
+): Array<{ roomId: string; roomName: string; answered: number; total: number; complete: boolean }> {
+  if (!questionSet || typeof questionSet !== 'object') return [];
+
+  // Collect room groups across phases; later phases must not clobber earlier ones.
+  const groups = new Map<string, { roomName: string; total: number }>();
+  for (const snapshot of Object.values(questionSet)) {
+    const result = (snapshot as any)?.result;
+    for (const room of Array.isArray(result?.rooms) ? result.rooms : []) {
+      const roomId = room?.roomId;
+      if (typeof roomId !== 'string' || groups.has(roomId)) continue;
+      const total =
+        typeof room?.budget?.baseQuestions === 'number'
+          ? room.budget.baseQuestions
+          : Array.isArray(room?.questions)
+            ? room.questions.length
+            : 0;
+      groups.set(roomId, { roomName: room?.roomName ?? roomId, total });
+    }
+  }
+
+  const answeredByRoom = new Map<string, number>();
+  for (const a of Array.isArray(answers) ? answers : []) {
+    if (!a || typeof a.answer !== 'string' || !a.answer.trim()) continue;
+    if (a.isFollowUp) continue; // budgets are expressed in base questions
+    const key = answerRoomKey(a);
+    if (!key) continue;
+    answeredByRoom.set(key, (answeredByRoom.get(key) ?? 0) + 1);
+  }
+
+  return Array.from(groups.entries()).map(([roomId, g]) => {
+    const answered = answeredByRoom.get(roomId) ?? 0;
+    return {
+      roomId,
+      roomName: g.roomName,
+      answered,
+      total: g.total,
+      complete: g.total > 0 ? answered >= g.total : answered > 0,
+    };
+  });
+}
+
 function ensureAnswerShape(a: any, idx: number) {
   const answer = (typeof a === 'string') ? a : (a?.answer ?? a?.text ?? a?.value ?? '');
   const prompt = (a?.prompt ?? a?.question ?? '');
@@ -239,9 +336,25 @@ export async function GET(
     const interview = provenance.interview || {};
     const payload = interview.payload || {};
 
-    const answers = payload.answers || interview.answers || [];
-    const followUps = payload.followups || interview.followUps || [];
+    const rawAnswers = payload.answers || interview.answers || [];
+    const rawFollowUps = payload.followups || interview.followUps || [];
     const selectedQuestionIds = payload.selectedQuestionIds || interview.selectedQuestionIds || [];
+
+    // Recover question text for saved answers. Answers persist a `prompt`, but
+    // historically the modal saved them without one, so older answers read as
+    // "Untitled question" everywhere they're listed. The persisted question set
+    // (provenance.interview.questionSet) is keyed by the same question ids, so we
+    // can resolve the text by id and backfill it on read — no migration needed.
+    const questionTextById = buildQuestionTextMap(interview.questionSet);
+    const withPrompt = (a: any) => {
+      if (!a || typeof a !== 'object') return a;
+      const existing = typeof a.prompt === 'string' ? a.prompt.trim() : '';
+      if (existing) return a;
+      const resolved = questionTextById.get(String(a.questionId ?? ''));
+      return resolved ? { ...a, prompt: resolved } : a;
+    };
+    const answers = Array.isArray(rawAnswers) ? rawAnswers.map(withPrompt) : rawAnswers;
+    const followUps = Array.isArray(rawFollowUps) ? rawFollowUps.map(withPrompt) : rawFollowUps;
 
     console.log('[interview/GET] Returning:', {
       answerCount: answers.length,
@@ -258,6 +371,8 @@ export async function GET(
       selectedQuestionIds,
       contextualQuestions, // Include contextual questions from AI classification
       roomProgress,
+      // Per-room coverage for the Story tab's include/exclude advisory.
+      coverage: buildCoverage(interview.questionSet, answers),
     });
   } catch (e: any) {
     console.error('[posting/interview] GET failed', { err: e?.message });
