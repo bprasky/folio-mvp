@@ -7,7 +7,6 @@ import RoomGroupedMedia from './RoomGroupedMedia';
 import ProjectCreationModal from '@/components/ProjectCreationModal';
 import { PresentationImportModal } from '@/components/import/PresentationImportModal';
 import { PdfSpecImportModal } from '@/components/import/PdfSpecImportModal';
-import { InterviewModal } from '@/components/posting/interview/InterviewModal';
 import TaggingSection from './TaggingSection';
 import MaterialsStep from './MaterialsStep';
 import DocumentImportModal from './DocumentImportModal';
@@ -60,7 +59,6 @@ export default function MediaSection({ project, isOwner, images, projectPost, in
   const router = useRouter();
   const searchParams = useSearchParams();
   const [showUploadModal, setShowUploadModal] = useState(false);
-  const [showInterviewModal, setShowInterviewModal] = useState(false);
   const [showTagger, setShowTagger] = useState(initialTagging);
   const [showMaterials, setShowMaterials] = useState(false);
   const [showTagReview, setShowTagReview] = useState(false);
@@ -243,6 +241,14 @@ export default function MediaSection({ project, isOwner, images, projectPost, in
     [handleFinishScheduleUpload],
   );
 
+  // Follow the tracker's active step. The Media surface hosts several steps, so
+  // stepping to Tags opens the tagging surface and stepping back to Photos/Rooms
+  // returns to the workspace. Keyed on the prop, so a manual toggle inside the
+  // surface (Tag products / exit) isn't fought by this effect.
+  useEffect(() => {
+    setShowTagger(initialTagging);
+  }, [initialTagging]);
+
   // --- Progress tracker dispatch -----------------------------------------
   // The tracker (top of the page) names a flow via `?action=` and routes here.
   // Open the matching existing flow, then strip the param so a refresh or a
@@ -280,15 +286,10 @@ export default function MediaSection({ project, isOwner, images, projectPost, in
       case 'tag-by-hand':
         setShowTagger(true);
         break;
-      case 'interview':
-        setShowInterviewModal(true);
-        break;
+      // 'interview' is intentionally absent: the interview lives on the Story
+      // step, so the tracker routes there directly instead of dispatching here.
     }
   }, [searchParams, router, project.id]);
-
-  const handleDraftGenerated = useCallback(() => {
-    router.push(`/project/${project.id}?view=publish`);
-  }, [router, project.id]);
 
   const handleSetCover = useCallback(async (imageId: string) => {
     setSelectedHeroImageId(imageId);
@@ -383,18 +384,18 @@ export default function MediaSection({ project, isOwner, images, projectPost, in
           onExit={() => setShowTagger(false)}
           onImportFinishBook={routeDocument}
           onProceed={() => {
+            // The interview belongs to the Story step, not Tags — hand off to
+            // that surface rather than opening the modal over the tagger.
             setShowTagger(false);
-            setShowInterviewModal(true);
+            router.push(`/project/${project.id}?view=story`);
           }}
         />
       ) : (
       <>
       {/* Re-entry controls on the Tags step (the tracker's CTA and the tab strip
-          are hidden here to keep tagging focused). "Continue to interview" is the
-          always-available way into (or back into) the interview — without it,
-          exiting the interview leaves no visible path back on this step. Shown
-          unconditionally so it survives the same-session case where the server's
-          editorialState prop hasn't re-rendered yet. */}
+          are hidden here to keep tagging focused). "Continue to story" leaves for
+          the Story step, which owns the interview — the Tags step hosts no
+          interview UI of its own. */}
       {initialTagging && isOwner && (
         <div className="flex justify-end gap-3">
           <button
@@ -405,10 +406,10 @@ export default function MediaSection({ project, isOwner, images, projectPost, in
             Tag products
           </button>
           <button
-            onClick={() => setShowInterviewModal(true)}
+            onClick={() => router.push(`/project/${project.id}?view=story`)}
             className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-[var(--accent)] text-white folio-meta font-medium hover:bg-[var(--accent-hover)] transition-colors"
           >
-            Continue to interview
+            Continue to story
           </button>
         </div>
       )}
@@ -543,17 +544,6 @@ export default function MediaSection({ project, isOwner, images, projectPost, in
       </section>
       </>
       )}
-
-      {/* Interview — opened by the spine's Story CTA (spec 20 §5). */}
-      <InterviewModal
-        open={showInterviewModal}
-        onOpenChange={setShowInterviewModal}
-        projectId={project.id}
-        projectName={project.title}
-        images={images.map(img => ({ id: img.id, url: img.url, name: img.name, room: img.room ?? null, roomId: img.roomId ?? null, displayOrder: img.displayOrder ?? null }))}
-        post={projectPost}
-        onDraftGenerated={handleDraftGenerated}
-      />
 
       {/* Materials step — in-brand replacement for the blue modal (spec 20 §3d). */}
       <MaterialsStep

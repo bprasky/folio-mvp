@@ -23,6 +23,13 @@ interface ProjectTabsProps {
    * published-only rule when not provided.
    */
   storyTabVisible?: boolean;
+  /**
+   * True once the project is in the publishing flow — created as finished work
+   * ("PAST"), or any project that has started a draft. The working surfaces
+   * (Boards / Action items / Media) belong to a project being built, not one
+   * being published, and the stepper owns navigation there instead.
+   */
+  inPublishingFlow?: boolean;
 }
 
 export default function ProjectTabs({
@@ -32,6 +39,7 @@ export default function ProjectTabs({
   hasDraftOrPublished,
   editorialState,
   storyTabVisible,
+  inPublishingFlow = false,
 }: ProjectTabsProps) {
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -47,11 +55,16 @@ export default function ProjectTabs({
   const totalSelections =
     project.rooms?.reduce((sum: number, room: any) => sum + (room.selections?.length || 0), 0) || 0;
 
+  // Story and Publish are the publishing flow's own surfaces — they never belong
+  // to a project that's still being built. (A draft existing already implies the
+  // publishing flow, so this gate only makes that explicit rather than changing
+  // when Publish appears.)
   const showStory = storyTabVisible ?? editorialState === 'PUBLISHED';
   const showPublish =
-    editorialState === 'GENERATED' ||
-    editorialState === 'PUBLISHED' ||
-    editorialState === 'UNPUBLISHED';
+    inPublishingFlow &&
+    (editorialState === 'GENERATED' ||
+      editorialState === 'PUBLISHED' ||
+      editorialState === 'UNPUBLISHED');
 
   const allTabs = [
     {
@@ -60,22 +73,25 @@ export default function ProjectTabs({
       Icon: LayoutGrid,
       count: totalSelections > 0 ? totalSelections : undefined,
       // Boards is a real-selections surface — it only exists once products have
-      // been tagged. No tags → no Boards tab.
-      visible: totalSelections > 0,
+      // been tagged. No tags → no Boards tab. Gone entirely once publishing
+      // starts, along with the other working surfaces.
+      visible: !inPublishingFlow && totalSelections > 0,
     },
     {
       id: 'actions' as TabView,
       label: 'Action items',
       Icon: ClipboardList,
       count: undefined,
-      visible: totalSelections > 0,
+      visible: !inPublishingFlow && totalSelections > 0,
     },
     {
       id: 'media' as TabView,
       label: 'Media',
       Icon: ImageIcon,
       count: undefined,
-      visible: true,
+      // In the publishing flow the photo/product steps are reached from the
+      // stepper (Photos / Rooms / Tags), so a Media tab would duplicate it.
+      visible: !inPublishingFlow,
     },
     {
       id: 'story' as TabView,

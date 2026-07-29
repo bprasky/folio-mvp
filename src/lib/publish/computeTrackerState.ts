@@ -255,6 +255,40 @@ export const STORY_IN_PROGRESS_COPY: Partial<StepCopy> = {
   cta: 'Continue interview',
 };
 
+/**
+ * Where a step lives. The tracker is real navigation, so each step names the
+ * surface that owns it:
+ *  - the story step → the Story tab (interview, answers, generate)
+ *  - the publish/share step → the Publish tab
+ *  - everything else → the Media surface, with `step` naming which one, so the
+ *    tracker can highlight it and Media can open the matching mode (the Tags
+ *    step opens the tagging surface; Photos/Rooms open the workspace).
+ */
+export function stepHref(projectId: string, key: string): string {
+  if (key === 'story') return `/project/${projectId}?view=story`;
+  if (key === 'publish' || key === 'share') return `/project/${projectId}?view=publish`;
+  return `/project/${projectId}?view=media&step=${key}`;
+}
+
+/**
+ * Which step a surface corresponds to, for deriving the active step from the
+ * current view. Media-hosted steps can't be told apart by view alone, so the
+ * caller passes the `step` param through.
+ */
+export function activeStepKeyForView(
+  view: string,
+  stepParam: string | undefined,
+  type: TrackerType,
+): string | undefined {
+  if (view === 'story') return 'story';
+  if (view === 'publish') return type === 'concept' ? 'share' : 'publish';
+  if (view === 'media' && stepParam) {
+    // Only accept a key that exists for this tracker type.
+    return TRACKER_TYPES[type].steps.some(s => s.key === stepParam) ? stepParam : undefined;
+  }
+  return undefined;
+}
+
 export interface TrackerStep {
   key: string;
   label: string;
@@ -262,6 +296,14 @@ export interface TrackerStep {
   index: number;
   /** Secondary count shown under done steps. Omitted where no number applies. */
   count?: number;
+  /** True for the step the designer is currently looking at. */
+  active: boolean;
+  /**
+   * True when the step isn't reachable yet. Everything up to the frontier
+   * navigates, as does the interview step (never gated behind photos/products —
+   * designers answer while tagging is still unfinished). Locked steps are inert.
+   */
+  locked: boolean;
 }
 
 export interface TrackerInput {
@@ -278,13 +320,30 @@ export interface TrackerInput {
    * "continue" variant (STORY_IN_PROGRESS_COPY).
    */
   interviewInProgress?: boolean;
+  /**
+   * The step the designer is currently viewing. The tracker follows the surface
+   * they're on rather than always pointing at the frontier, so stepping back to
+   * a finished step keeps the tracker in sync. Ignored when it names a locked
+   * step or one that doesn't exist for this type.
+   */
+  activeKey?: string;
 }
 
 export interface TrackerState {
   type: TrackerType;
   label: string;
   steps: TrackerStep[];
+  /**
+   * The step being viewed — drives the next-action zone, the down-tick, and the
+   * gold highlight. Equals `frontierIndex` unless the designer stepped back.
+   */
   currentIndex: number;
+  /**
+   * How far real completion has taken the project: the first incomplete step.
+   * Drives the filled track and the navigation gate (see `TrackerStep.locked`
+   * for the interview's exemption from it).
+   */
+  frontierIndex: number;
   /** Index of the materials/import step within `steps`. */
   materialsIndex: number;
   materialsExist: boolean;
@@ -297,24 +356,53 @@ export interface TrackerState {
 }
 
 /**
- * Derive the live tracker state. `currentIndex` is the first incomplete step;
- * if every step is complete it pins to the last step (the publish/share/final
- * action stays the prominent CTA).
+ * Derive the live tracker state. `frontierIndex` is the first incomplete step
+ * (pinned to the last step once everything is complete, so the publish/share
+ * action stays the prominent CTA); `currentIndex` is the step being viewed,
+ * which follows `activeKey` when that names a navigable step.
  */
 export function deriveTrackerState(input: TrackerInput): TrackerState {
   const def = TRACKER_TYPES[input.type];
-  const { complete, counts = {}, materialsExist, interviewInProgress = false } = input;
+  const { complete, counts = {}, materialsExist, interviewInProgress = false, activeKey } = input;
 
   const firstIncomplete = def.steps.findIndex(s => !complete[s.key]);
-  const currentIndex = firstIncomplete === -1 ? def.steps.length - 1 : firstIncomplete;
+  // The progress frontier: how far the project has actually earned its way.
+  const frontierIndex = firstIncomplete === -1 ? def.steps.length - 1 : firstIncomplete;
   const materialsIndex = def.steps.findIndex(s => s.key === def.materialsKey);
 
+  // What the designer may navigate to: anything up to the frontier, plus the
+  // interview step. The interview is deliberately not gated behind the photo and
+  // product steps — designers routinely answer questions while tagging is still
+  // unfinished, and the answers are the slowest part of the flow to collect.
+  // Publishing stays gated, since it genuinely needs a draft to exist.
+  const isInterviewStep = (index: number) => {
+    const key = def.steps[index]?.key;
+    return !!key && def.copy[key]?.action === 'interview';
+  };
+  const navigable = (index: number) => index <= frontierIndex || isInterviewStep(index);
+
+  // The viewed step. Stepping back to a finished step is always allowed; asking
+  // for one that isn't navigable falls back to the frontier.
+  const requestedIndex = activeKey ? def.steps.findIndex(s => s.key === activeKey) : -1;
+  const currentIndex =
+    requestedIndex >= 0 && navigable(requestedIndex) ? requestedIndex : frontierIndex;
+
   const steps: TrackerStep[] = def.steps.map((s, index) => {
+    // Completion-based styling stays tied to the frontier, so navigating back
+    // never makes a finished step look unfinished.
     let state: StepState;
-    if (index < currentIndex) state = 'done';
-    else if (index === currentIndex) state = 'current';
+    if (index < frontierIndex) state = 'done';
+    else if (index === frontierIndex) state = 'current';
     else state = 'upcoming';
-    return { key: s.key, label: s.label, state, index, count: counts[s.key] };
+    return {
+      key: s.key,
+      label: s.label,
+      state,
+      index,
+      count: counts[s.key],
+      active: index === currentIndex,
+      locked: !navigable(index),
+    };
   });
 
   // Switch the interview step's copy to the "continue" variant only when that
@@ -331,6 +419,7 @@ export function deriveTrackerState(input: TrackerInput): TrackerState {
     label: def.label,
     steps,
     currentIndex,
+    frontierIndex,
     materialsIndex,
     materialsExist,
     endCap: def.endCap,
