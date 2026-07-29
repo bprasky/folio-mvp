@@ -80,6 +80,10 @@ function buildTrackerState(args: {
 
   let complete: Record<string, boolean>;
   let counts: Record<string, number | undefined>;
+  // Open work per step, for steps whose gate counts something real (photos left
+  // to sort / tag). The story and publish gates use `remaining` as a boolean, so
+  // they're deliberately absent — "1 left" would mean nothing under them.
+  let remaining: Record<string, number | undefined> = {};
 
   if (type === 'inProgress') {
     complete = {
@@ -88,6 +92,7 @@ function buildTrackerState(args: {
       products: materialsExist,
     };
     counts = { photos: photoCount, rooms: roomCount, products: totalSelections };
+    remaining = { rooms: readiness.gates.rooms.remaining };
   } else if (type === 'concept') {
     complete = {
       references: photoCount > 0,
@@ -105,6 +110,10 @@ function buildTrackerState(args: {
       publish: isPublished,
     };
     counts = { photos: photoCount, rooms: roomCount, tags: totalSelections };
+    remaining = {
+      rooms: readiness.gates.rooms.remaining,
+      tags: readiness.gates.tags.remaining,
+    };
   }
 
   if (Object.values(complete).every(Boolean)) return null;
@@ -113,6 +122,7 @@ function buildTrackerState(args: {
     type,
     complete,
     counts,
+    remaining,
     materialsExist,
     interviewInProgress,
     // The tracker highlights whichever step's surface is open, so stepping back
@@ -497,6 +507,10 @@ export default async function ProjectPage({
               projectId={sanitizedProject.id}
               project={sanitizedProject}
               images={base.images.map(img => ({ id: img.id, url: img.url, name: img.name }))}
+              // Room names for grouping the saved answers. Taken from the Room
+              // rows rather than the interview's question set, which is
+              // regenerated (and loses rooms) whenever the project is retagged.
+              rooms={base.rooms.map(room => ({ id: room.id, name: room.name }))}
               isOwner={isOwner}
             />
           )}

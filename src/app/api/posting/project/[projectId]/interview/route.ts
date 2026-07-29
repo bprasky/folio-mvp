@@ -600,7 +600,11 @@ export async function POST(
       mergedBaseAnswers = [];
       mergedFuAnswers = [];
     } else {
-      // Get existing answers in InterviewAnswer format
+      // Get existing answers in InterviewAnswer format. Follow-ups are stored in
+      // their own array, so they have to be read back too: a partial save (one
+      // answer from the modal, or an edit from the Story tab) carries no
+      // follow-ups, and rebuilding `payload.followups` from the request alone
+      // wiped every saved follow-up answer.
       let existingAnswers: InterviewAnswer[] = [];
       try {
         existingAnswers = normalizeAnswers(
@@ -609,7 +613,15 @@ export async function POST(
       } catch {
         existingAnswers = [];
       }
-      
+      try {
+        const existingFollowups = normalizeAnswers(
+          (existingProvenance.interview?.payload?.followups ?? []) as unknown
+        ).map((a) => ({ ...a, isFollowUp: true }));
+        existingAnswers = [...existingAnswers, ...existingFollowups];
+      } catch {
+        /* no stored follow-ups to preserve */
+      }
+
       // Merge incoming answers with existing (non-destructive by questionId)
       mergedAnswers = mergeAnswers(existingAnswers, incomingAnswers);
       
@@ -780,6 +792,10 @@ export async function POST(
                 data: {
                   interviewId,
                   questionId: answer.questionId,
+                  // The projection has always had a questionText column and has
+                  // never written it, so nothing reading this table could show
+                  // (or generate from) the question that was answered.
+                  questionText: answer.prompt || null,
                   answerText: answer.answer,
                   isFollowUp: answer.isFollowUp || false,
                   inputModality: (answer as any).inputModality || 'text',
@@ -888,22 +904,42 @@ export async function POST(
   }
 }
 
+/**
+ * Merge incoming answers over stored ones, keyed by the QUESTION — questionId
+ * plus whether it's a follow-up — not by the answer's content.
+ *
+ * `makeAnswerKey` folds the answer text into the key, which is right for
+ * deduplicating a single payload but wrong for merging across saves: rewriting
+ * an answer changes its key, so the edited answer landed as a NEW entry and the
+ * old wording stayed in provenance. A question has one answer; re-answering it
+ * replaces that answer.
+ *
+ * Field-level rule: an incoming answer wins, EXCEPT that a blank `prompt` never
+ * overwrites question text already stored. Bulk re-saves from a session that
+ * couldn't resolve a question's text (its ids were regenerated) would otherwise
+ * erase the wording the designer answered.
+ */
 function mergeAnswers(
   existing: InterviewAnswer[],
   incoming: InterviewAnswer[]
 ): InterviewAnswer[] {
+  const questionKey = (answer: InterviewAnswer) =>
+    `${answer.questionId}|${answer.isFollowUp ? 'F' : 'P'}`;
+
   const merged = [...existing];
   const keyToIndex = new Map<string, number>();
 
-  merged.forEach((answer, idx) =>
-    keyToIndex.set(makeAnswerKey(answer), idx)
-  );
+  merged.forEach((answer, idx) => keyToIndex.set(questionKey(answer), idx));
 
   for (const answer of incoming) {
-    const key = makeAnswerKey(answer);
-    if (keyToIndex.has(key)) {
-      const idx = keyToIndex.get(key)!;
-      merged[idx] = answer;
+    const key = questionKey(answer);
+    const idx = keyToIndex.get(key);
+    if (idx !== undefined) {
+      const stored = merged[idx];
+      merged[idx] = {
+        ...answer,
+        prompt: (answer.prompt ?? '').trim() || stored.prompt || '',
+      };
     } else {
       merged.push(answer);
       keyToIndex.set(key, merged.length - 1);
