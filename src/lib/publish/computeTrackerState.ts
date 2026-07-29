@@ -299,8 +299,9 @@ export interface TrackerStep {
   /** True for the step the designer is currently looking at. */
   active: boolean;
   /**
-   * True when the step sits beyond the progress frontier — not yet reachable.
-   * Locked steps never navigate; everything up to and including the frontier does.
+   * True when the step isn't reachable yet. Everything up to the frontier
+   * navigates, as does the interview step (never gated behind photos/products —
+   * designers answer while tagging is still unfinished). Locked steps are inert.
    */
   locked: boolean;
 }
@@ -323,7 +324,7 @@ export interface TrackerInput {
    * The step the designer is currently viewing. The tracker follows the surface
    * they're on rather than always pointing at the frontier, so stepping back to
    * a finished step keeps the tracker in sync. Ignored when it names a locked
-   * step (beyond the frontier) or one that doesn't exist for this type.
+   * step or one that doesn't exist for this type.
    */
   activeKey?: string;
 }
@@ -339,7 +340,8 @@ export interface TrackerState {
   currentIndex: number;
   /**
    * How far real completion has taken the project: the first incomplete step.
-   * Drives the filled track and the navigation gate — steps past it are locked.
+   * Drives the filled track and the navigation gate (see `TrackerStep.locked`
+   * for the interview's exemption from it).
    */
   frontierIndex: number;
   /** Index of the materials/import step within `steps`. */
@@ -354,9 +356,10 @@ export interface TrackerState {
 }
 
 /**
- * Derive the live tracker state. `currentIndex` is the first incomplete step;
- * if every step is complete it pins to the last step (the publish/share/final
- * action stays the prominent CTA).
+ * Derive the live tracker state. `frontierIndex` is the first incomplete step
+ * (pinned to the last step once everything is complete, so the publish/share
+ * action stays the prominent CTA); `currentIndex` is the step being viewed,
+ * which follows `activeKey` when that names a navigable step.
  */
 export function deriveTrackerState(input: TrackerInput): TrackerState {
   const def = TRACKER_TYPES[input.type];
@@ -367,11 +370,22 @@ export function deriveTrackerState(input: TrackerInput): TrackerState {
   const frontierIndex = firstIncomplete === -1 ? def.steps.length - 1 : firstIncomplete;
   const materialsIndex = def.steps.findIndex(s => s.key === def.materialsKey);
 
+  // What the designer may navigate to: anything up to the frontier, plus the
+  // interview step. The interview is deliberately not gated behind the photo and
+  // product steps — designers routinely answer questions while tagging is still
+  // unfinished, and the answers are the slowest part of the flow to collect.
+  // Publishing stays gated, since it genuinely needs a draft to exist.
+  const isInterviewStep = (index: number) => {
+    const key = def.steps[index]?.key;
+    return !!key && def.copy[key]?.action === 'interview';
+  };
+  const navigable = (index: number) => index <= frontierIndex || isInterviewStep(index);
+
   // The viewed step. Stepping back to a finished step is always allowed; asking
-  // for one beyond the frontier is not, so those fall back to the frontier.
+  // for one that isn't navigable falls back to the frontier.
   const requestedIndex = activeKey ? def.steps.findIndex(s => s.key === activeKey) : -1;
   const currentIndex =
-    requestedIndex >= 0 && requestedIndex <= frontierIndex ? requestedIndex : frontierIndex;
+    requestedIndex >= 0 && navigable(requestedIndex) ? requestedIndex : frontierIndex;
 
   const steps: TrackerStep[] = def.steps.map((s, index) => {
     // Completion-based styling stays tied to the frontier, so navigating back
@@ -387,7 +401,7 @@ export function deriveTrackerState(input: TrackerInput): TrackerState {
       index,
       count: counts[s.key],
       active: index === currentIndex,
-      locked: index > frontierIndex,
+      locked: !navigable(index),
     };
   });
 
