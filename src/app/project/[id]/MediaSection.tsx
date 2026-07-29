@@ -241,6 +241,14 @@ export default function MediaSection({ project, isOwner, images, projectPost, in
     [handleFinishScheduleUpload],
   );
 
+  // Follow the tracker's active step. The Media surface hosts several steps, so
+  // stepping to Tags opens the tagging surface and stepping back to Photos/Rooms
+  // returns to the workspace. Keyed on the prop, so a manual toggle inside the
+  // surface (Tag products / exit) isn't fought by this effect.
+  useEffect(() => {
+    setShowTagger(initialTagging);
+  }, [initialTagging]);
+
   // --- Progress tracker dispatch -----------------------------------------
   // The tracker (top of the page) names a flow via `?action=` and routes here.
   // Open the matching existing flow, then strip the param so a refresh or a

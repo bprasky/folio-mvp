@@ -25,6 +25,7 @@ import {
 import ProjectProgressTracker from './ProjectProgressTracker';
 import {
   deriveTrackerState,
+  activeStepKeyForView,
   type TrackerState,
   type TrackerType,
 } from '@/lib/publish/computeTrackerState';
@@ -59,9 +60,20 @@ function buildTrackerState(args: {
   totalSelections: number;
   isPublished: boolean;
   interviewInProgress: boolean;
+  view: string;
+  stepParam?: string;
 }): TrackerState | null {
-  const { timeline, readiness, photoCount, roomCount, totalSelections, isPublished, interviewInProgress } =
-    args;
+  const {
+    timeline,
+    readiness,
+    photoCount,
+    roomCount,
+    totalSelections,
+    isPublished,
+    interviewInProgress,
+    view,
+    stepParam,
+  } = args;
   const materialsExist = totalSelections > 0;
 
   const type: TrackerType =
@@ -98,7 +110,16 @@ function buildTrackerState(args: {
 
   if (Object.values(complete).every(Boolean)) return null;
 
-  return deriveTrackerState({ type, complete, counts, materialsExist, interviewInProgress });
+  return deriveTrackerState({
+    type,
+    complete,
+    counts,
+    materialsExist,
+    interviewInProgress,
+    // The tracker highlights whichever step's surface is open, so stepping back
+    // to a finished step keeps the header in sync with what's on screen.
+    activeKey: activeStepKeyForView(view, stepParam, type),
+  });
 }
 
 export default async function ProjectPage({
@@ -106,7 +127,7 @@ export default async function ProjectPage({
   searchParams,
 }: {
   params: { id: string };
-  searchParams: { view?: string };
+  searchParams: { view?: string; step?: string };
 }) {
   const session = await getServerSession(authOptions);
   const viewerId = session?.user?.id ?? null;
@@ -252,17 +273,6 @@ export default async function ProjectPage({
 
   // Project Progress Tracker — guided "what's next" region (top of page).
   const photoCount = base.images.filter(img => !isDocumentImage(img.name)).length;
-  const trackerState = buildTrackerState({
-    timeline: base.timeline ?? null,
-    readiness: publishReadiness,
-    photoCount,
-    roomCount: base.rooms.length,
-    totalSelections,
-    isPublished,
-    // INTERVIEWED = answers saved but no draft generated yet → "Continue interview".
-    interviewInProgress: editorialState === 'INTERVIEWED',
-  });
-
   // Published/concept/in-progress lead with Boards once it exists; otherwise
   // (and for completed archives before tagging) lead with Media.
   const defaultView: TabView =
@@ -294,9 +304,25 @@ export default async function ProjectPage({
   ];
   const view = validViews.includes(currentView) ? currentView : defaultView;
 
+  // Built after the view resolves so the tracker can highlight the step whose
+  // surface is actually open (and so `step` can pick between the Media-hosted
+  // steps, which share one view).
+  const trackerState = buildTrackerState({
+    timeline: base.timeline ?? null,
+    readiness: publishReadiness,
+    photoCount,
+    roomCount: base.rooms.length,
+    totalSelections,
+    isPublished,
+    // INTERVIEWED = answers saved but no draft generated yet → "Continue interview".
+    interviewInProgress: editorialState === 'INTERVIEWED',
+    view,
+    stepParam: searchParams.step,
+  });
+
   // On the Tags step, the media view *is* the manual tagging surface (spec:
   // inline two-path, no separate route/modal). Landing here shows it directly;
-  // the designer can still step back to the plain photo workspace.
+  // stepping back to Photos/Rooms opens the plain photo workspace instead.
   const currentStepKey = trackerState
     ? trackerState.steps[trackerState.currentIndex]?.key ?? null
     : null;
@@ -386,7 +412,6 @@ export default async function ProjectPage({
               projectId={sanitizedProject.id}
               state={trackerState}
               hideNextAction={startInTagging}
-              storyHref={storyTabVisible ? `/project/${sanitizedProject.id}?view=story` : undefined}
             />
           </div>
         )}

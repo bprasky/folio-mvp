@@ -6,6 +6,7 @@ import { cn } from '@/lib/utils';
 import {
   TRACKER_TYPES,
   IMPORT_CARDS,
+  stepHref,
   type TrackerState,
   type TrackerStep,
   type TrackerAction,
@@ -21,12 +22,6 @@ interface ProjectProgressTrackerProps {
    * the tracker's cards don't duplicate it.
    */
   hideNextAction?: boolean;
-  /**
-   * Where the Story/interview step points. The interview's own progress lives on
-   * the Story tab, so that step's marker becomes a link — which is the only way
-   * back to it while the Tags step hides the tab strip for focused tagging.
-   */
-  storyHref?: string;
 }
 
 const IMPORT_ICONS = {
@@ -64,9 +59,9 @@ export default function ProjectProgressTracker({
   projectId,
   state,
   hideNextAction = false,
-  storyHref,
 }: ProjectProgressTrackerProps) {
-  const { steps, currentIndex, materialsIndex, materialsExist, type, endCap } = state;
+  const { steps, currentIndex, frontierIndex, materialsIndex, materialsExist, type, endCap } =
+    state;
   const def = TRACKER_TYPES[type];
   const current = steps[currentIndex];
   // Merge any per-render override (e.g. the "Continue interview" variant when an
@@ -80,16 +75,6 @@ export default function ProjectProgressTracker({
   const showCollapsedBar = materialsExist && !showImportCards;
   const onLastStep = currentIndex === steps.length - 1;
 
-  // The interview step links to the Story tab, which owns the interview's own
-  // progress. Keyed off the step's action (not a hardcoded key) so it stays
-  // correct across tracker types.
-  const stepHrefs: Record<string, string> = {};
-  if (storyHref) {
-    for (const s of steps) {
-      if (def.copy[s.key]?.action === 'interview') stepHrefs[s.key] = storyHref;
-    }
-  }
-
   // The surface below owns this step's next-action inline — show only progress.
   if (hideNextAction) {
     return (
@@ -99,9 +84,9 @@ export default function ProjectProgressTracker({
       >
         <Stepper
           steps={steps}
-          currentIndex={currentIndex}
+          projectId={projectId}
+          frontierIndex={frontierIndex}
           hideDownTick
-          stepHrefs={stepHrefs}
         />
       </section>
     );
@@ -112,7 +97,7 @@ export default function ProjectProgressTracker({
       aria-label="Project progress"
       className="rounded-[20px] border border-folio-border-subtle bg-surface-canvas overflow-hidden"
     >
-      <Stepper steps={steps} currentIndex={currentIndex} stepHrefs={stepHrefs} />
+      <Stepper steps={steps} projectId={projectId} frontierIndex={frontierIndex} />
 
       <div className="px-8 pb-8 pt-2">
         {showImportCards ? (
@@ -143,22 +128,25 @@ const MARKER_CENTER = MARKER / 2;
 
 function Stepper({
   steps,
-  currentIndex,
+  projectId,
+  frontierIndex,
   hideDownTick = false,
-  stepHrefs,
 }: {
   steps: TrackerStep[];
-  currentIndex: number;
+  projectId: string;
+  /** Progress frontier — fills the track and bounds what can be navigated to. */
+  frontierIndex: number;
   hideDownTick?: boolean;
-  /** Per-step-key destination. A step with an href renders as a link. */
-  stepHrefs?: Record<string, string>;
 }) {
   const n = steps.length;
+  const activeIndex = Math.max(0, steps.findIndex(s => s.active));
   // Marker centers sit at (i + 0.5)/n of the row width. The track spans the
   // first center to the last center; the filled portion runs to the current
   // center.
   const edge = 50 / n; // % from row edge to first/last marker center
-  const filledWidth = (currentIndex / n) * 100; // % of row width
+  // The fill shows real progress, so it tracks the frontier — stepping back to
+  // review a finished step must never look like progress was lost.
+  const filledWidth = (frontierIndex / n) * 100; // % of row width
 
   return (
     <div className="relative px-8 pt-8 pb-7">
@@ -176,7 +164,11 @@ function Stepper({
         />
 
         {steps.map(step => (
-          <StepMarker key={step.key} step={step} href={stepHrefs?.[step.key]} />
+          <StepMarker
+            key={step.key}
+            step={step}
+            href={step.locked ? undefined : stepHref(projectId, step.key)}
+          />
         ))}
 
         {/* Down-tick: a rotated square centered under the current step, pointing
@@ -185,7 +177,7 @@ function Stepper({
           <span
             className="absolute -bottom-[7px] w-3 h-3 rotate-45 bg-surface-canvas border-r border-b border-folio-border-subtle"
             style={{
-              left: `${((currentIndex + 0.5) / n) * 100}%`,
+              left: `${((activeIndex + 0.5) / n) * 100}%`,
               transform: 'translateX(-50%) rotate(45deg)',
             }}
             aria-hidden
@@ -197,31 +189,13 @@ function Stepper({
 }
 
 function StepMarker({ step, href }: { step: TrackerStep; href?: string }) {
-  const { state, label, count, index } = step;
+  const { state, label, count, index, active, locked } = step;
   const isDone = state === 'done';
-  const isCurrent = state === 'current';
 
-  // A step whose surface owns its own progress (the interview → Story tab) is
-  // reachable straight from the stepper. Navigation only — it never changes
-  // which step is "current"; that stays derived from real completion.
-  const Wrapper = href
-    ? ({ children }: { children: React.ReactNode }) => (
-        <Link
-          href={href}
-          title={`Go to ${label}`}
-          className="relative flex-1 flex flex-col items-center gap-2.5 z-[1] rounded-2xl transition-opacity duration-[220ms] hover:opacity-80 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)]/40"
-        >
-          {children}
-        </Link>
-      )
-    : ({ children }: { children: React.ReactNode }) => (
-        <div className="relative flex-1 flex flex-col items-center gap-2.5 z-[1]">{children}</div>
-      );
-
-  return (
-    <Wrapper>
-      {/* Soft gold backing behind the current marker + label */}
-      {isCurrent && (
+  const body = (
+    <>
+      {/* Soft gold backing behind the step being viewed */}
+      {active && (
         <span
           className="absolute -inset-x-1 -top-1.5 -bottom-1.5 rounded-2xl bg-folio-gold-ornament/12"
           aria-hidden
@@ -231,11 +205,11 @@ function StepMarker({ step, href }: { step: TrackerStep; href?: string }) {
       <span
         className={cn(
           'relative inline-flex items-center justify-center rounded-full text-sm font-semibold transition-all duration-[220ms]',
-          isDone && 'bg-[#161614] text-white',
-          isCurrent &&
-            'bg-folio-gold-ornament text-white ring-4 ring-folio-gold-ornament/20',
-          !isDone && !isCurrent &&
-            'border border-folio-stone-100 text-folio-text-tertiary',
+          // The viewed step always reads as active, finished or not.
+          active && 'bg-folio-gold-ornament text-white ring-4 ring-folio-gold-ornament/20',
+          !active && isDone && 'bg-[#161614] text-white',
+          !active && !isDone && 'border border-folio-stone-100 text-folio-text-tertiary',
+          locked && 'opacity-45',
         )}
         style={{ width: MARKER, height: MARKER }}
       >
@@ -246,11 +220,12 @@ function StepMarker({ step, href }: { step: TrackerStep; href?: string }) {
         <span
           className={cn(
             'text-[14px] leading-none',
-            isDone && 'font-medium text-folio-text-primary',
-            isCurrent && 'font-semibold text-folio-accent-700',
-            !isDone && !isCurrent && 'text-folio-text-tertiary',
+            active && 'font-semibold text-folio-accent-700',
+            !active && isDone && 'font-medium text-folio-text-primary',
+            !active && !isDone && 'text-folio-text-tertiary',
+            locked && 'opacity-60',
           )}
-          aria-current={isCurrent ? 'step' : undefined}
+          aria-current={active ? 'step' : undefined}
         >
           {label}
         </span>
@@ -260,7 +235,36 @@ function StepMarker({ step, href }: { step: TrackerStep; href?: string }) {
           </span>
         )}
       </div>
-    </Wrapper>
+    </>
+  );
+
+  const shared = 'relative flex-1 flex flex-col items-center gap-2.5 z-[1]';
+
+  // Every step up to the frontier is real navigation — back to finished work, or
+  // forward to the step progress has unlocked. Locked steps stay inert; this only
+  // moves the designer between surfaces, it never advances real completion.
+  if (!href) {
+    return (
+      <div
+        className={cn(shared, locked && 'cursor-not-allowed')}
+        title={locked ? `${label} unlocks as you finish the earlier steps` : undefined}
+      >
+        {body}
+      </div>
+    );
+  }
+
+  return (
+    <Link
+      href={href}
+      title={`Go to ${label}`}
+      className={cn(
+        shared,
+        'rounded-2xl transition-opacity duration-[220ms] hover:opacity-80 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)]/40',
+      )}
+    >
+      {body}
+    </Link>
   );
 }
 
