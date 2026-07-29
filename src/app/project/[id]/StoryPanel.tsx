@@ -1,43 +1,10 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
 import { X } from "lucide-react";
 import { CreditsEditor } from "@/components/posting/CreditsEditor";
 import type { CreditEntry } from "@/lib/posting/creditsSchema";
-import { TagDiagnosticModal } from "@/components/posting/interview/TagDiagnosticModal";
-import { InterviewFlow } from "@/components/interview";
 import StoryInterviewPanel from "./StoryInterviewPanel";
-import { usePublishFlow } from "@/hooks/usePublishFlow";
-
-type QA = {
-  q?: string;
-  a?: string;
-  question?: string;
-  answer?: string;
-  questionId?: string;
-  id?: string;
-  section?: string;
-  isFeatured?: boolean;
-};
-
-type Interview = {
-  id: string;
-  status?: string;
-  answers?: QA[];
-  followUps?: QA[];
-  payload?: any;
-  updatedAt?: string;
-};
-
-type DraftVersion = {
-  id: string;
-  createdAt: string;
-  status: string;
-  slug?: string;
-  lead?: { kicker?: string; title?: string; deck?: string };
-  sections?: any[];
-};
 
 interface StoryPanelProps {
   projectId: string;
@@ -46,28 +13,23 @@ interface StoryPanelProps {
   isOwner: boolean;
 }
 
-const POSTING_V1_ENABLED = process.env.NEXT_PUBLIC_POSTING_V1 === "true";
-
+/**
+ * StoryPanel — the Story step's surface (step 4).
+ *
+ * Everything about the designer's words lives here and ONLY here: the
+ * interview, the saved answers, what the article can include, and generating
+ * the draft. The Tags step owns photos and products; it carries no interview
+ * UI. Keeping the two apart is why this panel is deliberately thin — it hosts
+ * the interview panel and the credits that ship with the published post.
+ */
 export default function StoryPanel({ projectId, project, images, isOwner }: StoryPanelProps) {
-  const router = useRouter();
-  const [isLoading, setIsLoading] = useState(true);
-  const [answers, setAnswers] = useState<QA[]>([]);
-  const [followups, setFollowups] = useState<QA[]>([]);
-  const [saving, setSaving] = useState(false);
-
-  // Credits state
   const [credits, setCredits] = useState<CreditEntry[]>([]);
   const [creditsSaving, setCreditsSaving] = useState(false);
-
-  // Interview modal state
-  const [showTagDiagnostic, setShowTagDiagnostic] = useState(false);
-  const [showInterviewModal, setShowInterviewModal] = useState(false);
 
   // Rooms the last generation withheld because they weren't fully answered.
   // Stashed by InterviewModal in sessionStorage; shown once, then cleared.
   const [excludedRooms, setExcludedRooms] = useState<string[]>([]);
 
-  // Surface (once) any rooms the last generation left out for being unfinished.
   useEffect(() => {
     if (typeof window === "undefined") return;
     // Key mirrors getExcludedRoomsStorageKey in InterviewModal.
@@ -86,146 +48,23 @@ export default function StoryPanel({ projectId, project, images, isOwner }: Stor
     }
   }, [projectId]);
 
-  // Deduplicate answers by question and answer content
-  const dedupeAnswers = (answers: QA[]): QA[] => {
-    const seen = new Map<string, QA>();
-    for (const qa of answers) {
-      const answerKey = (qa.a || qa.answer || "").toLowerCase().trim().slice(0, 50);
-      const questionKey = (qa.q || qa.question || "").toLowerCase().trim();
-      const key = `${questionKey}::${answerKey}`;
-      if (key && key !== "::" && !seen.has(key)) {
-        seen.set(key, qa);
-      }
-    }
-    return Array.from(seen.values());
-  };
-
-  // Fetch interview data
-  const fetchData = async () => {
-    try {
-      setIsLoading(true);
-      const res = await fetch(`/api/posting/project/${projectId}/drafts`);
-      if (res.ok) {
-        const result = await res.json();
-
-        let answersFromDrafts = result.interview?.answers || [];
-        let followUpsFromDrafts = result.interview?.followUps || [];
-
-        // Fallback: try interview GET endpoint
-        if (answersFromDrafts.length === 0) {
-          try {
-            const interviewRes = await fetch(`/api/posting/project/${projectId}/interview`);
-            if (interviewRes.ok) {
-              const interviewData = await interviewRes.json();
-              if (interviewData.answers?.length > 0) {
-                answersFromDrafts = interviewData.answers;
-              }
-              if (interviewData.followUps?.length > 0 && followUpsFromDrafts.length === 0) {
-                followUpsFromDrafts = interviewData.followUps;
-              }
-            }
-          } catch (fallbackErr) {
-            console.warn("[StoryPanel] Fallback interview fetch failed:", fallbackErr);
-          }
-        }
-
-        if (answersFromDrafts.length > 0) {
-          const mappedAnswers = answersFromDrafts.map((a: any) => ({
-            q: a.question || a.q || a.prompt || "",
-            a: a.answer || a.a || "",
-            question: a.question || a.q || a.prompt || "",
-            answer: a.answer || a.a || "",
-            questionId: a.questionId || a.id,
-            section: a.section,
-            isFeatured: !!a.isFeatured,
-          }));
-          setAnswers(dedupeAnswers(mappedAnswers));
-        } else {
-          setAnswers([]);
-        }
-
-        if (followUpsFromDrafts.length > 0) {
-          setFollowups(
-            followUpsFromDrafts.map((f: any) => ({
-              q: f.question || f.q || f.prompt || "",
-              a: f.answer || f.a || "",
-              question: f.question || f.q || f.prompt || "",
-              answer: f.answer || f.a || "",
-            }))
-          );
-        } else {
-          setFollowups([]);
-        }
-      }
-    } catch (error) {
-      console.error("[StoryPanel] Fetch failed", error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  // Fetch credits
-  const fetchCredits = async () => {
-    try {
-      const res = await fetch(`/api/posting/project/${projectId}/credits`);
-      if (res.ok) {
-        const data = await res.json();
-        setCredits(data.credits || []);
-      }
-    } catch (error) {
-      console.error("[StoryPanel] Credits fetch failed:", error);
-    }
-  };
-
   useEffect(() => {
-    fetchData();
-    fetchCredits();
-  }, [projectId]);
-
-  const filteredAnswers = answers.filter(
-    (qa) => (qa.q || qa.question || "").trim() || (qa.a || qa.answer || "").trim()
-  );
-  const filteredFollowups = followups.filter(
-    (qa) => (qa.q || qa.question || "").trim() || (qa.a || qa.answer || "").trim()
-  );
-
-  async function saveAnswers(answersOverride?: QA[]) {
-    try {
-      setSaving(true);
-      const answersToSave = (answersOverride ?? answers).filter(
-        (qa) => (qa.q || qa.question || "").trim() || (qa.a || qa.answer || "").trim()
-      );
-      const res = await fetch(`/api/posting/project/${projectId}/interview`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          answers: answersToSave.map((qa) => ({
-            questionId: qa.questionId || qa.q || qa.question,
-            answer: qa.a || qa.answer || "",
-            question: qa.q || qa.question || "",
-            isFeatured: !!qa.isFeatured,
-          })),
-          followUps: filteredFollowups.map((qa) => ({
-            question: qa.q || qa.question || "",
-            answer: qa.a || qa.answer || "",
-          })),
-        }),
-      });
-
-      if (!res.ok) {
-        const error = await res.json().catch(() => ({}));
-        alert(error.error || "Failed to save answers");
-        return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await fetch(`/api/posting/project/${projectId}/credits`);
+        if (res.ok && !cancelled) {
+          const data = await res.json();
+          setCredits(data.credits || []);
+        }
+      } catch (error) {
+        console.error("[StoryPanel] Credits fetch failed:", error);
       }
-
-      await fetchData();
-    } catch (error: any) {
-      console.error("[StoryPanel] Save failed", error);
-      alert("Failed to save answers");
-    } finally {
-      setSaving(false);
-    }
-  }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [projectId]);
 
   async function handleCreditsChange(newCredits: CreditEntry[]) {
     setCredits(newCredits);
@@ -247,76 +86,9 @@ export default function StoryPanel({ projectId, project, images, isOwner }: Stor
     }
   }
 
-  async function reAskFollowups() {
-    try {
-      const res = await fetch(`/api/posting/project/${projectId}/interview/followups`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          answers: filteredAnswers.map((qa) => ({
-            questionId: qa.questionId || qa.q || `fallback-${Math.random()}`,
-            answer: qa.a,
-          })),
-        }),
-      });
-
-      if (!res.ok) {
-        const err = await res.json();
-        throw new Error(err.error || "Failed to generate follow-ups");
-      }
-
-      const result = await res.json();
-      const newFollowups =
-        result.followups?.map((f: any) => ({
-          q: f.text || f.question || f.prompt || "",
-          a: f.answer || "",
-          questionId: f.questionId,
-        })) ?? [];
-
-      setFollowups((prev) => [...prev, ...newFollowups]);
-      await fetchData();
-    } catch (err) {
-      console.error("Follow-ups error:", err);
-      alert(err instanceof Error ? err.message : "Failed to generate follow-ups");
-    }
-  }
-
-  function setFollowup(i: number, key: "q" | "a", value: string) {
-    const next = [...followups];
-    next[i] = {
-      ...next[i],
-      [key]: value,
-      ...(key === "a" ? { answer: value } : {}),
-      ...(key === "q" ? { question: value } : {}),
-    };
-    setFollowups(next);
-  }
-
-  function addFollowup() {
-    setFollowups([...followups, { q: "", a: "" }]);
-  }
-
-  function removeFollowup(i: number) {
-    setFollowups(followups.filter((_, idx) => idx !== i));
-  }
-
-  if (isLoading) {
-    return (
-      <div className="p-8 text-center text-folio-text-secondary">Loading...</div>
-    );
-  }
-
   return (
-    <div className="max-w-3xl space-y-12">
-      {/* Intro */}
-      <p className="folio-body text-folio-text-secondary">
-        Tell us about this project. Your reflections and credits shape the published post.
-      </p>
-
-      {/* The interview lives here: progress, editable answers, what the article
-          can include, and Generate. This is the story half of the designer's
-          flow — deliberately separate from the Tags progress in the header
-          tracker, which tracks the photo/product half. */}
+    <div className="max-w-3xl space-y-8">
+      {/* The interview: progress, answers, coverage, and Generate. */}
       {isOwner && (
         <StoryInterviewPanel
           projectId={projectId}
@@ -331,7 +103,7 @@ export default function StoryPanel({ projectId, project, images, isOwner }: Stor
           <div className="flex items-start justify-between gap-4">
             <div>
               <p className="folio-ui font-semibold text-folio-text-primary">
-                {excludedRooms.join(', ')}
+                {excludedRooms.join(", ")}
               </p>
               {/* C5 — verbatim: rooms without a write-up now appear as photo-only
                   gallery chapters, not dropped. Published rooms are frozen. */}
@@ -352,7 +124,7 @@ export default function StoryPanel({ projectId, project, images, isOwner }: Stor
         </div>
       )}
 
-      {/* Project Credits */}
+      {/* Project Credits — ships with the published post. */}
       <div className="rounded-[20px] border border-folio-border-subtle bg-surface-ground p-6 shadow-sm">
         <h2 className="folio-h3 text-folio-text-primary mb-1">Project Credits</h2>
         <p className="folio-meta text-folio-text-tertiary mb-4">
@@ -364,176 +136,6 @@ export default function StoryPanel({ projectId, project, images, isOwner }: Stor
           saving={creditsSaving}
         />
       </div>
-
-      {/* Editorial Context */}
-      {isOwner && POSTING_V1_ENABLED && (
-        <EditorialContextSection projectId={projectId} />
-      )}
-
-      {/* Follow-up Questions Section */}
-      <div className="rounded-[20px] border border-folio-border-subtle bg-surface-ground p-6 shadow-sm">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="folio-h3 text-folio-text-primary">Follow-up Questions</h2>
-          <div className="flex gap-2">
-            <button
-              className="px-3 py-1.5 folio-ui font-medium text-white bg-[var(--accent)] rounded-lg hover:bg-[var(--accent-hover)] transition-colors"
-              onClick={addFollowup}
-            >
-              + Add
-            </button>
-            <button
-              className="px-3 py-1.5 folio-ui font-medium text-folio-text-primary bg-surface-canvas border border-folio-border-subtle rounded-lg hover:bg-surface-ground transition-colors"
-              onClick={reAskFollowups}
-            >
-              Ask
-            </button>
-          </div>
-        </div>
-        <div className="space-y-3 max-h-[280px] overflow-y-auto pr-2">
-          {filteredFollowups.length === 0 && (
-            <p className="folio-ui text-folio-text-tertiary italic">
-              Deeper questions based on your reflections. Click Ask to generate.
-            </p>
-          )}
-          {filteredFollowups.map((qa, i) => (
-            <div
-              key={i}
-              className="grid grid-cols-12 gap-3 items-start p-3 rounded-lg border border-folio-border-subtle hover:border-[var(--accent)] transition-colors"
-            >
-              <input
-                className="col-span-5 px-3 py-2 folio-ui border border-folio-border-subtle rounded-lg focus:ring-1 focus:ring-[var(--accent)] focus:border-[var(--accent)] min-w-0 bg-surface-canvas"
-                value={qa.q || qa.question || ""}
-                placeholder="Follow-up Question"
-                onChange={(e) => setFollowup(i, "q", e.target.value)}
-              />
-              <textarea
-                className="col-span-6 px-3 py-2 border border-folio-border-subtle rounded-lg focus:ring-1 focus:ring-[var(--accent)] focus:border-[var(--accent)] resize-none bg-surface-canvas"
-                style={{ fontFamily: "var(--font-headline)", fontStyle: "italic", fontSize: 'var(--type-body)', lineHeight: 'var(--lh-body)' }}
-                value={qa.a || qa.answer || ""}
-                placeholder="Answer"
-                rows={2}
-                onChange={(e) => setFollowup(i, "a", e.target.value)}
-              />
-              <button
-                className="col-span-1 px-2 py-1 text-folio-text-tertiary hover:text-[rgb(74,44,59)] hover:bg-stone-100 rounded transition-colors"
-                onClick={() => removeFollowup(i)}
-                aria-label="Remove"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* Save Button */}
-      <div className="flex gap-3">
-        <button
-          className="px-4 py-2 folio-ui font-medium text-white bg-[var(--accent)] rounded-lg hover:bg-[var(--accent-hover)] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-          disabled={saving}
-          onClick={() => saveAnswers()}
-        >
-          {saving ? "Saving..." : "Save"}
-        </button>
-      </div>
-
-      {/* Tag Diagnostic Modal */}
-      {showTagDiagnostic && (
-        <TagDiagnosticModal
-          open={showTagDiagnostic}
-          onOpenChange={(open) => setShowTagDiagnostic(open)}
-          projectId={project.id}
-          onAutoTagComplete={() => router.refresh()}
-          onStartInterview={() => {
-            setShowTagDiagnostic(false);
-            setShowInterviewModal(true);
-          }}
-        />
-      )}
-
-      {/* Interview Flow Modal */}
-      {showInterviewModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center">
-          <div
-            className="absolute inset-0 bg-black/50 backdrop-blur-sm"
-            onClick={() => setShowInterviewModal(false)}
-          />
-          <div className="relative bg-white rounded-[20px] shadow-2xl w-full max-w-3xl mx-4 max-h-[90vh] overflow-hidden">
-            <InterviewFlow
-              projectId={project.id}
-              projectName={project.title}
-              images={images.map((img) => ({ id: img.id, url: img.url, name: img.name }))}
-              onComplete={() => {
-                setShowInterviewModal(false);
-                router.push(`/designer/projects/${project.id}/preview`);
-              }}
-              onCancel={() => setShowInterviewModal(false)}
-            />
-          </div>
-        </div>
-      )}
-    </div>
-  );
-}
-
-// Inline component for editorial context display/toggles
-function EditorialContextSection({ projectId }: { projectId: string }) {
-  const { contextToggles, setContextToggle, generationMeta, generateDraft, regenBusy } = usePublishFlow(projectId);
-  const [dirty, setDirty] = useState(false);
-
-  function handleToggle(key: 'includeBio' | 'includeProjectHistory', value: boolean) {
-    setContextToggle(key, value);
-    setDirty(true);
-  }
-
-  async function handleRegenerate() {
-    await generateDraft();
-    setDirty(false);
-  }
-
-  return (
-    <div className="rounded-[20px] border border-folio-border-subtle bg-surface-ground p-6 shadow-sm">
-      <h2 className="folio-h3 text-folio-text-primary mb-1">Editorial Context</h2>
-      <p className="folio-meta text-folio-text-tertiary mb-4">
-        Control what background context Folio uses when writing about your project.
-      </p>
-      <div className="space-y-3">
-        <label className="flex items-center gap-2 cursor-pointer select-none folio-ui text-folio-text-secondary">
-          <input
-            type="checkbox"
-            checked={contextToggles.includeBio}
-            onChange={(e) => handleToggle('includeBio', e.target.checked)}
-            className="w-4 h-4 rounded border-folio-border-subtle accent-[var(--accent)]"
-          />
-          Include my bio for richer editorial context
-        </label>
-        <label className="flex items-center gap-2 cursor-pointer select-none folio-ui text-folio-text-secondary">
-          <input
-            type="checkbox"
-            checked={contextToggles.includeProjectHistory}
-            onChange={(e) => handleToggle('includeProjectHistory', e.target.checked)}
-            className="w-4 h-4 rounded border-folio-border-subtle accent-[var(--accent)]"
-          />
-          Reference my other Folio projects
-        </label>
-      </div>
-      {generationMeta?.designerBioMissing && contextToggles.includeBio && (
-        <p className="mt-3 folio-meta text-folio-text-tertiary">
-          Your bio helps Folio write features that sound like you.{" "}
-          <a href="/settings/profile" className="text-[var(--accent)] hover:text-[var(--accent-hover)] underline">
-            Add one now
-          </a>
-        </p>
-      )}
-      {dirty && (
-        <button
-          onClick={handleRegenerate}
-          disabled={regenBusy}
-          className="mt-4 px-4 py-2 folio-ui font-medium text-white bg-[var(--accent)] rounded-lg hover:bg-[var(--accent-hover)] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-        >
-          {regenBusy ? "Regenerating..." : "Regenerate with updated context"}
-        </button>
-      )}
     </div>
   );
 }
