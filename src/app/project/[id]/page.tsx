@@ -298,12 +298,15 @@ export default async function ProjectPage({
   if (currentView === 'files') currentView = 'media';
   else if (currentView === 'drafts') currentView = 'publish';
 
-  // The Story tab is the owner's interview surface — where they start, resume,
-  // review answers, and generate the draft. It's therefore always available to
-  // the owner (not just once answers exist), so the tracker's Story step has
-  // somewhere to send them on a fresh project. Everyone else only sees Story
-  // once it's published.
-  const storyTabVisible = editorialState === 'PUBLISHED' || isOwner;
+  // Story is a publishing-flow surface: it's where the owner interviews, reviews
+  // answers, and generates the draft. A working project has no Story step in its
+  // tracker at all (inProgress is Photos/Rooms/Products; concept is
+  // References/Spaces/Products/Share), so the tab would point at a stage that
+  // doesn't exist for it. Owners get it throughout the publishing flow — not just
+  // once answers exist — so the tracker's Story step always has somewhere to send
+  // them. Everyone else only sees Story once it's published.
+  const storyTabVisible =
+    editorialState === 'PUBLISHED' || (isOwner && inPublishingFlow);
   if (currentView === 'story' && !storyTabVisible) currentView = 'media';
   if (!hasDraftOrPublished && currentView === 'publish') currentView = 'media';
   if (currentView === 'boards' && !boardsVisible) currentView = 'media';

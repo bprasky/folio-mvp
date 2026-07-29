@@ -55,11 +55,16 @@ export default function ProjectTabs({
   const totalSelections =
     project.rooms?.reduce((sum: number, room: any) => sum + (room.selections?.length || 0), 0) || 0;
 
+  // Story and Publish are the publishing flow's own surfaces — they never belong
+  // to a project that's still being built. (A draft existing already implies the
+  // publishing flow, so this gate only makes that explicit rather than changing
+  // when Publish appears.)
   const showStory = storyTabVisible ?? editorialState === 'PUBLISHED';
   const showPublish =
-    editorialState === 'GENERATED' ||
-    editorialState === 'PUBLISHED' ||
-    editorialState === 'UNPUBLISHED';
+    inPublishingFlow &&
+    (editorialState === 'GENERATED' ||
+      editorialState === 'PUBLISHED' ||
+      editorialState === 'UNPUBLISHED');
 
   const allTabs = [
     {
