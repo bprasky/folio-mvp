@@ -271,16 +271,22 @@ export default async function ProjectPage({
   const boardsVisible = totalSelections > 0;
   const isProspective = base.timeline === 'PRESENT' || base.timeline === 'FUTURE';
 
-  // Which flow is this project in? The timeline captured at creation decides:
-  // PAST is finished work, which exists to be published, so it enters the
-  // publishing flow immediately. PRESENT/FUTURE are working projects — boards,
-  // action items and media are their whole point. A working project that later
-  // starts publishing (a draft exists) crosses over too.
+  // Which flow is this project in? Must agree with the tracker type derived in
+  // buildTrackerState, which treats anything that isn't PRESENT/FUTURE as
+  // 'completed' — so a project with no timeline set (older projects, and
+  // anything created without the wizard) gets the 5-step publishing stepper.
+  // Testing `timeline === 'PAST'` here instead left those projects rendering the
+  // publishing stepper while every publishing surface was switched off, which
+  // hid the Story tab and silently bounced ?view=story back to Media.
+  //
+  // Derive it from the same signal the tracker uses: prospective projects are the
+  // working ones; everything else is publishing. A working project that starts a
+  // draft crosses over too.
   //
   // In the publishing flow the stepper is the navigation: Photos/Rooms/Tags all
   // live on the Media surface and are reached by step, so the working tabs
   // (Boards / Action items / Media) must not leak back in alongside it.
-  const inPublishingFlow = base.timeline === 'PAST' || hasDraftOrPublished;
+  const inPublishingFlow = !isProspective || hasDraftOrPublished;
 
   // Project Progress Tracker — guided "what's next" region (top of page).
   const photoCount = base.images.filter(img => !isDocumentImage(img.name)).length;
