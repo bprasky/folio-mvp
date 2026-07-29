@@ -23,7 +23,6 @@ import {
   isDocumentImage,
 } from '@/lib/publish/computePublishReadiness';
 import ProjectProgressTracker from './ProjectProgressTracker';
-import ProjectStorySection from './ProjectStorySection';
 import {
   deriveTrackerState,
   type TrackerState,
@@ -273,11 +272,12 @@ export default async function ProjectPage({
   if (currentView === 'files') currentView = 'media';
   else if (currentView === 'drafts') currentView = 'publish';
 
-  // The owner keeps access to their Story tab as soon as an interview exists
-  // (INTERVIEWED, or a generated/published draft) so they can always return to
-  // resume or adjust it. Everyone else only sees Story once it's published.
-  const storyTabVisible =
-    editorialState === 'PUBLISHED' || (isOwner && editorialState !== 'EMPTY');
+  // The Story tab is the owner's interview surface — where they start, resume,
+  // review answers, and generate the draft. It's therefore always available to
+  // the owner (not just once answers exist), so the tracker's Story step has
+  // somewhere to send them on a fresh project. Everyone else only sees Story
+  // once it's published.
+  const storyTabVisible = editorialState === 'PUBLISHED' || isOwner;
   if (currentView === 'story' && !storyTabVisible) currentView = 'media';
   if (!hasDraftOrPublished && currentView === 'publish') currentView = 'media';
   if (currentView === 'boards' && !boardsVisible) currentView = 'media';
@@ -377,33 +377,16 @@ export default async function ProjectPage({
         />
 
         {/* Project Progress Tracker — adaptive guided next-action region.
-            Once the owner has saved interview answers, the tracker card also
-            hosts the "Your story so far" region: resume/restart the interview
-            and edit answers in place, without the laggy "Continue to interview"
-            round-trip. Kept reachable even on the Tags step (the interview runs
-            in parallel to tagging). */}
+            Photo/product progress only. The interview's own progress (answers,
+            coverage, generate) lives on the Story tab, so the two halves of the
+            flow don't compete for the same header space. */}
         {trackerState && (
           <div className="mt-2 mb-2">
             <ProjectProgressTracker
               projectId={sanitizedProject.id}
               state={trackerState}
               hideNextAction={startInTagging}
-              storyFooter={
-                isOwner && interviewAnswerCount > 0 ? (
-                  <ProjectStorySection
-                    projectId={sanitizedProject.id}
-                    projectName={sanitizedProject.title}
-                    images={base.images.map(img => ({
-                      id: img.id,
-                      url: img.url,
-                      name: img.name,
-                      room: img.room ?? null,
-                      roomId: img.roomId ?? null,
-                      displayOrder: img.displayOrder ?? null,
-                    }))}
-                  />
-                ) : null
-              }
+              storyHref={storyTabVisible ? `/project/${sanitizedProject.id}?view=story` : undefined}
             />
           </div>
         )}

@@ -22,13 +22,11 @@ interface ProjectProgressTrackerProps {
    */
   hideNextAction?: boolean;
   /**
-   * Optional "Your story so far" region rendered inside the tracker card, below
-   * the stepper. Present once the designer has saved interview answers so they
-   * can resume/restart the interview and edit answers without leaving the page.
-   * Shown regardless of `hideNextAction` — the interview runs in parallel to the
-   * Tags step, so it stays reachable even while tagging is the active step.
+   * Where the Story/interview step points. The interview's own progress lives on
+   * the Story tab, so that step's marker becomes a link — which is the only way
+   * back to it while the Tags step hides the tab strip for focused tagging.
    */
-  storyFooter?: React.ReactNode;
+  storyHref?: string;
 }
 
 const IMPORT_ICONS = {
@@ -48,6 +46,12 @@ function actionHref(projectId: string, action: TrackerAction): string {
   if (action === 'publish') {
     return `/project/${projectId}?view=publish`;
   }
+  // The interview now lives on the Story tab, which owns its progress, coverage
+  // and the Generate action — so the Story step routes there rather than opening
+  // the modal over the Media surface.
+  if (action === 'interview') {
+    return `/project/${projectId}?view=story`;
+  }
   return `/project/${projectId}?view=media&action=${action}`;
 }
 
@@ -60,7 +64,7 @@ export default function ProjectProgressTracker({
   projectId,
   state,
   hideNextAction = false,
-  storyFooter,
+  storyHref,
 }: ProjectProgressTrackerProps) {
   const { steps, currentIndex, materialsIndex, materialsExist, type, endCap } = state;
   const def = TRACKER_TYPES[type];
@@ -76,6 +80,16 @@ export default function ProjectProgressTracker({
   const showCollapsedBar = materialsExist && !showImportCards;
   const onLastStep = currentIndex === steps.length - 1;
 
+  // The interview step links to the Story tab, which owns the interview's own
+  // progress. Keyed off the step's action (not a hardcoded key) so it stays
+  // correct across tracker types.
+  const stepHrefs: Record<string, string> = {};
+  if (storyHref) {
+    for (const s of steps) {
+      if (def.copy[s.key]?.action === 'interview') stepHrefs[s.key] = storyHref;
+    }
+  }
+
   // The surface below owns this step's next-action inline — show only progress.
   if (hideNextAction) {
     return (
@@ -83,10 +97,12 @@ export default function ProjectProgressTracker({
         aria-label="Project progress"
         className="rounded-[20px] border border-folio-border-subtle bg-surface-canvas overflow-hidden"
       >
-        <Stepper steps={steps} currentIndex={currentIndex} hideDownTick />
-        {storyFooter && (
-          <div className="border-t border-folio-border-subtle">{storyFooter}</div>
-        )}
+        <Stepper
+          steps={steps}
+          currentIndex={currentIndex}
+          hideDownTick
+          stepHrefs={stepHrefs}
+        />
       </section>
     );
   }
@@ -96,7 +112,7 @@ export default function ProjectProgressTracker({
       aria-label="Project progress"
       className="rounded-[20px] border border-folio-border-subtle bg-surface-canvas overflow-hidden"
     >
-      <Stepper steps={steps} currentIndex={currentIndex} />
+      <Stepper steps={steps} currentIndex={currentIndex} stepHrefs={stepHrefs} />
 
       <div className="px-8 pb-8 pt-2">
         {showImportCards ? (
@@ -114,9 +130,6 @@ export default function ProjectProgressTracker({
         )}
       </div>
 
-      {storyFooter && (
-        <div className="border-t border-folio-border-subtle">{storyFooter}</div>
-      )}
     </section>
   );
 }
@@ -132,10 +145,13 @@ function Stepper({
   steps,
   currentIndex,
   hideDownTick = false,
+  stepHrefs,
 }: {
   steps: TrackerStep[];
   currentIndex: number;
   hideDownTick?: boolean;
+  /** Per-step-key destination. A step with an href renders as a link. */
+  stepHrefs?: Record<string, string>;
 }) {
   const n = steps.length;
   // Marker centers sit at (i + 0.5)/n of the row width. The track spans the
@@ -160,7 +176,7 @@ function Stepper({
         />
 
         {steps.map(step => (
-          <StepMarker key={step.key} step={step} />
+          <StepMarker key={step.key} step={step} href={stepHrefs?.[step.key]} />
         ))}
 
         {/* Down-tick: a rotated square centered under the current step, pointing
@@ -180,13 +196,30 @@ function Stepper({
   );
 }
 
-function StepMarker({ step }: { step: TrackerStep }) {
+function StepMarker({ step, href }: { step: TrackerStep; href?: string }) {
   const { state, label, count, index } = step;
   const isDone = state === 'done';
   const isCurrent = state === 'current';
 
+  // A step whose surface owns its own progress (the interview → Story tab) is
+  // reachable straight from the stepper. Navigation only — it never changes
+  // which step is "current"; that stays derived from real completion.
+  const Wrapper = href
+    ? ({ children }: { children: React.ReactNode }) => (
+        <Link
+          href={href}
+          title={`Go to ${label}`}
+          className="relative flex-1 flex flex-col items-center gap-2.5 z-[1] rounded-2xl transition-opacity duration-[220ms] hover:opacity-80 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)]/40"
+        >
+          {children}
+        </Link>
+      )
+    : ({ children }: { children: React.ReactNode }) => (
+        <div className="relative flex-1 flex flex-col items-center gap-2.5 z-[1]">{children}</div>
+      );
+
   return (
-    <div className="relative flex-1 flex flex-col items-center gap-2.5 z-[1]">
+    <Wrapper>
       {/* Soft gold backing behind the current marker + label */}
       {isCurrent && (
         <span
@@ -227,7 +260,7 @@ function StepMarker({ step }: { step: TrackerStep }) {
           </span>
         )}
       </div>
-    </div>
+    </Wrapper>
   );
 }
 

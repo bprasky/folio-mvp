@@ -2,12 +2,12 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { X, Mic, Quote } from "lucide-react";
+import { X } from "lucide-react";
 import { CreditsEditor } from "@/components/posting/CreditsEditor";
 import type { CreditEntry } from "@/lib/posting/creditsSchema";
 import { TagDiagnosticModal } from "@/components/posting/interview/TagDiagnosticModal";
-import { EditReflectionModal } from "@/components/posting/interview/EditReflectionModal";
 import { InterviewFlow } from "@/components/interview";
+import StoryInterviewPanel from "./StoryInterviewPanel";
 import { usePublishFlow } from "@/hooks/usePublishFlow";
 
 type QA = {
@@ -66,10 +66,6 @@ export default function StoryPanel({ projectId, project, images, isOwner }: Stor
   // Rooms the last generation withheld because they weren't fully answered.
   // Stashed by InterviewModal in sessionStorage; shown once, then cleared.
   const [excludedRooms, setExcludedRooms] = useState<string[]>([]);
-
-  // Reflection edit modal state — store the entry by reference (filteredAnswers
-  // indexes don't map 1:1 to `answers` when empty entries are filtered out).
-  const [editingReflection, setEditingReflection] = useState<QA | null>(null);
 
   // Surface (once) any rooms the last generation left out for being unfinished.
   useEffect(() => {
@@ -285,35 +281,6 @@ export default function StoryPanel({ projectId, project, images, isOwner }: Stor
     }
   }
 
-  async function commitReflectionEdit(
-    target: QA,
-    nextAnswer: string,
-    nextQuestion: string
-  ) {
-    const idx = answers.indexOf(target);
-    if (idx === -1) return;
-    const next = [...answers];
-    next[idx] = {
-      ...next[idx],
-      a: nextAnswer,
-      answer: nextAnswer,
-      q: nextQuestion,
-      question: nextQuestion,
-    };
-    setAnswers(next);
-    await saveAnswers(next);
-  }
-
-  function removeAnswer(i: number) {
-    setAnswers(answers.filter((_, idx) => idx !== i));
-  }
-
-  function toggleFeatured(i: number) {
-    const next = [...answers];
-    next[i] = { ...next[i], isFeatured: !next[i].isFeatured };
-    setAnswers(next);
-  }
-
   function setFollowup(i: number, key: "q" | "a", value: string) {
     const next = [...followups];
     next[i] = {
@@ -346,22 +313,16 @@ export default function StoryPanel({ projectId, project, images, isOwner }: Stor
         Tell us about this project. Your reflections and credits shape the published post.
       </p>
 
-      {/* Resume the live interview. Routes to the Media surface's InterviewModal
-          (the primary flow, with native draft-resume) so a designer can always
-          pick up an in-progress interview from here — no answers are lost. */}
+      {/* The interview lives here: progress, editable answers, what the article
+          can include, and Generate. This is the story half of the designer's
+          flow — deliberately separate from the Tags progress in the header
+          tracker, which tracks the photo/product half. */}
       {isOwner && (
-        <button
-          onClick={() => router.push(`/project/${projectId}?view=media&action=interview`)}
-          className="w-full flex items-center justify-center gap-3 px-6 py-4 bg-[var(--accent)] text-white rounded-2xl hover:bg-[var(--accent-hover)] transition-colors shadow-sm"
-        >
-          <Mic className="w-5 h-5" />
-          <div className="text-left">
-            <span className="folio-ui font-semibold block">Continue interview</span>
-            <span className="folio-meta opacity-80">
-              Pick up where you left off — your answers are saved
-            </span>
-          </div>
-        </button>
+        <StoryInterviewPanel
+          projectId={projectId}
+          projectName={project.title}
+          images={images}
+        />
       )}
 
       {/* Rooms left out of the last generation for being unfinished */}
@@ -408,102 +369,6 @@ export default function StoryPanel({ projectId, project, images, isOwner }: Stor
       {isOwner && POSTING_V1_ENABLED && (
         <EditorialContextSection projectId={projectId} />
       )}
-
-      {/* Continue to Interview CTA */}
-      {isOwner && POSTING_V1_ENABLED && (
-        <button
-          onClick={() => setShowTagDiagnostic(true)}
-          className="w-full flex items-center justify-center gap-3 px-6 py-4 bg-[var(--accent)] text-white rounded-2xl hover:bg-[var(--accent-hover)] transition-colors shadow-sm"
-        >
-          <Mic className="w-5 h-5" />
-          <div className="text-left">
-            <span className="folio-ui font-semibold block">Continue to Interview</span>
-            <span className="folio-meta opacity-80">Answer questions about your design decisions</span>
-            <span className="folio-meta opacity-60 text-xs block mt-0.5">
-              Your answers will update the draft. Regenerate and republish to apply changes.
-            </span>
-          </div>
-        </button>
-      )}
-
-      {/* Your Reflections Section */}
-      <div className="rounded-[20px] border border-folio-border-subtle bg-surface-ground p-6 shadow-sm">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="folio-h3 text-folio-text-primary">Your Reflections</h2>
-        </div>
-        <div className="space-y-3 max-h-[420px] overflow-y-auto pr-2">
-          {filteredAnswers.length === 0 && (
-            <p className="folio-ui text-folio-text-tertiary italic">
-              No reflections yet. Continue the interview to add your first reflection.
-            </p>
-          )}
-          {filteredAnswers.map((qa, i) => (
-            <div
-              key={i}
-              className={`rounded-[20px] p-4 mb-3 transition-colors ${
-                qa.isFeatured
-                  ? "border-l-4 border-l-[var(--accent)] border border-[var(--accent)]/30 bg-[var(--accent)]/5"
-                  : "border border-folio-border-subtle"
-              }`}
-            >
-              <div className="flex items-start justify-between gap-2 mb-2">
-                <p className="flex-1 min-w-0 folio-ui font-medium text-folio-text-primary">
-                  {qa.q || qa.question}
-                </p>
-                <button
-                  onClick={() => toggleFeatured(i)}
-                  className={`shrink-0 p-1.5 rounded transition-colors ${
-                    qa.isFeatured
-                      ? "text-[var(--accent)] bg-[var(--accent)]/10"
-                      : "text-folio-text-tertiary hover:text-[var(--accent)] hover:bg-[var(--accent)]/5"
-                  }`}
-                  aria-label={qa.isFeatured ? "Remove from featured quotes" : "Mark as featured quote"}
-                  title={qa.isFeatured ? "Featured quote" : "Feature this quote"}
-                >
-                  <Quote className="w-4 h-4" />
-                </button>
-              </div>
-              {qa.isFeatured && (
-                <div className="mb-2 pl-3 border-l-2 border-[var(--accent)]/40">
-                  <p className="folio-ui italic text-folio-text-secondary leading-relaxed">
-                    {qa.a || qa.answer || ""}
-                  </p>
-                </div>
-              )}
-              <div
-                onDoubleClick={() => setEditingReflection(qa)}
-                role="button"
-                tabIndex={0}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") setEditingReflection(qa);
-                }}
-                title="Double-click to edit"
-                className={`w-full min-h-[80px] p-3 border border-folio-border-subtle rounded-[20px] bg-surface-canvas hover:border-[var(--accent)] hover:bg-[var(--accent)]/[0.02] cursor-pointer transition-colors whitespace-pre-wrap break-words ${
-                  (qa.a || qa.answer || "").trim() ? "text-folio-text-primary" : "text-folio-text-tertiary"
-                }`}
-                style={{ fontFamily: "var(--font-headline)", fontStyle: "italic", fontSize: 'var(--type-body)', lineHeight: 'var(--lh-body)' }}
-              >
-                {(qa.a || qa.answer || "").trim() || "Double-click to add your thoughts..."}
-              </div>
-              <div className="flex items-center justify-between mt-2">
-                {qa.isFeatured && (
-                  <span className="folio-meta text-[var(--accent)] font-medium">
-                    Pull quote
-                  </span>
-                )}
-                <div className="flex-1" />
-                <button
-                  onClick={() => removeAnswer(i)}
-                  className="text-folio-text-tertiary hover:text-[rgb(74,44,59)]"
-                  aria-label="Remove"
-                >
-                  <X className="w-4 h-4" />
-                </button>
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
 
       {/* Follow-up Questions Section */}
       <div className="rounded-[20px] border border-folio-border-subtle bg-surface-ground p-6 shadow-sm">
@@ -571,22 +436,6 @@ export default function StoryPanel({ projectId, project, images, isOwner }: Stor
           {saving ? "Saving..." : "Save"}
         </button>
       </div>
-
-      {/* Reflection Edit Modal */}
-      {editingReflection && (
-        <EditReflectionModal
-          question={editingReflection.q || editingReflection.question || ""}
-          initialValue={editingReflection.a || editingReflection.answer || ""}
-          questionId={editingReflection.questionId || ""}
-          section={editingReflection.section || ""}
-          saving={saving}
-          onCancel={() => setEditingReflection(null)}
-          onConfirm={async (nextAnswer, nextQuestion) => {
-            await commitReflectionEdit(editingReflection, nextAnswer, nextQuestion);
-            setEditingReflection(null);
-          }}
-        />
-      )}
 
       {/* Tag Diagnostic Modal */}
       {showTagDiagnostic && (
