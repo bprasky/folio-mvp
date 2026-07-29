@@ -26,8 +26,8 @@ import ProjectProgressTracker from './ProjectProgressTracker';
 import {
   deriveTrackerState,
   activeStepKeyForView,
+  trackerTypeForTimeline,
   type TrackerState,
-  type TrackerType,
 } from '@/lib/publish/computeTrackerState';
 
 type TabView = 'overview' | 'media' | 'boards' | 'drafts' | 'files' | 'publish' | 'story' | 'actions';
@@ -76,8 +76,7 @@ function buildTrackerState(args: {
   } = args;
   const materialsExist = totalSelections > 0;
 
-  const type: TrackerType =
-    timeline === 'PRESENT' ? 'inProgress' : timeline === 'FUTURE' ? 'concept' : 'completed';
+  const type = trackerTypeForTimeline(timeline);
 
   let complete: Record<string, boolean>;
   let counts: Record<string, number | undefined>;
@@ -269,18 +268,25 @@ export default async function ProjectPage({
     0,
   );
   const boardsVisible = totalSelections > 0;
-  const isProspective = base.timeline === 'PRESENT' || base.timeline === 'FUTURE';
 
-  // Which flow is this project in? The timeline captured at creation decides:
-  // PAST is finished work, which exists to be published, so it enters the
-  // publishing flow immediately. PRESENT/FUTURE are working projects — boards,
-  // action items and media are their whole point. A working project that later
-  // starts publishing (a draft exists) crosses over too.
+  // Which flow is this project in? The timeline captured at creation decides,
+  // read through the same classifier the tracker uses: the `completed` sequence
+  // (PAST, or a legacy project with no timeline) is finished work, which exists
+  // to be published, so it enters the publishing flow immediately. PRESENT/FUTURE
+  // are working projects — boards, action items and media are their whole point.
+  // A working project that later starts publishing (a draft exists) crosses over
+  // too.
   //
-  // In the publishing flow the stepper is the navigation: Photos/Rooms/Tags all
-  // live on the Media surface and are reached by step, so the working tabs
-  // (Boards / Action items / Media) must not leak back in alongside it.
-  const inPublishingFlow = base.timeline === 'PAST' || hasDraftOrPublished;
+  // Deriving this from `trackerType` rather than re-testing the timeline is what
+  // keeps the stepper honest: the tracker only shows the Story and Publish steps
+  // for the `completed` sequence, and those steps link to surfaces this flag
+  // gates. Test the timeline twice and the two disagree on a null timeline — the
+  // Story step renders, links to `?view=story`, and the page bounces it back to
+  // the Tags screen.
+  const trackerType = trackerTypeForTimeline(base.timeline);
+  const inPublishingFlow = trackerType === 'completed' || hasDraftOrPublished;
+  // A project still ahead of itself: in flight or a concept, never finished work.
+  const isProspective = trackerType !== 'completed';
 
   // Project Progress Tracker — guided "what's next" region (top of page).
   const photoCount = base.images.filter(img => !isDocumentImage(img.name)).length;
