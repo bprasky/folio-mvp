@@ -1,51 +1,50 @@
-# Progress Tracker — Story step: resume/restart + editable Q&A (branch: claude/progress-tracker-interview-flow-x8ykfp)
+# Story step is unreachable on legacy projects (branch: claude/tags-story-view-duplicate-6rnnjj)
 
 ## Problem (reported)
-Designer has saved interview answers, but the Progress Tracker never surfaces the
-Story step (it's gated behind the incomplete Tags step). Re-entering the interview
-via "Continue to interview" is ugly: the first question flashes, then it takes ~a
-minute to register that progress exists. Two asks:
-1. With saved answers, surface a Story area in the tracker with Resume/Restart.
-2. Show the Q&A there, editable — editing opens an existing modal, not inline.
+`/project/<id>?view=story` renders the exact same screen as
+`/project/<id>?view=media&step=tags` — clicking the tracker's Story step shows
+the tagging surface again, so the interview has no entry point.
 
-## Root causes
-- Tracker `currentIndex` = first incomplete step (Tags), so the Story step's
-  `STORY_IN_PROGRESS_COPY` override never shows while Tags is incomplete.
-- InterviewModal renders `phase="question"` immediately on open, before the preload
-  GET resolves → Q1 flashes, then the "Welcome back" resume screen appears late.
-- Interview question IDs regenerate each session (`project-<CAT>-<uuid>`,
-  `randomUUID()` for rooms), so the full modal CANNOT reopen pinned to one past
-  answer, pre-filled. Editing one answer needs the dedicated reflection editor.
+## Root cause
+`Project.timeline` is nullable (`ProjectTimeline?`) and `page.tsx` read it twice
+with conflicting defaults:
+
+- tracker type: `timeline === 'PRESENT' ? 'inProgress' : timeline === 'FUTURE' ? 'concept' : 'completed'`
+  → **null = completed**, so the stepper renders Photos/Rooms/Tags/Story/Publish
+  and `stepHref('story')` links to `?view=story`.
+- flow gate: `inPublishingFlow = timeline === 'PAST' || hasDraftOrPublished`
+  → **null = not publishing**, so `storyTabVisible` is false and the page runs
+  `if (currentView === 'story' && !storyTabVisible) currentView = 'media'`.
+
+Coerced to `media` with no `step` param, the tracker falls back to the frontier
+(Tags), which satisfies `startInTagging` → the tagging surface renders. Both URLs
+land on the same screen, with no error and no visible redirect.
 
 ## Implementation
-- [x] Extract `EditReflectionModal` (+ `parseCategoryLabel`) from StoryPanel into
-      `src/components/posting/interview/EditReflectionModal.tsx`; StoryPanel imports it
-      (removed local dup + now-unused `cn` import).
-- [x] `InterviewModal`: add `initialIntent?: 'resume'|'restart'|null`.
-      - resume → skip "Welcome back", arm `resumeRequested` (no Q1 flash).
-      - restart → extracted `handleStartOver({skipConfirm})`, driven by a once-per-open
-        effect; the inline "Start over" button now calls the same callback.
-      - `preloadComplete` gate: hold the question phase on a spinner until the preload
-        GET settles (finally-set), so Q1 never precedes the resume decision.
-- [x] `ProjectStorySection` (NEW): "Your story so far" in the tracker card — Resume /
-      Restart + editable Q&A list. Opens InterviewModal (intent) / EditReflectionModal
-      (pre-filled). Mounts InterviewModal ONLY while open so its question-gen hooks
-      don't fire LLM calls on page load. Refetches + router.refresh() on close.
-- [x] `ProjectProgressTracker`: add `storyFooter?: ReactNode`, rendered inside the card
-      in BOTH the collapsed (Tags-step) and normal branches.
-- [x] `page.tsx`: pass `<ProjectStorySection>` as `storyFooter` when
-      `isOwner && interviewAnswerCount > 0`.
+- [x] `computeTrackerState.ts`: export `trackerTypeForTimeline(timeline)` — the
+      single place a null/unknown timeline gets its default (`completed`).
+- [x] `page.tsx`: `buildTrackerState` uses it; `inPublishingFlow` is derived from
+      `trackerType === 'completed' || hasDraftOrPublished` instead of re-testing
+      the column; `isProspective` becomes `trackerType !== 'completed'` (same
+      result, one less independent read).
 
 ## Verify
-- [x] `npx tsc --noEmit`: 1050 errors WITH changes == 1050 on clean baseline (stash
-      compare). Zero new type errors. The 8 InterviewModal errors are pre-existing.
-- [ ] folio-code-reviewer pass (running) — address findings before commit.
-- [ ] Manual: INTERVIEWED project shows the section on Tags step; Resume goes straight
-      to where left off (no Q1 flash); Restart clears; editing a Q&A opens pre-filled
-      modal and saves.
+- [x] Replayed the page's view resolution against the reported project shape
+      (owner, `timeline: null`, photos+rooms done, no draft, INTERVIEWED):
+      - BEFORE — `?view=media&step=tags` → TAGGING, `?view=story` → TAGGING (bug reproduced)
+      - FIXED  — `?view=media&step=tags` → TAGGING, `?view=story` → STORY
+- [x] Regression shapes unchanged: PAST owner → Story reachable; PRESENT/FUTURE
+      owner → still no Story surface (working projects have no Story step);
+      non-owner on an unpublished project → still coerced to media.
+- [x] `npx tsc --noEmit`: zero errors in either touched file (1049 total, all
+      pre-existing elsewhere in the repo).
 
-## Notes / decisions
-- User confirmed: placement = in the tracker card (top); edit = jump to that answer,
-  pre-filled. Pre-filled single-answer edit is only reliable via the reflection modal
-  (ID regeneration), so Resume/Restart use the full InterviewModal and per-answer edit
-  uses EditReflectionModal.
+## Notes
+- Behaviour change for legacy (null-timeline) projects: they now enter the
+  publishing flow, matching the tracker they were already being shown — the
+  stepper owns navigation, so the Boards / Action items / Media tabs no longer
+  appear alongside it.
+- Left alone: the empty-project branch still gates the New Project Wizard on
+  `timeline === 'PAST'`, and `MediaSection`'s "Continue to story" can still push
+  `?view=story` on a PRESENT/FUTURE project (where it correctly coerces back to
+  media, since those projects have no Story step). Neither is the reported bug.

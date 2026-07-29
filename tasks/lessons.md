@@ -369,3 +369,24 @@ prompt keeps the person as the quoted voice and introduces them once as
 (auto-filled only when empty) and the preview byline renders from it — so
 existing posts keep their old credit until re-derived; the generation fix governs
 new drafts and the article's own credits/voice.
+
+**Two independent readings of the same nullable column = a step that links to a surface the page refuses to render.**
+The Story step and `?view=media&step=tags` both rendered the tagging screen.
+`Project.timeline` is nullable (`ProjectTimeline?`, legacy projects predate the
+wizard) and the page read it twice with *different* defaults: the tracker type
+(`timeline === 'PRESENT' ? … : 'completed'`) treated null as **completed**, so the
+stepper showed Tags/Story/Publish and the Story step linked to `?view=story`; but
+the flow gate (`inPublishingFlow = timeline === 'PAST' || hasDraftOrPublished`)
+treated null as **not** the publishing flow, so `storyTabVisible` was false and the
+page silently coerced `story → media`, where the tracker frontier (still Tags) then
+tripped `startInTagging`. Both URLs resolved to the same screen — no error, no
+redirect visible, just a dead step. Fix: one exported classifier
+(`trackerTypeForTimeline`) that every consumer goes through, with
+`inPublishingFlow = trackerType === 'completed' || hasDraftOrPublished` derived
+*from the type* rather than re-testing the column.
+Rules: (1) a nullable enum gets exactly ONE default, in one exported function —
+never re-test the raw column at a second site; (2) if a tracker/stepper can render
+a step, the surface that step links to must be reachable by construction, not by a
+parallel boolean that happens to agree; (3) a silent `currentView = 'media'`
+fallback hides this class of bug — when a coercion fires on a link the app itself
+renders, that's the bug, not the recovery.

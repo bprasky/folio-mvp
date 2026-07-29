@@ -23,6 +23,27 @@ export type TrackerType = 'completed' | 'inProgress' | 'concept';
 export type StepState = 'done' | 'current' | 'upcoming';
 
 /**
+ * The wizard's timeline → tracker type. PRESENT is work in flight, FUTURE is a
+ * concept, and PAST is finished work headed for publication.
+ *
+ * A missing timeline (projects created before the wizard captured one) reads as
+ * `completed`: the publishing sequence is the only one that can serve a project
+ * we know nothing else about, since it's the one with a Story and a Publish step.
+ *
+ * Every consumer must classify a project through this function. When the page
+ * derived the tracker type one way (null → completed, so the stepper offered
+ * Tags/Story/Publish) and its publishing-flow gate another (`timeline === 'PAST'`
+ * only, so the Story surface stayed hidden and `?view=story` fell back to the
+ * media view), the Story step pointed at a surface the page then refused to
+ * render — the Tags screen answered both URLs.
+ */
+export function trackerTypeForTimeline(timeline: string | null | undefined): TrackerType {
+  if (timeline === 'PRESENT') return 'inProgress';
+  if (timeline === 'FUTURE') return 'concept';
+  return 'completed';
+}
+
+/**
  * The action a CTA dispatches. The tracker turns these into a route that the
  * Media surface consumes (`?view=media&action=<X>`) to open the matching
  * existing flow. `publish` is the exception: it routes to the Publish view.
