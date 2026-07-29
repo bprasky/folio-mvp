@@ -284,12 +284,17 @@ export default async function ProjectPage({
 
   // Project Progress Tracker — guided "what's next" region (top of page).
   const photoCount = base.images.filter(img => !isDocumentImage(img.name)).length;
-  // Publishing flow leads with the draft once there is one, otherwise the
-  // stepper's first surface. Working projects lead with Boards once it exists.
+  // Where the project opens. In the publishing flow: the draft once there is
+  // one; failing that the interview if it's underway (INTERVIEWED = answers
+  // saved, no draft yet), so a designer returns to the work they'd actually
+  // started rather than back to the photo surface; otherwise the stepper's first
+  // surface. Working projects lead with Boards once it exists.
   const defaultView: TabView = inPublishingFlow
     ? hasDraftOrPublished
       ? 'publish'
-      : 'media'
+      : editorialState === 'INTERVIEWED'
+        ? 'story'
+        : 'media'
     : boardsVisible && (isPublished || isProspective)
       ? 'boards'
       : 'media';

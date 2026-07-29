@@ -208,8 +208,14 @@ function StepMarker({ step, href }: { step: TrackerStep; href?: string }) {
           // The viewed step always reads as active, finished or not.
           active && 'bg-folio-gold-ornament text-white ring-4 ring-folio-gold-ornament/20',
           !active && isDone && 'bg-[#161614] text-white',
-          !active && !isDone && 'border border-folio-stone-100 text-folio-text-tertiary',
-          locked && 'opacity-45',
+          // Unreached but reachable (e.g. the interview before tagging is done):
+          // must read as somewhere you can go. A faint outline made it look
+          // identical to a locked step, so an unlocked step was indistinguishable
+          // from a disabled one.
+          !active && !isDone && !locked &&
+            'border-2 border-folio-stone-700 text-folio-text-primary',
+          !active && !isDone && locked &&
+            'border border-folio-stone-100 text-folio-text-tertiary opacity-45',
         )}
         style={{ width: MARKER, height: MARKER }}
       >
@@ -222,8 +228,8 @@ function StepMarker({ step, href }: { step: TrackerStep; href?: string }) {
             'text-[14px] leading-none',
             active && 'font-semibold text-folio-accent-700',
             !active && isDone && 'font-medium text-folio-text-primary',
-            !active && !isDone && 'text-folio-text-tertiary',
-            locked && 'opacity-60',
+            !active && !isDone && !locked && 'font-medium text-folio-text-secondary',
+            !active && !isDone && locked && 'text-folio-text-tertiary opacity-60',
           )}
           aria-current={active ? 'step' : undefined}
         >
