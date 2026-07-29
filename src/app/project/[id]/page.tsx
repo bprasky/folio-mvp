@@ -271,12 +271,28 @@ export default async function ProjectPage({
   const boardsVisible = totalSelections > 0;
   const isProspective = base.timeline === 'PRESENT' || base.timeline === 'FUTURE';
 
+  // Which flow is this project in? The timeline captured at creation decides:
+  // PAST is finished work, which exists to be published, so it enters the
+  // publishing flow immediately. PRESENT/FUTURE are working projects — boards,
+  // action items and media are their whole point. A working project that later
+  // starts publishing (a draft exists) crosses over too.
+  //
+  // In the publishing flow the stepper is the navigation: Photos/Rooms/Tags all
+  // live on the Media surface and are reached by step, so the working tabs
+  // (Boards / Action items / Media) must not leak back in alongside it.
+  const inPublishingFlow = base.timeline === 'PAST' || hasDraftOrPublished;
+
   // Project Progress Tracker — guided "what's next" region (top of page).
   const photoCount = base.images.filter(img => !isDocumentImage(img.name)).length;
-  // Published/concept/in-progress lead with Boards once it exists; otherwise
-  // (and for completed archives before tagging) lead with Media.
-  const defaultView: TabView =
-    boardsVisible && (isPublished || isProspective) ? 'boards' : 'media';
+  // Publishing flow leads with the draft once there is one, otherwise the
+  // stepper's first surface. Working projects lead with Boards once it exists.
+  const defaultView: TabView = inPublishingFlow
+    ? hasDraftOrPublished
+      ? 'publish'
+      : 'media'
+    : boardsVisible && (isPublished || isProspective)
+      ? 'boards'
+      : 'media';
   let currentView: TabView = (searchParams.view as TabView) || defaultView;
 
   if (currentView === 'files') currentView = 'media';
@@ -291,6 +307,11 @@ export default async function ProjectPage({
   if (currentView === 'story' && !storyTabVisible) currentView = 'media';
   if (!hasDraftOrPublished && currentView === 'publish') currentView = 'media';
   if (currentView === 'boards' && !boardsVisible) currentView = 'media';
+  // The working surfaces don't exist in the publishing flow, so a stale link or
+  // bookmark to one lands on the stepper's surface instead of an orphan view.
+  if (inPublishingFlow && (currentView === 'boards' || currentView === 'actions')) {
+    currentView = 'media';
+  }
 
   const validViews: TabView[] = [
     'overview',
@@ -427,6 +448,7 @@ export default async function ProjectPage({
             hasDraftOrPublished={hasDraftOrPublished}
             editorialState={editorialState}
             storyTabVisible={storyTabVisible}
+            inPublishingFlow={inPublishingFlow}
           />
         )}
       </div>
