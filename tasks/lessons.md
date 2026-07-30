@@ -603,3 +603,23 @@ threshold (here: 4 rooms pass, 5 fail) — "it's broken" doesn't tell you whethe
 the bound or the producer is wrong, but "breaks above 4" does; (3) report the
 newly-revealed failure as progress, not as the fix having failed — the first fix
 is confirmed working by the logs that show the second failure.
+
+**A "derived index" rendered next to its own source renders everything twice — check the consumer before widening a cap.**
+`RichArticle` renders each chapter's pull quote inside that chapter's section AND
+rendered the top-level `pullQuotes` index as a stacked list. That index is derived
+from those very quotes, so every room quote appeared twice. Nobody noticed because
+`.max(5)` capped the array — the duplication was small enough to read as styling.
+Lifting the cap (correctly, to unblock 10-room projects) would have made it 11
+stacked duplicates. I initially framed this to the user as a design question
+("slice the list or drop it?"), which was wrong and confusing: they read it as
+"do you want fewer quotes per room" and answered "I want one per room" — which
+they already had. The real answer was that the second render was redundant.
+Rules: (1) when raising or removing a bound, read every CONSUMER of that field
+before shipping — a cap can be silently doing a display job somewhere; (2) if a
+field is derived from another, look for surfaces that render both, because that is
+duplication by construction; (3) don't ask the user a design question until you
+have read the rendering code — the "choice" here was an artifact of my not having
+read the chapter loop, and the honest question ("should the same quote appear
+twice?") answers itself; (4) filter the derived list by what the primary surface
+already showed, rather than slicing to a fixed count — that keeps the lead quote
+and legacy entries that have no other place to render.

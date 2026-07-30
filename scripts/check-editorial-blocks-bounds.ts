@@ -20,7 +20,12 @@
  * Run: npm run check:blocks-bounds
  */
 
-import { BlocksSchema, syncPullQuotesFromChapters } from '../src/lib/posting/schemas';
+import {
+  BlocksSchema,
+  syncPullQuotesFromChapters,
+  normalizePullQuote,
+  getSelectedPullQuoteText,
+} from '../src/lib/posting/schemas';
 
 let failures = 0;
 
@@ -130,6 +135,59 @@ unknownKey.somethingUnexpected = true;
 check(
   'BlocksSchema is still strict about unknown top-level keys',
   !BlocksSchema.safeParse(unknownKey).success,
+);
+
+console.log('\n5. The preview stack shows only what the room sections do not (no duplicate quotes)');
+
+// Mirrors RichArticle's filter: drop any top-level entry a chapter already renders.
+function previewStack(blocks: Record<string, any>) {
+  const chapterQuoteTexts = new Set(
+    (blocks.galleryChapters || [])
+      .map((ch: any) => getSelectedPullQuoteText(ch.pullQuote)?.trim())
+      .filter((t: string | null | undefined): t is string => !!t)
+  );
+  return (blocks.pullQuotes || [])
+    .map((q: any) => normalizePullQuote(q))
+    .filter((q: any) => q.text?.trim())
+    .filter((q: any, i: number, arr: any[]) => arr.findIndex(o => o.text.trim() === q.text.trim()) === i)
+    .filter((q: any) => !chapterQuoteTexts.has(q.text.trim()));
+}
+
+const preview = buildDraft(WRITE_ROOMS);
+syncPullQuotesFromChapters(preview);
+const stack = previewStack(preview);
+
+check(
+  'the 10 room quotes are NOT repeated in the top stack',
+  stack.length === 1,
+  `stack has ${stack.length}: ${JSON.stringify(stack.map((q: any) => q.text))}`,
+);
+check(
+  'the article lead hook quote survives (it has no chapter of its own)',
+  stack[0]?.text === 'We were chasing a feeling, not a look.',
+  JSON.stringify(stack[0]),
+);
+check(
+  'every room quote still renders, in its own chapter section',
+  WRITE_ROOMS.every(room => {
+    const ch = preview.galleryChapters.find((c: any) => c.title === room);
+    return !!getSelectedPullQuoteText(ch.pullQuote);
+  }),
+);
+
+// Legacy draft: top-level entries exist but chapters carry no pullQuote of their own.
+const legacy = buildDraft(['Kitchen', 'Entry']);
+legacy.galleryChapters.forEach((ch: any) => { ch.pullQuote = null; });
+delete legacy.hookQuote;
+legacy.pullQuotes = [
+  { text: 'An older draft quote.', sourceSection: 'Kitchen' },
+  { text: 'Another older one.', sourceSection: 'Entry' },
+];
+const legacyStack = previewStack(legacy);
+check(
+  'legacy drafts whose chapters have no pullQuote still show their quotes',
+  legacyStack.length === 2,
+  `got ${legacyStack.length}`,
 );
 
 console.log(

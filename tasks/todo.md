@@ -189,13 +189,26 @@ it", which `lessons.md` already warns against.
 - **`groupImagesIntoChapters`** (line 160) builds uncapped `imageIds` and would
   violate `.max(8)`, but it has **zero callers** — dead code. Left in place;
   flagged rather than deleted since removal is unrelated to this bug.
-- **Display consequence worth a decision (not changed here):**
-  `RichArticle.tsx` renders *every* top-level pull quote as a stacked blockquote,
-  while showing only `galleryChapters[0].body` as prose. At 10 rooms that is 11
-  quotes above one room's text. This is pre-existing incoherence in that preview
-  rather than a regression — before this fix the project could not generate at
-  all — but it is now reachable. `PostExpanded` is unaffected (it reads `[0]`
-  only), and the canonical article renderer (`layoutEngine`) is unaffected (it
-  interleaves one quote per chapter from `chapter.pullQuote`). Recommend either
-  slicing the preview list or dropping it in favor of the interleaved layout —
-  a design call.
+- **Duplicate pull-quote rendering in the article preview — FIXED.**
+  `RichArticle.tsx` (the designer's article preview at
+  `/designer/projects/[id]/preview`, and the published `PostView` via
+  `ProjectMediaHub`) renders each chapter's own pull quote inside that chapter's
+  section — room title, prose, quote, images together. That is correct and is
+  what a designer wants: one quote per room, shown with its room.
+
+  But it ALSO rendered the top-level `pullQuotes` index as a stacked list near
+  the top. Since that index is derived from those same per-chapter quotes, every
+  room quote appeared **twice** — once detached in the stack, once in its room.
+  The `.max(5)` cap had been masking the scale (a draft could never carry more
+  than 5); with the cap lifted, a 10-room project would have shown 11 stacked
+  duplicates.
+
+  Fix: the top stack now excludes any quote a chapter already renders. What
+  survives is exactly what has no chapter of its own — the spliced lead/hook
+  quote — plus, for legacy drafts whose chapters carry no `pullQuote`, their
+  entries (so old posts do not lose quotes). No room quote was removed; the
+  duplicate was.
+
+  Covered by section 5 of `check:blocks-bounds`: 10 rooms → 1 entry in the stack
+  (the hook), all 10 room quotes still rendering in their own sections, and the
+  legacy-draft case still showing its quotes.

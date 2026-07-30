@@ -142,11 +142,26 @@ export function RichArticle({
 
   // Extract narrative paragraphs and pull quotes from galleryChapters[0].body
   const narrativeParagraphs = article.galleryChapters?.[0]?.body || [];
+  // Every gallery chapter renders its OWN pull quote inside its section (see the
+  // chapter loop below), and `article.pullQuotes` is the derived index of exactly
+  // those same quotes plus the article's lead. Rendering the index verbatim
+  // therefore printed each room's quote TWICE — once stacked up here, detached
+  // from its room, and once in the room itself.
+  //
+  // So keep only what the chapter sections don't already show: the lead hook
+  // quote (carries no sourceSection, has no chapter of its own) and any legacy
+  // entry whose chapter has no pullQuote to render.
+  const chapterQuoteTexts = new Set(
+    (article.galleryChapters || [])
+      .map((ch) => getSelectedPullQuoteText(ch.pullQuote)?.trim())
+      .filter((t): t is string => !!t)
+  );
   // Normalize and deduplicate pull quotes (handles both string and {text, context} formats)
   const pullQuotes = (article.pullQuotes || [])
     .map((q: any) => normalizePullQuote(q))
     .filter((q) => q.text?.trim())
-    .filter((q, i, arr) => arr.findIndex(other => other.text.trim() === q.text.trim()) === i);
+    .filter((q, i, arr) => arr.findIndex(other => other.text.trim() === q.text.trim()) === i)
+    .filter((q) => !chapterQuoteTexts.has(q.text.trim()));
 
   // Check if we have any content to show
   const hasContent = narrativeParagraphs.length > 0 || pullQuotes.length > 0;
@@ -221,7 +236,7 @@ export function RichArticle({
             </div>
           )}
 
-          {/* Pull Quotes (simple styled, no animation) */}
+          {/* Lead pull quote(s) — room quotes render inside their own chapter below */}
           {pullQuotes.length > 0 && (
             <div className="space-y-6 my-8">
               {pullQuotes.map((quote, idx) => (
