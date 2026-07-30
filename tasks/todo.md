@@ -212,3 +212,59 @@ it", which `lessons.md` already warns against.
   Covered by section 5 of `check:blocks-bounds`: 10 rooms → 1 entry in the stack
   (the hook), all 10 room quotes still rendering in their own sections, and the
   legacy-draft case still showing its quotes.
+
+
+---
+
+# Part 3 — Room prose matched to the wrong room
+
+## Problem (reported)
+Parts 1 and 2 unblocked generation, and the draft rendered. Every chapter then
+showed one room's title and photographs beside a **different room's prose**,
+through all 10 rooms. Reported with three screenshots:
+
+| Heading + image | Prose actually about | writeRooms index |
+|---|---|---|
+| Dining Room (0) | Exterior — facade, "before you open the front door" | 6 |
+| Living Room (1) | Entry — "the entry sets the register", stairway | 8 |
+| Primary Bathroom (2) | Formal Living Room — fireplace, green marble | 9 |
+
+## Root cause
+`repairAndBuildBlocks` built each chapter from three sources — two keyed by room
+name, one by array position:
+
+```js
+const roomName     = writeRooms[i];                       // title  — by name
+const roomImageIds = imagesByRoom[roomName];              // images — by name
+const bodyParas    = proofBody(composedChapters[i]?.body) // body   — BY INDEX
+```
+
+The index read assumed the model returns chapters in prompt order. It reordered
+into a narrative walkthrough (exterior → entry → formal living room → …). Title
+and images stayed name-keyed and so corroborated each other, which is why the
+result reads as plausible until you look at the photograph.
+
+## Fix
+- [x] Join on the chapter title, which the prompt already required to name its
+      room. Two passes — exact, then whole-word containment — with longer room
+      names first so "Formal Living Room" claims its chapter before "Living
+      Room". Each chapter claimed at most once.
+- [x] Unmatched rooms demote to photo-only (the existing path for skipped
+      rooms). **No positional fallback** — a room with photos and no prose beats
+      a room captioned with another room's story.
+- [x] Log unmatched rooms and unplaceable chapters; a rising count means the
+      title contract is drifting.
+- [x] Prompt states the title is the join key and chapters may be written in any
+      narrative order.
+
+## Verify
+- [x] `npm run check:room-matching` — 19 checks: replays the real walkthrough
+      ordering and asserts each reported case by name; asserts the old index
+      pairing mismatches all 10 (the fixture reproduces the bug); covers the
+      Living Room / Formal Living Room ambiguity both ways; asserts no shared or
+      leftover-assigned chapters; covers name shapes. Check 0 greps the shipped
+      source so the positional read cannot return.
+- [ ] **Not verified: a live generation.** The matcher is proven; model title
+      compliance is not. Watch for `chapter/room title match incomplete` — a
+      non-empty `unmatchedRooms` means a room went photo-only, which is now the
+      failure mode instead of wrong prose.
