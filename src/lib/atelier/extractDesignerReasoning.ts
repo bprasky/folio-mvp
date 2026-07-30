@@ -4,6 +4,22 @@
  * Analyzes existing designer content to derive reasoning patterns.
  * This is NOT about making AI "sound like" a designer - it's about
  * understanding HOW they actually think and decide.
+ *
+ * The interview is the primary source. Every answer arrives anchored to the
+ * question that produced it, the room it was about, and — where the question was
+ * generated from a tag — the product in the photo. That anchoring is what makes
+ * a profile comparable to other designers' profiles later: two people answering
+ * the same question CATEGORY about the same kind of room is a comparison; two
+ * people's free prose is not.
+ *
+ * Every query in here was broken. `gatherExtractionSources` referenced four
+ * relations that do not exist (`designerBrandAssets`, `Project.productTags`,
+ * `InterviewSession.transcriptSegments`, `EditorialInterviewAnswer.editorialDraft`)
+ * plus a `Product.material` column that was never in the schema, so the first
+ * call threw PrismaClientValidationError and no reasoning profile has ever been
+ * built from real data. The type errors were real but invisible inside the
+ * repo's pre-existing backlog, and the phase5e CI check only looks for phantom
+ * MODELS, not phantom relations on real ones.
  */
 
 import { prisma } from "@/lib/prisma";
@@ -38,19 +54,54 @@ export interface ExtractionSources {
     highlightedQuotes: string[];
   }[];
 
-  // From ProjectPost/EditorialDraft
+  /**
+   * From EditorialInterviewAnswer — the project interview, one entry per answer.
+   *
+   * Question-anchored on purpose. `category` is the cross-designer axis: the
+   * five project-level questions carry a stable taxonomy in their id
+   * (`project-<CATEGORY>-<uuid>`), so the same category can be compared across
+   * designers and projects. Room questions have no such key yet, which is why
+   * `category` is nullable — see tasks/todo.md.
+   */
   editorialContent: {
+    projectId: string;
     projectName: string;
-    narrative: string;
+    question: string | null;
+    answer: string;
+    /** Stable cross-project question key, when the question has one. */
+    category: string | null;
+    roomName: string | null;
+    isFollowUp: boolean;
+    /** e.g. "material:travertine" — what the question was testing. */
+    attribute: string | null;
+    linkedProductId: string | null;
   }[];
 
-  // From DesignerDecision
+  /**
+   * From DesignerDecision — a logged choice with its reasoning.
+   *
+   * This model carries the only outcome-adjacent signal in the schema
+   * (`clientReaction`, `outcomeNotes`) and the only explicit marker of whose
+   * decision it was (`isClientDriven`). Both are designer-reported rather than
+   * observed, so they're evidence rather than ground truth — but "which of this
+   * designer's calls were theirs, and how did they land" is the question a
+   * client-matching model would eventually need to answer, so it is carried
+   * through rather than dropped.
+   */
   decisions: {
     reasoning: string | null;
     tradeoffs: string | null;
-    productName: string | null;
+    /** What was chosen. `DesignerDecision.choice`, not a Product relation. */
+    choice: string | null;
+    decisionType: string | null;
+    roomType: string | null;
     alternatives: any | null;
     influences: string[];
+    isClientDriven: boolean;
+    clientContext: string | null;
+    convictionLevel: number | null;
+    clientReaction: string | null;
+    outcomeNotes: string | null;
   }[];
 }
 
@@ -82,23 +133,47 @@ export interface DesignerReasoningOutput {
 export async function gatherExtractionSources(
   designerId: string
 ): Promise<ExtractionSources> {
-  // Fetch user with brand assets
   const user = await prisma.user.findUnique({
     where: { id: designerId },
-    include: {
-      designerBrandAssets: true,
-    },
+    include: { brandAssets: true },
   });
 
-  // Fetch projects with product tags
+  // Products come from two places and they overlap: a Selection is the spec'd
+  // item (and the only place finish/material language is written down), a
+  // ProductTag is the pin on the photo pointing at a catalog product. A
+  // Selection created from a tag carries that tag's id, which is how the two are
+  // reconciled below — counting both would skew every tendency this file
+  // computes.
   const projects = await prisma.project.findMany({
     where: { designerId },
-    include: {
-      productTags: {
-        include: {
-          product: {
-            include: {
-              vendor: true,
+    select: {
+      id: true,
+      title: true,
+      rooms: { select: { id: true, name: true, type: true } },
+      selections: {
+        select: {
+          productName: true,
+          vendorName: true,
+          colorFinish: true,
+          unitPrice: true,
+          productTagId: true,
+          room: { select: { name: true, type: true } },
+        },
+      },
+      images: {
+        select: {
+          tags: {
+            select: {
+              id: true,
+              productId: true,
+              product: {
+                select: {
+                  name: true,
+                  price: true,
+                  category: true,
+                  vendor: { select: { name: true } },
+                },
+              },
             },
           },
         },
@@ -106,86 +181,142 @@ export async function gatherExtractionSources(
     },
   });
 
-  // Fetch interview content
   const interviews = await prisma.interviewSession.findMany({
     where: { createdByUserId: designerId, status: "PUBLISHED" },
     include: {
-      transcriptSegments: {
-        orderBy: { order: "asc" },
-      },
-      quoteHighlights: {
-        where: { approvedByDesigner: true },
-      },
+      TranscriptSegment: { orderBy: { order: "asc" } },
+      QuoteHighlight: { where: { approvedByDesigner: true } },
     },
   });
 
-  // Fetch editorial answers
+  // The project interview. Ordered oldest-first so the profile reflects how the
+  // designer has talked over time rather than whatever the database returns.
   const editorialAnswers = await prisma.editorialInterviewAnswer.findMany({
-    where: {
-      editorialDraft: {
-        project: {
-          designerId,
-        },
-      },
+    where: { interview: { project: { designerId } } },
+    select: {
+      questionId: true,
+      questionText: true,
+      answerText: true,
+      isFollowUp: true,
+      roomId: true,
+      aiClassificationAttribute: true,
+      linkedProductId: true,
+      interview: { select: { project: { select: { id: true, title: true } } } },
     },
-    include: {
-      editorialDraft: {
-        include: {
-          project: true,
-        },
-      },
-    },
+    orderBy: { createdAt: "asc" },
   });
 
-  // Fetch designer decisions
+  // No `product` relation on this model — the chosen thing is the `choice`
+  // string, with productTagId/selectionId as optional pointers.
   const decisions = await prisma.designerDecision.findMany({
     where: { designerId },
-    include: {
-      product: true,
-    },
+    orderBy: { createdAt: "desc" },
   });
 
-  // Transform into extraction format
+  // roomId → room name, across every project this designer owns.
+  const roomNameById = new Map<string, string>();
+  for (const p of projects) {
+    for (const r of p.rooms) roomNameById.set(r.id, r.name);
+  }
+
+  // Tags already represented by a Selection — skip them on the tag pass.
+  const tagIdsWithSelection = new Set<string>();
+  for (const p of projects) {
+    for (const s of p.selections) {
+      if (s.productTagId) tagIdsWithSelection.add(s.productTagId);
+    }
+  }
+
+  const projectSelections: ExtractionSources["projectSelections"] = [];
+  for (const p of projects) {
+    for (const s of p.selections) {
+      if (!s.productName && !s.vendorName) continue;
+      projectSelections.push({
+        productId: s.productTagId || "",
+        productName: s.productName || "Unnamed selection",
+        vendorName: s.vendorName || "Unknown",
+        category: s.room?.type || "GENERAL",
+        pricePoint: inferPricePoint(s.unitPrice === null ? null : Number(s.unitPrice)),
+        // colorFinish is where the material actually lives ("Honed Carrara",
+        // "unlacquered brass"). There is no Product.material column — reading one
+        // is what threw here before, and inferring material from a product blurb
+        // would manufacture tendencies that were never stated.
+        material: s.colorFinish || null,
+      });
+    }
+    for (const img of p.images) {
+      for (const tag of img.tags) {
+        if (tagIdsWithSelection.has(tag.id)) continue;
+        projectSelections.push({
+          productId: tag.productId,
+          productName: tag.product.name,
+          vendorName: tag.product.vendor?.name || "Unknown",
+          category: tag.product.category || "GENERAL",
+          pricePoint: inferPricePoint(tag.product.price),
+          material: null,
+        });
+      }
+    }
+  }
+
   const sources: ExtractionSources = {
     bio: user?.bio || null,
-    brandTagline: user?.designerBrandAssets?.tagline || null,
-    brandAdjectives: user?.designerBrandAssets?.brandAdjectives || [],
-    designPhilosophy: user?.designerBrandAssets?.inspirationNotes || null,
+    brandTagline: user?.brandAssets?.tagline || null,
+    brandAdjectives: user?.brandAssets?.brandAdjectives || [],
+    designPhilosophy: user?.brandAssets?.inspirationNotes || null,
 
-    projectSelections: projects.flatMap((p) =>
-      p.productTags.map((pt) => ({
-        productId: pt.productId,
-        productName: pt.product.name,
-        vendorName: pt.product.vendor?.name || "Unknown",
-        category: pt.product.category || "GENERAL",
-        pricePoint: inferPricePoint(pt.product.price),
-        material: pt.product.material || null,
-      }))
-    ),
+    projectSelections,
 
     interviewContent: interviews.map((i) => ({
       question: i.promptLens || "General interview",
-      answer: i.transcriptSegments.map((s) => s.text).join(" "),
-      highlightedQuotes: i.quoteHighlights.map((q) => q.quoteText),
+      answer: i.TranscriptSegment.map((s) => s.text).join(" "),
+      highlightedQuotes: i.QuoteHighlight.map((q) => q.quoteText),
     })),
 
     editorialContent: editorialAnswers
-      .filter((ea) => ea.editorialDraft?.project)
+      .filter((ea) => ea.interview?.project && ea.answerText.trim())
       .map((ea) => ({
-        projectName: ea.editorialDraft!.project!.title || "Untitled",
-        narrative: ea.answerText,
+        projectId: ea.interview!.project!.id,
+        projectName: ea.interview!.project!.title || "Untitled",
+        question: ea.questionText,
+        answer: ea.answerText,
+        category: questionCategory(ea.questionId),
+        roomName: ea.roomId ? roomNameById.get(ea.roomId) ?? null : null,
+        isFollowUp: ea.isFollowUp,
+        attribute: ea.aiClassificationAttribute,
+        linkedProductId: ea.linkedProductId,
       })),
 
     decisions: decisions.map((d) => ({
       reasoning: d.reasoning,
       tradeoffs: d.tradeoffs,
-      productName: d.product?.name || null,
+      choice: d.choice || null,
+      decisionType: d.decisionType || null,
+      roomType: d.roomType || null,
       alternatives: d.alternatives,
       influences: d.influences || [],
+      isClientDriven: d.isClientDriven,
+      clientContext: d.clientContext,
+      convictionLevel: d.convictionLevel,
+      clientReaction: d.clientReaction,
+      outcomeNotes: d.outcomeNotes,
     })),
   };
 
   return sources;
+}
+
+/**
+ * The stable cross-project key a question carries, if it has one.
+ *
+ * Project-level questions are minted as `project-<CATEGORY>-<uuid>` over a fixed
+ * five-category taxonomy, so CATEGORY identifies the same question across every
+ * designer and project. Room-level questions are minted as a bare uuid and have
+ * no such key — they return null rather than a guess.
+ */
+function questionCategory(questionId: string): string | null {
+  const match = questionId.match(/^project-([A-Z_]+)-/);
+  return match ? match[1] : null;
 }
 
 function inferPricePoint(price: number | null): string {
@@ -385,16 +516,32 @@ function analyzeVendorAffinities(
     .slice(0, 10);
 }
 
+/**
+ * How much the profile is standing on. Counted in PROJECTS interviewed, not
+ * answers: forty answers about one house says a lot about one house and very
+ * little about how this designer works in general, and the distinction matters
+ * as soon as these profiles are compared to each other.
+ */
 function calculateConfidence(sources: ExtractionSources): number {
   let score = 0;
 
-  if (sources.bio && sources.bio.length > 100) score += 0.2;
-  if (sources.projectSelections.length >= 10) score += 0.25;
-  if (sources.projectSelections.length >= 30) score += 0.15;
-  if (sources.interviewContent.length >= 1) score += 0.25;
-  if (sources.editorialContent.length >= 2) score += 0.15;
+  const projectsInterviewed = new Set(
+    sources.editorialContent.map((e) => e.projectId)
+  ).size;
+
+  if (sources.bio && sources.bio.length > 100) score += 0.15;
+  if (sources.projectSelections.length >= 10) score += 0.2;
+  if (sources.projectSelections.length >= 30) score += 0.1;
+  if (sources.interviewContent.length >= 1) score += 0.15;
+  if (projectsInterviewed >= 1) score += 0.15;
+  if (projectsInterviewed >= 3) score += 0.15;
+  if (sources.decisions.length >= 10) score += 0.1;
 
   return Math.min(score, 1.0);
+}
+
+function truncate(text: string, max: number): string {
+  return text.length > max ? `${text.substring(0, max)}...` : text;
 }
 
 // ---------------------------------------------------------------------------
@@ -468,8 +615,11 @@ async function analyzeContentWithLLM(
     contentParts.push("## Design Decisions");
     for (const decision of sources.decisions.slice(0, 10)) {
       if (decision.reasoning) {
+        const where = [decision.roomType, decision.decisionType]
+          .filter(Boolean)
+          .join(" · ");
         contentParts.push(
-          `On ${decision.productName || "a selection"}: ${decision.reasoning}`
+          `On ${decision.choice || "a selection"}${where ? ` [${where}]` : ""}: ${decision.reasoning}`
         );
         if (decision.tradeoffs) {
           contentParts.push(`Tradeoffs considered: ${decision.tradeoffs}`);
@@ -477,20 +627,52 @@ async function analyzeContentWithLLM(
         if (decision.influences.length > 0) {
           contentParts.push(`Influenced by: ${decision.influences.join(", ")}`);
         }
+        // Whose call it was, and how it landed. Both matter for reading a
+        // pattern: a choice the client pushed for is weak evidence about the
+        // designer, and one they'd defend again is strong evidence.
+        if (decision.isClientDriven) {
+          contentParts.push(
+            `Client-driven${decision.clientContext ? `: ${decision.clientContext}` : ""}`
+          );
+        }
+        if (decision.clientReaction) {
+          contentParts.push(`Client reaction: ${decision.clientReaction}`);
+        }
+        if (decision.outcomeNotes) {
+          contentParts.push(`Outcome: ${decision.outcomeNotes}`);
+        }
         contentParts.push("");
       }
     }
   }
 
-  // Add editorial content
+  // Add the project interview, grouped by project and presented as Q → A.
+  //
+  // This used to pass the answer text alone, labelled "Project Narratives",
+  // which asked the model to infer a designer's reasoning from prose with no
+  // idea what had been asked. An answer only means something next to its
+  // question: "we used the same stone everywhere" reads as a budget decision or
+  // a continuity decision depending entirely on the prompt.
   if (sources.editorialContent.length > 0) {
-    contentParts.push("## Project Narratives");
-    for (const editorial of sources.editorialContent.slice(0, 3)) {
-      contentParts.push(`Project: ${editorial.projectName}`);
-      contentParts.push(
-        editorial.narrative.substring(0, 1500) +
-          (editorial.narrative.length > 1500 ? "..." : "")
-      );
+    const byProject = new Map<string, ExtractionSources["editorialContent"]>();
+    for (const entry of sources.editorialContent) {
+      const list = byProject.get(entry.projectId);
+      if (list) list.push(entry);
+      else byProject.set(entry.projectId, [entry]);
+    }
+
+    contentParts.push("## Project Interviews");
+    for (const entries of Array.from(byProject.values()).slice(0, 4)) {
+      contentParts.push(`Project: ${entries[0].projectName}`);
+      for (const e of entries.slice(0, 20)) {
+        const context = [e.roomName, e.attribute].filter(Boolean).join(" · ");
+        contentParts.push(
+          `Q${e.isFollowUp ? " (follow-up)" : ""}${context ? ` [${context}]` : ""}: ${
+            e.question || "(question text not recorded)"
+          }`
+        );
+        contentParts.push(`A: ${truncate(e.answer, 1200)}`);
+      }
       contentParts.push("");
     }
   }
@@ -565,11 +747,14 @@ export async function populateDesignerReasoning(
   // Gather all sources
   const sources = await gatherExtractionSources(designerId);
 
-  // Check if we have enough data
+  // Check if we have enough data. The project interview counts here — it is the
+  // richest source we have, and excluding it meant a designer who had answered
+  // an entire interview but tagged fewer than five products was skipped.
   if (
     sources.projectSelections.length < 5 &&
     !sources.bio &&
-    sources.interviewContent.length === 0
+    sources.interviewContent.length === 0 &&
+    sources.editorialContent.length === 0
   ) {
     console.log(`Skipping ${designerId}: insufficient data`);
     return;

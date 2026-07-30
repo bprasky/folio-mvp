@@ -527,3 +527,43 @@ the corrupting repair path wearing a different hat; resend the original prompt
 plus the rule that was violated; (3) log the recovery
 (`json_parse_recovered_on_resample`) so a silently-retrying path can still be
 measured — an invisible retry hides a worsening prompt.
+**A query that only fails at runtime hides forever inside a type-error backlog.**
+`extractDesignerReasoning.ts` — the source of Atelier's per-designer reasoning
+profile — referenced five things that don't exist: `User.designerBrandAssets`,
+`Project.productTags`, `Product.material`, `InterviewSession.transcriptSegments`,
+`EditorialInterviewAnswer.editorialDraft`, `DesignerDecision.product`. Every one
+was reported by tsc, and every one was invisible because the repo carries ~1000
+pre-existing errors. The phase5e CI check didn't catch it either: it looks for
+phantom `prisma.<model>` DELEGATES, not phantom RELATIONS on real models. So a
+whole feature had never executed once. Rules: (a) when touching a file, run tsc
+filtered to that file — the signal is there, it's just drowned; (b) "no phantom
+models" is a weaker guarantee than it sounds, since a valid delegate with an
+invalid include fails exactly as hard; (c) a fixed-count error baseline hides
+new errors in old files — worth pinning per-file counts if the backlog isn't
+being paid down.
+
+**Check whether the container can run the real dependency before settling for static review.**
+I was about to ship a Prisma query rewrite on the strength of tsc alone, having
+already told the user twice that there was "no database in this environment".
+There wasn't a configured one — but `/usr/lib/postgresql/16` was installed, and
+`apt-get install postgresql-16-pgvector` (the schema needs the `vector` type)
+made `prisma db push` of the entire schema work in about four seconds. Seeding
+one designer and running the real function end to end caught things static
+review could not have: that a Selection built from a ProductTag must be deduped
+against that tag, and that the follow-up→parent edge from the previous commit
+actually resolves. Rule: before claiming a verification limit, check what's
+actually installed (`which`, `ls /usr/lib`, `apt-get install`). An ephemeral
+cluster + `db push` + a seed script is minutes of work and converts "the types
+line up" into "it ran".
+
+**Prefer the field where humans actually wrote the thing.**
+The extractor wanted a `material` per selection and read `Product.material`,
+which has never existed. The real material language lives in
+`Selection.colorFinish` — "Honed travertine", "unlacquered brass" — because
+that's the field a designer fills in while speccing. The tempting fix (keyword-
+match material out of the product name or description) would have manufactured
+tendencies nobody stated, which is the same failure as the by-index room pairing
+in the editorial generator. Tag-sourced rows now get `material: null`. Rule: when
+a field is missing, look for where the information is genuinely recorded before
+inferring it; an absent value beats a fabricated one, and "unknown" is a
+legitimate result for an analysis pipeline.
