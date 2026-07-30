@@ -1,4 +1,11 @@
-# Editorial generation dies on LLM_JSON_PARSE (branch: claude/interview-generation-audit-xhlosb)
+# Editorial generation failures for a 10-room project (branch: claude/interview-generation-audit-xhlosb)
+
+Two sequential blockers on the same project (`dda4b29e`, 10 write rooms). The
+first was fixed, which revealed the second. Part 2 is at the bottom.
+
+---
+
+# Part 1 — LLM_JSON_PARSE
 
 ## Problem (reported)
 Correlation `generate_09e1580e3de6`, project `dda4b29e…`: a 2-minute generation
@@ -107,84 +114,88 @@ without replaying the run.
   rare. Worst case is one extra Sonnet generation on an already-failed request —
   strictly cheaper than the designer clicking regenerate themselves.
 
+
 ---
 
-# Atelier's designer reasoning extractor (branch: claude/question-id-rooms-progress-th0ggx)
+# Part 2 — LLM_REPAIR_FAILED: a derived index capped at 5
 
-Follows on from PR #718 (Story-tab question text, room grouping, tracker
-consistency, and making the interview answers a queryable record), which is
-merged. This is the surface that consumes that record.
+## Problem (reported)
+Correlation `generate_019bb0c31bfc`, same project. Part 1's fix worked — the
+model produced valid JSON on `attempt: 1`, no resample needed:
 
-`src/lib/atelier/extractDesignerReasoning.ts` builds the per-designer reasoning
-profile that the consultation chat reads (`api/consultations/[id]/chat`). It has
-never run against real data: `gatherExtractionSources` referenced five things
-that don't exist in the schema, so the first call threw
-`PrismaClientValidationError`.
+```
+[generate] llm_ok { attempt: 1, stopReason: 'end_turn', outputTokens: 5270 }
+[GENERATE] LLM call complete, proceeding to repair
+```
 
-| Referenced | Actually |
-| --- | --- |
-| `User.designerBrandAssets` | `User.brandAssets` |
-| `Project.productTags` | `Project.selections` + `Project.images[].tags` |
-| `Product.material` | no such column — finish/material lives on `Selection.colorFinish` |
-| `InterviewSession.transcriptSegments` / `quoteHighlights` | `TranscriptSegment` / `QuoteHighlight` |
-| `EditorialInterviewAnswer.editorialDraft` | `interview → project` |
-| `DesignerDecision.product` | no relation — the chosen thing is `choice` (String) |
+Then validation threw and the draft was discarded anyway:
 
-- [x] Fixed every query against the real schema.
-- [x] Selections now come from both real sources, deduped: a Selection created
-      from a ProductTag carries that tag's id, and counting both would skew every
-      material/price/vendor tendency the file computes.
-- [x] Material comes from `colorFinish` (where designers actually write "honed
-      travertine"). Tag-sourced entries get `material: null` rather than a
-      keyword guess off a product blurb.
-- [x] Interview answers are now question-anchored: each entry carries the
-      question text, the room, the classified attribute, the linked product, and
-      `category` — the cross-project question key parsed from the questionId.
-      The LLM sees `Q → A` per project instead of unlabelled prose.
-- [x] `DesignerDecision` now contributes `choice`, `roomType`, `decisionType`,
-      and the client/outcome fields (`isClientDriven`, `clientContext`,
-      `convictionLevel`, `clientReaction`, `outcomeNotes`) — the only
-      outcome-adjacent signal in the schema, and the one most relevant to
-      matching designers with clients.
-- [x] Confidence is counted in projects interviewed, not answers: 40 answers
-      about one house is evidence about one house.
-- [x] The "insufficient data" gate no longer skips a designer who has answered a
-      full interview but tagged fewer than five products.
+```
+[GENERATE] repairAndBuildBlocks THREW: [{ "code": "too_big", "maximum": 5,
+  "path": ["pullQuotes"], "message": "Too big: expected array to have <=5 items" }]
+[generate] generation failed: { code: 'LLM_REPAIR_FAILED' }
+```
 
-Output shape (the `DesignerReasoningProfile` columns) is unchanged — no
-migration, and the consultation chat's contract is untouched.
+## Root cause
+`BlocksSchema.pullQuotes` carried `.max(5)`. But `pullQuotes` is **not** an
+editorial selection — the prompt explicitly forbids the model from emitting it
+("Do NOT generate a pullQuotes array"). It is a **derived index**, built by
+`syncPullQuotesFromChapters` as the hook quote at index 0 followed by one entry
+per gallery chapter, keyed by chapter title.
 
-**Verified against a real database.** Postgres 16 + pgvector is available in this
-container, so rather than checking statically I stood up a throwaway cluster,
-`prisma db push`'d the full schema, seeded one designer (brand assets, a project
-with rooms, a tag-backed selection, a hand-entered selection, an untagged tag, a
-logged decision, and a four-answer interview written through the real
-`rebuildAnswerProjection`), and ran the real `gatherExtractionSources`. 15/15
-checks passed, covering this fix AND Part 2's projection writer — the follow-up
-row's `parentAnswerId` resolves to its parent, and every row carries its question
-text. The harness was deleted and the cluster torn down.
+Its length is therefore a function of `galleryChapters`, which is **uncapped** —
+a house has as many rooms as it has. So a cap of 5 on the derived index imposed a
+hard ceiling of **4 rooms** on the entire product. The repro confirms it: 4 rooms
+pass, 5 rooms fail. This project has 10.
 
-## Still open for the cross-project graph (needs a decision, some need migrations)
+Two further signals that the cap was stale rather than intentional: the same file
+declares `pullQuotes` twice more (lines 55, 109) with **no cap at all**, and the
+per-chapter `pullQuote` field it derives from is itself uncapped.
 
-1. **Room questions have no cross-project identity.** Project questions are
-   `project-<CATEGORY>-<uuid>` over a fixed five-category taxonomy
-   (CLIENT_BRIEF, SCOPE_PARAMETERS, DESIGN_DIRECTION, SIGNATURE_IDENTITY,
-   SURPRISE_PIVOT) — so "how do 40 designers answer the identity question" is
-   already answerable. Room questions are minted as a bare `randomUUID()`
-   (`generateRoomQuestions.ts:218`), so there is nothing to group them by across
-   projects. The generator DOES classify each one (`type`: hero_piece /
-   vendor_loyalty / material_theme / spatial_narrative / generic, plus `topic`,
-   `products[]`, `vendors[]`, `boostable`, `contextLevel`) and then throws it
-   away. Capturing `questionType` / `topic` / `contextLevel` on the answer is the
-   single highest-value addition for trend analysis — needs 3 columns.
-2. **No vendor/product edge for descriptor-only mentions.** `linkedProductId`
-   covers a tagged selection; a designer naming a vendor in prose isn't linked to
-   anything. Vendor-facing insight probably wants extraction into a join table.
-3. **Answers can't be sliced by designer/org/project type without a 3-hop join**
-   (answer → interview → project → designer). Fine for now; denormalise only if
-   the queries get slow.
-4. **Third projection writer**: `api/interview/realtime/convert` wipes and
-   recreates rows for voice interviews with its own (thinner) shape. It should go
-   through `rebuildAnswerProjection` too — untouched here because it's a separate
-   flow I haven't traced end to end.
-</content>
+## Fix
+- [x] Removed `.max(5)` from `BlocksSchema.pullQuotes`, with a comment explaining
+      that the field is a derived index whose cardinality follows an uncapped
+      source. Per-entry limits (300-char text, 80-char context/sourceSection) and
+      `.strict()` on unknown keys all still bind — only the array length changed.
+
+**Why not truncate to 5 instead:** the index has a second job. `layoutEngine.ts`
+looks entries up by `sourceSection` (chapter title) as its per-chapter fallback
+for older drafts. Dropping entries would silently break that lookup for chapters
+6+, and there is no editorial basis for choosing which 5 survive — it would be
+first-5-by-room-order, not by score. That is "repairing unknown data by dropping
+it", which `lessons.md` already warns against.
+
+## Verify
+- [x] `npm run check:blocks-bounds` — 15 checks. Written as a **reproduction
+      first**: it failed 6/15 against the old schema (naming the exact ceiling —
+      4 rooms pass, 5+ fail), and passes 15/15 after the change.
+      - the derived index is hook + one per chapter, hook at index 0 with no
+        `sourceSection` (the property `buildRoomTiles` relies on for the lead)
+      - every chapter is represented, so the `sourceSection` lookup resolves
+      - 1/4/5/6/10/20/37 rooms all validate
+      - per-entry limits and `.strict()` still reject bad data
+- [x] `npm run check:json-quoting` still 19/19 (Part 1 intact).
+- [x] `npx tsc --noEmit`: same 4 pre-existing errors, unchanged.
+- [ ] Not verified: a live generation past this point. The next stage
+      (`applyProseNamingGate`, then persistence) is unexercised for a 10-room
+      draft.
+
+## Notes
+- **Audited the other bounds for the same shape** — a capped schema field fed by
+  an uncapped producer. `introduction` is `.max(4)` (prompt asks 2-3);
+  `method`/`qa` aren't generated; `materialsLedger.items` and `credits` are
+  uncapped. `galleryChapters[].imageIds` is `.max(8)` and **every live path
+  slices to 8** before assembly (lines 752, 788, 830), so it is safe.
+- **`groupImagesIntoChapters`** (line 160) builds uncapped `imageIds` and would
+  violate `.max(8)`, but it has **zero callers** — dead code. Left in place;
+  flagged rather than deleted since removal is unrelated to this bug.
+- **Display consequence worth a decision (not changed here):**
+  `RichArticle.tsx` renders *every* top-level pull quote as a stacked blockquote,
+  while showing only `galleryChapters[0].body` as prose. At 10 rooms that is 11
+  quotes above one room's text. This is pre-existing incoherence in that preview
+  rather than a regression — before this fix the project could not generate at
+  all — but it is now reachable. `PostExpanded` is unaffected (it reads `[0]`
+  only), and the canonical article renderer (`layoutEngine`) is unaffected (it
+  interleaves one quote per chapter from `chapter.pullQuote`). Recommend either
+  slicing the preview list or dropping it in favor of the interleaved layout —
+  a design call.

@@ -146,6 +146,22 @@ export const BlocksSchema = z.object({
     generatedAt: z.number().optional(),
     kind: z.enum(['editorial', 'gallery']).optional(),
   })).optional(),
+  // NOT an editorial selection — the generation prompt explicitly forbids the
+  // model from emitting this array. It is a DERIVED INDEX, built by
+  // `syncPullQuotesFromChapters` as the hook quote (index 0, no sourceSection)
+  // followed by one entry per gallery chapter, keyed by chapter title.
+  //
+  // Its length is therefore a function of `galleryChapters`, which is uncapped —
+  // a house has as many rooms as it has. This field carried `.max(5)` until a
+  // 10-room project hit it: generation and JSON parsing both succeeded, then
+  // validation threw `too_big` and the whole draft was discarded
+  // (LLM_REPAIR_FAILED, cid generate_019bb0c31bfc). The effective ceiling was 4
+  // rooms. Truncating the index instead would silently break the
+  // `sourceSection` lookup `layoutEngine.ts` uses as its per-chapter fallback,
+  // so the cap is gone rather than enforced by dropping entries. The two sibling
+  // declarations of this field in this file never carried a cap either.
+  //
+  // Per-entry limits below still bind; only the array length is unbounded.
   pullQuotes: z.array(
     z.union([
       z.string().max(300),
@@ -155,7 +171,7 @@ export const BlocksSchema = z.object({
         sourceSection: z.string().max(80).optional(),
       }),
     ])
-  ).max(5).optional(),
+  ).optional(),
   // Editorially spliced lead pull quote drawn from the designer's hook-opener
   // answer (and its adaptive follow-up, if any). When present, this wins over
   // extracted chapter quotes for the article's lead slot.

@@ -567,3 +567,39 @@ in the editorial generator. Tag-sourced rows now get `material: null`. Rule: whe
 a field is missing, look for where the information is genuinely recorded before
 inferring it; an absent value beats a fabricated one, and "unknown" is a
 legitimate result for an analysis pipeline.
+
+
+**A cap on a DERIVED field is a cap on whatever it's derived from — here, a 5-item array capped the product at 4 rooms.**
+Editorial generation cleared the JSON-parse fix and then died at validation:
+`pullQuotes` "too_big, expected <=5 items" on a 10-room project. `pullQuotes`
+isn't authored by anyone — the prompt forbids the model from emitting it — it's a
+derived index that `syncPullQuotesFromChapters` builds as the hook quote plus one
+entry per gallery chapter. `galleryChapters` is uncapped, because a house has as
+many rooms as it has. So `.max(5)` on the index silently imposed a hard ceiling of
+FOUR ROOMS on the core product, and did it at the last step, after a full
+two-minute generation had already been paid for. Two tells that it was stale
+rather than deliberate: the same file declares the same field twice more with no
+cap, and the per-chapter field it derives from is uncapped too.
+Rules: (1) when a field is computed from another field, its bound must be
+expressed in terms of that source — if the source is unbounded, a fixed cap on
+the derivative is a bug waiting for a big enough input; (2) don't "fix" it by
+truncating a derived index — entries here are keyed by `sourceSection` and used
+for per-chapter lookup, so dropping some breaks the lookup for later chapters and
+there's no principled way to pick which survive; (3) when a validation cap fires,
+check whether the field is authored or derived before adjusting anything — the
+answer decides between "the producer is wrong" and "the cap is wrong"; (4) a
+schema that rejects at the END of an expensive pipeline should be audited for
+this shape proactively — the cost of being wrong is the whole generation.
+
+**Fix one blocker, expect the next — a pipeline that always failed at step 3 has untested steps 4 and 5.**
+The curly-quote fix worked exactly as intended (`attempt: 1`, clean parse, no
+resample) and immediately exposed a second failure one stage later, in a code path
+that had never successfully executed for a project this size. The pull-quote cap
+wasn't a regression; it had been unreachable behind the parse failure.
+Rules: (1) after unblocking a stage, walk the REMAINING stages for input-size
+assumptions before declaring victory — the newly-reachable code has never run on
+this input; (2) write the reproduction before the fix and let it name the exact
+threshold (here: 4 rooms pass, 5 fail) — "it's broken" doesn't tell you whether
+the bound or the producer is wrong, but "breaks above 4" does; (3) report the
+newly-revealed failure as progress, not as the fix having failed — the first fix
+is confirmed working by the logs that show the second failure.
