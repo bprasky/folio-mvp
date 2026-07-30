@@ -754,14 +754,25 @@ export function InterviewModal({
       }));
   }, [fetchedQuestions]);
   
-  // Create a map of questionId to full question metadata for saving
+  // Question metadata by id, for saving. This is what makes an answer analysable
+  // later: which photo and product the question was about, which classified
+  // attribute it was testing, where it came from.
+  //
+  // It used to be built from the FLAT list alone, so in a room-paced interview —
+  // the normal case — every answer saved with those fields null, and the whole
+  // "why was this asked" side of the record was lost at the save boundary even
+  // though the grouped endpoint had sent it. Same failure as the empty prompts,
+  // one map over.
   const questionMetadataMap = useMemo(() => {
     const map = new Map<string, ContextualQuestion>();
-    fetchedQuestions.forEach(q => {
-      map.set(q.id, q);
-    });
+    const add = (q: ContextualQuestion) => {
+      if (q?.id && !map.has(q.id)) map.set(q.id, q);
+    };
+    fetchedQuestions.forEach(add);
+    for (const room of roomData.rooms) (room.questions ?? []).forEach(add);
+    (roomData.crossRoomQuestions ?? []).forEach(add);
     return map;
-  }, [fetchedQuestions]);
+  }, [fetchedQuestions, roomData.rooms, roomData.crossRoomQuestions]);
   
   // Use contextual questions only — no legacy fallback.
   // The contextual system already includes base fallbacks for low-context projects.
@@ -793,6 +804,18 @@ export function InterviewModal({
     }
     return map;
   }, [allQuestions, roomData.rooms, roomData.crossRoomQuestions, followUps]);
+
+  // Follow-up → the answer that produced it. A follow-up only exists because of
+  // something the designer said, which makes this the one causal edge the
+  // interview itself observes — worth persisting, since "what did that answer
+  // provoke" is exactly the shape of question we want to ask across projects.
+  const parentQuestionIdByFollowUp = useMemo(() => {
+    const map = new Map<string, string>();
+    for (const group of followUps) {
+      for (const f of group.followUps) map.set(f.id, group.questionId);
+    }
+    return map;
+  }, [followUps]);
 
   // Auto-select all questions when they load (no pick phase)
   // Also re-select when the question set changes (e.g. contextual questions load
@@ -1376,7 +1399,10 @@ export function InterviewModal({
         const clearRes = await fetch(`/api/posting/project/${projectId}/interview`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ answers: [], followUps: [], selectedQuestionIds: [] }),
+          // clearAll is what makes this destructive — without it the server
+          // treats an empty answer list as "nothing to save" and keeps what it
+          // has, so no other code path can wipe an interview by omission.
+          body: JSON.stringify({ clearAll: true, answers: [], followUps: [], selectedQuestionIds: [] }),
         });
 
         if (!clearRes.ok) {
@@ -1758,6 +1784,8 @@ export function InterviewModal({
                   return resolvedRoomId === 'project' ? null : resolvedRoomId;
                 })(),
                 isCrossRoom: questionMeta?.isCrossRoom || false,
+                // The answer this follow-up came out of (null for base questions).
+                parentQuestionId: parentQuestionIdByFollowUp.get(item.questionId) ?? null,
               };
             }),
           // Room status persistence (C0) — merged into

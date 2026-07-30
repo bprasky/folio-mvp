@@ -73,6 +73,52 @@
 - Editing an answer now opens the pre-filled editor: no question generation, no
   LLM call, no resume/finish side effects. Saving merges by questionId.
 
+---
+
+# Part 2 — make the answers analysable across designers and projects
+
+Stated goal: a cause-and-effect graph per designer, plus trends across many
+designers, to draft Folio articles and feed vendor insight. That needs the
+interview's OUTPUT to be a queryable record, not just something the draft
+generator can read back for one project.
+
+Audit of what actually reached `editorial_interview_answers` before this:
+
+| Column | State | Why |
+| --- | --- | --- |
+| `question_text` | always NULL | never written (fixed in Part 1) |
+| `linked_image_id` | always NULL | rode in an undeclared `metadata` bag that `normalizeAnswers` strips — proven by replay against main |
+| `linked_product_id` | always NULL | same |
+| `ai_classification_attribute` | always NULL | same |
+| `parent_answer_id` | always NULL | never written by anything; the draft generator READS it |
+| `room_id` / `question_source` | partial | client resolved them from the FLAT question list only, so room-paced answers (the normal case) got nulls |
+| whole rows | sometimes absent | the sync was gated on `hasNewFields` |
+| `created_at` | wrong | wipe-and-rebuild reset every row to the last save |
+
+So the interview knew "this question is about the Rove travertine table, it's a
+vendor-loyalty question, it came out of that earlier answer" — and dropped all of
+it at the save boundary. Same failure family as the empty prompts, one map over.
+
+- [x] Declare `linkedImageId`, `linkedProductId`, `aiClassificationAttribute`,
+      `parentQuestionId` first-class in the answer schema (like roomId in D5), so
+      they survive into provenance AND the projection.
+- [x] Build the client's question-metadata map from the room-paced set too, so
+      room answers carry their real linkage instead of nulls.
+- [x] Persist the follow-up → parent edge and resolve it to `parentAnswerId`.
+- [x] Rebuild the projection on every answer write, not on a field heuristic.
+- [x] Preserve each answer's original `createdAt` across rebuilds.
+- [x] One projection writer (`rebuildAnswerProjection`), used by both the
+      interview save and `syncAnswersToEditorialInterview` — they were writing
+      different subsets of the same row, so whichever ran last decided how much
+      of the record survived.
+- [x] Refuse to infer a destructive clear: an empty answer payload only wipes
+      when the caller sends `clearAll: true`.
+- [x] `scripts/reproject-interview-answers.ts` to replay provenance into the
+      projection for everything already collected (`--dry-run` first).
+
+Verified: replayed `normalizeAnswers` against main — the four linkage fields come
+back `undefined` on main and intact here. Build + phase5e check clean.
+
 ## Notes / follow-ups
 - Answers saved before this change still can't recover their exact wording (the
   question set that minted their ids is gone). They now show the category parsed
@@ -90,4 +136,28 @@
   which is what orphans question ids. Persisting the text on the answer makes
   that harmless for display; making ids stable across regeneration is a bigger
   change and belongs in its own pass.
+
+## Still open for the cross-project graph (needs a decision, some need migrations)
+
+1. **Room questions have no cross-project identity.** Project questions are
+   `project-<CATEGORY>-<uuid>` over a fixed five-category taxonomy
+   (CLIENT_BRIEF, SCOPE_PARAMETERS, DESIGN_DIRECTION, SIGNATURE_IDENTITY,
+   SURPRISE_PIVOT) — so "how do 40 designers answer the identity question" is
+   already answerable. Room questions are minted as a bare `randomUUID()`
+   (`generateRoomQuestions.ts:218`), so there is nothing to group them by across
+   projects. The generator DOES classify each one (`type`: hero_piece /
+   vendor_loyalty / material_theme / spatial_narrative / generic, plus `topic`,
+   `products[]`, `vendors[]`, `boostable`, `contextLevel`) and then throws it
+   away. Capturing `questionType` / `topic` / `contextLevel` on the answer is the
+   single highest-value addition for trend analysis — needs 3 columns.
+2. **No vendor/product edge for descriptor-only mentions.** `linkedProductId`
+   covers a tagged selection; a designer naming a vendor in prose isn't linked to
+   anything. Vendor-facing insight probably wants extraction into a join table.
+3. **Answers can't be sliced by designer/org/project type without a 3-hop join**
+   (answer → interview → project → designer). Fine for now; denormalise only if
+   the queries get slow.
+4. **Third projection writer**: `api/interview/realtime/convert` wipes and
+   recreates rows for voice interviews with its own (thinner) shape. It should go
+   through `rebuildAnswerProjection` too — untouched here because it's a separate
+   flow I haven't traced end to end.
 </content>

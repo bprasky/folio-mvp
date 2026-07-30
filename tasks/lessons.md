@@ -439,3 +439,50 @@ zone) and `reachedIndex` (how far the project got → markers, fill, navigation)
 with the open count surfaced as "4 left" under a checked step so nothing is
 hidden. Rule: when a derived index feeds both "what's next" and "what's done",
 and any step can be reached out of order, those are two values.
+
+**An undeclared field is a deleted field — check what the schema strips before trusting a column.**
+`editorial_interview_answers` has had columns for `linked_image_id`,
+`linked_product_id`, `ai_classification_attribute` and `parent_answer_id` since it
+was created, and every row ever written has them NULL. The interview collected all
+of it, but it rode into the API in an undeclared `metadata` bag, and
+`normalizeAnswers` (a Zod object with no `.passthrough()` — deliberately) drops
+unknown keys. The route's own comment even said "metadata is still stripped" —
+nobody connected that to the projection two hundred lines below, which read
+`answer.metadata.linkedImageId` and therefore always wrote null. Proven by
+replaying `normalizeAnswers` against main: four fields in, four `undefined` out.
+Rules: (a) a strict schema in the middle of a pipeline is a delete statement for
+anything not declared — when adding a field to a write path, follow it through
+every parse/normalize boundary and assert it at the end, not at the start;
+(b) a nullable column that is null in 100% of rows is a bug report, not a data
+shape — check it before designing anything on top of it; (c) "preserved for the
+fallback path" in a comment means the primary path drops it.
+
+**Two writers for one table means the thinner one decides.**
+`EditorialInterviewAnswer` was rebuilt by the interview POST (rich: question text,
+room, cross-room flag) and by `syncAnswersToEditorialInterview` (thin: neither) —
+both wipe-and-recreate, both live, called from different routes. Whichever ran
+last set how much of the record survived, so the data degraded depending on which
+surface the designer touched. Fixed by extracting one `rebuildAnswerProjection`
+both call. Rule: when a table is a projection, exactly one function may write its
+row shape; every other caller supplies the source rows and delegates. If you find
+a second writer, the question isn't "should I update it too" — it's "why are there
+two".
+
+**Destructive intent must be sent, never inferred.**
+"Clear this interview" was expressed as an empty `answers: []` array — which is
+also exactly what a room-status-only save looks like when the designer skips a
+room before answering anything. One of those reaching a project with saved
+answers would have wiped every one of them, and interview answers are the one
+thing in this product that cannot be regenerated. Now the caller must send
+`clearAll: true`; an empty payload without it preserves what's stored. Rule: when
+the same request shape can mean "save nothing" or "delete everything", the
+ambiguity resolves toward keeping data, and the destructive reading requires an
+explicit flag from the caller.
+
+**A wipe-and-rebuild resets every timestamp it touches.**
+The projection recreated all rows on every save, so `created_at` became "the last
+time anything was saved" — identical across a whole interview, destroying the
+order the designer actually worked in, which is exactly the axis a
+cause-and-effect analysis needs. Rule: if you replace rows rather than update
+them, carry the original creation time forward explicitly; the default is
+silently wrong and nothing will fail to alert you.
