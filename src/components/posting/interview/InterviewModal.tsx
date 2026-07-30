@@ -69,13 +69,6 @@ interface InterviewModalProps {
    *  - 'restart' → clear saved answers and begin a fresh interview.
    */
   initialIntent?: 'resume' | 'restart' | null;
-  /**
-   * When set, open directly on this question (by id) so the designer can edit
-   * one saved answer in place, pre-filled. Relies on persisted (stable) question
-   * IDs — if the id is no longer in the current set (project changed since it was
-   * answered), the modal falls back to the normal resume so it never hangs.
-   */
-  jumpToQuestionId?: string | null;
 }
 
 const SIX_W_SECTIONS = new Set(["why", "who", "what", "where", "when", "how"]);
@@ -139,7 +132,6 @@ export function InterviewModal({
   tags = [],
   onDraftGenerated,
   initialIntent = null,
-  jumpToQuestionId = null,
 }: InterviewModalProps) {
   const router = useRouter();
   // Interview mode: 'select' shows mode picker, 'realtime' for voice, 'text' for traditional
@@ -157,10 +149,6 @@ export function InterviewModal({
   // saved progress — the "first question pops up, then a minute to register my
   // progress" report. Reset to false on each open; set true when preload lands.
   const [preloadComplete, setPreloadComplete] = useState(false);
-  // Edit-jump: while opening on a specific question (jumpToQuestionId), hold the
-  // question render until we've navigated to (or fallen back from) that question,
-  // so the modal doesn't flash room-0 Q1 first. Reset on each open.
-  const [jumpDone, setJumpDone] = useState(false);
   // Set when the designer picks "Continue where I left off" — arms the resume
   // navigation effect (which then jumps to the room they actually reached).
   const [resumeRequested, setResumeRequested] = useState(false);
@@ -517,15 +505,6 @@ export function InterviewModal({
               setShowDraftResume(false);
               setResumeRequested(true);
               console.log('[InterviewModal] Auto-resuming (initialIntent=resume):', { baseCount, savedQuestionIndex, savedPhase });
-            } else if (jumpToQuestionId) {
-              // Editing one saved answer — skip the "Welcome back" screen; the
-              // jump effect navigates to that question once questions have loaded.
-              // Force the question phase: a persisted draft with savedPhase
-              // 'complete' would otherwise flash the generation screen (that
-              // screen was previously masked by the draft-resume overlay we skip).
-              setShowDraftResume(false);
-              setPhase('question');
-              console.log('[InterviewModal] Edit-jump requested, skipping draft resume:', { jumpToQuestionId });
             } else {
               // Show draft resume prompt so user can choose: continue or start over
               setShowDraftResume(true);
@@ -554,7 +533,7 @@ export function InterviewModal({
     return () => {
       cancelled = true;
     };
-  }, [open, projectId, initialIntent, jumpToQuestionId]);
+  }, [open, projectId, initialIntent]);
 
   // inputModality: restore per-question source flags from the draft on open, so
   // a reload doesn't downgrade a previously-spoken answer to 'text'.
@@ -775,20 +754,68 @@ export function InterviewModal({
       }));
   }, [fetchedQuestions]);
   
-  // Create a map of questionId to full question metadata for saving
+  // Question metadata by id, for saving. This is what makes an answer analysable
+  // later: which photo and product the question was about, which classified
+  // attribute it was testing, where it came from.
+  //
+  // It used to be built from the FLAT list alone, so in a room-paced interview —
+  // the normal case — every answer saved with those fields null, and the whole
+  // "why was this asked" side of the record was lost at the save boundary even
+  // though the grouped endpoint had sent it. Same failure as the empty prompts,
+  // one map over.
   const questionMetadataMap = useMemo(() => {
     const map = new Map<string, ContextualQuestion>();
-    fetchedQuestions.forEach(q => {
-      map.set(q.id, q);
-    });
+    const add = (q: ContextualQuestion) => {
+      if (q?.id && !map.has(q.id)) map.set(q.id, q);
+    };
+    fetchedQuestions.forEach(add);
+    for (const room of roomData.rooms) (room.questions ?? []).forEach(add);
+    (roomData.crossRoomQuestions ?? []).forEach(add);
     return map;
-  }, [fetchedQuestions]);
+  }, [fetchedQuestions, roomData.rooms, roomData.crossRoomQuestions]);
   
   // Use contextual questions only — no legacy fallback.
   // The contextual system already includes base fallbacks for low-context projects.
   const allQuestions = useMemo(() => {
     return contextualQuestions;
   }, [contextualQuestions]);
+
+  // Question text by id, across EVERY source the designer can be asked from.
+  // The flat contextual list is only part of the picture: in a room-paced
+  // interview the questions actually asked come from the grouped endpoint via
+  // roomFlow, so resolving the prompt from `allQuestions` alone saved every room
+  // answer with an empty prompt — which is why saved answers listed as
+  // "Untitled question" on the Story tab. The answer has to carry its own text:
+  // the question set is regenerated (with fresh ids) whenever the project is
+  // retagged, so read-time recovery by id can't be relied on.
+  const questionTextById = useMemo(() => {
+    const map = new Map<string, string>();
+    const add = (id?: string, text?: string) => {
+      if (id && text && text.trim() && !map.has(id)) map.set(id, text.trim());
+    };
+    for (const q of allQuestions) add(q.id, q.prompt);
+    for (const room of roomData.rooms) {
+      for (const q of room.questions ?? []) add(q.id, q.questionText);
+    }
+    for (const q of roomData.crossRoomQuestions ?? []) add(q.id, q.questionText);
+    // Follow-ups are asked from their own queue, never from the question set.
+    for (const group of followUps) {
+      for (const f of group.followUps) add(f.id, f.prompt);
+    }
+    return map;
+  }, [allQuestions, roomData.rooms, roomData.crossRoomQuestions, followUps]);
+
+  // Follow-up → the answer that produced it. A follow-up only exists because of
+  // something the designer said, which makes this the one causal edge the
+  // interview itself observes — worth persisting, since "what did that answer
+  // provoke" is exactly the shape of question we want to ask across projects.
+  const parentQuestionIdByFollowUp = useMemo(() => {
+    const map = new Map<string, string>();
+    for (const group of followUps) {
+      for (const f of group.followUps) map.set(f.id, group.questionId);
+    }
+    return map;
+  }, [followUps]);
 
   // Auto-select all questions when they load (no pick phase)
   // Also re-select when the question set changes (e.g. contextual questions load
@@ -1211,7 +1238,6 @@ export function InterviewModal({
   useEffect(() => {
     if (!hasRoomPacing || roomsBlocked) return;
     if (resumeRequested) return; // resume path owns navigation
-    if (jumpToQuestionId) return; // edit-jump owns navigation
     if (roomFlow.rooms.length <= 1) return;
     if (roomFlow.currentRoom?.roomId !== 'project') return;
     if (roomFlow.roomProgress['project']?.status !== 'complete') return;
@@ -1232,7 +1258,6 @@ export function InterviewModal({
     if (!open) {
       didResumeNavRef.current = false;
       setResumeRequested(false);
-      setJumpDone(false);
     }
   }, [open]);
   useEffect(() => {
@@ -1263,44 +1288,11 @@ export function InterviewModal({
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [resumeRequested, hasRoomPacing, roomsBlocked, resumePlan, roomFlow.currentRoomIndex]);
 
-  // Edit-jump navigation. When opened to edit one saved answer (jumpToQuestionId),
-  // wait until answers have preloaded and — for room-paced interviews — the room
-  // set has settled, then navigate to that question (persisted stable IDs make
-  // the saved answer's id match a live question, so QuestionCard pre-fills it).
-  // If the id isn't in the current set (project changed since it was answered),
-  // fall back to the normal resume so the modal never hangs. Runs once per open.
-  useEffect(() => {
-    if (!jumpToQuestionId || jumpDone) return;
-    if (!preloadComplete) return;
-
-    let found = false;
-    if (hasRoomPacing) {
-      // Wait for the room set so room-level questions exist to land on.
-      if (roomsBlocked) return;
-      found = roomFlow.goToQuestionId(jumpToQuestionId);
-    } else {
-      // Flat interview: wait for questions to load, then find it in the flat list.
-      if (questionsLoading) return;
-      const idx = selectedQuestions.findIndex((q) => q.id === jumpToQuestionId);
-      if (idx >= 0) {
-        setCurrentQuestionIndex(idx);
-        found = true;
-      }
-    }
-
-    setShowDraftResume(false);
-    if (found) {
-      setPhase('question');
-      logClient('edit:jump-to-question', { questionId: jumpToQuestionId, mode: hasRoomPacing ? 'room' : 'flat' });
-    } else {
-      // The question is gone from the current set (project changed since it was
-      // answered) — resume instead of hanging on a spinner.
-      setResumeRequested(true);
-      logClient('edit:jump-fallback-resume', { questionId: jumpToQuestionId, hasRoomPacing });
-    }
-    setJumpDone(true);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [jumpToQuestionId, jumpDone, preloadComplete, hasRoomPacing, roomsBlocked, roomFlow.rooms.length, questionsLoading, selectedQuestions]);
+  // Editing ONE saved answer is not a mode of this modal. It regenerates its
+  // question set on open (fresh UUIDs), drives the rooms-generation phase, and
+  // owns resume/finish/auto-generate — so opening it pinned to a saved answer
+  // restarted the interview and landed on the generation screen. Single-answer
+  // edits go through EditReflectionModal, which saves by questionId and closes.
 
   // Finish detection for the IN-SESSION path (single source of truth). When
   // roomFlow.canFinish flips true — after skipping the last room or answering the
@@ -1316,15 +1308,11 @@ export function InterviewModal({
     if (!hasRoomPacing) return;
     if (phase !== 'question') return;
     if (showDraftResume || roomsBlocked || isGenerating) return;
-    // Editing a single answer: don't auto-finish/generate just because the
-    // interview happens to be fully answered — the designer is here to edit, and
-    // finishes explicitly. (Cleared once the edit modal closes.)
-    if (jumpToQuestionId) return;
     if (!roomFlow.canFinish) return;
     logClient('interview:finished', { via: 'canFinish' });
     autoGenerateRef.current = true;
     setPhase('complete');
-  }, [hasRoomPacing, phase, showDraftResume, roomsBlocked, isGenerating, roomFlow.canFinish, jumpToQuestionId]);
+  }, [hasRoomPacing, phase, showDraftResume, roomsBlocked, isGenerating, roomFlow.canFinish]);
 
   // Status hydration (C0): once room groups exist, re-apply persisted terminal
   // statuses (from server roomProgress and the localStorage draft) so a skipped
@@ -1411,7 +1399,10 @@ export function InterviewModal({
         const clearRes = await fetch(`/api/posting/project/${projectId}/interview`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ answers: [], followUps: [], selectedQuestionIds: [] }),
+          // clearAll is what makes this destructive — without it the server
+          // treats an empty answer list as "nothing to save" and keeps what it
+          // has, so no other code path can wipe an interview by omission.
+          body: JSON.stringify({ clearAll: true, answers: [], followUps: [], selectedQuestionIds: [] }),
         });
 
         if (!clearRes.ok) {
@@ -1526,17 +1517,6 @@ export function InterviewModal({
       // Save answer
       await persistAnswers([answerData], { includeFollowUps: false });
 
-      // Edit mode: the designer opened the modal to fix ONE saved answer. Persist
-      // it and close — never generate follow-ups, sweep to the next question, or
-      // (re)generate the draft. Without this, resubmitting one edited answer would
-      // continue the whole interview and fire LLM calls the designer didn't ask
-      // for. (jumpToQuestionId is cleared by the caller on close.)
-      if (jumpToQuestionId) {
-        logClient('edit:answer-saved-close', { questionId: currentQuestion.id });
-        onOpenChange(false);
-        return; // finally clears isSubmitting
-      }
-
       // Flush background evaluation results first (speculative, pre-computed while user typed)
       const bgUpdates = bgFlush();
 
@@ -1630,7 +1610,7 @@ export function InterviewModal({
     } finally {
       setIsSubmitting(false);
     }
-  }, [currentQuestion, currentAnswer, currentQuestionIndex, totalQuestions, persistAnswers, generateSingleFollowUp, handleBanner, followUps, roomsBlocked, jumpToQuestionId, onOpenChange]);
+  }, [currentQuestion, currentAnswer, currentQuestionIndex, totalQuestions, persistAnswers, generateSingleFollowUp, handleBanner, followUps, roomsBlocked]);
 
   // Handle regeneration prompt choices when a previous answer was changed
   const handleKeepExistingFollowUps = useCallback(async () => {
@@ -1751,8 +1731,6 @@ export function InterviewModal({
             .filter((item): item is NonNullable<typeof item> => item !== null)
             .map((item) => {
               const questionMeta = questionMetadataMap.get(item.questionId);
-              // Look up question text to persist alongside the answer
-              const questionDef = allQuestions.find(q => q.id === item.questionId);
               const morphedText = morphedQuestions.get(item.questionId);
               return {
                 questionId: item.questionId,
@@ -1763,8 +1741,15 @@ export function InterviewModal({
                 isFollowUp: item.isFollowUp,
                 // inputModality (Pass B): resolved 'text' | 'voice' | 'mixed'.
                 inputModality: resolveInputModality(item.questionId),
-                // Include question text so it persists in provenance (prevents UUID display)
-                prompt: morphedText || questionDef?.prompt || '',
+                // Include question text so it persists in provenance (prevents
+                // UUID display). Morphed text wins (it's what was on screen),
+                // then the text captured on the answer itself, then the question
+                // set it came from — flat OR room-paced.
+                prompt:
+                  morphedText ||
+                  (item.prompt || '').trim() ||
+                  questionTextById.get(item.questionId) ||
+                  '',
                 // Metadata fields
                 linkedImageId: questionMeta?.linkedImageId || null,
                 linkedProductId: questionMeta?.linkedProductId || null,
@@ -1799,6 +1784,8 @@ export function InterviewModal({
                   return resolvedRoomId === 'project' ? null : resolvedRoomId;
                 })(),
                 isCrossRoom: questionMeta?.isCrossRoom || false,
+                // The answer this follow-up came out of (null for base questions).
+                parentQuestionId: parentQuestionIdByFollowUp.get(item.questionId) ?? null,
               };
             }),
           // Room status persistence (C0) — merged into
@@ -2703,13 +2690,6 @@ export function InterviewModal({
               </div>
             </div>
           </div>
-        ) : phase === "question" && jumpToQuestionId && !jumpDone ? (
-          /* Edit-jump in flight — hold on a spinner until we've navigated to the
-             specific question being edited (or fallen back), so the modal doesn't
-             flash room-0 Q1 before landing on the right one. */
-          <div className="flex-1 flex items-center justify-center py-16">
-            <div className="animate-spin rounded-full h-5 w-5 border-2 border-[var(--accent)] border-t-transparent" />
-          </div>
         ) : phase === "question" && !preloadComplete && baseAnswers.length === 0 ? (
           /* Preload in flight and no answers loaded yet — hold on a spinner
              instead of flashing About Q1 before we know whether the designer
@@ -3005,6 +2985,7 @@ function sanitizeAnswerForSend(
       category?: SixWCategory;
       answer: string;
       isFollowUp?: boolean;
+      prompt?: string;
     }
   | null {
   const trimmed = answer.answer.trim();
@@ -3016,6 +2997,10 @@ function sanitizeAnswerForSend(
     category: answer.category ?? deriveCategory(answer.section),
     answer: trimmed.slice(0, 2000),
     isFollowUp: answer.isFollowUp,
+    // The question text the designer actually saw. Stripping it here is what
+    // made the save path fall back to a question list that doesn't contain
+    // room-paced questions, persisting them with an empty prompt.
+    prompt: answer.prompt,
   };
 }
 
@@ -3039,6 +3024,9 @@ function normalizeIncomingAnswers(raw: any[]): InterviewAnswer[] {
         category: item.category ?? deriveCategory(item.section),
         answer: trimmed.slice(0, 2000),
         isFollowUp: Boolean(item.isFollowUp),
+        // Carry the persisted question text back in, so a later bulk re-save
+        // can't blank out a prompt this session never had to resolve.
+        prompt: typeof item.prompt === "string" ? item.prompt : undefined,
       } as InterviewAnswer;
     })
     .filter((value): value is InterviewAnswer => value !== null);

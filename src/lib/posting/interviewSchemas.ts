@@ -36,6 +36,21 @@ const AnswerBaseSchema = z.object({
   questionSource: z.string().optional(),
   isCrossRoom: z.boolean().optional(),
   inputModality: z.enum(["text", "voice", "mixed"]).optional(),
+  // What the question was ABOUT — the analytic edges. An interview answer is
+  // only insight-bearing across projects if you can say what prompted it: the
+  // photo, the product, the classified attribute ("material:travertine"), and,
+  // for a follow-up, the answer that provoked it.
+  //
+  // These rode in an undeclared `metadata` bag, which this schema strips (no
+  // `.passthrough()` — by design). The projection table has had columns for all
+  // four since it was created and has therefore been writing NULL to every one
+  // of them. Declared first-class, same as roomId (D5), so they survive into
+  // both the canonical provenance and the queryable projection.
+  linkedImageId: z.string().nullable().optional(),
+  linkedProductId: z.string().nullable().optional(),
+  aiClassificationAttribute: z.string().nullable().optional(),
+  /** For a follow-up: the questionId of the answer it was generated from. */
+  parentQuestionId: z.string().nullable().optional(),
   answer: z
     .string()
     .transform((s) => s.trim())

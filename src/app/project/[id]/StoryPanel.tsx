@@ -10,6 +10,8 @@ interface StoryPanelProps {
   projectId: string;
   project: { id: string; title: string };
   images: Array<{ id: string; url: string; name: string | null }>;
+  /** The project's rooms, used to group the saved answers by room. */
+  rooms: Array<{ id: string; name: string }>;
   isOwner: boolean;
 }
 
@@ -22,7 +24,13 @@ interface StoryPanelProps {
  * UI. Keeping the two apart is why this panel is deliberately thin — it hosts
  * the interview panel and the credits that ship with the published post.
  */
-export default function StoryPanel({ projectId, project, images, isOwner }: StoryPanelProps) {
+export default function StoryPanel({
+  projectId,
+  project,
+  images,
+  rooms,
+  isOwner,
+}: StoryPanelProps) {
   const [credits, setCredits] = useState<CreditEntry[]>([]);
   const [creditsSaving, setCreditsSaving] = useState(false);
 
@@ -94,6 +102,7 @@ export default function StoryPanel({ projectId, project, images, isOwner }: Stor
           projectId={projectId}
           projectName={project.title}
           images={images}
+          rooms={rooms}
         />
       )}
 

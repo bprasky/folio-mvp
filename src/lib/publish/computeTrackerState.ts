@@ -317,10 +317,16 @@ export interface TrackerStep {
   index: number;
   /** Secondary count shown under done steps. Omitted where no number applies. */
   count?: number;
+  /**
+   * Work still open on this step (photos left to tag, and so on). Set on a step
+   * the designer has already moved past, so a checked marker can still say how
+   * much is left instead of hiding it.
+   */
+  remaining?: number;
   /** True for the step the designer is currently looking at. */
   active: boolean;
   /**
-   * True when the step isn't reachable yet. Everything up to the frontier
+   * True when the step isn't reachable yet. Everything up to `reachedIndex`
    * navigates, as does the interview step (never gated behind photos/products —
    * designers answer while tagging is still unfinished). Locked steps are inert.
    */
@@ -333,6 +339,12 @@ export interface TrackerInput {
   complete: Record<string, boolean>;
   /** Secondary count per step key (optional). */
   counts?: Record<string, number | undefined>;
+  /**
+   * Work still open per step key (e.g. photos left to tag). Surfaced only on
+   * steps the designer has already moved past, so the tracker can say "4 left"
+   * on a step it marks as reached rather than silently rounding it to done.
+   */
+  remaining?: Record<string, number | undefined>;
   /** True once any product/material has been added to the project. */
   materialsExist: boolean;
   /**
@@ -360,11 +372,24 @@ export interface TrackerState {
    */
   currentIndex: number;
   /**
-   * How far real completion has taken the project: the first incomplete step.
-   * Drives the filled track and the navigation gate (see `TrackerStep.locked`
-   * for the interview's exemption from it).
+   * The next thing to do: the first incomplete step. Drives the next-action
+   * zone's default. NOT the marker states — see `reachedIndex`.
    */
   frontierIndex: number;
+  /**
+   * How far the project has actually got to. Drives the filled track, the
+   * marker states and the navigation gate.
+   *
+   * This is deliberately not `frontierIndex`. The Story step is exempt from the
+   * navigation gate (designers answer questions while tagging is unfinished), so
+   * with `frontierIndex` alone the tracker could show an active Story step while
+   * the earlier Tags step still rendered as never-reached — a hollow bubble
+   * behind real progress. `reachedIndex` is monotonic over the whole sequence:
+   * it takes the furthest of the frontier, any step completed beyond it, and the
+   * interview step once answers exist. Steps behind it read as done and keep
+   * their `remaining` count, so nothing is hidden and nothing is un-navigable.
+   */
+  reachedIndex: number;
   /** Index of the materials/import step within `steps`. */
   materialsIndex: number;
   materialsExist: boolean;
@@ -379,48 +404,75 @@ export interface TrackerState {
 /**
  * Derive the live tracker state. `frontierIndex` is the first incomplete step
  * (pinned to the last step once everything is complete, so the publish/share
- * action stays the prominent CTA); `currentIndex` is the step being viewed,
- * which follows `activeKey` when that names a navigable step.
+ * action stays the prominent CTA); `reachedIndex` is how far the project has
+ * actually got, which is what the markers and the navigation gate read;
+ * `currentIndex` is the step being viewed, which follows `activeKey` when that
+ * names a navigable step.
  */
 export function deriveTrackerState(input: TrackerInput): TrackerState {
   const def = TRACKER_TYPES[input.type];
-  const { complete, counts = {}, materialsExist, interviewInProgress = false, activeKey } = input;
+  const {
+    complete,
+    counts = {},
+    remaining = {},
+    materialsExist,
+    interviewInProgress = false,
+    activeKey,
+  } = input;
 
   const firstIncomplete = def.steps.findIndex(s => !complete[s.key]);
-  // The progress frontier: how far the project has actually earned its way.
+  // What to do next: the first thing still open.
   const frontierIndex = firstIncomplete === -1 ? def.steps.length - 1 : firstIncomplete;
   const materialsIndex = def.steps.findIndex(s => s.key === def.materialsKey);
 
-  // What the designer may navigate to: anything up to the frontier, plus the
-  // interview step. The interview is deliberately not gated behind the photo and
-  // product steps — designers routinely answer questions while tagging is still
+  // The interview step is deliberately not gated behind the photo and product
+  // steps — designers routinely answer questions while tagging is still
   // unfinished, and the answers are the slowest part of the flow to collect.
   // Publishing stays gated, since it genuinely needs a draft to exist.
   const isInterviewStep = (index: number) => {
     const key = def.steps[index]?.key;
     return !!key && def.copy[key]?.action === 'interview';
   };
-  const navigable = (index: number) => index <= frontierIndex || isInterviewStep(index);
+
+  // How far the project has actually got. Monotonic, so the stepper can never
+  // show an unreached step behind a reached one: the frontier, plus any later
+  // step that is already complete, plus the interview step once it's underway.
+  let reachedIndex = frontierIndex;
+  def.steps.forEach((s, index) => {
+    if (index <= reachedIndex) return;
+    if (complete[s.key] || (interviewInProgress && isInterviewStep(index))) {
+      reachedIndex = index;
+    }
+  });
+
+  // What the designer may navigate to: anything up to what's been reached, plus
+  // the interview step.
+  const navigable = (index: number) => index <= reachedIndex || isInterviewStep(index);
 
   // The viewed step. Stepping back to a finished step is always allowed; asking
-  // for one that isn't navigable falls back to the frontier.
+  // for one that isn't navigable falls back to the next thing to do.
   const requestedIndex = activeKey ? def.steps.findIndex(s => s.key === activeKey) : -1;
   const currentIndex =
     requestedIndex >= 0 && navigable(requestedIndex) ? requestedIndex : frontierIndex;
 
   const steps: TrackerStep[] = def.steps.map((s, index) => {
-    // Completion-based styling stays tied to the frontier, so navigating back
-    // never makes a finished step look unfinished.
+    // Styling tracks what's been reached, so navigating back never makes a step
+    // the designer has moved past look unfinished. A step that is itself
+    // complete always reads as done, even when it's the furthest one reached.
     let state: StepState;
-    if (index < frontierIndex) state = 'done';
-    else if (index === frontierIndex) state = 'current';
+    if (index < reachedIndex || complete[s.key]) state = 'done';
+    else if (index === reachedIndex) state = 'current';
     else state = 'upcoming';
+    // A completed step has nothing open. One the designer moved past without
+    // finishing carries its count, so the marker can say "4 left".
+    const open = complete[s.key] ? 0 : remaining[s.key] ?? 0;
     return {
       key: s.key,
       label: s.label,
       state,
       index,
       count: counts[s.key],
+      remaining: open > 0 ? open : undefined,
       active: index === currentIndex,
       locked: !navigable(index),
     };
@@ -441,6 +493,7 @@ export function deriveTrackerState(input: TrackerInput): TrackerState {
     steps,
     currentIndex,
     frontierIndex,
+    reachedIndex,
     materialsIndex,
     materialsExist,
     endCap: def.endCap,

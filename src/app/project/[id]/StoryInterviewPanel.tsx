@@ -4,7 +4,10 @@ import { useState, useEffect, useCallback, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { Mic, RotateCcw, Pencil, Check, Sparkles } from "lucide-react";
 import { InterviewModal } from "@/components/posting/interview/InterviewModal";
-import { EditReflectionModal } from "@/components/posting/interview/EditReflectionModal";
+import {
+  EditReflectionModal,
+  parseCategoryLabel,
+} from "@/components/posting/interview/EditReflectionModal";
 
 type QA = {
   q: string;
@@ -24,6 +27,74 @@ type Coverage = {
   complete: boolean;
 };
 
+/** One room's worth of saved answers, in the order the interview asked them. */
+type AnswerGroup = {
+  key: string;
+  name: string;
+  answers: QA[];
+  /** Per-room coverage, when the interview knows the room's question budget. */
+  coverage?: Coverage;
+};
+
+/** The pseudo-room every project-level answer belongs to. */
+const PROJECT_GROUP_KEY = "project";
+const PROJECT_GROUP_NAME = "About This Project";
+
+/**
+ * Which room an answer belongs to. `roomId` is first-class on saved answers, and
+ * the interview stores project-level answers with none (the 'project'
+ * pseudo-room collapses to null on save), so a missing roomId means "about the
+ * project as a whole".
+ */
+function groupKeyFor(qa: QA): string {
+  if (typeof qa.roomId === "string" && qa.roomId) return qa.roomId;
+  return PROJECT_GROUP_KEY;
+}
+
+/**
+ * Group the saved answers by room: About This Project first, then the project's
+ * rooms in their own order, then anything whose room no longer exists. Rooms
+ * come from the Room rows (passed in from the page), not from the interview's
+ * question set — that set is regenerated whenever the project is retagged, so it
+ * can't be trusted to still name every room the answers refer to.
+ */
+function groupAnswers(
+  answers: QA[],
+  rooms: Array<{ id: string; name: string }>,
+  coverage: Coverage[],
+): AnswerGroup[] {
+  const byKey = new Map<string, QA[]>();
+  for (const qa of answers) {
+    const key = groupKeyFor(qa);
+    const list = byKey.get(key);
+    if (list) list.push(qa);
+    else byKey.set(key, [qa]);
+  }
+
+  const coverageByRoom = new Map(coverage.map((c) => [c.roomId, c]));
+  const nameFor = (key: string) =>
+    key === PROJECT_GROUP_KEY
+      ? PROJECT_GROUP_NAME
+      : rooms.find((r) => r.id === key)?.name ??
+        coverageByRoom.get(key)?.roomName ??
+        "Another room";
+
+  const ordered = [PROJECT_GROUP_KEY, ...rooms.map((r) => r.id)];
+  const groups: AnswerGroup[] = [];
+  for (const key of ordered) {
+    const list = byKey.get(key);
+    if (!list?.length) continue;
+    byKey.delete(key);
+    groups.push({ key, name: nameFor(key), answers: list, coverage: coverageByRoom.get(key) });
+  }
+  // Whatever is left belongs to a room that has since been renamed away or
+  // deleted. Keep the answers — losing them from the list would read as data loss.
+  for (const [key, list] of Array.from(byKey.entries())) {
+    groups.push({ key, name: nameFor(key), answers: list, coverage: coverageByRoom.get(key) });
+  }
+  return groups;
+}
+
 interface StoryInterviewPanelProps {
   projectId: string;
   projectName: string;
@@ -35,6 +106,8 @@ interface StoryInterviewPanelProps {
     roomId?: string | null;
     displayOrder?: number | null;
   }>;
+  /** The project's rooms, in project order — used to group the saved answers. */
+  rooms: Array<{ id: string; name: string }>;
 }
 
 /**
@@ -47,8 +120,8 @@ interface StoryInterviewPanelProps {
  *
  * It owns four things:
  *  - Resume / Restart the interview (the modal opens straight to the right place).
- *  - The saved Q&A, editable — clicking one reopens the interview modal on that
- *    exact question, pre-filled, and saves-and-closes.
+ *  - The saved Q&A, grouped by room and editable — clicking one opens the
+ *    single-answer editor pre-filled on that question.
  *  - Coverage: which rooms are answered (and will be written up) vs which aren't
  *    (their photos still appear as gallery chapters).
  *  - Generate the draft. On success the Publish tab opens with that draft.
@@ -57,6 +130,7 @@ export default function StoryInterviewPanel({
   projectId,
   projectName,
   images,
+  rooms,
 }: StoryInterviewPanelProps) {
   const router = useRouter();
   const [answers, setAnswers] = useState<QA[]>([]);
@@ -67,10 +141,11 @@ export default function StoryInterviewPanel({
   const [generateError, setGenerateError] = useState<string | null>(null);
   const [interviewOpen, setInterviewOpen] = useState(false);
   const [intent, setIntent] = useState<"resume" | "restart" | null>(null);
-  // Set when editing one answer: opens the full interview modal jumped to that
-  // question, pre-filled. Falls back to the reflection editor only for answers
-  // with no questionId to jump to.
-  const [jumpQuestionId, setJumpQuestionId] = useState<string | null>(null);
+  // The one answer being edited. Editing goes through the standalone editor, NOT
+  // the interview modal: the modal owns the whole flow (it regenerates the
+  // question set, fires the rooms-generation phase, and resumes/finishes the
+  // interview), so opening it to change one saved answer restarted the interview
+  // and landed the designer on the generation screen instead of their answer.
   const [editing, setEditing] = useState<QA | null>(null);
 
   const fetchAnswers = useCallback(async () => {
@@ -117,22 +192,15 @@ export default function StoryInterviewPanel({
   const hasAnswers = answers.length > 0;
   const canGenerate = hasAnswers && included.length > 0 && !generating;
 
+  // The saved answers, grouped by the room they were asked about.
+  const groups = useMemo(
+    () => groupAnswers(answers, rooms, coverage),
+    [answers, rooms, coverage],
+  );
+
   function openResume() {
-    setJumpQuestionId(null);
     setIntent("resume");
     setInterviewOpen(true);
-  }
-
-  function editAnswer(qa: QA) {
-    if (qa.questionId) {
-      // Open the full interview modal jumped to this question, pre-filled.
-      setIntent(null);
-      setJumpQuestionId(qa.questionId);
-      setInterviewOpen(true);
-    } else {
-      // No id to jump to — fall back to the standalone pre-filled editor.
-      setEditing(qa);
-    }
   }
 
   function openRestart() {
@@ -140,7 +208,6 @@ export default function StoryInterviewPanel({
       "This clears your saved interview answers and starts a new interview. Continue?",
     );
     if (!ok) return;
-    setJumpQuestionId(null);
     setIntent("restart");
     setInterviewOpen(true);
   }
@@ -152,7 +219,6 @@ export default function StoryInterviewPanel({
       // some, restart cleared them, an edit updated one). router.refresh()
       // re-derives the tracker / editorial state to match.
       setIntent(null);
-      setJumpQuestionId(null);
       fetchAnswers();
       router.refresh();
     }
@@ -358,11 +424,11 @@ export default function StoryInterviewPanel({
         </div>
       )}
 
-      {/* Saved Q&A — each row opens the interview modal on that question */}
+      {/* Saved Q&A, grouped by room — each row opens the single-answer editor */}
       <div className="rounded-[20px] border border-folio-border-subtle bg-surface-ground p-6 shadow-sm">
         <h2 className="folio-h3 text-folio-text-primary mb-1">Your answers</h2>
-        <p className="folio-meta text-folio-text-tertiary mb-4">
-          Click any answer to edit it in the interview.
+        <p className="folio-meta text-folio-text-tertiary mb-5">
+          Grouped by room, in the order we asked. Click any answer to edit it.
         </p>
 
         {loading ? (
@@ -372,45 +438,39 @@ export default function StoryInterviewPanel({
             No answers yet. Start the interview to build your story.
           </p>
         ) : (
-          <ul className="space-y-2">
-            {answers.map((qa, i) => (
-              <li key={qa.questionId || i}>
-                <button
-                  type="button"
-                  onClick={() => editAnswer(qa)}
-                  title="Edit this answer"
-                  className="group w-full rounded-[12px] border border-folio-border-subtle bg-surface-canvas px-4 py-3 text-left transition-colors hover:border-[var(--accent)]"
-                >
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="min-w-0">
-                      <p className="text-[14px] font-medium text-folio-text-primary">
-                        {qa.q || "Untitled question"}
-                      </p>
-                      {(qa.a || "").trim() ? (
-                        <p className="mt-1 line-clamp-2 whitespace-pre-wrap text-[14px] leading-relaxed text-folio-text-secondary">
-                          {qa.a}
-                        </p>
-                      ) : (
-                        <p className="mt-1 text-[14px] italic text-folio-text-tertiary">
-                          No answer yet — click to add
-                        </p>
-                      )}
-                    </div>
-                    <Pencil
-                      className="h-4 w-4 shrink-0 text-folio-text-tertiary transition-colors group-hover:text-[var(--accent)]"
-                      aria-hidden
-                    />
-                  </div>
-                </button>
-              </li>
+          <div className="space-y-7">
+            {groups.map((group) => (
+              <section key={group.key}>
+                <div className="mb-2.5 flex items-baseline justify-between gap-3 border-b border-folio-border-subtle pb-2">
+                  <h3 className="font-serif text-[17px] text-folio-text-primary">
+                    {group.name}
+                  </h3>
+                  {/* Counted from the rows actually listed below, so the header
+                      can never disagree with what's on screen; the denominator
+                      is the room's question budget when the interview knows it. */}
+                  <span className="folio-meta shrink-0 text-folio-text-tertiary tabular-nums">
+                    {group.coverage && group.coverage.total > 0
+                      ? `${group.answers.length} of ${group.coverage.total} answered`
+                      : `${group.answers.length} answer${group.answers.length !== 1 ? "s" : ""}`}
+                  </span>
+                </div>
+
+                <ul className="space-y-2">
+                  {group.answers.map((qa, i) => (
+                    <li key={qa.questionId || `${group.key}-${i}`}>
+                      <AnswerRow qa={qa} onEdit={() => setEditing(qa)} />
+                    </li>
+                  ))}
+                </ul>
+              </section>
             ))}
-          </ul>
+          </div>
         )}
       </div>
 
-      {/* Full interview flow — resume, restart, or edit-jump. Mounted only while
-          open so its question-generation hooks (which fetch on mount, not on
-          Dialog-open) don't fire on every Story tab view. */}
+      {/* Full interview flow — resume or restart. Mounted only while open so its
+          question-generation hooks (which fetch on mount, not on Dialog-open)
+          don't fire on every Story tab view. */}
       {interviewOpen && (
         <InterviewModal
           open
@@ -426,11 +486,11 @@ export default function StoryInterviewPanel({
             displayOrder: img.displayOrder ?? null,
           }))}
           initialIntent={intent}
-          jumpToQuestionId={jumpQuestionId}
         />
       )}
 
-      {/* Edit a single saved answer, pre-filled (answers with no id to jump to) */}
+      {/* Edit one saved answer, pre-filled. No question generation, no LLM call,
+          no interview flow — it saves this answer by questionId and closes. */}
       {editing && (
         <EditReflectionModal
           question={editing.q}
@@ -445,5 +505,59 @@ export default function StoryInterviewPanel({
         />
       )}
     </div>
+  );
+}
+
+/**
+ * One saved answer. The question it answers is the point of the row, so it leads
+ * with the question text and the category the questionId encodes
+ * (`room-<roomId>-MATERIALS-<uuid>` → "Materials"). Answers saved before the
+ * interview persisted its prompts have no text to show — the category still
+ * places them, and the editor lets the designer write the question in.
+ */
+function AnswerRow({ qa, onEdit }: { qa: QA; onEdit: () => void }) {
+  const category = parseCategoryLabel(qa.questionId || "");
+  const question = (qa.q || "").trim();
+  const answer = (qa.a || "").trim();
+
+  return (
+    <button
+      type="button"
+      onClick={onEdit}
+      title="Edit this answer"
+      className="group w-full rounded-[12px] border border-folio-border-subtle bg-surface-canvas px-4 py-3 text-left transition-colors hover:border-[var(--accent)]"
+    >
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          {category && (
+            <p className="folio-meta uppercase tracking-wider text-folio-text-tertiary">
+              {category}
+            </p>
+          )}
+          {question ? (
+            <p className="mt-0.5 text-[14px] font-medium text-folio-text-primary">
+              {question}
+            </p>
+          ) : (
+            <p className="mt-0.5 text-[14px] italic text-folio-text-tertiary">
+              Question text wasn&apos;t saved — click to add it
+            </p>
+          )}
+          {answer ? (
+            <p className="mt-1 line-clamp-2 whitespace-pre-wrap text-[14px] leading-relaxed text-folio-text-secondary">
+              {answer}
+            </p>
+          ) : (
+            <p className="mt-1 text-[14px] italic text-folio-text-tertiary">
+              No answer yet — click to add
+            </p>
+          )}
+        </div>
+        <Pencil
+          className="h-4 w-4 shrink-0 text-folio-text-tertiary transition-colors group-hover:text-[var(--accent)]"
+          aria-hidden
+        />
+      </div>
+    </button>
   );
 }

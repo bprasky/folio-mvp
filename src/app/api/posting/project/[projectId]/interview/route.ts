@@ -11,6 +11,10 @@ import {
   InterviewAnswer,
 } from "@/lib/posting/interviewSchemas";
 import { makeSlug } from "@/lib/posting/slug";
+import {
+  getOrCreateEditorialInterview,
+  rebuildAnswerProjection,
+} from "@/lib/editorial/syncInterviewAnswers";
 import { moderateAnswers } from "@/lib/posting/moderation";
 import { z } from "zod";
 import { randomUUID } from "crypto";
@@ -474,6 +478,10 @@ export async function POST(
       // Room pacing fields (Phase B)
       roomId: qa?.roomId || qa?.room_id || null,
       isCrossRoom: qa?.isCrossRoom || qa?.is_cross_room || false,
+      // Follow-up → the answer that prompted it. The one causal edge the
+      // interview itself creates, and the projection's `parentAnswerId` column
+      // has never been written by anything (the draft generator reads it).
+      parentQuestionId: qa?.parentQuestionId || qa?.parent_question_id || null,
       // inputModality (Pass B): 'text' | 'voice' | 'mixed', resolved client-side.
       inputModality: qa?.inputModality || qa?.input_modality || null,
     });
@@ -512,9 +520,14 @@ export async function POST(
         questionSource: (qa as any).questionSource ?? undefined,
         isCrossRoom: !!(qa as any).isCrossRoom,
         inputModality: (qa as any).inputModality ?? undefined,
-        // Preserve metadata (supplementary; not schema-declared, so it is dropped
-        // by normalizeAnswers — kept here only for the catch fallback path).
-        metadata: (qa as any).metadata || {},
+        // What the question was about (declared first-class — see the schema).
+        // Reading these off `metadata` and nowhere else is why the projection's
+        // linkage columns were always null: normalizeAnswers drops undeclared
+        // keys, so nothing downstream of this line ever saw them.
+        linkedImageId: (qa as any).metadata?.linkedImageId ?? null,
+        linkedProductId: (qa as any).metadata?.linkedProductId ?? null,
+        aiClassificationAttribute: (qa as any).metadata?.aiClassificationAttribute ?? null,
+        parentQuestionId: (qa as any).metadata?.parentQuestionId ?? null,
       }));
       incomingAnswers = normalizeAnswers(normalized as any);
     } catch (err) {
@@ -535,8 +548,11 @@ export async function POST(
         questionSource: (qa as any).questionSource ?? undefined,
         isCrossRoom: !!(qa as any).isCrossRoom,
         inputModality: (qa as any).inputModality ?? undefined,
-        // Preserve metadata
-        metadata: (qa as any).metadata || {},
+        // Same first-class linkage as the try path above.
+        linkedImageId: (qa as any).metadata?.linkedImageId ?? null,
+        linkedProductId: (qa as any).metadata?.linkedProductId ?? null,
+        aiClassificationAttribute: (qa as any).metadata?.aiClassificationAttribute ?? null,
+        parentQuestionId: (qa as any).metadata?.parentQuestionId ?? null,
       }));
     }
 
@@ -586,8 +602,22 @@ export async function POST(
     // Build new interview payload segment with intelligent merging
     const existingProvenance = (currentPost.provenance as any) || {};
     
-    // Check if we're clearing (empty incoming arrays means "clear all")
-    const isClearing = cleanedAnswers.length === 0 && cleanedFollowups.length === 0;
+    // Clearing is DESTRUCTIVE and must be asked for. It used to be inferred from
+    // "the request carried no answers", which is also what a room-status-only
+    // save looks like (skip a room before answering anything) — one of those
+    // reaching a project that already had answers would have wiped the lot.
+    // Interview answers are the one thing here that cannot be regenerated, so
+    // the ambiguous case now resolves toward keeping them: an empty payload with
+    // no explicit `clearAll` leaves stored answers alone.
+    const noIncomingAnswers = cleanedAnswers.length === 0 && cleanedFollowups.length === 0;
+    const clearAllRequested = body?.clearAll === true;
+    const isClearing = noIncomingAnswers && clearAllRequested;
+    if (noIncomingAnswers && !clearAllRequested) {
+      console.log('[interview/POST] Empty answer payload without clearAll — preserving stored answers', {
+        requestId,
+        roomStatusCount: roomStatuses.length,
+      });
+    }
     
     let mergedAnswers: InterviewAnswer[];
     let mergedBaseAnswers: InterviewAnswer[];
@@ -600,7 +630,11 @@ export async function POST(
       mergedBaseAnswers = [];
       mergedFuAnswers = [];
     } else {
-      // Get existing answers in InterviewAnswer format
+      // Get existing answers in InterviewAnswer format. Follow-ups are stored in
+      // their own array, so they have to be read back too: a partial save (one
+      // answer from the modal, or an edit from the Story tab) carries no
+      // follow-ups, and rebuilding `payload.followups` from the request alone
+      // wiped every saved follow-up answer.
       let existingAnswers: InterviewAnswer[] = [];
       try {
         existingAnswers = normalizeAnswers(
@@ -609,7 +643,15 @@ export async function POST(
       } catch {
         existingAnswers = [];
       }
-      
+      try {
+        const existingFollowups = normalizeAnswers(
+          (existingProvenance.interview?.payload?.followups ?? []) as unknown
+        ).map((a) => ({ ...a, isFollowUp: true }));
+        existingAnswers = [...existingAnswers, ...existingFollowups];
+      } catch {
+        /* no stored follow-ups to preserve */
+      }
+
       // Merge incoming answers with existing (non-destructive by questionId)
       mergedAnswers = mergeAnswers(existingAnswers, incomingAnswers);
       
@@ -625,13 +667,14 @@ export async function POST(
       section: a.section || deriveSection(a.questionId, a.prompt),
     });
     
-    // If clearing all answers and followups, also clear selectedQuestionIds
-    // This ensures "Start Over" fully resets the interview state
-    const shouldClearSelectedQuestions = cleanedAnswers.length === 0 && cleanedFollowups.length === 0;
-    
+    // "Start Over" fully resets the interview state, selected questions
+    // included — but only on an explicit clear, for the same reason as above.
+    const shouldClearSelectedQuestions = isClearing;
+
     console.log('[interview/POST] Clear check:', {
       cleanedAnswersLength: cleanedAnswers.length,
       cleanedFollowupsLength: cleanedFollowups.length,
+      clearAllRequested,
       shouldClearSelectedQuestions,
       incomingSelectedQuestionIds: selectedQuestionIds.length,
     });
@@ -735,64 +778,22 @@ export async function POST(
     // nothing decides on it, and it is exactly as complete as provenance, never
     // more. That is the intended direction of the dependency.
     try {
-      // D5: room attribution now rides as declared first-class fields (roomId,
-      // questionSource, isCrossRoom, inputModality), so `hasNewFields` reads them
-      // directly. Declaring roomId trips this gate for the first time, switching
-      // ON the deleteMany + create rebuild for every answer-bearing save — see the
-      // commit message. It rebuilds from `mergedAnswers` (the full merged set), so
-      // a single-answer save never drops the others.
-      const hasNewFields = incomingAnswers.some((a: any) =>
-        a.roomId || a.questionSource || a.isCrossRoom ||
-        a.metadata?.linkedImageId || a.metadata?.linkedProductId || a.metadata?.aiClassificationAttribute
-      );
-
-      // Run the sync when answer fields are present OR an explicit status arrived.
-      const shouldSync = hasNewFields || roomStatuses.length > 0;
+      // The rebuild runs whenever answers were saved, full stop. It used to run
+      // only when an incoming answer happened to carry one of a handful of
+      // fields (`hasNewFields`) — so an interview that produced none of them
+      // wrote provenance and left the queryable table empty, silently, and
+      // invisibly until someone tried to query across projects.
+      const hasAnswerWrite = incomingAnswers.length > 0 || isClearing;
+      const shouldSync = hasAnswerWrite || roomStatuses.length > 0;
 
       if (shouldSync) {
-        // Get or create EditorialInterview
-        let interview = await prisma.editorialInterview.findUnique({
-          where: { projectId },
-        });
+        const interview = await getOrCreateEditorialInterview(projectId);
 
-        if (!interview) {
-          interview = await prisma.editorialInterview.create({
-            data: {
-              projectId,
-              status: 'IN_PROGRESS',
-              selectedQuestionIds: selectedQuestionIds,
-            },
-          });
-        }
-
-        // Only rewrite answer rows when answer fields are present — a skip-only
-        // save must not wipe and recreate the answer set. The delete + recreate
-        // is wrapped in a single transaction (D5a) so a concurrent reader can
-        // never observe the projection mid-rewrite (half-written is worse than
-        // stale).
-        if (hasNewFields) {
-          const interviewId = interview.id;
-          await prisma.$transaction([
-            prisma.editorialInterviewAnswer.deleteMany({ where: { interviewId } }),
-            ...mergedAnswers.map((answer) => {
-              const metadata = (answer as any).metadata || {};
-              return prisma.editorialInterviewAnswer.create({
-                data: {
-                  interviewId,
-                  questionId: answer.questionId,
-                  answerText: answer.answer,
-                  isFollowUp: answer.isFollowUp || false,
-                  inputModality: (answer as any).inputModality || 'text',
-                  linkedImageId: metadata.linkedImageId || null,
-                  linkedProductId: metadata.linkedProductId || null,
-                  questionSource: (answer as any).questionSource || (answer.isFollowUp ? 'follow_up' : 'base_question'),
-                  aiClassificationAttribute: metadata.aiClassificationAttribute || null,
-                  roomId: (answer as any).roomId || null,
-                  isCrossRoom: (answer as any).isCrossRoom || false,
-                },
-              });
-            }),
-          ]);
+        // One writer owns the row shape (see rebuildAnswerProjection). A
+        // skip-only save must not wipe and recreate the answer set, so the
+        // rebuild is gated on an actual answer write.
+        if (hasAnswerWrite) {
+          await rebuildAnswerProjection(interview.id, mergedAnswers as any);
         }
 
         // --- Room progress (Phase B) — merge non-destructively (A3/C0) ---
@@ -888,22 +889,42 @@ export async function POST(
   }
 }
 
+/**
+ * Merge incoming answers over stored ones, keyed by the QUESTION — questionId
+ * plus whether it's a follow-up — not by the answer's content.
+ *
+ * `makeAnswerKey` folds the answer text into the key, which is right for
+ * deduplicating a single payload but wrong for merging across saves: rewriting
+ * an answer changes its key, so the edited answer landed as a NEW entry and the
+ * old wording stayed in provenance. A question has one answer; re-answering it
+ * replaces that answer.
+ *
+ * Field-level rule: an incoming answer wins, EXCEPT that a blank `prompt` never
+ * overwrites question text already stored. Bulk re-saves from a session that
+ * couldn't resolve a question's text (its ids were regenerated) would otherwise
+ * erase the wording the designer answered.
+ */
 function mergeAnswers(
   existing: InterviewAnswer[],
   incoming: InterviewAnswer[]
 ): InterviewAnswer[] {
+  const questionKey = (answer: InterviewAnswer) =>
+    `${answer.questionId}|${answer.isFollowUp ? 'F' : 'P'}`;
+
   const merged = [...existing];
   const keyToIndex = new Map<string, number>();
 
-  merged.forEach((answer, idx) =>
-    keyToIndex.set(makeAnswerKey(answer), idx)
-  );
+  merged.forEach((answer, idx) => keyToIndex.set(questionKey(answer), idx));
 
   for (const answer of incoming) {
-    const key = makeAnswerKey(answer);
-    if (keyToIndex.has(key)) {
-      const idx = keyToIndex.get(key)!;
-      merged[idx] = answer;
+    const key = questionKey(answer);
+    const idx = keyToIndex.get(key);
+    if (idx !== undefined) {
+      const stored = merged[idx];
+      merged[idx] = {
+        ...answer,
+        prompt: (answer.prompt ?? '').trim() || stored.prompt || '',
+      };
     } else {
       merged.push(answer);
       keyToIndex.set(key, merged.length - 1);

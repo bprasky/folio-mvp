@@ -471,8 +471,9 @@ export default function DraftsPanel({ projectId }: { projectId: string }) {
       const clearRes = await fetch(`/api/posting/project/${projectId}/interview`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ 
-          answers: [], 
+        body: JSON.stringify({
+          clearAll: true, // Explicit destructive intent — the server won't wipe without it
+          answers: [],
           followUps: [],
           selectedQuestionIds: [] // Explicitly clear selected questions
         })

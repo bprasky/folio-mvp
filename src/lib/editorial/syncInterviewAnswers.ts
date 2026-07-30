@@ -1,28 +1,145 @@
 import { prisma } from '@/lib/prisma';
+import { randomUUID } from 'crypto';
 
 /**
- * Sync answers from ProjectPost provenance to EditorialInterviewAnswer records
- * This bridges the gap between the current ProjectPost system and the new EditorialInterview system
+ * The projection of interview answers into `EditorialInterviewAnswer`.
+ *
+ * The read/record split (D5b): `provenance.interview.payload.answers` on the
+ * ProjectPost is CANONICAL — anything that decides reads it. This table is a
+ * queryable PROJECTION of that provenance, and it exists so questions that span
+ * designers and projects ("which vendors get named unprompted", "what do people
+ * say about a room once it's fully tagged") are answerable in SQL instead of by
+ * walking every project's JSON blob.
+ *
+ * That only works if the projection is FAITHFUL. It had two independent writers
+ * — this file and the interview POST — writing different subsets of the same
+ * row, so whichever ran last decided how much of the record survived: running
+ * this one after a save dropped the question text, the room, the cross-room
+ * flag and the follow-up edge. One writer now, one row shape.
+ */
+
+/** An answer as it exists in provenance, in either of its historical shapes. */
+export interface ProjectionAnswer {
+  questionId?: string;
+  id?: string;
+  /** The answer text: `answer` in provenance, `answerText` in the table. */
+  answer?: string;
+  answerText?: string;
+  /** The question text the designer actually answered. */
+  prompt?: string;
+  questionText?: string;
+  isFollowUp?: boolean;
+  inputModality?: string | null;
+  linkedImageId?: string | null;
+  linkedProductId?: string | null;
+  aiClassificationAttribute?: string | null;
+  questionSource?: string | null;
+  roomId?: string | null;
+  isCrossRoom?: boolean;
+  /** For a follow-up: the questionId of the answer that prompted it. */
+  parentQuestionId?: string | null;
+}
+
+const rowKey = (questionId: string, isFollowUp: boolean) =>
+  `${questionId}|${isFollowUp ? 'F' : 'P'}`;
+
+const pick = (...values: Array<string | null | undefined>) => {
+  for (const v of values) {
+    if (typeof v === 'string' && v.trim()) return v;
+  }
+  return null;
+};
+
+/**
+ * Rewrite one interview's answer rows from the canonical answer list.
+ *
+ * Wipe-and-rebuild (rather than upsert) keeps the projection exactly as complete
+ * as its source — an answer deleted from provenance must not survive here. It
+ * runs in a single transaction (D5a) so a concurrent reader never observes a
+ * half-written projection; half-written is worse than stale.
+ *
+ * Two things the rebuild has to carry across, since the rows themselves are
+ * replaced every time:
+ *  - `createdAt`, which otherwise becomes "the last time anything was saved" for
+ *    every row at once, erasing the order the designer actually worked in.
+ *  - `parentAnswerId`, resolved from the follow-up's parent QUESTION id. Row ids
+ *    are generated here rather than by the database so a follow-up can point at
+ *    its parent inside the same insert.
+ */
+export async function rebuildAnswerProjection(
+  interviewId: string,
+  answers: ProjectionAnswer[],
+): Promise<number> {
+  const rows = answers
+    .map((a) => ({ ...a, questionId: a.questionId || a.id || '' }))
+    .filter((a) => a.questionId && pick(a.answer, a.answerText));
+
+  const priorRows = await prisma.editorialInterviewAnswer.findMany({
+    where: { interviewId },
+    select: { questionId: true, isFollowUp: true, createdAt: true },
+  });
+  const firstSeen = new Map(
+    priorRows.map((r) => [rowKey(r.questionId, r.isFollowUp), r.createdAt]),
+  );
+
+  const idByQuestion = new Map<string, string>();
+  for (const a of rows) {
+    idByQuestion.set(rowKey(a.questionId, !!a.isFollowUp), randomUUID());
+  }
+
+  await prisma.$transaction([
+    prisma.editorialInterviewAnswer.deleteMany({ where: { interviewId } }),
+    ...rows.map((a) => {
+      const key = rowKey(a.questionId, !!a.isFollowUp);
+      return prisma.editorialInterviewAnswer.create({
+        data: {
+          id: idByQuestion.get(key)!,
+          interviewId,
+          questionId: a.questionId,
+          questionText: pick(a.prompt, a.questionText),
+          answerText: pick(a.answer, a.answerText) ?? '',
+          isFollowUp: !!a.isFollowUp,
+          // A follow-up whose parent is no longer in the set stays unlinked
+          // rather than pointing at a row that doesn't exist.
+          parentAnswerId: a.parentQuestionId
+            ? idByQuestion.get(rowKey(a.parentQuestionId, false)) ?? null
+            : null,
+          inputModality: pick(a.inputModality) ?? 'text',
+          linkedImageId: a.linkedImageId || null,
+          linkedProductId: a.linkedProductId || null,
+          questionSource:
+            pick(a.questionSource) ?? (a.isFollowUp ? 'follow_up' : 'base_question'),
+          aiClassificationAttribute: a.aiClassificationAttribute || null,
+          roomId: a.roomId || null,
+          isCrossRoom: !!a.isCrossRoom,
+          createdAt: firstSeen.get(key) ?? new Date(),
+        },
+      });
+    }),
+  ]);
+
+  return rows.length;
+}
+
+/** The interview record for a project, created on first use. */
+export async function getOrCreateEditorialInterview(projectId: string) {
+  const existing = await prisma.editorialInterview.findUnique({ where: { projectId } });
+  if (existing) return existing;
+  return prisma.editorialInterview.create({
+    data: { projectId, status: 'IN_PROGRESS', selectedQuestionIds: [] },
+  });
+}
+
+/**
+ * Re-project a project's stored answers. Reads canonical provenance and hands it
+ * to the one writer above, so calling this can only ever reproduce the same rows
+ * the interview save would have written — never a thinner version of them.
  */
 export async function syncAnswersToEditorialInterview(
   projectId: string
 ): Promise<{ interviewId: string; answersCreated: number }> {
-  // Get or create EditorialInterview
-  let interview = await prisma.editorialInterview.findUnique({
-    where: { projectId },
-  });
+  const interview = await getOrCreateEditorialInterview(projectId);
 
-  if (!interview) {
-    interview = await prisma.editorialInterview.create({
-      data: {
-        projectId,
-        status: 'IN_PROGRESS',
-        selectedQuestionIds: [],
-      },
-    });
-  }
-
-  // Get answers from ProjectPost provenance
   const post = await prisma.projectPost.findUnique({
     where: { projectId },
     select: { provenance: true },
@@ -33,37 +150,16 @@ export async function syncAnswersToEditorialInterview(
   }
 
   const provenance = post.provenance as any;
-  const interviewData = provenance.interview || {};
-  const payload = interviewData.payload || {};
-  const answers = payload.answers || [];
-  const followups = payload.followups || [];
+  const payload = provenance.interview?.payload || {};
+  const answers: ProjectionAnswer[] = payload.answers || [];
+  const followups: ProjectionAnswer[] = (payload.followups || []).map(
+    (f: ProjectionAnswer) => ({ ...f, isFollowUp: true }),
+  );
 
-  // Delete existing answers to avoid duplicates
-  await prisma.editorialInterviewAnswer.deleteMany({
-    where: { interviewId: interview.id },
-  });
-
-  // Create answer records
-  let answersCreated = 0;
-
-  for (const answer of [...answers, ...followups]) {
-    await prisma.editorialInterviewAnswer.create({
-      data: {
-        interviewId: interview.id,
-        questionId: answer.questionId || answer.id || 'unknown',
-        answerText: answer.answer || '',
-        isFollowUp: answer.isFollowUp || false,
-        inputModality: 'text',
-        // Extract new fields from answer metadata if available
-        linkedImageId: answer.linkedImageId || null,
-        linkedProductId: answer.linkedProductId || null,
-        questionSource: answer.questionSource || (answer.isFollowUp ? 'follow_up' : 'base_question'),
-        aiClassificationAttribute: answer.aiClassificationAttribute || null,
-      },
-    });
-    answersCreated++;
-  }
+  const answersCreated = await rebuildAnswerProjection(interview.id, [
+    ...answers,
+    ...followups,
+  ]);
 
   return { interviewId: interview.id, answersCreated };
 }
-

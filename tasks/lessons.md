@@ -390,3 +390,99 @@ a step, the surface that step links to must be reachable by construction, not by
 parallel boolean that happens to agree; (3) a silent `currentView = 'media'`
 fallback hides this class of bug — when a coercion fires on a link the app itself
 renders, that's the bug, not the recovery.
+
+**A field that can only be recovered by lookup will eventually be unrecoverable — store it with the record.**
+Saved interview answers all listed as "Untitled question" on the Story tab. Two
+independent reasons, same root shape: (1) `persistAnswers` resolved the prompt via
+`allQuestions.find(q => q.id === item.questionId)`, and `allQuestions` is the FLAT
+contextual list — in a room-paced interview the questions asked come from the
+grouped endpoint via `roomFlow`, so every room answer saved with `prompt: ''`
+(and `sanitizeAnswerForSend` stripped the prompt the submit handler HAD already
+resolved); (2) the read-time backfill from `provenance.interview.questionSet`
+couldn't recover it, because the rooms-phase question signature folds in per-room
+tag CONTENT — tagging one product mints fresh question UUIDs and orphans every
+saved id. Rules: (a) when a UI needs a value, persist it on the row at write time;
+never rely on re-deriving it from a set that regenerates; (b) if a save path
+resolves a field from a lookup table, prove the table covers every source the
+value can come from — two question sources meant one code path silently covered
+half the answers; (c) a sanitizer that drops a field the caller just computed is a
+silent data loss, not hygiene.
+
+**"Edit one saved answer" is not a mode of a modal that owns a whole flow.**
+`EditReflectionModal`'s own docstring said it was the only reliable single-answer
+editor, because the interview modal regenerates its question set on open. A later
+`jumpToQuestionId` prop reopened the full InterviewModal pinned to a question
+anyway: it tripped the rooms-generation phase ("Preparing questions for each
+room…"), and when the saved id wasn't in the regenerated set it fell back to
+`setResumeRequested(true)` → `resumePlan.allDone` → `autoGenerate` + `phase:
+'complete'`. Clicking an answer to fix a typo restarted the interview and showed
+the generation screen. Rule: when a component's mount owns side effects (fetching,
+LLM calls, flow advancement), don't add a prop that borrows it for a narrower job
+— and when an existing comment explains why a shortcut doesn't work, treat it as a
+constraint, not a stale note.
+
+**Merging records by a key that includes mutable content appends instead of replacing.**
+The interview POST merged answers with `makeAnswerKey`, which folds the answer
+text into the key. Right for deduplicating one payload; wrong across saves —
+rewriting an answer changed its key, so the edit landed as a NEW entry and the old
+wording stayed. Same file also rebuilt `payload.followups` from the request alone,
+so any partial save (one answer, or an edit) wiped every saved follow-up. Rule: a
+merge key is the record's IDENTITY (questionId + isFollowUp), never its value; and
+a partial write must read back every array it rewrites.
+
+**One progress variable can't answer two different questions.**
+`frontierIndex` (first incomplete step) drove the tracker's marker states, track
+fill AND navigation gate — but the Story step is deliberately exempt from the
+gate, so the stepper showed an active Story step with an unreached hollow Tags
+bubble behind it. Split into `frontierIndex` (what to do next → the next-action
+zone) and `reachedIndex` (how far the project got → markers, fill, navigation),
+with the open count surfaced as "4 left" under a checked step so nothing is
+hidden. Rule: when a derived index feeds both "what's next" and "what's done",
+and any step can be reached out of order, those are two values.
+
+**An undeclared field is a deleted field — check what the schema strips before trusting a column.**
+`editorial_interview_answers` has had columns for `linked_image_id`,
+`linked_product_id`, `ai_classification_attribute` and `parent_answer_id` since it
+was created, and every row ever written has them NULL. The interview collected all
+of it, but it rode into the API in an undeclared `metadata` bag, and
+`normalizeAnswers` (a Zod object with no `.passthrough()` — deliberately) drops
+unknown keys. The route's own comment even said "metadata is still stripped" —
+nobody connected that to the projection two hundred lines below, which read
+`answer.metadata.linkedImageId` and therefore always wrote null. Proven by
+replaying `normalizeAnswers` against main: four fields in, four `undefined` out.
+Rules: (a) a strict schema in the middle of a pipeline is a delete statement for
+anything not declared — when adding a field to a write path, follow it through
+every parse/normalize boundary and assert it at the end, not at the start;
+(b) a nullable column that is null in 100% of rows is a bug report, not a data
+shape — check it before designing anything on top of it; (c) "preserved for the
+fallback path" in a comment means the primary path drops it.
+
+**Two writers for one table means the thinner one decides.**
+`EditorialInterviewAnswer` was rebuilt by the interview POST (rich: question text,
+room, cross-room flag) and by `syncAnswersToEditorialInterview` (thin: neither) —
+both wipe-and-recreate, both live, called from different routes. Whichever ran
+last set how much of the record survived, so the data degraded depending on which
+surface the designer touched. Fixed by extracting one `rebuildAnswerProjection`
+both call. Rule: when a table is a projection, exactly one function may write its
+row shape; every other caller supplies the source rows and delegates. If you find
+a second writer, the question isn't "should I update it too" — it's "why are there
+two".
+
+**Destructive intent must be sent, never inferred.**
+"Clear this interview" was expressed as an empty `answers: []` array — which is
+also exactly what a room-status-only save looks like when the designer skips a
+room before answering anything. One of those reaching a project with saved
+answers would have wiped every one of them, and interview answers are the one
+thing in this product that cannot be regenerated. Now the caller must send
+`clearAll: true`; an empty payload without it preserves what's stored. Rule: when
+the same request shape can mean "save nothing" or "delete everything", the
+ambiguity resolves toward keeping data, and the destructive reading requires an
+explicit flag from the caller.
+
+**A wipe-and-rebuild resets every timestamp it touches.**
+The projection recreated all rows on every save, so `created_at` became "the last
+time anything was saved" — identical across a whole interview, destroying the
+order the designer actually worked in, which is exactly the axis a
+cause-and-effect analysis needs. Rule: if you replace rows rather than update
+them, carry the original creation time forward explicitly; the default is
+silently wrong and nothing will fail to alert you.
