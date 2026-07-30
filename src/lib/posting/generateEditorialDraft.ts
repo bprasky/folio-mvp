@@ -738,19 +738,97 @@ async function repairAndBuildBlocks(
     return out;
   };
 
+  // --- Match each writeRoom to the chapter the model actually wrote for it ---
+  //
+  // This USED to pair `writeRooms[i]` with `composedChapters[i]` by array index,
+  // on the assumption that the model returns chapters in the order the prompt
+  // lists the rooms. It does not have to, and in practice it doesn't: the model
+  // reorders into a narrative walkthrough (exterior → entry → living room …).
+  // When that happened, every chapter got the title and images of one room and
+  // the prose of another — a bathroom photo under "Primary Bathroom" describing
+  // the formal living room's fireplace. Silent, confident, and wrong in a way
+  // that reads as plausible until you look at the photo.
+  //
+  // Titles are the join key instead. The prompt already requires every chapter
+  // title to carry its room name ("Use the designer's exact room name as the
+  // section heading"), so the model tells us the mapping — we just have to read
+  // it rather than assume the ordering.
+  //
+  // Two passes, and within each, longer room names first: "Formal Living Room"
+  // must claim its chapter before "Living Room" can match the same title. A
+  // chapter is claimed at most once, so two rooms can never share prose.
+  const normalizeRoomKey = (s: unknown): string =>
+    String(s ?? '')
+      .toLowerCase()
+      .replace(/_/g, ' ')
+      .replace(/[^a-z0-9 ]/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim();
+  // Whole-word-run containment, so "entry" doesn't match inside "entryway".
+  const containsRoomName = (title: string, room: string): boolean =>
+    ` ${title} `.includes(` ${room} `);
+
+  const normChapters = composedChapters.map((ch, i) => ({
+    i,
+    ch,
+    norm: normalizeRoomKey(ch?.title),
+  }));
+  const roomToChapter = new Map<string, any>();
+  const claimedChapterIdx = new Set<number>();
+  const roomsBySpecificity = [...writeRooms].sort(
+    (a, b) => normalizeRoomKey(b).length - normalizeRoomKey(a).length,
+  );
+
+  for (const pass of ['exact', 'contains'] as const) {
+    for (const roomName of roomsBySpecificity) {
+      if (roomToChapter.has(roomName)) continue;
+      const target = normalizeRoomKey(roomName);
+      if (!target) continue;
+      const hit = normChapters.find(
+        (c) =>
+          !claimedChapterIdx.has(c.i) &&
+          c.norm &&
+          (pass === 'exact' ? c.norm === target : containsRoomName(c.norm, target)),
+      );
+      if (hit) {
+        roomToChapter.set(roomName, hit.ch);
+        claimedChapterIdx.add(hit.i);
+      }
+    }
+  }
+
+  // Diagnostics: a room with no chapter is demoted below (photo-only, honest).
+  // A chapter we couldn't place is prose the model wrote for a room we didn't
+  // ask about — dropping it is correct, but it must never be silent, because a
+  // rising count here means the title contract is drifting.
+  const unmatchedRooms = writeRooms.filter((r) => !roomToChapter.has(r));
+  const unclaimedChapters = normChapters
+    .filter((c) => !claimedChapterIdx.has(c.i) && (c.ch?.body?.length ?? 0) > 0)
+    .map((c) => c.ch?.title ?? `(untitled #${c.i})`);
+  if (unmatchedRooms.length > 0 || unclaimedChapters.length > 0) {
+    console.warn('[generateEditorialDraft] chapter/room title match incomplete', {
+      _cid,
+      unmatchedRooms,
+      unclaimedChapters,
+      writeRooms,
+      modelChapterTitles: normChapters.map((c) => c.ch?.title ?? null),
+    });
+  }
+
   // --- Build NEW editorial chapters, one per writeRoom (C2/C3) ---
-  // Room-keyed, positional match (prompt lists writeRooms in order). No
-  // placeholder filler: a room the model returns no prose for is demoted to a
-  // photo-only gallery chapter and logged — never "Content pending."
+  // No placeholder filler: a room the model returns no prose for is demoted to a
+  // photo-only gallery chapter and logged — never "Content pending." An
+  // unmatched room is demoted the same way. We deliberately do NOT fall back to
+  // positional pairing for leftovers: a room with photos and no prose is a
+  // lesser evil than a room confidently captioned with another room's story.
   const newEditorialAssembled: Array<Record<string, any>> = [];
   const demotedRooms: string[] = [];
-  for (let i = 0; i < writeRooms.length; i++) {
-    const roomName = writeRooms[i];
+  for (const roomName of writeRooms) {
     const roomImageIds = (imagesByRoom[roomName] || [])
       .map((img) => img.id)
       .filter((id) => knownImageIdSet.has(id))
       .slice(0, 8);
-    const bodyParas = proofBody(composedChapters[i]?.body);
+    const bodyParas = proofBody(roomToChapter.get(roomName)?.body);
     if (roomImageIds.length === 0 || bodyParas.length === 0) {
       demotedRooms.push(roomName);
       continue;
@@ -1253,7 +1331,7 @@ Each section should use at least 2 different opening structures across its parag
 FOR GALLERY CHAPTERS:
 - You MUST create exactly ${requiredChapterCount} gallery chapters — one for each REQUIRED room listed below.
 - REQUIRED rooms (do NOT omit or merge any): ${writeRooms.length > 0 ? writeRooms.join(', ') : 'None — write no gallery chapters this pass'}${isAppend ? `\n- Do NOT write chapters for any room not in that list. Other rooms are either already published (shown above as PUBLISHED CHAPTERS) or will appear as photo-only galleries — leave them out entirely.` : ''}
-- Each chapter title MUST include the room name.
+- Each chapter title MUST include the room name, spelled exactly as listed above. The title is how each chapter's prose is matched to that room's photographs — a chapter whose title does not name one of the required rooms cannot be placed, and its prose is discarded. You may write the chapters in whatever narrative order reads best; the titles carry the mapping, not the ordering.
 - Use the designer's exact room name as the section heading — do not rename or reinterpret rooms.
 - Do NOT create thematic chapters that span multiple rooms. Each chapter = one room.
 - EACH PARAGRAPH in a gallery chapter MUST include at least one direct quote or attributed paraphrase from the designer's interview answers for that room.

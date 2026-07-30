@@ -623,3 +623,39 @@ read the chapter loop, and the honest question ("should the same quote appear
 twice?") answers itself; (4) filter the derived list by what the primary surface
 already showed, rather than slicing to a fixed count — that keeps the lead quote
 and legacy entries that have no other place to render.
+
+**Three sources, two keyed by name and one by index, is a mismatch that renders as plausible.**
+Every editorial chapter showed one room's title and photographs beside another
+room's prose — "PRIMARY BATHROOM" over a bathroom photo and a paragraph about the
+formal living room's fireplace, through all 10 rooms. `repairAndBuildBlocks` built
+each chapter from `writeRooms[i]` (title, by name), `imagesByRoom[roomName]`
+(images, by name), and `composedChapters[i]` (body, BY INDEX). The index read
+assumed the model returns chapters in the order the prompt lists rooms; it
+reordered into a narrative walkthrough instead. Because title and images were both
+keyed by name they kept agreeing with each other, so nothing looked broken — the
+only witness was the photograph. The model had been emitting the mapping all
+along in its chapter titles (the prompt already required them to name the room)
+and the code discarded it.
+Rules: (1) when assembling one record from several sources, check that they all
+share ONE join key — a single positional read among name-keyed reads is a bug
+that hides, because the name-keyed fields corroborate each other; (2) if a model
+is asked to label its output, JOIN ON THE LABEL, never on emission order — LLM
+ordering is not a contract even when the prompt implies one, and if you depend on
+the label, say so in the prompt; (3) when matching names where one contains
+another ("Living Room" ⊂ "Formal Living Room"), run exact matches first and
+process longer names first, and consume each match once so two keys can't share a
+value; (4) no positional fallback for leftovers — an unmatched item demoted to
+photo-only is a lesser evil than one confidently captioned with another's story.
+This is the third positional-pairing bug in this pipeline (see the
+`ProjectImage.room` entry above); a regression check that greps the source for
+the old indexed read is cheap insurance against a fourth.
+
+**A visibly "improved" output can still be wrong in a way the improvement hides.**
+The prose quality jumped once the JSON and schema blockers were cleared, and the
+articles read well — which is exactly why the room mismatch was easy to miss in
+logs. It produced no error, no warning, and valid data. It was only visible by
+looking at a rendered page next to its photograph.
+Rule: when a fix unblocks a pipeline that had never run end-to-end, the first
+successful output needs a human looking at the RENDERED artifact, not just green
+checks — "it generated" and "it generated correctly" are different claims, and
+the checks in between can only prove the first.
