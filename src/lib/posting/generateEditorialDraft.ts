@@ -8,7 +8,7 @@ import { HOOK_OPENER_ID_PREFIX, HOOK_FOLLOWUP_ID_PREFIX } from "@/lib/interview/
 import { MODELS } from '@/lib/ai/models';
 import { resolveProductNaming } from '@/lib/naming/resolveProductNaming';
 import { scrubProseNaming, type DescriptorHint } from '@/lib/naming/scrubProse';
-import { FOLIO_TONE } from '@/lib/interview/prompts/editorialTone';
+import { FOLIO_TONE, JSON_PROSE_QUOTING_RULE } from '@/lib/interview/prompts/editorialTone';
 
 const client = new Anthropic();
 
@@ -596,18 +596,31 @@ function splitLongParagraph(text: string, maxLength: number = 4000): string[] {
   return chunks.map(chunk => chunk.length > 5000 ? chunk.substring(0, 5000) : chunk);
 }
 
+// A quoted span, straight or curly. The generator now emits curly quotes
+// (JSON_PROSE_QUOTING_RULE), so a straight-quote-only pattern would treat the
+// designer's quoted words as unquoted prose and rewrite them.
+const QUOTED_SPAN = /"[^"]*"|“[^”]*”/g;
+
+function capitalizeSentenceStarts(text: string): string {
+  return text.replace(/(^|\.\s+)([a-z])/g, (_, p, c) => p + c.toUpperCase());
+}
+
 // Conservative fixes outside quotes; never alter quoted text
-function proofOutsideQuotes(paragraph: string): string {
+export function proofOutsideQuotes(paragraph: string): string {
   if (!paragraph || !paragraph.trim()) return paragraph;
-  let result = paragraph.trim();
-  // Fix sentence starts (outside quotes only)
-  const parts = result.split(/"([^"]*)"/g);
-  for (let i = 0; i < parts.length; i += 2) {
-    if (parts[i]) {
-      parts[i] = parts[i].replace(/(^|\.\s+)([a-z])/g, (_, p, c) => p + c.toUpperCase());
-    }
+  const result = paragraph.trim();
+  // Walk the paragraph and capitalize sentence starts only in the spans sitting
+  // OUTSIDE quotation marks, preserving each span's original quote characters.
+  let out = '';
+  let cursor = 0;
+  let match: RegExpExecArray | null;
+  QUOTED_SPAN.lastIndex = 0;
+  while ((match = QUOTED_SPAN.exec(result)) !== null) {
+    out += capitalizeSentenceStarts(result.slice(cursor, match.index));
+    out += match[0];
+    cursor = match.index + match[0].length;
   }
-  return parts.join('"');
+  return out + capitalizeSentenceStarts(result.slice(cursor));
 }
 
 // Group images by room field
@@ -1142,17 +1155,19 @@ Rules for using interview content:
 
 1. DIRECT QUOTES — MANDATORY (at least 1 per gallery chapter):
    Use the designer's ACTUAL WORDS from interview answers as direct quotes. Each gallery chapter MUST contain at least 1 direct attributed quote drawn from that room's interview answers. Format them naturally:
-   - '${designerNameForPrompt} recalls...' followed by a direct quote
-   - 'As ${designerNameForPrompt} explains, "[quote]"'
-   - '"[Quote]," ${designerNameForPrompt} says.'
-   - '"[Quote]," says ${designerNameForPrompt}, "[continuation]."'
+   - ${designerNameForPrompt} recalls... followed by a direct quote
+   - As ${designerNameForPrompt} explains, “[quote]”
+   - “[Quote],” ${designerNameForPrompt} says.
+   - “[Quote],” says ${designerNameForPrompt}, “[continuation].”
 
-   Direct quotes must be REAL phrases from the interview answers above. Do not invent quotes. Do not clean up the language so much that it loses the person's voice. A designer saying "We almost went polished nickel but brass felt right for this house" is better than "We carefully considered polished nickel before ultimately selecting brass for its warmth."
+   Note the quotation marks in those examples: always curly (“ ”), never the straight " character. See JSON STRING SAFETY below.
+
+   Direct quotes must be REAL phrases from the interview answers above. Do not invent quotes. Do not clean up the language so much that it loses the person's voice. A designer saying “We almost went polished nickel but brass felt right for this house” is better than “We carefully considered polished nickel before ultimately selecting brass for its warmth.”
 
 2. ATTRIBUTED PARAPHRASE (at least 1 per gallery chapter):
    Convey the designer's perspective without direct quotation:
-   - '${designerNameForPrompt} chose brass hardware over polished nickel, drawn to its warmth against the mauve cabinetry.'
-   - 'The decision to remove the entry closet came early — ${designerNameForPrompt} wanted the full volume of the space to announce itself.'
+   - ${designerNameForPrompt} chose brass hardware over polished nickel, drawn to its warmth against the mauve cabinetry.
+   - The decision to remove the entry closet came early — ${designerNameForPrompt} wanted the full volume of the space to announce itself.
 
 3. UNATTRIBUTED NARRATIVE:
    The remaining prose can describe materials, spatial relationships, and visual effects without attribution. But even this should feel informed by the designer's perspective, not written by someone who only saw photos.
@@ -1166,6 +1181,8 @@ BALANCE: Each gallery chapter should have:
 USING FOLLOW-UP CONTENT: Answers tagged [SOURCE: FOLLOW-UP] contain the richest material — process stories, client anecdotes, tradeoff explanations, and behind-the-scenes details. Prioritize these for direct quotes and anecdotes. Do NOT flatten follow-up answers into generic descriptive prose.
 
 ## What to Generate
+
+${JSON_PROSE_QUOTING_RULE}
 
 Produce a JSON object with this structure:
 
@@ -1226,11 +1243,11 @@ FOR THE SECTIONS ARRAY (${requiredChapterCount}-${requiredChapterCount + 2} narr
 
 SENTENCE OPENINGS — CRITICAL FOR NATURAL PROSE:
 Never start more than 2 paragraphs in the entire article with "The [noun]..." Vary your openings:
-- Lead with a direct quote: '"We had to have both crews on site the same day," ${designerNameForPrompt} explains.'
-- Lead with action: '${designerNameForPrompt} sourced the marble from a local yard.'
-- Lead with a prepositional phrase: 'Above the island, three black pendants hover...'
-- Lead with a dependent clause: 'When the original slab cracked, the replacement turned out better.'
-- Lead with a spatial or temporal marker: 'At the far end of the open plan, the bar operates on different rules.'
+- Lead with a direct quote: “We had to have both crews on site the same day,” ${designerNameForPrompt} explains.
+- Lead with action: ${designerNameForPrompt} sourced the marble from a local yard.
+- Lead with a prepositional phrase: Above the island, three black pendants hover...
+- Lead with a dependent clause: When the original slab cracked, the replacement turned out better.
+- Lead with a spatial or temporal marker: At the far end of the open plan, the bar operates on different rules.
 Each section should use at least 2 different opening structures across its paragraphs. If you notice yourself starting consecutive paragraphs with "The," rewrite one of them.
 
 FOR GALLERY CHAPTERS:
@@ -1253,10 +1270,11 @@ FOR THE MATERIALS LEDGER:
 CRITICAL RULES:
 - 850-1300 words total across introduction, sections, and chapters
 - Products serve the narrative — the narrative does not serve the products
-- MANDATORY: Include at least 1 direct attributed quote per gallery chapter, drawn from the interview answers. Format: '${designerNameForPrompt} says/recalls/explains, "[actual words]"'. Do NOT paraphrase every answer — preserve the designer's voice.
+- MANDATORY: Include at least 1 direct attributed quote per gallery chapter, drawn from the interview answers. Format: ${designerNameForPrompt} says/recalls/explains, “[actual words]”. Do NOT paraphrase every answer — preserve the designer's voice.
 - The article should read like a magazine feature, not a product specification sheet
 - EVERY room with interview content MUST get its own gallery chapter — do not drop, merge, or skip any room
-- Return ONLY valid JSON.
+- Return ONLY valid JSON — no preamble, no commentary, no code fence.
+- Quotation marks inside prose are ALWAYS curly (“ ” and ‘ ’). A straight " inside a string value invalidates the whole response. Re-read JSON STRING SAFETY above before you begin.
 - Do NOT generate a pullQuotes array — pull quotes are extracted automatically from your body text after generation.
 
 Begin.`;
@@ -1405,6 +1423,18 @@ class EditorialGenerationError extends Error {
   }
 }
 
+// Appended to the user prompt on the one resample after an unparseable response.
+// Deliberately does NOT show the model its broken output: handing back the
+// mangled text invites it to "fix" the JSON around whatever prose it can salvage,
+// which is the corrupting repair path in a different costume. We ask for a clean
+// draft and restate the rule that is almost always the cause.
+const JSON_RESAMPLE_NOTE = `RETRY — YOUR PREVIOUS RESPONSE WAS NOT VALID JSON AND WAS DISCARDED.
+Write the complete article again from scratch. The overwhelmingly common cause is a straight double quote (") inside a prose string, so obey this without exception:
+
+${JSON_PROSE_QUOTING_RULE}
+
+Output the JSON object and nothing else.`;
+
 export async function generateEditorialDraft(input: GenInput): Promise<{
   blocks: z.infer<typeof BlocksSchema>;
 }> {
@@ -1441,67 +1471,26 @@ export async function generateEditorialDraft(input: GenInput): Promise<{
   const maxTokens = Math.min(32000, Math.max(4096, outputRoomCount * 800 + 2000));
   const modelName = MODELS.sonnet;
 
-  const llmResult = await callLLM(
+  const runGeneration = (attempt: number) => callLLM(
     async () => {
       return await client.messages.create({
         model: modelName,
-        temperature: 0.7,
+        // Attempt 2 is a resample after unparseable JSON. Drop the temperature so
+        // the retry hugs the format instructions instead of re-rolling the same
+        // creative liberties that broke the string in the first place.
+        temperature: attempt === 1 ? 0.7 : 0.3,
         max_tokens: maxTokens,
         system: systemPrompt,
         messages: [
-          { role: "user", content: userPrompt },
+          { role: "user", content: attempt === 1 ? userPrompt : `${userPrompt}\n\n${JSON_RESAMPLE_NOTE}` },
         ],
       });
     },
     { modelName, contextHint: `generate:${input.project?.id}`, baseDelayMs: 500 }
   );
 
-  if (!llmResult.ok) {
-    const failure = llmResult as { ok: false; code: string; status?: number; message?: string };
-    console.warn('[generate] llm_call_failed', {
-      _cid, code: failure.code, status: failure.status, message: failure.message, projectId: input.project?.id,
-    });
-    throw new EditorialGenerationError(
-      'LLM_CALL_FAILED',
-      `AI model call failed (${failure.code}${failure.status ? `, HTTP ${failure.status}` : ''}). Try regenerating in a moment.`,
-      failure.status || 502,
-    );
-  }
-
-  console.log('[GENERATE] LLM call complete, proceeding to repair', { _cid });
-  console.info('[generate] llm_ok', {
-    _cid,
-    model: llmResult.usedModel,
-    stopReason: llmResult.data.stop_reason,
-    outputTokens: llmResult.data.usage?.output_tokens,
-    maxTokens,
-  });
-
-  // Truncation guard: if the model hit the token ceiling, the JSON is cut off
-  // mid-structure. Detect it here so it surfaces as an actionable LLM_TRUNCATED
-  // (raise the budget) instead of a misleading LLM_JSON_PARSE ("regenerate",
-  // which deterministically hits the same cap). See maxTokens sizing above.
-  if (llmResult.data.stop_reason === 'max_tokens') {
-    console.warn('[generate] output truncated at max_tokens', {
-      _cid, maxTokens, outputRoomCount, outputTokens: llmResult.data.usage?.output_tokens,
-    });
-    throw new EditorialGenerationError(
-      'LLM_TRUNCATED',
-      'The AI model ran out of room before finishing this draft. Try regenerating, or split the project into fewer rooms.',
-    );
-  }
-
-  const rawText = llmResult.data.content[0]?.type === 'text' ? llmResult.data.content[0].text : "";
-
-  if (!rawText || rawText.trim().length === 0) {
-    throw new EditorialGenerationError(
-      'LLM_EMPTY_RESPONSE',
-      'The AI model returned an empty response. Try regenerating.',
-    );
-  }
-
-  // Parse JSON output. Strict JSON.parse is the ONLY accepted path — we HARD-FAIL
-  // on malformed output rather than "repairing" it.
+  // Parse JSON output. Strict JSON.parse is the ONLY accepted path — we NEVER
+  // "repair" malformed output.
   //
   // We tried a jsonrepair fallback (keep the draft instead of 502'ing) and it was
   // strictly worse: jsonrepair is a heuristic that guesses where each string
@@ -1514,30 +1503,108 @@ export async function generateEditorialDraft(input: GenInput): Promise<{
   // desynced the positional room→body mapping downstream, and poisoned the
   // regex pull-quote extractor (stray quotes → fabricated "quotes"). A
   // recoverable 502 the designer can regenerate is far better than publishing
-  // that. So: no repair. On a parse error we emit a rich diagnostic (parse
-  // position + the offending window of raw text) so the malformed span is
-  // actionable server-side without replaying the whole generation, then throw.
+  // that. So: no repair.
+  //
+  // What we do instead of repairing is RESAMPLE once. A fresh sample is the same
+  // action the error message asks the designer to take by hand ("Try
+  // regenerating") — it just costs them one click and two minutes less. Unlike a
+  // repair it cannot corrupt prose, because the second draft is authored whole by
+  // the model rather than stitched together by us. Only the parse failure
+  // retries; LLM_TRUNCATED and LLM_EMPTY_RESPONSE still fail immediately, since
+  // resampling those hits the same deterministic ceiling.
+  //
+  // On the final failure we emit a rich diagnostic (parse position + the offending
+  // window of raw text) so the malformed span is actionable server-side without
+  // replaying the whole generation, then throw.
+  const MAX_PARSE_ATTEMPTS = 2;
   let composed: any;
-  const cleaned = rawText.replace(/```json\n?|\n?```/g, '').trim();
-  try {
-    composed = JSON.parse(cleaned);
-  } catch (parseError: any) {
-    const diag = describeJsonParseFailure(cleaned, parseError);
-    console.error('[generate] JSON parse failed — hard-failing (no repair)', {
+  let parsed = false;
+
+  for (let attempt = 1; attempt <= MAX_PARSE_ATTEMPTS; attempt++) {
+    const llmResult = await runGeneration(attempt);
+
+    if (!llmResult.ok) {
+      const failure = llmResult as { ok: false; code: string; status?: number; message?: string };
+      console.warn('[generate] llm_call_failed', {
+        _cid, attempt, code: failure.code, status: failure.status, message: failure.message, projectId: input.project?.id,
+      });
+      throw new EditorialGenerationError(
+        'LLM_CALL_FAILED',
+        `AI model call failed (${failure.code}${failure.status ? `, HTTP ${failure.status}` : ''}). Try regenerating in a moment.`,
+        failure.status || 502,
+      );
+    }
+
+    console.info('[generate] llm_ok', {
       _cid,
-      projectId: input.project?.id,
-      error: parseError?.message,
-      position: diag.position,
-      snippet: diag.snippet,
-      rawLength: cleaned.length,
+      attempt,
+      model: llmResult.usedModel,
       stopReason: llmResult.data.stop_reason,
       outputTokens: llmResult.data.usage?.output_tokens,
+      maxTokens,
     });
+
+    // Truncation guard: if the model hit the token ceiling, the JSON is cut off
+    // mid-structure. Detect it here so it surfaces as an actionable LLM_TRUNCATED
+    // (raise the budget) instead of a misleading LLM_JSON_PARSE ("regenerate",
+    // which deterministically hits the same cap). See maxTokens sizing above.
+    if (llmResult.data.stop_reason === 'max_tokens') {
+      console.warn('[generate] output truncated at max_tokens', {
+        _cid, attempt, maxTokens, outputRoomCount, outputTokens: llmResult.data.usage?.output_tokens,
+      });
+      throw new EditorialGenerationError(
+        'LLM_TRUNCATED',
+        'The AI model ran out of room before finishing this draft. Try regenerating, or split the project into fewer rooms.',
+      );
+    }
+
+    const rawText = llmResult.data.content[0]?.type === 'text' ? llmResult.data.content[0].text : "";
+
+    if (!rawText || rawText.trim().length === 0) {
+      throw new EditorialGenerationError(
+        'LLM_EMPTY_RESPONSE',
+        'The AI model returned an empty response. Try regenerating.',
+      );
+    }
+
+    const cleaned = rawText.replace(/```json\n?|\n?```/g, '').trim();
+    try {
+      composed = JSON.parse(cleaned);
+      parsed = true;
+      if (attempt > 1) {
+        console.info('[generate] json_parse_recovered_on_resample', { _cid, attempt });
+      }
+      break;
+    } catch (parseError: any) {
+      const willResample = attempt < MAX_PARSE_ATTEMPTS;
+      const diag = describeJsonParseFailure(cleaned, parseError);
+      console.error(
+        willResample
+          ? '[generate] JSON parse failed — resampling once'
+          : '[generate] JSON parse failed — hard-failing (no repair)',
+        {
+          _cid,
+          attempt,
+          projectId: input.project?.id,
+          error: parseError?.message,
+          position: diag.position,
+          snippet: diag.snippet,
+          rawLength: cleaned.length,
+          stopReason: llmResult.data.stop_reason,
+          outputTokens: llmResult.data.usage?.output_tokens,
+        },
+      );
+    }
+  }
+
+  if (!parsed) {
     throw new EditorialGenerationError(
       'LLM_JSON_PARSE',
       'The AI model returned malformed output (invalid JSON). Try regenerating.',
     );
   }
+
+  console.log('[GENERATE] LLM call complete, proceeding to repair', { _cid });
 
   // Validate room structure (monitoring only)
   if (rooms.length > 0 && rooms[0] !== 'General') {

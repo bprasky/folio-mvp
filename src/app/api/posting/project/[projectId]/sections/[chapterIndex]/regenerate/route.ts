@@ -8,7 +8,7 @@ import { assertProjectWrite } from '@/lib/authz/access';
 import { callLLM } from '@/lib/posting/llmClient';
 import Anthropic from '@anthropic-ai/sdk';
 import type { SectionHistoryEntry, SectionOverride } from '@/lib/posting/editingTypes';
-import { FOLIO_TONE } from '@/lib/interview/prompts/editorialTone';
+import { FOLIO_TONE, JSON_PROSE_QUOTING_RULE } from '@/lib/interview/prompts/editorialTone';
 import { MODELS } from '@/lib/ai/models';
 
 const anthropic = new Anthropic();
@@ -188,14 +188,14 @@ This section MUST include the designer's voice. The interview answers above are 
 
 1. DIRECT QUOTES — MANDATORY (at least 1 in this section):
    Use ${designerName}'s ACTUAL WORDS from the interview answers as a direct quote. Format naturally:
-   - '${designerName} recalls...' followed by a direct quote
-   - 'As ${designerName} explains, "[quote]"'
-   - '"[Quote]," ${designerName} says.'
+   - ${designerName} recalls... followed by a direct quote
+   - As ${designerName} explains, “[quote]”
+   - “[Quote],” ${designerName} says.
    Direct quotes must be REAL phrases from the interview answers. Do not invent quotes. Do not rewrite the designer's voice.
 
 2. ATTRIBUTED PARAPHRASE (at least 1 in this section):
    Convey ${designerName}'s perspective without direct quotation:
-   - '${designerName} chose brass hardware over polished nickel, drawn to its warmth...'
+   - ${designerName} chose brass hardware over polished nickel, drawn to its warmth...
 
 3. UNATTRIBUTED NARRATIVE:
    The remaining prose can describe materials and spatial relationships without attribution, but should feel informed by the designer's perspective.
@@ -207,7 +207,9 @@ This section MUST include the designer's voice. The interview answers above are 
 - MANDATORY: Include at least 1 direct attributed quote from ${designerName} using their actual words from the interview
 - MANDATORY: Include at least 1 attributed paraphrase
 - Only reference products listed above
-- Return ONLY a JSON array of paragraph strings: ["paragraph 1", "paragraph 2", ...]`;
+- Return ONLY a JSON array of paragraph strings: ["paragraph 1", "paragraph 2", ...]
+
+${JSON_PROSE_QUOTING_RULE}`;
 
     const modelName = MODELS.sonnet;
     const llmResult = await callLLM(
@@ -237,16 +239,37 @@ This section MUST include the designer's voice. The interview answers above are 
       .map((b: any) => b.text)
       .join('') || '';
 
-    // Parse the JSON array of paragraphs
+    // Parse the JSON array of paragraphs.
+    //
+    // The two failure modes are NOT interchangeable, so they get different
+    // handling. If the model answered in plain prose with no JSON array at all,
+    // splitting on blank lines is safe — there is no JSON syntax to leak into the
+    // body. But if it DID return an array that fails to parse (the unescaped-quote
+    // class), splitting that text splices raw JSON — trailing commas, `],`, key
+    // names — into paragraphs the designer then publishes. That is exactly the
+    // corruption documented in tasks/lessons.md, so we hard-fail instead.
     let newBody: string[];
-    try {
-      const jsonMatch = responseText.match(/\[[\s\S]*\]/);
-      if (!jsonMatch) throw new Error('No JSON array found');
-      newBody = JSON.parse(jsonMatch[0]);
-      if (!Array.isArray(newBody) || newBody.length === 0) throw new Error('Empty array');
-      newBody = newBody.filter((p: any) => typeof p === 'string' && p.trim());
-    } catch {
-      // Fallback: split response into paragraphs
+    const jsonMatch = responseText.match(/\[[\s\S]*\]/);
+
+    if (jsonMatch) {
+      try {
+        const parsedBody = JSON.parse(jsonMatch[0]);
+        if (!Array.isArray(parsedBody)) throw new Error('Not an array');
+        newBody = parsedBody.filter((p: any) => typeof p === 'string' && p.trim());
+        if (newBody.length === 0) throw new Error('No usable paragraph strings');
+      } catch (parseError: any) {
+        console.error('[section/regenerate] malformed JSON array — refusing to splice raw text', {
+          projectId,
+          chapterIndex,
+          error: parseError?.message,
+          rawLength: responseText.length,
+        });
+        return NextResponse.json(
+          { error: 'The AI model returned malformed output. Please try again.' },
+          { status: 502 }
+        );
+      }
+    } else {
       newBody = responseText
         .replace(/^```json?\s*/m, '')
         .replace(/```\s*$/m, '')
