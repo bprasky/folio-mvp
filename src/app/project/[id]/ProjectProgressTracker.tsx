@@ -60,7 +60,7 @@ export default function ProjectProgressTracker({
   state,
   hideNextAction = false,
 }: ProjectProgressTrackerProps) {
-  const { steps, currentIndex, frontierIndex, materialsIndex, materialsExist, type, endCap } =
+  const { steps, currentIndex, reachedIndex, materialsIndex, materialsExist, type, endCap } =
     state;
   const def = TRACKER_TYPES[type];
   const current = steps[currentIndex];
@@ -85,7 +85,7 @@ export default function ProjectProgressTracker({
         <Stepper
           steps={steps}
           projectId={projectId}
-          frontierIndex={frontierIndex}
+          reachedIndex={reachedIndex}
           hideDownTick
         />
       </section>
@@ -97,7 +97,7 @@ export default function ProjectProgressTracker({
       aria-label="Project progress"
       className="rounded-[20px] border border-folio-border-subtle bg-surface-canvas overflow-hidden"
     >
-      <Stepper steps={steps} projectId={projectId} frontierIndex={frontierIndex} />
+      <Stepper steps={steps} projectId={projectId} reachedIndex={reachedIndex} />
 
       <div className="px-8 pb-8 pt-2">
         {showImportCards ? (
@@ -129,13 +129,13 @@ const MARKER_CENTER = MARKER / 2;
 function Stepper({
   steps,
   projectId,
-  frontierIndex,
+  reachedIndex,
   hideDownTick = false,
 }: {
   steps: TrackerStep[];
   projectId: string;
-  /** Progress frontier — fills the track and bounds what can be navigated to. */
-  frontierIndex: number;
+  /** How far the project has got — fills the track, and matches the markers. */
+  reachedIndex: number;
   hideDownTick?: boolean;
 }) {
   const n = steps.length;
@@ -144,9 +144,9 @@ function Stepper({
   // first center to the last center; the filled portion runs to the current
   // center.
   const edge = 50 / n; // % from row edge to first/last marker center
-  // The fill shows real progress, so it tracks the frontier — stepping back to
-  // review a finished step must never look like progress was lost.
-  const filledWidth = (frontierIndex / n) * 100; // % of row width
+  // The fill shows real progress, so it tracks what's been reached — stepping
+  // back to review a finished step must never look like progress was lost.
+  const filledWidth = (reachedIndex / n) * 100; // % of row width
 
   return (
     <div className="relative px-8 pt-8 pb-7">
@@ -189,8 +189,12 @@ function Stepper({
 }
 
 function StepMarker({ step, href }: { step: TrackerStep; href?: string }) {
-  const { state, label, count, index, active, locked } = step;
+  const { state, label, count, remaining, index, active, locked } = step;
   const isDone = state === 'done';
+  // A step the designer has moved past can still have work left in it (the Story
+  // step opens before every photo is tagged). Say so under the marker instead of
+  // rendering it as unreached — the step stays checked, navigable, and honest.
+  const openWork = isDone && typeof remaining === 'number' && remaining > 0;
 
   const body = (
     <>
@@ -235,10 +239,17 @@ function StepMarker({ step, href }: { step: TrackerStep; href?: string }) {
         >
           {label}
         </span>
-        {isDone && typeof count === 'number' && (
-          <span className="mt-1 text-[12px] text-folio-text-tertiary tabular-nums">
-            {count}
+        {openWork ? (
+          <span className="mt-1 text-[12px] font-medium text-folio-gold-ornament tabular-nums">
+            {remaining} left
           </span>
+        ) : (
+          isDone &&
+          typeof count === 'number' && (
+            <span className="mt-1 text-[12px] text-folio-text-tertiary tabular-nums">
+              {count}
+            </span>
+          )
         )}
       </div>
     </>
