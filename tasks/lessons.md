@@ -569,6 +569,30 @@ as a comment on the registry constant, not in a migration doc nobody reads — t
 next call site is written by copying the last one; (5) keep the retired model id
 in the pricing table, since instances mid-deploy still emit calls under it.
 
+**Turning a model feature on changes the response SHAPE, and `content[0]` is where that bites.**
+Wiring adaptive thinking behind a flag, every call site read the response as
+`content[0]?.type === 'text' ? content[0].text : ''`. That is correct with
+thinking off, because the text block IS block 0. With thinking on the response is
+`[thinking, text]`, so the check is false and every one of those call sites falls
+to its fallback — `''` in the editorial generator (surfacing as
+LLM_EMPTY_RESPONSE) and `'{}'` in the three follow-up routes (parsing cleanly to
+zero follow-ups). No exception, no error log, nothing to grep. The feature would
+have looked like it worked and quietly produced nothing, and only when the flag
+was flipped — which is precisely when you are least able to tell a real quality
+regression from a plumbing bug.
+Fix: `firstTextBlock()` in `lib/ai/thinking.ts`, finding the block by type instead
+of by position, applied to every Anthropic read in the repo — including the
+surfaces that cannot enable thinking today, because the trap is for whoever adds
+the next surface, not for the current author.
+Rules: (1) when a flag changes what the API RETURNS and not just what it costs,
+audit the parsing before shipping the flag — the failure is silent by
+construction, since a fallback value is indistinguishable from a real empty
+result; (2) never index a polymorphic content array by position, find by type —
+`content[0]` encodes an assumption that was only ever incidentally true; (3) fix
+the pattern everywhere at once rather than only at the flagged call sites, or you
+have moved the landmine instead of removing it; (4) assert it in a check —
+"reviewer will notice" does not survive a flag flip six months later.
+
 **Resampling is not repairing — one automatic retry is the honest version of "Try regenerating".**
 Corollary to the jsonrepair lesson above. Hard-failing on malformed JSON is
 right, but making the designer click regenerate for a failure they cannot

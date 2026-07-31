@@ -525,3 +525,81 @@ it. Migrating ahead of the cliff, rather than under it.
   distributions, but repeated regenerations of the same input will read more
   alike than before. If that becomes a complaint, the replacement is prompt-level
   variation, not a parameter.
+
+---
+
+# Part 5 — SDK upgrade + adaptive thinking behind a flag (branch: claude/llm-json-parse-error-pvl9ra)
+
+## Why the SDK had to move first
+`@anthropic-ai/sdk@0.71.2` predates adaptive thinking entirely:
+`ThinkingConfigParam = ThinkingConfigEnabled | ThinkingConfigDisabled` — no
+adaptive variant, and no `output_config`/`effort` at all. `thinking:
+{type:'adaptive'}` was a type error, and the only other typed option
+(`enabled` + `budget_tokens`) is the one Sonnet 5 rejects with a 400. Upgraded to
+**0.115.0**, which adds `ThinkingConfigAdaptive`, `OutputConfig.effort`, and
+`JSONOutputFormat` (structured outputs — see the follow-up note below).
+
+Installed with `--legacy-peer-deps`, matching `vercel.json`'s own
+`installCommand`. The peer conflict is pre-existing and unrelated (`openai` wants
+zod 3, the repo is on zod 4; the Anthropic SDK accepts either).
+
+## Fix
+- [x] SDK 0.71.2 → 0.115.0 (root), and the services package pinned to match.
+- [x] `src/lib/ai/thinking.ts` — per-surface opt-in, **off by default**:
+      `ADAPTIVE_THINKING_SURFACES=editorial[,followups]`, effort via
+      `ADAPTIVE_THINKING_EFFORT` (default `low`, not Sonnet 5's `high` — Sonnet 5
+      at `medium` is already ~Sonnet 4.6 at `high`). Returns a
+      `maxTokensMultiplier` because thinking shares the `max_tokens` budget.
+- [x] Wired `generateEditorialDraft` (surface `editorial`) and all three posting
+      interview follow-up routes — `followups`, `followups/single`,
+      `followups/batch` (surface `followups`).
+- [x] `[generate] llm_ok` now logs `adaptiveThinking` and `effort` beside
+      `outputTokens`, which includes thinking tokens. Same figure lands in
+      CostEvent per operation, so the A/B is readable without new plumbing.
+- [x] **`firstTextBlock()` — the bug this nearly shipped.** Every call site read
+      `content[0]?.type === 'text' ? … : ''`. With thinking on the response is
+      `[thinking, text]`, so all four wired sites would have silently returned
+      their fallback: an empty article (LLM_EMPTY_RESPONSE) and zero follow-ups,
+      no error raised. Applied to all six Anthropic reads in these files, not just
+      the flagged ones, so the next surface added doesn't hit it.
+- [x] `.env.example` documents both vars and which surface to enable first.
+
+## Caller audit (per the Path A/B lesson)
+Follow-up generators enumerated before wiring. In scope: the three
+`/api/posting/project/[id]/interview/followups*` routes, all called by
+`InterviewModal.tsx` — the Sofia interview that feeds editorial generation.
+**Out of scope and left disabled:** `/api/interview/respond` (a separate older
+interview flow with a single caller, `useInterviewSession.ts`), `spliceHookQuote`
+and `fixSentenceOpeners` (short utility calls inside editorial where thinking
+buys nothing), the realtime voice service, and the interactive chat surfaces.
+
+## Verify
+- [x] `npm run check:sonnet5` — now 27 checks. Adds: flag defaults to off for
+      both surfaces; enabling one does not enable the other; effort defaults to
+      `low` and an invalid value falls back rather than reaching the API; a
+      near-miss surface name (`editorials`) enables nothing; adaptive raises the
+      budget. Plus the `content[0]` guard — asserts `firstTextBlock` reads past a
+      leading thinking block, and greps the wired files so no `content[0]` read
+      returns.
+- [x] `npm run check:json-quoting` — 44 checks still pass.
+- [x] `tsc` — **1032 errors before and after the SDK upgrade, byte-identical
+      error-code distribution.** No new errors from the upgrade or the wiring.
+- [ ] **Not verified: a live adaptive generation.** No request has been made with
+      `thinking: {type:'adaptive'}`. The flag is off, so the deploy ships current
+      behavior; the first real test is flipping it on one project.
+
+## How to run the A/B
+1. Deploy with the flag unset — confirms the SDK upgrade alone changes nothing.
+2. Set `ADAPTIVE_THINKING_SURFACES=editorial`, regenerate one project, compare
+   `[generate] llm_ok` `outputTokens` and read the draft. Watch for
+   `LLM_TRUNCATED` — if it appears, raise `MAX_TOKENS_MULTIPLIER_WHEN_ADAPTIVE`
+   (currently 2, a starting guess, not a measurement).
+3. Only if editorial pays, add `,followups`. Note follow-ups are generated while
+   the designer waits, so latency there is user-visible in a way it is not on a
+   two-minute article.
+
+## Follow-up now unblocked
+SDK 0.115.0 brings `output_config.format` (structured outputs), which Sonnet 5
+supports. That is the permanent fix for the `LLM_JSON_PARSE` class this branch
+started on — it makes malformed JSON impossible rather than unlikely, replacing
+the prompt-level curly-quote defence. Separate change; not bundled here.

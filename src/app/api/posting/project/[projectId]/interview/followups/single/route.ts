@@ -15,6 +15,7 @@ import { z } from "zod";
 import { randomUUID } from "crypto";
 import { digestInterviewAnswer } from "@/lib/interview/digestInterviewAnswer";
 import { MODELS } from '@/lib/ai/models';
+import { thinkingSettingsFor, thinkingParams, firstTextBlock } from '@/lib/ai/thinking';
 import { FOLIO_INTERVIEWER_PERSONA } from "@/lib/interview/prompts/persona";
 import { SHARED_RULE_BLOCK, ARRIVALS_CONTRAST_POLICY } from "@/lib/interview/prompts/rules";
 import { isArrivalSafe } from "@/lib/interview/prompts/validateQuestion";
@@ -356,6 +357,10 @@ export async function POST(
 
     // Call Anthropic with LLM client wrapper
     const modelName = MODELS.sonnet;
+    // Follow-ups are generated while the designer waits, so adaptive thinking
+    // is a latency tradeoff here in a way it is not for the async article.
+    // Off unless ADAPTIVE_THINKING_SURFACES includes `followups`.
+    const thinkingSettings = thinkingSettingsFor('followups');
 
     const { default: Anthropic } = await import("@anthropic-ai/sdk");
     const anthropic = new Anthropic();
@@ -364,12 +369,12 @@ export async function POST(
       async () => {
         return await anthropic.messages.create({
           model: modelName,
-          thinking: { type: 'disabled' },
+          ...thinkingParams(thinkingSettings),
           system: SYSTEM_PROMPT,
           messages: [
             { role: "user", content: prompt },
           ],
-          max_tokens: 300,
+          max_tokens: 300 * thinkingSettings.maxTokensMultiplier,
         });
       },
       { modelName, contextHint: `followups-single:${projectId}:${validated.questionId}` }
@@ -400,7 +405,7 @@ export async function POST(
 
     console.info('[followups-single] llm_ok', { _cid, model: llmResult.usedModel });
 
-    const rawText = llmResult.data.content[0]?.type === 'text' ? llmResult.data.content[0].text : '{}';
+    const rawText = firstTextBlock(llmResult.data) || '{}';
     const raw = rawText.replace(/```json\n?|\n?```/g, '').trim();
     let json: any;
     try {

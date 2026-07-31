@@ -9,6 +9,7 @@ import { MODELS } from '@/lib/ai/models';
 import { resolveProductNaming } from '@/lib/naming/resolveProductNaming';
 import { scrubProseNaming, type DescriptorHint } from '@/lib/naming/scrubProse';
 import { FOLIO_TONE, JSON_PROSE_QUOTING_RULE, toTypographicQuotes } from '@/lib/interview/prompts/editorialTone';
+import { thinkingSettingsFor, thinkingParams, firstTextBlock } from '@/lib/ai/thinking';
 
 const client = new Anthropic();
 
@@ -558,7 +559,7 @@ Return JSON only: {"quote": "..."} or {"quote": null}. Do not wrap the quote in 
       max_tokens: 200,
     });
 
-    const raw = message.content[0]?.type === 'text' ? message.content[0].text : '';
+    const raw = firstTextBlock(message);
     const cleaned = raw.replace(/```json\n?|\n?```/g, '').trim();
     const parsed = JSON.parse(cleaned) as { quote?: string | null };
 
@@ -1428,7 +1429,7 @@ async function fixSentenceOpeners(
     return blocks;
   }
 
-  const rawResponse = rewriteResult.data.content[0]?.type === 'text' ? rewriteResult.data.content[0].text : '';
+  const rawResponse = firstTextBlock(rewriteResult.data);
   if (!rawResponse.trim()) return blocks;
 
   // Parse numbered responses back
@@ -1562,18 +1563,27 @@ export async function generateEditorialDraft(input: GenInput): Promise<{
   // because wall-clock is a function of prose written, not of how that prose is
   // tokenized. To size for genuinely unbounded projects, switch this call to
   // `.stream()` + getFinalMessage() and the cap can safely rise toward 128K.
+  //
+  // Adaptive thinking (off unless ADAPTIVE_THINKING_SURFACES includes `editorial`)
+  // shares this budget with the response, so the multiplier applies AFTER the
+  // per-room sizing and BEFORE the 32K wall-clock ceiling — thinking makes the
+  // call longer, which is exactly what that ceiling exists to bound.
   const outputRoomCount = Math.max(writeRooms.length, 1);
-  const maxTokens = Math.min(32000, Math.max(5500, outputRoomCount * 1100 + 2700));
+  const thinkingSettings = thinkingSettingsFor('editorial');
+  const maxTokens = Math.min(
+    32000,
+    Math.max(5500, outputRoomCount * 1100 + 2700) * thinkingSettings.maxTokensMultiplier,
+  );
   const modelName = MODELS.sonnet;
 
   const runGeneration = (attempt: number) => callLLM(
     async () => {
       return await client.messages.create({
         model: modelName,
-        // Sonnet 5 runs adaptive thinking when `thinking` is omitted, and thinking
-        // shares the max_tokens budget with the response. Disabled keeps the
-        // wall-clock and token profile this generator was sized against.
-        thinking: { type: 'disabled' },
+        // Never omit `thinking` — Sonnet 5 reads an absent field as adaptive.
+        // Disabled by default; `editorial` in ADAPTIVE_THINKING_SURFACES turns it
+        // on with an effort level and the matching max_tokens headroom above.
+        ...thinkingParams(thinkingSettings),
         // Attempt 2 is a resample after unparseable JSON. It used to also drop the
         // temperature 0.7 → 0.3 to make the retry hug the format instructions;
         // Sonnet 5 rejects the parameter, so the only difference between the two
@@ -1635,6 +1645,9 @@ export async function generateEditorialDraft(input: GenInput): Promise<{
       );
     }
 
+    // `outputTokens` includes thinking tokens, so this line is the A/B: same
+    // project, adaptive off vs on, compare outputTokens and the resulting draft.
+    // CostEvent records the same figure per operation via callLLM.
     console.info('[generate] llm_ok', {
       _cid,
       attempt,
@@ -1642,6 +1655,8 @@ export async function generateEditorialDraft(input: GenInput): Promise<{
       stopReason: llmResult.data.stop_reason,
       outputTokens: llmResult.data.usage?.output_tokens,
       maxTokens,
+      adaptiveThinking: thinkingSettings.adaptive,
+      effort: thinkingSettings.effort,
     });
 
     // Truncation guard: if the model hit the token ceiling, the JSON is cut off
@@ -1658,7 +1673,7 @@ export async function generateEditorialDraft(input: GenInput): Promise<{
       );
     }
 
-    const rawText = llmResult.data.content[0]?.type === 'text' ? llmResult.data.content[0].text : "";
+    const rawText = firstTextBlock(llmResult.data);
 
     if (!rawText || rawText.trim().length === 0) {
       throw new EditorialGenerationError(
