@@ -10,6 +10,15 @@ import { resolveProductNaming } from '@/lib/naming/resolveProductNaming';
 import { scrubProseNaming, type DescriptorHint } from '@/lib/naming/scrubProse';
 import { FOLIO_TONE, JSON_PROSE_QUOTING_RULE, toTypographicQuotes } from '@/lib/interview/prompts/editorialTone';
 import { thinkingSettingsFor, thinkingParams, firstTextBlock } from '@/lib/ai/thinking';
+import {
+  type AiErrorCode,
+  codeFromTransport,
+  isRetryable,
+  needsReview,
+  reportAiIncident,
+  statusFor,
+  userMessageFor,
+} from '@/lib/ai/errors';
 
 const client = new Anthropic();
 
@@ -1500,13 +1509,20 @@ export function describeJsonParseFailure(
 // surfaces them to the UI. Throwing keeps the designer from shipping a
 // fallback dump (raw interview answers as deck + chapter bodies) without
 // realizing it.
+// Message and status now come from the AI_ERRORS registry rather than the call
+// site, so the copy a designer reads is decided in one place next to the
+// retryable flag it has to agree with. `retryable` rides along: the UI keys the
+// retry affordance off it, and a false means the failure reproduces — offering
+// the button again just spends another call to land in the same place.
 class EditorialGenerationError extends Error {
-  code: string;
+  code: AiErrorCode;
   status: number;
-  constructor(code: string, message: string, status = 502) {
-    super(message);
+  retryable: boolean;
+  constructor(code: AiErrorCode, messageOverride?: string) {
+    super(messageOverride ?? userMessageFor(code));
     this.code = code;
-    this.status = status;
+    this.status = statusFor(code);
+    this.retryable = isRetryable(code);
   }
 }
 
@@ -1527,15 +1543,30 @@ export async function generateEditorialDraft(input: GenInput): Promise<{
 }> {
   const _cid = input.correlationId || 'generate';
 
+  // One reporter for this generation, so every incident carries the same
+  // identity without each throw site re-assembling it. `operation` matches the
+  // CostEvent label ('generate'), so spend and failures join on the same key.
+  // Transient codes are skipped on purpose. A rate limit or a one-off 502 is
+  // already visible in the logs and in CostEvent, and reporting every blip
+  // trains whoever reads the incident feed to ignore it — at which point the
+  // deterministic failures that DO need a human get ignored with them.
+  const reportIfReviewable = (code: AiErrorCode, diagnostic?: Record<string, unknown>) =>
+    needsReview(code)
+      ? reportAiIncident({
+          code,
+          operation: 'generate',
+          projectId: input.project?.id ?? null,
+          correlationId: _cid,
+          model: MODELS.sonnet,
+          diagnostic,
+        })
+      : Promise.resolve();
+
   // De-duplicate answers before processing
   const uniqueAnswers = deduplicateAnswers(input.answers);
 
   if (!ANTHROPIC_ENABLED) {
-    throw new EditorialGenerationError(
-      'LLM_DISABLED',
-      'Editorial generation is unavailable — the AI service is not configured. Contact support.',
-      503,
-    );
+    throw new EditorialGenerationError('LLM_DISABLED');
   }
 
   // Build prompt
@@ -1662,11 +1693,11 @@ export async function generateEditorialDraft(input: GenInput): Promise<{
       console.warn('[generate] llm_call_failed', {
         _cid, attempt, code: failure.code, status: failure.status, message: failure.message, projectId: input.project?.id,
       });
-      throw new EditorialGenerationError(
-        'LLM_CALL_FAILED',
-        `AI model call failed (${failure.code}${failure.status ? `, HTTP ${failure.status}` : ''}). Try regenerating in a moment.`,
-        failure.status || 502,
-      );
+      const mapped = codeFromTransport(failure.code);
+      await reportIfReviewable(mapped, {
+        transportCode: failure.code, httpStatus: failure.status, attempt,
+      });
+      throw new EditorialGenerationError(mapped);
     }
 
     // `outputTokens` includes thinking tokens, so this line is the A/B: same
@@ -1697,19 +1728,22 @@ export async function generateEditorialDraft(input: GenInput): Promise<{
       console.warn('[generate] output truncated at max_tokens', {
         _cid, attempt, maxTokens, outputRoomCount, outputTokens: llmResult.data.usage?.output_tokens,
       });
-      throw new EditorialGenerationError(
-        'LLM_TRUNCATED',
-        'The AI model ran out of room before finishing this draft. Try regenerating, or split the project into fewer rooms.',
-      );
+      await reportIfReviewable('LLM_TRUNCATED', {
+        maxTokens, outputRoomCount, attempt,
+        outputTokens: llmResult.data.usage?.output_tokens,
+        adaptiveThinking: thinkingSettings.adaptive,
+      });
+      throw new EditorialGenerationError('LLM_TRUNCATED');
     }
 
     const rawText = firstTextBlock(llmResult.data);
 
     if (!rawText || rawText.trim().length === 0) {
-      throw new EditorialGenerationError(
-        'LLM_EMPTY_RESPONSE',
-        'The AI model returned an empty response. Try regenerating.',
-      );
+      await reportIfReviewable('LLM_EMPTY_RESPONSE', {
+        attempt, stopReason: llmResult.data.stop_reason,
+        blockTypes: llmResult.data.content?.map(b => b.type),
+      });
+      throw new EditorialGenerationError('LLM_EMPTY_RESPONSE');
     }
 
     const cleaned = rawText.replace(/```json\n?|\n?```/g, '').trim();
@@ -1739,14 +1773,30 @@ export async function generateEditorialDraft(input: GenInput): Promise<{
           outputTokens: llmResult.data.usage?.output_tokens,
         },
       );
+      if (!willResample) {
+        // Only after the resample is spent. A parse failure we recover from cost
+        // one extra call and produced a good article — that is a metric, not an
+        // incident, and paging on it would train the alert to be ignored.
+        //
+        // The snippet is the one piece of designer prose recorded here, and it is
+        // also the only thing that makes this debuggable without replaying a
+        // two-minute generation. Capped hard, and the field to revisit when the
+        // incident table forces the retention question.
+        await reportIfReviewable('LLM_JSON_PARSE', {
+          parseError: parseError?.message,
+          position: diag.position,
+          snippet: diag.snippet.slice(0, 240),
+          rawLength: cleaned.length,
+          stopReason: llmResult.data.stop_reason,
+          outputTokens: llmResult.data.usage?.output_tokens,
+          attempts: MAX_PARSE_ATTEMPTS,
+        });
+      }
     }
   }
 
   if (!parsed) {
-    throw new EditorialGenerationError(
-      'LLM_JSON_PARSE',
-      'The AI model returned malformed output (invalid JSON). Try regenerating.',
-    );
+    throw new EditorialGenerationError('LLM_JSON_PARSE');
   }
 
   console.log('[GENERATE] LLM call complete, proceeding to repair', { _cid });
@@ -1779,9 +1829,7 @@ export async function generateEditorialDraft(input: GenInput): Promise<{
     return { blocks };
   } catch (repairError: any) {
     console.log('[GENERATE] repairAndBuildBlocks THREW:', repairError?.message ?? repairError, { _cid });
-    throw new EditorialGenerationError(
-      'LLM_REPAIR_FAILED',
-      'The generated draft did not pass validation. Try regenerating.',
-    );
+    await reportIfReviewable('LLM_REPAIR_FAILED', { reason: repairError?.message });
+    throw new EditorialGenerationError('LLM_REPAIR_FAILED');
   }
 }

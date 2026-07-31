@@ -593,6 +593,29 @@ the pattern everywhere at once rather than only at the flagged call sites, or yo
 have moved the landmine instead of removing it; (4) assert it in a check —
 "reviewer will notice" does not survive a flag flip six months later.
 
+**Error copy is a spend decision — "Try regenerating" on a deterministic failure bills the founder for the user's hope.**
+Every AI failure message in the editorial generator ended in some form of "Try
+regenerating." Including `LLM_JSON_PARSE`, the failure that had just reproduced
+at temperature 0.7 and again at 0.3, on the same sentence. The product was
+telling a designer to spend another two-minute call on a wall it had already hit
+twice, and nothing recorded that it had happened. Multiply by a few impatient
+clicks and the copy costs more than the bug.
+Fix: `lib/ai/errors.ts` — every code answers one question, *would an identical
+retry work?*, and message + status + `retryable` all derive from that one entry,
+so the copy cannot drift from the classification. Non-retryable codes carry copy
+that closes the loop ("logged — no need to run it again"), the API returns
+`retryable` so the UI can remove the control rather than disable it, and a check
+asserts no non-retryable code carries retry-inviting language.
+Rules: (1) classify failures by whether a retry can succeed, not by which
+subsystem raised them — the user-facing consequence follows from that one bit;
+(2) never let a call site hand-write user-facing error copy, or the message and
+the retry logic drift and only the message is visible; (3) remove the retry
+affordance rather than disabling it — "handled" reads as service, "denied" reads
+as a wall, and both cost the same to build; (4) report a failure only after the
+automatic recovery is spent — a resample that succeeded is a metric, not an
+incident, and paging on it trains the feed to be ignored; (5) a bad API key is
+not a transient error, it is an infinite wasted-call loop with a human fix.
+
 **Resampling is not repairing — one automatic retry is the honest version of "Try regenerating".**
 Corollary to the jsonrepair lesson above. Hard-failing on malformed JSON is
 right, but making the designer click regenerate for a failure they cannot

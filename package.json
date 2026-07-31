@@ -95,7 +95,8 @@
     "fix:null-elements": "npx tsx scripts/fix-null-array-elements.ts",
     "security:idor": "tsx scripts/security/idor-scan.ts",
     "security:idor:ci": "tsx scripts/security/idor-scan.ts --ci",
-    "check:sonnet5": "tsx scripts/check-sonnet5-compliance.ts"
+    "check:sonnet5": "tsx scripts/check-sonnet5-compliance.ts",
+    "check:ai-errors": "tsx scripts/check-ai-error-taxonomy.ts"
   },
   "buildTimestamp": "2025-01-18T20:15:00Z",
   "prisma": {

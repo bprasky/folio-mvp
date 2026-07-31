@@ -375,7 +375,7 @@ visible as project state — rather than a one-shot note that implies each
 2-minute regeneration is a cheap iteration.
 ---
 
-# Part 3 — LLM_JSON_PARSE, second occurrence (branch: claude/llm-json-parse-error-pvl9ra)
+# Part 6 — LLM_JSON_PARSE, second occurrence (branch: claude/llm-json-parse-error-pvl9ra)
 
 ## Problem (reported)
 Correlation `generate_71e2451a999f`, same project `dda4b29e…`, append-mode
@@ -454,7 +454,7 @@ it, so it is a deliberate follow-up rather than part of this fix.
 
 ---
 
-# Part 4 — Sonnet 4.6 → Sonnet 5 migration (branch: claude/llm-json-parse-error-pvl9ra)
+# Part 7 — Sonnet 4.6 → Sonnet 5 migration (branch: claude/llm-json-parse-error-pvl9ra)
 
 ## Why now
 `claude-sonnet-4-6` sunsets eventually and every AI surface in the product runs on
@@ -528,7 +528,7 @@ it. Migrating ahead of the cliff, rather than under it.
 
 ---
 
-# Part 5 — SDK upgrade + adaptive thinking behind a flag (branch: claude/llm-json-parse-error-pvl9ra)
+# Part 8 — SDK upgrade + adaptive thinking behind a flag (branch: claude/llm-json-parse-error-pvl9ra)
 
 ## Why the SDK had to move first
 `@anthropic-ai/sdk@0.71.2` predates adaptive thinking entirely:
@@ -606,7 +606,7 @@ the prompt-level curly-quote defence. Separate change; not bundled here.
 
 ---
 
-# Part 6 — Model tiering: structured extraction to Haiku (branch: claude/llm-json-parse-error-pvl9ra)
+# Part 9 — Model tiering: structured extraction to Haiku (branch: claude/llm-json-parse-error-pvl9ra)
 
 ## Principle this follows
 Stated by the founder, and it governs every cost decision from here:
@@ -658,7 +658,7 @@ material for every article downstream, not just one answer.
 
 ---
 
-# Part 7 — Prompt caching on the article prompt (branch: claude/llm-json-parse-error-pvl9ra)
+# Part 10 — Prompt caching on the article prompt (branch: claude/llm-json-parse-error-pvl9ra)
 
 ## What was measured first
 Caching is a prefix match with a per-model minimum, and a write bills at 1.25x
@@ -718,3 +718,92 @@ on its own, not to smuggle into a caching commit.
 - [ ] **Not verified: a live cache hit.** Watch `cacheRead` on a resample; zero
       reads across repeated generations means something per-request got in front
       of the breakpoint.
+
+---
+
+# Part 11 — AI failure taxonomy (branch: claude/llm-json-parse-error-pvl9ra)
+
+## The bug this fixes
+Every AI failure message in the generator ended with some form of "Try
+regenerating." Including `LLM_JSON_PARSE` — the failure that reproduced at
+temperature 0.7 and again at 0.3, on the same sentence, in the La Gorce run. The
+copy invited a retry that could only burn another two-minute call and fail
+identically, and nothing recorded that it had happened.
+
+## Fix
+- [x] `src/lib/ai/errors.ts` — 11 codes, each answering one question: **would an
+      identical retry work?** Plus status, designer-facing copy, a review flag,
+      and a per-project cooldown.
+- [x] Deterministic codes (`LLM_JSON_PARSE`, `LLM_TRUNCATED`,
+      `LLM_EMPTY_RESPONSE`, `LLM_REPAIR_FAILED`, `LLM_CONTENT_REFUSED`) are
+      non-retryable, carry copy that CLOSES the loop, and are flagged for review.
+- [x] `LLM_AUTH_FAILED` split out from generic call failure. A bad key is not
+      the designer's problem and every retry is a wasted call against a
+      credential that will keep being rejected.
+- [x] `codeFromTransport()` maps callLLM's lowercase transport codes onto the
+      taxonomy; anything unrecognised degrades to a retryable call failure.
+- [x] `EditorialGenerationError` now takes a code and derives message + status +
+      `retryable` from the registry, so copy and classification cannot drift.
+      All 6 throw sites converted.
+- [x] The route returns `retryable` so the UI can **remove** the retry control
+      rather than disable it — the designer reads "handled", not "denied".
+- [x] `reportAiIncident()` — sink is a `[ai-incident]` structured log for now
+      (no table, no email relay). Documented as a one-line swap to
+      `prisma.aiIncident.upsert` keyed on (projectId, operation, code) so one
+      broken project is one row, not forty. Never throws, like recordCostEvent.
+- [x] Reporting is gated on `needsReview`, so transient blips don't train the
+      incident feed to be ignored.
+- [x] `LLM_JSON_PARSE` reports only after the resample is spent — a parse failure
+      we recover from cost one extra call and produced a good article. That is a
+      metric, not an incident.
+
+## Deferred to the migration (founder is doing it before ship)
+Cooldown values are carried as data in the registry but **not enforced**.
+Enforcement needs durable storage: `src/lib/rateLimit.ts` is an in-memory Map,
+so on Vercel a user just lands on another instance. Two options when the table
+lands — the new `AiIncident` row, or the existing
+`provenance.interview.lastGenerationError` field, which already carries
+`{ code, message, failedAt }` per project and is already read by the preview
+page. The second needs no migration at all and is the right granularity, since
+the cooldown is per-project by design.
+
+Also open for the table: `diagnostic` holds one capped 240-char prose snippet
+(the only thing that makes a parse failure debuggable without replaying a
+two-minute generation). That is the field that forces the retention/PII
+question.
+
+## Six Sonnet 5 call sites the original migration missed
+Tightening the guard for a false positive surfaced a real one. Six live calls
+reach the model through `IMPORT_AGENT_CONFIG.model` — an indirection the original
+codemod's `MODELS.sonnet` pattern never matched — and **none passed `thinking`**,
+so on Sonnet 5 they were silently running adaptive thinking. One
+(`analyze.ts:155`) against a 256-token cap, where thinking would consume the
+whole budget. `IMPORT_AGENT_CONFIG` did carry a `thinking` field, untyped and
+read by nobody, which is precisely how it stayed invisible.
+
+- [x] All six now state `thinking: { type: 'disabled' }` inline, next to the
+      `max_tokens` it competes with, consistent with the other 53.
+- [x] The unread `thinking` field removed from the config — a shared object that
+      half-declares a request is worse than no config.
+- [x] Four `content[0]` reads in `analyze.ts` converted to `firstTextBlock`.
+      Safe today with thinking off, but leaving them is relocating the landmine
+      rather than removing it.
+- [x] **The guard is now fail-safe.** It matches ANY `model:` line in an object
+      that also has `messages:` and `max_tokens:`, and excludes only what it can
+      positively identify as Haiku. Enumerating Sonnet spellings was a
+      false-negative machine; an unrecognised expression is now checked, because
+      a spurious failure is cheap and a missed call site is a production bug.
+      Site count went 53 → 59.
+
+## Verify
+- [x] `npm run check:ai-errors` — 47 checks. The load-bearing one: no
+      non-retryable code carries copy matching /try again|regenerate|retry/,
+      with the negated form ("no need to run it again") allowed. Also asserts
+      retryable codes carry no cooldown and demand no review (suppressing a
+      failure that resolves itself would block work that would have succeeded),
+      every non-retryable code reaches a human, transport mapping is total, and
+      the generator has no hardcoded "Try regenerating" left.
+- [x] `tsc` — no new errors.
+- [ ] **Not verified:** no failure has been produced against the new taxonomy.
+      The UI does not yet read `retryable` — the API returns it, the front end
+      still needs to drop the control when it is false.

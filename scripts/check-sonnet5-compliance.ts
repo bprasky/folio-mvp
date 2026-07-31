@@ -44,9 +44,22 @@ function check(name: string, condition: boolean, detail?: string) {
 const SONNET_TASKS = (Object.keys(MODEL_FOR) as Array<keyof typeof MODEL_FOR>)
   .filter(task => MODEL_FOR[task] === MODELS.sonnet);
 
-const SONNET_MODEL_LINE = new RegExp(
-  `^\\s*model:\\s*(MODELS\\.sonnet|modelName${SONNET_TASKS.map(t => `|MODEL_FOR\\.${t}`).join('')}),?\\s*$`,
+// Match ANY `model:` line in a request object, then exclude only what we can
+// positively identify as Haiku. Enumerating the Sonnet spellings instead was a
+// false-negative machine: it missed six live Sonnet 5 calls that reach the model
+// through `IMPORT_AGENT_CONFIG.model`, all of them silently running adaptive
+// thinking, one against a 256-token cap. An unrecognised expression is now
+// CHECKED rather than skipped — a spurious failure is cheap, a missed call site
+// is a production bug.
+const HAIKU_TASKS = (Object.keys(MODEL_FOR) as Array<keyof typeof MODEL_FOR>)
+  .filter(task => MODEL_FOR[task] === MODELS.haiku);
+const KNOWN_HAIKU = new RegExp(
+  `^\\s*model:\\s*(MODELS\\.haiku${HAIKU_TASKS.map(t => `|MODEL_FOR\\.${t}`).join('')})\\b`,
 );
+const ANY_MODEL_LINE = /^\s*model:\s*[\w.[\]'"]+,?\s*$/;
+const SONNET_MODEL_LINE = {
+  test: (line: string) => ANY_MODEL_LINE.test(line) && !KNOWN_HAIKU.test(line),
+};
 const SAMPLING_LINE = /^\s*(temperature|top_p|top_k)\s*:/;
 // Two compliant forms: the inline literal, or the spread from lib/ai/thinking,
 // which resolves to `disabled` unless the surface is flagged on. Note `enabled`
@@ -101,9 +114,24 @@ check(
 console.log('\n3. Every Sonnet call site obeys the Sonnet 5 request surface');
 
 const files = execSync(
-  "grep -rl 'MODELS\\.sonnet' --include=*.ts --include=*.tsx src services",
+  "grep -rl \"messages.create\" --include=*.ts --include=*.tsx src services",
   { encoding: 'utf8' },
 ).trim().split('\n').filter(Boolean);
+
+/** The object literal that owns `lines[start]`, delimited by bracket depth. */
+function objectLiteralFrom(lines: string[], start: number): string {
+  const out: string[] = [];
+  let depth = 0;
+  for (let j = start + 1; j < lines.length; j++) {
+    out.push(lines[j]);
+    for (const ch of lines[j]) {
+      if (ch === '{' || ch === '[' || ch === '(') depth++;
+      else if (ch === '}' || ch === ']' || ch === ')') depth--;
+    }
+    if (depth < 0) break;
+  }
+  return out.join('\n');
+}
 
 const missingThinking: string[] = [];
 const strandedSampling: string[] = [];
@@ -113,6 +141,14 @@ for (const file of files) {
   const lines = readFileSync(file, 'utf8').split('\n');
   for (let i = 0; i < lines.length; i++) {
     if (!SONNET_MODEL_LINE.test(lines[i])) continue;
+
+    // A `model:` key alone does not make an object a request — an incident
+    // record or a log line carries one too, and flagging those for a missing
+    // `thinking` is noise that erodes trust in the check. Every real
+    // messages.create param object also carries `messages:` and `max_tokens:`.
+    const literal = objectLiteralFrom(lines, i);
+    if (!/^\s*messages:/m.test(literal) || !/^\s*max_tokens:/m.test(literal)) continue;
+
     callSites++;
 
     // Walk the object literal that owns this `model:` line. Both properties are

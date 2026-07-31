@@ -6,7 +6,12 @@ export const anthropic = new Anthropic();
 
 export const IMPORT_AGENT_CONFIG = {
   model: MODELS.sonnet,
-  thinking: { type: 'disabled' },
+  // NOTE: `thinking` is deliberately NOT here. It used to be, untyped and
+  // unread, while all six call sites that take `model` from this object omitted
+  // it — so on Sonnet 5 they silently ran adaptive thinking against caps as low
+  // as 256 tokens. A shared config that half-declares a request is worse than no
+  // config: each call site now states `thinking` inline, where it is visible
+  // next to the `max_tokens` it competes with, and where the guard can see it.
   maxTokens: 4096,
   maxImagesPerBatch: 5, // For batch processing
   maxProductsPerImage: 10,

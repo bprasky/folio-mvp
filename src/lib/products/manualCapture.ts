@@ -59,6 +59,7 @@ export async function parseProductFromContent(
 ): Promise<ParsedProductFields> {
   const response = await anthropic.messages.create({
     model: IMPORT_AGENT_CONFIG.model,
+    thinking: { type: 'disabled' },
     max_tokens: 1024,
     messages: [{ role: 'user', content }],
   });
