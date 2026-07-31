@@ -327,3 +327,49 @@ updated. That code could not have run.
 - The per-chapter `sections/[chapterIndex]/regenerate` route keeps its own
   narrower prompt by design (it rewrites one chapter, not an article). The guard
   allows it but asserts it shares `JSON_PROSE_QUOTING_RULE`.
+
+
+---
+
+# Part 5 — The Regenerate dialog's "direction" box was a no-op
+
+## Question (reported)
+"Confirm when I press regenerate where this feedback is submitted. Is it just
+injected into the prompt?"
+
+## Answer: it was submitted nowhere
+`regenFeedback` had 4 references — declared, `value`, `onChange`, and cleared on
+submit. Never read. And the concept was absent at every layer below:
+
+| Layer | State |
+|---|---|
+| `handleRegenerate()` | calls `generateDraft()` with no arguments |
+| `generateDraft` | signature `() => Promise<void>` |
+| POST payload | no feedback field |
+| generate route | zero references to feedback/direction |
+| `GenInput` | no field to carry it |
+
+Never wired (not a regression): `usePublishFlow.ts` has never contained
+"feedback" in its git history.
+
+The harm was not neutral. Generation runs at temperature 0.7, so every
+regeneration returns different prose — the box validated itself.
+
+## Decision: deleted (user agreed)
+Wiring was ~30 lines across four layers, but whole-article regeneration is the
+wrong instrument for steering tone: ~2 minutes, rewrites all rooms, drops
+unpreserved edits. Per-section feedback already does this correctly and cheaply
+(`SectionFeedback` → `sections/[chapterIndex]/regenerate` → note injected into
+that chapter's prompt, and persisted). The dialog now points there.
+
+- [x] Removed the input, its state, and its reset.
+- [x] Added a line directing designers to per-section feedback.
+- [x] Left a comment at the call site explaining why no such input belongs here.
+- [x] `keepEdits` / override preservation, Cancel, and Regenerate untouched.
+- [x] No `regenFeedback` references remain; no new tsc errors.
+
+## If global direction is wanted later
+Build it as a **persisted project-level editorial direction** beside
+`includeBio` / `includeProjectHistory` — typed once, applied to every generation,
+visible as project state — rather than a one-shot note that implies each
+2-minute regeneration is a cheap iteration.
