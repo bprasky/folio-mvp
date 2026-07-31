@@ -35,6 +35,7 @@ export type AiErrorCode =
   | 'LLM_EMPTY_RESPONSE'
   | 'LLM_REPAIR_FAILED'
   | 'LLM_CONTENT_REFUSED'
+  | 'LLM_QUOTE_UNVERIFIED'
   // --- Ours, not the model's: broken config. Never the designer's problem -
   | 'LLM_DISABLED'
   | 'LLM_AUTH_FAILED';
@@ -140,6 +141,19 @@ export const AI_ERRORS: Record<AiErrorCode, AiErrorSpec> = {
     retryable: false,
     userMessage:
       'The draft came back in a shape we could not use. It has been logged — no need to run it again.',
+    needsReview: true,
+    cooldownMs: 10 * MINUTE,
+  },
+  LLM_QUOTE_UNVERIFIED: {
+    // The ranking model returned a quote id that did not resolve, or text that
+    // is not a verbatim span of the answer it claims to come from. We fell back
+    // to a code-ranked candidate, so nothing unverified shipped — but it means
+    // the selection contract is drifting and wants a look.
+    status: 502,
+    retryable: false,
+    userMessage:
+      'One of the designer quotes could not be verified against the interview, so it was left out. ' +
+      'It has been logged — no need to run it again.',
     needsReview: true,
     cooldownMs: 10 * MINUTE,
   },

@@ -10,6 +10,8 @@ import { resolveProductNaming } from '@/lib/naming/resolveProductNaming';
 import { scrubProseNaming, type DescriptorHint } from '@/lib/naming/scrubProse';
 import { FOLIO_TONE, JSON_PROSE_QUOTING_RULE, toTypographicQuotes } from '@/lib/interview/prompts/editorialTone';
 import { thinkingSettingsFor, thinkingParams, firstTextBlock } from '@/lib/ai/thinking';
+import { selectPullQuotes } from './selectPullQuotes';
+import { isVerbatimSpan } from './quoteCandidates';
 import {
   type AiErrorCode,
   codeFromTransport,
@@ -575,6 +577,19 @@ Return JSON only: {"quote": "..."} or {"quote": null}. Do not wrap the quote in 
     if (!parsed.quote || typeof parsed.quote !== 'string') return null;
     const text = parsed.quote.trim().replace(/^["\u201C]|["\u201D]$/g, '').trim();
     if (!text || text.length < 10 || text.length > 220) return null;
+
+    // Same rule as the room pull quotes: if it is not a verbatim span of what
+    // the designer actually said, it does not ship. This call is allowed to
+    // trim and elide, which means it is also able to reword — so the output is
+    // checked rather than trusted. Failing here costs the hook quote, and the
+    // caller falls back to plain extraction.
+    const hookSources = [hookAnswer.answer, hookFollowUp?.answer].filter(Boolean) as string[];
+    if (!isVerbatimSpan(text, hookSources)) {
+      console.warn('[spliceHookQuote] result is not verbatim — discarding', {
+        text: text.slice(0, 120),
+      });
+      return null;
+    }
 
     return { text, context: designerName || undefined };
   } catch (error) {
@@ -1479,6 +1494,51 @@ async function fixSentenceOpeners(
 }
 
 // ============================================================================
+// PULL QUOTES — assigned last, verbatim from the designer's own answers
+// ============================================================================
+
+async function assignVerifiedPullQuotes(
+  blocks: z.infer<typeof BlocksSchema>,
+  input: GenInput,
+  answers: GenInput['answers'],
+  _cid: string,
+): Promise<z.infer<typeof BlocksSchema>> {
+  const chapters = (blocks as any)?.galleryChapters;
+  if (!Array.isArray(chapters) || chapters.length === 0) return blocks;
+
+  // Only rooms that actually have answers can produce a verbatim quote.
+  const roomNames = Array.from(new Set(answers.map((a) => a.section).filter(Boolean))) as string[];
+  if (roomNames.length === 0) return blocks;
+
+  const { byRoom } = await selectPullQuotes(roomNames, answers, _cid, input.project?.id ?? null);
+
+  let assigned = 0;
+  let cleared = 0;
+  for (const ch of chapters) {
+    if (ch?.kind === 'gallery') continue;
+    const title = typeof ch?.title === 'string' ? ch.title : '';
+    // byRoom is keyed by formatRoomName, which is exactly how chapter titles
+    // are written, so this is a direct lookup rather than a fuzzy match.
+    const selection = Object.prototype.hasOwnProperty.call(byRoom, title) ? byRoom[title] : undefined;
+    if (selection === undefined) continue; // room we did not rank — leave as-is
+    if (selection) {
+      ch.pullQuote = selection;
+      assigned++;
+    } else {
+      // No quotable candidate, or the editor declined. A room with no pull
+      // quote is the intended outcome — never a fabricated or borrowed one.
+      ch.pullQuote = null;
+      cleared++;
+    }
+  }
+
+  console.info('[generate] pull quotes assigned from answers', {
+    _cid, assigned, cleared, rooms: roomNames.length,
+  });
+  return blocks;
+}
+
+// ============================================================================
 // MAIN GENERATION FUNCTION — unified canonical path
 // ============================================================================
 
@@ -1825,6 +1885,20 @@ export async function generateEditorialDraft(input: GenInput): Promise<{
     // descriptor. Credits and the materials ledger are never scrubbed. This
     // catches names from the designer's own answer, not just the model's.
     blocks = await applyProseNamingGate(blocks, input, _cid);
+
+    // Pull quotes LAST, and sourced from the interview answers rather than the
+    // prose above. Two reasons, both learned the hard way:
+    //
+    //   1. Body-derived quotes inherit the model's paraphrasing. Extracting
+    //      from the article gives you something verbatim to the ARTICLE, which
+    //      is not the same as verbatim to the DESIGNER.
+    //   2. fixSentenceOpeners and applyProseNamingGate both rewrite body
+    //      paragraphs. A quote captured before them could no longer match the
+    //      text it came from — that is how one line shipped two ways.
+    //
+    // Sourcing from answers decouples the quote from the prose entirely, so no
+    // later rewrite can put them out of step.
+    blocks = await assignVerifiedPullQuotes(blocks, input, uniqueAnswers, _cid);
 
     return { blocks };
   } catch (repairError: any) {

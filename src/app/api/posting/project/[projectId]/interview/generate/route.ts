@@ -997,13 +997,25 @@ export async function POST(
       console.warn('[generate] roomProgress load failed — treating all rooms as unfinalized', { _cid, error: e?.message });
     }
 
-    // Existing published chapters → frozen set (editorial + roomId), in order.
+    // REGENERATE PRESERVES NOTHING.
+    //
+    // This filter used to freeze every existing editorial chapter with a roomId
+    // — its comment claimed "published", but it never checked publication, and
+    // `post.status` sits unread a few lines above. So a draft that had been
+    // generated once could never be regenerated: every click rewrote the lead
+    // and introduction and froze the rest verbatim. Room prose paired to the
+    // wrong room, and titles written before formatRoomName existed, survived
+    // every regeneration with no way for a designer to repair them.
+    //
+    // Regenerate now means regenerate. Preserving specific chapters is a real
+    // feature — per-room opt-in, and it should be the designer's explicit
+    // choice — but it is a separate one, so the machinery below is left intact
+    // rather than deleted.
     const existingChapters: any[] = Array.isArray((post?.expandedBlocks as any)?.galleryChapters)
       ? (post!.expandedBlocks as any).galleryChapters
       : [];
-    const frozenChapters = existingChapters.filter(
-      (ch) => ch?.kind === 'editorial' && typeof ch?.roomId === 'string' && ch.roomId,
-    );
+    const frozenChapters: any[] = [];
+    void existingChapters;
     const frozenRoomIds = new Set<string>(frozenChapters.map((ch) => ch.roomId));
 
     // Only rooms with at least one image can form a chapter.
