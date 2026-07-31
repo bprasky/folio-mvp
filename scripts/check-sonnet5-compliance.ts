@@ -230,7 +230,35 @@ check(
 const unpriced = [...new Set(Object.values(MODEL_FOR))].filter(m => perMTok(m) === 0);
 check('every tier resolves a pricing rate', unpriced.length === 0, unpriced.join(', '));
 
-console.log('\n7. Haiku is untouched — it still accepts what Sonnet 5 rejects');
+console.log('\n7. Prompt caching keeps the shared-prefix / varying-suffix shape');
+
+// Caching is a prefix match: the breakpoint must sit at the end of the SHARED
+// text, with anything that varies per request in a later block. Put the resample
+// note inside the cached block and attempt 2 writes a second entry instead of
+// reading the first — the cache silently never hits and you just pay 1.25x twice.
+const draftSrc = readFileSync('src/lib/posting/generateEditorialDraft.ts', 'utf8');
+check(
+  'the article prompt carries a cache breakpoint',
+  /text: userPrompt, cache_control: \{ type: 'ephemeral'/.test(draftSrc),
+);
+check(
+  'the resample note is a SEPARATE block after the breakpoint, not concatenated',
+  !/\$\{userPrompt\}\\n\\n\$\{JSON_RESAMPLE_NOTE\}/.test(draftSrc)
+    && /text: JSON_RESAMPLE_NOTE/.test(draftSrc),
+);
+check(
+  'cache hit/write are logged, so a dead cache is visible rather than assumed',
+  /cache_read_input_tokens/.test(draftSrc) && /cache_creation_input_tokens/.test(draftSrc),
+);
+// The cost math has to understand caching or the CostEvent trend misreads the
+// 1.25x write as a regression and the 0.1x read as free.
+const costSrc = readFileSync('src/lib/ai/cost.ts', 'utf8');
+check(
+  'cost accounting applies the cache read/write multipliers',
+  /CACHE_READ_MULTIPLIER/.test(costSrc) && /CACHE_WRITE_MULTIPLIER/.test(costSrc),
+);
+
+console.log('\n8. Haiku is untouched — it still accepts what Sonnet 5 rejects');
 
 const draft = readFileSync('src/lib/posting/generateEditorialDraft.ts', 'utf8');
 check(

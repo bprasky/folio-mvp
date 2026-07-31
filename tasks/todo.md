@@ -655,3 +655,66 @@ material for every article downstream, not just one answer.
 - [ ] **Not verified: extraction quality on Haiku.** Nothing has run against
       Haiku on these paths. The classes are individually revertible, so watch
       bio/profile field extraction and image tags on the next few imports.
+
+---
+
+# Part 7 — Prompt caching on the article prompt (branch: claude/llm-json-parse-error-pvl9ra)
+
+## What was measured first
+Caching is a prefix match with a per-model minimum, and a write bills at 1.25x
+while a read bills at 0.1x — so it only pays from the SECOND use of a prefix
+within the TTL. Measuring the candidates changed the plan:
+
+| Prefix | Size | Verdict |
+|---|---|---|
+| Editorial system prompt | ~1,035 tok | barely over Sonnet 5's 1024 min — too marginal alone |
+| followups SYSTEM_PROMPT | 956 tok | below minimum |
+| followups/single SYSTEM_PROMPT | 697 tok | below minimum |
+| followups/batch SYSTEM_PROMPT | 458 tok | below minimum |
+| Haiku extraction prompts | all < 4k | Haiku 4.5's minimum is 4096 — ineligible |
+
+So the audit's "biggest single cost-reduction opportunity" does not hold in the
+shape it assumed. The system prompts are individually too small, and the whole
+Haiku tier cannot cache. The only real cacheable mass is the article prompt
+itself — frozen chapters plus interview answers.
+
+## Fix
+- [x] One breakpoint at the end of the shared article prompt, with
+      `JSON_RESAMPLE_NOTE` moved into a SECOND content block after it. Caching
+      covers the rendered prefix (system, then messages), so this single
+      breakpoint covers the system prompt and the whole article prompt.
+- [x] `[generate] llm_ok` logs `cacheRead` / `cacheWrite`, so a dead cache shows
+      up instead of being assumed to work.
+- [x] Cost accounting needed no change — `recordCostEvent` already forwards both
+      cache token counts and `anthropicCostUsd` already applies the 0.1x / 1.25x
+      multipliers. That instrumentation was built and never exercised.
+
+## Honest accounting
+- **Guaranteed win:** the resample. `buildPrompt` runs once outside the retry
+  loop, so attempt 2 re-sends a byte-identical prefix seconds later — a hit every
+  time a parse failure happens.
+- **Unreliable:** regeneration. `paraDistributions[Math.floor(Math.random()*5)]`
+  (line ~1118) lands INSIDE the cached block at line ~1350, so two generations of
+  the same project only share a prefix when the random pick repeats — about 1 in
+  5. This is the textbook silent invalidator, in our own prompt.
+- **Cost when it misses:** +25% input on a first-time generation that is never
+  regenerated. Cents on this call, and it buys a much cheaper failure path.
+- Output is unaffected in every case. Caching changes what gets re-processed,
+  never what the model produces.
+
+## Not done, deliberately
+Moving the random paragraph instruction after the breakpoint would make
+regeneration cache reliably. It means relocating an instruction from the middle
+to the end of the prompt, which can change output — a prompt change to validate
+on its own, not to smuggle into a caching commit.
+
+## Verify
+- [x] `npm run check:sonnet5` — 38 checks. Adds: the breakpoint exists; the
+      resample note is a separate block (concatenating it would make attempt 2
+      write a second entry instead of reading the first — a cache that never hits
+      while paying 1.25x twice); cache tokens are logged; the cost math applies
+      both multipliers.
+- [x] `tsc` — no new errors.
+- [ ] **Not verified: a live cache hit.** Watch `cacheRead` on a resample; zero
+      reads across repeated generations means something per-request got in front
+      of the breakpoint.

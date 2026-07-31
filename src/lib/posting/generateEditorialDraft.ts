@@ -1591,8 +1591,32 @@ export async function generateEditorialDraft(input: GenInput): Promise<{
         // A fresh sample is still worth taking — it just carries less of an edge.
         max_tokens: maxTokens,
         system: systemPrompt,
+        // Prompt caching. The breakpoint sits at the END of the shared prompt and
+        // the resample note goes in a SECOND block after it — the "shared prefix,
+        // varying suffix" shape. Caching is a prefix match over the rendered
+        // request (system, then messages), so this one breakpoint covers the
+        // system prompt plus the whole article prompt: the frozen chapters, the
+        // interview answers, the image manifest.
+        //
+        // What it buys, concretely: attempt 2 re-sends a byte-identical prefix
+        // seconds after attempt 1, so a resample stops costing a second full
+        // input. Same for a designer regenerating within the 5-minute TTL.
+        //
+        // What it costs when it doesn't hit: a cache WRITE bills at 1.25x, so a
+        // generation that succeeds first time and is never regenerated pays ~25%
+        // more on input than it used to. On this call that is cents, and it buys
+        // a much cheaper failure path. Output is untouched either way — caching
+        // changes what gets re-processed, never what the model produces.
         messages: [
-          { role: "user", content: attempt === 1 ? userPrompt : `${userPrompt}\n\n${JSON_RESAMPLE_NOTE}` },
+          {
+            role: "user",
+            content: attempt === 1
+              ? [{ type: 'text' as const, text: userPrompt, cache_control: { type: 'ephemeral' as const } }]
+              : [
+                  { type: 'text' as const, text: userPrompt, cache_control: { type: 'ephemeral' as const } },
+                  { type: 'text' as const, text: JSON_RESAMPLE_NOTE },
+                ],
+          },
         ],
       });
     },
@@ -1657,6 +1681,12 @@ export async function generateEditorialDraft(input: GenInput): Promise<{
       maxTokens,
       adaptiveThinking: thinkingSettings.adaptive,
       effort: thinkingSettings.effort,
+      // Zero reads across repeated generations means a silent invalidator got
+      // into the prefix — check for anything per-request landing before the
+      // breakpoint. cacheWrite on attempt 1 + cacheRead on attempt 2 is the
+      // shape a working resample should show.
+      cacheRead: llmResult.data.usage?.cache_read_input_tokens,
+      cacheWrite: llmResult.data.usage?.cache_creation_input_tokens,
     });
 
     // Truncation guard: if the model hit the token ceiling, the JSON is cut off
