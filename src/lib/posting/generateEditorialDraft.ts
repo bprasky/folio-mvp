@@ -90,9 +90,8 @@ export type GenInput = {
   imageSelections?: Record<string, string[]>;
 
   // --- Append-only room chapters (ADR append-only-room-chapters, C2/C3/C4) ---
-  // Omitting all of these keeps the legacy single-pass behavior (every room
-  // gets a fresh editorial chapter) — so the other caller
-  // (getOrCreateEditorialDraft) is unaffected.
+  // Omitting all of these keeps the legacy single-pass behavior: every room gets
+  // a fresh editorial chapter.
   /** 'initial' = write every room; 'append' = only write `writeRoomNames`. */
   mode?: 'initial' | 'append';
   /** Editorial chapters kept verbatim from prior passes, in order, at the front. */

@@ -659,3 +659,57 @@ Rule: when a fix unblocks a pipeline that had never run end-to-end, the first
 successful output needs a human looking at the RENDERED artifact, not just green
 checks — "it generated" and "it generated correctly" are different claims, and
 the checks in between can only prove the first.
+
+**Dead code that carries a second copy of a prompt is a live risk, because the risk is that someone edits the wrong one.**
+Asked to confirm the Story/Publish "Regenerate" button ran the same prompt as
+initial generation, the answer was yes — it posts to the same route. But the
+audit that proved it turned up two alternate generation paths sitting in the
+tree: `composeEditorial` / `composeEditorialHard` inside the generate route,
+carrying a full second copy of the editorial system prompt, and a
+`getOrCreateEditorialDraft` module building its own GenInput. Both had zero
+callers. Neither could affect behavior — and both read as live to anyone opening
+the file, which is exactly how a fix lands in the copy nobody runs. The proof
+they had already rotted: `tsc` reported 8 errors inside them, including
+`Cannot find name 'proofOutsideQuotes'`, because the real helpers had been moved
+to `generateEditorialDraft.ts` and the dead copies were never updated. Code that
+cannot compile had been sitting next to code that ships, indistinguishable at a
+glance. Deleting both removed 1,484 lines and 9 repo-wide type errors.
+Rules: (1) "is X wired to the same prompt as Y" is answered by tracing the call
+path, but the real answer is whether a SECOND prompt exists at all — grep the
+tree for the prompt's signature line before saying yes; (2) an unreachable copy
+of a prompt is worse than no copy, because it survives review as "existing code"
+and silently competes for the next edit; (3) when an invariant is "there is only
+one of these in the repo", types can't express it and runtime tests can't observe
+it — write a grep-based guard (`check:single-generator`) and prove it FAILS by
+reintroducing the fork, or it's decoration; (4) dead code with type errors inside
+it is a strong signal it's dead — check `tsc` output per file before assuming a
+big unreferenced block is merely dormant.
+
+**A control that collects input it never sends is worse than no control, because non-determinism makes the placebo convincing.**
+The Regenerate Article dialog offered "Any direction for the rewrite? (optional)".
+`regenFeedback` had four references: declared, bound to the input's value and
+onChange, and cleared on submit. Nothing read it. `generateDraft()` takes no
+arguments, the POST payload has no such field, the generate route contains zero
+references to feedback or direction, and `GenInput` has no place to put one — so
+this was never a loose wire, it was a control with no receiver at any layer.
+Never wired, either: `usePublishFlow.ts` has never contained the word "feedback"
+in its history. The reason it survived is the sharp part: generation runs at
+temperature 0.7, so every regeneration returns visibly different prose. A designer
+types "more conversational", waits two minutes, sees changed writing, and
+concludes it worked. The feature validates itself, and real dissatisfaction that
+should have become a bug report gets absorbed instead.
+Fix: deleted the input rather than wiring it. Wiring was only ~30 lines across
+four layers, but the interaction was wrong — whole-article regeneration is a
+2-minute call that rewrites every room and drops unpreserved edits, so it is a
+slow, destructive loop for something as iterative as tone. The capability already
+existed at the right granularity: per-section feedback (`SectionFeedback` →
+`sections/[chapterIndex]/regenerate`) genuinely injects the note into that
+chapter's prompt and persists it. The dialog now points there.
+Rules: (1) for any input, trace the value to a network call before assuming it
+works — `grep` the state variable and count the reads, since bound-but-unread is
+invisible in the UI; (2) suspect placebo controls anywhere output is
+non-deterministic, because "the result changed" is not evidence the input was
+used; (3) when a control is dead, the choice is delete or wire — and pick by
+whether the ACTION it triggers is the right instrument, not by how few lines the
+wiring takes; (4) if a working version of the capability exists at a better
+granularity, delete the broken one and signpost the good one.

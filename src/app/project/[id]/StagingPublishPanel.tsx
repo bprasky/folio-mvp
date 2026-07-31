@@ -90,7 +90,6 @@ export default function StagingPublishPanel({
   const [showTagger, setShowTagger] = useState(false);
   const [viewMode, setViewMode] = useState<'edit' | 'preview'>('edit');
   const [showRegenDialog, setShowRegenDialog] = useState(false);
-  const [regenFeedback, setRegenFeedback] = useState('');
   const [keepEdits, setKeepEdits] = useState(true);
 
   const isPublishedStatus = initialPostData?.status === "PUBLISHED" || publishSuccess;
@@ -146,7 +145,6 @@ export default function StagingPublishPanel({
     }
 
     setShowRegenDialog(false);
-    setRegenFeedback('');
     router.refresh();
   }
 
@@ -495,19 +493,17 @@ export default function StagingPublishPanel({
               This will regenerate the entire article using AI. Any unpreserved edits will be lost.
             </p>
 
+            {/* Deliberately no "direction for the rewrite" input here. Whole-article
+                regeneration is the wrong instrument for steering: it is a ~2 minute
+                call that rewrites every room and drops unpreserved edits. Direction
+                belongs where it is targeted and cheap — the per-section feedback
+                control in Edit Article, which regenerates one chapter with the
+                designer's note in its prompt. */}
             <div className="space-y-4">
-              <div>
-                <label className="block folio-meta font-medium text-folio-text-primary mb-1">
-                  Any direction for the rewrite? (optional)
-                </label>
-                <input
-                  type="text"
-                  value={regenFeedback}
-                  onChange={(e) => setRegenFeedback(e.target.value)}
-                  placeholder="e.g., More conversational tone, focus on the materials"
-                  className="w-full border border-folio-border-subtle rounded-md px-3 py-2 folio-meta focus:outline-none focus:ring-2 focus:ring-[var(--accent)] bg-surface-canvas"
-                />
-              </div>
+              <p className="folio-meta text-folio-text-secondary">
+                To steer the writing, use the feedback control on an individual
+                section in Edit Article — it rewrites just that section.
+              </p>
 
               {((initialPostData?.sectionOverrides as SectionOverride[] | undefined)?.length ?? 0) > 0 && (
                 <label className="flex items-center gap-2 cursor-pointer">
