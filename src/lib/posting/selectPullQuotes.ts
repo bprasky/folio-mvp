@@ -8,6 +8,7 @@ import { callLLM } from './llmClient';
 import {
   extractQuoteCandidates,
   isVerbatimSpan,
+  normalizeForVerbatimCheck,
   type AnswerLike,
   type QuoteCandidate,
 } from './quoteCandidates';
@@ -56,11 +57,47 @@ export interface PullQuoteAssignment {
   roomsFailedVerification: string[];
 }
 
-function toSelection(candidate: QuoteCandidate, rest: QuoteCandidate[]): PullQuoteSelection {
+/** How many verbatim options the designer can shuffle through, including the pick. */
+const SHUFFLE_POOL = 6;
+
+/**
+ * Build the selection the designer shuffles through before posting.
+ *
+ * `alternatives` INCLUDES the chosen candidate, in rank order. That is not
+ * redundancy — the editing UI finds its position with
+ * `alternatives.findIndex(a => a.text === selectedText)` and cycles from there,
+ * so leaving the pick out makes the index -1 and the arrows toggle between two
+ * fixed entries instead of walking the list. The PATCH endpoint also rejects any
+ * `selectedText` not present here, so omitting it would make the designer's
+ * original pick the one thing they could not cycle back to.
+ *
+ * Every entry is verbatim, so shuffling can never introduce something the
+ * designer did not say. The model chose the default; the designer chooses the
+ * quote.
+ */
+export function buildShufflePool(
+  chosen: QuoteCandidate,
+  ranked: QuoteCandidate[],
+  cap: number = SHUFFLE_POOL,
+): QuoteCandidate[] {
+  const pool: QuoteCandidate[] = [];
+  for (const c of [chosen, ...ranked.filter(x => x.id !== chosen.id)]) {
+    if (pool.length >= cap) break;
+    const a = normalizeForVerbatimCheck(c.text);
+    if (pool.some(p => {
+      const b = normalizeForVerbatimCheck(p.text);
+      return a.includes(b) || b.includes(a);
+    })) continue;
+    pool.push(c);
+  }
+  return pool;
+}
+
+function toSelection(chosen: QuoteCandidate, ranked: QuoteCandidate[]): PullQuoteSelection {
+  const pool = buildShufflePool(chosen, ranked);
   return {
-    selected: { text: candidate.text },
-    // Alternatives power the cycling UI. All verbatim, same guarantee.
-    alternatives: rest.slice(0, 4).map((c, i) => ({ text: c.text, score: 1 - i * 0.1 })),
+    selected: { text: chosen.text },
+    alternatives: pool.map((c, i) => ({ text: c.text, score: 1 - i * 0.1 })),
   };
 }
 
@@ -157,9 +194,7 @@ export async function selectPullQuotes(
       chosen = candidates.find(c => isVerbatimSpan(c.text, sources));
     }
 
-    byRoom[label] = chosen
-      ? toSelection(chosen, candidates.filter(c => c.id !== chosen!.id))
-      : null;
+    byRoom[label] = chosen ? toSelection(chosen, candidates) : null;
   }
 
   if (roomsFailedVerification.length > 0) {

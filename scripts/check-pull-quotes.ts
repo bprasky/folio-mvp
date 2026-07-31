@@ -19,6 +19,7 @@ import {
   isVerbatimSpan,
   normalizeForVerbatimCheck,
 } from '../src/lib/posting/quoteCandidates';
+import { buildShufflePool } from '../src/lib/posting/selectPullQuotes';
 
 let failures = 0;
 const check = (name: string, cond: boolean, detail?: string) => {
@@ -103,6 +104,46 @@ check('an unusable pick falls back to a code-ranked candidate',
 const route = readFileSync('src/app/api/posting/project/[projectId]/interview/generate/route.ts', 'utf8');
 check('regenerate preserves nothing (no chapter is frozen)',
   /const frozenChapters: any\[\] = \[\];/.test(route));
+
+console.log('\n7. The shuffle set is usable by the editing UI');
+// The editor finds its position with alternatives.findIndex(a => a.text === selected)
+// and the PATCH endpoint rejects any selectedText not in alternatives. Both break
+// if the chosen quote is omitted from the list.
+const room = [
+  { section: 'Kitchen', isFollowUp: false, answer:
+    'We led with stone in the kitchen. The slab runs up the wall behind the range so the material reads as architecture.' },
+  { section: 'Kitchen', isFollowUp: true, answer:
+    'The slab arrived cracked and we kept it, because the fracture told you it was real. We did not want anything that looked manufactured.' },
+];
+const cands = extractQuoteCandidates(room as any, 'Kitchen');
+const pick = cands[0];
+const shuffle = buildShufflePool(pick, cands);
+
+check('the chosen quote is IN the pool — the editor finds its index at 0',
+  shuffle.findIndex(c => c.text === pick.text) === 0,
+  `index ${shuffle.findIndex(c => c.text === pick.text)}`);
+check('the pool offers several options to cycle through', shuffle.length > 1, String(shuffle.length));
+check('every option is verbatim from the room\'s own answers',
+  shuffle.every(c => isVerbatimSpan(c.text, room.map(a => a.answer))));
+check('no option is a prefix-extension of another (no near-duplicate clicks)',
+  shuffle.every((a, i) => shuffle.every((b, j) => {
+    if (i === j) return true;
+    const x = normalizeForVerbatimCheck(a.text), y = normalizeForVerbatimCheck(b.text);
+    return !x.includes(y) && !y.includes(x);
+  })));
+check('the pool is capped', buildShufflePool(pick, cands, 2).length <= 2);
+check('cycling forward through the whole pool returns to the pick', (() => {
+  let idx = shuffle.findIndex(c => c.text === pick.text);
+  for (let n = 0; n < shuffle.length; n++) idx = (idx + 1 + shuffle.length) % shuffle.length;
+  return shuffle[idx].text === pick.text;
+})());
+
+const editor = readFileSync('src/components/posting/editing/EditableArticle.tsx', 'utf8');
+check('the editor still locates the current pick by text within alternatives',
+  /alternatives\.findIndex\(a => a\.text === selectedText\)/.test(editor));
+const patch = readFileSync('src/app/api/posting/project/[projectId]/sections/pull-quote/route.ts', 'utf8');
+check('the endpoint only accepts a quote already in alternatives (so shuffling stays verbatim)',
+  /alternatives\.find\(\(a: any\) => a\.text === selectedText\)/.test(patch));
 
 console.log(failures === 0
   ? '\nAll pull-quote checks passed.\n'

@@ -873,8 +873,29 @@ real signal that the follow-up for that room did not land — logged as
 `[pullquotes] rooms with no quotable candidate`, to fix upstream in the
 interview rather than paper over in the article.
 
+## Shuffle-before-posting: the UI already existed, it was just starved
+`EditableArticle` already had `handleCycle` / `handleRemove` / `handleAdd`
+persisting through `PATCH /sections/pull-quote`, and that endpoint already
+rejects any `selectedText` not present in `alternatives`. The feature was inert
+because `alternatives` came from regex hits on the generated body — thin, and
+not guaranteed to be the designer's words.
+
+Feeding it verbatim candidates exposed a blocker in it:
+- [x] `alternatives` now **includes the chosen quote**, in rank order. The editor
+      locates its position with `alternatives.findIndex(a => a.text === selected)`,
+      so omitting the pick made that -1 and the arrows toggled between two fixed
+      entries instead of walking the list. The endpoint would also have rejected
+      a designer trying to cycle back to the original.
+- [x] Pool widened to 6, and **de-overlapped**: candidates include both a
+      sentence and that sentence plus its neighbour, so one is often a prefix of
+      another. Without the filter a designer clicks through what reads as the
+      same quote twice. A realistic 3-answer room yields 6 distinct options.
+- [x] Every option is verbatim, so shuffling can never introduce something the
+      designer did not say. The model picks the default; the designer picks the
+      quote.
+
 ## Verify
-- [x] `npm run check:pull-quotes` — 22 checks. The load-bearing pair replays the
+- [x] `npm run check:pull-quotes` — 26 checks. The load-bearing pair replays the
       shipped defect: "elements on tension" verifies, "elements in tension" is
       rejected. Also: every candidate is a verbatim contiguous span; a thin
       answer yields zero candidates; no candidate leaks between rooms; case and
