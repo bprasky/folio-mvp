@@ -512,6 +512,34 @@ generator's quote characters, audit every regex that reads the prose
 already matched `“`/`”`, but `proofOutsideQuotes` split on `"` only and would have
 started rewriting inside the designer's quoted words.
 
+**The prompt is mostly not written by us — normalize the context, or it out-votes the rule.**
+Same failure class as above, second occurrence (`generate_71e2451a999f`), with the
+rule already in place and being ignored. Append-mode recomposition: attempt 1 at
+temperature 0.7 died at position 482 and the resample at 0.3 died at position 584,
+both on a straight-quoted attribution in the *first introduction paragraph* —
+identical failure twice, so this was deterministic, not a sampling accident.
+The cause was the other half of the prompt. That generation injected 10 published
+chapters of straight-quoted magazine prose (with "match their register" attached)
+and 31 interview answers, each wrapped by our own template as `A: "${answer}"`.
+Thousands of words demonstrating `"` against four lines of instruction saying
+`“`. The model copied what it saw, which is what models do.
+Fix: `toTypographicQuotes()` in `editorialTone.ts`, applied to every prose-shaped
+value that enters a prompt whose answer is prose-inside-JSON — answers, published
+chapters, frozen lead/introduction, project description, designer bio, project
+history, atelier summary, and the same set in the section-regenerate route. The
+`A: "…"` wrapper became `A: “…”`. Safe to normalize the frozen fields because they
+are re-applied verbatim from `input` after generation, so the designer's stored
+text is never what we normalized.
+Rules: (1) the previous lesson's "prompt examples are training data" covers
+*retrieved* content too — every user-supplied or previously-generated string you
+interpolate is an example, and there are usually far more of those than
+hand-written ones; (2) when a prompt states a character-level rule, the context has
+to obey it — a prompt that violates its own rule at scale will lose; (3) a failure
+that reproduces at two different temperatures is not randomness, so stop
+re-rolling and go read what the prompt actually contains; (4) normalize on the way
+*in*, where the string boundaries are known, never on the way out, where they are
+the thing that broke.
+
 **Resampling is not repairing — one automatic retry is the honest version of "Try regenerating".**
 Corollary to the jsonrepair lesson above. Hard-failing on malformed JSON is
 right, but making the designer click regenerate for a failure they cannot

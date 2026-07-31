@@ -8,7 +8,7 @@ import { HOOK_OPENER_ID_PREFIX, HOOK_FOLLOWUP_ID_PREFIX } from "@/lib/interview/
 import { MODELS } from '@/lib/ai/models';
 import { resolveProductNaming } from '@/lib/naming/resolveProductNaming';
 import { scrubProseNaming, type DescriptorHint } from '@/lib/naming/scrubProse';
-import { FOLIO_TONE, JSON_PROSE_QUOTING_RULE } from '@/lib/interview/prompts/editorialTone';
+import { FOLIO_TONE, JSON_PROSE_QUOTING_RULE, toTypographicQuotes } from '@/lib/interview/prompts/editorialTone';
 
 const client = new Anthropic();
 
@@ -522,9 +522,14 @@ async function spliceHookQuote(
     (a) => typeof a.questionId === 'string' && a.questionId.startsWith(HOOK_FOLLOWUP_ID_PREFIX) && a.answer?.trim()
   );
 
+  // Normalized for the same reason as the article prompt: this returns prose
+  // inside JSON ({"quote": "…"}), and the model is told to reuse the designer's
+  // actual phrasing — so a straight quote in their answer gets spliced straight
+  // into the JSON string. Failure here is non-fatal (we fall back to regex
+  // extraction below), which is exactly why it would go unnoticed.
   const sourceLines = [
-    `HOOK ANSWER: ${hookAnswer.answer.trim()}`,
-    hookFollowUp ? `FOLLOW-UP ANSWER: ${hookFollowUp.answer.trim()}` : null,
+    `HOOK ANSWER: ${toTypographicQuotes(hookAnswer.answer.trim())}`,
+    hookFollowUp ? `FOLLOW-UP ANSWER: ${toTypographicQuotes(hookFollowUp.answer.trim())}` : null,
   ].filter(Boolean).join('\n\n');
 
   const system = `You are editing a direct quote for the opening pull quote of a magazine feature on an interior design project.
@@ -1047,7 +1052,7 @@ The design of this project is credited to the firm ${orgName}, not to an individ
       const sourceTag = a.isFollowUp
         ? '[SOURCE: PROJECT FOLLOW-UP — highest-value content for pull quotes and editorial framing]'
         : '[SOURCE: PROJECT — narrative frame material]';
-      return `Q: ${a.questionText || a.questionId || 'Question'}\nA: "${a.answer}" ${sourceTag}`;
+      return `Q: ${a.questionText || a.questionId || 'Question'}\nA: “${toTypographicQuotes(a.answer)}” ${sourceTag}`;
     }).join('\n\n');
     formattedProjectSection = `=== ABOUT THIS PROJECT ===\n${formatted}`;
   }
@@ -1059,7 +1064,7 @@ The design of this project is credited to the firm ${orgName}, not to an individ
       const sourceTag = a.isFollowUp
         ? '[SOURCE: FOLLOW-UP — richer narrative, prioritize for anecdotes and direct quotes]'
         : '[SOURCE: BASE QUESTION]';
-      return `Q: ${a.questionText || a.questionId || 'Question'}\nA: "${a.answer}" ${sourceTag}`;
+      return `Q: ${a.questionText || a.questionId || 'Question'}\nA: “${toTypographicQuotes(a.answer)}” ${sourceTag}`;
     }).join('\n\n');
     return `${roomHeader}\n${formatted}`;
   }).join('\n\n');
@@ -1148,14 +1153,18 @@ The design of this project is credited to the firm ${orgName}, not to an individ
   const frozenChaptersBlock = isAppend && (input.frozenChapters?.length ?? 0) > 0
     ? `\n## PUBLISHED CHAPTERS — DO NOT REWRITE, SUMMARIZE, OR REFERENCE AS PRIOR TEXT
 These rooms are already published. Treat them as fixed. Do NOT write about them again, do NOT reintroduce a product or material they already covered unless a NEW room's story genuinely turns on it, and match their register.
-${input.frozenChapters!.map((ch, i) => `--- Published chapter ${i + 1}${ch.title ? `: ${ch.title}` : ''} ---\n${(ch.body || []).join('\n\n')}`).join('\n\n')}
+${input.frozenChapters!.map((ch, i) => `--- Published chapter ${i + 1}${ch.title ? `: ${ch.title}` : ''} ---\n${toTypographicQuotes((ch.body || []).join('\n\n'))}`).join('\n\n')}
 `
     : '';
+  // Frozen fields are normalized for the prompt only. What ships is re-applied
+  // verbatim from `input` after generation (frozen lead/introduction are written
+  // back over the model's output, and published chapters are re-assembled from
+  // `input.frozenChapters`), so the designer's stored text is never touched.
   const frozenLeadIntroBlock = (() => {
     const parts: string[] = [];
-    if (input.frozenLead?.kicker) parts.push(`FIXED HEADLINE (kicker) — reproduce exactly: ${input.frozenLead.kicker}`);
-    if (input.frozenLead?.deck) parts.push(`FIXED SUBTITLE (deck) — reproduce exactly: ${input.frozenLead.deck}`);
-    if (input.frozenIntroduction?.length) parts.push(`FIXED INTRODUCTION — reproduce exactly:\n${input.frozenIntroduction.join('\n\n')}`);
+    if (input.frozenLead?.kicker) parts.push(`FIXED HEADLINE (kicker) — reproduce exactly: ${toTypographicQuotes(input.frozenLead.kicker)}`);
+    if (input.frozenLead?.deck) parts.push(`FIXED SUBTITLE (deck) — reproduce exactly: ${toTypographicQuotes(input.frozenLead.deck)}`);
+    if (input.frozenIntroduction?.length) parts.push(`FIXED INTRODUCTION — reproduce exactly:\n${toTypographicQuotes(input.frozenIntroduction.join('\n\n'))}`);
     return parts.length
       ? `\n## FIXED FIELDS (the designer edited these — reproduce verbatim and write everything else to fit them)\n${parts.join('\n\n')}\n`
       : '';
@@ -1180,20 +1189,20 @@ ${formattedAnswers || '(No interview answers available)'}
 ## Project Details
 - Project: ${project?.title ?? ''}
 - Designer: ${designerLine || 'Not specified'}
-- Location: ${locationStr || 'Not specified'}${project?.description ? `\n- Project description: ${project.description}` : ''}${project?.projectType && project.projectType !== 'UNSPECIFIED' ? `\n- Project type: ${project.projectType.toLowerCase().replace(/_/g, ' ')}` : ''}${project?.clientType ? `\n- Client type: ${project.clientType.toLowerCase()}` : ''}
+- Location: ${locationStr || 'Not specified'}${project?.description ? `\n- Project description: ${toTypographicQuotes(project.description)}` : ''}${project?.projectType && project.projectType !== 'UNSPECIFIED' ? `\n- Project type: ${project.projectType.toLowerCase().replace(/_/g, ' ')}` : ''}${project?.clientType ? `\n- Client type: ${project.clientType.toLowerCase()}` : ''}
 - Rooms: ${roomContexts.map(r => r.room).join(', ')}
 - Products tagged: ${materialsList || 'None'}
 
 PROJECT CONTEXT: The project description is the narrative frame — it captures who the client is, what prompted the project, and what they asked for. Use it to open and thread through the piece. Location should inform design vocabulary (reference local light, climate, landscape). Do NOT open with "Nestled in..." or use the description verbatim — synthesize into narrative.${input.designerBio ? `
 
 ## Designer Bio (use to inform tone and context — do not quote directly or paraphrase into the article. This helps you understand who is speaking in the interview)
-${input.designerBio}` : ''}${input.projectHistory ? `
+${toTypographicQuotes(input.designerBio)}` : ''}${input.projectHistory ? `
 
 ## Designer's Other Published Projects on Folio (use for context about their body of work — reference only if it genuinely enriches the narrative, e.g., "a departure from their typical palette" or "continuing a thread from previous work." Do not force references)
-${input.projectHistory}` : ''}${input.atelierSummary ? `
+${toTypographicQuotes(input.projectHistory)}` : ''}${input.atelierSummary ? `
 
 ## Designer Voice & Philosophy (from their Folio profile — use to inform tone, do not quote directly)
-${input.atelierSummary}` : ''}
+${toTypographicQuotes(input.atelierSummary)}` : ''}
 
 PROJECT-LEVEL ANSWERS — USE IN TWO WAYS:
 The interview may begin with project-level questions (tagged [SOURCE: PROJECT]) about the client, the brief, the design direction, and the designer's signature.

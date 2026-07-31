@@ -373,3 +373,81 @@ Build it as a **persisted project-level editorial direction** beside
 `includeBio` / `includeProjectHistory` — typed once, applied to every generation,
 visible as project state — rather than a one-shot note that implies each
 2-minute regeneration is a cheap iteration.
+---
+
+# Part 3 — LLM_JSON_PARSE, second occurrence (branch: claude/llm-json-parse-error-pvl9ra)
+
+## Problem (reported)
+Correlation `generate_71e2451a999f`, same project `dda4b29e…`, append-mode
+recomposition (`frozen: 10`, `galleryRooms: 4`):
+
+```
+attempt 1 (temp 0.7): position 584 — …of BP Design — knew his eye… "⟪HERE⟫This family is one we…
+attempt 2 (temp 0.3): position 482 — …was the natural call. "⟪HERE⟫This family is one we…
+→ LLM_JSON_PARSE
+```
+
+Both attempts `end_turn`, 1,403 and 1,173 output tokens against a 4,096 cap — not
+truncation. The Part 1 fix (`JSON_PROSE_QUOTING_RULE`) was in the prompt and being
+ignored.
+
+## Root cause
+Not the rule — the context. **Two attempts at different temperatures failed on the
+same sentence of the same paragraph**, which rules out sampling noise, so the
+prompt itself had to be the cause.
+
+The rule is four lines. The rest of the prompt, on this generation, was:
+
+1. **10 published chapters** injected verbatim under "match their register" —
+   every one straight-quoted, because they predate the rule.
+2. **31 interview answers**, each wrapped by *our own template* as `A: "${answer}"`
+   — 31 more demonstrations of the banned character, written by us.
+
+The model matched the register it was shown. The failure landed in the
+regenerated introduction, the first prose it wrote after reading all of it.
+
+This is Part 1's lesson ("prompt examples are training data") applied to the half
+of the prompt nobody hand-wrote: retrieved and previously-generated content is
+example content too, and there is far more of it.
+
+## Fix
+- [x] `toTypographicQuotes()` in `editorialTone.ts`, next to the rule it enforces.
+      Straight `"` only; apostrophes stay straight per the rule. A quote opens
+      when it starts the text or follows whitespace/an opening bracket, and closes
+      otherwise — which also turns a trailing inch mark (`96"`) into `96”`.
+- [x] Applied to every prose-shaped value entering the generator prompt: interview
+      answers, published chapters, frozen lead/introduction, project description,
+      designer bio, project history, atelier summary.
+- [x] `A: "${answer}"` → `A: “${…}”` in both prompts.
+- [x] Same treatment in the section-regenerate route: current body, other
+      chapters, answers, and the designer's free-text feedback.
+- [x] Frozen fields are safe to normalize — the published lead, introduction and
+      chapters are re-applied verbatim from `input` after generation, so the
+      designer's stored text is never the normalized copy.
+- [x] Same normalization in `spliceHookQuote`, which also returns prose inside
+      JSON and reuses the designer's phrasing. Its failure is non-fatal (falls back
+      to regex extraction), which is why it would have gone unnoticed.
+- [x] **No repair path added.** The no-repair decision stands; this fixes the
+      cause rather than reconstructing the damage.
+
+## Verify
+- [x] `npm run check:json-quoting` — 44 checks. Section 6 replays the actual
+      failing paragraph: asserts it still breaks `JSON.parse` un-normalized (the
+      diagnostic stays honest) and round-trips after normalization; asserts words
+      are byte-identical modulo the quote glyph; covers apostrophes, inch marks,
+      brackets, idempotency, empty input. Two checks grep the shipped prompt
+      sources so the `A: "…"` wrapper cannot come back.
+- [x] Section 7 re-runs `extractPullQuotesForChapter` and `proofOutsideQuotes`
+      against normalized prose — unchanged.
+- [ ] **Not verified: a live generation.** The context is now consistent with the
+      rule, which is what failed; model compliance is not provable offline. Watch
+      for `LLM_JSON_PARSE` on this project.
+
+## Known limitation
+The system prompt's banned-phrase list still uses straight quotes, deliberately —
+it quotes *phrases to avoid*, not prose to imitate, and rewriting it would change
+what those entries mean. If a third occurrence traces to it, that is the next
+thing to normalize. The permanent guarantee is Anthropic structured outputs
+(`output_config.format`), which makes malformed JSON impossible rather than
+unlikely — it needs a model move off `claude-sonnet-4-6`, which does not support
+it, so it is a deliberate follow-up rather than part of this fix.
