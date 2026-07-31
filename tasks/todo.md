@@ -603,3 +603,55 @@ SDK 0.115.0 brings `output_config.format` (structured outputs), which Sonnet 5
 supports. That is the permanent fix for the `LLM_JSON_PARSE` class this branch
 started on — it makes malformed JSON impossible rather than unlikely, replacing
 the prompt-level curly-quote defence. Separate change; not bundled here.
+
+---
+
+# Part 6 — Model tiering: structured extraction to Haiku (branch: claude/llm-json-parse-error-pvl9ra)
+
+## Principle this follows
+Stated by the founder, and it governs every cost decision from here:
+> "the most important thing is that user experience does not degrade in favor of
+> rate limiting or cost saving. I would rather a full project cost me $5 to post
+> and user experience is perfect… than burn api calls where rate limiting messes
+> up output anyway."
+
+So a call moves down a tier only when a wrong answer is invisible to the designer
+or is corrected at the point of entry — never when it reaches a published page.
+
+## Fix
+- [x] `MODEL_FOR` in `src/lib/ai/models.ts` — call sites declare a TASK CLASS,
+      the table maps class → model. Reversibility is the point: if a class
+      regresses, one line moves it back instead of hunting scattered swaps.
+- [x] Moved to `extraction` (Haiku 4.5, $1/$5 vs Sonnet 5's $3/$15 — a third of
+      the rate), 9 call sites, all text/vision-in → fixed-JSON-out with no tools:
+      `aesthetic/imageClassification`, `profile/extract-profile-fields` (×2),
+      `onboarding/bio/extract`, `profile/fetch-bio-url`,
+      `designer-bio/scrape-website`, `pdf/aiEnhancement` (×3).
+- [x] Moved sites keep an explicit `thinking: { type: 'disabled' }`. The Sonnet 5
+      lesson — never let an omitted field decide behavior — applies to Haiku too.
+
+## Deliberately NOT moved
+Two of the four originally floated, on the UX rule:
+- **`aiExtractProduct` / `ai/complete-product`** — these call the `web_search`
+  tool. Haiku's tool-calling is weaker and the failure mode is a product that
+  silently never gets enriched. Kept on Sonnet as `toolExtraction`.
+- **`estimateProductCoordinates`** — drives auto-tag dot placement on published
+  images. Spatial precision is exactly where a small model slips, and the
+  designer sees every misplaced dot. Kept on Sonnet as `visionCoordinates`.
+
+Also unmoved by design: all published prose (`prose`) and interview question and
+follow-up generation (`interview`). A weaker interviewer degrades the source
+material for every article downstream, not just one answer.
+
+## Verify
+- [x] `npm run check:sonnet5` — now 34 checks. The Sonnet-rules scanner resolves
+      `MODEL_FOR.<task>` against the registry, so a class flipped back to Sonnet
+      automatically re-enters the checked set (54 sites currently). Adds: prose
+      and interview are on Sonnet; extraction is on Haiku; tool and coordinate
+      classes stayed; the extraction tier is >2x cheaper; every tier the registry
+      can hand out resolves a pricing rate (or CostEvent silently records 0 and
+      the saving becomes unmeasurable).
+- [x] `tsc` — no new errors.
+- [ ] **Not verified: extraction quality on Haiku.** Nothing has run against
+      Haiku on these paths. The classes are individually revertible, so watch
+      bio/profile field extraction and image tags on the next few imports.

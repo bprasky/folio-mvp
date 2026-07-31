@@ -1,5 +1,5 @@
 import Anthropic from '@anthropic-ai/sdk';
-import { MODELS } from '@/lib/ai/models';
+import { MODEL_FOR } from '@/lib/ai/models';
 
 const anthropic = new Anthropic();
 
@@ -19,7 +19,7 @@ export async function classifyImage(imageUrl: string): Promise<ImageClassificati
   
   try {
     const response = await anthropic.messages.create({
-      model: MODELS.sonnet,
+      model: MODEL_FOR.extraction,
       thinking: { type: 'disabled' },
       max_tokens: 1024,
       messages: [

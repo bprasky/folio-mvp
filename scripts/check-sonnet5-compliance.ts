@@ -24,7 +24,7 @@
 import { execSync } from 'child_process';
 import { readFileSync } from 'fs';
 
-import { MODELS, LEGACY_MODEL_IDS } from '../src/lib/ai/models';
+import { MODELS, MODEL_FOR, LEGACY_MODEL_IDS } from '../src/lib/ai/models';
 
 let failures = 0;
 
@@ -37,7 +37,16 @@ function check(name: string, condition: boolean, detail?: string) {
   }
 }
 
-const SONNET_MODEL_LINE = /^\s*model:\s*(MODELS\.sonnet|modelName),?\s*$/;
+// Which MODEL_FOR task classes currently resolve to Sonnet. Computed from the
+// registry rather than hardcoded, so moving a class between tiers automatically
+// moves its call sites in or out of the Sonnet-rules set — flip `extraction`
+// back to Sonnet and those files start being checked again on the next run.
+const SONNET_TASKS = (Object.keys(MODEL_FOR) as Array<keyof typeof MODEL_FOR>)
+  .filter(task => MODEL_FOR[task] === MODELS.sonnet);
+
+const SONNET_MODEL_LINE = new RegExp(
+  `^\\s*model:\\s*(MODELS\\.sonnet|modelName${SONNET_TASKS.map(t => `|MODEL_FOR\\.${t}`).join('')}),?\\s*$`,
+);
 const SAMPLING_LINE = /^\s*(temperature|top_p|top_k)\s*:/;
 // Two compliant forms: the inline literal, or the spread from lib/ai/thinking,
 // which resolves to `disabled` unless the surface is flagged on. Note `enabled`
@@ -200,7 +209,28 @@ check(
   indexReaders,
 );
 
-console.log('\n6. Haiku is untouched — it still accepts what Sonnet 5 rejects');
+console.log('\n6. Model tiering keeps the product on Sonnet and only cheapens invisible work');
+
+check('published prose stays on Sonnet', MODEL_FOR.prose === MODELS.sonnet, MODEL_FOR.prose);
+check('interview question generation stays on Sonnet', MODEL_FOR.interview === MODELS.sonnet, MODEL_FOR.interview);
+check('structured extraction runs on Haiku', MODEL_FOR.extraction === MODELS.haiku, MODEL_FOR.extraction);
+check('tool-using extraction stays on Sonnet (Haiku tool-calling is weaker)', MODEL_FOR.toolExtraction === MODELS.sonnet);
+check('vision COORDINATES stay on Sonnet (misplaced tags are user-visible)', MODEL_FOR.visionCoordinates === MODELS.sonnet);
+
+// The tiering is only a saving if the cheap model is actually cheaper to run.
+const perMTok = (m: string) => anthropicCostUsd(m, { input_tokens: 1_000_000, output_tokens: 1_000_000 });
+check(
+  'the extraction tier is materially cheaper than the prose tier',
+  perMTok(MODEL_FOR.extraction) < perMTok(MODEL_FOR.prose) / 2,
+  `extraction $${perMTok(MODEL_FOR.extraction)} vs prose $${perMTok(MODEL_FOR.prose)} per 1M in+out`,
+);
+
+// Every model the registry can hand out must be priceable, or CostEvent silently
+// records 0 for a whole class of calls and the saving becomes unmeasurable.
+const unpriced = [...new Set(Object.values(MODEL_FOR))].filter(m => perMTok(m) === 0);
+check('every tier resolves a pricing rate', unpriced.length === 0, unpriced.join(', '));
+
+console.log('\n7. Haiku is untouched — it still accepts what Sonnet 5 rejects');
 
 const draft = readFileSync('src/lib/posting/generateEditorialDraft.ts', 'utf8');
 check(

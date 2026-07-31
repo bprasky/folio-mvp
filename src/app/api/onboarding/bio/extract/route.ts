@@ -5,7 +5,7 @@ import { getServerSession } from 'next-auth';
 import { z } from 'zod';
 import Anthropic from '@anthropic-ai/sdk';
 import { authOptions } from '@/app/api/auth/[...nextauth]/options';
-import { MODELS } from '@/lib/ai/models';
+import { MODEL_FOR } from '@/lib/ai/models';
 
 // Step 3 (17_ONBOARDING_FLOW). Single free-text bio → structured extraction.
 // Low-confidence fields are returned as null rather than guessed.
@@ -53,7 +53,7 @@ export async function POST(request: NextRequest) {
 
   try {
     const message = await anthropic.messages.create({
-      model: MODELS.sonnet,
+      model: MODEL_FOR.extraction,
       thinking: { type: 'disabled' },
       max_tokens: 1024,
       system: `You extract structured profile fields from an interior design professional's free-text bio.
