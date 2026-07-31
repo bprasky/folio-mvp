@@ -268,3 +268,62 @@ result reads as plausible until you look at the photograph.
       compliance is not. Watch for `chapter/room title match incomplete` — a
       non-empty `unmatchedRooms` means a room went photo-only, which is now the
       failure mode instead of wrong prose.
+
+
+---
+
+# Part 4 — Confirming Regenerate shares the prompt, and hardening to one path
+
+## Question (reported)
+"Confirm the regenerate button in the story tab is wired to the same prompting as
+the initial generation prompt... harden the route so there are not multiple
+generation routes ever."
+
+## Answer: yes, already shared
+`StagingPublishPanel` Regenerate → `handleRegenerate()` → `generateDraft()` in
+`usePublishFlow.ts` → `POST /api/posting/project/[projectId]/interview/generate`
+— the same route as initial generation, hence the same prompt. Confirmed by
+trace, and now by `check:single-generator`.
+
+## But the audit found two alternate paths sitting in the tree
+Both dead, both looking live to a reader:
+
+1. `composeEditorial` + `composeEditorialHard` + `buildEditorialPrompt` +
+   `EDITORIAL_SYSTEM_PROMPT` inside the generate route — **a full second copy of
+   the editorial system prompt**, 1,169 lines, zero callers.
+2. `src/lib/editorial/getOrCreateEditorialDraft.ts` — a second GenInput builder
+   calling the canonical generator, 315 lines, zero callers.
+
+They had already rotted: `tsc` reported 8 errors inside the route's dead block,
+including `Cannot find name 'proofOutsideQuotes'` / `splitLongParagraph`, because
+those helpers moved to `generateEditorialDraft.ts` and the copies were never
+updated. That code could not have run.
+
+## Fix
+- [x] Deleted both (1,484 lines). Repo-wide `tsc` errors 1032 → 1023.
+- [x] Fixed the two comments that described `getOrCreateEditorialDraft` as "the
+      other caller" / "both generation paths".
+- [x] Added `npm run check:single-generator`, a structural guard asserting:
+      one caller of `generateEditorialDraft`; the full-article prompt defined in
+      exactly one file; no `composeEditorial*` / `buildEditorialPrompt` /
+      `getOrCreateEditorialDraft` path exists; `generateDraft()` still targets
+      `/interview/generate` and has no second generation endpoint; both
+      prose-in-JSON prompts import `JSON_PROSE_QUOTING_RULE`; and the room join
+      is still title-keyed.
+
+## Verify
+- [x] All 15 guard checks pass.
+- [x] **Guard proven to fail**: re-adding a `composeEditorial` with the prompt
+      signature trips 2 checks and exits non-zero. Restored after.
+- [x] `check:room-matching`, `check:blocks-bounds`, `check:json-quoting` all pass.
+- [x] Kept helpers verified still referenced; POST handler intact.
+- [ ] Not verified: a live Regenerate click. The route is unchanged, so risk is
+      low, but the deletion was large.
+
+## Notes
+- `cleanParagraph`, `SectionsSchema`, `ARRAY_FIELDS` are also unreferenced, but
+  were **already** dead before this change and are unrelated to generation. Left
+  alone to keep the diff scoped.
+- The per-chapter `sections/[chapterIndex]/regenerate` route keeps its own
+  narrower prompt by design (it rewrites one chapter, not an article). The guard
+  allows it but asserts it shares `JSON_PROSE_QUOTING_RULE`.

@@ -659,3 +659,28 @@ Rule: when a fix unblocks a pipeline that had never run end-to-end, the first
 successful output needs a human looking at the RENDERED artifact, not just green
 checks — "it generated" and "it generated correctly" are different claims, and
 the checks in between can only prove the first.
+
+**Dead code that carries a second copy of a prompt is a live risk, because the risk is that someone edits the wrong one.**
+Asked to confirm the Story/Publish "Regenerate" button ran the same prompt as
+initial generation, the answer was yes — it posts to the same route. But the
+audit that proved it turned up two alternate generation paths sitting in the
+tree: `composeEditorial` / `composeEditorialHard` inside the generate route,
+carrying a full second copy of the editorial system prompt, and a
+`getOrCreateEditorialDraft` module building its own GenInput. Both had zero
+callers. Neither could affect behavior — and both read as live to anyone opening
+the file, which is exactly how a fix lands in the copy nobody runs. The proof
+they had already rotted: `tsc` reported 8 errors inside them, including
+`Cannot find name 'proofOutsideQuotes'`, because the real helpers had been moved
+to `generateEditorialDraft.ts` and the dead copies were never updated. Code that
+cannot compile had been sitting next to code that ships, indistinguishable at a
+glance. Deleting both removed 1,484 lines and 9 repo-wide type errors.
+Rules: (1) "is X wired to the same prompt as Y" is answered by tracing the call
+path, but the real answer is whether a SECOND prompt exists at all — grep the
+tree for the prompt's signature line before saying yes; (2) an unreachable copy
+of a prompt is worse than no copy, because it survives review as "existing code"
+and silently competes for the next edit; (3) when an invariant is "there is only
+one of these in the repo", types can't express it and runtime tests can't observe
+it — write a grep-based guard (`check:single-generator`) and prove it FAILS by
+reintroducing the fork, or it's decoration; (4) dead code with type errors inside
+it is a strong signal it's dead — check `tsc` output per file before assuming a
+big unreferenced block is merely dormant.
