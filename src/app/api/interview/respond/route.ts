@@ -110,6 +110,7 @@ async function generateFollowUp(
   try {
     const message = await anthropic.messages.create({
       model: MODELS.sonnet,
+      thinking: { type: 'disabled' },
       system: isHookParent ? HOOK_FOLLOWUP_SYSTEM : GENERIC_FOLLOWUP_SYSTEM,
       messages: [
         {
@@ -122,7 +123,6 @@ Generate a follow-up question.`,
         },
       ],
       max_tokens: 200,
-      temperature: 0.7,
     });
 
     const rawContent = message.content[0]?.type === "text" ? message.content[0].text : null;
@@ -164,6 +164,7 @@ async function generatePreviewDraft(
   try {
     const message = await anthropic.messages.create({
       model: MODELS.sonnet,
+      thinking: { type: 'disabled' },
       system: `${FOLIO_TONE}
 
 You are writing a preview excerpt for an interior design editorial. Based on interview responses, generate a compelling title and first paragraph.
@@ -188,7 +189,6 @@ Generate a title and excerpt preview.`,
         },
       ],
       max_tokens: 300,
-      temperature: 0.8,
     });
 
     const rawContent = message.content[0]?.type === "text" ? message.content[0].text : null;

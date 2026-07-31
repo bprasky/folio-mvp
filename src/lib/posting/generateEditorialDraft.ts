@@ -8,7 +8,17 @@ import { HOOK_OPENER_ID_PREFIX, HOOK_FOLLOWUP_ID_PREFIX } from "@/lib/interview/
 import { MODELS } from '@/lib/ai/models';
 import { resolveProductNaming } from '@/lib/naming/resolveProductNaming';
 import { scrubProseNaming, type DescriptorHint } from '@/lib/naming/scrubProse';
-import { FOLIO_TONE, JSON_PROSE_QUOTING_RULE } from '@/lib/interview/prompts/editorialTone';
+import { FOLIO_TONE, JSON_PROSE_QUOTING_RULE, toTypographicQuotes } from '@/lib/interview/prompts/editorialTone';
+import { thinkingSettingsFor, thinkingParams, firstTextBlock } from '@/lib/ai/thinking';
+import {
+  type AiErrorCode,
+  codeFromTransport,
+  isRetryable,
+  needsReview,
+  reportAiIncident,
+  statusFor,
+  userMessageFor,
+} from '@/lib/ai/errors';
 
 const client = new Anthropic();
 
@@ -522,9 +532,14 @@ async function spliceHookQuote(
     (a) => typeof a.questionId === 'string' && a.questionId.startsWith(HOOK_FOLLOWUP_ID_PREFIX) && a.answer?.trim()
   );
 
+  // Normalized for the same reason as the article prompt: this returns prose
+  // inside JSON ({"quote": "…"}), and the model is told to reuse the designer's
+  // actual phrasing — so a straight quote in their answer gets spliced straight
+  // into the JSON string. Failure here is non-fatal (we fall back to regex
+  // extraction below), which is exactly why it would go unnoticed.
   const sourceLines = [
-    `HOOK ANSWER: ${hookAnswer.answer.trim()}`,
-    hookFollowUp ? `FOLLOW-UP ANSWER: ${hookFollowUp.answer.trim()}` : null,
+    `HOOK ANSWER: ${toTypographicQuotes(hookAnswer.answer.trim())}`,
+    hookFollowUp ? `FOLLOW-UP ANSWER: ${toTypographicQuotes(hookFollowUp.answer.trim())}` : null,
   ].filter(Boolean).join('\n\n');
 
   const system = `You are editing a direct quote for the opening pull quote of a magazine feature on an interior design project.
@@ -545,15 +560,15 @@ Return JSON only: {"quote": "..."} or {"quote": null}. Do not wrap the quote in 
     console.log('[VERIFY] spliceHookQuote: AI SPLICE path');
     const message = await client.messages.create({
       model: MODELS.sonnet,
+      thinking: { type: 'disabled' },
       system,
       messages: [
         { role: 'user', content: sourceLines },
       ],
       max_tokens: 200,
-      temperature: 0.3,
     });
 
-    const raw = message.content[0]?.type === 'text' ? message.content[0].text : '';
+    const raw = firstTextBlock(message);
     const cleaned = raw.replace(/```json\n?|\n?```/g, '').trim();
     const parsed = JSON.parse(cleaned) as { quote?: string | null };
 
@@ -1047,7 +1062,7 @@ The design of this project is credited to the firm ${orgName}, not to an individ
       const sourceTag = a.isFollowUp
         ? '[SOURCE: PROJECT FOLLOW-UP — highest-value content for pull quotes and editorial framing]'
         : '[SOURCE: PROJECT — narrative frame material]';
-      return `Q: ${a.questionText || a.questionId || 'Question'}\nA: "${a.answer}" ${sourceTag}`;
+      return `Q: ${a.questionText || a.questionId || 'Question'}\nA: “${toTypographicQuotes(a.answer)}” ${sourceTag}`;
     }).join('\n\n');
     formattedProjectSection = `=== ABOUT THIS PROJECT ===\n${formatted}`;
   }
@@ -1059,7 +1074,7 @@ The design of this project is credited to the firm ${orgName}, not to an individ
       const sourceTag = a.isFollowUp
         ? '[SOURCE: FOLLOW-UP — richer narrative, prioritize for anecdotes and direct quotes]'
         : '[SOURCE: BASE QUESTION]';
-      return `Q: ${a.questionText || a.questionId || 'Question'}\nA: "${a.answer}" ${sourceTag}`;
+      return `Q: ${a.questionText || a.questionId || 'Question'}\nA: “${toTypographicQuotes(a.answer)}” ${sourceTag}`;
     }).join('\n\n');
     return `${roomHeader}\n${formatted}`;
   }).join('\n\n');
@@ -1148,14 +1163,18 @@ The design of this project is credited to the firm ${orgName}, not to an individ
   const frozenChaptersBlock = isAppend && (input.frozenChapters?.length ?? 0) > 0
     ? `\n## PUBLISHED CHAPTERS — DO NOT REWRITE, SUMMARIZE, OR REFERENCE AS PRIOR TEXT
 These rooms are already published. Treat them as fixed. Do NOT write about them again, do NOT reintroduce a product or material they already covered unless a NEW room's story genuinely turns on it, and match their register.
-${input.frozenChapters!.map((ch, i) => `--- Published chapter ${i + 1}${ch.title ? `: ${ch.title}` : ''} ---\n${(ch.body || []).join('\n\n')}`).join('\n\n')}
+${input.frozenChapters!.map((ch, i) => `--- Published chapter ${i + 1}${ch.title ? `: ${ch.title}` : ''} ---\n${toTypographicQuotes((ch.body || []).join('\n\n'))}`).join('\n\n')}
 `
     : '';
+  // Frozen fields are normalized for the prompt only. What ships is re-applied
+  // verbatim from `input` after generation (frozen lead/introduction are written
+  // back over the model's output, and published chapters are re-assembled from
+  // `input.frozenChapters`), so the designer's stored text is never touched.
   const frozenLeadIntroBlock = (() => {
     const parts: string[] = [];
-    if (input.frozenLead?.kicker) parts.push(`FIXED HEADLINE (kicker) — reproduce exactly: ${input.frozenLead.kicker}`);
-    if (input.frozenLead?.deck) parts.push(`FIXED SUBTITLE (deck) — reproduce exactly: ${input.frozenLead.deck}`);
-    if (input.frozenIntroduction?.length) parts.push(`FIXED INTRODUCTION — reproduce exactly:\n${input.frozenIntroduction.join('\n\n')}`);
+    if (input.frozenLead?.kicker) parts.push(`FIXED HEADLINE (kicker) — reproduce exactly: ${toTypographicQuotes(input.frozenLead.kicker)}`);
+    if (input.frozenLead?.deck) parts.push(`FIXED SUBTITLE (deck) — reproduce exactly: ${toTypographicQuotes(input.frozenLead.deck)}`);
+    if (input.frozenIntroduction?.length) parts.push(`FIXED INTRODUCTION — reproduce exactly:\n${toTypographicQuotes(input.frozenIntroduction.join('\n\n'))}`);
     return parts.length
       ? `\n## FIXED FIELDS (the designer edited these — reproduce verbatim and write everything else to fit them)\n${parts.join('\n\n')}\n`
       : '';
@@ -1180,20 +1199,20 @@ ${formattedAnswers || '(No interview answers available)'}
 ## Project Details
 - Project: ${project?.title ?? ''}
 - Designer: ${designerLine || 'Not specified'}
-- Location: ${locationStr || 'Not specified'}${project?.description ? `\n- Project description: ${project.description}` : ''}${project?.projectType && project.projectType !== 'UNSPECIFIED' ? `\n- Project type: ${project.projectType.toLowerCase().replace(/_/g, ' ')}` : ''}${project?.clientType ? `\n- Client type: ${project.clientType.toLowerCase()}` : ''}
+- Location: ${locationStr || 'Not specified'}${project?.description ? `\n- Project description: ${toTypographicQuotes(project.description)}` : ''}${project?.projectType && project.projectType !== 'UNSPECIFIED' ? `\n- Project type: ${project.projectType.toLowerCase().replace(/_/g, ' ')}` : ''}${project?.clientType ? `\n- Client type: ${project.clientType.toLowerCase()}` : ''}
 - Rooms: ${roomContexts.map(r => r.room).join(', ')}
 - Products tagged: ${materialsList || 'None'}
 
 PROJECT CONTEXT: The project description is the narrative frame — it captures who the client is, what prompted the project, and what they asked for. Use it to open and thread through the piece. Location should inform design vocabulary (reference local light, climate, landscape). Do NOT open with "Nestled in..." or use the description verbatim — synthesize into narrative.${input.designerBio ? `
 
 ## Designer Bio (use to inform tone and context — do not quote directly or paraphrase into the article. This helps you understand who is speaking in the interview)
-${input.designerBio}` : ''}${input.projectHistory ? `
+${toTypographicQuotes(input.designerBio)}` : ''}${input.projectHistory ? `
 
 ## Designer's Other Published Projects on Folio (use for context about their body of work — reference only if it genuinely enriches the narrative, e.g., "a departure from their typical palette" or "continuing a thread from previous work." Do not force references)
-${input.projectHistory}` : ''}${input.atelierSummary ? `
+${toTypographicQuotes(input.projectHistory)}` : ''}${input.atelierSummary ? `
 
 ## Designer Voice & Philosophy (from their Folio profile — use to inform tone, do not quote directly)
-${input.atelierSummary}` : ''}
+${toTypographicQuotes(input.atelierSummary)}` : ''}
 
 PROJECT-LEVEL ANSWERS — USE IN TWO WAYS:
 The interview may begin with project-level questions (tagged [SOURCE: PROJECT]) about the client, the brief, the design direction, and the designer's signature.
@@ -1419,7 +1438,7 @@ async function fixSentenceOpeners(
     return blocks;
   }
 
-  const rawResponse = rewriteResult.data.content[0]?.type === 'text' ? rewriteResult.data.content[0].text : '';
+  const rawResponse = firstTextBlock(rewriteResult.data);
   if (!rawResponse.trim()) return blocks;
 
   // Parse numbered responses back
@@ -1490,13 +1509,20 @@ export function describeJsonParseFailure(
 // surfaces them to the UI. Throwing keeps the designer from shipping a
 // fallback dump (raw interview answers as deck + chapter bodies) without
 // realizing it.
+// Message and status now come from the AI_ERRORS registry rather than the call
+// site, so the copy a designer reads is decided in one place next to the
+// retryable flag it has to agree with. `retryable` rides along: the UI keys the
+// retry affordance off it, and a false means the failure reproduces — offering
+// the button again just spends another call to land in the same place.
 class EditorialGenerationError extends Error {
-  code: string;
+  code: AiErrorCode;
   status: number;
-  constructor(code: string, message: string, status = 502) {
-    super(message);
+  retryable: boolean;
+  constructor(code: AiErrorCode, messageOverride?: string) {
+    super(messageOverride ?? userMessageFor(code));
     this.code = code;
-    this.status = status;
+    this.status = statusFor(code);
+    this.retryable = isRetryable(code);
   }
 }
 
@@ -1517,15 +1543,30 @@ export async function generateEditorialDraft(input: GenInput): Promise<{
 }> {
   const _cid = input.correlationId || 'generate';
 
+  // One reporter for this generation, so every incident carries the same
+  // identity without each throw site re-assembling it. `operation` matches the
+  // CostEvent label ('generate'), so spend and failures join on the same key.
+  // Transient codes are skipped on purpose. A rate limit or a one-off 502 is
+  // already visible in the logs and in CostEvent, and reporting every blip
+  // trains whoever reads the incident feed to ignore it — at which point the
+  // deterministic failures that DO need a human get ignored with them.
+  const reportIfReviewable = (code: AiErrorCode, diagnostic?: Record<string, unknown>) =>
+    needsReview(code)
+      ? reportAiIncident({
+          code,
+          operation: 'generate',
+          projectId: input.project?.id ?? null,
+          correlationId: _cid,
+          model: MODELS.sonnet,
+          diagnostic,
+        })
+      : Promise.resolve();
+
   // De-duplicate answers before processing
   const uniqueAnswers = deduplicateAnswers(input.answers);
 
   if (!ANTHROPIC_ENABLED) {
-    throw new EditorialGenerationError(
-      'LLM_DISABLED',
-      'Editorial generation is unavailable — the AI service is not configured. Contact support.',
-      503,
-    );
+    throw new EditorialGenerationError('LLM_DISABLED');
   }
 
   // Build prompt
@@ -1536,30 +1577,77 @@ export async function generateEditorialDraft(input: GenInput): Promise<{
   // Project-level answers all land in "About This Project"/"General", so an
   // answer-based count collapses to 0 and starves an image-driven multi-room
   // draft — the model then truncates mid-JSON and the parse fails as
-  // LLM_JSON_PARSE. Each written chapter needs ~800 tokens of prose+structure.
+  // LLM_JSON_PARSE. Each written chapter needs ~1100 tokens of prose+structure.
+  //
+  // That per-room figure was ~800 when this ran on Sonnet 4.6. Sonnet 5 uses a
+  // different tokenizer that produces roughly 30% more tokens for the SAME text,
+  // so an unchanged budget would buy ~30% less prose and start truncating
+  // multi-room drafts — a chapter count that fit before would now surface as
+  // LLM_TRUNCATED. The article did not get longer; the unit did. Same reason the
+  // 4096 floor moves to 5500.
+  //
   // Cap note: the Sonnet model ceiling is 128K output tokens, so this cap is
   // NOT a model limit — it's a wall-clock guard. This call is non-streaming, and
   // a generation that runs for many minutes risks an HTTP timeout / serverless
-  // maxDuration 502 before the JSON returns. 32K (~37 rooms at 800/room) covers
-  // any realistic project while staying inside a completable window. To size for
-  // genuinely unbounded projects, switch this call to `.stream()` +
-  // getFinalMessage() and the cap can safely rise toward 128K.
+  // maxDuration 502 before the JSON returns. 32K (~27 rooms at 1100/room) covers
+  // any realistic project while staying inside a completable window; it stays put
+  // because wall-clock is a function of prose written, not of how that prose is
+  // tokenized. To size for genuinely unbounded projects, switch this call to
+  // `.stream()` + getFinalMessage() and the cap can safely rise toward 128K.
+  //
+  // Adaptive thinking (off unless ADAPTIVE_THINKING_SURFACES includes `editorial`)
+  // shares this budget with the response, so the multiplier applies AFTER the
+  // per-room sizing and BEFORE the 32K wall-clock ceiling — thinking makes the
+  // call longer, which is exactly what that ceiling exists to bound.
   const outputRoomCount = Math.max(writeRooms.length, 1);
-  const maxTokens = Math.min(32000, Math.max(4096, outputRoomCount * 800 + 2000));
+  const thinkingSettings = thinkingSettingsFor('editorial');
+  const maxTokens = Math.min(
+    32000,
+    Math.max(5500, outputRoomCount * 1100 + 2700) * thinkingSettings.maxTokensMultiplier,
+  );
   const modelName = MODELS.sonnet;
 
   const runGeneration = (attempt: number) => callLLM(
     async () => {
       return await client.messages.create({
         model: modelName,
-        // Attempt 2 is a resample after unparseable JSON. Drop the temperature so
-        // the retry hugs the format instructions instead of re-rolling the same
-        // creative liberties that broke the string in the first place.
-        temperature: attempt === 1 ? 0.7 : 0.3,
+        // Never omit `thinking` — Sonnet 5 reads an absent field as adaptive.
+        // Disabled by default; `editorial` in ADAPTIVE_THINKING_SURFACES turns it
+        // on with an effort level and the matching max_tokens headroom above.
+        ...thinkingParams(thinkingSettings),
+        // Attempt 2 is a resample after unparseable JSON. It used to also drop the
+        // temperature 0.7 → 0.3 to make the retry hug the format instructions;
+        // Sonnet 5 rejects the parameter, so the only difference between the two
+        // attempts is now JSON_RESAMPLE_NOTE restating the rule that was violated.
+        // A fresh sample is still worth taking — it just carries less of an edge.
         max_tokens: maxTokens,
         system: systemPrompt,
+        // Prompt caching. The breakpoint sits at the END of the shared prompt and
+        // the resample note goes in a SECOND block after it — the "shared prefix,
+        // varying suffix" shape. Caching is a prefix match over the rendered
+        // request (system, then messages), so this one breakpoint covers the
+        // system prompt plus the whole article prompt: the frozen chapters, the
+        // interview answers, the image manifest.
+        //
+        // What it buys, concretely: attempt 2 re-sends a byte-identical prefix
+        // seconds after attempt 1, so a resample stops costing a second full
+        // input. Same for a designer regenerating within the 5-minute TTL.
+        //
+        // What it costs when it doesn't hit: a cache WRITE bills at 1.25x, so a
+        // generation that succeeds first time and is never regenerated pays ~25%
+        // more on input than it used to. On this call that is cents, and it buys
+        // a much cheaper failure path. Output is untouched either way — caching
+        // changes what gets re-processed, never what the model produces.
         messages: [
-          { role: "user", content: attempt === 1 ? userPrompt : `${userPrompt}\n\n${JSON_RESAMPLE_NOTE}` },
+          {
+            role: "user",
+            content: attempt === 1
+              ? [{ type: 'text' as const, text: userPrompt, cache_control: { type: 'ephemeral' as const } }]
+              : [
+                  { type: 'text' as const, text: userPrompt, cache_control: { type: 'ephemeral' as const } },
+                  { type: 'text' as const, text: JSON_RESAMPLE_NOTE },
+                ],
+          },
         ],
       });
     },
@@ -1605,13 +1693,16 @@ export async function generateEditorialDraft(input: GenInput): Promise<{
       console.warn('[generate] llm_call_failed', {
         _cid, attempt, code: failure.code, status: failure.status, message: failure.message, projectId: input.project?.id,
       });
-      throw new EditorialGenerationError(
-        'LLM_CALL_FAILED',
-        `AI model call failed (${failure.code}${failure.status ? `, HTTP ${failure.status}` : ''}). Try regenerating in a moment.`,
-        failure.status || 502,
-      );
+      const mapped = codeFromTransport(failure.code);
+      await reportIfReviewable(mapped, {
+        transportCode: failure.code, httpStatus: failure.status, attempt,
+      });
+      throw new EditorialGenerationError(mapped);
     }
 
+    // `outputTokens` includes thinking tokens, so this line is the A/B: same
+    // project, adaptive off vs on, compare outputTokens and the resulting draft.
+    // CostEvent records the same figure per operation via callLLM.
     console.info('[generate] llm_ok', {
       _cid,
       attempt,
@@ -1619,6 +1710,14 @@ export async function generateEditorialDraft(input: GenInput): Promise<{
       stopReason: llmResult.data.stop_reason,
       outputTokens: llmResult.data.usage?.output_tokens,
       maxTokens,
+      adaptiveThinking: thinkingSettings.adaptive,
+      effort: thinkingSettings.effort,
+      // Zero reads across repeated generations means a silent invalidator got
+      // into the prefix — check for anything per-request landing before the
+      // breakpoint. cacheWrite on attempt 1 + cacheRead on attempt 2 is the
+      // shape a working resample should show.
+      cacheRead: llmResult.data.usage?.cache_read_input_tokens,
+      cacheWrite: llmResult.data.usage?.cache_creation_input_tokens,
     });
 
     // Truncation guard: if the model hit the token ceiling, the JSON is cut off
@@ -1629,19 +1728,22 @@ export async function generateEditorialDraft(input: GenInput): Promise<{
       console.warn('[generate] output truncated at max_tokens', {
         _cid, attempt, maxTokens, outputRoomCount, outputTokens: llmResult.data.usage?.output_tokens,
       });
-      throw new EditorialGenerationError(
-        'LLM_TRUNCATED',
-        'The AI model ran out of room before finishing this draft. Try regenerating, or split the project into fewer rooms.',
-      );
+      await reportIfReviewable('LLM_TRUNCATED', {
+        maxTokens, outputRoomCount, attempt,
+        outputTokens: llmResult.data.usage?.output_tokens,
+        adaptiveThinking: thinkingSettings.adaptive,
+      });
+      throw new EditorialGenerationError('LLM_TRUNCATED');
     }
 
-    const rawText = llmResult.data.content[0]?.type === 'text' ? llmResult.data.content[0].text : "";
+    const rawText = firstTextBlock(llmResult.data);
 
     if (!rawText || rawText.trim().length === 0) {
-      throw new EditorialGenerationError(
-        'LLM_EMPTY_RESPONSE',
-        'The AI model returned an empty response. Try regenerating.',
-      );
+      await reportIfReviewable('LLM_EMPTY_RESPONSE', {
+        attempt, stopReason: llmResult.data.stop_reason,
+        blockTypes: llmResult.data.content?.map(b => b.type),
+      });
+      throw new EditorialGenerationError('LLM_EMPTY_RESPONSE');
     }
 
     const cleaned = rawText.replace(/```json\n?|\n?```/g, '').trim();
@@ -1671,14 +1773,30 @@ export async function generateEditorialDraft(input: GenInput): Promise<{
           outputTokens: llmResult.data.usage?.output_tokens,
         },
       );
+      if (!willResample) {
+        // Only after the resample is spent. A parse failure we recover from cost
+        // one extra call and produced a good article — that is a metric, not an
+        // incident, and paging on it would train the alert to be ignored.
+        //
+        // The snippet is the one piece of designer prose recorded here, and it is
+        // also the only thing that makes this debuggable without replaying a
+        // two-minute generation. Capped hard, and the field to revisit when the
+        // incident table forces the retention question.
+        await reportIfReviewable('LLM_JSON_PARSE', {
+          parseError: parseError?.message,
+          position: diag.position,
+          snippet: diag.snippet.slice(0, 240),
+          rawLength: cleaned.length,
+          stopReason: llmResult.data.stop_reason,
+          outputTokens: llmResult.data.usage?.output_tokens,
+          attempts: MAX_PARSE_ATTEMPTS,
+        });
+      }
     }
   }
 
   if (!parsed) {
-    throw new EditorialGenerationError(
-      'LLM_JSON_PARSE',
-      'The AI model returned malformed output (invalid JSON). Try regenerating.',
-    );
+    throw new EditorialGenerationError('LLM_JSON_PARSE');
   }
 
   console.log('[GENERATE] LLM call complete, proceeding to repair', { _cid });
@@ -1711,9 +1829,7 @@ export async function generateEditorialDraft(input: GenInput): Promise<{
     return { blocks };
   } catch (repairError: any) {
     console.log('[GENERATE] repairAndBuildBlocks THREW:', repairError?.message ?? repairError, { _cid });
-    throw new EditorialGenerationError(
-      'LLM_REPAIR_FAILED',
-      'The generated draft did not pass validation. Try regenerating.',
-    );
+    await reportIfReviewable('LLM_REPAIR_FAILED', { reason: repairError?.message });
+    throw new EditorialGenerationError('LLM_REPAIR_FAILED');
   }
 }

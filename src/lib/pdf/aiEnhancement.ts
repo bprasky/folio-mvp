@@ -11,7 +11,7 @@ import {
   generateSearchQuery
 } from './confidence'
 import type { ParsedDimensions } from './patterns'
-import { MODELS } from '@/lib/ai/models';
+import { MODEL_FOR } from '@/lib/ai/models';
 
 const anthropic = new Anthropic()
 
@@ -43,7 +43,8 @@ export async function completeSpecificationWithAI(
 
   try {
     const response = await anthropic.messages.create({
-      model: MODELS.sonnet,
+      model: MODEL_FOR.extraction,
+      thinking: { type: 'disabled' },
       max_tokens: 1024,
       system: `You are a product research assistant for interior design specifications.
 Given partial product information, provide the most likely complete specification based on your knowledge.
@@ -123,7 +124,8 @@ export async function generateInspirationSearchQuery(
 ): Promise<string> {
   try {
     const response = await anthropic.messages.create({
-      model: MODELS.sonnet,
+      model: MODEL_FOR.extraction,
+      thinking: { type: 'disabled' },
       max_tokens: 256,
       messages: [{
         role: 'user',
@@ -185,7 +187,8 @@ export async function analyzePageImage(
       : ''
 
     const response = await anthropic.messages.create({
-      model: MODELS.sonnet,
+      model: MODEL_FOR.extraction,
+      thinking: { type: 'disabled' },
       max_tokens: 1024,
       messages: [{
         role: 'user',

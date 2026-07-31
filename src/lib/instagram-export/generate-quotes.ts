@@ -68,6 +68,7 @@ Return ONLY a JSON array of 5 strings. No other text.`;
 
   const response = await anthropic.messages.create({
     model: MODELS.sonnet,
+    thinking: { type: 'disabled' },
     max_tokens: 500,
     messages: [{ role: 'user', content: prompt }],
   });

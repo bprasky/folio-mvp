@@ -120,6 +120,7 @@ Requirements:
 
       const message = await anthropic.messages.create({
         model: MODELS.sonnet,
+        thinking: { type: 'disabled' },
         system: 'You are a copywriter for Folio, a premium interior design platform. Write elegant, concise captions that match the brand\'s quiet sophistication.',
         messages: [
           {
@@ -128,7 +129,6 @@ Requirements:
           },
         ],
         max_tokens: 500,
-        temperature: 0.7,
       });
 
       let generatedCaption = (message.content[0]?.type === 'text' ? message.content[0].text : '').trim();

@@ -697,6 +697,7 @@ async function analyzeContentWithLLM(
 
     const response = await anthropic.messages.create({
       model: MODELS.sonnet,
+      thinking: { type: 'disabled' },
       max_tokens: 2048,
       messages: [
         {

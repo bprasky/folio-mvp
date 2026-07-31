@@ -108,11 +108,11 @@ export async function POST(
       async () => {
         return await anthropic.messages.create({
           model: modelName,
+          thinking: { type: 'disabled' },
           system: SYSTEM_PROMPT,
           messages: [
             { role: "user", content: prompt },
           ],
-          temperature: 0.3,
           max_tokens: 400,
         });
       },

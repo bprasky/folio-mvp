@@ -373,3 +373,437 @@ Build it as a **persisted project-level editorial direction** beside
 `includeBio` / `includeProjectHistory` — typed once, applied to every generation,
 visible as project state — rather than a one-shot note that implies each
 2-minute regeneration is a cheap iteration.
+---
+
+# Part 6 — LLM_JSON_PARSE, second occurrence (branch: claude/llm-json-parse-error-pvl9ra)
+
+## Problem (reported)
+Correlation `generate_71e2451a999f`, same project `dda4b29e…`, append-mode
+recomposition (`frozen: 10`, `galleryRooms: 4`):
+
+```
+attempt 1 (temp 0.7): position 584 — …of BP Design — knew his eye… "⟪HERE⟫This family is one we…
+attempt 2 (temp 0.3): position 482 — …was the natural call. "⟪HERE⟫This family is one we…
+→ LLM_JSON_PARSE
+```
+
+Both attempts `end_turn`, 1,403 and 1,173 output tokens against a 4,096 cap — not
+truncation. The Part 1 fix (`JSON_PROSE_QUOTING_RULE`) was in the prompt and being
+ignored.
+
+## Root cause
+Not the rule — the context. **Two attempts at different temperatures failed on the
+same sentence of the same paragraph**, which rules out sampling noise, so the
+prompt itself had to be the cause.
+
+The rule is four lines. The rest of the prompt, on this generation, was:
+
+1. **10 published chapters** injected verbatim under "match their register" —
+   every one straight-quoted, because they predate the rule.
+2. **31 interview answers**, each wrapped by *our own template* as `A: "${answer}"`
+   — 31 more demonstrations of the banned character, written by us.
+
+The model matched the register it was shown. The failure landed in the
+regenerated introduction, the first prose it wrote after reading all of it.
+
+This is Part 1's lesson ("prompt examples are training data") applied to the half
+of the prompt nobody hand-wrote: retrieved and previously-generated content is
+example content too, and there is far more of it.
+
+## Fix
+- [x] `toTypographicQuotes()` in `editorialTone.ts`, next to the rule it enforces.
+      Straight `"` only; apostrophes stay straight per the rule. A quote opens
+      when it starts the text or follows whitespace/an opening bracket, and closes
+      otherwise — which also turns a trailing inch mark (`96"`) into `96”`.
+- [x] Applied to every prose-shaped value entering the generator prompt: interview
+      answers, published chapters, frozen lead/introduction, project description,
+      designer bio, project history, atelier summary.
+- [x] `A: "${answer}"` → `A: “${…}”` in both prompts.
+- [x] Same treatment in the section-regenerate route: current body, other
+      chapters, answers, and the designer's free-text feedback.
+- [x] Frozen fields are safe to normalize — the published lead, introduction and
+      chapters are re-applied verbatim from `input` after generation, so the
+      designer's stored text is never the normalized copy.
+- [x] Same normalization in `spliceHookQuote`, which also returns prose inside
+      JSON and reuses the designer's phrasing. Its failure is non-fatal (falls back
+      to regex extraction), which is why it would have gone unnoticed.
+- [x] **No repair path added.** The no-repair decision stands; this fixes the
+      cause rather than reconstructing the damage.
+
+## Verify
+- [x] `npm run check:json-quoting` — 44 checks. Section 6 replays the actual
+      failing paragraph: asserts it still breaks `JSON.parse` un-normalized (the
+      diagnostic stays honest) and round-trips after normalization; asserts words
+      are byte-identical modulo the quote glyph; covers apostrophes, inch marks,
+      brackets, idempotency, empty input. Two checks grep the shipped prompt
+      sources so the `A: "…"` wrapper cannot come back.
+- [x] Section 7 re-runs `extractPullQuotesForChapter` and `proofOutsideQuotes`
+      against normalized prose — unchanged.
+- [ ] **Not verified: a live generation.** The context is now consistent with the
+      rule, which is what failed; model compliance is not provable offline. Watch
+      for `LLM_JSON_PARSE` on this project.
+
+## Known limitation
+The system prompt's banned-phrase list still uses straight quotes, deliberately —
+it quotes *phrases to avoid*, not prose to imitate, and rewriting it would change
+what those entries mean. If a third occurrence traces to it, that is the next
+thing to normalize. The permanent guarantee is Anthropic structured outputs
+(`output_config.format`), which makes malformed JSON impossible rather than
+unlikely — it needs a model move off `claude-sonnet-4-6`, which does not support
+it, so it is a deliberate follow-up rather than part of this fix.
+
+---
+
+# Part 7 — Sonnet 4.6 → Sonnet 5 migration (branch: claude/llm-json-parse-error-pvl9ra)
+
+## Why now
+`claude-sonnet-4-6` sunsets eventually and every AI surface in the product runs on
+it. Migrating ahead of the cliff, rather than under it.
+
+## What Sonnet 5 changes (and what breaks)
+1. **`temperature` / `top_p` / `top_k` return 400** on non-default values. 29 call
+   sites passed one. This is a hard failure, not a degradation — every one of
+   those endpoints would 400 on the first request after the model swap.
+2. **Omitting `thinking` now runs adaptive thinking.** Sonnet 4.6 ran
+   thinking-off. Thinking shares the `max_tokens` budget with the response, so
+   calls sized on 4.6 — and this repo has caps of 200, 256, 300, 400 — could
+   spend the whole budget thinking and return nothing usable.
+3. **New tokenizer: ~30% more tokens for the same text.** Per-token price is
+   unchanged ($3/$15), so cost per call still rises. Output caps buy ~30% less
+   prose than when they were chosen.
+4. `budget_tokens` is gone (depth is `output_config.effort` now). Not used here —
+   the repo had no `thinking` config at all.
+
+## Decisions
+- **Scope: `src/` + `services/interview-orchestration`.** The service keeps its own
+  service-local `MODELS` by design; leaving it on 4.6 would just defer the same
+  migration. 63 call sites total.
+- **`thinking: { type: 'disabled' }` everywhere.** Holds Sonnet 4.6's behavior,
+  latency and token profile exactly, so this stays an availability migration
+  rather than a product change. Adaptive thinking is a per-surface experiment to
+  run later, and it has to come with a `max_tokens` raise wherever it's turned on.
+
+## Fix
+- [x] `MODELS.sonnet` → `claude-sonnet-5` in both registries, with the Sonnet 5
+      request rules written at the definition so the next call site inherits them.
+- [x] Removed `temperature` from all 29 Sonnet call sites. The one Haiku call
+      (sentence-opener fixer) keeps its `temperature: 0.6` — Haiku 4.5 still
+      accepts it.
+- [x] Added `thinking: { type: 'disabled' }` to all 63 Sonnet call sites.
+- [x] `LEGACY_MODEL_IDS.sonnet46` + a matching `ANTHROPIC_RATES` entry, so a
+      CostEvent written by an instance that hasn't picked up the deploy prices at
+      $3/$15 instead of recording 0.
+- [x] Editorial generator resized for the new tokenizer: 800 → 1100 tokens/room,
+      floor 4096 → 5500. This one has a real `LLM_TRUNCATED` path and a history of
+      hitting it. The 32K ceiling stays — it's a wall-clock guard, and wall-clock
+      follows prose written, not how it's tokenized.
+- [x] `callLLM` now logs `[llm] output truncated at max_tokens`. The other ~60
+      caps were left alone deliberately: raising them all on a guess would inflate
+      worst-case spend across the product, so the real cases get surfaced instead
+      of predicted. Direct `messages.create` callers aren't covered by this.
+
+## Verify
+- [x] `npm run check:sonnet5` — 9 checks: both registries on Sonnet 5; no
+      executable code naming the retired id; the retired id still priceable and
+      priced identically; **all 63 call sites** free of sampling params and
+      passing `thinking` explicitly (both scanned by bracket depth, so the check
+      follows the object literal rather than line offsets); Haiku untouched.
+- [x] `npm run check:json-quoting` — 44 checks still pass (Part 3 unaffected).
+- [x] `tsc` — no new errors. `ThinkingConfigDisabled` exists in SDK 0.71.2 and
+      `Model` carries a `(string & {})` fallback, so the new id typechecks.
+- [ ] **Not verified: live calls.** No request has been made against
+      `claude-sonnet-5` from this codebase.
+
+## Watch after deploy
+- `[llm] output truncated at max_tokens` — the tokenizer shift landing on a cap
+  that was fine on 4.6. Raise that specific cap.
+- `LLM_TRUNCATED` on editorial generation — same, for the resized generator.
+- CostEvent totals: expect a rise from the ~30% tokenizer change at an unchanged
+  rate. That is the migration, not a regression.
+- Prose variety across regenerations. `temperature` is gone product-wide; the
+  editorial generator still varies structure via its random paragraph
+  distributions, but repeated regenerations of the same input will read more
+  alike than before. If that becomes a complaint, the replacement is prompt-level
+  variation, not a parameter.
+
+---
+
+# Part 8 — SDK upgrade + adaptive thinking behind a flag (branch: claude/llm-json-parse-error-pvl9ra)
+
+## Why the SDK had to move first
+`@anthropic-ai/sdk@0.71.2` predates adaptive thinking entirely:
+`ThinkingConfigParam = ThinkingConfigEnabled | ThinkingConfigDisabled` — no
+adaptive variant, and no `output_config`/`effort` at all. `thinking:
+{type:'adaptive'}` was a type error, and the only other typed option
+(`enabled` + `budget_tokens`) is the one Sonnet 5 rejects with a 400. Upgraded to
+**0.115.0**, which adds `ThinkingConfigAdaptive`, `OutputConfig.effort`, and
+`JSONOutputFormat` (structured outputs — see the follow-up note below).
+
+Installed with `--legacy-peer-deps`, matching `vercel.json`'s own
+`installCommand`. The peer conflict is pre-existing and unrelated (`openai` wants
+zod 3, the repo is on zod 4; the Anthropic SDK accepts either).
+
+## Fix
+- [x] SDK 0.71.2 → 0.115.0 (root), and the services package pinned to match.
+- [x] `src/lib/ai/thinking.ts` — per-surface opt-in, **off by default**:
+      `ADAPTIVE_THINKING_SURFACES=editorial[,followups]`, effort via
+      `ADAPTIVE_THINKING_EFFORT` (default `low`, not Sonnet 5's `high` — Sonnet 5
+      at `medium` is already ~Sonnet 4.6 at `high`). Returns a
+      `maxTokensMultiplier` because thinking shares the `max_tokens` budget.
+- [x] Wired `generateEditorialDraft` (surface `editorial`) and all three posting
+      interview follow-up routes — `followups`, `followups/single`,
+      `followups/batch` (surface `followups`).
+- [x] `[generate] llm_ok` now logs `adaptiveThinking` and `effort` beside
+      `outputTokens`, which includes thinking tokens. Same figure lands in
+      CostEvent per operation, so the A/B is readable without new plumbing.
+- [x] **`firstTextBlock()` — the bug this nearly shipped.** Every call site read
+      `content[0]?.type === 'text' ? … : ''`. With thinking on the response is
+      `[thinking, text]`, so all four wired sites would have silently returned
+      their fallback: an empty article (LLM_EMPTY_RESPONSE) and zero follow-ups,
+      no error raised. Applied to all six Anthropic reads in these files, not just
+      the flagged ones, so the next surface added doesn't hit it.
+- [x] `.env.example` documents both vars and which surface to enable first.
+
+## Caller audit (per the Path A/B lesson)
+Follow-up generators enumerated before wiring. In scope: the three
+`/api/posting/project/[id]/interview/followups*` routes, all called by
+`InterviewModal.tsx` — the Sofia interview that feeds editorial generation.
+**Out of scope and left disabled:** `/api/interview/respond` (a separate older
+interview flow with a single caller, `useInterviewSession.ts`), `spliceHookQuote`
+and `fixSentenceOpeners` (short utility calls inside editorial where thinking
+buys nothing), the realtime voice service, and the interactive chat surfaces.
+
+## Verify
+- [x] `npm run check:sonnet5` — now 27 checks. Adds: flag defaults to off for
+      both surfaces; enabling one does not enable the other; effort defaults to
+      `low` and an invalid value falls back rather than reaching the API; a
+      near-miss surface name (`editorials`) enables nothing; adaptive raises the
+      budget. Plus the `content[0]` guard — asserts `firstTextBlock` reads past a
+      leading thinking block, and greps the wired files so no `content[0]` read
+      returns.
+- [x] `npm run check:json-quoting` — 44 checks still pass.
+- [x] `tsc` — **1032 errors before and after the SDK upgrade, byte-identical
+      error-code distribution.** No new errors from the upgrade or the wiring.
+- [ ] **Not verified: a live adaptive generation.** No request has been made with
+      `thinking: {type:'adaptive'}`. The flag is off, so the deploy ships current
+      behavior; the first real test is flipping it on one project.
+
+## How to run the A/B
+1. Deploy with the flag unset — confirms the SDK upgrade alone changes nothing.
+2. Set `ADAPTIVE_THINKING_SURFACES=editorial`, regenerate one project, compare
+   `[generate] llm_ok` `outputTokens` and read the draft. Watch for
+   `LLM_TRUNCATED` — if it appears, raise `MAX_TOKENS_MULTIPLIER_WHEN_ADAPTIVE`
+   (currently 2, a starting guess, not a measurement).
+3. Only if editorial pays, add `,followups`. Note follow-ups are generated while
+   the designer waits, so latency there is user-visible in a way it is not on a
+   two-minute article.
+
+## Follow-up now unblocked
+SDK 0.115.0 brings `output_config.format` (structured outputs), which Sonnet 5
+supports. That is the permanent fix for the `LLM_JSON_PARSE` class this branch
+started on — it makes malformed JSON impossible rather than unlikely, replacing
+the prompt-level curly-quote defence. Separate change; not bundled here.
+
+---
+
+# Part 9 — Model tiering: structured extraction to Haiku (branch: claude/llm-json-parse-error-pvl9ra)
+
+## Principle this follows
+Stated by the founder, and it governs every cost decision from here:
+> "the most important thing is that user experience does not degrade in favor of
+> rate limiting or cost saving. I would rather a full project cost me $5 to post
+> and user experience is perfect… than burn api calls where rate limiting messes
+> up output anyway."
+
+So a call moves down a tier only when a wrong answer is invisible to the designer
+or is corrected at the point of entry — never when it reaches a published page.
+
+## Fix
+- [x] `MODEL_FOR` in `src/lib/ai/models.ts` — call sites declare a TASK CLASS,
+      the table maps class → model. Reversibility is the point: if a class
+      regresses, one line moves it back instead of hunting scattered swaps.
+- [x] Moved to `extraction` (Haiku 4.5, $1/$5 vs Sonnet 5's $3/$15 — a third of
+      the rate), 9 call sites, all text/vision-in → fixed-JSON-out with no tools:
+      `aesthetic/imageClassification`, `profile/extract-profile-fields` (×2),
+      `onboarding/bio/extract`, `profile/fetch-bio-url`,
+      `designer-bio/scrape-website`, `pdf/aiEnhancement` (×3).
+- [x] Moved sites keep an explicit `thinking: { type: 'disabled' }`. The Sonnet 5
+      lesson — never let an omitted field decide behavior — applies to Haiku too.
+
+## Deliberately NOT moved
+Two of the four originally floated, on the UX rule:
+- **`aiExtractProduct` / `ai/complete-product`** — these call the `web_search`
+  tool. Haiku's tool-calling is weaker and the failure mode is a product that
+  silently never gets enriched. Kept on Sonnet as `toolExtraction`.
+- **`estimateProductCoordinates`** — drives auto-tag dot placement on published
+  images. Spatial precision is exactly where a small model slips, and the
+  designer sees every misplaced dot. Kept on Sonnet as `visionCoordinates`.
+
+Also unmoved by design: all published prose (`prose`) and interview question and
+follow-up generation (`interview`). A weaker interviewer degrades the source
+material for every article downstream, not just one answer.
+
+## Verify
+- [x] `npm run check:sonnet5` — now 34 checks. The Sonnet-rules scanner resolves
+      `MODEL_FOR.<task>` against the registry, so a class flipped back to Sonnet
+      automatically re-enters the checked set (54 sites currently). Adds: prose
+      and interview are on Sonnet; extraction is on Haiku; tool and coordinate
+      classes stayed; the extraction tier is >2x cheaper; every tier the registry
+      can hand out resolves a pricing rate (or CostEvent silently records 0 and
+      the saving becomes unmeasurable).
+- [x] `tsc` — no new errors.
+- [ ] **Not verified: extraction quality on Haiku.** Nothing has run against
+      Haiku on these paths. The classes are individually revertible, so watch
+      bio/profile field extraction and image tags on the next few imports.
+
+---
+
+# Part 10 — Prompt caching on the article prompt (branch: claude/llm-json-parse-error-pvl9ra)
+
+## What was measured first
+Caching is a prefix match with a per-model minimum, and a write bills at 1.25x
+while a read bills at 0.1x — so it only pays from the SECOND use of a prefix
+within the TTL. Measuring the candidates changed the plan:
+
+| Prefix | Size | Verdict |
+|---|---|---|
+| Editorial system prompt | ~1,035 tok | barely over Sonnet 5's 1024 min — too marginal alone |
+| followups SYSTEM_PROMPT | 956 tok | below minimum |
+| followups/single SYSTEM_PROMPT | 697 tok | below minimum |
+| followups/batch SYSTEM_PROMPT | 458 tok | below minimum |
+| Haiku extraction prompts | all < 4k | Haiku 4.5's minimum is 4096 — ineligible |
+
+So the audit's "biggest single cost-reduction opportunity" does not hold in the
+shape it assumed. The system prompts are individually too small, and the whole
+Haiku tier cannot cache. The only real cacheable mass is the article prompt
+itself — frozen chapters plus interview answers.
+
+## Fix
+- [x] One breakpoint at the end of the shared article prompt, with
+      `JSON_RESAMPLE_NOTE` moved into a SECOND content block after it. Caching
+      covers the rendered prefix (system, then messages), so this single
+      breakpoint covers the system prompt and the whole article prompt.
+- [x] `[generate] llm_ok` logs `cacheRead` / `cacheWrite`, so a dead cache shows
+      up instead of being assumed to work.
+- [x] Cost accounting needed no change — `recordCostEvent` already forwards both
+      cache token counts and `anthropicCostUsd` already applies the 0.1x / 1.25x
+      multipliers. That instrumentation was built and never exercised.
+
+## Honest accounting
+- **Guaranteed win:** the resample. `buildPrompt` runs once outside the retry
+  loop, so attempt 2 re-sends a byte-identical prefix seconds later — a hit every
+  time a parse failure happens.
+- **Unreliable:** regeneration. `paraDistributions[Math.floor(Math.random()*5)]`
+  (line ~1118) lands INSIDE the cached block at line ~1350, so two generations of
+  the same project only share a prefix when the random pick repeats — about 1 in
+  5. This is the textbook silent invalidator, in our own prompt.
+- **Cost when it misses:** +25% input on a first-time generation that is never
+  regenerated. Cents on this call, and it buys a much cheaper failure path.
+- Output is unaffected in every case. Caching changes what gets re-processed,
+  never what the model produces.
+
+## Not done, deliberately
+Moving the random paragraph instruction after the breakpoint would make
+regeneration cache reliably. It means relocating an instruction from the middle
+to the end of the prompt, which can change output — a prompt change to validate
+on its own, not to smuggle into a caching commit.
+
+## Verify
+- [x] `npm run check:sonnet5` — 38 checks. Adds: the breakpoint exists; the
+      resample note is a separate block (concatenating it would make attempt 2
+      write a second entry instead of reading the first — a cache that never hits
+      while paying 1.25x twice); cache tokens are logged; the cost math applies
+      both multipliers.
+- [x] `tsc` — no new errors.
+- [ ] **Not verified: a live cache hit.** Watch `cacheRead` on a resample; zero
+      reads across repeated generations means something per-request got in front
+      of the breakpoint.
+
+---
+
+# Part 11 — AI failure taxonomy (branch: claude/llm-json-parse-error-pvl9ra)
+
+## The bug this fixes
+Every AI failure message in the generator ended with some form of "Try
+regenerating." Including `LLM_JSON_PARSE` — the failure that reproduced at
+temperature 0.7 and again at 0.3, on the same sentence, in the La Gorce run. The
+copy invited a retry that could only burn another two-minute call and fail
+identically, and nothing recorded that it had happened.
+
+## Fix
+- [x] `src/lib/ai/errors.ts` — 11 codes, each answering one question: **would an
+      identical retry work?** Plus status, designer-facing copy, a review flag,
+      and a per-project cooldown.
+- [x] Deterministic codes (`LLM_JSON_PARSE`, `LLM_TRUNCATED`,
+      `LLM_EMPTY_RESPONSE`, `LLM_REPAIR_FAILED`, `LLM_CONTENT_REFUSED`) are
+      non-retryable, carry copy that CLOSES the loop, and are flagged for review.
+- [x] `LLM_AUTH_FAILED` split out from generic call failure. A bad key is not
+      the designer's problem and every retry is a wasted call against a
+      credential that will keep being rejected.
+- [x] `codeFromTransport()` maps callLLM's lowercase transport codes onto the
+      taxonomy; anything unrecognised degrades to a retryable call failure.
+- [x] `EditorialGenerationError` now takes a code and derives message + status +
+      `retryable` from the registry, so copy and classification cannot drift.
+      All 6 throw sites converted.
+- [x] The route returns `retryable` so the UI can **remove** the retry control
+      rather than disable it — the designer reads "handled", not "denied".
+- [x] `reportAiIncident()` — sink is a `[ai-incident]` structured log for now
+      (no table, no email relay). Documented as a one-line swap to
+      `prisma.aiIncident.upsert` keyed on (projectId, operation, code) so one
+      broken project is one row, not forty. Never throws, like recordCostEvent.
+- [x] Reporting is gated on `needsReview`, so transient blips don't train the
+      incident feed to be ignored.
+- [x] `LLM_JSON_PARSE` reports only after the resample is spent — a parse failure
+      we recover from cost one extra call and produced a good article. That is a
+      metric, not an incident.
+
+## Deferred to the migration (founder is doing it before ship)
+Cooldown values are carried as data in the registry but **not enforced**.
+Enforcement needs durable storage: `src/lib/rateLimit.ts` is an in-memory Map,
+so on Vercel a user just lands on another instance. Two options when the table
+lands — the new `AiIncident` row, or the existing
+`provenance.interview.lastGenerationError` field, which already carries
+`{ code, message, failedAt }` per project and is already read by the preview
+page. The second needs no migration at all and is the right granularity, since
+the cooldown is per-project by design.
+
+Also open for the table: `diagnostic` holds one capped 240-char prose snippet
+(the only thing that makes a parse failure debuggable without replaying a
+two-minute generation). That is the field that forces the retention/PII
+question.
+
+## Six Sonnet 5 call sites the original migration missed
+Tightening the guard for a false positive surfaced a real one. Six live calls
+reach the model through `IMPORT_AGENT_CONFIG.model` — an indirection the original
+codemod's `MODELS.sonnet` pattern never matched — and **none passed `thinking`**,
+so on Sonnet 5 they were silently running adaptive thinking. One
+(`analyze.ts:155`) against a 256-token cap, where thinking would consume the
+whole budget. `IMPORT_AGENT_CONFIG` did carry a `thinking` field, untyped and
+read by nobody, which is precisely how it stayed invisible.
+
+- [x] All six now state `thinking: { type: 'disabled' }` inline, next to the
+      `max_tokens` it competes with, consistent with the other 53.
+- [x] The unread `thinking` field removed from the config — a shared object that
+      half-declares a request is worse than no config.
+- [x] Four `content[0]` reads in `analyze.ts` converted to `firstTextBlock`.
+      Safe today with thinking off, but leaving them is relocating the landmine
+      rather than removing it.
+- [x] **The guard is now fail-safe.** It matches ANY `model:` line in an object
+      that also has `messages:` and `max_tokens:`, and excludes only what it can
+      positively identify as Haiku. Enumerating Sonnet spellings was a
+      false-negative machine; an unrecognised expression is now checked, because
+      a spurious failure is cheap and a missed call site is a production bug.
+      Site count went 53 → 59.
+
+## Verify
+- [x] `npm run check:ai-errors` — 47 checks. The load-bearing one: no
+      non-retryable code carries copy matching /try again|regenerate|retry/,
+      with the negated form ("no need to run it again") allowed. Also asserts
+      retryable codes carry no cooldown and demand no review (suppressing a
+      failure that resolves itself would block work that would have succeeded),
+      every non-retryable code reaches a human, transport mapping is total, and
+      the generator has no hardcoded "Try regenerating" left.
+- [x] `tsc` — no new errors.
+- [ ] **Not verified:** no failure has been produced against the new taxonomy.
+      The UI does not yet read `retryable` — the API returns it, the front end
+      still needs to drop the control when it is false.

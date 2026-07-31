@@ -1189,8 +1189,18 @@ export async function POST(
         }
       }
 
+      // `retryable` is the field the UI keys its retry control off. When it is
+      // false the failure reproduced — the control should be REMOVED, not
+      // disabled, so the designer reads "handled" rather than "denied", and we
+      // don't pay for another two-minute call that lands in the same place.
+      // Defaults to true only when a thrown error predates the taxonomy.
       return NextResponse.json(
-        { error: "Story generation failed", code: e?.code || "COMPOSE_ERROR", message: e?.message },
+        {
+          error: "Story generation failed",
+          code: e?.code || "COMPOSE_ERROR",
+          message: e?.message,
+          retryable: e?.retryable ?? true,
+        },
         { status: e?.status || 502 }
       );
     }

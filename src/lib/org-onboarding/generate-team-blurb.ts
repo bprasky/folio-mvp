@@ -103,6 +103,7 @@ Respond in JSON:
 
   const response = await anthropic.messages.create({
     model: MODELS.sonnet,
+    thinking: { type: 'disabled' },
     max_tokens: 1000,
     messages: [{ role: 'user', content: prompt }]
   });

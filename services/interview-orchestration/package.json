@@ -11,7 +11,7 @@
     "lint": "eslint src --ext .ts"
   },
   "dependencies": {
-    "@anthropic-ai/sdk": "^0.71.2",
+    "@anthropic-ai/sdk": "^0.115.0",
     "@deepgram/sdk": "^3.8.0",
     "@livekit/server-sdk": "^2.0.0",
     "@prisma/client": "^6.18.0",

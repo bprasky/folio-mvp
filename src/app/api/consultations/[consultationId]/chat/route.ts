@@ -194,6 +194,7 @@ export async function POST(req: NextRequest, { params }: Params) {
 
     let response = await anthropic.messages.create({
       model: MODELS.sonnet,
+      thinking: { type: 'disabled' },
       max_tokens: 1024,
       system: systemPrompt,
       tools: CONSULTATION_TOOLS,
@@ -227,6 +228,7 @@ export async function POST(req: NextRequest, { params }: Params) {
       // Continue conversation with tool results
       response = await anthropic.messages.create({
         model: MODELS.sonnet,
+        thinking: { type: 'disabled' },
         max_tokens: 1024,
         system: systemPrompt,
         tools: CONSULTATION_TOOLS,

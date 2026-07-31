@@ -512,6 +512,110 @@ generator's quote characters, audit every regex that reads the prose
 already matched `“`/`”`, but `proofOutsideQuotes` split on `"` only and would have
 started rewriting inside the designer's quoted words.
 
+**The prompt is mostly not written by us — normalize the context, or it out-votes the rule.**
+Same failure class as above, second occurrence (`generate_71e2451a999f`), with the
+rule already in place and being ignored. Append-mode recomposition: attempt 1 at
+temperature 0.7 died at position 482 and the resample at 0.3 died at position 584,
+both on a straight-quoted attribution in the *first introduction paragraph* —
+identical failure twice, so this was deterministic, not a sampling accident.
+The cause was the other half of the prompt. That generation injected 10 published
+chapters of straight-quoted magazine prose (with "match their register" attached)
+and 31 interview answers, each wrapped by our own template as `A: "${answer}"`.
+Thousands of words demonstrating `"` against four lines of instruction saying
+`“`. The model copied what it saw, which is what models do.
+Fix: `toTypographicQuotes()` in `editorialTone.ts`, applied to every prose-shaped
+value that enters a prompt whose answer is prose-inside-JSON — answers, published
+chapters, frozen lead/introduction, project description, designer bio, project
+history, atelier summary, and the same set in the section-regenerate route. The
+`A: "…"` wrapper became `A: “…”`. Safe to normalize the frozen fields because they
+are re-applied verbatim from `input` after generation, so the designer's stored
+text is never what we normalized.
+Rules: (1) the previous lesson's "prompt examples are training data" covers
+*retrieved* content too — every user-supplied or previously-generated string you
+interpolate is an example, and there are usually far more of those than
+hand-written ones; (2) when a prompt states a character-level rule, the context has
+to obey it — a prompt that violates its own rule at scale will lose; (3) a failure
+that reproduces at two different temperatures is not randomness, so stop
+re-rolling and go read what the prompt actually contains; (4) normalize on the way
+*in*, where the string boundaries are known, never on the way out, where they are
+the thing that broke.
+
+**A model upgrade is a request-surface migration, and the dangerous half is the parameter that silently changed meaning.**
+Sonnet 4.6 → Sonnet 5 across 63 call sites. Two breaking changes, and the loud one
+was the easy one. `temperature`/`top_p`/`top_k` now 400 — 29 call sites had one,
+and every single one would have failed on its first request after the swap, which
+means it gets caught immediately. The dangerous change was `thinking`: omitting it
+used to mean "no thinking" and now means "adaptive thinking", and thinking shares
+the `max_tokens` budget with the response. This repo has caps of 200, 256, 300,
+400 — a call could have spent its entire budget thinking and returned a truncated
+answer, with no error anywhere. Fixed by passing `thinking: { type: 'disabled' }`
+explicitly at all 63 sites, holding 4.6 behavior so the migration stayed an
+availability fix rather than a silent product change.
+The third change has no error at all: the new tokenizer produces ~30% more tokens
+for the same text at an unchanged per-token rate, so every `max_tokens` in the
+repo buys less prose than when it was picked, and cost per call rises with no
+config change. Resized only the editorial generator (800 → 1100/room), which has a
+real truncation path and a history of hitting it; the other ~60 caps were left
+alone and `callLLM` now logs `[llm] output truncated at max_tokens` instead.
+Rules: (1) when migrating a model, grep for the parameters the new one *rejects*
+and, separately, for the ones whose **default changed** — the second list is the
+one that ships bugs, because nothing fails; (2) a 400 across every endpoint is a
+better failure than a silent truncation on one, so prefer the explicit parameter
+over relying on a default, even when the default is currently what you want;
+(3) don't inflate 60 output caps on a guess to cover a tokenizer change — that
+raises worst-case spend everywhere to fix a handful of real cases; instrument the
+truncation and resize what actually reports; (4) write the new model's constraints
+as a comment on the registry constant, not in a migration doc nobody reads — the
+next call site is written by copying the last one; (5) keep the retired model id
+in the pricing table, since instances mid-deploy still emit calls under it.
+
+**Turning a model feature on changes the response SHAPE, and `content[0]` is where that bites.**
+Wiring adaptive thinking behind a flag, every call site read the response as
+`content[0]?.type === 'text' ? content[0].text : ''`. That is correct with
+thinking off, because the text block IS block 0. With thinking on the response is
+`[thinking, text]`, so the check is false and every one of those call sites falls
+to its fallback — `''` in the editorial generator (surfacing as
+LLM_EMPTY_RESPONSE) and `'{}'` in the three follow-up routes (parsing cleanly to
+zero follow-ups). No exception, no error log, nothing to grep. The feature would
+have looked like it worked and quietly produced nothing, and only when the flag
+was flipped — which is precisely when you are least able to tell a real quality
+regression from a plumbing bug.
+Fix: `firstTextBlock()` in `lib/ai/thinking.ts`, finding the block by type instead
+of by position, applied to every Anthropic read in the repo — including the
+surfaces that cannot enable thinking today, because the trap is for whoever adds
+the next surface, not for the current author.
+Rules: (1) when a flag changes what the API RETURNS and not just what it costs,
+audit the parsing before shipping the flag — the failure is silent by
+construction, since a fallback value is indistinguishable from a real empty
+result; (2) never index a polymorphic content array by position, find by type —
+`content[0]` encodes an assumption that was only ever incidentally true; (3) fix
+the pattern everywhere at once rather than only at the flagged call sites, or you
+have moved the landmine instead of removing it; (4) assert it in a check —
+"reviewer will notice" does not survive a flag flip six months later.
+
+**Error copy is a spend decision — "Try regenerating" on a deterministic failure bills the founder for the user's hope.**
+Every AI failure message in the editorial generator ended in some form of "Try
+regenerating." Including `LLM_JSON_PARSE`, the failure that had just reproduced
+at temperature 0.7 and again at 0.3, on the same sentence. The product was
+telling a designer to spend another two-minute call on a wall it had already hit
+twice, and nothing recorded that it had happened. Multiply by a few impatient
+clicks and the copy costs more than the bug.
+Fix: `lib/ai/errors.ts` — every code answers one question, *would an identical
+retry work?*, and message + status + `retryable` all derive from that one entry,
+so the copy cannot drift from the classification. Non-retryable codes carry copy
+that closes the loop ("logged — no need to run it again"), the API returns
+`retryable` so the UI can remove the control rather than disable it, and a check
+asserts no non-retryable code carries retry-inviting language.
+Rules: (1) classify failures by whether a retry can succeed, not by which
+subsystem raised them — the user-facing consequence follows from that one bit;
+(2) never let a call site hand-write user-facing error copy, or the message and
+the retry logic drift and only the message is visible; (3) remove the retry
+affordance rather than disabling it — "handled" reads as service, "denied" reads
+as a wall, and both cost the same to build; (4) report a failure only after the
+automatic recovery is spent — a resample that succeeded is a metric, not an
+incident, and paging on it trains the feed to be ignored; (5) a bad API key is
+not a transient error, it is an infinite wasted-call loop with a human fix.
+
 **Resampling is not repairing — one automatic retry is the honest version of "Try regenerating".**
 Corollary to the jsonrepair lesson above. Hard-failing on malformed JSON is
 right, but making the designer click regenerate for a failure they cannot

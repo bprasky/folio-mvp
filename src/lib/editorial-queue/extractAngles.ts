@@ -120,10 +120,10 @@ export async function extractAngles(digest: CorpusDigest): Promise<AngleValidati
     () =>
       client.messages.create({
         model: MODELS.sonnet,
+        thinking: { type: 'disabled' },
         system: SYSTEM_PROMPT,
         messages: [{ role: 'user', content: userPrompt }],
         max_tokens: ANGLE_EXTRACTION_MAX_TOKENS,
-        temperature: ANGLE_EXTRACTION_TEMPERATURE,
       }),
     {
       modelName: MODELS.sonnet,

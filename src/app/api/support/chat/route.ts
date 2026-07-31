@@ -79,6 +79,7 @@ export async function POST(request: Request) {
 
     const response = await anthropic.messages.create({
       model: MODELS.sonnet,
+      thinking: { type: 'disabled' },
       max_tokens: 1024,
       system: SUPPORT_SYSTEM_PROMPT,
       messages: messages.map((m: { role: string; content: string }) => ({

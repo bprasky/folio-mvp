@@ -81,11 +81,11 @@ Return a JSON array of 4-6 questions.`;
     async () => {
       const message = await anthropic.messages.create({
         model: MODELS.sonnet,
+        thinking: { type: 'disabled' },
         system: ROUND2_SYSTEM_PROMPT,
         messages: [
           { role: 'user', content: userPrompt },
         ],
-        temperature: 0.7,
         max_tokens: 2000,
       });
 

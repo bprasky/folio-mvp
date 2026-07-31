@@ -1,4 +1,5 @@
 import { anthropic, IMPORT_AGENT_CONFIG, IMPORT_AGENT_SYSTEM } from './config';
+import { firstTextBlock } from '@/lib/ai/thinking';
 import type { RoomAnalysis, DetectedProduct, AnalysisContext, ProductCategory, RoomType, ConfidenceLevel } from './types';
 
 // Extracted specs from visible text on a page (not tied to specific products)
@@ -63,6 +64,7 @@ export async function analyzeImage(
 
     const response = await anthropic.messages.create({
       model: IMPORT_AGENT_CONFIG.model,
+      thinking: { type: 'disabled' },
       max_tokens: IMPORT_AGENT_CONFIG.maxTokens,
       system: IMPORT_AGENT_SYSTEM,
       messages: [
@@ -105,7 +107,7 @@ Be conservative with confidence - only use "high" when the product is clearly id
       ],
     });
 
-    const text = response.content[0].type === 'text' ? response.content[0].text : '';
+    const text = firstTextBlock(response);
     const jsonMatch = text.match(/\{[\s\S]*\}/);
 
     if (jsonMatch) {
@@ -153,6 +155,7 @@ export async function shouldAnalyzeImage(
 
     const response = await anthropic.messages.create({
       model: IMPORT_AGENT_CONFIG.model,
+      thinking: { type: 'disabled' },
       max_tokens: 256,
       messages: [
         {
@@ -170,7 +173,7 @@ Skip title slides, text-only slides, floor plans, mood boards without real produ
       ],
     });
 
-    const text = response.content[0].type === 'text' ? response.content[0].text : '';
+    const text = firstTextBlock(response);
     const jsonMatch = text.match(/\{[\s\S]*?\}/);
 
     if (jsonMatch) {
@@ -297,12 +300,13 @@ Be conservative with confidence - only use "high" when clearly identifiable.`,
 
   const response = await anthropic.messages.create({
     model: IMPORT_AGENT_CONFIG.model,
+      thinking: { type: 'disabled' },
     max_tokens: Math.min(IMPORT_AGENT_CONFIG.maxTokens * images.length, 16384),
     system: IMPORT_AGENT_SYSTEM,
     messages: [{ role: 'user', content }],
   });
 
-  const text = response.content[0].type === 'text' ? response.content[0].text : '';
+  const text = firstTextBlock(response);
   const jsonMatch = text.match(/\{[\s\S]*\}/);
 
   if (jsonMatch) {
@@ -474,6 +478,7 @@ export async function analyzePdfDocument(pdfUrl: string): Promise<PdfAnalysisRes
       const result = await Promise.race([
         anthropic.messages.create({
           model: IMPORT_AGENT_CONFIG.model,
+      thinking: { type: 'disabled' },
           max_tokens: 8192,
           system: IMPORT_AGENT_SYSTEM,
           messages: [
@@ -567,7 +572,7 @@ Rules:
       clearTimeout(timeoutId!);
       console.log('Claude API response received');
 
-      const text = result.content[0].type === 'text' ? result.content[0].text : '';
+      const text = firstTextBlock(result);
       const jsonMatch = text.match(/\{[\s\S]*\}/);
 
       if (jsonMatch) {

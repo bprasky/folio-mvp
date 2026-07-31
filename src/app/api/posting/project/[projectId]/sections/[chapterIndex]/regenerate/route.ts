@@ -8,7 +8,7 @@ import { assertProjectWrite } from '@/lib/authz/access';
 import { callLLM } from '@/lib/posting/llmClient';
 import Anthropic from '@anthropic-ai/sdk';
 import type { SectionHistoryEntry, SectionOverride } from '@/lib/posting/editingTypes';
-import { FOLIO_TONE, JSON_PROSE_QUOTING_RULE } from '@/lib/interview/prompts/editorialTone';
+import { FOLIO_TONE, JSON_PROSE_QUOTING_RULE, toTypographicQuotes } from '@/lib/interview/prompts/editorialTone';
 import { MODELS } from '@/lib/ai/models';
 
 const anthropic = new Anthropic();
@@ -130,7 +130,7 @@ export async function POST(
       const sourceTag = a.isFollowUp
         ? '[SOURCE: FOLLOW-UP — richer narrative, prioritize for anecdotes and direct quotes]'
         : '[SOURCE: BASE QUESTION]';
-      return `Q: ${a.questionText || 'Question'}\nA: "${a.answerText}" ${sourceTag}`;
+      return `Q: ${a.questionText || 'Question'}\nA: “${toTypographicQuotes(a.answerText)}” ${sourceTag}`;
     };
 
     const thisRoomText = thisRoomAnswers.length > 0
@@ -160,7 +160,7 @@ export async function POST(
     // Build the full article context (other chapters) for tone consistency
     const otherChapters = chapters
       .filter((_: any, i: number) => i !== chapterIndex)
-      .map((c: any) => `### ${c.title || 'Untitled'}\n${(c.body || []).join('\n\n')}`)
+      .map((c: any) => `### ${c.title || 'Untitled'}\n${toTypographicQuotes((c.body || []).join('\n\n'))}`)
       .join('\n\n');
 
     const userPrompt = `Regenerate the body paragraphs for this section of the article. Keep the same chapter title and image selection — only rewrite the body text.
@@ -168,10 +168,10 @@ export async function POST(
 ## Current Chapter
 Title: ${chapter.title || 'Untitled'}
 Current body:
-${(chapter.body || []).join('\n\n')}
+${toTypographicQuotes((chapter.body || []).join('\n\n'))}
 
 ${feedback ? `## Designer's Feedback
-The designer wants these changes: ${feedback}` : ''}
+The designer wants these changes: ${toTypographicQuotes(feedback)}` : ''}
 
 ## Interview Responses — Use for Direct Quotes and Attribution
 ${answersText}
@@ -216,8 +216,8 @@ ${JSON_PROSE_QUOTING_RULE}`;
       async () => {
         return await anthropic.messages.create({
           model: modelName,
+          thinking: { type: 'disabled' },
           max_tokens: 2000,
-          temperature: 0.7,
           system: SECTION_REGEN_SYSTEM_PROMPT,
           messages: [{ role: 'user', content: userPrompt }],
         });

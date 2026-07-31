@@ -48,6 +48,7 @@ Return ONLY the caption text, nothing else.`;
 
   const response = await anthropic.messages.create({
     model: MODELS.sonnet,
+    thinking: { type: 'disabled' },
     max_tokens: 500,
     messages: [{ role: 'user', content: prompt }],
   });

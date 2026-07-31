@@ -11,6 +11,7 @@ export async function searchProductAttribution(
   try {
     const response = await anthropic.messages.create({
       model: IMPORT_AGENT_CONFIG.model,
+    thinking: { type: 'disabled' },
       max_tokens: IMPORT_AGENT_CONFIG.maxTokens,
       system: IMPORT_AGENT_SYSTEM,
       tools: [

@@ -17,12 +17,15 @@
 // The Anthropic client is constructed at module load in generateEditorialDraft.
 process.env.ANTHROPIC_API_KEY ||= 'sk-ant-placeholder-for-static-checks';
 
+import { readFileSync } from 'fs';
+import { join } from 'path';
+
 import {
   describeJsonParseFailure,
   extractPullQuotesForChapter,
   proofOutsideQuotes,
 } from '../src/lib/posting/generateEditorialDraft';
-import { JSON_PROSE_QUOTING_RULE } from '../src/lib/interview/prompts/editorialTone';
+import { JSON_PROSE_QUOTING_RULE, toTypographicQuotes } from '../src/lib/interview/prompts/editorialTone';
 
 let failures = 0;
 
@@ -176,6 +179,116 @@ check(
   proofOutsideQuotes(`“first,” he said. "second," she said. then quiet.`) ===
     `“first,” he said. "second," she said. Then quiet.`,
   proofOutsideQuotes(`“first,” he said. "second," she said. then quiet.`),
+);
+
+console.log('\n6. Injected prompt context is normalized, so it stops teaching the wrong quote');
+
+// The second production failure (correlation generate_71e2451a999f) was not the
+// model ignoring the rule — it was the model copying the prompt. An append-mode
+// generation carried 10 published chapters of straight-quoted magazine prose plus
+// 31 answers each wrapped in `A: "…"`, then asked the model to match their
+// register. It obeyed the context, not the instruction, on attempt 1 (temp 0.7)
+// and again on the resample (temp 0.3), both times in the first intro paragraph.
+const PUBLISHED_CHAPTER_PARAGRAPH =
+  `When the family relocated to Miami and bought a house with strong architecture and tired finishes, ` +
+  `Diano Matto of BP Design was the natural call. "This family is one we have known for years and we ` +
+  `finally aligned on a project together," Matto recalls. "They and their kids wanted somewhere to land."`;
+
+const normalized = toTypographicQuotes(PUBLISHED_CHAPTER_PARAGRAPH);
+
+check('normalized context contains no straight double quote', !normalized.includes('"'), normalized);
+check(
+  'an opening quote becomes a left curly quote',
+  normalized.includes('call. “This family'),
+  normalized,
+);
+check(
+  'a closing quote after punctuation becomes a right curly quote',
+  normalized.includes('together,” Matto recalls.'),
+  normalized,
+);
+check(
+  'only the quote glyphs change — the words are untouched',
+  normalized.replace(/[“”]/g, '"') === PUBLISHED_CHAPTER_PARAGRAPH,
+);
+
+// The whole point: this paragraph, pasted into a JSON string with no escaping,
+// is exactly what killed the generation. Normalized, it parses.
+let normalizedParses = false;
+try {
+  const parsed = JSON.parse(`{"galleryChapters":[{"title":"Entry","body":["${normalized}"]}]}`);
+  normalizedParses = parsed.galleryChapters[0].body[0] === normalized;
+} catch {
+  normalizedParses = false;
+}
+check('the paragraph that broke production now round-trips through JSON', normalizedParses);
+
+let rawParses = true;
+try {
+  JSON.parse(`{"galleryChapters":[{"title":"Entry","body":["${PUBLISHED_CHAPTER_PARAGRAPH}"]}]}`);
+} catch {
+  rawParses = false;
+}
+check('...and the un-normalized original still does not (the diagnostic stays honest)', !rawParses);
+
+check(
+  "apostrophes stay straight, per the rule (didn't, designer's, clients')",
+  toTypographicQuotes(`the designer's clients didn't want it`) === `the designer's clients didn't want it`,
+);
+check(
+  'an inch mark closes rather than opening a stray quotation',
+  toTypographicQuotes(`a 96" sofa`) === `a 96” sofa`,
+  toTypographicQuotes(`a 96" sofa`),
+);
+check(
+  'a quote after an opening bracket opens',
+  toTypographicQuotes(`he paused ("briefly") and went on`) === `he paused (“briefly”) and went on`,
+  toTypographicQuotes(`he paused ("briefly") and went on`),
+);
+check(
+  'already-curly prose is left exactly as it is (idempotent)',
+  toTypographicQuotes(FIXED_PARAGRAPH) === FIXED_PARAGRAPH,
+);
+check('empty input is returned unchanged', toTypographicQuotes('') === '');
+check(
+  'prose with no quotes at all is returned unchanged',
+  toTypographicQuotes('the slab arrived cracked') === 'the slab arrived cracked',
+);
+
+// Normalizing the interview answers is worthless if the template that embeds them
+// re-introduces the character. Guard the wrapper itself: `A: "${...}"` is what
+// produced 31 straight-quote demonstrations in a single prompt.
+const PROMPT_SOURCES = [
+  'src/lib/posting/generateEditorialDraft.ts',
+  'src/app/api/posting/project/[projectId]/sections/[chapterIndex]/regenerate/route.ts',
+];
+for (const rel of PROMPT_SOURCES) {
+  const source = readFileSync(join(__dirname, '..', rel), 'utf8');
+  check(
+    `${rel} does not wrap interview answers in straight quotes`,
+    !/A: \\?"\$\{/.test(source),
+  );
+  check(
+    `${rel} routes interview answers through toTypographicQuotes`,
+    source.includes('toTypographicQuotes'),
+  );
+}
+
+console.log('\n7. Downstream prose consumers are unaffected by normalized context');
+
+const normalizedSelection = extractPullQuotesForChapter(
+  [normalized, 'Above the vanity, the sconces read warmer than the drawings promised.'],
+  'Diano Matto',
+);
+check(
+  'pull-quote extraction still finds the attributed quote after normalization',
+  !!normalizedSelection?.selected?.text,
+  JSON.stringify(normalizedSelection?.selected),
+);
+check(
+  'proofOutsideQuotes leaves the normalized quoted span alone',
+  proofOutsideQuotes(normalized).includes('“This family is one we have known'),
+  proofOutsideQuotes(normalized),
 );
 
 console.log(

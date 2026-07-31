@@ -87,6 +87,7 @@ export async function generateBioReflectiveQuestions(userId: string) {
     async () => {
       const message = await anthropic.messages.create({
         model: MODELS.sonnet,
+        thinking: { type: 'disabled' },
         system: `${FOLIO_INTERVIEWER_PERSONA}
 
 ${SHARED_RULE_BLOCK}
@@ -139,7 +140,6 @@ Return a JSON array of exactly ${QUESTIONS_PER_BATCH} objects:
           },
         ],
         max_tokens: 1500,
-        temperature: 0.85,
       });
 
       const content = message.content[0]?.type === 'text' ? message.content[0].text : null;
@@ -298,6 +298,7 @@ export async function generateProjectReflectiveQuestions(userId: string) {
     async () => {
       const message = await anthropic.messages.create({
         model: MODELS.sonnet,
+        thinking: { type: 'disabled' },
         system: `${FOLIO_INTERVIEWER_PERSONA}
 
 ${SHARED_RULE_BLOCK}
@@ -351,7 +352,6 @@ Return a JSON array of exactly ${QUESTIONS_PER_BATCH} objects:
           },
         ],
         max_tokens: 1500,
-        temperature: 0.85,
       });
 
       const content = message.content[0]?.type === 'text' ? message.content[0].text : null;

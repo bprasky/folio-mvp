@@ -68,3 +68,45 @@ export const JSON_PROSE_QUOTING_RULE = `JSON STRING SAFETY — NON-NEGOTIABLE:
 - NEVER emit a straight double quote (") inside a string value. That character belongs to JSON syntax only; an unescaped one makes the entire response unparseable and the work is discarded.
 - Apostrophes are the straight ' character (didn't, designer's, clients'). Never substitute a double quote for an apostrophe.
 - Never put a literal line break inside a string. Each paragraph is its own array element.`;
+
+/**
+ * Rewrite every straight double quote in a block of PROSE WE INJECT INTO A PROMPT
+ * as a typographic curly quote.
+ *
+ * Why this exists, and why the rule above is not enough on its own: the prompt is
+ * not just instructions. It carries the designer's interview answers, the already
+ * published chapters, their bio, and their other projects — and all of that is
+ * straight-quoted, because it was typed by a person or generated before the rule
+ * existed. In append mode a single generation can ship ten published chapters of
+ * straight-quoted magazine prose plus thirty-one answers each wrapped in `A: "…"`,
+ * and then ask the model to "match their register." Thousands of words modelling
+ * the wrong character beat one line of instruction, deterministically: correlation
+ * generate_71e2451a999f failed on attempt 1 at temperature 0.7 and again on the
+ * resample at 0.3, both times on a straight-quoted attribution in the very first
+ * introduction paragraph.
+ *
+ * So the context has to obey the rule it states. This is the lesson from the last
+ * LLM_JSON_PARSE ("prompt examples are training data") applied to the half of the
+ * prompt that isn't hand-written: anything prose-shaped going into a prompt whose
+ * answer is prose-inside-JSON must be normalized on the way in.
+ *
+ * Scope: straight `"` only. Apostrophes stay straight per the rule, and no other
+ * character is touched — this must never alter the designer's words beyond the
+ * quote glyph. A `"` opens a quotation when it starts the text or follows
+ * whitespace or an opening bracket, and closes one otherwise; the same rule turns
+ * a trailing inch mark (96") into 96”, which is correct typography and, more to
+ * the point, cannot terminate a JSON string.
+ *
+ * Nested quotations become “…“…”…” rather than the “…‘…’…” the rule asks the model
+ * to write. That is deliberate: inferring nesting depth from raw text is guesswork,
+ * and the property that matters here is that the context contains zero straight
+ * double quotes.
+ */
+export function toTypographicQuotes(text: string): string {
+  if (!text) return text;
+  return text.replace(/"/g, (_match, offset: number) => {
+    const prev = offset > 0 ? text[offset - 1] : '';
+    const opens = prev === '' || /[\s([{<‘“—–-]/.test(prev);
+    return opens ? '“' : '”';
+  });
+}

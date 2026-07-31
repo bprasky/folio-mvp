@@ -115,6 +115,7 @@ export async function aiExtractProduct(url: string): Promise<AiProductFields | n
     const anthropic = new Anthropic();
     const aiResponse = await anthropic.messages.create({
       model: MODELS.sonnet,
+      thinking: { type: 'disabled' },
       max_tokens: 2048,
       tools: [{ type: 'web_search_20250305', name: 'web_search' }],
       messages: [{ role: 'user', content: buildPrompt(url) }],
