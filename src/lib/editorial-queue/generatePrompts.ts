@@ -118,10 +118,10 @@ export async function generatePrompts(
     () =>
       client.messages.create({
         model: MODELS.sonnet,
+        thinking: { type: 'disabled' },
         system: SYSTEM_PROMPT,
         messages: [{ role: 'user', content: buildPromptGenUserPrompt(angle, format) }],
         max_tokens: PROMPT_GEN_MAX_TOKENS,
-        temperature: PROMPT_GEN_TEMPERATURE,
       }),
     { modelName: MODELS.sonnet, contextHint: 'operation=editorial_queue_prompt_generation', maxRetries: 2 },
   );

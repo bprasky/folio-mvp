@@ -114,7 +114,8 @@ async function analyzeBioAgainstQuestions(
 ): Promise<QuestionCoverageResult[]> {
 
   const response = await anthropic.messages.create({
-    model: 'claude-sonnet-4-6',
+    model: MODELS.sonnet, // never hardcode — see src/lib/ai/models.ts
+    thinking: { type: 'disabled' }, // required on Sonnet 5; omitting it runs adaptive thinking
     max_tokens: 2000,
     messages: [{
       role: 'user',

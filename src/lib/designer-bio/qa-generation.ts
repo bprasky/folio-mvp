@@ -77,6 +77,7 @@ export async function generateInitialSeedQuestions(
     async () => {
       const message = await anthropic.messages.create({
         model: MODELS.sonnet,
+        thinking: { type: 'disabled' },
         system: `${FOLIO_INTERVIEWER_PERSONA}
 
 ${SHARED_RULE_BLOCK}
@@ -101,7 +102,6 @@ Return JSON array: [{ "question": "...", "category": "personality|preference|con
           },
         ],
         max_tokens: 800,
-        temperature: 0.8,
       });
 
       const content = message.content[0]?.type === 'text' ? message.content[0].text : null;
@@ -172,6 +172,7 @@ export async function generateProjectQuestions(
     async () => {
       const message = await anthropic.messages.create({
         model: MODELS.sonnet,
+        thinking: { type: 'disabled' },
         system: `${FOLIO_INTERVIEWER_PERSONA}
 
 ${SHARED_RULE_BLOCK}
@@ -196,7 +197,6 @@ Return empty array [] if no genuinely interesting question comes to mind.`,
           },
         ],
         max_tokens: 400,
-        temperature: 0.7,
       });
 
       const content = message.content[0]?.type === 'text' ? message.content[0].text : null;

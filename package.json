@@ -94,7 +94,8 @@
     "debug:prisma": "npx tsx scripts/debug-prisma-types.ts",
     "fix:null-elements": "npx tsx scripts/fix-null-array-elements.ts",
     "security:idor": "tsx scripts/security/idor-scan.ts",
-    "security:idor:ci": "tsx scripts/security/idor-scan.ts --ci"
+    "security:idor:ci": "tsx scripts/security/idor-scan.ts --ci",
+    "check:sonnet5": "tsx scripts/check-sonnet5-compliance.ts"
   },
   "buildTimestamp": "2025-01-18T20:15:00Z",
   "prisma": {

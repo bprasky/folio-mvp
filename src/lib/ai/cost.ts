@@ -1,5 +1,5 @@
 import { prisma } from '@/lib/prisma';
-import { MODELS } from './models';
+import { MODELS, LEGACY_MODEL_IDS } from './models';
 
 // ============================================================================
 // CostEvent instrumentation (API cost hardening Phase 3).
@@ -14,9 +14,17 @@ export type CostProvider = 'anthropic' | 'fal' | 'resend' | 'deepgram' | 'liveki
 // Anthropic rates are per-million-tokens (MTok), keyed by the model id the
 // call actually used (see src/lib/ai/models.ts).
 const ANTHROPIC_RATES: Record<string, { inPerMTok: number; outPerMTok: number }> = {
+  // Sonnet 5 lists at the same $3/$15 as Sonnet 4.6. There is an introductory
+  // $2/$10 running through 2026-08-31; this stays at list price so the estimate
+  // is never optimistic and needs no edit when the promo lapses. Note Sonnet 5
+  // tokenizes ~30% higher for the same text, so cost per call rises even though
+  // the per-token rate did not — read the CostEvent trend, not the rate.
   [MODELS.sonnet]: { inPerMTok: 3, outPerMTok: 15 },
   [MODELS.haiku]: { inPerMTok: 1, outPerMTok: 5 },
   [MODELS.opus]: { inPerMTok: 5, outPerMTok: 25 },
+  // Kept so a call from an instance still running the pre-migration model prices
+  // correctly instead of recording 0. Same rate — 4.6 and 5 list identically.
+  [LEGACY_MODEL_IDS.sonnet46]: { inPerMTok: 3, outPerMTok: 15 },
 };
 
 // Anthropic cache token multipliers, relative to the base input rate.

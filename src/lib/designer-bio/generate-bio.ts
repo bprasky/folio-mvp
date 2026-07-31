@@ -42,6 +42,7 @@ export async function generateFolioBio(input: GenerateBioInput): Promise<string>
     async () => {
       const message = await anthropic.messages.create({
         model: MODELS.sonnet,
+        thinking: { type: 'disabled' },
         system: `${FOLIO_TONE}
 
 You are writing a magazine-quality profile bio for a ${roleLabel} named ${designerName}. Write in third person. This bio will appear on their professional profile page.
@@ -74,7 +75,6 @@ Return ONLY the bio text. No headers, no labels, no markdown.`,
           },
         ],
         max_tokens: 800,
-        temperature: 0.8,
       });
 
       const content = message.content[0]?.type === 'text' ? message.content[0].text : null;

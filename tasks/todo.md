@@ -451,3 +451,77 @@ thing to normalize. The permanent guarantee is Anthropic structured outputs
 (`output_config.format`), which makes malformed JSON impossible rather than
 unlikely — it needs a model move off `claude-sonnet-4-6`, which does not support
 it, so it is a deliberate follow-up rather than part of this fix.
+
+---
+
+# Part 4 — Sonnet 4.6 → Sonnet 5 migration (branch: claude/llm-json-parse-error-pvl9ra)
+
+## Why now
+`claude-sonnet-4-6` sunsets eventually and every AI surface in the product runs on
+it. Migrating ahead of the cliff, rather than under it.
+
+## What Sonnet 5 changes (and what breaks)
+1. **`temperature` / `top_p` / `top_k` return 400** on non-default values. 29 call
+   sites passed one. This is a hard failure, not a degradation — every one of
+   those endpoints would 400 on the first request after the model swap.
+2. **Omitting `thinking` now runs adaptive thinking.** Sonnet 4.6 ran
+   thinking-off. Thinking shares the `max_tokens` budget with the response, so
+   calls sized on 4.6 — and this repo has caps of 200, 256, 300, 400 — could
+   spend the whole budget thinking and return nothing usable.
+3. **New tokenizer: ~30% more tokens for the same text.** Per-token price is
+   unchanged ($3/$15), so cost per call still rises. Output caps buy ~30% less
+   prose than when they were chosen.
+4. `budget_tokens` is gone (depth is `output_config.effort` now). Not used here —
+   the repo had no `thinking` config at all.
+
+## Decisions
+- **Scope: `src/` + `services/interview-orchestration`.** The service keeps its own
+  service-local `MODELS` by design; leaving it on 4.6 would just defer the same
+  migration. 63 call sites total.
+- **`thinking: { type: 'disabled' }` everywhere.** Holds Sonnet 4.6's behavior,
+  latency and token profile exactly, so this stays an availability migration
+  rather than a product change. Adaptive thinking is a per-surface experiment to
+  run later, and it has to come with a `max_tokens` raise wherever it's turned on.
+
+## Fix
+- [x] `MODELS.sonnet` → `claude-sonnet-5` in both registries, with the Sonnet 5
+      request rules written at the definition so the next call site inherits them.
+- [x] Removed `temperature` from all 29 Sonnet call sites. The one Haiku call
+      (sentence-opener fixer) keeps its `temperature: 0.6` — Haiku 4.5 still
+      accepts it.
+- [x] Added `thinking: { type: 'disabled' }` to all 63 Sonnet call sites.
+- [x] `LEGACY_MODEL_IDS.sonnet46` + a matching `ANTHROPIC_RATES` entry, so a
+      CostEvent written by an instance that hasn't picked up the deploy prices at
+      $3/$15 instead of recording 0.
+- [x] Editorial generator resized for the new tokenizer: 800 → 1100 tokens/room,
+      floor 4096 → 5500. This one has a real `LLM_TRUNCATED` path and a history of
+      hitting it. The 32K ceiling stays — it's a wall-clock guard, and wall-clock
+      follows prose written, not how it's tokenized.
+- [x] `callLLM` now logs `[llm] output truncated at max_tokens`. The other ~60
+      caps were left alone deliberately: raising them all on a guess would inflate
+      worst-case spend across the product, so the real cases get surfaced instead
+      of predicted. Direct `messages.create` callers aren't covered by this.
+
+## Verify
+- [x] `npm run check:sonnet5` — 9 checks: both registries on Sonnet 5; no
+      executable code naming the retired id; the retired id still priceable and
+      priced identically; **all 63 call sites** free of sampling params and
+      passing `thinking` explicitly (both scanned by bracket depth, so the check
+      follows the object literal rather than line offsets); Haiku untouched.
+- [x] `npm run check:json-quoting` — 44 checks still pass (Part 3 unaffected).
+- [x] `tsc` — no new errors. `ThinkingConfigDisabled` exists in SDK 0.71.2 and
+      `Model` carries a `(string & {})` fallback, so the new id typechecks.
+- [ ] **Not verified: live calls.** No request has been made against
+      `claude-sonnet-5` from this codebase.
+
+## Watch after deploy
+- `[llm] output truncated at max_tokens` — the tokenizer shift landing on a cap
+  that was fine on 4.6. Raise that specific cap.
+- `LLM_TRUNCATED` on editorial generation — same, for the resized generator.
+- CostEvent totals: expect a rise from the ~30% tokenizer change at an unchanged
+  rate. That is the migration, not a regression.
+- Prose variety across regenerations. `temperature` is gone product-wide; the
+  editorial generator still varies structure via its random paragraph
+  distributions, but repeated regenerations of the same input will read more
+  alike than before. If that becomes a complaint, the replacement is prompt-level
+  variation, not a parameter.

@@ -139,6 +139,7 @@ export async function generateWebsiteContextQuestions(
     async () => {
       const message = await anthropic.messages.create({
         model: MODELS.sonnet,
+        thinking: { type: 'disabled' },
         system: `${FOLIO_INTERVIEWER_PERSONA}
 
 ${SHARED_RULE_BLOCK}
@@ -164,7 +165,6 @@ Return a JSON array of objects: [{ "id": "web-q-1", "question": "..." }, ...]`,
           },
         ],
         max_tokens: 1000,
-        temperature: 0.7,
       });
 
       const content = message.content[0]?.type === 'text' ? message.content[0].text : null;
@@ -227,6 +227,7 @@ export async function generateFollowUpQuestions(
 
       const message = await anthropic.messages.create({
         model: MODELS.sonnet,
+        thinking: { type: 'disabled' },
         system: `${FOLIO_INTERVIEWER_PERSONA}
 
 ${SHARED_RULE_BLOCK}
@@ -250,7 +251,6 @@ Return a JSON array: [{ "id": "followup-1", "question": "..." }, ...]`,
           },
         ],
         max_tokens: 1000,
-        temperature: 0.7,
       });
 
       const content = message.content[0]?.type === 'text' ? message.content[0].text : null;

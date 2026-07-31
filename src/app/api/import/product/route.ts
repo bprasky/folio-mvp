@@ -268,6 +268,7 @@ export async function POST(req: NextRequest) {
       // AI web search for product data
       anthropic.messages.create({
         model: MODELS.sonnet,
+        thinking: { type: 'disabled' },
         max_tokens: 2048,
         tools: [
           {

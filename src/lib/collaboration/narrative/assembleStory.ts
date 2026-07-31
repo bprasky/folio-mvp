@@ -129,11 +129,11 @@ Craft a compelling narrative that weaves both perspectives into a cohesive story
     async () => {
       const message = await anthropic.messages.create({
         model: MODELS.sonnet,
+        thinking: { type: 'disabled' },
         system: NARRATIVE_SYSTEM_PROMPT,
         messages: [
           { role: 'user', content: userPrompt },
         ],
-        temperature: 0.8,
         max_tokens: 4000,
       });
 
@@ -275,6 +275,7 @@ export async function generateStoryMeta(
     async () => {
       const message = await anthropic.messages.create({
         model: MODELS.sonnet,
+        thinking: { type: 'disabled' },
         system: 'Generate a compelling title and excerpt for a design collaboration story. Return JSON with "title" (max 80 chars) and "excerpt" (max 200 chars).',
         messages: [
           {
@@ -285,7 +286,6 @@ Vendor's perspective: "${vendorQuote}"
 Designer's perspective: "${designerQuote}"`,
           },
         ],
-        temperature: 0.7,
         max_tokens: 300,
       });
 

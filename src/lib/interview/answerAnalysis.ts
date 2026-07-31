@@ -71,6 +71,7 @@ export async function analyzeAnswer(
   try {
     const response = await anthropic.messages.create({
       model: MODELS.sonnet,
+      thinking: { type: 'disabled' },
       max_tokens: 512,
       messages: [
         {

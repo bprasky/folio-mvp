@@ -28,6 +28,7 @@ export class ClaudeService {
   ): Promise<SofiaResponse> {
     const response = await this.client.messages.create({
       model: MODELS.sonnet,
+      thinking: { type: 'disabled' },
       max_tokens: 1024,
       system: systemPrompt,
       messages: [{ role: 'user', content: userPrompt }],

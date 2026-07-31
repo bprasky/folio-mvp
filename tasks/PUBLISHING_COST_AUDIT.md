@@ -76,7 +76,9 @@ Adjacent / not on the core publish path (separate cost centers, listed for compl
 - **Prompt caching: NONE.** `grep -r cache_control` → 0 matches across the repo. Every call pays full input price on its (often large) system prompt + image context. This is the top cost lever.
 - **Batch mode: NONE.** All calls are synchronous `messages.create`. The interview/editorial flow is interactive so batch is mostly inapplicable — but the per-room fan-out calls (room questions, narrative intros/materials across 5+ rooms) are independent and could be batched at 50% off if latency tolerances allowed.
 - **`temperature: 0.7`** on the editorial draft (and similar elsewhere) — fine, just noted.
+  - _Superseded: Sonnet 5 rejects `temperature`; all 29 occurrences were removed in the migration._
 - **Deprecation risk:** `claude-sonnet-4-20250514` retires 2026-06-15. Recommend migrating to `claude-sonnet-4-6` regardless of this audit.
+  - _Superseded (see `tasks/todo.md` Part 4): the repo now runs `claude-sonnet-5`. Same $3/$15 list rate, but Sonnet 5 tokenizes ~30% higher for the same text, so the per-project token estimates below read low — the shape of the analysis holds, the absolute numbers do not._
 
 Estimated tokens per project (text flow, no caching, ~5-room project). Image-heavy calls dominate input because vision tokens (~1.6k/image on Sonnet 4) are re-sent uncached on every call that includes images:
 
@@ -175,7 +177,7 @@ This is ~1 table + ~4 small wrappers, no change to call sites' logic, and it mak
 
 ## Appendix: things worth fixing that surfaced during the audit
 
-- **`claude-sonnet-4-20250514` retires 2026-06-15.** Migrate to `claude-sonnet-4-6` now — this is an availability cliff, not just cost.
+- ~~**`claude-sonnet-4-20250514` retires 2026-06-15.** Migrate to `claude-sonnet-4-6` now — this is an availability cliff, not just cost.~~ **Done, and gone further:** the repo is on `claude-sonnet-5` (todo.md Part 4).
 - **No prompt caching** — highest-leverage cost fix (§3.4, §5).
 - **No interview-duration instrumentation in the live text flow** (§3.3).
 - **3D + originals retention** is unbounded and additive (§4) — fine pre-launch, but a lifecycle policy will be needed.

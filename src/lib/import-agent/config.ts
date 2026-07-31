@@ -6,6 +6,7 @@ export const anthropic = new Anthropic();
 
 export const IMPORT_AGENT_CONFIG = {
   model: MODELS.sonnet,
+  thinking: { type: 'disabled' },
   maxTokens: 4096,
   maxImagesPerBatch: 5, // For batch processing
   maxProductsPerImage: 10,

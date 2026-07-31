@@ -68,7 +68,7 @@ async function generateEditionCopy(payload: {
   try {
     const res = await client.messages.create({
       model: MODELS.sonnet,
-      temperature: 0.4,
+      thinking: { type: 'disabled' },
       max_tokens: 320,
       system: "You are Folio's Editorial Edition curator. Maintain an elegant, professional, timeless tone. Respond with JSON only.",
       messages: [

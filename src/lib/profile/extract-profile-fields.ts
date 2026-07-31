@@ -36,6 +36,7 @@ const ORG_FIELD_SCHEMA = {
 export async function extractOrgProfileFields(transcript: string): Promise<ExtractedOrgFields> {
   const response = await anthropic.messages.create({
     model: MODELS.sonnet,
+    thinking: { type: 'disabled' },
     max_tokens: 1500,
     messages: [{
       role: 'user',
@@ -91,6 +92,7 @@ const PERSONAL_FIELD_SCHEMA = {
 export async function extractPersonalProfileFields(transcript: string): Promise<ExtractedPersonalFields> {
   const response = await anthropic.messages.create({
     model: MODELS.sonnet,
+    thinking: { type: 'disabled' },
     max_tokens: 1500,
     messages: [{
       role: 'user',

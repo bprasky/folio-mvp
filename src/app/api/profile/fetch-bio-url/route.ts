@@ -83,6 +83,7 @@ export async function POST(request: NextRequest) {
     // Use Claude to extract the bio passage
     const response = await anthropic.messages.create({
       model: MODELS.sonnet,
+      thinking: { type: 'disabled' },
       max_tokens: 1500,
       messages: [{
         role: 'user',

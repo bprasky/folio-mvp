@@ -147,6 +147,7 @@ Return ONLY the updated summary, incorporating the new exchanges.`;
     try {
       const response = await this.anthropic.messages.create({
         model: MODELS.sonnet,
+        thinking: { type: 'disabled' },
         max_tokens: 300,
         messages: [{ role: 'user', content: compressionPrompt }],
       });

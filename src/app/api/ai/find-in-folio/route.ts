@@ -168,6 +168,7 @@ export async function POST(req: NextRequest) {
 
       const response = await anthropic.messages.create({
         model: MODELS.sonnet,
+        thinking: { type: 'disabled' },
         max_tokens: 1024,
         messages: [
           {

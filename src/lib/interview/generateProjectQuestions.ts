@@ -298,6 +298,7 @@ Return ONLY a JSON object:
 
   const response = await anthropic.messages.create({
     model: MODELS.sonnet,
+    thinking: { type: 'disabled' },
     max_tokens: 2048,
     messages: [{ role: 'user', content }],
   });

@@ -113,11 +113,11 @@ async function callLLM(question: string, nodeId?: string): Promise<OrbAgentRespo
 
     const message = await client.messages.create({
       model: MODELS.sonnet,
+      thinking: { type: 'disabled' },
       system: SYSTEM_PROMPT,
       messages: [
         { role: "user", content: userMessage },
       ],
-      temperature: 0.7,
       max_tokens: 500,
     });
 

@@ -24,6 +24,29 @@ function recordAnthropicCost(data: unknown, modelName: string, contextHint?: str
   });
 }
 
+// Surface output-cap truncation instead of silently returning half a response.
+//
+// This matters more since the Sonnet 5 migration: Sonnet 5 tokenizes ~30% higher
+// than Sonnet 4.6 for the same text, so every `max_tokens` in this repo buys less
+// prose than it did when it was chosen. Most caps have enough headroom to absorb
+// that, but "most" is an estimate, and the failure is quiet — a bio or caption cut
+// mid-sentence reads like a bad generation, not like a budget problem. Rather than
+// inflate ~60 caps on a guess (and inflate worst-case spend with them), leave them
+// and make the real cases greppable: `[llm] output truncated at max_tokens`.
+//
+// Only covers callers that go through callLLM. Sites that call
+// `client.messages.create` directly still need their own stop_reason check —
+// generateEditorialDraft has one, and it throws LLM_TRUNCATED.
+function warnOnTruncation(data: unknown, modelName: string, contextHint?: string): void {
+  const msg = data as { stop_reason?: string; usage?: AnthropicUsage } | null | undefined;
+  if (msg?.stop_reason !== 'max_tokens') return;
+  console.warn('[llm] output truncated at max_tokens', {
+    model: modelName,
+    context: contextHint,
+    outputTokens: msg.usage?.output_tokens,
+  });
+}
+
 const FORCE_FALLBACK = (process.env.POSTING_FORCE_FALLBACK ?? '').toLowerCase() === 'true';
 
 export async function callLLM<T>(
@@ -46,6 +69,7 @@ export async function callLLM<T>(
     try {
       const data = await fn();
       recordAnthropicCost(data, opts.modelName, opts.contextHint);
+      warnOnTruncation(data, opts.modelName, opts.contextHint);
       return { ok: true, data, usedModel: opts.modelName };
     } catch (err: any) {
       const status = err?.status ?? err?.response?.status;

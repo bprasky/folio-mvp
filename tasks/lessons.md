@@ -540,6 +540,35 @@ re-rolling and go read what the prompt actually contains; (4) normalize on the w
 *in*, where the string boundaries are known, never on the way out, where they are
 the thing that broke.
 
+**A model upgrade is a request-surface migration, and the dangerous half is the parameter that silently changed meaning.**
+Sonnet 4.6 → Sonnet 5 across 63 call sites. Two breaking changes, and the loud one
+was the easy one. `temperature`/`top_p`/`top_k` now 400 — 29 call sites had one,
+and every single one would have failed on its first request after the swap, which
+means it gets caught immediately. The dangerous change was `thinking`: omitting it
+used to mean "no thinking" and now means "adaptive thinking", and thinking shares
+the `max_tokens` budget with the response. This repo has caps of 200, 256, 300,
+400 — a call could have spent its entire budget thinking and returned a truncated
+answer, with no error anywhere. Fixed by passing `thinking: { type: 'disabled' }`
+explicitly at all 63 sites, holding 4.6 behavior so the migration stayed an
+availability fix rather than a silent product change.
+The third change has no error at all: the new tokenizer produces ~30% more tokens
+for the same text at an unchanged per-token rate, so every `max_tokens` in the
+repo buys less prose than when it was picked, and cost per call rises with no
+config change. Resized only the editorial generator (800 → 1100/room), which has a
+real truncation path and a history of hitting it; the other ~60 caps were left
+alone and `callLLM` now logs `[llm] output truncated at max_tokens` instead.
+Rules: (1) when migrating a model, grep for the parameters the new one *rejects*
+and, separately, for the ones whose **default changed** — the second list is the
+one that ships bugs, because nothing fails; (2) a 400 across every endpoint is a
+better failure than a silent truncation on one, so prefer the explicit parameter
+over relying on a default, even when the default is currently what you want;
+(3) don't inflate 60 output caps on a guess to cover a tokenizer change — that
+raises worst-case spend everywhere to fix a handful of real cases; instrument the
+truncation and resize what actually reports; (4) write the new model's constraints
+as a comment on the registry constant, not in a migration doc nobody reads — the
+next call site is written by copying the last one; (5) keep the retired model id
+in the pricing table, since instances mid-deploy still emit calls under it.
+
 **Resampling is not repairing — one automatic retry is the honest version of "Try regenerating".**
 Corollary to the jsonrepair lesson above. Hard-failing on malformed JSON is
 right, but making the designer click regenerate for a failure they cannot

@@ -246,7 +246,7 @@ Return JSON array:
         async () => {
           return await anthropic.messages.create({
             model: modelName,
-            temperature: 0.7,
+            thinking: { type: 'disabled' },
             max_tokens: 2000,
             system: systemPrompt,
             messages: [

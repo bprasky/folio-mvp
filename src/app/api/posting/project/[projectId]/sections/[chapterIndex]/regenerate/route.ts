@@ -216,8 +216,8 @@ ${JSON_PROSE_QUOTING_RULE}`;
       async () => {
         return await anthropic.messages.create({
           model: modelName,
+          thinking: { type: 'disabled' },
           max_tokens: 2000,
-          temperature: 0.7,
           system: SECTION_REGEN_SYSTEM_PROMPT,
           messages: [{ role: 'user', content: userPrompt }],
         });

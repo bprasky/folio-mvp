@@ -550,12 +550,12 @@ Return JSON only: {"quote": "..."} or {"quote": null}. Do not wrap the quote in 
     console.log('[VERIFY] spliceHookQuote: AI SPLICE path');
     const message = await client.messages.create({
       model: MODELS.sonnet,
+      thinking: { type: 'disabled' },
       system,
       messages: [
         { role: 'user', content: sourceLines },
       ],
       max_tokens: 200,
-      temperature: 0.3,
     });
 
     const raw = message.content[0]?.type === 'text' ? message.content[0].text : '';
@@ -1545,26 +1545,40 @@ export async function generateEditorialDraft(input: GenInput): Promise<{
   // Project-level answers all land in "About This Project"/"General", so an
   // answer-based count collapses to 0 and starves an image-driven multi-room
   // draft — the model then truncates mid-JSON and the parse fails as
-  // LLM_JSON_PARSE. Each written chapter needs ~800 tokens of prose+structure.
+  // LLM_JSON_PARSE. Each written chapter needs ~1100 tokens of prose+structure.
+  //
+  // That per-room figure was ~800 when this ran on Sonnet 4.6. Sonnet 5 uses a
+  // different tokenizer that produces roughly 30% more tokens for the SAME text,
+  // so an unchanged budget would buy ~30% less prose and start truncating
+  // multi-room drafts — a chapter count that fit before would now surface as
+  // LLM_TRUNCATED. The article did not get longer; the unit did. Same reason the
+  // 4096 floor moves to 5500.
+  //
   // Cap note: the Sonnet model ceiling is 128K output tokens, so this cap is
   // NOT a model limit — it's a wall-clock guard. This call is non-streaming, and
   // a generation that runs for many minutes risks an HTTP timeout / serverless
-  // maxDuration 502 before the JSON returns. 32K (~37 rooms at 800/room) covers
-  // any realistic project while staying inside a completable window. To size for
-  // genuinely unbounded projects, switch this call to `.stream()` +
-  // getFinalMessage() and the cap can safely rise toward 128K.
+  // maxDuration 502 before the JSON returns. 32K (~27 rooms at 1100/room) covers
+  // any realistic project while staying inside a completable window; it stays put
+  // because wall-clock is a function of prose written, not of how that prose is
+  // tokenized. To size for genuinely unbounded projects, switch this call to
+  // `.stream()` + getFinalMessage() and the cap can safely rise toward 128K.
   const outputRoomCount = Math.max(writeRooms.length, 1);
-  const maxTokens = Math.min(32000, Math.max(4096, outputRoomCount * 800 + 2000));
+  const maxTokens = Math.min(32000, Math.max(5500, outputRoomCount * 1100 + 2700));
   const modelName = MODELS.sonnet;
 
   const runGeneration = (attempt: number) => callLLM(
     async () => {
       return await client.messages.create({
         model: modelName,
-        // Attempt 2 is a resample after unparseable JSON. Drop the temperature so
-        // the retry hugs the format instructions instead of re-rolling the same
-        // creative liberties that broke the string in the first place.
-        temperature: attempt === 1 ? 0.7 : 0.3,
+        // Sonnet 5 runs adaptive thinking when `thinking` is omitted, and thinking
+        // shares the max_tokens budget with the response. Disabled keeps the
+        // wall-clock and token profile this generator was sized against.
+        thinking: { type: 'disabled' },
+        // Attempt 2 is a resample after unparseable JSON. It used to also drop the
+        // temperature 0.7 → 0.3 to make the retry hug the format instructions;
+        // Sonnet 5 rejects the parameter, so the only difference between the two
+        // attempts is now JSON_RESAMPLE_NOTE restating the rule that was violated.
+        // A fresh sample is still worth taking — it just carries less of an edge.
         max_tokens: maxTokens,
         system: systemPrompt,
         messages: [

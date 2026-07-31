@@ -54,6 +54,7 @@ export async function POST(request: NextRequest) {
   try {
     const message = await anthropic.messages.create({
       model: MODELS.sonnet,
+      thinking: { type: 'disabled' },
       max_tokens: 1024,
       system: `You extract structured profile fields from an interior design professional's free-text bio.
 

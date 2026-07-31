@@ -301,9 +301,9 @@ Do NOT re-ask any of this — it is settled ground. Use it only to sharpen wordi
       async () => {
         return await anthropic.messages.create({
           model: modelName,
+          thinking: { type: 'disabled' },
           system: BATCH_FOLLOWUP_SYSTEM_PROMPT,
           messages: [{ role: "user", content: prompt }],
-          temperature: 0.7,
           max_tokens: 500,
         });
       },
