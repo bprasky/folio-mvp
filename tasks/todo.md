@@ -807,3 +807,101 @@ read by nobody, which is precisely how it stayed invisible.
 - [ ] **Not verified:** no failure has been produced against the new taxonomy.
       The UI does not yet read `retryable` — the API returns it, the front end
       still needs to drop the control when it is false.
+
+---
+
+# Part 12 — Pull quotes become selection, not authorship (branch: claude/llm-json-parse-error-pvl9ra)
+
+## Reported
+Live preview of La Gorce showed three defects at once: a raw `LIVING_ROOM`
+title, entry prose under a LIVING ROOM heading and facade prose under DINING
+ROOM, and a pull quote reading "elements **in** tension" where the designer had
+said "elements **on** tension".
+
+## Root cause 1 — Regenerate could not fix anything
+```ts
+// Existing published chapters → frozen set (editorial + roomId), in order.
+const frozenChapters = existingChapters.filter(
+  (ch) => ch?.kind === 'editorial' && typeof ch?.roomId === 'string' && ch.roomId,
+);
+```
+The comment said **published**. The code never checked publication, and
+`post.status` sits selected and unread a few lines above. So every chapter from
+any previous generation was frozen — on an unpublished draft. That run froze 10
+chapters with `writeRooms: []`, which means the Part 3 title-matching fix ran on
+an empty list. It was never wrong; it never executed. The mismatched pairings
+and the pre-`formatRoomName` title were weeks-old artifacts carried forward
+verbatim through every regeneration, unrepairable from the UI.
+
+- [x] Regenerate now preserves nothing. Per-chapter preservation is a real
+      feature and an explicit designer choice — a separate one — so the append
+      machinery is left intact rather than deleted.
+
+## Root cause 2 — quotes were mined from the article, not the interview
+`extractPullQuotesForChapter` regex-scraped quoted spans out of the GENERATED
+BODY. If the model paraphrased while composing, the extractor faithfully lifted
+the paraphrase. Verbatim-to-the-article is not verbatim-to-the-person.
+Compounding it, the body is rewritten twice AFTER quotes were captured
+(`fixSentenceOpeners`, `applyProseNamingGate`), so a quote could no longer match
+the text it came from — the same line shipped two ways in one article.
+
+## Fix — the model can no longer write a quote, only choose one
+- [x] `quoteCandidates.ts` — code cuts candidates from the designer's own
+      answers by index into the source string. Verbatim by construction.
+      **Contiguous only**: splicing across answers cannot be substring-verified,
+      so it is not offered. Follow-ups are ranked first, since those questions
+      are specifically prompted to produce quotable material.
+- [x] `selectPullQuotes.ts` — one batched call across all rooms that returns
+      **candidate IDs, never text**. We look the ID up in our own array. A model
+      that can only pick from a list cannot invent a quote — not discouraged
+      from inventing, unable to.
+- [x] Selection re-verified as a verbatim span of its source answer, then falls
+      closed to the top code-ranked candidate. Ranking is advisory: a failed or
+      unparseable call costs editorial judgement, not the quote.
+- [x] Assigned as the LAST pipeline step, after both body rewrites, so no later
+      mutation can put quote and prose out of step.
+- [x] `spliceHookQuote` output is now verified the same way — it is allowed to
+      trim and elide, which means it is able to reword, so it is checked rather
+      than trusted. Fails → no hook quote.
+- [x] `LLM_QUOTE_UNVERIFIED` incident when a selection fails verification.
+
+## No fallback pool, by decision
+A room whose own answers yield nothing quotable gets **no pull quote**.
+Borrowing a project-level line would put words under a heading they were not
+said about. Because follow-ups are written to be quotable, an empty pool is a
+real signal that the follow-up for that room did not land — logged as
+`[pullquotes] rooms with no quotable candidate`, to fix upstream in the
+interview rather than paper over in the article.
+
+## Shuffle-before-posting: the UI already existed, it was just starved
+`EditableArticle` already had `handleCycle` / `handleRemove` / `handleAdd`
+persisting through `PATCH /sections/pull-quote`, and that endpoint already
+rejects any `selectedText` not present in `alternatives`. The feature was inert
+because `alternatives` came from regex hits on the generated body — thin, and
+not guaranteed to be the designer's words.
+
+Feeding it verbatim candidates exposed a blocker in it:
+- [x] `alternatives` now **includes the chosen quote**, in rank order. The editor
+      locates its position with `alternatives.findIndex(a => a.text === selected)`,
+      so omitting the pick made that -1 and the arrows toggled between two fixed
+      entries instead of walking the list. The endpoint would also have rejected
+      a designer trying to cycle back to the original.
+- [x] Pool widened to 6, and **de-overlapped**: candidates include both a
+      sentence and that sentence plus its neighbour, so one is often a prefix of
+      another. Without the filter a designer clicks through what reads as the
+      same quote twice. A realistic 3-answer room yields 6 distinct options.
+- [x] Every option is verbatim, so shuffling can never introduce something the
+      designer did not say. The model picks the default; the designer picks the
+      quote.
+
+## Verify
+- [x] `npm run check:pull-quotes` — 26 checks. The load-bearing pair replays the
+      shipped defect: "elements on tension" verifies, "elements in tension" is
+      rejected. Also: every candidate is a verbatim contiguous span; a thin
+      answer yields zero candidates; no candidate leaks between rooms; case and
+      curly glyphs are forgiven (typesetting) while a swapped word is not; and
+      the pipeline greps assert quotes are assigned after both body rewrites.
+- [x] `npm run check:ai-errors` — 12 codes.
+- [ ] **Not verified: a live generation.** The ranking call has never run. The
+      guarantee that no fabricated quote can ship is structural and tested; the
+      quality of which quote gets picked is not.
