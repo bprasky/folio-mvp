@@ -34,7 +34,7 @@ export async function POST(
       });
     } else {
       // Surface the action's own message. A refusal here is usually the publish
-      // gate ("sort rooms / confirm tags") or a missing draft — actionable
+      // gate ("sort every photo into a room") or a missing draft — actionable
       // things the designer can fix. Flattening every one of them into a generic
       // 500 told them to "try again", which is exactly what does not work.
       return NextResponse.json(

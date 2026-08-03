@@ -1,3 +1,74 @@
+# Tagging is upside, not a gate (branch: claude/story-tab-room-indexed-rtu92a)
+
+## What was on screen
+
+> Your draft is written. The products are not tagged.
+> Every photo needs its products confirmed — or marked product-free — before
+> this can go public.
+
+That was a real rule, enforced in three places, and it was never a product
+decision anyone had made. `computePublishReadiness` had
+`publishComplete = roomsComplete && tagsComplete`, where `tagsComplete` means
+**every** included, non-document photo has `tagCount > 0 || noProducts === true`.
+So having "some tags" did nothing — one untagged photo out of thirty closed the
+gate. It was enforced server-side in both `publishEditorial` and
+`publishProjectAction`, and the Publish button was replaced with a link to the
+Tags step, so it could not even be attempted.
+
+The tracker's own Tags copy already said *"Untagged photos still publish, but
+they cannot earn."* The copy was right and the gate disagreed with it.
+
+## The rule now
+
+`canPublish = roomsComplete`. Rooms stay a hard gate because they are
+structural — chapters and the gallery are both built per room, so a photo with
+no room has nowhere to appear and would silently vanish from the article being
+published. Tags are not structural. They are upside: the vendor gets invited to
+collaborate on the post and share it with their own audience, and the designer's
+product library grows for the next project. Worth asking for at the moment of
+publishing; not worth withholding a finished article over.
+
+`gates.tags` still reports `complete` and `remaining`, so the tracker still
+shows Tags as a step with work left and the CTA ladder still offers
+"Tag products (N left)" as the natural next thing. It just no longer feeds
+`canPublish`.
+
+## What replaced the block
+
+`UntaggedPhotosPrompt` on the Publish tab. The Publish button is live; pressing
+it with untagged photos asks once, naming the count and what tagging is worth,
+then offers **Tag products first** (routes to the Tags step) or
+**Publish anyway**. In the readiness checklist, tags moved from required to
+recommended. `PUBLISH_BLOCKED_COPY` lost its `tags` variant entirely and
+`publishBlockedBy` narrowed to `'rooms'`, so that message cannot render again.
+Both server messages now read "Sort every photo into a room before publishing."
+
+## Verify
+
+- [x] `npx tsc --noEmit` — 1025 errors, byte-identical to the count before the
+      change. Nothing new in any file touched.
+- [x] `npx next build` — succeeds.
+- [x] Readiness rule test (16 assertions, direct calls to
+      `computePublishReadiness`) — the reported case (rooms sorted, 3 tags on
+      one photo, 2 photos untagged) now publishes while the tags gate still
+      reports `complete: false, remaining: 2`, `nextGate` stays `tags` and the
+      CTA stays "Tag products (2 left)"; nothing tagged at all publishes; an
+      unsorted photo still blocks and reports its remainder; `noProducts` still
+      satisfies the tags gate; zero photos still cannot publish; an EXCLUDED
+      photo blocks neither gate; `PUBLISH_BLOCKED_COPY` has no `tags` key and
+      the old sentence is gone from the bundle.
+- [ ] **Not verified: a live publish.** No database here, so the two server
+      call sites were read, not exercised.
+
+## Left alone, worth a look
+
+The publish step's tracker copy still opens "Everything is in place", which
+overclaims slightly when photos are untagged. It only renders once nothing is
+blocking, and the checklist shows the outstanding tags row, so it is not the lie
+the old blocker was — but it is the same class of thing.
+
+---
+
 # Any answer earns a write-up (branch: claude/story-tab-room-indexed-rtu92a)
 
 ## The rule that was there

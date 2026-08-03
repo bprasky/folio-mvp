@@ -161,7 +161,7 @@ export const TRACKER_TYPES: Record<TrackerType, TypeDef> = {
       tags: {
         eyebrow: 'Tag products',
         headline: 'Tag the products in your photos',
-        body: 'A tagged photo tells readers exactly what they are looking at and where to buy it. Untagged photos still publish, but they cannot earn.',
+        body: 'A tagged photo tells readers what they are looking at and where to buy it, invites the vendor to collaborate on the post and share it onward, and builds out your product library. Untagged photos still publish, they just cannot earn.',
         cta: 'Tag products',
         action: 'tag',
       },
@@ -282,26 +282,21 @@ export const STORY_IN_PROGRESS_COPY: Partial<StepCopy> = {
  * and its CTA fires a publish the server will refuse — so say what is actually
  * blocking and send the designer to the step that owns it.
  *
- * Keyed by the blocking gate. Rooms is checked before tags because the tags gate
- * depends on it (`computePublishReadiness`: `tagsComplete = roomsComplete && …`),
- * so offering "Tag products" while photos are still unsorted sends the designer
- * to work they cannot finish.
+ * Rooms is the only gate. A photo with no room has nowhere to appear — neither a
+ * chapter nor the gallery is built for it — so publishing would quietly drop it
+ * from the article. Untagged photos used to sit here too, phrased as "before
+ * this can go public", which was never a real rule: tagging is upside (vendors
+ * invited, the post shared onward, the product library growing), and the Publish
+ * tab now asks for it at the moment of publishing instead of withholding a
+ * finished article over it.
  */
-export const PUBLISH_BLOCKED_COPY: Record<'rooms' | 'tags', Partial<StepCopy>> = {
+export const PUBLISH_BLOCKED_COPY: Record<'rooms', Partial<StepCopy>> = {
   rooms: {
     eyebrow: 'Sort rooms first',
     headline: 'Your draft is written. The photos are not sorted.',
     body: 'Every photo needs a room before this can go public. Your draft is saved and waiting exactly as it is.',
     cta: 'Sort rooms',
     action: 'sort-rooms',
-    ready: false,
-  },
-  tags: {
-    eyebrow: 'Tag products first',
-    headline: 'Your draft is written. The products are not tagged.',
-    body: 'Every photo needs its products confirmed — or marked product-free — before this can go public. Your draft is saved and waiting exactly as it is.',
-    cta: 'Tag products',
-    action: 'tag',
     ready: false,
   },
 };
@@ -413,7 +408,7 @@ export interface TrackerInput {
    * next-action zone names the blocker instead of offering a publish the server
    * will refuse.
    */
-  publishBlockedBy?: 'rooms' | 'tags';
+  publishBlockedBy?: 'rooms';
   /**
    * The step the designer is currently viewing. The tracker follows the surface
    * they're on rather than always pointing at the frontier, so stepping back to

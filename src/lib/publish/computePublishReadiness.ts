@@ -33,7 +33,8 @@ export interface PublishReadiness {
   nextGate: Gate;
   ctaLabel: string;
   ctaAction: CtaAction;
-  canPublish: boolean; // gates.rooms.complete && gates.tags.complete
+  /** gates.rooms.complete. Tags are prompted for at publish, never required. */
+  canPublish: boolean;
   statusLine: string; // "19 photos · 7 rooms · 0 tagged"
 }
 
@@ -94,7 +95,22 @@ export function computePublishReadiness(input: ReadinessInput): PublishReadiness
   const photosComplete = photos.length > 0;
   const roomsComplete = included.length > 0 && uncategorized.length === 0;
   const tagsComplete = roomsComplete && untagged.length === 0;
-  const publishComplete = roomsComplete && tagsComplete;
+
+  // TAGS DO NOT BLOCK PUBLISHING. Rooms do.
+  //
+  // A room is structural: the article's chapters and its gallery are both built
+  // per room, so a photo with no room has nowhere to appear and would silently
+  // vanish from the piece the designer is about to publish. That is worth
+  // stopping for.
+  //
+  // Tagging is not structural — it is upside. Tags are how the vendors in a
+  // project get invited to collaborate on the post and share it with their own
+  // audience, and how the designer's product library builds up for the next
+  // project. Real value, and worth asking for at the moment of publishing, but
+  // withholding a finished article until every last photo is signed off makes a
+  // marketing benefit read as a compliance step. The Publish tab prompts once,
+  // names the benefit, and lets the designer publish.
+  const publishComplete = roomsComplete;
 
   const gates: Record<Gate, GateState> = {
     photos: { complete: photosComplete, remaining: photosComplete ? 0 : 1 },

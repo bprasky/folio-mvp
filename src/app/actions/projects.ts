@@ -175,7 +175,7 @@ export async function publishEditorial({ projectId }: { projectId: string }) {
       if (!readiness.canPublish) {
         return {
           ok: false,
-          message: 'Sort every photo into a room and confirm its tags before publishing.',
+          message: 'Sort every photo into a room before publishing.',
         };
       }
     }
@@ -376,10 +376,11 @@ export async function publishProjectAction(raw: unknown) {
     throw new Error('Not authorized to publish this project');
   }
 
-  // Publish gate backstop (spec 20 §3e). The spine never surfaces "Publish"
-  // while blocked, but the server enforces rooms + tags completeness as the
-  // source of truth. Idempotent re-publish of an already-public project is
-  // still allowed (the gate only guards the first transition to public).
+  // Publish gate backstop. The spine never surfaces "Publish" while blocked, but
+  // the server enforces room completeness as the source of truth. Tags are NOT
+  // enforced — they are prompted for at publish time and never withheld over
+  // (see computePublishReadiness). Idempotent re-publish of an already-public
+  // project is still allowed (the gate only guards the first transition).
   if (!project.isPublic) {
     const readiness = computePublishReadiness({
       photos: project.images
@@ -397,7 +398,7 @@ export async function publishProjectAction(raw: unknown) {
     });
 
     if (!readiness.canPublish) {
-      throw new Error('Sort rooms and confirm tags before publishing.');
+      throw new Error('Sort every photo into a room before publishing.');
     }
   }
 

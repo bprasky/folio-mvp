@@ -62,7 +62,7 @@ function buildTrackerState(args: {
   isPublished: boolean;
   interviewInProgress: boolean;
   draftExists: boolean;
-  publishBlockedBy?: 'rooms' | 'tags';
+  publishBlockedBy?: 'rooms';
   /**
    * The step whose surface is open. Omitted on the first pass, before the view
    * has resolved — that pass exists only to read `reachedIndex`, which is what
@@ -311,15 +311,12 @@ export default async function ProjectPage({
   // Project Progress Tracker — guided "what's next" region (top of page).
   const photoCount = base.images.filter(img => !isDocumentImage(img.name)).length;
 
-  // Which gate holds publishing closed. Rooms before tags: the tags gate depends
-  // on rooms, so naming tags while photos are unsorted points at work that can't
-  // be finished. Undefined once both pass — then nothing is blocking.
-  const publishBlockedBy: 'rooms' | 'tags' | undefined = !publishReadiness.gates.rooms
-    .complete
+  // Which gate holds publishing closed. Rooms is the only one: a photo with no
+  // room has nowhere to appear in the article. Untagged photos are prompted for
+  // on the Publish tab, not blocked on — see computePublishReadiness.
+  const publishBlockedBy: 'rooms' | undefined = !publishReadiness.gates.rooms.complete
     ? 'rooms'
-    : !publishReadiness.gates.tags.complete
-      ? 'tags'
-      : undefined;
+    : undefined;
 
   const trackerArgs = {
     timeline: base.timeline ?? null,
@@ -641,7 +638,7 @@ async function PublishTabContent({
   editorialState: EditorialState;
   /** Server-derived publish gate — the same value the server action enforces. */
   canPublish: boolean;
-  publishBlockedBy?: 'rooms' | 'tags';
+  publishBlockedBy?: 'rooms';
   taggedPhotoCount: number;
   untaggedPhotoCount: number;
   unsortedPhotoCount: number;

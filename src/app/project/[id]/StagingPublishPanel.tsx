@@ -58,7 +58,7 @@ interface StagingPublishPanelProps {
    */
   canPublish: boolean;
   /** Which gate is closed, for naming the blocker and linking to its step. */
-  publishBlockedBy?: 'rooms' | 'tags';
+  publishBlockedBy?: 'rooms';
   taggedPhotoCount: number;
   untaggedPhotoCount: number;
   unsortedPhotoCount: number;
@@ -108,6 +108,10 @@ export default function StagingPublishPanel({
 
   const [checklistExpanded, setChecklistExpanded] = useState(false);
   const [showUnpublishDialog, setShowUnpublishDialog] = useState(false);
+  // Asked once when photos are still untagged. Tagging is upside, not a
+  // requirement, so this names what the designer gains and then gets out of the
+  // way — see computePublishReadiness for why it stopped being a gate.
+  const [showTagsPrompt, setShowTagsPrompt] = useState(false);
   const [viewMode, setViewMode] = useState<'edit' | 'preview'>('edit');
   const [showRegenDialog, setShowRegenDialog] = useState(false);
   const [keepEdits, setKeepEdits] = useState(true);
@@ -115,19 +119,19 @@ export default function StagingPublishPanel({
   const isPublishedStatus = initialPostData?.status === "PUBLISHED" || publishSuccess;
   const slug = initialPostData?.slug || publishedSlug;
 
-  // Readiness display. The two REQUIRED rows mirror the server gate exactly
-  // (`computePublishReadiness`: every included photo sorted into a room, and
-  // every included photo either tagged or marked product-free) so the checklist
-  // and the button can't tell different stories. Cover, reflections and credits
-  // are recommended — they never gate the publish.
+  // Readiness display. The one REQUIRED row mirrors the server gate exactly
+  // (`computePublishReadiness`: every included photo sorted into a room) so the
+  // checklist and the button can't tell different stories. Tags, cover,
+  // reflections and credits are recommended — tags are asked for at the moment
+  // of publishing, but none of them gate it.
   const imageCount = images.length;
   const roomsReady = unsortedPhotoCount === 0;
   const tagsReady = untaggedPhotoCount === 0;
   const hasCover = !!heroAssetId;
   const hasReflections = (data?.interview?.answers?.length || 0) > 0;
 
-  const requiredChecks = [roomsReady, tagsReady];
-  const recommendedChecks = [hasCover, hasReflections, hasCredits];
+  const requiredChecks = [roomsReady];
+  const recommendedChecks = [tagsReady, hasCover, hasReflections, hasCredits];
   const totalPassed = [...requiredChecks, ...recommendedChecks].filter(Boolean).length;
   const totalChecks = requiredChecks.length + recommendedChecks.length;
 
@@ -138,6 +142,20 @@ export default function StagingPublishPanel({
       setChecklistExpanded(true);
     }
   }, [canPublish]);
+
+  /**
+   * Publishing with untagged photos is allowed, so this asks rather than
+   * blocks: it says what tagging is worth, offers the Tags step, and lets the
+   * designer publish anyway. Nothing to remember across sessions — the prompt
+   * only appears while photos are untagged, and publishing ends the question.
+   */
+  function requestPublish() {
+    if (untaggedPhotoCount > 0) {
+      setShowTagsPrompt(true);
+      return;
+    }
+    handlePublish();
+  }
 
   async function handleRegenerate() {
     const savedOverrides = keepEdits
@@ -442,7 +460,7 @@ export default function StagingPublishPanel({
                 </>
               ) : canPublish ? (
                 <button
-                  onClick={handlePublish}
+                  onClick={requestPublish}
                   disabled={isPublishing || !initialPostData?.expandedBlocks}
                   className="px-6 py-2 folio-ui font-semibold text-white bg-[var(--accent)] rounded-lg hover:bg-[var(--accent-hover)] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                 >
@@ -458,16 +476,10 @@ export default function StagingPublishPanel({
                 // banner instead of the work that was actually outstanding.
                 // Send them to it.
                 <Link
-                  href={
-                    publishBlockedBy === 'rooms'
-                      ? roomsHref(projectId)
-                      : tagsHref(projectId)
-                  }
+                  href={roomsHref(projectId)}
                   className="flex items-center gap-2 px-6 py-2 folio-ui font-semibold text-white bg-[var(--accent)] rounded-lg hover:bg-[var(--accent-hover)] transition-colors"
                 >
-                  {publishBlockedBy === 'rooms'
-                    ? `Sort rooms (${unsortedPhotoCount} left)`
-                    : `Tag products (${untaggedPhotoCount} left)`}
+                  Sort rooms ({unsortedPhotoCount} left)
                   <ArrowRight className="w-4 h-4" />
                 </Link>
               )}
@@ -499,7 +511,7 @@ export default function StagingPublishPanel({
                           untaggedPhotoCount === 1 ? "photo" : "photos"
                         } still to tag`
                   }
-                  required
+                  recommended
                   href={tagsReady ? undefined : tagsHref(projectId)}
                 />
                 <ReadinessItem done={hasCover} label="Cover image selected" recommended />
@@ -581,6 +593,20 @@ export default function StagingPublishPanel({
         </div>
       )}
 
+      {/* Untagged photos — asked once, never a blocker. */}
+      {showTagsPrompt && (
+        <UntaggedPhotosPrompt
+          projectId={projectId}
+          untaggedPhotoCount={untaggedPhotoCount}
+          publishing={isPublishing}
+          onPublishAnyway={() => {
+            setShowTagsPrompt(false);
+            handlePublish();
+          }}
+          onCancel={() => setShowTagsPrompt(false)}
+        />
+      )}
+
       {/* Unpublish confirmation dialog */}
       <ConfirmDialog
         open={showUnpublishDialog}
@@ -591,6 +617,85 @@ export default function StagingPublishPanel({
         onCancel={() => setShowUnpublishDialog(false)}
         onConfirm={handleUnpublish}
       />
+    </div>
+  );
+}
+
+/**
+ * UntaggedPhotosPrompt — the ask before publishing with photos still untagged.
+ *
+ * Tagging does not gate publishing (see `computePublishReadiness`), so this is a
+ * pitch, not a checkpoint: it names what tagging is actually worth to the
+ * designer — vendors invited to collaborate and share the post, a product
+ * library that carries into the next project — and then lets them publish. The
+ * secondary action goes to the Tags step so "later" is one click, not a hunt.
+ */
+function UntaggedPhotosPrompt({
+  projectId,
+  untaggedPhotoCount,
+  publishing,
+  onPublishAnyway,
+  onCancel,
+}: {
+  projectId: string;
+  untaggedPhotoCount: number;
+  publishing: boolean;
+  onPublishAnyway: () => void;
+  onCancel: () => void;
+}) {
+  useEffect(() => {
+    function onKey(e: KeyboardEvent) {
+      if (e.key === "Escape") onCancel();
+    }
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [onCancel]);
+
+  const one = untaggedPhotoCount === 1;
+
+  return (
+    <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
+      <div
+        className="absolute inset-0 bg-[rgba(22,22,20,.32)] [backdrop-filter:blur(6px)_saturate(150%)]"
+        onClick={onCancel}
+        aria-hidden
+      />
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-label="Publish with untagged photos"
+        className="relative w-full max-w-[520px] overflow-hidden rounded-lg bg-surface-canvas p-7 shadow-folio3"
+      >
+        <span className="inline-flex h-10 w-10 items-center justify-center rounded-neu-sm bg-surface-ground text-folio-gold">
+          <Tag className="h-5 w-5" aria-hidden />
+        </span>
+        <h2 className="mt-4 font-headline text-folio-h4 text-folio-text-primary">
+          {untaggedPhotoCount} {one ? "photo has" : "photos have"} no products tagged
+        </h2>
+        <p className="mt-2 folio-body text-folio-text-secondary">
+          You can publish without them. Tagging is what invites the vendors in this project
+          to collaborate on the post and share it with their own audience, and it builds out
+          your product library for the next one.
+        </p>
+
+        <div className="mt-6 flex flex-wrap items-center justify-end gap-3">
+          <Link
+            href={tagsHref(projectId)}
+            className="inline-flex items-center gap-2 rounded-lg border border-folio-border-strong px-4 py-2.5 folio-ui font-medium text-folio-text-secondary transition-colors duration-150 hover:border-[var(--accent)] hover:text-[var(--accent)]"
+          >
+            Tag products first
+            <ArrowRight className="h-4 w-4" aria-hidden />
+          </Link>
+          <button
+            type="button"
+            onClick={onPublishAnyway}
+            disabled={publishing}
+            className="rounded-lg bg-[var(--accent)] px-5 py-2.5 folio-ui font-semibold text-white transition-colors duration-150 hover:bg-[var(--accent-hover)] disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            {publishing ? "Publishing…" : "Publish anyway"}
+          </button>
+        </div>
+      </div>
     </div>
   );
 }
