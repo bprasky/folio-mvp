@@ -789,6 +789,54 @@ reintroducing the fork, or it's decoration; (4) dead code with type errors insid
 it is a strong signal it's dead — check `tsc` output per file before assuming a
 big unreferenced block is merely dormant.
 
+**"How far have you got" and "where do you land" were two ladders, and only one of them knew about the draft.**
+Opening La Gorce showed the tracker pointing at Tags — "Next · Tag the products in
+your photos" — with the Publish marker rendered locked and inert, while a finished
+editorial draft rendered on the surface directly below it. Both halves were
+individually defensible. `deriveTrackerState` computed `reachedIndex` purely from
+step COMPLETION, and the publish step's completion flag is `isPublished`; a draft
+that exists but hasn't shipped therefore moved the tracker nowhere, so `currentIndex`
+fell back to the frontier (Tags). Meanwhile `page.tsx` had its own `defaultView`
+branch ladder that DID check `hasDraftOrPublished` and sent you to the Publish tab.
+The two ladders were answering the same question — how far has this project got —
+and disagreeing, which is why the header contradicted the page it sat on.
+Fix: a step whose WORK has started counts as reached even though it completes later.
+That rule already existed for the interview step (`interviewInProgress`); the publish
+step needed the same treatment (`draftExists`), and then landing could be derived from
+`reachedIndex` instead of re-branched.
+Rules: (1) when two pieces of code answer the same question about state, one must
+call the other — a second ladder that "happens to agree" is a coincidence with an
+expiry date, and the failure mode is a header that contradicts its own page;
+(2) distinguish REACHED from COMPLETE explicitly for every step, because any step
+whose artifact is produced before the step finishes (a draft before publish, answers
+before generation) is invisible to a completion-only model; (3) when adding a
+second instance of a rule that already exists once, key it off the same abstraction
+the first one used (here: `copy[key].action`, not a hardcoded step key) so it stays
+correct across tracker types; (4) a locked step marker is a strong signal — if the
+surface behind it renders real content, the gate model is wrong, not the surface.
+
+**A gate that exists on one publish path and not the other is not a gate.**
+`computePublishReadiness` has a `canPublish` field, an explicit backstop comment
+citing spec 20 §3e, and a real enforcement site — in `publishProjectAction`, which
+only the designer-dashboard `PublishButton` calls. The Publish tab's button goes
+through `publishEditorial`, which had no readiness check at all, so an editorial
+could go public with photos unsorted into rooms and nothing tagged. The client was
+no better: the panel computed its own `allRequired` from a DIFFERENT definition of
+ready (`hasImages && hasTags && hasCover` — "at least one photo has at least one
+tag", not "every photo reviewed"), used it only to color a badge and auto-expand a
+checklist, and left the Publish button enabled regardless. Three definitions of
+"ready to publish", one of them enforced, none of them agreeing.
+Rules: (1) when a shared readiness/authorization helper exists, grep for every
+mutation that should consult it and check EACH one — the existence of a well-commented
+enforcement site is evidence the rule was written down, not that it is applied;
+(2) a client-side readiness display must consume the same server-derived value the
+server enforces, never recompute its own — a second definition drifts silently
+because both look plausible on screen; (3) if a button fires a request the server
+will refuse, that is not a gate, it is an error message with extra steps — disable
+it or replace it with a route to the outstanding work; (4) an action returning
+`{ok: false, message}` whose caller flattens every failure into a generic 500 turns
+"sort your rooms" into "try again", which is advice that cannot work.
+
 **A control that collects input it never sends is worse than no control, because non-determinism makes the placebo convincing.**
 The Regenerate Article dialog offered "Any direction for the rewrite? (optional)".
 `regenFeedback` had four references: declared, bound to the input's value and

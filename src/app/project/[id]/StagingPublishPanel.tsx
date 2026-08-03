@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
   ExternalLink,
@@ -12,12 +13,11 @@ import {
   Eye,
   AlertCircle,
   Tag,
+  ArrowRight,
 } from "lucide-react";
 import { usePublishFlow } from "@/hooks/usePublishFlow";
 import { ImmersiveProjectPage } from "@/components/project/ImmersiveProjectPage";
 import ConfirmDialog from "@/components/ui/ConfirmDialog";
-import { InterviewModal } from "@/components/posting/interview/InterviewModal";
-import { ProjectImageTagger } from "@/components/project/ProjectImageTagger";
 import type { EditorialState } from "@/lib/editorial/getEditorialState";
 import EditableArticle from "@/components/posting/editing/EditableArticle";
 import type { SectionOverride, SectionHistoryEntry } from "@/lib/posting/editingTypes";
@@ -45,22 +45,44 @@ interface ProjectImage {
 
 interface StagingPublishPanelProps {
   projectId: string;
-  project: { id: string; title: string };
   images: ProjectImage[];
   isOwner: boolean;
   initialPostData: any;
   initialModules: any[];
   editorialState?: EditorialState;
+  /**
+   * The publish gate, derived server-side by `computePublishReadiness` — the
+   * same value `publishEditorial` enforces. The button reads this rather than
+   * recomputing: a second definition of "ready" on the client is how the panel
+   * came to offer a publish the server refuses.
+   */
+  canPublish: boolean;
+  /** Which gate is closed, for naming the blocker and linking to its step. */
+  publishBlockedBy?: 'rooms' | 'tags';
+  taggedPhotoCount: number;
+  untaggedPhotoCount: number;
+  unsortedPhotoCount: number;
 }
+
+/** The Tags step's surface. Tagging lives there and only there. */
+const tagsHref = (projectId: string) => `/project/${projectId}?view=media&step=tags`;
+/** The Rooms step's surface. */
+const roomsHref = (projectId: string) => `/project/${projectId}?view=media&step=rooms`;
+/** The Story step's surface — interview, answers, and generation. */
+const storyHref = (projectId: string) => `/project/${projectId}?view=story`;
 
 export default function StagingPublishPanel({
   projectId,
-  project,
   images,
   isOwner,
   initialPostData,
   initialModules,
   editorialState,
+  canPublish,
+  publishBlockedBy,
+  taggedPhotoCount,
+  untaggedPhotoCount,
+  unsortedPhotoCount,
 }: StagingPublishPanelProps) {
   const router = useRouter();
   const {
@@ -86,8 +108,6 @@ export default function StagingPublishPanel({
 
   const [checklistExpanded, setChecklistExpanded] = useState(false);
   const [showUnpublishDialog, setShowUnpublishDialog] = useState(false);
-  const [showInterviewModal, setShowInterviewModal] = useState(false);
-  const [showTagger, setShowTagger] = useState(false);
   const [viewMode, setViewMode] = useState<'edit' | 'preview'>('edit');
   const [showRegenDialog, setShowRegenDialog] = useState(false);
   const [keepEdits, setKeepEdits] = useState(true);
@@ -95,27 +115,29 @@ export default function StagingPublishPanel({
   const isPublishedStatus = initialPostData?.status === "PUBLISHED" || publishSuccess;
   const slug = initialPostData?.slug || publishedSlug;
 
-  // Readiness checks
-  const hasImages = images.length > 0;
+  // Readiness display. The two REQUIRED rows mirror the server gate exactly
+  // (`computePublishReadiness`: every included photo sorted into a room, and
+  // every included photo either tagged or marked product-free) so the checklist
+  // and the button can't tell different stories. Cover, reflections and credits
+  // are recommended — they never gate the publish.
   const imageCount = images.length;
-  const taggedCount = images.filter((img) => img.tags.length > 0).length;
-  const hasTags = taggedCount > 0;
+  const roomsReady = unsortedPhotoCount === 0;
+  const tagsReady = untaggedPhotoCount === 0;
   const hasCover = !!heroAssetId;
   const hasReflections = (data?.interview?.answers?.length || 0) > 0;
 
-  const requiredChecks = [hasImages, hasTags, hasCover];
-  const recommendedChecks = [hasReflections, hasCredits];
-  const requiredPassed = requiredChecks.filter(Boolean).length;
+  const requiredChecks = [roomsReady, tagsReady];
+  const recommendedChecks = [hasCover, hasReflections, hasCredits];
   const totalPassed = [...requiredChecks, ...recommendedChecks].filter(Boolean).length;
   const totalChecks = requiredChecks.length + recommendedChecks.length;
-  const allRequired = requiredChecks.every(Boolean);
 
-  // Auto-expand checklist if something is missing
+  // Auto-expand the checklist while the gate is closed, so the reason the
+  // Publish button is disabled is on screen without a click.
   useEffect(() => {
-    if (!allRequired) {
+    if (!canPublish) {
       setChecklistExpanded(true);
     }
-  }, [allRequired]);
+  }, [canPublish]);
 
   async function handleRegenerate() {
     const savedOverrides = keepEdits
@@ -221,13 +243,18 @@ export default function StagingPublishPanel({
                 </button>
               </div>
             )}
+            {/* The interview belongs to the Story step, so this links there
+                rather than opening it over the draft. Hosting it here gave the
+                project two places to answer the same questions, and left the
+                Story surface — which owns the answers, the coverage and the
+                Generate action — looking optional. */}
             {(editorialState === 'GENERATED' || editorialState === 'UNPUBLISHED') && (
-              <button
-                onClick={() => setShowInterviewModal(true)}
+              <Link
+                href={storyHref(projectId)}
                 className="flex items-center gap-1.5 px-3 py-1.5 folio-meta font-medium text-folio-text-secondary bg-surface-canvas border border-folio-border-subtle rounded-lg hover:bg-surface-ground transition-colors"
               >
-                Redo Interview
-              </button>
+                Edit your story
+              </Link>
             )}
             <button
               onClick={() => setShowRegenDialog(true)}
@@ -295,33 +322,29 @@ export default function StagingPublishPanel({
         </div>
       )}
 
-      {/* PRODUCT TAG REVIEW — Entry Point C */}
+      {/* PRODUCT TAG STATUS — a read-out, not a tagging surface. The tagger used
+          to open in a modal from here, which put the Tags step inside the
+          Publish step and gave tagging two homes with two different UIs. This
+          reports the count and links to the step that owns the work. */}
       {!isPublishedStatus && (
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-3">
-          {hasTags ? (
-            <div className="flex items-center gap-3">
-              <Tag className="w-4 h-4 text-[var(--accent)] shrink-0" />
-              <span className="folio-meta text-folio-text-secondary">
-                {taggedCount} {taggedCount === 1 ? "image" : "images"} tagged
-              </span>
-              <button
-                onClick={() => setShowTagger(true)}
-                className="folio-meta text-[var(--accent)] hover:text-[var(--accent-hover)] underline transition-colors"
-              >
-                Edit Tags
-              </button>
-            </div>
-          ) : (
-            <button
-              onClick={() => setShowTagger(true)}
-              className="flex items-center gap-2 p-3 w-full rounded-xl border border-dashed border-folio-border-subtle hover:border-[var(--accent)] hover:bg-[var(--accent)]/5 transition-all text-left"
+          <div className="flex items-center gap-3">
+            <Tag
+              className={`w-4 h-4 shrink-0 ${
+                tagsReady ? "text-[var(--accent)]" : "text-folio-text-tertiary"
+              }`}
+            />
+            <span className="folio-meta text-folio-text-secondary">
+              {taggedPhotoCount} {taggedPhotoCount === 1 ? "photo" : "photos"} tagged
+              {untaggedPhotoCount > 0 && ` · ${untaggedPhotoCount} still to review`}
+            </span>
+            <Link
+              href={tagsHref(projectId)}
+              className="folio-meta text-[var(--accent)] hover:text-[var(--accent-hover)] underline transition-colors"
             >
-              <Tag className="w-4 h-4 text-folio-text-tertiary shrink-0" />
-              <span className="folio-meta text-folio-text-secondary">
-                No products tagged yet. Tag now to enrich your editorial.
-              </span>
-            </button>
-          )}
+              {tagsReady ? "Edit tags" : "Finish tagging"}
+            </Link>
+          </div>
         </div>
       )}
 
@@ -381,7 +404,7 @@ export default function StagingPublishPanel({
               </span>
               <span
                 className={`folio-meta px-2 py-0.5 rounded-full ${
-                  allRequired
+                  canPublish
                     ? "bg-[rgb(74,44,59)]/10 text-[rgb(74,44,59)]"
                     : "bg-stone-100 text-stone-600"
                 }`}
@@ -417,7 +440,7 @@ export default function StagingPublishPanel({
                     {isUnpublishing ? "Unpublishing..." : "Unpublish"}
                   </button>
                 </>
-              ) : (
+              ) : canPublish ? (
                 <button
                   onClick={handlePublish}
                   disabled={isPublishing || !initialPostData?.expandedBlocks}
@@ -429,6 +452,24 @@ export default function StagingPublishPanel({
                     ? "Re-Publish to Folio"
                     : "Publish to Folio"}
                 </button>
+              ) : (
+                // The gate is closed. Offering "Publish to Folio" here fired a
+                // request the server rejects, so the designer met a red error
+                // banner instead of the work that was actually outstanding.
+                // Send them to it.
+                <Link
+                  href={
+                    publishBlockedBy === 'rooms'
+                      ? roomsHref(projectId)
+                      : tagsHref(projectId)
+                  }
+                  className="flex items-center gap-2 px-6 py-2 folio-ui font-semibold text-white bg-[var(--accent)] rounded-lg hover:bg-[var(--accent-hover)] transition-colors"
+                >
+                  {publishBlockedBy === 'rooms'
+                    ? `Sort rooms (${unsortedPhotoCount} left)`
+                    : `Tag products (${untaggedPhotoCount} left)`}
+                  <ArrowRight className="w-4 h-4" />
+                </Link>
               )}
             </div>
           </div>
@@ -438,50 +479,51 @@ export default function StagingPublishPanel({
             <div className="mt-3 pt-3 border-t border-folio-border-subtle">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-1">
                 <ReadinessItem
-                  done={hasImages}
-                  label={`Photos uploaded${hasImages ? ` (${imageCount})` : ""}`}
+                  done={roomsReady}
+                  label={
+                    roomsReady
+                      ? `Photos sorted into rooms (${imageCount})`
+                      : `${unsortedPhotoCount} ${
+                          unsortedPhotoCount === 1 ? "photo" : "photos"
+                        } still to sort`
+                  }
                   required
+                  href={roomsReady ? undefined : roomsHref(projectId)}
                 />
                 <ReadinessItem
-                  done={hasTags}
-                  label={`Products tagged${hasTags ? ` (${taggedCount})` : ""}`}
+                  done={tagsReady}
+                  label={
+                    tagsReady
+                      ? `Products tagged (${taggedPhotoCount})`
+                      : `${untaggedPhotoCount} ${
+                          untaggedPhotoCount === 1 ? "photo" : "photos"
+                        } still to tag`
+                  }
                   required
-                  onClick={() => setShowTagger(true)}
+                  href={tagsReady ? undefined : tagsHref(projectId)}
                 />
-                <ReadinessItem done={hasCover} label="Cover image selected" required />
-                <ReadinessItem done={hasReflections} label="Story reflections added" recommended />
-                <ReadinessItem done={hasCredits} label="Credits added" recommended />
+                <ReadinessItem done={hasCover} label="Cover image selected" recommended />
+                <ReadinessItem
+                  done={hasReflections}
+                  label="Story reflections added"
+                  recommended
+                  href={hasReflections ? undefined : storyHref(projectId)}
+                />
+                <ReadinessItem
+                  done={hasCredits}
+                  label="Credits added"
+                  recommended
+                  href={hasCredits ? undefined : storyHref(projectId)}
+                />
               </div>
             </div>
           )}
         </div>
       </div>
 
-      {/* Redo Interview modal — available for GENERATED and UNPUBLISHED states */}
-      <InterviewModal
-        open={showInterviewModal}
-        onOpenChange={setShowInterviewModal}
-        projectId={projectId}
-        projectName={project.title}
-        images={images.map(img => ({ id: img.id, url: img.url, name: img.name, room: img.room ?? null, roomId: img.roomId ?? null, displayOrder: img.displayOrder ?? null }))}
-        post={initialPostData}
-        onDraftGenerated={() => {
-          setShowInterviewModal(false);
-          router.refresh();
-        }}
-      />
-
-      {/* ProjectImageTagger — Entry Point C: post-interview tag editing */}
-      {showTagger && (
-        <ProjectImageTagger
-          projectId={projectId}
-          images={images}
-          onClose={() => {
-            setShowTagger(false);
-            router.refresh();
-          }}
-        />
-      )}
+      {/* No interview modal and no tagger here by design: the Story step owns the
+          interview and the Tags step owns tagging. Every route into them from
+          this surface is a link to that step. */}
 
       {/* Regeneration dialog with feedback + keep edits */}
       {showRegenDialog && (
@@ -553,16 +595,15 @@ export default function StagingPublishPanel({
   );
 }
 
-/** No-draft empty state shown when Publish tab is accessed but no ProjectPost exists */
+/**
+ * No-draft empty state, shown if the Publish tab is reached with no ProjectPost.
+ *
+ * It offers a link, not a Generate button. Generation is the Story step's final
+ * act — it runs from the interview's own answers and coverage, which live there
+ * — and a second Generate entry point here meant the article could be written
+ * from a surface that shows none of its inputs.
+ */
 export function NoDraftState({ projectId }: { projectId: string }) {
-  const router = useRouter();
-  const { generateDraft, regenBusy, error } = usePublishFlow(projectId);
-
-  async function handleGenerate() {
-    await generateDraft();
-    router.refresh();
-  }
-
   return (
     <div className="max-w-xl mx-auto text-center py-16 px-4">
       <div className="w-16 h-16 mx-auto mb-6 rounded-2xl bg-surface-ground border border-folio-border-subtle flex items-center justify-center">
@@ -570,20 +611,16 @@ export function NoDraftState({ projectId }: { projectId: string }) {
       </div>
       <h2 className="folio-h2 text-folio-text-primary mb-3">No draft yet</h2>
       <p className="folio-body text-folio-text-secondary mb-6">
-        Generate a draft to preview your article exactly as readers will see it.
+        Answer the interview and generate your draft on the Story step. It lands
+        here the moment it's written.
       </p>
-      <button
-        onClick={handleGenerate}
-        disabled={regenBusy}
-        className="px-6 py-3 folio-ui font-semibold text-white bg-[var(--accent)] rounded-lg hover:bg-[var(--accent-hover)] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+      <Link
+        href={storyHref(projectId)}
+        className="inline-flex items-center gap-2 px-6 py-3 folio-ui font-semibold text-white bg-[var(--accent)] rounded-lg hover:bg-[var(--accent-hover)] transition-colors"
       >
-        {regenBusy ? "Generating..." : "Generate Draft"}
-      </button>
-      {error && (
-        <div className="mt-4 p-4 bg-stone-100 border border-stone-300 text-[rgb(74,44,59)] rounded-[20px] folio-ui">
-          {error}
-        </div>
-      )}
+        Go to your story
+        <ArrowRight className="w-4 h-4" />
+      </Link>
     </div>
   );
 }
@@ -593,13 +630,14 @@ function ReadinessItem({
   label,
   required,
   recommended,
-  onClick,
+  href,
 }: {
   done: boolean;
   label: string;
   required?: boolean;
   recommended?: boolean;
-  onClick?: () => void;
+  /** The step that owns this item's work. Rows never do the work themselves. */
+  href?: string;
 }) {
   const content = (
     <>
@@ -615,20 +653,23 @@ function ReadinessItem({
       >
         {label}
       </span>
+      {required && !done && (
+        <span className="folio-meta text-folio-text-tertiary">(required)</span>
+      )}
       {recommended && !done && (
         <span className="folio-meta text-folio-text-tertiary">(recommended)</span>
       )}
     </>
   );
 
-  if (onClick) {
+  if (href) {
     return (
-      <button
-        onClick={onClick}
-        className="flex items-center gap-2 py-0.5 hover:text-[var(--accent)] transition-colors cursor-pointer"
+      <Link
+        href={href}
+        className="flex items-center gap-2 py-0.5 hover:text-[var(--accent)] transition-colors"
       >
         {content}
-      </button>
+      </Link>
     );
   }
 

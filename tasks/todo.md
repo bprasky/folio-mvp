@@ -1,3 +1,105 @@
+# Landing, draft hosting, and gate discipline (branch: claude/la-gorce-draft-publish-dp9ght)
+
+## Problem (observed on La Gorce Dr Home)
+
+A draft article exists (`GENERATED`), but the project opens with the tracker
+saying **"Next · Tag products — Tag the products in your photos"**, the Publish
+marker rendered as locked, and the draft sitting below on a surface the header
+claims you haven't reached. Four distinct defects:
+
+1. **A generated draft is not recorded as progress.** `deriveTrackerState`
+   derives `reachedIndex` from step completion only, and the publish step's
+   completion flag is `isPublished`. So a draft that exists but isn't published
+   moves the tracker nowhere: the Publish marker is `locked` (no href, inert),
+   and `currentIndex` falls back to `frontierIndex` (Tags) even while
+   `?view=publish` renders the draft. The header contradicts the surface.
+2. **Landing is hand-rolled, not derived from progress.** `defaultView` in
+   `page.tsx` is its own branch ladder sitting next to the tracker's, so "land
+   on the furthest progress achieved" is a coincidence rather than a rule.
+3. **The Publish tab hosts Tags and Story.** It carries a product-tag review
+   block + `ProjectImageTagger` modal, a "Redo Interview" button +
+   `InterviewModal`, a readiness row that opens the tagger, and a no-draft state
+   whose CTA generates the draft in place. Four surfaces that belong to the Tags
+   and Story steps.
+4. **The publish gate is absent on the live path.** `publishEditorial` — what
+   the Publish button actually calls — has NO readiness check. The
+   `computePublishReadiness` backstop lives in `publishProjectAction`, which
+   only the designer dashboard's `PublishButton` uses. A designer can publish an
+   article with uncategorized photos and zero tags. The UI button is ungated too.
+
+## Plan
+
+- [x] `computeTrackerState.ts`: a generated draft reaches the publish step
+      (mirrors how `interviewInProgress` reaches the interview step). Add
+      `PUBLISH_BLOCKED_COPY` so a reached-but-gated Publish step says what is
+      blocking and routes there, instead of "Everything is in place."
+- [x] `page.tsx`: derive `defaultView` from the tracker's `reachedIndex` step
+      via one pure helper (`viewForStepKey`), so landing and the tracker cannot
+      disagree.
+- [x] `StagingPublishPanel.tsx`: remove the tagger and the interview modal;
+      readiness rows and the no-draft state link to the owning step instead.
+- [x] `publishEditorial`: enforce `computePublishReadiness().canPublish` on the
+      server, and gate the Publish button + surface the reason on the client.
+
+## Review
+
+**1 — A generated draft now reaches the publish step.** `deriveTrackerState`
+takes `draftExists`; the publish step (keyed off `copy[key].action === 'publish'`,
+so it resolves to `share` in the concept sequence too) counts as reached when a
+draft exists, exactly as the interview step already counted as reached from
+`interviewInProgress`. Proven against the real modules with the La Gorce shape
+(draft written, 4 of 10 photos untagged):
+
+```
+old  → reached: story   | lands: story   | publish locked: true  | active step: tags
+new  → reached: publish | lands: publish | publish locked: false | active step: publish
+```
+
+The Tags marker still reads `done` and still reports `4 left`, so nothing is
+hidden by moving the frontier forward.
+
+**2 — Landing derives from the tracker.** `viewForStepKey` joins `stepHref` and
+`activeStepKeyForView` as the third member of one mapping. `page.tsx` builds the
+tracker twice from one `trackerArgs` object: once with no active step, purely to
+read `reachedIndex` and open there; once after the view resolves, to highlight
+the surface on screen. The old `defaultView` ladder is gone. Working projects
+(inProgress / concept) keep the Boards rule — Boards is not a tracker step.
+
+**3 — Publish tab hosts only publishing.** Removed the `ProjectImageTagger`
+modal, the `InterviewModal`, the tagger-opening readiness row, and the no-draft
+Generate button. Each is now a link to the step that owns the work. That left
+`ProjectImageTagger` (806 lines, a second full tagging UI) with zero callers, so
+it is deleted — the Tags step's inline surface is the only tagger now.
+
+**4 — Gates enforced on the path that is actually used.** `publishEditorial` now
+runs `computePublishReadiness().canPublish` before the transaction, guarding only
+the first transition to public so unpublish/re-publish stays idempotent. The route
+returns the action's own message with a 400 instead of flattening it to a generic
+500. The panel's Publish button reads the server-derived `canPublish` rather than
+its own `allRequired`, and when the gate is closed it becomes a link to the
+outstanding work. The two REQUIRED checklist rows now mirror the server gate
+exactly (rooms sorted, tags confirmed); "Cover image selected" moved to
+recommended, since nothing gates on it.
+
+**Also fixed:** the tracker's next-action zone collapses when its CTA would route
+to the surface already on screen. Before, viewing Story showed a "Start interview"
+CTA linking to `?view=story`, and the newly-reachable publish step would have
+shown "Publish project" linking to `?view=publish` — both reloads of the current
+page. The blocked-publish copy keeps its zone, because why a finished draft can't
+ship is the one thing the Publish surface can't say for itself.
+
+**Verification:** `next build` passes (only pre-existing warnings). `tsc` adds no
+new errors — the three in `actions/projects.ts` are pre-existing and outside the
+changed hunk. 26 assertions run against the real `computeTrackerState` /
+`computePublishReadiness` modules covering the La Gorce case, rooms-blocked,
+gate-open, fresh project, interview-underway, and concept-project paths: all pass.
+
+**Not verified:** no database access in this session, so the assertions run on
+constructed inputs rather than La Gorce's actual rows. The behavior should be
+confirmed against the real project once deployed.
+
+---
+
 # Editorial generation failures for a 10-room project (branch: claude/interview-generation-audit-xhlosb)
 
 Two sequential blockers on the same project (`dda4b29e`, 10 write rooms). The
