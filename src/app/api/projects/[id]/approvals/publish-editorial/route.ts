@@ -33,9 +33,13 @@ export async function POST(
         slug: result.slug,
       });
     } else {
+      // Surface the action's own message. A refusal here is usually the publish
+      // gate ("sort rooms / confirm tags") or a missing draft — actionable
+      // things the designer can fix. Flattening every one of them into a generic
+      // 500 told them to "try again", which is exactly what does not work.
       return NextResponse.json(
-        { error: 'Failed to publish. Please try again.' },
-        { status: 500 }
+        { error: result.message || 'Failed to publish. Please try again.' },
+        { status: 400 }
       );
     }
   } catch (error: any) {

@@ -129,6 +129,57 @@ export async function publishEditorial({ projectId }: { projectId: string }) {
       return { ok: false, message: 'Access denied' };
     }
 
+    // Publish gate (spec 20 §3e). This is the path the Publish button actually
+    // takes — `publishProjectAction` carries the same backstop but is only
+    // reached from the designer dashboard, so until now an editorial could go
+    // public from the Publish tab with photos unsorted and nothing tagged. The
+    // gate has to live on both paths, or it lives on neither.
+    //
+    // Only guards the first transition to public: re-publishing something that
+    // is already live stays idempotent, so an unpublish/re-publish round trip
+    // can't be blocked by work that was never required when it first shipped.
+    const project = await prisma.project.findUnique({
+      where: { id: projectId },
+      select: {
+        isPublic: true,
+        images: {
+          select: {
+            id: true,
+            name: true,
+            inclusion: true,
+            roomId: true,
+            room: true,
+            noProducts: true,
+            tags: { select: { productId: true } },
+          },
+        },
+      },
+    });
+
+    if (project && !project.isPublic) {
+      const readiness = computePublishReadiness({
+        photos: project.images
+          .filter(img => !isDocumentImage(img.name))
+          .map(img => ({
+            id: img.id,
+            inclusion: img.inclusion,
+            roomId: img.roomId,
+            room: img.room,
+            noProducts: img.noProducts,
+            tagCount: img.tags.length,
+          })),
+        roomCount: 0, // unused for canPublish
+        storyComplete: true, // a draft exists by definition here
+      });
+
+      if (!readiness.canPublish) {
+        return {
+          ok: false,
+          message: 'Sort every photo into a room and confirm its tags before publishing.',
+        };
+      }
+    }
+
     // Publish the draft — single transaction updates both ProjectPost and Project
     const now = new Date();
     const [updated] = await prisma.$transaction([

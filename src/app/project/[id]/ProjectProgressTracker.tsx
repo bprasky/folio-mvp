@@ -16,6 +16,9 @@ import {
 interface ProjectProgressTrackerProps {
   projectId: string;
   state: TrackerState;
+  /** The surface currently on screen, so the tracker can tell whether its own
+   *  CTA would route there. */
+  currentView: string;
   /**
    * When the step's surface already owns its next-action inline (the Tags step
    * opens straight into the tagging surface), collapse to just the stepper so
@@ -58,6 +61,7 @@ function actionHref(projectId: string, action: TrackerAction): string {
 export default function ProjectProgressTracker({
   projectId,
   state,
+  currentView,
   hideNextAction = false,
 }: ProjectProgressTrackerProps) {
   const { steps, currentIndex, reachedIndex, materialsIndex, materialsExist, type, endCap } =
@@ -75,8 +79,23 @@ export default function ProjectProgressTracker({
   const showCollapsedBar = materialsExist && !showImportCards;
   const onLastStep = currentIndex === steps.length - 1;
 
+  // A CTA that routes to the surface already on screen is a control that looks
+  // live and does nothing. The `interview` and `publish` actions route to a bare
+  // view — no `action` param for the surface to pick up — so on that view they
+  // reload the page you are reading. Both surfaces own their next action inline
+  // anyway (Story has Generate; Publish has the sticky Publish footer), so the
+  // tracker collapses to the stepper rather than competing with them.
+  //
+  // Note this reads the MERGED copy, so a publish step whose gate is closed —
+  // PUBLISH_BLOCKED_COPY swaps the action to `sort-rooms` / `tag` — keeps its
+  // zone. That is the one thing the Publish surface cannot say for itself: why
+  // a finished draft still can't ship.
+  const ctaRoutesToCurrentSurface =
+    (copy.action === 'interview' && currentView === 'story') ||
+    (copy.action === 'publish' && currentView === 'publish');
+
   // The surface below owns this step's next-action inline — show only progress.
-  if (hideNextAction) {
+  if (hideNextAction || ctaRoutesToCurrentSurface) {
     return (
       <section
         aria-label="Project progress"

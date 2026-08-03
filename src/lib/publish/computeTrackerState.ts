@@ -277,6 +277,36 @@ export const STORY_IN_PROGRESS_COPY: Partial<StepCopy> = {
 };
 
 /**
+ * Copy for the publish step when a draft exists but the publish gate is still
+ * closed. The default copy ("Everything is in place") is a lie in that state,
+ * and its CTA fires a publish the server will refuse — so say what is actually
+ * blocking and send the designer to the step that owns it.
+ *
+ * Keyed by the blocking gate. Rooms is checked before tags because the tags gate
+ * depends on it (`computePublishReadiness`: `tagsComplete = roomsComplete && …`),
+ * so offering "Tag products" while photos are still unsorted sends the designer
+ * to work they cannot finish.
+ */
+export const PUBLISH_BLOCKED_COPY: Record<'rooms' | 'tags', Partial<StepCopy>> = {
+  rooms: {
+    eyebrow: 'Sort rooms first',
+    headline: 'Your draft is written. The photos are not sorted.',
+    body: 'Every photo needs a room before this can go public. Your draft is saved and waiting exactly as it is.',
+    cta: 'Sort rooms',
+    action: 'sort-rooms',
+    ready: false,
+  },
+  tags: {
+    eyebrow: 'Tag products first',
+    headline: 'Your draft is written. The products are not tagged.',
+    body: 'Every photo needs its products confirmed — or marked product-free — before this can go public. Your draft is saved and waiting exactly as it is.',
+    cta: 'Tag products',
+    action: 'tag',
+    ready: false,
+  },
+};
+
+/**
  * Where a step lives. The tracker is real navigation, so each step names the
  * surface that owns it:
  *  - the story step → the Story tab (interview, answers, generate)
@@ -289,6 +319,22 @@ export function stepHref(projectId: string, key: string): string {
   if (key === 'story') return `/project/${projectId}?view=story`;
   if (key === 'publish' || key === 'share') return `/project/${projectId}?view=publish`;
   return `/project/${projectId}?view=media&step=${key}`;
+}
+
+/**
+ * Which surface hosts a step. The inverse of `activeStepKeyForView`, and the
+ * companion to `stepHref` for callers that need the view alone rather than a
+ * URL — the project page uses it to open on the furthest step reached.
+ *
+ * These three must agree. When landing had its own branch ladder next to the
+ * tracker's, "open where you left off" was a coincidence that held only while
+ * the two ladders happened to match; deriving it from the tracker's own
+ * `reachedIndex` makes it a rule.
+ */
+export function viewForStepKey(key: string): 'media' | 'story' | 'publish' {
+  if (key === 'story') return 'story';
+  if (key === 'publish' || key === 'share') return 'publish';
+  return 'media';
 }
 
 /**
@@ -354,6 +400,21 @@ export interface TrackerInput {
    */
   interviewInProgress?: boolean;
   /**
+   * True once an editorial draft exists (GENERATED / PUBLISHED / UNPUBLISHED).
+   * A written draft is real progress into the publish step even though the step
+   * only completes on publish, so it reaches that step the same way
+   * `interviewInProgress` reaches the interview step. Without this the marker
+   * stays locked and inert while the draft renders on the surface behind it.
+   */
+  draftExists?: boolean;
+  /**
+   * Which gate is holding the publish step closed, when a draft exists but the
+   * project is not publishable yet. Swaps in `PUBLISH_BLOCKED_COPY` so the
+   * next-action zone names the blocker instead of offering a publish the server
+   * will refuse.
+   */
+  publishBlockedBy?: 'rooms' | 'tags';
+  /**
    * The step the designer is currently viewing. The tracker follows the surface
    * they're on rather than always pointing at the frontier, so stepping back to
    * a finished step keeps the tracker in sync. Ignored when it names a locked
@@ -417,6 +478,8 @@ export function deriveTrackerState(input: TrackerInput): TrackerState {
     remaining = {},
     materialsExist,
     interviewInProgress = false,
+    draftExists = false,
+    publishBlockedBy,
     activeKey,
   } = input;
 
@@ -434,13 +497,29 @@ export function deriveTrackerState(input: TrackerInput): TrackerState {
     return !!key && def.copy[key]?.action === 'interview';
   };
 
+  // Keyed off the action rather than a step key, so it resolves to `publish` in
+  // the completed sequence and `share` in the concept one.
+  const isPublishStep = (index: number) => {
+    const key = def.steps[index]?.key;
+    return !!key && def.copy[key]?.action === 'publish';
+  };
+
   // How far the project has actually got. Monotonic, so the stepper can never
   // show an unreached step behind a reached one: the frontier, plus any later
-  // step that is already complete, plus the interview step once it's underway.
+  // step that is already complete, plus the interview step once it's underway,
+  // plus the publish step once a draft has been written. The last two are the
+  // same rule — a step whose WORK has started counts as reached even though the
+  // step only completes later. Without it a designer who has generated a draft
+  // sees the Publish marker rendered as locked and the tracker pointing back at
+  // Tags, while the draft itself renders on the surface below.
   let reachedIndex = frontierIndex;
   def.steps.forEach((s, index) => {
     if (index <= reachedIndex) return;
-    if (complete[s.key] || (interviewInProgress && isInterviewStep(index))) {
+    if (
+      complete[s.key] ||
+      (interviewInProgress && isInterviewStep(index)) ||
+      (draftExists && isPublishStep(index))
+    ) {
       reachedIndex = index;
     }
   });
@@ -478,14 +557,23 @@ export function deriveTrackerState(input: TrackerInput): TrackerState {
     };
   });
 
-  // Switch the interview step's copy to the "continue" variant only when that
-  // step is the one currently surfaced. Keyed off the action (not a hardcoded
-  // step key) so it stays correct across tracker types.
+  // Swap in a copy variant only when the step it belongs to is the one currently
+  // surfaced. Keyed off the action (not a hardcoded step key) so both stay
+  // correct across tracker types.
   const currentStepKey = steps[currentIndex]?.key;
-  const currentCopyOverride =
-    interviewInProgress && currentStepKey && def.copy[currentStepKey]?.action === 'interview'
-      ? STORY_IN_PROGRESS_COPY
-      : undefined;
+  const currentAction = currentStepKey ? def.copy[currentStepKey]?.action : undefined;
+  let currentCopyOverride: Partial<StepCopy> | undefined;
+  if (interviewInProgress && currentAction === 'interview') {
+    currentCopyOverride = STORY_IN_PROGRESS_COPY;
+  } else if (
+    currentAction === 'publish' &&
+    publishBlockedBy &&
+    currentStepKey &&
+    !complete[currentStepKey]
+  ) {
+    // Already published → the gate is behind us and the default copy is honest.
+    currentCopyOverride = PUBLISH_BLOCKED_COPY[publishBlockedBy];
+  }
 
   return {
     type: input.type,

@@ -27,6 +27,7 @@ import {
   deriveTrackerState,
   activeStepKeyForView,
   trackerTypeForTimeline,
+  viewForStepKey,
   type TrackerState,
 } from '@/lib/publish/computeTrackerState';
 
@@ -60,8 +61,14 @@ function buildTrackerState(args: {
   totalSelections: number;
   isPublished: boolean;
   interviewInProgress: boolean;
-  view: string;
-  stepParam?: string;
+  draftExists: boolean;
+  publishBlockedBy?: 'rooms' | 'tags';
+  /**
+   * The step whose surface is open. Omitted on the first pass, before the view
+   * has resolved — that pass exists only to read `reachedIndex`, which is what
+   * decides where the project opens.
+   */
+  activeKey?: string;
 }): TrackerState | null {
   const {
     timeline,
@@ -71,8 +78,9 @@ function buildTrackerState(args: {
     totalSelections,
     isPublished,
     interviewInProgress,
-    view,
-    stepParam,
+    draftExists,
+    publishBlockedBy,
+    activeKey,
   } = args;
   const materialsExist = totalSelections > 0;
 
@@ -125,9 +133,11 @@ function buildTrackerState(args: {
     remaining,
     materialsExist,
     interviewInProgress,
+    draftExists,
+    publishBlockedBy,
     // The tracker highlights whichever step's surface is open, so stepping back
     // to a finished step keeps the header in sync with what's on screen.
-    activeKey: activeStepKeyForView(view, stepParam, type),
+    activeKey,
   });
 }
 
@@ -300,16 +310,49 @@ export default async function ProjectPage({
 
   // Project Progress Tracker — guided "what's next" region (top of page).
   const photoCount = base.images.filter(img => !isDocumentImage(img.name)).length;
-  // Where the project opens. In the publishing flow: the draft once there is
-  // one; failing that the interview if it's underway (INTERVIEWED = answers
-  // saved, no draft yet), so a designer returns to the work they'd actually
-  // started rather than back to the photo surface; otherwise the stepper's first
-  // surface. Working projects lead with Boards once it exists.
+
+  // Which gate holds publishing closed. Rooms before tags: the tags gate depends
+  // on rooms, so naming tags while photos are unsorted points at work that can't
+  // be finished. Undefined once both pass — then nothing is blocking.
+  const publishBlockedBy: 'rooms' | 'tags' | undefined = !publishReadiness.gates.rooms
+    .complete
+    ? 'rooms'
+    : !publishReadiness.gates.tags.complete
+      ? 'tags'
+      : undefined;
+
+  const trackerArgs = {
+    timeline: base.timeline ?? null,
+    readiness: publishReadiness,
+    photoCount,
+    roomCount: base.rooms.length,
+    totalSelections,
+    isPublished,
+    // INTERVIEWED = answers saved but no draft generated yet → "Continue interview".
+    interviewInProgress: editorialState === 'INTERVIEWED',
+    // A written draft is progress into the publish step even before it's public.
+    draftExists: hasDraftOrPublished,
+    publishBlockedBy,
+  };
+
+  // First pass, with no step surfaced: this exists purely to read `reachedIndex`
+  // — how far the project has actually got. Landing reads it below.
+  const progressState = buildTrackerState(trackerArgs);
+
+  // Where the project opens: the furthest step reached, on the surface that owns
+  // it. Derived from the tracker rather than re-branched here, so the header and
+  // the surface under it can never disagree — a draft that exists opens the
+  // Publish tab because the tracker says the publish step is where the project
+  // got to, not because a separate ladder happens to agree. A null state means
+  // every step is complete, which in the publishing flow is a published project.
+  //
+  // Working projects keep their own rule: Boards isn't a tracker step, and it's
+  // the right surface for a project still being built.
   const defaultView: TabView = inPublishingFlow
-    ? hasDraftOrPublished
-      ? 'publish'
-      : editorialState === 'INTERVIEWED'
-        ? 'story'
+    ? progressState
+      ? viewForStepKey(progressState.steps[progressState.reachedIndex].key)
+      : hasDraftOrPublished
+        ? 'publish'
         : 'media'
     : boardsVisible && (isPublished || isProspective)
       ? 'boards'
@@ -349,20 +392,12 @@ export default async function ProjectPage({
   ];
   const view = validViews.includes(currentView) ? currentView : defaultView;
 
-  // Built after the view resolves so the tracker can highlight the step whose
-  // surface is actually open (and so `step` can pick between the Media-hosted
-  // steps, which share one view).
+  // Second pass, now that the view has resolved: same inputs, plus the step whose
+  // surface is actually open, so the tracker highlights it (and so `step` can
+  // pick between the Media-hosted steps, which share one view).
   const trackerState = buildTrackerState({
-    timeline: base.timeline ?? null,
-    readiness: publishReadiness,
-    photoCount,
-    roomCount: base.rooms.length,
-    totalSelections,
-    isPublished,
-    // INTERVIEWED = answers saved but no draft generated yet → "Continue interview".
-    interviewInProgress: editorialState === 'INTERVIEWED',
-    view,
-    stepParam: searchParams.step,
+    ...trackerArgs,
+    activeKey: activeStepKeyForView(view, searchParams.step, trackerType),
   });
 
   // On the Tags step, the media view *is* the manual tagging surface (spec:
@@ -456,6 +491,7 @@ export default async function ProjectPage({
             <ProjectProgressTracker
               projectId={sanitizedProject.id}
               state={trackerState}
+              currentView={view}
               hideNextAction={startInTagging}
             />
           </div>
@@ -481,10 +517,18 @@ export default async function ProjectPage({
       {view === 'publish' && (
         <PublishTabContent
           projectId={sanitizedProject.id}
-          project={sanitizedProject}
           images={base.images}
           isOwner={isOwner}
           editorialState={editorialState}
+          canPublish={publishReadiness.canPublish}
+          publishBlockedBy={publishBlockedBy}
+          taggedPhotoCount={
+            base.images.filter(
+              img => !isDocumentImage(img.name) && img.tags.length > 0,
+            ).length
+          }
+          untaggedPhotoCount={publishReadiness.gates.tags.remaining}
+          unsortedPhotoCount={publishReadiness.gates.rooms.remaining}
         />
       )}
 
@@ -567,16 +611,25 @@ export default async function ProjectPage({
 
 async function PublishTabContent({
   projectId,
-  project,
   images,
   isOwner,
   editorialState,
+  canPublish,
+  publishBlockedBy,
+  taggedPhotoCount,
+  untaggedPhotoCount,
+  unsortedPhotoCount,
 }: {
   projectId: string;
-  project: { id: string; title: string };
   images: any[];
   isOwner: boolean;
   editorialState: EditorialState;
+  /** Server-derived publish gate — the same value the server action enforces. */
+  canPublish: boolean;
+  publishBlockedBy?: 'rooms' | 'tags';
+  taggedPhotoCount: number;
+  untaggedPhotoCount: number;
+  unsortedPhotoCount: number;
 }) {
   const stagingData = await getPostForStaging(projectId);
 
@@ -591,12 +644,16 @@ async function PublishTabContent({
   return (
     <StagingPublishPanel
       projectId={projectId}
-      project={project}
       images={images}
       isOwner={isOwner}
       initialPostData={stagingData}
       initialModules={stagingData.modules || []}
       editorialState={editorialState}
+      canPublish={canPublish}
+      publishBlockedBy={publishBlockedBy}
+      taggedPhotoCount={taggedPhotoCount}
+      untaggedPhotoCount={untaggedPhotoCount}
+      unsortedPhotoCount={unsortedPhotoCount}
     />
   );
 }
