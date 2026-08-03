@@ -295,14 +295,19 @@ export async function POST(
     const force = Boolean(body.force);
     const answersOverride = Array.isArray(body.answersOverride) ? body.answersOverride : undefined;
     const followupsOverride = Array.isArray(body.followupsOverride) ? body.followupsOverride : undefined;
-    // Quality gate: the client (room-paced interview) sends the Room IDs whose
-    // questions are fully answered. Images for any real room NOT in this set are
-    // withheld from generation so an unfinished room can't emit a placeholder
-    // chapter. Only enforced when a non-empty set is provided — absent/empty
-    // means "no gating" (unchanged behaviour), which biases toward inclusion so
-    // a completed room is never accidentally dropped.
-    const completedRoomIds = Array.isArray(body.completedRoomIds)
-      ? (body.completedRoomIds as unknown[]).filter((x): x is string => typeof x === 'string')
+    // The Room IDs the client expects to be written up. ADVISORY ONLY — the
+    // server decides eligibility for itself from the canonical provenance answer
+    // counts below, and this list exists so a client/server disagreement shows up
+    // in the logs instead of silently producing an article the UI didn't promise.
+    // `completedRoomIds` is the old name for the same field, kept so a client
+    // deployed a moment earlier still gets its expectation logged.
+    const rawWriteUpIds = Array.isArray(body.writeUpRoomIds)
+      ? body.writeUpRoomIds
+      : Array.isArray(body.completedRoomIds)
+        ? body.completedRoomIds
+        : undefined;
+    const clientWriteUpRoomIds = rawWriteUpIds
+      ? (rawWriteUpIds as unknown[]).filter((x): x is string => typeof x === 'string')
       : undefined;
 
     // Editorial context toggles (default: include everything available)
@@ -1046,24 +1051,50 @@ export async function POST(
     const writeRoomNames: string[] = [];
     const galleryRoomNames: string[] = [];
     const roomNameToId: Record<string, string> = {};
-    const clientCompletedIds = new Set(completedRoomIds ?? []);
-    const disagreements: Array<{ roomId: string; roomName: string; serverStatus: string; clientSaysComplete: boolean }> = [];
+    const clientWriteUpIds = new Set(clientWriteUpRoomIds ?? []);
+    const disagreements: Array<{ roomId: string; roomName: string; serverStatus: string; answers: number; clientExpectedWriteUp: boolean }> = [];
     for (const r of projectRooms) {
       roomNameToId[r.name] = r.id;
       if (!roomsWithImages.has(r.name)) continue; // no images → no chapter at all
-      const status: string = serverRoomProgress[r.id]?.status ?? 'not_started';
       // D2: eligibility joins by roomId only (never name).
-      const answered = (answerCountsByRoomId.get(r.id) ?? 0) > 0;
-      const clientSaysComplete = clientCompletedIds.has(r.id);
-      if (clientSaysComplete !== (status === 'complete')) {
-        disagreements.push({ roomId: r.id, roomName: r.name, serverStatus: status, clientSaysComplete });
+      const answerCount = answerCountsByRoomId.get(r.id) ?? 0;
+      const answered = answerCount > 0;
+      if (clientWriteUpRoomIds && clientWriteUpIds.has(r.id) !== answered) {
+        disagreements.push({
+          roomId: r.id,
+          roomName: r.name,
+          serverStatus: serverRoomProgress[r.id]?.status ?? 'not_started',
+          answers: answerCount,
+          clientExpectedWriteUp: clientWriteUpIds.has(r.id),
+        });
       }
       if (frozenRoomIds.has(r.id)) continue; // already published → frozen; no new chapter, no gallery
-      if (status === 'complete' && answered) writeRoomNames.push(r.name);
+      // ANYTHING THE DESIGNER SAID GETS WRITTEN UP.
+      //
+      // This used to also require roomProgress.status === 'complete', which cost
+      // designers their own words twice over. First by design: a room answered
+      // 2-of-3 was demoted to photos-only, so the thing they had actually said
+      // about it never reached the article. Second by accident: `status` comes
+      // from EditorialInterview.roomProgress — a separate record, loaded above
+      // behind a try/catch, and frequently null or stale — so a room the
+      // designer genuinely finished was ALSO dropped whenever that record hadn't
+      // kept up. A failed load meant every room fell to gallery and the article
+      // had no chapters at all.
+      //
+      // The answer count is read from provenance, which is written in the same
+      // atomic update as the answers themselves. It cannot disagree with what
+      // the designer typed. A partly answered room simply produces a shorter
+      // chapter, and the Story tab warns before generating that it will.
+      //
+      // 'skipped' is deliberately NOT an exception. Skip means "stop asking me
+      // about this room", not "throw away what I already said" — and a room
+      // skipped with nothing said has no answers, so it lands in the gallery on
+      // this rule anyway.
+      if (answered) writeRoomNames.push(r.name);
       else galleryRoomNames.push(r.name);
     }
     if (disagreements.length > 0) {
-      console.warn('[generate] completedRoomIds vs server roomProgress disagreement', { _cid, disagreements });
+      console.warn('[generate] client write-up expectation vs server answer counts', { _cid, disagreements });
     }
 
     const composeMode: 'initial' | 'append' = frozenChapters.length > 0 ? 'append' : 'initial';

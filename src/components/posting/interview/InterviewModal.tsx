@@ -69,6 +69,19 @@ interface InterviewModalProps {
    *  - 'restart' → clear saved answers and begin a fresh interview.
    */
   initialIntent?: 'resume' | 'restart' | null;
+  /**
+   * Open scoped to one room: the Story tab's room index hands the interview a
+   * room the designer picked (a tile's "Answer another question", a room with no
+   * write-up, or the room behind an answer being re-recorded) and the modal
+   * lands there instead of on its own resume target. Implies 'resume' — a
+   * targeted entry never wants the "Welcome back" screen.
+   */
+  initialRoomId?: string | null;
+  /**
+   * Skip the mode picker and open in a specific interview mode. Used by
+   * "Re-record this answer", which is a request to speak, not to choose.
+   */
+  initialMode?: 'realtime' | 'text';
 }
 
 const SIX_W_SECTIONS = new Set(["why", "who", "what", "where", "when", "how"]);
@@ -132,12 +145,19 @@ export function InterviewModal({
   tags = [],
   onDraftGenerated,
   initialIntent = null,
+  initialRoomId = null,
+  initialMode,
 }: InterviewModalProps) {
   const router = useRouter();
   // Interview mode: 'select' shows mode picker, 'realtime' for voice, 'text' for traditional
-  const [interviewMode, setInterviewMode] = useState<"select" | "realtime" | "text">(
-    flags.realtimeInterview && realtimeInterviewConfig.enabled ? "select" : "text"
-  );
+  const [interviewMode, setInterviewMode] = useState<"select" | "realtime" | "text">(() => {
+    if (initialMode === "realtime") {
+      // Voice was asked for explicitly; fall back to text if it isn't available.
+      return flags.realtimeInterview && realtimeInterviewConfig.enabled ? "realtime" : "text";
+    }
+    if (initialMode === "text") return "text";
+    return flags.realtimeInterview && realtimeInterviewConfig.enabled ? "select" : "text";
+  });
   // Phase: question → followup → complete (pick phase removed — all questions auto-selected)
   const [phase, setPhase] = useState<"question" | "followup" | "complete">("question");
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
@@ -498,13 +518,13 @@ export function InterviewModal({
               setPhase("question");
               setCurrentQuestionIndex(savedQuestionIndex);
             }
-            if (initialIntent === 'resume') {
-              // The caller (tracker "Your story so far") already offered the
-              // resume/restart choice — skip our own "Welcome back" screen and
-              // jump straight to where they left off.
+            if (initialIntent === 'resume' || initialRoomId) {
+              // The caller (tracker "Your story so far", or the Story tab's room
+              // index) already offered the resume/restart choice — skip our own
+              // "Welcome back" screen and jump straight to where they asked for.
               setShowDraftResume(false);
               setResumeRequested(true);
-              console.log('[InterviewModal] Auto-resuming (initialIntent=resume):', { baseCount, savedQuestionIndex, savedPhase });
+              console.log('[InterviewModal] Auto-resuming:', { baseCount, savedQuestionIndex, savedPhase, initialRoomId });
             } else {
               // Show draft resume prompt so user can choose: continue or start over
               setShowDraftResume(true);
@@ -533,7 +553,7 @@ export function InterviewModal({
     return () => {
       cancelled = true;
     };
-  }, [open, projectId, initialIntent]);
+  }, [open, projectId, initialIntent, initialRoomId]);
 
   // inputModality: restore per-question source flags from the draft on open, so
   // a reload doesn't downgrade a previously-spoken answer to 'text'.
@@ -662,27 +682,48 @@ export function InterviewModal({
     roomFlow.currentRoom?.roomId === 'project' &&
     roomFlow.roomProgress['project']?.status === 'complete';
 
-  // Room-completeness signal for the quality gate. A room counts as "complete"
-  // only when all its questions are answered (roomProgress status 'complete').
-  // The project pseudo-room ('project') never maps to image chapters, so it's
-  // irrelevant to what gets withheld and is excluded from the "left out" list.
-  const completedRoomIds = useMemo(() => {
-    if (!hasRoomPacing) return undefined;
-    return Object.entries(roomFlow.roomProgress)
-      .filter(([, p]) => p?.status === 'complete')
-      .map(([roomId]) => roomId);
-  }, [hasRoomPacing, roomFlow.roomProgress]);
+  // Base answers per room, keyed by roomId ('project' for the project group).
+  // The ANSWERS are the reliable record — roomProgress lives in a separate
+  // EditorialInterview row that is frequently null or stale — so everything that
+  // asks "what has been said about this room" reads this one map: what gets
+  // written up, what comes in short, and where resume lands.
+  const answerCountByRoom = useMemo(() => {
+    const counts: Record<string, number> = {};
+    for (const a of baseAnswers) {
+      const rid = answerRoomIds[a.questionId];
+      const key =
+        typeof rid === 'string' && rid
+          ? rid
+          : a.questionId.startsWith('project-')
+            ? 'project'
+            : null;
+      if (key) counts[key] = (counts[key] || 0) + 1;
+    }
+    return counts;
+  }, [baseAnswers, answerRoomIds]);
 
-  const excludedRoomNames = useMemo(() => {
+  // Rooms the article will write up: anything the designer said something about.
+  // The project pseudo-room never maps to an image chapter, so it is excluded.
+  const writeUpRoomIds = useMemo(() => {
+    if (!hasRoomPacing) return undefined;
+    return Object.keys(answerCountByRoom).filter(
+      (roomId) => roomId !== 'project' && answerCountByRoom[roomId] > 0,
+    );
+  }, [hasRoomPacing, answerCountByRoom]);
+
+  // Written up, but under the question target — a shorter chapter, not a
+  // withheld one. Named before generating so the length is a choice.
+  const partialRoomNames = useMemo(() => {
     if (!hasRoomPacing) return [] as string[];
     return roomFlow.rooms
-      .filter(
-        (r) =>
-          r.roomId !== 'project' &&
-          (roomFlow.roomProgress[r.roomId]?.status ?? 'not_started') !== 'complete',
-      )
+      .filter((r) => {
+        if (r.roomId === 'project') return false;
+        const answered = answerCountByRoom[r.roomId] ?? 0;
+        const need = r.budget.baseQuestions;
+        return answered > 0 && need > 0 && answered < need;
+      })
       .map((r) => r.roomName);
-  }, [hasRoomPacing, roomFlow.rooms, roomFlow.roomProgress]);
+  }, [hasRoomPacing, roomFlow.rooms, answerCountByRoom]);
 
   // Answer-driven resume plan. The earlier fix relied on roomProgress to decide
   // where to resume, but roomProgress lives in a SEPARATE EditorialInterview
@@ -701,17 +742,7 @@ export function InterviewModal({
     const rooms = roomFlow.rooms;
     if (rooms.length === 0) return null;
 
-    const roomKeyOf = (qid: string): string | null => {
-      const rid = answerRoomIds[qid];
-      if (typeof rid === 'string' && rid) return rid;
-      if (qid.startsWith('project-')) return 'project';
-      return null;
-    };
-    const baseCountByRoom: Record<string, number> = {};
-    for (const a of baseAnswers) {
-      const key = roomKeyOf(a.questionId);
-      if (key) baseCountByRoom[key] = (baseCountByRoom[key] || 0) + 1;
-    }
+    const baseCountByRoom = answerCountByRoom;
 
     const isTerminal = (roomId: string) => {
       const s = roomFlow.roomProgress[roomId]?.status;
@@ -739,7 +770,7 @@ export function InterviewModal({
       return { hasProgress: true, allDone: true, targetIndex: rooms.length - 1 };
     }
     return { hasProgress: true, allDone: false, targetIndex: target };
-  }, [hasRoomPacing, roomsBlocked, roomFlow.rooms, roomFlow.roomProgress, baseAnswers, answerRoomIds]);
+  }, [hasRoomPacing, roomsBlocked, roomFlow.rooms, roomFlow.roomProgress, answerCountByRoom]);
 
 
   // Convert fetched questions to InterviewQuestion format for compatibility
@@ -1263,6 +1294,22 @@ export function InterviewModal({
   useEffect(() => {
     if (!resumeRequested || !hasRoomPacing || roomsBlocked) return;
     if (didResumeNavRef.current) return;
+
+    // A caller-picked room wins over the resume plan: the designer chose this
+    // room on the Story index, so "where they left off" is not the question.
+    // roomsBlocked above already guarantees the room set has loaded, so a room
+    // that still isn't here has gone (renamed or deleted) — fall through to the
+    // plan rather than stranding the designer on About Q1.
+    if (initialRoomId) {
+      const targetIndex = roomFlow.rooms.findIndex((r) => r.roomId === initialRoomId);
+      if (targetIndex >= 0) {
+        didResumeNavRef.current = true;
+        logClient('resume:enter-picked-room', { initialRoomId, targetIndex });
+        if (targetIndex !== roomFlow.currentRoomIndex) roomFlow.goToRoom(targetIndex);
+        return;
+      }
+    }
+
     if (!resumePlan || !resumePlan.hasProgress) return; // wait for answers to load
     didResumeNavRef.current = true;
     logClient('resume:plan', {
@@ -1286,7 +1333,7 @@ export function InterviewModal({
       roomFlow.goToRoom(resumePlan.targetIndex);
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [resumeRequested, hasRoomPacing, roomsBlocked, resumePlan, roomFlow.currentRoomIndex]);
+  }, [resumeRequested, hasRoomPacing, roomsBlocked, resumePlan, roomFlow.currentRoomIndex, initialRoomId, roomFlow.rooms]);
 
   // Editing ONE saved answer is not a mode of this modal. It regenerates its
   // question set on open (fresh UUIDs), drives the rooms-generation phase, and
@@ -1896,11 +1943,12 @@ export function InterviewModal({
   const canClickGenerate = useMemo(() => !isGenerating, [isGenerating]);
 
   const handleGenerate = useCallback(async () => {
-    // Quality gate: if some rooms aren't fully answered, confirm before spending
-    // the generation call. Incomplete rooms are withheld so no placeholder prose
-    // leaks into the story. Once confirmed this session, don't re-prompt.
-    if (excludedRoomNames.length > 0 && !generateConfirmedRef.current) {
-      logClient('generate:gated-incomplete-rooms', { excluded: excludedRoomNames });
+    // A room under its question target still gets written up — it just comes in
+    // shorter. So this is a heads-up before spending the generation call, not a
+    // gate: it names those rooms and offers to go finish them. Once accepted
+    // this session, don't re-prompt.
+    if (partialRoomNames.length > 0 && !generateConfirmedRef.current) {
+      logClient('generate:partial-rooms-notice', { partial: partialRoomNames });
       setShowGenerateConfirm(true);
       return;
     }
@@ -2007,7 +2055,7 @@ export function InterviewModal({
             // Only fully-answered rooms compose into the story; the server
             // withholds images for any room not in this set (incomplete rooms
             // never emit placeholder chapters). Omitted when not room-paced.
-            completedRoomIds,
+            writeUpRoomIds,
             answersOverride: baseAnswers.map(a => ({
               questionId: a.questionId,
               section: a.section,
@@ -2151,7 +2199,6 @@ export function InterviewModal({
           setBanner('Generated a base story draft while AI was unavailable. You can refine this later.');
         }
 
-        stashExcludedRooms(projectId, retryData?.excludedRooms);
         onOpenChange(false);
         if (onDraftGenerated) {
           onDraftGenerated();
@@ -2206,7 +2253,6 @@ export function InterviewModal({
         setBanner('Generated a base draft while AI was unavailable. You can refine this later.');
       }
 
-      stashExcludedRooms(projectId, data?.excludedRooms);
       onOpenChange(false);
       if (onDraftGenerated) {
         onDraftGenerated();
@@ -2225,7 +2271,7 @@ export function InterviewModal({
     } finally {
       setIsGenerating(false);
     }
-  }, [projectId, isGenerating, generationAttempts, baseAnswers, followUpAnswersState, step, router, onOpenChange, onDraftGenerated, handleBanner, persistAnswers, excludedRoomNames, completedRoomIds]);
+  }, [projectId, isGenerating, generationAttempts, baseAnswers, followUpAnswersState, step, router, onOpenChange, onDraftGenerated, handleBanner, persistAnswers, partialRoomNames, writeUpRoomIds]);
 
   // Quality-gate confirmation: proceed with only the completed rooms, or return
   // to the interview to finish the incomplete ones.
@@ -2781,36 +2827,38 @@ export function InterviewModal({
             </div>
           </div>
         ) : phase === "complete" && showGenerateConfirm ? (
-          /* Quality gate: some rooms aren't finished — confirm before generating */
+          /* Some rooms are under their question target — a heads-up, not a gate */
           <div className="flex-1 flex flex-col items-center justify-center px-8 py-12">
             <div className="max-w-md text-center space-y-6">
               <h3 className="text-xl font-serif text-folio-text-primary">
-                A few rooms aren’t finished
+                {partialRoomNames.length === 1
+                  ? "One room is partly answered"
+                  : `${partialRoomNames.length} rooms are partly answered`}
               </h3>
               <p className="text-sm text-folio-text-secondary leading-relaxed">
-                These rooms don’t have all their questions answered yet, so we’ll leave
-                them out of your story for now — a half-finished room reads as low quality.
+                These rooms will still be written up — they will just be shorter than the
+                ones you finished.
               </p>
               <ul className="text-sm font-medium text-folio-text-primary space-y-1">
-                {excludedRoomNames.map((name) => (
+                {partialRoomNames.map((name) => (
                   <li key={name}>{name}</li>
                 ))}
               </ul>
               <p className="text-sm text-folio-text-secondary leading-relaxed">
-                Finish them now, or generate with your completed rooms and add these later.
+                Answer a few more questions first, or generate now and add to them later.
               </p>
               <div className="flex flex-col gap-3 pt-2">
                 <button
                   onClick={handleConfirmGenerate}
                   className="px-6 py-3 text-sm font-medium text-white bg-[var(--accent)] rounded-full hover:bg-[var(--accent-hover)] transition-colors"
                 >
-                  Generate with completed rooms
+                  Generate anyway
                 </button>
                 <button
                   onClick={handleCancelGenerate}
                   className="px-6 py-3 text-sm font-medium text-folio-text-secondary hover:text-folio-text-primary transition-colors"
                 >
-                  Not now — I’ll finish these first
+                  Answer more first
                 </button>
               </div>
             </div>
@@ -2912,9 +2960,10 @@ export function InterviewModal({
                   ) : (
                     <>
                       <p className="text-sm text-folio-text-secondary leading-relaxed">
-                        The photos from this room will still appear in the gallery at the
-                        bottom of the article. No write-up will be generated for it. You
-                        can come back and complete it later.
+                        We&apos;ll stop asking about this room. Anything you have already said
+                        about it still gets written up — if you have said nothing, its photos
+                        appear in the gallery at the bottom of the article instead. You can
+                        come back to it later.
                       </p>
                       <div className="flex gap-3 justify-end">
                         <button
@@ -2944,35 +2993,6 @@ export function InterviewModal({
 
 function getValidationStorageKey(projectId: string) {
   return `folio.interview.validation.${projectId}`;
-}
-
-/** Key the Story tab reads to surface a "these rooms were left out" notice. */
-export function getExcludedRoomsStorageKey(projectId: string) {
-  return `folio.interview.excludedRooms.${projectId}`;
-}
-
-/**
- * Persist the rooms the server withheld from generation so the Story surface can
- * tell the designer which rooms weren't included (and why). Cleared once shown.
- */
-function stashExcludedRooms(
-  projectId: string,
-  excludedRooms: Array<{ roomName: string }> | undefined,
-) {
-  if (typeof window === "undefined") return;
-  try {
-    const names = Array.isArray(excludedRooms)
-      ? excludedRooms.map((r) => r?.roomName).filter((n): n is string => !!n)
-      : [];
-    const key = getExcludedRoomsStorageKey(projectId);
-    if (names.length > 0) {
-      window.sessionStorage.setItem(key, JSON.stringify(names));
-    } else {
-      window.sessionStorage.removeItem(key);
-    }
-  } catch {
-    /* noop */
-  }
 }
 
 function sanitizeAnswerForSend(

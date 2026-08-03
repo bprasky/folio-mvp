@@ -1,3 +1,177 @@
+# Any answer earns a write-up (branch: claude/story-tab-room-indexed-rtu92a)
+
+## The rule that was there
+
+`generate/route.ts` decided each room's fate with
+`status === 'complete' && answered`, where `status` came from
+`EditorialInterview.roomProgress` — a separate record, loaded behind a
+try/catch, and (per the notes in this very repo) frequently null or stale. That
+cost designers their own words twice:
+
+1. **By design.** A room answered 2-of-3 was demoted to photos-only. What the
+   designer actually said about it never reached the article.
+2. **By accident.** `roomProgress` only reaches `'complete'` when the client
+   explicitly posts that status from `finalizeRoomAndAdvance`; the answer-derived
+   overlay never sets more than `in_progress`. So a room the designer genuinely
+   finished was dropped whenever that record hadn't kept up — and if the
+   `roomProgress` read failed outright, *every* room fell to gallery and the
+   article had no chapters at all.
+
+The `completedRoomIds` the client sent was never consulted for the decision —
+only logged as a disagreement — so the Story tab could promise a write-up the
+server had no intention of producing.
+
+## The rule now
+
+`answered > 0` → write-up. Read from `provenance.interview.payload.answers`,
+which is written in the same atomic update as the answers themselves, so it
+cannot disagree with what the designer typed. Rooms with nothing said stay
+photos-only. `roomProgress` no longer decides anything.
+
+`'skipped'` is deliberately not an exception — skip means "stop asking me about
+this room", not "throw away what I already said", and a room skipped in silence
+has no answers and lands in the gallery anyway. The skip confirm sheet promised
+otherwise ("No write-up will be generated for it"), so its copy was corrected.
+
+This also makes the Story tab honest: its Written up / No write-up yet split
+**is** the generation rule now, so what the tab lists is what comes back.
+
+## The prompt before generating
+
+Partly answered rooms are written up, so the prompt is a heads-up, not a gate.
+It fires once per session, names only the rooms under target with their counts,
+says they will be shorter than the finished ones, and offers `Answer more first`
+(jumps into the first one) or `Generate anyway`. Both surfaces got it: a new
+`PartialRoomsConfirm` on the Story tab, and the interview modal's existing
+quality-gate screen re-pointed from "we'll leave them out" to "they'll be
+shorter".
+
+`completedRoomIds` → `writeUpRoomIds` on the wire (server still accepts the old
+name for one deploy), because a list containing partly-answered rooms could not
+keep being called "completed". The modal's four separate notions of per-room
+progress collapsed to one `answerCountByRoom` map that resume, write-up
+eligibility and the partial notice all read.
+
+## Verify
+
+- [x] `npx tsc --noEmit` — 17 errors across `InterviewModal.tsx` and the
+      generate routes, identical to the count before the change.
+- [x] `npx next build` — succeeds.
+- [x] Rule test (jsdom, 21 assertions) — Generate is enabled with only a
+      partly-answered room; clicking it prompts instead of generating; the
+      prompt names the partial room and its `2/3`, and names neither the
+      complete room nor the silent one; it says the room is still written up
+      and will be shorter; `Answer more first` opens the interview on that room
+      without generating; `Generate anyway` sends `writeUpRoomIds` containing
+      both the partial and the complete room, excluding the silent room and the
+      project pseudo-room, with no legacy `completedRoomIds` field; a second
+      Generate does not re-prompt.
+- [x] Index regression (jsdom, 33 assertions) — unchanged and still passing.
+- [ ] **Not verified: a live generation.** No database in this container, so the
+      server split itself was reviewed, not executed.
+
+---
+
+# Story tab: from a flat answer log to a room index (branch: claude/story-tab-room-indexed-rtu92a)
+
+## Problem
+
+`?view=story` rendered every captured answer expanded, grouped by room, in one
+column. A real project produces ~30 answers, so the tab was several screens of
+uniform cards — nothing to scan, nothing collapsed, and no way to see at a
+glance which rooms had been spoken about. `Generate draft` sat below all of it.
+Project Credits sat below that, which asked the designer to name their
+collaborators *after* the writing was done rather than before it.
+
+## What shipped
+
+A four-part index, top to bottom. Height is now roughly constant no matter how
+much has been said.
+
+1. **Progress header** — eyebrow / serif headline / one line of body, with the
+   action row (`Restart`, `Resume interview`, `Generate draft`) and a
+   rooms-answered coverage bar on the right. Generate is above the fold; there
+   is no bottom-of-page band.
+2. **The project** — the five fixed framing questions (`CLIENT_BRIEF`,
+   `SCOPE_PARAMETERS`, `DESIGN_DIRECTION`, `SIGNATURE_IDENTITY`,
+   `SURPRISE_PIVOT`, read off the `project-<CATEGORY>-<uuid>` id) as cards with
+   a clamped excerpt and an Answered / Needs a line status.
+3. **Written up** — one 4:3 photo tile per room with answers. All collapsed by
+   default; clicking one opens a *single* detail panel below the whole grid
+   (accordion, click again to close) listing that room's answers as
+   question / answer / Edit rows.
+4. **No write-up yet** — rooms with photos and nothing said, as low-weight
+   dashed rows, not photo tiles. Clicking one opens the interview scoped to
+   that room.
+
+Editing is now always `AnswerModal` — a 620px focus-trapped dialog, never an
+inline textarea. That is what lets a room panel stay one row per answer.
+
+**Nothing is unreachable.** Rooms whose answers refer to a room that has since
+been deleted still appear (named from coverage). Project-level answers outside
+the five categories get their own cards. Every question the interview asks is
+still reachable — nested under its room, not removed.
+
+## Supporting changes
+
+- `InterviewModal` gained `initialRoomId` (open scoped to a room the designer
+  picked; implies `resume`, and wins over the answer-driven resume plan) and
+  `initialMode` (skip the picker — "Re-record this answer" wants voice, not a
+  choice). Both are additive and guarded; a room that no longer exists falls
+  through to the existing plan.
+- The `excludedRooms` sessionStorage stash was deleted. Its only reader was the
+  old Story notice, and the "No write-up yet" section now says the same thing
+  permanently instead of once.
+- **Project Credits moved to the Rooms step** (`ProjectCreditsCard`, rendered by
+  `MediaSection` when `currentStepKey === 'rooms'`). Moved, not duplicated —
+  `StoryPanel` no longer imports `CreditsEditor`.
+- The Story tab now receives photos with `roomId` / `displayOrder` (documents
+  filtered out server-side) so each tile can draw its room's hero.
+
+## Constraints held
+
+Existing tokens only — no new colors, radii or shadows. Sizes map to `--type-*`
+tokens where one matches exactly (`folio-body`, `folio-ui`, `folio-meta`,
+`folio-h4`, `folio-quote`, `folio-eyebrow`); the spec's 30/26/20/17/12/11px are
+written as literals, matching how the rest of the app writes off-scale sizes.
+`lucide-react`, no emoji. Motion 150/220ms on `cubic-bezier(.2,.8,.2,1)` via
+`ease-folio`; hover lifts 1–2px, never opacity-only. Tiles and answer rows are
+real `<button>`s with gold 2px focus rings; the modal traps Tab and closes on
+Esc.
+
+## Verify
+
+- [x] `npx tsc --noEmit` — 8 errors in `InterviewModal.tsx`, identical to the
+      count on the branch point. No new type errors from any file touched.
+- [x] `npx next build` — succeeds. Only pre-existing warnings (`FaNotes`,
+      `getServerSession`, dynamic-route notices).
+- [x] Markup smoke render (SSR, 19 assertions) — header copy, the three
+      actions, the 220px coverage track, no "credits" and no "continue to
+      publish" left on the tab; modal is a labelled `role="dialog"` with the
+      question, `2 / 3` position, glass-inset textarea and both footer actions.
+- [x] Behaviour test (jsdom + React `act`, 34 assertions) — coverage reads
+      `2/3 rooms` off written-up rooms; the project section counts
+      `2/5 answered` and renders all five cards with the right statuses;
+      written-up counts `2 rooms · 3 answers`; each tile takes its hero from
+      `displayOrder 0`; the under-target room shows `1 more to go` and the
+      complete one shows no pill; rooms are collapsed on load; a tile click
+      opens the panel with only that room's answers and marks the tile
+      selected; opening a second room closes the first; clicking the open tile
+      closes it; a row opens the answer modal prefilled with the right
+      question, room and position.
+- [x] Wiring test (jsdom, 18 assertions) — `Resume interview` targets the first
+      room under its question target; a no-write-up row scopes to its own room;
+      `Answer another question` scopes to the open room; `Re-record` opens in
+      `realtime` on the answer's room and closes the modal; saving POSTs the
+      full answer list once (merge by questionId), keeps `roomId`, closes the
+      modal, updates the row in place, and leaves the panel open.
+- [ ] **Not verified: the running app.** This container has no database, so the
+      page was never driven end to end against real data — including the
+      `initialRoomId` navigation *inside* `InterviewModal`, which needs the live
+      room-pacing question set to exercise.
+
+---
+
 # Landing, draft hosting, and gate discipline (branch: claude/la-gorce-draft-publish-dp9ght)
 
 ## Problem (observed on La Gorce Dr Home)

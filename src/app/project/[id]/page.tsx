@@ -543,6 +543,9 @@ export default async function ProjectPage({
               isPublished={isPublished}
               editorialState={editorialState}
               initialTagging={startInTagging}
+              // Credits moved off the Story tab: naming collaborators belongs
+              // with sorting rooms, before the interview, not after the writing.
+              showCredits={isOwner && currentStepKey === 'rooms'}
             />
           )}
 
@@ -550,8 +553,20 @@ export default async function ProjectPage({
             <StoryPanel
               projectId={sanitizedProject.id}
               project={sanitizedProject}
-              images={base.images.map(img => ({ id: img.id, url: img.url, name: img.name }))}
-              // Room names for grouping the saved answers. Taken from the Room
+              // Photos only, with their room. The Story index draws each room's
+              // hero from the first photo in that room, so documents (which have
+              // no visual to show) are filtered out here rather than counted.
+              images={base.images
+                .filter(img => !isDocumentImage(img.name))
+                .map(img => ({
+                  id: img.id,
+                  url: img.url,
+                  name: img.name,
+                  room: img.room ?? null,
+                  roomId: img.roomId ?? null,
+                  displayOrder: img.displayOrder ?? null,
+                }))}
+              // Room names for indexing the saved answers. Taken from the Room
               // rows rather than the interview's question set, which is
               // regenerated (and loses rooms) whenever the project is retagged.
               rooms={base.rooms.map(room => ({ id: room.id, name: room.name }))}
