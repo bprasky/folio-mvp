@@ -1,3 +1,77 @@
+# Any answer earns a write-up (branch: claude/story-tab-room-indexed-rtu92a)
+
+## The rule that was there
+
+`generate/route.ts` decided each room's fate with
+`status === 'complete' && answered`, where `status` came from
+`EditorialInterview.roomProgress` — a separate record, loaded behind a
+try/catch, and (per the notes in this very repo) frequently null or stale. That
+cost designers their own words twice:
+
+1. **By design.** A room answered 2-of-3 was demoted to photos-only. What the
+   designer actually said about it never reached the article.
+2. **By accident.** `roomProgress` only reaches `'complete'` when the client
+   explicitly posts that status from `finalizeRoomAndAdvance`; the answer-derived
+   overlay never sets more than `in_progress`. So a room the designer genuinely
+   finished was dropped whenever that record hadn't kept up — and if the
+   `roomProgress` read failed outright, *every* room fell to gallery and the
+   article had no chapters at all.
+
+The `completedRoomIds` the client sent was never consulted for the decision —
+only logged as a disagreement — so the Story tab could promise a write-up the
+server had no intention of producing.
+
+## The rule now
+
+`answered > 0` → write-up. Read from `provenance.interview.payload.answers`,
+which is written in the same atomic update as the answers themselves, so it
+cannot disagree with what the designer typed. Rooms with nothing said stay
+photos-only. `roomProgress` no longer decides anything.
+
+`'skipped'` is deliberately not an exception — skip means "stop asking me about
+this room", not "throw away what I already said", and a room skipped in silence
+has no answers and lands in the gallery anyway. The skip confirm sheet promised
+otherwise ("No write-up will be generated for it"), so its copy was corrected.
+
+This also makes the Story tab honest: its Written up / No write-up yet split
+**is** the generation rule now, so what the tab lists is what comes back.
+
+## The prompt before generating
+
+Partly answered rooms are written up, so the prompt is a heads-up, not a gate.
+It fires once per session, names only the rooms under target with their counts,
+says they will be shorter than the finished ones, and offers `Answer more first`
+(jumps into the first one) or `Generate anyway`. Both surfaces got it: a new
+`PartialRoomsConfirm` on the Story tab, and the interview modal's existing
+quality-gate screen re-pointed from "we'll leave them out" to "they'll be
+shorter".
+
+`completedRoomIds` → `writeUpRoomIds` on the wire (server still accepts the old
+name for one deploy), because a list containing partly-answered rooms could not
+keep being called "completed". The modal's four separate notions of per-room
+progress collapsed to one `answerCountByRoom` map that resume, write-up
+eligibility and the partial notice all read.
+
+## Verify
+
+- [x] `npx tsc --noEmit` — 17 errors across `InterviewModal.tsx` and the
+      generate routes, identical to the count before the change.
+- [x] `npx next build` — succeeds.
+- [x] Rule test (jsdom, 21 assertions) — Generate is enabled with only a
+      partly-answered room; clicking it prompts instead of generating; the
+      prompt names the partial room and its `2/3`, and names neither the
+      complete room nor the silent one; it says the room is still written up
+      and will be shorter; `Answer more first` opens the interview on that room
+      without generating; `Generate anyway` sends `writeUpRoomIds` containing
+      both the partial and the complete room, excluding the silent room and the
+      project pseudo-room, with no legacy `completedRoomIds` field; a second
+      Generate does not re-prompt.
+- [x] Index regression (jsdom, 33 assertions) — unchanged and still passing.
+- [ ] **Not verified: a live generation.** No database in this container, so the
+      server split itself was reviewed, not executed.
+
+---
+
 # Story tab: from a flat answer log to a room index (branch: claude/story-tab-room-indexed-rtu92a)
 
 ## Problem

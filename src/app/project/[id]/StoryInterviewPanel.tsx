@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { Pencil, Sparkles } from "lucide-react";
 import { InterviewModal } from "@/components/posting/interview/InterviewModal";
@@ -120,6 +120,10 @@ export default function StoryInterviewPanel({
   const [saving, setSaving] = useState(false);
   const [generating, setGenerating] = useState(false);
   const [generateError, setGenerateError] = useState<string | null>(null);
+  // The "some rooms are shorter" confirm, and whether it has already been
+  // accepted this session.
+  const [showPartialConfirm, setShowPartialConfirm] = useState(false);
+  const partialWarningAcceptedRef = useRef(false);
 
   // The interview modal, and how it should open: resume where the designer left
   // off, restart, or scoped to one room they picked.
@@ -284,9 +288,27 @@ export default function StoryInterviewPanel({
   const roomsAnswered = writtenUp.length;
   const coveragePct = roomsTotal > 0 ? (roomsAnswered / roomsTotal) * 100 : 0;
 
-  /** Rooms whose write-up the article can include vs those it can't yet. */
-  const included = useMemo(() => coverage.filter((c) => c.complete && c.roomId !== PROJECT_KEY), [coverage]);
-  const canGenerate = answers.length > 0 && included.length > 0 && !generating;
+  /**
+   * The rooms the article will write up: anything the designer has said
+   * something about. This is the same rule the server generates on, and the same
+   * rule that splits the two sections above — so what the tab shows under
+   * "Written up" is exactly what comes back written up.
+   */
+  const writeUpRoomIds = useMemo(() => writtenUp.map((r) => r.roomId), [writtenUp]);
+  const canGenerate = writeUpRoomIds.length > 0 && !generating;
+
+  /**
+   * Written up, but under the question target the interview set for them. These
+   * rooms still get a chapter — a shorter one — so the confirm before generating
+   * names them rather than the tab quietly shipping thin prose.
+   */
+  const partlyAnswered = useMemo(
+    () =>
+      writtenUp.filter(
+        (r) => r.coverage && r.coverage.total > 0 && r.coverage.answered < r.coverage.total,
+      ),
+    [writtenUp],
+  );
 
   /**
    * Where "Resume interview" lands: the first room still under its question
@@ -363,15 +385,14 @@ export default function StoryInterviewPanel({
   /**
    * Generate the draft from the answers already saved on the server, then open
    * the Publish step on it. The draft never lands on this tab — Story captures
-   * and edits answers, Publish is where the writing is reviewed. Only complete
-   * rooms are composed into the story; partly answered rooms become gallery
-   * chapters rather than thin write-ups.
+   * and edits answers, Publish is where the writing is reviewed. Every room with
+   * an answer is composed into the story; only rooms with nothing said about
+   * them stay photos-only.
    */
   const handleGenerate = useCallback(async () => {
     setGenerating(true);
     setGenerateError(null);
     try {
-      const completedRoomIds = included.map((c) => c.roomId);
       const res = await fetch(
         `/api/posting/project/${projectId}/interview/generate?forceOverwriteDraft=true&mode=recomposition`,
         {
@@ -380,7 +401,9 @@ export default function StoryInterviewPanel({
           body: JSON.stringify({
             forceOverwriteDraft: true,
             mode: "recomposition",
-            completedRoomIds,
+            // Advisory: the server decides from its own answer counts. Sending
+            // what the tab promised lets a mismatch show up in the logs.
+            writeUpRoomIds,
           }),
         },
       );
@@ -399,7 +422,21 @@ export default function StoryInterviewPanel({
     } finally {
       setGenerating(false);
     }
-  }, [projectId, included, router]);
+  }, [projectId, writeUpRoomIds, router]);
+
+  /**
+   * Generate is one click unless rooms are partly answered — then it asks once,
+   * naming them, so a shorter chapter is a choice rather than a surprise in
+   * Publish. Confirming is remembered for the session: the warning is worth
+   * making once, not every time.
+   */
+  const requestGenerate = useCallback(() => {
+    if (partlyAnswered.length > 0 && !partialWarningAcceptedRef.current) {
+      setShowPartialConfirm(true);
+      return;
+    }
+    handleGenerate();
+  }, [partlyAnswered, handleGenerate]);
 
   const openRoom = openRoomId
     ? roomEntries.find((r) => r.roomId === openRoomId) ?? null
@@ -441,10 +478,12 @@ export default function StoryInterviewPanel({
               </button>
               <button
                 type="button"
-                onClick={handleGenerate}
+                onClick={requestGenerate}
                 disabled={!canGenerate}
                 title={
-                  canGenerate ? undefined : "Finish at least one room to generate the draft"
+                  canGenerate
+                    ? undefined
+                    : "Say something about at least one room to generate the draft"
                 }
                 className="inline-flex items-center gap-2 rounded-sm bg-folio-text-primary px-5 py-2.5 text-folio-ui font-semibold text-white transition-[transform,opacity] duration-150 ease-folio hover:-translate-y-px focus:outline-none focus-visible:ring-2 focus-visible:ring-folio-gold disabled:cursor-not-allowed disabled:opacity-40"
               >
@@ -600,6 +639,24 @@ export default function StoryInterviewPanel({
         </>
       )}
 
+      {/* Asked once, before generating, when rooms are under their question
+          target. They are still written up — just shorter. */}
+      {showPartialConfirm && (
+        <PartialRoomsConfirm
+          rooms={partlyAnswered}
+          onFinishFirst={() => {
+            setShowPartialConfirm(false);
+            setInterview({ intent: "resume", roomId: partlyAnswered[0]?.roomId });
+          }}
+          onGenerate={() => {
+            partialWarningAcceptedRef.current = true;
+            setShowPartialConfirm(false);
+            handleGenerate();
+          }}
+          onCancel={() => setShowPartialConfirm(false)}
+        />
+      )}
+
       {/* Full interview flow. Mounted only while open so its question-generation
           hooks (which fetch on mount, not on Dialog-open) don't fire on every
           Story tab view. */}
@@ -640,6 +697,91 @@ export default function StoryInterviewPanel({
           }}
         />
       )}
+    </div>
+  );
+}
+
+/* ----------------------------------------------------------------------------
+ * Partly-answered rooms — the one confirm before generating
+ * ------------------------------------------------------------------------- */
+
+/**
+ * Rooms under their question target are written up, not withheld — so this is
+ * not a gate, it is a heads-up with a shortcut. It says what will happen (a
+ * shorter chapter), offers to go finish them, and gets out of the way. Shown
+ * once per session; the tile pills carry the same information the rest of the
+ * time.
+ */
+function PartialRoomsConfirm({
+  rooms,
+  onFinishFirst,
+  onGenerate,
+  onCancel,
+}: {
+  rooms: RoomEntry[];
+  onFinishFirst: () => void;
+  onGenerate: () => void;
+  onCancel: () => void;
+}) {
+  useEffect(() => {
+    function onKey(e: KeyboardEvent) {
+      if (e.key === "Escape") onCancel();
+    }
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [onCancel]);
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+      <div
+        className="absolute inset-0 bg-[rgba(22,22,20,.32)] [backdrop-filter:blur(6px)_saturate(150%)]"
+        onClick={onCancel}
+        aria-hidden
+      />
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-label="Some rooms are partly answered"
+        className="relative w-full max-w-[520px] overflow-hidden rounded-lg bg-surface-canvas p-7 shadow-folio3"
+      >
+        <h2 className="font-headline text-[26px] font-medium leading-tight text-folio-text-primary">
+          {rooms.length} {rooms.length === 1 ? "room is" : "rooms are"} partly answered
+        </h2>
+        <p className="mt-2 text-folio-body text-folio-text-secondary">
+          These rooms will still be written up — they will just be shorter than the ones you
+          finished. Answer a few more questions first, or generate now and add to them later.
+        </p>
+
+        <ul className="mt-4 space-y-2 rounded-neu-sm bg-surface-ground px-4 py-3">
+          {rooms.map((room) => (
+            <li key={room.roomId} className="flex items-baseline justify-between gap-4">
+              <span className="truncate text-folio-ui font-medium text-folio-text-primary">
+                {room.name}
+              </span>
+              <span className="shrink-0 font-metricsMono text-[12px] tabular-nums text-folio-text-tertiary">
+                {room.coverage?.answered ?? room.answers.length}/{room.coverage?.total ?? 0}
+              </span>
+            </li>
+          ))}
+        </ul>
+
+        <div className="mt-6 flex flex-wrap items-center justify-end gap-3">
+          <button
+            type="button"
+            onClick={onFinishFirst}
+            className="rounded-sm border border-folio-border-strong px-4 py-2.5 text-folio-ui font-medium text-folio-text-secondary transition-[transform,border-color,color] duration-150 ease-folio hover:-translate-y-px hover:border-folio-gold hover:text-folio-gold focus:outline-none focus-visible:ring-2 focus-visible:ring-folio-gold"
+          >
+            Answer more first
+          </button>
+          <button
+            type="button"
+            onClick={onGenerate}
+            className="rounded-sm bg-folio-text-primary px-5 py-2.5 text-folio-ui font-semibold text-white transition-transform duration-150 ease-folio hover:-translate-y-px focus:outline-none focus-visible:ring-2 focus-visible:ring-folio-gold"
+          >
+            Generate anyway
+          </button>
+        </div>
+      </div>
     </div>
   );
 }
