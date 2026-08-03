@@ -11,6 +11,7 @@ import TaggingSection from './TaggingSection';
 import MaterialsStep from './MaterialsStep';
 import DocumentImportModal from './DocumentImportModal';
 import TagReviewPanel from './TagReviewPanel';
+import ProjectCreditsCard from './ProjectCreditsCard';
 import type { EditorialState } from '@/lib/editorial/getEditorialState';
 
 interface ProductTag {
@@ -53,9 +54,14 @@ interface MediaSectionProps {
   editorialState?: EditorialState;
   /** On the Tags step the media view opens directly into the tagging surface. */
   initialTagging?: boolean;
+  /**
+   * On the Rooms step the surface also hosts Project Credits, so collaborators
+   * are named before the story stage rather than after it.
+   */
+  showCredits?: boolean;
 }
 
-export default function MediaSection({ project, isOwner, images, projectPost, initialTagging = false }: MediaSectionProps) {
+export default function MediaSection({ project, isOwner, images, projectPost, initialTagging = false, showCredits = false }: MediaSectionProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [showUploadModal, setShowUploadModal] = useState(false);
@@ -542,6 +548,10 @@ export default function MediaSection({ project, isOwner, images, projectPost, in
           </div>
         )}
       </section>
+
+      {/* Rooms step — name the collaborators while the rooms are being sorted,
+          well before the interview asks the designer to write about them. */}
+      {showCredits && isOwner && <ProjectCreditsCard projectId={project.id} />}
       </>
       )}
 
