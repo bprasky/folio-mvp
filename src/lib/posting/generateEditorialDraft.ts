@@ -868,9 +868,11 @@ async function repairAndBuildBlocks(
       body: bodyParas,
       // Only the first chapter OVERALL is the article lead. In append mode that's
       // a frozen chapter, so no new chapter is treated as the lead.
-      pullQuote: extractPullQuotesForChapter(bodyParas, designerName, {
-        isLeadChapter: frozenChapters.length === 0 && newEditorialAssembled.length === 0,
-      }),
+      // Deliberately null. Pull quotes are assigned later by
+      // assignVerifiedPullQuotes, from the designer's own answers. Seeding a
+      // body-derived one here would survive for any chapter that pass does not
+      // cover, which is precisely the unverified quote this all exists to stop.
+      pullQuote: null,
       roomId: roomNameToId[roomName] ?? null,
       generatedAt: gen,
       kind: 'editorial' as const,
@@ -898,7 +900,7 @@ async function repairAndBuildBlocks(
           title: firstName ? formatRoomName(firstName) : (input.project?.title || 'The Space'),
           imageIds: imgIds,
           body: paras,
-          pullQuote: extractPullQuotesForChapter(paras, designerName, { isLeadChapter: true }),
+          pullQuote: null, // assigned by assignVerifiedPullQuotes, from answers
           roomId: firstName ? (roomNameToId[firstName] ?? null) : null,
           generatedAt: gen,
           kind: 'editorial' as const,
@@ -1011,14 +1013,28 @@ async function repairAndBuildBlocks(
   //  No chapter-quote fallback: an empty hookQuote is preferable to a piece-specific lead.
   const splicedQuote = await spliceHookQuote(input.answers, designerName);
   const validatedSplice = splicedQuote && isArticleHookQuote(splicedQuote.text) ? splicedQuote : null;
-  const hookQuote =
-    validatedSplice ??
-    extractHookQuoteFromIntroduction(blocks.introduction, designerName);
+  // The introduction fallback mines the GENERATED intro paragraphs, so it
+  // carries the same risk as the old chapter extractor: if the model paraphrased
+  // the designer while writing the opening, the hook quote inherits it. Held to
+  // the same rule — a verbatim span of an actual answer, or no hook quote. The
+  // comment above already prefers an empty hookQuote to a bad one.
+  const introHook = extractHookQuoteFromIntroduction(blocks.introduction, designerName);
+  const answerTexts = (input.answers ?? []).map((a) => a.answer).filter(Boolean);
+  const verifiedIntroHook =
+    introHook && isVerbatimSpan(introHook.text, answerTexts) ? introHook : null;
+  if (introHook && !verifiedIntroHook) {
+    console.warn('[generate] intro hook quote is not verbatim — dropping', {
+      _cid, text: introHook.text.slice(0, 120),
+    });
+  }
+  const hookQuote = validatedSplice ?? verifiedIntroHook;
   if (hookQuote) {
     (blocks as Record<string, any>).hookQuote = hookQuote;
   }
 
-  // Sync top-level pullQuotes from per-chapter selections (for layout engine)
+  // Sync top-level pullQuotes from per-chapter selections (for layout engine).
+  // Runs again after assignVerifiedPullQuotes, which is where chapter quotes are
+  // actually set — this pass only captures the hook quote.
   syncPullQuotesFromChapters(blocks as Record<string, any>);
 
   return BlocksSchema.parse(blocks);
@@ -1519,18 +1535,25 @@ async function assignVerifiedPullQuotes(
     const title = typeof ch?.title === 'string' ? ch.title : '';
     // byRoom is keyed by formatRoomName, which is exactly how chapter titles
     // are written, so this is a direct lookup rather than a fuzzy match.
-    const selection = Object.prototype.hasOwnProperty.call(byRoom, title) ? byRoom[title] : undefined;
-    if (selection === undefined) continue; // room we did not rank — leave as-is
+    const selection = Object.prototype.hasOwnProperty.call(byRoom, title) ? byRoom[title] : null;
     if (selection) {
       ch.pullQuote = selection;
       assigned++;
     } else {
-      // No quotable candidate, or the editor declined. A room with no pull
-      // quote is the intended outcome — never a fabricated or borrowed one.
+      // Cleared, not skipped. A chapter we could not rank — a room with photos
+      // and model-written prose but no interview answers, say — has no verified
+      // quote available, and leaving whatever was there is how an unverified one
+      // survives. No quotable candidate, an editor who declined, and a room we
+      // never ranked all land in the same place: no pull quote.
       ch.pullQuote = null;
       cleared++;
     }
   }
+
+  // Rebuild the top-level index now that the chapter quotes exist. layoutEngine
+  // reads `sourceSection` off it as its per-chapter fallback, so leaving the
+  // version built during assembly would leave that index describing nulls.
+  syncPullQuotesFromChapters(blocks as Record<string, any>);
 
   console.info('[generate] pull quotes assigned from answers', {
     _cid, assigned, cleared, rooms: roomNames.length,

@@ -145,6 +145,28 @@ const patch = readFileSync('src/app/api/posting/project/[projectId]/sections/pul
 check('the endpoint only accepts a quote already in alternatives (so shuffling stays verbatim)',
   /alternatives\.find\(\(a: any\) => a\.text === selectedText\)/.test(patch));
 
+console.log('\n8. No unverified quote can survive anywhere in the pipeline');
+// The hole this closes: assembly used to seed a body-mined pull quote, and the
+// verified pass SKIPPED any chapter it could not rank — so a room with photos
+// and prose but no interview answers kept the unverified one.
+check('assembly no longer seeds body-derived chapter pull quotes',
+  !/pullQuote: extractPullQuotesForChapter\(bodyParas/.test(draft));
+check('a chapter with no verified selection is CLEARED, not skipped',
+  !/if \(selection === undefined\) continue/.test(draft)
+  && /Cleared, not skipped/.test(draft));
+check('the intro-mined hook quote is verified against real answers',
+  /isVerbatimSpan\(introHook\.text, answerTexts\)/.test(draft));
+// Execution order, not file order: the function is DEFINED above its call site,
+// so comparing raw indexes proves nothing. Assert the rebuild lives inside the
+// assigning function's own body, which is what actually sequences it.
+const fnStart = draft.indexOf('async function assignVerifiedPullQuotes(');
+const fnEnd = draft.indexOf('\n}\n', draft.indexOf('return blocks;', fnStart));
+const fnBody = draft.slice(fnStart, fnEnd);
+check('the top-level index is rebuilt inside the assigning pass, after the quotes are set',
+  fnBody.includes('syncPullQuotesFromChapters')
+  && fnBody.indexOf('syncPullQuotesFromChapters') > fnBody.indexOf('ch.pullQuote = selection'),
+);
+
 console.log(failures === 0
   ? '\nAll pull-quote checks passed.\n'
   : `\n${failures} check(s) failed.\n`);
