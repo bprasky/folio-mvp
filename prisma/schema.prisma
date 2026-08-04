@@ -771,7 +771,7 @@ model Product {
 }
 
 model ProductTag {
-  id         String       @id @default(uuid())
+  id         String    @id @default(uuid())
   x          Float
   y          Float
   // The auto-tagger's original guessed position, kept even after the designer
@@ -779,16 +779,37 @@ model ProductTag {
   // data for improving auto-placement. Null for manually-placed tags.
   aiX        Float?
   aiY        Float?
-  createdAt  DateTime     @default(now())
-  updatedAt  DateTime     @updatedAt
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
   productId  String
   imageId    String
   // Async tagging review: when a deferred-scrape tag has been confirmed by the
   // designer. Null = still needs review. See ProjectImageTagger / notifications.
   reviewedAt DateTime?
-  image      ProjectImage @relation(fields: [imageId], references: [id], onDelete: Cascade)
-  product    Product      @relation(fields: [productId], references: [id], onDelete: Cascade)
-  selection  Selection? // Selection created from this tag
+
+  // --- Finish capture (spec 21 delta D3) ---
+  // A finish is a specification decision made for THIS tag, not an attribute of
+  // the SKU: the same faucet is unlacquered brass in one house and polished
+  // nickel in another. Putting it on Product would split one product into two
+  // records and break Repeat Specification.
+  //
+  // CachedProduct.finish is what the URL says the product is, shared across every
+  // designer. finishRaw is what this designer specified in this room. Extraction
+  // proposes, the tag records, and the tag always wins.
+  //
+  // Not every create site populates these — see D3's three-behavior table.
+  /// Vendor wording, preserved as extracted or entered. Displayed, never grouped.
+  finishRaw       String?      @map("finish_raw")
+  /// Normalized value from a background matching pass. The column corpus blocks
+  /// group and join on. Deferred: matching rules need real values first.
+  finishCanonical String?      @map("finish_canonical")
+  /// Whether a human stated this finish. False means extraction proposed it and
+  /// nobody confirmed. This is the only thing separating an observed finish from
+  /// a suggested one, and it is why Material Study can raise its bar later.
+  finishConfirmed Boolean      @default(false) @map("finish_confirmed")
+  image           ProjectImage @relation(fields: [imageId], references: [id], onDelete: Cascade)
+  product         Product      @relation(fields: [productId], references: [id], onDelete: Cascade)
+  selection       Selection? // Selection created from this tag
 
   // Contextual crop fields
   cropUrl    String?
@@ -818,6 +839,11 @@ model ProductTag {
   // --- Phase 5H2 Bucket B inverse relations ---
   pendingRepInvites PendingRepInvite[]
 
+  // finishCanonical ONLY. It is the column Material Palette groups on and
+  // Material Study joins across projects. finishRaw is display-only and is never
+  // grouped or joined, so a second index on it would cost writes and buy
+  // nothing — do not add one for symmetry.
+  @@index([finishCanonical])
   @@map("product_tags")
 }
 
@@ -4976,6 +5002,17 @@ model CachedProduct {
   // Raw AI response for debugging/reprocessing
   aiResponse           Json?  @map("ai_response")
   extractionConfidence String @default("medium") @map("extraction_confidence") // high, medium, low
+
+  // Finish as the URL states it (spec 21 delta D3). A DIFFERENT fact from
+  // ProductTag.finishRaw, which is what a designer specified in a room. A product
+  // page with a finish selector gives extraction the default variant while the
+  // designer specified the third option down — conflating them would let one
+  // designer's specification overwrite the shared record and then propose itself
+  // to everyone else.
+  //
+  // Distinct from materialType above: that is a category (stone, wood, metal),
+  // this is a finish ("Unlacquered Brass"). Finish must not collapse into it.
+  finish String? @map("finish")
 
   // Relations
   pairingsAsA    ProductPairing[]          @relation("PairingProductA")
