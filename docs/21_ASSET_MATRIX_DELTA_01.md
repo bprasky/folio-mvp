@@ -287,6 +287,18 @@ building the table first means guessing at its foreign key.
 lands, `TranscriptWord` is built with it and the `Json` column is backfilled and deprecated.**
 D4 is the trigger. If D4 ships without it, that is a regression to name in review.
 
+### If the reference is lost, the audio is not
+
+The transcribe route read-modify-writes the provenance `Json` column, so a write racing a
+concurrent interview save could in principle lose the reference. Timing makes this unlikely —
+transcription completes while the designer is still answering, saves happen on submit — but it
+is possible, as is a provenance write failing outright while the upload succeeded.
+
+**In every one of those cases the recording itself is safe.** The blob is written to storage
+before the reference, under a deterministic key: `interviews/<projectId>/answers/<questionId>`.
+A lost reference is recoverable by rederiving it from the key. Nothing here can produce the
+permanent loss D6 is about; the worst case is a repair job, not a re-interview.
+
 **`TranscriptSegment` is not reused.** It exists, and it holds timings — but it is keyed to
 `InterviewSession`, which belongs to the separate upload-based interview system. Those two
 systems are independent today, and coupling them through a shared model to avoid one table is

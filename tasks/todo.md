@@ -1209,3 +1209,21 @@ this is a day or a quarter.
 
 - [ ] Add an ESLint config so `npm run lint` runs
 - [ ] Bucket the 1023 type errors by cause, then decide baseline-and-ratchet vs fix
+- [ ] Declare a schema for the canonical interview answer shape
+
+**Why the third one is here.** `SaveBodySchema.answers` in
+`src/app/api/posting/project/[projectId]/interview/route.ts` is
+`z.array(z.any())`, so the canonical interview record has no declared shape. What
+actually constrains it is two hand-written allowlist normalizers, `normalizeQA`
+and `toInterviewAnswer`, that rebuild the object field by field. A key not named
+in both is **silently discarded, not rejected**.
+
+So every future field addition to the interview record is a two-site edit where
+missing one loses data with no error and no failing test. The `"carried
+first-class, not stripped"` comments on `roomId` mark where someone already paid
+for this. The same shape is then projected by `rebuildAnswerProjection`, which is
+a third allowlist with the same property.
+
+D5a's audio retention sidesteps all three by writing to a sibling provenance key
+instead of threading a field through them. That was the right call for that work
+and does nothing for the next person.
