@@ -1,11 +1,11 @@
 # 21_ASSET_MATRIX — Delta 01
 
-ADD-only delta against `docs/21_ASSET_MATRIX.md`. Records eight decisions and the findings
+ADD-only delta against `docs/21_ASSET_MATRIX.md`. Records nine decisions and the findings
 from `docs/audits/ASSET_MATRIX_IMPLEMENTATION_EVALUATION.md` and
 `docs/audits/CAROUSEL_GENERATOR_EVALUATION.md`.
 
-Nothing in the base document is removed. Sections 4, 6, and 11 gain content. Sections 14 and
-15 are new.
+Nothing in the base document is removed. Sections 4, 6, and 11 gain content. Sections 14, 15,
+and 16 are new.
 
 ---
 
@@ -282,6 +282,7 @@ explicitly so the behavior is not carried forward silently during harvest.
 | 6 | Founding cohort is recruited on four deliverables, films added later | Honest, and four already exceeds what any publication delivers |
 | 7 | One render layer for all four targets, HTML and CSS via headless Chromium | Real pagination and text flow; Sharp cannot produce the landscape document. Hosting is open, see D2 |
 | 8 | Gaps are surfaced to designers, distinguished from schema blocks | Actionable gaps teach the system; blocked gaps stay silent because the ask would be false |
+| 9 | The composer ships with a structural guard asserting one composer exists | Types cannot express it and runtime cannot observe it; three trees shipped with every check green |
 
 ---
 
@@ -321,6 +322,42 @@ belongs in the deck rather than the backlog.
 
 ---
 
+## D10. New Section 16. Structural guard requirement
+
+**When the composer lands, it ships with `check:single-composer`, a structural guard asserting
+that exactly one composer exists in the tree.** This is a requirement of the composer, not a
+follow-up task, and the composer is not done without it.
+
+The precedent is `scripts/check-single-generator.ts`, which guards editorial article
+generation. Its own docstring states the case:
+
+> These checks are greps over source, deliberately. The invariant they protect is "there is
+> only one of these in the tree", which types cannot express and a runtime test cannot observe.
+
+That is exactly the invariant this document exists to defend. Section 2's frame invariance and
+Section 3's operating rule — no asset generator composes its own layout, its own type scale, or
+its own copy — are both statements of the same form: there is one of these in the tree.
+
+**Neither existing guardrail would have caught the drift.** `check:single-generator` passed
+throughout, correctly, because its scope is editorial text generation and says nothing about
+asset or image generators. Types cannot express "no second Sharp composite chain." No runtime
+test observes a duplicate directory. Three layout trees shipped simultaneously with every check
+green.
+
+At minimum the guard asserts:
+
+1. **One composite path.** Exactly one module composites over project photography.
+2. **One token source.** No color, type scale, or spacing value is declared outside the design
+   system. The evaluation found two full palettes and three dimension declarations.
+3. **One voice.** Every prompt producing copy that lands in a block imports `FOLIO_TONE` rather
+   than declaring its own persona. The evaluation found three personas and zero importers.
+4. **One line-breaking implementation,** measured rather than counted.
+5. **No text over photography** except the numbered product tag marker permitted by Section 2.
+
+Check 5 is the one that would have caught this earliest, and it is a grep.
+
+---
+
 ## Immediate actions, ahead of all phases
 
 **A. Remove the quotation marks at `src/lib/instagram-export/svg-templates.ts:85`.**
@@ -330,9 +367,10 @@ now, on the surface designers show their peers. It violates `08`, `17`, and `09`
 quotation marks makes the copy a headline, which is what it always was — and what the editor UI
 already calls it. This does not fix the generator and must not wait for anything that does.
 
-**B. Repoint `InstagramExportModal` to the single surviving entry point.**
-The modal is mounted at `ProjectHeader.tsx:274` and `ProjectHero.tsx:149`. Two live entry points
-produce visually incompatible carousels from the same project, which is the frame-invariance
+**B. Repoint the project-page export controls to the single surviving entry point.**
+There are three entry points, not two: `InstagramExportModal` in `ProjectHeader.tsx` and
+`ProjectHero.tsx`, and `CampaignWizard` in the same two files. All three drive the RETIRE tree
+and produce output visually incompatible with the surviving one, which is the frame-invariance
 failure in its most literal form.
 
 **The button is repointed to `/designer/projects/[id]/instagram`, not removed.** Removing the
@@ -340,6 +378,26 @@ affordance from the public project page to fix a consistency problem is a worse 
 inconsistency: the designer loses a working path to an export they can currently produce, in
 exchange for a defect they cannot see. The surviving path holds everything worth carrying
 forward; only the destination changes.
+
+**The ownership gate is fixed at the same time, on all three controls.** Both files gated
+these controls on `project.isPublic && publishedAt && images.length > 0` — a publication check,
+not an ownership one — so any visitor to a public published project could open them. The
+destination redirects anyone who is not the owner, so a repoint without this fix sends
+signed-out visitors to a sign-in wall and signed-in non-owners to a bounce.
+
+`isOwner` is already computed in `src/app/project/[id]/page.tsx` and already passed to five
+other children. It is passed here too and the controls gate on it.
+
+**This is a live defect independent of the repoint.** The wrong gate predates this work and
+ships today, so `CampaignWizard` gets the ownership fix now rather than at retirement, even
+though its repoint waits for the composer.
+
+**`ProjectHero.tsx` has no importers.** It is dead and retires under Decision 2 with the rest
+of the tree. It is repointed in the interim so the pattern is not preserved if the file is ever
+resurrected. This document previously cited it as a live mount, inheriting that claim from the
+generator evaluation, which inferred liveness from the presence of a mount expression rather
+than from an importer check. **Later audit phases must establish reachability by importer, not
+by mount** — Phase C in particular, since a dead file's tokens are not drift.
 
 **C. Begin the capture workstream.** D5a — audio retention and word timestamps — and the three
 finish fields with extraction. Both are accruing permanent loss. Neither waits on the remaining
@@ -356,6 +414,6 @@ Phase B is closed. The generator evaluation covers everything Phase B would have
 3. Phase A empirical half, population rates, requires production access
 4. Phase C, token and frame audit
 5. Phase E, migration proposal
-6. Composer scope
+6. Composer scope, shipping with `check:single-composer` per D10
 7. Phase D, deferred; D3 answers its finish question
 8. D5b transcription provider evaluation, any time after D5a
