@@ -4,8 +4,113 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/options";
 import { assertProjectWrite } from "@/lib/authz/access";
+import { prisma } from "@/lib/prisma";
+import { supabaseAdmin } from "@/lib/supabaseAdmin";
 import OpenAI from "openai";
 import { z } from "zod";
+
+// Matches the bucket the other interview upload path uses
+// (src/app/api/interviews/[id]/upload/route.ts).
+const BUCKET = process.env.SB_BUCKET_NAME || "event-images";
+
+/** One spoken answer's retained recording and word-level timings. */
+type AnswerAudio = {
+  audioUrl: string;
+  /** Whisper word timings, seconds. First-word start to last-word end resolves
+   *  any contiguous substring — which is what a pull quote is — to a span. */
+  words: Array<{ word: string; start: number; end: number }>;
+  capturedAt: string;
+};
+
+function extensionFor(file: File): string {
+  const fromName = file.name.match(/\.(webm|ogg|wav|mp3|m4a)$/i)?.[1];
+  if (fromName) return fromName.toLowerCase();
+  if (file.type.includes("ogg")) return "ogg";
+  if (file.type.includes("wav")) return "wav";
+  if (file.type.includes("mpeg") || file.type.includes("mp3")) return "mp3";
+  if (file.type.includes("m4a")) return "m4a";
+  return "webm";
+}
+
+/**
+ * Persist the recording and its timings.
+ *
+ * Written to `provenance.interview.audio`, keyed by questionId — a SIBLING of
+ * `provenance.interview.payload`, deliberately. The answer row does not exist
+ * yet at transcription time (the client saves it in a later request), and
+ * `EditorialInterviewAnswer` is a wipe-and-rebuild projection that would drop a
+ * directly-written audioUrl on the designer's next save. Keying by question
+ * rather than by answer revision means re-answering never orphans the audio,
+ * and the interview save preserves this key because it spreads
+ * `existingProvenance.interview` (interview/route.ts, nextProvenance).
+ *
+ * Never throws. Losing the recording must not cost the designer their answer.
+ */
+async function retainAudio(
+  projectId: string,
+  questionId: string,
+  file: File,
+  buffer: Buffer,
+  words: AnswerAudio["words"],
+): Promise<string | null> {
+  try {
+    const storageKey = `interviews/${projectId}/answers/${questionId}.${extensionFor(file)}`;
+
+    const { error: uploadError } = await supabaseAdmin.storage
+      .from(BUCKET)
+      .upload(storageKey, buffer, {
+        contentType: file.type || "audio/webm",
+        // Re-recording an answer replaces its audio, as it replaces its text.
+        upsert: true,
+      });
+
+    if (uploadError) {
+      console.error("[interview/transcribe] Audio upload failed:", uploadError);
+      return null;
+    }
+
+    const { data: publicUrlData } = supabaseAdmin.storage
+      .from(BUCKET)
+      .getPublicUrl(storageKey);
+    const audioUrl = publicUrlData?.publicUrl;
+    if (!audioUrl) return null;
+
+    const post = await prisma.projectPost.findUnique({
+      where: { projectId },
+      select: { provenance: true },
+    });
+
+    // No post yet means the interview has never been saved. The blob is already
+    // in storage under a deterministic key, so the reference can be recovered.
+    if (!post) return audioUrl;
+
+    const provenance = (post.provenance as any) || {};
+    const interview = provenance.interview || {};
+    const entry: AnswerAudio = {
+      audioUrl,
+      words,
+      capturedAt: new Date().toISOString(),
+    };
+
+    await prisma.projectPost.update({
+      where: { projectId },
+      data: {
+        provenance: {
+          ...provenance,
+          interview: {
+            ...interview,
+            audio: { ...(interview.audio ?? {}), [questionId]: entry },
+          },
+        } as any,
+      },
+    });
+
+    return audioUrl;
+  } catch (error) {
+    console.error("[interview/transcribe] Audio retention failed:", error);
+    return null;
+  }
+}
 
 const POSTING_V1_ENABLED =
   (process.env.POSTING_V1 ?? "").toLowerCase() === "true" ||
@@ -90,11 +195,15 @@ export async function POST(
       const buffer = Buffer.from(arrayBuffer);
       const file = new File([buffer], audioFile.name, { type: audioFile.type });
 
-      // Transcribe with Whisper
+      // Transcribe with Whisper. verbose_json + word granularity is what makes a
+      // published quote resolvable to a time span; without it the recording is
+      // retained but uncuttable (spec 21 delta D5a).
       const transcription = await openai.audio.transcriptions.create({
         file: file,
         model: "whisper-1",
         language: "en", // Optional: specify language for better accuracy
+        response_format: "verbose_json",
+        timestamp_granularities: ["word"],
       });
 
       const transcript = transcription.text?.trim() || "";
@@ -105,6 +214,20 @@ export async function POST(
           { status: 422 }
         );
       }
+
+      const words: AnswerAudio["words"] = Array.isArray((transcription as any).words)
+        ? (transcription as any).words.map((w: any) => ({
+            word: String(w.word ?? ""),
+            start: Number(w.start ?? 0),
+            end: Number(w.end ?? 0),
+          }))
+        : [];
+
+      // Retain the recording. Non-blocking on failure: the answer is the critical
+      // path, the recording is the asset.
+      const audioUrl = questionId
+        ? await retainAudio(projectId, questionId, audioFile, buffer, words)
+        : null;
 
       // Analytics (non-blocking)
       import("@/lib/analytics")
@@ -117,6 +240,10 @@ export async function POST(
               event: "interview_voice_transcribed",
               questionId: questionId || undefined,
               transcriptLength: transcript.length,
+              // Whether this answer is film-eligible. A false here is a silent
+              // retention failure worth seeing in aggregate.
+              audioRetained: !!audioUrl,
+              wordTimings: words.length,
             },
           });
         })
@@ -125,7 +252,13 @@ export async function POST(
         });
 
       return NextResponse.json(
-        { ok: true, transcript, questionId: questionId || undefined },
+        {
+          ok: true,
+          transcript,
+          questionId: questionId || undefined,
+          audioUrl: audioUrl || undefined,
+          words: words.length ? words : undefined,
+        },
         { status: 200 }
       );
     } catch (transcriptionError: any) {
