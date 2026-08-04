@@ -218,6 +218,80 @@ no offsets cannot resolve a quote to a time span, and offsets with no audio have
 **This is gated behind nothing.** It is the only item in this document accruing permanent loss,
 per D6. It requires no new vendor, no comparison run, and no cutover.
 
+### It is four files, not one. Do not shrink it back.
+
+This document first scoped D5a as a change to the transcribe route alone, writing the URL
+straight to `EditorialInterviewAnswer.audioUrl`. **That scope was wrong, and the smaller
+version is a silent-loss bug on the exact field whose purpose is preventing silent loss.**
+
+Two facts about the existing architecture make the one-file version fail:
+
+**`EditorialInterviewAnswer` is a projection, not a record.**
+`src/lib/editorial/syncInterviewAnswers.ts` says so directly: `provenance.interview.payload
+.answers` on the `ProjectPost` is canonical, and the table is a queryable projection of it.
+`rebuildAnswerProjection` is wipe-and-rebuild — `deleteMany` then `create` with fresh row ids —
+and it runs on every interview save (`interview/route.ts:796`). It writes a fixed list of
+fields; `audioUrl` is not among them. A URL written directly to that column survives until the
+designer next saves, then vanishes. It would test clean.
+
+**The transcribe route cannot write the answer row, because the row does not exist yet.**
+`useVoiceRecording.ts` posts audio to the transcribe route, which is stateless and returns text.
+The answer is saved later, by a separate request, which writes provenance and then rebuilds the
+projection. At transcription time there is nothing to attach a URL to.
+
+So the audio has to travel the same path the answer travels:
+
+| # | File | Change |
+|---|---|---|
+| 1 | `interview/transcribe/route.ts` | Upload the blob; return `audioUrl` and word timings alongside the transcript |
+| 2 | `components/posting/interview/useVoiceRecording.ts` | Carry both into the answer payload |
+| 3 | `interview/route.ts` | Admit both through the normalizers into canonical provenance |
+| 4 | `syncInterviewAnswers.ts` | Carry both into the projection so they stay queryable |
+
+**File 3 is the one most likely to be missed.** The canonical answer shape has no declared
+schema — `SaveBodySchema.answers` is `z.array(z.any())`. What constrains it is a pair of
+hand-written normalizers, `normalizeQA` and `toInterviewAnswer`, that rebuild the object field
+by field from an allowlist. A key not named in both is **silently dropped**, not rejected. This
+is the same hazard as the projection, one layer up, and the codebase has already been bitten by
+it: the "carried first-class, not stripped" comments on `roomId` mark where someone fixed
+exactly this for room attribution.
+
+**A declared schema on the canonical answer shape is worth having** and is not part of D5a. It
+is recorded here because the next person adding a field to the interview record faces the same
+two silent-drop points with nothing telling them so.
+
+### Sequencing: the capture loss stops before the migration lands
+
+Only one piece of this needs a schema change. `EditorialInterviewAnswer.audioUrl` already
+exists, and canonical provenance is a `Json` column that holds any shape. So files 1 through 3,
+plus the `audioUrl` half of file 4, ship with **no migration** — and that is the point at which
+audio stops being destroyed.
+
+The word-timings column on the projection is the only migration, and it can follow. Losing
+query access to timings for a few days costs nothing; the timings themselves are already safe
+in provenance from the moment file 3 lands.
+
+### Word timings: a deliberate intermediate
+
+Timings land as `Json` on the projection and in canonical provenance, shaped
+`[{ word, start, end }]`. First-word start to last-word end resolves any contiguous substring —
+which is what a pull quote is — to a time span, so a film can be cut without a further schema
+change.
+
+**This is an intermediate, not the destination.** The relational form is a `TranscriptWord`
+table, which is more queryable and lets a pull quote point at a span by foreign key rather than
+by substring search. It is not built now because D4's pull-quote model does not exist yet, and
+building the table first means guessing at its foreign key.
+
+**Promotion condition, so this does not become permanent by default: when D4's pull-quote model
+lands, `TranscriptWord` is built with it and the `Json` column is backfilled and deprecated.**
+D4 is the trigger. If D4 ships without it, that is a regression to name in review.
+
+**`TranscriptSegment` is not reused.** It exists, and it holds timings — but it is keyed to
+`InterviewSession`, which belongs to the separate upload-based interview system. Those two
+systems are independent today, and coupling them through a shared model to avoid one table is
+the shortcut that becomes, in two years, the reason neither can change.
+
 ## D5b. Transcription provider evaluation — deferred, normal decision
 
 Evaluate Deepgram against Whisper on accuracy, cost, and word-timestamp quality, using three or
