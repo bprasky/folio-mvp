@@ -51,7 +51,15 @@ export interface ProjectionAnswer {
  */
 export type AnswerAudioMap = Record<
   string,
-  { audioUrl?: string | null } | null | undefined
+  | {
+      audioUrl?: string | null;
+      /** Whisper word timings, seconds. First-word start to last-word end
+       *  resolves any contiguous substring to a span — which is what makes a
+       *  published quote cuttable. */
+      words?: Array<{ word: string; start: number; end: number }> | null;
+    }
+  | null
+  | undefined
 >;
 
 const rowKey = (questionId: string, isFollowUp: boolean) =>
@@ -132,6 +140,12 @@ export async function rebuildAnswerProjection(
           // on the row, so a wipe-and-rebuild cannot drop it — which is the
           // failure that made writing it here directly the wrong design.
           audioUrl: audioByQuestion[a.questionId]?.audioUrl ?? null,
+          // Omitted rather than nulled when absent: Prisma reserves null on a
+          // Json? field for JSON null, and the column's default is SQL NULL,
+          // which is the accurate statement for an answer with no recording.
+          wordTimings: audioByQuestion[a.questionId]?.words?.length
+            ? audioByQuestion[a.questionId]!.words!
+            : undefined,
           createdAt: firstSeen.get(key) ?? new Date(),
         },
       });
