@@ -1,11 +1,11 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { HiOutlineDotsHorizontal } from 'react-icons/hi';
 import { FaInstagram, FaChevronDown } from 'react-icons/fa';
 import { MdDownload, MdCampaign } from 'react-icons/md';
 import OverviewModal from './OverviewModal';
-import InstagramExportModal from '@/components/instagram/InstagramExportModal';
 import { CampaignWizard } from '@/components/instagram/CampaignWizard';
 
 interface Project {
@@ -35,17 +35,27 @@ interface ProjectHeroProps {
   project: Project;
   images?: ProjectImage[];
   expandedBlocks?: any; // ProjectPost.expandedBlocks
+  /** Viewer owns this project. Gates controls whose destination is owner-only. */
+  isOwner?: boolean;
 }
 
-export default function ProjectHero({ project, images = [], expandedBlocks }: ProjectHeroProps) {
+export default function ProjectHero({
+  project,
+  images = [],
+  expandedBlocks,
+  isOwner = false,
+}: ProjectHeroProps) {
+  const router = useRouter();
   const [showOverviewModal, setShowOverviewModal] = useState(false);
-  const [showInstagramModal, setShowInstagramModal] = useState(false);
   const [showCampaignWizard, setShowCampaignWizard] = useState(false);
   const [showShareDropdown, setShowShareDropdown] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   // Only show Instagram export if project is published
   const canExportToInstagram = project.isPublic && project.publishedAt && images.length > 0;
+  // The export editor redirects anyone who is not the owner, so a publication
+  // check cannot gate a control that navigates there.
+  const canExport = canExportToInstagram && isOwner;
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -105,21 +115,23 @@ export default function ProjectHero({ project, images = [], expandedBlocks }: Pr
                         </div>
                       </div>
                     </button>
-                    <button
-                      onClick={() => {
-                        setShowInstagramModal(true);
-                        setShowShareDropdown(false);
-                      }}
-                      className="w-full px-4 py-3 text-left hover:bg-surface-ground flex items-start gap-3 transition"
-                    >
-                      <MdDownload className="w-5 h-5 text-folio-text-secondary flex-shrink-0 mt-0.5" />
-                      <div>
-                        <div className="font-medium text-folio-text-primary text-sm">Quick Export</div>
-                        <div className="text-xs text-folio-text-secondary mt-0.5">
-                          Single carousel with selected images
+                    {canExport && (
+                      <button
+                        onClick={() => {
+                          setShowShareDropdown(false);
+                          router.push(`/designer/projects/${project.id}/instagram`);
+                        }}
+                        className="w-full px-4 py-3 text-left hover:bg-surface-ground flex items-start gap-3 transition"
+                      >
+                        <MdDownload className="w-5 h-5 text-folio-text-secondary flex-shrink-0 mt-0.5" />
+                        <div>
+                          <div className="font-medium text-folio-text-primary text-sm">Quick Export</div>
+                          <div className="text-xs text-folio-text-secondary mt-0.5">
+                            Single carousel with selected images
+                          </div>
                         </div>
-                      </div>
-                    </button>
+                      </button>
+                    )}
                   </div>
                 </div>
               )}
@@ -143,18 +155,6 @@ export default function ProjectHero({ project, images = [], expandedBlocks }: Pr
         onClose={() => setShowOverviewModal(false)}
         project={project}
       />
-
-      {/* Instagram Export Modal (Quick Export) */}
-      {canExportToInstagram && (
-        <InstagramExportModal
-          isOpen={showInstagramModal}
-          onClose={() => setShowInstagramModal(false)}
-          projectId={project.id}
-          projectTitle={project.title}
-          images={images}
-          expandedBlocks={expandedBlocks}
-        />
-      )}
 
       {/* Campaign Wizard Modal */}
       {canExportToInstagram && showCampaignWizard && (
