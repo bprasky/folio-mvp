@@ -480,6 +480,7 @@ export default async function ProjectPage({
           editorialState={editorialState}
           images={base.images.map(img => ({ id: img.id, url: img.url, name: img.name }))}
           expandedBlocks={base.post?.expandedBlocks}
+          isOwner={isOwner}
         />
 
         {/* Project Progress Tracker — adaptive guided next-action region.

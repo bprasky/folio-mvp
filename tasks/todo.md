@@ -1181,3 +1181,49 @@ Feeding it verbatim candidates exposed a blocker in it:
 - [ ] **Not verified: a live generation.** The ranking call has never run. The
       guarantee that no fabricated quote can ship is structural and tested; the
       quality of which quote gets picked is not.
+
+---
+
+# Tooling: neither guardrail is operating
+
+Found while running checks for the asset matrix work. Not asset-matrix scope,
+tracked here so it is not rediscovered.
+
+**`npm run lint` is non-functional.** `next lint` drops into the interactive
+"How would you like to configure ESLint?" setup prompt. There is no
+`.eslintrc*`, no `eslint.config*`, and no `eslintConfig` key in `package.json`.
+No commit has been linted.
+
+**`tsc --noEmit` reports 1023 errors.** The count is stable, so nothing is
+regressing — but it means a new type error is invisible in the noise, and CI
+cannot gate on a clean run.
+
+Together: every commit lands with neither static guardrail operating. The
+`check:*` scripts do work and do catch real things, but they are targeted
+structural greps, not general coverage.
+
+Not urgent. Sizing it is the first step — whether the 1023 collapse into a few
+systemic causes (the one sampled was a `readonly` array assigned to a mutable
+Prisma input type) or are genuinely 1023 distinct problems determines whether
+this is a day or a quarter.
+
+- [ ] Add an ESLint config so `npm run lint` runs
+- [ ] Bucket the 1023 type errors by cause, then decide baseline-and-ratchet vs fix
+- [ ] Declare a schema for the canonical interview answer shape
+
+**Why the third one is here.** `SaveBodySchema.answers` in
+`src/app/api/posting/project/[projectId]/interview/route.ts` is
+`z.array(z.any())`, so the canonical interview record has no declared shape. What
+actually constrains it is two hand-written allowlist normalizers, `normalizeQA`
+and `toInterviewAnswer`, that rebuild the object field by field. A key not named
+in both is **silently discarded, not rejected**.
+
+So every future field addition to the interview record is a two-site edit where
+missing one loses data with no error and no failing test. The `"carried
+first-class, not stripped"` comments on `roomId` mark where someone already paid
+for this. The same shape is then projected by `rebuildAnswerProjection`, which is
+a third allowlist with the same property.
+
+D5a's audio retention sidesteps all three by writing to a sibling provenance key
+instead of threading a field through them. That was the right call for that work
+and does nothing for the next person.

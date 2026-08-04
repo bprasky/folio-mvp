@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { MoreHorizontal, Share2, Plus } from 'lucide-react';
 import { FaChevronDown } from 'react-icons/fa';
 import { MdDownload, MdCampaign } from 'react-icons/md';
@@ -8,7 +9,6 @@ import { format, formatDistanceToNowStrict } from 'date-fns';
 import { cn } from '@/lib/utils';
 import OverviewModal from './OverviewModal';
 import ExportSpecModal from './ExportSpecModal';
-import InstagramExportModal from '@/components/instagram/InstagramExportModal';
 import { CampaignWizard } from '@/components/instagram/CampaignWizard';
 import { toast } from 'sonner';
 import type { EditorialState } from '@/lib/editorial/getEditorialState';
@@ -56,6 +56,8 @@ interface ProjectHeaderProps {
   editorialState: EditorialState;
   images?: Array<{ id: string; url: string; name?: string | null }>;
   expandedBlocks?: unknown;
+  /** Viewer owns this project. Gates controls whose destination is owner-only. */
+  isOwner?: boolean;
 }
 
 export default function ProjectHeader({
@@ -63,15 +65,20 @@ export default function ProjectHeader({
   editorialState,
   images = [],
   expandedBlocks,
+  isOwner = false,
 }: ProjectHeaderProps) {
+  const router = useRouter();
   const [showOverviewModal, setShowOverviewModal] = useState(false);
   const [showExportModal, setShowExportModal] = useState(false);
-  const [showInstagramModal, setShowInstagramModal] = useState(false);
   const [showCampaignWizard, setShowCampaignWizard] = useState(false);
   const [showShareDropdown, setShowShareDropdown] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   const canShare = project.isPublic && !!project.publishedAt && images.length > 0;
+  // The export editor at /designer/projects/[id]/instagram redirects anyone who
+  // is not the owner. canShare is a publication check, not an ownership one, so
+  // it cannot gate a control that navigates there.
+  const canExport = canShare && isOwner;
   const sLabel = editorialStatusLabel(editorialState);
   const dotClass = editorialStatusDotClass(editorialState);
 
@@ -207,23 +214,25 @@ export default function ProjectHeader({
                         </div>
                       </div>
                     </button>
-                    <button
-                      onClick={() => {
-                        setShowInstagramModal(true);
-                        setShowShareDropdown(false);
-                      }}
-                      className="w-full px-4 py-3 text-left hover:bg-surface-ground flex items-start gap-3 transition-colors duration-150"
-                    >
-                      <MdDownload className="w-5 h-5 text-folio-text-secondary flex-shrink-0 mt-0.5" />
-                      <div>
-                        <div className="font-medium text-folio-text-primary text-sm">
-                          Quick export
+                    {canExport && (
+                      <button
+                        onClick={() => {
+                          setShowShareDropdown(false);
+                          router.push(`/designer/projects/${project.id}/instagram`);
+                        }}
+                        className="w-full px-4 py-3 text-left hover:bg-surface-ground flex items-start gap-3 transition-colors duration-150"
+                      >
+                        <MdDownload className="w-5 h-5 text-folio-text-secondary flex-shrink-0 mt-0.5" />
+                        <div>
+                          <div className="font-medium text-folio-text-primary text-sm">
+                            Quick export
+                          </div>
+                          <div className="text-xs text-folio-text-secondary mt-0.5">
+                            Single carousel with selected images
+                          </div>
                         </div>
-                        <div className="text-xs text-folio-text-secondary mt-0.5">
-                          Single carousel with selected images
-                        </div>
-                      </div>
-                    </button>
+                      </button>
+                    )}
                   </div>
                 </div>
               )}
@@ -269,17 +278,6 @@ export default function ProjectHeader({
         projectId={project.id}
         onExport={handleExport}
       />
-
-      {canShare && (
-        <InstagramExportModal
-          isOpen={showInstagramModal}
-          onClose={() => setShowInstagramModal(false)}
-          projectId={project.id}
-          projectTitle={project.title}
-          images={images}
-          expandedBlocks={expandedBlocks}
-        />
-      )}
 
       {canShare && showCampaignWizard && (
         <CampaignWizard

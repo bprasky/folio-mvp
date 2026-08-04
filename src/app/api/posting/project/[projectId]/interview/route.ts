@@ -14,6 +14,7 @@ import { makeSlug } from "@/lib/posting/slug";
 import {
   getOrCreateEditorialInterview,
   rebuildAnswerProjection,
+  type AnswerAudioMap,
 } from "@/lib/editorial/syncInterviewAnswers";
 import { moderateAnswers } from "@/lib/posting/moderation";
 import { z } from "zod";
@@ -793,7 +794,15 @@ export async function POST(
         // skip-only save must not wipe and recreate the answer set, so the
         // rebuild is gated on an actual answer write.
         if (hasAnswerWrite) {
-          await rebuildAnswerProjection(interview.id, mergedAnswers as any);
+          // Retained recordings live at provenance.interview.audio, written by
+          // the transcribe route and keyed by questionId (spec 21 delta D5a).
+          // Read from nextProvenance, not existingProvenance — the save above
+          // preserves the key, and this is the post-write state.
+          await rebuildAnswerProjection(
+            interview.id,
+            mergedAnswers as any,
+            ((nextProvenance as any)?.interview?.audio as AnswerAudioMap) || {},
+          );
         }
 
         // --- Room progress (Phase B) — merge non-destructively (A3/C0) ---

@@ -771,24 +771,24 @@ model Product {
 }
 
 model ProductTag {
-  id        String       @id @default(uuid())
-  x         Float
-  y         Float
+  id         String       @id @default(uuid())
+  x          Float
+  y          Float
   // The auto-tagger's original guessed position, kept even after the designer
   // drags the pin (x/y). The (aiX,aiY) -> (x,y) delta is captured as training
   // data for improving auto-placement. Null for manually-placed tags.
-  aiX       Float?
-  aiY       Float?
-  createdAt DateTime     @default(now())
-  updatedAt DateTime     @updatedAt
-  productId String
-  imageId   String
+  aiX        Float?
+  aiY        Float?
+  createdAt  DateTime     @default(now())
+  updatedAt  DateTime     @updatedAt
+  productId  String
+  imageId    String
   // Async tagging review: when a deferred-scrape tag has been confirmed by the
   // designer. Null = still needs review. See ProjectImageTagger / notifications.
   reviewedAt DateTime?
-  image     ProjectImage @relation(fields: [imageId], references: [id], onDelete: Cascade)
-  product   Product      @relation(fields: [productId], references: [id], onDelete: Cascade)
-  selection Selection? // Selection created from this tag
+  image      ProjectImage @relation(fields: [imageId], references: [id], onDelete: Cascade)
+  product    Product      @relation(fields: [productId], references: [id], onDelete: Cascade)
+  selection  Selection? // Selection created from this tag
 
   // Contextual crop fields
   cropUrl    String?
@@ -1826,6 +1826,13 @@ model EditorialInterviewAnswer {
 
   answerText    String  @map("answer_text")
   audioUrl      String? @map("audio_url") // Optional: retained audio
+  // Whisper word timings for the retained recording: [{ word, start, end }],
+  // seconds. First-word start to last-word end resolves any contiguous
+  // substring — which is what a pull quote is — to a time span. Projected from
+  // provenance.interview.audio, never written directly (spec 21 delta D5a).
+  // Deliberate intermediate: promoted to a relational TranscriptWord table when
+  // D4's pull-quote model lands to point at it.
+  wordTimings   Json?   @map("word_timings")
   inputModality String  @default("text") @map("input_modality") // "text" | "voice" | "mixed"
 
   // AI-extracted metadata (optional)
