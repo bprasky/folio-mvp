@@ -218,6 +218,31 @@ no offsets cannot resolve a quote to a time span, and offsets with no audio have
 **This is gated behind nothing.** It is the only item in this document accruing permanent loss,
 per D6. It requires no new vendor, no comparison run, and no cutover.
 
+### Forward-only, and what that costs the founding cohort
+
+**D5a stops the loss. It does not repair it.** Every interview conducted before it shipped has
+no retained audio and no word timings, and no code recovers them. Those projects are
+permanently film-ineligible in their current state.
+
+This has a product consequence that is already decided elsewhere and should not be
+rediscovered. Decision 6 recruits the founding cohort on four deliverables with films added
+later. For any designer interviewed before D5a landed, **four is not "for now" — it is
+permanent**, unless they re-record.
+
+**That promotes the retake affordance.** D1 lists Teaser Film as CLOSABLE with the remediation
+"re-record this answer," which reads as an ordinary iteration control. It is not. It is the
+only path to a film for every interview already in the record, so it carries the entire
+existing cohort rather than serving occasional do-overs.
+
+Two consequences follow for whoever builds it. Retake has to work per answer rather than per
+interview, since asking a designer to sit the whole thing again to recover one quote is not a
+remediation anyone takes. And the audio key is `interviews/<projectId>/answers/<questionId>`
+with `upsert: true`, so a retake overwrites cleanly by construction — the storage layer already
+supports this, and the affordance is the missing half.
+
+**Do not read the film library as eventually covering every project.** It covers every project
+interviewed after D5a, plus whichever earlier ones their designers choose to revisit.
+
 ### It is four files, not one. Do not shrink it back.
 
 This document first scoped D5a as a change to the transcribe route alone, writing the URL
