@@ -40,6 +40,20 @@ export interface ProjectionAnswer {
   parentQuestionId?: string | null;
 }
 
+/**
+ * Retained recordings, keyed by questionId, as written by the transcribe route
+ * to `provenance.interview.audio` (spec 21 delta D5a).
+ *
+ * It arrives as a parameter rather than being read here, for the same
+ * single-writer reason the rest of this file exists: the projection is exactly
+ * as complete as what its caller hands it, and a second reader inside this
+ * function would be a second source of truth about what a row should contain.
+ */
+export type AnswerAudioMap = Record<
+  string,
+  { audioUrl?: string | null } | null | undefined
+>;
+
 const rowKey = (questionId: string, isFollowUp: boolean) =>
   `${questionId}|${isFollowUp ? 'F' : 'P'}`;
 
@@ -69,6 +83,7 @@ const pick = (...values: Array<string | null | undefined>) => {
 export async function rebuildAnswerProjection(
   interviewId: string,
   answers: ProjectionAnswer[],
+  audioByQuestion: AnswerAudioMap = {},
 ): Promise<number> {
   const rows = answers
     .map((a) => ({ ...a, questionId: a.questionId || a.id || '' }))
@@ -112,6 +127,11 @@ export async function rebuildAnswerProjection(
           aiClassificationAttribute: a.aiClassificationAttribute || null,
           roomId: a.roomId || null,
           isCrossRoom: !!a.isCrossRoom,
+          // The retained recording for this question, projected from canonical
+          // provenance. Rebuilt from the map on every pass rather than carried
+          // on the row, so a wipe-and-rebuild cannot drop it — which is the
+          // failure that made writing it here directly the wrong design.
+          audioUrl: audioByQuestion[a.questionId]?.audioUrl ?? null,
           createdAt: firstSeen.get(key) ?? new Date(),
         },
       });
@@ -156,10 +176,11 @@ export async function syncAnswersToEditorialInterview(
     (f: ProjectionAnswer) => ({ ...f, isFollowUp: true }),
   );
 
-  const answersCreated = await rebuildAnswerProjection(interview.id, [
-    ...answers,
-    ...followups,
-  ]);
+  const answersCreated = await rebuildAnswerProjection(
+    interview.id,
+    [...answers, ...followups],
+    (provenance.interview?.audio as AnswerAudioMap) || {},
+  );
 
   return { interviewId: interview.id, answersCreated };
 }
