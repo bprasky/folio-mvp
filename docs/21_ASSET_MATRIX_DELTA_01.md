@@ -148,6 +148,70 @@ the flag, the corpus block would be built on guesses with no way to tell which.
 designers will select the nearest wrong option, and the wrong values become indistinguishable
 from right ones. The canonical value is derived, not chosen.
 
+### `ProductTag` is canonical, and that means eight writers
+
+Unlike `EditorialInterviewAnswer`, `ProductTag` has no projection layer, no provenance blob,
+and no rebuild function. The rows are the record, so the three fields go directly on the model
+and none of D5a's sibling-key indirection is needed.
+
+The inverse hazard applies instead. `EditorialInterviewAnswer` had one writer that dropped
+unknown fields; `ProductTag` has **eight `create` sites across seven files**, and they do not
+have equivalent access to a finish. Adding three columns without deciding per site produces
+eight undecided defaults.
+
+**Three behaviors, each with a reason.**
+
+| Behavior | Sites | Rule |
+|---|---|---|
+| **Capture** | `tag-product-to-image` | Finish is asked for, prefilled from extraction. `finishConfirmed` records whether the designer touched it. |
+| **Propose** | `posting/.../auto-tag` (×2), `projects/[id]/rooms/[roomId]/gen-image` | Extraction's proposal is written with `finishConfirmed` false. No prompt, no interruption. |
+| **Absent** | `import/pending-tag/[tagId]/place`, `import/pending-tag/[tagId]/verify`, `import/[sessionId]/batch-verify`, `living/skeleton/confirm` | Finish is NULL. Not an empty string, not a guess. |
+
+**Why the import paths stay empty.** A tag arriving through a bulk import has no specification
+event behind it. Inventing a finish there is worse than having none, because a fabricated value
+is indistinguishable from an observed one once it is in the column. If such a tag is later
+opened in the tagging UI it becomes a capture site like any other, and gets its finish then.
+
+**`finishConfirmed` is what makes the middle row recoverable.** A proposed finish is a
+candidate, and the flag is the only thing that distinguishes it from a designer's own statement
+later, which is why the corpus blocks can raise their bar without a re-capture.
+
+### Extraction proposes, the tag records, and the tag always wins
+
+Extraction already has a home. `src/lib/products/aiExtractProduct.ts` is Tier 3 of the scraper
+— Claude with `web_search`, gated behind an info threshold for cost, cached in `CachedProduct`
+by normalized URL, returning a `confidence` of high, medium, or low that lands in
+`extractionConfidence`. **It does not extract finish today.** It extracts `materialType`, one
+of ten categories (`stone`, `tile`, `wood`, `metal`, …), which is a class of thing rather than
+a finish. "Unlacquered brass" is not in that vocabulary.
+
+**Finish is added as a tenth field to the existing prompt, not as a second extraction call.**
+Doubling cost on a path that already carries deliberate cost discipline, in order to avoid
+editing one prompt, is a bad trade.
+
+**The cheap rung should be tried first.** `src/lib/products/extractProductFields.ts` already
+parses the JSON-LD `Product` node but reads only name, image, description, brand, price, and
+currency. `color` and `material` are standard schema.org `Product` properties sitting in a node
+the parser is already holding. Reading them is a few deterministic lines and costs nothing, so
+a page with good JSON-LD never needs to reach Tier 3. Note that the existing
+`extractMaterials` and `extractColors` helpers are **not** a finish source — they are keyword
+greps over raw HTML against fixed dictionaries, so they fire on any occurrence of "brass"
+anywhere on the page and have no notion of "unlacquered."
+
+**Two different facts, deliberately.**
+
+| Field | Means |
+|---|---|
+| `CachedProduct.finish` | What the URL says the product is. Shared across every designer. |
+| `ProductTag.finishRaw` | What this designer specified, in this room. |
+
+The variant-selector case proves they must stay separate: a product page with a finish picker
+gives extraction the default variant, while the designer specified the third option down. If
+these were one field, one designer's specification would overwrite the cached product record
+and then propose itself to everyone else.
+
+**Extraction proposes, the tag records, and the tag always wins.**
+
 ---
 
 ## D4. Section 11 gains the quote provenance model
