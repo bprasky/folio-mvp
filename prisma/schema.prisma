@@ -767,6 +767,25 @@ model Product {
 
   productClaimCandidates ProductClaimCandidate[]
 
+  // --- Product Record (spec 22_PRODUCT_RECORD) ---
+  // A product page is an editorial article about the product, written by the
+  // designers who specified it. recordTier is the maturity ladder; the three
+  // counts are a denormalized cache of the coverage disclosure the Record
+  // publishes on its face ("Specified by 40 designers across 47 projects.
+  // 6 have testified.").
+  //
+  // The counts are a CACHE, not the truth. `getProductRecord` computes coverage
+  // live from ProductTag and does not read these columns, so a stale cache can
+  // never produce a wrong Record. They exist for list surfaces and for the
+  // claim-email cohort query, where a live per-product aggregate is not viable.
+  recordTier        ProductRecordTier @default(LISTING)
+  recordPublishedAt DateTime?
+  specifierCount    Int               @default(0)
+  projectCount      Int               @default(0)
+  testimonyCount    Int               @default(0)
+
+  vendorProductClaims VendorProductClaim[]
+
   @@map("products")
 }
 
@@ -1069,6 +1088,10 @@ model Organization {
 
   // Designer Shop System relations
   shopBoosts ShopBoost[] @relation("VendorShopBoosts")
+
+  // Product Record (spec 22_PRODUCT_RECORD) — claiming is free and is the
+  // conversion moment. An org with no rows here is TAGGED on every product.
+  vendorProductClaims VendorProductClaim[]
 
   // Homepage Reel Boost System (Task 05) — vendor-funded auction for first 2 reel slots
   homepageReelBoosts HomepageReelBoost[] @relation("VendorHomepageReelBoosts")
@@ -4458,6 +4481,19 @@ model SupplementalQuote {
 
   createdAt DateTime @default(now())
 
+  // --- Testimony class (spec 22_PRODUCT_RECORD) ---
+  // Volunteer and commissioned content are distinct block classes with distinct
+  // gates. Conflating them leaks the gate: volunteer quotes go public the moment
+  // a vendor claims (free), commissioned testimony only exists because a vendor
+  // paid for the request. Every quote predating spec 22 is VOLUNTEER, which the
+  // default states correctly — no interview elicited any of them.
+  //
+  // Commissioned public output reuses this table rather than getting a parallel
+  // store, per the canonical-plus-projection pattern. collaborationRequestId is
+  // the join back to the paid request; it is null on every volunteer quote.
+  testimonyClass         TestimonyClass @default(VOLUNTEER)
+  collaborationRequestId String?
+
   post       ProjectPost @relation("PostSupplementalQuotes", fields: [projectPostId], references: [id], onDelete: Cascade)
   productTag ProductTag? @relation("ProductTagQuotes", fields: [productTagId], references: [id], onDelete: SetNull)
 
@@ -7691,4 +7727,189 @@ model EditorialQueueItem {
   @@index([designerId, status])
   @@index([status, scheduledSlot])
   @@map("editorial_queue_items")
+}
+
+// ─── Product Record System (spec 22_PRODUCT_RECORD) ─────────────────────────
+//
+// ADD-only. No destructive DDL. The Product Record is the Product entity at
+// Corpus scope in spec 21 — many projects against one product, where a project
+// Super-Article is many contributors against one project. Same block library,
+// different join key. What is new here is the query, the gate, and the
+// commission.
+//
+// Phases C through E have tables and no readers yet. That is deliberate: five
+// models against the same tables is one migration or five, and the five-migration
+// version is the bookkeeping debt Phases 1-5E spent weeks unwinding. Phase C is
+// blocked upstream on the canonical interviewer module.
+
+/// Record maturity. ARTICLE requires the independence gate: 3 distinct
+/// designers across 3 distinct projects, including 2+ commissioned testimonies.
+/// Without distinctness one friendly designer and one vendor manufacture an
+/// article and the merit claim dies.
+enum ProductRecordTier {
+  LISTING
+  RECORD
+  ARTICLE
+}
+
+/// Replaces the Tagged / Featured / Boosted ladder in spec 15. Visibility and
+/// credibility both attach to participation; neither attaches to spend alone.
+enum VendorRecordState {
+  TAGGED
+  CLAIMED
+  COLLABORATING
+}
+
+enum CollaborationRequestStatus {
+  PENDING
+  DECLINED
+  EXPIRED
+  SUBMITTED_BELOW_FLOOR
+  COMPLETED_WITHHELD
+  COMPLETED_PUBLISHED
+}
+
+/// VOLUNTEER: designer-initiated, unpaid, short, from the Add-to-Shop toggle.
+/// COMMISSIONED: elicited through the canonical interviewer against a paid
+/// request. A record populated entirely by volunteer quotes never reaches
+/// Article tier — volunteer content is a teaser, not the asset.
+enum TestimonyClass {
+  VOLUNTEER
+  COMMISSIONED
+}
+
+/// A vendor organization's participation state on one product. Absence of a row
+/// is TAGGED — the free, automatic state every product starts in. Claiming is
+/// free, and is what unlocks seeing testimony and pushing volunteer quotes
+/// public.
+model VendorProductClaim {
+  id             String            @id @default(cuid())
+  organizationId String
+  productId      String
+  state          VendorRecordState @default(CLAIMED)
+  claimedAt      DateTime          @default(now())
+
+  /// The one free Collaboration Request that Claimed carries. Consumed on
+  /// request creation, returned (consumedAt back to null) on decline or expiry —
+  /// a lapsed free request must not be a dead end, because the free request is
+  /// the entire conversion moment.
+  freeRequestGrantedAt  DateTime?
+  freeRequestConsumedAt DateTime?
+
+  organization Organization @relation(fields: [organizationId], references: [id])
+  product      Product      @relation(fields: [productId], references: [id])
+
+  @@unique([organizationId, productId])
+  @@index([productId])
+  @@map("vendor_product_claims")
+}
+
+/// A paid request for a designer's time. It does not purchase a conclusion.
+/// Billing fires only on delivery: no request generates a receivable until an
+/// interview clears the completion floor.
+model CollaborationRequest {
+  id                  String                     @id @default(cuid())
+  organizationId      String
+  productId           String
+  designerId          String
+  projectPostId       String?
+  status              CollaborationRequestStatus @default(PENDING)
+  isFreeGrant         Boolean                    @default(false)
+  quotedPriceCents    Int
+  designerTierAtQuote String
+  expiresAt           DateTime
+  respondedAt         DateTime?
+  publishedAt         DateTime?
+  billedAt            DateTime?
+  createdAt           DateTime                   @default(now())
+  updatedAt           DateTime                   @updatedAt
+
+  @@index([organizationId])
+  @@index([productId])
+  @@index([designerId, status])
+  @@index([status, expiresAt])
+  @@map("collaboration_requests")
+}
+
+/// The private half of the dual output. Delivered to the vendor, never
+/// published, and never an input to targeting or recommendation — see the
+/// Targeting Firewall, enforced by scripts/check-product-record-invariants.ts.
+/// If sentiment prediction became a targeting input, a vendor would buy a
+/// filtered sample and the record would be whitewashed by construction, with
+/// nothing suppressed and no rule broken.
+model PrivateProductSignal {
+  id                     String @id @default(cuid())
+  collaborationRequestId String @unique
+  productId              String
+  designerId             String
+
+  /// 1-5. Private, never rendered, never a targeting input.
+  qualityScore      Int?
+  failureMode       String?
+  leadTimeDays      Int?
+  finishConsistency String?
+  freightCondition  String?
+  repResponsiveness String?
+  reorderIntent     String?
+
+  /// Set when the off-topic routing prompt moved service/freight/lead-time
+  /// content here at submission. Routing must never change billing or bonus,
+  /// or Folio has paid a designer to move criticism into private.
+  routedFromPublic Boolean  @default(false)
+  createdAt        DateTime @default(now())
+
+  @@index([productId])
+  @@map("private_product_signals")
+}
+
+/// Payment for licensed use of a designer's words and photographs. Cash by
+/// default via Stripe Connect — paying for licensed IP in platform scrip is the
+/// version that reads badly in print.
+///
+/// `fundedBy` is the load-bearing column: Folio funds the effectiveness bonus
+/// and the commission on the free request, never the vendor. A vendor paying
+/// extra for feedback Folio graded is indefensible regardless of how the
+/// grading works.
+model CommissionLedgerEntry {
+  id                     String  @id @default(cuid())
+  collaborationRequestId String?
+  licenseGrantId         String?
+  designerId             String
+
+  /// BASE | BONUS | LICENSE | FREE_GRANT_FUNDED
+  kind         String
+  amountCents  Int
+  /// VENDOR | FOLIO
+  fundedBy     String
+  /// STRIPE_CASH | FOLIO_CREDIT
+  payoutMethod String
+
+  stripeTransferId     String?
+  gradedAt             DateTime?
+  /// Valence-blind: grades evidence density, never agreement.
+  evidenceDensityScore Int?
+  paidAt               DateTime?
+  createdAt            DateTime  @default(now())
+
+  @@index([designerId])
+  @@index([kind, paidAt])
+  @@map("commission_ledger_entries")
+}
+
+/// Off-platform use of testimony and in-situ imagery. Already-exported material
+/// is honored for the full term if a vendor lapses; only renewal rights end.
+/// Clawing back a printed catalog is unenforceable and attempting it looks petty.
+model LicenseGrant {
+  id             String   @id @default(cuid())
+  organizationId String
+  productId      String
+  /// CATALOG | DECK | SHOWROOM | WEB | TRADE_SHOW
+  scope          String
+  termMonths     Int      @default(12)
+  grantedAt      DateTime @default(now())
+  expiresAt      DateTime
+
+  @@index([organizationId])
+  @@index([productId])
+  @@map("license_grants")
 }
