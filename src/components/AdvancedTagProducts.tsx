@@ -52,6 +52,13 @@ export default function AdvancedTagProducts({
   const imageRef = useRef<HTMLImageElement | null>(null);
 
   // Shop product state
+  // Finish capture (spec 21 delta D3). This surface selects an EXISTING catalog
+  // product, so extraction's proposal can prefill. finishTouched separates a
+  // designer's statement from a proposal they never looked at — the distinction
+  // Material Study depends on.
+  const [finish, setFinish] = useState("");
+  const [finishTouched, setFinishTouched] = useState(false);
+  const finishTouchedRef = useRef(false);
   const [addToShop, setAddToShop] = useState(false);
   const [shopQuote, setShopQuote] = useState("");
   const [addQuoteLater, setAddQuoteLater] = useState(false);
@@ -117,9 +124,38 @@ export default function AdvancedTagProducts({
     setAddToShop(false);
     setShopQuote("");
     setAddQuoteLater(false);
+    // Finish MUST reset here. Unlike ProductTagPicker, this component persists
+    // between tags rather than unmounting, so a finish left in state would be
+    // carried onto the next product — a wrong finish on the wrong tag, which is
+    // worse than a missing one. Both the value and the touched flag go.
+    setFinish("");
+    setFinishTouched(false);
+    finishTouchedRef.current = false;
   };
 
   // Handle product selection and tag creation
+  // Prefill from the extraction proposal for the selected catalog product.
+  // Cancels on change so a late response cannot land on a different product,
+  // and never overwrites what the designer typed while it was in flight.
+  useEffect(() => {
+    if (!selectedProductId) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await fetch(`/api/products/${selectedProductId}/finish`);
+        if (!res.ok) return;
+        const data = await res.json();
+        if (cancelled || finishTouchedRef.current) return;
+        if (data?.finish) setFinish(String(data.finish));
+      } catch {
+        // A missing proposal is a blank field, not a failure.
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [selectedProductId]);
+
   const handleTagProduct = async () => {
     if (!selected || !selectedProductId) return;
 
@@ -131,8 +167,13 @@ export default function AdvancedTagProducts({
         ? { x: selected.x, y: selected.y, imageId, projectId, productId: selectedProductId }
         : { x: selected.x, y: selected.y, imageUrl, projectId, productId: selectedProductId };
 
+      const trimmedFinish = finish.trim();
       const payload = {
         ...basePayload,
+        // finishConfirmed is true only when the designer typed or edited it. A
+        // proposal left untouched is written but stays unconfirmed.
+        finishRaw: trimmedFinish || null,
+        finishConfirmed: Boolean(trimmedFinish) && finishTouched,
         addToShop,
         shopQuote: addToShop && !addQuoteLater ? shopQuote : undefined,
       };
@@ -485,6 +526,32 @@ export default function AdvancedTagProducts({
                     )}
                   </AnimatePresence>
                 </motion.div>
+              )}
+
+              {/* Finish (spec 21 delta D3). Optional by construction — a
+                  designer who does not know it moves on, and a required field
+                  would produce guesses. Free text, no fixed list. */}
+              {selectedProductId && (
+                <div className="mb-4">
+                  <label htmlFor="adv-tag-finish" className="block text-sm text-folio-border mb-1.5">
+                    Finish
+                  </label>
+                  <input
+                    id="adv-tag-finish"
+                    type="text"
+                    value={finish}
+                    onChange={(e) => {
+                      setFinish(e.target.value);
+                      setFinishTouched(true);
+                      finishTouchedRef.current = true;
+                    }}
+                    placeholder="Unlacquered brass"
+                    className="w-full px-4 py-2.5 border border-folio-border rounded-lg text-folio-text focus:outline-none focus:ring-2 focus:ring-folio-gold/30"
+                  />
+                  <p className="text-xs text-folio-border mt-1.5">
+                    As the vendor names it. Optional.
+                  </p>
+                </div>
               )}
 
               {/* Modal Actions */}
