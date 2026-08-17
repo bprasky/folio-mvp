@@ -164,6 +164,11 @@ export async function POST(
             if (tag.projectImageId) {
               const productTag = await tx.productTag.create({
                 data: {
+                  // Finish is deliberately NULL here (spec 21 delta D3). A tag arriving
+                  // through an import has no specification event behind it, and a
+                  // fabricated finish is indistinguishable from an observed one once
+                  // stored. If this tag is later opened in the tagging UI it becomes a
+                  // capture site like any other. Do not "fix" this by proposing a value.
                   imageId: tag.projectImageId,
                   productId: product.id,
                   x: tag.x,

@@ -80,6 +80,11 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ tag
 
     const productTag = await prisma.productTag.create({
       data: {
+        // Finish is deliberately NULL here (spec 21 delta D3). A tag arriving
+        // through an import has no specification event behind it, and a
+        // fabricated finish is indistinguishable from an observed one once
+        // stored. If this tag is later opened in the tagging UI it becomes a
+        // capture site like any other. Do not "fix" this by proposing a value.
         imageId,
         productId,
         x: parseFloat(String(x)),

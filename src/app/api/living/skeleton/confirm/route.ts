@@ -84,6 +84,11 @@ export async function POST(request: NextRequest) {
     if (targetImage && productId) {
       await prisma.productTag.create({
         data: {
+          // Finish is deliberately NULL here (spec 21 delta D3). A skeleton
+          // confirmation records that a product belongs in a room, not what
+          // finish was specified — there is no specification event to read one
+          // from, and inventing one is worse than having none. This becomes a
+          // capture site if the tag is later opened in the tagging UI.
           productId,
           imageId: targetImage.id,
           x,

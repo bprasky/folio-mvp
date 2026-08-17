@@ -104,6 +104,13 @@ export async function POST(request: NextRequest) {
       shopQuote,
       // Backfill option: create a Selection on the design board if none matches
       createSelection,
+      // Finish capture (spec 21 delta D3). This is the CAPTURE site: the designer
+      // is looking at the product as they tag it, so extraction proposes and the
+      // designer confirms. `finishConfirmed` records whether a human actually
+      // stated this finish — it is the only thing separating an observed finish
+      // from a suggested one, and Material Study depends on that distinction.
+      finishRaw,
+      finishConfirmed,
     } = await request.json();
 
     // Validate required fields
@@ -183,12 +190,23 @@ export async function POST(request: NextRequest) {
                       (project.ownerId === session.user.id ? session.user.id : null);
 
     // Create product tag in database
+    const trimmedFinish =
+      typeof finishRaw === 'string' && finishRaw.trim() ? finishRaw.trim() : null;
+
     const tag = await prisma.productTag.create({
       data: {
         x: parseFloat(String(x)),
         y: parseFloat(String(y)),
         productId,
         imageId,
+        // Finish capture (spec 21 delta D3). A finish with no value is NULL
+        // rather than an empty string: an empty string reads as an observed
+        // absence, and NULL is the accurate statement that nothing was said.
+        finishRaw: trimmedFinish,
+        // True only when the client says a human supplied or edited this value.
+        // A finish that passed through from extraction untouched stays false,
+        // even though it arrived on the same request.
+        finishConfirmed: trimmedFinish ? finishConfirmed === true : false,
       },
       include: {
         product: true,

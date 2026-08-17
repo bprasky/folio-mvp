@@ -10,6 +10,7 @@ import { getImageGenProvider } from '@/lib/ai/imageGen';
 import { saveBufferToProjectStorage } from '@/lib/storage';
 import { logPassiveEvent } from '@/lib/analytics';
 import { resolveSelectionToProduct } from '@/lib/tagging/resolveSelectionToProduct';
+import { proposedFinishByProductId } from '@/lib/products/proposedFinish';
 
 export async function POST(
   request: NextRequest,
@@ -205,11 +206,26 @@ export async function POST(
               y: 50,
             }));
 
+            // PROPOSE site (spec 21 delta D3). A generated-image tag takes
+            // extraction's finish with finishConfirmed false. Resolved in one
+            // batch before the transaction so the tag writes stay a single round
+            // of inserts rather than interleaving lookups.
+            const proposedFinishes = await proposedFinishByProductId(
+              resolved.map((r) => r.productId),
+            );
+
             // Create tags + backlinks in a transaction
             await prisma.$transaction(async (tx) => {
               for (let i = 0; i < resolved.length; i++) {
                 const tag = await tx.productTag.create({
-                  data: { x: positions[i].x, y: positions[i].y, productId: resolved[i].productId, imageId: rec.id },
+                  data: {
+                    x: positions[i].x,
+                    y: positions[i].y,
+                    productId: resolved[i].productId,
+                    imageId: rec.id,
+                    finishRaw: proposedFinishes.get(resolved[i].productId) ?? null,
+                    finishConfirmed: false,
+                  },
                 });
                 await tx.selection.update({
                   where: { id: resolved[i].selectionId },
