@@ -82,8 +82,6 @@ export function ProductTagPicker({ projectId, imageId, pendingDot, onCancel, onT
     dimensions?: string | null;
     materials?: string[];
     colors?: string[];
-    /** Finish as the vendor states it, from the JSON-LD/AI extraction (spec 21 D3). */
-    finish?: string | null;
     /** Set only when Tier 3 (AI) ran — flags a low-confidence scrape to verify. */
     confidence?: string | null;
     /** Flagged hard domain: skip the inline scrape, fill via the BQL rung after tagging. */
@@ -227,7 +225,6 @@ export function ProductTagPicker({ projectId, imageId, pendingDot, onCancel, onT
         brand: data.brand || null,
         url,
         description: data.description || null,
-        finish: data.finish || null,
         category: data.category || null,
         dimensions: data.dimensions || null,
         materials: Array.isArray(data.materials) ? data.materials : [],
@@ -244,17 +241,14 @@ export function ProductTagPicker({ projectId, imageId, pendingDot, onCancel, onT
   };
 
   // Patch a field on the live scrape preview (the confirm panel edits in place).
-  // Prefill the finish from extraction when a URL preview arrives. Never
-  // overwrites what the designer typed: a proposal that clobbers a statement is
-  // worse than no proposal at all.
-  useEffect(() => {
-    if (finishTouched) return;
-    setFinish(urlPreview?.finish?.trim() ?? "");
-  }, [urlPreview?.finish, finishTouched]);
-
-  // Same prefill for a catalog selection, which has no scrape to read it from.
-  // Ignores a stale response if the designer moves on before it lands, and
-  // still never overwrites something they typed in the meantime.
+  // Prefill applies to a CATALOG selection only. URL mode creates a new product,
+  // where there is no established finish to propose — the designer states it,
+  // and autofilling a scrape there would put words in their mouth on the one
+  // path that defines the record. Extraction still populates
+  // CachedProduct.finish for downstream proposals; it just does not prefill here.
+  //
+  // Ignores a stale response if the designer moves on before it lands, and never
+  // overwrites something they typed in the meantime.
   useEffect(() => {
     const id = selectedProduct?.id;
     if (!id) return;
@@ -909,9 +903,7 @@ export function ProductTagPicker({ projectId, imageId, pendingDot, onCancel, onT
             className="w-full rounded-lg border border-folio-border-subtle bg-surface-canvas px-3 py-2 text-sm text-folio-text-primary placeholder:text-folio-text-tertiary focus:outline-none focus:ring-2 focus:ring-[var(--accent)]/30"
           />
           <p className="folio-meta text-folio-text-tertiary mt-1.5">
-            {urlPreview?.finish && !finishTouched
-              ? "From the product page. Edit it if the specified finish is different."
-              : "As the vendor names it. Optional."}
+            As the vendor names it. Optional.
           </p>
         </div>
       )}

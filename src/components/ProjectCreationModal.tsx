@@ -673,7 +673,14 @@ const ProjectCreationModal: React.FC<ProjectCreationModalProps> = ({
                     }
                   }
 
-                  // Create tag
+                  // Create tag. Finish is deliberately absent here (spec 21
+                  // delta D3): this is a bulk loop with no per-tag interaction,
+                  // and the products it creates come from a name with no URL, so
+                  // there is no page to observe a finish from and no
+                  // specification event to record one against. Asking here would
+                  // produce guesses; proposing here would have nothing to
+                  // propose. These tags become capture sites if they are later
+                  // opened in the tagging UI. Do not "fix" this by adding a field.
                   await fetch('/api/tag-product-to-image', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
