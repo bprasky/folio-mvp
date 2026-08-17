@@ -64,6 +64,9 @@ export function ProductTagPicker({ projectId, imageId, pendingDot, onCancel, onT
   // being able to tell those apart later.
   const [finish, setFinish] = useState("");
   const [finishTouched, setFinishTouched] = useState(false);
+  // The catalog prefill is async, so it must check whether the designer started
+  // typing while it was in flight — a stale closure would overwrite them.
+  const finishTouchedRef = useRef(false);
 
   // "Paste a link" mode — scrape a product URL, then tag it at the dot.
   const [productUrl, setProductUrl] = useState("");
@@ -241,13 +244,36 @@ export function ProductTagPicker({ projectId, imageId, pendingDot, onCancel, onT
   };
 
   // Patch a field on the live scrape preview (the confirm panel edits in place).
-  // Prefill the finish from extraction when a preview arrives. Never overwrites
-  // what the designer typed: a proposal that clobbers a statement is worse than
-  // no proposal at all.
+  // Prefill the finish from extraction when a URL preview arrives. Never
+  // overwrites what the designer typed: a proposal that clobbers a statement is
+  // worse than no proposal at all.
   useEffect(() => {
     if (finishTouched) return;
     setFinish(urlPreview?.finish?.trim() ?? "");
   }, [urlPreview?.finish, finishTouched]);
+
+  // Same prefill for a catalog selection, which has no scrape to read it from.
+  // Ignores a stale response if the designer moves on before it lands, and
+  // still never overwrites something they typed in the meantime.
+  useEffect(() => {
+    const id = selectedProduct?.id;
+    if (!id) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await fetch(`/api/products/${id}/finish`);
+        if (!res.ok) return;
+        const data = await res.json();
+        if (cancelled || finishTouchedRef.current) return;
+        if (data?.finish) setFinish(String(data.finish));
+      } catch {
+        // A missing proposal is a blank field, not a failure.
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [selectedProduct?.id]);
 
   const updatePreview = (patch: Partial<NonNullable<typeof urlPreview>>) =>
     setUrlPreview((prev) => (prev ? { ...prev, ...patch } : prev));
@@ -877,6 +903,7 @@ export function ProductTagPicker({ projectId, imageId, pendingDot, onCancel, onT
             onChange={(e) => {
               setFinish(e.target.value);
               setFinishTouched(true);
+              finishTouchedRef.current = true;
             }}
             placeholder="Unlacquered brass"
             className="w-full rounded-lg border border-folio-border-subtle bg-surface-canvas px-3 py-2 text-sm text-folio-text-primary placeholder:text-folio-text-tertiary focus:outline-none focus:ring-2 focus:ring-[var(--accent)]/30"
