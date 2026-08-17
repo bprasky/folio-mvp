@@ -26,6 +26,13 @@ export interface AiProductFields {
   currency: string | null;
   description: string | null;
   materialType: string | null;
+  /**
+   * Finish as the vendor states it ("Unlacquered Brass"), spec 21 delta D3.
+   * DISTINCT from materialType, which is a category (stone, wood, metal). A
+   * finish must never collapse into the category — Material Palette groups on
+   * finishes, and "metal" is not one.
+   */
+  finish: string | null;
   style: string | null;
   dimensions: { width?: number; depth?: number; height?: number } | null;
   /** "high" | "medium" | "low" */
@@ -55,6 +62,7 @@ Search for and extract all available information about this product:
 7. Vendor/retailer name (the website selling it)
 8. Material type: classify as one of: stone, tile, wood, fabric, metal, lighting, appliance, furniture, other
 9. Style: classify as one of: modern, traditional, transitional, industrial, coastal, farmhouse, minimalist, bohemian, contemporary, other
+10. Finish: the finish exactly as the vendor names it, e.g. "Unlacquered Brass", "Polished Nickel", "Matte Black", "Oil-Rubbed Bronze". This is the specific finish or colorway on the product page, NOT the material category from item 8. If the page states no finish, omit the field — do not infer one from the material, the product name, or the images.
 
 Return ONLY a valid JSON object with the extracted information:
 {
@@ -71,6 +79,7 @@ Return ONLY a valid JSON object with the extracted information:
     "height": 32
   },
   "materialType": "stone",
+  "finish": "Unlacquered Brass",
   "style": "modern",
   "confidence": "high"
 }
@@ -94,6 +103,7 @@ export async function aiExtractProduct(url: string): Promise<AiProductFields | n
         currency: cached.currency,
         description: cached.description,
         materialType: cached.materialType,
+        finish: cached.finish,
         style: cached.style,
         dimensions: {
           width: num(cached.widthIn),
@@ -147,6 +157,7 @@ export async function aiExtractProduct(url: string): Promise<AiProductFields | n
     currency: productData.currency ?? 'USD',
     description: productData.description ?? null,
     materialType: productData.materialType ?? null,
+    finish: productData.finish ?? null,
     style: productData.style ?? null,
     dimensions: productData.dimensions ?? null,
     confidence: productData.confidence ?? 'medium',
@@ -166,6 +177,7 @@ export async function aiExtractProduct(url: string): Promise<AiProductFields | n
         currency: fields.currency || 'USD',
         description: fields.description,
         materialType: fields.materialType,
+        finish: fields.finish,
         style: fields.style,
         widthIn: productData.dimensions?.width ?? null,
         depthIn: productData.dimensions?.depth ?? null,

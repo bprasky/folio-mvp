@@ -184,6 +184,11 @@ export async function POST(
       priceCents: price != null ? Math.round(price * 100) : null,
       currency: fields.currency || 'USD',
       description: fields.description ?? null,
+      // Finish as the vendor states it (spec 21 delta D3), read from the JSON-LD
+      // node the deterministic extractor already parses. This is what the URL
+      // says the product is — a designer's per-tag finish lives on ProductTag
+      // and always wins over it.
+      finish: fields.finish ?? null,
       extractionConfidence: 'medium',
     };
     await prisma.cachedProduct.upsert({
