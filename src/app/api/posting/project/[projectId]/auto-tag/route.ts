@@ -7,6 +7,7 @@ import { prisma } from '@/lib/prisma';
 import { assertProjectView } from '@/lib/authz/access';
 import { resolveSelectionToProduct } from '@/lib/tagging/resolveSelectionToProduct';
 import { ensureProductForSelection } from '@/lib/tagging/ensureProductForSelection';
+import { proposedFinishByProductId } from '@/lib/products/proposedFinish';
 import { estimateProductCoordinates, matchProductsToLocations, computeFallbackPositions } from '@/lib/tagging/estimateProductCoordinates';
 
 type CreatedTag = {
@@ -296,9 +297,18 @@ export async function POST(
               y,
             });
           } else {
+            // PROPOSE site (spec 21 delta D3). An auto-placed tag takes
+            // extraction's finish with finishConfirmed false — no prompt, no
+            // interruption. The flag is what lets it be confirmed later; without
+            // it a proposal would be indistinguishable from a designer's word.
+            const proposed = (await proposedFinishByProductId([productId])).get(productId) ?? null;
             const result = await prisma.$transaction(async (tx) => {
               const tag = await tx.productTag.create({
-                data: { x, y, aiX: x, aiY: y, productId, imageId: image.id },
+                data: {
+                  x, y, aiX: x, aiY: y, productId, imageId: image.id,
+                  finishRaw: proposed,
+                  finishConfirmed: false,
+                },
               });
               await tx.selection.update({
                 where: { id: selectionId },
@@ -388,9 +398,15 @@ export async function POST(
             productName: productName ?? '', x, y,
           });
         } else {
+          // PROPOSE site (spec 21 delta D3) — see the note on the sibling path.
+          const proposed = (await proposedFinishByProductId([productId])).get(productId) ?? null;
           const result = await prisma.$transaction(async (tx) => {
             const tag = await tx.productTag.create({
-              data: { x, y, aiX: x, aiY: y, productId, imageId: image.id },
+              data: {
+                x, y, aiX: x, aiY: y, productId, imageId: image.id,
+                finishRaw: proposed,
+                finishConfirmed: false,
+              },
             });
             await tx.selection.update({
               where: { id: selectionId },
