@@ -1,7 +1,9 @@
 import type { Metadata } from "next";
 import { ProductPage } from "@/components/product/ProductPage";
 import { ImmersiveProductPage } from "@/components/product/ImmersiveProductPage";
+import { ProductRecordSection } from "@/components/product/ProductRecordSection";
 import { getProductById } from "@/lib/products/getProductById";
+import { getProductRecord, resolveRecordAudience } from "@/server/queries/getProductRecord";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/options";
 import { notFound } from "next/navigation";
@@ -43,6 +45,17 @@ export default async function ProductRoute({ params }: { params: { slug: string 
   const isAdmin = userRole === 'ADMIN';
   const showVendorInsights = isVendorOwner || isAdmin;
 
+  // Product Record (spec 22_PRODUCT_RECORD). The record is the same product page
+  // read as an editorial article: many projects against one product. It renders
+  // below whichever product layout is active, and returns null on a Listing with
+  // no specification events — a block whose data dependency is unmet is absent,
+  // not greyed out.
+  //
+  // The audience is resolved server-side and the testimony gate is applied in
+  // getProductRecord, so what arrives here is already filtered.
+  const audience = await resolveRecordAudience(params.slug, session?.user as { id?: string; role?: string } | undefined);
+  const record = await getProductRecord(params.slug, audience);
+
   // Feature flag for cinematic layout
   const useCinematicLayout = process.env.NEXT_PUBLIC_FEATURE_CINEMATIC_PRODUCT === "1";
 
@@ -54,9 +67,15 @@ export default async function ProductRoute({ params }: { params: { slug: string 
           showVendorInsights={showVendorInsights}
           isVendorOwner={isVendorOwner}
         />
+        {record && <ProductRecordSection record={record} />}
       </div>
     );
   }
 
-  return <ProductPage product={product} />;
+  return (
+    <>
+      <ProductPage product={product} />
+      {record && <ProductRecordSection record={record} />}
+    </>
+  );
 }

@@ -1,0 +1,53 @@
+name: Product Record Invariants
+
+# Spec 22_PRODUCT_RECORD names five Ordering Invariants as "legally load-bearing
+# and must be enforced in code, not convention". Two of them are structural
+# rather than expressible as a type or a database constraint, and a third is the
+# behaviour of the gate itself. All three run here.
+#
+# The targeting firewall is the reason this workflow exists on its own rather
+# than as a step in another job: if private product signal ever becomes a
+# targeting input, a vendor buys a filtered sample and the record is whitewashed
+# by construction — nothing suppressed, no rule broken, and nothing visible from
+# outside. A compromised record is found in the pipeline, not eighteen months
+# into the corpus.
+
+on:
+  pull_request:
+    paths:
+      - 'src/**'
+      - 'scripts/check-product-record-invariants.ts'
+      - 'prisma/schema.prisma'
+      - '.github/workflows/product-record-invariants.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'src/**'
+      - 'scripts/check-product-record-invariants.ts'
+      - 'prisma/schema.prisma'
+      - '.github/workflows/product-record-invariants.yml'
+  workflow_dispatch:
+
+jobs:
+  invariants:
+    name: Targeting firewall, gate placement, ladder
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      # The truth-table check imports src/lib/products/productRecord.ts, which
+      # imports enum TYPES from @prisma/client. Types are erased at runtime, but
+      # the module must resolve.
+      - name: Generate Prisma client
+        run: npx prisma generate
+
+      - name: Check Product Record invariants
+        run: npx tsx scripts/check-product-record-invariants.ts --ci

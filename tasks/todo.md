@@ -1227,3 +1227,134 @@ a third allowlist with the same property.
 D5a's audio retention sidesteps all three by writing to a sibling provenance key
 instead of threading a field through them. That was the right call for that work
 and does nothing for the next person.
+
+---
+
+# 22_PRODUCT_RECORD — Phase A + data model
+
+**Spec:** `docs/22_PRODUCT_RECORD.md` (added in this session).
+
+**Scope of this session.** Phase A in full, plus the ADD-only data model for
+Phases A through E. Phase C is blocked in the spec itself ("Blocked on canonical
+interviewer module"), and D/E hang off C, so they get their tables and nothing
+that reads them.
+
+**Why the whole data model and not just Phase A's slice.** The five new models are
+one ADD-only migration with no destructive DDL. Splitting them across five
+sessions produces five migrations against the same tables and five chances to get
+the bookkeeping wrong, which is exactly the debt Phases 1-5E spent weeks
+unwinding. The tables land once; the readers land per phase.
+
+## Tasks
+
+- [ ] `docs/22_PRODUCT_RECORD.md` — spec, verbatim
+- [ ] `prisma/schema.prisma` — 4 enums, 5 models, Product cache columns, SupplementalQuote testimony class
+- [ ] Migration, authored idempotent (no DATABASE_URL in this container — NOT APPLIED)
+- [ ] `src/lib/products/productRecord.ts` — maturity ladder, independence gate, three-audience testimony gate, evidentiary ordering (pure, no Prisma)
+- [ ] `src/server/queries/getProductRecord.ts` — coverage computation, gated assembly, `resolveProductImage` on every image
+- [ ] `src/components/product/ProductRecordSection.tsx` — server component, coverage disclosure + gated testimony
+- [ ] Mount on the canonical product page
+- [ ] `scripts/check-product-record-invariants.ts` — targeting firewall, enforced structurally per spec
+- [ ] Review section below
+
+## Not in this session
+
+- Phase B (Prospective Page, claim email, free grant issuance)
+- Phase C (blocked upstream)
+- Phase D (Stripe Connect, valence-blind grader, grader CI fixtures)
+- Phase E (licensing)
+- Open Decisions 1-6, including counsel review, which the spec gates Phase C on
+
+## Review — 22_PRODUCT_RECORD Phase A
+
+All Phase A tasks done, plus the ADD-only data model for A through E. Every
+checkbox above is complete.
+
+### What landed
+
+| File | What |
+|---|---|
+| `docs/22_PRODUCT_RECORD.md` | The spec, plus an Implementation Status table mapping each section to its code |
+| `prisma/schema.prisma` | 4 enums, 5 models, 5 Product columns, 2 SupplementalQuote columns |
+| `prisma/migrations/20260817120000_add_product_record_system/` | Idempotent, ADD-only, **authored and NOT APPLIED** |
+| `src/lib/products/productRecord.ts` | Ladder, independence gate, testimony gate, coverage sentence, evidentiary ordering. Pure |
+| `src/server/queries/getProductRecord.ts` | Coverage computation, gated assembly, cache refresh |
+| `src/components/product/ProductRecordSection.tsx` | The surface. Renders, decides nothing |
+| `src/app/products/[slug]/page.tsx` | Mount, both layout branches |
+| `scripts/check-product-record-invariants.ts` | 3 checks, wired to CI |
+| `scripts/refresh-product-record-cache.ts` | Batch cache refresh |
+| `.github/workflows/product-record-invariants.yml` | Runs the checks on every PR touching `src/**` |
+
+### Verification
+
+- `prisma validate` + `generate` clean.
+- Migration verified against `prisma migrate diff --from-empty --to-schema-datamodel`:
+  every column type, index name, and FK action matches what Prisma would have
+  generated. The hand-authored version differs only in being idempotent.
+- `tsc --noEmit` clean on all new and changed files (repo has ~1023 pre-existing
+  errors elsewhere; none are mine).
+- `phase5e-check-plan.mjs --ci` at baseline: `looseSql=32/32 phantomCalls=0/0
+  missingSql=0/0 nonIdempotent=0/0`.
+- `check-product-record-invariants.ts --ci` clean, and **negative-tested**: a
+  planted `privateProductSignal` reference in `src/lib/boost/` and a flipped
+  weight in `evidentiaryWeight` both failed the build as intended. A check that
+  cannot fail is not a check.
+
+### Decisions taken, flagged because they are interpretations not quotations
+
+1. **Commissioned testimonies must come from distinct designers.** The spec says
+   "3 distinct designers across 3 distinct projects, including 2+ commissioned
+   testimonies" and does not say the commissioned two must be different people.
+   Enforced as distinct anyway: a vendor buying two requests from one friendly
+   designer is the cheapest possible way to manufacture an article, which is the
+   exact failure the independence gate exists to prevent. Reverse it by relaxing
+   `evaluateRecordTier` if the first cohort proves it too strict.
+2. **Commissioned testimony is not re-gated on current vendor state.** Once
+   published it stays public even if the vendor lapses to CLAIMED. This follows
+   from the spec superseding the subscription-unlock model: "the gate is
+   upstream."
+3. **Testimony is read only from PUBLISHED posts.** A project can be public while
+   its Super-Article is still drafting. Publishing a designer's words ahead of
+   the post they were written for is a leak the vendor gate does not cover.
+4. **`recordPublishedAt` is stamped on first reaching ARTICLE and never cleared.**
+   The spec declares the column and does not define it. Follows from (2).
+5. **Evidentiary ordering carried over from `21_ASSET_MATRIX` §8**, which governs
+   the Record because the Record is the Product entity at Corpus scope. The
+   relative order (commissioned > volunteer, install shot > none, elapsed >
+   fresh) is spec; the numeric weights are a starting point.
+
+### Deliberate deferrals
+
+- **The coverage cache has no hot-path writer.** `refreshProductRecordCache` is
+  called by the batch script only. Wiring the four ProductTag creation sites puts
+  a write on the designer's tagging path and buys nothing, because
+  `getProductRecord` computes coverage live and never reads the columns — a stale
+  cache can under-report a list surface but cannot produce a wrong Record. Wire it
+  when a list surface reads the columns.
+- **Migration is authored, not applied.** No `DATABASE_URL` in the session
+  container and no Docker daemon for the shadow DB, so no
+  `migrate deploy` / `migrate resolve` / `migrate status`. Same convention as
+  commit 0878988 ("AUTHORED, NEITHER APPLIED"). **Someone with prod access must
+  apply and resolve it before any of this code runs against a real database** —
+  `getProductRecord` reads `vendor_product_claims` and
+  `supplemental_quotes.testimonyClass`, both of which are new.
+- **`ProductTestimonial` and `ShopProduct.quote` are untouched.** Spec 22 subsumes
+  ProductTestimonial for *new* volunteer quotes by routing them to
+  `SupplementalQuote.testimonyClass`. Existing rows still serve the Shop surface.
+  Migrating them is destructive-adjacent and belongs in its own session with its
+  own gate.
+
+### Found in passing, not fixed
+
+`npm run guard:client-imports` points at `scripts/guard-client-imports.js`, which
+does not exist. Pre-existing; unrelated to this work.
+
+### Next
+
+Phase B is unblocked and is the conversion moment: the Prospective Page reuses
+`ProductRecordSection` with the testimony section already rendering its empty
+state, so the remaining work is `VendorProductClaim` issuance, the free grant,
+and the claim email. Phase C stays blocked on the canonical interviewer module,
+and Open Decision 6 (counsel review of the whole solicitation-to-publication
+chain) gates it independently.
+
