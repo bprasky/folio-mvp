@@ -13,7 +13,6 @@ import {
   EMPTY_FIELDS,
   resolveUrl,
   extractProductFromHtml,
-  deriveFinish,
   formatPrice,
   extractDimensionsFromText,
   extractMaterials,
@@ -103,8 +102,6 @@ const PRODUCT_HARVEST_CODE = `export default async function ({ page, context }) 
       brand: (ld && ld.brand && (ld.brand.name || ld.brand)) || metaC('meta[property="product:brand"]') || null,
       price: (offer && (offer.price != null ? offer.price : offer.lowPrice)) || metaC('meta[property="product:price:amount"]') || metaC('meta[property="og:price:amount"]') || null,
       currency: (offer && offer.priceCurrency) || metaC('meta[property="product:price:currency"]') || null,
-      color: (ld && ld.color) || metaC('meta[property="product:color"]') || null,
-      material: (ld && (ld.material && (ld.material.name || ld.material))) || null,
     };
   });
   data._httpStatus = httpStatus;
@@ -136,12 +133,6 @@ async function renderedExtract(url: string): Promise<{ fields: ProductFields; bl
     brand: d.brand ? String(d.brand).trim() : null,
     price: d.price != null ? String(d.price) : null,
     currency: d.currency ?? null,
-    color: d.color ? String(d.color).trim() : null,
-    material: d.material ? String(d.material).trim() : null,
-    finish: deriveFinish(
-      d.color ? String(d.color).trim() : null,
-      d.material ? String(d.material).trim() : null,
-    ),
   };
   // The harvest captures the real navigation status, so classify against it —
   // a 403/429 denial page (whose <title> would otherwise become the product
@@ -170,9 +161,6 @@ function merge(primary: ProductFields, secondary: ProductFields): ProductFields 
     brand: primary.brand || secondary.brand,
     price: primary.price || secondary.price,
     currency: primary.currency || secondary.currency,
-    color: primary.color || secondary.color,
-    material: primary.material || secondary.material,
-    finish: primary.finish || secondary.finish,
   };
 }
 
@@ -228,10 +216,12 @@ export async function POST(request: NextRequest) {
     // Tier 3 — AI (Claude + web_search), only when the result is still thin
     // (no name or no price). Cached + key-gated, so most scrapes never reach it.
     let aiConfidence: string | null = null;
+    let aiFinish: string | null = null;
     if (!willEscalate && (!fields.name || !fields.price)) {
       const ai = await aiExtractProduct(url);
       if (ai) {
         aiConfidence = ai.confidence;
+        aiFinish = ai.finish ?? null;
         fields = {
           name: fields.name || ai.name,
           image: fields.image, // AI is text-only; image stays with the cheap tiers
@@ -239,11 +229,6 @@ export async function POST(request: NextRequest) {
           brand: fields.brand || ai.brand,
           price: fields.price || (ai.price != null ? String(ai.price) : null),
           currency: fields.currency || ai.currency,
-          // Finish (spec 21 delta D3). JSON-LD wins when present — it is the
-          // vendor's own wording rather than a model's reading of the page.
-          color: fields.color,
-          material: fields.material,
-          finish: fields.finish || ai.finish,
         };
       }
     }
@@ -309,10 +294,10 @@ export async function POST(request: NextRequest) {
       materials: extractMaterials(enrichHtml, name),
       dimensions: extractDimensionsFromText(enrichHtml),
       colors: extractColors(enrichHtml, name),
-      // Finish as the vendor states it (spec 21 delta D3). Deliberately separate
-      // from `materials` and `colors` above, which are keyword greps over the
-      // whole page and cannot represent "Unlacquered Brass".
-      finish: fields.finish,
+      // Finish (spec 21 delta D3) comes from the AI tier only. The deterministic
+      // JSON-LD read was removed after the corpus probe found it wrong on both
+      // pages that published a color — a wrong finish is worse than none.
+      finish: aiFinish,
       // Present only when Tier 3 (AI) ran; lets the UI flag low-confidence scrapes.
       confidence: aiConfidence,
     });

@@ -22,15 +22,6 @@ export interface ProductFields {
   brand: string | null;
   price: string | null;
   currency: string | null;
-  /** schema.org Product.color — where a retailer's finish variant name lives. */
-  color: string | null;
-  /** schema.org Product.material — the substance ("Brass"), not the finish. */
-  material: string | null;
-  /**
-   * Finish as the vendor states it (spec 21 delta D3). Derived here rather than
-   * at the call site so every scrape surface resolves it identically.
-   */
-  finish: string | null;
 }
 
 export const EMPTY_FIELDS: ProductFields = {
@@ -40,9 +31,6 @@ export const EMPTY_FIELDS: ProductFields = {
   brand: null,
   price: null,
   currency: null,
-  color: null,
-  material: null,
-  finish: null,
 };
 
 /**
@@ -98,40 +86,6 @@ function ldBrand(node: any): string | null {
   if (!b) return null;
   if (typeof b === 'string') return b;
   return b.name ?? null;
-}
-
-/**
- * A JSON-LD scalar that may arrive as a string, an array, or a Thing with a
- * `name`. `color` is usually a plain string; `material` is typed as
- * Text | Product | URL and does turn up as an object.
- */
-function ldScalar(value: any): string | null {
-  if (!value) return null;
-  if (typeof value === 'string') return value.trim() || null;
-  if (Array.isArray(value)) return ldScalar(value[0]);
-  if (typeof value === 'object') return ldScalar(value.name);
-  return null;
-}
-
-/**
- * Resolve a finish from the two schema.org properties that can carry one.
- *
- * `color` wins. On retailer pages the finish variant selector writes its label
- * there — "Unlacquered Brass", "Matte Black" — which is the vendor wording D3
- * wants preserved. `material` is the substance ("Brass") and is a weaker answer,
- * used only when `color` is absent.
- *
- * A URL is never a finish, so anything that parses as one is rejected rather
- * than stored: schema.org permits `material` to be a URL and a stray link in
- * that column would look like an observed value.
- */
-export function deriveFinish(color: string | null, material: string | null): string | null {
-  const pick = color ?? material;
-  if (!pick) return null;
-  const trimmed = pick.trim();
-  if (!trimmed) return null;
-  if (/^https?:\/\//i.test(trimmed)) return null;
-  return trimmed;
 }
 
 function ldOffer(node: any): any | null {
@@ -230,18 +184,18 @@ export function extractProductFromHtml(html: string, baseUrl: string): ProductFi
     }
   }
 
-  // Finish (spec 21 delta D3). The JSON-LD node is already in hand, and `color`
-  // and `material` are standard Product properties on it — reading them costs
-  // nothing and keeps well-marked-up retailers off the paid extraction tier.
+  // NO finish is derived here. Reading schema.org `color`/`material` off the
+  // JSON-LD node was tried and removed: probed against 15 real product URLs from
+  // the corpus, only 6 pages carried a Product node at all, and both pages that
+  // published a `color` published a WRONG one — "White" on a product named
+  // "Veria Green Polished Marble Slab", and the string "Colors, Pink".
   //
-  // NOT extractMaterials/extractColors below: those are keyword greps over the
-  // whole page against fixed dictionaries, so they fire on any "brass" in a nav
-  // or footer and cannot represent "unlacquered". They serve tagging, not this.
-  const color = ldScalar(ld?.color) || meta('meta[property="product:color"]') || null;
-  const material = ldScalar(ld?.material) || meta('meta[property="product:material"]') || null;
-  const finish = deriveFinish(color, material);
-
-  return { name, image, description, brand, price, currency, color, material, finish };
+  // A wrong finish is worse than an absent one. It is indistinguishable from an
+  // observed fact once stored, it proposes nonsense to a designer who is trying
+  // to trust the system, and it poisons the Material row it was meant to feed.
+  // Finish now comes only from the AI tier, which is instructed to name the
+  // vendor's own finish or return null rather than infer. See spec 21 delta D3.
+  return { name, image, description, brand, price, currency };
 }
 
 export function formatPrice(amount: string | null, currency: string | null): string {
