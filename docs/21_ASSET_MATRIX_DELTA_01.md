@@ -189,14 +189,45 @@ a finish. "Unlacquered brass" is not in that vocabulary.
 Doubling cost on a path that already carries deliberate cost discipline, in order to avoid
 editing one prompt, is a bad trade.
 
-**The cheap rung should be tried first.** `src/lib/products/extractProductFields.ts` already
-parses the JSON-LD `Product` node but reads only name, image, description, brand, price, and
-currency. `color` and `material` are standard schema.org `Product` properties sitting in a node
-the parser is already holding. Reading them is a few deterministic lines and costs nothing, so
-a page with good JSON-LD never needs to reach Tier 3. Note that the existing
-`extractMaterials` and `extractColors` helpers are **not** a finish source — they are keyword
-greps over raw HTML against fixed dictionaries, so they fire on any occurrence of "brass"
-anywhere on the page and have no notion of "unlacquered."
+**The cheap rung was tried first, and it was removed. Do not add it back.**
+Reading schema.org `color` and `material` off the JSON-LD node looked free — the parser was
+already holding the node — so it shipped. It was then probed against 15 real product URLs from
+the corpus (`scripts/probe-finish-variants.mjs`). The result killed it:
+
+| Measure | Result |
+|---|---|
+| Pages reached | 15 / 15 |
+| Carried any JSON-LD | 13 |
+| Carried a `Product` node | **6** |
+| Carried a `color` | 2 |
+| Carried a **correct** `color` | **0** |
+
+Both `color` values were wrong. One page published `"White"` for a product named *Veria Green
+Polished Marble Slab*; the other published the string `"Colors, Pink"`. A read that is wrong
+on both of the only two occasions it fires is not a cheap win, it is a liability — and the
+values it produced would have gone into `finishRaw` on auto-tagged rows and been proposed to
+designers as observed fact.
+
+**Finish comes from the AI tier only**, which is instructed to name the vendor's own finish or
+return null rather than infer. Coverage will be lower. That is the correct trade: a wrong
+finish is indistinguishable from an observed one once stored, it poisons the Material row it
+exists to feed, and it makes the system look like it is guessing — which is worse for trust
+than an empty field.
+
+**The constrained variant picker is killed by the same evidence.** Offering only the finishes
+a product actually comes in is the right design and remains barred by the data: **zero** of 15
+pages published colour-bearing variants. The one page with a `hasVariant` list carried 91
+entries that were size and framing combinations — `24" x 18" / Gold Frame` — with no colour on
+any of them. Building the picker on that would have offered a designer 91 options, none of
+them a finish. No `finishOptions` column, no variant parser, no picker.
+
+Note also that the existing `extractMaterials` and `extractColors` helpers are **not** a finish
+source — they are keyword greps over raw HTML against fixed dictionaries, so they fire on any
+occurrence of "brass" anywhere on the page and have no notion of "unlacquered."
+
+**Re-open this only with new evidence.** Re-run the probe with a wider `--limit`. If structured
+variant coverage has genuinely changed, the design is still right and the data finally supports
+it.
 
 **Two different facts, deliberately.**
 
