@@ -14,7 +14,13 @@ const isDemoParam = (): boolean => {
   }
 };
 
-const useDemo = (): boolean => {
+/**
+ * NOT a React hook — a plain predicate. Named `isDemoDataEnabled` rather than
+ * `useDemo` because the `use` prefix made rules-of-hooks treat every call site
+ * as a conditional hook call, reporting violations in code that was correct.
+ * A lint rule firing on sound code trains people to ignore it.
+ */
+const isDemoDataEnabled = (): boolean => {
   const flagEnabled = flags.vendorDemoData;
   const urlParamEnabled = isDemoParam();
   const result = flagEnabled || urlParamEnabled;
@@ -46,7 +52,7 @@ export type ProjectKPI = {
  * Fetch vendor project KPIs
  */
 export async function fetchProjectKPI(vendorId: string): Promise<ProjectKPI> {
-  if (useDemo()) {
+  if (isDemoDataEnabled()) {
     try {
       const st = getInitialDemoState();
       console.log('[DEMO] returning mock project KPI data', st.projects.kpi);
@@ -90,7 +96,7 @@ export async function fetchTopDesigners(vendorId: string): Promise<Array<{
   name: string;
   influenceScore: number;
 }>> {
-  if (useDemo()) {
+  if (isDemoDataEnabled()) {
     const st = getInitialDemoState();
     return st.projects.topDesigners;
   }
@@ -106,7 +112,7 @@ export async function fetchTaggedProjects(vendorId: string): Promise<Array<{
   tags: number;
   valueUsd: number;
 }>> {
-  if (useDemo()) {
+  if (isDemoDataEnabled()) {
     const st = getInitialDemoState();
     return st.projects.taggedProjects;
   }

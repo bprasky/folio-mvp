@@ -73,4 +73,19 @@ export function useDemoState(): DemoContextValue {
   return ctx;
 }
 
+/**
+ * Demo state when a provider is present, null when it is not.
+ *
+ * useDemoState throws without a provider, which forced callers that only
+ * SOMETIMES want demo state to wrap it in `if (...) { useDemoState() }` inside a
+ * try/catch. That is a conditional hook call: the hook order changes the moment
+ * the condition flips, which is exactly what rules-of-hooks exists to prevent.
+ *
+ * useContext is called unconditionally here, so the hook count is stable, and
+ * the absent-provider case returns null instead of throwing.
+ */
+export function useOptionalDemoState(): DemoContextValue | null {
+  return useContext(DemoContext) ?? null;
+}
+
 

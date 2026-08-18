@@ -367,7 +367,11 @@ export function ProductTagPicker({ projectId, imageId, pendingDot, onCancel, onT
   };
 
   // Reuse an existing product (a dedup hit) at the pending dot.
-  const useExistingProduct = async (forceEdit = false) => {
+  //
+  // NOT a React hook — a plain async handler. The `use` prefix it used to carry
+  // made rules-of-hooks report it as a hook called inside a callback, which it
+  // never was. Correct code should not produce lint errors.
+  const reuseExistingProduct = async (forceEdit = false) => {
     if (!existingMatch) return;
     const { id, complete, claimed } = existingMatch;
     setReusing(true);
@@ -609,7 +613,7 @@ export function ProductTagPicker({ projectId, imageId, pendingDot, onCancel, onT
                 </button>
                 <button
                   type="button"
-                  onClick={() => useExistingProduct(false)}
+                  onClick={() => reuseExistingProduct(false)}
                   disabled={reusing}
                   className="flex-1 rounded-lg py-2 text-sm font-medium text-white bg-[var(--accent)] hover:opacity-90 transition-opacity disabled:opacity-50"
                 >
@@ -619,7 +623,7 @@ export function ProductTagPicker({ projectId, imageId, pendingDot, onCancel, onT
               {!existingMatch.claimed && (
                 <button
                   type="button"
-                  onClick={() => useExistingProduct(true)}
+                  onClick={() => reuseExistingProduct(true)}
                   disabled={reusing}
                   className="w-full px-3 pb-2.5 pt-1.5 text-center folio-meta text-[var(--accent)] hover:underline disabled:opacity-50"
                 >

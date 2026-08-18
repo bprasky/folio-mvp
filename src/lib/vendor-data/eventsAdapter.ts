@@ -15,7 +15,13 @@ const isDemoParam = (): boolean => {
   }
 };
 
-const useDemo = (): boolean => {
+/**
+ * NOT a React hook — a plain predicate. Named `isDemoDataEnabled` rather than
+ * `useDemo` because the `use` prefix made rules-of-hooks treat every call site
+ * as a conditional hook call, reporting violations in code that was correct.
+ * A lint rule firing on sound code trains people to ignore it.
+ */
+const isDemoDataEnabled = (): boolean => {
   // Check flag (evaluated at build time)
   const flagEnabled = flags.vendorDemoData;
   
@@ -71,7 +77,7 @@ export type EventSummary = {
  * Fetch vendor event KPIs
  */
 export async function fetchEventKPI(vendorId: string): Promise<EventKPI> {
-  if (useDemo()) {
+  if (isDemoDataEnabled()) {
     try {
       const st = getInitialDemoState();
       console.log('[DEMO] returning mock event KPI data', st.events.portfolioTotals);
@@ -112,7 +118,7 @@ export async function fetchEventKPI(vendorId: string): Promise<EventKPI> {
  * Fetch event summaries for listing
  */
 export async function fetchEventSummaries(vendorId: string): Promise<EventSummary[]> {
-  if (useDemo()) {
+  if (isDemoDataEnabled()) {
     const st = getInitialDemoState();
     return st.events.summaries.map((s: any) => ({
       id: s.id,
@@ -141,7 +147,7 @@ export async function fetchEventToProjectBridge(vendorId: string): Promise<{
   conversionPct: number | null;
   avgDays: number | null;
 }> {
-  if (useDemo()) {
+  if (isDemoDataEnabled()) {
     const st = getInitialDemoState();
     return {
       conversionPct: st.events.bridge.conversionPct,
@@ -164,7 +170,7 @@ export async function fetchEventSeries(vendorId: string): Promise<{
   eventPerformance: Array<{ event: string; avgRsvps: number }>;
   portfolioMomentum: Array<{ month: string; value: number }>;
 }> {
-  if (useDemo()) {
+  if (isDemoDataEnabled()) {
     const st = getInitialDemoState();
     return st.events.series;
   }

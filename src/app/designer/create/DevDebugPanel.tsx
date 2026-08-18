@@ -3,7 +3,6 @@ import { useEffect, useState } from 'react';
 import { useSession } from 'next-auth/react';
 
 export default function DevDebugPanel() {
-  if (process.env.NODE_ENV === 'production') return null;
   const { data: session, status } = useSession();
   const [cookie, setCookie] = useState<string>('');
   const [ping, setPing] = useState<any>(null);
@@ -14,6 +13,11 @@ export default function DevDebugPanel() {
       setCookie(document.cookie || '');
     } catch {}
   }, []);
+
+  // Below the hooks, not above them. NODE_ENV is fixed per build so the old
+  // early return never actually changed hook order at runtime, but a guard
+  // sitting above five hooks is a trap for whoever edits this next.
+  const hidden = process.env.NODE_ENV === 'production';
 
   async function testCreate() {
     setPing('...');
@@ -47,6 +51,8 @@ export default function DevDebugPanel() {
       setServerSession({ error: e?.message || String(e) });
     }
   }
+
+  if (hidden) return null;
 
   return (
     <div className="mt-6 rounded-lg border p-3 text-xs bg-surface-ground">
