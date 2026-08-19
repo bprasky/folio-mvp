@@ -18,7 +18,14 @@ export async function PATCH(
     await assertProjectWrite(session.user.id, params.id);
 
     const body = await request.json();
-    const { photo, notes, vendorId } = body;
+    // `vendorId` is deliberately not read. The client sends it from a free-text
+    // "Vendor ID (optional)" input, but Selection has no such column, and none of
+    // the three candidates is a safe home for unvalidated text: `vendorRepId` and
+    // `vendorProductId` are foreign keys (free text would dangle), and `vendorName`
+    // is a guess about what the field means. Writing it wrong is worse than not
+    // writing it. See docs/audits/SCHEMA_DRIFT_WRITE_SITES.md — the input needs a
+    // product decision, not a mapping invented here.
+    const { photo, notes } = body;
 
     // Verify selection exists and belongs to the room/project
     const selection = await prisma.selection.findFirst({
@@ -44,7 +51,6 @@ export async function PATCH(
       data: {
         photo: photo !== undefined ? photo : selection.photo,
         notes: notes !== undefined ? notes : selection.notes,
-        vendorId: vendorId !== undefined ? vendorId : selection.vendorId
       }
     });
 

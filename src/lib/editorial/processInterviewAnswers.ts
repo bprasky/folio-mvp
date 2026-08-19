@@ -110,18 +110,31 @@ async function processContextualAnswer(
     answer.attributeValue
   );
 
-  // Create AttributeVerification record
+  // Create AttributeVerification record.
+  //
+  // This create was invalid on four counts and threw PrismaClientValidationError
+  // every time it ran. Because the call site below was the only one in this file
+  // NOT wrapped in try/catch, the throw escaped processInterviewAnswers entirely:
+  // /interview/process returned a 500, and /interview/status swallowed it, so
+  // completing an interview silently dropped every answer after the first
+  // ai_classification one, plus the closing summary signal.
+  //
+  //   - `projectId` is required (`String`, no default) and was never supplied.
+  //   - `designerId` has no column. Dropped: the row reaches the designer through
+  //     `project`, and the caller already has projectId in hand.
+  //   - `aiConfidence` has no column. Dropped rather than added — it was a
+  //     hardcoded 0.8, so it carried no real information.
+  //   - `interviewAnswerId` has no column. The link back to the answer survives
+  //     via `questionAsked`, which already stores the question id.
   await prisma.attributeVerification.create({
     data: {
+      projectId,
       imageId: answer.linkedImageId,
-      designerId,
       attributeType: answer.attributeType,
       aiValue: answer.attributeValue,
-      aiConfidence: 0.8, // Default AI confidence
       verified: verification.verified,
       correctedValue: verification.correctedValue,
       designerResponse: answer.answerText,
-      interviewAnswerId: answer.answerId,
       questionAsked: answer.questionId,
     },
   });
@@ -373,12 +386,21 @@ export async function processInterviewAnswers(
     // Process contextual answers (ai_classification) for verification
     if (answer.questionSource === 'ai_classification') {
       if (processedAnswer.attributeType && processedAnswer.attributeValue) {
-        await processContextualAnswer(
-          processedAnswer,
-          designerId,
-          interview.project.id
-        );
-        verificationsCreated++;
+        // Wrapped to match the two sibling writes in this loop. This was the one
+        // unguarded write, so a single bad row aborted the whole run rather than
+        // costing one verification — which is exactly what happened while the
+        // create above was invalid. Counting moved inside so the returned tally
+        // reflects rows actually written.
+        try {
+          await processContextualAnswer(
+            processedAnswer,
+            designerId,
+            interview.project.id
+          );
+          verificationsCreated++;
+        } catch (error) {
+          console.error('[processInterviewAnswers] Failed to process contextual answer:', error);
+        }
       }
     }
   }

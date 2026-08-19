@@ -39,18 +39,40 @@ export async function POST(request: NextRequest) {
     // Ensure user has edit access to the project
     await assertProjectEdit(userId, skeletonItem.projectId);
 
-    // Update roomName only (do NOT mutate ProjectImage.room)
+    // Resolve the room within this project.
+    //
+    // This route used to write `roomName` straight onto the SkeletonItem, but
+    // there is no such column — the item's room is the required `roomId` FK — so
+    // every move threw PrismaClientValidationError and returned a 500. The client
+    // (SkeletonSidePanel.handleMoveRoom) actually holds the room id and converts
+    // it to a name before sending, falling back to the raw id when the lookup
+    // misses, so accept either and resolve back to the row.
+    const targetRoom = await prisma.room.findFirst({
+      where: {
+        projectId: skeletonItem.projectId,
+        OR: [{ id: roomName }, { name: roomName }],
+      },
+      select: { id: true, name: true },
+    });
+
+    if (!targetRoom) {
+      return NextResponse.json(
+        { error: `No room "${roomName}" in this project` },
+        { status: 404 },
+      );
+    }
+
+    // Move the item only (do NOT mutate ProjectImage.room)
     await prisma.skeletonItem.update({
       where: { id: skeletonItemId },
       data: {
-        roomName: roomName,
-        updatedAt: new Date(),
+        roomId: targetRoom.id,
       }
     });
 
     return NextResponse.json({
       success: true,
-      skeletonItem: { id: skeletonItem.id, roomName: roomName },
+      skeletonItem: { id: skeletonItem.id, roomId: targetRoom.id, roomName: targetRoom.name },
     }, { status: 200 });
 
   } catch (error: any) {

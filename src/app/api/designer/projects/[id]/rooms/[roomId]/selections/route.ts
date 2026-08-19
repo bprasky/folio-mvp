@@ -18,10 +18,19 @@ export async function POST(
     await assertProjectWrite(session.user.id, params.id);
 
     const body = await request.json();
-    const { 
-      photo, 
-      notes, 
-      vendorId
+    // These are the fields the capture UI actually sends
+    // (designer/projects/[id]/rooms/[roomId]/page.tsx, handleCameraCaptureSave).
+    // It never sent `vendorId`, which this route used to read and write — and
+    // Selection has no such column anyway.
+    const {
+      photo,
+      notes,
+      vendorName,
+      productName,
+      colorFinish,
+      phaseOfUse,
+      gpsLocation,
+      source,
     } = body;
 
     // Verify room exists and belongs to the project
@@ -39,13 +48,28 @@ export async function POST(
       );
     }
 
-    // Create the selection with current schema fields only
+    // Create the selection.
+    //
+    // The old version could never succeed and lost data even in principle:
+    //   - it wrote `vendorId`, which Selection has no column for, so Prisma
+    //     rejected the whole create (surfaced as the 500 below);
+    //   - it omitted `projectId`, which is required (`String`, no default);
+    //   - and it persisted only photo/notes, silently discarding the six other
+    //     fields the capture UI sends — every one of which is a real column.
+    // The "current schema fields only" comment it carried was the opposite of
+    // what it did.
     const selection = await prisma.selection.create({
       data: {
+        projectId: params.id,
+        roomId: params.roomId,
         photo: photo || null,
         notes: notes || null,
-        vendorId: vendorId || null,
-        roomId: params.roomId
+        vendorName: vendorName || null,
+        productName: productName || null,
+        colorFinish: colorFinish || null,
+        phaseOfUse: phaseOfUse || null,
+        gpsLocation: gpsLocation || null,
+        source: source || null,
       }
     });
 
