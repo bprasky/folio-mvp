@@ -21,9 +21,149 @@ import { z } from "zod";
 import { randomUUID } from "crypto";
 
 // Helper types and functions for tolerant normalization
-type QA = { id?: string; question?: string; prompt?: string; answer: string; isFollowUp?: boolean; section?: string; category?: string; roomId?: string | null; questionSource?: string; isCrossRoom?: boolean; inputModality?: string };
+type QA = {
+  id?: string; question?: string; prompt?: string; answer: string; isFollowUp?: boolean;
+  section?: string; category?: string; roomId?: string | null; questionSource?: string;
+  isCrossRoom?: boolean; inputModality?: string;
+  // Carried, not derived. `normalizeQA` runs BEFORE `ensureAnswerShape` and
+  // `extractMetadata`, and both of those read their fields off its output — so a
+  // key this type does not carry is gone before either reader looks for it.
+  //
+  // That is not hypothetical: these six were declared first-class in
+  // `AnswerBaseSchema` and read by `extractMetadata`, but `normalizeQA` dropped
+  // them one step earlier, so the projection's linkage columns were written NULL
+  // on every save and `isFeatured` was always false. Declaring a field in the
+  // schema is not enough; it has to survive this hop too.
+  isFeatured?: boolean;
+  role?: string;
+  linkedImageId?: string | null;
+  linkedProductId?: string | null;
+  aiClassificationAttribute?: string | null;
+  parentQuestionId?: string | null;
+};
 
-function pickStr(obj: any, keys: string[]): string | undefined {
+/** The answer roles AnswerBaseSchema declares. Unknown input falls back to DESIGNER. */
+const ANSWER_ROLES = ['DESIGNER', 'VENDOR', 'ANY'] as const;
+type AnswerRole = (typeof ANSWER_ROLES)[number];
+
+function coerceAnswerRole(value: unknown): AnswerRole {
+  return (ANSWER_ROLES as readonly string[]).includes(value as string)
+    ? (value as AnswerRole)
+    : 'DESIGNER';
+}
+
+/**
+ * Pull the keys `normalizeQA` carries verbatim rather than normalizing, in both
+ * camelCase and snake_case. Shared by its array and object-map branches so the
+ * two cannot diverge.
+ */
+function carryAnswerExtras(v: any): Pick<QA, 'isFeatured' | 'role' | 'linkedImageId' | 'linkedProductId' | 'aiClassificationAttribute' | 'parentQuestionId'> {
+  return {
+    isFeatured: !!(v?.isFeatured ?? false),
+    role: typeof v?.role === 'string' ? v.role : undefined,
+    linkedImageId: v?.linkedImageId ?? v?.linked_image_id ?? null,
+    linkedProductId: v?.linkedProductId ?? v?.linked_product_id ?? null,
+    aiClassificationAttribute: v?.aiClassificationAttribute ?? v?.ai_classification_attribute ?? null,
+    parentQuestionId: v?.parentQuestionId ?? v?.parent_question_id ?? null,
+  };
+}
+
+/**
+ * Every key this route reads off an incoming answer (spec 21 delta D3).
+ *
+ * The canonical answer SHAPE is declared once, in `AnswerBaseSchema`
+ * (@/lib/posting/interviewSchemas) — deliberately without `.passthrough()`, so
+ * `normalizeAnswers` strips anything undeclared. This file is the layer in
+ * front of it: three hand-written readers (`normalizeQA`, `ensureAnswerShape`,
+ * `extractMetadata`) that map a tolerant client body onto that shape. A key
+ * none of them names never reaches the schema at all — it is dropped here, with
+ * no error and no log.
+ *
+ * That silence is the bug. It has already been paid for twice: the "carried
+ * first-class, not stripped" comments on roomId and the linkage fields mark
+ * where answers were being written with columns that were always NULL.
+ *
+ * So the lists live here, the readers below index through them, and
+ * `warnOnUnmappedAnswerKeys` warns on anything outside them. Because the
+ * readers and the warning share these arrays, the warning cannot go stale:
+ * teaching a reader a new key necessarily silences the warning for it, and
+ * there is no way to silence the warning without teaching a reader.
+ */
+const ANSWER_TEXT_KEYS = ['answer', 'a', 'value', 'text'] as const;
+const ANSWER_PROMPT_KEYS = ['question', 'q', 'prompt', 'label'] as const;
+const ANSWER_ID_KEYS = ['questionId', 'id', 'key'] as const;
+const ANSWER_SOURCE_KEYS = ['questionSource', 'question_source'] as const;
+const ANSWER_MODALITY_KEYS = ['inputModality', 'input_modality'] as const;
+
+/** Keys read by direct property access rather than through `pickStr`. */
+const ANSWER_DIRECT_KEYS = [
+  'section',
+  'category',
+  'isFollowUp',
+  'isFeatured',
+  'role',
+  'roomId',
+  'room_id',
+  'isCrossRoom',
+  'is_cross_room',
+  'linkedImageId',
+  'linked_image_id',
+  'linkedProductId',
+  'linked_product_id',
+  'aiClassificationAttribute',
+  'ai_classification_attribute',
+  'parentQuestionId',
+  'parent_question_id',
+] as const;
+
+const READ_ANSWER_KEYS: ReadonlySet<string> = new Set<string>([
+  ...ANSWER_TEXT_KEYS,
+  ...ANSWER_PROMPT_KEYS,
+  ...ANSWER_ID_KEYS,
+  ...ANSWER_SOURCE_KEYS,
+  ...ANSWER_MODALITY_KEYS,
+  ...ANSWER_DIRECT_KEYS,
+]);
+
+/**
+ * Shout when an answer arrives carrying a key nothing will store.
+ *
+ * Never throws and never changes what is saved — a save that would have worked
+ * still works. Adding a field to the interview record means editing
+ * `normalizeQA`, `ensureAnswerShape`/`extractMetadata`, the key list above, and
+ * `ProjectionAnswer` in syncInterviewAnswers.ts. Miss one and the value used to
+ * vanish with no error and no failing test; now the first save that carries it
+ * says so by name.
+ */
+function warnOnUnmappedAnswerKeys(raw: unknown, label: string, requestId: string): void {
+  // Mirror normalizeQA's accepted shapes: an array of answers, or an object map
+  // keyed by question id. Bare strings carry no keys, so there is nothing to drop.
+  const candidates: unknown[] = Array.isArray(raw)
+    ? raw
+    : raw && typeof raw === 'object'
+      ? Object.values(raw)
+      : [];
+
+  const unmapped = new Set<string>();
+  for (const item of candidates) {
+    if (!item || typeof item !== 'object' || Array.isArray(item)) continue;
+    for (const key of Object.keys(item)) {
+      if (!READ_ANSWER_KEYS.has(key)) unmapped.add(key);
+    }
+  }
+
+  if (unmapped.size > 0) {
+    console.warn(
+      `[posting/interview] ${label}: keys received but NOT stored — ${Array.from(unmapped).sort().join(', ')}`,
+      {
+        requestId,
+        hint: 'To persist one, add it to ANSWER_DIRECT_KEYS (or the relevant pickStr list), read it in ensureAnswerShape/extractMetadata, declare it in AnswerBaseSchema, and project it in syncInterviewAnswers.ts. All four, or it is silently dropped.',
+      },
+    );
+  }
+}
+
+function pickStr(obj: any, keys: readonly string[]): string | undefined {
   for (const k of keys) {
     const v = obj?.[k];
     if (typeof v === 'string' && v.trim()) return v.trim();
@@ -39,19 +179,19 @@ function normalizeQA(input: any): QA[] {
       .map((v) => {
         if (typeof v === 'string') return { answer: v.trim() };
         if (v && typeof v === 'object') {
-          const ans = pickStr(v, ['answer','a','value','text']);
-          const q   = pickStr(v, ['question','q','prompt','label']);
-          const id  = pickStr(v, ['questionId','id','key']);
+          const ans = pickStr(v, ANSWER_TEXT_KEYS);
+          const q   = pickStr(v, ANSWER_PROMPT_KEYS);
+          const id  = pickStr(v, ANSWER_ID_KEYS);
           const fu  = !!(v as any).isFollowUp;
           // Preserve section and category from the original object
           const section = pickStr(v, ['section']);
           const category = pickStr(v, ['category']);
           // Room attribution + provenance (D5) — carried first-class, not stripped.
           const roomId = (v as any).roomId ?? (v as any).room_id ?? null;
-          const questionSource = pickStr(v, ['questionSource', 'question_source']);
+          const questionSource = pickStr(v, ANSWER_SOURCE_KEYS);
           const isCrossRoom = !!((v as any).isCrossRoom ?? (v as any).is_cross_room);
-          const inputModality = pickStr(v, ['inputModality', 'input_modality']);
-          return ans ? { id, question: q, prompt: (v as any).prompt ?? q, answer: ans, isFollowUp: fu, section, category, roomId, questionSource, isCrossRoom, inputModality } : null;
+          const inputModality = pickStr(v, ANSWER_MODALITY_KEYS);
+          return ans ? { id, question: q, prompt: (v as any).prompt ?? q, answer: ans, isFollowUp: fu, section, category, roomId, questionSource, isCrossRoom, inputModality, ...carryAnswerExtras(v) } : null;
         }
         return null;
       })
@@ -70,17 +210,17 @@ function normalizeQA(input: any): QA[] {
         const s = v.trim();
         if (s) out.push({ id: k, question: k, prompt: k, answer: s });
       } else if (v && typeof v === 'object') {
-        const ans = pickStr(v, ['answer','a','value','text']);
-        const q   = pickStr(v, ['question','q','prompt','label']) ?? k;
-        const id  = pickStr(v, ['questionId','id','key']) ?? k;
+        const ans = pickStr(v, ANSWER_TEXT_KEYS);
+        const q   = pickStr(v, ANSWER_PROMPT_KEYS) ?? k;
+        const id  = pickStr(v, ANSWER_ID_KEYS) ?? k;
         const fu  = !!(v as any).isFollowUp;
         const section = pickStr(v, ['section']);
         const category = pickStr(v, ['category']);
         const roomId = (v as any).roomId ?? (v as any).room_id ?? null;
-        const questionSource = pickStr(v, ['questionSource', 'question_source']);
+        const questionSource = pickStr(v, ANSWER_SOURCE_KEYS);
         const isCrossRoom = !!((v as any).isCrossRoom ?? (v as any).is_cross_room);
-        const inputModality = pickStr(v, ['inputModality', 'input_modality']);
-        if (ans) out.push({ id, question: q, prompt: (v as any).prompt ?? q, answer: ans, isFollowUp: fu, section, category, roomId, questionSource, isCrossRoom, inputModality });
+        const inputModality = pickStr(v, ANSWER_MODALITY_KEYS);
+        if (ans) out.push({ id, question: q, prompt: (v as any).prompt ?? q, answer: ans, isFollowUp: fu, section, category, roomId, questionSource, isCrossRoom, inputModality, ...carryAnswerExtras(v) });
       }
     }
     return out;
@@ -244,12 +384,20 @@ const POSTING_V1_ENABLED =
   (process.env.NEXT_PUBLIC_POSTING_V1 ?? "").toLowerCase() === "true" ||
   process.env.NODE_ENV !== "production";
 
-const SaveBodySchema = z.object({
-  answers: z.array(z.any()).optional(),
-  selectedQuestionIds: z.array(z.string()).optional(),
-  imageOrder: z.array(z.string()).optional(),
-  previousUpdatedAt: z.string().optional(),
-});
+// NOTE: there is deliberately no body schema here any more.
+//
+// A `SaveBodySchema` used to sit at this spot declaring `answers`,
+// `selectedQuestionIds`, `imageOrder` and `previousUpdatedAt` — and nothing ever
+// parsed against it. POST reads the body untyped ("tolerant body parsing"
+// below), so the schema validated nothing while reading exactly like the
+// route's contract. Tightening it would have looked like a fix and changed no
+// behaviour at all.
+//
+// The contract that IS real: `AnswerBaseSchema` in
+// @/lib/posting/interviewSchemas, enforced by `normalizeAnswers` on the way into
+// provenance, plus the key lists at the top of this file, enforced by
+// `warnOnUnmappedAnswerKeys`. Don't reintroduce a decorative schema here — if
+// the body should be validated, validate it at the parse site.
 
 // Helper: merge by questionId (keeps latest answer)
 function mergeQA(prev: any[] = [], next: any[] = []): any[] {
@@ -443,6 +591,12 @@ export async function POST(
       body?.interview?.followups ??
       [];
 
+    // Loud about what we are about to throw away. Runs on the RAW body — the
+    // only point where a client's keys are still visible, before normalizeQA
+    // flattens them onto QA. Warn-only: it never rejects a save.
+    warnOnUnmappedAnswerKeys(answersRaw, 'answers', requestId);
+    warnOnUnmappedAnswerKeys(followupsRaw, 'followups', requestId);
+
     // Room statuses (C0): optional [{ roomId, status }] where status is the
     // roomPacing enum. Generalizes A3's roomSkips — the client now sends it from
     // BOTH skipRoom ('skipped') and finalizeRoomAndAdvance ('complete'), so the
@@ -511,7 +665,11 @@ export async function POST(
       const normalized = [...baseAnswers, ...fuAnswers].map(qa => ({
         questionId: qa.questionId,
         section: qa.section,
-        role: 'DESIGNER' as const,
+        // `role` is declared in AnswerBaseSchema and sent by InterviewModal, but
+        // was hardcoded here — so the client's value was discarded on every
+        // save. Carried now, coerced to the declared enum so an unexpected
+        // string falls back to DESIGNER instead of failing the whole parse.
+        role: coerceAnswerRole((qa as any).role),
         answer: qa.answer,
         isFollowUp: qa.isFollowUp || false,
         prompt: qa.prompt || '',
@@ -540,7 +698,7 @@ export async function POST(
       incomingAnswers = [...baseAnswers, ...fuAnswers].map((qa) => ({
         questionId: qa.questionId,
         section: qa.section,
-        role: 'DESIGNER' as const,
+        role: coerceAnswerRole((qa as any).role),
         answer: qa.answer,
         isFollowUp: qa.isFollowUp || false,
         prompt: qa.prompt || '',
