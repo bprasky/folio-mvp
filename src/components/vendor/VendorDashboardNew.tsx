@@ -15,7 +15,7 @@ import { DemoControls } from './shared/DemoControls';
 import { useAIUnlocked } from './ai/useAIAccess';
 import { QBRExportButton } from './ai/QBRExportButton';
 import { AISummaryRibbon } from './ai/AISummaryRibbon';
-import { useDemoState } from '@/lib/vendor-data/demoState';
+import { useOptionalDemoState } from '@/lib/vendor-data/demoState';
 import { computeAIBundle } from '@/lib/vendor-data/ai/engine';
 import { AIInlinePane } from './ai/AIInlinePane';
 
@@ -43,15 +43,15 @@ export function VendorDashboardNew() {
     new URLSearchParams(window.location.search).get('demo') === '1'
   );
   
-  // Use demo state when in demo mode
-  let demoState: ReturnType<typeof useDemoState> | null = null;
-  try {
-    if (isDemoMode) {
-      demoState = useDemoState();
-    }
-  } catch {
-    // Not in demo mode or provider not available
-  }
+  // Called unconditionally, then discarded when not in demo mode. Calling it
+  // inside `if (isDemoMode)` changed the hook order the moment demo mode
+  // toggled, which is the failure rules-of-hooks exists to prevent.
+  //
+  // useOptionalDemoState rather than useDemoState: the latter THROWS without a
+  // provider, which is why the original wrapped it in a try/catch. The optional
+  // form calls useContext unconditionally and returns null instead.
+  const demoStateValue = useOptionalDemoState();
+  const demoState = isDemoMode ? demoStateValue : null;
   
   const [eventKPI, setEventKPI] = useState<any>(null);
   const [projectKPI, setProjectKPI] = useState<any>(null);

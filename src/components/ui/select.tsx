@@ -136,6 +136,14 @@ export function SelectItem({
   return null as unknown as JSX.Element;
 }
 
+/**
+ * useLayoutEffect logs a warning when it runs during SSR. Selecting useEffect on
+ * the server keeps the hook COUNT identical on both renders — which is what the
+ * rules-of-hooks contract cares about — while avoiding that warning.
+ */
+const useIsomorphicLayoutEffect =
+  typeof window !== "undefined" ? React.useLayoutEffect : React.useEffect;
+
 /** Scans its children for <SelectItem> and renders the menu once (portal). */
 export function SelectContent({
   className = "",
@@ -160,21 +168,29 @@ export function SelectContent({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [children]);
 
-  if (typeof document === "undefined") return null;
-
   // Positioning relative to trigger (simple popper)
   const [pos, setPos] = React.useState<{ top: number; left: number; width: number }>({
     top: 0,
     left: 0,
     width: 0,
   });
-  React.useLayoutEffect(() => {
+  // useLayoutEffect, not useEffect: this must not run during SSR, where there is
+  // no layout to measure. React warns if it does, so it is selected at module
+  // level rather than guarded by an early return inside the component.
+  useIsomorphicLayoutEffect(() => {
     const trig = triggerRef.current;
     if (!trig) return;
     const rect = trig.getBoundingClientRect();
     setPos({ top: rect.bottom + window.scrollY + 6, left: rect.left + window.scrollX, width: rect.width });
   }, [open, triggerRef]);
 
+  // Every early return lives BELOW every hook, deliberately. The document check
+  // used to sit above useState/useLayoutEffect, which meant the server render
+  // (no document) called two fewer hooks than the client render did — the exact
+  // shape of "Rendered more hooks than during the previous render". It did not
+  // fail loudly because the component also returns null when closed, so the
+  // mismatch only surfaced when a select was open on first paint.
+  if (typeof document === "undefined") return null;
   if (!open) return null;
 
   const menu = (
