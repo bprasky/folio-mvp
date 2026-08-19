@@ -137,7 +137,31 @@ plus absent `sourceType` and `origin`.
 > **Decision:** `sourceUrl` → `url` is safe. `sourceType`/`origin` look like provenance
 > the record was meant to carry — add them, or drop them from the create.
 
-### E. Singles
+### E. Singles — FIXED (commit `d3931a02`), except as noted
+
+| Site | Was | Resolution |
+|---|---|---|
+| `processInterviewAnswers.ts:117` | required `projectId` missing; `designerId`, `aiConfidence`, `interviewAnswerId` absent | Added `projectId`; dropped the three. Also wrapped the call site in try/catch — it was the only unguarded write in that loop, so the throw aborted the entire run |
+| `applyDynamicHero.ts` | `dynamicHeroUpdatedAt` written **and** read; absent | Guardrail now reads `expandedBlocks.living.updatedAt`, which this function already stamps. Behaviour restored, no migration |
+| `skeleton/move/route.ts:46` | `roomName` absent; room is the required `roomId` FK | Resolves the name (or a raw id) to a `Room` in the same project; 404s when it does not match |
+| `designer/.../selections/route.ts` | `vendorId` absent; required `projectId` missing; six client fields silently discarded | Added `projectId`, dropped `vendorId`, now persists `vendorName`, `productName`, `colorFinish`, `phaseOfUse`, `gpsLocation`, `source` |
+| `designer/.../selections/[selectionId]/route.ts` | `vendorId` written and read | Dropped from both |
+
+**Still open in group E:**
+
+- **`Selection.vendorId` needs a product decision, not a mapping.** The value comes
+  from a free-text *"Vendor ID (optional)"* input. `vendorRepId` and
+  `vendorProductId` are foreign keys — free text would dangle — and `vendorName`
+  is a guess about intent. The write is dropped for now, so the routes work;
+  either map the input deliberately or remove it from the UI.
+- **`vendor/claim-product/route.ts:75`** — `Product.vendorRecordId` and `status`.
+  `Vendor` is a real model (`schema.prisma:7286`), but `Product.vendorId` points
+  at **`User`**, not `Vendor`. Attaching a claimed vendor needs a **new FK**, i.e.
+  a migration. Not a code fix — left alone.
+- **`init-db/route.ts:81,99`** — `Event.type` vs `eventTypes` (array). Dev/seed
+  route, lowest priority, untouched.
+
+### E. Original inventory
 
 | Site | Field(s) | Schema has | Note |
 |---|---|---|---|
