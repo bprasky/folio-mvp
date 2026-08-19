@@ -1,0 +1,51 @@
+name: Lint
+
+# The ratchet. Errors block; warnings do not.
+#
+# The repo carries ~3400 accumulated warnings, almost all no-explicit-any and
+# no-unused-vars. Blocking on those would mean nothing merges, so they stay
+# visible and non-blocking. What DOES block is every rule the codebase is
+# currently clean on — react-hooks/rules-of-hooks above all, which was at 17
+# violations until they were fixed and is now enforced at zero.
+#
+# The point is not to make old code clean. It is that a rule at zero stays at
+# zero, so new code cannot reintroduce a class of bug that has just been paid
+# down. Demote a rule here only with a reason; never to make a red build green.
+
+on:
+  pull_request:
+    paths:
+      - 'src/**'
+      - 'scripts/**'
+      - '.eslintrc.json'
+      - '.eslintignore'
+      - 'package.json'
+      - '.github/workflows/lint.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'src/**'
+      - 'scripts/**'
+      - '.eslintrc.json'
+      - '.eslintignore'
+      - 'package.json'
+      - '.github/workflows/lint.yml'
+  workflow_dispatch:
+
+jobs:
+  eslint:
+    name: ESLint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: ESLint — errors fail, warnings are reported
+        run: npx eslint . --ext .ts,.tsx,.js,.jsx
