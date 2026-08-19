@@ -9,8 +9,9 @@ let prisma: any = null;
 async function getPrisma() {
   if (!prisma) {
     try {
-      const module = await import('@/lib/prisma');
-      prisma = module.prisma;
+      // Not `module` — that shadows the CommonJS global and Next flags it.
+      const mod = await import('@/lib/prisma');
+      prisma = mod.prisma;
     } catch (e: any) {
       throw new Error(`Prisma import failed: ${e.message}`);
     }
