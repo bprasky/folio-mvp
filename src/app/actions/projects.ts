@@ -10,6 +10,7 @@ import { z } from 'zod';
 import { notifyIncompleteProductVendors } from '@/lib/notifications/notifyIncompleteProductVendors';
 import { triggerQueueUnlockForProject } from '@/lib/editorial-queue/unlock';
 import { computePublishReadiness, isDocumentImage } from '@/lib/publish/computePublishReadiness';
+import { makeSlug } from '@/lib/posting/slug';
 
 // Type definitions for project-related data
 interface ProjectWithImages {
@@ -75,12 +76,26 @@ export async function createEditorialDraft({ projectId }: { projectId: string })
       return { ok: true, message: 'Draft already exists', projectPostId: existingPost.id };
     }
 
-    // Create new draft
+    // Create new draft.
+    //
+    // This create was invalid in two independent ways, and every call threw a
+    // PrismaClientValidationError that the catch below swallowed into the
+    // generic "Failed to create draft". The endpoint could not succeed, ever.
+    //
+    //  1. It set `createdById`, which ProjectPost has no column for. Dropped —
+    //     authorship is not lost, since the post hangs off `projectId` and
+    //     Project carries both `designerId` and `ownerId`. Nothing anywhere in
+    //     the codebase read `ProjectPost.createdById`.
+    //  2. It omitted `slug`, which is `String @unique` with no default, so it is
+    //     required on create. Built here the same way every other ProjectPost
+    //     create builds it (see posting/project/[projectId]/init).
+    const slug = makeSlug(project.title || undefined, projectId);
+
     const post = await prisma.projectPost.create({
       data: {
         projectId,
+        slug,
         status: 'DRAFT',
-        createdById: session.user.id,
       },
     });
 

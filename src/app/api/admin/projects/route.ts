@@ -91,7 +91,9 @@ export async function POST(request: Request) {
     // Create the project in the database
     const project = await prisma.project.create({
       data: {
-        name: name.trim(),
+        // The column is `title`; `name` does not exist on Project, so this
+        // create was rejected outright by Prisma at runtime.
+        title: name.trim(),
         description: description || null,
         category: category.trim(),
         designerId: designerId.trim(),

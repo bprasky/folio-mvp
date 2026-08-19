@@ -22,14 +22,22 @@ export async function applyDynamicHeroForProject(
     return;
   }
 
-  // Load ProjectPost
+  // Load ProjectPost.
+  //
+  // `dynamicHeroUpdatedAt` is NOT selected: ProjectPost has no such column. It
+  // was both written and read here, so the write threw (the hero was never
+  // applied) and the read below was always undefined — meaning the 7-day
+  // guardrail never actually held anything back.
+  //
+  // The timestamp it wanted is already persisted, in `expandedBlocks.living
+  // .updatedAt`, which this function stamps on every application. Reading it
+  // from there keeps the guardrail working without a migration.
   const post = await prisma.projectPost.findUnique({
     where: { projectId },
     select: {
       id: true,
       status: true,
       heroAssetId: true,
-      dynamicHeroUpdatedAt: true,
       expandedBlocks: true,
     },
   });
@@ -40,8 +48,10 @@ export async function applyDynamicHeroForProject(
   }
 
   // Check guardrail: don't update if updated within last 7 days
-  if (post.dynamicHeroUpdatedAt) {
-    const daysSinceUpdate = (Date.now() - post.dynamicHeroUpdatedAt.getTime()) / (1000 * 60 * 60 * 24);
+  const lastAppliedRaw = (post.expandedBlocks as any)?.living?.updatedAt;
+  const lastApplied = lastAppliedRaw ? new Date(lastAppliedRaw) : null;
+  if (lastApplied && !Number.isNaN(lastApplied.getTime())) {
+    const daysSinceUpdate = (Date.now() - lastApplied.getTime()) / (1000 * 60 * 60 * 24);
     if (daysSinceUpdate < DAYS_BETWEEN_UPDATES) {
       return;
     }
@@ -71,12 +81,16 @@ export async function applyDynamicHeroForProject(
     updatedAt: new Date().toISOString(),
   };
 
-  // Update ProjectPost
+  // Update ProjectPost.
+  //
+  // No `dynamicHeroUpdatedAt`: ProjectPost has no such column, so this update
+  // threw PrismaClientValidationError and the hero was never actually applied.
+  // The guardrail timestamp lives in `expandedBlocks.living.updatedAt`, stamped
+  // just above and read back at the top of this function.
   await prisma.projectPost.update({
     where: { projectId },
     data: {
       heroAssetId: feature.heroAssetId,
-      dynamicHeroUpdatedAt: new Date(),
       expandedBlocks,
     },
   });
