@@ -29,6 +29,52 @@ and could never succeed.
 
 ---
 
+## Reachability findings (resolves groups A and B)
+
+Both large groups were traced. **Neither is reachable from the product**, so
+neither justifies a migration.
+
+### A. Consultation / Atelier — no UI exists at all
+
+- **Zero** `fetch` calls to `/api/consultations` anywhere in the codebase.
+- **Zero** pages render it: `find src/app -path "*atelier*"` returns only API
+  routes. No `page.tsx` anywhere renders a consultation.
+- The single navigation into it, `AtelierCTAs.tsx:20`
+  (`window.location.href = '/designer/consultation'`), points at a route that
+  **does not exist** — that CTA 404s today.
+
+The surface is **26 files** carrying **106 of the ~1021 tsc errors (~10%)**:
+
+| Path | Route files |
+|---|---|
+| `src/app/api/developments` | 10 |
+| `src/app/api/consultations` | 6 |
+| `src/app/api/atelier` | 4 |
+| `src/lib/atelier` | 5 |
+| `src/app/api/admin/atelier` | 1 |
+
+### B. Vendor rep onboarding — the page is live, but no invite can exist
+
+- `src/app/auth/rep-onboarding/page.tsx` is real and does POST to
+  `/api/auth/rep-onboarding/complete` (line 87).
+- `PendingRepInvite` **is** in the schema (`prisma/schema.prisma:7323`) with
+  `token`, `status`, `vendorOrganizationId`.
+- But **nothing anywhere creates one.** Across the whole codebase there is only
+  `findUnique`, `findMany`, and `update` — all inside the two rep-onboarding
+  routes themselves. Nothing mints an invite or builds the invite URL.
+- Both route files open with the comment *"Define PendingRepInviteStatus locally
+  since it may not be in Prisma schema yet"* — written defensively against a
+  schema the author was unsure of.
+
+So the page is only reachable by hand-constructing a URL whose `inviteId` and
+`token` match a row nothing inserts.
+
+> **Conclusion for A and B: do not migrate.** Adding four `Consultation` fields
+> and five `User` fields would be migrating the schema to support code that
+> nothing can reach — the inverse of the discipline in `CLAUDE.md`. Deleting is
+> defensible for both, but that is a product-direction call, not cleanup:
+> group A is 26 files and would remove ~10% of the error count in one commit.
+
 ## Decisions needed
 
 Default posture: **code follows schema**, since the schema is the migrated truth
