@@ -64,8 +64,15 @@ interface StagingPublishPanelProps {
   unsortedPhotoCount: number;
 }
 
-/** The Tags step's surface. Tagging lives there and only there. */
-const tagsHref = (projectId: string) => `/project/${projectId}?view=media&step=tags`;
+/**
+ * The Tags step's surface, opened on the review panel that lists the photos
+ * still to resolve (`action=tag` — the same dispatch the tracker's CTA fires).
+ * Without the param this CTA landed on the bare tagger, where the only thing on
+ * screen is the work already done: "N photos still to tag" sent the designer to
+ * a grid of their own tags and read as a lie.
+ */
+const tagsHref = (projectId: string) =>
+  `/project/${projectId}?view=media&step=tags&action=tag`;
 /** The Rooms step's surface. */
 const roomsHref = (projectId: string) => `/project/${projectId}?view=media&step=rooms`;
 /** The Story step's surface — interview, answers, and generation. */
