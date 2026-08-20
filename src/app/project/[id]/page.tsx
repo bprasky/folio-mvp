@@ -62,7 +62,8 @@ function buildTrackerState(args: {
   isPublished: boolean;
   interviewInProgress: boolean;
   draftExists: boolean;
-  publishBlockedBy?: 'rooms' | 'tags';
+  publishBlockedByRooms?: boolean;
+  untaggedPhotoCount?: number;
   /**
    * The step whose surface is open. Omitted on the first pass, before the view
    * has resolved — that pass exists only to read `reachedIndex`, which is what
@@ -79,7 +80,8 @@ function buildTrackerState(args: {
     isPublished,
     interviewInProgress,
     draftExists,
-    publishBlockedBy,
+    publishBlockedByRooms,
+    untaggedPhotoCount,
     activeKey,
   } = args;
   const materialsExist = totalSelections > 0;
@@ -134,7 +136,8 @@ function buildTrackerState(args: {
     materialsExist,
     interviewInProgress,
     draftExists,
-    publishBlockedBy,
+    publishBlockedByRooms,
+    untaggedPhotoCount,
     // The tracker highlights whichever step's surface is open, so stepping back
     // to a finished step keeps the header in sync with what's on screen.
     activeKey,
@@ -311,15 +314,12 @@ export default async function ProjectPage({
   // Project Progress Tracker — guided "what's next" region (top of page).
   const photoCount = base.images.filter(img => !isDocumentImage(img.name)).length;
 
-  // Which gate holds publishing closed. Rooms before tags: the tags gate depends
-  // on rooms, so naming tags while photos are unsorted points at work that can't
-  // be finished. Undefined once both pass — then nothing is blocking.
-  const publishBlockedBy: 'rooms' | 'tags' | undefined = !publishReadiness.gates.rooms
-    .complete
-    ? 'rooms'
-    : !publishReadiness.gates.tags.complete
-      ? 'tags'
-      : undefined;
+  // Unsorted photos are the only thing that holds publishing closed — the
+  // article is written room by room, so a photo with no room has nowhere to go.
+  // Untagged photos are surfaced alongside it as an invitation, not a blocker:
+  // the Publish surface confirms the choice before the post goes out.
+  const publishBlockedByRooms = !publishReadiness.gates.rooms.complete;
+  const untaggedPhotoCount = publishReadiness.gates.tags.remaining;
 
   const trackerArgs = {
     timeline: base.timeline ?? null,
@@ -332,7 +332,8 @@ export default async function ProjectPage({
     interviewInProgress: editorialState === 'INTERVIEWED',
     // A written draft is progress into the publish step even before it's public.
     draftExists: hasDraftOrPublished,
-    publishBlockedBy,
+    publishBlockedByRooms,
+    untaggedPhotoCount,
   };
 
   // First pass, with no step surfaced: this exists purely to read `reachedIndex`
@@ -522,7 +523,6 @@ export default async function ProjectPage({
           isOwner={isOwner}
           editorialState={editorialState}
           canPublish={publishReadiness.canPublish}
-          publishBlockedBy={publishBlockedBy}
           taggedPhotoCount={
             base.images.filter(
               img => !isDocumentImage(img.name) && img.tags.length > 0,
@@ -631,7 +631,6 @@ async function PublishTabContent({
   isOwner,
   editorialState,
   canPublish,
-  publishBlockedBy,
   taggedPhotoCount,
   untaggedPhotoCount,
   unsortedPhotoCount,
@@ -642,7 +641,6 @@ async function PublishTabContent({
   editorialState: EditorialState;
   /** Server-derived publish gate — the same value the server action enforces. */
   canPublish: boolean;
-  publishBlockedBy?: 'rooms' | 'tags';
   taggedPhotoCount: number;
   untaggedPhotoCount: number;
   unsortedPhotoCount: number;
@@ -666,7 +664,6 @@ async function PublishTabContent({
       initialModules={stagingData.modules || []}
       editorialState={editorialState}
       canPublish={canPublish}
-      publishBlockedBy={publishBlockedBy}
       taggedPhotoCount={taggedPhotoCount}
       untaggedPhotoCount={untaggedPhotoCount}
       unsortedPhotoCount={unsortedPhotoCount}

@@ -55,10 +55,11 @@ interface StagingPublishPanelProps {
    * same value `publishEditorial` enforces. The button reads this rather than
    * recomputing: a second definition of "ready" on the client is how the panel
    * came to offer a publish the server refuses.
+   *
+   * Only unsorted photos close this gate. Untagged photos are confirmed at the
+   * point of publish (see `handlePublish`), never blocked.
    */
   canPublish: boolean;
-  /** Which gate is closed, for naming the blocker and linking to its step. */
-  publishBlockedBy?: 'rooms' | 'tags';
   taggedPhotoCount: number;
   untaggedPhotoCount: number;
   unsortedPhotoCount: number;
@@ -86,7 +87,6 @@ export default function StagingPublishPanel({
   initialModules,
   editorialState,
   canPublish,
-  publishBlockedBy,
   taggedPhotoCount,
   untaggedPhotoCount,
   unsortedPhotoCount,
@@ -117,29 +117,30 @@ export default function StagingPublishPanel({
   const [showUnpublishDialog, setShowUnpublishDialog] = useState(false);
   const [viewMode, setViewMode] = useState<'edit' | 'preview'>('edit');
   const [showRegenDialog, setShowRegenDialog] = useState(false);
+  const [showUntaggedDialog, setShowUntaggedDialog] = useState(false);
   const [keepEdits, setKeepEdits] = useState(true);
 
   const isPublishedStatus = initialPostData?.status === "PUBLISHED" || publishSuccess;
   const slug = initialPostData?.slug || publishedSlug;
 
-  // Readiness display. The two REQUIRED rows mirror the server gate exactly
-  // (`computePublishReadiness`: every included photo sorted into a room, and
-  // every included photo either tagged or marked product-free) so the checklist
-  // and the button can't tell different stories. Cover, reflections and credits
-  // are recommended — they never gate the publish.
+  // Readiness display. The one REQUIRED row mirrors the server gate exactly
+  // (`computePublishReadiness`: every included photo sorted into a room) so the
+  // checklist and the button can't tell different stories. Tags, cover,
+  // reflections and credits are recommended — they never gate the publish, and
+  // tagging is confirmed rather than enforced at the moment of publishing.
   const imageCount = images.length;
   const roomsReady = unsortedPhotoCount === 0;
   const tagsReady = untaggedPhotoCount === 0;
   const hasCover = !!heroAssetId;
   const hasReflections = (data?.interview?.answers?.length || 0) > 0;
 
-  const requiredChecks = [roomsReady, tagsReady];
-  const recommendedChecks = [hasCover, hasReflections, hasCredits];
+  const requiredChecks = [roomsReady];
+  const recommendedChecks = [tagsReady, hasCover, hasReflections, hasCredits];
   const totalPassed = [...requiredChecks, ...recommendedChecks].filter(Boolean).length;
   const totalChecks = requiredChecks.length + recommendedChecks.length;
 
-  // Auto-expand the checklist while the gate is closed, so the reason the
-  // Publish button is disabled is on screen without a click.
+  // Auto-expand the checklist while the rooms gate is closed, so the reason the
+  // Publish button is replaced by "Sort rooms" is on screen without a click.
   useEffect(() => {
     if (!canPublish) {
       setChecklistExpanded(true);
@@ -177,7 +178,23 @@ export default function StagingPublishPanel({
     router.refresh();
   }
 
+  /**
+   * Publishing with photos still untagged is allowed, but never silent. Going
+   * public is the one outward-facing step here, so the designer sees exactly how
+   * many photos ship with no products on them before it happens — a confirmation
+   * rather than a block. Tagging stays available afterwards, which is why this
+   * is a question and not a gate.
+   */
+  function requestPublish() {
+    if (untaggedPhotoCount > 0) {
+      setShowUntaggedDialog(true);
+      return;
+    }
+    void handlePublish();
+  }
+
   async function handlePublish() {
+    setShowUntaggedDialog(false);
     await publish();
     router.refresh();
   }
@@ -448,33 +465,40 @@ export default function StagingPublishPanel({
                   </button>
                 </>
               ) : canPublish ? (
-                <button
-                  onClick={handlePublish}
-                  disabled={isPublishing || !initialPostData?.expandedBlocks}
-                  className="px-6 py-2 folio-ui font-semibold text-white bg-[var(--accent)] rounded-lg hover:bg-[var(--accent-hover)] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                >
-                  {isPublishing
-                    ? "Publishing..."
-                    : editorialState === 'UNPUBLISHED'
-                    ? "Re-Publish to Folio"
-                    : "Publish to Folio"}
-                </button>
+                <>
+                  {/* Untagged photos don't block the publish, so the way to
+                      finish them sits beside it rather than in place of it. */}
+                  {untaggedPhotoCount > 0 && (
+                    <Link
+                      href={tagsHref(projectId)}
+                      className="flex items-center gap-2 px-4 py-2 folio-ui font-medium text-[var(--accent)] border border-[var(--accent)]/20 rounded-lg hover:bg-[var(--accent)]/10 transition-colors"
+                    >
+                      <Tag className="w-4 h-4" />
+                      Tag products ({untaggedPhotoCount} left)
+                    </Link>
+                  )}
+                  <button
+                    onClick={requestPublish}
+                    disabled={isPublishing || !initialPostData?.expandedBlocks}
+                    className="px-6 py-2 folio-ui font-semibold text-white bg-[var(--accent)] rounded-lg hover:bg-[var(--accent-hover)] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  >
+                    {isPublishing
+                      ? "Publishing..."
+                      : editorialState === 'UNPUBLISHED'
+                      ? "Re-Publish to Folio"
+                      : "Publish to Folio"}
+                  </button>
+                </>
               ) : (
-                // The gate is closed. Offering "Publish to Folio" here fired a
-                // request the server rejects, so the designer met a red error
-                // banner instead of the work that was actually outstanding.
-                // Send them to it.
+                // The rooms gate is closed. Offering "Publish to Folio" here
+                // fired a request the server rejects, so the designer met a red
+                // error banner instead of the work that was actually
+                // outstanding. Send them to it.
                 <Link
-                  href={
-                    publishBlockedBy === 'rooms'
-                      ? roomsHref(projectId)
-                      : tagsHref(projectId)
-                  }
+                  href={roomsHref(projectId)}
                   className="flex items-center gap-2 px-6 py-2 folio-ui font-semibold text-white bg-[var(--accent)] rounded-lg hover:bg-[var(--accent-hover)] transition-colors"
                 >
-                  {publishBlockedBy === 'rooms'
-                    ? `Sort rooms (${unsortedPhotoCount} left)`
-                    : `Tag products (${untaggedPhotoCount} left)`}
+                  {`Sort rooms (${unsortedPhotoCount} left)`}
                   <ArrowRight className="w-4 h-4" />
                 </Link>
               )}
@@ -504,9 +528,9 @@ export default function StagingPublishPanel({
                       ? `Products tagged (${taggedPhotoCount})`
                       : `${untaggedPhotoCount} ${
                           untaggedPhotoCount === 1 ? "photo" : "photos"
-                        } still to tag`
+                        } untagged — sharper article, shoppable rooms`
                   }
-                  required
+                  recommended
                   href={tagsReady ? undefined : tagsHref(projectId)}
                 />
                 <ReadinessItem done={hasCover} label="Cover image selected" recommended />
@@ -531,6 +555,26 @@ export default function StagingPublishPanel({
       {/* No interview modal and no tagger here by design: the Story step owns the
           interview and the Tags step owns tagging. Every route into them from
           this surface is a link to that step. */}
+
+      {/* Publishing with untagged photos — allowed, but named out loud first.
+          The copy leads with what tagging buys rather than with a refusal: the
+          designer has already done the work of getting here, and partial
+          tagging is a legitimate place to stop. */}
+      <ConfirmDialog
+        open={showUntaggedDialog}
+        title={`Publish with ${untaggedPhotoCount} ${
+          untaggedPhotoCount === 1 ? "photo" : "photos"
+        } untagged?`}
+        description={`Those ${
+          untaggedPhotoCount === 1 ? "photo goes" : "photos go"
+        } out with no products on ${
+          untaggedPhotoCount === 1 ? "it" : "them"
+        }. Tagging tells us what is in the room, so the writing about it lands more accurately, and gives readers something to click. Tags you add later still appear on the live post; the article text only changes if you regenerate it.`}
+        confirmText="Publish anyway"
+        cancelText="Go back"
+        onConfirm={handlePublish}
+        onCancel={() => setShowUntaggedDialog(false)}
+      />
 
       {/* Regeneration dialog with feedback + keep edits */}
       {showRegenDialog && (
