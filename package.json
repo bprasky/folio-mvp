@@ -26,6 +26,7 @@
     "check:single-generator": "tsx scripts/check-single-generator.ts",
     "check:blocks-bounds": "tsx scripts/check-editorial-blocks-bounds.ts",
     "check:vendors": "node scripts/check-vendors.mjs",
+    "audit:quotes": "tsx scripts/audit-article-quotes.ts",
     "create:vendor": "node scripts/create-vendor.mjs",
     "create:vendor:rove": "cross-env VENDOR_NAME=\"Rove Concepts\" VENDOR_EMAIL=\"rove@example.com\" node scripts/create-vendor.mjs",
     "create:test-product": "node scripts/create-test-product.mjs",
