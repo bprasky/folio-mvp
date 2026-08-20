@@ -13,6 +13,7 @@
  */
 process.env.ANTHROPIC_API_KEY ||= 'sk-ant-placeholder-for-static-checks';
 
+import { execSync } from 'child_process';
 import { readFileSync } from 'fs';
 import {
   extractQuoteCandidates,
@@ -139,9 +140,22 @@ check('cycling forward through the whole pool returns to the pick', (() => {
   return shuffle[idx].text === pick.text;
 })());
 
-const editor = readFileSync('src/components/posting/editing/EditableArticle.tsx', 'utf8');
+// The picker moved to the story tree when editing was consolidated into the
+// preview. It is the ONE implementation of this control — a second copy is a
+// second chance to grow a free-text box where only selection belongs.
+const picker = readFileSync('src/components/story/PullQuotePicker.tsx', 'utf8');
 check('the editor still locates the current pick by text within alternatives',
-  /alternatives\.findIndex\(a => a\.text === selectedText\)/.test(editor));
+  /alternatives\.findIndex\(a => a\.text === selectedText\)/.test(picker));
+check('the picker only ever PATCHes text drawn from alternatives',
+  /patch\(alternatives\[nextIndex\]\.text\)/.test(picker)
+  && /patch\(alternatives\[0\]\.text\)/.test(picker));
+check('there is exactly one pull-quote picker in the app', (() => {
+  const hits = execSync(
+    "grep -rl 'sections/pull-quote' --include=*.tsx src/ || true",
+    { encoding: 'utf8' },
+  ).split('\n').filter(Boolean);
+  return hits.length === 1 && hits[0].includes('PullQuotePicker.tsx');
+})());
 const patch = readFileSync('src/app/api/posting/project/[projectId]/sections/pull-quote/route.ts', 'utf8');
 check('the endpoint only accepts a quote already in alternatives (so shuffling stays verbatim)',
   /alternatives\.find\(\(a: any\) => a\.text === selectedText\)/.test(patch));
