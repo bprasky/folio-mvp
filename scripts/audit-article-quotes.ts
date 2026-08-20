@@ -19,6 +19,12 @@
  * (`normalizeForVerbatimCheck`): whitespace, quote/dash glyphs and case are
  * forgiven because typesetting legitimately changes them; a swapped word is not.
  *
+ * Anything that is not verbatim is reported with a word-level diff against the
+ * closest real line, and left for a human to rule on. The script deliberately
+ * does not decide that a small edit was harmless — `wll`->`will` (a repaired
+ * transcript typo) and `on`->`in` (the alteration that actually shipped once)
+ * are the same edit distance.
+ *
  * Run:  npx tsx scripts/audit-article-quotes.ts <projectId> [--json]
  */
 process.env.ANTHROPIC_API_KEY ||= 'sk-ant-placeholder-for-static-checks';
@@ -48,7 +54,38 @@ type Surface =
   | 'sections[].quote'
   | 'body';
 
-type Verdict = 'VERBATIM' | 'WRONG_ROOM' | 'NOT_IN_INTERVIEW';
+/**
+ * "Not verbatim" is not one thing, and lumping the cases together is what makes
+ * a report unreadable. A model that repaired a transcript typo and a model that
+ * invented a sentence both fail a substring check; only one of them is a
+ * hallucination, and they call for opposite responses.
+ */
+type Verdict =
+  /** Exact span of one answer (modulo whitespace/glyph/case). */
+  | 'VERBATIM'
+  /**
+   * Close to a real line, with word-level differences. Deliberately NOT split
+   * into "typo repair" and "rewording": `wll`->`will` and `on`->`in` are both
+   * one-character substitutions, and only grammar and meaning separate a fixed
+   * transcript typo from a changed claim. A rule that called the first benign
+   * would call the second benign too — and `on tension` -> `in tension` is the
+   * exact defect this pipeline was rebuilt to prevent. The diff is printed and
+   * a human decides.
+   */
+  | 'ALTERED'
+  /** Sentences are each verbatim, but not contiguous — joined from separate places. */
+  | 'SPLICED'
+  /** Verbatim, but from an answer about a different room. */
+  | 'WRONG_ROOM'
+  /** Nothing in the interview resembles it. */
+  | 'INVENTED';
+
+interface WordChange {
+  from: string;
+  to: string;
+  /** Character edit distance. Reported as context, never used to excuse a change. */
+  distance: number;
+}
 
 interface Finding {
   surface: Surface;
@@ -58,8 +95,12 @@ interface Finding {
   verdict: Verdict;
   /** For WRONG_ROOM: the room the line was actually said about. */
   actualRoom?: string;
-  /** For NOT_IN_INTERVIEW: the closest thing the designer really said. */
-  nearest?: { text: string; room: string; overlap: number };
+  /** The closest real thing the designer said, for every non-VERBATIM verdict. */
+  source?: { text: string; room: string; similarity: number };
+  /** For ALTERED: exactly which words moved, so the call is one glance. */
+  changes?: WordChange[];
+  /** For SPLICED: per-sentence verdicts, so the invented half is visible. */
+  sentences?: Array<{ text: string; verbatim: boolean }>;
 }
 
 // ---------------------------------------------------------------------------
@@ -219,29 +260,82 @@ export function collectQuotes(blocks: any): Array<{ surface: Surface; where: str
 // Verification
 // ---------------------------------------------------------------------------
 
-const STOP = new Set(['the', 'a', 'an', 'and', 'of', 'to', 'in', 'it', 'we', 'that', 'is', 'was', 'for', 'on', 'with', 'you', 'i']);
-const contentWords = (s: string) =>
-  normalizeForVerbatimCheck(s).replace(/[^a-z0-9' ]/g, ' ').split(/\s+/).filter(w => w && !STOP.has(w));
+const splitSentences = (s: string) => s.split(/(?<=[.!?])\s+/).map(x => x.trim()).filter(Boolean);
+const wordsOf = (s: string) => normalizeForVerbatimCheck(s).replace(/[^a-z0-9' ]/g, ' ').split(/\s+/).filter(Boolean);
 
-/** Sentence-level nearest neighbour, so the report shows what was really said. */
-function nearestSaid(text: string, answers: SourceAnswer[]): Finding['nearest'] {
-  const needle = new Set(contentWords(text));
-  if (needle.size === 0) return undefined;
-  let best: Finding['nearest'];
+/** Longest common subsequence table over two word arrays. */
+function lcsTable(a: string[], b: string[]): number[][] {
+  const t = Array.from({ length: a.length + 1 }, () => new Array(b.length + 1).fill(0));
+  for (let i = 1; i <= a.length; i++) {
+    for (let j = 1; j <= b.length; j++) {
+      t[i][j] = a[i - 1] === b[j - 1] ? t[i - 1][j - 1] + 1 : Math.max(t[i - 1][j], t[i][j - 1]);
+    }
+  }
+  return t;
+}
+
+const similarity = (a: string[], b: string[]) =>
+  a.length && b.length ? lcsTable(a, b)[a.length][b.length] / Math.max(a.length, b.length) : 0;
+
+function levenshtein(a: string, b: string): number {
+  const prev = Array.from({ length: b.length + 1 }, (_, j) => j);
+  for (let i = 1; i <= a.length; i++) {
+    let diag = prev[0];
+    prev[0] = i;
+    for (let j = 1; j <= b.length; j++) {
+      const tmp = prev[j];
+      prev[j] = Math.min(prev[j] + 1, prev[j - 1] + 1, diag + (a[i - 1] === b[j - 1] ? 0 : 1));
+      diag = tmp;
+    }
+  }
+  return prev[b.length];
+}
+
+/**
+ * Word-level changes from `said` to `printed`, aligned by LCS so a single
+ * substitution reports as one change rather than shifting everything after it.
+ */
+function wordChanges(said: string[], printed: string[]): WordChange[] {
+  const t = lcsTable(said, printed);
+  const changes: WordChange[] = [];
+  let i = said.length, j = printed.length;
+  const removed: string[] = [], added: string[] = [];
+  const flush = () => {
+    while (removed.length || added.length) {
+      const from = removed.pop() ?? '';
+      const to = added.pop() ?? '';
+      changes.push({ from, to, distance: from && to ? levenshtein(from, to) : Math.max(from.length, to.length) });
+    }
+  };
+  while (i > 0 || j > 0) {
+    if (i > 0 && j > 0 && said[i - 1] === printed[j - 1]) { flush(); i--; j--; }
+    else if (j > 0 && (i === 0 || t[i][j - 1] >= t[i - 1][j])) { added.push(printed[j - 1]); j--; }
+    else { removed.push(said[i - 1]); i--; }
+  }
+  flush();
+  return changes.reverse();
+}
+
+/**
+ * Every contiguous 1-to-3-sentence run of every answer — the shapes a legitimate
+ * quote can take. Comparing against whole answers instead would drown a short
+ * quote's similarity score in surrounding text it never claimed to include.
+ */
+function sourceSpans(answers: SourceAnswer[]): Array<{ text: string; room: string }> {
+  const spans: Array<{ text: string; room: string }> = [];
   for (const a of answers) {
-    for (const sentence of a.answer.split(/(?<=[.!?])\s+/)) {
-      if (!sentence.trim()) continue;
-      const words = contentWords(sentence);
-      if (words.length === 0) continue;
-      const hits = words.filter(w => needle.has(w)).length;
-      const overlap = hits / needle.size;
-      if (!best || overlap > best.overlap) {
-        best = { text: sentence.trim(), room: a.section, overlap };
+    const sentences = splitSentences(a.answer);
+    for (let i = 0; i < sentences.length; i++) {
+      for (let n = 1; n <= 3 && i + n <= sentences.length; n++) {
+        spans.push({ text: sentences.slice(i, i + n).join(' '), room: a.section });
       }
     }
   }
-  return best && best.overlap > 0 ? best : undefined;
+  return spans;
 }
+
+/** Below this, the quote is not a version of anything the designer said. */
+const INVENTED_BELOW = 0.5;
 
 /** Room labels are formatted for display, so compare them loosely. */
 const sameRoom = (a: string, b: string) => {
@@ -253,37 +347,57 @@ const sameRoom = (a: string, b: string) => {
 export function verify(
   q: { surface: Surface; where: string; text: string; room: string | null },
   answers: SourceAnswer[],
+  spans: Array<{ text: string; room: string }> = sourceSpans(answers),
 ): Finding {
+  const base = { surface: q.surface, where: q.where, text: q.text };
   const all = answers.map(a => a.answer);
 
-  if (q.room) {
-    const roomAnswers = answers.filter(a => sameRoom(a.section, q.room!)).map(a => a.answer);
-    if (isVerbatimSpan(q.text, roomAnswers)) {
-      return { surface: q.surface, where: q.where, text: q.text, verdict: 'VERBATIM' };
-    }
-  } else if (isVerbatimSpan(q.text, all)) {
-    return { surface: q.surface, where: q.where, text: q.text, verdict: 'VERBATIM' };
+  // Room-scope the check only when the corpus actually knows about that room.
+  // Interview answers do not always carry a room, and scoping against an empty
+  // set would report every quote in the article as misattributed.
+  const roomAnswers = q.room ? answers.filter(a => sameRoom(a.section, q.room!)) : [];
+  const roomIsKnown = roomAnswers.length > 0;
+
+  if (isVerbatimSpan(q.text, roomIsKnown ? roomAnswers.map(a => a.answer) : all)) {
+    return { ...base, verdict: 'VERBATIM' };
   }
 
-  // Said by the designer, but about a different room. Real words under the
-  // wrong heading — a weaker failure than invention, still a failure.
-  const elsewhere = answers.find(a => isVerbatimSpan(q.text, [a.answer]));
-  if (elsewhere) {
-    return {
-      surface: q.surface,
-      where: q.where,
-      text: q.text,
-      verdict: 'WRONG_ROOM',
-      actualRoom: elsewhere.section,
-    };
+  // Real words, wrong heading. Only reachable when we know the room, so this
+  // never fires on an answer set that simply lacks room attribution.
+  if (roomIsKnown) {
+    const elsewhere = answers.find(a => isVerbatimSpan(q.text, [a.answer]));
+    if (elsewhere) return { ...base, verdict: 'WRONG_ROOM', actualRoom: elsewhere.section };
+  }
+
+  // Each sentence real, the whole not: the model joined lines the designer said
+  // apart. The words are his; the continuity is the model's.
+  const sentences = splitSentences(q.text);
+  if (sentences.length > 1) {
+    const perSentence = sentences.map(text => ({ text, verbatim: isVerbatimSpan(text, all) }));
+    if (perSentence.every(s => s.verbatim)) {
+      return { ...base, verdict: 'SPLICED', sentences: perSentence };
+    }
+  }
+
+  const printed = wordsOf(q.text);
+  let best: { text: string; room: string; similarity: number } | undefined;
+  for (const span of spans) {
+    const sim = similarity(wordsOf(span.text), printed);
+    if (!best || sim > best.similarity) best = { ...span, similarity: sim };
+  }
+
+  if (!best || best.similarity < INVENTED_BELOW) {
+    return { ...base, verdict: 'INVENTED', source: best };
   }
 
   return {
-    surface: q.surface,
-    where: q.where,
-    text: q.text,
-    verdict: 'NOT_IN_INTERVIEW',
-    nearest: nearestSaid(q.text, answers),
+    ...base,
+    verdict: 'ALTERED',
+    changes: wordChanges(wordsOf(best.text), printed),
+    source: best,
+    sentences: sentences.length > 1
+      ? sentences.map(text => ({ text, verbatim: isVerbatimSpan(text, all) }))
+      : undefined,
   };
 }
 
@@ -325,7 +439,8 @@ async function main() {
   }
 
   const quotes = collectQuotes(post.expandedBlocks as any);
-  const findings = quotes.map(q => verify(q, answers));
+  const spans = sourceSpans(answers);
+  const findings = quotes.map(q => verify(q, answers, spans));
 
   if (asJson) {
     console.log(JSON.stringify({ projectId, slug: post.slug, answers: answers.length, findings }, null, 2));
@@ -337,27 +452,61 @@ async function main() {
   const pull = findings.filter(isPullQuote);
   const body = findings.filter(f => !isPullQuote(f));
 
+  const sections = Array.from(new Set(answers.map(a => a.section)));
   console.log(`\nArticle quote audit — project ${projectId}`);
   console.log(`post ${post.slug} (${post.status}), regenerated ${post.updatedAt.toISOString()}`);
-  console.log(`${answers.length} interview answers across ${new Set(answers.map(a => a.section)).size} rooms`);
+  console.log(`${answers.length} interview answers, grouped under: ${sections.join(', ')}`);
+  // Room-scoping is only as good as the room labels on the answers. Say so
+  // rather than letting a reader assume misattribution was ruled out.
+  const chapterTitles = new Set(
+    (((post.expandedBlocks as any)?.galleryChapters ?? []) as any[])
+      .map(c => c?.title).filter((t): t is string => typeof t === 'string'),
+  );
+  const matched = Array.from(chapterTitles).filter(t => sections.some(sec => sameRoom(sec, t)));
+  if (matched.length < chapterTitles.size) {
+    console.log(
+      `NOTE: ${chapterTitles.size - matched.length} of ${chapterTitles.size} chapters have no room-labelled answers, ` +
+      'so their quotes are checked against the whole interview. Misattribution between those rooms is NOT ruled out.',
+    );
+  }
+
+  const MARK: Record<Verdict, string> = {
+    VERBATIM: 'OK  ', ALTERED: 'EDIT', SPLICED: 'JOIN',
+    WRONG_ROOM: 'ROOM', INVENTED: 'FAIL',
+  };
 
   const section = (label: string, group: Finding[]) => {
-    const bad = group.filter(f => f.verdict !== 'VERBATIM');
-    console.log(`\n${label}: ${group.length} quote(s), ${group.length - bad.length} verbatim, ${bad.length} unverified`);
+    const counts = group.reduce<Record<string, number>>((acc, f) => {
+      acc[f.verdict] = (acc[f.verdict] ?? 0) + 1;
+      return acc;
+    }, {});
+    const tally = Object.entries(counts).map(([k, v]) => `${v} ${k.toLowerCase()}`).join(', ') || 'none';
+    console.log(`\n${label}: ${group.length} quote(s) — ${tally}`);
     for (const f of group) {
-      const mark = f.verdict === 'VERBATIM' ? 'OK  ' : f.verdict === 'WRONG_ROOM' ? 'ROOM' : 'FAIL';
-      console.log(`  ${mark}  [${f.surface} @ ${f.where}]`);
+      console.log(`  ${MARK[f.verdict]}  [${f.surface} @ ${f.where}]`);
       console.log(`        "${f.text}"`);
       if (f.verdict === 'WRONG_ROOM') {
         console.log(`        ^ verbatim, but the designer said it about: ${f.actualRoom}`);
       }
-      if (f.verdict === 'NOT_IN_INTERVIEW') {
-        if (f.nearest) {
-          console.log(`        ^ NOT in any answer. Closest real line (${Math.round(f.nearest.overlap * 100)}% overlap, ${f.nearest.room}):`);
-          console.log(`          "${f.nearest.text}"`);
-        } else {
-          console.log('        ^ NOT in any answer, and nothing in the interview resembles it.');
+      if (f.verdict === 'SPLICED') {
+        console.log('        ^ each sentence is real, but they were not said together:');
+        for (const sen of f.sentences ?? []) console.log(`          - "${sen.text}"`);
+      }
+      if (f.verdict === 'ALTERED') {
+        const edits = (f.changes ?? [])
+          .map(c => `${c.from || '∅'} → ${c.to || '∅'}`).join(', ');
+        console.log(`        ^ ALTERED (${Math.round((f.source?.similarity ?? 0) * 100)}% match): ${edits}`);
+        console.log(`          he said: "${f.source?.text}"`);
+        for (const sen of f.sentences ?? []) {
+          if (!sen.verbatim) console.log(`          unmatched sentence: "${sen.text}"`);
         }
+      }
+      if (f.verdict === 'INVENTED') {
+        console.log(
+          f.source
+            ? `        ^ NOT in the interview. Closest real line (${Math.round(f.source.similarity * 100)}% match, ${f.source.room}):\n          "${f.source.text}"`
+            : '        ^ NOT in the interview, and nothing in it resembles this.',
+        );
       }
     }
   };
@@ -365,15 +514,26 @@ async function main() {
   section('PULL QUOTES (code-selected — any failure is a pipeline bug)', pull);
   section('IN-BODY ATTRIBUTED QUOTES (model-written — unverified by the pipeline)', body);
 
-  const failed = findings.filter(f => f.verdict !== 'VERBATIM');
-  console.log(
-    failed.length === 0
-      ? '\nEvery quote in this article is verbatim from the interview.\n'
-      : `\n${failed.length} of ${findings.length} quote(s) are not verbatim from the interview.\n`,
-  );
+  const fabricated = findings.filter(f => f.verdict === 'INVENTED' || f.verdict === 'WRONG_ROOM');
+  const altered = findings.filter(f => f.verdict === 'ALTERED' || f.verdict === 'SPLICED');
+  if (fabricated.length) {
+    console.log(`\n${fabricated.length} quote(s) are not in the interview at all, or are attributed to the wrong room.`);
+  }
+  if (altered.length) {
+    console.log(
+      `\n${altered.length} quote(s) differ from the transcript. Read each diff: a repaired typo and a changed ` +
+      'claim look identical to this script, and only one of them is publishable.',
+    );
+  }
+  if (!fabricated.length && !altered.length) {
+    console.log('\nEvery quote in this article is verbatim from the interview.');
+  }
+  console.log('');
 
   await prisma.$disconnect();
-  process.exit(failed.length === 0 ? 0 : 1);
+  // Any difference from the transcript is a finding: an alteration needs a
+  // human decision just as much as an invention does.
+  process.exit(fabricated.length + altered.length === 0 ? 0 : 1);
 }
 
 // Only run when invoked directly, so the exports above stay importable.
