@@ -20,6 +20,7 @@ import {
   normalizeForVerbatimCheck,
 } from '../src/lib/posting/quoteCandidates';
 import { buildShufflePool } from '../src/lib/posting/selectPullQuotes';
+import { formatRoomName } from '../src/lib/utils/formatRoomName';
 
 let failures = 0;
 const check = (name: string, cond: boolean, detail?: string) => {
@@ -166,6 +167,44 @@ check('the top-level index is rebuilt inside the assigning pass, after the quote
   fnBody.includes('syncPullQuotesFromChapters')
   && fnBody.indexOf('syncPullQuotesFromChapters') > fnBody.indexOf('ch.pullQuote = selection'),
 );
+
+console.log('\n9. Room attribution survives the trip to the quote selector');
+// The hole this closes: stored answers carry `roomId` (D5) and NEVER a room
+// name — `section` on a stored answer is the question category ("what"/"how"),
+// not a room. The generate route read only `a.roomName`, so every answer became
+// section 'General', `byRoom` was keyed under the single room "General", no
+// chapter title matched, and assignVerifiedPullQuotes CLEARED every chapter's
+// pull quote. A fully answered project generated with zero pull quotes.
+const genRoute = readFileSync('src/app/api/posting/project/[projectId]/interview/generate/route.ts', 'utf8');
+check('the route resolves an answer\'s roomId to a room name',
+  /roomId: a\?\.roomId \?\? a\?\.room_id \?\? null/.test(genRoute)
+  && /roomName: answerRoom\(a\)/.test(genRoute));
+check('follow-ups get their room resolved too', /roomName: answerRoom\(f\)/.test(genRoute));
+// Chapter titles come from the IMAGE side and pull quotes are looked up by the
+// ANSWER side. Two resolvers would let those drift; one closure cannot.
+check('answers and gallery images share ONE room resolver',
+  (genRoute.match(/buildRoomResolver\(projectRooms\)/g) ?? []).length === 1
+  && /const answerRoom = \(a: any\)[\s\S]{0,200}resolveRoomName\(\{ roomId/.test(genRoute));
+check('follow-ups carry roomId through the follow-up normalizer',
+  /roomId: a\.roomId \?\? a\.room_id \?\? null,/.test(genRoute));
+check('follow-ups stay marked as follow-ups (they are ranked first by design)',
+  /isFollowUp: true,/.test(genRoute));
+
+// Functional: the selector's keys must equal the chapter titles, or every
+// lookup misses exactly as it did in production.
+const roomAnswers = [
+  { section: 'DINING_ROOM', isFollowUp: true, answer:
+    'We always use glass when we need to make up space. Had we used a solid table we would have crowded it.' },
+  { section: 'primary bathroom', isFollowUp: false, answer:
+    'The clients loved this stone when we went shopping together, and it quickly became the one.' },
+];
+check('a room key from an answer equals the chapter title built from the same room',
+  formatRoomName('DINING_ROOM') === 'Dining Room' && formatRoomName('dining_room') === 'Dining Room');
+check('candidates are found under the room name, not under General',
+  extractQuoteCandidates(roomAnswers as any, 'DINING_ROOM').length > 0
+  && extractQuoteCandidates(roomAnswers as any, 'General').length === 0);
+check('every room with a real answer yields at least one candidate',
+  roomAnswers.every(a => extractQuoteCandidates(roomAnswers as any, a.section!).length > 0));
 
 console.log(failures === 0
   ? '\nAll pull-quote checks passed.\n'
