@@ -63,7 +63,6 @@ function buildTrackerState(args: {
   interviewInProgress: boolean;
   draftExists: boolean;
   publishBlockedByRooms?: boolean;
-  untaggedPhotoCount?: number;
   /**
    * The step whose surface is open. Omitted on the first pass, before the view
    * has resolved — that pass exists only to read `reachedIndex`, which is what
@@ -81,7 +80,6 @@ function buildTrackerState(args: {
     interviewInProgress,
     draftExists,
     publishBlockedByRooms,
-    untaggedPhotoCount,
     activeKey,
   } = args;
   const materialsExist = totalSelections > 0;
@@ -137,7 +135,6 @@ function buildTrackerState(args: {
     interviewInProgress,
     draftExists,
     publishBlockedByRooms,
-    untaggedPhotoCount,
     // The tracker highlights whichever step's surface is open, so stepping back
     // to a finished step keeps the header in sync with what's on screen.
     activeKey,
@@ -316,10 +313,16 @@ export default async function ProjectPage({
 
   // Unsorted photos are the only thing that holds publishing closed — the
   // article is written room by room, so a photo with no room has nowhere to go.
-  // Untagged photos are surfaced alongside it as an invitation, not a blocker:
-  // the Publish surface confirms the choice before the post goes out.
+  // Untagged photos block nothing; they are raised on the Story step, before the
+  // draft is generated, where tagging still changes what the article can say.
   const publishBlockedByRooms = !publishReadiness.gates.rooms.complete;
   const untaggedPhotoCount = publishReadiness.gates.tags.remaining;
+  // Photos the readiness selector actually counts: photos (not documents) that
+  // are included in the project. `photoCount` above includes EXCLUDED ones, so
+  // it would overstate how much tagging is left.
+  const includedPhotoCount = base.images.filter(
+    img => !isDocumentImage(img.name) && (img.inclusion ?? 'INCLUDED') === 'INCLUDED',
+  ).length;
 
   const trackerArgs = {
     timeline: base.timeline ?? null,
@@ -333,7 +336,6 @@ export default async function ProjectPage({
     // A written draft is progress into the publish step even before it's public.
     draftExists: hasDraftOrPublished,
     publishBlockedByRooms,
-    untaggedPhotoCount,
   };
 
   // First pass, with no step surfaced: this exists purely to read `reachedIndex`
@@ -554,6 +556,12 @@ export default async function ProjectPage({
             <StoryPanel
               projectId={sanitizedProject.id}
               project={sanitizedProject}
+              // Tagging changes what the interview can be written about, so the
+              // Story step raises it before generating rather than after. Both
+              // counts are over INCLUDED photos, matching what the readiness
+              // selector counts — an excluded photo is not work left undone.
+              untaggedPhotoCount={untaggedPhotoCount}
+              taggedPhotoCount={includedPhotoCount - untaggedPhotoCount}
               // Photos only, with their room. The Story index draws each room's
               // hero from the first photo in that room, so documents (which have
               // no visual to show) are filtered out here rather than counted.

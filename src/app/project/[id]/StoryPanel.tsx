@@ -16,6 +16,10 @@ interface StoryPanelProps {
   }>;
   /** The project's rooms, used to index the saved answers. */
   rooms: Array<{ id: string; name: string }>;
+  /** Photos with no products and no "product-free" mark, from the publish readiness. */
+  untaggedPhotoCount: number;
+  /** Photos that already carry at least one product tag. */
+  taggedPhotoCount: number;
   isOwner: boolean;
 }
 
@@ -33,6 +37,8 @@ export default function StoryPanel({
   project,
   images,
   rooms,
+  untaggedPhotoCount,
+  taggedPhotoCount,
   isOwner,
 }: StoryPanelProps) {
   if (!isOwner) return null;
@@ -44,6 +50,8 @@ export default function StoryPanel({
         projectName={project.title}
         images={images}
         rooms={rooms}
+        untaggedPhotoCount={untaggedPhotoCount}
+        taggedPhotoCount={taggedPhotoCount}
       />
     </div>
   );

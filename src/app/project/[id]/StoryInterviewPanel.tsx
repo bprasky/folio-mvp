@@ -91,6 +91,14 @@ interface StoryInterviewPanelProps {
   images: PanelImage[];
   /** The project's rooms, in project order. */
   rooms: Array<{ id: string; name: string }>;
+  /**
+   * Photos with no products on them and no "product-free" mark. Raised once
+   * before generating: what is tagged is what the writing has to work from, and
+   * after generation the draft is already written.
+   */
+  untaggedPhotoCount: number;
+  /** Photos that already carry at least one product tag. */
+  taggedPhotoCount: number;
 }
 
 /**
@@ -112,6 +120,8 @@ export default function StoryInterviewPanel({
   projectName,
   images,
   rooms,
+  untaggedPhotoCount,
+  taggedPhotoCount,
 }: StoryInterviewPanelProps) {
   const router = useRouter();
   const [answers, setAnswers] = useState<QA[]>([]);
@@ -124,6 +134,11 @@ export default function StoryInterviewPanel({
   // accepted this session.
   const [showPartialConfirm, setShowPartialConfirm] = useState(false);
   const partialWarningAcceptedRef = useRef(false);
+  // The "photos are still untagged" confirm, and whether it has already been
+  // accepted this session. Same contract as the partial-rooms one: worth saying
+  // once, not on every attempt.
+  const [showUntaggedConfirm, setShowUntaggedConfirm] = useState(false);
+  const untaggedWarningAcceptedRef = useRef(false);
 
   // The interview modal, and how it should open: resume where the designer left
   // off, restart, or scoped to one room they picked.
@@ -425,18 +440,25 @@ export default function StoryInterviewPanel({
   }, [projectId, writeUpRoomIds, router]);
 
   /**
-   * Generate is one click unless rooms are partly answered — then it asks once,
-   * naming them, so a shorter chapter is a choice rather than a surprise in
-   * Publish. Confirming is remembered for the session: the warning is worth
-   * making once, not every time.
+   * Generate is one click unless something would make the draft thinner than it
+   * needs to be — untagged photos, or rooms that are partly answered. Each asks
+   * once, naming what is short, so a thinner article is a choice rather than a
+   * surprise in Publish. Confirming is remembered for the session: the warning
+   * is worth making once, not every time.
    */
   const requestGenerate = useCallback(() => {
+    // Tagging first: it is the only one of the two that changes what the writing
+    // has to work from, and it is the harder thing to act on once a draft exists.
+    if (untaggedPhotoCount > 0 && !untaggedWarningAcceptedRef.current) {
+      setShowUntaggedConfirm(true);
+      return;
+    }
     if (partlyAnswered.length > 0 && !partialWarningAcceptedRef.current) {
       setShowPartialConfirm(true);
       return;
     }
     handleGenerate();
-  }, [partlyAnswered, handleGenerate]);
+  }, [untaggedPhotoCount, partlyAnswered, handleGenerate]);
 
   const openRoom = openRoomId
     ? roomEntries.find((r) => r.roomId === openRoomId) ?? null
@@ -639,6 +661,28 @@ export default function StoryInterviewPanel({
         </>
       )}
 
+      {/* Asked once, before generating, when photos still have no products on
+          them. Tags are what the writing has to name, so this is the last useful
+          moment to raise it. */}
+      {showUntaggedConfirm && (
+        <UntaggedPhotosConfirm
+          taggedCount={taggedPhotoCount}
+          untaggedCount={untaggedPhotoCount}
+          onTagFirst={() => {
+            setShowUntaggedConfirm(false);
+            router.push(`/project/${projectId}?view=media&step=tags&action=tag`);
+          }}
+          onGenerate={() => {
+            untaggedWarningAcceptedRef.current = true;
+            setShowUntaggedConfirm(false);
+            // Back through the gate rather than straight to generation, so a
+            // project that is ALSO short on answers still gets that question.
+            requestGenerate();
+          }}
+          onCancel={() => setShowUntaggedConfirm(false)}
+        />
+      )}
+
       {/* Asked once, before generating, when rooms are under their question
           target. They are still written up — just shorter. */}
       {showPartialConfirm && (
@@ -712,6 +756,82 @@ export default function StoryInterviewPanel({
  * once per session; the tile pills carry the same information the rest of the
  * time.
  */
+/**
+ * Asked once before generating, when photos still have no products on them.
+ *
+ * This is deliberately the LAST place tagging is raised. It used to be raised on
+ * the Publish tab, over a draft that was already written — by then the answer to
+ * "tag them for a better article" is "too late, regenerate." Here the tags still
+ * feed the writing, and the designer is one click from the surface that does it.
+ *
+ * It asks, it never blocks: partial tagging is a legitimate place to stop.
+ */
+function UntaggedPhotosConfirm({
+  taggedCount,
+  untaggedCount,
+  onTagFirst,
+  onGenerate,
+  onCancel,
+}: {
+  taggedCount: number;
+  untaggedCount: number;
+  onTagFirst: () => void;
+  onGenerate: () => void;
+  onCancel: () => void;
+}) {
+  useEffect(() => {
+    function onKey(e: KeyboardEvent) {
+      if (e.key === "Escape") onCancel();
+    }
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [onCancel]);
+
+  const total = taggedCount + untaggedCount;
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+      <div
+        className="absolute inset-0 bg-[rgba(22,22,20,.32)] [backdrop-filter:blur(6px)_saturate(150%)]"
+        onClick={onCancel}
+        aria-hidden
+      />
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-label="Photos are still untagged"
+        className="relative w-full max-w-[520px] overflow-hidden rounded-lg bg-surface-canvas p-7 shadow-folio3"
+      >
+        <h2 className="font-headline text-[26px] font-medium leading-tight text-folio-text-primary">
+          Only {taggedCount} of {total} photos {taggedCount === 1 ? "is" : "are"} tagged
+        </h2>
+        <p className="mt-2 text-folio-body text-folio-text-secondary">
+          Tags tell us what is actually in each room, so the writing names real pieces instead of
+          describing them generically. Finish tagging for a more accurate article — or generate
+          now and tag the rest later.
+        </p>
+
+        <div className="mt-6 flex flex-wrap items-center justify-end gap-3">
+          <button
+            type="button"
+            onClick={onTagFirst}
+            className="rounded-sm border border-folio-border-strong px-4 py-2.5 text-folio-ui font-medium text-folio-text-secondary transition-[transform,border-color,color] duration-150 ease-folio hover:-translate-y-px hover:border-folio-gold hover:text-folio-gold focus:outline-none focus-visible:ring-2 focus-visible:ring-folio-gold"
+          >
+            Tag {untaggedCount} more first
+          </button>
+          <button
+            type="button"
+            onClick={onGenerate}
+            className="rounded-sm bg-folio-text-primary px-5 py-2.5 text-folio-ui font-semibold text-white transition-transform duration-150 ease-folio hover:-translate-y-px focus:outline-none focus-visible:ring-2 focus-visible:ring-folio-gold"
+          >
+            Generate anyway
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function PartialRoomsConfirm({
   rooms,
   onFinishFirst,
