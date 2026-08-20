@@ -261,8 +261,9 @@ export default function TaggingSection({
               {unresolvedCount} of {photos.length}{' '}
               {photos.length === 1 ? 'photo' : 'photos'}
             </span>{' '}
-            {unresolvedCount === 1 ? 'has' : 'have'} no products yet. Publishing needs every photo
-            tagged — or marked as having no products to tag.
+            {unresolvedCount === 1 ? 'has' : 'have'} no products yet. You can publish without
+            them — tagging just makes those rooms read sharper and gives readers something to
+            click.
           </p>
         )}
       </header>

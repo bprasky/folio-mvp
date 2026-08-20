@@ -33,7 +33,11 @@ export interface PublishReadiness {
   nextGate: Gate;
   ctaLabel: string;
   ctaAction: CtaAction;
-  canPublish: boolean; // gates.rooms.complete && gates.tags.complete
+  /**
+   * The hard gate: every included photo sorted into a room. Tagging is
+   * deliberately NOT part of this — see `tagsComplete` below.
+   */
+  canPublish: boolean; // gates.rooms.complete
   statusLine: string; // "19 photos · 7 rooms · 0 tagged"
 }
 
@@ -94,7 +98,12 @@ export function computePublishReadiness(input: ReadinessInput): PublishReadiness
   const photosComplete = photos.length > 0;
   const roomsComplete = included.length > 0 && uncategorized.length === 0;
   const tagsComplete = roomsComplete && untagged.length === 0;
-  const publishComplete = roomsComplete && tagsComplete;
+  // Tagging is advisory, not a gate. A designer who has tagged half the project
+  // can publish the other half untagged; the Publish surface flags what is still
+  // untagged before the post goes out, and the tags step stays the recommended
+  // next action. Rooms remain required because the article is written per room —
+  // an unsorted photo has nowhere to appear.
+  const publishComplete = roomsComplete;
 
   const gates: Record<Gate, GateState> = {
     photos: { complete: photosComplete, remaining: photosComplete ? 0 : 1 },

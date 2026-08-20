@@ -147,8 +147,9 @@ export async function publishEditorial({ projectId }: { projectId: string }) {
     // Publish gate (spec 20 §3e). This is the path the Publish button actually
     // takes — `publishProjectAction` carries the same backstop but is only
     // reached from the designer dashboard, so until now an editorial could go
-    // public from the Publish tab with photos unsorted and nothing tagged. The
-    // gate has to live on both paths, or it lives on neither.
+    // public from the Publish tab with photos unsorted. The gate has to live on
+    // both paths, or it lives on neither. Only rooms are enforced — untagged
+    // photos are confirmed in the UI at the moment of publish, not blocked.
     //
     // Only guards the first transition to public: re-publishing something that
     // is already live stays idempotent, so an unpublish/re-publish round trip
@@ -190,7 +191,7 @@ export async function publishEditorial({ projectId }: { projectId: string }) {
       if (!readiness.canPublish) {
         return {
           ok: false,
-          message: 'Sort every photo into a room and confirm its tags before publishing.',
+          message: 'Sort every photo into a room before publishing.',
         };
       }
     }
@@ -392,9 +393,11 @@ export async function publishProjectAction(raw: unknown) {
   }
 
   // Publish gate backstop (spec 20 §3e). The spine never surfaces "Publish"
-  // while blocked, but the server enforces rooms + tags completeness as the
-  // source of truth. Idempotent re-publish of an already-public project is
-  // still allowed (the gate only guards the first transition to public).
+  // while blocked, but the server enforces room completeness as the source of
+  // truth. Tagging is deliberately NOT enforced here: it is confirmed in the UI
+  // at the moment of publish, not required. Idempotent re-publish of an
+  // already-public project is still allowed (the gate only guards the first
+  // transition to public).
   if (!project.isPublic) {
     const readiness = computePublishReadiness({
       photos: project.images
@@ -412,7 +415,7 @@ export async function publishProjectAction(raw: unknown) {
     });
 
     if (!readiness.canPublish) {
-      throw new Error('Sort rooms and confirm tags before publishing.');
+      throw new Error('Sort every photo into a room before publishing.');
     }
   }
 
