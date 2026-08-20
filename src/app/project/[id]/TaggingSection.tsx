@@ -13,8 +13,9 @@ import {
   FaRegClock,
   FaArrowRight,
 } from 'react-icons/fa';
-import { Sparkles, ArrowLeft, ArrowRight } from 'lucide-react';
+import { Sparkles, ArrowLeft, ArrowRight, CircleSlash } from 'lucide-react';
 import { isDocumentImage } from '@/lib/publish/computePublishReadiness';
+import { setImageNoProducts } from '@/app/actions/projectImages';
 import { ProductTagPicker } from '@/components/project/ProductTagPicker';
 import { ProductEditModal } from '@/components/project/ProductEditModal';
 
@@ -41,6 +42,8 @@ type Photo = {
   room?: string | null;
   roomId?: string | null;
   inclusion?: 'INCLUDED' | 'EXCLUDED';
+  /** Designer declared this photo product-free — the other half of the publish gate. */
+  noProducts?: boolean;
   tags: TagRow[];
 };
 
@@ -168,6 +171,15 @@ export default function TaggingSection({
     (img) => img.inclusion !== 'EXCLUDED' && !isDocumentImage(img.name ?? undefined),
   );
   const uncategorized = photos.filter((p) => !p.roomId);
+
+  // The publish gate is per PHOTO, not per product: every included photo needs
+  // at least one tag or an explicit "no products" (computePublishReadiness's
+  // `isReviewed`). A project can be full of tagged products and still hold the
+  // gate closed, so this surface states the same number the Publish tab does
+  // instead of leaving the Publish tab to be the first place it appears.
+  const isResolved = (p: Photo) => p.tags.length > 0 || p.noProducts === true;
+  const leftInRoom = (list: Photo[]) => list.filter((p) => !isResolved(p)).length;
+  const unresolvedCount = leftInRoom(photos);
   const roomBuckets = rooms
     .map((room) => ({ room, photos: photos.filter((p) => p.roomId === room.id) }))
     .filter((bucket) => bucket.photos.length > 0);
@@ -243,6 +255,16 @@ export default function TaggingSection({
           Every product you tag gives the interview a real detail to ask about — so the published
           piece comes back sharper. Untagged photos still publish; they just stay quiet.
         </p>
+        {unresolvedCount > 0 && (
+          <p className="folio-meta text-folio-text-primary">
+            <span className="font-semibold text-[var(--folio-gold-ornament)] tabular-nums">
+              {unresolvedCount} of {photos.length}{' '}
+              {photos.length === 1 ? 'photo' : 'photos'}
+            </span>{' '}
+            {unresolvedCount === 1 ? 'has' : 'have'} no products yet. Publishing needs every photo
+            tagged — or marked as having no products to tag.
+          </p>
+        )}
       </header>
 
       {/* Two-path shell — finish-book fast path + divider + tag-by-hand below. */}
@@ -293,7 +315,11 @@ export default function TaggingSection({
           {/* Uncategorized — pinned to the top when present */}
           {uncategorized.length > 0 && (
             <section className="space-y-4">
-              <RoomLabel name="Not in a room yet" count={uncategorized.length} />
+              <RoomLabel
+                name="Not in a room yet"
+                count={uncategorized.length}
+                left={leftInRoom(uncategorized)}
+              />
               <div className="space-y-4">
                 {uncategorized.map((photo) => (
                   <PhotoTagger
@@ -319,10 +345,13 @@ export default function TaggingSection({
 
           {/* One group per room with photos */}
           {roomBuckets.map(({ room, photos: roomPhotos }) => {
-            const tagged = roomPhotos.filter((p) => p.tags.length > 0).length;
             return (
               <section key={room.id} className="space-y-4">
-                <RoomLabel name={room.name} count={roomPhotos.length} tagged={tagged} />
+                <RoomLabel
+                  name={room.name}
+                  count={roomPhotos.length}
+                  left={leftInRoom(roomPhotos)}
+                />
                 <div className="space-y-4">
                   {roomPhotos.map((photo) => (
                     <PhotoTagger
@@ -543,13 +572,21 @@ function UnplacedTray({
   );
 }
 
-function RoomLabel({ name, count, tagged }: { name: string; count: number; tagged?: number }) {
+/**
+ * `left` is photos still to RESOLVE (no tags and not marked product-free), which
+ * is what the publish gate counts. The old "N tagged" counted products placed —
+ * a room could read "6 tagged" with half its photos still holding the gate shut.
+ */
+function RoomLabel({ name, count, left }: { name: string; count: number; left?: number }) {
   return (
     <div className="flex items-baseline justify-between gap-3 border-b border-folio-border-subtle pb-2">
       <h3 className="font-headline italic text-2xl text-folio-text-primary">{name}</h3>
       <span className="folio-meta text-folio-text-tertiary tabular-nums whitespace-nowrap">
         {count} {count === 1 ? 'photo' : 'photos'}
-        {tagged !== undefined ? ` · ${tagged} tagged` : ''}
+        {left === undefined ? '' : left > 0 ? '' : ' · all confirmed'}
+        {left !== undefined && left > 0 && (
+          <span className="font-medium text-[var(--folio-gold-ornament)]"> · {left} left</span>
+        )}
       </span>
     </div>
   );
@@ -591,6 +628,7 @@ function PhotoTagger({
   const [pendingDot, setPendingDot] = useState<{ x: number; y: number } | null>(null);
   // A tag being dragged to a new spot; its live position overrides the stored one.
   const [drag, setDrag] = useState<{ id: string; x: number; y: number } | null>(null);
+  const [marking, setMarking] = useState(false);
   const imageRef = useRef<HTMLImageElement | null>(null);
 
   // Persist a dragged tag's new position. The stored AI position (aiX/aiY) is
@@ -605,6 +643,22 @@ function PhotoTagger({
       onChanged();
     } catch (err) {
       console.error('[TaggingSection] move tag error:', err);
+    }
+  };
+
+  // Declare a photo product-free (or take it back). This is the second way past
+  // the publish gate, and it lived only in the review panel — so a designer on
+  // this surface had no way to resolve an architectural shot at all.
+  const markNoProducts = async (value: boolean) => {
+    setMarking(true);
+    try {
+      await setImageNoProducts({ imageId: photo.id, value });
+      onChanged();
+    } catch (err) {
+      console.error('[TaggingSection] no-products error:', err);
+      alert(err instanceof Error ? err.message : 'Something went wrong');
+    } finally {
+      setMarking(false);
     }
   };
 
@@ -693,6 +747,14 @@ function PhotoTagger({
               {photo.tags.length}
             </div>
           )}
+          {/* An unresolved photo is the thing holding publishing shut. Say so on
+              the photo itself — an untagged photo used to look identical to a
+              finished one from across the grid. */}
+          {photo.tags.length === 0 && !photo.noProducts && (
+            <div className="absolute bottom-2 right-2 bg-white/90 text-folio-text-primary border border-folio-border-subtle px-2 py-1 rounded-full text-xs">
+              Needs products
+            </div>
+          )}
           {isOwner && (
             <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-colors flex items-center justify-center">
               <span className="opacity-0 group-hover:opacity-100 bg-white/90 px-3 py-1.5 rounded-full text-sm font-medium text-folio-text-primary transition-opacity">
@@ -702,7 +764,10 @@ function PhotoTagger({
           )}
         </button>
 
-        <TagList tags={photo.tags} isOwner={isOwner} onEdit={onEditProduct} onDelete={handleDelete} onConfirm={onConfirm} siblingPhotos={siblingPhotos} onMove={handleMove} />
+        <div className="space-y-2">
+          <TagList tags={photo.tags} isOwner={isOwner} onEdit={onEditProduct} onDelete={handleDelete} onConfirm={onConfirm} siblingPhotos={siblingPhotos} onMove={handleMove} />
+          <ResolveRow photo={photo} isOwner={isOwner} busy={marking} onMark={markNoProducts} />
+        </div>
       </div>
     );
   }
@@ -853,11 +918,59 @@ function PhotoTagger({
               <p className="folio-meta text-folio-text-tertiary">
                 Click the photo to add another product.
               </p>
+              <ResolveRow photo={photo} isOwner={isOwner} busy={marking} onMark={markNoProducts} />
             </div>
           )}
         </div>
       </div>
     </div>
+  );
+}
+
+/**
+ * The per-photo state of the publish gate. A photo passes with one tag or an
+ * explicit "no products"; a photo with neither is what the Publish tab counts
+ * in "N photos still to tag", so the control that resolves it belongs here,
+ * next to the photo, and not only in the review panel.
+ */
+function ResolveRow({
+  photo,
+  isOwner,
+  busy,
+  onMark,
+}: {
+  photo: Photo;
+  isOwner: boolean;
+  busy: boolean;
+  onMark: (value: boolean) => void;
+}) {
+  if (!isOwner || photo.tags.length > 0) return null;
+
+  if (photo.noProducts) {
+    return (
+      <p className="inline-flex items-center gap-2 folio-meta text-folio-text-tertiary">
+        <FaCheckCircle className="w-3 h-3 text-[var(--accent)]" />
+        Marked as having no products
+        <button
+          onClick={() => onMark(false)}
+          disabled={busy}
+          className="font-medium text-folio-text-secondary hover:text-folio-text-primary underline disabled:opacity-50"
+        >
+          Undo
+        </button>
+      </p>
+    );
+  }
+
+  return (
+    <button
+      onClick={() => onMark(true)}
+      disabled={busy}
+      className="inline-flex items-center gap-1.5 px-3 py-2 folio-meta font-medium text-folio-text-secondary border border-folio-border-subtle rounded-lg hover:bg-surface-ground transition-colors disabled:opacity-50"
+    >
+      <CircleSlash className="w-3.5 h-3.5" />
+      No products in this photo
+    </button>
   );
 }
 
