@@ -283,8 +283,9 @@ export const STORY_IN_PROGRESS_COPY: Partial<StepCopy> = {
  * blocking and send the designer to the step that owns it.
  *
  * Rooms is the only hard gate left: the article is written room by room, so an
- * unsorted photo has nowhere to appear. Untagged photos get
- * `publishUntaggedCopy` below, which invites rather than blocks.
+ * unsorted photo has nowhere to appear. Untagged photos never reach this zone —
+ * they are raised before the draft is generated, where tagging still changes
+ * what the article can say.
  */
 export const PUBLISH_BLOCKED_ROOMS_COPY: Partial<StepCopy> = {
   eyebrow: 'Sort rooms first',
@@ -294,35 +295,6 @@ export const PUBLISH_BLOCKED_ROOMS_COPY: Partial<StepCopy> = {
   action: 'sort-rooms',
   ready: false,
 };
-
-/**
- * Copy for the publish step when the draft is publishable but photos are still
- * untagged. This is an invitation, not a gate — the designer can publish right
- * now, and the Publish surface confirms that choice before the post goes out.
- *
- * The old copy told a designer who had tagged most of their project that they
- * "cannot go public," which was both discouraging and, now, false. Partial
- * tagging is a legitimate place to stop. So the copy leads with what more
- * tagging BUYS — a sharper article and products readers can actually buy —
- * rather than with what it withholds.
- */
-export function publishUntaggedCopy(untaggedCount: number): Partial<StepCopy> {
-  const photos = untaggedCount === 1 ? 'photo' : 'photos';
-  return {
-    // The zone prefixes this with "Ready · ", so the eyebrow stays the plain
-    // noun the default publish copy uses.
-    eyebrow: 'Publish',
-    headline: `Your draft is ready. ${untaggedCount} ${photos} still have no products.`,
-    body: `You can publish as it stands. Tagging the remaining ${untaggedCount} ${photos} sharpens what we write about those rooms and gives readers something to click — so it is worth the few minutes if you have them.`,
-    cta: 'Tag products',
-    action: 'tag',
-    // No secondary here: this zone only renders on the Publish surface, whose
-    // sticky footer already carries the Publish button. `secondary` links to
-    // `?view=publish` — the page you are already reading — so it would be a
-    // control that looks live and does nothing.
-    ready: true,
-  };
-}
 
 /**
  * Where a step lives. The tracker is real navigation, so each step names the
@@ -432,12 +404,6 @@ export interface TrackerInput {
    */
   publishBlockedByRooms?: boolean;
   /**
-   * Photos still untagged. Not a blocker — when the draft is otherwise ready,
-   * this swaps in `publishUntaggedCopy` so the zone offers the upside of
-   * finishing the tagging while leaving publish available.
-   */
-  untaggedPhotoCount?: number;
-  /**
    * The step the designer is currently viewing. The tracker follows the surface
    * they're on rather than always pointing at the frontier, so stepping back to
    * a finished step keeps the tracker in sync. Ignored when it names a locked
@@ -503,7 +469,6 @@ export function deriveTrackerState(input: TrackerInput): TrackerState {
     interviewInProgress = false,
     draftExists = false,
     publishBlockedByRooms = false,
-    untaggedPhotoCount = 0,
     activeKey,
   } = input;
 
@@ -586,22 +551,20 @@ export function deriveTrackerState(input: TrackerInput): TrackerState {
   // correct across tracker types.
   const currentStepKey = steps[currentIndex]?.key;
   const currentAction = currentStepKey ? def.copy[currentStepKey]?.action : undefined;
-  // The untagged advisory's CTA opens the Tags step, which only the `completed`
-  // sequence has. Offering it on a sequence without one would point at a step
-  // the stepper never renders.
-  const hasTagStep = def.steps.some(s => def.copy[s.key]?.action === 'tag');
   let currentCopyOverride: Partial<StepCopy> | undefined;
   if (interviewInProgress && currentAction === 'interview') {
     currentCopyOverride = STORY_IN_PROGRESS_COPY;
-  } else if (currentAction === 'publish' && currentStepKey && !complete[currentStepKey]) {
+  } else if (
+    currentAction === 'publish' &&
+    publishBlockedByRooms &&
+    currentStepKey &&
+    !complete[currentStepKey]
+  ) {
     // Already published → the gate is behind us and the default copy is honest.
-    // Rooms first: it is the one thing that genuinely stops a publish, and the
-    // tags copy would otherwise promise a publish the server refuses.
-    if (publishBlockedByRooms) {
-      currentCopyOverride = PUBLISH_BLOCKED_ROOMS_COPY;
-    } else if (untaggedPhotoCount > 0 && hasTagStep) {
-      currentCopyOverride = publishUntaggedCopy(untaggedPhotoCount);
-    }
+    // Untagged photos deliberately get NO zone here: tagging affects what the
+    // article can say, so it is raised before generation (StoryInterviewPanel),
+    // not re-litigated over a draft that is already written.
+    currentCopyOverride = PUBLISH_BLOCKED_ROOMS_COPY;
   }
 
   return {

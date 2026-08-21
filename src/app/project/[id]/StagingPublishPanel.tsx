@@ -116,7 +116,6 @@ export default function StagingPublishPanel({
   const [checklistExpanded, setChecklistExpanded] = useState(false);
   const [showUnpublishDialog, setShowUnpublishDialog] = useState(false);
   const [showRegenDialog, setShowRegenDialog] = useState(false);
-  const [showUntaggedDialog, setShowUntaggedDialog] = useState(false);
   const [keepEdits, setKeepEdits] = useState(true);
 
   const isPublishedStatus = initialPostData?.status === "PUBLISHED" || publishSuccess;
@@ -177,23 +176,7 @@ export default function StagingPublishPanel({
     router.refresh();
   }
 
-  /**
-   * Publishing with photos still untagged is allowed, but never silent. Going
-   * public is the one outward-facing step here, so the designer sees exactly how
-   * many photos ship with no products on them before it happens — a confirmation
-   * rather than a block. Tagging stays available afterwards, which is why this
-   * is a question and not a gate.
-   */
-  function requestPublish() {
-    if (untaggedPhotoCount > 0) {
-      setShowUntaggedDialog(true);
-      return;
-    }
-    void handlePublish();
-  }
-
   async function handlePublish() {
-    setShowUntaggedDialog(false);
     await publish();
     router.refresh();
   }
@@ -428,7 +411,7 @@ export default function StagingPublishPanel({
                     </Link>
                   )}
                   <button
-                    onClick={requestPublish}
+                    onClick={handlePublish}
                     disabled={isPublishing || !initialPostData?.expandedBlocks}
                     className="px-6 py-2 folio-ui font-semibold text-white bg-[var(--accent)] rounded-lg hover:bg-[var(--accent-hover)] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                   >
@@ -478,7 +461,7 @@ export default function StagingPublishPanel({
                       ? `Products tagged (${taggedPhotoCount})`
                       : `${untaggedPhotoCount} ${
                           untaggedPhotoCount === 1 ? "photo" : "photos"
-                        } untagged — sharper article, shoppable rooms`
+                        } untagged`
                   }
                   recommended
                   href={tagsReady ? undefined : tagsHref(projectId)}
@@ -505,26 +488,6 @@ export default function StagingPublishPanel({
       {/* No interview modal and no tagger here by design: the Story step owns the
           interview and the Tags step owns tagging. Every route into them from
           this surface is a link to that step. */}
-
-      {/* Publishing with untagged photos — allowed, but named out loud first.
-          The copy leads with what tagging buys rather than with a refusal: the
-          designer has already done the work of getting here, and partial
-          tagging is a legitimate place to stop. */}
-      <ConfirmDialog
-        open={showUntaggedDialog}
-        title={`Publish with ${untaggedPhotoCount} ${
-          untaggedPhotoCount === 1 ? "photo" : "photos"
-        } untagged?`}
-        description={`Those ${
-          untaggedPhotoCount === 1 ? "photo goes" : "photos go"
-        } out with no products on ${
-          untaggedPhotoCount === 1 ? "it" : "them"
-        }. Tagging tells us what is in the room, so the writing about it lands more accurately, and gives readers something to click. Tags you add later still appear on the live post; the article text only changes if you regenerate it.`}
-        confirmText="Publish anyway"
-        cancelText="Go back"
-        onConfirm={handlePublish}
-        onCancel={() => setShowUntaggedDialog(false)}
-      />
 
       {/* Regeneration dialog with feedback + keep edits */}
       {showRegenDialog && (
