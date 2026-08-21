@@ -430,6 +430,12 @@ export async function POST(
       select: { id: true, name: true },
     });
     const roomIdToName = new Map(projectRooms.map(r => [r.id, r.name]));
+    // ONE resolver for everything that needs to name a room — interview answers
+    // here, gallery images further down. Chapter titles are derived from the
+    // image side and pull quotes are looked up by the answer side, so the two
+    // must resolve a room identically or the lookup misses. Sharing the closure
+    // is what makes that structural rather than a convention.
+    const resolveRoomName = buildRoomResolver(projectRooms);
 
     // Fetch or create post
     let post = await prisma.projectPost.findUnique({
@@ -762,6 +768,14 @@ export async function POST(
       questionId: a.questionId || a.id,
       question: a.question || a.prompt || a.q || '',
       answer: a.answer || a.a || '',
+      // Room attribution and the follow-up flag have to survive this hop.
+      // Dropping either silently degrades pull quotes: without the room the
+      // answer cannot be matched to a chapter, and without the flag
+      // `extractQuoteCandidates` stops ranking follow-ups first — which is the
+      // whole reason follow-up questions are prompted for quotable material.
+      roomId: a.roomId ?? a.room_id ?? null,
+      roomName: a.roomName || undefined,
+      isFollowUp: true,
     })).filter((f: { question: string; answer: string }) => f.question && f.answer);
 
     // Extract tagged products from images
@@ -809,11 +823,28 @@ export async function POST(
     // - `q` carries the human-readable question text used as a label in the LLM
     //   prompt (mapped to `questionText` on GenInput).
     // Preserve roomName so the prompt can group answers by room.
+    // Which room an answer is about. Answers persist `roomId` as first-class
+    // (D5) and do NOT carry a room NAME — `section` on a stored answer is the
+    // question category ("what"/"how"/"why"), never a room. Only the
+    // EditorialInterviewAnswer bridge above resolved the id, and that path runs
+    // only when provenance holds no answers at all.
+    //
+    // So on the normal path every answer arrived here with `roomName`
+    // undefined, became `section: 'General'` on GenInput, and
+    // `assignVerifiedPullQuotes` keyed its selections under the single room
+    // "General" — which is not the title of any chapter. Every lookup missed and
+    // every chapter had its pull quote CLEARED. That is why a fully answered
+    // project can generate with zero pull quotes.
+    // An answer resolves like an image does: authoritative roomId first, then a
+    // denormalized name, never a guess.
+    const answerRoom = (a: any): string | undefined =>
+      resolveRoomName({ roomId: a?.roomId ?? a?.room_id ?? null, room: a?.roomName ?? null }) ?? undefined;
+
     const normalizedAnswers = answers.map((a: any) => ({
       questionId: a.questionId,
       q: a.prompt || a.questionText || a.questionId || 'Question',
       a: a.answer || '',
-      roomName: a.roomName || undefined,
+      roomName: answerRoom(a),
       isFollowUp: a.isFollowUp || false,
     })).filter((x: { q: string; a: string }) => x.a.trim());
 
@@ -821,7 +852,8 @@ export async function POST(
       questionId: f.questionId,
       q: f.question || f.prompt || 'Follow-up',
       a: f.answer || '',
-      roomName: f.roomName || undefined,
+      roomName: answerRoom(f),
+      isFollowUp: true,
     })).filter((x: { q: string; a: string }) => x.a.trim());
 
     // Debug: log room names as they'll appear in the generation prompt
@@ -846,7 +878,6 @@ export async function POST(
     // photo under a "Stairway" heading. This is the single generation path, so
     // every surface that renders a draft resolves rooms identically.
     const currentRoomNames = projectRooms.map(r => r.name);
-    const resolveRoomName = buildRoomResolver(projectRooms);
 
     const imagesWithRoomData = validImages.map(img => ({
       id: img.id,

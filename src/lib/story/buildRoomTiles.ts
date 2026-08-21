@@ -4,7 +4,7 @@
 // for the Folio Story Format mosaic layout.
 
 import { buildEditorialChapters, type EditorialChapter } from "@/lib/editorial/buildEditorialChapters";
-import { getSelectedPullQuoteText } from "@/lib/posting/schemas";
+import { getSelectedPullQuoteText, type PullQuoteSelection } from "@/lib/posting/schemas";
 import { formatRoomName } from "@/lib/utils/formatRoomName";
 
 // --- Types ---
@@ -13,15 +13,32 @@ export type TilePattern = 1 | 2 | 3 | 4;
 
 export interface RoomTileData {
   roomId: string;
+  /**
+   * Index into `expandedBlocks.galleryChapters` — the key the section-override
+   * API is addressed by.
+   *
+   * NOT the tile's own position: tiles without a usable image are dropped below,
+   * so the two diverge the moment any chapter lacks a photo. Editing keyed by
+   * tile position would then write into the wrong room.
+   */
+  chapterIndex: number;
   roomLabel: string;
   roomSlug: string;
   heroImage: { id: string; url: string; tags?: any[] };
   pullQuote: string | null;
+  /**
+   * The unresolved pull quote, alternatives included. `pullQuote` above is just
+   * the selected text, which is all a reader needs; the owner's picker needs the
+   * list it is allowed to choose from.
+   */
+  pullQuoteSelection: string | PullQuoteSelection | null;
   attribution: string;
   productCount: number;
   products: any[];
   additionalImages: Array<{ id: string; url: string; tags?: any[] }>;
   editorialNarrative: string | null;
+  /** The same narrative, still addressable per paragraph. See EditorialChapter. */
+  editorialParagraphs: string[];
   editorialTeaser: string | null;
   pattern: TilePattern;
 }
@@ -42,6 +59,8 @@ export interface StoryData {
   projectPullQuote: string | null;
   projectPullQuoteIsAttributed: boolean;
   introText: string | null;
+  /** The same intro, per paragraph — see RoomTileData.editorialParagraphs. */
+  introParagraphs: string[];
   credits: Array<{ role: string; name: string; url?: string }>;
   designerName: string;
   designerStudio: string | null;
@@ -225,10 +244,15 @@ export function buildStoryData(post: any): StoryData | null {
   const title =
     blocks?.lead?.title ?? blocks?.lead?.kicker ?? project.title ?? "Untitled";
   const subtitle = blocks?.lead?.deck ?? post.excerpt ?? null;
+  // Unchanged: this string is what the published article renders.
   const introText =
     Array.isArray(blocks?.introduction)
       ? blocks.introduction.join("\n\n")
       : subtitle;
+  // Additive: the same paragraphs, still individually addressable for editing.
+  const introParagraphs: string[] = Array.isArray(blocks?.introduction)
+    ? blocks.introduction.filter((p: unknown): p is string => typeof p === "string" && !!p.trim())
+    : [];
 
   // Main pull quote — prefer project-level designer quotes; fall back to
   // editorial deck (summary copy) only when no quote exists. The fallback is
@@ -311,10 +335,12 @@ export function buildStoryData(post: any): StoryData | null {
 
       return {
         roomId: chapter.id,
+        chapterIndex: chapter.index,
         roomLabel,
         roomSlug,
         heroImage: chapter.primaryImage,
         pullQuote: getSelectedPullQuoteText(chapter.pullQuote),
+        pullQuoteSelection: chapter.pullQuote ?? null,
         attribution: designerName,
         productCount: chapter.taggedProducts.length,
         products: chapter.taggedProducts,
@@ -322,6 +348,7 @@ export function buildStoryData(post: any): StoryData | null {
           (img: any) => img?.url
         ),
         editorialNarrative: chapter.body ?? null,
+        editorialParagraphs: chapter.bodyParagraphs ?? [],
         editorialTeaser,
         pattern: patterns[idx] ?? 1,
       } as RoomTileData;
@@ -340,6 +367,7 @@ export function buildStoryData(post: any): StoryData | null {
     projectPullQuote,
     projectPullQuoteIsAttributed,
     introText,
+    introParagraphs,
     credits,
     designerName,
     designerStudio: designer?.studio ?? null,

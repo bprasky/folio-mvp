@@ -11,6 +11,11 @@
 import { useRef, useEffect, useState } from "react";
 import clsx from "clsx";
 import { ChevronDown } from "lucide-react";
+import { useStoryEdit, StoryEditRegion } from "./StoryEditContext";
+import { PullQuotePicker } from "./PullQuotePicker";
+import EditableParagraph from "@/components/posting/editing/EditableParagraph";
+import SectionFeedback from "@/components/posting/editing/SectionFeedback";
+import type { PullQuoteSelection } from "@/lib/posting/schemas";
 
 interface QuoteTileProps {
   roomLabel: string;
@@ -19,6 +24,12 @@ interface QuoteTileProps {
   productCount: number;
   editorialTeaser?: string | null;
   editorialNarrative?: string | null;
+  /** The narrative still addressable per paragraph — required to edit in place. */
+  editorialParagraphs?: string[];
+  /** Index into galleryChapters. Not the tile's position. */
+  chapterIndex?: number;
+  /** Raw pull quote value (with its alternatives) for the owner's picker. */
+  pullQuoteSelection?: string | PullQuoteSelection | null;
   onClick: () => void;
   isExpanded: boolean;
   wide?: boolean;
@@ -32,12 +43,18 @@ export function QuoteTile({
   productCount,
   editorialTeaser,
   editorialNarrative,
+  editorialParagraphs,
+  chapterIndex,
+  pullQuoteSelection,
   onClick,
   isExpanded,
   wide = false,
   reducedMotion = false,
 }: QuoteTileProps) {
   const ref = useRef<HTMLDivElement>(null);
+  // null on the published article — every branch below then behaves as before.
+  const edit = useStoryEdit();
+  const editable = !!edit && typeof chapterIndex === "number";
   const [revealed, setRevealed] = useState(reducedMotion);
 
   useEffect(() => {
@@ -69,19 +86,23 @@ export function QuoteTile({
           transform: revealed ? "translateY(0)" : `translateY(12px)`,
         };
 
-  const showNarrative = isExpanded && !!editorialNarrative;
+  // A reader opens a room to read it. An owner is here to WRITE it — making them
+  // expand every room to reach their own prose is the same tax the Edit/Preview
+  // toggle was, rebuilt one tile at a time.
+  const showNarrative = editable ? !!editorialNarrative : isExpanded && !!editorialNarrative;
 
   return (
     <div
       ref={ref}
-      onClick={onClick}
-      role="button"
-      tabIndex={0}
-      onKeyDown={(e) => e.key === "Enter" && onClick()}
+      onClick={editable ? undefined : onClick}
+      role={editable ? undefined : "button"}
+      tabIndex={editable ? undefined : 0}
+      onKeyDown={editable ? undefined : (e) => e.key === "Enter" && onClick()}
       className={clsx(
-        "cursor-pointer rounded-[12px] transition-colors duration-200 group",
+        !editable && "cursor-pointer",
+        "rounded-[12px] transition-colors duration-200 group",
         wide ? "flex flex-row items-center gap-8 px-8 py-5" : "flex flex-col justify-center px-2 py-6",
-        "hover:bg-[rgba(87,75,67,0.03)]"
+        !editable && "hover:bg-[rgba(87,75,67,0.03)]"
       )}
     >
       <div className={clsx(wide ? "flex-1 flex flex-col gap-2" : "flex flex-col gap-4")}>
@@ -99,8 +120,30 @@ export function QuoteTile({
           {roomLabel}
         </span>
 
-        {/* Body — narrative when expanded, big pull quote when collapsed */}
-        {showNarrative ? (
+        {/* Body — narrative when expanded, big pull quote when collapsed.
+            For an owner the narrative is always shown, one editable node per
+            paragraph so each maps to its own (chapterIndex, paragraphIndex)
+            override. */}
+        {editable && showNarrative ? (
+          <StoryEditRegion className="flex flex-col gap-3" >
+            {(editorialParagraphs?.length ? editorialParagraphs : [editorialNarrative ?? ""]).map(
+              (para, pi) => (
+                <EditableParagraph
+                  key={pi}
+                  text={para}
+                  isEdited={edit!.isEdited(chapterIndex!, pi, "body")}
+                  isEditing={edit!.isEditing(chapterIndex!, pi, "body")}
+                  placeholder="Paragraph text..."
+                  className="whitespace-pre-line font-[var(--font-body)] text-[var(--type-body)] leading-[1.7] text-[rgba(87,75,67,0.85)]"
+                  onStartEdit={() => edit!.openEditor(chapterIndex!, pi, "body")}
+                  onSave={(t) => edit!.save(chapterIndex!, pi, "body", t)}
+                  onCancel={() => edit!.closeEditor()}
+                  onRevert={() => edit!.revert(chapterIndex!, pi, "body")}
+                />
+              ),
+            )}
+          </StoryEditRegion>
+        ) : showNarrative ? (
           <div
             className="whitespace-pre-line"
             style={{
@@ -132,6 +175,43 @@ export function QuoteTile({
           )
         )}
 
+        {/* Pull quote — for an owner this is the picker, so the quote can be
+            cycled, removed or restored from the room's verbatim alternatives
+            without leaving the article. */}
+        {editable && (
+          <StoryEditRegion>
+            <PullQuotePicker
+              pullQuote={pullQuoteSelection ?? pullQuote}
+              chapterIndex={chapterIndex!}
+              projectId={edit!.projectId}
+              isEdited={edit!.isEdited(chapterIndex!, 0, "pullQuote")}
+              isEditing={edit!.isEditing(chapterIndex!, 0, "pullQuote")}
+              quoteClassName={clsx(
+                "font-[var(--font-headline)] italic leading-[1.25] text-[rgba(87,75,67,0.92)]",
+                wide ? "text-[var(--type-h4)]" : "text-[var(--type-h3)]",
+              )}
+              onStartEdit={() => edit!.openEditor(chapterIndex!, 0, "pullQuote")}
+              onSave={(t) => edit!.save(chapterIndex!, 0, "pullQuote", t)}
+              onCancel={() => edit!.closeEditor()}
+              onRevert={() => edit!.revert(chapterIndex!, 0, "pullQuote")}
+              onUpdate={() => edit!.refresh()}
+            />
+          </StoryEditRegion>
+        )}
+
+        {/* Per-section regenerate + undo. Kept with the section it acts on,
+            which is the whole point of editing in the article. */}
+        {editable && (
+          <StoryEditRegion>
+            <SectionFeedback
+              projectId={edit!.projectId}
+              chapterIndex={chapterIndex!}
+              hasHistory={edit!.hasHistory(chapterIndex!)}
+              onRegenerated={() => edit!.refresh()}
+            />
+          </StoryEditRegion>
+        )}
+
         {/* Attribution */}
         <span
           style={{
@@ -158,7 +238,10 @@ export function QuoteTile({
         )}
       </div>
 
-      {/* Affordance — chevron rotates 180° on expand, product count beside it */}
+      {/* Affordance — chevron rotates 180° on expand, product count beside it.
+          Hidden for an owner: their narrative is already open, so there is
+          nothing to expand and the control would only collapse their own text. */}
+      {!editable && (
       <div
         className={clsx(
           wide ? "whitespace-nowrap flex items-center gap-3" : "mt-5 flex items-center gap-3"
@@ -184,6 +267,7 @@ export function QuoteTile({
           />
         </span>
       </div>
+      )}
     </div>
   );
 }

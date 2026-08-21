@@ -17,9 +17,9 @@ import {
 } from "lucide-react";
 import { usePublishFlow } from "@/hooks/usePublishFlow";
 import { ImmersiveProjectPage } from "@/components/project/ImmersiveProjectPage";
+import { StoryEditProvider } from "@/components/story/StoryEditContext";
 import ConfirmDialog from "@/components/ui/ConfirmDialog";
 import type { EditorialState } from "@/lib/editorial/getEditorialState";
-import EditableArticle from "@/components/posting/editing/EditableArticle";
 import type { SectionOverride, SectionHistoryEntry } from "@/lib/posting/editingTypes";
 
 interface ProductTag {
@@ -115,7 +115,6 @@ export default function StagingPublishPanel({
 
   const [checklistExpanded, setChecklistExpanded] = useState(false);
   const [showUnpublishDialog, setShowUnpublishDialog] = useState(false);
-  const [viewMode, setViewMode] = useState<'edit' | 'preview'>('edit');
   const [showRegenDialog, setShowRegenDialog] = useState(false);
   const [showUntaggedDialog, setShowUntaggedDialog] = useState(false);
   const [keepEdits, setKeepEdits] = useState(true);
@@ -241,32 +240,6 @@ export default function StagingPublishPanel({
           </div>
 
           <div className="flex items-center gap-2">
-            {/* Edit / Preview toggle */}
-            {initialPostData?.expandedBlocks && (
-              <div className="flex rounded-lg border border-folio-border-subtle overflow-hidden">
-                <button
-                  onClick={() => setViewMode('edit')}
-                  className={`flex items-center gap-1 px-3 py-1.5 folio-meta font-medium transition-colors ${
-                    viewMode === 'edit'
-                      ? 'bg-[var(--accent)] text-white'
-                      : 'bg-surface-canvas text-folio-text-secondary hover:bg-surface-ground'
-                  }`}
-                >
-                  Edit
-                </button>
-                <button
-                  onClick={() => setViewMode('preview')}
-                  className={`flex items-center gap-1 px-3 py-1.5 folio-meta font-medium transition-colors ${
-                    viewMode === 'preview'
-                      ? 'bg-[var(--accent)] text-white'
-                      : 'bg-surface-canvas text-folio-text-secondary hover:bg-surface-ground'
-                  }`}
-                >
-                  <Eye className="w-3.5 h-3.5" />
-                  Preview
-                </button>
-              </div>
-            )}
             {/* The interview belongs to the Story step, so this links there
                 rather than opening it over the draft. Hosting it here gave the
                 project two places to answer the same questions, and left the
@@ -372,47 +345,24 @@ export default function StagingPublishPanel({
         </div>
       )}
 
-      {/* GENERATED STORY TITLE — surfaced above the preview */}
-      {(currentLead?.kicker || currentLead?.title) && (
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 pb-2">
-          {currentLead?.kicker && currentLead.kicker !== currentLead.title && (
-            <p
-              className="text-sm uppercase tracking-widest text-[var(--accent)] mb-1"
-              style={{ fontFamily: "var(--font-headline)" }}
-            >
-              {currentLead.kicker}
-            </p>
-          )}
-          <h2
-            className="text-3xl font-medium text-folio-text-primary leading-tight"
-            style={{ fontFamily: "var(--font-headline)" }}
-          >
-            {currentLead.title}
-          </h2>
-          {(currentLead.deck || currentLead.dek) && (
-            <p className="mt-2 folio-body text-folio-text-secondary leading-relaxed max-w-3xl">
-              {currentLead.deck || currentLead.dek}
-            </p>
-          )}
-        </div>
-      )}
-
-      {/* CONTENT AREA — Edit mode or Preview mode */}
-      {viewMode === 'edit' && initialPostData?.expandedBlocks ? (
-        <div className="bg-surface-canvas">
-          <EditableArticle
-            projectId={projectId}
-            blocks={initialPostData.expandedBlocks}
-            overrides={(initialPostData.sectionOverrides ?? []) as SectionOverride[]}
-            sectionHistory={(initialPostData.sectionHistory ?? []) as SectionHistoryEntry[]}
-            images={images}
-          />
-        </div>
-      ) : (
-        <div className="relative">
+      {/* CONTENT AREA — the article itself, editable in place.
+          There is no Edit/Preview toggle: editing in a layout that is not the
+          article means never seeing what you actually made until you switch.
+          StoryEditProvider is mounted ONLY here, so the same StoryRenderer
+          serving /p/[slug] stays read-only — see StoryEditContext. */}
+      <div className="relative">
+        {isPublishedStatus ? (
           <ImmersiveProjectPage post={initialPostData} modules={initialModules} isOwner={isOwner} />
-        </div>
-      )}
+        ) : (
+          <StoryEditProvider
+            projectId={projectId}
+            initialOverrides={(initialPostData?.sectionOverrides ?? []) as SectionOverride[]}
+            sectionHistory={(initialPostData?.sectionHistory ?? []) as SectionHistoryEntry[]}
+          >
+            <ImmersiveProjectPage post={initialPostData} modules={initialModules} isOwner={isOwner} />
+          </StoryEditProvider>
+        )}
+      </div>
 
       {/* STAGING FOOTER — sticky at bottom */}
       <div className="sticky bottom-0 z-50 border-t border-folio-border-subtle bg-surface-ground/95 backdrop-blur-sm">
