@@ -36,6 +36,28 @@ export async function PATCH(
       return NextResponse.json({ error: 'Invalid input' }, { status: 400 });
     }
 
+    // Pull quotes are SELECTED, never written.
+    //
+    // Every candidate is a verbatim span of the designer's own interview answer,
+    // and PATCH /sections/pull-quote enforces that by rejecting any selectedText
+    // not present in the chapter's `alternatives`. This endpoint took free text
+    // and wrote it into `pullQuote.selected.text` — the same field, no check. Two
+    // endpoints over one field under two contracts is not a guarantee, it is a
+    // back door, and the weaker one wins by definition.
+    //
+    // Editing prose is the designer's business; a pull quote is a claim about
+    // what they said out loud, which is why it is the one field here that cannot
+    // be typed into.
+    if (field === 'pullQuote') {
+      return NextResponse.json(
+        {
+          error: 'Pull quotes cannot be edited directly — they are verbatim from the interview. Use the pull quote picker to choose a different one.',
+          code: 'PULL_QUOTE_NOT_EDITABLE',
+        },
+        { status: 400 },
+      );
+    }
+
     const post = await prisma.projectPost.findUnique({
       where: { projectId },
       select: { id: true, expandedBlocks: true, sectionOverrides: true },
@@ -194,7 +216,9 @@ function getFieldValue(
     return blocks.introduction?.[paragraphIndex] ?? '';
   }
   if (chapterIndex === -1) {
-    // Lead fields
+    // Lead fields. `kicker` falls back to a legacy `title` so the recorded
+    // original matches what the page actually showed — see setFieldValue.
+    if (field === 'kicker') return blocks.lead?.kicker ?? blocks.lead?.title ?? '';
     return blocks.lead?.[field] ?? '';
   }
   const chapter = blocks.galleryChapters?.[chapterIndex];
@@ -227,6 +251,14 @@ function setFieldValue(
   if (chapterIndex === -1) {
     if (!blocks.lead) blocks.lead = {};
     blocks.lead[field] = value;
+    // The headline is written to `kicker`, but several readers still resolve it
+    // as `lead.title || lead.kicker` (PostExpanded, buildStoryData). Current
+    // generations never persist `title`, so this is inert — but on any row that
+    // carries one, writing only `kicker` leaves the stale `title` winning at
+    // render and the designer's edit silently does nothing. Keep them in step.
+    if (field === 'kicker' && typeof blocks.lead.title === 'string') {
+      blocks.lead.title = value;
+    }
     return;
   }
   const chapter = blocks.galleryChapters?.[chapterIndex];

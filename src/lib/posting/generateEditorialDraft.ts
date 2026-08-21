@@ -6,12 +6,12 @@ import { callLLM } from "./llmClient";
 import { formatRoomName } from "@/lib/utils/formatRoomName";
 import { HOOK_OPENER_ID_PREFIX, HOOK_FOLLOWUP_ID_PREFIX } from "@/lib/interview/generateQuestions";
 import { MODELS } from '@/lib/ai/models';
-import { resolveProductNaming } from '@/lib/naming/resolveProductNaming';
-import { scrubProseNaming, type DescriptorHint } from '@/lib/naming/scrubProse';
-import { FOLIO_TONE, JSON_PROSE_QUOTING_RULE, toTypographicQuotes } from '@/lib/interview/prompts/editorialTone';
+import { FOLIO_TONE, HEADLINE_CRITERIA, JSON_PROSE_QUOTING_RULE, toTypographicQuotes } from '@/lib/interview/prompts/editorialTone';
 import { thinkingSettingsFor, thinkingParams, firstTextBlock } from '@/lib/ai/thinking';
 import { selectPullQuotes } from './selectPullQuotes';
 import { isVerbatimSpan } from './quoteCandidates';
+import { normalizeHeadline, headlineIssues } from './headline';
+import { applyProseNamingGate as applyGate } from '@/lib/naming/applyProseNamingGate';
 import {
   type AiErrorCode,
   codeFromTransport,
@@ -244,59 +244,23 @@ function buildCredits(input: GenInput): Array<{ role: string; name: string }> {
 // Errors are intentionally NOT swallowed: a gate failure must fail generation
 // (the caller surfaces a retryable error) rather than silently persist
 // un-scrubbed prose. Over-suppression is the correct error, per spec 17/20.
+/**
+ * Adapter over the shared gate. The implementation lives in
+ * @/lib/naming/applyProseNamingGate so section regenerate — which also writes
+ * final prose — runs the identical pass. See that file for why.
+ */
 async function applyProseNamingGate(
   blocks: z.infer<typeof BlocksSchema>,
   input: GenInput,
   cid: string
 ): Promise<z.infer<typeof BlocksSchema>> {
-  const productIds: string[] = (input.tags ?? [])
-    .map((t: any) => t?.product?.id ?? t?.productId)
-    .filter((id: any): id is string => typeof id === 'string');
-  if (productIds.length === 0) return blocks;
-
-  const naming = await resolveProductNaming(productIds, {
-    mode: 'prose',
+  return applyGate(blocks, {
+    productIds: (input.tags ?? []).map((t: any) => t?.product?.id ?? t?.productId),
     projectId: input.project?.id ?? null,
     postingUserId: input.designer?.id ?? null,
+    cid,
+    source: 'generate',
   });
-
-  // Descriptor hints (source 1): the model emits a brand-free descriptor per
-  // materials-ledger item in its `finish` field. Match each ledger item back to
-  // a product — by productId if the model echoed one, otherwise by exact name
-  // (the prompt requires exact product names) — and feed it as the emitted
-  // descriptor. The deterministic category+finish assembly (source 2) still
-  // applies for anything unmatched.
-  const nameToProductId = new Map<string, string>();
-  for (const n of Array.from(naming.values())) {
-    if (n.name) nameToProductId.set(n.name.trim().toLowerCase(), n.productId);
-  }
-  const hints = new Map<string, DescriptorHint>();
-  for (const item of blocks.materialsLedger?.items ?? []) {
-    const emitted = typeof item.finish === 'string' ? item.finish.trim() : '';
-    if (!emitted) continue;
-    const pid = item.productId ?? (item.name ? nameToProductId.get(item.name.trim().toLowerCase()) : undefined);
-    if (pid) hints.set(pid, { emitted });
-  }
-
-  const { blocks: scrubbed, replacements } = scrubProseNaming(blocks, naming, hints);
-  const gated = Array.from(naming.values()).filter((n) => !n.named).length;
-  console.info('[generate] product_naming_gate', {
-    cid, products: naming.size, gated, replacements,
-  });
-
-  // Re-validate as a guard. The scrub is a structure-preserving string transform,
-  // but swapping a short name for a longer descriptor can push a field past a
-  // soft length cap (e.g. lead.kicker max 120). That is not a reason to fail
-  // generation or — worse — to fall back to un-scrubbed prose, so on a validation
-  // miss we keep the scrubbed (leak-free) blocks and log rather than throw.
-  const revalidated = BlocksSchema.safeParse(scrubbed);
-  if (!revalidated.success) {
-    console.warn('[generate] product_naming_gate_revalidation', {
-      cid, issues: revalidated.error.issues.slice(0, 3),
-    });
-    return scrubbed;
-  }
-  return revalidated.data;
 }
 
 // Score a pull quote candidate using heuristics.
@@ -954,13 +918,22 @@ async function repairAndBuildBlocks(
 
   const ledger = buildMaterialContext(input.tags);
 
+  // Safe cleanup only — normalizeHeadline does not restyle case beyond the first
+  // character, because lowercasing a Title Case headline cannot tell "House"
+  // from "Miami Beach". Departures from house style are reported below instead.
+  const composedKicker = normalizeHeadline(
+    (composed.lead && typeof composed.lead === 'object'
+      ? composed.lead.kicker || composed.lead.title || input.project?.title || ''
+      : input.project?.title || 'A Considered Composition'),
+  ).slice(0, 120);
+
   const blocks = {
     lead: composed.lead && typeof composed.lead === 'object'
       ? {
-          kicker: (composed.lead.kicker || composed.lead.title || input.project?.title || '').slice(0, 120),
+          kicker: composedKicker,
           deck: (composed.lead.deck || composed.lead.dek || '').slice(0, 400),
         }
-      : { kicker: input.project?.title || 'A Considered Composition', deck: '' },
+      : { kicker: composedKicker, deck: '' },
     introduction: Array.isArray(composed.introduction) && composed.introduction.length > 0
       ? composed.introduction
           .filter((p: any) => typeof p === 'string' && p.trim())
@@ -991,6 +964,19 @@ async function repairAndBuildBlocks(
       : buildCredits(input),
     mode: 'recomposition' as const,
   };
+
+  // House-style drift on the headline is surfaced, not silently rewritten: the
+  // designer edits the headline in place in the preview, so a flagged headline
+  // costs them seconds — a mis-lowercased place name costs a correction on a
+  // published page. See src/lib/posting/headline.ts.
+  const kickerIssues = headlineIssues(blocks.lead.kicker);
+  if (kickerIssues.length > 0) {
+    console.warn('[generate] headline departs from house style', {
+      _cid,
+      kicker: blocks.lead.kicker,
+      issues: kickerIssues.map((i) => `${i.code}: ${i.detail}`),
+    });
+  }
 
   // Frozen lead/intro (C3, Q1): a designer-edited lead field or introduction is
   // reproduced from the override, not from the model output. The model already
@@ -1315,8 +1301,8 @@ Produce a JSON object with this structure:
 
 {
   "lead": {
-    "kicker": "A headline capturing the project's singular idea — not generic (8-15 words)",
-    "deck": "1-2 sentences that set up the story. What makes this project worth reading about?"
+    "kicker": "The headline. See HEADLINE below — 4-10 words, sentence case.",
+    "deck": "1-2 sentences that set up the story. See HEADLINE — do not restate the headline."
   },
   "introduction": [
     "Opening paragraph — who the clients are, what brought them to this project, and the setting/location.",
@@ -1346,6 +1332,8 @@ MATERIALS LEDGER — DESCRIPTOR FIELD:
 For every item, the "finish" field must be a short brand-free descriptor of the piece — its form, material, and finish only (e.g. "clear glass globe pendant", "unlacquered brass bridge faucet"), never the brand or collection name. Naming eligibility is enforced downstream; this descriptor is the swap text used when a product may not be named in the published prose.
 
 ## Writing Instructions
+
+${HEADLINE_CRITERIA}
 
 FOR THE INTRODUCTION ARRAY (2-3 paragraphs, written BEFORE gallery chapters):
 Using the project-level interview answers, write 2-3 paragraphs that establish:

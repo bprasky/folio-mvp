@@ -1,3 +1,142 @@
+# Regenerate surfaces: section, headline, pull quote
+
+## What the section-regenerate button connects to
+
+`SectionFeedback` → `POST /sections/[chapterIndex]/regenerate`. The context work
+is genuinely right: it buckets answers into thisRoom/otherRoom, labels them
+"PRIMARY source for quotes" vs "context only — do not repeat", tags follow-ups
+as the richest material, fetches that chapter's product tags, preserves title /
+imageIds / pullQuote, and writes the previous body to sectionHistory for undo.
+
+Four things were wrong.
+
+1. **It bypassed the Product Naming Gate.** `resolveProductNaming` appeared in
+   exactly one file in the app — generateEditorialDraft. Section regenerate
+   wrote `chapters[i].body = newBody` straight to the DB. One button press put
+   an unsubscribed vendor's product name back into a published article, with
+   nothing downstream to catch it. A commercial gate one writer can walk around
+   is not a gate. Now extracted to `src/lib/naming/applyProseNamingGate.ts`,
+   called by both paths.
+2. **The prompt could instruct fabrication.** With no matched answers,
+   `answersText` became the literal string "No interview data available." while
+   the instructions still said "MANDATORY: Include at least 1 direct attributed
+   quote using their actual words from the interview." Now refuses (422
+   NO_ANSWERS / NO_ROOM_ANSWERS).
+3. **Room matching was a naive substring.** `chapterTitle.includes(roomName)` —
+   "Entry" matches "Entryway", in both directions, so one room's answers became
+   another's PRIMARY quote source. The hazard `check-editorial-room-matching.ts`
+   already guards in the main generator. Now whole-word.
+4. `provenance: true` selected and never read. (Left as-is; the
+   EditorialInterviewAnswer projection is maintained by syncInterviewAnswers, so
+   the route does get answers — the guard in 2 is what makes a stale projection
+   fail loudly instead of silently.)
+
+Not fixed: `fixSentenceOpeners` still doesn't run on a regenerated section, so
+it can drift into the "The [noun]…" pattern the main pipeline repairs.
+
+## Headline regeneration
+
+Built as a BATCH, not a swap. One press = ~8 candidates, filtered by
+`headlineIssues` (the same machine check the generator's headlines face), keep 6,
+store as `lead.kickerAlternatives`. The live headline is untouched until the
+designer cycles onto one. An all-bad batch offers nothing (422) rather than the
+least-bad.
+
+The reason: a button that swaps one fresh headline per press is a slot machine —
+press three can be worse than press one with no way back, which trains people not
+to touch it. That was the stated worry ("if it's more random... we will want to
+eliminate the feature") and it is a design problem, not a prompt problem.
+
+Criteria now live once, in `editorialTone.ts` as `HEADLINE_CRITERIA`, referenced
+by both the generator and the endpoint. Two copies would mean a regenerated
+headline graded by different rules than the one it replaces.
+
+## Pull quotes: selected, never written
+
+The picker built in the previous session put an `EditableParagraph` on the quote
+text, saving through `PATCH /sections/override` — which wrote arbitrary text into
+`pullQuote.selected.text` with no validation, unlike `PATCH /sections/pull-quote`
+which rejects any selectedText not in `alternatives`. Two endpoints over one
+field under two contracts; the weaker one wins by definition. Quote is now static
+text with cycle/remove only, and the override endpoint refuses `pullQuote`.
+
+**On AI ranking at cycle time: no.** The ranking already happened —
+`selectPullQuotes` calls the model once at generation, it returns candidate IDs,
+and `alternatives` is stored in rank order with scores. Cycling already walks an
+AI-ranked list. A second call per arrow press would cost money per click, add
+latency to a button, and make the same click produce different orders on
+different days — the exact unpredictability we are trying to remove.
+
+## The asymmetry worth keeping
+
+A headline is the model's sentence, so the designer may type their own.
+A pull quote is a claim about what they said out loud, so it can only be
+selected. The two controls look alike; only one has a text field.
+
+---
+
+# Headline criteria and capitalization
+
+## What was there
+
+The entire specification for the article headline was one line, inside a JSON
+shape comment:
+
+    "kicker": "A headline capturing the project's singular idea — not generic (8-15 words)"
+
+No capitalization rule anywhere — not in the prompt, not in FOLIO_TONE, and no
+normalization after. `sentenceCap` and `cleanParagraph` in the generate route
+are dead code (zero call sites), as is `SectionsSchema`. So headline case was
+whatever the model produced that run, with nothing to be consistent with.
+
+The shipped result: "A Miami Beach house that refuses to pick one mood and wear
+it all the way through" — 17 words against a stated 8-15 (unenforced; the only
+hard limit is 120 CHARACTERS, and it is 81), in the "X that refuses to Y" shape,
+which is the same family as "the kind of [noun] that [clause]" already banned for
+body prose. The banned-phrase list is framed for body copy and the headline is
+generated in the same call with no reference to it.
+
+The headline also duplicated the deck: both stated the thesis, so the deck had
+nothing left to add.
+
+## Decisions (founder)
+
+- Sentence case. Capitalize first word and proper nouns only.
+- 4-10 words.
+
+## What changed
+
+- A real HEADLINE block in the prompt: length, capitalization with an explicit
+  counter-example, the swap test for specificity, division of labor with the
+  deck, seven banned shapes, four concrete good examples.
+- `src/lib/posting/headline.ts` — `normalizeHeadline` (safe transforms only) and
+  `headlineIssues` (detection). Applied at assembly; drift is logged.
+- Override route keeps a legacy `lead.title` in step with `kicker` edits.
+
+## The call worth remembering
+
+Sentence case is NOT auto-enforced, deliberately. Lowercasing a Title Case
+headline requires knowing "House" is a common noun while "Miami Beach" is a
+place, and every heuristic for that (lowercase if the body uses it lowercase;
+preserve capitalized bigrams) breaks on exactly the ambiguous words. "Miami
+beach" on a published page is worse than the Title Case it replaced. Since the
+designer now edits the headline in place in the preview, a flagged headline
+costs seconds; a mangled proper noun costs a correction on a live page.
+
+Same posture as LLM_QUOTE_UNVERIFIED: surface it, don't paper over it.
+
+`looksTitleCased` is a heuristic, not a gate — a genuinely proper-noun-heavy
+headline ("Inside Diano Matto's Miami Beach house") trips it. That is asserted
+in check-headline.ts so it stays known, and costs one log line.
+
+## Not done
+
+Regeneration is required to see a new headline; the existing draft keeps its
+current one until then. The banned-shape list is regex over known tics — it
+catches the shapes we have seen, not novelty.
+
+---
+
 # Consolidate the Edit/Preview toggle into the preview
 
 ## Why

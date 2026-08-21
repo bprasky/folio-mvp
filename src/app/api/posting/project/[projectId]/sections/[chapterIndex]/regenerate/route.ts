@@ -10,6 +10,8 @@ import Anthropic from '@anthropic-ai/sdk';
 import type { SectionHistoryEntry, SectionOverride } from '@/lib/posting/editingTypes';
 import { FOLIO_TONE, JSON_PROSE_QUOTING_RULE, toTypographicQuotes } from '@/lib/interview/prompts/editorialTone';
 import { MODELS } from '@/lib/ai/models';
+import { applyProseNamingGate } from '@/lib/naming/applyProseNamingGate';
+import { cid as newCid } from '@/lib/utils/correlation';
 
 const anthropic = new Anthropic();
 
@@ -107,8 +109,15 @@ export async function POST(
       },
     });
 
-    // Find the room name for this chapter (match by title)
-    const chapterTitle = (chapter.title || '').toLowerCase();
+    // Find the room name for this chapter (match by title).
+    //
+    // Whole words only. A plain `includes` matches a room name inside a longer
+    // one — "Entry" inside "Entryway" — which files one room's answers under the
+    // other as the PRIMARY quote source, in both directions. This is the same
+    // hazard check-editorial-room-matching.ts guards in the main generator.
+    const chapterTitle = ` ${(chapter.title || '').toLowerCase().replace(/[_-]+/g, ' ')} `;
+    const namesThisRoom = (roomName: string): boolean =>
+      chapterTitle.includes(` ${roomName.toLowerCase().replace(/[_-]+/g, ' ').trim()} `);
 
     // Separate answers for this room vs other rooms
     const allAnswers = (interview?.answers || []).filter((a: any) => a.answerText);
@@ -117,8 +126,7 @@ export async function POST(
 
     for (const a of allAnswers) {
       const roomName = a.roomId ? roomIdToName.get(a.roomId) : undefined;
-      const isThisRoom = roomName && chapterTitle.includes(roomName.toLowerCase());
-      if (isThisRoom) {
+      if (roomName && namesThisRoom(roomName)) {
         thisRoomAnswers.push(a);
       } else {
         otherRoomAnswers.push(a);
@@ -141,7 +149,30 @@ export async function POST(
       ? `### Interview Answers from Other Rooms (for context only — do not repeat their content):\n\n${otherRoomAnswers.map(formatAnswer).join('\n\n')}`
       : '';
 
-    const answersText = [thisRoomText, otherRoomText].filter(Boolean).join('\n\n') || 'No interview data available.';
+    // The prompt below says a direct quote is MANDATORY. With no answers to quote
+    // from, that is an instruction to invent one — so refuse instead of asking
+    // the model to satisfy it. A section with no interview material is a gap to
+    // fill in the interview, not prose to manufacture.
+    if (thisRoomAnswers.length === 0 && otherRoomAnswers.length === 0) {
+      return NextResponse.json(
+        {
+          error: 'No interview answers found for this project, so there is nothing to rewrite this section from. Add answers in the Story step first.',
+          code: 'NO_ANSWERS',
+        },
+        { status: 422 },
+      );
+    }
+    if (thisRoomAnswers.length === 0) {
+      return NextResponse.json(
+        {
+          error: `No interview answers are attributed to ${chapter.title || 'this room'}, so a rewrite would have to borrow another room's words. Answer a question about this room first.`,
+          code: 'NO_ROOM_ANSWERS',
+        },
+        { status: 422 },
+      );
+    }
+
+    const answersText = [thisRoomText, otherRoomText].filter(Boolean).join('\n\n');
 
     // Fetch product tags for images in this chapter
     const imageIds = chapter.imageIds || [];
@@ -308,6 +339,32 @@ ${JSON_PROSE_QUOTING_RULE}`;
     // Update the chapter body in expandedBlocks
     chapters[chapterIndex].body = newBody;
 
+    // Product Naming Gate — the same deterministic pass the full generator runs.
+    // Freshly written prose can name a product whose vendor is not subscribed,
+    // whether the model chose the name or lifted it from the designer's own
+    // answer. Skipping it here made one button press a way around a commercial
+    // gate. Run over the whole blocks: the scrub leaves eligible names alone, so
+    // re-running it on untouched chapters is a no-op.
+    const _cid = newCid('section-regen');
+    const allProductIds = (
+      await prisma.productTag.findMany({
+        where: { image: { projectId } },
+        select: { productId: true },
+      })
+    ).map((t) => t.productId);
+
+    const gatedBlocks = await applyProseNamingGate(blocks as any, {
+      productIds: allProductIds,
+      projectId,
+      postingUserId: session.user.id,
+      cid: _cid,
+      source: 'section-regenerate',
+    });
+    // The gate may have rewritten the body it was handed; persist and return
+    // what it produced, never the pre-gate text.
+    const gatedChapters = (gatedBlocks as any).galleryChapters as any[];
+    const savedBody: string[] = gatedChapters?.[chapterIndex]?.body ?? newBody;
+
     // Clear any sectionOverrides for this chapter (text was regenerated)
     const overrides = ((post.sectionOverrides ?? []) as SectionOverride[])
       .filter((o) => o.chapterIndex !== chapterIndex);
@@ -315,7 +372,7 @@ ${JSON_PROSE_QUOTING_RULE}`;
     await prisma.projectPost.update({
       where: { id: post.id },
       data: {
-        expandedBlocks: blocks as any,
+        expandedBlocks: gatedBlocks as any,
         sectionHistory: history as any,
         sectionOverrides: overrides as any,
       },
@@ -323,7 +380,7 @@ ${JSON_PROSE_QUOTING_RULE}`;
 
     return NextResponse.json({
       ok: true,
-      chapter: { title: chapter.title, body: newBody, pullQuote: chapter.pullQuote },
+      chapter: { title: chapter.title, body: savedBody, pullQuote: chapter.pullQuote },
       previousBody,
     });
   } catch (error: any) {

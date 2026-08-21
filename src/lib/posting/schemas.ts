@@ -127,6 +127,14 @@ export const BlocksSchema = z.object({
     title: z.string().max(120).optional(), // Support title field (LLM sometimes generates this)
     kicker: z.string().max(120).optional(), // Increased from 80 to 120 for natural headlines
     deck: z.string().max(400).optional(), // Increased from 240 to 400 for proper magazine-style descriptions
+    // Headline options the designer cycles through, newest batch replacing the
+    // last. Written only by the headline regenerate endpoint, and only with
+    // candidates that already passed `headlineIssues` — so cycling cannot land
+    // on a headline that breaks house style. The live headline stays `kicker`
+    // until the designer picks one; a batch they don't like costs them nothing.
+    // Declared here because BlocksSchema is strict: an undeclared key is
+    // stripped on the next parse, which would silently empty the picker.
+    kickerAlternatives: z.array(z.string().max(120)).max(8).optional(),
   }).optional(),
   introduction: z.array(z.string().max(2000)).max(4).optional(),
   galleryChapters: z.array(z.object({

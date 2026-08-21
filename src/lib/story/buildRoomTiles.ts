@@ -61,6 +61,8 @@ export interface StoryData {
   introText: string | null;
   /** The same intro, per paragraph — see RoomTileData.editorialParagraphs. */
   introParagraphs: string[];
+  /** Headline options the owner cycles through. Empty on the published page. */
+  titleAlternatives: string[];
   credits: Array<{ role: string; name: string; url?: string }>;
   designerName: string;
   designerStudio: string | null;
@@ -249,6 +251,9 @@ export function buildStoryData(post: any): StoryData | null {
     Array.isArray(blocks?.introduction)
       ? blocks.introduction.join("\n\n")
       : subtitle;
+  const titleAlternatives: string[] = Array.isArray(blocks?.lead?.kickerAlternatives)
+    ? blocks.lead.kickerAlternatives.filter((t: unknown): t is string => typeof t === "string" && !!t.trim())
+    : [];
   // Additive: the same paragraphs, still individually addressable for editing.
   const introParagraphs: string[] = Array.isArray(blocks?.introduction)
     ? blocks.introduction.filter((p: unknown): p is string => typeof p === "string" && !!p.trim())
@@ -368,6 +373,7 @@ export function buildStoryData(post: any): StoryData | null {
     projectPullQuoteIsAttributed,
     introText,
     introParagraphs,
+    titleAlternatives,
     credits,
     designerName,
     designerStudio: designer?.studio ?? null,

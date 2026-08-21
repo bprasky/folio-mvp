@@ -10,6 +10,12 @@
 // say. Keeping ONE implementation of this control is what keeps that true; a
 // second copy is a second chance to build a free-text box here by accident.
 //
+// The quote itself is NOT editable, and that is the point. Every alternative is
+// a verbatim span of an interview answer, so choosing between them cannot
+// produce a sentence the designer did not say — while a text box over the same
+// field can, in one keystroke. The designer's recourse to a quote they dislike
+// is a different quote of their own, or none.
+//
 // Moved out of the retired EditableArticle when editing moved into the story
 // preview. `scripts/check-pull-quotes.ts` section 7 asserts against this file.
 // ============================================================================
@@ -17,20 +23,13 @@
 import { useState } from 'react';
 import type { PullQuoteSelection } from '@/lib/posting/schemas';
 import { isPullQuoteSelection } from '@/lib/posting/schemas';
-import EditableParagraph from '@/components/posting/editing/EditableParagraph';
 
 interface PullQuotePickerProps {
   pullQuote: string | PullQuoteSelection | null | undefined;
   chapterIndex: number;
   projectId: string;
-  isEdited: boolean;
-  isEditing: boolean;
   /** Typography for the quote itself, so it matches whatever layout hosts it. */
   quoteClassName?: string;
-  onStartEdit: () => void;
-  onSave: (text: string) => Promise<void>;
-  onCancel: () => void;
-  onRevert: () => Promise<void>;
   onUpdate: () => void;
 }
 
@@ -38,13 +37,7 @@ export function PullQuotePicker({
   pullQuote,
   chapterIndex,
   projectId,
-  isEdited,
-  isEditing,
   quoteClassName,
-  onStartEdit,
-  onSave,
-  onCancel,
-  onRevert,
   onUpdate,
 }: PullQuotePickerProps) {
   const [saving, setSaving] = useState(false);
@@ -86,17 +79,14 @@ export function PullQuotePicker({
   if (selectedText) {
     return (
       <div className="py-2">
-        <EditableParagraph
-          text={selectedText}
-          isEdited={isEdited}
-          isEditing={isEditing}
-          as="blockquote"
+        {/* Read-only by design. See the note at the top of this file: the quote
+            is the designer's own sentence, and the way to change it is to pick a
+            different one of their sentences. */}
+        <blockquote
           className={quoteClassName ?? 'font-[var(--font-headline)] text-lg md:text-xl italic leading-relaxed text-folio-text-secondary'}
-          onStartEdit={onStartEdit}
-          onSave={onSave}
-          onCancel={onCancel}
-          onRevert={onRevert}
-        />
+        >
+          &ldquo;{selectedText}&rdquo;
+        </blockquote>
 
         {selectedContext && (
           <p className="mt-2 folio-meta tracking-wide uppercase text-folio-text-tertiary">

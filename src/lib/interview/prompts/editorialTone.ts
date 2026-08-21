@@ -110,3 +110,50 @@ export function toTypographicQuotes(text: string): string {
     return opens ? '“' : '”';
   });
 }
+
+/**
+ * The headline contract, stated once.
+ *
+ * Two callers write headlines: the full article generator and the headline
+ * regenerate endpoint. If they carried separate copies, regenerating a headline
+ * would quietly grade it against different rules than the one it replaces —
+ * which is exactly what makes a regenerate button feel random. `headlineIssues`
+ * in @/lib/posting/headline is the machine-checkable half of the same contract.
+ */
+export const HEADLINE_CRITERIA = `HEADLINE (the "kicker") — the most important line you will write:
+
+LENGTH: 4-10 words. Not a sentence with a subject and a full predicate — a headline.
+If it runs past 10 words it is a deck, not a headline. Cut it.
+
+CAPITALIZATION: sentence case. Capitalize the first word and proper nouns only —
+place names, the designer's name, brands, the studio. Everything else stays
+lowercase. Write "A Miami Beach house that changes mood room by room", never
+"A Miami Beach House That Changes Mood Room By Room". No terminal period.
+
+IT MUST BE ABOUT THIS PROJECT AND NO OTHER. The test: swap in a different house
+and different photos. If the headline still fits, it is worthless — rewrite it
+around the one thing that was true only here. A material, a constraint, a
+reversal, a decision the designer had to defend.
+
+DIVIDE THE WORK WITH THE DECK. The headline makes ONE claim or names ONE image.
+The deck then does something the headline did not: the evidence, the stakes, or
+the specifics. If the deck restates the headline in longer words, both are wasted
+— that is two chances to interest a reader spent on one idea.
+
+NEVER WRITE THESE. They are the shapes a headline falls into when it has nothing
+specific to say:
+- "A house that refuses to [verb]" / "that isn't afraid to [verb]" / "that dares
+  to [verb]" — a project described by what it declines to do
+- "Where [quality] meets [quality]" — "Where warmth meets restraint"
+- "A study in [abstract noun]" / "An exercise in [abstract noun]"
+- "Redefining [noun]" / "Reimagining [noun]" / "Rethinking [noun]"
+- "The art of [gerund]" / "A masterclass in [noun]"
+- Any headline built on "curated", "elevated", "seamless", "harmonious",
+  "timeless", "bespoke", "sanctuary", "oasis", "haven"
+- Colon constructions that announce a theme: "Coastal modern: a Miami retreat"
+
+GOOD (concrete, specific, sentence case, under 10 words):
+- "Every room argues its own case"
+- "The kitchen that started with a cracked slab"
+- "Two crews, one site, the same afternoon"
+- "The stone chose the rest of the house"`;
