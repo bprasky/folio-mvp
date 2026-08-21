@@ -12,6 +12,7 @@ import { FOLIO_TONE, JSON_PROSE_QUOTING_RULE, toTypographicQuotes } from '@/lib/
 import { thinkingSettingsFor, thinkingParams, firstTextBlock } from '@/lib/ai/thinking';
 import { selectPullQuotes } from './selectPullQuotes';
 import { isVerbatimSpan } from './quoteCandidates';
+import { normalizeHeadline, headlineIssues } from './headline';
 import {
   type AiErrorCode,
   codeFromTransport,
@@ -954,13 +955,22 @@ async function repairAndBuildBlocks(
 
   const ledger = buildMaterialContext(input.tags);
 
+  // Safe cleanup only — normalizeHeadline does not restyle case beyond the first
+  // character, because lowercasing a Title Case headline cannot tell "House"
+  // from "Miami Beach". Departures from house style are reported below instead.
+  const composedKicker = normalizeHeadline(
+    (composed.lead && typeof composed.lead === 'object'
+      ? composed.lead.kicker || composed.lead.title || input.project?.title || ''
+      : input.project?.title || 'A Considered Composition'),
+  ).slice(0, 120);
+
   const blocks = {
     lead: composed.lead && typeof composed.lead === 'object'
       ? {
-          kicker: (composed.lead.kicker || composed.lead.title || input.project?.title || '').slice(0, 120),
+          kicker: composedKicker,
           deck: (composed.lead.deck || composed.lead.dek || '').slice(0, 400),
         }
-      : { kicker: input.project?.title || 'A Considered Composition', deck: '' },
+      : { kicker: composedKicker, deck: '' },
     introduction: Array.isArray(composed.introduction) && composed.introduction.length > 0
       ? composed.introduction
           .filter((p: any) => typeof p === 'string' && p.trim())
@@ -991,6 +1001,19 @@ async function repairAndBuildBlocks(
       : buildCredits(input),
     mode: 'recomposition' as const,
   };
+
+  // House-style drift on the headline is surfaced, not silently rewritten: the
+  // designer edits the headline in place in the preview, so a flagged headline
+  // costs them seconds — a mis-lowercased place name costs a correction on a
+  // published page. See src/lib/posting/headline.ts.
+  const kickerIssues = headlineIssues(blocks.lead.kicker);
+  if (kickerIssues.length > 0) {
+    console.warn('[generate] headline departs from house style', {
+      _cid,
+      kicker: blocks.lead.kicker,
+      issues: kickerIssues.map((i) => `${i.code}: ${i.detail}`),
+    });
+  }
 
   // Frozen lead/intro (C3, Q1): a designer-edited lead field or introduction is
   // reproduced from the override, not from the model output. The model already
@@ -1315,8 +1338,8 @@ Produce a JSON object with this structure:
 
 {
   "lead": {
-    "kicker": "A headline capturing the project's singular idea — not generic (8-15 words)",
-    "deck": "1-2 sentences that set up the story. What makes this project worth reading about?"
+    "kicker": "The headline. See HEADLINE below — 4-10 words, sentence case.",
+    "deck": "1-2 sentences that set up the story. See HEADLINE — do not restate the headline."
   },
   "introduction": [
     "Opening paragraph — who the clients are, what brought them to this project, and the setting/location.",
@@ -1346,6 +1369,44 @@ MATERIALS LEDGER — DESCRIPTOR FIELD:
 For every item, the "finish" field must be a short brand-free descriptor of the piece — its form, material, and finish only (e.g. "clear glass globe pendant", "unlacquered brass bridge faucet"), never the brand or collection name. Naming eligibility is enforced downstream; this descriptor is the swap text used when a product may not be named in the published prose.
 
 ## Writing Instructions
+
+HEADLINE (the "kicker") — the most important line you will write:
+
+LENGTH: 4-10 words. Not a sentence with a subject and a full predicate — a headline.
+If it runs past 10 words it is a deck, not a headline. Cut it.
+
+CAPITALIZATION: sentence case. Capitalize the first word and proper nouns only —
+place names, the designer's name, brands, the studio. Everything else stays
+lowercase. Write "A Miami Beach house that changes mood room by room", never
+"A Miami Beach House That Changes Mood Room By Room". No terminal period.
+
+IT MUST BE ABOUT THIS PROJECT AND NO OTHER. The test: swap in a different house
+and different photos. If the headline still fits, it is worthless — rewrite it
+around the one thing that was true only here. A material, a constraint, a
+reversal, a decision the designer had to defend.
+
+DIVIDE THE WORK WITH THE DECK. The headline makes ONE claim or names ONE image.
+The deck then does something the headline did not: the evidence, the stakes, or
+the specifics. If the deck restates the headline in longer words, both are wasted
+— that is two chances to interest a reader spent on one idea.
+
+NEVER WRITE THESE. They are the shapes a headline falls into when it has nothing
+specific to say:
+- "A house that refuses to [verb]" / "that isn't afraid to [verb]" / "that dares
+  to [verb]" — a project described by what it declines to do
+- "Where [quality] meets [quality]" — "Where warmth meets restraint"
+- "A study in [abstract noun]" / "An exercise in [abstract noun]"
+- "Redefining [noun]" / "Reimagining [noun]" / "Rethinking [noun]"
+- "The art of [gerund]" / "A masterclass in [noun]"
+- Any headline built on "curated", "elevated", "seamless", "harmonious",
+  "timeless", "bespoke", "sanctuary", "oasis", "haven"
+- Colon constructions that announce a theme: "Coastal modern: a Miami retreat"
+
+GOOD (concrete, specific, sentence case, under 10 words):
+- "Every room argues its own case"
+- "The kitchen that started with a cracked slab"
+- "Two crews, one site, the same afternoon"
+- "The stone chose the rest of the house"
 
 FOR THE INTRODUCTION ARRAY (2-3 paragraphs, written BEFORE gallery chapters):
 Using the project-level interview answers, write 2-3 paragraphs that establish:

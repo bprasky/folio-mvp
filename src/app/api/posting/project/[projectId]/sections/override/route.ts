@@ -194,7 +194,9 @@ function getFieldValue(
     return blocks.introduction?.[paragraphIndex] ?? '';
   }
   if (chapterIndex === -1) {
-    // Lead fields
+    // Lead fields. `kicker` falls back to a legacy `title` so the recorded
+    // original matches what the page actually showed — see setFieldValue.
+    if (field === 'kicker') return blocks.lead?.kicker ?? blocks.lead?.title ?? '';
     return blocks.lead?.[field] ?? '';
   }
   const chapter = blocks.galleryChapters?.[chapterIndex];
@@ -227,6 +229,14 @@ function setFieldValue(
   if (chapterIndex === -1) {
     if (!blocks.lead) blocks.lead = {};
     blocks.lead[field] = value;
+    // The headline is written to `kicker`, but several readers still resolve it
+    // as `lead.title || lead.kicker` (PostExpanded, buildStoryData). Current
+    // generations never persist `title`, so this is inert — but on any row that
+    // carries one, writing only `kicker` leaves the stale `title` winning at
+    // render and the designer's edit silently does nothing. Keep them in step.
+    if (field === 'kicker' && typeof blocks.lead.title === 'string') {
+      blocks.lead.title = value;
+    }
     return;
   }
   const chapter = blocks.galleryChapters?.[chapterIndex];

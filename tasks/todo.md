@@ -1,3 +1,65 @@
+# Headline criteria and capitalization
+
+## What was there
+
+The entire specification for the article headline was one line, inside a JSON
+shape comment:
+
+    "kicker": "A headline capturing the project's singular idea — not generic (8-15 words)"
+
+No capitalization rule anywhere — not in the prompt, not in FOLIO_TONE, and no
+normalization after. `sentenceCap` and `cleanParagraph` in the generate route
+are dead code (zero call sites), as is `SectionsSchema`. So headline case was
+whatever the model produced that run, with nothing to be consistent with.
+
+The shipped result: "A Miami Beach house that refuses to pick one mood and wear
+it all the way through" — 17 words against a stated 8-15 (unenforced; the only
+hard limit is 120 CHARACTERS, and it is 81), in the "X that refuses to Y" shape,
+which is the same family as "the kind of [noun] that [clause]" already banned for
+body prose. The banned-phrase list is framed for body copy and the headline is
+generated in the same call with no reference to it.
+
+The headline also duplicated the deck: both stated the thesis, so the deck had
+nothing left to add.
+
+## Decisions (founder)
+
+- Sentence case. Capitalize first word and proper nouns only.
+- 4-10 words.
+
+## What changed
+
+- A real HEADLINE block in the prompt: length, capitalization with an explicit
+  counter-example, the swap test for specificity, division of labor with the
+  deck, seven banned shapes, four concrete good examples.
+- `src/lib/posting/headline.ts` — `normalizeHeadline` (safe transforms only) and
+  `headlineIssues` (detection). Applied at assembly; drift is logged.
+- Override route keeps a legacy `lead.title` in step with `kicker` edits.
+
+## The call worth remembering
+
+Sentence case is NOT auto-enforced, deliberately. Lowercasing a Title Case
+headline requires knowing "House" is a common noun while "Miami Beach" is a
+place, and every heuristic for that (lowercase if the body uses it lowercase;
+preserve capitalized bigrams) breaks on exactly the ambiguous words. "Miami
+beach" on a published page is worse than the Title Case it replaced. Since the
+designer now edits the headline in place in the preview, a flagged headline
+costs seconds; a mangled proper noun costs a correction on a live page.
+
+Same posture as LLM_QUOTE_UNVERIFIED: surface it, don't paper over it.
+
+`looksTitleCased` is a heuristic, not a gate — a genuinely proper-noun-heavy
+headline ("Inside Diano Matto's Miami Beach house") trips it. That is asserted
+in check-headline.ts so it stays known, and costs one log line.
+
+## Not done
+
+Regeneration is required to see a new headline; the existing draft keeps its
+current one until then. The banned-shape list is regex over known tics — it
+catches the shapes we have seen, not novelty.
+
+---
+
 # Consolidate the Edit/Preview toggle into the preview
 
 ## Why

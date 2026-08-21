@@ -29,6 +29,7 @@
     "audit:quotes": "tsx scripts/audit-article-quotes.ts",
     "check:quote-audit": "tsx scripts/check-quote-audit.ts",
     "check:story-editing": "tsx scripts/check-story-editing.ts",
+    "check:headline": "tsx scripts/check-headline.ts",
     "create:vendor": "node scripts/create-vendor.mjs",
     "create:vendor:rove": "cross-env VENDOR_NAME=\"Rove Concepts\" VENDOR_EMAIL=\"rove@example.com\" node scripts/create-vendor.mjs",
     "create:test-product": "node scripts/create-test-product.mjs",
