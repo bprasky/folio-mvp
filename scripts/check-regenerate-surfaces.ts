@@ -1,0 +1,106 @@
+/**
+ * Guards the three "regenerate / choose again" surfaces: section body, headline,
+ * and pull quote. They look alike to a designer and are governed very
+ * differently, and each of those differences is load-bearing.
+ *
+ *   SECTION BODY  — rewritten by a model, so it must pass the same gates final
+ *                   prose passes anywhere else.
+ *   HEADLINE      — the model's sentence. Regenerated as a BATCH that is filtered
+ *                   by house style, and the designer may also type their own.
+ *   PULL QUOTE    — the designer's own sentence. Selected, never written.
+ *
+ * Run: npm run check:regenerate-surfaces
+ */
+process.env.ANTHROPIC_API_KEY ||= 'sk-ant-placeholder-for-static-checks';
+
+import { execSync } from 'child_process';
+import { readFileSync } from 'fs';
+
+let failures = 0;
+const check = (name: string, cond: boolean, detail?: string) => {
+  if (cond) console.log(`  PASS  ${name}`);
+  else { failures++; console.error(`  FAIL  ${name}${detail ? `\n        ${detail}` : ''}`); }
+};
+
+const regen = readFileSync('src/app/api/posting/project/[projectId]/sections/[chapterIndex]/regenerate/route.ts', 'utf8');
+const override = readFileSync('src/app/api/posting/project/[projectId]/sections/override/route.ts', 'utf8');
+const headlineRoute = readFileSync('src/app/api/posting/project/[projectId]/sections/headline/regenerate/route.ts', 'utf8');
+const picker = readFileSync('src/components/story/PullQuotePicker.tsx', 'utf8');
+
+console.log('\n1. Regenerated prose passes the same gate as generated prose');
+// The Product Naming Gate is a commercial gate: an unsubscribed vendor's name
+// reaches a published article only through a hole. It used to live inside the
+// full generator, so section regenerate wrote around it.
+check('the naming gate has ONE implementation', (() => {
+  const hits = execSync("grep -rl 'scrubProseNaming(' --include=*.ts src/lib/ || true", { encoding: 'utf8' })
+    .split('\n').filter(Boolean).filter(f => !f.includes('scrubProse.ts'));
+  return hits.length === 1 && hits[0].includes('applyProseNamingGate.ts');
+})());
+check('section regenerate runs the gate before saving',
+  /applyProseNamingGate\(/.test(regen) && /source: 'section-regenerate'/.test(regen));
+check('it gates against EVERY product on the project, not just this section\'s',
+  /where: \{ image: \{ projectId \} \}/.test(regen));
+check('it persists the GATED blocks, never the pre-gate text',
+  /expandedBlocks: gatedBlocks as any/.test(regen) && !/expandedBlocks: blocks as any/.test(regen));
+check('and returns the gated body to the client too',
+  /body: savedBody/.test(regen));
+check('the full generator delegates to the same shared gate',
+  /applyGate\(blocks, \{/.test(readFileSync('src/lib/posting/generateEditorialDraft.ts', 'utf8')));
+
+console.log('\n2. A section with no source material is refused, not invented');
+// The prompt says a direct quote is MANDATORY. With no answers, that is an
+// instruction to fabricate one.
+check('regenerating with zero answers returns an error, not prose',
+  /code: 'NO_ANSWERS'/.test(regen));
+check('regenerating a room with no answers of its own is refused too',
+  /code: 'NO_ROOM_ANSWERS'/.test(regen));
+check('the "No interview data available." placeholder is gone',
+  !/No interview data available/.test(regen));
+
+console.log('\n3. A section draws from its OWN room');
+check('room matching is whole-word, not substring ("Entry" vs "Entryway")',
+  /namesThisRoom/.test(regen) && !/chapterTitle\.includes\(roomName\.toLowerCase\(\)\)/.test(regen));
+check('this room\'s answers are still labelled the primary quote source',
+  /PRIMARY source for quotes/.test(regen));
+check('other rooms are still passed as context only',
+  /for context only — do not repeat their content/.test(regen));
+check('the chapter\'s pull quote survives a body regeneration',
+  /pullQuote: chapter\.pullQuote/.test(regen));
+
+console.log('\n4. Pull quotes are selected, never written');
+check('the picker renders the quote as static text, not an input',
+  /<blockquote/.test(picker) && !/EditableParagraph/.test(picker));
+check('the picker only PATCHes text taken from alternatives',
+  /patch\(alternatives\[nextIndex\]\.text\)/.test(picker) && /patch\(alternatives\[0\]\.text\)/.test(picker));
+// Two endpoints wrote this one field under two contracts. The weaker one wins by
+// definition, so the weaker one is now closed.
+check('the override endpoint refuses free-text pull quote writes',
+  /code: 'PULL_QUOTE_NOT_EDITABLE'/.test(override));
+check('the dedicated endpoint still validates against alternatives',
+  /alternatives\.find\(\(a: any\) => a\.text === selectedText\)/.test(
+    readFileSync('src/app/api/posting/project/[projectId]/sections/pull-quote/route.ts', 'utf8')));
+
+console.log('\n5. Headlines are proposed in batches and filtered by house style');
+check('the endpoint writes from the SHARED criteria',
+  /HEADLINE_CRITERIA/.test(headlineRoute));
+check('every candidate is graded by the same machine check',
+  /headlineIssues\(text\)/.test(headlineRoute));
+check('candidates that fail house style are dropped, not offered',
+  /rejected\.push\(/.test(headlineRoute) && /if \(issues\.length > 0\)/.test(headlineRoute));
+check('an all-bad batch offers nothing rather than the least-bad',
+  /code: 'NO_USABLE_CANDIDATES'/.test(headlineRoute));
+check('the live headline is NOT replaced by regenerating',
+  /kickerAlternatives: kept/.test(headlineRoute) && !/kicker: kept\[0\]/.test(headlineRoute));
+check('the current headline is excluded from its own replacements',
+  /if \(currentKicker\) seen\.add\(/.test(headlineRoute));
+check('duplicates within a batch are dropped',
+  /seen\.has\(key\)/.test(headlineRoute));
+check('alternatives are declared on the schema so strict parsing keeps them',
+  /kickerAlternatives: z\.array/.test(readFileSync('src/lib/posting/schemas.ts', 'utf8')));
+check('choosing one goes through the ordinary headline edit path',
+  /edit\.save\(LEAD, 0, 'kicker', next\)/.test(readFileSync('src/components/story/HeadlinePicker.tsx', 'utf8')));
+
+console.log(failures === 0
+  ? '\nAll regenerate-surface checks passed.\n'
+  : `\n${failures} check(s) failed.\n`);
+process.exit(failures === 0 ? 0 : 1);

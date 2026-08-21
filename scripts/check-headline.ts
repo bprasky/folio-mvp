@@ -18,6 +18,7 @@
  */
 process.env.ANTHROPIC_API_KEY ||= 'sk-ant-placeholder-for-static-checks';
 
+import { execSync } from 'child_process';
 import { readFileSync } from 'fs';
 import {
   normalizeHeadline,
@@ -106,15 +107,29 @@ check('a specific headline naming a place is not caught',
 
 console.log('\n6. The prompt and the checker state the same rules');
 const draft = readFileSync('src/lib/posting/generateEditorialDraft.ts', 'utf8');
-check('the prompt carries a real headline spec, not a parenthetical',
-  /HEADLINE \(the "kicker"\)/.test(draft));
-check('the prompt states the 4-10 word bound', /4-10 words/.test(draft));
-check('the prompt states sentence case with an explicit counter-example',
-  /CAPITALIZATION: sentence case/.test(draft) && /never\s*\n"A Miami Beach House That/.test(draft));
-check('the prompt bans the shape that shipped', /refuses to \[verb\]/.test(draft));
-check('the prompt separates the headline\'s job from the deck\'s',
-  /DIVIDE THE WORK WITH THE DECK/.test(draft));
-check('the old 8-15 word instruction is gone', !/8-15 words/.test(draft));
+// The criteria live in editorialTone.ts so the generator and the regenerate
+// endpoint grade a headline by the same rules. Two copies would mean a
+// regenerated headline is judged against something other than the one it
+// replaces — which is precisely what makes a regenerate button feel random.
+const tone = readFileSync('src/lib/interview/prompts/editorialTone.ts', 'utf8');
+check('the criteria are a real spec, not a parenthetical',
+  /HEADLINE \(the "kicker"\)/.test(tone));
+check('the criteria state the 4-10 word bound', /4-10 words/.test(tone));
+check('the criteria state sentence case with an explicit counter-example',
+  /CAPITALIZATION: sentence case/.test(tone) && /never\s*\n"A Miami Beach House That/.test(tone));
+check('the criteria ban the shape that shipped', /refuses to \[verb\]/.test(tone));
+check('the criteria separate the headline\'s job from the deck\'s',
+  /DIVIDE THE WORK WITH THE DECK/.test(tone));
+check('the old 8-15 word instruction is gone', !/8-15 words/.test(draft) && !/8-15 words/.test(tone));
+check('the generator references the shared criteria instead of copying them',
+  /\$\{HEADLINE_CRITERIA\}/.test(draft) && !/HEADLINE \(the "kicker"\)/.test(draft));
+check('there is exactly one copy of the criteria in the app', (() => {
+  const hits = execSync(
+    'grep -rl \'HEADLINE (the "kicker")\' --include=*.ts src/ || true',
+    { encoding: 'utf8' },
+  ).split('\n').filter(Boolean);
+  return hits.length === 1 && hits[0].includes('editorialTone.ts');
+})());
 check('every generated headline is normalized before it is stored',
   /kicker: composedKicker/.test(draft) && /normalizeHeadline\(/.test(draft));
 check('drift is logged rather than silently rewritten',

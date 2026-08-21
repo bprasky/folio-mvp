@@ -175,25 +175,20 @@ export function QuoteTile({
           )
         )}
 
-        {/* Pull quote — for an owner this is the picker, so the quote can be
-            cycled, removed or restored from the room's verbatim alternatives
-            without leaving the article. */}
+        {/* Pull quote — for an owner this is the picker: cycle, remove, or
+            restore from the room's verbatim alternatives. Not a text field. A
+            quote is a claim about what the designer said out loud, so the only
+            way to change it is to choose a different thing they said. */}
         {editable && (
           <StoryEditRegion>
             <PullQuotePicker
               pullQuote={pullQuoteSelection ?? pullQuote}
               chapterIndex={chapterIndex!}
               projectId={edit!.projectId}
-              isEdited={edit!.isEdited(chapterIndex!, 0, "pullQuote")}
-              isEditing={edit!.isEditing(chapterIndex!, 0, "pullQuote")}
               quoteClassName={clsx(
                 "font-[var(--font-headline)] italic leading-[1.25] text-[rgba(87,75,67,0.92)]",
                 wide ? "text-[var(--type-h4)]" : "text-[var(--type-h3)]",
               )}
-              onStartEdit={() => edit!.openEditor(chapterIndex!, 0, "pullQuote")}
-              onSave={(t) => edit!.save(chapterIndex!, 0, "pullQuote", t)}
-              onCancel={() => edit!.closeEditor()}
-              onRevert={() => edit!.revert(chapterIndex!, 0, "pullQuote")}
               onUpdate={() => edit!.refresh()}
             />
           </StoryEditRegion>

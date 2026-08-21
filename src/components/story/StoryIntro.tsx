@@ -6,6 +6,7 @@
 
 import type { StoryData } from "@/lib/story/buildRoomTiles";
 import { useStoryEdit, StoryEditRegion } from "./StoryEditContext";
+import { HeadlinePicker } from "./HeadlinePicker";
 import EditableParagraph from "@/components/posting/editing/EditableParagraph";
 
 // Sentinel chapter indices used by the section-override API for article-level
@@ -65,6 +66,7 @@ export function StoryIntro({ story, compact = false }: StoryIntroProps) {
                 onCancel={() => edit.closeEditor()}
                 onRevert={() => edit.revert(LEAD, 0, "kicker")}
               />
+              <HeadlinePicker current={story.title} alternatives={story.titleAlternatives} />
             </StoryEditRegion>
           ) : (
             <h1

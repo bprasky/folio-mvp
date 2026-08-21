@@ -36,6 +36,28 @@ export async function PATCH(
       return NextResponse.json({ error: 'Invalid input' }, { status: 400 });
     }
 
+    // Pull quotes are SELECTED, never written.
+    //
+    // Every candidate is a verbatim span of the designer's own interview answer,
+    // and PATCH /sections/pull-quote enforces that by rejecting any selectedText
+    // not present in the chapter's `alternatives`. This endpoint took free text
+    // and wrote it into `pullQuote.selected.text` — the same field, no check. Two
+    // endpoints over one field under two contracts is not a guarantee, it is a
+    // back door, and the weaker one wins by definition.
+    //
+    // Editing prose is the designer's business; a pull quote is a claim about
+    // what they said out loud, which is why it is the one field here that cannot
+    // be typed into.
+    if (field === 'pullQuote') {
+      return NextResponse.json(
+        {
+          error: 'Pull quotes cannot be edited directly — they are verbatim from the interview. Use the pull quote picker to choose a different one.',
+          code: 'PULL_QUOTE_NOT_EDITABLE',
+        },
+        { status: 400 },
+      );
+    }
+
     const post = await prisma.projectPost.findUnique({
       where: { projectId },
       select: { id: true, expandedBlocks: true, sectionOverrides: true },

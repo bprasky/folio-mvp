@@ -1,3 +1,80 @@
+# Regenerate surfaces: section, headline, pull quote
+
+## What the section-regenerate button connects to
+
+`SectionFeedback` → `POST /sections/[chapterIndex]/regenerate`. The context work
+is genuinely right: it buckets answers into thisRoom/otherRoom, labels them
+"PRIMARY source for quotes" vs "context only — do not repeat", tags follow-ups
+as the richest material, fetches that chapter's product tags, preserves title /
+imageIds / pullQuote, and writes the previous body to sectionHistory for undo.
+
+Four things were wrong.
+
+1. **It bypassed the Product Naming Gate.** `resolveProductNaming` appeared in
+   exactly one file in the app — generateEditorialDraft. Section regenerate
+   wrote `chapters[i].body = newBody` straight to the DB. One button press put
+   an unsubscribed vendor's product name back into a published article, with
+   nothing downstream to catch it. A commercial gate one writer can walk around
+   is not a gate. Now extracted to `src/lib/naming/applyProseNamingGate.ts`,
+   called by both paths.
+2. **The prompt could instruct fabrication.** With no matched answers,
+   `answersText` became the literal string "No interview data available." while
+   the instructions still said "MANDATORY: Include at least 1 direct attributed
+   quote using their actual words from the interview." Now refuses (422
+   NO_ANSWERS / NO_ROOM_ANSWERS).
+3. **Room matching was a naive substring.** `chapterTitle.includes(roomName)` —
+   "Entry" matches "Entryway", in both directions, so one room's answers became
+   another's PRIMARY quote source. The hazard `check-editorial-room-matching.ts`
+   already guards in the main generator. Now whole-word.
+4. `provenance: true` selected and never read. (Left as-is; the
+   EditorialInterviewAnswer projection is maintained by syncInterviewAnswers, so
+   the route does get answers — the guard in 2 is what makes a stale projection
+   fail loudly instead of silently.)
+
+Not fixed: `fixSentenceOpeners` still doesn't run on a regenerated section, so
+it can drift into the "The [noun]…" pattern the main pipeline repairs.
+
+## Headline regeneration
+
+Built as a BATCH, not a swap. One press = ~8 candidates, filtered by
+`headlineIssues` (the same machine check the generator's headlines face), keep 6,
+store as `lead.kickerAlternatives`. The live headline is untouched until the
+designer cycles onto one. An all-bad batch offers nothing (422) rather than the
+least-bad.
+
+The reason: a button that swaps one fresh headline per press is a slot machine —
+press three can be worse than press one with no way back, which trains people not
+to touch it. That was the stated worry ("if it's more random... we will want to
+eliminate the feature") and it is a design problem, not a prompt problem.
+
+Criteria now live once, in `editorialTone.ts` as `HEADLINE_CRITERIA`, referenced
+by both the generator and the endpoint. Two copies would mean a regenerated
+headline graded by different rules than the one it replaces.
+
+## Pull quotes: selected, never written
+
+The picker built in the previous session put an `EditableParagraph` on the quote
+text, saving through `PATCH /sections/override` — which wrote arbitrary text into
+`pullQuote.selected.text` with no validation, unlike `PATCH /sections/pull-quote`
+which rejects any selectedText not in `alternatives`. Two endpoints over one
+field under two contracts; the weaker one wins by definition. Quote is now static
+text with cycle/remove only, and the override endpoint refuses `pullQuote`.
+
+**On AI ranking at cycle time: no.** The ranking already happened —
+`selectPullQuotes` calls the model once at generation, it returns candidate IDs,
+and `alternatives` is stored in rank order with scores. Cycling already walks an
+AI-ranked list. A second call per arrow press would cost money per click, add
+latency to a button, and make the same click produce different orders on
+different days — the exact unpredictability we are trying to remove.
+
+## The asymmetry worth keeping
+
+A headline is the model's sentence, so the designer may type their own.
+A pull quote is a claim about what they said out loud, so it can only be
+selected. The two controls look alike; only one has a text field.
+
+---
+
 # Headline criteria and capitalization
 
 ## What was there

@@ -6,13 +6,12 @@ import { callLLM } from "./llmClient";
 import { formatRoomName } from "@/lib/utils/formatRoomName";
 import { HOOK_OPENER_ID_PREFIX, HOOK_FOLLOWUP_ID_PREFIX } from "@/lib/interview/generateQuestions";
 import { MODELS } from '@/lib/ai/models';
-import { resolveProductNaming } from '@/lib/naming/resolveProductNaming';
-import { scrubProseNaming, type DescriptorHint } from '@/lib/naming/scrubProse';
-import { FOLIO_TONE, JSON_PROSE_QUOTING_RULE, toTypographicQuotes } from '@/lib/interview/prompts/editorialTone';
+import { FOLIO_TONE, HEADLINE_CRITERIA, JSON_PROSE_QUOTING_RULE, toTypographicQuotes } from '@/lib/interview/prompts/editorialTone';
 import { thinkingSettingsFor, thinkingParams, firstTextBlock } from '@/lib/ai/thinking';
 import { selectPullQuotes } from './selectPullQuotes';
 import { isVerbatimSpan } from './quoteCandidates';
 import { normalizeHeadline, headlineIssues } from './headline';
+import { applyProseNamingGate as applyGate } from '@/lib/naming/applyProseNamingGate';
 import {
   type AiErrorCode,
   codeFromTransport,
@@ -245,59 +244,23 @@ function buildCredits(input: GenInput): Array<{ role: string; name: string }> {
 // Errors are intentionally NOT swallowed: a gate failure must fail generation
 // (the caller surfaces a retryable error) rather than silently persist
 // un-scrubbed prose. Over-suppression is the correct error, per spec 17/20.
+/**
+ * Adapter over the shared gate. The implementation lives in
+ * @/lib/naming/applyProseNamingGate so section regenerate — which also writes
+ * final prose — runs the identical pass. See that file for why.
+ */
 async function applyProseNamingGate(
   blocks: z.infer<typeof BlocksSchema>,
   input: GenInput,
   cid: string
 ): Promise<z.infer<typeof BlocksSchema>> {
-  const productIds: string[] = (input.tags ?? [])
-    .map((t: any) => t?.product?.id ?? t?.productId)
-    .filter((id: any): id is string => typeof id === 'string');
-  if (productIds.length === 0) return blocks;
-
-  const naming = await resolveProductNaming(productIds, {
-    mode: 'prose',
+  return applyGate(blocks, {
+    productIds: (input.tags ?? []).map((t: any) => t?.product?.id ?? t?.productId),
     projectId: input.project?.id ?? null,
     postingUserId: input.designer?.id ?? null,
+    cid,
+    source: 'generate',
   });
-
-  // Descriptor hints (source 1): the model emits a brand-free descriptor per
-  // materials-ledger item in its `finish` field. Match each ledger item back to
-  // a product — by productId if the model echoed one, otherwise by exact name
-  // (the prompt requires exact product names) — and feed it as the emitted
-  // descriptor. The deterministic category+finish assembly (source 2) still
-  // applies for anything unmatched.
-  const nameToProductId = new Map<string, string>();
-  for (const n of Array.from(naming.values())) {
-    if (n.name) nameToProductId.set(n.name.trim().toLowerCase(), n.productId);
-  }
-  const hints = new Map<string, DescriptorHint>();
-  for (const item of blocks.materialsLedger?.items ?? []) {
-    const emitted = typeof item.finish === 'string' ? item.finish.trim() : '';
-    if (!emitted) continue;
-    const pid = item.productId ?? (item.name ? nameToProductId.get(item.name.trim().toLowerCase()) : undefined);
-    if (pid) hints.set(pid, { emitted });
-  }
-
-  const { blocks: scrubbed, replacements } = scrubProseNaming(blocks, naming, hints);
-  const gated = Array.from(naming.values()).filter((n) => !n.named).length;
-  console.info('[generate] product_naming_gate', {
-    cid, products: naming.size, gated, replacements,
-  });
-
-  // Re-validate as a guard. The scrub is a structure-preserving string transform,
-  // but swapping a short name for a longer descriptor can push a field past a
-  // soft length cap (e.g. lead.kicker max 120). That is not a reason to fail
-  // generation or — worse — to fall back to un-scrubbed prose, so on a validation
-  // miss we keep the scrubbed (leak-free) blocks and log rather than throw.
-  const revalidated = BlocksSchema.safeParse(scrubbed);
-  if (!revalidated.success) {
-    console.warn('[generate] product_naming_gate_revalidation', {
-      cid, issues: revalidated.error.issues.slice(0, 3),
-    });
-    return scrubbed;
-  }
-  return revalidated.data;
 }
 
 // Score a pull quote candidate using heuristics.
@@ -1370,43 +1333,7 @@ For every item, the "finish" field must be a short brand-free descriptor of the 
 
 ## Writing Instructions
 
-HEADLINE (the "kicker") — the most important line you will write:
-
-LENGTH: 4-10 words. Not a sentence with a subject and a full predicate — a headline.
-If it runs past 10 words it is a deck, not a headline. Cut it.
-
-CAPITALIZATION: sentence case. Capitalize the first word and proper nouns only —
-place names, the designer's name, brands, the studio. Everything else stays
-lowercase. Write "A Miami Beach house that changes mood room by room", never
-"A Miami Beach House That Changes Mood Room By Room". No terminal period.
-
-IT MUST BE ABOUT THIS PROJECT AND NO OTHER. The test: swap in a different house
-and different photos. If the headline still fits, it is worthless — rewrite it
-around the one thing that was true only here. A material, a constraint, a
-reversal, a decision the designer had to defend.
-
-DIVIDE THE WORK WITH THE DECK. The headline makes ONE claim or names ONE image.
-The deck then does something the headline did not: the evidence, the stakes, or
-the specifics. If the deck restates the headline in longer words, both are wasted
-— that is two chances to interest a reader spent on one idea.
-
-NEVER WRITE THESE. They are the shapes a headline falls into when it has nothing
-specific to say:
-- "A house that refuses to [verb]" / "that isn't afraid to [verb]" / "that dares
-  to [verb]" — a project described by what it declines to do
-- "Where [quality] meets [quality]" — "Where warmth meets restraint"
-- "A study in [abstract noun]" / "An exercise in [abstract noun]"
-- "Redefining [noun]" / "Reimagining [noun]" / "Rethinking [noun]"
-- "The art of [gerund]" / "A masterclass in [noun]"
-- Any headline built on "curated", "elevated", "seamless", "harmonious",
-  "timeless", "bespoke", "sanctuary", "oasis", "haven"
-- Colon constructions that announce a theme: "Coastal modern: a Miami retreat"
-
-GOOD (concrete, specific, sentence case, under 10 words):
-- "Every room argues its own case"
-- "The kitchen that started with a cracked slab"
-- "Two crews, one site, the same afternoon"
-- "The stone chose the rest of the house"
+${HEADLINE_CRITERIA}
 
 FOR THE INTRODUCTION ARRAY (2-3 paragraphs, written BEFORE gallery chapters):
 Using the project-level interview answers, write 2-3 paragraphs that establish:
