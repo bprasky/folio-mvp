@@ -84,13 +84,25 @@ console.log('\n5. Headlines are proposed in batches and filtered by house style'
 check('the endpoint writes from the SHARED criteria',
   /HEADLINE_CRITERIA/.test(headlineRoute));
 check('every candidate is graded by the same machine check',
-  /headlineIssues\(text\)/.test(headlineRoute));
+  /headlineIssues\(text, names\)/.test(headlineRoute));
+// "A house Matto never had to redraw" shipped with the byline directly beneath
+// it. Enforced, not asked for — the endpoint knows who is credited.
+check('and by the credited names, so a headline cannot repeat the byline',
+  /designerName: project\?\.designer\?\.name/.test(headlineRoute)
+  && /orgName: project\?\.designerOrg\?\.name/.test(headlineRoute));
 check('candidates that fail house style are dropped, not offered',
   /rejected\.push\(/.test(headlineRoute) && /if \(issues\.length > 0\)/.test(headlineRoute));
 check('an all-bad batch offers nothing rather than the least-bad',
   /code: 'NO_USABLE_CANDIDATES'/.test(headlineRoute));
 check('the live headline is NOT replaced by regenerating',
-  /kickerAlternatives: kept/.test(headlineRoute) && !/kicker: kept\[0\]/.test(headlineRoute));
+  /kickerAlternatives: pool/.test(headlineRoute)
+  && !/kicker: kept\[0\]/.test(headlineRoute)
+  && !/blocks\.lead\.kicker =/.test(headlineRoute));
+// The stored list IS the pool the picker walks, so the headline being replaced
+// has to be in it — a pool that reorders around whichever entry is live cannot
+// be cycled past two.
+check('the batch includes the headline it would replace',
+  /const pool = currentKicker \? \[currentKicker, \.\.\.kept\] : kept/.test(headlineRoute));
 check('the current headline is excluded from its own replacements',
   /if \(currentKicker\) seen\.add\(/.test(headlineRoute));
 check('duplicates within a batch are dropped',

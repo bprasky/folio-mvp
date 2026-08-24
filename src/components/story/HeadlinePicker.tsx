@@ -35,10 +35,19 @@ export function HeadlinePicker({
 
   if (!edit) return null;
 
-  // The live headline is not always in the list — it is whatever the article
-  // currently carries, and a fresh batch never includes it. Present it as
-  // position 0 so cycling always has somewhere to return to.
-  const pool = [current, ...alternatives.filter((a) => a !== current)].filter(Boolean);
+  // The pool must be STABLE — the same list in the same order, whichever entry
+  // is currently live.
+  //
+  // It used to be rebuilt as `[current, ...others]`, which hoisted the live
+  // headline to index 0 on every render. So the counter always read "1 of N",
+  // and "next" was always pool[1] — which, after saving, was the headline you
+  // had just left. Six candidates, two of them reachable, forever.
+  //
+  // The batch now ships with the pre-batch headline as its first entry, so the
+  // stored list IS the whole pool and `current` is a member of it. A headline
+  // typed by hand after the batch is not, and is prepended so it stays
+  // reachable until the next batch replaces the list.
+  const pool = alternatives.includes(current) ? alternatives : [current, ...alternatives].filter(Boolean);
   const index = Math.max(0, pool.indexOf(current));
 
   const choose = async (next: string) => {
