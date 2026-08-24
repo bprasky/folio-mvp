@@ -31,8 +31,33 @@ export const HEADLINE_MIN_WORDS = 4;
 export const HEADLINE_MAX_WORDS = 10;
 
 export interface HeadlineIssue {
-  code: 'TOO_LONG' | 'TOO_SHORT' | 'TITLE_CASE' | 'BANNED_SHAPE' | 'TERMINAL_PUNCT';
+  code: 'TOO_LONG' | 'TOO_SHORT' | 'TITLE_CASE' | 'BANNED_SHAPE' | 'TERMINAL_PUNCT' | 'NAMES_PEOPLE';
   detail: string;
+}
+
+/**
+ * Names the headline must not use. The byline already carries them.
+ *
+ * Passed in rather than inferred, because "Matto" is only a designer's name on
+ * this project — somewhere else it is a word. Enforceable precisely because the
+ * caller knows exactly who is being credited.
+ */
+export interface HeadlineNames {
+  designerName?: string | null;
+  orgName?: string | null;
+}
+
+/** Every whole-word form of a name worth catching, surname included. */
+function nameForms(name: string | null | undefined): string[] {
+  const full = (name ?? '').trim();
+  if (!full) return [];
+  const parts = full.split(/\s+/).filter(Boolean);
+  const forms = [full];
+  // A surname alone is the usual way a headline smuggles the name in
+  // ("A house Matto never had to redraw"). One-word names are already covered.
+  if (parts.length > 1) forms.push(parts[parts.length - 1]);
+  // Studio names ending in a generic word ("BP Design") also appear shortened.
+  return forms.filter(f => f.length > 2);
 }
 
 const words = (s: string) => s.trim().split(/\s+/).filter(Boolean);
@@ -98,7 +123,7 @@ const BANNED_SHAPES: Array<{ re: RegExp; label: string }> = [
 ];
 
 /** Every way this headline departs from house style. Empty means it conforms. */
-export function headlineIssues(text: string): HeadlineIssue[] {
+export function headlineIssues(text: string, names?: HeadlineNames): HeadlineIssue[] {
   const issues: HeadlineIssue[] = [];
   const n = words(text).length;
 
@@ -115,6 +140,18 @@ export function headlineIssues(text: string): HeadlineIssue[] {
   }
   for (const { re, label } of BANNED_SHAPES) {
     if (re.test(text)) issues.push({ code: 'BANNED_SHAPE', detail: label });
+  }
+
+  // The headline is about the PROJECT. Naming the designer or the studio spends
+  // the one line that has to interest a stranger on something the byline
+  // directly beneath it already says — and on an org-credited project, naming
+  // the individual contradicts the credit outright.
+  for (const form of [...nameForms(names?.designerName), ...nameForms(names?.orgName)]) {
+    const re = new RegExp(`\\b${form.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'i');
+    if (re.test(text)) {
+      issues.push({ code: 'NAMES_PEOPLE', detail: `names "${form}" — the byline already does` });
+      break;
+    }
   }
   return issues;
 }

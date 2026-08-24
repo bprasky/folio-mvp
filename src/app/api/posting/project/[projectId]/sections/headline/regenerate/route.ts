@@ -43,8 +43,12 @@ import { normalizeForVerbatimCheck } from '@/lib/posting/quoteCandidates';
 
 const anthropic = new Anthropic();
 
-/** Asked for. More than we need, because the style filter rejects some. */
-const CANDIDATES_REQUESTED = 8;
+/**
+ * Asked for. Well over what we keep, because the filter is strict — length,
+ * sentence case, seven banned shapes, and the designer's own name — and a batch
+ * that comes back mostly rejected should still fill the pool.
+ */
+const CANDIDATES_REQUESTED = 12;
 /** Kept. Enough to cycle without turning the arrows into a chore. */
 const CANDIDATES_KEPT = 6;
 
@@ -93,8 +97,15 @@ export async function POST(
         city: true,
         regionState: true,
         designer: { select: { name: true } },
+        designerOrg: { select: { name: true } },
       },
     });
+    // Who the byline credits. The headline must not repeat it — see the
+    // NAMES_PEOPLE rule, which is enforced rather than merely asked for.
+    const names = {
+      designerName: project?.designer?.name ?? null,
+      orgName: project?.designerOrg?.name ?? null,
+    };
 
     // The headline describes the ARTICLE, so the article is the context: what it
     // opens with, which rooms it covers, and the designer's own framing line.
@@ -111,7 +122,7 @@ export async function POST(
 ## The project
 ${project?.title ? `Working title: ${project.title}` : ''}
 ${location ? `Location: ${location}` : ''}
-${project?.designer?.name ? `Designer: ${project.designer.name}` : ''}
+${names.orgName ? `Credited to: ${names.orgName}` : names.designerName ? `Credited to: ${names.designerName}` : ''} — do NOT name them in the headline
 Rooms covered: ${chapterTitles.length > 0 ? chapterTitles.join(', ') : 'unspecified'}
 
 ## How the article currently opens
@@ -193,7 +204,7 @@ Return ONLY a JSON array of strings.`;
       if (seen.has(key)) continue; // duplicate, or the headline they already have
       seen.add(key);
 
-      const issues = headlineIssues(text);
+      const issues = headlineIssues(text, names);
       if (issues.length > 0) {
         rejected.push({ text, why: issues.map((i) => `${i.code}: ${i.detail}`).join('; ') });
         continue;
@@ -222,15 +233,21 @@ Return ONLY a JSON array of strings.`;
       );
     }
 
-    // Store the batch. `kicker` is untouched — the designer's current headline
-    // stays live until they cycle onto one of these.
-    blocks.lead = { ...(blocks.lead ?? {}), kickerAlternatives: kept };
+    // Store the batch with the CURRENT headline as its first entry.
+    //
+    // The stored list is the pool the designer cycles, so the headline they
+    // already have has to be in it — otherwise the picker has to splice it in at
+    // render time, and a pool that reorders itself around whichever entry is
+    // live cannot be walked (it oscillates between two). `kicker` itself is
+    // untouched: the live headline does not change until they land on one.
+    const pool = currentKicker ? [currentKicker, ...kept] : kept;
+    blocks.lead = { ...(blocks.lead ?? {}), kickerAlternatives: pool };
     await prisma.projectPost.update({
       where: { id: post.id },
       data: { expandedBlocks: blocks as any },
     });
 
-    return NextResponse.json({ ok: true, current: currentKicker, alternatives: kept });
+    return NextResponse.json({ ok: true, current: currentKicker, alternatives: pool });
   } catch (error: any) {
     if (error?.message === 'NotFound') {
       return NextResponse.json({ error: 'Project not found' }, { status: 404 });

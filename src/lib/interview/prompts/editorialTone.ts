@@ -130,6 +130,21 @@ place names, the designer's name, brands, the studio. Everything else stays
 lowercase. Write "A Miami Beach house that changes mood room by room", never
 "A Miami Beach House That Changes Mood Room By Room". No terminal period.
 
+NEVER NAME THE DESIGNER, THE STUDIO, OR THE CLIENT. The byline sits directly
+under the headline and already says who made this. A headline that spends its
+one line on a name has said nothing about the house — and on a project credited
+to a firm, naming the individual contradicts the credit. Write about the
+building and the decisions, not the people.
+
+WRITE ABOUT SOMETHING A READER CAN SEE. The best headline here names a real
+thing in this house — a material, a room, a fixture, a constraint — or the
+decision that put it there. Abstractions are what a headline falls back on when
+it has not looked at the project.
+
+DO NOT DEFINE THE PROJECT BY WHAT DID NOT HAPPEN. "A house nobody had to
+redraw", "the renovation that never fought its plan" — an absence is not an
+image, and a reader cannot picture it. Say what IS there.
+
 IT MUST BE ABOUT THIS PROJECT AND NO OTHER. The test: swap in a different house
 and different photos. If the headline still fits, it is worthless — rewrite it
 around the one thing that was true only here. A material, a constraint, a
@@ -156,4 +171,6 @@ GOOD (concrete, specific, sentence case, under 10 words):
 - "Every room argues its own case"
 - "The kitchen that started with a cracked slab"
 - "Two crews, one site, the same afternoon"
-- "The stone chose the rest of the house"`;
+- "The stone chose the rest of the house"
+- "The slab arrived cracked and stayed"
+- "Dark in one wing, bright in the other"`;

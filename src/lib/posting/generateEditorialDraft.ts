@@ -969,7 +969,10 @@ async function repairAndBuildBlocks(
   // designer edits the headline in place in the preview, so a flagged headline
   // costs them seconds — a mis-lowercased place name costs a correction on a
   // published page. See src/lib/posting/headline.ts.
-  const kickerIssues = headlineIssues(blocks.lead.kicker);
+  const kickerIssues = headlineIssues(blocks.lead.kicker, {
+    designerName: input.designer?.name ?? null,
+    orgName: input.org?.name ?? null,
+  });
   if (kickerIssues.length > 0) {
     console.warn('[generate] headline departs from house style', {
       _cid,
