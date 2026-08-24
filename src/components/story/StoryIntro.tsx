@@ -26,6 +26,12 @@ export function StoryIntro({ story, compact = false }: StoryIntroProps) {
   const titleClass = compact
     ? "text-[var(--type-h3)] md:text-[var(--type-h2)] leading-[var(--lh-h1)] italic"
     : "text-[var(--type-stat)] md:text-[var(--type-h1)] leading-[var(--lh-h1)] italic";
+  // The deck sits under the headline: quieter than the title, more present than
+  // the byline. Not italic — the headline already is, and two italic lines in a
+  // row read as one run-on thought.
+  const deckClass = compact
+    ? "text-[var(--type-ui)] leading-[var(--lh-body)]"
+    : "text-[var(--type-h4)] leading-[var(--lh-body)]";
   const introClass = compact
     ? "text-[var(--type-meta)] leading-[1.65] whitespace-pre-line line-clamp-6" /* folio-design-system: off-scale */
     : "text-[var(--type-ui)] leading-[1.65] whitespace-pre-line"; /* folio-design-system: off-scale */
@@ -79,6 +85,32 @@ export function StoryIntro({ story, compact = false }: StoryIntroProps) {
             >
               {story.title}
             </h1>
+          )}
+
+          {/* The deck — the line under the headline that sets up the story.
+              It was generated on every article and rendered nowhere: the story
+              format never had a slot for it, and its only appearance anywhere
+              was as a fallback caption on the hero image. */}
+          {edit ? (
+            <StoryEditRegion>
+              <EditableParagraph
+                text={story.subtitle ?? ''}
+                isEdited={edit.isEdited(LEAD, 0, "deck")}
+                isEditing={edit.isEditing(LEAD, 0, "deck")}
+                placeholder="A line or two setting up the story..."
+                className={`${deckClass} text-[rgba(87,75,67,0.7)]`}
+                onStartEdit={() => edit.openEditor(LEAD, 0, "deck")}
+                onSave={(t) => edit.save(LEAD, 0, "deck", t)}
+                onCancel={() => edit.closeEditor()}
+                onRevert={() => edit.revert(LEAD, 0, "deck")}
+              />
+            </StoryEditRegion>
+          ) : (
+            story.subtitle && (
+              <p className={deckClass} style={{ color: "rgba(87, 75, 67, 0.7)" }}>
+                {story.subtitle}
+              </p>
+            )
           )}
 
           {/* Designer + room count */}

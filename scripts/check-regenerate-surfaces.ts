@@ -100,6 +100,40 @@ check('alternatives are declared on the schema so strict parsing keeps them',
 check('choosing one goes through the ordinary headline edit path',
   /edit\.save\(LEAD, 0, 'kicker', next\)/.test(readFileSync('src/components/story/HeadlinePicker.tsx', 'utf8')));
 
+console.log('\n6. An existing article can get its pull quotes without regenerating');
+// Candidates are cut from the interview by code and only RANKED by a model, so
+// they can be produced after the fact — the alternative was regenerating the
+// whole feature, which rewrites prose the designer may have already edited.
+const backfill = readFileSync('src/app/api/posting/project/[projectId]/sections/pull-quotes/backfill/route.ts', 'utf8');
+check('the backfill selects from interview answers, not from the prose',
+  /selectPullQuotes\(/.test(backfill) && /loadInterviewAnswers\(/.test(backfill));
+check('it never overwrites a quote the designer already has',
+  /if \(getSelectedPullQuoteText\(ch\.pullQuote\)\)/.test(backfill) && /skippedExisting\.push/.test(backfill));
+check('it skips photo-only gallery chapters',
+  /ch\?\.kind === 'gallery'/.test(backfill));
+check('it refuses when there are no answers rather than inventing',
+  /code: 'NO_ANSWERS'/.test(backfill));
+check('it rebuilds the top-level index the layout engine reads',
+  /syncPullQuotesFromChapters\(blocks\)/.test(backfill));
+check('a room with nothing quotable is reported, not filled',
+  /noCandidate\.push\(title\)/.test(backfill));
+
+// The empty state was `return null`, which is indistinguishable from "this
+// feature does not exist" — and it is the state every chapter of a
+// pre-room-fix article is in.
+check('the picker offers the backfill instead of rendering nothing',
+  !/^\s*return null;\s*$/m.test(picker) && /Add a pull quote from the interview/.test(picker));
+
+// Both stores, or projects interviewed through the other surface look empty.
+const loader = readFileSync('src/lib/posting/loadInterviewAnswers.ts', 'utf8');
+check('answers are read from BOTH provenance and the projection table',
+  /interview\?\.payload/.test(loader) || /provenance as any\)\?\.interview\?\.payload/.test(loader));
+check('...and the table is read too', /interview\?\.answers \?\? \[\]/.test(loader));
+check('roomId is resolved through the SAME resolver the images use',
+  /buildRoomResolver\(rooms\)/.test(loader));
+check('de-dupe is keyed on room AND text, so one sentence about two rooms survives',
+  /\$\{a\.section\.toLowerCase\(\)\}::/.test(loader));
+
 console.log(failures === 0
   ? '\nAll regenerate-surface checks passed.\n'
   : `\n${failures} check(s) failed.\n`);

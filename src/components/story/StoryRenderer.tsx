@@ -199,7 +199,10 @@ function LandscapeHero({ story, publishedAt }: { story: StoryData; publishedAt: 
     ? new Date(publishedAt).toLocaleString("en-US", { month: "long", year: "numeric" })
     : null;
   const heroRoom = story.heroImage?.room || story.roomTiles[0]?.roomLabel || null;
-  const captionText = story.heroImage?.name || story.subtitle || null;
+  // The deck used to fall through to here because it had nowhere else to go.
+  // StoryIntro renders it under the headline now, so falling back to it would
+  // print the same sentence twice whenever the hero image has no name.
+  const captionText = story.heroImage?.name || null;
   const totalRooms = story.roomCount || story.roomTiles.length || 0;
 
   // Four-row credit block: Rooms / Designer / Photography / Published.

@@ -41,6 +41,7 @@ export function PullQuotePicker({
   onUpdate,
 }: PullQuotePickerProps) {
   const [saving, setSaving] = useState(false);
+  const [notice, setNotice] = useState<string | null>(null);
 
   const isSelection = isPullQuoteSelection(pullQuote);
   const selectedText = typeof pullQuote === 'string' ? pullQuote : pullQuote?.selected?.text ?? null;
@@ -53,6 +54,28 @@ export function PullQuotePicker({
   const currentIndex = selectedText
     ? alternatives.findIndex(a => a.text === selectedText)
     : -1;
+
+  const backfill = async () => {
+    if (saving) return;
+    setSaving(true);
+    setNotice(null);
+    try {
+      const res = await fetch(`/api/posting/project/${projectId}/sections/pull-quotes/backfill`, {
+        method: 'POST',
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setNotice(data?.error ?? 'Could not find a quote for this section.');
+        return;
+      }
+      if (data?.filled > 0) onUpdate();
+      else setNotice(data?.message ?? 'Nothing quotable in the interview for this section yet.');
+    } catch {
+      setNotice('Could not find a quote for this section.');
+    } finally {
+      setSaving(false);
+    }
+  };
 
   const patch = async (nextText: string | null) => {
     if (saving) return;
@@ -133,6 +156,7 @@ export function PullQuotePicker({
             Remove
           </button>
         </div>
+        {notice && <p className="mt-1 folio-meta text-folio-text-tertiary">{notice}</p>}
       </div>
     );
   }
@@ -153,9 +177,26 @@ export function PullQuotePicker({
     );
   }
 
-  // No quote and nothing verbatim to offer. A room whose interview produced no
-  // quotable line gets no control — inventing one is the failure this avoids.
-  return null;
+  // No quote and no stored alternatives.
+  //
+  // This used to render nothing, which is indistinguishable from "this feature
+  // does not exist" — and it is the state EVERY chapter of an article generated
+  // before the room-attribution fix is in. The candidates are cut from the
+  // interview by code, so they can be produced now without regenerating the
+  // article; offer that rather than a blank space.
+  return (
+    <div className="py-2 flex flex-col gap-1">
+      <button
+        onClick={backfill}
+        disabled={saving}
+        className="folio-meta text-[var(--accent)] hover:text-folio-text-primary disabled:opacity-40 transition-colors flex items-center gap-1"
+      >
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M7 3V11M3 7H11" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/></svg>
+        {saving ? 'Looking through the interview…' : 'Add a pull quote from the interview'}
+      </button>
+      {notice && <p className="folio-meta text-folio-text-tertiary">{notice}</p>}
+    </div>
+  );
 }
 
 export default PullQuotePicker;
