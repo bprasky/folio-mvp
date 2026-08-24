@@ -93,6 +93,25 @@ check('the panel does not re-print the headline above the story',
 check('per-section regenerate survived the move',
   /SectionFeedback/.test(tile));
 
+console.log('\n6. The deck is rendered, and editable');
+// The deck (the line under the headline) was generated on every article and
+// displayed nowhere: the story format had no slot for it, and consolidating
+// editing into the story removed the panel block that used to show it. Its only
+// appearance anywhere was as a fallback caption on the hero image.
+const intro = readFileSync('src/components/story/StoryIntro.tsx', 'utf8');
+check('readers see the deck under the headline',
+  /story\.subtitle && \(/.test(intro) && /className=\{deckClass\}/.test(intro));
+check('owners can edit it in place',
+  /edit\.save\(LEAD, 0, "deck", t\)/.test(intro));
+check('it sits between the headline and the byline, where a deck goes',
+  intro.indexOf('"deck"') > intro.indexOf('"kicker"')
+  && intro.indexOf('"deck"') < intro.indexOf('Designer + room count'));
+// It had nowhere else to go before; now it does, so the fallback would print the
+// same sentence twice on any article whose hero image has no name.
+const renderer = readFileSync('src/components/story/StoryRenderer.tsx', 'utf8');
+check('the hero caption no longer falls back to the deck',
+  /const captionText = story\.heroImage\?\.name \|\| null;/.test(renderer));
+
 console.log(failures === 0
   ? '\nAll story-editing checks passed.\n'
   : `\n${failures} check(s) failed.\n`);
