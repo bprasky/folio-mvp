@@ -268,40 +268,6 @@ export default function StagingPublishPanel({
         </div>
       )}
 
-      {/* EDITORIAL CONTEXT TOGGLES */}
-      {!isPublishedStatus && (
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-3">
-          <div className="flex flex-wrap items-center gap-4 folio-meta text-folio-text-tertiary">
-            <label className="flex items-center gap-1.5 cursor-pointer select-none">
-              <input
-                type="checkbox"
-                checked={contextToggles.includeBio}
-                onChange={(e) => setContextToggle('includeBio', e.target.checked)}
-                className="w-3.5 h-3.5 rounded border-folio-border-subtle accent-[var(--accent)]"
-              />
-              <span>Include my bio</span>
-            </label>
-            <label className="flex items-center gap-1.5 cursor-pointer select-none">
-              <input
-                type="checkbox"
-                checked={contextToggles.includeProjectHistory}
-                onChange={(e) => setContextToggle('includeProjectHistory', e.target.checked)}
-                className="w-3.5 h-3.5 rounded border-folio-border-subtle accent-[var(--accent)]"
-              />
-              <span>Reference my other projects</span>
-            </label>
-          </div>
-          {generationMeta?.designerBioMissing && contextToggles.includeBio && (
-            <p className="mt-2 folio-meta text-folio-text-tertiary">
-              Your bio helps Folio write features that sound like you.{" "}
-              <a href="/settings/profile" className="text-[var(--accent)] hover:text-[var(--accent-hover)] underline">
-                Add one now
-              </a>
-            </p>
-          )}
-        </div>
-      )}
-
       {/* PRODUCT TAG STATUS — a read-out, not a tagging surface. The tagger used
           to open in a modal from here, which put the Tags step inside the
           Publish step and gave tagging two homes with two different UIs. This
@@ -510,6 +476,41 @@ export default function StagingPublishPanel({
                 To steer the writing, use the feedback control on an individual
                 section in Edit Article — it rewrites just that section.
               </p>
+
+              {/* What the rewrite is allowed to draw on. These lived on the page
+                  as a permanent checkbox row, which read as article settings but
+                  only ever affected the NEXT generation — so they sat there
+                  inert between runs and were easy to change without noticing.
+                  They belong to the run, so they are asked here, with it. */}
+              <div className="space-y-2 pt-1 border-t border-folio-border-subtle">
+                <p className="folio-meta text-folio-text-tertiary">Write it using</p>
+                <label className="flex items-center gap-2 cursor-pointer select-none">
+                  <input
+                    type="checkbox"
+                    checked={contextToggles.includeBio}
+                    onChange={(e) => setContextToggle('includeBio', e.target.checked)}
+                    className="rounded border-folio-border-subtle text-[var(--accent)] focus:ring-[var(--accent)]"
+                  />
+                  <span className="folio-meta text-folio-text-primary">My bio and design philosophy</span>
+                </label>
+                <label className="flex items-center gap-2 cursor-pointer select-none">
+                  <input
+                    type="checkbox"
+                    checked={contextToggles.includeProjectHistory}
+                    onChange={(e) => setContextToggle('includeProjectHistory', e.target.checked)}
+                    className="rounded border-folio-border-subtle text-[var(--accent)] focus:ring-[var(--accent)]"
+                  />
+                  <span className="folio-meta text-folio-text-primary">My other published projects</span>
+                </label>
+                {generationMeta?.designerBioMissing && contextToggles.includeBio && (
+                  <p className="folio-meta text-folio-text-tertiary">
+                    You have no bio yet, so this adds nothing.{' '}
+                    <a href="/settings/profile" className="text-[var(--accent)] hover:text-[var(--accent-hover)] underline">
+                      Add one
+                    </a>
+                  </p>
+                )}
+              </div>
 
               {((initialPostData?.sectionOverrides as SectionOverride[] | undefined)?.length ?? 0) > 0 && (
                 <label className="flex items-center gap-2 cursor-pointer">

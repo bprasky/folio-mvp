@@ -30,6 +30,14 @@ interface ProjectTabsProps {
    * being published, and the stepper owns navigation there instead.
    */
   inPublishingFlow?: boolean;
+  /**
+   * Whether the stepper is on screen above this. In the publishing flow it is
+   * the navigation — its Story and Publish steps are links to the same views —
+   * so rendering them here too gives the page two tab bars that say the same
+   * thing. They are dropped only when the stepper is actually there to replace
+   * them; without it these are the only way to reach either surface.
+   */
+  stepperVisible?: boolean;
 }
 
 export default function ProjectTabs({
@@ -40,6 +48,7 @@ export default function ProjectTabs({
   editorialState,
   storyTabVisible,
   inPublishingFlow = false,
+  stepperVisible = false,
 }: ProjectTabsProps) {
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -59,8 +68,11 @@ export default function ProjectTabs({
   // to a project that's still being built. (A draft existing already implies the
   // publishing flow, so this gate only makes that explicit rather than changing
   // when Publish appears.)
-  const showStory = storyTabVisible ?? editorialState === 'PUBLISHED';
+  // The stepper already owns Story and Publish in the publishing flow.
+  const ownedByStepper = inPublishingFlow && stepperVisible;
+  const showStory = !ownedByStepper && (storyTabVisible ?? editorialState === 'PUBLISHED');
   const showPublish =
+    !ownedByStepper &&
     inPublishingFlow &&
     (editorialState === 'GENERATED' ||
       editorialState === 'PUBLISHED' ||
@@ -110,6 +122,10 @@ export default function ProjectTabs({
   ];
 
   const tabs = allTabs.filter(t => t.visible);
+
+  // Nothing unique left to offer. An empty strip is still a visible rule and a
+  // block of padding, so render nothing at all.
+  if (tabs.length === 0) return null;
 
   return (
     <>

@@ -513,6 +513,7 @@ export default async function ProjectPage({
             editorialState={editorialState}
             storyTabVisible={storyTabVisible}
             inPublishingFlow={inPublishingFlow}
+            stepperVisible={!!trackerState}
           />
         )}
       </div>

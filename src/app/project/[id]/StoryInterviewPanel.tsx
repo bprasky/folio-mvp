@@ -130,6 +130,13 @@ export default function StoryInterviewPanel({
   const [saving, setSaving] = useState(false);
   const [generating, setGenerating] = useState(false);
   const [generateError, setGenerateError] = useState<string | null>(null);
+  // What the FIRST draft may draw on. These were only ever askable on the
+  // Publish tab, which meant they could not affect the draft that tab was
+  // showing — the first generation always ran with both on, and unchecking one
+  // there only mattered if you regenerated. Asked here, they apply to the run
+  // they belong to.
+  const [includeBio, setIncludeBio] = useState(true);
+  const [includeProjectHistory, setIncludeProjectHistory] = useState(true);
   // The "some rooms are shorter" confirm, and whether it has already been
   // accepted this session.
   const [showPartialConfirm, setShowPartialConfirm] = useState(false);
@@ -416,6 +423,8 @@ export default function StoryInterviewPanel({
           body: JSON.stringify({
             forceOverwriteDraft: true,
             mode: "recomposition",
+            includeBio,
+            includeProjectHistory,
             // Advisory: the server decides from its own answer counts. Sending
             // what the tab promised lets a mismatch show up in the logs.
             writeUpRoomIds,
@@ -437,7 +446,7 @@ export default function StoryInterviewPanel({
     } finally {
       setGenerating(false);
     }
-  }, [projectId, writeUpRoomIds, router]);
+  }, [projectId, writeUpRoomIds, router, includeBio, includeProjectHistory]);
 
   /**
    * Generate is one click unless something would make the draft thinner than it
@@ -512,6 +521,29 @@ export default function StoryInterviewPanel({
                 <Sparkles className="h-4 w-4" aria-hidden />
                 {generating ? "Generating draft…" : "Generate draft"}
               </button>
+            </div>
+
+            {/* What the draft may draw on, beside the button that draws on it. */}
+            <div className="mt-3 flex flex-wrap items-center gap-4 text-folio-meta text-folio-text-tertiary">
+              <span>Write it using</span>
+              <label className="flex cursor-pointer select-none items-center gap-1.5">
+                <input
+                  type="checkbox"
+                  checked={includeBio}
+                  onChange={(e) => setIncludeBio(e.target.checked)}
+                  className="h-3.5 w-3.5 rounded border-folio-border-subtle accent-[var(--accent)]"
+                />
+                <span>My bio and design philosophy</span>
+              </label>
+              <label className="flex cursor-pointer select-none items-center gap-1.5">
+                <input
+                  type="checkbox"
+                  checked={includeProjectHistory}
+                  onChange={(e) => setIncludeProjectHistory(e.target.checked)}
+                  className="h-3.5 w-3.5 rounded border-folio-border-subtle accent-[var(--accent)]"
+                />
+                <span>My other published projects</span>
+              </label>
             </div>
 
             <div className="flex items-center gap-3">

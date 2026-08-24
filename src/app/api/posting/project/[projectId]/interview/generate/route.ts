@@ -396,6 +396,14 @@ export async function POST(
           select: {
             id: true,
             name: true,
+            // The org's own bio. On an org-owned project the article is credited
+            // to the FIRM, but "Include my bio" only ever reached the individual
+            // User.bio — so a studio that wrote a full org bio had it ignored,
+            // and a principal with an empty personal bio contributed nothing at
+            // all. See the bio assembly below.
+            bioInterview: {
+              select: { fullBio: true, shortBio: true, philosophyStatement: true },
+            },
           },
         },
         images: {
@@ -915,7 +923,20 @@ export async function POST(
     let projectLocation: string | undefined;
     try {
       designerName = projectData.designer?.name || undefined;
-      designerBio = includeBio ? (projectData.designer?.bio || undefined) : undefined;
+      // Org-owned projects are credited to the firm, so the firm's bio is the
+      // relevant voice; the individual's is the fallback. Both are "my bio" from
+      // the designer's point of view — the checkbox does not distinguish, and
+      // neither should this.
+      if (includeBio) {
+        const orgBio = projectData.designerOrg?.bioInterview;
+        const orgBioText = orgBio
+          ? [orgBio.fullBio, orgBio.philosophyStatement].filter(Boolean).join('\n\n')
+            || orgBio.shortBio || undefined
+          : undefined;
+        designerBio = orgBioText || projectData.designer?.bio || undefined;
+      } else {
+        designerBio = undefined;
+      }
       projectLocation = [projectData.city, projectData.regionState].filter(Boolean).join(', ') || undefined;
     } catch (ctxErr: any) {
       console.warn('[generate] Designer context fetch failed (non-fatal):', ctxErr?.message, { _cid });
@@ -925,9 +946,16 @@ export async function POST(
     let projectHistory: string | undefined;
     if (includeProjectHistory && projectData.designerId) {
       try {
+        // Sibling projects: the firm's whole body of work when the project is
+        // org-owned, otherwise the individual's. Filtering by designerId alone
+        // made a studio's other published projects invisible to every article
+        // but the ones that one person happened to post.
+        const orgId = projectData.designerOrg?.id;
         const otherProjects = await prisma.project.findMany({
           where: {
-            designerId: projectData.designerId,
+            ...(orgId
+              ? { OR: [{ designerOrgId: orgId }, { designerId: projectData.designerId }] }
+              : { designerId: projectData.designerId }),
             id: { not: projectId },
             isPublic: true,
           },
@@ -962,9 +990,15 @@ export async function POST(
       }
     }
 
-    // Fetch Atelier fingerprint summary if available
+    // Fetch Atelier fingerprint summary if available.
+    //
+    // Gated by includeBio: this is the designer's voice and philosophy, drawn
+    // from their Folio profile, and it enters the prompt beside the bio under
+    // "Designer Voice & Philosophy". It used to ignore the checkbox entirely, so
+    // unchecking "Include my bio" still sent profile-derived voice data — the
+    // box said one thing and the prompt did another.
     let atelierSummary: string | undefined;
-    if (projectData.designerId) {
+    if (includeBio && projectData.designerId) {
       try {
         const fingerprint = await prisma.atelierFingerprint.findFirst({
           where: { designerId: projectData.designerId, ownerType: 'DESIGNER' },
