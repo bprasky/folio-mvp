@@ -105,7 +105,48 @@ check('a concrete headline is not caught by the shape filter',
 check('a specific headline naming a place is not caught',
   !codes('Two crews, one site, the same afternoon').includes('BANNED_SHAPE'));
 
-console.log('\n6. A headline never spends its one line on a name');
+console.log('\n6. A caption is not a headline');
+// Reported: "these are facts that are being recruited as titles. this is
+// supposed to be editorial." Every one of these is specific, accurate, and
+// about the actual house — and every one says what a photograph shows and then
+// stops. Nothing is at issue, nothing was decided, nobody could disagree.
+//
+// The previous criteria CAUSED this: "write about something a reader can see —
+// a material, a room, a fixture" is an instruction to inventory. One of the
+// GOOD examples ("Dark in one wing, bright in the other") was itself the
+// balanced-pair caption shape, teaching it directly.
+const CAPTIONS_BY_SHAPE = [
+  ['A moody entry gives way to a sunlit landing', 'walkthrough transition'],
+  ['One house, written in different chapters', 'about the article, not the house'],
+  ['Bold in the kitchen, soft in the primary bedroom', 'balanced pair'],
+  ['Finishes and fixtures do all the talking', 'cliché'],
+] as const;
+for (const [headline, why] of CAPTIONS_BY_SHAPE) {
+  check(`caption refused (${why})`, codes(headline).includes('BANNED_SHAPE'), headline);
+}
+// Honest boundary: these two are captions by MEANING, not by shape. No regex
+// separates them from a good headline without rejecting good ones too, so the
+// criteria carry them and the filter does not pretend to. Asserted so nobody
+// later reads the filter as complete.
+check('the semantic captions are NOT claimed by the shape filter',
+  codes('A stairway reconciles two different moods').length === 0
+  && codes('The exterior stays quiet so the rooms can argue').length === 0);
+check('...and the criteria name them explicitly instead',
+  /A stairway reconciles two different moods/.test(
+    readFileSync('src/lib/interview/prompts/editorialTone.ts', 'utf8')));
+
+// The filter must not have become so broad that good headlines die with them.
+for (const good of [
+  'The kitchen that started with a cracked slab',
+  'Two crews, one site, the same afternoon',
+  'The stone chose the rest of the house',
+  'They bought the marble before the plan',
+]) {
+  check(`still allowed: "${good}"`, headlineIssues(good).length === 0,
+    JSON.stringify(headlineIssues(good)));
+}
+
+console.log('\n7. A headline never spends its one line on a name');
 // "A house Matto never had to redraw" — shipped, and the byline directly under
 // it already said Diano Matto. On an org-credited project it is worse than
 // redundant: it contradicts the credit.
@@ -130,7 +171,7 @@ check('the batch endpoint passes the credited names to the filter',
 check('the full generator applies the same rule',
   /designerName: input\.designer\?\.name/.test(readFileSync('src/lib/posting/generateEditorialDraft.ts', 'utf8')));
 
-console.log('\n7. Cycling reaches every option, not two of them');
+console.log('\n8. Cycling reaches every option, not two of them');
 // The pool was rebuilt as [current, ...others] on every render, so the live
 // headline sat at index 0 forever: the counter always read "1 of 6" and "next"
 // was always the headline just left. Six candidates, two reachable.
@@ -143,7 +184,7 @@ check('the batch is stored WITH the headline it replaces, so current is a member
   /const pool = currentKicker \? \[currentKicker, \.\.\.kept\] : kept/.test(
     readFileSync('src/app/api/posting/project/[projectId]/sections/headline/regenerate/route.ts', 'utf8')));
 
-console.log('\n8. The prompt and the checker state the same rules');
+console.log('\n9. The prompt and the checker state the same rules');
 const draft = readFileSync('src/lib/posting/generateEditorialDraft.ts', 'utf8');
 // The criteria live in editorialTone.ts so the generator and the regenerate
 // endpoint grade a headline by the same rules. Two copies would mean a
@@ -160,10 +201,23 @@ check('the criteria separate the headline\'s job from the deck\'s',
   /DIVIDE THE WORK WITH THE DECK/.test(tone));
 check('the criteria forbid naming the designer, studio or client',
   /NEVER NAME THE DESIGNER, THE STUDIO, OR THE CLIENT/.test(tone));
-check('the criteria ask for something a reader can see',
-  /WRITE ABOUT SOMETHING A READER CAN SEE/.test(tone));
 check('the criteria refuse headlines built on an absence',
   /DO NOT DEFINE THE PROJECT BY WHAT DID NOT HAPPEN/.test(tone));
+check('the criteria give the caption test',
+  /A HEADLINE IS NOT A CAPTION/.test(tone)
+  && /could this sentence sit under a\s*\nphotograph/.test(tone));
+check('the criteria require something at stake',
+  /SOMETHING HAS TO BE AT STAKE/.test(tone));
+check('the criteria refuse the balanced pair',
+  /NEVER THE BALANCED PAIR/.test(tone));
+// The instruction that produced the inventory headlines is gone, along with the
+// GOOD example that was itself a balanced pair.
+check('the "name a thing a reader can see" instruction is gone',
+  !/WRITE ABOUT SOMETHING A READER CAN SEE/.test(tone));
+check('the balanced-pair example is no longer taught as good',
+  !/Dark in one wing, bright in the other"\n/.test(tone));
+check('every GOOD example is annotated with what is at stake in it',
+  /\(a mistake they kept\)/.test(tone) && /\(a claim, arguable\)/.test(tone));
 check('the old 8-15 word instruction is gone', !/8-15 words/.test(draft) && !/8-15 words/.test(tone));
 check('the generator references the shared criteria instead of copying them',
   /\$\{HEADLINE_CRITERIA\}/.test(draft) && !/HEADLINE \(the "kicker"\)/.test(draft));
@@ -179,7 +233,7 @@ check('every generated headline is normalized before it is stored',
 check('drift is logged rather than silently rewritten',
   /headline departs from house style/.test(draft));
 
-console.log('\n9. Editing the headline cannot be silently swallowed');
+console.log('\n10. Editing the headline cannot be silently swallowed');
 // `lead.title` is never persisted today, but readers still resolve
 // `lead.title || lead.kicker`. On any row carrying one, writing only `kicker`
 // would leave the stale title winning at render.

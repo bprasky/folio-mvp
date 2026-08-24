@@ -120,6 +120,21 @@ const BANNED_SHAPES: Array<{ re: RegExp; label: string }> = [
   { re: /\b(redefin|reimagin|rethink|reinvent)\w*\b/i, label: '"Redefining X"' },
   { re: /\bthe\s+art\s+of\s+\w+ing\b/i, label: '"The art of X-ing"' },
   { re: /\b(curated|elevated|seamless|harmonious|timeless|bespoke|sanctuary|oasis|haven)\b/i, label: 'brochure vocabulary' },
+
+  // The caption shapes. A caption is specific and accurate and still not a
+  // headline: it says what a photograph shows and stops, leaving nothing at
+  // stake. These are the constructions that give one away.
+  //
+  // "Bold in the kitchen, soft in the primary bedroom" — two things inventoried
+  // and the inventory presented as a thought.
+  { re: /\b\w+ in the \w+([\s\w]*)?,\s*\w+ in the \w+/i, label: 'balanced pair ("bold in the kitchen, soft in the bedroom") — a caption\'s shape' },
+  // "A moody entry gives way to a sunlit landing" — a walkthrough, not a claim.
+  { re: /\bgives? way to\b/i, label: '"gives way to" — describes a photo sequence' },
+  // "Finishes and fixtures do all the talking".
+  { re: /\bdo(es)? (all )?the talking\b/i, label: '"does the talking" — cliché, and says nothing about this house' },
+  // "One house, written in different chapters" — about the article, not the
+  // project. A reader does not care how the piece is organised.
+  { re: /\b(written in|told in|across) (its |different |several |many )?(chapters|parts|sections|acts)\b/i, label: 'about the article\'s own structure, not the house' },
 ];
 
 /** Every way this headline departs from house style. Empty means it conforms. */

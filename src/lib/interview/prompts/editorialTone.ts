@@ -136,10 +136,35 @@ one line on a name has said nothing about the house — and on a project credite
 to a firm, naming the individual contradicts the credit. Write about the
 building and the decisions, not the people.
 
-WRITE ABOUT SOMETHING A READER CAN SEE. The best headline here names a real
-thing in this house — a material, a room, a fixture, a constraint — or the
-decision that put it there. Abstractions are what a headline falls back on when
-it has not looked at the project.
+A HEADLINE IS NOT A CAPTION. This is the failure to guard against hardest,
+because a caption looks like good writing — it is specific, it is accurate, it
+names real things. Test every headline: could this sentence sit under a
+photograph in the piece? If it could, it is a caption. It tells the reader what
+they are about to look at. A headline tells them why it is worth looking.
+
+Captions, every one of them:
+- "A stairway reconciles two different moods"
+- "A moody entry gives way to a sunlit landing"
+- "Bold in the kitchen, soft in the primary bedroom"
+- "The exterior stays quiet so the rooms can argue"
+- "Finishes and fixtures do all the talking"
+These are facts recruited as titles. Each states a true thing about the house
+and stops. Nothing is at issue, nothing was decided, nobody could disagree.
+
+SOMETHING HAS TO BE AT STAKE. A decision that could have gone the other way. A
+constraint someone had to beat. A reversal, a cost, a risk taken. A claim a
+reasonable reader could argue with. If nothing in the headline could have gone
+differently, it is an observation, not a story — and an observation gives a
+stranger no reason to start reading.
+
+NEVER THE BALANCED PAIR. "Bold in the kitchen, soft in the bedroom." "Dark in
+one wing, bright in the other." "Moody here, sunlit there." This construction is
+a caption's native shape: it inventories two things and presents the inventory
+as a thought. A headline carries ONE idea, not a matched set.
+
+DO NOT WRITE ABOUT THE ARTICLE. "One house, written in different chapters" is
+about the piece's own structure. The reader does not care how the piece is
+organised; they care about the house.
 
 DO NOT DEFINE THE PROJECT BY WHAT DID NOT HAPPEN. "A house nobody had to
 redraw", "the renovation that never fought its plan" — an absence is not an
@@ -167,10 +192,14 @@ specific to say:
   "timeless", "bespoke", "sanctuary", "oasis", "haven"
 - Colon constructions that announce a theme: "Coastal modern: a Miami retreat"
 
-GOOD (concrete, specific, sentence case, under 10 words):
-- "Every room argues its own case"
-- "The kitchen that started with a cracked slab"
-- "Two crews, one site, the same afternoon"
-- "The stone chose the rest of the house"
-- "The slab arrived cracked and stayed"
-- "Dark in one wing, bright in the other"`;
+GOOD — each one has a turn, a cost, or a claim in it:
+- "The kitchen that started with a cracked slab"   (a mistake they kept)
+- "Two crews, one site, the same afternoon"        (a problem someone solved)
+- "The stone chose the rest of the house"          (a claim, arguable)
+- "The slab arrived cracked and stayed"            (a decision, reversible)
+- "They bought the marble before the plan"         (an order of events that risks something)
+
+Read each of those against its caption twin. "The stone chose the rest of the
+house" makes a claim about how the project was decided. "Stone repeats from the
+kitchen to the bookcase" says what a photograph shows. Same material, same
+project — only one of them is a headline.`;
