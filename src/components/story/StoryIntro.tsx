@@ -5,14 +5,7 @@
 // Compact: Single-column stack beside the hero (portrait).
 
 import type { StoryData } from "@/lib/story/buildRoomTiles";
-import { useStoryEdit, StoryEditRegion } from "./StoryEditContext";
-import { HeadlinePicker } from "./HeadlinePicker";
-import EditableParagraph from "@/components/posting/editing/EditableParagraph";
-
-// Sentinel chapter indices used by the section-override API for article-level
-// fields. See SectionOverride in @/lib/posting/editingTypes.
-const LEAD = -1;
-const INTRODUCTION = -2;
+import { LeadHeadline, LeadDeck, LeadIntro } from "./StoryLead";
 
 interface StoryIntroProps {
   story: StoryData;
@@ -20,9 +13,6 @@ interface StoryIntroProps {
 }
 
 export function StoryIntro({ story, compact = false }: StoryIntroProps) {
-  // null on the published article — every branch below falls back to plain text.
-  const edit = useStoryEdit();
-
   const titleClass = compact
     ? "text-[var(--type-h3)] md:text-[var(--type-h2)] leading-[var(--lh-h1)] italic"
     : "text-[var(--type-stat)] md:text-[var(--type-h1)] leading-[var(--lh-h1)] italic";
@@ -58,60 +48,13 @@ export function StoryIntro({ story, compact = false }: StoryIntroProps) {
             </span>
           )}
 
-          {edit ? (
-            <StoryEditRegion>
-              <EditableParagraph
-                text={story.title}
-                isEdited={edit.isEdited(LEAD, 0, "kicker")}
-                isEditing={edit.isEditing(LEAD, 0, "kicker")}
-                placeholder="Article headline..."
-                as="h2"
-                className={`${titleClass} font-[var(--font-headline)] text-[rgba(87,75,67,0.85)]`}
-                onStartEdit={() => edit.openEditor(LEAD, 0, "kicker")}
-                onSave={(t) => edit.save(LEAD, 0, "kicker", t)}
-                onCancel={() => edit.closeEditor()}
-                onRevert={() => edit.revert(LEAD, 0, "kicker")}
-              />
-              <HeadlinePicker current={story.title} alternatives={story.titleAlternatives} />
-            </StoryEditRegion>
-          ) : (
-            <h1
-              className={titleClass}
-              style={{
-                fontFamily: "var(--font-headline)",
-                fontWeight: 'var(--w-body)',
-                color: "rgba(87, 75, 67, 0.85)",
-              }}
-            >
-              {story.title}
-            </h1>
-          )}
+          <LeadHeadline
+            story={story}
+            className={`${titleClass} font-[var(--font-headline)] text-[rgba(87,75,67,0.85)]`}
+          />
 
-          {/* The deck — the line under the headline that sets up the story.
-              It was generated on every article and rendered nowhere: the story
-              format never had a slot for it, and its only appearance anywhere
-              was as a fallback caption on the hero image. */}
-          {edit ? (
-            <StoryEditRegion>
-              <EditableParagraph
-                text={story.subtitle ?? ''}
-                isEdited={edit.isEdited(LEAD, 0, "deck")}
-                isEditing={edit.isEditing(LEAD, 0, "deck")}
-                placeholder="A line or two setting up the story..."
-                className={`${deckClass} text-[rgba(87,75,67,0.7)]`}
-                onStartEdit={() => edit.openEditor(LEAD, 0, "deck")}
-                onSave={(t) => edit.save(LEAD, 0, "deck", t)}
-                onCancel={() => edit.closeEditor()}
-                onRevert={() => edit.revert(LEAD, 0, "deck")}
-              />
-            </StoryEditRegion>
-          ) : (
-            story.subtitle && (
-              <p className={deckClass} style={{ color: "rgba(87, 75, 67, 0.7)" }}>
-                {story.subtitle}
-              </p>
-            )
-          )}
+          {/* The deck — the line under the headline that sets up the story. */}
+          <LeadDeck story={story} className={`${deckClass} text-[rgba(87,75,67,0.7)]`} />
 
           {/* Designer + room count */}
           <div className="flex flex-col gap-1 mt-2">
@@ -176,37 +119,7 @@ export function StoryIntro({ story, compact = false }: StoryIntroProps) {
             )
           )}
 
-          {edit ? (
-            story.introParagraphs.length > 0 && (
-              <StoryEditRegion className="flex flex-col gap-3">
-                {story.introParagraphs.map((para, pi) => (
-                  <EditableParagraph
-                    key={pi}
-                    text={para}
-                    isEdited={edit.isEdited(INTRODUCTION, pi, "introduction")}
-                    isEditing={edit.isEditing(INTRODUCTION, pi, "introduction")}
-                    placeholder="Introduction paragraph..."
-                    className={`${introClass} text-[rgba(87,75,67,0.85)]`}
-                    onStartEdit={() => edit.openEditor(INTRODUCTION, pi, "introduction")}
-                    onSave={(t) => edit.save(INTRODUCTION, pi, "introduction", t)}
-                    onCancel={() => edit.closeEditor()}
-                    onRevert={() => edit.revert(INTRODUCTION, pi, "introduction")}
-                  />
-                ))}
-              </StoryEditRegion>
-            )
-          ) : (
-            story.introText && (
-              <p
-                className={introClass}
-                style={{
-                  color: "rgba(87, 75, 67, 0.85)"
-                }}
-              >
-                {story.introText}
-              </p>
-            )
-          )}
+          <LeadIntro story={story} className={`${introClass} text-[rgba(87,75,67,0.85)]`} />
         </div>
       </div>
     </section>

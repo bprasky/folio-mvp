@@ -93,19 +93,49 @@ check('the panel does not re-print the headline above the story',
 check('per-section regenerate survived the move',
   /SectionFeedback/.test(tile));
 
-console.log('\n6. The deck is rendered, and editable');
+console.log('\n6. The lead has ONE implementation');
+// The failure this exists for: the lead was written twice — StoryIntro for the
+// portrait hero, and LandscapeHero inline. Making it editable meant editing
+// StoryIntro, so portrait articles got editors and every landscape article — the
+// common case — kept a plain <h1> with no controls. Rooms worked, the top of the
+// article did not, and nothing failed: the second copy just rendered read-only
+// markup. A third hero variant must not be able to reintroduce that.
+const lead = readFileSync('src/components/story/StoryLead.tsx', 'utf8');
+check('the lead slots live in one module',
+  /export function LeadHeadline/.test(lead)
+  && /export function LeadDeck/.test(lead)
+  && /export function LeadIntro/.test(lead));
+check('NOTHING renders a lead field as text outside that module', (() => {
+  // A JSX child on its own line — `{story.title}` — is the lead being DISPLAYED.
+  // `alt={story.title}` on an <Image> is not, and neither is the unrelated
+  // `story` object in CollaborationStoryView, so both stay scoped out.
+  const offenders = execSync(
+    "grep -rln -E '^[[:space:]]*\\{story\\.(title|subtitle|introText)\\}[[:space:]]*$' --include=*.tsx src/components/story/ || true",
+    { encoding: 'utf8' },
+  ).split('\n').filter(Boolean).filter(f => !f.endsWith('StoryLead.tsx'));
+  return offenders.length === 0;
+})(), 'a story layout renders the lead itself instead of importing StoryLead');
+check('both hero layouts import the shared slots',
+  /LeadHeadline/.test(readFileSync('src/components/story/StoryRenderer.tsx', 'utf8'))
+  && /LeadHeadline/.test(readFileSync('src/components/story/StoryIntro.tsx', 'utf8')));
+check('the headline picker rides along with the headline, so it cannot be omitted',
+  /<HeadlinePicker/.test(lead)
+  && (execSync("grep -rl '<HeadlinePicker' --include=*.tsx src/ || true", { encoding: 'utf8' })
+      .split('\n').filter(Boolean).length === 1));
+
+console.log('\n7. The deck is rendered, and editable');
 // The deck (the line under the headline) was generated on every article and
 // displayed nowhere: the story format had no slot for it, and consolidating
 // editing into the story removed the panel block that used to show it. Its only
 // appearance anywhere was as a fallback caption on the hero image.
 const intro = readFileSync('src/components/story/StoryIntro.tsx', 'utf8');
-check('readers see the deck under the headline',
-  /story\.subtitle && \(/.test(intro) && /className=\{deckClass\}/.test(intro));
-check('owners can edit it in place',
-  /edit\.save\(LEAD, 0, "deck", t\)/.test(intro));
-check('it sits between the headline and the byline, where a deck goes',
-  intro.indexOf('"deck"') > intro.indexOf('"kicker"')
-  && intro.indexOf('"deck"') < intro.indexOf('Designer + room count'));
+check('readers see the deck', /story\.subtitle \? <p/.test(lead));
+check('owners can edit it in place', /edit\.save\(LEAD, 0, 'deck', t\)/.test(lead));
+check('it sits under the headline in BOTH layouts', (() => {
+  const renderer = readFileSync('src/components/story/StoryRenderer.tsx', 'utf8');
+  const after = (src: string) => src.indexOf('LeadDeck') > src.indexOf('LeadHeadline');
+  return after(intro) && after(renderer);
+})());
 // It had nowhere else to go before; now it does, so the fallback would print the
 // same sentence twice on any article whose hero image has no name.
 const renderer = readFileSync('src/components/story/StoryRenderer.tsx', 'utf8');
