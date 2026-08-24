@@ -5,6 +5,22 @@ import { getPostBySlug } from "@/lib/post/getPostBySlug";
 import { StoryRenderer } from "@/components/story/StoryRenderer";
 import { titleCase } from "@/lib/utils";
 
+// A published article is mutable after it is built: the designer edits its
+// headline, deck, prose and pull quotes in place, and any of that can happen
+// long after the page first rendered.
+//
+// Without these, the render lands in the Full Route Cache and is served from
+// there indefinitely — there is no revalidation window, so the only thing that
+// clears it is the next deployment. The page then looks like it "catches up
+// with the database" whenever something is deployed, which is not a schedule
+// anyone chose.
+//
+// Same three lines as /monograph/[username] and /photographer/[username], the
+// other public pages backed by data their owner keeps changing.
+export const dynamic = 'force-dynamic';
+export const dynamicParams = true;
+export const revalidate = 0;
+
 export async function generateMetadata({
   params,
 }: {
