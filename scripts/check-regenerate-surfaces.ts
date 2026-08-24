@@ -83,6 +83,39 @@ check('the dedicated endpoint still validates against alternatives',
 console.log('\n5. Headlines are proposed in batches and filtered by house style');
 check('the endpoint writes from the SHARED criteria',
   /HEADLINE_CRITERIA/.test(headlineRoute));
+
+// The endpoint used to see only the article's own introduction, hook quote and
+// current headline — prose that has ALREADY abstracted the project. With nothing
+// but abstractions to work from it recombined their vocabulary: a deck reading
+// "every room argues its own case" produced "the exterior stays quiet so the
+// rooms can argue". Arrangement in, arrangement out.
+check('the headline writer is given the INTERVIEW, not just the article',
+  /loadInterviewAnswers\(projectId\)/.test(headlineRoute));
+check('follow-ups lead, because that is where the anecdotes are',
+  /Number\(b\.isFollowUp\) - Number\(a\.isFollowUp\)/.test(headlineRoute));
+check('the answers are labelled as the source, and events are what is asked for',
+  /WAS DECIDED, WENT WRONG, WAS\s*\nNEARLY DIFFERENT, or COST SOMETHING/.test(headlineRoute));
+check('the article\'s own prose is labelled context, NOT source material',
+  /## Context, NOT source material/.test(headlineRoute)
+  && /Do not mine them for phrasing/.test(headlineRoute));
+check('inventing an event is refused rather than filled in',
+  /Never state something the\s*\ndesigner did not say happened/.test(headlineRoute));
+
+// One instruction repeated N times returns N versions of one thought. Named
+// angles make the spread structural rather than hoped for.
+check('candidates are requested one per angle, not N free-form',
+  /const ANGLES: Array<\{ key: string; brief: string \}>/.test(headlineRoute)
+  && /const CANDIDATES_REQUESTED = ANGLES\.length \* 2/.test(headlineRoute));
+check('every angle asks for something that HAPPENED',
+  /reversal/.test(headlineRoute) && /constraint/.test(headlineRoute)
+  && /accident/.test(headlineRoute) && /first-move/.test(headlineRoute));
+// Taking survivors in order would fill the pool from the first few angles —
+// six phrasings of one idea, which is the flat batch this prevents.
+check('the kept set spans angles rather than taking the first N survivors',
+  /const rank = \(i: number\) => \(i % 2\) \* ANGLES\.length \+ Math\.floor\(i \/ 2\)/.test(headlineRoute)
+  && !/if \(kept\.length >= CANDIDATES_KEPT\) break/.test(headlineRoute));
+check('how many angles actually survived is logged',
+  /anglesCovered/.test(headlineRoute));
 check('every candidate is graded by the same machine check',
   /headlineIssues\(text, names\)/.test(headlineRoute));
 // "A house Matto never had to redraw" shipped with the byline directly beneath
