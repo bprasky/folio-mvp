@@ -18,6 +18,7 @@ import {
 import { usePublishFlow } from "@/hooks/usePublishFlow";
 import { ImmersiveProjectPage } from "@/components/project/ImmersiveProjectPage";
 import { StoryEditProvider } from "@/components/story/StoryEditContext";
+import GenerationContextOptions, { useGenerationContext } from "@/components/posting/GenerationContextOptions";
 import ConfirmDialog from "@/components/ui/ConfirmDialog";
 import type { EditorialState } from "@/lib/editorial/getEditorialState";
 import type { SectionOverride, SectionHistoryEntry } from "@/lib/posting/editingTypes";
@@ -115,6 +116,7 @@ export default function StagingPublishPanel({
 
   const [checklistExpanded, setChecklistExpanded] = useState(false);
   const [showUnpublishDialog, setShowUnpublishDialog] = useState(false);
+  const contextAvailability = useGenerationContext(projectId);
   const [showRegenDialog, setShowRegenDialog] = useState(false);
   const [keepEdits, setKeepEdits] = useState(true);
 
@@ -265,40 +267,6 @@ export default function StagingPublishPanel({
             <AlertCircle className="w-4 h-4 mt-0.5 shrink-0 text-[var(--accent)]" />
             <span>This project was previously published and is now a draft. Review your changes and re-publish when ready.</span>
           </div>
-        </div>
-      )}
-
-      {/* EDITORIAL CONTEXT TOGGLES */}
-      {!isPublishedStatus && (
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-3">
-          <div className="flex flex-wrap items-center gap-4 folio-meta text-folio-text-tertiary">
-            <label className="flex items-center gap-1.5 cursor-pointer select-none">
-              <input
-                type="checkbox"
-                checked={contextToggles.includeBio}
-                onChange={(e) => setContextToggle('includeBio', e.target.checked)}
-                className="w-3.5 h-3.5 rounded border-folio-border-subtle accent-[var(--accent)]"
-              />
-              <span>Include my bio</span>
-            </label>
-            <label className="flex items-center gap-1.5 cursor-pointer select-none">
-              <input
-                type="checkbox"
-                checked={contextToggles.includeProjectHistory}
-                onChange={(e) => setContextToggle('includeProjectHistory', e.target.checked)}
-                className="w-3.5 h-3.5 rounded border-folio-border-subtle accent-[var(--accent)]"
-              />
-              <span>Reference my other projects</span>
-            </label>
-          </div>
-          {generationMeta?.designerBioMissing && contextToggles.includeBio && (
-            <p className="mt-2 folio-meta text-folio-text-tertiary">
-              Your bio helps Folio write features that sound like you.{" "}
-              <a href="/settings/profile" className="text-[var(--accent)] hover:text-[var(--accent-hover)] underline">
-                Add one now
-              </a>
-            </p>
-          )}
         </div>
       )}
 
@@ -510,6 +478,24 @@ export default function StagingPublishPanel({
                 To steer the writing, use the feedback control on an individual
                 section in Edit Article — it rewrites just that section.
               </p>
+
+              {/* What the rewrite is allowed to draw on. These lived on the page
+                  as a permanent checkbox row, which read as article settings but
+                  only ever affected the NEXT generation — so they sat there
+                  inert between runs and were easy to change without noticing.
+                  They belong to the run, so they are asked here, with it, and
+                  only when they would contribute anything. */}
+              <div className="pt-1 border-t border-folio-border-subtle">
+                <GenerationContextOptions
+                  availability={contextAvailability}
+                  value={contextToggles}
+                  onChange={(next) => {
+                    setContextToggle('includeBio', next.includeBio);
+                    setContextToggle('includeProjectHistory', next.includeProjectHistory);
+                  }}
+                  className="pt-3"
+                />
+              </div>
 
               {((initialPostData?.sectionOverrides as SectionOverride[] | undefined)?.length ?? 0) > 0 && (
                 <label className="flex items-center gap-2 cursor-pointer">

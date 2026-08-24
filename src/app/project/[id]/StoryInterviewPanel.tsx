@@ -5,6 +5,10 @@ import { useRouter } from "next/navigation";
 import { Pencil, Sparkles } from "lucide-react";
 import { InterviewModal } from "@/components/posting/interview/InterviewModal";
 import { AnswerModal } from "@/components/posting/interview/AnswerModal";
+import GenerationContextOptions, {
+  useGenerationContext,
+  type ContextChoice,
+} from "@/components/posting/GenerationContextOptions";
 
 type QA = {
   q: string;
@@ -130,6 +134,16 @@ export default function StoryInterviewPanel({
   const [saving, setSaving] = useState(false);
   const [generating, setGenerating] = useState(false);
   const [generateError, setGenerateError] = useState<string | null>(null);
+  // What the FIRST draft may draw on. These were only ever askable on the
+  // Publish tab, which meant they could not affect the draft that tab was
+  // showing — the first generation always ran with both on, and unchecking one
+  // there only mattered if you regenerated. Asked here, they apply to the run
+  // they belong to.
+  const contextAvailability = useGenerationContext(projectId);
+  const [contextChoice, setContextChoice] = useState<ContextChoice>({
+    includeBio: true,
+    includeProjectHistory: true,
+  });
   // The "some rooms are shorter" confirm, and whether it has already been
   // accepted this session.
   const [showPartialConfirm, setShowPartialConfirm] = useState(false);
@@ -416,6 +430,12 @@ export default function StoryInterviewPanel({
           body: JSON.stringify({
             forceOverwriteDraft: true,
             mode: "recomposition",
+            // Send what is actually on offer. An option that was never shown
+            // because there is nothing to include stays at its default, which
+            // the server reads as ON — and finds nothing, exactly as the absent
+            // checkbox implied.
+            includeBio: contextChoice.includeBio,
+            includeProjectHistory: contextChoice.includeProjectHistory,
             // Advisory: the server decides from its own answer counts. Sending
             // what the tab promised lets a mismatch show up in the logs.
             writeUpRoomIds,
@@ -437,7 +457,7 @@ export default function StoryInterviewPanel({
     } finally {
       setGenerating(false);
     }
-  }, [projectId, writeUpRoomIds, router]);
+  }, [projectId, writeUpRoomIds, router, contextChoice]);
 
   /**
    * Generate is one click unless something would make the draft thinner than it
@@ -513,6 +533,15 @@ export default function StoryInterviewPanel({
                 {generating ? "Generating draft…" : "Generate draft"}
               </button>
             </div>
+
+            {/* What the draft may draw on, beside the button that draws on it.
+                Renders nothing when neither would contribute anything. */}
+            <GenerationContextOptions
+              availability={contextAvailability}
+              value={contextChoice}
+              onChange={setContextChoice}
+              className="mt-3"
+            />
 
             <div className="flex items-center gap-3">
               <div

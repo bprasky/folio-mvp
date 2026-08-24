@@ -69,6 +69,15 @@ function buildTrackerState(args: {
    * decides where the project opens.
    */
   activeKey?: string;
+  /**
+   * Keep the tracker once every step is done, instead of returning null.
+   *
+   * The tracker is the publishing flow's navigation — its Story and Publish
+   * steps are the links to those surfaces, and nothing else offers them. Letting
+   * it vanish on a fully-complete project left that project with no way to reach
+   * either one.
+   */
+  keepWhenComplete?: boolean;
 }): TrackerState | null {
   const {
     timeline,
@@ -124,7 +133,7 @@ function buildTrackerState(args: {
     };
   }
 
-  if (Object.values(complete).every(Boolean)) return null;
+  if (Object.values(complete).every(Boolean) && !args.keepWhenComplete) return null;
 
   return deriveTrackerState({
     type,
@@ -401,6 +410,10 @@ export default async function ProjectPage({
   const trackerState = buildTrackerState({
     ...trackerArgs,
     activeKey: activeStepKeyForView(view, searchParams.step, trackerType),
+    // In the publishing flow the tracker IS the navigation, so it stays even
+    // when every step is complete — see ProjectTabs, which no longer offers
+    // Story and Publish as a second way in.
+    keepWhenComplete: inPublishingFlow,
   });
 
   // On the Tags step, the media view *is* the manual tagging surface (spec:

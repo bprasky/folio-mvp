@@ -10,6 +10,7 @@ import { useSearchParams } from "next/navigation";
 import { buildStoryData, type StoryData } from "@/lib/story/buildRoomTiles";
 import { StoryHero } from "./StoryHero";
 import { StoryIntro } from "./StoryIntro";
+import { LeadHeadline, LeadDeck, LeadIntro } from "./StoryLead";
 import { Mosaic } from "./Mosaic";
 import { ProductSheet } from "./ProductSheet";
 import { StoryCredits } from "./StoryCredits";
@@ -236,21 +237,33 @@ function LandscapeHero({ story, publishedAt }: { story: StoryData; publishedAt: 
           alignItems: "end",
         }}
       >
-        <h1
-          style={{
-            fontFamily: "var(--font-headline)",
-            fontStyle: "italic",
-            fontWeight: "var(--w-body)",
-            fontSize: 60, /* folio-design-system: off-scale */
-            lineHeight: 1.02, /* folio-design-system: off-scale */
-            letterSpacing: "-0.012em",
-            textWrap: "balance" as any,
-            color: "rgba(87, 75, 67, 0.92)",
-            margin: 0,
-          }}
-        >
-          {story.title}
-        </h1>
+        <div style={{ display: "flex", flexDirection: "column", gap: 12 /* folio-design-system: off-scale */ }}>
+          <LeadHeadline
+            story={story}
+            style={{
+              fontFamily: "var(--font-headline)",
+              fontStyle: "italic",
+              fontWeight: "var(--w-body)",
+              fontSize: 60, /* folio-design-system: off-scale */
+              lineHeight: 1.02, /* folio-design-system: off-scale */
+              letterSpacing: "-0.012em",
+              textWrap: "balance" as any,
+              color: "rgba(87, 75, 67, 0.92)",
+              margin: 0,
+            }}
+          />
+          <LeadDeck
+            story={story}
+            style={{
+              fontFamily: "var(--font-body)",
+              fontSize: "var(--type-h4)",
+              lineHeight: "var(--lh-body)",
+              color: "rgba(87, 75, 67, 0.7)",
+              margin: 0,
+              maxWidth: 720, /* matches --story-prose-width */
+            }}
+          />
+        </div>
 
         <div
           style={{
@@ -345,7 +358,7 @@ function LandscapeHero({ story, publishedAt }: { story: StoryData; publishedAt: 
 
       {/* Introduction — pull quote + lede paragraph below the caption row,
           same container width, sized for comfortable reading. */}
-      {(story.projectPullQuote || story.introText) && (
+      {(story.projectPullQuote || story.introText || story.introParagraphs.length > 0) && (
         <div
           style={{
             marginTop: 48, /* folio-design-system: off-scale */
@@ -396,20 +409,17 @@ function LandscapeHero({ story, publishedAt }: { story: StoryData; publishedAt: 
               </p>
             )
           )}
-          {story.introText && (
-            <p
-              className="whitespace-pre-line"
-              style={{
-                fontFamily: "var(--font-body)",
-                fontSize: "var(--type-ui)",
-                lineHeight: 1.65, /* folio-design-system: off-scale */
-                color: "rgba(87, 75, 67, 0.85)",
-                margin: 0,
-              }}
-            >
-              {story.introText}
-            </p>
-          )}
+          <LeadIntro
+            story={story}
+            className="whitespace-pre-line"
+            style={{
+              fontFamily: "var(--font-body)",
+              fontSize: "var(--type-ui)",
+              lineHeight: 1.65, /* folio-design-system: off-scale */
+              color: "rgba(87, 75, 67, 0.85)",
+              margin: 0,
+            }}
+          />
         </div>
       )}
     </section>

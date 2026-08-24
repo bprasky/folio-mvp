@@ -22,6 +22,7 @@ import { compactImages, compactProducts, frameNarrativePrompt, softModerate } fr
 import Anthropic from '@anthropic-ai/sdk';
 import { formatRoomName } from '@/lib/utils/formatRoomName';
 import { buildRoomResolver } from "@/lib/posting/resolveImageRoom";
+import { resolveDesignerBio, siblingProjectsWhere } from "@/lib/posting/generationContext";
 import { callLLM } from "@/lib/posting/llmClient";
 import { z } from "zod";
 import { LlmComposedLooseSchema, ComposedDraftSchema } from "@/lib/posting/schemas";
@@ -396,6 +397,14 @@ export async function POST(
           select: {
             id: true,
             name: true,
+            // The org's own bio. On an org-owned project the article is credited
+            // to the FIRM, but "Include my bio" only ever reached the individual
+            // User.bio — so a studio that wrote a full org bio had it ignored,
+            // and a principal with an empty personal bio contributed nothing at
+            // all. See the bio assembly below.
+            bioInterview: {
+              select: { fullBio: true, shortBio: true, philosophyStatement: true },
+            },
           },
         },
         images: {
@@ -915,7 +924,14 @@ export async function POST(
     let projectLocation: string | undefined;
     try {
       designerName = projectData.designer?.name || undefined;
-      designerBio = includeBio ? (projectData.designer?.bio || undefined) : undefined;
+      // Same rule the checkbox was offered under — see generationContext.ts.
+      // Two copies of "which bio wins" is how the offer and the run drift apart.
+      designerBio = includeBio
+        ? resolveDesignerBio({
+            orgBio: projectData.designerOrg?.bioInterview,
+            designerBio: projectData.designer?.bio,
+          })?.text
+        : undefined;
       projectLocation = [projectData.city, projectData.regionState].filter(Boolean).join(', ') || undefined;
     } catch (ctxErr: any) {
       console.warn('[generate] Designer context fetch failed (non-fatal):', ctxErr?.message, { _cid });
@@ -925,12 +941,13 @@ export async function POST(
     let projectHistory: string | undefined;
     if (includeProjectHistory && projectData.designerId) {
       try {
+        // Same rule the checkbox was offered under — see generationContext.ts.
         const otherProjects = await prisma.project.findMany({
-          where: {
+          where: siblingProjectsWhere({
+            projectId,
             designerId: projectData.designerId,
-            id: { not: projectId },
-            isPublic: true,
-          },
+            orgId: projectData.designerOrg?.id ?? null,
+          }),
           select: {
             title: true,
             city: true,
@@ -962,9 +979,15 @@ export async function POST(
       }
     }
 
-    // Fetch Atelier fingerprint summary if available
+    // Fetch Atelier fingerprint summary if available.
+    //
+    // Gated by includeBio: this is the designer's voice and philosophy, drawn
+    // from their Folio profile, and it enters the prompt beside the bio under
+    // "Designer Voice & Philosophy". It used to ignore the checkbox entirely, so
+    // unchecking "Include my bio" still sent profile-derived voice data — the
+    // box said one thing and the prompt did another.
     let atelierSummary: string | undefined;
-    if (projectData.designerId) {
+    if (includeBio && projectData.designerId) {
       try {
         const fingerprint = await prisma.atelierFingerprint.findFirst({
           where: { designerId: projectData.designerId, ownerType: 'DESIGNER' },

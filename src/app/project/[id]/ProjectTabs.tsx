@@ -59,8 +59,13 @@ export default function ProjectTabs({
   // to a project that's still being built. (A draft existing already implies the
   // publishing flow, so this gate only makes that explicit rather than changing
   // when Publish appears.)
-  const showStory = storyTabVisible ?? editorialState === 'PUBLISHED';
+  // The stepper owns Story and Publish in the publishing flow, always — it is
+  // kept on screen there even once every step is complete, precisely so this
+  // does not need a fallback.
+  const ownedByStepper = inPublishingFlow;
+  const showStory = !ownedByStepper && (storyTabVisible ?? editorialState === 'PUBLISHED');
   const showPublish =
+    !ownedByStepper &&
     inPublishingFlow &&
     (editorialState === 'GENERATED' ||
       editorialState === 'PUBLISHED' ||
@@ -110,6 +115,10 @@ export default function ProjectTabs({
   ];
 
   const tabs = allTabs.filter(t => t.visible);
+
+  // Nothing unique left to offer. An empty strip is still a visible rule and a
+  // block of padding, so render nothing at all.
+  if (tabs.length === 0) return null;
 
   return (
     <>
