@@ -99,15 +99,19 @@ check('the regenerate call still sends them',
 
 console.log('\n6. The stepper is the only navigation in the publishing flow');
 const tabs = readFileSync('src/app/project/[id]/ProjectTabs.tsx', 'utf8');
-check('Story and Publish drop out of the tab strip when the stepper is shown',
-  /const ownedByStepper = inPublishingFlow && stepperVisible/.test(tabs));
+const page = readFileSync('src/app/project/[id]/page.tsx', 'utf8');
+check('Story and Publish always drop out of the tab strip in the publishing flow',
+  /const ownedByStepper = inPublishingFlow;/.test(tabs));
 check('an empty strip renders nothing rather than an empty rule',
   /if \(tabs\.length === 0\) return null/.test(tabs));
-// Without the stepper these tabs are the only route to either surface.
-check('they come back when the stepper is absent',
-  /stepperVisible = false/.test(tabs));
-check('the page tells the strip whether the stepper is there',
-  /stepperVisible=\{!!trackerState\}/.test(readFileSync('src/app/project/[id]/page.tsx', 'utf8')));
+// The strip has no fallback path, so the stepper must never disappear under it.
+// It used to return null once every step was complete — which on a fully
+// published project would have left no route to Story or Publish at all.
+check('no fallback prop remains', !/stepperVisible/.test(tabs) && !/stepperVisible/.test(page));
+check('the tracker survives completion in the publishing flow',
+  /keepWhenComplete: inPublishingFlow/.test(page));
+check('and the early return respects that',
+  /every\(Boolean\) && !args\.keepWhenComplete/.test(page));
 
 console.log(failures === 0
   ? '\nAll generation-context checks passed.\n'
