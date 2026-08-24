@@ -107,44 +107,45 @@ check('a specific headline naming a place is not caught',
 
 console.log('\n6. A caption is not a headline');
 // Reported: "these are facts that are being recruited as titles. this is
-// supposed to be editorial." Every one of these is specific, accurate, and
-// about the actual house — and every one says what a photograph shows and then
-// stops. Nothing is at issue, nothing was decided, nobody could disagree.
+// supposed to be editorial." Every one is specific, accurate, about the real
+// house — and every one says what a photograph shows and then stops. Nothing is
+// at issue, nothing was decided, nobody could disagree.
 //
-// The previous criteria CAUSED this: "write about something a reader can see —
-// a material, a room, a fixture" is an instruction to inventory. One of the
+// The previous criteria CAUSED this. "Write about something a reader can see —
+// a material, a room, a fixture" is an instruction to inventory, and one of the
 // GOOD examples ("Dark in one wing, bright in the other") was itself the
 // balanced-pair caption shape, teaching it directly.
-const CAPTIONS_BY_SHAPE = [
+const REPORTED_CAPTIONS: Array<[string, string]> = [
+  ['A stairway reconciles two different moods', 'personified architecture'],
   ['A moody entry gives way to a sunlit landing', 'walkthrough transition'],
   ['One house, written in different chapters', 'about the article, not the house'],
   ['Bold in the kitchen, soft in the primary bedroom', 'balanced pair'],
-  ['Finishes and fixtures do all the talking', 'cliché'],
-] as const;
-for (const [headline, why] of CAPTIONS_BY_SHAPE) {
-  check(`caption refused (${why})`, codes(headline).includes('BANNED_SHAPE'), headline);
+  ['The exterior stays quiet so the rooms can argue', 'personified architecture'],
+  ['Finishes and fixtures do all the talking', 'personified architecture / cliché'],
+];
+for (const [headline, why] of REPORTED_CAPTIONS) {
+  check(`refused (${why})`, codes(headline).includes('BANNED_SHAPE'), headline);
 }
-// Honest boundary: these two are captions by MEANING, not by shape. No regex
-// separates them from a good headline without rejecting good ones too, so the
-// criteria carry them and the filter does not pretend to. Asserted so nobody
-// later reads the filter as complete.
-check('the semantic captions are NOT claimed by the shape filter',
-  codes('A stairway reconciles two different moods').length === 0
-  && codes('The exterior stays quiet so the rooms can argue').length === 0);
-check('...and the criteria name them explicitly instead',
-  /A stairway reconciles two different moods/.test(
-    readFileSync('src/lib/interview/prompts/editorialTone.ts', 'utf8')));
 
-// The filter must not have become so broad that good headlines die with them.
+// The filter must not have widened so far that headlines with an event in them
+// die alongside the captions. Each of these names something that HAPPENED.
 for (const good of [
   'The kitchen that started with a cracked slab',
   'Two crews, one site, the same afternoon',
   'The stone chose the rest of the house',
   'They bought the marble before the plan',
+  'The slab arrived cracked and stayed',
+  'The clients asked for one dark room',
 ]) {
   check(`still allowed: "${good}"`, headlineIssues(good).length === 0,
     JSON.stringify(headlineIssues(good)));
 }
+// "The stone chose the rest of the house" is personification too — and it is
+// GOOD, because choosing is a decision. The ban targets architecture performing
+// a MOOD (arguing, whispering, staying quiet), not architecture causing an
+// outcome. If that line ever starts failing, the rule has gone too wide.
+check('personification that encodes a decision survives the conceit ban',
+  headlineIssues('The stone chose the rest of the house').length === 0);
 
 console.log('\n7. A headline never spends its one line on a name');
 // "A house Matto never had to redraw" — shipped, and the byline directly under

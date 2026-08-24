@@ -135,6 +135,15 @@ const BANNED_SHAPES: Array<{ re: RegExp; label: string }> = [
   // "One house, written in different chapters" — about the article, not the
   // project. A reader does not care how the piece is organised.
   { re: /\b(written in|told in|across) (its |different |several |many )?(chapters|parts|sections|acts)\b/i, label: 'about the article\'s own structure, not the house' },
+
+  // The conceit. Rooms that argue, exteriors that stay quiet, materials that
+  // converse — personifying the architecture reads as writing rather than
+  // reporting, and it is always describing arrangement: nothing happened, nobody
+  // decided anything, the building is simply performing a mood.
+  {
+    re: /\b(rooms?|walls?|kitchens?|exteriors?|facades?|stairs?|stairways?|spaces?|finishes|fixtures|materials?|palettes?)\b[^,]{0,40}\b(argue|argues|converse|converses|whisper|whispers|shout|shouts|speak|speaks|talk|talks|breathe|breathes|behave|behaves|insist|insists|reconcile|reconciles|mediate|mediates|negotiate|negotiates|stay quiet|stays quiet|hold their tongue)\b/i,
+    label: 'personified architecture ("so the rooms can argue") — a conceit, and it describes arrangement rather than a decision',
+  },
 ];
 
 /** Every way this headline departs from house style. Empty means it conforms. */

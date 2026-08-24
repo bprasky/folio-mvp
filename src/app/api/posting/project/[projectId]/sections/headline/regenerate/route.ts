@@ -40,15 +40,35 @@ import {
   HEADLINE_MAX_WORDS,
 } from '@/lib/posting/headline';
 import { normalizeForVerbatimCheck } from '@/lib/posting/quoteCandidates';
+import { loadInterviewAnswers } from '@/lib/posting/loadInterviewAnswers';
 
 const anthropic = new Anthropic();
 
 /**
- * Asked for. Well over what we keep, because the filter is strict — length,
- * sentence case, seven banned shapes, and the designer's own name — and a batch
- * that comes back mostly rejected should still fill the pool.
+ * One headline per angle, rather than N free-form.
+ *
+ * A single instruction repeated twelve times returns twelve versions of one
+ * thought — which is why a batch could feel flat even when no individual entry
+ * was wrong. Each angle names a DIFFERENT thing to write about, so the spread is
+ * structural instead of hoped for, and the designer picks the angle that fits
+ * the project rather than the least-bad phrasing of one angle.
+ *
+ * Every one of these asks for something that HAPPENED. That is deliberate: a
+ * headline drawn from how the house is arranged ("bold in the kitchen, soft in
+ * the bedroom") is a caption, and arrangement is all the article's own prose can
+ * offer. Events live in the interview.
  */
-const CANDIDATES_REQUESTED = 12;
+const ANGLES: Array<{ key: string; brief: string }> = [
+  { key: 'reversal', brief: 'A decision that could easily have gone the other way, and did not. What was nearly chosen instead?' },
+  { key: 'constraint', brief: 'A limit someone had to beat — a budget, a schedule, a structural fact, a room that would not cooperate.' },
+  { key: 'accident', brief: 'Something that went wrong, or arrived wrong, and was kept anyway.' },
+  { key: 'client', brief: 'What the client actually asked for, in their terms, especially if it sounds unreasonable out of context.' },
+  { key: 'first-move', brief: 'The one selection that set everything after it — the material or object the rest of the house had to answer to.' },
+  { key: 'argument', brief: 'A claim about this project a reasonable designer could disagree with. Take a position.' },
+];
+
+/** Asked for. One per angle. */
+const CANDIDATES_REQUESTED = ANGLES.length * 2;
 /** Kept. Enough to cycle without turning the arrows into a chore. */
 const CANDIDATES_KEPT = 6;
 
@@ -107,6 +127,26 @@ export async function POST(
       orgName: project?.designerOrg?.name ?? null,
     };
 
+    // The interview — the events.
+    //
+    // This endpoint used to write headlines from the article's own introduction,
+    // its hook quote and its current headline. All three are prose that has
+    // ALREADY abstracted the project, so the writer had nothing to report and
+    // could only recombine the vocabulary it was handed: a deck reading "every
+    // room argues its own case" came back as the suggestion "the exterior stays
+    // quiet so the rooms can argue".
+    //
+    // Follow-up answers first — they are the ones prompted for anecdote, so they
+    // are where a decision or a reversal is actually described. This is the same
+    // correction the pull quotes needed: source from the interview, not from the
+    // prose written about it.
+    const answers = await loadInterviewAnswers(projectId);
+    const byInterest = [...answers].sort((a, b) => Number(b.isFollowUp) - Number(a.isFollowUp));
+    const answerText = byInterest
+      .slice(0, 24)
+      .map((a) => `- [${a.section}] ${toTypographicQuotes(a.answer.trim())}`)
+      .join('\n');
+
     // The headline describes the ARTICLE, so the article is the context: what it
     // opens with, which rooms it covers, and the designer's own framing line.
     const introduction: string[] = Array.isArray(blocks.introduction) ? blocks.introduction : [];
@@ -117,7 +157,13 @@ export async function POST(
       typeof blocks.hookQuote?.text === 'string' ? blocks.hookQuote.text : null;
     const location = [project?.city, project?.regionState].filter(Boolean).join(', ');
 
-    const userPrompt = `Write ${CANDIDATES_REQUESTED} different headline options for this article.
+    const userPrompt = `Write ${CANDIDATES_REQUESTED} headline options for this article — ${ANGLES.length} angles, two per angle.
+
+## What the designer told us happened
+These are their own words from the interview. This is your source material: a
+headline has to come from something in here that WAS DECIDED, WENT WRONG, WAS
+NEARLY DIFFERENT, or COST SOMETHING. Not from how the finished house looks.
+${answerText || '(no interview answers on file)'}
 
 ## The project
 ${project?.title ? `Working title: ${project.title}` : ''}
@@ -125,18 +171,24 @@ ${location ? `Location: ${location}` : ''}
 ${names.orgName ? `Credited to: ${names.orgName}` : names.designerName ? `Credited to: ${names.designerName}` : ''} — do NOT name them in the headline
 Rooms covered: ${chapterTitles.length > 0 ? chapterTitles.join(', ') : 'unspecified'}
 
-## How the article currently opens
-${introduction.length > 0 ? toTypographicQuotes(introduction.join('\n\n')) : '(no introduction written yet)'}
+## Context, NOT source material
+The article's own opening and its current headline are below so you do not repeat
+them. Do not mine them for phrasing — they describe the finished house, and a
+headline built from them will describe it too.
 
-${hookQuote ? `## The designer's own framing, in their words\n“${toTypographicQuotes(hookQuote)}”` : ''}
+${introduction.length > 0 ? `Opening: ${toTypographicQuotes(introduction.join(' '))}` : '(no introduction written yet)'}
+${hookQuote ? `\nThe designer's framing: “${toTypographicQuotes(hookQuote)}”` : ''}
+${currentKicker ? `\nCurrent headline — do NOT repeat or paraphrase: ${toTypographicQuotes(currentKicker)}` : ''}
 
-${currentKicker ? `## The current headline — do NOT repeat it, and do not paraphrase it\n${toTypographicQuotes(currentKicker)}` : ''}
+${feedback ? `## What the designer wants changed\n${toTypographicQuotes(feedback)}\n` : ''}
+## Write two for each of these angles, in this order
+${ANGLES.map((a, i) => `${i * 2 + 1}. and ${i * 2 + 2}. ${a.key.toUpperCase()} — ${a.brief}`).join('\n')}
 
-${feedback ? `## What the designer wants changed\n${toTypographicQuotes(feedback)}` : ''}
+If an angle has nothing in the interview to support it, write a weaker headline
+from a different angle rather than inventing an event. Never state something the
+designer did not say happened.
 
-Give ${CANDIDATES_REQUESTED} genuinely DIFFERENT options — different angles on the project, not one headline reworded ${CANDIDATES_REQUESTED} ways. Each must satisfy every rule above.
-
-Return ONLY a JSON array of strings.`;
+Return ONLY a JSON array of ${CANDIDATES_REQUESTED} strings, in that order.`;
 
     const modelName = MODELS.sonnet;
     const llm = await callLLM(
@@ -193,28 +245,42 @@ Return ONLY a JSON array of strings.`;
     if (currentKicker) seen.add(normalizeForVerbatimCheck(currentKicker));
 
     const rejected: Array<{ text: string; why: string }> = [];
-    const kept: string[] = [];
+    // Survivors keep the position they were asked at, because position IS the
+    // angle: entry 2i and 2i+1 are the two takes on ANGLES[i].
+    const survivors: Array<{ text: string; index: number }> = [];
 
-    for (const entry of raw) {
-      if (typeof entry !== 'string') continue;
+    raw.forEach((entry, index) => {
+      if (typeof entry !== 'string') return;
       const text = normalizeHeadline(entry);
-      if (!text) continue;
+      if (!text) return;
 
       const key = normalizeForVerbatimCheck(text);
-      if (seen.has(key)) continue; // duplicate, or the headline they already have
+      if (seen.has(key)) return; // duplicate, or the headline they already have
       seen.add(key);
 
       const issues = headlineIssues(text, names);
       if (issues.length > 0) {
         rejected.push({ text, why: issues.map((i) => `${i.code}: ${i.detail}`).join('; ') });
-        continue;
+        return;
       }
-      kept.push(text);
-      if (kept.length >= CANDIDATES_KEPT) break;
-    }
+      survivors.push({ text, index });
+    });
+
+    // Take the FIRST take on every angle before the second take on any of them.
+    //
+    // Taking survivors in order would fill the pool from the first few angles —
+    // six variations on "a decision that could have gone the other way" — which
+    // is the flat batch this restructuring exists to prevent. The designer
+    // should be choosing between kinds of headline, not phrasings of one.
+    const takeOrder = (a: { index: number }, b: { index: number }) => {
+      const rank = (i: number) => (i % 2) * ANGLES.length + Math.floor(i / 2);
+      return rank(a.index) - rank(b.index);
+    };
+    const kept = [...survivors].sort(takeOrder).slice(0, CANDIDATES_KEPT).map((s) => s.text);
 
     console.info('[headline/regenerate] candidates', {
       _cid, requested: CANDIDATES_REQUESTED, returned: raw.length, kept: kept.length, rejected: rejected.length,
+      anglesCovered: new Set(survivors.slice(0, CANDIDATES_KEPT).map(s => Math.floor(s.index / 2))).size,
     });
     if (rejected.length > 0) {
       console.warn('[headline/regenerate] rejected candidates', { _cid, rejected: rejected.slice(0, 5) });
