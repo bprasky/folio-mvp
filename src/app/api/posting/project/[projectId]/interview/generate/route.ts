@@ -22,6 +22,7 @@ import { compactImages, compactProducts, frameNarrativePrompt, softModerate } fr
 import Anthropic from '@anthropic-ai/sdk';
 import { formatRoomName } from '@/lib/utils/formatRoomName';
 import { buildRoomResolver } from "@/lib/posting/resolveImageRoom";
+import { resolveDesignerBio, siblingProjectsWhere } from "@/lib/posting/generationContext";
 import { callLLM } from "@/lib/posting/llmClient";
 import { z } from "zod";
 import { LlmComposedLooseSchema, ComposedDraftSchema } from "@/lib/posting/schemas";
@@ -923,20 +924,14 @@ export async function POST(
     let projectLocation: string | undefined;
     try {
       designerName = projectData.designer?.name || undefined;
-      // Org-owned projects are credited to the firm, so the firm's bio is the
-      // relevant voice; the individual's is the fallback. Both are "my bio" from
-      // the designer's point of view — the checkbox does not distinguish, and
-      // neither should this.
-      if (includeBio) {
-        const orgBio = projectData.designerOrg?.bioInterview;
-        const orgBioText = orgBio
-          ? [orgBio.fullBio, orgBio.philosophyStatement].filter(Boolean).join('\n\n')
-            || orgBio.shortBio || undefined
-          : undefined;
-        designerBio = orgBioText || projectData.designer?.bio || undefined;
-      } else {
-        designerBio = undefined;
-      }
+      // Same rule the checkbox was offered under — see generationContext.ts.
+      // Two copies of "which bio wins" is how the offer and the run drift apart.
+      designerBio = includeBio
+        ? resolveDesignerBio({
+            orgBio: projectData.designerOrg?.bioInterview,
+            designerBio: projectData.designer?.bio,
+          })?.text
+        : undefined;
       projectLocation = [projectData.city, projectData.regionState].filter(Boolean).join(', ') || undefined;
     } catch (ctxErr: any) {
       console.warn('[generate] Designer context fetch failed (non-fatal):', ctxErr?.message, { _cid });
@@ -946,19 +941,13 @@ export async function POST(
     let projectHistory: string | undefined;
     if (includeProjectHistory && projectData.designerId) {
       try {
-        // Sibling projects: the firm's whole body of work when the project is
-        // org-owned, otherwise the individual's. Filtering by designerId alone
-        // made a studio's other published projects invisible to every article
-        // but the ones that one person happened to post.
-        const orgId = projectData.designerOrg?.id;
+        // Same rule the checkbox was offered under — see generationContext.ts.
         const otherProjects = await prisma.project.findMany({
-          where: {
-            ...(orgId
-              ? { OR: [{ designerOrgId: orgId }, { designerId: projectData.designerId }] }
-              : { designerId: projectData.designerId }),
-            id: { not: projectId },
-            isPublic: true,
-          },
+          where: siblingProjectsWhere({
+            projectId,
+            designerId: projectData.designerId,
+            orgId: projectData.designerOrg?.id ?? null,
+          }),
           select: {
             title: true,
             city: true,

@@ -18,6 +18,7 @@ import {
 import { usePublishFlow } from "@/hooks/usePublishFlow";
 import { ImmersiveProjectPage } from "@/components/project/ImmersiveProjectPage";
 import { StoryEditProvider } from "@/components/story/StoryEditContext";
+import GenerationContextOptions, { useGenerationContext } from "@/components/posting/GenerationContextOptions";
 import ConfirmDialog from "@/components/ui/ConfirmDialog";
 import type { EditorialState } from "@/lib/editorial/getEditorialState";
 import type { SectionOverride, SectionHistoryEntry } from "@/lib/posting/editingTypes";
@@ -115,6 +116,7 @@ export default function StagingPublishPanel({
 
   const [checklistExpanded, setChecklistExpanded] = useState(false);
   const [showUnpublishDialog, setShowUnpublishDialog] = useState(false);
+  const contextAvailability = useGenerationContext(projectId);
   const [showRegenDialog, setShowRegenDialog] = useState(false);
   const [keepEdits, setKeepEdits] = useState(true);
 
@@ -481,35 +483,18 @@ export default function StagingPublishPanel({
                   as a permanent checkbox row, which read as article settings but
                   only ever affected the NEXT generation — so they sat there
                   inert between runs and were easy to change without noticing.
-                  They belong to the run, so they are asked here, with it. */}
-              <div className="space-y-2 pt-1 border-t border-folio-border-subtle">
-                <p className="folio-meta text-folio-text-tertiary">Write it using</p>
-                <label className="flex items-center gap-2 cursor-pointer select-none">
-                  <input
-                    type="checkbox"
-                    checked={contextToggles.includeBio}
-                    onChange={(e) => setContextToggle('includeBio', e.target.checked)}
-                    className="rounded border-folio-border-subtle text-[var(--accent)] focus:ring-[var(--accent)]"
-                  />
-                  <span className="folio-meta text-folio-text-primary">My bio and design philosophy</span>
-                </label>
-                <label className="flex items-center gap-2 cursor-pointer select-none">
-                  <input
-                    type="checkbox"
-                    checked={contextToggles.includeProjectHistory}
-                    onChange={(e) => setContextToggle('includeProjectHistory', e.target.checked)}
-                    className="rounded border-folio-border-subtle text-[var(--accent)] focus:ring-[var(--accent)]"
-                  />
-                  <span className="folio-meta text-folio-text-primary">My other published projects</span>
-                </label>
-                {generationMeta?.designerBioMissing && contextToggles.includeBio && (
-                  <p className="folio-meta text-folio-text-tertiary">
-                    You have no bio yet, so this adds nothing.{' '}
-                    <a href="/settings/profile" className="text-[var(--accent)] hover:text-[var(--accent-hover)] underline">
-                      Add one
-                    </a>
-                  </p>
-                )}
+                  They belong to the run, so they are asked here, with it, and
+                  only when they would contribute anything. */}
+              <div className="pt-1 border-t border-folio-border-subtle">
+                <GenerationContextOptions
+                  availability={contextAvailability}
+                  value={contextToggles}
+                  onChange={(next) => {
+                    setContextToggle('includeBio', next.includeBio);
+                    setContextToggle('includeProjectHistory', next.includeProjectHistory);
+                  }}
+                  className="pt-3"
+                />
               </div>
 
               {((initialPostData?.sectionOverrides as SectionOverride[] | undefined)?.length ?? 0) > 0 && (
