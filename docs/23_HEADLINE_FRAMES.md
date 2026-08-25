@@ -618,17 +618,18 @@ use, the move is to narrow the `EDITORIAL_BANNED_PHRASES` entry to the prose sen
 was written for and admit `echoes` in headlines only, where the two-places
 precondition already guarantees there is something behind it.
 
-### Material-class vocabulary gap — AUDIT COMPLETE, ADDITIONS AWAITING APPROVAL (B4)
+### Material-class vocabulary gap — APPLIED (B5)
 
-`MATERIAL_CLASSES` (38) audited against `naming/descriptor.ts`'s `FINISH_FAMILIES`
-(31). **Eight terms sit only on the descriptor side.** Nothing has been added;
-`MATERIAL_CLASSES` is unchanged.
+`MATERIAL_CLASSES` audited against `naming/descriptor.ts`'s `FINISH_FAMILIES` (31).
+**Eight terms sat only on the descriptor side.** Two were added in B5, taking the
+vocabulary from 38 to 40. `white oak` is rejected; the other five are correctly filed
+as descriptors.
 
 | term | material class? | verdict |
 |---|---|---|
-| `steel` | **yes** — a material, sibling of the `iron` / `zinc` / `pewter` / `bronze` already present | **propose** |
-| `terrazzo` | **yes** — a composite material, sibling of `concrete` / `terracotta` | **propose** |
-| `white oak` | **yes** — a species, narrower than the `oak` already present | **hold** — see below |
+| `steel` | **yes** — a material, sibling of the `iron` / `zinc` / `pewter` / `bronze` already present | **added** |
+| `terrazzo` | **yes** — a composite material, sibling of `concrete` / `terracotta` | **added** |
+| `white oak` | **yes** — a species, narrower than the `oak` already present | **rejected** — see below |
 | `stainless` | no — shorthand for stainless *steel*; a qualifier, not a material | reject |
 | `brushed steel` | no — a finish **of** steel | reject |
 | `matte black` | no — colour + sheen | reject |
@@ -663,9 +664,19 @@ So an addition is **not strictly additive**. Two of the five consumers can alter
 drop signals that have nothing to do with the new term. That is the real cost, and it
 applies to any addition, including the two proposed.
 
-#### Why `white oak` is held back
+#### `white oak` — REJECTED, settled (B5)
 
-Beyond the regrouping itself, there is a concrete regression path:
+Not deferred. Under first-hit-wins, admitting `white oak` is a **splitting operation
+on an existing group**, and splitting can only ever remove signals: tags leave the
+`oak` group, and any signal that depended on `oak` clearing a threshold can fall
+below it. Nothing is gained that offsets that.
+
+**Adding a class that resolves to `null` today and splitting an existing class are
+different kinds of change and must not be batched together.** The first cannot
+regroup anything; the second does nothing else. Treating them as one edit is how a
+vocabulary change quietly becomes a signal migration.
+
+The concrete regression path:
 
 1. **It can destroy a repetition signal.** A designer with white oak in three
    projects has an `oak` signal at 3/N today. Split into two white-oak and one
@@ -676,25 +687,68 @@ Beyond the regrouping itself, there is a concrete regression path:
    resolve to `white oak`, they stop matching those claims unless `white oak` is
    added to each entry — which is a separate edit to a different constant.
 
-`white oak` should be decided on its own, together with the positioning edits it
-implies. It is not a one-line vocabulary addition.
+**If species-level resolution is ever wanted, a flat list is the wrong shape for
+it.** `white oak` and `oak` are not siblings — one contains the other — and a
+first-hit-wins array cannot express that. It needs a **two-level taxonomy** (class →
+species, with the class retained for grouping and the species available for
+headlines), plus coordinated `POSITIONING_TERMS` edits so a species still matches
+every claim its class matches. That is a design change, not a vocabulary line.
 
-#### Proposed batch — TWO terms, awaiting approval
+#### Applied (B5)
 
 ```
-steel      → beside 'iron' in the metals group
-terrazzo   → beside 'concrete' in the stone/mineral group
+steel      signals.ts:28   beside 'iron' in the metals group
+terrazzo   signals.ts:31   beside 'concrete' in the stone/mineral group
 ```
 
-Placement is free of ordering constraints: neither string overlaps an existing
-class, so first-hit-wins is not in play. Grouping is for readability only.
+Placement carries no ordering constraint: neither string overlaps an existing class,
+so first-hit-wins is not in play and grouping is for readability only. Verified after
+the edit — `"White Oak Counter Stool"` still resolves to `oak`, so nothing was split.
 
-Not written. `MATERIAL_CLASSES` is unchanged pending approval.
+**`terrazzo` also joined the stone positioning claim** (`signals.ts:287`, alongside
+marble, travertine, limestone, granite, soapstone, quartz). Without it the class
+would be half-admitted: repeated terrazzo would produce a repetition signal but could
+never support a positioning claim, because positioning matches on `families[]`
+membership and nothing else. `steel` was **not** added to any positioning entry —
+none of the existing terms (warm, natural, quiet, rich, stone, texture, glossy) has a
+reading steel obviously belongs to, and inventing one is a separate editorial call.
 
-**One related edit deliberately NOT proposed:** `terrazzo` arguably belongs in the
-stone `POSITIONING_TERMS` entry (`signals.ts:287` — marble, travertine, limestone,
-granite, soapstone, quartz). That is a change to a different constant with its own
-signal consequences and is out of scope here.
+#### Churn measured — `npm run report:digest-churn`
+
+B4 predicted an addition is not strictly additive: Outlier, Singular and Evolution
+can each move signals for unrelated families. Measured before and after.
+
+| corpus | gained | lost | unrelated families moved |
+|---|---|---|---|
+| `fixtureA` (check:digest) | 0 | 0 | 0 |
+| `fixtureB` (check:digest) | 0 | 0 | 0 |
+| probe (engineered) | 4 | 1 | **1** |
+
+**Zero churn on the real fixtures — and that is a fact about the fixtures, not
+evidence the mechanism is inert.** Neither contains a steel or terrazzo product, so
+no tag changed class and no consumer could move. A report stopping there would read
+as reassurance it had not earned.
+
+So the tool carries a probe corpus engineered to make the mechanism visible. Early
+half: brass 20%, chrome 80%. Late half: brass 40%, chrome 60%, plus steel and
+terrazzo tags present in **both** runs — only the vocabulary changes whether they
+count toward the `familyShares` denominator.
+
+```
++ evo:finish:steel:rising
++ evo:finish:terrazzo:rising
++ rep:finish:steel
++ rep:finish:terrazzo
+- evo:finish:brass:rising      <-- UNRELATED FAMILY
+```
+
+Brass has nothing to do with steel or terrazzo. Its rising signal disappeared because
+the denominator grew: `8/20 = 40%` became `8/30 = 27%`, so its delta fell from +0.20
+to +0.07 — under `EVOLUTION_MIN_DELTA = 0.15`. Exactly the mechanism B4 named, now
+reproducible with one command.
+
+Expected, not a failure. Recorded so the next vocabulary change is measured rather
+than assumed, and so a missing evolution signal is not later investigated as a bug.
 
 ### The two `FINISH_FAMILIES` vocabularies — RESOLVED by rename (B3)
 

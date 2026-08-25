@@ -112,7 +112,8 @@
     "check:migration-connection": "tsx scripts/check-migration-connection.ts",
     "check:headline-frames": "tsx scripts/check-headline-frames.ts",
     "check:headline-discriminator": "tsx scripts/check-headline-discriminator.ts",
-    "report:headline-coverage": "tsx scripts/report-headline-coverage.ts"
+    "report:headline-coverage": "tsx scripts/report-headline-coverage.ts",
+    "report:digest-churn": "tsx scripts/report-digest-churn.ts"
   },
   "buildTimestamp": "2025-01-18T20:15:00Z",
   "prisma": {

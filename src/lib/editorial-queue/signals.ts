@@ -25,10 +25,10 @@ import type {
 // frame library reads this one.
 export const MATERIAL_CLASSES = [
   'brass', 'bronze', 'copper', 'nickel', 'chrome', 'pewter', 'zinc', 'iron',
-  'gold', 'silver',
+  'steel', 'gold', 'silver',
   'oak', 'walnut', 'maple', 'ash', 'teak', 'mahogany', 'pine', 'birch',
   'marble', 'travertine', 'limestone', 'granite', 'quartz', 'soapstone',
-  'terracotta', 'concrete', 'plaster',
+  'terracotta', 'concrete', 'terrazzo', 'plaster',
   'linen', 'leather', 'velvet', 'boucle', 'wool', 'rattan', 'cane', 'jute',
   'lacquer', 'ceramic', 'glass',
 ] as const;
@@ -284,7 +284,7 @@ const POSITIONING_TERMS: Array<{
   {
     term: 'stone',
     bioPatterns: /\bstone\b|\bmarble\b/i,
-    families: ['marble', 'travertine', 'limestone', 'granite', 'soapstone', 'quartz'],
+    families: ['marble', 'travertine', 'limestone', 'granite', 'soapstone', 'quartz', 'terrazzo'],
     categories: [],
   },
   {
