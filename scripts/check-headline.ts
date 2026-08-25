@@ -280,6 +280,14 @@ check('what the editor cut, and why, is logged',
 check('an all-cut batch says the options were generic, not that they were malformed',
   /editorCut > 0/.test(headlineRoute));
 
+// Stored pools outlive the rules that produced them. This is why a banned
+// headline kept being offered after the ban shipped.
+const tiles = readFileSync('src/lib/story/buildRoomTiles.ts', 'utf8');
+check('stored alternatives are re-graded on read, not trusted from write time',
+  /headlineIssues\(t, headlineNames\)\.length === 0/.test(tiles));
+check('...and against the byline names too, so a stale batch cannot name the designer',
+  /designerName: designer\?\.name/.test(tiles));
+
 console.log('\n10. Editing the headline cannot be silently swallowed');
 // `lead.title` is never persisted today, but readers still resolve
 // `lead.title || lead.kicker`. On any row carrying one, writing only `kicker`
