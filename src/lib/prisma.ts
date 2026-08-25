@@ -66,18 +66,46 @@ function describeUrlShape(raw: string): string {
   if (raw !== raw.trim()) facts.push("has leading/trailing whitespace");
   if (/[\r\n]/.test(raw)) facts.push("contains a newline");
   const trimmed = raw.trim();
-  if (/^["']|["']$/.test(trimmed)) facts.push("wrapped in quote characters");
+  // Curly quotes as well as straight ones. A value copied out of anything that
+  // renders text — a doc, a rendered web page, a chat message — arrives with
+  // \u201c and \u201d, and a check for " alone reports nothing while the value is
+  // just as broken.
+  if (/^["'\u2018\u2019\u201c\u201d]|["'\u2018\u2019\u201c\u201d]$/.test(trimmed)) {
+    facts.push("wrapped in quote characters");
+  }
 
   const scheme = trimmed.match(/^([A-Za-z][A-Za-z0-9+.-]*):\/\//);
   if (scheme) {
     facts.push(`scheme="${scheme[1]}"`);
   } else if (trimmed.includes("://")) {
-    // Something precedes the scheme — the `psql "postgresql://...` shape.
-    facts.push("contains :// but does not start with a scheme");
+    // Something precedes the scheme. Name it: the text BEFORE :// is
+    // structurally not a credential — user and password come after it — so
+    // printing it is safe, and it is the one piece that identifies the mistake.
+    // "contains :// but does not start with a scheme" fits `DATABASE_URL=...`,
+    // `psql ...`, a smart quote, and an invisible character equally well, which
+    // makes it a prompt for another round of guessing rather than an answer.
+    facts.push(`text before :// is ${describePrefix(trimmed.slice(0, trimmed.indexOf("://")))}`);
   } else {
     facts.push("no :// found — this does not look like a connection string");
   }
   return facts.join(", ");
+}
+
+/**
+ * The prefix, made visible.
+ *
+ * Escaped rather than printed raw, because the likeliest invisible causes — a
+ * zero-width space picked up from a rendered page, a stray control character —
+ * are invisible in a log too, and a diagnostic that prints them looks identical
+ * to one reporting nothing wrong. Bounded, so a value that happens to contain
+ * :// somewhere in a secret cannot dump that secret into the log.
+ */
+function describePrefix(prefix: string): string {
+  const LIMIT = 32;
+  if (prefix.length > LIMIT) return `${prefix.length} characters long`;
+  const escaped = prefix.replace(/[^\x20-\x7e]/g, (ch) =>
+    `\\u${ch.charCodeAt(0).toString(16).padStart(4, "0")}`);
+  return `"${escaped}"`;
 }
 
 export function tunePoolForServerless(raw: string | undefined): string | undefined {

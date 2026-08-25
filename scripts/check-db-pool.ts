@@ -86,7 +86,7 @@ const shapeOf = (input: string) => {
 check('a value wrapped in quotes is named as such',
   /wrapped in quote characters/.test(shapeOf(`"postgresql://u:${SECRET}@h:6543/db"`)));
 check('a psql-prefixed value is distinguished from a bad scheme',
-  /contains :\/\/ but does not start with a scheme/.test(shapeOf(`psql "postgresql://u:${SECRET}@h:6543/db"`)));
+  /text before :\/\/ is/.test(shapeOf(`psql "postgresql://u:${SECRET}@h:6543/db"`)));
 check('a value that is not a connection string at all is called out',
   /no :\/\/ found/.test(shapeOf(SECRET)));
 check('the reported length helps spot a truncated paste',
@@ -122,6 +122,29 @@ check('every genuinely malformed value produces a diagnostic', (() => {
 })());
 // A URL that parses must stay silent — a warning on every healthy boot is noise
 // that trains you to ignore the one that matters.
+// "contains :// but does not start with a scheme" fits DATABASE_URL=, psql, a
+// smart quote and an invisible character equally well — so it prompts another
+// round of guessing instead of answering. The prefix is named now.
+check('the text before :// is named, not just reported as absent',
+  /text before :\/\/ is "DATABASE_URL=postgresql"/.test(shapeOf(`DATABASE_URL=postgresql://u:${SECRET}@h:6543/db`)));
+check('a psql-tab paste is distinguishable from a pasted env line',
+  /text before :\/\/ is "psql postgresql"/.test(shapeOf(`psql postgresql://u:${SECRET}@h:6543/db`)));
+// The likeliest invisible causes are invisible in a log too, so a diagnostic
+// that printed them raw would look identical to one reporting nothing wrong.
+check('an invisible character is escaped so it is actually visible',
+  /\\u200b/.test(shapeOf(`\u200bpostgresql://u:${SECRET}@h:6543/db`)));
+// A value copied from anything that renders text arrives with curly quotes, and
+// a check for " alone reports nothing while the value is just as broken.
+check('curly quotes are caught, not only straight ones',
+  /wrapped in quote characters/.test(shapeOf(`\u201cpostgresql://u:${SECRET}@h:6543/db\u201d`)));
+// Bounded, so a secret that happens to contain :// cannot be dumped.
+// The prefix must contain a character no URI scheme allows, or `new URL` parses
+// it as a legitimate (if nonsensical) scheme and there is nothing to report.
+const LONG_PREFIX = `a b ${SECRET}${SECRET}`;
+check('an over-long prefix is measured rather than printed',
+  /text before :\/\/ is \d+ characters long/.test(shapeOf(`${LONG_PREFIX}://h/db`))
+  && !shapeOf(`${LONG_PREFIX}://h/db`).includes(SECRET));
+
 check('a valid URL produces no diagnostic at all',
   shapeOf('postgresql://u:p@h:6543/db') === '');
 
