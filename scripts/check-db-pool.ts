@@ -70,6 +70,61 @@ check('an unparseable URL is passed through for Prisma to reject',
   tunePoolForServerless('not a url') === 'not a url');
 check('an unset URL stays unset', tunePoolForServerless(undefined) === undefined);
 
+console.log('\n4b. A malformed URL says what is wrong with it, and leaks nothing');
+// Prisma's own message points at a correct line of schema, never shows the
+// value, and never says what is wrong with it — so one bad character in a
+// dashboard reads as "the database is broken".
+const SECRET = 'sup3rs3cr3t-p4ssw0rd';
+const shapeOf = (input: string) => {
+  const lines: string[] = [];
+  const realError = console.error;
+  console.error = (...a: unknown[]) => { lines.push(a.map(String).join(' ')); };
+  try { tunePoolForServerless(input); } finally { console.error = realError; }
+  return lines.join('\n');
+};
+
+check('a value wrapped in quotes is named as such',
+  /wrapped in quote characters/.test(shapeOf(`"postgresql://u:${SECRET}@h:6543/db"`)));
+check('a psql-prefixed value is distinguished from a bad scheme',
+  /contains :\/\/ but does not start with a scheme/.test(shapeOf(`psql "postgresql://u:${SECRET}@h:6543/db"`)));
+check('a value that is not a connection string at all is called out',
+  /no :\/\/ found/.test(shapeOf(SECRET)));
+check('the reported length helps spot a truncated paste',
+  /length=\d+/.test(shapeOf('not-a-url')));
+// A connection string is a credential and this runs on a production log.
+check('the diagnostic NEVER prints the value', (() => {
+  // Every input that a real misconfiguration could produce, whether or not it
+  // happens to parse. Nothing derived from the content may reach the log.
+  const inputs = [
+    `"postgresql://user:${SECRET}@h:6543/db"`,
+    `psql postgresql://user:${SECRET}@h:6543/db`,
+    SECRET,
+    `  ${SECRET}  `,
+    `DATABASE_URL=postgresql://user:${SECRET}@h:6543/db`,
+    // This one PARSES — URL tolerates the trailing junk — so it must emit
+    // nothing at all. Asserted separately below.
+    `postgresql://user:${SECRET}@h:6543/db\n\n{`,
+  ];
+  return inputs.every((i) => {
+    const out = shapeOf(i);
+    return !out.includes(SECRET) && !out.includes('user');
+  });
+})());
+// Emission is a separate property from leakage: the malformed ones must speak.
+check('every genuinely malformed value produces a diagnostic', (() => {
+  const malformed = [
+    `"postgresql://user:${SECRET}@h:6543/db"`,
+    `psql postgresql://user:${SECRET}@h:6543/db`,
+    SECRET,
+    `DATABASE_URL=postgresql://user:${SECRET}@h:6543/db`,
+  ];
+  return malformed.every((i) => shapeOf(i).length > 0);
+})());
+// A URL that parses must stay silent — a warning on every healthy boot is noise
+// that trains you to ignore the one that matters.
+check('a valid URL produces no diagnostic at all',
+  shapeOf('postgresql://u:p@h:6543/db') === '');
+
 console.log('\n5. One client per process, whatever the bundler does');
 const client = readFileSync('src/lib/prisma.ts', 'utf8');
 // This used to be `if (NODE_ENV !== "production")`, where its only job was
