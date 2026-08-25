@@ -48,15 +48,57 @@ import { PrismaClient } from "@prisma/client";
  * extra connections in a default-sized pool are not serving concurrency within
  * the instance. They are idle, and in session mode idle still means held.
  */
+/**
+ * Say what is wrong with a malformed connection string WITHOUT printing it.
+ *
+ * Structural facts only. A connection string is a credential, and this runs on a
+ * production log — so nothing derived from the value's content is emitted, not
+ * even a prefix. That rules out the obvious "log the first 20 characters", which
+ * leaks the password outright if the variable was set to a bare secret.
+ *
+ * The flags below are enough to identify every cause seen in practice, because
+ * each has a distinct signature: quotes pasted along with the value, a `psql `
+ * prefix copied from the CLI tab, a trailing newline from a text editor, or a
+ * value that is simply not a URL at all.
+ */
+function describeUrlShape(raw: string): string {
+  const facts: string[] = [`length=${raw.length}`];
+  if (raw !== raw.trim()) facts.push("has leading/trailing whitespace");
+  if (/[\r\n]/.test(raw)) facts.push("contains a newline");
+  const trimmed = raw.trim();
+  if (/^["']|["']$/.test(trimmed)) facts.push("wrapped in quote characters");
+
+  const scheme = trimmed.match(/^([A-Za-z][A-Za-z0-9+.-]*):\/\//);
+  if (scheme) {
+    facts.push(`scheme="${scheme[1]}"`);
+  } else if (trimmed.includes("://")) {
+    // Something precedes the scheme — the `psql "postgresql://...` shape.
+    facts.push("contains :// but does not start with a scheme");
+  } else {
+    facts.push("no :// found — this does not look like a connection string");
+  }
+  return facts.join(", ");
+}
+
 export function tunePoolForServerless(raw: string | undefined): string | undefined {
   if (!raw) return raw;
   let url: URL;
   try {
     url = new URL(raw);
   } catch {
-    // Not parseable as a URL — hand it to Prisma untouched and let Prisma be
-    // the one to complain. Swallowing a malformed DATABASE_URL here would turn
-    // a clear startup error into a mystery.
+    // Not parseable as a URL. Hand it to Prisma untouched — swallowing it here
+    // would be worse — but say something first, because Prisma's complaint on
+    // its own is nearly undiagnosable:
+    //
+    //   Error validating datasource `db`: the URL must start with the protocol
+    //   `postgresql://` [...] --> schema.prisma:7
+    //
+    // It points at a line of schema that is correct, never shows the value, and
+    // never says what is wrong with it. Every realistic cause — a pasted pair of
+    // quotes, a `psql ` prefix, a stray newline, the wrong variable's value — is
+    // invisible from that message, so the failure reads as "the database is
+    // broken" when it is one bad character in a dashboard.
+    console.error(`[prisma] DATABASE_URL is not a parseable URL — ${describeUrlShape(raw)}`);
     return raw;
   }
 
