@@ -109,7 +109,9 @@
     "refresh:record-cache": "tsx scripts/refresh-product-record-cache.ts",
     "refresh:record-cache:dry": "tsx scripts/refresh-product-record-cache.ts --dry-run",
     "check:db-pool": "tsx scripts/check-db-pool.ts",
-    "check:migration-connection": "tsx scripts/check-migration-connection.ts"
+    "check:migration-connection": "tsx scripts/check-migration-connection.ts",
+    "check:headline-frames": "tsx scripts/check-headline-frames.ts",
+    "check:headline-discriminator": "tsx scripts/check-headline-discriminator.ts"
   },
   "buildTimestamp": "2025-01-18T20:15:00Z",
   "prisma": {

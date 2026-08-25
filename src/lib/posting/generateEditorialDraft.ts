@@ -6,7 +6,7 @@ import { callLLM } from "./llmClient";
 import { formatRoomName } from "@/lib/utils/formatRoomName";
 import { HOOK_OPENER_ID_PREFIX, HOOK_FOLLOWUP_ID_PREFIX } from "@/lib/interview/generateQuestions";
 import { MODELS } from '@/lib/ai/models';
-import { FOLIO_TONE, HEADLINE_CRITERIA, JSON_PROSE_QUOTING_RULE, toTypographicQuotes } from '@/lib/interview/prompts/editorialTone';
+import { EDITORIAL_BANNED_PHRASES, FOLIO_TONE, HEADLINE_CRITERIA, JSON_PROSE_QUOTING_RULE, toTypographicQuotes } from '@/lib/interview/prompts/editorialTone';
 import { thinkingSettingsFor, thinkingParams, firstTextBlock } from '@/lib/ai/thinking';
 import { selectPullQuotes } from './selectPullQuotes';
 import { isVerbatimSpan } from './quoteCandidates';
@@ -42,17 +42,7 @@ The designer's interview answers are your primary source material — treat them
 
 ${FOLIO_TONE}
 
-You must AVOID:
-- The pattern of "Product X does Y because Z" repeated for each item
-- Sequential product descriptions (product → explanation → next product → explanation)
-- Generic design language ("thoughtfully curated", "deliberately chosen", "seamlessly blends", "creates a dynamic flow", "transforms the space")
-- These specific AI-default phrases: "anchors the space", "adds warmth", "adds visual weight", "adds [quality]", "creates intimacy", "creates visual interest", "creates a sense of", "embodies" (as a verb for rooms or objects), "echoing" (to describe formal relationships), "the space feels", "the room feels", "without compromising", "without competing", "[thing] while [thing]" as a repeated two-clause construction, "commitment to [abstract noun]", "testament to", "envelope of calm", "envelope of [quality]", "material continuity", "material palette", "a sense of [noun]", "the kind of [noun] that [clause]", "rather than [negative]" as praise by contrast
-- ALSO AVOID: "reads as [noun]" / "reading as [noun]", "material conversation", "architectural weight" / "visual weight" / "carries weight", "metallic thread" / "thread that runs through", "burst of [noun]", "speaks quietly" / "speaks to", "restraint as strategy", "grounding the [noun]", "completing the [noun]", any aphoristic sentence that sounds like a design manifesto (e.g. "Restraint as strategy, not limitation" — cut sentences like this)
-- Any sentence where you could swap the project name and photos and the sentence would still be accurate — if it's generic, cut it
-- Treating the article as a specification document
-- Mentioning every single tagged product — only include products that serve the narrative
-- Promotional or inflated language — be observational, not promotional
-- Do NOT use words like "harmonious," "curate," "elevate," "juxtaposition," or "seamlessly."
+${EDITORIAL_BANNED_PHRASES}
 
 ACCURACY RULES — NON-NEGOTIABLE:
 - You may ONLY reference products, materials, and vendors that appear in the provided product tag data below. Do not invent product names, vendor names, material origins, or finishes.

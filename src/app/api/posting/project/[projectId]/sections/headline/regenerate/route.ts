@@ -29,11 +29,17 @@ import { callLLM } from '@/lib/posting/llmClient';
 import { MODELS } from '@/lib/ai/models';
 import { cid as newCid } from '@/lib/utils/correlation';
 import {
+  EVALUATIVE_ADJECTIVES,
   FOLIO_TONE,
   HEADLINE_CRITERIA,
   JSON_PROSE_QUOTING_RULE,
   toTypographicQuotes,
 } from '@/lib/interview/prompts/editorialTone';
+import {
+  eligibleFrames,
+  renderFrameInstruction,
+} from '@/lib/interview/prompts/headlineFrames';
+import { resolveHeadlineSlots } from '@/lib/posting/headlineSlots';
 import {
   normalizeHeadline,
   headlineIssues,
@@ -78,6 +84,8 @@ const SYSTEM_PROMPT = `You are a senior writer for a prestigious design magazine
 ${FOLIO_TONE}
 
 ${HEADLINE_CRITERIA}
+
+${EVALUATIVE_ADJECTIVES}
 
 Return ONLY a JSON array of headline strings. No preamble, no commentary, no code fence.
 
@@ -158,6 +166,30 @@ export async function POST(
       typeof blocks.hookQuote?.text === 'string' ? blocks.hookQuote.text : null;
     const location = [project?.city, project?.regionState].filter(Boolean).join(', ');
 
+    // The frame library.
+    //
+    // Materials are structured on the row and this endpoint was passed none of
+    // them — the audit's F8. So the FIRST-MOVE angle ("the material the rest of
+    // the house had to answer to") was being asked of a writer that had never
+    // been told which materials exist, and it answered from the interview prose
+    // or from nothing.
+    //
+    // Two things change when a confirmed material exists. The verified values go
+    // into the prompt as facts, and the FIRST-MOVE angle stops being a topic and
+    // becomes a SHAPE: material as grammatical subject, designer as agent in the
+    // tail. Eligibility is decided here, in code — the model is never asked
+    // whether it has enough to write a material headline, because a model asked
+    // that says yes.
+    //
+    // This surface HAS a deck (`blocks.lead.deck`), so deck-requiring frames are
+    // eligible here. Three of the five title surfaces do not — see docs/23.
+    const { slots, materials } = await resolveHeadlineSlots(projectId);
+    const frames = eligibleFrames(slots, { hasDeck: true });
+    const materialFrame = frames.find((f) => f.id === 'material') ?? null;
+    // Position IS the angle (entry 2i and 2i+1 are ANGLES[i]), so the frame
+    // replaces an angle in place rather than adding a candidate.
+    const framedAngleIndex = materialFrame ? ANGLES.findIndex((a) => a.key === 'first-move') : -1;
+
     const userPrompt = `Write ${CANDIDATES_REQUESTED} headline options for this article — ${ANGLES.length} angles, two per angle.
 
 ## What the designer told us happened
@@ -171,7 +203,13 @@ ${project?.title ? `Working title: ${project.title}` : ''}
 ${location ? `Location: ${location}` : ''}
 ${names.orgName ? `Credited to: ${names.orgName}` : names.designerName ? `Credited to: ${names.designerName}` : ''} — do NOT name them in the headline
 Rooms covered: ${chapterTitles.length > 0 ? chapterTitles.join(', ') : 'unspecified'}
-
+${materials.length > 0 ? `
+## Materials the designer specified — VERIFIED
+Each of these was typed by the designer onto a tagged product, not inferred from a
+photograph and not read out of the interview. You may state these as fact. Do not
+add a material that is not on this list, and do not name a product or a brand.
+${materials.slice(0, 8).map((m) => `- ${m.value} (specified across ${m.imageCount} image${m.imageCount === 1 ? '' : 's'})`).join('\n')}
+` : ''}
 ## Context, NOT source material
 The article's own opening and its current headline are below so you do not repeat
 them. Do not mine them for phrasing — they describe the finished house, and a
@@ -183,8 +221,10 @@ ${currentKicker ? `\nCurrent headline — do NOT repeat or paraphrase: ${toTypog
 
 ${feedback ? `## What the designer wants changed\n${toTypographicQuotes(feedback)}\n` : ''}
 ## Write two for each of these angles, in this order
-${ANGLES.map((a, i) => `${i * 2 + 1}. and ${i * 2 + 2}. ${a.key.toUpperCase()} — ${a.brief}`).join('\n')}
-
+${ANGLES.map((a, i) => `${i * 2 + 1}. and ${i * 2 + 2}. ${a.key.toUpperCase()} — ${i === framedAngleIndex ? 'write these two to the FRAME below, not freely.' : a.brief}`).join('\n')}
+${materialFrame ? `
+${renderFrameInstruction(materialFrame, slots)}
+` : ''}
 If an angle has nothing in the interview to support it, write a weaker headline
 from a different angle rather than inventing an event. Never state something the
 designer did not say happened.
@@ -358,6 +398,17 @@ Return ONLY a JSON array of ${CANDIDATES_REQUESTED} strings, in that order.`;
         _cid, survivedRules: survivors.length, kept: kept.length,
       });
     }
+
+    // Whether a frame fired, and on what. Without this a framed batch and a free
+    // one are indistinguishable in the logs, and the only symptom of an
+    // ineligible frame is that the headlines are no better than before.
+    console.info('[headline/regenerate] frames', {
+      _cid,
+      confirmedMaterials: materials.length,
+      topMaterial: materials[0]?.value ?? null,
+      eligible: frames.map((f) => f.id),
+      framedAngle: framedAngleIndex >= 0 ? ANGLES[framedAngleIndex].key : null,
+    });
 
     console.info('[headline/regenerate] candidates', {
       _cid, requested: CANDIDATES_REQUESTED, returned: raw.length,

@@ -32,6 +32,49 @@ export const EDITORIAL_BANNED_PHRASES = `You must AVOID:
 - Do NOT use words like "harmonious," "curate," "elevate," "juxtaposition," or "seamlessly."`;
 
 /**
+ * Words that assess the work instead of reporting it.
+ *
+ * A separate export from EDITORIAL_BANNED_PHRASES because it bans a different
+ * KIND of thing. That list catches AI-default constructions — phrases that signal
+ * a model wrote the sentence. This one catches a register: language that tells the
+ * reader how impressed to be. A human writer produces it fluently, which is why it
+ * survives a list aimed at machine tells.
+ *
+ * This is `09`'s editorial tone stated as a vocabulary. Tone there is
+ * "observational, not promotional", and editorial "does not inflate importance" or
+ * "manufacture narrative". Every word below does one of those.
+ *
+ * THE LINE THIS MUST NOT CROSS. Factual adjectives drawn from the work are the
+ * opposite of this failure and are encouraged: cantilevered, lime-washed,
+ * book-matched, unlacquered, fluted, quarter-sawn, hand-troweled. Each names
+ * something a reader could verify from the photograph, and each could only be
+ * written by someone who looked. The banned class is the one that could be written
+ * without having seen the project at all.
+ *
+ * Load-bearing for the headline frame library: every frame terminates on a fact,
+ * and this is the vocabulary of the tails that do not. See TAIL_RULE and
+ * `hasEvaluativeTail` in ./headlineFrames.
+ */
+export const EVALUATIVE_ADJECTIVES = `NEVER ASSESS THE WORK. Report it.
+
+These words tell the reader how impressed to be. They are promotional register, and
+they are available whenever the writer has nothing left to report — which is exactly
+when they appear:
+- stunning, gorgeous, breathtaking, dreamy, elevated, luxe, jaw-dropping, must-see
+- showstopping, drop-dead, swoon-worthy, "to die for"
+- the idioms that do the same job: "pulls out all the stops", "goes all out",
+  "wow factor", "knocks it out of the park", "raises the bar", "sets a new standard"
+
+The test is whether the reader could disagree on the facts. "Reimagined for a family
+of five" is wrong if the family has four, so it is reporting. "Pulls out all the
+stops" cannot be wrong about anything, so it is not.
+
+This does NOT ban descriptive adjectives taken from the work itself. Cantilevered,
+lime-washed, book-matched, unlacquered, fluted, quarter-sawn, hand-troweled are all
+encouraged — each names something visible in the photograph, and none of them could
+be written by someone who had not looked.`;
+
+/**
  * The grounding / anti-fabrication guardrail. §5 requires this apply to ALL prose
  * generators, including the narrative-copy ones that currently carry no such rule.
  * Verbatim from the canonical article generator's ACCURACY block.
