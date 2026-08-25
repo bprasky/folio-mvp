@@ -15,9 +15,15 @@
  * and "the piece" is the absolute floor when nothing is known.
  *
  * Finish extraction is a small self-contained keyword pass. It mirrors the
- * corpus digest's `finishFamilyOf` intent but is deliberately NOT coupled to
+ * corpus digest's `materialClassOf` intent but is deliberately NOT coupled to
  * `src/lib/editorial-queue/signals.ts` — the gate must not depend on the
  * queue's internals.
+ *
+ * Note the two lists are not the same kind of thing, which is why this one keeps
+ * its own name. `MATERIAL_CLASSES` over there holds material CLASSES (marble,
+ * oak, brass); FINISH_FAMILIES here also carries finishes and colours (matte
+ * black, brushed steel, white) because a descriptor's job is to describe the
+ * object, not to classify its material.
  */
 
 // Finish-family keywords, checked in order against colorFinish then name.

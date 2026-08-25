@@ -618,6 +618,84 @@ use, the move is to narrow the `EDITORIAL_BANNED_PHRASES` entry to the prose sen
 was written for and admit `echoes` in headlines only, where the two-places
 precondition already guarantees there is something behind it.
 
+### Material-class vocabulary gap — AUDIT COMPLETE, ADDITIONS AWAITING APPROVAL (B4)
+
+`MATERIAL_CLASSES` (38) audited against `naming/descriptor.ts`'s `FINISH_FAMILIES`
+(31). **Eight terms sit only on the descriptor side.** Nothing has been added;
+`MATERIAL_CLASSES` is unchanged.
+
+| term | material class? | verdict |
+|---|---|---|
+| `steel` | **yes** — a material, sibling of the `iron` / `zinc` / `pewter` / `bronze` already present | **propose** |
+| `terrazzo` | **yes** — a composite material, sibling of `concrete` / `terracotta` | **propose** |
+| `white oak` | **yes** — a species, narrower than the `oak` already present | **hold** — see below |
+| `stainless` | no — shorthand for stainless *steel*; a qualifier, not a material | reject |
+| `brushed steel` | no — a finish **of** steel | reject |
+| `matte black` | no — colour + sheen | reject |
+| `black` | no — colour | reject |
+| `white` | no — colour | reject |
+
+The five rejects are correctly filed: a descriptor's job is to describe the object,
+so colours and finishes belong on that side. Only the misfiled *materials* move.
+
+#### Pure addition versus regrouping — the distinction that decides the risk
+
+Measured, not assumed. `materialClassOf` today returns `null` for text containing
+seven of the eight candidates, and `"oak"` for `white oak`.
+
+- **`steel`, `terrazzo` — pure additions.** No existing class claims their strings,
+  so no product changes group. Tags that resolved to nothing start resolving.
+- **`white oak` — a regrouping.** Matching is first-hit-wins in array order, so to
+  take effect it must be placed *before* `oak`, and every white-oak tag then moves
+  out of the `oak` group.
+
+#### Digest impact — the five consumers of `finishFamily`
+
+| consumer | gate | effect of a PURE ADDITION |
+|---|---|---|
+| Repetition (`byFamily`) | `projectIds.size >= 2` | **strictly additive.** Families are independent and `strength` is per-family. New signals only. |
+| Positioning (`POSITIONING_TERMS`) | `families[]` membership | **none.** Neither `steel` nor `terrazzo` appears in any `families` array. |
+| Outlier (Jaccard) | `PROJECT_OUTLIER_MIN_DISTANCE = 0.6` | **can change existing signals.** A new `finish:` trait shifts every pairwise distance, so an outlier can appear or disappear. |
+| Singular | `repeatedFamilies >= 2` (global) | **can change existing signals.** A new repeated family can flip this gate on, enabling singular signals for *other* families that were suppressed. |
+| Evolution | `EVOLUTION_MIN_DELTA = 0.15` | **can remove existing signals.** `total` counts only non-null families, so a new class raises the denominator and lowers *every* other family's share in both halves; a delta near 0.15 can fall under it. |
+
+So an addition is **not strictly additive**. Two of the five consumers can alter or
+drop signals that have nothing to do with the new term. That is the real cost, and it
+applies to any addition, including the two proposed.
+
+#### Why `white oak` is held back
+
+Beyond the regrouping itself, there is a concrete regression path:
+
+1. **It can destroy a repetition signal.** A designer with white oak in three
+   projects has an `oak` signal at 3/N today. Split into two white-oak and one
+   plain-oak project, `oak` drops to 1 and **falls below the `>= 2` gate** while
+   `white oak` gets 2. Net can be a wash or a loss.
+2. **It silently weakens positioning.** `oak` is named in **three**
+   `POSITIONING_TERMS` entries (`signals.ts:257, 263, 269`). Once white-oak products
+   resolve to `white oak`, they stop matching those claims unless `white oak` is
+   added to each entry — which is a separate edit to a different constant.
+
+`white oak` should be decided on its own, together with the positioning edits it
+implies. It is not a one-line vocabulary addition.
+
+#### Proposed batch — TWO terms, awaiting approval
+
+```
+steel      → beside 'iron' in the metals group
+terrazzo   → beside 'concrete' in the stone/mineral group
+```
+
+Placement is free of ordering constraints: neither string overlaps an existing
+class, so first-hit-wins is not in play. Grouping is for readability only.
+
+Not written. `MATERIAL_CLASSES` is unchanged pending approval.
+
+**One related edit deliberately NOT proposed:** `terrazzo` arguably belongs in the
+stone `POSITIONING_TERMS` entry (`signals.ts:287` — marble, travertine, limestone,
+granite, soapstone, quartz). That is a change to a different constant with its own
+signal consequences and is out of scope here.
+
 ### The two `FINISH_FAMILIES` vocabularies — RESOLVED by rename (B3)
 
 `signals.ts`'s constant is now **`MATERIAL_CLASSES`** and its resolver
