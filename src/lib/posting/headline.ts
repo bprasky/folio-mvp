@@ -109,6 +109,21 @@ export function looksTitleCased(text: string): boolean {
 }
 
 /**
+ * Where a fragment says a thing SITS. A closed, stable set — unlike the open set
+ * of adjectives that can fill the other half of a balanced pair.
+ *
+ * The determiner is required on the prepositional forms ("in the kitchen", "in
+ * one wing"), which is what keeps a bare place name out: "They bought the marble
+ * in Italy, then redrew the plan" reports two events and must survive.
+ */
+const LOCATOR = String.raw`(?:here|there|outside|inside|within|indoors|outdoors|upstairs|downstairs|above|below|out front|out back|(?:in|on|at|across|through)\s+(?:the|one|another|each|every|either)\s+\w+(?:\s+\w+)?)`;
+
+/** `<quality> <locator>, <quality> <locator>` — the caption's native shape. */
+const BALANCED_PAIR = new RegExp(
+  String.raw`\b\w+\s+${LOCATOR}\s*,\s*(?:and\s+|but\s+)?\w+\s+${LOCATOR}\b`, 'i',
+);
+
+/**
  * The shapes a headline falls into when it has nothing specific to say. Each of
  * these is also spelled out in the prompt; this catches the ones that come back
  * anyway.
@@ -127,7 +142,23 @@ const BANNED_SHAPES: Array<{ re: RegExp; label: string }> = [
   //
   // "Bold in the kitchen, soft in the primary bedroom" — two things inventoried
   // and the inventory presented as a thought.
-  { re: /\b\w+ in the \w+([\s\w]*)?,\s*\w+ in the \w+/i, label: 'balanced pair ("bold in the kitchen, soft in the bedroom") — a caption\'s shape' },
+  //
+  // Matched STRUCTURALLY rather than by phrasing. The first version of this rule
+  // spelled out one lexicalization ("X in the Y, Z in the W") and so caught
+  // exactly one of the three examples the criteria list under NEVER THE BALANCED
+  // PAIR: "Dark in one wing, bright in the other" and "Moody here, sunlit there"
+  // both went straight through, and "Formal outside, unruly within" shipped.
+  //
+  // What every one of them is: a quality pinned to a PLACE, twice, with a comma
+  // between. That is a floor plan read aloud, which is why it reads as a caption
+  // — the sentence describes where things are, so nothing in it happened.
+  //
+  // The locator is the discriminator, not the adjective. "Two crews, one site,
+  // the same afternoon" is also a comma list of verbless fragments and is a GOOD
+  // example: its fragments are concrete nouns converging on one event, and no
+  // fragment says where anything sits. Keying on position rather than on a
+  // lexicon of moods is what keeps that line alive.
+  { re: BALANCED_PAIR, label: 'balanced pair ("bold in the kitchen, soft in the bedroom") — a caption\'s shape: one quality per location, inventoried' },
   // "A moody entry gives way to a sunlit landing" — a walkthrough, not a claim.
   { re: /\bgives? way to\b/i, label: '"gives way to" — describes a photo sequence' },
   // "Finishes and fixtures do all the talking".

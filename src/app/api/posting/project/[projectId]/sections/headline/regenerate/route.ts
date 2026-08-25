@@ -328,11 +328,35 @@ Return ONLY a JSON array of ${CANDIDATES_REQUESTED} strings, in that order.`;
           cuts: killed.slice(0, 6).map((v) => ({ text: survivors[v.index].text, why: v.why })),
         });
       }
+      // What survived, and what the editor says each one REPORTS.
+      //
+      // The cuts alone cannot tell you whether the pass is working. A batch of
+      // fluent verdicts kept for good-sounding reasons looks identical in the
+      // logs to a batch of grounded headlines until you can see what each keeper
+      // is supposedly about — `on` is the editor naming the interview moment,
+      // and a keeper whose moment is vague ("the overall approach") is the pass
+      // failing quietly rather than cutting.
+      console.info('[headline/regenerate] editor keeps', {
+        _cid,
+        keeps: verdicts.filter((v) => v.keep).slice(0, 8).map((v) => ({
+          angle: ANGLES[Math.floor(survivors[v.index].index / 2)]?.key,
+          text: survivors[v.index].text,
+          on: v.on ?? '(the editor did not say)',
+        })),
+      });
     } else {
       // No editor: ship the mechanically-clean batch in angle order rather than
       // nothing. A judgement pass that is unavailable is a reason to lose the
       // ranking, not a reason to lose the feature.
       kept = [...survivors].sort(takeOrder).slice(0, CANDIDATES_KEPT).map((s) => s.text);
+      // Said loudly and at this level on purpose. The batch the designer sees is
+      // the writer's, unjudged — which is a different product from the one the
+      // pipeline is supposed to ship, and the only way to tell from the outside
+      // is that the headlines are worse. Anyone diagnosing a bad batch needs to
+      // know which of the two they are looking at before they change a prompt.
+      console.warn('[headline/regenerate] NO EDITOR — shipping the writer\'s unjudged batch', {
+        _cid, survivedRules: survivors.length, kept: kept.length,
+      });
     }
 
     console.info('[headline/regenerate] candidates', {

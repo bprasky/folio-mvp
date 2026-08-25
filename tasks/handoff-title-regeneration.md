@@ -1,6 +1,8 @@
 # Handoff — article title (headline) generation & regeneration
 
-Written 2026-08-25. Everything described as merged is on `main` at `e65d3a7`.
+Written 2026-08-25; revised the same day after the first live batch. Everything
+described as merged was on `main` at `e65d3a7`; the layer-2 and layer-3 changes in
+"The first live batch" are on `claude/title-regen-editor-layer-bv6ezt`.
 
 ## What this feature is
 
@@ -60,13 +62,25 @@ Banned shapes: `refuses to…` · `Where X meets Y` · `A study in X` ·
 `gives way to` · `does the talking` · about the article's own structure ·
 personified architecture.
 
+The balanced pair is matched **structurally** — a quality pinned to a place,
+twice, with a comma between — keyed on a closed set of locators rather than on an
+open lexicon of mood adjectives. See finding 1 below.
+
 ### Layer 3 — the editor (`judgeHeadlines`)
 
-Kills for the three things a pattern cannot see:
+Kills for the four things a pattern cannot see:
 
 - **INTERCHANGEABLE** — could run on someone else's project with the nouns swapped
 - **UNSUPPORTED** — the interview does not say this happened
 - **NOTHING AT STAKE** — true, specific, and no reason to read the next line
+- **VERDICT INSTEAD OF REPORT** — summarises what the house is LIKE rather than
+  reporting a moment in it. Added after the first live batch; the tell is a
+  contrast or a paradox, and the criterion says so explicitly because *a contrast
+  counterfeits a stake* and so slips past NOTHING AT STAKE.
+
+Keepers must name the interview moment they report (the `on` field), which is
+logged. That is what makes UNSUPPORTED bite: a model that must point at the
+answer cannot keep a headline that came from nowhere without writing the lie down.
 
 Design decisions that are load-bearing:
 
@@ -140,35 +154,112 @@ npm run check:story-editing
 There is no test runner. The project's idiom is static//fixture check scripts in
 `scripts/check-*.ts`. Follow it.
 
+## The first live batch — what it showed
+
+**The pipeline has now run live.** These four reached the designer and were
+rejected. Whether *layer 3* ran for this batch is not known — see the open
+question below; the two findings here hold either way.
+
+```
+Formal outside, unruly within, and both are true on purpose
+Renovating finishes only, and still changing everything
+Glass won the dining table argument by disappearing
+A reserved facade for clients who never wanted flash
+```
+
+Two findings, and they sit at different layers.
+
+### 1. The balanced-pair rule was one-third implemented (fixed)
+
+`HEADLINE_CRITERIA` lists three examples under NEVER THE BALANCED PAIR. The regex
+implemented the first one literally, so the other two passed clean — and
+`check-headline.ts` asserted the rule using the same example the regex was written
+from, so everything agreed the rule was enforced:
+
+```
+REJECT  Bold in the kitchen, soft in the primary bedroom
+PASS    Dark in one wing, bright in the other      ← printed in the criteria as banned
+PASS    Moody here, sunlit there                   ← printed in the criteria as banned
+```
+
+Now matched structurally: a quality pinned to a PLACE, twice, with a comma between.
+The discriminator is a closed set of LOCATORS (`here`, `outside`, `in the <room>`,
+`in one <wing>`), not an open lexicon of mood adjectives — which is what keeps the
+GOOD example "Two crews, one site, the same afternoon" alive. All three criteria
+examples are now fixtures in the check script, along with the good ones as negatives.
+
+### 2. The editor was missing a criterion (fixed)
+
+The other three are NOT regex-able and were deliberately left alone. Banning
+material-as-agent to catch the glass one kills "The stone chose the rest of the
+house", which the criteria list as GOOD. `check-headline.ts` now asserts all three
+stay mechanically clean, so a later session cannot chase them into the pattern list.
+
+What they share is a defect none of INTERCHANGEABLE / UNSUPPORTED / NOTHING AT STAKE
+named: each delivers a **verdict on what the finished house is like** rather than
+reporting a moment in it. Three of the four reach for a contrast to do it — and that
+is precisely why NOTHING AT STAKE did not fire. **A contrast counterfeits a stake:**
+it has the cadence of a claim, so "both are true on purpose" reads like an argument
+while nothing is actually at issue.
+
+So the editor has a fourth criterion, `VERDICT INSTEAD OF REPORT`, which names the
+counterfeit explicitly rather than leaving it to be inferred. Keepers must also now
+name the interview moment they report (the `on` field) — the cheapest way to make
+UNSUPPORTED bite, since a model that must point at the answer cannot keep a headline
+that came from nowhere without writing the lie down.
+
+Note this answers the handoff's original question in the negative: the editor did
+NOT kill "The kitchen stone dictated every finish around it"-style output. Per the
+standing decision, the fix was sharpening the editorial criteria, not adding
+`dictated` to a verb list. That check still holds.
+
 ## THE OPEN QUESTION — start here
 
-**The editor has never made a live call.** There is no `ANTHROPIC_API_KEY` and no
-database in the authoring environment, so layer 3 is unproven end to end. The
-user was blocked from testing it by an unrelated production outage (connection
-pool exhaustion, then a malformed `DATABASE_URL`) which is now resolved.
-
-The next step is to press **New options** on a real project and read the logs:
+**Whether the editor was even running for that batch is unknown.** `edited: !!verdicts`
+was in the `candidates` log but nobody read it, and a degraded pass ships the
+writer's unjudged batch — which from the outside looks identical to a working pass
+that made bad calls. That ambiguity is now closed at the source:
 
 ```
-[headline/regenerate] candidates   { requested, returned, survivedRules, editorCut, edited, kept, rejected, anglesCovered }
-[headline/regenerate] editor cuts  { cuts: [{ text, why }] }
+[headline/regenerate] NO EDITOR — shipping the writer's unjudged batch   ← warn, unmissable
+[headline/regenerate] editor keeps  { keeps: [{ angle, text, on }] }
+[headline/regenerate] editor cuts   { cuts: [{ text, why }] }
+[headline/regenerate] candidates    { requested, returned, survivedRules, editorCut, edited, kept, ... }
 ```
 
-Three specific things to learn from that:
+Press **New options** again on `dda4b29e-dbdf-4f54-ad21-32dafd4d1dd4` (La Gorce) and
+read those four lines. What to learn, in order:
 
-1. Does the editor actually kill "The kitchen stone dictated every finish around
-   it"? That is the case it was built for. If it does not, the INTERCHANGEABLE
-   criterion needs sharpening — not a new banned verb.
-2. Is `editorCut` sane? If it is cutting 11 of 12 every time, the batch will keep
-   emptying and the feature dies via `NO_USABLE_CANDIDATES`. If it is cutting 0,
-   it is not doing anything.
-3. Does the La Gorce interview contain enough *events* to fill six angles? If
-   most angles come back weak, the fix is upstream in the interview, not here.
+1. **Is `NO EDITOR` present?** If it is, none of the criteria work matters — the
+   editor never ran and the problem is reachability, not judgement.
+2. **Read `on` for every keeper.** This is the new signal. A keeper whose moment is
+   vague ("the overall approach", "the client's taste") is the pass failing quietly
+   rather than cutting, and it is a stronger tell than `editorCut` because a fluent
+   verdict kept for a good-sounding reason logs identically to a grounded headline.
+3. **Is `editorCut` sane?** 11 of 12 every time empties the batch and the feature
+   dies via `NO_USABLE_CANDIDATES`; 0 means it is not doing anything. Note the
+   criteria now say "the default is to kill", so expect this to rise.
+4. **Does the La Gorce interview contain enough events to fill six angles?** If most
+   angles come back weak, the fix is upstream in the interview, not here.
 
-Test project: `dda4b29e-dbdf-4f54-ad21-32dafd4d1dd4` (La Gorce).
+### Unproven, and worth a look after the next batch
 
-Known cost: the editor is a **second model call per regenerate**, roughly
-doubling the button's latency.
+Both of these are reasoned from four samples, not observed — do not act on them
+before the logs say so.
+
+- **The `argument` angle may be the source.** Its brief reads "A claim about this
+  project a reasonable designer could disagree with. Take a position." A model reads
+  "take a position" as "state a thesis", and a thesis about a house IS the verdict
+  shape. If `editor keeps`/`editor cuts` show the verdict headlines clustering on
+  `argument`, tighten the brief to ask for a position on a DECISION rather than on
+  the house's character. Left alone for now because the angle labels in the logs are
+  what would prove it.
+- **`client` may be structurally prone to interchangeable output.** "A reserved
+  facade for clients who never wanted flash" is what that angle produces when the
+  interview has taste but no anecdote.
+
+Known cost: the editor is a **second model call per regenerate**, roughly doubling
+the button's latency.
 
 ## Unrelated loose ends, still open
 

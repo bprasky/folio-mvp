@@ -127,6 +127,41 @@ for (const [headline, why] of REPORTED_CAPTIONS) {
   check(`refused (${why})`, codes(headline).includes('BANNED_SHAPE'), headline);
 }
 
+// EVERY example the criteria print under NEVER THE BALANCED PAIR, not just the
+// one the rule was first written around.
+//
+// The original regex spelled out a single lexicalization — "<word> in the <word>,
+// <word> in the <word>" — so of the three headlines the prose lists as the
+// canonical balanced pair it caught exactly one. The other two passed clean, and
+// "Formal outside, unruly within, and both are true on purpose" shipped to a
+// designer. A rule the checker implements one third of is not a rule.
+//
+// The structural property is a quality pinned to a PLACE, twice. Keying on the
+// locator rather than on the adjective is what lets "Two crews, one site, the
+// same afternoon" — also a comma list of verbless fragments, and a GOOD example —
+// stay alive below.
+for (const headline of [
+  'Bold in the kitchen, soft in the primary bedroom',
+  'Dark in one wing, bright in the other',
+  'Moody here, sunlit there',
+  'Formal outside, unruly within, and both are true on purpose',
+  'Quiet upstairs, loud downstairs',
+  'Dark in the study, bright in the hall',
+]) {
+  check(`balanced pair refused: "${headline}"`,
+    codes(headline).includes('BANNED_SHAPE'), JSON.stringify(headlineIssues(headline)));
+}
+// The locator is what makes it a floor plan. Without one, a comma list is just a
+// list, and some of those are the best headlines the criteria have.
+for (const headline of [
+  'Two crews, one site, the same afternoon',
+  'They bought the marble in Italy, then redrew the plan',
+  'The slab cracked, and they kept it',
+]) {
+  check(`comma list with no locator survives: "${headline}"`,
+    !codes(headline).includes('BANNED_SHAPE'), JSON.stringify(headlineIssues(headline)));
+}
+
 // The filter must not have widened so far that headlines with an event in them
 // die alongside the captions. Each of these names something that HAPPENED.
 for (const good of [
@@ -249,9 +284,31 @@ check('it cuts what a regex cannot see: interchangeable, unsupported, no stakes'
   /1\. INTERCHANGEABLE/.test(editor)
   && /2\. UNSUPPORTED/.test(editor)
   && /3\. NOTHING AT STAKE/.test(editor));
+// The first live batch. Every headline the designer rejected was a VERDICT on
+// the finished house rather than a report of anything that happened in it, and
+// three of the four reached for a contrast to say so. A contrast has the cadence
+// of a claim, which is exactly why criterion 3 did not fire on any of them — so
+// the counterfeit has to be named, not left to be inferred from "no stakes".
+check('it also cuts the verdict — a summary of what the house is LIKE',
+  /4\. VERDICT INSTEAD OF REPORT/.test(editor));
+check('...and names the contrast as a counterfeit stake, which is why 3 missed these',
+  /COUNTERFEITS a stake/.test(editor));
+check('...and the headline that comments on its own cleverness',
+  /on its own cleverness/.test(editor) && /both are true on purpose/.test(editor));
+check('the criteria are stated as four, so the count cannot drift from the list',
+  /KILL a headline for any of these four reasons/.test(editor)
+  && /survive all four/.test(editor));
+// A model that must name the answer a headline came from cannot keep one that
+// came from nowhere without writing the lie down.
+check('a keeper must name the interview moment it reports',
+  /"on": "<for a keeper only/.test(editor)
+  && /name the moment in the interview it came from/.test(editor));
+check('...but a missing one is not treated as a failed verdict',
+  /on\?: string;/.test(editor)
+  && /\.on === 'string' \? \(entry as any\)\.on : undefined/.test(editor));
 // "Rate these 1-10" returns a spread of sevens and changes nothing.
 check('it is asked for a decision, not a score',
-  /KILL a headline for any of these three reasons/.test(editor)
+  /KILL a headline for any of these four reasons/.test(editor)
   && !/\b(rate|score|rank them 1|1-10|out of 10)\b/i.test(editor.split('const EDITOR_SYSTEM')[1].split('`;')[0]));
 check('it is given the interview to check the candidates against',
   /## The reporting/.test(editor) && /interview/.test(editor));
@@ -264,6 +321,28 @@ check('it is a separate call, so it did not write what it is judging',
 check('the verbs that got through are NOT chased into the regex',
   !/dictated/.test(readFileSync('src/lib/posting/headline.ts', 'utf8'))
   && !/asked for/.test(readFileSync('src/lib/posting/headline.ts', 'utf8')));
+// Same discipline, applied to the first live batch. Of the four headlines the
+// designer rejected, ONE is a structural shape the criteria already ban, and the
+// mechanical layer now catches it. The other three are editorial judgements:
+//
+//   "Glass won the dining table argument by disappearing"  — a conceit, but
+//     "The stone chose the rest of the house" is a GOOD example and is the same
+//     shape. Banning material-as-agent kills the good one too.
+//   "A reserved facade for clients who never wanted flash" — interchangeable.
+//   "Renovating finishes only, and still changing everything" — a verdict.
+//
+// Each is decidable only against the interview, which is the editor's input and
+// not the regex's. If these ever start failing here, someone has widened the
+// mechanical layer into territory it cannot judge, and "The stone chose the rest
+// of the house" is about to die with them.
+for (const editorial of [
+  'Glass won the dining table argument by disappearing',
+  'A reserved facade for clients who never wanted flash',
+  'Renovating finishes only, and still changing everything',
+]) {
+  check(`left to the editor, not the regex: "${editorial}"`,
+    headlineIssues(editorial).length === 0, JSON.stringify(headlineIssues(editorial)));
+}
 // An editor who is unreachable must not take the feature down with them.
 check('an unavailable editor falls back to the writer\'s order, not to nothing',
   /return null/.test(editor)
@@ -277,6 +356,16 @@ check('the editor\'s ranking wins, but the pool still spans angles',
   /const bestPerAngle = keeps\.filter/.test(headlineRoute));
 check('what the editor cut, and why, is logged',
   /editor cuts/.test(headlineRoute));
+// The cuts alone cannot tell you whether the pass is working: a batch of fluent
+// verdicts kept for good-sounding reasons logs identically to a grounded one.
+check('what it KEPT, its angle, and what each keeper reports, is logged too',
+  /editor keeps/.test(headlineRoute) && /on: v\.on/.test(headlineRoute));
+// A degraded pass ships the writer's unjudged batch, which is a different
+// product from the one the pipeline is meant to produce — and from the outside
+// the only symptom is that the headlines are worse. Anyone diagnosing a bad
+// batch has to be able to tell the two apart before they touch a prompt.
+check('a batch that shipped without the editor says so loudly',
+  /NO EDITOR — shipping the writer/.test(headlineRoute));
 check('an all-cut batch says the options were generic, not that they were malformed',
   /editorCut > 0/.test(headlineRoute));
 
