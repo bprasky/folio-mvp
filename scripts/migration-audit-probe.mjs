@@ -2,13 +2,9 @@
 // Run: node --env-file=.env.local scripts/migration-audit-probe.mjs
 
 import { PrismaClient } from '@prisma/client';
+import { migrationConnectionUrl } from './lib/migrationConnection.mjs';
 
-const url = process.env.DIRECT_URL || process.env.DATABASE_URL;
-if (!url) {
-  console.error('ERR: neither DIRECT_URL nor DATABASE_URL is set');
-  process.exit(1);
-}
-
+const url = migrationConnectionUrl({ label: 'probe', readOnly: true });
 const prisma = new PrismaClient({ datasourceUrl: url });
 
 async function tableExists(t) {
