@@ -187,6 +187,7 @@ check('the batch is stored WITH the headline it replaces, so current is a member
 
 console.log('\n9. The prompt and the checker state the same rules');
 const draft = readFileSync('src/lib/posting/generateEditorialDraft.ts', 'utf8');
+const headlineRoute = readFileSync('src/app/api/posting/project/[projectId]/sections/headline/regenerate/route.ts', 'utf8');
 // The criteria live in editorialTone.ts so the generator and the regenerate
 // endpoint grade a headline by the same rules. Two copies would mean a
 // regenerated headline is judged against something other than the one it
@@ -233,6 +234,59 @@ check('every generated headline is normalized before it is stored',
   /kicker: composedKicker/.test(draft) && /normalizeHeadline\(/.test(draft));
 check('drift is logged rather than silently rewritten',
   /headline departs from house style/.test(draft));
+
+console.log('\n9b. Judgement, not just pattern matching');
+// The mechanical check can only reject a shape someone already watched fail.
+// Banning "so the rooms can argue" produced "the kitchen stone dictated every
+// finish around it" and "a bright room asked for black anchors, not brass" —
+// same failure, verbs that were not on the list yet. The list always loses that
+// race, so the batch is now read by an editor before the designer sees it.
+const editor = readFileSync('src/lib/posting/headlineEditor.ts', 'utf8');
+check('the editor judges, and can only cut and reorder — never rewrite',
+  /Your job is to CUT, not to write/.test(editor)
+  && !/normalizeHeadline/.test(editor));
+check('it cuts what a regex cannot see: interchangeable, unsupported, no stakes',
+  /1\. INTERCHANGEABLE/.test(editor)
+  && /2\. UNSUPPORTED/.test(editor)
+  && /3\. NOTHING AT STAKE/.test(editor));
+// "Rate these 1-10" returns a spread of sevens and changes nothing.
+check('it is asked for a decision, not a score',
+  /KILL a headline for any of these three reasons/.test(editor)
+  && !/\b(rate|score|rank them 1|1-10|out of 10)\b/i.test(editor.split('const EDITOR_SYSTEM')[1].split('`;')[0]));
+check('it is given the interview to check the candidates against',
+  /## The reporting/.test(editor) && /interview/.test(editor));
+// A model grading its own twelve suggestions defends them.
+check('it is a separate call, so it did not write what it is judging',
+  /export async function judgeHeadlines/.test(editor)
+  && /anthropic\.messages\.create/.test(editor));
+// The two headlines that survived every rule are BOTH interchangeable — that is
+// the criterion doing the work here, not a new banned verb.
+check('the verbs that got through are NOT chased into the regex',
+  !/dictated/.test(readFileSync('src/lib/posting/headline.ts', 'utf8'))
+  && !/asked for/.test(readFileSync('src/lib/posting/headline.ts', 'utf8')));
+// An editor who is unreachable must not take the feature down with them.
+check('an unavailable editor falls back to the writer\'s order, not to nothing',
+  /return null/.test(editor)
+  && /keeping the writer/.test(editor));
+check('a partial verdict list is discarded whole, so no candidate is cut by silence',
+  /verdicts\.length !== candidates\.length/.test(editor));
+check('the caller actually falls back rather than failing the request',
+  /if \(verdicts\) \{/.test(headlineRoute) && /\} else \{/.test(headlineRoute)
+  && /sort\(takeOrder\)/.test(headlineRoute));
+check('the editor\'s ranking wins, but the pool still spans angles',
+  /const bestPerAngle = keeps\.filter/.test(headlineRoute));
+check('what the editor cut, and why, is logged',
+  /editor cuts/.test(headlineRoute));
+check('an all-cut batch says the options were generic, not that they were malformed',
+  /editorCut > 0/.test(headlineRoute));
+
+// Stored pools outlive the rules that produced them. This is why a banned
+// headline kept being offered after the ban shipped.
+const tiles = readFileSync('src/lib/story/buildRoomTiles.ts', 'utf8');
+check('stored alternatives are re-graded on read, not trusted from write time',
+  /headlineIssues\(t, headlineNames\)\.length === 0/.test(tiles));
+check('...and against the byline names too, so a stale batch cannot name the designer',
+  /designerName: designer\?\.name/.test(tiles));
 
 console.log('\n10. Editing the headline cannot be silently swallowed');
 // `lead.title` is never persisted today, but readers still resolve
