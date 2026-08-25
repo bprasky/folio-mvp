@@ -13,6 +13,18 @@ process.env.ANTHROPIC_API_KEY ||= 'sk-ant-placeholder-for-static-checks';
 import { execSync } from 'child_process';
 import { readFileSync } from 'fs';
 import {
+  HEADLINE_VERBS,
+  BANNED_HEADLINE_VERBS,
+  BANNED_HEADLINE_VERBS_RULE,
+  UNVEIL_EXCEPTION,
+  selectVerbs,
+  renderVerbInstruction,
+  explainVerb,
+  conditionState,
+  usesBannedVerb,
+  assertVerbLibraryIntegrity,
+} from '../src/lib/interview/prompts/headlineVerbs';
+import {
   HEADLINE_FRAMES,
   MATERIAL_FRAME,
   TAIL_RULE,
@@ -215,6 +227,132 @@ check('no exemplar block is emitted when none are sourced',
   !/Published headlines in this frame/.test(rendered));
 check('the shape puts the material in subject position',
   /grammatical subject/.test(rendered) && /never as the subject of the sentence/.test(rendered));
+
+console.log('\n12. The verb library is typed, not a flat list');
+const verbInt = assertVerbLibraryIntegrity();
+check('no structural errors', verbInt.errors.length === 0, verbInt.errors.join('\n        '));
+for (const w of verbInt.warnings) console.log(`  NOTE  ${w}`);
+check('25-40 verbs, breadth carried by preconditions rather than scarcity',
+  HEADLINE_VERBS.length >= 25 && HEADLINE_VERBS.length <= 40, `${HEADLINE_VERBS.length}`);
+check('all six categories are present',
+  new Set(HEADLINE_VERBS.map(v => v.category)).size === 6);
+check('every verb carries at least one precondition',
+  HEADLINE_VERBS.every(v => v.requires.length > 0));
+// A lemma means different things in different categories and carries different
+// preconditions ("extend" a building vs "extend" a material run), so ids are
+// composite and both senses can coexist.
+check('a lemma may hold two senses with different preconditions',
+  HEADLINE_VERBS.filter(v => v.verb === 'extend').length === 2
+  && new Set(HEADLINE_VERBS.filter(v => v.verb === 'extend').map(v => v.id)).size === 2);
+
+console.log('\n13. Unknown withholds — the rule that matters');
+// No per-project new-build-vs-renovation field exists, so `existingStructure` and
+// `newBuild` are unknowable today. Every Intervention verb must therefore be
+// withheld. Offering `renovate` on a project that might be new build is exactly
+// the error the precondition system is for.
+const nothingKnown = selectVerbs({});
+check('with nothing known, NO verb is offered',
+  nothingKnown.eligible.length === 0, `${nothingKnown.eligible.length} offered`);
+check('...and every one is withheld with a stated reason',
+  nothingKnown.withheld.length === HEADLINE_VERBS.length
+  && nothingKnown.withheld.every(w => w.reasons.length > 0));
+check('an unknown REQUIRED condition withholds',
+  conditionState('materialClass', {}) === 'unknown'
+  && !explainVerb(HEADLINE_VERBS.find(v => v.id === 'application:clad')!, {}).eligible);
+// The asymmetry that is easy to get wrong: a barring condition being unknown must
+// also withhold. Otherwise a verb whose requirements are met sails past a bar
+// nobody could evaluate.
+const claddable = { namedSurface: true, materialClass: true };
+check('a met requirement is not enough when a BAR is unknown',
+  !explainVerb(HEADLINE_VERBS.find(v => v.id === 'intervention:renovate')!, { existingStructure: true }).eligible);
+check('...and it becomes eligible once the bar is known not to hold',
+  explainVerb(HEADLINE_VERBS.find(v => v.id === 'intervention:renovate')!, { existingStructure: true, newBuild: false }).eligible);
+check('an explicit false is not the same as absent',
+  conditionState('newBuild', { newBuild: false }) === 'doesNotHold'
+  && conditionState('newBuild', {}) === 'unknown');
+check('all seven Intervention verbs are withheld on today\'s data',
+  nothingKnown.withheld.filter(w => w.id.startsWith('intervention:')).length === 7);
+check('application verbs become eligible when their facts resolve',
+  selectVerbs(claddable).eligible.some(v => v.id === 'application:clad'));
+check('...and continuity does not, on the same facts',
+  !selectVerbs(claddable).eligible.some(v => v.category === 'continuity'));
+
+console.log('\n14. Two gates for a sourced verb, both required');
+// The seam for interview extraction. A designer saying "we clad it in oak" does
+// not make `clad` usable if no material class resolves, and a resolvable class
+// does not license a verb the designer never used.
+check('a candidate outside the library is rejected (gate 1)',
+  selectVerbs(claddable, { candidate: 'showcase' }).sourced === null
+  && /not in the library/.test(selectVerbs(claddable, { candidate: 'showcase' }).candidateRejection ?? ''));
+check('a library verb whose preconditions fail is rejected (gate 2)',
+  selectVerbs({}, { candidate: 'clad' }).sourced === null
+  && /preconditions fail/.test(selectVerbs({}, { candidate: 'clad' }).candidateRejection ?? ''));
+check('a candidate passing both gates is sourced',
+  selectVerbs(claddable, { candidate: 'clad' }).sourced?.id === 'application:clad');
+check('the rejection says which gate, so extraction can be debugged later',
+  /gate 1/.test(selectVerbs(claddable, { candidate: 'showcase' }).candidateRejection ?? '')
+  && /gate 2/.test(selectVerbs({}, { candidate: 'clad' }).candidateRejection ?? ''));
+check('the extraction seam is documented as not built',
+  /SEAM for interview verb extraction \(not built this phase\)/.test(
+    readFileSync('src/lib/interview/prompts/headlineVerbs.ts', 'utf8')));
+
+console.log('\n15. The generics are banned');
+for (const bad of [
+  'Travertine features throughout the house',
+  'Brass showcases the stair',
+  'Oak elevates the kitchen',
+  'A kitchen that transforms the plan',
+  'Plaster reimagines the entry',
+  'Concrete redefines the floor',
+  'Marble celebrates the island',
+  'The house embraces the slope',
+  'A facade that boasts three openings',
+]) {
+  check(`banned verb caught: "${bad}"`, usesBannedVerb(bad) !== null, bad);
+}
+check('a specific verb is not caught',
+  usesBannedVerb('Travertine clads the island and the stair') === null);
+check('no library verb is also banned',
+  HEADLINE_VERBS.every(v => !BANNED_HEADLINE_VERBS.includes(v.verb)
+    && !BANNED_HEADLINE_VERBS.includes(v.headlineForm)));
+check('unveil is banned but its one legitimate use is stated',
+  BANNED_HEADLINE_VERBS.includes('unveils')
+  && /first public reveal/.test(UNVEIL_EXCEPTION)
+  && BANNED_HEADLINE_VERBS_RULE.includes(UNVEIL_EXCEPTION));
+
+console.log('\n16. The verb library does not contradict the centralized banned list');
+// EDITORIAL_BANNED_PHRASES is canon (docs/17 §5). A new list that quietly
+// contradicts it is the fragmentation this whole effort is against.
+const bannedPhrases = tone.split('EDITORIAL_BANNED_PHRASES = `')[1].split('`;')[0].toLowerCase();
+// `echo` is banned there as a VERB for formal relationships — which is exactly
+// what the continuity category describes — so it is absent by decision, not by
+// oversight.
+check('"echoing" is banned by the centralized list', /"echoing"/.test(bannedPhrases));
+check('...so `echo` is absent from continuity',
+  !HEADLINE_VERBS.some(v => v.verb === 'echo'));
+check('...and the reason is written down where the category is',
+  /echo. is DELIBERATELY ABSENT/.test(readFileSync('src/lib/interview/prompts/headlineVerbs.ts', 'utf8')));
+// anchor / run / thread collide only as COLLOCATIONS. The verb survives; the
+// exact banned phrasing travels with it.
+for (const [id, colloc] of [
+  ['placement:anchor', 'anchors the space'],
+  ['continuity:thread', 'metallic thread'],
+  ['continuity:run', 'thread that runs through'],
+] as const) {
+  const verb = HEADLINE_VERBS.find(v => v.id === id)!;
+  check(`${id} carries its banned collocation "${colloc}"`,
+    (verb.bannedCollocations ?? []).includes(colloc));
+  check(`...and that collocation really is in the centralized list`,
+    bannedPhrases.includes(colloc));
+}
+check('the rendered instruction repeats the banned collocations',
+  /Even with an allowed verb, these exact phrasings are banned/.test(
+    renderVerbInstruction(selectVerbs({ spatialObject: true }))));
+
+console.log('\n17. The verb library is pure, like the rest of prompts/');
+check('no Prisma, no AI SDK in headlineVerbs.ts',
+  !/from '@\/lib\/prisma'|@anthropic-ai|from 'openai'/.test(
+    readFileSync('src/lib/interview/prompts/headlineVerbs.ts', 'utf8')));
 
 console.log(failures === 0
   ? '\nAll headline-frame checks passed.\n'
