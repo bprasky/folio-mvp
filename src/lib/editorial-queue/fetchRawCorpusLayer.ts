@@ -3,7 +3,7 @@
 // (maturity, signals, digest assembly) is pure and fixture-testable.
 
 import { prisma } from '@/lib/prisma';
-import { finishFamilyOf } from './signals';
+import { materialClassOf } from './signals';
 import type {
   DigestImage,
   DigestInterviewAnswer,
@@ -130,14 +130,14 @@ export async function fetchRawCorpusLayer(designerId: string): Promise<RawCorpus
             category: tag.product.category,
             brand: tag.product.brand,
             colorFinish: selectionFinish,
-            finishFamily: finishFamilyOf(selectionFinish, nameText),
+            finishFamily: materialClassOf(selectionFinish, nameText),
             vendorId: tag.product.vendorId,
             imageSource: tag.product.imageSource,
           });
         } else if (!existing.colorFinish && selectionFinish) {
           // A later tag's selection carries the finish the first sighting lacked.
           existing.colorFinish = selectionFinish;
-          existing.finishFamily = finishFamilyOf(
+          existing.finishFamily = materialClassOf(
             selectionFinish,
             `${tag.product.name} ${tag.product.description ?? ''}`
           );

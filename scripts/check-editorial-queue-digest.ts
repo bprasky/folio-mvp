@@ -17,7 +17,7 @@ import type {
   DigestTag,
   RawCorpusLayer,
 } from '../src/lib/editorial-queue/types';
-import { finishFamilyOf } from '../src/lib/editorial-queue/signals';
+import { materialClassOf } from '../src/lib/editorial-queue/signals';
 
 let failures = 0;
 function check(name: string, condition: boolean, context?: unknown) {
@@ -38,7 +38,7 @@ function makeProduct(id: string, name: string, opts: Partial<DigestProduct> = {}
     category: opts.category ?? null,
     brand: opts.brand ?? null,
     colorFinish: opts.colorFinish ?? null,
-    finishFamily: finishFamilyOf(opts.colorFinish ?? null, name),
+    finishFamily: materialClassOf(opts.colorFinish ?? null, name),
     vendorId: opts.vendorId ?? null,
     imageSource: opts.imageSource ?? 'VENDOR_REFERENCE',
   };

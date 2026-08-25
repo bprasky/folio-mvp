@@ -97,9 +97,10 @@ names-only string; the headline endpoint received no product data at all. So the
 the rest of the house had to answer to"* — was being asked of a writer that had never
 been told which materials exist. Closing that gap is the whole of item 2.
 
-### CORRECTION (B2) — the gate is at the wrong granularity
+### CORRECTION (B2, applied in B3) — the gate was at the wrong granularity
 
-**`finishConfirmed` is the wrong source, and the shipped frame still uses it.**
+**Applied.** The frame now resolves a material class; `finishConfirmed` no longer
+gates it. What follows is the diagnosis; the new behaviour is under *Eligibility*.
 
 Finish was chosen in B1 because `FINISH_FAMILIES` in `src/lib/naming/descriptor.ts`
 was the brand-free vocabulary that satisfied `docs/20`'s naming gate. That solved
@@ -138,35 +139,64 @@ Three consequences, all of which raise coverage:
 3. It resolves per tag, so the same class in two rooms is computable — which is the
    `classInTwoPlaces` precondition the Continuity verbs need (§7).
 
-**Not changed in this phase, by instruction.** The Material frame still gates on
-`finishConfirmed`. The change is a B3 candidate and should not land before the
-coverage numbers in §6.2 exist, since those are what size it.
+In B2 this was recorded and not acted on. B3 applies it.
 
-### Eligibility (as shipped in B1)
+### Eligibility (B3)
 
-At least one `ProductTag` on the project with `finishConfirmed = true` and a non-empty
-`finishRaw` (falling back to `finishCanonical`).
+**A material class resolves for the project.** That is the whole gate.
+`finishConfirmed` is no longer read for eligibility — it is still counted and
+logged, so one project's `[headline/regenerate] frames` line shows the old gate
+beside the new one.
 
-`finishConfirmed` is true exactly when the designer **typed or edited** the finish —
-`AdvancedTagProducts.tsx:176`, `ProductTagPicker.tsx:365`,
-`api/tag-product-to-image/route.ts:209`. The auto-tagger
-(`auto-tag/route.ts:310,408`) and the room image generator
-(`gen-image/route.ts:227`) both write proposed finishes with `finishConfirmed: false`.
-The schema says why the column exists: it *"is the only thing separating an observed
-finish from a suggested one."*
+Resolution is `materialClassOf(colorFinish, productText)` per tag, where
+`colorFinish` is `Selection.colorFinish` (falling back to `finishRaw`, then
+`finishCanonical`) and `productText` is `Product.name` + `.description` +
+`.category`.
 
-Two sources are explicitly refused:
+#### What "verified" means under the class source
 
-- **A material named in interview prose.** The interview supplies the tail, but a
-  noun a model found in a paragraph is not a structured value and cannot be traced
-  to a row.
-- **A material inferred from a product name or category.** `buildDescriptor` will
-  turn "Antolini Calacatta slab" into "a marble" — correct as swap-in text, not
-  evidence the designer specified marble.
+The frame contract requires a slot to be non-null and **verified**. Here that means
+*traceable to a designer action on a row*: the designer placed the tag — they chose
+that product for that photograph — and the class is a deterministic projection of
+that product onto a closed vocabulary.
+
+This is a different claim from B1's and weaker in one direction (the designer did
+not type the word "marble") and stronger in another (a derived class cannot be a
+brand, and cannot be a sentence typed into the wrong field). Neither source is
+inference from prose, which is the line that actually matters.
+
+#### Still refused, and one deliberate reversal
+
+**Still refused: a material named in interview prose.** The interview supplies the
+frame's tail; a noun a model found in a paragraph is not a structured value.
+
+**Reversed: a material inferred from product data.** B1 refused this because
+`buildDescriptor` would turn "Antolini Calacatta slab" into "a marble" and present
+it as though the designer had said marble. Under `materialClassOf` the emitted token
+is the class `marble` and can be nothing else — not the brand, not the collection,
+not a phrase. **What made inference unsafe was the open output, not the reading of
+the name.** Recorded in the source so it is not rediscovered as a regression.
+
+#### Look-alike guard — added beyond the B3 instruction, flagged for review
+
+`materialClassOf` substring-matches, so *"marble-look porcelain"* and *"faux
+travertine"* resolve to the material they imitate. The corpus digest tolerates that;
+a headline cannot. *"Marble runs from the kitchen to the bath"* is simply false about
+a porcelain floor, in the most visible line of the piece and under an accuracy
+contract.
+
+So a tag whose text carries a look-alike qualifier (`look`, `effect`, `inspired`,
+`style`, `faux`, `imitation`, `repro`) is dropped **on the headline path only**. It
+rejects the tag, not the class — a project with real marble elsewhere still resolves
+marble.
+
+This was not in the B3 brief. Removing `LOOKALIKE` in `headlineSlots.ts` restores
+plain `materialClassOf` behaviour.
 
 ### Ranking
 
-Candidates rank by **distinct images**, then tag count, then alphabetically. Five
+Candidates rank by **distinct rooms**, then images, then tag count, then
+alphabetically. Five
 tags of the same brass on one photograph is one decision photographed five times; the
 same brass across three rooms is the project answering to it. The alphabetical
 tiebreak makes a batch reproducible across presses.
@@ -177,16 +207,20 @@ tiebreak makes a batch reproducible across presses.
 paid for, and calls the sentence *"Folio's most valuable editorial real estate."* A
 headline is the most valuable sentence there is.
 
-The protection here is **structural, not prompted**: the slot draws from a finish
-column and the resolver never reads `Product.name` or `Product.brand` into a value,
-so a gated name has no path in and the frame needs no gate of its own.
+The protection is **total by construction**: the slot value is a member of the fixed
+38-entry `MATERIAL_CLASSES` vocabulary and nothing else. The resolver reads a product
+name but cannot emit one — `materialClassOf` returns a vocabulary term or `null`.
 
-The one hole in that argument is a designer typing a brand into the finish field
-("Calacatta Gold by Antolini"). `docs/20` is explicit that the gate is deterministic
-and never trusts a prompt, so that case is checked rather than asked for:
-`carriesProprietaryName()` refuses a finish that carries its own product's name or
-brand. Matching is token-based with a 3-character floor, so "Antolini" in the finish
-disqualifies it while a product named "Ash" does not disqualify the finish "ash".
+This is strictly stronger than B1. There, the value was `finishRaw`, free text a
+designer typed, and the hole was a designer entering a brand into the finish field
+("Calacatta Gold by Antolini"); `carriesProprietaryName()` existed to police it.
+
+`carriesProprietaryName()` is **retained as defence-in-depth and is now unreachable
+on this path**. `assertIsMaterialClass()` is what makes that claim checkable rather
+than asserted — the resolver drops any value not in the vocabulary before the
+proprietary-name check is even reached, and `check:headline-frames` §3 asserts both
+that every vocabulary member passes and that a brand string, a finish string and an
+empty string all fail.
 
 ### Integration
 
@@ -351,6 +385,15 @@ live" and "the Material frame ever fires" were separate unverified claims.
 **The percentages were not obtained.** This environment has no `DATABASE_URL`. The
 script reports and exits 2 rather than estimating — an estimated coverage figure is
 worse than none, because it gets quoted back as though it were measured.
+
+**The B3 before/after eligibility count was likewise not measured.** Row 2 is the old
+gate and row 1 the new one, so the gap between them *is* the answer; both need a
+database. What can be stated without one: the new gate is **strictly broader**. Every
+project with a confirmed finish also has a tagged product, and `materialClassOf`
+resolves from the product regardless of whether anyone typed a finish — so the new
+eligible set contains the old one, minus only tags dropped by the look-alike guard.
+Per-project, the `[headline/regenerate] frames` log now emits `confirmedFinishTags`
+beside `materialClasses`, so a single press shows the difference.
 
 The structural answers below do **not** depend on data and are settled.
 
@@ -555,35 +598,50 @@ its own decision about which list is correct.
 `check:headline-frames` asserts the copy count does not grow and fails if a new
 inline copy appears.
 
-### `echo` was excluded from Continuity — confirm or overrule
+### `echo` stays excluded — SETTLED (B3)
 
-The B2 brief lists `echo` in the Continuity category. `EDITORIAL_BANNED_PHRASES`
-bans `"echoing" (to describe formal relationships)`, and a formal relationship is
-exactly what Continuity describes. I excluded it and substituted `continue`,
-because `docs/17` §5 makes the centralized list binding and a new list quietly
-contradicting it is the fragmentation this effort exists to end.
+`echo` is excluded from Continuity; `continue` remains the substitute.
 
-Three ways to settle it, in the order I'd rank them:
+The reason: the ban in `docs/17` §5 targets **asserted resonance with nothing behind
+it** — the register where one thing "echoes" another because it sounds like criticism,
+not because anything was established. The Continuity category's `classInTwoPlaces`
+precondition arguably dissolves that objection, since a verb that only fires when the
+same material class is verified in more than one room is asserting a fact rather than
+a resonance.
 
-1. **Leave it excluded** (current state). `continue`, `run`, `carry`, `repeat` and
-   `extend` cover the category.
-2. **Narrow the banned-phrase entry** to the prose sense it was written for, and
-   admit `echoes` in headlines only. Requires editing canon, which is your call.
-3. **Admit it with a collocation ban** — the `anchor` treatment. Weaker here,
-   because the ban is on the verb's *meaning* rather than on one phrasing.
+Settled against admitting it anyway, on cost: the substitution costs little —
+`continue`, `run`, `carry`, `repeat` and `extend` cover the category — and reopening
+canon for one verb is not warranted.
 
-### Two `FINISH_FAMILIES` vocabularies exist
+**The narrow amendment stays available.** If the Continuity set proves too thin in
+use, the move is to narrow the `EDITORIAL_BANNED_PHRASES` entry to the prose sense it
+was written for and admit `echoes` in headlines only, where the two-places
+precondition already guarantees there is something behind it.
 
-`descriptor.ts` (31 entries) and `signals.ts` (38) both define `FINISH_FAMILIES`,
-and they differ in both directions — see §3's correction table. They are not
-copies that drifted; they were written for different jobs (swap-in descriptor
-versus corpus grouping) and the names collide.
+### The two `FINISH_FAMILIES` vocabularies — RESOLVED by rename (B3)
 
-Not merged in this phase. If the Material frame moves to a class source, one of
-them becomes load-bearing for reader-facing prose and the naming should stop being
-ambiguous — `signals.ts`'s list is a material-class vocabulary and `descriptor.ts`'s
-is a descriptor vocabulary. `terrazzo` exists only in `descriptor.ts` and would need
-carrying over.
+`signals.ts`'s constant is now **`MATERIAL_CLASSES`** and its resolver
+**`materialClassOf()`**. `descriptor.ts` keeps its own local `FINISH_FAMILIES`,
+untouched — it is a descriptor vocabulary for swap-in text and is correctly named for
+what it holds.
+
+Pure rename, verified: the vocabulary is identical in content and order (38 entries),
+and the old and new implementations return identical results on all 52 probe inputs.
+
+**Still open:** `terrazzo` exists only in `descriptor.ts`'s list, so the class
+vocabulary cannot currently resolve a terrazzo floor. Adding it to `MATERIAL_CLASSES`
+would change corpus-digest grouping as well as headlines, so it is not a free edit and
+was left alone.
+
+**Also left alone:** `descriptor.ts:18` carries a prose reference to the old
+`finishFamilyOf` name in a comment explaining that it is deliberately *not* coupled to
+the corpus digest. The instruction was to leave that file untouched, so the reference
+is now stale by one name. Harmless, and a one-word fix whenever that file is next
+edited.
+
+`DigestProduct.finishFamily` (`editorial-queue/types.ts`) keeps its field name — it is
+the digest's own data shape, and renaming it would ripple into grouping logic for no
+gain in this phase.
 
 ### `Product` has no `finish` field
 

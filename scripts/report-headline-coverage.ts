@@ -16,7 +16,7 @@
  */
 
 import { PrismaClient } from '@prisma/client';
-import { finishFamilyOf, FINISH_FAMILIES } from '../src/lib/editorial-queue/signals';
+import { materialClassOf, MATERIAL_CLASSES } from '../src/lib/editorial-queue/signals';
 import { loadInterviewAnswers } from '../src/lib/posting/loadInterviewAnswers';
 
 const prisma = new PrismaClient();
@@ -75,7 +75,7 @@ async function main() {
     // 1 + 3. Material CLASS, derived per tag, keyed to where it appears.
     //
     // Derivation, not a stored column: no material-class field exists anywhere in
-    // the schema. `finishFamilyOf` is reused rather than reimplemented — it is the
+    // the schema. `materialClassOf` is reused rather than reimplemented — it is the
     // corpus digest's own vocabulary and is the only class-level list in the repo.
     const classPlaces = new Map<string, { rooms: Set<string>; images: Set<string> }>();
     let confirmedHere = false;
@@ -86,7 +86,7 @@ async function main() {
           confirmedHere = true;
         }
         const haystack = `${tag.product?.name ?? ''} ${tag.product?.description ?? ''} ${tag.product?.category ?? ''}`;
-        const cls = finishFamilyOf(
+        const cls = materialClassOf(
           tag.selection?.colorFinish ?? tag.finishRaw ?? tag.finishCanonical ?? null,
           haystack,
         );
@@ -129,7 +129,7 @@ async function main() {
   console.log(`\nHEADLINE FRAME COVERAGE — ${total} published projects\n`);
 
   console.log('1. Material CLASS resolvable at project level');
-  console.log('   source: derived by finishFamilyOf() over Selection.colorFinish +');
+  console.log('   source: derived by materialClassOf() over Selection.colorFinish +');
   console.log('           Product.name/description/category. No stored class column exists.');
   row('at least one material class', withClass, total);
 
@@ -169,8 +169,8 @@ async function main() {
   for (const [cls, n] of top.slice(0, 20)) {
     console.log(`  ${cls.padEnd(20)} ${String(n).padStart(5)} project(s)   ${pct(n, total)}`);
   }
-  const unseen = FINISH_FAMILIES.filter((f) => !classHistogram.has(f));
-  console.log(`\n  vocabulary: ${FINISH_FAMILIES.length} classes, ${classHistogram.size} seen, ${unseen.length} unseen`);
+  const unseen = MATERIAL_CLASSES.filter((f) => !classHistogram.has(f));
+  console.log(`\n  vocabulary: ${MATERIAL_CLASSES.length} classes, ${classHistogram.size} seen, ${unseen.length} unseen`);
   if (unseen.length) console.log(`  unseen: ${unseen.join(', ')}`);
   console.log('');
 }

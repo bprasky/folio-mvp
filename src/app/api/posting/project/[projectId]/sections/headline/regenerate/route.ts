@@ -39,6 +39,11 @@ import {
   eligibleFrames,
   renderFrameInstruction,
 } from '@/lib/interview/prompts/headlineFrames';
+import {
+  BANNED_HEADLINE_VERBS_RULE,
+  selectVerbs,
+  renderVerbInstruction,
+} from '@/lib/interview/prompts/headlineVerbs';
 import { resolveHeadlineSlots } from '@/lib/posting/headlineSlots';
 import {
   normalizeHeadline,
@@ -86,6 +91,8 @@ ${FOLIO_TONE}
 ${HEADLINE_CRITERIA}
 
 ${EVALUATIVE_ADJECTIVES}
+
+${BANNED_HEADLINE_VERBS_RULE}
 
 Return ONLY a JSON array of headline strings. No preamble, no commentary, no code fence.
 
@@ -183,8 +190,17 @@ export async function POST(
     //
     // This surface HAS a deck (`blocks.lead.deck`), so deck-requiring frames are
     // eligible here. Three of the five title surfaces do not — see docs/23.
-    const { slots, materials } = await resolveHeadlineSlots(projectId);
+    const { slots, materials, facts, confirmedFinishTags } = await resolveHeadlineSlots(projectId);
     const frames = eligibleFrames(slots, { hasDeck: true });
+    // The verb library, gated on the same structured facts.
+    //
+    // Only what the data can decide is passed: `materialClass` and, when a class
+    // appears in more than one room or image, `classInTwoPlaces`. Everything else
+    // is ABSENT rather than false, which withholds rather than permits — so every
+    // Intervention verb stays out (no per-project new-build field exists) and so do
+    // Application, Placement, Division and Aperture, whose preconditions nothing
+    // can currently answer. See docs/23 §6.2 and §7.
+    const verbs = selectVerbs(facts);
     const materialFrame = frames.find((f) => f.id === 'material') ?? null;
     // Position IS the angle (entry 2i and 2i+1 are ANGLES[i]), so the frame
     // replaces an angle in place rather than adding a candidate.
@@ -224,6 +240,8 @@ ${feedback ? `## What the designer wants changed\n${toTypographicQuotes(feedback
 ${ANGLES.map((a, i) => `${i * 2 + 1}. and ${i * 2 + 2}. ${a.key.toUpperCase()} — ${i === framedAngleIndex ? 'write these two to the FRAME below, not freely.' : a.brief}`).join('\n')}
 ${materialFrame ? `
 ${renderFrameInstruction(materialFrame, slots)}
+` : ''}${verbs.eligible.length > 0 ? `
+${renderVerbInstruction(verbs)}
 ` : ''}
 If an angle has nothing in the interview to support it, write a weaker headline
 from a different angle rather than inventing an event. Never state something the
@@ -404,10 +422,16 @@ Return ONLY a JSON array of ${CANDIDATES_REQUESTED} strings, in that order.`;
     // ineligible frame is that the headlines are no better than before.
     console.info('[headline/regenerate] frames', {
       _cid,
-      confirmedMaterials: materials.length,
+      materialClasses: materials.length,
       topMaterial: materials[0]?.value ?? null,
+      // The B1 gate beside the B3 one, so a single project shows the difference
+      // the repoint made. The aggregate needs a database — docs/23 §6.2.
+      confirmedFinishTags,
+      classInTwoPlaces: facts.classInTwoPlaces === true,
       eligible: frames.map((f) => f.id),
       framedAngle: framedAngleIndex >= 0 ? ANGLES[framedAngleIndex].key : null,
+      verbsOffered: verbs.eligible.map((v) => v.id),
+      verbsWithheld: verbs.withheld.length,
     });
 
     console.info('[headline/regenerate] candidates', {

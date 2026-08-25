@@ -114,19 +114,21 @@ export const TAIL_RULE =
  * materials exist. That gap is the entire reason this frame is first.
  *
  * SHAPE: the material is the grammatical SUBJECT and the designer is the agent in
- * the tail. That ordering is the point. "The designer chose unlacquered brass"
- * leads with the person the byline already names; "Unlacquered brass, specified
- * before the plan" leads with the thing only this project has. The subject
- * position is the scarcest real estate in the sentence and a frame is how it stops
- * going to the wrong noun.
+ * the tail. That ordering is the point. "The designer chose travertine" leads with
+ * the person the byline already names; "Travertine, bought before the drawings"
+ * leads with the thing only this project has. The subject position is the scarcest
+ * real estate in the sentence and a frame is how it stops going to the wrong noun.
  *
- * BRAND SAFETY. The material slot draws from a finish value, never from
- * `Product.name` or `Product.brand`. That is not incidental: `docs/20` gates
- * product names out of published prose unless the exposure is paid for, and a
- * headline is the most valuable prose Folio has. Because the slot can only ever
- * hold a finish descriptor, no gated name can reach it and the frame needs no gate
- * of its own. `headlineSlots.ts` enforces the source; see its note on why it
- * reuses the gate's own vocabulary rather than keeping a second copy.
+ * BRAND SAFETY. The material slot holds a member of the fixed 38-entry
+ * `MATERIAL_CLASSES` vocabulary and nothing else. `docs/20` gates product names out
+ * of published prose unless the exposure is paid for, and a headline is the most
+ * valuable prose Folio has — so the protection here is total by construction rather
+ * than by policing: the resolver reads a product name but cannot emit one.
+ *
+ * B1 drew this slot from `ProductTag.finishRaw`, free text a designer typed, which
+ * needed `carriesProprietaryName()` to keep a brand out. That check is retained as
+ * defence-in-depth and is now unreachable on this path; `assertIsMaterialClass` in
+ * `headlineSlots.ts` is what makes the claim checkable instead of asserted.
  */
 export const MATERIAL_FRAME: HeadlineFrame = {
   id: 'material',
@@ -134,10 +136,10 @@ export const MATERIAL_FRAME: HeadlineFrame = {
   slots: [
     {
       name: 'material',
-      source: 'ProductTag.finishRaw (finishConfirmed = true)',
+      source: 'material class via materialClassOf() — a member of MATERIAL_CLASSES',
       description:
-        'The material or finish, as the designer specified it — "unlacquered brass", ' +
-        '"lime-washed plaster", "book-matched travertine". A material noun, never a ' +
+        'The material class: marble, travertine, oak, brass, concrete, plaster. The ' +
+        'noun a published design headline actually uses. Never a finish, never a ' +
         'product name and never a brand.',
     },
     {

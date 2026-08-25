@@ -56,7 +56,7 @@ export interface DigestProduct {
   category: string | null;
   brand: string | null;
   colorFinish: string | null;
-  // Normalized finish family (see FINISH_FAMILIES) — 'unlacquered brass' and
+  // Normalized material class (see MATERIAL_CLASSES) — 'unlacquered brass' and
   // 'brushed brass' both land in 'brass' so repetition can see across variants.
   finishFamily: string | null;
   vendorId: string | null;

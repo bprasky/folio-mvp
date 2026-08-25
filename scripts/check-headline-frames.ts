@@ -12,6 +12,11 @@ process.env.ANTHROPIC_API_KEY ||= 'sk-ant-placeholder-for-static-checks';
 
 import { execSync } from 'child_process';
 import { readFileSync } from 'fs';
+import { MATERIAL_CLASSES } from '../src/lib/editorial-queue/signals';
+import {
+  assertIsMaterialClass,
+  carriesProprietaryName,
+} from '../src/lib/posting/headlineSlots';
 import {
   HEADLINE_VERBS,
   BANNED_HEADLINE_VERBS,
@@ -69,31 +74,66 @@ for (const frame of HEADLINE_FRAMES) {
 }
 
 console.log('\n3. The Material frame cannot carry a brand into prose');
+// B3: the protection moved from policing free text to a closed vocabulary. The
+// slot value is a member of MATERIAL_CLASSES or the tag is dropped, so the
+// resolver reads a product name but cannot emit one.
+check('the material slot is a material CLASS, not a finish',
+  /materialClassOf/.test(MATERIAL_FRAME.slots[0].source)
+  && /MATERIAL_CLASSES/.test(MATERIAL_FRAME.slots[0].source));
+check('...and the description says class, never finish or brand',
+  /material class/i.test(MATERIAL_FRAME.slots[0].description)
+  && /never a product name and never a brand/.test(MATERIAL_FRAME.slots[0].description));
+check('every value the resolver can emit is a member of MATERIAL_CLASSES',
+  MATERIAL_CLASSES.every((c) => assertIsMaterialClass(c))
+  && !assertIsMaterialClass('Calacatta Gold by Antolini')
+  && !assertIsMaterialClass('unlacquered brass')
+  && !assertIsMaterialClass(''));
+check('...and the resolver drops anything that is not one',
+  /if \(!assertIsMaterialClass\(cls\)\) continue;/.test(slots));
+// Retained but unreachable on this path — asserted rather than assumed.
+check('carriesProprietaryName is kept as defence-in-depth',
+  /defence-in-depth/.test(slots) && typeof carriesProprietaryName === 'function');
+check('...and it still works, so the defence is real if the vocabulary ever opens',
+  carriesProprietaryName('calacatta gold by antolini', 'Calacatta Gold', 'Antolini')
+  && !carriesProprietaryName('marble', 'Calacatta Gold', 'Antolini'));
+// A marble-look porcelain tile is not marble, and a headline saying so is false in
+// the most visible line of the piece.
+check('a look-alike qualifier is refused on the headline path',
+  /LOOKALIKE/.test(slots) && /A marble-look porcelain tile is not marble/i.test(slots));
 // docs/20 gates product and brand names out of published prose unless the exposure
 // is paid for, and calls the sentence Folio's most valuable editorial real estate.
 // A headline is the most valuable sentence there is. The protection is structural:
 // the slot draws from a finish column, so there is no path for a name to arrive.
-check('the material slot draws from a finish column, not a product name',
-  /finishRaw/.test(MATERIAL_FRAME.slots[0].source)
-  && !/Product\.name|Product\.brand/.test(MATERIAL_FRAME.slots[0].source));
+check('the slot names no product column at all',
+  !/Product\.name|Product\.brand|finishRaw/.test(MATERIAL_FRAME.slots[0].source));
 check('the frame says so in words, so nobody "improves" it later',
   /never a product name and never a brand/.test(MATERIAL_FRAME.slots[0].description),
   MATERIAL_FRAME.slots[0].description);
 check('the resolver never selects Product.name or Product.brand as a value',
   !/value:\s*.*product\?\.(name|brand)/.test(slots));
-check('a finish carrying its own product or brand name is refused',
-  /carriesProprietaryName/.test(slots)
-  && /if \(carriesProprietaryName\(raw, tag\.product\?\.name, tag\.product\?\.brand\)\) continue;/.test(slots));
+check('a value carrying its own product or brand name is still refused',
+  /if \(carriesProprietaryName\(cls, tag\.product\?\.name, tag\.product\?\.brand\)\) continue;/.test(slots));
 check('...and docs/20 is cited where that decision lives',
   /docs\/20/.test(slots));
 
-console.log('\n4. Only a value a human stated is usable');
-check('eligibility requires finishConfirmed',
-  /finishConfirmed: true/.test(slots) && /finishConfirmed/.test(MATERIAL_FRAME.slots[0].source));
+console.log('\n4. Only a value traceable to a row is usable');
+// B3: the gate is "a material class resolves", not "a designer typed a finish".
+// The old gate is still READ, so one project's logs show both, but it no longer
+// decides eligibility.
+check('finishConfirmed no longer gates eligibility',
+  !/finishConfirmed/.test(MATERIAL_FRAME.slots[0].source));
+check('...but it is still counted, so the repoint is visible per project',
+  /confirmedFinishTags/.test(slots) && /confirmedFinishTags/.test(route));
 check('interview prose is explicitly refused as a slot source',
   /material named in interview PROSE/i.test(slots));
-check('a material inferred from a product name is explicitly refused',
-  /INFERRED from a product name/i.test(slots));
+// B3 REVERSES B1 here, deliberately. B1 refused inference from a product name
+// because `buildDescriptor` had an open output and could present a brand-derived
+// phrase as the designer's word. `materialClassOf` emits a member of a closed
+// 38-entry vocabulary and can emit nothing else, so the reading of the name is
+// safe. The reversal is recorded in the source rather than left to be rediscovered.
+check('inference from product data is now allowed, and the reversal is explained',
+  /B1 additionally refused a material INFERRED FROM A PRODUCT NAME/.test(slots)
+  && /the open output, not\s*\n \* the reading of the name/.test(slots));
 // An unverified value must be ABSENT, not present-and-flagged: a frame that fires
 // on a proposed finish is the fabrication the design exists to prevent.
 const unverified: ResolvedSlot[] = [
@@ -108,6 +148,17 @@ const verified: ResolvedSlot[] = [
 ];
 check('a verified slot makes it eligible',
   eligibleFrames(verified, { hasDeck: true }).map(f => f.id).join() === 'material');
+// Per-tag resolution is what makes "the same class in two rooms" answerable, and
+// that is the Continuity precondition. It is the reason this was not a vocabulary
+// swap.
+check('resolution is per tag, keyed to room and image',
+  /roomCount/.test(slots) && /imageCount/.test(slots)
+  && /at\.rooms\.add\(/.test(slots));
+check('classInTwoPlaces is derived from that and passed as a fact',
+  /facts\.classInTwoPlaces = true/.test(slots)
+  && /m\.roomCount > 1 \|\| m\.imageCount > 1/.test(slots));
+check('an unassigned image counts as its own place, so roomCount cannot inflate',
+  /image:\$\{tag\.imageId\}/.test(slots) || /`image:/.test(slots));
 
 console.log('\n5. requiresDeck keeps a two-part frame off a deckless surface');
 // Three of the five title surfaces have no deck field (audit §4). The failure this
