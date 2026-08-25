@@ -41,6 +41,7 @@ import {
 } from '@/lib/posting/headline';
 import { normalizeForVerbatimCheck } from '@/lib/posting/quoteCandidates';
 import { loadInterviewAnswers } from '@/lib/posting/loadInterviewAnswers';
+import { judgeHeadlines } from '@/lib/posting/headlineEditor';
 
 const anthropic = new Anthropic();
 
@@ -276,11 +277,71 @@ Return ONLY a JSON array of ${CANDIDATES_REQUESTED} strings, in that order.`;
       const rank = (i: number) => (i % 2) * ANGLES.length + Math.floor(i / 2);
       return rank(a.index) - rank(b.index);
     };
-    const kept = [...survivors].sort(takeOrder).slice(0, CANDIDATES_KEPT).map((s) => s.text);
+
+    // The editor's pass.
+    //
+    // Everything above this line is mechanical: it enforces length, casing, the
+    // byline's names, and shapes already known to be dead. That is a spellcheck,
+    // and it was the ONLY thing standing between the writer and the designer —
+    // so a headline nobody had thought to ban yet went straight through. Banning
+    // "the rooms argue" produced "the stone dictated" and "the room asked for";
+    // the list always loses that race.
+    //
+    // So the batch is now read by an editor before anyone sees it, judged against
+    // the same interview the writer worked from, and cut for the three things a
+    // pattern cannot see: whether it could run on somebody else's project,
+    // whether it actually happened, and whether there is any reason to read on.
+    const verdicts = await judgeHeadlines({
+      candidates: survivors.map((s) => s.text),
+      interview: answerText,
+      projectTitle: project?.title,
+      location,
+      cid: _cid,
+    });
+
+    let kept: string[];
+    let editorCut = 0;
+    if (verdicts) {
+      // The editor's order is the ranking — but a ranking alone can put six
+      // phrasings of the strongest angle at the top, which is the flat batch the
+      // angles exist to prevent. So the best surviving headline from each angle
+      // is seated first, and the remaining slots are filled by rank. Both
+      // properties hold: the pool opens with the editor's pick and still spans
+      // what the designer could be choosing between.
+      const keeps = verdicts.filter((v) => v.keep).map((v) => survivors[v.index]);
+      editorCut = verdicts.length - keeps.length;
+      const angleOf = (i: number) => Math.floor(i / 2);
+      const seenAngles = new Set<number>();
+      const bestPerAngle = keeps.filter((s) => {
+        const a = angleOf(s.index);
+        if (seenAngles.has(a)) return false;
+        seenAngles.add(a);
+        return true;
+      });
+      const rest = keeps.filter((s) => !bestPerAngle.includes(s));
+      kept = [...bestPerAngle, ...rest].slice(0, CANDIDATES_KEPT).map((s) => s.text);
+
+      const killed = verdicts.filter((v) => !v.keep);
+      if (killed.length > 0) {
+        console.info('[headline/regenerate] editor cuts', {
+          _cid,
+          cuts: killed.slice(0, 6).map((v) => ({ text: survivors[v.index].text, why: v.why })),
+        });
+      }
+    } else {
+      // No editor: ship the mechanically-clean batch in angle order rather than
+      // nothing. A judgement pass that is unavailable is a reason to lose the
+      // ranking, not a reason to lose the feature.
+      kept = [...survivors].sort(takeOrder).slice(0, CANDIDATES_KEPT).map((s) => s.text);
+    }
 
     console.info('[headline/regenerate] candidates', {
-      _cid, requested: CANDIDATES_REQUESTED, returned: raw.length, kept: kept.length, rejected: rejected.length,
-      anglesCovered: new Set(survivors.slice(0, CANDIDATES_KEPT).map(s => Math.floor(s.index / 2))).size,
+      _cid, requested: CANDIDATES_REQUESTED, returned: raw.length,
+      survivedRules: survivors.length, editorCut, edited: !!verdicts,
+      kept: kept.length, rejected: rejected.length,
+      anglesCovered: new Set(
+        survivors.filter((s) => kept.includes(s.text)).map((s) => Math.floor(s.index / 2)),
+      ).size,
     });
     if (rejected.length > 0) {
       console.warn('[headline/regenerate] rejected candidates', { _cid, rejected: rejected.slice(0, 5) });
@@ -292,7 +353,9 @@ Return ONLY a JSON array of ${CANDIDATES_REQUESTED} strings, in that order.`;
       // button the source of bad headlines it exists to prevent.
       return NextResponse.json(
         {
-          error: `None of the options came back within house style (${HEADLINE_MAX_WORDS} words max, sentence case, nothing generic). Try again, or add a note about what you want.`,
+          error: editorCut > 0
+            ? 'Every option this time was either generic enough to run on another project or not supported by the interview. Try again, or add a note about what you want the headline to be about.'
+            : `None of the options came back within house style (${HEADLINE_MAX_WORDS} words max, sentence case, nothing generic). Try again, or add a note about what you want.`,
           code: 'NO_USABLE_CANDIDATES',
         },
         { status: 422 },
