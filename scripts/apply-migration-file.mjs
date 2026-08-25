@@ -4,6 +4,7 @@
 // a ';' inside any of those is NOT a statement terminator.
 // Reports each statement's result.
 import { PrismaClient } from '@prisma/client';
+import { migrationConnectionUrl } from './lib/migrationConnection.mjs';
 import fs from 'node:fs';
 
 const path = process.argv[2];
@@ -79,7 +80,7 @@ function splitStatements(src) {
   );
 }
 
-const prisma = new PrismaClient({ datasourceUrl: process.env.DIRECT_URL || process.env.DATABASE_URL });
+const prisma = new PrismaClient({ datasourceUrl: migrationConnectionUrl({ label: 'apply-migration-file' }) });
 const stmts = splitStatements(sql);
 console.log('Parsed '+stmts.length+' statement(s).');
 

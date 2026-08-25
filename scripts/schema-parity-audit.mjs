@@ -3,6 +3,7 @@
 // READ-ONLY: only SELECTs against information_schema and pg_catalog.
 
 import { PrismaClient } from '@prisma/client';
+import { migrationConnectionUrl } from './lib/migrationConnection.mjs';
 import fs from 'node:fs';
 
 // ----------------------------------------------------------------------
@@ -151,7 +152,7 @@ const modelSet = new Set(modelNames);
 
 console.error(`parsed: models=${modelNames.length}, enums=${enumNames.length}`);
 
-const prisma = new PrismaClient({ datasourceUrl: process.env.DIRECT_URL || process.env.DATABASE_URL });
+const prisma = new PrismaClient({ datasourceUrl: migrationConnectionUrl({ label: 'schema-parity-audit', readOnly: true }) });
 
 // Bulk queries
 const tables = await prisma.$queryRawUnsafe(`

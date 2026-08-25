@@ -108,7 +108,8 @@
     "check:record-invariants:ci": "tsx scripts/check-product-record-invariants.ts --ci",
     "refresh:record-cache": "tsx scripts/refresh-product-record-cache.ts",
     "refresh:record-cache:dry": "tsx scripts/refresh-product-record-cache.ts --dry-run",
-    "check:db-pool": "tsx scripts/check-db-pool.ts"
+    "check:db-pool": "tsx scripts/check-db-pool.ts",
+    "check:migration-connection": "tsx scripts/check-migration-connection.ts"
   },
   "buildTimestamp": "2025-01-18T20:15:00Z",
   "prisma": {

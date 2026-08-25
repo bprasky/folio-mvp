@@ -1,6 +1,7 @@
 // Targeted introspection — columns/indexes/constraints for specific tables, no enum dump.
 import { PrismaClient } from '@prisma/client';
-const prisma = new PrismaClient({ datasourceUrl: process.env.DIRECT_URL || process.env.DATABASE_URL });
+import { migrationConnectionUrl } from './lib/migrationConnection.mjs';
+const prisma = new PrismaClient({ datasourceUrl: migrationConnectionUrl({ label: 'introspect-targeted', readOnly: true }) });
 
 const tables = process.argv.slice(2);
 if (!tables.length) { console.error('no tables'); process.exit(1); }
