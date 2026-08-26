@@ -73,6 +73,8 @@
 
 import { prisma } from '@/lib/prisma';
 import { MATERIAL_CLASSES, materialClassOf } from '@/lib/editorial-queue/signals';
+import { loadInterviewAnswers } from '@/lib/posting/loadInterviewAnswers';
+import { isVerbatimSpan } from '@/lib/posting/quoteCandidates';
 import type { ResolvedSlot } from '@/lib/interview/prompts/headlineFrames';
 import type { VerbFacts } from '@/lib/interview/prompts/headlineVerbs';
 
@@ -145,8 +147,105 @@ export function assertIsMaterialClass(value: string): boolean {
   return (MATERIAL_CLASSES as readonly string[]).includes(value);
 }
 
+
+// ── Borrowed fragment ────────────────────────────────────────────────────────
+//
+// A headline-scale span of the designer's own speech. `extractQuoteCandidates`
+// is the pull-quote extractor and is deliberately NOT reused here: its bounds are
+// 6-45 words, tuned for a display line, and a headline is 4-10 words total. A
+// fragment has to leave room for the sentence around it.
+//
+// The span is SELECTED, never written — the same posture the pull quote takes.
+// What is resolved here is a concrete candidate so the frame can state a value
+// rather than describe one; the route still re-checks whatever the model actually
+// quotes with `isVerbatimSpan`, because a model handed a quote may quote something
+// else.
+
+const FRAGMENT_MIN_WORDS = 3;
+const FRAGMENT_MAX_WORDS = 9;
+
+/**
+ * Terms that make a fragment worth borrowing.
+ *
+ * Deliberately the SAME vocabulary EVALUATIVE_ADJECTIVES bans us from using. That
+ * is the device: the words we may not write are exactly the words worth quoting,
+ * because in quotation marks they stop being our assessment and become a fact
+ * about what a named person said.
+ */
+const WORTH_BORROWING = /\b(hated|loved|terrible|ugliest|worst|best|awful|refused|insisted|begged|fought|never|always|impossible|ridiculous|obsessed|terrifying|stunning|gorgeous|wrong|mistake|scared|nervous)\b/i;
+
+/** Sentence-ish spans of a single answer, kept contiguous so they stay verifiable. */
+function fragmentSpans(answer: string): string[] {
+  return answer
+    .split(/(?<=[.!?])\s+|\s+[\u2014-]\s+/)
+    .map((x) => x.trim().replace(/^["\u201C]+|["\u201D]+$/g, '').trim())
+    .filter((x) => {
+      const n = x.split(/\s+/).filter(Boolean).length;
+      return n >= FRAGMENT_MIN_WORDS && n <= FRAGMENT_MAX_WORDS;
+    });
+}
+
+export interface FragmentCandidate {
+  text: string;
+  isFollowUp: boolean;
+  wordCount: number;
+  /** Whether it carries the evaluative language the frame exists to borrow. */
+  worthBorrowing: boolean;
+}
+
+/**
+ * Every headline-scale verbatim span, best first.
+ *
+ * Ordered: worth-borrowing before plain, follow-up before opener (follow-ups are
+ * the answers prompted for anecdote), then shorter, then alphabetically. The last
+ * key is what makes a batch reproducible across presses.
+ */
+export function resolveFragmentCandidates(
+  answers: Array<{ answer: string; isFollowUp: boolean }>,
+): FragmentCandidate[] {
+  const seen = new Set<string>();
+  const out: FragmentCandidate[] = [];
+  for (const a of answers) {
+    for (const text of fragmentSpans(a.answer)) {
+      const key = text.toLowerCase();
+      if (seen.has(key)) continue;
+      seen.add(key);
+      out.push({
+        text,
+        isFollowUp: a.isFollowUp,
+        wordCount: text.split(/\s+/).filter(Boolean).length,
+        worthBorrowing: WORTH_BORROWING.test(text),
+      });
+    }
+  }
+  return out.sort(
+    (a, b) =>
+      Number(b.worthBorrowing) - Number(a.worthBorrowing) ||
+      Number(b.isFollowUp) - Number(a.isFollowUp) ||
+      a.wordCount - b.wordCount ||
+      a.text.localeCompare(b.text),
+  );
+}
+
+/**
+ * Whether a headline's quoted span really is the designer's.
+ *
+ * The route's gate on borrowed-fragment output. Everything inside double quotes
+ * must appear verbatim in some answer; a headline quoting nothing fails too, since
+ * the frame's whole claim is that someone said this.
+ */
+export function borrowedFragmentIsVerbatim(headline: string, answers: string[]): boolean {
+  const quoted = Array.from(headline.matchAll(/[\u201C"]([^\u201D"]+)[\u201D"]/g)).map((m) => m[1].trim());
+  if (quoted.length === 0) return false;
+  return quoted.every((q) => isVerbatimSpan(q, answers));
+}
+
 export interface ResolvedHeadlineSlots {
   slots: ResolvedSlot[];
+  /** Headline-scale verbatim spans, best first. Empty when none qualify. */
+  fragments: FragmentCandidate[];
+  /** Every answer, for the route's post-generation verbatim check. */
+  answerTexts: string[];
   /** Every material class on the project, most-established first. */
   materials: MaterialCandidate[];
   /** Structured facts for verb eligibility. Absent key = unknown, deliberately. */
@@ -244,7 +343,12 @@ export async function resolveMaterialCandidates(projectId: string): Promise<{
  * can support, and the verb library treats unknown and false very differently.
  */
 export async function resolveHeadlineSlots(projectId: string): Promise<ResolvedHeadlineSlots> {
-  const { materials, confirmedFinishTags } = await resolveMaterialCandidates(projectId);
+  const [{ materials, confirmedFinishTags }, answers] = await Promise.all([
+    resolveMaterialCandidates(projectId),
+    loadInterviewAnswers(projectId),
+  ]);
+  const fragments = resolveFragmentCandidates(answers);
+  const answerTexts = answers.map((a) => a.answer);
   const slots: ResolvedSlot[] = [];
 
   if (materials.length > 0) {
@@ -257,11 +361,32 @@ export async function resolveHeadlineSlots(projectId: string): Promise<ResolvedH
     });
   }
 
+  if (fragments.length > 0) {
+    slots.push({
+      name: 'fragment',
+      value: fragments[0].text,
+      source: `verbatim span of ${fragments[0].isFollowUp ? 'a follow-up' : 'an interview'} answer`,
+      verified: true,
+    });
+  }
+
+  // `agent` is NEVER resolved, and this is deliberate rather than unfinished.
+  //
+  // The frame contract requires a required slot to be non-null and VERIFIED, and
+  // there is no name-verification predicate in the schema — `User.name` is a plain
+  // String, and nothing records that anyone confirmed it (audit §3.A). Resolving it
+  // anyway with `verified: true` would be the exact lie the contract exists to
+  // prevent, and it would make the Agent-verb-object frame eligible on a surface
+  // where `headlineIssues` kills every output it can produce (NAMES_PEOPLE).
+  //
+  // So it stays absent and the frame stays ineligible, visibly, for a reason
+  // written down. See AGENT_VERB_OBJECT_FRAME.
+
   // Only what the data can decide. `classInTwoPlaces` is the Continuity
   // precondition, and per-tag resolution is what makes it answerable at all.
   const facts: VerbFacts = {};
   if (materials.length > 0) facts.materialClass = true;
   if (materials.some((m) => m.roomCount > 1 || m.imageCount > 1)) facts.classInTwoPlaces = true;
 
-  return { slots, materials, facts, confirmedFinishTags };
+  return { slots, materials, facts, confirmedFinishTags, fragments, answerTexts };
 }

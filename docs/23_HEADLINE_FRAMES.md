@@ -19,7 +19,9 @@ deterministic slot-templates over numeric facts and produces specific,
 non-interchangeable lines; gallery chapter titles and Instagram campaign post titles
 do the same. Reader-facing headlines are the one surface where it was never applied.
 
-**Phase B1 scope: one frame, one live-violation fix, one measurement.**
+**Three arrangements are implemented over the same six variables** (agent, verb,
+object, instrument, borrowed fragment, locative tail). Two fire; one is declared and
+correctly ineligible — see §3b.
 
 ---
 
@@ -235,6 +237,91 @@ free brief, and the batch is what it was.
 
 ---
 
+## 3a. The Borrowed-fragment frame
+
+A verbatim fragment of the designer's speech carries the evaluative language;
+everything around it stays factual.
+
+> "It was the ugliest room in the house" — and the beam stayed
+
+### Why this is not a loophole in the tail rule
+
+`TAIL_RULE` and `EVALUATIVE_ADJECTIVES` ban evaluation because an assessment cannot
+be checked and inflates by default. **A quoted evaluation is a different object.**
+The claim is not *this house is remarkable*; it is *the designer said this house is
+remarkable* — and that is a fact, checkable against the interview and wrong if they
+did not say it.
+
+`docs/17` §5 states the same rule from the other side: pull quotes are the
+contributor's actual words, verbatim, never polished. The evaluation is admissible
+precisely because it belongs to a named person rather than to us.
+
+`hasEvaluativeTail` is therefore **quote-aware**: it strips double-quoted spans
+before checking. Only double quotes — the apostrophe is the straight `'` per
+`JSON_PROSE_QUOTING_RULE`, so treating single quotes as speech would swallow
+*didn't* and blind the check to everything after it. An unclosed quote takes the
+rest of the string, which fails safe: it can only under-report, never flag a quoted
+word as an authored one.
+
+**Our own evaluation is still caught alongside a quote.** `"We fought for it" and
+the result is stunning` fails, which is the property that stops the frame becoming a
+way in for the register it exists to borrow.
+
+### Eligibility and selection
+
+At least one headline-scale verbatim span. `extractQuoteCandidates` — the pull-quote
+extractor — is deliberately **not** reused: its bounds are 6–45 words, tuned for a
+display line, and a headline is 4–10 words *in total*. A fragment has to leave room
+for the sentence around it, so `resolveFragmentCandidates` uses 3–9.
+
+Ranking: worth-borrowing first, then follow-up answers, then shorter, then
+alphabetically. The last key makes a batch reproducible across presses.
+
+`WORTH_BORROWING` is deliberately **the same vocabulary `EVALUATIVE_ADJECTIVES`
+bans us from using**. That is the device: the words we may not write are exactly the
+words worth quoting, because in quotation marks they stop being our assessment.
+
+### The verbatim gate
+
+`borrowedFragmentIsVerbatim` runs on **every candidate that contains quotation
+marks**, not only the framed angle. The model does not always keep to the position
+it was asked for, and a headline is the worst place in the piece to attribute words
+to a designer they did not use. Rejections log as `QUOTE_UNVERIFIED`.
+
+The fragment is **selected, never written** — the pull-quote posture. A headline is
+our sentence, so a designer may type their own; a borrowed fragment is a claim about
+what they said out loud, so it can only be chosen.
+
+---
+
+## 3b. The Agent-verb-object frame — declared, and never eligible
+
+The corpus arrangement: a named studio as subject, a physical verb, the object, an
+instrument tail. *"Studio X clads a Brooklyn loft in white oak."*
+
+**It cannot fire on the article surface, and that is correct rather than a gap.**
+Three independent blockers, none removable in this phase:
+
+| # | blocker | evidence |
+|---|---|---|
+| 1 | **`agent` cannot be verified.** The contract requires a required slot to be non-null *and verified*. There is no name-verification predicate anywhere in the schema — `User.name` is a plain `String`. | audit §3.A |
+| 2 | **Naming the designer is banned here.** `HEADLINE_CRITERIA` states it; `headlineIssues` enforces it as `NAMES_PEOPLE`, at write in the regenerate route and again on read in `buildRoomTiles`. Folio sets the byline directly under the headline. | `headline.ts:207` |
+| 3 | **`namedSurface` is unknown.** Rooms are structured; surfaces are not. | docs/23 §7 |
+
+`headlineSlots.ts` therefore **never resolves `agent`**. Resolving it with
+`verified: true` would be the exact lie the contract exists to prevent, and would
+make the frame eligible on a surface where every output it can produce is killed by
+`NAMES_PEOPLE` — an eligible frame yielding nothing, ending in
+`NO_USABLE_CANDIDATES`.
+
+It is declared rather than omitted because **an absent frame gets rediscovered and
+re-proposed, while an ineligible one carries its reasons with it.** Blocker 2 in
+particular is a decision the user owns, not a limitation to engineer around: the
+frame would work on a surface with no byline under the headline, which is a product
+question.
+
+---
+
 ## 4. The tail rule
 
 > The final clause must state a fact — who it was for, what it replaced, where it came
@@ -352,10 +439,22 @@ invented corpus measures agreement with whoever invented it.
 | baseline (pre-frame) | — | **not obtained** | — | — |
 | post-frame | — | **not obtained** | — | — |
 
-**Neither number was obtained.** The authoring environment has no
-`ANTHROPIC_API_KEY` and no `DATABASE_URL`, so neither the judge call nor a live
-generation can run, and the held-out corpus does not exist yet. The harness is
-complete and runs given a key and a corpus:
+**Neither number was obtained, through B6.** Every authoring session so far has had
+no `ANTHROPIC_API_KEY` and no `DATABASE_URL`, so neither the judge call nor a live
+generation can run, and the held-out corpus does not exist yet. B6 asked for the
+baseline explicitly; it is still blocked on the same two credentials, and on the
+corpus, which must be human-written and must not be invented.
+
+To run it you need three things, and the corpus is the one nobody can supply from
+inside the repo:
+
+1. `ANTHROPIC_API_KEY` — the judge is a model call.
+2. A generated set — press New options on ~20 projects, or read
+   `blocks.lead.kickerAlternatives` off published posts.
+3. `docs/audits/headline-discriminator-corpus.json` — human-written headlines from
+   real design magazines. See "Why the corpus is not our own published headlines".
+
+The harness is complete and runs given all three:
 
 ```
 npx tsx scripts/check-headline-discriminator.ts --generated <batch.json>
@@ -364,6 +463,27 @@ npx tsx scripts/check-headline-discriminator.ts --generated <batch.json>
 No CI floor, per scope. One run is a sample and the judge is a model; a floor set
 from a single number would fail honest work. Record runs in this table until there is
 enough history to know the spread.
+
+### 6.1b Frame selection on real projects — `npm run report:headline-samples`
+
+The B6 deliverable: for each published project, which frames are eligible, which
+angle each takes, and the slot values it draws from — computed by the same functions
+the route calls (`resolveHeadlineSlots`, `eligibleFrames`, `selectVerbs`), so the
+eligibility reported is the eligibility production sees.
+
+**Not obtained — no `DATABASE_URL`.** The script refuses rather than inventing
+projects.
+
+**It does not generate headlines, deliberately.** The writer prompt is assembled
+inside the route handler and `check:regenerate-surfaces` pins seven assertions to
+its text living there. Copying it into a script would create the second copy this
+whole effort exists to prevent; extracting it would mean rewriting that guard, in
+service of a script that cannot be run here anyway. So the model call stays where it
+is. Everything the deliverable asks for *except* the generated line is decided
+before the model is called — which is the design — and all of it is in this report.
+
+To see actual headlines: press **New options**, and read `[headline/regenerate]
+frames` for what fired.
 
 ### 6.2 Coverage — how often a frame can fire
 

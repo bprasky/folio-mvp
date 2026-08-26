@@ -165,8 +165,142 @@ export const MATERIAL_FRAME: HeadlineFrame = {
     'decision but never as the subject of the sentence, and never by name.',
 };
 
-/** Every frame. Built to hold five or more; one is implemented. */
-export const HEADLINE_FRAMES: readonly HeadlineFrame[] = [MATERIAL_FRAME];
+/**
+ * The Agent-verb-object frame.
+ *
+ * The corpus arrangement: a named studio as subject, a physical verb, the thing
+ * acted on, and an instrument tail. "Studio X clads a Brooklyn loft in white oak."
+ *
+ * IT WILL NOT FIRE ON THE ARTICLE SURFACE, and that is correct rather than a gap to
+ * close. Three independent blockers, none of which this phase may remove:
+ *
+ *   1. `agent` cannot be VERIFIED. The frame contract requires a required slot to be
+ *      non-null and verified, and there is no name-verification predicate anywhere
+ *      in the schema — `User.name` is a plain String (audit §3.A). No row says this
+ *      name was confirmed by anyone.
+ *   2. Naming the designer is BANNED on the article surface. `HEADLINE_CRITERIA`
+ *      states it and `headlineIssues` enforces it as NAMES_PEOPLE, at write in the
+ *      regenerate route and again on read in `buildRoomTiles`. The reason is
+ *      structural: Folio sets the byline directly under the headline, so a headline
+ *      spending its one line on the name says nothing the reader is not already
+ *      being told.
+ *   3. `namedSurface` is unknown. Rooms are structured, surfaces are not.
+ *
+ * So it is declared, and it withholds — the same posture the Intervention verbs
+ * take against the missing new-build field. A frame that is ineligible for a reason
+ * written down is worth more than a frame that is absent: absence gets rediscovered
+ * and re-proposed, and the second blocker in particular is a decision the user owns
+ * rather than a limitation to engineer around.
+ *
+ * Where it WOULD work is a surface with no byline under the headline. That is a
+ * product question, not a code one, and it is not decided here.
+ */
+export const AGENT_VERB_OBJECT_FRAME: HeadlineFrame = {
+  id: 'agent-verb-object',
+  name: 'Agent, verb, object',
+  slots: [
+    {
+      name: 'agent',
+      source: 'User.name / Organization.name — NO verification predicate exists',
+      description:
+        'The studio or designer, as the credited party. Named, not described.',
+    },
+    {
+      name: 'verb',
+      source: 'headlineVerbs — an eligible verb, preconditions already satisfied',
+      description:
+        'A physical action from the eligible list. Never a generic: no features, ' +
+        'showcases, elevates, transforms.',
+    },
+    {
+      name: 'object',
+      source: 'Room.name, or a named surface',
+      description: 'The thing acted on — the room, the facade, the island, the stair.',
+    },
+    {
+      name: 'instrument',
+      source: 'the interview, or a resolved material class',
+      description: 'What it was done WITH, stated as a fact.',
+    },
+  ],
+  requiredFields: ['agent', 'verb', 'object'],
+  requiresDeck: false,
+  // UNSOURCED, and unusually hard to source: Folio has never published a headline
+  // in this frame, because the naming ban predates the frame library.
+  exemplars: [],
+  tailRule: TAIL_RULE,
+  shape:
+    'Open on {agent} as the subject. Then {verb} — use the verb exactly as given, ' +
+    'do not substitute a synonym. Then {object}, the thing acted on. Close on ' +
+    '{instrument}: what it was done with, as a fact.',
+};
+
+/**
+ * The Borrowed-fragment frame.
+ *
+ * A verbatim fragment of the designer's own speech carries the evaluative language;
+ * everything around it stays factual. "‘We had to fight for that window’ — and the
+ * plan changed twice."
+ *
+ * THIS IS THE ONE THAT FITS THE CANON EXACTLY, and the reason is worth stating
+ * because it looks at first like a loophole. TAIL_RULE and EVALUATIVE_ADJECTIVES ban
+ * evaluation because an assessment cannot be checked and inflates by default. A
+ * quoted evaluation is a different object: the claim is not "this house is
+ * remarkable", it is "the designer said this house is remarkable", and THAT is a
+ * fact — checkable against the interview, and wrong if they did not say it.
+ *
+ * `docs/17` §5 puts the same rule the other way round: pull quotes are the
+ * contributor's actual words, verbatim, never polished. The evaluation is allowed
+ * precisely because it belongs to a named person rather than to us.
+ *
+ * Two properties this depends on, both already built:
+ *   - The fragment must be VERBATIM. `isVerbatimSpan` in `posting/quoteCandidates`
+ *     is the check, and it is the same one the pull-quote pipeline uses.
+ *   - `hasEvaluativeTail` must not kill the frame's own output. It is quote-aware
+ *     for exactly this reason — see its note.
+ *
+ * The fragment is SELECTED, never written. That is the pull-quote posture: a
+ * headline is our sentence so a designer may type their own, but a borrowed
+ * fragment is a claim about what they said out loud, so it can only be chosen.
+ */
+export const BORROWED_FRAGMENT_FRAME: HeadlineFrame = {
+  id: 'borrowed-fragment',
+  name: 'Borrowed fragment',
+  slots: [
+    {
+      name: 'fragment',
+      source: 'a verbatim span of an interview answer, checked by isVerbatimSpan',
+      description:
+        'The designer\'s own words, quoted exactly. This is the only place ' +
+        'evaluative language is permitted, because it belongs to them. Do not ' +
+        'paraphrase, do not tidy, do not extend it by a single word.',
+    },
+    {
+      name: 'context',
+      source: 'the interview',
+      description:
+        'The factual remainder: what happened around the thing they said. Plain, ' +
+        'checkable, and carrying no assessment of its own.',
+    },
+  ],
+  requiredFields: ['fragment'],
+  requiresDeck: false,
+  // UNSOURCED. Must be read off real published articles, never invented.
+  exemplars: [],
+  tailRule: TAIL_RULE,
+  shape:
+    'Quote {fragment} exactly as the designer said it, inside quotation marks. ' +
+    'Everything outside the quotation marks is {context} and must be plain fact \u2014 ' +
+    'the evaluation is theirs, and borrowing it does not license any of your own. ' +
+    'Do not introduce the quote with a verb of speaking; let it sit in the sentence.',
+};
+
+/** Every frame. Built to hold five or more; three are implemented. */
+export const HEADLINE_FRAMES: readonly HeadlineFrame[] = [
+  MATERIAL_FRAME,
+  BORROWED_FRAGMENT_FRAME,
+  AGENT_VERB_OBJECT_FRAME,
+];
 
 /**
  * A slot value that survived resolution: a real value from a real row.
@@ -272,6 +406,17 @@ const EVALUATIVE_IDIOMS = [
 ];
 
 /**
+ * Remove double-quoted spans, so an evaluation inside a quotation is not read as
+ * ours. An unclosed quote takes the rest of the string, which is the safe direction:
+ * it can only under-report, never flag a quoted word as an authored one.
+ */
+export function stripQuotedSpans(text: string): string {
+  return text
+    .replace(/\u201C[^\u201D]*(\u201D|$)/g, ' ')
+    .replace(/"[^"]*("|$)/g, ' ');
+}
+
+/**
  * Whether a headline ends on an evaluation rather than a fact.
  *
  * Pure and deterministic, so the tail rule is checkable rather than merely stated.
@@ -283,11 +428,22 @@ const EVALUATIVE_IDIOMS = [
  * §Blocked.
  */
 export function hasEvaluativeTail(text: string): boolean {
-  const lower = ` ${text.toLowerCase().replace(/[^a-z\s-]/g, ' ').replace(/\s+/g, ' ')} `;
+  // Quoted spans are exempt, and this is the Borrowed-fragment frame's premise
+  // rather than a loophole in it. "This house is remarkable" is an assessment we
+  // cannot check. "The designer said this house is remarkable" is a fact, wrong if
+  // they did not say it — and `isVerbatimSpan` is what makes it checkable. The
+  // evaluation belongs to a named person, which is the distinction docs/17 §5
+  // draws when it requires pull quotes to be the contributor's actual words.
+  //
+  // Only DOUBLE quotes are stripped. The apostrophe is the straight ' per
+  // JSON_PROSE_QUOTING_RULE, so treating single quotes as speech would swallow
+  // "didn't" and blind the check to everything after it.
+  const unquoted = stripQuotedSpans(text);
+  const lower = ` ${unquoted.toLowerCase().replace(/[^a-z\s-]/g, ' ').replace(/\s+/g, ' ')} `;
   for (const term of EVALUATIVE_TERMS) {
     if (lower.includes(` ${term} `)) return true;
   }
-  return EVALUATIVE_IDIOMS.some((re) => re.test(text));
+  return EVALUATIVE_IDIOMS.some((re) => re.test(unquoted));
 }
 
 /**

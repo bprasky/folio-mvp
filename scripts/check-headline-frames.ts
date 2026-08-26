@@ -13,9 +13,12 @@ process.env.ANTHROPIC_API_KEY ||= 'sk-ant-placeholder-for-static-checks';
 import { execSync } from 'child_process';
 import { readFileSync } from 'fs';
 import { MATERIAL_CLASSES } from '../src/lib/editorial-queue/signals';
+import { headlineIssues } from '../src/lib/posting/headline';
 import {
   assertIsMaterialClass,
   carriesProprietaryName,
+  resolveFragmentCandidates,
+  borrowedFragmentIsVerbatim,
 } from '../src/lib/posting/headlineSlots';
 import {
   HEADLINE_VERBS,
@@ -30,6 +33,9 @@ import {
   assertVerbLibraryIntegrity,
 } from '../src/lib/interview/prompts/headlineVerbs';
 import {
+  BORROWED_FRAGMENT_FRAME,
+  AGENT_VERB_OBJECT_FRAME,
+  stripQuotedSpans,
   HEADLINE_FRAMES,
   MATERIAL_FRAME,
   TAIL_RULE,
@@ -404,6 +410,86 @@ console.log('\n17. The verb library is pure, like the rest of prompts/');
 check('no Prisma, no AI SDK in headlineVerbs.ts',
   !/from '@\/lib\/prisma'|@anthropic-ai|from 'openai'/.test(
     readFileSync('src/lib/interview/prompts/headlineVerbs.ts', 'utf8')));
+
+console.log('\n18. Three arrangements over the same six variables');
+check('all three frames are declared',
+  HEADLINE_FRAMES.map(f => f.id).sort().join() === 'agent-verb-object,borrowed-fragment,material');
+check('each names the angle it replaces in the route',
+  /material.*first-move/s.test(route) && /borrowed-fragment.*client/s.test(route));
+// Each frame takes the angle that was already asking for its material rather than
+// adding a candidate, so counts and the position-is-angle invariant are untouched.
+check('frames replace angles in place, they do not add candidates',
+  /const CANDIDATES_REQUESTED = ANGLES\.length \* 2/.test(route)
+  && /framesByAngle/.test(route));
+
+console.log('\n19. Borrowed fragment — the evaluation belongs to a named person');
+check('it requires only a verbatim fragment',
+  BORROWED_FRAGMENT_FRAME.requiredFields.join() === 'fragment');
+check('it needs no deck, so it works on every surface',
+  BORROWED_FRAGMENT_FRAME.requiresDeck === false);
+check('the frame forbids paraphrasing the quote',
+  /do not tidy, do not extend it by a single word/i.test(BORROWED_FRAGMENT_FRAME.slots[0].description));
+check('...and confines evaluation to inside the quotation marks',
+  /the evaluation is theirs, and borrowing it does not license any of your own/.test(BORROWED_FRAGMENT_FRAME.shape));
+// The device only works if the tail rule stops treating a quoted evaluation as ours.
+check('a quoted evaluation is permitted',
+  !hasEvaluativeTail('“It was the ugliest room in the house” — and the beam stayed')
+  && !hasEvaluativeTail('“Stunning” was the client’s word, not the brief'));
+check('...and our OWN evaluation is still caught alongside a quote',
+  hasEvaluativeTail('“We fought for it” and the result is stunning'));
+check('an apostrophe is not mistaken for a quotation',
+  !hasEvaluativeTail('The clients didn’t want flash, and the plaster stayed')
+  && stripQuotedSpans("didn't and won't").includes("didn't"));
+check('an unclosed quote fails safe — it can only under-report',
+  stripQuotedSpans('“unclosed forever').trim() === '');
+// A fragment that was not said is the worst thing a headline can contain.
+const SRC = ['It was the ugliest room in the house. We kept the beam anyway.'];
+check('a verbatim quote passes',
+  borrowedFragmentIsVerbatim('“It was the ugliest room in the house” — and the beam stayed', SRC));
+check('one swapped word fails',
+  !borrowedFragmentIsVerbatim('“It was the prettiest room in the house” — and the beam stayed', SRC));
+check('a headline quoting nothing fails, since the frame claims someone said it',
+  !borrowedFragmentIsVerbatim('No quote at all, just a claim', SRC));
+check('the gate runs on EVERY candidate, not only the framed angle',
+  /Applied to EVERY candidate, not only the borrowed-fragment angle/.test(route)
+  && /QUOTE_UNVERIFIED/.test(route));
+// Selected, never written — the pull-quote posture.
+const frags = resolveFragmentCandidates([
+  { answer: 'The clients hated the original kitchen. We gutted it in a week.', isFollowUp: true },
+  { answer: 'We used travertine throughout the ground floor for continuity.', isFollowUp: false },
+]);
+check('fragments are headline-scale, not pull-quote-scale',
+  frags.length > 0 && frags.every(f => f.wordCount >= 3 && f.wordCount <= 9));
+check('the borrowable one ranks first',
+  frags[0].worthBorrowing === true);
+check('ordering is deterministic, so a batch is reproducible',
+  JSON.stringify(resolveFragmentCandidates([
+    { answer: 'The clients hated the original kitchen. We gutted it in a week.', isFollowUp: true },
+    { answer: 'We used travertine throughout the ground floor for continuity.', isFollowUp: false },
+  ])) === JSON.stringify(frags));
+
+console.log('\n20. Agent-verb-object — declared, and correctly never eligible');
+// Three independent blockers, none removable in this phase. Declared anyway,
+// because an absent frame gets rediscovered and re-proposed while an ineligible one
+// carries its reasons with it.
+check('the frame is declared',
+  AGENT_VERB_OBJECT_FRAME.requiredFields.join() === 'agent,verb,object');
+check('agent is never resolved, because no name-verification predicate exists',
+  /`agent` is NEVER resolved/.test(slots) && /no name-verification predicate/.test(slots));
+check('...so the frame is ineligible even with every other slot verified',
+  eligibleFrames([
+    { name: 'verb', value: 'clads', source: 'headlineVerbs', verified: true },
+    { name: 'object', value: 'the island', source: 'Room.name', verified: true },
+    { name: 'material', value: 'oak', source: 'x', verified: true },
+    { name: 'fragment', value: 'we fought for it', source: 'x', verified: true },
+  ], { hasDeck: true }).every(f => f.id !== 'agent-verb-object'));
+check('naming the designer is banned on this surface anyway',
+  headlineIssues('Matto clads the island in oak', { designerName: 'Diano Matto', orgName: null })
+    .some(i => i.code === 'NAMES_PEOPLE'));
+check('all three blockers are written down where the frame is',
+  /no name-verification predicate/i.test(frames)
+  && /NAMES_PEOPLE/.test(frames)
+  && /`namedSurface` is unknown/.test(frames));
 
 console.log(failures === 0
   ? '\nAll headline-frame checks passed.\n'

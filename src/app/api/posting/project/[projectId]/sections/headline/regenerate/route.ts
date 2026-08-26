@@ -44,7 +44,7 @@ import {
   selectVerbs,
   renderVerbInstruction,
 } from '@/lib/interview/prompts/headlineVerbs';
-import { resolveHeadlineSlots } from '@/lib/posting/headlineSlots';
+import { resolveHeadlineSlots, borrowedFragmentIsVerbatim } from '@/lib/posting/headlineSlots';
 import {
   normalizeHeadline,
   headlineIssues,
@@ -190,7 +190,8 @@ export async function POST(
     //
     // This surface HAS a deck (`blocks.lead.deck`), so deck-requiring frames are
     // eligible here. Three of the five title surfaces do not — see docs/23.
-    const { slots, materials, facts, confirmedFinishTags } = await resolveHeadlineSlots(projectId);
+    const { slots, materials, facts, confirmedFinishTags, fragments, answerTexts } =
+      await resolveHeadlineSlots(projectId);
     const frames = eligibleFrames(slots, { hasDeck: true });
     // The verb library, gated on the same structured facts.
     //
@@ -202,8 +203,15 @@ export async function POST(
     // can currently answer. See docs/23 §6.2 and §7.
     const verbs = selectVerbs(facts);
     const materialFrame = frames.find((f) => f.id === 'material') ?? null;
-    // Position IS the angle (entry 2i and 2i+1 are ANGLES[i]), so the frame
-    // replaces an angle in place rather than adding a candidate.
+    const fragmentFrame = frames.find((f) => f.id === 'borrowed-fragment') ?? null;
+    // Position IS the angle (entry 2i and 2i+1 are ANGLES[i]), so a frame replaces
+    // an angle in place rather than adding a candidate. Each frame takes the angle
+    // that was already asking for its material: FIRST-MOVE wanted the material the
+    // house answered to, and CLIENT wanted what the client said "in their terms",
+    // which is a borrowed fragment with the quotation marks left off.
+    const framesByAngle = new Map<number, typeof materialFrame>();
+    if (materialFrame) framesByAngle.set(ANGLES.findIndex((a) => a.key === 'first-move'), materialFrame);
+    if (fragmentFrame) framesByAngle.set(ANGLES.findIndex((a) => a.key === 'client'), fragmentFrame);
     const framedAngleIndex = materialFrame ? ANGLES.findIndex((a) => a.key === 'first-move') : -1;
 
     const userPrompt = `Write ${CANDIDATES_REQUESTED} headline options for this article — ${ANGLES.length} angles, two per angle.
@@ -219,7 +227,13 @@ ${project?.title ? `Working title: ${project.title}` : ''}
 ${location ? `Location: ${location}` : ''}
 ${names.orgName ? `Credited to: ${names.orgName}` : names.designerName ? `Credited to: ${names.designerName}` : ''} — do NOT name them in the headline
 Rooms covered: ${chapterTitles.length > 0 ? chapterTitles.join(', ') : 'unspecified'}
-${materials.length > 0 ? `
+${fragmentFrame && fragments.length > 0 ? `
+## What the designer said, word for word — QUOTABLE
+Any of these may be quoted in a headline, exactly as written. They are the only
+spans you may put inside quotation marks. Do not shorten, extend, tidy or re-punctuate
+one, and never quote anything that is not on this list.
+${fragments.slice(0, 10).map((f) => `- \u201C${f.text}\u201D`).join('\n')}
+` : ''}${materials.length > 0 ? `
 ## Materials the designer specified — VERIFIED
 Each of these was typed by the designer onto a tagged product, not inferred from a
 photograph and not read out of the interview. You may state these as fact. Do not
@@ -237,10 +251,10 @@ ${currentKicker ? `\nCurrent headline — do NOT repeat or paraphrase: ${toTypog
 
 ${feedback ? `## What the designer wants changed\n${toTypographicQuotes(feedback)}\n` : ''}
 ## Write two for each of these angles, in this order
-${ANGLES.map((a, i) => `${i * 2 + 1}. and ${i * 2 + 2}. ${a.key.toUpperCase()} — ${i === framedAngleIndex ? 'write these two to the FRAME below, not freely.' : a.brief}`).join('\n')}
-${materialFrame ? `
-${renderFrameInstruction(materialFrame, slots)}
-` : ''}${verbs.eligible.length > 0 ? `
+${ANGLES.map((a, i) => `${i * 2 + 1}. and ${i * 2 + 2}. ${a.key.toUpperCase()} — ${framesByAngle.has(i) ? `write these two to the ${framesByAngle.get(i)!.name.toUpperCase()} frame below, not freely.` : a.brief}`).join('\n')}
+${Array.from(framesByAngle.values()).filter(Boolean).map((f) => `
+${renderFrameInstruction(f!, slots)}
+`).join('')}${verbs.eligible.length > 0 ? `
 ${renderVerbInstruction(verbs)}
 ` : ''}
 If an angle has nothing in the interview to support it, write a weaker headline
@@ -320,6 +334,18 @@ Return ONLY a JSON array of ${CANDIDATES_REQUESTED} strings, in that order.`;
       const issues = headlineIssues(text, names);
       if (issues.length > 0) {
         rejected.push({ text, why: issues.map((i) => `${i.code}: ${i.detail}`).join('; ') });
+        return;
+      }
+
+      // Anything in quotation marks must actually have been said.
+      //
+      // Applied to EVERY candidate, not only the borrowed-fragment angle: the model
+      // does not always keep to the position it was asked for, and a headline is the
+      // worst place in the piece to attribute words to a designer that they did not
+      // use. This is the same contract the pull quote pipeline holds — a quote is
+      // selected, never written — checked with the same `isVerbatimSpan`.
+      if (/[\u201C"]/.test(text) && !borrowedFragmentIsVerbatim(text, answerTexts)) {
+        rejected.push({ text, why: 'QUOTE_UNVERIFIED: quotes words the designer did not say' });
         return;
       }
       survivors.push({ text, index });
@@ -429,6 +455,8 @@ Return ONLY a JSON array of ${CANDIDATES_REQUESTED} strings, in that order.`;
       confirmedFinishTags,
       classInTwoPlaces: facts.classInTwoPlaces === true,
       eligible: frames.map((f) => f.id),
+      quotableFragments: fragments.length,
+      framedAngles: Array.from(framesByAngle.entries()).map(([i, f]) => `${ANGLES[i].key}:${f!.id}`),
       framedAngle: framedAngleIndex >= 0 ? ANGLES[framedAngleIndex].key : null,
       verbsOffered: verbs.eligible.map((v) => v.id),
       verbsWithheld: verbs.withheld.length,
