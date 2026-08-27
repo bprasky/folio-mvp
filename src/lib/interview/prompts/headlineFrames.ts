@@ -374,11 +374,233 @@ export const BORROWED_FRAGMENT_FRAME: HeadlineFrame = {
     'Do not introduce the quote with a verb of speaking; let it sit in the sentence.',
 };
 
-/** Every frame. Built to hold five or more; three are implemented. */
+/**
+ * ── The project-grain frames (C2) ────────────────────────────────────────────
+ *
+ * The three frames above put a MATERIAL, a QUOTE or a STUDIO in subject position.
+ * The corpus, measured, puts the project there 41% of the time and a room 13%
+ * (grain audit §4). An article is about a project; these three say so.
+ *
+ * What changes in every one of them: the subject is the dwelling, and the material
+ * or the decision is EVIDENCE for a claim about it, not the thing making the claim.
+ * "One stone set the palette for a Miami Beach house" and "A Miami Beach house
+ * answered to one stone throughout" report the same fact about the same project.
+ * Only the second is about the house.
+ *
+ * `project` is the shared subject slot and every one of them requires it. It is
+ * resolved, never inferred: the place comes off `Project.city` / `regionState` and
+ * the dwelling noun off `Project.projectType`, an enum. When the type is
+ * UNSPECIFIED the slot carries the place alone and the shape says to name it by
+ * place — the alternative is a model deciding whether a project is a house or an
+ * apartment from nothing, which is the class of invention the whole contract
+ * exists to stop.
+ */
+
+/**
+ * Continuity — one move repeats across rooms.
+ *
+ * The one angle Folio can compute exactly and the one with the least corpus
+ * support, and both halves of that matter. Its source is a material class tagged in
+ * two or more NAMED rooms, which is `MaterialCandidate.rooms` read for what it is —
+ * a fact a publisher's writer never has, because it comes off room-level tag data
+ * nobody outside the project can see.
+ *
+ * `exemplars` is EMPTY, deliberately, and must stay that way until someone can read
+ * one off a published article. Of the 56 held-out human headlines, seven carry any
+ * project-wide spread and NOT ONE says "room to room" — they are project-wide
+ * impressions ("Steel elements bring a sheen to this 1300s French townhouse"), not
+ * a move traced between named rooms. The shape this frame asks for has no published
+ * analogue. Inventing one would teach a shape nobody has validated, which is exactly
+ * how the old criteria came to list the balanced pair as GOOD. See
+ * `docs/audits/PROJECT_ANGLE_AUDIT.md` §3 and `docs/23` §3l.
+ */
+export const CONTINUITY_FRAME: HeadlineFrame = {
+  id: 'continuity',
+  name: 'Continuity across rooms',
+  slots: [
+    {
+      name: 'project',
+      source: 'Project.city / regionState, with the dwelling noun from Project.projectType',
+      description:
+        'The project, as the SUBJECT. Named by where it is. Use it as given — do ' +
+        'not add a dwelling type you were not handed.',
+    },
+    {
+      name: 'verb',
+      source: 'headlineVerbs — a Continuity verb, preconditions already satisfied',
+      description:
+        'What the project does with the material across its rooms: runs, carries, ' +
+        'threads, repeats, extends, continues. Active, and the project owns it.',
+    },
+    {
+      name: 'material',
+      source: 'material class via materialClassOf() — a member of MATERIAL_CLASSES',
+      description:
+        'The material class that repeats. The EVIDENCE, not the subject. Never a ' +
+        'finish, never a product name, never a brand.',
+    },
+    {
+      name: 'rooms',
+      source: 'Room.name — the two or more named rooms this class is tagged in',
+      description:
+        'The rooms it repeats across, as given. Two at most in the headline; a ' +
+        'headline listing four rooms is an inventory, which is a caption.',
+    },
+  ],
+  // `rooms` is required and is what makes this frame honest. Without two NAMED
+  // rooms there is no repetition to report, only a material that exists.
+  requiredFields: ['project', 'material', 'rooms'],
+  requiresDeck: false,
+  // EMPTY ON PURPOSE — see the note above. Do not fill this from imagination.
+  exemplars: [],
+  tailRule: TAIL_RULE,
+  shape:
+    '{project} is the SUBJECT. Report that {material} repeats across {rooms}, and ' +
+    'let the project own {verb}.\n' +
+    '\n' +
+    'The claim is about the HOUSE, and the material is the evidence for it.\n' +
+    '  YES  A Miami Beach house runs one paneling detail from the entry to the ' +
+    'primary bedroom\n' +
+    '  NO   Paneling reappears from the entry to the primary bedroom\n' +
+    '\n' +
+    'The NO is not wrong, it is about the paneling. Name the rooms you were given ' +
+    'and no others, and never claim a room the material was not tagged in.',
+};
+
+/**
+ * Governing decision — one choice everything followed.
+ *
+ * The corpus's second-largest project-grain angle (29%, by an active governing verb
+ * over a named element). Its source is the designer's own answer to "what was the
+ * big idea" — the DESIGN_DIRECTION opening question, which every project is asked
+ * and which C1 made reachable by carrying the question category through the read.
+ *
+ * The slot value is the answer VERBATIM, and that is the same standard the borrowed
+ * fragment frame uses: what is verified is that the designer wrote this sentence,
+ * not that a model correctly extracted a governing element from it. The writer is
+ * handed their words and told to find the decision in them. It may not name one —
+ * a designer can answer "the big idea" with a mood — and the frame is eligible
+ * anyway, because a non-empty answer to that question is the honest predicate. What
+ * it must not do is invent a decision the answer does not contain, which the shape
+ * says and the editor checks.
+ */
+export const GOVERNING_DECISION_FRAME: HeadlineFrame = {
+  id: 'governing-decision',
+  name: 'Governing decision',
+  slots: [
+    {
+      name: 'project',
+      source: 'Project.city / regionState, with the dwelling noun from Project.projectType',
+      description: 'The project, as the SUBJECT. Named by where it is.',
+    },
+    {
+      name: 'decision',
+      source: 'the DESIGN_DIRECTION opening answer, verbatim — the designer\'s own words',
+      description:
+        'What the designer said the big idea was. Find the one choice everything ' +
+        'else answered to INSIDE these words. Do not supply one they did not.',
+    },
+    {
+      name: 'tail',
+      source: 'Project.city / regionState',
+      description: 'Where it is. A fact, and the last thing the headline says.',
+    },
+  ],
+  requiredFields: ['project', 'decision'],
+  requiresDeck: false,
+  // Project-subject, active, one governing element. Agent-led corpus entries are
+  // deliberately excluded here — they belong to AGENT_VERB_OBJECT_FRAME, and one
+  // inside this frame would teach the arrangement this frame exists to replace.
+  exemplars: [
+    'Tour a coastal Norway home made of wood flooring scraps',
+    'Brutalismo: a concrete cabin in the woods of Ca\u00F1ada De Alferes, Mexico',
+    'Casa Modesta: a family house turned rural retreat in Portugal\u2019s Algarve',
+  ],
+  tailRule: TAIL_RULE,
+  shape:
+    '{project} is the SUBJECT. Name the one decision in {decision} that everything ' +
+    'else had to answer to, and close on {tail}.\n' +
+    '\n' +
+    '  YES  A Miami Beach house answered to one stone from the entry down\n' +
+    '  NO   One stone set the palette for an entire Miami Beach house\n' +
+    '\n' +
+    'The NO puts the stone in subject position; the article is about the house. ' +
+    'The decision is EVIDENCE. Take it only from the words you were given — if they ' +
+    'name no single choice, write a different angle rather than inventing one.',
+};
+
+/**
+ * Constraint — something the whole project had to answer.
+ *
+ * 18% of the corpus: a named limit and what it forced. "OMA completes first US
+ * affordable housing development", "This ever-expanding L.A. home was 24 years in
+ * the making", "A pet-friendly overhaul for the laundry closet".
+ *
+ * Sources from CLIENT_BRIEF and SCOPE_PARAMETERS together, because the constraint
+ * is rarely in one of them alone: the brief says who it had to work for and the
+ * scope says what it had to work within, and a headline-grade constraint is usually
+ * the collision. Either one on its own makes the frame eligible; the structured
+ * fields cannot help here, and it is worth saying why. `Project.budgetBand` is an
+ * enum with five values and `LOW` is a band, not "built for the cost of the kitchen
+ * it replaced". None of the corpus constraints is an enum value.
+ */
+export const CONSTRAINT_FRAME: HeadlineFrame = {
+  id: 'constraint',
+  name: 'Constraint the project answered',
+  slots: [
+    {
+      name: 'project',
+      source: 'Project.city / regionState, with the dwelling noun from Project.projectType',
+      description: 'The project, as the SUBJECT. Named by where it is.',
+    },
+    {
+      name: 'constraint',
+      source: 'the CLIENT_BRIEF and SCOPE_PARAMETERS opening answers, verbatim',
+      description:
+        'Who it had to work for, and what it had to work within. The limit is ' +
+        'somewhere in these words. Do not supply a limit they did not state.',
+    },
+    {
+      name: 'tail',
+      source: 'Project.city / regionState',
+      description: 'Where it is.',
+    },
+  ],
+  requiredFields: ['project', 'constraint'],
+  requiresDeck: false,
+  exemplars: [
+    'This ever-expanding L.A. home was 24 years in the making',
+    'Stilt House at Fernwood: a contemporary vacation cabin on an organic farm in Connemara, Ireland',
+    'Kitchen of the week: a low-cost before/after kitchen in Brooklyn',
+  ],
+  tailRule: TAIL_RULE,
+  shape:
+    '{project} is the SUBJECT. Name the limit in {constraint} that the whole ' +
+    'project had to answer, and what answering it took. Close on {tail}.\n' +
+    '\n' +
+    '  YES  A Miami Beach house built for a family that never leaves the water\n' +
+    '  NO   The clients wanted somewhere they could put wet towels down\n' +
+    '\n' +
+    'The NO reports the brief; the YES reports what the brief COST. A constraint ' +
+    'that did not change anything is not a constraint, it is a preference. Take it ' +
+    'only from the words you were given.',
+};
+
+/** Every frame. Three material-grain, three project-grain. */
 export const HEADLINE_FRAMES: readonly HeadlineFrame[] = [
   MATERIAL_FRAME,
   BORROWED_FRAGMENT_FRAME,
   AGENT_VERB_OBJECT_FRAME,
+  CONTINUITY_FRAME,
+  GOVERNING_DECISION_FRAME,
+  CONSTRAINT_FRAME,
+];
+
+/** The frames whose subject is the project rather than a material or a person. */
+export const PROJECT_GRAIN_FRAME_IDS: readonly string[] = [
+  'continuity',
+  'governing-decision',
+  'constraint',
 ];
 
 /**

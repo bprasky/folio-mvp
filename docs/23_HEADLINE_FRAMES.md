@@ -936,6 +936,147 @@ The honesty note is still live: `agent` is account-asserted, not identity-verifi
 
 ---
 
+## 3m. Project grain becomes the subject — C2
+
+Three frames added, both re-gate holes closed, and the angle list stopped being a
+constant.
+
+### The two re-gate holes
+
+Both let a headline outlive the rule that bans it, from opposite ends.
+
+**The read path ran only half the mechanical checks.** `buildRoomTiles` re-grades a
+stored pool on the way out precisely so a shape banned this week is retired from
+batches written before the ban. `hasWeakPredicate` shipped as a route-only check in
+§3l's predecessor, so it was never in that list — and `blockingIssues` has no opinion
+about voice. *"A stairway's mixed metals **were kept**, then let loose into rooms next
+door"* passed the re-grade every time it was read. A stale pool could not self-clean;
+the only way to stop being offered a passive headline was to generate a new batch.
+
+**The live headline re-entered the pool ungated.** `pool = [currentKicker, ...kept]`
+prepended it unconditionally, so a headline written before a rule existed came back on
+every press *because it was the one currently showing*. It is now gated by the same
+two checks every other pool member passes. That does not strand the designer:
+`HeadlinePicker` splices the live headline back when the stored pool lacks it, so it
+stays reachable while live and simply stops being preserved as an **option** once they
+move off it.
+
+### Three project-grain frames
+
+The three original frames put a MATERIAL, a QUOTE or a STUDIO in subject position. The
+corpus puts the project there 41% of the time and a room 13% (grain audit §4). An
+article is about a project.
+
+| frame | subject | evidence | source | required |
+|---|---|---|---|---|
+| **Continuity** | the project | a material class | `MaterialCandidate.rooms`, ≥2 named | `project`, `material`, `rooms` |
+| **Governing decision** | the project | one choice | DESIGN_DIRECTION answer, verbatim | `project`, `decision` |
+| **Constraint** | the project | a limit | CLIENT_BRIEF + SCOPE_PARAMETERS, verbatim | `project`, `constraint` |
+
+**Transformation is deliberately absent.** It is the corpus's largest angle at 37% and
+there is no before-state anywhere in the schema — no renovation/new-build field, no
+before-image flag, and the two tables that look right are dead. An angle built on it
+would be an LLM asked to find a prior state in five answers that never ask about one,
+which returns something every time. See `docs/audits/PROJECT_ANGLE_AUDIT.md` §2.
+
+**The prose slots are verbatim, and that is the borrowed fragment's standard, not the
+material class's.** `decision` and `constraint` carry the designer's own answer text.
+What is verified is that they wrote this sentence — not that a model correctly
+extracted a governing element from it. The writer is handed the words and told to find
+it there or write a different angle; the shape says so and the editor checks it.
+
+**`project` is resolved, never inferred.** The place comes off `Project.city` /
+`regionState`; the dwelling noun off `Project.projectType`, an enum, and only for the
+values that map to one ordinary noun. COMMERCIAL covers an office and a shop and a
+gym, so it maps to nothing. UNSPECIFIED is the column default and the common case, and
+there the slot carries the place alone — *"Brooklyn"*, not *"a Brooklyn house"*. A
+weaker headline and a true one; the alternative is a model deciding from nothing
+whether a project is a house or an apartment, in the most-read sentence Folio publishes.
+
+No location at all → the slot is null → **all three frames go ineligible together.**
+That is correct: *"A house answered to one stone"* is about nothing.
+
+### Continuity ships with an empty exemplar array
+
+Recorded in §3l and now enforced. `check-headline-frames` names the exemption rather
+than expressing it as a threshold, so a second frame shipping empty still fails and
+filling this one also fails — both are wrong, in opposite directions.
+
+### The angle list is computed per project
+
+`ANGLES` was a constant of six. It is now built per request:
+
+1. **Project-grain angles**, each present only if `eligibleFrames` returned its frame.
+   No fallback brief — an angle whose source did not resolve is not asked for.
+2. **Base angles with an eligible frame** behind them (`client` →
+   borrowed-fragment, `argument` → agent-verb-object, `first-move` → material).
+3. **Free-form briefs** for the rest.
+
+Capped at `MAX_ANGLES = 6`, which is what the batch was before, so cost is unchanged.
+
+Two things this order encodes:
+
+- **GOVERNING-DECISION displaces FIRST-MOVE, and CONSTRAINT displaces CONSTRAINT.**
+  These are the same questions at two grains — *"the one selection that set everything
+  after it"* is the governing decision with a material in the subject slot — and asking
+  both would spend four candidates arguing with itself. So the Material frame is often
+  eligible and unbound on a well-interviewed project. That is the phase working, and
+  `unboundFrames` logs it so it is not mistaken for the other cause.
+- **Computed angles outrank briefs under the cap.** Ordering the other way had a quiet
+  cost worth recording: with all three project-grain angles resolved, the cap fell on
+  ARGUMENT and FIRST-MOVE, so the two richest material-grain frames silently stopped
+  firing on exactly the best-equipped projects. `bind` no-ops when its angle is absent,
+  so nothing said so.
+
+Measured eligibility, over synthetic slot sets:
+
+| project shape | project-grain | material-grain |
+|---|---|---|
+| tagged + interviewed | continuity, governing-decision, constraint | all three |
+| interviewed, no tags | governing-decision, constraint | borrowed-fragment |
+| tagged, not interviewed | continuity | material |
+| material in ONE room | governing-decision | material |
+| no location | — none | material |
+| nothing | — none | — none |
+
+Nothing pads. A material in one room loses Continuity; a project with no location loses
+all three.
+
+### `hasWeakPredicate` does NOT need scoping for these three
+
+Measured rather than assumed. All four of the angles' own worked examples pass
+unmodified:
+
+| headline | verdict |
+|---|---|
+| Paneling runs room to room through a Miami Beach house | ok |
+| A Miami Beach house built for a family that never leaves the water | ok |
+| One stone set the palette for an entire Miami Beach house | ok |
+| A dark Miami Beach house opened to the light it was hiding from | ok |
+
+Of 14 project- and agent-subject corpus headlines, two are flagged: *"A Midcentury
+Home's Past Mistakes **Are** Finally **Corrected**"* (true passive) and *"Vollerup Atrium
+House **is a** monolithic summerhouse"* (copula). Both are Transformation-adjacent or
+copular — shapes the tail rule and the subject-must-act instruction discourage
+independently, and Transformation is not in this phase.
+
+The reduced passive is why: *"a house **built** for a family"* has no auxiliary, so
+`PASSIVE_VOICE` (`(was|were|is|are|been|being) + participle`) does not match it. A
+project can be acted upon in the corpus's grammar without tripping the check.
+
+**What scoping would take, if Transformation ever lands.** `PASSIVE_VOICE` and
+`COPULA`/`BECOMING` would need to be frame-scoped; `VERB_DEMOTED` stays global, since a
+verb hidden in a relative clause is wrong in every frame. §3k recorded that scoping
+needs the route to know which frame produced which candidate and that it deliberately
+did not. **C2 changes that half:** position is the angle (`Math.floor(index/2)`) and
+`framesByAngle` maps angle to frame, so the route can now name the intended frame for
+any candidate. What it still cannot do is verify the model kept to it — the mapping is
+what was *asked for*, not what came back. Scoping on that basis relaxes the check for a
+candidate that may have drifted, so it should wait for a real need rather than being
+built speculatively.
+
+---
+
 ## 4. The tail rule
 
 > The final clause must state a fact — who it was for, what it replaced, where it came

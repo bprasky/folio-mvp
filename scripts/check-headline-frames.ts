@@ -36,6 +36,8 @@ import {
 import {
   hasWeakPredicate,
   BORROWED_FRAGMENT_FRAME,
+  CONTINUITY_FRAME,
+  PROJECT_GRAIN_FRAME_IDS,
   AGENT_VERB_OBJECT_FRAME,
   stripQuotedSpans,
   HEADLINE_FRAMES,
@@ -74,8 +76,18 @@ for (const w of warnings) console.log(`  NOTE  ${w}`);
 const unsourced = assertFrameLibraryIntegrity([{ ...MATERIAL_FRAME, exemplars: [] }]);
 check('an unsourced exemplar list warns rather than fails',
   unsourced.warnings.some(w => /no exemplars/.test(w)) && unsourced.errors.length === 0);
-check('...and the real library is now fully sourced, so it warns about nothing',
-  warnings.length === 0, warnings.join('; '));
+// Every frame is sourced EXCEPT Continuity, whose exemplar array is empty on
+// purpose and must stay that way. Of the 56 held-out human headlines, seven carry
+// any project-wide spread and not one says "room to room" — the shape that frame
+// asks for has no published analogue, and an invented exemplar would teach a shape
+// nobody has validated. So the assertion is not "no warnings", it is "exactly the
+// one warning we chose", which fails if anyone quietly fills it or leaves a second
+// frame unsourced.
+check('the library warns about Continuity and nothing else',
+  warnings.length === 1 && /continuity/i.test(warnings[0]), warnings.join('; ') || '(no warnings)');
+check('...and Continuity ships with a deliberately empty exemplar array',
+  CONTINUITY_FRAME.exemplars.length === 0
+  && /EMPTY ON PURPOSE/.test(frames));
 check('exemplars are documented as never-invented',
   /NEVER invented/.test(frames));
 
@@ -263,7 +275,15 @@ console.log('\n9. The route actually uses it');
 check('slots are resolved for the project', /resolveHeadlineSlots\(projectId\)/.test(route));
 check('eligibility is computed, not asked of the model', /eligibleFrames\(slots, \{ hasDeck: true \}\)/.test(route));
 check('the frame replaces an angle in place, preserving position-is-angle',
-  /framedAngleIndex/.test(route) && /ANGLES\.findIndex\(\(a\) => a\.key === 'first-move'\)/.test(route));
+  /framedAngleIndex/.test(route) && /angles\.findIndex\(\(a\) => a\.key === 'first-move'\)/.test(route));
+// C2. The angle list is built per project, not declared: a project-grain angle
+// exists only when its frame was eligible, and there is no fallback brief for one.
+check('project-grain angles are computed from frame eligibility, never padded',
+  /const projectGrain = PROJECT_GRAIN_ANGLES/.test(route)
+  && /\.filter\(\(a\) => a\.frame !== null\)/.test(route));
+check('...and each removes the base angle it supersedes, so no angle runs twice',
+  /const displaced = new Set\(projectGrain\.map\(\(a\) => a\.displaces\)/.test(route)
+  && /BASE_ANGLES\.filter\(\(a\) => !displaced\.has\(a\.key\)\)/.test(route));
 check('the verified materials reach the prompt as fact',
   /Materials the designer specified — VERIFIED/.test(route));
 check('the prompt forbids adding a material that is not on the list',
@@ -444,15 +464,28 @@ check('no Prisma, no AI SDK in headlineVerbs.ts',
   !/from '@\/lib\/prisma'|@anthropic-ai|from 'openai'/.test(
     readFileSync('src/lib/interview/prompts/headlineVerbs.ts', 'utf8')));
 
-console.log('\n18. Three arrangements over the same six variables');
-check('all three frames are declared',
-  HEADLINE_FRAMES.map(f => f.id).sort().join() === 'agent-verb-object,borrowed-fragment,material');
+console.log('\n18. Six arrangements: three material-grain, three project-grain');
+check('all six frames are declared',
+  HEADLINE_FRAMES.map(f => f.id).sort().join()
+    === 'agent-verb-object,borrowed-fragment,constraint,continuity,governing-decision,material');
+// The whole point of the project-grain three: the SUBJECT is the dwelling, and the
+// material or decision is evidence for a claim about it. Every one of them requires
+// the `project` slot, so a project with no location loses all three at once — which
+// is correct, since "A house answered to one stone" is about nothing.
+check('every project-grain frame takes the project as its subject slot',
+  PROJECT_GRAIN_FRAME_IDS.every(id => {
+    const f = HEADLINE_FRAMES.find(x => x.id === id)!;
+    return f.slots[0].name === 'project' && f.requiredFields.includes('project');
+  }));
 check('each names the angle it replaces in the route',
   /material.*first-move/s.test(route) && /borrowed-fragment.*client/s.test(route));
-// Each frame takes the angle that was already asking for its material rather than
-// adding a candidate, so counts and the position-is-angle invariant are untouched.
+// Each frame takes an angle rather than adding a candidate, so the
+// position-is-angle invariant holds however the list was built. C2 made the list
+// per-project, so the count is computed and the cap is what keeps the batch from
+// growing: three project-grain angles could otherwise run it to seven.
 check('frames replace angles in place, they do not add candidates',
-  /const CANDIDATES_REQUESTED = ANGLES\.length \* 2/.test(route)
+  /const CANDIDATES_REQUESTED = candidatesRequested\(angles\.length\)/.test(route)
+  && /\.slice\(0, MAX_ANGLES\)/.test(route)
   && /framesByAngle/.test(route));
 
 console.log('\n19. Borrowed fragment — the evaluation belongs to a named person');
@@ -542,8 +575,16 @@ const corpusLines: string[] = [
 // reaching a prompt must be curly per JSON_PROSE_QUOTING_RULE. Compare through the
 // normalizer the pull-quote pipeline already uses for exactly this.
 const corpusNormalized = new Set(corpusLines.map(normalizeForVerbatimCheck));
+// Continuity is the ONE frame allowed to ship unsourced, and the exemption is named
+// rather than expressed as a threshold: of the 56 held-out human headlines, seven
+// carry any project-wide spread and not one says "room to room", so the shape it
+// asks for has no published analogue to quote. Naming it here means a second frame
+// shipping empty still fails, and filling this one also fails — both are wrong, in
+// opposite directions.
+const EXEMPLAR_EXEMPT = new Set(['continuity']);
 for (const frame of HEADLINE_FRAMES) {
-  check(`${frame.id}: has exemplars`, frame.exemplars.length > 0);
+  check(`${frame.id}: has exemplars`,
+    EXEMPLAR_EXEMPT.has(frame.id) ? frame.exemplars.length === 0 : frame.exemplars.length > 0);
   for (const e of frame.exemplars) {
     check(`${frame.id}: exemplar is in the collected corpus, not invented`,
       corpusNormalized.has(normalizeForVerbatimCheck(e)), e);

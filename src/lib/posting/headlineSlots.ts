@@ -417,6 +417,53 @@ function resolveTail(rooms: string[], location: string): string | null {
   return location.trim() || null;
 }
 
+/**
+ * The dwelling noun, from `Project.projectType`.
+ *
+ * The corpus names a project by place plus kind — "a Miami Beach house", "London
+ * mews house", "a coastal Norway home". Place we have. Kind we have only where the
+ * enum says so, and only for the values that map to ONE ordinary noun: COMMERCIAL
+ * covers an office and a shop and a gym, so it maps to nothing rather than to a
+ * guess. UNSPECIFIED is the default on this column and is the common case.
+ *
+ * Returning null is not a failure. It means the subject slot carries the place
+ * alone and the shape tells the writer to name the project by place — which is a
+ * weaker headline and a true one. The alternative is a model deciding from nothing
+ * whether a project is a house or an apartment, in the most-read sentence Folio
+ * publishes.
+ */
+function dwellingNoun(projectType: string | null | undefined): string | null {
+  switch (projectType) {
+    case 'RESIDENTIAL': return 'house';
+    case 'HOSPITALITY': return 'hotel';
+    case 'OFFICE': return 'office';
+    case 'RETAIL': return 'store';
+    case 'HEALTHCARE': return 'clinic';
+    case 'EDUCATION': return 'school';
+    default: return null;
+  }
+}
+
+/**
+ * The project as a headline SUBJECT, or null.
+ *
+ * Null makes every project-grain frame ineligible, which is the intended behaviour:
+ * a project with no location cannot be the subject of a sentence a reader can
+ * place. "A house answered to one stone" is about nothing.
+ */
+export function resolveProjectSubject(
+  projectType: string | null | undefined,
+  city: string | null | undefined,
+  regionState: string | null | undefined,
+): { value: string; source: string } | null {
+  const place = (city ?? '').trim() || (regionState ?? '').trim();
+  if (!place) return null;
+  const noun = dwellingNoun(projectType);
+  return noun
+    ? { value: `${place} ${noun}`, source: `Project.city/regionState + Project.projectType (${projectType})` }
+    : { value: place, source: 'Project.city/regionState (projectType gives no single dwelling noun)' };
+}
+
 export async function resolveHeadlineSlots(projectId: string): Promise<ResolvedHeadlineSlots> {
   const [{ materials, confirmedFinishTags, namedPlace, spatialObject }, answers, project] =
     await Promise.all([
@@ -424,13 +471,72 @@ export async function resolveHeadlineSlots(projectId: string): Promise<ResolvedH
       loadInterviewAnswers(projectId),
       prisma.project.findUnique({
         where: { id: projectId },
-        select: { city: true, regionState: true },
+        select: { city: true, regionState: true, projectType: true },
       }),
     ]);
   const location = [project?.city, project?.regionState].filter(Boolean).join(', ');
   const fragments = resolveFragmentCandidates(answers);
   const answerTexts = answers.map((a) => a.answer);
   const slots: ResolvedSlot[] = [];
+
+  // ── The project-grain slots (C2) ───────────────────────────────────────────
+  //
+  // `project` is the shared subject of all three project-grain frames, so its
+  // absence makes all three ineligible at once. That is correct rather than
+  // unfortunate: without a location the project cannot be the subject of a sentence
+  // a reader can place.
+  const subject = resolveProjectSubject(project?.projectType, project?.city, project?.regionState);
+  if (subject) {
+    slots.push({ name: 'project', value: subject.value, source: subject.source, verified: true });
+  }
+
+  // Continuity's evidence: a class in two or more NAMED rooms.
+  //
+  // Note this is the FIRST such class, not `materials[0]`. The ranking sorts by
+  // `roomCount`, which counts unassigned photos as places, so the top-ranked class
+  // can be one with no named rooms at all — and Continuity needs the names, because
+  // it puts them in the sentence.
+  const spread = materials.find((m) => m.rooms.length >= 2);
+  if (spread) {
+    slots.push({
+      name: 'rooms',
+      value: spread.rooms.slice(0, 2).join(' and '),
+      source: `Room.name — ${spread.value} is tagged in ${spread.rooms.length} named rooms`,
+      verified: true,
+    });
+  }
+
+  // The two opening answers, verbatim.
+  //
+  // Verified means the designer wrote this sentence — the borrowed fragment's
+  // standard, not the material class's. What is NOT claimed is that a governing
+  // decision or a constraint has been correctly extracted from it; the writer is
+  // handed the words and told to find it there or write a different angle. C1 is
+  // what makes this reachable: before it, these answers arrived labelled `General`
+  // and could not be told apart from a remark about a bathroom faucet.
+  const answerFor = (category: string): string | null => {
+    const hit = answers.find((a) => a.category === category && a.answer.trim());
+    return hit ? hit.answer.trim() : null;
+  };
+  const direction = answerFor('DESIGN_DIRECTION');
+  if (direction) {
+    slots.push({
+      name: 'decision',
+      value: direction,
+      source: 'the DESIGN_DIRECTION opening answer, verbatim',
+      verified: true,
+    });
+  }
+  const brief = answerFor('CLIENT_BRIEF');
+  const scope = answerFor('SCOPE_PARAMETERS');
+  if (brief || scope) {
+    slots.push({
+      name: 'constraint',
+      value: [brief, scope].filter(Boolean).join('\n'),
+      source: `verbatim: ${[brief && 'CLIENT_BRIEF', scope && 'SCOPE_PARAMETERS'].filter(Boolean).join(' + ')}`,
+      verified: true,
+    });
+  }
 
   if (materials.length > 0) {
     const top = materials[0];
