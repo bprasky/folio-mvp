@@ -537,6 +537,10 @@ Return ONLY a JSON array of ${CANDIDATES_REQUESTED} strings, in that order.`;
       _cid,
       materialClasses: materials.length,
       topMaterial: materials[0]?.value ?? null,
+      // Which rooms the top class was actually found in — the data that used to be
+      // aggregated to a count and discarded.
+      topMaterialRooms: materials[0]?.rooms ?? [],
+      tail: slots.find((s) => s.name === 'tail')?.value ?? null,
       // The B1 gate beside the B3 one, so a single project shows the difference
       // the repoint made. The aggregate needs a database — docs/23 §6.2.
       confirmedFinishTags,

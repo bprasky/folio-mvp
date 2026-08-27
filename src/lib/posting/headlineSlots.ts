@@ -88,6 +88,19 @@ export interface MaterialCandidate {
   imageCount: number;
   /** Distinct rooms it appears in — the Continuity precondition's real measure. */
   roomCount: number;
+  /**
+   * The rooms it was actually found in, named.
+   *
+   * The aggregation always knew these — it built a Set of room identities and then
+   * exported only `.size`. Knowing a class appears in three rooms while not knowing
+   * which three is what left the Material frame's `tail` unresolvable, so the model
+   * invented the place and three of the first five headlines named none at all.
+   *
+   * Shorter than `roomCount` when a tagged image has no room assigned: an
+   * unassigned image still counts as a distinct place (it cannot be proven to be
+   * the same one) but contributes no name.
+   */
+  rooms: string[];
 }
 
 /** Normalize for comparison only. */
@@ -282,13 +295,24 @@ export async function resolveMaterialCandidates(projectId: string): Promise<{
       finishRaw: true,
       finishCanonical: true,
       finishConfirmed: true,
-      image: { select: { roomId: true, room: true } },
+      // `assignedRoom` is the structured room; `room` is the legacy free-text name.
+      // Both are read, the structured one wins — the same precedence the gallery uses.
+      image: {
+        select: {
+          roomId: true,
+          room: true,
+          assignedRoom: { select: { name: true } },
+        },
+      },
       selection: { select: { colorFinish: true } },
       product: { select: { name: true, description: true, category: true, brand: true } },
     },
   });
 
-  const byClass = new Map<string, { tagCount: number; images: Set<string>; rooms: Set<string> }>();
+  const byClass = new Map<
+    string,
+    { tagCount: number; images: Set<string>; places: Set<string>; rooms: Set<string> }
+  >();
   let confirmedFinishTags = 0;
 
   for (const tag of tags) {
@@ -310,12 +334,25 @@ export async function resolveMaterialCandidates(projectId: string): Promise<{
     if (!assertIsMaterialClass(cls)) continue;
     if (carriesProprietaryName(cls, tag.product?.name, tag.product?.brand)) continue;
 
-    const at = byClass.get(cls) ?? { tagCount: 0, images: new Set<string>(), rooms: new Set<string>() };
+    const at = byClass.get(cls) ?? {
+      tagCount: 0,
+      images: new Set<string>(),
+      places: new Set<string>(),
+      rooms: new Set<string>(),
+    };
     at.tagCount += 1;
     at.images.add(tag.imageId);
-    // An unassigned image is its own "room" so two unassigned photos never
-    // masquerade as one place — that would understate roomCount, never inflate it.
-    at.rooms.add(tag.image?.roomId ?? tag.image?.room ?? `image:${tag.imageId}`);
+    // Two sets, because they answer different questions.
+    //
+    // `places` is for COUNTING. An unassigned image is its own place, so two
+    // unassigned photos never masquerade as one — that would understate the count,
+    // never inflate it, which is the safe direction for a precondition.
+    //
+    // `rooms` is for NAMING, and only a real room can go in it. The `image:` fallback
+    // is a counting sentinel and must never reach a headline as a place name.
+    at.places.add(tag.image?.roomId ?? tag.image?.room ?? `image:${tag.imageId}`);
+    const roomName = (tag.image?.assignedRoom?.name ?? tag.image?.room ?? '').trim();
+    if (roomName) at.rooms.add(roomName);
     byClass.set(cls, at);
   }
 
@@ -324,7 +361,9 @@ export async function resolveMaterialCandidates(projectId: string): Promise<{
       value,
       tagCount: at.tagCount,
       imageCount: at.images.size,
-      roomCount: at.rooms.size,
+      roomCount: at.places.size,
+      // Sorted, so a batch is reproducible across presses.
+      rooms: Array.from(at.rooms).sort((a, b) => a.localeCompare(b)),
     }))
     .sort(
       (a, b) =>
@@ -358,11 +397,37 @@ export async function resolveMaterialCandidates(projectId: string): Promise<{
  * Intervention verb stays withheld. Writing `false` there would be a claim nobody
  * can support, and the verb library treats unknown and false very differently.
  */
+/**
+ * Where the material acts, as a place a reader could point at.
+ *
+ * Rooms first, because that is where the class was actually found — not a room the
+ * project happens to have. Two are named at most: a headline listing four rooms is
+ * an inventory, which is the caption shape the criteria ban.
+ *
+ * Project location is the fallback and is genuinely weaker: it says the marble is
+ * in Miami, not which room. It is still a fact, and a fact beats the model choosing.
+ *
+ * Returns null when neither resolves, and null makes the frame INELIGIBLE. That is
+ * the point of the change: an unresolvable place used to be handed to the model as a
+ * description, and three of the first five headlines named no location at all.
+ */
+function resolveTail(rooms: string[], location: string): string | null {
+  if (rooms.length === 1) return rooms[0];
+  if (rooms.length >= 2) return `${rooms[0]} and ${rooms[1]}`;
+  return location.trim() || null;
+}
+
 export async function resolveHeadlineSlots(projectId: string): Promise<ResolvedHeadlineSlots> {
-  const [{ materials, confirmedFinishTags, namedPlace, spatialObject }, answers] = await Promise.all([
-    resolveMaterialCandidates(projectId),
-    loadInterviewAnswers(projectId),
-  ]);
+  const [{ materials, confirmedFinishTags, namedPlace, spatialObject }, answers, project] =
+    await Promise.all([
+      resolveMaterialCandidates(projectId),
+      loadInterviewAnswers(projectId),
+      prisma.project.findUnique({
+        where: { id: projectId },
+        select: { city: true, regionState: true },
+      }),
+    ]);
+  const location = [project?.city, project?.regionState].filter(Boolean).join(', ');
   const fragments = resolveFragmentCandidates(answers);
   const answerTexts = answers.map((a) => a.answer);
   const slots: ResolvedSlot[] = [];
@@ -375,6 +440,19 @@ export async function resolveHeadlineSlots(projectId: string): Promise<ResolvedH
       source: `material class across ${top.roomCount} room(s), ${top.imageCount} image(s)`,
       verified: true,
     });
+
+    // The place, from the rooms this class was found in.
+    const tail = resolveTail(top.rooms, location);
+    if (tail) {
+      slots.push({
+        name: 'tail',
+        value: tail,
+        source: top.rooms.length > 0
+          ? `Room.name — where ${top.value} is tagged`
+          : 'Project.city / regionState (no room resolved for this class)',
+        verified: true,
+      });
+    }
   }
 
   if (fragments.length > 0) {

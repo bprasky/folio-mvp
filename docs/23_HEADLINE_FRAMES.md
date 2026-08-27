@@ -715,6 +715,110 @@ as `WEAK_PREDICATE`.
 
 ---
 
+## 3j. The tail is resolved — B10
+
+`docs/audits/HEADLINE_GRAIN_AUDIT.md` found the Material frame's `tail` slot was
+**never pushed**. It rendered as a description — *"what the material acts on, and
+where"* — so the model supplied the place. **Three of the first five headlines to
+reach a designer named no location at all.**
+
+### The room was known and discarded
+
+`resolveMaterialCandidates` built a `Set` of room identities and exported only
+`.size`. It knew a class appeared in *Dining Room* and *Primary Bath* and reported
+**2**.
+
+`MaterialCandidate` now carries `rooms: string[]`. Two sets, because counting and
+naming are different questions:
+
+| set | answers | includes |
+|---|---|---|
+| `places` | how many distinct places → `roomCount` | rooms **and** unassigned images (an unassigned image is its own place; it cannot be proven to be the same one) |
+| `rooms` | which rooms, by name | real room names only |
+
+The `image:<id>` sentinel exists to keep the count honest and **must never reach a
+headline as a place name**, which is why it lives in the other set. Room names come
+from `assignedRoom.name` with the legacy `image.room` string as fallback — the same
+precedence the gallery uses — and are sorted, so a batch is reproducible.
+
+### The tail slot
+
+`resolveTail(rooms, location)`:
+
+1. one room → that room
+2. two or more → the first two, joined. **At most two** — a headline listing four
+   rooms is an inventory, which is the caption shape the criteria ban
+3. otherwise → `Project.city, regionState`
+4. otherwise → **null**
+
+**`tail` joined `requiredFields`.** Null makes the frame ineligible rather than a
+prompt to guess. A Material headline that cannot say *where* is not one this frame
+should offer.
+
+The location fallback is genuinely weaker — it says the marble is in Miami, not which
+room — but it is still a fact, and a fact beats the model choosing.
+
+### One thing this exposed
+
+`renderFrameInstruction` appended *"stated by the designer"* to every resolved value.
+True of a confirmed finish; **false of a room name or a city**. A prompt that
+overstates provenance invites the model to treat a database value as speech. The
+label is now the slot's own `source`: `[verified — Room.name where travertine is
+tagged]`.
+
+---
+
+## 3k. The room-as-object variant — reported, not built
+
+The audit's sharpest number: **76% of the corpus names no material class at all**,
+and the Material frame requires one. Material-as-subject is real but a minority — of
+19 corpus headlines naming a material, 4 have it as subject and 10 as instrument.
+Subject grain across the whole corpus is **41% project/dwelling, 13% room, ~0%
+product instance**. The five samples were 100% product-or-below.
+
+What the variant would take:
+
+| change | consequence |
+|---|---|
+| `requiredFields: ['object']` | fires on any project with a room, not only one with a tagged material class — this is where the coverage is |
+| material demoted to `instrument` | *"…clads the kitchen in oak"* rather than *"oak clads…"*, which is the corpus's dominant form |
+| ranking inverted — pick the room first, then the class within it | `roomCount` stops being the sort key and becomes evidence for *which* room; the aggregation is the same, keyed the other way |
+| Application and Placement verbs read correctly | today they need the material as their subject, which is the minority form |
+
+### What `hasWeakPredicate` would need to relax, and why
+
+It currently flags **6 of the 56 held-out headlines**, and every one is a project- or
+room-subject shape:
+
+```
+A Miami Renovation That Blends Concrete and Rich Wooden Interiors
+A Midcentury Home's Past Mistakes Are Finally Corrected
+Vollerup Atrium House is a monolithic summerhouse on the Danish coast
+```
+
+That is not a false-positive rate to fix — it is the predicate correctly enforcing a
+rule scoped to the three arrangements Folio has, **all of which want their subject to
+act**. A room-as-object frame changes the premise: a room legitimately *is* acted
+upon, so the passive and the copula stop being evasions and become the arrangement.
+
+Two of the three sub-rules would need scoping to the frame rather than the batch:
+
+- **`PASSIVE_VOICE`** — *"A Midcentury Home's Past Mistakes Are Finally Corrected"* is
+  a published headline and a room-grain one.
+- **`COPULA` / `BECOMING`** — *"Vollerup Atrium House **is** a monolithic summerhouse"*
+  is the named-project copula arrangement.
+
+**`VERB_DEMOTED` should stay global.** *"Styling that took more objects than the shelf
+could keep"* is inert at any grain — a subject owning no verb is not an arrangement,
+it is a missing one.
+
+Scoping it means the route must know which frame produced which candidate, and it
+currently does not — it applies the check to the whole batch precisely because the
+model does not reliably keep to the position it was asked for. That coupling is the
+real cost of the variant, and it is why this is reported rather than built.
+
+---
+
 ## 4. The tail rule
 
 > The final clause must state a fact — who it was for, what it replaced, where it came

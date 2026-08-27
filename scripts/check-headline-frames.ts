@@ -157,8 +157,11 @@ check('an unverified slot makes the frame ineligible',
   eligibleFrames(unverified, { hasDeck: true }).length === 0);
 check('an empty slot value makes the frame ineligible',
   eligibleFrames([{ name: 'material', value: '   ', source: 'x', verified: true }], { hasDeck: true }).length === 0);
+// `tail` joined requiredFields in B10 — a Material headline that cannot say WHERE
+// is not one this frame should offer.
 const verified: ResolvedSlot[] = [
-  { name: 'material', value: 'unlacquered brass', source: 'ProductTag.finishRaw', verified: true },
+  { name: 'material', value: 'brass', source: 'material class', verified: true },
+  { name: 'tail', value: 'The Kitchen', source: 'Room.name', verified: true },
 ];
 check('a verified slot makes it eligible',
   eligibleFrames(verified, { hasDeck: true }).map(f => f.id).join() === 'material');
@@ -285,8 +288,14 @@ check('the drift is recorded so it is not lost',
 
 console.log('\n11. A rendered frame instruction states its values');
 const rendered = renderFrameInstruction(MATERIAL_FRAME, verified);
-check('the resolved value is inlined, not described', /unlacquered brass/.test(rendered));
-check('it is marked as designer-stated', /stated by the designer/.test(rendered));
+check('the resolved value is inlined, not described',
+  /\{material\} = brass/.test(rendered));
+check('...and so is the place, which used to render as a description',
+  /\{tail\} = The Kitchen/.test(rendered));
+// The label is the slot's own source, not a blanket claim: "stated by the designer"
+// is true of a confirmed finish and false of a room name or a city.
+check('the value carries its own provenance, not a blanket claim',
+  /\[verified — /.test(rendered) && !/stated by the designer/.test(rendered));
 check('the tail rule travels with it', rendered.includes(TAIL_RULE));
 check('no exemplar block is emitted when none are sourced',
   !/Published headlines in this frame/.test(
@@ -679,6 +688,53 @@ check('...and still withholds the ones it cannot',
 check('the rename is explained where the condition is declared',
   /Was `namedSurface`, and that was the bug/.test(
     readFileSync('src/lib/interview/prompts/headlineVerbs.ts', 'utf8')));
+
+console.log('\n26. The tail is resolved, not described — B10');
+// It was never pushed, so it rendered as a description and the model invented the
+// place. Three of the first five headlines named no location at all.
+check('the Material frame requires a tail', MATERIAL_FRAME.requiredFields.includes('tail'));
+check('a material with no resolvable place makes the frame ineligible',
+  eligibleFrames([{ name: 'material', value: 'brass', source: 'x', verified: true }],
+    { hasDeck: true }).length === 0);
+check('a room tail makes it eligible',
+  eligibleFrames([
+    { name: 'material', value: 'brass', source: 'x', verified: true },
+    { name: 'tail', value: 'The Kitchen', source: 'Room.name', verified: true },
+  ], { hasDeck: true }).some(f => f.id === 'material'));
+check('a location fallback also makes it eligible',
+  eligibleFrames([
+    { name: 'material', value: 'brass', source: 'x', verified: true },
+    { name: 'tail', value: 'Miami Beach, FL', source: 'Project.city', verified: true },
+  ], { hasDeck: true }).some(f => f.id === 'material'));
+check('the resolver pushes a tail slot', /name: 'tail'/.test(slots));
+check('...from the rooms the class was tagged in, falling back to location',
+  /Room\.name — where \$\{top\.value\} is tagged/.test(slots)
+  && /no room resolved for this class/.test(slots));
+check('an unresolvable place returns null rather than a guess',
+  /null makes the frame INELIGIBLE/.test(slots));
+check('at most two rooms are named, so the tail is not an inventory',
+  /an inventory/.test(slots) && /rooms\.length >= 2\) return/.test(slots));
+check('the slot tells the model to use the place as given',
+  /do not substitute a room you/.test(
+    MATERIAL_FRAME.slots.find(x => x.name === 'tail')!.description));
+
+console.log('\n27. The candidate carries the rooms it came from — B10');
+check('MaterialCandidate has a rooms array', /rooms: string\[\];/.test(slots));
+// Counting and naming are different questions: an unassigned image is its own place
+// for the count, and contributes no name.
+check('counting and naming use separate sets',
+  /places: Set<string>/.test(slots) && /rooms: Set<string>/.test(slots));
+check('the counting sentinel can never reach a headline as a place name',
+  /must never reach a headline as a place name/.test(slots));
+check('only a real room name is collected',
+  /assignedRoom\?\.name \?\? tag\.image\?\.room/.test(slots));
+check('the structured room is joined, not just the legacy string',
+  /assignedRoom: \{ select: \{ name: true \} \}/.test(slots));
+check('room names are sorted, so a batch is reproducible',
+  /Array\.from\(at\.rooms\)\.sort/.test(slots));
+check('roomCount still counts places, not names', /roomCount: at\.places\.size/.test(slots));
+check('the rooms and the tail are logged',
+  /topMaterialRooms/.test(route) && /tail: slots\.find/.test(route));
 
 console.log(failures === 0
   ? '\nAll headline-frame checks passed.\n'

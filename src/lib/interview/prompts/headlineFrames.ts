@@ -152,17 +152,24 @@ export const MATERIAL_FRAME: HeadlineFrame = {
     },
     {
       name: 'tail',
-      source: 'the interview, or the rooms the article covers',
+      source: 'Room.name where the class is tagged, else Project.city / regionState',
       description:
-        'What the material acts ON, and where — the room, the surface, the fixture, ' +
-        'closing on a place. A fact, never an assessment.',
+        'The place the material acts on. A real room this material was tagged in, ' +
+        'or the project location. Use it as given — do not substitute a room you ' +
+        'inferred from the interview.',
     },
   ],
+  // `tail` IS required. It was not, and the cost was direct: the slot went
+  // unresolved, rendered as a description, and the model invented the place — three
+  // of the first five headlines to reach a designer named no location at all. A
+  // headline that cannot say where is not a headline this frame should offer, so an
+  // unresolvable place now makes the frame ineligible rather than a prompt to guess.
+  //
   // `verb` is deliberately NOT required. It is available on nearly every project
   // now, but a material with no room-assigned tags would otherwise lose the frame
   // entirely — and a material headline without a verb from the list is still better
   // than no material headline. The shape demands one; eligibility does not.
-  requiredFields: ['material'],
+  requiredFields: ['material', 'tail'],
   // The material carries the subject and the tail carries the event, so the
   // sentence is complete on its own. Nothing is deferred to a deck.
   requiresDeck: false,
@@ -430,8 +437,12 @@ export function renderFrameInstruction(
   const values = frame.slots
     .map((slot) => {
       const hit = resolved.find((r) => r.name === slot.name);
+      // The provenance label is the slot's own `source`, not a blanket claim. It used
+      // to append "stated by the designer" to every value, which was true of a
+      // confirmed finish and false of a room name or a city — and a prompt that
+      // overstates where a value came from invites the model to treat it as speech.
       return hit
-        ? `- {${slot.name}} = ${hit.value}   [from ${hit.source}, stated by the designer]`
+        ? `- {${slot.name}} = ${hit.value}   [verified — ${hit.source}]`
         : `- {${slot.name}} — ${slot.description}`;
     })
     .join('\n');
