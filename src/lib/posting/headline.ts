@@ -81,8 +81,21 @@ const words = (s: string) => s.trim().split(/\s+/).filter(Boolean);
  */
 export function normalizeHeadline(raw: string): string {
   let text = (raw ?? '').replace(/\s+/g, ' ').trim();
-  // Models sometimes hand back the headline already quoted.
-  text = text.replace(/^["“'‘]+/, '').replace(/["”'’]+$/, '').trim();
+  // Models sometimes hand back the whole headline wrapped in quotes. Strip that —
+  // but ONLY when both ends carry one.
+  //
+  // Stripping each end independently was wrong the moment the Borrowed-fragment
+  // frame shipped, because that frame puts a quotation at the HEAD of the
+  // sentence. It turned
+  //   “Yes, always in the plan”: paneling that raises a bedroom ceiling
+  // into
+  //   Yes, always in the plan”: paneling that raises a bedroom ceiling
+  // — an orphaned closing quote, published. The opening quote is part of the
+  // sentence whenever the sentence does not also end in one.
+  const wrapped = /^["“'‘]/.test(text) && /["”'’]$/.test(text);
+  if (wrapped) {
+    text = text.replace(/^["“'‘]+/, '').replace(/["”'’]+$/, '').trim();
+  }
   // Headlines do not take a terminal period. A question or exclamation mark is
   // a deliberate choice and is left alone.
   text = text.replace(/\.+$/, '').trim();

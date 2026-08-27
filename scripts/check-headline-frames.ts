@@ -13,7 +13,7 @@ process.env.ANTHROPIC_API_KEY ||= 'sk-ant-placeholder-for-static-checks';
 import { execSync } from 'child_process';
 import { readFileSync } from 'fs';
 import { MATERIAL_CLASSES } from '../src/lib/editorial-queue/signals';
-import { blockingIssues, headlineIssues, looksTitleCased } from '../src/lib/posting/headline';
+import { blockingIssues, headlineIssues, looksTitleCased, normalizeHeadline } from '../src/lib/posting/headline';
 import { normalizeForVerbatimCheck } from '../src/lib/posting/quoteCandidates';
 import {
   assertIsMaterialClass,
@@ -34,6 +34,7 @@ import {
   assertVerbLibraryIntegrity,
 } from '../src/lib/interview/prompts/headlineVerbs';
 import {
+  hasWeakPredicate,
   BORROWED_FRAGMENT_FRAME,
   AGENT_VERB_OBJECT_FRAME,
   stripQuotedSpans,
@@ -156,8 +157,11 @@ check('an unverified slot makes the frame ineligible',
   eligibleFrames(unverified, { hasDeck: true }).length === 0);
 check('an empty slot value makes the frame ineligible',
   eligibleFrames([{ name: 'material', value: '   ', source: 'x', verified: true }], { hasDeck: true }).length === 0);
+// `tail` joined requiredFields in B10 — a Material headline that cannot say WHERE
+// is not one this frame should offer.
 const verified: ResolvedSlot[] = [
-  { name: 'material', value: 'unlacquered brass', source: 'ProductTag.finishRaw', verified: true },
+  { name: 'material', value: 'brass', source: 'material class', verified: true },
+  { name: 'tail', value: 'The Kitchen', source: 'Room.name', verified: true },
 ];
 check('a verified slot makes it eligible',
   eligibleFrames(verified, { hasDeck: true }).map(f => f.id).join() === 'material');
@@ -284,8 +288,14 @@ check('the drift is recorded so it is not lost',
 
 console.log('\n11. A rendered frame instruction states its values');
 const rendered = renderFrameInstruction(MATERIAL_FRAME, verified);
-check('the resolved value is inlined, not described', /unlacquered brass/.test(rendered));
-check('it is marked as designer-stated', /stated by the designer/.test(rendered));
+check('the resolved value is inlined, not described',
+  /\{material\} = brass/.test(rendered));
+check('...and so is the place, which used to render as a description',
+  /\{tail\} = The Kitchen/.test(rendered));
+// The label is the slot's own source, not a blanket claim: "stated by the designer"
+// is true of a confirmed finish and false of a room name or a city.
+check('the value carries its own provenance, not a blanket claim',
+  /\[verified — /.test(rendered) && !/stated by the designer/.test(rendered));
 check('the tail rule travels with it', rendered.includes(TAIL_RULE));
 check('no exemplar block is emitted when none are sourced',
   !/Published headlines in this frame/.test(
@@ -293,8 +303,9 @@ check('no exemplar block is emitted when none are sourced',
 check('...and one IS emitted once they are',
   /Published headlines in this frame/.test(rendered)
   && /Coloured marble defines/.test(rendered));
-check('the shape puts the material in subject position',
-  /grammatical subject/.test(rendered) && /never as the subject of the sentence/.test(rendered));
+check('the shape puts the material in subject position AND makes it act',
+  /is the SUBJECT and it must ACT/.test(rendered)
+  && /It is not something that was done to/.test(rendered));
 
 console.log('\n12. The verb library is typed, not a flat list');
 const verbInt = assertVerbLibraryIntegrity();
@@ -330,7 +341,7 @@ check('an unknown REQUIRED condition withholds',
 // The asymmetry that is easy to get wrong: a barring condition being unknown must
 // also withhold. Otherwise a verb whose requirements are met sails past a bar
 // nobody could evaluate.
-const claddable = { namedSurface: true, materialClass: true };
+const claddable = { namedPlace: true, materialClass: true };
 check('a met requirement is not enough when a BAR is unknown',
   !explainVerb(HEADLINE_VERBS.find(v => v.id === 'intervention:renovate')!, { existingStructure: true }).eligible);
 check('...and it becomes eligible once the bar is known not to hold',
@@ -481,7 +492,7 @@ check('ordering is deterministic, so a batch is reproducible',
 
 console.log('\n20. Agent-verb-object — now fires (B8)');
 // Held back for three phases on three blockers. Two are gone and the third was
-// somewhere else: `namedSurface` is a VERB precondition, not a frame requirement.
+// somewhere else: `namedPlace` is a VERB precondition, not a frame requirement.
 check('the frame is declared', AGENT_VERB_OBJECT_FRAME.requiredFields.join() === 'agent,verb,object');
 check('naming the designer is no longer an issue',
   headlineIssues('Matto clads the island in oak').length === 0);
@@ -610,6 +621,120 @@ check('the corpus is v2', corpus._version === 2);
 check('the small-sample caveat is enforced, not just documented',
   /only \$\{human\.length\} human headlines \(20 recommended\)/.test(
     readFileSync('scripts/check-headline-discriminator.ts', 'utf8')));
+
+console.log('\n23. The subject must act — B10');
+// Every headline in the batch that prompted this had a thing in subject position
+// and a sentence reporting what happened TO it. Nothing caught them: they passed
+// every gate the pipeline had.
+for (const reported of [
+  'A glass table was chosen to keep a bright dining room from crowding',
+  "A stone bought without a shopping list became the bathroom's anchor",
+  '\u201CYes, always in the plan\u201D: paneling that raises a bedroom ceiling by inches',
+  'Black anchors were the first idea for the dining room, and stayed the last',
+  'Styling that took more objects than the shelf could keep',
+]) {
+  check(`caught: "${reported.slice(0, 46)}..."`, hasWeakPredicate(reported));
+}
+// The three shapes, named.
+check('passive is caught', hasWeakPredicate('Travertine was laid across the entry'));
+check('a copula is caught', hasWeakPredicate('Travertine was the first decision'));
+check('becoming is caught', hasWeakPredicate('Travertine became the entry floor'));
+check('a verb demoted into a relative clause is caught',
+  hasWeakPredicate('Paneling that raises a bedroom ceiling by inches'));
+// It must not eat the arrangements we actually ship.
+check('an active transitive headline survives',
+  !hasWeakPredicate('Coloured marble defines his-and-hers sinks in Marylebone penthouse'));
+check('...and every exemplar survives',
+  HEADLINE_FRAMES.every(f => f.exemplars.every(e => !hasWeakPredicate(e))));
+// A quoted passive is the designer's sentence, not ours.
+check('a passive INSIDE a quotation is not ours to police',
+  !hasWeakPredicate('\u201CIt was chosen for the light\u201D and the plan changed twice'));
+check('the route rejects on it', /WEAK_PREDICATE/.test(route));
+check('the prompt asks for it too, not just the filter',
+  /THE SUBJECT MUST ACT/.test(route));
+
+console.log('\n24. A quotation at the head survives normalization — B10');
+// normalizeHeadline stripped leading and trailing quotes independently, which was
+// correct until the Borrowed-fragment frame started putting a quotation FIRST. It
+// published an orphaned closing quote.
+check('a head quotation keeps its opening mark',
+  normalizeHeadline('\u201CYes, always in the plan\u201D: paneling raises the ceiling')
+    .startsWith('\u201C'));
+check('a fully wrapped headline is still unwrapped',
+  normalizeHeadline('\u201CEvery room argues its own case\u201D') === 'Every room argues its own case');
+check('the reason is recorded where the change is',
+  /an orphaned closing quote, published/.test(readFileSync('src/lib/posting/headline.ts', 'utf8')));
+check('the verbatim gate tests for ANY quote glyph, not just openers',
+  /\[\\u201C\\u201D"\]/.test(route));
+
+console.log('\n25. The verb library is reachable — B10');
+// It was dark. Five of six categories required conditions nothing ever resolved, so
+// renderVerbInstruction returned an empty string on nearly every project and the
+// model chose its own verb.
+check('no verbs when nothing is known', selectVerbs({}).eligible.length === 0);
+const common = { materialClass: true, namedPlace: true, spatialObject: true };
+check('the COMMON case now offers verbs, where it offered none',
+  selectVerbs(common).eligible.length >= 10, String(selectVerbs(common).eligible.length));
+check('application and placement are both reachable',
+  selectVerbs(common).eligible.some(v => v.category === 'application')
+  && selectVerbs(common).eligible.some(v => v.category === 'placement'));
+check('continuity still needs a class in two places',
+  !selectVerbs(common).eligible.some(v => v.category === 'continuity')
+  && selectVerbs({ ...common, classInTwoPlaces: true }).eligible.some(v => v.category === 'continuity'));
+check('the resolver sets the conditions it can answer',
+  /facts\.namedPlace = true/.test(slots) && /facts\.spatialObject = true/.test(slots));
+check('...and still withholds the ones it cannot',
+  /Still unresolvable, and still absent rather than false/.test(slots));
+check('the rename is explained where the condition is declared',
+  /Was `namedSurface`, and that was the bug/.test(
+    readFileSync('src/lib/interview/prompts/headlineVerbs.ts', 'utf8')));
+
+console.log('\n26. The tail is resolved, not described — B10');
+// It was never pushed, so it rendered as a description and the model invented the
+// place. Three of the first five headlines named no location at all.
+check('the Material frame requires a tail', MATERIAL_FRAME.requiredFields.includes('tail'));
+check('a material with no resolvable place makes the frame ineligible',
+  eligibleFrames([{ name: 'material', value: 'brass', source: 'x', verified: true }],
+    { hasDeck: true }).length === 0);
+check('a room tail makes it eligible',
+  eligibleFrames([
+    { name: 'material', value: 'brass', source: 'x', verified: true },
+    { name: 'tail', value: 'The Kitchen', source: 'Room.name', verified: true },
+  ], { hasDeck: true }).some(f => f.id === 'material'));
+check('a location fallback also makes it eligible',
+  eligibleFrames([
+    { name: 'material', value: 'brass', source: 'x', verified: true },
+    { name: 'tail', value: 'Miami Beach, FL', source: 'Project.city', verified: true },
+  ], { hasDeck: true }).some(f => f.id === 'material'));
+check('the resolver pushes a tail slot', /name: 'tail'/.test(slots));
+check('...from the rooms the class was tagged in, falling back to location',
+  /Room\.name — where \$\{top\.value\} is tagged/.test(slots)
+  && /no room resolved for this class/.test(slots));
+check('an unresolvable place returns null rather than a guess',
+  /null makes the frame INELIGIBLE/.test(slots));
+check('at most two rooms are named, so the tail is not an inventory',
+  /an inventory/.test(slots) && /rooms\.length >= 2\) return/.test(slots));
+check('the slot tells the model to use the place as given',
+  /do not substitute a room you/.test(
+    MATERIAL_FRAME.slots.find(x => x.name === 'tail')!.description));
+
+console.log('\n27. The candidate carries the rooms it came from — B10');
+check('MaterialCandidate has a rooms array', /rooms: string\[\];/.test(slots));
+// Counting and naming are different questions: an unassigned image is its own place
+// for the count, and contributes no name.
+check('counting and naming use separate sets',
+  /places: Set<string>/.test(slots) && /rooms: Set<string>/.test(slots));
+check('the counting sentinel can never reach a headline as a place name',
+  /must never reach a headline as a place name/.test(slots));
+check('only a real room name is collected',
+  /assignedRoom\?\.name \?\? tag\.image\?\.room/.test(slots));
+check('the structured room is joined, not just the legacy string',
+  /assignedRoom: \{ select: \{ name: true \} \}/.test(slots));
+check('room names are sorted, so a batch is reproducible',
+  /Array\.from\(at\.rooms\)\.sort/.test(slots));
+check('roomCount still counts places, not names', /roomCount: at\.places\.size/.test(slots));
+check('the rooms and the tail are logged',
+  /topMaterialRooms/.test(route) && /tail: slots\.find/.test(route));
 
 console.log(failures === 0
   ? '\nAll headline-frame checks passed.\n'

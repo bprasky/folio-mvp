@@ -67,11 +67,24 @@ export type VerbCondition =
   | 'existingStructure'
   /** The project is ground-up construction. */
   | 'newBuild'
-  /** A surface is named — wall, ceiling, floor, island, stair, facade. */
-  | 'namedSurface'
+  /**
+   * A named place the verb can act on — a room, or a surface within one.
+   *
+   * Was `namedSurface`, and that was the bug. Surfaces are not structured (the
+   * schema has rooms, not walls), so the condition could never hold and every
+   * Application verb was permanently withheld. But `clads the kitchen in oak` is
+   * exactly what these verbs do; a room is the object they take. The condition was
+   * asking for something narrower than the verbs need and narrower than the data
+   * has.
+   */
+  | 'namedPlace'
   /** A material class resolves for the project (marble, oak, brass…). */
   | 'materialClass'
-  /** An object with a spatial relationship to the room. */
+  /**
+   * A real object sitting in a named room — a tagged product on a photograph of
+   * that room. The tag carries x/y coordinates, so the placement is a recorded
+   * fact rather than an inference.
+   */
   | 'spatialObject'
   /** A stated spatial relationship between two areas. */
   | 'spatialRelation'
@@ -138,15 +151,15 @@ const INTERVENTION: HeadlineVerb[] = [
   v('intervention', 'expose', 'exposes', ['existingStructure'], ['newBuild']),
 ];
 
-/** APPLICATION — putting a material onto a surface. */
+/** APPLICATION — putting a material onto a surface or into a room. */
 const APPLICATION: HeadlineVerb[] = [
-  v('application', 'clad', 'clads', ['namedSurface', 'materialClass']),
-  v('application', 'wrap', 'wraps', ['namedSurface', 'materialClass']),
-  v('application', 'line', 'lines', ['namedSurface', 'materialClass']),
-  v('application', 'sheathe', 'sheathes', ['namedSurface', 'materialClass']),
-  v('application', 'panel', 'panels', ['namedSurface', 'materialClass']),
-  v('application', 'tile', 'tiles', ['namedSurface', 'materialClass']),
-  v('application', 'face', 'faces', ['namedSurface', 'materialClass']),
+  v('application', 'clad', 'clads', ['namedPlace', 'materialClass']),
+  v('application', 'wrap', 'wraps', ['namedPlace', 'materialClass']),
+  v('application', 'line', 'lines', ['namedPlace', 'materialClass']),
+  v('application', 'sheathe', 'sheathes', ['namedPlace', 'materialClass']),
+  v('application', 'panel', 'panels', ['namedPlace', 'materialClass']),
+  v('application', 'tile', 'tiles', ['namedPlace', 'materialClass']),
+  v('application', 'face', 'faces', ['namedPlace', 'materialClass']),
 ];
 
 /** PLACEMENT — where an object sits. */
