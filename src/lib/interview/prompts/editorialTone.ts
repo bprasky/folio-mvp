@@ -32,6 +32,49 @@ export const EDITORIAL_BANNED_PHRASES = `You must AVOID:
 - Do NOT use words like "harmonious," "curate," "elevate," "juxtaposition," or "seamlessly."`;
 
 /**
+ * Words that assess the work instead of reporting it.
+ *
+ * A separate export from EDITORIAL_BANNED_PHRASES because it bans a different
+ * KIND of thing. That list catches AI-default constructions — phrases that signal
+ * a model wrote the sentence. This one catches a register: language that tells the
+ * reader how impressed to be. A human writer produces it fluently, which is why it
+ * survives a list aimed at machine tells.
+ *
+ * This is `09`'s editorial tone stated as a vocabulary. Tone there is
+ * "observational, not promotional", and editorial "does not inflate importance" or
+ * "manufacture narrative". Every word below does one of those.
+ *
+ * THE LINE THIS MUST NOT CROSS. Factual adjectives drawn from the work are the
+ * opposite of this failure and are encouraged: cantilevered, lime-washed,
+ * book-matched, unlacquered, fluted, quarter-sawn, hand-troweled. Each names
+ * something a reader could verify from the photograph, and each could only be
+ * written by someone who looked. The banned class is the one that could be written
+ * without having seen the project at all.
+ *
+ * Load-bearing for the headline frame library: every frame terminates on a fact,
+ * and this is the vocabulary of the tails that do not. See TAIL_RULE and
+ * `hasEvaluativeTail` in ./headlineFrames.
+ */
+export const EVALUATIVE_ADJECTIVES = `NEVER ASSESS THE WORK. Report it.
+
+These words tell the reader how impressed to be. They are promotional register, and
+they are available whenever the writer has nothing left to report — which is exactly
+when they appear:
+- stunning, gorgeous, breathtaking, dreamy, elevated, luxe, jaw-dropping, must-see
+- showstopping, drop-dead, swoon-worthy, "to die for"
+- the idioms that do the same job: "pulls out all the stops", "goes all out",
+  "wow factor", "knocks it out of the park", "raises the bar", "sets a new standard"
+
+The test is whether the reader could disagree on the facts. "Reimagined for a family
+of five" is wrong if the family has four, so it is reporting. "Pulls out all the
+stops" cannot be wrong about anything, so it is not.
+
+This does NOT ban descriptive adjectives taken from the work itself. Cantilevered,
+lime-washed, book-matched, unlacquered, fluted, quarter-sawn, hand-troweled are all
+encouraged — each names something visible in the photograph, and none of them could
+be written by someone who had not looked.`;
+
+/**
  * The grounding / anti-fabrication guardrail. §5 requires this apply to ALL prose
  * generators, including the narrative-copy ones that currently carry no such rule.
  * Verbatim from the canonical article generator's ACCURACY block.
@@ -122,19 +165,13 @@ export function toTypographicQuotes(text: string): string {
  */
 export const HEADLINE_CRITERIA = `HEADLINE (the "kicker") — the most important line you will write:
 
-LENGTH: 4-10 words. Not a sentence with a subject and a full predicate — a headline.
-If it runs past 10 words it is a deck, not a headline. Cut it.
+LENGTH: 4-16 words. A backstop, not a target — the frame decides the shape and most
+good headlines land well short of the ceiling. Past 16 it is a deck, not a headline.
 
 CAPITALIZATION: sentence case. Capitalize the first word and proper nouns only —
 place names, the designer's name, brands, the studio. Everything else stays
 lowercase. Write "A Miami Beach house that changes mood room by room", never
 "A Miami Beach House That Changes Mood Room By Room". No terminal period.
-
-NEVER NAME THE DESIGNER, THE STUDIO, OR THE CLIENT. The byline sits directly
-under the headline and already says who made this. A headline that spends its
-one line on a name has said nothing about the house — and on a project credited
-to a firm, naming the individual contradicts the credit. Write about the
-building and the decisions, not the people.
 
 A HEADLINE IS NOT A CAPTION. This is the failure to guard against hardest,
 because a caption looks like good writing — it is specific, it is accurate, it

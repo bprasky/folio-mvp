@@ -865,3 +865,55 @@ used; (3) when a control is dead, the choice is delete or wire — and pick by
 whether the ACTION it triggers is the right instrument, not by how few lines the
 wiring takes; (4) if a working version of the capability exists at a better
 granularity, delete the broken one and signpost the good one.
+
+---
+
+## 2026-08-25 — A prose rule with three examples must be checked against all three
+
+**A checker that implements one example of a stated rule reads as enforcement and is not.**
+`HEADLINE_CRITERIA` has a section headed NEVER THE BALANCED PAIR, and it prints three
+headlines under it: "Bold in the kitchen, soft in the primary bedroom", "Dark in one
+wing, bright in the other", "Moody here, sunlit there". `BANNED_SHAPES` implemented
+the first one literally — `\w+ in the \w+..., \w+ in the \w+` — so the other two
+passed clean. `check-headline.ts` asserted the rule was refused using the one example
+the regex was written from, and passed. Every layer agreed the balanced pair was
+banned; two thirds of it shipped, and "Formal outside, unruly within, and both are
+true on purpose" reached a designer.
+The tell was available for free the whole time: the criteria's own counter-examples
+are a ready-made fixture, and running them through the checker takes one script.
+Fix: matched the structure instead of the phrasing. Every balanced pair is a quality
+pinned to a PLACE, twice, with a comma between — so the check keys on a closed set of
+LOCATORS (`here`, `outside`, `in the <room>`, `in one <wing>`) rather than on an open
+lexicon of mood adjectives. That distinction is what keeps the GOOD example "Two
+crews, one site, the same afternoon" alive: also a comma list of verbless fragments,
+but no fragment says where anything sits.
+Rules: (1) when prose states a rule and lists examples, put EVERY example in the
+check script as a fixture — the examples are a spec someone already wrote for you;
+(2) an assertion that reuses the one example the implementation was built from proves
+only that the implementation matches itself; (3) prefer a structural discriminator
+over a lexicon when the bad set is open-ended (adjectives, verbs) but the shape is
+closed (position, punctuation) — a lexicon has to be extended by each new production
+report, which is the race the list always loses; (4) when widening a filter, assert
+the GOOD examples survive in the same pass, or the widening quietly kills them.
+
+**Where a defect gets fixed is decided by whether a pattern could ever see it.**
+Four headlines came back bad from the first live batch. Exactly one — the balanced
+pair — was a structural shape; the other three ("Glass won the dining table argument
+by disappearing", "A reserved facade for clients who never wanted flash",
+"Renovating finishes only, and still changing everything") are only decidable against
+the interview, so they belong to the editor pass and NOT to the regex. Banning
+material-as-agent to catch the glass one would have killed "The stone chose the rest
+of the house", which the criteria list as GOOD.
+What the three shared was a defect none of the editor's three kill criteria named:
+they deliver a VERDICT on what the finished house is like rather than reporting a
+moment in it. Three of the four reached for a contrast to do it, and that is why
+"nothing at stake" did not fire — a contrast has the cadence of a claim, so it
+counterfeits the stake.
+Rules: (1) before adding a pattern, check it against the GOOD examples — if a good
+one dies, the defect is editorial and the pattern is the wrong layer; (2) when
+several bad outputs pass every stated criterion, look for the criterion that is
+MISSING rather than tightening the ones that exist; (3) name the counterfeit
+explicitly in a judging prompt ("a contrast counterfeits a stake"), because a
+criterion that has to be inferred from an adjacent one does not fire; (4) record in
+the check script which failures are deliberately left to judgement, so the next
+session does not chase them into the regex.

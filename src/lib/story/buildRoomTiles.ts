@@ -6,7 +6,7 @@
 import { buildEditorialChapters, type EditorialChapter } from "@/lib/editorial/buildEditorialChapters";
 import { getSelectedPullQuoteText, type PullQuoteSelection } from "@/lib/posting/schemas";
 import { formatRoomName } from "@/lib/utils/formatRoomName";
-import { headlineIssues } from "@/lib/posting/headline";
+import { blockingIssues } from "@/lib/posting/headline";
 
 // --- Types ---
 
@@ -264,14 +264,10 @@ export function buildStoryData(post: any): StoryData | null {
   //
   // Only the mechanical check runs here: it is free and has no opinion. The
   // editorial pass is a model call and belongs at write time, in the endpoint.
-  const headlineNames = {
-    designerName: designer?.name ?? null,
-    orgName: (project as any)?.designerOrg?.name ?? null,
-  };
   const titleAlternatives: string[] = Array.isArray(blocks?.lead?.kickerAlternatives)
     ? blocks.lead.kickerAlternatives
         .filter((t: unknown): t is string => typeof t === "string" && !!t.trim())
-        .filter((t: string) => headlineIssues(t, headlineNames).length === 0)
+        .filter((t: string) => blockingIssues(t).length === 0)
     : [];
   // Additive: the same paragraphs, still individually addressable for editing.
   const introParagraphs: string[] = Array.isArray(blocks?.introduction)

@@ -23,10 +23,11 @@
 //                       headline in Title Case.
 //
 //   judgeHeadlines()  — EDITORIAL. Is this about THIS project? Did it happen?
-//                       Is there a reason to read on? None of these are
-//                       decidable by pattern, and all three are what separates
-//                       the headlines that got complained about from the ones
-//                       that did not.
+//                       Is there a reason to read on? And does it report a
+//                       moment, or just deliver a verdict on the finished house?
+//                       None of these are decidable by pattern, and all four are
+//                       what separates the headlines that got complained about
+//                       from the ones that did not.
 //
 // A separate call, not an instruction bolted onto the writer's prompt. A model
 // asked to grade its own twelve suggestions defends them; a fresh context that
@@ -52,22 +53,44 @@ export interface HeadlineVerdict {
   keep: boolean;
   /** The editor's one line. Logged on kills; never shown to the designer. */
   why: string;
+  /**
+   * For a keeper: the interview moment the editor says the headline reports.
+   *
+   * Asked for because it is the cheapest way to make UNSUPPORTED and VERDICT
+   * bite. A model that must name the answer a headline came from cannot keep one
+   * that came from nowhere without writing the lie down — and the same line,
+   * logged, is how a human reading the logs can tell a grounded batch from a
+   * fluent one. Never shown to the designer, and never required: an editor that
+   * omits it still gets its verdict counted.
+   */
+  on?: string;
 }
 
 /**
- * The three ways a headline that passes every mechanical check is still wrong.
+ * The four ways a headline that passes every mechanical check is still wrong.
  *
  * Written as kill criteria rather than a quality score on purpose. "Rate these
  * 1-10" returns a spread of sevens and changes nothing; "which of these would
  * you not run, and why" is a decision, and it is the decision an editor is
  * actually making. Each criterion names the failure it catches so the model is
  * matching against a described defect rather than against its own taste.
+ *
+ * The fourth criterion is the one the first live batch bought. Every headline
+ * the designer rejected — "Formal outside, unruly within, and both are true on
+ * purpose", "Renovating finishes only, and still changing everything", "Glass
+ * won the dining table argument by disappearing", "A reserved facade for clients
+ * who never wanted flash" — was a VERDICT on the finished house rather than a
+ * report of anything in it, and three of the four reached for a contrast to say
+ * so. That is why the criterion names the counterfeit explicitly: a contrast has
+ * the cadence of a claim, so "nothing at stake" does not fire on it. Two of them
+ * are quoted into the prompt because a described defect is matched far more
+ * reliably when the model has seen one.
  */
 const EDITOR_SYSTEM = `You are the editor of a prestigious design magazine. A writer has submitted headline options for a feature. Your job is to CUT, not to write.
 
 You have the designer's interview — the reporting the piece is built on. Judge every candidate against it.
 
-KILL a headline for any of these three reasons. Be severe: it is much worse to run a weak headline than to run fewer options.
+KILL a headline for any of these four reasons. Be severe: it is much worse to run a weak headline than to run fewer options. The default is to kill. A headline earns its place by surviving all four, and most will not.
 
 1. INTERCHANGEABLE — swap two nouns and it could run on any other project this year. "The kitchen stone dictated every finish around it" is the template for every house with a statement slab; it tells you the shape of a decision without telling you the decision. If you cannot say what is specific to THIS house, kill it.
 
@@ -75,12 +98,18 @@ KILL a headline for any of these three reasons. Be severe: it is much worse to r
 
 3. NOTHING AT STAKE — accurate, specific, and there is still no reason to read the next line. Usually this is a caption: it describes how the house is arranged rather than what anyone did about it. Personifying the architecture is the tell — rooms that argue, stone that dictates, a bright room that asks for something. Nobody decided anything in those sentences; the building is performing a mood. Kill it.
 
-A headline you KEEP has to survive all three: something specific to this project, that the designer actually said happened, that a reader would want the rest of.
+4. VERDICT INSTEAD OF REPORT — it summarises what the project is LIKE rather than reporting something that happened. "Formal outside, unruly within, and both are true on purpose" and "Renovating finishes only, and still changing everything" are both conclusions about the finished house; no moment, no decision, nobody doing anything. The tell is a contrast or a paradox — two opposed qualities held together, or a concession ("only this, and still that"). Watch for it, because a contrast COUNTERFEITS a stake: it has the rhythm of a claim, so it can slip past reason 3 while nothing is actually at issue. A verdict about the house is not an event in it. Kill it.
+
+Also a verdict: the headline commenting on its own cleverness — "and both are true on purpose", "and that is the point", "by design". That is the writer talking about the writing.
+
+A headline you KEEP has to survive all four: something specific to this house, that the designer said happened, that a reader would want the rest of, and that reports a moment rather than delivering a verdict on the whole project.
+
+The test for a keeper: name the moment in the interview it came from — the decision, the mistake, the thing that arrived wrong, the thing the client said. If you cannot point at one answer and say "this line is about that", it is not a keeper, however well written it is. A headline can be vivid, specific and accurate and still be a verdict.
 
 Then RANK the survivors, best first. Best means: the one a stranger scrolling past is most likely to stop for, without having been misled about what the piece contains.
 
 Return ONLY a JSON array, ranked, kept headlines first then killed ones:
-[{"i": <number>, "keep": true|false, "why": "<one short line>"}]
+[{"i": <number>, "keep": true|false, "why": "<one short line>", "on": "<for a keeper only: the interview moment it reports, in a few words>"}]
 
 Every candidate index must appear exactly once. No preamble, no commentary, no code fence.
 
@@ -170,6 +199,7 @@ Judge all ${candidates.length}. Return the JSON array, ranked, kept first.`;
       index,
       keep: (entry as any)?.keep === true,
       why: typeof (entry as any)?.why === 'string' ? (entry as any).why : '',
+      on: typeof (entry as any)?.on === 'string' ? (entry as any).on : undefined,
     });
   }
 

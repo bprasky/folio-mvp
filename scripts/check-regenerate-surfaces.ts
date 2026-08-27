@@ -117,14 +117,24 @@ check('the kept set spans angles rather than taking the first N survivors',
 check('how many angles actually survived is logged',
   /anglesCovered/.test(headlineRoute));
 check('every candidate is graded by the same machine check',
-  /headlineIssues\(text, names\)/.test(headlineRoute));
-// "A house Matto never had to redraw" shipped with the byline directly beneath
-// it. Enforced, not asked for — the endpoint knows who is credited.
-check('and by the credited names, so a headline cannot repeat the byline',
-  /designerName: project\?\.designer\?\.name/.test(headlineRoute)
-  && /orgName: project\?\.designerOrg\?\.name/.test(headlineRoute));
+  /headlineIssues\(text\)/.test(headlineRoute));
+// The credited name used to be passed IN so a headline could be rejected for
+// containing it — "A house Matto never had to redraw" had shipped with the byline
+// directly beneath it. B8 reversed that on corpus evidence (57% of published design
+// headlines open on the credited party), and the name is now an input to the
+// Agent-verb-object frame rather than a disqualifier.
+check('the credited name is resolved as a SLOT, not as a disqualifier',
+  /name: 'agent'/.test(headlineRoute)
+  && !/headlineIssues\(text, names\)/.test(headlineRoute));
+check('...and the prompt no longer forbids using it',
+  !/do NOT name them in the headline/.test(headlineRoute));
+// B9: drops on BLOCKING issues only. TITLE_CASE is a heuristic this pipeline always
+// documented as a warning, and dropping on it threw away good headlines over a house
+// convention a designer can fix in the preview in seconds.
 check('candidates that fail house style are dropped, not offered',
-  /rejected\.push\(/.test(headlineRoute) && /if \(issues\.length > 0\)/.test(headlineRoute));
+  /rejected\.push\(/.test(headlineRoute) && /if \(blocking\.length > 0\)/.test(headlineRoute));
+check('...but a warning keeps the candidate and is surfaced instead',
+  /kept with warnings/.test(headlineRoute));
 check('an all-bad batch offers nothing rather than the least-bad',
   /code: 'NO_USABLE_CANDIDATES'/.test(headlineRoute));
 check('the live headline is NOT replaced by regenerating',

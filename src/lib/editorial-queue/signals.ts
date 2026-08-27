@@ -11,23 +11,32 @@ import type {
 
 // ─── Shared helpers ──────────────────────────────────────────────────────────
 
-// Finish-family keywords, checked in order against colorFinish then product
-// name. 'unlacquered brass' and 'brushed brass' both normalize to 'brass' so
-// repetition sees deliberate loyalty across spec variants.
-export const FINISH_FAMILIES = [
+// Material classes, checked in order against colorFinish then product name.
+// 'unlacquered brass' and 'brushed brass' both normalize to 'brass' so repetition
+// sees deliberate loyalty across spec variants.
+//
+// NAMED FOR WHAT IT HOLDS. This was FINISH_FAMILIES, which collided with an
+// unrelated 31-entry constant of the same name in src/lib/naming/descriptor.ts.
+// That one is a DESCRIPTOR vocabulary — 'matte black', 'brushed steel',
+// 'stainless', 'lacquer' — assembled for swap-in text when a product may not be
+// named in prose. This one is a CLASS vocabulary: marble, travertine, oak, brass,
+// the nouns a published headline actually uses. Two constants with one name over
+// two vocabularies is an import waiting to go to the wrong list, and the headline
+// frame library reads this one.
+export const MATERIAL_CLASSES = [
   'brass', 'bronze', 'copper', 'nickel', 'chrome', 'pewter', 'zinc', 'iron',
-  'gold', 'silver',
+  'steel', 'gold', 'silver',
   'oak', 'walnut', 'maple', 'ash', 'teak', 'mahogany', 'pine', 'birch',
   'marble', 'travertine', 'limestone', 'granite', 'quartz', 'soapstone',
-  'terracotta', 'concrete', 'plaster',
+  'terracotta', 'concrete', 'terrazzo', 'plaster',
   'linen', 'leather', 'velvet', 'boucle', 'wool', 'rattan', 'cane', 'jute',
   'lacquer', 'ceramic', 'glass',
 ] as const;
 
-export function finishFamilyOf(colorFinish: string | null, productName: string): string | null {
+export function materialClassOf(colorFinish: string | null, productName: string): string | null {
   const haystack = `${colorFinish ?? ''} ${productName}`.toLowerCase();
-  for (const family of FINISH_FAMILIES) {
-    if (haystack.includes(family)) return family;
+  for (const cls of MATERIAL_CLASSES) {
+    if (haystack.includes(cls)) return cls;
   }
   return null;
 }
@@ -275,7 +284,7 @@ const POSITIONING_TERMS: Array<{
   {
     term: 'stone',
     bioPatterns: /\bstone\b|\bmarble\b/i,
-    families: ['marble', 'travertine', 'limestone', 'granite', 'soapstone', 'quartz'],
+    families: ['marble', 'travertine', 'limestone', 'granite', 'soapstone', 'quartz', 'terrazzo'],
     categories: [],
   },
   {

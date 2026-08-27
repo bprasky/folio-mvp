@@ -29,13 +29,25 @@ import { callLLM } from '@/lib/posting/llmClient';
 import { MODELS } from '@/lib/ai/models';
 import { cid as newCid } from '@/lib/utils/correlation';
 import {
+  EVALUATIVE_ADJECTIVES,
   FOLIO_TONE,
   HEADLINE_CRITERIA,
   JSON_PROSE_QUOTING_RULE,
   toTypographicQuotes,
 } from '@/lib/interview/prompts/editorialTone';
 import {
+  eligibleFrames,
+  renderFrameInstruction,
+} from '@/lib/interview/prompts/headlineFrames';
+import {
+  BANNED_HEADLINE_VERBS_RULE,
+  selectVerbs,
+  renderVerbInstruction,
+} from '@/lib/interview/prompts/headlineVerbs';
+import { resolveHeadlineSlots, borrowedFragmentIsVerbatim } from '@/lib/posting/headlineSlots';
+import {
   normalizeHeadline,
+  blockingIssues,
   headlineIssues,
   HEADLINE_MAX_WORDS,
 } from '@/lib/posting/headline';
@@ -79,6 +91,10 @@ ${FOLIO_TONE}
 
 ${HEADLINE_CRITERIA}
 
+${EVALUATIVE_ADJECTIVES}
+
+${BANNED_HEADLINE_VERBS_RULE}
+
 Return ONLY a JSON array of headline strings. No preamble, no commentary, no code fence.
 
 ${JSON_PROSE_QUOTING_RULE}`;
@@ -121,8 +137,12 @@ export async function POST(
         designerOrg: { select: { name: true } },
       },
     });
-    // Who the byline credits. The headline must not repeat it — see the
-    // NAMES_PEOPLE rule, which is enforced rather than merely asked for.
+    // Who the byline credits.
+    //
+    // B8 unbanned this. It used to be forbidden in the headline and enforced as
+    // NAMES_PEOPLE; 57% of published design headlines open on exactly this name, so
+    // the ban was killing the corpus's best-supported arrangement. It is now the
+    // `agent` slot of the Agent-verb-object frame.
     const names = {
       designerName: project?.designer?.name ?? null,
       orgName: project?.designerOrg?.name ?? null,
@@ -158,6 +178,89 @@ export async function POST(
       typeof blocks.hookQuote?.text === 'string' ? blocks.hookQuote.text : null;
     const location = [project?.city, project?.regionState].filter(Boolean).join(', ');
 
+    // The frame library.
+    //
+    // Materials are structured on the row and this endpoint was passed none of
+    // them — the audit's F8. So the FIRST-MOVE angle ("the material the rest of
+    // the house had to answer to") was being asked of a writer that had never
+    // been told which materials exist, and it answered from the interview prose
+    // or from nothing.
+    //
+    // Two things change when a confirmed material exists. The verified values go
+    // into the prompt as facts, and the FIRST-MOVE angle stops being a topic and
+    // becomes a SHAPE: material as grammatical subject, designer as agent in the
+    // tail. Eligibility is decided here, in code — the model is never asked
+    // whether it has enough to write a material headline, because a model asked
+    // that says yes.
+    //
+    // This surface HAS a deck (`blocks.lead.deck`), so deck-requiring frames are
+    // eligible here. Three of the five title surfaces do not — see docs/23.
+    const { slots, materials, facts, confirmedFinishTags, fragments, answerTexts } =
+      await resolveHeadlineSlots(projectId);
+    // Slots the ROUTE can fill, from data it has already loaded. These three are
+    // what the Agent-verb-object frame needs, and until B8 unbanned the designer's
+    // name there was no point resolving any of them.
+    //
+    // `agent` is VERIFIED by the same standard already applied to a confirmed
+    // finish: a human entered it. It is account-asserted, not identity-checked —
+    // there is still no name-verification predicate in the schema — and that
+    // distinction is recorded rather than papered over. It is the standard the
+    // frame contract has always used, applied consistently.
+    const creditedName = project?.designerOrg?.name ?? project?.designer?.name ?? null;
+    if (creditedName) {
+      slots.push({
+        name: 'agent',
+        value: creditedName,
+        source: project?.designerOrg?.name ? 'Organization.name (credited)' : 'User.name (credited)',
+        verified: true,
+      });
+    }
+    // `object` is a room the article actually covers, resolved through the same
+    // chapter titles the gallery uses. A named SURFACE is still unavailable — the
+    // schema has rooms, not walls.
+    if (chapterTitles.length > 0) {
+      slots.push({
+        name: 'object',
+        value: chapterTitles[0],
+        source: 'Room.name, via the article\'s gallery chapters',
+        verified: true,
+      });
+    }
+    const verbs = selectVerbs(facts);
+    if (verbs.eligible.length > 0) {
+      slots.push({
+        name: 'verb',
+        value: verbs.eligible[0].headlineForm,
+        source: `headlineVerbs (${verbs.eligible[0].id}), preconditions satisfied`,
+        verified: true,
+      });
+    }
+
+    const frames = eligibleFrames(slots, { hasDeck: true });
+    // The verb library, gated on the same structured facts.
+    //
+    // Only what the data can decide is passed: `materialClass` and, when a class
+    // appears in more than one room or image, `classInTwoPlaces`. Everything else
+    // is ABSENT rather than false, which withholds rather than permits — so every
+    // Intervention verb stays out (no per-project new-build field exists) and so do
+    // Application, Placement, Division and Aperture, whose preconditions nothing
+    // can currently answer. See docs/23 §6.2 and §7.
+    const materialFrame = frames.find((f) => f.id === 'material') ?? null;
+    const fragmentFrame = frames.find((f) => f.id === 'borrowed-fragment') ?? null;
+    const agentFrame = frames.find((f) => f.id === 'agent-verb-object') ?? null;
+    // Position IS the angle (entry 2i and 2i+1 are ANGLES[i]), so a frame replaces
+    // an angle in place rather than adding a candidate. Each frame takes the angle
+    // that was already asking for its material: FIRST-MOVE wanted the material the
+    // house answered to, and CLIENT wanted what the client said "in their terms",
+    // which is a borrowed fragment with the quotation marks left off.
+    const framesByAngle = new Map<number, typeof materialFrame>();
+    if (materialFrame) framesByAngle.set(ANGLES.findIndex((a) => a.key === 'first-move'), materialFrame);
+    if (fragmentFrame) framesByAngle.set(ANGLES.findIndex((a) => a.key === 'client'), fragmentFrame);
+    // ARGUMENT asked for a claim someone could disagree with; an agent doing a
+    // specific thing to a specific room is the corpus's way of making one.
+    if (agentFrame) framesByAngle.set(ANGLES.findIndex((a) => a.key === 'argument'), agentFrame);
+    const framedAngleIndex = materialFrame ? ANGLES.findIndex((a) => a.key === 'first-move') : -1;
+
     const userPrompt = `Write ${CANDIDATES_REQUESTED} headline options for this article — ${ANGLES.length} angles, two per angle.
 
 ## What the designer told us happened
@@ -169,9 +272,21 @@ ${answerText || '(no interview answers on file)'}
 ## The project
 ${project?.title ? `Working title: ${project.title}` : ''}
 ${location ? `Location: ${location}` : ''}
-${names.orgName ? `Credited to: ${names.orgName}` : names.designerName ? `Credited to: ${names.designerName}` : ''} — do NOT name them in the headline
+${names.orgName ? `Credited to: ${names.orgName}` : names.designerName ? `Credited to: ${names.designerName}` : ''}
 Rooms covered: ${chapterTitles.length > 0 ? chapterTitles.join(', ') : 'unspecified'}
-
+${fragmentFrame && fragments.length > 0 ? `
+## What the designer said, word for word — QUOTABLE
+Any of these may be quoted in a headline, exactly as written. They are the only
+spans you may put inside quotation marks. Do not shorten, extend, tidy or re-punctuate
+one, and never quote anything that is not on this list.
+${fragments.slice(0, 10).map((f) => `- \u201C${f.text}\u201D`).join('\n')}
+` : ''}${materials.length > 0 ? `
+## Materials the designer specified — VERIFIED
+Each of these was typed by the designer onto a tagged product, not inferred from a
+photograph and not read out of the interview. You may state these as fact. Do not
+add a material that is not on this list, and do not name a product or a brand.
+${materials.slice(0, 8).map((m) => `- ${m.value} (specified across ${m.imageCount} image${m.imageCount === 1 ? '' : 's'})`).join('\n')}
+` : ''}
 ## Context, NOT source material
 The article's own opening and its current headline are below so you do not repeat
 them. Do not mine them for phrasing — they describe the finished house, and a
@@ -183,8 +298,12 @@ ${currentKicker ? `\nCurrent headline — do NOT repeat or paraphrase: ${toTypog
 
 ${feedback ? `## What the designer wants changed\n${toTypographicQuotes(feedback)}\n` : ''}
 ## Write two for each of these angles, in this order
-${ANGLES.map((a, i) => `${i * 2 + 1}. and ${i * 2 + 2}. ${a.key.toUpperCase()} — ${a.brief}`).join('\n')}
-
+${ANGLES.map((a, i) => `${i * 2 + 1}. and ${i * 2 + 2}. ${a.key.toUpperCase()} — ${framesByAngle.has(i) ? `write these two to the ${framesByAngle.get(i)!.name.toUpperCase()} frame below, not freely.` : a.brief}`).join('\n')}
+${Array.from(framesByAngle.values()).filter(Boolean).map((f) => `
+${renderFrameInstruction(f!, slots)}
+`).join('')}${verbs.eligible.length > 0 ? `
+${renderVerbInstruction(verbs)}
+` : ''}
 If an angle has nothing in the interview to support it, write a weaker headline
 from a different angle rather than inventing an event. Never state something the
 designer did not say happened.
@@ -259,9 +378,31 @@ Return ONLY a JSON array of ${CANDIDATES_REQUESTED} strings, in that order.`;
       if (seen.has(key)) return; // duplicate, or the headline they already have
       seen.add(key);
 
-      const issues = headlineIssues(text, names);
-      if (issues.length > 0) {
-        rejected.push({ text, why: issues.map((i) => `${i.code}: ${i.detail}`).join('; ') });
+      // Drop on ERRORS only. TITLE_CASE is a heuristic and this pipeline documents
+      // it as one — dropping on it threw away good headlines over a house
+      // convention the designer can fix in the preview in two seconds. The warning
+      // still travels with the candidate so it is visible rather than silent.
+      const blocking = blockingIssues(text);
+      if (blocking.length > 0) {
+        rejected.push({ text, why: blocking.map((i) => `${i.code}: ${i.detail}`).join('; ') });
+        return;
+      }
+      const warnings = headlineIssues(text).filter((i) => i.severity === 'warning');
+      if (warnings.length > 0) {
+        console.info('[headline/regenerate] kept with warnings', {
+          _cid, text, warnings: warnings.map((i) => `${i.code}: ${i.detail}`),
+        });
+      }
+
+      // Anything in quotation marks must actually have been said.
+      //
+      // Applied to EVERY candidate, not only the borrowed-fragment angle: the model
+      // does not always keep to the position it was asked for, and a headline is the
+      // worst place in the piece to attribute words to a designer that they did not
+      // use. This is the same contract the pull quote pipeline holds — a quote is
+      // selected, never written — checked with the same `isVerbatimSpan`.
+      if (/[\u201C"]/.test(text) && !borrowedFragmentIsVerbatim(text, answerTexts)) {
+        rejected.push({ text, why: 'QUOTE_UNVERIFIED: quotes words the designer did not say' });
         return;
       }
       survivors.push({ text, index });
@@ -328,12 +469,55 @@ Return ONLY a JSON array of ${CANDIDATES_REQUESTED} strings, in that order.`;
           cuts: killed.slice(0, 6).map((v) => ({ text: survivors[v.index].text, why: v.why })),
         });
       }
+      // What survived, and what the editor says each one REPORTS.
+      //
+      // The cuts alone cannot tell you whether the pass is working. A batch of
+      // fluent verdicts kept for good-sounding reasons looks identical in the
+      // logs to a batch of grounded headlines until you can see what each keeper
+      // is supposedly about — `on` is the editor naming the interview moment,
+      // and a keeper whose moment is vague ("the overall approach") is the pass
+      // failing quietly rather than cutting.
+      console.info('[headline/regenerate] editor keeps', {
+        _cid,
+        keeps: verdicts.filter((v) => v.keep).slice(0, 8).map((v) => ({
+          angle: ANGLES[Math.floor(survivors[v.index].index / 2)]?.key,
+          text: survivors[v.index].text,
+          on: v.on ?? '(the editor did not say)',
+        })),
+      });
     } else {
       // No editor: ship the mechanically-clean batch in angle order rather than
       // nothing. A judgement pass that is unavailable is a reason to lose the
       // ranking, not a reason to lose the feature.
       kept = [...survivors].sort(takeOrder).slice(0, CANDIDATES_KEPT).map((s) => s.text);
+      // Said loudly and at this level on purpose. The batch the designer sees is
+      // the writer's, unjudged — which is a different product from the one the
+      // pipeline is supposed to ship, and the only way to tell from the outside
+      // is that the headlines are worse. Anyone diagnosing a bad batch needs to
+      // know which of the two they are looking at before they change a prompt.
+      console.warn('[headline/regenerate] NO EDITOR — shipping the writer\'s unjudged batch', {
+        _cid, survivedRules: survivors.length, kept: kept.length,
+      });
     }
+
+    // Whether a frame fired, and on what. Without this a framed batch and a free
+    // one are indistinguishable in the logs, and the only symptom of an
+    // ineligible frame is that the headlines are no better than before.
+    console.info('[headline/regenerate] frames', {
+      _cid,
+      materialClasses: materials.length,
+      topMaterial: materials[0]?.value ?? null,
+      // The B1 gate beside the B3 one, so a single project shows the difference
+      // the repoint made. The aggregate needs a database — docs/23 §6.2.
+      confirmedFinishTags,
+      classInTwoPlaces: facts.classInTwoPlaces === true,
+      eligible: frames.map((f) => f.id),
+      quotableFragments: fragments.length,
+      framedAngles: Array.from(framesByAngle.entries()).map(([i, f]) => `${ANGLES[i].key}:${f!.id}`),
+      framedAngle: framedAngleIndex >= 0 ? ANGLES[framedAngleIndex].key : null,
+      verbsOffered: verbs.eligible.map((v) => v.id),
+      verbsWithheld: verbs.withheld.length,
+    });
 
     console.info('[headline/regenerate] candidates', {
       _cid, requested: CANDIDATES_REQUESTED, returned: raw.length,
