@@ -294,10 +294,13 @@ what they said out loud, so it can only be chosen.
 
 ---
 
-## 3b. The Agent-verb-object frame — declared, and never eligible
+## 3b. The Agent-verb-object frame — superseded by §3e
 
 The corpus arrangement: a named studio as subject, a physical verb, the object, an
 instrument tail. *"Studio X clads a Brooklyn loft in white oak."*
+
+> **Superseded.** This section records the state through B6–B7. Two of the three
+> blockers below were reversed or withdrawn in B8; see §3e for what is true now.
 
 **It cannot fire on the article surface, and that is correct rather than a gap.**
 Three independent blockers, none removable in this phase:
@@ -353,6 +356,168 @@ banned shape.
 The `agent-verb-object` frame is the one place the corpus's Dezeen skew is an asset:
 naming the agent is its shape, so all five fit directly. They pass every mechanical
 check — what makes the frame ineligible is the naming ban, not its construction.
+
+---
+
+## 3d. Two rules reversed — B8
+
+Both predate the frame library. Both were written when generation was producing bad
+long headlines, and both were treating a symptom the frame library now treats at the
+cause: a headline was bad because nothing gave it a shape, not because it was long or
+because it named someone.
+
+### The word cap: 10 → 16
+
+35% of the v1 corpus exceeded 10 words; the v2 corpus runs to 17 and its median is
+10. Ten was not house style — it was a guess that happened to suppress a failure
+mode.
+
+**16 is a backstop, not a shaping constraint.** The frame decides the shape; the cap
+only catches a runaway. The 17-word headline that prompted the whole module
+("A Miami Beach house that refuses to pick one mood and wear it all the way through")
+is still caught, and `check:headline` asserts it.
+
+The bound is now generated from `HEADLINE_MAX_WORDS` in the check rather than
+hard-coded, because raising it left a stale literal asserting the old value.
+
+### `NAMES_PEOPLE`: unbanned
+
+**57% of v1 opened on a named agent.** The ban's stated reason — the byline sits
+directly under the headline and already says who made this — is not one the corpus
+shares. It was killing the best-supported arrangement in the collected corpus.
+
+Sites changed:
+
+| file:line | change |
+|---|---|
+| `src/lib/posting/headline.ts:34` | `NAMES_PEOPLE` removed from the issue-code union |
+| `src/lib/posting/headline.ts` | `HeadlineNames` interface and `nameForms()` deleted |
+| `src/lib/posting/headline.ts:181` | `headlineIssues(text)` — the `names` parameter is gone |
+| `src/lib/interview/prompts/editorialTone.ts` | the `NEVER NAME THE DESIGNER…` section removed from `HEADLINE_CRITERIA` |
+| `src/lib/posting/generateEditorialDraft.ts:962` | `kickerIssues` no longer passes names |
+| `src/lib/story/buildRoomTiles.ts:267,274` | the read path no longer re-grades against names |
+| `…/headline/regenerate/route.ts:334` | the write filter no longer passes names |
+| `…/headline/regenerate/route.ts` | the prompt no longer says "do NOT name them in the headline" |
+| `scripts/check-headline.ts` §7 | rewritten to assert the reversal |
+| `scripts/check-regenerate-surfaces.ts` | two assertions rewritten |
+
+**What did NOT change: `docs/20`'s product naming gate.** That withholds *product and
+brand* names from prose until the exposure is paid for — a commercial rule about a
+placement Folio sells. A designer's own credit was never that placement, and the gate
+is untouched. `check:headline` asserts both facts together so the two are not
+confused later.
+
+---
+
+## 3e. Agent-verb-object now fires
+
+Held back for three phases on three blockers. Two are gone and the third was
+somewhere else.
+
+| blocker (B6) | status |
+|---|---|
+| `agent` cannot be verified — no name-verification predicate exists | **withdrawn as inconsistent** |
+| naming the designer is banned | **reversed** (§3d) |
+| `namedSurface` is unknown | **true, and irrelevant** — it is a *verb* precondition, not a frame requirement |
+
+**On the first: the schema still has no name-verification predicate, and the frame
+now resolves `agent` anyway.** The contract's bar has always been *a human stated
+it* — exactly the bar `ProductTag.finishConfirmed` clears. A designer typing their
+own name is not a weaker fact than a designer typing a finish. What the schema lacks
+is *identity* verification, a higher bar this contract never asked for anywhere else.
+Holding `agent` to it while accepting `finishRaw` was an inconsistency, not a
+standard. The slot records `account-asserted, not identity-verified` in its `source`.
+
+`object` resolves from `Room.name` via the article's gallery chapters. A named
+*surface* is still unavailable — the schema has rooms, not walls.
+
+**It fires when:** a credited name exists, the article covers at least one room, and
+a material class appears in more than one place.
+
+**What still gates it is the VERB.** That last condition is doing all the work:
+Application, Placement, Division and Aperture verbs all require preconditions nothing
+can answer (`namedSurface`, `spatialObject`, `spatialRelation`, `apertureFact`), so
+the only verbs ever offered are Continuity ones. The frame can currently say a
+material *runs, carries, threads, repeats, extends* or *continues* — and nothing
+else. Widening it means resolving surfaces and spatial relations; it does not mean
+touching this frame.
+
+It takes the `argument` angle, which asked for a claim someone could disagree with.
+
+---
+
+## 3f. Two arrangements the corpus shows and we do not have
+
+Reported, not implemented.
+
+### Project-as-subject — **distinct, not a generalization**
+
+The v2 corpus's largest agent-free group: 17 entries. Of those, **8 lead with a
+material** and are already covered by the Material frame. **9 do not**:
+
+> A Remodel Turns a Dark and Choppy House in Melbourne Into a Bright, Flexible Family Home
+> A Midcentury Home's Past Mistakes Are Finally Corrected
+> This Ever-Expanding L.A. Home Was 24 Years in the Making
+
+The subject is the *project* or the *intervention* — a remodel, a renovation, the
+home itself. Generalizing the Material frame to admit them would destroy what makes
+it work: its slot is a value from a closed 38-term vocabulary, traceable to a tagged
+product row. "A remodel" is not a slot value; it is the project, which every project
+has. The frame would go from *filling a verified slot* to *naming a category*, which
+is the free composition the library replaced.
+
+What it would need instead: a slot for the *intervention* — its scope or its scale —
+which is not structured today. `Project.stage` is a workflow position and
+`Project.timeline` is PAST/PRESENT/FUTURE; neither says what was done.
+
+### Label prefix — the queue can supply a label, but not these labels
+
+Eight entries, seven with a leading label: **Kitchen of the Week** (2),
+**Before & After** (4), **Home Tour** (1).
+
+Two candidate sources exist:
+
+- `PostVariant` — `PROJECT_FEATURE, MATERIAL_STUDY, METHOD, DESIGNER_PROFILE,
+  EVENT_ESSAY, PROMPTED_ARTICLE, QA, THIS_OR_THAT, GET_TO_KNOW`
+- `DesignerAngle.angleType` — `material_loyalty, evolution, anatomy_of_room, process,
+  philosophy, client_dynamic, regional_identity`
+
+**Both are internal taxonomies, not reader-facing labels.** "MATERIAL_STUDY" and
+"anatomy_of_room" describe why the piece exists; "Kitchen of the Week" and
+"Before & After" describe what the reader is about to see, and carry a recurring-
+series promise Folio does not make. The corpus labels are *editorial franchises*.
+
+So the answer is: yes, the queue could supply *a* label, and no, it could not supply
+these. Adopting the arrangement is a publishing decision — do we run recurring series?
+— before it is a code one. Note also the colon construction is on the
+`HEADLINE_CRITERIA` banned list ("Colon constructions that announce a theme"), which
+would need reversing first.
+
+---
+
+## 3g. Agent-free threshold — there is no threshold frame
+
+The v2 corpus has four:
+
+> Inside an Architect's Minimalist North London Apartment
+> Tour a Coastal Norway Home Made of Wood Flooring Scraps
+
+**No threshold frame is implemented.** Three frames exist — `material`,
+`borrowed-fragment`, `agent-verb-object` — and none can produce this shape. The
+"threshold" grouping has only ever been a corpus label; it was never built.
+
+What it would need:
+
+1. **A frame.** Slots: the threshold verb (`Inside` / `Tour`), an indefinite
+   possessor (`an Architect's`, `a Coastal Norway Home`), and the distinguishing
+   detail. None of that is hard.
+2. **The possessor slot is the real question.** "An Architect's" works because the
+   indefinite article does the presupposition without a name. Folio has the credited
+   name and the *role*, so `an architect's` is derivable — but whether a headline
+   should refer to the credited designer *indefinitely* when the byline names them is
+   an editorial call, not a data one.
+3. All four corpus entries are Title Case, so none can serve as an exemplar until
+   sentence-case instances are collected.
 
 ---
 
@@ -466,7 +631,40 @@ the operator at `docs/audits/headline-discriminator-corpus.json`:
 It must not be invented, for the same reason a frame's exemplars must not be: an
 invented corpus measures agreement with whoever invented it.
 
-#### The corpus exists — and 57% of it is a shape Folio cannot produce
+#### v2, re-measured under the B8 rules
+
+80 unique headlines (up from 46), adding Dwell and Remodelista, which write
+agent-free by default.
+
+| | v1, old rules | v2, new rules |
+|---|---|---|
+| unique entries | 46 | **80** |
+| passes every Folio check | 22 (48%) | **38 (48%)** |
+| agent-free | 20 (43%) | **53 (66%)** |
+| Folio-legal **and** single-project — the held-out set | **5** | **26** |
+
+**The held-out set goes from 5 to 26** — from below the script's floor to above the
+20 it recommends. Two things did it: the naming unban stopped excluding 57% of the
+corpus, and v2 added publications that do not lead with a studio name.
+
+Word count now spans 4–17, median 10.
+
+**The dominant rejection is now `TITLE_CASE` — 38 of 80.** Dwell and Remodelista set
+headlines in Title Case; Folio's house style is sentence case. That costs the entire
+project-as-subject group, which is otherwise the closest match to what Folio
+produces. Ignoring casing would give **56** rather than 26, but the judge could then
+separate on casing alone — the same methodological trap the naming ban was. 26 is the
+set that needs no normalization, and it is what `human` holds.
+
+##### A live inconsistency this surfaced
+
+`headline.ts` documents `TITLE_CASE` as *"a heuristic, not a gate"* that *"returns a
+warning rather than driving a rewrite or blocking generation."* The regenerate route
+drops any candidate with **any** issue, `TITLE_CASE` included — so it is a gate in
+practice. Thirty corpus entries turn on which of the two is true. Not fixed here: B8
+decided two rule changes and this is a third.
+
+#### v1 (superseded) — 57% of it was a shape Folio could not produce
 
 Collected by the project owner from Dezeen (majority) and Architectural Digest: 46
 unique published headlines, classified by arrangement. Measured against Folio's own
@@ -514,7 +712,7 @@ resolved permanently**:
 
 | | status |
 |---|---|
-| the held-out corpus | **DONE** — `docs/audits/headline-discriminator-corpus.json`, collected by the project owner |
+| the held-out corpus | **DONE** — v2, 80 entries; the held-out set is 26, above the recommended 20 |
 | `ANTHROPIC_API_KEY` | still unset in every authoring session; the judge is a model call |
 | a generated set | needs `DATABASE_URL` plus generation — press New options on ~20 projects, or read `blocks.lead.kickerAlternatives` off published posts |
 

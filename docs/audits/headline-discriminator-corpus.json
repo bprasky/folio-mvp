@@ -1,16 +1,75 @@
 {
+  "_version": 2,
   "_README": [
     "Real published headlines, human-written, collected from design publications.",
     "Two purposes: filling frame exemplar arrays, and serving as the discriminator's held-out set.",
     "DO NOT add generated headlines to this file. DO NOT invent entries.",
     "Every line appeared as a published article title.",
-    "Supplied by the project owner. Sources: Dezeen (majority, from tag indexes), Architectural Digest.",
-    "KNOWN SKEW, stated by the collector: majority Dezeen, whose house grammar is studio-as-subject.",
-    "Publications like World of Interiors and Cabana use three allusive words with the deck carrying",
-    "the facts, and that shape is NOT represented here. See docs/23 6.1 for what that costs the",
-    "discriminator."
+    "Supplied by the project owner. Sources: Dezeen, Dwell, Remodelista, Architectural Digest.",
+    "",
+    "v2: the first version was majority Dezeen, whose house grammar puts the studio name in",
+    "subject position, leaving only five entries that were agent-free and single-project. v2 adds",
+    "Dwell and Remodelista, both of which write agent-free by default.",
+    "",
+    "Note the path: the phase brief referred to docs/fixtures/headline-corpus.md, which has never",
+    "existed. The corpus has lived here since it was first supplied."
   ],
   "byArrangement": {
+    "project-as-subject": [
+      "Steel Elements Bring a Sheen to This 1300s French Townhouse",
+      "A Miami Renovation That Blends Concrete and Rich Wooden Interiors",
+      "A Remodel Turns a Dark and Choppy House in Melbourne Into a Bright, Flexible Family Home",
+      "A Family's Loft in Poland Gets a Minimalist Renovation That's Both Elegant and Functional",
+      "A Breakthrough Renovation Turns a Brick Home Into a Desert Oasis",
+      "A Midcentury Home's Past Mistakes Are Finally Corrected",
+      "This Minimalist, Solar-Powered Home Is a True Desert Oasis",
+      "This Ever-Expanding L.A. Home Was 24 Years in the Making",
+      "This Cozy L.A. Home Pairs High Design With Down-to-Earth Sustainability",
+      "Coloured marble defines his-and-hers sinks in Marylebone penthouse",
+      "Monolithic green marble forms \"majestic wall\" in Milan apartment",
+      "Rough drystone walls frame sunken home on Greek island by Alexandre Pavlidis",
+      "Open-air temple sits beneath granite farmhouse on Kerala hillside",
+      "Water disappears through gaps in Serafini's \"sculptural yet functional\" Piano washbasin",
+      "Ambient lighting meets glossy finishes inside Millo Bucharest",
+      "Blocks of terrazzo divide up muted pizza restaurant in Beijing",
+      "Antolini stone features throughout interior of coastal Maltese apartment"
+    ],
+    "threshold-agent-free": [
+      "Inside an Architect's Minimalist North London Apartment",
+      "Tour a Coastal Norway Home Made of Wood Flooring Scraps",
+      "Tour a 17th-Century Paris Loft Overflowing with Vintage Items",
+      "Tour a Charming Parisian Hotel That Just Got an Amazing Makeover"
+    ],
+    "threshold-named": [
+      "Inside Maggie Gyllenhaal and Peter Sarsgaard's Brooklyn Home",
+      "Inside NBA Star Devin Booker's Stylish Desert Oasis",
+      "Inside Emma Chamberlain's Radiant New Home",
+      "Izat Arundell's Modernist Stone Cottage in Scotland's Outer Hebrides",
+      "New York Architect Elizabeth Roberts's Own Kitchen Update, Before and After",
+      "Tour Frank Lloyd Wright's Spectacular Desert Retreat and School in Arizona"
+    ],
+    "label-prefix": [
+      "Kitchen of the Week: A Zesty Colorblocked Cook Space (and Bath), Before + After",
+      "Kitchen of the Week: A Low-Cost Before/After Kitchen in Brooklyn",
+      "Before & After: A Remodeled L.A. Home Dazzles With Fresh Materials and Color",
+      "Before & After: A Historic Catalan Farmhouse Redone by Espanyolet",
+      "Before & After: A Remodelista Editor's Dated California Kitchen Gets a Refresh",
+      "Before & After: A Pet-Friendly Overhaul for the Laundry Closet",
+      "Home Tour: A Petite Prefab With Stunning Views of the Texas Landscape",
+      "Modern White-Out Kitchen in the Haut Marais of Paris by Architect Saba Ghorbanalinejad: Kitchen of the Week"
+    ],
+    "named-project-copula": [
+      "Casa Modesta: A Family House Turned Rural Retreat in Portugal's Algarve",
+      "Brutalismo: A Concrete Cabin in the Woods of Cañada De Alferes, Mexico",
+      "Stilt House at Fernwood: A Contemporary Vacation Cabin on an Organic Farm in Connemara, Ireland",
+      "Le Chalet Olivet: A 19th Century Swiss Chalet Rental in the Loire Valley",
+      "Vollerup Atrium House is a monolithic summerhouse on the Danish coast"
+    ],
+    "allusive-plus-locative": [
+      "Strip Show: Peeling Back the Layers in a Park Slope Brownstone",
+      "Serial Remodelers Settle Down",
+      "A Very Proper Townhouse Remodel"
+    ],
     "agent-verb-object": [
       "Studio Okami Architecten updates Belgian home with The Garden Pavilion",
       "Form(LA) hides stone furniture showroom behind marble pivot door",
@@ -30,17 +89,9 @@
       "EBBA Architects remodels London apartment with bespoke joinery",
       "Bureau de Change makes creative use of terrazzo in Frame House renovation",
       "Shigeru Ban unveils coastal wellness retreat on Awaji Island",
-      "OMA completes first US affordable housing development"
-    ],
-    "material-as-subject": [
-      "Coloured marble defines his-and-hers sinks in Marylebone penthouse",
-      "Monolithic green marble forms \"majestic wall\" in Milan apartment",
-      "Rough drystone walls frame sunken home on Greek island by Alexandre Pavlidis",
-      "Open-air temple sits beneath granite farmhouse on Kerala hillside",
-      "Water disappears through gaps in Serafini's \"sculptural yet functional\" Piano washbasin",
-      "Ambient lighting meets glossy finishes inside Millo Bucharest",
-      "Blocks of terrazzo divide up muted pizza restaurant in Beijing",
-      "Antolini stone features throughout interior of coastal Maltese apartment"
+      "OMA completes first US affordable housing development",
+      "An Extended Family Pulls Together to Transform a Late '70s House Near Philadelphia",
+      "They Gave Their \"Grey Gardens\" Craftsman a Grand Reinvention"
     ],
     "borrowed-fragment": [
       "WXCA creates \"chiselled-out monolithic block\" for Polish History Museum",
@@ -50,15 +101,8 @@
       "Open Studio designs izakaya-style restaurant with \"half-dipped dumpling\" lamp",
       "Matthew Fisher blends antiquity with \"comforts of quiet luxury\" in New York gallery",
       "Water disappears through gaps in Serafini's \"sculptural yet functional\" Piano washbasin",
+      "They Gave Their \"Grey Gardens\" Craftsman a Grand Reinvention",
       "Heinz adjustable ketchup lid allows for \"perfect squeeze\""
-    ],
-    "named-project-copula": [
-      "Vollerup Atrium House is a monolithic summerhouse on the Danish coast"
-    ],
-    "threshold": [
-      "Inside Maggie Gyllenhaal and Peter Sarsgaard's Brooklyn Home",
-      "Inside NBA Star Devin Booker's Stylish Desert Oasis",
-      "Inside Emma Chamberlain's Radiant New Home"
     ],
     "enumerated-corpus-scope": [
       "Eight elegant kitchen islands that demonstrate the versatility of marble",
@@ -75,50 +119,70 @@
       "Nine designers revisit the Renaissance with works in bronze and marble",
       "Construction begins on world's tallest jail in Manhattan",
       "Photos reveal new facade of Google's Thompson Center",
-      "AIA announces longest \"ongoing slump\" for architecture revenues"
+      "AIA announces longest \"ongoing slump\" for architecture revenues",
+      "Block Shop's First Brick and Mortar Store in LA's Atwater Village"
     ]
   },
+  "_collectorNotes": [
+    "Verbs are physical actions. Clads, perches, inserts, hides, frames, divides, riffs, fills,",
+    "turns, blends, pairs. Never features, showcases, elevates, transforms as an abstraction.",
+    "Evaluation is borrowed, not asserted. Where evaluative language appears it usually sits inside",
+    "quotation marks and belongs to a named person. Dwell is the exception and uses mild evaluative",
+    "adjectives directly (charming, stunning, cozy), which is worth noting as a divergence rather",
+    "than adopting.",
+    "A locative tail closes most of them.",
+    "Length runs past ten words routinely. Several entries run 12 to 16 words. The colon",
+    "constructions in particular need the room.",
+    "Agent-free is a house style, not a constraint. Dwell and Remodelista almost never lead with a",
+    "studio name and still produce headlines that read as important."
+  ],
   "_humanSelection": [
-    "`human` is what scripts/check-headline-discriminator.ts reads. It is a SUBSET of",
-    "byArrangement, and the subset is experimental design rather than cherry-picking.",
+    "`human` is what scripts/check-headline-discriminator.ts reads. A SUBSET of",
+    "byArrangement, chosen so the comparison is like-for-like.",
     "",
-    "A held-out set has to be like-for-like with what the generator produces, or the",
-    "judge separates on task and grammar instead of on writing. Three exclusions, each",
-    "measured against the Folio checks in src/lib/posting/headline.ts:",
+    "v2 + the B8 rule changes took this from 5 to 26 — above the 20 the script",
+    "recommends, where v1 was below its floor of 5.",
     "",
-    "  1. Opens on a NAMED agent - 26 of 46 (57%). Folio bans naming the credited party",
-    "     (NAMES_PEOPLE, enforced at write and on read), so it cannot produce this shape",
-    "     at all. Leaving them in lets a judge score 'names a studio' = human and learn",
-    "     nothing about the writing.",
-    "  2. Fails a Folio check - 35% exceed the 10-word max, 4 read as Title Case, 3 use",
-    "     a banned generic verb (unveils, features, celebrate).",
-    "  3. A different task - corpus-scope round-ups ('Eight kitchens that...') and news",
-    "     items ('Construction begins on...'). The collector already noted round-ups are",
-    "     not applicable to single-project surfaces.",
+    "Two exclusions remain, and one that DROPPED OUT:",
+    "  DROPPED: 'opens on a named agent'. It removed 57% of v1. B8 unbanned naming, so",
+    "    agent-led headlines are now something Folio can produce and belong in the set.",
+    "  1. Fails a Folio check - 4 use a banned generic verb, 5 a banned shape, 1 is over",
+    "     the new 16-word cap, and 38 read as Title Case.",
+    "  2. A different task - corpus-scope round-ups and news items.",
     "",
-    "What survives all three is 5 headlines. That is the script's bare floor and well",
-    "below the 20 it recommends, so a baseline computed on it will be noisy. The gap is",
-    "the one the collector flagged: publications that do not lead with the studio name.",
-    "See docs/23 6.1."
+    "THE TITLE CASE PROBLEM, unresolved. 38 of 80 entries are Title Case, because that",
+    "is Dwell and Remodelista house style; Folio's is sentence case. Excluding them",
+    "costs the whole project-as-subject group, which is otherwise the closest match to",
+    "what Folio produces. Ignoring casing instead would give 56 rather than 26, but the",
+    "judge could then separate on casing alone. 26 is the set that needs no",
+    "normalization. See docs/23 6.1."
   ],
   "human": [
     "Coloured marble defines his-and-hers sinks in Marylebone penthouse",
     "Monolithic green marble forms “majestic wall” in Milan apartment",
+    "Rough drystone walls frame sunken home on Greek island by Alexandre Pavlidis",
     "Open-air temple sits beneath granite farmhouse on Kerala hillside",
+    "Water disappears through gaps in Serafini's “sculptural yet functional” Piano washbasin",
     "Ambient lighting meets glossy finishes inside Millo Bucharest",
-    "Blocks of terrazzo divide up muted pizza restaurant in Beijing"
-  ],
-  "_humanExtended": {
-    "_note": "Agent-free and Folio-legal, but a different task (round-ups, news). Widen `human` with these only if you accept the task mismatch.",
-    "entries": [
-      "Eight elegant kitchen islands that demonstrate the versatility of marble",
-      "Eight kitchens that benefit from generous marble surfaces",
-      "Ten home interiors with distinctive terrazzo floors",
-      "Eight bathrooms with elegant and pared-back terrazzo interiors",
-      "Ten architect-designed kitchens with terrazzo details",
-      "Five innovative smartphones and dumbphones that put design first",
-      "Construction begins on world's tallest jail in Manhattan",
-      "Photos reveal new facade of Google's Thompson Center"
-    ]
-  }
+    "Blocks of terrazzo divide up muted pizza restaurant in Beijing",
+    "Vollerup Atrium House is a monolithic summerhouse on the Danish coast",
+    "Form(LA) hides stone furniture showroom behind marble pivot door",
+    "Al-Jawad Pike creates marble “immersive experience” for APL's Soho flagship store",
+    "WXCA creates “chiselled-out monolithic block” for Polish History Museum",
+    "Studio Font perches cliffside home in Mexico on inhabitable concrete columns",
+    "Iterare Arquitectos inserts stark white home into shell of old Spanish building",
+    "Fabio Fantolino looks to 1960s offices for interior of retro Turin bar",
+    "Studio NRG designs Lilium Chair out of recycled metal car rims",
+    "Open Studio designs izakaya-style restaurant with “half-dipped dumpling” lamp",
+    "Besley & Spresser clads Sydney Harbour pavilion with oyster shell terrazzo",
+    "Local Local completes “contemporary and playful” renovation of neoclassical Athens townhouse",
+    "Studio Aisslinger completes “nature-loving” renovation of Hotel Seegarten",
+    "Erik Bratsberg fills Persona restaurant with tactile materials and own artworks",
+    "Chrysler Building cafe by Deidra Hodgson riffs on art deco location",
+    "Echlin uses broken-plan layout to create spacious interiors within London mews house",
+    "Bureau de Change makes creative use of terrazzo in Frame House renovation",
+    "OMA completes first US affordable housing development",
+    "Matthew Fisher blends antiquity with “comforts of quiet luxury” in New York gallery",
+    "Heinz adjustable ketchup lid allows for “perfect squeeze”"
+  ]
 }

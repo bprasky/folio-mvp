@@ -479,28 +479,33 @@ check('ordering is deterministic, so a batch is reproducible',
     { answer: 'We used travertine throughout the ground floor for continuity.', isFollowUp: false },
   ])) === JSON.stringify(frags));
 
-console.log('\n20. Agent-verb-object — declared, and correctly never eligible');
-// Three independent blockers, none removable in this phase. Declared anyway,
-// because an absent frame gets rediscovered and re-proposed while an ineligible one
-// carries its reasons with it.
-check('the frame is declared',
-  AGENT_VERB_OBJECT_FRAME.requiredFields.join() === 'agent,verb,object');
-check('agent is never resolved, because no name-verification predicate exists',
-  /`agent` is NEVER resolved/.test(slots) && /no name-verification predicate/.test(slots));
-check('...so the frame is ineligible even with every other slot verified',
-  eligibleFrames([
-    { name: 'verb', value: 'clads', source: 'headlineVerbs', verified: true },
-    { name: 'object', value: 'the island', source: 'Room.name', verified: true },
-    { name: 'material', value: 'oak', source: 'x', verified: true },
-    { name: 'fragment', value: 'we fought for it', source: 'x', verified: true },
-  ], { hasDeck: true }).every(f => f.id !== 'agent-verb-object'));
-check('naming the designer is banned on this surface anyway',
-  headlineIssues('Matto clads the island in oak', { designerName: 'Diano Matto', orgName: null })
-    .some(i => i.code === 'NAMES_PEOPLE'));
-check('all three blockers are written down where the frame is',
-  /no name-verification predicate/i.test(frames)
-  && /NAMES_PEOPLE/.test(frames)
-  && /`namedSurface` is unknown/.test(frames));
+console.log('\n20. Agent-verb-object — now fires (B8)');
+// Held back for three phases on three blockers. Two are gone and the third was
+// somewhere else: `namedSurface` is a VERB precondition, not a frame requirement.
+check('the frame is declared', AGENT_VERB_OBJECT_FRAME.requiredFields.join() === 'agent,verb,object');
+check('naming the designer is no longer an issue',
+  headlineIssues('Matto clads the island in oak').length === 0);
+const agentSlots = [
+  { name: 'agent', value: 'BP Design', source: 'Organization.name (credited)', verified: true },
+  { name: 'object', value: 'The Kitchen', source: 'Room.name', verified: true },
+  { name: 'verb', value: 'runs', source: 'headlineVerbs', verified: true },
+];
+check('it is eligible once agent, object and verb resolve',
+  eligibleFrames(agentSlots, { hasDeck: true }).some(f => f.id === 'agent-verb-object'));
+check('...and not without a verb',
+  !eligibleFrames(agentSlots.slice(0, 2), { hasDeck: true }).some(f => f.id === 'agent-verb-object'));
+// The verb is what actually gates it now. Only Continuity verbs are ever offered,
+// because every other category's preconditions are unanswerable.
+check('only Continuity verbs are reachable on today\'s data',
+  selectVerbs({ materialClass: true, classInTwoPlaces: true }).eligible
+    .every(v => v.category === 'continuity'));
+check('the route resolves all three slots',
+  /name: 'agent'/.test(route) && /name: 'object'/.test(route) && /name: 'verb'/.test(route));
+check('the agent slot records that it is account-asserted, not identity-verified',
+  /account-asserted, not identity-verified/.test(AGENT_VERB_OBJECT_FRAME.slots[0].source));
+check('the reversal and what still gates it are written down',
+  /IT FIRES AS OF B8/.test(frames)
+  && /What actually gates it now is the VERB/.test(frames));
 
 console.log('\n21. Exemplars are real, and clean');
 // "NEVER invented" is the frame contract's own words. This makes it mechanical:
@@ -527,21 +532,25 @@ for (const frame of HEADLINE_FRAMES) {
       JSON.stringify({ issues: headlineIssues(e).map(i => i.code), verb: usesBannedVerb(e), evaluative: hasEvaluativeTail(e) }));
   }
 }
-// 57% of the corpus opens on a studio name, which Folio bans. Those may teach the
-// agent-verb-object frame, which is declared precisely because it cannot ship here
-// — but they must never leak into a frame that DOES ship, or every output learns a
-// shape NAMES_PEOPLE kills.
-const shippingFrames = HEADLINE_FRAMES.filter(f => f.id !== 'agent-verb-object');
+// Agent-led exemplars are no longer illegal — B8 unbanned naming. What still
+// matters is FRAME IDENTITY: an exemplar has to demonstrate the arrangement its
+// frame is named for, or it teaches a different frame from inside this one.
 const OPENS_AGENT_FREE = /^(the|a|an|inside|eight|ten|five|nine|coloured|monolithic|rough|open-air|water|ambient|blocks|photos|construction)\b/i;
-for (const frame of shippingFrames) {
-  for (const e of frame.exemplars) {
-    check(`${frame.id}: exemplar does not open on a named agent`,
-      OPENS_AGENT_FREE.test(e), e);
-  }
+for (const e of MATERIAL_FRAME.exemplars) {
+  check('material: exemplar leads with the material, not an agent', OPENS_AGENT_FREE.test(e), e);
 }
-check('the agent-verb-object frame keeps the agent-led ones, which are its shape',
+check('agent-verb-object: every exemplar leads with the agent',
   AGENT_VERB_OBJECT_FRAME.exemplars.length >= 3
   && AGENT_VERB_OBJECT_FRAME.exemplars.every(e => !OPENS_AGENT_FREE.test(e)));
+// Borrowed-fragment is deliberately unconstrained on subject: its identity is the
+// quotation, which is orthogonal to who leads the sentence. It went from one
+// exemplar to five when the naming ban lifted.
+check('borrowed-fragment: every exemplar actually carries a quotation',
+  BORROWED_FRAGMENT_FRAME.exemplars.length >= 3
+  && BORROWED_FRAGMENT_FRAME.exemplars.every(e => /[\u201C"]/.test(e)));
+check('...and spans both subject shapes, which the naming ban had prevented',
+  BORROWED_FRAGMENT_FRAME.exemplars.some(e => OPENS_AGENT_FREE.test(e))
+  && BORROWED_FRAGMENT_FRAME.exemplars.some(e => !OPENS_AGENT_FREE.test(e)));
 
 console.log('\n22. The held-out set is like-for-like');
 check('a human set exists', Array.isArray(corpus.human) && corpus.human.length >= 5);
@@ -549,15 +558,24 @@ const byArrangementNormalized = new Set(
   Object.values(corpus.byArrangement as Record<string, string[]>).flat().map(normalizeForVerbatimCheck));
 check('every entry in it is also in the full record',
   (corpus.human as string[]).every(h => byArrangementNormalized.has(normalizeForVerbatimCheck(h))));
-// If the held-out set contains shapes Folio cannot produce, the judge separates on
-// grammar rather than on writing and the rate means nothing.
-check('no entry opens on a named agent',
-  (corpus.human as string[]).every(h => OPENS_AGENT_FREE.test(h)));
+// The agent-free requirement is GONE — B8 made agent-led headlines producible, so
+// excluding them would now bias the set the other way. What still has to hold is
+// that every entry is something Folio's checks would let through.
+check('the set is above the 20 the script recommends',
+  (corpus.human as string[]).length >= 20, String((corpus.human as string[]).length));
+check('it now includes both agent-led and agent-free shapes',
+  (corpus.human as string[]).some(h => OPENS_AGENT_FREE.test(h))
+  && (corpus.human as string[]).some(h => !OPENS_AGENT_FREE.test(h)));
 check('every entry would pass Folio\'s own checks',
   (corpus.human as string[]).every(h => headlineIssues(h).length === 0 && !usesBannedVerb(h)));
 check('the selection criterion is written down',
   Array.isArray(corpus._humanSelection)
   && corpus._humanSelection.join(' ').includes('like-for-like'));
+// 38 of 80 entries are Title Case because that is Dwell and Remodelista house
+// style; Folio's is sentence case. Unresolved, and recorded rather than hidden.
+check('the Title Case confound is recorded',
+  corpus._humanSelection.join(' ').includes('TITLE CASE PROBLEM'));
+check('the corpus is v2', corpus._version === 2);
 check('the small-sample caveat is enforced, not just documented',
   /only \$\{human\.length\} human headlines \(20 recommended\)/.test(
     readFileSync('scripts/check-headline-discriminator.ts', 'utf8')));

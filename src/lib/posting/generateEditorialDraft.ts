@@ -959,10 +959,7 @@ async function repairAndBuildBlocks(
   // designer edits the headline in place in the preview, so a flagged headline
   // costs them seconds — a mis-lowercased place name costs a correction on a
   // published page. See src/lib/posting/headline.ts.
-  const kickerIssues = headlineIssues(blocks.lead.kicker, {
-    designerName: input.designer?.name ?? null,
-    orgName: input.org?.name ?? null,
-  });
+  const kickerIssues = headlineIssues(blocks.lead.kicker);
   if (kickerIssues.length > 0) {
     console.warn('[generate] headline departs from house style', {
       _cid,
@@ -1294,7 +1291,7 @@ Produce a JSON object with this structure:
 
 {
   "lead": {
-    "kicker": "The headline. See HEADLINE below — 4-10 words, sentence case.",
+    "kicker": "The headline. See HEADLINE below — 4-16 words, sentence case.",
     "deck": "1-2 sentences that set up the story. See HEADLINE — do not restate the headline."
   },
   "introduction": [

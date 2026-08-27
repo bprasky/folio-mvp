@@ -136,8 +136,12 @@ export async function POST(
         designerOrg: { select: { name: true } },
       },
     });
-    // Who the byline credits. The headline must not repeat it — see the
-    // NAMES_PEOPLE rule, which is enforced rather than merely asked for.
+    // Who the byline credits.
+    //
+    // B8 unbanned this. It used to be forbidden in the headline and enforced as
+    // NAMES_PEOPLE; 57% of published design headlines open on exactly this name, so
+    // the ban was killing the corpus's best-supported arrangement. It is now the
+    // `agent` slot of the Agent-verb-object frame.
     const names = {
       designerName: project?.designer?.name ?? null,
       orgName: project?.designerOrg?.name ?? null,
@@ -192,6 +196,45 @@ export async function POST(
     // eligible here. Three of the five title surfaces do not — see docs/23.
     const { slots, materials, facts, confirmedFinishTags, fragments, answerTexts } =
       await resolveHeadlineSlots(projectId);
+    // Slots the ROUTE can fill, from data it has already loaded. These three are
+    // what the Agent-verb-object frame needs, and until B8 unbanned the designer's
+    // name there was no point resolving any of them.
+    //
+    // `agent` is VERIFIED by the same standard already applied to a confirmed
+    // finish: a human entered it. It is account-asserted, not identity-checked —
+    // there is still no name-verification predicate in the schema — and that
+    // distinction is recorded rather than papered over. It is the standard the
+    // frame contract has always used, applied consistently.
+    const creditedName = project?.designerOrg?.name ?? project?.designer?.name ?? null;
+    if (creditedName) {
+      slots.push({
+        name: 'agent',
+        value: creditedName,
+        source: project?.designerOrg?.name ? 'Organization.name (credited)' : 'User.name (credited)',
+        verified: true,
+      });
+    }
+    // `object` is a room the article actually covers, resolved through the same
+    // chapter titles the gallery uses. A named SURFACE is still unavailable — the
+    // schema has rooms, not walls.
+    if (chapterTitles.length > 0) {
+      slots.push({
+        name: 'object',
+        value: chapterTitles[0],
+        source: 'Room.name, via the article\'s gallery chapters',
+        verified: true,
+      });
+    }
+    const verbs = selectVerbs(facts);
+    if (verbs.eligible.length > 0) {
+      slots.push({
+        name: 'verb',
+        value: verbs.eligible[0].headlineForm,
+        source: `headlineVerbs (${verbs.eligible[0].id}), preconditions satisfied`,
+        verified: true,
+      });
+    }
+
     const frames = eligibleFrames(slots, { hasDeck: true });
     // The verb library, gated on the same structured facts.
     //
@@ -201,9 +244,9 @@ export async function POST(
     // Intervention verb stays out (no per-project new-build field exists) and so do
     // Application, Placement, Division and Aperture, whose preconditions nothing
     // can currently answer. See docs/23 §6.2 and §7.
-    const verbs = selectVerbs(facts);
     const materialFrame = frames.find((f) => f.id === 'material') ?? null;
     const fragmentFrame = frames.find((f) => f.id === 'borrowed-fragment') ?? null;
+    const agentFrame = frames.find((f) => f.id === 'agent-verb-object') ?? null;
     // Position IS the angle (entry 2i and 2i+1 are ANGLES[i]), so a frame replaces
     // an angle in place rather than adding a candidate. Each frame takes the angle
     // that was already asking for its material: FIRST-MOVE wanted the material the
@@ -212,6 +255,9 @@ export async function POST(
     const framesByAngle = new Map<number, typeof materialFrame>();
     if (materialFrame) framesByAngle.set(ANGLES.findIndex((a) => a.key === 'first-move'), materialFrame);
     if (fragmentFrame) framesByAngle.set(ANGLES.findIndex((a) => a.key === 'client'), fragmentFrame);
+    // ARGUMENT asked for a claim someone could disagree with; an agent doing a
+    // specific thing to a specific room is the corpus's way of making one.
+    if (agentFrame) framesByAngle.set(ANGLES.findIndex((a) => a.key === 'argument'), agentFrame);
     const framedAngleIndex = materialFrame ? ANGLES.findIndex((a) => a.key === 'first-move') : -1;
 
     const userPrompt = `Write ${CANDIDATES_REQUESTED} headline options for this article — ${ANGLES.length} angles, two per angle.
@@ -225,7 +271,7 @@ ${answerText || '(no interview answers on file)'}
 ## The project
 ${project?.title ? `Working title: ${project.title}` : ''}
 ${location ? `Location: ${location}` : ''}
-${names.orgName ? `Credited to: ${names.orgName}` : names.designerName ? `Credited to: ${names.designerName}` : ''} — do NOT name them in the headline
+${names.orgName ? `Credited to: ${names.orgName}` : names.designerName ? `Credited to: ${names.designerName}` : ''}
 Rooms covered: ${chapterTitles.length > 0 ? chapterTitles.join(', ') : 'unspecified'}
 ${fragmentFrame && fragments.length > 0 ? `
 ## What the designer said, word for word — QUOTABLE
@@ -331,7 +377,7 @@ Return ONLY a JSON array of ${CANDIDATES_REQUESTED} strings, in that order.`;
       if (seen.has(key)) return; // duplicate, or the headline they already have
       seen.add(key);
 
-      const issues = headlineIssues(text, names);
+      const issues = headlineIssues(text);
       if (issues.length > 0) {
         rejected.push({ text, why: issues.map((i) => `${i.code}: ${i.detail}`).join('; ') });
         return;

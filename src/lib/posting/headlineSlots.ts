@@ -152,7 +152,7 @@ export function assertIsMaterialClass(value: string): boolean {
 //
 // A headline-scale span of the designer's own speech. `extractQuoteCandidates`
 // is the pull-quote extractor and is deliberately NOT reused here: its bounds are
-// 6-45 words, tuned for a display line, and a headline is 4-10 words total. A
+// 6-45 words, tuned for a display line, and a headline is 4-16 words total. A
 // fragment has to leave room for the sentence around it.
 //
 // The span is SELECTED, never written — the same posture the pull quote takes.

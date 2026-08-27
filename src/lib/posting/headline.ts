@@ -1,9 +1,28 @@
 // ============================================================================
 // The article headline: what we can enforce, and what we deliberately do not.
 //
-// House style is sentence case, 4-10 words (see the HEADLINE block in the
+// House style is sentence case, 4-16 words (see the HEADLINE block in the
 // generation prompt). This module is the deterministic half of that — the
 // prompt asks, this checks.
+//
+// TWO RULES WERE REVERSED IN B8, both on corpus evidence. They were written when
+// generation was producing bad long headlines, and they were treating a symptom the
+// frame library now treats at the cause.
+//
+//   The cap was 10. 35% of real published headlines exceed it and the collected
+//   corpus runs to 16, so 10 was not house style, it was a guess that happened to
+//   suppress a failure mode. It is now 16 and is a BACKSTOP, not a shaping
+//   constraint: a frame decides the shape, and this only catches a runaway.
+//
+//   NAMES_PEOPLE is gone. It banned the credited designer or studio from the
+//   headline, and 57% of published design headlines open on exactly that. It was
+//   killing the best-supported arrangement in the corpus for a reason — "the byline
+//   below already says it" — that the corpus simply does not share.
+//
+// Note what did NOT change: docs/20's product naming gate. That withholds PRODUCT
+// and BRAND names from prose until the exposure is paid for, which is a commercial
+// rule about a placement Folio sells. A designer's own credit is not a placement
+// and was never gated by it.
 //
 // The split matters, because casing is NOT symmetrically safe to fix:
 //
@@ -28,36 +47,11 @@
 
 /** House style. Past this a headline is a deck. */
 export const HEADLINE_MIN_WORDS = 4;
-export const HEADLINE_MAX_WORDS = 10;
+export const HEADLINE_MAX_WORDS = 16;
 
 export interface HeadlineIssue {
-  code: 'TOO_LONG' | 'TOO_SHORT' | 'TITLE_CASE' | 'BANNED_SHAPE' | 'TERMINAL_PUNCT' | 'NAMES_PEOPLE';
+  code: 'TOO_LONG' | 'TOO_SHORT' | 'TITLE_CASE' | 'BANNED_SHAPE' | 'TERMINAL_PUNCT';
   detail: string;
-}
-
-/**
- * Names the headline must not use. The byline already carries them.
- *
- * Passed in rather than inferred, because "Matto" is only a designer's name on
- * this project — somewhere else it is a word. Enforceable precisely because the
- * caller knows exactly who is being credited.
- */
-export interface HeadlineNames {
-  designerName?: string | null;
-  orgName?: string | null;
-}
-
-/** Every whole-word form of a name worth catching, surname included. */
-function nameForms(name: string | null | undefined): string[] {
-  const full = (name ?? '').trim();
-  if (!full) return [];
-  const parts = full.split(/\s+/).filter(Boolean);
-  const forms = [full];
-  // A surname alone is the usual way a headline smuggles the name in
-  // ("A house Matto never had to redraw"). One-word names are already covered.
-  if (parts.length > 1) forms.push(parts[parts.length - 1]);
-  // Studio names ending in a generic word ("BP Design") also appear shortened.
-  return forms.filter(f => f.length > 2);
 }
 
 const words = (s: string) => s.trim().split(/\s+/).filter(Boolean);
@@ -178,12 +172,12 @@ const BANNED_SHAPES: Array<{ re: RegExp; label: string }> = [
 ];
 
 /** Every way this headline departs from house style. Empty means it conforms. */
-export function headlineIssues(text: string, names?: HeadlineNames): HeadlineIssue[] {
+export function headlineIssues(text: string): HeadlineIssue[] {
   const issues: HeadlineIssue[] = [];
   const n = words(text).length;
 
   if (n > HEADLINE_MAX_WORDS) {
-    issues.push({ code: 'TOO_LONG', detail: `${n} words (max ${HEADLINE_MAX_WORDS}) — this is a deck, not a headline` });
+    issues.push({ code: 'TOO_LONG', detail: `${n} words (max ${HEADLINE_MAX_WORDS}) — past this it is a deck` });
   } else if (n > 0 && n < HEADLINE_MIN_WORDS) {
     issues.push({ code: 'TOO_SHORT', detail: `${n} words (min ${HEADLINE_MIN_WORDS})` });
   }
@@ -197,16 +191,5 @@ export function headlineIssues(text: string, names?: HeadlineNames): HeadlineIss
     if (re.test(text)) issues.push({ code: 'BANNED_SHAPE', detail: label });
   }
 
-  // The headline is about the PROJECT. Naming the designer or the studio spends
-  // the one line that has to interest a stranger on something the byline
-  // directly beneath it already says — and on an org-credited project, naming
-  // the individual contradicts the credit outright.
-  for (const form of [...nameForms(names?.designerName), ...nameForms(names?.orgName)]) {
-    const re = new RegExp(`\\b${form.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'i');
-    if (re.test(text)) {
-      issues.push({ code: 'NAMES_PEOPLE', detail: `names "${form}" — the byline already does` });
-      break;
-    }
-  }
   return issues;
 }

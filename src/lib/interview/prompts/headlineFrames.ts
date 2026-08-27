@@ -155,15 +155,21 @@ export const MATERIAL_FRAME: HeadlineFrame = {
   requiresDeck: false,
   // Real published headlines, from docs/audits/headline-discriminator-corpus.json.
   //
-  // Selected on two criteria, both load-bearing. They must pass every check Folio
-  // enforces — an exemplar that breaks a rule teaches the rule away, which is how
-  // the old criteria came to list the balanced pair as GOOD. And they must NOT name
-  // an agent: 57% of the corpus opens on a studio name, which Folio bans outright
-  // (NAMES_PEOPLE), so those would teach a shape every output gets killed for.
+  // Every exemplar must pass every check Folio enforces — one that breaks a rule
+  // teaches the rule away, which is how the old criteria came to list the balanced
+  // pair as GOOD.
+  //
+  // These stay agent-free, but for a different reason than in B7. The naming ban is
+  // gone, so agent-led headlines are no longer illegal; they belong to a DIFFERENT
+  // frame. A material-frame exemplar that opened on a studio name would teach the
+  // agent arrangement inside the frame whose whole point is that the material takes
+  // the subject position.
   exemplars: [
     'Coloured marble defines his-and-hers sinks in Marylebone penthouse',
     'Monolithic green marble forms \u201Cmajestic wall\u201D in Milan apartment',
     'Blocks of terrazzo divide up muted pizza restaurant in Beijing',
+    'Rough drystone walls frame sunken home on Greek island by Alexandre Pavlidis',
+    'Water disappears through gaps in Serafini\'s \u201Csculptural yet functional\u201D Piano washbasin',
   ],
   tailRule: TAIL_RULE,
   shape:
@@ -180,29 +186,32 @@ export const MATERIAL_FRAME: HeadlineFrame = {
  * The corpus arrangement: a named studio as subject, a physical verb, the thing
  * acted on, and an instrument tail. "Studio X clads a Brooklyn loft in white oak."
  *
- * IT WILL NOT FIRE ON THE ARTICLE SURFACE, and that is correct rather than a gap to
- * close. Three independent blockers, none of which this phase may remove:
+ * IT FIRES AS OF B8. It was declared-and-withheld for three phases, on three
+ * blockers; two are gone and the third turned out to be somewhere else.
  *
- *   1. `agent` cannot be VERIFIED. The frame contract requires a required slot to be
- *      non-null and verified, and there is no name-verification predicate anywhere
- *      in the schema — `User.name` is a plain String (audit §3.A). No row says this
- *      name was confirmed by anyone.
- *   2. Naming the designer is BANNED on the article surface. `HEADLINE_CRITERIA`
- *      states it and `headlineIssues` enforces it as NAMES_PEOPLE, at write in the
- *      regenerate route and again on read in `buildRoomTiles`. The reason is
- *      structural: Folio sets the byline directly under the headline, so a headline
- *      spending its one line on the name says nothing the reader is not already
- *      being told.
- *   3. `namedSurface` is unknown. Rooms are structured, surfaces are not.
+ *   1. "`agent` cannot be verified." WITHDRAWN as inconsistent. There is still no
+ *      name-verification predicate — `User.name` is a plain String — but the frame
+ *      contract's bar has always been "a human stated it", and that is exactly the
+ *      bar `ProductTag.finishConfirmed` clears. A designer typing their own name is
+ *      not a weaker fact than a designer typing a finish. What the schema lacks is
+ *      IDENTITY verification, a higher bar this contract never asked for anywhere
+ *      else. The slot is account-asserted and says so in its `source`.
+ *   2. "Naming the designer is banned." REVERSED in B8 on corpus evidence: 57% of
+ *      published design headlines open on the credited party. The ban's reason —
+ *      the byline below already says it — is not one the corpus shares.
+ *   3. "`namedSurface` is unknown." TRUE, and irrelevant here: it is a VERB
+ *      precondition, not a frame requirement. `object` resolves from `Room.name`.
  *
- * So it is declared, and it withholds — the same posture the Intervention verbs
- * take against the missing new-build field. A frame that is ineligible for a reason
- * written down is worth more than a frame that is absent: absence gets rediscovered
- * and re-proposed, and the second blocker in particular is a decision the user owns
- * rather than a limitation to engineer around.
+ * What actually gates it now is the VERB. Application, Placement, Division and
+ * Aperture verbs all require preconditions nothing can answer (`namedSurface`,
+ * `spatialObject`, `spatialRelation`, `apertureFact`), so the only verbs ever
+ * offered are Continuity ones — the frame can currently say that a material runs,
+ * carries, threads, repeats, extends or continues, and nothing else. Widening it
+ * means resolving surfaces and spatial relations, not touching this frame.
  *
- * Where it WOULD work is a surface with no byline under the headline. That is a
- * product question, not a code one, and it is not decided here.
+ * Fires when: a credited name exists, the article covers at least one room, and a
+ * material class appears in more than one place (which is what makes a Continuity
+ * verb eligible).
  */
 export const AGENT_VERB_OBJECT_FRAME: HeadlineFrame = {
   id: 'agent-verb-object',
@@ -210,9 +219,10 @@ export const AGENT_VERB_OBJECT_FRAME: HeadlineFrame = {
   slots: [
     {
       name: 'agent',
-      source: 'User.name / Organization.name — NO verification predicate exists',
+      source: 'Organization.name or User.name (credited) — account-asserted, not identity-verified',
       description:
-        'The studio or designer, as the credited party. Named, not described.',
+        'The studio or designer, as the credited party. Named, not described. Use ' +
+        'the credited name exactly as given.',
     },
     {
       name: 'verb',
@@ -234,15 +244,15 @@ export const AGENT_VERB_OBJECT_FRAME: HeadlineFrame = {
   ],
   requiredFields: ['agent', 'verb', 'object'],
   requiresDeck: false,
-  // The corpus's largest group, and the one place its Dezeen skew is an asset
-  // rather than a problem: naming the agent IS this frame. All five pass every
-  // mechanical check; what makes them ineligible here is the naming ban, not their
-  // construction.
+  // The corpus's largest group. Since B8 unbanned the name these are exemplars for
+  // a frame that ships, not for one held back.
+  // Chosen for VERB variety, now that the frame ships: hides, perches, inserts,
+  // clads, completes. The verb is the slot that does the work.
   exemplars: [
     'Form(LA) hides stone furniture showroom behind marble pivot door',
-    'WXCA creates \u201Cchiselled-out monolithic block\u201D for Polish History Museum',
-    'Open Studio designs izakaya-style restaurant with \u201Chalf-dipped dumpling\u201D lamp',
-    'Studio Aisslinger completes \u201Cnature-loving\u201D renovation of Hotel Seegarten',
+    'Studio Font perches cliffside home in Mexico on inhabitable concrete columns',
+    'Iterare Arquitectos inserts stark white home into shell of old Spanish building',
+    'Besley & Spresser clads Sydney Harbour pavilion with oyster shell terrazzo',
     'OMA completes first US affordable housing development',
   ],
   tailRule: TAIL_RULE,
@@ -302,18 +312,20 @@ export const BORROWED_FRAGMENT_FRAME: HeadlineFrame = {
   ],
   requiredFields: ['fragment'],
   requiresDeck: false,
-  // ONE. That is not an oversight, it is what the corpus contains.
+  // ONE in B7, five now. The constraint that held it to one was the naming ban:
+  // seven of the eight collected borrowed-fragment headlines open on a studio name,
+  // and while that was illegal they could not be taught. B8 unbanned it, so the
+  // device can be shown in the grammar the corpus actually uses it in.
   //
-  // Of eight borrowed-fragment headlines collected, seven open on a studio name —
-  // Dezeen's house grammar, which Folio bans. Only this one carries the device
-  // without the agent. Padding the array with the other seven would teach the
-  // naming shape alongside the borrowing, and the borrowing is the only part Folio
-  // can use. One correct exemplar beats four that carry a banned shape.
-  //
-  // More can only come from publications that do not lead with the studio — the
-  // gap the corpus's own collector flagged. See docs/23 §6.1.
+  // Note what these have in common regardless of who the subject is: the evaluation
+  // is always inside the quotation marks and always someone's. That is the frame,
+  // and it is orthogonal to whether an agent leads.
   exemplars: [
     'Monolithic green marble forms \u201Cmajestic wall\u201D in Milan apartment',
+    'WXCA creates \u201Cchiselled-out monolithic block\u201D for Polish History Museum',
+    'Studio Aisslinger completes \u201Cnature-loving\u201D renovation of Hotel Seegarten',
+    'Open Studio designs izakaya-style restaurant with \u201Chalf-dipped dumpling\u201D lamp',
+    'Matthew Fisher blends antiquity with \u201Ccomforts of quiet luxury\u201D in New York gallery',
   ],
   tailRule: TAIL_RULE,
   shape:

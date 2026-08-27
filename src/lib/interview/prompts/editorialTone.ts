@@ -165,19 +165,13 @@ export function toTypographicQuotes(text: string): string {
  */
 export const HEADLINE_CRITERIA = `HEADLINE (the "kicker") — the most important line you will write:
 
-LENGTH: 4-10 words. Not a sentence with a subject and a full predicate — a headline.
-If it runs past 10 words it is a deck, not a headline. Cut it.
+LENGTH: 4-16 words. A backstop, not a target — the frame decides the shape and most
+good headlines land well short of the ceiling. Past 16 it is a deck, not a headline.
 
 CAPITALIZATION: sentence case. Capitalize the first word and proper nouns only —
 place names, the designer's name, brands, the studio. Everything else stays
 lowercase. Write "A Miami Beach house that changes mood room by room", never
 "A Miami Beach House That Changes Mood Room By Room". No terminal period.
-
-NEVER NAME THE DESIGNER, THE STUDIO, OR THE CLIENT. The byline sits directly
-under the headline and already says who made this. A headline that spends its
-one line on a name has said nothing about the house — and on a project credited
-to a firm, naming the individual contradicts the credit. Write about the
-building and the decisions, not the people.
 
 A HEADLINE IS NOT A CAPTION. This is the failure to guard against hardest,
 because a caption looks like good writing — it is specific, it is accurate, it
