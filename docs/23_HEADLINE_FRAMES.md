@@ -1077,6 +1077,126 @@ built speculatively.
 
 ---
 
+## 3n. The article headline is rebuilt on the interview — C3
+
+§3m added project-grain angles and left the material-grain frames in the same
+candidate pool. That was not enough, and the reported batch says why:
+
+- *"BP Design clads the Dining Room in glass, to keep the room from crowding"*
+- *"BP Design clads the Dining Room in black hardware and pendants"*
+- *"Wood paneling reaches the primary bedroom because it was 'yes, always in the plan'"*
+- *"A Miami Beach house carries one marble from the kitchen into Connor's Bath"*
+
+Two agent-verb-object at room grain, one material-grain, one Continuity working
+exactly as designed. Adding angles could not fix this, because **the pool still
+offered the shape**.
+
+### The candidate set is the interview
+
+`resolveProjectHeadlineSlots` replaces `resolveHeadlineSlots` on this route. It
+issues **no `ProductTag` read**, resolves no material class and reads no room name.
+The room-answer block is gone from the prompt too.
+
+Why the tag path came off: it ranked material classes by tag count and built the
+headline around the winner, so the output was confidently specific about whatever
+had been photographed most rather than about anything the designer emphasised. **A
+tag count is evidence of what got photographed, not of what mattered.** If a
+material or a room reaches an article headline now, it is because an answer put it
+there.
+
+`resolveHeadlineSlots` is untouched and still resolves everything, because the
+caption layer needs exactly what this one refuses.
+
+### Two gate axes, because neither implies the other
+
+`HeadlineFrame` carries `grain` (what is in subject position) and `source` (where
+the evidence comes from). The article surface requires **both** `grain: 'project'`
+and `source: 'interview'`.
+
+| frame | grain | source | leads an article? |
+|---|---|---|---|
+| constraint | project | interview | **yes** |
+| governing-decision | project | interview | **yes** |
+| change | project | interview | **yes** |
+| continuity | project | tags | no — caption |
+| material | material | tags | no — caption |
+| agent-verb-object | material | tags | no — caption |
+| borrowed-fragment | material | interview | no — caption |
+
+One axis would not have done it. **Continuity is project-subject and tag-sourced** —
+it says something about the whole house, and says it because tag counts put a
+material in two rooms. Borrowed fragment is the mirror image. Relabelling either to
+force a single axis would have been a lie about what it does; two independent
+predicates say the actual rule.
+
+Nothing is deleted. All four off-surface frames stay declared, exemplar-checked
+against the corpus, and asserted by `check-headline-frames`.
+
+### Change, the third angle
+
+Sourced from SURPRISE_PIVOT — *"what changed along the way"*. That is a change of
+DIRECTION, not the corpus's before-and-after: the audit found no before-state in the
+schema and that is still true. The frame reports the change the designer described
+and its shape forbids inferring a prior condition they did not state.
+
+### Substantive, not merely present
+
+`"n/a"`, `"not sure"`, a stray character — each is a non-empty answer and none is a
+headline source. An angle needs its answer to clear a floor (24 characters, 5 words)
+or it is ineligible.
+
+The floor is set by what it must let THROUGH. A first pass at 40/8 rejected *"One
+stone, everywhere it could go"* — 34 characters, six words, and the best
+governing-decision answer in any sample here. A designer being terse is not a
+designer being unhelpful, so it sits just above the answers that carry no content at
+all and leaves the rest to the writer and the editor.
+
+### No eligible angle means no headline
+
+Measured on the article surface:
+
+| project shape | angles |
+|---|---|
+| all four opening answers substantive | governing-decision, constraint, change |
+| big idea + pivot only | governing-decision, change |
+| client/scope only | constraint |
+| answers but no location | **NONE** |
+| **tags only, no interview** | **NONE** |
+| nothing | **NONE** |
+
+The last three return HTTP 422, `NO_ELIGIBLE_ANGLE`, naming which opening question
+is unanswered. That is the same decision the endpoint already made when every
+candidate failed the rules — offering nothing is a correct outcome, not a failure to
+hide — and it is actionable in a way a bad headline is not: every angle here is
+unlocked by work the designer can do.
+
+Falling back to a material frame would reintroduce exactly what this removes, one
+layer down. A well-tagged, un-interviewed project gets **no article headline**, and
+that is the intended answer.
+
+### Batch size holds, spread over what resolved
+
+Two candidates per angle was right at six angles. At one angle it is a batch of two,
+which is not a picker. `TARGET_CANDIDATES` is divided over however many angles
+resolved, capped by `MAX_PER_ANGLE` — six takes on one angle would be the flat batch
+this structure exists to prevent, arrived at from the other direction.
+
+### What C2 built and C3 removed
+
+The room-grain angle briefs (`BASE_ANGLES`) are retained in the route file, unused,
+for the caption surface. They must not come back: carrying no frame, nothing
+constrains their grain, and the most concrete thing in this prompt is the article's
+own room list. `check-headline-frames` asserts the angle list is built from
+`PROJECT_GRAIN_ANGLES` alone, so wiring them back in fails a check rather than
+quietly reintroducing the bug.
+
+Also gone from this route with the tag path: the `agent`, `object` and `verb` slots,
+and the verb library — every one of its preconditions is tag-derived, so none could
+be answered here. The frames still declare those slots, which is what a caption
+surface will resolve against.
+
+---
+
 ## 4. The tail rule
 
 > The final clause must state a fact — who it was for, what it replaced, where it came

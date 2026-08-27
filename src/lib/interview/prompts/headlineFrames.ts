@@ -50,6 +50,45 @@ export interface HeadlineFrame {
   id: string;
   /** Human name, used in logs and in docs/23. */
   name: string;
+  /**
+   * What occupies the subject position, which is what decides WHICH SURFACE may
+   * offer this frame.
+   *
+   * `project` — the dwelling is the subject and the material or decision is
+   * evidence about it. An article is about a project, so the article headline is
+   * the surface for these.
+   *
+   * `material` — a material, a quote or a studio is the subject, and the claim is
+   * about a room or an object. These are the CAPTION layer. They are correct
+   * sentences at the wrong altitude for a headline: "BP Design clads the Dining
+   * Room in glass" is true, specific, and about one room of a house the article
+   * covers in eight.
+   *
+   * Gating happens at `eligibleFrames`, by surface. Nothing is deleted — a frame
+   * that cannot lead an article is exactly the frame that should caption a room,
+   * and it stays declared, exemplar-checked and tested here.
+   */
+  grain: 'project' | 'material';
+  /**
+   * Where this frame's EVIDENCE comes from, which is the second half of the surface
+   * gate and independent of `grain`.
+   *
+   * `interview` — the designer's own answers. The claim is something they said.
+   * `tags` — `ProductTag` rows, material classes, room assignments. The claim is
+   * something the resolver found.
+   *
+   * Both axes are needed because neither implies the other. Continuity is
+   * project-SUBJECT and tag-SOURCED: it says something about the whole house, and
+   * says it because tag counts put a material in two rooms — not because the
+   * designer thought it mattered. Borrowed fragment is the mirror image,
+   * interview-sourced and room-subject.
+   *
+   * The article headline requires BOTH `grain: 'project'` and `source: 'interview'`,
+   * which is the rule "the article is about the project, sourced from what the
+   * designer told us" expressed as two independent predicates rather than one
+   * hand-maintained list of frame ids.
+   */
+  source: 'interview' | 'tags';
   /** Ordered — the order the shape reads in. */
   slots: readonly HeadlineSlot[];
   /**
@@ -132,6 +171,8 @@ export const TAIL_RULE =
  */
 export const MATERIAL_FRAME: HeadlineFrame = {
   id: 'material',
+  source: 'tags',
+  grain: 'material',
   name: 'Material as subject',
   slots: [
     {
@@ -253,6 +294,8 @@ export const MATERIAL_FRAME: HeadlineFrame = {
  */
 export const AGENT_VERB_OBJECT_FRAME: HeadlineFrame = {
   id: 'agent-verb-object',
+  source: 'tags',
+  grain: 'material',
   name: 'Agent, verb, object',
   slots: [
     {
@@ -331,6 +374,8 @@ export const AGENT_VERB_OBJECT_FRAME: HeadlineFrame = {
  */
 export const BORROWED_FRAGMENT_FRAME: HeadlineFrame = {
   id: 'borrowed-fragment',
+  source: 'interview',
+  grain: 'material',
   name: 'Borrowed fragment',
   slots: [
     {
@@ -416,6 +461,8 @@ export const BORROWED_FRAGMENT_FRAME: HeadlineFrame = {
  */
 export const CONTINUITY_FRAME: HeadlineFrame = {
   id: 'continuity',
+  source: 'tags',
+  grain: 'project',
   name: 'Continuity across rooms',
   slots: [
     {
@@ -486,6 +533,8 @@ export const CONTINUITY_FRAME: HeadlineFrame = {
  */
 export const GOVERNING_DECISION_FRAME: HeadlineFrame = {
   id: 'governing-decision',
+  source: 'interview',
+  grain: 'project',
   name: 'Governing decision',
   slots: [
     {
@@ -514,7 +563,6 @@ export const GOVERNING_DECISION_FRAME: HeadlineFrame = {
   exemplars: [
     'Tour a coastal Norway home made of wood flooring scraps',
     'Brutalismo: a concrete cabin in the woods of Ca\u00F1ada De Alferes, Mexico',
-    'Casa Modesta: a family house turned rural retreat in Portugal\u2019s Algarve',
   ],
   tailRule: TAIL_RULE,
   shape:
@@ -546,6 +594,8 @@ export const GOVERNING_DECISION_FRAME: HeadlineFrame = {
  */
 export const CONSTRAINT_FRAME: HeadlineFrame = {
   id: 'constraint',
+  source: 'interview',
+  grain: 'project',
   name: 'Constraint the project answered',
   slots: [
     {
@@ -586,7 +636,68 @@ export const CONSTRAINT_FRAME: HeadlineFrame = {
     'only from the words you were given.',
 };
 
-/** Every frame. Three material-grain, three project-grain. */
+/**
+ * Change — what the project became.
+ *
+ * Its source is SURPRISE_PIVOT, the opening question that asks "what changed along
+ * the way — a decision or discovery that took the project somewhere you did not
+ * expect". That is a change of DIRECTION, which is not the same as the corpus's
+ * before-and-after — the audit found no before-state anywhere in the schema and
+ * that is still true. What this frame reports is the change the designer described,
+ * not a prior physical state inferred from anything.
+ *
+ * The distinction matters at the exemplar level too. The published entries below
+ * are transformations the article could report because someone told the writer what
+ * the house had been; here the equivalent licence comes from the answer itself, and
+ * the shape says so. An answer that describes no change makes the frame ineligible.
+ */
+export const CHANGE_FRAME: HeadlineFrame = {
+  id: 'change',
+  grain: 'project',
+  source: 'interview',
+  name: 'What the project became',
+  slots: [
+    {
+      name: 'project',
+      source: 'Project.city / regionState, with the dwelling noun from Project.projectType',
+      description: 'The project, as the SUBJECT. Named by where it is.',
+    },
+    {
+      name: 'change',
+      source: 'the SURPRISE_PIVOT opening answer, verbatim \u2014 the designer\u2019s own words',
+      description:
+        'What changed along the way, in their account of it. Report the change they ' +
+        'described. Do not infer a prior state they did not state.',
+    },
+    {
+      name: 'tail',
+      source: 'Project.city / regionState',
+      description: 'Where it is. A fact, and the last thing the headline says.',
+    },
+  ],
+  requiredFields: ['project', 'change'],
+  requiresDeck: false,
+  exemplars: [
+    'A remodel turns a dark and choppy house in Melbourne into a bright, flexible family home',
+    'Casa Modesta: a family house turned rural retreat in Portugal\u2019s Algarve',
+    'Before & after: a historic Catalan farmhouse redone by Espanyolet',
+    'Strip show: peeling back the layers in a Park Slope brownstone',
+  ],
+  tailRule: TAIL_RULE,
+  shape:
+    '{project} is the SUBJECT. Report what it became, from the change described in ' +
+    '{change}, and close on {tail}.\n' +
+    '\n' +
+    '  YES  A Miami Beach house gave up its formal dining room for a second kitchen\n' +
+    '  NO   The original plan changed when the clients saw the model\n' +
+    '\n' +
+    'The NO reports that a change happened; the YES reports WHAT IT COST and what ' +
+    'the house is now. Take the change only from the words you were given \u2014 if ' +
+    'they describe no change, write a different angle rather than inventing one, and ' +
+    'never state a prior condition the designer did not.',
+};
+
+/** Every frame. Three material-grain, four project-grain. */
 export const HEADLINE_FRAMES: readonly HeadlineFrame[] = [
   MATERIAL_FRAME,
   BORROWED_FRAGMENT_FRAME,
@@ -594,14 +705,19 @@ export const HEADLINE_FRAMES: readonly HeadlineFrame[] = [
   CONTINUITY_FRAME,
   GOVERNING_DECISION_FRAME,
   CONSTRAINT_FRAME,
+  CHANGE_FRAME,
 ];
 
-/** The frames whose subject is the project rather than a material or a person. */
-export const PROJECT_GRAIN_FRAME_IDS: readonly string[] = [
-  'continuity',
-  'governing-decision',
-  'constraint',
-];
+/**
+ * The frames whose subject is the project rather than a material or a person.
+ *
+ * DERIVED from `grain` rather than listed beside it. C2 declared this as a literal
+ * array, which was a second place to keep the same fact — a frame could be tagged
+ * one way and listed the other, and nothing would have said so.
+ */
+export const PROJECT_GRAIN_FRAME_IDS: readonly string[] = HEADLINE_FRAMES
+  .filter((f) => f.grain === 'project')
+  .map((f) => f.id);
 
 /**
  * A slot value that survived resolution: a real value from a real row.
@@ -620,6 +736,28 @@ export interface ResolvedSlot {
 export interface FrameEligibilityContext {
   /** Whether the calling surface HAS a deck field. Audit §4. */
   hasDeck: boolean;
+  /**
+   * The grain this surface publishes at. Omitted means every grain, which is what
+   * the checks and the reporting scripts want; a real surface should always say.
+   *
+   * This is the gate C3 exists for. C2 added the project-grain frames and left the
+   * material-grain ones in the same candidate pool, so the writer went on picking
+   * room-scoped shapes for the article headline — two of four in the reported batch
+   * were "BP Design clads the Dining Room in ...". Adding angles could not fix that,
+   * because the pool still offered the shape.
+   */
+  grain?: 'project' | 'material';
+  /**
+   * The evidence this surface may draw on. Omitted means any, which is what the
+   * checks want; a real surface should always say.
+   *
+   * The article headline passes 'interview'. That is what takes CONTINUITY off this
+   * surface despite its being project-grain: it ranks material classes by tag count
+   * and builds a claim around the winner, so it is specific about things the
+   * designer never emphasised. If a material or a room reaches an article headline
+   * now, it is because the designer's own answer put it there.
+   */
+  source?: 'interview' | 'tags';
 }
 
 /**
@@ -640,6 +778,11 @@ export function eligibleFrames(
     if (slot.verified && slot.value.trim()) usable.set(slot.name, slot);
   }
   return frames.filter((frame) => {
+    // Grain and source first, because both are properties of the SURFACE and no
+    // amount of resolved data should let a room-grain or resolver-sourced frame
+    // lead an article.
+    if (ctx.grain && frame.grain !== ctx.grain) return false;
+    if (ctx.source && frame.source !== ctx.source) return false;
     if (frame.requiresDeck && !ctx.hasDeck) return false;
     return frame.requiredFields.every((field) => usable.has(field));
   });
