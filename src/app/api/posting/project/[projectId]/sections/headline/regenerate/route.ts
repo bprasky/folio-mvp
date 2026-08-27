@@ -76,7 +76,7 @@ const anthropic = new Anthropic();
  * the bedroom") is a caption, and arrangement is all the article's own prose can
  * offer. Events live in the interview.
  */
-const ANGLES: Array<{ key: string; brief: string }> = [
+const BASE_ANGLES: Array<{ key: string; brief: string }> = [
   { key: 'reversal', brief: 'A decision that could easily have gone the other way, and did not. What was nearly chosen instead?' },
   { key: 'constraint', brief: 'A limit someone had to beat — a budget, a schedule, a structural fact, a room that would not cooperate.' },
   { key: 'accident', brief: 'Something that went wrong, or arrived wrong, and was kept anyway.' },
@@ -84,6 +84,46 @@ const ANGLES: Array<{ key: string; brief: string }> = [
   { key: 'first-move', brief: 'The one selection that set everything after it — the material or object the rest of the house had to answer to.' },
   { key: 'argument', brief: 'A claim about this project a reasonable designer could disagree with. Take a position.' },
 ];
+
+/**
+ * The project-grain angles, and which base angle each one displaces.
+ *
+ * These lead the batch, because an article is about a project and the corpus puts
+ * the project in subject position 41% of the time against a room's 13% (grain audit
+ * §4). Two of them are the base list's own angles rewritten at project grain rather
+ * than additions: `first-move` asked for "the one selection that set everything
+ * after it", which is the Governing decision angle with a material in the subject
+ * slot; `constraint` asked for "a limit someone had to beat", which is the
+ * Constraint angle with nobody in it. When the project-grain version is eligible it
+ * REPLACES its base angle, so the batch does not offer the same angle twice at two
+ * grains.
+ *
+ * Continuity displaces nothing and is the reason for the cap below: it is genuinely
+ * new, so on a project where all three resolve the list would run to seven angles.
+ *
+ * ELIGIBILITY IS THE FRAME'S, and it is computed. Each entry appears only when
+ * `eligibleFrames` returned its frame, which happens only when every one of that
+ * frame's `requiredFields` resolved to a real value off a real row. There is no
+ * fallback brief for these: an angle whose source did not resolve is not asked for
+ * at all, because an angle asked for without a source is the padding that produces
+ * a headline about nothing.
+ */
+const PROJECT_GRAIN_ANGLES: Array<{ key: string; frameId: string; displaces: string | null }> = [
+  { key: 'continuity', frameId: 'continuity', displaces: null },
+  { key: 'governing-decision', frameId: 'governing-decision', displaces: 'first-move' },
+  { key: 'constraint', frameId: 'constraint', displaces: 'constraint' },
+];
+
+/**
+ * Angles per batch, capped.
+ *
+ * Six was the batch size before C2 and staying there is deliberate: the cost of an
+ * angle is two more candidates through the writer, the rule filter and the editor,
+ * and a designer choosing between eight kinds of headline is not better served than
+ * one choosing between six. Project-grain angles are ordered first, so the cap
+ * trims the free-form briefs rather than the computed angles.
+ */
+const MAX_ANGLES = 6;
 
 /**
  * What each opening question was actually asking, in the writer's language.
@@ -115,8 +155,8 @@ const PROJECT_ANSWER_LABELS: Record<ProjectQuestionCategory, string> = {
  */
 const PROJECT_ANSWERS_SHOWN = 8;
 
-/** Asked for. One per angle. */
-const CANDIDATES_REQUESTED = ANGLES.length * 2;
+/** Two per angle. Computed per project, since the angle list is. */
+const candidatesRequested = (angleCount: number) => angleCount * 2;
 /** Kept. Enough to cycle without turning the arrows into a chore. */
 const CANDIDATES_KEPT = 6;
 
@@ -321,23 +361,82 @@ export async function POST(
     // Intervention verb stays out (no per-project new-build field exists) and so do
     // Application, Placement, Division and Aperture, whose preconditions nothing
     // can currently answer. See docs/23 §6.2 and §7.
-    const materialFrame = frames.find((f) => f.id === 'material') ?? null;
-    const fragmentFrame = frames.find((f) => f.id === 'borrowed-fragment') ?? null;
-    const agentFrame = frames.find((f) => f.id === 'agent-verb-object') ?? null;
-    // Position IS the angle (entry 2i and 2i+1 are ANGLES[i]), so a frame replaces
-    // an angle in place rather than adding a candidate. Each frame takes the angle
-    // that was already asking for its material: FIRST-MOVE wanted the material the
-    // house answered to, and CLIENT wanted what the client said "in their terms",
-    // which is a borrowed fragment with the quotation marks left off.
-    const framesByAngle = new Map<number, typeof materialFrame>();
-    if (materialFrame) framesByAngle.set(ANGLES.findIndex((a) => a.key === 'first-move'), materialFrame);
-    if (fragmentFrame) framesByAngle.set(ANGLES.findIndex((a) => a.key === 'client'), fragmentFrame);
-    // ARGUMENT asked for a claim someone could disagree with; an agent doing a
-    // specific thing to a specific room is the corpus's way of making one.
-    if (agentFrame) framesByAngle.set(ANGLES.findIndex((a) => a.key === 'argument'), agentFrame);
-    const framedAngleIndex = materialFrame ? ANGLES.findIndex((a) => a.key === 'first-move') : -1;
+    const frameById = (id: string) => frames.find((f) => f.id === id) ?? null;
 
-    const userPrompt = `Write ${CANDIDATES_REQUESTED} headline options for this article — ${ANGLES.length} angles, two per angle.
+    // The angle list, built per project rather than declared.
+    //
+    // Project-grain angles lead and are strictly computed: each appears only if its
+    // frame came back from `eligibleFrames`, which requires every one of that
+    // frame's `requiredFields` to have resolved. Nothing here has a fallback brief.
+    // An angle whose source did not resolve is not asked for.
+    //
+    // Each one then removes the base angle it supersedes, so the batch never offers
+    // the same angle at two grains — GOVERNING-DECISION and FIRST-MOVE are the same
+    // question with the subject moved, and asking both would spend four candidates
+    // arguing with itself.
+    const projectGrain = PROJECT_GRAIN_ANGLES
+      .map((a) => ({ ...a, frame: frameById(a.frameId) }))
+      .filter((a) => a.frame !== null);
+    const displaced = new Set(projectGrain.map((a) => a.displaces).filter(Boolean) as string[]);
+
+    // Which base angles have a frame behind them. The material-grain frames take
+    // the base angles that were already asking for what they need: FIRST-MOVE
+    // wanted the material the house answered to, CLIENT wanted what the client said
+    // "in their terms" (a borrowed fragment with the quotation marks left off), and
+    // ARGUMENT wanted a claim someone could disagree with, which an agent doing a
+    // specific thing to a specific room is the corpus's way of making.
+    const BASE_FRAME_BY_ANGLE: Record<string, string> = {
+      'first-move': 'material',
+      client: 'borrowed-fragment',
+      argument: 'agent-verb-object',
+    };
+    const remaining = BASE_ANGLES.filter((a) => !displaced.has(a.key));
+    const framedBase = remaining.filter((a) => frameById(BASE_FRAME_BY_ANGLE[a.key] ?? '') !== null);
+    const freeBase = remaining.filter((a) => !framedBase.includes(a));
+
+    // ORDER IS WHAT THE CAP TRIMS, so the order is computed-first.
+    //
+    // Project-grain angles lead, then base angles with an eligible frame behind
+    // them, then the free-form briefs. Sorting the other way had a quiet cost worth
+    // recording: on a project where all three project-grain angles resolved, the cap
+    // fell on ARGUMENT and FIRST-MOVE, so the two richest material-grain frames
+    // silently stopped firing on exactly the best-equipped projects — `bind` no-ops
+    // when its angle is not in the list, so nothing said so. A framed angle is
+    // grounded in a resolved slot; a brief asks the model to go and find something.
+    // Under a cap the grounded one wins.
+    const angles: Array<{ key: string; brief: string }> = [
+      ...projectGrain.map((a) => ({ key: a.key, brief: a.frame!.name })),
+      ...framedBase,
+      ...freeBase,
+    ].slice(0, MAX_ANGLES);
+    const CANDIDATES_REQUESTED = candidatesRequested(angles.length);
+
+    // Position IS the angle (entry 2i and 2i+1 are angles[i]), so a frame replaces
+    // an angle in place rather than adding a candidate.
+    const framesByAngle = new Map<number, ReturnType<typeof frameById>>();
+    const bind = (key: string, frame: ReturnType<typeof frameById>) => {
+      if (!frame) return;
+      const i = angles.findIndex((a) => a.key === key);
+      if (i >= 0) framesByAngle.set(i, frame);
+    };
+    // The project-grain angles ARE their frames — the angle exists because the
+    // frame was eligible, so the binding cannot miss.
+    for (const a of projectGrain) bind(a.key, a.frame);
+    // The material-grain frames keep the base angles that were already asking for
+    // what they need: FIRST-MOVE wanted the material the house answered to, CLIENT
+    // wanted what the client said "in their terms" (a borrowed fragment with the
+    // quotation marks left off), and ARGUMENT wanted a claim someone could disagree
+    // with, which an agent doing a specific thing to a specific room is the corpus's
+    // way of making. FIRST-MOVE is often gone by now, displaced by
+    // GOVERNING-DECISION; `bind` no-ops when the angle is not in the list.
+    const materialFrame = frameById('material');
+    const fragmentFrame = frameById('borrowed-fragment');
+    bind('first-move', materialFrame);
+    bind('client', fragmentFrame);
+    bind('argument', frameById('agent-verb-object'));
+    const framedAngleIndex = materialFrame ? angles.findIndex((a) => a.key === 'first-move') : -1;
+
+    const userPrompt = `Write ${CANDIDATES_REQUESTED} headline options for this article — ${angles.length} angles, two per angle.
 
 ${projectAnswerText ? `## What this project was, in the designer's words
 The opening questions, about the project as a whole rather than any one room.
@@ -381,7 +480,7 @@ ${currentKicker ? `\nCurrent headline — do NOT repeat or paraphrase: ${toTypog
 
 ${feedback ? `## What the designer wants changed\n${toTypographicQuotes(feedback)}\n` : ''}
 ## Write two for each of these angles, in this order
-${ANGLES.map((a, i) => `${i * 2 + 1}. and ${i * 2 + 2}. ${a.key.toUpperCase()} — ${framesByAngle.has(i) ? `write these two to the ${framesByAngle.get(i)!.name.toUpperCase()} frame below, not freely.` : a.brief}`).join('\n')}
+${angles.map((a, i) => `${i * 2 + 1}. and ${i * 2 + 2}. ${a.key.toUpperCase()} — ${framesByAngle.has(i) ? `write these two to the ${framesByAngle.get(i)!.name.toUpperCase()} frame below, not freely.` : a.brief}`).join('\n')}
 ${Array.from(framesByAngle.values()).filter(Boolean).map((f) => `
 ${renderFrameInstruction(f!, slots)}
 `).join('')}${verbs.eligible.length > 0 ? `
@@ -449,7 +548,7 @@ Return ONLY a JSON array of ${CANDIDATES_REQUESTED} strings, in that order.`;
 
     const rejected: Array<{ text: string; why: string }> = [];
     // Survivors keep the position they were asked at, because position IS the
-    // angle: entry 2i and 2i+1 are the two takes on ANGLES[i].
+    // angle: entry 2i and 2i+1 are the two takes on angles[i].
     const survivors: Array<{ text: string; index: number }> = [];
 
     raw.forEach((entry, index) => {
@@ -511,7 +610,7 @@ Return ONLY a JSON array of ${CANDIDATES_REQUESTED} strings, in that order.`;
     // is the flat batch this restructuring exists to prevent. The designer
     // should be choosing between kinds of headline, not phrasings of one.
     const takeOrder = (a: { index: number }, b: { index: number }) => {
-      const rank = (i: number) => (i % 2) * ANGLES.length + Math.floor(i / 2);
+      const rank = (i: number) => (i % 2) * angles.length + Math.floor(i / 2);
       return rank(a.index) - rank(b.index);
     };
 
@@ -576,7 +675,7 @@ Return ONLY a JSON array of ${CANDIDATES_REQUESTED} strings, in that order.`;
       console.info('[headline/regenerate] editor keeps', {
         _cid,
         keeps: verdicts.filter((v) => v.keep).slice(0, 8).map((v) => ({
-          angle: ANGLES[Math.floor(survivors[v.index].index / 2)]?.key,
+          angle: angles[Math.floor(survivors[v.index].index / 2)]?.key,
           text: survivors[v.index].text,
           on: v.on ?? '(the editor did not say)',
         })),
@@ -623,8 +722,16 @@ Return ONLY a JSON array of ${CANDIDATES_REQUESTED} strings, in that order.`;
       classInTwoPlaces: facts.classInTwoPlaces === true,
       eligible: frames.map((f) => f.id),
       quotableFragments: fragments.length,
-      framedAngles: Array.from(framesByAngle.entries()).map(([i, f]) => `${ANGLES[i].key}:${f!.id}`),
-      framedAngle: framedAngleIndex >= 0 ? ANGLES[framedAngleIndex].key : null,
+      angles: angles.map((a) => a.key),
+      framedAngles: Array.from(framesByAngle.entries()).map(([i, f]) => `${angles[i].key}:${f!.id}`),
+      // Eligible but not asked for. Normally the Material frame, displaced by
+      // GOVERNING-DECISION on purpose — the project outranks the stone as subject.
+      // Logged rather than assumed, because the other way a frame lands here is the
+      // cap trimming its angle, and those two look identical from the output.
+      unboundFrames: frames
+        .map((f) => f.id)
+        .filter((id) => !Array.from(framesByAngle.values()).some((f) => f!.id === id)),
+      framedAngle: framedAngleIndex >= 0 ? angles[framedAngleIndex].key : null,
       verbsOffered: verbs.eligible.map((v) => v.id),
       verbsWithheld: verbs.withheld.length,
     });
@@ -663,7 +770,30 @@ Return ONLY a JSON array of ${CANDIDATES_REQUESTED} strings, in that order.`;
     // render time, and a pool that reorders itself around whichever entry is
     // live cannot be walked (it oscillates between two). `kicker` itself is
     // untouched: the live headline does not change until they land on one.
-    const pool = currentKicker ? [currentKicker, ...kept] : kept;
+    //
+    // The carried-over headline is GATED, not trusted for having been live. It used
+    // to be prepended unconditionally, which was a hole the size of the whole rule
+    // set: a headline written before a rule existed stayed in the pool forever,
+    // re-entering on every press because it was the one currently showing. That is
+    // how a passive headline outlived the check that bans it.
+    //
+    // Dropping it here does not strand the designer. `HeadlinePicker` splices the
+    // live headline back in when the stored pool does not contain it, so it stays
+    // reachable while it is live — it just stops being preserved as an OPTION once
+    // they move off it, which is the correct fate for a headline that fails the
+    // rules everything else in the pool had to pass.
+    const carriedKicker =
+      currentKicker &&
+      blockingIssues(currentKicker).length === 0 &&
+      !hasWeakPredicate(currentKicker)
+        ? currentKicker
+        : null;
+    if (currentKicker && !carriedKicker) {
+      console.info('[headline/regenerate] live headline dropped from the pool', {
+        _cid, text: currentKicker,
+      });
+    }
+    const pool = carriedKicker ? [carriedKicker, ...kept] : kept;
     blocks.lead = { ...(blocks.lead ?? {}), kickerAlternatives: pool };
     await prisma.projectPost.update({
       where: { id: post.id },

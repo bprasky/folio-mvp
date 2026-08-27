@@ -106,16 +106,20 @@ check('inventing an event is refused rather than filled in',
 
 // One instruction repeated N times returns N versions of one thought. Named
 // angles make the spread structural rather than hoped for.
+// C2 made the angle list per-project — project-grain angles appear only when their
+// frame is eligible — so the count is computed rather than a constant. The
+// invariant it protects is unchanged: two candidates per named angle.
 check('candidates are requested one per angle, not N free-form',
-  /const ANGLES: Array<\{ key: string; brief: string \}>/.test(headlineRoute)
-  && /const CANDIDATES_REQUESTED = ANGLES\.length \* 2/.test(headlineRoute));
+  /const BASE_ANGLES: Array<\{ key: string; brief: string \}>/.test(headlineRoute)
+  && /const candidatesRequested = \(angleCount: number\) => angleCount \* 2/.test(headlineRoute)
+  && /const CANDIDATES_REQUESTED = candidatesRequested\(angles\.length\)/.test(headlineRoute));
 check('every angle asks for something that HAPPENED',
   /reversal/.test(headlineRoute) && /constraint/.test(headlineRoute)
   && /accident/.test(headlineRoute) && /first-move/.test(headlineRoute));
 // Taking survivors in order would fill the pool from the first few angles —
 // six phrasings of one idea, which is the flat batch this prevents.
 check('the kept set spans angles rather than taking the first N survivors',
-  /const rank = \(i: number\) => \(i % 2\) \* ANGLES\.length \+ Math\.floor\(i \/ 2\)/.test(headlineRoute)
+  /const rank = \(i: number\) => \(i % 2\) \* angles\.length \+ Math\.floor\(i \/ 2\)/.test(headlineRoute)
   && !/if \(kept\.length >= CANDIDATES_KEPT\) break/.test(headlineRoute));
 check('how many angles actually survived is logged',
   /anglesCovered/.test(headlineRoute));
@@ -148,7 +152,17 @@ check('the live headline is NOT replaced by regenerating',
 // has to be in it — a pool that reorders around whichever entry is live cannot
 // be cycled past two.
 check('the batch includes the headline it would replace',
-  /const pool = currentKicker \? \[currentKicker, \.\.\.kept\] : kept/.test(headlineRoute));
+  /const pool = carriedKicker \? \[carriedKicker, \.\.\.kept\] : kept/.test(headlineRoute));
+// ...but only if it passes the rules everything else in the pool had to pass. See
+// check-headline.ts for why an ungated carry-over was a hole the size of the rule set.
+check('...and the carried headline is re-gated on the way in',
+  /!hasWeakPredicate\(currentKicker\)/.test(headlineRoute));
+// The read path re-grades stored pools so a shape banned this week is retired from
+// batches written before the ban. hasWeakPredicate shipped route-only, so it was
+// missing here and stale pools could not self-clean.
+const tiles = readFileSync('src/lib/story/buildRoomTiles.ts', 'utf8');
+check('the read-path re-grade runs EVERY mechanical check, not just blockingIssues',
+  /blockingIssues\(t\)\.length === 0 && !hasWeakPredicate\(t\)/.test(tiles));
 check('the current headline is excluded from its own replacements',
   /if \(currentKicker\) seen\.add\(/.test(headlineRoute));
 check('duplicates within a batch are dropped',

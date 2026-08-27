@@ -238,9 +238,19 @@ check('the pool is the stored list, not a list reordered around the current one'
   /alternatives\.includes\(current\) \? alternatives :/.test(pickerSrc));
 check('the index is the real position of the current headline',
   /pool\.indexOf\(current\)/.test(pickerSrc) && !/\[current, \.\.\.alternatives\.filter/.test(pickerSrc));
+// C2 narrowed this. The live headline is still carried into the pool — the picker
+// needs it there to be walkable — but it is GATED first. It used to be prepended
+// unconditionally, which meant a headline written before a rule existed re-entered
+// the pool on every press because it was the one currently showing. That is how a
+// passive headline outlived the check that bans it. Dropping it does not strand the
+// designer: HeadlinePicker splices the live headline back when the stored pool does
+// not contain it, so it stays reachable while live and stops being an OPTION after.
+const regenSrc = readFileSync('src/app/api/posting/project/[projectId]/sections/headline/regenerate/route.ts', 'utf8');
 check('the batch is stored WITH the headline it replaces, so current is a member',
-  /const pool = currentKicker \? \[currentKicker, \.\.\.kept\] : kept/.test(
-    readFileSync('src/app/api/posting/project/[projectId]/sections/headline/regenerate/route.ts', 'utf8')));
+  /const pool = carriedKicker \? \[carriedKicker, \.\.\.kept\] : kept/.test(regenSrc));
+check('...but the carried headline is gated, not trusted for having been live',
+  /blockingIssues\(currentKicker\)\.length === 0/.test(regenSrc)
+  && /!hasWeakPredicate\(currentKicker\)/.test(regenSrc));
 
 console.log('\n9. The prompt and the checker state the same rules');
 const draft = readFileSync('src/lib/posting/generateEditorialDraft.ts', 'utf8');

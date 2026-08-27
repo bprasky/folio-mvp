@@ -7,6 +7,7 @@ import { buildEditorialChapters, type EditorialChapter } from "@/lib/editorial/b
 import { getSelectedPullQuoteText, type PullQuoteSelection } from "@/lib/posting/schemas";
 import { formatRoomName } from "@/lib/utils/formatRoomName";
 import { blockingIssues } from "@/lib/posting/headline";
+import { hasWeakPredicate } from "@/lib/interview/prompts/headlineFrames";
 
 // --- Types ---
 
@@ -262,12 +263,20 @@ export function buildStoryData(post: any): StoryData | null {
   // costs one regex sweep and retires an offer everywhere it is read, without
   // making the designer regenerate to get the benefit of a rule.
   //
-  // Only the mechanical check runs here: it is free and has no opinion. The
+  // Only the mechanical checks run here: they are free and have no opinion. The
   // editorial pass is a model call and belongs at write time, in the endpoint.
+  //
+  // `hasWeakPredicate` is one of the mechanical ones and was missing from this
+  // list, which cost exactly what the re-grade exists to prevent. It shipped as a
+  // route-only check, so every pool written before it kept offering the shapes it
+  // bans — "A stairway's mixed metals WERE KEPT, then let loose into rooms next
+  // door" survived here, because `blockingIssues` has no opinion about voice and
+  // nothing else looked. A stale batch could not self-clean, and the only way to
+  // stop being offered a passive headline was to generate a new batch.
   const titleAlternatives: string[] = Array.isArray(blocks?.lead?.kickerAlternatives)
     ? blocks.lead.kickerAlternatives
         .filter((t: unknown): t is string => typeof t === "string" && !!t.trim())
-        .filter((t: string) => blockingIssues(t).length === 0)
+        .filter((t: string) => blockingIssues(t).length === 0 && !hasWeakPredicate(t))
     : [];
   // Additive: the same paragraphs, still individually addressable for editing.
   const introParagraphs: string[] = Array.isArray(blocks?.introduction)
