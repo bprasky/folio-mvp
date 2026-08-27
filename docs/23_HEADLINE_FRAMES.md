@@ -322,6 +322,40 @@ question.
 
 ---
 
+## 3c. Exemplars — sourced
+
+All three frames now carry real published exemplars from
+`docs/audits/headline-discriminator-corpus.json`. Selection is mechanical and
+asserted by `check:headline-frames` §21:
+
+- **Present in the collected corpus**, compared through `normalizeForVerbatimCheck`
+  (the corpus was supplied with straight quotes; anything reaching a prompt must be
+  curly per `JSON_PROSE_QUOTING_RULE`). This is what makes "never invented"
+  enforceable rather than merely stated.
+- **Passes every check Folio enforces.** An exemplar that breaks a rule teaches the
+  rule away — exactly how the old criteria came to list the balanced pair as GOOD.
+- **Does not open on a named agent**, for the two frames that ship. 57% of the
+  corpus does, and Folio bans it; an agent-led exemplar would teach a shape every
+  output gets killed for.
+
+| frame | exemplars | note |
+|---|---|---|
+| `material` | 3 | agent-free, 8–10 words |
+| `borrowed-fragment` | **1** | see below |
+| `agent-verb-object` | 5 | agent-led, which *is* this frame |
+
+**Borrowed-fragment has one exemplar, and that is what the corpus contains.** Of
+eight borrowed-fragment headlines collected, seven open on a studio name. Padding
+the array with those would teach the naming shape alongside the borrowing, and the
+borrowing is the only half Folio can use. One correct exemplar beats four carrying a
+banned shape.
+
+The `agent-verb-object` frame is the one place the corpus's Dezeen skew is an asset:
+naming the agent is its shape, so all five fit directly. They pass every mechanical
+check — what makes the frame ineligible is the naming ban, not its construction.
+
+---
+
 ## 4. The tail rule
 
 > The final clause must state a fact — who it was for, what it replaced, where it came
@@ -432,6 +466,42 @@ the operator at `docs/audits/headline-discriminator-corpus.json`:
 It must not be invented, for the same reason a frame's exemplars must not be: an
 invented corpus measures agreement with whoever invented it.
 
+#### The corpus exists — and 57% of it is a shape Folio cannot produce
+
+Collected by the project owner from Dezeen (majority) and Architectural Digest: 46
+unique published headlines, classified by arrangement. Measured against Folio's own
+checks:
+
+| | count | share |
+|---|---|---|
+| opens on a **named agent** — banned here by `NAMES_PEOPLE` | 26 / 46 | **57%** |
+| over the 10-word maximum (median real headline is 9, max 13) | 16 / 46 | 35% |
+| reads as Title Case | 4 / 46 | 9% |
+| uses a banned generic verb — `unveils`, `features`, `celebrate` | 3 / 46 | 7% |
+| **passes every check Folio enforces** | 22 / 46 | **48%** |
+| agent-free **and** Folio-legal | 13 / 46 | 28% |
+| …and a single-project feature rather than a round-up or news item | **5 / 46** | **11%** |
+
+`hasEvaluativeTail` flags **zero** of the 46 — every piece of evaluative language in
+the corpus is already inside quotation marks, which is the borrowed-fragment device
+appearing independently in the wild.
+
+**This governs how the held-out set is built.** A discriminator whose human set is
+57% studio-as-subject is not measuring writing quality; it is measuring whether the
+generator imitates Dezeen's byline grammar — a shape Folio bans outright, so the
+judge would score `names a studio → human` and the rate would be near zero while
+saying nothing. The set is therefore restricted to headlines Folio could plausibly
+have produced, which is **5**.
+
+Five is the script's bare floor and well below the 20 it recommends, so
+`check-headline-discriminator` now warns loudly under 20 rather than reporting a
+rate as though it were settled. The gap is precisely the one the collector flagged:
+publications like *World of Interiors* and *Cabana* that use three allusive words
+with the deck carrying the facts, and do not lead with the studio name.
+
+The full 46 are kept in `byArrangement`; `_humanSelection` records the three
+exclusion criteria and the count each removes.
+
 ### Results
 
 | run | date | misidentification rate | control | n |
@@ -439,20 +509,17 @@ invented corpus measures agreement with whoever invented it.
 | baseline (pre-frame) | — | **not obtained** | — | — |
 | post-frame | — | **not obtained** | — | — |
 
-**Neither number was obtained, through B6.** Every authoring session so far has had
-no `ANTHROPIC_API_KEY` and no `DATABASE_URL`, so neither the judge call nor a live
-generation can run, and the held-out corpus does not exist yet. B6 asked for the
-baseline explicitly; it is still blocked on the same two credentials, and on the
-corpus, which must be human-written and must not be invented.
+**Neither number was obtained.** Of the three things a run needs, **one is now
+resolved permanently**:
 
-To run it you need three things, and the corpus is the one nobody can supply from
-inside the repo:
+| | status |
+|---|---|
+| the held-out corpus | **DONE** — `docs/audits/headline-discriminator-corpus.json`, collected by the project owner |
+| `ANTHROPIC_API_KEY` | still unset in every authoring session; the judge is a model call |
+| a generated set | needs `DATABASE_URL` plus generation — press New options on ~20 projects, or read `blocks.lead.kickerAlternatives` off published posts |
 
-1. `ANTHROPIC_API_KEY` — the judge is a model call.
-2. A generated set — press New options on ~20 projects, or read
-   `blocks.lead.kickerAlternatives` off published posts.
-3. `docs/audits/headline-discriminator-corpus.json` — human-written headlines from
-   real design magazines. See "Why the corpus is not our own published headlines".
+The corpus was the blocker nobody could clear from inside the repo, and it is
+cleared. The remaining two are credentials.
 
 The harness is complete and runs given all three:
 

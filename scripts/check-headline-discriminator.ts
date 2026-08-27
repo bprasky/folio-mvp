@@ -104,6 +104,13 @@ async function main() {
     console.error(`\nToo small to mean anything: ${human.length} human, ${generated.length} generated.\n`);
     process.exit(2);
   }
+  // Between the floor and the recommendation the run is legal but noisy. Said
+  // loudly, because a number quoted without this caveat reads as settled.
+  if (human.length < 20) {
+    console.warn(`\n  WARNING: only ${human.length} human headlines (20 recommended).`);
+    console.warn('  A rate from this few is a sample, not a baseline. See the corpus file\'s');
+    console.warn('  _humanSelection note for why the set is small and what to collect.\n');
+  }
 
   const mixed = shuffle([
     ...human.map((text) => ({ text, truth: 'human' as const })),

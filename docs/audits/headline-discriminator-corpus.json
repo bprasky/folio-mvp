@@ -1,0 +1,124 @@
+{
+  "_README": [
+    "Real published headlines, human-written, collected from design publications.",
+    "Two purposes: filling frame exemplar arrays, and serving as the discriminator's held-out set.",
+    "DO NOT add generated headlines to this file. DO NOT invent entries.",
+    "Every line appeared as a published article title.",
+    "Supplied by the project owner. Sources: Dezeen (majority, from tag indexes), Architectural Digest.",
+    "KNOWN SKEW, stated by the collector: majority Dezeen, whose house grammar is studio-as-subject.",
+    "Publications like World of Interiors and Cabana use three allusive words with the deck carrying",
+    "the facts, and that shape is NOT represented here. See docs/23 6.1 for what that costs the",
+    "discriminator."
+  ],
+  "byArrangement": {
+    "agent-verb-object": [
+      "Studio Okami Architecten updates Belgian home with The Garden Pavilion",
+      "Form(LA) hides stone furniture showroom behind marble pivot door",
+      "Al-Jawad Pike creates marble \"immersive experience\" for APL's Soho flagship store",
+      "WXCA creates \"chiselled-out monolithic block\" for Polish History Museum",
+      "Studio Font perches cliffside home in Mexico on inhabitable concrete columns",
+      "Iterare Arquitectos inserts stark white home into shell of old Spanish building",
+      "Fabio Fantolino looks to 1960s offices for interior of retro Turin bar",
+      "Studio NRG designs Lilium Chair out of recycled metal car rims",
+      "Open Studio designs izakaya-style restaurant with \"half-dipped dumpling\" lamp",
+      "Besley & Spresser clads Sydney Harbour pavilion with oyster shell terrazzo",
+      "Local Local completes \"contemporary and playful\" renovation of neoclassical Athens townhouse",
+      "Studio Aisslinger completes \"nature-loving\" renovation of Hotel Seegarten",
+      "Erik Bratsberg fills Persona restaurant with tactile materials and own artworks",
+      "Chrysler Building cafe by Deidra Hodgson riffs on art deco location",
+      "Echlin uses broken-plan layout to create spacious interiors within London mews house",
+      "EBBA Architects remodels London apartment with bespoke joinery",
+      "Bureau de Change makes creative use of terrazzo in Frame House renovation",
+      "Shigeru Ban unveils coastal wellness retreat on Awaji Island",
+      "OMA completes first US affordable housing development"
+    ],
+    "material-as-subject": [
+      "Coloured marble defines his-and-hers sinks in Marylebone penthouse",
+      "Monolithic green marble forms \"majestic wall\" in Milan apartment",
+      "Rough drystone walls frame sunken home on Greek island by Alexandre Pavlidis",
+      "Open-air temple sits beneath granite farmhouse on Kerala hillside",
+      "Water disappears through gaps in Serafini's \"sculptural yet functional\" Piano washbasin",
+      "Ambient lighting meets glossy finishes inside Millo Bucharest",
+      "Blocks of terrazzo divide up muted pizza restaurant in Beijing",
+      "Antolini stone features throughout interior of coastal Maltese apartment"
+    ],
+    "borrowed-fragment": [
+      "WXCA creates \"chiselled-out monolithic block\" for Polish History Museum",
+      "Studio Aisslinger completes \"nature-loving\" renovation of Hotel Seegarten",
+      "Local Local completes \"contemporary and playful\" renovation of neoclassical Athens townhouse",
+      "Al-Jawad Pike creates marble \"immersive experience\" for APL's Soho flagship store",
+      "Open Studio designs izakaya-style restaurant with \"half-dipped dumpling\" lamp",
+      "Matthew Fisher blends antiquity with \"comforts of quiet luxury\" in New York gallery",
+      "Water disappears through gaps in Serafini's \"sculptural yet functional\" Piano washbasin",
+      "Heinz adjustable ketchup lid allows for \"perfect squeeze\""
+    ],
+    "named-project-copula": [
+      "Vollerup Atrium House is a monolithic summerhouse on the Danish coast"
+    ],
+    "threshold": [
+      "Inside Maggie Gyllenhaal and Peter Sarsgaard's Brooklyn Home",
+      "Inside NBA Star Devin Booker's Stylish Desert Oasis",
+      "Inside Emma Chamberlain's Radiant New Home"
+    ],
+    "enumerated-corpus-scope": [
+      "Eight elegant kitchen islands that demonstrate the versatility of marble",
+      "Ten soothing bathrooms that celebrate veiny marble interiors",
+      "Eight kitchens that benefit from generous marble surfaces",
+      "Ten home interiors with distinctive terrazzo floors",
+      "Eight bathrooms with elegant and pared-back terrazzo interiors",
+      "Ten architect-designed kitchens with terrazzo details",
+      "Five innovative smartphones and dumbphones that put design first"
+    ],
+    "unclassified": [
+      "Omar Chakil's stone furniture collection references ancient Egyptian gods",
+      "Jessica Anne Woodley's debut furniture collection looks like it's swaying",
+      "Nine designers revisit the Renaissance with works in bronze and marble",
+      "Construction begins on world's tallest jail in Manhattan",
+      "Photos reveal new facade of Google's Thompson Center",
+      "AIA announces longest \"ongoing slump\" for architecture revenues"
+    ]
+  },
+  "_humanSelection": [
+    "`human` is what scripts/check-headline-discriminator.ts reads. It is a SUBSET of",
+    "byArrangement, and the subset is experimental design rather than cherry-picking.",
+    "",
+    "A held-out set has to be like-for-like with what the generator produces, or the",
+    "judge separates on task and grammar instead of on writing. Three exclusions, each",
+    "measured against the Folio checks in src/lib/posting/headline.ts:",
+    "",
+    "  1. Opens on a NAMED agent - 26 of 46 (57%). Folio bans naming the credited party",
+    "     (NAMES_PEOPLE, enforced at write and on read), so it cannot produce this shape",
+    "     at all. Leaving them in lets a judge score 'names a studio' = human and learn",
+    "     nothing about the writing.",
+    "  2. Fails a Folio check - 35% exceed the 10-word max, 4 read as Title Case, 3 use",
+    "     a banned generic verb (unveils, features, celebrate).",
+    "  3. A different task - corpus-scope round-ups ('Eight kitchens that...') and news",
+    "     items ('Construction begins on...'). The collector already noted round-ups are",
+    "     not applicable to single-project surfaces.",
+    "",
+    "What survives all three is 5 headlines. That is the script's bare floor and well",
+    "below the 20 it recommends, so a baseline computed on it will be noisy. The gap is",
+    "the one the collector flagged: publications that do not lead with the studio name.",
+    "See docs/23 6.1."
+  ],
+  "human": [
+    "Coloured marble defines his-and-hers sinks in Marylebone penthouse",
+    "Monolithic green marble forms “majestic wall” in Milan apartment",
+    "Open-air temple sits beneath granite farmhouse on Kerala hillside",
+    "Ambient lighting meets glossy finishes inside Millo Bucharest",
+    "Blocks of terrazzo divide up muted pizza restaurant in Beijing"
+  ],
+  "_humanExtended": {
+    "_note": "Agent-free and Folio-legal, but a different task (round-ups, news). Widen `human` with these only if you accept the task mismatch.",
+    "entries": [
+      "Eight elegant kitchen islands that demonstrate the versatility of marble",
+      "Eight kitchens that benefit from generous marble surfaces",
+      "Ten home interiors with distinctive terrazzo floors",
+      "Eight bathrooms with elegant and pared-back terrazzo interiors",
+      "Ten architect-designed kitchens with terrazzo details",
+      "Five innovative smartphones and dumbphones that put design first",
+      "Construction begins on world's tallest jail in Manhattan",
+      "Photos reveal new facade of Google's Thompson Center"
+    ]
+  }
+}

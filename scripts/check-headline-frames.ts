@@ -14,6 +14,7 @@ import { execSync } from 'child_process';
 import { readFileSync } from 'fs';
 import { MATERIAL_CLASSES } from '../src/lib/editorial-queue/signals';
 import { headlineIssues } from '../src/lib/posting/headline';
+import { normalizeForVerbatimCheck } from '../src/lib/posting/quoteCandidates';
 import {
   assertIsMaterialClass,
   carriesProprietaryName,
@@ -66,8 +67,14 @@ for (const w of warnings) console.log(`  NOTE  ${w}`);
 // Unsourced exemplars are reported, never failed — blocking on them would mean
 // inventing them, which is how the old criteria came to teach the balanced pair
 // as a GOOD example.
+// Unsourced exemplars must still WARN rather than fail — blocking on them would
+// mean inventing them. Tested on a synthetic frame, because the real ones are now
+// sourced.
+const unsourced = assertFrameLibraryIntegrity([{ ...MATERIAL_FRAME, exemplars: [] }]);
 check('an unsourced exemplar list warns rather than fails',
-  warnings.some(w => /no exemplars/.test(w)) && errors.length === 0);
+  unsourced.warnings.some(w => /no exemplars/.test(w)) && unsourced.errors.length === 0);
+check('...and the real library is now fully sourced, so it warns about nothing',
+  warnings.length === 0, warnings.join('; '));
 check('exemplars are documented as never-invented',
   /NEVER invented/.test(frames));
 
@@ -281,7 +288,11 @@ check('the resolved value is inlined, not described', /unlacquered brass/.test(r
 check('it is marked as designer-stated', /stated by the designer/.test(rendered));
 check('the tail rule travels with it', rendered.includes(TAIL_RULE));
 check('no exemplar block is emitted when none are sourced',
-  !/Published headlines in this frame/.test(rendered));
+  !/Published headlines in this frame/.test(
+    renderFrameInstruction({ ...MATERIAL_FRAME, exemplars: [] }, verified)));
+check('...and one IS emitted once they are',
+  /Published headlines in this frame/.test(rendered)
+  && /Coloured marble defines/.test(rendered));
 check('the shape puts the material in subject position',
   /grammatical subject/.test(rendered) && /never as the subject of the sentence/.test(rendered));
 
@@ -490,6 +501,66 @@ check('all three blockers are written down where the frame is',
   /no name-verification predicate/i.test(frames)
   && /NAMES_PEOPLE/.test(frames)
   && /`namedSurface` is unknown/.test(frames));
+
+console.log('\n21. Exemplars are real, and clean');
+// "NEVER invented" is the frame contract's own words. This makes it mechanical:
+// every exemplar must appear verbatim in the corpus the project owner collected.
+const corpus = JSON.parse(readFileSync('docs/audits/headline-discriminator-corpus.json', 'utf8'));
+const corpusLines: string[] = [
+  ...Object.values(corpus.byArrangement as Record<string, string[]>).flat(),
+  ...(corpus.human ?? []),
+  ...((corpus._humanExtended?.entries ?? []) as string[]),
+];
+// Quote glyphs differ by design: the corpus was supplied straight, and anything
+// reaching a prompt must be curly per JSON_PROSE_QUOTING_RULE. Compare through the
+// normalizer the pull-quote pipeline already uses for exactly this.
+const corpusNormalized = new Set(corpusLines.map(normalizeForVerbatimCheck));
+for (const frame of HEADLINE_FRAMES) {
+  check(`${frame.id}: has exemplars`, frame.exemplars.length > 0);
+  for (const e of frame.exemplars) {
+    check(`${frame.id}: exemplar is in the collected corpus, not invented`,
+      corpusNormalized.has(normalizeForVerbatimCheck(e)), e);
+    // An exemplar that breaks a rule teaches the rule away. This is exactly how the
+    // old criteria came to list the balanced pair as a GOOD example.
+    check(`${frame.id}: exemplar passes every check Folio enforces`,
+      headlineIssues(e).length === 0 && !usesBannedVerb(e) && !hasEvaluativeTail(e),
+      JSON.stringify({ issues: headlineIssues(e).map(i => i.code), verb: usesBannedVerb(e), evaluative: hasEvaluativeTail(e) }));
+  }
+}
+// 57% of the corpus opens on a studio name, which Folio bans. Those may teach the
+// agent-verb-object frame, which is declared precisely because it cannot ship here
+// — but they must never leak into a frame that DOES ship, or every output learns a
+// shape NAMES_PEOPLE kills.
+const shippingFrames = HEADLINE_FRAMES.filter(f => f.id !== 'agent-verb-object');
+const OPENS_AGENT_FREE = /^(the|a|an|inside|eight|ten|five|nine|coloured|monolithic|rough|open-air|water|ambient|blocks|photos|construction)\b/i;
+for (const frame of shippingFrames) {
+  for (const e of frame.exemplars) {
+    check(`${frame.id}: exemplar does not open on a named agent`,
+      OPENS_AGENT_FREE.test(e), e);
+  }
+}
+check('the agent-verb-object frame keeps the agent-led ones, which are its shape',
+  AGENT_VERB_OBJECT_FRAME.exemplars.length >= 3
+  && AGENT_VERB_OBJECT_FRAME.exemplars.every(e => !OPENS_AGENT_FREE.test(e)));
+
+console.log('\n22. The held-out set is like-for-like');
+check('a human set exists', Array.isArray(corpus.human) && corpus.human.length >= 5);
+const byArrangementNormalized = new Set(
+  Object.values(corpus.byArrangement as Record<string, string[]>).flat().map(normalizeForVerbatimCheck));
+check('every entry in it is also in the full record',
+  (corpus.human as string[]).every(h => byArrangementNormalized.has(normalizeForVerbatimCheck(h))));
+// If the held-out set contains shapes Folio cannot produce, the judge separates on
+// grammar rather than on writing and the rate means nothing.
+check('no entry opens on a named agent',
+  (corpus.human as string[]).every(h => OPENS_AGENT_FREE.test(h)));
+check('every entry would pass Folio\'s own checks',
+  (corpus.human as string[]).every(h => headlineIssues(h).length === 0 && !usesBannedVerb(h)));
+check('the selection criterion is written down',
+  Array.isArray(corpus._humanSelection)
+  && corpus._humanSelection.join(' ').includes('like-for-like'));
+check('the small-sample caveat is enforced, not just documented',
+  /only \$\{human\.length\} human headlines \(20 recommended\)/.test(
+    readFileSync('scripts/check-headline-discriminator.ts', 'utf8')));
 
 console.log(failures === 0
   ? '\nAll headline-frame checks passed.\n'

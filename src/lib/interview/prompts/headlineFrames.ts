@@ -153,9 +153,18 @@ export const MATERIAL_FRAME: HeadlineFrame = {
   // The material carries the subject and the tail carries the event, so the
   // sentence is complete on its own. Nothing is deferred to a deck.
   requiresDeck: false,
-  // UNSOURCED. Requires reading real published Folio headlines out of the
-  // database; this must not be filled by invention. See docs/23 §Exemplars.
-  exemplars: [],
+  // Real published headlines, from docs/audits/headline-discriminator-corpus.json.
+  //
+  // Selected on two criteria, both load-bearing. They must pass every check Folio
+  // enforces — an exemplar that breaks a rule teaches the rule away, which is how
+  // the old criteria came to list the balanced pair as GOOD. And they must NOT name
+  // an agent: 57% of the corpus opens on a studio name, which Folio bans outright
+  // (NAMES_PEOPLE), so those would teach a shape every output gets killed for.
+  exemplars: [
+    'Coloured marble defines his-and-hers sinks in Marylebone penthouse',
+    'Monolithic green marble forms \u201Cmajestic wall\u201D in Milan apartment',
+    'Blocks of terrazzo divide up muted pizza restaurant in Beijing',
+  ],
   tailRule: TAIL_RULE,
   shape:
     'Open on {material} as the grammatical subject of the sentence — the first ' +
@@ -225,9 +234,17 @@ export const AGENT_VERB_OBJECT_FRAME: HeadlineFrame = {
   ],
   requiredFields: ['agent', 'verb', 'object'],
   requiresDeck: false,
-  // UNSOURCED, and unusually hard to source: Folio has never published a headline
-  // in this frame, because the naming ban predates the frame library.
-  exemplars: [],
+  // The corpus's largest group, and the one place its Dezeen skew is an asset
+  // rather than a problem: naming the agent IS this frame. All five pass every
+  // mechanical check; what makes them ineligible here is the naming ban, not their
+  // construction.
+  exemplars: [
+    'Form(LA) hides stone furniture showroom behind marble pivot door',
+    'WXCA creates \u201Cchiselled-out monolithic block\u201D for Polish History Museum',
+    'Open Studio designs izakaya-style restaurant with \u201Chalf-dipped dumpling\u201D lamp',
+    'Studio Aisslinger completes \u201Cnature-loving\u201D renovation of Hotel Seegarten',
+    'OMA completes first US affordable housing development',
+  ],
   tailRule: TAIL_RULE,
   shape:
     'Open on {agent} as the subject. Then {verb} — use the verb exactly as given, ' +
@@ -285,8 +302,19 @@ export const BORROWED_FRAGMENT_FRAME: HeadlineFrame = {
   ],
   requiredFields: ['fragment'],
   requiresDeck: false,
-  // UNSOURCED. Must be read off real published articles, never invented.
-  exemplars: [],
+  // ONE. That is not an oversight, it is what the corpus contains.
+  //
+  // Of eight borrowed-fragment headlines collected, seven open on a studio name —
+  // Dezeen's house grammar, which Folio bans. Only this one carries the device
+  // without the agent. Padding the array with the other seven would teach the
+  // naming shape alongside the borrowing, and the borrowing is the only part Folio
+  // can use. One correct exemplar beats four that carry a banned shape.
+  //
+  // More can only come from publications that do not lead with the studio — the
+  // gap the corpus's own collector flagged. See docs/23 §6.1.
+  exemplars: [
+    'Monolithic green marble forms \u201Cmajestic wall\u201D in Milan apartment',
+  ],
   tailRule: TAIL_RULE,
   shape:
     'Quote {fragment} exactly as the designer said it, inside quotation marks. ' +
