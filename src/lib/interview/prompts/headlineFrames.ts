@@ -143,12 +143,25 @@ export const MATERIAL_FRAME: HeadlineFrame = {
         'product name and never a brand.',
     },
     {
-      name: 'tail',
-      source: 'the interview',
+      name: 'verb',
+      source: 'headlineVerbs — an eligible verb, preconditions already satisfied',
       description:
-        'What was done with it, decided about it, or paid for it — stated as a fact.',
+        'An active, transitive, physical verb with the material as its SUBJECT: ' +
+        'clads, lines, frames, divides, anchors, runs. Use one from the list given ' +
+        'below; never invent one, and never a passive or a copula.',
+    },
+    {
+      name: 'tail',
+      source: 'the interview, or the rooms the article covers',
+      description:
+        'What the material acts ON, and where — the room, the surface, the fixture, ' +
+        'closing on a place. A fact, never an assessment.',
     },
   ],
+  // `verb` is deliberately NOT required. It is available on nearly every project
+  // now, but a material with no room-assigned tags would otherwise lose the frame
+  // entirely — and a material headline without a verb from the list is still better
+  // than no material headline. The shape demands one; eligibility does not.
   requiredFields: ['material'],
   // The material carries the subject and the tail carries the event, so the
   // sentence is complete on its own. Nothing is deferred to a deck.
@@ -181,11 +194,21 @@ export const MATERIAL_FRAME: HeadlineFrame = {
   ],
   tailRule: TAIL_RULE,
   shape:
-    'Open on {material} as the grammatical subject of the sentence — the first ' +
-    'thing the reader meets. Do not open on the designer, the client, the room, or ' +
-    'the house. Then {tail}: what was decided about that material, in the ' +
-    'designer\'s own reporting. The designer may appear as the agent of that ' +
-    'decision but never as the subject of the sentence, and never by name.',
+    '{material} is the SUBJECT and it must ACT. Write it as the agent of {verb} — ' +
+    'an active, transitive, physical verb — acting on {tail}, and close on a place.\n' +
+    '\n' +
+    'The material does something. It is not something that was done to.\n' +
+    '  YES  Coloured marble defines his-and-hers sinks in Marylebone penthouse\n' +
+    '  YES  Blocks of terrazzo divide up muted pizza restaurant in Beijing\n' +
+    '  NO   A glass table was chosen to keep a dining room from crowding\n' +
+    '  NO   A stone bought without a shopping list became the bathroom\'s anchor\n' +
+    '\n' +
+    'The two NOs put the material in subject position and then describe what ' +
+    'happened TO it — passive, or a copula. Grammatically the subject, ' +
+    'semantically the object. That is the failure this frame exists to prevent, so ' +
+    'no was/were/became/is/are/had been, and no verb hidden in a relative clause ' +
+    '("paneling THAT raises", "styling THAT took"). One finite active verb, and the ' +
+    'material owns it.',
 };
 
 /**
@@ -207,7 +230,7 @@ export const MATERIAL_FRAME: HeadlineFrame = {
  *   2. "Naming the designer is banned." REVERSED in B8 on corpus evidence: 57% of
  *      published design headlines open on the credited party. The ban's reason —
  *      the byline below already says it — is not one the corpus shares.
- *   3. "`namedSurface` is unknown." TRUE, and irrelevant here: it is a VERB
+ *   3. "`namedPlace` was unresolvable." TRUE, and irrelevant here: it is a VERB
  *      precondition, not a frame requirement. `object` resolves from `Room.name`.
  *
  * What actually gates it now is the VERB. Application, Placement, Division and
@@ -493,6 +516,57 @@ export function hasEvaluativeTail(text: string): boolean {
     if (lower.includes(` ${term} `)) return true;
   }
   return EVALUATIVE_IDIOMS.some((re) => re.test(unquoted));
+}
+
+/**
+ * Whether the headline's subject never actually does anything.
+ *
+ * The defect behind every bad headline in the first live batch of B10:
+ *
+ *   A glass table WAS CHOSEN to keep a bright dining room from crowding
+ *   A stone bought without a shopping list BECAME the bathroom's anchor
+ *   Black anchors WERE the first idea for the dining room, and STAYED the last
+ *   STYLING THAT TOOK more objects than the shelf could keep
+ *
+ * Each puts a thing in subject position and then reports what happened TO it, or
+ * what it merely was — grammatically the subject, semantically the patient. The
+ * corpus never does this: "Coloured marble DEFINES his-and-hers sinks", "Blocks of
+ * terrazzo DIVIDE UP muted pizza restaurant". The subject acts.
+ *
+ * Three shapes, all of them ways to avoid a finite active verb:
+ *   - passive        was chosen, were kept, is lined
+ *   - copula/becoming  was the first idea, became the anchor, stayed the last
+ *   - the verb demoted into a relative clause, so the subject owns nothing:
+ *     "styling THAT TOOK...", "paneling THAT RAISES..."
+ *
+ * This is deliberately NOT a general English rule — published headlines use the
+ * passive ("A Midcentury Home's Past Mistakes Are Finally Corrected"). It is a rule
+ * for the arrangements Folio actually has, all three of which want their subject to
+ * act. A project-as-subject frame, if one is ever built, would need to relax it.
+ */
+// Regular participles end -ed/-en/-t. The irregulars are a small closed list, and
+// they are the ones this domain actually uses: "was LAID across the entry",
+// "was BUILT to the old plan", "were HUNG in the stairwell".
+const IRREGULAR_PARTICIPLE =
+  'laid|built|made|hung|sunk|cast|held|kept|left|torn|drawn|shown|given|taken|put|' +
+  'cut|set|done|run|won|sold|told|brought|bought|found|worn|woven|sewn|struck|split';
+const PASSIVE_VOICE = new RegExp(
+  `\\b(was|were|is|are|been|being)\\s+(\\w+ly\\s+)?(\\w+(ed|en|t)|${IRREGULAR_PARTICIPLE})\\b`,
+  'i',
+);
+const COPULA = /\b(was|were|is|are|am)\s+(a|an|the|his|her|its|their|my|our|not|still|finally|no)\b/i;
+const BECOMING = /\b(became|becomes|stayed|stays|remained|remains|got|gets)\b/i;
+/** The subject's only verb sits inside a relative clause — at the head, or after a colon. */
+const VERB_DEMOTED = /(^|:\s*)[\w'()\u2019-]+(\s+[\w'()\u2019-]+){0,2}\s+(that|which)\s+\w+/i;
+
+export function hasWeakPredicate(text: string): boolean {
+  const outside = stripQuotedSpans(text);
+  return (
+    PASSIVE_VOICE.test(outside) ||
+    COPULA.test(outside) ||
+    BECOMING.test(outside) ||
+    VERB_DEMOTED.test(text)
+  );
 }
 
 /**

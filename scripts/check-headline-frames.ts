@@ -13,7 +13,7 @@ process.env.ANTHROPIC_API_KEY ||= 'sk-ant-placeholder-for-static-checks';
 import { execSync } from 'child_process';
 import { readFileSync } from 'fs';
 import { MATERIAL_CLASSES } from '../src/lib/editorial-queue/signals';
-import { blockingIssues, headlineIssues, looksTitleCased } from '../src/lib/posting/headline';
+import { blockingIssues, headlineIssues, looksTitleCased, normalizeHeadline } from '../src/lib/posting/headline';
 import { normalizeForVerbatimCheck } from '../src/lib/posting/quoteCandidates';
 import {
   assertIsMaterialClass,
@@ -34,6 +34,7 @@ import {
   assertVerbLibraryIntegrity,
 } from '../src/lib/interview/prompts/headlineVerbs';
 import {
+  hasWeakPredicate,
   BORROWED_FRAGMENT_FRAME,
   AGENT_VERB_OBJECT_FRAME,
   stripQuotedSpans,
@@ -293,8 +294,9 @@ check('no exemplar block is emitted when none are sourced',
 check('...and one IS emitted once they are',
   /Published headlines in this frame/.test(rendered)
   && /Coloured marble defines/.test(rendered));
-check('the shape puts the material in subject position',
-  /grammatical subject/.test(rendered) && /never as the subject of the sentence/.test(rendered));
+check('the shape puts the material in subject position AND makes it act',
+  /is the SUBJECT and it must ACT/.test(rendered)
+  && /It is not something that was done to/.test(rendered));
 
 console.log('\n12. The verb library is typed, not a flat list');
 const verbInt = assertVerbLibraryIntegrity();
@@ -330,7 +332,7 @@ check('an unknown REQUIRED condition withholds',
 // The asymmetry that is easy to get wrong: a barring condition being unknown must
 // also withhold. Otherwise a verb whose requirements are met sails past a bar
 // nobody could evaluate.
-const claddable = { namedSurface: true, materialClass: true };
+const claddable = { namedPlace: true, materialClass: true };
 check('a met requirement is not enough when a BAR is unknown',
   !explainVerb(HEADLINE_VERBS.find(v => v.id === 'intervention:renovate')!, { existingStructure: true }).eligible);
 check('...and it becomes eligible once the bar is known not to hold',
@@ -481,7 +483,7 @@ check('ordering is deterministic, so a batch is reproducible',
 
 console.log('\n20. Agent-verb-object — now fires (B8)');
 // Held back for three phases on three blockers. Two are gone and the third was
-// somewhere else: `namedSurface` is a VERB precondition, not a frame requirement.
+// somewhere else: `namedPlace` is a VERB precondition, not a frame requirement.
 check('the frame is declared', AGENT_VERB_OBJECT_FRAME.requiredFields.join() === 'agent,verb,object');
 check('naming the designer is no longer an issue',
   headlineIssues('Matto clads the island in oak').length === 0);
@@ -610,6 +612,73 @@ check('the corpus is v2', corpus._version === 2);
 check('the small-sample caveat is enforced, not just documented',
   /only \$\{human\.length\} human headlines \(20 recommended\)/.test(
     readFileSync('scripts/check-headline-discriminator.ts', 'utf8')));
+
+console.log('\n23. The subject must act — B10');
+// Every headline in the batch that prompted this had a thing in subject position
+// and a sentence reporting what happened TO it. Nothing caught them: they passed
+// every gate the pipeline had.
+for (const reported of [
+  'A glass table was chosen to keep a bright dining room from crowding',
+  "A stone bought without a shopping list became the bathroom's anchor",
+  '\u201CYes, always in the plan\u201D: paneling that raises a bedroom ceiling by inches',
+  'Black anchors were the first idea for the dining room, and stayed the last',
+  'Styling that took more objects than the shelf could keep',
+]) {
+  check(`caught: "${reported.slice(0, 46)}..."`, hasWeakPredicate(reported));
+}
+// The three shapes, named.
+check('passive is caught', hasWeakPredicate('Travertine was laid across the entry'));
+check('a copula is caught', hasWeakPredicate('Travertine was the first decision'));
+check('becoming is caught', hasWeakPredicate('Travertine became the entry floor'));
+check('a verb demoted into a relative clause is caught',
+  hasWeakPredicate('Paneling that raises a bedroom ceiling by inches'));
+// It must not eat the arrangements we actually ship.
+check('an active transitive headline survives',
+  !hasWeakPredicate('Coloured marble defines his-and-hers sinks in Marylebone penthouse'));
+check('...and every exemplar survives',
+  HEADLINE_FRAMES.every(f => f.exemplars.every(e => !hasWeakPredicate(e))));
+// A quoted passive is the designer's sentence, not ours.
+check('a passive INSIDE a quotation is not ours to police',
+  !hasWeakPredicate('\u201CIt was chosen for the light\u201D and the plan changed twice'));
+check('the route rejects on it', /WEAK_PREDICATE/.test(route));
+check('the prompt asks for it too, not just the filter',
+  /THE SUBJECT MUST ACT/.test(route));
+
+console.log('\n24. A quotation at the head survives normalization — B10');
+// normalizeHeadline stripped leading and trailing quotes independently, which was
+// correct until the Borrowed-fragment frame started putting a quotation FIRST. It
+// published an orphaned closing quote.
+check('a head quotation keeps its opening mark',
+  normalizeHeadline('\u201CYes, always in the plan\u201D: paneling raises the ceiling')
+    .startsWith('\u201C'));
+check('a fully wrapped headline is still unwrapped',
+  normalizeHeadline('\u201CEvery room argues its own case\u201D') === 'Every room argues its own case');
+check('the reason is recorded where the change is',
+  /an orphaned closing quote, published/.test(readFileSync('src/lib/posting/headline.ts', 'utf8')));
+check('the verbatim gate tests for ANY quote glyph, not just openers',
+  /\[\\u201C\\u201D"\]/.test(route));
+
+console.log('\n25. The verb library is reachable — B10');
+// It was dark. Five of six categories required conditions nothing ever resolved, so
+// renderVerbInstruction returned an empty string on nearly every project and the
+// model chose its own verb.
+check('no verbs when nothing is known', selectVerbs({}).eligible.length === 0);
+const common = { materialClass: true, namedPlace: true, spatialObject: true };
+check('the COMMON case now offers verbs, where it offered none',
+  selectVerbs(common).eligible.length >= 10, String(selectVerbs(common).eligible.length));
+check('application and placement are both reachable',
+  selectVerbs(common).eligible.some(v => v.category === 'application')
+  && selectVerbs(common).eligible.some(v => v.category === 'placement'));
+check('continuity still needs a class in two places',
+  !selectVerbs(common).eligible.some(v => v.category === 'continuity')
+  && selectVerbs({ ...common, classInTwoPlaces: true }).eligible.some(v => v.category === 'continuity'));
+check('the resolver sets the conditions it can answer',
+  /facts\.namedPlace = true/.test(slots) && /facts\.spatialObject = true/.test(slots));
+check('...and still withholds the ones it cannot',
+  /Still unresolvable, and still absent rather than false/.test(slots));
+check('the rename is explained where the condition is declared',
+  /Was `namedSurface`, and that was the bug/.test(
+    readFileSync('src/lib/interview/prompts/headlineVerbs.ts', 'utf8')));
 
 console.log(failures === 0
   ? '\nAll headline-frame checks passed.\n'

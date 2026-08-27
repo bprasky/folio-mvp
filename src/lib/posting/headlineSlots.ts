@@ -270,6 +270,10 @@ export interface ResolvedHeadlineSlots {
 export async function resolveMaterialCandidates(projectId: string): Promise<{
   materials: MaterialCandidate[];
   confirmedFinishTags: number;
+  /** A room is named on this project — what an Application verb acts on. */
+  namedPlace: boolean;
+  /** A tagged product sits in a named room — a real object, in a real place. */
+  spatialObject: boolean;
 }> {
   const tags = await prisma.productTag.findMany({
     where: { image: { projectId } },
@@ -330,7 +334,19 @@ export async function resolveMaterialCandidates(projectId: string): Promise<{
         a.value.localeCompare(b.value),
     );
 
-  return { materials, confirmedFinishTags };
+  // Conditions the verb library needs, answered from the same rows.
+  //
+  // These were never resolved, and the cost was total: five of six verb categories
+  // could never fire, so `renderVerbInstruction` returned an empty string on almost
+  // every project and the model chose its own verb. That is where "was chosen",
+  // "became" and "stayed" came from — not from a bad prompt, from no prompt.
+  const placed = tags.filter((t) => (t.image?.roomId ?? t.image?.room ?? null) !== null);
+  return {
+    materials,
+    confirmedFinishTags,
+    namedPlace: placed.length > 0,
+    spatialObject: placed.length > 0,
+  };
 }
 
 /**
@@ -343,7 +359,7 @@ export async function resolveMaterialCandidates(projectId: string): Promise<{
  * can support, and the verb library treats unknown and false very differently.
  */
 export async function resolveHeadlineSlots(projectId: string): Promise<ResolvedHeadlineSlots> {
-  const [{ materials, confirmedFinishTags }, answers] = await Promise.all([
+  const [{ materials, confirmedFinishTags, namedPlace, spatialObject }, answers] = await Promise.all([
     resolveMaterialCandidates(projectId),
     loadInterviewAnswers(projectId),
   ]);
@@ -387,6 +403,12 @@ export async function resolveHeadlineSlots(projectId: string): Promise<ResolvedH
   const facts: VerbFacts = {};
   if (materials.length > 0) facts.materialClass = true;
   if (materials.some((m) => m.roomCount > 1 || m.imageCount > 1)) facts.classInTwoPlaces = true;
+  if (namedPlace) facts.namedPlace = true;
+  if (spatialObject) facts.spatialObject = true;
+  // Still unresolvable, and still absent rather than false: `spatialRelation` needs
+  // a stated relationship between two areas, `apertureFact` a window or light fact,
+  // and `existingStructure`/`newBuild` a project-provenance field that does not
+  // exist. Absent withholds; that part was always working.
 
   return { slots, materials, facts, confirmedFinishTags, fragments, answerTexts };
 }

@@ -37,6 +37,7 @@ import {
 } from '@/lib/interview/prompts/editorialTone';
 import {
   eligibleFrames,
+  hasWeakPredicate,
   renderFrameInstruction,
 } from '@/lib/interview/prompts/headlineFrames';
 import {
@@ -94,6 +95,22 @@ ${HEADLINE_CRITERIA}
 ${EVALUATIVE_ADJECTIVES}
 
 ${BANNED_HEADLINE_VERBS_RULE}
+
+THE SUBJECT MUST ACT. Whatever you put in front of the verb has to be the thing doing
+something, not the thing something was done to. This is the single most common way a
+headline goes inert, and it is invisible while you are writing it, because the
+sentence still starts with the right noun.
+
+- "A glass table was chosen to keep a dining room from crowding" — passive. The table
+  does nothing; someone off-stage chose it.
+- "A stone became the bathroom's anchor" — a copula. Nothing happens, a state is
+  reported.
+- "Styling that took more objects than the shelf could keep" — the verb has been
+  demoted into a relative clause, so the subject owns no verb at all.
+
+Write one finite active verb and give it to the subject: marble DEFINES the sinks,
+terrazzo DIVIDES the room, drystone walls FRAME the house. No was, were, is, are,
+became, stayed. No "that" or "which" carrying the only verb.
 
 Return ONLY a JSON array of headline strings. No preamble, no commentary, no code fence.
 
@@ -387,6 +404,16 @@ Return ONLY a JSON array of ${CANDIDATES_REQUESTED} strings, in that order.`;
         rejected.push({ text, why: blocking.map((i) => `${i.code}: ${i.detail}`).join('; ') });
         return;
       }
+      // The subject has to DO something. Every headline in the batch that prompted
+      // this was a thing in subject position with the sentence reporting what
+      // happened TO it — passive, a copula, or the verb demoted into a relative
+      // clause. All three are ways of avoiding a finite active verb, and all three
+      // read as inert.
+      if (hasWeakPredicate(text)) {
+        rejected.push({ text, why: 'WEAK_PREDICATE: the subject never acts — passive, copula, or verb in a relative clause' });
+        return;
+      }
+
       const warnings = headlineIssues(text).filter((i) => i.severity === 'warning');
       if (warnings.length > 0) {
         console.info('[headline/regenerate] kept with warnings', {
@@ -401,7 +428,10 @@ Return ONLY a JSON array of ${CANDIDATES_REQUESTED} strings, in that order.`;
       // worst place in the piece to attribute words to a designer that they did not
       // use. This is the same contract the pull quote pipeline holds — a quote is
       // selected, never written — checked with the same `isVerbatimSpan`.
-      if (/[\u201C"]/.test(text) && !borrowedFragmentIsVerbatim(text, answerTexts)) {
+      // ANY quote glyph, opening or closing. Testing only for openers let a
+      // headline carrying a lone ” through unchecked — which is exactly what a
+      // mis-stripped opening quote produces.
+      if (/[\u201C\u201D"]/.test(text) && !borrowedFragmentIsVerbatim(text, answerTexts)) {
         rejected.push({ text, why: 'QUOTE_UNVERIFIED: quotes words the designer did not say' });
         return;
       }

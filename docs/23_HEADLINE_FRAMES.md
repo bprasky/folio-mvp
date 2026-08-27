@@ -611,6 +611,110 @@ sentence case whose proper noun happens to be three capitalised words.
 
 ---
 
+## 3i. B10 — the first batch that reached a designer, and why it was inert
+
+Five headlines, reported as terrible. **All five passed every gate the pipeline
+had.** Three defects, all of them ours.
+
+```
+A glass table was chosen to keep a bright dining room from crowding
+A stone bought without a shopping list became the bathroom's anchor
+Yes, always in the plan”: paneling that raises a bedroom ceiling by inches
+Black anchors were the first idea for the dining room, and stayed the last
+Styling that took more objects than the shelf could keep
+```
+
+### Defect 1 — the frame asked for the passive
+
+The Material frame put the material in subject position and then said:
+
+> Then {tail}: **what was decided about** that material
+
+…and the tail slot read *"What was **done with it, decided about it**, or paid for
+it."* Every phrasing is passive. The frame made the material **grammatically the
+subject and semantically the patient** — which is exactly what came back.
+
+The corpus does the opposite. The material **acts**: *Coloured marble **defines**
+his-and-hers sinks*, *Blocks of terrazzo **divide up** muted pizza restaurant*.
+
+The shape now demands an active transitive verb with the material as agent, and
+carries two of the reported failures as labelled NOs so the defect is shown, not
+described.
+
+### Defect 2 — the verb library was dark
+
+**Only 2 of 8 verb conditions were ever set.** `materialClass` and
+`classInTwoPlaces`; never `namedSurface`, `spatialObject`, `spatialRelation`,
+`apertureFact`, `existingStructure`, `newBuild`.
+
+So five of six categories could never fire, `renderVerbInstruction` returned `''` on
+nearly every project, and **the model picked its own verb** — *was chosen*,
+*became*, *took*, *stayed*. The verb was called "the highest-leverage slot in the
+corpus" in B2 and it was empty.
+
+Two conditions were asking for the wrong thing:
+
+- **`namedSurface` → `namedPlace`.** Surfaces are not structured — the schema has
+  rooms, not walls — so it could never hold. But *"clads the kitchen in oak"* is
+  what these verbs do; a **room** is the object they take. The condition was
+  narrower than the verbs need and narrower than the data has.
+- **`spatialObject`** is a tagged product on a photograph of a named room. The tag
+  carries x/y coordinates, so the placement is recorded, not inferred.
+
+| | before | after |
+|---|---|---|
+| verbs offered, material in one room | **0** | **14** |
+| verbs offered, material in two places | 6 | **20** |
+
+`spatialRelation`, `apertureFact`, `existingStructure` and `newBuild` remain
+unresolvable and stay **absent rather than false** — that half was always working.
+
+### Defect 3 — `normalizeHeadline` ate the opening quote
+
+It stripped leading and trailing quotes **independently**, which was right until the
+Borrowed-fragment frame started putting a quotation first:
+
+```
+in   “Yes, always in the plan”: paneling that raises a bedroom ceiling
+out   Yes, always in the plan”: paneling that raises a bedroom ceiling
+```
+
+An orphaned closing quote, published. It now strips only a **wrapping pair** — both
+ends, or neither.
+
+The verbatim gate had the matching hole: it tested `/[“"]/`, opening glyphs only, so
+a headline carrying a lone `”` skipped the check entirely. It now tests any quote
+glyph.
+
+### The enforcement: `hasWeakPredicate`
+
+Prompt prose alone is what failed here, so the rule is checkable. Three shapes, all
+ways of avoiding a finite active verb:
+
+| shape | example |
+|---|---|
+| passive | *was chosen*, *were kept*, *was laid* |
+| copula / becoming | *was the first idea*, *became the anchor*, *stayed the last* |
+| verb demoted into a relative clause | *styling **that took***, *paneling **that raises*** |
+
+Irregular participles are a small closed list (*laid, built, made, hung, sunk, cast,
+held…*) and are covered — `was laid across the entry` is the common case, not
+`was placed`.
+
+Quoted spans are exempt: a passive inside a quotation is the designer's sentence,
+not ours.
+
+**Deliberately not a general English rule.** Published headlines do use the passive
+(*"A Midcentury Home's Past Mistakes Are Finally Corrected"*). This is a rule for the
+three arrangements Folio has, all of which want their subject to act. It flags 6 of
+the 56 held-out headlines — every one a project-as-subject or copula shape we have no
+frame for. **A project-as-subject frame would need to relax it.**
+
+Results: **5 of 5 reported headlines caught, 0 of 17 exemplars lost.** Rejections log
+as `WEAK_PREDICATE`.
+
+---
+
 ## 4. The tail rule
 
 > The final clause must state a fact — who it was for, what it replaced, where it came
