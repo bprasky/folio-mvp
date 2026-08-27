@@ -22,6 +22,7 @@ import { execSync } from 'child_process';
 import { readFileSync } from 'fs';
 import {
   normalizeHeadline,
+  blockingIssues,
   headlineIssues,
   looksTitleCased,
   HEADLINE_MAX_WORDS,
@@ -394,7 +395,7 @@ check('an all-cut batch says the options were generic, not that they were malfor
 // headline kept being offered after the ban shipped.
 const tiles = readFileSync('src/lib/story/buildRoomTiles.ts', 'utf8');
 check('stored alternatives are re-graded on read, not trusted from write time',
-  /headlineIssues\(t\)\.length === 0/.test(tiles));
+  /blockingIssues\(t\)\.length === 0/.test(tiles));
 
 console.log('\n10. Editing the headline cannot be silently swallowed');
 // `lead.title` is never persisted today, but readers still resolve
@@ -405,6 +406,45 @@ check('saving the headline also updates a legacy lead.title',
   /field === 'kicker' && typeof blocks\.lead\.title === 'string'/.test(override));
 check('and the recorded original is read from the same place',
   /return blocks\.lead\?\.kicker \?\? blocks\.lead\?\.title \?\? ''/.test(override));
+
+console.log('\n11. TITLE_CASE warns, it does not drop — B9');
+// This module always documented TITLE_CASE as "a heuristic, not a gate" that
+// "returns a warning rather than driving a rewrite or blocking generation". The
+// regenerate route dropped any candidate with any issue, and the story read path
+// filtered them out of the stored pool. The documentation and the behaviour
+// disagreed and the behaviour won silently, over a house convention a designer can
+// fix in the preview in two seconds.
+const TITLED = 'A Remodel Turns a Dark and Choppy House in Melbourne Into a Bright Family Home';
+check('a Title Case headline still REPORTS the issue',
+  headlineIssues(TITLED).some(i => i.code === 'TITLE_CASE'));
+check('...marked as a warning',
+  headlineIssues(TITLED).find(i => i.code === 'TITLE_CASE')?.severity === 'warning');
+check('...and is therefore NOT blocking',
+  blockingIssues(TITLED).length === 0, JSON.stringify(blockingIssues(TITLED)));
+// Everything else still drops.
+for (const [text, code] of [
+  ['A house that refuses to sit still', 'BANNED_SHAPE'],
+  ['One two three', 'TOO_SHORT'],
+  ['Every room argues its own case.', 'TERMINAL_PUNCT'],
+] as const) {
+  check(`${code} is still an error`,
+    blockingIssues(text).some(i => i.code === code), text);
+}
+check('every issue carries a severity',
+  headlineIssues(TITLED).every(i => i.severity === 'error' || i.severity === 'warning'));
+// Both sites that DROP must use the blocking filter; the route also still logs the
+// warning, so a flagged headline is visible rather than silently kept.
+const route = readFileSync('src/app/api/posting/project/[projectId]/sections/headline/regenerate/route.ts', 'utf8');
+check('the write filter drops on blocking issues only',
+  /const blocking = blockingIssues\(text\);/.test(route)
+  && !/const issues = headlineIssues\(text\);\n      if \(issues\.length > 0\)/.test(route));
+check('...and still surfaces the warning',
+  /kept with warnings/.test(route));
+check('the read path re-grades on blocking issues only',
+  /blockingIssues\(t\)\.length === 0/.test(tiles));
+check('the reason is written where the severity is decided',
+  /documentation\s*\n\s*\*\s*and the behaviour disagreed/.test(
+    readFileSync('src/lib/posting/headline.ts', 'utf8')));
 
 console.log(failures === 0
   ? '\nAll headline checks passed.\n'

@@ -13,7 +13,7 @@ process.env.ANTHROPIC_API_KEY ||= 'sk-ant-placeholder-for-static-checks';
 import { execSync } from 'child_process';
 import { readFileSync } from 'fs';
 import { MATERIAL_CLASSES } from '../src/lib/editorial-queue/signals';
-import { headlineIssues } from '../src/lib/posting/headline';
+import { blockingIssues, headlineIssues, looksTitleCased } from '../src/lib/posting/headline';
 import { normalizeForVerbatimCheck } from '../src/lib/posting/quoteCandidates';
 import {
   assertIsMaterialClass,
@@ -527,15 +527,19 @@ for (const frame of HEADLINE_FRAMES) {
       corpusNormalized.has(normalizeForVerbatimCheck(e)), e);
     // An exemplar that breaks a rule teaches the rule away. This is exactly how the
     // old criteria came to list the balanced pair as a GOOD example.
+    // Blocking issues only. TITLE_CASE is a warning, and one exemplar trips it as a
+    // documented false positive: "Studio Okami Architecten updates Belgian home with
+    // The Garden Pavilion" is sentence case whose proper noun happens to be three
+    // capitalised words.
     check(`${frame.id}: exemplar passes every check Folio enforces`,
-      headlineIssues(e).length === 0 && !usesBannedVerb(e) && !hasEvaluativeTail(e),
-      JSON.stringify({ issues: headlineIssues(e).map(i => i.code), verb: usesBannedVerb(e), evaluative: hasEvaluativeTail(e) }));
+      blockingIssues(e).length === 0 && !usesBannedVerb(e) && !hasEvaluativeTail(e),
+      JSON.stringify({ issues: blockingIssues(e).map(i => i.code), verb: usesBannedVerb(e), evaluative: hasEvaluativeTail(e) }));
   }
 }
 // Agent-led exemplars are no longer illegal — B8 unbanned naming. What still
 // matters is FRAME IDENTITY: an exemplar has to demonstrate the arrangement its
 // frame is named for, or it teaches a different frame from inside this one.
-const OPENS_AGENT_FREE = /^(the|a|an|inside|eight|ten|five|nine|coloured|monolithic|rough|open-air|water|ambient|blocks|photos|construction)\b/i;
+const OPENS_AGENT_FREE = /^(the|a|an|inside|eight|ten|five|nine|this|these|coloured|monolithic|rough|open-air|water|ambient|blocks|photos|construction|steel)\b/i;
 for (const e of MATERIAL_FRAME.exemplars) {
   check('material: exemplar leads with the material, not an agent', OPENS_AGENT_FREE.test(e), e);
 }
@@ -552,6 +556,18 @@ check('...and spans both subject shapes, which the naming ban had prevented',
   BORROWED_FRAGMENT_FRAME.exemplars.some(e => OPENS_AGENT_FREE.test(e))
   && BORROWED_FRAGMENT_FRAME.exemplars.some(e => !OPENS_AGENT_FREE.test(e)));
 
+// A re-cased exemplar is still the published headline: same words, house
+// convention. Asserted both ways — it must match the corpus case-insensitively
+// (which the corpus check above already does) and must no longer read as Title
+// Case, or it teaches the convention it was re-cased out of.
+const RECASED = 'Steel elements bring a sheen to this 1300s French townhouse';
+check('the re-cased exemplar is in the material frame', MATERIAL_FRAME.exemplars.includes(RECASED));
+check('...and no longer reads as Title Case', !looksTitleCased(RECASED));
+check('...while the corpus keeps the published form',
+  corpusLines.some(h => h === 'Steel Elements Bring a Sheen to This 1300s French Townhouse'));
+check('...and the re-casing is explained where it was done',
+  /RE-CASED to house convention/.test(frames) && /never algorithmically/.test(frames));
+
 console.log('\n22. The held-out set is like-for-like');
 check('a human set exists', Array.isArray(corpus.human) && corpus.human.length >= 5);
 const byArrangementNormalized = new Set(
@@ -566,15 +582,30 @@ check('the set is above the 20 the script recommends',
 check('it now includes both agent-led and agent-free shapes',
   (corpus.human as string[]).some(h => OPENS_AGENT_FREE.test(h))
   && (corpus.human as string[]).some(h => !OPENS_AGENT_FREE.test(h)));
-check('every entry would pass Folio\'s own checks',
-  (corpus.human as string[]).every(h => headlineIssues(h).length === 0 && !usesBannedVerb(h)));
+check('every entry would pass Folio\'s BLOCKING checks',
+  (corpus.human as string[]).every(h => blockingIssues(h).length === 0 && !usesBannedVerb(h)));
+// Casing is normalized inside the discriminator, so Title Case entries belong in
+// the set — excluding them would bias it the other way and cost the whole
+// project-as-subject group.
+check('the set now admits Title Case entries',
+  (corpus.human as string[]).some(h => looksTitleCased(h)));
+check('the discriminator lowercases BOTH sets before judging', (() => {
+  const d = readFileSync('scripts/check-headline-discriminator.ts', 'utf8');
+  return /const flatten = \(s: string\) => s\.toLocaleLowerCase\(\);/.test(d)
+    && /judged: flatten\(text\), truth: 'human'/.test(d)
+    && /judged: flatten\(text\), truth: 'machine'/.test(d)
+    && /\$\{i\}\. \$\{m\.judged\}/.test(d);
+})());
+check('...and tells the judge capitalisation carries no signal',
+  /Capitalisation carries no signal here/.test(
+    readFileSync('scripts/check-headline-discriminator.ts', 'utf8')));
 check('the selection criterion is written down',
   Array.isArray(corpus._humanSelection)
   && corpus._humanSelection.join(' ').includes('like-for-like'));
 // 38 of 80 entries are Title Case because that is Dwell and Remodelista house
 // style; Folio's is sentence case. Unresolved, and recorded rather than hidden.
-check('the Title Case confound is recorded',
-  corpus._humanSelection.join(' ').includes('TITLE CASE PROBLEM'));
+check('the casing decision is recorded',
+  corpus._humanSelection.join(' ').includes('CASING IS NOT A CRITERION'));
 check('the corpus is v2', corpus._version === 2);
 check('the small-sample caveat is enforced, not just documented',
   /only \$\{human\.length\} human headlines \(20 recommended\)/.test(

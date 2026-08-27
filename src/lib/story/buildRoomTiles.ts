@@ -6,7 +6,7 @@
 import { buildEditorialChapters, type EditorialChapter } from "@/lib/editorial/buildEditorialChapters";
 import { getSelectedPullQuoteText, type PullQuoteSelection } from "@/lib/posting/schemas";
 import { formatRoomName } from "@/lib/utils/formatRoomName";
-import { headlineIssues } from "@/lib/posting/headline";
+import { blockingIssues } from "@/lib/posting/headline";
 
 // --- Types ---
 
@@ -267,7 +267,7 @@ export function buildStoryData(post: any): StoryData | null {
   const titleAlternatives: string[] = Array.isArray(blocks?.lead?.kickerAlternatives)
     ? blocks.lead.kickerAlternatives
         .filter((t: unknown): t is string => typeof t === "string" && !!t.trim())
-        .filter((t: string) => headlineIssues(t).length === 0)
+        .filter((t: string) => blockingIssues(t).length === 0)
     : [];
   // Additive: the same paragraphs, still individually addressable for editing.
   const introParagraphs: string[] = Array.isArray(blocks?.introduction)

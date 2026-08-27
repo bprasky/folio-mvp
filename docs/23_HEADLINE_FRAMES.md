@@ -521,6 +521,96 @@ What it would need:
 
 ---
 
+## 3h. Casing — B9
+
+Three changes, one decision: **casing is a house convention, not a quality signal.**
+Folio's sentence-case output rule is unchanged; what changed is everywhere casing was
+being used to *judge*.
+
+### The discriminator lowercases both sets
+
+Dwell and Remodelista set Title Case; Folio sets sentence case. Left alone that is a
+perfect tell — the judge would score *Title Case = human* and the rate would measure
+which publication's typography the generator imitates, not whether the writing is
+good. The same trap the naming ban was.
+
+Both sets are lowercased before the judge sees either, and the system prompt says so
+explicitly. The report prints the original, so what comes back is the headline as
+published rather than as measured.
+
+**Held-out set: 26 → 56.** Thirty Title Case entries, previously excluded, are now
+admitted — including the whole project-as-subject group, which is the closest match
+to what Folio produces.
+
+| | v1, old rules | v2, B8 | B9 |
+|---|---|---|---|
+| held-out set | 5 | 26 | **56** |
+
+### `TITLE_CASE` warns, it does not drop
+
+`headline.ts` always documented it as *"a heuristic, not a gate"* that *"returns a
+warning rather than driving a rewrite or blocking generation."* Two sites dropped on
+it anyway. **The documentation and the behaviour disagreed, and the behaviour won
+silently** — over a house convention a designer can fix in the preview in seconds,
+and using a heuristic that trips on any headline which is genuinely mostly proper
+nouns.
+
+`HeadlineIssue` now carries `severity: 'error' | 'warning'`, decided on the issue
+rather than at each call site — the call sites are what drifted apart. `TITLE_CASE`
+is the only warning. `blockingIssues()` is the filter every dropping site uses;
+`headlineIssues()` still returns everything, so logging is unaffected.
+
+| file:line | change |
+|---|---|
+| `src/lib/posting/headline.ts:33` | `severity` added to `HeadlineIssue` |
+| `src/lib/posting/headline.ts` | `TITLE_CASE` marked `warning`; the other four `error` |
+| `src/lib/posting/headline.ts` | `blockingIssues()` added |
+| `…/headline/regenerate/route.ts:380` | drops on `blockingIssues`, and logs `kept with warnings` |
+| `src/lib/story/buildRoomTiles.ts:9,270` | read path re-grades on `blockingIssues` |
+| `scripts/check-headline.ts` §11 | new — asserts the severity split and both sites |
+| `scripts/check-regenerate-surfaces.ts` | two assertions updated |
+
+`generateEditorialDraft.ts:962` already only warned; it was the one site already
+matching the documentation.
+
+### Exemplars: 6 / 5 / 6
+
+**Casing turned out not to be the binding constraint — frame identity is.** Of seven
+newly-admitted Title Case entries that looked like Material candidates, **only one is
+actually material-led**. The other six lead with the *project* — a remodel, a
+renovation, a loft — which is the project-as-subject arrangement §3f reports we do
+not have a frame for. Using them as Material exemplars would teach the wrong frame
+from inside the right one.
+
+| frame | B7 | B8 | B9 |
+|---|---|---|---|
+| `material` | 3 | 5 | **6** |
+| `borrowed-fragment` | 1 | 5 | **5** |
+| `agent-verb-object` | 5 | 5 | **6** |
+
+`borrowed-fragment` gains nothing: zero newly-admitted entries carry a quotation.
+(*They Gave Their "Grey Gardens" Craftsman a Grand Reinvention* is excluded on
+`BANNED_SHAPE` — "Reinvention" — not on casing.)
+
+**One exemplar is re-cased**, and that is a deliberate exception worth stating.
+Published as *"Steel Elements Bring a Sheen to This 1300s French Townhouse"*; the
+exemplar reads *"Steel elements bring a sheen to this 1300s French townhouse"*. Same
+words, same arrangement, house convention — only `French` needed keeping. Done **by
+hand, never algorithmically**: `headline.ts`'s own header explains why lowercasing
+cannot be automated (it would publish "Miami beach"). The corpus keeps the published
+form; the exemplar check matches case-insensitively through
+`normalizeForVerbatimCheck`, and asserts the result no longer reads as Title Case.
+
+An exemplar going into a prompt must not teach Title Case, which is why exemplars are
+re-cased while the held-out set is not: the held-out set is *judged* with casing
+normalized away, but an exemplar is *copied*.
+
+One exemplar still trips `looksTitleCased` — *"Studio Okami Architecten updates
+Belgian home with The Garden Pavilion"* — as the documented false positive: it is
+sentence case whose proper noun happens to be three capitalised words.
+
+---
+
 ## 4. The tail rule
 
 > The final clause must state a fact — who it was for, what it replaced, where it came
@@ -712,7 +802,7 @@ resolved permanently**:
 
 | | status |
 |---|---|
-| the held-out corpus | **DONE** — v2, 80 entries; the held-out set is 26, above the recommended 20 |
+| the held-out corpus | **DONE** — v2, 80 entries; the held-out set is 56, well above the recommended 20 |
 | `ANTHROPIC_API_KEY` | still unset in every authoring session; the judge is a model call |
 | a generated set | needs `DATABASE_URL` plus generation — press New options on ~20 projects, or read `blocks.lead.kickerAlternatives` off published posts |
 

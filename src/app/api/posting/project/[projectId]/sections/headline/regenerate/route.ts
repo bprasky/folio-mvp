@@ -47,6 +47,7 @@ import {
 import { resolveHeadlineSlots, borrowedFragmentIsVerbatim } from '@/lib/posting/headlineSlots';
 import {
   normalizeHeadline,
+  blockingIssues,
   headlineIssues,
   HEADLINE_MAX_WORDS,
 } from '@/lib/posting/headline';
@@ -377,10 +378,20 @@ Return ONLY a JSON array of ${CANDIDATES_REQUESTED} strings, in that order.`;
       if (seen.has(key)) return; // duplicate, or the headline they already have
       seen.add(key);
 
-      const issues = headlineIssues(text);
-      if (issues.length > 0) {
-        rejected.push({ text, why: issues.map((i) => `${i.code}: ${i.detail}`).join('; ') });
+      // Drop on ERRORS only. TITLE_CASE is a heuristic and this pipeline documents
+      // it as one — dropping on it threw away good headlines over a house
+      // convention the designer can fix in the preview in two seconds. The warning
+      // still travels with the candidate so it is visible rather than silent.
+      const blocking = blockingIssues(text);
+      if (blocking.length > 0) {
+        rejected.push({ text, why: blocking.map((i) => `${i.code}: ${i.detail}`).join('; ') });
         return;
+      }
+      const warnings = headlineIssues(text).filter((i) => i.severity === 'warning');
+      if (warnings.length > 0) {
+        console.info('[headline/regenerate] kept with warnings', {
+          _cid, text, warnings: warnings.map((i) => `${i.code}: ${i.detail}`),
+        });
       }
 
       // Anything in quotation marks must actually have been said.

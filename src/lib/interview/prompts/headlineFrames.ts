@@ -170,6 +170,14 @@ export const MATERIAL_FRAME: HeadlineFrame = {
     'Blocks of terrazzo divide up muted pizza restaurant in Beijing',
     'Rough drystone walls frame sunken home on Greek island by Alexandre Pavlidis',
     'Water disappears through gaps in Serafini\'s \u201Csculptural yet functional\u201D Piano washbasin',
+    // RE-CASED to house convention. Published as "Steel Elements Bring a Sheen to
+    // This 1300s French Townhouse" — Dwell sets Title Case, Folio sets sentence
+    // case. Same words, same arrangement; only the convention changed, and only
+    // "French" needed keeping. Done by hand, never algorithmically: this module's
+    // own header explains why lowercasing cannot be automated ("Miami beach").
+    // The corpus keeps the published form; the exemplar check matches
+    // case-insensitively.
+    'Steel elements bring a sheen to this 1300s French townhouse',
   ],
   tailRule: TAIL_RULE,
   shape:
@@ -254,6 +262,7 @@ export const AGENT_VERB_OBJECT_FRAME: HeadlineFrame = {
     'Iterare Arquitectos inserts stark white home into shell of old Spanish building',
     'Besley & Spresser clads Sydney Harbour pavilion with oyster shell terrazzo',
     'OMA completes first US affordable housing development',
+    'Studio Okami Architecten updates Belgian home with The Garden Pavilion',
   ],
   tailRule: TAIL_RULE,
   shape:

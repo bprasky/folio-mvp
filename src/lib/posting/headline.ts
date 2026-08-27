@@ -52,6 +52,23 @@ export const HEADLINE_MAX_WORDS = 16;
 export interface HeadlineIssue {
   code: 'TOO_LONG' | 'TOO_SHORT' | 'TITLE_CASE' | 'BANNED_SHAPE' | 'TERMINAL_PUNCT';
   detail: string;
+  /**
+   * Whether this issue may drop a candidate.
+   *
+   * `error` — the headline is wrong and must not be offered.
+   * `warning` — the headline departs from house style and is surfaced, not dropped.
+   *
+   * Carried on the issue rather than decided at each call site, because the call
+   * sites had drifted apart: this module documented TITLE_CASE as "a heuristic, not
+   * a gate" that "returns a warning rather than driving a rewrite or blocking
+   * generation", while the regenerate route dropped any candidate with any issue
+   * and the story read path filtered them out of the stored pool. The documentation
+   * and the behaviour disagreed, and the behaviour won silently.
+   *
+   * `blockingIssues()` is the filter every dropping site now uses. A site that
+   * wants to LOG everything still calls `headlineIssues()`.
+   */
+  severity: 'error' | 'warning';
 }
 
 const words = (s: string) => s.trim().split(/\s+/).filter(Boolean);
@@ -171,24 +188,38 @@ const BANNED_SHAPES: Array<{ re: RegExp; label: string }> = [
   },
 ];
 
+/**
+ * Only the issues that may DROP a headline.
+ *
+ * The filter every rejecting site uses. Sites that log call `headlineIssues`, so a
+ * warning is still surfaced — it just no longer costs the designer the candidate.
+ */
+export function blockingIssues(text: string): HeadlineIssue[] {
+  return headlineIssues(text).filter((i) => i.severity === 'error');
+}
+
 /** Every way this headline departs from house style. Empty means it conforms. */
 export function headlineIssues(text: string): HeadlineIssue[] {
   const issues: HeadlineIssue[] = [];
   const n = words(text).length;
 
   if (n > HEADLINE_MAX_WORDS) {
-    issues.push({ code: 'TOO_LONG', detail: `${n} words (max ${HEADLINE_MAX_WORDS}) — past this it is a deck` });
+    issues.push({ code: 'TOO_LONG', severity: 'error', detail: `${n} words (max ${HEADLINE_MAX_WORDS}) — past this it is a deck` });
   } else if (n > 0 && n < HEADLINE_MIN_WORDS) {
-    issues.push({ code: 'TOO_SHORT', detail: `${n} words (min ${HEADLINE_MIN_WORDS})` });
+    issues.push({ code: 'TOO_SHORT', severity: 'error', detail: `${n} words (min ${HEADLINE_MIN_WORDS})` });
   }
+  // WARNING, not error. `looksTitleCased` is a heuristic and this module has always
+  // said so: a headline that is genuinely mostly proper nouns trips it. Dropping on
+  // a heuristic throws away good headlines for a house convention, and casing is the
+  // one departure a designer can fix in the preview in two seconds.
   if (looksTitleCased(text)) {
-    issues.push({ code: 'TITLE_CASE', detail: 'reads as Title Case; house style is sentence case' });
+    issues.push({ code: 'TITLE_CASE', severity: 'warning', detail: 'reads as Title Case; house style is sentence case' });
   }
   if (/[.]$/.test(text.trim())) {
-    issues.push({ code: 'TERMINAL_PUNCT', detail: 'headlines take no terminal period' });
+    issues.push({ code: 'TERMINAL_PUNCT', severity: 'error', detail: 'headlines take no terminal period' });
   }
   for (const { re, label } of BANNED_SHAPES) {
-    if (re.test(text)) issues.push({ code: 'BANNED_SHAPE', detail: label });
+    if (re.test(text)) issues.push({ code: 'BANNED_SHAPE', severity: 'error', detail: label });
   }
 
   return issues;

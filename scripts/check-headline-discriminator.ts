@@ -29,6 +29,18 @@
  * Corpus file: docs/audits/headline-discriminator-corpus.json
  *   { "human": ["...", "..."] }        // >= 20 recommended, human-written, held out
  *
+ * ── Casing is normalized before the judge sees anything ─────────────────────
+ *
+ * Both sets are lowercased. Dwell and Remodelista set headlines in Title Case;
+ * Folio's house style is sentence case. Left alone, that is a perfect tell — the
+ * judge would score "Title Case = human" and the rate would measure which
+ * publication's typographic convention the generator imitates, not whether the
+ * writing is any good.
+ *
+ * It is the same trap the naming ban was: a house convention masquerading as a
+ * quality signal. Folio's own sentence-case rule is unchanged; it simply has no
+ * business inside this measurement.
+ *
  * ── Reading the number ───────────────────────────────────────────────────────
  *
  * Reported as the misidentification rate: of the generated headlines shown, the
@@ -57,6 +69,8 @@ const JUDGE_SYSTEM = `You are a design magazine reader with a good ear. You will
 For each one, say which. Judge on the writing alone — whether it reports something a person went and found out, whether the sentence has the specificity and the restraint of edited copy, whether it sounds like it was assembled from a description of a house.
 
 Do not assume a fixed proportion. The mix is unknown to you and may be uneven.
+
+Every headline has been lowercased. Capitalisation carries no signal here — do not read anything into it.
 
 Return ONLY a JSON array, one entry per headline, in order:
 [{"i": <number>, "verdict": "human"|"machine"}]
@@ -112,9 +126,12 @@ async function main() {
     console.warn('  _humanSelection note for why the set is small and what to collect.\n');
   }
 
+  // Lowercased for the judge; the original is kept for the report, so what is
+  // printed back is the headline as published rather than as measured.
+  const flatten = (s: string) => s.toLocaleLowerCase();
   const mixed = shuffle([
-    ...human.map((text) => ({ text, truth: 'human' as const })),
-    ...generated.map((text) => ({ text, truth: 'machine' as const })),
+    ...human.map((text) => ({ text, judged: flatten(text), truth: 'human' as const })),
+    ...generated.map((text) => ({ text, judged: flatten(text), truth: 'machine' as const })),
   ]);
 
   const anthropic = new Anthropic();
@@ -125,7 +142,7 @@ async function main() {
     system: JUDGE_SYSTEM,
     messages: [{
       role: 'user',
-      content: `${mixed.map((m, i) => `${i}. ${m.text}`).join('\n')}\n\nJudge all ${mixed.length}.`,
+      content: `${mixed.map((m, i) => `${i}. ${m.judged}`).join('\n')}\n\nJudge all ${mixed.length}.`,
     }],
   });
 
@@ -164,7 +181,8 @@ async function main() {
   }
 
   const rate = (genCalledHuman / genShown) * 100;
-  console.log(`\nHEADLINE DISCRIMINATOR — ${mixed.length} headlines, model ${MODELS.sonnet}\n`);
+  console.log(`\nHEADLINE DISCRIMINATOR — ${mixed.length} headlines, model ${MODELS.sonnet}`);
+  console.log('  casing normalized: both sets lowercased before judging\n');
   console.log(`  generated shown          ${genShown}`);
   console.log(`  ...called human          ${genCalledHuman}`);
   console.log(`  MISIDENTIFICATION RATE   ${rate.toFixed(1)}%   <- record this in docs/23`);
