@@ -171,9 +171,20 @@ check('a verified slot makes it eligible',
 check('resolution is per tag, keyed to room and image',
   /roomCount/.test(slots) && /imageCount/.test(slots)
   && /at\.rooms\.add\(/.test(slots));
+// C1 narrowed this. It was `m.roomCount > 1 || m.imageCount > 1`, and neither
+// half asked the Continuity question: `roomCount` is `places.size`, which counts
+// an `image:<id>` sentinel per unassigned photo, and the `imageCount` half meant
+// two photographs of ONE room satisfied it outright. The verbs it gates — runs,
+// carries, threads — claim the material crosses the house. Two named rooms is
+// that claim; `rooms` is the naming set, and `places` is not.
 check('classInTwoPlaces is derived from that and passed as a fact',
   /facts\.classInTwoPlaces = true/.test(slots)
-  && /m\.roomCount > 1 \|\| m\.imageCount > 1/.test(slots));
+  && /m\.rooms\.length >= 2/.test(slots));
+const continuityLine = slots.split('\n').find(l => /facts\.classInTwoPlaces = true/.test(l)) ?? '';
+check('...from the NAMING set, so image count cannot satisfy it on its own',
+  /rooms\.length/.test(continuityLine)
+  && !/imageCount/.test(continuityLine)
+  && !/roomCount/.test(continuityLine));
 check('an unassigned image counts as its own place, so roomCount cannot inflate',
   /image:\$\{tag\.imageId\}/.test(slots) || /`image:/.test(slots));
 

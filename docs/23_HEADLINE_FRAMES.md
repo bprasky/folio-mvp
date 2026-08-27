@@ -139,7 +139,8 @@ Three consequences, all of which raise coverage:
    can survive it. `finishRaw` is free text a designer typed and needs
    `carriesProprietaryName()` to police it; a class does not.
 3. It resolves per tag, so the same class in two rooms is computable — which is the
-   `classInTwoPlaces` precondition the Continuity verbs need (§7).
+   `classInTwoPlaces` precondition the Continuity verbs need (§7; narrowed to two
+   NAMED rooms in §3l).
 
 In B2 this was recorded and not acted on. B3 applies it.
 
@@ -819,6 +820,122 @@ real cost of the variant, and it is why this is reported rather than built.
 
 ---
 
+## 3l. Project grain reaches the prompt — C1
+
+Three defects, one theme: the generator had project-level material and could not see
+it as project-level.
+
+### The question category was destroyed on read
+
+`loadInterviewAnswers` resolves each answer's `roomId` to a room name and assigns it
+to `section`. Its own docblock said `section` was the question category. Both are
+true of different things — the category is what a STORED answer's `section` holds,
+the room is what a LOADED answer's holds — and the second overwrote the first.
+
+For a room answer that is correct and load-bearing. `quoteCandidates.ts:98` and
+`selectPullQuotes.ts:173` both match `section` against a chapter title; a quote whose
+section stops naming its room stops being offered for that room. **The field was not
+renamed and its meaning was not changed.**
+
+The cost was the other half. A project-level answer has no `roomId`, so it fell to
+`'General'` and reached the headline prompt rendered `- [General] …`, identical to an
+unassigned room answer. The five most narrative answers on the project — the brief,
+the limits, the big idea, the signature, the pivot — were present in the prompt and
+unlabelled.
+
+`LoadedAnswer.category` now carries the other half alongside. It is recovered from
+the question id, because **no column records it**: `EditorialInterviewAnswer` has
+`questionId`, `questionText` and `roomId`, and no scope, topic or category field. Ids
+are minted `project-<CATEGORY>-<uuid>` and two readers already depended on that shape
+(`getInterviewQuestions.ts:318`, `interview/route.ts:302`). No migration.
+
+Two details worth keeping:
+
+- **Matched against `PROJECT_QUESTION_CATEGORIES`, not split on hyphens.** A category
+  contains underscores and a uuid contains hyphens, so splitting would work by
+  accident. Prefix-matching a known member means a malformed id yields `null` rather
+  than whatever sat between the first two hyphens.
+- **A follow-up inherits its parent's category, resolved from BOTH stores.** A
+  follow-up carries its own question id, not its parent's. Provenance holds
+  `parentQuestionId` directly; the projection resolved that to a row id at write time,
+  so it is walked back through the loaded rows. They must agree, because the category
+  is part of the de-dupe key — a disagreement would surface not as a wrong label but
+  as the same answer appearing twice.
+
+### The prompt now has two blocks
+
+Project-grain answers are rendered under their own heading, labelled by what the
+question asked ("The big idea", not `DESIGN_DIRECTION`); room answers keep the heading
+and the room bracket they had. `PROJECT_ANSWER_LABELS` is typed
+`Record<ProjectQuestionCategory, string>`, so a sixth category fails the build rather
+than shipping an unlabelled answer.
+
+**The editor still sees both.** `judgeHeadlines` cuts a candidate the interview does
+not support; handed only the room block it would have started cutting exactly the
+headlines this split exists to enable — a candidate grounded in the client brief would
+read as unsupported because the brief was not in the evidence. The prompt splits;
+the editor does not.
+
+### `classInTwoPlaces` was not the Continuity precondition
+
+It was `roomCount > 1 || imageCount > 1`, and neither half asked the Continuity
+question:
+
+- `roomCount` is `places.size`, and `places` carries an `image:<id>` sentinel for every
+  tag on an unassigned photo. That is deliberate — counting must not understate — but
+  it means two unassigned photos read as two places.
+- `|| imageCount > 1` then made even that irrelevant. **Two photographs of one kitchen
+  satisfied it outright.**
+
+So run, carry, thread, repeat, extend and continue were being offered on projects where
+the class had been photographed twice in the same room. The verb claims the material
+crosses the house; the evidence said it was shot from two angles.
+
+Now `rooms.length >= 2` — the naming set, two named rooms, which is the claim the verb
+makes. **Strictly narrower.** Some projects lose the Continuity category, and those are
+the projects that never earned it. §7's table row and §6.2's coverage item 3 both refer
+to this predicate and now mean the stricter one.
+
+### Continuity ships with an empty exemplar array
+
+When a Continuity angle or frame lands, its `exemplars` array must be **empty**.
+
+Of the 56 held-out human headlines, seven carry any project-wide spread — and **not one
+of them says "room to room."** They are project-wide impressions: *"Steel Elements Bring
+a Sheen to This 1300s French Townhouse"*, *"Tour a 17th-Century Paris Loft Overflowing
+with Vintage Items"*, *"Erik Bratsberg fills Persona restaurant with tactile materials
+and own artworks"*. The shape a Continuity angle proposes — one move traced across named
+rooms — has **no published analogue in the corpus**.
+
+That is not a reason to drop the angle. It is the one place Folio holds evidence a
+publisher's writer never sees: room-level tag data. But it must ship knowing it is
+unattested, and `HeadlineFrame.exemplars` already carries the rule (`headlineFrames.ts:76`):
+
+> Empty means unsourced, not "none exist". `assertFrameLibraryIntegrity` reports empty
+> arrays rather than failing, so a frame ships usable and gets its exemplars when
+> someone can read them off published articles.
+
+An invented exemplar here would teach a shape nobody has validated — which is precisely
+how the previous criteria taught the balanced pair as GOOD. See
+`docs/audits/PROJECT_ANGLE_AUDIT.md` §3 for the measurement.
+
+### Correction: `agent` is resolved, just not here
+
+`headlineSlots.ts` carried a comment stating `agent` is NEVER resolved, and gave the
+reason: `headlineIssues` killed every output the Agent-verb-object frame could produce
+(`NAMES_PEOPLE`), so eligibility would have been pointless. **B8 removed that ban** and
+the regenerate route has resolved `agent` from the credited party since. The comment
+stayed on the page after it stopped being true.
+
+What survives is *where*, not *whether*. The credited name comes off
+`Project.designerOrg` / `Project.designer`, which `resolveHeadlineSlots` does not load —
+it selects `city` and `regionState`. The route already holds that row for the byline, so
+resolving it there costs no query and resolving it in the slot resolver would cost one.
+
+The honesty note is still live: `agent` is account-asserted, not identity-verified.
+
+---
+
 ## 4. The tail rule
 
 > The final clause must state a fact — who it was for, what it replaced, where it came
@@ -1171,7 +1288,7 @@ missing field stays visible instead of quietly shaping output.
 | **Application** | clad, wrap, line, sheathe, panel, tile, face | `namedSurface` + `materialClass` | — |
 | **Placement** | anchor, center, set, perch, suspend, float, sink | `spatialObject` | — |
 | **Division** | split, divide, screen, partition, separate, break | `spatialRelation` | — |
-| **Continuity** | run, carry, thread, repeat, extend, continue | `classInTwoPlaces` | — |
+| **Continuity** | run, carry, thread, repeat, extend, continue | `classInTwoPlaces` — two NAMED rooms since §3l | — |
 | **Aperture** | frame, open, admit, filter, screen | `apertureFact` | — |
 
 Intervention is **entirely withheld today** (§6.2 item 4). Continuity depends on
@@ -1291,6 +1408,12 @@ not because anything was established. The Continuity category's `classInTwoPlace
 precondition arguably dissolves that objection, since a verb that only fires when the
 same material class is verified in more than one room is asserting a fact rather than
 a resonance.
+
+That argument was not yet true when it was written. Until §3l the precondition also
+fired on `imageCount > 1`, so "verified in more than one room" described a predicate
+that two photographs of one room satisfied. It is true now. The decision does not
+change — it was settled on cost, not on this — but the reasoning behind it only
+started holding in C1.
 
 Settled against admitting it anyway, on cost: the substitution costs little —
 `continue`, `run`, `carry`, `repeat` and `extend` cover the category — and reopening

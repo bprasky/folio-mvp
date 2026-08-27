@@ -464,23 +464,49 @@ export async function resolveHeadlineSlots(projectId: string): Promise<ResolvedH
     });
   }
 
-  // `agent` is NEVER resolved, and this is deliberate rather than unfinished.
+  // `agent` is not resolved HERE, and that is a boundary rather than a refusal.
   //
-  // The frame contract requires a required slot to be non-null and VERIFIED, and
-  // there is no name-verification predicate in the schema — `User.name` is a plain
-  // String, and nothing records that anyone confirmed it (audit §3.A). Resolving it
-  // anyway with `verified: true` would be the exact lie the contract exists to
-  // prevent, and it would make the Agent-verb-object frame eligible on a surface
-  // where `headlineIssues` kills every output it can produce (NAMES_PEOPLE).
+  // This comment used to say the slot was never resolved at all, and gave the
+  // reason: `headlineIssues` killed every output the Agent-verb-object frame could
+  // produce (NAMES_PEOPLE), so making it eligible would have been pointless. B8
+  // removed that ban — 57% of published design headlines open on the credited name
+  // — and the regenerate route has resolved `agent` from the credited party since
+  // (regenerate/route.ts:226). The claim below stayed on the page after it stopped
+  // being true.
   //
-  // So it stays absent and the frame stays ineligible, visibly, for a reason
-  // written down. See AGENT_VERB_OBJECT_FRAME.
+  // What survives is where the slot is filled, not whether. The credited name comes
+  // off `Project.designerOrg` / `Project.designer`, which this function does not
+  // load — it selects `city` and `regionState` and nothing else. The route already
+  // has that row in hand for the byline, so resolving it there costs no query and
+  // resolving it here would cost one.
+  //
+  // The honesty note is still live and still worth keeping: `agent` is
+  // account-asserted, not identity-verified. `User.name` is a plain String and
+  // nothing records that anyone confirmed it (audit §3.A). The route marks it
+  // `verified: true` under the same standard applied to a confirmed finish — a
+  // human entered it — and says so at the call site rather than papering over it.
+  // See AGENT_VERB_OBJECT_FRAME.
 
   // Only what the data can decide. `classInTwoPlaces` is the Continuity
   // precondition, and per-tag resolution is what makes it answerable at all.
+  //
+  // It reads `rooms`, the NAMING set, and nothing else. It used to be
+  // `roomCount > 1 || imageCount > 1`, and both halves of that were wrong for this
+  // question. `roomCount` is `places.size`, and `places` carries an `image:<id>`
+  // sentinel for every tag on an unassigned photo — deliberately, so counting
+  // cannot understate — which means two unassigned photos read as two places. The
+  // `|| imageCount > 1` half then made even that irrelevant: two photographs of one
+  // kitchen satisfied it outright.
+  //
+  // So the Continuity verbs — runs, carries, threads, repeats, extends, continues —
+  // were being offered on projects where the class had been photographed twice in
+  // the same room. The verb says the material crosses the house; the evidence said
+  // it was shot from two angles. `rooms.length >= 2` is two named rooms, which is
+  // the claim the verb actually makes. This is strictly narrower: some projects
+  // lose the Continuity category, and those are the projects that never earned it.
   const facts: VerbFacts = {};
   if (materials.length > 0) facts.materialClass = true;
-  if (materials.some((m) => m.roomCount > 1 || m.imageCount > 1)) facts.classInTwoPlaces = true;
+  if (materials.some((m) => m.rooms.length >= 2)) facts.classInTwoPlaces = true;
   if (namedPlace) facts.namedPlace = true;
   if (spatialObject) facts.spatialObject = true;
   // Still unresolvable, and still absent rather than false: `spatialRelation` needs

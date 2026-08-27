@@ -47,6 +47,10 @@ import {
 } from '@/lib/interview/prompts/headlineVerbs';
 import { resolveHeadlineSlots, borrowedFragmentIsVerbatim } from '@/lib/posting/headlineSlots';
 import {
+  PROJECT_QUESTION_CATEGORIES,
+  type ProjectQuestionCategory,
+} from '@/lib/interview/generateProjectQuestions';
+import {
   normalizeHeadline,
   blockingIssues,
   headlineIssues,
@@ -80,6 +84,36 @@ const ANGLES: Array<{ key: string; brief: string }> = [
   { key: 'first-move', brief: 'The one selection that set everything after it — the material or object the rest of the house had to answer to.' },
   { key: 'argument', brief: 'A claim about this project a reasonable designer could disagree with. Take a position.' },
 ];
+
+/**
+ * What each opening question was actually asking, in the writer's language.
+ *
+ * The five "About This Project" answers are the only project-GRAIN material in the
+ * interview, and they were reaching the prompt indistinguishable from a remark
+ * about a bathroom faucet: a project answer has no `roomId`, so it resolved to the
+ * room name "General" and was rendered `- [General] ...` beside every unassigned
+ * room answer. The category was recoverable from the question id the whole time
+ * and nothing was recovering it.
+ *
+ * Labels rather than the raw category names because `SCOPE_PARAMETERS` tells the
+ * writer nothing about what the designer was answering. Typed `Record<...>` so
+ * adding a sixth category fails the build here instead of silently shipping a
+ * headline prompt with an unlabelled answer in it.
+ */
+const PROJECT_ANSWER_LABELS: Record<ProjectQuestionCategory, string> = {
+  CLIENT_BRIEF: 'Who it was for, and what they asked for',
+  SCOPE_PARAMETERS: 'What they were working within',
+  DESIGN_DIRECTION: 'The big idea',
+  SIGNATURE_IDENTITY: 'What is most recognisably theirs',
+  SURPRISE_PIVOT: 'What changed along the way',
+};
+
+/**
+ * Shown from the project block. Five categories, plus any follow-ups to them, and
+ * a follow-up is where a designer stops summarising and tells you what happened —
+ * so the cap is above five rather than at it.
+ */
+const PROJECT_ANSWERS_SHOWN = 8;
 
 /** Asked for. One per angle. */
 const CANDIDATES_REQUESTED = ANGLES.length * 2;
@@ -179,11 +213,36 @@ export async function POST(
     // correction the pull quotes needed: source from the interview, not from the
     // prose written about it.
     const answers = await loadInterviewAnswers(projectId);
-    const byInterest = [...answers].sort((a, b) => Number(b.isFollowUp) - Number(a.isFollowUp));
-    const answerText = byInterest
+    // Split by grain. `category` is non-null exactly for the "About This Project"
+    // answers and their follow-ups (loadInterviewAnswers.ts), so this is the whole
+    // test — there is no heuristic here and no room answer can fall into it.
+    const projectAnswers = answers.filter((a) => a.category !== null);
+    const roomAnswers = answers.filter((a) => a.category === null);
+
+    // Project answers in the canonical question order, not the order they were
+    // saved in. The five read as an opening statement — who it was for, what the
+    // limits were, what the idea was — and shuffling them costs that.
+    const projectAnswerText = PROJECT_QUESTION_CATEGORIES.flatMap((c) =>
+      projectAnswers.filter((a) => a.category === c),
+    )
+      .slice(0, PROJECT_ANSWERS_SHOWN)
+      .map((a) => `- [${PROJECT_ANSWER_LABELS[a.category!]}] ${toTypographicQuotes(a.answer.trim())}`)
+      .join('\n');
+
+    const byInterest = [...roomAnswers].sort((a, b) => Number(b.isFollowUp) - Number(a.isFollowUp));
+    const roomAnswerText = byInterest
       .slice(0, 24)
       .map((a) => `- [${a.section}] ${toTypographicQuotes(a.answer.trim())}`)
       .join('\n');
+
+    // What the EDITOR is given, and it must stay the union of both blocks.
+    //
+    // `judgeHeadlines` cuts a candidate that the interview does not support. Hand
+    // it only the room answers and it would start cutting exactly the headlines
+    // this change exists to enable: a candidate grounded in the client brief would
+    // read as unsupported, because the brief would not be in the evidence it was
+    // checking against. The prompt splits these; the editor must not.
+    const answerText = [projectAnswerText, roomAnswerText].filter(Boolean).join('\n');
 
     // The headline describes the ARTICLE, so the article is the context: what it
     // opens with, which rooms it covers, and the designer's own framing line.
@@ -280,11 +339,18 @@ export async function POST(
 
     const userPrompt = `Write ${CANDIDATES_REQUESTED} headline options for this article — ${ANGLES.length} angles, two per angle.
 
+${projectAnswerText ? `## What this project was, in the designer's words
+The opening questions, about the project as a whole rather than any one room.
+This is where the brief, the limits and the big idea are, and a headline about
+THE PROJECT comes from here. The bracket says which question they were answering.
+${projectAnswerText}
+` : ''}
 ## What the designer told us happened
-These are their own words from the interview. This is your source material: a
-headline has to come from something in here that WAS DECIDED, WENT WRONG, WAS
-NEARLY DIFFERENT, or COST SOMETHING. Not from how the finished house looks.
-${answerText || '(no interview answers on file)'}
+These are their own words from the interview, room by room. This is your source
+material: a headline has to come from something in here that WAS DECIDED, WENT
+WRONG, WAS NEARLY DIFFERENT, or COST SOMETHING. Not from how the finished house
+looks. The bracket is the room.
+${roomAnswerText || '(no room-level interview answers on file)'}
 
 ## The project
 ${project?.title ? `Working title: ${project.title}` : ''}
@@ -535,6 +601,16 @@ Return ONLY a JSON array of ${CANDIDATES_REQUESTED} strings, in that order.`;
     // ineligible frame is that the headlines are no better than before.
     console.info('[headline/regenerate] frames', {
       _cid,
+      // Whether the project layer reached the prompt at all, and which questions
+      // it came from. Zero here on a project that has been interviewed means the
+      // ids are not in the `project-<CATEGORY>-<uuid>` shape the category is
+      // recovered from — which is invisible in the output, because the writer
+      // simply has less to work from and the headlines are merely worse.
+      projectAnswers: projectAnswers.length,
+      projectCategories: Array.from(
+        new Set(projectAnswers.map((a) => a.category).filter(Boolean)),
+      ),
+      roomAnswers: roomAnswers.length,
       materialClasses: materials.length,
       topMaterial: materials[0]?.value ?? null,
       // Which rooms the top class was actually found in — the data that used to be

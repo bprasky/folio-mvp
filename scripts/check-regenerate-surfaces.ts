@@ -93,8 +93,11 @@ check('the headline writer is given the INTERVIEW, not just the article',
   /loadInterviewAnswers\(projectId\)/.test(headlineRoute));
 check('follow-ups lead, because that is where the anecdotes are',
   /Number\(b\.isFollowUp\) - Number\(a\.isFollowUp\)/.test(headlineRoute));
+// Wrap-insensitive on purpose: the rule is the four verbs, not where the line
+// breaks. C1 rewrapped this paragraph to add "The bracket is the room." and the
+// old literal-newline pattern failed on a prompt whose rule had not changed.
 check('the answers are labelled as the source, and events are what is asked for',
-  /WAS DECIDED, WENT WRONG, WAS\s*\nNEARLY DIFFERENT, or COST SOMETHING/.test(headlineRoute));
+  /WAS DECIDED,\s+WENT\s+WRONG,\s+WAS\s+NEARLY DIFFERENT,\s+or COST SOMETHING/.test(headlineRoute));
 check('the article\'s own prose is labelled context, NOT source material',
   /## Context, NOT source material/.test(headlineRoute)
   && /Do not mine them for phrasing/.test(headlineRoute));
@@ -188,6 +191,36 @@ check('roomId is resolved through the SAME resolver the images use',
   /buildRoomResolver\(rooms\)/.test(loader));
 check('de-dupe is keyed on room AND text, so one sentence about two rooms survives',
   /\$\{a\.section\.toLowerCase\(\)\}::/.test(loader));
+
+// C1. `section` is the ROOM on a loaded answer, and two consumers match it against
+// a chapter title (quoteCandidates, selectPullQuotes) — so it could not be
+// repurposed to carry the question category, and was not. The category rides
+// alongside instead, recovered from the `project-<CATEGORY>-<uuid>` id because no
+// column records it. Before this, all five project answers reached the headline
+// prompt tagged `[General]`, indistinguishable from an unassigned room answer.
+check('the loaded answer carries the question category BESIDE the room, not instead of it',
+  /category: ProjectQuestionCategory \| null/.test(loader)
+  && /section: string/.test(loader));
+check('the category is matched against the canonical list, not split out of the id',
+  /PROJECT_QUESTION_CATEGORIES\.find/.test(loader)
+  && /startsWith\(`project-\$\{c\}-`\)/.test(loader));
+check('a follow-up inherits its parent\'s category, from BOTH stores or they disagree',
+  /parentQuestionId \?\? a\?\.parent_question_id/.test(loader)
+  && /questionIdByRowId/.test(loader));
+check('...and the category is in the de-dupe key, which is why they must agree',
+  /\$\{a\.category \?\? ''\}::/.test(loader));
+
+// The five opening answers are the only project-GRAIN material in the interview.
+// The prompt names them as such; the editor still sees both, or it would cut the
+// headlines this split exists to enable.
+check('the prompt separates project-grain answers from room-grain ones',
+  /What this project was, in the designer's words/.test(headlineRoute)
+  && /const projectAnswers = answers\.filter\(\(a\) => a\.category !== null\)/.test(headlineRoute));
+check('project answers are labelled by what was asked, not by category name',
+  /PROJECT_ANSWER_LABELS: Record<ProjectQuestionCategory, string>/.test(headlineRoute));
+check('the editor is given BOTH blocks, so project-grounded headlines are not cut',
+  /const answerText = \[projectAnswerText, roomAnswerText\]/.test(headlineRoute)
+  && /interview: answerText/.test(headlineRoute));
 
 console.log(failures === 0
   ? '\nAll regenerate-surface checks passed.\n'
