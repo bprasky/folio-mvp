@@ -418,6 +418,21 @@ function resolveTail(rooms: string[], location: string): string | null {
 }
 
 /**
+ * What counts as an answer worth building a headline on. Below either floor the
+ * angle is ineligible rather than attempted.
+ */
+const MIN_SUBSTANTIVE_ANSWER_CHARS = 24;
+const MIN_SUBSTANTIVE_ANSWER_WORDS = 5;
+
+// Set by what it has to let THROUGH, not by what it blocks. "One stone, everywhere
+// it could go" is 34 characters and six words, and it is the best governing-decision
+// answer in any sample here — a first pass at 40/8 excluded it. A designer being
+// terse is not a designer being unhelpful, so the floor sits just above the answers
+// that carry no content at all ("n/a", "not sure", a stray character) and leaves the
+// rest to the writer and the editor.
+
+
+/**
  * The dwelling noun, from `Project.projectType`.
  *
  * The corpus names a project by place plus kind — "a Miami Beach house", "London
@@ -462,6 +477,116 @@ export function resolveProjectSubject(
   return noun
     ? { value: `${place} ${noun}`, source: `Project.city/regionState + Project.projectType (${projectType})` }
     : { value: place, source: 'Project.city/regionState (projectType gives no single dwelling noun)' };
+}
+
+/** What the article headline surface resolves. No tags, by construction. */
+export interface ProjectHeadlineSlots {
+  slots: ResolvedSlot[];
+  /** Verbatim spans of the PROJECT-level answers, for the quote gate. */
+  fragments: FragmentCandidate[];
+  /** The project answers as text, in canonical question order. */
+  projectAnswers: Array<{ category: string; answer: string; isFollowUp: boolean }>;
+}
+
+/**
+ * Slots for the ARTICLE headline: the project, and what the designer said about it.
+ *
+ * Separate from `resolveHeadlineSlots` rather than a flag on it, because the
+ * difference is not a filter — it is a different QUERY. This function issues no
+ * `ProductTag` read at all, resolves no material class and reads no room name. That
+ * is the point of it and it should stay checkable by reading the imports.
+ *
+ * Why the tag path came off this surface: it ranked material classes by tag count
+ * and built the headline around the winner, so the output was confidently specific
+ * about whatever had been photographed most — "BP Design clads the Dining Room in
+ * glass" — rather than about anything the designer had emphasised. A tag count is
+ * evidence of what got photographed, not of what mattered. If a material or a room
+ * reaches an article headline now, it is because an answer put it there.
+ *
+ * `resolveHeadlineSlots` is untouched and still resolves everything, because the
+ * caption layer needs exactly what this one refuses.
+ */
+export async function resolveProjectHeadlineSlots(
+  projectId: string,
+): Promise<ProjectHeadlineSlots> {
+  const [answers, project] = await Promise.all([
+    loadInterviewAnswers(projectId),
+    prisma.project.findUnique({
+      where: { id: projectId },
+      select: { city: true, regionState: true, projectType: true },
+    }),
+  ]);
+
+  // Project-scoped only. `category` is non-null exactly for the "About This
+  // Project" answers and their follow-ups, so this is the whole test.
+  const projectOnly = answers.filter((a) => a.category !== null);
+  const slots: ResolvedSlot[] = [];
+
+  const subject = resolveProjectSubject(project?.projectType, project?.city, project?.regionState);
+  if (subject) {
+    slots.push({ name: 'project', value: subject.value, source: subject.source, verified: true });
+  }
+  const location = [project?.city, project?.regionState].filter(Boolean).join(', ');
+  if (location) {
+    slots.push({ name: 'tail', value: location, source: 'Project.city / regionState', verified: true });
+  }
+
+  // SUBSTANTIVE, not merely present.
+  //
+  // "n/a", "not sure", a stray character — every one of those is a non-empty answer
+  // and none of them is a headline source. The floor is deliberately low (a short
+  // sentence) rather than tuned: what it has to exclude is the answer that carries
+  // no content, and anything above that the writer and the editor can judge.
+  const substantive = (text: string | null | undefined): string | null => {
+    const t = (text ?? '').trim();
+    if (t.length < MIN_SUBSTANTIVE_ANSWER_CHARS) return null;
+    if (t.split(/\s+/).length < MIN_SUBSTANTIVE_ANSWER_WORDS) return null;
+    return t;
+  };
+  const answerFor = (category: string): string | null => {
+    for (const a of projectOnly) {
+      if (a.category !== category) continue;
+      const t = substantive(a.answer);
+      if (t) return t;
+    }
+    return null;
+  };
+
+  const brief = answerFor('CLIENT_BRIEF');
+  const scope = answerFor('SCOPE_PARAMETERS');
+  if (brief || scope) {
+    slots.push({
+      name: 'constraint',
+      value: [brief, scope].filter(Boolean).join('\n'),
+      source: `verbatim: ${[brief && 'CLIENT_BRIEF', scope && 'SCOPE_PARAMETERS'].filter(Boolean).join(' + ')}`,
+      verified: true,
+    });
+  }
+  const direction = answerFor('DESIGN_DIRECTION');
+  if (direction) {
+    slots.push({
+      name: 'decision',
+      value: direction,
+      source: 'verbatim: DESIGN_DIRECTION',
+      verified: true,
+    });
+  }
+  const pivot = answerFor('SURPRISE_PIVOT');
+  if (pivot) {
+    slots.push({ name: 'change', value: pivot, source: 'verbatim: SURPRISE_PIVOT', verified: true });
+  }
+
+  return {
+    slots,
+    // Quotable spans come from the project answers only, so the quote gate cannot
+    // validate a headline against a room answer this surface never showed.
+    fragments: resolveFragmentCandidates(projectOnly),
+    projectAnswers: projectOnly.map((a) => ({
+      category: a.category as string,
+      answer: a.answer,
+      isFollowUp: a.isFollowUp,
+    })),
+  };
 }
 
 export async function resolveHeadlineSlots(projectId: string): Promise<ResolvedHeadlineSlots> {

@@ -148,8 +148,10 @@ console.log('\n4. Only a value traceable to a row is usable');
 // decides eligibility.
 check('finishConfirmed no longer gates eligibility',
   !/finishConfirmed/.test(MATERIAL_FRAME.slots[0].source));
+// The counter lives with the tag resolver, which is now the CAPTION layer's. The
+// article route no longer reads a tag at all, so it cannot log a tag count.
 check('...but it is still counted, so the repoint is visible per project',
-  /confirmedFinishTags/.test(slots) && /confirmedFinishTags/.test(route));
+  /confirmedFinishTags/.test(slots));
 check('interview prose is explicitly refused as a slot source',
   /material named in interview PROSE/i.test(slots));
 // B3 REVERSES B1 here, deliberately. B1 refused inference from a product name
@@ -272,22 +274,47 @@ check('eligibility is pure, so it is decided in code before any model call',
   /export function eligibleFrames/.test(frames) && !/await/.test(frames.split('export function eligibleFrames')[1].split('\n}')[0]));
 
 console.log('\n9. The route actually uses it');
-check('slots are resolved for the project', /resolveHeadlineSlots\(projectId\)/.test(route));
-check('eligibility is computed, not asked of the model', /eligibleFrames\(slots, \{ hasDeck: true \}\)/.test(route));
+check('slots are resolved for the project',
+  /resolveProjectHeadlineSlots\(projectId\)/.test(route));
+check('eligibility is computed, not asked of the model',
+  /eligibleFrames\(slots, \{\s*hasDeck: true,\s*grain: SURFACE_GRAIN,\s*source: SURFACE_SOURCE,\s*\}\)/.test(route));
+// The candidate set for an article headline is the interview, and this is what
+// makes that checkable by reading rather than by trusting: the route resolves its
+// slots through a function that issues no tag query.
+check('the article route reads NO tag data and NO room name',
+  !/resolveHeadlineSlots\(/.test(route)
+  && !/materials\[/.test(route)
+  && !/galleryChapters/.test(route)
+  && !/materialClass/.test(route));
+// C3. The article surface publishes at project grain and says so at the call, so a
+// material-grain frame cannot lead an article however much data resolved.
+check('the article surface declares its grain rather than filtering downstream',
+  /const SURFACE_GRAIN = 'project' as const/.test(route));
+// Position is still the angle; C3 made the block size per-angle rather than 2.
 check('the frame replaces an angle in place, preserving position-is-angle',
-  /framedAngleIndex/.test(route) && /angles\.findIndex\(\(a\) => a\.key === 'first-move'\)/.test(route));
-// C2. The angle list is built per project, not declared: a project-grain angle
-// exists only when its frame was eligible, and there is no fallback brief for one.
+  /entries \[i\*perAngle, \(i\+1\)\*perAngle\) are angles\[i\]/.test(route)
+  && /angles\.forEach\(\(a, i\) => framesByAngle\.set\(i, a\.frame\)\)/.test(route));
+// The angle list is built per project, not declared: a project-grain angle exists
+// only when its frame was eligible, and there is no fallback brief for one.
 check('project-grain angles are computed from frame eligibility, never padded',
-  /const projectGrain = PROJECT_GRAIN_ANGLES/.test(route)
-  && /\.filter\(\(a\) => a\.frame !== null\)/.test(route));
-check('...and each removes the base angle it supersedes, so no angle runs twice',
-  /const displaced = new Set\(projectGrain\.map\(\(a\) => a\.displaces\)/.test(route)
-  && /BASE_ANGLES\.filter\(\(a\) => !displaced\.has\(a\.key\)\)/.test(route));
-check('the verified materials reach the prompt as fact',
-  /Materials the designer specified — VERIFIED/.test(route));
-check('the prompt forbids adding a material that is not on the list',
-  /do not\s+add a material that is not on this list/i.test(route));
+  /const angles = PROJECT_GRAIN_ANGLES/.test(route)
+  && /\.filter\(\(a\): a is \{ key: string; frame: HeadlineFrame \} => a\.frame !== null\)/.test(route));
+// C3. The room-grain briefs are retained for the caption surface but must not feed
+// this one — unframed, nothing constrains their grain, and the most concrete thing
+// in this prompt is the article's own room list.
+check('the article route builds its angles from PROJECT_GRAIN_ANGLES alone',
+  !/\.\.\.BASE_ANGLES|BASE_ANGLES\.filter|\.\.\.framedBase|\.\.\.freeBase/.test(route));
+check('...and no project-grain angle resolving means NO headline, not a room-grain one',
+  /if \(angles\.length === 0\)/.test(route)
+  && /NO_ELIGIBLE_ANGLE/.test(route));
+// The VERIFIED-materials block is gone from this prompt with the tag read. What
+// replaces its job — stopping the writer inventing a material — is the rule below,
+// which now covers rooms and brands on the same grounds: if it is not in the
+// designer's own words, it does not go in the headline.
+check('the prompt forbids naming a material or room the answers do not',
+  /never name a material, a room or a brand that is not in their own words/i.test(route));
+check('...and the material block is gone with the tag read',
+  !/Materials the designer specified/.test(route));
 check('whether a frame fired is logged', /\[headline\/regenerate\] frames/.test(route));
 
 console.log('\n10. The docs/17 §5 violation on this path is fixed');
@@ -465,9 +492,21 @@ check('no Prisma, no AI SDK in headlineVerbs.ts',
     readFileSync('src/lib/interview/prompts/headlineVerbs.ts', 'utf8')));
 
 console.log('\n18. Six arrangements: three material-grain, three project-grain');
-check('all six frames are declared',
+check('all seven frames are declared',
   HEADLINE_FRAMES.map(f => f.id).sort().join()
-    === 'agent-verb-object,borrowed-fragment,constraint,continuity,governing-decision,material');
+    === 'agent-verb-object,borrowed-fragment,change,constraint,continuity,governing-decision,material');
+// Two independent axes, because neither implies the other: Continuity is
+// project-SUBJECT and tag-SOURCED, borrowed fragment is the mirror image. The
+// article surface requires both 'project' and 'interview', which is how Continuity
+// comes off it without being deleted or relabelled as something it is not.
+check('grain and source are declared on every frame',
+  HEADLINE_FRAMES.every(f => ['project','material'].includes(f.grain)
+    && ['interview','tags'].includes(f.source)));
+check('exactly the interview-sourced project frames can lead an article',
+  HEADLINE_FRAMES.filter(f => f.grain === 'project' && f.source === 'interview')
+    .map(f => f.id).sort().join() === 'change,constraint,governing-decision');
+check('Continuity stays declared and tested, off the article surface',
+  CONTINUITY_FRAME.grain === 'project' && CONTINUITY_FRAME.source === 'tags');
 // The whole point of the project-grain three: the SUBJECT is the dwelling, and the
 // material or decision is evidence for a claim about it. Every one of them requires
 // the `project` slot, so a project with no location loses all three at once — which
@@ -477,14 +516,18 @@ check('every project-grain frame takes the project as its subject slot',
     const f = HEADLINE_FRAMES.find(x => x.id === id)!;
     return f.slots[0].name === 'project' && f.requiredFields.includes('project');
   }));
-check('each names the angle it replaces in the route',
-  /material.*first-move/s.test(route) && /borrowed-fragment.*client/s.test(route));
-// Each frame takes an angle rather than adding a candidate, so the
-// position-is-angle invariant holds however the list was built. C2 made the list
-// per-project, so the count is computed and the cap is what keeps the batch from
-// growing: three project-grain angles could otherwise run it to seven.
-check('frames replace angles in place, they do not add candidates',
-  /const CANDIDATES_REQUESTED = candidatesRequested\(angles\.length\)/.test(route)
+// The material-grain frames no longer take an angle on THIS surface — they are the
+// caption layer. What must still hold is that they are intact, not deleted.
+check('the material-grain frames are retained, not deleted',
+  ['material', 'borrowed-fragment', 'agent-verb-object']
+    .every(id => HEADLINE_FRAMES.some(f => f.id === id && f.grain === 'material')));
+// C3 holds the BATCH size roughly constant and divides it over however many angles
+// resolved, instead of holding candidates-per-angle constant. One angle at two
+// candidates is a batch of two, which is not a picker; MAX_PER_ANGLE stops the
+// other end, since six takes on Continuity is the flat batch again.
+check('the batch size is held constant and spread over the eligible angles',
+  /const perAngle = Math\.min\(MAX_PER_ANGLE, Math\.ceil\(TARGET_CANDIDATES \/ angles\.length\)\)/.test(route)
+  && /const CANDIDATES_REQUESTED = angles\.length \* perAngle/.test(route)
   && /\.slice\(0, MAX_ANGLES\)/.test(route)
   && /framesByAngle/.test(route));
 
@@ -554,8 +597,11 @@ check('...and not without a verb',
 check('only Continuity verbs are reachable on today\'s data',
   selectVerbs({ materialClass: true, classInTwoPlaces: true }).eligible
     .every(v => v.category === 'continuity'));
-check('the route resolves all three slots',
-  /name: 'agent'/.test(route) && /name: 'object'/.test(route) && /name: 'verb'/.test(route));
+// Agent, object and verb are the material-grain frames' slots, and those frames are
+// the caption layer's. The article route stopped resolving them; the frame keeps
+// declaring them, which is what a caption surface will resolve against.
+check('the frame still declares all three slots for the caption layer',
+  ['agent', 'object', 'verb'].every(n => AGENT_VERB_OBJECT_FRAME.slots.some(sl => sl.name === n)));
 check('the agent slot records that it is account-asserted, not identity-verified',
   /account-asserted, not identity-verified/.test(AGENT_VERB_OBJECT_FRAME.slots[0].source));
 check('the reversal and what still gates it are written down',
@@ -786,7 +832,11 @@ check('room names are sorted, so a batch is reproducible',
   /Array\.from\(at\.rooms\)\.sort/.test(slots));
 check('roomCount still counts places, not names', /roomCount: at\.places\.size/.test(slots));
 check('the rooms and the tail are logged',
-  /topMaterialRooms/.test(route) && /tail: slots\.find/.test(route));
+  /topMaterialRooms/.test(slots) || /rooms: Array\.from/.test(slots));
+check('...and the article route logs its surface and what resolved',
+  /surface: \{ grain: SURFACE_GRAIN, source: SURFACE_SOURCE \}/.test(route)
+  && /resolvedSlots: slots\.map/.test(route)
+  && /tail: slots\.find/.test(route));
 
 console.log(failures === 0
   ? '\nAll headline-frame checks passed.\n'

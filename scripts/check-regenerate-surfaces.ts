@@ -90,36 +90,40 @@ check('the endpoint writes from the SHARED criteria',
 // "every room argues its own case" produced "the exterior stays quiet so the
 // rooms can argue". Arrangement in, arrangement out.
 check('the headline writer is given the INTERVIEW, not just the article',
-  /loadInterviewAnswers\(projectId\)/.test(headlineRoute));
-check('follow-ups lead, because that is where the anecdotes are',
-  /Number\(b\.isFollowUp\) - Number\(a\.isFollowUp\)/.test(headlineRoute));
-// Wrap-insensitive on purpose: the rule is the four verbs, not where the line
-// breaks. C1 rewrapped this paragraph to add "The bracket is the room." and the
-// old literal-newline pattern failed on a prompt whose rule had not changed.
+  /resolveProjectHeadlineSlots\(projectId\)/.test(headlineRoute));
+// Follow-up-first ordering was for the ROOM answers, which this surface no longer
+// reads. The project answers are ordered by QUESTION instead — the five read as an
+// opening statement (who it was for, the limits, the idea, what changed) and
+// shuffling them costs that. Follow-ups to a project question ride with their parent.
+check('project answers are ordered by question, not by save order',
+  /PROJECT_QUESTION_CATEGORIES\.flatMap/.test(headlineRoute));
+// Wrap-insensitive on purpose: the rule is the four verbs, not where the line breaks.
 check('the answers are labelled as the source, and events are what is asked for',
-  /WAS DECIDED,\s+WENT\s+WRONG,\s+WAS\s+NEARLY DIFFERENT,\s+or COST SOMETHING/.test(headlineRoute));
+  /WAS DECIDED,\s+WENT\s+WRONG,\s+WAS\s+NEARLY\s+DIFFERENT,\s+or\s+COST\s+SOMETHING/.test(headlineRoute)
+  && /THIS IS YOUR ONLY SOURCE MATERIAL/.test(headlineRoute));
 check('the article\'s own prose is labelled context, NOT source material',
   /## Context, NOT source material/.test(headlineRoute)
   && /Do not mine them for phrasing/.test(headlineRoute));
 check('inventing an event is refused rather than filled in',
-  /Never state something the\s*\ndesigner did not say happened/.test(headlineRoute));
+  /Never state something the designer did not say happened/.test(headlineRoute));
 
 // One instruction repeated N times returns N versions of one thought. Named
 // angles make the spread structural rather than hoped for.
-// C2 made the angle list per-project — project-grain angles appear only when their
-// frame is eligible — so the count is computed rather than a constant. The
-// invariant it protects is unchanged: two candidates per named angle.
+// The angle list is per-project — project-grain angles appear only when their frame
+// is eligible — so the count is computed rather than a constant. The invariant it
+// protects is unchanged: candidates are asked for per NAMED angle, never N free-form.
+// C3 made the per-angle block size vary so a one-angle project still gets a pool.
 check('candidates are requested one per angle, not N free-form',
-  /const BASE_ANGLES: Array<\{ key: string; brief: string \}>/.test(headlineRoute)
-  && /const candidatesRequested = \(angleCount: number\) => angleCount \* 2/.test(headlineRoute)
-  && /const CANDIDATES_REQUESTED = candidatesRequested\(angles\.length\)/.test(headlineRoute));
+  /const angles = PROJECT_GRAIN_ANGLES/.test(headlineRoute)
+  && /const perAngle = Math\.min\(MAX_PER_ANGLE, /.test(headlineRoute)
+  && /const CANDIDATES_REQUESTED = angles\.length \* perAngle/.test(headlineRoute));
 check('every angle asks for something that HAPPENED',
   /reversal/.test(headlineRoute) && /constraint/.test(headlineRoute)
   && /accident/.test(headlineRoute) && /first-move/.test(headlineRoute));
 // Taking survivors in order would fill the pool from the first few angles —
 // six phrasings of one idea, which is the flat batch this prevents.
 check('the kept set spans angles rather than taking the first N survivors',
-  /const rank = \(i: number\) => \(i % 2\) \* angles\.length \+ Math\.floor\(i \/ 2\)/.test(headlineRoute)
+  /const rank = \(i: number\) => \(i % perAngle\) \* angles\.length \+ Math\.floor\(i \/ perAngle\)/.test(headlineRoute)
   && !/if \(kept\.length >= CANDIDATES_KEPT\) break/.test(headlineRoute));
 check('how many angles actually survived is logged',
   /anglesCovered/.test(headlineRoute));
@@ -130,9 +134,12 @@ check('every candidate is graded by the same machine check',
 // directly beneath it. B8 reversed that on corpus evidence (57% of published design
 // headlines open on the credited party), and the name is now an input to the
 // Agent-verb-object frame rather than a disqualifier.
-check('the credited name is resolved as a SLOT, not as a disqualifier',
-  /name: 'agent'/.test(headlineRoute)
-  && !/headlineIssues\(text, names\)/.test(headlineRoute));
+// The `agent` slot went with the material-grain frames to the caption layer. What
+// B8 actually settled — that naming the designer is not itself a disqualifier —
+// still holds and is what this now asserts.
+check('the credited name is not a disqualifier',
+  !/headlineIssues\(text, names\)/.test(headlineRoute)
+  && /Credited to:/.test(headlineRoute));
 check('...and the prompt no longer forbids using it',
   !/do NOT name them in the headline/.test(headlineRoute));
 // B9: drops on BLOCKING issues only. TITLE_CASE is a heuristic this pipeline always
@@ -227,14 +234,22 @@ check('...and the category is in the de-dupe key, which is why they must agree',
 // The five opening answers are the only project-GRAIN material in the interview.
 // The prompt names them as such; the editor still sees both, or it would cut the
 // headlines this split exists to enable.
-check('the prompt separates project-grain answers from room-grain ones',
-  /What this project was, in the designer's words/.test(headlineRoute)
-  && /const projectAnswers = answers\.filter\(\(a\) => a\.category !== null\)/.test(headlineRoute));
+// C2 split the two blocks apart. The rebuild went further: the room block is gone.
+// While it was in the prompt the writer kept reaching for it, because the article's
+// own rooms were the most concrete thing on the page — "BP Design clads the Dining
+// Room in glass" is what that produces.
+check('the prompt carries project answers ONLY, with no room block',
+  /What the designer told us about this project/.test(headlineRoute)
+  && !/roomAnswerText/.test(headlineRoute)
+  && !/room by room/.test(headlineRoute));
 check('project answers are labelled by what was asked, not by category name',
   /PROJECT_ANSWER_LABELS: Record<ProjectQuestionCategory, string>/.test(headlineRoute));
-check('the editor is given BOTH blocks, so project-grounded headlines are not cut',
-  /const answerText = \[projectAnswerText, roomAnswerText\]/.test(headlineRoute)
-  && /interview: answerText/.test(headlineRoute));
+// The editor checks a candidate against the interview it was written from. Now that
+// the writer sees only the project answers, so must it — handed more, it would keep
+// headlines grounded in evidence the writer was never allowed to use.
+check('the editor is given exactly what the writer was given',
+  /interview: answerText/.test(headlineRoute)
+  && /const answerText = PROJECT_QUESTION_CATEGORIES\.flatMap/.test(headlineRoute));
 
 console.log(failures === 0
   ? '\nAll regenerate-surface checks passed.\n'

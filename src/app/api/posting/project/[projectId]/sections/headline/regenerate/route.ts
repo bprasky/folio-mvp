@@ -39,13 +39,13 @@ import {
   eligibleFrames,
   hasWeakPredicate,
   renderFrameInstruction,
+  type HeadlineFrame,
 } from '@/lib/interview/prompts/headlineFrames';
+import { BANNED_HEADLINE_VERBS_RULE } from '@/lib/interview/prompts/headlineVerbs';
 import {
-  BANNED_HEADLINE_VERBS_RULE,
-  selectVerbs,
-  renderVerbInstruction,
-} from '@/lib/interview/prompts/headlineVerbs';
-import { resolveHeadlineSlots, borrowedFragmentIsVerbatim } from '@/lib/posting/headlineSlots';
+  resolveProjectHeadlineSlots,
+  borrowedFragmentIsVerbatim,
+} from '@/lib/posting/headlineSlots';
 import {
   PROJECT_QUESTION_CATEGORIES,
   type ProjectQuestionCategory,
@@ -57,7 +57,6 @@ import {
   HEADLINE_MAX_WORDS,
 } from '@/lib/posting/headline';
 import { normalizeForVerbatimCheck } from '@/lib/posting/quoteCandidates';
-import { loadInterviewAnswers } from '@/lib/posting/loadInterviewAnswers';
 import { judgeHeadlines } from '@/lib/posting/headlineEditor';
 
 const anthropic = new Anthropic();
@@ -76,6 +75,23 @@ const anthropic = new Anthropic();
  * the bedroom") is a caption, and arrangement is all the article's own prose can
  * offer. Events live in the interview.
  */
+// ── ROOM-GRAIN. NOT OFFERED ON THIS SURFACE. ─────────────────────────────────
+//
+// Retained, not used. These are the free-form briefs the article headline ran on
+// before C3, and they are kept for the caption surface for the same reason the
+// material-grain frames are kept: at room grain they are correct, and captioning a
+// room is the job they were written for.
+//
+// They must not come back here, and the reason is precise. They carry no frame, so
+// nothing constrains their grain — and the most concrete thing in this prompt is
+// the article's own list of rooms. A free brief asked against that reliably returns
+// "BP Design clads the Dining Room in glass": a true sentence about one room of a
+// house the article covers in eight. Adding project-grain angles beside them (C2)
+// did not help, because the pool still offered the shape.
+//
+// `check-headline-frames` asserts the article route builds its angle list from
+// PROJECT_GRAIN_ANGLES alone, so wiring these back in fails a check rather than
+// quietly reintroducing the bug.
 const BASE_ANGLES: Array<{ key: string; brief: string }> = [
   { key: 'reversal', brief: 'A decision that could easily have gone the other way, and did not. What was nearly chosen instead?' },
   { key: 'constraint', brief: 'A limit someone had to beat — a budget, a schedule, a structural fact, a room that would not cooperate.' },
@@ -86,42 +102,37 @@ const BASE_ANGLES: Array<{ key: string; brief: string }> = [
 ];
 
 /**
- * The project-grain angles, and which base angle each one displaces.
+ * The angles this surface offers. All of them, and only these.
  *
- * These lead the batch, because an article is about a project and the corpus puts
- * the project in subject position 41% of the time against a room's 13% (grain audit
- * §4). Two of them are the base list's own angles rewritten at project grain rather
- * than additions: `first-move` asked for "the one selection that set everything
- * after it", which is the Governing decision angle with a material in the subject
- * slot; `constraint` asked for "a limit someone had to beat", which is the
- * Constraint angle with nobody in it. When the project-grain version is eligible it
- * REPLACES its base angle, so the batch does not offer the same angle twice at two
- * grains.
- *
- * Continuity displaces nothing and is the reason for the cap below: it is genuinely
- * new, so on a project where all three resolve the list would run to seven angles.
+ * An article is about a project, and the corpus puts the project in subject
+ * position 41% of the time against a room's 13% (grain audit §4).
  *
  * ELIGIBILITY IS THE FRAME'S, and it is computed. Each entry appears only when
  * `eligibleFrames` returned its frame, which happens only when every one of that
  * frame's `requiredFields` resolved to a real value off a real row. There is no
- * fallback brief for these: an angle whose source did not resolve is not asked for
- * at all, because an angle asked for without a source is the padding that produces
- * a headline about nothing.
+ * fallback brief for any of them: an angle whose source did not resolve is not
+ * asked for, and if none resolves the surface has no headline to offer rather than
+ * a room-grain one.
+ *
+ * C2's `displaces` field is gone with the base angles it pointed at. GOVERNING-
+ * DECISION superseding FIRST-MOVE is no longer a displacement between two angles in
+ * one list; it is the grain gate, and it happens in `eligibleFrames`.
  */
-const PROJECT_GRAIN_ANGLES: Array<{ key: string; frameId: string; displaces: string | null }> = [
-  { key: 'continuity', frameId: 'continuity', displaces: null },
-  { key: 'governing-decision', frameId: 'governing-decision', displaces: 'first-move' },
-  { key: 'constraint', frameId: 'constraint', displaces: 'constraint' },
+const PROJECT_GRAIN_ANGLES: Array<{ key: string; frameId: string; needs: string; asks: string }> = [
+  { key: 'constraint', frameId: 'constraint', needs: 'constraint',
+    asks: 'the opening questions about the client and the scope are unanswered' },
+  { key: 'governing-decision', frameId: 'governing-decision', needs: 'decision',
+    asks: 'the “what was the big idea” opening question is unanswered' },
+  { key: 'change', frameId: 'change', needs: 'change',
+    asks: 'the “what changed along the way” opening question is unanswered' },
 ];
 
 /**
  * Angles per batch, capped.
  *
- * Six was the batch size before C2 and staying there is deliberate: the cost of an
- * angle is two more candidates through the writer, the rule filter and the editor,
- * and a designer choosing between eight kinds of headline is not better served than
- * one choosing between six. Project-grain angles are ordered first, so the cap
- * trims the free-form briefs rather than the computed angles.
+ * Three project-grain frames exist, so this cannot bite today. It is kept as the
+ * tripwire it was: if a fourth lands, the batch grows past what a designer can
+ * usefully choose between, and this is where that gets noticed.
  */
 const MAX_ANGLES = 6;
 
@@ -149,14 +160,50 @@ const PROJECT_ANSWER_LABELS: Record<ProjectQuestionCategory, string> = {
 };
 
 /**
- * Shown from the project block. Five categories, plus any follow-ups to them, and
- * a follow-up is where a designer stops summarising and tells you what happened —
- * so the cap is above five rather than at it.
+ * Answers shown. Five categories, plus any follow-ups to them, and a follow-up is
+ * where a designer stops summarising and tells you what happened — so the cap is
+ * above five rather than at it.
  */
 const PROJECT_ANSWERS_SHOWN = 8;
 
-/** Two per angle. Computed per project, since the angle list is. */
-const candidatesRequested = (angleCount: number) => angleCount * 2;
+/**
+ * The grain this surface publishes at.
+ *
+ * An article is about a project, so only project-grain frames may lead one. The
+ * material-grain frames are not deleted and not weakened — they are the caption
+ * layer, they stay declared and exemplar-checked in `headlineFrames.ts`, and the
+ * gate is `eligibleFrames`'s, by surface. A caption surface passes 'material' here
+ * and gets exactly the frames this one refuses.
+ */
+const SURFACE_GRAIN = 'project' as const;
+
+/**
+ * And what it may draw on.
+ *
+ * 'interview' is what takes CONTINUITY off this surface as well, despite its being
+ * project-grain. It ranks material classes by tag count and builds a claim around
+ * the winner, so it is confidently specific about whatever was photographed most
+ * rather than about anything the designer emphasised — and a tag count is evidence
+ * of what got photographed, not of what mattered. It stays declared, exemplar-
+ * checked and tested for the caption layer, like the other three.
+ */
+const SURFACE_SOURCE = 'interview' as const;
+
+/**
+ * Candidates asked for, and how they are spread.
+ *
+ * Two per angle was right when there were always six angles. Project-grain angles
+ * are computed, so a project can have one — and one angle at two candidates is a
+ * batch of two, which is not a picker. The batch size is held roughly constant
+ * instead and divided over however many angles resolved: three angles get four
+ * each, one angle gets the cap.
+ *
+ * `MAX_PER_ANGLE` exists because the failure this whole structure prevents is N
+ * versions of one thought. Six takes on Continuity would be that batch again, just
+ * arrived at from the other direction.
+ */
+const TARGET_CANDIDATES = 12;
+const MAX_PER_ANGLE = 4;
 /** Kept. Enough to cycle without turning the arrows into a chore. */
 const CANDIDATES_KEPT = 6;
 
@@ -252,222 +299,141 @@ export async function POST(
     // are where a decision or a reversal is actually described. This is the same
     // correction the pull quotes needed: source from the interview, not from the
     // prose written about it.
-    const answers = await loadInterviewAnswers(projectId);
-    // Split by grain. `category` is non-null exactly for the "About This Project"
-    // answers and their follow-ups (loadInterviewAnswers.ts), so this is the whole
-    // test — there is no heuristic here and no room answer can fall into it.
-    const projectAnswers = answers.filter((a) => a.category !== null);
-    const roomAnswers = answers.filter((a) => a.category === null);
+    // THE CANDIDATE SET IS THE INTERVIEW, and only its project-scoped half.
+    //
+    // Room answers are not read here. They are the caption layer's source, and while
+    // they were in this prompt the writer kept reaching for them: the article's own
+    // rooms were the most concrete thing on the page, so "BP Design clads the Dining
+    // Room in glass" is what came back — a true sentence about one room of a house
+    // the article covers in eight.
+    //
+    // `resolveProjectHeadlineSlots` issues no ProductTag read, resolves no material
+    // class and reads no room name. If a material or a room reaches an article
+    // headline now, it is because an answer put it there.
+    const { slots, fragments, projectAnswers } = await resolveProjectHeadlineSlots(projectId);
 
-    // Project answers in the canonical question order, not the order they were
-    // saved in. The five read as an opening statement — who it was for, what the
-    // limits were, what the idea was — and shuffling them costs that.
-    const projectAnswerText = PROJECT_QUESTION_CATEGORIES.flatMap((c) =>
+    // Canonical question order, not the order they were saved in. The answers read
+    // as an opening statement — who it was for, what the limits were, what the idea
+    // was, what changed — and shuffling them costs that.
+    const answerText = PROJECT_QUESTION_CATEGORIES.flatMap((c) =>
       projectAnswers.filter((a) => a.category === c),
     )
       .slice(0, PROJECT_ANSWERS_SHOWN)
-      .map((a) => `- [${PROJECT_ANSWER_LABELS[a.category!]}] ${toTypographicQuotes(a.answer.trim())}`)
+      .map((a) => `- [${PROJECT_ANSWER_LABELS[a.category as ProjectQuestionCategory]}] ${toTypographicQuotes(a.answer.trim())}`)
       .join('\n');
-
-    const byInterest = [...roomAnswers].sort((a, b) => Number(b.isFollowUp) - Number(a.isFollowUp));
-    const roomAnswerText = byInterest
-      .slice(0, 24)
-      .map((a) => `- [${a.section}] ${toTypographicQuotes(a.answer.trim())}`)
-      .join('\n');
-
-    // What the EDITOR is given, and it must stay the union of both blocks.
-    //
-    // `judgeHeadlines` cuts a candidate that the interview does not support. Hand
-    // it only the room answers and it would start cutting exactly the headlines
-    // this change exists to enable: a candidate grounded in the client brief would
-    // read as unsupported, because the brief would not be in the evidence it was
-    // checking against. The prompt splits these; the editor must not.
-    const answerText = [projectAnswerText, roomAnswerText].filter(Boolean).join('\n');
 
     // The headline describes the ARTICLE, so the article is the context: what it
     // opens with, which rooms it covers, and the designer's own framing line.
     const introduction: string[] = Array.isArray(blocks.introduction) ? blocks.introduction : [];
-    const chapterTitles: string[] = (Array.isArray(blocks.galleryChapters) ? blocks.galleryChapters : [])
-      .map((c: any) => c?.title)
-      .filter((t: any): t is string => typeof t === 'string' && !!t.trim());
     const hookQuote: string | null =
       typeof blocks.hookQuote?.text === 'string' ? blocks.hookQuote.text : null;
     const location = [project?.city, project?.regionState].filter(Boolean).join(', ');
 
     // The frame library.
     //
-    // Materials are structured on the row and this endpoint was passed none of
-    // them — the audit's F8. So the FIRST-MOVE angle ("the material the rest of
-    // the house had to answer to") was being asked of a writer that had never
-    // been told which materials exist, and it answered from the interview prose
-    // or from nothing.
+    // Eligibility is decided here, in code — the model is never asked whether it has
+    // enough to write a given headline, because a model asked that says yes. Every
+    // slot these frames need is already resolved above, from the interview and the
+    // project row; nothing further is pushed on.
     //
-    // Two things change when a confirmed material exists. The verified values go
-    // into the prompt as facts, and the FIRST-MOVE angle stops being a topic and
-    // becomes a SHAPE: material as grammatical subject, designer as agent in the
-    // tail. Eligibility is decided here, in code — the model is never asked
-    // whether it has enough to write a material headline, because a model asked
-    // that says yes.
+    // Gone with the tag path: `agent` (the credited studio), `object` (the first
+    // gallery chapter's room) and `verb` (the verb library, whose preconditions are
+    // all tag-derived and so can no longer be answered). They belong to the
+    // material-grain frames, which are the caption layer's.
     //
     // This surface HAS a deck (`blocks.lead.deck`), so deck-requiring frames are
     // eligible here. Three of the five title surfaces do not — see docs/23.
-    const { slots, materials, facts, confirmedFinishTags, fragments, answerTexts } =
-      await resolveHeadlineSlots(projectId);
-    // Slots the ROUTE can fill, from data it has already loaded. These three are
-    // what the Agent-verb-object frame needs, and until B8 unbanned the designer's
-    // name there was no point resolving any of them.
-    //
-    // `agent` is VERIFIED by the same standard already applied to a confirmed
-    // finish: a human entered it. It is account-asserted, not identity-checked —
-    // there is still no name-verification predicate in the schema — and that
-    // distinction is recorded rather than papered over. It is the standard the
-    // frame contract has always used, applied consistently.
-    const creditedName = project?.designerOrg?.name ?? project?.designer?.name ?? null;
-    if (creditedName) {
-      slots.push({
-        name: 'agent',
-        value: creditedName,
-        source: project?.designerOrg?.name ? 'Organization.name (credited)' : 'User.name (credited)',
-        verified: true,
-      });
-    }
-    // `object` is a room the article actually covers, resolved through the same
-    // chapter titles the gallery uses. A named SURFACE is still unavailable — the
-    // schema has rooms, not walls.
-    if (chapterTitles.length > 0) {
-      slots.push({
-        name: 'object',
-        value: chapterTitles[0],
-        source: 'Room.name, via the article\'s gallery chapters',
-        verified: true,
-      });
-    }
-    const verbs = selectVerbs(facts);
-    if (verbs.eligible.length > 0) {
-      slots.push({
-        name: 'verb',
-        value: verbs.eligible[0].headlineForm,
-        source: `headlineVerbs (${verbs.eligible[0].id}), preconditions satisfied`,
-        verified: true,
-      });
-    }
 
-    const frames = eligibleFrames(slots, { hasDeck: true });
-    // The verb library, gated on the same structured facts.
-    //
-    // Only what the data can decide is passed: `materialClass` and, when a class
-    // appears in more than one room or image, `classInTwoPlaces`. Everything else
-    // is ABSENT rather than false, which withholds rather than permits — so every
-    // Intervention verb stays out (no per-project new-build field exists) and so do
-    // Application, Placement, Division and Aperture, whose preconditions nothing
-    // can currently answer. See docs/23 §6.2 and §7.
+    // THIS SURFACE PUBLISHES AT PROJECT GRAIN, and says so here rather than filtering
+    // downstream. An article is about a project; a material-grain frame produces a
+    // true sentence about one room of a house the article covers in eight.
+    const frames = eligibleFrames(slots, {
+      hasDeck: true,
+      grain: SURFACE_GRAIN,
+      source: SURFACE_SOURCE,
+    });
     const frameById = (id: string) => frames.find((f) => f.id === id) ?? null;
 
     // The angle list, built per project rather than declared.
     //
-    // Project-grain angles lead and are strictly computed: each appears only if its
-    // frame came back from `eligibleFrames`, which requires every one of that
-    // frame's `requiredFields` to have resolved. Nothing here has a fallback brief.
-    // An angle whose source did not resolve is not asked for.
+    // Each angle appears only if its frame came back from `eligibleFrames`, which
+    // requires every one of that frame's `requiredFields` to have resolved — and for
+    // these three that means a SUBSTANTIVE answer to the question behind it, not
+    // merely a non-empty one. Nothing here has a fallback brief. An angle whose
+    // source did not resolve is not asked for.
+    const angles = PROJECT_GRAIN_ANGLES
+      .map((a) => ({ key: a.key, frame: frameById(a.frameId) }))
+      .filter((a): a is { key: string; frame: HeadlineFrame } => a.frame !== null)
+      .slice(0, MAX_ANGLES);
+
+    // No project-grain angle resolved, so there is no article headline to offer.
     //
-    // Each one then removes the base angle it supersedes, so the batch never offers
-    // the same angle at two grains — GOVERNING-DECISION and FIRST-MOVE are the same
-    // question with the subject moved, and asking both would spend four candidates
-    // arguing with itself.
-    const projectGrain = PROJECT_GRAIN_ANGLES
-      .map((a) => ({ ...a, frame: frameById(a.frameId) }))
-      .filter((a) => a.frame !== null);
-    const displaced = new Set(projectGrain.map((a) => a.displaces).filter(Boolean) as string[]);
-
-    // Which base angles have a frame behind them. The material-grain frames take
-    // the base angles that were already asking for what they need: FIRST-MOVE
-    // wanted the material the house answered to, CLIENT wanted what the client said
-    // "in their terms" (a borrowed fragment with the quotation marks left off), and
-    // ARGUMENT wanted a claim someone could disagree with, which an agent doing a
-    // specific thing to a specific room is the corpus's way of making.
-    const BASE_FRAME_BY_ANGLE: Record<string, string> = {
-      'first-move': 'material',
-      client: 'borrowed-fragment',
-      argument: 'agent-verb-object',
-    };
-    const remaining = BASE_ANGLES.filter((a) => !displaced.has(a.key));
-    const framedBase = remaining.filter((a) => frameById(BASE_FRAME_BY_ANGLE[a.key] ?? '') !== null);
-    const freeBase = remaining.filter((a) => !framedBase.includes(a));
-
-    // ORDER IS WHAT THE CAP TRIMS, so the order is computed-first.
+    // C2 kept a set of free-form angle briefs as the floor, and that floor was the
+    // bug: unframed, they let the writer choose its own grain, and it chose the room
+    // — "BP Design clads the Dining Room in glass" is what a free brief produces when
+    // the article's own rooms are the most concrete thing in the prompt. Falling back
+    // to a material frame here would reintroduce exactly what C3 removes, one layer
+    // down.
     //
-    // Project-grain angles lead, then base angles with an eligible frame behind
-    // them, then the free-form briefs. Sorting the other way had a quiet cost worth
-    // recording: on a project where all three project-grain angles resolved, the cap
-    // fell on ARGUMENT and FIRST-MOVE, so the two richest material-grain frames
-    // silently stopped firing on exactly the best-equipped projects — `bind` no-ops
-    // when its angle is not in the list, so nothing said so. A framed angle is
-    // grounded in a resolved slot; a brief asks the model to go and find something.
-    // Under a cap the grounded one wins.
-    const angles: Array<{ key: string; brief: string }> = [
-      ...projectGrain.map((a) => ({ key: a.key, brief: a.frame!.name })),
-      ...framedBase,
-      ...freeBase,
-    ].slice(0, MAX_ANGLES);
-    const CANDIDATES_REQUESTED = candidatesRequested(angles.length);
+    // So the surface returns nothing and says what is missing. That is the same
+    // decision the endpoint already makes when every candidate fails the rules —
+    // offering nothing is a correct outcome, not a failure to hide — and it is
+    // actionable in a way a bad headline is not: every one of these frames is
+    // unlocked by work the designer can do (assign rooms to photos, answer the
+    // opening questions, set a location).
+    if (angles.length === 0) {
+      const has = (name: string) => slots.some((s) => s.name === name);
+      const missing: string[] = [];
+      if (!has('project'))
+        missing.push('the project has no city or region set, which every project-level angle needs');
+      for (const a of PROJECT_GRAIN_ANGLES) if (!has(a.needs)) missing.push(a.asks);
+      console.info('[headline/regenerate] no project-grain angle is eligible', {
+        _cid, projectId, resolvedSlots: slots.map((s) => s.name), missing,
+      });
+      return NextResponse.json(
+        {
+          error:
+            'There is nothing to write a project-level headline from yet. ' +
+            `${missing.join('; ')}.`,
+          code: 'NO_ELIGIBLE_ANGLE',
+          missing,
+        },
+        { status: 422 },
+      );
+    }
 
-    // Position IS the angle (entry 2i and 2i+1 are angles[i]), so a frame replaces
-    // an angle in place rather than adding a candidate.
-    const framesByAngle = new Map<number, ReturnType<typeof frameById>>();
-    const bind = (key: string, frame: ReturnType<typeof frameById>) => {
-      if (!frame) return;
-      const i = angles.findIndex((a) => a.key === key);
-      if (i >= 0) framesByAngle.set(i, frame);
-    };
-    // The project-grain angles ARE their frames — the angle exists because the
-    // frame was eligible, so the binding cannot miss.
-    for (const a of projectGrain) bind(a.key, a.frame);
-    // The material-grain frames keep the base angles that were already asking for
-    // what they need: FIRST-MOVE wanted the material the house answered to, CLIENT
-    // wanted what the client said "in their terms" (a borrowed fragment with the
-    // quotation marks left off), and ARGUMENT wanted a claim someone could disagree
-    // with, which an agent doing a specific thing to a specific room is the corpus's
-    // way of making. FIRST-MOVE is often gone by now, displaced by
-    // GOVERNING-DECISION; `bind` no-ops when the angle is not in the list.
-    const materialFrame = frameById('material');
-    const fragmentFrame = frameById('borrowed-fragment');
-    bind('first-move', materialFrame);
-    bind('client', fragmentFrame);
-    bind('argument', frameById('agent-verb-object'));
-    const framedAngleIndex = materialFrame ? angles.findIndex((a) => a.key === 'first-move') : -1;
+    // Candidates per angle, scaled so a thin project still gets a pool worth
+    // cycling. Two per angle was right at six angles; at one angle it is a batch of
+    // two, which is not a picker. The target is the batch size the designer was
+    // already getting, spread over however many angles resolved.
+    const perAngle = Math.min(MAX_PER_ANGLE, Math.ceil(TARGET_CANDIDATES / angles.length));
+    const CANDIDATES_REQUESTED = angles.length * perAngle;
 
-    const userPrompt = `Write ${CANDIDATES_REQUESTED} headline options for this article — ${angles.length} angles, two per angle.
+    // Position IS the angle: entries [i*perAngle, (i+1)*perAngle) are angles[i].
+    const framesByAngle = new Map<number, HeadlineFrame>();
+    angles.forEach((a, i) => framesByAngle.set(i, a.frame));
 
-${projectAnswerText ? `## What this project was, in the designer's words
-The opening questions, about the project as a whole rather than any one room.
-This is where the brief, the limits and the big idea are, and a headline about
-THE PROJECT comes from here. The bracket says which question they were answering.
-${projectAnswerText}
-` : ''}
-## What the designer told us happened
-These are their own words from the interview, room by room. This is your source
-material: a headline has to come from something in here that WAS DECIDED, WENT
-WRONG, WAS NEARLY DIFFERENT, or COST SOMETHING. Not from how the finished house
-looks. The bracket is the room.
-${roomAnswerText || '(no room-level interview answers on file)'}
+
+    const userPrompt = `Write ${CANDIDATES_REQUESTED} headline options for this article — ${angles.length} angle${angles.length === 1 ? '' : 's'}, ${perAngle} per angle.
+
+## What the designer told us about this project
+Their own words, from the opening questions — about the project as a whole, not
+about any one room. THIS IS YOUR ONLY SOURCE MATERIAL. A headline has to come from
+something in here that WAS DECIDED, WENT WRONG, WAS NEARLY DIFFERENT, or COST
+SOMETHING. Not from how the finished house looks. The bracket says which question
+they were answering.
+${answerText}
 
 ## The project
 ${project?.title ? `Working title: ${project.title}` : ''}
 ${location ? `Location: ${location}` : ''}
 ${names.orgName ? `Credited to: ${names.orgName}` : names.designerName ? `Credited to: ${names.designerName}` : ''}
-Rooms covered: ${chapterTitles.length > 0 ? chapterTitles.join(', ') : 'unspecified'}
-${fragmentFrame && fragments.length > 0 ? `
+${fragments.length > 0 ? `
 ## What the designer said, word for word — QUOTABLE
 Any of these may be quoted in a headline, exactly as written. They are the only
 spans you may put inside quotation marks. Do not shorten, extend, tidy or re-punctuate
 one, and never quote anything that is not on this list.
 ${fragments.slice(0, 10).map((f) => `- \u201C${f.text}\u201D`).join('\n')}
-` : ''}${materials.length > 0 ? `
-## Materials the designer specified — VERIFIED
-Each of these was typed by the designer onto a tagged product, not inferred from a
-photograph and not read out of the interview. You may state these as fact. Do not
-add a material that is not on this list, and do not name a product or a brand.
-${materials.slice(0, 8).map((m) => `- ${m.value} (specified across ${m.imageCount} image${m.imageCount === 1 ? '' : 's'})`).join('\n')}
 ` : ''}
 ## Context, NOT source material
 The article's own opening and its current headline are below so you do not repeat
@@ -479,16 +445,15 @@ ${hookQuote ? `\nThe designer's framing: “${toTypographicQuotes(hookQuote)}”
 ${currentKicker ? `\nCurrent headline — do NOT repeat or paraphrase: ${toTypographicQuotes(currentKicker)}` : ''}
 
 ${feedback ? `## What the designer wants changed\n${toTypographicQuotes(feedback)}\n` : ''}
-## Write two for each of these angles, in this order
-${angles.map((a, i) => `${i * 2 + 1}. and ${i * 2 + 2}. ${a.key.toUpperCase()} — ${framesByAngle.has(i) ? `write these two to the ${framesByAngle.get(i)!.name.toUpperCase()} frame below, not freely.` : a.brief}`).join('\n')}
+## Write ${perAngle} for each of these angles, in this order
+${angles.map((a, i) => `${i * perAngle + 1}\u2013${(i + 1) * perAngle}. ${a.key.toUpperCase()} \u2014 write these ${perAngle} to the ${a.frame.name.toUpperCase()} frame below, not freely.`).join('\n')}
 ${Array.from(framesByAngle.values()).filter(Boolean).map((f) => `
 ${renderFrameInstruction(f!, slots)}
-`).join('')}${verbs.eligible.length > 0 ? `
-${renderVerbInstruction(verbs)}
-` : ''}
-If an angle has nothing in the interview to support it, write a weaker headline
-from a different angle rather than inventing an event. Never state something the
-designer did not say happened.
+`).join('')}
+Every one of these angles already HAS its source — that is why it is on this list.
+Your job is to find the headline inside the words you were given, not to decide
+whether there is one. Never state something the designer did not say happened, and
+never name a material, a room or a brand that is not in their own words above.
 
 Return ONLY a JSON array of ${CANDIDATES_REQUESTED} strings, in that order.`;
 
@@ -596,7 +561,7 @@ Return ONLY a JSON array of ${CANDIDATES_REQUESTED} strings, in that order.`;
       // ANY quote glyph, opening or closing. Testing only for openers let a
       // headline carrying a lone ” through unchecked — which is exactly what a
       // mis-stripped opening quote produces.
-      if (/[\u201C\u201D"]/.test(text) && !borrowedFragmentIsVerbatim(text, answerTexts)) {
+      if (/[\u201C\u201D"]/.test(text) && !borrowedFragmentIsVerbatim(text, projectAnswers.map((a) => a.answer))) {
         rejected.push({ text, why: 'QUOTE_UNVERIFIED: quotes words the designer did not say' });
         return;
       }
@@ -610,7 +575,7 @@ Return ONLY a JSON array of ${CANDIDATES_REQUESTED} strings, in that order.`;
     // is the flat batch this restructuring exists to prevent. The designer
     // should be choosing between kinds of headline, not phrasings of one.
     const takeOrder = (a: { index: number }, b: { index: number }) => {
-      const rank = (i: number) => (i % 2) * angles.length + Math.floor(i / 2);
+      const rank = (i: number) => (i % perAngle) * angles.length + Math.floor(i / perAngle);
       return rank(a.index) - rank(b.index);
     };
 
@@ -646,7 +611,7 @@ Return ONLY a JSON array of ${CANDIDATES_REQUESTED} strings, in that order.`;
       // what the designer could be choosing between.
       const keeps = verdicts.filter((v) => v.keep).map((v) => survivors[v.index]);
       editorCut = verdicts.length - keeps.length;
-      const angleOf = (i: number) => Math.floor(i / 2);
+      const angleOf = (i: number) => Math.floor(i / perAngle);
       const seenAngles = new Set<number>();
       const bestPerAngle = keeps.filter((s) => {
         const a = angleOf(s.index);
@@ -675,7 +640,7 @@ Return ONLY a JSON array of ${CANDIDATES_REQUESTED} strings, in that order.`;
       console.info('[headline/regenerate] editor keeps', {
         _cid,
         keeps: verdicts.filter((v) => v.keep).slice(0, 8).map((v) => ({
-          angle: angles[Math.floor(survivors[v.index].index / 2)]?.key,
+          angle: angles[Math.floor(survivors[v.index].index / perAngle)]?.key,
           text: survivors[v.index].text,
           on: v.on ?? '(the editor did not say)',
         })),
@@ -700,40 +665,29 @@ Return ONLY a JSON array of ${CANDIDATES_REQUESTED} strings, in that order.`;
     // ineligible frame is that the headlines are no better than before.
     console.info('[headline/regenerate] frames', {
       _cid,
+      surface: { grain: SURFACE_GRAIN, source: SURFACE_SOURCE },
       // Whether the project layer reached the prompt at all, and which questions
       // it came from. Zero here on a project that has been interviewed means the
       // ids are not in the `project-<CATEGORY>-<uuid>` shape the category is
       // recovered from — which is invisible in the output, because the writer
       // simply has less to work from and the headlines are merely worse.
       projectAnswers: projectAnswers.length,
-      projectCategories: Array.from(
-        new Set(projectAnswers.map((a) => a.category).filter(Boolean)),
-      ),
-      roomAnswers: roomAnswers.length,
-      materialClasses: materials.length,
-      topMaterial: materials[0]?.value ?? null,
-      // Which rooms the top class was actually found in — the data that used to be
-      // aggregated to a count and discarded.
-      topMaterialRooms: materials[0]?.rooms ?? [],
+      projectCategories: Array.from(new Set(projectAnswers.map((a) => a.category))),
+      // Which angles had a SUBSTANTIVE source answer. An answer can be present and
+      // still not clear the floor, and the two are indistinguishable from the output.
+      resolvedSlots: slots.map((s) => s.name),
       tail: slots.find((s) => s.name === 'tail')?.value ?? null,
-      // The B1 gate beside the B3 one, so a single project shows the difference
-      // the repoint made. The aggregate needs a database — docs/23 §6.2.
-      confirmedFinishTags,
-      classInTwoPlaces: facts.classInTwoPlaces === true,
       eligible: frames.map((f) => f.id),
       quotableFragments: fragments.length,
       angles: angles.map((a) => a.key),
-      framedAngles: Array.from(framesByAngle.entries()).map(([i, f]) => `${angles[i].key}:${f!.id}`),
-      // Eligible but not asked for. Normally the Material frame, displaced by
-      // GOVERNING-DECISION on purpose — the project outranks the stone as subject.
-      // Logged rather than assumed, because the other way a frame lands here is the
-      // cap trimming its angle, and those two look identical from the output.
+      perAngle,
+      framedAngles: Array.from(framesByAngle.entries()).map(([i, f]) => `${angles[i].key}:${f.id}`),
+      // Eligible but not asked for. Should always be empty on this surface — every
+      // angle here IS its frame — so a non-empty value means the cap trimmed one,
+      // which is the only way a resolved angle can go unasked.
       unboundFrames: frames
         .map((f) => f.id)
-        .filter((id) => !Array.from(framesByAngle.values()).some((f) => f!.id === id)),
-      framedAngle: framedAngleIndex >= 0 ? angles[framedAngleIndex].key : null,
-      verbsOffered: verbs.eligible.map((v) => v.id),
-      verbsWithheld: verbs.withheld.length,
+        .filter((id) => !Array.from(framesByAngle.values()).some((f) => f.id === id)),
     });
 
     console.info('[headline/regenerate] candidates', {
@@ -741,7 +695,7 @@ Return ONLY a JSON array of ${CANDIDATES_REQUESTED} strings, in that order.`;
       survivedRules: survivors.length, editorCut, edited: !!verdicts,
       kept: kept.length, rejected: rejected.length,
       anglesCovered: new Set(
-        survivors.filter((s) => kept.includes(s.text)).map((s) => Math.floor(s.index / 2)),
+        survivors.filter((s) => kept.includes(s.text)).map((s) => Math.floor(s.index / perAngle)),
       ).size,
     });
     if (rejected.length > 0) {
