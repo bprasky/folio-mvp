@@ -1270,6 +1270,34 @@ a few more opening questions to get title options"* and the list. It is the most
 actionable message in the flow — every angle is unlocked by work the designer can do —
 and it was the most buried.
 
+### What the first live run corrected — P1a
+
+Three things, reported from a screenshot of the shipped picker.
+
+**A stale pool degraded silently, and that is indistinguishable from a broken
+feature.** Every pool written before P1 is a bare `string[]`, so every entry carries
+`angle: ''`, every entry collapses into one unlabelled group, and the per-angle
+controls disappear — rendering as a flat list of strings, i.e. exactly the thing the
+component replaced. The angle was never recorded on those entries, so it cannot be
+recovered, only regenerated. What the picker can do is say so, and now does.
+
+**One option per angle was specified and all takes were rendering.** Three labels
+with two rows each is six strings on the page with headings above them, which is the
+comparison this component exists to stop asking for. The angle is the choice; the
+wording is a detail inside it. The editor's best survivor for each angle leads — pool
+order already carries that judgement, since the route seats `bestPerAngle` first — and
+the rest sit behind a disclosure.
+
+Two things are never behind that disclosure: the live headline (forced open when the
+current title is not the group's first take), and a group with **no** angle. A legacy
+pool's entries are not takes on one story, so folding them under "N more wordings"
+would label them as something they are not and would hide options an existing
+designer can already see.
+
+**The options read as prose.** They rendered as a stack of paragraphs, so nothing said
+"pick one" before the text was read. Each option is now a bordered row with a radio
+mark, and the live one is filled.
+
 ### Not done, deliberately
 
 No correction-signal capture. The audit found the stored pair is *(pre-batch headline

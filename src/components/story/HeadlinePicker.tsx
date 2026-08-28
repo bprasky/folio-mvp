@@ -46,6 +46,8 @@ export function HeadlinePicker({
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [missing, setMissing] = useState<string[] | null>(null);
+  /** Angles whose extra takes are showing. The angle is the primary choice. */
+  const [expanded, setExpanded] = useState<Set<string>>(new Set());
 
   if (!edit) return null;
 
@@ -66,6 +68,17 @@ export function HeadlinePicker({
     if (found) found.options.push(a);
     else groups.push({ angle: a.angle, label: a.angleLabel, options: [a] });
   }
+
+  // A pool written before angles were stored.
+  //
+  // Every entry carries `angle: ''`, so they collapse into one unlabelled group and
+  // the per-angle controls disappear — which renders as a flat list of strings, i.e.
+  // EXACTLY the thing this component replaced. Degrading silently made a stale pool
+  // indistinguishable from a broken feature, and that is how it was reported.
+  //
+  // There is no migration to run: the angle was never recorded on these, so it
+  // cannot be recovered, only regenerated. What this can do is say so.
+  const isLegacyPool = alternatives.length > 0 && alternatives.every((a) => !a.angle);
 
   const choose = async (next: TitleAlternative) => {
     if (busy || next.text === current) return;
@@ -131,14 +144,42 @@ export function HeadlinePicker({
 
   return (
     <StoryEditRegion className="mt-3 flex flex-col gap-3">
-      {groups.map((group) => (
+      {isLegacyPool && (
+        <p className="folio-meta text-folio-text-tertiary">
+          These options were written before titles were grouped by angle — get new
+          ones to see what each is about.
+        </p>
+      )}
+      {groups.map((group) => {
+        // ONE option per angle is the primary read. The extra takes are reachable
+        // and not hidden — but rendering all of them as equal rows puts six strings
+        // back on the page with three labels above them, which is the comparison
+        // this component exists to stop asking for. The angle is the choice; the
+        // wording is a detail inside it.
+        //
+        // The one that shows is the editor's best survivor for that angle: the route
+        // seats `bestPerAngle` first, so pool order already carries that judgement.
+        // A take the designer has selected shows regardless of position — the live
+        // headline must never be the thing behind a disclosure.
+        //
+        // A group with no angle is NOT collapsed. Its entries are a legacy pool or a
+        // hand-typed headline — not takes on one story — so folding them under
+        // "N more wordings" would label them as something they are not, and would
+        // hide options an existing designer can already see today.
+        const isOpen =
+          !group.angle
+          || expanded.has(group.angle)
+          || group.options.some((o, i) => i > 0 && o.text === current);
+        const shown = isOpen ? group.options : group.options.slice(0, 1);
+        const hiddenCount = group.options.length - shown.length;
+        return (
         <div key={group.angle || 'unlabelled'} className="flex flex-col gap-1">
           {group.label && (
             <p className="folio-meta tracking-wide uppercase text-folio-text-tertiary">
               {group.label}
             </p>
           )}
-          {group.options.map((option) => {
+          {shown.map((option) => {
             const isCurrent = option.text === current;
             return (
               <button
@@ -146,28 +187,53 @@ export function HeadlinePicker({
                 onClick={() => choose(option)}
                 disabled={busy || isCurrent}
                 aria-current={isCurrent}
-                className={`text-left folio-ui leading-snug rounded px-2 py-1.5 -mx-2 transition-colors disabled:cursor-default ${
+                title={isCurrent ? 'This is the title on the article' : 'Use this title'}
+                className={`group/opt flex items-start gap-2.5 text-left folio-ui leading-snug rounded px-2 py-2 -mx-2 border transition-colors disabled:cursor-default ${
                   isCurrent
-                    ? 'text-folio-text-primary bg-surface-raised'
-                    : 'text-folio-text-secondary hover:text-folio-text-primary hover:bg-surface-raised disabled:opacity-40'
+                    ? 'border-folio-border-subtle bg-surface-raised text-folio-text-primary'
+                    : 'border-transparent text-folio-text-secondary hover:border-folio-border-subtle hover:bg-surface-raised hover:text-folio-text-primary disabled:opacity-40'
                 }`}
               >
-                {option.text}
+                {/* The options were rendering as a stack of paragraphs, which reads
+                    as prose rather than as a choice. A radio mark says "pick one"
+                    before any of the text is read. */}
+                <span
+                  aria-hidden
+                  className={`mt-[3px] flex h-3.5 w-3.5 shrink-0 items-center justify-center rounded-full border transition-colors ${
+                    isCurrent
+                      ? 'border-[var(--accent)]'
+                      : 'border-folio-border-subtle group-hover/opt:border-folio-text-tertiary'
+                  }`}
+                >
+                  {isCurrent && <span className="h-1.5 w-1.5 rounded-full bg-[var(--accent)]" />}
+                </span>
+                <span>{option.text}</span>
               </button>
             );
           })}
-          {group.angle && (
-            <button
-              onClick={() => propose(group.angle)}
-              disabled={busy}
-              className="self-start flex items-center gap-1.5 folio-meta text-folio-text-tertiary hover:text-folio-text-secondary disabled:opacity-40 transition-colors"
-            >
-              <RefreshCw className={`w-3 h-3 ${busy ? 'animate-spin' : ''}`} />
-              More like this
-            </button>
-          )}
+          <div className="flex items-center gap-4">
+            {hiddenCount > 0 && (
+              <button
+                onClick={() => setExpanded((prev) => new Set(prev).add(group.angle))}
+                className="folio-meta text-folio-text-tertiary hover:text-folio-text-secondary transition-colors"
+              >
+                {hiddenCount === 1 ? 'Another wording' : `${hiddenCount} more wordings`}
+              </button>
+            )}
+            {group.angle && (
+              <button
+                onClick={() => propose(group.angle)}
+                disabled={busy}
+                className="flex items-center gap-1.5 folio-meta text-folio-text-tertiary hover:text-folio-text-secondary disabled:opacity-40 transition-colors"
+              >
+                <RefreshCw className={`w-3 h-3 ${busy ? 'animate-spin' : ''}`} />
+                More like this
+              </button>
+            )}
+          </div>
         </div>
-      ))}
+        );
+      })}
 
       {/* No angle at all — a to-do, not an error. Every one of these is unlocked by
           work the designer can do, and naming the question is the whole value. */}
