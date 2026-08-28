@@ -1,64 +1,96 @@
 'use client';
 
 // ============================================================================
-// Headline options: ask for a batch, cycle through what survives.
+// Headline options, grouped by ANGLE.
 //
-// The same interaction as the pull quote picker, for the same reason. A single
-// "regenerate" that swaps in one new headline per press is a slot machine — the
-// designer cannot get back the one they had two presses ago, so the safe move is
-// never to press it. Here the current headline stays live while they arrow
-// through validated options, and landing on one is what commits it.
+// The batch has been several angles since C3 — one to three, depending on which
+// opening questions the designer answered — and the route has always known which
+// angle wrote which candidate, because position is the angle. It used that fact
+// three times internally and then dropped it, so the designer was handed several
+// different STORIES presented as one list of interchangeable strings and asked to
+// arrow through them. Comparing wordings is a different, harder task than
+// choosing what the article is about, and it is the wrong one.
 //
-// The difference from pull quotes: a headline is the model's sentence, so the
-// designer may also type their own. A pull quote is a claim about what they said
-// out loud, so it can only be selected. Both controls look alike; only one has a
-// text field, and that asymmetry is deliberate.
+// So the primary choice here is the angle. Each group shows the frame's own name
+// as its label ("Constraint the project answered"), and the takes within an angle
+// are secondary — reachable, but not what the eye is asked to compare.
+//
+// "New options" narrows to the chosen angle. Re-rolling all three would cost the
+// designer the two stories they had not rejected yet, which is the slot-machine
+// behaviour the batch model exists to prevent.
+//
+// The difference from pull quotes is unchanged: a headline is the model's
+// sentence, so the designer may also type their own. A pull quote is a claim
+// about what they said out loud, so it can only be selected.
 // ============================================================================
 
 import { useState } from 'react';
 import { RefreshCw } from 'lucide-react';
 import { useStoryEdit, StoryEditRegion } from './StoryEditContext';
+import type { TitleAlternative } from '@/lib/posting/schemas';
 
 /** Sentinel chapter index for lead fields — see SectionOverride. */
 const LEAD = -1;
+
+/** Legacy pools carry no angle. Grouped under this and rendered without a label. */
+const UNLABELLED = '';
 
 export function HeadlinePicker({
   current,
   alternatives,
 }: {
   current: string;
-  alternatives: string[];
+  alternatives: TitleAlternative[];
 }) {
   const edit = useStoryEdit();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [missing, setMissing] = useState<string[] | null>(null);
 
   if (!edit) return null;
 
-  // The pool must be STABLE — the same list in the same order, whichever entry
-  // is currently live.
-  //
-  // It used to be rebuilt as `[current, ...others]`, which hoisted the live
-  // headline to index 0 on every render. So the counter always read "1 of N",
-  // and "next" was always pool[1] — which, after saving, was the headline you
-  // had just left. Six candidates, two of them reachable, forever.
-  //
-  // The batch now ships with the pre-batch headline as its first entry, so the
-  // stored list IS the whole pool and `current` is a member of it. A headline
-  // typed by hand after the batch is not, and is prepended so it stays
-  // reachable until the next batch replaces the list.
-  const pool = alternatives.includes(current) ? alternatives : [current, ...alternatives].filter(Boolean);
-  const index = Math.max(0, pool.indexOf(current));
+  // The live headline is always reachable, even when the stored pool has moved on
+  // — it is dropped from storage once it fails a rule the rest had to pass, and a
+  // headline typed by hand was never in the pool at all.
+  const inPool = alternatives.some((a) => a.text === current);
+  const pool: TitleAlternative[] =
+    inPool || !current
+      ? alternatives
+      : [{ text: current, angle: UNLABELLED, angleLabel: '' }, ...alternatives];
 
-  const choose = async (next: string) => {
-    if (busy || next === current) return;
+  // Grouped, in the order the pool arrived — the route seats the editor's best
+  // survivor from each angle first, so that order already means something.
+  const groups: Array<{ angle: string; label: string; options: TitleAlternative[] }> = [];
+  for (const a of pool) {
+    const found = groups.find((g) => g.angle === a.angle);
+    if (found) found.options.push(a);
+    else groups.push({ angle: a.angle, label: a.angleLabel, options: [a] });
+  }
+
+  const choose = async (next: TitleAlternative) => {
+    if (busy || next.text === current) return;
     setBusy(true);
     setError(null);
     try {
-      // Selecting is an ordinary headline edit — it goes through the same
-      // override path as typing one, so a chosen headline is respected as the
-      // designer's on the next full regeneration.
-      await edit.save(LEAD, 0, 'kicker', next);
+      // Selecting is an ordinary headline edit — it goes through the same override
+      // path as typing, so a chosen headline is respected as the designer's on the
+      // next full regeneration.
+      await edit.save(LEAD, 0, 'kicker', next.text);
+      // ...and the deck follows the title rather than preceding it. The two used to
+      // come out of one call, so picking a new headline left a deck written to sit
+      // under a different one. Non-blocking: a deck that fails to regenerate is a
+      // stale deck, which is what the designer had before, and it must not cost
+      // them the headline they just chose.
+      try {
+        await fetch(`/api/posting/project/${edit.projectId}/sections/deck/regenerate`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ title: next.text, angle: next.angle || undefined }),
+        });
+        edit.refresh();
+      } catch {
+        /* the title is saved; the deck simply stays as it was */
+      }
     } catch {
       setError('Could not save that headline.');
     } finally {
@@ -66,23 +98,27 @@ export function HeadlinePicker({
     }
   };
 
-  const cycle = (direction: 1 | -1) => {
-    if (pool.length < 2) return;
-    return choose(pool[(index + direction + pool.length) % pool.length]);
-  };
-
-  const propose = async () => {
+  /** More options, in ONE angle. Omitted for a legacy entry, which has no angle. */
+  const propose = async (angle?: string) => {
     setBusy(true);
     setError(null);
+    setMissing(null);
     try {
       const res = await fetch(`/api/posting/project/${edit.projectId}/sections/headline/regenerate`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({}),
+        body: JSON.stringify(angle ? { angle } : {}),
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
-        setError(data?.error ?? 'Could not write new options.');
+        // The most actionable message in the flow. The route names which opening
+        // questions are unanswered, and rendering that as one line of grey error
+        // text buried the only thing the designer can actually do about it.
+        if (data?.code === 'NO_ELIGIBLE_ANGLE' && Array.isArray(data.missing)) {
+          setMissing(data.missing);
+        } else {
+          setError(data?.error ?? 'Could not write new options.');
+        }
         return;
       }
       edit.refresh();
@@ -94,42 +130,84 @@ export function HeadlinePicker({
   };
 
   return (
-    <StoryEditRegion className="mt-2 flex flex-col gap-1">
-      <div className="flex items-center gap-3">
-        {pool.length > 1 && (
-          <div className="flex items-center gap-2">
+    <StoryEditRegion className="mt-3 flex flex-col gap-3">
+      {groups.map((group) => (
+        <div key={group.angle || 'unlabelled'} className="flex flex-col gap-1">
+          {group.label && (
+            <p className="folio-meta tracking-wide uppercase text-folio-text-tertiary">
+              {group.label}
+            </p>
+          )}
+          {group.options.map((option) => {
+            const isCurrent = option.text === current;
+            return (
+              <button
+                key={option.text}
+                onClick={() => choose(option)}
+                disabled={busy || isCurrent}
+                aria-current={isCurrent}
+                className={`text-left folio-ui leading-snug rounded px-2 py-1.5 -mx-2 transition-colors disabled:cursor-default ${
+                  isCurrent
+                    ? 'text-folio-text-primary bg-surface-raised'
+                    : 'text-folio-text-secondary hover:text-folio-text-primary hover:bg-surface-raised disabled:opacity-40'
+                }`}
+              >
+                {option.text}
+              </button>
+            );
+          })}
+          {group.angle && (
             <button
-              onClick={() => cycle(-1)}
+              onClick={() => propose(group.angle)}
               disabled={busy}
-              className="text-folio-text-tertiary hover:text-folio-text-secondary disabled:opacity-40 transition-colors p-0.5"
-              title="Previous headline"
-              aria-label="Previous headline"
+              className="self-start flex items-center gap-1.5 folio-meta text-folio-text-tertiary hover:text-folio-text-secondary disabled:opacity-40 transition-colors"
             >
-              <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M10 12L6 8L10 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+              <RefreshCw className={`w-3 h-3 ${busy ? 'animate-spin' : ''}`} />
+              More like this
             </button>
-            <span className="folio-meta text-folio-text-tertiary tabular-nums">
-              {index + 1} of {pool.length}
-            </span>
-            <button
-              onClick={() => cycle(1)}
-              disabled={busy}
-              className="text-folio-text-tertiary hover:text-folio-text-secondary disabled:opacity-40 transition-colors p-0.5"
-              title="Next headline"
-              aria-label="Next headline"
-            >
-              <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M6 4L10 8L6 12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
-            </button>
-          </div>
-        )}
+          )}
+        </div>
+      ))}
+
+      {/* No angle at all — a to-do, not an error. Every one of these is unlocked by
+          work the designer can do, and naming the question is the whole value. */}
+      {missing && missing.length > 0 && (
+        <div className="flex flex-col gap-1.5 rounded border border-folio-border-subtle p-3">
+          <p className="folio-ui text-folio-text-primary">
+            Answer a few more opening questions to get title options.
+          </p>
+          <ul className="flex flex-col gap-1">
+            {missing.map((m) => (
+              <li key={m} className="folio-meta text-folio-text-secondary">
+                • {m}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+      {groups.length === 0 && !missing && (
         <button
-          onClick={propose}
+          onClick={() => propose()}
           disabled={busy}
-          className="flex items-center gap-1.5 folio-meta text-folio-text-tertiary hover:text-folio-text-secondary disabled:opacity-40 transition-colors"
+          className="self-start flex items-center gap-1.5 folio-meta text-folio-text-tertiary hover:text-folio-text-secondary disabled:opacity-40 transition-colors"
         >
           <RefreshCw className={`w-3.5 h-3.5 ${busy ? 'animate-spin' : ''}`} />
-          {busy ? 'Writing options…' : alternatives.length > 0 ? 'New options' : 'Suggest headlines'}
+          {busy ? 'Writing options…' : 'Suggest titles'}
         </button>
-      </div>
+      )}
+
+      {groups.length > 0 && (
+        <button
+          onClick={() => propose()}
+          disabled={busy}
+          className="self-start flex items-center gap-1.5 folio-meta text-folio-text-tertiary hover:text-folio-text-secondary disabled:opacity-40 transition-colors"
+        >
+          <RefreshCw className={`w-3.5 h-3.5 ${busy ? 'animate-spin' : ''}`} />
+          {busy ? 'Writing options…' : 'New options, every angle'}
+        </button>
+      )}
+
       {error && <p className="folio-meta text-folio-text-tertiary">{error}</p>}
     </StoryEditRegion>
   );

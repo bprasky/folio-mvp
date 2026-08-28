@@ -297,8 +297,16 @@ check('the frame replaces an angle in place, preserving position-is-angle',
 // The angle list is built per project, not declared: a project-grain angle exists
 // only when its frame was eligible, and there is no fallback brief for one.
 check('project-grain angles are computed from frame eligibility, never padded',
-  /const angles = PROJECT_GRAIN_ANGLES/.test(route)
+  /const eligibleAngles = PROJECT_GRAIN_ANGLES/.test(route)
   && /\.filter\(\(a\): a is \{ key: string; frame: HeadlineFrame \} => a\.frame !== null\)/.test(route));
+// P1. "More like this" narrows the batch to one angle. It must NEVER create one:
+// an angle whose source answer did not resolve stays ineligible however it is
+// asked for, or the one rule this surface has — never pad — is negotiable.
+check('a requested angle can narrow the batch but cannot create an angle',
+  /const angles = requestedAngle/.test(route)
+  && /eligibleAngles\.filter\(\(a\) => a\.key === requestedAngle\)/.test(route));
+check('...and a stale requested angle is a conflict, not an empty project',
+  /ANGLE_NOT_ELIGIBLE/.test(route));
 // C3. The room-grain briefs are retained for the caption surface but must not feed
 // this one — unframed, nothing constrains their grain, and the most concrete thing
 // in this prompt is the article's own room list.

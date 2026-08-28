@@ -51,6 +51,11 @@ import {
   type ProjectQuestionCategory,
 } from '@/lib/interview/generateProjectQuestions';
 import {
+  normalizeTitleAlternatives,
+  type TitleAlternative,
+  type TitleSelection,
+} from '@/lib/posting/schemas';
+import {
   normalizeHeadline,
   blockingIssues,
   headlineIssues,
@@ -253,6 +258,13 @@ export async function POST(
 
     const body = await request.json().catch(() => ({}));
     const feedback = typeof body?.feedback === 'string' ? body.feedback.trim() : '';
+    // "More options like this one." Narrowing to one angle is what makes the button
+    // mean something once the options are labelled: without it, asking for another
+    // Constraint headline re-rolls all three stories and the designer loses the two
+    // they were still weighing.
+    const requestedAngle = typeof body?.angle === 'string' && body.angle.trim()
+      ? body.angle.trim()
+      : null;
 
     const post = await prisma.projectPost.findUnique({
       where: { projectId },
@@ -361,10 +373,16 @@ export async function POST(
     // these three that means a SUBSTANTIVE answer to the question behind it, not
     // merely a non-empty one. Nothing here has a fallback brief. An angle whose
     // source did not resolve is not asked for.
-    const angles = PROJECT_GRAIN_ANGLES
+    const eligibleAngles = PROJECT_GRAIN_ANGLES
       .map((a) => ({ key: a.key, frame: frameById(a.frameId) }))
       .filter((a): a is { key: string; frame: HeadlineFrame } => a.frame !== null)
       .slice(0, MAX_ANGLES);
+    // A requested angle narrows the batch; it cannot CREATE one. An angle whose
+    // source answer never resolved is not eligible however it is asked for, which
+    // keeps the one rule this surface has: never pad.
+    const angles = requestedAngle
+      ? eligibleAngles.filter((a) => a.key === requestedAngle)
+      : eligibleAngles;
 
     // No project-grain angle resolved, so there is no article headline to offer.
     //
@@ -381,6 +399,22 @@ export async function POST(
     // actionable in a way a bad headline is not: every one of these frames is
     // unlocked by work the designer can do (assign rooms to photos, answer the
     // opening questions, set a location).
+    // A requested angle that is not eligible is a stale client, not an empty
+    // project — the two produce the same `angles.length === 0` and must not produce
+    // the same message. This one happens when the pool outlives the answer that fed
+    // it: the label is still on screen after the designer cleared the answer behind
+    // it.
+    if (requestedAngle && angles.length === 0 && eligibleAngles.length > 0) {
+      return NextResponse.json(
+        {
+          error: 'That angle is no longer available for this project. Try the other options.',
+          code: 'ANGLE_NOT_ELIGIBLE',
+          eligible: eligibleAngles.map((a) => a.key),
+        },
+        { status: 409 },
+      );
+    }
+
     if (angles.length === 0) {
       const has = (name: string) => slots.some((s) => s.name === name);
       const missing: string[] = [];
@@ -600,7 +634,17 @@ Return ONLY a JSON array of ${CANDIDATES_REQUESTED} strings, in that order.`;
       cid: _cid,
     });
 
-    let kept: string[];
+    // The angle rides WITH the candidate from here on.
+    //
+    // It was always known — position is the angle, and this block uses that fact
+    // three times below — and it was dropped one line before storage when `kept`
+    // mapped to `s.text`. The designer was then shown several stories as one list
+    // of interchangeable strings.
+    const labelled = (s: { text: string; index: number }): TitleAlternative => {
+      const angle = angles[Math.floor(s.index / perAngle)];
+      return { text: s.text, angle: angle?.key ?? '', angleLabel: angle?.frame.name ?? '' };
+    };
+    let kept: TitleAlternative[];
     let editorCut = 0;
     if (verdicts) {
       // The editor's order is the ranking — but a ranking alone can put six
@@ -620,7 +664,7 @@ Return ONLY a JSON array of ${CANDIDATES_REQUESTED} strings, in that order.`;
         return true;
       });
       const rest = keeps.filter((s) => !bestPerAngle.includes(s));
-      kept = [...bestPerAngle, ...rest].slice(0, CANDIDATES_KEPT).map((s) => s.text);
+      kept = [...bestPerAngle, ...rest].slice(0, CANDIDATES_KEPT).map(labelled);
 
       const killed = verdicts.filter((v) => !v.keep);
       if (killed.length > 0) {
@@ -649,7 +693,7 @@ Return ONLY a JSON array of ${CANDIDATES_REQUESTED} strings, in that order.`;
       // No editor: ship the mechanically-clean batch in angle order rather than
       // nothing. A judgement pass that is unavailable is a reason to lose the
       // ranking, not a reason to lose the feature.
-      kept = [...survivors].sort(takeOrder).slice(0, CANDIDATES_KEPT).map((s) => s.text);
+      kept = [...survivors].sort(takeOrder).slice(0, CANDIDATES_KEPT).map(labelled);
       // Said loudly and at this level on purpose. The batch the designer sees is
       // the writer's, unjudged — which is a different product from the one the
       // pipeline is supposed to ship, and the only way to tell from the outside
@@ -694,9 +738,7 @@ Return ONLY a JSON array of ${CANDIDATES_REQUESTED} strings, in that order.`;
       _cid, requested: CANDIDATES_REQUESTED, returned: raw.length,
       survivedRules: survivors.length, editorCut, edited: !!verdicts,
       kept: kept.length, rejected: rejected.length,
-      anglesCovered: new Set(
-        survivors.filter((s) => kept.includes(s.text)).map((s) => Math.floor(s.index / perAngle)),
-      ).size,
+      anglesCovered: new Set(kept.map((k) => k.angle)).size,
     });
     if (rejected.length > 0) {
       console.warn('[headline/regenerate] rejected candidates', { _cid, rejected: rejected.slice(0, 5) });
@@ -747,14 +789,40 @@ Return ONLY a JSON array of ${CANDIDATES_REQUESTED} strings, in that order.`;
         _cid, text: currentKicker,
       });
     }
-    const pool = carriedKicker ? [carriedKicker, ...kept] : kept;
-    blocks.lead = { ...(blocks.lead ?? {}), kickerAlternatives: pool };
+    // A single-angle regeneration REPLACES that angle's entries and leaves the rest
+    // standing. Wiping the pool would make "more Constraint options" cost the
+    // Governing-decision options the designer had not looked at yet, which is the
+    // slot-machine behaviour the batch model exists to avoid — one press should
+    // never lose ground the designer has not rejected.
+    const priorPool = normalizeTitleAlternatives((blocks.lead as any)?.kickerAlternatives);
+    const survivingOther = requestedAngle
+      ? priorPool.alternatives.filter((a) => a.angle !== requestedAngle)
+      : [];
+
+    // The carried headline keeps its label if the pool knew it. A headline typed by
+    // hand, or one written before angles were stored, has no angle — recorded as
+    // absent rather than guessed, and the picker renders it without a label.
+    const carried: TitleAlternative[] = carriedKicker
+      ? [
+          priorPool.alternatives.find((a) => a.text === carriedKicker)
+            ?? { text: carriedKicker, angle: '', angleLabel: '' },
+        ]
+      : [];
+
+    const alternatives = [...carried, ...kept, ...survivingOther].filter(
+      (a, i, all) => all.findIndex((b) => b.text === a.text) === i,
+    );
+    const selected = alternatives.find((a) => a.text === currentKicker) ?? null;
+    blocks.lead = {
+      ...(blocks.lead ?? {}),
+      kickerAlternatives: { selected, alternatives } satisfies TitleSelection,
+    };
     await prisma.projectPost.update({
       where: { id: post.id },
       data: { expandedBlocks: blocks as any },
     });
 
-    return NextResponse.json({ ok: true, current: currentKicker, alternatives: pool });
+    return NextResponse.json({ ok: true, current: currentKicker, alternatives });
   } catch (error: any) {
     if (error?.message === 'NotFound') {
       return NextResponse.json({ error: 'Project not found' }, { status: 404 });

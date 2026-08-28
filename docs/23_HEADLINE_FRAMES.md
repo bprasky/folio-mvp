@@ -1197,6 +1197,88 @@ surface will resolve against.
 
 ---
 
+## 3o. The picker shows angles, and the deck follows the title — P1
+
+Presentation only. No generation logic changed.
+
+### The angle stops being discarded
+
+Position always encoded the angle, and the route used that three times — to spread
+the kept set, to log per-keep angles, to log coverage — then dropped it when `kept`
+mapped to `s.text`. So the designer was handed several different STORIES presented as
+one list of interchangeable strings, and asked to arrow through them. Comparing
+wordings is a different and harder task than choosing what the article is about.
+
+The pool moves from `string[]` to the shape pull quotes already use:
+
+```ts
+{ selected: { text, angle, angleLabel } | null,
+  alternatives: [{ text, angle, angleLabel }] }
+```
+
+`angleLabel` is the frame's own `name` — already written for display, so nothing was
+authored.
+
+**The legacy arm is not optional.** Every pool in production is a bare array and
+`BlocksSchema` is strict, so an undeclared shape is stripped on the next parse.
+`kickerAlternatives` is a union and readers go through `normalizeTitleAlternatives`,
+mirroring `normalizePullQuote`. A legacy entry gets no angle — honest, since none was
+recorded — and renders without a label. Verified: both shapes survive a strict parse.
+
+### One labelled option per angle
+
+`HeadlinePicker` renders a group per angle, headed by the label, with every option as
+a row. Cycling is gone: the invariant the counter protected — reach every option, not
+two of them — is structural once each option is its own row.
+
+"New options" splits in two. **"More like this"** regenerates ONE angle; the
+top-level button still re-rolls all of them. The per-angle request replaces only that
+angle's entries and leaves the rest standing — re-rolling everything would cost the
+designer the stories they had not rejected yet, which is the slot-machine behaviour
+the batch model exists to prevent.
+
+A requested angle can NARROW the batch and never create one: an angle whose source
+answer did not resolve stays ineligible however it is asked for. A stale request
+(the label outlived the answer behind it) returns `ANGLE_NOT_ELIGIBLE`, 409 — a
+different condition from an empty project and it must not borrow its message.
+
+### The deck follows the title
+
+Choosing a title now POSTs `sections/deck/regenerate`: fixed title in, one deck out.
+
+`frozenLead` already solved the general version — a designer-edited lead field is
+passed to the generator as FIXED context so the unfrozen field is written to fit it —
+and choosing already wrote that override. What was missing was a cheap trigger: the
+only consumer of `frozenLead` is a full article regeneration, which rewrites every
+chapter to update one sentence.
+
+The endpoint is deliberately not a generator. It writes no headline, touches no
+chapter, and **reads the same project answers the title was written from**, so the
+deck cannot introduce a fact the title's own angle never had access to. It is also
+told which angle the title took, which turns the existing DIVIDE THE WORK rule from a
+hope into a decidable instruction.
+
+Failure is non-blocking on purpose. A deck that fails to rewrite leaves the previous
+one — which is what the designer already had — and must not cost them the title they
+just chose.
+
+### The no-angle state is a to-do
+
+`NO_ELIGIBLE_ANGLE` already named which opening questions were unanswered, and
+`HeadlinePicker` rendered it as one line of grey error text. It is now a panel: *"Answer
+a few more opening questions to get title options"* and the list. It is the most
+actionable message in the flow — every angle is unlocked by work the designer can do —
+and it was the most buried.
+
+### Not done, deliberately
+
+No correction-signal capture. The audit found the stored pair is *(pre-batch headline
+→ current text)*, not *(generated candidate → correction)*, and fixing that needs
+changes to the override path plus a row-volume question that needs the database.
+`SectionOverride` is untouched.
+
+---
+
 ## 4. The tail rule
 
 > The final clause must state a fact — who it was for, what it replaced, where it came
