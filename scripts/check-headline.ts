@@ -240,8 +240,23 @@ const pickerSrc = readFileSync('src/components/story/HeadlinePicker.tsx', 'utf8'
 check('options are grouped by angle and the angle is named',
   /groups\.map\(\(group\)/.test(pickerSrc) && /\{group\.label\}/.test(pickerSrc));
 check('every option is a row, so none can be unreachable',
-  /group\.options\.map\(\(option\)/.test(pickerSrc)
+  /shown\.map\(\(option\)/.test(pickerSrc)
   && !/pool\.indexOf\(current\)/.test(pickerSrc));
+// The ANGLE is the primary choice, so one option per angle shows and the rest sit
+// behind a disclosure. Rendering every take as an equal row puts six strings back on
+// the page with three labels above them — the comparison this component replaced.
+check('one option per angle leads, extra takes are disclosed not hidden',
+  /group\.options\.slice\(0, 1\)/.test(pickerSrc)
+  && /more wordings/.test(pickerSrc));
+// ...but never the live headline, and never a pool that has no angles to collapse by.
+check('the live headline and an angle-less pool are never behind the disclosure',
+  /!group\.angle$/m.test(pickerSrc)
+  && /o\.text === current/.test(pickerSrc));
+// A stale pool degraded to a flat unlabelled list, which is indistinguishable from
+// the feature not existing — and was reported as exactly that.
+check('a pool written before angles existed says so',
+  /const isLegacyPool = alternatives\.length > 0 && alternatives\.every\(\(a\) => !a\.angle\)/.test(pickerSrc)
+  && /before titles were grouped by angle/.test(pickerSrc));
 check('the live headline stays reachable even when the stored pool has moved on',
   /const inPool = alternatives\.some\(\(a\) => a\.text === current\)/.test(pickerSrc));
 // C2 narrowed this. The live headline is still carried into the pool — the picker
