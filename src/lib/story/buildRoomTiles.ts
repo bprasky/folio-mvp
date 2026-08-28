@@ -7,6 +7,7 @@ import { buildEditorialChapters, type EditorialChapter } from "@/lib/editorial/b
 import { getSelectedPullQuoteText, type PullQuoteSelection } from "@/lib/posting/schemas";
 import { formatRoomName } from "@/lib/utils/formatRoomName";
 import { blockingIssues } from "@/lib/posting/headline";
+import { normalizeTitleAlternatives, type TitleAlternative } from "@/lib/posting/schemas";
 import { hasWeakPredicate } from "@/lib/interview/prompts/headlineFrames";
 
 // --- Types ---
@@ -64,7 +65,7 @@ export interface StoryData {
   /** The same intro, per paragraph — see RoomTileData.editorialParagraphs. */
   introParagraphs: string[];
   /** Headline options the owner cycles through. Empty on the published page. */
-  titleAlternatives: string[];
+  titleAlternatives: TitleAlternative[];
   credits: Array<{ role: string; name: string; url?: string }>;
   designerName: string;
   designerStudio: string | null;
@@ -273,11 +274,13 @@ export function buildStoryData(post: any): StoryData | null {
   // door" survived here, because `blockingIssues` has no opinion about voice and
   // nothing else looked. A stale batch could not self-clean, and the only way to
   // stop being offered a passive headline was to generate a new batch.
-  const titleAlternatives: string[] = Array.isArray(blocks?.lead?.kickerAlternatives)
-    ? blocks.lead.kickerAlternatives
-        .filter((t: unknown): t is string => typeof t === "string" && !!t.trim())
-        .filter((t: string) => blockingIssues(t).length === 0 && !hasWeakPredicate(t))
-    : [];
+  // Both shapes, because every pool written before P1 is a bare `string[]` and a
+  // legacy entry simply carries no angle — which is honest, since none was recorded.
+  const titleAlternatives: TitleAlternative[] = normalizeTitleAlternatives(
+    blocks?.lead?.kickerAlternatives,
+  ).alternatives.filter(
+    (a) => blockingIssues(a.text).length === 0 && !hasWeakPredicate(a.text),
+  );
   // Additive: the same paragraphs, still individually addressable for editing.
   const introParagraphs: string[] = Array.isArray(blocks?.introduction)
     ? blocks.introduction.filter((p: unknown): p is string => typeof p === "string" && !!p.trim())

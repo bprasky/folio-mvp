@@ -114,7 +114,7 @@ check('inventing an event is refused rather than filled in',
 // protects is unchanged: candidates are asked for per NAMED angle, never N free-form.
 // C3 made the per-angle block size vary so a one-angle project still gets a pool.
 check('candidates are requested one per angle, not N free-form',
-  /const angles = PROJECT_GRAIN_ANGLES/.test(headlineRoute)
+  /const eligibleAngles = PROJECT_GRAIN_ANGLES/.test(headlineRoute)
   && /const perAngle = Math\.min\(MAX_PER_ANGLE, /.test(headlineRoute)
   && /const CANDIDATES_REQUESTED = angles\.length \* perAngle/.test(headlineRoute));
 check('every angle asks for something that HAPPENED',
@@ -152,14 +152,14 @@ check('...but a warning keeps the candidate and is surfaced instead',
 check('an all-bad batch offers nothing rather than the least-bad',
   /code: 'NO_USABLE_CANDIDATES'/.test(headlineRoute));
 check('the live headline is NOT replaced by regenerating',
-  /kickerAlternatives: pool/.test(headlineRoute)
+  /kickerAlternatives: \{ selected, alternatives \}/.test(headlineRoute)
   && !/kicker: kept\[0\]/.test(headlineRoute)
   && !/blocks\.lead\.kicker =/.test(headlineRoute));
 // The stored list IS the pool the picker walks, so the headline being replaced
 // has to be in it — a pool that reorders around whichever entry is live cannot
 // be cycled past two.
 check('the batch includes the headline it would replace',
-  /const pool = carriedKicker \? \[carriedKicker, \.\.\.kept\] : kept/.test(headlineRoute));
+  /const alternatives = \[\.\.\.carried, \.\.\.kept, \.\.\.survivingOther\]/.test(headlineRoute));
 // ...but only if it passes the rules everything else in the pool had to pass. See
 // check-headline.ts for why an ungated carry-over was a hole the size of the rule set.
 check('...and the carried headline is re-gated on the way in',
@@ -169,15 +169,35 @@ check('...and the carried headline is re-gated on the way in',
 // missing here and stale pools could not self-clean.
 const tiles = readFileSync('src/lib/story/buildRoomTiles.ts', 'utf8');
 check('the read-path re-grade runs EVERY mechanical check, not just blockingIssues',
-  /blockingIssues\(t\)\.length === 0 && !hasWeakPredicate\(t\)/.test(tiles));
+  /blockingIssues\(a\.text\)\.length === 0 && !hasWeakPredicate\(a\.text\)/.test(tiles));
 check('the current headline is excluded from its own replacements',
   /if \(currentKicker\) seen\.add\(/.test(headlineRoute));
 check('duplicates within a batch are dropped',
   /seen\.has\(key\)/.test(headlineRoute));
+// P1 moved the pool from `string[]` to `{selected, alternatives:[{text, angle,
+// angleLabel}]}` so the angle survives to the frontend. The union arm is not
+// optional: every pool in production is a bare array, and BlocksSchema is strict, so
+// dropping the legacy shape would silently empty the picker for existing projects.
+const schemaSrc = readFileSync('src/lib/posting/schemas.ts', 'utf8');
 check('alternatives are declared on the schema so strict parsing keeps them',
-  /kickerAlternatives: z\.array/.test(readFileSync('src/lib/posting/schemas.ts', 'utf8')));
+  /kickerAlternatives: z\.union\(\[/.test(schemaSrc)
+  && /TitleSelectionSchema,/.test(schemaSrc));
+check('...and the legacy string[] shape is still accepted, as pull quotes do',
+  /z\.array\(z\.string\(\)\.max\(120\)\)\.max\(16\),/.test(schemaSrc)
+  && /export function normalizeTitleAlternatives/.test(schemaSrc));
+const headlinePicker = readFileSync('src/components/story/HeadlinePicker.tsx', 'utf8');
 check('choosing one goes through the ordinary headline edit path',
-  /edit\.save\(LEAD, 0, 'kicker', next\)/.test(readFileSync('src/components/story/HeadlinePicker.tsx', 'utf8')));
+  /edit\.save\(LEAD, 0, 'kicker', next\.text\)/.test(headlinePicker));
+// P1. The deck used to come out of the same call as the kicker, so picking a new
+// title left a deck written to sit under the one the designer rejected.
+check('choosing a title then rewrites the deck to fit it',
+  /sections\/deck\/regenerate/.test(headlinePicker));
+check('...and a deck that fails to rewrite does not cost the chosen title',
+  /the title is saved; the deck simply stays as it was/.test(headlinePicker));
+// The most actionable message in the flow, and it was one line of grey error text.
+check('the no-angle state names the unanswered questions as a to-do',
+  /data\?\.code === 'NO_ELIGIBLE_ANGLE'/.test(headlinePicker)
+  && /Answer a few more opening questions/.test(headlinePicker));
 
 console.log('\n6. An existing article can get its pull quotes without regenerating');
 // Candidates are cut from the interview by code and only RANKED by a model, so

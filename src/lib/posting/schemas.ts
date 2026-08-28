@@ -34,6 +34,38 @@ export const PullQuoteSelectionSchema = z.object({
   alternatives: z.array(PullQuoteAlternativeSchema),
 });
 
+/**
+ * Headline options, one or more per eligible ANGLE.
+ *
+ * `angle` is the frame id the candidate was written to (`constraint`,
+ * `governing-decision`, `change`); `angleLabel` is that frame's `name`, which is
+ * already written for display and needs no authoring. Position encoded the angle
+ * inside the generating route and was used three times there — to spread the kept
+ * set, to log per-keep angles, to log coverage — and then thrown away when `kept`
+ * mapped to `s.text`. This is where it stops being thrown away.
+ *
+ * Why it matters: the batch has been several angles since C3, and presenting it as
+ * six interchangeable strings asked the designer to compare wordings when what
+ * actually differs is the story.
+ */
+export const TitleAlternativeSchema = z.object({
+  text: z.string().max(120),
+  angle: z.string().max(40),
+  angleLabel: z.string().max(60),
+});
+
+export const TitleSelectionSchema = z.object({
+  selected: z.object({
+    text: z.string().max(120),
+    angle: z.string().max(40),
+    angleLabel: z.string().max(60),
+  }).nullable(),
+  alternatives: z.array(TitleAlternativeSchema).max(16),
+});
+
+export type TitleAlternative = z.infer<typeof TitleAlternativeSchema>;
+export type TitleSelection = z.infer<typeof TitleSelectionSchema>;
+
 // Composed draft schema for LLM output (accepts sections at compose time)
 // Uses .passthrough() so unexpected keys from the LLM don't cause validation failures
 export const ComposedDraftSchema = z.object({
@@ -134,7 +166,15 @@ export const BlocksSchema = z.object({
     // until the designer picks one; a batch they don't like costs them nothing.
     // Declared here because BlocksSchema is strict: an undeclared key is
     // stripped on the next parse, which would silently empty the picker.
-    kickerAlternatives: z.array(z.string().max(120)).max(8).optional(),
+    // Union, not a replacement. Every pool in production today is a bare
+    // `string[]`, and `BlocksSchema` is strict — an undeclared key is stripped on
+    // the next parse — so dropping the legacy arm would silently empty the picker
+    // for every existing project. Readers go through `normalizeTitleAlternatives`,
+    // exactly as pull quotes go through `normalizePullQuote`.
+    kickerAlternatives: z.union([
+      z.array(z.string().max(120)).max(16),
+      TitleSelectionSchema,
+    ]).optional(),
   }).optional(),
   introduction: z.array(z.string().max(2000)).max(4).optional(),
   galleryChapters: z.array(z.object({
@@ -243,6 +283,37 @@ export function getSelectedPullQuoteText(pullQuote: string | PullQuoteSelection 
 export function getSelectedPullQuoteContext(pullQuote: string | PullQuoteSelection | null | undefined): string | undefined {
   if (!pullQuote || typeof pullQuote === 'string') return undefined;
   return pullQuote.selected?.context ?? undefined;
+}
+
+/**
+ * Normalize a stored headline pool to the structured shape.
+ *
+ * Accepts the legacy `string[]` and the new `TitleSelection`, and mirrors
+ * `normalizePullQuote` because the migration problem is identical: the shape
+ * changed after data existed, so the reader carries the union rather than a
+ * backfill. A legacy entry gets no angle — which is honest, since none was
+ * recorded — and the picker renders it without a label.
+ */
+export function normalizeTitleAlternatives(
+  stored: unknown,
+): { selected: TitleAlternative | null; alternatives: TitleAlternative[] } {
+  if (Array.isArray(stored)) {
+    return {
+      selected: null,
+      alternatives: stored
+        .filter((t): t is string => typeof t === 'string' && !!t.trim())
+        .map((text) => ({ text, angle: '', angleLabel: '' })),
+    };
+  }
+  if (stored && typeof stored === 'object' && 'alternatives' in stored) {
+    const sel = (stored as TitleSelection).selected;
+    const alts = (stored as TitleSelection).alternatives;
+    return {
+      selected: sel ?? null,
+      alternatives: Array.isArray(alts) ? alts.filter((a) => a && typeof a.text === 'string' && a.text.trim()) : [],
+    };
+  }
+  return { selected: null, alternatives: [] };
 }
 
 /** Check if a pullQuote value is in the new PullQuoteSelection format */

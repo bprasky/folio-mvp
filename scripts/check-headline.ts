@@ -229,15 +229,21 @@ check('the product naming gate is untouched',
   /product naming gate/i.test(readFileSync('src/lib/posting/headline.ts', 'utf8'))
   && /resolveProductNaming/.test(readFileSync('src/lib/naming/applyProseNamingGate.ts', 'utf8')));
 
-console.log('\n8. Cycling reaches every option, not two of them');
-// The pool was rebuilt as [current, ...others] on every render, so the live
-// headline sat at index 0 forever: the counter always read "1 of 6" and "next"
-// was always the headline just left. Six candidates, two reachable.
+console.log('\n8. Every option is reachable, and each one says what it is ABOUT');
+// P1 replaced cycling with a labelled list, so the invariant this section
+// protected — reach every option, not two of them — is now structural: every
+// option is a row. What replaces the old assertions is the reason the list exists.
+// The batch has been several ANGLES since C3, and the route knew which angle wrote
+// which candidate and dropped it one line before storage, so the designer was shown
+// several different stories as one list of interchangeable strings.
 const pickerSrc = readFileSync('src/components/story/HeadlinePicker.tsx', 'utf8');
-check('the pool is the stored list, not a list reordered around the current one',
-  /alternatives\.includes\(current\) \? alternatives :/.test(pickerSrc));
-check('the index is the real position of the current headline',
-  /pool\.indexOf\(current\)/.test(pickerSrc) && !/\[current, \.\.\.alternatives\.filter/.test(pickerSrc));
+check('options are grouped by angle and the angle is named',
+  /groups\.map\(\(group\)/.test(pickerSrc) && /\{group\.label\}/.test(pickerSrc));
+check('every option is a row, so none can be unreachable',
+  /group\.options\.map\(\(option\)/.test(pickerSrc)
+  && !/pool\.indexOf\(current\)/.test(pickerSrc));
+check('the live headline stays reachable even when the stored pool has moved on',
+  /const inPool = alternatives\.some\(\(a\) => a\.text === current\)/.test(pickerSrc));
 // C2 narrowed this. The live headline is still carried into the pool — the picker
 // needs it there to be walkable — but it is GATED first. It used to be prepended
 // unconditionally, which meant a headline written before a rule existed re-entered
@@ -247,7 +253,12 @@ check('the index is the real position of the current headline',
 // not contain it, so it stays reachable while live and stops being an OPTION after.
 const regenSrc = readFileSync('src/app/api/posting/project/[projectId]/sections/headline/regenerate/route.ts', 'utf8');
 check('the batch is stored WITH the headline it replaces, so current is a member',
-  /const pool = carriedKicker \? \[carriedKicker, \.\.\.kept\] : kept/.test(regenSrc));
+  /const alternatives = \[\.\.\.carried, \.\.\.kept, \.\.\.survivingOther\]/.test(regenSrc));
+// P1. A single-angle regeneration replaces that angle and leaves the others
+// standing — one press must never cost the designer stories they have not rejected.
+check('...and a per-angle regeneration keeps the other angles\' options',
+  /const survivingOther = requestedAngle/.test(regenSrc)
+  && /priorPool\.alternatives\.filter\(\(a\) => a\.angle !== requestedAngle\)/.test(regenSrc));
 check('...but the carried headline is gated, not trusted for having been live',
   /blockingIssues\(currentKicker\)\.length === 0/.test(regenSrc)
   && /!hasWeakPredicate\(currentKicker\)/.test(regenSrc));
@@ -405,7 +416,7 @@ check('an all-cut batch says the options were generic, not that they were malfor
 // headline kept being offered after the ban shipped.
 const tiles = readFileSync('src/lib/story/buildRoomTiles.ts', 'utf8');
 check('stored alternatives are re-graded on read, not trusted from write time',
-  /blockingIssues\(t\)\.length === 0/.test(tiles));
+  /blockingIssues\(a\.text\)\.length === 0/.test(tiles));
 
 console.log('\n10. Editing the headline cannot be silently swallowed');
 // `lead.title` is never persisted today, but readers still resolve
@@ -451,7 +462,7 @@ check('the write filter drops on blocking issues only',
 check('...and still surfaces the warning',
   /kept with warnings/.test(route));
 check('the read path re-grades on blocking issues only',
-  /blockingIssues\(t\)\.length === 0/.test(tiles));
+  /blockingIssues\(a\.text\)\.length === 0/.test(tiles));
 check('the reason is written where the severity is decided',
   /documentation\s*\n\s*\*\s*and the behaviour disagreed/.test(
     readFileSync('src/lib/posting/headline.ts', 'utf8')));
