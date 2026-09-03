@@ -119,7 +119,7 @@ export function StoryRenderer({ post }: StoryRendererProps) {
 
   return (
     <div
-      className="min-h-screen bg-surface-ground"
+      className="min-h-screen bg-surface-canvas"
     >
       <div className="w-full pb-6 md:pb-10">
         {/* Hero + Intro: orientation-aware layout */}

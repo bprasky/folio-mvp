@@ -25,10 +25,14 @@
   --surface-canvas: #FFFFFF;        /* Level 0 — page bg, nav, breadcrumbs */
   --surface-ground: #FAF8F5;        /* Level 1 — filter bars, tab trays, footer */
   --surface-elevated: #F5F0EB;      /* Level 2 — card base before glass */
-  --surface-cream: var(--surface-ground); /* Warm cream — long-form editorial pages.
-                                            Aliases --surface-ground so the article
-                                            field reads as one continuous warm tone
-                                            from the header strip through the body. */
+  --surface-cream: var(--surface-canvas); /* Long-form editorial pages. Aliases
+                                            --surface-canvas so the article field
+                                            reads as ONE continuous tone from the
+                                            nav through the body — the article is
+                                            the page, not a panel laid on it. Named
+                                            "cream" from when that tone was warm;
+                                            the alias is the single place to change
+                                            it. */
 
   /* Page-aware surface token. The sticky header's scrolled-state tint reads
      `--surface` so each route can paint its own backdrop without forking
