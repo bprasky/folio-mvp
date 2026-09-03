@@ -143,7 +143,29 @@ export function HeadlinePicker({
   };
 
   return (
-    <StoryEditRegion className="mt-3 flex flex-col gap-3">
+    // A tray, not a bleed. The article page is one continuous white field, and
+    // these options were rendering as loose rows directly on it — six sentences in
+    // the same tone under the headline, reading as body copy the designer had
+    // already written rather than as a choice they still have to make. Naming the
+    // block and giving it its own warm ground says which of those it is before any
+    // of the text is read; the ground is the one Folio already uses for trays and
+    // control bars, so the picker is not a new surface, it is that one.
+    <StoryEditRegion className="mt-4 flex flex-col gap-3 rounded-lg border border-folio-border-subtle bg-surface-ground p-4">
+      <div className="flex items-baseline justify-between gap-4">
+        <p className="folio-meta tracking-wide uppercase text-folio-text-tertiary">
+          Choose a title
+        </p>
+        {groups.length > 0 && (
+          <button
+            onClick={() => propose()}
+            disabled={busy}
+            className="shrink-0 flex items-center gap-1.5 folio-meta text-folio-text-tertiary hover:text-folio-text-secondary disabled:opacity-40 transition-colors"
+          >
+            <RefreshCw className={`w-3.5 h-3.5 ${busy ? 'animate-spin' : ''}`} />
+            {busy ? 'Writing options…' : 'New options, every angle'}
+          </button>
+        )}
+      </div>
       {isLegacyPool && (
         <p className="folio-meta text-folio-text-tertiary">
           These options were written before titles were grouped by angle — get new
@@ -190,8 +212,8 @@ export function HeadlinePicker({
                 title={isCurrent ? 'This is the title on the article' : 'Use this title'}
                 className={`group/opt flex items-start gap-2.5 text-left folio-ui leading-snug rounded px-2 py-2 -mx-2 border transition-colors disabled:cursor-default ${
                   isCurrent
-                    ? 'border-folio-border-subtle bg-surface-raised text-folio-text-primary'
-                    : 'border-transparent text-folio-text-secondary hover:border-folio-border-subtle hover:bg-surface-raised hover:text-folio-text-primary disabled:opacity-40'
+                    ? 'border-folio-border-subtle bg-surface-canvas text-folio-text-primary'
+                    : 'border-transparent text-folio-text-secondary hover:border-folio-border-subtle hover:bg-surface-canvas hover:text-folio-text-primary disabled:opacity-40'
                 }`}
               >
                 {/* The options were rendering as a stack of paragraphs, which reads
@@ -260,17 +282,6 @@ export function HeadlinePicker({
         >
           <RefreshCw className={`w-3.5 h-3.5 ${busy ? 'animate-spin' : ''}`} />
           {busy ? 'Writing options…' : 'Suggest titles'}
-        </button>
-      )}
-
-      {groups.length > 0 && (
-        <button
-          onClick={() => propose()}
-          disabled={busy}
-          className="self-start flex items-center gap-1.5 folio-meta text-folio-text-tertiary hover:text-folio-text-secondary disabled:opacity-40 transition-colors"
-        >
-          <RefreshCw className={`w-3.5 h-3.5 ${busy ? 'animate-spin' : ''}`} />
-          {busy ? 'Writing options…' : 'New options, every angle'}
         </button>
       )}
 
