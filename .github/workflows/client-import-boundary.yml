@@ -1,0 +1,51 @@
+name: Client Import Boundary
+
+# The RSC / client boundary, enforced. `.claude/agents/folio-next-supabase-
+# specialist.md` calls scripts/guard-client-imports.js "the canonical rule set
+# for what can be imported where" and reserves a `guard:client-imports:
+# <passed / failed>` line in its required output — but the script did not exist,
+# so that line was unanswerable on every run and none of the rules were checked
+# by anything.
+#
+# Two of the four rules are not caught by `next build`, which is why this runs
+# separately rather than riding on the build: a service-role key reaching a
+# client bundle is a published secret, and the build ships it happily. The
+# `server-only` package would cover part of this, but it is in neither
+# dependency block and only one file in the repo imports it, so it is not a
+# boundary anything can lean on.
+#
+# One-workflow-per-discipline, matching migration-discipline,
+# product-record-invariants, design-system-discipline and pull-quote-verbatim.
+
+on:
+  pull_request:
+    paths:
+      - 'src/**'
+      - 'scripts/guard-client-imports.js'
+      - '.github/workflows/client-import-boundary.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'src/**'
+      - 'scripts/guard-client-imports.js'
+      - '.github/workflows/client-import-boundary.yml'
+  workflow_dispatch:
+
+jobs:
+  boundary:
+    name: Server secrets stay out of client bundles
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+
+      # No npm ci and no prisma generate: the guard reads source text and
+      # imports nothing from the project, so it needs neither dependencies nor a
+      # generated client. Keeping it dependency-free is what lets it run in
+      # seconds on every PR that touches src/.
+      - name: Check the client import boundary
+        run: node scripts/guard-client-imports.js

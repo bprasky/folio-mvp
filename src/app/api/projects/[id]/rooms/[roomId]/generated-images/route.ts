@@ -4,6 +4,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
 import { assertProjectAccess } from '@/lib/permissions';
 import { prisma } from '@/lib/prisma';
+import { supabaseServer } from '@/lib/supabaseServer';
 
 export async function GET(
   request: NextRequest,
@@ -68,8 +69,10 @@ export async function GET(
 
     // Also check storage for any orphaned images (images that exist in storage but not in DB)
     try {
-      const { createClient } = await import("@supabase/supabase-js");
-      const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!);
+      // Through the factory, not a hand-rolled client: same anon key, same
+      // project, but constructed in one place. guard:client-imports forbids
+      // reaching for @supabase/supabase-js under src/app/.
+      const supabase = supabaseServer();
       const bucket = "event-images";
       
       // Check the old path structure where real images might be
