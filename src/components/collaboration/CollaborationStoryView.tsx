@@ -253,6 +253,28 @@ export function CollaborationStoryView({ story }: CollaborationStoryViewProps) {
               // selectPullQuotes cuts them from interview answers. Until that exists,
               // the slot is empty.
               return null;
+            case 'verbatimQuote':
+              // The replacement for the block above: cut from this speaker's own
+              // interview answers by code, ranked by ID rather than written, and
+              // re-checked against those same answers before it reached the page.
+              // Safe to attribute because nothing in the path could have authored it.
+              return (
+                <figure
+                  key={index}
+                  className="my-10 p-8 bg-gradient-to-br from-neutral-50 to-neutral-100 rounded-2xl"
+                >
+                  <blockquote className="text-xl md:text-2xl font-serif italic text-neutral-800 leading-relaxed">
+                    &ldquo;{block.text}&rdquo;
+                  </blockquote>
+                  <figcaption className="mt-4 flex items-center gap-3">
+                    <div className="w-1 h-8 bg-gradient-to-b from-blue-500 to-purple-500 rounded-full" />
+                    <div>
+                      <p className="font-medium text-neutral-900">{block.speaker}</p>
+                      {block.role && <p className="text-sm text-neutral-500">{block.role}</p>}
+                    </div>
+                  </figcaption>
+                </figure>
+              );
             case 'divider':
               return (
                 <div key={index} className="my-12 flex items-center justify-center gap-2">
