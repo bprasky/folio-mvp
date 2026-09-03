@@ -143,7 +143,7 @@ export function InstagramExportEditor({ project, post, designer, images, rooms }
     async (feedback?: string) => {
       setQuotesLoading(true);
       try {
-        const res = await fetch('/api/instagram-export/generate-quotes', {
+        const res = await fetch('/api/instagram-export/generate-headlines', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -153,9 +153,9 @@ export function InstagramExportEditor({ project, post, designer, images, rooms }
           }),
         });
         const data = await res.json();
-        if (data.quotes?.length) {
-          setQuoteOptions(data.quotes);
-          if (!selectedHeadline) setSelectedHeadline(data.quotes[0]);
+        if (data.headlines?.length) {
+          setQuoteOptions(data.headlines);
+          if (!selectedHeadline) setSelectedHeadline(data.headlines[0]);
         }
       } catch (error) {
         console.error('Failed to generate quotes:', error);

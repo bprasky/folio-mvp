@@ -1,5 +1,5 @@
 import Anthropic from '@anthropic-ai/sdk';
-import { extractTextFromBlocks } from './generate-quotes';
+import { extractTextFromBlocks } from './generate-headlines';
 import { MODELS } from '@/lib/ai/models';
 
 const anthropic = new Anthropic();
