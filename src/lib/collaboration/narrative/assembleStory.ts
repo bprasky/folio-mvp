@@ -15,12 +15,6 @@ export type NarrativeSection = {
   type: 'intro' | 'dialogue' | 'reflection' | 'conclusion';
   heading?: string;
   content: string;
-  quotes?: {
-    speaker: 'VENDOR' | 'DESIGNER';
-    speakerName: string;
-    text: string;
-    context?: string;
-  }[];
 };
 
 export type GeneratedNarrative = {
@@ -36,7 +30,6 @@ export type ExpandedBlock =
   | { type: 'heading'; level: 1 | 2 | 3; text: string }
   | { type: 'paragraph'; text: string }
   | { type: 'blockquote'; text: string; attribution?: string }
-  | { type: 'pullQuote'; text: string; speaker: string; role: string }
   | { type: 'divider' }
   | { type: 'image'; url: string; caption?: string; alt?: string };
 
@@ -56,10 +49,13 @@ const NARRATIVE_SYSTEM_PROMPT = `You are an editorial writer for a prestigious d
 
 Writing guidelines:
 - Write in third person narrative voice
-- Weave quotes naturally into the story flow
 - Create a cohesive narrative arc: introduction → development → dialogue/exchange → reflection
 - Highlight moments of connection, shared values, and mutual growth
-- Use direct quotes to let both voices shine
+- NEVER quote either party. Do not put any of their words in quotation marks, and do not
+  present a sentence as something either of them said. Report what they described in your
+  own third-person prose instead. Neither party reviews this text before it publishes, so
+  a quoted sentence here is words attributed to a named person that they never approved
+  and may never have said.
 - Balance screen time between both parties
 - Find the emotional core of the collaboration
 - Write for a sophisticated design industry audience
@@ -123,7 +119,7 @@ ${designerInterview}
 Vendor: ${data.vendorOrgName}
 Designer: ${data.designerName}
 
-Craft a compelling narrative that weaves both perspectives into a cohesive story about their collaboration. Include direct quotes from both parties, especially the Round 3 cross-pollinated responses where they react to each other.`;
+Craft a compelling narrative that weaves both perspectives into a cohesive story about their collaboration. Draw especially on the Round 3 cross-pollinated responses where they react to each other — but report them in third-person prose, never as quotations.`;
 
   const result = await callLLM(
     async () => {
@@ -183,13 +179,6 @@ function generateFallbackNarrative(data: InterviewData): GeneratedNarrative {
         type: 'dialogue',
         heading: 'The Beginning',
         content: getFirstResponse(data.vendorRound1.responses),
-        quotes: [
-          {
-            speaker: 'DESIGNER',
-            speakerName: data.designerName,
-            text: getFirstResponse(data.designerRound1.responses),
-          },
-        ],
       },
     ],
     suggestedTags: ['collaboration', 'partnership', 'design'],
@@ -198,11 +187,7 @@ function generateFallbackNarrative(data: InterviewData): GeneratedNarrative {
 }
 
 // Convert narrative to expandedBlocks format
-export function narrativeToBlocks(
-  narrative: GeneratedNarrative,
-  vendorOrgName: string,
-  designerName: string
-): ExpandedBlock[] {
+export function narrativeToBlocks(narrative: GeneratedNarrative): ExpandedBlock[] {
   const blocks: ExpandedBlock[] = [];
 
   // Title as H1
@@ -223,21 +208,6 @@ export function narrativeToBlocks(
       blocks.push({ type: 'paragraph', text: section.content });
     }
 
-    if (section.quotes) {
-      for (const quote of section.quotes) {
-        blocks.push({
-          type: 'pullQuote',
-          text: quote.text,
-          speaker: quote.speakerName,
-          role: quote.speaker === 'VENDOR' ? vendorOrgName : designerName,
-        });
-
-        if (quote.context) {
-          blocks.push({ type: 'paragraph', text: quote.context });
-        }
-      }
-    }
-
     if (section.type === 'conclusion') {
       blocks.push({ type: 'divider' });
     }
@@ -253,7 +223,7 @@ export async function assembleCollaborationStory(
   blocks: ExpandedBlock[];
 }> {
   const narrative = await generateNarrativeWithLLM(data);
-  const blocks = narrativeToBlocks(narrative, data.vendorOrgName, data.designerName);
+  const blocks = narrativeToBlocks(narrative);
 
   return { narrative, blocks };
 }
