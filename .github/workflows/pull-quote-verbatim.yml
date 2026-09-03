@@ -15,7 +15,10 @@ name: Pull Quote Verbatim
 #   - a chapter with no verified selection is CLEARED, not skipped, so an
 #     unverified quote from an earlier run cannot survive;
 #   - the picker PATCHes only text already present in `alternatives`, and there is
-#     exactly one picker.
+#     exactly one picker;
+#   - the collaboration narrative and the Instagram export take their quotes from
+#     verified selections, never from prose — both were rewired onto
+#     `selectPullQuotes` and both used to mine generated text.
 #
 # None of that is expressible as a type. It fails as a wrong string under a real
 # designer's name on a published page — "elements on tension" shipping as
@@ -26,17 +29,25 @@ on:
   pull_request:
     paths:
       - 'src/lib/posting/**'
+      - 'src/lib/collaboration/**'
+      - 'src/lib/instagram/**'
       - 'src/components/story/**'
+      - 'src/components/collaboration/**'
       - 'src/app/api/posting/**'
       - 'scripts/check-pull-quotes.ts'
+      - 'scripts/stub-anthropic-fetch.ts'
       - '.github/workflows/pull-quote-verbatim.yml'
   push:
     branches: [main]
     paths:
       - 'src/lib/posting/**'
+      - 'src/lib/collaboration/**'
+      - 'src/lib/instagram/**'
       - 'src/components/story/**'
+      - 'src/components/collaboration/**'
       - 'src/app/api/posting/**'
       - 'scripts/check-pull-quotes.ts'
+      - 'scripts/stub-anthropic-fetch.ts'
       - '.github/workflows/pull-quote-verbatim.yml'
   workflow_dispatch:
 
