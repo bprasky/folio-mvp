@@ -224,7 +224,7 @@ ${transcriptSegments.map((s, i) => `[${i}] ${s.start}ms-${s.end}ms: ${s.text}`).
 Requirements:
 - Extract quotes that are ${useCases.join(" or ")} quality
 - Return EXACT timestamp ranges that map to transcript segment boundaries
-- Quotes should be verbatim from transcript (light cleanup ok for readability)
+- Quotes must be verbatim from transcript. Copy the speaker's exact words. Do not clean up, tidy, condense, re-punctuate or smooth the language for readability
 - Each quote should be 1-3 sentences, emotionally resonant or insightfully specific
 - Score each quote 0-1 based on quality (designer insight, specificity, quotability)
 
