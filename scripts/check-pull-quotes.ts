@@ -23,8 +23,10 @@ import {
   isVerbatimSpan,
   normalizeForVerbatimCheck,
 } from '../src/lib/posting/quoteCandidates';
-import { buildShufflePool } from '../src/lib/posting/selectPullQuotes';
+import { buildShufflePool, toSelection } from '../src/lib/posting/selectPullQuotes';
 import { scoreStandalone } from '../src/lib/posting/quoteStandalone';
+import { verifyPullQuoteProvenance, verifyQuoteAgainstAnswers }
+  from '../src/lib/posting/verifyQuoteProvenance';
 import { formatRoomName } from '../src/lib/utils/formatRoomName';
 import { extractQuotes } from '../src/lib/instagram/extractQuotes';
 import { extractQuotesWithMetadata, matchQuotesToImages } from '../src/lib/instagram/matchQuoteToImage';
@@ -666,6 +668,114 @@ async function projectionWriteChecks() {
     row('q-junk')?.questionCategory === null, JSON.stringify(row('q-junk')?.questionCategory));
 }
 
+// ─── 19. Provenance: the durable pointer survives to the stored selection ────
+//
+// `isVerbatimSpan` proves a string existed in the answers AT SELECTION TIME and
+// records nothing, so a quote verified at generation cannot be re-checked later.
+// (questionId, isFollowUp) is the pointer that closes that loop — the row key
+// rebuildAnswerProjection already treats as an answer's identity, and the only
+// one that survives a sync, since row ids are re-minted and `answerIndex`
+// indexes an array that does not outlive the run.
+//
+// Four properties, each the thing that would silently break:
+//   a) it survives toSelection at all;
+//   b) it survives a projection REBUILD — the pointer must still resolve after
+//      every row has been deleted and recreated with new ids;
+//   c) it is on every ALTERNATIVE, not just the selected quote, because the
+//      picker publishes whichever one the designer cycles to;
+//   d) a null-provenance row reports UNVERIFIABLE, not failed.
+console.log('\n19. Provenance pointer');
+
+function provenanceChecks() {
+  const ROOM = 'Dining Room';
+  const answers = [
+    { section: ROOM, questionId: 'q-table', isFollowUp: false,
+      answer: 'The table was the first thing we settled. It set the height of everything else in the room.' },
+    { section: ROOM, questionId: 'q-glass', isFollowUp: true,
+      answer: 'We always use glass when we need to make up space. Had we used a solid table we would have crowded it badly.' },
+  ];
+
+  const ranked = extractQuoteCandidates(answers, ROOM);
+  check('candidates carry the question id they were cut from',
+    ranked.length > 0 && ranked.every(c => typeof c.questionId === 'string' && c.questionId.length > 0),
+    ranked.map(c => `${c.id}=${c.questionId}`).join(' '));
+  check('a candidate points at the answer it actually came from',
+    ranked.every(c => answers.some(a =>
+      a.questionId === c.questionId && a.isFollowUp === c.isFollowUp && a.answer.includes(c.text))),
+    'each candidate text is a span of its pointed-to answer');
+
+  // (a) + (c) through the real toSelection, via the real selector's fallback
+  // path: no model, so it takes the top code-ranked candidate.
+  // The REAL toSelection, not a rebuild of it — so dropping the pointer there
+  // turns these red instead of leaving a passing copy behind.
+  const selection = toSelection(ranked[0], ranked);
+  check('the stored selection carries a provenance pointer',
+    !!selection.selected?.provenance?.questionId,
+    JSON.stringify(selection.selected?.provenance));
+  check('EVERY alternative carries its own pointer, not just the selected quote',
+    selection.alternatives.length > 0 && selection.alternatives.every(a => !!a.provenance?.questionId),
+    selection.alternatives.map(a => a.provenance?.questionId ?? 'MISSING').join(', '));
+  check('each alternative points at the answer that alternative came from',
+    selection.alternatives.every(alt => answers.some(a =>
+      a.questionId === alt.provenance?.questionId &&
+      a.isFollowUp === alt.provenance?.isFollowUp &&
+      a.answer.includes(alt.text))));
+
+  // (b) The pointer survives a projection rebuild. Row ids are re-minted, so a
+  // stored row id would dangle here; the row key does not.
+  const afterRebuild = answers.map((a, i) => ({ ...a, id: `regenerated-uuid-${i}-${Math.random()}` }));
+  const verdicts = verifyPullQuoteProvenance(selection, afterRebuild).map(c => c.verdict);
+  check('every pointer still resolves after a projection rebuild re-mints row ids',
+    verdicts.length > 0 && verdicts.every(v => v === 'verified'),
+    verdicts.join(', '));
+
+  // (d) Pre-provenance rows: absent pointer is unverifiable, never failed.
+  const legacy = {
+    selected: { text: 'The table was the first thing we settled.' },
+    alternatives: [{ text: 'We always use glass when we need to make up space.', score: 1 }],
+  } as any;
+  const legacyVerdicts = verifyPullQuoteProvenance(legacy, answers).map(c => c.verdict);
+  check('a null-provenance quote reports unverifiable, not failed',
+    legacyVerdicts.length === 2 && legacyVerdicts.every(v => v === 'unverifiable'),
+    legacyVerdicts.join(', '));
+
+  // The alarm still has to fire. A pointer at an answer that no longer contains
+  // the text is a mismatch — that is the case this whole mechanism exists for.
+  const drifted = verifyQuoteAgainstAnswers(
+    'a sentence nobody said', { questionId: 'q-table', isFollowUp: false }, answers, 'selected');
+  check('a quote that is not a span of its pointed-to answer reports mismatch',
+    drifted.verdict === 'mismatch', drifted.verdict);
+  const orphan = verifyQuoteAgainstAnswers(
+    'The table was the first thing we settled.', { questionId: 'q-deleted', isFollowUp: false }, answers, 'selected');
+  check('a pointer at an answer that no longer exists reports answer-missing',
+    orphan.verdict === 'answer-missing', orphan.verdict);
+
+  // Verification is against ONE answer, never joined text. A span spliced across
+  // two answers must not pass just because both are in the interview.
+  const spliced = verifyQuoteAgainstAnswers(
+    'It set the height of everything else in the room. We always use glass',
+    { questionId: 'q-table', isFollowUp: false }, answers, 'selected');
+  check('a span crossing two answers fails — the check never joins them',
+    spliced.verdict === 'mismatch', spliced.verdict);
+
+  // Duplicates for one row key make "the" answer undefined. Reported, never
+  // resolved by picking one.
+  const dupes = [...answers, { section: ROOM, questionId: 'q-table', isFollowUp: false, answer: 'A different answer entirely.' }];
+  const amb = verifyQuoteAgainstAnswers(
+    'The table was the first thing we settled.', { questionId: 'q-table', isFollowUp: false }, dupes, 'selected');
+  check('two answers sharing a row key report ambiguous rather than guessing',
+    amb.verdict === 'ambiguous', amb.verdict);
+
+  // The collaboration path has no durable key (section 19 note / item 6), so its
+  // candidates must carry a null pointer rather than a fabricated one.
+  const collab = extractQuoteCandidates(
+    [{ section: 'VENDOR', isFollowUp: true, answer: 'We had to rebuild the whole run of cabinetry twice over.' }],
+    'VENDOR');
+  check('an answer with no question id yields a null pointer, never an invented one',
+    collab.length > 0 && collab.every(c => c.questionId === null),
+    collab.map(c => String(c.questionId)).join(', '));
+}
+
 // ─── 18. Re-answering UPDATES the row, it does not insert a second one ───────
 //
 // A designer answering the same question again is correcting themselves. Two
@@ -868,6 +978,7 @@ collaborationChecks()
   .then(projectionWriteChecks)
   .then(standaloneRankingChecks)
   .then(reAnswerChecks)
+  .then(provenanceChecks)
   .then(() => {
   console.log(failures === 0
     ? '\nAll pull-quote checks passed.\n'

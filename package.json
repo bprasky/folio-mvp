@@ -81,7 +81,8 @@
     "report:digest-churn": "tsx scripts/report-digest-churn.ts",
     "report:headline-samples": "tsx scripts/report-headline-samples.ts",
     "report:quote-standalone": "tsx scripts/measure-quote-standalone.ts",
-    "report:quote-ranking": "tsx scripts/report-quote-ranking.ts"
+    "report:quote-ranking": "tsx scripts/report-quote-ranking.ts",
+    "report:quote-provenance": "tsx scripts/report-quote-provenance.ts"
   },
   "buildTimestamp": "2025-01-18T20:15:00Z",
   "prisma": {

@@ -97,6 +97,19 @@ export interface LoadedAnswer extends AnswerLike {
    * null rather than carrying whatever an earlier derivation invented.
    */
   questionCategory: SectionCategory | null;
+  /**
+   * The question this answer was given to. With `isFollowUp` it forms the row
+   * key (questionId, isFollowUp) that `rebuildAnswerProjection` already treats
+   * as an answer's identity within an interview, and that
+   * 20260904193000_add_row_key_unique makes a constraint.
+   *
+   * This is the only durable handle a pull quote can point at. The projection
+   * row `id` is re-minted by randomUUID() on every sync, so a stored answer id
+   * dangles as soon as the designer answers one more question.
+   *
+   * Null when neither store carried one. Null means unverifiable, never invalid.
+   */
+  questionId: string | null;
   answer: string;
   isFollowUp: boolean;
 }
@@ -143,10 +156,15 @@ export async function loadInterviewAnswers(projectId: string): Promise<LoadedAns
     isFollowUp: boolean,
     category: ProjectQuestionCategory | null,
     questionCategory: SectionCategory | null,
+    questionId: string | null,
   ) => {
     if (typeof text !== 'string' || !text.trim()) return;
-    out.push({ answer: text, section, isFollowUp, category, questionCategory });
+    out.push({ answer: text, section, isFollowUp, category, questionCategory, questionId });
   };
+
+  /** Only a non-empty string is an identifier; '' would point at nothing. */
+  const qid = (raw: unknown): string | null =>
+    typeof raw === 'string' && raw.trim() ? raw : null;
 
   /**
    * The stored question category, or null.
@@ -165,10 +183,10 @@ export async function loadInterviewAnswers(projectId: string): Promise<LoadedAns
 
   const payload = (post?.provenance as any)?.interview?.payload ?? {};
   for (const a of Array.isArray(payload.answers) ? payload.answers : []) {
-    push(a?.answer ?? a?.a, roomOf(a), !!a?.isFollowUp, categoryFromPayload(a), storedCategory(a?.section));
+    push(a?.answer ?? a?.a, roomOf(a), !!a?.isFollowUp, categoryFromPayload(a), storedCategory(a?.section), qid(a?.questionId ?? a?.id));
   }
   for (const a of Array.isArray(payload.followups) ? payload.followups : []) {
-    push(a?.answer ?? a?.a, roomOf(a), true, categoryFromPayload(a), storedCategory(a?.section));
+    push(a?.answer ?? a?.a, roomOf(a), true, categoryFromPayload(a), storedCategory(a?.section), qid(a?.questionId ?? a?.id));
   }
   for (const a of interview?.answers ?? []) {
     push(
@@ -180,6 +198,7 @@ export async function loadInterviewAnswers(projectId: string): Promise<LoadedAns
           a.parentAnswerId ? questionIdByRowId.get(a.parentAnswerId) : null,
         ),
       storedCategory((a as { questionCategory?: unknown }).questionCategory),
+      qid(a.questionId),
     );
   }
 
