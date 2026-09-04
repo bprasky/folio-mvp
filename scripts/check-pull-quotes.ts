@@ -468,7 +468,211 @@ check('the legacy pullQuote arm returns null', /return null;/.test(legacyArm));
 check('the legacy pullQuote arm never reads the block’s text',
   !/block\.(text|speaker|role)/.test(legacyArm), legacyArm.slice(0, 200));
 
-collaborationChecks().then(() => {
+// ─── 14. The room and the question category stop sharing one field ───────────
+//
+// loadInterviewAnswers overwrites `section` with the resolved ROOM, because
+// quoteCandidates.ts:98 and selectPullQuotes.ts:173 match it against a chapter
+// title. That overwrite is correct and must stay. What it used to destroy was
+// the question CATEGORY the stores hold under the same name — a "what" question
+// asked about the Entry arrived as Entry with its topic gone and no way back.
+//
+// Both halves are asserted here because they are one property: the room reaches
+// the consumers AND the category survives alongside it. Asserting either alone
+// would pass while the other regressed.
+console.log('\n14. The room reaches the consumers and the category survives beside it');
+
+async function loaderChecks() {
+  // The loader talks to the database, so the database is what gets stubbed —
+  // the loader itself is the real one, which is the only way this assertion
+  // means anything. Installed before the dynamic import for the same
+  // module-evaluation-order reason the fetch stub is imported first.
+  const Module = await import('module');
+  const origLoad = (Module.default as any)._load;
+  const ROOMS = [{ id: 'room-entry', name: 'Entry' }, { id: 'room-kitchen', name: 'Kitchen' }];
+  const PAYLOAD = [
+    // A "what" question asked about a room: the exact shape that used to lose
+    // its category. Room and topic must BOTH survive.
+    { questionId: 'ctx-01', section: 'what', answer:
+      'We use paneling strategically in our projects and throughout the house. It gives the eye somewhere to rest.',
+      roomId: 'room-entry', isFollowUp: false },
+    { questionId: 'how-01', section: 'how', answer:
+      'With the windows up top, we wanted it to be a bright space, and that helps with the transition between rooms.',
+      roomId: 'room-kitchen', isFollowUp: false },
+    // A payload whose `section` is not a real SECTION_ENUM member — what an
+    // earlier derivation left behind. Must arrive null, never promoted to fact.
+    { questionId: 'junk-01', section: 'notACategory', answer:
+      'The stair rail took four tries before it felt like it belonged to the house.',
+      roomId: 'room-entry', isFollowUp: true },
+  ];
+  (Module.default as any)._load = function (request: string) {
+    if (request === '@/lib/prisma' || request.endsWith('/lib/prisma')) {
+      return { prisma: {
+        projectPost: { findUnique: async () => ({ provenance: { interview: { payload: { answers: PAYLOAD, followups: [] } } } }) },
+        room: { findMany: async () => ROOMS },
+        editorialInterview: { findUnique: async () => ({ answers: [
+          // The projection path. Its category lives in its own column rather than
+          // under `section`, so it needs its own coverage — a fixture that only
+          // exercises provenance passes while the column is being dropped.
+          { id: 'row-1', questionId: 'flow-01', questionText: 'Tell us about the entry.',
+            answerText: 'The entry had to do two jobs at once. It is the first thing you see and where everyone drops a coat.',
+            isFollowUp: false, roomId: 'room-entry', parentAnswerId: null, questionCategory: 'where' },
+        ] }) },
+      } };
+    }
+    return origLoad.apply(this, arguments as any);
+  };
+
+  let loaded: any[];
+  try {
+    const { loadInterviewAnswers } = await import('../src/lib/posting/loadInterviewAnswers');
+    loaded = await loadInterviewAnswers('check-project');
+  } finally {
+    (Module.default as any)._load = origLoad;
+  }
+
+  // ── the room half ──────────────────────────────────────────────────────────
+  // Asserted as a set rather than a fixed sequence, so adding a fixture answer
+  // does not make this fail for a reason that has nothing to do with the rule.
+  check('the loader still resolves `section` to the room name',
+    Array.from(new Set(loaded.map(a => a.section))).sort().join(',') === 'Entry,Kitchen',
+    JSON.stringify(loaded.map(a => a.section)));
+  check('the two consumers still find candidates under the room name',
+    extractQuoteCandidates(loaded as any, 'Entry').length > 0
+    && extractQuoteCandidates(loaded as any, 'Kitchen').length > 0);
+  check('a question category is never mistaken for a room key',
+    extractQuoteCandidates(loaded as any, 'what').length === 0
+    && extractQuoteCandidates(loaded as any, 'how').length === 0);
+
+  // ── the category half ──────────────────────────────────────────────────────
+  const byText = (frag: string) => loaded.find(a => a.answer.includes(frag));
+  check('a room answer keeps the category it was asked under',
+    byText('paneling')?.questionCategory === 'what', JSON.stringify(byText('paneling')));
+  check('...alongside the room, not instead of it',
+    byText('paneling')?.section === 'Entry');
+  check('a second answer keeps its own distinct category',
+    byText('windows up top')?.questionCategory === 'how');
+  check('a section that is not a real category arrives null, not promoted',
+    byText('stair rail')?.questionCategory === null, JSON.stringify(byText('stair rail')));
+  check('every loaded answer carries the field, even when unknown',
+    loaded.every(a => 'questionCategory' in a));
+  check('the category stored on the projection column reaches the loader too',
+    byText('two jobs at once')?.questionCategory === 'where',
+    JSON.stringify(byText('two jobs at once')));
+  check('...with its own room, resolved the same way',
+    byText('two jobs at once')?.section === 'Entry');
+}
+
+// ─── 15. The reverse sync stops overwriting the category with a guess ────────
+//
+// syncEditorialAnswersToProvenance writes projected answers back into
+// provenance. It used to set `section` to deriveSection(questionId, questionText)
+// unconditionally, and that function answers 'how' for every questionId this
+// codebase mints — so a project completed through InterviewFlow came back with
+// its whole interview relabelled 'how', corrupting the store the new column
+// depends on. The stored category must win; the derivation survives only for
+// rows that predate the column.
+console.log('\n15. The reverse sync preserves a stored category');
+
+async function reverseSyncChecks() {
+  const Module = await import('module');
+  const origLoad = (Module.default as any)._load;
+  const ROWS = [
+    // Stored category present: must be preserved verbatim, not re-derived.
+    { questionId: 'clx0001', questionText: 'Why the paneling?', answerText: 'It gives the eye somewhere to rest.',
+      isFollowUp: false, questionCategory: 'what', linkedImageId: null, linkedProductId: null,
+      questionSource: null, aiClassificationAttribute: null },
+    // No stored category (a row written before the column): derivation is the
+    // last resort, and 'how' here is the honest legacy behaviour, not a regression.
+    { questionId: 'clx0002', questionText: 'And the stair?', answerText: 'It took four tries before it belonged.',
+      isFollowUp: false, questionCategory: null, linkedImageId: null, linkedProductId: null,
+      questionSource: null, aiClassificationAttribute: null },
+  ];
+  (Module.default as any)._load = function (request: string) {
+    if (request === '@/lib/prisma' || request.endsWith('/lib/prisma')) {
+      return { prisma: {
+        editorialInterview: { findUnique: async () => ({ answers: ROWS }) },
+        project: { findUnique: async () => ({ images: [], title: 'P' }) },
+        projectPost: { findUnique: async () => ({ provenance: {} }), update: async () => ({}), create: async () => ({ provenance: {} }) },
+      } };
+    }
+    return origLoad.apply(this, arguments as any);
+  };
+
+  let result: any;
+  try {
+    const mod = await import('../src/lib/editorial/syncEditorialAnswersToProvenance');
+    result = await mod.syncEditorialAnswersToProvenance('check-project');
+  } finally {
+    (Module.default as any)._load = origLoad;
+  }
+
+  const bySpan = (frag: string) => result.answers.find((a: any) => a.answer.includes(frag));
+  check('a stored category survives the trip back into provenance',
+    bySpan('eye somewhere to rest')?.section === 'what',
+    JSON.stringify(bySpan('eye somewhere to rest')));
+  check('it is NOT overwritten with the derivation',
+    bySpan('eye somewhere to rest')?.section !== 'how');
+  check('a row with no stored category still falls back rather than dropping the field',
+    typeof bySpan('four tries')?.section === 'string' && bySpan('four tries')?.section.length > 0);
+}
+
+// ─── 16. The projection WRITES the category, not just reads it ───────────────
+//
+// Section 14 hands the loader a projection row that already has the column set,
+// which proves the read but says nothing about the write. rebuildAnswerProjection
+// deletes every row and recreates it on each pass, so a field it fails to write
+// is a field that vanishes on the next interview save. This asserts the payload
+// handed to `create`.
+console.log('\n16. The projection writes the category through delete-and-recreate');
+
+async function projectionWriteChecks() {
+  const Module = await import('module');
+  const origLoad = (Module.default as any)._load;
+  const created: any[] = [];
+  const PAYLOAD = [
+    { questionId: 'q-what', section: 'what', prompt: 'Why the paneling?', answer: 'It gives the eye somewhere to rest.', isFollowUp: false },
+    { questionId: 'q-junk', section: 'notACategory', prompt: 'And the stair?', answer: 'It took four tries before it belonged.', isFollowUp: false },
+  ];
+  (Module.default as any)._load = function (request: string) {
+    if (request === '@/lib/prisma' || request.endsWith('/lib/prisma')) {
+      return { prisma: {
+        editorialInterview: { findUnique: async () => ({ id: 'i1', projectId: 'p1' }), create: async () => ({ id: 'i1' }) },
+        projectPost: { findUnique: async () => ({ provenance: { interview: { payload: { answers: PAYLOAD, followups: [] } } } }) },
+        editorialInterviewAnswer: {
+          findMany: async () => [],
+          deleteMany: () => ({ __op: 'deleteMany' }),
+          create: (args: any) => { created.push(args.data); return { __op: 'create' }; },
+        },
+        $transaction: async (ops: any[]) => ops,
+      } };
+    }
+    return origLoad.apply(this, arguments as any);
+  };
+
+  try {
+    const mod = await import('../src/lib/editorial/syncInterviewAnswers');
+    await mod.syncAnswersToEditorialInterview('p1');
+  } finally {
+    (Module.default as any)._load = origLoad;
+  }
+
+  const row = (qid: string) => created.find((r) => r.questionId === qid);
+  check('the projection was exercised at all (guards the two checks below)', created.length === 2,
+    `${created.length} row(s) created`);
+  check('a real category is written to the column',
+    row('q-what')?.questionCategory === 'what', JSON.stringify(row('q-what')?.questionCategory));
+  check('a section that is not a real category is written as null, not as itself',
+    row('q-junk')?.questionCategory === null, JSON.stringify(row('q-junk')?.questionCategory));
+}
+
+// Sequential, not Promise.all: loaderChecks and reverseSyncChecks each install a
+// module-loader stub and restore it in a finally, so running them concurrently
+// lets one restore the loader out from under the other. Found by doing it.
+collaborationChecks()
+  .then(loaderChecks)
+  .then(reverseSyncChecks)
+  .then(projectionWriteChecks)
+  .then(() => {
   console.log(failures === 0
     ? '\nAll pull-quote checks passed.\n'
     : `\n${failures} check(s) failed.\n`);

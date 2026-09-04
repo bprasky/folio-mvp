@@ -1,5 +1,6 @@
 import { prisma } from '@/lib/prisma';
 import { randomUUID } from 'crypto';
+import { SECTION_ENUM } from '@/lib/posting/interviewSchemas';
 
 /**
  * The projection of interview answers into `EditorialInterviewAnswer`.
@@ -36,6 +37,13 @@ export interface ProjectionAnswer {
   questionSource?: string | null;
   roomId?: string | null;
   isCrossRoom?: boolean;
+  /**
+   * The question CATEGORY, one of the twelve SECTION_ENUM values. Provenance
+   * calls this field `section`; the column is `questionCategory` because by the
+   * time an answer is loaded, `section` means the resolved ROOM and the two are
+   * orthogonal. Read off the payload's `section` by the caller.
+   */
+  questionCategory?: string | null;
   /** For a follow-up: the questionId of the answer that prompted it. */
   parentQuestionId?: string | null;
 }
@@ -135,6 +143,11 @@ export async function rebuildAnswerProjection(
           aiClassificationAttribute: a.aiClassificationAttribute || null,
           roomId: a.roomId || null,
           isCrossRoom: !!a.isCrossRoom,
+          // Rebuilt from the payload on every pass, like audioUrl above and for
+          // the same reason: a wipe-and-rebuild cannot drop what it re-derives
+          // from its input. Null when the payload carried no category — never a
+          // guess, because a wrong category is worse than a missing one.
+          questionCategory: a.questionCategory || null,
           // The retained recording for this question, projected from canonical
           // provenance. Rebuilt from the map on every pass rather than carried
           // on the row, so a wipe-and-rebuild cannot drop it — which is the
@@ -185,9 +198,19 @@ export async function syncAnswersToEditorialInterview(
 
   const provenance = post.provenance as any;
   const payload = provenance.interview?.payload || {};
-  const answers: ProjectionAnswer[] = payload.answers || [];
+
+  // Provenance names the question category `section`. Carry it across under the
+  // name the column uses, and only when it is a real SECTION_ENUM member —
+  // anything else is a value some earlier derivation invented, and null is the
+  // honest record of "we do not know".
+  const withCategory = (a: any): ProjectionAnswer => ({
+    ...a,
+    questionCategory: SECTION_ENUM.safeParse(a?.section).success ? a.section : null,
+  });
+
+  const answers: ProjectionAnswer[] = (payload.answers || []).map(withCategory);
   const followups: ProjectionAnswer[] = (payload.followups || []).map(
-    (f: ProjectionAnswer) => ({ ...f, isFollowUp: true }),
+    (f: ProjectionAnswer) => ({ ...withCategory(f), isFollowUp: true }),
   );
 
   const answersCreated = await rebuildAnswerProjection(
