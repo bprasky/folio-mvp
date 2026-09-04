@@ -16,13 +16,85 @@
 // field can, in one keystroke. The designer's recourse to a quote they dislike
 // is a different quote of their own, or none.
 //
+// The AUTHORSHIP TOGGLE names who wrote the line, not what format it is in.
+// "Your words" and "Written by Folio" are two legitimate choices — a designer
+// may reasonably prefer Folio describing their decisions to a sentence they
+// happened to say out loud. What they may NOT do is be unclear about which they
+// picked, which is why the labels name the author rather than saying something
+// like "quote" and "caption".
+//
+// "Written by Folio" is deliberately present and deliberately unavailable.
+// There is no caption generator, and there must not be a stub one: a Folio line
+// is paraphrase, and paraphrase needs the provenance work (C1) before it can be
+// published under a designer's name. Rendering the slot is how the choice stays
+// visible as a choice instead of arriving later as a surprise.
+//
 // Moved out of the retired EditableArticle when editing moved into the story
 // preview. `scripts/check-pull-quotes.ts` section 7 asserts against this file.
 // ============================================================================
 
 import { useState } from 'react';
-import type { PullQuoteSelection } from '@/lib/posting/schemas';
+import type { PullQuoteSelection, PullQuoteAuthorship } from '@/lib/posting/schemas';
 import { isPullQuoteSelection } from '@/lib/posting/schemas';
+
+/**
+ * Why "Written by Folio" cannot be picked yet, in the designer's terms rather
+ * than ours. Shown on activation instead of as permanent chrome under every
+ * room, but the control is focusable and announces itself disabled, so the
+ * explanation is reachable by keyboard and not tooltip-only.
+ */
+const FOLIO_UNAVAILABLE =
+  'Not available yet. Before Folio writes in your place, every line has to be traceable back to something you said.';
+
+/**
+ * Two authorship modes, side by side, both always rendered.
+ *
+ * Every room shows both regardless of how good its candidates are. This is a
+ * choice about who is speaking, not a fallback for a thin interview — showing
+ * the Folio option only when the verbatim pool is weak would turn it into a
+ * consolation prize and quietly tell the designer their own words were not good
+ * enough.
+ */
+function AuthorshipToggle({
+  authorship,
+  onUnavailable,
+}: {
+  authorship: PullQuoteAuthorship;
+  onUnavailable: () => void;
+}) {
+  const base =
+    'folio-meta px-2 py-0.5 rounded-full border transition-colors whitespace-nowrap';
+  const selected = 'border-[var(--accent)] text-[var(--accent)]';
+  const unselected = 'border-transparent text-folio-text-tertiary';
+
+  return (
+    <div
+      role="group"
+      aria-label="Who wrote this line"
+      className="flex items-center gap-1"
+    >
+      <span
+        className={`${base} ${authorship === 'verbatim' ? selected : unselected}`}
+        aria-current={authorship === 'verbatim'}
+      >
+        Your words
+      </span>
+      {/* Present, focusable, and honestly disabled. `aria-disabled` rather than
+          `disabled` so it still takes focus and can explain itself when
+          activated — a `disabled` button is silent to a keyboard user, which is
+          the one case where "why can't I click this" has no answer. */}
+      <button
+        type="button"
+        aria-disabled
+        onClick={onUnavailable}
+        className={`${base} border-dashed border-folio-text-tertiary/40 text-folio-text-tertiary/70 cursor-not-allowed hover:text-folio-text-tertiary`}
+        title="Not available yet"
+      >
+        Written by Folio
+      </button>
+    </div>
+  );
+}
 
 interface PullQuotePickerProps {
   pullQuote: string | PullQuoteSelection | null | undefined;
@@ -44,6 +116,10 @@ export function PullQuotePicker({
   const [notice, setNotice] = useState<string | null>(null);
 
   const isSelection = isPullQuoteSelection(pullQuote);
+  // Absent on every article generated before the toggle existed, and absent
+  // means the designer's own words — which is what those articles contain.
+  const authorship: PullQuoteAuthorship =
+    (isSelection ? pullQuote.authorship : undefined) ?? 'verbatim';
   const selectedText = typeof pullQuote === 'string' ? pullQuote : pullQuote?.selected?.text ?? null;
   const selectedContext = isSelection ? pullQuote.selected?.context : undefined;
   const alternatives = isSelection ? pullQuote.alternatives : [];
@@ -84,7 +160,11 @@ export function PullQuotePicker({
       const res = await fetch(`/api/posting/project/${projectId}/sections/pull-quote`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ chapterIndex, selectedText: nextText }),
+        // The mode rides along with the selection so the two cannot disagree.
+        // Only 'verbatim' is reachable today; recording it from the start is
+        // what makes the eventual Folio rate readable against a real baseline
+        // rather than against rows that predate the field.
+        body: JSON.stringify({ chapterIndex, selectedText: nextText, authorship }),
       });
       if (res.ok) onUpdate();
     } finally {
@@ -102,22 +182,15 @@ export function PullQuotePicker({
   if (selectedText) {
     return (
       <div className="py-2">
-        {/* Read-only by design. See the note at the top of this file: the quote
-            is the designer's own sentence, and the way to change it is to pick a
-            different one of their sentences. */}
-        <blockquote
-          className={quoteClassName ?? 'font-[var(--font-headline)] text-lg md:text-xl italic leading-relaxed text-folio-text-secondary'}
-        >
-          &ldquo;{selectedText}&rdquo;
-        </blockquote>
+        {/* Controls ABOVE the quote: they govern the line beneath them, and
+            reading order should say so. Regenerate Section is not here — it
+            acts on the whole room and stays below with the room. */}
+        <div className="flex items-center gap-3 flex-wrap mb-2">
+          <AuthorshipToggle
+            authorship={authorship}
+            onUnavailable={() => setNotice(FOLIO_UNAVAILABLE)}
+          />
 
-        {selectedContext && (
-          <p className="mt-2 folio-meta tracking-wide uppercase text-folio-text-tertiary">
-            — {selectedContext}
-          </p>
-        )}
-
-        <div className="flex items-center justify-between mt-3">
           <div className="flex items-center gap-2">
             {hasAlternatives && (
               <>
@@ -145,6 +218,7 @@ export function PullQuotePicker({
               </>
             )}
           </div>
+
           <button
             onClick={() => patch(null)}
             disabled={saving}
@@ -156,7 +230,23 @@ export function PullQuotePicker({
             Remove
           </button>
         </div>
-        {notice && <p className="mt-1 folio-meta text-folio-text-tertiary">{notice}</p>}
+
+        {notice && <p className="mb-2 folio-meta text-folio-text-tertiary">{notice}</p>}
+
+        {/* Read-only by design. See the note at the top of this file: the quote
+            is the designer's own sentence, and the way to change it is to pick a
+            different one of their sentences. */}
+        <blockquote
+          className={quoteClassName ?? 'font-[var(--font-headline)] text-lg md:text-xl italic leading-relaxed text-folio-text-secondary'}
+        >
+          &ldquo;{selectedText}&rdquo;
+        </blockquote>
+
+        {selectedContext && (
+          <p className="mt-2 folio-meta tracking-wide uppercase text-folio-text-tertiary">
+            — {selectedContext}
+          </p>
+        )}
       </div>
     );
   }

@@ -780,8 +780,10 @@ export async function POST(
       // Room attribution and the follow-up flag have to survive this hop.
       // Dropping either silently degrades pull quotes: without the room the
       // answer cannot be matched to a chapter, and without the flag
-      // `extractQuoteCandidates` stops ranking follow-ups first — which is the
-      // whole reason follow-up questions are prompted for quotable material.
+      // `extractQuoteCandidates` stops ranking follow-ups above primaries —
+      // which is the whole reason follow-up questions are prompted for quotable
+      // material. (The follow-up tier is the SECOND sort key; self-sufficiency
+      // is the first. Losing the flag still costs the tier.)
       roomId: a.roomId ?? a.room_id ?? null,
       roomName: a.roomName || undefined,
       isFollowUp: true,
