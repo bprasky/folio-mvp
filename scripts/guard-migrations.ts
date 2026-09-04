@@ -23,6 +23,7 @@ import { spawnSync } from 'child_process';
 // connection is safe for schema work, and seven scripts depend on that decision
 // being made in exactly one place.
 import { migrationConnectionUrl } from './lib/migrationConnection.mjs';
+import { loadProjectEnv } from './lib/loadEnv.mjs';
 
 let failures = 0;
 const fail = (name: string, detail: string) => {
@@ -45,7 +46,18 @@ function describe(raw: string): { label: string; host: string; port: string; db:
   }
 }
 
+// Before anything reads process.env. The chains invoke this bare, so there is no
+// --env-file to pass, and `prisma migrate deploy` two links later reads `.env`
+// on its own — a gate that could not see the same connection as the command it
+// gates would refuse work that was never unsafe.
+const envFiles = loadProjectEnv();
+
 console.log('\ndb:guard — pre-apply checks\n');
+console.log(
+  envFiles.length > 0
+    ? `  ....  env loaded from ${envFiles.join(', ')}`
+    : '  ....  no .env.local or .env found; using the ambient environment only',
+);
 
 // ─── 1. Connection safety for `prisma migrate` itself ────────────────────────
 //
