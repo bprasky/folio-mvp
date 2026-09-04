@@ -1899,6 +1899,19 @@ model EditorialInterviewAnswer {
   roomId      String? @map("room_id")
   isCrossRoom Boolean @default(false) @map("is_cross_room")
 
+  // The QUESTION CATEGORY the designer answered under — one of the twelve
+  // SECTION_ENUM values in @/lib/posting/interviewSchemas ("what", "how",
+  // "emotionalCore" …). Orthogonal to `roomId`, which is the room the answer is
+  // ABOUT: a "what" question can be asked about the Entry.
+  //
+  // It exists because the projection had nowhere to put it. Provenance stores it
+  // as `section`, loadInterviewAnswers overwrites `section` with the resolved
+  // room name for the consumers that match it against a chapter title, and the
+  // category was gone with no recovery path. Nullable and never backfilled:
+  // rows written before this column keep null, which reads as "unknown" rather
+  // than as a wrong value.
+  questionCategory String? @map("question_category")
+
   createdAt DateTime @default(now()) @map("created_at")
 
   // Relations

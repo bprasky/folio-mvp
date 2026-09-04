@@ -79,7 +79,7 @@ export function createHeadlineSVG(
   const xPos = position.endsWith('center') ? width / 2 : padding;
   const anchor = position.endsWith('center') ? 'middle' : 'start';
 
-  // No quotation marks. This text comes from generate-quotes.ts, which prompts a
+  // No quotation marks. This text comes from generate-headlines.ts, which prompts a
   // model to invent an editorial headline — it is not the designer's speech, and
   // typesetting it as a quotation attributed invented words to a named person
   // over their own photograph. The editor UI already calls this a headline.

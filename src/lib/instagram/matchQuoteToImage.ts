@@ -3,7 +3,7 @@
  * Matches quotes to images based on metadata, context, or distributes intelligently
  */
 
-import { Blocks } from '@/lib/posting/schemas';
+import { Blocks, getSelectedPullQuoteText } from '@/lib/posting/schemas';
 
 interface QuoteWithMetadata {
   text: string;
@@ -20,65 +20,59 @@ interface ImageData {
 }
 
 /**
- * Extract quotes with metadata from expandedBlocks
+ * Extract quotes with metadata from expandedBlocks.
+ *
+ * SOURCE: the article's already-verified pull quote selections. Nothing else —
+ * see the header of `./extractQuotes` for why the body-prose mining that used to
+ * live here is gone. Same guarantee, same absence of a fallback: no verified
+ * selection means no quote for that chapter, and `matchQuotesToImages` simply
+ * has fewer quotes to place. `createImageSlideWithQuote` already renders the
+ * photograph alone when it is handed none, so the slide loses its overlay
+ * instead of gaining an invented line.
+ *
+ * The metadata (`imageId`, `chapterIndex`) is what this adds over `extractQuotes`
+ * — it is how a quote lands on the photograph from the room it was said about
+ * rather than on an arbitrary one.
  */
 export function extractQuotesWithMetadata(expandedBlocks: Blocks | null | undefined): QuoteWithMetadata[] {
   if (!expandedBlocks) return [];
 
   const quotes: QuoteWithMetadata[] = [];
 
-  // Extract from pullQuotes array
-  if (expandedBlocks.pullQuotes && Array.isArray(expandedBlocks.pullQuotes)) {
-    expandedBlocks.pullQuotes.forEach((quote, index) => {
-      if (quote) {
-        quotes.push({
-          text: quote,
-          chapterIndex: index,
-        });
+  // Top-level index, built by `syncPullQuotesFromChapters` from the chapter
+  // selections plus the verified hook quote. Entries are objects on current
+  // articles and bare strings on legacy ones; both carry verified text.
+  if (Array.isArray(expandedBlocks.pullQuotes)) {
+    expandedBlocks.pullQuotes.forEach((raw, index) => {
+      const text = typeof raw === 'string' ? raw : (raw as { text?: unknown })?.text;
+      if (typeof text === 'string' && text.trim()) {
+        quotes.push({ text: text.trim(), chapterIndex: index });
       }
     });
   }
 
-  // Extract from galleryChapters with imageIds
-  if (expandedBlocks.galleryChapters && Array.isArray(expandedBlocks.galleryChapters)) {
+  // Per-chapter selections, resolved through the helper the article renders
+  // through so the export cannot show a quote the page does not.
+  if (Array.isArray(expandedBlocks.galleryChapters)) {
     expandedBlocks.galleryChapters.forEach((chapter, chapterIndex) => {
-      // Pull quote from chapter
-      if (chapter.pullQuote) {
-        quotes.push({
-          text: chapter.pullQuote,
-          imageId: chapter.imageIds?.[0], // Use first image in chapter
-          chapterIndex,
-        });
-      }
-      
-      // Extract quotable sentences from body
-      if (chapter.body && Array.isArray(chapter.body)) {
-        chapter.body.forEach((para) => {
-          if (typeof para === 'string') {
-            const sentences = para.split(/[.!?]+/).filter(s => {
-              const trimmed = s.trim();
-              return trimmed.length >= 50 && trimmed.length <= 150;
-            });
-            
-            sentences.slice(0, 1).forEach((sentence) => {
-              quotes.push({
-                text: sentence.trim(),
-                imageId: chapter.imageIds?.[0],
-                chapterIndex,
-              });
-            });
-          }
-        });
-      }
+      const text = getSelectedPullQuoteText(chapter.pullQuote);
+      if (!text) return;
+      quotes.push({
+        text: text.trim(),
+        imageId: chapter.imageIds?.[0],
+        chapterIndex,
+      });
     });
   }
 
-  // Deduplicate and limit to 4
-  const uniqueQuotes = Array.from(
-    new Map(quotes.map(q => [q.text.trim(), q])).values()
+  // Deduplicate on text, keeping the first entry — the chapter-scoped one wins
+  // over the top-level index only if it was seen first, which is fine: both carry
+  // the same string, and the imageId is a placement hint, not a claim.
+  const unique = Array.from(
+    new Map(quotes.map(q => [q.text, q])).values()
   ).filter(q => q.text.length >= 30 && q.text.length <= 200);
 
-  return uniqueQuotes.slice(0, 4);
+  return unique.slice(0, 4);
 }
 
 /**

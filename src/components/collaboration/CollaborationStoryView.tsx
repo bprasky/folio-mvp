@@ -238,13 +238,33 @@ export function CollaborationStoryView({ story }: CollaborationStoryViewProps) {
                 </blockquote>
               );
             case 'pullQuote':
+              // Deliberately not rendered, including on stories already stored.
+              //
+              // These blocks were written by the model, not said by anyone. The
+              // generator asked for "direct quotes from both parties" and set
+              // whatever came back in display type under a named person's name and
+              // role — and neither the vendor nor the designer sees this page before
+              // it publishes, so nobody ever agreed to the words attributed to them.
+              //
+              // The generator no longer emits this block. Rows written before that
+              // change still carry them, and they are left in place rather than
+              // rewritten: skipping at render is reversible and touches no data, and
+              // the real fix is quotes selected from the round responses the way
+              // selectPullQuotes cuts them from interview answers. Until that exists,
+              // the slot is empty.
+              return null;
+            case 'verbatimQuote':
+              // The replacement for the block above: cut from this speaker's own
+              // interview answers by code, ranked by ID rather than written, and
+              // re-checked against those same answers before it reached the page.
+              // Safe to attribute because nothing in the path could have authored it.
               return (
                 <figure
                   key={index}
                   className="my-10 p-8 bg-gradient-to-br from-neutral-50 to-neutral-100 rounded-2xl"
                 >
                   <blockquote className="text-xl md:text-2xl font-serif italic text-neutral-800 leading-relaxed">
-                    "{block.text}"
+                    &ldquo;{block.text}&rdquo;
                   </blockquote>
                   <figcaption className="mt-4 flex items-center gap-3">
                     <div className="w-1 h-8 bg-gradient-to-b from-blue-500 to-purple-500 rounded-full" />

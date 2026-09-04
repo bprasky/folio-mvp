@@ -28,6 +28,30 @@ function deriveSection(qid?: string, prompt?: string): string {
   return 'how';
 }
 
+/**
+ * The category to write back into provenance for one projected answer.
+ *
+ * This function is the fix for the worse half of the category loss. It used to
+ * be `deriveSection(a.questionId, a.questionText)` unconditionally, which meant
+ * every trip through here OVERWROTE the canonical provenance value with a guess
+ * — and `deriveSection` guesses `'how'` for anything it does not recognise,
+ * which is every questionId this codebase currently mints (`project-<CAT>-<uuid>`
+ * splits to `project`, a cuid splits to itself, `auto-<idx>` to `auto`). So a
+ * project completed through InterviewFlow came out with its whole interview
+ * relabelled `'how'`, and the store the new `questionCategory` column depends on
+ * was corrupted by the same pass that populates it.
+ *
+ * Now the stored value wins whenever there is one. The derivation survives only
+ * as the last resort for rows written before the column existed, where guessing
+ * is still better than dropping the field entirely — those rows are already
+ * carrying whatever `deriveSection` said, so this preserves their behaviour
+ * rather than changing it.
+ */
+function categoryFor(a: { questionCategory: string | null; questionId: string; questionText: string | null }): string {
+  if (a.questionCategory && ALLOWED_SECTIONS.has(a.questionCategory)) return a.questionCategory;
+  return deriveSection(a.questionId, a.questionText || undefined);
+}
+
 function deepMerge(a: any, b: any): any {
   if (Array.isArray(a) || Array.isArray(b)) return b ?? a;
   if (a && typeof a === 'object' && b && typeof b === 'object') {
@@ -84,7 +108,7 @@ export async function syncEditorialAnswersToProvenance(
   // 2. Convert to provenance answer shape
   const allFormatted = editorialInterview.answers.map((a) => ({
     questionId: a.questionId,
-    section: deriveSection(a.questionId, a.questionText || undefined),
+    section: categoryFor(a),
     prompt: a.questionText || a.questionId,
     answer: a.answerText,
     role: 'DESIGNER' as const,

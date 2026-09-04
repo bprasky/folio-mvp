@@ -1,16 +1,37 @@
 /**
- * Extract quotable excerpts from ProjectPost expandedBlocks
- * Returns array of quotes (max 4) suitable for Instagram carousel
+ * Quotes for an Instagram export.
+ *
+ * SOURCE: the article's already-verified pull quote selections. Nothing else.
+ *
+ * What this used to do, and why it stopped: it read the verified selections, then
+ * fell through to `lead.deck` (Folio's own summary copy, never anyone's speech),
+ * then split every chapter body on `[.!?]` and took any sentence between 50 and
+ * 150 characters. Those sentences are model-written article prose. Setting one in
+ * quote marks over a photograph publishes a sentence the designer never said, to
+ * an audience that has no way to check, on the one surface that leaves the
+ * platform and cannot be corrected after the fact.
+ *
+ * The article's own quotes were cut from the designer's interview answers by
+ * `extractQuoteCandidates` and re-checked with `isVerbatimSpan` before they were
+ * stored. Reading them here inherits that guarantee. Re-deriving anything from
+ * prose throws it away, which is why there is no fallback below: a project with
+ * no verified selection returns an empty array, and the caller omits the quote
+ * rather than generating one.
  */
 
 import { Blocks, getSelectedPullQuoteText } from '@/lib/posting/schemas';
+
+/** Instagram overlay limits. A quote outside them is dropped, never trimmed to fit. */
+const MIN_LENGTH = 30;
+const MAX_LENGTH = 200;
 
 export function extractQuotes(expandedBlocks: Blocks | null | undefined): string[] {
   if (!expandedBlocks) return [];
 
   const quotes: string[] = [];
 
-  // Top-level pullQuotes can be string | { text, context?, sourceSection? }
+  // Top-level index. Built by `syncPullQuotesFromChapters` from the chapter
+  // selections plus the hook quote, both of which are verified upstream.
   if (Array.isArray(expandedBlocks.pullQuotes)) {
     for (const q of expandedBlocks.pullQuotes) {
       if (typeof q === 'string') {
@@ -21,7 +42,8 @@ export function extractQuotes(expandedBlocks: Blocks | null | undefined): string
     }
   }
 
-  // Per-chapter pullQuote is string | PullQuoteSelection | null — use the shared helper
+  // Per-chapter selections. The same helper the article renders through, so the
+  // export cannot show a quote the page does not.
   if (Array.isArray(expandedBlocks.galleryChapters)) {
     for (const chapter of expandedBlocks.galleryChapters) {
       const text = getSelectedPullQuoteText(chapter.pullQuote);
@@ -29,36 +51,9 @@ export function extractQuotes(expandedBlocks: Blocks | null | undefined): string
     }
   }
 
-  // Extract from lead.deck (if it's quotable)
-  if (typeof expandedBlocks.lead?.deck === 'string' && expandedBlocks.lead.deck.length <= 150) {
-    quotes.push(expandedBlocks.lead.deck);
-  }
+  const unique = Array.from(new Set(quotes.map((q) => q.trim()).filter(Boolean)));
 
-  // Extract from galleryChapters body text (look for short, impactful sentences)
-  if (Array.isArray(expandedBlocks.galleryChapters)) {
-    for (const chapter of expandedBlocks.galleryChapters) {
-      if (Array.isArray(chapter.body)) {
-        for (const para of chapter.body) {
-          if (typeof para === 'string') {
-            const sentences = para
-              .split(/[.!?]+/)
-              .map((s) => s.trim())
-              .filter((s) => s.length >= 50 && s.length <= 150);
-            quotes.push(...sentences.slice(0, 2));
-          }
-        }
-      }
-    }
-  }
-
-  // Deduplicate and limit to 4
-  const uniqueQuotes = Array.from(
-    new Set(quotes.map((q) => q.trim()).filter(Boolean))
-  );
-
-  // Filter out quotes that are too short or too long for Instagram
-  const filtered = uniqueQuotes.filter((q) => q.length >= 30 && q.length <= 200);
-
-  return filtered.slice(0, 4);
+  return unique
+    .filter((q) => q.length >= MIN_LENGTH && q.length <= MAX_LENGTH)
+    .slice(0, 4);
 }
-

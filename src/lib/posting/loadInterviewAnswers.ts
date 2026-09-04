@@ -39,6 +39,11 @@ import {
   type ProjectQuestionCategory,
 } from '@/lib/interview/generateProjectQuestions';
 import type { AnswerLike } from './quoteCandidates';
+import { z } from 'zod';
+import { SECTION_ENUM } from './interviewSchemas';
+
+/** One of the twelve question categories. `z.infer` keeps it tied to the enum. */
+export type SectionCategory = z.infer<typeof SECTION_ENUM>;
 
 /**
  * The "About This Project" category an answer belongs to, or null for a room one.
@@ -78,6 +83,20 @@ export interface LoadedAnswer extends AnswerLike {
    * `category !== null` the test for "this is project-scoped".
    */
   category: ProjectQuestionCategory | null;
+  /**
+   * The QUESTION CATEGORY — one of the twelve SECTION_ENUM values, the thing the
+   * stores call `section` before this loader overwrites that field with the room.
+   *
+   * A third axis, not a variant of the other two. `section` above is the room the
+   * answer is ABOUT; `category` is whether it is project-scoped; this is what was
+   * ASKED. A "what" question can be asked about the Entry, which is precisely the
+   * case that used to be unrecoverable: the room survived, the topic did not.
+   *
+   * Null means unknown, never a guess. Rows written before the column existed and
+   * payload answers whose `section` is not a real SECTION_ENUM member both arrive
+   * null rather than carrying whatever an earlier derivation invented.
+   */
+  questionCategory: SectionCategory | null;
   answer: string;
   isFollowUp: boolean;
 }
@@ -123,17 +142,33 @@ export async function loadInterviewAnswers(projectId: string): Promise<LoadedAns
     section: string,
     isFollowUp: boolean,
     category: ProjectQuestionCategory | null,
+    questionCategory: SectionCategory | null,
   ) => {
     if (typeof text !== 'string' || !text.trim()) return;
-    out.push({ answer: text, section, isFollowUp, category });
+    out.push({ answer: text, section, isFollowUp, category, questionCategory });
+  };
+
+  /**
+   * The stored question category, or null.
+   *
+   * Provenance keeps it under `section` — the field this loader is about to
+   * overwrite with the room — so reading it here is the whole of the fix for
+   * provenance-native projects: the value was never missing, only discarded.
+   * The projection keeps it under its own column. Validated against SECTION_ENUM
+   * either way, so a derived `'how'` that some earlier pass wrote into a payload
+   * does not get promoted to a fact.
+   */
+  const storedCategory = (raw: unknown): SectionCategory | null => {
+    const parsed = SECTION_ENUM.safeParse(raw);
+    return parsed.success ? parsed.data : null;
   };
 
   const payload = (post?.provenance as any)?.interview?.payload ?? {};
   for (const a of Array.isArray(payload.answers) ? payload.answers : []) {
-    push(a?.answer ?? a?.a, roomOf(a), !!a?.isFollowUp, categoryFromPayload(a));
+    push(a?.answer ?? a?.a, roomOf(a), !!a?.isFollowUp, categoryFromPayload(a), storedCategory(a?.section));
   }
   for (const a of Array.isArray(payload.followups) ? payload.followups : []) {
-    push(a?.answer ?? a?.a, roomOf(a), true, categoryFromPayload(a));
+    push(a?.answer ?? a?.a, roomOf(a), true, categoryFromPayload(a), storedCategory(a?.section));
   }
   for (const a of interview?.answers ?? []) {
     push(
@@ -144,6 +179,7 @@ export async function loadInterviewAnswers(projectId: string): Promise<LoadedAns
         projectAnswerCategory(
           a.parentAnswerId ? questionIdByRowId.get(a.parentAnswerId) : null,
         ),
+      storedCategory((a as { questionCategory?: unknown }).questionCategory),
     );
   }
 

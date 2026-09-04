@@ -431,9 +431,17 @@ export function isArticleHookQuote(text: string): boolean {
  * returns the first that passes `isArticleHookQuote` — we never accept a
  * piece-specific line as the lead, even if it scored highest.
  *
- * Deterministic, no LLM call. Used as:
- *   - A fallback for new drafts when spliceHookQuote returns null/rejected.
- *   - A retrofit for existing posts via the admin re-extract route.
+ * Deterministic, no LLM call. The only caller is the new-draft path, as a
+ * fallback for when spliceHookQuote returns null or its result is rejected.
+ * The result is checked with isVerbatimSpan before it ships, because mining
+ * the generated introduction inherits any paraphrase the model wrote there.
+ *
+ * There is deliberately no retrofit caller. The admin re-extract route used to
+ * be one — it re-mined every stored post's quotes out of generated prose with
+ * no verbatim check and overwrote verified selections — and was deleted rather
+ * than repaired. Backfilling an existing article goes through
+ * POST /api/posting/project/[projectId]/sections/pull-quotes/backfill, which
+ * selects from the designer's answers and never overwrites an existing quote.
  */
 export function extractHookQuoteFromIntroduction(
   introduction: string[] | undefined,

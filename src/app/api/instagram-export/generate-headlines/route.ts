@@ -4,7 +4,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/app/api/auth/[...nextauth]/options';
 import { prisma } from '@/lib/prisma';
-import { generatePullQuotes } from '@/lib/instagram-export/generate-quotes';
+import { generateHeadlineOptions } from '@/lib/instagram-export/generate-headlines';
 
 export async function POST(request: NextRequest) {
   try {
@@ -42,18 +42,18 @@ export async function POST(request: NextRequest) {
       ? project.rooms.find((r) => r.id === roomId)
       : undefined;
 
-    const quotes = await generatePullQuotes({
+    const headlines = await generateHeadlineOptions({
       postTitle: project.title,
       expandedBlocks: project.post.expandedBlocks,
       roomName: room?.name,
       feedback,
     });
 
-    return NextResponse.json({ quotes });
+    return NextResponse.json({ headlines });
   } catch (error: any) {
-    console.error('[instagram-export/generate-quotes]', error);
+    console.error('[instagram-export/generate-headlines]', error);
     return NextResponse.json(
-      { error: error.message || 'Failed to generate quotes' },
+      { error: error.message || 'Failed to generate headlines' },
       { status: 500 }
     );
   }

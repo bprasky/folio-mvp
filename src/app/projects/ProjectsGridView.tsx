@@ -1,6 +1,6 @@
 'use client';
 
-import { Project } from '@prisma/client';
+import type { Project } from '@prisma/client';
 import { SortKey } from './_lib/sort';
 import Link from 'next/link';
 import { RidgeCard } from '@/components/ui/ridge-card';

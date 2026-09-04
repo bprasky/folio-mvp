@@ -1,3 +1,18 @@
+/**
+ * Instagram export HEADLINES.
+ *
+ * This was called `generatePullQuotes` in `generate-quotes.ts`, which was a lie
+ * with consequences: the prompt below asks for five scroll-stopping cover lines
+ * and the model writes them, so anything sitting in a slot named "pull quote"
+ * was editorial copy nobody said. The export UI already treated the result as a
+ * headline (`selectedHeadline`); only the name disagreed.
+ *
+ * A headline is Folio's own line about the work and may be written. A quote is a
+ * claim about what a person said and may not — those come from
+ * `@/lib/instagram/extractQuotes`, which reads the article's already-verified
+ * selections and never generates.
+ */
+
 import Anthropic from '@anthropic-ai/sdk';
 import { MODELS } from '@/lib/ai/models';
 
@@ -29,7 +44,7 @@ export function extractTextFromBlocks(blocks: any): string {
   return JSON.stringify(blocks).slice(0, 2000);
 }
 
-interface GenerateQuotesInput {
+interface GenerateHeadlinesInput {
   postTitle: string;
   postSubtitle?: string;
   expandedBlocks: any;
@@ -38,7 +53,7 @@ interface GenerateQuotesInput {
   feedback?: string;
 }
 
-export async function generatePullQuotes(input: GenerateQuotesInput): Promise<string[]> {
+export async function generateHeadlineOptions(input: GenerateHeadlinesInput): Promise<string[]> {
   if (!isAnthropicEnabled()) {
     throw new Error('AI generation is not available');
   }
