@@ -1,0 +1,45 @@
+-- Enforce the row key that rebuildAnswerProjection already depends on.
+--
+-- ADD-ONLY. One unique index. No column added, altered or dropped, no data
+-- written, moved or deleted, no backfill.
+--
+-- WHY. `rebuildAnswerProjection` (syncInterviewAnswers.ts) wipes and recreates
+-- every answer row for an interview on each sync, minting a fresh randomUUID()
+-- for each. It re-links a follow-up to its parent through a Map keyed on
+-- `rowKey(questionId, isFollowUp)` scoped to the interview. That triple is
+-- therefore already treated as an identity, with nothing enforcing it: two rows
+-- sharing it collapse to a single Map entry and then collide on the primary key
+-- mid-transaction. It is also the only key a pull quote can durably point at,
+-- since the row `id` is re-minted on every sync and dangles as soon as the
+-- designer answers one more question.
+--
+-- PRE-FLIGHT. A unique index over data that violates it fails at CREATE. Run
+-- the duplicate check in the same file's session notes BEFORE applying:
+--
+--   SELECT interview_id, question_id, is_follow_up, COUNT(*)
+--   FROM editorial_interview_answers
+--   GROUP BY 1, 2, 3 HAVING COUNT(*) > 1;
+--
+-- Two live writers can produce duplicates and neither is guarded:
+--   * /api/interview/respond creates a row per answer with no uniqueness check,
+--     so re-answering a question adds a second row for the same triple.
+--   * /api/interview/realtime/convert deletes only rows whose question_source
+--     is 'realtime_interview', then createMany's — so a questionId already
+--     stored under a different source survives and is duplicated.
+-- If the check returns rows, STOP: deduplication is a data decision.
+--
+-- LOCKING. CREATE UNIQUE INDEX takes ACCESS EXCLUSIVE on the table for the
+-- build. CONCURRENTLY is not available here — Prisma runs migrations inside a
+-- transaction and CREATE INDEX CONCURRENTLY cannot run in one. The table is
+-- small at this stage, so the block is brief; revisit if it grows.
+--
+-- NAME. Set explicitly. Prisma's derived name for this triple
+-- ("editorial_interview_answers_interview_id_question_id_is_follow_up_key") is
+-- 69 characters and Postgres truncates identifiers at 63, so an implicit name
+-- would depend on a silent truncation.
+--
+-- IF NOT EXISTS per the Phase 5E idempotency rule enforced by
+-- scripts/phase5e-check-plan.mjs check 4.
+
+CREATE UNIQUE INDEX IF NOT EXISTS "editorial_interview_answers_row_key"
+  ON "editorial_interview_answers" ("interview_id", "question_id", "is_follow_up");
