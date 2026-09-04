@@ -93,11 +93,28 @@ export function buildShufflePool(
   return pool;
 }
 
-function toSelection(chosen: QuoteCandidate, ranked: QuoteCandidate[]): PullQuoteSelection {
+/**
+ * The durable pointer back to the answer a candidate was cut from, or nothing.
+ *
+ * Omitted rather than written as null when the candidate has no question id, so
+ * "no pointer" is one state in the stored JSON instead of two.
+ */
+const provenanceOf = (c: QuoteCandidate) =>
+  c.questionId ? { provenance: { questionId: c.questionId, isFollowUp: !!c.isFollowUp } } : {};
+
+/**
+ * Exported for `scripts/check-pull-quotes.ts` section 19 only. The provenance
+ * assertions have to run against THIS function: a check that rebuilt the same
+ * mapping would keep passing while this one stopped writing pointers, which is
+ * a false green of exactly the kind the N6/N7 gap taught us to avoid.
+ */
+export function toSelection(chosen: QuoteCandidate, ranked: QuoteCandidate[]): PullQuoteSelection {
   const pool = buildShufflePool(chosen, ranked);
   return {
-    selected: { text: chosen.text },
-    alternatives: pool.map((c, i) => ({ text: c.text, score: 1 - i * 0.1 })),
+    // The pointer rides on the SELECTION, and on every alternative, because the
+    // picker lets the designer cycle to any of them and publish it.
+    selected: { text: chosen.text, ...provenanceOf(chosen) },
+    alternatives: pool.map((c, i) => ({ text: c.text, score: 1 - i * 0.1, ...provenanceOf(c) })),
   };
 }
 

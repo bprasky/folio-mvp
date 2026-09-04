@@ -38,6 +38,15 @@ export interface QuoteCandidate {
   /** Index into the answers array this was cut from, for verification. */
   answerIndex: number;
   /**
+   * The question the source answer was given to. With `isFollowUp` this is the
+   * DURABLE pointer back to that answer — `answerIndex` indexes an in-memory
+   * array rebuilt on every run, so it cannot survive being stored.
+   *
+   * Null when the source answer carried no question id. Null is unverifiable,
+   * never invalid: it means the pointer is absent, not that the quote is wrong.
+   */
+  questionId: string | null;
+  /**
    * Follow-up answers are prompted for quote-worthy content, so they are the
    * intended source and are offered to the ranker first.
    */
@@ -49,6 +58,9 @@ export interface AnswerLike {
   section?: string;
   answer: string;
   isFollowUp?: boolean;
+  /** Half the row key (questionId, isFollowUp). Optional: callers that predate
+   *  provenance threading still work, and their candidates carry a null pointer. */
+  questionId?: string | null;
 }
 
 /**
@@ -115,6 +127,7 @@ export function extractQuoteCandidates(
         id: `q${out.length + 1}`,
         text,
         answerIndex,
+        questionId: a.questionId ?? null,
         isFollowUp: !!a.isFollowUp,
         wordCount: n,
       });
