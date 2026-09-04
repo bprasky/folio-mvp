@@ -27,6 +27,8 @@
 //      surfacing and fixing upstream, not papering over.
 // ============================================================================
 
+import { standaloneRank } from './quoteStandalone';
+
 /** A verbatim, contiguous slice of one interview answer. */
 export interface QuoteCandidate {
   /** Stable within one generation. What the ranking model returns. */
@@ -124,10 +126,23 @@ export function extractQuoteCandidates(
     }
   });
 
-  // Follow-ups first — they are the ones written to be quotable. Within a tier,
-  // mid-length reads best as a display line.
+  // Ranking, in priority order. Ranking ONLY — nothing is dropped here, and the
+  // contract with the model is untouched: it still receives numbered candidates
+  // and still returns an id.
+  //
+  //   1. SELF-SUFFICIENCY. In published mode the reader sees the room photo and
+  //      the quote; the body is behind a click. A quote whose referent is in the
+  //      hidden body does not read, so it sorts last however good it is. This
+  //      outranks the follow-up tier because it is a question of whether the
+  //      quote WORKS in the surface it is going into, not of how likely it is to
+  //      be interesting.
+  //   2. FOLLOW-UPS. They are the ones written to be quotable.
+  //   3. LENGTH. Within a tier, mid-length reads best as a display line.
   const ideal = 18;
+  const rank = new Map(out.map(c => [c.id, standaloneRank(c.text)]));
   return out.sort((x, y) => {
+    const r = rank.get(x.id)! - rank.get(y.id)!;
+    if (r !== 0) return r;
     if (x.isFollowUp !== y.isFollowUp) return x.isFollowUp ? -1 : 1;
     return Math.abs(x.wordCount - ideal) - Math.abs(y.wordCount - ideal);
   });

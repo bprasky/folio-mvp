@@ -26,12 +26,33 @@ export const PullQuoteAlternativeSchema = z.object({
   score: z.number(),
 });
 
+/**
+ * Who wrote the line under the photograph.
+ *
+ * `verbatim` — the designer's own sentence, chosen from their interview answers.
+ * `folio`    — Folio writing about their decisions on their behalf.
+ *
+ * These are two legitimate authorship choices, not a quality ladder, and the
+ * distinction is exactly the one a reader is entitled to. `folio` is NOT
+ * implemented: no generator exists, and none should be added behind this enum
+ * without the provenance work (C1) landing first, because a Folio line is
+ * paraphrase and paraphrase needs a traceability gate. The value exists so the
+ * storage shape is settled before the feature is, and so the rate at which
+ * designers reach for it is recorded from the first day it is reachable.
+ *
+ * Storage only. Nothing reads it yet.
+ */
+export const PullQuoteAuthorshipSchema = z.enum(['verbatim', 'folio']);
+export type PullQuoteAuthorship = z.infer<typeof PullQuoteAuthorshipSchema>;
+
 export const PullQuoteSelectionSchema = z.object({
   selected: z.object({
     text: z.string().max(300),
     context: z.string().max(80).optional(),
   }).nullable(),
   alternatives: z.array(PullQuoteAlternativeSchema),
+  /** Absent on every article generated before the toggle; absent means `verbatim`. */
+  authorship: PullQuoteAuthorshipSchema.optional(),
 });
 
 /**

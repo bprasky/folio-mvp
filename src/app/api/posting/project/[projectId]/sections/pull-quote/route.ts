@@ -5,14 +5,18 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/app/api/auth/[...nextauth]/options';
 import { prisma } from '@/lib/prisma';
 import { assertProjectWrite } from '@/lib/authz/access';
-import { syncPullQuotesFromChapters, isPullQuoteSelection } from '@/lib/posting/schemas';
+import { syncPullQuotesFromChapters, isPullQuoteSelection, PullQuoteAuthorshipSchema } from '@/lib/posting/schemas';
 
 /**
  * PATCH — Select, remove, or restore a pull quote for a chapter.
  *
- * Body: { chapterIndex: number, selectedText: string | null }
+ * Body: { chapterIndex: number, selectedText: string | null, authorship?: 'verbatim' | 'folio' }
  *   - selectedText = "some quote" → select that alternative
  *   - selectedText = null → remove pull quote (keeps alternatives)
+ *   - authorship → record which authorship mode the designer is in for this
+ *     room. Storage only; nothing reads it yet. Omitted means "leave as is",
+ *     which is not the same as 'verbatim' — a caller that does not know about
+ *     the toggle must not silently overwrite a choice the designer made.
  */
 export async function PATCH(
   request: NextRequest,
@@ -35,6 +39,18 @@ export async function PATCH(
 
     if (typeof chapterIndex !== 'number') {
       return NextResponse.json({ error: 'Invalid chapterIndex' }, { status: 400 });
+    }
+
+    // Validated rather than trusted: this lands in expandedBlocks, which is an
+    // untyped Json column, so an unrecognised value would persist silently and
+    // corrupt the signal this field exists to collect.
+    let authorship: 'verbatim' | 'folio' | undefined;
+    if (body.authorship !== undefined) {
+      const parsed = PullQuoteAuthorshipSchema.safeParse(body.authorship);
+      if (!parsed.success) {
+        return NextResponse.json({ error: 'Invalid authorship' }, { status: 400 });
+      }
+      authorship = parsed.data;
     }
 
     const post = await prisma.projectPost.findUnique({
@@ -71,6 +87,8 @@ export async function PATCH(
     }
 
     // New PullQuoteSelection format
+    if (authorship !== undefined) pq.authorship = authorship;
+
     if (selectedText === null) {
       // Remove pull quote — keep alternatives for later restoration
       pq.selected = null;

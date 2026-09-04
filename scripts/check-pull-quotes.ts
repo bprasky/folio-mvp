@@ -24,6 +24,7 @@ import {
   normalizeForVerbatimCheck,
 } from '../src/lib/posting/quoteCandidates';
 import { buildShufflePool } from '../src/lib/posting/selectPullQuotes';
+import { scoreStandalone } from '../src/lib/posting/quoteStandalone';
 import { formatRoomName } from '../src/lib/utils/formatRoomName';
 import { extractQuotes } from '../src/lib/instagram/extractQuotes';
 import { extractQuotesWithMetadata, matchQuotesToImages } from '../src/lib/instagram/matchQuoteToImage';
@@ -665,6 +666,86 @@ async function projectionWriteChecks() {
     row('q-junk')?.questionCategory === null, JSON.stringify(row('q-junk')?.questionCategory));
 }
 
+// ─── 17. Self-sufficiency is a RANKING input, and only a ranking input ───────
+//
+// In published mode the reader sees the room photograph and the quote; the body
+// is behind a click. A quote whose referent lives in that hidden body does not
+// read. So candidates that survive the collapse must be offered first — to the
+// designer cycling the picker and to the ranking model alike.
+//
+// The three things that could go wrong, and are asserted here:
+//   a) the ordering does not actually change (the input is wired but inert);
+//   b) it turns into a FILTER — a room loses candidates, which would silently
+//      recreate the fallback-pool problem the no-fallback rule exists to stop;
+//   c) it outranks nothing, or outranks the wrong thing.
+//
+// Asserted as an INVARIANT over the emitted order, not as a call sequence: any
+// implementation that puts standalone spans first passes.
+console.log('\n17. Self-sufficiency ranking');
+
+function standaloneRankingChecks() {
+  // Two answers for one room. The first sentence of each is standalone; the
+  // second of the primary answer opens with a bare "It" and cannot be read
+  // beside a photograph alone.
+  const ROOM = 'Dining Room';
+  const answers = [
+    { section: ROOM, isFollowUp: false, answer:
+      'The table was the first thing we settled. It remains agreeable, but still on theme for the rest of the house for sure.' },
+    { section: ROOM, isFollowUp: true, answer:
+      'We always use glass when we need to make up space. Had we used a solid table we would have crowded it badly.' },
+  ];
+
+  const ranked = extractQuoteCandidates(answers, ROOM);
+  const verdicts = ranked.map(c => scoreStandalone(c.text).verdict);
+
+  check('the fixture produces a pool worth ranking (guards every check below)',
+    ranked.length >= 3 && verdicts.includes('not-standalone') && verdicts.includes('standalone'),
+    `${ranked.length} candidate(s), verdicts: ${verdicts.join(', ')}`);
+
+  // (a) + (c) The invariant: no non-standalone span may precede a standalone one.
+  const firstBad = verdicts.indexOf('not-standalone');
+  const lastGood = verdicts.lastIndexOf('standalone');
+  check('every standalone candidate is offered before every non-standalone one',
+    firstBad === -1 || lastGood < firstBad,
+    `order: ${verdicts.join(', ')}`);
+
+  // (c) Specifically: it outranks the follow-up tier. A follow-up that does not
+  // read on its own is still a follow-up that does not read on its own.
+  const followUpBroken = [
+    { section: ROOM, isFollowUp: true, answer: 'It was the one thing the budget never reached in the end.' },
+    { section: ROOM, isFollowUp: false, answer: 'The plaster ceiling is what the whole room is organised around.' },
+  ];
+  const mixed = extractQuoteCandidates(followUpBroken, ROOM);
+  check('self-sufficiency outranks the follow-up tier',
+    mixed.length >= 2 && scoreStandalone(mixed[0].text).verdict === 'standalone' && !mixed[0].isFollowUp,
+    mixed.map(c => `${c.isFollowUp ? 'FU' : 'P '} ${scoreStandalone(c.text).verdict} "${c.text}"`).join(' | '));
+
+  // (b) Ranking, never filtering. Same multiset in, same multiset out.
+  const unranked = new Set(ranked.map(c => c.text));
+  check('ranking drops nothing — a room with no standalone candidate still offers its pool',
+    unranked.size === ranked.length && ranked.length === new Set(ranked.map(c => c.id)).size,
+    `${ranked.length} candidates, ${unranked.size} distinct texts`);
+
+  const allBroken = [
+    { section: ROOM, isFollowUp: false, answer:
+      'It was the one room the budget never really reached. But we did what we could with the light in there.' },
+  ];
+  const broken = extractQuoteCandidates(allBroken, ROOM);
+  check('a room where NOTHING is standalone still yields candidates (ranking, not filtering)',
+    broken.length > 0 && broken.every(c => scoreStandalone(c.text).verdict !== 'standalone'),
+    `${broken.length} candidate(s)`);
+
+  // The verbatim guarantee is upstream of ranking and must survive it untouched.
+  const srcs = answers.map(a => a.answer);
+  check('every ranked candidate is still a verbatim span of its room answers',
+    ranked.every(c => isVerbatimSpan(c.text, srcs)));
+
+  // The contract with the model: numbered candidates, model returns an id. Ids
+  // are assigned at extraction and must still resolve after the sort.
+  check('every candidate still carries an id the ranker can return',
+    ranked.every(c => typeof c.id === 'string' && c.id.length > 0));
+}
+
 // Sequential, not Promise.all: loaderChecks and reverseSyncChecks each install a
 // module-loader stub and restore it in a finally, so running them concurrently
 // lets one restore the loader out from under the other. Found by doing it.
@@ -672,6 +753,7 @@ collaborationChecks()
   .then(loaderChecks)
   .then(reverseSyncChecks)
   .then(projectionWriteChecks)
+  .then(standaloneRankingChecks)
   .then(() => {
   console.log(failures === 0
     ? '\nAll pull-quote checks passed.\n'

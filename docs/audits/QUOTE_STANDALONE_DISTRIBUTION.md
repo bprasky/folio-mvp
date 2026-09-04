@@ -1,10 +1,10 @@
 # Quote Standalone Distribution
 
-**Status: METHOD ONLY — NOT YET MEASURED.**
-No `DATABASE_URL` in the environment this was written in. The script exists, its
-rule is verified against fabricated spans, and the full pipeline has been run end
-to end on fixtures. **Running it against real data overwrites this file with the
-numbers.**
+**Status: MEASURED — 6 projects, 16 rooms, 0.0% of rooms have zero standalone
+candidates.**
+
+Measured by the founding cohort's owner against real data; this document
+describes the method and records the result. Re-run to refresh the numbers:
 
 ```
 npm run report:quote-standalone
@@ -15,9 +15,27 @@ only and is not a fallback). The script loads `.env.local` then `.env` itself
 before importing the Prisma client, so an ordinary local checkout needs no extra
 setup.
 
-Read-only: it calls `extractQuoteCandidates` exactly as the generator does and
-scores what comes out. No ranking changed, no article field written, nothing in
-`quoteCandidates.ts` or `selectPullQuotes.ts` touched.
+**What the result licensed.** Because no room came up empty, quote mode can
+offer standalone candidates only, and context lines were not needed. Both
+followed from this number and neither was built.
+
+**What it does not license.** 0.0% is a floor on six projects the interview was
+tuned on, and every approximation in the scorer leans toward calling a span
+standalone. A colder designer can still produce a room with nothing that reads
+alone. That case is reported, not blocked:
+
+```
+npm run report:quote-ranking
+```
+
+The measurement is read-only: it calls `extractQuoteCandidates` exactly as the
+generator does and scores what comes out. No article field is written.
+
+**Since this was first measured, the scorer became a ranking input.**
+`extractQuoteCandidates` now offers standalone candidates first, using the same
+predicate described below — it lives in `src/lib/posting/quoteStandalone.ts` and
+has exactly one implementation, so the measurement and the product cannot drift
+apart. It ranks; it never filters. `selectPullQuotes` is unchanged.
 
 ---
 
