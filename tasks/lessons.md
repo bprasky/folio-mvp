@@ -917,3 +917,41 @@ explicitly in a judging prompt ("a contrast counterfeits a stake"), because a
 criterion that has to be inferred from an adjacent one does not fire; (4) record in
 the check script which failures are deliberately left to judgement, so the next
 session does not chase them into the regex.
+
+## A guard written where it cannot run is a guess with a PASS line
+
+`db:guard` was written, reviewed and reported as working in an environment with no
+database, no `.env`, and no Windows. It then failed three times in a row on the
+machine that actually runs migrations, and the three failures were not related bugs
+— they were the same absence three times, each surfacing only after the previous one
+was cleared:
+
+1. **No env loading.** A bare `tsx` script reads no `.env`. Every sibling script
+   works around this by being documented as `node --env-file=.env.local …`, which a
+   gate invoked as `npm run db:guard && …` cannot do. Worse than an inconvenience:
+   `prisma migrate deploy`, two links later in the same chain, reads `.env` itself —
+   so the gate refused for want of a connection the command it gates would have found.
+2. **`spawnSync('npx', …)`.** Bare-name PATH lookup; on Windows the executable is
+   `npx.cmd` and `spawnSync` without a shell does not try PATHEXT. Fine on the
+   machine that wrote it, ENOENT on the only machine that matters.
+3. **Pending treated as drift.** The check refused when `prisma migrate status`
+   reported pending migrations. But the gate runs immediately before an apply, so
+   the migration being applied is always pending — the guard could never pass at
+   the only moment it runs. The file's own comment said "pending migrations (often
+   fine before a deploy)" one line above the code that failed on them.
+
+The third is the one worth remembering, because it was not a portability gap and no
+amount of local testing would have caught it: the fixture I proved the guard against
+was "a database that needs nothing done to it", which is the one state it will never
+be invoked in.
+
+Rules: (1) a script whose whole contract is an exit code has not been tested until it
+has produced that exit code in the environment it ships to — "the logic is right"
+is not a test result; (2) when a gate runs at a specific moment, write the fixture
+for THAT moment, not for the steady state — ask "what is true immediately before the
+thing I am gating?" and assert against that; (3) cross-platform process spawning:
+never a bare command name, resolve the entry out of the dependency's own
+`package.json` and run it through `process.execPath`; (4) if a script is invoked
+with no arguments by a chain, it owns its own environment loading — the caller has
+nowhere to put a flag; (5) when a comment and the code beneath it disagree, the
+comment is usually the intent and the code is usually the bug.

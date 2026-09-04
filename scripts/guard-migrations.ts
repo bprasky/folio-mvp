@@ -128,10 +128,19 @@ if (!appInfo || !targetInfo) {
 // `prisma migrate status` is the other two, and it is the check that catches a
 // half-applied or failed migration BEFORE another one is stacked on top of it.
 //
-// Exit codes: 0 = up to date. Non-zero = pending, failed, or drifted. The text
-// is parsed only to say which, because the exit code alone does not distinguish
-// "pending migrations" (often fine before a deploy) from "failed migration"
-// (never fine).
+// Exit codes: 0 = up to date, non-zero for pending OR failed OR drifted alike.
+// So the text has to be parsed, and the three cases are NOT equivalent:
+//
+//   FAILED   — a migration started and did not finish. Never fine. Stacking
+//              another on top is how a schema reaches a state nobody wrote down.
+//   DRIFT    — the database no longer matches the recorded history. Never fine;
+//              CLAUDE.md's runbook exists for exactly this.
+//   PENDING  — migrations exist that have not been applied yet. This is the
+//              NORMAL state immediately before an apply, because the migration
+//              being applied is itself pending. Failing on it made this gate
+//              impossible to pass before a deploy, which is the only moment it
+//              runs. Reported, not refused — and the list is printed, so the
+//              operator can see that only what they intended is about to go.
 //
 // Invoked through `node <prisma's own bin entry>` rather than `npx prisma`.
 // `spawnSync('npx', …)` looks up a bare name on PATH, and on Windows the
@@ -150,7 +159,7 @@ if (status.error) {
   fail('prisma migrate status ran', String(status.error.message));
 } else if (status.status === 0) {
   pass('migration bookkeeping is clean', 'database schema is up to date');
-} else if (/failed migrations?|in a failed state|`prisma migrate resolve`/i.test(statusText)) {
+} else if (/failed migrations?|in a failed state|migrate resolve/i.test(statusText)) {
   fail(
     'no migration is in a failed state',
     'A previous migration failed and was never resolved. Applying another one on\n' +
@@ -158,11 +167,27 @@ if (status.error) {
     'first — see CLAUDE.md, "When drift is reintroduced (runbook)".\n\n' +
     statusText.trim().split('\n').slice(0, 12).join('\n'),
   );
-} else if (/drift|not (?:yet )?(?:been )?applied to the database|have not yet been applied/i.test(statusText)) {
+} else if (/drift detected|not in sync with your migration history/i.test(statusText)) {
   fail(
     'the database matches the migration history',
-    'Pending or drifted migrations. Apply or reconcile them before adding another.\n\n' +
+    'The database no longer matches the recorded history. Reconcile before adding\n' +
+    'another migration — see CLAUDE.md, "When drift is reintroduced (runbook)".\n\n' +
     statusText.trim().split('\n').slice(0, 12).join('\n'),
+  );
+} else if (/have not yet been applied/i.test(statusText)) {
+  // Pending is the expected state here — the migration about to be applied is
+  // one of these. Naming them is the point: an unexpected entry in this list is
+  // the operator's cue to stop, and it is information the exit code cannot carry.
+  const pending = statusText
+    .split('\n')
+    .map((l) => l.trim())
+    .filter((l) => /^\d{14}_/.test(l));
+  pass(
+    'no failed or drifted migration; pending work is what an apply is for',
+    pending.length > 0
+      ? `${pending.length} pending, will be applied by the next link in the chain:\n` +
+        pending.map((m) => `  ${m}`).join('\n')
+      : 'pending migrations reported; see prisma migrate status for the list',
   );
 } else {
   fail(
