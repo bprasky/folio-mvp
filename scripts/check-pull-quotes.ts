@@ -666,6 +666,119 @@ async function projectionWriteChecks() {
     row('q-junk')?.questionCategory === null, JSON.stringify(row('q-junk')?.questionCategory));
 }
 
+// ─── 18. Re-answering UPDATES the row, it does not insert a second one ───────
+//
+// A designer answering the same question again is correcting themselves. Two
+// rows for one row key (interviewId, questionId, isFollowUp) would give a pull
+// quote's provenance pointer an ambiguous target, and after
+// 20260904193000_add_row_key_unique is applied a second insert is a P2002 that
+// reaches the designer as a 500 with their answer unsaved.
+//
+// Asserted against the WRITE THE MODULE ISSUES, not against a call sequence: a
+// stub records every operation, and the assertions are about what reached the
+// database. Any implementation that updates in place passes.
+console.log('\n18. Re-answer updates rather than inserting');
+
+async function reAnswerChecks() {
+  const Module = await import('module');
+  const origLoad = (Module.default as any)._load;
+  const ops: Array<{ op: string; args: any }> = [];
+  // One row already stored for this key, carrying context this route does not
+  // know: the question was classified a follow-up, and the projection has since
+  // attached a room, a category and audio to it.
+  let stored: any = {
+    id: 'row-1', interviewId: 'iv1', questionId: 'q-what', isFollowUp: false,
+    answerText: 'The mauve came first.', questionText: 'What drove the palette?',
+    inputModality: 'voice', questionSource: 'follow_up',
+    roomId: 'room-dining', questionCategory: 'what',
+    audioUrl: 'https://x/a.mp3', wordTimings: [{ word: 'The', start: 0, end: 0.2 }],
+  };
+
+  (Module.default as any)._load = function (request: string) {
+    if (request === '@/lib/prisma' || request.endsWith('/lib/prisma')) {
+      return { prisma: { editorialInterviewAnswer: {
+        findFirst: async () => (stored ? { ...stored } : null),
+        update: async (args: any) => { ops.push({ op: 'update', args }); stored = { ...stored, ...args.data }; return stored; },
+        create: async (args: any) => { ops.push({ op: 'create', args }); stored = { ...args.data }; return stored; },
+      } } };
+    }
+    return origLoad.apply(this, arguments as any);
+  };
+
+  let outcome: string;
+  try {
+    const mod = await import('../src/lib/interview/saveInterviewAnswer');
+    // The second submission: different text, arriving by keyboard, and WITHOUT
+    // a questionText — exactly the shape that used to overwrite a real stored
+    // question with the route's generic fallback.
+    outcome = await mod.saveInterviewAnswer({
+      interviewId: 'iv1', questionId: 'q-what', questionText: undefined,
+      answer: 'Actually the brass came first.', inputMode: 'text',
+    });
+  } finally {
+    (Module.default as any)._load = origLoad;
+  }
+
+  check('a re-answer reports that it updated', outcome === 'updated', outcome);
+  check('a re-answer issues no INSERT',
+    ops.filter(o => o.op === 'create').length === 0,
+    ops.map(o => o.op).join(', '));
+  check('a re-answer issues exactly one UPDATE',
+    ops.filter(o => o.op === 'update').length === 1,
+    ops.map(o => o.op).join(', '));
+
+  const data = ops.find(o => o.op === 'update')?.args?.data ?? {};
+  check('the correction is what gets written',
+    data.answerText === 'Actually the brass came first.', JSON.stringify(data.answerText));
+  check('the modality is refreshed with the answer', data.inputModality === 'text', JSON.stringify(data.inputModality));
+
+  // The preserve half. These are absent from the update payload, which is how
+  // they survive — naming a column at all is what would null it.
+  for (const col of ['questionText', 'questionSource', 'roomId', 'questionCategory', 'createdAt', 'id', 'interviewId']) {
+    check(`a re-answer does not write ${col}`, !(col in data), `${col}=${JSON.stringify((data as any)[col])}`);
+  }
+  check('the stored question survives a submission that carried none',
+    stored.questionText === 'What drove the palette?', JSON.stringify(stored.questionText));
+  check('a question classified follow_up is not relabelled base_question',
+    stored.questionSource === 'follow_up', JSON.stringify(stored.questionSource));
+  check('the room and category the projection attached survive',
+    stored.roomId === 'room-dining' && stored.questionCategory === 'what',
+    `${stored.roomId} / ${stored.questionCategory}`);
+
+  // Word timings are offsets into the answer they were transcribed from. Against
+  // replaced text they resolve a quote to the wrong span, so they go.
+  check('audio is cleared when the answer text changed',
+    data.audioUrl === null && data.wordTimings !== undefined,
+    `audioUrl=${JSON.stringify(data.audioUrl)} wordTimings=${JSON.stringify(data.wordTimings)}`);
+
+  // And the first answer for a key must still insert.
+  stored = null;
+  ops.length = 0;
+  (Module.default as any)._load = function (request: string) {
+    if (request === '@/lib/prisma' || request.endsWith('/lib/prisma')) {
+      return { prisma: { editorialInterviewAnswer: {
+        findFirst: async () => null,
+        update: async (args: any) => { ops.push({ op: 'update', args }); return {}; },
+        create: async (args: any) => { ops.push({ op: 'create', args }); return args.data; },
+      } } };
+    }
+    return origLoad.apply(this, arguments as any);
+  };
+  let firstOutcome: string;
+  try {
+    const mod = await import('../src/lib/interview/saveInterviewAnswer');
+    firstOutcome = await mod.saveInterviewAnswer({
+      interviewId: 'iv1', questionId: 'q-new', questionText: 'And the stair?',
+      answer: 'It took four tries before it belonged.', inputMode: 'text',
+    });
+  } finally {
+    (Module.default as any)._load = origLoad;
+  }
+  check('a first answer still inserts',
+    firstOutcome === 'created' && ops.length === 1 && ops[0].op === 'create',
+    `${firstOutcome}: ${ops.map(o => o.op).join(', ')}`);
+}
+
 // ─── 17. Self-sufficiency is a RANKING input, and only a ranking input ───────
 //
 // In published mode the reader sees the room photograph and the quote; the body
@@ -754,6 +867,7 @@ collaborationChecks()
   .then(reverseSyncChecks)
   .then(projectionWriteChecks)
   .then(standaloneRankingChecks)
+  .then(reAnswerChecks)
   .then(() => {
   console.log(failures === 0
     ? '\nAll pull-quote checks passed.\n'
