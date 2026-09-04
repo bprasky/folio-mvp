@@ -19,6 +19,7 @@
  */
 
 import { spawnSync } from 'child_process';
+import path from 'path';
 // Reused, not reimplemented. This module is what already decides whether a
 // connection is safe for schema work, and seven scripts depend on that decision
 // being made in exactly one place.
@@ -33,6 +34,20 @@ const fail = (name: string, detail: string) => {
 const pass = (name: string, detail?: string) => {
   console.log(`  PASS  ${name}${detail ? `\n        ${detail}` : ''}`);
 };
+
+/**
+ * The path to the Prisma CLI this project installed.
+ *
+ * Throws rather than returning a guess: a guard that cannot find the tool it
+ * checks with must say so, not skip the check.
+ */
+function prismaCli(): string {
+  const pkgPath = require.resolve('prisma/package.json', { paths: [process.cwd()] });
+  const bin = require(pkgPath).bin;
+  const rel = typeof bin === 'string' ? bin : bin?.prisma;
+  if (!rel) throw new Error('prisma/package.json declares no `prisma` bin entry');
+  return path.join(path.dirname(pkgPath), rel);
+}
 
 /** Host, port and database, with any credentials dropped. Safe to print. */
 function describe(raw: string): { label: string; host: string; port: string; db: string } | null {
@@ -117,7 +132,15 @@ if (!appInfo || !targetInfo) {
 // is parsed only to say which, because the exit code alone does not distinguish
 // "pending migrations" (often fine before a deploy) from "failed migration"
 // (never fine).
-const status = spawnSync('npx', ['prisma', 'migrate', 'status'], {
+//
+// Invoked through `node <prisma's own bin entry>` rather than `npx prisma`.
+// `spawnSync('npx', …)` looks up a bare name on PATH, and on Windows the
+// executable is `npx.cmd` — spawnSync without a shell does not try the PATHEXT
+// extensions, so it fails ENOENT on exactly the machine that runs the migration.
+// Reported from one. Resolving the bin out of prisma's own package.json needs no
+// PATH, no shell, and no per-platform filename, and it pins the CLI to the
+// version this project installed instead of whatever npx would fetch.
+const status = spawnSync(process.execPath, [prismaCli(), 'migrate', 'status'], {
   encoding: 'utf8',
   env: process.env,
 });
