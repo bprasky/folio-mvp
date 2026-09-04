@@ -63,6 +63,7 @@
     "prisma:shadow:down": "docker compose -f docker-compose.prisma-shadow.yml down",
     "prisma:shadow:reset": "docker compose -f docker-compose.prisma-shadow.yml down -v && docker compose -f docker-compose.prisma-shadow.yml up -d",
     "verify:prisma": "npx tsx scripts/verify-prisma-sync.ts",
+    "report:question-category": "npx tsx scripts/report-question-category.ts",
     "security:idor": "tsx scripts/security/idor-scan.ts",
     "security:idor:ci": "tsx scripts/security/idor-scan.ts --ci",
     "check:sonnet5": "tsx scripts/check-sonnet5-compliance.ts",
