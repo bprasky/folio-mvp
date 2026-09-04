@@ -1917,6 +1917,24 @@ model EditorialInterviewAnswer {
   // Relations
   // Removed - AttributeVerification doesn't have interviewAnswerId field
 
+  // The durable identity of an answer WITHIN an interview.
+  //
+  // `rebuildAnswerProjection` already treats this triple as a key: it builds
+  // `idByQuestion` keyed on `rowKey(questionId, isFollowUp)` to re-link a
+  // follow-up to its parent inside a single insert
+  // (syncInterviewAnswers.ts:65-66, 114-116). Nothing enforced it, so the
+  // assumption held by convention only — and two rows sharing the triple would
+  // collapse to one entry in that Map and then collide on the primary key at
+  // insert. This turns the convention into a constraint.
+  //
+  // It is also the key a pull quote can point at. Row `id` is re-minted by
+  // `randomUUID()` on every sync, so a stored answer id dangles as soon as the
+  // designer answers one more question; this triple survives the rebuild.
+  //
+  // Named explicitly: Prisma's derived name for this triple is 69 characters
+  // and Postgres truncates identifiers at 63, so leaving it implicit would make
+  // the constraint name depend on a silent truncation.
+  @@unique([interviewId, questionId, isFollowUp], map: "editorial_interview_answers_row_key")
   @@index([interviewId])
   @@index([questionId])
   @@index([linkedImageId])
