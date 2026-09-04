@@ -4,6 +4,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/options";
 import { prisma } from "@/lib/prisma";
+import { saveInterviewAnswer } from "@/lib/interview/saveInterviewAnswer";
 import { z } from "zod";
 import { randomUUID } from "crypto";
 import Anthropic from "@anthropic-ai/sdk";
@@ -244,31 +245,25 @@ export async function POST(request: NextRequest) {
     // Use provided question text, or fall back to generic
     const questionText = providedQuestionText || "Tell us about this project.";
 
-    // Store answer in EditorialInterviewAnswer for durability
-    // Try with questionText first; if the column doesn't exist yet, retry without it
-    try {
-      await prisma.editorialInterviewAnswer.create({
-        data: {
-          interviewId: interview.id,
-          questionId,
-          questionText, // Persist question text for editorial generation
-          answerText: answer,
-          inputModality: inputMode,
-          questionSource: "base_question",
-        },
-      });
-    } catch (insertError: any) {
-      console.warn("[/api/interview/respond] Insert with questionText failed, retrying without:", insertError?.message);
-      // Fallback: save without questionText (column may not exist in DB yet)
-      await prisma.editorialInterviewAnswer.create({
-        data: {
-          interviewId: interview.id,
-          questionId,
-          answerText: answer,
-          inputModality: inputMode,
-        },
-      });
-    }
+    // Store the answer, keyed by the row key (interviewId, questionId,
+    // isFollowUp). RE-ANSWERING UPDATES: a designer answering the same question
+    // again is correcting themselves, not adding a second answer, and two rows
+    // for one key would give a pull quote's provenance pointer an ambiguous
+    // target.
+    //
+    // Deliberately NOT `upsert`. Prisma compiles upsert to INSERT … ON CONFLICT,
+    // which Postgres rejects with 42P10 ("no unique or exclusion constraint
+    // matching the ON CONFLICT specification") until
+    // 20260904193000_add_row_key_unique is applied — that would fail EVERY
+    // answer, not just re-answers, for the whole window between this deploy and
+    // that migration. Read-then-write by primary key works in both states.
+    await saveInterviewAnswer({
+      interviewId: interview.id,
+      questionId,
+      questionText: providedQuestionText,
+      answer,
+      inputMode,
+    });
 
     // Read all answers for this interview to get count and for preview
     const allAnswers = await prisma.editorialInterviewAnswer.findMany({

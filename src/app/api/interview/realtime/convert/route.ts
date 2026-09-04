@@ -99,24 +99,54 @@ export async function POST(req: NextRequest) {
       },
     });
 
-    // Delete existing answers if any (for clean replacement)
-    await prisma.editorialInterviewAnswer.deleteMany({
-      where: {
-        interviewId: editorialInterview.id,
-        questionSource: 'realtime_interview',
-      },
-    });
-
-    // Create new answers
-    await prisma.editorialInterviewAnswer.createMany({
-      data: answers.map((a) => ({
-        interviewId: editorialInterview.id,
-        questionId: a.questionId,
-        answerText: a.answerText,
-        inputModality: 'voice',
-        questionSource: 'realtime_interview',
-      })),
-    });
+    // Replace this session's answers.
+    //
+    // The delete used to be scoped to questionSource = 'realtime_interview'
+    // alone, which misses rows holding the very ids about to be written. The
+    // path is concrete, not hypothetical: the `answers` built above are also
+    // written to provenance below, carrying no questionSource, and
+    // rebuildAnswerProjection defaults a source-less answer to 'base_question'.
+    // So after any sync, `realtime-0` exists under 'base_question', this delete
+    // skips it, and the insert below duplicates it — which is a second row for
+    // one row key today and a P2002 once
+    // 20260904193000_add_row_key_unique is applied.
+    //
+    // Widened delete rather than upsert, because that is what this route
+    // actually does: it replaces the whole realtime answer set. The two arms
+    // are both needed and neither subsumes the other — the questionSource arm
+    // retires ids a SHORTER re-run no longer produces (realtime-4, realtime-5
+    // after a re-record), and the questionId arm clears anything squatting on
+    // an id under a different source.
+    //
+    // Note the row key (interviewId, questionId, isFollowUp) does not include
+    // questionSource, so two sources CANNOT hold different answers for one
+    // questionId. That is the constraint's decision, and this route now agrees
+    // with it instead of quietly depending on the opposite.
+    //
+    // Transactional: the delete is destructive, and a failure between the two
+    // statements would leave the interview with its answers removed and none
+    // written back.
+    const realtimeQuestionIds = answers.map((a) => a.questionId);
+    await prisma.$transaction([
+      prisma.editorialInterviewAnswer.deleteMany({
+        where: {
+          interviewId: editorialInterview.id,
+          OR: [
+            { questionSource: 'realtime_interview' },
+            { questionId: { in: realtimeQuestionIds } },
+          ],
+        },
+      }),
+      prisma.editorialInterviewAnswer.createMany({
+        data: answers.map((a) => ({
+          interviewId: editorialInterview.id,
+          questionId: a.questionId,
+          answerText: a.answerText,
+          inputModality: 'voice',
+          questionSource: 'realtime_interview',
+        })),
+      }),
+    ]);
 
     // Build provenance data
     const extractedQuotes = realtimeSession.extractedQuotes as string[] | null;
