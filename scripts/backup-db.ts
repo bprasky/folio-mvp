@@ -25,6 +25,7 @@ import path from 'path';
 // A backup read through a transaction pooler is not a hazard the way DDL is, but
 // the direct connection is the one that can actually see everything.
 import { migrationConnectionUrl } from './lib/migrationConnection.mjs';
+import { loadProjectEnv } from './lib/loadEnv.mjs';
 
 const OUT_DIR = process.env.FOLIO_BACKUP_DIR ?? '.backups';
 
@@ -34,7 +35,12 @@ const die = (name: string, detail: string): never => {
   process.exit(1);
 };
 
+// Same reason as db:guard: migrate:safe invokes this bare, between the gate and
+// the apply, with nowhere to pass --env-file.
+const envFiles = loadProjectEnv();
+
 console.log('\ndb:backup — pre-migration snapshot\n');
+if (envFiles.length > 0) console.log(`  ....  env loaded from ${envFiles.join(', ')}`);
 
 // ── 1. pg_dump has to exist ──────────────────────────────────────────────────
 const version = spawnSync('pg_dump', ['--version'], { encoding: 'utf8' });
