@@ -8,7 +8,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/app/api/auth/[...nextauth]/options';
 import { prisma } from '@/lib/prisma';
-import { protectedProductHtml } from '@/lib/browserless/protected-product';
+import { renderProductPage, type RenderedProductPage } from '@/lib/server/render-product';
 import { validateProductUrl, UnsafeProductUrl } from '@/lib/server/safe-product-url';
 import { checkMultipleRateLimits } from '@/lib/rateLimit';
 import { recordScrapeAttempt, hasRecentBlockedAttempt } from '@/lib/browserless/record';
@@ -133,13 +133,13 @@ export async function POST(
 
   // No unrestricted BQL fallback: all escalation uses the protected renderer.
   const started = Date.now();
-  let html: string | null = null;
-  try { html = await protectedProductHtml(product.url); } catch { /* Fail closed, no provider exception/URL in response. */ }
-  const res = { ok: !!html, status: html ? 200 : 503, targetStatus: null,
-    payload: html || '', endpoint: 'function' as const, durationMs: Date.now() - started,
-    error: html ? undefined : 'Protected renderer unavailable' };
+  let rendered: RenderedProductPage | null = null;
+  try { rendered = await renderProductPage(product.url); } catch { /* Fail closed, no provider exception/URL in response. */ }
+  const res = { ok: !!rendered, status: rendered ? 200 : 503, targetStatus: rendered?.status ?? null,
+    payload: rendered?.html || '', endpoint: 'content' as const, durationMs: Date.now() - started,
+    error: rendered ? undefined : 'Protected renderer unavailable' };
 
-  const fields = res.ok ? extractProductFromHtml(res.payload, product.url) : null;
+  const fields = res.ok ? extractProductFromHtml(res.payload, rendered!.finalUrl) : null;
   const usable = !!(fields && (fields.name || fields.image));
 
   // Record one attempt. No response body or provider credential is logged.

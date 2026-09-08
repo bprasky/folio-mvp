@@ -8,7 +8,6 @@ import { Webhook } from 'svix';
 import { verifyInbound, InboundVerificationError } from '../../src/lib/email/verify-inbound';
 import { parseProductUrl, validateProductUrl, isPublicAddress, safeProductFetch } from '../../src/lib/server/safe-product-url';
 import { checkRateLimit, checkMultipleRateLimits } from '../../src/lib/rateLimit';
-import { assertProtectedBrowserArgs, PRODUCT_BROWSER_ARGS } from '../../src/lib/browserless/protected-product';
 
 test('webhook: signed test events verify, tampering and missing signatures fail', () => {
   const secret = `whsec_${Buffer.from('a-test-only-secret-with-32-bytes!!').toString('base64')}`;
@@ -38,12 +37,6 @@ test('URL policy blocks non-public IPv4, IPv6, alternate encodings and credentia
   assert.equal(isPublicAddress('8.8.8.8'), true);
 });
 
-test('browser controls fail closed when provider adds a private proxy bypass', () => {
-  assert.doesNotThrow(() => assertProtectedBrowserArgs(PRODUCT_BROWSER_ARGS));
-  assert.throws(() => assertProtectedBrowserArgs(PRODUCT_BROWSER_ARGS.filter(arg => !arg.startsWith('--proxy-server='))));
-  assert.throws(() => assertProtectedBrowserArgs(PRODUCT_BROWSER_ARGS.map(arg => arg.startsWith('--proxy-bypass-list=') ? '--proxy-bypass-list=<-loopback>;0.0.0.0;production-sfo.browserless.io' : arg)));
-  assert.throws(() => assertProtectedBrowserArgs([...PRODUCT_BROWSER_ARGS, '--proxy-server=direct://']));
-});
 
 test('DNS policy rejects mixed public/private answers and resolution failures', async () => {
   const resolver = (async () => [{ address: '8.8.8.8', family: 4 }, { address: '10.0.0.1', family: 4 }]) as never;

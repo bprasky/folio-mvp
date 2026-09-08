@@ -1601,3 +1601,25 @@ worker implementation, adversarial browser tests and product parity are blocked
 on the Linux execution environment. Live Upstash smoke awaits credentials.
 Full dispositions, threat model and resumption procedure:
 `docs/audits/P0_COMPLETION_REVIEW.md`. No subsequent phase started.
+
+## P0 isolated renderer implementation
+- [x] Implement bounded authenticated controller, disposable jobs and verified namespace/host packet policy before browser startup.
+- [x] Implement sandboxed Chromium runner and replace managed protected-render callers without broad application changes.
+- [x] Add controller/worker tests, Linux canary acceptance rig with deliberate-breach control, and extraction parity fixtures.
+- [x] Execute available tests and Linux/Upstash probes; record unexecuted network acceptance explicitly.
+- [x] Run P0 tests, scanner, guard, lint, baseline-relative types, build and secret review; document deployment and commit/push.
+
+Plan: target Linux Docker with the iptables backend. Host controller installs
+namespace OUTPUT and host DOCKER-USER/INPUT rules before starting Chromium.
+No Linux availability is required to author the implementation, but Linux
+packet/canary evidence remains mandatory for P0 completion.
+
+Implementation review: 13 worker/controller/harness tests and 23 application
+security/integration tests pass; Linux-output parity is explicitly skipped.
+Build passes; types 1,009 before/after with no added diagnostics; guard passes;
+lint zero errors (13 historical integration warnings); IDOR 0 Critical/1 High/
+16 Medium/20 Low. No-secret/artifact check passes. Managed runtime rendering is
+removed; legacy renderer entrypoints now enforce identity and a shared budget.
+Linux image/sandbox/network tests, live rendering and Upstash verification remain
+pending infrastructure/credentials. Full report: docs/audits/P0_RENDER_WORKER_REPORT.md.
+P0 INCOMPLETE — implementation ready, authoritative network verification pending.

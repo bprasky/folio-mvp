@@ -958,3 +958,5 @@ comment is usually the intent and the code is usually the bug.
 
 ## 2026-09-08 — Browser SSRF is a network-boundary requirement
 When a managed browser provider overrides required controls, stop layering interception workarounds. Decide on an independently controlled network boundary first. Navigation success and launch flags alone do not prove isolation. A completion report must include adversarial network evidence and real product parity, or explicitly remain incomplete.
+
+When the user authorizes a portable Linux implementation despite a Windows workstation, complete the implementation and acceptance harness locally. Keep the inability to execute kernel tests as an explicit release gate; do not use it to stop authoring the requested code.

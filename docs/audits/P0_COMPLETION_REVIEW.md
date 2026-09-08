@@ -1,5 +1,7 @@
 # P0 completion review — 2026-09-08
 
+Historical checkpoint. See [the subsequent worker implementation report](P0_RENDER_WORKER_REPORT.md) for the current implementation and remaining Linux verification gate.
+
 **P0 INCOMPLETE.** The scoped Critical/High fixes and webhook integration are
 implemented and tested. Independently enforced browser isolation and legitimate
 rendering parity are not demonstrated. No later hardening phase was started.

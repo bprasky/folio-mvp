@@ -1,6 +1,6 @@
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
-export const maxDuration = 60;
+export const maxDuration = 120;
 
 import { NextRequest, NextResponse } from 'next/server';
 import { aiExtractProduct } from '@/lib/products/aiExtractProduct';
@@ -8,7 +8,7 @@ import { auth } from '@/lib/auth';
 import { rateLimit } from '@/lib/rateLimit';
 import { safeProductFetch, validateProductUrl, UnsafeProductUrl } from '@/lib/server/safe-product-url';
 import { looksLikeBotWall } from '@/lib/browserless/classify';
-import { protectedProductHtml } from '@/lib/browserless/protected-product';
+import { renderProductPage } from '@/lib/server/render-product';
 import {
   type ProductFields,
   EMPTY_FIELDS,
@@ -21,7 +21,7 @@ import {
   determineCategory,
 } from '@/lib/products/extractProductFields';
 
-// Direct and browser resource requests share the same pinned transport.
+// The cheap path uses pinned transport; Chromium has independent kernel egress.
 async function fetchHtml(url: string): Promise<{ html: string | null; blocked: boolean }> {
   const result = await safeProductFetch(url);
   return { html: result.status >= 200 && result.status < 300 ? result.html : null,
@@ -62,9 +62,9 @@ export async function POST(request: NextRequest) {
 
     if (!fields.name || !fields.image) {
       try {
-        const rendered = await protectedProductHtml(url);
-        if (rendered && !looksLikeBotWall(rendered)) {
-          const extracted = extractProductFromHtml(rendered, url);
+        const rendered = await renderProductPage(url);
+        if (rendered && !looksLikeBotWall(rendered.html)) {
+          const extracted = extractProductFromHtml(rendered.html, rendered.finalUrl);
           for (const key of Object.keys(fields) as Array<keyof ProductFields>) fields[key] = fields[key] || extracted[key];
         }
       } catch {

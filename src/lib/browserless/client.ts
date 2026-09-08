@@ -1,96 +1,8 @@
-/**
- * Browserless client.
- *
- * This is the single place in the app that reads the Browserless key, builds a
- * Browserless URL, and applies a request timeout. Every external page scrape
- * goes through here so that later escalation (stealth, residential proxy,
- * captcha solve, smart-scrape, BrowserQL) becomes a change in this one module
- * rather than an edit across six call sites.
- *
- * Phase 0 contract: behavior on the wire is unchanged. The escalation options
- * below are wired as a typed pass-through and default to off, so the request
- * bodies sent are byte for byte what they were before this client existed
- * (`{ url }` for /content, `{ code, context }` for /function). The mapping from
- * these options onto real Browserless params is confirmed against
- * docs.browserless.io and turned on in Phase 2, not here. Until then the options
- * are accepted and ignored, and `smartScrape` is an inert stub. As of Phase 2a
- * the `bql` rung is live: it maps the stealth / residential-proxy / conditional
- * solve options onto a confirmed BrowserQL mutation. It is not yet wired into
- * the scrape path, which still runs the Phase 0 byte-for-byte bodies.
- */
-
-import { hasUsablePageContent } from './classify';
-
-const BROWSERLESS_HOST = 'https://production-sfo.browserless.io';
-const DEFAULT_TIMEOUT_MS = 20000;
-// BrowserQL needs a higher ceiling than the REST endpoints: a navigation plus a
-// conditional captcha solve can legitimately run long (the solve mutation alone
-// defaults to a 30s wait), so a 20s abort would cut off a real challenge clear.
-const BQL_DEFAULT_TIMEOUT_MS = 90000;
-
-// Single BrowserQL mutation for the escalation rung. Confirmed against the BQL
-// reference on docs.browserless.io (goto / if / solve / html operations):
-//
-//   - goto(url, waitUntil: domContentLoaded, timeout: 45000) { status }
-//     navigates and surfaces the page status. waitUntil is a documented BQL goto
-//     enum (commit / domContentLoaded / load / networkIdle / firstMeaningfulPaint);
-//     we wait only for the DOM, not for every sub-resource (load) or the network
-//     to quiet (networkIdle). Heavy retailer pages (e.g. a 2.8MB Pottery Barn
-//     PDP) render usable HTML long before then, and a stricter wait just burns
-//     the goto navigation timeout while the page is already there. The explicit
-//     45s goto timeout is headroom over the ~9s a plain-endpoint nav takes; it
-//     replaces BQL's default 30s, which a slow exit could otherwise blow past.
-//     By default bql() hits the plain /chromium/bql endpoint with NO residential
-//     proxy (the proven-fast Pottery Barn path); stealth (/stealth/bql) and the
-//     residential proxy are explicit opt-ins for domains that need them.
-//   - if(selector) { solve(type) { ... } }  is a point-in-time presence check
-//     that runs the nested solve ONLY when that widget is in the DOM. This keeps
-//     the 10-unit solve charge gated to an actual challenge: on a clean page the
-//     if branch is skipped and solve never fires.
-//   - solve(type: CaptchaTypes) { found solved time }  takes an explicit captcha
-//     type. solve runs once per call against a single type, so the conditional
-//     rung is split per widget, each passing the matching enum value. The
-//     supported types were confirmed against the BQL CaptchaTypes enum on
-//     docs.browserless.io: recaptcha / recaptchaV3, cloudflare (which also
-//     covers Turnstile), datadome, and others. Notably absent: hCaptcha and
-//     PerimeterX (Wayfair's px-captcha). Those are intentionally given no solve
-//     branch: an unsupported challenge falls through to the returned HTML and
-//     is recorded as a failure by the classifier rather than looping on a type
-//     solve cannot handle. In practice Wayfair clears on the residential proxy +
-//     stealth without ever presenting a captcha, so neither if branch fires.
-//   - html { html }  returns the final page HTML, which the classifier consumes
-//     exactly like the /content payload.
-//
-// Caveat surfaced for Phase 2: goto.status reflects only the first navigation,
-// so a challenge that is cleared by the solve still reports its handshake status
-// (e.g. 403). The recorder keys BQL success on usable content, not status, so a
-// solved 403 is not mislabeled as a block. `solved` is surfaced alongside the
-// status so a cleared challenge stays legible.
-const BQL_RECAPTCHA_SELECTOR = ".g-recaptcha, iframe[src*='recaptcha']";
-const BQL_CLOUDFLARE_SELECTOR = ".cf-turnstile, iframe[src*='challenges.cloudflare.com']";
-
-const BQL_SCRAPE_MUTATION = `mutation FolioBqlScrape($url: String!) {
-  goto(url: $url, waitUntil: domContentLoaded, timeout: 45000) {
-    status
-  }
-  recaptcha: if(selector: ${JSON.stringify(BQL_RECAPTCHA_SELECTOR)}) {
-    solve(type: recaptcha) {
-      found
-      solved
-      time
-    }
-  }
-  cloudflare: if(selector: ${JSON.stringify(BQL_CLOUDFLARE_SELECTOR)}) {
-    solve(type: cloudflare) {
-      found
-      solved
-      time
-    }
-  }
-  content: html {
-    html
-  }
-}`;
+// Compatibility types for existing scrape recorders. All rendering uses the isolated worker.
+import { renderProductPage, hasRenderWorker } from '@/lib/server/render-product';
+import { safeProductFetch } from '@/lib/server/safe-product-url';
+import { auth } from '@/lib/auth';
+import { rateLimit } from '@/lib/rateLimit';
 
 export type ScrapeEndpoint =
   | 'content'
@@ -152,259 +64,31 @@ export interface BrowserlessResult {
   solved?: boolean;
 }
 
-let aliasWarned = false;
 
-/**
- * Read the Browserless key. Prefers BROWSERLESS_API_KEY. Accepts BROWSERLESS_TOKEN
- * as a fallback alias so the standalone test scripts keep working, but warns once
- * when only the alias is set.
- */
-function readKey(): string | null {
-  const primary = process.env.BROWSERLESS_API_KEY;
-  if (primary) return primary;
-  const alias = process.env.BROWSERLESS_TOKEN;
-  if (alias) {
-    if (!aliasWarned) {
-      aliasWarned = true;
-      console.warn(
-        '[browserless] BROWSERLESS_API_KEY is not set; falling back to BROWSERLESS_TOKEN. Set BROWSERLESS_API_KEY.',
-      );
-    }
-    return alias;
-  }
-  return null;
-}
+export const hasBrowserlessKey = hasRenderWorker;
 
-/** True when a Browserless key is available under either name. */
-export function hasBrowserlessKey(): boolean {
-  return !!(process.env.BROWSERLESS_API_KEY || process.env.BROWSERLESS_TOKEN);
-}
-
-/** Shared POST against a Browserless REST endpoint with a uniform timeout. */
-async function postEndpoint(
-  endpoint: ScrapeEndpoint,
-  path: string,
-  body: Record<string, unknown>,
-  opts: BrowserlessOptions,
-): Promise<BrowserlessResult> {
-  const key = readKey();
-  if (!key) {
-    return { ok: false, status: 0, targetStatus: null, payload: '', endpoint, durationMs: 0, error: 'no-key' };
-  }
-
-  const timeoutMs = opts.timeoutMs ?? DEFAULT_TIMEOUT_MS;
-  const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), timeoutMs);
+export async function getContent(url: string, _opts: BrowserlessOptions = {}): Promise<BrowserlessResult> {
+  void _opts; // Legacy flags are never forwarded; worker owns its fixed bounds.
   const started = Date.now();
   try {
-    const res = await fetch(`${BROWSERLESS_HOST}${path}?token=${key}`, {
-      method: 'POST',
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify(body),
-      signal: controller.signal,
-    });
-    const payload = await res.text();
-    return { ok: res.ok, status: res.status, targetStatus: null, payload, endpoint, durationMs: Date.now() - started };
-  } catch (err: any) {
-    const aborted = err?.name === 'AbortError';
-    return {
-      ok: false,
-      status: 0,
-      targetStatus: null,
-      payload: '',
-      endpoint,
-      durationMs: Date.now() - started,
-      error: aborted ? 'timeout' : err?.message || 'error',
-    };
-  } finally {
-    clearTimeout(timer);
-  }
+    const session = await auth();
+    if (!session?.user?.id) return { ok: false, status: 401, targetStatus: null, payload: '', endpoint: 'content', durationMs: 0, error: 'unauthorized' };
+    const budget = await rateLimit({ userId: session.user.id, scope: 'legacy-render', limit: 20, windowMs: 3600000 });
+    if (!budget.ok) return { ok: false, status: 429, targetStatus: null, payload: '', endpoint: 'content', durationMs: 0, error: 'render-budget' };
+    const page = await renderProductPage(url);
+    return { ok: !!page, status: page ? 200 : 503, targetStatus: page?.status ?? null, payload: page?.html || '', endpoint: 'content', durationMs: Date.now() - started, error: page ? undefined : 'renderer-unavailable' };
+  } catch { return { ok: false, status: 503, targetStatus: null, payload: '', endpoint: 'content', durationMs: Date.now() - started, error: 'renderer-unavailable' }; }
 }
 
-/**
- * Rendered HTML via the /content endpoint. Phase 0 body is exactly `{ url }`.
- */
-export async function getContent(url: string, opts: BrowserlessOptions = {}): Promise<BrowserlessResult> {
-  return postEndpoint('content', '/content', { url }, opts);
-}
-
-/**
- * In-page JS harvest via the /function endpoint. Phase 0 body is exactly
- * `{ code, context }`.
- */
-export async function runFunction(
-  code: string,
-  context: Record<string, unknown>,
-  opts: BrowserlessOptions = {},
-): Promise<BrowserlessResult> {
-  return postEndpoint('function', '/function', { code, context }, opts);
-}
-
-/**
- * Plain server-side fetch of the page, centralized so the direct-fetch fallback
- * shared by several scrape paths lives in one place. The target page status is
- * available directly on the Response, so it is filled here.
- */
-export async function directFetch(url: string, opts: DirectFetchOptions = {}): Promise<BrowserlessResult> {
-  const timeoutMs = opts.timeoutMs ?? DEFAULT_TIMEOUT_MS;
-  const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), timeoutMs);
+export async function directFetch(url: string, _opts: DirectFetchOptions = {}): Promise<BrowserlessResult> {
+  void _opts; // Pinned transport owns request headers and timeout.
   const started = Date.now();
   try {
-    const res = await fetch(url, { headers: opts.headers, signal: controller.signal });
-    const payload = res.ok ? await res.text() : '';
-    return {
-      ok: res.ok,
-      status: res.status,
-      targetStatus: res.status,
-      payload,
-      endpoint: 'direct',
-      durationMs: Date.now() - started,
-    };
-  } catch (err: any) {
-    const aborted = err?.name === 'AbortError';
-    return {
-      ok: false,
-      status: 0,
-      targetStatus: null,
-      payload: '',
-      endpoint: 'direct',
-      durationMs: Date.now() - started,
-      error: aborted ? 'timeout' : err?.message || 'error',
-    };
-  } finally {
-    clearTimeout(timer);
-  }
+    const page = await safeProductFetch(url);
+    return { ok: page.status >= 200 && page.status < 300, status: page.status, targetStatus: page.status, payload: page.html, endpoint: 'direct', durationMs: Date.now() - started };
+  } catch { return { ok: false, status: 503, targetStatus: null, payload: '', endpoint: 'direct', durationMs: Date.now() - started, error: 'fetch-unavailable' }; }
 }
 
-/**
- * Smart-scrape endpoint. Inert until Phase 2 enables it; the interface is
- * settled now so call sites can be pointed at it later without a signature
- * change.
- */
-export async function smartScrape(_url: string, _opts: BrowserlessOptions = {}): Promise<BrowserlessResult> {
-  throw new Error('[browserless] smartScrape is not enabled until Phase 2');
-}
-
-/**
- * BrowserQL escalation rung (spec 17 Phase 2a). Runs the single
- * BQL_SCRAPE_MUTATION above against the /stealth/bql GraphQL endpoint: navigate
- * with stealth over a residential proxy, conditionally solve a captcha only when
- * one is present, then return the page HTML.
- *
- * The residential proxy is selected via query params on the endpoint URL, the
- * documented way to use Browserless's built-in proxy from BQL. `opts.stealth`
- * is accepted for signature parity but needs no wire mapping: stealth is engaged
- * by the /stealth/bql endpoint path itself.
- *
- * Result shape matches the other client methods so it flows straight through
- * the classifier and recorder: `payload` carries the page HTML (so the bot-wall
- * signatures match real page text), `targetStatus` carries goto.status, and
- * `ok` reflects BQL transport success, not the page status. A GraphQL `errors`
- * array comes back on a 200, so it is treated as a failure, not an ok response.
- */
-export async function bql(url: string, opts: BrowserlessOptions = {}): Promise<BrowserlessResult> {
-  const key = readKey();
-  if (!key) {
-    return { ok: false, status: 0, targetStatus: null, payload: '', endpoint: 'bql', durationMs: 0, error: 'no-key' };
-  }
-
-  // The token rides as a query param. The built-in residential proxy is OFF by
-  // default: in testing it roughly tripled latency and pushed a heavy retailer
-  // PDP (Pottery Barn) past the goto navigation timeout, returning an empty page
-  // shell, while a plain datacenter exit loaded the same page fully in ~9s.
-  // Residential stays available for a caller that explicitly needs it (a domain
-  // that blocks datacenter IPs) via opts.proxy; it is no longer forced on.
-  const params = new URLSearchParams({ token: key });
-  if (opts.proxy === 'residential') {
-    params.set('proxy', 'residential');
-    params.set('proxyCountry', opts.proxyCountry ?? 'us');
-  } else if (opts.proxy === 'datacenter') {
-    params.set('proxy', 'datacenter');
-  }
-
-  const timeoutMs = opts.timeoutMs ?? BQL_DEFAULT_TIMEOUT_MS;
-  const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), timeoutMs);
-  const started = Date.now();
-  try {
-    // Default to the plain /chromium/bql endpoint, which cleared Pottery Barn in
-    // testing (full PDP, HTTP 200, ~9s). Escalate to the stealth endpoint only
-    // when a caller explicitly asks via opts.stealth.
-    const path = opts.stealth ? '/stealth/bql' : '/chromium/bql';
-    const res = await fetch(`${BROWSERLESS_HOST}${path}?${params.toString()}`, {
-      method: 'POST',
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ query: BQL_SCRAPE_MUTATION, variables: { url } }),
-      signal: controller.signal,
-    });
-    const raw = await res.text();
-    const durationMs = Date.now() - started;
-
-    // Parse the GraphQL envelope. BQL returns 200 with an `errors` array when a
-    // mutation throws (bad navigation, malformed query), so a 200 alone is not
-    // success.
-    let data: any = null;
-    let gqlError: string | undefined;
-    try {
-      const parsed = JSON.parse(raw);
-      data = parsed?.data ?? null;
-      if (Array.isArray(parsed?.errors) && parsed.errors.length > 0) {
-        gqlError = parsed.errors.map((e: any) => e?.message).filter(Boolean).join('; ') || 'bql-error';
-      }
-    } catch {
-      gqlError = 'bql-parse-error';
-    }
-
-    const targetStatus: number | null = typeof data?.goto?.status === 'number' ? data.goto.status : null;
-    const html: string = typeof data?.content?.html === 'string' ? data.content.html : '';
-    // Each alias is null when its if branch was skipped (that widget absent), so
-    // a truthy solved on either means a captcha was both found and solved.
-    const solved =
-      data?.recaptcha?.solve?.solved === true ||
-      data?.cloudflare?.solve?.solved === true;
-
-    // A goto navigation-wait timeout (or any step that throws once the page is
-    // already up) comes back as a GraphQL `errors` array on a 200, but the
-    // `content: html` field still carries the fully rendered page. This rung is
-    // content-first: if a usable page came back, a wait condition that didn't
-    // fully settle is not a failure. Recover those: flip to ok, surface the
-    // HTML, and downgrade the step error to a non-fatal note. Genuinely empty,
-    // thin, or challenge/captcha responses do NOT qualify (hasUsablePageContent
-    // gates on real content length and the absence of challenge markers, the
-    // same rule the classifier's BQL branch uses), so they stay failures.
-    const recoveredFromStepError =
-      res.ok && !!gqlError && hasUsablePageContent(html);
-    const ok = res.ok && (!gqlError || recoveredFromStepError);
-
-    return {
-      ok,
-      status: res.status,
-      targetStatus,
-      // On success surface the page HTML for the classifier; on failure surface
-      // the raw envelope so the error is debuggable.
-      payload: ok ? html : raw,
-      endpoint: 'bql',
-      durationMs,
-      // Only a genuine failure carries `error`. A recovered step timeout is
-      // non-fatal and rides along as `note` instead, so the classifier does not
-      // mislabel a usable page as TIMEOUT/BROWSERLESS_ERROR.
-      error: recoveredFromStepError ? undefined : gqlError,
-      note: recoveredFromStepError ? gqlError : undefined,
-      solved,
-    };
-  } catch (err: any) {
-    const aborted = err?.name === 'AbortError';
-    return {
-      ok: false,
-      status: 0,
-      targetStatus: null,
-      payload: '',
-      endpoint: 'bql',
-      durationMs: Date.now() - started,
-      error: aborted ? 'timeout' : err?.message || 'error',
-    };
-  } finally {
-    clearTimeout(timer);
-  }
-}
+// Kept for standalone historical callers; no GraphQL, proxy or solver is executed.
+export const bql = getContent;
+export async function smartScrape(_url: string, _opts: BrowserlessOptions = {}): Promise<BrowserlessResult> { void _opts; throw new Error('Unsupported render operation'); }

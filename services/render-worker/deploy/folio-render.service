@@ -1,0 +1,24 @@
+[Unit]
+Description=Folio isolated render controller
+Requires=docker.service
+After=docker.service network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=/opt/folio-render
+EnvironmentFile=/etc/folio-render.env
+ExecStart=/usr/bin/node /opt/folio-render/controller.mjs
+Restart=on-failure
+RestartSec=5
+TimeoutStopSec=70
+RuntimeDirectory=folio-render
+RuntimeDirectoryMode=0755
+UMask=0077
+LimitNOFILE=4096
+# Controller intentionally needs host namespace/net-admin and local Docker.
+# Chromium runs separately without these privileges or this environment.
+
+[Install]
+WantedBy=multi-user.target

@@ -33,7 +33,7 @@ replace('../../src/lib/rateLimit', {
   checkMultipleRateLimits: async () => ({ success: allowed }),
   rateLimit: async () => ({ ok: allowed }),
 });
-replace('../../src/lib/browserless/protected-product', { protectedProductHtml: async () => { throw Error('Renderer unavailable'); } });
+replace('../../src/lib/server/render-product', { renderProductPage: async () => { throw Error('Renderer unavailable'); } });
 replace('../../src/lib/browserless/record', { hasRecentBlockedAttempt: async () => false, recordScrapeAttempt: async () => {} });
 replace('../../src/lib/three-d/triggerMeshGeneration', { triggerMeshGeneration: () => { calls.push({ method: 'mesh', args: {} }); } });
 replace('../../src/lib/telemetry/context-signal', { logSignal: async () => {}, extractTags: () => [] });
