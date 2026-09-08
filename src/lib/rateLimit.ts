@@ -34,6 +34,11 @@ export interface RateLimitResult {
   reset: number;
 }
 
+function recordRateLimitOutcome(outcome: 'rejected' | 'missing_configuration' | 'backend_timeout' | 'backend_outage') {
+  // Fixed vocabulary only: never identifiers, Redis URLs/tokens, email, IP or exception text.
+  console.warn('[rate-limit]', JSON.stringify({ outcome }));
+}
+
 /**
  * Check if request should be rate limited
  * @param identifier - Unique identifier for the requester (e.g., IP address, user ID)
@@ -50,7 +55,7 @@ export async function checkRateLimit(
     const denied = { success: false, limit: config.max, remaining: 0, reset: now + config.windowMs };
     const url = process.env.UPSTASH_REDIS_REST_URL;
     const token = process.env.UPSTASH_REDIS_REST_TOKEN;
-    if (!url || !token) return denied;
+    if (!url || !token) { recordRateLimitOutcome('missing_configuration'); return denied; }
     try {
       const limiter = new Ratelimit({
         redis: new Redis({ url, token, retry: { retries: 0 } }),
@@ -61,11 +66,12 @@ export async function checkRateLimit(
         timeout: 3000,
       });
       const result = await limiter.limit(key);
-      if (result.reason === 'timeout') return denied;
+      if (result.reason === 'timeout') { recordRateLimitOutcome('backend_timeout'); return denied; }
       await result.pending;
+      if (!result.success) recordRateLimitOutcome('rejected');
       return { success: result.success, limit: result.limit, remaining: result.remaining, reset: result.reset };
     } catch {
-      console.error('[rate-limit] Production backend unavailable');
+      recordRateLimitOutcome('backend_outage');
       return denied;
     }
   }

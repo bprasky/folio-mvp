@@ -1,5 +1,8 @@
 # P0 security hardening — in progress, not production-ready
 
+This is the historical first checkpoint. See [the completion-phase review](P0_COMPLETION_REVIEW.md)
+for current Critical/High dispositions, additional tests and the browser architecture decision.
+
 Date: 2026-09-08. Branch: `codex/folio-hardening`.
 
 ## Findings and changes

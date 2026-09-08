@@ -955,3 +955,6 @@ never a bare command name, resolve the entry out of the dependency's own
 with no arguments by a chain, it owns its own environment loading — the caller has
 nowhere to put a flag; (5) when a comment and the code beneath it disagree, the
 comment is usually the intent and the code is usually the bug.
+
+## 2026-09-08 — Browser SSRF is a network-boundary requirement
+When a managed browser provider overrides required controls, stop layering interception workarounds. Decide on an independently controlled network boundary first. Navigation success and launch flags alone do not prove isolation. A completion report must include adversarial network evidence and real product parity, or explicitly remain incomplete.

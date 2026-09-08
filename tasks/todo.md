@@ -1581,3 +1581,23 @@ Review: Pending. No security property is complete until verified. Schema changes
 - Live Browserless probe rejects the provider-added 0.0.0.0 proxy bypass. User explicitly chose establishing a protected browser path; disabling it is not accepted as completion.
 - P0 remains open. Need a Browserless environment honoring required egress controls, then live adversarial and rendered-product verification. Distributed live Redis and route integration tests also remain.
 - Prompts 2–6 have not started, preserving order. Full status: docs/audits/HARDENING_P0_STATUS.md.
+
+## P0 completion phase — 2026-09-08
+Scope: only Critical/High security dispositions, browser architecture and remaining P0 checks.
+- [x] Fetch current branch/main; reproduce 3 Critical/14 High; inspect handlers and caller chains.
+- [x] Fix public feed publication/provenance leaks and contact-form abuse; scope internal prompts and their answer mutation.
+- [x] Repair claimed-product scrape authorization, bound resource spend and remove unprotected escalation; make product dedup updates race-safe.
+- [x] Remove unreachable middleware limits; distinguish limiter rejection/configuration/outage/timeout in safe logs.
+- [x] Route-level regression tests including signed webhook -> real thread matcher.
+- [x] Decide smallest independently controlled browser architecture before browser implementation; verify engine availability, then implement/test only if enforceable here.
+- [ ] Browser release gate: provision an independently controlled Linux worker, enforce namespace/host egress, pass adversarial and legitimate-rendering parity tests. Blocked: no working local Linux Docker engine or configured worker host.
+- [x] Build, type diagnostic comparison, changed-file lint, client guard, fresh IDOR report, no-secret review; commit/push checkpoint with honest completion status.
+
+Completion review: **P0 INCOMPLETE**. Twenty security tests pass; build and client
+guard pass; lint has zero errors/10 warnings. Types: 1,009 before, 1,007 after,
+zero added diagnostics. IDOR: zero Critical, one documented High scanner
+limitation, 16 Medium, 20 Low. The managed browser remains fail-closed; isolated
+worker implementation, adversarial browser tests and product parity are blocked
+on the Linux execution environment. Live Upstash smoke awaits credentials.
+Full dispositions, threat model and resumption procedure:
+`docs/audits/P0_COMPLETION_REVIEW.md`. No subsequent phase started.

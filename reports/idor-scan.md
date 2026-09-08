@@ -1,55 +1,46 @@
 # IDOR / Authorization-Gap Scan Report
 
-_Generated: 2026-04-13T18:44:30.328Z_
+_Generated: 2026-09-08T17:36:41.828Z_
 _Scanned root: `src/app/api`_
-_Files scanned: 523_
+_Files scanned: 558_
 
 ## Summary
 
 | Severity | Count |
 |---|---|
 | Critical | 0 |
-| High | 0 |
-| Medium | 40 |
+| High | 1 |
+| Medium | 16 |
 | Low | 20 |
 
 ### By rule
 
 | Rule | Count |
 |---|---|
-| IDOR005 | 50 |
+| IDOR004 | 1 |
+| IDOR005 | 26 |
 | IDOR006 | 10 |
 
-## Medium (40)
+## High (1)
 
-### `src/app/api/admin/festivals/route.ts`:168 — IDOR006 [POST]
+### `src/app/api/products/route.ts`:161 — IDOR004 [POST]
+
+Mutation prisma.product.updateMany uses where: { id } with no ownership constraint.
+
+```ts
+{ id: existing.id, vendorId: null, AND: Object.keys(addOnly).map(field => ({ [field]: existing[field] })) }
+```
+
+## Medium (16)
+
+### `src/app/api/admin/festivals/route.ts`:170 — IDOR006 [POST]
 
 Raw SQL ($queryRaw/$executeRaw) used — scanner cannot reason about ownership.
 
 ```ts
 {
 try {
-rateLimit({
-```
-
-### `src/app/api/analytics/concierge/route.ts`:5 — IDOR005 [POST]
-
-Mutating route handler POST has no session check.
-
-```ts
-{
-try {
-const analyticsData = await request.json();
-```
-
-### `src/app/api/assign-projects/route.ts`:47 — IDOR005 [POST]
-
-Mutating route handler POST has no session check.
-
-```ts
-{
-try {
-const projects = loadProjects();
+const session = await getServerSession(authOptions);
 ```
 
 ### `src/app/api/auth/me/avatar/route.ts`:21 — IDOR005 [POST]
@@ -92,104 +83,24 @@ try {
 const searchParams = req.nextUrl.searchParams;
 ```
 
-### `src/app/api/consultations/route.ts`:14 — IDOR005 [POST]
-
-Mutating route handler POST has no session check.
-
-```ts
-{
-try {
-const body = await req.json();
-```
-
-### `src/app/api/context/match/route.ts`:103 — IDOR005 [POST]
-
-Mutating route handler POST has no session check.
-
-```ts
-{
-try {
-const body = await req.json();
-```
-
-### `src/app/api/context/match/route.ts`:28 — IDOR006 [GET]
+### `src/app/api/context/match/route.ts`:30 — IDOR006 [GET]
 
 Raw SQL ($queryRaw/$executeRaw) used — scanner cannot reason about ownership.
 
 ```ts
 {
 try {
-const { searchParams } = new URL(req.url);
+const session = await getServerSession(authOptions);
 ```
 
-### `src/app/api/context/match/route.ts`:103 — IDOR006 [POST]
+### `src/app/api/context/match/route.ts`:109 — IDOR006 [POST]
 
 Raw SQL ($queryRaw/$executeRaw) used — scanner cannot reason about ownership.
 
 ```ts
 {
 try {
-const body = await req.json();
-```
-
-### `src/app/api/editorial-submissions/route.ts`:51 — IDOR005 [POST]
-
-Mutating route handler POST has no session check.
-
-```ts
-{
-try {
-const { projectId, designerId } = await request.json();
-```
-
-### `src/app/api/editorial-submissions/route.ts`:161 — IDOR005 [PUT]
-
-Mutating route handler PUT has no session check.
-
-```ts
-{
-try {
-const { submissionId, action, rejectionReason, reviewedBy } = await request.json();
-```
-
-### `src/app/api/event-concierge/parse/route.ts`:135 — IDOR005 [POST]
-
-Mutating route handler POST has no session check.
-
-```ts
-{
-try {
-const { input } = await request.json();
-```
-
-### `src/app/api/export/spec-html/route.ts`:6 — IDOR005 [POST]
-
-Mutating route handler POST has no session check.
-
-```ts
-{
-const { projectId } = await req.json();
-if (!projectId) return NextResponse.json({ error: 'projectId required' }, { status: 400 });
-```
-
-### `src/app/api/instagram/campaign/generate/route.ts`:24 — IDOR005 [POST]
-
-Mutating route handler POST has no session check.
-
-```ts
-{
-try {
-const body: GenerateCampaignRequest = await request.json();
-```
-
-### `src/app/api/instagram/campaign/preview/route.ts`:11 — IDOR005 [POST]
-
-Mutating route handler POST has no session check.
-
-```ts
-{
-try {
-const body: PreviewRequest = await request.json();
+const session = await getServerSession(authOptions);
 ```
 
 ### `src/app/api/messages/inbox/route.ts`:5 — IDOR006 [GET]
@@ -200,16 +111,6 @@ Raw SQL ($queryRaw/$executeRaw) used — scanner cannot reason about ownership.
 {
 const userId = await getUserIdFromRequest(req);
 if (!userId) {
-```
-
-### `src/app/api/orb-agent/route.ts`:136 — IDOR005 [POST]
-
-Mutating route handler POST has no session check.
-
-```ts
-{
-try {
-const body: OrbAgentRequest = await request.json();
 ```
 
 ### `src/app/api/orgs/route.ts`:16 — IDOR006 [GET]
@@ -252,74 +153,14 @@ try {
 const session = await getServerSession();
 ```
 
-### `src/app/api/projects/handoff/route.ts`:121 — IDOR005 [PUT]
-
-Mutating route handler PUT has no session check.
-
-```ts
-{
-try {
-const body = await request.json();
-```
-
-### `src/app/api/quotes/route.ts`:8 — IDOR005 [POST]
+### `src/app/api/scrape-product/route.ts`:33 — IDOR005 [POST]
 
 Mutating route handler POST has no session check.
 
 ```ts
 {
 try {
-const formData = await request.formData();
-```
-
-### `src/app/api/selections/route.ts`:7 — IDOR005 [POST]
-
-Mutating route handler POST has no session check.
-
-```ts
-{
-try {
-const body = await request.json();
-```
-
-### `src/app/api/set-active-profile/route.ts`:5 — IDOR005 [POST]
-
-Mutating route handler POST has no session check.
-
-```ts
-{
-try {
-const { profileId, role } = await request.json();
-```
-
-### `src/app/api/support/chat/route.ts`:60 — IDOR005 [POST]
-
-Mutating route handler POST has no session check.
-
-```ts
-{
-try {
-if (!process.env.ANTHROPIC_API_KEY) {
-```
-
-### `src/app/api/update-designer-profile/route.ts`:5 — IDOR005 [POST]
-
-Mutating route handler POST has no session check.
-
-```ts
-{
-try {
-const profileData = await request.json();
-```
-
-### `src/app/api/upload-spec-sheet/route.ts`:8 — IDOR005 [POST]
-
-Mutating route handler POST has no session check.
-
-```ts
-{
-try {
-const formData = await request.formData();
+const session = await auth();
 ```
 
 ### `src/app/api/user/workspace-context/route.ts`:16 — IDOR006 [POST]
@@ -342,56 +183,6 @@ try {
 const session = await getServerSession(authOptions);
 ```
 
-### `src/app/api/vendor-actions/create-appreciation-dinner/route.ts`:92 — IDOR005 [POST]
-
-Mutating route handler POST has no session check.
-
-```ts
-{
-try {
-const body = await req.json();
-```
-
-### `src/app/api/vendor-actions/create-discovery-lunch/route.ts`:93 — IDOR005 [POST]
-
-Mutating route handler POST has no session check.
-
-```ts
-{
-try {
-const body = await req.json();
-```
-
-### `src/app/api/vendor-analytics/chat/route.ts`:75 — IDOR005 [POST]
-
-Mutating route handler POST has no session check.
-
-```ts
-{
-try {
-const body = (await req.json()) as VendorAnalyticsChatRequest;
-```
-
-### `src/app/api/vendor/ai-actions/route.ts`:9 — IDOR005 [POST]
-
-Mutating route handler POST has no session check.
-
-```ts
-{
-try {
-const body = await req.json();
-```
-
-### `src/app/api/vendor/ai-analyst/route.ts`:10 — IDOR005 [POST]
-
-Mutating route handler POST has no session check.
-
-```ts
-{
-try {
-const body = await req.json();
-```
-
 ### `src/app/api/vendor/claim-product/route.ts`:6 — IDOR005 [POST]
 
 Mutating route handler POST has no session check.
@@ -402,27 +193,17 @@ try {
 const body = await req.json();
 ```
 
-### `src/app/api/vendors/events/create/route.ts`:8 — IDOR005 [POST]
-
-Mutating route handler POST has no session check.
-
-```ts
-{
-try {
-// Debug: Log the content type and try to parse the body
-```
-
-### `src/app/api/videos/clips/route.ts`:7 — IDOR005 [POST]
-
-Mutating route handler POST has no session check.
-
-```ts
-{
-try {
-const body = await request.json();
-```
-
 ## Low (20)
+
+### `src/app/api/auth/claim/route.ts`:21 — IDOR005 [GET]
+
+Read route handler GET has no session check.
+
+```ts
+{
+const token = request.nextUrl.searchParams.get('token');
+if (!token || token.length < 8) {
+```
 
 ### `src/app/api/auth/me/route.ts`:15 — IDOR005 [GET]
 
@@ -454,17 +235,7 @@ try {
 const searchParams = req.nextUrl.searchParams;
 ```
 
-### `src/app/api/context/match/route.ts`:28 — IDOR005 [GET]
-
-Read route handler GET has no session check.
-
-```ts
-{
-try {
-const { searchParams } = new URL(req.url);
-```
-
-### `src/app/api/editorial-submissions/route.ts`:121 — IDOR005 [GET]
+### `src/app/api/editorial-submissions/route.ts`:127 — IDOR005 [GET]
 
 Read route handler GET has no session check.
 
@@ -504,7 +275,7 @@ try {
 const { searchParams } = new URL(request.url);
 ```
 
-### `src/app/api/export-spec-sheet/route.ts`:8 — IDOR005 [GET]
+### `src/app/api/export-spec-sheet/route.ts`:6 — IDOR005 [GET]
 
 Read route handler GET has no session check.
 
@@ -564,7 +335,7 @@ try {
 const searchParams = request.nextUrl.searchParams;
 ```
 
-### `src/app/api/projects/handoff/route.ts`:182 — IDOR005 [GET]
+### `src/app/api/projects/handoff/route.ts`:186 — IDOR005 [GET]
 
 Read route handler GET has no session check.
 
@@ -584,7 +355,7 @@ try {
 const { searchParams } = new URL(request.url);
 ```
 
-### `src/app/api/tag-product-to-image/route.ts`:542 — IDOR005 [GET]
+### `src/app/api/tag-product-to-image/route.ts`:567 — IDOR005 [GET]
 
 Read route handler GET has no session check.
 
@@ -614,7 +385,7 @@ try {
 const t = await getToken({ req: req as any, secret: process.env.NEXTAUTH_SECRET });
 ```
 
-### `src/app/api/videos/clips/route.ts`:76 — IDOR005 [GET]
+### `src/app/api/videos/clips/route.ts`:82 — IDOR005 [GET]
 
 Read route handler GET has no session check.
 

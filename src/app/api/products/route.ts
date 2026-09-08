@@ -8,6 +8,7 @@ import { authOptions } from '@/app/api/auth/[...nextauth]/options';
 import { triggerMeshGeneration } from '@/lib/three-d/triggerMeshGeneration';
 import { resolveProductImage } from '@/lib/products/imageProvenance';
 import { normalizeProductUrl } from '@/lib/products/normalizeProductUrl';
+import { rateLimit } from '@/lib/rateLimit';
 
 export async function GET(request: NextRequest) {
   try {
@@ -101,6 +102,8 @@ export async function POST(request: NextRequest) {
     if (!session?.user?.id) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
+    const limit = await rateLimit({ userId: session.user.id, scope: 'product-create', limit: 60, windowMs: 3600000 });
+    if (!limit.ok) return NextResponse.json({ error: 'Too many requests' }, { status: 429 });
 
     const body = await request.json();
     const { name, imageUrl, price, brand, category, url, isPending, description, scrapeStatus } = body;
@@ -155,9 +158,12 @@ export async function POST(request: NextRequest) {
             addOnly.name = name.trim();
           }
           if (Object.keys(addOnly).length > 0) {
-            await prisma.product.update({ where: { id: existing.id }, data: addOnly });
+            const mergedFields = await prisma.product.updateMany({
+              where: { id: existing.id, vendorId: null, AND: Object.keys(addOnly).map(field => ({ [field]: existing[field] })) },
+              data: addOnly,
+            });
             // Generate a mesh if this paste supplied the product's first image.
-            if (addOnly.imageUrl) triggerMeshGeneration(existing.id, addOnly.imageUrl);
+            if (mergedFields.count && addOnly.imageUrl) triggerMeshGeneration(existing.id, addOnly.imageUrl);
           }
         }
         const merged = await prisma.product.findUnique({ where: { id: existing.id } });
@@ -200,8 +206,8 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     console.error('Error creating product:', error);
     return NextResponse.json(
-      { error: 'Failed to create product: ' + (error instanceof Error ? error.message : 'Unknown error') },
+      { error: 'Failed to create product' },
       { status: 500 }
     );
   }
-} 
+}

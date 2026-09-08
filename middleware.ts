@@ -1,7 +1,6 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import { getToken } from 'next-auth/jwt';
-import { checkRateLimit, getClientIp, RateLimitPresets } from '@/lib/rateLimit';
 import {
   nextOnboardingStep,
   resumePathForStep,
@@ -22,46 +21,12 @@ const EXEMPT_ROUTES = [
   '/favicon.ico',
 ];
 
-// Auth routes that should be rate limited
-const AUTH_RATE_LIMITED_ROUTES = [
-  '/api/auth/signin',
-  '/api/auth/callback/credentials',
-];
-
 // Roles that should never be funnelled through the guided onboarding sequence.
 // Admins and vendor reps are onboarded through separate flows.
 const ONBOARDING_EXEMPT_ROLES = new Set(['ADMIN', 'VENDOR']);
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
-
-  // Rate limiting for auth endpoints (IP-level only, prevents mass attacks)
-  // Per-email rate limiting happens in the authorize callback where we have email access
-  if (AUTH_RATE_LIMITED_ROUTES.some((route) => pathname.startsWith(route))) {
-    const clientIp = getClientIp(request.headers);
-    const rateLimitResult = await checkRateLimit(clientIp, {
-      ...RateLimitPresets.LOGIN_PER_IP,
-      keyGenerator: (ip) => `login-ip:${ip}`,
-    });
-
-    if (!rateLimitResult.success) {
-      return NextResponse.json(
-        {
-          error: 'Too many login attempts from this network. Please try again later.',
-          retryAfter: Math.ceil((rateLimitResult.reset - Date.now()) / 1000),
-        },
-        {
-          status: 429,
-          headers: {
-            'X-RateLimit-Limit': String(rateLimitResult.limit),
-            'X-RateLimit-Remaining': String(rateLimitResult.remaining),
-            'X-RateLimit-Reset': String(rateLimitResult.reset),
-            'Retry-After': String(Math.ceil((rateLimitResult.reset - Date.now()) / 1000)),
-          },
-        }
-      );
-    }
-  }
 
   // Skip exempt routes (onboarding pages, auth, api, public profile, etc.)
   if (EXEMPT_ROUTES.some((route) => pathname.startsWith(route))) {

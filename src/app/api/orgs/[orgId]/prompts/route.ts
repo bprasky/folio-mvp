@@ -2,6 +2,9 @@ export const dynamic = 'force-dynamic';
 
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@/lib/auth';
+import { can, isOrgRole } from '@/lib/orgPermissions';
 
 /**
  * GET /api/orgs/[orgId]/prompts
@@ -13,13 +16,23 @@ export async function GET(
   { params }: { params: { orgId: string } }
 ) {
   try {
+    const session = await getServerSession(authOptions);
+    if (!session?.user?.id) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     const resolvedParams = params instanceof Promise ? await params : params;
     const orgId = resolvedParams.orgId;
+    const membership = await prisma.organizationUser.findFirst({
+      where: { organizationId: orgId, userId: session.user.id, isActive: true },
+      select: { role: true },
+    });
+    if (!membership || !isOrgRole(membership.role) || !can(membership.role, 'view_internal')) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    }
 
     // Fetch org-specific + global prompts
     let prompts: any[] = [];
     try {
       prompts = await prisma.vendorPrompt.findMany({
+        select: { id: true, title: true, question: true, category: true, status: true },
         where: {
           OR: [
             { organizationId: orgId, status: 'ACTIVE' },

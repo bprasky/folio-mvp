@@ -10,6 +10,7 @@ import { logSignal, extractTags } from '@/lib/telemetry/context-signal';
 import { triggerMeshGeneration } from '@/lib/three-d/triggerMeshGeneration';
 import { normalizeProductUrl } from '@/lib/products/normalizeProductUrl';
 import { assessProductHealth, isHealthRegression } from '@/lib/products/productHealth';
+import { resolveProductImage } from '@/lib/products/imageProvenance';
 
 export async function GET(
   request: NextRequest,
@@ -36,14 +37,15 @@ export async function GET(
       );
     }
 
-    // Transform to match expected format
+    const session = await getServerSession(authOptions);
+    // Apply the same public image gate as catalog browsing.
     const formattedProduct = {
       id: product.id,
       name: product.name,
       description: product.description,
       price: product.price,
       priceCents: product.price ? Math.round(Number(product.price) * 100) : null,
-      imageUrl: product.imageUrl,
+      imageUrl: resolveProductImage(product, null, session?.user?.id ? 'INTERNAL' : 'PUBLIC'),
       category: product.category,
       brand: product.brand,
       vendorName: product.vendor?.name || product.vendor?.companyName || product.brand,
@@ -54,7 +56,6 @@ export async function GET(
     };
 
     // Log context signal for product view (async, non-blocking)
-    const session = await getServerSession(authOptions);
     if (session?.user?.id) {
       logSignal({
         userId: session.user.id,
@@ -124,9 +125,7 @@ export async function PUT(
       imageUrl,
       brand,
       category,
-      url,
-      vendorName,
-      currency = 'USD'
+      url
     } = body;
 
     // Convert priceCents back to decimal
@@ -136,20 +135,7 @@ export async function PUT(
     // matches the CachedProduct cache key. See products/route.ts POST.
     const normalizedUrl = url ? normalizeProductUrl(url) : url;
 
-    // Find vendor by name (vendor is a User with role VENDOR)
-    let vendorId: string | undefined;
-    if (vendorName) {
-      const vendor = await prisma.user.findFirst({
-        where: {
-          role: 'VENDOR',
-          OR: [
-            { name: { equals: vendorName, mode: 'insensitive' } },
-            { companyName: { equals: vendorName, mode: 'insensitive' } }
-          ]
-        }
-      });
-      vendorId = vendor?.id;
-    }
+    // Vendor ownership is assigned by the claim workflow, never by a client-supplied display name.
 
     // Submit safeguard: health-check the edit. If it made the record meaningfully
     // worse, flag it (structured, admin-visible log) — without blocking the save,
@@ -177,7 +163,7 @@ export async function PUT(
 
     // Update the product
     const updatedProduct = await prisma.product.update({
-      where: { id: params.productId },
+      where: { id: params.productId, vendorId: existingProduct.vendorId },
       data: {
         name,
         description,
@@ -186,7 +172,6 @@ export async function PUT(
         brand,
         category,
         url: normalizedUrl,
-        vendorId: vendorId
       },
       include: {
         vendor: {
@@ -228,4 +213,3 @@ export async function PUT(
     );
   }
 }
-

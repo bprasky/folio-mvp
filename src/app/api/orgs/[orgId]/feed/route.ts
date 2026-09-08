@@ -1,7 +1,9 @@
+// @idor-allow: public-read reason="Public vendor profile: published public projects, published articles and non-pending catalog entries only; no mutations or member identifiers returned"
 export const dynamic = 'force-dynamic';
 
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { PRODUCT_PROVENANCE_SELECT, resolveProductImage } from '@/lib/products/imageProvenance';
 
 /**
  * GET /api/orgs/[orgId]/feed?type=all|projects|articles|products|media&page=1&limit=12
@@ -21,8 +23,11 @@ export async function GET(
     const orgId = resolvedParams.orgId;
     const { searchParams } = new URL(request.url);
     const type = searchParams.get('type') || 'all';
-    const page = parseInt(searchParams.get('page') || '1');
-    const limit = Math.min(parseInt(searchParams.get('limit') || '12'), 24);
+    const page = Number(searchParams.get('page') || '1');
+    const limit = Number(searchParams.get('limit') || '12');
+    if (!Number.isInteger(page) || page < 1 || page > 100 || !Number.isInteger(limit) || limit < 1 || limit > 24 || !['all', 'projects', 'articles', 'products', 'media'].includes(type)) {
+      return NextResponse.json({ error: 'Invalid pagination or feed type' }, { status: 400 });
+    }
     const skip = (page - 1) * limit;
 
     // Verify org exists and is a vendor type
@@ -30,7 +35,7 @@ export async function GET(
       where: { id: orgId },
       select: { id: true, type: true, name: true },
     });
-    if (!org) {
+    if (!org || !['VENDOR', 'MANUFACTURER', 'SHOWROOM'].includes(org.type)) {
       return NextResponse.json({ error: 'Organization not found' }, { status: 404 });
     }
 
@@ -49,15 +54,14 @@ export async function GET(
         where: {
           vendorId: orgId,
           status: 'APPROVED',
+          product: { isPending: false },
+          productTag: { image: { project: { isPublic: true, post: { status: 'PUBLISHED' } } } },
         },
         select: {
           id: true,
           createdAt: true,
-          impressions: true,
-          clicks: true,
-          followUpAnswer: true,
           product: {
-            select: { id: true, name: true, imageUrl: true, brand: true },
+            select: { id: true, name: true, brand: true, ...PRODUCT_PROVENANCE_SELECT },
           },
           productTag: {
             select: {
@@ -91,15 +95,13 @@ export async function GET(
           id: b.id,
           date: b.createdAt,
           productName: b.product.name,
-          productImage: b.product.imageUrl,
+          productImage: resolveProductImage(b.product, null, 'PUBLIC'),
           projectImage: b.productTag?.image?.url,
           room: b.productTag?.image?.room,
           projectTitle: project?.title,
           designerName: project?.designer?.name,
           designerImage: project?.designer?.profileImage,
           articleSlug: post?.status === 'PUBLISHED' ? post.slug : null,
-          impressions: b.impressions,
-          hasQA: !!b.followUpAnswer,
         });
       }
     }
@@ -109,7 +111,7 @@ export async function GET(
       const collabPosts = await prisma.projectPost.findMany({
         where: {
           status: 'PUBLISHED',
-          project: { vendorOrgId: orgId },
+          project: { vendorOrgId: orgId, isPublic: true },
         },
         select: {
           id: true,
@@ -193,13 +195,14 @@ export async function GET(
       const products = await prisma.product.findMany({
         where: {
           vendorId: { in: vendorUserIds },
+          isPending: false,
           imageUrl: { not: null },
         },
         select: {
           id: true,
           name: true,
           brand: true,
-          imageUrl: true,
+          ...PRODUCT_PROVENANCE_SELECT,
           category: true,
           createdAt: true,
         },
@@ -214,7 +217,7 @@ export async function GET(
           id: prod.id,
           date: prod.createdAt,
           productName: prod.name,
-          productImage: prod.imageUrl,
+          productImage: resolveProductImage(prod, null, 'PUBLIC'),
           brand: prod.brand,
           category: prod.category,
         });

@@ -1,19 +1,16 @@
-// @idor-allow: public-read reason="Authenticated designer tagging action; spends the BQL rung only for products on flagged domains"
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
-// The BQL rung runs a real headless browser navigation plus a conditional captcha
-// solve, which can take ~10-40s for a heavy retailer page. Raise the ceiling the
-// same way the website import and ImportWizard analyze steps do, and run it inline
-// here so the result is written back when it finishes. The tagging request itself
-// stays fast: it creates the product as scrapeStatus 'pending' and fires this
-// route after.
+// Keep the caller-facing escalation URL. All live rendering must use the protected
+// path; the old unrestricted BQL navigation is no longer permitted here.
 export const maxDuration = 120;
 
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/app/api/auth/[...nextauth]/options';
 import { prisma } from '@/lib/prisma';
-import { bql, hasBrowserlessKey } from '@/lib/browserless/client';
+import { protectedProductHtml } from '@/lib/browserless/protected-product';
+import { validateProductUrl, UnsafeProductUrl } from '@/lib/server/safe-product-url';
+import { checkMultipleRateLimits } from '@/lib/rateLimit';
 import { recordScrapeAttempt, hasRecentBlockedAttempt } from '@/lib/browserless/record';
 import { isFlaggedDomain } from '@/lib/browserless/flaggedDomains';
 import { normalizeProductUrl } from '@/lib/products/normalizeProductUrl';
@@ -28,7 +25,7 @@ import {
 /**
  * POST /api/products/[productId]/scrape-bql
  *
- * Runs the BrowserQL escalation rung for a product tagged from a flagged hard
+ * Runs protected rendering for a product tagged from a flagged hard
  * domain, then writes the result back onto the product and flips scrapeStatus to
  * 'complete' (or 'failed' on no usable content). Mirrors the create-then-run
  * shape of src/app/api/import/website/route.ts: the product row already exists in
@@ -54,11 +51,28 @@ export async function POST(
 
   const product = await prisma.product.findUnique({
     where: { id: productId },
-    select: { id: true, url: true, scrapeStatus: true },
+    select: { id: true, url: true, scrapeStatus: true, vendorId: true },
   });
 
   if (!product) {
     return NextResponse.json({ error: 'Product not found' }, { status: 404 });
+  }
+
+  // Unclaimed products are collaborative catalog records; claimed products belong to their vendor.
+  if (product.vendorId !== null && product.vendorId !== session.user.id && session.user.role !== 'ADMIN') {
+    return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+  }
+  const limits = await checkMultipleRateLimits([
+    { identifier: `product-render-user:${session.user.id}`, config: { max: 20, windowMs: 3600000 } },
+    { identifier: `product-render-target:${productId}`, config: { max: 3, windowMs: 3600000 } },
+  ]);
+  if (!limits.success) return NextResponse.json({ error: 'Too many requests' }, { status: 429 });
+  if (product.url) {
+    try { await validateProductUrl(product.url); }
+    catch (error) {
+      if (error instanceof UnsafeProductUrl) return NextResponse.json({ error: 'This URL cannot be scraped' }, { status: 400 });
+      return NextResponse.json({ error: 'Renderer unavailable' }, { status: 503 });
+    }
   }
 
   // Idempotent: a completed scrape is never re-run unless forced.
@@ -67,11 +81,11 @@ export async function POST(
   }
 
   if (!product.url) {
-    await prisma.product.update({ where: { id: productId }, data: { scrapeStatus: 'failed' } });
+    await prisma.product.update({ where: { id: productId, vendorId: product.vendorId, url: product.url }, data: { scrapeStatus: 'failed' } });
     return NextResponse.json({ status: 'failed', error: 'Product has no URL to scrape' }, { status: 422 });
   }
 
-  // Cost gate: the rung spends a residential proxy and pulls multi-megabyte
+  // Cost gate: the renderer runs JavaScript and pulls multi-megabyte
   // pages, so it is allowed only when the spend is justified — either the domain
   // is statically flagged (a known-hard retailer, fast-pathed in the UI) or the
   // cheap path recently recorded a block for this exact URL (auto-escalation).
@@ -87,7 +101,7 @@ export async function POST(
   }
 
   // Mark in-progress so a concurrent caller / poller sees the pending state.
-  await prisma.product.update({ where: { id: productId }, data: { scrapeStatus: 'pending' } });
+  await prisma.product.update({ where: { id: productId, vendorId: product.vendorId, url: product.url }, data: { scrapeStatus: 'pending' } });
 
   const normalizedUrl = normalizeProductUrl(product.url);
 
@@ -100,7 +114,7 @@ export async function POST(
       : await prisma.cachedProduct.findUnique({ where: { url: normalizedUrl } });
     if (cached && (cached.productName || cached.imageUrl)) {
       await prisma.product.update({
-        where: { id: productId },
+        where: { id: productId, vendorId: product.vendorId, url: product.url },
         data: {
           name: cached.productName ?? undefined,
           brand: cached.brand ?? undefined,
@@ -117,40 +131,18 @@ export async function POST(
     // proceed to a live scrape
   }
 
-  if (!hasBrowserlessKey()) {
-    await prisma.product.update({ where: { id: productId }, data: { scrapeStatus: 'failed' } });
-    return NextResponse.json({ status: 'failed', error: 'Browserless is not configured' }, { status: 503 });
-  }
-
-  // Run the rung inline (the ~34s part).
-  const res = await bql(product.url);
-
-  // Diagnostic: a flagged-domain scrape that returns fast with no content is the
-  // symptom we are chasing. Log the BQL outcome so prod logs show the exact
-  // failure (auth, bad param, GraphQL error, empty html) instead of just a
-  // silent 'failed' on the product. payload is logged by length + a short head,
-  // never in full.
-  console.log(
-    '[scrape-bql] result',
-    JSON.stringify({
-      productId,
-      url: product.url,
-      ok: res.ok,
-      httpStatus: res.status,
-      targetStatus: res.targetStatus,
-      durationMs: res.durationMs,
-      error: res.error ?? null,
-      note: res.note ?? null,
-      payloadLength: res.payload?.length ?? 0,
-      payloadHead: (res.payload ?? '').slice(0, 200),
-    }),
-  );
+  // No unrestricted BQL fallback: all escalation uses the protected renderer.
+  const started = Date.now();
+  let html: string | null = null;
+  try { html = await protectedProductHtml(product.url); } catch { /* Fail closed, no provider exception/URL in response. */ }
+  const res = { ok: !!html, status: html ? 200 : 503, targetStatus: null,
+    payload: html || '', endpoint: 'function' as const, durationMs: Date.now() - started,
+    error: html ? undefined : 'Protected renderer unavailable' };
 
   const fields = res.ok ? extractProductFromHtml(res.payload, product.url) : null;
   const usable = !!(fields && (fields.name || fields.image));
 
-  // One ScrapeAttempt row, endpoint BQL. emptyResult drives the THIN vs OK split
-  // on top of the content-first BQL classification (a solved 403 is not a block).
+  // Record one attempt. No response body or provider credential is logged.
   await recordScrapeAttempt({
     url: product.url,
     consumer: 'PRODUCT_SCRAPE',
@@ -160,7 +152,7 @@ export async function POST(
   });
 
   if (!res.ok || !fields || !usable) {
-    await prisma.product.update({ where: { id: productId }, data: { scrapeStatus: 'failed' } });
+    await prisma.product.update({ where: { id: productId, vendorId: product.vendorId, url: product.url }, data: { scrapeStatus: 'failed' } });
     return NextResponse.json(
       { status: 'failed', error: res.error || 'No usable content from the page' },
       { status: 502 },
@@ -224,7 +216,7 @@ export async function POST(
   // Fill the product. Only overwrite name when the scrape found one, so a useful
   // placeholder is never blanked by a thin result.
   await prisma.product.update({
-    where: { id: productId },
+    where: { id: productId, vendorId: product.vendorId, url: product.url },
     data: {
       name: name || undefined,
       brand: fields.brand ?? undefined,
