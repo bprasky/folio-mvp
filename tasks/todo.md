@@ -1654,3 +1654,15 @@ P0 PARKED. Scope, current-state map, transition table, checkable plan and result
 - [x] Record parked disposable database gate, review, commit and push.
 
 Review: approved mappings only; generated metadata and six read-only queries pass. Build exits 0 with no editorial mapping errors. Types: 1,006 before/after, zero added. Guards/regressions pass. Real database transition journey parked pending disposable DB. Full evidence: tasks/editorial-schema-repair.md.
+
+## TypeScript error ratchet — 2026-09-08
+- [x] Read configuration/CI conventions, fetch origin, and start a fresh canonical measurement.
+- [x] Implement deterministic structured-diagnostic fingerprints and a reviewable baseline; enforce count and fingerprint multiplicity without line positions.
+- [x] Add safe baseline lowering and existing lint-workflow integration; reject baseline expansion against the merge base.
+- [x] Prove baseline, +1 regression, movement, reduction and lowering with controlled mutations; restore all fixtures.
+- [x] Run guards, focused lint, production build and final ratchet; classify measured debt and document commands/limitations.
+- [x] Review focused diff, commit baseline/implementation/docs and push.
+
+Plan: preserve current tsconfig, build flags, product behavior and parked workstreams. Use the installed compiler API with the existing project configuration and no emit/incremental cache. Global fingerprint enforcement is stronger than changed-file-only enforcement and catches indirect errors in unchanged consumers. No increase override is planned.
+
+Review: measured 1,006 diagnostics / 638 fingerprints / 260 files at b094b5e0. Structured compiler guard rejects total increases and new fingerprints globally; merge-base integrity prevents baseline inflation. Five tests pass, including actual CLI/Git fixtures. Real repository proofs: baseline 1,006 pass; artificial 1,007 fails; line movement passes; temporary 1,005 reduction and update pass. All mutations restored. Final ratchet 1,006/zero new, production build, guard typecheck/lint and client guard pass; IDOR unchanged. No src/schema/config changes. Evidence and cleanup order: docs/TYPESCRIPT_RATCHET.md. TYPESCRIPT RATCHET COMPLETE.

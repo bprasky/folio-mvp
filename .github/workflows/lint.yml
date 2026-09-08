@@ -20,6 +20,13 @@ on:
       - '.eslintrc.json'
       - '.eslintignore'
       - 'package.json'
+      - 'package-lock.json'
+      - '**/*.ts'
+      - '**/*.tsx'
+      - 'tsconfig*'
+      - 'next.config.*'
+      - 'prisma/**'
+      - 'tools/typescript-baseline.json'
       - '.github/workflows/lint.yml'
   push:
     branches: [main]
@@ -29,6 +36,13 @@ on:
       - '.eslintrc.json'
       - '.eslintignore'
       - 'package.json'
+      - 'package-lock.json'
+      - '**/*.ts'
+      - '**/*.tsx'
+      - 'tsconfig*'
+      - 'next.config.*'
+      - 'prisma/**'
+      - 'tools/typescript-baseline.json'
       - '.github/workflows/lint.yml'
   workflow_dispatch:
 
@@ -49,3 +63,27 @@ jobs:
 
       - name: ESLint — errors fail, warnings are reported
         run: npx eslint . --ext .ts,.tsx,.js,.jsx
+
+
+  typescript:
+    name: TypeScript diagnostic ratchet
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - name: Install dependencies
+        run: npm ci
+      - name: Test the diagnostic guard
+        run: npm run typecheck:test
+      # Next 14 compile mode emits real route types without prerendering or DB access.
+      - name: Generate Prisma and Next route types
+        run: npm run typecheck:prepare
+      - name: Reject new diagnostics and baseline expansion
+        env:
+          TYPESCRIPT_BUDGET_BASE_REF: ${{ github.event.pull_request.base.sha || github.event.before || 'origin/main' }}
+        run: npm run typecheck

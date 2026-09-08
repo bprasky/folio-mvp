@@ -82,7 +82,11 @@
     "report:headline-samples": "tsx scripts/report-headline-samples.ts",
     "report:quote-standalone": "tsx scripts/measure-quote-standalone.ts",
     "report:quote-ranking": "tsx scripts/report-quote-ranking.ts",
-    "report:quote-provenance": "tsx scripts/report-quote-provenance.ts"
+    "report:quote-provenance": "tsx scripts/report-quote-provenance.ts",
+    "typecheck": "node scripts/check-typescript-budget.mjs",
+    "typecheck:prepare": "prisma generate && next build --experimental-build-mode compile",
+    "typecheck:baseline:update": "node scripts/check-typescript-budget.mjs --update",
+    "typecheck:test": "tsc --allowJs --checkJs --noEmit --skipLibCheck --module nodenext --target es2022 --types node scripts/check-typescript-budget.mjs scripts/check-typescript-budget.test.mjs && node --test scripts/check-typescript-budget.test.mjs"
   },
   "buildTimestamp": "2025-01-18T20:15:00Z",
   "prisma": {
