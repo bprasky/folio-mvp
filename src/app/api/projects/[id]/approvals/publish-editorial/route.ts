@@ -39,7 +39,7 @@ export async function POST(
       // 500 told them to "try again", which is exactly what does not work.
       return NextResponse.json(
         { error: result.message || 'Failed to publish. Please try again.' },
-        { status: 400 }
+        { status: result.statusCode ?? 400 }
       );
     }
   } catch (error: any) {

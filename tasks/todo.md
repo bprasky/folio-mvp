@@ -1641,3 +1641,7 @@ acceptance stops before setup; zero completed cases. No implementation changes.
 IDOR unchanged at 0 Critical/1 High/16 Medium/20 Low. Types 1,009 before/1,007 after,
 zero added. Access question remains pending. Evidence and all NOT RUN matrix
 entries: docs/audits/P0_FINAL_VERIFICATION_BLOCKER.md.
+
+## Editorial architecture consolidation — 2026-09-08
+P0 PARKED. Scope, current-state map, transition table, checkable plan and results: tasks/editorial-consolidation.md.
+- [ ] Complete consolidation and verification; preserve P0 controls.

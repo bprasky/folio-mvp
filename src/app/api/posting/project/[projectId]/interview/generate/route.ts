@@ -11,7 +11,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/options";
 import { prisma } from "@/lib/prisma";
-import { assertProjectWrite } from "@/lib/authz/access";
+import { assertProjectWrite, assertProjectPublish } from "@/lib/authz/access";
 import { BlocksSchema } from "@/lib/posting/schemas";
 import { generateEditorialDraft, type GenInput } from "@/lib/posting/generateEditorialDraft";
 import { rateLimit } from "@/lib/rateLimit";
@@ -465,6 +465,10 @@ export async function POST(
     });
 
     // Check for existing draft and respect forceOverwriteDraft flag
+    if (post?.status === 'REVIEW' || post?.status === 'ARCHIVED') {
+      return NextResponse.json({ error: 'Return the post to draft before regenerating' }, { status: 409 });
+    }
+    if (post?.status === 'PUBLISHED' || projectData.isPublic) await assertProjectPublish(session.user.id, projectId);
     const draftExists = post && post.status === "DRAFT" && post.expandedBlocks;
     if (draftExists && !forceOverwriteDraft && !debugEcho) {
       console.log('[AUDIT] lock:return-202 (draft exists & no force)');
@@ -1554,9 +1558,15 @@ export async function POST(
       credits = expandedBlocks.credits;
     }
     
-    const saved = await prisma.projectPost.upsert({
-      where: { projectId },
-      update: {
+    const saved = await prisma.$transaction(async tx => {
+      const current = await tx.projectPost.findUniqueOrThrow({ where: { projectId } });
+      const visibility = await tx.project.findUniqueOrThrow({ where: { id: projectId }, select: { isPublic: true } });
+      if (current.status === 'REVIEW' || current.status === 'ARCHIVED' || (post && current.status !== post.status) || (visibility.isPublic && !projectData.isPublic)) {
+        throw Object.assign(new Error('Publication state changed during generation. Retry from the current draft.'), { status: 409 });
+      }
+      const result = await tx.projectPost.update({
+      where: { projectId, updatedAt: current.updatedAt, status: current.status },
+      data: {
         status: 'DRAFT',
         expandedBlocks: expandedBlocks,
         // Merge, not replace (C3): keep override/history entries pointing at
@@ -1594,35 +1604,9 @@ export async function POST(
           },
         } as any,
       },
-      create: {
-        projectId,
-        slug,
-        status: 'DRAFT',
-        expandedBlocks: expandedBlocks,
-        sectionOverrides: [],
-        sectionHistory: [],
-        ...(heroAssetId ? { heroAssetId } : {}),
-        ...(excerpt ? { excerpt } : {}),
-        ...(credits ? { credits: credits as any } : {}),
-        provenance: {
-          interview: {
-            generatedAt: Date.now(),
-            generatedWith: {
-              answerCount: normalizedAnswers.length,
-              followupCount: normalizedFollowUps.length,
-              selectionCount: allSelections.length,
-              imageCount: imageOrder?.length || 0,
-            },
-            payload: {
-              answers: interview.payload.answers,
-              followups: interview.payload.followups,
-              selectedQuestionIds: interview.payload.selectedQuestionIds,
-              imageOrder: interview.payload.imageOrder,
-            },
-            status: { phase: 'idle' },
-          },
-        } as any,
-      },
+      });
+      await tx.project.update({ where: { id: projectId }, data: { isPublic: false, publishedAt: null, status: 'draft' } });
+      return result;
     });
 
     console.log('[AUDIT] generate:saved', {
@@ -1783,4 +1767,3 @@ export async function POST(
     );
   }
 }
-

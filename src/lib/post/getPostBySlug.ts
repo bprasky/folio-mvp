@@ -66,7 +66,7 @@ export async function getPostBySlug(slug: string) {
       },
     });
 
-    if (!post || post.status !== "PUBLISHED") {
+    if (!post || post.status !== "PUBLISHED" || !post.project.isPublic) {
       return null;
     }
 

@@ -35,8 +35,8 @@ export async function POST(
       });
     } else {
       return NextResponse.json(
-        { error: 'Failed to create editorial draft' },
-        { status: 500 }
+        { error: result.message || 'Failed to create editorial draft' },
+        { status: result.statusCode ?? 500 }
       );
     }
   } catch (error: any) {

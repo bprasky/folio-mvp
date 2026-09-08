@@ -6,6 +6,7 @@ import { authOptions } from '@/app/api/auth/[...nextauth]/options';
 import { prisma } from '@/lib/prisma';
 import { assertProjectWrite } from '@/lib/authz/access';
 import { makeSlug } from '@/lib/posting/slug';
+import { jsonObject } from '@/lib/editorial/lifecycle';
 
 /**
  * POST /api/interview/realtime/convert
@@ -175,9 +176,11 @@ export async function POST(req: NextRequest) {
     // Generate slug for post
     const projectSlug = makeSlug(realtimeSession.project.title || 'project');
 
-    // Upsert ProjectPost with provenance
-    await prisma.projectPost.upsert({
-      where: { projectId: realtimeSession.projectId },
+    // Preserve the persisted review audit when refreshing interview source data.
+    await prisma.$transaction(async tx => {
+      const current = await tx.projectPost.findUnique({ where: { projectId: realtimeSession.projectId }, select: { provenance: true, updatedAt: true } });
+      await tx.projectPost.upsert({
+      where: { projectId: realtimeSession.projectId, updatedAt: current?.updatedAt },
       create: {
         projectId: realtimeSession.projectId,
         slug: `${projectSlug}-${realtimeSession.projectId.slice(0, 8)}`,
@@ -185,8 +188,9 @@ export async function POST(req: NextRequest) {
         provenance: provenancePayload,
       },
       update: {
-        provenance: provenancePayload,
+        provenance: { ...jsonObject(current?.provenance), ...provenancePayload },
       },
+      });
     });
 
     // Link session to editorial interview
