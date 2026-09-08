@@ -1623,3 +1623,21 @@ removed; legacy renderer entrypoints now enforce identity and a shared budget.
 Linux image/sandbox/network tests, live rendering and Upstash verification remain
 pending infrastructure/credentials. Full report: docs/audits/P0_RENDER_WORKER_REPORT.md.
 P0 INCOMPLETE — implementation ready, authoritative network verification pending.
+
+## P0 final verification attempt
+- [x] Read final verification request; fetch and inspect branch; inspect available provisioning/SSH and staging configuration without exposing secrets.
+- [ ] Obtain dedicated Linux test-host and public fixture access; build the unchanged image and record runtime isolation evidence.
+- [ ] Prove positive-control HTTP/subresource/WebSocket/worker canary contact before the protected matrix.
+- [ ] Execute complete protected matrix, live rendering parity and staging Folio integration; fix only observed failures.
+- [ ] Execute live shared Upstash smoke when staging credentials are available.
+- [x] Run unchanged local regressions, build, guard, scanner and diagnostic comparison; record exact blockers without claiming Linux proof.
+
+No implementation edits planned before deployment/acceptance identifies a concrete defect.
+
+Verification attempt result: no cloud CLI/credential configuration, SSH target,
+test fixture configuration or staging Upstash credentials available. Linux
+acceptance stops before setup; zero completed cases. No implementation changes.
+36 local tests pass, one Linux-output test skipped. Build, guard and lint pass;
+IDOR unchanged at 0 Critical/1 High/16 Medium/20 Low. Types 1,009 before/1,007 after,
+zero added. Access question remains pending. Evidence and all NOT RUN matrix
+entries: docs/audits/P0_FINAL_VERIFICATION_BLOCKER.md.
