@@ -1,9 +1,9 @@
 {
   "version": 1,
-  "baselineCommit": "b094b5e0a86cfdd258c0fbae2aeee8a0da9313a3",
+  "baselineCommit": "c4317f30066e4ebd26e7a6916aee31dca4f5da1e",
   "compilerVersion": "5.9.3",
   "command": "tsc --noEmit --pretty false --incremental false",
-  "total": 1006,
+  "total": 1003,
   "diagnostics": [
     [".next/types/app/api/auth/[...nextauth]/route.ts",2344,"Type 'OmitWithTag<typeof import(\"<root>/src/app/api/auth/[...nextauth]/route\"), \"config\" | \"GET\" | \"HEAD\" | \"POST\" | \"PATCH\" | \"DELETE\" | \"dynamic\" | \"PUT\" | \"generateStaticParams\" | ... 6 more ... | \"OPTIONS\", \"\">' does not satisfy the constraint '{ [x: string]: never; }'. Property 'authOptions' is incompatible with index signature. Type 'AuthOptions' is not assignable to type 'never'.",1],
     [".next/types/app/api/rep-contacts/route.ts",2344,"Type 'OmitWithTag<typeof import(\"<root>/src/app/api/rep-contacts/route\"), \"config\" | \"GET\" | \"HEAD\" | \"POST\" | \"PATCH\" | \"DELETE\" | \"dynamic\" | \"PUT\" | \"generateStaticParams\" | ... 6 more ... | \"OPTIONS\", \"\">' does not satisfy the constraint '{ [x: string]: never; }'. Property 'listAllContacts' is incompatible with index signature. Type '(userId: string) => Promise<{ id: string; createdAt: Date; updatedAt: Date; userId: string; notes: string; isActive: boolean; vendorOrgId: string; vendorName: string; repEmail: string; repName: string; ... 6 more ...; lastContactedAt: Date; }[]>' is not assignable to type 'never'.",1],
@@ -411,10 +411,7 @@
     ["src/components/FestivalFibonacciFeed.tsx",2339,"Property 'isSponsored' does not exist on type 'FestivalEvent'.",1],
     ["src/components/FestivalFibonacciFeed.tsx",2339,"Property 'viewCount' does not exist on type 'FestivalEvent'.",1],
     ["src/components/FestivalFibonacciFeed.tsx",2551,"Property 'startDate' does not exist on type 'FestivalEvent'. Did you mean 'startsAt'?",1],
-    ["src/components/GlobalHeader.tsx",2305,"Module '\"@/lib/permissions\"' has no exported member 'getRoleDisplayName'.",1],
     ["src/components/ImageErrorBoundary.tsx",2305,"Module '\"react-icons/fa\"' has no exported member 'FaRefresh'.",1],
-    ["src/components/RolePanel.tsx",2741,"Property 'individual' is missing in type '{ homeowner: { title: string; subtitle: string; features: { icon: IconType; label: string; description: string; color: string; onClick: () => void; }[]; }; designer: { title: string; subtitle: string; features: { ...; }[]; }; vendor: { ...; }; student: { ...; }; admin: { ...; }; }' but required in type 'Record<UserRole, { title: string; subtitle: string; features: FeatureButton[]; }>'.",1],
-    ["src/components/RoleSelector.tsx",2345,"Argument of type 'import(\"<root>/src/components/RoleSelector\").UserRole' is not assignable to parameter of type 'import(\"<root>/src/contexts/RoleContext\").UserRole'. Type '\"architect\"' is not assignable to type 'UserRole'.",1],
     ["src/components/admin/AdminEditButton.tsx",2305,"Module '\"@/lib/permissions\"' has no exported member 'isAdmin'.",1],
     ["src/components/admin/EventFormWrapper.tsx",2741,"Property 'eventTypeOptions' is missing in type '{ mode: \"create\" | \"edit\"; defaultValues: Partial<EventFormValues>; onSubmit: (values: EventFormValues) => Promise<void>; onDelete: () => Promise<...>; festivals: { ...; }[]; }' but required in type 'EventFormProps'.",1],
     ["src/components/events/ActionStrip.tsx",2345,"Argument of type '{ eventId: string; state: \"ATTENDING\" | \"INTERESTED\" | \"SEND_TO_TEAM\"; }' is not assignable to parameter of type 'string'.",1],
