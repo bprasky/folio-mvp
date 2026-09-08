@@ -39,7 +39,7 @@ export async function middleware(request: NextRequest) {
   // Per-email rate limiting happens in the authorize callback where we have email access
   if (AUTH_RATE_LIMITED_ROUTES.some((route) => pathname.startsWith(route))) {
     const clientIp = getClientIp(request.headers);
-    const rateLimitResult = checkRateLimit(clientIp, {
+    const rateLimitResult = await checkRateLimit(clientIp, {
       ...RateLimitPresets.LOGIN_PER_IP,
       keyGenerator: (ip) => `login-ip:${ip}`,
     });

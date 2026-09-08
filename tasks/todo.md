@@ -1561,3 +1561,23 @@ and the claim email. Phase C stays blocked on the canonical interviewer module,
 and Open Decision 6 (counsel review of the whole solicitation-to-publication
 chain) gates it independently.
 
+
+# Folio hardening — 2026-09-08
+Ordered scope authorized: execute prompts 1–6 sequentially. Preserve unrelated work.
+- [x] Read request, conventions and current code; fetch and rebase preserved work onto main.
+- [ ] P1: Verify raw inbound signatures; authenticated, rate-limited SSRF-safe scraping; distributed auth limits; media Permissions Policy. Focused tests, guard, lint, baseline-relative types, build, IDOR.
+- [ ] P2: Audit legacy editorial callers and canonical state, consolidate/delete, verify surviving workflow.
+- [ ] P3: Measure actual main TypeScript baseline, implement deterministic ratchet and negative tests, wire CI.
+- [ ] P4: Add five deterministic regression journeys using existing application boundaries and isolated persistence.
+- [ ] P5: Inventory auth dialects, canonicalize bounded route slice, strengthen scanner and test authorization matrix.
+- [ ] P6: Read-only deletion audit with caller evidence, ranked batches and quantified impact; no repository edits in this phase.
+
+Review: Pending. No security property is complete until verified. Schema changes, if necessary, require backup and scoped review under migration discipline; restore and stop on validation failure.
+
+## P0 review — incomplete / browser environment blocker
+- Implemented raw-body Svix verification, distributed production rate limits, credentials IP+email enforcement, URL/IP validation with socket pinning, and self-only media permissions.
+- Nine focused test groups pass. Client guard passes. Changed-file lint: zero errors, 174 warnings. Production build exits 0 but logs an existing editorial schema mismatch.
+- Typecheck remains non-clean; historical errors plus a regenerated Next route-export diagnostic. No errors in the added security helpers or scraper.
+- Live Browserless probe rejects the provider-added 0.0.0.0 proxy bypass. User explicitly chose establishing a protected browser path; disabling it is not accepted as completion.
+- P0 remains open. Need a Browserless environment honoring required egress controls, then live adversarial and rendered-product verification. Distributed live Redis and route integration tests also remain.
+- Prompts 2–6 have not started, preserving order. Full status: docs/audits/HARDENING_P0_STATUS.md.

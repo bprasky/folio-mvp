@@ -1,15 +1,6 @@
-/**
- * Simple in-memory rate limiter
- *
- * IMPORTANT: This implementation uses in-memory storage and is suitable for:
- * - Development environments
- * - Single-instance deployments
- *
- * For production with multiple instances, consider using:
- * - @upstash/ratelimit with Redis
- * - Vercel Edge Config rate limiting
- * - Or similar distributed rate limiting solution
- */
+/** Distributed production limits; deterministic process-local storage only in development/test. */
+import { Ratelimit } from '@upstash/ratelimit';
+import { Redis } from '@upstash/redis';
 
 interface RateLimitRecord {
   count: number;
@@ -49,16 +40,39 @@ export interface RateLimitResult {
  * @param config - Rate limit configuration
  * @returns RateLimitResult indicating if request is allowed
  */
-export function checkRateLimit(
+export async function checkRateLimit(
   identifier: string,
   config: RateLimitConfig
-): RateLimitResult {
+): Promise<RateLimitResult> {
   const key = config.keyGenerator ? config.keyGenerator(identifier) : identifier;
   const now = Date.now();
+  if (process.env.NODE_ENV === 'production') {
+    const denied = { success: false, limit: config.max, remaining: 0, reset: now + config.windowMs };
+    const url = process.env.UPSTASH_REDIS_REST_URL;
+    const token = process.env.UPSTASH_REDIS_REST_TOKEN;
+    if (!url || !token) return denied;
+    try {
+      const limiter = new Ratelimit({
+        redis: new Redis({ url, token, retry: { retries: 0 } }),
+        limiter: Ratelimit.fixedWindow(config.max, `${config.windowMs} ms`),
+        prefix: `folio:ratelimit:${config.max}:${config.windowMs}`,
+        ephemeralCache: false,
+        analytics: false,
+        timeout: 3000,
+      });
+      const result = await limiter.limit(key);
+      if (result.reason === 'timeout') return denied;
+      await result.pending;
+      return { success: result.success, limit: result.limit, remaining: result.remaining, reset: result.reset };
+    } catch {
+      console.error('[rate-limit] Production backend unavailable');
+      return denied;
+    }
+  }
 
   // Clean up expired entries (simple garbage collection)
   if (rateLimitStore.size > 10000) {
-    for (const [k, v] of rateLimitStore.entries()) {
+    for (const [k, v] of Array.from(rateLimitStore.entries())) {
       if (v.resetAt < now) {
         rateLimitStore.delete(k);
       }
@@ -68,7 +82,7 @@ export function checkRateLimit(
   let record = rateLimitStore.get(key);
 
   // Create new record or reset if window expired
-  if (!record || record.resetAt < now) {
+  if (!record || record.resetAt <= now) {
     record = {
       count: 0,
       resetAt: now + config.windowMs,
@@ -121,19 +135,20 @@ export function getClientIp(headers: Headers): string {
  * @param checks - Array of {identifier, config} objects
  * @returns First failed result, or successful result if all pass
  */
-export function checkMultipleRateLimits(
+export async function checkMultipleRateLimits(
   checks: Array<{ identifier: string; config: RateLimitConfig }>
-): RateLimitResult {
+): Promise<RateLimitResult> {
+  if (!checks.length) throw new Error('At least one rate limit is required');
+  let result: RateLimitResult;
   for (const { identifier, config } of checks) {
-    const result = checkRateLimit(identifier, config);
+    result = await checkRateLimit(identifier, config);
     if (!result.success) {
       return result; // Return first failure
     }
   }
 
   // All checks passed, return success from last check
-  const lastCheck = checks[checks.length - 1];
-  return checkRateLimit(lastCheck.identifier, lastCheck.config);
+  return result!;
 }
 
 /**
@@ -210,14 +225,14 @@ export const RateLimitPresets = {
  * Simple rate limit function that returns ok/not ok status
  * Supports object-based configuration for consistency
  */
-export function rateLimit(opts: {
+export async function rateLimit(opts: {
   userId?: string;
   scope: string;
   limit: number;
   windowMs: number;
-}): { ok: boolean; remaining: number; reset: number } {
+}): Promise<{ ok: boolean; remaining: number; reset: number }> {
   const key = opts.userId ? `${opts.userId}:${opts.scope}` : opts.scope;
-  const result = checkRateLimit(key, { max: opts.limit, windowMs: opts.windowMs });
+  const result = await checkRateLimit(key, { max: opts.limit, windowMs: opts.windowMs });
   return {
     ok: result.success,
     remaining: result.remaining,

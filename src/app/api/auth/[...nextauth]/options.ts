@@ -5,7 +5,7 @@ import AppleProvider from 'next-auth/providers/apple';
 import bcrypt from 'bcryptjs';
 import { AccountStatus } from '@prisma/client';
 import { prisma } from '@/lib/prisma';
-import { checkRateLimit, RateLimitPresets } from '@/lib/rateLimit';
+import { checkRateLimit, getClientIp, RateLimitPresets } from '@/lib/rateLimit';
 
 declare module 'next-auth' {
   interface User {
@@ -123,14 +123,20 @@ export const authOptions: NextAuthOptions = {
         email: { label: 'Email', type: 'email' },
         password: { label: 'Password', type: 'password' }
       },
-      async authorize(credentials) {
+      async authorize(credentials, request) {
         if (!credentials?.email || !credentials?.password) {
           return null;
         }
 
+        const ipRateLimit = await checkRateLimit(getClientIp(new Headers(request.headers as Record<string, string>)), {
+          ...RateLimitPresets.LOGIN_PER_IP,
+          keyGenerator: (ip) => `login-ip:${ip}`,
+        });
+        if (!ipRateLimit.success) return null;
+
         // Per-email rate limiting (prevents credential stuffing on specific accounts)
-        // This complements the IP-level rate limiting in middleware
-        const emailRateLimit = checkRateLimit(credentials.email.toLowerCase().trim(), {
+        // Both dimensions run here because page middleware excludes APIs.
+        const emailRateLimit = await checkRateLimit(credentials.email.toLowerCase().trim(), {
           ...RateLimitPresets.LOGIN_PER_EMAIL,
           keyGenerator: (email) => `login-email:${email}`,
         });

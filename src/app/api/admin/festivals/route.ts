@@ -176,7 +176,7 @@ export async function POST(req: Request) {
     if (!canAccessAdmin(normalizeRole((session.user as any).role))) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
-    rateLimit({
+    await rateLimit({
       userId: req.headers.get('x-forwarded-for') ?? 'local',
       scope: 'admin:festivals',
       limit: 100,

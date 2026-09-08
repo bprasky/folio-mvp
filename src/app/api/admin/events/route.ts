@@ -59,7 +59,7 @@ function estimateBytesFromDataUrl(d: string) {
 
 export async function POST(req: Request) {
   try {
-    rateLimit({
+    await rateLimit({
       userId: req.headers.get('x-forwarded-for') ?? 'local',
       scope: 'admin:events',
       limit: 100,

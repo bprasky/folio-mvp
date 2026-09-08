@@ -348,7 +348,7 @@ export async function POST(
 
     // Rate limiting
     // Always apply user-level daily limit
-    const rl1 = rateLimit({
+    const rl1 = await rateLimit({
       userId: session.user.id,
       scope: "draft:user:day",
       limit: USER_DAILY_LIMIT,
@@ -364,7 +364,7 @@ export async function POST(
     // Skip project-level rate limit when force=true (explicit overwrite)
     // This allows immediate retry after 409 conflict
     if (!force) {
-      const rl2 = rateLimit({
+      const rl2 = await rateLimit({
         userId: projectId,
         scope: "draft:project:minute",
         limit: PROJECT_MINUTE_LIMIT,

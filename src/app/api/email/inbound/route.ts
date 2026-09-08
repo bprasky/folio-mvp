@@ -1,14 +1,10 @@
-// @idor-allow: public-read reason="Resend inbound-email webhook; bearer-credential auth via webhook signature (see TODO)"
-// TODO(security): verify Resend webhook signature before processing. Resend
-// sends an `svix-id`, `svix-timestamp`, and `svix-signature` header set; use
-// the `svix` package with process.env.RESEND_WEBHOOK_SECRET to verify. Until
-// then, anyone who finds this URL can POST fake inbound-email events and
-// trigger `matchInboundToThread`.
+// @idor-allow: public-read reason="Resend webhook authenticated by raw-body Svix signature verification"
 export const dynamic = 'force-dynamic';
 
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { matchInboundToThread } from '@/lib/email/match-inbound';
+import { verifyInbound, InboundVerificationError } from '@/lib/email/verify-inbound';
 
 /**
  * POST /api/email/inbound
@@ -21,7 +17,7 @@ import { matchInboundToThread } from '@/lib/email/match-inbound';
  */
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json();
+    const body = verifyInbound(await request.text(), request.headers) as Record<string, any>;
 
     // Resend webhook events have a 'type' field
     // For email.received events, the data contains email fields
@@ -137,7 +133,10 @@ export async function POST(request: NextRequest) {
     console.log(`[Inbound] Matched reply from ${from} to thread ${match.threadId}`);
     return NextResponse.json({ received: true, matched: true, threadId: match.threadId });
   } catch (error) {
-    console.error('[API] /api/email/inbound error:', error);
+    if (error instanceof InboundVerificationError) {
+      return NextResponse.json({ error: error.message }, { status: error.status });
+    }
+    console.error('[API] /api/email/inbound processing failed');
     // Always return 200 to Resend so they don't retry indefinitely
     return NextResponse.json({ received: true, error: 'Processing failed' });
   }
