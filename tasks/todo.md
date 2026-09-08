@@ -1666,3 +1666,15 @@ Review: approved mappings only; generated metadata and six read-only queries pas
 Plan: preserve current tsconfig, build flags, product behavior and parked workstreams. Use the installed compiler API with the existing project configuration and no emit/incremental cache. Global fingerprint enforcement is stronger than changed-file-only enforcement and catches indirect errors in unchanged consumers. No increase override is planned.
 
 Review: measured 1,006 diagnostics / 638 fingerprints / 260 files at b094b5e0. Structured compiler guard rejects total increases and new fingerprints globally; merge-base integrity prevents baseline inflation. Five tests pass, including actual CLI/Git fixtures. Real repository proofs: baseline 1,006 pass; artificial 1,007 fails; line movement passes; temporary 1,005 reduction and update pass. All mutations restored. Final ratchet 1,006/zero new, production build, guard typecheck/lint and client guard pass; IDOR unchanged. No src/schema/config changes. Evidence and cleanup order: docs/TYPESCRIPT_RATCHET.md. TYPESCRIPT RATCHET COMPLETE.
+
+## Core regression journeys — 2026-09-08
+- [x] Audit existing Node/tsx tests, real signup/onboarding, project/tag/authz, interview generation and mounted collaboration routes.
+- [x] Add small reusable fixtures and a fail-closed disposable database gate; keep local orchestration doubles explicitly distinct from persistence proof.
+- [x] Implement all five journeys through real handlers/auth/lifecycle, mocking external boundaries only (plus deterministic DB doubles for local orchestration).
+- [x] Add explicit live-DB execution mode for the same journeys and CI integration without provisioning infrastructure.
+- [x] Run suite, ratchet/guard tests, client guard, lint, Prisma validation, build and relevant IDOR scan; repair only directly exposed regressions.
+- [x] Document exact assertions, gaps and parked live execution; review, commit and push.
+
+Plan: reuse Node test + installed tsx, no browser framework. Exercise real Credentials authorization/JWT/session callbacks and middleware with an encoded session cookie. Use the mounted collaboration story invitation/acceptance path from CreateButton/MobileMenu for vendor interaction. Local database doubles prove orchestration only; the same journeys can run against an explicitly disposable database. No schema changes or infrastructure provisioning.
+
+Review: all five real-handler journeys pass locally (8 passing tests including parent/safety, one explicit live-DB skip). Required DB mode correctly exits 1 without a disposable target. Fixed project PUT view-vs-write authorization and private read/edit 500-vs-403 responses. Production build, ratchet guard tests, client guard, lint (zero errors), Prisma validate and migration discipline pass; IDOR unchanged at 0 critical/1 existing high/16 medium/19 low. TypeScript 1,006 before/after, zero new fingerprints. Full architecture, exact assertions, commands, CI and limits: docs/CORE_REGRESSION_JOURNEYS.md. IMPLEMENTATION COMPLETE — LIVE DATABASE EXECUTION PARKED.

@@ -9,7 +9,7 @@ import { authOptions } from '@/app/api/auth/[...nextauth]/options';
 import { normalizeRole, canPerformAction } from '@/lib/permissions';
 import { normalizeCreatePayload } from './normalizeCreatePayload';
 import { logDbEnv } from '@/lib/dbEnv';
-import { assertProjectView, assertProjectWrite } from "@/lib/authz/access";
+import { assertProjectWrite } from "@/lib/authz/access";
 import { CLIENT_BY_LABEL, PROJECT_TYPE_BY_LABEL, DEFAULTS } from '@/domain/project/enums';
 import { makeSlug } from '@/lib/posting/slug';
 import { PUBLISHED_PROJECT_FILTER } from '@/server/queries/filters';
@@ -268,7 +268,7 @@ export async function PUT(request: NextRequest) {
       );
     }
     
-    const access = await assertProjectView(session.user.id, id);
+    await assertProjectWrite(session.user.id, id);
 
     // Normalize legacy fields if present (for backward compatibility)
     const normalizedData: any = { ...updateData };
@@ -360,6 +360,12 @@ export async function PUT(request: NextRequest) {
 
     return NextResponse.json(updatedProject, { status: 200 });
   } catch (error) {
+    if (error instanceof Error && error.message === 'Forbidden') {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    }
+    if (error instanceof Error && error.message === 'NotFound') {
+      return NextResponse.json({ error: 'Project not found' }, { status: 404 });
+    }
     console.error('Error updating project:', error);
     return NextResponse.json(
       { error: 'Failed to update project: ' + (error instanceof Error ? error.message : 'Unknown error') },
@@ -399,4 +405,4 @@ export async function DELETE(request: NextRequest) {
       { status: 500 }
     );
   }
-} 
+}
