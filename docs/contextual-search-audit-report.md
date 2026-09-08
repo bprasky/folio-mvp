@@ -571,10 +571,10 @@ export default async function Page({ searchParams }: MagazinePageProps) {
 }
 ```
 
-#### **Editorial Project Layout** — ✅ **Magazine-Style View**
-- **File:** `src/components/project/editorial/EditorialProjectLayout.tsx`
-- **Route:** `/project/{id}?view=editorial`
-- **Type:** Computed view (renders project as editorial spread)
+#### **Editorial Project Layout** — Historical implementation
+- The unmounted `src/components/project/editorial/EditorialProjectLayout.tsx` tree was removed in Great Folio Delete Batch 2 (2026-09-08).
+- The current public path is `/p/[slug]` → `getPostBySlug` → canonical `ProjectPost` → `StoryRenderer`.
+- The previously listed `/project/{id}?view=editorial` view is historical, not evidence of a current mount.
 
 ### Featured/Trending Logic
 
