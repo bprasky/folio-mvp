@@ -74,15 +74,14 @@ shown in the list; edits or another transition invalidate stale decisions.
 Gallery and hero references are checked against the target project's images before
 submission/publication. Public post readers require PUBLISHED and a public project.
 
-## Curator mapping defect
+## Curator mappings repaired
 
-The configured database metadata and the finished
-`20251109120000_editorial_curator_integration` migration agree on snake_case
-columns. The Prisma schema instead expects unmapped camelCase fields, including
-editorial_assignment.editorialId. This is a mapping defect, not missing DDL or
-missing data. The exact source-only repair is in
-[tasks/editorial-schema-repair.md](../tasks/editorial-schema-repair.md), pending
-the repository's schema-block approval. No production SQL is needed or authorized.
+The approved mappings now align EditorialCategory, EditorialAssignment and
+EditorialEdition with the existing snake_case columns. The regenerated client
+successfully reads all three models and runs the magazine category groupBy query
+without P2022. The existing unique-index name is preserved. No SQL migration or
+database writes were performed. Exact mappings and evidence:
+[tasks/editorial-schema-repair.md](../tasks/editorial-schema-repair.md).
 
 The unreachable `curator.ts` cross-hook in-memory score/last-project mechanism was
 deleted. Existing assignments and edition scheduling remain. There is no active
@@ -104,6 +103,8 @@ transactions; only session acquisition and external notifications are substitute
 It verifies designer access, duplicate initialization/submission/review, admin
 approve/reject, stale and contradictory decisions, independent-client persistence,
 public-reader identity and unpublish visibility.
+
+REAL DATABASE TRANSITION JOURNEY — PARKED PENDING DISPOSABLE TEST DB
 
 Current execution results and outstanding gates:
 [tasks/editorial-consolidation.md](../tasks/editorial-consolidation.md).

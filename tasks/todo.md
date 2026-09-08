@@ -1644,4 +1644,13 @@ entries: docs/audits/P0_FINAL_VERIFICATION_BLOCKER.md.
 
 ## Editorial architecture consolidation — 2026-09-08
 P0 PARKED. Scope, current-state map, transition table, checkable plan and results: tasks/editorial-consolidation.md.
-- [ ] Complete consolidation and verification; preserve P0 controls.
+- [x] Complete consolidation implementation and available verification; preserve P0 controls. Disposable database journey remains parked.
+
+## Approved editorial mapping repair
+- [x] Verify approved source, sync baseline, and back up schema.
+- [x] Apply only three approved model mappings; inspect exact diff.
+- [x] Format/validate/generate/migrate-status; if any fails, restore from backup and stop.
+- [x] Verify generated mappings, read-only queries, build and focused regressions.
+- [x] Record parked disposable database gate, review, commit and push.
+
+Review: approved mappings only; generated metadata and six read-only queries pass. Build exits 0 with no editorial mapping errors. Types: 1,006 before/after, zero added. Guards/regressions pass. Real database transition journey parked pending disposable DB. Full evidence: tasks/editorial-schema-repair.md.

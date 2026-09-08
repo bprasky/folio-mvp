@@ -38,9 +38,8 @@ EditorialAssignment/Category → edition scheduler and public curation queries
 Read-only metadata on the configured database confirms snake_case columns for
 editorial_assignment/category/edition. Migration
 20251109120000_editorial_curator_integration is recorded finished, not rolled back.
-Schema omits @map on these fields; generated client consequently queries camelCase.
-This is a Prisma mapping error, not missing production DDL. Mapping-only repair
-is awaiting the repository's schema-block approval gate. No database writes.
+The approved mapping-only repair now targets those existing columns. Regenerated
+client reads and the exact magazine groupBy succeed without P2022. No database writes.
 
 ## Intended transitions
 
@@ -63,7 +62,7 @@ No new model or enum. Conditional transactional writes prevent stale reviews.
 - [x] Consolidate draft initialization and persisted transitions.
 - [x] Delete legacy submissions; migrate admin review and enforce session identity.
 - [x] Audit generation/editing and close review/visibility bypasses in source.
-- [ ] Apply approved mapping-only repair with schema backup and validation.
+- [x] Apply approved mapping-only repair with schema backup and validation.
 - [x] Add focused authorization, concurrency, persistence and public-path tests.
 - [ ] Execute the real database journey on an existing isolated test database.
 - [x] Run editorial checks, Prisma/guards, IDOR, lint, type comparison and build; limitations below.
@@ -72,7 +71,7 @@ No new model or enum. Conditional transactional writes prevent stale reviews.
 Recovery: back up schema before approved edits; restore and stop schema work if
 format/validate/generate/migrate-status fails. Never apply production migrations.
 
-## Review / verification
+## Initial consolidation verification (before approved mapping repair)
 
 - Authorization and transition tests: 3 passed, 0 failed. One integration group
   (8 sequential database journey cases) skipped because no disposable DB is
@@ -113,18 +112,22 @@ status/to request formats and unused scoring constants are removed. Existing
 draft/publish wrappers remain because PublishWorkflow and usePublishFlow call
 them, and both delegate to the shared lifecycle.
 
-### Remaining gates and debt
+### Remaining gate and retained scope
 
-1. Apply the exact mapping-only schema blocks in editorial-schema-repair.md after
-   the CLAUDE.md per-model-block approval, then regenerate/validate the client,
-   read the affected tables and rebuild. No SQL migration is indicated.
-2. Run the real database journey with an existing disposable, schema-compatible
-   EDITORIAL_TEST_DATABASE_URL and EDITORIAL_TEST_DATABASE_DISPOSABLE=1. The local
-   shadow target is unreachable. No infrastructure has been provisioned.
-3. EditorialDraft retains historical records/model and room-cleanup support but
-   has no lifecycle authority. Shared projects.json demo/export consumers remain
-   outside editorial. Existing curation assignments/editions remain readable once
-   mappings are repaired; the deleted assignment generator already had no callers.
+REAL DATABASE TRANSITION JOURNEY — PARKED PENDING DISPOSABLE TEST DB
 
-Status: INCOMPLETE — mapping approval and real database transition verification
-are pending. P0 remains parked with its original operational verification gate.
+Neither EDITORIAL_TEST_DATABASE_URL nor its disposable acknowledgement is configured.
+No infrastructure was provisioned and no production transition tests were run.
+This operational gate does not block implementation completion under the user's
+explicit continuation instructions.
+
+EditorialDraft retains historical records/model and room-cleanup support. Shared
+projects.json demo/export consumers remain outside editorial. Existing curation
+assignments/editions now read successfully; the deleted generator had no callers.
+P0 remains parked with its original operational verification gate.
+
+Mapping completion evidence is recorded in editorial-schema-repair.md.
+
+Final approved repair: format/validate/generate/status, regenerated mappings, six read-only queries, build and available regressions pass. Types 1,006 before/after, zero added. No editorial P2022 remains. SQL migration: none. Database writes: none.
+
+EDITORIAL CONSOLIDATION IMPLEMENTATION COMPLETE

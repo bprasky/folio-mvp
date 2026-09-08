@@ -963,3 +963,6 @@ When the user authorizes a portable Linux implementation despite a Windows works
 
 ## 2026-09-08 — Respect parked workstreams
 When the user parks infrastructure-blocked work and starts an independent task, preserve the controls and recorded blocker. Do not reopen architecture or provision infrastructure as a prerequisite for the new task.
+
+## 2026-09-08 — Separate implementation completion from parked operational proof
+When the user explicitly approves a scoped schema repair and parks the disposable-database journey, apply that exact repair without seeking approval again. Prove mappings with regenerated metadata, read-only queries and build logs. Report the unrun journey as parked; do not treat it as an implementation failure or imply that it passed.
