@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { CheckCircle, X, Play, Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
@@ -19,12 +19,8 @@ interface ApproveHighlightsClientProps {
       approvedByDesigner: boolean;
       productId: string | null;
     }>;
-    recordingAsset: {
-      url: string;
-      durationMs: number | null;
-    } | null;
   };
-  recordingUrl: string | null;
+  hasRecording: boolean;
 }
 
 const USE_CASE_LABELS: Record<string, string> = {
@@ -35,7 +31,7 @@ const USE_CASE_LABELS: Record<string, string> = {
 
 export function ApproveHighlightsClient({
   interviewSession,
-  recordingUrl,
+  hasRecording,
 }: ApproveHighlightsClientProps) {
   const router = useRouter();
   const [approvedIds, setApprovedIds] = useState<string[]>(
@@ -66,27 +62,33 @@ export function ApproveHighlightsClient({
     }
   };
 
-  const playSegment = (startMs: number, endMs: number) => {
-    if (!recordingUrl) return;
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+  useEffect(() => () => { audioRef.current?.pause(); }, []);
+  const playSegment = async (startMs: number, endMs: number) => {
+    if (!hasRecording) return;
+    audioRef.current?.pause();
+    setError(null);
+    try {
+    const response = await fetch('/api/interviews/' + interviewSession.id + '/media', { cache: 'no-store' });
+    if (!response.ok) throw new Error('Recording access unavailable. Please retry.');
+    const { url } = await response.json();
 
     setPlayingSegment({ startMs, endMs });
-    const audio = new Audio(recordingUrl);
+    const audio = new Audio(url);
+    audioRef.current = audio;
     audio.currentTime = startMs / 1000;
 
     const stopAt = endMs / 1000;
-    const checkTime = setInterval(() => {
-      if (audio.currentTime >= stopAt) {
-        audio.pause();
-        clearInterval(checkTime);
-        setPlayingSegment(null);
-      }
-    }, 100);
+    audio.ontimeupdate = () => {
+      if (audio.currentTime >= stopAt) { audio.pause(); setPlayingSegment(null); }
+    };
+    audio.onended = () => setPlayingSegment(null);
 
-    audio.play().catch((err) => {
-      console.error("Play error:", err);
-      clearInterval(checkTime);
+    await audio.play();
+    } catch (err) {
       setPlayingSegment(null);
-    });
+      setError(err instanceof Error ? err.message : 'Playback failed');
+    }
   };
 
   const handleSubmit = async () => {
@@ -113,7 +115,12 @@ export function ApproveHighlightsClient({
         throw new Error(errorData.error || "Failed to approve highlights");
       }
 
+      if (interviewSession.status === 'READY') {
+        const published = await fetch('/api/interviews/' + interviewSession.id + '/publish', { method: 'POST' });
+        if (!published.ok) throw new Error((await published.json()).error || 'Publishing failed');
+      }
       router.push(`/designer/interviews/${interviewSession.id}`);
+      router.refresh();
     } catch (err) {
       console.error("Approve error:", err);
       setError(err instanceof Error ? err.message : "Failed to approve highlights");
@@ -182,13 +189,13 @@ export function ApproveHighlightsClient({
                     </span>
                   </div>
                   <p className="text-folio-text-primary leading-relaxed text-lg font-light">
-                    "{highlight.quoteText}"
+                    &ldquo;{highlight.quoteText}&rdquo;
                   </p>
                 </div>
               </div>
 
               <div className="flex items-center space-x-3">
-                {recordingUrl && (
+                {hasRecording && (
                   <Button
                     variant="outline"
                     size="sm"
@@ -244,7 +251,7 @@ export function ApproveHighlightsClient({
                 Saving...
               </>
             ) : (
-              "Save & Continue"
+              interviewSession.status === "READY" ? "Publish Approved Quotes" : "Save & Continue"
             )}
           </Button>
         </div>

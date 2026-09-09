@@ -91,7 +91,8 @@
     "typecheck": "node scripts/check-typescript-budget.mjs",
     "typecheck:prepare": "prisma generate && next build --experimental-build-mode compile",
     "typecheck:baseline:update": "node scripts/check-typescript-budget.mjs --update",
-    "typecheck:test": "tsc --allowJs --checkJs --noEmit --skipLibCheck --module nodenext --target es2022 --types node scripts/check-typescript-budget.mjs scripts/check-typescript-budget.test.mjs && node --test scripts/check-typescript-budget.test.mjs"
+    "typecheck:test": "tsc --allowJs --checkJs --noEmit --skipLibCheck --module nodenext --target es2022 --types node scripts/check-typescript-budget.mjs scripts/check-typescript-budget.test.mjs && node --test scripts/check-typescript-budget.test.mjs",
+    "test:recorded-media": "tsx --test scripts/core/media-integrity.test.cjs"
   },
   "buildTimestamp": "2025-01-18T20:15:00Z",
   "prisma": {

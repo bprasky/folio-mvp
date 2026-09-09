@@ -1,98 +1,23 @@
 export const dynamic = 'force-dynamic';
-
-import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
+import { NextRequest, NextResponse } from 'next/server';
+import { prisma } from '@/lib/prisma';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { assertProjectView } from '@/lib/authz/access';
-
-export async function GET(
-  request: NextRequest,
-  { params }: { params: { id: string } }
-) {
-  try {
-    const session = await getServerSession(authOptions);
-    if (!session?.user?.id) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-    await assertProjectView(session.user.id, params.id);
-
-    const searchParams = request.nextUrl.searchParams;
-    const limit = Math.min(parseInt(searchParams.get("limit") || "10"), 50);
-    const approvedOnly = searchParams.get("approvedOnly") !== "false"; // Default true
-
-    // Fetch approved quote highlights for this project
-    const where: any = {
-      interviewSession: {
-        projectId: params.id,
-      },
-      useCase: "EDITORIAL_PULLQUOTE",
-    };
-
-    if (approvedOnly) {
-      where.approvedByDesigner = true;
-    }
-
-    const highlights = await prisma.quoteHighlight.findMany({
-      where,
-      orderBy: {
-        score: "desc",
-      },
-      take: limit,
-      select: {
-        id: true,
-        quoteText: true,
-        startMs: true,
-        endMs: true,
-        score: true,
-        interviewSession: {
-          select: {
-            id: true,
-            recordedAt: true,
-            createdBy: {
-              select: {
-                id: true,
-                name: true,
-                profileImage: true,
-              },
-            },
-          },
-        },
-      },
-    });
-
-    // Filter to only published interviews
-    const publishedHighlights = highlights.filter(
-      (h) => h.interviewSession
-    );
-
-    // Transform to response format
-    const quotes = publishedHighlights.map((highlight) => ({
-      id: highlight.id,
-      quoteText: highlight.quoteText,
-      designer: {
-        id: highlight.interviewSession!.createdBy.id,
-        name: highlight.interviewSession!.createdBy.name,
-        profileImage: highlight.interviewSession!.createdBy.profileImage,
-      },
-      interviewSession: {
-        id: highlight.interviewSession!.id,
-        recordedAt: highlight.interviewSession!.recordedAt,
-      },
-      startMs: highlight.startMs,
-      endMs: highlight.endMs,
-    }));
-
-    return NextResponse.json({
-      ok: true,
-      quotes,
-      totalCount: quotes.length,
-    });
-  } catch (error) {
-    console.error("[projects/interview-quotes] Error:", error);
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
-  }
+export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
+  const session = await getServerSession(authOptions);
+  if (!session?.user?.id) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  try { await assertProjectView(session.user.id, params.id); }
+  catch { return NextResponse.json({ error: 'Forbidden' }, { status: 403 }); }
+  const requested = Number(request.nextUrl.searchParams.get('limit') || 10);
+  const limit = Number.isFinite(requested) ? Math.max(1, Math.min(Math.floor(requested), 50)) : 10;
+  const highlights = await prisma.quoteHighlight.findMany({
+    where: { approvedByDesigner: true, useCase: 'EDITORIAL_PULLQUOTE', InterviewSession: { projectId: params.id, status: 'PUBLISHED' } },
+    orderBy: { score: 'desc' }, take: limit,
+    select: { id: true, quoteText: true, startMs: true, endMs: true,
+      InterviewSession: { select: { id: true, recordedAt: true, users: { select: { id: true, name: true, profileImage: true } } } } },
+  });
+  const quotes = highlights.map(h => ({ id: h.id, quoteText: h.quoteText, startMs: h.startMs, endMs: h.endMs,
+    designer: h.InterviewSession.users, interviewSession: { id: h.InterviewSession.id, recordedAt: h.InterviewSession.recordedAt } }));
+  return NextResponse.json({ ok: true, quotes, totalCount: quotes.length });
 }
-
-
-

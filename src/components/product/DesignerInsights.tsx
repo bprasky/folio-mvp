@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Play, ExternalLink, Quote } from "lucide-react";
+import { ExternalLink, Quote } from "lucide-react";
 import Link from "next/link";
 
 interface DesignerInsight {
@@ -33,8 +33,6 @@ export function DesignerInsights({ productId }: DesignerInsightsProps) {
   const [insights, setInsights] = useState<DesignerInsight[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [playingId, setPlayingId] = useState<string | null>(null);
-  const [audioUrls, setAudioUrls] = useState<Record<string, string>>({});
 
   useEffect(() => {
     async function fetchInsights() {
@@ -55,55 +53,6 @@ export function DesignerInsights({ productId }: DesignerInsightsProps) {
 
     fetchInsights();
   }, [productId]);
-
-  const playSegment = async (insight: DesignerInsight) => {
-    try {
-      // Fetch interview session to get recording URL (cache per interview session)
-      let recordingUrl = audioUrls[insight.interviewSession.id];
-      
-      if (!recordingUrl) {
-        const response = await fetch(`/api/interviews/${insight.interviewSession.id}/status`);
-        if (!response.ok) throw new Error("Failed to fetch interview");
-
-        const data = await response.json();
-        recordingUrl = data.interviewSession?.recordingAsset?.url;
-
-        if (!recordingUrl) {
-          alert("Audio recording not available");
-          return;
-        }
-
-        setAudioUrls((prev) => ({
-          ...prev,
-          [insight.interviewSession.id]: recordingUrl,
-        }));
-      }
-
-      setPlayingId(insight.id);
-
-      const audio = new Audio(recordingUrl);
-      audio.currentTime = insight.startMs / 1000;
-
-      const stopAt = insight.endMs / 1000;
-      const checkTime = setInterval(() => {
-        if (audio.currentTime >= stopAt) {
-          audio.pause();
-          clearInterval(checkTime);
-          setPlayingId(null);
-        }
-      }, 100);
-
-      audio.play().catch((err) => {
-        console.error("Play error:", err);
-        clearInterval(checkTime);
-        setPlayingId(null);
-      });
-    } catch (err) {
-      console.error("Error playing segment:", err);
-      alert("Failed to play audio segment");
-      setPlayingId(null);
-    }
-  };
 
   if (loading) {
     return (
@@ -135,7 +84,7 @@ export function DesignerInsights({ productId }: DesignerInsightsProps) {
               <Quote className="h-4 w-4 text-folio-text-tertiary mt-0.5 flex-shrink-0" />
               <div className="flex-1 min-w-0">
                 <p className="text-sm text-[#111827] leading-relaxed italic">
-                  "{insight.quoteText}"
+                  &ldquo;{insight.quoteText}&rdquo;
                 </p>
                 <div className="mt-2 flex items-center space-x-3 text-xs text-[#6B7280]">
                   <div className="flex items-center space-x-1">
@@ -158,17 +107,6 @@ export function DesignerInsights({ productId }: DesignerInsightsProps) {
                   </Link>
                 </div>
               </div>
-              <button
-                onClick={() => playSegment(insight)}
-                className="flex-shrink-0 p-2 rounded-lg hover:bg-surface-ground transition-colors"
-                title="Play audio segment"
-              >
-                <Play
-                  className={`h-4 w-4 ${
-                    playingId === insight.id ? "text-[var(--accent)]" : "text-folio-text-tertiary"
-                  }`}
-                />
-              </button>
             </div>
           </div>
         ))}

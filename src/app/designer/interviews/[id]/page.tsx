@@ -29,21 +29,20 @@ export default async function InterviewPage({
       extractedAt: true,
       publishedAt: true,
       createdByUserId: true,
-      recordingAsset: {
+      MediaAsset: {
         select: {
           id: true,
-          url: true,
           durationMs: true,
           mimeType: true,
         },
       },
-      project: {
+      projects: {
         select: {
           id: true,
           title: true,
         },
       },
-      product: {
+      products: {
         select: {
           id: true,
           name: true,
@@ -58,7 +57,7 @@ export default async function InterviewPage({
   }
 
   // Check access
-  if (interviewSession.createdByUserId !== session.user.id) {
+  if (interviewSession.createdByUserId !== session.user.id || session.user.role !== "DESIGNER") {
     notFound();
   }
 
@@ -67,13 +66,13 @@ export default async function InterviewPage({
       <div className="max-w-4xl mx-auto py-12 px-4">
         <div className="mb-8">
           <h1 className="text-3xl font-light text-folio-text-primary mb-2">
-            {interviewSession.project?.title || interviewSession.product?.name || "Interview"}
+            {interviewSession.projects?.title || interviewSession.products?.name || "Interview"}
           </h1>
           <p className="text-folio-text-secondary">
-            {interviewSession.project
+            {interviewSession.projects
               ? "Project Reflection"
-              : interviewSession.product
-              ? `Product Insight: ${interviewSession.product.brand} ${interviewSession.product.name}`
+              : interviewSession.products
+              ? `Product Insight: ${interviewSession.products.brand} ${interviewSession.products.name}`
               : "Recorded Reflection"}
           </p>
         </div>
@@ -83,16 +82,13 @@ export default async function InterviewPage({
           <div className="bg-white rounded-lg shadow-sm border border-folio-border-subtle p-8">
             <RecordingInterface
               interviewId={interviewSession.id}
-              onUploadComplete={() => {
-                // Client-side redirect handled in component
-              }}
             />
           </div>
         )}
 
         {/* Show status view for other states */}
-        {interviewSession.status !== "DRAFT" && interviewSession.status !== "UPLOADED" && (
-          <InterviewStatusView interviewSession={interviewSession} />
+        {interviewSession.status !== "DRAFT" && (
+          <InterviewStatusView interviewSession={{ id: interviewSession.id, status: interviewSession.status, errorMessage: interviewSession.errorMessage, recordingAsset: interviewSession.MediaAsset ? { durationMs: interviewSession.MediaAsset.durationMs } : null, transcribedAt: interviewSession.transcribedAt, extractedAt: interviewSession.extractedAt, publishedAt: interviewSession.publishedAt }} />
         )}
       </div>
     </div>

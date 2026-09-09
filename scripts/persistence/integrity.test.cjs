@@ -4,6 +4,8 @@ const assert = require('node:assert/strict');
 const { resolve } = require('node:path');
 const { randomUUID } = require('node:crypto');
 const h = require('../core/harness.cjs');
+process.env.INTERVIEW_MEDIA_BUCKET = 'interview-media';
+const webmFixture = Buffer.from([0x1a,0x45,0xdf,0xa3,0x9f,0x42,0x82,0x84,0x77,0x65,0x62,0x6d,0,0,0]);
 const { memoryDatabase } = require('../core/memory-db.cjs');
 const { factories } = require('../core/fixtures.cjs');
 const { NextRequest } = require('next/server');
@@ -284,10 +286,10 @@ test('canonical recorded upload still writes storage then MediaAsset and Intervi
   const id = randomUUID();
   await db.interviewSession.create({ data: { id, createdByUserId: owner.id, projectId: project.id, status: 'DRAFT', mode: 'AUDIO', updatedAt: new Date() } });
   const post = h.route('interviews/[id]/upload').POST;
-  const req = () => uploadRequest(project.id, 'audio/webm', 'audio-fixture');
+  const req = () => uploadRequest(project.id, 'audio/webm', webmFixture);
   await h.login(other); assert.equal((await post(req(), { params: { id } })).status, 403);
   await h.login(owner); failStorage = true;
-  assert.equal((await post(req(), { params: { id } })).status, 500);
+  assert.equal((await post(req(), { params: { id } })).status, 502);
   assert.equal((await db.interviewSession.findUnique({ where: { id } })).status, 'DRAFT');
   failStorage = false;
   const response = await post(req(), { params: { id } }); assert.equal(response.status, 200);
@@ -295,7 +297,7 @@ test('canonical recorded upload still writes storage then MediaAsset and Intervi
   assert.equal(state.status, 'UPLOADED');
   const asset = await db.mediaAsset.findUnique({ where: { id: state.recordingAssetId } });
   assert.match(asset.storageKey, new RegExp('^interviews/' + id + '/'));
-  assert.equal(objects.get(asset.storageKey).toString(), 'audio-fixture');
+  assert.deepEqual(objects.get(asset.storageKey), webmFixture);
 });
 
 test('upgrade requests retain requested details for claimed organizations and reject nonmembers', async () => {
