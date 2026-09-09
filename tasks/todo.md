@@ -1779,3 +1779,12 @@ Review: approved zero-reference User FK migration applied; 107 migrations up to 
 Scope: audit only; no new production migration, no infrastructure changes, no broad cleanup. Fix only concrete narrow branch-caused blockers if discovered. Main is currently the merge base; no rebase needed unless a fresh fetch changes that evidence.
 
 Review: MERGE READY; PRODUCTION DEPLOY BLOCKED pending production Upstash configuration and live shared-limit verification. Actual production credentials handler denies without Upstash before DB access; signup returns 429. Main unchanged after final fetch. Two migrations applied, 107 up to date; aggregate orphan/synthetic/invalid claim counts zero. All five core journeys and integrity suites pass; three explicit execution groups skipped (core DB, editorial DB, Linux parity). TypeScript unchanged at 904/574/233; build and CI lint pass with documented historical warnings. Renderer/media live gates remain feature gates. LAND AS ONE PR. Audit-only changes; no application or database mutation. Report: docs/FINAL_MERGE_DEPLOYMENT_READINESS_2026-09-09.md.
+
+## Final hardening PR — 2026-09-09
+- [x] Reverify branch/main and deployment automation visibility.
+- [x] Rerun the protected release contract and migration checks.
+- [x] Prepare outcome-based PR description with deployment hold and review order.
+- [x] Commit/push session documentation and open or update one PR; do not merge.
+Scope: no product changes, no new migrations or infrastructure work. Main unchanged at baseline; preserve commit history.
+
+Review: fresh final release contract passed with unchanged counts: core 8 pass / 1 DB group skipped; attribution 8; claims 17; persistence 34; media 33; security/editorial 26 pass / 2 skipped; worker 13; ratchet guards 5. TypeScript unchanged 904 diagnostics / 574 fingerprints / 233 files, zero additions. Quotes, editorial generation, Product Record invariants, client guard, Prisma validation/sync/status, migration discipline, build and CI lint pass (0 lint errors, 3333 warnings). Both branch migrations applied; 107 up to date. IDOR unchanged 0 critical / 1 reviewed high / 15 medium / 11 low. Main/base unchanged at 05303220a06c3aece2381067d98e0717ee972eda; no overlap/rebase. No existing open PR found for this head. Prepared final review guide and PR publication with ACTIVE Upstash hold; no merge/auto-merge or deployment. Automatic production deployment behavior unverified from repository config. Report/body: docs/HARDENING_PR_REVIEW_GUIDE_2026-09-09.md. No application changes.
