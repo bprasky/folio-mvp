@@ -1,5 +1,9 @@
 # 12_SUPER_ARTICLES
 
+## Spotlight collaboration boundary — adopted 9 September 2026
+
+For the [spotlight flow, revision 1.1](Folio-Spotlight-and-Social-Publishing-Spec.md), the designer's original project, spotlight, Shop entry, testimonial and social exports proceed independently of vendor membership, payment, response or acceptance. The subscription-to-have-a-voice statements below do not create a launch prerequisite for this optional collaboration. A joint piece is a separate versioned draft linked to the published spotlight; it needs an approved vendor contribution and both parties' approval of the assembled version. Vendor identity/access must be verified, and the vendor cannot edit or veto the designer's original wording. Sending requires publication and explicit recipient/message authorization; saving a contact is not sending. Accumulate public attributable evidence by verified vendor identity, coordinate authorized invitations without expanding any designer's scope, respect recipient opt-outs, and send no automatic reminders at launch. Keep evidence/delivery failures independent of designer publishing. See the [foundation audit](SPOTLIGHT_FOUNDATION_AUDIT_2026-09-09.md); this update does not claim implementation.
+
 ## Purpose
 This document defines the Super-Article system: a multi-party collaborative editorial model that unifies Designer, Architect, Contractor, and Vendor perspectives into a single project narrative—creating editorial content no traditional design magazine can match.
 

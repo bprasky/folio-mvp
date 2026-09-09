@@ -1,5 +1,7 @@
 # 21_ASSET_MATRIX — Delta 01
 
+**9 September 2026 precedence:** [Spotlight/social revision 1.1](Folio-Spotlight-and-Social-Publishing-Spec.md) supersedes parent-only export eligibility and any automatic retirement implied below. Inventory all reachable paths before changing them. Exports require the parent and exact social-piece version to be published; product features require approved published spotlight sources. Historical harvest/deletion recommendations below are not authorization for deletion in this implementation.
+
 ADD-only delta against `docs/21_ASSET_MATRIX.md`. Records nine decisions and the findings
 from `docs/audits/ASSET_MATRIX_IMPLEMENTATION_EVALUATION.md` and
 `docs/audits/CAROUSEL_GENERATOR_EVALUATION.md`.

@@ -1,5 +1,9 @@
 # 22_PRODUCT_RECORD
 
+## Spotlight exception — adopted 9 September 2026
+
+The [founder specification revision 1.1](Folio-Spotlight-and-Social-Publishing-Spec.md) adds a distinct explicit designer-spotlight source. Its approved published excerpt appears on the product page with designer/studio attribution, the original project and cleared contextual imagery, regardless of vendor claim, subscription or response. The legacy volunteer-quote claim gate and paid-request-only public-content statements below do not apply to these spotlights. Editorial paraphrases are not quotations; exact source/version approval is required. Private notes and unpublished answers remain private. Preserve separate project/room sources; withdrawal or parent privacy removes affected public evidence. Vendor advertising reuse and paid amplification require separate actions. Existing commissioned research/economic proposals remain separate and are not launch requirements for spotlights. Runtime enforcement is pending; see the [foundation audit](SPOTLIGHT_FOUNDATION_AUDIT_2026-09-09.md).
+
 ## Purpose
 
 This document defines the Product Record: the product page as the design industry's system of record, authored by the designers who specified the product, gated behind vendor participation, and commissioned rather than volunteered.

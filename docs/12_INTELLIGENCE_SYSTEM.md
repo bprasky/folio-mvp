@@ -1,3 +1,7 @@
+## Spotlight selection and outreach amendment — 9 September 2026
+
+For [spotlight/social revision 1.1](Folio-Spotlight-and-Social-Publishing-Spec.md), intelligence signals and product prominence may suggest an explicit designer selection but cannot schedule product-specific questions or send invitations. Only persisted designer selection schedules a spotlight question; descriptors do not bypass this rule. Aggregate public attributable vendor evidence separately from send authorization. Tagging, evidence refresh and publication do not authorize outreach; vendor identity ambiguity blocks outreach/access only. Apply this scope override to older trigger/proposal examples below. Implementation remains pending the [foundation audit](SPOTLIGHT_FOUNDATION_AUDIT_2026-09-09.md) milestones.
+
 # 12_INTELLIGENCE_SYSTEM
 
 ## Purpose

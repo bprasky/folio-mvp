@@ -1,5 +1,9 @@
 # 06 — Editorial and publishing system
 
+## Required spotlight/social extension — 9 September 2026
+
+The [founder specification revision 1.1](Folio-Spotlight-and-Social-Publishing-Spec.md) adds designer-approved spotlights and separately published social pieces attached to the same parent project. It does not create a competing editorial article pipeline. Parent publication requires finishing unresolved spotlights or explicitly deferring them as drafts; a published project may receive a later spotlight through review/publish. Only the completed approved spotlight activates Shop/testimonials/Studio eligibility, independently of vendor state. Social export additionally requires the exact approved social-piece version to be published and render-ready, with live parent visibility and source permissions. Parent/piece withdrawal removes dependent public/feed/export eligibility. Discovery eligibility is distinct from earned featuring and paid boosts. Evaluate ProjectModule reuse before introducing another feed object. The current-implementation description below predates these additions; see the [foundation audit](SPOTLIGHT_FOUNDATION_AUDIT_2026-09-09.md).
+
 Current implementation, audited 2026-09-08. P0 renderer work remains parked.
 
 ## Canonical journey
