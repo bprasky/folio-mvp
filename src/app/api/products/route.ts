@@ -9,6 +9,7 @@ import { triggerMeshGeneration } from '@/lib/three-d/triggerMeshGeneration';
 import { resolveProductImage } from '@/lib/products/imageProvenance';
 import { normalizeProductUrl } from '@/lib/products/normalizeProductUrl';
 import { rateLimit } from '@/lib/rateLimit';
+import { unclaimedProductAttribution } from '@/lib/products/unclaimedAttribution';
 
 export async function GET(request: NextRequest) {
   try {
@@ -181,14 +182,13 @@ export async function POST(request: NextRequest) {
         description: description || null,
         imageUrl: imageUrl || null,
         price: price ? parseFloat(String(price)) : null,
-        brand: brand || null,
+        ...unclaimedProductAttribution(brand),
         category: category || null,
         url: normalizedUrl,
         isPending: isPending ?? false,
         // Flagged-domain BQL lifecycle: the tagging UI creates the product as
         // 'pending' for hard domains, then fires the scrape-bql route to fill it.
         scrapeStatus: scrapeStatus ?? null,
-        vendorId: null, // Can be set later if needed
       },
     });
 

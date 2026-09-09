@@ -84,6 +84,7 @@
     "report:quote-ranking": "tsx scripts/report-quote-ranking.ts",
     "report:quote-provenance": "tsx scripts/report-quote-provenance.ts",
     "test:core": "tsx --test scripts/core/safety.test.cjs scripts/core/journeys.test.cjs",
+    "test:product-attribution": "tsx --test scripts/core/product-attribution.test.cjs",
     "test:core:db": "node scripts/core/run-db.cjs",
     "typecheck": "node scripts/check-typescript-budget.mjs",
     "typecheck:prepare": "prisma generate && next build --experimental-build-mode compile",

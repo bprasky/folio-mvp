@@ -75,7 +75,14 @@ async function journeys(t, database) {
     const { assignImageToRoom } = require(resolve('src/app/actions/projectImages.ts'));
     await assignImageToRoom({ imageId: image.id, roomId: room.id });
     assert.equal((await db.projectImage.findUniqueOrThrow({ where: { id: image.id } })).roomId, room.id);
-    product = await f.product(); // Existing catalogue product is a fixture, not a scrape.
+    const userCount = await db.user.count();
+    const createdProduct = await body(await h.route('designer/products').POST(r({
+      name: 'Core Chair', vendorName: 'Core Workshop', url: 'https://product.test/chair',
+      imageUrl: 'https://storage.test/chair.png',
+    })));
+    product = await db.product.findUniqueOrThrow({ where: { id: createdProduct.productId } });
+    assert.equal(product.brand, 'Core Workshop'); assert.equal(product.vendorId, null);
+    assert.equal(await db.user.count(), userCount);
     tag = await body(await tagging.POST(r({ projectId, imageId: image.id, productId: product.id, x: 0.25, y: 0.75, createSelection: true, finishRaw: 'Oak', finishConfirmed: true })));
     const persisted = await db.productTag.findFirst({ where: { imageId: image.id, productId: product.id } });
     assert.ok(persisted); assert.equal(persisted.x, 0.25); assert.equal(persisted.y, 0.75); assert.equal(persisted.finishRaw, 'Oak');
