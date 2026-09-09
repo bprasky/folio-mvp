@@ -163,7 +163,7 @@ async function journeys(t, database) {
     await f.membership(vendor.id, vendorOrg.id);
     const stories = h.route('collaboration/stories'), storyRoute = h.route('collaboration/stories/[id]');
     await h.login(vendor);
-    const invite = { designerUserId: owner.id, taggedProjectId: projectId, taggedProductIds: [product.id] };
+      const invite = { designerUserId: owner.id, taggedProjectId: projectId, taggedProductIds: [product.id], vendorOrgId: 'spoofed-organization', vendorUserId: owner.id };
     const created = await body(await stories.POST(r(invite)), 201);
     const story = created.story || created;
     assert.equal(story.vendorOrgId, vendorOrg.id); assert.equal(story.designerUserId, owner.id); assert.equal(story.taggedProjectId, projectId);

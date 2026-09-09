@@ -247,7 +247,7 @@ async function sendTaggedNotificationEmail(data: VendorNotificationData): Promis
   const subject = `${designerName} tagged your product on Folio`;
   const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
   const viewPostUrl = `${appUrl}/project/${projectId}`;
-  const claimProfileUrl = `${appUrl}/vendor/onboarding`;
+  const claimProfileUrl = `${appUrl}/auth/org-setup`;
   const dashboardUrl = `${appUrl}/vendor/dashboard`;
 
   const html = `

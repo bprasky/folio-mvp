@@ -62,8 +62,15 @@ export async function POST(
       }
     });
 
+    if (['VENDOR', 'MANUFACTURER', 'SHOWROOM'].includes(org.type) &&
+        (!existingMembership?.isActive || !['OWNER', 'ADMIN'].includes(existingMembership.role))) {
+      return NextResponse.json({ error: 'An active organization owner or admin must claim this vendor organization.' }, { status: 403 });
+    }
+
     // Perform the claim in a transaction
     await prisma.$transaction(async (tx) => {
+      const claimed = await tx.organization.updateMany({ where: { id: orgId, status: 'UNCLAIMED' }, data: { status: 'CLAIMED' } });
+      if (claimed.count !== 1) throw new Error('Organization already claimed');
       // If there's an existing owner, demote them to admin
       for (const owner of org.users) {
         await tx.organizationUser.update({

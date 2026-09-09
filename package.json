@@ -85,6 +85,7 @@
     "report:quote-provenance": "tsx scripts/report-quote-provenance.ts",
     "test:core": "tsx --test scripts/core/safety.test.cjs scripts/core/journeys.test.cjs",
     "test:persistence": "tsx --test scripts/persistence/integrity.test.cjs",
+    "test:vendor-claims": "tsx --test scripts/core/vendor-claims.test.cjs",
     "test:product-attribution": "tsx --test scripts/core/product-attribution.test.cjs",
     "test:core:db": "node scripts/core/run-db.cjs",
     "typecheck": "node scripts/check-typescript-budget.mjs",

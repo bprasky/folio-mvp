@@ -1,6 +1,7 @@
 'use server';
 
 import { prisma } from '@/lib/prisma';
+import { vendorClaimMembership } from '@/lib/vendor/claimAuthorization';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { normalizeUrl, isValidImageUrl, validateImageList } from '@/lib/url/normalizeUrl';
@@ -271,6 +272,10 @@ export async function publishProduct(payload: any): Promise<{ success: boolean; 
         success: false,
         error: 'Unauthorized',
       };
+    }
+
+    if (!session.user.id || !await vendorClaimMembership(session.user.id)) {
+      return { success: false, error: 'Active vendor membership is required.' };
     }
 
     // Generate slug

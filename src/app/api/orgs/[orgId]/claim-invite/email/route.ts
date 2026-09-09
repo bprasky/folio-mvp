@@ -50,7 +50,7 @@ export async function POST(
   // path and the MEMBER who minted it).
   const membership = await prisma.organizationUser.findUnique({
     where: { userId_organizationId: { userId, organizationId: orgId } },
-    select: { isActive: true },
+    select: { isActive: true, role: true },
   });
   if (!membership || !membership.isActive) {
     return NextResponse.json(
@@ -67,11 +67,20 @@ export async function POST(
       organizationId: true,
       status: true,
       expiresAt: true,
+      createdById: true,
+      invitedEmail: true,
       organization: { select: { name: true } },
     },
   });
   if (!invite || invite.organizationId !== orgId) {
     return NextResponse.json({ error: 'Claim invite not found.' }, { status: 404 });
+  }
+  if (invite.createdById !== userId && !['OWNER', 'ADMIN'].includes(membership.role)) {
+    return NextResponse.json({ error: 'Only the invite creator or an organization admin can send this link.' }, { status: 403 });
+  }
+  const normalizedEmail = recipientEmail.toLowerCase().trim();
+  if (invite.invitedEmail && invite.invitedEmail !== normalizedEmail) {
+    return NextResponse.json({ error: 'This invite is already scoped to another recipient.' }, { status: 409 });
   }
   if (invite.status !== ClaimStatus.PENDING) {
     return NextResponse.json(
@@ -85,10 +94,11 @@ export async function POST(
 
   // Capture the invitedEmail on the invite row so we know who got pinged.
   // Idempotent — multiple sends to the same recipient just overwrite.
-  await prisma.orgClaimInvite.update({
-    where: { id: invite.id },
-    data: { invitedEmail: recipientEmail.toLowerCase().trim() },
+  const scoped = await prisma.orgClaimInvite.updateMany({
+    where: { id: invite.id, status: ClaimStatus.PENDING, expiresAt: { gt: new Date() }, invitedEmail: invite.invitedEmail },
+    data: { invitedEmail: normalizedEmail },
   });
+  if (scoped.count !== 1) return NextResponse.json({ error: 'Invite changed; reload before sending.' }, { status: 409 });
 
   const proto = request.headers.get('x-forwarded-proto') ?? 'https';
   const host = request.headers.get('host') ?? request.headers.get('x-forwarded-host') ?? '';

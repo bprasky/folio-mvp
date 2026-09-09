@@ -4,6 +4,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/app/api/auth/[...nextauth]/options';
 import { prisma } from '@/lib/prisma';
+import { canClaimExistingProducts } from '@/lib/vendor/claimAuthorization';
+import { ClaimConflict } from '@/lib/vendor/reviewProductClaim';
 import { canClaimOrganization } from '@/lib/vendor/domain-verification';
 import { turnoverUnclaimedProducts } from '@/lib/vendor/claimTurnover';
 import { mergeVendorShadow, mergeRepShadow } from '@/lib/intelligence/shadow-merge';
@@ -29,6 +31,10 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'organizationId is required' }, { status: 400 });
     }
 
+    if (!await canClaimExistingProducts(session.user.id, organizationId)) {
+      return NextResponse.json({ error: 'Active vendor membership and organization verification by Folio are required.' }, { status: 403 });
+    }
+
     // Verify domain match
     const verification = await canClaimOrganization(
       session.user.email,
@@ -42,51 +48,17 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Create or update the vendor invite record
-    const vendorInvite = await prisma.vendorInvite.upsert({
-      where: { organizationId },
-      create: {
-        organizationId,
-        claimedAt: new Date(),
-        claimedByUserId: session.user.id,
-      },
-      update: {
-        claimedAt: new Date(),
-        claimedByUserId: session.user.id,
-      },
-    });
-
-    // Add user to org if not already a member
-    const existingMembership = await prisma.organizationUser.findUnique({
-      where: {
-        userId_organizationId: {
-          userId: session.user.id,
-          organizationId,
-        },
-      },
-    });
-
-    if (!existingMembership) {
-      await prisma.organizationUser.create({
-        data: {
-          userId: session.user.id,
-          organizationId,
-          role: 'MEMBER',
-          isActive: true,
-          workEmail: session.user.email,
-        },
+    // Consume the organization claim once; a lost race cannot replace the claimant.
+    const vendorInvite = await prisma.$transaction(async tx => {
+      if (!await canClaimExistingProducts(session.user.id, organizationId, tx)) throw new ClaimConflict('Vendor authorization changed.');
+      const invite = await tx.vendorInvite.upsert({ where: { organizationId }, create: { organizationId }, update: {} });
+      const claimed = await tx.vendorInvite.updateMany({
+        where: { id: invite.id, claimedAt: null },
+        data: { claimedAt: new Date(), claimedByUserId: session.user.id },
       });
-    }
-
-    // Update org status to CLAIMED if currently UNCLAIMED
-    await prisma.organization.updateMany({
-      where: {
-        id: organizationId,
-        status: 'UNCLAIMED',
-      },
-      data: {
-        status: 'CLAIMED',
-      },
+      if (claimed.count !== 1) throw new ClaimConflict('Organization has already been claimed.');
+      await tx.organization.updateMany({ where: { id: organizationId, status: 'UNCLAIMED' }, data: { status: 'CLAIMED' } });
+      return invite;
     });
 
     // Phase 2 turnover: hand unclaimed products on this vendor's domain over to
@@ -179,6 +151,7 @@ export async function POST(request: NextRequest) {
       message: 'Organization claimed successfully. An admin must activate to unlock full features.',
     });
   } catch (error) {
+    if (error instanceof ClaimConflict) return NextResponse.json({ error: error.message }, { status: 409 });
     console.error('[vendor/claim] Error:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }

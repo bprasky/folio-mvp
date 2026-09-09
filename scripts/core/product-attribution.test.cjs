@@ -22,9 +22,10 @@ test('product attribution stays unclaimed until a server-authorized vendor claim
   const db = h.facade, f = factories(db), r = h.request;
   const designer = await f.user({ onboardingCompletedAt: new Date() });
   const vendor = await f.user({ role: 'VENDOR', email: 'rep@acme.test' });
-  const org = await f.organization({ type: 'VENDOR', name: 'Acme', website: 'https://acme.test' });
+  const admin = await f.user({ role: 'ADMIN' });
+  const org = await f.organization({ type: 'VENDOR', name: 'Acme', website: 'https://acme.test', verifiedAt: new Date(), verifiedBy: admin.id });
   await f.membership(vendor.id, org.id, { role: 'MEMBER' });
-  const otherOrg = await f.organization({ type: 'VENDOR', name: 'Other Vendor' });
+  const otherOrg = await f.organization({ type: 'VENDOR', name: 'Other Vendor', verifiedAt: new Date(), verifiedBy: admin.id });
   const otherVendor = await f.user({ role: 'VENDOR' });
   await f.membership(otherVendor.id, otherOrg.id);
   await h.login(designer);
@@ -101,7 +102,7 @@ test('product attribution stays unclaimed until a server-authorized vendor claim
     assert.equal((await db.product.findUniqueOrThrow({ where: { id: brandOnly.id } })).vendorId, vendor.id);
     // A stale/replayed review cannot transfer a product assigned in the meantime.
     await db.product.update({ where: { id: brandOnly.id }, data: { vendorId: otherVendor.id } });
-    await json(await review.POST(r({ candidateId: candidate.id, action: 'confirm' })));
+    await json(await review.POST(r({ candidateId: candidate.id, action: 'confirm' })), 409);
     assert.equal((await db.product.findUniqueOrThrow({ where: { id: brandOnly.id } })).vendorId, otherVendor.id);
     assert.equal(await db.productTag.count(), tagCount);
     assert.deepEqual(await identities(), before);
