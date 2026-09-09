@@ -10,8 +10,7 @@ import { sendEmail } from '@/lib/email/sendEmail';
 
 // Send-the-link endpoint. The member who minted the OrgClaimInvite (or any
 // admin of the org) can use this to email the link to whoever can claim the
-// firm page. If RESEND_API_KEY isn't configured, sendEmail() logs and
-// returns success — wiring "actual sending" is deferred per product call.
+// firm page. Missing delivery configuration returns a failure, never sent status.
 // See docs/AUTH_ORG_ENROLLMENT_FLOW.md.
 
 const bodySchema = z.object({

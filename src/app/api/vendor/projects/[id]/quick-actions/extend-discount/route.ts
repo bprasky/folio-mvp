@@ -1,23 +1,10 @@
+// @idor-allow: IDOR002 reason="Retired endpoint: constant 410 only; no resource reads or mutations."
+// @idor-allow: IDOR005 reason="Retired endpoint: constant 410 only; no resource reads or mutations."
 export const dynamic = 'force-dynamic';
 
-import { NextResponse } from "next/server";
-import { getUserIdFromRequest } from "@/lib/apiAuth";
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth';
-import { assertProjectWrite } from '@/lib/authz/access';
+import { NextResponse } from 'next/server';
 
-export async function POST(req: Request, { params }: { params: { id: string }}) {
-  const session = await getServerSession(authOptions);
-  if (!session?.user?.id) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
-  await assertProjectWrite(session.user.id, params.id);
-
-  const userId = await getUserIdFromRequest(req);
-  if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  // In a real build, enqueue a notification or update a field on project/selections.
-  return NextResponse.json({ ok: true, projectId: params.id }, { status: 200 });
+// Compatibility URL retained with an explicit, side-effect-free retirement response.
+export async function POST() {
+  return NextResponse.json({ error: "This legacy quick action is retired. No request, invitation, discount or boost was submitted.", code: 'ENDPOINT_RETIRED' }, { status: 410 });
 }
-
-
-

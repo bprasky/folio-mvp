@@ -24,9 +24,9 @@ export default function VendorAnalyticsDashboard() {
         <div className="flex items-center justify-between gap-4">
           <div>
             <h1 className="text-lg font-semibold text-folio-text-primary">
-              Vendor Dashboard
+              Sample vendor analytics (demo)
             </h1>
-            <p className="folio-meta text-folio-text-secondary">Viewing as {vendor.name}</p>
+            <p className="folio-meta text-folio-text-secondary">Fictional sample data for {vendor.name}. These figures are not your account analytics.</p>
           </div>
         </div>
       </div>

@@ -316,6 +316,7 @@ export default function VendorRoomManagementPage() {
     try {
       const formData = new FormData();
       formData.append('file', file);
+      formData.append('projectId', String(params.id));
       
       const response = await fetch('/api/upload-spec-sheet', {
         method: 'POST',
@@ -935,12 +936,12 @@ Total Selections: ${room.selections.length}
               
               <div>
                 <label className="block text-sm font-medium text-folio-text-primary mb-1">
-                  Upload Spec Sheet
+                  Upload Spec Sheet (PDF, up to 10 MB)
                 </label>
                 <div className="flex space-x-2">
                   <input
                     type="file"
-                    accept=".pdf,.docx,.doc,.txt,.jpg,.jpeg,.png"
+                    accept=".pdf,application/pdf"
                     onChange={async (e) => {
                       const file = e.target.files?.[0];
                       if (file) {
@@ -1140,4 +1141,4 @@ Total Selections: ${room.selections.length}
       )}
     </div>
   );
-} 
+}

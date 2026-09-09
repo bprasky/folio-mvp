@@ -47,7 +47,8 @@ export default function VendorQuickActionsMenu({ projectId, productId, vendorId 
       });
 
       if (!response.ok) {
-        throw new Error(`Failed to ${type.replace('-', ' ')}`);
+        const result = await response.json();
+        throw new Error(result.error || `Failed to ${type.replace('-', ' ')}`);
       }
 
       const result = await response.json();
@@ -56,7 +57,7 @@ export default function VendorQuickActionsMenu({ projectId, productId, vendorId 
       setActionData({});
     } catch (error) {
       console.error(`Error with ${type}:`, error);
-      toast.error(`Failed to ${type.replace('-', ' ')}`);
+      toast.error(error instanceof Error ? error.message : 'Action failed');
     } finally {
       setIsLoading(false);
     }

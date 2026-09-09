@@ -101,15 +101,15 @@ export function ProfessionalUpgradeModal({
       });
 
       if (!response.ok) {
-        throw new Error('Failed to send request');
+        throw new Error('Failed to record request');
       }
 
-      toast.success('Upgrade request sent to account owner');
+      toast.success('Upgrade request recorded. No email was sent; please contact the account owner directly.');
       setShareEmail('');
       setShowShareForm(false);
       onOpenChange(false);
     } catch (error) {
-      toast.error('Failed to send upgrade request');
+      toast.error('Failed to record upgrade request');
     } finally {
       setIsSending(false);
     }
@@ -191,7 +191,7 @@ export function ProfessionalUpgradeModal({
                       {orgName || 'This organization'} hasn't been claimed yet
                     </div>
                     <div className="text-sm text-amber-700 mt-1">
-                      Claim your business profile to upgrade, or share this request with someone who can.
+                      Claim your business profile to upgrade, or record an upgrade request and contact the account owner directly.
                     </div>
                   </div>
                 </div>
@@ -205,7 +205,7 @@ export function ProfessionalUpgradeModal({
                     onClick={() => setShowShareForm(true)}
                   >
                     <Share2 className="w-4 h-4 mr-2" />
-                    Share with Owner
+                    Record Upgrade Request
                   </Button>
                   <Button
                     className="flex-1 accent-btn"
@@ -218,7 +218,7 @@ export function ProfessionalUpgradeModal({
               ) : (
                 <div className="space-y-3">
                   <div className="text-sm text-folio-text-secondary">
-                    Enter the email of someone who can upgrade this account:
+                    Record the account owner’s email for this request. No email will be sent:
                   </div>
                   <div className="flex gap-2">
                     <Input
@@ -241,7 +241,7 @@ export function ProfessionalUpgradeModal({
                     onClick={handleShareUpgradeRequest}
                     disabled={!shareEmail.trim() || isSending}
                   >
-                    {isSending ? 'Sending...' : 'Send Upgrade Request'}
+                    {isSending ? 'Recording...' : 'Record Upgrade Request'}
                   </Button>
                 </div>
               )}

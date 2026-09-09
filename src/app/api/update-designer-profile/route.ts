@@ -1,43 +1,10 @@
+// @idor-allow: IDOR002 reason="Retired endpoint: constant 410 only; no resource reads or mutations."
+// @idor-allow: IDOR005 reason="Retired endpoint: constant 410 only; no resource reads or mutations."
 export const dynamic = 'force-dynamic';
 
-import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/app/api/auth/[...nextauth]/options';
+import { NextResponse } from 'next/server';
 
-export async function POST(request: NextRequest) {
-  try {
-    const session = await getServerSession(authOptions);
-    if (!session?.user?.id) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-    const profileData = await request.json();
-    
-    if (!profileData.id) {
-      return NextResponse.json(
-        { error: 'Profile ID is required' },
-        { status: 400 }
-      );
-    }
-    
-    // In a real app, this would update the designer profile in the database
-    // For now, we'll just validate the data and return success
-    
-    const updatedProfile = {
-      ...profileData,
-      updatedAt: new Date().toISOString()
-    };
-    
-    console.log('Updated designer profile:', updatedProfile);
-    
-    return NextResponse.json({ 
-      success: true, 
-      profile: updatedProfile 
-    });
-  } catch (error) {
-    console.error('Error updating designer profile:', error);
-    return NextResponse.json(
-      { error: 'Failed to update profile' },
-      { status: 500 }
-    );
-  }
-} 
+// Compatibility URL retained with an explicit, side-effect-free retirement response.
+export async function POST() {
+  return NextResponse.json({ error: "This profile API is retired. Save your profile at /profile. No update was made.", code: 'ENDPOINT_RETIRED' }, { status: 410 });
+}
