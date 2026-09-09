@@ -266,16 +266,18 @@ model User {
   contactImportJobs       ContactImportJob[] @relation("UserContactImportJobs")
 
   // --- Phase 5H1 Bucket A inverse relations ---
-  actionItemsAssigned    ActionItem[]            @relation("action_items_assignedToIdTousers")
-  actionItemsCreated     ActionItem[]            @relation("action_items_createdByIdTousers")
-  eventContacts          EventContact[]
-  eventDesignerEdges     EventDesignerEdge[]
-  eventHostProfile       EventHostProfile?
-  eventInvites           EventInvite[]
-  eventRepEdges          EventRepEdge[]
-  interviewSessions      InterviewSession[]
-  vendorBoostRequests    VendorBoostRequest[]
-  vendorInviteCandidates VendorInviteCandidate[]
+  actionItemsAssigned         ActionItem[]            @relation("action_items_assignedToIdTousers")
+  actionItemsCreated          ActionItem[]            @relation("action_items_createdByIdTousers")
+  eventContacts               EventContact[]
+  eventDesignerEdges          EventDesignerEdge[]
+  eventHostProfile            EventHostProfile?
+  eventInvites                EventInvite[]
+  eventRepEdges               EventRepEdge[]
+  recordedVendorInterviews    InterviewSession[]      @relation("RecordedInterviewVendor")
+  recordedVendorBoostRequests VendorBoostRequest[]    @relation("RecordedBoostVendor")
+  interviewSessions           InterviewSession[]
+  vendorBoostRequests         VendorBoostRequest[]
+  vendorInviteCandidates      VendorInviteCandidate[]
 
   // --- Phase 5H2 Bucket B inverse relations ---
   vendorProductMatchScores     VendorProductMatchScore[]
@@ -7074,7 +7076,7 @@ model InterviewSession {
   QuoteHighlight       QuoteHighlight[]
   TranscriptSegment    TranscriptSegment[]
   derivedBoostRequest  VendorBoostRequest?    @relation("vendor_boost_requests_interviewSessionIdTointerview_sessions")
-  vendor               Vendor?                @relation(fields: [vendorId], references: [id])
+  vendor               User?                  @relation("RecordedInterviewVendor", fields: [vendorId], references: [id], onDelete: SetNull)
 
   @@index([createdByUserId])
   @@index([productId])
@@ -7218,7 +7220,7 @@ model VendorBoostRequest {
   products            Product                  @relation(fields: [productId], references: [id], onDelete: Cascade)
   projects            Project                  @relation(fields: [projectId], references: [id], onDelete: Cascade)
   users               User                     @relation(fields: [requestedDesignerId], references: [id])
-  vendor              Vendor                   @relation(fields: [vendorId], references: [id], onDelete: Cascade)
+  vendor              User                     @relation("RecordedBoostVendor", fields: [vendorId], references: [id], onDelete: Cascade)
 
   @@index([expiresAt])
   @@index([productId])
@@ -7326,8 +7328,6 @@ model Vendor {
   city               String?
   userId             String?
   EventVendorEdge    EventVendorEdge[]
-  InterviewSession   InterviewSession[]
-  VendorBoostRequest VendorBoostRequest[]
   VendorPreviewToken VendorPreviewToken[]
 
   @@map("vendors")

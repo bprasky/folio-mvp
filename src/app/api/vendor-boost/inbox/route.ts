@@ -67,7 +67,7 @@ export async function GET(request: NextRequest) {
           select: {
             id: true,
             name: true,
-            logoUrl: true,
+            profileImage: true,
           },
         },
         interviewSession: {
@@ -81,7 +81,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({
       ok: true,
-      requests: requests.map(({ products, projects, ...request }) => ({ ...request, product: products, project: projects })),
+      requests: requests.map(({ products, projects, vendor, ...request }) => ({ ...request, product: products, project: projects, vendor: { id: vendor.id, name: vendor.name ?? "Vendor", logoUrl: vendor.profileImage } })),
     });
   } catch (error) {
     console.error("[vendor-boost/inbox] Error:", error);

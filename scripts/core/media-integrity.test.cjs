@@ -198,17 +198,17 @@ test('retired upload protocols cannot sign or persist supplied object references
   for(const path of ['upload-url','confirm-upload'])assert.equal((await h.route('interviews/[id]/'+path).POST(h.request({storageKey:'other/key',url:'https://evil.test'}),params('other'))).status,410);
   assert.equal(db.calls.length,0);assert.equal(calls.length,0);
 });
-test('legacy persisted boost acceptance copies all server context atomically; request adapter remains blocked',async()=>{
-  const c=await setup();const legacy=await db.vendor.create({data:{id:randomUUID(),name:'Historical vendor',updatedAt:new Date()}});
-  const boost=await db.vendorBoostRequest.create({data:{id:randomUUID(),vendorId:legacy.id,projectId:c.project.id,productId:c.product.id,requestedDesignerId:c.owner.id,status:'PENDING',updatedAt:new Date()}});
+test('canonical persisted boost acceptance copies all server context atomically',async()=>{
+  const c=await setup();const canonicalVendor=c.vendor;
+  const boost=await db.vendorBoostRequest.create({data:{id:randomUUID(),vendorId:canonicalVendor.id,projectId:c.project.id,productId:c.product.id,requestedDesignerId:c.owner.id,status:'PENDING',updatedAt:new Date()}});
   const accept=h.route('vendor-boost/[id]/accept').POST;
   await h.login(c.other);assert.equal((await accept(h.request({}),params(boost.id))).status,403);await h.login(c.owner);
   const response=await accept(h.request({projectId:'spoof',productId:'spoof',vendorId:'spoof'}),params(boost.id));assert.equal(response.status,200);
   const id=(await response.json()).interviewSession.id;const saved=await state(id);
-  assert.equal(saved.projectId,boost.projectId);assert.equal(saved.productId,boost.productId);assert.equal(saved.vendorId,legacy.id);assert.equal(saved.vendorBoostRequestId,boost.id);
+  assert.equal(saved.projectId,boost.projectId);assert.equal(saved.productId,boost.productId);assert.equal(saved.vendorId,canonicalVendor.id);assert.equal(saved.vendorBoostRequestId,boost.id);
   assert.equal((await accept(h.request({}),params(boost.id))).status,409);
   const org=await c.f.organization({type:'VENDOR'});await c.f.membership(c.vendor.id,org.id);await h.login(c.vendor);
-  assert.equal((await h.route('vendor-boost/request').POST(h.request({}))).status,503);
+  assert.equal((await h.route('vendor-boost/request').POST(h.request({productId:c.product.id,projectId:c.project.id}))).status,403);
   assert.equal(await db.vendorBoostRequest.count(),1);
 });
 test('create refuses video, unauthorized project, invalid product and boost context substitution',async()=>{
@@ -219,7 +219,12 @@ test('create refuses video, unauthorized project, invalid product and boost cont
   assert.equal((await post(h.request({projectId:c.project.id,vendorId:'spoof'}))).status,200);
   const rows=await db.interviewSession.findMany();assert.equal(rows[1].vendorId,null);assert.ok(rows[1].id);
 });
-test('canonical vendor-to-boost creation awaits approved User FK migration', {skip:'No trustworthy User/Organization -> historical Vendor adapter; Prisma approval required'},()=>{});
+test('canonical vendor relations target User in generated Prisma metadata',()=>{
+  const models=require('@prisma/client').Prisma.dmmf.datamodel.models;
+  for(const model of ['Product','InterviewSession','VendorBoostRequest']){
+    const relation=models.find(m=>m.name===model).fields.find(f=>f.name==='vendor');assert.equal(relation.type,'User');assert.deepEqual(relation.relationFromFields,['vendorId']);
+  }
+});
 
 
 test('approval/publish/status reject anonymous and vendor role even if creator ID matches',async()=>{
@@ -245,9 +250,9 @@ test('project quote reader keeps access checks and ignores unapproved exposure o
   await db.quoteHighlight.update({where:{id:quote.id},data:{approvedByDesigner:true}});assert.equal((await (await get()).json()).quotes.length,0);
   await db.interviewSession.update({where:{id:c.interview.id},data:{status:'PUBLISHED'}});assert.equal((await (await get()).json()).quotes.length,1);
 });
-test('legacy boost acceptance rolls back on session failure and forbids expiry/replay/context override',async()=>{
+test('canonical boost acceptance rolls back on session failure and forbids expiry/replay/context override',async()=>{
   const c=await setup();
-  const boost=await db.vendorBoostRequest.create({data:{id:randomUUID(),vendorId:randomUUID(),projectId:c.project.id,productId:c.product.id,requestedDesignerId:c.owner.id,status:'PENDING',updatedAt:new Date()}});
+  const boost=await db.vendorBoostRequest.create({data:{id:randomUUID(),vendorId:c.vendor.id,projectId:c.project.id,productId:c.product.id,requestedDesignerId:c.owner.id,status:'PENDING',updatedAt:new Date()}});
   const accept=()=>h.route('vendor-boost/[id]/accept').POST(h.request({}),params(boost.id));
   fail='interviewSession.create';assert.equal((await accept()).status,409);
   assert.equal((await db.vendorBoostRequest.findUnique({where:{id:boost.id}})).status,'PENDING');
@@ -282,4 +287,78 @@ test('provider adapter parses real SDK-shaped responses without network or trans
     assert.match(prompt.messages[0].content,/0ms-2000ms: The oak softened the room/);assert.match(prompt.messages[0].content,/verbatim/);
   }finally{require.cache[path]=previous;}
   assert.equal(h.unexpectedNetwork.length,0);
+});
+
+async function vendorContext() {
+  const c=await setup();
+  const org=await c.f.organization({type:'VENDOR'});
+  const membership=await c.f.membership(c.vendor.id,org.id,{role:'MEMBER'});
+  await db.product.update({where:{id:c.product.id},data:{vendorId:c.vendor.id}});
+  const image=await c.f.image(c.project.id);
+  const tag=await db.productTag.create({data:{productId:c.product.id,imageId:image.id,x:0.5,y:0.5}});
+  await h.login(c.vendor);
+  return {...c,org,membership,tag};
+}
+function requestBoost(c, extra={}) {
+  return h.route('vendor-boost/request').POST(h.request({productId:c.product.id,projectId:c.project.id,...extra}));
+}
+test('vendor request requires active non-viewer qualifying membership and direct product ownership',async()=>{
+  const c=await vendorContext();h.anonymous();assert.equal((await requestBoost(c)).status,401);
+  await h.login(c.owner);assert.equal((await requestBoost(c)).status,403);await h.login(c.vendor);
+  for(const change of [{isActive:false},{isActive:true,role:'VIEWER'}]){
+    await db.organizationUser.update({where:{id:c.membership.id},data:change});assert.equal((await requestBoost(c)).status,403);
+  }
+  await db.organizationUser.update({where:{id:c.membership.id},data:{role:'MEMBER'}});
+  await db.organization.update({where:{id:c.org.id},data:{type:'DESIGN_FIRM'}});assert.equal((await requestBoost(c)).status,403);
+  await db.organization.update({where:{id:c.org.id},data:{type:'MANUFACTURER'}});
+  await db.product.update({where:{id:c.product.id},data:{vendorId:c.other.id}});
+  assert.equal((await requestBoost(c,{vendorId:c.vendor.id,organizationId:c.org.id})).status,403);assert.equal(await db.vendorBoostRequest.count(),0);
+});
+test('vendor request validates product project tag and requested designer context',async()=>{
+  const c=await vendorContext();
+  assert.equal((await requestBoost(c,{requestedDesignerId:c.other.id})).status,400);
+  assert.equal((await requestBoost(c,{projectId:randomUUID()})).status,404);
+  await db.productTag.deleteMany();assert.equal((await requestBoost(c)).status,400);
+  assert.equal(await db.vendorBoostRequest.count(),0);
+});
+test('canonical boost flow covers spoofed identity, owner acceptance, private recording and public quote',async()=>{
+  const c=await vendorContext();
+  const response=await requestBoost(c,{vendorId:c.other.id,organizationId:randomUUID(),requestedDesignerId:c.owner.id});
+  assert.equal(response.status,200);const boost=await db.vendorBoostRequest.findUnique({where:{id:(await response.json()).vendorBoostRequest.id}});
+  assert.equal(boost.vendorId,c.vendor.id);assert.equal(boost.requestedDesignerId,c.owner.id);assert.ok(boost.id);assert.ok(boost.updatedAt);
+  await h.login(c.other);assert.equal((await h.route('vendor-boost/[id]/decline').POST(h.request({}),params(boost.id))).status,403);
+  assert.equal((await h.route('vendor-boost/[id]/accept').POST(h.request({}),params(boost.id))).status,403);
+  await h.login(c.owner);
+  const inbox=await h.route('vendor-boost/inbox').GET(h.request());assert.equal(inbox.status,200);
+  assert.equal((await inbox.json()).requests[0].vendor.id,c.vendor.id);
+  const accepted=await h.route('vendor-boost/[id]/accept').POST(h.request({vendorId:c.other.id,productId:randomUUID(),projectId:randomUUID()}),params(boost.id));
+  assert.equal(accepted.status,200);const interview=await state((await accepted.json()).interviewSession.id);
+  assert.equal(interview.vendorId,c.vendor.id);assert.equal(interview.createdByUserId,c.owner.id);assert.equal(interview.productId,c.product.id);assert.equal(interview.projectId,c.project.id);
+  c.interview=interview;const quote=await extracted(c);
+  assert.equal((await h.route('interviews/[id]/approve-highlights').POST(h.request({highlightIds:[quote.id]}),params(interview.id))).status,200);
+  assert.equal((await h.route('interviews/[id]/publish').POST(h.request({vendorId:c.other.id}),params(interview.id))).status,200);
+  assert.equal((await db.vendorBoostRequest.findUnique({where:{id:boost.id}})).status,'COMPLETED');
+  await db.project.update({where:{id:c.project.id},data:{isPublic:true}});
+  h.anonymous();const insights=await h.route('products/[productId]/insights').GET(h.request(),{params:{productId:c.product.id}});
+  assert.equal((await insights.json()).insights[0].id,quote.id);
+  const context=await db.interviewSession.findUnique({where:{id:interview.id},include:{vendor:true,products:{include:{vendor:true}}}});
+  assert.equal(context.vendor.id,c.vendor.id);assert.equal(context.products.vendor.id,c.vendor.id);
+  assert.equal(db.calls.some(c=>c.model==='Vendor'),false);
+});
+test('boost duplicate creation and declined or stale acceptance cannot silently rewrite state',async()=>{
+  const c=await vendorContext();const responses=await Promise.all([requestBoost(c),requestBoost(c)]);
+  assert.deepEqual(responses.map(r=>r.status).sort(),[200,409]);assert.equal(await db.vendorBoostRequest.count(),1);
+  const boost=await db.vendorBoostRequest.findFirst();await h.login(c.owner);
+  const decline=()=>h.route('vendor-boost/[id]/decline').POST(h.request({}),params(boost.id));
+  assert.equal((await decline()).status,200);assert.equal((await decline()).status,409);
+  assert.equal((await h.route('vendor-boost/[id]/accept').POST(h.request({}),params(boost.id))).status,409);
+  await db.vendorBoostRequest.update({where:{id:boost.id},data:{status:'PENDING'}});
+  const delegate=db.vendorBoostRequest;let intercepted=false;
+  db.vendorBoostRequest=new Proxy(delegate,{get:(target,key)=>key==='findUnique'?async args=>{
+    const snapshot=await target.findUnique(args);
+    if(!intercepted){intercepted=true;await new Promise(r=>setTimeout(r,10));await target.update({where:{id:boost.id},data:{message:'Concurrent edit'}});}
+    return snapshot;
+  }:target[key]});
+  assert.equal((await h.route('vendor-boost/[id]/accept').POST(h.request({}),params(boost.id))).status,409);
+  db.vendorBoostRequest=delegate;assert.equal(await db.interviewSession.count(),1);
 });

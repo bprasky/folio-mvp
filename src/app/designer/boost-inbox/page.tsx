@@ -47,7 +47,7 @@ export default async function BoostInboxPage() {
         select: {
           id: true,
           name: true,
-          logoUrl: true,
+          profileImage: true,
         },
       },
       interviewSession: {
@@ -69,7 +69,7 @@ export default async function BoostInboxPage() {
           </p>
         </div>
 
-        <BoostInboxClient requests={requests.map(({ products, projects, ...request }) => ({ ...request, product: products, project: projects }))} />
+        <BoostInboxClient requests={requests.map(({ products, projects, vendor, ...request }) => ({ ...request, product: products, project: projects, vendor: { id: vendor.id, name: vendor.name ?? "Vendor", logoUrl: vendor.profileImage } }))} />
       </div>
     </div>
   );
