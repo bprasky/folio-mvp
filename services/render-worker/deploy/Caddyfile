@@ -1,0 +1,14 @@
+{$RENDER_HOSTNAME} {
+    request_body { max_size 8KB }
+    @render {
+        method POST
+        path /render
+    }
+    handle @render {
+        reverse_proxy 127.0.0.1:8787 {
+            transport http { response_header_timeout 75s }
+        }
+    }
+    handle { respond 404 }
+    # Do not enable request/access-body logging; auth token must never be logged.
+}

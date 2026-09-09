@@ -1,6 +1,7 @@
 'use server';
 
 import { prisma } from '@/lib/prisma';
+import { vendorClaimMembership } from '@/lib/vendor/claimAuthorization';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { normalizeUrl, isValidImageUrl, validateImageList } from '@/lib/url/normalizeUrl';
@@ -134,12 +135,12 @@ export async function listVendors() {
 }
 
 /**
- * Scrape product information from a URL using Browserless
+ * Scrape product information through the isolated renderer
  */
 export async function scrapeProduct(url: string): Promise<any> {
   try {
     if (!hasBrowserlessKey()) {
-      return createEmptyScrapeResult(url, 'Browserless API key not configured. Please set BROWSERLESS_API_KEY in environment variables.');
+      return createEmptyScrapeResult(url, 'Product rendering is temporarily unavailable. Please enter the product details manually.');
     }
 
     // Validate URL
@@ -149,23 +150,17 @@ export async function scrapeProduct(url: string): Promise<any> {
       return createEmptyScrapeResult(url, 'Invalid URL format');
     }
 
-    // Call Browserless to get HTML through the shared client (which applies the
-    // same AbortController timeout the other scrape paths already had).
+    // The shared adapter uses the isolated worker and its fixed bounds.
     const response = await getContent(url);
     await recordScrapeAttempt({ url, consumer: 'VENDOR_WIZARD', result: response });
 
     if (!response.ok) {
-      console.error('Browserless API Error:', {
+      console.error('Isolated renderer unavailable:', {
         status: response.status,
         error: response.error,
-        body: response.payload,
       });
 
-      if (response.status === 401 || response.status === 403) {
-        return createEmptyScrapeResult(url, `Browserless API key invalid or expired. Please check your BROWSERLESS_API_KEY in .env.local`);
-      }
-
-      return createEmptyScrapeResult(url, `Browserless request failed: HTTP ${response.status}${response.error ? ` - ${response.error}` : ''}`);
+      return createEmptyScrapeResult(url, 'Product rendering is temporarily unavailable. Please enter the product details manually.');
     }
 
     const html = response.payload;
@@ -277,6 +272,10 @@ export async function publishProduct(payload: any): Promise<{ success: boolean; 
         success: false,
         error: 'Unauthorized',
       };
+    }
+
+    if (!session.user.id || !await vendorClaimMembership(session.user.id)) {
+      return { success: false, error: 'Active vendor membership is required.' };
     }
 
     // Generate slug

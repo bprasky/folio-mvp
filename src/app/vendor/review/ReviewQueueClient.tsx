@@ -22,6 +22,7 @@ interface QueueItem {
 export default function ReviewQueueClient({ vendorName }: { vendorName: string }) {
   const [items, setItems] = useState<QueueItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [busyId, setBusyId] = useState<string | null>(null);
 
   const load = async () => {
@@ -42,6 +43,7 @@ export default function ReviewQueueClient({ vendorName }: { vendorName: string }
 
   const act = async (candidateId: string, action: 'confirm' | 'reject') => {
     setBusyId(candidateId);
+    setError(null);
     try {
       const res = await fetch('/api/vendor/review-queue', {
         method: 'POST',
@@ -51,10 +53,29 @@ export default function ReviewQueueClient({ vendorName }: { vendorName: string }
       if (res.ok) {
         // Drop the resolved item from the list.
         setItems((prev) => prev.filter((i) => i.candidateId !== candidateId));
+      } else {
+        const body = await res.json();
+        setError(body.error || 'Unable to save this review.');
       }
     } finally {
       setBusyId(null);
     }
+  };
+
+  const discover = async () => {
+    setBusyId('discover');
+    setError(null);
+    try {
+      const res = await fetch('/api/vendor/review-queue', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'discover' }),
+      });
+      const body = await res.json();
+      if (!res.ok) setError(body.error || 'Unable to find products.');
+      else await load();
+    } catch {
+      setError('Unable to reach Folio. Please retry.');
+    } finally { setBusyId(null); }
   };
 
   return (
@@ -68,6 +89,12 @@ export default function ReviewQueueClient({ vendorName }: { vendorName: string }
         </p>
       </header>
 
+      <p className="mb-3 text-sm text-folio-text-secondary">Finding and claiming existing products requires organization verification by Folio.</p>
+      <button onClick={discover} disabled={busyId !== null} className="mb-4 rounded-lg border px-3 py-2 text-sm disabled:opacity-50">
+        {busyId === 'discover' ? 'Finding products…' : 'Find attributed products'}
+      </button>
+
+      {error && <p role="alert" className="mb-4 text-sm">{error}</p>}
       {loading ? (
         <p className="text-sm text-folio-text-tertiary">Loading…</p>
       ) : items.length === 0 ? (

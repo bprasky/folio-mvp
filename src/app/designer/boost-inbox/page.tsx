@@ -6,7 +6,7 @@ import { BoostInboxClient } from "@/components/interviews/BoostInboxClient";
 
 export default async function BoostInboxPage() {
   const session = await getServerSession(authOptions);
-  if (!session?.user?.id) {
+  if (!session?.user?.id || session.user.role !== "DESIGNER") {
     notFound();
   }
 
@@ -29,7 +29,7 @@ export default async function BoostInboxPage() {
       expiresAt: true,
       acceptedAt: true,
       completedAt: true,
-      product: {
+      products: {
         select: {
           id: true,
           name: true,
@@ -37,7 +37,7 @@ export default async function BoostInboxPage() {
           imageUrl: true,
         },
       },
-      project: {
+      projects: {
         select: {
           id: true,
           title: true,
@@ -47,7 +47,7 @@ export default async function BoostInboxPage() {
         select: {
           id: true,
           name: true,
-          logoUrl: true,
+          profileImage: true,
         },
       },
       interviewSession: {
@@ -69,7 +69,7 @@ export default async function BoostInboxPage() {
           </p>
         </div>
 
-        <BoostInboxClient requests={requests} />
+        <BoostInboxClient requests={requests.map(({ products, projects, vendor, ...request }) => ({ ...request, product: products, project: projects, vendor: { id: vendor.id, name: vendor.name ?? "Vendor", logoUrl: vendor.profileImage } }))} />
       </div>
     </div>
   );

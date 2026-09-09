@@ -78,7 +78,7 @@ export async function POST(
 
     // Rate limiting
     const maxPerHour = parseInt(process.env.IMAGE_GEN_MAX_PER_HOUR || '10');
-    const rateLimitResult = rateLimit({
+    const rateLimitResult = await rateLimit({
       userId,
       scope: 'gen-image',
       limit: maxPerHour,

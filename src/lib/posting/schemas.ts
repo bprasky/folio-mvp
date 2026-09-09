@@ -20,18 +20,65 @@ export const SectionSchema = z.object({
 }).passthrough();
 
 // Per-chapter pull quote selection with alternatives for cycling UI
+/**
+ * Where a quote came from, durably.
+ *
+ * (questionId, isFollowUp) is the row key `rebuildAnswerProjection` already
+ * treats as an answer's identity within an interview. It is the only handle that
+ * survives a sync: the projection row `id` is re-minted by randomUUID() on every
+ * rebuild, and `answerIndex` on a candidate indexes an in-memory array that does
+ * not outlive the run.
+ *
+ * Optional, and absent on every quote selected before this landed. ABSENT MEANS
+ * UNVERIFIABLE, NOT INVALID — a quote chosen under the old code is still a
+ * verbatim span, it simply has no recorded pointer to re-check it against. No
+ * backfill: a pointer inferred after the fact would be a guess wearing the
+ * costume of a record.
+ */
+export const QuoteProvenanceSchema = z.object({
+  questionId: z.string().max(200),
+  isFollowUp: z.boolean(),
+});
+export type QuoteProvenance = z.infer<typeof QuoteProvenanceSchema>;
+
 export const PullQuoteAlternativeSchema = z.object({
   text: z.string().max(300),
   context: z.string().max(80).optional(),
   score: z.number(),
+  /** Every alternative carries its own: the picker lets a designer cycle to any
+   *  of them and publish it, so a pointer on the selected quote alone would go
+   *  stale the moment they cycled. */
+  provenance: QuoteProvenanceSchema.optional(),
 });
+
+/**
+ * Who wrote the line under the photograph.
+ *
+ * `verbatim` — the designer's own sentence, chosen from their interview answers.
+ * `folio`    — Folio writing about their decisions on their behalf.
+ *
+ * These are two legitimate authorship choices, not a quality ladder, and the
+ * distinction is exactly the one a reader is entitled to. `folio` is NOT
+ * implemented: no generator exists, and none should be added behind this enum
+ * without the provenance work (C1) landing first, because a Folio line is
+ * paraphrase and paraphrase needs a traceability gate. The value exists so the
+ * storage shape is settled before the feature is, and so the rate at which
+ * designers reach for it is recorded from the first day it is reachable.
+ *
+ * Storage only. Nothing reads it yet.
+ */
+export const PullQuoteAuthorshipSchema = z.enum(['verbatim', 'folio']);
+export type PullQuoteAuthorship = z.infer<typeof PullQuoteAuthorshipSchema>;
 
 export const PullQuoteSelectionSchema = z.object({
   selected: z.object({
     text: z.string().max(300),
     context: z.string().max(80).optional(),
+    provenance: QuoteProvenanceSchema.optional(),
   }).nullable(),
   alternatives: z.array(PullQuoteAlternativeSchema),
+  /** Absent on every article generated before the toggle; absent means `verbatim`. */
+  authorship: PullQuoteAuthorshipSchema.optional(),
 });
 
 /**

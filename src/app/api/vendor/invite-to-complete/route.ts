@@ -70,7 +70,7 @@ export async function POST(request: NextRequest) {
         requestedBy: session.user.id,
       });
 
-      // TODO: Send actual email via sendVendorProductPreviewEmail or similar
+      // Outreach is recorded for admin follow-up; no claim token is generated.
       // For now, this creates the signal for the admin to act on
     }
 
@@ -101,9 +101,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      message: vendorEmail
-        ? 'Vendor invite sent'
-        : 'Vendor invite request recorded — our team will follow up',
+      message: 'Vendor invite request recorded — our team will follow up',
     });
   } catch (error) {
     console.error('[invite-to-complete] Error:', error);

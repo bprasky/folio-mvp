@@ -64,7 +64,7 @@ export async function GET(
     }
 
     // Only return if PUBLISHED
-    if (post.status !== "PUBLISHED") {
+    if (post.status !== "PUBLISHED" || !post.project.isPublic) {
       return NextResponse.json(
         { error: "Post not found" },
         { status: 404 }

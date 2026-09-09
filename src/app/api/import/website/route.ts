@@ -7,16 +7,12 @@ import { authOptions } from '@/app/api/auth/[...nextauth]/options';
 import { prisma } from '@/lib/prisma';
 import { canUsePortfolioScrape } from '@/lib/pricing/canUsePortfolioScrape';
 import * as cheerio from 'cheerio';
-import { getContent, runFunction, directFetch, hasBrowserlessKey } from '@/lib/browserless/client';
+import { getContent, directFetch, hasBrowserlessKey } from '@/lib/browserless/client';
 import { recordScrapeAttempt } from '@/lib/browserless/record';
 
 const MAX_CANDIDATES = 40;
 const FETCH_TIMEOUT_MS = 15000;
 const RENDER_TIMEOUT_MS = 45000;
-// Minimum natural dimensions for a harvested image to count as a real photo
-// (filters out logos, icons, avatars, UI chrome).
-const MIN_PHOTO_WIDTH = 400;
-const MIN_PHOTO_HEIGHT = 300;
 
 /** Skip icons, logos, tracking pixels, sprites by URL shape. */
 function isJunkImage(url: string): boolean {
@@ -39,7 +35,7 @@ function resolveUrl(src: string | undefined, base: string): string | null {
 }
 
 /**
- * Fetch rendered HTML via Browserless if configured, otherwise fall back to a
+ * Fetch rendered HTML via the isolated worker if configured, otherwise use a
  * direct fetch (works for server-rendered pages without JS hydration).
  */
 async function fetchHtml(url: string, importSessionId?: string): Promise<string | null> {
@@ -47,7 +43,7 @@ async function fetchHtml(url: string, importSessionId?: string): Promise<string 
     const res = await getContent(url, { timeoutMs: FETCH_TIMEOUT_MS });
     await recordScrapeAttempt({ url, consumer: 'IMPORT_WEBSITE', result: res, importSessionId });
     if (res.ok) return res.payload;
-    console.error('[import/website] Browserless /content failed:', res.status);
+    console.error('[import/website] Isolated renderer unavailable:', res.status);
     // fall through to direct fetch
   }
   const direct = await directFetch(url, {
@@ -116,127 +112,21 @@ function extractFromHtml(html: string, baseUrl: string): ScrapeResult {
   return { images: images.slice(0, MAX_CANDIDATES), description: description || null };
 }
 
-// Page-context harvester (runs inside the browser via Browserless /function).
-// Scrolls to trigger lazy-loading, then collects every image's best URL plus its
-// rendered/natural dimensions and CSS background images. Returns originals — no
-// re-encoding, so full resolution is preserved.
-const HARVEST_CODE = `export default async function ({ page, context }) {
-  const { url } = context;
-  const navResponse = await page.goto(url, { waitUntil: 'networkidle2', timeout: 30000 }).catch(() => null);
-  const httpStatus = navResponse ? navResponse.status() : null;
-  await page.evaluate(async () => {
-    await new Promise((resolve) => {
-      let total = 0;
-      const step = 800;
-      const timer = setInterval(() => {
-        window.scrollBy(0, step);
-        total += step;
-        if (total >= document.body.scrollHeight + 1200) { clearInterval(timer); resolve(); }
-      }, 120);
-    });
-    window.scrollTo(0, 0);
-  });
-  await new Promise((r) => setTimeout(r, 800));
-  const data = await page.evaluate(() => {
-    const out = [];
-    const seen = new Set();
-    const pickFromSrcset = (ss) => {
-      if (!ss) return null;
-      const parts = ss.split(',').map((s) => s.trim()).filter(Boolean);
-      if (!parts.length) return null;
-      return parts[parts.length - 1].split(' ')[0];
-    };
-    const push = (u, w, h, alt) => {
-      if (!u || u.startsWith('data:') || seen.has(u)) return;
-      seen.add(u);
-      out.push({ url: u, w: w || 0, h: h || 0, alt: alt || '' });
-    };
-    document.querySelectorAll('img').forEach((img) => {
-      const u = img.currentSrc || img.src || pickFromSrcset(img.getAttribute('srcset')) ||
-        img.getAttribute('data-src') || pickFromSrcset(img.getAttribute('data-srcset'));
-      push(u, img.naturalWidth, img.naturalHeight, img.alt);
-    });
-    document.querySelectorAll('*').forEach((el) => {
-      const bg = window.getComputedStyle(el).backgroundImage;
-      if (bg && bg.indexOf('url(') === 0) {
-        const m = bg.match(/url\\(["']?(.*?)["']?\\)/);
-        if (m && m[1]) {
-          const rect = el.getBoundingClientRect();
-          push(m[1], Math.round(rect.width), Math.round(rect.height), '');
-        }
-      }
-    });
-    const meta = (sel, attr) => { const e = document.querySelector(sel); return e ? e.getAttribute(attr) : null; };
-    const description = meta('meta[property="og:description"]', 'content') ||
-      meta('meta[name="description"]', 'content') ||
-      (document.querySelector('main p, article p, p') || {}).textContent || null;
-    return { images: out, description: description ? description.trim() : null };
-  });
-  data._httpStatus = httpStatus;
-  return { data, type: 'application/json' };
-}`;
-
-/**
- * Tier 2: render the page with JS via Browserless /function, scroll to load
- * everything, and harvest the original full-resolution image URLs. Filters by
- * natural dimensions so logos/icons/avatars are dropped. Only runs on a cheerio
- * miss; needs Browserless (JS rendering) to work.
- */
+// Rendered DOM uses the same bounded HTML extractor as the cheap path.
+// Arbitrary remote page functions are no longer supported.
 async function renderedHarvest(url: string, importSessionId?: string): Promise<ScrapeResult> {
   if (!hasBrowserlessKey()) return { images: [], description: null };
-
-  const res = await runFunction(HARVEST_CODE, { url }, { timeoutMs: RENDER_TIMEOUT_MS });
-  if (!res.ok) {
-    await recordScrapeAttempt({ url, consumer: 'IMPORT_WEBSITE', result: res, importSessionId });
-    console.error('[import/website] Browserless /function failed:', res.status);
-    return { images: [], description: null };
-  }
-  let payload: any;
-  try {
-    payload = JSON.parse(res.payload);
-  } catch {
-    await recordScrapeAttempt({ url, consumer: 'IMPORT_WEBSITE', result: res, importSessionId });
-    return { images: [], description: null };
-  }
-
-  const raw: Array<{ url: string; w: number; h: number; alt?: string }> = payload?.images || [];
-
-  const seen = new Set<string>();
-  const images: { url: string; alt?: string }[] = [];
-  for (const item of raw) {
-    const resolved = resolveUrl(item.url, url);
-    if (!resolved || seen.has(resolved) || isJunkImage(resolved)) continue;
-    // Keep images that are clearly photo-sized. Some lazy <img> report 0x0
-    // natural size if still not decoded, so keep those too (the URL is real),
-    // but drop anything we positively know is small.
-    const w = item.w || 0;
-    const h = item.h || 0;
-    const knownSmall = (w > 0 && w < MIN_PHOTO_WIDTH) || (h > 0 && h < MIN_PHOTO_HEIGHT);
-    if (knownSmall) continue;
-    seen.add(resolved);
-    images.push({ url: resolved, alt: item.alt?.trim() || undefined });
-  }
-
-  await recordScrapeAttempt({
-    url,
-    consumer: 'IMPORT_WEBSITE',
-    result: res,
-    targetStatus: typeof payload?._httpStatus === 'number' ? payload._httpStatus : null,
-    emptyResult: images.length === 0,
-    importSessionId,
-  });
-
-  return {
-    images: images.slice(0, MAX_CANDIDATES),
-    description: typeof payload?.description === 'string' ? payload.description.trim() || null : null,
-  };
+  const res = await getContent(url, { timeoutMs: RENDER_TIMEOUT_MS });
+  const result = res.ok ? extractFromHtml(res.payload, url) : { images: [], description: null };
+  await recordScrapeAttempt({ url, consumer: 'IMPORT_WEBSITE', result: res, importSessionId, emptyResult: !result.images.length });
+  return result;
 }
 
 /**
  * POST /api/import/website
  * Body: { projectId, url }
- * Tier 1 cheerio (static HTML) → Tier 2 rendered-DOM harvest (JS, lazy-load,
- * background images) → else FAILED. Both tiers return original image URLs.
+ * HTML extraction → rendered-DOM extraction on a miss → else FAILED.
+ * Both tiers return original image URLs; computed CSS-only imagery is not harvested.
  * Returns { sessionId }; the client reads GET /api/import/[sessionId].
  */
 export async function POST(req: NextRequest) {

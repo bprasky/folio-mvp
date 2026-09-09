@@ -171,9 +171,8 @@ export default function ConciergeEventCreate({ isOpen, onClose, onSubmit, classN
       const response = await fetch(`/api/event-import?source=${encodeURIComponent(importUrl)}`);
       
       if (!response.ok) {
-        const errorText = await response.text();
-        console.error('Import API error:', errorText);
-        throw new Error(`Failed to import event: ${response.status}`);
+        const result = await response.json();
+        throw new Error(result.error || 'Event URL import is unavailable');
       }
 
       const responseText = await response.text();
@@ -195,7 +194,7 @@ export default function ConciergeEventCreate({ isOpen, onClose, onSubmit, classN
     } catch (error) {
       console.error('Import error:', error);
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      addMessage(`I couldn't import from that URL: ${errorMessage}. Please check the link or try a different source.`, 'assistant');
+      addMessage(`I couldn't import from that URL: ${errorMessage}. Please enter the event details manually.`, 'assistant');
     } finally {
       setIsImporting(false);
     }
@@ -510,4 +509,4 @@ export default function ConciergeEventCreate({ isOpen, onClose, onSubmit, classN
     </div>
     </>
   );
-} 
+}

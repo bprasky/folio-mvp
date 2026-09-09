@@ -5,6 +5,9 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/app/api/auth/[...nextauth]/options';
 import { prisma } from '@/lib/prisma';
 import { getVendorContext } from '@/lib/auth/vendorContext';
+import { canClaimExistingProducts } from '@/lib/vendor/claimAuthorization';
+import { ClaimConflict, reviewProductClaim } from '@/lib/vendor/reviewProductClaim';
+import { turnoverUnclaimedProducts } from '@/lib/vendor/claimTurnover';
 
 /**
  * Vendor review queue (Product Tag Lifecycle Phase 3).
@@ -13,6 +16,7 @@ import { getVendorContext } from '@/lib/auth/vendorContext';
  *        with product fields and tag-usage attribution (how many tags, how many
  *        distinct designers). Tag data is read-only here.
  * POST  { candidateId, action: 'confirm' | 'reject' }
+ *       { action: 'discover' } discovers candidates through the same claim policy.
  *        confirm → assign the product to the vendor (set vendorId) and mark the
  *        candidate CONFIRMED. reject → mark REJECTED; the product stays unclaimed
  *        and won't resurface.
@@ -73,7 +77,17 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Not a vendor' }, { status: 403 });
   }
 
-  const { candidateId, action } = await request.json();
+  if (!await canClaimExistingProducts(session.user.id, ctx.vendorOrgId)) {
+    return NextResponse.json({ error: 'Active vendor membership and organization verification by Folio are required.' }, { status: 403 });
+  }
+  const { candidateId, action } = await request.json().catch(() => ({}));
+  if (action === 'discover') {
+    try {
+      return NextResponse.json(await turnoverUnclaimedProducts(ctx.vendorOrgId, session.user.id));
+    } catch {
+      return NextResponse.json({ error: 'Product discovery could not finish. Please retry.' }, { status: 500 });
+    }
+  }
   if (!candidateId || (action !== 'confirm' && action !== 'reject')) {
     return NextResponse.json({ error: 'candidateId and action (confirm|reject) required' }, { status: 400 });
   }
@@ -87,23 +101,12 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Candidate not found' }, { status: 404 });
   }
 
-  if (action === 'reject') {
-    await prisma.productClaimCandidate.update({
-      where: { id: candidate.id },
-      data: { status: 'REJECTED', reviewedById: session.user.id, reviewedAt: new Date() },
-    });
-    return NextResponse.json({ success: true, status: 'REJECTED' });
+  try {
+    const status = await reviewProductClaim(candidate.id, ctx.vendorOrgId, session.user.id, action);
+    return NextResponse.json({ success: true, status });
+  } catch (error) {
+    if (error instanceof ClaimConflict) return NextResponse.json({ error: error.message }, { status: 409 });
+    console.error('[vendor/review-queue] Claim failed');
+    return NextResponse.json({ error: 'Claim could not be saved.' }, { status: 500 });
   }
-
-  // confirm: assign the product to the vendor only if still unclaimed, then
-  // mark the candidate CONFIRMED.
-  await prisma.product.updateMany({
-    where: { id: candidate.productId, vendorId: null },
-    data: { vendorId: session.user.id },
-  });
-  await prisma.productClaimCandidate.update({
-    where: { id: candidate.id },
-    data: { status: 'CONFIRMED', reviewedById: session.user.id, reviewedAt: new Date() },
-  });
-  return NextResponse.json({ success: true, status: 'CONFIRMED' });
 }

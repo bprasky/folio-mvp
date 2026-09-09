@@ -60,6 +60,9 @@ export async function GET(
 
     return NextResponse.json(project);
   } catch (error) {
+    if (error instanceof Error && error.message === 'Forbidden') {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    }
     console.error('Error fetching project:', error);
     return NextResponse.json(
       { error: 'Failed to fetch project' },
@@ -111,4 +114,4 @@ export async function DELETE(
       { status: 500 }
     );
   }
-} 
+}

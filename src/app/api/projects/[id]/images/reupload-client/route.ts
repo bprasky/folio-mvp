@@ -10,7 +10,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/app/api/auth/[...nextauth]/options';
 import { prisma } from '@/lib/prisma';
-import { assertProjectView } from '@/lib/authz/access';
+import { assertProjectWrite } from '@/lib/authz/access';
 import { saveBufferToProjectStorage } from '@/lib/storage';
 import { z } from 'zod';
 
@@ -35,7 +35,7 @@ export async function POST(
     const userId = session.user.id;
 
     // Check project access
-    await assertProjectView(userId, projectId);
+    await assertProjectWrite(userId, projectId);
 
     const body = await request.json();
     const { imageId, imageData, mimeType, room } = ReuploadClientRequestSchema.parse(body);
@@ -103,13 +103,10 @@ export async function POST(
       console.log(`[reupload-client] Database updated successfully for image ${imageId}`);
     } catch (dbError: any) {
       console.error(`[reupload-client] Database update failed for image ${imageId}:`, dbError);
-      // Even if DB update fails, return success with the URL so user can see it worked
+      // An uploaded object is not a saved ProjectImage until this write succeeds.
       return NextResponse.json({
-        success: true,
-        imageId,
-        newUrl: publicUrl,
-        warning: 'Image uploaded but database update may have failed',
-      });
+        error: 'Image upload completed, but saving the image failed. Please retry.',
+      }, { status: 500 });
     }
 
     console.log(`[reupload-client] Successfully re-uploaded image ${imageId} to Supabase: ${publicUrl}`);
@@ -120,6 +117,8 @@ export async function POST(
       newUrl: publicUrl,
     });
   } catch (error: any) {
+    if (error.message === 'NotFound') return NextResponse.json({ error: 'Project not found' }, { status: 404 });
+    if (error.message?.startsWith('Forbidden')) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     if (error.name === 'ZodError') {
       return NextResponse.json(
         { error: 'Invalid request', issues: error.issues },

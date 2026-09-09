@@ -1,8 +1,9 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
+import { supportsInterviewRecording, RECORDER_MIME, INTERVIEW_MIME, MAX_INTERVIEW_BYTES } from '@/lib/interviews/format';
 import { Button } from "@/components/ui/button";
-import { Mic, Square, Play, Pause, Upload, Loader2 } from "lucide-react";
+import { Mic, Square, Upload, Loader2 } from "lucide-react";
 
 interface RecordingInterfaceProps {
   interviewId: string;
@@ -42,11 +43,15 @@ export function RecordingInterface({ interviewId, onUploadComplete }: RecordingI
   const startRecording = async () => {
     try {
       setError(null);
+      if (!supportsInterviewRecording(typeof MediaRecorder === 'undefined' ? undefined : MediaRecorder)) {
+        setError('This browser cannot record WebM/Opus audio. Please use a browser with WebM/Opus recording support.');
+        return;
+      }
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       streamRef.current = stream;
 
       const mediaRecorder = new MediaRecorder(stream, {
-        mimeType: "audio/webm;codecs=opus", // Fallback to webm, browser will handle conversion
+        mimeType: RECORDER_MIME,
       });
 
       mediaRecorderRef.current = mediaRecorder;
@@ -59,7 +64,7 @@ export function RecordingInterface({ interviewId, onUploadComplete }: RecordingI
       };
 
       mediaRecorder.onstop = () => {
-        const blob = new Blob(chunksRef.current, { type: "audio/webm" });
+        const blob = new Blob(chunksRef.current, { type: INTERVIEW_MIME });
         setAudioBlob(blob);
         const url = URL.createObjectURL(blob);
         setAudioUrl(url);
@@ -75,6 +80,7 @@ export function RecordingInterface({ interviewId, onUploadComplete }: RecordingI
         setRecordingTime((prev) => prev + 1);
       }, 1000);
     } catch (err) {
+      streamRef.current?.getTracks().forEach(track => track.stop());
       console.error("Error starting recording:", err);
       setError("Failed to access microphone. Please check permissions.");
       setStatus("idle");
@@ -102,6 +108,10 @@ export function RecordingInterface({ interviewId, onUploadComplete }: RecordingI
 
   const handleUpload = async () => {
     if (!audioBlob) return;
+    if (!audioBlob.size || audioBlob.size > MAX_INTERVIEW_BYTES) {
+      setError('Please record nonempty audio under 4 MiB.');
+      return;
+    }
 
     setStatus("uploading");
     setError(null);
@@ -120,7 +130,7 @@ export function RecordingInterface({ interviewId, onUploadComplete }: RecordingI
         throw new Error(errorData.error || "Upload failed");
       }
 
-      const result = await response.json();
+      await response.json();
       setStatus("uploaded");
       onUploadComplete?.();
     } catch (err) {

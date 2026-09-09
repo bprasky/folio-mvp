@@ -136,6 +136,17 @@ export async function PATCH(
     if (foundedYear !== undefined) updateData.foundedYear = foundedYear ? parseInt(foundedYear) : null;
     if (specialties !== undefined) updateData.specialties = Array.isArray(specialties) ? specialties : [];
 
+    // Organization verification cannot vouch for a newly supplied identity or
+    // domain. Admin verification must be renewed before claiming more products.
+    if (name !== undefined || website !== undefined) {
+      const identity = await prisma.organization.findUnique({ where: { id: orgId }, select: { name: true, website: true } });
+      if ((name !== undefined && updateData.name !== identity?.name) ||
+          (website !== undefined && updateData.website !== identity?.website)) {
+        updateData.verifiedAt = null;
+        updateData.verifiedBy = null;
+      }
+    }
+
     const org = await prisma.organization.update({
       where: { id: orgId },
       data: updateData,

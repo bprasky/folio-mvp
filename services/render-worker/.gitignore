@@ -1,0 +1,8 @@
+node_modules/
+acceptance-results.json
+*.env
+*.pem
+*.key
+*.crt
+profile/
+captures/

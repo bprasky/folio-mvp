@@ -51,9 +51,7 @@ export async function POST(request: NextRequest) {
       }
     });
 
-    const isOperatingAs = session.user.operatingAsOrgId === orgId;
-
-    if (!membership && !isOperatingAs) {
+    if (!membership) {
       return NextResponse.json(
         { error: 'You must be a member of this organization' },
         { status: 403 }
@@ -65,9 +63,7 @@ export async function POST(request: NextRequest) {
     const updatedOrg = await prisma.organization.update({
       where: { id: orgId },
       data: {
-        salesNotes: org.status === 'UNCLAIMED'
-          ? `Upgrade request from ${session.user.email} for ${featureRequested || 'professional features'}. Recipient: ${recipientEmail || 'N/A'}. ${new Date().toISOString()}`
-          : undefined,
+        salesNotes: `Upgrade request from ${session.user.email} for ${featureRequested || 'professional features'}. Recipient: ${recipientEmail || 'N/A'}. ${new Date().toISOString()}`,
         salesContactedAt: new Date()
       }
     });

@@ -37,7 +37,7 @@ export async function POST(request: NextRequest) {
   // Rate limiting: Check IP-level limit (prevents mass signup from single source)
   // This is generous to avoid false positives from corporate networks/VPNs
   const clientIp = getClientIp(request.headers);
-  const ipRateLimit = checkRateLimit(clientIp, {
+  const ipRateLimit = await checkRateLimit(clientIp, {
     ...RateLimitPresets.SIGNUP_PER_IP,
     keyGenerator: (ip) => `signup-ip:${ip}`,
   });

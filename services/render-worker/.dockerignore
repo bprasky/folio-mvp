@@ -1,0 +1,6 @@
+*
+!package.json
+!package-lock.json
+!policy.mjs
+!job.mjs
+!chromium-policy.json

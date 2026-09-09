@@ -23,7 +23,10 @@ import {
   isVerbatimSpan,
   normalizeForVerbatimCheck,
 } from '../src/lib/posting/quoteCandidates';
-import { buildShufflePool } from '../src/lib/posting/selectPullQuotes';
+import { buildShufflePool, toSelection } from '../src/lib/posting/selectPullQuotes';
+import { scoreStandalone } from '../src/lib/posting/quoteStandalone';
+import { verifyPullQuoteProvenance, verifyQuoteAgainstAnswers }
+  from '../src/lib/posting/verifyQuoteProvenance';
 import { formatRoomName } from '../src/lib/utils/formatRoomName';
 import { extractQuotes } from '../src/lib/instagram/extractQuotes';
 import { extractQuotesWithMetadata, matchQuotesToImages } from '../src/lib/instagram/matchQuoteToImage';
@@ -665,6 +668,307 @@ async function projectionWriteChecks() {
     row('q-junk')?.questionCategory === null, JSON.stringify(row('q-junk')?.questionCategory));
 }
 
+// ─── 19. Provenance: the durable pointer survives to the stored selection ────
+//
+// `isVerbatimSpan` proves a string existed in the answers AT SELECTION TIME and
+// records nothing, so a quote verified at generation cannot be re-checked later.
+// (questionId, isFollowUp) is the pointer that closes that loop — the row key
+// rebuildAnswerProjection already treats as an answer's identity, and the only
+// one that survives a sync, since row ids are re-minted and `answerIndex`
+// indexes an array that does not outlive the run.
+//
+// Four properties, each the thing that would silently break:
+//   a) it survives toSelection at all;
+//   b) it survives a projection REBUILD — the pointer must still resolve after
+//      every row has been deleted and recreated with new ids;
+//   c) it is on every ALTERNATIVE, not just the selected quote, because the
+//      picker publishes whichever one the designer cycles to;
+//   d) a null-provenance row reports UNVERIFIABLE, not failed.
+console.log('\n19. Provenance pointer');
+
+function provenanceChecks() {
+  const ROOM = 'Dining Room';
+  const answers = [
+    { section: ROOM, questionId: 'q-table', isFollowUp: false,
+      answer: 'The table was the first thing we settled. It set the height of everything else in the room.' },
+    { section: ROOM, questionId: 'q-glass', isFollowUp: true,
+      answer: 'We always use glass when we need to make up space. Had we used a solid table we would have crowded it badly.' },
+  ];
+
+  const ranked = extractQuoteCandidates(answers, ROOM);
+  check('candidates carry the question id they were cut from',
+    ranked.length > 0 && ranked.every(c => typeof c.questionId === 'string' && c.questionId.length > 0),
+    ranked.map(c => `${c.id}=${c.questionId}`).join(' '));
+  check('a candidate points at the answer it actually came from',
+    ranked.every(c => answers.some(a =>
+      a.questionId === c.questionId && a.isFollowUp === c.isFollowUp && a.answer.includes(c.text))),
+    'each candidate text is a span of its pointed-to answer');
+
+  // (a) + (c) through the real toSelection, via the real selector's fallback
+  // path: no model, so it takes the top code-ranked candidate.
+  // The REAL toSelection, not a rebuild of it — so dropping the pointer there
+  // turns these red instead of leaving a passing copy behind.
+  const selection = toSelection(ranked[0], ranked);
+  check('the stored selection carries a provenance pointer',
+    !!selection.selected?.provenance?.questionId,
+    JSON.stringify(selection.selected?.provenance));
+  check('EVERY alternative carries its own pointer, not just the selected quote',
+    selection.alternatives.length > 0 && selection.alternatives.every(a => !!a.provenance?.questionId),
+    selection.alternatives.map(a => a.provenance?.questionId ?? 'MISSING').join(', '));
+  check('each alternative points at the answer that alternative came from',
+    selection.alternatives.every(alt => answers.some(a =>
+      a.questionId === alt.provenance?.questionId &&
+      a.isFollowUp === alt.provenance?.isFollowUp &&
+      a.answer.includes(alt.text))));
+
+  // (b) The pointer survives a projection rebuild. Row ids are re-minted, so a
+  // stored row id would dangle here; the row key does not.
+  const afterRebuild = answers.map((a, i) => ({ ...a, id: `regenerated-uuid-${i}-${Math.random()}` }));
+  const verdicts = verifyPullQuoteProvenance(selection, afterRebuild).map(c => c.verdict);
+  check('every pointer still resolves after a projection rebuild re-mints row ids',
+    verdicts.length > 0 && verdicts.every(v => v === 'verified'),
+    verdicts.join(', '));
+
+  // (d) Pre-provenance rows: absent pointer is unverifiable, never failed.
+  const legacy = {
+    selected: { text: 'The table was the first thing we settled.' },
+    alternatives: [{ text: 'We always use glass when we need to make up space.', score: 1 }],
+  } as any;
+  const legacyVerdicts = verifyPullQuoteProvenance(legacy, answers).map(c => c.verdict);
+  check('a null-provenance quote reports unverifiable, not failed',
+    legacyVerdicts.length === 2 && legacyVerdicts.every(v => v === 'unverifiable'),
+    legacyVerdicts.join(', '));
+
+  // The alarm still has to fire. A pointer at an answer that no longer contains
+  // the text is a mismatch — that is the case this whole mechanism exists for.
+  const drifted = verifyQuoteAgainstAnswers(
+    'a sentence nobody said', { questionId: 'q-table', isFollowUp: false }, answers, 'selected');
+  check('a quote that is not a span of its pointed-to answer reports mismatch',
+    drifted.verdict === 'mismatch', drifted.verdict);
+  const orphan = verifyQuoteAgainstAnswers(
+    'The table was the first thing we settled.', { questionId: 'q-deleted', isFollowUp: false }, answers, 'selected');
+  check('a pointer at an answer that no longer exists reports answer-missing',
+    orphan.verdict === 'answer-missing', orphan.verdict);
+
+  // Verification is against ONE answer, never joined text. A span spliced across
+  // two answers must not pass just because both are in the interview.
+  const spliced = verifyQuoteAgainstAnswers(
+    'It set the height of everything else in the room. We always use glass',
+    { questionId: 'q-table', isFollowUp: false }, answers, 'selected');
+  check('a span crossing two answers fails — the check never joins them',
+    spliced.verdict === 'mismatch', spliced.verdict);
+
+  // Duplicates for one row key make "the" answer undefined. Reported, never
+  // resolved by picking one.
+  const dupes = [...answers, { section: ROOM, questionId: 'q-table', isFollowUp: false, answer: 'A different answer entirely.' }];
+  const amb = verifyQuoteAgainstAnswers(
+    'The table was the first thing we settled.', { questionId: 'q-table', isFollowUp: false }, dupes, 'selected');
+  check('two answers sharing a row key report ambiguous rather than guessing',
+    amb.verdict === 'ambiguous', amb.verdict);
+
+  // The collaboration path has no durable key (section 19 note / item 6), so its
+  // candidates must carry a null pointer rather than a fabricated one.
+  const collab = extractQuoteCandidates(
+    [{ section: 'VENDOR', isFollowUp: true, answer: 'We had to rebuild the whole run of cabinetry twice over.' }],
+    'VENDOR');
+  check('an answer with no question id yields a null pointer, never an invented one',
+    collab.length > 0 && collab.every(c => c.questionId === null),
+    collab.map(c => String(c.questionId)).join(', '));
+}
+
+// ─── 18. Re-answering UPDATES the row, it does not insert a second one ───────
+//
+// A designer answering the same question again is correcting themselves. Two
+// rows for one row key (interviewId, questionId, isFollowUp) would give a pull
+// quote's provenance pointer an ambiguous target, and after
+// 20260904193000_add_row_key_unique is applied a second insert is a P2002 that
+// reaches the designer as a 500 with their answer unsaved.
+//
+// Asserted against the WRITE THE MODULE ISSUES, not against a call sequence: a
+// stub records every operation, and the assertions are about what reached the
+// database. Any implementation that updates in place passes.
+console.log('\n18. Re-answer updates rather than inserting');
+
+async function reAnswerChecks() {
+  const Module = await import('module');
+  const origLoad = (Module.default as any)._load;
+  const ops: Array<{ op: string; args: any }> = [];
+  // One row already stored for this key, carrying context this route does not
+  // know: the question was classified a follow-up, and the projection has since
+  // attached a room, a category and audio to it.
+  let stored: any = {
+    id: 'row-1', interviewId: 'iv1', questionId: 'q-what', isFollowUp: false,
+    answerText: 'The mauve came first.', questionText: 'What drove the palette?',
+    inputModality: 'voice', questionSource: 'follow_up',
+    roomId: 'room-dining', questionCategory: 'what',
+    audioUrl: 'https://x/a.mp3', wordTimings: [{ word: 'The', start: 0, end: 0.2 }],
+  };
+
+  (Module.default as any)._load = function (request: string) {
+    if (request === '@/lib/prisma' || request.endsWith('/lib/prisma')) {
+      return { prisma: { editorialInterviewAnswer: {
+        findFirst: async () => (stored ? { ...stored } : null),
+        update: async (args: any) => { ops.push({ op: 'update', args }); stored = { ...stored, ...args.data }; return stored; },
+        create: async (args: any) => { ops.push({ op: 'create', args }); stored = { ...args.data }; return stored; },
+      } } };
+    }
+    return origLoad.apply(this, arguments as any);
+  };
+
+  let outcome: string;
+  try {
+    const mod = await import('../src/lib/interview/saveInterviewAnswer');
+    // The second submission: different text, arriving by keyboard, and WITHOUT
+    // a questionText — exactly the shape that used to overwrite a real stored
+    // question with the route's generic fallback.
+    outcome = await mod.saveInterviewAnswer({
+      interviewId: 'iv1', questionId: 'q-what', questionText: undefined,
+      answer: 'Actually the brass came first.', inputMode: 'text',
+    });
+  } finally {
+    (Module.default as any)._load = origLoad;
+  }
+
+  check('a re-answer reports that it updated', outcome === 'updated', outcome);
+  check('a re-answer issues no INSERT',
+    ops.filter(o => o.op === 'create').length === 0,
+    ops.map(o => o.op).join(', '));
+  check('a re-answer issues exactly one UPDATE',
+    ops.filter(o => o.op === 'update').length === 1,
+    ops.map(o => o.op).join(', '));
+
+  const data = ops.find(o => o.op === 'update')?.args?.data ?? {};
+  check('the correction is what gets written',
+    data.answerText === 'Actually the brass came first.', JSON.stringify(data.answerText));
+  check('the modality is refreshed with the answer', data.inputModality === 'text', JSON.stringify(data.inputModality));
+
+  // The preserve half. These are absent from the update payload, which is how
+  // they survive — naming a column at all is what would null it.
+  for (const col of ['questionText', 'questionSource', 'roomId', 'questionCategory', 'createdAt', 'id', 'interviewId']) {
+    check(`a re-answer does not write ${col}`, !(col in data), `${col}=${JSON.stringify((data as any)[col])}`);
+  }
+  check('the stored question survives a submission that carried none',
+    stored.questionText === 'What drove the palette?', JSON.stringify(stored.questionText));
+  check('a question classified follow_up is not relabelled base_question',
+    stored.questionSource === 'follow_up', JSON.stringify(stored.questionSource));
+  check('the room and category the projection attached survive',
+    stored.roomId === 'room-dining' && stored.questionCategory === 'what',
+    `${stored.roomId} / ${stored.questionCategory}`);
+
+  // Word timings are offsets into the answer they were transcribed from. Against
+  // replaced text they resolve a quote to the wrong span, so they go.
+  check('audio is cleared when the answer text changed',
+    data.audioUrl === null && data.wordTimings !== undefined,
+    `audioUrl=${JSON.stringify(data.audioUrl)} wordTimings=${JSON.stringify(data.wordTimings)}`);
+
+  // And the first answer for a key must still insert.
+  stored = null;
+  ops.length = 0;
+  (Module.default as any)._load = function (request: string) {
+    if (request === '@/lib/prisma' || request.endsWith('/lib/prisma')) {
+      return { prisma: { editorialInterviewAnswer: {
+        findFirst: async () => null,
+        update: async (args: any) => { ops.push({ op: 'update', args }); return {}; },
+        create: async (args: any) => { ops.push({ op: 'create', args }); return args.data; },
+      } } };
+    }
+    return origLoad.apply(this, arguments as any);
+  };
+  let firstOutcome: string;
+  try {
+    const mod = await import('../src/lib/interview/saveInterviewAnswer');
+    firstOutcome = await mod.saveInterviewAnswer({
+      interviewId: 'iv1', questionId: 'q-new', questionText: 'And the stair?',
+      answer: 'It took four tries before it belonged.', inputMode: 'text',
+    });
+  } finally {
+    (Module.default as any)._load = origLoad;
+  }
+  check('a first answer still inserts',
+    firstOutcome === 'created' && ops.length === 1 && ops[0].op === 'create',
+    `${firstOutcome}: ${ops.map(o => o.op).join(', ')}`);
+}
+
+// ─── 17. Self-sufficiency is a RANKING input, and only a ranking input ───────
+//
+// In published mode the reader sees the room photograph and the quote; the body
+// is behind a click. A quote whose referent lives in that hidden body does not
+// read. So candidates that survive the collapse must be offered first — to the
+// designer cycling the picker and to the ranking model alike.
+//
+// The three things that could go wrong, and are asserted here:
+//   a) the ordering does not actually change (the input is wired but inert);
+//   b) it turns into a FILTER — a room loses candidates, which would silently
+//      recreate the fallback-pool problem the no-fallback rule exists to stop;
+//   c) it outranks nothing, or outranks the wrong thing.
+//
+// Asserted as an INVARIANT over the emitted order, not as a call sequence: any
+// implementation that puts standalone spans first passes.
+console.log('\n17. Self-sufficiency ranking');
+
+function standaloneRankingChecks() {
+  // Two answers for one room. The first sentence of each is standalone; the
+  // second of the primary answer opens with a bare "It" and cannot be read
+  // beside a photograph alone.
+  const ROOM = 'Dining Room';
+  const answers = [
+    { section: ROOM, isFollowUp: false, answer:
+      'The table was the first thing we settled. It remains agreeable, but still on theme for the rest of the house for sure.' },
+    { section: ROOM, isFollowUp: true, answer:
+      'We always use glass when we need to make up space. Had we used a solid table we would have crowded it badly.' },
+  ];
+
+  const ranked = extractQuoteCandidates(answers, ROOM);
+  const verdicts = ranked.map(c => scoreStandalone(c.text).verdict);
+
+  check('the fixture produces a pool worth ranking (guards every check below)',
+    ranked.length >= 3 && verdicts.includes('not-standalone') && verdicts.includes('standalone'),
+    `${ranked.length} candidate(s), verdicts: ${verdicts.join(', ')}`);
+
+  // (a) + (c) The invariant: no non-standalone span may precede a standalone one.
+  const firstBad = verdicts.indexOf('not-standalone');
+  const lastGood = verdicts.lastIndexOf('standalone');
+  check('every standalone candidate is offered before every non-standalone one',
+    firstBad === -1 || lastGood < firstBad,
+    `order: ${verdicts.join(', ')}`);
+
+  // (c) Specifically: it outranks the follow-up tier. A follow-up that does not
+  // read on its own is still a follow-up that does not read on its own.
+  const followUpBroken = [
+    { section: ROOM, isFollowUp: true, answer: 'It was the one thing the budget never reached in the end.' },
+    { section: ROOM, isFollowUp: false, answer: 'The plaster ceiling is what the whole room is organised around.' },
+  ];
+  const mixed = extractQuoteCandidates(followUpBroken, ROOM);
+  check('self-sufficiency outranks the follow-up tier',
+    mixed.length >= 2 && scoreStandalone(mixed[0].text).verdict === 'standalone' && !mixed[0].isFollowUp,
+    mixed.map(c => `${c.isFollowUp ? 'FU' : 'P '} ${scoreStandalone(c.text).verdict} "${c.text}"`).join(' | '));
+
+  // (b) Ranking, never filtering. Same multiset in, same multiset out.
+  const unranked = new Set(ranked.map(c => c.text));
+  check('ranking drops nothing — a room with no standalone candidate still offers its pool',
+    unranked.size === ranked.length && ranked.length === new Set(ranked.map(c => c.id)).size,
+    `${ranked.length} candidates, ${unranked.size} distinct texts`);
+
+  const allBroken = [
+    { section: ROOM, isFollowUp: false, answer:
+      'It was the one room the budget never really reached. But we did what we could with the light in there.' },
+  ];
+  const broken = extractQuoteCandidates(allBroken, ROOM);
+  check('a room where NOTHING is standalone still yields candidates (ranking, not filtering)',
+    broken.length > 0 && broken.every(c => scoreStandalone(c.text).verdict !== 'standalone'),
+    `${broken.length} candidate(s)`);
+
+  // The verbatim guarantee is upstream of ranking and must survive it untouched.
+  const srcs = answers.map(a => a.answer);
+  check('every ranked candidate is still a verbatim span of its room answers',
+    ranked.every(c => isVerbatimSpan(c.text, srcs)));
+
+  // The contract with the model: numbered candidates, model returns an id. Ids
+  // are assigned at extraction and must still resolve after the sort.
+  check('every candidate still carries an id the ranker can return',
+    ranked.every(c => typeof c.id === 'string' && c.id.length > 0));
+}
+
 // Sequential, not Promise.all: loaderChecks and reverseSyncChecks each install a
 // module-loader stub and restore it in a finally, so running them concurrently
 // lets one restore the loader out from under the other. Found by doing it.
@@ -672,6 +976,9 @@ collaborationChecks()
   .then(loaderChecks)
   .then(reverseSyncChecks)
   .then(projectionWriteChecks)
+  .then(standaloneRankingChecks)
+  .then(reAnswerChecks)
+  .then(provenanceChecks)
   .then(() => {
   console.log(failures === 0
     ? '\nAll pull-quote checks passed.\n'

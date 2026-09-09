@@ -3,12 +3,13 @@ export const dynamic = 'force-dynamic';
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
+import type { Prisma, VendorBoostRequestStatus } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 
 export async function GET(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
-    if (!session?.user?.id) {
+    if (!session?.user?.id || session.user.role !== "DESIGNER") {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
@@ -23,12 +24,13 @@ export async function GET(request: NextRequest) {
       | null;
 
     // Build where clause
-    const where: any = {
+    const where: Prisma.VendorBoostRequestWhereInput = {
       requestedDesignerId: userId,
     };
 
     if (statusFilter) {
-      where.status = statusFilter;
+      if (!['PENDING','ACCEPTED','COMPLETED','DECLINED','EXPIRED'].includes(statusFilter)) return NextResponse.json({ error: 'Invalid status' }, { status: 400 });
+      where.status = statusFilter as VendorBoostRequestStatus;
     }
 
     // Fetch boost requests for this designer
@@ -46,7 +48,7 @@ export async function GET(request: NextRequest) {
         acceptedAt: true,
         declinedAt: true,
         completedAt: true,
-        product: {
+        products: {
           select: {
             id: true,
             name: true,
@@ -54,18 +56,18 @@ export async function GET(request: NextRequest) {
             imageUrl: true,
           },
         },
-        project: {
+        projects: {
           select: {
             id: true,
             title: true,
-            slug: true,
+            post: { select: { slug: true } },
           },
         },
         vendor: {
           select: {
             id: true,
             name: true,
-            logoUrl: true,
+            profileImage: true,
           },
         },
         interviewSession: {
@@ -79,7 +81,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({
       ok: true,
-      requests,
+      requests: requests.map(({ products, projects, vendor, ...request }) => ({ ...request, product: products, project: projects, vendor: { id: vendor.id, name: vendor.name ?? "Vendor", logoUrl: vendor.profileImage } })),
     });
   } catch (error) {
     console.error("[vendor-boost/inbox] Error:", error);

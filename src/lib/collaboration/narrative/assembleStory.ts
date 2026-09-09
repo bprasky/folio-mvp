@@ -243,7 +243,8 @@ const CONTRIBUTORS: ContributorRole[] = ['VENDOR', 'DESIGNER'];
  * Flatten both interviews into the shape the candidate cutter reads.
  *
  * Rounds 2 and 3 are marked `isFollowUp` because that is what they are, and
- * `extractQuoteCandidates` ranks follow-ups first. Round 3 is the round where
+ * `extractQuoteCandidates` ranks follow-ups above primaries — behind
+ * self-sufficiency, which sorts first. Round 3 is the round where
  * each party reacts to the other, which is the most quotable material either of
  * them produces.
  */

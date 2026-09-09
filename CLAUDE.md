@@ -136,3 +136,9 @@ If CI fails or `migrate status` goes non-clean, don't freelance. Follow the runb
 1. Review `tasks/lessons.md` for past mistakes
 2. Check `tasks/todo.md` for current priorities
 3. Confirm the task serves Folio's core value prop
+
+## TypeScript debt ratchet
+
+Run `npm run typecheck:prepare` after checkout or route/schema changes, then `npm run typecheck` before completing TypeScript work. The guard uses the actual project config and allows existing fingerprints to remain or disappear; new fingerprints or increased multiplicities fail everywhere, including unchanged consumers. Do not disable checks or raise `tools/typescript-baseline.json` to pass CI.
+
+When fixing historical debt, run `npm run typecheck:baseline:update` and commit the reduced baseline with the fix. This command refuses increases and replacement errors. The lint workflow also compares baseline changes against the merge base. See `docs/TYPESCRIPT_RATCHET.md` for generated-type preparation, limitations and cleanup priorities. Keep `typescript.ignoreBuildErrors` until the baseline is zero and a clean production build passes with the flag removed.

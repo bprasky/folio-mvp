@@ -266,16 +266,18 @@ model User {
   contactImportJobs       ContactImportJob[] @relation("UserContactImportJobs")
 
   // --- Phase 5H1 Bucket A inverse relations ---
-  actionItemsAssigned    ActionItem[]            @relation("action_items_assignedToIdTousers")
-  actionItemsCreated     ActionItem[]            @relation("action_items_createdByIdTousers")
-  eventContacts          EventContact[]
-  eventDesignerEdges     EventDesignerEdge[]
-  eventHostProfile       EventHostProfile?
-  eventInvites           EventInvite[]
-  eventRepEdges          EventRepEdge[]
-  interviewSessions      InterviewSession[]
-  vendorBoostRequests    VendorBoostRequest[]
-  vendorInviteCandidates VendorInviteCandidate[]
+  actionItemsAssigned         ActionItem[]            @relation("action_items_assignedToIdTousers")
+  actionItemsCreated          ActionItem[]            @relation("action_items_createdByIdTousers")
+  eventContacts               EventContact[]
+  eventDesignerEdges          EventDesignerEdge[]
+  eventHostProfile            EventHostProfile?
+  eventInvites                EventInvite[]
+  eventRepEdges               EventRepEdge[]
+  recordedVendorInterviews    InterviewSession[]      @relation("RecordedInterviewVendor")
+  recordedVendorBoostRequests VendorBoostRequest[]    @relation("RecordedBoostVendor")
+  interviewSessions           InterviewSession[]
+  vendorBoostRequests         VendorBoostRequest[]
+  vendorInviteCandidates      VendorInviteCandidate[]
 
   // --- Phase 5H2 Bucket B inverse relations ---
   vendorProductMatchScores     VendorProductMatchScore[]
@@ -1734,7 +1736,7 @@ model EditorialCategory {
   type        String
   label       String
   centroid    Unsupported("vector")?
-  createdAt   DateTime               @default(now())
+  createdAt   DateTime               @default(now()) @map("created_at")
   assignments EditorialAssignment[]
 
   @@unique([type, label])
@@ -1744,16 +1746,16 @@ model EditorialCategory {
 
 model EditorialAssignment {
   id             String            @id @default(cuid())
-  projectId      String
-  editorialId    String
-  categoryId     String
-  editorialScore Float
-  createdAt      DateTime          @default(now())
+  projectId      String            @map("project_id")
+  editorialId    String            @map("editorial_id")
+  categoryId     String            @map("category_id")
+  editorialScore Float             @map("editorial_score")
+  createdAt      DateTime          @default(now()) @map("created_at")
   project        Project           @relation(fields: [projectId], references: [id], onDelete: Cascade)
   editorial      ProjectPost       @relation(fields: [editorialId], references: [id], onDelete: Cascade)
   category       EditorialCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)
 
-  @@unique([projectId, categoryId])
+  @@unique([projectId, categoryId], map: "editorial_assignment_project_category_unique")
   @@index([categoryId])
   @@index([editorialId])
   @@map("editorial_assignment")
@@ -1764,12 +1766,12 @@ model EditorialEdition {
   slug        String    @unique
   title       String
   intro       String
-  categoryIds String[]
-  projectIds  String[]
-  publishedAt DateTime?
+  categoryIds String[]  @map("category_ids")
+  projectIds  String[]  @map("project_ids")
+  publishedAt DateTime? @map("published_at")
   metrics     Json
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
 
   @@map("editorial_edition")
 }
@@ -1917,6 +1919,24 @@ model EditorialInterviewAnswer {
   // Relations
   // Removed - AttributeVerification doesn't have interviewAnswerId field
 
+  // The durable identity of an answer WITHIN an interview.
+  //
+  // `rebuildAnswerProjection` already treats this triple as a key: it builds
+  // `idByQuestion` keyed on `rowKey(questionId, isFollowUp)` to re-link a
+  // follow-up to its parent inside a single insert
+  // (syncInterviewAnswers.ts:65-66, 114-116). Nothing enforced it, so the
+  // assumption held by convention only — and two rows sharing the triple would
+  // collapse to one entry in that Map and then collide on the primary key at
+  // insert. This turns the convention into a constraint.
+  //
+  // It is also the key a pull quote can point at. Row `id` is re-minted by
+  // `randomUUID()` on every sync, so a stored answer id dangles as soon as the
+  // designer answers one more question; this triple survives the rebuild.
+  //
+  // Named explicitly: Prisma's derived name for this triple is 69 characters
+  // and Postgres truncates identifiers at 63, so leaving it implicit would make
+  // the constraint name depend on a silent truncation.
+  @@unique([interviewId, questionId, isFollowUp], map: "editorial_interview_answers_row_key")
   @@index([interviewId])
   @@index([questionId])
   @@index([linkedImageId])
@@ -7056,7 +7076,7 @@ model InterviewSession {
   QuoteHighlight       QuoteHighlight[]
   TranscriptSegment    TranscriptSegment[]
   derivedBoostRequest  VendorBoostRequest?    @relation("vendor_boost_requests_interviewSessionIdTointerview_sessions")
-  vendor               Vendor?                @relation(fields: [vendorId], references: [id])
+  vendor               User?                  @relation("RecordedInterviewVendor", fields: [vendorId], references: [id], onDelete: SetNull)
 
   @@index([createdByUserId])
   @@index([productId])
@@ -7200,7 +7220,7 @@ model VendorBoostRequest {
   products            Product                  @relation(fields: [productId], references: [id], onDelete: Cascade)
   projects            Project                  @relation(fields: [projectId], references: [id], onDelete: Cascade)
   users               User                     @relation(fields: [requestedDesignerId], references: [id])
-  vendor              Vendor                   @relation(fields: [vendorId], references: [id], onDelete: Cascade)
+  vendor              User                     @relation("RecordedBoostVendor", fields: [vendorId], references: [id], onDelete: Cascade)
 
   @@index([expiresAt])
   @@index([productId])
@@ -7308,8 +7328,6 @@ model Vendor {
   city               String?
   userId             String?
   EventVendorEdge    EventVendorEdge[]
-  InterviewSession   InterviewSession[]
-  VendorBoostRequest VendorBoostRequest[]
   VendorPreviewToken VendorPreviewToken[]
 
   @@map("vendors")

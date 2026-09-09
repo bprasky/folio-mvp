@@ -19,14 +19,14 @@ export default async function ApproveHighlightsPage({
     select: {
       id: true,
       status: true,
-      recordingAsset: {
+      createdByUserId: true,
+      MediaAsset: {
         select: {
           id: true,
-          url: true,
           durationMs: true,
         },
       },
-      highlights: {
+      QuoteHighlight: {
         orderBy: {
           score: "desc",
         },
@@ -41,13 +41,13 @@ export default async function ApproveHighlightsPage({
           productId: true,
         },
       },
-      project: {
+      projects: {
         select: {
           id: true,
           title: true,
         },
       },
-      product: {
+      products: {
         select: {
           id: true,
           name: true,
@@ -63,7 +63,7 @@ export default async function ApproveHighlightsPage({
 
   // Check access
   const isOwner = interviewSession.status === "EXTRACTED" || interviewSession.status === "READY";
-  if (!isOwner) {
+  if (!isOwner || interviewSession.createdByUserId !== session.user.id || session.user.role !== "DESIGNER") {
     notFound();
   }
 
@@ -73,13 +73,13 @@ export default async function ApproveHighlightsPage({
         <div className="mb-8">
           <h1 className="text-3xl font-light text-folio-text-primary mb-2">Review & Approve Quotes</h1>
           <p className="text-folio-text-secondary">
-            {interviewSession.project?.title || interviewSession.product?.name || "Interview"}
+            {interviewSession.projects?.title || interviewSession.products?.name || "Interview"}
           </p>
         </div>
 
         <ApproveHighlightsClient
-          interviewSession={interviewSession}
-          recordingUrl={interviewSession.recordingAsset?.url || null}
+          interviewSession={{ id: interviewSession.id, status: interviewSession.status, highlights: interviewSession.QuoteHighlight }}
+          hasRecording={!!interviewSession.MediaAsset}
         />
       </div>
     </div>

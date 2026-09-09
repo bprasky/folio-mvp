@@ -1561,3 +1561,230 @@ and the claim email. Phase C stays blocked on the canonical interviewer module,
 and Open Decision 6 (counsel review of the whole solicitation-to-publication
 chain) gates it independently.
 
+
+# Folio hardening — 2026-09-08
+Ordered scope authorized: execute prompts 1–6 sequentially. Preserve unrelated work.
+- [x] Read request, conventions and current code; fetch and rebase preserved work onto main.
+- [ ] P1: Verify raw inbound signatures; authenticated, rate-limited SSRF-safe scraping; distributed auth limits; media Permissions Policy. Focused tests, guard, lint, baseline-relative types, build, IDOR.
+- [ ] P2: Audit legacy editorial callers and canonical state, consolidate/delete, verify surviving workflow.
+- [ ] P3: Measure actual main TypeScript baseline, implement deterministic ratchet and negative tests, wire CI.
+- [ ] P4: Add five deterministic regression journeys using existing application boundaries and isolated persistence.
+- [ ] P5: Inventory auth dialects, canonicalize bounded route slice, strengthen scanner and test authorization matrix.
+- [ ] P6: Read-only deletion audit with caller evidence, ranked batches and quantified impact; no repository edits in this phase.
+
+Review: Pending. No security property is complete until verified. Schema changes, if necessary, require backup and scoped review under migration discipline; restore and stop on validation failure.
+
+## P0 review — incomplete / browser environment blocker
+- Implemented raw-body Svix verification, distributed production rate limits, credentials IP+email enforcement, URL/IP validation with socket pinning, and self-only media permissions.
+- Nine focused test groups pass. Client guard passes. Changed-file lint: zero errors, 174 warnings. Production build exits 0 but logs an existing editorial schema mismatch.
+- Typecheck remains non-clean; historical errors plus a regenerated Next route-export diagnostic. No errors in the added security helpers or scraper.
+- Live Browserless probe rejects the provider-added 0.0.0.0 proxy bypass. User explicitly chose establishing a protected browser path; disabling it is not accepted as completion.
+- P0 remains open. Need a Browserless environment honoring required egress controls, then live adversarial and rendered-product verification. Distributed live Redis and route integration tests also remain.
+- Prompts 2–6 have not started, preserving order. Full status: docs/audits/HARDENING_P0_STATUS.md.
+
+## P0 completion phase — 2026-09-08
+Scope: only Critical/High security dispositions, browser architecture and remaining P0 checks.
+- [x] Fetch current branch/main; reproduce 3 Critical/14 High; inspect handlers and caller chains.
+- [x] Fix public feed publication/provenance leaks and contact-form abuse; scope internal prompts and their answer mutation.
+- [x] Repair claimed-product scrape authorization, bound resource spend and remove unprotected escalation; make product dedup updates race-safe.
+- [x] Remove unreachable middleware limits; distinguish limiter rejection/configuration/outage/timeout in safe logs.
+- [x] Route-level regression tests including signed webhook -> real thread matcher.
+- [x] Decide smallest independently controlled browser architecture before browser implementation; verify engine availability, then implement/test only if enforceable here.
+- [ ] Browser release gate: provision an independently controlled Linux worker, enforce namespace/host egress, pass adversarial and legitimate-rendering parity tests. Blocked: no working local Linux Docker engine or configured worker host.
+- [x] Build, type diagnostic comparison, changed-file lint, client guard, fresh IDOR report, no-secret review; commit/push checkpoint with honest completion status.
+
+Completion review: **P0 INCOMPLETE**. Twenty security tests pass; build and client
+guard pass; lint has zero errors/10 warnings. Types: 1,009 before, 1,007 after,
+zero added diagnostics. IDOR: zero Critical, one documented High scanner
+limitation, 16 Medium, 20 Low. The managed browser remains fail-closed; isolated
+worker implementation, adversarial browser tests and product parity are blocked
+on the Linux execution environment. Live Upstash smoke awaits credentials.
+Full dispositions, threat model and resumption procedure:
+`docs/audits/P0_COMPLETION_REVIEW.md`. No subsequent phase started.
+
+## P0 isolated renderer implementation
+- [x] Implement bounded authenticated controller, disposable jobs and verified namespace/host packet policy before browser startup.
+- [x] Implement sandboxed Chromium runner and replace managed protected-render callers without broad application changes.
+- [x] Add controller/worker tests, Linux canary acceptance rig with deliberate-breach control, and extraction parity fixtures.
+- [x] Execute available tests and Linux/Upstash probes; record unexecuted network acceptance explicitly.
+- [x] Run P0 tests, scanner, guard, lint, baseline-relative types, build and secret review; document deployment and commit/push.
+
+Plan: target Linux Docker with the iptables backend. Host controller installs
+namespace OUTPUT and host DOCKER-USER/INPUT rules before starting Chromium.
+No Linux availability is required to author the implementation, but Linux
+packet/canary evidence remains mandatory for P0 completion.
+
+Implementation review: 13 worker/controller/harness tests and 23 application
+security/integration tests pass; Linux-output parity is explicitly skipped.
+Build passes; types 1,009 before/after with no added diagnostics; guard passes;
+lint zero errors (13 historical integration warnings); IDOR 0 Critical/1 High/
+16 Medium/20 Low. No-secret/artifact check passes. Managed runtime rendering is
+removed; legacy renderer entrypoints now enforce identity and a shared budget.
+Linux image/sandbox/network tests, live rendering and Upstash verification remain
+pending infrastructure/credentials. Full report: docs/audits/P0_RENDER_WORKER_REPORT.md.
+P0 INCOMPLETE — implementation ready, authoritative network verification pending.
+
+## P0 final verification attempt
+- [x] Read final verification request; fetch and inspect branch; inspect available provisioning/SSH and staging configuration without exposing secrets.
+- [ ] Obtain dedicated Linux test-host and public fixture access; build the unchanged image and record runtime isolation evidence.
+- [ ] Prove positive-control HTTP/subresource/WebSocket/worker canary contact before the protected matrix.
+- [ ] Execute complete protected matrix, live rendering parity and staging Folio integration; fix only observed failures.
+- [ ] Execute live shared Upstash smoke when staging credentials are available.
+- [x] Run unchanged local regressions, build, guard, scanner and diagnostic comparison; record exact blockers without claiming Linux proof.
+
+No implementation edits planned before deployment/acceptance identifies a concrete defect.
+
+Verification attempt result: no cloud CLI/credential configuration, SSH target,
+test fixture configuration or staging Upstash credentials available. Linux
+acceptance stops before setup; zero completed cases. No implementation changes.
+36 local tests pass, one Linux-output test skipped. Build, guard and lint pass;
+IDOR unchanged at 0 Critical/1 High/16 Medium/20 Low. Types 1,009 before/1,007 after,
+zero added. Access question remains pending. Evidence and all NOT RUN matrix
+entries: docs/audits/P0_FINAL_VERIFICATION_BLOCKER.md.
+
+## Editorial architecture consolidation — 2026-09-08
+P0 PARKED. Scope, current-state map, transition table, checkable plan and results: tasks/editorial-consolidation.md.
+- [x] Complete consolidation implementation and available verification; preserve P0 controls. Disposable database journey remains parked.
+
+## Approved editorial mapping repair
+- [x] Verify approved source, sync baseline, and back up schema.
+- [x] Apply only three approved model mappings; inspect exact diff.
+- [x] Format/validate/generate/migrate-status; if any fails, restore from backup and stop.
+- [x] Verify generated mappings, read-only queries, build and focused regressions.
+- [x] Record parked disposable database gate, review, commit and push.
+
+Review: approved mappings only; generated metadata and six read-only queries pass. Build exits 0 with no editorial mapping errors. Types: 1,006 before/after, zero added. Guards/regressions pass. Real database transition journey parked pending disposable DB. Full evidence: tasks/editorial-schema-repair.md.
+
+## TypeScript error ratchet — 2026-09-08
+- [x] Read configuration/CI conventions, fetch origin, and start a fresh canonical measurement.
+- [x] Implement deterministic structured-diagnostic fingerprints and a reviewable baseline; enforce count and fingerprint multiplicity without line positions.
+- [x] Add safe baseline lowering and existing lint-workflow integration; reject baseline expansion against the merge base.
+- [x] Prove baseline, +1 regression, movement, reduction and lowering with controlled mutations; restore all fixtures.
+- [x] Run guards, focused lint, production build and final ratchet; classify measured debt and document commands/limitations.
+- [x] Review focused diff, commit baseline/implementation/docs and push.
+
+Plan: preserve current tsconfig, build flags, product behavior and parked workstreams. Use the installed compiler API with the existing project configuration and no emit/incremental cache. Global fingerprint enforcement is stronger than changed-file-only enforcement and catches indirect errors in unchanged consumers. No increase override is planned.
+
+Review: measured 1,006 diagnostics / 638 fingerprints / 260 files at b094b5e0. Structured compiler guard rejects total increases and new fingerprints globally; merge-base integrity prevents baseline inflation. Five tests pass, including actual CLI/Git fixtures. Real repository proofs: baseline 1,006 pass; artificial 1,007 fails; line movement passes; temporary 1,005 reduction and update pass. All mutations restored. Final ratchet 1,006/zero new, production build, guard typecheck/lint and client guard pass; IDOR unchanged. No src/schema/config changes. Evidence and cleanup order: docs/TYPESCRIPT_RATCHET.md. TYPESCRIPT RATCHET COMPLETE.
+
+## Core regression journeys — 2026-09-08
+- [x] Audit existing Node/tsx tests, real signup/onboarding, project/tag/authz, interview generation and mounted collaboration routes.
+- [x] Add small reusable fixtures and a fail-closed disposable database gate; keep local orchestration doubles explicitly distinct from persistence proof.
+- [x] Implement all five journeys through real handlers/auth/lifecycle, mocking external boundaries only (plus deterministic DB doubles for local orchestration).
+- [x] Add explicit live-DB execution mode for the same journeys and CI integration without provisioning infrastructure.
+- [x] Run suite, ratchet/guard tests, client guard, lint, Prisma validation, build and relevant IDOR scan; repair only directly exposed regressions.
+- [x] Document exact assertions, gaps and parked live execution; review, commit and push.
+
+Plan: reuse Node test + installed tsx, no browser framework. Exercise real Credentials authorization/JWT/session callbacks and middleware with an encoded session cookie. Use the mounted collaboration story invitation/acceptance path from CreateButton/MobileMenu for vendor interaction. Local database doubles prove orchestration only; the same journeys can run against an explicitly disposable database. No schema changes or infrastructure provisioning.
+
+Review: all five real-handler journeys pass locally (8 passing tests including parent/safety, one explicit live-DB skip). Required DB mode correctly exits 1 without a disposable target. Fixed project PUT view-vs-write authorization and private read/edit 500-vs-403 responses. Production build, ratchet guard tests, client guard, lint (zero errors), Prisma validate and migration discipline pass; IDOR unchanged at 0 critical/1 existing high/16 medium/19 low. TypeScript 1,006 before/after, zero new fingerprints. Full architecture, exact assertions, commands, CI and limits: docs/CORE_REGRESSION_JOURNEYS.md. IMPLEMENTATION COMPLETE — LIVE DATABASE EXECUTION PARKED.
+
+## Great Folio Delete — Batch 1 — 2026-09-08
+- [x] Fetch and reverify the seven approved files against static/dynamic imports, re-exports, JSX/string references, scripts, CI, tests, documentation and audit baseline.
+- [x] Delete only the seven approved callerless files; preserve shared role/session/navigation/workspace code.
+- [x] Run type preparation, ratchet and lowering if needed; core journeys, guard tests, client guard, lint applicability, production build and IDOR scan.
+- [x] Review exact diff, document results, commit and push one focused deletion commit.
+
+Plan: seven file deletions, 932 actual physical lines; no routes, dependencies or Prisma changes. Historical RoleSelector documentation remains historical. Lower the baseline only if diagnostics decrease. No new helpers or product logic.
+
+Review: deleted exactly page-backup.tsx, GlobalHeader.tsx, ProjectDashboard.tsx, RolePanel.tsx, RoleSelector.tsx, getRole.ts and getServerRole.ts. Reverification found zero resolved import/re-export/dynamic-import callers for each and no runtime symbol/path references; only historical RoleSelector documentation remained. No commits had landed since audit HEAD c4317f30. Shared role/session/permissions/onboarding/navigation/root/workspace files remain unchanged. Type preparation, production build, five ratchet guard tests and client guard pass. All five core journeys pass (8 tests total, 1 unchanged live-DB group skip). IDOR remains 558 routes: 0 critical / 1 existing high / 16 medium / 19 low. Changed-file lint has no applicable surviving source files. Ratchet passed with zero new fingerprints; approved update lowers 1,006 to 1,003 diagnostics, 638 to 635 fingerprints, 260 to 257 files. Removed diagnostics belonged to GlobalHeader, RolePanel and RoleSelector. Full diff contains seven deletions, baseline lowering and these notes only; source LOC removal is 932 rather than the approximate 933. Logs: tasks/delete-batch1-*. GREAT FOLIO DELETE BATCH 1 COMPLETE.
+
+## Great Folio Delete — Batch 2 — 2026-09-08
+- [x] Rebuild the 22-file import graph, check references/history and verify canonical public/preview/feed/social/admin paths.
+- [x] Delete the closed legacy renderer tree only; retain all external helpers, APIs, packages and canonical editorial code.
+- [x] Run core/editorial/quote/story checks, type preparation/ratchet and lowering, guard tests, client guard, production build and IDOR.
+- [x] Inspect stranded references/assets and full diff; document exact results; commit and push one focused batch.
+
+Plan: 22 files / 3,248 actual lines under src/components/project/editorial only. Root EditorialProjectLayout has no external caller; spacing.ts is also callerless. All other inbound module edges remain within the candidate tree. No CSS/assets/barrels are present inside it. Preserve shared TaggedImage, ActionIconBar, folder helpers, editorial types, schemas, formatRoomName, quote APIs and packages. No canonical source changes.
+
+Review: all 22 audit candidates deleted, none retained, no additional assets/barrels removed. Zero routes, API routes, dependencies, Prisma or migration changes. Resolved static imports/re-exports/literal dynamic imports and runtime reference searches found no external inbound edge. EditorialProjectLayout was the unmounted root, with spacing.ts independently callerless. The current public chain remains /p/[slug] -> getPostBySlug -> published ProjectPost on public Project -> StoryRenderer -> buildStoryData/buildEditorialChapters -> Mosaic/RoomTilePair/PhotoTile/QuoteTile and shared product/media components. Feed, magazine, preview, social export and admin surfaces have no dependency on the deleted tree. Shared outbound dependencies and both interview quote/status APIs remain untouched. No stranded internal barrels, CSS, assets or obsolete-only tests found; contextual-search audit now labels its old renderer claim historical. Remaining source comments and historical audit references do not import removed code.
+
+Verification: production build, typecheck:prepare, typecheck, baseline update, all five ratchet guard tests and client-import guard pass. All five core journeys pass (8 passing tests including parent/safety, one live-DB group skipped); lifecycle checks pass (3 tests, one live-DB group skipped). Single-generator, block bounds, pull-quotes/provenance, quote audit, generation context, room matching, regeneration surfaces and story-editing checks pass. Real StoryRenderer SSR smoke passes with fixture title/data, room/product mapping, room image markup and its initial hero placeholder; browser hydration was not exercised. Windows grep-based checks required installed Git Bash as the child shell; no scripts changed. IDOR is unchanged: 558 routes, 0 critical / 1 existing high / 16 medium / 19 low. Changed-file lint is not applicable: no surviving JS/TS source was modified. TypeScript decreases 1,003 -> 994 diagnostics, 635 -> 627 fingerprints, 257 -> 255 files; zero new fingerprints. All removed diagnostics belong to EditorialProjectLayout and layoutEngine. Actual Git source reduction is 3,248 lines; the approximate audit count included one extra trailing line per file. Logs: tasks/delete-batch2-* (local artifacts). Live database checks and P0 infrastructure verification remain parked.
+
+## Great Folio Delete — Batch 3 — 2026-09-08
+- [x] Reconstruct old/current interview graphs, preserve live shared components, and record old API callers.
+- [x] Delete only the proven exclusive old UI files; inspect remaining references and internal artifacts.
+- [x] Verify current interview, biography, recorded/realtime, core journeys, quotes/provenance, TypeScript, build and security.
+- [x] Review exact diff, record results, commit and push the focused batch.
+
+Plan: resolve imports across tracked source before choosing the deletion set. Preserve biography's FollowUpTransition, InterviewQuestion and ProgressIndicator, all current posting/recording/realtime flows, every API and all data/provenance helpers. Use deterministic existing checks and focused component checks without live LLM calls. Lower TypeScript baseline only for proven reductions. No API, Prisma, migration or feature changes.
+
+Review: deleted exactly 18 closed old UI files / 1,890 source lines, including five internal barrels; no additional artifacts. The three known biography components remain unchanged and directly imported. Zero external inbound callers for the deletion set; no current source, route, API, dependency, Prisma or migration changes. All five core journeys pass (8 tests, 1 live-DB group skipped); question validation/lifecycle pass (6 tests, 1 live-DB group skipped). Current question/init/save/resume and biography base-question/three-answer checks pass through real handlers with deterministic fixtures. Current modal, question card, biography flow/shared components, recording and realtime initial server renders pass; no browser, microphone, realtime transport or live DB proof claimed. Quotes/verbatim, forward/reverse projection, provenance pointers, generation/context, room matching, naming, regeneration and story-editing checks pass. Type preparation, production build, five ratchet tests and client guard pass. No surviving source files to lint. IDOR unchanged: 558 routes, 0 critical / 1 existing high / 16 medium / 19 low. TypeScript 994 -> 988 diagnostics, 627 -> 625 fingerprints, 255 -> 253 files; zero new fingerprints. Old start/respond/complete endpoints are now repository-callerless but preserved, with external usage unknown. Exact graph, deletion list, API status, limits and results: docs/SESSION_DELETE_BATCH3_2026-09-08.md. GREAT FOLIO DELETE BATCH 3 COMPLETE.
+
+## Recorded media implementation — approved storage, 2026-09-09
+- [x] Finish runtime/identity graph and aggregate database/storage policy audit.
+- [x] Create and verify only the approved private interview-media bucket and scoped policy; configure dedicated application bucket contract.
+- [x] Implement owner-authorized bounded WebM upload, transactional linkage/compensation, private reads and honest replacement semantics.
+- [x] Repair current Prisma source drift, conditional processing/retries, transcript-backed quotes and approval/publish exposure.
+- [x] Resolve boost only if trustworthy under current schema; otherwise document exact minimal migration proposal and keep that portion blocked.
+- [x] Add focused mocked regressions; run core, provenance, security, types, lint, Prisma, migration discipline and build; report and commit/push.
+
+Plan: use existing MediaAsset storageKey plus bucket metadata for permanent identity; signed URLs remain transient. No Prisma edits or migrations. Storage approval covers interview-media only (private, audio/webm, 20 MiB, server-mediated). Never upload production media or call transcription/LLM services. Finish independent recording work even if canonical boost identity requires schema approval.
+
+Review: private interview-media bucket created and read back (audio/webm only, 20 MiB). Application cap 4 MiB for current multipart transport. Canonical private linkage, compensation/replacement, signed owner reads, stage retries, persisted-transcript quotes, review/publish and reader source drift repaired. Media tests 28 pass / 1 schema-gated skip; persistence 34 pass; core 8 pass / disposable DB group skipped; types 972→904, fingerprints 609→574, 0 new; IDOR unchanged 0 Critical/1 existing High; guards, quote checks, Prisma, migration discipline, lint and production build pass. Full report: docs/RECORDED_INTERVIEW_MEDIA_INTEGRITY_2026-09-09.md. No Prisma changes or live media/model tests. Canonical boost creation remains explicitly unavailable pending User FK migration approval.
+
+## Recorded interview / media integrity — 2026-09-09
+- [x] Confirm branch baseline, inspect current recorder/upload/process source and Prisma mappings, and audit live bucket metadata read-only.
+- [ ] Obtain explicit approval for a suitable media bucket: all existing buckets reject the actual audio/webm output.
+- [ ] Complete mounted graph/boost identity audit; repair source only within approved schema/storage scope.
+- [ ] Add media failure/auth/provenance regressions and run core/security/TypeScript/lint/build verification.
+
+Review: stopped at the user's explicit Steps 2/13 gate. event-images is public, image/* only, 5 MiB. None of eight existing buckets accepts audio/webm. Proposed private interview-media bucket with audio/webm only and a 20 MiB bucket cap, server-authorized storage access and unique scoped object keys. No application/schema/bucket/data changes or external AI calls. Current source also has stale interview relation names and required historical Vendor FKs; canonical boost mapping needs further audit before any schema proposal. Baseline unchanged 972 diagnostics / 609 fingerprints / 247 files, not remeasured. Report: docs/RECORDED_INTERVIEW_MEDIA_AUDIT_2026-09-09.md.
+
+## Canonical vendor claim integrity — 2026-09-09
+- [x] Map all ownership/claim writers, membership/domain policy, legacy token flow and Product Record semantics; gather aggregate-only database evidence.
+- [x] Choose legacy retirement or canonical entry; enforce scoped server identity, membership and conditional assignment without schema changes.
+- [x] Add claim, spoofing, stale/replay/concurrency and vendor-creation regressions; preserve designer attribution.
+- [x] Run attribution/product invariants/core journeys, security, TypeScript guards, lint and build; document exact results and commit/push.
+
+Plan: audit before implementation. Preserve Product.brand text with vendorId null for designer products. Keep Product ownership, organization membership and Product Record evidence distinct. Prefer retiring the obsolete preview mutation over rebuilding a second claim state machine. Correct directly involved authorization and conditional-write outcome handling; do not migrate vendor identity, alter Prisma schema or change historical data. Reuse established checks and state their fixture/live-data limits.
+
+Review: legacy preview and generator retired; verified active membership gates existing-product claims; candidate decisions and ownership commit together; organization/token/enrollment bypasses closed. Read-only audit: 175 unclaimed / 16 owned products; claim/token tables empty; zero admin-verified vendor orgs (verification required before first claim). Tests: attribution 8, claims 17, core 8 with separate disposable-DB group skipped, ratchet tests 5; IDOR 0 Critical / 1 existing High / 15 Medium / 11 Low. TS 985→972 diagnostics, 622→609 fingerprints, 251→247 files; no new fingerprints. Client guard, Product Record invariants, Prisma validation, migration discipline, changed lint and production build pass. Full report: docs/CANONICAL_VENDOR_CLAIM_INTEGRITY_2026-09-09.md. No schema or historical data changes.
+
+## Persistence integrity — 2026-09-09
+- [x] Audit JSON, mock responses, filesystem and module stores; document callers and canonical alternatives.
+- [x] Retire obsolete URLs explicitly, migrate mounted document storage, and reject failed canonical writes.
+- [x] Add focused retirement, authorization, storage failure and recorded-media regression coverage.
+- [x] Run core journeys, TypeScript ratchet, security, lint and build; document exact changes and commit/push.
+
+Plan: retain compatibility URLs with explicit unsupported responses where old semantics have no safe mapping; retire admin JSON export and its page together. Use existing Supabase storage and Selection document fields for the mounted upload. Keep canonical recorded media, publication and attribution unchanged. Include additional mock actions found by the same search; do not create models or infrastructure. Test real handlers with controlled external boundaries and describe durability limits honestly.
+
+Review: 26 legacy API paths now return explicit 410 responses with no reads/writes or success payloads. Retired admin export and sample designer analytics pages retain notices; fake invitation and quarterly export controls retired. PDF spec sheets use the existing public imports bucket with project write authorization; read-only metadata confirmed the image bucket cannot accept PDFs. Image re-upload fails when its ProjectImage save fails. Upgrade requests persist details for all org states, require active membership and no longer claim email delivery; missing provider configuration fails email helpers. Focused tests: 34 passed. All five core journeys: 8 passed, one live-DB group skipped. Recorded upload orchestration and component SSR pass with doubles; existing live audio bucket/mapping limitations remain unchanged and documented. Type preparation, final production build, five ratchet tests, client guard, Prisma validation and migration discipline pass. TypeScript 988 -> 985 diagnostics, 625 -> 622 fingerprints, 253 -> 251 files; zero new fingerprints. IDOR: 0 critical / 1 existing high / 16 medium / 11 low, 558 routes. Lint: 0 errors, 47 existing warnings. No file/route URL/page path/schema/migration deletion; 42 source files changed, 3,567 net source lines removed. Full audit, history and limits: docs/PERSISTENCE_INTEGRITY_2026-09-09.md. PERSISTENCE INTEGRITY COMPLETE.
+
+## Product attribution integrity — 2026-09-09
+- [x] Map mounted creation/import/selection and claim paths; confirm identity semantics and gather read-only historical evidence.
+- [x] Remove synthetic identity creation using existing unclaimed Product fields and a minimal shared attribution policy.
+- [x] Add focused real-handler regression tests for unknown/repeated/known/spoofed attribution, tagging and later claim.
+- [x] Run core journeys, product invariants, security, TypeScript guards, lint and production build; review, document and commit/push.
+
+Plan: preserve designer product creation and immediate tagging with Product.brand as text and vendorId null. Do not infer ownership from names or caller-supplied IDs. Reuse the existing null-vendor claim path; retain its authorization and conditional writes. No schema, migrations, historical data repair, endpoint consolidation or vendor-identity redesign. Audit historical synthetic records read-only and provide a separate remediation proposal.
+
+Review: confirmed designer/products created a new vendor+random@folio.local User on every submission, then assigned Product.vendorId. Replaced that behavior with existing brand/null-vendor attribution, shared with catalog new-row creation. Input ownership fields are ignored and malformed attribution rejected; designer response/tagging flow preserved. Focused tests fail against the old route and pass after the fix (8 tests). Core journey 2 now creates through the fixed route; all five journeys pass (8 tests, one live-DB group skipped). Existing domain verification, review membership/candidate checks and vendorId-null conditional writes are unchanged and exercised. Read-only configured-database audit found 0 matching synthetic users, 0 owned products and 0 memberships; no data changed. Product invariants/naming, type preparation, ratchet guards, client guard, lint and production build pass. TypeScript unchanged: 988 diagnostics / 625 fingerprints / 253 files, zero new fingerprints. Lint: zero errors, four existing catalog any warnings. IDOR unchanged: 0 critical / 1 existing high / 16 medium / 19 low across 558 routes. Migration discipline passes, no schema/migration/dependency changes. Full path map and findings: docs/PRODUCT_ATTRIBUTION_INTEGRITY.md; unexecuted historical repair proposal: docs/SYNTHETIC_VENDOR_REMEDIATION.md. PRODUCT ATTRIBUTION INTEGRITY COMPLETE.
+
+## Canonical recorded vendor User identity — 2026-09-09
+- [x] Verify zero-reference gate, exact FK/types, backup/checksum, migration status and guards.
+- [x] Apply only approved User relations and guarded FK migration; verify target/counts.
+- [x] Restore canonical vendor request authority and User display projections.
+- [x] Complete spoof/replay and full accepted-session media journey tests.
+- [x] Run requested regressions/types/build, document results, commit and push.
+Plan: explicit user approval covers the displayed User relation blocks and guarded zero-reference migration on the configured application database under existing migration workflow. Preserve historical Vendor and every unrelated relation. Before schema edits back up schema to the OS temp directory and record checksum. If format/validate/generate/migrate-status fails, restore the schema backup and stop to diagnose; never guess or convert populated references. No media/storage configuration changes or live model calls.
+
+Review: approved zero-reference User FK migration applied; 107 migrations up to date. Both vendor FKs now target users(id); zero affected/orphan rows; four historical Vendor rows preserved. Canonical request route restored with VENDOR session, existing active non-viewer vendor membership, direct Product ownership, current product/project/tag/designer checks and serializable duplicate protection. User display projections repaired. Focused boost 8/8; recorded media 33/33 with schema skip removed; attribution 8/8; claims 17/17; all five core journeys green (8 tests, disposable DB group skipped). Quotes, Product Record invariants, client guard, ratchet tests, lint, Prisma, migration discipline and production build pass. TypeScript unchanged 904 diagnostics / 574 fingerprints / 233 files, zero new fingerprints. No storage changes or live media/model tests. Report: docs/CANONICAL_RECORDED_VENDOR_IDENTITY_2026-09-09.md.
+
+## Final merge and deployment readiness audit — 2026-09-09
+- [x] Synchronize main, inventory commits/files/dependencies and migration ordering.
+- [x] Trace production env failure modes, parked gates, core fallback paths and rollback coupling.
+- [x] Run required release contract and aggregate-only database/migration consistency checks.
+- [x] Classify merge/deploy/feature gates, document landing strategy and commit/push audit report.
+Scope: audit only; no new production migration, no infrastructure changes, no broad cleanup. Fix only concrete narrow branch-caused blockers if discovered. Main is currently the merge base; no rebase needed unless a fresh fetch changes that evidence.
+
+Review: MERGE READY; PRODUCTION DEPLOY BLOCKED pending production Upstash configuration and live shared-limit verification. Actual production credentials handler denies without Upstash before DB access; signup returns 429. Main unchanged after final fetch. Two migrations applied, 107 up to date; aggregate orphan/synthetic/invalid claim counts zero. All five core journeys and integrity suites pass; three explicit execution groups skipped (core DB, editorial DB, Linux parity). TypeScript unchanged at 904/574/233; build and CI lint pass with documented historical warnings. Renderer/media live gates remain feature gates. LAND AS ONE PR. Audit-only changes; no application or database mutation. Report: docs/FINAL_MERGE_DEPLOYMENT_READINESS_2026-09-09.md.
+
+## Final hardening PR — 2026-09-09
+- [x] Reverify branch/main and deployment automation visibility.
+- [x] Rerun the protected release contract and migration checks.
+- [x] Prepare outcome-based PR description with deployment hold and review order.
+- [x] Commit/push session documentation and open or update one PR; do not merge.
+Scope: no product changes, no new migrations or infrastructure work. Main unchanged at baseline; preserve commit history.
+
+Review: fresh final release contract passed with unchanged counts: core 8 pass / 1 DB group skipped; attribution 8; claims 17; persistence 34; media 33; security/editorial 26 pass / 2 skipped; worker 13; ratchet guards 5. TypeScript unchanged 904 diagnostics / 574 fingerprints / 233 files, zero additions. Quotes, editorial generation, Product Record invariants, client guard, Prisma validation/sync/status, migration discipline, build and CI lint pass (0 lint errors, 3333 warnings). Both branch migrations applied; 107 up to date. IDOR unchanged 0 critical / 1 reviewed high / 15 medium / 11 low. Main/base unchanged at 05303220a06c3aece2381067d98e0717ee972eda; no overlap/rebase. No existing open PR found for this head. Prepared final review guide and PR publication with ACTIVE Upstash hold; no merge/auto-merge or deployment. Automatic production deployment behavior unverified from repository config. Report/body: docs/HARDENING_PR_REVIEW_GUIDE_2026-09-09.md. No application changes.

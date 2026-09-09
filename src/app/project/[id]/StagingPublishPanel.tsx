@@ -119,6 +119,9 @@ export default function StagingPublishPanel({
   const contextAvailability = useGenerationContext(projectId);
   const [showRegenDialog, setShowRegenDialog] = useState(false);
   const [keepEdits, setKeepEdits] = useState(true);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [reviewError, setReviewError] = useState<string | null>(null);
+  const isInReview = initialPostData?.status === 'REVIEW';
 
   const isPublishedStatus = initialPostData?.status === "PUBLISHED" || publishSuccess;
   const slug = initialPostData?.slug || publishedSlug;
@@ -183,6 +186,22 @@ export default function StagingPublishPanel({
     router.refresh();
   }
 
+  async function handleSubmit() {
+    setIsSubmitting(true);
+    setReviewError(null);
+    try {
+      const response = await fetch(`/api/posting/project/${projectId}/status`, {
+        method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'submit' }),
+      });
+      const result = await response.json();
+      if (!response.ok) throw new Error(result.error || 'Unable to submit for review');
+      router.refresh();
+    } catch (err) {
+      setReviewError(err instanceof Error ? err.message : 'Unable to submit for review');
+    } finally { setIsSubmitting(false); }
+  }
+
   async function handleUnpublish() {
     setShowUnpublishDialog(false);
     const result = await unpublish();
@@ -193,6 +212,7 @@ export default function StagingPublishPanel({
 
   return (
     <div className="relative">
+      {reviewError && <p role="alert" className="p-4 text-red-700">{reviewError}</p>}
       {/* PREVIEW BANNER — sticky at top */}
       <div className="sticky top-0 z-50 border-b border-folio-border-subtle bg-surface-ground/95 backdrop-blur-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex items-center justify-between">
@@ -365,6 +385,8 @@ export default function StagingPublishPanel({
                     {isUnpublishing ? "Unpublishing..." : "Unpublish"}
                   </button>
                 </>
+              ) : isInReview ? (
+                <p className="folio-ui">Awaiting editorial review</p>
               ) : canPublish ? (
                 <>
                   {/* Untagged photos don't block the publish, so the way to
@@ -378,9 +400,13 @@ export default function StagingPublishPanel({
                       Tag products ({untaggedPhotoCount} left)
                     </Link>
                   )}
+                  <button onClick={handleSubmit} disabled={isSubmitting || isPublishing || !initialPostData?.expandedBlocks}
+                    className="px-4 py-2 folio-ui border rounded-lg disabled:opacity-50">
+                    {isSubmitting ? 'Submitting…' : 'Submit for review'}
+                  </button>
                   <button
                     onClick={handlePublish}
-                    disabled={isPublishing || !initialPostData?.expandedBlocks}
+                    disabled={isPublishing || isSubmitting || !initialPostData?.expandedBlocks}
                     className="px-6 py-2 folio-ui font-semibold text-white bg-[var(--accent)] rounded-lg hover:bg-[var(--accent-hover)] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                   >
                     {isPublishing

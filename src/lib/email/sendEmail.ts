@@ -18,7 +18,7 @@ export async function sendEmail({
 }): Promise<{ success: boolean; error?: string }> {
   if (!resend) {
     console.log(`[Email] No RESEND_API_KEY — skipping email to ${to}: ${subject}`);
-    return { success: true };
+    return { success: false, error: 'Email delivery is not configured' };
   }
 
   try {
@@ -63,7 +63,7 @@ export async function sendProxyEmail({
 }): Promise<{ success: boolean; resendMessageId?: string; error?: string }> {
   if (!resend) {
     console.log(`[Email] No RESEND_API_KEY — skipping proxy email to ${to}: ${subject}`);
-    return { success: true };
+    return { success: false, error: 'Email delivery is not configured' };
   }
 
   try {

@@ -7,6 +7,7 @@ import { z } from 'zod';
 import { authOptions } from '@/app/api/auth/[...nextauth]/options';
 import { prisma } from '@/lib/prisma';
 import { roleForOrgType } from '@/lib/onboarding/role-org-mapping';
+import { vendorClaimMembership } from '@/lib/vendor/claimAuthorization';
 
 // Two surfaces:
 //   GET  /api/auth/claim?token=... — public token validation. The claim
@@ -94,6 +95,7 @@ export async function POST(request: NextRequest) {
           status: true,
           expiresAt: true,
           organizationId: true,
+          invitedEmail: true,
           organization: { select: { type: true, name: true } },
         },
       });
@@ -107,14 +109,28 @@ export async function POST(request: NextRequest) {
         );
       }
       if (invite.expiresAt.getTime() < Date.now()) {
-        // Side-effect: flip the row to EXPIRED so subsequent calls return
-        // the right state.
-        await tx.orgClaimInvite.update({
-          where: { id: invite.id },
-          data: { status: ClaimStatus.EXPIRED },
-        });
+        // Reject without writes; GET derives effective expiry from expiresAt.
         throw Object.assign(new Error('This claim invite has expired.'), { httpStatus: 400 });
       }
+
+      // Vendor tokens identify an organization; they cannot create vendor
+      // authority for a stranger. Join approval must establish membership first.
+      if (['VENDOR', 'MANUFACTURER', 'SHOWROOM'].includes(invite.organization.type)) {
+        if (!await vendorClaimMembership(userId, invite.organizationId, tx) ||
+            (invite.invitedEmail && invite.invitedEmail.toLowerCase() !== session.user.email?.toLowerCase())) {
+          throw Object.assign(new Error('Join this vendor organization with approval before claiming it.'), { httpStatus: 403 });
+        }
+      }
+      const claimed = await tx.organization.updateMany({
+        where: { id: invite.organizationId, status: OrgStatus.UNCLAIMED },
+        data: { status: OrgStatus.CLAIMED },
+      });
+      if (claimed.count !== 1) throw Object.assign(new Error('Organization already claimed.'), { httpStatus: 409 });
+      const consumed = await tx.orgClaimInvite.updateMany({
+        where: { id: invite.id, status: ClaimStatus.PENDING, expiresAt: { gt: new Date() }, invitedEmail: invite.invitedEmail },
+        data: { status: ClaimStatus.CLAIMED, claimedById: userId, claimedAt: new Date() },
+      });
+      if (consumed.count !== 1) throw Object.assign(new Error('Invite no longer available.'), { httpStatus: 409 });
 
       // Membership: upsert OWNER. If the claimer was already a MEMBER (e.g.
       // they were also the minter and now want to upgrade), bump them to
@@ -134,27 +150,6 @@ export async function POST(request: NextRequest) {
         update: {
           role: OrgUserRole.OWNER,
           isActive: true,
-        },
-      });
-
-      // Org transitions UNCLAIMED → CLAIMED. updateMany guarded on the
-      // current status so concurrent claims don't race past it.
-      await tx.organization.updateMany({
-        where: { id: invite.organizationId, status: OrgStatus.UNCLAIMED },
-        data: {
-          status: OrgStatus.CLAIMED,
-          verifiedAt: new Date(),
-          verifiedBy: userId,
-        },
-      });
-
-      // Mark the invite consumed.
-      await tx.orgClaimInvite.update({
-        where: { id: invite.id },
-        data: {
-          status: ClaimStatus.CLAIMED,
-          claimedById: userId,
-          claimedAt: new Date(),
         },
       });
 

@@ -10,7 +10,7 @@ import { z } from 'zod';
 import { notifyIncompleteProductVendors } from '@/lib/notifications/notifyIncompleteProductVendors';
 import { triggerQueueUnlockForProject } from '@/lib/editorial-queue/unlock';
 import { computePublishReadiness, isDocumentImage } from '@/lib/publish/computePublishReadiness';
-import { makeSlug } from '@/lib/posting/slug';
+import { initiateEditorial, transitionEditorial } from '@/lib/editorial/lifecycle';
 
 // Type definitions for project-related data
 interface ProjectWithImages {
@@ -26,212 +26,33 @@ interface ProjectWithImages {
   description: string | null;
 }
 
-/**
- * Creates an editorial draft for a project
- * Does NOT publish - just creates the draft for review
- *
- * Part of the legacy (non-Posting-V1) editorial flow called via
- * POST /api/projects/[id]/approvals/draft-editorial. Intentionally
- * NOT gated on NEXT_PUBLIC_POSTING_V1 so it remains functional with
- * the flag off.
- */
+/** Path B remains available with Posting V1 disabled. */
 export async function createEditorialDraft({ projectId }: { projectId: string }) {
   const session = await getServerSession(authOptions);
-  if (!session?.user?.id) {
-    return { ok: false, message: 'Unauthorized' };
-  }
-
+  if (!session?.user?.id) return { ok: false, message: 'Unauthorized', statusCode: 401 };
   try {
-    // Check project exists and user has access; require at least one image
-    const project = await prisma.project.findFirst({
-      where: {
-        id: projectId,
-        OR: [
-          { ownerId: session.user.id },
-          { designerId: session.user.id },
-        ],
-      },
-      include: {
-        _count: { select: { images: true } },
-      },
-    });
-
-    if (!project) {
-      return { ok: false, message: 'Project not found or access denied' };
-    }
-
-    if (project._count.images === 0) {
-      return {
-        ok: false,
-        message: 'Add at least one image before creating an editorial draft',
-      };
-    }
-
-    // Check if draft already exists
-    const existingPost = await prisma.projectPost.findFirst({
-      where: { projectId, status: 'DRAFT' },
-    });
-
-    if (existingPost) {
-      return { ok: true, message: 'Draft already exists', projectPostId: existingPost.id };
-    }
-
-    // Create new draft.
-    //
-    // This create was invalid in two independent ways, and every call threw a
-    // PrismaClientValidationError that the catch below swallowed into the
-    // generic "Failed to create draft". The endpoint could not succeed, ever.
-    //
-    //  1. It set `createdById`, which ProjectPost has no column for. Dropped —
-    //     authorship is not lost, since the post hangs off `projectId` and
-    //     Project carries both `designerId` and `ownerId`. Nothing anywhere in
-    //     the codebase read `ProjectPost.createdById`.
-    //  2. It omitted `slug`, which is `String @unique` with no default, so it is
-    //     required on create. Built here the same way every other ProjectPost
-    //     create builds it (see posting/project/[projectId]/init).
-    const slug = makeSlug(project.title || undefined, projectId);
-
-    const post = await prisma.projectPost.create({
-      data: {
-        projectId,
-        slug,
-        status: 'DRAFT',
-      },
-    });
-
-    return { ok: true, message: 'Draft created', projectPostId: post.id };
-  } catch (error) {
-    console.error('[createEditorialDraft] Error:', error);
-    return { ok: false, message: 'Failed to create draft' };
+    const post = await initiateEditorial(session.user.id, projectId);
+    return { ok: true, message: 'Draft ready', projectPostId: post.id, slug: post.slug, status: post.status };
+  } catch (error: any) {
+    return { ok: false, message: error.message, statusCode: error.status ?? (error.message === 'Forbidden' ? 403 : error.message === 'NotFound' ? 404 : 500) };
   }
 }
 
-/**
- * Publishes an existing editorial draft
- */
 export async function publishEditorial({ projectId }: { projectId: string }) {
   const session = await getServerSession(authOptions);
-  if (!session?.user?.id) {
-    return { ok: false, message: 'Unauthorized' };
-  }
-
+  if (!session?.user?.id) return { ok: false, message: 'Unauthorized', statusCode: 401 };
   try {
-    // Find the draft
-    const post = await prisma.projectPost.findFirst({
-      where: {
-        projectId,
-        status: 'DRAFT',
-      },
-      include: {
-        project: {
-          select: {
-            ownerId: true,
-            designerId: true,
-          },
-        },
-      },
-    });
-
-    if (!post) {
-      return { ok: false, message: 'No draft found to publish' };
-    }
-
-    // Matrix-gated authorization via assertProjectPublish — see
-    // src/lib/orgPermissions.ts for the role/capability matrix.
-    try {
-      await assertProjectPublish(session.user.id, projectId);
-    } catch {
-      return { ok: false, message: 'Access denied' };
-    }
-
-    // Publish gate (spec 20 §3e). This is the path the Publish button actually
-    // takes — `publishProjectAction` carries the same backstop but is only
-    // reached from the designer dashboard, so until now an editorial could go
-    // public from the Publish tab with photos unsorted. The gate has to live on
-    // both paths, or it lives on neither. Only rooms are enforced — untagged
-    // photos are confirmed in the UI at the moment of publish, not blocked.
-    //
-    // Only guards the first transition to public: re-publishing something that
-    // is already live stays idempotent, so an unpublish/re-publish round trip
-    // can't be blocked by work that was never required when it first shipped.
-    const project = await prisma.project.findUnique({
-      where: { id: projectId },
-      select: {
-        isPublic: true,
-        images: {
-          select: {
-            id: true,
-            name: true,
-            inclusion: true,
-            roomId: true,
-            room: true,
-            noProducts: true,
-            tags: { select: { productId: true } },
-          },
-        },
-      },
-    });
-
-    if (project && !project.isPublic) {
-      const readiness = computePublishReadiness({
-        photos: project.images
-          .filter(img => !isDocumentImage(img.name))
-          .map(img => ({
-            id: img.id,
-            inclusion: img.inclusion,
-            roomId: img.roomId,
-            room: img.room,
-            noProducts: img.noProducts,
-            tagCount: img.tags.length,
-          })),
-        roomCount: 0, // unused for canPublish
-        storyComplete: true, // a draft exists by definition here
-      });
-
-      if (!readiness.canPublish) {
-        return {
-          ok: false,
-          message: 'Sort every photo into a room before publishing.',
-        };
-      }
-    }
-
-    // Publish the draft — single transaction updates both ProjectPost and Project
-    const now = new Date();
-    const [updated] = await prisma.$transaction([
-      prisma.projectPost.update({
-        where: { id: post.id },
-        data: {
-          status: 'PUBLISHED',
-          publishedAt: now,
-        },
-      }),
-      prisma.project.update({
-        where: { id: projectId },
-        data: {
-          isPublic: true,
-          publishedAt: now,
-        },
-      }),
-    ]);
-
-    // Revalidate paths
-    revalidatePath(`/project/${projectId}`);
+    const post = await transitionEditorial({ userId: session.user.id, projectId, action: 'publish' });
+    revalidatePath('/project/' + projectId);
+    revalidatePath('/p/' + post.slug);
     revalidatePath('/editorial');
-
-    // Fire-and-forget: notify vendors of incomplete product specs
-    notifyIncompleteProductVendors(projectId);
-
-    // Fire-and-forget: Editorial Queue three-story gate — generate + notify if
-    // this publish just earned the designer their queue.
-    triggerQueueUnlockForProject(projectId).catch((err) => {
-      console.error('[publishEditorial] Editorial Queue unlock failed:', err);
-    });
-
-    return { ok: true, message: 'Published successfully', projectPostId: updated.id, slug: updated.slug };
-  } catch (error) {
-    console.error('[publishEditorial] Error:', error);
-    return { ok: false, message: 'Failed to publish. Please try again.' };
+    if (post.changed) {
+      notifyIncompleteProductVendors(projectId);
+      triggerQueueUnlockForProject(projectId).catch(err => console.error('[publishEditorial] Queue unlock failed:', err));
+    }
+    return { ok: true, message: 'Published successfully', projectPostId: post.id, slug: post.slug };
+  } catch (error: any) {
+    return { ok: false, message: error.message, statusCode: error.status ?? (error.message === 'Forbidden' ? 403 : error.message === 'NotFound' ? 404 : 500) };
   }
 }
 
@@ -422,9 +243,12 @@ export async function publishProjectAction(raw: unknown) {
   // Idempotent publish - only set publishedAt if not already set
   const publishedAt = project.publishedAt ?? new Date();
 
-  // Update project to published state
-  const updated = await prisma.project.update({
-    where: { id: projectId },
+  // A project with editorial content must use the same post lifecycle. The
+  // dashboard cannot make a REVIEW/ARCHIVED article's project public directly.
+  const existingPost = await prisma.projectPost.findUnique({ where: { projectId }, select: { id: true } });
+  if (existingPost) await transitionEditorial({ userId, projectId, action: 'publish' });
+  const updated = existingPost ? await prisma.project.findUniqueOrThrow({ where: { id: projectId } }) : await prisma.project.update({
+    where: { id: projectId, post: { is: null } },
     data: {
       isPublic: true,
       status: 'published',

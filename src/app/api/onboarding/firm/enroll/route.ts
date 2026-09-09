@@ -49,6 +49,18 @@ export async function POST(request: NextRequest) {
 
   const now = new Date();
 
+  // Existing vendor membership comes from approval/invitation, never a client
+  // choosing an organization ID during general professional onboarding.
+  if (parsed.data.mode === 'join') {
+    const org = await prisma.organization.findUnique({ where: { id: parsed.data.organizationId }, select: { type: true } });
+    if (org && ['VENDOR', 'MANUFACTURER', 'SHOWROOM'].includes(org.type)) {
+      const member = await prisma.organizationUser.findFirst({ where: { userId, organizationId: parsed.data.organizationId, isActive: true } });
+      if (!member) return NextResponse.json({ error: 'Request approval to join this vendor organization first.' }, { status: 403 });
+      await prisma.user.update({ where: { id: userId }, data: { onboardingFirmContextAt: now } });
+      return NextResponse.json({ ok: true, organizationId: parsed.data.organizationId, nextPath: '/onboarding/bio' });
+    }
+  }
+
   const result = await prisma.$transaction(async (tx) => {
     let organizationId: string;
 

@@ -29,10 +29,8 @@ export const getPublishedProjectPosts = cache(async (opts?: { take?: number }) =
   const take = opts?.take ?? 6;
 
   try {
-    // Prefer ProjectPost if available
-    // @ts-ignore - model may not exist on some branches
     const posts = await prisma.projectPost.findMany({
-      where: { status: "PUBLISHED" },
+      where: { status: "PUBLISHED", project: { isPublic: true } },
       orderBy: { publishedAt: "desc" },
       take,
       select: {

@@ -1,0 +1,8 @@
+{
+  "name": "folio-render-worker",
+  "private": true,
+  "type": "module",
+  "scripts": { "test": "node --test test/*.test.mjs", "start": "node controller.mjs", "acceptance": "node test/linux-acceptance.mjs" },
+  "engines": { "node": ">=22" },
+  "dependencies": { "ipaddr.js": "2.5.0", "puppeteer-core": "24.43.1" }
+}

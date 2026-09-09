@@ -19,10 +19,12 @@
  */
 
 import { spawnSync } from 'child_process';
+import path from 'path';
 // Reused, not reimplemented. This module is what already decides whether a
 // connection is safe for schema work, and seven scripts depend on that decision
 // being made in exactly one place.
 import { migrationConnectionUrl } from './lib/migrationConnection.mjs';
+import { loadProjectEnv } from './lib/loadEnv.mjs';
 
 let failures = 0;
 const fail = (name: string, detail: string) => {
@@ -32,6 +34,20 @@ const fail = (name: string, detail: string) => {
 const pass = (name: string, detail?: string) => {
   console.log(`  PASS  ${name}${detail ? `\n        ${detail}` : ''}`);
 };
+
+/**
+ * The path to the Prisma CLI this project installed.
+ *
+ * Throws rather than returning a guess: a guard that cannot find the tool it
+ * checks with must say so, not skip the check.
+ */
+function prismaCli(): string {
+  const pkgPath = require.resolve('prisma/package.json', { paths: [process.cwd()] });
+  const bin = require(pkgPath).bin;
+  const rel = typeof bin === 'string' ? bin : bin?.prisma;
+  if (!rel) throw new Error('prisma/package.json declares no `prisma` bin entry');
+  return path.join(path.dirname(pkgPath), rel);
+}
 
 /** Host, port and database, with any credentials dropped. Safe to print. */
 function describe(raw: string): { label: string; host: string; port: string; db: string } | null {
@@ -45,7 +61,18 @@ function describe(raw: string): { label: string; host: string; port: string; db:
   }
 }
 
+// Before anything reads process.env. The chains invoke this bare, so there is no
+// --env-file to pass, and `prisma migrate deploy` two links later reads `.env`
+// on its own — a gate that could not see the same connection as the command it
+// gates would refuse work that was never unsafe.
+const envFiles = loadProjectEnv();
+
 console.log('\ndb:guard — pre-apply checks\n');
+console.log(
+  envFiles.length > 0
+    ? `  ....  env loaded from ${envFiles.join(', ')}`
+    : '  ....  no .env.local or .env found; using the ambient environment only',
+);
 
 // ─── 1. Connection safety for `prisma migrate` itself ────────────────────────
 //
@@ -101,11 +128,28 @@ if (!appInfo || !targetInfo) {
 // `prisma migrate status` is the other two, and it is the check that catches a
 // half-applied or failed migration BEFORE another one is stacked on top of it.
 //
-// Exit codes: 0 = up to date. Non-zero = pending, failed, or drifted. The text
-// is parsed only to say which, because the exit code alone does not distinguish
-// "pending migrations" (often fine before a deploy) from "failed migration"
-// (never fine).
-const status = spawnSync('npx', ['prisma', 'migrate', 'status'], {
+// Exit codes: 0 = up to date, non-zero for pending OR failed OR drifted alike.
+// So the text has to be parsed, and the three cases are NOT equivalent:
+//
+//   FAILED   — a migration started and did not finish. Never fine. Stacking
+//              another on top is how a schema reaches a state nobody wrote down.
+//   DRIFT    — the database no longer matches the recorded history. Never fine;
+//              CLAUDE.md's runbook exists for exactly this.
+//   PENDING  — migrations exist that have not been applied yet. This is the
+//              NORMAL state immediately before an apply, because the migration
+//              being applied is itself pending. Failing on it made this gate
+//              impossible to pass before a deploy, which is the only moment it
+//              runs. Reported, not refused — and the list is printed, so the
+//              operator can see that only what they intended is about to go.
+//
+// Invoked through `node <prisma's own bin entry>` rather than `npx prisma`.
+// `spawnSync('npx', …)` looks up a bare name on PATH, and on Windows the
+// executable is `npx.cmd` — spawnSync without a shell does not try the PATHEXT
+// extensions, so it fails ENOENT on exactly the machine that runs the migration.
+// Reported from one. Resolving the bin out of prisma's own package.json needs no
+// PATH, no shell, and no per-platform filename, and it pins the CLI to the
+// version this project installed instead of whatever npx would fetch.
+const status = spawnSync(process.execPath, [prismaCli(), 'migrate', 'status'], {
   encoding: 'utf8',
   env: process.env,
 });
@@ -115,7 +159,7 @@ if (status.error) {
   fail('prisma migrate status ran', String(status.error.message));
 } else if (status.status === 0) {
   pass('migration bookkeeping is clean', 'database schema is up to date');
-} else if (/failed migrations?|in a failed state|`prisma migrate resolve`/i.test(statusText)) {
+} else if (/failed migrations?|in a failed state|migrate resolve/i.test(statusText)) {
   fail(
     'no migration is in a failed state',
     'A previous migration failed and was never resolved. Applying another one on\n' +
@@ -123,11 +167,27 @@ if (status.error) {
     'first — see CLAUDE.md, "When drift is reintroduced (runbook)".\n\n' +
     statusText.trim().split('\n').slice(0, 12).join('\n'),
   );
-} else if (/drift|not (?:yet )?(?:been )?applied to the database|have not yet been applied/i.test(statusText)) {
+} else if (/drift detected|not in sync with your migration history/i.test(statusText)) {
   fail(
     'the database matches the migration history',
-    'Pending or drifted migrations. Apply or reconcile them before adding another.\n\n' +
+    'The database no longer matches the recorded history. Reconcile before adding\n' +
+    'another migration — see CLAUDE.md, "When drift is reintroduced (runbook)".\n\n' +
     statusText.trim().split('\n').slice(0, 12).join('\n'),
+  );
+} else if (/have not yet been applied/i.test(statusText)) {
+  // Pending is the expected state here — the migration about to be applied is
+  // one of these. Naming them is the point: an unexpected entry in this list is
+  // the operator's cue to stop, and it is information the exit code cannot carry.
+  const pending = statusText
+    .split('\n')
+    .map((l) => l.trim())
+    .filter((l) => /^\d{14}_/.test(l));
+  pass(
+    'no failed or drifted migration; pending work is what an apply is for',
+    pending.length > 0
+      ? `${pending.length} pending, will be applied by the next link in the chain:\n` +
+        pending.map((m) => `  ${m}`).join('\n')
+      : 'pending migrations reported; see prisma migrate status for the list',
   );
 } else {
   fail(

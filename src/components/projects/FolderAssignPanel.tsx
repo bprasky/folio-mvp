@@ -97,7 +97,7 @@ export default function FolderAssignPanel({ folderId, onUpdate }: FolderAssignPa
       });
 
       if (!response.ok) {
-        throw new Error("Failed to assign sections");
+        throw new Error((await response.json()).error || "Failed to assign sections");
       }
 
       // Update local state
@@ -118,7 +118,7 @@ export default function FolderAssignPanel({ folderId, onUpdate }: FolderAssignPa
       onUpdate?.();
     } catch (error) {
       console.error("Error assigning sections:", error);
-      toast.error("Failed to assign sections");
+      toast.error(error instanceof Error ? error.message : "Failed to assign sections");
     } finally {
       setAssigning(false);
     }
@@ -145,7 +145,7 @@ export default function FolderAssignPanel({ folderId, onUpdate }: FolderAssignPa
       });
 
       if (!response.ok) {
-        throw new Error("Failed to remove section");
+        throw new Error((await response.json()).error || "Failed to remove section");
       }
 
       setProducts(prev => prev.map(p => 
@@ -156,7 +156,7 @@ export default function FolderAssignPanel({ folderId, onUpdate }: FolderAssignPa
       onUpdate?.();
     } catch (error) {
       console.error("Error removing section:", error);
-      toast.error("Failed to remove section");
+      toast.error(error instanceof Error ? error.message : "Failed to remove section");
     }
   };
 

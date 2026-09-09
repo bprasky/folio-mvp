@@ -4,6 +4,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/app/api/auth/[...nextauth]/options';
 import { prisma } from '@/lib/prisma';
+import { can, isOrgRole } from '@/lib/orgPermissions';
+import { rateLimit } from '@/lib/rateLimit';
 
 /**
  * POST /api/orgs/[orgId]/prompts/[promptId]/answer
@@ -21,9 +23,11 @@ export async function POST(
 
     const resolvedParams = params instanceof Promise ? await params : params;
     const { orgId, promptId } = resolvedParams;
-    const { answer } = await request.json();
+    let body;
+    try { body = await request.json(); } catch { return NextResponse.json({ error: 'Invalid request' }, { status: 400 }); }
+    const { answer } = body;
 
-    if (!answer?.trim()) {
+    if (typeof answer !== 'string' || !answer.trim() || answer.length > 10000) {
       return NextResponse.json({ error: 'Answer is required' }, { status: 400 });
     }
 
@@ -31,8 +35,18 @@ export async function POST(
     const membership = await prisma.organizationUser.findUnique({
       where: { userId_organizationId: { userId: session.user.id, organizationId: orgId } },
     });
-    if (!membership) {
+    if (!membership?.isActive || !isOrgRole(membership.role) || !can(membership.role, 'edit_org_profile')) {
       return NextResponse.json({ error: 'Not a member of this organization' }, { status: 403 });
+    }
+    const limit = await rateLimit({ userId: session.user.id, scope: 'vendor-prompt-answer', limit: 20, windowMs: 3600000 });
+    if (!limit.ok) return NextResponse.json({ error: 'Too many requests' }, { status: 429 });
+    const defaults = ['default-story', 'default-product', 'default-designers'];
+    if (promptId.startsWith('default-') && !defaults.includes(promptId)) return NextResponse.json({ error: 'Unknown prompt' }, { status: 404 });
+    let ownPrompt = false;
+    if (!defaults.includes(promptId)) {
+      const prompt = await prisma.vendorPrompt.findFirst({ where: { id: promptId, OR: [{ organizationId: orgId }, { organizationId: null }], status: 'ACTIVE' }, select: { id: true, organizationId: true } });
+      if (!prompt) return NextResponse.json({ error: 'Prompt unavailable' }, { status: 404 });
+      ownPrompt = prompt.organizationId === orgId;
     }
 
     const org = await prisma.organization.findUnique({
@@ -66,10 +80,10 @@ export async function POST(
       });
 
       // Update prompt status if it's a real prompt (not a default)
-      if (!promptId.startsWith('default-')) {
+      if (ownPrompt) {
         try {
           await prisma.vendorPrompt.update({
-            where: { id: promptId },
+            where: { id: promptId, organizationId: orgId },
             data: { status: 'ANSWERED', answeredAt: new Date(), answeredPostId: post.id },
           });
         } catch {
@@ -84,10 +98,7 @@ export async function POST(
     } catch (createError) {
       // VendorPost table might not exist yet
       console.error('[prompts/answer] VendorPost creation failed:', createError);
-      return NextResponse.json({
-        success: true,
-        message: 'Answer recorded. Article creation requires database migration.',
-      });
+      return NextResponse.json({ error: 'Unable to save the answer' }, { status: 503 });
     }
   } catch (error) {
     console.error('[prompts/answer] Error:', error);

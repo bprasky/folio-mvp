@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { CheckCircle, Clock, AlertCircle, Play, Loader2, Sparkles } from "lucide-react";
 import Link from "next/link";
+import { PrivateRecording } from "./PrivateRecording";
 
 function ProcessButton({ interviewId }: { interviewId: string }) {
   const [isProcessing, setIsProcessing] = useState(false);
@@ -62,7 +63,6 @@ interface InterviewStatusViewProps {
     status: string;
     errorMessage: string | null;
     recordingAsset: {
-      url: string;
       durationMs: number | null;
     } | null;
     transcribedAt: Date | null;
@@ -105,7 +105,6 @@ const STATUS_CONFIG: Record<string, { label: string; color: string; icon: React.
 };
 
 export function InterviewStatusView({ interviewSession }: InterviewStatusViewProps) {
-  const [isPolling, setIsPolling] = useState(false);
 
   const statusConfig = STATUS_CONFIG[interviewSession.status] || {
     label: interviewSession.status,
@@ -119,7 +118,6 @@ export function InterviewStatusView({ interviewSession }: InterviewStatusViewPro
       interviewSession.status === "TRANSCRIBING" ||
       interviewSession.status === "EXTRACTING"
     ) {
-      setIsPolling(true);
       const interval = setInterval(async () => {
         try {
           const response = await fetch(`/api/interviews/${interviewSession.id}/status`);
@@ -129,7 +127,6 @@ export function InterviewStatusView({ interviewSession }: InterviewStatusViewPro
               data.interviewSession.status !== "TRANSCRIBING" &&
               data.interviewSession.status !== "EXTRACTING"
             ) {
-              setIsPolling(false);
               window.location.reload();
             }
           }
@@ -167,7 +164,7 @@ export function InterviewStatusView({ interviewSession }: InterviewStatusViewPro
           </div>
         </div>
 
-        {interviewSession.status === "UPLOADED" && (
+        {["UPLOADED", "TRANSCRIBED"].includes(interviewSession.status) && (
           <ProcessButton interviewId={interviewSession.id} />
         )}
 
@@ -189,7 +186,7 @@ export function InterviewStatusView({ interviewSession }: InterviewStatusViewPro
         <div className="border-t border-folio-border-subtle pt-6">
           <div className="flex items-center space-x-4">
             <Play className="h-5 w-5 text-folio-text-tertiary" />
-            <audio src={interviewSession.recordingAsset.url} controls className="flex-1" />
+            <PrivateRecording interviewId={interviewSession.id} />
             <span className="text-sm text-folio-text-secondary">
               {formatDuration(interviewSession.recordingAsset.durationMs)}
             </span>

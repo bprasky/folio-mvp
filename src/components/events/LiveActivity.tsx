@@ -12,9 +12,11 @@ export default function LiveActivity({ eventId, initialActivity }: LiveActivityP
   const [isExpanded, setIsExpanded] = useState(false);
   const [activity, setActivity] = useState<LiveActivityItem[] | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [unavailable, setUnavailable] = useState(false);
 
   // Initialize activity from props or fetch
   useEffect(() => {
+    setUnavailable(false);
     if (initialActivity !== undefined) {
       setActivity(initialActivity);
       return;
@@ -27,18 +29,23 @@ export default function LiveActivity({ eventId, initialActivity }: LiveActivityP
 
     // Fetch initial activity
     fetch(`/api/events/${eventId}/live-activity`)
-      .then(res => res.json())
+      .then(res => {
+        if (!res.ok) throw new Error('Live activity unavailable');
+        return res.json();
+      })
       .then(data => {
         setActivity(data.activity || []);
       })
       .catch(error => {
         console.error("Error fetching live activity:", error);
+        setUnavailable(true);
         setActivity([]);
       });
   }, [initialActivity, eventId]);
 
   useEffect(() => {
     if (!isExpanded || !eventId) return;
+    if (unavailable) return;
 
     const pollActivity = async () => {
       setIsLoading(true);
@@ -47,6 +54,8 @@ export default function LiveActivity({ eventId, initialActivity }: LiveActivityP
         if (response.ok) {
           const data = await response.json();
           setActivity(data.activity || []);
+        } else {
+          setUnavailable(true);
         }
       } catch (error) {
         console.error("Error fetching live activity:", error);
@@ -62,7 +71,9 @@ export default function LiveActivity({ eventId, initialActivity }: LiveActivityP
     pollActivity();
 
     return () => clearInterval(interval);
-  }, [eventId, isExpanded]);
+  }, [eventId, isExpanded, unavailable]);
+
+  if (unavailable) return <p className="text-sm text-folio-text-secondary">Live activity is unavailable.</p>;
 
   // Loading state
   if (activity === null) {
@@ -141,4 +152,4 @@ export default function LiveActivity({ eventId, initialActivity }: LiveActivityP
       ))}
     </div>
   );
-} 
+}
