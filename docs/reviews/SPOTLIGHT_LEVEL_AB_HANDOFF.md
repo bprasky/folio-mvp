@@ -2,6 +2,8 @@
 
 10 September 2026. **Level A is installed; level B SQL execution is blocked. Keep this PR in draft until the disposable PostgreSQL suite passes. The application database has not been migrated.**
 
+Draft PR: [#766](https://github.com/bprasky/folio-mvp/pull/766). Implementation commit: `17286e2ec42e01e97537f4f3d8a7ea72789beb54`. Later handoff-only commits do not alter the approved SQL. The push succeeded; the first post-push Git status read returned no Vercel deployment status for this commit. This observation supplements the committed deployment hold, not an audit of external deployment systems.
+
 ## Baseline and exact scope
 
 - Repository: `bprasky/folio-mvp`; branch: `codex/spotlight-spec-foundation`.
