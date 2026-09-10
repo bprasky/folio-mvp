@@ -29,6 +29,8 @@ All seven ratchet test groups passed, including the existing real-compiler and C
 
 The complete repository ratchet passes: **baseline 904, current 904, delta 0**. No `--update` or `--init` was used on the repository budget. CI also runs this change and the real-compiler tests; its result is recorded separately in the final readiness report.
 
+CI run `34518427882` passed the guard tests, generated route types and baseline-integrity checks, then exhausted Node's default approximately 2 GiB heap during full-project analysis (exit 134). Separate commit `2e1fd318dda9408c76c0f32b1084ec32b291b7d8` sets `NODE_OPTIONS: --max-old-space-size=4096` only on that analysis step. This changes the compiler process's memory ceiling, not diagnostics, the baseline, or failure handling. The subsequent run's actual result is recorded in the readiness report.
+
 Reproduction:
 
 ```powershell

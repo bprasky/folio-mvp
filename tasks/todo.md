@@ -1805,7 +1805,7 @@ Review: foundation complete on merged main 8af4ce97, branch codex/spotlight-spec
 - [x] Design the smallest additive draft-selection schema and durable answer/publication contract; prepare exact review files outside active Prisma/migrations.
 - [x] Validate the proposed schema in an isolated copy, inspect SQL and source impact, document rollout/rollback and approval boundaries.
 - [x] Commit/push the review package and present the exact schema/SQL approval gate before any application.
-- [ ] Obtain scoped approval before applying the two models, seven inverse fields and one additive migration.
+- [x] Obtain scoped approval before applying the two models, seven inverse fields and one additive migration.
 
 Plan: continue the adopted specification at canonical draft selection. No application behavior, canonical schema, database schema/data, legacy public records, or infrastructure changes in the proposal step. Audit before authorship; scope approval to concrete blocks/SQL. Before later approved canonical schema edits back up schema and restore/stop if format/validate/generate/migrate-status fails. Keep draft selection independent of vendor state and all public surfaces disabled until version-specific approval/publication exists.
 
@@ -1821,10 +1821,19 @@ Review: single self-contained packet at docs/reviews/CANONICAL_SPOTLIGHT_DRAFT_S
 ## Canonical spotlight levels A/B — approved 10 September 2026
 - [x] Verify reviewed hashes/baseline and separate merge/deployment/migration automation.
 - [x] Back up schema, install exact reviewed artifacts, format/validate/generate and run guards (strict TypeScript gate remains failing; evidence recorded).
-- [ ] Run isolated PostgreSQL acceptance harness with synthetic fixtures; report any real execution blocker.
+- [x] Run isolated PostgreSQL acceptance harness with synthetic fixtures; report any real execution blocker.
 - [x] Review exact diff, commit/push deployment-disabled draft PR #766 and provide manual migration/postflight/failure handoff.
 Scope: two reviewed tables only. No application database writes, merge, deployment, public activation, later schemas or unrelated repair. If format/validate/generate/migrate-status fails, restore schema backup and stop to diagnose before continuing. Existing unrelated work is preserved.
 
 A/B review: reviewed hashes and fetched baseline match. Installed exact two-model/seven-inverse proposal plus one timestamped migration; canonical backup retained locally. Format/validate/generate, schema token/hash check, migration discipline, connection guard (Git Bash), client-import and record-invariant guards pass. Compile-mode build completed with existing import warnings. TypeScript strict ratchet fails on 47 changed type-display fingerprints: baseline and installed schemas both 904 errors, identical file/code counts, baseline exactly matches budget; no budget waiver. Restored approved generated client after comparison. Disposable harness authored and attempted but blocked before container creation because Docker Desktop crashes initializing its inference socket; zero SQL tests ran. Added Vercel git.deploymentEnabled=false to separate push/merge from deployment. Draft PR must retain SQL and TypeScript gates. No application database contact/apply, feature exposure, merge, deployment or external messages.
 
 Draft PR: https://github.com/bprasky/folio-mvp/pull/766. Implementation commit: 17286e2ec42e01e97537f4f3d8a7ea72789beb54. Level B remains blocked and TypeScript fingerprint gate unresolved; no application migration or deployment.
+
+## PR #766 — finish A/B acceptance gates
+- [x] Run direct SQL suite in isolated existing CI; retain actual catalog and test evidence.
+- [x] Run repository migration command/target-binding tests separately in a verified disposable environment.
+- [x] Prove all 47 diagnostic display changes; review a narrow ratchet change with adversarial regression tests and unchanged budget.
+- [x] Review deployment hold separately, update evidence/handoff/PR and report gates; no app apply, merge or deploy.
+Plan: preserve exact approved SQL/schema and feature inactivity. Use existing Ubuntu CI only; no production data/secrets or paid provisioning. Keep PR draft until required gates pass. If runtime reveals a semantic SQL change is needed, show it before editing the proposal. Separate ratchet and deployment operational review from migration approval.
+
+A/B follow-up review: actual PostgreSQL CI passed 23 direct-SQL groups and 10 separate guarded migration-command groups; network-disabled disposable containers and nonce/socket binding verified, no application env/data, cleanup succeeded. SQL hash unchanged. Full 904-occurrence TypeScript proof resolves 45 display-order fingerprints plus two equivalent assignment witnesses; seven regression groups and local strict 904-error ratchet pass without changing the budget. Separate ratchet commit 8b93e8c3 and operational hold review a5389bcd are provided. PR remains draft, application migration/deployment/feature exposure withheld. Final code CI passes at 2e1fd318: TypeScript (904 unchanged), regression tests, ESLint, core journeys, migration discipline, record invariants and both PostgreSQL suites. A narrowly scoped 4 GiB compiler heap resolves CI resource exhaustion without altering the budget. Readiness and manual handoff retain all deployment/target limitations.

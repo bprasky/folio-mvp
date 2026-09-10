@@ -1,0 +1,500 @@
+{
+  "status": "passed",
+  "migrationName": "20260910180000_add_product_spotlight_draft_selection",
+  "expectedHash": "77fa2afe19f2f1e61d344f54d78381ca18d862b795e48edca9b3101c939291ab",
+  "tests": [
+    {
+      "label": "External URL, foreign socket and wrong database rejected before command execution",
+      "result": "passed"
+    },
+    {
+      "label": "Prisma migration engine binds to the verified socket, nonce, database and server identity",
+      "result": "passed"
+    },
+    {
+      "label": "Actual repository migration chain bootstraps synthetic prerequisites",
+      "result": "passed"
+    },
+    {
+      "label": "Pending status and guard name exactly the reviewed migration",
+      "result": "passed"
+    },
+    {
+      "label": "An extra pending migration is surfaced, not hidden by the guard",
+      "result": "passed"
+    },
+    {
+      "label": "Guard rejects mismatched database names within the same disposable socket",
+      "result": "passed"
+    },
+    {
+      "label": "Guard rejects transaction-pooled fallback before migration",
+      "result": "passed"
+    },
+    {
+      "label": "Same inherited target overrides both env files; guarded npm deploy applies exact SQL",
+      "result": "passed"
+    },
+    {
+      "label": "Postflight status clean; command replay applies nothing and keeps one history row",
+      "result": "passed"
+    },
+    {
+      "label": "Failed synthetic migration rolls back DDL; next guarded apply refuses failed history",
+      "result": "passed"
+    }
+  ],
+  "commandLogs": [
+    {
+      "label": "Prisma engine target-binding assertion",
+      "code": 0,
+      "output": "Script executed successfully.\n"
+    },
+    {
+      "label": "npm run migrate:deploy",
+      "code": 0,
+      "output": "\n> migrate:deploy\n> npm run db:guard && prisma migrate deploy\n\n\n> db:guard\n> tsx scripts/guard-migrations.ts\n\n\ndb:guard — pre-apply checks\n\n  ....  env loaded from .env.local, .env\n  PASS  the connection is safe for schema work\n        target: localhost:5432/spotlight_command_b7e481ad\n  PASS  the migration target is the app database\n        database: spotlight_command_b7e481ad\n  PASS  no failed or drifted migration; pending work is what an apply is for\n        1 pending, will be applied by the next link in the chain:\n  20000101000000_synthetic_prerequisites\n\nPre-apply checks passed. Proceeding.\n\nPrisma schema loaded from prisma/schema.prisma\nDatasource \"db\": PostgreSQL database \"spotlight_command_b7e481ad\", schema \"public\" at \"localhost:5432\"\n\n1 migration found in prisma/migrations\n\nApplying migration `20000101000000_synthetic_prerequisites`\n\nThe following migration(s) have been applied:\n\nmigrations/\n  └─ 20000101000000_synthetic_prerequisites/\n    └─ migration.sql\n      \nAll migrations have been successfully applied.\nEnvironment variables loaded from .env\n"
+    },
+    {
+      "label": "prisma migrate status",
+      "code": 1,
+      "output": "Prisma schema loaded from prisma/schema.prisma\nDatasource \"db\": PostgreSQL database \"spotlight_command_b7e481ad\", schema \"public\" at \"localhost:5432\"\n\n2 migrations found in prisma/migrations\nFollowing migration have not yet been applied:\n20260910180000_add_product_spotlight_draft_selection\n\nTo apply migrations in development run prisma migrate dev.\nTo apply migrations in production run prisma migrate deploy.\nEnvironment variables loaded from .env\n"
+    },
+    {
+      "label": "npm run db:guard",
+      "code": 0,
+      "output": "\n> db:guard\n> tsx scripts/guard-migrations.ts\n\n\ndb:guard — pre-apply checks\n\n  ....  env loaded from .env.local, .env\n  PASS  the connection is safe for schema work\n        target: localhost:5432/spotlight_command_b7e481ad\n  PASS  the migration target is the app database\n        database: spotlight_command_b7e481ad\n  PASS  no failed or drifted migration; pending work is what an apply is for\n        1 pending, will be applied by the next link in the chain:\n  20260910180000_add_product_spotlight_draft_selection\n\nPre-apply checks passed. Proceeding.\n\n"
+    },
+    {
+      "label": "npm run db:guard",
+      "code": 0,
+      "output": "\n> db:guard\n> tsx scripts/guard-migrations.ts\n\n\ndb:guard — pre-apply checks\n\n  ....  env loaded from .env.local, .env\n  PASS  the connection is safe for schema work\n        target: localhost:5432/spotlight_command_b7e481ad\n  PASS  the migration target is the app database\n        database: spotlight_command_b7e481ad\n  PASS  no failed or drifted migration; pending work is what an apply is for\n        2 pending, will be applied by the next link in the chain:\n  20260910180000_add_product_spotlight_draft_selection\n  20260910180100_synthetic_extra\n\nPre-apply checks passed. Proceeding.\n\n"
+    },
+    {
+      "label": "npm run db:guard",
+      "code": 1,
+      "output": "\n> db:guard\n> tsx scripts/guard-migrations.ts\n\n\ndb:guard — pre-apply checks\n\n  ....  env loaded from .env.local, .env\n  PASS  the connection is safe for schema work\n        target: localhost:5432/spotlight_command_b7e481ad\n  PASS  no failed or drifted migration; pending work is what an apply is for\n        1 pending, will be applied by the next link in the chain:\n  20260910180000_add_product_spotlight_draft_selection\n\n1 pre-apply check(s) failed. Migration NOT started.\n\n  FAIL  the migration target and the app database are the same database\n        DIRECT_URL  -> localhost:5432/spotlight_command_b7e481ad\n        DATABASE_URL -> localhost:5432/wrong_synthetic_database\n        \n        Migrating one while the app reads the other applies schema nobody will see.\n"
+    },
+    {
+      "label": "npm run db:guard",
+      "code": 1,
+      "output": "\n> db:guard\n> tsx scripts/guard-migrations.ts\n\n\ndb:guard — pre-apply checks\n\n  ....  env loaded from .env.local, .env\nERR: DIRECT_URL is not set, and DATABASE_URL is transaction-pooled.\n\ndb:guard (pre-apply gate) writes schema, which needs a real session. Transaction pooling hands\neach statement to a different backend, so advisory locks are not held and\nmulti-statement DDL can half-apply — reporting success while leaving the\nschema in a state nobody wrote down.\n\nSet DIRECT_URL to the direct connection (port 5432) and run this again.\n"
+    },
+    {
+      "label": "Prisma engine target-binding assertion",
+      "code": 0,
+      "output": "Script executed successfully.\n"
+    },
+    {
+      "label": "npm run migrate:deploy",
+      "code": 0,
+      "output": "\n> migrate:deploy\n> npm run db:guard && prisma migrate deploy\n\n\n> db:guard\n> tsx scripts/guard-migrations.ts\n\n\ndb:guard — pre-apply checks\n\n  ....  env loaded from .env.local, .env\n  PASS  the connection is safe for schema work\n        target: localhost:5432/spotlight_command_b7e481ad\n  PASS  the migration target is the app database\n        database: spotlight_command_b7e481ad\n  PASS  no failed or drifted migration; pending work is what an apply is for\n        1 pending, will be applied by the next link in the chain:\n  20260910180000_add_product_spotlight_draft_selection\n\nPre-apply checks passed. Proceeding.\n\nPrisma schema loaded from prisma/schema.prisma\nDatasource \"db\": PostgreSQL database \"spotlight_command_b7e481ad\", schema \"public\" at \"localhost:5432\"\n\n2 migrations found in prisma/migrations\n\nApplying migration `20260910180000_add_product_spotlight_draft_selection`\n\nThe following migration(s) have been applied:\n\nmigrations/\n  └─ 20260910180000_add_product_spotlight_draft_selection/\n    └─ migration.sql\n      \nAll migrations have been successfully applied.\nEnvironment variables loaded from .env\n┌─────────────────────────────────────────────────────────┐\n│  Update available 6.18.0 -> 8.0.0-rc.13                 │\n│                                                         │\n│  This is a major update - please follow the guide at    │\n│  https://pris.ly/d/major-version-upgrade                │\n│                                                         │\n│  Run the following to update                            │\n│    npm i --save-dev prisma@latest                       │\n│    npm i @prisma/client@latest                          │\n└─────────────────────────────────────────────────────────┘\n"
+    },
+    {
+      "label": "prisma migrate status",
+      "code": 0,
+      "output": "Prisma schema loaded from prisma/schema.prisma\nDatasource \"db\": PostgreSQL database \"spotlight_command_b7e481ad\", schema \"public\" at \"localhost:5432\"\n\n2 migrations found in prisma/migrations\n\nDatabase schema is up to date!\nEnvironment variables loaded from .env\n"
+    },
+    {
+      "label": "npm run migrate:deploy",
+      "code": 0,
+      "output": "\n> migrate:deploy\n> npm run db:guard && prisma migrate deploy\n\n\n> db:guard\n> tsx scripts/guard-migrations.ts\n\n\ndb:guard — pre-apply checks\n\n  ....  env loaded from .env.local, .env\n  PASS  the connection is safe for schema work\n        target: localhost:5432/spotlight_command_b7e481ad\n  PASS  the migration target is the app database\n        database: spotlight_command_b7e481ad\n  PASS  migration bookkeeping is clean\n        database schema is up to date\n\nPre-apply checks passed. Proceeding.\n\nPrisma schema loaded from prisma/schema.prisma\nDatasource \"db\": PostgreSQL database \"spotlight_command_b7e481ad\", schema \"public\" at \"localhost:5432\"\n\n2 migrations found in prisma/migrations\n\n\nNo pending migrations to apply.\nEnvironment variables loaded from .env\n"
+    },
+    {
+      "label": "npm run migrate:deploy",
+      "code": 1,
+      "output": "\n> migrate:deploy\n> npm run db:guard && prisma migrate deploy\n\n\n> db:guard\n> tsx scripts/guard-migrations.ts\n\n\ndb:guard — pre-apply checks\n\n  ....  env loaded from .env.local, .env\n  PASS  the connection is safe for schema work\n        target: localhost:5432/spotlight_command_b7e481ad\n  PASS  the migration target is the app database\n        database: spotlight_command_b7e481ad\n  PASS  no failed or drifted migration; pending work is what an apply is for\n        1 pending, will be applied by the next link in the chain:\n  20260910180200_synthetic_failure\n\nPre-apply checks passed. Proceeding.\n\nPrisma schema loaded from prisma/schema.prisma\nDatasource \"db\": PostgreSQL database \"spotlight_command_b7e481ad\", schema \"public\" at \"localhost:5432\"\n\n3 migrations found in prisma/migrations\n\nApplying migration `20260910180200_synthetic_failure`\nEnvironment variables loaded from .env\nError: ERROR: current transaction is aborted, commands ignored until end of transaction block\n   0: schema_commands::commands::apply_migrations::Applying migration\n           with migration_name=\"20260910180200_synthetic_failure\"\n             at schema-engine/commands/src/commands/apply_migrations.rs:95\n   1: schema_core::state::ApplyMigrations\n             at schema-engine/core/src/state.rs:260\n\n"
+    },
+    {
+      "label": "npm run migrate:deploy",
+      "code": 1,
+      "output": "\n> migrate:deploy\n> npm run db:guard && prisma migrate deploy\n\n\n> db:guard\n> tsx scripts/guard-migrations.ts\n\n\ndb:guard — pre-apply checks\n\n  ....  env loaded from .env.local, .env\n  PASS  the connection is safe for schema work\n        target: localhost:5432/spotlight_command_b7e481ad\n  PASS  the migration target is the app database\n        database: spotlight_command_b7e481ad\n\n1 pre-apply check(s) failed. Migration NOT started.\n\n  FAIL  no migration is in a failed state\n        A previous migration failed and was never resolved. Applying another one on\n        top of it is how a schema ends up in a state nobody wrote down. Resolve it\n        first — see CLAUDE.md, \"When drift is reintroduced (runbook)\".\n        \n        Prisma schema loaded from prisma/schema.prisma\n        Datasource \"db\": PostgreSQL database \"spotlight_command_b7e481ad\", schema \"public\" at \"localhost:5432\"\n        \n        3 migrations found in prisma/migrations\n        Environment variables loaded from .env\n        Following migration have failed:\n        20260910180200_synthetic_failure\n        \n        During development if the failed migration(s) have not been deployed to a production database you can then fix the migration(s) and run prisma migrate dev.\n        \n        The failed migration(s) can be marked as rolled back or applied:\n              \n"
+    }
+  ],
+  "applicationDatabaseContacted": false,
+  "startedAt": "2026-09-10T18:59:20.804Z",
+  "isolation": {
+    "localDockerSocket": true,
+    "network": "none",
+    "tcpListener": false,
+    "ports": 0,
+    "hostDataMounts": 0,
+    "privateTemporarySocketMount": 1,
+    "imageId": "sha256:7296f210ae81031ec955dbad9a67a84fe958572a2153b8d0826a647522904dc1"
+  },
+  "catalog": {
+    "serverVersion": "17.11 (Debian 17.11-1.pgdg13+2)",
+    "tables": [
+      {
+        "name": "product_spotlight_tags",
+        "rls": true,
+        "force_rls": false,
+        "owner": "postgres"
+      },
+      {
+        "name": "product_spotlights",
+        "rls": true,
+        "force_rls": false,
+        "owner": "postgres"
+      }
+    ],
+    "columns": [
+      {
+        "table_name": "product_spotlight_tags",
+        "column_name": "tag_id",
+        "data_type": "text",
+        "is_nullable": "NO",
+        "column_default": null,
+        "character_maximum_length": null,
+        "datetime_precision": null,
+        "ordinal_position": 1
+      },
+      {
+        "table_name": "product_spotlight_tags",
+        "column_name": "spotlight_id",
+        "data_type": "text",
+        "is_nullable": "NO",
+        "column_default": null,
+        "character_maximum_length": null,
+        "datetime_precision": null,
+        "ordinal_position": 2
+      },
+      {
+        "table_name": "product_spotlight_tags",
+        "column_name": "linked_at",
+        "data_type": "timestamp without time zone",
+        "is_nullable": "NO",
+        "column_default": "CURRENT_TIMESTAMP",
+        "character_maximum_length": null,
+        "datetime_precision": 3,
+        "ordinal_position": 3
+      },
+      {
+        "table_name": "product_spotlights",
+        "column_name": "id",
+        "data_type": "text",
+        "is_nullable": "NO",
+        "column_default": null,
+        "character_maximum_length": null,
+        "datetime_precision": null,
+        "ordinal_position": 1
+      },
+      {
+        "table_name": "product_spotlights",
+        "column_name": "project_id",
+        "data_type": "text",
+        "is_nullable": "NO",
+        "column_default": null,
+        "character_maximum_length": null,
+        "datetime_precision": null,
+        "ordinal_position": 2
+      },
+      {
+        "table_name": "product_spotlights",
+        "column_name": "product_id",
+        "data_type": "text",
+        "is_nullable": "NO",
+        "column_default": null,
+        "character_maximum_length": null,
+        "datetime_precision": null,
+        "ordinal_position": 3
+      },
+      {
+        "table_name": "product_spotlights",
+        "column_name": "room_id",
+        "data_type": "text",
+        "is_nullable": "YES",
+        "column_default": null,
+        "character_maximum_length": null,
+        "datetime_precision": null,
+        "ordinal_position": 4
+      },
+      {
+        "table_name": "product_spotlights",
+        "column_name": "publisher_user_id",
+        "data_type": "text",
+        "is_nullable": "YES",
+        "column_default": null,
+        "character_maximum_length": null,
+        "datetime_precision": null,
+        "ordinal_position": 5
+      },
+      {
+        "table_name": "product_spotlights",
+        "column_name": "publisher_org_id",
+        "data_type": "text",
+        "is_nullable": "YES",
+        "column_default": null,
+        "character_maximum_length": null,
+        "datetime_precision": null,
+        "ordinal_position": 6
+      },
+      {
+        "table_name": "product_spotlights",
+        "column_name": "variant",
+        "data_type": "character varying",
+        "is_nullable": "NO",
+        "column_default": "''::character varying",
+        "character_maximum_length": 160,
+        "datetime_precision": null,
+        "ordinal_position": 7
+      },
+      {
+        "table_name": "product_spotlights",
+        "column_name": "finish",
+        "data_type": "character varying",
+        "is_nullable": "NO",
+        "column_default": "''::character varying",
+        "character_maximum_length": 160,
+        "datetime_precision": null,
+        "ordinal_position": 8
+      },
+      {
+        "table_name": "product_spotlights",
+        "column_name": "is_selected",
+        "data_type": "boolean",
+        "is_nullable": "NO",
+        "column_default": "true",
+        "character_maximum_length": null,
+        "datetime_precision": null,
+        "ordinal_position": 9
+      },
+      {
+        "table_name": "product_spotlights",
+        "column_name": "private_note",
+        "data_type": "text",
+        "is_nullable": "YES",
+        "column_default": null,
+        "character_maximum_length": null,
+        "datetime_precision": null,
+        "ordinal_position": 10
+      },
+      {
+        "table_name": "product_spotlights",
+        "column_name": "selected_by_id",
+        "data_type": "text",
+        "is_nullable": "NO",
+        "column_default": null,
+        "character_maximum_length": null,
+        "datetime_precision": null,
+        "ordinal_position": 11
+      },
+      {
+        "table_name": "product_spotlights",
+        "column_name": "selected_at",
+        "data_type": "timestamp without time zone",
+        "is_nullable": "NO",
+        "column_default": "CURRENT_TIMESTAMP",
+        "character_maximum_length": null,
+        "datetime_precision": 3,
+        "ordinal_position": 12
+      },
+      {
+        "table_name": "product_spotlights",
+        "column_name": "selection_version",
+        "data_type": "integer",
+        "is_nullable": "NO",
+        "column_default": "1",
+        "character_maximum_length": null,
+        "datetime_precision": null,
+        "ordinal_position": 13
+      },
+      {
+        "table_name": "product_spotlights",
+        "column_name": "created_at",
+        "data_type": "timestamp without time zone",
+        "is_nullable": "NO",
+        "column_default": "CURRENT_TIMESTAMP",
+        "character_maximum_length": null,
+        "datetime_precision": 3,
+        "ordinal_position": 14
+      },
+      {
+        "table_name": "product_spotlights",
+        "column_name": "updated_at",
+        "data_type": "timestamp without time zone",
+        "is_nullable": "NO",
+        "column_default": null,
+        "character_maximum_length": null,
+        "datetime_precision": 3,
+        "ordinal_position": 15
+      }
+    ],
+    "constraints": [
+      {
+        "name": "product_spotlight_tags_pkey",
+        "type": "p",
+        "table_name": "product_spotlight_tags",
+        "definition": "PRIMARY KEY (tag_id)",
+        "delete_action": " ",
+        "update_action": " "
+      },
+      {
+        "name": "product_spotlight_tags_spotlight_id_fkey",
+        "type": "f",
+        "table_name": "product_spotlight_tags",
+        "definition": "FOREIGN KEY (spotlight_id) REFERENCES product_spotlights(id) ON UPDATE CASCADE ON DELETE CASCADE",
+        "delete_action": "c",
+        "update_action": "c"
+      },
+      {
+        "name": "product_spotlight_tags_tag_id_fkey",
+        "type": "f",
+        "table_name": "product_spotlight_tags",
+        "definition": "FOREIGN KEY (tag_id) REFERENCES product_tags(id) ON UPDATE CASCADE ON DELETE CASCADE",
+        "delete_action": "c",
+        "update_action": "c"
+      },
+      {
+        "name": "product_spotlights_finish_trimmed",
+        "type": "c",
+        "table_name": "product_spotlights",
+        "definition": "CHECK (((finish)::text = btrim((finish)::text)))",
+        "delete_action": " ",
+        "update_action": " "
+      },
+      {
+        "name": "product_spotlights_pkey",
+        "type": "p",
+        "table_name": "product_spotlights",
+        "definition": "PRIMARY KEY (id)",
+        "delete_action": " ",
+        "update_action": " "
+      },
+      {
+        "name": "product_spotlights_product_id_fkey",
+        "type": "f",
+        "table_name": "product_spotlights",
+        "definition": "FOREIGN KEY (product_id) REFERENCES products(id) ON UPDATE CASCADE ON DELETE RESTRICT",
+        "delete_action": "r",
+        "update_action": "c"
+      },
+      {
+        "name": "product_spotlights_project_id_fkey",
+        "type": "f",
+        "table_name": "product_spotlights",
+        "definition": "FOREIGN KEY (project_id) REFERENCES projects(id) ON UPDATE CASCADE ON DELETE CASCADE",
+        "delete_action": "c",
+        "update_action": "c"
+      },
+      {
+        "name": "product_spotlights_publisher_org_id_fkey",
+        "type": "f",
+        "table_name": "product_spotlights",
+        "definition": "FOREIGN KEY (publisher_org_id) REFERENCES organizations(id) ON UPDATE CASCADE ON DELETE RESTRICT",
+        "delete_action": "r",
+        "update_action": "c"
+      },
+      {
+        "name": "product_spotlights_publisher_user_id_fkey",
+        "type": "f",
+        "table_name": "product_spotlights",
+        "definition": "FOREIGN KEY (publisher_user_id) REFERENCES users(id) ON UPDATE CASCADE ON DELETE RESTRICT",
+        "delete_action": "r",
+        "update_action": "c"
+      },
+      {
+        "name": "product_spotlights_publisher_xor",
+        "type": "c",
+        "table_name": "product_spotlights",
+        "definition": "CHECK (((publisher_user_id IS NOT NULL) <> (publisher_org_id IS NOT NULL)))",
+        "delete_action": " ",
+        "update_action": " "
+      },
+      {
+        "name": "product_spotlights_room_id_fkey",
+        "type": "f",
+        "table_name": "product_spotlights",
+        "definition": "FOREIGN KEY (room_id) REFERENCES rooms(id) ON UPDATE CASCADE ON DELETE SET NULL",
+        "delete_action": "n",
+        "update_action": "c"
+      },
+      {
+        "name": "product_spotlights_selected_by_id_fkey",
+        "type": "f",
+        "table_name": "product_spotlights",
+        "definition": "FOREIGN KEY (selected_by_id) REFERENCES users(id) ON UPDATE CASCADE ON DELETE RESTRICT",
+        "delete_action": "r",
+        "update_action": "c"
+      },
+      {
+        "name": "product_spotlights_variant_trimmed",
+        "type": "c",
+        "table_name": "product_spotlights",
+        "definition": "CHECK (((variant)::text = btrim((variant)::text)))",
+        "delete_action": " ",
+        "update_action": " "
+      },
+      {
+        "name": "product_spotlights_version_positive",
+        "type": "c",
+        "table_name": "product_spotlights",
+        "definition": "CHECK ((selection_version > 0))",
+        "delete_action": " ",
+        "update_action": " "
+      }
+    ],
+    "indexes": [
+      {
+        "tablename": "product_spotlight_tags",
+        "indexname": "product_spotlight_tags_pkey",
+        "indexdef": "CREATE UNIQUE INDEX product_spotlight_tags_pkey ON public.product_spotlight_tags USING btree (tag_id)"
+      },
+      {
+        "tablename": "product_spotlight_tags",
+        "indexname": "product_spotlight_tags_spotlight_idx",
+        "indexdef": "CREATE INDEX product_spotlight_tags_spotlight_idx ON public.product_spotlight_tags USING btree (spotlight_id)"
+      },
+      {
+        "tablename": "product_spotlights",
+        "indexname": "product_spotlights_org_scope_key",
+        "indexdef": "CREATE UNIQUE INDEX product_spotlights_org_scope_key ON public.product_spotlights USING btree (publisher_org_id, project_id, product_id, room_id, variant, finish) WHERE ((publisher_org_id IS NOT NULL) AND (room_id IS NOT NULL))"
+      },
+      {
+        "tablename": "product_spotlights",
+        "indexname": "product_spotlights_person_scope_key",
+        "indexdef": "CREATE UNIQUE INDEX product_spotlights_person_scope_key ON public.product_spotlights USING btree (publisher_user_id, project_id, product_id, room_id, variant, finish) WHERE ((publisher_user_id IS NOT NULL) AND (room_id IS NOT NULL))"
+      },
+      {
+        "tablename": "product_spotlights",
+        "indexname": "product_spotlights_pkey",
+        "indexdef": "CREATE UNIQUE INDEX product_spotlights_pkey ON public.product_spotlights USING btree (id)"
+      },
+      {
+        "tablename": "product_spotlights",
+        "indexname": "product_spotlights_product_idx",
+        "indexdef": "CREATE INDEX product_spotlights_product_idx ON public.product_spotlights USING btree (product_id)"
+      },
+      {
+        "tablename": "product_spotlights",
+        "indexname": "product_spotlights_project_selected_idx",
+        "indexdef": "CREATE INDEX product_spotlights_project_selected_idx ON public.product_spotlights USING btree (project_id, is_selected)"
+      },
+      {
+        "tablename": "product_spotlights",
+        "indexname": "product_spotlights_publisher_org_idx",
+        "indexdef": "CREATE INDEX product_spotlights_publisher_org_idx ON public.product_spotlights USING btree (publisher_org_id)"
+      },
+      {
+        "tablename": "product_spotlights",
+        "indexname": "product_spotlights_publisher_user_idx",
+        "indexdef": "CREATE INDEX product_spotlights_publisher_user_idx ON public.product_spotlights USING btree (publisher_user_id)"
+      },
+      {
+        "tablename": "product_spotlights",
+        "indexname": "product_spotlights_room_idx",
+        "indexdef": "CREATE INDEX product_spotlights_room_idx ON public.product_spotlights USING btree (room_id)"
+      },
+      {
+        "tablename": "product_spotlights",
+        "indexname": "product_spotlights_selector_idx",
+        "indexdef": "CREATE INDEX product_spotlights_selector_idx ON public.product_spotlights USING btree (selected_by_id)"
+      }
+    ],
+    "policies": 0,
+    "spotlightCount": 0,
+    "sourceCount": 0
+  },
+  "disposableContainerRemoved": true,
+  "finishedAt": "2026-09-10T18:59:44.157Z"
+}
