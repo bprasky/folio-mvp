@@ -1858,8 +1858,10 @@ Review: completed self-contained SPOTLIGHT_DURABLE_INTERVIEW_REVIEW_PACKET.md wi
 
 ## Durable spotlight interview — authorized A/B
 - [x] Verify current main/head and four reviewed hashes; preserve unrelated report edit.
-- [ ] Correct provenance documentation and identify deletion/privacy integration gates.
-- [ ] Back up canonical schema; install exact approved models/inverses/SQL; format, validate, generate and run guards/diagnostic checks.
-- [ ] Run exact SQL/catalog/invariant/deletion/concurrency/rollback/RLS suite in isolated PostgreSQL and separate guarded migration-command suite.
-- [ ] Prepare draft PR, actual evidence and bounded next-milestone handoff; no merge/application migration/deployment/exposure.
+- [x] Correct provenance documentation and identify deletion/privacy integration gates.
+- [x] Back up canonical schema; install exact approved models/inverses/SQL; format, validate, generate and run guards/diagnostic checks.
+- [x] Run exact SQL/catalog/invariant/deletion/concurrency/rollback/RLS suite in isolated PostgreSQL and separate guarded migration-command suite.
+- [x] Prepare draft PR, actual evidence and bounded next-milestone handoff; no merge/application migration/deployment/exposure.
 Plan: use existing secret-free Ubuntu CI Docker because the local daemon is unavailable. Keep network disabled, no application env/data or paid infrastructure. Restore canonical schema backup and stop if format/validate/generate or expected disposable postflight migrate-status fails. Deliberately negative test statuses are expected assertions, not installation failures. Preserve both deployment holds. No source/service/UI changes, grants, backfills or schema expansion.
+
+A/B review: exact installed SQL hash 50adeaf12a7b402181769746caed685ba3c0a5b58821528f83cffa397e5e2c10; Prisma/static guards and local 904→904 TypeScript pass, seven ratchet tests pass. CI run 34533487564 at 471337e5 passed 26 durable SQL groups + 10 migration-command groups on PostgreSQL 17.11, all containers removed; full sanitized evidence retained. PR #767 stays draft/unmerged, application migration unapplied. Provenance field corrected, unanswered deletion restrictions demonstrated, concrete public-reader leak prevention requirements documented for next service milestone. Both holds and unrelated application-report edit preserved. No service/UI work.
