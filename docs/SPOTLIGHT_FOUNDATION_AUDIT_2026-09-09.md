@@ -1,5 +1,7 @@
 # Product spotlights and social publishing: foundation audit
 
+**10 September follow-on:** the [canonical draft-selection proposal](proposals/spotlight-draft-selection/README.md) adds live metadata findings. In the configured database, shop_products and product_testimonials are absent despite clean migration bookkeeping. The source/schema observations below remain valid; they did not establish physical table existence or working Shop runtime behavior. The follow-on proposal keeps private draft selection independent and records public-surface restoration as a separate dependency.
+
 9 September 2026. Delivery sequence step 1 of the [founder specification, revision 1.1](Folio-Spotlight-and-Social-Publishing-Spec.md).
 
 ## Outcome and baseline

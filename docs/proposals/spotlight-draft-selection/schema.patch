@@ -1,0 +1,90 @@
+diff --git a/prisma/schema.prisma b/prisma/schema.prisma
+index aebf589d..692d3692 100644
+--- a/prisma/schema.prisma
++++ b/prisma/schema.prisma
+@@ -12,2 +12,6 @@ datasource db {
+ model User {
++  // Product spotlight draft selection
++  spotlightsAsPublisher ProductSpotlight[] @relation("SpotlightPublisher")
++  selectedSpotlights ProductSpotlight[] @relation("SpotlightSelector")
++
+   id                             String                    @id @default(uuid())
+@@ -412,2 +416,5 @@ model EventWorkflowJob {
+ model Project {
++  // Product spotlight draft selection
++  productSpotlights ProductSpotlight[]
++
+   id                        String                     @id @default(uuid())
+@@ -683,2 +690,5 @@ enum DisplayScope {
+ model Product {
++  // Product spotlight draft selection
++  spotlights ProductSpotlight[]
++
+   id                String             @id @default(uuid())
+@@ -794,2 +804,5 @@ model Product {
+ model ProductTag {
++  // Product spotlight draft selection
++  spotlightLink ProductSpotlightTag?
++
+   id         String    @id @default(uuid())
+@@ -924,2 +937,5 @@ model Category {
+ model Room {
++  // Product spotlight draft selection
++  productSpotlights ProductSpotlight[]
++
+   id            String         @id @default(uuid())
+@@ -1001,2 +1017,5 @@ model ProjectFile {
+ model Organization {
++  // Product spotlight draft selection
++  spotlightsAsPublisher ProductSpotlight[] @relation("SpotlightPublisherOrg")
++
+   id           String      @id @default(uuid())
+@@ -7946 +7965,48 @@ model LicenseGrant {
+ }
++
++// SQL-only checks and confirmed-room uniqueness are in migration.sql.
++model ProductSpotlight {
++  id              String   @id @default(uuid())
++  projectId       String   @map("project_id")
++  productId       String   @map("product_id")
++  roomId          String?  @map("room_id")
++  publisherUserId String?  @map("publisher_user_id")
++  publisherOrgId  String?  @map("publisher_org_id")
++  variant         String   @default("") @db.VarChar(160)
++  finish          String   @default("") @db.VarChar(160)
++  isSelected      Boolean  @default(true) @map("is_selected")
++  privateNote     String?  @map("private_note")
++  selectedById    String   @map("selected_by_id")
++  selectedAt      DateTime @default(now()) @map("selected_at")
++  selectionVersion Int     @default(1) @map("selection_version")
++  createdAt       DateTime @default(now()) @map("created_at")
++  updatedAt       DateTime @updatedAt @map("updated_at")
++
++  project       Project      @relation(fields: [projectId], references: [id], onDelete: Cascade)
++  product       Product      @relation(fields: [productId], references: [id], onDelete: Restrict)
++  room          Room?        @relation(fields: [roomId], references: [id], onDelete: SetNull)
++  publisherUser User?         @relation("SpotlightPublisher", fields: [publisherUserId], references: [id], onDelete: Restrict)
++  publisherOrg  Organization? @relation("SpotlightPublisherOrg", fields: [publisherOrgId], references: [id], onDelete: Restrict)
++  selectedBy    User          @relation("SpotlightSelector", fields: [selectedById], references: [id], onDelete: Restrict)
++  sourceTags    ProductSpotlightTag[]
++
++  @@index([projectId, isSelected], map: "product_spotlights_project_selected_idx")
++  @@index([productId], map: "product_spotlights_product_idx")
++  @@index([roomId], map: "product_spotlights_room_idx")
++  @@index([selectedById], map: "product_spotlights_selector_idx")
++  @@index([publisherUserId], map: "product_spotlights_publisher_user_idx")
++  @@index([publisherOrgId], map: "product_spotlights_publisher_org_idx")
++  @@map("product_spotlights")
++}
++
++model ProductSpotlightTag {
++  tagId       String   @id @map("tag_id")
++  spotlightId String   @map("spotlight_id")
++  linkedAt    DateTime @default(now()) @map("linked_at")
++
++  tag       ProductTag       @relation(fields: [tagId], references: [id], onDelete: Cascade)
++  spotlight ProductSpotlight @relation(fields: [spotlightId], references: [id], onDelete: Cascade)
++
++  @@index([spotlightId], map: "product_spotlight_tags_spotlight_idx")
++  @@map("product_spotlight_tags")
++}

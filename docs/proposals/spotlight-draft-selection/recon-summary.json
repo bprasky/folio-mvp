@@ -1,0 +1,82 @@
+{
+  "auditedAt": "2026-09-10",
+  "scope": "configured application and direct database; metadata and aggregates only",
+  "columnCount": 305,
+  "constraintCount": 32,
+  "existingSpotlightTables": [],
+  "relatedShopTables": [],
+  "migrations": [
+    {
+      "recorded": 108,
+      "applied": 107,
+      "unfinished": 0
+    }
+  ],
+  "stats": [
+    {
+      "projects": 6,
+      "org_projects": 6,
+      "projects_without_designer": 0,
+      "rooms": 36,
+      "images": 37,
+      "images_without_room_fk": 8,
+      "image_room_project_mismatch": 0,
+      "tags": 59,
+      "tags_without_selection": 17,
+      "tags_with_finish": 0,
+      "answer_projection_rows": 81,
+      "posts_with_answer_payload": 6
+    }
+  ],
+  "tagGroups": [
+    {
+      "repeated_room_product_groups": 0
+    }
+  ],
+  "legacyShop": "MISSING_TABLE",
+  "testimonials": "MISSING_TABLE",
+  "connectionChecks": {
+    "app": {
+      "server": [
+        {
+          "version": "170004",
+          "schema": "public"
+        }
+      ],
+      "missing": [
+        {
+          "shop": null,
+          "testimonials": null
+        }
+      ],
+      "bookkeeping": [
+        {
+          "migration_name": "20260709163000_add_pdf_extractions_skeleton_items",
+          "finished": false,
+          "rolled_back": true
+        }
+      ]
+    },
+    "direct": {
+      "server": [
+        {
+          "version": "170004",
+          "schema": "public"
+        }
+      ],
+      "missing": [
+        {
+          "shop": null,
+          "testimonials": null
+        }
+      ],
+      "bookkeeping": [
+        {
+          "migration_name": "20260709163000_add_pdf_extractions_skeleton_items",
+          "finished": false,
+          "rolled_back": true
+        }
+      ]
+    }
+  }
+}
