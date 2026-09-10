@@ -1,5 +1,9 @@
 # 16_ATTRIBUTION_CONSENT
 
+## Explicit spotlight approval and invitation scope — 9 September 2026
+
+The [founder spotlight specification revision 1.1](Folio-Spotlight-and-Social-Publishing-Spec.md) requires approval of the exact public version, with product-page attribution/source use explained. That approval does not authorize vendor advertising reuse, paid amplification or sending a collaboration invitation. Saving a contact or tagging is not send consent. A reviewed invitation retains its authorizing identity, exact recipient, approved source revisions and message scope; grouping public evidence never expands another designer's permission. Joint publication requires both contributors' approval of its own assembled version. Vendor decline/opt-out suppresses recipient outreach, not the original designer's publishing rights.
+
 ## Purpose
 This document defines what attribution data Folio collects, who can see it, and the consent architecture that governs data visibility between designers and vendors.
 

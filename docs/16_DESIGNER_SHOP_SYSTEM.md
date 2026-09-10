@@ -1,5 +1,15 @@
 # 16_DESIGNER_SHOP_SYSTEM
 
+## Spotlight revision 1.1 override — 9 September 2026
+
+The [founder specification](Folio-Spotlight-and-Social-Publishing-Spec.md) replaces the immediate-activation tagging flow below. Offer **Spotlight this piece**, off by default, on creation and editing of tags. Explain the interview, Shop, social-story and optional vendor-contribution benefits before selection, plus attributed product-page use. No quote is required during tagging; an optional private steering note is allowed.
+
+Selection creates a canonical draft per publishing identity/project/product/confirmed room, deduplicating linked photo tags while preserving distinguishing finish/variant. Resolve room IDs, not display names or optional Selection backfills. Show pending questions and room assignment. Removing selection preserves the tag.
+
+Only an approved published spotlight activates new Shop and product-page content. Preserve independent explanations from multiple rooms/projects and an explicitly chosen lead source. Exact approval is version-specific; draft edits do not overwrite the currently approved public wording. Withdrawal removes only affected sources, and parent unpublishing removes dependent visibility. Existing public Shop records remain labeled legacy until reviewed; never infer selection or bulk-withdraw them.
+
+Vendor payment, enrollment, silence, decline or opt-out never gates this designer value. Saving contacts or tagging sends no invitation. Invitations require public content plus explicit reviewed send authorization. Boosts and possible future payouts are separate; launch promises no guaranteed income. The older immediate-Shop toggle, automatic effects and revenue statements below are historical proposals where they conflict with this override. See the [foundation audit](SPOTLIGHT_FOUNDATION_AUDIT_2026-09-09.md) for runtime gaps.
+
 ## Purpose
 This document defines the Designer Shop feature—a shoppable storefront on every designer profile showcasing products they've tagged, with testimonial content, vendor boost monetization, and closed-loop attribution economics.
 

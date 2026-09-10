@@ -7,6 +7,31 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { compare, measure, normalizeMessage, validateBaseline } from './check-typescript-budget.mjs';
 
+test('47 reviewed display equivalents preserve counts and reject changed errors', () => {
+  const { entries } = JSON.parse(readFileSync(new URL('../tools/typescript-display-equivalences.json', import.meta.url), 'utf8'));
+  assert.equal(entries.length, 47);
+  for (const e of entries) {
+    const old = [e.file,e.code,e.before,e.count], current = [e.file,e.code,e.after,e.count];
+    const baseline = { total:e.count,diagnostics:[old] };
+    assert.equal(compare(baseline,{total:e.count,diagnostics:[current]}).pass,true);
+    for (const changed of [
+      [e.file,e.code,e.after+' A new constraint failed.',e.count],
+      ['src/new-location.ts',e.code,e.after,e.count],
+      [e.file,e.code+1,e.after,e.count],
+    ]) assert.equal(compare(baseline,{total:e.count,diagnostics:[changed]}).pass,false);
+    assert.equal(compare(baseline,{total:e.count+1,diagnostics:[[e.file,e.code,e.after,e.count+1]]}).pass,false);
+    assert.equal(compare(baseline,{total:e.count*2,diagnostics:[old,current]}).pass,false,'Both renderings of an error must consume their combined multiplicity');
+  }
+});
+
+test('reviewed displays cannot spend removed debt on a same-total duplicate or new property type', () => {
+  const { entries:[e] } = JSON.parse(readFileSync(new URL('../tools/typescript-display-equivalences.json', import.meta.url), 'utf8'));
+  const old=[e.file,e.code,e.before,1], current=[e.file,e.code,e.after,1];
+  const baseline={total:2,diagnostics:[old,['src/unrelated.ts',2322,'historical error',1]]};
+  assert.equal(compare(baseline,{total:2,diagnostics:[old,current]}).pass,false);
+  assert.equal(compare(baseline,{total:1,diagnostics:[[e.file,e.code,e.after.replace('id: string','id: number'),1]]}).pass,false);
+});
+
 test('root paths and line wrapping normalize without erasing diagnostic content', () => {
   assert.equal(normalizeMessage('import("C:\\repo\\src\\a")\n  has no field', 'C:/repo'),
     normalizeMessage('import("C:/repo/src/a") has no field', 'C:/repo'));

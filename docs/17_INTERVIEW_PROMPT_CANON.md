@@ -19,6 +19,8 @@ canonical module (Section 6). A new elicitation technique is added **once**, her
 sprinkled into an individual generator.
 
 ## Authority
+The founder's [spotlight specification revision 1.1](Folio-Spotlight-and-Social-Publishing-Spec.md), adopted 9 September 2026, overrides older canon on product-question selection and spotlight naming. Rule 8 below is required behavior; implementation gaps remain in the [foundation audit](SPOTLIGHT_FOUNDATION_AUDIT_2026-09-09.md).
+
 This doc sits beneath the canon hierarchy in `08_AI_ROLE` (Canonical Documents → Verified
 data → User intent → AI). Where it conflicts with `00`, `02`, `08`, `09`, `15`, or `16`,
 those win. This doc operationalizes them for prompting; it does not override them.
@@ -73,6 +75,7 @@ Every generator composes these rules. They are not optional and not restated loc
    contextual/informed). This is not governed by `16` — `16` covers vendor visibility into
    private spec/save data, a different scenario.
 7. **Canonical terminology (Section 7).** Roles and user terms are fixed.
+8. **Explicit spotlight scope.** Product-specific questions belong only to server-scheduled, currently selected spotlight IDs in confirmed rooms. One base question per distinct spotlight, outside room budgets, with at most one optional clarifying follow-up retaining that spotlight ID. Name the identified selected product regardless of vendor subscription. Never target an unselected product by name, brand, category, position or descriptor, including when volunteered in an answer. Specificity-push, echoing, contrast and coverage/morphing techniques do not override selection. Keep general room questions room-level. Validate exact membership, room and source IDs, coverage, duplicates and question meaning; retry within bounds, then use safe deterministic wording. Cache/resume/regeneration and reachable legacy/realtime paths obey the same rule. Preserve historical answers and stable question IDs; confirmed answer reuse requires designer confirmation. Do not derive testimonials from editorial prose. Implement through existing shared rule/persona modules, with server enforcement in addition to prompts.
 
 ---
 

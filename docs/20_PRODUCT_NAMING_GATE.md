@@ -1,5 +1,25 @@
 # 20_PRODUCT_NAMING_GATE
 
+## Current policy — adopted 9 September 2026
+
+The founder's [spotlight specification revision 1.1](Folio-Spotlight-and-Social-Publishing-Spec.md) supersedes the older policy below within spotlight scope. This is required behavior, not a claim of runtime enforcement; see the [foundation audit](SPOTLIGHT_FOUNDATION_AUDIT_2026-09-09.md).
+
+| Surface | Binding rule |
+|---|---|
+| Interview product question | Only a currently selected, server-resolved spotlight in a confirmed room receives a product-specific question. Use its identified name regardless of vendor status. One base question per distinct spotlight outside room caps, at most one optional follow-up. |
+| Unselected product | No product question by name, brand, category, position or descriptor, including corpus-selected hooks and voluntary mentions. Payment never overrides selection. |
+| General room/project interview | Remains available with zero spotlights; discuss spatial relationships, composition, intent and overall atmosphere. |
+| Approved spotlight prose in its confirmed room | Permit exact names independently of subscription, payment or vendor account. Article inclusion is optional. Scope the exception to approved content and room, not a global product boolean. |
+| Published spotlight, Shop and product-page excerpt | Use the exact approved published revision with designer/studio and project attribution. Vendor absence, silence, decline or opt-out cannot gate visibility. |
+| Other article prose | Retain the existing subscription / approved per-post boost / posting-account ENTERPRISE naming rules outside the spotlight exception. These signals do not create questions, spotlight selection or testimonial approval. |
+| Credits | Always accurately named and linked independent of payment. |
+
+Keep one shared server eligibility resolver and compose-time scrub, extending context with spotlight revision and canonical room identity. Apply to generation, regeneration and public composition. Compose prompt policy through `17_INTERVIEW_PROMPT_CANON`; membership/source/coverage validation and semantic exclusion checks are required in addition to prompts. Resume, cache fallback, realtime and reachable legacy paths share the policy. Preserve raw answers and historical question IDs. A quotation must remain an exact approved source span; never turn scrubbed/paraphrased text into a purported quotation. Naming permission does not grant image rights.
+
+## Historical policy — superseded where it conflicts with the current policy above
+
+The remainder records the previous design for historical audits. Its subscription-based interview selection, descriptor-based product-hook exception, and blanket paid-only spotlight prose rules are withdrawn. It is not authorization to retain those behaviors in the new flow. No automatic removal of old application paths or legacy public Shop entries follows from this update.
+
 ## Purpose
 
 This document defines a naming exposure gate so that a specific product's brand and product name are usable everywhere the designer is working and everywhere attribution is owed, but appear inside published **article prose** only when the exposure has been paid for. It protects Folio's most valuable editorial real estate — the sentence — from being given away as free earned media.

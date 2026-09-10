@@ -1,3 +1,7 @@
+## Spotlight/social workflow amendment — 9 September 2026
+
+The [founder specification revision 1.1](Folio-Spotlight-and-Social-Publishing-Spec.md) defines the next implementation: tag attribution → optional explicit spotlight → scheduled room-specific question → exact wording approval → spotlight publication → Shop/testimonial/Studio eligibility. Unresolved spotlights must be completed or explicitly deferred before parent publication. Social Studio follows draft → review → publish the social piece to Folio → export its published version; never silently publish a private parent. Vendor invitation is a separate explicit post-publication send, with no dependency on the designer's ability to publish. Existing workflows below describe earlier behavior; the [foundation audit](SPOTLIGHT_FOUNDATION_AUDIT_2026-09-09.md) records the required changes.
+
 > ⚠️ Canonical Notice  
 > This document reflects the current implemented state of the system based on a codebase audit.  
 > It does not define future direction unless explicitly stated elsewhere.
@@ -200,5 +204,3 @@ This document describes the main user workflows and business processes implement
 - Used for collaboration spend attribution
 - Verified signals for authenticated users
 - Immutable accounting via valueUsd field
-
-

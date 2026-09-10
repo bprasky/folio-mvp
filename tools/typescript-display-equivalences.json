@@ -1,0 +1,385 @@
+{
+  "version": 1,
+  "compilerVersion": "5.9.3",
+  "reviewedBaseline": "a483ec202b66f588ec85cddcc34a745e92af269f",
+  "installedSchemaCommit": "17286e2ec42e01e97537f4f3d8a7ea72789beb54",
+  "proof": "docs/reviews/SPOTLIGHT_TYPESCRIPT_FULL_PROOF.json",
+  "entries": [
+    {
+      "file": "src/app/api/action-items/[id]/route.ts",
+      "code": 2339,
+      "before": "Property 'room' does not exist on type '{ id: string; title: string; createdAt: Date; updatedAt: Date; status: ActionItemStatus; description: string; createdById: string; projectId: string; roomId: string; ... 5 more ...; dueDate: Date; }'.",
+      "after": "Property 'room' does not exist on type '{ id: string; title: string; createdAt: Date; updatedAt: Date; projectId: string; roomId: string; status: ActionItemStatus; description: string; createdById: string; ... 5 more ...; dueDate: Date; }'.",
+      "count": 1,
+      "reason": "type-property-display-order"
+    },
+    {
+      "file": "src/app/api/action-items/[id]/route.ts",
+      "code": 2551,
+      "before": "Property 'productTag' does not exist on type '{ id: string; title: string; createdAt: Date; updatedAt: Date; status: ActionItemStatus; description: string; createdById: string; projectId: string; roomId: string; ... 5 more ...; dueDate: Date; }'. Did you mean 'productTagId'?",
+      "after": "Property 'productTag' does not exist on type '{ id: string; title: string; createdAt: Date; updatedAt: Date; projectId: string; roomId: string; status: ActionItemStatus; description: string; createdById: string; ... 5 more ...; dueDate: Date; }'. Did you mean 'productTagId'?",
+      "count": 1,
+      "reason": "type-property-display-order"
+    },
+    {
+      "file": "src/app/api/action-items/route.ts",
+      "code": 2322,
+      "before": "Type '{ title: string; description: string; status: \"PENDING\" | \"IN_PROGRESS\" | \"COMPLETED\" | \"CANCELLED\"; priority: \"LOW\" | \"HIGH\" | \"MEDIUM\" | \"URGENT\"; sourceNoteId: string; projectId: string; ... 4 more ...; dueDate: Date; }' is not assignable to type '(Without<ActionItemCreateInput, ActionItemUncheckedCreateInput> & ActionItemUncheckedCreateInput) | (Without<...> & ActionItemCreateInput)'. Type '{ title: string; description: string; status: \"PENDING\" | \"IN_PROGRESS\" | \"COMPLETED\" | \"CANCELLED\"; priority: \"LOW\" | \"HIGH\" | \"MEDIUM\" | \"URGENT\"; sourceNoteId: string; projectId: string; ... 4 more ...; dueDate: Date; }' is not assignable to type 'Without<ActionItemUncheckedCreateInput, ActionItemCreateInput> & ActionItemCreateInput'. Type '{ title: string; description: string; status: \"PENDING\" | \"IN_PROGRESS\" | \"COMPLETED\" | \"CANCELLED\"; priority: \"LOW\" | \"HIGH\" | \"MEDIUM\" | \"URGENT\"; sourceNoteId: string; projectId: string; ... 4 more ...; dueDate: Date; }' is not assignable to type 'Without<ActionItemUncheckedCreateInput, ActionItemCreateInput>'. Types of property 'createdById' are incompatible. Type 'string' is not assignable to type 'never'.",
+      "after": "Type '{ title: string; description: string; status: \"PENDING\" | \"IN_PROGRESS\" | \"COMPLETED\" | \"CANCELLED\"; priority: \"LOW\" | \"HIGH\" | \"MEDIUM\" | \"URGENT\"; sourceNoteId: string; projectId: string; ... 4 more ...; dueDate: Date; }' is not assignable to type '(Without<ActionItemCreateInput, ActionItemUncheckedCreateInput> & ActionItemUncheckedCreateInput) | (Without<...> & ActionItemCreateInput)'. Type '{ title: string; description: string; status: \"PENDING\" | \"IN_PROGRESS\" | \"COMPLETED\" | \"CANCELLED\"; priority: \"LOW\" | \"HIGH\" | \"MEDIUM\" | \"URGENT\"; sourceNoteId: string; projectId: string; ... 4 more ...; dueDate: Date; }' is not assignable to type 'Without<ActionItemUncheckedCreateInput, ActionItemCreateInput> & ActionItemCreateInput'. Type '{ title: string; description: string; status: \"PENDING\" | \"IN_PROGRESS\" | \"COMPLETED\" | \"CANCELLED\"; priority: \"LOW\" | \"HIGH\" | \"MEDIUM\" | \"URGENT\"; sourceNoteId: string; projectId: string; ... 4 more ...; dueDate: Date; }' is not assignable to type 'Without<ActionItemUncheckedCreateInput, ActionItemCreateInput>'. Types of property 'projectId' are incompatible. Type 'string' is not assignable to type 'never'.",
+      "count": 1,
+      "reason": "equivalent-incompatible-property-witness"
+    },
+    {
+      "file": "src/app/api/action-items/route.ts",
+      "code": 2551,
+      "before": "Property 'project' does not exist on type '{ id: string; createdAt: Date; updatedAt: Date; productId: string; notes: string; projectId: string; x: number; y: number; projectImageId: string; roomName: string; }'. Did you mean 'projectId'?",
+      "after": "Property 'project' does not exist on type '{ id: string; createdAt: Date; updatedAt: Date; projectId: string; productId: string; notes: string; x: number; y: number; projectImageId: string; roomName: string; }'. Did you mean 'projectId'?",
+      "count": 2,
+      "reason": "type-property-display-order"
+    },
+    {
+      "file": "src/app/api/designer/projects/[id]/export/route.ts",
+      "code": 2339,
+      "before": "Property 'name' does not exist on type '{ designer: { name: string; email: string; }; rooms: ({ selections: { id: string; createdAt: Date; updatedAt: Date; notes: string; projectId: string; roomId: string; vendorRepId: string; ... 17 more ...; productTagId: string; }[]; } & { ...; })[]; } & { ...; }'.",
+      "after": "Property 'name' does not exist on type '{ designer: { name: string; email: string; }; rooms: ({ selections: { id: string; createdAt: Date; updatedAt: Date; projectId: string; roomId: string; notes: string; vendorRepId: string; ... 17 more ...; productTagId: string; }[]; } & { ...; })[]; } & { ...; }'.",
+      "count": 3,
+      "reason": "type-property-display-order"
+    },
+    {
+      "file": "src/app/api/designer/projects/[id]/export/route.ts",
+      "code": 2339,
+      "before": "Property 'vendorId' does not exist on type '{ id: string; createdAt: Date; updatedAt: Date; notes: string; projectId: string; roomId: string; vendorRepId: string; photo: string; vendorName: string; productName: string; colorFinish: string; ... 13 more ...; productTagId: string; }'.",
+      "after": "Property 'vendorId' does not exist on type '{ id: string; createdAt: Date; updatedAt: Date; projectId: string; roomId: string; notes: string; vendorRepId: string; photo: string; vendorName: string; productName: string; colorFinish: string; ... 13 more ...; productTagId: string; }'.",
+      "count": 1,
+      "reason": "type-property-display-order"
+    },
+    {
+      "file": "src/app/api/events/[id]/ai/analytics/route.ts",
+      "code": 2551,
+      "before": "Property 'product' does not exist on type '{ id: string; views: number; createdAt: Date; updatedAt: Date; eventId: string; productId: string; saves: number; clicks: number; edgeType: string; weight: number; lastSpikeAt: Date; conversionRate: number; }'. Did you mean 'productId'?",
+      "after": "Property 'product' does not exist on type '{ id: string; views: number; createdAt: Date; updatedAt: Date; productId: string; eventId: string; saves: number; clicks: number; edgeType: string; weight: number; lastSpikeAt: Date; conversionRate: number; }'. Did you mean 'productId'?",
+      "count": 2,
+      "reason": "type-property-display-order"
+    },
+    {
+      "file": "src/app/api/events/[id]/ai/recommendations/route.ts",
+      "code": 2551,
+      "before": "Property 'product' does not exist on type '{ id: string; createdAt: Date; updatedAt: Date; eventId: string; productId: string; designerId: string; vendorId: string; projectId: string; styleMatchScore: number; projectMatchScore: number; ... 5 more ...; hasTagged: boolean; }'. Did you mean 'productId'?",
+      "after": "Property 'product' does not exist on type '{ id: string; createdAt: Date; updatedAt: Date; projectId: string; productId: string; eventId: string; designerId: string; vendorId: string; styleMatchScore: number; projectMatchScore: number; ... 5 more ...; hasTagged: boolean; }'. Did you mean 'productId'?",
+      "count": 1,
+      "reason": "type-property-display-order"
+    },
+    {
+      "file": "src/app/api/events/[id]/audience/lifecycle-scores/route.ts",
+      "code": 2551,
+      "before": "Property 'designer' does not exist on type '{ id: string; createdAt: Date; updatedAt: Date; designerId: string; projectId: string; lastActivityAt: Date; currentStage: ProjectStage; procurementReadinessScore: number; ... 6 more ...; estimatedProcurementDate: Date; }'. Did you mean 'designerId'?",
+      "after": "Property 'designer' does not exist on type '{ id: string; createdAt: Date; updatedAt: Date; projectId: string; designerId: string; lastActivityAt: Date; currentStage: ProjectStage; procurementReadinessScore: number; ... 6 more ...; estimatedProcurementDate: Date; }'. Did you mean 'designerId'?",
+      "count": 1,
+      "reason": "type-property-display-order"
+    },
+    {
+      "file": "src/app/api/events/[id]/audience/match-scores/route.ts",
+      "code": 2551,
+      "before": "Property 'designer' does not exist on type '{ id: string; createdAt: Date; updatedAt: Date; eventId: string; productId: string; designerId: string; vendorId: string; projectId: string; styleMatchScore: number; projectMatchScore: number; ... 5 more ...; hasTagged: boolean; }'. Did you mean 'designerId'?",
+      "after": "Property 'designer' does not exist on type '{ id: string; createdAt: Date; updatedAt: Date; projectId: string; productId: string; eventId: string; designerId: string; vendorId: string; styleMatchScore: number; projectMatchScore: number; ... 5 more ...; hasTagged: boolean; }'. Did you mean 'designerId'?",
+      "count": 1,
+      "reason": "type-property-display-order"
+    },
+    {
+      "file": "src/app/api/events/[id]/audience/premium/route.ts",
+      "code": 2551,
+      "before": "Property 'designer' does not exist on type '{ id: string; createdAt: Date; updatedAt: Date; designerId: string; projectId: string; lastActivityAt: Date; currentStage: ProjectStage; procurementReadinessScore: number; ... 6 more ...; estimatedProcurementDate: Date; }'. Did you mean 'designerId'?",
+      "after": "Property 'designer' does not exist on type '{ id: string; createdAt: Date; updatedAt: Date; projectId: string; designerId: string; lastActivityAt: Date; currentStage: ProjectStage; procurementReadinessScore: number; ... 6 more ...; estimatedProcurementDate: Date; }'. Did you mean 'designerId'?",
+      "count": 2,
+      "reason": "type-property-display-order"
+    },
+    {
+      "file": "src/app/api/events/[id]/graph/route.ts",
+      "code": 2322,
+      "before": "Type '{ eventId: string; productId: any; edgeType: any; weight: number; }' is not assignable to type '(Without<EventProductEdgeCreateInput, EventProductEdgeUncheckedCreateInput> & EventProductEdgeUncheckedCreateInput) | (Without<...> & EventProductEdgeCreateInput)'. Type '{ eventId: string; productId: any; edgeType: any; weight: number; }' is not assignable to type 'Without<EventProductEdgeUncheckedCreateInput, EventProductEdgeCreateInput> & EventProductEdgeCreateInput'. Type '{ eventId: string; productId: any; edgeType: any; weight: number; }' is not assignable to type 'Without<EventProductEdgeUncheckedCreateInput, EventProductEdgeCreateInput>'. Types of property 'eventId' are incompatible. Type 'string' is not assignable to type 'never'.",
+      "after": "Type '{ eventId: string; productId: any; edgeType: any; weight: number; }' is not assignable to type '(Without<EventProductEdgeCreateInput, EventProductEdgeUncheckedCreateInput> & EventProductEdgeUncheckedCreateInput) | (Without<...> & EventProductEdgeCreateInput)'. Type '{ eventId: string; productId: any; edgeType: any; weight: number; }' is not assignable to type 'Without<EventProductEdgeUncheckedCreateInput, EventProductEdgeCreateInput> & EventProductEdgeCreateInput'. Type '{ eventId: string; productId: any; edgeType: any; weight: number; }' is not assignable to type 'Without<EventProductEdgeUncheckedCreateInput, EventProductEdgeCreateInput>'. Types of property 'productId' are incompatible. Type 'any' is not assignable to type 'never'.",
+      "count": 1,
+      "reason": "equivalent-incompatible-property-witness"
+    },
+    {
+      "file": "src/app/api/events/[id]/graph/route.ts",
+      "code": 2551,
+      "before": "Property 'product' does not exist on type '{ id: string; views: number; createdAt: Date; updatedAt: Date; eventId: string; productId: string; saves: number; clicks: number; edgeType: string; weight: number; lastSpikeAt: Date; conversionRate: number; }'. Did you mean 'productId'?",
+      "after": "Property 'product' does not exist on type '{ id: string; views: number; createdAt: Date; updatedAt: Date; productId: string; eventId: string; saves: number; clicks: number; edgeType: string; weight: number; lastSpikeAt: Date; conversionRate: number; }'. Did you mean 'productId'?",
+      "count": 2,
+      "reason": "type-property-display-order"
+    },
+    {
+      "file": "src/app/api/events/[id]/workflow/followups/route.ts",
+      "code": 2551,
+      "before": "Property 'product' does not exist on type '{ id: string; views: number; createdAt: Date; updatedAt: Date; eventId: string; productId: string; saves: number; clicks: number; edgeType: string; weight: number; lastSpikeAt: Date; conversionRate: number; }'. Did you mean 'productId'?",
+      "after": "Property 'product' does not exist on type '{ id: string; views: number; createdAt: Date; updatedAt: Date; productId: string; eventId: string; saves: number; clicks: number; edgeType: string; weight: number; lastSpikeAt: Date; conversionRate: number; }'. Did you mean 'productId'?",
+      "count": 2,
+      "reason": "type-property-display-order"
+    },
+    {
+      "file": "src/app/api/export-spec-sheet/route.ts",
+      "code": 2339,
+      "before": "Property 'name' does not exist on type '{ rooms: ({ selections: { id: string; createdAt: Date; updatedAt: Date; notes: string; projectId: string; roomId: string; vendorRepId: string; photo: string; vendorName: string; productName: string; ... 14 more ...; productTagId: string; }[]; } & { ...; })[]; } & { ...; }'.",
+      "after": "Property 'name' does not exist on type '{ rooms: ({ selections: { id: string; createdAt: Date; updatedAt: Date; projectId: string; roomId: string; notes: string; vendorRepId: string; photo: string; vendorName: string; productName: string; ... 14 more ...; productTagId: string; }[]; } & { ...; })[]; } & { ...; }'.",
+      "count": 2,
+      "reason": "type-property-display-order"
+    },
+    {
+      "file": "src/app/api/meeting-notes/[noteId]/attachments/route.ts",
+      "code": 2551,
+      "before": "Property 'project' does not exist on type '{ id: string; title: string; createdAt: Date; updatedAt: Date; status: string; projectId: string; metadata: JsonValue; sourceType: string; rawText: string; transcriptUrl: string; }'. Did you mean 'projectId'?",
+      "after": "Property 'project' does not exist on type '{ id: string; title: string; createdAt: Date; updatedAt: Date; projectId: string; status: string; metadata: JsonValue; sourceType: string; rawText: string; transcriptUrl: string; }'. Did you mean 'projectId'?",
+      "count": 2,
+      "reason": "type-property-display-order"
+    },
+    {
+      "file": "src/app/api/project-product-tags/[id]/action-items/route.ts",
+      "code": 2551,
+      "before": "Property 'project' does not exist on type '{ id: string; createdAt: Date; updatedAt: Date; productId: string; notes: string; projectId: string; x: number; y: number; projectImageId: string; roomName: string; }'. Did you mean 'projectId'?",
+      "after": "Property 'project' does not exist on type '{ id: string; createdAt: Date; updatedAt: Date; projectId: string; productId: string; notes: string; x: number; y: number; projectImageId: string; roomName: string; }'. Did you mean 'projectId'?",
+      "count": 2,
+      "reason": "type-property-display-order"
+    },
+    {
+      "file": "src/app/api/projects/[id]/generate-2d-cutouts/route.ts",
+      "code": 2551,
+      "before": "Property 'product' does not exist on type '{ id: string; createdAt: Date; updatedAt: Date; productId: string; notes: string; projectId: string; x: number; y: number; projectImageId: string; roomName: string; }'. Did you mean 'productId'?",
+      "after": "Property 'product' does not exist on type '{ id: string; createdAt: Date; updatedAt: Date; projectId: string; productId: string; notes: string; x: number; y: number; projectImageId: string; roomName: string; }'. Did you mean 'productId'?",
+      "count": 1,
+      "reason": "type-property-display-order"
+    },
+    {
+      "file": "src/app/api/projects/[id]/generate-3d-assets/route.ts",
+      "code": 2551,
+      "before": "Property 'product' does not exist on type '{ id: string; createdAt: Date; updatedAt: Date; productId: string; notes: string; projectId: string; x: number; y: number; projectImageId: string; roomName: string; }'. Did you mean 'productId'?",
+      "after": "Property 'product' does not exist on type '{ id: string; createdAt: Date; updatedAt: Date; projectId: string; productId: string; notes: string; x: number; y: number; projectImageId: string; roomName: string; }'. Did you mean 'productId'?",
+      "count": 1,
+      "reason": "type-property-display-order"
+    },
+    {
+      "file": "src/app/api/projects/[id]/repair-skeletons/route.ts",
+      "code": 2339,
+      "before": "Property 'bbox' does not exist on type '{ id: string; createdAt: Date; updatedAt: Date; status: SkeletonItemStatus; description: string; imageUrl: string; projectId: string; roomId: string; searchQuery: string; ... 8 more ...; resultingSelectionId: string; }'.",
+      "after": "Property 'bbox' does not exist on type '{ id: string; createdAt: Date; updatedAt: Date; projectId: string; roomId: string; status: SkeletonItemStatus; description: string; imageUrl: string; searchQuery: string; ... 8 more ...; resultingSelectionId: string; }'.",
+      "count": 1,
+      "reason": "type-property-display-order"
+    },
+    {
+      "file": "src/app/api/vendor/collaborations/[participantId]/spend/route.ts",
+      "code": 2339,
+      "before": "Property 'activatedAt' does not exist on type '{ project: { id: string; title: string; }; } & { id: string; createdAt: Date; role: ParticipantRole; userId: string; projectId: string; orgId: string; side: ParticipantSide; }'.",
+      "after": "Property 'activatedAt' does not exist on type '{ project: { id: string; title: string; }; } & { id: string; createdAt: Date; role: ParticipantRole; projectId: string; userId: string; orgId: string; side: ParticipantSide; }'.",
+      "count": 1,
+      "reason": "type-property-display-order"
+    },
+    {
+      "file": "src/app/api/vendor/collaborations/[participantId]/spend/route.ts",
+      "code": 2339,
+      "before": "Property 'budgetCapUsd' does not exist on type '{ project: { id: string; title: string; }; } & { id: string; createdAt: Date; role: ParticipantRole; userId: string; projectId: string; orgId: string; side: ParticipantSide; }'.",
+      "after": "Property 'budgetCapUsd' does not exist on type '{ project: { id: string; title: string; }; } & { id: string; createdAt: Date; role: ParticipantRole; projectId: string; userId: string; orgId: string; side: ParticipantSide; }'.",
+      "count": 1,
+      "reason": "type-property-display-order"
+    },
+    {
+      "file": "src/app/api/vendor/collaborations/[participantId]/spend/route.ts",
+      "code": 2339,
+      "before": "Property 'collaborationStatus' does not exist on type '{ org: { id: string; type: OrgType; }; } & { id: string; createdAt: Date; role: ParticipantRole; userId: string; projectId: string; orgId: string; side: ParticipantSide; }'.",
+      "after": "Property 'collaborationStatus' does not exist on type '{ org: { id: string; type: OrgType; }; } & { id: string; createdAt: Date; role: ParticipantRole; projectId: string; userId: string; orgId: string; side: ParticipantSide; }'.",
+      "count": 2,
+      "reason": "type-property-display-order"
+    },
+    {
+      "file": "src/app/api/vendor/collaborations/[participantId]/spend/route.ts",
+      "code": 2339,
+      "before": "Property 'collaborationStatus' does not exist on type '{ project: { id: string; title: string; }; } & { id: string; createdAt: Date; role: ParticipantRole; userId: string; projectId: string; orgId: string; side: ParticipantSide; }'.",
+      "after": "Property 'collaborationStatus' does not exist on type '{ project: { id: string; title: string; }; } & { id: string; createdAt: Date; role: ParticipantRole; projectId: string; userId: string; orgId: string; side: ParticipantSide; }'.",
+      "count": 1,
+      "reason": "type-property-display-order"
+    },
+    {
+      "file": "src/app/api/vendor/collaborations/[participantId]/spend/route.ts",
+      "code": 2339,
+      "before": "Property 'pausedAt' does not exist on type '{ project: { id: string; title: string; }; } & { id: string; createdAt: Date; role: ParticipantRole; userId: string; projectId: string; orgId: string; side: ParticipantSide; }'.",
+      "after": "Property 'pausedAt' does not exist on type '{ project: { id: string; title: string; }; } & { id: string; createdAt: Date; role: ParticipantRole; projectId: string; userId: string; orgId: string; side: ParticipantSide; }'.",
+      "count": 1,
+      "reason": "type-property-display-order"
+    },
+    {
+      "file": "src/app/api/vendor/collaborations/[participantId]/spend/route.ts",
+      "code": 2339,
+      "before": "Property 'spendEnabled' does not exist on type '{ project: { id: string; title: string; }; } & { id: string; createdAt: Date; role: ParticipantRole; userId: string; projectId: string; orgId: string; side: ParticipantSide; }'.",
+      "after": "Property 'spendEnabled' does not exist on type '{ project: { id: string; title: string; }; } & { id: string; createdAt: Date; role: ParticipantRole; projectId: string; userId: string; orgId: string; side: ParticipantSide; }'.",
+      "count": 1,
+      "reason": "type-property-display-order"
+    },
+    {
+      "file": "src/app/api/vendor/collaborations/[participantId]/spend/route.ts",
+      "code": 2339,
+      "before": "Property 'spendPerClickUsd' does not exist on type '{ project: { id: string; title: string; }; } & { id: string; createdAt: Date; role: ParticipantRole; userId: string; projectId: string; orgId: string; side: ParticipantSide; }'.",
+      "after": "Property 'spendPerClickUsd' does not exist on type '{ project: { id: string; title: string; }; } & { id: string; createdAt: Date; role: ParticipantRole; projectId: string; userId: string; orgId: string; side: ParticipantSide; }'.",
+      "count": 1,
+      "reason": "type-property-display-order"
+    },
+    {
+      "file": "src/app/api/vendor/collaborations/[participantId]/spend/route.ts",
+      "code": 2339,
+      "before": "Property 'spendPerSaveUsd' does not exist on type '{ project: { id: string; title: string; }; } & { id: string; createdAt: Date; role: ParticipantRole; userId: string; projectId: string; orgId: string; side: ParticipantSide; }'.",
+      "after": "Property 'spendPerSaveUsd' does not exist on type '{ project: { id: string; title: string; }; } & { id: string; createdAt: Date; role: ParticipantRole; projectId: string; userId: string; orgId: string; side: ParticipantSide; }'.",
+      "count": 1,
+      "reason": "type-property-display-order"
+    },
+    {
+      "file": "src/app/api/vendor/collaborations/route.ts",
+      "code": 2339,
+      "before": "Property 'activatedAt' does not exist on type '{ project: { id: string; title: string; ownerId: string; owner: { name: string; id: string; email: string; }; }; } & { id: string; createdAt: Date; role: ParticipantRole; userId: string; projectId: string; orgId: string; side: ParticipantSide; }'.",
+      "after": "Property 'activatedAt' does not exist on type '{ project: { id: string; title: string; ownerId: string; owner: { name: string; id: string; email: string; }; }; } & { id: string; createdAt: Date; role: ParticipantRole; projectId: string; userId: string; orgId: string; side: ParticipantSide; }'.",
+      "count": 1,
+      "reason": "type-property-display-order"
+    },
+    {
+      "file": "src/app/api/vendor/collaborations/route.ts",
+      "code": 2339,
+      "before": "Property 'budgetCapUsd' does not exist on type '{ project: { id: string; title: string; ownerId: string; owner: { name: string; id: string; email: string; }; }; } & { id: string; createdAt: Date; role: ParticipantRole; userId: string; projectId: string; orgId: string; side: ParticipantSide; }'.",
+      "after": "Property 'budgetCapUsd' does not exist on type '{ project: { id: string; title: string; ownerId: string; owner: { name: string; id: string; email: string; }; }; } & { id: string; createdAt: Date; role: ParticipantRole; projectId: string; userId: string; orgId: string; side: ParticipantSide; }'.",
+      "count": 2,
+      "reason": "type-property-display-order"
+    },
+    {
+      "file": "src/app/api/vendor/collaborations/route.ts",
+      "code": 2339,
+      "before": "Property 'collaborationStatus' does not exist on type '{ project: { id: string; title: string; ownerId: string; owner: { name: string; id: string; email: string; }; }; } & { id: string; createdAt: Date; role: ParticipantRole; userId: string; projectId: string; orgId: string; side: ParticipantSide; }'.",
+      "after": "Property 'collaborationStatus' does not exist on type '{ project: { id: string; title: string; ownerId: string; owner: { name: string; id: string; email: string; }; }; } & { id: string; createdAt: Date; role: ParticipantRole; projectId: string; userId: string; orgId: string; side: ParticipantSide; }'.",
+      "count": 1,
+      "reason": "type-property-display-order"
+    },
+    {
+      "file": "src/app/api/vendor/collaborations/route.ts",
+      "code": 2339,
+      "before": "Property 'pausedAt' does not exist on type '{ project: { id: string; title: string; ownerId: string; owner: { name: string; id: string; email: string; }; }; } & { id: string; createdAt: Date; role: ParticipantRole; userId: string; projectId: string; orgId: string; side: ParticipantSide; }'.",
+      "after": "Property 'pausedAt' does not exist on type '{ project: { id: string; title: string; ownerId: string; owner: { name: string; id: string; email: string; }; }; } & { id: string; createdAt: Date; role: ParticipantRole; projectId: string; userId: string; orgId: string; side: ParticipantSide; }'.",
+      "count": 1,
+      "reason": "type-property-display-order"
+    },
+    {
+      "file": "src/app/api/vendor/collaborations/route.ts",
+      "code": 2339,
+      "before": "Property 'spendEnabled' does not exist on type '{ project: { id: string; title: string; ownerId: string; owner: { name: string; id: string; email: string; }; }; } & { id: string; createdAt: Date; role: ParticipantRole; userId: string; projectId: string; orgId: string; side: ParticipantSide; }'.",
+      "after": "Property 'spendEnabled' does not exist on type '{ project: { id: string; title: string; ownerId: string; owner: { name: string; id: string; email: string; }; }; } & { id: string; createdAt: Date; role: ParticipantRole; projectId: string; userId: string; orgId: string; side: ParticipantSide; }'.",
+      "count": 1,
+      "reason": "type-property-display-order"
+    },
+    {
+      "file": "src/app/api/vendor/collaborations/route.ts",
+      "code": 2339,
+      "before": "Property 'spendPerClickUsd' does not exist on type '{ project: { id: string; title: string; ownerId: string; owner: { name: string; id: string; email: string; }; }; } & { id: string; createdAt: Date; role: ParticipantRole; userId: string; projectId: string; orgId: string; side: ParticipantSide; }'.",
+      "after": "Property 'spendPerClickUsd' does not exist on type '{ project: { id: string; title: string; ownerId: string; owner: { name: string; id: string; email: string; }; }; } & { id: string; createdAt: Date; role: ParticipantRole; projectId: string; userId: string; orgId: string; side: ParticipantSide; }'.",
+      "count": 1,
+      "reason": "type-property-display-order"
+    },
+    {
+      "file": "src/app/api/vendor/collaborations/route.ts",
+      "code": 2339,
+      "before": "Property 'spendPerSaveUsd' does not exist on type '{ project: { id: string; title: string; ownerId: string; owner: { name: string; id: string; email: string; }; }; } & { id: string; createdAt: Date; role: ParticipantRole; userId: string; projectId: string; orgId: string; side: ParticipantSide; }'.",
+      "after": "Property 'spendPerSaveUsd' does not exist on type '{ project: { id: string; title: string; ownerId: string; owner: { name: string; id: string; email: string; }; }; } & { id: string; createdAt: Date; role: ParticipantRole; projectId: string; userId: string; orgId: string; side: ParticipantSide; }'.",
+      "count": 1,
+      "reason": "type-property-display-order"
+    },
+    {
+      "file": "src/app/api/vendor/collaborations/route.ts",
+      "code": 2339,
+      "before": "Property 'valueUsd' does not exist on type '{ meta: JsonValue; id: string; createdAt: Date; userId: string; eventId: string; productId: string; vendorId: string; projectId: string; tags: string[]; action: string; materialId: string; }'.",
+      "after": "Property 'valueUsd' does not exist on type '{ meta: JsonValue; id: string; createdAt: Date; projectId: string; productId: string; userId: string; eventId: string; vendorId: string; tags: string[]; action: string; materialId: string; }'.",
+      "count": 1,
+      "reason": "type-property-display-order"
+    },
+    {
+      "file": "src/app/api/visit-tokens/[token]/choose-destination/route.ts",
+      "code": 2551,
+      "before": "Property 'project' does not exist on type '{ handoffPackage: never; } & { id: string; createdAt: Date; vendorId: string; projectId: string; expiresAt: Date; token: string; designerEmail: string; note: string; }'. Did you mean 'projectId'?",
+      "after": "Property 'project' does not exist on type '{ handoffPackage: never; } & { id: string; createdAt: Date; projectId: string; vendorId: string; expiresAt: Date; token: string; designerEmail: string; note: string; }'. Did you mean 'projectId'?",
+      "count": 2,
+      "reason": "type-property-display-order"
+    },
+    {
+      "file": "src/app/profile/[userId]/page.tsx",
+      "code": 2322,
+      "before": "Type '{ organizationUsers: ({ organization: { teamMembers: ({ linkedUser: { name: string; id: string; profileImage: string; }; } & { name: string; id: string; bio: string; createdAt: Date; updatedAt: Date; ... 4 more ...; displayOrder: number; })[]; } & { ...; }; } & { ...; })[]; profileInterview: { ...; }; } & { ...; }' is not assignable to type '{ id: string; name: string; bio?: string; title?: string; location?: string; website?: string; instagram?: string; linkedin?: string; specialties?: string[]; createdAt?: string | Date; profileInterview?: ProfileInterview; ... 7 more ...; builderYearsInBusiness?: number; }'. The types of 'profileInterview.pullQuotes' are incompatible between these types. Type 'JsonValue' is not assignable to type 'string[]'. Type 'string' is not assignable to type 'string[]'.",
+      "after": "Type '{ profileInterview: { id: string; createdAt: Date; updatedAt: Date; userId: string; status: ProfileInterviewStatus; philosophyStatement: string; shortBio: string; pullQuotes: JsonValue; processDescription: string; answers: JsonValue; generatedBio: string; }; organizationUsers: ({ ...; } & { ...; })[]; } & { ...; }' is not assignable to type '{ id: string; name: string; bio?: string; title?: string; location?: string; website?: string; instagram?: string; linkedin?: string; specialties?: string[]; createdAt?: string | Date; profileInterview?: ProfileInterview; ... 7 more ...; builderYearsInBusiness?: number; }'. The types of 'profileInterview.pullQuotes' are incompatible between these types. Type 'JsonValue' is not assignable to type 'string[]'. Type 'string' is not assignable to type 'string[]'.",
+      "count": 1,
+      "reason": "type-property-display-order"
+    },
+    {
+      "file": "src/lib/approvals.ts",
+      "code": 2339,
+      "before": "Property 'projectImage' does not exist on type '{ id: string; createdAt: Date; updatedAt: Date; status: SkeletonItemStatus; description: string; imageUrl: string; projectId: string; roomId: string; searchQuery: string; ... 8 more ...; resultingSelectionId: string; }'.",
+      "after": "Property 'projectImage' does not exist on type '{ id: string; createdAt: Date; updatedAt: Date; projectId: string; roomId: string; status: SkeletonItemStatus; description: string; imageUrl: string; searchQuery: string; ... 8 more ...; resultingSelectionId: string; }'.",
+      "count": 4,
+      "reason": "type-property-display-order"
+    },
+    {
+      "file": "src/lib/approvals.ts",
+      "code": 2339,
+      "before": "Property 'roomName' does not exist on type '{ id: string; createdAt: Date; updatedAt: Date; status: SkeletonItemStatus; description: string; imageUrl: string; projectId: string; roomId: string; searchQuery: string; ... 8 more ...; resultingSelectionId: string; }'.",
+      "after": "Property 'roomName' does not exist on type '{ id: string; createdAt: Date; updatedAt: Date; projectId: string; roomId: string; status: SkeletonItemStatus; description: string; imageUrl: string; searchQuery: string; ... 8 more ...; resultingSelectionId: string; }'.",
+      "count": 5,
+      "reason": "type-property-display-order"
+    },
+    {
+      "file": "src/lib/living/gravity.ts",
+      "code": 2551,
+      "before": "Property 'projectImage' does not exist on type '{ id: string; createdAt: Date; updatedAt: Date; productId: string; notes: string; projectId: string; x: number; y: number; projectImageId: string; roomName: string; }'. Did you mean 'projectImageId'?",
+      "after": "Property 'projectImage' does not exist on type '{ id: string; createdAt: Date; updatedAt: Date; projectId: string; productId: string; notes: string; x: number; y: number; projectImageId: string; roomName: string; }'. Did you mean 'projectImageId'?",
+      "count": 1,
+      "reason": "type-property-display-order"
+    },
+    {
+      "file": "src/lib/living/skeleton.ts",
+      "code": 2352,
+      "before": "Conversion of type '{ id: string; createdAt: Date; updatedAt: Date; status: SkeletonItemStatus; description: string; imageUrl: string; projectId: string; roomId: string; searchQuery: string; ... 8 more ...; resultingSelectionId: string; }[]' to type 'SkeletonItem[]' may be a mistake because neither type sufficiently overlaps with the other. If this was intentional, convert the expression to 'unknown' first. Type '{ id: string; createdAt: Date; updatedAt: Date; status: SkeletonItemStatus; description: string; imageUrl: string; projectId: string; roomId: string; searchQuery: string; ... 8 more ...; resultingSelectionId: string; }' is missing the following properties from type 'SkeletonItem': projectImageId, roomName, bbox, label, and 3 more.",
+      "after": "Conversion of type '{ id: string; createdAt: Date; updatedAt: Date; projectId: string; roomId: string; status: SkeletonItemStatus; description: string; imageUrl: string; searchQuery: string; ... 8 more ...; resultingSelectionId: string; }[]' to type 'SkeletonItem[]' may be a mistake because neither type sufficiently overlaps with the other. If this was intentional, convert the expression to 'unknown' first. Type '{ id: string; createdAt: Date; updatedAt: Date; projectId: string; roomId: string; status: SkeletonItemStatus; description: string; imageUrl: string; searchQuery: string; ... 8 more ...; resultingSelectionId: string; }' is missing the following properties from type 'SkeletonItem': projectImageId, roomName, bbox, label, and 3 more.",
+      "count": 2,
+      "reason": "type-property-display-order"
+    },
+    {
+      "file": "src/lib/living/skeleton.ts",
+      "code": 2551,
+      "before": "Property 'project' does not exist on type '{ name: string; id: string; createdAt: Date; updatedAt: Date; url: string; projectId: string; roomId: string; displayOrder: number; room: string; verifiedAt: Date; inclusion: ImageInclusion; ... 13 more ...; momentShares: number; }'. Did you mean 'projectId'?",
+      "after": "Property 'project' does not exist on type '{ name: string; id: string; createdAt: Date; updatedAt: Date; projectId: string; roomId: string; url: string; displayOrder: number; room: string; verifiedAt: Date; inclusion: ImageInclusion; ... 13 more ...; momentShares: number; }'. Did you mean 'projectId'?",
+      "count": 11,
+      "reason": "type-property-display-order"
+    },
+    {
+      "file": "src/lib/rooms/merge-tagged-selections.ts",
+      "code": 2352,
+      "before": "Conversion of type '{ id: string; photo: string; vendorName: string; productName: string; colorFinish: null; notes: null; phaseOfUse: null; gpsLocation: null; source: \"tagged\"; timestamp: Date; createdAt: Date; ... 15 more ...; _displayName: string; }' to type 'SelectionWithMetadata' may be a mistake because neither type sufficiently overlaps with the other. If this was intentional, convert the expression to 'unknown' first. Type '{ id: string; photo: string; vendorName: string; productName: string; colorFinish: null; notes: null; phaseOfUse: null; gpsLocation: null; source: \"tagged\"; timestamp: Date; createdAt: Date; ... 15 more ...; _displayName: string; }' is missing the following properties from type '{ id: string; createdAt: Date; updatedAt: Date; notes: string; projectId: string; roomId: string; vendorRepId: string; photo: string; vendorName: string; productName: string; colorFinish: string; ... 13 more ...; productTagId: string; }': uiMeta, productTagId",
+      "after": "Conversion of type '{ id: string; photo: string; vendorName: string; productName: string; colorFinish: null; notes: null; phaseOfUse: null; gpsLocation: null; source: \"tagged\"; timestamp: Date; createdAt: Date; ... 15 more ...; _displayName: string; }' to type 'SelectionWithMetadata' may be a mistake because neither type sufficiently overlaps with the other. If this was intentional, convert the expression to 'unknown' first. Type '{ id: string; photo: string; vendorName: string; productName: string; colorFinish: null; notes: null; phaseOfUse: null; gpsLocation: null; source: \"tagged\"; timestamp: Date; createdAt: Date; ... 15 more ...; _displayName: string; }' is missing the following properties from type '{ id: string; createdAt: Date; updatedAt: Date; projectId: string; roomId: string; notes: string; vendorRepId: string; photo: string; vendorName: string; productName: string; colorFinish: string; ... 13 more ...; productTagId: string; }': uiMeta, productTagId",
+      "count": 1,
+      "reason": "type-property-display-order"
+    },
+    {
+      "file": "src/lib/spend/resolveCollaboration.ts",
+      "code": 2339,
+      "before": "Property 'budgetCapUsd' does not exist on type '{ id: string; createdAt: Date; role: ParticipantRole; userId: string; projectId: string; orgId: string; side: ParticipantSide; }'.",
+      "after": "Property 'budgetCapUsd' does not exist on type '{ id: string; createdAt: Date; role: ParticipantRole; projectId: string; userId: string; orgId: string; side: ParticipantSide; }'.",
+      "count": 1,
+      "reason": "type-property-display-order"
+    },
+    {
+      "file": "src/lib/spend/resolveCollaboration.ts",
+      "code": 2339,
+      "before": "Property 'spendPerClickUsd' does not exist on type '{ id: string; createdAt: Date; role: ParticipantRole; userId: string; projectId: string; orgId: string; side: ParticipantSide; }'.",
+      "after": "Property 'spendPerClickUsd' does not exist on type '{ id: string; createdAt: Date; role: ParticipantRole; projectId: string; userId: string; orgId: string; side: ParticipantSide; }'.",
+      "count": 1,
+      "reason": "type-property-display-order"
+    },
+    {
+      "file": "src/lib/spend/resolveCollaboration.ts",
+      "code": 2339,
+      "before": "Property 'spendPerSaveUsd' does not exist on type '{ id: string; createdAt: Date; role: ParticipantRole; userId: string; projectId: string; orgId: string; side: ParticipantSide; }'.",
+      "after": "Property 'spendPerSaveUsd' does not exist on type '{ id: string; createdAt: Date; role: ParticipantRole; projectId: string; userId: string; orgId: string; side: ParticipantSide; }'.",
+      "count": 1,
+      "reason": "type-property-display-order"
+    }
+  ]
+}

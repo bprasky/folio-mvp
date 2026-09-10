@@ -1,0 +1,18 @@
+// Add only these fields to existing model User:
+  spotlightsAsPublisher ProductSpotlight[] @relation("SpotlightPublisher")
+  selectedSpotlights ProductSpotlight[] @relation("SpotlightSelector")
+
+// Add only these fields to existing model Organization:
+  spotlightsAsPublisher ProductSpotlight[] @relation("SpotlightPublisherOrg")
+
+// Add only these fields to existing model Project:
+  productSpotlights ProductSpotlight[]
+
+// Add only these fields to existing model Product:
+  spotlights ProductSpotlight[]
+
+// Add only these fields to existing model Room:
+  productSpotlights ProductSpotlight[]
+
+// Add only these fields to existing model ProductTag:
+  spotlightLink ProductSpotlightTag?

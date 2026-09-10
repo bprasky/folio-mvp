@@ -1,5 +1,9 @@
 # 21_ASSET_MATRIX
 
+## Social publishing contract — adopted 9 September 2026
+
+The [founder specification revision 1.1](Folio-Spotlight-and-Social-Publishing-Spec.md) governs externally exportable social assets. Private draft generation/marked or reduced previews may precede publication, but final assets require a published parent and an independently approved, published, render-ready social-piece version with valid source permissions. One shared server resolver covers slides, ZIPs, images, video, campaign routes and job delivery; parent publication alone is insufficient. Use stable piece landing pages showing the actual media, preserve provenance, and group aspect-ratio variants under one piece. Product-focused stories use approved published spotlights only, including a single-product layout; general project reveals need no spotlight. Vendor state never gates designer exports. Canon adoption is not runtime enforcement; see the [foundation audit](SPOTLIGHT_FOUNDATION_AUDIT_2026-09-09.md).
+
 ## Purpose
 
 This document defines the composition system that turns a published project into every

@@ -11,6 +11,30 @@ const slash = value => value.replaceAll('\\', '/');
 const key = row => JSON.stringify(row.slice(0, 3));
 const git = (root, args) => execFileSync('git', args, { cwd: root, encoding: 'utf8' }).trim();
 
+// Exact reviewed alternative renderings, not a wildcard or a dropped type field.
+// Full source-span/type/assignability proof accompanies the 47 display changes.
+// Truncated compiler messages cannot safely be generically property-sorted.
+const displays = JSON.parse(readFileSync(new URL('../tools/typescript-display-equivalences.json', import.meta.url), 'utf8'));
+if (displays.version !== 1 || !Array.isArray(displays.entries)) throw new Error('Invalid diagnostic display equivalences');
+const displayKeys = new Map();
+for (const row of displays.entries) {
+  if (typeof row.file !== 'string' || !Number.isInteger(row.code) || typeof row.before !== 'string' || typeof row.after !== 'string') throw new Error('Invalid diagnostic display equivalence');
+  const alternative = key([row.file, row.code, row.after]);
+  if (displayKeys.has(alternative)) throw new Error('Duplicate diagnostic display equivalence');
+  displayKeys.set(alternative, key([row.file, row.code, row.before]));
+}
+const comparisonKey = row => ts.version === displays.compilerVersion ? displayKeys.get(key(row)) || key(row) : key(row);
+
+function comparisonGroups(rows) {
+  const groups = new Map();
+  for (const row of rows) {
+    const id = comparisonKey(row);
+    const previous = groups.get(id);
+    groups.set(id, previous ? [...previous.slice(0, 3), previous[3] + row[3]] : [...row]);
+  }
+  return groups;
+}
+
 export function normalizeMessage(message, root) {
   return slash(message).split(slash(resolve(root)) + '/').join('<root>/').replace(/\s+/g, ' ').trim();
 }
@@ -55,9 +79,9 @@ export function validateBaseline(value) {
 }
 
 export function compare(baseline, current) {
-  const known = new Map(baseline.diagnostics.map(row => [key(row), row[3]]));
-  const added = current.diagnostics.flatMap(row => {
-    const count = row[3] - (known.get(key(row)) || 0);
+  const known = comparisonGroups(baseline.diagnostics);
+  const added = [...comparisonGroups(current.diagnostics)].flatMap(([id, row]) => {
+    const count = row[3] - (known.get(id)?.[3] || 0);
     return count > 0 ? [[...row.slice(0, 3), count]] : [];
   });
   return { pass: current.total <= baseline.total && added.length === 0, delta: current.total - baseline.total, added };

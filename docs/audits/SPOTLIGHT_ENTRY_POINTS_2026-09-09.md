@@ -1,0 +1,343 @@
+# Spotlight foundation: static entry-point inventory
+
+Baseline: `8af4ce97` (9 September 2026). Generated from all 2144 TypeScript/TSX files under `src`. These are textual candidates and direct references, not runtime reachability proof. Line numbers refer to the pinned baseline. Review route handlers even when no repository UI caller exists; dynamic and external callers cannot be excluded by text search.
+
+## Tag writers and tagging UI (20 files)
+
+- `src/app/api/admin/regenerate-tag-meshes/route.ts` — 136, 177, 209
+- `src/app/api/import/[sessionId]/batch-verify/route.ts` — 165
+- `src/app/api/import/pending-tag/[tagId]/place/route.ts` — 81
+- `src/app/api/import/pending-tag/[tagId]/verify/route.ts` — 156
+- `src/app/api/living/skeleton/confirm/route.ts` — 85
+- `src/app/api/posting/project/[projectId]/auto-tag/route.ts` — 306, 404
+- `src/app/api/posting/project/[projectId]/interview/generate/route.ts` — 1679
+- `src/app/api/products/tags/[tagId]/crop/route.ts` — 93
+- `src/app/api/projects/[id]/generate-crops/route.ts` — 125
+- `src/app/api/projects/[id]/rooms/[roomId]/gen-image/route.ts` — 220
+- `src/app/api/tag-product-to-image/route.ts` — 196, 657, 734
+- `src/app/api/tags/[tagId]/generate-3d/route.ts` — 68, 89, 126, 156
+- `src/app/designer/project-tagging/page.tsx` — 7, 195
+- `src/app/project/[id]/TaggingSection.tsx` — 19, 91, 193, 639, 691, 701, 900
+- `src/components/AdvancedTagProducts.tsx` — 26, 35, 42, 127, 181, 222
+- `src/components/ProjectCreationModal.tsx` — 684
+- `src/components/product/ProductTagPanel.tsx` — 7, 15, 21
+- `src/components/project/ProductTagPicker.tsx` — 48, 49, 54, 379, 399, 452, 468
+- `src/components/project/productFields.tsx` — 3
+- `src/lib/crops/uploadCrop.ts` — 40
+
+## Question orchestration and follow-up entry points (26 files)
+
+- `src/app/api/interview/realtime/convert/route.ts` — 12
+- `src/app/api/interview/realtime/session/route.ts` — 11, 149
+- `src/app/api/interview/start/route.ts` — 104, 105
+- `src/app/api/posting/project/[projectId]/interview/followups/route.ts` — 23, 218, 310, 428, 500
+- `src/app/api/posting/project/[projectId]/interview/followups/single/route.ts` — 24, 224, 393, 514
+- `src/app/api/posting/project/[projectId]/interview/questions/route.ts` — 6, 49, 58
+- `src/app/api/posting/project/[projectId]/interview/route.ts` — 425, 426, 866, 867
+- `src/app/api/posting/project/[projectId]/sections/deck/regenerate/route.ts` — 45
+- `src/app/api/posting/project/[projectId]/sections/headline/regenerate/route.ts` — 52
+- `src/app/project/[id]/DraftsPanel.tsx` — 374
+- `src/app/project/[id]/StoryInterviewPanel.tsx` — 47
+- `src/components/posting/interview/InterviewModal.tsx` — 1061, 1168, 2320, 2594
+- `src/components/posting/interview/RealtimeInterviewView.tsx` — 93
+- `src/components/posting/interview/RoomPhotoStrip.tsx` — 21, 22, 24
+- `src/hooks/useInterviewQuestions.ts` — 3, 67
+- `src/hooks/useRoomInterviewQuestions.ts` — 4, 168, 214
+- `src/lib/designer-bio/index.ts` — 9
+- `src/lib/designer-bio/qa-generation.ts` — 148, 220
+- `src/lib/editorial/getInterviewQuestions.ts` — 12, 13, 53, 54, 62, 71, 170, 187, 349, 472, 518, 537, 613, 619, 622, 641
+- `src/lib/interview/generateAllRoomQuestions.ts` — 11, 31, 175
+- `src/lib/interview/generateProjectQuestions.ts` — 113
+- `src/lib/interview/generateQuestions.ts` — 9
+- `src/lib/interview/generateRoomQuestions.ts` — 66, 236
+- `src/lib/interview/index.ts` — 62, 63, 66, 67, 72
+- `src/lib/interview/prompts/sourceHandling.ts` — 13, 50
+- `src/lib/posting/loadInterviewAnswers.ts` — 40, 52, 55
+
+## Publication and visibility transitions (8 files)
+
+- `src/app/actions/projects.ts` — 13, 41, 45, 51, 171, 249, 272, 277
+- `src/app/api/posting/project/[projectId]/status/route.ts` — 9, 41, 49
+- `src/app/api/projects/[id]/approvals/publish-editorial/route.ts` — 6, 26
+- `src/app/designer/PublishButton.tsx` — 4, 18
+- `src/app/onboarding/profile-preview/page.tsx` — 52, 95
+- `src/app/onboarding/profile-preview/profile-preview-actions.tsx` — 9, 17, 53
+- `src/app/project/[id]/StagingPublishPanel.tsx` — 56
+- `src/lib/editorial/lifecycle.ts` — 63, 156
+
+## Social rendering and export callers (19 files)
+
+- `src/app/api/instagram-export/generate-images/route.ts` — 8, 66, 76
+- `src/app/api/instagram/campaign/generate/route.ts` — 5, 7, 84, 219
+- `src/app/api/instagram/campaign/preview/route.ts` — 4, 30
+- `src/app/api/instagram/caption/route.ts` — 5
+- `src/app/api/instagram/export/route.ts` — 5, 14, 16, 144, 209
+- `src/app/api/instagram/slide/route.ts` — 3, 11, 133, 154
+- `src/components/instagram-export/ExportButton.tsx` — 39
+- `src/components/instagram-export/InstagramExportEditor.tsx` — 146, 173, 200
+- `src/components/instagram/CampaignWizard.tsx` — 125, 155
+- `src/components/instagram/ExportButton.tsx` — 31
+- `src/components/instagram/InstagramExportModal.tsx` — 249, 318
+- `src/lib/instagram-export/generate-images.ts` — 262
+- `src/lib/instagram/campaign/generateLaunchCard.ts` — 44
+- `src/lib/instagram/campaign/generateRoomSpotlight.ts` — 48, 340
+- `src/lib/instagram/campaign/selectCampaignContent.ts` — 48
+- `src/lib/instagram/createZip.ts` — 13
+- `src/lib/instagram/generateCarouselSlides.ts` — 67, 102, 454
+- `src/lib/instagram/generateSingleSlide.ts` — 3, 509, 553, 575
+- `src/scripts/audit-ai-coverage.ts` — 399
+
+## Feed and public module readers (24 files)
+
+- `src/app/api/feed/route.ts` — 4, 8, 11
+- `src/app/api/homepage-feed/route.ts` — 5, 21, 44
+- `src/app/api/org/[orgId]/feed/route.ts` — 190
+- `src/app/api/orgs/[orgId]/feed/route.ts` — 9
+- `src/app/api/posting/[slug]/route.ts` — 7, 207
+- `src/app/feed/page.tsx` — 6, 7, 8, 55, 56, 57
+- `src/components/feed/UpdatesCarousel.tsx` — 6
+- `src/components/feed/stories/StoryViewer.tsx` — 5
+- `src/components/homepage/BoostReel.tsx` — 14
+- `src/components/homepage/BoostReelCell.tsx` — 13
+- `src/components/homepage/HomepageHeroXL.tsx` — 20
+- `src/components/homepage/HomepageMosaicSection.tsx` — 3, 60, 94
+- `src/components/homepage/HomepagePage.tsx` — 9, 22
+- `src/components/org-profile/OrgProfileFeed.tsx` — 60
+- `src/components/profile/unified/ProfileFeed.tsx` — 47
+- `src/components/vendor/VendorFeed.tsx` — 55
+- `src/lib/feed/getPublishedProjectPosts.ts` — 1, 28
+- `src/lib/feed/getRecentProjectModules.ts` — 5, 6
+- `src/lib/feed/getUpdatesCarousel.ts` — 18, 19
+- `src/lib/homepage/getHomepageData.ts` — 1, 98
+- `src/lib/magazine/getMagazineData.ts` — 71, 197
+- `src/lib/modules/getProjectModules.ts` — 3, 4
+- `src/lib/post/getPostBySlug.ts` — 2, 73
+- `src/lib/post/getPostForStaging.ts` — 2, 74
+
+## Shop, testimonial and invitation sources (30 files)
+
+- `src/app/api/collaboration/stories/[id]/approve/route.ts` — 43, 78, 133, 214
+- `src/app/api/collaboration/stories/[id]/generate/route.ts` — 52, 80, 127, 160
+- `src/app/api/collaboration/stories/[id]/publish/route.ts` — 37, 108, 176, 193
+- `src/app/api/collaboration/stories/[id]/respond/route.ts` — 31, 69, 101
+- `src/app/api/collaboration/stories/[id]/round/[round]/route.ts` — 112, 250, 311
+- `src/app/api/collaboration/stories/[id]/route.ts` — 48, 114, 167, 192
+- `src/app/api/collaboration/stories/route.ts` — 66, 80, 154, 173
+- `src/app/api/designer/shop/boosts/[boostId]/route.ts` — 46, 81, 85
+- `src/app/api/designer/shop/products/[productId]/route.ts` — 8, 34, 43, 68, 75, 113, 122, 127, 133
+- `src/app/api/designer/shop/route.ts` — 22, 125
+- `src/app/api/products/[productId]/testimonials/route.ts` — 40, 85, 86, 87, 88, 90, 92, 93, 94, 95
+- `src/app/api/profile/[userId]/shop/route.ts` — 80
+- `src/app/api/shop/products/[shopProductId]/route.ts` — 22, 60, 63, 106, 107, 108, 109, 110
+- `src/app/api/tag-product-to-image/route.ts` — 10, 12, 62, 290, 300, 311, 315, 322, 329, 331, 476, 552
+- `src/app/api/vendor/activate/route.ts` — 47, 67
+- `src/app/api/vendor/claim/route.ts` — 54, 55, 115, 148
+- `src/app/api/vendor/designers/route.ts` — 40, 126
+- `src/app/api/vendor/founding-program/route.ts` — 44, 64, 159
+- `src/app/api/vendor/invite-stats/route.ts` — 49
+- `src/app/api/vendor/invite-to-complete/route.ts` — 47
+- `src/app/api/vendor/shop-analytics/route.ts` — 110, 115, 121, 140, 149, 158
+- `src/app/api/vendor/trigger-tag/route.ts` — 38, 82, 88
+- `src/app/magazine/collaborations/[slug]/page.tsx` — 12, 49
+- `src/lib/boost/createOpportunity.ts` — 119, 132
+- `src/lib/boost/inContextBoost.ts` — 14, 229
+- `src/lib/collaboration/auth.ts` — 96
+- `src/lib/magazine/getMagazineData.ts` — 357
+- `src/lib/notifications/notifyIncompleteProductVendors.ts` — 136
+- `src/lib/syncTestimonials.ts` — 17, 18, 35, 36, 44, 47, 48, 49, 53, 64, 74, 87, 101, 108, 123, 146
+- `src/lib/vendor/inviteCandidates.ts` — 126
+
+## Asset permission and answer provenance boundaries (84 files)
+
+- `src/app/actions/projectImages.ts` — 7, 17, 39, 212, 255, 286
+- `src/app/actions/projects.ts` — 6, 205, 211
+- `src/app/api/action-items/[id]/route.ts` — 7, 69
+- `src/app/api/action-items/route.ts` — 7, 192
+- `src/app/api/designer/projects/[id]/rooms/[roomId]/selections/[selectionId]/route.ts` — 7, 18, 76
+- `src/app/api/designer/projects/[id]/rooms/[roomId]/selections/route.ts` — 7, 18
+- `src/app/api/designer/projects/[id]/rooms/route.ts` — 7, 57
+- `src/app/api/designer/projects/[id]/route.ts` — 7, 77
+- `src/app/api/designer/projects/[id]/selections/route.ts` — 7, 20
+- `src/app/api/import/pending-tag/[tagId]/place/route.ts` — 17, 55
+- `src/app/api/interview/realtime/convert/route.ts` — 7, 53, 109
+- `src/app/api/interview/realtime/session/route.ts` — 7, 40
+- `src/app/api/interview/respond/route.ts` — 7, 260
+- `src/app/api/orgs/[orgId]/feed/route.ts` — 6
+- `src/app/api/posting/project/[projectId]/blocks/route.ts` — 7, 24
+- `src/app/api/posting/project/[projectId]/generation-context/route.ts` — 14, 26
+- `src/app/api/posting/project/[projectId]/interview/evaluate/route.ts` — 7, 61
+- `src/app/api/posting/project/[projectId]/interview/followups/batch/route.ts` — 7, 105
+- `src/app/api/posting/project/[projectId]/interview/followups/route.ts` — 7, 123
+- `src/app/api/posting/project/[projectId]/interview/followups/single/route.ts` — 7, 122
+- `src/app/api/posting/project/[projectId]/interview/generate/route.ts` — 14, 341, 471
+- `src/app/api/posting/project/[projectId]/interview/questions/route.ts` — 7, 43
+- `src/app/api/posting/project/[projectId]/interview/route.ts` — 7, 16, 561, 951, 959
+- `src/app/api/posting/project/[projectId]/interview/transcribe/route.ts` — 6, 145
+- `src/app/api/posting/project/[projectId]/meta/route.ts` — 7, 24
+- `src/app/api/posting/project/[projectId]/sections/[chapterIndex]/regenerate/route.ts` — 7, 13, 48, 356
+- `src/app/api/posting/project/[projectId]/sections/[chapterIndex]/undo/route.ts` — 7, 26
+- `src/app/api/posting/project/[projectId]/sections/deck/regenerate/route.ts` — 30, 72
+- `src/app/api/posting/project/[projectId]/sections/headline/regenerate/route.ts` — 27, 257
+- `src/app/api/posting/project/[projectId]/sections/override/route.ts` — 7, 25, 144
+- `src/app/api/posting/project/[projectId]/sections/pull-quote/route.ts` — 7, 32
+- `src/app/api/posting/project/[projectId]/sections/pull-quotes/backfill/route.ts` — 29, 47
+- `src/app/api/posting/project/[projectId]/status/route.ts` — 6, 36
+- `src/app/api/products/[productId]/route.ts` — 13
+- `src/app/api/products/[productId]/save-to-project/route.ts` — 7, 33
+- `src/app/api/products/bulk/route.ts` — 6
+- `src/app/api/products/route.ts` — 9
+- `src/app/api/products/tags/[tagId]/crop/route.ts` — 7, 56
+- `src/app/api/profile/[userId]/shop/route.ts` — 8
+- `src/app/api/projects/[id]/approvals/create-room/route.ts` — 7, 28
+- `src/app/api/projects/[id]/availability-check/route.ts` — 10, 32
+- `src/app/api/projects/[id]/bulk-request/route.ts` — 10, 34
+- `src/app/api/projects/[id]/detect-rooms/route.ts` — 19, 33
+- `src/app/api/projects/[id]/extract-pdf/route.ts` — 15, 33
+- `src/app/api/projects/[id]/generate-crops/route.ts` — 7, 54
+- `src/app/api/projects/[id]/images/[imageId]/route.ts` — 7, 27, 103
+- `src/app/api/projects/[id]/images/reupload-client/route.ts` — 13, 38
+- `src/app/api/projects/[id]/import-spec/route.ts` — 17, 35
+- `src/app/api/projects/[id]/lead-time-request/route.ts` — 10, 33
+- `src/app/api/projects/[id]/meeting-notes/route.ts` — 7, 28, 97
+- `src/app/api/projects/[id]/pending-spec-tags/route.ts` — 15, 28
+- `src/app/api/projects/[id]/pricing/route.ts` — 8, 67
+- `src/app/api/projects/[id]/refresh-intent/route.ts` — 7, 102
+- `src/app/api/projects/[id]/rooms/[roomId]/route.ts` — 9, 67, 255
+- `src/app/api/projects/[id]/route.ts` — 5
+- `src/app/api/projects/[id]/supplemental-quotes/route.ts` — 6, 107
+- `src/app/api/projects/route.ts` — 12, 271, 394
+- `src/app/api/tag-product-to-image/route.ts` — 7, 126, 648, 705
+- `src/app/api/tags/[tagId]/generate-3d/route.ts` — 11, 57
+- `src/app/api/upload-spec-sheet/route.ts` — 7, 21
+- `src/app/api/vendor/projects/[id]/handoff/route.ts` — 8, 17
+- `src/app/api/vendor/projects/[id]/rooms/route.ts` — 7, 38
+- `src/app/api/vendor/projects/[id]/route.ts` — 7, 69
+- `src/app/api/vendor/projects/[id]/selections/[selectionId]/route.ts` — 7, 18, 90
+- `src/app/api/vendor/projects/[id]/selections/bulk/route.ts` — 9, 16
+- `src/app/api/vendor/projects/[id]/selections/route.ts` — 9, 16
+- `src/app/product/[productId]/page.tsx` — 7
+- `src/lib/authz/access.ts` — 149, 212, 282
+- `src/lib/editorial/lifecycle.ts` — 3, 19, 79, 82, 85
+- `src/lib/editorial/syncInterviewAnswers.ts` — 99, 216
+- `src/lib/homepage/getHomepageData.ts` — 22
+- `src/lib/interview/generateAllRoomQuestions.ts` — 14, 146
+- `src/lib/interview/saveInterviewAnswer.ts` — 41
+- `src/lib/magazine/getMagazineData.ts` — 18
+- `src/lib/naming/applyProseNamingGate.ts` — 21, 35, 42
+- `src/lib/naming/namingRules.ts` — 6
+- `src/lib/naming/resolveProductNaming.ts` — 46
+- `src/lib/naming/scrubProse.ts` — 15
+- `src/lib/posting/generateEditorialDraft.ts` — 14, 239, 242, 1896, 1904
+- `src/lib/posting/loadInterviewAnswers.ts` — 102
+- `src/lib/posting/schemas.ts` — 26
+- `src/lib/products/productRecord.ts` — 10
+- `src/server/queries/getDesignerProjectsWithProducts.ts` — 37
+- `src/server/queries/getProductRecord.ts` — 11, 23
+
+## Additional route-name sweep (103 candidates)
+
+Includes adjacent utility exports, biography and commissioned/vendor flows. Inclusion does not mean all require the social gate; classify by actual payload and authority before editing.
+
+- `src/app/api/admin/regenerate-tag-meshes/route.ts`
+- `src/app/api/collaboration/stories/[id]/approve/route.ts`
+- `src/app/api/collaboration/stories/[id]/generate/route.ts`
+- `src/app/api/collaboration/stories/[id]/publish/route.ts`
+- `src/app/api/collaboration/stories/[id]/respond/route.ts`
+- `src/app/api/collaboration/stories/[id]/round/[round]/route.ts`
+- `src/app/api/collaboration/stories/[id]/route.ts`
+- `src/app/api/collaboration/stories/route.ts`
+- `src/app/api/cron/process-boost-opportunities/route.ts`
+- `src/app/api/cron/process-boost-revenue/route.ts`
+- `src/app/api/designer/bio/publish/route.ts`
+- `src/app/api/designer/projects/[id]/export/route.ts`
+- `src/app/api/designer/shop/boosts/[boostId]/route.ts`
+- `src/app/api/designer/shop/products/[productId]/route.ts`
+- `src/app/api/designer/shop/route.ts`
+- `src/app/api/events/[id]/my-collection/export/route.ts`
+- `src/app/api/export-all-tagged-products/route.ts`
+- `src/app/api/export-project-tags/route.ts`
+- `src/app/api/export-spec-sheet/route.ts`
+- `src/app/api/export-tearsheet/route.ts`
+- `src/app/api/export/spec-html/route.ts`
+- `src/app/api/feed/route.ts`
+- `src/app/api/homepage-feed/route.ts`
+- `src/app/api/import/[sessionId]/pending-tags/route.ts`
+- `src/app/api/import/pending-tag/[tagId]/place/route.ts`
+- `src/app/api/import/pending-tag/[tagId]/verify/route.ts`
+- `src/app/api/instagram-export/generate-bio/route.ts`
+- `src/app/api/instagram-export/generate-caption/route.ts`
+- `src/app/api/instagram-export/generate-headlines/route.ts`
+- `src/app/api/instagram-export/generate-images/route.ts`
+- `src/app/api/instagram/campaign/generate/route.ts`
+- `src/app/api/instagram/campaign/preview/route.ts`
+- `src/app/api/instagram/caption/route.ts`
+- `src/app/api/instagram/export/route.ts`
+- `src/app/api/instagram/proxy-image/route.ts`
+- `src/app/api/instagram/slide/route.ts`
+- `src/app/api/interview/complete/route.ts`
+- `src/app/api/interview/realtime/convert/route.ts`
+- `src/app/api/interview/realtime/session/route.ts`
+- `src/app/api/interview/respond/route.ts`
+- `src/app/api/interview/start/route.ts`
+- `src/app/api/interviews/[id]/approve-highlights/route.ts`
+- `src/app/api/interviews/[id]/confirm-upload/route.ts`
+- `src/app/api/interviews/[id]/media/route.ts`
+- `src/app/api/interviews/[id]/process/route.ts`
+- `src/app/api/interviews/[id]/publish/route.ts`
+- `src/app/api/interviews/[id]/status/route.ts`
+- `src/app/api/interviews/[id]/upload-url/route.ts`
+- `src/app/api/interviews/[id]/upload/route.ts`
+- `src/app/api/interviews/create/route.ts`
+- `src/app/api/notifications/tag-review-reminder/route.ts`
+- `src/app/api/org/[orgId]/feed/route.ts`
+- `src/app/api/orgs/[orgId]/bio-interview/coverage/route.ts`
+- `src/app/api/orgs/[orgId]/bio-interview/generate/route.ts`
+- `src/app/api/orgs/[orgId]/bio-interview/route.ts`
+- `src/app/api/orgs/[orgId]/feed/route.ts`
+- `src/app/api/posting/_debug/status/route.ts`
+- `src/app/api/posting/project/[projectId]/auto-tag/route.ts`
+- `src/app/api/posting/project/[projectId]/interview/evaluate/route.ts`
+- `src/app/api/posting/project/[projectId]/interview/followups/batch/route.ts`
+- `src/app/api/posting/project/[projectId]/interview/followups/route.ts`
+- `src/app/api/posting/project/[projectId]/interview/followups/single/route.ts`
+- `src/app/api/posting/project/[projectId]/interview/generate/route.ts`
+- `src/app/api/posting/project/[projectId]/interview/process/route.ts`
+- `src/app/api/posting/project/[projectId]/interview/questions/route.ts`
+- `src/app/api/posting/project/[projectId]/interview/route.ts`
+- `src/app/api/posting/project/[projectId]/interview/status/route.ts`
+- `src/app/api/posting/project/[projectId]/interview/transcribe/route.ts`
+- `src/app/api/posting/project/[projectId]/interview/verify/route.ts`
+- `src/app/api/posting/project/[projectId]/status/route.ts`
+- `src/app/api/posting/project/[projectId]/tag-diagnostic/route.ts`
+- `src/app/api/products/[productId]/in-context-boosts/route.ts`
+- `src/app/api/products/tags/[tagId]/crop/route.ts`
+- `src/app/api/profile/[userId]/feed/route.ts`
+- `src/app/api/profile/[userId]/shop/route.ts`
+- `src/app/api/profile/extract-from-interview/route.ts`
+- `src/app/api/project-product-tags/[id]/action-items/route.ts`
+- `src/app/api/projects/[id]/approvals/publish-editorial/route.ts`
+- `src/app/api/projects/[id]/export-spec/route.ts`
+- `src/app/api/projects/[id]/export/route.ts`
+- `src/app/api/projects/[id]/interview-quotes/route.ts`
+- `src/app/api/projects/[id]/pending-spec-tags/route.ts`
+- `src/app/api/projects/[id]/quotes/[quoteId]/status/route.ts`
+- `src/app/api/projects/[id]/rooms/[roomId]/gen-image/feedback/route.ts`
+- `src/app/api/shop/products/[shopProductId]/route.ts`
+- `src/app/api/tag-product-to-image/route.ts`
+- `src/app/api/tags/[tagId]/generate-3d/route.ts`
+- `src/app/api/user/export/route.ts`
+- `src/app/api/vendor-boost/[id]/accept/route.ts`
+- `src/app/api/vendor-boost/[id]/decline/route.ts`
+- `src/app/api/vendor-boost/inbox/route.ts`
+- `src/app/api/vendor-boost/request/route.ts`
+- `src/app/api/vendor/boosts/[opportunityId]/boost/route.ts`
+- `src/app/api/vendor/boosts/[opportunityId]/decline/route.ts`
+- `src/app/api/vendor/collaborations/[participantId]/spend/route.ts`
+- `src/app/api/vendor/collaborations/route.ts`
+- `src/app/api/vendor/invite-admin/route.ts`
+- `src/app/api/vendor/invite-designer/route.ts`
+- `src/app/api/vendor/invite-stats/route.ts`
+- `src/app/api/vendor/invite-to-complete/route.ts`
+- `src/app/api/vendor/projects/[id]/quick-actions/offer-boost/route.ts`
+- `src/app/api/vendor/shop-analytics/route.ts`
+- `src/app/api/vendor/trigger-tag/route.ts`

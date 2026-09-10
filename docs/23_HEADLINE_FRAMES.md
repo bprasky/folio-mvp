@@ -1,5 +1,7 @@
 # 23_HEADLINE_FRAMES
 
+**9 September 2026 naming amendment:** references below to the paid-only `20_PRODUCT_NAMING_GATE` must be read with its [spotlight revision 1.1 exception](Folio-Spotlight-and-Social-Publishing-Spec.md). Approved spotlight content can retain exact names in its confirmed room regardless of vendor payment; this does not authorize arbitrary product naming in unrelated headlines or questions. Existing headline-quality and provenance rules remain applicable.
+
 ## Purpose
 
 Title generation becomes **frame selection plus slot filling from verified values**,

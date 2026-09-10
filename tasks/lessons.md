@@ -966,3 +966,8 @@ When the user parks infrastructure-blocked work and starts an independent task, 
 
 ## 2026-09-08 — Separate implementation completion from parked operational proof
 When the user explicitly approves a scoped schema repair and parks the disposable-database journey, apply that exact repair without seeking approval again. Prove mappings with regenerated metadata, read-only queries and build logs. Report the unrun journey as parked; do not treat it as an implementation failure or imply that it passed.
+## 2026-09-09 — Follow an explicit specification's delivery sequence
+When a supplied specification already says where to start, execute that first step rather than asking the founder to choose between audit and implementation. Complete the authorized discovery and reviewable artifacts before raising a concrete schema approval gate.
+
+## 2026-09-10 — Complete authorized acceptance gates with portable evidence
+When local infrastructure blocks a database suite and the user authorizes another development/CI environment, provide and run a reproducible isolated path there. Equal TypeScript error totals or file/code counts do not prove fingerprint equivalence: compare source locations and full diagnostic types, preserve multiplicities and prove new errors still fail. A missing deployment status is not evidence that deployment was prevented; document the actual deployment control and its restoration separately.
