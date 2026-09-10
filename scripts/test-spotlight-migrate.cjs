@@ -14,6 +14,7 @@ const sqlFile = fs.readFileSync(path.join(root, 'prisma/migrations', migrationNa
 const sha = value => crypto.createHash('sha256').update(value).digest('hex');
 const nonce = crypto.randomBytes(16).toString('hex');
 const database = `spotlight_command_${nonce.slice(0, 8)}`;
+const shadowDatabase = `${database}_shadow`;
 const name = `folio-spotlight-command-${nonce}`;
 const baseEnv = Object.fromEntries(Object.entries(process.env).filter(([k]) => /^(PATH|HOME|TMPDIR|TEMP|TMP)$/i.test(k)));
 const evidence = { status: 'running', migrationName, expectedHash, tests: [], commandLogs: [], applicationDatabaseContacted: false, startedAt: new Date().toISOString() };
@@ -61,7 +62,7 @@ function assertTarget(env, { negativeGuard = false } = {}) {
     assert.equal(u.searchParams.get('schema'), 'public');
     assert.deepEqual([...u.searchParams.keys()].sort(), ['host','schema']);
     assert.ok(u.port === '5432' || (negativeGuard && key === 'DATABASE_URL' && u.port === '6543'));
-    assert.ok(u.pathname === '/' + database || (negativeGuard && key === 'DATABASE_URL' && u.pathname === '/wrong_synthetic_database'));
+    assert.ok(u.pathname === '/' + (key === 'SHADOW_DATABASE_URL' ? shadowDatabase : database) || (negativeGuard && key === 'DATABASE_URL' && u.pathname === '/wrong_synthetic_database'));
   }
 }
 const prismaBin = path.join(root, 'node_modules/prisma/build/index.js');
@@ -111,7 +112,7 @@ async function main() {
   if (!fs.existsSync(npmBin)) npmBin=fs.realpathSync(path.join(path.dirname(process.execPath),'npm'));
   assert.ok(fs.existsSync(npmBin), 'Resolve npm CLI belonging to the installed Node runtime');
   const url = `postgresql://postgres@localhost:5432/${database}?host=${encodeURIComponent(socket)}&schema=public`;
-  boundEnv = { ...baseEnv, DATABASE_URL:url,DIRECT_URL:url,SHADOW_DATABASE_URL:url,
+  boundEnv = { ...baseEnv, DATABASE_URL:url,DIRECT_URL:url,SHADOW_DATABASE_URL:url.replace(database,shadowDatabase),
     NPM_CONFIG_USERCONFIG:path.join(scratch,'.npmrc'),NPM_CONFIG_CACHE:path.join(scratch,'npm-cache'),CI:'true' };
   assertTarget(boundEnv);
   await test('External URL, foreign socket and wrong database rejected before command execution', async () => {
@@ -136,6 +137,7 @@ async function main() {
   }
   assert.ok(ready,'Final PostgreSQL server must be ready');
   await sql(`ALTER DATABASE ${database} SET folio.test_nonce='${nonce}';`);
+  await sql(`CREATE DATABASE ${shadowDatabase};`);
   await test('Prisma migration engine binds to the verified socket, nonce, database and server identity', proveBinding);
   await test('Actual repository migration chain bootstraps synthetic prerequisites', async () => {
     await npm('migrate:deploy');
