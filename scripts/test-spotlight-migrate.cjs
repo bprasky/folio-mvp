@@ -122,7 +122,9 @@ async function main() {
   if ((await docker(['image','inspect','postgres:17'])).code !== 0) await ok(['pull','postgres:17'],{timeout:300000});
   container = await ok(['run','-d','--name',name,'--label',`folio.spotlight.command-test=${nonce}`,'--network','none',
     '--tmpfs','/var/lib/postgresql/data:rw','--mount',`type=bind,src=${socket},dst=/test-socket`,
-    '-e','POSTGRES_HOST_AUTH_METHOD=trust','-e','PGHOST=/test-socket','-e',`POSTGRES_DB=${database}`,'postgres:17','-c','listen_addresses=','-c','unix_socket_directories=/test-socket']);
+    // The official entrypoint deliberately clears PGHOST for bootstrap psql.
+    // Retain its internal default socket as well as our private host socket.
+    '-e','POSTGRES_HOST_AUTH_METHOD=trust','-e',`POSTGRES_DB=${database}`,'postgres:17','-c','listen_addresses=','-c','unix_socket_directories=/var/run/postgresql,/test-socket']);
   const c = await verify();
   evidence.isolation = { localDockerSocket:true,network:'none',tcpListener:false,ports:0,hostDataMounts:0,privateTemporarySocketMount:1,imageId:c.Image };
   let ready = false;
