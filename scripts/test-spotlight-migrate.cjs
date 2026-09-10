@@ -122,7 +122,7 @@ async function main() {
   if ((await docker(['image','inspect','postgres:17'])).code !== 0) await ok(['pull','postgres:17'],{timeout:300000});
   container = await ok(['run','-d','--name',name,'--label',`folio.spotlight.command-test=${nonce}`,'--network','none',
     '--tmpfs','/var/lib/postgresql/data:rw','--mount',`type=bind,src=${socket},dst=/test-socket`,
-    '-e','POSTGRES_HOST_AUTH_METHOD=trust','-e',`POSTGRES_DB=${database}`,'postgres:17','-c','listen_addresses=','-c','unix_socket_directories=/test-socket']);
+    '-e','POSTGRES_HOST_AUTH_METHOD=trust','-e','PGHOST=/test-socket','-e',`POSTGRES_DB=${database}`,'postgres:17','-c','listen_addresses=','-c','unix_socket_directories=/test-socket']);
   const c = await verify();
   evidence.isolation = { localDockerSocket:true,network:'none',tcpListener:false,ports:0,hostDataMounts:0,privateTemporarySocketMount:1,imageId:c.Image };
   let ready = false;
@@ -183,7 +183,10 @@ async function main() {
   });
   evidence.status='passed';
 }
-main().catch(error=>{ evidence.status=container?'failed':'blocked'; evidence.error=error.message; process.exitCode=1; console.error(evidence.status.toUpperCase()+': '+error.message); }).finally(async()=>{
+main().catch(async error=>{
+  evidence.status=container?'failed':'blocked'; evidence.error=error.message; process.exitCode=1; console.error(evidence.status.toUpperCase()+': '+error.message);
+  if(container) { const logs=await docker(['logs','--tail','50',container]); evidence.postgresFailureLog=logs.stdout+logs.stderr; console.error(evidence.postgresFailureLog); }
+}).finally(async()=>{
   if(container) {
     try { await verify(); await ok(['rm','-f','-v',container]); evidence.disposableContainerRemoved=true; }
     catch(error) { evidence.cleanupError=error.message; evidence.status='failed'; process.exitCode=1; }
