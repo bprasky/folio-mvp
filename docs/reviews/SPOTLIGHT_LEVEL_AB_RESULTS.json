@@ -1,0 +1,10 @@
+{
+  "migrationPath": "prisma/migrations/20260910180000_add_product_spotlight_draft_selection/migration.sql",
+  "approvedHash": "77fa2afe19f2f1e61d344f54d78381ca18d862b795e48edca9b3101c939291ab",
+  "startedAt": "2026-09-10T16:25:44.528Z",
+  "status": "blocked",
+  "tests": [],
+  "applicationDatabaseContacted": false,
+  "error": "Docker command failed: failed to connect to the docker API at npipe:////./pipe/dockerDesktopLinuxEngine; check if the path is correct and if the daemon is running: open //./pipe/dockerDesktopLinuxEngine: The system cannot find the file specified.\n\n\n1 !== 0\n",
+  "finishedAt": "2026-09-10T16:25:45.004Z"
+}
