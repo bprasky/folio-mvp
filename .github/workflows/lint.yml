@@ -100,5 +100,7 @@ jobs:
         run: npm run typecheck:prepare
       - name: Reject new diagnostics and baseline expansion
         env:
+          # Full-project compiler analysis exceeds Node's default 2 GiB heap.
+          NODE_OPTIONS: --max-old-space-size=4096
           TYPESCRIPT_BUDGET_BASE_REF: ${{ github.event.pull_request.base.sha || github.event.before || 'origin/main' }}
         run: npm run typecheck
