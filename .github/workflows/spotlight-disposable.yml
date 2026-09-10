@@ -26,6 +26,9 @@ jobs:
       - run: npm ci --ignore-scripts
       - name: Execute exact SQL against network-disabled local PostgreSQL
         run: node scripts/test-spotlight-postgres.cjs
+      - name: Exercise guarded npm migration command on a separate disposable database
+        if: always()
+        run: node scripts/test-spotlight-migrate.cjs
       - name: Retain actual evidence even on failure
         if: always()
         uses: actions/upload-artifact@v4
