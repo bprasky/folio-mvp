@@ -8,7 +8,7 @@ import { join } from 'node:path';
 import { compare, measure, normalizeMessage, validateBaseline } from './check-typescript-budget.mjs';
 
 test('47 reviewed display equivalents preserve counts and reject changed errors', () => {
-  const { entries } = JSON.parse(readFileSync(new URL('../tools/typescript-display-equivalences.json', import.meta.url)));
+  const { entries } = JSON.parse(readFileSync(new URL('../tools/typescript-display-equivalences.json', import.meta.url), 'utf8'));
   assert.equal(entries.length, 47);
   for (const e of entries) {
     const old = [e.file,e.code,e.before,e.count], current = [e.file,e.code,e.after,e.count];
@@ -25,7 +25,7 @@ test('47 reviewed display equivalents preserve counts and reject changed errors'
 });
 
 test('reviewed displays cannot spend removed debt on a same-total duplicate or new property type', () => {
-  const { entries:[e] } = JSON.parse(readFileSync(new URL('../tools/typescript-display-equivalences.json', import.meta.url)));
+  const { entries:[e] } = JSON.parse(readFileSync(new URL('../tools/typescript-display-equivalences.json', import.meta.url), 'utf8'));
   const old=[e.file,e.code,e.before,1], current=[e.file,e.code,e.after,1];
   const baseline={total:2,diagnostics:[old,['src/unrelated.ts',2322,'historical error',1]]};
   assert.equal(compare(baseline,{total:2,diagnostics:[old,current]}).pass,false);
