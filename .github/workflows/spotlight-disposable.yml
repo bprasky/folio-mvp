@@ -1,0 +1,36 @@
+name: Spotlight disposable PostgreSQL
+
+on:
+  pull_request:
+    paths:
+      - 'scripts/test-spotlight-*.cjs'
+      - 'scripts/spotlight-postgres/**'
+      - 'prisma/migrations/20260910180000_add_product_spotlight_draft_selection/**'
+      - '.github/workflows/spotlight-disposable.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  postgres:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci --ignore-scripts
+      - name: Execute exact SQL against network-disabled local PostgreSQL
+        run: node scripts/test-spotlight-postgres.cjs
+      - name: Retain actual evidence even on failure
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: spotlight-disposable-evidence
+          path: tasks/spotlight-*-results.json
+          if-no-files-found: error
+          retention-days: 7
