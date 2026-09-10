@@ -27,6 +27,7 @@ on:
       - 'next.config.*'
       - 'prisma/**'
       - 'tools/typescript-baseline.json'
+      - 'tools/typescript-display-equivalences.json'
       - '.github/workflows/lint.yml'
   push:
     branches: [main]
@@ -43,6 +44,7 @@ on:
       - 'next.config.*'
       - 'prisma/**'
       - 'tools/typescript-baseline.json'
+      - 'tools/typescript-display-equivalences.json'
       - '.github/workflows/lint.yml'
   workflow_dispatch:
 
