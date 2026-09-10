@@ -5,6 +5,9 @@ on:
     paths:
       - 'scripts/test-spotlight-*.cjs'
       - 'scripts/spotlight-postgres/**'
+      - 'scripts/spotlight-durable-postgres/**'
+      - 'scripts/check-spotlight-durable-install.cjs'
+      - 'prisma/migrations/20260910210000_add_spotlight_durable_interview/**'
       - 'prisma/migrations/20260910180000_add_product_spotlight_draft_selection/**'
       - '.github/workflows/spotlight-disposable.yml'
 
@@ -19,16 +22,25 @@ jobs:
       - uses: actions/checkout@v4
         with:
           persist-credentials: false
+          fetch-depth: 0
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
           cache: npm
       - run: npm ci --ignore-scripts
+      - name: Verify durable schema and four reviewed artifact hashes
+        run: node scripts/check-spotlight-durable-install.cjs
       - name: Execute exact SQL against network-disabled local PostgreSQL
         run: node scripts/test-spotlight-postgres.cjs
       - name: Exercise guarded npm migration command on a separate disposable database
         if: always()
         run: node scripts/test-spotlight-migrate.cjs
+      - name: Execute durable interview SQL and adversarial persistence tests
+        if: always()
+        run: node scripts/test-spotlight-durable-postgres.cjs
+      - name: Exercise durable migration through the guarded repository command
+        if: always()
+        run: node scripts/test-spotlight-durable-migrate.cjs
       - name: Retain actual evidence even on failure
         if: always()
         uses: actions/upload-artifact@v4
