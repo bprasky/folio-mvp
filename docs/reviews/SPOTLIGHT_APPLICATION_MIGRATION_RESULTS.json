@@ -1,0 +1,568 @@
+{
+  "status": "passed",
+  "completedAt": "2026-09-10T19:51:43.531Z",
+  "pr": 766,
+  "mergeCommit": "d5f3dcf10d4acf737ffd5f9dfc86e5e4e2bf55ff",
+  "reviewedHead": "ce61d06b2c4807b9d67cb450a1a645016bca4820",
+  "environment": "Folio / MVP / main (production)",
+  "project": "gwdkhgejsyvynqzolyau",
+  "recoveryPoint": {
+    "type": "Supabase scheduled PHYSICAL backup",
+    "timestamp": "2026-09-10T10:00:42Z",
+    "dashboardVerified": true,
+    "restoreAvailable": true,
+    "restoreExecuted": false,
+    "storageObjectsIncluded": false
+  },
+  "deploymentControls": {
+    "vercelGitDeploymentEnabled": false,
+    "supabaseDeployToProduction": false,
+    "supabaseSettingSavedAndReloadVerified": true,
+    "automaticBranchingUnchanged": true,
+    "featureExposed": false
+  },
+  "preflight": {
+    "samePhysicalDatabase": true,
+    "connections": {
+      "DATABASE_URL": {
+        "project": "gwdkhgejsyvynqzolyau",
+        "port": "6543",
+        "options": [
+          "sslmode",
+          "pgbouncer"
+        ]
+      },
+      "DIRECT_URL": {
+        "project": "gwdkhgejsyvynqzolyau",
+        "port": "5432",
+        "options": []
+      }
+    },
+    "appliedCount": 107,
+    "pending": [
+      "20260910180000_add_product_spotlight_draft_selection"
+    ],
+    "failed": [],
+    "missingLocal": [],
+    "existingTables": [],
+    "historicalRolledBack": [
+      "20260709163000_add_pdf_extractions_skeleton_items"
+    ],
+    "ambientTargetVariablesPresent": false
+  },
+  "execution": {
+    "command": "npm run migrate:deploy",
+    "wrapper": "node --env-file=.env --env-file=.env.local <installed npm CLI> run migrate:deploy",
+    "exitCode": 0,
+    "onlyAuthorizedMigrationApplied": true
+  },
+  "postflight": {
+    "checkedAt": "2026-09-10T19:50:12.408Z",
+    "project": "gwdkhgejsyvynqzolyau",
+    "environment": "Folio / MVP / main (production)",
+    "history": [
+      {
+        "migration_name": "20260910180000_add_product_spotlight_draft_selection",
+        "checksum": "77fa2afe19f2f1e61d344f54d78381ca18d862b795e48edca9b3101c939291ab",
+        "started_at": "2026-09-10T19:48:43.529Z",
+        "finished_at": "2026-09-10T19:48:43.800Z",
+        "rolled_back_at": null
+      }
+    ],
+    "counts": {
+      "unfinished": 0,
+      "applied": 108
+    },
+    "catalog": {
+      "serverVersion": "17.4",
+      "tables": [
+        {
+          "name": "product_spotlight_tags",
+          "rls": true,
+          "force_rls": false,
+          "owner": "postgres"
+        },
+        {
+          "name": "product_spotlights",
+          "rls": true,
+          "force_rls": false,
+          "owner": "postgres"
+        }
+      ],
+      "columns": [
+        {
+          "table_name": "product_spotlight_tags",
+          "column_name": "tag_id",
+          "data_type": "text",
+          "is_nullable": "NO",
+          "column_default": null,
+          "character_maximum_length": null,
+          "datetime_precision": null,
+          "ordinal_position": 1
+        },
+        {
+          "table_name": "product_spotlight_tags",
+          "column_name": "spotlight_id",
+          "data_type": "text",
+          "is_nullable": "NO",
+          "column_default": null,
+          "character_maximum_length": null,
+          "datetime_precision": null,
+          "ordinal_position": 2
+        },
+        {
+          "table_name": "product_spotlight_tags",
+          "column_name": "linked_at",
+          "data_type": "timestamp without time zone",
+          "is_nullable": "NO",
+          "column_default": "CURRENT_TIMESTAMP",
+          "character_maximum_length": null,
+          "datetime_precision": 3,
+          "ordinal_position": 3
+        },
+        {
+          "table_name": "product_spotlights",
+          "column_name": "id",
+          "data_type": "text",
+          "is_nullable": "NO",
+          "column_default": null,
+          "character_maximum_length": null,
+          "datetime_precision": null,
+          "ordinal_position": 1
+        },
+        {
+          "table_name": "product_spotlights",
+          "column_name": "project_id",
+          "data_type": "text",
+          "is_nullable": "NO",
+          "column_default": null,
+          "character_maximum_length": null,
+          "datetime_precision": null,
+          "ordinal_position": 2
+        },
+        {
+          "table_name": "product_spotlights",
+          "column_name": "product_id",
+          "data_type": "text",
+          "is_nullable": "NO",
+          "column_default": null,
+          "character_maximum_length": null,
+          "datetime_precision": null,
+          "ordinal_position": 3
+        },
+        {
+          "table_name": "product_spotlights",
+          "column_name": "room_id",
+          "data_type": "text",
+          "is_nullable": "YES",
+          "column_default": null,
+          "character_maximum_length": null,
+          "datetime_precision": null,
+          "ordinal_position": 4
+        },
+        {
+          "table_name": "product_spotlights",
+          "column_name": "publisher_user_id",
+          "data_type": "text",
+          "is_nullable": "YES",
+          "column_default": null,
+          "character_maximum_length": null,
+          "datetime_precision": null,
+          "ordinal_position": 5
+        },
+        {
+          "table_name": "product_spotlights",
+          "column_name": "publisher_org_id",
+          "data_type": "text",
+          "is_nullable": "YES",
+          "column_default": null,
+          "character_maximum_length": null,
+          "datetime_precision": null,
+          "ordinal_position": 6
+        },
+        {
+          "table_name": "product_spotlights",
+          "column_name": "variant",
+          "data_type": "character varying",
+          "is_nullable": "NO",
+          "column_default": "''::character varying",
+          "character_maximum_length": 160,
+          "datetime_precision": null,
+          "ordinal_position": 7
+        },
+        {
+          "table_name": "product_spotlights",
+          "column_name": "finish",
+          "data_type": "character varying",
+          "is_nullable": "NO",
+          "column_default": "''::character varying",
+          "character_maximum_length": 160,
+          "datetime_precision": null,
+          "ordinal_position": 8
+        },
+        {
+          "table_name": "product_spotlights",
+          "column_name": "is_selected",
+          "data_type": "boolean",
+          "is_nullable": "NO",
+          "column_default": "true",
+          "character_maximum_length": null,
+          "datetime_precision": null,
+          "ordinal_position": 9
+        },
+        {
+          "table_name": "product_spotlights",
+          "column_name": "private_note",
+          "data_type": "text",
+          "is_nullable": "YES",
+          "column_default": null,
+          "character_maximum_length": null,
+          "datetime_precision": null,
+          "ordinal_position": 10
+        },
+        {
+          "table_name": "product_spotlights",
+          "column_name": "selected_by_id",
+          "data_type": "text",
+          "is_nullable": "NO",
+          "column_default": null,
+          "character_maximum_length": null,
+          "datetime_precision": null,
+          "ordinal_position": 11
+        },
+        {
+          "table_name": "product_spotlights",
+          "column_name": "selected_at",
+          "data_type": "timestamp without time zone",
+          "is_nullable": "NO",
+          "column_default": "CURRENT_TIMESTAMP",
+          "character_maximum_length": null,
+          "datetime_precision": 3,
+          "ordinal_position": 12
+        },
+        {
+          "table_name": "product_spotlights",
+          "column_name": "selection_version",
+          "data_type": "integer",
+          "is_nullable": "NO",
+          "column_default": "1",
+          "character_maximum_length": null,
+          "datetime_precision": null,
+          "ordinal_position": 13
+        },
+        {
+          "table_name": "product_spotlights",
+          "column_name": "created_at",
+          "data_type": "timestamp without time zone",
+          "is_nullable": "NO",
+          "column_default": "CURRENT_TIMESTAMP",
+          "character_maximum_length": null,
+          "datetime_precision": 3,
+          "ordinal_position": 14
+        },
+        {
+          "table_name": "product_spotlights",
+          "column_name": "updated_at",
+          "data_type": "timestamp without time zone",
+          "is_nullable": "NO",
+          "column_default": null,
+          "character_maximum_length": null,
+          "datetime_precision": 3,
+          "ordinal_position": 15
+        }
+      ],
+      "constraints": [
+        {
+          "name": "product_spotlight_tags_pkey",
+          "type": "p",
+          "table_name": "product_spotlight_tags",
+          "definition": "PRIMARY KEY (tag_id)",
+          "delete_action": " ",
+          "update_action": " "
+        },
+        {
+          "name": "product_spotlight_tags_spotlight_id_fkey",
+          "type": "f",
+          "table_name": "product_spotlight_tags",
+          "definition": "FOREIGN KEY (spotlight_id) REFERENCES product_spotlights(id) ON UPDATE CASCADE ON DELETE CASCADE",
+          "delete_action": "c",
+          "update_action": "c"
+        },
+        {
+          "name": "product_spotlight_tags_tag_id_fkey",
+          "type": "f",
+          "table_name": "product_spotlight_tags",
+          "definition": "FOREIGN KEY (tag_id) REFERENCES product_tags(id) ON UPDATE CASCADE ON DELETE CASCADE",
+          "delete_action": "c",
+          "update_action": "c"
+        },
+        {
+          "name": "product_spotlights_finish_trimmed",
+          "type": "c",
+          "table_name": "product_spotlights",
+          "definition": "CHECK (((finish)::text = btrim((finish)::text)))",
+          "delete_action": " ",
+          "update_action": " "
+        },
+        {
+          "name": "product_spotlights_pkey",
+          "type": "p",
+          "table_name": "product_spotlights",
+          "definition": "PRIMARY KEY (id)",
+          "delete_action": " ",
+          "update_action": " "
+        },
+        {
+          "name": "product_spotlights_product_id_fkey",
+          "type": "f",
+          "table_name": "product_spotlights",
+          "definition": "FOREIGN KEY (product_id) REFERENCES products(id) ON UPDATE CASCADE ON DELETE RESTRICT",
+          "delete_action": "r",
+          "update_action": "c"
+        },
+        {
+          "name": "product_spotlights_project_id_fkey",
+          "type": "f",
+          "table_name": "product_spotlights",
+          "definition": "FOREIGN KEY (project_id) REFERENCES projects(id) ON UPDATE CASCADE ON DELETE CASCADE",
+          "delete_action": "c",
+          "update_action": "c"
+        },
+        {
+          "name": "product_spotlights_publisher_org_id_fkey",
+          "type": "f",
+          "table_name": "product_spotlights",
+          "definition": "FOREIGN KEY (publisher_org_id) REFERENCES organizations(id) ON UPDATE CASCADE ON DELETE RESTRICT",
+          "delete_action": "r",
+          "update_action": "c"
+        },
+        {
+          "name": "product_spotlights_publisher_user_id_fkey",
+          "type": "f",
+          "table_name": "product_spotlights",
+          "definition": "FOREIGN KEY (publisher_user_id) REFERENCES users(id) ON UPDATE CASCADE ON DELETE RESTRICT",
+          "delete_action": "r",
+          "update_action": "c"
+        },
+        {
+          "name": "product_spotlights_publisher_xor",
+          "type": "c",
+          "table_name": "product_spotlights",
+          "definition": "CHECK (((publisher_user_id IS NOT NULL) <> (publisher_org_id IS NOT NULL)))",
+          "delete_action": " ",
+          "update_action": " "
+        },
+        {
+          "name": "product_spotlights_room_id_fkey",
+          "type": "f",
+          "table_name": "product_spotlights",
+          "definition": "FOREIGN KEY (room_id) REFERENCES rooms(id) ON UPDATE CASCADE ON DELETE SET NULL",
+          "delete_action": "n",
+          "update_action": "c"
+        },
+        {
+          "name": "product_spotlights_selected_by_id_fkey",
+          "type": "f",
+          "table_name": "product_spotlights",
+          "definition": "FOREIGN KEY (selected_by_id) REFERENCES users(id) ON UPDATE CASCADE ON DELETE RESTRICT",
+          "delete_action": "r",
+          "update_action": "c"
+        },
+        {
+          "name": "product_spotlights_variant_trimmed",
+          "type": "c",
+          "table_name": "product_spotlights",
+          "definition": "CHECK (((variant)::text = btrim((variant)::text)))",
+          "delete_action": " ",
+          "update_action": " "
+        },
+        {
+          "name": "product_spotlights_version_positive",
+          "type": "c",
+          "table_name": "product_spotlights",
+          "definition": "CHECK ((selection_version > 0))",
+          "delete_action": " ",
+          "update_action": " "
+        }
+      ],
+      "indexes": [
+        {
+          "tablename": "product_spotlight_tags",
+          "indexname": "product_spotlight_tags_pkey",
+          "indexdef": "CREATE UNIQUE INDEX product_spotlight_tags_pkey ON public.product_spotlight_tags USING btree (tag_id)"
+        },
+        {
+          "tablename": "product_spotlight_tags",
+          "indexname": "product_spotlight_tags_spotlight_idx",
+          "indexdef": "CREATE INDEX product_spotlight_tags_spotlight_idx ON public.product_spotlight_tags USING btree (spotlight_id)"
+        },
+        {
+          "tablename": "product_spotlights",
+          "indexname": "product_spotlights_org_scope_key",
+          "indexdef": "CREATE UNIQUE INDEX product_spotlights_org_scope_key ON public.product_spotlights USING btree (publisher_org_id, project_id, product_id, room_id, variant, finish) WHERE ((publisher_org_id IS NOT NULL) AND (room_id IS NOT NULL))"
+        },
+        {
+          "tablename": "product_spotlights",
+          "indexname": "product_spotlights_person_scope_key",
+          "indexdef": "CREATE UNIQUE INDEX product_spotlights_person_scope_key ON public.product_spotlights USING btree (publisher_user_id, project_id, product_id, room_id, variant, finish) WHERE ((publisher_user_id IS NOT NULL) AND (room_id IS NOT NULL))"
+        },
+        {
+          "tablename": "product_spotlights",
+          "indexname": "product_spotlights_pkey",
+          "indexdef": "CREATE UNIQUE INDEX product_spotlights_pkey ON public.product_spotlights USING btree (id)"
+        },
+        {
+          "tablename": "product_spotlights",
+          "indexname": "product_spotlights_product_idx",
+          "indexdef": "CREATE INDEX product_spotlights_product_idx ON public.product_spotlights USING btree (product_id)"
+        },
+        {
+          "tablename": "product_spotlights",
+          "indexname": "product_spotlights_project_selected_idx",
+          "indexdef": "CREATE INDEX product_spotlights_project_selected_idx ON public.product_spotlights USING btree (project_id, is_selected)"
+        },
+        {
+          "tablename": "product_spotlights",
+          "indexname": "product_spotlights_publisher_org_idx",
+          "indexdef": "CREATE INDEX product_spotlights_publisher_org_idx ON public.product_spotlights USING btree (publisher_org_id)"
+        },
+        {
+          "tablename": "product_spotlights",
+          "indexname": "product_spotlights_publisher_user_idx",
+          "indexdef": "CREATE INDEX product_spotlights_publisher_user_idx ON public.product_spotlights USING btree (publisher_user_id)"
+        },
+        {
+          "tablename": "product_spotlights",
+          "indexname": "product_spotlights_room_idx",
+          "indexdef": "CREATE INDEX product_spotlights_room_idx ON public.product_spotlights USING btree (room_id)"
+        },
+        {
+          "tablename": "product_spotlights",
+          "indexname": "product_spotlights_selector_idx",
+          "indexdef": "CREATE INDEX product_spotlights_selector_idx ON public.product_spotlights USING btree (selected_by_id)"
+        }
+      ],
+      "policies": 0,
+      "spotlightCount": 0,
+      "sourceCount": 0
+    },
+    "privileges": [
+      {
+        "rolname": "anon",
+        "rolsuper": false,
+        "rolbypassrls": false,
+        "rolcanlogin": false,
+        "relname": "product_spotlight_tags",
+        "can_use_owner_role": false,
+        "select_grant": false,
+        "insert_grant": false,
+        "update_grant": false,
+        "delete_grant": false,
+        "truncate_grant": false
+      },
+      {
+        "rolname": "anon",
+        "rolsuper": false,
+        "rolbypassrls": false,
+        "rolcanlogin": false,
+        "relname": "product_spotlights",
+        "can_use_owner_role": false,
+        "select_grant": false,
+        "insert_grant": false,
+        "update_grant": false,
+        "delete_grant": false,
+        "truncate_grant": false
+      },
+      {
+        "rolname": "authenticated",
+        "rolsuper": false,
+        "rolbypassrls": false,
+        "rolcanlogin": false,
+        "relname": "product_spotlight_tags",
+        "can_use_owner_role": false,
+        "select_grant": false,
+        "insert_grant": false,
+        "update_grant": false,
+        "delete_grant": false,
+        "truncate_grant": false
+      },
+      {
+        "rolname": "authenticated",
+        "rolsuper": false,
+        "rolbypassrls": false,
+        "rolcanlogin": false,
+        "relname": "product_spotlights",
+        "can_use_owner_role": false,
+        "select_grant": false,
+        "insert_grant": false,
+        "update_grant": false,
+        "delete_grant": false,
+        "truncate_grant": false
+      },
+      {
+        "rolname": "postgres",
+        "rolsuper": false,
+        "rolbypassrls": true,
+        "rolcanlogin": true,
+        "relname": "product_spotlight_tags",
+        "can_use_owner_role": true,
+        "select_grant": true,
+        "insert_grant": true,
+        "update_grant": true,
+        "delete_grant": true,
+        "truncate_grant": true
+      },
+      {
+        "rolname": "postgres",
+        "rolsuper": false,
+        "rolbypassrls": true,
+        "rolcanlogin": true,
+        "relname": "product_spotlights",
+        "can_use_owner_role": true,
+        "select_grant": true,
+        "insert_grant": true,
+        "update_grant": true,
+        "delete_grant": true,
+        "truncate_grant": true
+      },
+      {
+        "rolname": "service_role",
+        "rolsuper": false,
+        "rolbypassrls": true,
+        "rolcanlogin": false,
+        "relname": "product_spotlight_tags",
+        "can_use_owner_role": false,
+        "select_grant": false,
+        "insert_grant": false,
+        "update_grant": false,
+        "delete_grant": false,
+        "truncate_grant": false
+      },
+      {
+        "rolname": "service_role",
+        "rolsuper": false,
+        "rolbypassrls": true,
+        "rolcanlogin": false,
+        "relname": "product_spotlights",
+        "can_use_owner_role": false,
+        "select_grant": false,
+        "insert_grant": false,
+        "update_grant": false,
+        "delete_grant": false,
+        "truncate_grant": false
+      }
+    ],
+    "exactReviewedCatalogMatch": true,
+    "migrationStatus": "Database schema is up to date!",
+    "foreignKeys": 8,
+    "checks": 4,
+    "partialUniqueIndexes": 2,
+    "ordinaryIndexes": 7,
+    "primaryKeyIndexes": 2
+  },
+  "limitations": [
+    "Scheduled backup availability verified in dashboard; restore not executed.",
+    "Supabase service_role has no table grants; the existing Prisma postgres connection is the intended privileged writer.",
+    "No application feature, interview milestone, backfill or deployment performed."
+  ]
+}
