@@ -1,0 +1,37 @@
+{
+  "status": "Static proposal validation only; no SQL/runtime execution",
+  "baselineHead": "ac64f260e8a548bc5cfa5a3b9944278bc726c511",
+  "fetchedMain": "d5f3dcf10d4acf737ffd5f9dfc86e5e4e2bf55ff",
+  "prismaVersion": "6.18.0",
+  "checks": {
+    "isolatedPrismaFormat": "PASS",
+    "isolatedPrismaValidate": "PASS",
+    "databaseFreePrismaMigrateDiff": "PASS",
+    "generatedDdlComparison": "PASS: 31 column type/nullability/default tuples, eight Prisma secondary indexes, six FK source/target/action tuples match",
+    "sqlOnlyStaticCounts": "PASS: 11 CHECKs, one extra partial unique index, two functions, five triggers, RLS on two tables; no grant/policy/backfill statement",
+    "patchApplyCheck": "PASS",
+    "migrationDiscipline": "[phase5e-check] OK — all counts at or below baseline.\n  looseSql=32/32 phantomCalls=0/0 missingSql=0/0 nonIdempotent=0/0",
+    "gitDiffCheck": "PASS",
+    "activeSchemaUnchanged": "PASS: exact normalized-LF equality with session baseline",
+    "existingMigrationHash": "PASS",
+    "vercelDeploymentHold": "PASS: git.deploymentEnabled remains false"
+  },
+  "notExecuted": [
+    "SQL parse/application/replay/catalog against PostgreSQL",
+    "SQL deletion/concurrency/rollback/RLS runtime tests",
+    "Migration command/target-binding runtime suite",
+    "Prisma generate for this proposal",
+    "TypeScript/build/service/API/browser tests",
+    "Live model evaluation",
+    "Application database queries or migration",
+    "Fresh Supabase deployment-control inspection"
+  ],
+  "activeSchemaSha256LF": "9e024086632362f69b8922bd9a6d71742a6f5a76d3a0115de37e9752ee8a6e54",
+  "installedDraftSelectionMigrationSha256LF": "77fa2afe19f2f1e61d344f54d78381ca18d862b795e48edca9b3101c939291ab",
+  "proposedArtifactSha256LF": {
+    "models.prisma": "2559d6f6f77ccf819912ee9c372fbde79a508fe2bd5e8702f778fa20066b1cad",
+    "inverse-fields.txt": "8c38f1cf724c6644d2c26f3c2aba23a18884eef74a2ba906f7d6da4f4d91d84d",
+    "schema.patch": "b4adb1c49440f67777d9298975be3310805189608d2f300760adb130beb6f8b9",
+    "migration.sql": "50adeaf12a7b402181769746caed685ba3c0a5b58821528f83cffa397e5e2c10"
+  }
+}
