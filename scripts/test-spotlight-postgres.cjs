@@ -96,8 +96,11 @@ async function main() {
   evidence.isolation = { localDockerSocket: true, network: 'none', ports: 0, hostMounts: 0, storage: 'tmpfs', imageId: c.Image, tcpListener: false };
   let ready = false;
   for (let n = 0; n < 60; n++) {
+    // The image starts a temporary server during initdb, then stops it. Wait
+    // for the entrypoint's final exec, not just that temporary server's socket.
+    const pidOne = await cli(['exec', container, 'cat', '/proc/1/comm']);
     const r = await cli(['exec', container, 'pg_isready', '-h', '/var/run/postgresql', '-U', 'postgres', '-d', 'spotlight_test']);
-    if (r.code === 0) { ready = true; break; }
+    if (pidOne.stdout.trim() === 'postgres' && r.code === 0) { ready = true; break; }
     await new Promise(resolve => setTimeout(resolve, 500));
   }
   assert.ok(ready, 'PostgreSQL startup timed out');
