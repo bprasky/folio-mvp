@@ -1,5 +1,6 @@
 "use client";
 import { useState } from "react";
+import { Button } from "@/components/ui/button";
 import {
   PrivateSpotlightInterview,
   SpotlightSelections,
@@ -17,7 +18,9 @@ export function PrivateSpotlightWorkspace({
     <main className="max-w-3xl mx-auto p-8 space-y-6">
       <h1>Private spotlight workspace</h1>
       <SpotlightSelections projectId={projectId} />
-      <button onClick={() => setOpen(true)}>Start or resume interview</button>
+      <Button variant="accent" onClick={() => setOpen(true)}>
+        Start or resume interview
+      </Button>
       {open && (
         <PrivateSpotlightInterview
           projectId={projectId}

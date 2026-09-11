@@ -1,6 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Dialog } from "@/components/ui/dialog";
 import type { runSpotlight, SpotlightCommand } from "@/lib/spotlight/service";
 
 type State = Awaited<ReturnType<typeof runSpotlight>>;
@@ -131,7 +133,10 @@ export function SpotlightSelections({
                 </p>
               )}
               {s?.needsResolution && t.roomId && (
-                <button
+                <Button
+                  variant="ridge"
+                  size="sm"
+                  className="mr-2 mb-2"
                   disabled={busy}
                   onClick={async () => {
                     setBusy(true);
@@ -156,7 +161,7 @@ export function SpotlightSelections({
                   }}
                 >
                   Use this photo’s confirmed room
-                </button>
+                </Button>
               )}
             </div>
           );
@@ -171,7 +176,10 @@ export function SpotlightSelections({
           <p key={s.id}>
             A selected piece has no valid photo source. Its saved history is
             retained. Tag it again in its confirmed room to resume.{" "}
-            <button
+            <Button
+              variant="ridge"
+              size="sm"
+              className="mr-2 mb-2"
               disabled={busy}
               onClick={async () => {
                 setBusy(true);
@@ -196,7 +204,7 @@ export function SpotlightSelections({
               }}
             >
               Deselect and keep history
-            </button>
+            </Button>
           </p>
         ))}
       {error && <p role="alert">{error}</p>}
@@ -324,7 +332,10 @@ function AnswerEditor({
           )}
         </details>
       )}
-      <button
+      <Button
+        variant="ridge"
+        size="sm"
+        className="mr-2 mb-2"
         disabled={
           busy || (!ordinary && !question.eligible) || (!!reuseId && !confirmed)
         }
@@ -381,8 +392,11 @@ function AnswerEditor({
         }}
       >
         Save answer
-      </button>
-      <button
+      </Button>
+      <Button
+        variant="ridge"
+        size="sm"
+        className="mr-2 mb-2"
         disabled={busy}
         onClick={async () => {
           try {
@@ -398,12 +412,15 @@ function AnswerEditor({
         }}
       >
         Refresh saved version
-      </button>
+      </Button>
       {!ordinary &&
         question.kind === "BASE" &&
         question.currentAnswer &&
         question.eligible && (
-          <button
+          <Button
+            variant="ridge"
+            size="sm"
+            className="mr-2 mb-2"
             onClick={async () => {
               try {
                 saved(
@@ -418,7 +435,7 @@ function AnswerEditor({
             }}
           >
             Add a follow-up
-          </button>
+          </Button>
         )}
       {error && <p role="status">{error}</p>}
       {!ordinary && (
@@ -452,64 +469,44 @@ export function PrivateSpotlightInterview({
       .catch((e) => setError(e.message));
   }, [projectId]);
   return (
-    <div
-      role="dialog"
-      aria-modal="true"
-      aria-label="Private spotlight interview"
-      className="fixed inset-0 z-[100] bg-white overflow-auto p-8"
+    <Dialog
+      open
+      onOpenChange={(open) => {
+        if (!open) onClose();
+      }}
     >
-      <div className="max-w-3xl mx-auto space-y-5">
-        <button onClick={onClose}>Close interview</button>
-        <h2>Private spotlight interview</h2>
-        <p>
-          Each selected piece gets a question. Answers stay private. Saving does
-          not publish or contact vendors.
-        </p>
-        {error && <p role="alert">{error}</p>}
-        {state ? (
-          <>
-            <p>
-              {
-                state.questions.filter((q) => q.kind === "BASE" && q.eligible)
-                  .length
-              }{" "}
-              selected piece questions
-            </p>
-            {state.questions
-              .filter((q) => q.eligible)
-              .map((q) => (
-                <AnswerEditor
-                  key={q.id}
-                  {...{ projectId, actorId, state }}
-                  question={q}
-                  saved={setState}
-                />
-              ))}
-            <details>
-              <summary>Earlier ordinary interview answers</summary>
-              {state.ordinaryHistory.map((a, i) => (
-                <div key={a.questionId || a.id || i}>
-                  <p>{a.prompt || a.questionText}</p>
-                  <p className="whitespace-pre-wrap">
-                    {a.answer || a.answerText}
-                  </p>
-                </div>
-              ))}
-            </details>
-            <h2>Project and rooms</h2>
-            {state.ordinary.map((q) => (
-              <AnswerEditor
-                key={q.id}
-                {...{ projectId, actorId, state }}
-                ordinary
-                question={q}
-                saved={setState}
-              />
-            ))}
-            <details>
-              <summary>Inactive spotlight history</summary>
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-label="Private spotlight interview"
+        className="w-[90vw] max-w-3xl max-h-[85vh] bg-surface-card rounded-2xl overflow-auto p-6 md:p-8"
+      >
+        <div className="max-w-3xl mx-auto space-y-5">
+          <Button
+            variant="ridge"
+            size="sm"
+            className="mr-2 mb-2"
+            onClick={onClose}
+          >
+            Close interview
+          </Button>
+          <h2>Private spotlight interview</h2>
+          <p>
+            Each selected piece gets a question. Answers stay private. Saving
+            does not publish or contact vendors.
+          </p>
+          {error && <p role="alert">{error}</p>}
+          {state ? (
+            <>
+              <p>
+                {
+                  state.questions.filter((q) => q.kind === "BASE" && q.eligible)
+                    .length
+                }{" "}
+                selected piece questions
+              </p>
               {state.questions
-                .filter((q) => !q.eligible)
+                .filter((q) => q.eligible)
                 .map((q) => (
                   <AnswerEditor
                     key={q.id}
@@ -518,12 +515,46 @@ export function PrivateSpotlightInterview({
                     saved={setState}
                   />
                 ))}
-            </details>
-          </>
-        ) : (
-          <p>Loading saved interview…</p>
-        )}
+              <details>
+                <summary>Earlier ordinary interview answers</summary>
+                {state.ordinaryHistory.map((a, i) => (
+                  <div key={a.questionId || a.id || i}>
+                    <p>{a.prompt || a.questionText}</p>
+                    <p className="whitespace-pre-wrap">
+                      {a.answer || a.answerText}
+                    </p>
+                  </div>
+                ))}
+              </details>
+              <h2>Project and rooms</h2>
+              {state.ordinary.map((q) => (
+                <AnswerEditor
+                  key={q.id}
+                  {...{ projectId, actorId, state }}
+                  ordinary
+                  question={q}
+                  saved={setState}
+                />
+              ))}
+              <details>
+                <summary>Inactive spotlight history</summary>
+                {state.questions
+                  .filter((q) => !q.eligible)
+                  .map((q) => (
+                    <AnswerEditor
+                      key={q.id}
+                      {...{ projectId, actorId, state }}
+                      question={q}
+                      saved={setState}
+                    />
+                  ))}
+              </details>
+            </>
+          ) : (
+            <p>Loading saved interview…</p>
+          )}
+        </div>
       </div>
-    </div>
+    </Dialog>
   );
 }
