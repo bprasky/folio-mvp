@@ -1,3 +1,4 @@
+import { stripPrivateInterviewData } from '@/lib/spotlight/privacy';
 import { prisma } from '@/lib/prisma';
 import { recordAtelierSignal } from '@/lib/atelier/signals';
 import { AtelierOwnerType, AtelierSignalSourceType } from '@prisma/client';
@@ -275,7 +276,7 @@ export async function processInterviewAnswers(
   interviewId: string
 ): Promise<{ decisionsCreated: number; verificationsCreated: number }> {
   // Fetch interview with answers and project
-  const interview = await prisma.editorialInterview.findUnique({
+  const interview = await stripPrivateInterviewData(await prisma.editorialInterview.findUnique({
     where: { id: interviewId },
     include: {
       answers: true,
@@ -294,7 +295,7 @@ export async function processInterviewAnswers(
         },
       },
     },
-  });
+  }));
 
   if (!interview || !interview.project) {
     throw new Error('Interview or project not found');

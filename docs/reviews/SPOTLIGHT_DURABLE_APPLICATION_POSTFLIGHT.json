@@ -1,0 +1,707 @@
+{
+  "checkedAt": "2026-09-11T16:30:55.789Z",
+  "project": "gwdkhgejsyvynqzolyau",
+  "applicationDirectIdentityMatch": true,
+  "applicationRole": "postgres",
+  "history": [
+    {
+      "migration_name": "20260910210000_add_spotlight_durable_interview",
+      "checksum": "50adeaf12a7b402181769746caed685ba3c0a5b58821528f83cffa397e5e2c10",
+      "finished_at": "2026-09-11T16:25:05.203Z",
+      "rolled_back_at": null
+    }
+  ],
+  "failures": {
+    "unresolved": 0
+  },
+  "catalog": {
+    "serverVersion": "17.4",
+    "tables": [
+      {
+        "name": "spotlight_answer_revisions",
+        "rls": true,
+        "force_rls": false,
+        "owner": "postgres"
+      },
+      {
+        "name": "spotlight_questions",
+        "rls": true,
+        "force_rls": false,
+        "owner": "postgres"
+      }
+    ],
+    "columns": [
+      {
+        "table_name": "spotlight_answer_revisions",
+        "column_name": "id",
+        "data_type": "text",
+        "is_nullable": "NO",
+        "column_default": null,
+        "character_maximum_length": null,
+        "datetime_precision": null,
+        "ordinal_position": 1
+      },
+      {
+        "table_name": "spotlight_answer_revisions",
+        "column_name": "question_id",
+        "data_type": "text",
+        "is_nullable": "NO",
+        "column_default": null,
+        "character_maximum_length": null,
+        "datetime_precision": null,
+        "ordinal_position": 2
+      },
+      {
+        "table_name": "spotlight_answer_revisions",
+        "column_name": "question_version",
+        "data_type": "integer",
+        "is_nullable": "NO",
+        "column_default": null,
+        "character_maximum_length": null,
+        "datetime_precision": null,
+        "ordinal_position": 3
+      },
+      {
+        "table_name": "spotlight_answer_revisions",
+        "column_name": "revision_number",
+        "data_type": "integer",
+        "is_nullable": "NO",
+        "column_default": null,
+        "character_maximum_length": null,
+        "datetime_precision": null,
+        "ordinal_position": 4
+      },
+      {
+        "table_name": "spotlight_answer_revisions",
+        "column_name": "answering_user_id",
+        "data_type": "text",
+        "is_nullable": "NO",
+        "column_default": null,
+        "character_maximum_length": null,
+        "datetime_precision": null,
+        "ordinal_position": 5
+      },
+      {
+        "table_name": "spotlight_answer_revisions",
+        "column_name": "accepted_text",
+        "data_type": "text",
+        "is_nullable": "NO",
+        "column_default": null,
+        "character_maximum_length": null,
+        "datetime_precision": null,
+        "ordinal_position": 6
+      },
+      {
+        "table_name": "spotlight_answer_revisions",
+        "column_name": "acceptance_snapshot",
+        "data_type": "jsonb",
+        "is_nullable": "NO",
+        "column_default": null,
+        "character_maximum_length": null,
+        "datetime_precision": null,
+        "ordinal_position": 7
+      },
+      {
+        "table_name": "spotlight_answer_revisions",
+        "column_name": "input_modality",
+        "data_type": "character varying",
+        "is_nullable": "NO",
+        "column_default": null,
+        "character_maximum_length": 16,
+        "datetime_precision": null,
+        "ordinal_position": 8
+      },
+      {
+        "table_name": "spotlight_answer_revisions",
+        "column_name": "acceptance_mode",
+        "data_type": "character varying",
+        "is_nullable": "NO",
+        "column_default": null,
+        "character_maximum_length": 24,
+        "datetime_precision": null,
+        "ordinal_position": 9
+      },
+      {
+        "table_name": "spotlight_answer_revisions",
+        "column_name": "reused_from_revision_id",
+        "data_type": "text",
+        "is_nullable": "YES",
+        "column_default": null,
+        "character_maximum_length": null,
+        "datetime_precision": null,
+        "ordinal_position": 10
+      },
+      {
+        "table_name": "spotlight_answer_revisions",
+        "column_name": "reuse_snapshot",
+        "data_type": "jsonb",
+        "is_nullable": "YES",
+        "column_default": null,
+        "character_maximum_length": null,
+        "datetime_precision": null,
+        "ordinal_position": 11
+      },
+      {
+        "table_name": "spotlight_answer_revisions",
+        "column_name": "request_key",
+        "data_type": "character varying",
+        "is_nullable": "NO",
+        "column_default": null,
+        "character_maximum_length": 128,
+        "datetime_precision": null,
+        "ordinal_position": 12
+      },
+      {
+        "table_name": "spotlight_answer_revisions",
+        "column_name": "request_hash",
+        "data_type": "character varying",
+        "is_nullable": "NO",
+        "column_default": null,
+        "character_maximum_length": 64,
+        "datetime_precision": null,
+        "ordinal_position": 13
+      },
+      {
+        "table_name": "spotlight_answer_revisions",
+        "column_name": "accepted_state_version",
+        "data_type": "integer",
+        "is_nullable": "NO",
+        "column_default": null,
+        "character_maximum_length": null,
+        "datetime_precision": null,
+        "ordinal_position": 14
+      },
+      {
+        "table_name": "spotlight_answer_revisions",
+        "column_name": "accepted_selection_version",
+        "data_type": "integer",
+        "is_nullable": "NO",
+        "column_default": null,
+        "character_maximum_length": null,
+        "datetime_precision": null,
+        "ordinal_position": 15
+      },
+      {
+        "table_name": "spotlight_answer_revisions",
+        "column_name": "accepted_at",
+        "data_type": "timestamp without time zone",
+        "is_nullable": "NO",
+        "column_default": "CURRENT_TIMESTAMP",
+        "character_maximum_length": null,
+        "datetime_precision": 3,
+        "ordinal_position": 16
+      },
+      {
+        "table_name": "spotlight_questions",
+        "column_name": "id",
+        "data_type": "text",
+        "is_nullable": "NO",
+        "column_default": null,
+        "character_maximum_length": null,
+        "datetime_precision": null,
+        "ordinal_position": 1
+      },
+      {
+        "table_name": "spotlight_questions",
+        "column_name": "spotlight_id",
+        "data_type": "text",
+        "is_nullable": "NO",
+        "column_default": null,
+        "character_maximum_length": null,
+        "datetime_precision": null,
+        "ordinal_position": 2
+      },
+      {
+        "table_name": "spotlight_questions",
+        "column_name": "kind",
+        "data_type": "character varying",
+        "is_nullable": "NO",
+        "column_default": null,
+        "character_maximum_length": 16,
+        "datetime_precision": null,
+        "ordinal_position": 3
+      },
+      {
+        "table_name": "spotlight_questions",
+        "column_name": "question_version",
+        "data_type": "integer",
+        "is_nullable": "NO",
+        "column_default": null,
+        "character_maximum_length": null,
+        "datetime_precision": null,
+        "ordinal_position": 4
+      },
+      {
+        "table_name": "spotlight_questions",
+        "column_name": "meaning_key",
+        "data_type": "character varying",
+        "is_nullable": "NO",
+        "column_default": null,
+        "character_maximum_length": 64,
+        "datetime_precision": null,
+        "ordinal_position": 5
+      },
+      {
+        "table_name": "spotlight_questions",
+        "column_name": "context_snapshot",
+        "data_type": "jsonb",
+        "is_nullable": "NO",
+        "column_default": null,
+        "character_maximum_length": null,
+        "datetime_precision": null,
+        "ordinal_position": 6
+      },
+      {
+        "table_name": "spotlight_questions",
+        "column_name": "wording",
+        "data_type": "text",
+        "is_nullable": "NO",
+        "column_default": null,
+        "character_maximum_length": null,
+        "datetime_precision": null,
+        "ordinal_position": 7
+      },
+      {
+        "table_name": "spotlight_questions",
+        "column_name": "prompt_version",
+        "data_type": "character varying",
+        "is_nullable": "NO",
+        "column_default": null,
+        "character_maximum_length": 80,
+        "datetime_precision": null,
+        "ordinal_position": 8
+      },
+      {
+        "table_name": "spotlight_questions",
+        "column_name": "policy_version",
+        "data_type": "character varying",
+        "is_nullable": "NO",
+        "column_default": null,
+        "character_maximum_length": 80,
+        "datetime_precision": null,
+        "ordinal_position": 9
+      },
+      {
+        "table_name": "spotlight_questions",
+        "column_name": "parent_answer_revision_id",
+        "data_type": "text",
+        "is_nullable": "YES",
+        "column_default": null,
+        "character_maximum_length": null,
+        "datetime_precision": null,
+        "ordinal_position": 10
+      },
+      {
+        "table_name": "spotlight_questions",
+        "column_name": "retired_at",
+        "data_type": "timestamp without time zone",
+        "is_nullable": "YES",
+        "column_default": null,
+        "character_maximum_length": null,
+        "datetime_precision": 3,
+        "ordinal_position": 11
+      },
+      {
+        "table_name": "spotlight_questions",
+        "column_name": "retired_reason",
+        "data_type": "character varying",
+        "is_nullable": "YES",
+        "column_default": null,
+        "character_maximum_length": 32,
+        "datetime_precision": null,
+        "ordinal_position": 12
+      },
+      {
+        "table_name": "spotlight_questions",
+        "column_name": "state_version",
+        "data_type": "integer",
+        "is_nullable": "NO",
+        "column_default": "0",
+        "character_maximum_length": null,
+        "datetime_precision": null,
+        "ordinal_position": 13
+      },
+      {
+        "table_name": "spotlight_questions",
+        "column_name": "current_answer_number",
+        "data_type": "integer",
+        "is_nullable": "YES",
+        "column_default": null,
+        "character_maximum_length": null,
+        "datetime_precision": null,
+        "ordinal_position": 14
+      },
+      {
+        "table_name": "spotlight_questions",
+        "column_name": "created_at",
+        "data_type": "timestamp without time zone",
+        "is_nullable": "NO",
+        "column_default": "CURRENT_TIMESTAMP",
+        "character_maximum_length": null,
+        "datetime_precision": 3,
+        "ordinal_position": 15
+      }
+    ],
+    "constraints": [
+      {
+        "name": "spotlight_answer_revisions_answering_user_id_fkey",
+        "type": "f",
+        "table_name": "spotlight_answer_revisions",
+        "definition": "FOREIGN KEY (answering_user_id) REFERENCES users(id) ON UPDATE RESTRICT ON DELETE RESTRICT",
+        "delete_action": "r",
+        "update_action": "r"
+      },
+      {
+        "name": "spotlight_answer_revisions_pkey",
+        "type": "p",
+        "table_name": "spotlight_answer_revisions",
+        "definition": "PRIMARY KEY (id)",
+        "delete_action": " ",
+        "update_action": " "
+      },
+      {
+        "name": "spotlight_answer_revisions_reused_from_revision_id_fkey",
+        "type": "f",
+        "table_name": "spotlight_answer_revisions",
+        "definition": "FOREIGN KEY (reused_from_revision_id) REFERENCES spotlight_answer_revisions(id) ON UPDATE RESTRICT ON DELETE RESTRICT",
+        "delete_action": "r",
+        "update_action": "r"
+      },
+      {
+        "name": "spotlight_answers_modality_check",
+        "type": "c",
+        "table_name": "spotlight_answer_revisions",
+        "definition": "CHECK (((input_modality)::text = ANY ((ARRAY['TEXT'::character varying, 'VOICE'::character varying, 'MIXED'::character varying])::text[])))",
+        "delete_action": " ",
+        "update_action": " "
+      },
+      {
+        "name": "spotlight_answers_no_self_reuse",
+        "type": "c",
+        "table_name": "spotlight_answer_revisions",
+        "definition": "CHECK (((reused_from_revision_id IS NULL) OR (reused_from_revision_id <> id)))",
+        "delete_action": " ",
+        "update_action": " "
+      },
+      {
+        "name": "spotlight_answers_numbers_check",
+        "type": "c",
+        "table_name": "spotlight_answer_revisions",
+        "definition": "CHECK (((revision_number > 0) AND (accepted_state_version > 0) AND (accepted_selection_version > 0)))",
+        "delete_action": " ",
+        "update_action": " "
+      },
+      {
+        "name": "spotlight_answers_question_version_fk",
+        "type": "f",
+        "table_name": "spotlight_answer_revisions",
+        "definition": "FOREIGN KEY (question_id, question_version) REFERENCES spotlight_questions(id, question_version) ON UPDATE RESTRICT ON DELETE RESTRICT",
+        "delete_action": "r",
+        "update_action": "r"
+      },
+      {
+        "name": "spotlight_answers_reuse_check",
+        "type": "c",
+        "table_name": "spotlight_answer_revisions",
+        "definition": "CHECK (((((acceptance_mode)::text = 'AUTHORED'::text) AND (reused_from_revision_id IS NULL) AND (reuse_snapshot IS NULL)) OR (((acceptance_mode)::text = 'CONFIRMED_REUSE'::text) AND (reuse_snapshot IS NOT NULL) AND (jsonb_typeof(reuse_snapshot) = 'object'::text))))",
+        "delete_action": " ",
+        "update_action": " "
+      },
+      {
+        "name": "spotlight_answers_snapshot_check",
+        "type": "c",
+        "table_name": "spotlight_answer_revisions",
+        "definition": "CHECK ((jsonb_typeof(acceptance_snapshot) = 'object'::text))",
+        "delete_action": " ",
+        "update_action": " "
+      },
+      {
+        "name": "spotlight_answers_text_check",
+        "type": "c",
+        "table_name": "spotlight_answer_revisions",
+        "definition": "CHECK (((btrim(accepted_text) <> ''::text) AND (btrim((request_key)::text) <> ''::text) AND ((request_hash)::text ~ '^[0-9a-f]{64}$'::text)))",
+        "delete_action": " ",
+        "update_action": " "
+      },
+      {
+        "name": "spotlight_questions_current_answer_fk",
+        "type": "f",
+        "table_name": "spotlight_questions",
+        "definition": "FOREIGN KEY (id, current_answer_number) REFERENCES spotlight_answer_revisions(question_id, revision_number) ON UPDATE RESTRICT ON DELETE RESTRICT",
+        "delete_action": "r",
+        "update_action": "r"
+      },
+      {
+        "name": "spotlight_questions_kind_check",
+        "type": "c",
+        "table_name": "spotlight_questions",
+        "definition": "CHECK (((((kind)::text = 'BASE'::text) AND (parent_answer_revision_id IS NULL)) OR (((kind)::text = 'FOLLOW_UP'::text) AND (parent_answer_revision_id IS NOT NULL))))",
+        "delete_action": " ",
+        "update_action": " "
+      },
+      {
+        "name": "spotlight_questions_parent_answer_revision_id_fkey",
+        "type": "f",
+        "table_name": "spotlight_questions",
+        "definition": "FOREIGN KEY (parent_answer_revision_id) REFERENCES spotlight_answer_revisions(id) ON UPDATE RESTRICT ON DELETE RESTRICT",
+        "delete_action": "r",
+        "update_action": "r"
+      },
+      {
+        "name": "spotlight_questions_pkey",
+        "type": "p",
+        "table_name": "spotlight_questions",
+        "definition": "PRIMARY KEY (id)",
+        "delete_action": " ",
+        "update_action": " "
+      },
+      {
+        "name": "spotlight_questions_retirement_check",
+        "type": "c",
+        "table_name": "spotlight_questions",
+        "definition": "CHECK ((((retired_at IS NULL) AND (retired_reason IS NULL)) OR ((retired_at IS NOT NULL) AND (retired_reason IS NOT NULL) AND ((retired_reason)::text = ANY ((ARRAY['DESELECTED'::character varying, 'NO_VALID_SOURCE'::character varying, 'SCOPE_CHANGED'::character varying, 'PARENT_REANSWERED'::character varying, 'POLICY_CHANGED'::character varying])::text[])))))",
+        "delete_action": " ",
+        "update_action": " "
+      },
+      {
+        "name": "spotlight_questions_snapshot_check",
+        "type": "c",
+        "table_name": "spotlight_questions",
+        "definition": "CHECK ((jsonb_typeof(context_snapshot) = 'object'::text))",
+        "delete_action": " ",
+        "update_action": " "
+      },
+      {
+        "name": "spotlight_questions_spotlight_id_fkey",
+        "type": "f",
+        "table_name": "spotlight_questions",
+        "definition": "FOREIGN KEY (spotlight_id) REFERENCES product_spotlights(id) ON UPDATE RESTRICT ON DELETE RESTRICT",
+        "delete_action": "r",
+        "update_action": "r"
+      },
+      {
+        "name": "spotlight_questions_text_check",
+        "type": "c",
+        "table_name": "spotlight_questions",
+        "definition": "CHECK ((((meaning_key)::text ~ '^[0-9a-f]{64}$'::text) AND (btrim(wording) <> ''::text) AND (btrim((prompt_version)::text) <> ''::text) AND (btrim((policy_version)::text) <> ''::text)))",
+        "delete_action": " ",
+        "update_action": " "
+      },
+      {
+        "name": "spotlight_questions_version_check",
+        "type": "c",
+        "table_name": "spotlight_questions",
+        "definition": "CHECK (((question_version > 0) AND (state_version >= 0) AND ((current_answer_number IS NULL) OR (current_answer_number > 0))))",
+        "delete_action": " ",
+        "update_action": " "
+      }
+    ],
+    "indexes": [
+      {
+        "tablename": "spotlight_answer_revisions",
+        "indexname": "spotlight_answer_revisions_pkey",
+        "indexdef": "CREATE UNIQUE INDEX spotlight_answer_revisions_pkey ON public.spotlight_answer_revisions USING btree (id)"
+      },
+      {
+        "tablename": "spotlight_answer_revisions",
+        "indexname": "spotlight_answers_actor_idx",
+        "indexdef": "CREATE INDEX spotlight_answers_actor_idx ON public.spotlight_answer_revisions USING btree (answering_user_id)"
+      },
+      {
+        "tablename": "spotlight_answer_revisions",
+        "indexname": "spotlight_answers_number_key",
+        "indexdef": "CREATE UNIQUE INDEX spotlight_answers_number_key ON public.spotlight_answer_revisions USING btree (question_id, revision_number)"
+      },
+      {
+        "tablename": "spotlight_answer_revisions",
+        "indexname": "spotlight_answers_request_key",
+        "indexdef": "CREATE UNIQUE INDEX spotlight_answers_request_key ON public.spotlight_answer_revisions USING btree (question_id, answering_user_id, request_key)"
+      },
+      {
+        "tablename": "spotlight_answer_revisions",
+        "indexname": "spotlight_answers_reuse_idx",
+        "indexdef": "CREATE INDEX spotlight_answers_reuse_idx ON public.spotlight_answer_revisions USING btree (reused_from_revision_id)"
+      },
+      {
+        "tablename": "spotlight_questions",
+        "indexname": "spotlight_questions_active_kind_key",
+        "indexdef": "CREATE UNIQUE INDEX spotlight_questions_active_kind_key ON public.spotlight_questions USING btree (spotlight_id, kind) WHERE (retired_at IS NULL)"
+      },
+      {
+        "tablename": "spotlight_questions",
+        "indexname": "spotlight_questions_id_version_key",
+        "indexdef": "CREATE UNIQUE INDEX spotlight_questions_id_version_key ON public.spotlight_questions USING btree (id, question_version)"
+      },
+      {
+        "tablename": "spotlight_questions",
+        "indexname": "spotlight_questions_meaning_key",
+        "indexdef": "CREATE UNIQUE INDEX spotlight_questions_meaning_key ON public.spotlight_questions USING btree (spotlight_id, kind, meaning_key)"
+      },
+      {
+        "tablename": "spotlight_questions",
+        "indexname": "spotlight_questions_parent_idx",
+        "indexdef": "CREATE INDEX spotlight_questions_parent_idx ON public.spotlight_questions USING btree (parent_answer_revision_id)"
+      },
+      {
+        "tablename": "spotlight_questions",
+        "indexname": "spotlight_questions_pkey",
+        "indexdef": "CREATE UNIQUE INDEX spotlight_questions_pkey ON public.spotlight_questions USING btree (id)"
+      },
+      {
+        "tablename": "spotlight_questions",
+        "indexname": "spotlight_questions_version_key",
+        "indexdef": "CREATE UNIQUE INDEX spotlight_questions_version_key ON public.spotlight_questions USING btree (spotlight_id, kind, question_version)"
+      }
+    ],
+    "functions": [
+      {
+        "name": "spotlight_history_no_mutation",
+        "body": "\nBEGIN\n  RAISE EXCEPTION 'Durable spotlight history cannot be updated, deleted or truncated' USING ERRCODE = '23514';\nEND;\n",
+        "security_definer": false,
+        "config": [
+          "search_path=pg_catalog"
+        ],
+        "result": "trigger"
+      },
+      {
+        "name": "spotlight_question_guard",
+        "body": "\nBEGIN\n  IF TG_OP = 'INSERT' THEN\n    IF NEW.state_version <> 0 OR NEW.current_answer_number IS NOT NULL THEN\n      RAISE EXCEPTION 'New question must start without an answer at state version zero' USING ERRCODE = '23514';\n    END IF;\n  ELSE\n    IF (to_jsonb(NEW) - ARRAY['retired_at','retired_reason','state_version','current_answer_number'])\n       IS DISTINCT FROM\n       (to_jsonb(OLD) - ARRAY['retired_at','retired_reason','state_version','current_answer_number']) THEN\n      RAISE EXCEPTION 'Question definition is immutable; reconcile a new meaning explicitly' USING ERRCODE = '23514';\n    END IF;\n    IF NEW.state_version <> OLD.state_version + 1 THEN\n      RAISE EXCEPTION 'Question state version must advance exactly once' USING ERRCODE = '23514';\n    END IF;\n    IF NEW.current_answer_number IS DISTINCT FROM OLD.current_answer_number AND\n       (NEW.current_answer_number IS NULL OR NEW.current_answer_number <> coalesce(OLD.current_answer_number, 0) + 1) THEN\n      RAISE EXCEPTION 'Current answer must advance to the next revision' USING ERRCODE = '23514';\n    END IF;\n  END IF;\n  RETURN NEW;\nEND;\n",
+        "security_definer": false,
+        "config": [
+          "search_path=pg_catalog"
+        ],
+        "result": "trigger"
+      }
+    ],
+    "triggers": [
+      {
+        "name": "spotlight_answers_no_mutation",
+        "table_name": "spotlight_answer_revisions",
+        "type": 27,
+        "enabled": "O",
+        "definition": "CREATE TRIGGER spotlight_answers_no_mutation BEFORE DELETE OR UPDATE ON public.spotlight_answer_revisions FOR EACH ROW EXECUTE FUNCTION spotlight_history_no_mutation()"
+      },
+      {
+        "name": "spotlight_answers_no_truncate",
+        "table_name": "spotlight_answer_revisions",
+        "type": 34,
+        "enabled": "O",
+        "definition": "CREATE TRIGGER spotlight_answers_no_truncate BEFORE TRUNCATE ON public.spotlight_answer_revisions FOR EACH STATEMENT EXECUTE FUNCTION spotlight_history_no_mutation()"
+      },
+      {
+        "name": "spotlight_questions_guard",
+        "table_name": "spotlight_questions",
+        "type": 23,
+        "enabled": "O",
+        "definition": "CREATE TRIGGER spotlight_questions_guard BEFORE INSERT OR UPDATE ON public.spotlight_questions FOR EACH ROW EXECUTE FUNCTION spotlight_question_guard()"
+      },
+      {
+        "name": "spotlight_questions_no_delete",
+        "table_name": "spotlight_questions",
+        "type": 11,
+        "enabled": "O",
+        "definition": "CREATE TRIGGER spotlight_questions_no_delete BEFORE DELETE ON public.spotlight_questions FOR EACH ROW EXECUTE FUNCTION spotlight_history_no_mutation()"
+      },
+      {
+        "name": "spotlight_questions_no_truncate",
+        "table_name": "spotlight_questions",
+        "type": 34,
+        "enabled": "O",
+        "definition": "CREATE TRIGGER spotlight_questions_no_truncate BEFORE TRUNCATE ON public.spotlight_questions FOR EACH STATEMENT EXECUTE FUNCTION spotlight_history_no_mutation()"
+      }
+    ],
+    "policies": 0,
+    "questionCount": 0,
+    "answerCount": 0
+  },
+  "roles": [
+    {
+      "rolname": "authenticated",
+      "rolsuper": false,
+      "rolbypassrls": false,
+      "relname": "spotlight_questions",
+      "owner_access": false,
+      "can_select": false,
+      "can_insert": false,
+      "can_update": false,
+      "can_delete": false
+    },
+    {
+      "rolname": "authenticated",
+      "rolsuper": false,
+      "rolbypassrls": false,
+      "relname": "spotlight_answer_revisions",
+      "owner_access": false,
+      "can_select": false,
+      "can_insert": false,
+      "can_update": false,
+      "can_delete": false
+    },
+    {
+      "rolname": "anon",
+      "rolsuper": false,
+      "rolbypassrls": false,
+      "relname": "spotlight_questions",
+      "owner_access": false,
+      "can_select": false,
+      "can_insert": false,
+      "can_update": false,
+      "can_delete": false
+    },
+    {
+      "rolname": "anon",
+      "rolsuper": false,
+      "rolbypassrls": false,
+      "relname": "spotlight_answer_revisions",
+      "owner_access": false,
+      "can_select": false,
+      "can_insert": false,
+      "can_update": false,
+      "can_delete": false
+    },
+    {
+      "rolname": "service_role",
+      "rolsuper": false,
+      "rolbypassrls": true,
+      "relname": "spotlight_questions",
+      "owner_access": false,
+      "can_select": false,
+      "can_insert": false,
+      "can_update": false,
+      "can_delete": false
+    },
+    {
+      "rolname": "service_role",
+      "rolsuper": false,
+      "rolbypassrls": true,
+      "relname": "spotlight_answer_revisions",
+      "owner_access": false,
+      "can_select": false,
+      "can_insert": false,
+      "can_update": false,
+      "can_delete": false
+    },
+    {
+      "rolname": "postgres",
+      "rolsuper": false,
+      "rolbypassrls": true,
+      "relname": "spotlight_questions",
+      "owner_access": true,
+      "can_select": true,
+      "can_insert": true,
+      "can_update": true,
+      "can_delete": true
+    },
+    {
+      "rolname": "postgres",
+      "rolsuper": false,
+      "rolbypassrls": true,
+      "relname": "spotlight_answer_revisions",
+      "owner_access": true,
+      "can_select": true,
+      "can_insert": true,
+      "can_update": true,
+      "can_delete": true
+    }
+  ]
+}

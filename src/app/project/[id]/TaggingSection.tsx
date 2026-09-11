@@ -1,4 +1,5 @@
 'use client';
+import { SpotlightSelections } from '@/components/spotlight/PrivateSpotlightInterview';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import Image from 'next/image';
@@ -766,6 +767,7 @@ function PhotoTagger({
         </button>
 
         <div className="space-y-2">
+          <SpotlightSelections projectId={projectId} tagIds={photo.tags.map(t => t.id)} />
           <TagList tags={photo.tags} isOwner={isOwner} onEdit={onEditProduct} onDelete={handleDelete} onConfirm={onConfirm} siblingPhotos={siblingPhotos} onMove={handleMove} />
           <ResolveRow photo={photo} isOwner={isOwner} busy={marking} onMark={markNoProducts} />
         </div>
@@ -915,7 +917,8 @@ function PhotoTagger({
             />
           ) : (
             <div className="space-y-3">
-              <TagList tags={photo.tags} isOwner={isOwner} onEdit={onEditProduct} onDelete={handleDelete} onConfirm={onConfirm} siblingPhotos={siblingPhotos} onMove={handleMove} />
+              <SpotlightSelections projectId={projectId} tagIds={photo.tags.map(t => t.id)} />
+          <TagList tags={photo.tags} isOwner={isOwner} onEdit={onEditProduct} onDelete={handleDelete} onConfirm={onConfirm} siblingPhotos={siblingPhotos} onMove={handleMove} />
               <p className="folio-meta text-folio-text-tertiary">
                 Click the photo to add another product.
               </p>

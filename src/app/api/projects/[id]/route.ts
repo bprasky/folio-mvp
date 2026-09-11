@@ -1,3 +1,5 @@
+import { deleteProjectWithSpotlightGuard } from '@/lib/spotlight/deletion';
+import { SpotlightConflict } from '@/lib/spotlight/gate';
 export const dynamic = 'force-dynamic';
 
 import { NextRequest, NextResponse } from 'next/server';
@@ -60,6 +62,7 @@ export async function GET(
 
     return NextResponse.json(project);
   } catch (error) {
+    if (error instanceof SpotlightConflict) return NextResponse.json({ code: error.code, error: error.message }, { status: error.status });
     if (error instanceof Error && error.message === 'Forbidden') {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
@@ -92,12 +95,11 @@ export async function DELETE(
     // tears down or detaches the children. (If a real FK ever blocks this,
     // the error below names the constraint; fix that constraint's onDelete
     // in a migration rather than unlinking by hand here.)
-    await prisma.project.delete({
-      where: { id: projectId },
-    });
+    await deleteProjectWithSpotlightGuard(projectId);
 
     return NextResponse.json({ message: 'Project deleted successfully', deleted: true });
   } catch (error) {
+    if (error instanceof SpotlightConflict) return NextResponse.json({ code: error.code, error: error.message }, { status: error.status });
     const message = error instanceof Error ? error.message : 'Unknown error';
     console.error('Error deleting project:', error);
     if (message === 'NotFound') {

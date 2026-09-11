@@ -1,3 +1,4 @@
+import { stripPrivateInterviewData } from '@/lib/spotlight/privacy';
 // @idor-allow: public-read reason="Public published project post viewable anonymously by slug"
 export const dynamic = 'force-dynamic';
 
@@ -136,7 +137,7 @@ export async function GET(
         excerpt: post.excerpt,
         keywords: post.keywords,
         expandedBlocks: post.expandedBlocks,
-        provenance: post.provenance,
+        provenance: await stripPrivateInterviewData(post.provenance),
         credits: post.credits,
         publishedAt: post.publishedAt,
       },

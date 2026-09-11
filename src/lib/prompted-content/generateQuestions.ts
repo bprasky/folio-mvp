@@ -1,3 +1,4 @@
+import { stripPrivateInterviewData } from '@/lib/spotlight/privacy';
 /**
  * Prompted Content — Question Generation (Phase 1 + 2)
  *
@@ -215,7 +216,7 @@ interface ProjectReflectiveQuestion {
  */
 export async function generateProjectReflectiveQuestions(userId: string) {
   // Load published projects with rich context
-  const projects = await prisma.project.findMany({
+  const projects = await stripPrivateInterviewData(await prisma.project.findMany({
     where: {
       ownerId: userId,
       post: { status: 'PUBLISHED' },
@@ -240,7 +241,7 @@ export async function generateProjectReflectiveQuestions(userId: string) {
       editorialInterviews: {
         select: {
           answers: {
-            select: { questionText: true, answerText: true },
+            select: { questionId: true, questionText: true, answerText: true },
             take: 10,
           },
         },
@@ -249,7 +250,7 @@ export async function generateProjectReflectiveQuestions(userId: string) {
     },
     orderBy: { publishedAt: 'desc' },
     take: 5,
-  });
+  }));
 
   if (projects.length === 0) {
     console.log('[prompted-content] No published projects for user:', userId);

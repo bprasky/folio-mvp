@@ -1,3 +1,4 @@
+import { legacyInterviewBoundary } from '@/lib/spotlight/legacyBoundary';
 export const dynamic = 'force-dynamic';
 
 import { NextRequest, NextResponse } from "next/server";
@@ -419,6 +420,9 @@ export async function GET(
   request: NextRequest,
   { params }: { params: { projectId: string } }
 ) {
+  const spotlightBoundary = await legacyInterviewBoundary(request);
+  if (spotlightBoundary) return spotlightBoundary;
+
   // Try to get contextual questions from AI classification
   let contextualQuestions: any[] = [];
   try {
@@ -540,6 +544,9 @@ export async function POST(
   request: NextRequest,
   { params }: { params: { projectId: string } }
 ) {
+  const spotlightBoundary = await legacyInterviewBoundary(request);
+  if (spotlightBoundary) return spotlightBoundary;
+
   try {
     if (!POSTING_V1_ENABLED) {
       return NextResponse.json(

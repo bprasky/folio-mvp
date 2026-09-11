@@ -1,3 +1,4 @@
+import { assertLegacyInterviewAllowed } from '@/lib/spotlight/legacyBoundary';
 import {
   toInterviewQuestion,
   type ContextLevel,
@@ -51,6 +52,8 @@ export interface InterviewQuestionsResult {
  * Questions scale with available project context.
  */
 export async function getInterviewQuestions(projectId: string): Promise<InterviewQuestion[]> {
+  assertLegacyInterviewAllowed(projectId);
+
   const result = await getInterviewQuestionsWithContext(projectId);
   return result.questions;
 }
@@ -67,6 +70,8 @@ export async function getInterviewQuestionsWithContext(
     includeGeneric?: boolean;
   }
 ): Promise<InterviewQuestionsResult> {
+  assertLegacyInterviewAllowed(projectId);
+
   // Generate per-room questions
   const { roomResults, context } = await generateAllRoomQuestions(projectId);
 
@@ -553,6 +558,8 @@ export async function getInterviewQuestionsGroupedByRoom(
     persistQuestions?: boolean;
   },
 ): Promise<GroupedQuestionsResult> {
+  assertLegacyInterviewAllowed(projectId);
+
   const phase = options?.phase ?? 'full';
   const { getContextLevelDescription, getContextUpgradeSuggestion } = await import('@/lib/interview');
 

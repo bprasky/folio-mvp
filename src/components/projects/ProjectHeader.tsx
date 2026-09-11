@@ -17,7 +17,8 @@ export function ProjectHeader({ projectId, title, subtitle }: ProjectHeaderProps
   const handleDelete = () => {
     startTransition(async () => {
       try {
-        await deleteProjectAction({ projectId });
+        const result = await deleteProjectAction({ projectId });
+        if (result?.ok === false) { alert(result.message); return; }
         // redirect happens in server action
       } catch (error) {
         console.error('Failed to delete project:', error);

@@ -1,3 +1,5 @@
+import { legacyInterviewBoundary } from '@/lib/spotlight/legacyBoundary';
+import { stripPrivateInterviewData } from '@/lib/spotlight/privacy';
 export const dynamic = 'force-dynamic';
 // Editorial generation is the heaviest LLM call in the app — a multi-room draft
 // runs for minutes. Without an explicit ceiling this route inherits Vercel's
@@ -262,6 +264,9 @@ export async function POST(
   request: NextRequest,
   { params }: { params: { projectId: string } }
 ) {
+  const spotlightBoundary = await legacyInterviewBoundary(request);
+  if (spotlightBoundary) return spotlightBoundary;
+
   const _cid = cid('generate');
   const projectId = params.projectId; // Extract early for catch block access
   let duration = 0;
@@ -294,7 +299,7 @@ export async function POST(
     const debugEcho = Boolean(body.debugEcho);
     const callSource = body?.source || request.headers.get("x-debug-client") || "unknown";
     const force = Boolean(body.force);
-    const answersOverride = Array.isArray(body.answersOverride) ? body.answersOverride : undefined;
+    const answersOverride = Array.isArray(body.answersOverride) ? await stripPrivateInterviewData(body.answersOverride) : undefined;
     const followupsOverride = Array.isArray(body.followupsOverride) ? body.followupsOverride : undefined;
     // The Room IDs the client expects to be written up. ADVISORY ONLY — the
     // server decides eligibility for itself from the canonical provenance answer
@@ -549,7 +554,7 @@ export async function POST(
 
     // Get interview data from provenance
     // If force=true, retry fetching the post in case of recent saves
-    let provenance = (post.provenance as any) || {};
+    let provenance = (await stripPrivateInterviewData(post.provenance) as any) || {};
     let interview = provenance.interview || {};
 
     // If force=true and no answers found (and no overrides), wait a bit and refetch (handles race condition)
@@ -564,7 +569,7 @@ export async function POST(
       });
 
       if (refreshedPost) {
-        provenance = (refreshedPost.provenance as any) || {};
+        provenance = (await stripPrivateInterviewData(refreshedPost.provenance) as any) || {};
         interview = provenance.interview || {};
       }
     }
@@ -586,7 +591,7 @@ export async function POST(
         });
 
         if (editorialInterview && editorialInterview.answers.length > 0) {
-          const dbAnswers = editorialInterview.answers.map((a) => ({
+          const dbAnswers = (await stripPrivateInterviewData(editorialInterview.answers)).map((a) => ({
             questionId: a.questionId,
             prompt: a.questionText || a.questionId,
             answer: a.answerText,
@@ -649,7 +654,7 @@ export async function POST(
           where: { projectId },
           select: { provenance: true },
         });
-        const lastResortProv = (lastResortPost?.provenance as any) || {};
+        const lastResortProv = (await stripPrivateInterviewData(lastResortPost?.provenance) as any) || {};
         const lastResortInterview = lastResortProv.interview || {};
         const lastResortAnswers = lastResortInterview.payload?.answers || lastResortInterview.answers || [];
 
@@ -722,8 +727,8 @@ export async function POST(
     }
 
     // Use overrides if provided, otherwise use interview data
-    const baseAnswers = answersOverride ?? interview.payload.answers ?? [];
-    const baseFollowups = followupsOverride ?? interview.followUps ?? interview.followups ?? [];
+    const baseAnswers = await stripPrivateInterviewData(answersOverride ?? interview.payload.answers ?? []);
+    const baseFollowups = await stripPrivateInterviewData(followupsOverride ?? interview.followUps ?? interview.followups ?? []);
     
     console.log("[AUDIT] generate:inputs", {
       answersLen: Array.isArray(baseAnswers) ? baseAnswers.length : 0,

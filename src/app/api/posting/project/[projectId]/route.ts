@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/options";
 import { prisma } from "@/lib/prisma";
 import { assertProjectView } from "@/lib/authz/access";
+import { stripPrivateInterviewData } from '@/lib/spotlight/privacy';
 
 export const dynamic = 'force-dynamic'; // Prevent caching of draft data
 
@@ -57,7 +58,7 @@ export async function GET(
       );
     }
 
-    return NextResponse.json({ post });
+    return NextResponse.json({ post: await stripPrivateInterviewData(post) });
   } catch (error: any) {
     if (error.message === "Forbidden") {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });

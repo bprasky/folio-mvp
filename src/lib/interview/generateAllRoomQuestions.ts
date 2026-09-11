@@ -1,3 +1,4 @@
+import { assertLegacyInterviewAllowed } from '@/lib/spotlight/legacyBoundary';
 /**
  * Orchestrator for Per-Room Interview Question Generation
  *
@@ -39,6 +40,8 @@ export async function generateAllRoomQuestions(
   context: ProjectContext;
   totalGenerated: number;
 }> {
+  assertLegacyInterviewAllowed(projectId);
+
   console.info(`[QUESTION_GEN] Starting per-room generation for project ${projectId}`);
 
   // 1. Assess project context

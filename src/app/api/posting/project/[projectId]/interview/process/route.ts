@@ -1,3 +1,4 @@
+import { legacyInterviewBoundary } from '@/lib/spotlight/legacyBoundary';
 export const dynamic = 'force-dynamic';
 
 import { NextRequest, NextResponse } from 'next/server';
@@ -12,6 +13,9 @@ export async function POST(
   request: NextRequest,
   { params }: { params: { projectId: string } }
 ) {
+  const spotlightBoundary = await legacyInterviewBoundary(request);
+  if (spotlightBoundary) return spotlightBoundary;
+
   try {
     const session = await getServerSession(authOptions);
     if (!session?.user?.id) {

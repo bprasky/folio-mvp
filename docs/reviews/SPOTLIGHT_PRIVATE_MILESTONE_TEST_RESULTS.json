@@ -1,0 +1,518 @@
+{
+  "testedCommit": "4d240cdb44b44f98e6e7ff5afcec2c5f0322c905",
+  "runUrl": "https://github.com/bprasky/folio-mvp/actions/runs/34629564023",
+  "status": "passed",
+  "startedAt": "2026-09-11T17:47:47.446Z",
+  "finishedAt": "2026-09-11T17:49:40.265Z",
+  "isolation": {
+    "network": "none",
+    "ports": 0,
+    "persistentDataMounts": 0,
+    "privateSocket": true,
+    "imageId": "sha256:7296f210ae81031ec955dbad9a67a84fe958572a2153b8d0826a647522904dc1"
+  },
+  "applicationDatabaseContacted": false,
+  "disposableContainerRemoved": true,
+  "commands": [
+    {
+      "label": "Prisma client generation",
+      "code": 0
+    },
+    {
+      "label": "Synthetic prerequisite DDL generation",
+      "code": 0
+    },
+    {
+      "label": "Real services, privacy readers and concurrency",
+      "code": 0
+    },
+    {
+      "label": "Real Next API and Chromium save/restart/resume journey",
+      "code": 0
+    }
+  ],
+  "services": {
+    "status": "passed",
+    "tests": [
+      {
+        "name": "Physical disposable target verified before synthetic writes",
+        "result": "passed"
+      },
+      {
+        "name": "Ten tags, zero implicit selections and no required product questions",
+        "result": "passed"
+      },
+      {
+        "name": "Ten tags, exactly two explicitly selected base questions independent of vendor subscription",
+        "result": "passed"
+      },
+      {
+        "name": "Required selected coverage exceeds optional budgets",
+        "result": "passed"
+      },
+      {
+        "name": "Confirmed duplicate photos share selection and question identity",
+        "result": "passed"
+      },
+      {
+        "name": "Distinct rooms separate scope; unresolved room waits for explicit reconciliation",
+        "result": "passed"
+      },
+      {
+        "name": "Cross-project photo room is rejected before canonical selection is written",
+        "result": "passed"
+      },
+      {
+        "name": "First private mutation preserves projection-only ordinary text and follow-up edges",
+        "result": "passed"
+      },
+      {
+        "name": "Exact text acceptance and identical retry receipt; conflicting payload rejected",
+        "result": "passed"
+      },
+      {
+        "name": "Concurrent stale saves have one winner and append exactly once",
+        "result": "passed"
+      },
+      {
+        "name": "Unconfirmed reuse rejected; explicit same-publisher reuse preserves exact source",
+        "result": "passed"
+      },
+      {
+        "name": "Shared deselection blocks saves; retry survives; reselection keeps heads and IDs",
+        "result": "passed"
+      },
+      {
+        "name": "Follow-up requires accepted selected base; re-answer retires its parent-dependent meaning",
+        "result": "passed"
+      },
+      {
+        "name": "Concurrent ordinary/durable saves and projection rebuild preserve both stores",
+        "result": "passed"
+      },
+      {
+        "name": "Legacy reuse binds exact provenance digest and destination versions",
+        "result": "passed"
+      },
+      {
+        "name": "Spoofed/missing projection labels and published provenance cannot leak durable IDs",
+        "result": "passed"
+      },
+      {
+        "name": "Last source deletion preserves history and suspends eligibility",
+        "result": "passed"
+      },
+      {
+        "name": "Scheduling an unanswered question blocks hard deletion",
+        "result": "passed"
+      },
+      {
+        "name": "Publisher changes and inactive actor reject replay and reads",
+        "result": "passed"
+      },
+      {
+        "name": "Studio capability is rechecked after active membership revocation",
+        "result": "passed"
+      },
+      {
+        "name": "Selection/save race serializes without accepting a deselected version",
+        "result": "passed"
+      },
+      {
+        "name": "Failure after revision insertion rolls back revision, head and provenance together",
+        "result": "passed"
+      },
+      {
+        "name": "Default-off/allowlists and kill switch cannot fall back to legacy",
+        "result": "passed"
+      }
+    ],
+    "liveModelEvaluation": "not run"
+  },
+  "browser": {
+    "status": "passed",
+    "tests": [
+      {
+        "name": "Unauthenticated API denied and invalid input rejected",
+        "result": "passed"
+      },
+      {
+        "name": "Actual tagging API ignores Shop/testimonial/outreach payload and does not select",
+        "result": "passed"
+      },
+      {
+        "name": "Browser selects two canonical pieces and receives exactly two base questions",
+        "result": "passed"
+      },
+      {
+        "name": "Browser saves exact text through authenticated production route",
+        "result": "passed"
+      },
+      {
+        "name": "Server restart, reload and browser resume retain stable question and answer",
+        "result": "passed"
+      },
+      {
+        "name": "Browser previews and explicitly confirms reuse into a second question",
+        "result": "passed"
+      },
+      {
+        "name": "Stale browser save retains unsaved text; retry never overwrites winner",
+        "result": "passed"
+      },
+      {
+        "name": "Enrolled legacy cached/questions, save, followup and realtime start routes reject bypass",
+        "result": "passed"
+      },
+      {
+        "name": "Actual published-post response removes private subtree and spoofed answer",
+        "result": "passed"
+      },
+      {
+        "name": "Actual section regeneration model input excludes private answers and retains ordinary context",
+        "result": "passed"
+      },
+      {
+        "name": "Prompted-content model input excludes spoofed private projection answers",
+        "result": "passed"
+      },
+      {
+        "name": "Authenticated project deletion returns typed scheduled-history conflict",
+        "result": "passed"
+      },
+      {
+        "name": "Force deletion and account deletion stop before cleanup with typed conflict",
+        "result": "passed"
+      },
+      {
+        "name": "Browser deselects and reselects while preserving question IDs and exact history",
+        "result": "passed"
+      },
+      {
+        "name": "Concurrent room rename and ordinary save preserve durable mirrors and ordinary text",
+        "result": "passed"
+      }
+    ],
+    "mockedModelCalls": 2,
+    "externalBrowserRequests": "blocked",
+    "liveModelEvaluation": "not run"
+  },
+  "sqlAndMigrationCommandSuites": [
+    {
+      "suite": "spotlight-command-results.json",
+      "status": "passed",
+      "groups": 10,
+      "tests": [
+        {
+          "label": "External URL, foreign socket and wrong database rejected before command execution",
+          "result": "passed"
+        },
+        {
+          "label": "Prisma migration engine binds to the verified socket, nonce, database and server identity",
+          "result": "passed"
+        },
+        {
+          "label": "Actual repository migration chain bootstraps synthetic prerequisites",
+          "result": "passed"
+        },
+        {
+          "label": "Pending status and guard name exactly the reviewed migration",
+          "result": "passed"
+        },
+        {
+          "label": "An extra pending migration is surfaced, not hidden by the guard",
+          "result": "passed"
+        },
+        {
+          "label": "Guard rejects mismatched database names within the same disposable socket",
+          "result": "passed"
+        },
+        {
+          "label": "Guard rejects transaction-pooled fallback before migration",
+          "result": "passed"
+        },
+        {
+          "label": "Same inherited target overrides both env files; guarded npm deploy applies exact SQL",
+          "result": "passed"
+        },
+        {
+          "label": "Postflight status clean; command replay applies nothing and keeps one history row",
+          "result": "passed"
+        },
+        {
+          "label": "Failed synthetic migration rolls back DDL; next guarded apply refuses failed history",
+          "result": "passed"
+        }
+      ],
+      "applicationDatabaseContacted": false,
+      "disposableContainerRemoved": true,
+      "postgresVersion": "17.11 (Debian 17.11-1.pgdg13+2)"
+    },
+    {
+      "suite": "spotlight-durable-command-results.json",
+      "status": "passed",
+      "groups": 10,
+      "tests": [
+        {
+          "label": "External URL, foreign socket and wrong database rejected before command execution",
+          "result": "passed"
+        },
+        {
+          "label": "Prisma migration engine binds to the verified socket, nonce, database and server identity",
+          "result": "passed"
+        },
+        {
+          "label": "Actual repository migration chain bootstraps synthetic prerequisites",
+          "result": "passed"
+        },
+        {
+          "label": "Pending status and guard name exactly the reviewed migration",
+          "result": "passed"
+        },
+        {
+          "label": "An extra pending migration is surfaced, not hidden by the guard",
+          "result": "passed"
+        },
+        {
+          "label": "Guard rejects mismatched database names within the same disposable socket",
+          "result": "passed"
+        },
+        {
+          "label": "Guard rejects transaction-pooled fallback before migration",
+          "result": "passed"
+        },
+        {
+          "label": "Same inherited target overrides both env files; guarded npm deploy applies exact SQL",
+          "result": "passed"
+        },
+        {
+          "label": "Postflight status clean; command replay applies nothing and keeps one history row",
+          "result": "passed"
+        },
+        {
+          "label": "Failed synthetic migration rolls back DDL; next guarded apply refuses failed history",
+          "result": "passed"
+        }
+      ],
+      "applicationDatabaseContacted": false,
+      "disposableContainerRemoved": true,
+      "postgresVersion": "17.11 (Debian 17.11-1.pgdg13+2)"
+    },
+    {
+      "suite": "spotlight-durable-postgres-results.json",
+      "status": "passed",
+      "groups": 26,
+      "tests": [
+        {
+          "label": "Exact migration applies; all columns/FKs/indexes/functions/triggers/RLS match; initially empty",
+          "result": "passed"
+        },
+        {
+          "label": "Empty replay preserves the complete catalog",
+          "result": "passed"
+        },
+        {
+          "label": "Even unanswered scheduling blocks spotlight and project hard deletion",
+          "result": "passed"
+        },
+        {
+          "label": "Question CHECKs reject kind/parent, version, text/hash, snapshot and retirement errors",
+          "result": "passed"
+        },
+        {
+          "label": "Active-kind, meaning, version and identity uniqueness reject duplicates",
+          "result": "passed"
+        },
+        {
+          "label": "Immutable question definitions reject every definition-column UPDATE, DELETE and TRUNCATE",
+          "result": "passed"
+        },
+        {
+          "label": "Atomic first answer and next revision preserve exact accepted text and old version",
+          "result": "passed"
+        },
+        {
+          "label": "Append-only revisions reject every UPDATE, DELETE and TRUNCATE",
+          "result": "passed"
+        },
+        {
+          "label": "Answer CHECKs/FKs reject malformed input; all modality/reuse shapes accept valid rows",
+          "result": "passed"
+        },
+        {
+          "label": "Revision ordinal and actor/question request namespace unique; hash conflicts remain service work",
+          "result": "passed"
+        },
+        {
+          "label": "Pointer rejects null/backward/skipped movement and missing next revision; valid retirement/reactivation",
+          "result": "passed"
+        },
+        {
+          "label": "Follow-up parent FK and active-kind uniqueness preserve previous definitions",
+          "result": "passed"
+        },
+        {
+          "label": "Source deletion removes only that source; room deletion SET NULL retains accepted history",
+          "result": "passed"
+        },
+        {
+          "label": "Answered/retired project and spotlight deletion remain restricted",
+          "result": "passed"
+        },
+        {
+          "label": "product deletion restricted",
+          "result": "passed"
+        },
+        {
+          "label": "personal publisher deletion restricted",
+          "result": "passed"
+        },
+        {
+          "label": "selector deletion restricted",
+          "result": "passed"
+        },
+        {
+          "label": "answering user deletion restricted",
+          "result": "passed"
+        },
+        {
+          "label": "Studio publisher deletion restricted",
+          "result": "passed"
+        },
+        {
+          "label": "Failure after revision INSERT rolls back history/request key and leaves current head untouched",
+          "result": "passed"
+        },
+        {
+          "label": "Browser roles denied without grants and constrained by RLS with synthetic grants; postgres works",
+          "result": "passed"
+        },
+        {
+          "label": "Concurrent question duplicates: one commit, one uniqueness rejection",
+          "result": "passed"
+        },
+        {
+          "label": "Concurrent revision duplicates: one commit, one uniqueness rejection",
+          "result": "passed"
+        },
+        {
+          "label": "Concurrent request duplicates: one commit, one uniqueness rejection",
+          "result": "passed"
+        },
+        {
+          "label": "Populated replay preserves all IDs/exact text/heads/counts and complete catalog",
+          "result": "passed"
+        },
+        {
+          "label": "Fault-injected migration rolls back all new objects; exact retry/replay succeeds",
+          "result": "passed"
+        }
+      ],
+      "applicationDatabaseContacted": false,
+      "disposableContainerRemoved": true,
+      "postgresVersion": "17.11 (Debian 17.11-1.pgdg13+2)"
+    },
+    {
+      "suite": "spotlight-postgres-results.json",
+      "status": "passed",
+      "groups": 23,
+      "tests": [
+        {
+          "label": "Exact migration executes; new tables initially empty; catalog matches",
+          "result": "passed"
+        },
+        {
+          "label": "Exact SQL replay leaves catalog unchanged",
+          "result": "passed"
+        },
+        {
+          "label": "Publishing identity XOR rejects zero/two and accepts personal/studio",
+          "result": "passed"
+        },
+        {
+          "label": "Positive version, trimmed bounded variant/finish and FK existence",
+          "result": "passed"
+        },
+        {
+          "label": "Confirmed-room uniqueness (personal), including deselected rows",
+          "result": "passed"
+        },
+        {
+          "label": "Confirmed-room uniqueness (studio), including deselected rows",
+          "result": "passed"
+        },
+        {
+          "label": "Multiple photo tags share one row; a tag cannot link twice",
+          "result": "passed"
+        },
+        {
+          "label": "Unresolved rows coexist; failed room reconciliation rolls back both assignments",
+          "result": "passed"
+        },
+        {
+          "label": "Transactional reconciliation SQL moves sources and keeps one canonical row",
+          "result": "passed"
+        },
+        {
+          "label": "Tag deletion removes one source; last-source deletion retains selected draft",
+          "result": "passed"
+        },
+        {
+          "label": "Room SET NULL preserves drafts/sources; database does not increment version",
+          "result": "passed"
+        },
+        {
+          "label": "Project deletion cascades drafts, sources, rooms, images and tags",
+          "result": "passed"
+        },
+        {
+          "label": "product deletion restricted by the spotlight FK",
+          "result": "passed"
+        },
+        {
+          "label": "publisher deletion restricted by the spotlight FK",
+          "result": "passed"
+        },
+        {
+          "label": "selector deletion restricted by the spotlight FK",
+          "result": "passed"
+        },
+        {
+          "label": "Studio publisher deletion restricted",
+          "result": "passed"
+        },
+        {
+          "label": "Direct spotlight deletion cascades sources but keeps photo tags",
+          "result": "passed"
+        },
+        {
+          "label": "Browser RLS denies reads/writes even with table grants; privileged server works",
+          "result": "passed"
+        },
+        {
+          "label": "Cross-project/source consistency is NOT database-enforced (service responsibility)",
+          "result": "passed"
+        },
+        {
+          "label": "Concurrent personal duplicate inserts: one commit, one unique violation",
+          "result": "passed"
+        },
+        {
+          "label": "Concurrent studio duplicate inserts: one commit, one unique violation",
+          "result": "passed"
+        },
+        {
+          "label": "Replay with stored rows preserves data and links",
+          "result": "passed"
+        },
+        {
+          "label": "Failed DDL transaction leaves no spotlight tables; exact retry/replay succeeds",
+          "result": "passed"
+        }
+      ],
+      "applicationDatabaseContacted": false,
+      "disposableContainerRemoved": true,
+      "postgresVersion": "17.11 (Debian 17.11-1.pgdg13+2)"
+    }
+  ]
+}

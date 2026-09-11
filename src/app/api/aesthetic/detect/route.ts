@@ -1,5 +1,6 @@
 export const dynamic = 'force-dynamic';
 
+import { stripPrivateInterviewData } from '@/lib/spotlight/privacy';
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/options";
@@ -131,7 +132,7 @@ export async function POST(request: NextRequest) {
     });
 
     // Fetch interviews for language analysis
-    const interviews = await prisma.editorialInterview.findMany({
+    const interviews = await stripPrivateInterviewData(await prisma.editorialInterview.findMany({
       where: {
         projectId: { in: fetchedProjectIds },
         status: "COMPLETED",
@@ -139,11 +140,11 @@ export async function POST(request: NextRequest) {
       include: {
         answers: {
           select: {
-            answerText: true,
+            questionId: true, answerText: true,
           },
         },
       },
-    });
+    }));
 
     // Transform to DetectionInput format
     const detectionInput: DetectionInput = {

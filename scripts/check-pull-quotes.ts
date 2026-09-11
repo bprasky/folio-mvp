@@ -509,8 +509,8 @@ async function loaderChecks() {
   ];
   (Module.default as any)._load = function (request: string) {
     if (request === '@/lib/prisma' || request.endsWith('/lib/prisma')) {
-      return { prisma: {
-        projectPost: { findUnique: async () => ({ provenance: { interview: { payload: { answers: PAYLOAD, followups: [] } } } }) },
+      return { prisma: { spotlightQuestion: { findMany: async () => [{ id: "durable-private" }] },
+        projectPost: { findUnique: async () => ({ provenance: { interview: { payload: { answers: [...PAYLOAD, { questionId: 'durable-private', answer: 'PRIVATE_SPOTLIGHT_SENTINEL', questionSource: 'base_question' }], followups: [] } } } }) },
         room: { findMany: async () => ROOMS },
         editorialInterview: { findUnique: async () => ({ answers: [
           // The projection path. Its category lives in its own column rather than
@@ -532,6 +532,8 @@ async function loaderChecks() {
   } finally {
     (Module.default as any)._load = origLoad;
   }
+
+  check('durable draft identity excludes a spoofed ordinary source label', !JSON.stringify(loaded).includes('PRIVATE_SPOTLIGHT_SENTINEL'));
 
   // ── the room half ──────────────────────────────────────────────────────────
   // Asserted as a set rather than a fixed sequence, so adding a fixture answer
@@ -592,7 +594,7 @@ async function reverseSyncChecks() {
   ];
   (Module.default as any)._load = function (request: string) {
     if (request === '@/lib/prisma' || request.endsWith('/lib/prisma')) {
-      return { prisma: {
+      return { prisma: { spotlightQuestion: { findMany: async () => [{ id: "durable-private" }] },
         editorialInterview: { findUnique: async () => ({ answers: ROWS }) },
         project: { findUnique: async () => ({ images: [], title: 'P' }) },
         projectPost: { findUnique: async () => ({ provenance: {} }), update: async () => ({}), create: async () => ({ provenance: {} }) },
@@ -638,7 +640,7 @@ async function projectionWriteChecks() {
   ];
   (Module.default as any)._load = function (request: string) {
     if (request === '@/lib/prisma' || request.endsWith('/lib/prisma')) {
-      return { prisma: {
+      return { prisma: { spotlightQuestion: { findMany: async () => [{ id: "durable-private" }] },
         editorialInterview: { findUnique: async () => ({ id: 'i1', projectId: 'p1' }), create: async () => ({ id: 'i1' }) },
         projectPost: { findUnique: async () => ({ provenance: { interview: { payload: { answers: PAYLOAD, followups: [] } } } }) },
         editorialInterviewAnswer: {
@@ -806,7 +808,7 @@ async function reAnswerChecks() {
 
   (Module.default as any)._load = function (request: string) {
     if (request === '@/lib/prisma' || request.endsWith('/lib/prisma')) {
-      return { prisma: { editorialInterviewAnswer: {
+      return { prisma: { spotlightQuestion: { findMany: async () => [{ id: "durable-private" }] }, editorialInterviewAnswer: {
         findFirst: async () => (stored ? { ...stored } : null),
         update: async (args: any) => { ops.push({ op: 'update', args }); stored = { ...stored, ...args.data }; return stored; },
         create: async (args: any) => { ops.push({ op: 'create', args }); stored = { ...args.data }; return stored; },
@@ -866,7 +868,7 @@ async function reAnswerChecks() {
   ops.length = 0;
   (Module.default as any)._load = function (request: string) {
     if (request === '@/lib/prisma' || request.endsWith('/lib/prisma')) {
-      return { prisma: { editorialInterviewAnswer: {
+      return { prisma: { spotlightQuestion: { findMany: async () => [{ id: "durable-private" }] }, editorialInterviewAnswer: {
         findFirst: async () => null,
         update: async (args: any) => { ops.push({ op: 'update', args }); return {}; },
         create: async (args: any) => { ops.push({ op: 'create', args }); return args.data; },

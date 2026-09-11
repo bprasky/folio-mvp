@@ -892,8 +892,8 @@ function ProjectCard({ p, onRename, onDelete, onForceDelete, onRequestDeletion }
       setIsDeleting(true);
       await onDelete(p.id);
       setIsMenuOpen(false);
-    } catch {
-      alert('Failed to delete project. Please try again.');
+    } catch (error) {
+      alert(error instanceof Error ? error.message : 'Failed to delete project. Please try again.');
       setIsDeleting(false);
     }
   };
@@ -925,8 +925,8 @@ function ProjectCard({ p, onRename, onDelete, onForceDelete, onRequestDeletion }
       setIsDeleting(true);
       await onForceDelete(p.id);
       setIsMenuOpen(false);
-    } catch {
-      alert('Failed to delete project. Please try again.');
+    } catch (error) {
+      alert(error instanceof Error ? error.message : 'Failed to delete project. Please try again.');
       setIsDeleting(false);
     }
   };

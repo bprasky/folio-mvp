@@ -1,4 +1,5 @@
 'use client';
+import { SpotlightSelections } from '@/components/spotlight/PrivateSpotlightInterview';
 
 import { useMemo, useTransition } from 'react';
 import Image from 'next/image';
@@ -114,6 +115,7 @@ export default function TagReviewPanel({
         </div>
 
         <div className="relative z-[1] px-7 pb-7 overflow-y-auto space-y-6">
+          <SpotlightSelections projectId={projectId} />
           {remaining.length === 0 ? (
             <div className="text-center py-10">
               <Check className="w-10 h-10 text-[var(--folio-gold)] mx-auto mb-3" />

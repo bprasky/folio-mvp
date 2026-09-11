@@ -1,3 +1,4 @@
+import { stripPrivateInterviewData } from '@/lib/spotlight/privacy';
 import { notFound } from "next/navigation";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/options";
@@ -178,7 +179,7 @@ export default async function DesignerProfilePage({
       });
 
       // Fetch interviews
-      const interviews = await prisma.editorialInterview.findMany({
+      const interviews = await stripPrivateInterviewData(await prisma.editorialInterview.findMany({
         where: {
           projectId: { in: projectIds },
           status: "COMPLETED",
@@ -186,11 +187,11 @@ export default async function DesignerProfilePage({
         include: {
           answers: {
             select: {
-              answerText: true,
+              questionId: true, answerText: true,
             },
           },
         },
-      });
+      }));
 
       const detectionInput = {
         projects: fullProjects.map((project) => ({

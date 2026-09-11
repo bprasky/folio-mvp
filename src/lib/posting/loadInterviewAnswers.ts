@@ -1,3 +1,4 @@
+import { stripPrivateInterviewData } from '@/lib/spotlight/privacy';
 /**
  * Read a project's interview answers the way the generator reads them.
  *
@@ -115,7 +116,7 @@ export interface LoadedAnswer extends AnswerLike {
 }
 
 export async function loadInterviewAnswers(projectId: string): Promise<LoadedAnswer[]> {
-  const [post, rooms, interview] = await Promise.all([
+  const [rawPost, rooms, rawInterview] = await Promise.all([
     prisma.projectPost.findUnique({ where: { projectId }, select: { provenance: true } }),
     prisma.room.findMany({ where: { projectId }, select: { id: true, name: true } }),
     prisma.editorialInterview.findUnique({
@@ -123,6 +124,7 @@ export async function loadInterviewAnswers(projectId: string): Promise<LoadedAns
       include: { answers: { orderBy: { createdAt: 'asc' } } },
     }),
   ]);
+  const { post, interview } = await stripPrivateInterviewData({ post: rawPost, interview: rawInterview });
 
   const resolveRoomName = buildRoomResolver(rooms);
   const roomOf = (a: any): string =>
