@@ -17,11 +17,11 @@ const record = (v: unknown): JsonRecord => v && typeof v === 'object' && !Array.
 async function authority(tx: Tx, projectId: string, actorId: string) {
   if (!spotlightEnabled(projectId, actorId)) fail('SPOTLIGHT_UNAVAILABLE', 'Private spotlight interviews are not enabled for this account and project.', 403);
   await tx.$queryRaw`SELECT id FROM projects WHERE id = ${projectId} FOR UPDATE`;
-  const p = await tx.project.findUnique({ where: { id: projectId }, select: { id: true, ownerId: true, designerId: true, designerOrgId: true, archivedAt: true } });
-  if (!p || p.archivedAt) fail('PROJECT_UNAVAILABLE', 'Project is unavailable.', 404);
+  const p = await tx.project.findUnique({ where: { id: projectId }, select: { id: true, ownerId: true, designerId: true, designerOrgId: true, status: true } });
+  if (!p || p.status === 'archived') fail('PROJECT_UNAVAILABLE', 'Project is unavailable.', 404);
   await tx.$queryRaw`SELECT id FROM users WHERE id = ${actorId} FOR SHARE`;
   const actor = await tx.user.findUnique({ where: { id: actorId }, select: { accountStatus: true } });
-  if (!actor || actor.accountStatus === 'DELETED') fail('FORBIDDEN', 'Publisher access is required.', 403);
+  if (!actor || actor.accountStatus !== 'APPROVED') fail('FORBIDDEN', 'Publisher access is required.', 403);
   if (p.designerOrgId) {
     await tx.$queryRaw`SELECT id FROM organization_users WHERE "userId" = ${actorId} AND "organizationId" = ${p.designerOrgId} FOR SHARE`;
     const m = await tx.organizationUser.findUnique({ where: { userId_organizationId: { userId: actorId, organizationId: p.designerOrgId } }, select: { isActive: true, role: true } });
@@ -112,7 +112,7 @@ export async function runSpotlight(projectId: string, actorId: string, command: 
       } else {
         if (!eligible.has(s.id) || q.retiredAt) fail('INELIGIBLE', 'This piece needs selection and a valid photo in its confirmed room. Your unsaved text is retained.');
         if (q.stateVersion !== command.stateVersion || s.selectionVersion !== command.selectionVersion) fail('STALE_ANSWER', 'The answer or selection changed. Reload the saved version; your draft is retained.');
-        if (!command.text.trim() || command.text.includes('\0') || Array.from(command.text).length > 50000 || /[\uD800-\uDBFF](?![\uDC00-\uDFFF])|(?<![\uD800-\uDBFF])[\uDC00-\uDFFF]/u.test(command.text)) fail('INVALID_TEXT', 'Enter valid answer text, up to 50,000 characters.', 400);
+        if (!command.text.trim() || command.text.includes('\0') || Array.from(command.text).length > 50000 || /[\uD800-\uDBFF](?![\uDC00-\uDFFF])|(?<![\uD800-\uDBFF])[\uDC00-\uDFFF]/.test(command.text)) fail('INVALID_TEXT', 'Enter valid answer text, up to 50,000 characters.', 400);
         let reuse: Awaited<ReturnType<typeof tx.spotlightAnswerRevision.findUnique>> = null;
         if (command.reuseRevisionId) {
           if (!command.confirmReuse) fail('CONFIRM_REUSE', 'Review and explicitly confirm the answer to reuse.', 400);
@@ -160,3 +160,4 @@ export async function runSpotlight(projectId: string, actorId: string, command: 
     return { receipt, tags: tags.map(t => ({ id: t.id, productName: t.product.name, roomId: t.image.roomId, spotlightId: spotlights.find(s => s.sourceTags.some(l => l.tagId === t.id))?.id || null })), spotlights: spotlights.map(s => ({ id: s.id, isSelected: s.isSelected, selectionVersion: s.selectionVersion, eligible: eligible.has(s.id), sourceCount: s.sourceTags.length, roomId: s.roomId, needsResolution: s.isSelected && !eligible.has(s.id) })), questions: questions.map(q => ({ ...q, eligible: eligible.has(q.spotlightId) && !q.retiredAt, selectionVersion: spotlights.find(s => s.id === q.spotlightId)!.selectionVersion })), ordinary: ordinaryDefinitions.map(q => ({ ...q, ...record(ordinary[q.id]) })) };
   }, { timeout: 20000 });
 }
+

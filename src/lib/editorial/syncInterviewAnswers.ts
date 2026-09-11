@@ -167,7 +167,9 @@ export async function rebuildAnswerProjection(
         },
       });
     }),
-  ]);
+  ];
+  if (tx) { for (const operation of operations) await operation; }
+  else await prisma.$transaction(operations);
 
   return rows.length;
 }

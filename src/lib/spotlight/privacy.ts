@@ -15,7 +15,7 @@ export async function stripPrivateInterviewData<T>(value: T): Promise<T> {
   };
   visit(value);
   const identities = candidates.size ? await prisma.spotlightQuestion.findMany({
-    where: { id: { in: [...candidates] } }, select: { id: true },
+    where: { id: { in: Array.from(candidates) } }, select: { id: true },
   }) : [];
   const privateIds = new Set(identities.map(row => row.id));
   const clean = (node: unknown): unknown => {
