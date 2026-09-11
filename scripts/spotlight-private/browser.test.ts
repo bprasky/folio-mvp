@@ -171,6 +171,14 @@ async function main() {
   page.on("pageerror", (error) => {
     logs += `\nBROWSER ERROR: ${String(error)}`;
   });
+  page.on("console", (message) => {
+    if (["error", "warn"].includes(message.type()))
+      logs += `\nBROWSER CONSOLE: ${message.text()}`;
+  });
+  page.on("response", (response) => {
+    if (response.url().startsWith(base) && response.status() >= 400)
+      logs += `\nHTTP ${response.status()}: ${response.url()}`;
+  });
   page.on("requestfailed", (request) => {
     if (request.url().startsWith(base))
       logs += `\nFAILED REQUEST: ${request.url()} ${request.failure()?.errorText}`;
@@ -187,6 +195,12 @@ async function main() {
     value: cookie,
     url: base,
   });
+  const initialPage = await fetch(
+    base + "/project/" + f.project + "/spotlight",
+    { headers },
+  );
+  assert.equal(initialPage.status, 200);
+  await initialPage.text();
   const navigation = await page.goto(
     base + "/project/" + f.project + "/spotlight",
     { waitUntil: "domcontentloaded", timeout: 180000 },
