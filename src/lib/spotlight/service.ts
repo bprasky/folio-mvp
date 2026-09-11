@@ -23,6 +23,7 @@ async function authority(tx: Tx, projectId: string, actorId: string) {
   const actor = await tx.user.findUnique({ where: { id: actorId }, select: { accountStatus: true } });
   if (!actor || actor.accountStatus !== 'APPROVED') fail('FORBIDDEN', 'Publisher access is required.', 403);
   if (p.designerOrgId) {
+    await tx.$queryRaw`SELECT id FROM organizations WHERE id = ${p.designerOrgId} FOR SHARE`;
     await tx.$queryRaw`SELECT id FROM organization_users WHERE "userId" = ${actorId} AND "organizationId" = ${p.designerOrgId} FOR SHARE`;
     const m = await tx.organizationUser.findUnique({ where: { userId_organizationId: { userId: actorId, organizationId: p.designerOrgId } }, select: { isActive: true, role: true } });
     if (!m?.isActive || !isOrgRole(m.role) || !can(m.role, 'create_and_edit_projects')) fail('FORBIDDEN', 'Current studio editing permission is required.', 403);
@@ -34,7 +35,7 @@ export type SpotlightCommand =
   | { action: 'resume' | 'schedule' | 'rebuild' }
   | { action: 'select'; tagId: string; selected: boolean; expectedSelectionVersion?: number }
   | { action: 'followup'; questionId: string }
-  | { action: 'accept'; questionId: string; text: string; requestKey: string; stateVersion: number; selectionVersion: number; inputModality: 'TEXT' | 'VOICE' | 'MIXED'; reuseRevisionId?: string; confirmReuse?: boolean }
+  | { action: 'accept'; questionId: string; questionVersion: number; currentAnswerNumber: number | null; text: string; requestKey: string; stateVersion: number; selectionVersion: number; inputModality: 'TEXT' | 'VOICE' | 'MIXED'; reuseRevisionId?: string; confirmReuse?: boolean }
   | { action: 'ordinary'; questionId: string; text: string; expectedVersion: number; requestKey: string };
 
 async function sources(tx: Tx, projectId: string) {
@@ -49,6 +50,16 @@ async function sources(tx: Tx, projectId: string) {
 }
 
 export async function runSpotlight(projectId: string, actorId: string, command: SpotlightCommand) {
+  for (let attempt = 0; ; attempt++) {
+    try { return await spotlightTransaction(projectId, actorId, command); }
+    catch (error) {
+      if (!(error instanceof Prisma.PrismaClientKnownRequestError) || error.code !== 'P2034' || attempt >= 2) throw error;
+      await new Promise(resolve => setTimeout(resolve, 15 + Math.random() * 40));
+    }
+  }
+}
+
+async function spotlightTransaction(projectId: string, actorId: string, command: SpotlightCommand) {
   return prisma.$transaction(async tx => {
     const publisher = await authority(tx, projectId, actorId);
     const tags = await sources(tx, projectId);
@@ -73,10 +84,20 @@ export async function runSpotlight(projectId: string, actorId: string, command: 
       for (const source of matching) await tx.productSpotlightTag.upsert({ where: { tagId: source.id }, create: { tagId: source.id, spotlightId: s.id }, update: { spotlightId: s.id } });
     }
     const spotlights = await tx.productSpotlight.findMany({ where: { projectId }, include: { sourceTags: true } });
-    const eligible = new Set(spotlights.filter(s => s.isSelected && s.publisherUserId === publisher.publisherUserId && s.publisherOrgId === publisher.publisherOrgId && s.roomId && rooms.some(r => r.id === s.roomId) && s.sourceTags.some(link => tags.some(t => t.id === link.tagId && t.productId === s.productId && t.image.roomId === s.roomId && t.image.inclusion === 'INCLUDED'))).map(s => s.id));
-    const allQuestions = await tx.spotlightQuestion.findMany({ where: { spotlight: { projectId } }, orderBy: { questionVersion: 'asc' } });
-    // Deselection/source loss suspends eligibility, not history or question ID.
-    // Retired definitions are reserved for meaning/parent changes.
+    const eligible = new Set(spotlights.filter(s => s.isSelected && s.publisherUserId === publisher.publisherUserId && s.publisherOrgId === publisher.publisherOrgId && s.roomId && rooms.some(r => r.id === s.roomId) && s.sourceTags.some(link => tags.some(t => t.id === link.tagId && t.productId === s.productId && t.image.roomId === s.roomId && t.image.inclusion === 'INCLUDED' && (t.finishConfirmed ? (t.finishRaw || '').trim().normalize('NFC') : '') === s.finish))).map(s => s.id));
+    await tx.$queryRaw`SELECT q.id FROM spotlight_questions q JOIN product_spotlights s ON s.id = q.spotlight_id WHERE s.project_id = ${projectId} ORDER BY q.id FOR UPDATE OF q`;
+    let allQuestions = await tx.spotlightQuestion.findMany({ where: { spotlight: { projectId } }, orderBy: { questionVersion: 'asc' } });
+    for (const q of allQuestions) {
+      const s = spotlights.find(s => s.id === q.spotlightId)!;
+      if (!eligible.has(s.id) && !q.retiredAt) await tx.spotlightQuestion.update({ where: { id: q.id }, data: { retiredAt: new Date(), retiredReason: s.isSelected ? 'NO_VALID_SOURCE' : 'DESELECTED', stateVersion: { increment: 1 } } });
+      if (eligible.has(s.id) && q.retiredAt && ['NO_VALID_SOURCE', 'DESELECTED'].includes(q.retiredReason || '')) {
+        const base = allQuestions.find(base => base.spotlightId === s.id && base.kind === 'BASE');
+        const parent = q.parentAnswerRevisionId ? await tx.spotlightAnswerRevision.findUnique({ where: { id: q.parentAnswerRevisionId }, select: { questionId: true, revisionNumber: true } }) : null;
+        const sameMeaning = q.kind === 'BASE' ? q.meaningKey === hash([SPOTLIGHT_POLICY, s.id, s.productId, s.roomId, s.publisherUserId, s.publisherOrgId, s.variant, s.finish]) : parent?.questionId === base?.id && parent?.revisionNumber === base?.currentAnswerNumber;
+        if (sameMeaning) await tx.spotlightQuestion.update({ where: { id: q.id }, data: { retiredAt: null, retiredReason: null, stateVersion: { increment: 1 } } });
+      }
+    }
+    allQuestions = await tx.spotlightQuestion.findMany({ where: { spotlight: { projectId } }, orderBy: { questionVersion: 'asc' } });
     if (command.action === 'schedule') {
       for (const s of spotlights.filter(s => eligible.has(s.id))) {
         const meaningKey = hash([SPOTLIGHT_POLICY, s.id, s.productId, s.roomId, s.publisherUserId, s.publisherOrgId, s.variant, s.finish]);
@@ -104,14 +125,14 @@ export async function runSpotlight(projectId: string, actorId: string, command: 
       if (!q) fail('NOT_FOUND', 'Question is unavailable.', 404);
       const s = spotlights.find(s => s.id === q.spotlightId)!;
       if (s.publisherUserId !== publisher.publisherUserId || s.publisherOrgId !== publisher.publisherOrgId) fail('FORBIDDEN', 'Publishing identity changed.', 403);
-      const requestHash = hash([command.questionId, command.text, command.stateVersion, command.selectionVersion, command.inputModality, command.reuseRevisionId || null, command.confirmReuse === true]);
+      const requestHash = hash([command.questionId, command.questionVersion, command.currentAnswerNumber, command.text, command.stateVersion, command.selectionVersion, command.inputModality, command.reuseRevisionId || null, command.confirmReuse === true]);
       const prior = await tx.spotlightAnswerRevision.findUnique({ where: { questionId_answeringUserId_requestKey: { questionId: q.id, answeringUserId: actorId, requestKey: command.requestKey } } });
       if (prior) {
         if (prior.requestHash !== requestHash) fail('RETRY_CONFLICT', 'This retry key was already used with different content.');
         receipt = prior;
       } else {
         if (!eligible.has(s.id) || q.retiredAt) fail('INELIGIBLE', 'This piece needs selection and a valid photo in its confirmed room. Your unsaved text is retained.');
-        if (q.stateVersion !== command.stateVersion || s.selectionVersion !== command.selectionVersion) fail('STALE_ANSWER', 'The answer or selection changed. Reload the saved version; your draft is retained.');
+        if (q.questionVersion !== command.questionVersion || q.currentAnswerNumber !== command.currentAnswerNumber || q.stateVersion !== command.stateVersion || s.selectionVersion !== command.selectionVersion) fail('STALE_ANSWER', 'The answer or selection changed. Reload the saved version; your draft is retained.');
         if (!command.text.trim() || command.text.includes('\0') || Array.from(command.text).length > 50000 || /[\uD800-\uDBFF](?![\uDC00-\uDFFF])|(?<![\uD800-\uDBFF])[\uDC00-\uDFFF]/.test(command.text)) fail('INVALID_TEXT', 'Enter valid answer text, up to 50,000 characters.', 400);
         let reuse: Awaited<ReturnType<typeof tx.spotlightAnswerRevision.findUnique>> = null;
         if (command.reuseRevisionId) {
