@@ -116,7 +116,7 @@ export interface LoadedAnswer extends AnswerLike {
 }
 
 export async function loadInterviewAnswers(projectId: string): Promise<LoadedAnswer[]> {
-  const [post, rooms, interview] = await Promise.all([
+  const [rawPost, rooms, rawInterview] = await Promise.all([
     prisma.projectPost.findUnique({ where: { projectId }, select: { provenance: true } }),
     prisma.room.findMany({ where: { projectId }, select: { id: true, name: true } }),
     prisma.editorialInterview.findUnique({
@@ -124,6 +124,7 @@ export async function loadInterviewAnswers(projectId: string): Promise<LoadedAns
       include: { answers: { orderBy: { createdAt: 'asc' } } },
     }),
   ]);
+  const { post, interview } = await stripPrivateInterviewData({ post: rawPost, interview: rawInterview });
 
   const resolveRoomName = buildRoomResolver(rooms);
   const roomOf = (a: any): string =>
@@ -214,7 +215,7 @@ export async function loadInterviewAnswers(projectId: string): Promise<LoadedAns
   // unassigned room answer. Both stores derive the category identically, so this
   // narrows the key without letting the provenance/projection pair back through.
   const seen = new Set<string>();
-  return (await stripPrivateInterviewData(out)).filter((a) => {
+  return out.filter((a) => {
     const key = `${a.section.toLowerCase()}::${a.category ?? ''}::${a.answer.replace(/\s+/g, ' ').trim().toLowerCase()}`;
     if (seen.has(key)) return false;
     seen.add(key);

@@ -6,6 +6,7 @@ import { authOptions } from "@/app/api/auth/[...nextauth]/options";
 import { prisma } from "@/lib/prisma";
 import { assertProjectView } from "@/lib/authz/access";
 import { hasNewProductsSinceGeneration } from "@/lib/posting/hasNewProductsSinceGeneration";
+import { stripPrivateInterviewData } from '@/lib/spotlight/privacy';
 
 export async function GET(
   request: NextRequest,
@@ -31,7 +32,7 @@ export async function GET(
       },
     });
 
-    const provenance = (latestPost?.provenance as any) || {};
+    const provenance = (await stripPrivateInterviewData(latestPost?.provenance) as any) || {};
     const interview = provenance.interview || {};
     const payload = interview.payload || {};
 
@@ -56,7 +57,7 @@ export async function GET(
 
     const questionTextByQuestionId = new Map<string, string>();
     const questionTextByAnswerText = new Map<string, string>();
-    for (const a of editorialInterview?.answers ?? []) {
+    for (const a of await stripPrivateInterviewData(editorialInterview?.answers ?? [])) {
       if (a.questionText) {
         if (a.questionId) questionTextByQuestionId.set(a.questionId, a.questionText);
         if (a.answerText) questionTextByAnswerText.set(a.answerText.trim(), a.questionText);
