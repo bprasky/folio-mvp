@@ -971,3 +971,6 @@ When a supplied specification already says where to start, execute that first st
 
 ## 2026-09-10 — Complete authorized acceptance gates with portable evidence
 When local infrastructure blocks a database suite and the user authorizes another development/CI environment, provide and run a reproducible isolated path there. Equal TypeScript error totals or file/code counts do not prove fingerprint equivalence: compare source locations and full diagnostic types, preserve multiplicities and prove new errors still fail. A missing deployment status is not evidence that deployment was prevented; document the actual deployment control and its restoration separately.
+
+## 2026-09-10 — Verify persistence field names in concrete proposals
+The durable interview packet incorrectly named ProjectPost.provenanceJson; the actual Prisma field and existing writers use ProjectPost.provenance. Before proposing a persistence contract, copy exact field names from the schema and verify a real writer/reader. Correct documentation without inventing an adapter or renaming an existing schema field. Test approval of deletion restrictions is not approval of a permanent product retention policy.

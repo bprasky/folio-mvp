@@ -1,0 +1,60 @@
+model SpotlightQuestion {
+  id                     String    @id @default(uuid())
+  spotlightId            String    @map("spotlight_id")
+  kind                   String    @db.VarChar(16)
+  questionVersion        Int       @map("question_version")
+  meaningKey             String    @map("meaning_key") @db.VarChar(64)
+  contextSnapshot        Json      @map("context_snapshot")
+  wording                String    @db.Text
+  promptVersion          String    @map("prompt_version") @db.VarChar(80)
+  policyVersion          String    @map("policy_version") @db.VarChar(80)
+  parentAnswerRevisionId String?   @map("parent_answer_revision_id")
+  retiredAt              DateTime? @map("retired_at") @db.Timestamp(3)
+  retiredReason          String?   @map("retired_reason") @db.VarChar(32)
+  stateVersion           Int       @default(0) @map("state_version")
+  currentAnswerNumber    Int?      @map("current_answer_number")
+  createdAt              DateTime  @default(now()) @map("created_at") @db.Timestamp(3)
+
+  spotlight     ProductSpotlight          @relation(fields: [spotlightId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+  answers       SpotlightAnswerRevision[] @relation("SpotlightQuestionAnswers")
+  currentAnswer SpotlightAnswerRevision?  @relation("SpotlightCurrentAnswer", fields: [id, currentAnswerNumber], references: [questionId, revisionNumber], onDelete: Restrict, onUpdate: Restrict, map: "spotlight_questions_current_answer_fk")
+  parentAnswer  SpotlightAnswerRevision?  @relation("SpotlightFollowupParent", fields: [parentAnswerRevisionId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+
+  @@unique([id, questionVersion], map: "spotlight_questions_id_version_key")
+  @@unique([spotlightId, kind, questionVersion], map: "spotlight_questions_version_key")
+  @@unique([spotlightId, kind, meaningKey], map: "spotlight_questions_meaning_key")
+  @@index([parentAnswerRevisionId], map: "spotlight_questions_parent_idx")
+  @@map("spotlight_questions")
+}
+
+model SpotlightAnswerRevision {
+  id                       String   @id @default(uuid())
+  questionId               String   @map("question_id")
+  questionVersion          Int      @map("question_version")
+  revisionNumber           Int      @map("revision_number")
+  answeringUserId          String   @map("answering_user_id")
+  acceptedText             String   @map("accepted_text") @db.Text
+  acceptanceSnapshot       Json     @map("acceptance_snapshot")
+  inputModality            String   @map("input_modality") @db.VarChar(16)
+  acceptanceMode           String   @map("acceptance_mode") @db.VarChar(24)
+  reusedFromRevisionId     String?  @map("reused_from_revision_id")
+  reuseSnapshot            Json?    @map("reuse_snapshot")
+  requestKey               String   @map("request_key") @db.VarChar(128)
+  requestHash              String   @map("request_hash") @db.VarChar(64)
+  acceptedStateVersion     Int      @map("accepted_state_version")
+  acceptedSelectionVersion Int      @map("accepted_selection_version")
+  acceptedAt               DateTime @default(now()) @map("accepted_at") @db.Timestamp(3)
+
+  question          SpotlightQuestion         @relation("SpotlightQuestionAnswers", fields: [questionId, questionVersion], references: [id, questionVersion], onDelete: Restrict, onUpdate: Restrict, map: "spotlight_answers_question_version_fk")
+  answeringUser     User                      @relation("SpotlightAnsweringUser", fields: [answeringUserId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+  currentFor        SpotlightQuestion[]       @relation("SpotlightCurrentAnswer")
+  followupQuestions SpotlightQuestion[]       @relation("SpotlightFollowupParent")
+  reusedFrom        SpotlightAnswerRevision?  @relation("SpotlightAnswerReuse", fields: [reusedFromRevisionId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+  reusedBy          SpotlightAnswerRevision[] @relation("SpotlightAnswerReuse")
+
+  @@unique([questionId, revisionNumber], map: "spotlight_answers_number_key")
+  @@unique([questionId, answeringUserId, requestKey], map: "spotlight_answers_request_key")
+  @@index([answeringUserId], map: "spotlight_answers_actor_idx")
+  @@index([reusedFromRevisionId], map: "spotlight_answers_reuse_idx")
+  @@map("spotlight_answer_revisions")
+}

@@ -1,0 +1,7 @@
+User:
+  spotlightAnswerRevisions SpotlightAnswerRevision[] @relation("SpotlightAnsweringUser")
+
+ProductSpotlight:
+  questions SpotlightQuestion[]
+
+No other existing model changes. No new columns on existing tables.
