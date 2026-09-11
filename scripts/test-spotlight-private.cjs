@@ -38,7 +38,7 @@ async function main() {
   context = await docker(['context','show']); const [ctx] = JSON.parse(await docker(['context','inspect',context])); assert.match(ctx.Endpoints.docker.Host,/^unix:\/\//);
   scratch = fs.mkdtempSync(path.join(os.tmpdir(),'folio-private-')); socket = path.join(scratch,'socket'); fs.mkdirSync(socket); fs.chmodSync(socket,0o777);
   for (const p of ['src','scripts','prisma','public']) fs.cpSync(path.join(root,p),path.join(scratch,p),{recursive:true});
-  for (const p of ['package.json','package-lock.json','tsconfig.json','next.config.js','middleware.ts','tailwind.config.ts','postcss.config.js']) if(fs.existsSync(path.join(root,p))) fs.copyFileSync(path.join(root,p),path.join(scratch,p));
+  for (const p of ['package.json','package-lock.json','tsconfig.json','next.config.js','middleware.ts','tailwind.config.js','tailwind.config.ts','postcss.config.js']) if(fs.existsSync(path.join(root,p))) fs.copyFileSync(path.join(root,p),path.join(scratch,p));
   fs.mkdirSync(path.join(scratch,'tasks')); fs.symlinkSync(path.join(root,'node_modules'),path.join(scratch,'node_modules'),'dir');
   assert.ok(!fs.readdirSync(scratch).some(p=>p.startsWith('.env')));
   const url = `postgresql://postgres@localhost:5432/${database}?host=${encodeURIComponent(socket)}&schema=public&connection_limit=8`;

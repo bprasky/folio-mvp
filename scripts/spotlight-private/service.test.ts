@@ -56,6 +56,39 @@ async function main() {
   await test('Last source deletion preserves history and suspends eligibility',async()=>{await prisma.productTag.delete({where:{id:fixtures[0].tags[0]}});state=await call({action:'resume'});assert.equal(state.questions[0].eligible,false);assert.ok(state.questions[0].answers.length>=3);});
   await test('Scheduling an unanswered question blocks hard deletion',async()=>{await reject(()=>deleteProjectWithSpotlightGuard(project(1)),'SPOTLIGHT_HISTORY_RESTRICTS_DELETION');assert.ok(await prisma.project.findUnique({where:{id:project(1)}}));});
   await test('Publisher changes and inactive actor reject replay and reads',async()=>{await reject(()=>call({action:'resume'},project(0),other),'FORBIDDEN');await prisma.project.update({where:{id:project(0)},data:{designerId:other}});await reject(()=>call(command),'FORBIDDEN');await prisma.project.update({where:{id:project(0)},data:{designerId:actor}});await prisma.user.update({where:{id:actor},data:{accountStatus:'REJECTED'}});await reject(()=>call({action:'resume'}),'FORBIDDEN');await prisma.user.update({where:{id:actor},data:{accountStatus:'APPROVED'}});});
+  await test('Studio capability is rechecked after active membership revocation',async()=>{
+    const org=await prisma.organization.create({data:{name:'Synthetic studio',specialties:[]}});
+    const membership=await prisma.organizationUser.create({data:{organizationId:org.id,userId:actor,role:'MEMBER'}});
+    await prisma.project.update({where:{id:project(3)},data:{designerOrgId:org.id}});
+    await call({action:'select',tagId:fixtures[3].tags[0],selected:true},project(3));
+    const s=await call({action:'schedule'},project(3));
+    await prisma.organizationUser.update({where:{id:membership.id},data:{isActive:false}});
+    await reject(()=>call(accept(s.questions[0],'revoked'),project(3)),'FORBIDDEN');
+    await prisma.organizationUser.update({where:{id:membership.id},data:{isActive:true,role:'VIEWER'}});
+    await reject(()=>call({action:'resume'},project(3)),'FORBIDDEN');
+    await prisma.organizationUser.update({where:{id:membership.id},data:{role:'MEMBER'}});
+    assert.equal((await call(accept(s.questions[0],'authorized studio answer'),project(3))).questions[0].answers.length,1);
+  });
+  await test('Selection/save race serializes without accepting a deselected version',async()=>{
+    const before=await call({action:'resume'},project(1)),q=before.questions[0];
+    const t=before.tags.find(t=>t.spotlightId===q.spotlightId)!;
+    const results=await Promise.allSettled([call({action:'select',tagId:t.id,selected:false,expectedSelectionVersion:q.selectionVersion},project(1)),call(accept(q,'racing selection'),project(1))]);
+    assert.equal(results[0].status,'fulfilled');
+    const after=await call({action:'resume'},project(1));assert.equal(after.questions.find(x=>x.id===q.id)!.eligible,false);
+    assert.ok(after.questions.find(x=>x.id===q.id)!.answers.length <= 1);
+    assert.ok(after.questions.find(x=>x.id===q.id)!.retiredAt);
+  });
+  await test('Failure after revision insertion rolls back revision, head and provenance together',async()=>{
+    const s=await call({action:'resume'},project(3)),q=s.questions[0];
+    const before=await prisma.projectPost.findUniqueOrThrow({where:{projectId:project(3)}});
+    await prisma.$executeRawUnsafe(`CREATE FUNCTION public.test_reject_head() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN RAISE EXCEPTION 'synthetic head failure'; END $$`);
+    await prisma.$executeRawUnsafe(`CREATE TRIGGER test_reject_head BEFORE UPDATE ON public.spotlight_questions FOR EACH ROW EXECUTE FUNCTION public.test_reject_head()`);
+    await assert.rejects(()=>call(accept(q,'must roll back'),project(3)));
+    await prisma.$executeRawUnsafe('DROP TRIGGER test_reject_head ON public.spotlight_questions');
+    await prisma.$executeRawUnsafe('DROP FUNCTION public.test_reject_head()');
+    const after=await call({action:'resume'},project(3));assert.deepEqual(after.questions[0].answers,s.questions[0].answers);
+    assert.deepEqual((await prisma.projectPost.findUniqueOrThrow({where:{projectId:project(3)}})).provenance,before.provenance);
+  });
   await test('Default-off/allowlists and kill switch cannot fall back to legacy',async()=>{process.env.SPOTLIGHT_INTERVIEW_V1='false';await reject(()=>call({action:'resume'}),'SPOTLIGHT_UNAVAILABLE');assert.equal((await legacyInterviewBoundary(new Request(`http://localhost/api/posting/project/${project(0)}/interview/questions`)))!.status,409);process.env.SPOTLIGHT_INTERVIEW_V1='true';await reject(()=>call({action:'resume'},'not-enrolled'),'SPOTLIGHT_UNAVAILABLE');});
   // Browser uses a separate clean project with ten tags and zero selections.
   fs.writeFileSync('tasks/spotlight-private-fixtures.json',JSON.stringify({actor,other,project:project(7),fixtures:fixtures[7],publicSlug:`private-${project(0)}`}));

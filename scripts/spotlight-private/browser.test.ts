@@ -34,7 +34,8 @@ async function main(){
   const page=await browser.newPage();await page.setViewport({width:1280,height:1000});
   await page.setRequestInterception(true);page.on('request',r=>{const u=r.url();if(u.startsWith(base)||u.startsWith('data:'))void r.continue();else void r.abort();});
   await page.setCookie({name:'next-auth.session-token',value:cookie,url:base});
-  await page.goto(base+'/project/'+f.project+'/spotlight',{waitUntil:'domcontentloaded',timeout:180000});
+  const navigation = await page.goto(base+'/project/'+f.project+'/spotlight',{waitUntil:'domcontentloaded',timeout:180000});
+  assert.equal(navigation!.status(),200,'Private workspace must render successfully');
   await page.waitForSelector('section[aria-label="Spotlight selections"] input',{timeout:90000});
   const clickText=async(text:string)=>{const buttons=await page.$$('button');for(const b of buttons){if((await b.evaluate(e=>e.textContent))?.trim()===text){await b.click();return;}}throw Error('Missing button '+text);};
   await test('Browser selects two canonical pieces and receives exactly two base questions',async()=>{
