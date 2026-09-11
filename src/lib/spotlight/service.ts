@@ -198,6 +198,15 @@ async function spotlightTransaction(
             "That photo tag is no longer available.",
             404,
           );
+        if (
+          tag.image.roomId &&
+          !rooms.some((room) => room.id === tag.image.roomId)
+        )
+          fail(
+            "SOURCE_ROOM_MISMATCH",
+            "The photo room must belong to this project.",
+            400,
+          );
         const finish = tag.finishConfirmed
           ? (tag.finishRaw || "").trim().normalize("NFC")
           : "";

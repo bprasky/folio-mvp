@@ -210,6 +210,31 @@ async function main() {
       2,
     );
   });
+  await test("Cross-project photo room is rejected before canonical selection is written", async () => {
+    await prisma.projectImage.update({
+      where: { id: fixtures[2].images[3] },
+      data: { roomId: fixtures[1].rooms[0] },
+    });
+    const count = await prisma.productSpotlight.count({
+      where: { projectId: project(2) },
+    });
+    await reject(
+      () =>
+        call(
+          { action: "select", tagId: fixtures[2].tags[3], selected: true },
+          project(2),
+        ),
+      "SOURCE_ROOM_MISMATCH",
+    );
+    assert.equal(
+      await prisma.productSpotlight.count({ where: { projectId: project(2) } }),
+      count,
+    );
+    await prisma.projectImage.update({
+      where: { id: fixtures[2].images[3] },
+      data: { roomId: fixtures[2].rooms[0] },
+    });
+  });
   const exact = "  Exact private answer 🪑\nsecond line.  ";
   await test("First private mutation preserves projection-only ordinary text and follow-up edges", async () => {
     const interview = await prisma.editorialInterview.findUniqueOrThrow({
