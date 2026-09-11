@@ -1,3 +1,5 @@
+import { deleteProjectWithSpotlightGuard } from '@/lib/spotlight/deletion';
+import { SpotlightConflict } from '@/lib/spotlight/gate';
 export const dynamic = 'force-dynamic';
 
 import { NextRequest, NextResponse } from 'next/server';
@@ -78,9 +80,10 @@ export async function PATCH(
     }
 
     // approve → delete the project. The deletion request cascades away with it.
-    await prisma.project.delete({ where: { id: req.projectId } });
+    await deleteProjectWithSpotlightGuard(req.projectId);
     return NextResponse.json({ resolved: true, projectDeleted: true });
   } catch (error) {
+    if (error instanceof SpotlightConflict) return NextResponse.json({ code: error.code, error: error.message }, { status: error.status });
     console.error('Error resolving deletion request:', error);
     return NextResponse.json(
       { error: 'Failed to resolve deletion request' },

@@ -1,3 +1,4 @@
+import { stripPrivateInterviewData } from '@/lib/spotlight/privacy';
 export const dynamic = 'force-dynamic';
 
 import { NextRequest, NextResponse } from 'next/server';
@@ -120,7 +121,7 @@ export async function POST(
       chapterTitle.includes(` ${roomName.toLowerCase().replace(/[_-]+/g, ' ').trim()} `);
 
     // Separate answers for this room vs other rooms
-    const allAnswers = (interview?.answers || []).filter((a: any) => a.answerText);
+    const allAnswers = (await stripPrivateInterviewData(interview?.answers || [])).filter((a: any) => a.answerText);
     const thisRoomAnswers: any[] = [];
     const otherRoomAnswers: any[] = [];
 

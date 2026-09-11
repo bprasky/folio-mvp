@@ -1,3 +1,4 @@
+import { legacyInterviewBoundary } from '@/lib/spotlight/legacyBoundary';
 export const dynamic = 'force-dynamic';
 
 import { NextRequest, NextResponse } from 'next/server';
@@ -12,6 +13,9 @@ import { realtimeInterviewConfig } from '@/lib/flags';
  * Create a new realtime interview session
  */
 export async function POST(req: NextRequest) {
+  const spotlightBoundary = await legacyInterviewBoundary(req);
+  if (spotlightBoundary) return spotlightBoundary;
+
   try {
     // Check feature flag
     if (!realtimeInterviewConfig.enabled) {
@@ -150,6 +154,9 @@ export async function POST(req: NextRequest) {
  * Get session status and data
  */
 export async function GET(req: NextRequest) {
+  const spotlightBoundary = await legacyInterviewBoundary(req);
+  if (spotlightBoundary) return spotlightBoundary;
+
   try {
     const session = await getServerSession(authOptions);
     if (!session?.user?.id) {

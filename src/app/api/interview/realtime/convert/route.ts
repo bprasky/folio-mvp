@@ -1,3 +1,4 @@
+import { legacyInterviewBoundary } from '@/lib/spotlight/legacyBoundary';
 export const dynamic = 'force-dynamic';
 
 import { NextRequest, NextResponse } from 'next/server';
@@ -13,6 +14,9 @@ import { jsonObject } from '@/lib/editorial/lifecycle';
  * Convert completed realtime session to editorial interview format
  */
 export async function POST(req: NextRequest) {
+  const spotlightBoundary = await legacyInterviewBoundary(req);
+  if (spotlightBoundary) return spotlightBoundary;
+
   try {
     const session = await getServerSession(authOptions);
     if (!session?.user?.id) {

@@ -7,6 +7,9 @@ on:
       - 'scripts/spotlight-postgres/**'
       - 'scripts/spotlight-durable-postgres/**'
       - 'scripts/check-spotlight-durable-install.cjs'
+      - 'scripts/spotlight-private/**'
+      - 'src/lib/spotlight/**'
+      - 'src/components/spotlight/**'
       - 'prisma/migrations/20260910210000_add_spotlight_durable_interview/**'
       - 'prisma/migrations/20260910180000_add_product_spotlight_draft_selection/**'
       - '.github/workflows/spotlight-disposable.yml'
@@ -48,4 +51,27 @@ jobs:
           name: spotlight-disposable-evidence
           path: tasks/spotlight-*-results.json
           if-no-files-found: error
+          retention-days: 7
+
+  private-journey:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci --ignore-scripts
+      - name: Execute real services and browser against isolated PostgreSQL
+        run: node scripts/test-spotlight-private.cjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: spotlight-private-evidence
+          path: |
+            tasks/spotlight-private-*.json
+            tasks/spotlight-private-browser.png
           retention-days: 7

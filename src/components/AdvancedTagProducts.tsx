@@ -1,4 +1,5 @@
 'use client';
+import { SpotlightSelections } from '@/components/spotlight/PrivateSpotlightInterview';
 
 import { useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -240,6 +241,7 @@ export default function AdvancedTagProducts({
 
   return (
     <div className="relative w-full">
+      <SpotlightSelections projectId={projectId} tagIds={tags.map(t => t.id)} />
       {/* Main Image Container */}
       <div className="relative group">
         <Image
@@ -454,79 +456,6 @@ export default function AdvancedTagProducts({
                   </div>
                 )}
               </div>
-
-              {/* Add to Shop Section - shows when a product is selected */}
-              {selectedProductId && (
-                <motion.div
-                  className="mb-6 p-4 bg-folio-muted rounded-lg border border-folio-border"
-                  initial={{ opacity: 0, height: 0 }}
-                  animate={{ opacity: 1, height: 'auto' }}
-                  exit={{ opacity: 0, height: 0 }}
-                >
-                  {/* Add to Shop Toggle */}
-                  <label className="flex items-center gap-3 cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={addToShop}
-                      onChange={(e) => setAddToShop(e.target.checked)}
-                      className="w-5 h-5 rounded border-folio-border text-folio-gold focus:ring-folio-gold"
-                    />
-                    <div className="flex items-center gap-2">
-                      <FaStore className="w-4 h-4 text-folio-gold" />
-                      <span className="font-medium text-folio-text">Add to my Shop</span>
-                    </div>
-                  </label>
-
-                  {/* Quote Input - shows when Add to Shop is checked */}
-                  <AnimatePresence>
-                    {addToShop && (
-                      <motion.div
-                        className="mt-4 space-y-3"
-                        initial={{ opacity: 0, height: 0 }}
-                        animate={{ opacity: 1, height: 'auto' }}
-                        exit={{ opacity: 0, height: 0 }}
-                      >
-                        <div>
-                          <label className="block text-sm text-folio-text mb-2">
-                            Add a quote about this product (optional)
-                          </label>
-                          <textarea
-                            value={shopQuote}
-                            onChange={(e) => setShopQuote(e.target.value.slice(0, 500))}
-                            placeholder="What makes this product special? How did it work in this space?"
-                            disabled={addQuoteLater}
-                            maxLength={500}
-                            rows={3}
-                            className={`w-full px-3 py-2 border border-folio-border rounded-lg focus:ring-1 focus:ring-folio-gold focus:border-folio-gold bg-white text-folio-text placeholder-folio-border resize-none ${
-                              addQuoteLater ? 'opacity-50' : ''
-                            }`}
-                          />
-                          <div className="flex justify-between mt-1">
-                            <span className="text-xs text-folio-border">
-                              {shopQuote.length}/500 characters
-                            </span>
-                          </div>
-                        </div>
-
-                        <label className="flex items-center gap-2 cursor-pointer">
-                          <input
-                            type="checkbox"
-                            checked={addQuoteLater}
-                            onChange={(e) => {
-                              setAddQuoteLater(e.target.checked);
-                              if (e.target.checked) setShopQuote("");
-                            }}
-                            className="w-4 h-4 rounded border-folio-border text-folio-gold focus:ring-folio-gold"
-                          />
-                          <span className="text-sm text-folio-border">
-                            I&apos;ll add thoughts later
-                          </span>
-                        </label>
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
-                </motion.div>
-              )}
 
               {/* Finish (spec 21 delta D3). Optional by construction — a
                   designer who does not know it moves on, and a required field

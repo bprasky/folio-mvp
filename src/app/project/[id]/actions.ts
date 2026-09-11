@@ -2,6 +2,7 @@
 
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/app/api/auth/[...nextauth]/options';
+import { assertNoScheduledHistory } from '@/lib/spotlight/deletion';
 import { prisma } from '@/lib/prisma';
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
@@ -32,6 +33,7 @@ export async function deleteProjectAction(raw: unknown) {
   // Transactional cleanup - Prisma will handle cascading deletes automatically
   // but we'll use a transaction for safety
   await prisma.$transaction(async (tx) => {
+    await assertNoScheduledHistory(tx, projectId);
     // Delete project (cascading deletes will handle related records)
     await tx.project.delete({ where: { id: projectId } });
   });

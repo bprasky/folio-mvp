@@ -3,6 +3,8 @@ export const dynamic = 'force-dynamic';
 import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/app/api/auth/[...nextauth]/options';
+import { assertNoScheduledHistory } from '@/lib/spotlight/deletion';
+import { SpotlightConflict } from '@/lib/spotlight/gate';
 import { prisma } from '@/lib/prisma';
 
 /**
@@ -52,6 +54,11 @@ export async function DELETE() {
 
     // Perform deletion operations in transaction
     await prisma.$transaction(async (tx) => {
+      // Match scheduler lock order before any anonymization or cleanup.
+      const projects = await tx.project.findMany({ where: { OR: [{ ownerId: userId }, { designerId: userId }] }, select: { id: true }, orderBy: { id: 'asc' } });
+      for (const p of projects) await assertNoScheduledHistory(tx, p.id);
+      await tx.$queryRaw`SELECT id FROM users WHERE id = ${userId} FOR UPDATE`;
+      if (await tx.spotlightAnswerRevision.findFirst({ where: { answeringUserId: userId }, select: { id: true } }) || await tx.productSpotlight.findFirst({ where: { OR: [{ publisherUserId: userId }, { selectedById: userId }] }, select: { id: true } })) throw new SpotlightConflict('SPOTLIGHT_HISTORY_RESTRICTS_DELETION', 'This account has private spotlight records. Permanent erasure requires a separately reviewed process.');
       // 1. Anonymize user profile
       await tx.user.update({
         where: { id: userId },
@@ -138,6 +145,7 @@ export async function DELETE() {
       deletedAt: deletedAt.toISOString(),
     });
   } catch (error) {
+    if (error instanceof SpotlightConflict) return NextResponse.json({ code: error.code, error: error.message }, { status: error.status });
     console.error('[DELETE /api/user/delete] Error:', error);
     return NextResponse.json(
       {

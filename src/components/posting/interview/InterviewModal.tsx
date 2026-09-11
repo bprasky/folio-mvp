@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { PrivateSpotlightInterview } from '@/components/spotlight/PrivateSpotlightInterview';
 import { useRouter } from "next/navigation";
 import { X } from "lucide-react";
 import {
@@ -134,7 +135,7 @@ function logClient(event: string, payload?: unknown) {
   } catch { /* noop */ }
 }
 
-export function InterviewModal({
+function LegacyInterviewModal({
   open,
   onOpenChange,
   projectId,
@@ -3069,3 +3070,17 @@ function mapValidationIssues(
   return map;
 }
 
+
+export function InterviewModal(props: InterviewModalProps) {
+  const [gate, setGate] = useState<{ enrolled: boolean; enabled: boolean; actorId: string } | null>(null);
+  const [error, setError] = useState('');
+  useEffect(() => {
+    setGate(null); setError(''); let active = true;
+    if (props.open) fetch('/api/projects/' + encodeURIComponent(props.projectId) + '/spotlight').then(async r => { if (!r.ok) throw new Error('Unable to verify interview access.'); return r.json(); }).then(g => { if (active) setGate(g); }).catch(e => { if (active) setError(e.message); });
+    return () => { active = false; };
+  }, [props.open, props.projectId]);
+  if (!props.open) return null;
+  if (!gate || (gate.enrolled && !gate.enabled)) return <div role="dialog" className="fixed inset-0 z-[100] bg-white p-8"><button onClick={() => props.onOpenChange(false)}>Close</button><p>{error || (gate ? 'Private interviews are paused for this project or account.' : 'Checking interview access…')}</p></div>;
+  if (gate.enrolled) return <PrivateSpotlightInterview projectId={props.projectId} actorId={gate.actorId} onClose={() => props.onOpenChange(false)} />;
+  return <LegacyInterviewModal {...props} />;
+}

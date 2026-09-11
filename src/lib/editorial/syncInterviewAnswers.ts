@@ -1,3 +1,5 @@
+import type { Prisma } from '@prisma/client';
+import { assertLegacyInterviewAllowed } from '@/lib/spotlight/legacyBoundary';
 import { prisma } from '@/lib/prisma';
 import { randomUUID } from 'crypto';
 import { SECTION_ENUM } from '@/lib/posting/interviewSchemas';
@@ -100,12 +102,14 @@ export async function rebuildAnswerProjection(
   interviewId: string,
   answers: ProjectionAnswer[],
   audioByQuestion: AnswerAudioMap = {},
+  tx?: Prisma.TransactionClient,
 ): Promise<number> {
+  const writer = tx || prisma;
   const rows = answers
     .map((a) => ({ ...a, questionId: a.questionId || a.id || '' }))
     .filter((a) => a.questionId && pick(a.answer, a.answerText));
 
-  const priorRows = await prisma.editorialInterviewAnswer.findMany({
+  const priorRows = await writer.editorialInterviewAnswer.findMany({
     where: { interviewId },
     select: { questionId: true, isFollowUp: true, createdAt: true },
   });
@@ -118,11 +122,11 @@ export async function rebuildAnswerProjection(
     idByQuestion.set(rowKey(a.questionId, !!a.isFollowUp), randomUUID());
   }
 
-  await prisma.$transaction([
-    prisma.editorialInterviewAnswer.deleteMany({ where: { interviewId } }),
+  const operations = [
+    writer.editorialInterviewAnswer.deleteMany({ where: { interviewId } }),
     ...rows.map((a) => {
       const key = rowKey(a.questionId, !!a.isFollowUp);
-      return prisma.editorialInterviewAnswer.create({
+      return writer.editorialInterviewAnswer.create({
         data: {
           id: idByQuestion.get(key)!,
           interviewId,
@@ -185,6 +189,7 @@ export async function getOrCreateEditorialInterview(projectId: string) {
 export async function syncAnswersToEditorialInterview(
   projectId: string
 ): Promise<{ interviewId: string; answersCreated: number }> {
+  assertLegacyInterviewAllowed(projectId);
   const interview = await getOrCreateEditorialInterview(projectId);
 
   const post = await prisma.projectPost.findUnique({

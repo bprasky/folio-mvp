@@ -1,3 +1,4 @@
+import { stripPrivateInterviewData } from '@/lib/spotlight/privacy';
 /**
  * Read a project's interview answers the way the generator reads them.
  *
@@ -213,7 +214,7 @@ export async function loadInterviewAnswers(projectId: string): Promise<LoadedAns
   // unassigned room answer. Both stores derive the category identically, so this
   // narrows the key without letting the provenance/projection pair back through.
   const seen = new Set<string>();
-  return out.filter((a) => {
+  return (await stripPrivateInterviewData(out)).filter((a) => {
     const key = `${a.section.toLowerCase()}::${a.category ?? ''}::${a.answer.replace(/\s+/g, ' ').trim().toLowerCase()}`;
     if (seen.has(key)) return false;
     seen.add(key);

@@ -1,3 +1,4 @@
+import { assertLegacyInterviewAllowed } from '@/lib/spotlight/legacyBoundary';
 import { prisma } from '@/lib/prisma';
 
 /**
@@ -91,6 +92,8 @@ export interface SyncResult {
 export async function syncEditorialAnswersToProvenance(
   projectId: string
 ): Promise<SyncResult> {
+  assertLegacyInterviewAllowed(projectId);
+
   // 1. Read all answers from EditorialInterviewAnswer
   const editorialInterview = await prisma.editorialInterview.findUnique({
     where: { projectId },

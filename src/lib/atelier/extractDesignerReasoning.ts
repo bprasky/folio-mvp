@@ -1,3 +1,4 @@
+import { stripPrivateInterviewData } from '@/lib/spotlight/privacy';
 /**
  * extractDesignerReasoning.ts
  *
@@ -191,7 +192,7 @@ export async function gatherExtractionSources(
 
   // The project interview. Ordered oldest-first so the profile reflects how the
   // designer has talked over time rather than whatever the database returns.
-  const editorialAnswers = await prisma.editorialInterviewAnswer.findMany({
+  const editorialAnswers = await stripPrivateInterviewData(await prisma.editorialInterviewAnswer.findMany({
     where: { interview: { project: { designerId } } },
     select: {
       questionId: true,
@@ -204,7 +205,7 @@ export async function gatherExtractionSources(
       interview: { select: { project: { select: { id: true, title: true } } } },
     },
     orderBy: { createdAt: "asc" },
-  });
+  }));
 
   // No `product` relation on this model — the chosen thing is the `choice`
   // string, with productTagId/selectionId as optional pointers.

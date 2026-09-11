@@ -1,3 +1,5 @@
+import { deleteProjectWithSpotlightGuard } from '@/lib/spotlight/deletion';
+import { SpotlightConflict } from '@/lib/spotlight/gate';
 export const dynamic = 'force-dynamic';
 
 import { NextRequest, NextResponse } from 'next/server';
@@ -47,15 +49,14 @@ export async function DELETE(
     }
 
     // Force delete the project
-    await prisma.project.delete({
-      where: { id: projectId },
-    });
+    await deleteProjectWithSpotlightGuard(projectId);
 
     return NextResponse.json({ 
       message: 'Project permanently deleted',
       deleted: true 
     });
   } catch (error: any) {
+    if (error instanceof SpotlightConflict) return NextResponse.json({ code: error.code, error: error.message }, { status: error.status });
     console.error('Error force deleting project:', error);
     if (error.message === "Forbidden") {
       return NextResponse.json(

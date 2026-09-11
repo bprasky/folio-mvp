@@ -1,3 +1,5 @@
+import { deleteProjectWithSpotlightGuard } from '@/lib/spotlight/deletion';
+import { SpotlightConflict } from '@/lib/spotlight/gate';
 export const dynamic = 'force-dynamic';
 
 import { NextRequest, NextResponse } from 'next/server';
@@ -74,6 +76,7 @@ export async function GET(request: NextRequest) {
     
     return NextResponse.json(projects);
   } catch (error) {
+    if (error instanceof SpotlightConflict) return NextResponse.json({ code: error.code, error: error.message }, { status: error.status });
     console.error('Error fetching projects:', error);
     return NextResponse.json(
       { error: 'Failed to fetch projects' },
@@ -360,6 +363,7 @@ export async function PUT(request: NextRequest) {
 
     return NextResponse.json(updatedProject, { status: 200 });
   } catch (error) {
+    if (error instanceof SpotlightConflict) return NextResponse.json({ code: error.code, error: error.message }, { status: error.status });
     if (error instanceof Error && error.message === 'Forbidden') {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
@@ -393,12 +397,11 @@ export async function DELETE(request: NextRequest) {
     
     const access = await assertProjectWrite(session.user.id, id);
 
-    await prisma.project.delete({
-      where: { id },
-    });
+    await deleteProjectWithSpotlightGuard(id);
     
     return NextResponse.json({ message: 'Project deleted successfully', deleted: true });
   } catch (error) {
+    if (error instanceof SpotlightConflict) return NextResponse.json({ code: error.code, error: error.message }, { status: error.status });
     console.error('Error deleting project:', error);
     return NextResponse.json(
       { error: 'Failed to delete project: ' + (error instanceof Error ? error.message : 'Unknown error') },
