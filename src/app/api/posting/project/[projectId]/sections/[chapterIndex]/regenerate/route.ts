@@ -104,7 +104,7 @@ export async function POST(
       where: { projectId },
       select: {
         answers: {
-          select: { questionText: true, answerText: true, isFollowUp: true, roomId: true },
+          select: { questionId: true, questionText: true, answerText: true, isFollowUp: true, roomId: true },
           orderBy: { createdAt: 'asc' },
         },
       },

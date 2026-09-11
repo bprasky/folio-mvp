@@ -1,4 +1,4 @@
-import { deleteProjectWithSpotlightGuard } from '@/lib/spotlight/deletion';
+import { assertNoScheduledHistory, deleteProjectWithSpotlightGuard } from '@/lib/spotlight/deletion';
 import { SpotlightConflict } from '@/lib/spotlight/gate';
 export const dynamic = 'force-dynamic';
 
@@ -36,6 +36,7 @@ export async function DELETE(
     }
 
     // Check if project is archived
+    await prisma.$transaction(tx => assertNoScheduledHistory(tx, projectId));
     const project = await prisma.project.findUnique({
       where: { id: projectId },
       select: { archivedAt: true },
