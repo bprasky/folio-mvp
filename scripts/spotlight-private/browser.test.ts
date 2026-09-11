@@ -268,6 +268,13 @@ async function main() {
   await test("Server restart, reload and browser resume retain stable question and answer", async () => {
     await stop();
     await start();
+    // Compile the authenticated page and its client chunks after Next dev has
+    // restarted, before the existing browser reloads into that fresh build.
+    const warm = await fetch(base + "/project/" + f.project + "/spotlight", {
+      headers,
+    });
+    assert.equal(warm.status, 200);
+    await warm.text();
     await page.reload({ waitUntil: "domcontentloaded", timeout: 180000 });
     await page.waitForSelector(
       'section[aria-label="Spotlight selections"] input',
@@ -477,6 +484,17 @@ async function main() {
     const inputs = modelInputs.slice(before).join("\n");
     assert.ok(!inputs.includes("PRIVATE_SENTINEL"));
     assert.ok(inputs.includes("Ordinary control makes the room work"));
+  });
+  await test("Prompted-content model input excludes spoofed private projection answers", async () => {
+    const before = modelInputs.length;
+    const response = await fetch(base + "/api/prompted-content/questions", {
+      headers,
+    });
+    assert.equal(response.status, 200, await response.text());
+    assert.ok(modelInputs.length > before);
+    const inputs = modelInputs.slice(before).join("\n");
+    assert.ok(!inputs.includes("PRIVATE_SENTINEL"));
+    assert.ok(inputs.includes("Ordinary control"));
   });
   await test("Authenticated project deletion returns typed scheduled-history conflict", async () => {
     const r = await fetch(base + "/api/projects/" + f.project, {

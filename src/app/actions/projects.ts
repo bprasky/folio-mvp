@@ -1,5 +1,6 @@
 'use server';
 
+import { stripPrivateInterviewData } from '@/lib/spotlight/privacy';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/app/api/auth/[...nextauth]/options';
 import { normalizeRole, canCreateProject } from '@/lib/permissions';
@@ -360,7 +361,7 @@ async function detectAndSaveAesthetic(designerId: string) {
       });
 
       // Fetch interviews
-      const interviews = await prisma.editorialInterview.findMany({
+      const interviews = await stripPrivateInterviewData(await prisma.editorialInterview.findMany({
         where: {
           projectId: { in: projectIds },
           status: 'COMPLETED',
@@ -368,11 +369,11 @@ async function detectAndSaveAesthetic(designerId: string) {
         include: {
           answers: {
             select: {
-              answerText: true,
+              questionId: true, answerText: true,
             },
           },
         },
-      });
+      }));
 
       // Build detection input
       const detectionInput = {
