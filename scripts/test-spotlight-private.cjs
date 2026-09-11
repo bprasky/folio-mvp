@@ -28,7 +28,7 @@ async function verify() {
 async function sql(input) { await verify(); return docker(['exec','-i',container,'psql','-X','-qAt','-v','ON_ERROR_STOP=1','-h','/test-socket','-U','postgres','-d',database],{input}); }
 async function tool(label, args, timeout) {
   await verify();
-  for (const k of ['DATABASE_URL','DIRECT_URL','SHADOW_DATABASE_URL']) { const u = new URL(env[k]); assert.equal(u.hostname,'localhost'); assert.equal(u.searchParams.get('host'),socket); assert.equal(u.pathname,'/'+database); }
+  for (const k of ['DATABASE_URL','DIRECT_URL','SHADOW_DATABASE_URL']) { const u = new URL(env[k]); assert.equal(u.hostname,'localhost'); assert.equal(u.searchParams.get('host'),socket); assert.equal(u.pathname,'/'+database+(k==='SHADOW_DATABASE_URL'?'_shadow':'')); }
   const r = await run(process.execPath,args,{env,timeout});
   evidence.commands.push({ label, code: r.code, output: (r.stdout+r.stderr).replace(/postgres(?:ql)?:\/\/[^\s"']+/g,'[isolated connection]') });
   assert.equal(r.code,0,evidence.commands.at(-1).output); console.log('PASS '+label); return r.stdout;
@@ -42,7 +42,7 @@ async function main() {
   fs.mkdirSync(path.join(scratch,'tasks')); fs.symlinkSync(path.join(root,'node_modules'),path.join(scratch,'node_modules'),'dir');
   assert.ok(!fs.readdirSync(scratch).some(p=>p.startsWith('.env')));
   const url = `postgresql://postgres@localhost:5432/${database}?host=${encodeURIComponent(socket)}&schema=public&connection_limit=8`;
-  env = { ...base, DATABASE_URL:url,DIRECT_URL:url,SHADOW_DATABASE_URL:url,FOLIO_TEST_NONCE:nonce,FOLIO_TEST_DATABASE:database,
+  env = { ...base, DATABASE_URL:url,DIRECT_URL:url,SHADOW_DATABASE_URL:url.replace(database,database+'_shadow'),FOLIO_TEST_NONCE:nonce,FOLIO_TEST_DATABASE:database,
     NEXTAUTH_SECRET:crypto.randomBytes(32).toString('hex'),NEXTAUTH_URL:'http://127.0.0.1:3210',NEXT_PUBLIC_SUPABASE_URL:'http://127.0.0.1:9',NEXT_PUBLIC_SUPABASE_ANON_KEY:'synthetic-only',
     SPOTLIGHT_INTERVIEW_V1:'true',SPOTLIGHT_PROJECT_IDS:Array.from({length:8},(_,i)=>`00000000-0000-4000-8000-${String(i+100).padStart(12,'0')}`).join(','),SPOTLIGHT_ACTOR_IDS:'00000000-0000-4000-8000-000000000001,00000000-0000-4000-8000-000000000002',
     NEXT_TELEMETRY_DISABLED:'1',NODE_OPTIONS:'--max-old-space-size=4096',CI:'true' };
@@ -51,6 +51,7 @@ async function main() {
   const c = await verify(); evidence.isolation={network:'none',ports:0,persistentDataMounts:0,privateSocket:true,imageId:c.Image};
   for(let i=0;i<80;i++){const ready=await run('docker',['--context',context,'exec',container,'pg_isready','-h','/test-socket','-U','postgres','-d',database]);const pid=await docker(['exec',container,'cat','/proc/1/comm']);if(ready.code===0&&pid==='postgres')break;await new Promise(r=>setTimeout(r,500));}
   await sql(`ALTER DATABASE ${database} SET folio.test_nonce='${nonce}';`);
+  await sql(`CREATE DATABASE ${database}_shadow;`);
   env.FOLIO_TEST_SYSTEM_ID = await sql('SELECT system_identifier::text FROM pg_control_system()');
   const prisma = path.join(root,'node_modules/prisma/build/index.js');
   await tool('Prisma client generation',[prisma,'generate','--schema','prisma/schema.prisma']);

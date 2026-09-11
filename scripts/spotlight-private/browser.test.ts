@@ -18,7 +18,7 @@ async function start() {
 }
 async function stop(){if(server){server.kill('SIGTERM');await new Promise<void>(r=>server.once('exit',()=>r()));}}
 async function main(){
-  assert.ok(process.env.FOLIO_TEST_NONCE);assert.ok(process.env.DATABASE_URL!.includes('/socket'));
+  assert.ok(process.env.FOLIO_TEST_NONCE);assert.ok(new URL(process.env.DATABASE_URL!).searchParams.get('host')!.endsWith('/socket'));
   const cookie=await encode({secret:process.env.NEXTAUTH_SECRET!,token:{id:f.actor,sub:f.actor,role:'DESIGNER',accountStatus:'APPROVED',onboardingCompletedAt:new Date().toISOString()},maxAge:3600});
   const headers={'Content-Type':'application/json',Cookie:`next-auth.session-token=${cookie}`};
   const api=async(body:any)=>{const r=await fetch(base+'/api/projects/'+f.project+'/spotlight',{method:'POST',headers,body:JSON.stringify(body)});const data=await r.json();return {status:r.status,data};};
