@@ -98,6 +98,9 @@ export async function PUT(
       }
 
       const room = await prisma.$transaction(async (tx) => {
+        // Same mutex as private/ordinary interview acceptance: a room rename
+        // must not replace provenance read before a concurrent answer commit.
+        await tx.$queryRaw`SELECT id FROM projects WHERE id = ${projectId} FOR UPDATE`;
         // 1. Update the Room record
         const updated = await tx.room.update({
           where: { id: roomId, projectId },

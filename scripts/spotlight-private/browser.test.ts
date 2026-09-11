@@ -165,6 +165,16 @@ async function main() {
     args: ["--no-sandbox", "--disable-dev-shm-usage"],
   });
   const page = await browser.newPage();
+  // Next dev recompiles chunks after a process restart. Always fetch the
+  // current chunks; persistence is tested in PostgreSQL, never browser caches.
+  await page.setCacheEnabled(false);
+  page.on("pageerror", (error) => {
+    logs += `\nBROWSER ERROR: ${String(error)}`;
+  });
+  page.on("requestfailed", (request) => {
+    if (request.url().startsWith(base))
+      logs += `\nFAILED REQUEST: ${request.url()} ${request.failure()?.errorText}`;
+  });
   await page.setViewport({ width: 1280, height: 1000 });
   await page.setRequestInterception(true);
   page.on("request", (r) => {
@@ -274,6 +284,35 @@ async function main() {
       ),
       exact,
     );
+  });
+  await test("Browser previews and explicitly confirms reuse into a second question", async () => {
+    const s = (await api({ action: "resume" })).data;
+    const second = s.questions.find(
+      (q: any) => q.kind === "BASE" && q.id !== firstId,
+    );
+    const selector = `article[data-question-id="${second.id}"]`;
+    await (await page.$(`${selector} summary`))!.click();
+    const value = await page.$eval(
+      `${selector} select`,
+      (el) => (el as HTMLSelectElement).options[1].value,
+    );
+    await page.select(`${selector} select`, value);
+    assert.equal(
+      await page.$eval(`${selector} blockquote`, (el) => el.textContent),
+      exact,
+    );
+    await (await page.$(`${selector} input[type="checkbox"]`))!.click();
+    await (await page.$(`${selector} button`))!.click();
+    await page.waitForFunction(
+      (sel) => document.querySelector(sel)?.textContent?.includes("Saved."),
+      {},
+      selector,
+    );
+    const saved = (await api({ action: "resume" })).data.questions.find(
+      (q: any) => q.id === second.id,
+    ).currentAnswer;
+    assert.equal(saved.acceptedText, exact);
+    assert.equal(saved.acceptanceMode, "CONFIRMED_REUSE");
   });
   await test("Stale browser save retains unsaved text; retry never overwrites winner", async () => {
     const s = (await api({ action: "resume" })).data,
@@ -502,6 +541,38 @@ async function main() {
     assert.equal(q.answers[0].acceptedText, exact);
     assert.equal(q.currentAnswer.acceptedText, "Another session won");
   });
+  await test("Concurrent room rename and ordinary save preserve durable mirrors and ordinary text", async () => {
+    const s = (await api({ action: "resume" })).data;
+    const ordinary = s.ordinary[0];
+    const [rename, save] = await Promise.all([
+      fetch(base + `/api/projects/${f.project}/rooms/${f.fixtures.rooms[0]}`, {
+        method: "PUT",
+        headers,
+        body: JSON.stringify({ name: "Lounge" }),
+      }),
+      api({
+        action: "ordinary",
+        questionId: ordinary.id,
+        text: "Concurrent room rename control",
+        expectedVersion: ordinary.version || 0,
+        requestKey: crypto.randomUUID(),
+      }),
+    ]);
+    assert.equal(rename.status, 200, await rename.text());
+    assert.equal(save.status, 200);
+    const post = await prisma.projectPost.findUniqueOrThrow({
+      where: { projectId: f.project },
+    });
+    const mirror = (post.provenance as any).interview.spotlightDrafts;
+    assert.equal(
+      mirror.answersByQuestion[firstId].answer,
+      "Another session won",
+    );
+    assert.equal(
+      mirror.ordinary[ordinary.id].text,
+      "Concurrent room rename control",
+    );
+  });
   await page.screenshot({
     path: "tasks/spotlight-private-browser.png",
     fullPage: true,
@@ -524,7 +595,18 @@ main()
       ),
     ),
   )
-  .catch((e) => {
+  .catch(async (e) => {
+    if (browser) {
+      const pages = await browser.pages();
+      const page = pages[pages.length - 1];
+      logs += `\nBROWSER BODY: ${await page.$eval("body", (el) => el.innerText).catch(() => "unavailable")}`;
+      await page
+        .screenshot({
+          path: "tasks/spotlight-private-browser.png",
+          fullPage: true,
+        })
+        .catch(() => {});
+    }
     fs.writeFileSync(
       "tasks/spotlight-private-browser.json",
       JSON.stringify(

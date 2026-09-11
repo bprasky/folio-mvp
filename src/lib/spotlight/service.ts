@@ -15,6 +15,8 @@ import {
 type Tx = Prisma.TransactionClient;
 const hash = (value: unknown) =>
   createHash("sha256").update(JSON.stringify(value)).digest("hex");
+// Meaning format is independent of deployable prompt/policy versions.
+const MEANING_FORMAT = "spotlight-meaning-v1";
 const fail = (code: string, message: string, status = 409): never => {
   throw new SpotlightConflict(code, message, status);
 };
@@ -102,6 +104,8 @@ export type SpotlightCommand =
       selectionVersion: number;
       inputModality: "TEXT" | "VOICE" | "MIXED";
       reuseRevisionId?: string;
+      reuseLegacyQuestionId?: string;
+      reuseTextDigest?: string;
       confirmReuse?: boolean;
     }
   | {
@@ -120,6 +124,7 @@ async function sources(tx: Tx, projectId: string) {
     where: { image: { projectId } },
     select: {
       id: true,
+      imageId: true,
       productId: true,
       finishRaw: true,
       finishConfirmed: true,
@@ -375,7 +380,7 @@ async function spotlightTransaction(
             q.kind === "BASE"
               ? q.meaningKey ===
                 hash([
-                  SPOTLIGHT_POLICY,
+                  MEANING_FORMAT,
                   s.id,
                   s.productId,
                   s.roomId,
@@ -407,7 +412,7 @@ async function spotlightTransaction(
       if (command.action === "schedule") {
         for (const s of spotlights.filter((s) => eligible.has(s.id))) {
           const meaningKey = hash([
-            SPOTLIGHT_POLICY,
+            MEANING_FORMAT,
             s.id,
             s.productId,
             s.roomId,
@@ -448,6 +453,23 @@ async function spotlightTransaction(
                 ) + 1,
               meaningKey,
               contextSnapshot: {
+                snapshotVersion: 1,
+                projectId,
+                publisher: {
+                  kind: publisher.publisherOrgId ? "STUDIO" : "PERSONAL",
+                  id: publisher.publisherOrgId || publisher.publisherUserId,
+                },
+                product: { id: s.productId, name: product.product.name },
+                room: {
+                  id: s.roomId,
+                  name: rooms.find((r) => r.id === s.roomId)!.name,
+                },
+                semanticIntent: "CHOICE_REASON_V1",
+                sourceTagIds: s.sourceTags.map((t) => t.tagId).sort(),
+                linkedImageIds: tags
+                  .filter((t) => s.sourceTags.some((l) => l.tagId === t.id))
+                  .map((t) => t.imageId)
+                  .sort(),
                 productId: s.productId,
                 productName: product.product.name,
                 roomId: s.roomId,
@@ -522,6 +544,36 @@ async function spotlightTransaction(
           });
         }
       }
+      const post = await tx.projectPost.findUnique({
+        where: { projectId },
+        select: { id: true, provenance: true },
+      });
+      const provenance = record(post?.provenance),
+        interview = record(provenance.interview),
+        privateDrafts = record(interview.spotlightDrafts);
+      const existingPayload = record(interview.payload);
+      const legacySources = [
+        ...(Array.isArray(existingPayload.answers)
+          ? existingPayload.answers
+          : []),
+        ...(Array.isArray(existingPayload.followups)
+          ? existingPayload.followups
+          : []),
+      ]
+        .filter(
+          (a: JsonRecord) =>
+            typeof (a.questionId || a.id) === "string" &&
+            !allQuestions.some((q) => q.id === (a.questionId || a.id)) &&
+            typeof (a.answer ?? a.answerText) === "string",
+        )
+        .map((a: JsonRecord) => ({
+          questionId: (a.questionId || a.id) as string,
+          wording: (a.prompt ||
+            a.questionText ||
+            "Earlier ordinary answer") as string,
+          acceptedText: (a.answer ?? a.answerText) as string,
+          textDigest: hash(a.answer ?? a.answerText),
+        }));
       let receipt: unknown = null;
       if (command.action === "accept") {
         const q = allQuestions.find((q) => q.id === command.questionId);
@@ -541,6 +593,8 @@ async function spotlightTransaction(
           command.selectionVersion,
           command.inputModality,
           command.reuseRevisionId || null,
+          command.reuseLegacyQuestionId || null,
+          command.reuseTextDigest || null,
           command.confirmReuse === true,
         ]);
         const prior = await tx.spotlightAnswerRevision.findUnique({
@@ -591,6 +645,30 @@ async function spotlightTransaction(
           let reuse: Awaited<
             ReturnType<typeof tx.spotlightAnswerRevision.findUnique>
           > = null;
+          if (command.reuseRevisionId && command.reuseLegacyQuestionId)
+            fail("INVALID_REUSE", "Choose one source answer.", 400);
+          const legacyReuse = command.reuseLegacyQuestionId
+            ? legacySources.find(
+                (a) => a.questionId === command.reuseLegacyQuestionId,
+              )
+            : undefined;
+          if (command.reuseLegacyQuestionId) {
+            if (!command.confirmReuse)
+              fail(
+                "CONFIRM_REUSE",
+                "Review and explicitly confirm the answer to reuse.",
+                400,
+              );
+            if (
+              !legacyReuse ||
+              legacyReuse.acceptedText !== command.text ||
+              legacyReuse.textDigest !== command.reuseTextDigest
+            )
+              fail(
+                "STALE_REUSE",
+                "The source answer changed. Preview and confirm it again.",
+              );
+          }
           if (command.reuseRevisionId) {
             if (!command.confirmReuse)
               fail(
@@ -619,17 +697,63 @@ async function spotlightTransaction(
               answeringUserId: actorId,
               acceptedText: command.text,
               acceptanceSnapshot: {
+                snapshotVersion: 1,
+                projectId,
+                actorId,
+                capability: publisher.publisherOrgId
+                  ? "create_and_edit_projects"
+                  : "PUBLISHING_DESIGNER",
+                membershipId: publisher.publisherOrgId
+                  ? (
+                      await tx.organizationUser.findUniqueOrThrow({
+                        where: {
+                          userId_organizationId: {
+                            userId: actorId,
+                            organizationId: publisher.publisherOrgId,
+                          },
+                        },
+                        select: { id: true },
+                      })
+                    ).id
+                  : null,
                 wording: q.wording,
                 context: q.contextSnapshot,
-                sourceTagIds: s.sourceTags.map((t) => t.tagId),
+                sourceTagIds: s.sourceTags.map((t) => t.tagId).sort(),
+                linkedImageIds: tags
+                  .filter((t) => s.sourceTags.some((l) => l.tagId === t.id))
+                  .map((t) => t.imageId)
+                  .sort(),
+                textDigest: hash(command.text),
                 ...publisher,
               },
               inputModality: command.inputModality,
-              acceptanceMode: reuse ? "CONFIRMED_REUSE" : "AUTHORED",
+              acceptanceMode:
+                reuse || legacyReuse ? "CONFIRMED_REUSE" : "AUTHORED",
               reusedFromRevisionId: reuse?.id,
               reuseSnapshot: reuse
-                ? { revisionId: reuse.id, textHash: hash(reuse.acceptedText) }
-                : undefined,
+                ? {
+                    snapshotVersion: 1,
+                    sourceKind: "DURABLE_REVISION",
+                    projectId,
+                    ...publisher,
+                    questionId: reuse.questionId,
+                    revisionId: reuse.id,
+                    acceptedText: reuse.acceptedText,
+                    textHash: hash(reuse.acceptedText),
+                    explicitlyConfirmed: true,
+                  }
+                : legacyReuse
+                  ? {
+                      snapshotVersion: 1,
+                      sourceKind: "LEGACY_PROVENANCE",
+                      projectId,
+                      ...publisher,
+                      questionId: legacyReuse.questionId,
+                      acceptedText: legacyReuse.acceptedText,
+                      textHash: legacyReuse.textDigest,
+                      explicitlyConfirmed: true,
+                    }
+                  : undefined,
               requestKey: command.requestKey,
               requestHash,
               acceptedStateVersion: q.stateVersion + 1,
@@ -668,14 +792,6 @@ async function spotlightTransaction(
         },
         orderBy: { createdAt: "asc" },
       });
-      const post = await tx.projectPost.findUnique({
-        where: { projectId },
-        select: { id: true, provenance: true },
-      });
-      const provenance = record(post?.provenance),
-        interview = record(provenance.interview),
-        privateDrafts = record(interview.spotlightDrafts);
-      const existingPayload = record(interview.payload);
       const legacyProjection = await tx.editorialInterview.findUnique({
         where: { projectId },
         include: { answers: true },
@@ -769,7 +885,10 @@ async function spotlightTransaction(
         }
         receipt = ordinary[command.questionId];
       }
-      if (command.action !== "resume" || reconciled) {
+      if (
+        (command.action !== "resume" || reconciled) &&
+        (post || !["select", "deselect", "resume"].includes(command.action))
+      ) {
         const ordinaryIds = new Set(ordinaryDefinitions.map((q) => q.id));
         const ordinaryAnswers = ordinaryDefinitions
           .filter((q) => ordinary[q.id]?.text)
@@ -793,7 +912,50 @@ async function spotlightTransaction(
             payload: { ...existingPayload, answers },
             spotlightDrafts: {
               ...privateDrafts,
+              schemaVersion: 1,
               ordinary,
+              answersByQuestion: Object.fromEntries(
+                questions
+                  .filter((q) => q.currentAnswer)
+                  .map((q) => {
+                    const a = q.currentAnswer!;
+                    const s = spotlights.find((s) => s.id === q.spotlightId)!;
+                    return [
+                      q.id,
+                      {
+                        questionId: q.id,
+                        questionVersion: q.questionVersion,
+                        revisionId: a.id,
+                        revisionNumber: a.revisionNumber,
+                        answer: a.acceptedText,
+                        prompt: q.wording,
+                        roomId: s.roomId,
+                        linkedProductId: s.productId,
+                        sourceTagIds: s.sourceTags.map((t) => t.tagId).sort(),
+                        linkedImageIds: tags
+                          .filter((t) =>
+                            s.sourceTags.some((l) => l.tagId === t.id),
+                          )
+                          .map((t) => t.imageId)
+                          .sort(),
+                        answeringUserId: a.answeringUserId,
+                        acceptedAt: a.acceptedAt,
+                      },
+                    ];
+                  }),
+              ),
+              eligibilityByQuestion: Object.fromEntries(
+                questions.map((q) => [
+                  q.id,
+                  {
+                    eligible: eligible.has(q.spotlightId) && !q.retiredAt,
+                    stateVersion: q.stateVersion,
+                    selectionVersion: spotlights.find(
+                      (s) => s.id === q.spotlightId,
+                    )!.selectionVersion,
+                  },
+                ]),
+              ),
               heads: questions.map((q) => ({
                 questionId: q.id,
                 revisionNumber: q.currentAnswerNumber,
@@ -839,6 +1001,7 @@ async function spotlightTransaction(
       }
       return {
         receipt,
+        legacyReuseSources: legacySources,
         ordinaryHistory: oldAnswers.filter(
           (a) =>
             !ordinaryDefinitions.some((q) => q.id === (a.questionId || a.id)),

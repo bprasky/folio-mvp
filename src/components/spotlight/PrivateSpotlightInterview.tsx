@@ -244,9 +244,12 @@ function AnswerEditor({
     setReuseId("");
     sessionStorage.setItem(storageKey, JSON.stringify({ text: value }));
   };
-  const reuse = state.questions
-    .flatMap((q) => q.answers)
-    .find((a) => a.id === reuseId);
+  const legacyReuse = state.legacyReuseSources.find(
+    (a) => `legacy:${a.questionId}` === reuseId,
+  );
+  const reuse =
+    legacyReuse ||
+    state.questions.flatMap((q) => q.answers).find((a) => a.id === reuseId);
   return (
     <article
       className="border rounded-lg p-4 space-y-3"
@@ -286,6 +289,14 @@ function AnswerEditor({
                 </option>
               )),
             )}
+            {state.legacyReuseSources.map((a) => (
+              <option
+                key={`legacy:${a.questionId}`}
+                value={`legacy:${a.questionId}`}
+              >
+                {a.wording} — ordinary saved answer
+              </option>
+            ))}
           </select>
           {reuse && (
             <>
@@ -341,7 +352,15 @@ function AnswerEditor({
                   inputModality: "TEXT",
                   requestKey: crypto.randomUUID(),
                   ...(reuseId
-                    ? { reuseRevisionId: reuseId, confirmReuse: confirmed }
+                    ? {
+                        ...(legacyReuse
+                          ? {
+                              reuseLegacyQuestionId: legacyReuse.questionId,
+                              reuseTextDigest: legacyReuse.textDigest,
+                            }
+                          : { reuseRevisionId: reuseId }),
+                        confirmReuse: confirmed,
+                      }
                     : {}),
                 });
           setPending(cmd);

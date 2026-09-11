@@ -12,7 +12,7 @@ const command = z.discriminatedUnion('action', [
   z.object({ action: z.literal('select'), tagId: id, selected: z.boolean(), expectedSelectionVersion: z.number().int().positive().optional() }),
   z.object({ action: z.literal('deselect'), spotlightId: id, expectedSelectionVersion: z.number().int().positive() }),
   z.object({ action: z.literal('followup'), questionId: id }),
-  z.object({ action: z.literal('accept'), questionId: id, questionVersion: z.number().int().positive(), currentAnswerNumber: z.number().int().positive().nullable(), text: z.string().min(1).max(100000), requestKey: z.string().min(1).max(128), stateVersion: z.number().int().nonnegative(), selectionVersion: z.number().int().positive(), inputModality: z.enum(['TEXT', 'VOICE', 'MIXED']), reuseRevisionId: id.optional(), confirmReuse: z.boolean().optional() }),
+  z.object({ action: z.literal('accept'), questionId: id, questionVersion: z.number().int().positive(), currentAnswerNumber: z.number().int().positive().nullable(), text: z.string().min(1).max(100000), requestKey: z.string().min(1).max(128), stateVersion: z.number().int().nonnegative(), selectionVersion: z.number().int().positive(), inputModality: z.enum(['TEXT', 'VOICE', 'MIXED']), reuseRevisionId: id.optional(), reuseLegacyQuestionId: id.optional(), reuseTextDigest: z.string().regex(/^[a-f0-9]{64}$/).optional(), confirmReuse: z.boolean().optional() }),
   z.object({ action: z.literal('ordinary'), questionId: id, text: z.string().min(1).max(100000), expectedVersion: z.number().int().nonnegative(), requestKey: z.string().min(1).max(128) }),
 ]);
 export async function GET(_req: NextRequest, { params }: { params: { id: string } }) {

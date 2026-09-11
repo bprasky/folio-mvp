@@ -350,10 +350,62 @@ async function main() {
       state.questions[0].currentAnswer!.acceptedText,
       "durable simultaneous",
     );
+    const savedPost = await prisma.projectPost.findUniqueOrThrow({
+      where: { projectId: project(0) },
+    });
+    const mirror = (savedPost.provenance as any).interview.spotlightDrafts;
+    assert.equal(mirror.schemaVersion, 1);
+    assert.equal(
+      mirror.answersByQuestion[state.questions[0].id].answer,
+      "durable simultaneous",
+    );
+    assert.equal(
+      mirror.eligibilityByQuestion[state.questions[0].id].eligible,
+      true,
+    );
     assert.ok(
       (await loadInterviewAnswers(project(0))).some((a) =>
         JSON.stringify(a).includes("Ordinary project intention"),
       ),
+    );
+  });
+  await test("Legacy reuse binds exact provenance digest and destination versions", async () => {
+    const source = state.legacyReuseSources.find(
+      (a) => a.questionId === "legacy-parent",
+    )!;
+    const cmd = {
+      ...accept(state.questions[1], source.acceptedText),
+      reuseLegacyQuestionId: source.questionId,
+      reuseTextDigest: source.textDigest,
+      confirmReuse: true,
+    } as Extract<SpotlightCommand, { action: "accept" }>;
+    await reject(
+      () => call({ ...cmd, reuseTextDigest: "0".repeat(64) }),
+      "STALE_REUSE",
+    );
+    state = await call(cmd);
+    const revision = state.questions[1].currentAnswer!;
+    assert.equal(revision.acceptedText, source.acceptedText);
+    assert.equal(revision.reusedFromRevisionId, null);
+    assert.equal(
+      (revision.reuseSnapshot as any).sourceKind,
+      "LEGACY_PROVENANCE",
+    );
+    const post = await prisma.projectPost.findUniqueOrThrow({
+      where: { projectId: project(0) },
+    });
+    const prov = post.provenance as any;
+    prov.interview.payload.answers.find(
+      (a: any) => a.questionId === source.questionId,
+    ).answer = "changed source";
+    await prisma.projectPost.update({
+      where: { id: post.id },
+      data: { provenance: prov },
+    });
+    await reject(
+      () =>
+        call({ ...cmd, ...accept(state.questions[1], source.acceptedText) }),
+      "STALE_REUSE",
     );
   });
   await test("Spoofed/missing projection labels and published provenance cannot leak durable IDs", async () => {
