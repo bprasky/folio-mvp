@@ -1434,14 +1434,9 @@ export async function POST(
       _cid,
     }));
 
-    // Distribute top-level pullQuotes into per-chapter pullQuote fields
-    // so both the draft editor and preview can render them inline.
-    if (validatedBlocks.pullQuotes?.length && validatedBlocks.galleryChapters?.length) {
-      for (let i = 0; i < validatedBlocks.galleryChapters.length && i < validatedBlocks.pullQuotes.length; i++) {
-        const q = validatedBlocks.pullQuotes[i];
-        validatedBlocks.galleryChapters[i].pullQuote = typeof q === 'string' ? q : q.text;
-      }
-    }
+    // Chapter selections are canonical, including alternatives and provenance.
+    // The flat pullQuotes index includes the hook and skips empty rooms; its
+    // positions cannot be mapped back onto chapter positions.
 
     // expandedBlocks is the validated structure ready to save
     const expandedBlocks = validatedBlocks;

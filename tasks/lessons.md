@@ -977,3 +977,6 @@ The durable interview packet incorrectly named ProjectPost.provenanceJson; the a
 
 ## 2026-09-14 — Folio-authored pull quotes retain the direct quote's purpose
 When enabling Written by Folio, implement optimized versions of the ranked direct pull quotes using their interview context. Do not broaden the feature into an independent room-caption generator or assume third-person voice. Keep direct selections intact, preserve meaning, and label Folio authorship explicitly.
+
+## 2026-09-14 — Verify review options at the regeneration save boundary
+Article regeneration must retain canonical room selection objects through persistence; never rebuild them from a flattened quote export index, which includes hooks and omits empty rooms. Verify title-choice generation separately from the article's single headline, and report partial option-generation failures without discarding a successfully saved article. When investigating a screenshot, verify the tested deployment independently of PR merge status.

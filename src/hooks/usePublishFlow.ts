@@ -241,6 +241,25 @@ export function usePublishFlow(projectId: string): UsePublishFlowReturn {
         setGenerationMeta(responseJson.meta);
       }
 
+      // The article generator writes one title. Prepare the review pool separately
+      // without replacing that title or losing the saved article if this step fails.
+      try {
+        const titleRes = await fetch(
+          `/api/posting/project/${projectId}/sections/headline/regenerate`,
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({}),
+          },
+        );
+        if (!titleRes.ok) {
+          const titleJson = await titleRes.json().catch(() => ({}));
+          setError(`Your article was regenerated, but title options could not be prepared. ${titleJson?.error ? `${titleJson.error} ` : ''}Try “New options, every angle” in Choose a title.`);
+        }
+      } catch {
+        setError('Your article was regenerated, but title options could not be prepared. Try “New options, every angle” in Choose a title.');
+      }
+
       await fetchData();
     } catch (err: any) {
       console.error("[usePublishFlow] Generate failed", err);
