@@ -1875,3 +1875,26 @@ A/B review: exact installed SQL hash 50adeaf12a7b402181769746caed685ba3c0a5b5882
 Plan: no deployment, application test content, grants, schema expansion or outreach. Preserve prior report edit and existing merge notes. Implement first privacy controls, then writes. Use actual local/CI disposable persistence; model calls mocked only for deterministic tests. Application migration is user-reported applied; catalog/role verification remains independent until checked.
 
 Review: implementation in draft PR #768. Tested code 4d240cdb44b44f98e6e7ff5afcec2c5f0322c905 passed 23 real service groups, 15 browser/API groups and the four exact SQL/migration-command suites in run 34629564023. Two local model inputs inspected; live models/voice not evaluated. Read-only application postflight verified exact durable catalog/roles and empty tables. Both deployment holds unchanged; no application writes/schema change/grants/exposure. TypeScript remains 904→904, core 8 pass/1 explicit DB skip, guards pass; preexisting design-system failure keeps PR draft. Handoff and sanitized evidence in docs/reviews/SPOTLIGHT_PRIVATE_MILESTONE_HANDOFF.md and SPOTLIGHT_PRIVATE_MILESTONE_TEST_RESULTS.json.
+
+## 2026-09-14 — Room quote picker placement
+- [x] Move the owner quote picker directly below the room label and above the article body.
+- [x] Verify the component change and explain existing-draft quote options.
+
+Review: QuoteTile JSX block moved with its props unchanged. Changed-file lint, pull-quote checks, and story-editing checks pass (Git Bash used for existing Unix shell commands). No browser visual check or deployment performed. Existing alternatives need no regeneration; backfill fills missing quotes but skips selected quotes. Folio-authored mode remains unavailable.
+
+## 2026-09-14 — Activate Written by Folio
+- [x] Audit room sources, storage, public renderers and export consumers.
+- [x] Add grounded, source-linked Folio alternatives with reversible authorship selection and authenticated generation.
+- [x] Enable picker in all states; render Folio lines as editorial copy and preserve verbatim-only exports.
+- [x] Run focused behavior tests, lint and existing quote/story checks; review the diff.
+Plan: generate a small cached batch of optimized versions of ranked direct quotes, using the room's public-eligible interview context; keep source references and exact supporting excerpts in existing JSON, without database schema changes. Preserve the original verbatim pool. Reject malformed/unsupported model output and concurrent stale saves. No article regeneration, deployment or application-data writes during verification.
+
+Review: Implemented separate original/optimized pools; 1–3 Folio rewrites on demand with original text, exact source context, source rechecks, and a semantic review call. Preserves direct meaning/viewpoint, chosen direct text and removed Folio state. API auth, rate limiting, naming scrub, cache reuse and CAS; existing backfill retains Folio data. Public/shared readers strip rewrite evidence and alternatives; Folio display text is labeled and excluded from direct-quote exports. 58 focused tests (19 source/React, 29 API, 10 reader-boundary) pass; existing pull-quote, story-editing and regeneration suites, import guard and migration discipline pass. Changed-source lint passes with repository any warnings. TypeScript still reports 904 existing diagnostics, none in changed source files. Final independent review: no blockers. Live model quality, application database behavior and visual browser QA were not exercised; no deployment or application-data writes. Two model calls per new room batch, capped at 1400 + 400 output tokens; cached selection/cycling makes no model calls.
+
+## 2026-09-14 — Prepare Folio quote PR
+- [x] Refresh main and create dedicated branch; preserve unrelated Spotlight changes.
+- [x] Run live model smoke on synthetic quotes and inspect meaning/voice.
+- [ ] Include focused tests in CI, commit scoped files and open PR.
+- [ ] Resolve new CI failures and report exact-head merge readiness.
+
+PR preparation: live smoke passed on configured claude-sonnet-5 using three synthetic fixtures/six calls (6958 input, 348 output tokens; $0.026094 estimated). Actual outputs and limitations in docs/reviews/FOLIO_LINES_LIVE_SMOKE.md. No application data accessed or written. CI now runs the 58 focused checks and existing quote/story/regeneration guards. Full diagnostic ratchet passes at 904 with no new fingerprints; local compile retried outside the sandbox after Google font downloads were denied.

@@ -29,7 +29,7 @@ import { prisma } from '@/lib/prisma';
 import { assertProjectWrite } from '@/lib/authz/access';
 import { selectPullQuotes } from '@/lib/posting/selectPullQuotes';
 import { loadInterviewAnswers } from '@/lib/posting/loadInterviewAnswers';
-import { syncPullQuotesFromChapters, getSelectedPullQuoteText } from '@/lib/posting/schemas';
+import { syncPullQuotesFromChapters, isPullQuoteSelection } from '@/lib/posting/schemas';
 import { cid as newCid } from '@/lib/utils/correlation';
 
 export async function POST(
@@ -93,14 +93,20 @@ export async function POST(
 
       // Never overwrite a quote the designer already has. Backfill means filling
       // a hole, not re-deciding something they may have chosen deliberately.
-      if (getSelectedPullQuoteText(ch.pullQuote)) {
+      // Check the direct pool independently: Folio authorship intentionally
+      // hides it from getSelectedPullQuoteText, but does not erase the choice.
+      const directText = typeof ch.pullQuote === 'string'
+        ? ch.pullQuote : isPullQuoteSelection(ch.pullQuote) ? ch.pullQuote.selected?.text : null;
+      if (directText) {
         skippedExisting.push(title);
         continue;
       }
 
       const selection = Object.prototype.hasOwnProperty.call(byRoom, title) ? byRoom[title] : null;
       if (selection) {
-        ch.pullQuote = selection;
+        ch.pullQuote = isPullQuoteSelection(ch.pullQuote)
+          ? { ...ch.pullQuote, selected: selection.selected, alternatives: selection.alternatives }
+          : selection;
         filled++;
       } else {
         noCandidate.push(title);

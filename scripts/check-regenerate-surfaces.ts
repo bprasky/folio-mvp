@@ -77,7 +77,7 @@ check('the picker only PATCHes text taken from alternatives',
 check('the override endpoint refuses free-text pull quote writes',
   /code: 'PULL_QUOTE_NOT_EDITABLE'/.test(override));
 check('the dedicated endpoint still validates against alternatives',
-  /alternatives\.find\(\(a: any\) => a\.text === selectedText\)/.test(
+  /pq\.alternatives\.find\(line => line\.text === body\.selectedText\)/.test(
     readFileSync('src/app/api/posting/project/[projectId]/sections/pull-quote/route.ts', 'utf8')));
 
 console.log('\n5. Headlines are proposed in batches and filtered by house style');
@@ -207,7 +207,7 @@ const backfill = readFileSync('src/app/api/posting/project/[projectId]/sections/
 check('the backfill selects from interview answers, not from the prose',
   /selectPullQuotes\(/.test(backfill) && /loadInterviewAnswers\(/.test(backfill));
 check('it never overwrites a quote the designer already has',
-  /if \(getSelectedPullQuoteText\(ch\.pullQuote\)\)/.test(backfill) && /skippedExisting\.push/.test(backfill));
+  /if \(directText\)/.test(backfill) && /ch\.pullQuote\.selected\?\.text/.test(backfill) && /skippedExisting\.push/.test(backfill));
 check('it skips photo-only gallery chapters',
   /ch\?\.kind === 'gallery'/.test(backfill));
 check('it refuses when there are no answers rather than inventing',

@@ -4,7 +4,7 @@
 // for the Folio Story Format mosaic layout.
 
 import { buildEditorialChapters, type EditorialChapter } from "@/lib/editorial/buildEditorialChapters";
-import { getSelectedPullQuoteText, type PullQuoteSelection } from "@/lib/posting/schemas";
+import { getSelectedRoomLineText, type PullQuoteSelection } from "@/lib/posting/schemas";
 import { formatRoomName } from "@/lib/utils/formatRoomName";
 import { blockingIssues } from "@/lib/posting/headline";
 import { normalizeTitleAlternatives, type TitleAlternative } from "@/lib/posting/schemas";
@@ -371,7 +371,7 @@ export function buildStoryData(post: any): StoryData | null {
         roomLabel,
         roomSlug,
         heroImage: chapter.primaryImage,
-        pullQuote: getSelectedPullQuoteText(chapter.pullQuote),
+        pullQuote: getSelectedRoomLineText(chapter.pullQuote),
         pullQuoteSelection: chapter.pullQuote ?? null,
         attribution: designerName,
         productCount: chapter.taggedProducts.length,

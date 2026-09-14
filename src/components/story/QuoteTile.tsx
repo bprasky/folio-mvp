@@ -55,6 +55,7 @@ export function QuoteTile({
   // null on the published article — every branch below then behaves as before.
   const edit = useStoryEdit();
   const editable = !!edit && typeof chapterIndex === "number";
+  const folioAuthored = !!pullQuoteSelection && typeof pullQuoteSelection !== "string" && pullQuoteSelection.authorship === "folio";
   const [revealed, setRevealed] = useState(reducedMotion);
 
   useEffect(() => {
@@ -120,6 +121,23 @@ export function QuoteTile({
           {roomLabel}
         </span>
 
+        {/* The owner chooses direct words or an explicitly Folio-authored version
+            before reading the room article. Both pools retain their selections. */}
+        {editable && (
+          <StoryEditRegion>
+            <PullQuotePicker
+              pullQuote={pullQuoteSelection ?? pullQuote}
+              chapterIndex={chapterIndex!}
+              projectId={edit!.projectId}
+              quoteClassName={clsx(
+                "font-[var(--font-headline)] italic leading-[1.25] text-[rgba(87,75,67,0.92)]",
+                wide ? "text-[var(--type-h4)]" : "text-[var(--type-h3)]",
+              )}
+              onUpdate={() => edit!.refresh()}
+            />
+          </StoryEditRegion>
+        )}
+
         {/* Body — narrative when expanded, big pull quote when collapsed.
             For an owner the narrative is always shown, one editable node per
             paragraph so each maps to its own (chapterIndex, paragraphIndex)
@@ -158,7 +176,11 @@ export function QuoteTile({
             {editorialNarrative}
           </div>
         ) : (
-          pullQuote && (
+          pullQuote && (folioAuthored ? (
+            <p className={clsx("font-[var(--font-headline)] italic leading-[var(--lh-h4)] text-[rgba(87,75,67,0.92)]", wide ? "text-[var(--type-h4)]" : "text-[var(--type-h3)]")}>
+              {pullQuote}
+            </p>
+          ) : (
             <blockquote
               style={{
                 fontFamily: "var(--font-headline)",
@@ -172,26 +194,7 @@ export function QuoteTile({
             >
               &ldquo;{pullQuote}&rdquo;
             </blockquote>
-          )
-        )}
-
-        {/* Pull quote — for an owner this is the picker: cycle, remove, or
-            restore from the room's verbatim alternatives. Not a text field. A
-            quote is a claim about what the designer said out loud, so the only
-            way to change it is to choose a different thing they said. */}
-        {editable && (
-          <StoryEditRegion>
-            <PullQuotePicker
-              pullQuote={pullQuoteSelection ?? pullQuote}
-              chapterIndex={chapterIndex!}
-              projectId={edit!.projectId}
-              quoteClassName={clsx(
-                "font-[var(--font-headline)] italic leading-[1.25] text-[rgba(87,75,67,0.92)]",
-                wide ? "text-[var(--type-h4)]" : "text-[var(--type-h3)]",
-              )}
-              onUpdate={() => edit!.refresh()}
-            />
-          </StoryEditRegion>
+          ))
         )}
 
         {/* Per-section regenerate + undo. Kept with the section it acts on,
@@ -215,7 +218,7 @@ export function QuoteTile({
             ...stagger(160)
           }}
         >
-          &mdash; {attribution}
+          {folioAuthored ? 'Written by Folio' : <>&mdash; {attribution}</>}
         </span>
 
         {/* Editorial teaser (optional, only on collapsed regular tiles) */}

@@ -1,123 +1,82 @@
 export const dynamic = 'force-dynamic';
 
 import { NextRequest, NextResponse } from 'next/server';
+import { revalidatePath } from 'next/cache';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/app/api/auth/[...nextauth]/options';
 import { prisma } from '@/lib/prisma';
 import { assertProjectWrite } from '@/lib/authz/access';
-import { syncPullQuotesFromChapters, isPullQuoteSelection, PullQuoteAuthorshipSchema } from '@/lib/posting/schemas';
+import { syncPullQuotesFromChapters, isPullQuoteSelection, PullQuoteAuthorshipSchema, FolioLineSchema, type PullQuoteSelection } from '@/lib/posting/schemas';
+import { loadInterviewAnswers } from '@/lib/posting/loadInterviewAnswers';
+import { folioLinesMatchSources } from '@/lib/posting/folioLines';
 
-/**
- * PATCH — Select, remove, or restore a pull quote for a chapter.
- *
- * Body: { chapterIndex: number, selectedText: string | null, authorship?: 'verbatim' | 'folio' }
- *   - selectedText = "some quote" → select that alternative
- *   - selectedText = null → remove pull quote (keeps alternatives)
- *   - authorship → record which authorship mode the designer is in for this
- *     room. Storage only; nothing reads it yet. Omitted means "leave as is",
- *     which is not the same as 'verbatim' — a caller that does not know about
- *     the toggle must not silently overwrite a choice the designer made.
- */
-export async function PATCH(
-  request: NextRequest,
-  { params }: { params: { projectId: string } }
-) {
+/** Select within either authorship pool, or switch modes without losing either selection. */
+export async function PATCH(request: NextRequest, { params }: { params: { projectId: string } }) {
   try {
     const session = await getServerSession(authOptions);
-    if (!session?.user?.id) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
+    if (!session?.user?.id) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     const { projectId } = params;
     await assertProjectWrite(session.user.id, projectId);
-
-    const body = await request.json();
-    const { chapterIndex, selectedText } = body as {
-      chapterIndex: number;
-      selectedText: string | null;
+    const body = await request.json().catch(() => null);
+    if (!body || !Number.isInteger(body.chapterIndex) || body.chapterIndex < 0 ||
+        (body.selectedText !== undefined && body.selectedText !== null && typeof body.selectedText !== 'string') ||
+        (body.selectedText === undefined && body.authorship === undefined)) {
+      return NextResponse.json({ error: 'Invalid quote selection' }, { status: 400 });
+    }
+    if (body.authorship !== undefined && !PullQuoteAuthorshipSchema.safeParse(body.authorship).success) {
+      return NextResponse.json({ error: 'Invalid authorship' }, { status: 400 });
+    }
+    const post = await prisma.projectPost.findUnique({ where: { projectId }, select: { id: true, slug: true, expandedBlocks: true } });
+    if (!post?.expandedBlocks) return NextResponse.json({ error: 'Post not found' }, { status: 404 });
+    // Clone: the original JSON is the compare-and-swap token below.
+    const blocks = structuredClone(post.expandedBlocks) as Record<string, any>;
+    const chapter = blocks.galleryChapters?.[body.chapterIndex];
+    if (!chapter || chapter.kind === 'gallery') return NextResponse.json({ error: 'Invalid editorial chapter' }, { status: 400 });
+    const original = chapter.pullQuote;
+    const pq: PullQuoteSelection = isPullQuoteSelection(original) ? original : {
+      selected: typeof original === 'string' && original ? { text: original } : null,
+      alternatives: typeof original === 'string' && original ? [{ text: original, score: 0 }] : [],
     };
-
-    if (typeof chapterIndex !== 'number') {
-      return NextResponse.json({ error: 'Invalid chapterIndex' }, { status: 400 });
-    }
-
-    // Validated rather than trusted: this lands in expandedBlocks, which is an
-    // untyped Json column, so an unrecognised value would persist silently and
-    // corrupt the signal this field exists to collect.
-    let authorship: 'verbatim' | 'folio' | undefined;
-    if (body.authorship !== undefined) {
-      const parsed = PullQuoteAuthorshipSchema.safeParse(body.authorship);
-      if (!parsed.success) {
-        return NextResponse.json({ error: 'Invalid authorship' }, { status: 400 });
+    const authorship = body.authorship ?? pq.authorship ?? 'verbatim';
+    if (authorship === 'folio') {
+      const lines = pq.folio?.alternatives;
+      if (!lines?.length || !lines.every(line => FolioLineSchema.safeParse(line).success) ||
+          !folioLinesMatchSources(lines, chapter.title || '', await loadInterviewAnswers(projectId))) {
+        return NextResponse.json({ error: 'Generate Folio versions for this room first.' }, { status: 422 });
       }
-      authorship = parsed.data;
-    }
-
-    const post = await prisma.projectPost.findUnique({
-      where: { projectId },
-      select: { id: true, expandedBlocks: true },
-    });
-
-    if (!post) {
-      return NextResponse.json({ error: 'Post not found' }, { status: 404 });
-    }
-
-    const blocks = (post.expandedBlocks ?? {}) as Record<string, any>;
-    const chapters = blocks.galleryChapters as Array<Record<string, any>> | undefined;
-
-    if (!chapters || chapterIndex < 0 || chapterIndex >= chapters.length) {
-      return NextResponse.json({ error: 'Invalid chapter index' }, { status: 400 });
-    }
-
-    const chapter = chapters[chapterIndex];
-    const pq = chapter.pullQuote;
-
-    if (!pq || !isPullQuoteSelection(pq)) {
-      // Legacy string format or no pull quote — can't cycle
-      if (selectedText === null) {
-        chapter.pullQuote = null;
+      if (body.selectedText !== undefined) {
+        const chosen = body.selectedText === null ? null : lines.find(line => line.text === body.selectedText);
+        if (chosen === undefined) return NextResponse.json({ error: 'Selected text not found in alternatives' }, { status: 400 });
+        pq.folio!.selected = chosen;
       }
-      // Sync and save
-      syncPullQuotesFromChapters(blocks);
-      await prisma.projectPost.update({
-        where: { id: post.id },
-        data: { expandedBlocks: blocks as any },
-      });
-      return NextResponse.json({ ok: true, pullQuote: chapter.pullQuote });
-    }
-
-    // New PullQuoteSelection format
-    if (authorship !== undefined) pq.authorship = authorship;
-
-    if (selectedText === null) {
-      // Remove pull quote — keep alternatives for later restoration
-      pq.selected = null;
-    } else {
-      // Validate that selectedText exists in alternatives
-      const alt = pq.alternatives.find((a: any) => a.text === selectedText);
-      if (!alt) {
-        return NextResponse.json({ error: 'Selected text not found in alternatives' }, { status: 400 });
+      // Mode-only switching must not revive a stale or malformed stored selection.
+      const selected = pq.folio!.selected;
+      if (selected && (!lines.some(line => line.text === selected.text) ||
+          !folioLinesMatchSources([selected], chapter.title || '', await loadInterviewAnswers(projectId)))) {
+        return NextResponse.json({ error: 'Generate Folio versions for this room first.' }, { status: 422 });
       }
-      pq.selected = { text: alt.text, context: alt.context };
+    } else if (body.selectedText !== undefined) {
+      const chosen = body.selectedText === null ? null : pq.alternatives.find(line => line.text === body.selectedText);
+      if (chosen === undefined) return NextResponse.json({ error: 'Selected text not found in alternatives' }, { status: 400 });
+      // Copy the full alternative so its provenance survives selection.
+      pq.selected = chosen;
     }
-
-    // Sync top-level pullQuotes array
+    pq.authorship = authorship;
+    chapter.pullQuote = pq;
     syncPullQuotesFromChapters(blocks);
-
-    await prisma.projectPost.update({
-      where: { id: post.id },
+    const saved = await prisma.projectPost.updateMany({
+      where: { id: post.id, expandedBlocks: { equals: post.expandedBlocks } },
       data: { expandedBlocks: blocks as any },
     });
-
-    return NextResponse.json({ ok: true, pullQuote: chapter.pullQuote });
+    if (!saved.count) return NextResponse.json({ error: 'The article changed. Refresh and try again.' }, { status: 409 });
+    revalidatePath(`/designer/projects/${projectId}/preview`);
+    revalidatePath(`/project/${projectId}`);
+    if (post.slug) revalidatePath(`/p/${post.slug}`);
+    return NextResponse.json({ ok: true, pullQuote: pq });
   } catch (error: any) {
-    if (error.message === 'NotFound') {
-      return NextResponse.json({ error: 'Project not found' }, { status: 404 });
-    }
-    if (error.message === 'Forbidden') {
-      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
-    }
-    console.error('[sections/pull-quote] Error:', error);
+    if (error.message === 'NotFound') return NextResponse.json({ error: 'Project not found' }, { status: 404 });
+    if (error.message === 'Forbidden') return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    console.error('[sections/pull-quote] Request failed');
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }

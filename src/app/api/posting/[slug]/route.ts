@@ -6,6 +6,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getRelatedProjects } from "@/lib/article/getRelatedProjects";
 import { getProjectModules } from "@/lib/modules/getProjectModules";
+import { publicFolioBlocks } from '@/lib/posting/publicFolioBlocks';
 
 export async function GET(
   request: NextRequest,
@@ -136,7 +137,7 @@ export async function GET(
         slug: post.slug,
         excerpt: post.excerpt,
         keywords: post.keywords,
-        expandedBlocks: post.expandedBlocks,
+        expandedBlocks: publicFolioBlocks(post.expandedBlocks),
         provenance: await stripPrivateInterviewData(post.provenance),
         credits: post.credits,
         publishedAt: post.publishedAt,

@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { getProjectModules } from "@/lib/modules/getProjectModules";
+import { publicFolioBlocks } from "@/lib/posting/publicFolioBlocks";
 
 export async function getPostBySlug(slug: string) {
   try {
@@ -74,6 +75,7 @@ export async function getPostBySlug(slug: string) {
 
     return {
       ...post,
+      expandedBlocks: publicFolioBlocks(post.expandedBlocks),
       modules,
     };
   } catch (error) {
