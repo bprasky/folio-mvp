@@ -5,6 +5,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/app/api/auth/[...nextauth]/options';
 import { prisma } from '@/lib/prisma';
 import { approveInContextBoost, answerInContextFollowUp } from '@/lib/boost/inContextBoost';
+import { publicFolioBlocks } from '@/lib/posting/publicFolioBlocks';
 
 /**
  * GET /api/products/[productId]/in-context-boosts
@@ -63,6 +64,10 @@ export async function GET(
       orderBy: { createdAt: 'desc' },
     });
 
+    for (const boost of boosts) {
+      const post = boost.productTag?.image?.project?.post;
+      if (post) post.expandedBlocks = publicFolioBlocks(post.expandedBlocks);
+    }
     return NextResponse.json({ boosts });
   } catch (error) {
     console.error('[in-context-boosts] GET error:', error);

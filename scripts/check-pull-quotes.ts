@@ -166,7 +166,7 @@ check('there is exactly one pull-quote picker in the app', (() => {
 })());
 const patch = readFileSync('src/app/api/posting/project/[projectId]/sections/pull-quote/route.ts', 'utf8');
 check('the endpoint only accepts a quote already in alternatives (so shuffling stays verbatim)',
-  /alternatives\.find\(\(a: any\) => a\.text === selectedText\)/.test(patch));
+  /pq\.alternatives\.find\(line => line\.text === body\.selectedText\)/.test(patch));
 
 console.log('\n8. No unverified quote can survive anywhere in the pipeline');
 // The hole this closes: assembly used to seed a body-mined pull quote, and the

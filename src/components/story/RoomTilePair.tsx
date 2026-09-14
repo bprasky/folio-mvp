@@ -247,6 +247,7 @@ function Pattern4({
       pullQuote={room.pullQuote}
       attribution={room.attribution}
       productCount={0}
+      pullQuoteSelection={room.pullQuoteSelection}
       onClick={onToggle}
       isExpanded={isExpanded}
       reducedMotion={reducedMotion}

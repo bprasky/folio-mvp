@@ -41,6 +41,16 @@ export const QuoteProvenanceSchema = z.object({
 });
 export type QuoteProvenance = z.infer<typeof QuoteProvenanceSchema>;
 
+/** Folio's optimized wording, with the interview context used to write it. */
+export const FolioLineSchema = z.object({
+  text: z.string().trim().min(1).max(300),
+  originalText: z.string().min(1).max(300),
+  sources: z.array(QuoteProvenanceSchema.extend({
+    excerpt: z.string().min(1).max(4000),
+  })).min(1).max(3),
+});
+export type FolioLine = z.infer<typeof FolioLineSchema>;
+
 export const PullQuoteAlternativeSchema = z.object({
   text: z.string().max(300),
   context: z.string().max(80).optional(),
@@ -58,14 +68,8 @@ export const PullQuoteAlternativeSchema = z.object({
  * `folio`    — Folio writing about their decisions on their behalf.
  *
  * These are two legitimate authorship choices, not a quality ladder, and the
- * distinction is exactly the one a reader is entitled to. `folio` is NOT
- * implemented: no generator exists, and none should be added behind this enum
- * without the provenance work (C1) landing first, because a Folio line is
- * paraphrase and paraphrase needs a traceability gate. The value exists so the
- * storage shape is settled before the feature is, and so the rate at which
- * designers reach for it is recorded from the first day it is reachable.
- *
- * Storage only. Nothing reads it yet.
+ * distinction is exactly the one a reader is entitled to. Folio versions live
+ * in a separate pool: switching modes never changes the original direct quotes.
  */
 export const PullQuoteAuthorshipSchema = z.enum(['verbatim', 'folio']);
 export type PullQuoteAuthorship = z.infer<typeof PullQuoteAuthorshipSchema>;
@@ -79,6 +83,10 @@ export const PullQuoteSelectionSchema = z.object({
   alternatives: z.array(PullQuoteAlternativeSchema),
   /** Absent on every article generated before the toggle; absent means `verbatim`. */
   authorship: PullQuoteAuthorshipSchema.optional(),
+  folio: z.object({
+    selected: FolioLineSchema.nullable(),
+    alternatives: z.array(FolioLineSchema).min(1).max(3),
+  }).optional(),
 });
 
 /**
@@ -310,6 +318,7 @@ export type NormalizedPullQuote = { text: string; context?: string; sourceSectio
 /** Normalize a pull quote entry (string, {text, context, sourceSection}, or PullQuoteSelection) to a consistent shape */
 export function normalizePullQuote(q: string | { text: string; context?: string; sourceSection?: string; selected?: { text: string; context?: string } | null; alternatives?: unknown[] }): NormalizedPullQuote {
   if (typeof q === 'string') return { text: q };
+  if ('authorship' in q && q.authorship === 'folio') return { text: '' };
   // Handle PullQuoteSelection format — extract from selected
   if ('selected' in q && 'alternatives' in q) {
     const sel = q.selected;
@@ -323,7 +332,17 @@ export function normalizePullQuote(q: string | { text: string; context?: string;
 export function getSelectedPullQuoteText(pullQuote: string | PullQuoteSelection | null | undefined): string | null {
   if (!pullQuote) return null;
   if (typeof pullQuote === 'string') return pullQuote;
+  // Quote-only consumers (including export overlays) must never receive a rewrite.
+  if (pullQuote.authorship === 'folio') return null;
   return pullQuote.selected?.text ?? null;
+}
+
+/** Display copy for a room; the renderer must respect its authorship. */
+export function getSelectedRoomLineText(pullQuote: string | PullQuoteSelection | null | undefined): string | null {
+  if (pullQuote && typeof pullQuote !== 'string' && pullQuote.authorship === 'folio') {
+    return pullQuote.folio?.selected?.text ?? null;
+  }
+  return getSelectedPullQuoteText(pullQuote);
 }
 
 /** Get the selected pull quote context from a chapter's pullQuote field */

@@ -32,9 +32,17 @@ on:
       - 'src/lib/collaboration/**'
       - 'src/lib/instagram/**'
       - 'src/components/story/**'
+      - 'src/lib/story/**'
       - 'src/components/collaboration/**'
       - 'src/app/api/posting/**'
       - 'scripts/check-pull-quotes.ts'
+      - 'scripts/check-folio-lines*.ts'
+      - 'scripts/check-public-folio.ts'
+      - 'scripts/check-story-editing.ts'
+      - 'scripts/check-regenerate-surfaces.ts'
+      - 'src/lib/post/getPostBySlug.ts'
+      - 'src/app/api/products/**/in-context-boosts/route.ts'
+      - 'package.json'
       - 'scripts/stub-anthropic-fetch.ts'
       - '.github/workflows/pull-quote-verbatim.yml'
   push:
@@ -44,9 +52,17 @@ on:
       - 'src/lib/collaboration/**'
       - 'src/lib/instagram/**'
       - 'src/components/story/**'
+      - 'src/lib/story/**'
       - 'src/components/collaboration/**'
       - 'src/app/api/posting/**'
       - 'scripts/check-pull-quotes.ts'
+      - 'scripts/check-folio-lines*.ts'
+      - 'scripts/check-public-folio.ts'
+      - 'scripts/check-story-editing.ts'
+      - 'scripts/check-regenerate-surfaces.ts'
+      - 'src/lib/post/getPostBySlug.ts'
+      - 'src/app/api/products/**/in-context-boosts/route.ts'
+      - 'package.json'
       - 'scripts/stub-anthropic-fetch.ts'
       - '.github/workflows/pull-quote-verbatim.yml'
   workflow_dispatch:
@@ -74,3 +90,9 @@ jobs:
 
       - name: Check pull-quote contract
         run: npx tsx scripts/check-pull-quotes.ts
+
+      - name: Check Folio versions and reader privacy
+        run: npm run check:folio-lines
+
+      - name: Check story editing and quote backfill
+        run: npm run check:story-editing && npm run check:regenerate-surfaces
