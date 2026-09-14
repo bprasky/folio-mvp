@@ -132,6 +132,7 @@ async function main() {
   const { JSDOM } = require('jsdom');
   const dom = new JSDOM('<div id="root"></div>', { url: 'http://localhost' });
   Object.assign(globalThis, { window: dom.window, document: dom.window.document, IS_REACT_ACT_ENVIRONMENT: true });
+  Object.defineProperty(globalThis, 'navigator', { configurable: true, value: dom.window.navigator });
   const { createRoot } = require('react-dom/client');
   const { act } = React;
   const root = createRoot(document.getElementById('root'));

@@ -177,7 +177,7 @@ export function QuoteTile({
           </div>
         ) : (
           pullQuote && (folioAuthored ? (
-            <p className={clsx("font-[var(--font-headline)] italic leading-[1.25] text-[rgba(87,75,67,0.92)]", wide ? "text-[var(--type-h4)]" : "text-[var(--type-h3)]")}>
+            <p className={clsx("font-[var(--font-headline)] italic leading-[var(--lh-h4)] text-[rgba(87,75,67,0.92)]", wide ? "text-[var(--type-h4)]" : "text-[var(--type-h3)]")}>
               {pullQuote}
             </p>
           ) : (
