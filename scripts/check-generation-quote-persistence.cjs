@@ -1,0 +1,74 @@
+/** Run the route's actual post-generation save path; no model, network or DB. */
+const assert = require('node:assert/strict');
+const fs = require('node:fs');
+const vm = require('node:vm');
+const ts = require('typescript');
+
+const route = fs.readFileSync('src/app/api/posting/project/[projectId]/interview/generate/route.ts', 'utf8');
+const start = route.indexOf('const validatedBlocks = composed;');
+const end = route.indexOf("console.log('[AUDIT] generate:saved'", start);
+assert.ok(start >= 0 && end > start, 'The route persistence boundary must remain discoverable');
+const savePath = route.slice(start, end);
+const selection = {
+  selected: { text: 'We chose glass to keep the room open.', provenance: { questionId: 'dining-q1', isFollowUp: false } },
+  alternatives: [
+    { text: 'We chose glass to keep the room open.', score: 9, provenance: { questionId: 'dining-q1', isFollowUp: false } },
+    { text: 'Six people can sit comfortably here.', score: 7, provenance: { questionId: 'dining-q2', isFollowUp: true } },
+  ],
+  authorship: 'verbatim',
+};
+const fixture = {
+  hook: { text: 'Every room needed its own character.' },
+  introduction: ['A home organized around distinct rooms.'],
+  galleryChapters: [
+    { kind: 'editorial', roomId: 'entry', title: 'Entry', imageIds: [], body: ['The entry.'], pullQuote: null },
+    { kind: 'editorial', roomId: 'dining', title: 'Dining Room', imageIds: [], body: ['The dining room.'], pullQuote: selection },
+  ],
+  // The hook shifts the index and the empty room is absent from it.
+  pullQuotes: [{ text: 'Every room needed its own character.' }, { text: selection.selected.text, sourceSection: 'Dining Room' }],
+};
+async function persist(source) {
+  let written;
+  const post = { id: 'post', slug: 'story', status: 'DRAFT', updatedAt: new Date(0), provenance: {} };
+  const tx = {
+    projectPost: { findUniqueOrThrow: async () => post, update: async ({ data }) => { written = JSON.parse(JSON.stringify(data.expandedBlocks)); return { ...post, ...data }; } },
+    project: { findUniqueOrThrow: async () => ({ isPublic: false }), update: async () => ({}) },
+  };
+  const context = {
+    composed: structuredClone(fixture), post, projectId: 'project', projectData: { isPublic: false, images: [] },
+    validImages: [], normalizedAnswers: [], normalizedFollowUps: [], allSelections: [], imageOrder: [],
+    frozenChapters: [], existingOverrides: [], existingHistory: [],
+    designerBio: null, projectHistory: null, atelierSummary: null, duration: 1, _cid: 'test',
+    interview: { payload: {} }, answersOverride: [], acquireLock: false,
+    verifyProductAccuracy: () => ({ warnings: [] }),
+    prisma: { projectPost: { findUnique: async () => post }, $transaction: async callback => callback(tx) },
+    console: { log() {}, warn() {} },
+  };
+  const js = ts.transpileModule(`(async () => { ${source}\n })()`, {
+    compilerOptions: { target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.CommonJS },
+  }).outputText;
+  await vm.runInNewContext(js, context);
+  assert.ok(written, 'Actual transaction update must receive expandedBlocks');
+  return written;
+}
+function assertCanonical(saved) {
+  assert.equal(saved.galleryChapters[0].pullQuote, null, 'A room with no quote must not receive the project hook');
+  assert.deepEqual(saved.galleryChapters[1].pullQuote, selection, 'Selected text, provenance and all alternatives survive persistence');
+  assert.deepEqual(saved.pullQuotes, fixture.pullQuotes, 'The top-level display index remains intact');
+}
+async function main() {
+  assertCanonical(await persist(savePath));
+  console.log('PASS route persistence retains null room, multi-option selection and provenance with hook index');
+  const redistribution = `
+    if (validatedBlocks.pullQuotes?.length && validatedBlocks.galleryChapters?.length) {
+      for (let i = 0; i < validatedBlocks.galleryChapters.length && i < validatedBlocks.pullQuotes.length; i++) {
+        const q = validatedBlocks.pullQuotes[i];
+        validatedBlocks.galleryChapters[i].pullQuote = typeof q === 'string' ? q : q.text;
+      }
+    }
+  `;
+  const broken = await persist(savePath.replace('const expandedBlocks = validatedBlocks;', redistribution + 'const expandedBlocks = validatedBlocks;'));
+  assert.throws(() => assertCanonical(broken), 'Fixture must reject the original redistribution defect');
+  console.log('PASS regression fixture rejects the original redistribution behavior');
+}
+main().catch(error => { console.error(error); process.exitCode = 1; });

@@ -1898,3 +1898,11 @@ Review: Implemented separate original/optimized pools; 1–3 Folio rewrites on d
 - [ ] Resolve new CI failures and report exact-head merge readiness.
 
 PR preparation: live smoke passed on configured claude-sonnet-5 using three synthetic fixtures/six calls (6958 input, 348 output tokens; $0.026094 estimated). Actual outputs and limitations in docs/reviews/FOLIO_LINES_LIVE_SMOKE.md. No application data accessed or written. CI now runs the 58 focused checks and existing quote/story/regeneration guards. Full diagnostic ratchet passes at 904 with no new fingerprints; local compile retried outside the sandbox after Google font downloads were denied.
+
+## 2026-09-14 — Regenerated article missing review options
+- [x] Verify current merge state: PR #769 is merged as 9cfbc61d; automatic Vercel Git deployments remain disabled.
+- [ ] Identify the tested URL/deployment and trace whole-article regeneration versus title/quote option generation.
+- [x] Correct confirmed regeneration defects with regression coverage.
+- [ ] Verify the tested deployment before reporting live availability.
+
+Review: Removed post-generation redistribution that replaced room selection objects with flattened quote strings. Actual route persistence regression preserves a null room, ranked alternatives and provenance with a project hook; mutation check reproduces the original failure. Publish-screen regeneration now prepares title choices before refresh, preserving article success and surfacing title-only retry errors. Five hook scenarios, existing regeneration guards, lint, and TypeScript fingerprint ratchet (904 unchanged) pass. No review blockers. Other initial-generation entry points are outside this focused UI fix. Tested URL still needed to verify release state; deployment holds unchanged.
