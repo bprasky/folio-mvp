@@ -32,10 +32,11 @@ const mocks: Record<string, any> = {
   '@/lib/prisma': { prisma: {
     projectPost: { findUnique: async () => structuredClone(post) },
     inContextBoost: { findMany: async () => [{ id: 'boost', productTag: { image: { project: { post: structuredClone(post) } } } }] },
+    spotlightQuestion: { findMany: async ({ where }: { where: { id: { in: string[] } } }) =>
+      where.id.in.includes('durable-private-id') ? [{ id: 'durable-private-id' }] : [] },
   } },
   '@/lib/modules/getProjectModules': { getProjectModules: async () => [] },
   '@/lib/article/getRelatedProjects': { getRelatedProjects: async () => [] },
-  '@/lib/spotlight/privacy': { stripPrivateInterviewData: async (value: unknown) => value },
   '@/lib/authz/access': {
     assertProjectView: async () => { if (!canView) throw new Error('Forbidden'); },
     assertProjectWrite: async () => { if (!canWrite) throw new Error('Forbidden'); },
@@ -53,6 +54,7 @@ function load(file: string) {
   return exports;
 }
 mocks['@/lib/posting/publicFolioBlocks'] = load('src/lib/posting/publicFolioBlocks.ts');
+mocks['@/lib/spotlight/privacy'] = load('src/lib/spotlight/privacy.ts');
 const publicReader = load('src/lib/post/getPostBySlug.ts').getPostBySlug;
 const publicApi = load('src/app/api/posting/[slug]/route.ts').GET;
 const projectApi = load('src/app/api/posting/project/[projectId]/route.ts').GET;
@@ -72,6 +74,30 @@ async function check(name: string, run: () => Promise<void>) {
   reset(); await run(); passed++; console.log(`  PASS ${name}`);
 }
 async function main() {
+  await check('public loader strips Spotlight drafts and durable identities from serialized provenance', async () => {
+    post.provenance = { interview: {
+      spotlightDrafts: { proposal: { answer: 'PRIVATE_DRAFT_TEXT' } },
+      payload: {
+        answers: [
+          { questionId: 'public-question', answer: 'Public interview answer' },
+          { questionId: 'durable-private-id', answer: 'PRIVATE_DURABLE_ANSWER' },
+        ],
+        followups: [{ parentQuestionId: 'durable-private-id', answer: 'PRIVATE_DURABLE_FOLLOWUP' }],
+        byQuestion: { 'durable-private-id': 'PRIVATE_KEYED_ANSWER', 'public-question': 'Public keyed answer' },
+      },
+    } };
+    const result = serialize(await publicReader('story'));
+    assert.ok(result, 'Published public story remains available');
+    const json = JSON.stringify(result);
+    for (const secret of ['spotlightDrafts', 'PRIVATE_DRAFT_TEXT', 'durable-private-id', 'PRIVATE_DURABLE_ANSWER', 'PRIVATE_DURABLE_FOLLOWUP', 'PRIVATE_KEYED_ANSWER']) {
+      assert.ok(!json.includes(secret), `Public loader leaked ${secret}`);
+    }
+    assert.deepEqual(result.provenance.interview.payload.answers, [{ questionId: 'public-question', answer: 'Public interview answer' }]);
+    assert.deepEqual(result.provenance.interview.payload.followups, []);
+    assert.equal(result.provenance.interview.payload.byQuestion['public-question'], 'Public keyed answer');
+    assertPublic(result, result.expandedBlocks);
+    assert.ok(post.provenance.interview.spotlightDrafts, 'Sanitizing a response must not mutate stored data');
+  });
   await check('public server reader removes evidence and alternatives', async () => {
     const result = serialize(await publicReader('story')); assertPublic(result, result.expandedBlocks);
     assert.equal(post.expandedBlocks.galleryChapters[0].pullQuote.folio.selected.originalText, originalText);

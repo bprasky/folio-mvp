@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { getProjectModules } from "@/lib/modules/getProjectModules";
 import { publicFolioBlocks } from "@/lib/posting/publicFolioBlocks";
+import { stripPrivateInterviewData } from "@/lib/spotlight/privacy";
 
 export async function getPostBySlug(slug: string) {
   try {
@@ -73,11 +74,12 @@ export async function getPostBySlug(slug: string) {
 
     const modules = await getProjectModules(post.projectId);
 
-    return {
+    // This object crosses into StoryRenderer's client props on the public page.
+    return await stripPrivateInterviewData({
       ...post,
       expandedBlocks: publicFolioBlocks(post.expandedBlocks),
       modules,
-    };
+    });
   } catch (error) {
     console.error("[getPostBySlug] Failed to fetch post:", slug, error);
     return null;
