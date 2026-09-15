@@ -41,7 +41,7 @@ export const QuoteProvenanceSchema = z.object({
 });
 export type QuoteProvenance = z.infer<typeof QuoteProvenanceSchema>;
 
-/** Folio's optimized wording, with the interview context used to write it. */
+/** Folio's room teaser, with the interview evidence used to write it. */
 export const FolioLineSchema = z.object({
   text: z.string().trim().min(1).max(300),
   originalText: z.string().min(1).max(300),
@@ -84,8 +84,9 @@ export const PullQuoteSelectionSchema = z.object({
   /** Absent on every article generated before the toggle; absent means `verbatim`. */
   authorship: PullQuoteAuthorshipSchema.optional(),
   folio: z.object({
+    generatorVersion: z.literal(2).optional(),
     selected: FolioLineSchema.nullable(),
-    alternatives: z.array(FolioLineSchema).min(1).max(3),
+    alternatives: z.array(FolioLineSchema).min(1).max(6),
   }).optional(),
 });
 

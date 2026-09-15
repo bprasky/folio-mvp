@@ -57,6 +57,25 @@ function assertCanonical(saved) {
   assert.deepEqual(saved.pullQuotes, fixture.pullQuotes, 'The top-level display index remains intact');
 }
 async function main() {
+  const generator = fs.readFileSync('src/lib/posting/generateEditorialDraft.ts', 'utf8');
+  const assignmentStart = generator.indexOf('async function assignVerifiedPullQuotes(');
+  const assignmentEnd = generator.indexOf('// MAIN GENERATION FUNCTION', assignmentStart);
+  assert.ok(assignmentStart >= 0 && assignmentEnd > assignmentStart);
+  const assignmentJs = ts.transpileModule(generator.slice(assignmentStart, assignmentEnd), {
+    compilerOptions: { target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.CommonJS },
+  }).outputText;
+  const regenerated = structuredClone(fixture);
+  regenerated.galleryChapters[1].pullQuote = { selected: null, alternatives: selection.alternatives };
+  const assigned = vm.runInNewContext(`${assignmentJs}\nassignVerifiedPullQuotes`, {
+    selectPullQuotes: async (_rooms, _answers, _cid, _projectId, autoSelect) => {
+      assert.equal(autoSelect, true, 'Full generation must request a visible default even if the ranker declines');
+      return { byRoom: { 'Dining Room': selection } };
+    },
+    syncPullQuotesFromChapters() {}, console: { info() {} },
+  });
+  await assigned(regenerated, { project: { id: 'project' } }, [{ section: 'Dining Room' }], 'test');
+  assert.deepEqual(regenerated.galleryChapters[1].pullQuote, selection);
+  console.log('PASS explicit full regeneration replaces removed selection with verified default and alternatives');
   assertCanonical(await persist(savePath));
   console.log('PASS route persistence retains null room, multi-option selection and provenance with hook index');
   const redistribution = `

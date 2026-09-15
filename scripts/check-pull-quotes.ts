@@ -23,7 +23,7 @@ import {
   isVerbatimSpan,
   normalizeForVerbatimCheck,
 } from '../src/lib/posting/quoteCandidates';
-import { buildShufflePool, toSelection } from '../src/lib/posting/selectPullQuotes';
+import { buildShufflePool, toSelection, selectPullQuotes } from '../src/lib/posting/selectPullQuotes';
 import { scoreStandalone } from '../src/lib/posting/quoteStandalone';
 import { verifyPullQuoteProvenance, verifyQuoteAgainstAnswers }
   from '../src/lib/posting/verifyQuoteProvenance';
@@ -105,7 +105,7 @@ check('the lead hook quote is verified verbatim before it can ship',
 
 const ranker = readFileSync('src/lib/posting/selectPullQuotes.ts', 'utf8');
 check('the ranking model is asked for ids, never text',
-  /candidate id or null/.test(ranker) && !/"quote"\s*:/.test(ranker));
+  /candidate id/.test(ranker) && !/"quote"\s*:/.test(ranker));
 check('selection is re-verified against the source answer',
   /isVerbatimSpan\(chosen\.text, sources\)/.test(ranker));
 check('an unusable pick falls back to a code-ranked candidate',
@@ -974,7 +974,29 @@ function standaloneRankingChecks() {
 // Sequential, not Promise.all: loaderChecks and reverseSyncChecks each install a
 // module-loader stub and restore it in a finally, so running them concurrently
 // lets one restore the loader out from under the other. Found by doing it.
-collaborationChecks()
+async function automaticRoomSelectionChecks() {
+  const sixAnswers = [
+    'We always use glass when we need to make up space.',
+    'The black pendants balance the brightness of the dining room.',
+    'The rounded lights repeat the shapes found across the house.',
+    'The wallpaper gives the dining room a character of its own.',
+    'We kept the original structure and changed the finishes in every room.',
+    'The dining chairs bring the dark accents down to the table.',
+  ].map((answer, index) => ({ section: 'Kitchen', answer, questionId: `q${index}`, isFollowUp: false }));
+  for (const reply of ['{"Kitchen":null}', '{}', '{"Kitchen":"q999"}']) {
+    setRankerReply(reply);
+    const result = await selectPullQuotes(['Kitchen', 'Powder Room'], [...sixAnswers, ANSWERS[2]], 'auto-selection-check', null, true);
+    const quote = result.byRoom.Kitchen;
+    check(`generation automatically selects verified room quote for ${reply}`,
+      !!quote?.selected && isVerbatimSpan(quote.selected.text, sixAnswers.map(answer => answer.answer)));
+    check('automatic selection retains review alternatives',
+      quote?.alternatives.length === 6 && quote.alternatives.some(option => option.text === quote.selected?.text));
+    check('room without candidates remains empty', result.byRoom['Powder Room'] === null);
+  }
+}
+
+automaticRoomSelectionChecks()
+  .then(collaborationChecks)
   .then(loaderChecks)
   .then(reverseSyncChecks)
   .then(projectionWriteChecks)

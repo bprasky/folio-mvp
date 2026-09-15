@@ -43,10 +43,8 @@ Choose the line that:
 - reads as a standalone display line, without needing the question that prompted it
 - is not merely descriptive of what a photograph already shows
 
-Return null for a room when NOTHING in its list is worth setting in large type. A missing pull quote is correct and expected; a weak one is not. Do not stretch for a choice.
-
 Return ONLY a JSON object mapping room name to candidate id or null:
-{"Kitchen": "q3", "Powder Room": null}`;
+{"Kitchen": "q3", "Powder Room": "q1"}`;
 
 export interface PullQuoteAssignment {
   /** room name (formatted) -> selection, or null when nothing qualified */
@@ -129,6 +127,7 @@ export async function selectPullQuotes(
   answers: AnswerLike[],
   _cid: string,
   projectId?: string | null,
+  autoSelect: boolean = false,
 ): Promise<PullQuoteAssignment> {
   const byRoom: Record<string, PullQuoteSelection | null> = {};
   const roomsWithNoCandidates: string[] = [];
@@ -166,7 +165,9 @@ export async function selectPullQuotes(
         model: MODEL_FOR.prose,
         ...thinkingParams(thinking),
         max_tokens: 1000,
-        system: SYSTEM,
+        system: `${SYSTEM}\n\n${autoSelect
+          ? 'Choose the strongest available candidate for every room provided. This is a suggested starting point that the designer can change or remove.'
+          : 'Return null when NOTHING in a list is worth setting in large type. A missing pull quote is correct and expected; a weak one is not. Do not stretch for a choice.'}`,
         messages: [{ role: 'user', content: prompt }],
       }),
     { modelName: MODEL_FOR.prose, contextHint: `pullquotes:${projectId ?? ''}`, maxRetries: 1 },
@@ -192,9 +193,10 @@ export async function selectPullQuotes(
     const wanted = picked[label];
     let chosen: QuoteCandidate | undefined;
 
-    if (wanted === null) {
-      // The editor judged nothing worth setting in type. Respected — that is
-      // the outcome this prompt explicitly asks for over a weak quote.
+    // Ranking is advisory: even a null response must leave a verified starting
+    // option visible on generation. An explicit removal is saved separately by
+    // the picker and is never changed here except during a new generation.
+    if (wanted === null && !autoSelect) {
       byRoom[label] = null;
       continue;
     }

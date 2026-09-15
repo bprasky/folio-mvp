@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import Module from 'node:module';
 import { FolioLineSchema, getSelectedPullQuoteText, getSelectedRoomLineText, syncPullQuotesFromChapters, type PullQuoteSelection } from '../src/lib/posting/schemas';
-import { folioRewriteSources, folioLinesMatchSources } from '../src/lib/posting/folioLines';
+import { folioRewriteSources, folioTeaserSources, folioLinesMatchSources } from '../src/lib/posting/folioLines';
 import type { LoadedAnswer } from '../src/lib/posting/loadInterviewAnswers';
 import { extractQuotes } from '../src/lib/instagram/extractQuotes';
 import { extractQuotesWithMetadata } from '../src/lib/instagram/matchQuoteToImage';
@@ -9,7 +9,7 @@ import { publicFolioBlocks } from '../src/lib/posting/publicFolioBlocks';
 
 const answer: LoadedAnswer = { section: 'Dining Room', questionId: 'q1', isFollowUp: false, category: null, questionCategory: 'what', answer: 'We chose a glass table because a solid table would have crowded the dining room.' };
 const direct: PullQuoteSelection = { selected: { text: answer.answer }, alternatives: [{ text: answer.answer, score: 10, provenance: { questionId: 'q1', isFollowUp: false } }] };
-const line = { text: 'We kept the dining room open by choosing glass over a solid table.', originalText: answer.answer, sources: [{ questionId: 'q1', isFollowUp: false, excerpt: answer.answer }] };
+const line = { text: 'A glass table keeps the dining room visually open.', originalText: answer.answer, sources: [{ questionId: 'q1', isFollowUp: false, excerpt: answer.answer }] };
 let passed = 0;
 function check(name: string, fn: () => void) { fn(); passed++; console.log('PASS', name); }
 check('original ranked quote supplies exact source context', () => assert.equal(folioRewriteSources('Dining Room', [answer], direct)[0].quote, answer.answer));
@@ -63,7 +63,7 @@ const originalLoad = (Module as any)._load;
 let responses: any[] = [];
 const calls: any[] = [];
 (Module as any)._load = function(id: string, ...rest: any[]) {
-  if (id === '@anthropic-ai/sdk') return class { messages = { create: async (args: any) => { calls.push(args); return { content: [{ type: 'text', text: JSON.stringify(responses.shift()) }], stop_reason: 'end_turn' }; } }; };
+  if (id === '@anthropic-ai/sdk') return class { messages = { create: async (args: any) => { calls.push(args); return { content: [{ type: 'text', text: (() => { const response = responses.shift(); if (response instanceof Error) throw response; return JSON.stringify(response); })() }], stop_reason: 'end_turn' }; } }; };
   if (id === './llmClient') return { callLLM: async (fn: () => Promise<unknown>) => ({ ok: true, data: await fn() }) };
   return originalLoad.call(this, id, ...rest);
 };
@@ -73,17 +73,42 @@ const { generateFolioLines, resolveFolioDraft } = require('../src/lib/posting/ge
 async function main() {
   check('invented source id and unchanged or quoted output are rejected', () => {
     const sources = folioRewriteSources('Dining Room', [answer], direct);
-    assert.deepEqual(resolveFolioDraft({ alternatives: [{ text: line.text, sourceId: 'fake' }] }, sources), []);
-    assert.deepEqual(resolveFolioDraft({ alternatives: [{ text: answer.answer, sourceId: 'q1' }] }, sources), []);
-    assert.deepEqual(resolveFolioDraft({ alternatives: [{ text: '“A fabricated quote.”', sourceId: 'q1' }] }, sources), []);
+    assert.deepEqual(resolveFolioDraft({ alternatives: [{ text: line.text, sourceIds: ['fake'] }] }, sources), []);
+    assert.deepEqual(resolveFolioDraft({ alternatives: [{ text: answer.answer, sourceIds: ['q1'] }] }, sources), []);
+    assert.deepEqual(resolveFolioDraft({ alternatives: [{ text: '“A fabricated quote.”', sourceIds: ['q1'] }] }, sources), []);
   });
-  responses = [{ alternatives: [{ text: line.text, sourceId: 'q1' }] }, { approvedIds: ['v1'] }];
+  check('teasers can cite multiple public room answers and retain each source', () => {
+    const other = { ...answer, questionId: 'q2', answer: 'Black accents on the chairs balance the brightness.' };
+    const sources = folioTeaserSources('Dining Room', [answer, other, { ...other, questionId: 'private', category: 'big_idea' as any }], direct);
+    assert.equal(sources.length, 2);
+    const text = 'A glass table preserves openness, with black accents balancing the bright dining room.';
+    const resolved = resolveFolioDraft({ alternatives: [{ text, sourceIds: ['q1', 'q2'] }] }, sources);
+    assert.equal(resolved[0].sources.length, 2);
+    assert.ok(folioLinesMatchSources(resolved, 'Dining Room', [answer, other]));
+    assert.deepEqual(resolveFolioDraft({ alternatives: [{ text: 'We chose the room layout.', sourceIds: ['q1'] }] }, sources), []);
+  });
+  responses = [{ alternatives: [{ text: line.text, sourceIds: ['q1'] }] }, { approvedIds: ['v1'] }];
   const generated = await generateFolioLines('Dining Room', [answer], 'test-project', direct);
   check('reviewed rewrite retains original text and source', () => assert.deepEqual(generated, [line]));
   check('reviewer sees original ranked quote, not only answer context', () => assert.equal(JSON.parse(calls[1].messages[0].content).versions[0].directQuote, answer.answer));
-  responses = [{ alternatives: [{ text: line.text, sourceId: 'q1' }] }, { approvedIds: [] }];
+  responses = [{ alternatives: [{ text: line.text, sourceIds: ['q1'] }] }, { approvedIds: [] }];
   const rejected = await generateFolioLines('Dining Room', [answer], 'test-project', direct);
   check('semantic rejection does not fall back to unreviewed wording', () => assert.deepEqual(rejected, []));
+  const extraAnswer = { ...answer, questionId: 'q2', answer: 'Black chairs balance the bright room.' };
+  const moreLines = ['The dining room keeps an open view through the table.', 'Black chairs punctuate the bright dining room.', 'Transparency guides the table choice in this dining room.'];
+  responses = [{ alternatives: [{ text: line.text, sourceIds: ['q1'] }] }, { approvedIds: ['v1'] },
+    { alternatives: moreLines.map(text => ({ text, sourceIds: ['q1', 'q2'] })) }, { approvedIds: ['v1', 'v2', 'v3'] }];
+  const toppedUp = await generateFolioLines('Dining Room', [answer, extraAnswer], 'test-project', direct, [], ['Room article context.']);
+  check('a second grounded batch tops up rich room evidence without losing approved choices', () => {
+    assert.equal(toppedUp.length, 4);
+    assert.equal(toppedUp[0].text, line.text);
+    const retry = JSON.parse(calls[calls.length - 2].messages[0].content);
+    assert.deepEqual(retry.alreadyApproved, [line.text]);
+    assert.equal(retry.article, 'Room article context.');
+  });
+  responses = [{ alternatives: [{ text: line.text, sourceIds: ['q1'] }] }, { approvedIds: ['v1'] }, new Error('Top-up provider unavailable')];
+  const retained = await generateFolioLines('Dining Room', [answer, extraAnswer], 'test-project', direct);
+  check('top-up provider failure retains independently approved first batch', () => assert.deepEqual(retained, [line]));
   const before = calls.length;
   await generateFolioLines('Living Room', [answer], 'test-project', direct);
   check('missing room evidence incurs no model call', () => assert.equal(calls.length, before));
@@ -97,6 +122,7 @@ async function main() {
     const html = renderToStaticMarkup(React.createElement(PullQuotePicker, { ...props, pullQuote: null }));
     assert.ok(html.includes('Your words') && html.includes('Written by Folio'));
     assert.ok(!html.includes('aria-disabled'));
+    assert.ok(html.includes('Choose your room') && html.includes('social'));
   });
   check('Folio preview is a paragraph while direct quote is a blockquote', () => {
     const html = renderToStaticMarkup(React.createElement(PullQuotePicker, { ...props, pullQuote: { ...direct, authorship: 'folio', folio: { selected: line, alternatives: [line] } } }));
@@ -148,6 +174,15 @@ async function main() {
   check('switching back sends mode only and preserves the original selection', () => {
     assert.equal(requests[1].method, 'PATCH'); assert.equal(requests[1].body.authorship, 'verbatim'); assert.ok(!('selectedText' in requests[1].body));
   });
+  const secondQuote = 'The black chairs balance the brightness.';
+  await act(async () => root.render(React.createElement(PullQuotePicker, { ...props, pullQuote: { ...direct, alternatives: [...direct.alternatives, { text: secondQuote, score: 9 }] } })));
+  await act(async () => { Array.from(document.querySelectorAll('button')).find((b: any) => b.textContent === 'Browse all 2 options')!.click(); });
+  check('all quote choices are discoverable with explicit selection state', () => {
+    assert.equal(document.querySelectorAll('[aria-label="Room opening line options"] button').length, 2);
+    assert.equal(document.querySelector('[aria-label="Room opening line options"] button')!.getAttribute('aria-pressed'), 'true');
+  });
+  await act(async () => { const buttons = document.querySelectorAll('[aria-label="Room opening line options"] button'); (buttons[1] as HTMLButtonElement).click(); });
+  check('selecting a visible alternative persists that exact quote', () => assert.equal(requests.at(-1).body.selectedText, secondQuote));
   await act(async () => root.unmount());
   dom.window.close();
   console.log(`${passed} Folio version checks passed.`);

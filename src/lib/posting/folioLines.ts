@@ -25,6 +25,21 @@ export interface FolioRewriteSource {
   source: FolioLine['sources'][number];
 }
 
+/** Room prose may draw on answers that do not contain a ranked direct quote. */
+export function folioTeaserSources(room: string, answers: LoadedAnswer[], direct?: PullQuoteSelection): FolioRewriteSource[] {
+  const sources = folioRewriteSources(room, answers, direct);
+  const eligible = folioRoomAnswers(room, answers);
+  for (const answer of eligible) {
+    if (sources.length >= 12) break;
+    if (sources.some(s => s.source.questionId === answer.questionId && s.source.isFollowUp === answer.isFollowUp)) continue;
+    if (eligible.some(a => a.questionId === answer.questionId && a.isFollowUp === answer.isFollowUp && a.answer !== answer.answer)) continue;
+    const excerpt = answer.answer.slice(0, 4000);
+    sources.push({ id: `q${sources.length + 1}`, quote: excerpt.slice(0, 300),
+      source: { questionId: answer.questionId!, isFollowUp: answer.isFollowUp, excerpt } });
+  }
+  return sources;
+}
+
 /** Use the ranked pool first; older articles can recover direct candidates. */
 export function folioRewriteSources(room: string, answers: LoadedAnswer[], direct?: PullQuoteSelection): FolioRewriteSource[] {
   const eligible = folioRoomAnswers(room, answers);

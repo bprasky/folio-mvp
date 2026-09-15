@@ -14,7 +14,7 @@ import { FolioLineSchema, isPullQuoteSelection, syncPullQuotesFromChapters, type
 import { resolveProductNaming } from '@/lib/naming/resolveProductNaming';
 import { scrubProseNaming } from '@/lib/naming/scrubProse';
 
-/** Generate optimized versions independently of the room article, then retain both pools. */
+/** Generate room teasers while retaining the designer's direct quote pool. */
 export async function POST(request: NextRequest, { params }: { params: { projectId: string } }) {
   try {
     const session = await getServerSession(authOptions);
@@ -38,7 +38,7 @@ export async function POST(request: NextRequest, { params }: { params: { project
     const room = chapter.title || '';
     const answers = await loadInterviewAnswers(projectId);
     let lines = pq.folio?.alternatives ?? [];
-    const cached = lines.length > 0 && lines.every(line => FolioLineSchema.safeParse(line).success) &&
+    const cached = pq.folio?.generatorVersion === 2 && lines.length > 0 && lines.every(line => FolioLineSchema.safeParse(line).success) &&
       folioLinesMatchSources(lines, room, answers);
     const projectTags = await prisma.productTag.findMany({
       where: { image: { projectId } },
@@ -61,10 +61,16 @@ export async function POST(request: NextRequest, { params }: { params: { project
         // constitute room-specific material evidence; never promote AI guesses.
         finish: tag.finishConfirmed ? tag.finishRaw : null,
       }));
-      lines = await generateFolioLines(room, answers, projectId, pq, taggedProducts);
+      // The saved room prose provides editorial context, never independent
+      // factual evidence. The generator still grounds each line in eligible
+      // room interview answers and verifies those sources again before saving.
+      const article = Array.isArray(chapter.body)
+        ? chapter.body.filter((paragraph: unknown): paragraph is string => typeof paragraph === 'string')
+        : [];
+      lines = await generateFolioLines(room, answers, projectId, pq, taggedProducts, article);
     }
     if (!lines.length || !lines.every(line => FolioLineSchema.safeParse(line).success)) {
-      return NextResponse.json({ error: 'Folio could not find a faithful improvement on these quotes. Try adding more detail to this room in your interview.', code: 'NO_FOLIO_LINES' }, { status: 422 });
+      return NextResponse.json({ error: 'Folio could not prepare room teasers this time. Please try again.', code: 'NO_FOLIO_LINES' }, { status: 422 });
     }
     // Apply the same commercial naming rule as article generation to the line
     // texts only. Source excerpts remain exact evidence, and article prose is untouched.
@@ -81,6 +87,7 @@ export async function POST(request: NextRequest, { params }: { params: { project
     }
     const selectedIndex = cached ? (pq.folio?.alternatives.findIndex(line => line.text === pq.folio?.selected?.text) ?? -1) : -1;
     pq.folio = {
+      generatorVersion: 2,
       selected: cached && pq.folio?.selected === null ? null : lines[selectedIndex >= 0 ? selectedIndex : 0],
       alternatives: lines,
     };
