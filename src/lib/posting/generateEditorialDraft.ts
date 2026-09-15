@@ -1512,7 +1512,7 @@ async function assignVerifiedPullQuotes(
   const roomNames = Array.from(new Set(answers.map((a) => a.section).filter(Boolean))) as string[];
   if (roomNames.length === 0) return blocks;
 
-  const { byRoom } = await selectPullQuotes(roomNames, answers, _cid, input.project?.id ?? null);
+  const { byRoom } = await selectPullQuotes(roomNames, answers, _cid, input.project?.id ?? null, true);
 
   let assigned = 0;
   let cleared = 0;
@@ -1529,7 +1529,7 @@ async function assignVerifiedPullQuotes(
       // Cleared, not skipped. A chapter we could not rank — a room with photos
       // and model-written prose but no interview answers, say — has no verified
       // quote available, and leaving whatever was there is how an unverified one
-      // survives. No quotable candidate, an editor who declined, and a room we
+      // survives. No quotable candidate and a room we
       // never ranked all land in the same place: no pull quote.
       ch.pullQuote = null;
       cleared++;

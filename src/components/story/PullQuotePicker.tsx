@@ -16,6 +16,7 @@ interface PullQuotePickerProps {
 export function PullQuotePicker({ pullQuote, chapterIndex, projectId, quoteClassName, onUpdate }: PullQuotePickerProps) {
   const [saving, setSaving] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
+  const [showOptions, setShowOptions] = useState(false);
   const isSelection = isPullQuoteSelection(pullQuote);
   const authorship: PullQuoteAuthorship = (isSelection ? pullQuote.authorship : undefined) ?? 'verbatim';
   const selectedText = authorship === 'folio' && isSelection
@@ -77,13 +78,15 @@ export function PullQuotePicker({ pullQuote, chapterIndex, projectId, quoteClass
   };
   const lineClass = quoteClassName ?? 'font-[var(--font-headline)] text-lg md:text-xl italic leading-relaxed text-folio-text-secondary';
   return (
-    <div className="py-2" aria-busy={saving}>
+    <div className="rounded-xl border border-folio-border bg-[var(--surface-ground)] p-5" aria-busy={saving}>
+      <h3 className="folio-body font-semibold text-folio-text-primary">Choose your room’s opening line</h3>
+      <p className="folio-meta text-folio-text-secondary mt-1 mb-4">Set the scene with a quote or a Folio-written teaser — a standout line for your story and social posts.</p>
       <div className="flex items-center gap-3 flex-wrap mb-2">
         <div role="group" aria-label="Who wrote this line" className="flex items-center gap-1">
           {(['verbatim', 'folio'] as const).map(mode => (
             <button key={mode} type="button" disabled={saving} aria-pressed={authorship === mode}
               onClick={() => changeAuthorship(mode)}
-              className={'folio-meta px-2 py-0.5 rounded-full border transition-colors whitespace-nowrap disabled:opacity-40 ' + (authorship === mode ? 'border-[var(--accent)] text-[var(--accent)]' : 'border-transparent text-folio-text-tertiary hover:text-folio-text-secondary')}>
+              className={'folio-meta px-3 py-2 rounded-full border transition-colors whitespace-nowrap disabled:opacity-40 ' + (authorship === mode ? 'border-folio-text-primary bg-[var(--folio-text-primary)] text-[var(--surface-canvas)]' : 'border-folio-border text-folio-text-primary hover:bg-[var(--surface-canvas)]')}>
               {mode === 'verbatim' ? 'Your words' : 'Written by Folio'}
             </button>
           ))}
@@ -109,6 +112,7 @@ export function PullQuotePicker({ pullQuote, chapterIndex, projectId, quoteClass
           </button>
         )}
       </div>
+      <p className="folio-meta text-folio-text-secondary mb-3">{authorship === 'folio' ? 'Original editorial lines inspired by your room’s story.' : 'Direct quotes from your interview. Browse to find your favorite.'}</p>
       {saving && <p role="status" className="mb-2 folio-meta text-folio-text-tertiary">Updating options…</p>}
       {notice && <p role="alert" className="mb-2 folio-meta text-folio-text-tertiary">{notice}</p>}
       {selectedText ? (
@@ -125,6 +129,21 @@ export function PullQuotePicker({ pullQuote, chapterIndex, projectId, quoteClass
         </button>
       )}
       {selectedText && selectedContext && <p className="mt-2 folio-meta tracking-wide uppercase text-folio-text-tertiary">— {selectedContext}</p>}
+      {hasAlternatives && (
+        <div className="mt-4">
+          <button type="button" aria-expanded={showOptions} onClick={() => setShowOptions(!showOptions)}
+            className="folio-meta font-semibold text-folio-text-primary underline underline-offset-4 py-2">
+            {showOptions ? 'Hide options' : `Browse all ${alternatives.length} options`}
+          </button>
+          {showOptions && <div role="group" aria-label="Room opening line options" className="mt-2 flex flex-col gap-2">
+            {alternatives.map(option => <button key={option.text} type="button" disabled={saving}
+              aria-pressed={selectedText === option.text} onClick={() => patch(option.text)}
+              className={'text-left folio-body rounded-lg border p-3 text-folio-text-primary disabled:opacity-40 ' + (selectedText === option.text ? 'border-folio-text-primary bg-[var(--surface-canvas)]' : 'border-folio-border')}>
+              {option.text}
+            </button>)}
+          </div>}
+        </div>
+      )}
     </div>
   );
 }

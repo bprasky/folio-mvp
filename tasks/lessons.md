@@ -980,3 +980,6 @@ When enabling Written by Folio, implement optimized versions of the ranked direc
 
 ## 2026-09-14 — Verify review options at the regeneration save boundary
 Article regeneration must retain canonical room selection objects through persistence; never rebuild them from a flattened quote export index, which includes hooks and omits empty rooms. Verify title-choice generation separately from the article's single headline, and report partial option-generation failures without discarding a successfully saved article. When investigating a screenshot, verify the tested deployment independently of PR merge status.
+
+## 2026-09-15 — Room teasers are editorial alternatives
+The user clarified that Written by Folio should synthesize third-person room teasers from grounded interview and article context, rather than require same-point-of-view rewrites of individual quotes. Review factual support without rejecting this intended synthesis. Quote discovery must explain its purpose and generation must visibly present a suggestion.

@@ -11,7 +11,7 @@ let generations: number, reads: number, stale: boolean, limited: boolean, scrub:
 let revalidated: string[];
 function reset() {
   post = { id: 'post', slug: 'story', expandedBlocks: { introduction: ['Keep introduction'], galleryChapters: [{
-    title: 'Kitchen', imageIds: ['room-image'], body: ['Keep article'], pullQuote: { selected: direct, alternatives: [direct], folio: { selected: line, alternatives: [line] } },
+    title: 'Kitchen', imageIds: ['room-image'], body: ['Keep article'], pullQuote: { selected: direct, alternatives: [direct], folio: { generatorVersion: 2, selected: line, alternatives: [line] } },
   }] } };
   saved = null; session = { user: { id: 'owner' } }; forbidden = false; cas = true;
   answers = ['source']; generations = 0; reads = 0; stale = false; limited = false; scrub = false; revalidated = [];
@@ -40,7 +40,8 @@ const mocks: Record<string, any> = {
   }, roomsWithNoCandidates: [], roomsFailedVerification: [] }) },
   '@/lib/utils/correlation': { cid: () => 'test-backfill' },
   '@/lib/posting/folioLines': { folioLinesMatchSources: (_lines: unknown, _room: string, current: string[]) => current.length > 0 },
-  '@/lib/posting/generateFolioLines': { generateFolioLines: async (_room: string, _answers: unknown, _project: string, _direct: unknown, tags: unknown[]) => {
+  '@/lib/posting/generateFolioLines': { generateFolioLines: async (_room: string, _answers: unknown, _project: string, _direct: unknown, tags: unknown[], article: string[]) => {
+    assert.deepEqual(JSON.parse(JSON.stringify(article)), ['Keep article']);
     assert.deepEqual(JSON.parse(JSON.stringify(tags)), [{ productId: 'tagged-product', name: 'Table', brand: 'Brand', category: 'Furniture', description: 'Glass table', finish: 'glass' }]);
     generations++; return [line];
   } },
@@ -106,6 +107,12 @@ async function main() {
   await check('cached pool avoids model', async () => {
     const result = await generate(request({ chapterIndex: 0 }), context);
     assert.equal(result.status, 200); assert.equal(result.data.cached, true); assert.equal(generations, 0);
+  });
+  await check('old rewrite pool is replaced with new room teasers', async () => {
+    delete post.expandedBlocks.galleryChapters[0].pullQuote.folio.generatorVersion;
+    const result = await generate(request({ chapterIndex: 0 }), context);
+    assert.equal(result.status, 200); assert.equal(result.data.cached, false); assert.equal(generations, 1);
+    assert.equal(result.data.pullQuote.folio.generatorVersion, 2);
   });
   await check('activating cached Folio preserves removed selection', async () => {
     post.expandedBlocks.galleryChapters[0].pullQuote.folio.selected = null;
