@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { MoreHorizontal, Share2, Plus } from 'lucide-react';
+import { MoreHorizontal, Share2 } from 'lucide-react';
 import { FaChevronDown } from 'react-icons/fa';
 import { MdDownload, MdCampaign } from 'react-icons/md';
 import { format, formatDistanceToNowStrict } from 'date-fns';
@@ -153,10 +153,21 @@ export default function ProjectHeader({
 
   return (
     <>
-      <header className="grid grid-cols-[1fr_auto] items-end gap-8 pb-6">
+      <header className="grid grid-cols-[1fr_auto] items-end gap-8 pb-5">
         <div>
-          {/* Status + category badges */}
-          <div className="inline-flex items-center gap-2.5 mb-3.5">
+          {/* H1 — --type-h1 (48px/1.10). Was a hard-coded 72px, 1.5x the scale
+              with no off-scale comment, which on a 1440x900 laptop was 24px of
+              the ~723px of chrome standing between the designer and their photos. */}
+          <h1 className="font-headline italic text-folio-h1 tracking-[-0.015em] text-folio-text-primary">
+            {project.title}
+          </h1>
+
+          {/* Meta row — status and category ride here rather than in a badge row
+              of their own above the H1: that row cost 36px to say what the
+              breadcrumb and the stepper already say. Room/item counts stay
+              omitted; the progress tracker's stepper is the single owner of
+              project counts. */}
+          <div className="mt-3 flex flex-wrap items-center gap-3 text-sm text-folio-text-secondary">
             <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-folio-surface-elevated text-folio-text-secondary text-[11px] font-medium tracking-[0.08em] uppercase">
               <span className={cn('w-1.5 h-1.5 rounded-full', dotClass)} />
               {sLabel}
@@ -166,23 +177,18 @@ export default function ProjectHeader({
                 {project.category}
               </span>
             )}
-          </div>
-
-          {/* H1 */}
-          <h1 className="font-headline italic font-medium text-[72px] leading-none tracking-[-0.015em] text-folio-text-primary">
-            {project.title}
-          </h1>
-
-          {/* Meta row — room/item counts intentionally omitted: the progress
-              tracker's stepper is the single owner of project counts. */}
-          <div className="mt-4 flex items-center gap-4 text-sm text-folio-text-secondary">
+            <Sep />
             <span>Started {formatMonthYear(project.createdAt)}</span>
             <Sep />
             <span>Last edit {formatRelative(project.updatedAt)}</span>
           </div>
         </div>
 
-        {/* Action cluster */}
+        {/* Action cluster — ghost controls only, deliberately no filled button.
+            The tracker's CTA below is the project's one primary action; a dark
+            "Add tile" button up here competed with it for the eye and, worse,
+            had no onClick at all. Share is rendered only when the project can
+            actually be shared, for the same reason. */}
         <div className="flex items-center gap-2.5">
           {canShare ? (
             <div className="relative" ref={dropdownRef}>
@@ -237,23 +243,13 @@ export default function ProjectHeader({
                 </div>
               )}
             </div>
-          ) : (
-            <button className="inline-flex items-center gap-2 px-3.5 py-2 rounded-lg border border-folio-border-subtle text-folio-text-secondary text-sm font-medium transition-colors duration-[220ms] hover:text-folio-text-primary hover:border-folio-border-strong focus:outline-none focus:ring-2 focus:ring-[var(--accent)]/30">
-              <Share2 className="w-4 h-4" />
-              Share
-            </button>
-          )}
+          ) : null}
 
           <button
             onClick={() => setShowExportModal(true)}
             className="inline-flex items-center gap-2 px-3.5 py-2 rounded-lg border border-folio-border-subtle text-folio-text-secondary text-sm font-medium transition-colors duration-[220ms] hover:text-folio-text-primary hover:border-folio-border-strong focus:outline-none focus:ring-2 focus:ring-[var(--accent)]/30"
           >
             Export spec
-          </button>
-
-          <button className="inline-flex items-center gap-2 px-3.5 py-2 rounded-lg bg-folio-text-primary text-white text-sm font-medium transition-colors duration-[220ms] hover:bg-[#2a2a28] focus:outline-none focus:ring-2 focus:ring-[var(--accent)]/30">
-            <Plus className="w-4 h-4" />
-            Add tile
           </button>
 
           <button

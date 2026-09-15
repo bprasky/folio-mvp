@@ -118,7 +118,7 @@ export default function ProjectProgressTracker({
     >
       <Stepper steps={steps} projectId={projectId} reachedIndex={reachedIndex} />
 
-      <div className="px-8 pb-8 pt-2">
+      <div className="px-8 pb-6 pt-1">
         {showImportCards ? (
           <MaterialsZone projectId={projectId} copy={copy} />
         ) : (
@@ -168,7 +168,7 @@ function Stepper({
   const filledWidth = (reachedIndex / n) * 100; // % of row width
 
   return (
-    <div className="relative px-8 pt-8 pb-7">
+    <div className="relative px-8 pt-6 pb-5">
       <div className="relative flex">
         {/* 2px track behind the markers */}
         <div
@@ -249,6 +249,11 @@ function StepMarker({ step, href }: { step: TrackerStep; href?: string }) {
         <span
           className={cn(
             'text-[14px] leading-none',
+            // A reachable step is a link, and in the publishing flow the stepper
+            // is the page's ONLY navigation — ProjectTabs renders nothing there.
+            // Opacity-on-hover was the whole affordance, so nothing said these
+            // were clickable. A dotted underline costs no height and says it.
+            !locked && 'underline decoration-dotted decoration-folio-stone-100 underline-offset-4',
             active && 'font-semibold text-folio-accent-700',
             !active && isDone && 'font-medium text-folio-text-primary',
             !active && !isDone && !locked && 'font-medium text-folio-text-secondary',
@@ -308,6 +313,16 @@ function StepMarker({ step, href }: { step: TrackerStep; href?: string }) {
  * Next-action zone — normal mode
  * ------------------------------------------------------------------------- */
 
+/**
+ * The next-action zone, laid out as a single band: eyebrow + headline + body on
+ * the left, CTA on the right.
+ *
+ * It used to stack those four on top of each other, which cost 213px of the
+ * page's ~723px of chrome — and the copy is static per step, so a designer
+ * returning to the project for the tenth time re-read the same paragraph of
+ * onboarding guidance before reaching their photos. The band says the same
+ * thing in 123px and lets a full row of the work surface clear the fold.
+ */
 function NextActionZone({
   projectId,
   copy,
@@ -321,26 +336,30 @@ function NextActionZone({
     <div>
       {showCollapsedBar && <CollapsedMaterialsBar projectId={projectId} />}
 
-      <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-folio-gold-ornament">
-        {copy.ready ? 'Ready' : 'Next'} · {copy.eyebrow}
-      </p>
-      <h2 className="mt-2.5 text-[27px] font-semibold leading-tight text-folio-text-primary">
-        {copy.headline}
-      </h2>
-      <p className="mt-2 max-w-2xl text-[15px] leading-relaxed text-folio-text-secondary">
-        {copy.body}
-      </p>
+      <div className="flex flex-wrap items-center justify-between gap-x-8 gap-y-4">
+        <div className="min-w-0 flex-1">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-folio-gold-ornament">
+            {copy.ready ? 'Ready' : 'Next'} · {copy.eyebrow}
+          </p>
+          <h2 className="mt-2 text-[22px] font-semibold leading-tight text-folio-text-primary">
+            {copy.headline}
+          </h2>
+          <p className="mt-1.5 max-w-2xl text-[13px] leading-snug text-folio-text-secondary">
+            {copy.body}
+          </p>
+        </div>
 
-      <div className="mt-5 flex items-center gap-5">
-        <PrimaryCta href={actionHref(projectId, copy.action)}>{copy.cta}</PrimaryCta>
-        {copy.secondary && (
-          <Link
-            href={`/project/${projectId}?view=publish`}
-            className="text-[14px] font-medium text-folio-text-tertiary transition-colors duration-150 hover:text-folio-text-secondary"
-          >
-            {copy.secondary}
-          </Link>
-        )}
+        <div className="flex flex-shrink-0 items-center gap-5">
+          {copy.secondary && (
+            <Link
+              href={`/project/${projectId}?view=publish`}
+              className="text-[14px] font-medium text-folio-text-tertiary transition-colors duration-150 hover:text-folio-text-secondary"
+            >
+              {copy.secondary}
+            </Link>
+          )}
+          <PrimaryCta href={actionHref(projectId, copy.action)}>{copy.cta}</PrimaryCta>
+        </div>
       </div>
     </div>
   );
@@ -374,7 +393,7 @@ function MaterialsZone({
       <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-folio-gold-ornament">
         Next · {copy.eyebrow}
       </p>
-      <h2 className="mt-2.5 text-[27px] font-semibold leading-tight text-folio-text-primary">
+      <h2 className="mt-2 text-[22px] font-semibold leading-tight text-folio-text-primary">
         {copy.headline}
       </h2>
       <p className="mt-2 max-w-2xl text-[15px] leading-relaxed text-folio-text-secondary">

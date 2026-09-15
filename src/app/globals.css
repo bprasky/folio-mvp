@@ -53,8 +53,17 @@
      Use --folio-gold for anything functional (buttons, focus, active states, links).
      Use --folio-gold-ornament for decoration only (rules, dots, charts).
      --accent / --accent-hover are kept as aliases during migration; remove in Task 01b. */
-  --folio-gold: #B8845C;            /* Functional — WCAG AA on #FCFBF7 */
-  --folio-gold-hover: #A67548;
+  /* Functional gold. The previous value (see git history) carried a comment
+     claiming it met WCAG AA. It did not: 3.2:1 as white-on-gold for a filled
+     button label, and 3.15:1 as gold on #FCFBF7 for a link — both short of the
+     4.5:1 AA wants at UI text sizes. This value is the same hue two steps down,
+     5.5:1 on white either way. Hover darkens to --folio-accent-700, so hover
+     still reads darker than rest.
+     Deliberately no literal predecessor hex here: the Accent color discipline
+     workflow greps src/ for it, and only the --folio-gold declaration line
+     itself is exempt. */
+  --folio-gold: #8C5F3C;
+  --folio-gold-hover: #724A31;
   --folio-gold-ornament: #C9A96E;   /* Decorative only — never text or interactive */
 
   /* === TYPE SCALE (canonical, Task 04) ===
@@ -648,8 +657,14 @@ html[data-compact="true"] main { padding-top: 0 !important; }
   --secondary-foreground: var(--folio-ink);
   --muted: var(--folio-stone-100);
   --muted-foreground: var(--folio-stone-700);
-  --accent: var(--folio-accent-200);
-  --accent-foreground: var(--folio-ink);
+  /* shadcn --accent / --accent-foreground are deliberately NOT mapped here.
+     This block is declared AFTER the canonical palette at the top of the file,
+     so re-declaring --accent silently overrode --folio-gold for every one of
+     the ~1,400 var(--accent) uses in the app: gold buttons filled #D6CBBC and
+     sat at 1.6:1 against their own white labels. Nothing reads
+     --accent-foreground and no bg-accent utility resolves against this Tailwind
+     config, so the mapping was dead weight. If a shadcn component ever needs
+     one, give it its own name (--shadcn-accent) rather than reusing --accent. */
   --input: var(--folio-border);
   --ring: var(--folio-stone-300);
   --radius: var(--radius-md);
@@ -712,8 +727,7 @@ html[data-compact="true"] main { padding-top: 0 !important; }
   --secondary-foreground: var(--folio-ink);
   --muted: var(--folio-stone-100);
   --muted-foreground: var(--folio-stone-700);
-  --accent: var(--folio-accent-200);
-  --accent-foreground: var(--folio-ink);
+  /* See the note on --accent in the light :root block above. */
   --input: var(--folio-border);
   --ring: var(--folio-stone-300);
 }
