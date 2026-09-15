@@ -50,7 +50,7 @@ export function StoryIntro({ story, compact = false }: StoryIntroProps) {
 
           <LeadHeadline
             story={story}
-            className={`${titleClass} font-[var(--font-headline)] text-[rgba(87,75,67,0.85)]`}
+            className={`${titleClass} font-[family-name:var(--font-headline)] text-[rgba(87,75,67,0.85)]`}
           />
 
           {/* The deck — the line under the headline that sets up the story. */}
