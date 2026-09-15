@@ -60,7 +60,7 @@ export function PullQuotePicker({ pullQuote, chapterIndex, projectId, quoteClass
     const nextIndex = ((currentIndex === -1 ? 0 : currentIndex) + direction + alternatives.length) % alternatives.length;
     return patch(alternatives[nextIndex].text);
   };
-  const lineClass = quoteClassName ?? 'font-[var(--font-headline)] text-lg md:text-xl italic leading-relaxed text-folio-text-secondary';
+  const lineClass = quoteClassName ?? 'font-[family-name:var(--font-headline)] text-lg md:text-xl italic leading-relaxed text-folio-text-secondary';
   return (
     <div className="rounded-xl border border-folio-border bg-[var(--surface-ground)] p-5" aria-busy={saving}>
       <h3 className="folio-body font-semibold text-folio-text-primary">Choose your room’s opening line</h3>
