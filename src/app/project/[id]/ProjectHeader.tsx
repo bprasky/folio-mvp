@@ -52,7 +52,7 @@ export default function ProjectHeader({ project, editorialState }: ProjectHeader
         {/* H1 — --type-h1 (48px/1.10). Was a hard-coded 72px, 1.5x the scale
             with no off-scale comment, which on a 1440x900 laptop was 24px of
             the ~723px of chrome standing between the designer and their photos. */}
-        <h1 className="font-headline italic text-folio-h1 tracking-[-0.015em] text-folio-text-primary">
+        <h1 className={"font-headline italic text-folio-h1 tracking-[-0.015em] text-folio-text-primary" /* folio-design-system: off-scale */}>
           {project.title}
         </h1>
 
@@ -62,12 +62,12 @@ export default function ProjectHeader({ project, editorialState }: ProjectHeader
             omitted; the progress tracker's stepper is the single owner of
             project counts. */}
         <div className="mt-3 flex flex-wrap items-center gap-3 text-sm text-folio-text-secondary">
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-folio-surface-elevated text-folio-text-secondary text-[11px] font-medium tracking-[0.08em] uppercase">
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-folio-surface-elevated text-folio-text-secondary text-[length:var(--type-eyebrow)] font-medium tracking-[var(--ls-wide)] uppercase">
             <span className={cn('w-1.5 h-1.5 rounded-full', dotClass)} />
             {sLabel}
           </span>
           {project.category && (
-            <span className="inline-flex items-center px-2.5 py-1 rounded-full border border-folio-border-subtle text-folio-text-secondary text-[11px] font-medium tracking-[0.08em] uppercase">
+            <span className="inline-flex items-center px-2.5 py-1 rounded-full border border-folio-border-subtle text-folio-text-secondary text-[length:var(--type-eyebrow)] font-medium tracking-[var(--ls-wide)] uppercase">
               {project.category}
             </span>
           )}

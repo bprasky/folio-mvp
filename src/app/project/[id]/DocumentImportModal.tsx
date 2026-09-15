@@ -102,7 +102,7 @@ export default function DocumentImportModal({
             <p className="folio-ui font-medium text-folio-text-primary">
               {isDragOver ? 'Drop to import' : 'Drag a file here, or click to browse'}
             </p>
-            <p className="mt-1 font-metricsMono text-[12px] tracking-tight text-folio-text-tertiary">
+            <p className={"mt-1 font-metricsMono text-[12px] tracking-tight text-folio-text-tertiary" /* folio-design-system: off-scale */}>
               PDF · PPTX · XLSX · CSV
             </p>
           </div>

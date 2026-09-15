@@ -493,7 +493,7 @@ export default function StoryInterviewPanel({
             <p className="text-folio-eyebrow font-semibold uppercase text-folio-text-tertiary">
               Step 4 of 5 — Story
             </p>
-            <h1 className="mt-2 font-headline text-[30px] font-medium leading-tight text-folio-text-primary">
+            <h1 className={"mt-2 font-headline text-[30px] font-medium leading-tight text-folio-text-primary" /* folio-design-system: off-scale */}>
               Your story, room by room
             </h1>
             <p className="mt-2 text-folio-body text-folio-text-secondary">
@@ -557,7 +557,7 @@ export default function StoryInterviewPanel({
                   style={{ width: `${coveragePct}%` }}
                 />
               </div>
-              <span className="font-metricsMono text-[12px] tabular-nums text-folio-text-secondary">
+              <span className={"font-metricsMono text-[12px] tabular-nums text-folio-text-secondary" /* folio-design-system: off-scale */}>
                 {roomsAnswered}/{roomsTotal} rooms
               </span>
             </div>
@@ -831,7 +831,7 @@ function UntaggedPhotosConfirm({
         aria-label="Photos are still untagged"
         className="relative w-full max-w-[520px] overflow-hidden rounded-lg bg-surface-canvas p-7 shadow-folio3"
       >
-        <h2 className="font-headline text-[26px] font-medium leading-tight text-folio-text-primary">
+        <h2 className={"font-headline text-[26px] font-medium leading-tight text-folio-text-primary" /* folio-design-system: off-scale */}>
           Only {taggedCount} of {total} photos {taggedCount === 1 ? "is" : "are"} tagged
         </h2>
         <p className="mt-2 text-folio-body text-folio-text-secondary">
@@ -893,7 +893,7 @@ function PartialRoomsConfirm({
         aria-label="Some rooms are partly answered"
         className="relative w-full max-w-[520px] overflow-hidden rounded-lg bg-surface-canvas p-7 shadow-folio3"
       >
-        <h2 className="font-headline text-[26px] font-medium leading-tight text-folio-text-primary">
+        <h2 className={"font-headline text-[26px] font-medium leading-tight text-folio-text-primary" /* folio-design-system: off-scale */}>
           {rooms.length} {rooms.length === 1 ? "room is" : "rooms are"} partly answered
         </h2>
         <p className="mt-2 text-folio-body text-folio-text-secondary">
@@ -907,7 +907,7 @@ function PartialRoomsConfirm({
               <span className="truncate text-folio-ui font-medium text-folio-text-primary">
                 {room.name}
               </span>
-              <span className="shrink-0 font-metricsMono text-[12px] tabular-nums text-folio-text-tertiary">
+              <span className={"shrink-0 font-metricsMono text-[12px] tabular-nums text-folio-text-tertiary" /* folio-design-system: off-scale */}>
                 {room.coverage?.answered ?? room.answers.length}/{room.coverage?.total ?? 0}
               </span>
             </li>
@@ -956,7 +956,7 @@ function SectionHeader({
         </h2>
         <p className="mt-0.5 text-folio-meta text-folio-text-tertiary">{caption}</p>
       </div>
-      <span className="shrink-0 font-metricsMono text-[12px] tabular-nums text-folio-text-tertiary">
+      <span className={"shrink-0 font-metricsMono text-[12px] tabular-nums text-folio-text-tertiary" /* folio-design-system: off-scale */}>
         {count}
       </span>
     </div>
@@ -1042,14 +1042,14 @@ function RoomTile({
       />
 
       {remaining > 0 && (
-        <span className="absolute left-3 top-3 inline-flex items-center gap-1.5 rounded-neu-pill bg-white/90 px-2.5 py-1 text-[11px] font-medium text-folio-accent-700 [backdrop-filter:blur(8px)_saturate(160%)]">
+        <span className="absolute left-3 top-3 inline-flex items-center gap-1.5 rounded-neu-pill bg-white/90 px-2.5 py-1 text-[length:var(--type-eyebrow)] font-medium text-folio-accent-700 [backdrop-filter:blur(8px)_saturate(160%)]">
           <span className="h-1.5 w-1.5 rounded-full bg-folio-gold-ornament" aria-hidden />
           {remaining} more to go
         </span>
       )}
 
       <span className="absolute inset-x-4 bottom-3.5">
-        <span className="block font-headline text-[20px] font-medium leading-tight text-white">
+        <span className={"block font-headline text-[20px] font-medium leading-tight text-white" /* folio-design-system: off-scale */}>
           {room.name}
         </span>
         <span className="mt-0.5 block text-folio-meta text-[rgba(255,255,255,.82)]">
@@ -1076,10 +1076,10 @@ function RoomPanel({
     <div className="mt-5 overflow-hidden rounded-lg border border-folio-border-strong bg-surface-ground shadow-folio2">
       <div className="flex flex-wrap items-center justify-between gap-4 bg-surface-canvas px-6 py-5">
         <div className="min-w-0">
-          <h3 className="font-headline text-[26px] font-medium leading-tight text-folio-text-primary">
+          <h3 className={"font-headline text-[26px] font-medium leading-tight text-folio-text-primary" /* folio-design-system: off-scale */}>
             {room.name}
           </h3>
-          <p className="mt-0.5 font-metricsMono text-[12px] tabular-nums text-folio-text-tertiary">
+          <p className={"mt-0.5 font-metricsMono text-[12px] tabular-nums text-folio-text-tertiary" /* folio-design-system: off-scale */}>
             {room.answers.length} {room.answers.length === 1 ? "answer" : "answers"} ·{" "}
             {room.photos.length} {room.photos.length === 1 ? "photo" : "photos"}
             {room.coverage && room.coverage.total > 0
@@ -1113,7 +1113,7 @@ function RoomPanel({
               onClick={() => onEdit(qa, i)}
               className="grid w-full grid-cols-[260px_1fr_auto] items-start gap-6 border-b border-folio-border-subtle px-6 py-5 text-left transition-colors duration-150 ease-folio hover:bg-surface-elevated focus:outline-none focus-visible:ring-2 focus-visible:ring-folio-gold"
             >
-              <span className="font-headline text-[17px] italic leading-snug text-folio-accent-700">
+              <span className={"font-headline text-[17px] italic leading-snug text-folio-accent-700" /* folio-design-system: off-scale */}>
                 {qa.q?.trim() || "This question's wording wasn't saved"}
               </span>
               <span className="whitespace-pre-wrap text-folio-body text-folio-text-secondary">

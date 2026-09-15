@@ -666,8 +666,8 @@ export default function CreateProjectPage() {
         <div
           style={{
             fontSize: 11,
-            letterSpacing: '0.16em',
-            fontWeight: 500,
+            letterSpacing: 'var(--ls-eyebrow)',
+            fontWeight: 'var(--w-ui)',
             color: C.textSecondary,
             textTransform: 'uppercase',
             marginBottom: 12,
@@ -680,10 +680,10 @@ export default function CreateProjectPage() {
           style={{
             fontFamily: 'var(--font-headline)',
             fontStyle: 'italic',
-            fontWeight: 500,
+            fontWeight: 'var(--w-ui)',
             fontSize: 56,
             lineHeight: 1.02,
-            letterSpacing: '-0.01em',
+            letterSpacing: '-0.01em' /* folio-design-system: off-scale */,
             color: C.textPrimary,
             margin: 0,
           }}
@@ -713,7 +713,7 @@ export default function CreateProjectPage() {
               border: `1px solid ${C.borderSubtle}`,
               color: C.textPrimary,
               fontSize: 13,
-              fontWeight: 500,
+              fontWeight: 'var(--w-ui)',
             }}
           >
             <span
@@ -728,8 +728,8 @@ export default function CreateProjectPage() {
                 display: 'grid',
                 placeItems: 'center',
                 fontSize: 10,
-                fontWeight: 600,
-                letterSpacing: '0.02em',
+                fontWeight: 'var(--w-stat)',
+                letterSpacing: '0.02em' /* folio-design-system: off-scale */,
               }}
             >
               {initialsFromName(operatingAsOrgName)}
@@ -863,7 +863,7 @@ export default function CreateProjectPage() {
               alignItems: 'center',
               gap: 10,
               cursor: 'pointer',
-              fontWeight: 500,
+              fontWeight: 'var(--w-ui)',
               fontSize: 14,
               color: C.textPrimary,
             }}
@@ -874,7 +874,7 @@ export default function CreateProjectPage() {
               style={{
                 marginLeft: 4,
                 color: C.textTertiary,
-                fontWeight: 400,
+                fontWeight: 'var(--w-body)',
                 fontSize: 12,
               }}
             >
@@ -905,7 +905,7 @@ export default function CreateProjectPage() {
                     <span className="fpn-cover-label">Cover</span>
                   </span>
                   <span style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-                    <span style={{ fontSize: 14, fontWeight: 500, color: C.textPrimary }}>
+                    <span style={{ fontSize: 14, fontWeight: 'var(--w-ui)', color: C.textPrimary }}>
                       Drop a hero image here
                     </span>
                     <span style={{ fontSize: 12, color: C.textTertiary }}>
@@ -928,7 +928,7 @@ export default function CreateProjectPage() {
                 >
                   <CoverPreview file={coverFile} />
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 6, flex: 1 }}>
-                    <span style={{ fontSize: 14, color: C.textPrimary, fontWeight: 500 }}>
+                    <span style={{ fontSize: 14, color: C.textPrimary, fontWeight: 'var(--w-ui)' }}>
                       {coverFile.name}
                     </span>
                     <span style={{ display: 'flex', gap: 16 }}>
@@ -936,7 +936,7 @@ export default function CreateProjectPage() {
                         type="button"
                         onClick={onPickCover}
                         className="fpn-btn-text fpn-focusable"
-                        style={{ color: C.copper, fontWeight: 500 }}
+                        style={{ color: C.copper, fontWeight: 'var(--w-ui)' }}
                       >
                         Replace
                       </button>
@@ -1198,7 +1198,7 @@ function Field({
         <label
           style={{
             fontSize: 13,
-            fontWeight: 500,
+            fontWeight: 'var(--w-ui)',
             color: C.textPrimary,
           }}
         >
@@ -1251,7 +1251,7 @@ function SubField({
         <label
           style={{
             fontSize: 13,
-            fontWeight: 500,
+            fontWeight: 'var(--w-ui)',
             color: C.textPrimary,
           }}
         >
@@ -1318,7 +1318,7 @@ function StatusTile({
           alignItems: 'center',
           gap: 10,
           fontSize: 14,
-          fontWeight: 500,
+          fontWeight: 'var(--w-ui)',
           color: C.textPrimary,
         }}
       >

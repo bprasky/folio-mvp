@@ -696,7 +696,7 @@ function PhotoCard({
       )}
 
       {badge && !cover && (
-        <div className="absolute bottom-2 left-2 z-[2] bg-black/55 text-white px-2 py-1 rounded-full text-[11px] font-medium">
+        <div className="absolute bottom-2 left-2 z-[2] bg-black/55 text-white px-2 py-1 rounded-full text-[length:var(--type-eyebrow)] font-medium">
           {badge}
         </div>
       )}

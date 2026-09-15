@@ -173,7 +173,7 @@ export function QuoteTile({
                   isEdited={edit!.isEdited(chapterIndex!, pi, "body")}
                   isEditing={edit!.isEditing(chapterIndex!, pi, "body")}
                   placeholder="Paragraph text..."
-                  className="whitespace-pre-line font-[var(--font-body)] text-[var(--type-body)] leading-[1.7] text-[rgba(87,75,67,0.85)]"
+                  className={"whitespace-pre-line font-[var(--font-body)] text-[var(--type-body)] leading-[1.7] text-[rgba(87,75,67,0.85)]" /* folio-design-system: off-scale */}
                   onStartEdit={() => edit!.openEditor(chapterIndex!, pi, "body")}
                   onSave={(t) => edit!.save(chapterIndex!, pi, "body", t)}
                   onCancel={() => edit!.closeEditor()}

@@ -158,7 +158,7 @@ export function EditorialMasthead() {
             <div className="flex flex-col items-center justify-center text-center h-full">
               <h1
                 className="block font-serif text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-light uppercase text-folio-text-primary"
-                style={{ letterSpacing: "var(--ls-wide)", fontWeight: 300, lineHeight: 1 }}
+                style={{ letterSpacing: "var(--ls-wide)", fontWeight: 300 /* folio-design-system: off-scale */, lineHeight: 1 }}
               >
                 <span className="sr-only">Folio</span>
                 <span aria-hidden="true">FOLIO</span>

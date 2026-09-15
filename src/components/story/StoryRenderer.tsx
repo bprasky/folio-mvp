@@ -246,7 +246,7 @@ function LandscapeHero({ story, publishedAt }: { story: StoryData; publishedAt: 
               fontWeight: "var(--w-body)",
               fontSize: 60, /* folio-design-system: off-scale */
               lineHeight: 1.02, /* folio-design-system: off-scale */
-              letterSpacing: "-0.012em",
+              letterSpacing: "-0.012em" /* folio-design-system: off-scale */,
               textWrap: "balance" as any,
               color: "rgba(87, 75, 67, 0.92)",
               margin: 0,
@@ -319,7 +319,7 @@ function LandscapeHero({ story, publishedAt }: { story: StoryData; publishedAt: 
               style={{
                 fontSize: 10, /* folio-design-system: off-scale */
                 textTransform: "uppercase",
-                letterSpacing: "0.14em",
+                letterSpacing: "0.14em" /* folio-design-system: off-scale */,
                 color: "rgba(87, 75, 67, 0.55)",
                 whiteSpace: "nowrap",
               }}
@@ -346,7 +346,7 @@ function LandscapeHero({ story, publishedAt }: { story: StoryData; publishedAt: 
               fontFamily: "var(--font-mono, ui-monospace, SFMono-Regular, Menlo, monospace)",
               fontSize: 10, /* folio-design-system: off-scale */
               textTransform: "uppercase",
-              letterSpacing: "0.14em",
+              letterSpacing: "0.14em" /* folio-design-system: off-scale */,
               color: "rgba(87, 75, 67, 0.45)",
               whiteSpace: "nowrap",
             }}
@@ -433,7 +433,7 @@ function BylineRow({ label, value }: { label: string; value: string }) {
         style={{
           fontSize: 10, /* folio-design-system: off-scale */
           textTransform: "uppercase",
-          letterSpacing: "0.16em",
+          letterSpacing: 'var(--ls-eyebrow)',
           color: "rgba(87, 75, 67, 0.55)",
         }}
       >

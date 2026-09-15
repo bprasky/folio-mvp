@@ -1034,3 +1034,15 @@ the whole sequence before pushing.
 Grepping the built CSS for `--folio-copper:#B8845C` found nothing and looked like
 a broken token; the minifier had lowercased the hex to `#b8845c`. Check case and
 whitespace normalisation before concluding a value did not survive the build.
+
+## 2026-09-15 — An off-scale marker must be a real comment, not text inside JSX
+The `folio-design-system: off-scale` carve-out is a line-based grep, so two earlier
+annotations had been placed wherever they silenced it rather than where they were
+syntactically valid. `MosaicCard.tsx` put the marker inside the `className` string,
+so React emitted `/*`, `folio-design-system:`, `off-scale` and `*/` as DOM class
+names; `CampaignWizard.tsx` put it in JSX children position, where it rendered as
+visible text on the page. The correct form for a Tailwind literal is
+`className={"…" /* folio-design-system: off-scale */}` — an expression container
+whose comment is real JS — and for a style object, the comment goes after the
+offending value inside the literal, attached to the property it describes. Silencing
+a grep is not the same as annotating the code.

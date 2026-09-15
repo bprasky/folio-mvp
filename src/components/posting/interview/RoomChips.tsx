@@ -64,7 +64,7 @@ export function RoomChips({
               >
                 <Check className="h-3.5 w-3.5 text-white" strokeWidth={2.5} />
                 <span
-                  className="text-[15px] italic leading-none text-white"
+                  className="text-[length:var(--type-body)] italic leading-none text-white"
                   style={{ fontFamily: "var(--font-headline)" }}
                 >
                   {room.roomName}

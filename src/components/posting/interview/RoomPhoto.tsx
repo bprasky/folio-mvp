@@ -260,10 +260,10 @@ export function RoomPhoto({
             className="h-1.5 w-1.5 shrink-0 rounded-full"
             style={{ background: "var(--folio-gold-ornament)" }}
           />
-          <span className="text-[11px] font-medium uppercase tracking-[0.16em] text-folio-text-primary">
+          <span className="text-[length:var(--type-eyebrow)] font-medium uppercase tracking-[var(--ls-eyebrow)] text-folio-text-primary">
             {captionLabel}
           </span>
-          <span className="text-[11px] uppercase tracking-[0.16em] text-folio-text-tertiary">
+          <span className="text-[length:var(--type-eyebrow)] uppercase tracking-[var(--ls-eyebrow)] text-folio-text-tertiary">
             Reference
           </span>
         </div>

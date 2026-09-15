@@ -421,7 +421,7 @@ function PostMockupCard({
         </span>
       )}
       <div className="absolute inset-x-2 bottom-5 text-white">
-        <p className="text-[9px] uppercase tracking-[var(--ls-eyebrow)] text-white/80"> /* folio-design-system: off-scale */
+        <p className={"text-[9px] uppercase tracking-[var(--ls-eyebrow)] text-white/80" /* folio-design-system: off-scale */}>
           {typeLabel[post.type]}
         </p>
         <p className="line-clamp-2 font-serif text-sm leading-tight">{post.title}</p>
