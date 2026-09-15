@@ -99,6 +99,7 @@ export function MobileTapOverlay({ tags, onTagTap }: MobileTapOverlayProps) {
       className="absolute inset-0 z-[2] md:hidden"
       onTouchStart={handleTouchStart}
       onTouchEnd={handleTouchEnd}
+      onTouchCancel={clearTimers}
     >
       <AnimatePresence>
         {showDots && (
@@ -125,6 +126,8 @@ export function MobileTapOverlay({ tags, onTagTap }: MobileTapOverlayProps) {
                   boxShadow: 'var(--tag-dot-shadow)',
                 }}
                 onClick={(e) => handleDotTap(e, tag)}
+                onTouchStart={(e) => e.stopPropagation()}
+                onTouchEnd={(e) => e.stopPropagation()}
                 aria-label={`View ${tag.label}`}
               />
             ))}
