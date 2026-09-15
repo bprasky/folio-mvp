@@ -53,11 +53,15 @@
      Use --folio-gold for anything functional (buttons, focus, active states, links).
      Use --folio-gold-ornament for decoration only (rules, dots, charts).
      --accent / --accent-hover are kept as aliases during migration; remove in Task 01b. */
-  /* Functional gold. Was #B8845C, which the old comment claimed met WCAG AA —
-     it does not: 3.2:1 as white-on-gold (a filled button label) and 3.15:1 as
-     gold-on-#FCFBF7 (a link), both short of the 4.5:1 AA wants at UI text sizes.
-     #8C5F3C is the same hue two steps down: 5.5:1 on white either way. Hover
-     darkens to --folio-accent-700 so hover still reads darker than rest. */
+  /* Functional gold. The previous value (see git history) carried a comment
+     claiming it met WCAG AA. It did not: 3.2:1 as white-on-gold for a filled
+     button label, and 3.15:1 as gold on #FCFBF7 for a link — both short of the
+     4.5:1 AA wants at UI text sizes. This value is the same hue two steps down,
+     5.5:1 on white either way. Hover darkens to --folio-accent-700, so hover
+     still reads darker than rest.
+     Deliberately no literal predecessor hex here: the Accent color discipline
+     workflow greps src/ for it, and only the --folio-gold declaration line
+     itself is exempt. */
   --folio-gold: #8C5F3C;
   --folio-gold-hover: #724A31;
   --folio-gold-ornament: #C9A96E;   /* Decorative only — never text or interactive */
