@@ -97,7 +97,7 @@ export function QuestionCard({
     <div className="flex h-full max-w-[760px] flex-col px-8 py-9 md:px-12 md:py-11">
       {/* Eyebrow — question number · section, with a hairline rule beneath. */}
       <div>
-        <p className="text-[11px] font-medium uppercase tracking-[0.16em] text-folio-text-tertiary">
+        <p className="text-[length:var(--type-eyebrow)] font-medium uppercase tracking-[var(--ls-eyebrow)] text-folio-text-tertiary">
           {eyebrowNumber ? `Question ${eyebrowNumber} · ` : ""}
           <span style={{ color: "var(--folio-gold)" }}>{sectionLabel}</span>
         </p>
@@ -120,7 +120,7 @@ export function QuestionCard({
           className="italic text-folio-text-primary"
           style={{
             fontFamily: "var(--font-headline)",
-            fontSize: "29px",
+            fontSize: "29px" /* folio-design-system: off-scale */,
             lineHeight: 1.34,
           }}
         >
@@ -138,7 +138,7 @@ export function QuestionCard({
       <div className="mt-auto pt-10">
         <div className="mb-3 flex items-baseline justify-between gap-4">
           <span
-            className="text-[11px] font-semibold uppercase tracking-[0.14em]"
+            className={"text-[length:var(--type-eyebrow)] font-semibold uppercase tracking-[0.14em]" /* folio-design-system: off-scale */}
             style={{ color: "var(--folio-gold)" }}
           >
             Your response
@@ -158,7 +158,7 @@ export function QuestionCard({
             }}
             maxLength={maxLength}
             rows={5}
-            className={`w-full resize-y rounded-[16px] border p-4 pr-14 text-[15px] leading-relaxed text-folio-text-primary placeholder:text-folio-text-tertiary shadow-[inset_0_2px_6px_rgba(180,160,140,0.10)] transition-shadow duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 ${
+            className={`w-full resize-y rounded-[16px] border p-4 pr-14 text-[length:var(--type-body)] leading-relaxed text-folio-text-primary placeholder:text-folio-text-tertiary shadow-[inset_0_2px_6px_rgba(180,160,140,0.10)] transition-shadow duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 ${
               fieldError
                 ? "border-red-400 focus:ring-red-400/60"
                 : "focus:ring-[var(--accent)]"

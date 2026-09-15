@@ -65,6 +65,11 @@
   --folio-gold: #8C5F3C;
   --folio-gold-hover: #724A31;
   --folio-gold-ornament: #C9A96E;   /* Decorative only — never text or interactive */
+  /* The pre-Task-01b accent value. It was retired as --folio-gold because it only
+     reached 3.2:1 (see the note above), so it must never return to a functional or
+     text role. It survives as a name because three decorative gradients still paint
+     with it; naming it keeps those greppable and retires them in one edit later. */
+  --folio-copper: #B8845C;          /* Decorative only — never text or interactive */
 
   /* === TYPE SCALE (canonical, Task 04) ===
      Every size, weight, line-height, and letter-spacing in Folio

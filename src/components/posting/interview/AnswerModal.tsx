@@ -104,7 +104,7 @@ export function AnswerModal({
           <p className="text-folio-eyebrow font-semibold uppercase text-folio-text-tertiary">
             {contextLabel}
           </p>
-          <p className="shrink-0 font-metricsMono text-[12px] tabular-nums text-folio-gold">
+          <p className={"shrink-0 font-metricsMono text-[12px] tabular-nums text-folio-gold" /* folio-design-system: off-scale */}>
             {position.index} / {position.total}
           </p>
         </div>

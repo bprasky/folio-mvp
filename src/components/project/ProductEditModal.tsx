@@ -259,14 +259,14 @@ export function ProductEditModal({ productId, tagId = null, onClose, onSaved }: 
                 if (h.flags.length === 0) return null;
                 return (
                   <div className="rounded-md bg-amber-50 px-2.5 py-2 space-y-1">
-                    <div className="flex items-center gap-1.5 text-[11px] font-medium text-amber-700">
+                    <div className="flex items-center gap-1.5 text-[length:var(--type-eyebrow)] font-medium text-amber-700">
                       <FaExclamationCircle className="w-3 h-3" />
                       This product&apos;s details look incomplete or off:
                     </div>
                     {h.flags.map((f, i) => (
                       <div
                         key={i}
-                        className={`pl-4.5 text-[11px] ${
+                        className={`pl-4.5 text-[length:var(--type-eyebrow)] ${
                           f.severity === "suspicious" ? "text-red-600" : "text-amber-700"
                         }`}
                       >

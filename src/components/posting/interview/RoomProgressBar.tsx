@@ -24,7 +24,7 @@ interface RoomProgressBarProps {
 // Folio palette (A4). Four visually distinct states.
 const TAUPE = "#8A7E70";
 const INK = "#1A1A1A";
-const GOLD = "#C9A96E";
+const GOLD = "var(--folio-gold-ornament)";
 
 // Edge fade so the rail reads as scrollable on both sides.
 const FADE =
@@ -35,7 +35,7 @@ function StatusGlyph({ status }: { status: RoomProgressStatus }) {
     case "complete":
       return <span className="text-xs font-bold">&#10003;</span>; // check
     case "in_progress":
-      return <span className="text-[10px] leading-none">&#9679;</span>; // filled dot (light on ink)
+      return <span className="text-[length:var(--type-fine)] leading-none">&#9679;</span>; // filled dot (light on ink)
     case "skipped":
       return <span className="text-xs line-through">&#8709;</span>; // struck empty-set
     case "not_started":
@@ -147,11 +147,11 @@ export function RoomProgressBar({
 
       {/* Fixed counter — never scrolls, so the designer keeps their place. */}
       <div className="shrink-0 text-right leading-tight whitespace-nowrap">
-        <div className="text-[11px] font-medium text-folio-text-primary">
+        <div className="text-[length:var(--type-eyebrow)] font-medium text-folio-text-primary">
           Room {currentRoomIndex + 1} of {rooms.length}
         </div>
         {currentRoom && (
-          <div className="text-[11px] text-folio-text-secondary">
+          <div className="text-[length:var(--type-eyebrow)] text-folio-text-secondary">
             {currentRoom.roomName} &mdash;{" "}
             {currentRound > 1 && baseQuestionCount > 0
               ? `Follow-up ${currentQuestionInRoom + 1 - baseQuestionCount} of ${totalQuestionsInRoom - baseQuestionCount}`

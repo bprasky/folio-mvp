@@ -737,7 +737,7 @@ function PhotoTagger({
           {photo.tags.map((t, i) => (
             <span
               key={t.id}
-              className="pointer-events-none absolute z-10 flex h-4 w-4 items-center justify-center rounded-full bg-[var(--accent)] border border-white text-[9px] font-semibold text-white shadow"
+              className={"pointer-events-none absolute z-10 flex h-4 w-4 items-center justify-center rounded-full bg-[var(--accent)] border border-white text-[9px] font-semibold text-white shadow" /* folio-design-system: off-scale */}
               style={{ left: `${t.x}%`, top: `${t.y}%`, transform: 'translate(-50%, -50%)' }}
             >
               {i + 1}
@@ -821,7 +821,7 @@ function PhotoTagger({
                   }}
                 >
                   <div className="flex h-5 w-5 items-center justify-center rounded-full bg-[var(--accent)] border-2 border-white shadow-md">
-                    <span className="text-[10px] font-semibold leading-none text-white">{i + 1}</span>
+                    <span className="text-[length:var(--type-fine)] font-semibold leading-none text-white">{i + 1}</span>
                   </div>
                 </div>
               );
@@ -1021,7 +1021,7 @@ function TagList({
             className="flex items-center gap-3 rounded-xl border border-folio-border-subtle bg-surface-canvas px-3 py-2"
           >
             {/* Matches the numbered pin on the photo. */}
-            <span className="flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full bg-[var(--accent)] text-[10px] font-semibold text-white">
+            <span className="flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full bg-[var(--accent)] text-[length:var(--type-fine)] font-semibold text-white">
               {i + 1}
             </span>
             <div className="min-w-0 flex-1">

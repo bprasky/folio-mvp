@@ -1033,3 +1033,28 @@ was unaffected, which is why direct-quote blockquotes looked right while the
 Folio-authored line beside them did not. When a font "looks wrong" rather than
 missing, read the compiled CSS for the class before assuming the font failed to
 load.
+## 2026-09-15 — Run every step of a CI guard locally, not just the one that failed
+`Accent color discipline` reported one failing step, so the obvious move was to
+fix that step and push. Running all six of the workflow's greps locally first
+showed a second, unrelated failure (`#FAF8F5` in the new-project palette) that CI
+had never printed, because a shell step exits at the first `exit 1` and the job
+stops there. Fixing only the reported step would have produced a second red run
+and a second cycle. When a guard is a sequence of independent checks, reproduce
+the whole sequence before pushing.
+
+## 2026-09-15 — Verify a built artifact case-insensitively before calling it missing
+Grepping the built CSS for `--folio-copper:#B8845C` found nothing and looked like
+a broken token; the minifier had lowercased the hex to `#b8845c`. Check case and
+whitespace normalisation before concluding a value did not survive the build.
+
+## 2026-09-15 — An off-scale marker must be a real comment, not text inside JSX
+The `folio-design-system: off-scale` carve-out is a line-based grep, so two earlier
+annotations had been placed wherever they silenced it rather than where they were
+syntactically valid. `MosaicCard.tsx` put the marker inside the `className` string,
+so React emitted `/*`, `folio-design-system:`, `off-scale` and `*/` as DOM class
+names; `CampaignWizard.tsx` put it in JSX children position, where it rendered as
+visible text on the page. The correct form for a Tailwind literal is
+`className={"…" /* folio-design-system: off-scale */}` — an expression container
+whose comment is real JS — and for a style object, the comment goes after the
+offending value inside the literal, attached to the property it describes. Silencing
+a grep is not the same as annotating the code.

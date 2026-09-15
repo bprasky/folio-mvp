@@ -130,7 +130,7 @@ export default function ProjectProgressTracker({
         )}
 
         {endCap && onLastStep && (
-          <p className="mt-6 text-[13px] text-folio-text-tertiary">{endCap}</p>
+          <p className="mt-6 text-[length:var(--type-meta)] text-folio-text-tertiary">{endCap}</p>
         )}
       </div>
 
@@ -248,7 +248,7 @@ function StepMarker({ step, href }: { step: TrackerStep; href?: string }) {
       <div className="relative flex flex-col items-center">
         <span
           className={cn(
-            'text-[14px] leading-none',
+            'text-[length:var(--type-ui)] leading-none',
             // A reachable step is a link, and in the publishing flow the stepper
             // is the page's ONLY navigation — ProjectTabs renders nothing there.
             // Opacity-on-hover was the whole affordance, so nothing said these
@@ -264,13 +264,13 @@ function StepMarker({ step, href }: { step: TrackerStep; href?: string }) {
           {label}
         </span>
         {openWork ? (
-          <span className="mt-1 text-[12px] font-medium text-folio-gold-ornament tabular-nums">
+          <span className={"mt-1 text-[12px] font-medium text-folio-gold-ornament tabular-nums" /* folio-design-system: off-scale */}>
             {remaining} left
           </span>
         ) : (
           isDone &&
           typeof count === 'number' && (
-            <span className="mt-1 text-[12px] text-folio-text-tertiary tabular-nums">
+            <span className={"mt-1 text-[12px] text-folio-text-tertiary tabular-nums" /* folio-design-system: off-scale */}>
               {count}
             </span>
           )
@@ -338,13 +338,13 @@ function NextActionZone({
 
       <div className="flex flex-wrap items-center justify-between gap-x-8 gap-y-4">
         <div className="min-w-0 flex-1">
-          <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-folio-gold-ornament">
+          <p className="text-[length:var(--type-eyebrow)] font-semibold uppercase tracking-[var(--ls-eyebrow)] text-folio-gold-ornament">
             {copy.ready ? 'Ready' : 'Next'} · {copy.eyebrow}
           </p>
-          <h2 className="mt-2 text-[22px] font-semibold leading-tight text-folio-text-primary">
+          <h2 className="mt-2 text-[length:var(--type-h4)] font-semibold leading-tight text-folio-text-primary">
             {copy.headline}
           </h2>
-          <p className="mt-1.5 max-w-2xl text-[13px] leading-snug text-folio-text-secondary">
+          <p className="mt-1.5 max-w-2xl text-[length:var(--type-meta)] leading-snug text-folio-text-secondary">
             {copy.body}
           </p>
         </div>
@@ -353,7 +353,7 @@ function NextActionZone({
           {copy.secondary && (
             <Link
               href={`/project/${projectId}?view=publish`}
-              className="text-[14px] font-medium text-folio-text-tertiary transition-colors duration-150 hover:text-folio-text-secondary"
+              className="text-[length:var(--type-ui)] font-medium text-folio-text-tertiary transition-colors duration-150 hover:text-folio-text-secondary"
             >
               {copy.secondary}
             </Link>
@@ -369,7 +369,7 @@ function PrimaryCta({ href, children }: { href: string; children: React.ReactNod
   return (
     <Link
       href={href}
-      className="group inline-flex items-center gap-2 rounded-[12px] bg-[var(--accent)] px-6 py-3.5 text-[16px] font-semibold text-white shadow-[0_4px_14px_rgba(184,132,92,0.30)] transition-all duration-[220ms] hover:bg-[var(--accent-hover)] hover:shadow-[0_6px_18px_rgba(184,132,92,0.38)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)]/40"
+      className={"group inline-flex items-center gap-2 rounded-[12px] bg-[var(--accent)] px-6 py-3.5 text-[16px] font-semibold text-white shadow-[0_4px_14px_rgba(184,132,92,0.30)] transition-all duration-[220ms] hover:bg-[var(--accent-hover)] hover:shadow-[0_6px_18px_rgba(184,132,92,0.38)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)]/40" /* folio-design-system: off-scale */}
     >
       {children}
       <ArrowRight className="w-4 h-4 transition-transform duration-[220ms] group-hover:translate-x-0.5" />
@@ -390,13 +390,13 @@ function MaterialsZone({
 }) {
   return (
     <div>
-      <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-folio-gold-ornament">
+      <p className="text-[length:var(--type-eyebrow)] font-semibold uppercase tracking-[var(--ls-eyebrow)] text-folio-gold-ornament">
         Next · {copy.eyebrow}
       </p>
-      <h2 className="mt-2 text-[22px] font-semibold leading-tight text-folio-text-primary">
+      <h2 className="mt-2 text-[length:var(--type-h4)] font-semibold leading-tight text-folio-text-primary">
         {copy.headline}
       </h2>
-      <p className="mt-2 max-w-2xl text-[15px] leading-relaxed text-folio-text-secondary">
+      <p className="mt-2 max-w-2xl text-[length:var(--type-body)] leading-relaxed text-folio-text-secondary">
         {copy.body}
       </p>
 
@@ -441,16 +441,16 @@ function ImportCardView({
       >
         <Icon className="w-5 h-5" aria-hidden />
       </span>
-      <h3 className="mt-3.5 text-[15px] font-semibold text-folio-text-primary">
+      <h3 className="mt-3.5 text-[length:var(--type-body)] font-semibold text-folio-text-primary">
         {card.name}
       </h3>
-      <p className="mt-1 font-metricsMono text-[12px] tracking-tight text-folio-text-tertiary">
+      <p className={"mt-1 font-metricsMono text-[12px] tracking-tight text-folio-text-tertiary" /* folio-design-system: off-scale */}>
         {card.formats}
       </p>
       <Link
         href={href}
         className={cn(
-          'mt-5 inline-flex items-center justify-center rounded-[10px] px-4 py-2.5 text-[14px] font-semibold transition-colors duration-[220ms]',
+          'mt-5 inline-flex items-center justify-center rounded-[10px] px-4 py-2.5 text-[length:var(--type-ui)] font-semibold transition-colors duration-[220ms]',
           primary
             ? 'bg-[var(--accent)] text-white hover:bg-[var(--accent-hover)]'
             : 'border border-folio-border-subtle text-folio-text-secondary hover:border-folio-border-strong hover:text-folio-text-primary',
@@ -484,14 +484,14 @@ function CollapsedMaterialsBar({ projectId }: { projectId: string }) {
         })}
       </div>
 
-      <p className="flex-1 text-[14px] text-folio-text-secondary">
+      <p className="flex-1 text-[length:var(--type-ui)] text-folio-text-secondary">
         <span className="font-semibold text-folio-text-primary">Materials imported.</span>{' '}
         Counts live in the tracker above.
       </p>
 
       <Link
         href={actionHref(projectId, 'materials')}
-        className="inline-flex items-center gap-1.5 rounded-[10px] border border-folio-border-subtle bg-surface-canvas px-3.5 py-2 text-[14px] font-medium text-folio-text-secondary transition-colors duration-[220ms] hover:border-folio-border-strong hover:text-folio-text-primary"
+        className="inline-flex items-center gap-1.5 rounded-[10px] border border-folio-border-subtle bg-surface-canvas px-3.5 py-2 text-[length:var(--type-ui)] font-medium text-folio-text-secondary transition-colors duration-[220ms] hover:border-folio-border-strong hover:text-folio-text-primary"
       >
         <Plus className="w-3.5 h-3.5" aria-hidden />
         Add more

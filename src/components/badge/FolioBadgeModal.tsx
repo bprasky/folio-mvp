@@ -122,7 +122,7 @@ export default function FolioBadgeModal({
                 style={{
                   background: 'linear-gradient(135deg, #5C554D 0%, #8B8178 100%)',
                   fontSize: '18px',
-                  fontWeight: 600,
+                  fontWeight: 'var(--w-stat)',
                   letterSpacing: '0.05em',
                 }}
               >
@@ -136,7 +136,7 @@ export default function FolioBadgeModal({
             style={{
               fontFamily: 'Georgia, serif',
               fontSize: '20px',
-              fontWeight: 400,
+              fontWeight: 'var(--w-body)',
               margin: '0 0 4px',
             }}
           >
@@ -222,7 +222,7 @@ export default function FolioBadgeModal({
                 margin: 0,
               }}
             >
-              <span style={{ fontWeight: 600 }}>Badge for:</span>{' '}
+              <span style={{ fontWeight: 'var(--w-stat)' }}>Badge for:</span>{' '}
               {nearestEvent.eventTitle}
               {' · '}
               {formatEventDate(nearestEvent.eventStartDate)}
@@ -251,13 +251,13 @@ export default function FolioBadgeModal({
           <button
             onClick={handleDownload}
             disabled={!qrDataUrl}
-            className="px-5 py-2.5 rounded-full text-[13px] font-medium text-white transition-colors disabled:opacity-40 bg-folio-text-primary"
+            className="px-5 py-2.5 rounded-full text-[length:var(--type-meta)] font-medium text-white transition-colors disabled:opacity-40 bg-folio-text-primary"
           >
             Save Badge
           </button>
           <button
             onClick={handleCopyLink}
-            className="px-5 py-2.5 rounded-full text-[13px] font-medium border transition-colors border-folio-border-subtle text-folio-text-secondary"
+            className="px-5 py-2.5 rounded-full text-[length:var(--type-meta)] font-medium border transition-colors border-folio-border-subtle text-folio-text-secondary"
             style={{
               backgroundColor: copied ? '#F0EDE9' : 'transparent',
             }}

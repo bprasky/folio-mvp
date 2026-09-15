@@ -44,9 +44,9 @@ export function renderPreviewField(
   const cls = `w-full rounded-md px-2 py-1.5 text-sm ${ring} focus:outline-none focus:ring-2 focus:ring-[var(--accent)]`;
   return (
     <label className="block">
-      <span className="flex items-center gap-1.5 text-[11px] font-medium text-folio-text-secondary mb-1">
+      <span className="flex items-center gap-1.5 text-[length:var(--type-eyebrow)] font-medium text-folio-text-secondary mb-1">
         {label}
-        {missing && <span className="text-amber-600 text-[10px]">• missing</span>}
+        {missing && <span className="text-amber-600 text-[length:var(--type-fine)]">• missing</span>}
       </span>
       {multiline ? (
         <textarea value={value} onChange={(e) => onChange(e.target.value)} rows={3} className={cls} />

@@ -14,7 +14,8 @@
  * - Typography: --font-headline, --font-body
  * - Base: --bg-base (#FFFFFF), --bg-elevated (#FAFAF9)
  * - Text: --text-primary, --text-secondary, --text-tertiary
- * - Accent (functional): --folio-gold (#B8845C), --folio-gold-hover (#A67548)
+ * - Accent (functional): --folio-gold, --folio-gold-hover. See globals.css for
+ *   the values; the pre-Task-01b pair was retired for failing WCAG AA contrast.
  * - Accent (ornament):   --folio-gold-ornament (#C9A96E) — never use for text or interactive elements
  * - Shadows: --neu-raised, --neu-raised-lg, --neu-inset, --neu-inset-sm
  * - Ridge: --ridge-outer, --ridge-inner, --ridge-dark

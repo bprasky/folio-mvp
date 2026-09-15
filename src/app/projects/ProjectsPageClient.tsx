@@ -97,10 +97,10 @@ interface ProjectsPageClientProps {
 
 const COVER_GRADIENTS = [
   'bg-[linear-gradient(160deg,#B89B7A_0%,#6E5642_100%)]',
-  'bg-[linear-gradient(160deg,#C9A96E_0%,#8A6B47_100%)]',
+  'bg-[linear-gradient(160deg,var(--folio-gold-ornament)_0%,#8A6B47_100%)]',
   'bg-[linear-gradient(160deg,#A89378_0%,#4F3A2A_100%)]',
   'bg-[linear-gradient(160deg,#5C6B4E_0%,#2E3B2A_100%)]',
-  'bg-[linear-gradient(160deg,#B8845C_0%,#724A31_100%)]',
+  'bg-[linear-gradient(160deg,var(--folio-copper)_0%,#724A31_100%)]',
 ];
 
 function hashToIndex(str: string, mod: number): number {
@@ -322,7 +322,7 @@ export default function ProjectsPageClient({ projectsRaw, operatingAsOrgId, pend
               <span className="w-1 h-1 rounded-full bg-folio-text-tertiary" aria-hidden />
               <span className="folio-eyebrow text-folio-text-tertiary">{studioName}</span>
             </div>
-            <h1 className="font-headline italic font-medium text-[56px] leading-[1.02] tracking-[-0.01em] text-folio-text-primary">
+            <h1 className={"font-headline italic font-medium text-[56px] leading-[1.02] tracking-[-0.01em] text-folio-text-primary" /* folio-design-system: off-scale */}>
               Projects
             </h1>
             <div className="mt-2.5 flex items-center gap-4 text-sm text-folio-text-secondary">
@@ -339,14 +339,14 @@ export default function ProjectsPageClient({ projectsRaw, operatingAsOrgId, pend
           <div className="flex items-center gap-2.5">
             <Button
               variant="ridge"
-              className="inline-flex items-center gap-2 px-4 py-2.5 text-[13px] font-medium rounded-[10px]"
+              className="inline-flex items-center gap-2 px-4 py-2.5 text-[length:var(--type-meta)] font-medium rounded-[10px]"
             >
               <Download className="w-3.5 h-3.5" />
               Import
             </Button>
             <Link
               href="/projects/new"
-              className="accent-btn inline-flex items-center gap-2 px-4 py-2.5 text-[13px] font-medium rounded-[10px]"
+              className="accent-btn inline-flex items-center gap-2 px-4 py-2.5 text-[length:var(--type-meta)] font-medium rounded-[10px]"
             >
               <Plus className="w-3.5 h-3.5" />
               New project
@@ -365,10 +365,10 @@ export default function ProjectsPageClient({ projectsRaw, operatingAsOrgId, pend
                   i < stats.length - 1 && 'pr-9 border-r border-folio-border-subtle'
                 )}
               >
-                <span className="text-[11px] font-medium tracking-[0.16em] uppercase text-folio-text-tertiary">
+                <span className="text-[length:var(--type-eyebrow)] font-medium tracking-[var(--ls-eyebrow)] uppercase text-folio-text-tertiary">
                   {s.label}
                 </span>
-                <span className="font-headline text-[30px] font-medium leading-none tabular-nums text-folio-text-primary">
+                <span className={"font-headline text-[30px] font-medium leading-none tabular-nums text-folio-text-primary" /* folio-design-system: off-scale */}>
                   {s.value}
                 </span>
                 <span className="text-xs text-folio-text-secondary">{s.delta}</span>
@@ -762,7 +762,7 @@ function NewProjectTile() {
         + New project
       </div>
       <div className="pt-3.5 px-1">
-        <div className="font-headline italic text-[19px] text-folio-text-tertiary">Untitled</div>
+        <div className={"font-headline italic text-[19px] text-folio-text-tertiary" /* folio-design-system: off-scale */}>Untitled</div>
         <div className="text-xs text-folio-text-tertiary mt-0.5">Start a new board</div>
       </div>
     </Link>
@@ -973,7 +973,7 @@ function ProjectCard({ p, onRename, onDelete, onForceDelete, onRequestDeletion }
           )}
 
           {/* Status pill */}
-          <span className="absolute top-3 left-3 inline-flex items-center gap-1.5 px-2.5 py-1 bg-white/[0.92] backdrop-blur-md rounded-full border border-folio-border-subtle text-[11px] font-medium tracking-[0.04em] text-folio-text-primary">
+          <span className={"absolute top-3 left-3 inline-flex items-center gap-1.5 px-2.5 py-1 bg-white/[0.92] backdrop-blur-md rounded-full border border-folio-border-subtle text-[length:var(--type-eyebrow)] font-medium tracking-[0.04em] text-folio-text-primary" /* folio-design-system: off-scale */}>
             <span className={cn('w-1.5 h-1.5 rounded-full flex-shrink-0', statusDot)} aria-hidden />
             {statusLabel}
           </span>
@@ -1095,7 +1095,7 @@ function ProjectCard({ p, onRename, onDelete, onForceDelete, onRequestDeletion }
         {/* Body — text under image, no card chrome */}
         <div className="pt-3.5 px-1 flex justify-between items-start gap-3">
           <div className="min-w-0">
-            <div className="font-headline font-medium text-[19px] leading-tight text-folio-text-primary mb-1 truncate">
+            <div className={"font-headline font-medium text-[19px] leading-tight text-folio-text-primary mb-1 truncate" /* folio-design-system: off-scale */}>
               {p.title}
             </div>
             <div className="flex items-center gap-2 text-xs text-folio-text-tertiary">
@@ -1104,7 +1104,7 @@ function ProjectCard({ p, onRename, onDelete, onForceDelete, onRequestDeletion }
               <span>{subline}</span>
             </div>
           </div>
-          <span className="font-mono text-[11px] text-folio-text-secondary tracking-[0.02em] whitespace-nowrap pt-0.5 flex-shrink-0">
+          <span className={"font-mono text-[length:var(--type-eyebrow)] text-folio-text-secondary tracking-[0.02em] whitespace-nowrap pt-0.5 flex-shrink-0" /* folio-design-system: off-scale */}>
             {itemCount} items
           </span>
         </div>
