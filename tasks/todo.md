@@ -84,12 +84,30 @@ laptop, so a full row of photos clears the fold instead of a third of one.
 - `npm run guard:client-imports` — pass
 - `next lint` on the three changed files — no errors; warnings all pre-existing
 
-## Pre-existing failure, NOT from this work
+## Running `npm run typecheck` locally on Node 22
 
-`npm run typecheck` fails on `main` itself:
-`src/app/api/rep-contacts/route.ts:141` does
-`export async function listAllContacts(...)`. App Router route modules may
-only export the HTTP verbs plus a few config keys, so Next's generated
-route type rejects it (TS2344). Reproduced with these changes stashed —
-identical failure. Left alone deliberately; the fix is to move the helper
-into a non-route module and import it.
+The ratchet passes in CI but reports a false `+1` when run locally on
+Node 22, naming `.next/types/app/api/rep-contacts/route.ts` (TS2344).
+
+That diagnostic is **already in `tools/typescript-baseline.json`** and is
+not new. The guard matches fingerprints as exact strings, and TypeScript's
+type printer elides a union at a different point depending on version:
+
+- baseline / CI (Node 20): `"generateStaticParams" | ... 6 more ... | "OPTIONS"`
+- local (Node 22):         `"generateStaticParams" | "revalidate" | ... 5 more ...`
+
+Same error, different rendering, so the strings don't match and the guard
+counts it as a new fingerprint. Use Node 20 (`.github/workflows/lint.yml`
+pins `node-version: 20`) when interpreting a ratchet run, and do not
+"fix" a diagnostic on this basis — and never regenerate the baseline on
+Node 22, which would rewrite fingerprints CI then rejects.
+
+### Separately: `listAllContacts` is dead code
+
+`src/app/api/rep-contacts/route.ts:141` exports `listAllContacts`, which
+has zero callers anywhere in `src/`. App Router route modules may only
+export the HTTP verbs plus a few config keys, which is why it produces a
+(baselined) diagnostic at all. Its doc comment says it serves
+`GET /api/rep-contacts` with no `vendorName`, but the real GET handler
+400s in that case — an unfinished feature that was never wired up.
+Deleting it would retire one baselined diagnostic. Out of scope here.
