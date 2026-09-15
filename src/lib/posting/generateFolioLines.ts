@@ -11,6 +11,7 @@ import type { LoadedAnswer } from './loadInterviewAnswers';
 
 export const FOLIO_REWRITE_PROMPT = `Write third-person room teasers for an interior designer's article and social posts. These options are explicitly labeled Written by Folio; the designer's untouched direct quotes are a separate choice.
 Create 4–6 distinct, concise, standalone options using the public room interview evidence and the supplied room article. Explore different supported angles: a design decision, a practical constraint, a visual detail, or the room's connection to the project. These are editorial perspectives, not rewrites that must preserve one direct quote's central point or first-person voice. Combine related evidence from up to three sourceIds when helpful.
+Write fresh display lines; do not copy sentences from the article or repeat its opening sentence.
 Treat the article as narrative context, not independent proof: every factual claim, reason and outcome must also be supported by cited interview sources and the product tag rules below. Do not invent intent, lifestyle, materials, products, causal links or outcomes. Preserve uncertainty. Avoid brand names unless necessary and present in product tags.
 Keep hypothetical alternatives hypothetical: a considered table was not necessarily installed or replaced. Do not turn people into guests, one decision into a general philosophy, or a room-level observation into an unmentioned project-wide pattern.
 Prefer 15–35 words; maximum 300 characters. Third person only: no I, we, our, you or your, enclosing quotation marks, attribution or labels. Each option should give a reader a concrete reason to explore this room. Vary the angle, not just synonyms. When evidence is thin, provide fewer honest options; never invent facts to fill a quota. Do not return nothing merely because the original quote is already well written.
@@ -78,7 +79,7 @@ export async function generateFolioLines(room: string, answers: LoadedAnswer[], 
         sources: sources.map(s => ({ sourceId: s.id, directQuote: s.quote, context: s.source.excerpt })),
         ...(attempt ? { alreadyApproved: approved.map(line => line.text), instruction: 'Add distinct supported angles to these existing choices. Simplify claims to the supplied evidence. Do not repeat these options.' } : {}),
       }, 2000);
-      const lines = resolveFolioDraft(written, sources);
+      const lines = resolveFolioDraft(written, sources).filter(line => !article.some(paragraph => paragraph.includes(line.text)));
       if (lines.length) {
         const review = ReviewSchema.safeParse(await ask(REVIEW_PROMPT, {
           productTags: taggedProducts,

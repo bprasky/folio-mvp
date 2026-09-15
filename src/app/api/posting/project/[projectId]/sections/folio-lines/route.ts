@@ -38,7 +38,7 @@ export async function POST(request: NextRequest, { params }: { params: { project
     const room = chapter.title || '';
     const answers = await loadInterviewAnswers(projectId);
     let lines = pq.folio?.alternatives ?? [];
-    const cached = pq.folio?.generatorVersion === 2 && lines.length > 0 && lines.every(line => FolioLineSchema.safeParse(line).success) &&
+    const cached = (pq.folio?.generatorVersion === 2 || pq.folio?.generatorVersion === 3) && lines.length > 0 && lines.every(line => FolioLineSchema.safeParse(line).success) &&
       folioLinesMatchSources(lines, room, answers, chapter.body ?? []);
     const projectTags = await prisma.productTag.findMany({
       where: { image: { projectId } },
@@ -87,7 +87,7 @@ export async function POST(request: NextRequest, { params }: { params: { project
     }
     const selectedIndex = cached ? (pq.folio?.alternatives.findIndex(line => line.text === pq.folio?.selected?.text) ?? -1) : -1;
     pq.folio = {
-      generatorVersion: 2,
+      generatorVersion: cached ? pq.folio!.generatorVersion : 2,
       selected: lines[selectedIndex >= 0 ? selectedIndex : 0],
       alternatives: lines,
     };

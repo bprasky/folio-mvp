@@ -8,9 +8,18 @@ export function needsRoomTeaserPreparation(chapter: { kind?: string; body?: stri
   if (chapter.kind === 'gallery' || !chapter.body?.some(p => p.trim())) return false;
   const pq = chapter.pullQuote;
   if (!getSelectedRoomLineText(pq) || !isPullQuoteSelection(pq) || !pq.folio?.alternatives.length) return true;
-  return pq.folio.alternatives.some(line => !FolioLineSchema.safeParse(line).success ||
+  if (pq.folio.alternatives.some(line => !FolioLineSchema.safeParse(line).success)) return true;
+  // Older fallback pools could be saved with no direct choices, then treated as
+  // complete forever. Attempt their recovery once; version 3 records the attempt
+  // even when a room truly has no interview evidence or the provider is down.
+  if (pq.folio.generatorVersion !== 3 && (!pq.alternatives.length || pq.folio.alternatives.some(isArticleFolioLine))) return true;
+  return pq.folio.alternatives.some(line =>
     line.sources.some(source => 'kind' in source && source.kind === 'article' &&
       !chapter.body![source.paragraphIndex]?.includes(source.excerpt)));
+}
+
+export function isArticleFolioLine(line: FolioLine): boolean {
+  return line.sources.some(source => 'kind' in source && source.kind === 'article');
 }
 
 export function folioRoomAnswers(room: string, answers: LoadedAnswer[]): LoadedAnswer[] {

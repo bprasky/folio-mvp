@@ -1,5 +1,6 @@
 /** Exercise the actual preparation boundary with model transport replaced. */
 require('tsx/cjs');
+process.env.ANTHROPIC_API_KEY ||= 'test-only';
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const vm = require('node:vm');
@@ -8,6 +9,7 @@ const schemas = require('../src/lib/posting/schemas.ts');
 const folio = require('../src/lib/posting/folioLines.ts');
 const format = require('../src/lib/utils/formatRoomName.ts');
 const scrub = require('../src/lib/naming/scrubProse.ts');
+const { toSelection } = require('../src/lib/posting/selectPullQuotes.ts');
 const source = fs.readFileSync('src/lib/posting/prepareRoomTeasers.ts', 'utf8');
 const js = ts.transpileModule(source, { compilerOptions: { target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.CommonJS } }).outputText;
 const direct = { selected: { text: 'We chose glass to keep the room open.' }, alternatives: [{ text: 'We chose glass to keep the room open.', score: 1 }] };
@@ -27,7 +29,8 @@ function load(generate, rank = async (rooms, answers, _cid, _project, auto) => {
     if (id === './schemas') return schemas;
     if (id === './folioLines') return folio;
     if (id === './generateFolioLines') return { generateFolioLines: generate };
-    if (id === './selectPullQuotes') return { selectPullQuotes: rank };
+    if (id === './selectPullQuotes') return { selectPullQuotes: rank, toSelection };
+    if (id === './quoteCandidates') return require('../src/lib/posting/quoteCandidates.ts');
     throw new Error(id);
   } };
   vm.runInNewContext(js, context);
@@ -57,6 +60,26 @@ async function main() {
   assert.ok(schemas.getSelectedRoomLineText(empty.galleryChapters[0].pullQuote));
   assert.equal(empty.galleryChapters[0].pullQuote.authorship, 'folio');
   console.log('PASS missing interview and provider failure still produce selected article teaser');
+  const brokenSaved = { galleryChapters: [{ ...chapter('Dining Room'), pullQuote: {
+    selected: null, alternatives: [], authorship: 'folio',
+    folio: { generatorVersion: 2, selected: folio.articleFolioLines('', chapter('').body)[0], alternatives: folio.articleFolioLines('', chapter('').body) },
+  } }] };
+  assert.equal(folio.needsRoomTeaserPreparation(brokenSaved.galleryChapters[0]), true,
+    'The exact saved failure (empty direct pool plus article excerpts) must be repaired');
+  const written = { text: 'Glass gives the dining room openness without changing the footprint.',
+    originalText: answer.answer, sources: [{ questionId: answer.questionId, isFollowUp: false, excerpt: answer.answer }] };
+  const unchangedBody = JSON.stringify(brokenSaved.galleryChapters[0].body);
+  await load(async () => [written])(brokenSaved, [answer], 'p');
+  assert.ok(brokenSaved.galleryChapters[0].pullQuote.alternatives.length);
+  assert.equal(brokenSaved.galleryChapters[0].pullQuote.folio.selected.text, written.text);
+  assert.equal(JSON.stringify(brokenSaved.galleryChapters[0].body), unchangedBody);
+  assert.equal(folio.needsRoomTeaserPreparation(brokenSaved.galleryChapters[0]), false);
+  console.log('PASS saved excerpt-only rooms recover both pools without rewriting the article');
+  const rankFailure = { galleryChapters: [chapter('Dining Room')] };
+  await load(async () => [written], async () => { throw new Error('ranker down'); })(rankFailure, [answer], 'p');
+  assert.ok(rankFailure.galleryChapters[0].pullQuote.alternatives.length,
+    'A ranking failure must not discard the designer’s available direct quotes');
+  console.log('PASS ranker exception keeps code-ranked verbatim choices');
   const before = JSON.stringify(blocks.galleryChapters[0].pullQuote);
   calls = 0;
   await prepare(blocks, [answer], 'p');

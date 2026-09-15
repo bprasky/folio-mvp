@@ -243,7 +243,7 @@ export function QuoteTile({
         </span>
 
         {/* Editorial teaser (optional, only on collapsed regular tiles) */}
-        {editorialTeaser && !wide && !showNarrative && (
+        {editorialTeaser && editorialTeaser.trim() !== displayQuote?.trim() && !wide && !showNarrative && (
           <p
             style={{
               fontSize: 'var(--type-meta)',

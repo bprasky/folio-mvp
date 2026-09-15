@@ -85,7 +85,7 @@ export function RoomExpand({
                         sizes="(max-width: 768px) 100vw, 50vw"
                       />
                       {/* Tag dots always visible in expanded gallery */}
-                      <TaggedImage surface="post" image={img} />
+                      <TaggedImage surface="post" image={img} forceDotsVisible />
                     </div>
                   ))}
                 </div>
