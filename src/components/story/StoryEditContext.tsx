@@ -17,7 +17,9 @@
 // replaces. It is not a second implementation of it.
 // ============================================================================
 
-import { createContext, useCallback, useContext, useMemo, useState } from 'react';
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
+import type { PullQuoteSelection } from '@/lib/posting/schemas';
+import { needsRoomTeaserPreparation } from '@/lib/posting/folioLines';
 import { useRouter } from 'next/navigation';
 import type {
   SectionHistoryEntry,
@@ -48,6 +50,7 @@ export interface StoryEditValue {
   hasHistory: (chapterIndex: number) => boolean;
   /** True while any field is open — tiles suppress their own click handling. */
   anyFieldOpen: boolean;
+  teasersPreparing?: boolean;
 }
 
 const StoryEditContext = createContext<StoryEditValue | null>(null);
@@ -64,16 +67,41 @@ export function StoryEditProvider({
   projectId,
   initialOverrides,
   sectionHistory = [],
+  chapters = [],
   children,
 }: {
   projectId: string;
   initialOverrides: SectionOverride[];
   sectionHistory?: SectionHistoryEntry[];
+  chapters?: Array<{ kind?: string; body?: string[]; pullQuote?: string | PullQuoteSelection | null }>;
   children: React.ReactNode;
 }) {
   const router = useRouter();
   const [overrides, setOverrides] = useState<SectionOverride[]>(initialOverrides);
   const [editingField, setEditingField] = useState<EditingField>(null);
+  const [teasersPreparing, setTeasersPreparing] = useState(false);
+  const [teaserError, setTeaserError] = useState<string | null>(null);
+  const attemptedPreparation = useRef<string | null>(null);
+  const needsTeasers = chapters.some(needsRoomTeaserPreparation);
+  const prepareTeasers = useCallback(async () => {
+    setTeasersPreparing(true);
+    setTeaserError(null);
+    try {
+      const res = await fetch(`/api/posting/project/${projectId}/sections/pull-quotes/backfill`, { method: 'POST' });
+      if (!res.ok) throw new Error('Could not save the room options. Your article is unchanged.');
+      router.refresh();
+    } catch {
+      setTeaserError('Could not save the room options. Your article is unchanged.');
+    } finally {
+      setTeasersPreparing(false);
+    }
+  }, [projectId, router]);
+  useEffect(() => {
+    if (!needsTeasers) { attemptedPreparation.current = null; return; }
+    if (attemptedPreparation.current === projectId) return;
+    attemptedPreparation.current = projectId;
+    void prepareTeasers();
+  }, [needsTeasers, prepareTeasers, projectId]);
 
   const isEdited = useCallback(
     (chapterIndex: number, paragraphIndex: number, field: SectionOverrideField) =>
@@ -150,11 +178,15 @@ export function StoryEditProvider({
       refresh,
       hasHistory,
       anyFieldOpen: editingField !== null,
+      teasersPreparing,
     }),
-    [projectId, isEdited, isEditing, openEditor, closeEditor, save, revert, refresh, hasHistory, editingField],
+    [projectId, isEdited, isEditing, openEditor, closeEditor, save, revert, refresh, hasHistory, editingField, teasersPreparing],
   );
 
-  return <StoryEditContext.Provider value={value}>{children}</StoryEditContext.Provider>;
+  return <StoryEditContext.Provider value={value}>
+    {teaserError && <p role="alert" className="folio-meta p-4 text-folio-text-primary">{teaserError} <button type="button" onClick={prepareTeasers} disabled={teasersPreparing} className="underline">Retry saving options</button></p>}
+    {children}
+  </StoryEditContext.Provider>;
 }
 
 /**

@@ -7,7 +7,8 @@
  *                   prose passes anywhere else.
  *   HEADLINE      — the model's sentence. Regenerated as a BATCH that is filtered
  *                   by house style, and the designer may also type their own.
- *   PULL QUOTE    — the designer's own sentence. Selected, never written.
+ *   ROOM TEASER   — required default selection: untouched designer quotes or
+ *                   separately labeled Folio-authored editorial lines.
  *
  * Run: npm run check:regenerate-surfaces
  */
@@ -26,15 +27,18 @@ const regen = readFileSync('src/app/api/posting/project/[projectId]/sections/[ch
 const override = readFileSync('src/app/api/posting/project/[projectId]/sections/override/route.ts', 'utf8');
 const headlineRoute = readFileSync('src/app/api/posting/project/[projectId]/sections/headline/regenerate/route.ts', 'utf8');
 const picker = readFileSync('src/components/story/PullQuotePicker.tsx', 'utf8');
+const preparation = readFileSync('src/lib/posting/prepareRoomTeasers.ts', 'utf8');
 
 console.log('\n1. Regenerated prose passes the same gate as generated prose');
 // The Product Naming Gate is a commercial gate: an unsubscribed vendor's name
 // reaches a published article only through a hole. It used to live inside the
 // full generator, so section regenerate wrote around it.
-check('the naming gate has ONE implementation', (() => {
-  const hits = execSync("grep -rl 'scrubProseNaming(' --include=*.ts src/lib/ || true", { encoding: 'utf8' })
-    .split('\n').filter(Boolean).filter(f => !f.includes('scrubProse.ts'));
-  return hits.length === 1 && hits[0].includes('applyProseNamingGate.ts');
+check('article and teaser paths share the same naming scrub implementation', (() => {
+  const definitions = execSync("grep -rl 'export function scrubProseNaming(' --include=*.ts src/lib/ || true", { encoding: 'utf8' })
+    .split('\n').filter(Boolean);
+  return definitions.length === 1 && definitions[0].includes('scrubProse.ts')
+    && preparation.includes('scrubProseNaming(')
+    && readFileSync('src/lib/naming/applyProseNamingGate.ts', 'utf8').includes('scrubProseNaming(');
 })());
 check('section regenerate runs the gate before saving',
   /applyProseNamingGate\(/.test(regen) && /source: 'section-regenerate'/.test(regen));
@@ -64,14 +68,16 @@ check('this room\'s answers are still labelled the primary quote source',
   /PRIMARY source for quotes/.test(regen));
 check('other rooms are still passed as context only',
   /for context only — do not repeat their content/.test(regen));
-check('the chapter\'s pull quote survives a body regeneration',
-  /pullQuote: chapter\.pullQuote/.test(regen));
+check('section regeneration prepares and returns a selector for its new body',
+  /prepareRoomTeasers\(\{ galleryChapters: \[gatedChapters\[chapterIndex\]\] \}/.test(regen)
+  && /pullQuote: gatedChapters\[chapterIndex\]\.pullQuote/.test(regen));
 
 console.log('\n4. Pull quotes are selected, never written');
 check('the picker renders the quote as static text, not an input',
   /<blockquote/.test(picker) && !/EditableParagraph/.test(picker));
 check('the picker only PATCHes text taken from alternatives',
-  /patch\(alternatives\[nextIndex\]\.text\)/.test(picker) && /patch\(alternatives\[0\]\.text\)/.test(picker));
+  /patch\(alternatives\[nextIndex\]\.text\)/.test(picker) && /patch\(option\.text\)/.test(picker)
+  && /alternatives\.map\(option =>/.test(picker) && !/patch\(null\)/.test(picker));
 // Two endpoints wrote this one field under two contracts. The weaker one wins by
 // definition, so the weaker one is now closed.
 check('the override endpoint refuses free-text pull quote writes',
@@ -204,24 +210,28 @@ console.log('\n6. An existing article can get its pull quotes without regenerati
 // they can be produced after the fact — the alternative was regenerating the
 // whole feature, which rewrites prose the designer may have already edited.
 const backfill = readFileSync('src/app/api/posting/project/[projectId]/sections/pull-quotes/backfill/route.ts', 'utf8');
-check('the backfill selects from interview answers, not from the prose',
-  /selectPullQuotes\(/.test(backfill) && /loadInterviewAnswers\(/.test(backfill));
-check('it never overwrites a quote the designer already has',
-  /if \(directText\)/.test(backfill) && /ch\.pullQuote\.selected\?\.text/.test(backfill) && /skippedExisting\.push/.test(backfill));
+check('the backfill uses the shared preparation path and real interview answers',
+  /prepareRoomTeasers\(/.test(backfill) && /loadInterviewAnswers\(/.test(backfill)
+  && /selectPullQuotes\(roomNames, publicAnswers/.test(preparation));
+check('backfill preserves existing selections while filling missing pools',
+  /!refresh && previous/.test(preparation) && /\{ \.\.\.previous \}/.test(preparation));
 check('it skips photo-only gallery chapters',
-  /ch\?\.kind === 'gallery'/.test(backfill));
-check('it refuses when there are no answers rather than inventing',
-  /code: 'NO_ANSWERS'/.test(backfill));
+  /ch\.kind === 'gallery'/.test(preparation));
+check('no-answer rooms use article evidence labeled Folio, not invented direct quotes',
+  /articleFolioLines\(room, chapter\.body\)/.test(preparation)
+  && /selected: null, alternatives: \[\]/.test(preparation));
 check('it rebuilds the top-level index the layout engine reads',
-  /syncPullQuotesFromChapters\(blocks\)/.test(backfill));
-check('a room with nothing quotable is reported, not filled',
-  /noCandidate\.push\(title\)/.test(backfill));
+  /syncPullQuotesFromChapters\(blocks\)/.test(preparation));
+check('Folio alternatives are prepared without waiting for an opt-in click',
+  /await generateFolioLines\(/.test(preparation) && !/sections\/folio-lines/.test(picker));
 
 // The empty state was `return null`, which is indistinguishable from "this
 // feature does not exist" — and it is the state every chapter of a
 // pre-room-fix article is in.
-check('the picker offers the backfill instead of rendering nothing',
-  !/^\s*return null;\s*$/m.test(picker) && /Add a pull quote from the interview/.test(picker));
+const editContext = readFileSync('src/components/story/StoryEditContext.tsx', 'utf8');
+check('legacy drafts prepare selectors automatically; the picker offers no add/remove opt-in',
+  /void prepareTeasers\(\)/.test(editContext) && /sections\/pull-quotes\/backfill/.test(editContext)
+  && !/Add a pull quote from the interview|patch\(null\)/.test(picker));
 
 // Both stores, or projects interviewed through the other surface look empty.
 const loader = readFileSync('src/lib/posting/loadInterviewAnswers.ts', 'utf8');

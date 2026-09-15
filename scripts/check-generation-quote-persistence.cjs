@@ -67,9 +67,11 @@ async function main() {
   const regenerated = structuredClone(fixture);
   regenerated.galleryChapters[1].pullQuote = { selected: null, alternatives: selection.alternatives };
   const assigned = vm.runInNewContext(`${assignmentJs}\nassignVerifiedPullQuotes`, {
-    selectPullQuotes: async (_rooms, _answers, _cid, _projectId, autoSelect) => {
-      assert.equal(autoSelect, true, 'Full generation must request a visible default even if the ranker declines');
-      return { byRoom: { 'Dining Room': selection } };
+    projectAnswerCategory: () => null,
+    prepareRoomTeasers: async (blocks, _answers, _projectId, options) => {
+      assert.equal(options.refresh, true, 'Full generation must prepare both pools before persistence');
+      blocks.galleryChapters[1].pullQuote = selection;
+      return blocks;
     },
     syncPullQuotesFromChapters() {}, console: { info() {} },
   });

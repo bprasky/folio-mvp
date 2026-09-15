@@ -16,6 +16,8 @@ import { PullQuotePicker } from "./PullQuotePicker";
 import EditableParagraph from "@/components/posting/editing/EditableParagraph";
 import SectionFeedback from "@/components/posting/editing/SectionFeedback";
 import type { PullQuoteSelection } from "@/lib/posting/schemas";
+import { getSelectedRoomLineText } from "@/lib/posting/schemas";
+import { articleFolioLines } from "@/lib/posting/folioLines";
 
 interface QuoteTileProps {
   roomLabel: string;
@@ -55,7 +57,14 @@ export function QuoteTile({
   // null on the published article — every branch below then behaves as before.
   const edit = useStoryEdit();
   const editable = !!edit && typeof chapterIndex === "number";
-  const folioAuthored = !!pullQuoteSelection && typeof pullQuoteSelection !== "string" && pullQuoteSelection.authorship === "folio";
+  const storedSelection = pullQuoteSelection ?? pullQuote;
+  const fallbackLines = getSelectedRoomLineText(storedSelection) ? []
+    : articleFolioLines(roomLabel, editorialParagraphs ?? (editorialNarrative ? [editorialNarrative] : []));
+  const displaySelection: string | PullQuoteSelection | null | undefined = fallbackLines.length
+    ? { selected: null, alternatives: [], authorship: 'folio', folio: { selected: fallbackLines[0], alternatives: fallbackLines } }
+    : storedSelection;
+  const displayQuote = getSelectedRoomLineText(displaySelection);
+  const folioAuthored = !!displaySelection && typeof displaySelection !== "string" && displaySelection.authorship === "folio";
   const [revealed, setRevealed] = useState(reducedMotion);
 
   useEffect(() => {
@@ -126,7 +135,8 @@ export function QuoteTile({
         {editable && (
           <StoryEditRegion>
             <PullQuotePicker
-              pullQuote={pullQuoteSelection ?? pullQuote}
+              pullQuote={displaySelection}
+              preparing={!!edit?.teasersPreparing || fallbackLines.length > 0}
               chapterIndex={chapterIndex!}
               projectId={edit!.projectId}
               quoteClassName={clsx(
@@ -176,9 +186,9 @@ export function QuoteTile({
             {editorialNarrative}
           </div>
         ) : (
-          pullQuote && (folioAuthored ? (
+          displayQuote && (folioAuthored ? (
             <p className={clsx("font-[var(--font-headline)] italic leading-[var(--lh-h4)] text-[rgba(87,75,67,0.92)]", wide ? "text-[var(--type-h4)]" : "text-[var(--type-h3)]")}>
-              {pullQuote}
+              {displayQuote}
             </p>
           ) : (
             <blockquote
@@ -192,7 +202,7 @@ export function QuoteTile({
                 ...stagger(80),
               }}
             >
-              &ldquo;{pullQuote}&rdquo;
+              &ldquo;{displayQuote}&rdquo;
             </blockquote>
           ))
         )}

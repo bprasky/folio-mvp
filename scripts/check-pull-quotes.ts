@@ -156,10 +156,12 @@ check('the editor still locates the current pick by text within alternatives',
   /alternatives\.findIndex\(a => a\.text === selectedText\)/.test(picker));
 check('the picker only ever PATCHes text drawn from alternatives',
   /patch\(alternatives\[nextIndex\]\.text\)/.test(picker)
-  && /patch\(alternatives\[0\]\.text\)/.test(picker));
+  && /alternatives\.map\(option =>/.test(picker)
+  && /patch\(option\.text\)/.test(picker)
+  && !/patch\(null\)/.test(picker));
 check('there is exactly one pull-quote picker in the app', (() => {
   const hits = execSync(
-    "grep -rl 'sections/pull-quote' --include=*.tsx src/ || true",
+    "grep -rl 'export function PullQuotePicker' --include=*.tsx src/ || true",
     { encoding: 'utf8' },
   ).split('\n').filter(Boolean);
   return hits.length === 1 && hits[0].includes('PullQuotePicker.tsx');
@@ -174,20 +176,22 @@ console.log('\n8. No unverified quote can survive anywhere in the pipeline');
 // and prose but no interview answers kept the unverified one.
 check('assembly no longer seeds body-derived chapter pull quotes',
   !/pullQuote: extractPullQuotesForChapter\(bodyParas/.test(draft));
-check('a chapter with no verified selection is CLEARED, not skipped',
-  !/if \(selection === undefined\) continue/.test(draft)
-  && /Cleared, not skipped/.test(draft));
+const preparation = readFileSync('src/lib/posting/prepareRoomTeasers.ts', 'utf8');
+check('a room without a direct candidate gets a distinctly authored Folio teaser',
+  /direct \? \{ \.\.\.direct \} : \{ selected: null, alternatives: \[\] \}/.test(preparation)
+  && /articleFolioLines\(room, chapter\.body\)/.test(preparation)
+  && /selection\.authorship = selection\.selected[\s\S]*: 'folio'/.test(preparation));
 check('the intro-mined hook quote is verified against real answers',
   /isVerbatimSpan\(introHook\.text, answerTexts\)/.test(draft));
 // Execution order, not file order: the function is DEFINED above its call site,
 // so comparing raw indexes proves nothing. Assert the rebuild lives inside the
 // assigning function's own body, which is what actually sequences it.
 const fnStart = draft.indexOf('async function assignVerifiedPullQuotes(');
-const fnEnd = draft.indexOf('\n}\n', draft.indexOf('return blocks;', fnStart));
+const fnEnd = draft.indexOf('\n}', fnStart);
 const fnBody = draft.slice(fnStart, fnEnd);
-check('the top-level index is rebuilt inside the assigning pass, after the quotes are set',
-  fnBody.includes('syncPullQuotesFromChapters')
-  && fnBody.indexOf('syncPullQuotesFromChapters') > fnBody.indexOf('ch.pullQuote = selection'),
+check('the assigning pass delegates to preparation which rebuilds the index after selections',
+  fnBody.includes('prepareRoomTeasers')
+  && preparation.indexOf('syncPullQuotesFromChapters(blocks)') > preparation.indexOf('chapter.pullQuote = selection'),
 );
 
 console.log('\n9. Room attribution survives the trip to the quote selector');

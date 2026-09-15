@@ -4,7 +4,8 @@
  */
 
 import sharp from 'sharp';
-import { matchQuotesToImages, extractQuotesWithMetadata } from './matchQuoteToImage';
+import { matchQuotesToImages } from './matchQuoteToImage';
+import { extractRoomTeasers, matchRoomTeasersToImages } from './roomTeasers';
 import { Blocks } from '@/lib/posting/schemas';
 import { placeQuoteSmart, formatQuoteText } from './placeQuoteSmart';
 
@@ -234,7 +235,8 @@ async function createMagazineCoverSlide(
  */
 async function createImageSlideWithQuote(
   imageUrl: string,
-  quote?: string
+  quote?: string,
+  authorship: 'verbatim' | 'folio' = 'verbatim'
 ): Promise<Buffer> {
   const imageBuffer = await fetchImageBuffer(imageUrl);
   
@@ -269,6 +271,7 @@ async function createImageSlideWithQuote(
   // AI-powered smart quote placement
   const placement = await placeQuoteSmart(baseImage, quote);
   const { lines, fontSize } = formatQuoteText(quote, INSTAGRAM_WIDTH * 0.85);
+  placement.y = Math.max(80, Math.min(placement.y, INSTAGRAM_HEIGHT - lines.length * fontSize * 1.4 - 80));
   const lineHeight = fontSize * 1.15; // Line-height 1.15
 
   // Build SVG with proper XML structure - smart placement
@@ -316,11 +319,14 @@ async function createImageSlideWithQuote(
   
   // Quote text: smart color, 58-68px italic serif, letter-spacing 1.2px
   const filterId = placement.glow ? 'url(#quoteGlow)' : 'url(#quoteShadow)';
-  quoteOverlaySvg += `<text x="${placement.x}" y="${placement.y}" font-family="${SERIF_FONT}" font-size="${fontSize}" font-style="italic" text-anchor="middle" fill="${placement.color}" letter-spacing="1.2" filter="${filterId}" dominant-baseline="middle">`;
+  quoteOverlaySvg += `<text x="${placement.x}" y="${placement.y}" font-family="${SERIF_FONT}" font-size="${fontSize}" font-style="${authorship === 'folio' ? 'normal' : 'italic'}" text-anchor="middle" fill="${placement.color}" letter-spacing="1.2" filter="${filterId}" dominant-baseline="middle">`;
   lines.forEach((line, i) => {
     quoteOverlaySvg += `<tspan x="${placement.x}" dy="${i === 0 ? 0 : lineHeight}">${escapeSvgText(line)}</tspan>`;
   });
   quoteOverlaySvg += `</text>`;
+  if (authorship === 'folio') {
+    quoteOverlaySvg += `<text x="${placement.x}" y="${placement.y + lines.length * lineHeight + 24}" font-family="Arial, sans-serif" font-size="22" text-anchor="middle" fill="${placement.color}">Written by Folio</text>`;
+  }
   quoteOverlaySvg += `</svg>`;
 
   // Validate SVG structure
@@ -514,10 +520,10 @@ export async function generateSingleSlide(input: SingleSlideInput): Promise<Buff
   }
 
   // Extract and match quotes to images
+  const roomTeasers = matchRoomTeasersToImages(extractRoomTeasers(expandedBlocks), images);
   let quoteMatches = new Map<string, string>();
   if (expandedBlocks) {
-    const quotesWithMetadata = extractQuotesWithMetadata(expandedBlocks);
-    quoteMatches = matchQuotesToImages(quotesWithMetadata, images);
+    quoteMatches = new Map(Array.from(roomTeasers, ([id, teaser]) => [id, teaser.text]));
   } else if (input.quotes) {
     const quotesWithMetadata = input.quotes.map(q => ({ 
       text: typeof q === 'string' ? q : q.text,
@@ -569,7 +575,7 @@ export async function generateSingleSlide(input: SingleSlideInput): Promise<Buff
         const image = images[i];
         const quote = quoteMatches.get(image.id);
         try {
-          return await createImageSlideWithQuote(image.url, quote);
+          return await createImageSlideWithQuote(image.url, quote, roomTeasers.get(image.id)?.authorship);
         } catch (error: any) {
           if (error.message.includes('Failed to fetch image') || error.message.includes('403')) {
             console.warn(`[generateSingleSlide] Image fetch failed for slide ${slideIndex}, using fallback`);

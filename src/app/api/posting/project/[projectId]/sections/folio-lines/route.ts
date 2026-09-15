@@ -39,7 +39,7 @@ export async function POST(request: NextRequest, { params }: { params: { project
     const answers = await loadInterviewAnswers(projectId);
     let lines = pq.folio?.alternatives ?? [];
     const cached = pq.folio?.generatorVersion === 2 && lines.length > 0 && lines.every(line => FolioLineSchema.safeParse(line).success) &&
-      folioLinesMatchSources(lines, room, answers);
+      folioLinesMatchSources(lines, room, answers, chapter.body ?? []);
     const projectTags = await prisma.productTag.findMany({
       where: { image: { projectId } },
       select: {
@@ -82,13 +82,13 @@ export async function POST(request: NextRequest, { params }: { params: { project
       return NextResponse.json({ error: 'Folio could not produce valid versions. Please try again.' }, { status: 502 });
     }
     // A slow model call must not revive an answer removed or made private meanwhile.
-    if (!folioLinesMatchSources(lines, room, await loadInterviewAnswers(projectId))) {
+    if (!folioLinesMatchSources(lines, room, await loadInterviewAnswers(projectId), chapter.body ?? [])) {
       return NextResponse.json({ error: 'The interview changed. Please try again.' }, { status: 409 });
     }
     const selectedIndex = cached ? (pq.folio?.alternatives.findIndex(line => line.text === pq.folio?.selected?.text) ?? -1) : -1;
     pq.folio = {
       generatorVersion: 2,
-      selected: cached && pq.folio?.selected === null ? null : lines[selectedIndex >= 0 ? selectedIndex : 0],
+      selected: lines[selectedIndex >= 0 ? selectedIndex : 0],
       alternatives: lines,
     };
     pq.authorship = 'folio';

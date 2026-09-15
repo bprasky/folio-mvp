@@ -328,6 +328,7 @@ export default function StagingPublishPanel({
           <StoryEditProvider
             projectId={projectId}
             initialOverrides={(initialPostData?.sectionOverrides ?? []) as SectionOverride[]}
+            chapters={initialPostData?.expandedBlocks?.galleryChapters ?? []}
             sectionHistory={(initialPostData?.sectionHistory ?? []) as SectionHistoryEntry[]}
           >
             <ImmersiveProjectPage post={initialPostData} modules={initialModules} isOwner={isOwner} />

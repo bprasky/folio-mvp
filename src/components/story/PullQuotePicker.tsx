@@ -10,11 +10,13 @@ interface PullQuotePickerProps {
   chapterIndex: number;
   projectId: string;
   quoteClassName?: string;
+  preparing?: boolean;
   onUpdate: () => void;
 }
 
-export function PullQuotePicker({ pullQuote, chapterIndex, projectId, quoteClassName, onUpdate }: PullQuotePickerProps) {
-  const [saving, setSaving] = useState(false);
+export function PullQuotePicker({ pullQuote, chapterIndex, projectId, quoteClassName, preparing = false, onUpdate }: PullQuotePickerProps) {
+  const [requestSaving, setSaving] = useState(false);
+  const saving = requestSaving || preparing;
   const [notice, setNotice] = useState<string | null>(null);
   const [showOptions, setShowOptions] = useState(false);
   const isSelection = isPullQuoteSelection(pullQuote);
@@ -29,14 +31,13 @@ export function PullQuotePicker({ pullQuote, chapterIndex, projectId, quoteClass
   const currentIndex = selectedText ? alternatives.findIndex(a => a.text === selectedText) : -1;
   const hasAlternatives = alternatives.length > 1;
 
-  const saveSelection = async (body: { authorship: PullQuoteAuthorship; selectedText?: string | null }, generate = false) => {
+  const saveSelection = async (body: { authorship: PullQuoteAuthorship; selectedText?: string }) => {
     if (saving) return;
     setSaving(true);
     setNotice(null);
     try {
-      const endpoint = generate ? 'folio-lines' : 'pull-quote';
-      const res = await fetch(`/api/posting/project/${projectId}/sections/${endpoint}`, {
-        method: generate ? 'POST' : 'PATCH',
+      const res = await fetch(`/api/posting/project/${projectId}/sections/pull-quote`, {
+        method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ chapterIndex, ...body }),
       });
@@ -49,41 +50,24 @@ export function PullQuotePicker({ pullQuote, chapterIndex, projectId, quoteClass
       setSaving(false);
     }
   };
-  const patch = (nextText: string | null) => saveSelection({ authorship, selectedText: nextText });
+  const patch = (nextText: string) => saveSelection({ authorship, selectedText: nextText });
   const changeAuthorship = (mode: PullQuoteAuthorship) => {
     if (mode === authorship) return;
-    // POST reuses a valid saved Folio pool and refreshes stale sources if needed.
-    return saveSelection({ authorship: mode }, mode === 'folio');
+    return saveSelection({ authorship: mode });
   };
   const handleCycle = (direction: 1 | -1) => {
     if (!hasAlternatives) return;
     const nextIndex = ((currentIndex === -1 ? 0 : currentIndex) + direction + alternatives.length) % alternatives.length;
     return patch(alternatives[nextIndex].text);
   };
-  const backfill = async () => {
-    if (saving) return;
-    setSaving(true);
-    setNotice(null);
-    try {
-      const res = await fetch(`/api/posting/project/${projectId}/sections/pull-quotes/backfill`, { method: 'POST' });
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok) setNotice(data?.error ?? 'Could not find a quote for this section.');
-      else if (data?.filled > 0) onUpdate();
-      else setNotice(data?.message ?? 'Nothing quotable in the interview for this section yet.');
-    } catch {
-      setNotice('Could not find a quote for this section.');
-    } finally {
-      setSaving(false);
-    }
-  };
   const lineClass = quoteClassName ?? 'font-[var(--font-headline)] text-lg md:text-xl italic leading-relaxed text-folio-text-secondary';
   return (
     <div className="rounded-xl border border-folio-border bg-[var(--surface-ground)] p-5" aria-busy={saving}>
       <h3 className="folio-body font-semibold text-folio-text-primary">Choose your room’s opening line</h3>
-      <p className="folio-meta text-folio-text-secondary mt-1 mb-4">Set the scene with a quote or a Folio-written teaser — a standout line for your story and social posts.</p>
+      <p className="folio-meta text-folio-text-secondary mt-1 mb-4">We’ve selected a teaser for your room and social posts. Choose your favorite — readers click this line to open the room’s story.</p>
       <div className="flex items-center gap-3 flex-wrap mb-2">
         <div role="group" aria-label="Who wrote this line" className="flex items-center gap-1">
-          {(['verbatim', 'folio'] as const).map(mode => (
+          {(['verbatim', 'folio'] as const).filter(mode => mode === 'verbatim' ? (isSelection ? pullQuote.alternatives.length > 0 : !!selectedText) : !!(isSelection && pullQuote.folio?.alternatives.length)).map(mode => (
             <button key={mode} type="button" disabled={saving} aria-pressed={authorship === mode}
               onClick={() => changeAuthorship(mode)}
               className={'folio-meta px-3 py-2 rounded-full border transition-colors whitespace-nowrap disabled:opacity-40 ' + (authorship === mode ? 'border-folio-text-primary bg-[var(--folio-text-primary)] text-[var(--surface-canvas)]' : 'border-folio-border text-folio-text-primary hover:bg-[var(--surface-canvas)]')}>
@@ -104,29 +88,14 @@ export function PullQuotePicker({ pullQuote, chapterIndex, projectId, quoteClass
             </button>
           </div>
         )}
-        {selectedText && (
-          <button type="button" onClick={() => patch(null)} disabled={saving} aria-label="Remove pull quote"
-            className="flex items-center gap-1 folio-meta text-folio-text-tertiary hover:text-folio-text-secondary disabled:opacity-40">
-            <svg width="12" height="12" viewBox="0 0 14 14" fill="none"><path d="M3.5 3.5L10.5 10.5M10.5 3.5L3.5 10.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/></svg>
-            Remove
-          </button>
-        )}
       </div>
       <p className="folio-meta text-folio-text-secondary mb-3">{authorship === 'folio' ? 'Original editorial lines inspired by your room’s story.' : 'Direct quotes from your interview. Browse to find your favorite.'}</p>
       {saving && <p role="status" className="mb-2 folio-meta text-folio-text-tertiary">Updating options…</p>}
       {notice && <p role="alert" className="mb-2 folio-meta text-folio-text-tertiary">{notice}</p>}
       {selectedText ? (
         authorship === 'folio' ? <p className={lineClass}>{selectedText}</p> : <blockquote className={lineClass}>&ldquo;{selectedText}&rdquo;</blockquote>
-      ) : alternatives.length > 0 ? (
-        <button type="button" onClick={() => patch(alternatives[0].text)} disabled={saving}
-          className="folio-meta text-[var(--accent)] hover:text-folio-text-primary disabled:opacity-40">
-          {authorship === 'folio' ? 'Restore Folio version' : 'Add pull quote'}
-        </button>
       ) : (
-        <button type="button" onClick={backfill} disabled={saving}
-          className="folio-meta text-[var(--accent)] hover:text-folio-text-primary disabled:opacity-40">
-          Add a pull quote from the interview
-        </button>
+        <p role="status" className="folio-meta text-folio-text-secondary">Preparing your room’s opening lines…</p>
       )}
       {selectedText && selectedContext && <p className="mt-2 folio-meta tracking-wide uppercase text-folio-text-tertiary">— {selectedContext}</p>}
       {hasAlternatives && (

@@ -7,6 +7,7 @@ import { generateLaunchCard } from '@/lib/instagram/campaign/generateLaunchCard'
 import { generateRoomSpotlight } from '@/lib/instagram/campaign/generateRoomSpotlight';
 import { generateCaption, generateCaptionsFile } from '@/lib/instagram/campaign/generateCaptions';
 import JSZip from 'jszip';
+import { assertProjectWrite } from '@/lib/authz/access';
 
 export const runtime = 'nodejs';
 export const maxDuration = 300; // 5 minutes for campaign generation
@@ -37,6 +38,12 @@ export async function POST(request: NextRequest) {
         { error: 'Missing required fields: projectId, preset, formats' },
         { status: 400 }
       );
+    }
+
+    try {
+      await assertProjectWrite(session.user.id, projectId);
+    } catch {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
     // Fetch project data
@@ -234,7 +241,7 @@ export async function POST(request: NextRequest) {
       const roomCaption = generateCaption({
         postType: 'room_spotlight',
         project: projectData,
-        context: { roomName: room.name },
+        context: { roomName: room.name, roomTeaser: room.teaser },
       });
       captionData.push({
         postNumber,
@@ -314,6 +321,7 @@ export async function POST(request: NextRequest) {
         project: projectData,
         context: {
           quoteText: quote.text,
+          quoteAuthorship: quote.authorship,
         },
       });
       captionData.push({

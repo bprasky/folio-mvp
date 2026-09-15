@@ -7,7 +7,9 @@
 
 import { useState, useRef, useEffect } from 'react';
 import Image from 'next/image';
-import { matchQuotesToImages, extractQuotesWithMetadata } from '@/lib/instagram/matchQuoteToImage';
+import { matchQuotesToImages } from '@/lib/instagram/matchQuoteToImage';
+
+import { extractRoomTeasers, matchRoomTeasersToImages } from '@/lib/instagram/roomTeasers';
 
 interface CarouselPreviewProps {
   images: Array<{ id: string; url: string; name?: string | null; room?: string | null }>;
@@ -27,11 +29,12 @@ export default function CarouselPreview({
   const [currentIndex, setCurrentIndex] = useState(0);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
 
+  const roomTeasers = matchRoomTeasersToImages(extractRoomTeasers(expandedBlocks), images);
+
   // Match quotes to images intelligently
   const quoteMatches = (() => {
     if (expandedBlocks) {
-      const quotesWithMetadata = extractQuotesWithMetadata(expandedBlocks);
-      return matchQuotesToImages(quotesWithMetadata, images);
+      return new Map(Array.from(roomTeasers, ([id, teaser]) => [id, teaser.text]));
     } else if (quotes.length > 0) {
       const quotesWithMetadata = quotes.map(text => ({ text }));
       return matchQuotesToImages(quotesWithMetadata, images);
@@ -183,7 +186,7 @@ export default function CarouselPreview({
                   {quote && quoteLines.length > 0 && (
                     <div className="absolute left-0 right-0 flex items-center justify-center" style={{ bottom: '30%', paddingBottom: '40px' }}>
                       <p 
-                        className="font-serif italic text-center max-w-[90%]"
+                        className={`font-serif text-center max-w-[90%] ${roomTeasers.get(image.id)?.authorship === 'folio' ? '' : 'italic'}`}
                         style={{ 
                           fontSize: 'clamp(3.5rem, 4.5vw, 4rem)', // 56-64px range
                           lineHeight: 'var(--lh-h3)',
@@ -198,6 +201,9 @@ export default function CarouselPreview({
                             {i < quoteLines.length - 1 && <br />}
                           </span>
                         ))}
+                        {roomTeasers.get(image.id)?.authorship === 'folio' && (
+                          <span className="block mt-3 font-sans text-sm not-italic">Written by Folio</span>
+                        )}
                       </p>
                     </div>
                   )}

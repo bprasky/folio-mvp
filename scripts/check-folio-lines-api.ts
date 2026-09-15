@@ -3,6 +3,7 @@ import { readFileSync } from 'fs';
 import ts from 'typescript';
 import vm from 'vm';
 import assert from 'assert/strict';
+import { needsRoomTeaserPreparation } from '../src/lib/posting/folioLines';
 
 const direct = { text: 'We kept the glass table.', score: 8, provenance: { questionId: 'q1', isFollowUp: false } };
 const line = { text: 'Keeping glass gave us more space.', originalText: direct.text, sources: [{ questionId: 'q1', isFollowUp: false, excerpt: 'We kept the glass table for more space.' }] };
@@ -10,7 +11,7 @@ let post: any, saved: any, session: any, forbidden: boolean, cas: boolean, answe
 let generations: number, reads: number, stale: boolean, limited: boolean, scrub: boolean;
 let revalidated: string[];
 function reset() {
-  post = { id: 'post', slug: 'story', expandedBlocks: { introduction: ['Keep introduction'], galleryChapters: [{
+  post = { id: 'post', status: 'DRAFT', slug: 'story', expandedBlocks: { introduction: ['Keep introduction'], galleryChapters: [{
     title: 'Kitchen', imageIds: ['room-image'], body: ['Keep article'], pullQuote: { selected: direct, alternatives: [direct], folio: { generatorVersion: 2, selected: line, alternatives: [line] } },
   }] } };
   saved = null; session = { user: { id: 'owner' } }; forbidden = false; cas = true;
@@ -28,18 +29,30 @@ const mocks: Record<string, any> = {
   } },
   '@/lib/authz/access': { assertProjectWrite: async () => { if (forbidden) throw new Error('Forbidden'); } },
   '@/lib/posting/schemas': {
+    getSelectedRoomLineText: (p: any) => typeof p === 'string' ? p : p?.authorship === 'folio' ? p.folio?.selected?.text ?? null : p?.selected?.text ?? null,
     isPullQuoteSelection: (p: any) => p && typeof p === 'object' && Array.isArray(p.alternatives),
     PullQuoteAuthorshipSchema: { safeParse: (value: unknown) => ({ success: value === 'folio' || value === 'verbatim' }) },
     FolioLineSchema: { safeParse: (value: any) => ({ success: typeof value?.text === 'string' && value.text.trim().length > 0 && value.text.length <= 300 && typeof value.originalText === 'string' && value.sources?.length > 0 }) },
     syncPullQuotesFromChapters: () => {},
   },
   '@/lib/posting/loadInterviewAnswers': { loadInterviewAnswers: async () => { reads++; return stale && reads > 1 ? [] : answers; } },
+  '@/lib/posting/prepareRoomTeasers': { prepareRoomTeasers: async (blocks: any) => {
+    generations++;
+    for (const chapter of blocks.galleryChapters) {
+      if (chapter.kind === 'gallery' || chapter.pullQuote?.folio?.alternatives?.length) continue;
+      chapter.pullQuote = { selected: { text: `${chapter.title} direct option` }, alternatives: [],
+        folio: { generatorVersion: 2, selected: line, alternatives: [line] } };
+    }
+    return blocks;
+  } },
   '@/lib/posting/selectPullQuotes': { selectPullQuotes: async () => ({ byRoom: {
     Kitchen: { selected: { text: 'New direct option' }, alternatives: [{ text: 'New direct option', score: 7 }] },
     Bedroom: { selected: { text: 'Bedroom direct option' }, alternatives: [{ text: 'Bedroom direct option', score: 7 }] },
   }, roomsWithNoCandidates: [], roomsFailedVerification: [] }) },
   '@/lib/utils/correlation': { cid: () => 'test-backfill' },
-  '@/lib/posting/folioLines': { folioLinesMatchSources: (_lines: unknown, _room: string, current: string[]) => current.length > 0 },
+  '@/lib/posting/folioLines': { needsRoomTeaserPreparation, folioLinesMatchSources: (lines: any[], _room: string, current: string[], article: string[]) =>
+    lines.every(line => line.sources.every((source: any) => source.kind === 'article'
+      ? article?.[source.paragraphIndex]?.includes(source.excerpt) : current.length > 0)) },
   '@/lib/posting/generateFolioLines': { generateFolioLines: async (_room: string, _answers: unknown, _project: string, _direct: unknown, tags: unknown[], article: string[]) => {
     assert.deepEqual(JSON.parse(JSON.stringify(article)), ['Keep article']);
     assert.deepEqual(JSON.parse(JSON.stringify(tags)), [{ productId: 'tagged-product', name: 'Table', brand: 'Brand', category: 'Furniture', description: 'Glass table', finish: 'glass' }]);
@@ -114,11 +127,11 @@ async function main() {
     assert.equal(result.status, 200); assert.equal(result.data.cached, false); assert.equal(generations, 1);
     assert.equal(result.data.pullQuote.folio.generatorVersion, 2);
   });
-  await check('activating cached Folio preserves removed selection', async () => {
+  await check('activating cached Folio restores a selected default', async () => {
     post.expandedBlocks.galleryChapters[0].pullQuote.folio.selected = null;
     const result = await generate(request({ chapterIndex: 0 }), context);
     assert.equal(result.status, 200); assert.equal(result.data.pullQuote.authorship, 'folio');
-    assert.equal(result.data.pullQuote.folio.selected, null);
+    assert.deepEqual(JSON.parse(JSON.stringify(result.data.pullQuote.folio.selected)), line);
     assert.deepEqual(JSON.parse(JSON.stringify(result.data.pullQuote.folio.alternatives)), [line]);
     assert.equal(result.data.cached, true); assert.equal(generations, 0);
   });
@@ -136,15 +149,43 @@ async function main() {
     post.expandedBlocks.galleryChapters[0].pullQuote.authorship = 'folio';
     const result = await patch(request({ chapterIndex: 0, authorship: 'verbatim' }), context);
     assert.equal(result.status, 200); assert.deepEqual(result.data.pullQuote.selected, direct);
-    assert.deepEqual(result.data.pullQuote.folio.selected, line);
+    assert.deepEqual(JSON.parse(JSON.stringify(result.data.pullQuote.folio.selected)), line);
   });
   await check('selection keeps direct provenance', async () => {
     const result = await patch(request({ chapterIndex: 0, selectedText: direct.text }), context);
     assert.deepEqual(result.data.pullQuote.selected.provenance, direct.provenance);
   });
-  await check('Folio removal only clears Folio', async () => {
+  await check('Folio removal cannot leave the room without a teaser', async () => {
     const result = await patch(request({ chapterIndex: 0, authorship: 'folio', selectedText: null }), context);
-    assert.equal(result.data.pullQuote.folio.selected, null); assert.deepEqual(result.data.pullQuote.selected, direct);
+    assert.equal(result.status, 400); assert.equal(saved, null);
+  });
+  await check('direct removal cannot leave the room without a teaser', async () => {
+    const result = await patch(request({ chapterIndex: 0, authorship: 'verbatim', selectedText: null }), context);
+    assert.equal(result.status, 400); assert.equal(saved, null);
+  });
+  await check('switching to an empty direct pool is rejected', async () => {
+    const pq = post.expandedBlocks.galleryChapters[0].pullQuote;
+    pq.authorship = 'folio'; pq.selected = null; pq.alternatives = [];
+    const result = await patch(request({ chapterIndex: 0, authorship: 'verbatim' }), context);
+    assert.equal(result.status, 400); assert.equal(saved, null);
+  });
+  await check('switching to Folio with no selection chooses first prepared option', async () => {
+    post.expandedBlocks.galleryChapters[0].pullQuote.folio.selected = null;
+    const result = await patch(request({ chapterIndex: 0, authorship: 'folio' }), context);
+    assert.equal(result.status, 200); assert.deepEqual(JSON.parse(JSON.stringify(result.data.pullQuote.folio.selected)), line);
+  });
+  await check('article-backed option remains selectable without interview answers', async () => {
+    answers = [];
+    const articleLine = { text: 'Keep article', originalText: 'Keep article', sources: [{ kind: 'article', paragraphIndex: 0, excerpt: 'Keep article' }] };
+    post.expandedBlocks.galleryChapters[0].pullQuote.folio = { generatorVersion: 2, selected: articleLine, alternatives: [articleLine] };
+    const result = await patch(request({ chapterIndex: 0, authorship: 'folio' }), context);
+    assert.equal(result.status, 200);
+  });
+  await check('stale article-backed option cannot be activated', async () => {
+    const articleLine = { text: 'Old prose', originalText: 'Old prose', sources: [{ kind: 'article', paragraphIndex: 0, excerpt: 'Old prose' }] };
+    post.expandedBlocks.galleryChapters[0].pullQuote.folio = { generatorVersion: 2, selected: articleLine, alternatives: [articleLine] };
+    const result = await patch(request({ chapterIndex: 0, authorship: 'folio' }), context);
+    assert.equal(result.status, 422); assert.equal(saved, null);
   });
   await check('source removed during generation prevents save', async () => {
     delete post.expandedBlocks.galleryChapters[0].pullQuote.folio; stale = true;
@@ -170,15 +211,28 @@ async function main() {
     assert.deepEqual(saved.data.expandedBlocks.galleryChapters[0].pullQuote, before);
     assert.equal(saved.data.expandedBlocks.galleryChapters[1].pullQuote.selected.text, 'Bedroom direct option');
   });
-  await check('backfilling missing direct selection preserves existing Folio pool and authorship', async () => {
+  await check('complete Folio-only selector needs no backfill or model', async () => {
     const kitchen = post.expandedBlocks.galleryChapters[0];
     kitchen.pullQuote.authorship = 'folio'; kitchen.pullQuote.selected = null; kitchen.pullQuote.alternatives = [];
     const before = structuredClone(kitchen.pullQuote.folio);
     const result = await backfill(request({}), context);
-    assert.equal(result.status, 200); assert.equal(result.data.filled, 1);
-    const selection = saved.data.expandedBlocks.galleryChapters[0].pullQuote;
-    assert.equal(selection.selected.text, 'New direct option'); assert.equal(selection.authorship, 'folio');
-    assert.deepEqual(selection.folio, before);
+    assert.equal(result.status, 200); assert.equal(result.data.filled, 0);
+    assert.equal(saved, null); assert.equal(generations, 0);
+    assert.deepEqual(kitchen.pullQuote.folio, before);
+  });
+  for (const failure of ['anonymous', 'nonowner', 'published', 'limited', 'stale', 'conflict']) await check(`backfill rejects ${failure} without successful persistence`, async () => {
+    delete post.expandedBlocks.galleryChapters[0].pullQuote.folio;
+    const status = { anonymous: 401, nonowner: 403, published: 409, limited: 429, stale: 409, conflict: 409 }[failure];
+    if (failure === 'anonymous') session = null;
+    if (failure === 'nonowner') forbidden = true;
+    if (failure === 'published') post.status = 'PUBLISHED';
+    if (failure === 'limited') limited = true;
+    if (failure === 'stale') stale = true;
+    if (failure === 'conflict') cas = false;
+    const result = await backfill(request({}), context);
+    assert.equal(result.status, status);
+    assert.equal(revalidated.length, 0);
+    if (failure !== 'conflict') assert.equal(saved, null);
   });
   console.log(`\n${passed} API scenarios passed (mocked dependencies; no live model/database).`);
 }

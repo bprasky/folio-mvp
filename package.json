@@ -69,7 +69,7 @@
     "check:sonnet5": "tsx scripts/check-sonnet5-compliance.ts",
     "check:ai-errors": "tsx scripts/check-ai-error-taxonomy.ts",
     "check:pull-quotes": "tsx scripts/check-pull-quotes.ts",
-    "check:folio-lines": "tsx scripts/check-folio-lines.ts && tsx scripts/check-folio-lines-api.ts && tsx scripts/check-public-folio.ts",
+    "check:folio-lines": "tsx scripts/check-folio-lines.ts && tsx scripts/check-folio-lines-api.ts && tsx scripts/check-public-folio.ts && node scripts/check-default-room-teasers.cjs && tsx scripts/check-room-teaser-ui.ts && tsx scripts/check-social-room-teasers.ts",
     "check:record-invariants": "tsx scripts/check-product-record-invariants.ts",
     "check:record-invariants:ci": "tsx scripts/check-product-record-invariants.ts --ci",
     "refresh:record-cache": "tsx scripts/refresh-product-record-cache.ts",
