@@ -52,7 +52,10 @@ export function ProductSheet({
   // Close on escape
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onClose();
+      if (e.key === "Escape") {
+        e.preventDefault();
+        onClose();
+      }
     };
     if (product) {
       document.addEventListener("keydown", handler);

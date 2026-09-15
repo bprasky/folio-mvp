@@ -7,6 +7,7 @@ import ProjectTabs from './ProjectTabs';
 import MediaSection from './MediaSection';
 import DesignerBoard from './DesignerBoard';
 import ProjectHeader from './ProjectHeader';
+import PublishedProjectHome from './PublishedProjectHome';
 import ProjectMediaManager from './ProjectMediaManager';
 import DraftsPanel from './DraftsPanel';
 import StoryPanel from './StoryPanel';
@@ -198,6 +199,8 @@ export default async function ProjectPage({
       },
       post: {
         select: {
+          slug: true,
+          heroAssetId: true,
           expandedBlocks: true,
           status: true,
           publishedAt: true,
@@ -351,7 +354,8 @@ export default async function ProjectPage({
   // — how far the project has actually got. Landing reads it below.
   const progressState = buildTrackerState(trackerArgs);
 
-  // Where the project opens: the furthest step reached, on the surface that owns
+  // Published projects open their home; explicit step links still open that step.
+  // Unpublished projects open the furthest step reached, on the surface that owns
   // it. Derived from the tracker rather than re-branched here, so the header and
   // the surface under it can never disagree — a draft that exists opens the
   // Publish tab because the tracker says the publish step is where the project
@@ -360,7 +364,7 @@ export default async function ProjectPage({
   //
   // Working projects keep their own rule: Boards isn't a tracker step, and it's
   // the right surface for a project still being built.
-  const defaultView: TabView = inPublishingFlow
+  const defaultView: TabView = isPublished ? 'overview' : inPublishingFlow
     ? progressState
       ? viewForStepKey(progressState.steps[progressState.reachedIndex].key)
       : hasDraftOrPublished
@@ -391,6 +395,7 @@ export default async function ProjectPage({
   if (inPublishingFlow && (currentView === 'boards' || currentView === 'actions')) {
     currentView = 'media';
   }
+  if (!isPublished && inPublishingFlow && currentView === 'overview') currentView = defaultView;
 
   const validViews: TabView[] = [
     'overview',
@@ -403,6 +408,7 @@ export default async function ProjectPage({
     'actions',
   ];
   const view = validViews.includes(currentView) ? currentView : defaultView;
+  const isProjectHome = isPublished && view === 'overview';
 
   // Second pass, now that the view has resolved: same inputs, plus the step whose
   // surface is actually open, so the tracker highlights it (and so `step` can
@@ -494,16 +500,18 @@ export default async function ProjectPage({
         <ProjectHeader
           project={sanitizedProject}
           editorialState={editorialState}
-          images={base.images.map(img => ({ id: img.id, url: img.url, name: img.name }))}
-          expandedBlocks={base.post?.expandedBlocks}
-          isOwner={isOwner}
         />
+        {isPublished && !isProjectHome && (
+          <Link href={`/project/${base.id}`} className="inline-block mb-4 folio-ui underline underline-offset-4">
+            Back to project home
+          </Link>
+        )}
 
         {/* Project Progress Tracker — adaptive guided next-action region.
             Photo/product progress only. The interview's own progress (answers,
             coverage, generate) lives on the Story tab, so the two halves of the
             flow don't compete for the same header space. */}
-        {trackerState && (
+        {!isProjectHome && trackerState && (
           <div className="mt-2 mb-2">
             <ProjectProgressTracker
               projectId={sanitizedProject.id}
@@ -517,7 +525,7 @@ export default async function ProjectPage({
         {/* Flat tab strip. Hidden on the Tags step: that surface is the focused
             inline tagging flow, and Boards / Action items / Media are cross-project
             navigation that only distracts from the active posting flow. */}
-        {!startInTagging && (
+        {!isProjectHome && !startInTagging && (
           <ProjectTabs
             project={sanitizedProject}
             currentView={view}
@@ -551,6 +559,17 @@ export default async function ProjectPage({
       {/* All other tabs */}
       {view !== 'publish' && (
         <main className="max-w-[1280px] mx-auto px-10 py-8 pb-24">
+          {isProjectHome && (
+            <PublishedProjectHome
+              project={sanitizedProject}
+              slug={base.post?.slug ?? null}
+              coverUrl={
+                base.images.find(img => img.id === base.post?.heroAssetId)?.url ??
+                base.images.find(img => !isDocumentImage(img.name))?.url ?? null
+              }
+              canUseSocialTools={!!viewerId && (viewerId === base.ownerId || viewerId === designerId)}
+            />
+          )}
           {view === 'media' && (
             <MediaSection
               project={sanitizedProject}
@@ -615,7 +634,7 @@ export default async function ProjectPage({
             />
           )}
 
-          {(view === 'boards' || view === 'overview') && (
+          {!isProjectHome && (view === 'boards' || view === 'overview') && (
             <DesignerBoard
               projectId={sanitizedProject.id}
               project={sanitizedProject}

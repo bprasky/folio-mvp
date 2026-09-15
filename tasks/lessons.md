@@ -1,5 +1,9 @@
 # Lessons Learned
 
+## 2026-09-15 — Place project actions by lifecycle; preserve clean preview
+
+The user clarified that export and project details are useful but belong on a published project's home, alongside social tools, rather than in the busy publishing workflow. Do not interpret misplaced controls as unwanted capabilities. Inline article editing still needs a reader preview that hides title/quote choices and editing controls. Sharing the public renderer does not by itself make the editor a clean preview.
+
 Rules for Claude (and future contributors) to avoid repeating past mistakes.
 Review at session start. Append — do not overwrite — new lessons.
 

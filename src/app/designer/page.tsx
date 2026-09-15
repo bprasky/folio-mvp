@@ -378,7 +378,7 @@ export default function DesignerProfile() {
             )}
             {!project.id?.startsWith('mock') && (
               <Link
-                href={`/project/${project.id}?view=media`}
+                href={`/project/${project.id}`}
                 className="rounded bg-black/60 text-white text-[var(--type-eyebrow)] px-2 py-1 hover:bg-black/80"
                 onClick={(e) => e.stopPropagation()}
               >
