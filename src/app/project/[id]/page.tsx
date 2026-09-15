@@ -465,7 +465,7 @@ export default async function ProjectPage({
         {/* Breadcrumbs */}
         <nav
           aria-label="Breadcrumb"
-          className="flex items-center gap-2 mb-7 text-[13px] text-folio-text-secondary"
+          className="flex items-center gap-2 mb-5 text-[13px] text-folio-text-secondary"
         >
           <Link
             href="/projects"
