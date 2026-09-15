@@ -18,6 +18,7 @@ import SectionFeedback from "@/components/posting/editing/SectionFeedback";
 import type { PullQuoteSelection } from "@/lib/posting/schemas";
 import { getSelectedRoomLineText } from "@/lib/posting/schemas";
 import { articleFolioLines } from "@/lib/posting/folioLines";
+import { captionScale, type CaptionStyle } from "./captionScale";
 
 interface QuoteTileProps {
   roomLabel: string;
@@ -65,6 +66,10 @@ export function QuoteTile({
     : storedSelection;
   const displayQuote = getSelectedRoomLineText(displaySelection);
   const folioAuthored = !!displaySelection && typeof displaySelection !== "string" && displaySelection.authorship === "folio";
+  // The caption sizes itself from the column it sits in and from how much text
+  // it has to hold — see captionScale. The wide (Pattern 3 bar) variant isn't
+  // beside a photo, so it keeps the flat token.
+  const scale = captionScale(displayQuote?.length ?? 0);
   const [revealed, setRevealed] = useState(reducedMotion);
 
   useEffect(() => {
@@ -114,6 +119,15 @@ export function QuoteTile({
         wide ? "flex flex-row items-center gap-8 px-8 py-5" : "flex flex-col justify-center px-2 py-6",
         !editable && "hover:bg-[rgba(87,75,67,0.03)]"
       )}
+      style={
+        (wide
+          ? { "--caption-size": "var(--type-h4)", "--caption-leading": "var(--lh-h4)" }
+          : {
+              containerType: "inline-size",
+              "--caption-size": scale.size,
+              "--caption-leading": scale.leading,
+            }) as CaptionStyle
+      }
     >
       <div className={clsx(wide ? "flex-1 flex flex-col gap-2" : "flex flex-col gap-4")}>
         {/* Room label */}
@@ -139,10 +153,7 @@ export function QuoteTile({
               preparing={!!edit?.teasersPreparing || fallbackLines.length > 0}
               chapterIndex={chapterIndex!}
               projectId={edit!.projectId}
-              quoteClassName={clsx(
-                "font-[var(--font-headline)] italic leading-[1.25] text-[rgba(87,75,67,0.92)]",
-                wide ? "text-[var(--type-h4)]" : "text-[var(--type-h3)]",
-              )}
+              quoteClassName="font-[var(--font-headline)] italic text-[rgba(87,75,67,0.92)] text-[length:var(--caption-size)] leading-[var(--caption-leading)]"
               onUpdate={() => edit!.refresh()}
             />
           </StoryEditRegion>
@@ -187,17 +198,17 @@ export function QuoteTile({
           </div>
         ) : (
           displayQuote && (folioAuthored ? (
-            <p className={clsx("font-[var(--font-headline)] italic leading-[var(--lh-h4)] text-[rgba(87,75,67,0.92)]", wide ? "text-[var(--type-h4)]" : "text-[var(--type-h3)]")}>
+            <p className="font-[var(--font-headline)] italic text-[rgba(87,75,67,0.92)] text-[length:var(--caption-size)] leading-[var(--caption-leading)]">
               {displayQuote}
             </p>
           ) : (
             <blockquote
               style={{
                 fontFamily: "var(--font-headline)",
-                fontSize: wide ? 'var(--type-h4)' : 'var(--type-h3)',
+                fontSize: 'var(--caption-size)',
                 fontWeight: 'var(--w-body)',
                 fontStyle: "italic",
-                lineHeight: 1.25, /* folio-design-system: off-scale */
+                lineHeight: 'var(--caption-leading)',
                 color: "rgba(87, 75, 67, 0.92)",
                 ...stagger(80),
               }}

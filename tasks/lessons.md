@@ -1000,3 +1000,23 @@ For additions to the published article, prioritize spatial or visual understandi
 ## 2026-09-15 — Park spatial experiments and prioritize current functionality
 
 The user explicitly tabled 3D, diagramming, and richer photo interaction experiments. Preserve interest in visible photo tags as a future direction, but focus current work on verifying and fixing existing functionality. Do not reopen spatial technology research or build new interaction features under the guise of functional verification.
+
+## 2026-09-15 — Measure the container's fill before judging a type size
+Asked an open "what do you think about the caption size", the assistant argued it
+was too large from the page's type hierarchy and proposed going down. The user
+meant the opposite: beside a near-square photo the caption column is ~490px tall
+and the text cluster was ~170px of it, so the type read as undersized and
+marooned. The mockup built to reason about it used a 4:3 photo, which hid the
+emptiness the real near-square crop creates. Before recommending a type size,
+compute what fraction of its container the text actually fills, and build
+comparison mockups at the real asset's proportions rather than a convenient
+default — an unrepresentative mockup argues confidently for the wrong answer.
+
+## 2026-09-15 — Check that the data exists before promising a relational design
+The approved design anchored caption size to the photo's height via `cqh`. Neither
+route to it survived the codebase: `ProjectImage` has no `width`/`height` columns,
+so the aspect ratio is only discoverable by loading the image client-side, and the
+CSS-only version needs `container-type: size`, whose size containment stops the
+tile growing for a long caption — today such a caption correctly makes the row
+taller than the photo. Anchor to `cqi` (inline-size containment contains nothing
+in the block axis) and say plainly which half of the approved idea shipped.
