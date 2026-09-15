@@ -990,3 +990,13 @@ The user clarified that Written by Folio should synthesize third-person room tea
 
 ## 2026-09-15 — Room teasers are required output, not an optional tool
 The user clarified repeatedly: every written room needs a selected teaser at draft generation, with direct and Folio choices already prepared. Never substitute a generate/add button, permit removal to empty, or silently omit Folio from social output. Test the no-candidate and model-failure paths at persisted generation output, not only a populated picker fixture. This supersedes the earlier optional/on-demand interpretation.
+
+## 2026-09-15 — Separate article enrichment from promotion; add no designer work
+
+The user clarified that decision write-ups, material breakdowns, and similar editorial derivatives belong in the post-publication Promote flow. Publish produces the article; Promote reuses the existing interview, photographs, and selections for shareable pieces. Treat Publish / Promote as proposed product terminology until implementation is requested.
+
+For additions to the published article, prioritize spatial or visual understanding, such as diagrams or exploration of an existing 3D asset. Evaluate every proposal against zero additional designer work: no required new questionnaire, capture, modeling, or review task. Distinguish assets already available from inputs an enhancement would newly require. Research or discussion does not authorize implementation of these features.
+
+## 2026-09-15 — Park spatial experiments and prioritize current functionality
+
+The user explicitly tabled 3D, diagramming, and richer photo interaction experiments. Preserve interest in visible photo tags as a future direction, but focus current work on verifying and fixing existing functionality. Do not reopen spatial technology research or build new interaction features under the guise of functional verification.

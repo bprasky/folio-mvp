@@ -5,11 +5,11 @@
 // physically in the image. Glass overlays, text, gradients, badges
 // are still never on photos.
 //
-// Desktop: tag dots fade in on hover (300ms).
-// Mobile: tag dots appear on tap-and-hold (300ms threshold).
+// TaggedImage owns desktop and touch visibility so a parent cannot hide an
+// active tag or product card.
 
 import Image from "next/image";
-import { useRef, useState, useCallback } from "react";
+import { useRef } from "react";
 import { motion, useScroll, useTransform } from "framer-motion";
 import { TaggedImage } from "@/components/project/interaction/TaggedImage";
 import { useImageAspect } from "./useImageAspect";
@@ -49,8 +49,6 @@ export function PhotoTile({
   isExpanded = false,
 }: PhotoTileProps) {
   const ref = useRef<HTMLDivElement>(null);
-  const [showDots, setShowDots] = useState(false);
-  const holdTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Aspect-aware framing only applies to full-bleed photos. Half-width
   // mosaic tiles already live inside the 2-col grid and are not at risk of
@@ -85,32 +83,6 @@ export function PhotoTile({
 
   const hasTags = image?.tags?.length > 0;
 
-  // Desktop: hover to show dots
-  const handleMouseEnter = useCallback(() => {
-    if (hasTags) setShowDots(true);
-  }, [hasTags]);
-  const handleMouseLeave = useCallback(() => {
-    setShowDots(false);
-  }, []);
-
-  // Mobile: tap-and-hold to show dots
-  const handleTouchStart = useCallback(() => {
-    if (!hasTags) return;
-    holdTimerRef.current = setTimeout(() => {
-      setShowDots(true);
-    }, 300);
-  }, [hasTags]);
-  const handleTouchEnd = useCallback(() => {
-    if (holdTimerRef.current) {
-      clearTimeout(holdTimerRef.current);
-      holdTimerRef.current = null;
-    }
-    // Dismiss dots after a short delay (unless user taps a dot)
-    if (showDots) {
-      setTimeout(() => setShowDots(false), 2000);
-    }
-  }, [showDots]);
-
   const tile = (
     <div
       ref={ref}
@@ -119,13 +91,14 @@ export function PhotoTile({
         background: "rgba(87, 75, 67, 0.04)",
       }}
       onClick={onClick}
-      onMouseEnter={handleMouseEnter}
-      onMouseLeave={handleMouseLeave}
-      onTouchStart={handleTouchStart}
-      onTouchEnd={handleTouchEnd}
       role="button"
       tabIndex={0}
-      onKeyDown={(e) => e.key === "Enter" && onClick()}
+      onKeyDown={(e) => {
+        if (e.target === e.currentTarget && (e.key === "Enter" || e.key === " ")) {
+          e.preventDefault();
+          onClick();
+        }
+      }}
     >
       <motion.div
         style={{
@@ -151,14 +124,10 @@ export function PhotoTile({
         />
       </motion.div>
 
-      {/* Product tag dots — fade in on hover (desktop) or tap-hold (mobile); persistent while expanded */}
+      {/* TaggedImage owns tag visibility and product activation. */}
       {hasTags && (
         <div
           className="absolute inset-0 z-10 pointer-events-none"
-          style={{
-            opacity: showDots || isExpanded ? 1 : 0,
-            transition: "opacity 300ms ease",
-          }}
         >
           <div
             className="pointer-events-auto absolute inset-0"

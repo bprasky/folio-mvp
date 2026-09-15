@@ -1,3 +1,20 @@
+# Existing article photo tags — functional verification, 2026-09-15
+
+Scope: keep new 3D, diagrams, and richer photo interactions parked. Verify the existing public article photo-to-tag-to-product flow and fix confirmed functional defects only.
+
+- [x] Trace the active public article renderer, tag data, selection behavior, and product destination.
+- [x] Verify existing desktop, touch, and keyboard interactions with focused checks; use the live reader where accessible.
+- [x] Fix confirmed defects with minimal changes and regression coverage.
+- [x] Record verified behavior and any live-access limitations.
+
+### Review
+
+Removed PhotoTile's duplicate tag-visibility state, which hid the real touch overlay and could hide an active product card. Mobile tag touches now stay within the tag until its click is delivered; cancelled touches clear pending timers. Keyboard events on product controls no longer toggle the enclosing room; the photo itself supports Enter and Space.
+
+Verification: five real-component interaction cases in `node scripts/check-photo-tag-interactions.cjs` pass. The original visibility, tap activation, and keyboard failures were reproduced before the fix. Browser fixture with real Framer Motion verified desktop tag reveal, correct product card, product actions, and navigation to `/products/lamp`. Existing project-home and reader-preview checks pass. Focused lint passes with existing PhotoTile warnings; TypeScript ratchet passes (903 diagnostics against 904 baseline), client import guard and migration discipline pass. Manual React review found no new dependencies or changes to data visibility.
+
+Limits: live `/p/meru-XB4XBK` loads and expands room sections, but the original owner project link is unavailable while signed out. Touch event coverage uses jsdom; physical-device touch and this exact project's live tag data remain unverified. The browser fixture uses sample products and simplified layout CSS. No new feature or database change; fixes are not deployed.
+
 # Project home and reader preview — approved scope, 2026-09-15
 
 - [x] Trace header actions: retain existing spec export and project overview functionality.
