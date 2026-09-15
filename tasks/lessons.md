@@ -990,3 +990,23 @@ The user clarified that Written by Folio should synthesize third-person room tea
 
 ## 2026-09-15 — Room teasers are required output, not an optional tool
 The user clarified repeatedly: every written room needs a selected teaser at draft generation, with direct and Folio choices already prepared. Never substitute a generate/add button, permit removal to empty, or silently omit Folio from social output. Test the no-candidate and model-failure paths at persisted generation output, not only a populated picker fixture. This supersedes the earlier optional/on-demand interpretation.
+
+## 2026-09-15 — Measure the container's fill before judging a type size
+Asked an open "what do you think about the caption size", the assistant argued it
+was too large from the page's type hierarchy and proposed going down. The user
+meant the opposite: beside a near-square photo the caption column is ~490px tall
+and the text cluster was ~170px of it, so the type read as undersized and
+marooned. The mockup built to reason about it used a 4:3 photo, which hid the
+emptiness the real near-square crop creates. Before recommending a type size,
+compute what fraction of its container the text actually fills, and build
+comparison mockups at the real asset's proportions rather than a convenient
+default — an unrepresentative mockup argues confidently for the wrong answer.
+
+## 2026-09-15 — Check that the data exists before promising a relational design
+The approved design anchored caption size to the photo's height via `cqh`. Neither
+route to it survived the codebase: `ProjectImage` has no `width`/`height` columns,
+so the aspect ratio is only discoverable by loading the image client-side, and the
+CSS-only version needs `container-type: size`, whose size containment stops the
+tile growing for a long caption — today such a caption correctly makes the row
+taller than the photo. Anchor to `cqi` (inline-size containment contains nothing
+in the block axis) and say plainly which half of the approved idea shipped.
