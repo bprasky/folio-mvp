@@ -33,6 +33,7 @@ interface ContentSelection {
   }>;
   quotes: Array<{
     text: string;
+    authorship: 'verbatim' | 'folio';
     imageId?: string;
     suggested: boolean;
   }>;
@@ -47,7 +48,7 @@ type PostMockup =
   | { type: 'launch'; imageUrl: string; title: string; subtitle: string }
   | { type: 'room_spotlight'; imageUrl: string; title: string; subtitle: string; slideCount: number }
   | { type: 'product_feature'; imageUrl: string; title: string; subtitle: string }
-  | { type: 'quote'; text: string; attribution: string }
+  | { type: 'quote'; text: string; attribution: string; authorship: 'verbatim' | 'folio' }
   | { type: 'detail'; imageUrl: string; title: string }
   | { type: 'closer'; imageUrl: string; title: string; subtitle: string };
 
@@ -86,7 +87,8 @@ function buildPostMockups(c: ContentSelection): PostMockup[] {
     posts.push({
       type: 'quote',
       text: quote.text,
-      attribution: c.designerName,
+      authorship: quote.authorship,
+      attribution: quote.authorship === 'folio' ? 'Written by Folio' : c.designerName,
     });
   }
 
@@ -380,7 +382,7 @@ function PostMockupCard({
       <div className="relative flex h-[175px] w-[140px] flex-shrink-0 flex-col justify-center rounded-md bg-folio-ink p-3 text-white">
         {sequenceBadge}
         <p className="line-clamp-5 font-serif text-[var(--type-eyebrow)] italic leading-snug text-white">
-          &ldquo;{post.text}&rdquo;
+          {post.authorship === 'folio' ? post.text : <> &ldquo;{post.text}&rdquo; </>}
         </p>
         <p className="mt-2 text-[9px] uppercase tracking-[var(--ls-eyebrow)] text-white/70"> /* folio-design-system: off-scale */
           {post.attribution}

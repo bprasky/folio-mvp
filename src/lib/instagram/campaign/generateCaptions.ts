@@ -24,10 +24,12 @@ interface CaptionInput {
   project: ProjectData;
   context?: {
     roomName?: string;
+    roomTeaser?: { text: string; authorship: 'verbatim' | 'folio' };
     productName?: string;
     productBrand?: string;
     quoteText?: string;
     quoteAttribution?: string;
+    quoteAuthorship?: 'verbatim' | 'folio';
   };
 }
 
@@ -94,7 +96,7 @@ Every room. Every source. The story behind the design.
 
       caption = `${context.roomName} at ${project.title}.
 
-${project.description || 'A space designed with intention and care.'}
+${context.roomTeaser ? (context.roomTeaser.authorship === 'folio' ? `${context.roomTeaser.text}\n\nWritten by Folio` : `"${context.roomTeaser.text}"`) : (project.description || 'A space designed with intention and care.')}
 
 📍 ${project.city ? `${project.city}, ${project.regionState || ''}` : 'See location'}
 ✏️ ${designerHandle}
@@ -131,11 +133,13 @@ Full sources: ${projectLink}`;
         throw new Error('Quote text required for quote caption');
       }
 
-      const attribution = context.quoteAttribution || project.designerName;
+      const teaser = context.quoteAuthorship === 'folio'
+        ? `${context.quoteText}\n\nWritten by Folio`
+        : `"${context.quoteText}"`;
 
       caption = `On the vision for ${project.title}:
 
-"${context.quoteText}"
+${teaser}
 
 The full story: ${projectLink}`;
 

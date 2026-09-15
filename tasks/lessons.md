@@ -983,3 +983,6 @@ Article regeneration must retain canonical room selection objects through persis
 
 ## 2026-09-15 — Room teasers are editorial alternatives
 The user clarified that Written by Folio should synthesize third-person room teasers from grounded interview and article context, rather than require same-point-of-view rewrites of individual quotes. Review factual support without rejecting this intended synthesis. Quote discovery must explain its purpose and generation must visibly present a suggestion.
+
+## 2026-09-15 — Room teasers are required output, not an optional tool
+The user clarified repeatedly: every written room needs a selected teaser at draft generation, with direct and Folio choices already prepared. Never substitute a generate/add button, permit removal to empty, or silently omit Folio from social output. Test the no-candidate and model-failure paths at persisted generation output, not only a populated picker fixture. This supersedes the earlier optional/on-demand interpretation.

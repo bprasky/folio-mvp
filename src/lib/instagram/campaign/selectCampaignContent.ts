@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma";
-import { extractQuotes } from "@/lib/instagram/extractQuotes";
+import { extractRoomTeasers } from "@/lib/instagram/roomTeasers";
+import { BlocksSchema } from "@/lib/posting/schemas";
 
 export type CampaignPreset = "compact" | "standard" | "complete" | "custom";
 
@@ -17,6 +18,7 @@ export interface CampaignContentSelection {
     name: string;
     imageIds: string[];
     imageCount: number;
+    teaser?: { text: string; authorship: 'verbatim' | 'folio' };
     suggested: boolean; // Auto-selected for this preset
   }>;
   products: Array<{
@@ -28,6 +30,7 @@ export interface CampaignContentSelection {
   }>;
   quotes: Array<{
     text: string;
+    authorship: 'verbatim' | 'folio';
     imageId?: string; // Optional: image to pair with
     suggested: boolean;
   }>;
@@ -101,11 +104,16 @@ export async function selectCampaignContent(
     }
   });
 
+  const parsedBlocks = BlocksSchema.pick({ galleryChapters: true, pullQuotes: true })
+    .passthrough().safeParse(project.post?.expandedBlocks);
+  const roomTeasers = extractRoomTeasers(parsedBlocks.success ? parsedBlocks.data : undefined);
+
   // Extract rooms with image counts
   const allRooms = Array.from(imagesByRoom.entries()).map(([name, imgs]) => ({
     name,
     imageIds: imgs.map((i) => i.id),
     imageCount: imgs.length,
+    teaser: roomTeasers.find(teaser => teaser.imageIds?.some(id => imgs.some(image => image.id === id))),
     suggested: false, // Will be set based on preset
   }));
 
@@ -144,14 +152,14 @@ export async function selectCampaignContent(
     suggested: false,
   }));
 
-  // Extract quotes from interview content
-  const quotes = project.post?.expandedBlocks
-    ? extractQuotes(project.post.expandedBlocks)
-    : [];
+  // Carry the selected room teaser and its authorship into campaign output.
+  const quotes = roomTeasers;
 
-  // extractQuotes returns string[] — wrap into the structured shape the rest of the flow expects
+  // Suggested choices retain the saved room selections.
   const allQuotes = quotes.map((q) => ({
-    text: q,
+    text: q.text,
+    authorship: q.authorship,
+    imageId: q.imageId,
     suggested: false,
   }));
 

@@ -8,7 +8,8 @@ import { HOOK_OPENER_ID_PREFIX, HOOK_FOLLOWUP_ID_PREFIX } from "@/lib/interview/
 import { MODELS } from '@/lib/ai/models';
 import { EDITORIAL_BANNED_PHRASES, FOLIO_TONE, HEADLINE_CRITERIA, JSON_PROSE_QUOTING_RULE, toTypographicQuotes } from '@/lib/interview/prompts/editorialTone';
 import { thinkingSettingsFor, thinkingParams, firstTextBlock } from '@/lib/ai/thinking';
-import { selectPullQuotes } from './selectPullQuotes';
+import { prepareRoomTeasers } from './prepareRoomTeasers';
+import { projectAnswerCategory } from './loadInterviewAnswers';
 import { isVerbatimSpan } from './quoteCandidates';
 import { normalizeHeadline, headlineIssues } from './headline';
 import { applyProseNamingGate as applyGate } from '@/lib/naming/applyProseNamingGate';
@@ -1505,46 +1506,19 @@ async function assignVerifiedPullQuotes(
   answers: GenInput['answers'],
   _cid: string,
 ): Promise<z.infer<typeof BlocksSchema>> {
-  const chapters = (blocks as any)?.galleryChapters;
-  if (!Array.isArray(chapters) || chapters.length === 0) return blocks;
-
-  // Only rooms that actually have answers can produce a verbatim quote.
-  const roomNames = Array.from(new Set(answers.map((a) => a.section).filter(Boolean))) as string[];
-  if (roomNames.length === 0) return blocks;
-
-  const { byRoom } = await selectPullQuotes(roomNames, answers, _cid, input.project?.id ?? null, true);
-
-  let assigned = 0;
-  let cleared = 0;
-  for (const ch of chapters) {
-    if (ch?.kind === 'gallery') continue;
-    const title = typeof ch?.title === 'string' ? ch.title : '';
-    // byRoom is keyed by formatRoomName, which is exactly how chapter titles
-    // are written, so this is a direct lookup rather than a fuzzy match.
-    const selection = Object.prototype.hasOwnProperty.call(byRoom, title) ? byRoom[title] : null;
-    if (selection) {
-      ch.pullQuote = selection;
-      assigned++;
-    } else {
-      // Cleared, not skipped. A chapter we could not rank — a room with photos
-      // and model-written prose but no interview answers, say — has no verified
-      // quote available, and leaving whatever was there is how an unverified one
-      // survives. No quotable candidate and a room we
-      // never ranked all land in the same place: no pull quote.
-      ch.pullQuote = null;
-      cleared++;
-    }
-  }
-
-  // Rebuild the top-level index now that the chapter quotes exist. layoutEngine
-  // reads `sourceSection` off it as its per-chapter fallback, so leaving the
-  // version built during assembly would leave that index describing nulls.
-  syncPullQuotesFromChapters(blocks as Record<string, any>);
-
-  console.info('[generate] pull quotes assigned from answers', {
-    _cid, assigned, cleared, rooms: roomNames.length,
+  return prepareRoomTeasers(blocks, answers.map(answer => ({
+    ...answer,
+    category: projectAnswerCategory(answer.questionId),
+    questionCategory: null,
+    isFollowUp: !!answer.isFollowUp,
+  })), input.project?.id ?? '', {
+    refresh: true,
+    preserveRoomIds: input.mode === 'append'
+      ? input.frozenChapters?.map(ch => ch.roomId).filter((id): id is string => !!id)
+      : undefined,
+    correlationId: _cid,
+    postingUserId: input.designer?.id ?? null,
   });
-  return blocks;
 }
 
 // ============================================================================

@@ -353,67 +353,25 @@ export async function placeQuoteSmart(
   };
 }
 
-/**
- * Format quote text for optimal display (max 3 lines, auto-scale font)
- */
+/** Fit the complete selected line; never silently truncate a quote or teaser. */
 export function formatQuoteText(quote: string, maxWidth: number = INSTAGRAM_WIDTH * 0.85): {
   lines: string[];
   fontSize: number;
 } {
-  const words = quote.split(' ');
-  const minFontSize = 58;
-  const maxFontSize = 68;
-  let fontSize = maxFontSize;
+  const words = quote.trim().split(/\s+/);
   let lines: string[] = [];
-  
-  // Try to fit in 3 lines with max font size (retry with smaller font if needed)
-  let attempts = 0;
-  const maxAttempts = 5;
-  
-  while (attempts < maxAttempts) {
+  for (let fontSize = 68; fontSize >= 24; fontSize -= 2) {
     lines = [];
-    let currentLine = '';
-    
+    let current = '';
     for (const word of words) {
-      const testLine = currentLine ? `${currentLine} ${word}` : word;
-      // Rough estimate: ~0.6 * fontSize per character for serif italic
-      const estimatedWidth = testLine.length * fontSize * 0.6;
-      
-      if (estimatedWidth > maxWidth && currentLine) {
-        lines.push(currentLine);
-        currentLine = word;
-        
-        if (lines.length >= 3) {
-          break; // Stop if we hit 3 lines
-        }
-      } else {
-        currentLine = testLine;
-      }
+      const candidate = current ? current + ' ' + word : word;
+      if (candidate.length * fontSize * 0.6 > maxWidth && current) {
+        lines.push(current);
+        current = word;
+      } else current = candidate;
     }
-    
-    if (currentLine) {
-      lines.push(currentLine);
-    }
-    
-    // If too many lines, reduce font size and retry
-    if (lines.length > 3 && fontSize > minFontSize) {
-      fontSize = Math.max(minFontSize, fontSize - 4);
-      attempts++;
-      continue;
-    }
-    
-    break; // Success or at minimum font size
+    if (current) lines.push(current);
+    if (lines.length <= 5 || fontSize === 24) return { lines, fontSize };
   }
-  
-  // If still too many lines, truncate last line
-  if (lines.length > 3) {
-    lines = lines.slice(0, 2);
-    const lastLine = lines[1];
-    if (lastLine && lastLine.length > 30) {
-      lines[1] = lastLine.substring(0, 27) + '…';
-    }
-  }
-  
-  return { lines, fontSize };
+  return { lines, fontSize: 24 };
 }
-

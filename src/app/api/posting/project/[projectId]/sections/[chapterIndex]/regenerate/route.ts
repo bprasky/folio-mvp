@@ -13,6 +13,11 @@ import { FOLIO_TONE, JSON_PROSE_QUOTING_RULE, toTypographicQuotes } from '@/lib/
 import { MODELS } from '@/lib/ai/models';
 import { applyProseNamingGate } from '@/lib/naming/applyProseNamingGate';
 import { cid as newCid } from '@/lib/utils/correlation';
+import { loadInterviewAnswers } from '@/lib/posting/loadInterviewAnswers';
+import { prepareRoomTeasers } from '@/lib/posting/prepareRoomTeasers';
+import { syncPullQuotesFromChapters } from '@/lib/posting/schemas';
+import { revalidatePath } from 'next/cache';
+import { folioLinesMatchSources } from '@/lib/posting/folioLines';
 
 const anthropic = new Anthropic();
 
@@ -71,7 +76,7 @@ export async function POST(
       return NextResponse.json({ error: 'No article to regenerate' }, { status: 404 });
     }
 
-    const blocks = post.expandedBlocks as Record<string, any>;
+    const blocks = structuredClone(post.expandedBlocks) as Record<string, any>;
     const chapters = blocks.galleryChapters as any[];
 
     if (!chapters || chapterIndex >= chapters.length) {
@@ -365,23 +370,34 @@ ${JSON_PROSE_QUOTING_RULE}`;
     // what it produced, never the pre-gate text.
     const gatedChapters = (gatedBlocks as any).galleryChapters as any[];
     const savedBody: string[] = gatedChapters?.[chapterIndex]?.body ?? newBody;
+    // Generate the room selector alongside its new prose, including Folio
+    // choices. Passing only this chapter leaves every other room untouched.
+    await prepareRoomTeasers({ galleryChapters: [gatedChapters[chapterIndex]] },
+      await loadInterviewAnswers(projectId), projectId, { refresh: true, correlationId: _cid, postingUserId: session.user.id });
+    syncPullQuotesFromChapters(gatedBlocks as any);
 
     // Clear any sectionOverrides for this chapter (text was regenerated)
     const overrides = ((post.sectionOverrides ?? []) as SectionOverride[])
       .filter((o) => o.chapterIndex !== chapterIndex);
 
-    await prisma.projectPost.update({
-      where: { id: post.id },
+    if (!folioLinesMatchSources(gatedChapters[chapterIndex].pullQuote.folio.alternatives,
+      gatedChapters[chapterIndex].title ?? '', await loadInterviewAnswers(projectId), savedBody)) {
+      return NextResponse.json({ error: 'The interview changed while regenerating. Please try again.' }, { status: 409 });
+    }
+    const saved = await prisma.projectPost.updateMany({
+      where: { id: post.id, expandedBlocks: { equals: post.expandedBlocks } },
       data: {
         expandedBlocks: gatedBlocks as any,
         sectionHistory: history as any,
         sectionOverrides: overrides as any,
       },
     });
+    if (!saved.count) return NextResponse.json({ error: 'The article changed while regenerating. Refresh and try again.' }, { status: 409 });
+    revalidatePath(`/project/${projectId}`);
 
     return NextResponse.json({
       ok: true,
-      chapter: { title: chapter.title, body: savedBody, pullQuote: chapter.pullQuote },
+      chapter: { title: chapter.title, body: savedBody, pullQuote: gatedChapters[chapterIndex].pullQuote },
       previousBody,
     });
   } catch (error: any) {

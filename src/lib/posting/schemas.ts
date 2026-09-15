@@ -41,13 +41,18 @@ export const QuoteProvenanceSchema = z.object({
 });
 export type QuoteProvenance = z.infer<typeof QuoteProvenanceSchema>;
 
-/** Folio's room teaser, with the interview evidence used to write it. */
+/** Article excerpts are Folio editorial, never designer interview quotations. */
+export const FolioLineSourceSchema = z.union([
+  QuoteProvenanceSchema.extend({ excerpt: z.string().min(1).max(4000) }).strict(),
+  z.object({ kind: z.literal('article'), paragraphIndex: z.number().int().nonnegative(),
+    excerpt: z.string().min(1).max(4000) }).strict(),
+]);
+
+/** Folio's room teaser, with the evidence used to write it. */
 export const FolioLineSchema = z.object({
   text: z.string().trim().min(1).max(300),
   originalText: z.string().min(1).max(300),
-  sources: z.array(QuoteProvenanceSchema.extend({
-    excerpt: z.string().min(1).max(4000),
-  })).min(1).max(3),
+  sources: z.array(FolioLineSourceSchema).min(1).max(3),
 });
 export type FolioLine = z.infer<typeof FolioLineSchema>;
 

@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import Module from 'node:module';
 import { FolioLineSchema, getSelectedPullQuoteText, getSelectedRoomLineText, syncPullQuotesFromChapters, type PullQuoteSelection } from '../src/lib/posting/schemas';
-import { folioRewriteSources, folioTeaserSources, folioLinesMatchSources } from '../src/lib/posting/folioLines';
+import { articleFolioLines, folioRewriteSources, folioTeaserSources, folioLinesMatchSources } from '../src/lib/posting/folioLines';
 import type { LoadedAnswer } from '../src/lib/posting/loadInterviewAnswers';
 import { extractQuotes } from '../src/lib/instagram/extractQuotes';
 import { extractQuotesWithMetadata } from '../src/lib/instagram/matchQuoteToImage';
@@ -12,6 +12,33 @@ const direct: PullQuoteSelection = { selected: { text: answer.answer }, alternat
 const line = { text: 'A glass table keeps the dining room visually open.', originalText: answer.answer, sources: [{ questionId: 'q1', isFollowUp: false, excerpt: answer.answer }] };
 let passed = 0;
 function check(name: string, fn: () => void) { fn(); passed++; console.log('PASS', name); }
+const article = ['A glass table keeps the view through the dining room open. Black chairs balance its brightness.',
+  '“We kept the structure. We changed the finishes,” the designer says.'];
+check('article fallback provides multiple grounded editorial choices without interview quotes', () => {
+  const options = articleFolioLines('Dining Room', article);
+  assert.equal(options.length, 2);
+  assert.ok(options.every(option => FolioLineSchema.safeParse(option).success));
+  assert.ok(folioLinesMatchSources(options, 'Dining Room', [], article));
+  assert.ok(!folioLinesMatchSources(options, 'Dining Room', [], ['A different room story.']));
+  assert.ok(!folioLinesMatchSources(options, 'Dining Room', []));
+  assert.ok(!folioLinesMatchSources([{ ...options[0], text: 'An invented material changed this room.' }], 'Dining Room', [], article));
+  const hybrid = { ...options[0], sources: [{ ...options[0].sources[0], questionId: 'private', isFollowUp: false }] };
+  assert.ok(!FolioLineSchema.safeParse(hybrid).success);
+  assert.ok(options.every(option => !option.text.includes('We ')));
+});
+check('quote-only article remains an exact editorial excerpt and stays out of direct exports', () => {
+  const body = ['“We kept the structure,” the designer says.'];
+  const options = articleFolioLines('Dining Room', body);
+  assert.equal(options[0].text, body[0]);
+  assert.ok(folioLinesMatchSources(options, 'Dining Room', [], body));
+  assert.equal(getSelectedPullQuoteText({ selected: null, alternatives: [], authorship: 'folio', folio: { selected: options[0], alternatives: options } }), null);
+});
+check('long article fallbacks are bounded without inventing or losing provenance', () => {
+  const body = [('The dining room contains a long sequence of existing details. ').repeat(100)];
+  const options = articleFolioLines('Dining Room', body);
+  assert.ok(options.length > 0 && options.length <= 6);
+  assert.ok(folioLinesMatchSources(options, 'Dining Room', [], body));
+});
 check('original ranked quote supplies exact source context', () => assert.equal(folioRewriteSources('Dining Room', [answer], direct)[0].quote, answer.answer));
 check('other rooms and project-scoped sources are excluded', () => {
   assert.equal(folioRewriteSources('Living Room', [answer], direct).length, 0);
@@ -71,6 +98,19 @@ const { generateFolioLines, resolveFolioDraft } = require('../src/lib/posting/ge
 (Module as any)._load = originalLoad;
 
 async function main() {
+  const callCount = calls.length;
+  const withoutQuotes = await generateFolioLines('Dining Room', [], 'test-project', undefined, [], article);
+  check('no-interview generation immediately supplies article-backed Folio options without model cost', () => {
+    assert.equal(calls.length, callCount);
+    assert.equal(withoutQuotes.length, 2);
+  });
+  responses = [new Error('Provider unavailable')];
+  const unavailable = await generateFolioLines('Dining Room', [answer], 'test-project', direct, [], article);
+  check('provider failure keeps room opening options available from the actual article', () => {
+    assert.equal(unavailable.length, 2);
+    assert.ok(folioLinesMatchSources(unavailable, 'Dining Room', [], article));
+  });
+  calls.length = 0;
   check('invented source id and unchanged or quoted output are rejected', () => {
     const sources = folioRewriteSources('Dining Room', [answer], direct);
     assert.deepEqual(resolveFolioDraft({ alternatives: [{ text: line.text, sourceIds: ['fake'] }] }, sources), []);
@@ -118,9 +158,10 @@ async function main() {
   const { renderToStaticMarkup } = require('react-dom/server');
   const { PullQuotePicker } = require('../src/components/story/PullQuotePicker');
   const props = { chapterIndex: 0, projectId: 'test', onUpdate: () => {} };
-  check('both authorship modes render even with no direct quotes', () => {
+  check('missing legacy selection shows preparation rather than opt-in controls', () => {
     const html = renderToStaticMarkup(React.createElement(PullQuotePicker, { ...props, pullQuote: null }));
-    assert.ok(html.includes('Your words') && html.includes('Written by Folio'));
+    assert.ok(html.includes('Preparing your room'));
+    assert.ok(!html.includes('Add a pull quote') && !html.includes('Remove pull quote'));
     assert.ok(!html.includes('aria-disabled'));
     assert.ok(html.includes('Choose your room') && html.includes('social'));
   });
@@ -148,11 +189,19 @@ async function main() {
     assert.ok(html.includes(line.text) && html.includes('Written by Folio'));
     assert.ok(!html.includes('<blockquote') && !html.includes('Designer Name'));
   });
+  check('legacy published room still has a clickable article-backed teaser', () => {
+    const html = renderToStaticMarkup(React.createElement(QuoteTile, { ...tileProps, pullQuote: null, pullQuoteSelection: null,
+      editorialNarrative: 'The glass table keeps the dining room visually open.' }));
+    assert.ok(html.includes('The glass table keeps the dining room visually open.'));
+    assert.ok(html.includes('role="button"') && html.includes('Written by Folio'));
+    assert.ok(!html.includes('Designer Name'));
+  });
   ownerContext = { projectId: 'test', isEdited: () => false, isEditing: () => false, hasHistory: () => false };
   check('owner tile puts the quote picker between room label and article', () => {
     const html = renderToStaticMarkup(React.createElement(QuoteTile, tileProps));
     assert.ok(html.indexOf('Dining Room') < html.indexOf('Your words'));
     assert.ok(html.indexOf(line.text) < html.indexOf('Room article body.'));
+    assert.ok(!html.includes('Remove pull quote') && !html.includes('Add pull quote'));
   });
 
   const { JSDOM } = require('jsdom');
@@ -164,10 +213,10 @@ async function main() {
   const root = createRoot(document.getElementById('root'));
   const requests: any[] = [];
   (globalThis as any).fetch = async (url: string, options: any) => { requests.push({ url, ...options, body: JSON.parse(options.body) }); return { ok: true, json: async () => ({ ok: true }) }; };
-  await act(async () => { root.render(React.createElement(PullQuotePicker, { ...props, pullQuote: direct })); });
+  await act(async () => { root.render(React.createElement(PullQuotePicker, { ...props, pullQuote: { ...direct, folio: { selected: line, alternatives: [line] } } })); });
   await act(async () => { Array.from(document.querySelectorAll('button')).find((b: any) => b.textContent === 'Written by Folio')!.dispatchEvent(new dom.window.MouseEvent('click', { bubbles: true })); });
-  check('Written by Folio calls only the room-version endpoint', () => {
-    assert.ok(requests[0].url.endsWith('/sections/folio-lines')); assert.equal(requests[0].method, 'POST'); assert.equal(requests[0].body.chapterIndex, 0);
+  check('Written by Folio selects prepared options without generation', () => {
+    assert.ok(requests[0].url.endsWith('/sections/pull-quote')); assert.equal(requests[0].method, 'PATCH'); assert.equal(requests[0].body.chapterIndex, 0);
   });
   await act(async () => { root.render(React.createElement(PullQuotePicker, { ...props, pullQuote: { ...direct, authorship: 'folio', folio: { selected: line, alternatives: [line] } } })); });
   await act(async () => { Array.from(document.querySelectorAll('button')).find((b: any) => b.textContent === 'Your words')!.dispatchEvent(new dom.window.MouseEvent('click', { bubbles: true })); });

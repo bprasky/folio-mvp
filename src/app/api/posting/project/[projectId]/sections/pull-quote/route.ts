@@ -19,7 +19,7 @@ export async function PATCH(request: NextRequest, { params }: { params: { projec
     await assertProjectWrite(session.user.id, projectId);
     const body = await request.json().catch(() => null);
     if (!body || !Number.isInteger(body.chapterIndex) || body.chapterIndex < 0 ||
-        (body.selectedText !== undefined && body.selectedText !== null && typeof body.selectedText !== 'string') ||
+        (body.selectedText !== undefined && (typeof body.selectedText !== 'string' || !body.selectedText.trim())) ||
         (body.selectedText === undefined && body.authorship === undefined)) {
       return NextResponse.json({ error: 'Invalid quote selection' }, { status: 400 });
     }
@@ -41,25 +41,31 @@ export async function PATCH(request: NextRequest, { params }: { params: { projec
     if (authorship === 'folio') {
       const lines = pq.folio?.alternatives;
       if (!lines?.length || !lines.every(line => FolioLineSchema.safeParse(line).success) ||
-          !folioLinesMatchSources(lines, chapter.title || '', await loadInterviewAnswers(projectId))) {
-        return NextResponse.json({ error: 'Generate Folio versions for this room first.' }, { status: 422 });
+          !folioLinesMatchSources(lines, chapter.title || '', await loadInterviewAnswers(projectId), chapter.body ?? [])) {
+        return NextResponse.json({ error: 'Room options are being updated. Refresh and try again.' }, { status: 422 });
       }
       if (body.selectedText !== undefined) {
-        const chosen = body.selectedText === null ? null : lines.find(line => line.text === body.selectedText);
+        const chosen = lines.find(line => line.text === body.selectedText);
         if (chosen === undefined) return NextResponse.json({ error: 'Selected text not found in alternatives' }, { status: 400 });
         pq.folio!.selected = chosen;
       }
       // Mode-only switching must not revive a stale or malformed stored selection.
-      const selected = pq.folio!.selected;
+      const selected = pq.folio!.selected ?? lines[0];
+      pq.folio!.selected = selected;
       if (selected && (!lines.some(line => line.text === selected.text) ||
-          !folioLinesMatchSources([selected], chapter.title || '', await loadInterviewAnswers(projectId)))) {
-        return NextResponse.json({ error: 'Generate Folio versions for this room first.' }, { status: 422 });
+          !folioLinesMatchSources([selected], chapter.title || '', await loadInterviewAnswers(projectId), chapter.body ?? []))) {
+        return NextResponse.json({ error: 'Room options are being updated. Refresh and try again.' }, { status: 422 });
       }
     } else if (body.selectedText !== undefined) {
-      const chosen = body.selectedText === null ? null : pq.alternatives.find(line => line.text === body.selectedText);
+      const chosen = pq.alternatives.find(line => line.text === body.selectedText);
       if (chosen === undefined) return NextResponse.json({ error: 'Selected text not found in alternatives' }, { status: 400 });
       // Copy the full alternative so its provenance survives selection.
       pq.selected = chosen;
+    }
+    if (authorship === 'verbatim') {
+      pq.selected = pq.selected ?? pq.alternatives[0] ?? null;
+      if (!pq.selected?.text.trim()) return NextResponse.json({ error: 'Choose an available Folio opening line for this room.' }, { status: 400 });
+      if (!pq.alternatives.some(line => line.text === pq.selected!.text)) return NextResponse.json({ error: 'Selected text not found in alternatives' }, { status: 400 });
     }
     pq.authorship = authorship;
     chapter.pullQuote = pq;
