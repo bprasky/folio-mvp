@@ -153,7 +153,7 @@ export function QuoteTile({
               preparing={!!edit?.teasersPreparing || fallbackLines.length > 0}
               chapterIndex={chapterIndex!}
               projectId={edit!.projectId}
-              quoteClassName="font-[var(--font-headline)] italic text-[rgba(87,75,67,0.92)] text-[length:var(--caption-size)] leading-[var(--caption-leading)]"
+              quoteClassName="font-[family-name:var(--font-headline)] italic text-[rgba(87,75,67,0.92)] text-[length:var(--caption-size)] leading-[var(--caption-leading)]"
               onUpdate={() => edit!.refresh()}
             />
           </StoryEditRegion>
@@ -198,7 +198,7 @@ export function QuoteTile({
           </div>
         ) : (
           displayQuote && (folioAuthored ? (
-            <p className="font-[var(--font-headline)] italic text-[rgba(87,75,67,0.92)] text-[length:var(--caption-size)] leading-[var(--caption-leading)]">
+            <p className="font-[family-name:var(--font-headline)] italic text-[rgba(87,75,67,0.92)] text-[length:var(--caption-size)] leading-[var(--caption-leading)]">
               {displayQuote}
             </p>
           ) : (

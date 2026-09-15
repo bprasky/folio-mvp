@@ -1021,6 +1021,18 @@ tile growing for a long caption — today such a caption correctly makes the row
 taller than the photo. Anchor to `cqi` (inline-size containment contains nothing
 in the block axis) and say plainly which half of the approved idea shipped.
 
+## 2026-09-15 — Tailwind's `font-[…]` needs a `family-name:` hint for a CSS variable
+`font-[var(--font-headline)]` compiles to `font-weight: var(--font-headline)`, not
+`font-family` — Tailwind cannot infer the property from a bare custom property in
+the `font-` namespace, and defaults to weight. The declaration is invalid as a
+weight, so it is dropped and the element silently inherits the body font. Every
+headline styled that way had been rendering in Instrument Sans, not Cormorant
+Garamond. The fix is the explicit data-type hint,
+`font-[family-name:var(--font-headline)]`. Inline `fontFamily: "var(--font-headline)"`
+was unaffected, which is why direct-quote blockquotes looked right while the
+Folio-authored line beside them did not. When a font "looks wrong" rather than
+missing, read the compiled CSS for the class before assuming the font failed to
+load.
 ## 2026-09-15 — Run every step of a CI guard locally, not just the one that failed
 `Accent color discipline` reported one failing step, so the obvious move was to
 fix that step and push. Running all six of the workflow's greps locally first
