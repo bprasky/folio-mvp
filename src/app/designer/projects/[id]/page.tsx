@@ -6,5 +6,5 @@ export default async function LegacyProjectPage({
   params: { id: string } | Promise<{ id: string }>;
 }) {
   const resolvedParams = params instanceof Promise ? await params : params;
-  redirect(`/project/${resolvedParams.id}?view=media`);
+  redirect(`/project/${resolvedParams.id}`);
 }

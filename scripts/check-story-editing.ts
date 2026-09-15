@@ -11,17 +11,18 @@
  *
  * Run: npm run check:story-editing
  */
-import { execSync } from 'child_process';
-import { readFileSync } from 'fs';
+import { readdirSync, readFileSync } from 'fs';
 
 let failures = 0;
 const check = (name: string, cond: boolean, detail?: string) => {
   if (cond) console.log(`  PASS  ${name}`);
   else { failures++; console.error(`  FAIL  ${name}${detail ? `\n        ${detail}` : ''}`); }
 };
-const grepFiles = (pattern: string) =>
-  execSync(`grep -rl '${pattern}' --include=*.tsx src/ || true`, { encoding: 'utf8' })
-    .split('\n').filter(Boolean);
+const tsxFiles = (directory: string): string[] => readdirSync(directory, { withFileTypes: true })
+  .flatMap(entry => entry.isDirectory() ? tsxFiles(`${directory}/${entry.name}`)
+    : entry.name.endsWith('.tsx') ? [`${directory}/${entry.name}`] : []);
+const sourceFiles = tsxFiles('src');
+const grepFiles = (pattern: string) => sourceFiles.filter(file => readFileSync(file, 'utf8').includes(pattern));
 
 console.log('\n1. The published article stays read-only');
 const publicPage = readFileSync('src/app/p/[slug]/page.tsx', 'utf8');
@@ -81,11 +82,19 @@ check('the owner sees the narrative without expanding anything',
 check('edit regions stop clicks reaching a clickable ancestor',
   /onClick=\{\(e\) => e\.stopPropagation\(\)\}/.test(ctx));
 
-console.log('\n5. One editing surface, not two');
+console.log('\n5. One editing surface and a clean reader preview');
 check('the old form-based article editor is gone',
   grepFiles('EditableArticle').every(f => !f.endsWith('EditableArticle.tsx')));
 const panel = readFileSync('src/app/project/[id]/StagingPublishPanel.tsx', 'utf8');
-check('the staging panel has no Edit/Preview view mode', !/viewMode/.test(panel));
+check('the staging panel offers Edit and Preview',
+  /aria-label="Article view"/.test(panel) && /aria-pressed=\{isPreview\}/.test(panel));
+check('unsaved edits survive preview because its editor stays mounted and hidden',
+  /\{canEdit && <div hidden=\{isPreview\}>\s*<StoryEditProvider/.test(panel));
+check('reader preview is outside the edit provider and suppresses owner tools',
+  /\{\(!canEdit \|\| isPreview\) && \(\s*<ImmersiveProjectPage[^>]*showOwnerTools=\{false\}[^>]*\/>\s*\)\}/.test(panel));
+check('preview covers the workflow header and stepper and has an exit',
+  /isPreview \? 'fixed inset-0/.test(panel) && /Back to editing/.test(panel));
+check('preview suppresses the staging footer', /\{isOwner && !isPreview && <div className="sticky bottom-0/.test(panel));
 // The panel used to print the headline directly above a story that renders its
 // own lead, so the article opened with its title twice.
 check('the panel does not re-print the headline above the story',
@@ -109,10 +118,8 @@ check('NOTHING renders a lead field as text outside that module', (() => {
   // A JSX child on its own line — `{story.title}` — is the lead being DISPLAYED.
   // `alt={story.title}` on an <Image> is not, and neither is the unrelated
   // `story` object in CollaborationStoryView, so both stay scoped out.
-  const offenders = execSync(
-    "grep -rln -E '^[[:space:]]*\\{story\\.(title|subtitle|introText)\\}[[:space:]]*$' --include=*.tsx src/components/story/ || true",
-    { encoding: 'utf8' },
-  ).split('\n').filter(Boolean).filter(f => !f.endsWith('StoryLead.tsx'));
+  const offenders = tsxFiles('src/components/story').filter(file =>
+    !file.endsWith('StoryLead.tsx') && /^\s*\{story\.(title|subtitle|introText)\}\s*$/m.test(readFileSync(file, 'utf8')));
   return offenders.length === 0;
 })(), 'a story layout renders the lead itself instead of importing StoryLead');
 check('both hero layouts import the shared slots',
@@ -120,8 +127,7 @@ check('both hero layouts import the shared slots',
   && /LeadHeadline/.test(readFileSync('src/components/story/StoryIntro.tsx', 'utf8')));
 check('the headline picker rides along with the headline, so it cannot be omitted',
   /<HeadlinePicker/.test(lead)
-  && (execSync("grep -rl '<HeadlinePicker' --include=*.tsx src/ || true", { encoding: 'utf8' })
-      .split('\n').filter(Boolean).length === 1));
+  && grepFiles('<HeadlinePicker').length === 1);
 
 console.log('\n7. The deck is rendered, and editable');
 // The deck (the line under the headline) was generated on every article and

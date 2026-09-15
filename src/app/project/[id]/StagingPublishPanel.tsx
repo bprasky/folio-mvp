@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
@@ -121,10 +121,45 @@ export default function StagingPublishPanel({
   const [keepEdits, setKeepEdits] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [reviewError, setReviewError] = useState<string | null>(null);
+  const [isPreview, setIsPreview] = useState(false);
+  const previewRef = useRef<HTMLDivElement>(null);
   const isInReview = initialPostData?.status === 'REVIEW';
 
   const isPublishedStatus = initialPostData?.status === "PUBLISHED" || publishSuccess;
   const slug = initialPostData?.slug || publishedSlug;
+  const canEdit = isOwner && !isPublishedStatus && !isInReview;
+
+  useEffect(() => {
+    if (!isPreview) return;
+    const previousFocus = document.activeElement as HTMLElement | null;
+    const shell = previewRef.current;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    const focusable = () => Array.from(shell?.querySelectorAll<HTMLElement>(
+      'button:not([disabled]), a[href], input:not([disabled]), textarea:not([disabled]), select:not([disabled]), [tabindex="0"]',
+    ) ?? []).filter(element => element.getClientRects().length > 0);
+    focusable()[0]?.focus();
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape' && !event.defaultPrevented) setIsPreview(false);
+      if (event.key !== 'Tab') return;
+      const elements = focusable();
+      const first = elements[0];
+      const last = elements.at(-1);
+      if (event.shiftKey && (document.activeElement === first || !shell?.contains(document.activeElement))) {
+        event.preventDefault();
+        last?.focus();
+      } else if (!event.shiftKey && (document.activeElement === last || !shell?.contains(document.activeElement))) {
+        event.preventDefault();
+        first?.focus();
+      }
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      window.removeEventListener('keydown', onKeyDown);
+      previousFocus?.focus();
+    };
+  }, [isPreview]);
 
   // Readiness display. The one REQUIRED row mirrors the server gate exactly
   // (`computePublishReadiness`: every included photo sorted into a room) so the
@@ -182,8 +217,11 @@ export default function StagingPublishPanel({
   }
 
   async function handlePublish() {
-    await publish();
-    router.refresh();
+    const result = await publish();
+    if (result.slug) {
+      router.push(`/project/${projectId}`);
+      router.refresh();
+    }
   }
 
   async function handleSubmit() {
@@ -211,11 +249,13 @@ export default function StagingPublishPanel({
   }
 
   return (
-    <div className="relative">
+    <div ref={previewRef} role={isPreview ? 'dialog' : undefined} aria-modal={isPreview || undefined}
+      aria-label={isPreview ? 'Published appearance preview' : undefined}
+      className={isPreview ? 'fixed inset-0 z-[60] overflow-y-auto bg-white' : 'relative'}>
       {reviewError && <p role="alert" className="p-4 text-red-700">{reviewError}</p>}
       {/* PREVIEW BANNER — sticky at top */}
       <div className="sticky top-0 z-50 border-b border-folio-border-subtle bg-surface-ground/95 backdrop-blur-sm">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex items-center justify-between">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex flex-wrap gap-3 items-center justify-between">
           <div className="flex items-center gap-3">
             {isPublishedStatus ? (
               <>
@@ -238,19 +278,31 @@ export default function StagingPublishPanel({
               <span className="flex items-center gap-1.5">
                 <span className="w-2 h-2 rounded-full border-2 border-[var(--text-tertiary)] bg-transparent" />
                 <span className="folio-ui font-medium text-folio-text-primary">
-                  Preview — not yet published
+                  {isPreview ? 'Preview — saved draft' : 'Draft — not yet published'}
                 </span>
               </span>
             )}
           </div>
 
           <div className="flex items-center gap-2">
+            {canEdit && (
+              <div className="flex items-center rounded-lg border border-folio-border-subtle p-1" role="group" aria-label="Article view">
+                <button type="button" aria-pressed={!isPreview} onClick={() => setIsPreview(false)}
+                  className={`px-3 py-1.5 folio-meta rounded-md ${!isPreview ? 'bg-surface-canvas text-folio-text-primary' : 'text-folio-text-secondary'}`}>
+                  {isPreview ? 'Back to editing' : 'Edit'}
+                </button>
+                <button type="button" aria-pressed={isPreview} onClick={() => { router.refresh(); setIsPreview(true); }}
+                  className={`px-3 py-1.5 folio-meta rounded-md ${isPreview ? 'bg-surface-canvas text-folio-text-primary' : 'text-folio-text-secondary'}`}>
+                  Preview
+                </button>
+              </div>
+            )}
             {/* The interview belongs to the Story step, so this links there
                 rather than opening it over the draft. Hosting it here gave the
                 project two places to answer the same questions, and left the
                 Story surface — which owns the answers, the coverage and the
                 Generate action — looking optional. */}
-            {(editorialState === 'GENERATED' || editorialState === 'UNPUBLISHED') && (
+            {canEdit && !isPreview && (editorialState === 'GENERATED' || editorialState === 'UNPUBLISHED') && (
               <Link
                 href={storyHref(projectId)}
                 className="flex items-center gap-1.5 px-3 py-1.5 folio-meta font-medium text-folio-text-secondary bg-surface-canvas border border-folio-border-subtle rounded-lg hover:bg-surface-ground transition-colors"
@@ -258,14 +310,14 @@ export default function StagingPublishPanel({
                 Edit your story
               </Link>
             )}
-            <button
+            {canEdit && !isPreview && <button
               onClick={() => setShowRegenDialog(true)}
               disabled={regenBusy}
               className="flex items-center gap-1.5 px-3 py-1.5 folio-meta font-medium text-folio-text-secondary bg-surface-canvas border border-folio-border-subtle rounded-lg hover:bg-surface-ground disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
               <RefreshCw className={`w-3.5 h-3.5 ${regenBusy ? "animate-spin" : ""}`} />
               {regenBusy ? "Regenerating..." : "Regenerate"}
-            </button>
+            </button>}
           </div>
         </div>
       </div>
@@ -281,7 +333,7 @@ export default function StagingPublishPanel({
       )}
 
       {/* UNPUBLISHED STATE BANNER */}
-      {editorialState === 'UNPUBLISHED' && (
+      {!isPreview && editorialState === 'UNPUBLISHED' && (
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-4">
           <div className="flex items-start gap-2 p-4 bg-[var(--accent)]/5 border border-[var(--accent)]/20 rounded-[20px] folio-ui text-folio-text-primary">
             <AlertCircle className="w-4 h-4 mt-0.5 shrink-0 text-[var(--accent)]" />
@@ -294,7 +346,7 @@ export default function StagingPublishPanel({
           to open in a modal from here, which put the Tags step inside the
           Publish step and gave tagging two homes with two different UIs. This
           reports the count and links to the step that owns the work. */}
-      {!isPublishedStatus && (
+      {canEdit && !isPreview && (
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-3">
           <div className="flex items-center gap-3">
             <Tag
@@ -316,28 +368,27 @@ export default function StagingPublishPanel({
         </div>
       )}
 
-      {/* CONTENT AREA — the article itself, editable in place.
-          There is no Edit/Preview toggle: editing in a layout that is not the
-          article means never seeing what you actually made until you switch.
-          StoryEditProvider is mounted ONLY here, so the same StoryRenderer
-          serving /p/[slug] stays read-only — see StoryEditContext. */}
+      {/* Keep the editor mounted while previewing so unsaved text survives the
+          round trip. The preview is a separate public renderer without editing
+          context and shows the latest saved article. */}
       <div className="relative">
-        {isPublishedStatus ? (
-          <ImmersiveProjectPage post={initialPostData} modules={initialModules} isOwner={isOwner} />
-        ) : (
+        {(!canEdit || isPreview) && (
+          <ImmersiveProjectPage post={initialPostData} modules={initialModules} isOwner={isOwner} showOwnerTools={false} />
+        )}
+        {canEdit && <div hidden={isPreview}>
           <StoryEditProvider
             projectId={projectId}
             initialOverrides={(initialPostData?.sectionOverrides ?? []) as SectionOverride[]}
             chapters={initialPostData?.expandedBlocks?.galleryChapters ?? []}
             sectionHistory={(initialPostData?.sectionHistory ?? []) as SectionHistoryEntry[]}
           >
-            <ImmersiveProjectPage post={initialPostData} modules={initialModules} isOwner={isOwner} />
+            <ImmersiveProjectPage post={initialPostData} modules={initialModules} isOwner={isOwner} showOwnerTools={false} />
           </StoryEditProvider>
-        )}
+        </div>}
       </div>
 
       {/* STAGING FOOTER — sticky at bottom */}
-      <div className="sticky bottom-0 z-50 border-t border-folio-border-subtle bg-surface-ground/95 backdrop-blur-sm">
+      {isOwner && !isPreview && <div className="sticky bottom-0 z-50 border-t border-folio-border-subtle bg-surface-ground/95 backdrop-blur-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3">
           {/* Readiness summary + action */}
           <div className="flex items-center justify-between">
@@ -478,7 +529,7 @@ export default function StagingPublishPanel({
             </div>
           )}
         </div>
-      </div>
+      </div>}
 
       {/* No interview modal and no tagger here by design: the Story step owns the
           interview and the Tags step owns tagging. Every route into them from
@@ -559,7 +610,7 @@ export default function StagingPublishPanel({
       )}
 
       {/* Unpublish confirmation dialog */}
-      <ConfirmDialog
+      {showUnpublishDialog && <ConfirmDialog
         open={showUnpublishDialog}
         title="Unpublish this post?"
         description="This will take your post offline. Your story and interview answers are preserved and you can republish anytime."
@@ -567,7 +618,7 @@ export default function StagingPublishPanel({
         confirmVariant="destructive"
         onCancel={() => setShowUnpublishDialog(false)}
         onConfirm={handleUnpublish}
-      />
+      />}
     </div>
   );
 }

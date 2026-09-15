@@ -18,19 +18,20 @@ type Props = {
   post: any;
   modules: MediaModule[];
   isOwner?: boolean;
+  showOwnerTools?: boolean;
 };
 
-export function ImmersiveProjectPage({ post, modules, isOwner = false }: Props) {
+export function ImmersiveProjectPage({ post, modules, isOwner = false, showOwnerTools = true }: Props) {
   return (
     <div className="relative min-h-screen bg-white">
       {/* Instagram export button — floated top-right */}
-      <div className="fixed top-4 right-4 z-40">
+      {showOwnerTools && <div className="fixed top-4 right-4 z-40">
         <ShareToInstagramButton
           projectId={post.projectId}
           designerId={post.project?.designerId}
           postStatus={post.status}
         />
-      </div>
+      </div>}
 
       {/* Story Format renderer */}
       <Suspense fallback={<StoryFallback />}>
