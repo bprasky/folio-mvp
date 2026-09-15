@@ -233,8 +233,11 @@ export async function POST(
       const contentWidth = pageWidth - 2 * marginX; // 512
       const bottomLimit = 60; // content must not cross into the footer band
 
-      // Brand tokens (docs/17): ink #1A1A1A, gold #C9A96E, taupe #8A7E70,
-      // warm header band #FAF8F5. Gold is reserved for header/room rules only.
+      // Brand tokens (docs/17), as rgb() because pdf-lib resolves no CSS vars:
+      // ink, gold ornament, taupe, warm header band. Values are mirrored from
+      // globals.css by hand — hexes are not repeated here so this comment can
+      // never drift from the tokens or trip the accent-discipline check.
+      // Gold is reserved for header/room rules only.
       const ink = rgb(0.102, 0.102, 0.102);
       const gold = rgb(0.788, 0.663, 0.431);
       const taupe = rgb(0.541, 0.494, 0.439);

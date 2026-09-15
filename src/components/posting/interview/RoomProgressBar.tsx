@@ -24,7 +24,7 @@ interface RoomProgressBarProps {
 // Folio palette (A4). Four visually distinct states.
 const TAUPE = "#8A7E70";
 const INK = "#1A1A1A";
-const GOLD = "#C9A96E";
+const GOLD = "var(--folio-gold-ornament)";
 
 // Edge fade so the rail reads as scrollable on both sides.
 const FADE =

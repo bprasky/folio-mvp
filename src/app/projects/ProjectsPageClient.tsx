@@ -97,10 +97,10 @@ interface ProjectsPageClientProps {
 
 const COVER_GRADIENTS = [
   'bg-[linear-gradient(160deg,#B89B7A_0%,#6E5642_100%)]',
-  'bg-[linear-gradient(160deg,#C9A96E_0%,#8A6B47_100%)]',
+  'bg-[linear-gradient(160deg,var(--folio-gold-ornament)_0%,#8A6B47_100%)]',
   'bg-[linear-gradient(160deg,#A89378_0%,#4F3A2A_100%)]',
   'bg-[linear-gradient(160deg,#5C6B4E_0%,#2E3B2A_100%)]',
-  'bg-[linear-gradient(160deg,#B8845C_0%,#724A31_100%)]',
+  'bg-[linear-gradient(160deg,var(--folio-copper)_0%,#724A31_100%)]',
 ];
 
 function hashToIndex(str: string, mod: number): number {

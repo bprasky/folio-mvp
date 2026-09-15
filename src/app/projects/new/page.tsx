@@ -34,20 +34,21 @@ const TITLE_MAX = 80;
 const DESCRIPTION_MAX = 280;
 const TAG_LIMIT = 6;
 
-// UI tokens — kept inline because the global Tailwind palette doesn't have
-// 1:1 names for the editorial spec colors.
+// UI tokens. The three surface levels and the two accents below map 1:1 onto
+// globals.css and reference it directly; the remaining entries are editorial
+// spec colors that genuinely have no global token yet.
 const C = {
-  canvas: '#FFFFFF',
-  ground: '#FAF8F5',
-  elevated: '#F5F0EB',
+  canvas: 'var(--surface-canvas)',
+  ground: 'var(--surface-ground)',
+  elevated: 'var(--surface-elevated)',
   borderSubtle: '#E8E4DF',
   borderStrong: '#D4CFC8',
   textPrimary: '#1A1A1A',
   textSecondary: '#6B6B6B',
   textTertiary: '#9B9B9B',
-  copper: '#B8845C',
+  copper: 'var(--folio-copper)',
   copperHover: '#A67548',
-  gold: '#C9A96E',
+  gold: 'var(--folio-gold-ornament)',
   cognac: '#724A31',
   selectedTint: '#FBF6F0',
 };
@@ -722,7 +723,7 @@ export default function CreateProjectPage() {
                 height: 22,
                 borderRadius: '50%',
                 background:
-                  'linear-gradient(135deg, #E8C9A5 0%, #B8845C 100%)',
+                  'linear-gradient(135deg, #E8C9A5 0%, var(--folio-copper) 100%)',
                 color: '#fff',
                 display: 'grid',
                 placeItems: 'center',

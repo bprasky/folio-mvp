@@ -260,7 +260,7 @@ function FrameDots({ current }: { current: FrameIndex }) {
           key={i}
           className="h-1.5 w-1.5 rounded-full transition-colors"
           style={{
-            backgroundColor: i === current ? '#C9A96E' : 'transparent',
+            backgroundColor: i === current ? 'var(--folio-gold-ornament)' : 'transparent',
             border: i === current ? 'none' : '1px solid rgba(201, 169, 110, 0.5)',
           }}
         />

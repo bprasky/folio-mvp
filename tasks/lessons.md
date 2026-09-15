@@ -1020,3 +1020,17 @@ CSS-only version needs `container-type: size`, whose size containment stops the
 tile growing for a long caption — today such a caption correctly makes the row
 taller than the photo. Anchor to `cqi` (inline-size containment contains nothing
 in the block axis) and say plainly which half of the approved idea shipped.
+
+## 2026-09-15 — Run every step of a CI guard locally, not just the one that failed
+`Accent color discipline` reported one failing step, so the obvious move was to
+fix that step and push. Running all six of the workflow's greps locally first
+showed a second, unrelated failure (`#FAF8F5` in the new-project palette) that CI
+had never printed, because a shell step exits at the first `exit 1` and the job
+stops there. Fixing only the reported step would have produced a second red run
+and a second cycle. When a guard is a sequence of independent checks, reproduce
+the whole sequence before pushing.
+
+## 2026-09-15 — Verify a built artifact case-insensitively before calling it missing
+Grepping the built CSS for `--folio-copper:#B8845C` found nothing and looked like
+a broken token; the minifier had lowercased the hex to `#b8845c`. Check case and
+whitespace normalisation before concluding a value did not survive the build.
