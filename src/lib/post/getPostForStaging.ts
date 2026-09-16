@@ -14,6 +14,7 @@ export async function getPostForStaging(projectId: string) {
       include: {
         project: {
           include: {
+            designerOrg: { select: { name: true } },
             designer: {
               select: {
                 id: true,

@@ -1,3 +1,23 @@
+# Embedded article quote choices — 2026-09-16
+
+Scope: let the owner choose the standalone quotes between rooms using existing saved interview quotes. Default display attribution to the project's designer organization (studio/person fallback), with an explicit individual option. Contributor quotes retain their own credit. No additional interview or generation work.
+
+- [x] Trace standalone quote placement, quote pools, and organization data on draft/public paths.
+- [x] Add saved quote/attribution choices with authenticated, draft-only, concurrent-edit-safe persistence.
+- [x] Add compact edit controls; keep preview/public free of controls and preserve choices across regeneration.
+- [x] Verify quote eligibility, organization/person defaults, contributor credit, persistence, conflicts, and edit/preview UI.
+- [x] Review and prepare a reviewable PR; commit and push the scoped change.
+
+Plan check-in: preserve article prose and room opening selections; use the existing JSON storage and authorization boundaries. No schema migration or AI call is needed.
+
+### Review
+
+Added an independent quote/credit picker to the existing embedded quote breaks. Its options come from saved direct quotes and pinned contributors; Folio display lines cannot be submitted as quotations. Project.designerOrg supplies the default attribution on owner and public paths, with studio/person fallback and an explicit individual override. Contributor credit remains fixed. Existing automatic quote counts are retained, including after choosing a different quote. Saved choices are carried through the final regeneration transaction and used only while the quote remains in the current saved source pool.
+
+Read-only audit of the reported draft confirms BP Design / Diano Matto and 50 saved quote options. A local snapshot passed the actual builder and mocked PATCH boundary without changing production data. Browser verification used the real component, this snapshot, fixture CSS, and in-memory transport: organization default, quote selection, individual override, and control-free preview all work. This is not a live authenticated owner or database-write test.
+
+Validation: 25 embedded quote cases including the exact-project fixture; existing Folio suite (33 source/UI, 41 API, 11 serialized-reader cases, preparation, room UI and social checks); pull-quote contract; 30 story-editing checks; regeneration-surface checks; actual generation persistence; 5 publish-title checks. TypeScript ratchet 903/904, client boundary guard, migration guard and focused lint pass. Existing Unix-shell test assumptions required the local Git Bash runner on Windows; test transports remained mocked. New checks are wired into quote CI. No dependencies, migration, AI generation, production write, or deployment.
+
 # Exact project room preview repair — 2026-09-15
 
 Scope: restore existing direct-quote and Folio teaser choices and visible photo tags for project dda4b29e-dbdf-4f54-ad21-32dafd4d1dd4. Preserve article prose and designer selections; no new interview work.

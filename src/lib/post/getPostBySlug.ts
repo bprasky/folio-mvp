@@ -10,6 +10,7 @@ export async function getPostBySlug(slug: string) {
       include: {
         project: {
           include: {
+            designerOrg: { select: { name: true } },
             designer: {
               select: {
                 id: true,

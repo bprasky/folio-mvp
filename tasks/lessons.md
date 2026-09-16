@@ -1047,6 +1047,9 @@ Grepping the built CSS for `--folio-copper:#B8845C` found nothing and looked lik
 a broken token; the minifier had lowercased the hex to `#b8845c`. Check case and
 whitespace normalisation before concluding a value did not survive the build.
 
+## 2026-09-16 — Standalone article quotes need their own choices and organization credit
+Room opening selectors do not control the standalone quotes between rooms. Verify each quote surface independently. For these embedded quotes, default display credit to Project.designerOrg, then studio, then the person; offer an individual choice without rewriting interview words or reattributing other contributors. This updates the earlier person-only display convention for this surface.
+
 ## 2026-09-15 — Verify the reported project before declaring its experience complete
 The public Meru smoke test and synthetic photo-tag fixture did not prove the reported owner's La Gorce draft worked. Check the exact saved selectors, room interview attribution, and per-photo tag data through the owner edit and preview paths. Report a fallback excerpt as a fallback; a nonempty selector is not proof of successful Folio teaser generation. Existing tags must be discoverable without requiring the designer to redo their work.
 

@@ -9,6 +9,8 @@ import { formatRoomName } from "@/lib/utils/formatRoomName";
 import { blockingIssues } from "@/lib/posting/headline";
 import { normalizeTitleAlternatives, type TitleAlternative } from "@/lib/posting/schemas";
 import { hasWeakPredicate } from "@/lib/interview/prompts/headlineFrames";
+import { embeddedQuoteOptions, embeddedQuoteCredits, embeddedQuoteAttribution, savedEmbeddedQuoteChoices, type EmbeddedQuoteOption } from '@/lib/posting/embeddedQuotes';
+import type { EmbeddedQuoteChoice } from '@/lib/posting/schemas';
 
 // --- Types ---
 
@@ -51,6 +53,9 @@ export interface BreatherData {
   insertAfterRoomSlug: string;
   quote: string;
   attribution: string;
+  choice: EmbeddedQuoteChoice;
+  options: EmbeddedQuoteOption[];
+  credits: ReturnType<typeof embeddedQuoteCredits>;
 }
 
 export interface StoryData {
@@ -167,51 +172,17 @@ function placeBreathers(
     if (tile.pullQuote) usedQuotes.add(tile.pullQuote);
   }
 
-  // Candidate pool: supplemental quotes from non-designer contributors (architect, builder, etc.)
-  // These are the best breathers — they shift perspective away from the room-level designer voice
-  const candidates: Array<{ text: string; attribution: string }> = [];
-
-  const supplementalBreathers =
-    post?.supplementalQuotes
-      ?.filter((sq: any) => sq.pinned && sq.answer && sq.contributorRole !== "DESIGNER")
-      ?.map((sq: any) => ({
-        text: sq.answer,
-        attribution: sq.contributorRole
-          ? formatRoomName(sq.contributorRole.toLowerCase())
-          : "Contributor",
-      })) ?? [];
-
-  for (const sb of supplementalBreathers) {
-    if (!usedQuotes.has(sb.text)) {
-      candidates.push(sb);
-      usedQuotes.add(sb.text);
-    }
-  }
-
-  // Next: top-level pull quotes that are NOT room-specific (no sourceSection)
-  // These are project-level quotes that won't duplicate any room tile
-  const topQuotes: Array<{ text: string; context?: string; sourceSection?: string }> =
-    Array.isArray(post?.expandedBlocks?.pullQuotes)
-      ? post.expandedBlocks.pullQuotes
-          .map((q: any) => {
-            if (typeof q === "string") return { text: q };
-            return { text: q.text, context: q.context, sourceSection: q.sourceSection };
-          })
-          .filter((q: any) => q.text)
-      : [];
-
-  for (const tq of topQuotes) {
-    // Skip if this quote is already used by a room tile
-    if (usedQuotes.has(tq.text)) continue;
-    // Prefer non-room-specific quotes; room-specific ones are last resort
-    candidates.push({
-      text: tq.text,
-      attribution: tq.sourceSection
-        ? formatRoomName(tq.sourceSection)
-        : post?.project?.designer?.name ?? "Designer",
-    });
-    usedQuotes.add(tq.text);
-  }
+  const candidates = embeddedQuoteOptions(post);
+  // Preserve the existing automatic placements. Extra room alternatives are
+  // choices for the owner, not a reason to add more quotations to the article.
+  const indexedTexts = new Set((post?.expandedBlocks?.pullQuotes ?? []).map((quote: any) => typeof quote === 'string' ? quote : quote.text));
+  const defaults = candidates.filter(option => {
+    if (usedQuotes.has(option.text) || (!option.contributorAttribution && !indexedTexts.has(option.text))) return false;
+    usedQuotes.add(option.text);
+    return true;
+  });
+  const saved = savedEmbeddedQuoteChoices(post.expandedBlocks);
+  const credits = embeddedQuoteCredits(post.project);
 
   // Insert breathers after every 2-3 rooms
   const intervals = roomTiles.length <= 4 ? [2] : [2, 5];
@@ -219,14 +190,23 @@ function placeBreathers(
   for (let i = 0; i < intervals.length; i++) {
     const interval = intervals[i];
     if (interval >= roomTiles.length) break;
-    if (i >= candidates.length) break; // No unused quotes left
+    const slotId = `breather-${interval}` as EmbeddedQuoteChoice['slotId'];
+    const stored = saved.find(choice => choice.slotId === slotId);
+    const selected = candidates.find(option => option.sourceId === stored?.sourceId && option.text === stored.text)
+      ?? defaults[i];
+    if (!selected) continue;
+    const choice: EmbeddedQuoteChoice = { slotId, sourceId: selected.sourceId, text: selected.text,
+      attribution: stored?.attribution ?? (credits.organization ? 'organization' : credits.designer ? 'designer' : undefined) };
 
     const afterRoom = roomTiles[interval - 1];
     breathers.push({
-      id: `breather-${interval}`,
+      id: slotId,
       insertAfterRoomSlug: afterRoom.roomSlug,
-      quote: candidates[i].text,
-      attribution: candidates[i].attribution,
+      quote: selected.text,
+      attribution: embeddedQuoteAttribution(selected, choice, post.project),
+      choice,
+      options: candidates,
+      credits,
     });
   }
 
