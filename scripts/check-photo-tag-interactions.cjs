@@ -92,6 +92,13 @@ async function main() {
     return;
   }
   const cases = [
+    ['article photo tags are visible on desktop and mobile before interaction', async ({document,visible}) => {
+      for (const selector of ['.md\\:hidden', '.md\\:block']) {
+        const dot = document.querySelector(selector).querySelector('button');
+        assert.ok(dot, `${selector}: saved tags must be discoverable without hover or tap`);
+        assert.ok(visible(dot));
+      }
+    }],
     ['a short touch reveals visible photo tags', async ({window,document,tick,touch,visible}) => {
       const overlay = document.querySelector('.md\\:hidden');
       await touch(overlay,'touchstart'); await touch(overlay,'touchend');

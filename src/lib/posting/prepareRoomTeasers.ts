@@ -4,8 +4,9 @@ import { resolveProductNaming } from '@/lib/naming/resolveProductNaming';
 import { scrubProseNaming } from '@/lib/naming/scrubProse';
 import type { LoadedAnswer } from './loadInterviewAnswers';
 import { generateFolioLines } from './generateFolioLines';
-import { articleFolioLines, folioLinesMatchSources } from './folioLines';
-import { selectPullQuotes } from './selectPullQuotes';
+import { articleFolioLines, folioLinesMatchSources, isArticleFolioLine, needsRoomTeaserPreparation } from './folioLines';
+import { selectPullQuotes, toSelection } from './selectPullQuotes';
+import { extractQuoteCandidates } from './quoteCandidates';
 import { FolioLineSchema, getSelectedRoomLineText, isPullQuoteSelection, syncPullQuotesFromChapters, type Blocks, type PullQuoteSelection } from './schemas';
 
 /** Prepare the selector before saving an article, or repair a legacy draft once. */
@@ -22,7 +23,7 @@ export async function prepareRoomTeasers<T extends { galleryChapters?: any[] }>(
     if (ch.kind === 'gallery' || !Array.isArray(ch.body) ||
       !ch.body.some((p: unknown) => typeof p === 'string' && p.trim())) return false;
     const previous = isPullQuoteSelection(ch.pullQuote) ? ch.pullQuote : undefined;
-    return refreshChapter(ch) || !getSelectedRoomLineText(previous) || !previous?.folio?.alternatives?.length ||
+    return refreshChapter(ch) || needsRoomTeaserPreparation(ch) || !getSelectedRoomLineText(previous) || !previous?.folio?.alternatives?.length ||
       !folioLinesMatchSources(previous.folio.alternatives, formatRoomName(ch.title ?? 'The room'), publicAnswers, ch.body);
   });
   const roomNames = Array.from(new Set(chapters.map(ch => formatRoomName(ch.title ?? 'The room'))));
@@ -39,7 +40,12 @@ export async function prepareRoomTeasers<T extends { galleryChapters?: any[] }>(
   try {
     ({ byRoom } = await selectPullQuotes(roomNames, publicAnswers, options.correlationId ?? 'room-teasers', projectId, true));
   } catch {
-    // Folio's article excerpts still furnish a selector if ranking is unavailable.
+    // Ranking is advisory. Never discard verified candidates because transport
+    // or incident reporting threw outside the ranker's normal fallback.
+    for (const room of roomNames) {
+      const candidates = extractQuoteCandidates(publicAnswers, room);
+      byRoom[room] = candidates.length ? toSelection(candidates[0], candidates) : null;
+    }
   }
   let cursor = 0;
   // Article requests may contain many rooms. Bound both writer/reviewer traffic
@@ -61,7 +67,8 @@ export async function prepareRoomTeasers<T extends { galleryChapters?: any[] }>(
         selection.selected = direct.selected;
         selection.alternatives = direct.alternatives;
       }
-      let lines = !refresh && previous?.folio?.alternatives &&
+      const recoverFallback = previous?.folio?.generatorVersion !== 3 && previous?.folio?.alternatives.some(isArticleFolioLine);
+      let lines = !refresh && !recoverFallback && previous?.folio?.alternatives &&
         folioLinesMatchSources(previous.folio.alternatives, room, publicAnswers, chapter.body)
         ? previous.folio.alternatives : [];
       if (!lines.length) {
@@ -87,7 +94,7 @@ export async function prepareRoomTeasers<T extends { galleryChapters?: any[] }>(
       if (!lines.length) lines = articleFolioLines(room, chapter.body);
       const oldFolio = previous?.folio?.selected;
       selection.folio = {
-        generatorVersion: 2,
+        generatorVersion: 3,
         alternatives: lines,
         selected: !refresh && oldFolio && lines.some(line => line.text === oldFolio.text)
           ? oldFolio : lines[0],

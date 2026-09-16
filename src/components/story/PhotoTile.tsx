@@ -46,7 +46,6 @@ export function PhotoTile({
   image,
   fullWidth = false,
   reducedMotion = false,
-  isExpanded = false,
 }: PhotoTileProps) {
   const ref = useRef<HTMLDivElement>(null);
 
@@ -101,6 +100,7 @@ export function PhotoTile({
       }}
     >
       <motion.div
+        className="relative"
         style={{
           y,
           willChange: "transform",
@@ -111,7 +111,7 @@ export function PhotoTile({
           alt={alt}
           width={naturalWidth}
           height={naturalHeight}
-          className="w-full h-auto transition-transform duration-300 group-hover:scale-[1.01]"
+          className={hasTags ? "w-full h-auto" : "w-full h-auto transition-transform duration-300 group-hover:scale-[1.01]"}
           sizes={
             fullWidth
               ? frame === "portrait"
@@ -122,21 +122,18 @@ export function PhotoTile({
               : "(max-width: 768px) 100vw, 50vw"
           }
         />
-      </motion.div>
-
-      {/* TaggedImage owns tag visibility and product activation. */}
-      {hasTags && (
-        <div
-          className="absolute inset-0 z-10 pointer-events-none"
-        >
-          <div
-            className="pointer-events-auto absolute inset-0"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <TaggedImage image={image} surface="post" forceDotsVisible={isExpanded} />
+        {/* Move the image and its coordinates together during parallax. */}
+        {hasTags && (
+          <div className="absolute inset-0 z-10 pointer-events-none">
+            <div
+              className="pointer-events-auto absolute inset-0"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <TaggedImage image={image} surface="post" forceDotsVisible />
+            </div>
           </div>
-        </div>
-      )}
+        )}
+      </motion.div>
     </div>
   );
 

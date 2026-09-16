@@ -7,6 +7,7 @@ import type { NormalizedTag } from './types';
 interface MobileTapOverlayProps {
   tags: NormalizedTag[];
   onTagTap: (tag: NormalizedTag) => void;
+  forceDotsVisible?: boolean;
 }
 
 /**
@@ -15,7 +16,7 @@ interface MobileTapOverlayProps {
  * Long-press: dots stay until tap-away.
  * Tap a dot: fires onTagTap immediately.
  */
-export function MobileTapOverlay({ tags, onTagTap }: MobileTapOverlayProps) {
+export function MobileTapOverlay({ tags, onTagTap, forceDotsVisible = false }: MobileTapOverlayProps) {
   const [showDots, setShowDots] = useState(false);
   const [persistent, setPersistent] = useState(false);
   const dismissTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -102,7 +103,7 @@ export function MobileTapOverlay({ tags, onTagTap }: MobileTapOverlayProps) {
       onTouchCancel={clearTimers}
     >
       <AnimatePresence>
-        {showDots && (
+        {(showDots || forceDotsVisible) && (
           <motion.div
             className="absolute inset-0 pointer-events-none"
             initial={{ opacity: 0 }}

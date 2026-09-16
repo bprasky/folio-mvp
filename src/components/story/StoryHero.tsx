@@ -8,14 +8,16 @@
 
 import Image from "next/image";
 import { useImageAspect } from "./useImageAspect";
+import { TaggedImage } from "@/components/project/interaction/TaggedImage";
 
 interface StoryHeroProps {
   imageUrl: string;
   alt: string;
+  image?: { id: string; tags?: unknown[] } | null;
   orientation?: "landscape" | "portrait";
 }
 
-export function StoryHero({ imageUrl, alt, orientation = "landscape" }: StoryHeroProps) {
+export function StoryHero({ imageUrl, alt, image, orientation = "landscape" }: StoryHeroProps) {
   // Match natural aspect once the image loads so the height cap is precise.
   // Until then the wrapper falls back to full width (no cap).
   const aspect = useImageAspect(imageUrl);
@@ -43,6 +45,7 @@ export function StoryHero({ imageUrl, alt, orientation = "landscape" }: StoryHer
         className="w-full h-auto"
         sizes={orientation === "portrait" ? "(max-width: 768px) 100vw, 48vw" : "100vw"}
       />
+      {!!image?.tags?.length && <TaggedImage image={image} surface="post" forceDotsVisible />}
     </figure>
   );
 }

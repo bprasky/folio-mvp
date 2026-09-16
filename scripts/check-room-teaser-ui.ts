@@ -23,7 +23,7 @@ const { StoryEditProvider } = require('../src/components/story/StoryEditContext'
 const root = createRoot(document.getElementById('root')!);
 const paragraph = 'The glass table keeps the dining room visually open.';
 const options = articleFolioLines('Dining Room', [paragraph]);
-const complete = { title: 'Dining Room', body: [paragraph], pullQuote: { selected: null, alternatives: [], authorship: 'folio', folio: { selected: options[0], alternatives: options } } };
+const complete = { title: 'Dining Room', body: [paragraph], pullQuote: { selected: null, alternatives: [], authorship: 'folio', folio: { generatorVersion: 3, selected: options[0], alternatives: options } } };
 const render = (chapters: unknown[]) => React.createElement(StoryEditProvider, { projectId: 'test', initialOverrides: [], chapters }, React.createElement('p', null, 'Article'));
 
 async function main() {

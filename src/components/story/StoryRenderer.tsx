@@ -14,6 +14,8 @@ import { LeadHeadline, LeadDeck, LeadIntro } from "./StoryLead";
 import { Mosaic } from "./Mosaic";
 import { ProductSheet } from "./ProductSheet";
 import { StoryCredits } from "./StoryCredits";
+import { useImageAspect } from "./useImageAspect";
+import { TaggedImage } from "@/components/project/interaction/TaggedImage";
 
 interface StoryRendererProps {
   post: any;
@@ -137,7 +139,7 @@ export function StoryRenderer({ post }: StoryRendererProps) {
                 <StoryIntro story={story} compact />
               </div>
               <div className="w-full md:w-[48%]">
-                <StoryHero imageUrl={story.heroImageUrl} alt={story.title} orientation="portrait" />
+                <StoryHero imageUrl={story.heroImageUrl} image={story.heroImage} alt={story.title} orientation="portrait" />
               </div>
             </div>
             <div className="border-b mt-6" style={{ borderColor: "rgba(87, 75, 67, 0.06)" }} />
@@ -196,6 +198,12 @@ const HERO_DOT = (
 );
 
 function LandscapeHero({ story, publishedAt }: { story: StoryData; publishedAt: string | Date | null }) {
+  const heroAspect = useImageAspect(story.heroImageUrl);
+  const ratio = heroAspect.width && heroAspect.height ? heroAspect.width / heroAspect.height : null;
+  // Match the centered cover crop: tag coordinates still refer to the original
+  // photo, so the overlay must occupy that photo's scaled size, including overflow.
+  const tagWidth = ratio ? Math.max(100, 100 * ratio / (16 / 9)) : 100;
+  const tagHeight = ratio ? Math.max(100, 100 * (16 / 9) / ratio) : 100;
   const dateLabel = publishedAt
     ? new Date(publishedAt).toLocaleString("en-US", { month: "long", year: "numeric" })
     : null;
@@ -301,6 +309,11 @@ function LandscapeHero({ story, publishedAt }: { story: StoryData; publishedAt: 
           sizes="(max-width: 768px) 100vw, 1168px"
           style={{ objectFit: "cover", objectPosition: "center" }}
         />
+        {ratio && !!story.heroImage?.tags?.length && (
+          <div className="absolute" style={{ width: `${tagWidth}%`, height: `${tagHeight}%`, left: `${(100 - tagWidth) / 2}%`, top: `${(100 - tagHeight) / 2}%` }}>
+            <TaggedImage image={story.heroImage} surface="post" forceDotsVisible />
+          </div>
+        )}
       </div>
 
       {/* Caption row */}

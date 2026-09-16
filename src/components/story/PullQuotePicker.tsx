@@ -4,6 +4,7 @@
 import { useState } from 'react';
 import type { PullQuoteSelection, PullQuoteAuthorship } from '@/lib/posting/schemas';
 import { isPullQuoteSelection } from '@/lib/posting/schemas';
+import { isArticleFolioLine } from '@/lib/posting/folioLines';
 
 interface PullQuotePickerProps {
   pullQuote: string | PullQuoteSelection | null | undefined;
@@ -30,6 +31,7 @@ export function PullQuotePicker({ pullQuote, chapterIndex, projectId, quoteClass
     : [];
   const currentIndex = selectedText ? alternatives.findIndex(a => a.text === selectedText) : -1;
   const hasAlternatives = alternatives.length > 1;
+  const articleFallback = isSelection && !!pullQuote.folio?.alternatives.length && pullQuote.folio.alternatives.every(isArticleFolioLine);
 
   const saveSelection = async (body: { authorship: PullQuoteAuthorship; selectedText?: string }) => {
     if (saving) return;
@@ -71,7 +73,7 @@ export function PullQuotePicker({ pullQuote, chapterIndex, projectId, quoteClass
             <button key={mode} type="button" disabled={saving} aria-pressed={authorship === mode}
               onClick={() => changeAuthorship(mode)}
               className={'folio-meta px-3 py-2 rounded-full border transition-colors whitespace-nowrap disabled:opacity-40 ' + (authorship === mode ? 'border-folio-text-primary bg-[var(--folio-text-primary)] text-[var(--surface-canvas)]' : 'border-folio-border text-folio-text-primary hover:bg-[var(--surface-canvas)]')}>
-              {mode === 'verbatim' ? 'Your words' : 'Written by Folio'}
+              {mode === 'verbatim' ? 'Your words' : articleFallback ? 'From the article' : 'Written by Folio'}
             </button>
           ))}
         </div>
@@ -89,7 +91,9 @@ export function PullQuotePicker({ pullQuote, chapterIndex, projectId, quoteClass
           </div>
         )}
       </div>
-      <p className="folio-meta text-folio-text-secondary mb-3">{authorship === 'folio' ? 'Original editorial lines inspired by your room’s story.' : 'Direct quotes from your interview. Browse to find your favorite.'}</p>
+      <p className="folio-meta text-folio-text-secondary mb-3">{authorship === 'folio'
+        ? articleFallback ? 'Original Folio options could not be prepared. These choices are excerpts from your saved article.' : 'Original editorial lines inspired by your room’s story.'
+        : 'Direct quotes from your interview. Browse to find your favorite.'}</p>
       {saving && <p role="status" className="mb-2 folio-meta text-folio-text-tertiary">Updating options…</p>}
       {notice && <p role="alert" className="mb-2 folio-meta text-folio-text-tertiary">{notice}</p>}
       {selectedText ? (

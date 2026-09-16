@@ -1,3 +1,24 @@
+# Exact project room preview repair — 2026-09-15
+
+Scope: restore existing direct-quote and Folio teaser choices and visible photo tags for project dda4b29e-dbdf-4f54-ad21-32dafd4d1dd4. Preserve article prose and designer selections; no new interview work.
+
+- [x] Audit saved room selections, interview attribution, and tags through the actual owner renderer.
+- [x] Reproduce missing direct choices, article-opening fallback, and missing photo dots with representative saved data.
+- [x] Fix the broken boundaries and add focused regression coverage.
+- [x] Verify exact project data and edit/preview behavior; report live verification limits explicitly.
+- [ ] Regenerate original Folio options after the requested external-provider transfer approval; review sources and save with a concurrent-edit guard.
+- [ ] Deploy and verify the code fixes after resolving the regeneration approval.
+
+### Review
+
+All 10 written rooms had an empty direct pool and only article-excerpt Folio options, despite 31 eligible loaded answers and 3–13 quote candidates per written room. The backfill predicate treated those selectors as complete. A versioned repair now revisits incomplete legacy pools once; ranker exceptions retain code-ranked verbatim candidates. Existing authored selections remain intact. The writer rejects copied article sentences, the owner picker identifies excerpt fallbacks honestly, and preview omits duplicated feature/teaser text. Saved photo tags display immediately on desktop and touch across room, gallery, and cover photographs; overlays follow parallax and the cover crop.
+
+An isolated code-only production data repair restored 49 verified direct choices across the 10 written rooms, preserving Folio selections, article prose, and image assignments. Readback confirms no written room still has an empty direct pool. The exact saved room data passed the real React selector test at every chapter index. Nine of 20 project photos have saved tags; no tag positions were invented for the other 11.
+
+Verification: 33 Folio/source/UI checks plus all 10 saved room selectors; 41 API scenarios including authorization and compare-and-save conflicts; 9 preparation cases; 6 photo interaction cases; draft-load and edit/preview checks; core regressions (8 passed, disposable DB journey skipped); focused lint (existing warnings only); TypeScript ratchet 903 against 904 baseline; client import and migration guards. Manual React/source review completed.
+
+Limits: authenticated owner browser is unavailable (signed-out 404), so exact data was checked against the actual components locally, not claimed as a live owner-browser pass. Automatic approval review rejected live Folio regeneration because it transfers room interview content to Anthropic. A local input review and user approval request are prepared. No Folio regeneration was performed, no article prose was rewritten, and this code is not deployed yet.
+
 # Existing article photo tags — functional verification, 2026-09-15
 
 Scope: keep new 3D, diagrams, and richer photo interactions parked. Verify the existing public article photo-to-tag-to-product flow and fix confirmed functional defects only.

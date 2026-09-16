@@ -211,9 +211,10 @@ async function main() {
     assert.deepEqual(saved.data.expandedBlocks.galleryChapters[0].pullQuote, before);
     assert.equal(saved.data.expandedBlocks.galleryChapters[1].pullQuote.selected.text, 'Bedroom direct option');
   });
-  await check('complete Folio-only selector needs no backfill or model', async () => {
+  await check('Folio-only selector already checked for direct quotes needs no repeat backfill', async () => {
     const kitchen = post.expandedBlocks.galleryChapters[0];
     kitchen.pullQuote.authorship = 'folio'; kitchen.pullQuote.selected = null; kitchen.pullQuote.alternatives = [];
+    kitchen.pullQuote.folio.generatorVersion = 3;
     const before = structuredClone(kitchen.pullQuote.folio);
     const result = await backfill(request({}), context);
     assert.equal(result.status, 200); assert.equal(result.data.filled, 0);

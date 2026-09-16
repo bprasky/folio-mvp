@@ -89,7 +89,7 @@ export const PullQuoteSelectionSchema = z.object({
   /** Absent on every article generated before the toggle; absent means `verbatim`. */
   authorship: PullQuoteAuthorshipSchema.optional(),
   folio: z.object({
-    generatorVersion: z.literal(2).optional(),
+    generatorVersion: z.union([z.literal(2), z.literal(3)]).optional(),
     selected: FolioLineSchema.nullable(),
     alternatives: z.array(FolioLineSchema).min(1).max(6),
   }).optional(),

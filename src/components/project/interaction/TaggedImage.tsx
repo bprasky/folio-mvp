@@ -198,6 +198,7 @@ export function TaggedImage({
         <MobileTapOverlay
           tags={tags}
           onTagTap={handleTagActivate}
+          forceDotsVisible={forceDotsVisible && !activeTag && !partialTag}
         />
 
         {/* 2D Product Expansion Card */}

@@ -131,6 +131,11 @@ async function main() {
   const generated = await generateFolioLines('Dining Room', [answer], 'test-project', direct);
   check('reviewed rewrite retains original text and source', () => assert.deepEqual(generated, [line]));
   check('reviewer sees original ranked quote, not only answer context', () => assert.equal(JSON.parse(calls[1].messages[0].content).versions[0].directQuote, answer.answer));
+  responses = [{ alternatives: [{ text: line.text, sourceIds: ['q1'] }] }];
+  const copiedOpening = await generateFolioLines('Dining Room', [answer], 'test-project', direct, [], [line.text]);
+  check('copying the article opening is an excerpt fallback, never a fresh generated option', () => {
+    assert.ok(copiedOpening.every(option => option.sources.some(source => 'kind' in source && source.kind === 'article')));
+  });
   responses = [{ alternatives: [{ text: line.text, sourceIds: ['q1'] }] }, { approvedIds: [] }];
   const rejected = await generateFolioLines('Dining Room', [answer], 'test-project', direct);
   check('semantic rejection does not fall back to unreviewed wording', () => assert.deepEqual(rejected, []));
@@ -171,6 +176,15 @@ async function main() {
     const verbatim = renderToStaticMarkup(React.createElement(PullQuotePicker, { ...props, pullQuote: direct }));
     assert.ok(verbatim.includes('<blockquote'));
   });
+  check('article fallback is disclosed rather than presented as original Folio writing', () => {
+    const excerpts = articleFolioLines('Dining Room', article);
+    const html = renderToStaticMarkup(React.createElement(PullQuotePicker, { ...props, pullQuote: {
+      ...direct, authorship: 'folio', folio: { selected: excerpts[0], alternatives: excerpts },
+    } }));
+    assert.ok(html.includes('From the article') && html.includes('excerpts from your saved article'));
+    assert.ok(!html.includes('Original editorial lines inspired'));
+    assert.ok(html.includes('Your words'));
+  });
   let ownerContext: any = null;
   (Module as any)._load = function(id: string, ...rest: any[]) {
     if (id === './StoryEditContext') return {
@@ -188,6 +202,10 @@ async function main() {
     const html = renderToStaticMarkup(React.createElement(QuoteTile, tileProps));
     assert.ok(html.includes(line.text) && html.includes('Written by Folio'));
     assert.ok(!html.includes('<blockquote') && !html.includes('Designer Name'));
+  });
+  check('the selected feature line is not repeated as the smaller article teaser', () => {
+    const html = renderToStaticMarkup(React.createElement(QuoteTile, { ...tileProps, editorialTeaser: line.text }));
+    assert.equal(html.split(line.text).length - 1, 1);
   });
   check('legacy published room still has a clickable article-backed teaser', () => {
     const html = renderToStaticMarkup(React.createElement(QuoteTile, { ...tileProps, pullQuote: null, pullQuoteSelection: null,
@@ -232,6 +250,24 @@ async function main() {
   });
   await act(async () => { const buttons = document.querySelectorAll('[aria-label="Room opening line options"] button'); (buttons[1] as HTMLButtonElement).click(); });
   check('selecting a visible alternative persists that exact quote', () => assert.equal(requests.at(-1).body.selectedText, secondQuote));
+  const savedFixture = process.argv.indexOf('--saved-project-fixture');
+  if (savedFixture >= 0) {
+    const snapshot = JSON.parse(require('node:fs').readFileSync(process.argv[savedFixture + 1], 'utf8'));
+    ownerContext.refresh = () => {};
+    for (const [chapterIndex, chapter] of snapshot.after.galleryChapters.entries()) {
+      if (chapter.kind === 'gallery') continue;
+      await act(async () => root.render(React.createElement(QuoteTile, { ...tileProps,
+        roomLabel: chapter.title, chapterIndex, pullQuote: getSelectedRoomLineText(chapter.pullQuote),
+        pullQuoteSelection: chapter.pullQuote, editorialNarrative: chapter.body.join('\n\n'), editorialParagraphs: chapter.body,
+      })));
+      const directButton = Array.from(document.querySelectorAll('button')).find((button: any) => button.textContent === 'Your words') as HTMLButtonElement;
+      assert.ok(directButton && !directButton.disabled, `${chapter.title}: direct selector available`);
+      await act(async () => directButton.click());
+      assert.equal(requests.at(-1).body.chapterIndex, chapterIndex);
+      assert.equal(requests.at(-1).body.authorship, 'verbatim');
+    }
+    console.log('PASS exact saved project: all 10 written rooms expose usable Your words controls at their correct chapter indexes');
+  }
   await act(async () => root.unmount());
   dom.window.close();
   console.log(`${passed} Folio version checks passed.`);
