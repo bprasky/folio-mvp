@@ -215,7 +215,16 @@ export const PostMetaSchema = z.object({
 export type PullQuoteAlternative = z.infer<typeof PullQuoteAlternativeSchema>;
 export type PullQuoteSelection = z.infer<typeof PullQuoteSelectionSchema>;
 
+export const EmbeddedQuoteChoiceSchema = z.object({
+  slotId: z.enum(['breather-2', 'breather-5']),
+  sourceId: z.string().min(1).max(200),
+  text: z.string().trim().min(1).max(4000),
+  attribution: z.enum(['organization', 'designer']).optional(),
+}).strict();
+export type EmbeddedQuoteChoice = z.infer<typeof EmbeddedQuoteChoiceSchema>;
+
 export const BlocksSchema = z.object({
+  embeddedQuotes: z.array(EmbeddedQuoteChoiceSchema).max(2).optional(),
   lead: z.object({
     title: z.string().max(120).optional(), // Support title field (LLM sometimes generates this)
     kicker: z.string().max(120).optional(), // Increased from 80 to 120 for natural headlines

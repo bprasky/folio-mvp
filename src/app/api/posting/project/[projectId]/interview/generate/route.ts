@@ -15,6 +15,7 @@ import { authOptions } from "@/app/api/auth/[...nextauth]/options";
 import { prisma } from "@/lib/prisma";
 import { assertProjectWrite, assertProjectPublish } from "@/lib/authz/access";
 import { BlocksSchema } from "@/lib/posting/schemas";
+import { savedEmbeddedQuoteChoices } from '@/lib/posting/embeddedQuotes';
 import { generateEditorialDraft, type GenInput } from "@/lib/posting/generateEditorialDraft";
 import { rateLimit } from "@/lib/rateLimit";
 import { logPassiveEvent } from "@/lib/analytics";
@@ -1564,6 +1565,10 @@ export async function POST(
       if (current.status === 'REVIEW' || current.status === 'ARCHIVED' || (post && current.status !== post.status) || (visibility.isPublic && !projectData.isPublic)) {
         throw Object.assign(new Error('Publication state changed during generation. Retry from the current draft.'), { status: 409 });
       }
+      // Editorial generation does not own these choices. Preserve even a choice
+      // saved while the model was running; the renderer rechecks pool membership.
+      const embeddedQuotes = savedEmbeddedQuoteChoices(current.expandedBlocks);
+      if (embeddedQuotes.length) expandedBlocks.embeddedQuotes = embeddedQuotes;
       const result = await tx.projectPost.update({
       where: { projectId, updatedAt: current.updatedAt, status: current.status },
       data: {

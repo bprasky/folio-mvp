@@ -3,6 +3,8 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const vm = require('node:vm');
 const ts = require('typescript');
+require('tsx/cjs');
+const { savedEmbeddedQuoteChoices } = require('../src/lib/posting/embeddedQuotes.ts');
 
 const route = fs.readFileSync('src/app/api/posting/project/[projectId]/interview/generate/route.ts', 'utf8');
 const start = route.indexOf('const validatedBlocks = composed;');
@@ -29,7 +31,8 @@ const fixture = {
 };
 async function persist(source) {
   let written;
-  const post = { id: 'post', slug: 'story', status: 'DRAFT', updatedAt: new Date(0), provenance: {} };
+  const post = { id: 'post', slug: 'story', status: 'DRAFT', updatedAt: new Date(0), provenance: {},
+    expandedBlocks: { embeddedQuotes: [{ slotId: 'breather-2', sourceId: 'designer', text: selection.selected.text, attribution: 'organization' }] } };
   const tx = {
     projectPost: { findUniqueOrThrow: async () => post, update: async ({ data }) => { written = JSON.parse(JSON.stringify(data.expandedBlocks)); return { ...post, ...data }; } },
     project: { findUniqueOrThrow: async () => ({ isPublic: false }), update: async () => ({}) },
@@ -41,6 +44,7 @@ async function persist(source) {
     designerBio: null, projectHistory: null, atelierSummary: null, duration: 1, _cid: 'test',
     interview: { payload: {} }, answersOverride: [], acquireLock: false,
     verifyProductAccuracy: () => ({ warnings: [] }),
+    savedEmbeddedQuoteChoices,
     prisma: { projectPost: { findUnique: async () => post }, $transaction: async callback => callback(tx) },
     console: { log() {}, warn() {} },
   };
@@ -55,6 +59,7 @@ function assertCanonical(saved) {
   assert.equal(saved.galleryChapters[0].pullQuote, null, 'A room with no quote must not receive the project hook');
   assert.deepEqual(saved.galleryChapters[1].pullQuote, selection, 'Selected text, provenance and all alternatives survive persistence');
   assert.deepEqual(saved.pullQuotes, fixture.pullQuotes, 'The top-level display index remains intact');
+  assert.equal(saved.embeddedQuotes[0].text, selection.selected.text, 'Owner embedded quote survives the actual regeneration transaction');
 }
 async function main() {
   const generator = fs.readFileSync('src/lib/posting/generateEditorialDraft.ts', 'utf8');

@@ -102,8 +102,8 @@ export function Mosaic({
 
             {breather && (
               <BreatherQuote
-                quote={breather.quote}
-                attribution={breather.attribution}
+                key={breather.id}
+                breather={breather}
                 reducedMotion={reducedMotion}
               />
             )}

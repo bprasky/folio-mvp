@@ -21,6 +21,7 @@ export async function GET(
       include: {
         project: {
           include: {
+            designerOrg: { select: { name: true } },
             designer: {
               select: {
                 id: true,
