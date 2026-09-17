@@ -11,13 +11,15 @@ const { createRoot } = require('react-dom/client');
 function load(file) {
   const exports = {};
   vm.runInNewContext(ts.transpileModule(fs.readFileSync(file, 'utf8'), { compilerOptions: { module: ts.ModuleKind.CommonJS, jsx: ts.JsxEmit.ReactJSX, target: ts.ScriptTarget.ES2022 } }).outputText,
-    { exports, console, Error, navigator: {}, require: name => name === '@/lib/publishing-studio/activities' ? activities : require(name) });
+    { exports, console, Error, navigator: {}, require: name => name === '@/lib/publishing-studio/activities' ? activities : name === './StoryConfigurator' ? load('src/components/publishing-studio/StoryConfigurator.tsx') : require(name) });
   return exports;
 }
 const activities = load('src/lib/publishing-studio/activities.ts');
 const { StoryActivity } = load('src/components/publishing-studio/StoryActivity.tsx');
 const context = { designerName: 'Designer', firmName: 'Studio', profile: { hasBio: true, hasPointOfView: true }, projects: [] };
 const definition = activities.createActivity({ subject: 'designer', format: 'qa', topic: '', destinations: ['folio', 'instagram'] }, context);
+  definition.questionSource = 'personalized'; // Assembly fixture; generation grounding has separate tests.
+  definition.questions.forEach((q,i) => { q.prompt = 'Fixture question '+(i+1)+'?'; });
 let snapshot = { id: 'activity', revision: 1, definition, answers: [], reviewed: false, draft: null };
 const calls = []; let closeCount = 0;
 const persistence = { create: async () => snapshot, save: next => new Promise((resolve, reject) => calls.push({ next, resolve, reject })) };
@@ -29,7 +31,14 @@ async function typeAnswer(text) {
 }
 async function main() {
   const root = createRoot(document.getElementById('root'));
-  await React.act(async () => root.render(React.createElement(StoryActivity, { context, persistence, initial: snapshot, onClose: () => closeCount++ })));
+  await React.act(async () => root.render(React.createElement(StoryActivity, { context, persistence, onClose() {} })));
+  assert.equal(document.querySelectorAll('select').length, 0, 'Topic choices must be visible');
+  assert.equal(document.querySelectorAll('input').length, 0, 'No angle or destination fields');
+  assert(document.body.textContent.includes('Firm History'));
+  await click('Next: Story type');
+  assert(button('Prepare my interview'));
+  assert.equal(document.querySelectorAll('select').length, 0);
+  await React.act(async () => root.render(React.createElement(StoryActivity, { key: 'interview', context, persistence, initial: snapshot, onClose: () => closeCount++ })));
   assert.equal(document.querySelectorAll('textarea').length, 1);
   await typeAnswer('The table was the starting point.');
   await click('Save progress');

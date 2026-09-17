@@ -1,0 +1,15 @@
+{
+  "designerName": "Alex Morgan",
+  "firmName": "Example Studio",
+  "profile": { "hasBio": true, "hasPointOfView": true },
+  "projects": [{ "id": "p1", "title": "Garden House", "rooms": [{ "id": "r1", "name": "Living room" }, { "id": "r2", "name": "Kitchen" }] }],
+  "references": [
+    { "id": "bio:education", "kind": "bio", "text": "SYNTHETIC TEST PROFILE. Alex studied design in Madison, Wisconsin, before moving to Portland." },
+    { "id": "bio:interests", "kind": "bio", "text": "Alex collects handmade ceramics and photographs ordinary shop windows on weekend walks." },
+    { "id": "bio:practice", "kind": "bio", "text": "Alex starts with a pencil sketch and keeps a drawer of paper scraps used for color studies." },
+    { "id": "bio:roots", "kind": "bio", "text": "Alex grew up near the Oregon coast and spent summers helping a relative repair wooden boats." },
+    { "id": "firm:history", "kind": "firm", "text": "Example Studio began in 2015 with two people sharing a small workspace. The practice now focuses on homes and neighborhood cafes. The team uses a weekly sample-table discussion to develop ideas together." },
+    { "id": "project:living", "kind": "project", "projectId": "p1", "roomId": "r1", "text": "At Garden House, the living room was planned around a dining table the family already owned. A lower sofa kept the view toward the garden open. The team tested the turning space using a full-size paper template. The reading corner pairs a woven chair with a small ceramic lamp." },
+    { "id": "project:kitchen", "kind": "project", "projectId": "p1", "roomId": "r2", "text": "The Garden House kitchen uses clay tiles and oak shelves. A glazed tile sample was tested beside the window at different times of day. The client wanted to keep everyday dishes within reach. The team left a section of the wall without upper cabinets to bring light farther into the room." }
+  ]
+}

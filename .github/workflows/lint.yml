@@ -73,6 +73,7 @@ jobs:
           node scripts/check-social-generation-route.cjs
           node scripts/check-story-activities.cjs
           node scripts/check-story-activity-ui.cjs
+          node scripts/check-activity-questions.cjs
 
   eslint:
     name: ESLint

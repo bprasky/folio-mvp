@@ -1096,3 +1096,6 @@ Keep prepared story Polish focused. Offer a separate configurator for firm/desig
 
 ## 2026-09-17 — A story format must launch an actual designer activity
 Selecting Q&A or20 Questions is not evidence of participation. Store original answers separately from generated copy, support save/resume, and require the designer to complete/review the activity before draft preparation. A suggested idea remains Needs your input until that occurs.
+
+## 2026-09-17 — Story setup is horizontal and personally grounded
+Use visible Topic → Story type → Interview steps. Topic choices are Designer, Firm History, Specific Project; project/room choices stay visible. Remove arbitrary angle and destination inputs; Folio and Instagram are defaults. Templates guide question intent, but questions must be generated from verified bio/project context (light personal references welcome), never served as the same static20 prompts for everyone.

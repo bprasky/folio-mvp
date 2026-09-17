@@ -374,3 +374,11 @@ Review: authored three20-question sets and four shorter formats; prototype valid
 - [ ] After explicit model/SQL approval: apply through migration runbook, implement authorized transactional adapter/routes, wire live Studio and verify durable save/reopen before release.
 
 Final checks: TypeScript budget902/904 with no new fingerprints; client boundary, migration discipline, all design-system guards and focused lint pass. The previous polish PR received its isolated Set-iteration compatibility fix. New activity changes remain a draft pending database approval and live backend integration.
+
+### Horizontal setup and contextual interviews — 2026-09-17
+- [x] Replace dropdown configuration with visible Topic → Story type steps; remove angle and destination fields.
+- [x] Replace fixed questions with source-cited context generation; default Folio and Instagram outputs.
+- [x] Verify revised UI, source boundaries and live synthetic question quality; update draft PR.
+Production database approval and real profile/source adapter remain outstanding; this correction does not authorize the pending migration.
+
+Verification: all three activity/interaction/generation suites pass; focused lint, client boundary and TypeScript budget902/904 pass. Horizontal cards verified at623px and1280px,390px has no overflow. Ten bounded synthetic provider calls informed the prompt; structural citations are checked but do not establish perfect entailment. Staged design guards pass; an unrelated in-progress FlowMosaic edit fails the working-tree raw-type guard and was left untouched. No schema changes or real profile generation.

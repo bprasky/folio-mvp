@@ -4,15 +4,15 @@ Status: reviewable component prototype and interview rules implemented; **not co
 
 ## What the designer does
 
-1. Choose the designer, the firm, or a published project. A project can use the whole project or one verified room.
-2. Choose 20 Questions with Folio, Q&A, material story, method, or firm history. Name the material for a material story. Optionally narrow the angle.
-3. Choose intended outputs: Folio, Instagram and/or LinkedIn. These are draft destinations, not social-account connections or publishing consent.
-4. Answer one question at a time. The twenty-question sets differ for designer, firm and project. The shorter activities have five questions each. Missing answers remain missing. All prompts pass the canonical arrivals gate; no grievance, fabricated premise or claimed testimony is inserted.
+1. Horizontal Topic step: Designer, Firm History, Specific Project. All choices are visible cards. Project and room choices are visible buttons; a project can stay general.
+2. Next horizontal step: choose20 Questions with Folio, Q&A, material story, method, or firm history from visible cards. There is no angle field.
+3. Every activity prepares for Folio and Instagram. No destination picker; no automatic social-account posting or publication consent.
+4. Answer one question at a time. The server generates questions from authorized biography and project references at explicit start; format templates contain intent guidance, not fixed questions. The shorter activities have five questions each. Missing answers remain missing. Generated questions pass the canonical arrivals gate and verify cited excerpts against supplied sources. These structural checks do not prove factual entailment; live synthetic evaluation also reviews unsupported implications.
 5. Save and return; reopen at the first unanswered question. A save failure retains the text and prevents a save-and-exit action from discarding it.
 6. Review the complete answers. Unanswered questions block draft preparation. A short answer to the example question gets a gentle specificity nudge, not a word-count claim of quality. Human review is required. Editing an answer clears that review and the derived draft.
 7. Prepare an exact-answer Q&A and selectable social excerpts. Original wording is retained without paraphrasing or automatic first-person invention. Longer answers are not silently truncated. This is the first drafting pass, not a claim that a material study has already been editorially rewritten.
 
-Profile suggestions come from explicit absence of an introduction or point-of-view field; this is not an AI judgment that a designer is lacking. The production context adapter must supply these facts from the authorized profile. The prototype uses synthetic data only.
+Profile suggestions come from explicit absence of an introduction or point-of-view field; this is not an AI judgment that a designer is lacking. The production context adapter must supply these facts from the authorized profile. The prototype uses synthetic data only. Its explicit Prepare my interview action makes a bounded call through the existing configured provider. Browsing, answering and resuming make no model calls. Generation failures never substitute a generic questionnaire.
 
 Default for review: typed answers. A preference question about reusing voice was left open; there is no new recording pipeline. Voice transcription, when added, must enter the same editable answer buffer and require review. It must not auto-complete an activity or publish a quote.
 
@@ -60,4 +60,14 @@ The component consumes `ActivityPersistence.create/save`. The local preview impl
 
 Run `node scripts/check-story-activities.cjs` and `node scripts/check-story-activity-ui.cjs`. They verify all three twenty-question sets, canonical prompt checks, project/room scope, missing/reviewed answer boundaries, exact wording, failure retention, save-before-exit, resume and review invalidation. These are not database integration tests.
 
-Run `node scripts/preview-story-activities.cjs` for the local prototype at port4183. It never calls an external model or saves designer data to production. Desktop/mobile review and schema validation accompany the PR; live persistence remains the explicit approval-dependent next step.
+Run `node scripts/preview-story-activities.cjs` for the local prototype at port4183. It uses the configured model only on explicit interview preparation, with the checked-in synthetic context. It never saves designer data to production. Desktop/mobile review and schema validation accompany the PR; live persistence remains the explicit approval-dependent next step.
+
+## Personalization revision
+Activity version2 removes static questionnaire arrays. Templates define counts and intent; factual hooks cite exact authorized source excerpts. Twenty Questions targets light favorites and place/object/routine prompts, limiting technical deep dives. Missing bio/project context returns a useful request for context rather than a fabricated personal history. The production adapter still needs to resolve real current-workspace bio/project references before this becomes live.
+
+Research references for interview design (not designer facts): Herman Miller’s [Bill Stumpf Q&A](https://www.hermanmiller.com/stories/why-magazine/design-q-and-a-bill-stumpf/) for concise questions about viewpoint and [Form and Function](https://www.hermanmiller.com/stories/why-magazine/form-and-function/) for questions anchored to an actual project and its everyday objects. No source questions were copied into a fixed questionnaire.
+
+### Live synthetic evaluation
+Ten bounded calls in this revision: three initial calls caught omitted empty evidence arrays; three parser checks passed but exposed repeated template wording and biography detours; three template-free calls returned valid20/20/5 questions; a final project-only context check returned five on-topic room questions. Synthetic outputs are recorded in scripts/fixtures/story-question-evaluation.json. Example: Madison/ceramics/coastal childhood produces different personal hooks from Providence/maps/music. Existing templates no longer supply fixed question text. No paid calls occur when answering or resuming.
+
+Limit: exact-quote validation establishes a traceable source excerpt, not full semantic entailment. Some generated questions remain more leading or verbose than ideal (including an assumed alternative sofa arrangement); further prompt quality iteration is needed before claiming flawless interviewing. This does not authorize production schema changes or establish a real-profile end-to-end flow.
