@@ -16,7 +16,14 @@ import type {
 
 const ANSWER_TEXT_MAX_CHARS = 600;
 
-export async function fetchRawCorpusLayer(designerId: string): Promise<RawCorpusLayer | null> {
+// Optional strict scope for Studio refreshes. Legacy unlock callers retain their
+// existing corpus; passing an empty project list intentionally returns no work.
+export interface EditorialCorpusScope {
+  organizationId: string | null;
+  projectIds: string[];
+}
+
+export async function fetchRawCorpusLayer(designerId: string, scope?: EditorialCorpusScope): Promise<RawCorpusLayer | null> {
   const designer = await prisma.user.findUnique({
     where: { id: designerId },
     select: {
@@ -37,6 +44,11 @@ export async function fetchRawCorpusLayer(designerId: string): Promise<RawCorpus
     where: {
       designerId,
       post: { status: 'PUBLISHED' },
+      ...(scope ? {
+        id: { in: scope.projectIds },
+        designerOrgId: scope.organizationId,
+        isPublic: true,
+      } : {}),
     },
     select: {
       id: true,
@@ -217,6 +229,7 @@ export async function fetchRawCorpusLayer(designerId: string): Promise<RawCorpus
     where: {
       designerId,
       status: { in: ['completed', 'scheduled', 'published'] },
+      ...(scope ? { angle: { designerId, organizationId: scope.organizationId } } : {}),
     },
     select: {
       id: true,

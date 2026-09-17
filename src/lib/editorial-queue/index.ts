@@ -13,16 +13,31 @@ export * from './types';
 import { prisma } from '@/lib/prisma';
 import { buildCorpusDigest } from './buildCorpusDigest';
 import { fetchRawCorpusLayer } from './fetchRawCorpusLayer';
+import type { EditorialCorpusScope } from './fetchRawCorpusLayer';
 import { extractAngles, persistAngles } from './extractAngles';
 import { assignFormat } from './assignFormat';
 import { generatePrompts } from './generatePrompts';
 import type { AngleType, CorpusDigest, ExtractedAngle, SignalEvidence } from './types';
 
+export class EditorialCorpusChangedError extends Error {
+  constructor() { super('Source projects changed during generation. Refresh your workspace and try again.'); }
+}
+
+// Model calls can take minutes. Recheck the entire input corpus before saving:
+// even an uncited project may have influenced the model's editorial framing.
+async function assertCurrentCorpus(designerId: string, scope: EditorialCorpusScope): Promise<void> {
+  const count = await prisma.project.count({
+    where: { id: { in: scope.projectIds }, designerId, designerOrgId: scope.organizationId,
+      isPublic: true, post: { status: 'PUBLISHED' } },
+  });
+  if (count !== new Set(scope.projectIds).size) throw new EditorialCorpusChangedError();
+}
+
 // Fetch + assemble in one call. Returns null when the designer doesn't exist;
 // callers check digest.maturity.eligibleSignalTypes.length (or the published
 // story count) for the three-story gate.
-export async function getCorpusDigestForDesigner(designerId: string): Promise<CorpusDigest | null> {
-  const raw = await fetchRawCorpusLayer(designerId);
+export async function getCorpusDigestForDesigner(designerId: string, scope?: EditorialCorpusScope): Promise<CorpusDigest | null> {
+  const raw = await fetchRawCorpusLayer(designerId, scope);
   if (!raw) return null;
   return buildCorpusDigest(raw);
 }
@@ -45,8 +60,9 @@ export interface AngleExtractionRun {
 export async function runAngleExtraction(
   designerId: string,
   organizationId: string | null = null,
+  scope?: EditorialCorpusScope,
 ): Promise<AngleExtractionRun> {
-  const digest = await getCorpusDigestForDesigner(designerId);
+  const digest = await getCorpusDigestForDesigner(designerId, scope);
   const base = { digest, persistedAngleIds: [] as string[], rejectedCount: 0 };
 
   // Three-story gate: no eligible signal computations means the corpus hasn't
@@ -58,12 +74,34 @@ export async function runAngleExtraction(
     return { ...base, status: 'no_signals' };
   }
 
+  if (scope) {
+    // Both dismissed and active ideas consume their supporting signals. A
+    // refresh must not charge for repeatedly proposing the same story.
+    const prior = await prisma.designerAngle.findMany({
+      where: { designerId, organizationId: scope.organizationId, queueItems: { some: { status: { not: 'expired' } } } },
+      select: { signalIds: true },
+    });
+    const used = new Set(prior.flatMap((angle) => angle.signalIds));
+    digest.signals = digest.signals.filter((signal) => !used.has(signal.id));
+    if (!digest.signals.length) return { ...base, status: 'no_signals' };
+  }
+
   const validated = await extractAngles(digest);
   if (validated === null) {
     return { ...base, status: 'llm_unavailable' };
   }
 
-  const persistedAngleIds = await persistAngles(designerId, organizationId, validated.accepted);
+  let accepted = validated.accepted;
+  if (scope) {
+    const used = new Set<string>();
+    accepted = accepted.filter((angle) => {
+      if (angle.signalIds.some((id) => used.has(id))) return false;
+      angle.signalIds.forEach((id) => used.add(id));
+      return true;
+    }).slice(0, DEFAULT_QUEUE_PIECES);
+    await assertCurrentCorpus(designerId, scope);
+  }
+  const persistedAngleIds = await persistAngles(designerId, scope ? scope.organizationId : organizationId, accepted);
   return {
     status: 'persisted',
     digest,
@@ -112,8 +150,9 @@ export async function generateQueueForDesigner(
   designerId: string,
   organizationId: string | null = null,
   maxPieces: number = DEFAULT_QUEUE_PIECES,
+  scope?: EditorialCorpusScope,
 ): Promise<QueueGenerationRun> {
-  const extraction = await runAngleExtraction(designerId, organizationId);
+  const extraction = await runAngleExtraction(designerId, organizationId, scope);
   if (extraction.status !== 'persisted' || !extraction.digest) {
     return { extraction, createdQueueItemIds: [] };
   }
@@ -133,6 +172,7 @@ export async function generateQueueForDesigner(
     const format = assignFormat(angle.angleType, publishedStoryCount);
     const prompts = await generatePrompts(angle, format);
     if (!prompts) continue; // model unavailable / unparseable — leave angle fresh for a retry
+    if (scope) await assertCurrentCorpus(designerId, scope);
 
     const item = await prisma.editorialQueueItem.create({
       data: {

@@ -19,9 +19,9 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { projectId, config } = body;
+    const { projectId, config, caption, exportId, expectedUpdatedAt, saveOnly = false } = body;
 
-    if (!projectId || !config) {
+    if (typeof projectId !== 'string' || !config || typeof config !== 'object' || Array.isArray(config) || (caption !== undefined && typeof caption !== 'string') || typeof saveOnly !== 'boolean' || (exportId !== undefined && typeof exportId !== 'string')) {
       return NextResponse.json(
         { error: 'projectId and config are required' },
         { status: 400 }
@@ -45,6 +45,26 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
+    const existing = exportId ? await prisma.instagramExport.findFirst({
+      where: { id: exportId, projectId, designerId: session.user.id },
+      select: { id: true, updatedAt: true },
+    }) : null;
+    if (exportId && !existing) return NextResponse.json({ error: 'Carousel not found' }, { status: 404 });
+    if (existing && (typeof expectedUpdatedAt !== 'string' || expectedUpdatedAt !== existing.updatedAt.toISOString())) {
+      return NextResponse.json({ error: 'This carousel changed in another session. Reload before saving.' }, { status: 409 });
+    }
+    if ((config.aspectRatio && !['1:1', '4:5', '9:16'].includes(config.aspectRatio)) ||
+      (config.watermarkStyle && !['folio_x', 'folio_presents', 'minimal'].includes(config.watermarkStyle)) ||
+      (config.headlinePosition && !['bottom_left', 'bottom_center', 'top_left'].includes(config.headlinePosition)) ||
+      (config.slideCount !== undefined && ![3, 4, 5].includes(config.slideCount)) ||
+      (config.headline !== undefined && typeof config.headline !== 'string') ||
+      (config.bioText !== undefined && typeof config.bioText !== 'string') ||
+      (config.bioEnabled !== undefined && typeof config.bioEnabled !== 'boolean') ||
+      (config.roomId !== undefined && typeof config.roomId !== 'string') ||
+      (config.selectedImageUrls !== undefined && (!Array.isArray(config.selectedImageUrls) || config.selectedImageUrls.some((url: unknown) => typeof url !== 'string' || !project.images.some((image) => image.url === url))))) {
+      return NextResponse.json({ error: 'Invalid carousel settings or project images' }, { status: 400 });
+    }
+
     const designer = project.designer;
 
     const exportConfig: ExportConfig = {
@@ -63,7 +83,7 @@ export async function POST(request: NextRequest) {
       roomId: config.roomId,
     };
 
-    const slides = await generateAllSlides(exportConfig, designer?.profileImage || undefined);
+    const slides = saveOnly ? [] : await generateAllSlides(exportConfig, designer?.profileImage || undefined);
 
     // Return images as base64-encoded data URLs for client-side download
     const images = slides.map((slide) => ({
@@ -72,23 +92,37 @@ export async function POST(request: NextRequest) {
       dataUrl: `data:image/jpeg;base64,${slide.buffer.toString('base64')}`,
     }));
 
-    // Save export record
-    await prisma.instagramExport.create({
-      data: {
-        projectId,
-        designerId: session.user.id,
-        config: exportConfig as any,
-        headline: exportConfig.headline,
-        bioText: exportConfig.bioText,
-        status: 'generated',
-      },
-    });
-
-    return NextResponse.json({ images });
+    const updatedAt = new Date(Math.max(Date.now(), existing ? existing.updatedAt.getTime() + 1 : 0));
+    const data = {
+      config: exportConfig as any,
+      headline: exportConfig.headline,
+      bioText: exportConfig.bioText ?? null,
+      ...(caption !== undefined ? { caption } : {}),
+      status: saveOnly ? 'draft' : 'generated',
+      imageUrls: [],
+      exportedAt: null,
+      updatedAt,
+    };
+    let savedId: string;
+    if (existing) {
+      const saved = await prisma.instagramExport.updateMany({
+        where: { id: existing.id, projectId, designerId: session.user.id, updatedAt: existing.updatedAt },
+        data,
+      });
+      if (saved.count !== 1) return NextResponse.json({ error: 'This carousel changed while saving. Reload before trying again.' }, { status: 409 });
+      savedId = existing.id;
+    } else {
+      const saved = await prisma.instagramExport.create({
+        data: { ...data, projectId, designerId: session.user.id },
+        select: { id: true },
+      });
+      savedId = saved.id;
+    }
+    return NextResponse.json({ images, export: { id: savedId, updatedAt: updatedAt.toISOString() } });
   } catch (error: any) {
     console.error('[instagram-export/generate-images]', error);
     return NextResponse.json(
-      { error: error.message || 'Failed to generate images' },
+      { error: 'Unable to save or export this carousel. Please try again.' },
       { status: 500 }
     );
   }

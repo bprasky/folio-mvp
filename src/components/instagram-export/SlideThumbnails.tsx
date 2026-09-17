@@ -1,8 +1,10 @@
 'use client';
 
+import type { AspectRatio } from '@/lib/instagram-export/generate-images';
 import type { SlideData } from './InstagramExportEditor';
 
 interface Props {
+  aspectRatio: AspectRatio;
   slides: SlideData[];
   activeIndex: number;
   onSelect: (index: number) => void;
@@ -22,18 +24,20 @@ const SLIDE_BG: Record<string, string> = {
   cta: 'linear-gradient(135deg, #F5F0EB, #EDE6DD)',
 };
 
-export function SlideThumbnails({ slides, activeIndex, onSelect }: Props) {
+export function SlideThumbnails({ aspectRatio, slides, activeIndex, onSelect }: Props) {
   return (
-    <div style={{ display: 'flex', gap: '6px', marginTop: '16px', paddingLeft: '2px' }}>
+    <div style={{ display: 'flex', gap: '6px', marginTop: '16px', padding: '2px', maxWidth: '100%', overflowX: 'auto' }}>
       {slides.map((slide, i) => {
         const isLight = slide.type === 'bio' || slide.type === 'cta';
         return (
           <button
             key={`${slide.type}-${i}`}
             onClick={() => onSelect(i)}
+            aria-label={`Slide ${i + 1}: ${SLIDE_LABELS[slide.type]}`}
+            aria-pressed={i === activeIndex}
             style={{
               width: '64px',
-              height: '80px',
+              aspectRatio: aspectRatio.replace(':', ' / '),
               borderRadius: '4px',
               overflow: 'hidden',
               border: i === activeIndex ? '2px solid #2C2420' : '2px solid transparent',

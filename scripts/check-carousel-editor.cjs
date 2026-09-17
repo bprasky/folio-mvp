@@ -1,0 +1,83 @@
+const assert = require('node:assert/strict');
+const fs = require('node:fs');
+const vm = require('node:vm');
+const ts = require('typescript');
+const React = require('react');
+const { JSDOM } = require('jsdom');
+const { createRoot } = require('react-dom/client');
+const { act } = React;
+const { renderToStaticMarkup } = require('react-dom/server');
+const dom = new JSDOM('<div id="root"></div>', {url:'https://fixture.test/designer/projects/p1/instagram'});
+global.window = dom.window; global.document = dom.window.document;
+global.IS_REACT_ACT_ENVIRONMENT = true;
+const requests = [];
+const fetchMock = (url, options) => new Promise(resolve => requests.push({ url, body: JSON.parse(options.body), resolve }));
+function load(file) {
+  const loaded = { exports: {} };
+  const code = ts.transpileModule(fs.readFileSync(file, 'utf8'), { compilerOptions: { jsx: ts.JsxEmit.ReactJSX, module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2020 } }).outputText;
+  vm.runInNewContext(code, { exports: loaded.exports, module: loaded, console, window: dom.window, URL, fetch: fetchMock, require: id => {
+    if (id === 'next/link') return { default: ({ children, ...props }) => React.createElement('a', props, children) };
+    if (id.startsWith('./')) return load(require('node:path').resolve(require('node:path').dirname(file), id + '.tsx'));
+    return require(id);
+  } });
+  return loaded.exports;
+}
+const { InstagramExportEditor } = load('src/components/instagram-export/InstagramExportEditor.tsx');
+const { SlidePreview } = load('src/components/instagram-export/SlidePreview.tsx');
+const { SlideThumbnails } = load('src/components/instagram-export/SlideThumbnails.tsx');
+const { CampaignWizard } = load('src/components/instagram/CampaignWizard.tsx');
+const props = { project: { id: 'p1', title: 'A home' }, post: { slug: 'home' }, designer: { name: 'Designer' }, images: [{id:'1',url:'https://fixture.test/a.jpg',room:'r1'}, {id:'2',url:'https://fixture.test/b.jpg',room:'r2'}], rooms: [{id:'r1',name:'Kitchen'}, {id:'r2',name:'Bedroom'}, {id:'r3',name:'Empty'}], initialExport: { id:'saved',updatedAt:'2026-09-01T00:00:00.000Z',config: { aspectRatio:'1:1',selectedImageUrls:['https://fixture.test/b.jpg'],bioEnabled:false },headline:'Saved headline',caption:'Saved caption' } };
+async function main() {
+  for (const ratio of ['1:1','4:5','9:16']) {
+    const markup = renderToStaticMarkup(React.createElement(SlidePreview, {slides:[{type:'hero',imageUrl:'fixture.jpg'}],activeIndex:0,aspectRatio:ratio,headline:'Headline',headlinePosition:'bottom_left',watermarkStyle:'minimal',designerName:'Designer',projectName:'Home',caption:'short',onSelectSlide() {}}));
+    assert.ok(markup.includes(`aspect-ratio:${ratio.replace(':',' / ')}`));
+    assert.ok(!markup.includes('folio-design-system'));
+    assert.ok(!markup.includes('short...'));
+    const thumbs = renderToStaticMarkup(React.createElement(SlideThumbnails,{slides:[{type:'hero'}],activeIndex:0,aspectRatio:ratio,onSelect(){}}));
+    assert.ok(thumbs.includes('overflow-x:auto'));
+  }
+  const campaign = renderToStaticMarkup(React.createElement(CampaignWizard, {projectId:'p1',projectTitle:'Home',onClose(){}}));
+  assert.ok(campaign.includes('max-h-[calc(100dvh-2rem)]'));
+  assert.ok(campaign.includes('overflow-y-auto'));
+  assert.ok(campaign.includes('aria-label="Close campaign"'));
+  assert.ok(!campaign.includes('folio-design-system'));
+  const root = createRoot(document.getElementById('root'));
+  await act(async () => root.render(React.createElement(InstagramExportEditor, props)));
+  assert.equal(requests.length,0,'Opening saved export must not generate');
+  assert.ok(document.body.textContent.includes('Saved headline'));
+  assert.ok(!document.body.textContent.includes('folio-design-system'));
+  assert.ok([...document.querySelectorAll('a')].some(a => a.getAttribute('href') === '/designer/studio?view=posts&project=p1'), document.body.innerHTML.slice(0,2500));
+  const click = async text => act(async () => [...document.querySelectorAll('button')].find(b=>b.textContent===text).click());
+  await click('Save draft');
+  const save = requests.at(-1);
+  assert.equal(save.body.caption, 'Saved caption');
+  assert.equal(save.body.exportId, 'saved');
+  assert.equal(save.body.saveOnly, true);
+  await act(async () => save.resolve({ok:true,json:async()=>({export:{id:'saved',updatedAt:'2026-09-02T00:00:00.000Z'},images:[]})}));
+  assert.ok(window.location.search.includes('export=saved'));
+  await click('Save draft');
+  assert.equal(requests.at(-1).body.expectedUpdatedAt,'2026-09-02T00:00:00.000Z','Next save uses returned concurrency token');
+  await act(async () => requests.at(-1).resolve({ok:true,json:async()=>({export:{id:'saved',updatedAt:'2026-09-03T00:00:00.000Z'},images:[]})}));
+  await click('Kitchen');
+  const kitchen = requests.find(r=>r.url.endsWith('headlines') && r.body.roomId==='r1');
+  await click('Bedroom');
+  const bedroom = requests.find(r=>r.url.endsWith('headlines') && r.body.roomId==='r2');
+  await act(async () => bedroom.resolve({ok:true,json:async()=>({headlines:['Bedroom headline']})}));
+  await act(async () => kitchen.resolve({ok:true,json:async()=>({headlines:['Stale kitchen headline']})}));
+  assert.ok(document.body.textContent.includes('Bedroom headline'));
+  assert.ok(!document.body.textContent.includes('Stale kitchen headline'));
+  await click('Full Project');
+  assert.ok(requests.some(r=>r.url.endsWith('headlines') && r.body.roomId===null),'Returning to full project regenerates context');
+  const selected = [...document.querySelectorAll('button[aria-pressed="true"]')];
+  assert.ok(selected.length>0,'Slide selection remains valid');
+  await click('Empty');
+  assert.equal(document.querySelector('img[alt="hero"]'),null,'Empty room must not retain another room image');
+  await act(async () => root.render(React.createElement(InstagramExportEditor, {...props,key:'five',initialExport:{...props.initialExport,config:{slideCount:5,bioEnabled:true,selectedImageUrls:['a','b','c','d']}}})));
+  await act(async () => [...document.querySelectorAll('button[aria-label^="Slide "]')].at(-1).click());
+  await click('3 slides');
+  assert.ok(document.querySelector('button[aria-label="Slide 3: CTA Slide"][aria-pressed="true"]'),'Reducing slides clamps selected index');
+  assert.ok(document.body.textContent.includes('Full Editorial'));
+  await act(async () => root.unmount());
+  console.log('Carousel regression checks passed: saved reopen, 3 ratios, annotations, stale responses, project reset, empty room, selection.');
+}
+main().catch(error=>{console.error(error);process.exitCode=1;});
