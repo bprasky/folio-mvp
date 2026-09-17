@@ -4,9 +4,9 @@ import { useRef, useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { ArrowUpRight, Download, FileText, Pencil, Share2 } from 'lucide-react';
+import { ArrowUpRight, Download, FileText, Pencil } from 'lucide-react';
 import { toast } from 'sonner';
-import { CampaignWizard } from '@/components/instagram/CampaignWizard';
+import { ProjectSocialPanel } from '@/components/publishing-studio/ProjectSocialPanel';
 import ConfirmDialog from '@/components/ui/ConfirmDialog';
 import ExportSpecModal from './ExportSpecModal';
 import OverviewModal from './OverviewModal';
@@ -23,7 +23,6 @@ export default function PublishedProjectHome({ project, slug, coverUrl, canUseSo
   const router = useRouter();
   const [showExportModal, setShowExportModal] = useState(false);
   const [showOverviewModal, setShowOverviewModal] = useState(false);
-  const [showCampaignWizard, setShowCampaignWizard] = useState(false);
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [isOpeningDraft, setIsOpeningDraft] = useState(false);
   const openingDraft = useRef(false);
@@ -136,16 +135,8 @@ export default function PublishedProjectHome({ project, slug, coverUrl, canUseSo
         </div>
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {canUseSocialTools && (
-          <div className={cardClass}>
-            <Share2 className="h-5 w-5 text-[var(--accent)]" />
-            <h3 className="folio-h3">Social hub</h3>
-            <p className="folio-body text-folio-text-secondary">Turn your project into Instagram carousels and room spotlights.</p>
-            <Link href={`/designer/projects/${project.id}/instagram`} className="folio-ui underline underline-offset-4">Create a carousel</Link>
-            <button type="button" onClick={() => setShowCampaignWizard(true)} className="folio-ui underline underline-offset-4">Create a campaign</button>
-          </div>
-        )}
+      {canUseSocialTools && <ProjectSocialPanel projectId={project.id} />}
+      <div className="grid gap-4 sm:grid-cols-2">
         <button type="button" onClick={() => setShowExportModal(true)} className={cardClass}>
           <Download className="h-5 w-5 text-[var(--accent)]" />
           <span className="folio-h3">Export product list</span>
@@ -161,7 +152,6 @@ export default function PublishedProjectHome({ project, slug, coverUrl, canUseSo
       </div>
       <ExportSpecModal open={showExportModal} onClose={() => setShowExportModal(false)} projectId={project.id} onExport={handleExport} />
       <OverviewModal open={showOverviewModal} onClose={() => setShowOverviewModal(false)} project={project} />
-      {canUseSocialTools && showCampaignWizard && <CampaignWizard projectId={project.id} projectTitle={project.title} onClose={() => setShowCampaignWizard(false)} />}
       <ConfirmDialog open={showEditDialog} title="Return this project to a draft?" description="Your story will leave public view while you edit. Your photos, story, and selections are kept. Publish again when your changes are ready." confirmText="Unpublish and edit" onConfirm={openDraft} onCancel={() => setShowEditDialog(false)} />
     </section>
   );

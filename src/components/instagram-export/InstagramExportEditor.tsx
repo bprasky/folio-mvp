@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import Link from 'next/link';
 import { SlidePreview } from './SlidePreview';
 import { SlideThumbnails } from './SlideThumbnails';
@@ -20,6 +20,7 @@ export interface SlideData {
 }
 
 interface Props {
+  initialExport?: { id: string; updatedAt?: string; config: any; headline?: string | null; bioText?: string | null; caption?: string | null } | null;
   project: {
     id: string;
     title: string;
@@ -59,37 +60,42 @@ interface Props {
 
 export type TabType = 'format' | 'headline' | 'designer' | 'caption';
 
-export function InstagramExportEditor({ project, post, designer, images, rooms }: Props) {
+export function InstagramExportEditor({ project, designer, images, rooms, initialExport }: Props) {
+  const saved = initialExport?.config || {};
   const [activeTab, setActiveTab] = useState<TabType>('format');
   const [activeSlideIndex, setActiveSlideIndex] = useState(0);
 
   // Format state
-  const [aspectRatio, setAspectRatio] = useState<AspectRatio>('4:5');
-  const [watermarkStyle, setWatermarkStyle] = useState<WatermarkStyle>('folio_x');
-  const [headlinePosition, setHeadlinePosition] = useState<HeadlinePosition>('bottom_left');
-  const [slideCount, setSlideCount] = useState<3 | 4 | 5>(5);
+  const [aspectRatio, setAspectRatio] = useState<AspectRatio>(['1:1', '4:5', '9:16'].includes(saved.aspectRatio) ? saved.aspectRatio : '4:5');
+  const [watermarkStyle, setWatermarkStyle] = useState<WatermarkStyle>(['folio_x', 'folio_presents', 'minimal'].includes(saved.watermarkStyle) ? saved.watermarkStyle : 'folio_x');
+  const [headlinePosition, setHeadlinePosition] = useState<HeadlinePosition>(['bottom_left', 'bottom_center', 'top_left'].includes(saved.headlinePosition) ? saved.headlinePosition : 'bottom_left');
+  const [slideCount, setSlideCount] = useState<3 | 4 | 5>([3, 4, 5].includes(saved.slideCount) ? saved.slideCount : 5);
 
   // Headline state
   const [quoteOptions, setQuoteOptions] = useState<string[]>([]);
-  const [selectedHeadline, setSelectedHeadline] = useState('');
+  const [selectedHeadline, setSelectedHeadline] = useState(initialExport?.headline ?? saved.headline ?? '');
   const [quotesLoading, setQuotesLoading] = useState(false);
 
   // Designer/bio state
-  const [bioEnabled, setBioEnabled] = useState(true);
+  const [bioEnabled, setBioEnabled] = useState(saved.bioEnabled !== false);
   const [bioOptions, setBioOptions] = useState<string[]>([]);
-  const [selectedBio, setSelectedBio] = useState('');
+  const [selectedBio, setSelectedBio] = useState(initialExport?.bioText ?? saved.bioText ?? '');
   const [bioLoading, setBioLoading] = useState(false);
 
   // Caption state
-  const [caption, setCaption] = useState('');
+  const [caption, setCaption] = useState(initialExport?.caption ?? '');
   const [captionLoading, setCaptionLoading] = useState(false);
 
   // Room selection
-  const [selectedRoom, setSelectedRoom] = useState<string | null>(null);
+  const [selectedRoom, setSelectedRoom] = useState<string | null>(typeof saved.roomId === 'string' ? saved.roomId : null);
 
+  const roomChanged = useRef(false);
+  const headlineRequest = useRef(0);
+  const captionRequest = useRef(0);
+  const [generationError, setGenerationError] = useState<string | null>(null);
   // Image selection
   const [selectedImageUrls, setSelectedImageUrls] = useState<string[]>(
-    images.slice(0, 5).map((img) => img.url)
+    Array.isArray(saved.selectedImageUrls) ? saved.selectedImageUrls.filter((url: unknown): url is string => typeof url === 'string') : images.slice(0, 5).map((img) => img.url)
   );
 
   // Build slide sequence
@@ -123,25 +129,29 @@ export function InstagramExportEditor({ project, post, designer, images, rooms }
     ? images.filter((img) => img.room === selectedRoom || img.room === rooms.find((r) => r.id === selectedRoom)?.name)
     : images;
 
-  // Auto-generate on mount
-  useEffect(() => {
-    generateQuotes();
-    generateBio();
-  }, []);
-
-  // Regenerate when room changes
-  useEffect(() => {
-    if (selectedRoom !== null) {
-      generateQuotes();
-      // Update selected images based on room
-      const roomImages = filteredImages.slice(0, 5).map((img) => img.url);
-      if (roomImages.length > 0) setSelectedImageUrls(roomImages);
-    }
-  }, [selectedRoom]);
+  const changeRoom = (roomId: string | null) => {
+    if (roomId === selectedRoom) return;
+    headlineRequest.current++;
+    captionRequest.current++;
+    roomChanged.current = true;
+    setSelectedRoom(roomId);
+    const roomName = rooms.find((room) => room.id === roomId)?.name;
+    setSelectedImageUrls((roomId ? images.filter((img) => img.room === roomId || img.room === roomName) : images).slice(0, 5).map((img) => img.url));
+    setActiveSlideIndex(0);
+    setSelectedHeadline('');
+    setQuoteOptions([]);
+    setCaption('');
+    setCaptionLoading(false);
+    setGenerationError(null);
+  };
+  const safeSlideIndex = Math.min(activeSlideIndex, slides.length - 1);
+  useEffect(() => { setActiveSlideIndex((index) => Math.min(index, slides.length - 1)); }, [slides.length]);
 
   const generateQuotes = useCallback(
     async (feedback?: string) => {
+      const request = ++headlineRequest.current;
       setQuotesLoading(true);
+      setGenerationError(null);
       try {
         const res = await fetch('/api/instagram-export/generate-headlines', {
           method: 'POST',
@@ -153,17 +163,19 @@ export function InstagramExportEditor({ project, post, designer, images, rooms }
           }),
         });
         const data = await res.json();
+        if (!res.ok) throw new Error('Could not generate headlines. Please try again.');
+        if (request !== headlineRequest.current) return;
         if (data.headlines?.length) {
           setQuoteOptions(data.headlines);
-          if (!selectedHeadline) setSelectedHeadline(data.headlines[0]);
+          setSelectedHeadline((current: string) => current || data.headlines[0]);
         }
       } catch (error) {
-        console.error('Failed to generate quotes:', error);
+        if (request === headlineRequest.current) setGenerationError(error instanceof Error ? error.message : 'Could not generate headlines.');
       } finally {
-        setQuotesLoading(false);
+        if (request === headlineRequest.current) setQuotesLoading(false);
       }
     },
-    [project.id, selectedRoom, selectedHeadline]
+    [project.id, selectedRoom]
   );
 
   const generateBio = useCallback(
@@ -182,7 +194,7 @@ export function InstagramExportEditor({ project, post, designer, images, rooms }
         const data = await res.json();
         if (data.bios?.length) {
           setBioOptions(data.bios);
-          if (!selectedBio) setSelectedBio(data.bios[0]);
+          setSelectedBio((current: string) => current || data.bios[0]);
         }
       } catch (error) {
         console.error('Failed to generate bio:', error);
@@ -190,11 +202,12 @@ export function InstagramExportEditor({ project, post, designer, images, rooms }
         setBioLoading(false);
       }
     },
-    [project.id, designer?.id, selectedBio]
+    [project.id, designer?.id]
   );
 
   const generateCaption = useCallback(async () => {
     if (!selectedHeadline) return;
+    const request = ++captionRequest.current;
     setCaptionLoading(true);
     try {
       const res = await fetch('/api/instagram-export/generate-caption', {
@@ -207,20 +220,33 @@ export function InstagramExportEditor({ project, post, designer, images, rooms }
         }),
       });
       const data = await res.json();
-      if (data.caption) setCaption(data.caption);
+      if (!res.ok) throw new Error('Could not generate caption. Please try again.');
+      if (request === captionRequest.current && data.caption) setCaption(data.caption);
     } catch (error) {
-      console.error('Failed to generate caption:', error);
+      if (request === captionRequest.current) setGenerationError(error instanceof Error ? error.message : 'Could not generate caption.');
     } finally {
-      setCaptionLoading(false);
+      if (request === captionRequest.current) setCaptionLoading(false);
     }
   }, [project.id, selectedRoom, selectedHeadline]);
 
+  useEffect(() => {
+    if (!initialExport || roomChanged.current) generateQuotes();
+    const requestState = headlineRequest;
+    return () => { requestState.current++; };
+  }, [generateQuotes, initialExport, selectedRoom]);
+  useEffect(() => { if (!initialExport) generateBio(); }, [generateBio, initialExport]);
+
   // Auto-generate caption when headline is selected
   useEffect(() => {
-    if (selectedHeadline && !caption) {
+    if (selectedHeadline && !caption && (!initialExport || roomChanged.current)) {
       generateCaption();
     }
-  }, [selectedHeadline]);
+  }, [selectedHeadline, caption, generateCaption, initialExport]);
+
+  useEffect(() => {
+    const requestState = captionRequest;
+    return () => { requestState.current++; };
+  }, []);
 
   // Tab auto-navigation: switch to relevant slide when tab changes
   const handleTabChange = (tab: TabType) => {
@@ -260,14 +286,17 @@ export function InstagramExportEditor({ project, post, designer, images, rooms }
           maxWidth: '1280px',
           margin: '0 auto',
           display: 'flex',
-          height: '64px',
+          minHeight: '64px',
+          flexWrap: 'wrap',
+          gap: '12px',
           alignItems: 'center',
           justifyContent: 'space-between',
-          padding: '0 24px',
+          padding: '12px 16px',
         }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '16px', flexWrap: 'wrap' }}>
             <Link
-              href={`/p/${post.slug}`}
+              href={`/designer/studio?view=posts&project=${project.id}`}
+              aria-label="Back to Publishing Studio"
               style={{ color: '#8B7B68', transition: 'color 0.2s', display: 'flex', alignItems: 'center' }}
             >
               <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
@@ -278,14 +307,16 @@ export function InstagramExportEditor({ project, post, designer, images, rooms }
               <span style={{ fontFamily: "var(--font-headline)", fontSize: 'var(--type-h4)', fontStyle: 'italic', color: '#2C2420' }}>
                 folio
               </span>
-              <span style={{ color: '#D4C9BC', fontSize: 'var(--type-h4)', fontWeight: 200 }}>|</span> /* folio-design-system: off-scale */
+              <span style={{ color: '#D4C9BC', fontSize: 'var(--type-h4)', fontWeight: 200 }}>|</span> {/* folio-design-system: off-scale */}
               <span style={{ fontFamily: "'Helvetica Neue', sans-serif", fontSize: 'var(--type-meta)', letterSpacing: 'var(--ls-wide)', textTransform: 'uppercase' as const, color: '#8B7B68' }}>
-                Share to Instagram
+                Instagram carousel
               </span>
             </div>
           </div>
 
+          <Link href={`/designer/projects/${project.id}`} style={{ color: '#8B7B68', fontSize: 'var(--type-meta)' }}>View project</Link>
           <ExportButton
+            initialExport={initialExport}
             projectId={project.id}
             config={{
               aspectRatio,
@@ -306,9 +337,9 @@ export function InstagramExportEditor({ project, post, designer, images, rooms }
       {/* Room selector */}
       {rooms.length > 1 && (
         <div style={{ borderBottom: '1px solid #E8E0D8', background: '#FAF7F4' }}>
-          <div style={{ maxWidth: '1280px', margin: '0 auto', display: 'flex', gap: '8px', padding: '12px 24px' }}>
+          <div style={{ maxWidth: '1280px', margin: '0 auto', display: 'flex', flexWrap: 'wrap', gap: '8px', padding: '12px 16px' }}>
             <button
-              onClick={() => setSelectedRoom(null)}
+              onClick={() => changeRoom(null)}
               style={{
                 borderRadius: '20px',
                 padding: '6px 16px',
@@ -326,7 +357,7 @@ export function InstagramExportEditor({ project, post, designer, images, rooms }
             {rooms.map((room) => (
               <button
                 key={room.id}
-                onClick={() => setSelectedRoom(room.id)}
+                onClick={() => changeRoom(room.id)}
                 style={{
                   borderRadius: '20px',
                   padding: '6px 16px',
@@ -348,18 +379,21 @@ export function InstagramExportEditor({ project, post, designer, images, rooms }
 
       {/* Main layout */}
       <div style={{
-        maxWidth: '1280px',
+        maxWidth: '900px',
         margin: '0 auto',
         display: 'flex',
-        gap: '48px',
-        padding: '32px 24px',
+        flexWrap: 'wrap',
+        justifyContent: 'center',
+        gap: '32px',
+        padding: '32px 16px',
         alignItems: 'flex-start',
       }}>
         {/* Left: Preview */}
-        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', width: '100%', maxWidth: '380px', minWidth: 0 }}>
           <SlidePreview
+            aspectRatio={aspectRatio}
             slides={slides}
-            activeIndex={activeSlideIndex}
+            activeIndex={safeSlideIndex}
             onSelectSlide={setActiveSlideIndex}
             headline={selectedHeadline}
             headlinePosition={headlinePosition}
@@ -374,14 +408,16 @@ export function InstagramExportEditor({ project, post, designer, images, rooms }
             designerHandle={designerHandle}
           />
           <SlideThumbnails
+            aspectRatio={aspectRatio}
             slides={slides}
-            activeIndex={activeSlideIndex}
+            activeIndex={safeSlideIndex}
             onSelect={setActiveSlideIndex}
           />
         </div>
 
         {/* Right: Controls */}
-        <div style={{ width: '380px', flexShrink: 0 }}>
+        <div style={{ width: '100%', maxWidth: '380px', minWidth: 0 }}>
+          {generationError && <p role="alert" style={{ marginBottom: '16px', color: '#A33' }}>{generationError}</p>}
           {/* Tab navigation */}
           <div style={{
             display: 'flex',
@@ -398,7 +434,7 @@ export function InstagramExportEditor({ project, post, designer, images, rooms }
                 style={{
                   flex: 1,
                   borderRadius: '8px',
-                  padding: '8px 12px',
+                  padding: '8px 6px',
                   fontSize: 'var(--type-meta)',
                   fontWeight: 'var(--w-h1)',
                   border: 'none',

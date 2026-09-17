@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/app/api/auth/[...nextauth]/options';
 import { selectCampaignContent, CampaignPreset } from '@/lib/instagram/campaign/selectCampaignContent';
+import { assertProjectWrite } from '@/lib/authz/access';
 
 export const runtime = 'nodejs';
 
@@ -26,6 +27,12 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Preview includes source text; authenticate the project before reading it.
+    try {
+      await assertProjectWrite(session.user.id, projectId);
+    } catch {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    }
     // Get campaign content selection
     const contentSelection = await selectCampaignContent(projectId, preset);
 

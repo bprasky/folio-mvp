@@ -61,6 +61,12 @@ jobs:
       - run: npm ci
       - run: npx prisma generate
       - run: npm run test:core
+      - name: Publishing Studio regression checks
+        run: |
+          node scripts/check-publishing-studio-data.cjs
+          node scripts/check-studio-recommendations.cjs
+          node scripts/check-carousel-editor.cjs
+          node scripts/check-carousel-persistence.cjs
 
   eslint:
     name: ESLint

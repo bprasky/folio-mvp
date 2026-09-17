@@ -263,3 +263,49 @@ resolved sizes are arithmetic against the real tokens and column widths, not
 observed rendering. The `wide` Pattern 3 bar is unchanged. The caption is still
 duplicated as the teaser beneath it (`articleFolioLines` lifts the first eligible
 sentence out of the article body) — a separate, known issue, untouched.
+
+# Social Studio review and landing specification — 2026-09-16
+
+Scope: review the reported campaign/carousel cleanliness and navigation; specify the coordinated Studio experience before expansion.
+
+- [x] Inspect the current carousel/editor and campaign entry points and record concrete code findings.
+- [x] Reconcile the proposal with the existing spotlight/social publishing specification.
+- [x] Write a staged UX proposal and acceptance criteria in docs/reviews/SOCIAL_STUDIO_LAYOUT_REVIEW_2026-09-16.md.
+- [ ] Complete signed-in visual review of the supplied project and both originating actions (available browser is signed out).
+- [x] Implement cleanup and the shared Studio foundation; native publishing remains gated below.
+
+Review: found eight literal developer annotations, fixed-width left-heavy layout, portrait-only preview despite format selection, and an unbounded campaign modal. Current source distinguishes page vs modal, so reported duplicate live routing is not yet reproduced. Review/spec only; no application or production changes.
+
+# Global publishing hub evaluation — 2026-09-17
+
+- [x] Inspect dropdown, editorial queue UI/API, source relationships and recommendation gate.
+- [x] Evaluate global hub with editorial/posts/campaigns views and contextual project entry.
+- [x] Revise the social Studio review with navigation, filters, source/consent boundaries and staged delivery.
+
+Review: updated docs/reviews/SOCIAL_STUDIO_LAYOUT_REVIEW_2026-09-16.md. Current queue supports idea/question previews, but answer-and-launch is a placeholder and Refresh queue is an initial unlock call. Proposed hub is always accessible; the three-story threshold applies only to recommendations. Screenshot not attached; evaluation is source-based. No application/schema/production changes.
+
+### Publishing Studio clarification — 2026-09-17
+
+- [x] Preserve project social/campaign sections as views of shared Studio records and actions.
+- [x] Include editorial-post-level campaigns and cross-project campaign composition.
+- [x] Specify prominent AI story proposals grounded in cross-project signals, with evidence, designer input, and linked editorial/social outputs.
+
+Review: Publishing Studio name accepted. Spec updated; no application changes or AI generation performed. Proposal builds on existing digest/signals/angle code; recurring refresh and completed publishing remain implementation work.
+
+# Publishing Studio implementation — 2026-09-17
+
+Approved scope: global Publishing Studio with project-level views of the same work, editorial and social recommendations across projects, posts and campaigns; preserve source approval and publishing rules. Existing unrelated local changes remain untouched.
+
+- [x] Audit persisted content, source ownership and branch baseline; reuse existing models where semantically appropriate.
+- [x] Build shared authorized Studio listing and global/project navigation with project/status/search filters.
+- [x] Connect saved campaigns/posts and editorial recommendations to honest supported actions and source evidence.
+- [x] Fix carousel annotations, responsive layout, preview ratio and campaign overflow.
+- [x] Implement feasible creation/continuation paths; explicitly identify any new persistence contract requiring scoped schema review.
+- [x] Verify source isolation, navigation, filters, layout and representative flows; run required repository checks and review diff.
+- [x] Commit/push scoped implementation and report remaining gates precisely.
+
+Plan check-in: approved spec is the implementation basis. No unreviewed schema edits or production data writes. Any required schema addition will be authored and shown before application under the repository migration rules.
+
+Implementation review: shared global/project records, workspace authorization, editorial ideas and existing stories, source-based recommendations, saved carousel resume/save/export, corrected responsive previews and campaign modal shipped in the scoped branch. Four regression scripts pass and are wired into CI. Production build, focused lint (warnings only), client boundary, migration discipline and all seven design-system checks pass; TypeScript ratchet passes (903 diagnostics against baseline 904). Local actual-component browser fixtures verified desktop/mobile layouts, filtering and saved-item navigation; production signed-in verification and live AI generation were not performed. No schema or production writes.
+
+Remaining: native standalone story answers/publication, immutable approved social versions, cross-project campaign composition and public/feed integration require the additive proposal in docs/reviews/PUBLISHING_STUDIO_SCHEMA_PROPOSAL.md. Proposed Prisma blocks validate in an isolated copy; applying them awaits the explicit schema review required by AGENTS.md.

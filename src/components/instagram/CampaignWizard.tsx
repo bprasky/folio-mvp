@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { FaInstagram, FaTimes, FaDownload, FaSpinner } from 'react-icons/fa';
+import { FaTimes, FaDownload, FaSpinner } from 'react-icons/fa';
 
 interface CampaignWizardProps {
   projectId: string;
@@ -200,29 +200,30 @@ export function CampaignWizard({ projectId, projectTitle, onClose }: CampaignWiz
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-      <div className="relative w-full max-w-2xl rounded-lg bg-white shadow-xl">
+      <div role="dialog" aria-modal="true" aria-labelledby="campaign-title" className="relative flex max-h-[calc(100dvh-2rem)] w-full max-w-2xl flex-col overflow-hidden rounded-lg bg-white shadow-xl">
         {/* Header */}
-        <div className="flex items-center justify-between border-b border-folio-border-subtle p-6">
+        <div className="flex shrink-0 items-center justify-between gap-3 border-b border-folio-border-subtle p-6">
           <div>
-            <h2 className="text-2xl font-semibold text-folio-text-primary">
+            <h2 id="campaign-title" className="text-2xl font-semibold text-folio-text-primary">
               Generate Instagram Campaign
             </h2>
             <p className="mt-1 text-sm text-folio-text-secondary">{projectTitle}</p>
           </div>
           <button
             onClick={onClose}
-            className="rounded-full p-2 text-folio-text-tertiary hover:bg-surface-ground hover:text-folio-text-secondary"
+            aria-label="Close campaign"
+            className="shrink-0 rounded-full p-2 text-folio-text-tertiary hover:bg-surface-ground hover:text-folio-text-secondary"
           >
             <FaTimes size={20} />
           </button>
         </div>
 
         {/* Content */}
-        <div className="p-6">
+        <div className="min-h-0 overflow-y-auto p-4 sm:p-6">
           {/* Preset Selection */}
           <div className="mb-6">
             <h3 className="mb-3 text-sm font-medium text-folio-text-primary">Campaign Size</h3>
-            <div className="grid grid-cols-3 gap-3">
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
               <button
                 onClick={() => setPreset('compact')}
                 className={`rounded-lg border-2 p-4 text-center transition ${
@@ -326,7 +327,7 @@ export function CampaignWizard({ projectId, projectTitle, onClose }: CampaignWiz
         </div>
 
         {/* Footer */}
-        <div className="flex items-center justify-between border-t border-folio-border-subtle bg-surface-ground p-6">
+        <div className="flex shrink-0 flex-wrap items-center justify-between gap-3 border-t border-folio-border-subtle bg-surface-ground p-6">
           <button
             onClick={onClose}
             className="rounded-lg border border-folio-border-subtle px-6 py-2.5 text-sm font-medium text-folio-text-primary hover:bg-surface-ground"
@@ -372,7 +373,7 @@ function PostMockupCard({
   );
 
   const folioMark = (
-    <span className="absolute bottom-2 right-2 text-[9px] font-medium uppercase tracking-[var(--ls-eyebrow)] text-white/90"> /* folio-design-system: off-scale */
+    <span className="absolute bottom-2 right-2 text-[9px] font-medium uppercase tracking-[var(--ls-eyebrow)] text-white/90"> {/* folio-design-system: off-scale */}
       Folio
     </span>
   );
@@ -384,7 +385,7 @@ function PostMockupCard({
         <p className="line-clamp-5 font-serif text-[var(--type-eyebrow)] italic leading-snug text-white">
           {post.authorship === 'folio' ? post.text : <> &ldquo;{post.text}&rdquo; </>}
         </p>
-        <p className="mt-2 text-[9px] uppercase tracking-[var(--ls-eyebrow)] text-white/70"> /* folio-design-system: off-scale */
+        <p className="mt-2 text-[9px] uppercase tracking-[var(--ls-eyebrow)] text-white/70"> {/* folio-design-system: off-scale */}
           {post.attribution}
         </p>
         {folioMark}

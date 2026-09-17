@@ -305,11 +305,11 @@ export function UserMenu() {
           <div className="py-2">
             {isDesigner && (
               <MenuLink
-                href="/designer/queue"
+                href="/designer/studio"
                 icon={<Sparkles className="h-4 w-4" />}
                 onClick={() => setIsOpen(false)}
               >
-                Editorial Queue
+                Publishing Studio
               </MenuLink>
             )}
 

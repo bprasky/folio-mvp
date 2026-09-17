@@ -1064,3 +1064,15 @@ visible text on the page. The correct form for a Tailwind literal is
 whose comment is real JS — and for a style object, the comment goes after the
 offending value inside the literal, attached to the property it describes. Silencing
 a grep is not the same as annotating the code.
+
+## 2026-09-16 — Coordinate social entry points before expanding formats
+
+User reported that campaign and carousel actions appear to land on the same screen, alongside stray text and off-center layout. Treat story type, output format and multi-story campaign as distinct choices within one coordinated Studio. Review the actual originating clicks and preserve a clear return to the published project. Spec the shared landing experience before adding material spotlights. Never place bare /* ... */ comments in JSX text; review rendered content as well as type/lint results. Do not claim deployed routing or visual behavior from local source alone.
+
+## 2026-09-17 — Publishing workspace is global; projects are filters
+
+The founder clarified that users must not think social posts and campaigns require entering each project. Merge the dropdown Editorial Queue and campaign/post management into one practice-wide hub. Project actions open that same hub filtered to the project's campaigns, with an obvious All projects escape. Preserve cross-project and studio-wide editorial work; do not force it into a single project. Keep recommendation thresholds separate from access to the hub.
+
+## 2026-09-17 — Project social sections and Publishing Studio share the same work
+
+The founder clarified that global access does not mean removing social content from project pages. Keep project-level social/campaign previews and actions, linked into Publishing Studio using the same records and editor. Publishing Studio is the approved name. Include campaigns tied to individual editorial posts as well as projects. Cross-project AI comparison and evidence-backed proposals for material studies, Q&A and social/editorial stories are core Studio content, not an incidental later feature.

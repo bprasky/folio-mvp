@@ -17,23 +17,27 @@ interface ExportConfig {
 }
 
 interface Props {
+  initialExport?: { id: string; updatedAt?: string } | null;
   projectId: string;
   config: ExportConfig;
   caption: string;
 }
 
-export function ExportButton({ projectId, config, caption }: Props) {
+export function ExportButton({ projectId, config, caption, initialExport }: Props) {
   const [exporting, setExporting] = useState(false);
+  const [savedExport, setSavedExport] = useState(initialExport);
+  const [error, setError] = useState('');
   const [progress, setProgress] = useState('');
 
-  const handleExport = async () => {
-    if (!config.headline) {
+  const handleExport = async (saveOnly = false) => {
+    if (!saveOnly && !config.headline) {
       alert('Please select a headline first.');
       return;
     }
 
     setExporting(true);
-    setProgress('Generating images...');
+    setError('');
+    setProgress(saveOnly ? 'Saving draft...' : 'Generating images...');
 
     try {
       const res = await fetch('/api/instagram-export/generate-images', {
@@ -41,6 +45,10 @@ export function ExportButton({ projectId, config, caption }: Props) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           projectId,
+          caption,
+          saveOnly,
+          exportId: savedExport?.id,
+          expectedUpdatedAt: savedExport?.updatedAt,
           config: {
             aspectRatio: config.aspectRatio,
             watermarkStyle: config.watermarkStyle,
@@ -61,6 +69,14 @@ export function ExportButton({ projectId, config, caption }: Props) {
       }
 
       const data = await res.json();
+      setSavedExport(data.export);
+      const url = new URL(window.location.href);
+      url.searchParams.set('export', data.export.id);
+      window.history.replaceState(window.history.state, '', url);
+      if (saveOnly) {
+        setProgress('Draft saved');
+        return;
+      }
       setProgress('Downloading...');
 
       // Download each image
@@ -95,19 +111,21 @@ export function ExportButton({ projectId, config, caption }: Props) {
     } catch (error: any) {
       console.error('Export failed:', error);
       setProgress('');
-      alert(`Export failed: ${error.message}`);
+      setError(error.message || 'Could not save carousel. Please try again.');
     } finally {
       setExporting(false);
     }
   };
 
   return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+    <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '12px' }}>
+      {error && <span role="alert" style={{ color: '#A33', fontSize: 'var(--type-meta)' }}>{error}</span>}
+      <button onClick={() => handleExport(true)} disabled={exporting} style={{ padding: '10px 16px', border: '1px solid #E8E0D8', borderRadius: '10px', fontSize: 'var(--type-meta)' }}>Save draft</button>
       {progress && (
         <span style={{ fontSize: 'var(--type-meta)', color: '#8B7B68' }}>{progress}</span>
       )}
       <button
-        onClick={handleExport}
+        onClick={() => handleExport()}
         disabled={exporting || !config.headline}
         style={{
           display: 'flex',

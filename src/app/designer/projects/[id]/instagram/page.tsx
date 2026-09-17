@@ -1,13 +1,15 @@
 import { getServerSession } from 'next-auth';
-import { redirect } from 'next/navigation';
+import { notFound, redirect } from 'next/navigation';
 import { prisma } from '@/lib/prisma';
 import { authOptions } from '@/app/api/auth/[...nextauth]/options';
 import { InstagramExportEditor } from '@/components/instagram-export/InstagramExportEditor';
 
 export default async function InstagramExportPage({
   params,
+  searchParams,
 }: {
   params: { id: string };
+  searchParams: { export?: string };
 }) {
   const session = await getServerSession(authOptions);
   if (!session?.user) redirect('/auth/signin');
@@ -40,9 +42,11 @@ export default async function InstagramExportPage({
     include: { brandProfile: true },
   });
 
-  const fingerprint = await prisma.atelierFingerprint.findFirst({
-    where: { designerId: project.designerId || project.ownerId },
-  });
+  const initialExport = searchParams.export ? await prisma.instagramExport.findFirst({
+    where: { id: searchParams.export, projectId: project.id, designerId: session.user.id },
+    select: { id: true, config: true, headline: true, bioText: true, caption: true, updatedAt: true },
+  }) : null;
+  if (searchParams.export && !initialExport) notFound();
 
   // Serialize data for client component
   const serializedProject = {
@@ -89,6 +93,8 @@ export default async function InstagramExportPage({
 
   return (
     <InstagramExportEditor
+      key={initialExport?.id ?? project.id}
+      initialExport={initialExport ? { ...initialExport, updatedAt: initialExport.updatedAt.toISOString() } : null}
       project={serializedProject}
       post={serializedPost}
       designer={serializedDesigner}
