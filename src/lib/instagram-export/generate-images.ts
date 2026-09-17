@@ -31,7 +31,7 @@ export interface ExportConfig {
   bioEnabled: boolean;
   bioText?: string;
   projectName: string;
-  slideCount: 3 | 4 | 5;
+  slideCount: 2 | 3 | 4 | 5;
   selectedImageUrls: string[];
   roomId?: string;
 }

@@ -1,15 +1,5 @@
-import Anthropic from '@anthropic-ai/sdk';
-import { extractTextFromBlocks } from './generate-headlines';
-import { MODELS } from '@/lib/ai/models';
-
-const anthropic = new Anthropic();
-
-function isAnthropicEnabled(): boolean {
-  return (
-    process.env.ANTHROPIC_ENABLED === 'true' &&
-    Boolean(process.env.ANTHROPIC_API_KEY)
-  );
-}
+import { generateSocialText, parseSocialOptions, extractTextFromBlocks } from './generation';
+import { BioOptionsSchema } from './generation.schemas';
 
 interface GenerateBioInput {
   designerName: string;
@@ -26,10 +16,6 @@ interface GenerateBioInput {
 }
 
 export async function generateBioBlurbs(input: GenerateBioInput): Promise<string[]> {
-  if (!isAnthropicEnabled()) {
-    throw new Error('AI generation is not available');
-  }
-
   const editorialText = extractTextFromBlocks(input.expandedBlocks);
 
   const prompt = `You are an editorial writer for a high-end design publication.
@@ -61,22 +47,5 @@ ${input.feedback ? `Direction: ${input.feedback}` : ''}
 
 Return ONLY a JSON array of 4 strings.`;
 
-  const response = await anthropic.messages.create({
-    model: MODELS.sonnet,
-    thinking: { type: 'disabled' },
-    max_tokens: 600,
-    messages: [{ role: 'user', content: prompt }],
-  });
-
-  const content = response.content[0];
-  if (content.type !== 'text') {
-    throw new Error('Unexpected response type');
-  }
-
-  const jsonMatch = content.text.match(/\[[\s\S]*\]/);
-  if (!jsonMatch) {
-    throw new Error('Failed to parse bio response');
-  }
-
-  return JSON.parse(jsonMatch[0]) as string[];
+  return parseSocialOptions(await generateSocialText(prompt, 600), BioOptionsSchema);
 }

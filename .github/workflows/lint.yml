@@ -68,6 +68,9 @@ jobs:
           node scripts/check-studio-recommendations.cjs
           node scripts/check-carousel-editor.cjs
           node scripts/check-carousel-persistence.cjs
+          node scripts/check-carousel-page.cjs
+          node scripts/check-social-generation.cjs
+          node scripts/check-social-generation-route.cjs
 
   eslint:
     name: ESLint

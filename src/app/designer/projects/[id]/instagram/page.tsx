@@ -3,6 +3,7 @@ import { notFound, redirect } from 'next/navigation';
 import { prisma } from '@/lib/prisma';
 import { assertProjectWrite } from '@/lib/authz/access';
 import { authOptions } from '@/app/api/auth/[...nextauth]/options';
+import { getStudioData, StudioAccessError } from '@/lib/publishing-studio/data';
 import { InstagramExportEditor } from '@/components/instagram-export/InstagramExportEditor';
 
 export default async function InstagramExportPage({
@@ -49,6 +50,30 @@ export default async function InstagramExportPage({
     select: { id: true, config: true, headline: true, bioText: true, caption: true, updatedAt: true },
   }) : null;
   if (searchParams.export && !initialExport) notFound();
+
+  // Older prepared drafts predate the pitch/options fields. Reuse exactly the
+  // source-backed proposal shown in Studio, without replacing any saved edits.
+  const savedConfig = initialExport?.config && typeof initialExport.config === 'object' && !Array.isArray(initialExport.config)
+    ? { ...initialExport.config } as Record<string, unknown> : {};
+  for (const field of ['headlineOptions', 'captionOptions', 'beats'] as const) {
+    if (Array.isArray(savedConfig[field])) {
+      savedConfig[field] = savedConfig[field].filter((value): value is string => typeof value === 'string' && value.length <= 5000).slice(0, 10);
+    }
+  }
+  const proposalFields = ['pitch', 'rationale', 'beats', 'headlineOptions', 'captionOptions'] as const;
+  if (initialExport && proposalFields.some((field) => savedConfig[field] == null)) {
+    try {
+      const studio = await getStudioData(session.user.id, project.id);
+      const card = studio.feed.find((item) => item.exportId === initialExport.id);
+      if (card) for (const field of proposalFields) {
+        if (savedConfig[field] == null && card[field] !== undefined) savedConfig[field] = card[field];
+      }
+    } catch (error) {
+      // A direct project link can remain authorized outside the active Studio
+      // workspace. It must not reveal that workspace's proposal metadata.
+      if (!(error instanceof StudioAccessError)) throw error;
+    }
+  }
 
   // Serialize data for client component
   const serializedProject = {
@@ -97,7 +122,7 @@ export default async function InstagramExportPage({
   return (
     <InstagramExportEditor
       key={initialExport?.id ?? project.id}
-      initialExport={initialExport ? { ...initialExport, updatedAt: initialExport.updatedAt.toISOString() } : null}
+      initialExport={initialExport ? { ...initialExport, config: savedConfig, updatedAt: initialExport.updatedAt.toISOString() } : null}
       studioScope={searchParams.studio === 'all' ? 'all' : 'project'}
       project={serializedProject}
       post={serializedPost}

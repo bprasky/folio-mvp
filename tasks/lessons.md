@@ -1085,3 +1085,11 @@ The Meru screenshot exposes a redundant project picker after Meru is already sel
 
 ## 2026-09-17 — Feed cards are prepared work, not invitations to generate
 The founder wants 4:5 Instagram previews with the proposed opening image and caption visible before clicking. Clicking polishes the exact prepared content. Preserve image order, headline and caption across preview/editor; no repeated project inquiry or generation wizard. Clearly distinguish draft previews from unfinished cross-project questions.
+
+## 2026-09-17 — A photo plus room name is not an editorial proposal
+Do not populate the idea feed with every room having a paragraph. Require a specific supported decision, challenge, change or result worth sharing; surface the angle and evidence on the card. Generic warmth/durability does not justify a standalone post. The polish screen must show pitch and copy options before decorative format controls; never wipe prepared copy when a source change or provider request fails. Display actual rendered slide count including closing/bio slides, not requested capacity.
+
+A prepared room story is a fixed editorial direction: remove room-switching navigation in Polish. Return to the Studio to choose another idea; keep slide navigation within the selected story.
+
+## 2026-09-17 — Curated feed and intentional story configuration are complementary
+Keep prepared story Polish focused. Offer a separate configurator for firm/designer/project/multiple projects, optional room, angle/series (including 20 Questions), and output destinations. Identify missing source/profile substance and ask targeted questions rather than fabricate it. The feed need not enumerate every combination. Trend discovery needs current sourced context, not invented trends.

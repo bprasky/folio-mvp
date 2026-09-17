@@ -4,6 +4,8 @@ export interface StudioFeedCard {
   kind: 'suggestion' | 'carousel' | 'campaign' | 'idea';
   format: string; status: string; updatedAt: string;
   exportId?: string; campaignId?: string; roomId?: string; canPolish: boolean; revision?: string;
+  pitch?: string; rationale?: string; beats?: string[]; slideCount?: number;
+  headlineOptions?: string[]; captionOptions?: string[];
   preview?: { headlinePosition: 'bottom_left' | 'bottom_center' | 'top_left'; watermarkStyle: 'folio_x' | 'folio_presents' | 'minimal'; aspectRatio: '1:1' | '4:5' | '9:16'; watermarkText?: string };
 }
 

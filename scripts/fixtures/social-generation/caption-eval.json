@@ -1,0 +1,140 @@
+{
+  "model": "claude-sonnet-5",
+  "maxOutputTokens": 500,
+  "before": [
+    {
+      "fixture": 1,
+      "name": "Living room",
+      "version": "old",
+      "usage": {
+        "input_tokens": 288,
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 0,
+        "cache_creation": {
+          "ephemeral_5m_input_tokens": 0,
+          "ephemeral_1h_input_tokens": 0
+        },
+        "output_tokens": 147,
+        "output_tokens_details": {
+          "thinking_tokens": 0
+        },
+        "service_tier": "standard",
+        "inference_geo": "global"
+      },
+      "stop": "end_turn",
+      "text": "Swapped a tall sofa for a low one, and suddenly the whole room breathed differently. From the doorway, your eye just keeps going — straight past the seating, out to the garden, toward the terrace. One decision, and the space stopped feeling like a box and started feeling like a path.\n\n#interiordesign #livingroomdesign #fixturestudio #lowprofilefurniture #gardenview #openplanliving #residentialdesign #designdetails"
+    },
+    {
+      "fixture": 2,
+      "name": "Staircase",
+      "version": "old",
+      "usage": {
+        "input_tokens": 295,
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 0,
+        "cache_creation": {
+          "ephemeral_5m_input_tokens": 0,
+          "ephemeral_1h_input_tokens": 0
+        },
+        "output_tokens": 149,
+        "output_tokens_details": {
+          "thinking_tokens": 0
+        },
+        "service_tier": "standard",
+        "inference_geo": "global"
+      },
+      "stop": "end_turn",
+      "text": "That first step was doing more harm than good — it was crowding the whole hallway before anyone even reached the stairs. Pulling it back changed the entire feel of the passage, and the oak handrail just carries that decision around the turn like it was always meant to be there.\n\n#StaircaseDesign #InteriorArchitecture #OakHandrail #ResidentialDesign #DesignDetails #FixtureStudio #HomeRenovation #InteriorDesign"
+    },
+    {
+      "fixture": 3,
+      "name": "Dining room",
+      "version": "old",
+      "usage": {
+        "input_tokens": 280,
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 0,
+        "cache_creation": {
+          "ephemeral_5m_input_tokens": 0,
+          "ephemeral_1h_input_tokens": 0
+        },
+        "output_tokens": 151,
+        "output_tokens_details": {
+          "thinking_tokens": 0
+        },
+        "service_tier": "standard",
+        "inference_geo": "global"
+      },
+      "stop": "end_turn",
+      "text": "When the room won't budge but the table still needs to seat six, you stop fighting the walls and start rethinking the seating. A built-in bench solved a width problem we couldn't design our way around — and honestly, it might be my favorite fix on this whole project.\n\n#DiningRoomDesign #BuiltInBench #SmallSpaceSolutions #InteriorDesign #FixtureStudio #DesignDetails #SpacePlanning #HomeRenovation"
+    }
+  ],
+  "after": [
+    {
+      "fixture": 1,
+      "name": "Living room",
+      "version": "grounded",
+      "usage": {
+        "input_tokens": 1535,
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 0,
+        "cache_creation": {
+          "ephemeral_5m_input_tokens": 0,
+          "ephemeral_1h_input_tokens": 0
+        },
+        "output_tokens": 137,
+        "output_tokens_details": {
+          "thinking_tokens": 0
+        },
+        "service_tier": "standard",
+        "inference_geo": "global"
+      },
+      "stop": "end_turn",
+      "text": "In the living room at Fixture House, a low sofa took the place of a taller one, low enough that the garden stays visible from the doorway. The layout leaves one end open, so the path to the terrace remains clear rather than closed off by furniture.\n\n#FixtureStudio #LivingRoomDesign #InteriorDesign #LowSofa #GardenView #IndoorOutdoorLiving #ResidentialDesign"
+    },
+    {
+      "fixture": 2,
+      "name": "Staircase",
+      "version": "grounded",
+      "usage": {
+        "input_tokens": 1541,
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 0,
+        "cache_creation": {
+          "ephemeral_5m_input_tokens": 0,
+          "ephemeral_1h_input_tokens": 0
+        },
+        "output_tokens": 142,
+        "output_tokens_details": {
+          "thinking_tokens": 0
+        },
+        "service_tier": "standard",
+        "inference_geo": "global"
+      },
+      "stop": "end_turn",
+      "text": "The stair landing used to crowd the hall, its first step set forward into the path of anyone passing through. Fixture studio pulled that step back, and the hall opened. The Example Oak Handrail carries the line through the turn, unbroken from base to landing.\n\n#StaircaseDesign #FixtureStudio #InteriorArchitecture #OakHandrail #ResidentialDesign #DesignDetails #SpatialPlanning"
+    },
+    {
+      "fixture": 3,
+      "name": "Dining room",
+      "version": "grounded",
+      "usage": {
+        "input_tokens": 1497,
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 0,
+        "cache_creation": {
+          "ephemeral_5m_input_tokens": 0,
+          "ephemeral_1h_input_tokens": 0
+        },
+        "output_tokens": 146,
+        "output_tokens_details": {
+          "thinking_tokens": 0
+        },
+        "service_tier": "standard",
+        "inference_geo": "global"
+      },
+      "stop": "end_turn",
+      "text": "The dining room was narrow enough that chairs on both sides of the table were never going to work. Fixture studio's solution was a built-in bench set against the wall, leaving the aisle down the center clear. The table stays put; the room still moves.\n\n#FixtureStudio #DiningRoomDesign #BuiltInBench #InteriorDesign #SmallSpaceDesign #ResidentialDesign #FixtureHouse #DesignDetails"
+    }
+  ]
+}

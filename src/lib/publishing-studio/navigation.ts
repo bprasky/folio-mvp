@@ -16,7 +16,7 @@ export function matchesStudioItem(
   item: { title: string; projectIds: string[]; status: string },
   filter: { project: string; query: string; status: string },
 ) {
-  return (!filter.project || (filter.project === 'studio-wide' ? item.projectIds.length === 0 : item.projectIds.includes(filter.project)))
+  return (!filter.project || (filter.project === 'studio-wide' ? true : filter.project === 'cross-project' ? item.projectIds.length > 1 : item.projectIds.includes(filter.project)))
     && (!filter.query || item.title.toLocaleLowerCase().includes(filter.query.toLocaleLowerCase()))
     && (!filter.status || item.status === filter.status);
 }
