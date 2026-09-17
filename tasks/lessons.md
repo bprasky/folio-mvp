@@ -1093,3 +1093,6 @@ A prepared room story is a fixed editorial direction: remove room-switching navi
 
 ## 2026-09-17 — Curated feed and intentional story configuration are complementary
 Keep prepared story Polish focused. Offer a separate configurator for firm/designer/project/multiple projects, optional room, angle/series (including 20 Questions), and output destinations. Identify missing source/profile substance and ask targeted questions rather than fabricate it. The feed need not enumerate every combination. Trend discovery needs current sourced context, not invented trends.
+
+## 2026-09-17 — A story format must launch an actual designer activity
+Selecting Q&A or20 Questions is not evidence of participation. Store original answers separately from generated copy, support save/resume, and require the designer to complete/review the activity before draft preparation. A suggested idea remains Needs your input until that occurs.
