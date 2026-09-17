@@ -9,6 +9,28 @@ export const ACTIVITY_FORMATS = {
 } as const;
 export type ActivityFormat = keyof typeof ACTIVITY_FORMATS;
 export type ActivitySubject = 'designer' | 'firm' | 'project';
+const SUBJECT_FORMATS: Record<ActivitySubject, readonly ActivityFormat[]> = {
+  designer: ['twenty_questions', 'qa', 'material', 'method'],
+  firm: ['history', 'qa', 'twenty_questions'],
+  project: ['twenty_questions', 'qa', 'material', 'method'],
+};
+
+/** Shared by visible choices and server-side brief validation. */
+export function activityFormatsFor(subject: ActivitySubject) {
+  return SUBJECT_FORMATS[subject].map(key => {
+    const format = ACTIVITY_FORMATS[key];
+    if (subject === 'firm') {
+      const firmFormats = {
+        history: { label: 'How the firm began', description: 'The origins and milestones that shaped the practice.' },
+        qa: { label: 'The people behind the firm', description: 'A conversation about the people and ideas that shaped its history.' },
+        twenty_questions: { label: '20 Questions about the firm', description: 'A quick look at its beginnings, defining moments and evolution.' },
+      };
+      return { key, ...firmFormats[key as keyof typeof firmFormats] };
+    }
+    if (subject === 'designer' && key === 'method') return { key, label: 'How I work', description: 'Your approach, explained through a real example.' };
+    return { key, ...format };
+  });
+}
 export interface ActivityBrief {
   subject: ActivitySubject;
   projectId?: string;
@@ -39,7 +61,7 @@ export interface ActivityDraft {
 function validBrief(input: ActivityBrief, context: ActivityContext): { subjectLabel: string; brief: ActivityBrief } {
   if (!input || !['designer', 'firm', 'project'].includes(input.subject) || !Object.hasOwn(ACTIVITY_FORMATS, input.format)) throw new Error('Choose a subject and activity.');
   if (input.subject !== 'project' && (input.projectId || input.roomId)) throw new Error('Project and room selections do not belong to this subject.');
-  if (input.format === 'history' && input.subject !== 'firm') throw new Error('Firm history needs the firm as its subject.');
+  if (!SUBJECT_FORMATS[input.subject].includes(input.format)) throw new Error('This story type is not available for this topic. Choose a matching activity.');
   const project = context.projects.find(item => item.id === input.projectId);
   if (input.subject === 'project' && !project) throw new Error('Choose an available project.');
   const room = project?.rooms.find(item => item.id === input.roomId);
@@ -53,7 +75,7 @@ export function createActivity(input: ActivityBrief, context: ActivityContext): 
   const { brief, subjectLabel } = validBrief(input, context);
   const count = brief.format === 'twenty_questions' ? 20 : 5;
   return { questionSource: 'template', version: ACTIVITY_VERSION, brief, subjectLabel,
-    title: `${ACTIVITY_FORMATS[brief.format].label}: ${subjectLabel}`,
+    title: `${activityFormatsFor(brief.subject).find(format => format.key === brief.format)!.label}: ${subjectLabel}`,
     intro: brief.format === 'twenty_questions' ? 'Twenty questions, in your words. Short answers are welcome. You can pause and come back.'
       : 'Use a real example. Your original answers stay intact when you review the draft.',
     questions: Array.from({ length: count }, (_, index) => ({ id: `${brief.format}:v${ACTIVITY_VERSION}:${index + 1}`, prompt: '',

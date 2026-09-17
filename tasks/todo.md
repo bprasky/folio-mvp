@@ -382,3 +382,9 @@ Final checks: TypeScript budget902/904 with no new fingerprints; client boundary
 Production database approval and real profile/source adapter remain outstanding; this correction does not authorize the pending migration.
 
 Verification: all three activity/interaction/generation suites pass; focused lint, client boundary and TypeScript budget902/904 pass. Horizontal cards verified at623px and1280px,390px has no overflow. Ten bounded synthetic provider calls informed the prompt; structural citations are checked but do not establish perfect entailment. Staged design guards pass; an unrelated in-progress FlowMosaic edit fails the working-tree raw-type guard and was left untouched. No schema changes or real profile generation.
+
+### Topic-specific story choices — 2026-09-17
+- [x] Restrict Firm History to origins, people and historical quickfire interviews; remove material and project-process options.
+- [x] Share allowed combinations between visible choices and brief validation; reset choices when topics change.
+- [x] Pass the selected story meaning into question generation and verify topic switching, invalid combinations and the local browser.
+Review: all three focused activity suites and focused lint pass. Local preview shows only the three firm-history choices. No migration or production changes.

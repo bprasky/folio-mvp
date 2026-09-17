@@ -1099,3 +1099,6 @@ Selecting Q&A or20 Questions is not evidence of participation. Store original an
 
 ## 2026-09-17 — Story setup is horizontal and personally grounded
 Use visible Topic → Story type → Interview steps. Topic choices are Designer, Firm History, Specific Project; project/room choices stay visible. Remove arbitrary angle and destination inputs; Folio and Instagram are defaults. Templates guide question intent, but questions must be generated from verified bio/project context (light personal references welcome), never served as the same static20 prompts for everyone.
+
+## 2026-09-17 — Topic constrains story types
+Firm History is not a general firm topic. Exclude both Material story and How it came together; show origins, people and evolution-focused choices. Use one allowed-combination mapping for the UI and server validation, and reset stale choices when changing topics.

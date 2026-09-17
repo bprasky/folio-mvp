@@ -32,7 +32,7 @@ for (const subject of ['designer', 'firm', 'project']) {
   assert.equal(createActivity({ ...brief, subject: 'project', projectId: 'p1', roomId: 'r1' }, context).subjectLabel, 'Living room at Garden House');
 }
 for (const format of ['qa', 'material', 'method', 'history']) {
-  const definition = createActivity({ ...brief, subject: 'firm', format, topic: 'Clay tiles' }, context);
+  const definition = createActivity({ ...brief, subject: format === 'history' ? 'firm' : 'designer', format }, context);
   definition.questionSource = 'personalized';
   definition.questions.forEach((q,i) => { q.prompt = 'Fixture question '+(i+1)+'?'; });
   assert.equal(definition.questions.length, 5);
@@ -43,9 +43,11 @@ for (const format of ['qa', 'material', 'method', 'history']) {
 assert.throws(() => createActivity({ ...brief, subject: 'project', projectId: 'foreign' }, context), /available/);
 assert.throws(() => createActivity({ ...brief, subject: 'project', projectId: 'p1', roomId: 'foreign' }, context), /room/);
 assert.throws(() => createActivity({ ...brief, projectId: 'p1' }, context), /do not belong/);
-assert.throws(() => createActivity({ ...brief, format: 'history' }, context), /firm/);
+assert.throws(() => createActivity({ ...brief, format: 'history' }, context), /not available/);
 
 
 assert.equal(profileActivitySuggestions(context).length, 2);
 assert.equal(profileActivitySuggestions({ ...context, profile: { hasBio: true, hasPointOfView: true } }).length, 0);
 console.log('PASS activities: 3 subject-specific 20-question structures, scoped room/context, authored prompts, completed/reviewed gate, exact answers, bounds and truthful profile gaps.');
+
+for(const format of ['material','method']) assert.throws(() => createActivity({...brief,subject:'firm',format},context), /not available/);

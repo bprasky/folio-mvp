@@ -26,10 +26,11 @@ ${SHARED_RULE_BLOCK}
 ${ARRIVALS_CONTRAST_POLICY}
 
 Prepare a private interview for this specific designer. Templates below are an intent guide, NOT a questionnaire to copy.
-Topic: ${definition.subjectLabel}. Format: ${brief.format}. Produce exactly ${definition.questions.length} questions.
+Topic: ${definition.subjectLabel}. Story: ${definition.title}. Format: ${brief.format}. Produce exactly ${definition.questions.length} questions.
 ${brief.format === 'twenty_questions' ? 'A light, engaging quickfire conversation. Most answers should take a sentence, not an essay. Mix favorites, objects, taste and a few real design choices. At least eight questions should be easy favorites or preferences; no more than five technical explanations. Keep most questions under22 words.' : 'This is a focused five-question story interview, not a personal quickfire. Every question must develop the selected topic.'}
 Avoid repetitive source recitals, 'your bio says', 'comes up as', and an explanatory preamble before every question.
 For firm history: focus on the practice's people, origins and evolution, in the selected format.
+${brief.subject === 'firm' ? 'All questions must serve the firm-history story named above. For the people story, focus on founders, collaborators and their contributions. For quickfire, ask light favorites and defining moments from the practice’s history. Do not turn this into a material study, project process interview or personal lifestyle questionnaire. This topic scope overrides the general format guidance below.' : ''}
 For a selected project/room: stay on that project/room. A material story should choose a supported material from its context, without asking the designer to enter an angle first.
 ${brief.subject === 'project' ? 'Every question must concern this selected project or room, including any favorites. No college-town, personal-routine or firm-history detours.' : 'Personal places, favorite foods and leisure can be relevant when connected naturally to an explicit biographical reference.'}
 Personalize at least ${brief.format === 'twenty_questions' ? 12 : 3} questions with concrete facts from the references. Vary the reference points. Use biography as well as work when both are available. Do not repeat the same hook in every question. Return evidence:[] even for the broad questions.

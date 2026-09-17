@@ -38,6 +38,18 @@ async function main() {
   await click('Next: Story type');
   assert(button('Prepare my interview'));
   assert.equal(document.querySelectorAll('select').length, 0);
+  await click('Back to Topic');
+  await React.act(async () => [...document.querySelectorAll('button')].find(item => item.textContent.startsWith('Firm History')).click());
+  await click('Next: Story type');
+  assert(!document.body.textContent.includes('Material story'), 'Firm History must not offer materials');
+  assert(!document.body.textContent.includes('How it came together'), 'Firm History must not offer project process');
+  assert(document.body.textContent.includes('The people behind the firm'));
+  assert([...document.querySelectorAll('button')].some(item => item.textContent.startsWith('How the firm began') && item.getAttribute('aria-pressed') === 'true'), 'Changing topics selects a valid default');
+  await click('Back to Topic');
+  await React.act(async () => [...document.querySelectorAll('button')].find(item => item.textContent.startsWith('DesignerYour eye')).click());
+  await click('Next: Story type');
+  assert(document.body.textContent.includes('Material story'));
+  assert(!document.body.textContent.includes('How the firm began'));
   await React.act(async () => root.render(React.createElement(StoryActivity, { key: 'interview', context, persistence, initial: snapshot, onClose: () => closeCount++ })));
   assert.equal(document.querySelectorAll('textarea').length, 1);
   await typeAnswer('The table was the starting point.');
