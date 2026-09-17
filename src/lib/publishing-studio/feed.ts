@@ -39,7 +39,7 @@ export function publishedStoryProposal(body: unknown) {
   const full = paragraphs.join('\n\n');
   const focused = paragraphs.find(p => p.includes(best.text)) || full;
   return { pitch: best.text, rationale: 'A published design decision with a change or alternative worth explaining.',
-    beats, caption: full, captionOptions: proposalOptions([...new Set([full, focused])]),
+    beats, caption: full, captionOptions: proposalOptions(Array.from(new Set([full, focused]))),
     score: ranked.reduce((sum, s) => sum + s.score, 0) };
 }
 
