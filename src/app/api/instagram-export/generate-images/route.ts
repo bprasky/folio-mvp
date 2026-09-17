@@ -59,13 +59,25 @@ export async function POST(request: NextRequest) {
     if ((config.aspectRatio && !['1:1', '4:5', '9:16'].includes(config.aspectRatio)) ||
       (config.watermarkStyle && !['folio_x', 'folio_presents', 'minimal'].includes(config.watermarkStyle)) ||
       (config.headlinePosition && !['bottom_left', 'bottom_center', 'top_left'].includes(config.headlinePosition)) ||
-      (config.slideCount !== undefined && ![3, 4, 5].includes(config.slideCount)) ||
+      (config.slideCount !== undefined && ![2, 3, 4, 5].includes(config.slideCount)) ||
       (config.headline !== undefined && typeof config.headline !== 'string') ||
       (config.bioText !== undefined && typeof config.bioText !== 'string') ||
       (config.bioEnabled !== undefined && typeof config.bioEnabled !== 'boolean') ||
       (config.roomId !== undefined && typeof config.roomId !== 'string') ||
       (config.selectedImageUrls !== undefined && (!Array.isArray(config.selectedImageUrls) || config.selectedImageUrls.some((url: unknown) => typeof url !== 'string' || !project.images.some((image) => image.url === url))))) {
       return NextResponse.json({ error: 'Invalid carousel settings or project images' }, { status: 400 });
+    }
+
+    const proposal: Record<string, string | string[]> = {};
+    const previous = existing?.config && typeof existing.config === 'object' && !Array.isArray(existing.config) ? existing.config : {};
+    for (const key of ['pitch', 'rationale', 'beats', 'headlineOptions', 'captionOptions']) {
+      const value = config[key] ?? previous[key];
+      if (value === undefined) continue;
+      const valid = ['pitch', 'rationale'].includes(key)
+        ? typeof value === 'string' && value.length <= 5000
+        : Array.isArray(value) && value.length <= 10 && value.every(item => typeof item === 'string' && item.length <= 5000);
+      if (!valid) return NextResponse.json({ error: 'Invalid story proposal' }, { status: 400 });
+      proposal[key] = value as string | string[];
     }
 
     const designer = project.designer;
@@ -99,6 +111,7 @@ export async function POST(request: NextRequest) {
     const data = {
       config: {
         ...exportConfig,
+        ...proposal,
         ...(existing?.config && typeof existing.config === 'object' && !Array.isArray(existing.config)
           && typeof existing.config.studioCardId === 'string' ? { studioCardId: existing.config.studioCardId } : {}),
       } as any,

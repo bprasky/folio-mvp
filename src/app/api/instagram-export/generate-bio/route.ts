@@ -1,8 +1,10 @@
 export const dynamic = 'force-dynamic';
+export const maxDuration = 60;
 
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/app/api/auth/[...nextauth]/options';
+import { socialGenerationFailure } from '@/lib/instagram-export/generation';
 import { prisma } from '@/lib/prisma';
 import { assertProjectWrite } from '@/lib/authz/access';
 import { generateBioBlurbs } from '@/lib/instagram-export/generate-bio';
@@ -70,11 +72,9 @@ export async function POST(request: NextRequest) {
     });
 
     return NextResponse.json({ bios });
-  } catch (error: any) {
-    console.error('[instagram-export/generate-bio]', error);
-    return NextResponse.json(
-      { error: error.message || 'Failed to generate bio' },
-      { status: 500 }
-    );
+  } catch (error: unknown) {
+    const failure = socialGenerationFailure(error);
+    console.error('[instagram-export/generate-bio]', failure.body.code);
+    return NextResponse.json(failure.body, { status: failure.status });
   }
 }

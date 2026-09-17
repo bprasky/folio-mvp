@@ -331,3 +331,20 @@ Verification: actual patched Studio loader exercised in a read-only transaction 
 Plan check-in: implement the approved photo-first polishing workflow using existing export persistence; no schema migration needed for project/room prepared drafts. Native multi-project publishing remains a separate approved proposal.
 
 Review: source-grounded 4:5 cards share their hero renderer with the editor. Read-only live BP Design loader produced 17 cards (15 directly polishable project/room drafts plus2 existing story directions), all with source photos. Actual components rendered with that local snapshot at desktop,390px and320px; a filter popover overflow found at320px was fixed and rechecked. Exact prepare revision, idempotence, no browse generation, draft preservation, room FK, shared scope and access regressions pass. Production build, full lint, TypeScript ratchet903/904, client boundary, migration discipline and all design-system checks pass. Reviewer found no blockers. Live mutation/AI generation not run; downloaded SVG typography is not asserted pixel-identical to browser previews. Cross-project native editing remains separately scoped.
+
+# Substantive story pitches and polish — 2026-09-17
+
+- [x] Diagnose headline/caption failures and source extraction, fix with grounded generation validation.
+- [x] Qualify room stories by substantive published evidence; surface angle, rationale and accurate length before clicking.
+- [x] Make editor story-first, preserve prepared text on failure and show usable caption/headline options.
+- [x] Correct studio-wide filtering, test actual BP examples and responsive editor, review and push.
+
+Plan check-in: user authorized fixes to pitch quality and polish flow. Prioritize evidence over content volume, preserve saved drafts. No schema change needed.
+
+## Next scope — Story configurator
+- [ ] Specify subject (firm/designer/project/multiple projects), optional focus (general/room/material/decision), angle or recurring series (Q&A, material study, 20 Questions), and Folio/social outputs.
+- [ ] Reuse published facts and authorized profile context; surface missing substance as targeted interview questions.
+- [ ] Preserve chosen direction into the same focused Polish editor; keep curated feed separate from exhaustive combinations.
+- [ ] Specify sourced trend discovery and platform adaptation separately before implementation.
+
+Review: BP Design read-only fixture now has four substantive room stories; generic entry/room descriptions excluded. Pitch/options persist into focused caption-first Polish. Caption generation gate, published room extraction, grounded prompt and retry errors corrected. Seven regression suites, full lint, production build, TypeScript budget, client/migration/design guards pass. Desktop and390px component preview checked (no horizontal overflow). Final synthetic paired caption eval documented; production provider configuration not verified. No schema changes.

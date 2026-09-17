@@ -171,7 +171,7 @@ async function main() {
   const card = data.feed.find(c => c.id === 'project:p1');
   assert.equal(card.caption, 'Published source text.');
   assert.equal(card.imageUrl, 'p1.jpg');
-  assert.equal(data.feed.find(c => c.id === 'room:p1:room-p1').caption, 'Published room paragraph.');
+  assert.ok(!data.feed.some(c => c.id === 'room:p1:room-p1'), 'Generic room prose is not a proposed story');
   assert.equal((await f.prepare(card.id, 'outdated')).status, 409);
   assert.ok(!data.feed.some(c => c.kind === 'suggestion' && c.projectIds.includes('p2')), 'No private draft suggestions');
   assert.equal(f.calls.filter(c => c.table === 'prepare').length, 0, 'GET never writes');
@@ -203,5 +203,49 @@ async function main() {
     assert.equal((await f.getStudioData('me')).feed.find(c => c.id === 'carousel:carousel-p1').preview.watermarkText, label);
   }
   console.log('PASS source-backed feed, exact prepared snapshot, retry idempotence, draft preservation, public-source and role boundaries');
+  const feedModule = load('src/lib/publishing-studio/feed.ts', { crypto: require('node:crypto') });
+  const strong = 'After fifteen iterations, the curved staircase finally worked. The original plan had a straight staircase along the wall. Once we opened up the floor plan, the entry felt empty. The architect and designer refined the curve until it anchored the space.';
+  const weak = 'Wood paneling greets you first, chosen for a very practical reason. The paneling is warm enough and durable enough on an entry to be a great choice. The wood survives daily traffic without losing its warmth.';
+  assert.equal(feedModule.publishedStoryProposal([weak]), null, 'Routine material benefits are clutter, not an angle');
+  for (const phrase of ['That reserve is deliberate rather than accidental restraint.', 'The palette feels calm instead of intense.', 'The gathering spot works harder than originally designed.']) {
+    assert.equal(feedModule.publishedStoryProposal([weak, phrase]), null, 'Rhetorical contrasts and generic original intent do not establish a story');
+  }
+  const proposal = feedModule.publishedStoryProposal([weak, strong]);
+  assert.ok(proposal.pitch.includes('fifteen iterations'), 'Read beyond first paragraph for substantive angle');
+  assert.ok(proposal.captionOptions.every(c => [weak + '\n\n' + strong, strong].includes(c)), 'Variants preserve source paragraphs, quantities and claims verbatim');
+  const project = setup().projects[0];
+  project.rooms = [{id:'entry',name:'Entry'}, {id:'stairs',name:'Staircase'}, {id:'unrelated',name:'Bedroom'}];
+  project.images = ['entry','stairs','unrelated'].map(id=>({id,roomId:id,room:null,url:id+'.jpg',inclusion:'INCLUDED'}));
+  project.post.expandedBlocks = {galleryChapters:[{roomId:'entry',body:[weak]},{roomId:'stairs',imageIds:['unrelated'],body:[weak,strong]}]};
+  const roomFeed = feedModule.buildStudioFeed([project],[],[],[],'me',false);
+  assert.ok(!roomFeed.some(c=>c.roomId==='entry'||c.roomId==='unrelated'), 'Exclude shallow content and chapter assigned to another room even if image IDs overlap');
+  const stairs = roomFeed.find(c=>c.roomId==='stairs');
+  assert.equal(stairs.imageUrl,'stairs.jpg');
+  assert.equal(stairs.slideCount,2,'One source image plus CTA, not a fictional three-slide narrative');
+  const config = feedModule.preparedConfig(stairs);
+  assert.equal(config.pitch, stairs.pitch);
+  assert.deepEqual(plain(config.captionOptions),plain(stairs.captionOptions));
+  assert.equal(config.slideCount,stairs.slideCount);
+  const oldDraft = {id:'old',projectId:project.id,headline:'My edited headline',caption:'My edited caption',status:'draft',updatedAt:new Date(),config:{studioCardId:stairs.id,selectedImageUrls:['stairs.jpg'],bioEnabled:false,slideCount:5}};
+  const enriched = feedModule.buildStudioFeed([project],[oldDraft],[],[],'me',false);
+  const savedOld = enriched.find(c=>c.id==='carousel:old');
+  assert.equal(savedOld.pitch,stairs.pitch,'Read-only enrichment restores qualified source pitch on old drafts');
+  assert.equal(savedOld.title,'My edited headline');
+  assert.equal(savedOld.caption,'My edited caption');
+  assert.equal(savedOld.slideCount,2,'Actual count accounts for insufficient source photos');
+  assert.ok(!enriched.some(c=>c.id===stairs.id),'Enrichment does not duplicate saved source');
+  oldDraft.config.selectedImageUrls=['stairs.jpg','entry.jpg','unrelated.jpg'];
+  oldDraft.config.slideCount=2;
+  assert.equal(feedModule.buildStudioFeed([project],[oldDraft],[],[],'me',false).find(c=>c.id==='carousel:old').slideCount,2,'Saved config caps visible photos');
+  const longPassage = ('The room connects to the adjacent space. ').repeat(150);
+  const longProposal = feedModule.publishedStoryProposal([longPassage,strong]);
+  assert.equal(longProposal.caption,longPassage.trim()+'\n\n'+strong,'Selected full source caption is retained separately');
+  assert.deepEqual(plain(longProposal.captionOptions),[strong],'Options keep complete bounded passages, never cut quotations');
+  oldDraft.config.captionOptions=[longPassage,strong];
+  const safeOld=feedModule.buildStudioFeed([project],[oldDraft],[],[],'me',false).find(c=>c.id==='carousel:old');
+  assert.deepEqual(plain(safeOld.captionOptions),[strong],'Old oversized options are omitted without modifying selected copy');
+  assert.equal(safeOld.caption,'My edited caption');
+  console.log('PASS full-chapter editorial gate, staircase evidence, weak-entry suppression, photo relevance and proposal handoff');
+
 }
 main().catch(error => { console.error(error); process.exitCode = 1; });

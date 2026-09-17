@@ -73,9 +73,12 @@ export function DesignerTab({
         </div>
         <button
           onClick={() => setBioEnabled(!bioEnabled)}
+          aria-label="Include designer bio slide"
+          aria-pressed={bioEnabled}
           style={{
             position: 'relative',
             width: '44px',
+            flexShrink: 0,
             height: '24px',
             borderRadius: '12px',
             border: 'none',

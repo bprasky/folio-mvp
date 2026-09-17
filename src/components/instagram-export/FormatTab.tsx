@@ -10,8 +10,9 @@ interface Props {
   setWatermarkStyle: (v: WatermarkStyle) => void;
   headlinePosition: HeadlinePosition;
   setHeadlinePosition: (v: HeadlinePosition) => void;
-  slideCount: 3 | 4 | 5;
-  setSlideCount: (v: 3 | 4 | 5) => void;
+  bioEnabled: boolean;
+  slideCount: 2 | 3 | 4 | 5;
+  setSlideCount: (v: 2 | 3 | 4 | 5) => void;
   images: { id: string; url: string; name: string | null; room: string | null }[];
   selectedImageUrls: string[];
   setSelectedImageUrls: (urls: string[]) => void;
@@ -42,6 +43,7 @@ export function FormatTab({
   setWatermarkStyle,
   headlinePosition,
   setHeadlinePosition,
+  bioEnabled,
   slideCount,
   setSlideCount,
   images,
@@ -116,7 +118,7 @@ export function FormatTab({
         <div style={{ fontSize: 'var(--type-eyebrow)', letterSpacing: 'var(--ls-eyebrow)', textTransform: 'uppercase' as const, color: '#8B7B68', marginBottom: '12px', fontWeight: 'var(--w-h1)' }}>
           Aspect Ratio
         </div>
-        <div style={{ display: 'flex', gap: '8px' }}>
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
           {ASPECT_OPTIONS.map((opt) => (
             <button
               key={opt.value}
@@ -148,7 +150,7 @@ export function FormatTab({
         <div style={{ fontSize: 'var(--type-eyebrow)', letterSpacing: 'var(--ls-eyebrow)', textTransform: 'uppercase' as const, color: '#8B7B68', marginBottom: '12px', fontWeight: 'var(--w-h1)' }}>
           Headline Position
         </div>
-        <div style={{ display: 'flex', gap: '8px' }}>
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
           {POSITION_OPTIONS.map((opt) => (
             <button
               key={opt.value}
@@ -177,15 +179,18 @@ export function FormatTab({
         <div style={{ fontSize: 'var(--type-eyebrow)', letterSpacing: 'var(--ls-eyebrow)', textTransform: 'uppercase' as const, color: '#8B7B68', marginBottom: '12px', fontWeight: 'var(--w-h1)' }}>
           Carousel Length
         </div>
-        <div style={{ display: 'flex', gap: '8px' }}>
-          {([3, 4, 5] as const).map((count) => (
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+          {([2, 3, 4, 5] as const).map((count) => (
             <button
               key={count}
               onClick={() => setSlideCount(count)}
+              disabled={bioEnabled && count === 2}
+              aria-pressed={slideCount === count}
               style={{
                 flex: 1,
                 padding: '10px 8px',
                 borderRadius: '10px',
+                opacity: bioEnabled && count === 2 ? 0.4 : 1,
                 border: slideCount === count ? '1.5px solid #C4B5A0' : '1px solid #E8E0D8',
                 background: slideCount === count ? '#FAF7F4' : '#FFFFFF',
                 cursor: 'pointer',

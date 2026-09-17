@@ -11,9 +11,10 @@ interface ExportConfig {
   headline: string;
   bioEnabled: boolean;
   bioText?: string;
-  slideCount: 3 | 4 | 5;
+  slideCount: 2 | 3 | 4 | 5;
   selectedImageUrls: string[];
   roomId?: string;
+  pitch?: string; rationale?: string; beats?: string[]; headlineOptions?: string[]; captionOptions?: string[];
 }
 
 interface Props {
@@ -30,8 +31,8 @@ export function ExportButton({ projectId, config, caption, initialExport }: Prop
   const [progress, setProgress] = useState('');
 
   const handleExport = async (saveOnly = false) => {
-    if (!saveOnly && !config.headline) {
-      alert('Please select a headline first.');
+    if (!saveOnly && (!config.headline.trim() || !config.selectedImageUrls.length)) {
+      setError('Add a headline and at least one photo before exporting.');
       return;
     }
 
@@ -59,6 +60,8 @@ export function ExportButton({ projectId, config, caption, initialExport }: Prop
             slideCount: config.slideCount,
             selectedImageUrls: config.selectedImageUrls,
             roomId: config.roomId,
+            pitch: config.pitch, rationale: config.rationale, beats: config.beats,
+            headlineOptions: config.headlineOptions, captionOptions: config.captionOptions,
           },
         }),
       });
@@ -97,10 +100,8 @@ export function ExportButton({ projectId, config, caption, initialExport }: Prop
 
       // Also copy caption to clipboard
       if (caption) {
-        const ctaText = 'The full editorial \u2014 and every product specification \u2014 lives on Folio.';
-        const fullCaption = `${caption}\n\n${ctaText}`;
         try {
-          await navigator.clipboard.writeText(fullCaption);
+          await navigator.clipboard.writeText(caption);
         } catch {
           // Clipboard not available, that's ok
         }
@@ -117,16 +118,18 @@ export function ExportButton({ projectId, config, caption, initialExport }: Prop
     }
   };
 
+  const unavailable = !config.headline.trim() || !config.selectedImageUrls.length;
   return (
     <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '12px' }}>
       {error && <span role="alert" style={{ color: '#A33', fontSize: 'var(--type-meta)' }}>{error}</span>}
       <button onClick={() => handleExport(true)} disabled={exporting} style={{ padding: '10px 16px', border: '1px solid #E8E0D8', borderRadius: '10px', fontSize: 'var(--type-meta)' }}>Save draft</button>
+      {unavailable && !exporting && <span className="folio-meta text-folio-text-secondary">Add a headline and photo to export.</span>}
       {progress && (
         <span style={{ fontSize: 'var(--type-meta)', color: '#8B7B68' }}>{progress}</span>
       )}
       <button
         onClick={() => handleExport()}
-        disabled={exporting || !config.headline}
+        disabled={exporting || unavailable}
         style={{
           display: 'flex',
           alignItems: 'center',
@@ -140,7 +143,7 @@ export function ExportButton({ projectId, config, caption, initialExport }: Prop
           transition: 'all 0.2s',
           background: exporting ? '#E8E0D8' : '#2C2420',
           color: exporting ? '#8B7B68' : '#FFFFFF',
-          opacity: !config.headline && !exporting ? 0.4 : 1,
+          opacity: unavailable && !exporting ? 0.4 : 1,
         }}
       >
         {exporting ? (
@@ -154,7 +157,7 @@ export function ExportButton({ projectId, config, caption, initialExport }: Prop
               animation: 'spin 1s linear infinite',
             }} />
             <style>{`@keyframes spin { to { transform: rotate(360deg) } }`}</style>
-            Exporting...
+            {progress.startsWith('Saving') ? 'Saving…' : 'Exporting…'}
           </>
         ) : (
           <>
