@@ -26,10 +26,11 @@ export async function POST(request: NextRequest) {
   try {
     const userId = session.user.id;
     const workspace = await resolvePublishingStudioContext(userId);
-    // Membership grants workspace access, but does not make colleagues' projects
-    // this designer's corpus. The personal workspace also excludes all org work.
+    // An authorized organization workspace reviews the practice's published
+    // corpus, including work created by other members. Personal work stays private.
     const projects = await prisma.project.findMany({
-      where: { designerId: userId, designerOrgId: workspace.id, isPublic: true, post: { status: 'PUBLISHED' } },
+      where: { ...(workspace.id ? {} : { designerId: userId }), designerOrgId: workspace.id,
+        isPublic: true, post: { status: 'PUBLISHED' } },
       select: { id: true }, orderBy: [{ updatedAt: 'desc' }, { id: 'asc' }], take: 100,
     });
     if (projects.length < EDITORIAL_QUEUE_MIN_STORIES) {

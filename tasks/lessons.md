@@ -1076,3 +1076,6 @@ The founder clarified that users must not think social posts and campaigns requi
 ## 2026-09-17 — Project social sections and Publishing Studio share the same work
 
 The founder clarified that global access does not mean removing social content from project pages. Keep project-level social/campaign previews and actions, linked into Publishing Studio using the same records and editor. Publishing Studio is the approved name. Include campaigns tied to individual editorial posts as well as projects. Cross-project AI comparison and evidence-backed proposals for material studies, Q&A and social/editorial stories are core Studio content, not an incidental later feature.
+
+## 2026-09-17 — Verify a studio with published work and no social history
+A publishing hub must surface existing published project stories on its landing page before any campaigns or exports exist. Do not mistake saved social-record counts for available source work. In an active organization, recommendation eligibility and corpus must agree with the organization-wide published work users see; maintain exact workspace and public-source boundaries. Verify the reported studio's actual distribution across member designers, not just single-owner fixtures.

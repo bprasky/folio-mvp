@@ -8,7 +8,7 @@ const tailwind = require('tailwindcss');
 const config = require('../tailwind.config');
 const data = {
   workspace: { id: null, name: 'Example design practice' },
-  projects: [{ id: 'p1', title: 'La Gorce', thumbnail: null, published: true, canCreate: true }, { id: 'p2', title: 'Lake House', thumbnail: null, published: true, canCreate: true }],
+  projects: [{ id: 'p1', title: 'La Gorce', thumbnail: null, published: true, canCreate: true, canCreateCampaign: true }, { id: 'p2', title: 'Lake House', thumbnail: null, published: true, canCreate: true, canCreateCampaign: true }],
   ideas: [
     { id: 'i1', title: 'Natural stone, two different moods', format: 'MATERIAL_STUDY', status: 'recommended', createdAt: '2026-09-17', projectIds: ['p1', 'p2'], reason: 'Both projects use natural stone in the kitchen. Explore the difference in scale and atmosphere.', prompts: [{ id: 'q1', prompt: 'What guided the different treatment of stone in these two kitchens?' }] },
     { id: 'i2', title: 'The questions behind your rooms', format: 'QA', status: 'in_progress', createdAt: '2026-09-16', projectIds: [], reason: 'An introduction to your approach, in your own words.', prompts: [{ id: 'q2', prompt: 'What do you want to understand before you begin a room?' }] },

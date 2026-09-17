@@ -1,0 +1,22 @@
+const assert = require('node:assert/strict'), fs = require('fs'), vm = require('vm'), ts = require('typescript'), React = require('react');
+const { renderToStaticMarkup } = require('react-dom/server');
+function load(file, imports) { const exports = {}; vm.runInNewContext(ts.transpileModule(fs.readFileSync(file, 'utf8'), { compilerOptions: { jsx: ts.JsxEmit.ReactJSX, module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 } }).outputText, { exports, URLSearchParams, require: id => id in imports ? imports[id] : require(id) }); return exports; }
+const navigation = load('src/lib/publishing-studio/navigation.ts', {});
+let params = new URLSearchParams();
+const data = { workspace: { name: 'BP Design', id: 'bp' }, projects: Array.from({ length: 5 }, (_, i) => ({ id: `p${i}`, title: `Project ${i}`, published: i < 4, canCreate: true, canCreateCampaign: true })), editorials: Array.from({ length: 5 }, (_, i) => ({ id: `story${i}`, projectId: `p${i}`, title: `Project ${i}`, slug: `story-${i}`, status: i < 4 ? 'published' : 'draft', format: 'PROJECT_FEATURE', updatedAt: '2026-09-17' })), posts: [], campaigns: [], ideas: [] };
+const { PublishingStudio } = load('src/components/publishing-studio/PublishingStudio.tsx', { 'next/link': { default: ({ children, ...props }) => React.createElement('a', props, children) }, 'next/dynamic': { default: () => () => null }, 'next/navigation': { useRouter: () => ({ replace() { } }), useSearchParams: () => params }, './useStudio': { useStudio: () => ({ data, reload() { } }) }, '@/lib/publishing-studio/navigation': navigation });
+let html = renderToStaticMarkup(React.createElement(PublishingStudio));
+assert.match(html, /4 published stories/);
+assert.match(html, /Your published stories/);
+assert.equal((html.match(/>Create a campaign<\/a>/g) || []).length, 4);
+assert.equal((html.match(/>Create a carousel<\/a>/g) || []).length, 4);
+assert.ok(html.indexOf('Your published stories') < html.indexOf('Suggested stories'));
+assert.doesNotMatch(html, /href="\/project\/p4"/);
+params = new URLSearchParams('project=p1');
+html = renderToStaticMarkup(React.createElement(PublishingStudio));
+assert.match(html, /1 published story/);
+assert.equal((html.match(/>Create a campaign<\/a>/g) || []).length, 1);
+params = new URLSearchParams('view=editorial');
+html = renderToStaticMarkup(React.createElement(PublishingStudio));
+assert.match(html, /Continue project story/);
+console.log('PASS Studio landing: four published stories and creation actions without social history; source-first order; project filter; draft only in editorial view.');
