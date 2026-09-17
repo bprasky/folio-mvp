@@ -30,6 +30,7 @@ type Props = {
   orgId: string;
   canAddToTeam: boolean;
   isMember: boolean;
+  isOwner: boolean;
   currentUserNeedsProfile: boolean;
 };
 
@@ -37,6 +38,7 @@ export function OrgMemberNotices({
   orgId,
   canAddToTeam,
   isMember,
+  isOwner,
   currentUserNeedsProfile,
 }: Props) {
   const [missing, setMissing] = useState<MissingMember[]>([]);
@@ -83,7 +85,7 @@ export function OrgMemberNotices({
   };
 
   const showSelfNudge =
-    isMember && currentUserNeedsProfile && !dismissedSelfNudge;
+    isOwner && isMember && currentUserNeedsProfile && !dismissedSelfNudge;
   const showTeamBanner = canAddToTeam && missing.length > 0;
 
   if (!showSelfNudge && !showTeamBanner) return null;
@@ -186,20 +188,18 @@ export function OrgMemberNotices({
 
       {showSelfNudge && (
         <section
-          className="p-4 rounded-2xl border flex items-center gap-4"
+          className="px-4 py-3 rounded-xl flex items-center gap-3"
           style={{
-            borderColor: '#E8E4DF',
-            backgroundColor: '#FFFFFF',
+            backgroundColor: '#F5F3F0',
           }}
           aria-label="Complete your profile"
         >
-          <div className="flex-1 min-w-0">
+          <div className="flex-1 min-w-0 flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
             <p className="text-sm font-medium" style={{ color: '#2C2825' }}>
-              Complete your bio so it appears on the team page
+              Complete your profile
             </p>
-            <p className="text-xs mt-1" style={{ color: '#8B8178' }}>
-              Your photo and bio populate your team card here. Without them
-              you&rsquo;ll show as initials and an empty card.
+            <p className="text-xs" style={{ color: '#8B8178' }}>
+              Add a photo and bio to appear on the team page.
             </p>
           </div>
           <Link
@@ -207,7 +207,7 @@ export function OrgMemberNotices({
             className="px-3 py-1.5 text-xs rounded-full whitespace-nowrap shrink-0"
             style={{ backgroundColor: '#2C2825', color: 'var(--surface-ground)' }}
           >
-            Complete profile
+            Complete
           </Link>
           <button
             type="button"

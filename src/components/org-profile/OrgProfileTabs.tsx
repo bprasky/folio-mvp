@@ -9,10 +9,9 @@ interface OrgProfileTabsProps {
   defaultTab?: string;
   orgType?: string;
   isMember?: boolean;
-  isAdmin?: boolean;
 }
 
-export default function OrgProfileTabs({ activeTab, orgId, defaultTab = 'feed', orgType, isMember, isAdmin }: OrgProfileTabsProps) {
+export default function OrgProfileTabs({ activeTab, orgId, defaultTab = 'feed', orgType, isMember }: OrgProfileTabsProps) {
   const searchParams = useSearchParams();
 
   const createUrl = (tab: string) => {
@@ -27,7 +26,6 @@ export default function OrgProfileTabs({ activeTab, orgId, defaultTab = 'feed', 
   };
 
   const VENDOR_ORG_TYPES = ['VENDOR', 'MANUFACTURER', 'SHOWROOM'];
-  const DESIGN_ORG_TYPES = ['DESIGN_FIRM', 'ARCHITECTURE_FIRM'];
   const isVendorOrg = orgType && VENDOR_ORG_TYPES.includes(orgType);
 
   const tabs = isVendorOrg
@@ -40,9 +38,8 @@ export default function OrgProfileTabs({ activeTab, orgId, defaultTab = 'feed', 
         { id: 'about', label: 'About' },
       ]
     : [
-        // Design org tabs (unchanged)
+        // Published projects live in the Feed; a second projects grid duplicated them.
         { id: 'feed', label: 'Feed' },
-        { id: 'projects', label: 'Projects' },
         { id: 'shop', label: 'Shop' },
         { id: 'about', label: 'About' },
         { id: 'contact', label: 'Contact' },

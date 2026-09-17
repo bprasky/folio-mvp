@@ -1,5 +1,5 @@
 import { Suspense } from 'react';
-import { notFound } from 'next/navigation';
+import { notFound, redirect } from 'next/navigation';
 import { prisma } from '@/lib/prisma';
 import { PUBLISHED_PROJECT_FILTER } from '@/server/queries/filters';
 import { getServerSession } from 'next-auth';
@@ -9,7 +9,6 @@ import { OrgMemberNotices } from '@/components/org-profile/OrgMemberNotices';
 import { can, isOrgRole } from '@/lib/orgPermissions';
 import OrgProfileTabs from '@/components/org-profile/OrgProfileTabs';
 import OrgProfileFeed from '@/components/org-profile/OrgProfileFeed';
-import OrgProjectsGrid from '@/components/org-profile/OrgProjectsGrid';
 import OrgShopTab from '@/components/org-profile/OrgShopTab';
 import OrgContactTab from '@/components/org-profile/OrgContactTab';
 import { OrgAboutTab } from '@/components/org-onboarding';
@@ -90,6 +89,14 @@ export default async function OrgProfilePage({ params, searchParams }: Props) {
 
   if (!org) {
     notFound();
+  }
+
+  if (resolvedSearchParams.tab === 'projects') {
+    const params = new URLSearchParams();
+    if (resolvedSearchParams.filter) params.set('filter', resolvedSearchParams.filter);
+    if (resolvedSearchParams.sort) params.set('sort', resolvedSearchParams.sort);
+    const queryString = params.toString();
+    redirect(`/org/${resolvedParams.orgId}${queryString ? `?${queryString}` : ''}`);
   }
 
   // Serialize org data for client components (Prisma objects can have non-serializable properties)
@@ -293,7 +300,7 @@ export default async function OrgProfilePage({ params, searchParams }: Props) {
   // Get pinned items (with fallback for missing fields)
   const pinnedItems = await getPinnedItems(memberIds);
 
-  // Fetch published projects for the Projects tab
+  // Published projects also supply product provenance for the Shop tab.
   let orgProjects: any[] = [];
   if (memberIds.length > 0) {
     try {
@@ -314,15 +321,6 @@ export default async function OrgProfilePage({ params, searchParams }: Props) {
       console.error('[OrgProfilePage] Error fetching projects:', err);
     }
   }
-
-  const projectsData = orgProjects.map((p: any) => ({
-    id: p.id,
-    title: p.title || 'Untitled Project',
-    imageUrl: p.images?.[0]?.url || null,
-    location: [p.city, p.regionState].filter(Boolean).join(', ') || null,
-    type: p.projectType !== 'UNSPECIFIED' ? p.projectType : null,
-    year: p.createdAt ? new Date(p.createdAt).getFullYear().toString() : null,
-  }));
 
   // Fetch products from org members' projects for the Shop tab
   let productsData: any[] = [];
@@ -432,7 +430,7 @@ export default async function OrgProfilePage({ params, searchParams }: Props) {
   }));
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: 'var(--surface-ground)' }}>
+    <div className="min-h-screen bg-surface-canvas">
       <OrgProfileHero
         org={orgData}
         projectCount={projectCount}
@@ -446,14 +444,15 @@ export default async function OrgProfilePage({ params, searchParams }: Props) {
         orgId={resolvedParams.orgId}
         canAddToTeam={canAddToTeam}
         isMember={isMember}
+        isOwner={isOwner}
         currentUserNeedsProfile={currentUserNeedsProfile}
       />
 
       {pinnedItems.length > 0 && <PinnedCarousel items={pinnedItems} />}
 
-      <OrgProfileTabs activeTab={activeTab} orgId={resolvedParams.orgId} defaultTab={defaultTab} orgType={org.type} isMember={isMember} isAdmin={isAdmin} />
+      <OrgProfileTabs activeTab={activeTab} orgId={resolvedParams.orgId} defaultTab={defaultTab} orgType={org.type} isMember={isMember} />
 
-      <div className="max-w-6xl mx-auto px-6 py-8">
+      <div className={`${activeTab === 'feed' ? 'mx-[calc(50%-50vw)] px-4 md:px-6 lg:px-8' : 'max-w-6xl mx-auto px-6'} py-8`}>
         {/* Vendor-specific tab content */}
         {isVendorOrg && activeTab === 'feed' && (
           <Suspense fallback={<FeedSkeleton />}>
@@ -482,9 +481,6 @@ export default async function OrgProfilePage({ params, searchParams }: Props) {
               setupState={setupState}
             />
           </Suspense>
-        )}
-        {!isVendorOrg && activeTab === 'projects' && (
-          <OrgProjectsGrid projects={projectsData} isOwner={isOwner} />
         )}
         {!isVendorOrg && activeTab === 'shop' && (
           <OrgShopTab products={productsData} />

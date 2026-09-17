@@ -1,10 +1,8 @@
 'use client';
 
-import { getFeedLayoutState, type FeedProjectItem } from '@/lib/feed/feed-layout';
-import { FEED_LAYOUT_THRESHOLDS } from '@/lib/feed/feed-layout';
-import NascentFeed from './NascentFeed';
-import MosaicFeed from './MosaicFeed';
+import type { FeedProjectItem } from '@/lib/feed/feed-layout';
 import MosaicActivationToast from './MosaicActivationToast';
+import ProjectFlowMosaic from './ProjectFlowMosaic';
 import MediaCard from '../feed-cards/MediaCard';
 import RecognitionCard from '../feed-cards/RecognitionCard';
 import CollaborationCard from '../feed-cards/CollaborationCard';
@@ -54,8 +52,6 @@ export default function FeedLayoutSystem({
   orgId,
   isMember,
 }: FeedLayoutSystemProps) {
-  const layoutState = getFeedLayoutState(projectCount);
-
   const projectItems = items.filter(i => i.type === 'project');
   const otherItems = items.filter(i => i.type !== 'project');
   const projects = projectItems.map(mapToFeedProject);
@@ -68,9 +64,7 @@ export default function FeedLayoutSystem({
         isMember={isMember}
       />
 
-      {/* Project layout section */}
-      {layoutState === 'nascent' && <NascentFeed projects={projects} />}
-      {layoutState === 'mosaic' && <MosaicFeed projects={projects} />}
+      {projects.length > 0 && <ProjectFlowMosaic projects={projects} />}
 
       {/* Non-project items */}
       {otherItems.length > 0 && (

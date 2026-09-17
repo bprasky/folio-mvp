@@ -16,17 +16,19 @@ type UIEvent = {
   eventTypes?: string[] | null;
   startsAt?: string | null;   // ISO string ok
   startDate?: string | null;  // for alt shapes
+  href?: string;
 };
 
 export type FlowMosaicProps = {
   events: UIEvent[];
   canEdit?: boolean;
+  preserveOrder?: boolean;
 };
 
 type Size = "L" | "M" | "S";
 
 function pickImage(e: UIEvent) {
-  return e.heroImageUrl || e.coverImageUrl || e.imageUrl || "/images/event-placeholder.jpg";
+  return e.heroImageUrl || e.coverImageUrl || e.imageUrl || null;
 }
 
 function score(e: UIEvent) {
@@ -65,37 +67,38 @@ function assignSizes(events: UIEvent[]): { item: UIEvent; size: Size }[] {
   return out;
 }
 
-// Row units: 8px; these spans produce nice rectangles with dense packing.
-// We compute rowSpan directly, do NOT rely on content height.
-const rowUnit = 8;
+function assignSizesInOrder(events: UIEvent[]): { item: UIEvent; size: Size }[] {
+  const largeCount = Math.min(events.length, Math.max(2, Math.floor(events.length * 0.08)));
+  const mediumCount = Math.min(events.length - largeCount, Math.max(6, Math.floor(events.length * 0.4)));
+  const remaining = { L: largeCount, M: mediumCount, S: events.length - largeCount - mediumCount };
+  const pattern: Size[] = ['L', 'M', 'S', 'M', 'S', 'M'];
+  let patternIndex = 0;
 
-function spanFor(size: Size, cols: number) {
-  // cols is dynamic; we limit max colSpan based on container columns.
-  // Bias to horizontal flow on large screens; vertical on tight screens.
-  if (size === "L") {
-    const col = cols >= 6 ? 4 : cols >= 4 ? 3 : 2;
-    const row = cols >= 6 ? 34 : cols >= 4 ? 32 : 30; // ~272–256px
-    return { colSpan: Math.min(col, cols), rowSpan: row };
-  }
-  if (size === "M") {
-    const col = 2;
-    const row = cols >= 4 ? 26 : 24; // ~208–192px
-    return { colSpan: Math.min(col, cols), rowSpan: row };
-  }
-  // SMALL
-  return { colSpan: 1, rowSpan: 18 }; // ~144px
+  return events.map(item => {
+    let size = pattern[patternIndex % pattern.length];
+    while (remaining[size] === 0) {
+      patternIndex += 1;
+      size = pattern[patternIndex % pattern.length];
+    }
+    remaining[size] -= 1;
+    patternIndex += 1;
+    return { item, size };
+  });
 }
 
-// Quick hook to read an estimated columns value from responsive breakpoints
-function useEstimatedCols() {
-  // CSS-driven estimate: we don't measure; we align to our class breakpoints.
-  if (typeof window === "undefined") return 4;
-  const w = window.innerWidth;
-  if (w >= 1280) return 6; // xl
-  if (w >= 1024) return 4; // lg
-  if (w >= 640)  return 2; // sm
-  return 1;
-}
+// Keep spans in static classes so Tailwind can emit them and the server/client
+// render stays identical. The grid itself owns the responsive behavior.
+const tileLayout: Record<Size, { className: string; rowSpan: number }> = {
+  L: {
+    className: "col-span-1 sm:col-span-2 lg:col-span-3 xl:col-span-4",
+    rowSpan: 34,
+  },
+  M: {
+    className: "col-span-1 sm:col-span-2 lg:col-span-2 xl:col-span-2",
+    rowSpan: 26,
+  },
+  S: { className: "col-span-1", rowSpan: 18 },
+};
 
 function fmtDateTime(e: UIEvent) {
   const iso = e.startsAt || e.startDate;
@@ -115,10 +118,11 @@ function hasRSVP(e: UIEvent) {
   return Number.isFinite(n) && n > 0 ? n : null;
 }
 
-export default function FlowMosaic({ events, canEdit = false }: FlowMosaicProps) {
-  const cols = useEstimatedCols();
-
-  const sized = useMemo(() => assignSizes(events), [events]);
+export default function FlowMosaic({ events, canEdit = false, preserveOrder = false }: FlowMosaicProps) {
+  const sized = useMemo(
+    () => preserveOrder ? assignSizesInOrder(events) : assignSizes(events),
+    [events, preserveOrder]
+  );
   return (
     <div
       className={clsx(
@@ -129,8 +133,8 @@ export default function FlowMosaic({ events, canEdit = false }: FlowMosaicProps)
       )}
     >
       {sized.map(({ item, size }) => {
-        const { colSpan, rowSpan } = spanFor(size, cols);
-        const href = (item as any).href || `/events/${item.id}`;
+        const { className, rowSpan } = tileLayout[size];
+        const href = item.href || `/events/${item.id}`;
         const img = pickImage(item);
 
         return (
@@ -138,8 +142,7 @@ export default function FlowMosaic({ events, canEdit = false }: FlowMosaicProps)
             key={item.id}
             className={clsx(
               "group relative rounded-[20px] overflow-hidden",
-              // Tailwind supports col-span-1..12, dynamic via template string
-              `col-span-${colSpan}`
+              className
             )}
             style={{ gridRowEnd: `span ${rowSpan}` }}
           >
@@ -147,24 +150,30 @@ export default function FlowMosaic({ events, canEdit = false }: FlowMosaicProps)
             <div className="relative h-full">
               {/* image box: fill, cover */}
               <div className="absolute inset-0 pointer-events-none">
-                <SafeImage
-                  src={img}
-                  alt={item.title ?? "Event"}
-                  fill
-                  sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, (max-width: 1280px) 33vw, 25vw"
-                  className="object-cover"
-                />
+                {img ? (
+                  <SafeImage
+                    src={img}
+                    alt={item.title ?? "Event"}
+                    fill
+                    sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, (max-width: 1280px) 33vw, 25vw"
+                    className="object-cover"
+                  />
+                ) : (
+                  <div className="absolute inset-0 flex items-center justify-center bg-stone-200 text-xs uppercase tracking-[0.2em] text-stone-500">
+                    Folio
+                  </div>
+                )}
                 <div className="absolute inset-0 z-10 pointer-events-none bg-gradient-to-t from-black/60 via-black/10 to-transparent" />
               </div>
 
               {/* content overlay */}
               <div className="relative z-20 pointer-events-none flex h-full items-end p-3">
                 <div className="text-white w-full">
-                  <div className={clsx("font-semibold leading-tight",
+                  <h3 className={clsx("font-semibold leading-tight",
                     size === "L" ? "text-xl" : size === "M" ? "text-lg" : "text-sm"
                   )}>
                     {item.title}
-                  </div>
+                  </h3>
                   {/* Meta row */}
                   {(() => {
                     const dt = fmtDateTime(item);
@@ -213,4 +222,4 @@ export default function FlowMosaic({ events, canEdit = false }: FlowMosaicProps)
       })}
     </div>
   );
-} 
+}
