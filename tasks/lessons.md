@@ -1093,3 +1093,12 @@ A prepared room story is a fixed editorial direction: remove room-switching navi
 
 ## 2026-09-17 — Curated feed and intentional story configuration are complementary
 Keep prepared story Polish focused. Offer a separate configurator for firm/designer/project/multiple projects, optional room, angle/series (including 20 Questions), and output destinations. Identify missing source/profile substance and ask targeted questions rather than fabricate it. The feed need not enumerate every combination. Trend discovery needs current sourced context, not invented trends.
+
+## 2026-09-17 — A story format must launch an actual designer activity
+Selecting Q&A or20 Questions is not evidence of participation. Store original answers separately from generated copy, support save/resume, and require the designer to complete/review the activity before draft preparation. A suggested idea remains Needs your input until that occurs.
+
+## 2026-09-17 — Story setup is horizontal and personally grounded
+Use visible Topic → Story type → Interview steps. Topic choices are Designer, Firm History, Specific Project; project/room choices stay visible. Remove arbitrary angle and destination inputs; Folio and Instagram are defaults. Templates guide question intent, but questions must be generated from verified bio/project context (light personal references welcome), never served as the same static20 prompts for everyone.
+
+## 2026-09-17 — Topic constrains story types
+Firm History is not a general firm topic. Exclude both Material story and How it came together; show origins, people and evolution-focused choices. Use one allowed-combination mapping for the UI and server validation, and reset stale choices when changing topics.

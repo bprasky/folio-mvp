@@ -348,3 +348,43 @@ Plan check-in: user authorized fixes to pitch quality and polish flow. Prioritiz
 - [ ] Specify sourced trend discovery and platform adaptation separately before implementation.
 
 Review: BP Design read-only fixture now has four substantive room stories; generic entry/room descriptions excluded. Pitch/options persist into focused caption-first Polish. Caption generation gate, published room extraction, grounded prompt and retry errors corrected. Seven regression suites, full lint, production build, TypeScript budget, client/migration/design guards pass. Desktop and390px component preview checked (no horizontal overflow). Final synthetic paired caption eval documented; production provider configuration not verified. No schema changes.
+
+# Story configurator and interview activities — 2026-09-17
+
+- [x] Build scoped activity definitions, authored questions, readiness checks, and answer-preserving draft assembly.
+- [x] Build and visually verify configurator → one-question interview → answer review → draft preview with save/resume adapter boundaries.
+- [x] Prepare the exact native editorial schema/SQL and persistence contract using current metadata recon; do not apply unapproved schema changes.
+- [ ] Test boundaries, document review results, commit/push a draft PR and present the concrete migration approval gate.
+
+Plan check-in: user approved configurator and actual designer participation. Start with firm/designer/project subjects, optional room, Q&A,20 Questions, material story, method and history. No automatic publication, invented answers or trend claims. Database approval is required by AGENTS.md before applying model blocks/migrations; build a reviewable flow before asking.
+
+# Organization profile visual tightening — 2026-09-17
+
+- [x] Match the organization profile shell to the white navigation canvas.
+- [x] Reuse the events feed's dense mosaic for organization project cards at every non-empty count.
+- [x] Align loading, filters and responsive/accessibility behavior with the updated feed.
+- [x] Verify focused lint/types and visually review desktop/mobile organization states.
+
+Plan check-in: preserve the existing profile information architecture and non-project feed cards. Reuse the established events mosaic rather than introducing a third grid system. No schema, API contract or production-data changes.
+
+Review: organization profile now uses the white canvas token and project cards use the same dense L/M/S FlowMosaic as Events while preserving the selected org-feed sort. Shared responsive spans are static, eliminating render-time viewport reads and dynamic Tailwind classes. Loading geometry and filter accessibility match the result. Focused lint passes with existing warnings; TypeScript remains at the 904-diagnostic baseline. Representative desktop and 390px renders were checked with no mobile overflow. The live org route could not be rendered locally because sandboxed dev-server access to Supabase was blocked; the actual shared component was verified through a temporary mock route, which was removed afterward.
+
+Review: authored three20-question sets and four shorter formats; prototype validates subject/project/room choices, retains answers on failed save, resumes the first unanswered question, requires review and invalidates drafts on edits. Unit/React interaction tests and focused lint pass; mobile390px has no horizontal overflow. Prisma validates all four proposed models/inverses in a temporary schema; no actual schema or database writes. Live persistence/API/Studio wiring is deliberately incomplete until model/migration approval. SQL generated locally, not yet tested on disposable PostgreSQL.
+
+- [ ] After explicit model/SQL approval: apply through migration runbook, implement authorized transactional adapter/routes, wire live Studio and verify durable save/reopen before release.
+
+Final checks: TypeScript budget902/904 with no new fingerprints; client boundary, migration discipline, all design-system guards and focused lint pass. The previous polish PR received its isolated Set-iteration compatibility fix. New activity changes remain a draft pending database approval and live backend integration.
+
+### Horizontal setup and contextual interviews — 2026-09-17
+- [x] Replace dropdown configuration with visible Topic → Story type steps; remove angle and destination fields.
+- [x] Replace fixed questions with source-cited context generation; default Folio and Instagram outputs.
+- [x] Verify revised UI, source boundaries and live synthetic question quality; update draft PR.
+Production database approval and real profile/source adapter remain outstanding; this correction does not authorize the pending migration.
+
+Verification: all three activity/interaction/generation suites pass; focused lint, client boundary and TypeScript budget902/904 pass. Horizontal cards verified at623px and1280px,390px has no overflow. Ten bounded synthetic provider calls informed the prompt; structural citations are checked but do not establish perfect entailment. Staged design guards pass; an unrelated in-progress FlowMosaic edit fails the working-tree raw-type guard and was left untouched. No schema changes or real profile generation.
+
+### Topic-specific story choices — 2026-09-17
+- [x] Restrict Firm History to origins, people and historical quickfire interviews; remove material and project-process options.
+- [x] Share allowed combinations between visible choices and brief validation; reset choices when topics change.
+- [x] Pass the selected story meaning into question generation and verify topic switching, invalid combinations and the local browser.
+Review: all three focused activity suites and focused lint pass. Local preview shows only the three firm-history choices. No migration or production changes.

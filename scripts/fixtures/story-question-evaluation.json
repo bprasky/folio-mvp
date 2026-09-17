@@ -1,0 +1,653 @@
+{
+  "note": "Synthetic iterative evaluation. Designer outputs from template-free prompt round; project output from subsequent project-only scope correction. No real designer data.",
+  "results": [
+    {
+      "name": "Alex designer",
+      "definition": {
+        "questionSource": "personalized",
+        "version": 2,
+        "brief": {
+          "subject": "designer",
+          "format": "twenty_questions"
+        },
+        "subjectLabel": "Alex Morgan",
+        "title": "20 Questions with Folio: Alex Morgan",
+        "intro": "Twenty questions, in your words. Short answers are welcome. You can pause and come back.",
+        "questions": [
+          {
+            "id": "twenty_questions:v2:1",
+            "prompt": "What was your favorite place to spend an afternoon in Madison?",
+            "hint": "A specific spot, if one comes to mind.",
+            "needsExample": false,
+            "sourceIds": [],
+            "evidence": []
+          },
+          {
+            "id": "twenty_questions:v2:2",
+            "prompt": "Did you always plan to move to Portland after Madison, or did that happen another way?",
+            "hint": "Curious about the sequence, not a big narrative.",
+            "needsExample": false,
+            "sourceIds": [
+              "bio:education"
+            ],
+            "evidence": [
+              {
+                "sourceId": "bio:education",
+                "quote": "before moving to Portland"
+              }
+            ]
+          },
+          {
+            "id": "twenty_questions:v2:3",
+            "prompt": "Ceramics collecting — do you remember the first piece that started it?",
+            "hint": "An object, not a philosophy.",
+            "needsExample": false,
+            "sourceIds": [
+              "bio:interests"
+            ],
+            "evidence": [
+              {
+                "sourceId": "bio:interests",
+                "quote": "Alex collects handmade ceramics"
+              }
+            ]
+          },
+          {
+            "id": "twenty_questions:v2:4",
+            "prompt": "What draws you to photographing shop windows specifically, rather than other street details?",
+            "hint": "",
+            "needsExample": false,
+            "sourceIds": [
+              "bio:interests"
+            ],
+            "evidence": [
+              {
+                "sourceId": "bio:interests",
+                "quote": "photographs ordinary shop windows on weekend walks"
+              }
+            ]
+          },
+          {
+            "id": "twenty_questions:v2:5",
+            "prompt": "Is there a shop window you've photographed more than once?",
+            "hint": "",
+            "needsExample": false,
+            "sourceIds": [
+              "bio:interests"
+            ],
+            "evidence": [
+              {
+                "sourceId": "bio:interests",
+                "quote": "photographs ordinary shop windows on weekend walks"
+              }
+            ]
+          },
+          {
+            "id": "twenty_questions:v2:6",
+            "prompt": "What's in that drawer of paper scraps besides color studies?",
+            "hint": "",
+            "needsExample": false,
+            "sourceIds": [
+              "bio:practice"
+            ],
+            "evidence": [
+              {
+                "sourceId": "bio:practice",
+                "quote": "keeps a drawer of paper scraps used for color studies"
+              }
+            ]
+          },
+          {
+            "id": "twenty_questions:v2:7",
+            "prompt": "Pencil sketch first, always — is there a project where that first sketch survived to the end?",
+            "hint": "",
+            "needsExample": false,
+            "sourceIds": [
+              "bio:practice"
+            ],
+            "evidence": [
+              {
+                "sourceId": "bio:practice",
+                "quote": "Alex starts with a pencil sketch"
+              }
+            ]
+          },
+          {
+            "id": "twenty_questions:v2:8",
+            "prompt": "What did repairing wooden boats with your relative teach you that sketching doesn't?",
+            "hint": "",
+            "needsExample": false,
+            "sourceIds": [
+              "bio:roots"
+            ],
+            "evidence": [
+              {
+                "sourceId": "bio:roots",
+                "quote": "spent summers helping a relative repair wooden boats"
+              }
+            ]
+          },
+          {
+            "id": "twenty_questions:v2:9",
+            "prompt": "Do you still go back to the Oregon coast?",
+            "hint": "",
+            "needsExample": false,
+            "sourceIds": [
+              "bio:roots"
+            ],
+            "evidence": [
+              {
+                "sourceId": "bio:roots",
+                "quote": "grew up near the Oregon coast"
+              }
+            ]
+          },
+          {
+            "id": "twenty_questions:v2:10",
+            "prompt": "What's a material you trust the way you'd trust a well-repaired boat hull?",
+            "hint": "Light, not literal.",
+            "needsExample": false,
+            "sourceIds": [],
+            "evidence": []
+          },
+          {
+            "id": "twenty_questions:v2:11",
+            "prompt": "At the weekly sample-table discussion, what's the most useful kind of disagreement to have?",
+            "hint": "",
+            "needsExample": false,
+            "sourceIds": [
+              "firm:history"
+            ],
+            "evidence": [
+              {
+                "sourceId": "firm:history",
+                "quote": "weekly sample-table discussion to develop ideas together"
+              }
+            ]
+          },
+          {
+            "id": "twenty_questions:v2:12",
+            "prompt": "Example Studio started with two people in a small workspace — who was the other person?",
+            "hint": "",
+            "needsExample": false,
+            "sourceIds": [
+              "firm:history"
+            ],
+            "evidence": [
+              {
+                "sourceId": "firm:history",
+                "quote": "began in 2015 with two people sharing a small workspace"
+              }
+            ]
+          },
+          {
+            "id": "twenty_questions:v2:13",
+            "prompt": "Homes and neighborhood cafes are different rhythms — do you prefer designing for one over the other?",
+            "hint": "",
+            "needsExample": false,
+            "sourceIds": [
+              "firm:history"
+            ],
+            "evidence": [
+              {
+                "sourceId": "firm:history",
+                "quote": "now focuses on homes and neighborhood cafes"
+              }
+            ]
+          },
+          {
+            "id": "twenty_questions:v2:14",
+            "prompt": "At Garden House, keeping the family's existing dining table as the anchor — was that decided early or discovered along the way?",
+            "hint": "",
+            "needsExample": false,
+            "sourceIds": [
+              "project:living"
+            ],
+            "evidence": [
+              {
+                "sourceId": "project:living",
+                "quote": "the living room was planned around a dining table the family already owned"
+              }
+            ]
+          },
+          {
+            "id": "twenty_questions:v2:15",
+            "prompt": "That full-size paper template for testing turning space — is that a habit across projects or specific to this room?",
+            "hint": "",
+            "needsExample": false,
+            "sourceIds": [
+              "project:living"
+            ],
+            "evidence": [
+              {
+                "sourceId": "project:living",
+                "quote": "tested the turning space using a full-size paper template"
+              }
+            ]
+          },
+          {
+            "id": "twenty_questions:v2:16",
+            "prompt": "The reading corner's ceramic lamp — did that come from your own collecting, or was it sourced for the room?",
+            "hint": "",
+            "needsExample": false,
+            "sourceIds": [
+              "project:living"
+            ],
+            "evidence": [
+              {
+                "sourceId": "project:living",
+                "quote": "pairs a woven chair with a small ceramic lamp"
+              }
+            ]
+          },
+          {
+            "id": "twenty_questions:v2:17",
+            "prompt": "Testing the glazed tile beside the window at different times of day — what changed your mind, if anything?",
+            "hint": "",
+            "needsExample": false,
+            "sourceIds": [
+              "project:kitchen"
+            ],
+            "evidence": [
+              {
+                "sourceId": "project:kitchen",
+                "quote": "A glazed tile sample was tested beside the window at different times of day"
+              }
+            ]
+          },
+          {
+            "id": "twenty_questions:v2:18",
+            "prompt": "Leaving that wall bare of upper cabinets — what almost went there instead?",
+            "hint": "",
+            "needsExample": false,
+            "sourceIds": [
+              "project:kitchen"
+            ],
+            "evidence": [
+              {
+                "sourceId": "project:kitchen",
+                "quote": "left a section of the wall without upper cabinets to bring light farther into the room"
+              }
+            ]
+          },
+          {
+            "id": "twenty_questions:v2:19",
+            "prompt": "Favorite meal to cook, if you cook?",
+            "hint": "Quick one.",
+            "needsExample": false,
+            "sourceIds": [],
+            "evidence": []
+          },
+          {
+            "id": "twenty_questions:v2:20",
+            "prompt": "What's a small object on your desk right now that has nothing to do with work?",
+            "hint": "",
+            "needsExample": false,
+            "sourceIds": [],
+            "evidence": []
+          }
+        ]
+      }
+    },
+    {
+      "name": "Sam designer",
+      "definition": {
+        "questionSource": "personalized",
+        "version": 2,
+        "brief": {
+          "subject": "designer",
+          "format": "twenty_questions"
+        },
+        "subjectLabel": "Sam Rivera",
+        "title": "20 Questions with Folio: Sam Rivera",
+        "intro": "Twenty questions, in your words. Short answers are welcome. You can pause and come back.",
+        "questions": [
+          {
+            "id": "twenty_questions:v2:1",
+            "prompt": "You studied furniture design in Providence — any spot there you still miss?",
+            "hint": "favorite place, low stakes",
+            "needsExample": false,
+            "sourceIds": [
+              "bio:education"
+            ],
+            "evidence": [
+              {
+                "sourceId": "bio:education",
+                "quote": "Sam studied furniture design in Providence, Rhode Island"
+              }
+            ]
+          },
+          {
+            "id": "twenty_questions:v2:2",
+            "prompt": "What first drew you to secondhand bookshops, as opposed to new ones?",
+            "hint": "personal taste",
+            "needsExample": false,
+            "sourceIds": [
+              "bio:collecting"
+            ],
+            "evidence": [
+              {
+                "sourceId": "bio:collecting",
+                "quote": "spends weekends looking through secondhand bookshops"
+              }
+            ]
+          },
+          {
+            "id": "twenty_questions:v2:3",
+            "prompt": "Is there a particular vintage map in your collection you'd call a favorite?",
+            "hint": "object/collection",
+            "needsExample": false,
+            "sourceIds": [
+              "bio:collecting"
+            ],
+            "evidence": [
+              {
+                "sourceId": "bio:collecting",
+                "quote": "Sam collects vintage maps"
+              }
+            ]
+          },
+          {
+            "id": "twenty_questions:v2:4",
+            "prompt": "Growing up around musicians — did that shape how you listen to a room?",
+            "hint": "background, open-ended",
+            "needsExample": false,
+            "sourceIds": [
+              "bio:background"
+            ],
+            "evidence": [
+              {
+                "sourceId": "bio:background",
+                "quote": "Sam grew up in a family of musicians"
+              }
+            ]
+          },
+          {
+            "id": "twenty_questions:v2:5",
+            "prompt": "What was the first small speaker you ever built?",
+            "hint": "concrete object",
+            "needsExample": false,
+            "sourceIds": [
+              "bio:background"
+            ],
+            "evidence": [
+              {
+                "sourceId": "bio:background",
+                "quote": "enjoys building small speakers"
+              }
+            ]
+          },
+          {
+            "id": "twenty_questions:v2:6",
+            "prompt": "When you start a collage for a project, is it photographs first or painted paper first?",
+            "hint": "work ritual, specific",
+            "needsExample": false,
+            "sourceIds": [
+              "bio:habits"
+            ],
+            "evidence": [
+              {
+                "sourceId": "bio:habits",
+                "quote": "Sam starts each design with a collage of photographs and painted paper"
+              }
+            ]
+          },
+          {
+            "id": "twenty_questions:v2:7",
+            "prompt": "What's a color you find yourself reaching for again and again?",
+            "hint": "taste, open",
+            "needsExample": false,
+            "sourceIds": [],
+            "evidence": []
+          },
+          {
+            "id": "twenty_questions:v2:8",
+            "prompt": "Coffee or tea while you're working through a collage?",
+            "hint": "light ritual",
+            "needsExample": false,
+            "sourceIds": [],
+            "evidence": []
+          },
+          {
+            "id": "twenty_questions:v2:9",
+            "prompt": "Is there a record you'd want playing in that listening corner at Garden House?",
+            "hint": "favorite, tied to project",
+            "needsExample": false,
+            "sourceIds": [
+              "project:studio"
+            ],
+            "evidence": [
+              {
+                "sourceId": "project:studio",
+                "quote": "A quiet corner was set aside for listening to records"
+              }
+            ]
+          },
+          {
+            "id": "twenty_questions:v2:10",
+            "prompt": "Why cardboard for testing the bench height, rather than a scale model?",
+            "hint": "specific decision",
+            "needsExample": false,
+            "sourceIds": [
+              "project:studio"
+            ],
+            "evidence": [
+              {
+                "sourceId": "project:studio",
+                "quote": "Sam tested the bench height with cardboard mockups"
+              }
+            ]
+          },
+          {
+            "id": "twenty_questions:v2:11",
+            "prompt": "What made deep green feel right for the Garden House walls?",
+            "hint": "material/color choice",
+            "needsExample": false,
+            "sourceIds": [
+              "project:studio"
+            ],
+            "evidence": [
+              {
+                "sourceId": "project:studio",
+                "quote": "The recent Garden House project used deep green walls"
+              }
+            ]
+          },
+          {
+            "id": "twenty_questions:v2:12",
+            "prompt": "Recycled glass for the lights — was that decided early or discovered along the way?",
+            "hint": "material story",
+            "needsExample": false,
+            "sourceIds": [
+              "project:studio"
+            ],
+            "evidence": [
+              {
+                "sourceId": "project:studio",
+                "quote": "recycled glass lights"
+              }
+            ]
+          },
+          {
+            "id": "twenty_questions:v2:13",
+            "prompt": "Oak shows up a lot in furniture work — what do you like about it specifically?",
+            "hint": "material preference",
+            "needsExample": false,
+            "sourceIds": [
+              "project:studio"
+            ],
+            "evidence": [
+              {
+                "sourceId": "project:studio",
+                "quote": "a long oak bench"
+              }
+            ]
+          },
+          {
+            "id": "twenty_questions:v2:14",
+            "prompt": "Chicago now, after Providence — what's a small thing about the city you didn't expect to love?",
+            "hint": "place, personal",
+            "needsExample": false,
+            "sourceIds": [
+              "bio:education"
+            ],
+            "evidence": [
+              {
+                "sourceId": "bio:education",
+                "quote": "now works in Chicago"
+              }
+            ]
+          },
+          {
+            "id": "twenty_questions:v2:15",
+            "prompt": "Do you still hunt for maps when you travel, or mostly at home?",
+            "hint": "habit, light",
+            "needsExample": false,
+            "sourceIds": [
+              "bio:collecting"
+            ],
+            "evidence": [
+              {
+                "sourceId": "bio:collecting",
+                "quote": "Sam collects vintage maps"
+              }
+            ]
+          },
+          {
+            "id": "twenty_questions:v2:16",
+            "prompt": "What's something you'd never put in a collage, even if it looked right?",
+            "hint": "taste boundary",
+            "needsExample": false,
+            "sourceIds": [],
+            "evidence": []
+          },
+          {
+            "id": "twenty_questions:v2:17",
+            "prompt": "Is there a piece of music you associate with a specific project, past or present?",
+            "hint": "personal, connective",
+            "needsExample": false,
+            "sourceIds": [],
+            "evidence": []
+          },
+          {
+            "id": "twenty_questions:v2:18",
+            "prompt": "Favorite way to spend a Sunday when there's no deadline?",
+            "hint": "personal, easy",
+            "needsExample": false,
+            "sourceIds": [],
+            "evidence": []
+          },
+          {
+            "id": "twenty_questions:v2:19",
+            "prompt": "If you weren't designing, is there another way you might've spent your hands — building speakers, maybe?",
+            "hint": "open, no assumed switch",
+            "needsExample": false,
+            "sourceIds": [
+              "bio:background"
+            ],
+            "evidence": [
+              {
+                "sourceId": "bio:background",
+                "quote": "enjoys building small speakers"
+              }
+            ]
+          },
+          {
+            "id": "twenty_questions:v2:20",
+            "prompt": "What's a small object on your desk right now that means something to you?",
+            "hint": "favorite object, concrete",
+            "needsExample": false,
+            "sourceIds": [],
+            "evidence": []
+          }
+        ]
+      }
+    },
+    {
+      "name": "Garden living room",
+      "definition": {
+        "questionSource": "personalized",
+        "version": 2,
+        "brief": {
+          "subject": "project",
+          "format": "qa",
+          "projectId": "p1",
+          "roomId": "r1"
+        },
+        "subjectLabel": "Living room at Garden House",
+        "title": "Q&A: Living room at Garden House",
+        "intro": "Use a real example. Your original answers stay intact when you review the draft.",
+        "questions": [
+          {
+            "id": "qa:v2:1",
+            "prompt": "The living room was planned around a dining table the family already owned — what did that piece of furniture dictate about the rest of the layout?",
+            "hint": "Think about scale, placement, or sightlines that followed from keeping the table.",
+            "needsExample": false,
+            "sourceIds": [
+              "project:living"
+            ],
+            "evidence": [
+              {
+                "sourceId": "project:living",
+                "quote": "the living room was planned around a dining table the family already owned"
+              }
+            ]
+          },
+          {
+            "id": "qa:v2:2",
+            "prompt": "You chose a lower sofa to keep the view toward the garden open — what was the alternative height or arrangement you set aside to get there?",
+            "hint": "Concrete comparison: what a taller or bulkier sofa would have blocked.",
+            "needsExample": true,
+            "sourceIds": [
+              "project:living"
+            ],
+            "evidence": [
+              {
+                "sourceId": "project:living",
+                "quote": "A lower sofa kept the view toward the garden open"
+              }
+            ]
+          },
+          {
+            "id": "qa:v2:3",
+            "prompt": "There's a mention of testing the turning space with a full-size paper template — what did that test reveal that a drawing or plan alone wouldn't have shown?",
+            "hint": "Ask for the specific moment the template caught something.",
+            "needsExample": false,
+            "sourceIds": [
+              "project:living"
+            ],
+            "evidence": [
+              {
+                "sourceId": "project:living",
+                "quote": "The team tested the turning space using a full-size paper template"
+              }
+            ]
+          },
+          {
+            "id": "qa:v2:4",
+            "prompt": "In the reading corner, the woven chair is paired with a small ceramic lamp — what made that particular pairing feel right together?",
+            "hint": "Look for texture, scale, or light quality reasoning.",
+            "needsExample": false,
+            "sourceIds": [
+              "project:living"
+            ],
+            "evidence": [
+              {
+                "sourceId": "project:living",
+                "quote": "The reading corner pairs a woven chair with a small ceramic lamp"
+              }
+            ]
+          },
+          {
+            "id": "qa:v2:5",
+            "prompt": "Across the room, how did designing around an existing piece like the dining table change your process compared to starting with an empty plan?",
+            "hint": "Broad reflection on working with what's already there versus a blank layout.",
+            "needsExample": false,
+            "sourceIds": [],
+            "evidence": []
+          }
+        ]
+      }
+    }
+  ]
+}
