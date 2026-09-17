@@ -45,8 +45,9 @@ async function main() {
   await act(async () => root.render(React.createElement(InstagramExportEditor, props)));
   assert.equal(requests.length,0,'Opening saved export must not generate');
   assert.ok(document.body.textContent.includes('Saved headline'));
+  assert.ok(!document.body.textContent.includes('“Saved headline”'), 'Editorial headline is not a quotation');
   assert.ok(!document.body.textContent.includes('folio-design-system'));
-  assert.ok([...document.querySelectorAll('a')].some(a => a.getAttribute('href') === '/designer/studio?view=posts&project=p1'), document.body.innerHTML.slice(0,2500));
+  assert.ok([...document.querySelectorAll('a')].some(a => a.getAttribute('href') === '/designer/studio?project=p1'), document.body.innerHTML.slice(0,2500));
   const click = async text => act(async () => [...document.querySelectorAll('button')].find(b=>b.textContent===text).click());
   await click('Save draft');
   const save = requests.at(-1);
@@ -77,7 +78,25 @@ async function main() {
   await click('3 slides');
   assert.ok(document.querySelector('button[aria-label="Slide 3: CTA Slide"][aria-pressed="true"]'),'Reducing slides clamps selected index');
   assert.ok(document.body.textContent.includes('Full Editorial'));
+  const roomImages = [
+    { id: 'fk-kitchen', url: 'https://fixture.test/renamed.jpg', name: 'FK kitchen photo', roomId: 'r1', room: 'Old kitchen name' },
+    { id: 'fk-bedroom', url: 'https://fixture.test/misleading.jpg', name: 'FK bedroom photo', roomId: 'r2', room: 'Kitchen' },
+    { id: 'legacy-kitchen', url: 'https://fixture.test/legacy.jpg', name: 'Legacy kitchen photo', room: 'Kitchen' },
+  ];
+  const beforeRoomOpen = requests.length;
+  await act(async () => root.render(React.createElement(InstagramExportEditor, { ...props, key: 'room-fk', images: roomImages,
+    initialExport: { ...props.initialExport, config: { ...props.initialExport.config, roomId: 'r1', selectedImageUrls: [roomImages[0].url] } },
+  })));
+  assert.equal(requests.length, beforeRoomOpen, 'Opening a prepared room must not generate');
+  assert.ok(document.querySelector('img[alt="FK kitchen photo"]'), 'Prepared room picker follows the FK after a room rename');
+  assert.ok(document.querySelector('img[alt="Legacy kitchen photo"]'), 'No-FK legacy photos still resolve by room name');
+  assert.equal(document.querySelector('img[alt="FK bedroom photo"]'), null, 'Conflicting room text must not override the FK');
+  await click('Bedroom');
+  assert.ok(document.querySelector('img[alt="FK bedroom photo"]'), 'Changing rooms uses the FK for picker contents');
+  await click('Save draft');
+  assert.deepEqual(JSON.parse(JSON.stringify(requests.at(-1).body.config.selectedImageUrls)), [roomImages[1].url], 'Room changes reset selected images using the FK');
+  await act(async () => requests.at(-1).resolve({ ok: true, json: async () => ({ export: { id: 'saved', updatedAt: '2026-09-04T00:00:00.000Z' }, images: [] }) }));
   await act(async () => root.unmount());
-  console.log('Carousel regression checks passed: saved reopen, 3 ratios, annotations, stale responses, project reset, empty room, selection.');
+  console.log('Carousel regression checks passed: saved reopen, 3 ratios, annotations, stale responses, project reset, empty room, selection, FK-first prepared room and image reset.');
 }
 main().catch(error=>{console.error(error);process.exitCode=1;});

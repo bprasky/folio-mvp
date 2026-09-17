@@ -6,7 +6,7 @@ const esbuild = require('esbuild');
 const postcss = require('postcss');
 const tailwind = require('tailwindcss');
 const config = require('../tailwind.config');
-const data = {
+let data = {
   workspace: { id: null, name: 'Example design practice' },
   projects: [{ id: 'p1', title: 'La Gorce', thumbnail: null, published: true, canCreate: true, canCreateCampaign: true }, { id: 'p2', title: 'Lake House', thumbnail: null, published: true, canCreate: true, canCreateCampaign: true }],
   ideas: [
@@ -17,6 +17,14 @@ const data = {
   editorials: [{ id: 'article1', projectId: 'p1', title: 'La Gorce', slug: 'la-gorce', status: 'published', format: 'PROJECT_FEATURE', updatedAt: '2026-09-17' }],
   campaigns: [{ id: 'c1', projectId: 'p2', title: 'Lake House campaign', preset: 'compact', createdAt: '2026-09-16', totalPosts: 1, postCount: 1, posts: [{ id: 'cp1', title: 'Inside Lake House', caption: 'A kitchen opening to the lake.', sequenceNum: 1 }] }], truncated: false,
 };
+const fixtureImage = 'data:image/svg+xml,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="600" height="800"><rect width="600" height="800" fill="#c9b9a5"/><rect x="70" y="130" width="460" height="500" fill="#e6ddd0"/><path d="M0 700L600 500V800H0" fill="#9b8a73"/></svg>');
+data.feed = [
+ { id:'suggestion:p1', revision:'fixture1', projectIds:['p1'], title:'A quieter kind of home', caption:'A home shaped by warm stone and quiet light.', imageUrl:fixtureImage, imageUrls:[fixtureImage,fixtureImage], kind:'suggestion',format:'project_story',status:'recommended',updatedAt:'2026-09-17',canPolish:true },
+ { id:'carousel:e1', projectIds:['p1'], title:'A quieter kind of home', caption:'A home shaped by warm stone and quiet light.', imageUrl:fixtureImage, imageUrls:[fixtureImage],kind:'carousel',format:'carousel',status:'draft',updatedAt:'2026-09-17',canPolish:true,exportId:'e1' },
+ { id:'campaign:c1', projectIds:['p2'], title:'Lake House campaign', caption:'A kitchen opening to the lake.', imageUrl:fixtureImage,imageUrls:[fixtureImage],kind:'campaign',format:'campaign',status:'generated',updatedAt:'2026-09-17',canPolish:false,campaignId:'c1' },
+ { id:'idea:i1', projectIds:['p1','p2'], title:'Natural stone, two different moods', caption:'What guided the different treatment of stone in these two kitchens?', imageUrl:fixtureImage,imageUrls:[fixtureImage],kind:'idea',format:'MATERIAL_STUDY',status:'recommended',updatedAt:'2026-09-17',canPolish:false },
+];
+if (process.env.STUDIO_FIXTURE_PATH) data = JSON.parse(fs.readFileSync(process.env.STUDIO_FIXTURE_PATH, 'utf8'));
 async function main() {
   const bundle = await esbuild.build({
     stdin: { sourcefile: 'studio-preview.tsx', resolveDir: process.cwd(), loader: 'tsx', contents: `
@@ -34,7 +42,7 @@ async function main() {
       build.onLoad({ filter: /.*/, namespace: 'fixture' }, args => ({ loader: 'tsx', resolveDir: process.cwd(), contents:
         args.path === 'next/link' ? `import React from 'react'; export default function Link({children,...props}){return <a {...props}>{children}</a>}` :
         args.path === 'next/dynamic' ? `import React,{lazy,Suspense} from 'react'; export default function dynamic(load){const Component=lazy(()=>load().then(defaultExport=>({default:defaultExport})));return props=><Suspense fallback={<p>Loading…</p>}><Component {...props}/></Suspense>}` :
-        `import {useSyncExternalStore} from 'react'; const subscribe=fn=>{window.addEventListener('popstate',fn);return()=>window.removeEventListener('popstate',fn)};export function useSearchParams(){return new URLSearchParams(useSyncExternalStore(subscribe,()=>location.search))}export function useRouter(){return{replace(url){history.replaceState({},'',url);window.dispatchEvent(new PopStateEvent('popstate'))}}}`,
+        `import {useSyncExternalStore} from 'react'; const subscribe=fn=>{window.addEventListener('popstate',fn);return()=>window.removeEventListener('popstate',fn)};export function useSearchParams(){return new URLSearchParams(useSyncExternalStore(subscribe,()=>location.search))}export function useRouter(){return{push(url){location.href=url},replace(url){history.replaceState({},'',url);window.dispatchEvent(new PopStateEvent('popstate'))}}}`,
       }));
     } }],
   });
@@ -51,10 +59,11 @@ async function main() {
         const idea=data.ideas.find(i=>i.id===url.pathname.split('/').pop()); if(idea)idea.status=JSON.parse(body).status;
         return res.end(JSON.stringify({ok:true}));
       }
+      if(url.pathname.endsWith('/prepare'))return res.end(JSON.stringify({href:'/designer/projects/p1/instagram?export=e1'}));
       if(url.pathname.endsWith('/recommendations'))return res.end(JSON.stringify({status:'no_signals',createdPieces:0}));
       if(url.pathname.endsWith('/preview'))return res.end(JSON.stringify({projectTitle:'La Gorce',designerName:'Example Designer',totalPosts:2,imagesById:{},launch:{heroImageId:''},rooms:[],products:[],quotes:[],details:[],closer:{imageId:''}}));
       const project=url.searchParams.get('projectId');
-      return res.end(JSON.stringify(project?{...data,projects:data.projects.filter(p=>p.id===project),posts:data.posts.filter(p=>p.projectId===project),campaigns:data.campaigns.filter(c=>c.projectId===project),ideas:data.ideas.filter(i=>i.projectIds.includes(project))}:data));
+      return res.end(JSON.stringify(project?{...data,feed:data.feed.filter(item=>item.projectIds.includes(project)),projects:data.projects.filter(p=>p.id===project),posts:data.posts.filter(p=>p.projectId===project),campaigns:data.campaigns.filter(c=>c.projectId===project),ideas:data.ideas.filter(i=>i.projectIds.includes(project))}:data));
     }
     res.setHeader('Content-Type','text/html');res.end('<!doctype html><html><head><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="stylesheet" href="/fixture.css"></head><body><div id="root"></div><script src="/fixture.js"></script></body></html>');
   }).listen(4182,'127.0.0.1',()=>console.log('Studio component fixture: http://127.0.0.1:4182/designer/studio'));

@@ -320,3 +320,14 @@ Remaining: native standalone story answers/publication, immutable approved socia
 Plan check-in: correct misleading empty landing and organization eligibility; no automatic campaign creation or live AI requests.
 
 Verification: actual patched Studio loader exercised in a read-only transaction for both active BP Design members: each sees four published stories and four campaign-eligible projects. No records generated or modified. Source-first landing regression and scoped corpus/access tests pass; full lint and reviewer pass. Client boundary and migration discipline pass. TypeScript result recorded with commit. No schema changes; approved broader proposal remains separate.
+
+# Photo-led Publishing Studio — 2026-09-17
+
+- [x] Prepare source-grounded photo/caption/sequence cards with no generation or writes on browsing.
+- [x] Replace navigation-heavy landing with responsive 4:5 feed and shared project scope.
+- [x] Open the exact prepared content in the editor, preserving saved identity and workspace authorization.
+- [x] Verify preview/editor continuity, access, mobile/desktop rendering and repository checks.
+
+Plan check-in: implement the approved photo-first polishing workflow using existing export persistence; no schema migration needed for project/room prepared drafts. Native multi-project publishing remains a separate approved proposal.
+
+Review: source-grounded 4:5 cards share their hero renderer with the editor. Read-only live BP Design loader produced 17 cards (15 directly polishable project/room drafts plus2 existing story directions), all with source photos. Actual components rendered with that local snapshot at desktop,390px and320px; a filter popover overflow found at320px was fixed and rechecked. Exact prepare revision, idempotence, no browse generation, draft preservation, room FK, shared scope and access regressions pass. Production build, full lint, TypeScript ratchet903/904, client boundary, migration discipline and all design-system checks pass. Reviewer found no blockers. Live mutation/AI generation not run; downloaded SVG typography is not asserted pixel-identical to browser previews. Cross-project native editing remains separately scoped.

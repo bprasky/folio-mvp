@@ -137,3 +137,19 @@ Acceptance checks: desktop at 1440px and 1024px; mobile at 390px and 320px; shor
 ## Review result
 
 Code establishes real cleanup defects and an inconsistent navigation model. The proposed Studio landing coordinates project, room and material stories with the already-adopted source/publication specification. No application code, production data or deployments changed during this review. Exact authenticated visual verification is pending.
+
+## Meru screenshot evaluation — 2026-09-17
+
+Observed: Meru is selected in the project filter and repeated in a chip, then a creation panel asks the user to choose Meru again. The Campaigns tab excludes carousel and editorial ideas and displays a second empty-state panel. Search/status/sort occupy prominent space despite no saved results. The page provides navigation rather than a useful publishing workspace.
+
+Recommended revision: one canonical project publishing workspace. Both Studio project selection and the project Social & campaigns action open it, with identical ideas, drafts, saved pieces, campaign groupings and editor state. Keep a compact project selector, All projects and a quiet project link. Present source-backed candidate content first; cards carry thumbnail, concrete subject, format and suggested/draft/ready status. Open a card directly in a shared editor with project/source preselected. Campaigns group these same pieces and do not create a separate content universe. Suppress redundant source chooser for an already selected project; move secondary search/status/sort into compact controls; remove generic empty promotional panels and unavailable-feature boilerplate.
+
+The global workspace uses the same collection across projects, adding multi-project proposals with visible source labels. Project scope includes multi-project ideas involving that project. Suggested concepts are not saved campaigns: derive supported starter concepts from existing published sources, show an explicit generation action when content is not drafted, and never invent material details or imply that generated assets already exist. Returning from the editor must preserve the selected scope and saved identity.
+
+Acceptance example: Meru project → Social & campaigns and Studio → Meru resolve to the same content view. A designer can open an available idea in one click, with no second Meru choice or separate Posts/Campaigns navigation needed to discover it. This section is evaluation/specification only; no application changes were made.
+
+## Photo-led implementation — 2026-09-17
+
+The default Studio now shows 4:5 source-photo previews, proposed headline and published-source caption before any click. Project and room drafts open directly via an explicit idempotent preparation action; saved drafts retain edits and source identity. Global/project entry uses the same cards; compact contextual campaign creation remains available. Cross-project directions with unanswered prompts are labeled Needs your perspective. No schema changes or AI generation on browsing.
+
+Verified BP Design read-only source data and desktop/mobile actual-component fixtures, with tests covering snapshot parity, source changes, ownership, idempotence and saved room selection. Feed/editor share the first-slide composition; exact typography parity with exported SVG images remains unverified.

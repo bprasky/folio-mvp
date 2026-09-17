@@ -1,5 +1,7 @@
 'use client';
 
+import { CarouselHero } from './CarouselHero';
+
 import type { AspectRatio } from '@/lib/instagram-export/generate-images';
 import type { SlideData } from './InstagramExportEditor';
 import type { HeadlinePosition, WatermarkStyle } from '@/lib/instagram-export/svg-templates';
@@ -59,12 +61,6 @@ export function SlidePreview({
 
   const watermarkText = getWatermarkText(watermarkStyle, designerName);
   const handle = designerHandle || designerName.toLowerCase().replace(/\s+/g, '');
-
-  const positionStyles: Record<string, React.CSSProperties> = {
-    bottom_left: { bottom: '64px', left: '28px', right: '28px', textAlign: 'left' },
-    bottom_center: { bottom: '64px', left: '28px', right: '28px', textAlign: 'center' },
-    top_left: { top: '64px', left: '28px', right: '28px', textAlign: 'left' },
-  };
 
   const renderSlide = () => {
     // Bio slide
@@ -131,9 +127,8 @@ export function SlidePreview({
       );
     }
 
-    // Hero / Detail slides (with images)
-    const isHero = slide.type === 'hero';
-    const gradientDir = headlinePosition.startsWith('top') ? '180deg' : '0deg';
+    // Reuse the feed's exact first-slide composition.
+    if (slide.type === 'hero') return <CarouselHero imageUrl={slide.imageUrl} headline={headline || 'Your headline here'} headlinePosition={headlinePosition} watermarkText={watermarkText} />;
 
     return (
       <div style={{ width: '100%', height: '100%', position: 'relative', overflow: 'hidden' }}>
@@ -141,24 +136,9 @@ export function SlidePreview({
           // eslint-disable-next-line @next/next/no-img-element
           <img src={slide.imageUrl} alt={slide.type} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
         ) : (
-          <div style={{ position: 'absolute', inset: 0, background: isHero ? 'linear-gradient(135deg, #8B7355 0%, #6B5B45 40%, #4A3F35 100%)' : 'linear-gradient(160deg, #9B8B75 0%, #7B6B55 50%, #5A4F45 100%)' }}>
+          <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(160deg, #9B8B75 0%, #7B6B55 50%, #5A4F45 100%)' }}>
             <div style={{ position: 'absolute', inset: 0, opacity: 0.06, backgroundImage: NOISE_TEXTURE }} />
           </div>
-        )}
-        {isHero && (
-          <>
-            <div style={{ position: 'absolute', inset: 0, background: `linear-gradient(${gradientDir}, rgba(0,0,0,0.5) 0%, rgba(0,0,0,0) 50%)` }} />
-            <div style={{ position: 'absolute', ...positionStyles[headlinePosition], zIndex: 2 }}>
-              <div style={{ fontFamily: "var(--font-headline)", fontSize: 'var(--type-h4)', lineHeight: 'var(--lh-h4)', color: '#FFFFFF', fontStyle: 'italic', textShadow: '0 1px 8px rgba(0,0,0,0.3)', maxWidth: '280px', margin: headlinePosition === 'bottom_center' ? '0 auto' : undefined }}>
-                &ldquo;{headline || 'Your headline here'}&rdquo;
-              </div>
-            </div>
-            <div style={{ position: 'absolute', bottom: headlinePosition.startsWith('bottom') ? '28px' : 'auto', top: headlinePosition.startsWith('top') ? '28px' : 'auto', right: '28px', zIndex: 2 }}>
-              <div style={{ fontFamily: "'Helvetica Neue', sans-serif", fontSize: '8px', letterSpacing: '2.5px', color: 'rgba(255,255,255,0.65)', textTransform: 'lowercase' }}> {/* folio-design-system: off-scale */}
-                {watermarkText}
-              </div>
-            </div>
-          </>
         )}
         {slide.type === 'detail' && (
           <div style={{ position: 'absolute', bottom: '20px', right: '20px', zIndex: 2 }}>

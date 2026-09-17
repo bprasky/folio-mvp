@@ -20,6 +20,7 @@ export interface SlideData {
 }
 
 interface Props {
+  studioScope?: 'all' | 'project';
   initialExport?: { id: string; updatedAt?: string; config: any; headline?: string | null; bioText?: string | null; caption?: string | null } | null;
   project: {
     id: string;
@@ -50,6 +51,7 @@ interface Props {
     url: string;
     name: string | null;
     room: string | null;
+    roomId?: string | null;
   }[];
   rooms: {
     id: string;
@@ -60,7 +62,7 @@ interface Props {
 
 export type TabType = 'format' | 'headline' | 'designer' | 'caption';
 
-export function InstagramExportEditor({ project, designer, images, rooms, initialExport }: Props) {
+export function InstagramExportEditor({ project, designer, images, rooms, initialExport, studioScope = 'project' }: Props) {
   const saved = initialExport?.config || {};
   const [activeTab, setActiveTab] = useState<TabType>('format');
   const [activeSlideIndex, setActiveSlideIndex] = useState(0);
@@ -126,7 +128,7 @@ export function InstagramExportEditor({ project, designer, images, rooms, initia
 
   // Filter images by room
   const filteredImages = selectedRoom
-    ? images.filter((img) => img.room === selectedRoom || img.room === rooms.find((r) => r.id === selectedRoom)?.name)
+    ? images.filter((img) => img.roomId ? img.roomId === selectedRoom : img.room === selectedRoom || img.room === rooms.find((r) => r.id === selectedRoom)?.name)
     : images;
 
   const changeRoom = (roomId: string | null) => {
@@ -136,7 +138,7 @@ export function InstagramExportEditor({ project, designer, images, rooms, initia
     roomChanged.current = true;
     setSelectedRoom(roomId);
     const roomName = rooms.find((room) => room.id === roomId)?.name;
-    setSelectedImageUrls((roomId ? images.filter((img) => img.room === roomId || img.room === roomName) : images).slice(0, 5).map((img) => img.url));
+    setSelectedImageUrls((roomId ? images.filter((img) => img.roomId ? img.roomId === roomId : img.room === roomId || img.room === roomName) : images).slice(0, 5).map((img) => img.url));
     setActiveSlideIndex(0);
     setSelectedHeadline('');
     setQuoteOptions([]);
@@ -295,7 +297,7 @@ export function InstagramExportEditor({ project, designer, images, rooms, initia
         }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '16px', flexWrap: 'wrap' }}>
             <Link
-              href={`/designer/studio?view=posts&project=${project.id}`}
+              href={studioScope === 'all' ? '/designer/studio' : `/designer/studio?project=${encodeURIComponent(project.id)}`}
               aria-label="Back to Publishing Studio"
               style={{ color: '#8B7B68', transition: 'color 0.2s', display: 'flex', alignItems: 'center' }}
             >

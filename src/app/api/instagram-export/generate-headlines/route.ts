@@ -4,6 +4,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/app/api/auth/[...nextauth]/options';
 import { prisma } from '@/lib/prisma';
+import { assertProjectWrite } from '@/lib/authz/access';
 import { generateHeadlineOptions } from '@/lib/instagram-export/generate-headlines';
 
 export async function POST(request: NextRequest) {
@@ -33,8 +34,9 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Published project not found' }, { status: 404 });
     }
 
-    // Auth: must be the project owner/designer
-    if (project.designerId !== session.user.id && project.ownerId !== session.user.id) {
+    try {
+      await assertProjectWrite(session.user.id, project.id);
+    } catch {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 

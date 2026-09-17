@@ -30,8 +30,12 @@ function matches(row, where) {
 function setup(options = {}) {
   const date = new Date('2026-09-17T00:00:00Z');
   const project = (id, ownerId, org = null, status = 'PUBLISHED') => ({
-    id, ownerId, designerId: ownerId, designerOrgId: org, title: id,
-    images: [{ url: `${id}.jpg` }], post: { id: `article-${id}`, status, slug: id, variant: 'PROJECT_FEATURE', updatedAt: date },
+    id, ownerId, designerId: ownerId, designerOrgId: org, title: id, isPublic: true,
+    rooms: [{ id: `room-${id}`, name: 'Living room' }],
+    images: [{ id: `image-${id}`, url: `${id}.jpg`, roomId: `room-${id}`, room: null, inclusion: 'INCLUDED' }],
+    designer: { name: 'Designer' },
+    post: { id: `article-${id}`, status, slug: id, variant: 'PROJECT_FEATURE', updatedAt: date, excerpt: 'Published source text.', heroAssetId: `image-${id}`,
+      expandedBlocks: { galleryChapters: [{ roomId: `room-${id}`, body: ['Published room paragraph.'] }] } },
   });
   const projects = [project('p1', 'me'), project('p2', 'me', null, 'DRAFT'),
     project('other', 'stranger'), project('org1', 'me', 'org'), project('org2', 'colleague', 'org'),
@@ -48,10 +52,11 @@ function setup(options = {}) {
     idea('org-mixed', 'me', 'org', ['org1', 'other-org'])];
   const campaigns = projects.map(p => ({ id: `campaign-${p.id}`, projectId: p.id, preset: 'compact',
     totalPosts: 4, createdAt: date, _count: { posts: 1 }, posts: [
-      { id: `post-${p.id}`, title: 'Launch', caption: 'Caption', sequenceNum: 1, createdAt: date },
+      { id: `post-${p.id}`, title: 'Launch', caption: 'Caption', sequenceNum: 1, createdAt: date, imageIds: [`image-${p.id}`] },
     ] }));
   const carousels = projects.map(p => ({ id: `carousel-${p.id}`, projectId: p.id, designerId: p.ownerId,
-    headline: 'Carousel', caption: 'Saved caption', status: 'exported', updatedAt: date }));
+    headline: 'Carousel', caption: 'Saved caption', status: 'exported', updatedAt: date,
+    config: { selectedImageUrls: [`${p.id}.jpg`] } }));
   const calls = [];
   const findMany = (table, data) => async args => {
     calls.push({ table, ...plain(args) });
@@ -72,9 +77,19 @@ function setup(options = {}) {
       return { count: eligible.length };
     } },
     instagramCampaign: { findMany: findMany('campaign', campaigns) },
-    instagramExport: { findMany: findMany('carousel', carousels) },
+    instagramExport: { findMany: findMany('carousel', carousels),
+      findUnique: async ({ where }) => carousels.find(row => row.id === where.id) || null,
+      upsert: async args => {
+        calls.push({ table: 'prepare', ...plain(args) });
+        const existing = carousels.find(row => row.id === args.where.id);
+        if (existing) return existing;
+        const created = { ...args.create, updatedAt: date };
+        carousels.push(created);
+        return created;
+      } },
   };
-  const data = load('src/lib/publishing-studio/data.ts', { 'server-only': {}, '@/lib/prisma': { prisma } });
+  const feed = load('src/lib/publishing-studio/feed.ts', { crypto: require('node:crypto') });
+  const data = load('src/lib/publishing-studio/data.ts', { 'server-only': {}, '@/lib/prisma': { prisma }, './feed': feed });
   const permissions = load('src/lib/permissions.ts', { '@/lib/prisma': { prisma } });
   const route = load('src/app/api/publishing-studio/ideas/[id]/route.ts', {
     'next/server': { NextResponse: { json: (body, init) => ({ body, status: init?.status || 200 }) } },
@@ -82,7 +97,18 @@ function setup(options = {}) {
     '@/app/api/auth/[...nextauth]/options': { authOptions: {} }, '@/lib/prisma': { prisma },
     '@/lib/permissions': permissions, '@/lib/publishing-studio/data': data,
   });
-  return { ...data, calls, ideas, patch: (id, status) => route.PATCH({ json: async () => ({ status }) }, { params: { id } }) };
+  const prepareRoute = load('src/app/api/publishing-studio/prepare/route.ts', {
+    crypto: require('node:crypto'),
+    'next/server': { NextResponse: { json: (body, init) => ({ body, status: init?.status || 200 }) } },
+    'next-auth': { getServerSession: async () => options.signedOut ? null : { user: { id: 'me', role: options.role || 'DESIGNER' } } },
+    '@/app/api/auth/[...nextauth]/options': { authOptions: {} }, '@/lib/prisma': { prisma },
+    '@/lib/permissions': permissions, '@/lib/publishing-studio/data': data, '@/lib/publishing-studio/feed': feed,
+  });
+  return { ...data, calls, ideas, carousels, projects, prepare: async (cardId, revision) => {
+    if (revision === undefined && !options.stale && !options.signedOut) revision = (await data.getStudioData('me')).feed.find(c => c.id === cardId)?.revision;
+    return prepareRoute.POST({ json: async () => ({ cardId, revision }) });
+  },
+    patch: (id, status) => route.PATCH({ json: async () => ({ status }) }, { params: { id } }) };
 }
 
 async function main() {
@@ -91,6 +117,7 @@ async function main() {
   assert.deepEqual(plain(data.projects.map(p => p.id)), ['p1', 'p2']);
   assert.equal(data.projects.find(p => p.id === 'p2').canCreate, false);
   assert.deepEqual(plain(data.ideas.map(p => p.id)), ['mine', 'dismissed', 'published']);
+  assert.equal(data.feed.find(card => card.id === 'idea:dismissed')?.status, 'dismissed', 'Dismissed cards remain available to the status filter and restore action');
   assert.equal(data.campaigns[0].postCount, 1);
   assert.equal(data.campaigns[0].totalPosts, 4);
   assert.ok(data.posts.every(p => p.status === 'generated' || p.status === 'exported'));
@@ -101,6 +128,7 @@ async function main() {
   assert.deepEqual(plain(filtered.campaigns.map(p => p.id)), ['campaign-p1']);
   assert.deepEqual(plain(filtered.posts.map(p => p.id).sort()), ['carousel-p1', 'post-p1']);
   assert.deepEqual(plain(filtered.campaigns[0]), plain(data.campaigns[0]));
+  assert.deepEqual(plain(filtered.feed.find(c => c.id === 'idea:mine')), plain(data.feed.find(c => c.id === 'idea:mine')));
   await assert.rejects(f.getStudioData('me', 'other'), error => error.status === 404);
   console.log('PASS project filter preserves shared records and cross-project ideas without allowing forged selection');
 
@@ -137,5 +165,43 @@ async function main() {
   assert.deepEqual(update.where, { id: 'mine', designerId: 'me', status: 'recommended', angle: { designerId: 'me', organizationId: null } });
   assert.equal((await setup({ conflict: true }).patch('mine', 'dismissed')).status, 409);
   console.log('PASS owner changes, restore, ownership predicate and optimistic concurrency conflict');
+
+  f = setup();
+  data = await f.getStudioData('me');
+  const card = data.feed.find(c => c.id === 'project:p1');
+  assert.equal(card.caption, 'Published source text.');
+  assert.equal(card.imageUrl, 'p1.jpg');
+  assert.equal(data.feed.find(c => c.id === 'room:p1:room-p1').caption, 'Published room paragraph.');
+  assert.equal((await f.prepare(card.id, 'outdated')).status, 409);
+  assert.ok(!data.feed.some(c => c.kind === 'suggestion' && c.projectIds.includes('p2')), 'No private draft suggestions');
+  assert.equal(f.calls.filter(c => c.table === 'prepare').length, 0, 'GET never writes');
+  const prepared = await f.prepare(card.id);
+  assert.equal(prepared.status, 200);
+  const draft = f.carousels.find(c => c.id === prepared.body.exportId);
+  assert.equal(draft.headline, card.title);
+  assert.equal(draft.caption, card.caption);
+  assert.deepEqual(plain(draft.config.selectedImageUrls), plain(card.imageUrls));
+  draft.caption = 'Designer polished caption';
+  assert.equal((await f.prepare(card.id)).body.exportId, prepared.body.exportId);
+  assert.equal(draft.caption, 'Designer polished caption');
+  assert.equal(f.calls.filter(c => c.table === 'prepare').length, 1);
+  assert.ok(!(await f.getStudioData('me')).feed.some(c => c.id === card.id), 'Saved idea no longer duplicated as suggestion');
+  assert.equal((await f.prepare('project:other')).status, 404);
+  assert.equal((await setup({ role: 'HOMEOWNER' }).prepare('project:p1')).status, 403);
+  assert.equal((await setup({ signedOut: true }).prepare('project:p1')).status, 401);
+  assert.equal((await setup({ org: 'org', memberRole: 'VIEWER' }).prepare('project:org2')).status, 403);
+  assert.equal((await setup({ org: 'org' }).prepare('project:org2')).status, 200);
+  f.projects.find(p => p.id === 'p1').isPublic = false;
+  assert.ok(!(await f.getStudioData('me')).feed.some(c => c.kind === 'suggestion' && c.projectIds.includes('p1')));
+  f.carousels.find(c => c.id === 'carousel-p1').config.selectedImageUrls = ['foreign.jpg', 'p1.jpg'];
+  const invalidHero = (await f.getStudioData('me')).feed.find(c => c.id === 'carousel:carousel-p1');
+  assert.equal(invalidHero.imageUrl, null, 'Never replace missing saved cover with another photo');
+  assert.deepEqual(plain(invalidHero.imageUrls), ['p1.jpg'], 'Foreign image URL never returned');
+  const savedCarousel = f.carousels.find(c => c.id === 'carousel-p1');
+  for (const [style, label] of [['minimal', 'folio'], ['folio_presents', 'a folio editorial'], ['folio_x', 'folio × designer']]) {
+    savedCarousel.config.watermarkStyle = style;
+    assert.equal((await f.getStudioData('me')).feed.find(c => c.id === 'carousel:carousel-p1').preview.watermarkText, label);
+  }
+  console.log('PASS source-backed feed, exact prepared snapshot, retry idempotence, draft preservation, public-source and role boundaries');
 }
 main().catch(error => { console.error(error); process.exitCode = 1; });

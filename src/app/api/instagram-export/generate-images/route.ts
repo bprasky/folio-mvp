@@ -4,6 +4,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/app/api/auth/[...nextauth]/options';
 import { prisma } from '@/lib/prisma';
+import { assertProjectWrite } from '@/lib/authz/access';
 import {
   generateAllSlides,
   type ExportConfig,
@@ -41,13 +42,15 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Published project not found' }, { status: 404 });
     }
 
-    if (project.designerId !== session.user.id && project.ownerId !== session.user.id) {
+    try {
+      await assertProjectWrite(session.user.id, project.id);
+    } catch {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
     const existing = exportId ? await prisma.instagramExport.findFirst({
       where: { id: exportId, projectId, designerId: session.user.id },
-      select: { id: true, updatedAt: true },
+      select: { id: true, updatedAt: true, config: true },
     }) : null;
     if (exportId && !existing) return NextResponse.json({ error: 'Carousel not found' }, { status: 404 });
     if (existing && (typeof expectedUpdatedAt !== 'string' || expectedUpdatedAt !== existing.updatedAt.toISOString())) {
@@ -94,7 +97,11 @@ export async function POST(request: NextRequest) {
 
     const updatedAt = new Date(Math.max(Date.now(), existing ? existing.updatedAt.getTime() + 1 : 0));
     const data = {
-      config: exportConfig as any,
+      config: {
+        ...exportConfig,
+        ...(existing?.config && typeof existing.config === 'object' && !Array.isArray(existing.config)
+          && typeof existing.config.studioCardId === 'string' ? { studioCardId: existing.config.studioCardId } : {}),
+      } as any,
       headline: exportConfig.headline,
       bioText: exportConfig.bioText ?? null,
       ...(caption !== undefined ? { caption } : {}),
