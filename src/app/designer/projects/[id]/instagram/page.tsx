@@ -1,6 +1,7 @@
 import { getServerSession } from 'next-auth';
 import { notFound, redirect } from 'next/navigation';
 import { prisma } from '@/lib/prisma';
+import { assertProjectWrite } from '@/lib/authz/access';
 import { authOptions } from '@/app/api/auth/[...nextauth]/options';
 import { InstagramExportEditor } from '@/components/instagram-export/InstagramExportEditor';
 
@@ -9,7 +10,7 @@ export default async function InstagramExportPage({
   searchParams,
 }: {
   params: { id: string };
-  searchParams: { export?: string };
+  searchParams: { export?: string; studio?: string };
 }) {
   const session = await getServerSession(authOptions);
   if (!session?.user) redirect('/auth/signin');
@@ -32,8 +33,9 @@ export default async function InstagramExportPage({
     redirect('/designer');
   }
 
-  // Auth: must be the project owner
-  if (project.designerId !== session.user.id && project.ownerId !== session.user.id) {
+  try {
+    await assertProjectWrite(session.user.id, project.id);
+  } catch {
     redirect(`/p/${project.post.slug}`);
   }
 
@@ -83,6 +85,7 @@ export default async function InstagramExportPage({
     url: img.url,
     name: img.name,
     room: img.room,
+    roomId: img.roomId,
   }));
 
   const serializedRooms = project.rooms.map((room) => ({
@@ -95,6 +98,7 @@ export default async function InstagramExportPage({
     <InstagramExportEditor
       key={initialExport?.id ?? project.id}
       initialExport={initialExport ? { ...initialExport, updatedAt: initialExport.updatedAt.toISOString() } : null}
+      studioScope={searchParams.studio === 'all' ? 'all' : 'project'}
       project={serializedProject}
       post={serializedPost}
       designer={serializedDesigner}

@@ -1,6 +1,7 @@
 import 'server-only';
 import { prisma } from '@/lib/prisma';
 import type { StudioData } from './types';
+import { buildStudioFeed } from './feed';
 
 export class StudioAccessError extends Error {
   constructor(message: string, public readonly status: number) { super(message); }
@@ -41,9 +42,11 @@ export async function getStudioData(userId: string, projectId?: string): Promise
       designerOrgId: null, OR: [{ ownerId: userId }, { designerId: userId }],
     },
     select: {
-      id: true, title: true, ownerId: true, designerId: true,
-      post: { select: { id: true, status: true, slug: true, variant: true, updatedAt: true } },
-      images: { select: { url: true }, orderBy: { displayOrder: 'asc' }, take: 1 },
+      id: true, title: true, ownerId: true, designerId: true, isPublic: true,
+      designer: { select: { name: true } },
+      post: { select: { id: true, status: true, slug: true, variant: true, updatedAt: true, excerpt: true, heroAssetId: true, expandedBlocks: true } },
+      rooms: { select: { id: true, name: true }, orderBy: { id: 'asc' }, take: 30 },
+      images: { select: { id: true, url: true, room: true, roomId: true, inclusion: true }, orderBy: [{ displayOrder: 'asc' }, { id: 'asc' }], take: 100 },
     },
     orderBy: [{ updatedAt: 'desc' }, { id: 'asc' }], take: 501,
   });
@@ -67,13 +70,13 @@ export async function getStudioData(userId: string, projectId?: string): Promise
       where: { projectId: { in: ids } },
       select: { id: true, projectId: true, preset: true, totalPosts: true, createdAt: true,
         _count: { select: { posts: true } },
-        posts: { select: { id: true, title: true, caption: true, sequenceNum: true, createdAt: true },
+        posts: { select: { id: true, title: true, caption: true, sequenceNum: true, createdAt: true, imageIds: true },
           orderBy: [{ sequenceNum: 'asc' }, { id: 'asc' }], take: 100 } },
       orderBy: [{ createdAt: 'desc' }, { id: 'asc' }], take: 101,
     }),
     prisma.instagramExport.findMany({
       where: { projectId: { in: ids }, designerId: userId },
-      select: { id: true, projectId: true, headline: true, caption: true, status: true, updatedAt: true },
+      select: { id: true, projectId: true, headline: true, caption: true, status: true, updatedAt: true, config: true },
       orderBy: [{ updatedAt: 'desc' }, { id: 'asc' }], take: 501,
     }),
   ]);
@@ -114,6 +117,8 @@ export async function getStudioData(userId: string, projectId?: string): Promise
     }))),
   ].sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
   return {
+    feed: buildStudioFeed(authorized, exportRows.slice(0, 500), campaignRows.slice(0, 100), ideas, userId, workspace.canWriteCampaigns)
+      .filter(card => !projectId || card.projectIds.includes(projectId)),
     workspace,
     projects: scoped.map(p => ({ id: p.id, title: p.title || 'Untitled project',
       thumbnail: p.images[0]?.url ?? null, published: p.post?.status === 'PUBLISHED',

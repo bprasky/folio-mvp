@@ -1079,3 +1079,9 @@ The founder clarified that global access does not mean removing social content f
 
 ## 2026-09-17 — Verify a studio with published work and no social history
 A publishing hub must surface existing published project stories on its landing page before any campaigns or exports exist. Do not mistake saved social-record counts for available source work. In an active organization, recommendation eligibility and corpus must agree with the organization-wide published work users see; maintain exact workspace and public-source boundaries. Verify the reported studio's actual distribution across member designers, not just single-owner fixtures.
+
+## 2026-09-17 — Shared publishing records also need a shared content workspace
+The Meru screenshot exposes a redundant project picker after Meru is already selected and an empty saved-campaign screen instead of usable ideas. Sharing records and adding links is insufficient. Project social entry and Studio project selection must land on the same populated workspace, showing source-backed suggestions alongside saved pieces and campaign groupings. Never require project reselection or format navigation before showing available content. Distinguish suggested concepts from generated drafts and saved campaigns.
+
+## 2026-09-17 — Feed cards are prepared work, not invitations to generate
+The founder wants 4:5 Instagram previews with the proposed opening image and caption visible before clicking. Clicking polishes the exact prepared content. Preserve image order, headline and caption across preview/editor; no repeated project inquiry or generation wizard. Clearly distinguish draft previews from unfinished cross-project questions.
