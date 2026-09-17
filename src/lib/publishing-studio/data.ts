@@ -12,7 +12,7 @@ function object(value: unknown): Record<string, unknown> {
 }
 
 /** Resolve fresh workspace identity; a stale operating-as selection fails closed. */
-export async function resolvePublishingStudioContext(userId: string): Promise<StudioData['workspace']> {
+export async function resolvePublishingStudioContext(userId: string): Promise<StudioData['workspace'] & { canWriteCampaigns: boolean }> {
   const user = await prisma.user.findUnique({
     where: { id: userId }, select: { operatingAsOrgId: true },
   });
@@ -21,12 +21,12 @@ export async function resolvePublishingStudioContext(userId: string): Promise<St
   if (orgId) {
     const membership = await prisma.organizationUser.findFirst({
       where: { userId, organizationId: orgId, isActive: true },
-      select: { organization: { select: { name: true } } },
+      select: { role: true, organization: { select: { name: true } } },
     });
     if (!membership) throw new StudioAccessError('Workspace access is no longer available', 403);
-    return { id: orgId, name: membership.organization.name };
+    return { id: orgId, name: membership.organization.name, canWriteCampaigns: ['OWNER', 'ADMIN', 'MANAGER', 'MEMBER'].includes(membership.role) };
   }
-  return { id: null, name: 'Your studio' };
+  return { id: null, name: 'Your studio', canWriteCampaigns: false };
 }
 
 /** Author workspace: drafts are deliberately visible; no public visibility filters. */
@@ -117,6 +117,7 @@ export async function getStudioData(userId: string, projectId?: string): Promise
     workspace,
     projects: scoped.map(p => ({ id: p.id, title: p.title || 'Untitled project',
       thumbnail: p.images[0]?.url ?? null, published: p.post?.status === 'PUBLISHED',
+      canCreateCampaign: p.post?.status === 'PUBLISHED' && (workspace.canWriteCampaigns || p.ownerId === userId || p.designerId === userId),
       canCreate: p.post?.status === 'PUBLISHED' && (p.ownerId === userId || p.designerId === userId) })),
     editorials: scoped.flatMap(p => p.post ? [{ id: p.post.id, projectId: p.id, title: p.title || 'Untitled project',
       slug: p.post.slug, status: p.post.status.toLowerCase(), format: p.post.variant,

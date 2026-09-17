@@ -1,6 +1,6 @@
 export interface StudioData {
   workspace: { id: string | null; name: string };
-  projects: { id: string; title: string; thumbnail: string | null; published: boolean; canCreate: boolean }[];
+  projects: { id: string; title: string; thumbnail: string | null; published: boolean; canCreateCampaign: boolean; canCreate: boolean }[];
   editorials: { id: string; projectId: string; title: string; slug: string; status: string; format: string; updatedAt: string }[];
   ideas: {
     id: string; title: string; format: string; status: string; createdAt: string;

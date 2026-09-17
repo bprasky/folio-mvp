@@ -61,7 +61,7 @@ function setup(options = {}) {
     user: { findUnique: async () => options.missingUser ? null : { operatingAsOrgId: options.org || null } },
     organizationUser: { findFirst: async args => {
       calls.push({ table: 'membership', ...plain(args) });
-      return options.stale ? null : { organization: { name: 'Our studio' } };
+      return options.stale ? null : { role: options.memberRole || 'MEMBER', organization: { name: 'Our studio' } };
     } },
     project: { findMany: findMany('project', projects) },
     editorialQueueItem: { findMany: findMany('idea', ideas), updateMany: async args => {
@@ -109,6 +109,9 @@ async function main() {
   assert.deepEqual(plain(data.projects.map(p => p.id)), ['org1', 'org2']);
   assert.deepEqual(plain(data.ideas.map(p => p.id)), ['org-mine']);
   assert.equal(data.projects.find(p => p.id === 'org2').canCreate, false);
+  assert.equal(data.projects.find(p => p.id === 'org2').canCreateCampaign, true);
+  const viewer = setup({ org: 'org', memberRole: 'VIEWER' });
+  assert.equal((await viewer.getStudioData('me')).projects.find(p => p.id === 'org2').canCreateCampaign, false);
   assert.deepEqual(f.calls.find(c => c.table === 'membership').where, { userId: 'me', organizationId: 'org', isActive: true });
   assert.ok(!data.posts.some(p => p.id === 'carousel-org2'), 'Personal carousel drafts must not leak to colleagues');
   const stale = setup({ org: 'org', stale: true });

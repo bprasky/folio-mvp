@@ -27,7 +27,7 @@ export class EditorialCorpusChangedError extends Error {
 // even an uncited project may have influenced the model's editorial framing.
 async function assertCurrentCorpus(designerId: string, scope: EditorialCorpusScope): Promise<void> {
   const count = await prisma.project.count({
-    where: { id: { in: scope.projectIds }, designerId, designerOrgId: scope.organizationId,
+    where: { id: { in: scope.projectIds }, ...(scope.organizationId ? {} : { designerId }), designerOrgId: scope.organizationId,
       isPublic: true, post: { status: 'PUBLISHED' } },
   });
   if (count !== new Set(scope.projectIds).size) throw new EditorialCorpusChangedError();

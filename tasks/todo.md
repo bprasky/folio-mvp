@@ -309,3 +309,14 @@ Plan check-in: approved spec is the implementation basis. No unreviewed schema e
 Implementation review: shared global/project records, workspace authorization, editorial ideas and existing stories, source-based recommendations, saved carousel resume/save/export, corrected responsive previews and campaign modal shipped in the scoped branch. Four regression scripts pass and are wired into CI. Production build, focused lint (warnings only), client boundary, migration discipline and all seven design-system checks pass; TypeScript ratchet passes (903 diagnostics against baseline 904). Local actual-component browser fixtures verified desktop/mobile layouts, filtering and saved-item navigation; production signed-in verification and live AI generation were not performed. No schema or production writes.
 
 Remaining: native standalone story answers/publication, immutable approved social versions, cross-project campaign composition and public/feed integration require the additive proposal in docs/reviews/PUBLISHING_STUDIO_SCHEMA_PROPOSAL.md. Proposed Prisma blocks validate in an isolated copy; applying them awaits the explicit schema review required by AGENTS.md.
+
+# BP Design Studio landing fix — 2026-09-17
+
+- [x] Audit exact workspace records read-only: four public published stories split across two members; zero saved campaigns, exports or ideas.
+- [x] Show existing published stories with clear campaign/carousel entry points on Overview.
+- [x] Count and compare the active organization's published work for recommendations while excluding private/foreign sources.
+- [x] Add regression coverage, verify, review and push a scoped fix.
+
+Plan check-in: correct misleading empty landing and organization eligibility; no automatic campaign creation or live AI requests.
+
+Verification: actual patched Studio loader exercised in a read-only transaction for both active BP Design members: each sees four published stories and four campaign-eligible projects. No records generated or modified. Source-first landing regression and scoped corpus/access tests pass; full lint and reviewer pass. Client boundary and migration discipline pass. TypeScript result recorded with commit. No schema changes; approved broader proposal remains separate.

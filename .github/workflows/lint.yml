@@ -64,6 +64,7 @@ jobs:
       - name: Publishing Studio regression checks
         run: |
           node scripts/check-publishing-studio-data.cjs
+          node scripts/check-studio-landing.cjs
           node scripts/check-studio-recommendations.cjs
           node scripts/check-carousel-editor.cjs
           node scripts/check-carousel-persistence.cjs

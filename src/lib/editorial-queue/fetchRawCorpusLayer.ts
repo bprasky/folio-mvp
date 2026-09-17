@@ -42,7 +42,7 @@ export async function fetchRawCorpusLayer(designerId: string, scope?: EditorialC
   // PUBLISHED. Drafts and unpublished work are invisible to the queue.
   const projects = await prisma.project.findMany({
     where: {
-      designerId,
+      ...(scope?.organizationId ? {} : { designerId }),
       post: { status: 'PUBLISHED' },
       ...(scope ? {
         id: { in: scope.projectIds },
