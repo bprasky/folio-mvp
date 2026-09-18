@@ -12,13 +12,13 @@ The API supplies evaluation time. Refreshing within the same day preserves order
 
 The connected database has `projects.publishedAt` and `projects.targetInstallDate`, but no completion date/year/month. Migration bookkeeping contains 110 records, zero unfinished. The declared `TrendSignal` table (`trend_signals`) is absent in the connected database. Source search found no collector/writer callers for it. Do not use this as a live signal or add a production query to that absent table. No migration or database writes were performed in this change.
 
-## Completion date proposal — application pending exact approval
+## Completion date migration — approved and applied 2026-09-18
 
 Add two nullable integers to Project: `completedYear Int?` and `completedMonth Int?`. Unknown is both null; year-only leaves month null. Month requires a year. No artificial January 1 timestamp. Year bounds 1800–9999; month 1–12. The future-date rule belongs in authenticated input validation relative to the current month, not a time-dependent database check. Existing publication and target-install fields retain their meaning.
 
-Proposed SQL: `studio-completion-date.sql.txt` in this directory. After approval, back up the actual schema, append those two fields, validate/generate, add a timestamped migration, test on disposable PostgreSQL, then apply via the migration runbook. Restore the schema backup and stop if validation/generation/status checks fail. Re-audit immediately before application. Do not apply the review file directly.
+Applied migration: prisma/migrations/20260918180000_add_project_completion_date/migration.sql. User explicitly approved the exact SQL and two nullable fields. Actual schema backed up before edits; validate/format/generate pass. Disposable PGlite PostgreSQL verified preservation, null/year/month combinations, constraint rejection and idempotent rerun (Docker was unavailable). Production migrate deploy applied only this migration; migrate status is clean. Readback confirms both integer columns and the validated constraint. No project values were backfilled.
 
-Next implementation adds year/month inputs to project information and scoped create/update handlers, preserving year-only/unknown values. Completion can then supply new-work framing while publication supplies new-to-Folio framing. Migration approval is not implied by merging the recommendation UI.
+Project information inputs and authenticated write validation remain follow-up work. Completion-aware ranking is not enabled until designers can supply those dates. The Studio UI and migration can merge together without claiming the date-entry feature is finished.
 
 ## Remaining intelligence
 

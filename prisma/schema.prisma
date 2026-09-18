@@ -415,6 +415,8 @@ model EventWorkflowJob {
 }
 
 model Project {
+  completedYear     Int?
+  completedMonth    Int?
   // Product spotlight draft selection
   productSpotlights ProductSpotlight[]
 

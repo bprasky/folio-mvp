@@ -397,3 +397,12 @@ Review: all three focused activity suites and focused lint pass. Local preview s
 Plan: prioritize evidence before timing. Recompute cheap ranking on load with stable daily time; no paid generation on page load. Do not claim social publication from exports. Keep absent trends neutral. Schema application remains gated on the exact proposed change.
 
 Review: focused Studio ranking, loader and interaction suites pass; focused lint, client boundary, migration discipline and TypeScript ratchet (902/904) pass. Desktop1280px and mobile390px component fixture checked; mobile has no overflow. Read-only metadata confirms no completion fields and an absent trend table. Proposed two-field schema validates in a temporary copy. Completion migration/application, project inputs, real trend collection and persistent impression/social-post feedback remain pending. No production writes or migration application.
+
+### Approved completion migration and merge — 2026-09-18
+- [x] Back up schema; add approved nullable year/month fields and exact reviewed migration.
+- [x] Validate/generate and test SQL on disposable PostgreSQL; restore schema backup and stop if format/validate/generate/migrate-status fails.
+- [x] Apply only the approved pending migration; verify types/constraint and clean migration status.
+- [ ] Update PR787, verify CI and merge. Preserve unrelated local edits.
+Approval: user explicitly approved the completion migration and merge; no new approval required for that exact change.
+
+Migration review: user-approved SQL applied via migrate deploy; both columns and validated constraint confirmed. Bookkeeping111 records, zero unfinished,110 migration folders and clean migrate status. PGlite PostgreSQL tests pass; Docker unavailable. Compile build passed with existing unrelated import warnings. Project date-entry controls remain follow-up work.
