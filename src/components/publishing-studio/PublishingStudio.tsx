@@ -7,6 +7,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { Sparkles } from 'lucide-react';
 import { useStudio } from './useStudio';
 import { StudioFeedCard, type FeedItem, feedLabel } from './StudioFeedCard';
+import { recommendStudioStories } from '@/lib/publishing-studio/recommendations';
 import { matchesStudioItem } from '@/lib/publishing-studio/navigation';
 
 const CampaignWizard = dynamic(() => import('@/components/instagram/CampaignWizard').then(module => module.CampaignWizard), { ssr: false });
@@ -83,8 +84,13 @@ export function PublishingStudio() {
   const campaign = selected?.campaignId ? data.campaigns.find(item => item.id === selected.campaignId) : undefined;
   const idea = selected?.kind === 'idea' ? data.ideas.find(item => item.id === selected.id || selected.id === `idea:${item.id}`) : undefined;
 
+  const recommendations = recommendStudioStories(data, feed);
+  const recommendedIds = new Set(recommendations.flatMap(group => group.cards.map(card => card.id)));
+  const saved = feed.filter(card => !recommendedIds.has(card.id)).sort((a, b) => b.updatedAt.localeCompare(a.updatedAt) || a.id.localeCompare(b.id));
+  const renderCard = (item: FeedItem) => <StudioFeedCard key={item.id} item={item} projectNames={item.projectIds.map(projectName).join(' · ')} onOpen={() => openItem(item)} pending={pending === item.id} disabled={pending !== null} />;
+
   return <main className="mx-auto max-w-6xl px-4 py-8 sm:px-6 md:py-10">
-    <header><p className="folio-meta uppercase tracking-widest text-folio-text-secondary">{data.workspace.name}</p><h1 className="folio-h1 mt-2">Publishing Studio</h1><p className="folio-body mt-2 text-folio-text-secondary">Something worth sharing, already taking shape.</p></header>
+    <header><p className="folio-meta uppercase tracking-widest text-folio-text-secondary">{data.workspace.name}</p><h1 className="folio-h1 mt-2">Publishing Studio</h1><p className="folio-body mt-2 text-folio-text-secondary">Your next stories, with a reason to share them.</p></header>
     <div className="relative my-6 flex flex-wrap items-center gap-3">
       <label className="min-w-0"><span className="sr-only">Project</span><select className={fieldClass} value={project} onChange={event => navigate({ project: event.target.value, item: null })}><option value="">All projects</option><option value="cross-project">Across projects</option>{data.projects.map(item => <option key={item.id} value={item.id}>{item.title}</option>)}</select></label>
       <label className="min-w-0"><span className="sr-only">Content type</span><select className={fieldClass} value={kind} onChange={event => navigate({ type: event.target.value, item: null })}><option value="">All ideas & posts</option><option value="suggestion">Proposed posts</option><option value="carousel">Saved carousels</option><option value="campaign">Campaigns</option><option value="idea">Story directions</option></select></label>
@@ -94,7 +100,19 @@ export function PublishingStudio() {
     {selectedProject && <div className="mb-5 flex flex-wrap items-center justify-between gap-2"><h2 className="folio-h3">{selectedProject.title}</h2><Link href={`/project/${encodeURIComponent(project)}`} className="folio-meta text-folio-text-secondary underline underline-offset-4">View project</Link></div>}
     {notice && <p role="status" className="mb-5 folio-ui">{notice}</p>}{actionError && <p role="alert" className="mb-5 folio-ui">{actionError}</p>}
     {selected && <section aria-label={selected.title} className="mb-6 rounded-xl border border-folio-border-subtle p-5"><div className="flex items-start justify-between gap-4"><h2 className="folio-h3">{selected.title}</h2><button className={actionClass} onClick={() => navigate({ item: null })}>Close</button></div><p className="folio-body mt-3 whitespace-pre-wrap">{selected.caption}</p>{campaign && <ol className="mt-5 space-y-4">{campaign.posts.map(post => <li key={post.id}><h3 className="folio-ui">{post.sequenceNum}. {post.title}</h3><p className="folio-body mt-1 whitespace-pre-wrap text-folio-text-secondary">{post.caption}</p></li>)}</ol>}{idea && <><p className="folio-meta mt-4 text-folio-text-secondary">This direction needs your perspective before it becomes a finished post.</p>{idea.prompts.map(prompt => <p key={prompt.id} className="folio-body mt-3">{prompt.prompt}</p>)}<div className="mt-4 flex flex-wrap gap-4">{idea.status === 'recommended' && <button disabled={pending !== null} className={actionClass} onClick={() => updateIdea(idea.id, 'in_progress')}>Keep this direction</button>}{['recommended', 'in_progress'].includes(idea.status) && <button disabled={pending !== null} className={actionClass} onClick={() => updateIdea(idea.id, 'dismissed')}>Dismiss</button>}{idea.status === 'dismissed' && <button disabled={pending !== null} className={actionClass} onClick={() => updateIdea(idea.id, 'recommended')}>Restore</button>}</div></>}{!selected.canPolish && selected.kind === 'suggestion' && <p className="folio-meta mt-3">Editing this project’s social posts is not available for your account.</p>}</section>}
-    {feed.length ? <section aria-label="Ideas and posts" className="grid grid-cols-1 gap-x-5 gap-y-8 sm:grid-cols-2 lg:grid-cols-3">{feed.map(item => <StudioFeedCard key={item.id} item={item} projectNames={item.projectIds.map(projectName).join(' · ')} onOpen={() => openItem(item)} onCampaign={['suggestion', 'carousel'].includes(item.kind) && data.projects.find(project => project.id === item.projectIds[0])?.canCreateCampaign ? () => setCampaignProject(item.projectIds[0]) : undefined} pending={pending === item.id} disabled={pending !== null} />)}</section> : <p className="py-8 folio-body text-folio-text-secondary">{project === 'cross-project' ? 'No cross-project directions yet. Find more connections to review your published work together.' : project || kind || query || status ? 'No posts match this selection. Try another project or clear your filters.' : 'No prepared stories yet. Strong proposals need published photos and a specific design decision, challenge or outcome.'}</p>}
+    {feed.length ? <div className="space-y-12">
+      {recommendations.map((group, index) => <section key={group.id} aria-label={group.title}>
+        <header className="mb-5 border-t border-folio-border-subtle pt-5">
+          <p className="folio-meta text-folio-text-secondary">{index === 0 ? 'Folio recommends · ' : ''}{group.label}</p>
+          <div className="mt-2 flex flex-wrap items-center justify-between gap-3"><h2 className="folio-h2">{group.title}</h2>
+            {group.id.startsWith('project:') && data.projects.find(item => item.id === group.cards[0].projectIds[0])?.canCreateCampaign && <button className={actionClass} disabled={pending !== null} onClick={() => setCampaignProject(group.cards[0].projectIds[0])}>Build a campaign</button>}
+          </div>
+          <p className="folio-body mt-2 max-w-3xl text-folio-text-secondary">{group.reason}</p>
+        </header>
+        <div className="grid grid-cols-1 gap-x-5 gap-y-8 sm:grid-cols-2 lg:grid-cols-3">{group.cards.map(renderCard)}</div>
+      </section>)}
+      {saved.length > 0 && <section aria-label="Saved work"><header className="mb-5 border-t border-folio-border-subtle pt-5"><h2 className="folio-h2">Saved work</h2><p className="folio-body mt-2 text-folio-text-secondary">Your drafts, campaigns and kept directions, most recently updated first.</p></header><div className="grid grid-cols-1 gap-x-5 gap-y-8 sm:grid-cols-2 lg:grid-cols-3">{saved.map(renderCard)}</div></section>}
+    </div> : <p className="py-8 folio-body text-folio-text-secondary">{project === 'cross-project' ? 'No cross-project directions yet. Find more connections to review your published work together.' : project || kind || query || status ? 'No posts match this selection. Try another project or clear your filters.' : 'No prepared stories yet. Strong proposals need published photos and a specific design decision, challenge or outcome.'}</p>}
     {data.truncated && <p role="status" className="mt-6 folio-meta text-folio-text-secondary">Showing recent work. Older records may not appear in these results.</p>}
     {activeCampaign && <CampaignWizard projectId={activeCampaign.id} projectTitle={activeCampaign.title} onClose={() => { setCampaignProject(null); reload(); }} />}
   </main>;

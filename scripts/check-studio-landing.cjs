@@ -8,7 +8,7 @@ let params = new URLSearchParams();
 const data = { workspace: { name: 'BP Design', id: 'bp' }, projects: ['Meru', 'La Gorce'].map((title, i) => ({ id: `p${i}`, title, published: true, canCreate: true, canCreateCampaign: true })), editorials: [], posts: [], campaigns: [], ideas: [], feed: ['Meru', 'La Gorce'].map((title, i) => ({id:`suggestion:p${i}`,projectIds:[`p${i}`],title:`Inside ${title}`,caption:`Prepared caption for ${title}`,imageUrl:`https://example.com/${i}.jpg`,imageUrls:[`https://example.com/${i}.jpg`],pitch:'A focused story about the decision behind this room.',rationale:'Supported by the published design change.',slideCount:2,revision:'source-v1',kind:'suggestion',format:'project_story',status:'recommended',updatedAt:'2026-09-17',canPolish:true})) };
 const hero = load('src/components/instagram-export/CarouselHero.tsx', {});
 const feedCard = load('src/components/publishing-studio/StudioFeedCard.tsx', { '@/components/instagram-export/CarouselHero': hero });
-const imports = { 'next/dynamic': {default: () => props => React.createElement('div', {'data-campaign-project':props.projectId}, props.projectTitle)}, 'next/link': { default: ({ children, ...props }) => React.createElement('a', props, children) }, 'next/navigation': { useRouter: () => ({ replace() { }, push(href) { destinations.push(href); } }), useSearchParams: () => params }, './useStudio': { useStudio: () => ({ data, reload() { } }) }, './StudioFeedCard': feedCard, '@/lib/publishing-studio/navigation': navigation };
+const imports = { '@/lib/publishing-studio/recommendations': load('src/lib/publishing-studio/recommendations.ts', {}), 'next/dynamic': {default: () => props => React.createElement('div', {'data-campaign-project':props.projectId}, props.projectTitle)}, 'next/link': { default: ({ children, ...props }) => React.createElement('a', props, children) }, 'next/navigation': { useRouter: () => ({ replace() { }, push(href) { destinations.push(href); } }), useSearchParams: () => params }, './useStudio': { useStudio: () => ({ data, reload() { } }) }, './StudioFeedCard': feedCard, '@/lib/publishing-studio/navigation': navigation };
 const { PublishingStudio } = load('src/components/publishing-studio/PublishingStudio.tsx', imports);
 let html = renderToStaticMarkup(React.createElement(PublishingStudio));
 assert.match(html, /A focused story about the decision behind this room/);assert.match(html,/2 slides/);
@@ -37,7 +37,7 @@ async function checkInteractions() {
  const root=createRoot(document.getElementById('root'));
  await act(async()=>root.render(React.createElement(PublishingStudio)));
  assert.equal(requests.length,0,'Browsing available cards must not call preparation or generation');
- await act(async()=>[...document.querySelectorAll('button')].find(button=>button.textContent==='Build a campaign').click());
+ await act(async()=>[...document.querySelector('section[aria-label="Stories from Meru"]').querySelectorAll('button')].find(button=>button.textContent==='Build a campaign').click());
  assert.equal(document.querySelector('[data-campaign-project]').getAttribute('data-campaign-project'),'p0','Campaign opens directly with source project selected');
  const button=()=>document.querySelector('button[aria-label="Polish this post: Inside Meru"]');
  await act(async()=>button().click());
