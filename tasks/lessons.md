@@ -1102,3 +1102,6 @@ Use visible Topic → Story type → Interview steps. Topic choices are Designer
 
 ## 2026-09-17 — Topic constrains story types
 Firm History is not a general firm topic. Exclude both Material story and How it came together; show origins, people and evolution-focused choices. Use one allowed-combination mapping for the UI and server validation, and reset stale choices when changing topics.
+
+## 2026-09-18 — Studio recommendations need editorial order and honest timing
+Group prepared pitches under a clear recommendation and explain why now before users read every card. Rank by supported story substance, true publication timing and saved activity; do not equate updates, completion, exports and actual social publication. Trends need fresh measured evidence. Keep saved work stable while recommendations evolve.

@@ -20,6 +20,9 @@ let expected=execFileSync('git',['show',baseline+':prisma/schema.prisma'],{encod
 expected=expected.replace('model User {','model User {\nspotlightAnswerRevisions SpotlightAnswerRevision[] @relation("SpotlightAnsweringUser")');
 expected=expected.replace('model ProductSpotlight {','model ProductSpotlight {\nquestions SpotlightQuestion[]');
 expected+='\n'+read('docs/proposals/spotlight-durable-interview/models.prisma');
+// Separately approved 2026-09-18 completion-date migration; preserve the exact
+// full-schema comparison rather than allowing arbitrary Project changes.
+expected=expected.replace('model Project {','model Project {\ncompletedYear Int?\ncompletedMonth Int?');
 const tokens=s=>(s.match(/"(?:\\.|[^"\\])*"|\/\/[^\n]*|[^\s"]/g)||[]).filter(x=>!x.startsWith('//')).join('');
 assert.equal(tokens(read('prisma/schema.prisma')),tokens(expected),'Only reviewed schema tokens');
 assert.equal(JSON.parse(read('vercel.json')).git.deploymentEnabled,false);

@@ -1,0 +1,257 @@
+{
+  "base": "a9f583ae",
+  "compilerVersion": "5.9.3",
+  "changes": "Only displayed Project property counts 18→20 and aggregate input counts30→32; no diagnostic removal or budget increase.",
+  "entries": [
+    {
+      "file": "src/app/actions/projects.ts",
+      "code": 2345,
+      "before": "Argument of type '(project: ProjectWithImages) => { id: string; images: { url: string; precomputedSignals: any; }[]; productTags: { product: { category: string; materials: any[]; }; }[]; rooms: { type: string; materials: any[]; }[]; description: string; }' is not assignable to parameter of type '(value: { id: string; title: string; views: number; createdAt: Date; updatedAt: Date; status: string; description: string; city: string; isPublic: boolean; designerId: string; category: string; ... 18 more ...; targetInstallDate: Date; }, index: number, array: { ...; }[]) => { ...; }'. Types of parameters 'project' and 'value' are incompatible. Type '{ id: string; title: string; views: number; createdAt: Date; updatedAt: Date; status: string; description: string; city: string; isPublic: boolean; designerId: string; category: string; ... 18 more ...; targetInstallDate: Date; }' is missing the following properties from type 'ProjectWithImages': images, rooms",
+      "after": "Argument of type '(project: ProjectWithImages) => { id: string; images: { url: string; precomputedSignals: any; }[]; productTags: { product: { category: string; materials: any[]; }; }[]; rooms: { type: string; materials: any[]; }[]; description: string; }' is not assignable to parameter of type '(value: { id: string; title: string; views: number; createdAt: Date; updatedAt: Date; status: string; description: string; city: string; isPublic: boolean; designerId: string; category: string; ... 20 more ...; targetInstallDate: Date; }, index: number, array: { ...; }[]) => { ...; }'. Types of parameters 'project' and 'value' are incompatible. Type '{ id: string; title: string; views: number; createdAt: Date; updatedAt: Date; status: string; description: string; city: string; isPublic: boolean; designerId: string; category: string; ... 20 more ...; targetInstallDate: Date; }' is missing the following properties from type 'ProjectWithImages': images, rooms",
+      "count": 1,
+      "reason": "Two approved Project scalar fields change only the truncated property count; source unchanged.",
+      "priorRendering": "Argument of type '(project: ProjectWithImages) => { id: string; images: { url: string; precomputedSignals: any; }[]; productTags: { product: { category: string; materials: any[]; }; }[]; rooms: { type: string; materials: any[]; }[]; description: string; }' is not assignable to parameter of type '(value: { id: string; title: string; views: number; createdAt: Date; updatedAt: Date; status: string; description: string; city: string; isPublic: boolean; designerId: string; category: string; ... 18 more ...; targetInstallDate: Date; }, index: number, array: { ...; }[]) => { ...; }'. Types of parameters 'project' and 'value' are incompatible. Type '{ id: string; title: string; views: number; createdAt: Date; updatedAt: Date; status: string; description: string; city: string; isPublic: boolean; designerId: string; category: string; ... 18 more ...; targetInstallDate: Date; }' is missing the following properties from type 'ProjectWithImages': images, rooms",
+      "sourceSha256": "9c1de19405f2571e0f9d625ac4dff44563e0693a72f9341a76329a06fa94d152"
+    },
+    {
+      "file": "src/app/api/events/[id]/scan-analytics/route.ts",
+      "code": 2615,
+      "before": "Type of property 'AND' circularly references itself in mapped type '{ [K in keyof { AND?: ProjectScalarWhereWithAggregatesInput | ProjectScalarWhereWithAggregatesInput[]; OR?: ProjectScalarWhereWithAggregatesInput[]; ... 30 more ...; targetInstallDate?: string | ... 1 more ... | DateTimeNullableWithAggregatesFilter<...>; }]: Or<...> extends 1 ? { ...; }[K] extends infer TK ? GetHavi...'.",
+      "after": "Type of property 'AND' circularly references itself in mapped type '{ [K in keyof { AND?: ProjectScalarWhereWithAggregatesInput | ProjectScalarWhereWithAggregatesInput[]; OR?: ProjectScalarWhereWithAggregatesInput[]; ... 32 more ...; targetInstallDate?: string | ... 1 more ... | DateTimeNullableWithAggregatesFilter<...>; }]: Or<...> extends 1 ? { ...; }[K] extends infer TK ? GetHavi...'.",
+      "count": 1,
+      "reason": "Two approved Project scalar fields change only the truncated property count; source unchanged.",
+      "priorRendering": "Type of property 'AND' circularly references itself in mapped type '{ [K in keyof { AND?: ProjectScalarWhereWithAggregatesInput | ProjectScalarWhereWithAggregatesInput[]; OR?: ProjectScalarWhereWithAggregatesInput[]; ... 30 more ...; targetInstallDate?: string | ... 1 more ... | DateTimeNullableWithAggregatesFilter<...>; }]: Or<...> extends 1 ? { ...; }[K] extends infer TK ? GetHavi...'.",
+      "sourceSha256": "190d08282f8bba46cee06538ea9f91582e2f53689064f24596fda823ee6831ef"
+    },
+    {
+      "file": "src/app/api/events/[id]/scan-analytics/route.ts",
+      "code": 2615,
+      "before": "Type of property 'NOT' circularly references itself in mapped type '{ [K in keyof { AND?: ProjectScalarWhereWithAggregatesInput | ProjectScalarWhereWithAggregatesInput[]; OR?: ProjectScalarWhereWithAggregatesInput[]; ... 30 more ...; targetInstallDate?: string | ... 1 more ... | DateTimeNullableWithAggregatesFilter<...>; }]: Or<...> extends 1 ? { ...; }[K] extends infer TK ? GetHavi...'.",
+      "after": "Type of property 'NOT' circularly references itself in mapped type '{ [K in keyof { AND?: ProjectScalarWhereWithAggregatesInput | ProjectScalarWhereWithAggregatesInput[]; OR?: ProjectScalarWhereWithAggregatesInput[]; ... 32 more ...; targetInstallDate?: string | ... 1 more ... | DateTimeNullableWithAggregatesFilter<...>; }]: Or<...> extends 1 ? { ...; }[K] extends infer TK ? GetHavi...'.",
+      "count": 1,
+      "reason": "Two approved Project scalar fields change only the truncated property count; source unchanged.",
+      "priorRendering": "Type of property 'NOT' circularly references itself in mapped type '{ [K in keyof { AND?: ProjectScalarWhereWithAggregatesInput | ProjectScalarWhereWithAggregatesInput[]; OR?: ProjectScalarWhereWithAggregatesInput[]; ... 30 more ...; targetInstallDate?: string | ... 1 more ... | DateTimeNullableWithAggregatesFilter<...>; }]: Or<...> extends 1 ? { ...; }[K] extends infer TK ? GetHavi...'.",
+      "sourceSha256": "190d08282f8bba46cee06538ea9f91582e2f53689064f24596fda823ee6831ef"
+    },
+    {
+      "file": "src/app/api/events/[id]/scan-analytics/route.ts",
+      "code": 2615,
+      "before": "Type of property 'OR' circularly references itself in mapped type '{ [K in keyof { AND?: ProjectScalarWhereWithAggregatesInput | ProjectScalarWhereWithAggregatesInput[]; OR?: ProjectScalarWhereWithAggregatesInput[]; ... 30 more ...; targetInstallDate?: string | ... 1 more ... | DateTimeNullableWithAggregatesFilter<...>; }]: Or<...> extends 1 ? { ...; }[K] extends infer TK ? GetHavi...'.",
+      "after": "Type of property 'OR' circularly references itself in mapped type '{ [K in keyof { AND?: ProjectScalarWhereWithAggregatesInput | ProjectScalarWhereWithAggregatesInput[]; OR?: ProjectScalarWhereWithAggregatesInput[]; ... 32 more ...; targetInstallDate?: string | ... 1 more ... | DateTimeNullableWithAggregatesFilter<...>; }]: Or<...> extends 1 ? { ...; }[K] extends infer TK ? GetHavi...'.",
+      "count": 1,
+      "reason": "Two approved Project scalar fields change only the truncated property count; source unchanged.",
+      "priorRendering": "Type of property 'OR' circularly references itself in mapped type '{ [K in keyof { AND?: ProjectScalarWhereWithAggregatesInput | ProjectScalarWhereWithAggregatesInput[]; OR?: ProjectScalarWhereWithAggregatesInput[]; ... 30 more ...; targetInstallDate?: string | ... 1 more ... | DateTimeNullableWithAggregatesFilter<...>; }]: Or<...> extends 1 ? { ...; }[K] extends infer TK ? GetHavi...'.",
+      "sourceSha256": "190d08282f8bba46cee06538ea9f91582e2f53689064f24596fda823ee6831ef"
+    },
+    {
+      "file": "src/app/api/export/spec-html/route.ts",
+      "code": 2339,
+      "before": "Property 'rooms' does not exist on type '{ id: string; title: string; views: number; createdAt: Date; updatedAt: Date; status: string; description: string; city: string; isPublic: boolean; designerId: string; category: string; ... 18 more ...; targetInstallDate: Date; }'.",
+      "after": "Property 'rooms' does not exist on type '{ id: string; title: string; views: number; createdAt: Date; updatedAt: Date; status: string; description: string; city: string; isPublic: boolean; designerId: string; category: string; ... 20 more ...; targetInstallDate: Date; }'.",
+      "count": 1,
+      "reason": "Two approved Project scalar fields change only the truncated property count; source unchanged.",
+      "priorRendering": "Property 'rooms' does not exist on type '{ id: string; title: string; views: number; createdAt: Date; updatedAt: Date; status: string; description: string; city: string; isPublic: boolean; designerId: string; category: string; ... 18 more ...; targetInstallDate: Date; }'.",
+      "sourceSha256": "fc56dfac6a21116bbda7748b29c51ee7254b5fa14c6eca7d0d9b582b2dcf9fa7"
+    },
+    {
+      "file": "src/app/api/export/spec-html/route.ts",
+      "code": 2339,
+      "before": "Property 'selections' does not exist on type '{ id: string; title: string; views: number; createdAt: Date; updatedAt: Date; status: string; description: string; city: string; isPublic: boolean; designerId: string; category: string; ... 18 more ...; targetInstallDate: Date; }'.",
+      "after": "Property 'selections' does not exist on type '{ id: string; title: string; views: number; createdAt: Date; updatedAt: Date; status: string; description: string; city: string; isPublic: boolean; designerId: string; category: string; ... 20 more ...; targetInstallDate: Date; }'.",
+      "count": 1,
+      "reason": "Two approved Project scalar fields change only the truncated property count; source unchanged.",
+      "priorRendering": "Property 'selections' does not exist on type '{ id: string; title: string; views: number; createdAt: Date; updatedAt: Date; status: string; description: string; city: string; isPublic: boolean; designerId: string; category: string; ... 18 more ...; targetInstallDate: Date; }'.",
+      "sourceSha256": "fc56dfac6a21116bbda7748b29c51ee7254b5fa14c6eca7d0d9b582b2dcf9fa7"
+    },
+    {
+      "file": "src/app/api/export/spec-html/route.ts",
+      "code": 2551,
+      "before": "Property 'owner' does not exist on type '{ id: string; title: string; views: number; createdAt: Date; updatedAt: Date; status: string; description: string; city: string; isPublic: boolean; designerId: string; category: string; ... 18 more ...; targetInstallDate: Date; }'. Did you mean 'ownerId'?",
+      "after": "Property 'owner' does not exist on type '{ id: string; title: string; views: number; createdAt: Date; updatedAt: Date; status: string; description: string; city: string; isPublic: boolean; designerId: string; category: string; ... 20 more ...; targetInstallDate: Date; }'. Did you mean 'ownerId'?",
+      "count": 1,
+      "reason": "Two approved Project scalar fields change only the truncated property count; source unchanged.",
+      "priorRendering": "Property 'owner' does not exist on type '{ id: string; title: string; views: number; createdAt: Date; updatedAt: Date; status: string; description: string; city: string; isPublic: boolean; designerId: string; category: string; ... 18 more ...; targetInstallDate: Date; }'. Did you mean 'ownerId'?",
+      "sourceSha256": "fc56dfac6a21116bbda7748b29c51ee7254b5fa14c6eca7d0d9b582b2dcf9fa7"
+    },
+    {
+      "file": "src/app/api/projects/[id]/force-delete/route.ts",
+      "code": 2339,
+      "before": "Property 'archivedAt' does not exist on type '{ id: string; title: string; views: number; createdAt: Date; updatedAt: Date; status: string; description: string; city: string; isPublic: boolean; designerId: string; category: string; ... 18 more ...; targetInstallDate: Date; }'.",
+      "after": "Property 'archivedAt' does not exist on type '{ id: string; title: string; views: number; createdAt: Date; updatedAt: Date; status: string; description: string; city: string; isPublic: boolean; designerId: string; category: string; ... 20 more ...; targetInstallDate: Date; }'.",
+      "count": 1,
+      "reason": "Two approved Project scalar fields change only the truncated property count; source unchanged.",
+      "priorRendering": "Property 'archivedAt' does not exist on type '{ id: string; title: string; views: number; createdAt: Date; updatedAt: Date; status: string; description: string; city: string; isPublic: boolean; designerId: string; category: string; ... 18 more ...; targetInstallDate: Date; }'.",
+      "sourceSha256": "e66c96c3e580295f3a7c17c8f0c9399e39069d8e81e321159e66e9bede921901"
+    },
+    {
+      "file": "src/app/api/projects/[id]/supplemental-quotes/route.ts",
+      "code": 2339,
+      "before": "Property 'posts' does not exist on type '{ id: string; title: string; views: number; createdAt: Date; updatedAt: Date; status: string; description: string; city: string; isPublic: boolean; designerId: string; category: string; ... 18 more ...; targetInstallDate: Date; }'.",
+      "after": "Property 'posts' does not exist on type '{ id: string; title: string; views: number; createdAt: Date; updatedAt: Date; status: string; description: string; city: string; isPublic: boolean; designerId: string; category: string; ... 20 more ...; targetInstallDate: Date; }'.",
+      "count": 2,
+      "reason": "Two approved Project scalar fields change only the truncated property count; source unchanged.",
+      "priorRendering": "Property 'posts' does not exist on type '{ id: string; title: string; views: number; createdAt: Date; updatedAt: Date; status: string; description: string; city: string; isPublic: boolean; designerId: string; category: string; ... 18 more ...; targetInstallDate: Date; }'.",
+      "sourceSha256": "82fd7b9f682ca88252e4e1ae38b2637873ec4522949931924b252ebe5d36d2fa"
+    },
+    {
+      "file": "src/app/api/projects/[id]/supplemental-quotes/route.ts",
+      "code": 2339,
+      "before": "Property 'userId' does not exist on type '{ id: string; title: string; views: number; createdAt: Date; updatedAt: Date; status: string; description: string; city: string; isPublic: boolean; designerId: string; category: string; ... 18 more ...; targetInstallDate: Date; }'.",
+      "after": "Property 'userId' does not exist on type '{ id: string; title: string; views: number; createdAt: Date; updatedAt: Date; status: string; description: string; city: string; isPublic: boolean; designerId: string; category: string; ... 20 more ...; targetInstallDate: Date; }'.",
+      "count": 1,
+      "reason": "Two approved Project scalar fields change only the truncated property count; source unchanged.",
+      "priorRendering": "Property 'userId' does not exist on type '{ id: string; title: string; views: number; createdAt: Date; updatedAt: Date; status: string; description: string; city: string; isPublic: boolean; designerId: string; category: string; ... 18 more ...; targetInstallDate: Date; }'.",
+      "sourceSha256": "82fd7b9f682ca88252e4e1ae38b2637873ec4522949931924b252ebe5d36d2fa"
+    },
+    {
+      "file": "src/app/designer/[username]/page.tsx",
+      "code": 2339,
+      "before": "Property 'images' does not exist on type '{ id: string; title: string; views: number; createdAt: Date; updatedAt: Date; status: string; description: string; city: string; isPublic: boolean; designerId: string; category: string; ... 18 more ...; targetInstallDate: Date; }'.",
+      "after": "Property 'images' does not exist on type '{ id: string; title: string; views: number; createdAt: Date; updatedAt: Date; status: string; description: string; city: string; isPublic: boolean; designerId: string; category: string; ... 20 more ...; targetInstallDate: Date; }'.",
+      "count": 1,
+      "reason": "Two approved Project scalar fields change only the truncated property count; source unchanged.",
+      "priorRendering": "Property 'images' does not exist on type '{ id: string; title: string; views: number; createdAt: Date; updatedAt: Date; status: string; description: string; city: string; isPublic: boolean; designerId: string; category: string; ... 18 more ...; targetInstallDate: Date; }'.",
+      "sourceSha256": "9735cd4bb8460f18c68e321a2561cd9c2735b055fa9915c31f67b06020bad7b2"
+    },
+    {
+      "file": "src/app/designer/[username]/page.tsx",
+      "code": 2339,
+      "before": "Property 'rooms' does not exist on type '{ id: string; title: string; views: number; createdAt: Date; updatedAt: Date; status: string; description: string; city: string; isPublic: boolean; designerId: string; category: string; ... 18 more ...; targetInstallDate: Date; }'.",
+      "after": "Property 'rooms' does not exist on type '{ id: string; title: string; views: number; createdAt: Date; updatedAt: Date; status: string; description: string; city: string; isPublic: boolean; designerId: string; category: string; ... 20 more ...; targetInstallDate: Date; }'.",
+      "count": 1,
+      "reason": "Two approved Project scalar fields change only the truncated property count; source unchanged.",
+      "priorRendering": "Property 'rooms' does not exist on type '{ id: string; title: string; views: number; createdAt: Date; updatedAt: Date; status: string; description: string; city: string; isPublic: boolean; designerId: string; category: string; ... 18 more ...; targetInstallDate: Date; }'.",
+      "sourceSha256": "9735cd4bb8460f18c68e321a2561cd9c2735b055fa9915c31f67b06020bad7b2"
+    },
+    {
+      "file": "src/app/designer/profile/page.tsx",
+      "code": 2339,
+      "before": "Property 'images' does not exist on type '{ id: string; title: string; views: number; createdAt: Date; updatedAt: Date; status: string; description: string; city: string; isPublic: boolean; designerId: string; category: string; ... 18 more ...; targetInstallDate: Date; }'.",
+      "after": "Property 'images' does not exist on type '{ id: string; title: string; views: number; createdAt: Date; updatedAt: Date; status: string; description: string; city: string; isPublic: boolean; designerId: string; category: string; ... 20 more ...; targetInstallDate: Date; }'.",
+      "count": 1,
+      "reason": "Two approved Project scalar fields change only the truncated property count; source unchanged.",
+      "priorRendering": "Property 'images' does not exist on type '{ id: string; title: string; views: number; createdAt: Date; updatedAt: Date; status: string; description: string; city: string; isPublic: boolean; designerId: string; category: string; ... 18 more ...; targetInstallDate: Date; }'.",
+      "sourceSha256": "bfdfa97c649e38452451ad2d103b3b1cedf69fe7d14e2772b4a0048b786d2eb9"
+    },
+    {
+      "file": "src/app/monograph/[username]/page.tsx",
+      "code": 2322,
+      "before": "Type '{ id: string; title: string; views: number; createdAt: Date; updatedAt: Date; status: string; description: string; city: string; isPublic: boolean; designerId: string; category: string; ... 18 more ...; targetInstallDate: Date; }[]' is not assignable to type 'Project[]'. Property 'images' is missing in type '{ id: string; title: string; views: number; createdAt: Date; updatedAt: Date; status: string; description: string; city: string; isPublic: boolean; designerId: string; category: string; ... 18 more ...; targetInstallDate: Date; }' but required in type 'Project'.",
+      "after": "Type '{ id: string; title: string; views: number; createdAt: Date; updatedAt: Date; status: string; description: string; city: string; isPublic: boolean; designerId: string; category: string; ... 20 more ...; targetInstallDate: Date; }[]' is not assignable to type 'Project[]'. Property 'images' is missing in type '{ id: string; title: string; views: number; createdAt: Date; updatedAt: Date; status: string; description: string; city: string; isPublic: boolean; designerId: string; category: string; ... 20 more ...; targetInstallDate: Date; }' but required in type 'Project'.",
+      "count": 1,
+      "reason": "Two approved Project scalar fields change only the truncated property count; source unchanged.",
+      "priorRendering": "Type '{ id: string; title: string; views: number; createdAt: Date; updatedAt: Date; status: string; description: string; city: string; isPublic: boolean; designerId: string; category: string; ... 18 more ...; targetInstallDate: Date; }[]' is not assignable to type 'Project[]'. Property 'images' is missing in type '{ id: string; title: string; views: number; createdAt: Date; updatedAt: Date; status: string; description: string; city: string; isPublic: boolean; designerId: string; category: string; ... 18 more ...; targetInstallDate: Date; }' but required in type 'Project'.",
+      "sourceSha256": "556632d7d42c9fb6c5b8f01c6e2e9bf1b55576d13705e24cbde6156b47080809"
+    },
+    {
+      "file": "src/app/monograph/[username]/page.tsx",
+      "code": 2339,
+      "before": "Property 'images' does not exist on type '{ id: string; title: string; views: number; createdAt: Date; updatedAt: Date; status: string; description: string; city: string; isPublic: boolean; designerId: string; category: string; ... 18 more ...; targetInstallDate: Date; }'.",
+      "after": "Property 'images' does not exist on type '{ id: string; title: string; views: number; createdAt: Date; updatedAt: Date; status: string; description: string; city: string; isPublic: boolean; designerId: string; category: string; ... 20 more ...; targetInstallDate: Date; }'.",
+      "count": 4,
+      "reason": "Two approved Project scalar fields change only the truncated property count; source unchanged.",
+      "priorRendering": "Property 'images' does not exist on type '{ id: string; title: string; views: number; createdAt: Date; updatedAt: Date; status: string; description: string; city: string; isPublic: boolean; designerId: string; category: string; ... 18 more ...; targetInstallDate: Date; }'.",
+      "sourceSha256": "556632d7d42c9fb6c5b8f01c6e2e9bf1b55576d13705e24cbde6156b47080809"
+    },
+    {
+      "file": "src/lib/living/gravity.ts",
+      "code": 2339,
+      "before": "Property 'livingEnabled' does not exist on type '{ id: string; title: string; views: number; createdAt: Date; updatedAt: Date; status: string; description: string; city: string; isPublic: boolean; designerId: string; category: string; ... 18 more ...; targetInstallDate: Date; }'.",
+      "after": "Property 'livingEnabled' does not exist on type '{ id: string; title: string; views: number; createdAt: Date; updatedAt: Date; status: string; description: string; city: string; isPublic: boolean; designerId: string; category: string; ... 20 more ...; targetInstallDate: Date; }'.",
+      "count": 2,
+      "reason": "Two approved Project scalar fields change only the truncated property count; source unchanged.",
+      "priorRendering": "Property 'livingEnabled' does not exist on type '{ id: string; title: string; views: number; createdAt: Date; updatedAt: Date; status: string; description: string; city: string; isPublic: boolean; designerId: string; category: string; ... 18 more ...; targetInstallDate: Date; }'.",
+      "sourceSha256": "cc22474853c7daaa3f07a6b58f6b3be030b2fc07f49f5e468b2f2f85e950b3e6"
+    },
+    {
+      "file": "src/lib/living/gravity.ts",
+      "code": 2339,
+      "before": "Property 'livingOptOut' does not exist on type '{ id: string; title: string; views: number; createdAt: Date; updatedAt: Date; status: string; description: string; city: string; isPublic: boolean; designerId: string; category: string; ... 18 more ...; targetInstallDate: Date; }'.",
+      "after": "Property 'livingOptOut' does not exist on type '{ id: string; title: string; views: number; createdAt: Date; updatedAt: Date; status: string; description: string; city: string; isPublic: boolean; designerId: string; category: string; ... 20 more ...; targetInstallDate: Date; }'.",
+      "count": 2,
+      "reason": "Two approved Project scalar fields change only the truncated property count; source unchanged.",
+      "priorRendering": "Property 'livingOptOut' does not exist on type '{ id: string; title: string; views: number; createdAt: Date; updatedAt: Date; status: string; description: string; city: string; isPublic: boolean; designerId: string; category: string; ... 18 more ...; targetInstallDate: Date; }'.",
+      "sourceSha256": "cc22474853c7daaa3f07a6b58f6b3be030b2fc07f49f5e468b2f2f85e950b3e6"
+    },
+    {
+      "file": "src/lib/living/rooms.ts",
+      "code": 2339,
+      "before": "Property 'images' does not exist on type '{ id: string; title: string; views: number; createdAt: Date; updatedAt: Date; status: string; description: string; city: string; isPublic: boolean; designerId: string; category: string; ... 18 more ...; targetInstallDate: Date; }'.",
+      "after": "Property 'images' does not exist on type '{ id: string; title: string; views: number; createdAt: Date; updatedAt: Date; status: string; description: string; city: string; isPublic: boolean; designerId: string; category: string; ... 20 more ...; targetInstallDate: Date; }'.",
+      "count": 1,
+      "reason": "Two approved Project scalar fields change only the truncated property count; source unchanged.",
+      "priorRendering": "Property 'images' does not exist on type '{ id: string; title: string; views: number; createdAt: Date; updatedAt: Date; status: string; description: string; city: string; isPublic: boolean; designerId: string; category: string; ... 18 more ...; targetInstallDate: Date; }'.",
+      "sourceSha256": "48abe9a42711f2ffaea5778e740fa975bf7d5f8d0eb7875735659403e88a562d"
+    },
+    {
+      "file": "src/lib/living/rooms.ts",
+      "code": 2339,
+      "before": "Property 'intent' does not exist on type '{ id: string; title: string; views: number; createdAt: Date; updatedAt: Date; status: string; description: string; city: string; isPublic: boolean; designerId: string; category: string; ... 18 more ...; targetInstallDate: Date; }'.",
+      "after": "Property 'intent' does not exist on type '{ id: string; title: string; views: number; createdAt: Date; updatedAt: Date; status: string; description: string; city: string; isPublic: boolean; designerId: string; category: string; ... 20 more ...; targetInstallDate: Date; }'.",
+      "count": 1,
+      "reason": "Two approved Project scalar fields change only the truncated property count; source unchanged.",
+      "priorRendering": "Property 'intent' does not exist on type '{ id: string; title: string; views: number; createdAt: Date; updatedAt: Date; status: string; description: string; city: string; isPublic: boolean; designerId: string; category: string; ... 18 more ...; targetInstallDate: Date; }'.",
+      "sourceSha256": "48abe9a42711f2ffaea5778e740fa975bf7d5f8d0eb7875735659403e88a562d"
+    },
+    {
+      "file": "src/lib/living/rooms.ts",
+      "code": 2339,
+      "before": "Property 'livingEnabled' does not exist on type '{ id: string; title: string; views: number; createdAt: Date; updatedAt: Date; status: string; description: string; city: string; isPublic: boolean; designerId: string; category: string; ... 18 more ...; targetInstallDate: Date; }'.",
+      "after": "Property 'livingEnabled' does not exist on type '{ id: string; title: string; views: number; createdAt: Date; updatedAt: Date; status: string; description: string; city: string; isPublic: boolean; designerId: string; category: string; ... 20 more ...; targetInstallDate: Date; }'.",
+      "count": 1,
+      "reason": "Two approved Project scalar fields change only the truncated property count; source unchanged.",
+      "priorRendering": "Property 'livingEnabled' does not exist on type '{ id: string; title: string; views: number; createdAt: Date; updatedAt: Date; status: string; description: string; city: string; isPublic: boolean; designerId: string; category: string; ... 18 more ...; targetInstallDate: Date; }'.",
+      "sourceSha256": "48abe9a42711f2ffaea5778e740fa975bf7d5f8d0eb7875735659403e88a562d"
+    },
+    {
+      "file": "src/lib/living/rooms.ts",
+      "code": 2339,
+      "before": "Property 'livingOptOut' does not exist on type '{ id: string; title: string; views: number; createdAt: Date; updatedAt: Date; status: string; description: string; city: string; isPublic: boolean; designerId: string; category: string; ... 18 more ...; targetInstallDate: Date; }'.",
+      "after": "Property 'livingOptOut' does not exist on type '{ id: string; title: string; views: number; createdAt: Date; updatedAt: Date; status: string; description: string; city: string; isPublic: boolean; designerId: string; category: string; ... 20 more ...; targetInstallDate: Date; }'.",
+      "count": 1,
+      "reason": "Two approved Project scalar fields change only the truncated property count; source unchanged.",
+      "priorRendering": "Property 'livingOptOut' does not exist on type '{ id: string; title: string; views: number; createdAt: Date; updatedAt: Date; status: string; description: string; city: string; isPublic: boolean; designerId: string; category: string; ... 18 more ...; targetInstallDate: Date; }'.",
+      "sourceSha256": "48abe9a42711f2ffaea5778e740fa975bf7d5f8d0eb7875735659403e88a562d"
+    },
+    {
+      "file": "src/lib/living/rooms.ts",
+      "code": 2339,
+      "before": "Property 'rooms' does not exist on type '{ id: string; title: string; views: number; createdAt: Date; updatedAt: Date; status: string; description: string; city: string; isPublic: boolean; designerId: string; category: string; ... 18 more ...; targetInstallDate: Date; }'.",
+      "after": "Property 'rooms' does not exist on type '{ id: string; title: string; views: number; createdAt: Date; updatedAt: Date; status: string; description: string; city: string; isPublic: boolean; designerId: string; category: string; ... 20 more ...; targetInstallDate: Date; }'.",
+      "count": 2,
+      "reason": "Two approved Project scalar fields change only the truncated property count; source unchanged.",
+      "priorRendering": "Property 'rooms' does not exist on type '{ id: string; title: string; views: number; createdAt: Date; updatedAt: Date; status: string; description: string; city: string; isPublic: boolean; designerId: string; category: string; ... 18 more ...; targetInstallDate: Date; }'.",
+      "sourceSha256": "48abe9a42711f2ffaea5778e740fa975bf7d5f8d0eb7875735659403e88a562d"
+    },
+    {
+      "file": "src/lib/living/rooms.ts",
+      "code": 2339,
+      "before": "Property 'skeletonItems' does not exist on type '{ id: string; title: string; views: number; createdAt: Date; updatedAt: Date; status: string; description: string; city: string; isPublic: boolean; designerId: string; category: string; ... 18 more ...; targetInstallDate: Date; }'.",
+      "after": "Property 'skeletonItems' does not exist on type '{ id: string; title: string; views: number; createdAt: Date; updatedAt: Date; status: string; description: string; city: string; isPublic: boolean; designerId: string; category: string; ... 20 more ...; targetInstallDate: Date; }'.",
+      "count": 1,
+      "reason": "Two approved Project scalar fields change only the truncated property count; source unchanged.",
+      "priorRendering": "Property 'skeletonItems' does not exist on type '{ id: string; title: string; views: number; createdAt: Date; updatedAt: Date; status: string; description: string; city: string; isPublic: boolean; designerId: string; category: string; ... 18 more ...; targetInstallDate: Date; }'.",
+      "sourceSha256": "48abe9a42711f2ffaea5778e740fa975bf7d5f8d0eb7875735659403e88a562d"
+    },
+    {
+      "file": "src/lib/projects/hasContent.ts",
+      "code": 2339,
+      "before": "Property '_count' does not exist on type '{ id: string; title: string; views: number; createdAt: Date; updatedAt: Date; status: string; description: string; city: string; isPublic: boolean; designerId: string; category: string; ... 18 more ...; targetInstallDate: Date; }'.",
+      "after": "Property '_count' does not exist on type '{ id: string; title: string; views: number; createdAt: Date; updatedAt: Date; status: string; description: string; city: string; isPublic: boolean; designerId: string; category: string; ... 20 more ...; targetInstallDate: Date; }'.",
+      "count": 1,
+      "reason": "Two approved Project scalar fields change only the truncated property count; source unchanged.",
+      "priorRendering": "Property '_count' does not exist on type '{ id: string; title: string; views: number; createdAt: Date; updatedAt: Date; status: string; description: string; city: string; isPublic: boolean; designerId: string; category: string; ... 18 more ...; targetInstallDate: Date; }'.",
+      "sourceSha256": "3b51d78528574ac7126aa81d09c4b0b9ee82945fd288aa4e3e3ba2fe8d186d54"
+    },
+    {
+      "file": "src/lib/projects/hasContent.ts",
+      "code": 2339,
+      "before": "Property 'post' does not exist on type '{ id: string; title: string; views: number; createdAt: Date; updatedAt: Date; status: string; description: string; city: string; isPublic: boolean; designerId: string; category: string; ... 18 more ...; targetInstallDate: Date; }'.",
+      "after": "Property 'post' does not exist on type '{ id: string; title: string; views: number; createdAt: Date; updatedAt: Date; status: string; description: string; city: string; isPublic: boolean; designerId: string; category: string; ... 20 more ...; targetInstallDate: Date; }'.",
+      "count": 1,
+      "reason": "Two approved Project scalar fields change only the truncated property count; source unchanged.",
+      "priorRendering": "Property 'post' does not exist on type '{ id: string; title: string; views: number; createdAt: Date; updatedAt: Date; status: string; description: string; city: string; isPublic: boolean; designerId: string; category: string; ... 18 more ...; targetInstallDate: Date; }'.",
+      "sourceSha256": "3b51d78528574ac7126aa81d09c4b0b9ee82945fd288aa4e3e3ba2fe8d186d54"
+    }
+  ]
+}

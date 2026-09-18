@@ -159,7 +159,7 @@ export default function FlowMosaic({ events, canEdit = false, preserveOrder = fa
                     className="object-cover"
                   />
                 ) : (
-                  <div className="absolute inset-0 flex items-center justify-center bg-stone-200 text-xs uppercase tracking-[0.2em] text-stone-500">
+                  <div className="absolute inset-0 flex items-center justify-center bg-stone-200 text-xs uppercase tracking-folio-eyebrow text-stone-500">
                     Folio
                   </div>
                 )}

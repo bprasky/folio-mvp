@@ -42,7 +42,7 @@ export async function getStudioData(userId: string, projectId?: string): Promise
       designerOrgId: null, OR: [{ ownerId: userId }, { designerId: userId }],
     },
     select: {
-      id: true, title: true, ownerId: true, designerId: true, isPublic: true,
+      id: true, title: true, ownerId: true, designerId: true, isPublic: true, publishedAt: true,
       designer: { select: { name: true } },
       post: { select: { id: true, status: true, slug: true, variant: true, updatedAt: true, excerpt: true, heroAssetId: true, expandedBlocks: true } },
       rooms: { select: { id: true, name: true }, orderBy: { id: 'asc' }, take: 30 },
@@ -117,10 +117,12 @@ export async function getStudioData(userId: string, projectId?: string): Promise
     }))),
   ].sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
   return {
+    evaluatedAt: new Date().toISOString(),
     feed: buildStudioFeed(authorized, exportRows.slice(0, 500), campaignRows.slice(0, 100), ideas, userId, workspace.canWriteCampaigns)
       .filter(card => !projectId || card.projectIds.includes(projectId)),
     workspace,
     projects: scoped.map(p => ({ id: p.id, title: p.title || 'Untitled project',
+      publishedAt: p.publishedAt?.toISOString() ?? null,
       thumbnail: p.images[0]?.url ?? null, published: p.post?.status === 'PUBLISHED',
       canCreateCampaign: p.post?.status === 'PUBLISHED' && (workspace.canWriteCampaigns || p.ownerId === userId || p.designerId === userId),
       canCreate: p.post?.status === 'PUBLISHED' && (p.ownerId === userId || p.designerId === userId) })),

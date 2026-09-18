@@ -7,8 +7,9 @@ const postcss = require('postcss');
 const tailwind = require('tailwindcss');
 const config = require('../tailwind.config');
 let data = {
+  evaluatedAt: '2026-09-18T12:00:00Z',
   workspace: { id: null, name: 'Example design practice' },
-  projects: [{ id: 'p1', title: 'La Gorce', thumbnail: null, published: true, canCreate: true, canCreateCampaign: true }, { id: 'p2', title: 'Lake House', thumbnail: null, published: true, canCreate: true, canCreateCampaign: true }],
+  projects: [{ id: 'p1', title: 'La Gorce', publishedAt: '2024-05-01', thumbnail: null, published: true, canCreate: true, canCreateCampaign: true }, { id: 'p2', title: 'Lake House', publishedAt: '2026-09-10', thumbnail: null, published: true, canCreate: true, canCreateCampaign: true }],
   ideas: [
     { id: 'i1', title: 'Natural stone, two different moods', format: 'MATERIAL_STUDY', status: 'recommended', createdAt: '2026-09-17', projectIds: ['p1', 'p2'], reason: 'Both projects use natural stone in the kitchen. Explore the difference in scale and atmosphere.', prompts: [{ id: 'q1', prompt: 'What guided the different treatment of stone in these two kitchens?' }] },
     { id: 'i2', title: 'The questions behind your rooms', format: 'QA', status: 'in_progress', createdAt: '2026-09-16', projectIds: [], reason: 'An introduction to your approach, in your own words.', prompts: [{ id: 'q2', prompt: 'What do you want to understand before you begin a room?' }] },
@@ -24,6 +25,10 @@ data.feed = [
  { id:'campaign:c1', projectIds:['p2'], title:'Lake House campaign', caption:'A kitchen opening to the lake.', imageUrl:fixtureImage,imageUrls:[fixtureImage],kind:'campaign',format:'campaign',status:'generated',updatedAt:'2026-09-17',canPolish:false,campaignId:'c1' },
  { id:'idea:i1', projectIds:['p1','p2'], title:'Natural stone, two different moods', caption:'What guided the different treatment of stone in these two kitchens?', imageUrl:fixtureImage,imageUrls:[fixtureImage],kind:'idea',format:'MATERIAL_STUDY',status:'recommended',updatedAt:'2026-09-17',canPolish:false },
 ];
+data.feed.unshift(...[
+ { id:'room:p1:living', roomId:'living', projectIds:['p1'], title:'Living Room at La Gorce', pitch:'The sofa that changed the plan', caption:'Synthetic fixture: the original sofa blocked the view; a lower profile changed the room.', rationale:'A design change explained in the published story.' },
+ { id:'room:p1:stairs', roomId:'stairs', projectIds:['p1'], title:'Staircase at La Gorce', pitch:'Getting the staircase right', caption:'Synthetic fixture: a full-size mock-up resolved the landing.', rationale:'A tested alternative with a specific outcome.' }
+].map(item=>({...data.feed[0],...item})));
 if (process.env.STUDIO_FIXTURE_PATH) data = JSON.parse(fs.readFileSync(process.env.STUDIO_FIXTURE_PATH, 'utf8'));
 async function main() {
   const bundle = await esbuild.build({
