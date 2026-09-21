@@ -15,6 +15,7 @@ export function ProjectSocialPanel({ projectId }: { projectId: string }) {
   const [openError, setOpenError] = useState('');
   async function openItem(item: FeedItem) {
     setOpenError('');
+    if (item.candidateId) { router.push(`${href}&candidate=${encodeURIComponent(item.candidateId)}`); return; }
     if (item.kind === 'carousel' && item.exportId && item.canPolish) {
       router.push(`/designer/projects/${encodeURIComponent(projectId)}/instagram?export=${encodeURIComponent(item.exportId)}&studio=project`);
       return;

@@ -1,7 +1,7 @@
 // Editorial Queue — the validation-reject rule (docs/17_EDITORIAL_QUEUE.md,
 // Component 2). Pure and fixture-testable: no API, no Prisma.
 //
-// This is the hallucination guard. The model ranks signals into angles; this
+// This is a citation-integrity guard, not semantic verification. The model ranks signals into angles; this
 // function guarantees every persisted angle cites only real signals and that
 // DesignerAngle.evidence always resolves to verifiable rows. An angle survives
 // only if it cites at least one signal ID present in the digest AND every ID it
@@ -27,8 +27,10 @@ function mergeEvidence(signals: ComputedSignal[]): SignalEvidence {
   const productTagIds = new Set<string>();
   const interviewAnswerIds = new Set<string>();
   const facts: Record<string, string | number | string[]> = {};
+  const sources = new Map<string, NonNullable<SignalEvidence['sources']>[number]>();
 
   for (const signal of signals) {
+    for (const source of signal.evidence.sources ?? []) sources.set(`${source.kind}:${source.id}`, source);
     for (const id of signal.evidence.projectIds ?? []) projectIds.add(id);
     for (const id of signal.evidence.imageIds ?? []) imageIds.add(id);
     for (const id of signal.evidence.productIds ?? []) productIds.add(id);
@@ -42,7 +44,7 @@ function mergeEvidence(signals: ComputedSignal[]): SignalEvidence {
     }
   }
 
-  const evidence: SignalEvidence = {};
+  const evidence: SignalEvidence = { claimStatus: 'inferred', sources: Array.from(sources.values()) };
   if (projectIds.size) evidence.projectIds = Array.from(projectIds);
   if (imageIds.size) evidence.imageIds = Array.from(imageIds);
   if (productIds.size) evidence.productIds = Array.from(productIds);

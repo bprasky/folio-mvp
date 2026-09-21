@@ -10,7 +10,22 @@ export async function GET(request: NextRequest) {
   if (!session?.user?.id) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   try {
     const projectId = request.nextUrl.searchParams.get('projectId') || undefined;
-    return NextResponse.json(await getStudioData(session.user.id, projectId), {
+    const data = await getStudioData(session.user.id, projectId);
+    if (process.env.STUDIO_EDITORIAL_READINESS === 'true') {
+      const { listReadiness } = await import('@/lib/publishing-studio/readiness/service');
+      const readiness = await listReadiness(session.user.id);
+      data.readinessEnabled = true;
+      data.feed = [
+        ...readiness.candidates.filter(candidate => !projectId || candidate.projectIds.includes(projectId)).map(candidate => ({
+          id: candidate.id, candidateId: candidate.id, projectIds: candidate.projectIds, title: candidate.draft.headline,
+          caption: candidate.draft.caption, imageUrl: candidate.visuals[0]?.url || null, imageUrls: candidate.visuals.map(image => image.url),
+          kind: 'suggestion' as const, format: candidate.format, status: candidate.readiness, updatedAt: candidate.createdAt,
+          canPolish: true, pitch: candidate.thesis, rationale: candidate.rationale, slideCount: candidate.visuals.length,
+        })),
+        ...data.feed.filter(card => card.kind === 'carousel' || card.kind === 'campaign'),
+      ];
+    }
+    return NextResponse.json(data, {
       headers: { 'Cache-Control': 'private, no-store' },
     });
   } catch (error) {

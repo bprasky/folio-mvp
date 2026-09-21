@@ -1,5 +1,6 @@
 import 'server-only';
 import { prisma } from '@/lib/prisma';
+import type { Prisma } from '@prisma/client';
 import type { StudioData } from './types';
 import { buildStudioFeed } from './feed';
 
@@ -13,14 +14,14 @@ function object(value: unknown): Record<string, unknown> {
 }
 
 /** Resolve fresh workspace identity; a stale operating-as selection fails closed. */
-export async function resolvePublishingStudioContext(userId: string): Promise<StudioData['workspace'] & { canWriteCampaigns: boolean }> {
-  const user = await prisma.user.findUnique({
+export async function resolvePublishingStudioContext(userId: string, db: Prisma.TransactionClient = prisma): Promise<StudioData['workspace'] & { canWriteCampaigns: boolean }> {
+  const user = await db.user.findUnique({
     where: { id: userId }, select: { operatingAsOrgId: true },
   });
   if (!user) throw new StudioAccessError('Unauthorized', 401);
   const orgId = user.operatingAsOrgId;
   if (orgId) {
-    const membership = await prisma.organizationUser.findFirst({
+    const membership = await db.organizationUser.findFirst({
       where: { userId, organizationId: orgId, isActive: true },
       select: { role: true, organization: { select: { name: true } } },
     });
@@ -96,6 +97,8 @@ export async function getStudioData(userId: string, projectId?: string): Promise
       const prompt = object(value);
       if (typeof prompt.id !== 'string' || typeof prompt.prompt !== 'string') continue;
       prompts.push({ id: prompt.id, prompt: prompt.prompt,
+        ...(typeof prompt.optionA === 'string' ? { optionA: prompt.optionA } : {}),
+        ...(typeof prompt.optionB === 'string' ? { optionB: prompt.optionB } : {}),
         ...(typeof prompt.hint === 'string' ? { hint: prompt.hint } : {}) });
     }
     ideas.push({ id: item.id, title: item.angle.summary, format: item.format, status: item.status,

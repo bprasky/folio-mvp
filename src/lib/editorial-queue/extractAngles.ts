@@ -14,6 +14,7 @@ import { MODELS } from '@/lib/ai/models';
 import { callLLM } from '@/lib/posting/llmClient';
 import { validateAngles } from './validateAngles';
 import { ANGLE_TYPES } from './types';
+import { AngleResponseSchema } from './generation.schemas';
 import type {
   AngleValidationResult,
   CandidateAngle,
@@ -54,7 +55,9 @@ export function buildAngleUserPrompt(digest: CorpusDigest): string {
   const signalLines = signals
     .map(
       (s) =>
-        `- id: ${s.id} | type: ${s.type} | strength: ${s.strength.toFixed(2)} | ${s.headline}`,
+        `- id: ${s.id} | type: ${s.type} | strength: ${s.strength.toFixed(2)} | ${s.headline}`
+        + (process.env.STUDIO_EDITORIAL_READINESS === 'true'
+          ? `\n  Supporting records: ${JSON.stringify(s.evidence.sources ?? [])}` : ''),
     )
     .join('\n');
 
@@ -85,25 +88,9 @@ export function parseAngleResponse(raw: string): CandidateAngle[] {
   } catch {
     return [];
   }
-  const angles = (parsed as { angles?: unknown })?.angles;
-  if (!Array.isArray(angles)) return [];
-
-  const out: CandidateAngle[] = [];
-  for (const a of angles) {
-    if (!a || typeof a !== 'object') continue;
-    const row = a as Record<string, unknown>;
-    if (typeof row.angleType !== 'string' || typeof row.summary !== 'string') continue;
-    const signalIds = Array.isArray(row.signalIds)
-      ? row.signalIds.filter((id): id is string => typeof id === 'string')
-      : [];
-    out.push({
-      angleType: row.angleType,
-      summary: row.summary,
-      signalIds,
-      confidence: typeof row.confidence === 'number' ? row.confidence : 0.5,
-    });
-  }
-  return out;
+  const validated = AngleResponseSchema.safeParse(parsed);
+  if (!validated.success) return [];
+  return validated.data.angles;
 }
 
 // The one Anthropic call. Returns the validated split (accepted + rejected),
@@ -135,7 +122,7 @@ export async function extractAngles(digest: CorpusDigest): Promise<AngleValidati
   if (result.ok) {
     const raw = result.data.content[0]?.type === 'text' ? result.data.content[0].text : '';
     const candidates = parseAngleResponse(raw);
-    const validated = validateAngles(candidates, digest.signals);
+    const validated = validateAngles(candidates, digest.signals.slice(0, MAX_SIGNALS_IN_PROMPT));
 
     if (validated.rejected.length > 0) {
       console.info('[extractAngles] rejected candidates by guard', {

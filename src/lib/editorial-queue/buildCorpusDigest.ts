@@ -5,6 +5,7 @@
 
 import { computeMaturity } from './maturity';
 import { SIGNAL_COMPUTATIONS } from './signals';
+import { resolveSignalEvidence } from './evidence';
 import type { CorpusDigest, RawCorpusLayer } from './types';
 
 export function buildCorpusDigest(raw: RawCorpusLayer): CorpusDigest {
@@ -13,6 +14,7 @@ export function buildCorpusDigest(raw: RawCorpusLayer): CorpusDigest {
   const signals = maturity.eligibleSignalTypes
     .flatMap((type) => SIGNAL_COMPUTATIONS[type](raw))
     .sort((a, b) => b.strength - a.strength);
+  for (const signal of signals) resolveSignalEvidence(signal, raw);
 
   return {
     designerId: raw.designer.id,

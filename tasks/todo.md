@@ -406,3 +406,20 @@ Review: focused Studio ranking, loader and interaction suites pass; focused lint
 Approval: user explicitly approved the completion migration and merge; no new approval required for that exact change.
 
 Migration review: user-approved SQL applied via migrate deploy; both columns and validated constraint confirmed. Bookkeeping111 records, zero unfinished,110 migration folders and clean migrate status. PGlite PostgreSQL tests pass; Docker unavailable. Compile build passed with existing unrelated import warnings. Project date-entry controls remain follow-up work.
+
+# Editorial readiness implementation — 2026-09-21
+
+Scope: implement attached Publishing Studio Editorial Readiness Specification v1.0 as a controlled-evaluation workflow. Default rollout remains off until the required human benchmark is reviewed. Preserve existing drafts and unrelated local work.
+
+- [x] Read specification and audit baseline; sync merged main and create codex/studio-editorial-readiness.
+- [x] Phase 0: align source authorization/inclusion, product validity, material matching, question contracts, campaign accounting.
+- [x] Implement canonical candidate/evidence/visual/score/readiness/version contracts and quality-first diverse selection.
+- [x] Implement explicit evaluation, durable version/event adapter, authorized lifecycle routes and guided completion UI.
+- [x] Connect approved candidate exports/campaigns and explicit publication confirmation; preserve provenance through editing.
+- [x] Prepare and validate exact persistence model/SQL proposal; application requires AGENTS.md review gate. If schema format/validate/generate/migrate-status fails after approved application, restore backup and stop.
+- [x] Verify representative scenarios, authorization/concurrency/grounding tests, UI rendering and repository checks; review changes.
+- [x] Document benchmark/deployment gates and commit/push scoped implementation.
+
+Plan check-in: implement product contract using exact source excerpts for factual copy and explicit image assessment, never inferred intent as fact. Browsing reads persisted recommendations only. Refresh performs bounded evaluation; unknown visual/source quality cannot be promoted to Ready. No production AI calls or database writes during implementation. New database structures will be reviewed in full before application.
+
+Review: implementation and automated checks are complete; see docs/reviews/STUDIO_READINESS_IMPLEMENTATION.md. Exact schema/SQL is proposed only. Migration application and human benchmark remain gated. Preserve feature-off default; no production writes or live AI evaluation.

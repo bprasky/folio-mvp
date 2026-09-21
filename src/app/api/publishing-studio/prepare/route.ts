@@ -9,6 +9,7 @@ import { preparedConfig } from '@/lib/publishing-studio/feed';
 
 /** Explicit polish action persists the already-visible proposal once, never regenerates it. */
 export async function POST(request: NextRequest) {
+  if (typeof process !== 'undefined' && process.env.STUDIO_EDITORIAL_READINESS === 'true') return NextResponse.json({ error: 'Review this story in the readiness configurator before exporting.' }, { status: 409 });
   const session = await getServerSession(authOptions);
   if (!session?.user?.id) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   if (!canAccessDesignerTools(session.user.role)) return NextResponse.json({ error: 'Designer access required' }, { status: 403 });

@@ -16,8 +16,7 @@ import type {
 
 const ANSWER_TEXT_MAX_CHARS = 600;
 
-// Optional strict scope for Studio refreshes. Legacy unlock callers retain their
-// existing corpus; passing an empty project list intentionally returns no work.
+// Explicit workspace scope; an empty project list intentionally returns no work.
 export interface EditorialCorpusScope {
   organizationId: string | null;
   projectIds: string[];
@@ -44,6 +43,8 @@ export async function fetchRawCorpusLayer(designerId: string, scope?: EditorialC
     where: {
       ...(scope?.organizationId ? {} : { designerId }),
       post: { status: 'PUBLISHED' },
+      isPublic: true,
+      designerOrgId: scope?.organizationId ?? null,
       ...(scope ? {
         id: { in: scope.projectIds },
         designerOrgId: scope.organizationId,
@@ -63,6 +64,7 @@ export async function fetchRawCorpusLayer(designerId: string, scope?: EditorialC
       post: { select: { publishedAt: true, variant: true } },
       rooms: { select: { id: true, name: true, type: true }, orderBy: { id: 'asc' } },
       images: {
+        where: { inclusion: 'INCLUDED' },
         // Stable ordering keeps Map insertion order — and therefore signal
         // tie-breaks and IDs — deterministic run-to-run.
         orderBy: { id: 'asc' },
@@ -71,6 +73,7 @@ export async function fetchRawCorpusLayer(designerId: string, scope?: EditorialC
           room: true,
           roomId: true,
           tags: {
+            where: { reviewedAt: { not: null }, product: { isPending: false, name: { not: '' } } },
             orderBy: { id: 'asc' },
             select: {
               id: true,

@@ -14,7 +14,7 @@ export function StudioFeedCard({ item, projectNames, onOpen, onCampaign, pending
 }) {
   const [failedImage, setFailedImage] = useState<string | null>(null);
   const imageAvailable = item.imageUrl && failedImage !== item.imageUrl;
-  const action = item.kind === 'suggestion' && item.canPolish ? 'Polish this post' : item.kind === 'carousel' && item.canPolish ? 'Continue editing' : item.kind === 'campaign' ? 'View campaign' : item.kind === 'carousel' ? 'View post' : 'View idea';
+  const action = item.candidateId ? item.status === 'ready' ? 'Review and publish' : 'Finish in configurator' : item.kind === 'suggestion' && item.canPolish ? 'Polish this post' : item.kind === 'carousel' && item.canPolish ? 'Continue editing' : item.kind === 'campaign' ? 'View campaign' : item.kind === 'carousel' ? 'View post' : 'View idea';
   const aspectRatio = item.preview?.aspectRatio || '4:5';
   return <article className="min-w-0">
     <button type="button" onClick={onOpen} disabled={disabled} aria-label={`${action}: ${item.title}`} className="group block w-full text-left disabled:opacity-60 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4">

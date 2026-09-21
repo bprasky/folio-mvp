@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { extractRoomTeasers } from "@/lib/instagram/roomTeasers";
 import { BlocksSchema } from "@/lib/posting/schemas";
+import { resolvePublishingStudioContext, StudioAccessError } from '@/lib/publishing-studio/data';
 
 export type CampaignPreset = "compact" | "standard" | "complete" | "custom";
 
@@ -50,8 +51,10 @@ export interface CampaignContentSelection {
  */
 export async function selectCampaignContent(
   projectId: string,
-  preset: CampaignPreset = "standard"
+  preset: CampaignPreset,
+  userId: string
 ): Promise<CampaignContentSelection> {
+  const workspace = await resolvePublishingStudioContext(userId);
   // Fetch project with all relevant data
   const project = await prisma.project.findUnique({
     where: { id: projectId },
@@ -59,9 +62,12 @@ export async function selectCampaignContent(
       designer: {
         select: { name: true, studio: true },
       },
+      rooms: { select: { id: true, name: true } },
       images: {
+        where: { inclusion: 'INCLUDED' },
         include: {
           tags: {
+            where: { reviewedAt: { not: null }, product: { isPending: false } },
             include: {
               product: {
                 include: {
@@ -78,6 +84,8 @@ export async function selectCampaignContent(
       post: {
         select: {
           expandedBlocks: true,
+          status: true,
+          heroAssetId: true,
         },
       },
     },
@@ -87,20 +95,28 @@ export async function selectCampaignContent(
     throw new Error(`Project ${projectId} not found`);
   }
 
-  const images = project.images;
+  const inWorkspace = workspace.id
+    ? workspace.canWriteCampaigns && project.designerOrgId === workspace.id
+    : !project.designerOrgId && (project.ownerId === userId || project.designerId === userId);
+  if (!inWorkspace) throw new StudioAccessError('Project is not available in this workspace', 403);
+  if (!project.isPublic || project.post?.status !== 'PUBLISHED') {
+    throw new Error('CAMPAIGN_INELIGIBLE: Publish this project before building a campaign.');
+  }
+  const images = project.images.filter(image => image.inclusion === 'INCLUDED');
   if (images.length === 0) {
     throw new Error(
       'CAMPAIGN_INELIGIBLE: This project has no images yet. Add images before generating an Instagram campaign.'
     );
   }
-  const heroImage = images[0]; // First image is hero
+  const heroImage = images.find(image => image.id === project.post?.heroAssetId) || images[0];
 
   // Group images by room
   const imagesByRoom = new Map<string, typeof images>();
   images.forEach((img) => {
-    if (img.room) {
-      const existing = imagesByRoom.get(img.room) || [];
-      imagesByRoom.set(img.room, [...existing, img]);
+    const name = img.roomId ? project.rooms.find(room => room.id === img.roomId)?.name : img.room;
+    if (name) {
+      const existing = imagesByRoom.get(name) || [];
+      imagesByRoom.set(name, [...existing, img]);
     }
   });
 
@@ -109,7 +125,8 @@ export async function selectCampaignContent(
   const roomTeasers = extractRoomTeasers(parsedBlocks.success ? parsedBlocks.data : undefined);
 
   // Extract rooms with image counts
-  const allRooms = Array.from(imagesByRoom.entries()).map(([name, imgs]) => ({
+  // The legacy room renderer requires three source photographs.
+  const allRooms = Array.from(imagesByRoom.entries()).filter(([, imgs]) => imgs.length >= 3).map(([name, imgs]) => ({
     name,
     imageIds: imgs.map((i) => i.id),
     imageCount: imgs.length,
@@ -133,7 +150,7 @@ export async function selectCampaignContent(
 
   images.forEach((img) => {
     img.tags.forEach((tag) => {
-      if (tag.product && tag.product.name && tag.product.vendor) {
+      if (tag.reviewedAt && tag.product && !tag.product.isPending && tag.product.name && tag.product.vendor) {
         const productId = tag.product.id;
         if (!productMap.has(productId)) {
           productMap.set(productId, {
@@ -152,41 +169,9 @@ export async function selectCampaignContent(
     suggested: false,
   }));
 
-  // Carry the selected room teaser and its authorship into campaign output.
-  const quotes = roomTeasers;
-
-  // Suggested choices retain the saved room selections.
-  const allQuotes = quotes.map((q) => ({
-    text: q.text,
-    authorship: q.authorship,
-    imageId: q.imageId,
-    suggested: false,
-  }));
-
-  // Detect detail shots (images with AI classification)
-  const detailImages = images
-    .filter((img) => {
-      const aiSpaces = (img.aiSpaces as string[]) || [];
-      const aiTags = (img.aiTags as string[]) || [];
-      // Detail shots typically have material/texture tags but no room classification
-      return (
-        aiTags.some((tag) =>
-          [
-            "marble",
-            "brass",
-            "wood",
-            "tile",
-            "fabric",
-            "texture",
-            "detail",
-          ].some((material) => tag.toLowerCase().includes(material))
-        ) && aiSpaces.length === 0
-      );
-    })
-    .map((img) => ({
-      imageId: img.id,
-      caption: `The details at ${project.title}.`,
-    }));
+  // These formats have no image renderer yet; never advertise absent ZIP posts.
+  const allQuotes: CampaignContentSelection['quotes'] = [];
+  const detailImages: CampaignContentSelection['details'] = [];
 
   // Apply preset-based curation
   let selectedRoomCount = 0;
