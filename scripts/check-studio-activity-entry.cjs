@@ -1,0 +1,58 @@
+const assert = require('node:assert/strict'), fs = require('node:fs'), vm = require('node:vm'), ts = require('typescript');
+const React = require('react'), { JSDOM } = require('jsdom');
+const dom = new JSDOM('<div id="root"></div>', {url:'https://folio.test/designer/studio/activity'});
+Object.assign(global,{window:dom.window,document:dom.window.document,IS_REACT_ACT_ENVIRONMENT:true});
+const {createRoot}=require('react-dom/client');
+let calls=[],respond,bioProps,activityProps;
+const fetch=async(url,options)=>{calls.push({url,options});return respond(url,options);};
+function load(file){const exports={};vm.runInNewContext(ts.transpileModule(fs.readFileSync(file,'utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,jsx:ts.JsxEmit.ReactJSX,target:ts.ScriptTarget.ES2022}}).outputText,{exports,console,window:dom.window,document:dom.window.document,navigator:dom.window.navigator,URL,URLSearchParams,fetch,globalThis:{crypto:require('node:crypto').webcrypto},require(name){
+if(name==='next/link')return {default:({href,children})=>React.createElement('a',{href},children)};
+if(name==='next/navigation')return {useSearchParams:()=>new URLSearchParams('subject=designer&format=twenty_questions'),useRouter:()=>({push(){}})};
+if(name==='@/components/designer-bio/BioSetupFlow')return {default:props=>{bioProps=props;return React.createElement('button',{onClick:props.onPublished},'Publish fixture');}};
+if(name==='./StoryActivity')return {StoryActivity:props=>{activityProps=props;return null;}};
+if(name==='@/lib/publishing-studio/activities')return load('src/lib/publishing-studio/activities.ts');
+if(name==='@/components/publishing-studio/UnsavedActivityDialog')return load('src/components/publishing-studio/UnsavedActivityDialog.tsx');
+if(name==='framer-motion')return {AnimatePresence:({children})=>children,motion:{div:({children})=>React.createElement('div',null,children)}};
+if(name==='lucide-react')return {X:()=>null,Loader2:()=>null};
+if(name==='@/lib/utils')return {cn:(...values)=>values.filter(Boolean).join(' ')};
+if(name.includes('/InterviewQuestion'))return {InterviewQuestion:({question})=>React.createElement('p',null,question)};
+if(name.includes('/ProgressIndicator'))return {ProgressIndicator:()=>null};
+if(name.includes('/FollowUpTransition'))return {FollowUpTransition:()=>null};
+return require(name);}});return exports;}
+const button=text=>[...document.querySelectorAll('button')].find(item=>item.textContent===text);
+const flush=()=>new Promise(resolve=>setTimeout(resolve,0));
+async function type(text){await React.act(async()=>{const el=document.querySelector('textarea');Object.getOwnPropertyDescriptor(dom.window.HTMLTextAreaElement.prototype,'value').set.call(el,text);el.dispatchEvent(new dom.window.Event('input',{bubbles:true}));});}
+async function main(){const root=createRoot(document.getElementById('root'));
+const {StudioBioActivity}=load('src/components/publishing-studio/StudioBioActivity.tsx');
+await React.act(async()=>root.render(React.createElement(StudioBioActivity,{profileUrl:'/profile/owner?tab=about'})));assert.equal(calls.length,0);
+respond=async()=>({ok:false,json:async()=>({error:'Unavailable'})});await React.act(async()=>button('Start or resume my bio').click());assert(document.querySelector('[role=alert]'));
+respond=async()=>({ok:true,json:async()=>({bio:{status:'published',folioBio:'Approved',interviewAnswers:[{}]},user:{website:null}})});await React.act(async()=>button('Start or resume my bio').click());assert.equal(bioProps.designerBio.status,'generated');
+await React.act(async()=>button('Publish fixture').click());assert(document.querySelector('a[href="/profile/owner?tab=about"]'));
+const {StudioActivityHost}=load('src/components/publishing-studio/StudioActivityHost.tsx');
+const context={designerName:'A',firmName:'B',projects:[],profile:{hasBio:true,hasPointOfView:true}};
+respond=async()=>({ok:true,json:async()=>({context,stories:[]})});calls=[];
+await React.act(async()=>{root.render(React.createElement(StudioActivityHost));await flush();});assert.equal(calls.length,1);assert.equal(calls[0].options.method,undefined);assert.equal(activityProps.initialBrief.format,'twenty_questions');
+let revision=1;respond=async()=>({ok:true,json:async()=>({id:'s',revision:++revision})});calls=[];
+await activityProps.persistence.save({id:'s',revision:1,answers:[{questionId:'q',text:'words'}],reviewed:true,draft:{}});assert.deepEqual(calls.map(c=>JSON.parse(c.options.body).action),['save','review','prepare']);assert.deepEqual(calls.map(c=>JSON.parse(c.options.body).revision),[1,2,3]);
+calls=[];
+await activityProps.persistence.save({id:'s',revision:4,answers:[{questionId:'q',text:'words'}],reviewed:false,draft:{}});
+assert.equal(calls.length,1,'Revoked review must never trigger prepare even if stale client draft remains');
+assert.equal(JSON.parse(calls[0].options.body).reviewed,false);
+const {default:BioPreview}=load('src/components/designer-bio/BioPreview.tsx');let published=0;
+await React.act(async()=>root.render(React.createElement(BioPreview,{initialBio:'Original',onPublished(){published++;}})));await type('Edited');calls=[];respond=async()=>({ok:false,json:async()=>({error:'Failed'})});await React.act(async()=>button('Publish to About').click());assert.equal(calls.length,1);assert.equal(calls[0].url,'/api/designer/bio/save');assert.equal(published,0);assert.equal(document.querySelector('textarea').value,'Edited');
+const {default:BioInterviewModal}=load('src/components/designer-bio/BioInterviewModal.tsx');let closed=0;
+respond=async url=>({ok:true,json:async()=>url.includes('/questions')?{questions:[{id:'q1',question:'First?',round:'base'},{id:'q2',question:'Second?',round:'base'}]}:{bio:{interviewAnswers:[{id:'q1',answer:'Already saved'}]}}});
+await React.act(async()=>{root.render(React.createElement(BioInterviewModal,{onComplete(){},onClose(){closed++;}}));await flush();});assert(document.body.textContent.includes('Second?'));
+await React.act(async()=>document.querySelector('[aria-label="Close interview"]').click());assert.equal(closed,1);
+await type('My pending answer');respond=async()=>({ok:false,json:async()=>({error:'Answer save failed'})});await React.act(async()=>button('Continue →').click());assert.equal(document.querySelector('textarea').value,'My pending answer');assert(document.body.textContent.includes('Answer save failed'));assert(document.body.textContent.includes('Second?'));
+await React.act(async()=>document.querySelector('[aria-label="Close interview"]').click());assert(button('Save draft and exit'));assert.equal(closed,1);await React.act(async()=>button('Exit without saving').click());assert.equal(closed,2);
+const {StudioSavedActivities}=load('src/components/publishing-studio/StudioSavedActivities.tsx');
+const baseStory={id:'draft',revision:3,definition:{title:'My interview',questions:[{id:'q'}]},answers:[{questionId:'q',text:'Saved answer'}],draft:null,publishedUrl:null};
+respond=async()=>({ok:true,json:async()=>({stories:[baseStory,{...baseStory,id:'published',publishedUrl:'/stories/published'},{...baseStory,id:'revision',previousPublishedUrl:'/stories/previous'}]})});
+await React.act(async()=>{root.render(React.createElement(StudioSavedActivities));await flush();});
+assert.equal([...document.querySelectorAll('button')].filter(item=>item.textContent==='Remove draft').length,1,'Published and previously published stories cannot be discarded');
+calls=[];await React.act(async()=>button('Remove draft').click());assert.equal(calls.length,0,'Opening confirmation is read only');await React.act(async()=>button('Keep draft').click());assert.equal(calls.length,0);
+await React.act(async()=>button('Remove draft').click());respond=async()=>({ok:false,json:async()=>({error:'Removal failed'})});await React.act(async()=>button('Remove saved draft').click());assert.equal(document.querySelectorAll('article').length,3);assert(document.querySelector('dialog [role=alert]').textContent.includes('Removal failed'));
+respond=async()=>({ok:true,json:async()=>({status:'withdrawn'})});await React.act(async()=>button('Remove saved draft').click());assert.equal(document.querySelectorAll('article').length,2);assert(!document.querySelector('dialog'));assert.deepEqual(JSON.parse(calls.at(-1).options.body),{action:'discard',revision:3});
+await React.act(async()=>root.unmount());console.log('PASS activity entry: readonly opening, explicit resume, ordered review, bio save failures, answer retention and clean/dirty exits.');}
+main().catch(error=>{console.error(error);process.exitCode=1;});

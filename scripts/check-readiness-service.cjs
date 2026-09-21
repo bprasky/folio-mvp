@@ -15,6 +15,8 @@ function load(file, mocks) {
 async function main() {
   let enabled = true, sources = [], stored = [], events = [], saves = [], evaluations = 0, modelHistory = [], mutationHistory = [], work = [];
   let workspace = { id: null, name: 'Studio', canWriteCampaigns: false }, budget = true, mutateAfterEvaluate;
+  let useRealEngine = false, answerCalls = 0;
+  const engine = load('src/lib/publishing-studio/readiness/engine.ts', {});
   const policy = 'test-policy';
   const source = { key: 'project:p1', origin: 'project', title: 'Project One', fingerprint: 'source-a', projectIds: ['p1'], evidence: [], images: [] };
   const fixture = () => ({ id: 'candidate-1', version: 1, sourceVersion: 'source-a', sourceKey: source.key, policy,
@@ -28,8 +30,8 @@ async function main() {
     './sources': { readinessEnabled: () => enabled, sourceVersion: s => s.fingerprint,
       loadCandidateSources: async () => ({ workspace: structuredClone(workspace), sources: structuredClone(sources) }) },
     './engine': { selectCandidates: items => items.filter(c => !c.dismissed && !c.confirmedPublishedAt && ['ready','quick'].includes(c.readiness)),
-      evaluateCandidate: (candidate, history = []) => { mutationHistory = history; return { ...candidate, readiness: candidate.blockers.length ? 'quick' : candidate.readiness }; },
-      answerBlocker: (candidate, id, answer) => ({ ...structuredClone(candidate), evidence: [...candidate.evidence, { id, text: answer, source: 'designer_answer' }] }) },
+      evaluateCandidate: (candidate, history = []) => { mutationHistory = history; return useRealEngine ? engine.evaluateCandidate(candidate, history) : { ...candidate, readiness: candidate.blockers.length ? 'quick' : candidate.readiness }; },
+      answerBlocker: (candidate, id, answer) => { answerCalls++; return useRealEngine ? engine.answerBlocker(candidate, id, answer) : { ...structuredClone(candidate), evidence: [...candidate.evidence, { id, text: answer, source: 'designer_answer' }] }; } },
     './evaluator': { evaluateSource: async (s, user, org, history) => { modelHistory = history; evaluations++; if (mutateAfterEvaluate) mutateAfterEvaluate(); return { ...fixture(), sourceVersion: s.fingerprint }; } },
     './store': { CandidateConflictError: Conflict, listStoredCandidates: async () => structuredClone(stored), listCandidateWork: async () => structuredClone(work),
       saveCandidate: async (candidate, expected, kind, payload, secondaryEvents = []) => { saves.push({ candidate: structuredClone(candidate), expected, kind, payload, secondaryEvents }); stored = [structuredClone(candidate)]; events.push(...secondaryEvents.map(event => ({ candidate, ...event, atomic: true }))); return candidate; },
@@ -59,6 +61,45 @@ async function main() {
   assert.equal(saves[0].expected, 1);
   assert.equal(saves[0].kind, 'edited');
   assert.equal(edited.confirmedPublishedAt, undefined, 'editing must never imply social publication');
+  useRealEngine = true;
+  const pendingFixture = fixture();
+  pendingFixture.thesis = pendingFixture.draft.headline;
+  pendingFixture.dimensions = Object.fromEntries(Object.keys(engine.WEIGHTS).map(key => [key, 1]));
+  pendingFixture.penalties = Object.fromEntries(Object.keys(engine.PENALTY_CAPS).map(key => [key, 0]));
+  pendingFixture.evidence = [{ id: 'source', projectId: 'p1', tier: 'direct', source: 'published_prose', text: `${pendingFixture.thesis} ${pendingFixture.draft.caption}` }];
+  pendingFixture.claims = [{ text: pendingFixture.draft.caption, evidenceIds: ['source'] }];
+  pendingFixture.visuals = [{ ...pendingFixture.visuals[0], projectId: 'p1', approved: true, width: 1080, height: 1350, technical: 1, relevance: 1, aesthetic: 1, crop: 1 }];
+  pendingFixture.draft.credits = { designer: 'Designer', photographer: null };
+  pendingFixture.blockers = [{ id: 'credit', kind: 'credit', question: 'Who photographed this?', evidenceIds: [], options: ['Photographer'] }];
+  stored = [engine.evaluateCandidate(pendingFixture)];
+  const pendingAnswer = { blockerId: 'credit', text: ' Photo' };
+  let drafted = await service.changeCandidate('owner', 'candidate-1', { version: 1, sourceVersion: 'source-a', action: 'draft', pendingAnswer });
+  assert.deepEqual(structuredClone(drafted.draft.pendingAnswer), pendingAnswer);
+  assert.equal(drafted.readiness, 'quick');
+  assert.equal(drafted.blockers[0].answer, undefined);
+  assert.equal(drafted.draft.credits.photographer, null);
+  assert.equal(answerCalls, 0, 'saving a partial answer never submits it to the answer engine');
+  assert.equal(drafted.evidence.length, 1, 'partial text is not attributed as confirmed evidence');
+  assert.equal(saves.at(-1).kind, 'edited', 'only explicit draft save counts as started work');
+  drafted = await service.changeCandidate('owner', 'candidate-1', { version: 2, sourceVersion: 'source-a', action: 'edit', caption: drafted.draft.caption });
+  assert.deepEqual(structuredClone(drafted.draft.pendingAnswer), pendingAnswer, 'normal editing preserves the saved answer buffer');
+  const writesBeforeInvalid = saves.length;
+  for (const pendingAnswer of [{ blockerId: 'foreign', text: 'Answer' }, { blockerId: 'credit', text: 'x'.repeat(2201) }, { blockerId: 'credit', text: ' ' }]) {
+    await assert.rejects(service.changeCandidate('owner', 'candidate-1', { version: 3, sourceVersion: 'source-a', action: 'draft', pendingAnswer }));
+  }
+  await assert.rejects(service.changeCandidate('owner', 'candidate-1', { version: 3, sourceVersion: 'source-a', action: 'answer', blockerId: 'credit', answer: 'Not an offered option' }));
+  assert.equal(saves.length, writesBeforeInvalid);
+  assert.deepEqual(structuredClone(stored[0].draft.pendingAnswer), pendingAnswer, 'failed submission retains the partial answer');
+  drafted = await service.changeCandidate('owner', 'candidate-1', { version: 3, sourceVersion: 'source-a', action: 'draft', pendingAnswer: null });
+  assert.equal(drafted.draft.pendingAnswer, undefined);
+  drafted = await service.changeCandidate('owner', 'candidate-1', { version: 4, sourceVersion: 'source-a', action: 'draft', pendingAnswer });
+  const completed = await service.changeCandidate('owner', 'candidate-1', { version: 5, sourceVersion: 'source-a', action: 'answer', blockerId: 'credit', answer: 'Photographer' });
+  assert.equal(completed.draft.pendingAnswer, undefined);
+  assert.equal(completed.blockers[0].answer, 'Photographer');
+  assert.equal(completed.draft.credits.photographer, 'Photographer');
+  assert.equal(completed.readiness, 'ready', 'only explicit valid submission lets the existing engine resolve the blocker');
+  await assert.rejects(service.changeCandidate('owner', 'candidate-1', { version: 6, sourceVersion: 'source-a', action: 'draft', pendingAnswer }));
+  useRealEngine = false;
   stored = [fixture()];
   await assert.rejects(service.changeCandidate('owner', 'candidate-1', { ...change, imageIds: ['foreign-image'] }));
   await assert.rejects(service.changeCandidate('owner', 'candidate-1', { ...change, imageIds: ['image','image'] }));

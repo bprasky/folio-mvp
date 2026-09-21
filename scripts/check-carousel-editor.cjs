@@ -10,12 +10,17 @@ const { renderToStaticMarkup } = require('react-dom/server');
 const dom = new JSDOM('<div id="root"></div>', {url:'https://fixture.test/designer/projects/p1/instagram'});
 global.window = dom.window; global.document = dom.window.document;
 global.IS_REACT_ACT_ENVIRONMENT = true;
+dom.window.HTMLDialogElement.prototype.showModal = function () { this.open = true; };
+dom.window.HTMLDialogElement.prototype.close = function () { this.open = false; };
+const destinations = [];
+
 const requests = [];
 const fetchMock = (url, options) => new Promise(resolve => requests.push({ url, body: JSON.parse(options.body), resolve }));
 function load(file) {
   const loaded = { exports: {} };
   const code = ts.transpileModule(fs.readFileSync(file, 'utf8'), { compilerOptions: { jsx: ts.JsxEmit.ReactJSX, module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2020 } }).outputText;
-  vm.runInNewContext(code, { exports: loaded.exports, module: loaded, console, window: dom.window, URL, fetch: fetchMock, require: id => {
+  vm.runInNewContext(code, { exports: loaded.exports, module: loaded, console, window: dom.window, document: dom.window.document, URL, fetch: fetchMock, require: id => {
+    if (id === 'next/navigation') return { useRouter: () => ({ push: href => destinations.push(href) }) };
     if (id === 'next/link') return { default: ({ children, ...props }) => React.createElement('a', props, children) };
     if (id.startsWith('./')) return load(require('node:path').resolve(require('node:path').dirname(file), id + '.tsx'));
     return require(id);
@@ -108,6 +113,44 @@ async function main() {
   await act(async () => requests.at(-1).resolve({ok:false,json:async()=>({error:'Headline service unavailable'})}));
   assert.ok(document.body.textContent.includes('Saved headline'),'Headline failure preserves draft');
   assert.ok(document.body.textContent.includes('Retry headlines'));
+  const beforePreview = requests.length;
+  const preview = { config: {...props.initialExport.config, studioCardId:'project:p1', studioRevision:'v1', captionOptions:['Preview caption','Changed caption']}, headline:'Preview headline', caption:'Preview caption' };
+  await act(async () => root.render(React.createElement(InstagramExportEditor, {...props,key:'preview',initialExport:null,initialPreview:preview})));
+  assert.equal(requests.length,beforePreview,'Transient proposal makes no generation or persistence requests');
+  const exit = async () => { const event = new window.MouseEvent('click',{bubbles:true,cancelable:true,button:0}); await act(async () => document.querySelector('a[aria-label="Back to Publishing Studio"]').dispatchEvent(event)); return event; };
+  let exitEvent = await exit();assert.equal(exitEvent.defaultPrevented,false,'Untouched preview exits immediately');assert.equal(document.querySelector('dialog').open,false);
+  await click('Headline');await click('Caption');exitEvent=await exit();assert.equal(exitEvent.defaultPrevented,false,'Navigation through tabs is not a content edit');
+  await click('Changed caption');await exit();assert.equal(document.querySelector('dialog').open,true);
+  await click('Keep editing');assert.equal(document.querySelector('dialog').open,false);assert.equal(document.querySelector('#instagram-caption').value,'Changed caption');
+  await click('Preview caption');exitEvent=await exit();assert.equal(exitEvent.defaultPrevented,false,'Restoring original content clears dirty state');
+  await click('Changed caption');await exit();await click('Discard changes');assert.equal(requests.length,beforePreview,'Discard does not persist');assert.match(destinations.at(-1),/designer\/studio/);
+  await act(async () => root.render(React.createElement(InstagramExportEditor, {...props,key:'preview-save',initialExport:null,initialPreview:preview})));
+  await click('Changed caption');await exit();await click('Save draft and exit');
+  const firstSave=requests.at(-1);assert.equal(firstSave.body.exportId,undefined);assert.equal(firstSave.body.config.studioCardId,'project:p1');assert.equal(firstSave.body.config.studioRevision,'v1');assert.equal(firstSave.body.saveOnly,true);
+  const navigationCount=destinations.length;
+  await act(async()=>firstSave.resolve({ok:false,json:async()=>({error:'Save failed'})}));assert.equal(destinations.length,navigationCount);assert.equal(document.querySelector('dialog').open,true);assert.match(document.querySelector('dialog [role="alert"]').textContent,/not saved/);
+  await click('Save draft and exit');await act(async()=>requests.at(-1).resolve({ok:true,json:async()=>({export:{id:'new',updatedAt:'2026-09-04T00:00:00.000Z'},images:[]})}));assert.equal(destinations.length,navigationCount+1);assert.equal(document.querySelector('dialog').open,false);
+  assert.equal(window.location.search.includes('proposal='),false);
+  // Simulate the browser updating URL/state before dispatching popstate. Preserve
+  // Next's opaque history state when restoring the editor, then resume the back.
+  const originalBack=window.history.back;let backCalls=0;window.history.back=()=>{backCalls++;};
+  window.history.replaceState({__NA:true,tree:'editor'},'', '/designer/projects/p1/instagram?proposal=project:p1');
+  await act(async () => root.render(React.createElement(InstagramExportEditor,{...props,key:'history',initialExport:null,initialPreview:preview})));
+  let laterPops=0;const laterPop=()=>laterPops++;window.addEventListener('popstate',laterPop);
+  window.history.replaceState({__NA:true,tree:'studio'},'', '/designer/studio');
+  await act(async()=>window.dispatchEvent(new window.PopStateEvent('popstate',{state:window.history.state})));
+  assert.equal(laterPops,1,'Clean history navigation passes through');assert.equal(document.querySelector('dialog').open,false);
+  window.history.replaceState({__NA:true,tree:'editor'},'', '/designer/projects/p1/instagram?proposal=project:p1');
+  await click('Changed caption');
+  const moveBack=async()=>{window.history.replaceState({__NA:true,tree:'studio'},'', '/designer/studio');await act(async()=>window.dispatchEvent(new window.PopStateEvent('popstate',{state:window.history.state})));};
+  await moveBack();assert.equal(laterPops,1,'Dirty history navigation is intercepted before router');assert.equal(document.querySelector('dialog').open,true);assert.equal(window.history.state.tree,'editor');assert.match(window.location.pathname,/instagram/);
+  await click('Keep editing');assert.equal(backCalls,0);assert.equal(document.querySelector('#instagram-caption').value,'Changed caption');
+  await moveBack();await click('Discard changes');assert.equal(backCalls,1,'Discard resumes browser back');
+  await act(async () => root.render(React.createElement(InstagramExportEditor,{...props,key:'history-save',initialExport:null,initialPreview:preview})));
+  await click('Changed caption');await moveBack();await click('Save draft and exit');
+  await act(async()=>requests.at(-1).resolve({ok:false,json:async()=>({error:'Save failed'})}));assert.equal(backCalls,1);assert.equal(document.querySelector('dialog').open,true);
+  await click('Save draft and exit');await act(async()=>requests.at(-1).resolve({ok:true,json:async()=>({export:{id:'back-saved',updatedAt:'2026-09-05T00:00:00.000Z'},images:[]})}));assert.equal(backCalls,2,'Successful draft save resumes browser back');
+  window.removeEventListener('popstate',laterPop);window.history.back=originalBack;
   await act(async () => root.render(React.createElement(InstagramExportEditor,{...props,key:'legacy',initialExport:null})));
   const initialCaption = requests.filter(r=>r.url.endsWith('generate-caption')).at(-1);
   assert.equal(initialCaption.body.headline,'','Caption does not wait for headline generation');

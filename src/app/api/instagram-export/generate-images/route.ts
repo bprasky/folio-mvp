@@ -1,9 +1,12 @@
 export const dynamic = 'force-dynamic';
 
+import { createHash } from 'crypto';
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/app/api/auth/[...nextauth]/options';
 import { prisma } from '@/lib/prisma';
+import { getStudioData, StudioAccessError } from '@/lib/publishing-studio/data';
+import { revalidatePath } from 'next/cache';
 import { assertProjectWrite } from '@/lib/authz/access';
 import {
   generateAllSlides,
@@ -68,6 +71,32 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Invalid carousel settings or project images' }, { status: 400 });
     }
 
+    const firstId = !exportId && typeof config.studioCardId === 'string'
+      ? `studio_${createHash('sha256').update(`${session.user.id}\0${config.studioCardId}`).digest('hex').slice(0, 40)}` : undefined;
+    const readFirst = () => prisma.instagramExport.findFirst({
+      where: { id: firstId!, projectId, designerId: session.user.id },
+      select: { id: true, updatedAt: true, config: true, status: true },
+    });
+    let firstSaved = firstId ? await readFirst() : null;
+    let studioCardId: string | undefined;
+    if (!existing && config.studioCardId !== undefined) {
+      try {
+        const studio = await getStudioData(session.user.id, project.id);
+        const card = studio.feed.find(item => item.id === config.studioCardId);
+        if (!firstSaved && firstId) firstSaved = await readFirst();
+        if (!firstSaved && (!card || card.revision !== config.studioRevision || card.kind !== 'suggestion' || !card.canPolish || card.projectIds.length !== 1 || card.projectIds[0] !== project.id)) {
+          return NextResponse.json({ error: 'This proposal changed. Return to the Studio to review it before saving.' }, { status: 409 });
+        }
+        if (firstSaved && !studio.projects.some(item => item.id === projectId && item.canCreateCampaign)) {
+          return NextResponse.json({ error: 'This draft is no longer available in this workspace.' }, { status: 403 });
+        }
+        studioCardId = config.studioCardId;
+      } catch (error) {
+        if (error instanceof StudioAccessError) return NextResponse.json({ error: error.message }, { status: error.status });
+        throw error;
+      }
+    }
+
     const proposal: Record<string, string | string[]> = {};
     const previous = existing?.config && typeof existing.config === 'object' && !Array.isArray(existing.config) ? existing.config : {};
     for (const key of ['pitch', 'rationale', 'beats', 'headlineOptions', 'captionOptions']) {
@@ -98,6 +127,18 @@ export async function POST(request: NextRequest) {
       roomId: config.roomId,
     };
 
+    // Bind retries to the exact submitted content. Later explicit edits remove
+    // this fingerprint, so an old first-save request can never overwrite them.
+    const firstSaveFingerprint = firstId ? createHash('sha256').update(JSON.stringify({
+      exportConfig, proposal, caption: caption ?? null, revision: config.studioRevision,
+    })).digest('hex') : undefined;
+    const sameFirstSave = (record: NonNullable<typeof firstSaved>) => {
+      const value = record.config;
+      return value && typeof value === 'object' && !Array.isArray(value)
+        && value.firstSaveFingerprint === firstSaveFingerprint && record.status === (saveOnly ? 'draft' : 'generated');
+    };
+    if (firstSaved && !sameFirstSave(firstSaved)) return NextResponse.json({ error: 'This story already has a different saved draft. Reopen it from In progress before saving.' }, { status: 409 });
+
     const slides = saveOnly ? [] : await generateAllSlides(exportConfig, designer?.profileImage || undefined);
 
     // Return images as base64-encoded data URLs for client-side download
@@ -107,11 +148,15 @@ export async function POST(request: NextRequest) {
       dataUrl: `data:image/jpeg;base64,${slide.buffer.toString('base64')}`,
     }));
 
+    if (firstSaved) return NextResponse.json({ images, export: { id: firstSaved.id, updatedAt: firstSaved.updatedAt.toISOString() } });
+
     const updatedAt = new Date(Math.max(Date.now(), existing ? existing.updatedAt.getTime() + 1 : 0));
     const data = {
       config: {
         ...exportConfig,
         ...proposal,
+        ...(studioCardId ? { studioCardId } : {}),
+        ...(firstSaveFingerprint ? { firstSaveFingerprint } : {}),
         ...(existing?.config && typeof existing.config === 'object' && !Array.isArray(existing.config)
           && typeof existing.config.studioCardId === 'string' ? { studioCardId: existing.config.studioCardId } : {}),
       } as any,
@@ -132,12 +177,20 @@ export async function POST(request: NextRequest) {
       if (saved.count !== 1) return NextResponse.json({ error: 'This carousel changed while saving. Reload before trying again.' }, { status: 409 });
       savedId = existing.id;
     } else {
-      const saved = await prisma.instagramExport.create({
-        data: { ...data, projectId, designerId: session.user.id },
-        select: { id: true },
-      });
-      savedId = saved.id;
+      try {
+        const saved = await prisma.instagramExport.create({
+          data: { ...data, ...(firstId ? { id: firstId } : {}), projectId, designerId: session.user.id },
+          select: { id: true },
+        });
+        savedId = saved.id;
+      } catch (error) {
+        if (!firstId || !(error && typeof error === 'object' && 'code' in error && error.code === 'P2002')) throw error;
+        const winner = await readFirst();
+        if (!winner || !sameFirstSave(winner)) return NextResponse.json({ error: 'This story was saved in another session. Reopen its draft before saving your changes.' }, { status: 409 });
+        return NextResponse.json({ images, export: { id: winner.id, updatedAt: winner.updatedAt.toISOString() } });
+      }
     }
+    revalidatePath('/designer/studio');
     return NextResponse.json({ images, export: { id: savedId, updatedAt: updatedAt.toISOString() } });
   } catch (error: any) {
     console.error('[instagram-export/generate-images]', error);

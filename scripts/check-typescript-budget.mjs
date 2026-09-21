@@ -12,7 +12,7 @@ const key = row => JSON.stringify(row.slice(0, 3));
 const git = (root, args) => execFileSync('git', args, { cwd: root, encoding: 'utf8' }).trim();
 
 // Exact reviewed alternative renderings, not a wildcard or a dropped type field.
-// Full source-span/type/assignability proof accompanies the 47 display changes.
+// Full source-span/type/assignability proofs accompany the reviewed display changes.
 // Truncated compiler messages cannot safely be generically property-sorted.
 const displays = JSON.parse(readFileSync(new URL('../tools/typescript-display-equivalences.json', import.meta.url), 'utf8'));
 if (displays.version !== 1 || !Array.isArray(displays.entries)) throw new Error('Invalid diagnostic display equivalences');

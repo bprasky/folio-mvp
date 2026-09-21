@@ -9,6 +9,7 @@ import ProfileFeed from '@/components/profile/unified/ProfileFeed';
 import ProfileShop from '@/components/profile/unified/ProfileShop';
 import ProfileAbout from '@/components/profile/unified/ProfileAbout';
 import PinnedCarousel from '@/components/profile/unified/PinnedCarousel';
+import { PublishedStudioStories } from '@/components/profile/PublishedStudioStories';
 
 export const dynamic = 'force-dynamic';
 
@@ -110,6 +111,7 @@ export default async function ProfilePage({ params, searchParams }: Props) {
 
       {pinnedItems.length > 0 && <PinnedCarousel items={pinnedItems} />}
 
+      <PublishedStudioStories userId={resolvedParams.userId} />
       <ProfileTabs activeTab={activeTab} userId={resolvedParams.userId} />
 
       <div className="max-w-6xl mx-auto px-6 py-8">

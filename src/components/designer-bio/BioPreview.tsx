@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useActivityExit } from '@/components/publishing-studio/UnsavedActivityDialog';
 
 interface BioPreviewProps {
   initialBio: string | null;
@@ -11,20 +12,27 @@ export default function BioPreview({ initialBio, onPublished }: BioPreviewProps)
   const [bio, setBio] = useState(initialBio || '');
   const [saving, setSaving] = useState(false);
   const [publishing, setPublishing] = useState(false);
-  const [edited, setEdited] = useState(false);
+  const [savedBio, setSavedBio] = useState(initialBio || '');
+  const edited = bio !== savedBio;
+  const [error, setError] = useState('');
+  const exit = useActivityExit(edited, saving || publishing, handleSave);
 
   async function handleSave() {
-    if (!bio.trim()) return;
+    if (!bio.trim()) return false;
     setSaving(true);
+    setError('');
     try {
-      await fetch('/api/designer/bio/save', {
+      const response = await fetch('/api/designer/bio/save', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ folioBio: bio }),
       });
-      setEdited(false);
+      if (!response.ok) throw new Error('Could not save your bio. Your changes are still here.');
+      setSavedBio(bio);
+      return true;
     } catch (err) {
-      console.error('Failed to save bio:', err);
+      setError(err instanceof Error ? err.message : 'Could not save your bio.');
+      return false;
     } finally {
       setSaving(false);
     }
@@ -32,9 +40,7 @@ export default function BioPreview({ initialBio, onPublished }: BioPreviewProps)
 
   async function handlePublish() {
     // Save first if edited
-    if (edited) {
-      await handleSave();
-    }
+    if (edited && !await handleSave()) return;
 
     setPublishing(true);
     try {
@@ -45,7 +51,7 @@ export default function BioPreview({ initialBio, onPublished }: BioPreviewProps)
       }
       onPublished();
     } catch (err) {
-      console.error('Failed to publish bio:', err);
+      setError(err instanceof Error ? err.message : 'Could not publish your bio.');
     } finally {
       setPublishing(false);
     }
@@ -53,18 +59,21 @@ export default function BioPreview({ initialBio, onPublished }: BioPreviewProps)
 
   return (
     <div className="bio-preview">
+      {exit.dialog}
       <div className="bio-preview-header">
         <h3 className="bio-preview-title">Your Generated Bio</h3>
         <p className="bio-preview-subtitle">
-          Edit the text below to make it yours, then publish to your About page.
+            Edit the text below to make it yours. Publishing replaces the bio on your Folio profile.
         </p>
       </div>
 
+      {error && <p role="alert">{error}</p>}
       <textarea
+        aria-label="Your bio"
+        disabled={saving || publishing}
         value={bio}
         onChange={(e) => {
           setBio(e.target.value);
-          setEdited(true);
         }}
         className="bio-preview-editor"
         rows={12}
@@ -74,7 +83,7 @@ export default function BioPreview({ initialBio, onPublished }: BioPreviewProps)
         {edited && (
           <button
             onClick={handleSave}
-            disabled={saving}
+            disabled={saving || publishing}
             className="ridge-btn pill-btn bio-preview-btn"
           >
             {saving ? 'Saving...' : 'Save Draft'}
@@ -82,7 +91,7 @@ export default function BioPreview({ initialBio, onPublished }: BioPreviewProps)
         )}
         <button
           onClick={handlePublish}
-          disabled={publishing || !bio.trim()}
+          disabled={saving || publishing || !bio.trim()}
           className="accent-btn pill-btn bio-preview-btn"
         >
           {publishing ? 'Publishing...' : 'Publish to About'}

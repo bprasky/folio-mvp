@@ -8,7 +8,7 @@ export const studioAction = 'inline-flex items-center justify-center rounded-ful
 export function StudioIntro() {
   return <header className="space-y-2">
     <p className="folio-meta uppercase tracking-widest text-folio-text-secondary">Publishing Studio</p>
-    <h1 className="folio-h1">Your work has more to say.</h1>
+    <h1 className="folio-h2 sm:folio-h1">Your work has more to say.</h1>
     <p className="folio-body">Help future clients see how you think—not just what you design.</p>
   </header>;
 }

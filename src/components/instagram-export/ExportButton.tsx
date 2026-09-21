@@ -1,10 +1,11 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, forwardRef, useImperativeHandle } from 'react';
 import type { AspectRatio } from '@/lib/instagram-export/generate-images';
 import type { HeadlinePosition, WatermarkStyle } from '@/lib/instagram-export/svg-templates';
 
-interface ExportConfig {
+export interface ExportConfig {
+  studioCardId?: string; studioRevision?: string;
   aspectRatio: AspectRatio;
   watermarkStyle: WatermarkStyle;
   headlinePosition: HeadlinePosition;
@@ -22,9 +23,11 @@ interface Props {
   projectId: string;
   config: ExportConfig;
   caption: string;
+  onSaved?: () => void;
+  onBusyChange?: (busy: boolean) => void;
 }
 
-export function ExportButton({ projectId, config, caption, initialExport }: Props) {
+export const ExportButton = forwardRef<{ saveDraft: () => Promise<boolean> }, Props>(function ExportButton({ projectId, config, caption, initialExport, onSaved, onBusyChange }, ref) {
   const [exporting, setExporting] = useState(false);
   const [savedExport, setSavedExport] = useState(initialExport);
   const [error, setError] = useState('');
@@ -33,10 +36,12 @@ export function ExportButton({ projectId, config, caption, initialExport }: Prop
   const handleExport = async (saveOnly = false) => {
     if (!saveOnly && (!config.headline.trim() || !config.selectedImageUrls.length)) {
       setError('Add a headline and at least one photo before exporting.');
-      return;
+      return false;
     }
 
+    if (exporting) return false;
     setExporting(true);
+    onBusyChange?.(true);
     setError('');
     setProgress(saveOnly ? 'Saving draft...' : 'Generating images...');
 
@@ -51,6 +56,7 @@ export function ExportButton({ projectId, config, caption, initialExport }: Prop
           exportId: savedExport?.id,
           expectedUpdatedAt: savedExport?.updatedAt,
           config: {
+            studioCardId: config.studioCardId, studioRevision: config.studioRevision,
             aspectRatio: config.aspectRatio,
             watermarkStyle: config.watermarkStyle,
             headlinePosition: config.headlinePosition,
@@ -75,10 +81,13 @@ export function ExportButton({ projectId, config, caption, initialExport }: Prop
       setSavedExport(data.export);
       const url = new URL(window.location.href);
       url.searchParams.set('export', data.export.id);
+      url.searchParams.delete('proposal');
+      url.searchParams.delete('revision');
       window.history.replaceState(window.history.state, '', url);
+      onSaved?.();
       if (saveOnly) {
         setProgress('Draft saved');
-        return;
+        return true;
       }
       setProgress('Downloading...');
 
@@ -109,14 +118,19 @@ export function ExportButton({ projectId, config, caption, initialExport }: Prop
 
       setProgress('Done! Images downloaded.');
       setTimeout(() => setProgress(''), 3000);
+      return true;
     } catch (error: any) {
       console.error('Export failed:', error);
       setProgress('');
       setError(error.message || 'Could not save carousel. Please try again.');
+      return false;
     } finally {
       setExporting(false);
+      onBusyChange?.(false);
     }
   };
+
+  useImperativeHandle(ref, () => ({ saveDraft: () => handleExport(true) }));
 
   const unavailable = !config.headline.trim() || !config.selectedImageUrls.length;
   return (
@@ -171,4 +185,4 @@ export function ExportButton({ projectId, config, caption, initialExport }: Prop
       </button>
     </div>
   );
-}
+});

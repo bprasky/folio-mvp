@@ -10,6 +10,10 @@ datasource db {
 }
 
 model User {
+  studioStories        EditorialStory[]         @relation("StudioStoryOwner")
+  studioStoryApprovals EditorialStoryRevision[] @relation("StudioStoryApprover")
+  studioStoryAnswers   EditorialStoryAnswer[]   @relation("StudioStoryAnswerer")
+
   spotlightAnswerRevisions SpotlightAnswerRevision[] @relation("SpotlightAnsweringUser")
   // Product spotlight draft selection
   spotlightsAsPublisher    ProductSpotlight[]        @relation("SpotlightPublisher")
@@ -1018,6 +1022,8 @@ model ProjectFile {
 }
 
 model Organization {
+  studioStories EditorialStory[]
+
   // Product spotlight draft selection
   spotlightsAsPublisher ProductSpotlight[] @relation("SpotlightPublisherOrg")
 
@@ -1661,6 +1667,8 @@ enum PostVariant {
 }
 
 model ProjectPost {
+  studioStorySources EditorialStorySource[]
+
   id        String  @id @default(cuid())
   projectId String  @unique
   project   Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
@@ -7753,6 +7761,8 @@ model DesignerAngle {
 }
 
 model EditorialQueueItem {
+  studioStory EditorialStory?
+
   id         String @id @default(cuid())
   designerId String
   angleId    String
@@ -8118,4 +8128,76 @@ model StudioCandidateEvent {
 
   @@index([candidateId, createdAt])
   @@map("studio_candidate_events")
+}
+
+model EditorialStory {
+  id                      String                   @id @default(uuid())
+  ownerId                 String
+  organizationId          String?
+  queueItemId             String?                  @unique
+  slug                    String                   @unique
+  format                  String
+  status                  String                   @default("draft")
+  publishedRevisionNumber Int?
+  createdAt               DateTime                 @default(now()) @db.Timestamptz(3)
+  updatedAt               DateTime                 @updatedAt @db.Timestamptz(3)
+  owner                   User                     @relation("StudioStoryOwner", fields: [ownerId], references: [id], onDelete: Restrict)
+  organization            Organization?            @relation(fields: [organizationId], references: [id], onDelete: Restrict)
+  queueItem               EditorialQueueItem?      @relation(fields: [queueItemId], references: [id], onDelete: Restrict)
+  revisions               EditorialStoryRevision[] @relation("StudioStoryRevisions")
+  publishedRevision       EditorialStoryRevision?  @relation("StudioPublishedStory", fields: [id, publishedRevisionNumber], references: [storyId, number], onDelete: Restrict, onUpdate: Restrict, map: "editorial_stories_published_fkey")
+
+  @@index([ownerId, organizationId, updatedAt])
+  @@map("editorial_stories")
+}
+
+model EditorialStoryRevision {
+  id                String                 @id @default(uuid())
+  storyId           String
+  number            Int
+  title             String
+  blocks            Json
+  interview         Json // Frozen activity version, brief and question definitions; answers live in answer rows.
+  editVersion       Int                    @default(1)
+  answersReviewedAt DateTime?              @db.Timestamptz(3)
+  approvedById      String?
+  approvedAt        DateTime?              @db.Timestamptz(3)
+  consentScope      String? // feed_only | feed_and_social; approval is version-specific
+  publishedAt       DateTime?              @db.Timestamptz(3)
+  createdAt         DateTime               @default(now()) @db.Timestamptz(3)
+  story             EditorialStory         @relation("StudioStoryRevisions", fields: [storyId], references: [id], onDelete: Restrict)
+  publishedFor      EditorialStory[]       @relation("StudioPublishedStory")
+  approvedBy        User?                  @relation("StudioStoryApprover", fields: [approvedById], references: [id], onDelete: Restrict)
+  answers           EditorialStoryAnswer[]
+  sources           EditorialStorySource[]
+
+  @@unique([storyId, number])
+  @@map("editorial_story_revisions")
+}
+
+model EditorialStoryAnswer {
+  id           String                 @id @default(uuid())
+  revisionId   String
+  promptId     String
+  questionText String
+  answerText   String // raw authored wording, never replace with the generated paraphrase
+  answeredById String
+  answeredAt   DateTime               @default(now()) @db.Timestamptz(3)
+  revision     EditorialStoryRevision @relation(fields: [revisionId], references: [id], onDelete: Restrict)
+  answeredBy   User                   @relation("StudioStoryAnswerer", fields: [answeredById], references: [id], onDelete: Restrict)
+
+  @@unique([revisionId, promptId])
+  @@map("editorial_story_answers")
+}
+
+model EditorialStorySource {
+  revisionId    String
+  projectPostId String
+  sourceDigest  String // hash of exact eligible source snapshot; not an approval by itself
+  revision      EditorialStoryRevision @relation(fields: [revisionId], references: [id], onDelete: Restrict)
+  projectPost   ProjectPost            @relation(fields: [projectPostId], references: [id], onDelete: Restrict)
+
+  @@id([revisionId, projectPostId])
+  @@index([projectPostId])
+  @@map("editorial_story_sources")
 }

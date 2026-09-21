@@ -6,6 +6,8 @@ import { authOptions } from '@/app/api/auth/[...nextauth]/options';
 import { prisma } from '@/lib/prisma';
 import { generateInitialSeedQuestions } from '@/lib/designer-bio/qa-generation';
 import type { InterviewAnswer } from '@/lib/designer-bio/constants';
+import { canAccessDesignerTools } from '@/lib/permissions';
+import { revalidatePath } from 'next/cache';
 
 /**
  * POST /api/designer/bio/publish
@@ -21,25 +23,30 @@ export async function POST() {
 
     const userId = session.user.id;
 
-    const bio = await prisma.designerBio.findUnique({
-      where: { userId },
-    });
+    const result = await prisma.$transaction(async tx => {
+      const actor = await tx.user.findUnique({ where: { id: userId }, select: { role: true } });
+      if (!actor || !canAccessDesignerTools(actor.role)) return { error: 'Forbidden', status: 403 } as const;
+      const bio = await tx.designerBio.findUnique({ where: { userId } });
+      if (!bio?.folioBio?.trim()) return { error: 'No bio to publish. Generate one first.', status: 400 } as const;
+      // The explicit publish action updates both public bio surfaces atomically.
+      await tx.designerBio.update({ where: { userId }, data: { status: 'published' } });
+      await tx.user.update({ where: { id: userId }, data: { bio: bio.folioBio } });
+      return { bio };
+    }, { isolationLevel: 'Serializable' });
 
-    if (!bio?.folioBio) {
-      return NextResponse.json({ error: 'No bio to publish. Generate one first.' }, { status: 400 });
+    if ('error' in result) {
+      return NextResponse.json({ error: result.error }, { status: result.status });
     }
-
-    // Publish the bio
-    await prisma.designerBio.update({
-      where: { userId },
-      data: { status: 'published' },
-    });
+    const { bio } = result;
+    revalidatePath(`/designer/${userId}`);
+    revalidatePath(`/api/profiles/${userId}/about`);
+    revalidatePath('/designer/profile');
 
     // Trigger initial Q&A seed generation (fire-and-forget)
     const answers = (bio.interviewAnswers as InterviewAnswer[] | null) || [];
     generateInitialSeedQuestions(
       userId,
-      bio.folioBio,
+      bio.folioBio!,
       answers.map((a) => ({ question: a.question, answer: a.answer })),
       bio.scrapedData as Record<string, unknown> | null
     ).catch((err) => {

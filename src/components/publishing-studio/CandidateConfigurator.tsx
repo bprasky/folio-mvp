@@ -40,22 +40,33 @@ export function CandidateConfigurator({ candidate, onChange, onClose, readOnly =
   }, []);
   const [headline, setHeadline] = useState(candidate.draft.headline);
   const [caption, setCaption] = useState(candidate.draft.caption);
-  const [answer, setAnswer] = useState('');
+  const [answer, setAnswer] = useState(candidate.draft.pendingAnswer?.text || '');
+  const [imageIds, setImageIds] = useState(candidate.visuals.map(image => image.id));
   const [pending, setPending] = useState<'save' | 'download' | null>(null);
   const [error, setError] = useState('');
   const [saveNotice, setSaveNotice] = useState('');
   const [leaveRequested, setLeaveRequested] = useState(false);
+  const exitDialog = useRef<HTMLDialogElement>(null);
+  useEffect(() => {
+    if (leaveRequested) exitDialog.current?.showModal?.();
+  }, [leaveRequested]);
   const [published, setPublished] = useState(false);
   const [downloaded, setDownloaded] = useState(false);
   const [missingImages, setMissingImages] = useState<string[]>([]);
   const [hydratedKey, setHydratedKey] = useState<string | null>(null);
   const [recovered, setRecovered] = useState(false);
   const [recoveryUnavailable, setRecoveryUnavailable] = useState(false);
+  const leaveAction = useRef<(() => void) | null>(null);
+  const leaving = useRef(false);
   const blockers = candidate.blockers.filter(item => !item.answer?.trim());
   const blocker = blockers[0];
   const hasUnsavedCopy = headline !== candidate.draft.headline || caption !== candidate.draft.caption;
-  const hasUnsavedAnswer = !!answer.trim();
-  const hasUnsavedChanges = !readOnly && (hasUnsavedCopy || hasUnsavedAnswer);
+  const savedAnswer = candidate.draft.pendingAnswer?.blockerId === blocker?.id ? candidate.draft.pendingAnswer?.text || '' : '';
+  const hasUnsavedAnswer = answer !== savedAnswer;
+  const savedImageOrder = JSON.stringify(candidate.visuals.map(image => image.id));
+  const hasUnsavedImages = JSON.stringify(imageIds) !== savedImageOrder;
+  const hasUnsavedChanges = !readOnly && (hasUnsavedCopy || hasUnsavedAnswer || hasUnsavedImages);
+  const visuals = imageIds.map(id => candidate.visuals.find(image => image.id === id)).filter((image): image is Candidate['visuals'][number] => Boolean(image));
   const locked = !!pending || readOnly;
   const storageKey = recoveryKey(candidate);
   const savedHeadline = candidate.draft.headline, savedCaption = candidate.draft.caption, blockerId = blocker?.id;
@@ -64,7 +75,8 @@ export function CandidateConfigurator({ candidate, onChange, onClose, readOnly =
   // or a readiness decision. Exact source/version keys prevent stale replay.
   useEffect(() => {
     let restored = false;
-    let copyHeadline = savedHeadline, copyCaption = savedCaption, copyAnswer = '';
+    let copyHeadline = savedHeadline, copyCaption = savedCaption, copyAnswer = savedAnswer;
+    let recoveredIds: string[] = JSON.parse(savedImageOrder);
     if (!readOnly) {
       try {
         const raw = window.sessionStorage.getItem(storageKey);
@@ -72,44 +84,74 @@ export function CandidateConfigurator({ candidate, onChange, onClose, readOnly =
           const value = JSON.parse(raw);
           if (typeof value.headline === 'string' && value.headline.length <= 180 && typeof value.caption === 'string' && value.caption.length <= 2200 && typeof value.answer === 'string' && value.answer.length <= 2200) {
             copyHeadline = value.headline; copyCaption = value.caption;
-            copyAnswer = value.blockerId === blockerId ? value.answer : '';
-            restored = copyHeadline !== savedHeadline || copyCaption !== savedCaption || !!copyAnswer.trim();
+            copyAnswer = value.blockerId === blockerId ? value.answer : savedAnswer;
+            if (Array.isArray(value.imageIds) && value.imageIds.length === recoveredIds.length && new Set(value.imageIds).size === recoveredIds.length && value.imageIds.every((id: string) => recoveredIds.includes(id))) recoveredIds = value.imageIds;
+            restored = copyHeadline !== savedHeadline || copyCaption !== savedCaption || copyAnswer !== savedAnswer || JSON.stringify(recoveredIds) !== savedImageOrder;
           }
         }
       } catch { setRecoveryUnavailable(true); }
     }
-    setHeadline(copyHeadline); setCaption(copyCaption); setAnswer(copyAnswer);
+    setHeadline(copyHeadline); setCaption(copyCaption); setAnswer(copyAnswer); setImageIds(recoveredIds);
     setRecovered(restored); setHydratedKey(storageKey);
-  }, [storageKey, readOnly, savedHeadline, savedCaption, blockerId]);
+  }, [storageKey, readOnly, savedHeadline, savedCaption, blockerId, savedAnswer, savedImageOrder]);
   useEffect(() => {
     if (readOnly || hydratedKey !== storageKey) return;
     try {
-      if (hasUnsavedChanges) window.sessionStorage.setItem(storageKey, JSON.stringify({ headline, caption, answer, blockerId }));
+      if (hasUnsavedChanges) window.sessionStorage.setItem(storageKey, JSON.stringify({ headline, caption, answer, blockerId, imageIds }));
       else window.sessionStorage.removeItem(storageKey);
     } catch { setRecoveryUnavailable(true); }
-  }, [headline, caption, answer, blockerId, hydratedKey, storageKey, hasUnsavedChanges, readOnly]);
+  }, [headline, caption, answer, blockerId, imageIds, hydratedKey, storageKey, hasUnsavedChanges, readOnly]);
   useEffect(() => {
     if (!hasUnsavedChanges && !pending) return;
-    const protect = (event: BeforeUnloadEvent) => { event.preventDefault(); event.returnValue = ''; };
+    const protect = (event: BeforeUnloadEvent) => { if (leaving.current) return; event.preventDefault(); event.returnValue = ''; };
     window.addEventListener('beforeunload', protect);
     return () => window.removeEventListener('beforeunload', protect);
   }, [hasUnsavedChanges, pending]);
 
-  async function save(changes: Record<string, unknown>) {
+  useEffect(() => {
+    if (!hasUnsavedChanges && !pending) return;
+    const currentUrl = window.location.href, currentState = window.history.state;
+    const interceptLink = (event: MouseEvent) => {
+      if (leaving.current || event.defaultPrevented || event.button !== 0 || event.ctrlKey || event.metaKey || event.shiftKey || event.altKey) return;
+      const anchor = (event.target as Element)?.closest?.('a[href]') as HTMLAnchorElement | null;
+      if (!anchor || anchor.hasAttribute('download') || (anchor.target && anchor.target !== '_self') || anchor.href === currentUrl || anchor.getAttribute('href')?.startsWith('#')) return;
+      event.preventDefault(); event.stopPropagation();
+      if (pending) return;
+      leaveAction.current = () => window.location.assign(anchor.href); setLeaveRequested(true);
+    };
+    const interceptBack = (event: PopStateEvent) => {
+      if (leaving.current) return;
+      event.stopImmediatePropagation();
+      window.history.pushState(currentState, '', currentUrl);
+      if (pending) return;
+      leaveAction.current = () => window.history.back(); setLeaveRequested(true);
+    };
+    document.addEventListener('click', interceptLink, true);
+    window.addEventListener('popstate', interceptBack, true);
+    return () => { document.removeEventListener('click', interceptLink, true); window.removeEventListener('popstate', interceptBack, true); };
+  }, [hasUnsavedChanges, pending]);
+
+  function finishLeaving() {
+    leaving.current = true;
+    const action = leaveAction.current || onClose;
+    action();
+  }
+  async function save(changes: Record<string, unknown>, exitAfterSave = false) {
     if (locked) return;
     setPending('save'); setError(''); setSaveNotice('');
     try {
       const saved = await updateCandidate(candidate, changes);
-      const remainingAnswer = changes.action === 'answer' ? '' : answer;
+      const remainingAnswer = changes.action === 'answer' || changes.action === 'draft' ? '' : answer;
       try {
         if (remainingAnswer.trim()) window.sessionStorage.setItem(recoveryKey(saved), JSON.stringify({ headline: saved.draft.headline, caption: saved.draft.caption, answer: remainingAnswer, blockerId }));
         window.sessionStorage.removeItem(storageKey);
       } catch { setRecoveryUnavailable(true); }
       setSaveNotice(savedCandidateSummary(candidate, saved));
-      setHeadline(saved.draft.headline); setCaption(saved.draft.caption);
-      if (changes.action === 'answer') setAnswer('');
+      setHeadline(saved.draft.headline); setCaption(saved.draft.caption); setImageIds(saved.visuals.map(image => image.id));
+      if (changes.action === 'answer' || changes.action === 'draft') setAnswer(saved.draft.pendingAnswer?.text || '');
       setDownloaded(false); setPublished(false);
       onChange(saved);
+      if (exitAfterSave) finishLeaving();
     } catch (err) { setError(err instanceof Error ? err.message : 'Could not save this story. Your changes are still here.'); }
     finally { setPending(null); }
   }
@@ -135,55 +177,66 @@ export function CandidateConfigurator({ candidate, onChange, onClose, readOnly =
     finally { setPending(null); }
   }
   function moveImage(index: number, direction: number) {
-    const ids = candidate.visuals.map(image => image.id);
+    const ids = [...imageIds];
     [ids[index], ids[index + direction]] = [ids[index + direction], ids[index]];
-    void save({ action: 'edit', imageIds: ids });
+    setImageIds(ids);
+  }
+  function saveDraft(exitAfterSave = false) {
+    return save({ action: 'draft',
+      ...(headline !== savedHeadline ? { headline } : {}), ...(caption !== savedCaption ? { caption } : {}),
+      ...(hasUnsavedImages ? { imageIds } : {}),
+      pendingAnswer: blocker && answer.trim() ? { blockerId: blocker.id, text: answer } : null }, exitAfterSave);
   }
   function requestClose() {
     if (pending) return;
+    leaveAction.current = onClose;
     if (hasUnsavedChanges) setLeaveRequested(true); else onClose();
   }
 
   return <section ref={sectionRef} tabIndex={-1} aria-labelledby="candidate-title" className="space-y-6 text-folio-text-primary focus:outline-none">
     <div className="flex flex-wrap items-center justify-between gap-3 border-b border-folio-border-subtle pb-4">
       <button className={button} disabled={!!pending} onClick={requestClose}>Back to stories</button>
-      <p aria-live="polite" className="folio-meta text-folio-text-secondary">{readOnly ? 'Saved version · read only' : pending === 'save' ? 'Saving draft…' : pending === 'download' ? 'Preparing download…' : hasUnsavedChanges ? 'Unsaved changes' : 'Saved draft'}</p>
+      <p aria-live="polite" className="folio-meta text-folio-text-secondary">{readOnly ? 'Saved version · read only' : pending === 'save' ? 'Saving draft…' : pending === 'download' ? 'Preparing download…' : hasUnsavedChanges ? 'Unsaved changes' : 'No unsaved changes'}</p>
     </div>
     {recovered && hasUnsavedChanges && <p role="status" className="folio-meta text-folio-text-secondary">Recovered unsaved changes from this browser session. Save them to update your draft.</p>}
     {recoveryUnavailable && hasUnsavedChanges && <p role="status" className="folio-meta text-folio-text-secondary">This browser could not retain unsaved changes. Save before leaving this story.</p>}
-    {leaveRequested && <div role="alert" className="space-y-3 border-l-2 border-[var(--folio-gold)] bg-surface-ground p-4">
-      <p className="folio-body">Your latest {hasUnsavedCopy && hasUnsavedAnswer ? 'copy and answer are' : hasUnsavedCopy ? 'copy is' : 'answer is'} not saved. Keep editing to save before returning.</p>
-      <div className="flex flex-wrap gap-2"><button className={primaryButton} onClick={() => setLeaveRequested(false)}>Keep editing</button><button className={button} onClick={() => { try { window.sessionStorage.removeItem(storageKey); } catch { /* Closing does not depend on browser storage. */ } onClose(); }}>Discard unsaved changes</button></div>
-    </div>}
+    {leaveRequested && <dialog ref={exitDialog} aria-label="Unsaved changes" onCancel={event => { event.preventDefault(); if (!locked) setLeaveRequested(false); }} className="max-w-lg space-y-3 border border-folio-border-subtle bg-surface-ground p-6 text-folio-text-primary backdrop:bg-black/30">
+      <div role="alert">
+      <p className="folio-body">Your changes are not saved. Save them as a draft, or leave without saving this edit.</p>
+      {error && <p role="alert" className="folio-body mt-3">{error}</p>}
+      <button className={primaryButton} disabled={locked || !headline.trim() || !caption.trim()} onClick={() => saveDraft(true)}>{pending === 'save' ? 'Saving draft…' : 'Save draft and exit'}</button>
+      <div className="flex flex-wrap gap-2"><button className={primaryButton} disabled={locked} onClick={() => { leaveAction.current = null; setLeaveRequested(false); }}>Keep editing</button><button className={button} disabled={locked} onClick={() => { try { window.sessionStorage.removeItem(storageKey); } catch { /* Closing does not depend on browser storage. */ } finishLeaving(); }}>Discard changes</button></div>
+      </div>
+    </dialog>}
     <header className="max-w-3xl space-y-2"><p className="folio-meta text-folio-text-secondary">{candidate.source?.title || 'Your project'} · {candidate.format === 'carousel' ? 'Carousel' : 'Single photograph'}</p><h2 id="candidate-title" className="folio-h2">{candidate.thesis}</h2><p className="folio-body text-folio-text-secondary">{candidate.audienceValue}</p></header>
     {error && <p role="alert" className="border-l-2 border-[var(--folio-gold)] bg-surface-ground p-4 folio-body">{error}</p>}
     {saveNotice && <p role="status" className="border-l border-folio-border-subtle pl-4 folio-body">{saveNotice}</p>}
     <div className="grid items-start gap-8 lg:grid-cols-5">
       <div className="min-w-0 space-y-6 lg:col-span-3">
         <div className={`grid gap-4 ${candidate.visuals.length > 1 ? 'sm:grid-cols-2' : ''}`}>
-          {candidate.visuals.map((image, index) => <figure key={image.id} className="min-w-0 space-y-2">
+          {visuals.map((image, index) => <figure key={image.id} className="min-w-0 space-y-2">
             {missingImages.includes(image.id) ? <div role="status" className="flex aspect-[4/5] items-center justify-center bg-surface-ground p-5 folio-body">This selected photograph is unavailable. Review its project source before downloading.</div> : <>
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src={image.url} alt={`${image.role}: ${candidate.draft.headline}`} onError={() => setMissingImages(ids => [...ids, image.id])} className="aspect-[4/5] w-full rounded-sm object-cover" />
             </>}
             <figcaption className="folio-meta text-folio-text-secondary">{index === 0 ? 'Cover' : `Photo ${index + 1}`} · {image.reason}</figcaption>
-            {!readOnly && candidate.visuals.length > 1 && <div className="flex gap-2"><button className={button} disabled={locked || hasUnsavedChanges || index === 0} onClick={() => moveImage(index, -1)} aria-label={`Move image ${index + 1} earlier`}>Earlier</button><button className={button} disabled={locked || hasUnsavedChanges || index === candidate.visuals.length - 1} onClick={() => moveImage(index, 1)} aria-label={`Move image ${index + 1} later`}>Later</button></div>}
+            {!readOnly && candidate.visuals.length > 1 && <div className="flex gap-2"><button className={button} disabled={locked || index === 0} onClick={() => moveImage(index, -1)} aria-label={`Move image ${index + 1} earlier`}>Earlier</button><button className={button} disabled={locked || index === visuals.length - 1} onClick={() => moveImage(index, 1)} aria-label={`Move image ${index + 1} later`}>Later</button></div>}
           </figure>)}
           {!candidate.visuals.length && <p className="bg-surface-ground p-5 folio-body">No selected photograph is available for this draft.</p>}
         </div>
         <div className="space-y-4 border-t border-folio-border-subtle pt-5"><h3 className="folio-h3">Your post</h3>
           <label className="block space-y-2 folio-ui">Headline<input className={field} value={headline} disabled={!!pending} readOnly={readOnly} onChange={event => setHeadline(event.target.value)} maxLength={180} /></label>
           <label className="block space-y-2 folio-ui">Caption<textarea className={field} rows={7} value={caption} disabled={!!pending} readOnly={readOnly} onChange={event => setCaption(event.target.value)} maxLength={2200} /></label>
-          {!readOnly && <div className="flex flex-wrap items-center gap-3"><button className={button} disabled={locked || !headline.trim() || headline.length > 180 || !caption.trim() || caption.length > 2200} onClick={() => save({ action: 'edit', headline, caption })}>Save draft</button>{hasUnsavedCopy && <p className="folio-meta text-folio-text-secondary">Save copy before completing another step.</p>}</div>}
+          {!readOnly && <div className="flex flex-wrap items-center gap-3"><button className={button} disabled={locked || !hasUnsavedChanges || !headline.trim() || headline.length > 180 || !caption.trim() || caption.length > 2200} onClick={() => saveDraft()}>Save draft</button>{(hasUnsavedCopy || hasUnsavedImages) && <p className="folio-meta text-folio-text-secondary">Save your draft before completing another step.</p>}</div>}
           <p className="folio-meta text-folio-text-secondary">Design: {candidate.draft.credits.designer}<br />Photography: {candidate.draft.credits.photographer || 'Credit needs confirmation'}</p>
         </div>
       </div>
       <aside aria-label="Story review" className="order-first min-w-0 space-y-6 lg:order-none lg:col-span-2">
-        {!readOnly && blocker ? <form onSubmit={event => { event.preventDefault(); if (!hasUnsavedCopy) void save({ action: 'answer', blockerId: blocker.id, answer }); }} className="space-y-4 border-t-2 border-[var(--folio-gold)] bg-surface-ground p-5">
+        {!readOnly && blocker ? <form onSubmit={event => { event.preventDefault(); if (!hasUnsavedCopy && !hasUnsavedImages) void save({ action: 'answer', blockerId: blocker.id, answer }); }} className="space-y-4 border-t-2 border-[var(--folio-gold)] bg-surface-ground p-5">
           <div className="space-y-2"><p className="folio-meta text-folio-text-secondary">{blockers.length === 1 ? 'One step to review' : `${blockers.length} steps to review`}</p><h3 className="folio-h3">{blocker.kind === 'credit' ? 'Complete the credit' : blocker.kind === 'visual' ? 'Review the imagery' : 'A detail only you can add'}</h3><p id="candidate-question" className="folio-body">{blocker.question}</p></div>
           {blocker.options && <div className="flex flex-wrap gap-2">{blocker.options.map(option => <button type="button" key={option} disabled={locked} aria-pressed={answer === option} className={answer === option ? primaryButton : button} onClick={() => setAnswer(option)}>{candidate.visuals.find(image => image.id === option) ? `Photo ${candidate.visuals.findIndex(image => image.id === option) + 1}` : option}</button>)}</div>}
           {!blocker.options && <textarea id="candidate-answer" aria-labelledby="candidate-question" className={field} rows={4} disabled={locked} value={answer} onChange={event => setAnswer(event.target.value)} maxLength={2200} required />}
-          <button className={primaryButton} type="submit" disabled={locked || hasUnsavedCopy || !answer.trim()}>Save and continue</button>
+          <button className={primaryButton} type="submit" disabled={locked || hasUnsavedCopy || hasUnsavedImages || !answer.trim()}>Save and continue</button>
           <p className="folio-meta text-folio-text-secondary">Your saved answer updates this story. Review the returned draft before sharing.</p>
         </form> : <div className="space-y-3 border-t border-folio-border-subtle pt-4"><h3 className="folio-h3">{readOnly ? 'Saved story' : readinessLabel(candidate)}</h3><p className="folio-body text-folio-text-secondary">{readOnly ? 'This saved version remains available to read. Continue from a current editable draft to make changes or prepare another download.' : candidate.readiness === 'ready' ? 'Review the photographs, wording, and credits before downloading your post.' : 'The story needs more source material before it can be shared.'}</p>{!readOnly && candidate.readiness !== 'ready' && candidate.reasons.map(reason => <p key={reason} className="folio-meta text-folio-text-secondary">{reason}</p>)}</div>}
         {!!candidate.evidence.length && <details className="border-t border-folio-border-subtle pt-4"><summary className="cursor-pointer folio-ui focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--folio-gold)]">From your project</summary><div className="mt-4 space-y-4">{candidate.evidence.map(evidence => <blockquote key={evidence.id} className="space-y-1 border-l border-folio-border-subtle pl-3 folio-body">{evidence.text}<span className="block folio-meta text-folio-text-secondary">{evidence.tier === 'direct' ? 'Designer source' : evidence.tier === 'observed' ? 'Observed in source' : 'Needs confirmation'}</span></blockquote>)}</div></details>}

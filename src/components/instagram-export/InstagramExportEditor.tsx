@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { SlidePreview } from './SlidePreview';
 import { SlideThumbnails } from './SlideThumbnails';
 import { FormatTab } from './FormatTab';
@@ -21,6 +22,7 @@ export interface SlideData {
 
 interface Props {
   studioScope?: 'all' | 'project';
+  initialPreview?: { config: any; headline?: string | null; caption?: string | null; bioText?: string | null } | null;
   initialExport?: { id: string; updatedAt?: string; config: any; headline?: string | null; bioText?: string | null; caption?: string | null } | null;
   project: {
     id: string;
@@ -62,8 +64,9 @@ interface Props {
 
 export type TabType = 'format' | 'headline' | 'designer' | 'caption';
 
-export function InstagramExportEditor({ project, designer, images, rooms, initialExport, studioScope = 'project' }: Props) {
-  const saved = initialExport?.config || {};
+export function InstagramExportEditor({ project, designer, images, rooms, initialExport, initialPreview, studioScope = 'project' }: Props) {
+  const initial = initialExport || initialPreview;
+  const saved = initial?.config || {};
   const [activeTab, setActiveTab] = useState<TabType>('caption');
   const [activeSlideIndex, setActiveSlideIndex] = useState(0);
 
@@ -74,19 +77,19 @@ export function InstagramExportEditor({ project, designer, images, rooms, initia
   const [slideCount, setSlideCount] = useState<2 | 3 | 4 | 5>([2, 3, 4, 5].includes(saved.slideCount) ? (saved.slideCount === 2 && saved.bioEnabled !== false ? 3 : saved.slideCount) : 5);
 
   // Headline state
-  const [quoteOptions, setQuoteOptions] = useState<string[]>(Array.isArray(saved.headlineOptions) ? saved.headlineOptions : initialExport?.headline ? [initialExport.headline] : []);
-  const [selectedHeadline, setSelectedHeadline] = useState(initialExport?.headline ?? saved.headline ?? '');
+  const [quoteOptions, setQuoteOptions] = useState<string[]>(Array.isArray(saved.headlineOptions) ? saved.headlineOptions : initial?.headline ? [initial.headline] : []);
+  const [selectedHeadline, setSelectedHeadline] = useState(initial?.headline ?? saved.headline ?? '');
   const [quotesLoading, setQuotesLoading] = useState(false);
 
   // Designer/bio state
   const [bioEnabled, setBioEnabled] = useState(saved.bioEnabled !== false);
   const [bioOptions, setBioOptions] = useState<string[]>([]);
-  const [selectedBio, setSelectedBio] = useState(initialExport?.bioText ?? saved.bioText ?? '');
+  const [selectedBio, setSelectedBio] = useState(initial?.bioText ?? saved.bioText ?? '');
   const [bioLoading, setBioLoading] = useState(false);
 
   // Caption state
-  const [caption, setCaption] = useState(initialExport?.caption ?? '');
-  const [captionOptions, setCaptionOptions] = useState<string[]>(Array.isArray(saved.captionOptions) ? saved.captionOptions : initialExport?.caption ? [initialExport.caption] : []);
+  const [caption, setCaption] = useState(initial?.caption ?? '');
+  const [captionOptions, setCaptionOptions] = useState<string[]>(Array.isArray(saved.captionOptions) ? saved.captionOptions : initial?.caption ? [initial.caption] : []);
   const [captionLoading, setCaptionLoading] = useState(false);
 
   // Room selection
@@ -100,6 +103,55 @@ export function InstagramExportEditor({ project, designer, images, rooms, initia
   const [selectedImageUrls, setSelectedImageUrls] = useState<string[]>(
     Array.isArray(saved.selectedImageUrls) ? saved.selectedImageUrls.filter((url: unknown): url is string => typeof url === 'string') : images.slice(0, 5).map((img) => img.url)
   );
+
+  const router = useRouter();
+  const exportRef = useRef<{ saveDraft: () => Promise<boolean> }>(null);
+  const [busy, setBusy] = useState(false);
+  const [exitHref, setExitHref] = useState<string | null>(null);
+  const [exitError, setExitError] = useState('');
+  const dialogRef = useRef<HTMLDialogElement>(null);
+  const snapshot = JSON.stringify({ aspectRatio, watermarkStyle, headlinePosition, slideCount, selectedHeadline, bioEnabled, selectedBio, caption, selectedRoom, selectedImageUrls });
+  const [baseline, setBaseline] = useState(snapshot);
+  const dirty = snapshot !== baseline;
+  const leaving = useRef(false);
+  const historyExit = useRef(false);
+  function leave(href: string) {
+    leaving.current = true;
+    setExitHref(null);
+    if (historyExit.current) { historyExit.current = false; window.history.back(); }
+    else router.push(href);
+  }
+  useEffect(() => {
+    const currentUrl = window.location.href;
+    const currentHistoryState = window.history.state;
+    const popState = (event: PopStateEvent) => {
+      if ((!dirty && !busy) || leaving.current) return;
+      const destination = window.location.href;
+      event.stopImmediatePropagation();
+      window.history.pushState(currentHistoryState, '', currentUrl);
+      historyExit.current = true;
+      setExitError('');
+      setExitHref(destination);
+    };
+    const beforeUnload = (event: BeforeUnloadEvent) => {
+      if ((dirty || busy) && !leaving.current) { event.preventDefault(); event.returnValue = ''; }
+    };
+    const intercept = (event: MouseEvent) => {
+      if ((!dirty && !busy) || event.defaultPrevented || event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+      const link = (event.target as Element).closest('a[href]') as HTMLAnchorElement | null;
+      if (!link || link.download || (link.target && link.target !== '_self') || link.href === window.location.href || !/^https?:/.test(link.href)) return;
+      event.preventDefault(); event.stopPropagation();
+      if (!busy) { historyExit.current = false; setExitError(''); setExitHref(link.href); }
+    };
+    window.addEventListener('popstate', popState, true);
+    window.addEventListener('beforeunload', beforeUnload);
+    document.addEventListener('click', intercept, true);
+    return () => { window.removeEventListener('popstate', popState, true); window.removeEventListener('beforeunload', beforeUnload); document.removeEventListener('click', intercept, true); };
+  }, [dirty, busy]);
+  useEffect(() => {
+    if (exitHref) dialogRef.current?.showModal();
+    else dialogRef.current?.close();
+  }, [exitHref]);
 
   // Build slide sequence
   const slides: SlideData[] = (() => {
@@ -238,12 +290,12 @@ export function InstagramExportEditor({ project, designer, images, rooms, initia
 
   const initialGeneration = useRef(false);
   useEffect(() => {
-    if (!initialExport && !initialGeneration.current) {
+    if (!initial && !initialGeneration.current) {
       initialGeneration.current = true;
       void generateQuotes();
       void generateCaption();
     }
-  }, [initialExport, generateQuotes, generateCaption]);
+  }, [initial, generateQuotes, generateCaption]);
   useEffect(() => () => { headlineRequest.current++; captionRequest.current++; }, []);
 
   // Tab auto-navigation: switch to relevant slide when tab changes
@@ -311,6 +363,9 @@ export function InstagramExportEditor({ project, designer, images, rooms, initia
 
           <Link href={`/designer/projects/${project.id}`} style={{ color: '#8B7B68', fontSize: 'var(--type-meta)' }}>View project</Link>
           <ExportButton
+            ref={exportRef}
+            onBusyChange={setBusy}
+            onSaved={() => setBaseline(snapshot)}
             initialExport={initialExport}
             projectId={project.id}
             config={{
@@ -333,7 +388,7 @@ export function InstagramExportEditor({ project, designer, images, rooms, initia
       </header>
 
       {/* Room selector */}
-      {!initialExport && rooms.length > 1 && (
+      {!initial && rooms.length > 1 && (
         <div style={{ borderBottom: '1px solid #E8E0D8', background: '#FAF7F4' }}>
           <div style={{ maxWidth: '1280px', margin: '0 auto', display: 'flex', flexWrap: 'wrap', gap: '8px', padding: '12px 16px' }}>
             <button
@@ -376,7 +431,8 @@ export function InstagramExportEditor({ project, designer, images, rooms, initia
       )}
 
       {/* Main layout */}
-      <div style={{
+      <fieldset disabled={busy} style={{
+        border: 0,
         maxWidth: '900px',
         margin: '0 auto',
         display: 'flex',
@@ -515,7 +571,17 @@ export function InstagramExportEditor({ project, designer, images, rooms, initia
             )}
           </div>
         </div>
-      </div>
+      </fieldset>
+      <dialog ref={dialogRef} aria-labelledby="carousel-exit-title" onCancel={event => { event.preventDefault(); if (!busy) setExitHref(null); }} className="max-w-lg rounded-xl border border-folio-border-subtle bg-surface-canvas p-6 text-folio-text-primary backdrop:bg-black/30">
+        <h2 id="carousel-exit-title" className="folio-h3">Save your changes?</h2>
+        <p className="folio-body mt-2">Save these changes as a draft, or leave without saving them.</p>
+        {exitError && <p role="alert" className="folio-body mt-2">{exitError}</p>}
+        <div className="mt-6 flex flex-wrap gap-4">
+          <button disabled={busy} className="folio-ui underline" onClick={async () => { setExitError(''); if (exitHref && await exportRef.current?.saveDraft()) leave(exitHref); else setExitError('Your changes were not saved. Keep editing or try saving again.'); }}>Save draft and exit</button>
+          <button disabled={busy} className="folio-ui underline" onClick={() => { if (exitHref) leave(exitHref); }}>Discard changes</button>
+          <button disabled={busy} className="folio-ui underline" onClick={() => setExitHref(null)}>Keep editing</button>
+        </div>
+      </dialog>
     </div>
   );
 }

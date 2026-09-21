@@ -9,8 +9,8 @@ let calls = [], data = { candidates: [candidate], developing: [], dismissed: [] 
 function load(file, mocks = {}) {
   const exports = {};
   vm.runInNewContext(ts.transpileModule(fs.readFileSync(file, 'utf8'), { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2020, jsx: ts.JsxEmit.ReactJSX } }).outputText, {
-    exports, URLSearchParams, window: { addEventListener: (...args) => global.window?.addEventListener(...args), removeEventListener: (...args) => global.window?.removeEventListener(...args) },
-    URL: { createObjectURL: () => 'blob:test', revokeObjectURL() {} }, document: { createElement: () => ({ click() {}, remove() {} }), body: { appendChild() {} } },
+    exports, URLSearchParams, window: { get location() { return global.window?.location; }, get history() { return global.window?.history; }, get sessionStorage() { return global.window?.sessionStorage; }, addEventListener: (...args) => global.window?.addEventListener(...args), removeEventListener: (...args) => global.window?.removeEventListener(...args) },
+    URL: { createObjectURL: () => 'blob:test', revokeObjectURL() {} }, document: { addEventListener: (...args) => global.document?.addEventListener(...args), removeEventListener: (...args) => global.document?.removeEventListener(...args), createElement: () => ({ click() {}, remove() {} }), body: { appendChild() {} } },
     require: id => id in mocks ? mocks[id] : require(id), console, crypto: require('node:crypto').webcrypto,
     fetch: async (url, options) => { calls.push({ url, body: options?.body && JSON.parse(options.body) }); return { ok: true, json: async () => url.endsWith('/export') ? { images: [{ name: 'slide.jpg', dataUrl: 'data:image/jpeg;base64,eA==' }], caption: 'Caption', filename: 'post.zip' } : options?.method === 'PATCH' ? { candidate: { ...candidate, readiness: 'ready', version: 2, blockers: [{ ...candidate.blockers[0], answer: 'Verified' }] } } : data }; },
   });
@@ -18,6 +18,7 @@ function load(file, mocks = {}) {
 }
 const configurator = load('src/components/publishing-studio/CandidateConfigurator.tsx', { jszip: { default: class Zip { file() {} async generateAsync() { return 'blob'; } } } });
 const workspace = load('src/components/publishing-studio/StudioWorkspace.tsx');
+const discovery=load('src/components/publishing-studio/StudioDiscovery.tsx',{'./StudioWorkspace':workspace,'next/link':{default:({children,...props})=>React.createElement('a',props,children)}});
 const presentation = load('src/lib/publishing-studio/readiness/presentation.ts');
 const { ReadinessStudio } = load('src/components/publishing-studio/ReadinessStudio.tsx', {
   'next/link': { default: ({ children, ...props }) => React.createElement('a', props, children) },
@@ -25,7 +26,7 @@ const { ReadinessStudio } = load('src/components/publishing-studio/ReadinessStud
   'next/navigation': { useRouter: () => ({ replace: url => navigation.push(url) }), useSearchParams: () => params },
   '@/lib/publishing-studio/readiness/types': { DISMISSAL_REASONS: [] },
   '@/lib/publishing-studio/readiness/presentation': presentation,
-  './StudioWorkspace': workspace, './CandidateConfigurator': configurator,
+  './StudioDiscovery':discovery, './StudioSavedActivities':{StudioSavedActivities:()=>null}, './StudioWorkspace': workspace, './CandidateConfigurator': configurator,
 });
 const make = (index, readiness = 'ready', blockers = []) => ({ ...candidate, id: `candidate-${index}`, readiness, blockers, thesis: `Story thesis ${index}`,
   draft: { ...candidate.draft, headline: `Prepared story ${index}`, caption: `Prepared caption ${index}` },
@@ -54,9 +55,11 @@ async function interactions() {
     data = { candidates: Array.from({ length: count }, (_, index) => make(index)), developing: [], dismissed: [] };
     params = new URLSearchParams();
     await mount();
-    assert.equal(document.querySelectorAll('[aria-label="Recommended stories"] > article').length, Math.min(count, 3), `${count} qualified candidates: three is a ceiling, not a quota`);
+    assert.equal(document.querySelectorAll('[aria-label="Recommended stories"] > article').length, Math.min(count, 2)+1, `${count} qualified candidates: a personal activity is always visible alongside prepared work`);
     if (!count) assert.match(document.body.textContent, /No stories ready for review yet/);
-    if (count > 3) { await act(async () => button('More prepared stories (2)').click()); assert.equal(buttons().filter(node => node.textContent === 'Review post').length, 5); }
+    assert.equal(buttons().filter(node=>node.textContent==='Review post').length,count,'All qualified stories visible without expansion');
+    assert.equal(document.querySelectorAll('select').length,0);
+    assert.ok([...document.querySelectorAll('a')].some(a=>a.getAttribute('href')==='/designer/studio/activity?subject=designer&format=twenty_questions'));
     await unmount();
   }
   data = { candidates: [make(0), make(1, 'quick', [{ id: 'q1', kind: 'truth', question: 'Which detail changed?' }]), make(2, 'quick', [{ id: 'q2', kind: 'credit', question: 'Photo credit?' }, { id: 'q3', kind: 'voice', question: 'Your wording?' }])], developing: [], dismissed: [] };
@@ -66,7 +69,7 @@ async function interactions() {
   await act(async () => button('Answer one question').click());
   assert.equal(document.getElementById('candidate-title').textContent, 'Story thesis 1', 'Exact candidate opens in real configurator');
   assert.equal(document.getElementById('candidate-question').textContent, 'Which detail changed?');
-  assert.equal(calls.at(-1).body.version, 1); assert.match(calls.at(-1).url, /candidate-1\/events$/);
+  assert.ok(!calls.some(call => call.body?.kind === 'opened'), 'Opening a story writes no activity or draft');
   assert.equal(document.querySelector('[role="tablist"]'), null, 'Workspace tabs cannot bypass an active draft guard');
   params = new URLSearchParams(navigation.at(-1).split('?')[1]);
   await act(async () => root.render(React.createElement(ReadinessStudio)));
@@ -81,7 +84,7 @@ async function interactions() {
   assert.match(document.body.textContent, /An earlier dismissed story/); assert.ok(button('Restore'), 'Persisted dismissal offers restore after fresh load');
   assert.match(document.body.textContent, /Prepared caption 0/, 'Prepared copy is accessible before opening a story');
   assert.ok(document.querySelector('[aria-label="Across your portfolio"]'));
-  await act(async () => button('More prepared stories (1)').click());
+  assert.ok(document.querySelector('[aria-label="More stories to tell"]'), 'Additional stories are exposed without a disclosure');
   assert.equal([...document.querySelectorAll('h3')].filter(node => node.textContent === 'Prepared story 3').length, 1, 'Portfolio candidate is not duplicated in recommendations');
   const tabs = document.querySelectorAll('[role="tab"]');
   await act(async () => tabs[0].dispatchEvent(new dom.window.KeyboardEvent('keydown', { key: 'ArrowRight', bubbles: true })));

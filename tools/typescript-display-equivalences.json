@@ -580,6 +580,422 @@
       "after": "Property 'post' does not exist on type '{ id: string; title: string; views: number; createdAt: Date; updatedAt: Date; status: string; description: string; city: string; isPublic: boolean; designerId: string; category: string; ... 20 more ...; targetInstallDate: Date; }'.",
       "count": 1,
       "reason": "Two approved Project scalar fields change only the truncated property count; source unchanged."
+    },
+    {
+      "file": "src/app/actions/projects.ts",
+      "code": 2345,
+      "before": "Argument of type '(project: ProjectWithImages) => { id: string; images: { url: string; precomputedSignals: any; }[]; productTags: { product: { category: string; materials: any[]; }; }[]; rooms: { type: string; materials: any[]; }[]; description: string; }' is not assignable to parameter of type '(value: { id: string; title: string; views: number; createdAt: Date; updatedAt: Date; status: string; description: string; city: string; isPublic: boolean; designerId: string; category: string; ... 18 more ...; targetInstallDate: Date; }, index: number, array: { ...; }[]) => { ...; }'. Types of parameters 'project' and 'value' are incompatible. Type '{ id: string; title: string; views: number; createdAt: Date; updatedAt: Date; status: string; description: string; city: string; isPublic: boolean; designerId: string; category: string; ... 18 more ...; targetInstallDate: Date; }' is missing the following properties from type 'ProjectWithImages': images, rooms",
+      "after": "Argument of type '(project: ProjectWithImages) => { id: string; images: { url: string; precomputedSignals: any; }[]; productTags: { product: { category: string; materials: any[]; }; }[]; rooms: { type: string; materials: any[]; }[]; description: string; }' is not assignable to parameter of type '(value: { id: string; title: string; views: number; createdAt: Date; updatedAt: Date; ownerId: string; status: string; publishedAt: Date; description: string; city: string; isPublic: boolean; ... 20 more ...; targetInstallDate: Date; }, index: number, array: { ...; }[]) => { ...; }'. Types of parameters 'project' and 'value' are incompatible. Type '{ id: string; title: string; views: number; createdAt: Date; updatedAt: Date; ownerId: string; status: string; publishedAt: Date; description: string; city: string; isPublic: boolean; ... 20 more ...; targetInstallDate: Date; }' is missing the following properties from type 'ProjectWithImages': images, rooms",
+      "count": 1,
+      "reason": "Exact existing diagnostic: identical source span/hash and full types after sorting only unordered property signatures."
+    },
+    {
+      "file": "src/app/api/action-items/[id]/route.ts",
+      "code": 2339,
+      "before": "Property 'room' does not exist on type '{ id: string; title: string; createdAt: Date; updatedAt: Date; status: ActionItemStatus; description: string; createdById: string; projectId: string; roomId: string; ... 5 more ...; dueDate: Date; }'.",
+      "after": "Property 'room' does not exist on type '{ id: string; title: string; createdAt: Date; updatedAt: Date; status: ActionItemStatus; projectId: string; roomId: string; description: string; createdById: string; ... 5 more ...; dueDate: Date; }'.",
+      "count": 1,
+      "reason": "Exact existing diagnostic: identical source span/hash and full types after sorting only unordered property signatures."
+    },
+    {
+      "file": "src/app/api/action-items/[id]/route.ts",
+      "code": 2551,
+      "before": "Property 'productTag' does not exist on type '{ id: string; title: string; createdAt: Date; updatedAt: Date; status: ActionItemStatus; description: string; createdById: string; projectId: string; roomId: string; ... 5 more ...; dueDate: Date; }'. Did you mean 'productTagId'?",
+      "after": "Property 'productTag' does not exist on type '{ id: string; title: string; createdAt: Date; updatedAt: Date; status: ActionItemStatus; projectId: string; roomId: string; description: string; createdById: string; ... 5 more ...; dueDate: Date; }'. Did you mean 'productTagId'?",
+      "count": 1,
+      "reason": "Exact existing diagnostic: identical source span/hash and full types after sorting only unordered property signatures."
+    },
+    {
+      "file": "src/app/api/events/[id]/ai/analytics/route.ts",
+      "code": 2551,
+      "before": "Property 'hostProfile' does not exist on type '{ id: string; location: string; title: string; createdAt: Date; updatedAt: Date; description: string; city: string; state: string; country: string; startDate: Date; endDate: Date; ... 32 more ...; hostProfileId: string; }'. Did you mean 'hostProfileId'?",
+      "after": "Property 'hostProfile' does not exist on type '{ id: string; location: string; title: string; createdAt: Date; updatedAt: Date; organizationId: string; description: string; city: string; state: string; country: string; startDate: Date; ... 32 more ...; hostProfileId: string; }'. Did you mean 'hostProfileId'?",
+      "count": 1,
+      "reason": "Exact existing diagnostic: identical source span/hash and full types after sorting only unordered property signatures."
+    },
+    {
+      "file": "src/app/api/events/[id]/ai/recommendations/route.ts",
+      "code": 2551,
+      "before": "Property 'hostProfile' does not exist on type '{ id: string; location: string; title: string; createdAt: Date; updatedAt: Date; description: string; city: string; state: string; country: string; startDate: Date; endDate: Date; ... 32 more ...; hostProfileId: string; }'. Did you mean 'hostProfileId'?",
+      "after": "Property 'hostProfile' does not exist on type '{ id: string; location: string; title: string; createdAt: Date; updatedAt: Date; organizationId: string; description: string; city: string; state: string; country: string; startDate: Date; ... 32 more ...; hostProfileId: string; }'. Did you mean 'hostProfileId'?",
+      "count": 1,
+      "reason": "Exact existing diagnostic: identical source span/hash and full types after sorting only unordered property signatures."
+    },
+    {
+      "file": "src/app/api/events/[id]/ai/recommendations/route.ts",
+      "code": 2339,
+      "before": "Property 'engagementMetrics' does not exist on type '{ id: string; location: string; title: string; createdAt: Date; updatedAt: Date; description: string; city: string; state: string; country: string; startDate: Date; endDate: Date; ... 32 more ...; hostProfileId: string; }'.",
+      "after": "Property 'engagementMetrics' does not exist on type '{ id: string; location: string; title: string; createdAt: Date; updatedAt: Date; organizationId: string; description: string; city: string; state: string; country: string; startDate: Date; ... 32 more ...; hostProfileId: string; }'.",
+      "count": 1,
+      "reason": "Exact existing diagnostic: identical source span/hash and full types after sorting only unordered property signatures."
+    },
+    {
+      "file": "src/app/api/events/[id]/invites/route.ts",
+      "code": 2551,
+      "before": "Property 'hostProfile' does not exist on type '{ id: string; location: string; title: string; createdAt: Date; updatedAt: Date; description: string; city: string; state: string; country: string; startDate: Date; endDate: Date; ... 32 more ...; hostProfileId: string; }'. Did you mean 'hostProfileId'?",
+      "after": "Property 'hostProfile' does not exist on type '{ id: string; location: string; title: string; createdAt: Date; updatedAt: Date; organizationId: string; description: string; city: string; state: string; country: string; startDate: Date; ... 32 more ...; hostProfileId: string; }'. Did you mean 'hostProfileId'?",
+      "count": 3,
+      "reason": "Exact existing diagnostic: identical source span/hash and full types after sorting only unordered property signatures."
+    },
+    {
+      "file": "src/app/api/export/spec-html/route.ts",
+      "code": 2551,
+      "before": "Property 'owner' does not exist on type '{ id: string; title: string; views: number; createdAt: Date; updatedAt: Date; status: string; description: string; city: string; isPublic: boolean; designerId: string; category: string; ... 18 more ...; targetInstallDate: Date; }'. Did you mean 'ownerId'?",
+      "after": "Property 'owner' does not exist on type '{ id: string; title: string; views: number; createdAt: Date; updatedAt: Date; ownerId: string; status: string; publishedAt: Date; description: string; city: string; isPublic: boolean; ... 20 more ...; targetInstallDate: Date; }'. Did you mean 'ownerId'?",
+      "count": 1,
+      "reason": "Exact existing diagnostic: identical source span/hash and full types after sorting only unordered property signatures."
+    },
+    {
+      "file": "src/app/api/export/spec-html/route.ts",
+      "code": 2339,
+      "before": "Property 'rooms' does not exist on type '{ id: string; title: string; views: number; createdAt: Date; updatedAt: Date; status: string; description: string; city: string; isPublic: boolean; designerId: string; category: string; ... 18 more ...; targetInstallDate: Date; }'.",
+      "after": "Property 'rooms' does not exist on type '{ id: string; title: string; views: number; createdAt: Date; updatedAt: Date; ownerId: string; status: string; publishedAt: Date; description: string; city: string; isPublic: boolean; ... 20 more ...; targetInstallDate: Date; }'.",
+      "count": 1,
+      "reason": "Exact existing diagnostic: identical source span/hash and full types after sorting only unordered property signatures."
+    },
+    {
+      "file": "src/app/api/export/spec-html/route.ts",
+      "code": 2339,
+      "before": "Property 'selections' does not exist on type '{ id: string; title: string; views: number; createdAt: Date; updatedAt: Date; status: string; description: string; city: string; isPublic: boolean; designerId: string; category: string; ... 18 more ...; targetInstallDate: Date; }'.",
+      "after": "Property 'selections' does not exist on type '{ id: string; title: string; views: number; createdAt: Date; updatedAt: Date; ownerId: string; status: string; publishedAt: Date; description: string; city: string; isPublic: boolean; ... 20 more ...; targetInstallDate: Date; }'.",
+      "count": 1,
+      "reason": "Exact existing diagnostic: identical source span/hash and full types after sorting only unordered property signatures."
+    },
+    {
+      "file": "src/app/api/festivals/[festivalId]/events/route.ts",
+      "code": 2339,
+      "before": "Property 'name' does not exist on type '{ id: string; location: string; title: string; createdAt: Date; updatedAt: Date; description: string; city: string; state: string; country: string; startDate: Date; endDate: Date; ... 32 more ...; hostProfileId: string; }'.",
+      "after": "Property 'name' does not exist on type '{ id: string; location: string; title: string; createdAt: Date; updatedAt: Date; organizationId: string; description: string; city: string; state: string; country: string; startDate: Date; ... 32 more ...; hostProfileId: string; }'.",
+      "count": 1,
+      "reason": "Exact existing diagnostic: identical source span/hash and full types after sorting only unordered property signatures."
+    },
+    {
+      "file": "src/app/api/festivals/[festivalId]/events/route.ts",
+      "code": 2339,
+      "before": "Property '_count' does not exist on type '{ id: string; location: string; title: string; createdAt: Date; updatedAt: Date; description: string; city: string; state: string; country: string; startDate: Date; endDate: Date; ... 32 more ...; hostProfileId: string; }'.",
+      "after": "Property '_count' does not exist on type '{ id: string; location: string; title: string; createdAt: Date; updatedAt: Date; organizationId: string; description: string; city: string; state: string; country: string; startDate: Date; ... 32 more ...; hostProfileId: string; }'.",
+      "count": 1,
+      "reason": "Exact existing diagnostic: identical source span/hash and full types after sorting only unordered property signatures."
+    },
+    {
+      "file": "src/app/api/festivals/[festivalId]/events/route.ts",
+      "code": 2551,
+      "before": "Property 'createdBy' does not exist on type '{ id: string; location: string; title: string; createdAt: Date; updatedAt: Date; description: string; city: string; state: string; country: string; startDate: Date; endDate: Date; ... 32 more ...; hostProfileId: string; }'. Did you mean 'createdById'?",
+      "after": "Property 'createdBy' does not exist on type '{ id: string; location: string; title: string; createdAt: Date; updatedAt: Date; organizationId: string; description: string; city: string; state: string; country: string; startDate: Date; ... 32 more ...; hostProfileId: string; }'. Did you mean 'createdById'?",
+      "count": 1,
+      "reason": "Exact existing diagnostic: identical source span/hash and full types after sorting only unordered property signatures."
+    },
+    {
+      "file": "src/app/api/projects/[id]/export/route.ts",
+      "code": 2339,
+      "before": "Property 'name' does not exist on type '{ designerOrg: { name: string; id: string; location: string; phone: string; specialties: string[]; website: string; createdAt: Date; updatedAt: Date; interviewProfileExtractedAt: Date; ... 28 more ...; dormancyThresholdDays: number; }; owner: { ...; }; vendorOrg: { ...; }; rooms: ({ ...; } & { ...; })[]; selections:...'.",
+      "after": "Property 'name' does not exist on type '{ owner: { name: string; id: string; email: string; }; designerOrg: { name: string; id: string; location: string; phone: string; specialties: string[]; website: string; createdAt: Date; updatedAt: Date; ... 29 more ...; dormancyThresholdDays: number; }; vendorOrg: { ...; }; rooms: ({ ...; } & { ...; })[]; selections...'.",
+      "count": 3,
+      "reason": "Exact existing diagnostic: identical source span/hash and full types after sorting only unordered property signatures."
+    },
+    {
+      "file": "src/app/api/projects/[id]/force-delete/route.ts",
+      "code": 2339,
+      "before": "Property 'archivedAt' does not exist on type '{ id: string; title: string; views: number; createdAt: Date; updatedAt: Date; status: string; description: string; city: string; isPublic: boolean; designerId: string; category: string; ... 18 more ...; targetInstallDate: Date; }'.",
+      "after": "Property 'archivedAt' does not exist on type '{ id: string; title: string; views: number; createdAt: Date; updatedAt: Date; ownerId: string; status: string; publishedAt: Date; description: string; city: string; isPublic: boolean; ... 20 more ...; targetInstallDate: Date; }'.",
+      "count": 1,
+      "reason": "Exact existing diagnostic: identical source span/hash and full types after sorting only unordered property signatures."
+    },
+    {
+      "file": "src/app/api/projects/[id]/repair-skeletons/route.ts",
+      "code": 2339,
+      "before": "Property 'bbox' does not exist on type '{ id: string; createdAt: Date; updatedAt: Date; status: SkeletonItemStatus; description: string; imageUrl: string; projectId: string; roomId: string; searchQuery: string; ... 8 more ...; resultingSelectionId: string; }'.",
+      "after": "Property 'bbox' does not exist on type '{ id: string; createdAt: Date; updatedAt: Date; status: SkeletonItemStatus; projectId: string; roomId: string; description: string; imageUrl: string; searchQuery: string; ... 8 more ...; resultingSelectionId: string; }'.",
+      "count": 1,
+      "reason": "Exact existing diagnostic: identical source span/hash and full types after sorting only unordered property signatures."
+    },
+    {
+      "file": "src/app/api/projects/[id]/supplemental-quotes/route.ts",
+      "code": 2339,
+      "before": "Property 'posts' does not exist on type '{ id: string; title: string; views: number; createdAt: Date; updatedAt: Date; status: string; description: string; city: string; isPublic: boolean; designerId: string; category: string; ... 18 more ...; targetInstallDate: Date; }'.",
+      "after": "Property 'posts' does not exist on type '{ id: string; title: string; views: number; createdAt: Date; updatedAt: Date; ownerId: string; status: string; publishedAt: Date; description: string; city: string; isPublic: boolean; ... 20 more ...; targetInstallDate: Date; }'.",
+      "count": 2,
+      "reason": "Exact existing diagnostic: identical source span/hash and full types after sorting only unordered property signatures."
+    },
+    {
+      "file": "src/app/api/projects/[id]/supplemental-quotes/route.ts",
+      "code": 2339,
+      "before": "Property 'userId' does not exist on type '{ id: string; title: string; views: number; createdAt: Date; updatedAt: Date; status: string; description: string; city: string; isPublic: boolean; designerId: string; category: string; ... 18 more ...; targetInstallDate: Date; }'.",
+      "after": "Property 'userId' does not exist on type '{ id: string; title: string; views: number; createdAt: Date; updatedAt: Date; ownerId: string; status: string; publishedAt: Date; description: string; city: string; isPublic: boolean; ... 20 more ...; targetInstallDate: Date; }'.",
+      "count": 1,
+      "reason": "Exact existing diagnostic: identical source span/hash and full types after sorting only unordered property signatures."
+    },
+    {
+      "file": "src/app/api/user/export/route.ts",
+      "code": 2339,
+      "before": "Property 'createdAt' does not exist on type '{ organization: { name: string; id: string; type: OrgType; }; } & { id: string; role: OrgUserRole; userId: string; organizationId: string; isActive: boolean; joinedAt: Date; workEmail: string; showOnProfile: boolean; }'.",
+      "after": "Property 'createdAt' does not exist on type '{ organization: { name: string; id: string; type: OrgType; }; } & { id: string; role: OrgUserRole; organizationId: string; userId: string; isActive: boolean; joinedAt: Date; workEmail: string; showOnProfile: boolean; }'.",
+      "count": 1,
+      "reason": "Exact existing diagnostic: identical source span/hash and full types after sorting only unordered property signatures."
+    },
+    {
+      "file": "src/app/api/user/organizations/route.ts",
+      "code": 2551,
+      "before": "Property 'organization' does not exist on type '{ id: string; role: OrgUserRole; userId: string; organizationId: string; isActive: boolean; joinedAt: Date; workEmail: string; showOnProfile: boolean; }'. Did you mean 'organizationId'?",
+      "after": "Property 'organization' does not exist on type '{ id: string; role: OrgUserRole; organizationId: string; userId: string; isActive: boolean; joinedAt: Date; workEmail: string; showOnProfile: boolean; }'. Did you mean 'organizationId'?",
+      "count": 4,
+      "reason": "Exact existing diagnostic: identical source span/hash and full types after sorting only unordered property signatures."
+    },
+    {
+      "file": "src/app/designer/[username]/page.tsx",
+      "code": 2339,
+      "before": "Property 'images' does not exist on type '{ id: string; title: string; views: number; createdAt: Date; updatedAt: Date; status: string; description: string; city: string; isPublic: boolean; designerId: string; category: string; ... 18 more ...; targetInstallDate: Date; }'.",
+      "after": "Property 'images' does not exist on type '{ id: string; title: string; views: number; createdAt: Date; updatedAt: Date; ownerId: string; status: string; publishedAt: Date; description: string; city: string; isPublic: boolean; ... 20 more ...; targetInstallDate: Date; }'.",
+      "count": 1,
+      "reason": "Exact existing diagnostic: identical source span/hash and full types after sorting only unordered property signatures."
+    },
+    {
+      "file": "src/app/designer/[username]/page.tsx",
+      "code": 2339,
+      "before": "Property 'rooms' does not exist on type '{ id: string; title: string; views: number; createdAt: Date; updatedAt: Date; status: string; description: string; city: string; isPublic: boolean; designerId: string; category: string; ... 18 more ...; targetInstallDate: Date; }'.",
+      "after": "Property 'rooms' does not exist on type '{ id: string; title: string; views: number; createdAt: Date; updatedAt: Date; ownerId: string; status: string; publishedAt: Date; description: string; city: string; isPublic: boolean; ... 20 more ...; targetInstallDate: Date; }'.",
+      "count": 1,
+      "reason": "Exact existing diagnostic: identical source span/hash and full types after sorting only unordered property signatures."
+    },
+    {
+      "file": "src/app/designer/profile/page.tsx",
+      "code": 2339,
+      "before": "Property 'images' does not exist on type '{ id: string; title: string; views: number; createdAt: Date; updatedAt: Date; status: string; description: string; city: string; isPublic: boolean; designerId: string; category: string; ... 18 more ...; targetInstallDate: Date; }'.",
+      "after": "Property 'images' does not exist on type '{ id: string; title: string; views: number; createdAt: Date; updatedAt: Date; ownerId: string; status: string; publishedAt: Date; description: string; city: string; isPublic: boolean; ... 20 more ...; targetInstallDate: Date; }'.",
+      "count": 1,
+      "reason": "Exact existing diagnostic: identical source span/hash and full types after sorting only unordered property signatures."
+    },
+    {
+      "file": "src/app/monograph/[username]/page.tsx",
+      "code": 2339,
+      "before": "Property 'images' does not exist on type '{ id: string; title: string; views: number; createdAt: Date; updatedAt: Date; status: string; description: string; city: string; isPublic: boolean; designerId: string; category: string; ... 18 more ...; targetInstallDate: Date; }'.",
+      "after": "Property 'images' does not exist on type '{ id: string; title: string; views: number; createdAt: Date; updatedAt: Date; ownerId: string; status: string; publishedAt: Date; description: string; city: string; isPublic: boolean; ... 20 more ...; targetInstallDate: Date; }'.",
+      "count": 4,
+      "reason": "Exact existing diagnostic: identical source span/hash and full types after sorting only unordered property signatures."
+    },
+    {
+      "file": "src/app/monograph/[username]/page.tsx",
+      "code": 2322,
+      "before": "Type '{ id: string; title: string; views: number; createdAt: Date; updatedAt: Date; status: string; description: string; city: string; isPublic: boolean; designerId: string; category: string; ... 18 more ...; targetInstallDate: Date; }[]' is not assignable to type 'Project[]'. Property 'images' is missing in type '{ id: string; title: string; views: number; createdAt: Date; updatedAt: Date; status: string; description: string; city: string; isPublic: boolean; designerId: string; category: string; ... 18 more ...; targetInstallDate: Date; }' but required in type 'Project'.",
+      "after": "Type '{ id: string; title: string; views: number; createdAt: Date; updatedAt: Date; ownerId: string; status: string; publishedAt: Date; description: string; city: string; isPublic: boolean; ... 20 more ...; targetInstallDate: Date; }[]' is not assignable to type 'Project[]'. Property 'images' is missing in type '{ id: string; title: string; views: number; createdAt: Date; updatedAt: Date; ownerId: string; status: string; publishedAt: Date; description: string; city: string; isPublic: boolean; ... 20 more ...; targetInstallDate: Date; }' but required in type 'Project'.",
+      "count": 1,
+      "reason": "Exact existing diagnostic: identical source span/hash and full types after sorting only unordered property signatures."
+    },
+    {
+      "file": "src/app/profile/[userId]/page.tsx",
+      "code": 2322,
+      "before": "Type '{ organizationUsers: ({ organization: { teamMembers: ({ linkedUser: { name: string; id: string; profileImage: string; }; } & { name: string; id: string; bio: string; createdAt: Date; updatedAt: Date; ... 4 more ...; displayOrder: number; })[]; } & { ...; }; } & { ...; })[]; profileInterview: { ...; }; } & { ...; }' is not assignable to type '{ id: string; name: string; bio?: string; title?: string; location?: string; website?: string; instagram?: string; linkedin?: string; specialties?: string[]; createdAt?: string | Date; profileInterview?: ProfileInterview; ... 7 more ...; builderYearsInBusiness?: number; }'. The types of 'profileInterview.pullQuotes' are incompatible between these types. Type 'JsonValue' is not assignable to type 'string[]'. Type 'string' is not assignable to type 'string[]'.",
+      "after": "Type '{ profileInterview: { id: string; createdAt: Date; updatedAt: Date; status: ProfileInterviewStatus; userId: string; philosophyStatement: string; shortBio: string; pullQuotes: JsonValue; processDescription: string; answers: JsonValue; generatedBio: string; }; organizationUsers: ({ ...; } & { ...; })[]; } & { ...; }' is not assignable to type '{ id: string; name: string; bio?: string; title?: string; location?: string; website?: string; instagram?: string; linkedin?: string; specialties?: string[]; createdAt?: string | Date; profileInterview?: ProfileInterview; ... 7 more ...; builderYearsInBusiness?: number; }'. The types of 'profileInterview.pullQuotes' are incompatible between these types. Type 'JsonValue' is not assignable to type 'string[]'. Type 'string' is not assignable to type 'string[]'.",
+      "count": 1,
+      "reason": "Exact existing diagnostic: identical source span/hash and full types after sorting only unordered property signatures."
+    },
+    {
+      "file": "src/lib/approvals.ts",
+      "code": 2339,
+      "before": "Property 'roomName' does not exist on type '{ id: string; createdAt: Date; updatedAt: Date; status: SkeletonItemStatus; description: string; imageUrl: string; projectId: string; roomId: string; searchQuery: string; ... 8 more ...; resultingSelectionId: string; }'.",
+      "after": "Property 'roomName' does not exist on type '{ id: string; createdAt: Date; updatedAt: Date; status: SkeletonItemStatus; projectId: string; roomId: string; description: string; imageUrl: string; searchQuery: string; ... 8 more ...; resultingSelectionId: string; }'.",
+      "count": 5,
+      "reason": "Exact existing diagnostic: identical source span/hash and full types after sorting only unordered property signatures."
+    },
+    {
+      "file": "src/lib/approvals.ts",
+      "code": 2339,
+      "before": "Property 'projectImage' does not exist on type '{ id: string; createdAt: Date; updatedAt: Date; status: SkeletonItemStatus; description: string; imageUrl: string; projectId: string; roomId: string; searchQuery: string; ... 8 more ...; resultingSelectionId: string; }'.",
+      "after": "Property 'projectImage' does not exist on type '{ id: string; createdAt: Date; updatedAt: Date; status: SkeletonItemStatus; projectId: string; roomId: string; description: string; imageUrl: string; searchQuery: string; ... 8 more ...; resultingSelectionId: string; }'.",
+      "count": 4,
+      "reason": "Exact existing diagnostic: identical source span/hash and full types after sorting only unordered property signatures."
+    },
+    {
+      "file": "src/lib/events/gating.ts",
+      "code": 2339,
+      "before": "Property 'visibility' does not exist on type '{ id: string; location: string; title: string; createdAt: Date; updatedAt: Date; description: string; city: string; state: string; country: string; startDate: Date; endDate: Date; ... 32 more ...; hostProfileId: string; }'.",
+      "after": "Property 'visibility' does not exist on type '{ id: string; location: string; title: string; createdAt: Date; updatedAt: Date; organizationId: string; description: string; city: string; state: string; country: string; startDate: Date; ... 32 more ...; hostProfileId: string; }'.",
+      "count": 2,
+      "reason": "Exact existing diagnostic: identical source span/hash and full types after sorting only unordered property signatures."
+    },
+    {
+      "file": "src/lib/events/gating.ts",
+      "code": 2551,
+      "before": "Property 'eventType' does not exist on type '{ id: string; location: string; title: string; createdAt: Date; updatedAt: Date; description: string; city: string; state: string; country: string; startDate: Date; endDate: Date; ... 32 more ...; hostProfileId: string; }'. Did you mean 'eventTypes'?",
+      "after": "Property 'eventType' does not exist on type '{ id: string; location: string; title: string; createdAt: Date; updatedAt: Date; organizationId: string; description: string; city: string; state: string; country: string; startDate: Date; ... 32 more ...; hostProfileId: string; }'. Did you mean 'eventTypes'?",
+      "count": 2,
+      "reason": "Exact existing diagnostic: identical source span/hash and full types after sorting only unordered property signatures."
+    },
+    {
+      "file": "src/lib/events/gating.ts",
+      "code": 2551,
+      "before": "Property 'parentFestival' does not exist on type '{ id: string; location: string; title: string; createdAt: Date; updatedAt: Date; description: string; city: string; state: string; country: string; startDate: Date; endDate: Date; ... 32 more ...; hostProfileId: string; }'. Did you mean 'parentFestivalId'?",
+      "after": "Property 'parentFestival' does not exist on type '{ id: string; location: string; title: string; createdAt: Date; updatedAt: Date; organizationId: string; description: string; city: string; state: string; country: string; startDate: Date; ... 32 more ...; hostProfileId: string; }'. Did you mean 'parentFestivalId'?",
+      "count": 3,
+      "reason": "Exact existing diagnostic: identical source span/hash and full types after sorting only unordered property signatures."
+    },
+    {
+      "file": "src/lib/events/inheritance.ts",
+      "code": 2551,
+      "before": "Property 'eventType' does not exist on type '{ id: string; location: string; title: string; createdAt: Date; updatedAt: Date; description: string; city: string; state: string; country: string; startDate: Date; endDate: Date; ... 32 more ...; hostProfileId: string; }'. Did you mean 'eventTypes'?",
+      "after": "Property 'eventType' does not exist on type '{ id: string; location: string; title: string; createdAt: Date; updatedAt: Date; organizationId: string; description: string; city: string; state: string; country: string; startDate: Date; ... 32 more ...; hostProfileId: string; }'. Did you mean 'eventTypes'?",
+      "count": 7,
+      "reason": "Exact existing diagnostic: identical source span/hash and full types after sorting only unordered property signatures."
+    },
+    {
+      "file": "src/lib/events/inheritance.ts",
+      "code": 2551,
+      "before": "Property 'parentFestival' does not exist on type '{ id: string; location: string; title: string; createdAt: Date; updatedAt: Date; description: string; city: string; state: string; country: string; startDate: Date; endDate: Date; ... 32 more ...; hostProfileId: string; }'. Did you mean 'parentFestivalId'?",
+      "after": "Property 'parentFestival' does not exist on type '{ id: string; location: string; title: string; createdAt: Date; updatedAt: Date; organizationId: string; description: string; city: string; state: string; country: string; startDate: Date; ... 32 more ...; hostProfileId: string; }'. Did you mean 'parentFestivalId'?",
+      "count": 2,
+      "reason": "Exact existing diagnostic: identical source span/hash and full types after sorting only unordered property signatures."
+    },
+    {
+      "file": "src/lib/events/ranking.ts",
+      "code": 2339,
+      "before": "Property 'baseScore' does not exist on type '{ id: string; location: string; title: string; createdAt: Date; updatedAt: Date; description: string; city: string; state: string; country: string; startDate: Date; endDate: Date; ... 32 more ...; hostProfileId: string; } & { ...; }'.",
+      "after": "Property 'baseScore' does not exist on type '{ id: string; location: string; title: string; createdAt: Date; updatedAt: Date; organizationId: string; description: string; city: string; state: string; country: string; startDate: Date; ... 32 more ...; hostProfileId: string; } & { ...; }'.",
+      "count": 1,
+      "reason": "Exact existing diagnostic: identical source span/hash and full types after sorting only unordered property signatures."
+    },
+    {
+      "file": "src/lib/events/ranking.ts",
+      "code": 2339,
+      "before": "Property 'weight' does not exist on type '{ id: string; location: string; title: string; createdAt: Date; updatedAt: Date; description: string; city: string; state: string; country: string; startDate: Date; endDate: Date; ... 32 more ...; hostProfileId: string; } & { ...; }'.",
+      "after": "Property 'weight' does not exist on type '{ id: string; location: string; title: string; createdAt: Date; updatedAt: Date; organizationId: string; description: string; city: string; state: string; country: string; startDate: Date; ... 32 more ...; hostProfileId: string; } & { ...; }'.",
+      "count": 2,
+      "reason": "Exact existing diagnostic: identical source span/hash and full types after sorting only unordered property signatures."
+    },
+    {
+      "file": "src/lib/events/ranking.ts",
+      "code": 2339,
+      "before": "Property 'sponsorshipTier' does not exist on type '{ id: string; location: string; title: string; createdAt: Date; updatedAt: Date; description: string; city: string; state: string; country: string; startDate: Date; endDate: Date; ... 32 more ...; hostProfileId: string; } & { ...; }'.",
+      "after": "Property 'sponsorshipTier' does not exist on type '{ id: string; location: string; title: string; createdAt: Date; updatedAt: Date; organizationId: string; description: string; city: string; state: string; country: string; startDate: Date; ... 32 more ...; hostProfileId: string; } & { ...; }'.",
+      "count": 2,
+      "reason": "Exact existing diagnostic: identical source span/hash and full types after sorting only unordered property signatures."
+    },
+    {
+      "file": "src/lib/events/socialProof.ts",
+      "code": 2339,
+      "before": "Property 'statusEnum' does not exist on type '{ user: { name: string; id: string; profileImage: string; role: Role; }; } & { id: string; createdAt: Date; updatedAt: Date; userId: string; eventId: string; status: string; notes: string; badgeToken: string; checkedInAt: Date; checkedInById: string; checkInMethod: string; }'.",
+      "after": "Property 'statusEnum' does not exist on type '{ user: { name: string; id: string; profileImage: string; role: Role; }; } & { id: string; createdAt: Date; updatedAt: Date; status: string; userId: string; eventId: string; notes: string; badgeToken: string; checkedInAt: Date; checkedInById: string; checkInMethod: string; }'.",
+      "count": 2,
+      "reason": "Exact existing diagnostic: identical source span/hash and full types after sorting only unordered property signatures."
+    },
+    {
+      "file": "src/lib/events/socialProof.ts",
+      "code": 2339,
+      "before": "Property 'user' does not exist on type '{ id: string; createdAt: Date; updatedAt: Date; userId: string; eventId: string; status: string; notes: string; badgeToken: string; checkedInAt: Date; checkedInById: string; checkInMethod: string; }'.",
+      "after": "Property 'user' does not exist on type '{ id: string; createdAt: Date; updatedAt: Date; status: string; userId: string; eventId: string; notes: string; badgeToken: string; checkedInAt: Date; checkedInById: string; checkInMethod: string; }'.",
+      "count": 1,
+      "reason": "Exact existing diagnostic: identical source span/hash and full types after sorting only unordered property signatures."
+    },
+    {
+      "file": "src/lib/events/visibility.ts",
+      "code": 2339,
+      "before": "Property 'visibility' does not exist on type '{ id: string; location: string; title: string; createdAt: Date; updatedAt: Date; description: string; city: string; state: string; country: string; startDate: Date; endDate: Date; ... 32 more ...; hostProfileId: string; }'.",
+      "after": "Property 'visibility' does not exist on type '{ id: string; location: string; title: string; createdAt: Date; updatedAt: Date; organizationId: string; description: string; city: string; state: string; country: string; startDate: Date; ... 32 more ...; hostProfileId: string; }'.",
+      "count": 2,
+      "reason": "Exact existing diagnostic: identical source span/hash and full types after sorting only unordered property signatures."
+    },
+    {
+      "file": "src/lib/events/visibility.ts",
+      "code": 2551,
+      "before": "Property 'eventType' does not exist on type '{ id: string; location: string; title: string; createdAt: Date; updatedAt: Date; description: string; city: string; state: string; country: string; startDate: Date; endDate: Date; ... 32 more ...; hostProfileId: string; }'. Did you mean 'eventTypes'?",
+      "after": "Property 'eventType' does not exist on type '{ id: string; location: string; title: string; createdAt: Date; updatedAt: Date; organizationId: string; description: string; city: string; state: string; country: string; startDate: Date; ... 32 more ...; hostProfileId: string; }'. Did you mean 'eventTypes'?",
+      "count": 2,
+      "reason": "Exact existing diagnostic: identical source span/hash and full types after sorting only unordered property signatures."
+    },
+    {
+      "file": "src/lib/events/visibility.ts",
+      "code": 2551,
+      "before": "Property 'parentFestival' does not exist on type '{ id: string; location: string; title: string; createdAt: Date; updatedAt: Date; description: string; city: string; state: string; country: string; startDate: Date; endDate: Date; ... 32 more ...; hostProfileId: string; }'. Did you mean 'parentFestivalId'?",
+      "after": "Property 'parentFestival' does not exist on type '{ id: string; location: string; title: string; createdAt: Date; updatedAt: Date; organizationId: string; description: string; city: string; state: string; country: string; startDate: Date; ... 32 more ...; hostProfileId: string; }'. Did you mean 'parentFestivalId'?",
+      "count": 5,
+      "reason": "Exact existing diagnostic: identical source span/hash and full types after sorting only unordered property signatures."
+    },
+    {
+      "file": "src/lib/living/gravity.ts",
+      "code": 2339,
+      "before": "Property 'livingEnabled' does not exist on type '{ id: string; title: string; views: number; createdAt: Date; updatedAt: Date; status: string; description: string; city: string; isPublic: boolean; designerId: string; category: string; ... 18 more ...; targetInstallDate: Date; }'.",
+      "after": "Property 'livingEnabled' does not exist on type '{ id: string; title: string; views: number; createdAt: Date; updatedAt: Date; ownerId: string; status: string; publishedAt: Date; description: string; city: string; isPublic: boolean; ... 20 more ...; targetInstallDate: Date; }'.",
+      "count": 2,
+      "reason": "Exact existing diagnostic: identical source span/hash and full types after sorting only unordered property signatures."
+    },
+    {
+      "file": "src/lib/living/gravity.ts",
+      "code": 2339,
+      "before": "Property 'livingOptOut' does not exist on type '{ id: string; title: string; views: number; createdAt: Date; updatedAt: Date; status: string; description: string; city: string; isPublic: boolean; designerId: string; category: string; ... 18 more ...; targetInstallDate: Date; }'.",
+      "after": "Property 'livingOptOut' does not exist on type '{ id: string; title: string; views: number; createdAt: Date; updatedAt: Date; ownerId: string; status: string; publishedAt: Date; description: string; city: string; isPublic: boolean; ... 20 more ...; targetInstallDate: Date; }'.",
+      "count": 2,
+      "reason": "Exact existing diagnostic: identical source span/hash and full types after sorting only unordered property signatures."
+    },
+    {
+      "file": "src/lib/living/rooms.ts",
+      "code": 2339,
+      "before": "Property 'intent' does not exist on type '{ id: string; title: string; views: number; createdAt: Date; updatedAt: Date; status: string; description: string; city: string; isPublic: boolean; designerId: string; category: string; ... 18 more ...; targetInstallDate: Date; }'.",
+      "after": "Property 'intent' does not exist on type '{ id: string; title: string; views: number; createdAt: Date; updatedAt: Date; ownerId: string; status: string; publishedAt: Date; description: string; city: string; isPublic: boolean; ... 20 more ...; targetInstallDate: Date; }'.",
+      "count": 1,
+      "reason": "Exact existing diagnostic: identical source span/hash and full types after sorting only unordered property signatures."
+    },
+    {
+      "file": "src/lib/living/rooms.ts",
+      "code": 2339,
+      "before": "Property 'livingEnabled' does not exist on type '{ id: string; title: string; views: number; createdAt: Date; updatedAt: Date; status: string; description: string; city: string; isPublic: boolean; designerId: string; category: string; ... 18 more ...; targetInstallDate: Date; }'.",
+      "after": "Property 'livingEnabled' does not exist on type '{ id: string; title: string; views: number; createdAt: Date; updatedAt: Date; ownerId: string; status: string; publishedAt: Date; description: string; city: string; isPublic: boolean; ... 20 more ...; targetInstallDate: Date; }'.",
+      "count": 1,
+      "reason": "Exact existing diagnostic: identical source span/hash and full types after sorting only unordered property signatures."
+    },
+    {
+      "file": "src/lib/living/rooms.ts",
+      "code": 2339,
+      "before": "Property 'livingOptOut' does not exist on type '{ id: string; title: string; views: number; createdAt: Date; updatedAt: Date; status: string; description: string; city: string; isPublic: boolean; designerId: string; category: string; ... 18 more ...; targetInstallDate: Date; }'.",
+      "after": "Property 'livingOptOut' does not exist on type '{ id: string; title: string; views: number; createdAt: Date; updatedAt: Date; ownerId: string; status: string; publishedAt: Date; description: string; city: string; isPublic: boolean; ... 20 more ...; targetInstallDate: Date; }'.",
+      "count": 1,
+      "reason": "Exact existing diagnostic: identical source span/hash and full types after sorting only unordered property signatures."
+    },
+    {
+      "file": "src/lib/living/rooms.ts",
+      "code": 2339,
+      "before": "Property 'images' does not exist on type '{ id: string; title: string; views: number; createdAt: Date; updatedAt: Date; status: string; description: string; city: string; isPublic: boolean; designerId: string; category: string; ... 18 more ...; targetInstallDate: Date; }'.",
+      "after": "Property 'images' does not exist on type '{ id: string; title: string; views: number; createdAt: Date; updatedAt: Date; ownerId: string; status: string; publishedAt: Date; description: string; city: string; isPublic: boolean; ... 20 more ...; targetInstallDate: Date; }'.",
+      "count": 1,
+      "reason": "Exact existing diagnostic: identical source span/hash and full types after sorting only unordered property signatures."
+    },
+    {
+      "file": "src/lib/living/rooms.ts",
+      "code": 2339,
+      "before": "Property 'skeletonItems' does not exist on type '{ id: string; title: string; views: number; createdAt: Date; updatedAt: Date; status: string; description: string; city: string; isPublic: boolean; designerId: string; category: string; ... 18 more ...; targetInstallDate: Date; }'.",
+      "after": "Property 'skeletonItems' does not exist on type '{ id: string; title: string; views: number; createdAt: Date; updatedAt: Date; ownerId: string; status: string; publishedAt: Date; description: string; city: string; isPublic: boolean; ... 20 more ...; targetInstallDate: Date; }'.",
+      "count": 1,
+      "reason": "Exact existing diagnostic: identical source span/hash and full types after sorting only unordered property signatures."
+    },
+    {
+      "file": "src/lib/living/rooms.ts",
+      "code": 2339,
+      "before": "Property 'rooms' does not exist on type '{ id: string; title: string; views: number; createdAt: Date; updatedAt: Date; status: string; description: string; city: string; isPublic: boolean; designerId: string; category: string; ... 18 more ...; targetInstallDate: Date; }'.",
+      "after": "Property 'rooms' does not exist on type '{ id: string; title: string; views: number; createdAt: Date; updatedAt: Date; ownerId: string; status: string; publishedAt: Date; description: string; city: string; isPublic: boolean; ... 20 more ...; targetInstallDate: Date; }'.",
+      "count": 2,
+      "reason": "Exact existing diagnostic: identical source span/hash and full types after sorting only unordered property signatures."
+    },
+    {
+      "file": "src/lib/living/skeleton.ts",
+      "code": 2352,
+      "before": "Conversion of type '{ id: string; createdAt: Date; updatedAt: Date; status: SkeletonItemStatus; description: string; imageUrl: string; projectId: string; roomId: string; searchQuery: string; ... 8 more ...; resultingSelectionId: string; }[]' to type 'SkeletonItem[]' may be a mistake because neither type sufficiently overlaps with the other. If this was intentional, convert the expression to 'unknown' first. Type '{ id: string; createdAt: Date; updatedAt: Date; status: SkeletonItemStatus; description: string; imageUrl: string; projectId: string; roomId: string; searchQuery: string; ... 8 more ...; resultingSelectionId: string; }' is missing the following properties from type 'SkeletonItem': projectImageId, roomName, bbox, label, and 3 more.",
+      "after": "Conversion of type '{ id: string; createdAt: Date; updatedAt: Date; status: SkeletonItemStatus; projectId: string; roomId: string; description: string; imageUrl: string; searchQuery: string; ... 8 more ...; resultingSelectionId: string; }[]' to type 'SkeletonItem[]' may be a mistake because neither type sufficiently overlaps with the other. If this was intentional, convert the expression to 'unknown' first. Type '{ id: string; createdAt: Date; updatedAt: Date; status: SkeletonItemStatus; projectId: string; roomId: string; description: string; imageUrl: string; searchQuery: string; ... 8 more ...; resultingSelectionId: string; }' is missing the following properties from type 'SkeletonItem': projectImageId, roomName, bbox, label, and 3 more.",
+      "count": 2,
+      "reason": "Exact existing diagnostic: identical source span/hash and full types after sorting only unordered property signatures."
+    },
+    {
+      "file": "src/lib/projects/hasContent.ts",
+      "code": 2339,
+      "before": "Property '_count' does not exist on type '{ id: string; title: string; views: number; createdAt: Date; updatedAt: Date; status: string; description: string; city: string; isPublic: boolean; designerId: string; category: string; ... 18 more ...; targetInstallDate: Date; }'.",
+      "after": "Property '_count' does not exist on type '{ id: string; title: string; views: number; createdAt: Date; updatedAt: Date; ownerId: string; status: string; publishedAt: Date; description: string; city: string; isPublic: boolean; ... 20 more ...; targetInstallDate: Date; }'.",
+      "count": 1,
+      "reason": "Exact existing diagnostic: identical source span/hash and full types after sorting only unordered property signatures."
+    },
+    {
+      "file": "src/lib/projects/hasContent.ts",
+      "code": 2339,
+      "before": "Property 'post' does not exist on type '{ id: string; title: string; views: number; createdAt: Date; updatedAt: Date; status: string; description: string; city: string; isPublic: boolean; designerId: string; category: string; ... 18 more ...; targetInstallDate: Date; }'.",
+      "after": "Property 'post' does not exist on type '{ id: string; title: string; views: number; createdAt: Date; updatedAt: Date; ownerId: string; status: string; publishedAt: Date; description: string; city: string; isPublic: boolean; ... 20 more ...; targetInstallDate: Date; }'.",
+      "count": 1,
+      "reason": "Exact existing diagnostic: identical source span/hash and full types after sorting only unordered property signatures."
     }
   ]
 }

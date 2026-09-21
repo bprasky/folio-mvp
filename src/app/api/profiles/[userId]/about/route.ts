@@ -57,6 +57,7 @@ export async function GET(
       where: { id: userId },
       select: {
         name: true,
+        bio: true,
         location: true,
         companyName: true,
         specialties: true,
@@ -84,7 +85,7 @@ export async function GET(
             secondaryPhotoUrl: publishedBio.secondaryPhotoUrl,
             teamPhotoUrl: publishedBio.teamPhotoUrl,
           }
-        : null,
+        : user.bio ? { folioBio: user.bio, primaryPhotoUrl: null, secondaryPhotoUrl: null, teamPhotoUrl: null } : null,
       qas,
       details: {
         name: user.name,

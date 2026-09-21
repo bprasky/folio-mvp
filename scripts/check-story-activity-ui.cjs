@@ -11,7 +11,7 @@ const { createRoot } = require('react-dom/client');
 function load(file) {
   const exports = {};
   vm.runInNewContext(ts.transpileModule(fs.readFileSync(file, 'utf8'), { compilerOptions: { module: ts.ModuleKind.CommonJS, jsx: ts.JsxEmit.ReactJSX, target: ts.ScriptTarget.ES2022 } }).outputText,
-    { exports, console, Error, navigator: {}, require: name => name === '@/lib/publishing-studio/activities' ? activities : name === './StoryConfigurator' ? load('src/components/publishing-studio/StoryConfigurator.tsx') : require(name) });
+    { exports, console, Error, navigator: {}, window: dom.window, document: dom.window.document, require: name => name === '@/lib/publishing-studio/activities' ? activities : name === './ActivitySocialCard' ? { ActivitySocialCard: () => null } : name === './UnsavedActivityDialog' ? load('src/components/publishing-studio/UnsavedActivityDialog.tsx') : name === './StoryConfigurator' ? load('src/components/publishing-studio/StoryConfigurator.tsx') : require(name) });
   return exports;
 }
 const activities = load('src/lib/publishing-studio/activities.ts');
@@ -52,13 +52,19 @@ async function main() {
   assert(!document.body.textContent.includes('How the firm began'));
   await React.act(async () => root.render(React.createElement(StoryActivity, { key: 'interview', context, persistence, initial: snapshot, onClose: () => closeCount++ })));
   assert.equal(document.querySelectorAll('textarea').length, 1);
+  await click('Back to Studio');
+  assert.equal(closeCount, 1, 'Clean exit is immediate');
+  closeCount = 0;
+  assert.equal(calls.length, 0, 'Clean exit is read only');
   await typeAnswer('The table was the starting point.');
   await click('Save progress');
   assert.equal(calls[0].next.answers[0].text, 'The table was the starting point.');
   await React.act(async () => calls[0].reject(new Error('Connection lost. Retry saving.')));
   assert.equal(document.querySelector('textarea').value, 'The table was the starting point.');
   assert(document.body.textContent.includes('Connection lost'));
-  await click('Save & return to Studio');
+  await click('Back to Studio');
+  assert.equal(calls.length, 1, 'Opening exit dialog must not save');
+  await click('Save draft and exit');
   assert.equal(closeCount, 0, 'Must not exit before save succeeds');
   snapshot = { ...calls[1].next, revision: 2 };
   await React.act(async () => calls[1].resolve(snapshot));
@@ -78,7 +84,16 @@ async function main() {
   assert.equal(prepared.next.draft.entries.length, 5);
   await React.act(async () => prepared.resolve({ ...prepared.next, revision: 3 }));
   assert(document.body.textContent.includes('Draft preview'));
-  await click('Review or edit answers'); await click('Edit answer 1');
+  await click('Review or edit answers');
+  await React.act(async () => document.querySelector('input[type=checkbox]').click());
+  await click('Back to Studio');
+  await click('Save draft and exit');
+  const revoked = calls.at(-1);
+  assert.equal(revoked.next.reviewed, false, 'Review can be revoked after preparation');
+  assert.equal(revoked.next.draft, null, 'Revoking review clears prepared output');
+  await React.act(async () => revoked.resolve({ ...revoked.next, revision: 4 }));
+  assert(!document.querySelector('dialog'), 'Successful revoked-review save exits without preparing again');
+  await click('Edit answer 1');
   await typeAnswer('An edited original answer.');
   await click('See all questions and answers');
   assert(button('Prepare my draft').disabled, 'Editing invalidates review and old draft');
