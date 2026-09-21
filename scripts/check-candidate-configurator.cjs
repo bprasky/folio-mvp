@@ -1,0 +1,94 @@
+const assert = require('node:assert/strict');
+const fs = require('node:fs');
+const vm = require('node:vm');
+const ts = require('typescript');
+const React = require('react');
+const { JSDOM } = require('jsdom');
+const dom = new JSDOM('<div id="root"></div>', { url: 'https://fixture.test/designer/studio' });
+global.window = dom.window; global.document = dom.window.document; global.navigator = dom.window.navigator;
+global.IS_REACT_ACT_ENVIRONMENT = true;
+const { createRoot } = require('react-dom/client');
+const { Simulate } = require('react-dom/test-utils');
+const { act } = React;
+const fixture = { id: 'story', version: 1, sourceVersion: 'source', readiness: 'quick', thesis: 'A considered room', audienceValue: 'Show the decision behind the room.', source: { title: 'A home' },
+  projectIds: ['p'], format: 'single_image', visuals: [{ id: 'image', url: '/fixture.jpg', role: 'hero', reason: 'The finished room' }],
+  draft: { headline: 'A considered room', caption: 'The original saved caption.', credits: { designer: 'Designer', photographer: 'Photographer' } },
+  evidence: [{ id: 'e', text: 'Published project detail.', tier: 'direct' }],
+  blockers: [{ id: 'question', kind: 'truth', question: 'Which decision changed the room?' }], reasons: ['The answer still needs clarification.'] };
+const calls = [];
+const exported = {};
+vm.runInNewContext(ts.transpileModule(fs.readFileSync('src/components/publishing-studio/CandidateConfigurator.tsx', 'utf8'), { compilerOptions: { module: ts.ModuleKind.CommonJS, jsx: ts.JsxEmit.ReactJSX, target: ts.ScriptTarget.ES2020 } }).outputText,
+ { exports: exported, require, window: dom.window, document: dom.window.document, console,
+   fetch: (url, options) => new Promise(resolve => calls.push({ url, body: JSON.parse(options.body), resolve })) });
+let candidate = structuredClone(fixture), readOnly = false, closed = 0;
+let root;
+const render = () => root.render(React.createElement(exported.CandidateConfigurator, { candidate, readOnly,
+  onChange: saved => { candidate = saved; render(); }, onClose: () => { closed++; } }));
+const button = text => [...document.querySelectorAll('button')].find(node => node.textContent === text);
+const change = async (node, value) => act(async () => Simulate.change(node, { target: { value } }));
+(async () => {
+  root = createRoot(document.getElementById('root'));
+  await act(async () => render());
+  assert.equal(calls.length, 0);
+  await change(document.querySelector('input'), 'My edited headline');
+  await change(document.querySelector('#candidate-answer'), 'An unfinished answer');
+  await act(async () => root.unmount());
+  root = createRoot(document.getElementById('root'));
+  await act(async () => render());
+  assert.equal(document.querySelector('input').value, 'My edited headline', 'Forced remount recovers unsaved copy');
+  assert.equal(document.querySelector('#candidate-answer').value, 'An unfinished answer', 'Forced remount recovers the pending answer');
+  assert.match(document.body.textContent, /Recovered unsaved changes/);
+  assert.equal(calls.length, 0, 'Recovering browser edits never submits them or changes readiness');
+  await act(async () => button('Back to stories').click());
+  assert.equal(closed, 0); assert.match(document.querySelector('[role="alert"]').textContent, /not saved/);
+  assert.equal(window.dispatchEvent(new window.Event('beforeunload', { cancelable: true })), false, 'Reload is guarded while unsaved');
+  await act(async () => button('Keep editing').click());
+  await act(async () => button('Save draft').click());
+  assert.equal(calls[0].body.headline, 'My edited headline'); assert.equal(calls[0].body.version, 1);
+  assert.equal(button('Back to stories').disabled, true, 'Back cannot race a pending save');
+  assert.equal(document.querySelector('input').disabled, true);
+  await act(async () => calls[0].resolve({ ok: true, json: async () => ({ candidate: { ...candidate, version: 2, draft: { ...candidate.draft, headline: 'My edited headline' } } }) }));
+  assert.equal(document.querySelector('#candidate-answer').value, 'An unfinished answer', 'Saving copy preserves the pending answer');
+  assert.equal(window.sessionStorage.getItem('folio:studio-unsaved:story:1:source'), null, 'Completed copy save retires the earlier recovery key');
+  assert.match(window.sessionStorage.getItem('folio:studio-unsaved:story:2:source'), /An unfinished answer/, 'Pending answer follows the new saved version');
+  assert.match(document.body.textContent, /Headline updated/);
+  await act(async () => button('Save and continue').click());
+  assert.equal(calls[1].body.version, 2, 'Answer follows the persisted version');
+  assert.equal(calls[1].body.blockerId, 'question');
+  const savedNonready = { ...candidate, version: 3, readiness: 'developing', blockers: [{ ...candidate.blockers[0], answer: 'An unfinished answer' }] };
+  await act(async () => calls[1].resolve({ ok: true, json: async () => ({ candidate: savedNonready }) }));
+  assert.match(document.body.textContent, /Needs more source material/);
+  assert.equal(button('Download post').disabled, true, 'Server nonready response is never overridden by the client');
+  assert.equal(document.querySelector('#candidate-answer'), null, 'Completed questions are not asked again');
+  assert.match(document.body.textContent, /An unfinished answer/, 'Saved answer remains inspectable');
+  assert.equal(window.sessionStorage.getItem('folio:studio-unsaved:story:2:source'), null, 'Completed answer save removes its browser buffer');
+  await act(async () => button('Back to stories').click()); assert.equal(closed, 1);
+  await act(async () => root.unmount());
+  root = createRoot(document.getElementById('root'));
+  await act(async () => render());
+  assert.equal(document.querySelector('input').value, 'My edited headline', 'Reloading saved snapshot resumes copy');
+  assert.match(document.body.textContent, /An unfinished answer/, 'Reloading saved snapshot resumes answers');
+  await change(document.querySelector('input'), 'Keep after failure');
+  await act(async () => button('Save draft').click());
+  await act(async () => calls[2].resolve({ ok: false, json: async () => ({ error: 'Source changed; your edit is still here.' }) }));
+  assert.equal(document.querySelector('input').value, 'Keep after failure');
+  assert.match(document.body.textContent, /Unsaved changes/);
+  await act(async () => root.unmount());
+  root = createRoot(document.getElementById('root'));
+  await act(async () => render());
+  assert.equal(document.querySelector('input').value, 'Keep after failure', 'A failed save remains recoverable on reload');
+  await act(async () => button('Back to stories').click());
+  await act(async () => button('Discard unsaved changes').click());
+  assert.equal(window.sessionStorage.getItem('folio:studio-unsaved:story:3:source'), null, 'Explicit discard removes recovery');
+  await act(async () => root.unmount());
+  candidate = { ...savedNonready, readiness: 'ready' }; readOnly = true;
+  root = createRoot(document.getElementById('root'));
+  await act(async () => render());
+  assert.equal(button('Save draft'), undefined); assert.equal(button('Download post'), undefined);
+  assert.equal(document.querySelector('input').readOnly, true);
+  assert.match(document.body.textContent, /Saved version · read only/);
+  assert.match(document.body.textContent, /An unfinished answer/);
+  assert.equal(calls.length, 3, 'Reading older saved work never mutates it');
+  await act(async () => root.unmount());
+  console.log('Configurator checks passed: guarded back/reload, pending save, preserved answer and copy, server-authoritative nonready state, saved resume, save failure recovery and read-only history.');
+})().catch(error => { console.error(error); process.exitCode = 1; });

@@ -4,7 +4,7 @@ import { Redis } from '@upstash/redis';
 import { answerBlocker, evaluateCandidate, selectCandidates } from './engine';
 import { evaluateSource } from './evaluator';
 import { loadCandidateSources, readinessEnabled, sourceVersion } from './sources';
-import { appendEvent, CandidateConflictError, listStoredCandidates, saveCandidate, type SecondaryCandidateEvent } from './store';
+import { appendEvent, CandidateConflictError, listStoredCandidates, listCandidateWork, saveCandidate, type SecondaryCandidateEvent } from './store';
 import { DISMISSAL_REASONS, READINESS_POLICY, type Candidate, type CandidateEventKind } from './types';
 
 export class ReadinessError extends Error {
@@ -29,7 +29,20 @@ function currentHistory(data: Awaited<ReturnType<typeof context>>, sourceKey?: s
 export async function listReadiness(userId: string) {
   const data = await context(userId);
   const current = data.stored.filter(candidate => candidate.policy === READINESS_POLICY && data.sources.some(source => source.key === candidate.sourceKey && sourceVersion(source) === candidate.sourceVersion));
+  const work = await listCandidateWork(userId, data.workspace.id);
+  const needsReview = (candidate: Candidate) => candidate.policy !== READINESS_POLICY ||
+    !data.sources.some(source => source.key === candidate.sourceKey && sourceVersion(source) === candidate.sourceVersion);
+  const inProgress = work.filter(item => item.isCurrent && item.lastWorkedAt && !item.exportedAt && !item.candidate.dismissed)
+    .map(item => ({ candidate: item.candidate, lastWorkedAt: item.lastWorkedAt!, needsReview: needsReview(item.candidate) }))
+    .sort((a, b) => b.lastWorkedAt.localeCompare(a.lastWorkedAt) || a.candidate.id.localeCompare(b.candidate.id));
+  const exports = work.filter(item => item.exportedAt).map(item => ({ candidate: item.candidate,
+    exportedAt: item.exportedAt!, needsReview: !item.isCurrent || needsReview(item.candidate),
+    canDownload: item.isCurrent && !needsReview(item.candidate) && item.candidate.readiness === 'ready' && !item.candidate.dismissed }))
+    .sort((a, b) => b.exportedAt.localeCompare(a.exportedAt) || a.candidate.id.localeCompare(b.candidate.id) || b.candidate.version - a.candidate.version);
+  const projects = Array.from(new Map(data.sources.filter(source => source.origin === 'project')
+    .map(source => [source.projectIds[0], { id: source.projectIds[0], title: source.title }])).values());
   return { enabled: true as const, workspace: { id: data.workspace.id, name: data.workspace.name }, candidates: selectCandidates(current),
+    inProgress, exports, projects,
     developing: current.filter(candidate => candidate.readiness === 'developing' && !candidate.dismissed),
     dismissed: current.filter(candidate => candidate.dismissed),
     published: current.filter(candidate => candidate.confirmedPublishedAt),

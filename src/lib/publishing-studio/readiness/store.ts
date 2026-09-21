@@ -105,6 +105,48 @@ export async function listStoredCandidates(designerId: string, organizationId: s
   });
 }
 
+export interface CandidateWork {
+  candidate: Candidate;
+  isCurrent: boolean;
+  lastWorkedAt: string | null;
+  exportedAt: string | null;
+}
+
+/** Author history remains readable when its source is private, unpublished or changed. */
+export async function listCandidateWork(designerId: string, organizationId: string | null): Promise<CandidateWork[]> {
+  assertEnabled();
+  return prisma.$transaction(async tx => {
+    await authorize(tx, { designerId, organizationId });
+    const rows = await tx.$queryRaw<{ snapshot: Candidate; isCurrent: boolean; lastWorkedAt: Date | null; exportedAt: Date | null }[]>`
+      SELECT v.snapshot,v.version=c."currentVersion" AS "isCurrent",
+        CASE WHEN v.version=c."currentVersion" THEN
+          (SELECT MAX(e."createdAt") FROM studio_candidate_events e WHERE e."candidateId"=c.id
+            AND e.kind IN ('configured','answered','edited','published')) ELSE NULL END AS "lastWorkedAt",
+        (SELECT MAX(e."createdAt") FROM studio_candidate_events e WHERE e."candidateId"=c.id
+          AND e.version=v.version AND e."sourceVersion"=v."sourceVersion"
+          AND e.kind='exported' AND e.payload->>'destination'='download') AS "exportedAt"
+      FROM studio_candidates c JOIN studio_candidate_versions v
+        ON v."candidateId"=c.id
+      WHERE c."designerId"=${designerId} AND c."organizationId" IS NOT DISTINCT FROM ${organizationId}::text
+        AND (v.version=c."currentVersion" OR EXISTS (
+          SELECT 1 FROM studio_candidate_events e WHERE e."candidateId"=c.id AND e.version=v.version
+            AND e."sourceVersion"=v."sourceVersion" AND e.kind='exported' AND e.payload->>'destination'='download'))
+      ORDER BY c."updatedAt" DESC,c.id ASC,v.version DESC`;
+    // This is saved author work, so publication filters would hide the very
+    // drafts that need review. Ownership/workspace boundaries still apply.
+    const projects = await tx.project.findMany({ where: organizationId ? {
+      designerOrgId: organizationId, OR: [{ ownerId: designerId }, { designerId }, { isPublic: true, post: { status: 'PUBLISHED' } }],
+    } : {
+      designerOrgId: null, OR: [{ ownerId: designerId }, { designerId }],
+    }, select: { id: true } });
+    const authorizedIds = new Set(projects.map(project => project.id));
+    return rows.filter(row => row.snapshot.designerId === designerId && row.snapshot.organizationId === organizationId
+      && row.snapshot.projectIds.length > 0 && row.snapshot.projectIds.every(id => authorizedIds.has(id))
+      && (row.lastWorkedAt || row.exportedAt)).map(row => ({ candidate: row.snapshot, isCurrent: row.isCurrent,
+      lastWorkedAt: row.lastWorkedAt?.toISOString() ?? null, exportedAt: row.exportedAt?.toISOString() ?? null }));
+  });
+}
+
 export interface SecondaryCandidateEvent { kind: CandidateEventKind; payload?: Record<string, unknown> }
 
 export async function saveCandidate(candidate: Candidate, expectedVersion: number | null, eventKind: CandidateEventKind, payload: Record<string, unknown> = {}, secondaryEvents: SecondaryCandidateEvent[] = []): Promise<Candidate> {
