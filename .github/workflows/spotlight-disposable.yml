@@ -7,6 +7,7 @@ on:
       - 'scripts/spotlight-postgres/**'
       - 'scripts/spotlight-durable-postgres/**'
       - 'scripts/check-spotlight-durable-install.cjs'
+      - 'scripts/check-spotlight-install-scope.cjs'
       - 'scripts/spotlight-private/**'
       - 'src/**'
       - 'prisma/migrations/20260910210000_add_spotlight_durable_interview/**'
@@ -31,7 +32,9 @@ jobs:
           cache: npm
       - run: npm ci --ignore-scripts
       - name: Verify durable schema and four reviewed artifact hashes
-        run: node scripts/check-spotlight-durable-install.cjs
+        run: |
+          node scripts/check-spotlight-durable-install.cjs
+          node scripts/check-spotlight-install-scope.cjs
       - name: Execute exact SQL against network-disabled local PostgreSQL
         run: node scripts/test-spotlight-postgres.cjs
       - name: Exercise guarded npm migration command on a separate disposable database
