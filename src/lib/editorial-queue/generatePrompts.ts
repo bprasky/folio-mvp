@@ -17,6 +17,7 @@ import type { ExtractedAngle, PromptStructure, QueuePromptItem } from './types';
 import { FOLIO_INTERVIEWER_PERSONA } from '@/lib/interview/prompts/persona';
 import { SHARED_RULE_BLOCK, ARRIVALS_CONTRAST_POLICY } from '@/lib/interview/prompts/rules';
 import { isArrivalSafe } from '@/lib/interview/prompts/validateQuestion';
+import { FORMAT_COUNTS, PromptResponseSchema } from './generation.schemas';
 
 const PROMPT_GEN_MAX_TOKENS = 1200;
 const PROMPT_GEN_TEMPERATURE = 0.6;
@@ -58,7 +59,8 @@ Omit optionA/optionB unless the format asks for them.`;
 export function buildPromptGenUserPrompt(angle: ExtractedAngle, format: QueueFormat): string {
   return `ANGLE TYPE: ${angle.angleType}
 EDITORIAL FRAMING: ${angle.summary}
-SUPPORTING EVIDENCE (facts computed from the corpus): ${evidenceFactLines(angle)}
+SUPPORTING EVIDENCE (facts computed from the corpus): ${evidenceFactLines(angle)}${process.env.STUDIO_EDITORIAL_READINESS === 'true'
+    ? `\nSOURCE RECORDS: ${JSON.stringify(angle.evidence.sources ?? [])}\nThe editorial framing is an unverified inference. Ask the designer to establish it; do not assert it as fact.` : ''}
 
 FORMAT: ${format}
 WHAT THIS FORMAT NEEDS: ${FORMAT_BRIEF[format]}`;
@@ -74,7 +76,9 @@ export function parsePromptResponse(raw: string, format: QueueFormat): PromptStr
   } catch {
     return null;
   }
-  const obj = parsed as { intro?: unknown; items?: unknown };
+  const validated = PromptResponseSchema.safeParse(parsed);
+  if (!validated.success) return null;
+  const obj = validated.data;
   if (!Array.isArray(obj.items) || obj.items.length === 0) return null;
 
   const items: QueuePromptItem[] = [];
@@ -93,7 +97,11 @@ export function parsePromptResponse(raw: string, format: QueueFormat): PromptStr
     if (typeof row.optionB === 'string' && row.optionB.trim()) item.optionB = row.optionB.trim();
     items.push(item);
   }
-  if (items.length === 0) return null;
+  const [min, max] = FORMAT_COUNTS[format];
+  if (items.length < min || items.length > max) return null;
+  if (new Set(items.map(item => item.prompt.toLowerCase().replace(/\s+/g, ' '))).size !== items.length) return null;
+  if (format === 'THIS_OR_THAT' && items.some(item => !item.optionA || !item.optionB
+    || item.optionA.toLowerCase() === item.optionB.toLowerCase())) return null;
 
   const intro = typeof obj.intro === 'string' && obj.intro.trim() ? obj.intro.trim() : angleIntroFallback(format);
   return { format, intro, items };

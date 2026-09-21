@@ -1,0 +1,44 @@
+// PROPOSAL ONLY. Append these models to schema.prisma after explicit review.
+// Actor/workspace IDs deliberately have no cross-domain relations/inverse edits.
+model StudioCandidate {
+  id             String                   @id
+  designerId     String
+  organizationId String?
+  projectIds     String[]
+  currentVersion Int
+  state          String
+  createdAt      DateTime                 @default(now())
+  updatedAt      DateTime                 @updatedAt
+  versions       StudioCandidateVersion[]
+
+  @@index([designerId, organizationId, state])
+  @@map("studio_candidates")
+}
+
+model StudioCandidateVersion {
+  candidateId   String
+  version       Int
+  sourceVersion String
+  snapshot      Json
+  createdAt     DateTime               @default(now())
+  candidate     StudioCandidate       @relation(fields: [candidateId], references: [id], onDelete: Cascade)
+  events        StudioCandidateEvent[]
+
+  @@id([candidateId, version])
+  @@unique([candidateId, version, sourceVersion])
+  @@map("studio_candidate_versions")
+}
+
+model StudioCandidateEvent {
+  id               String                 @id
+  candidateId      String
+  version          Int
+  sourceVersion    String
+  kind             String
+  payload          Json
+  createdAt        DateTime               @default(now())
+  candidateVersion StudioCandidateVersion @relation(fields: [candidateId, version, sourceVersion], references: [candidateId, version, sourceVersion], onDelete: Cascade)
+
+  @@index([candidateId, createdAt])
+  @@map("studio_candidate_events")
+}

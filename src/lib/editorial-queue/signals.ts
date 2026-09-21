@@ -34,9 +34,11 @@ export const MATERIAL_CLASSES = [
 ] as const;
 
 export function materialClassOf(colorFinish: string | null, productName: string): string | null {
-  const haystack = `${colorFinish ?? ''} ${productName}`.toLowerCase();
-  for (const cls of MATERIAL_CLASSES) {
-    if (haystack.includes(cls)) return cls;
+  // Stated finish takes precedence over catalog copy. Match whole tokens:
+  // washbasin, champagne and ironwood do not establish ash, pine or iron.
+  for (const text of [colorFinish ?? '', productName]) {
+    const tokens = new Set(text.toLowerCase().match(/[a-z]+/g) ?? []);
+    for (const cls of MATERIAL_CLASSES) if (tokens.has(cls)) return cls;
   }
   return null;
 }

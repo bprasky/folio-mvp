@@ -32,22 +32,35 @@ export async function maybeUnlockEditorialQueue(
   designerId: string,
   organizationId: string | null,
 ): Promise<UnlockResult> {
-  const publishedStories = await prisma.projectPost.count({
-    where: { status: 'PUBLISHED', project: { designerId } },
+  // Apply the same public workspace boundary as explicit Studio refreshes.
+  if (organizationId) {
+    const membership = await prisma.organizationUser.findFirst({
+      where: { userId: designerId, organizationId, isActive: true }, select: { id: true },
+    });
+    if (!membership) return { status: 'no_pieces_generated' };
+  }
+  const projects = await prisma.project.findMany({
+    where: { ...(organizationId ? {} : { designerId }), designerOrgId: organizationId,
+      isPublic: true, post: { status: 'PUBLISHED' } },
+    select: { id: true }, orderBy: [{ updatedAt: 'desc' }, { id: 'asc' }], take: 100,
   });
+  const publishedStories = projects.length;
   if (publishedStories < EDITORIAL_QUEUE_MIN_STORIES) {
     return { status: 'below_gate', publishedStories };
   }
 
   const alreadyUnlocked = await prisma.notification.findFirst({
-    where: { userId: designerId, type: EDITORIAL_QUEUE_UNLOCKED_NOTIFICATION },
+    where: { userId: designerId, type: EDITORIAL_QUEUE_UNLOCKED_NOTIFICATION,
+      actionUrl: organizationId ? `${QUEUE_ACTION_URL}?workspace=${encodeURIComponent(organizationId)}` : QUEUE_ACTION_URL },
     select: { id: true },
   });
   if (alreadyUnlocked) {
     return { status: 'already_unlocked' };
   }
 
-  const run = await generateQueueForDesigner(designerId, organizationId);
+  const run = await generateQueueForDesigner(designerId, organizationId, 3, {
+    organizationId, projectIds: projects.map(project => project.id),
+  });
   const createdPieces = run.createdQueueItemIds.length;
   if (createdPieces === 0) {
     return { status: 'no_pieces_generated' };
@@ -59,7 +72,7 @@ export async function maybeUnlockEditorialQueue(
       type: EDITORIAL_QUEUE_UNLOCKED_NOTIFICATION,
       title: 'Your editorial desk is open',
       body: `Folio drafted ${createdPieces} ${createdPieces === 1 ? 'story' : 'stories'} from your work. Review and launch them from your queue.`,
-      actionUrl: QUEUE_ACTION_URL,
+      actionUrl: organizationId ? `${QUEUE_ACTION_URL}?workspace=${encodeURIComponent(organizationId)}` : QUEUE_ACTION_URL,
     },
   });
 

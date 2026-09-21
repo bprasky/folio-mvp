@@ -16,6 +16,9 @@ export type SignalType =
 // Row-level references backing a signal. Every ID resolves to a real row so
 // angles citing this signal can be verified before persistence.
 export interface SignalEvidence {
+  sources?: Array<{ id: string; kind: string; text: string; detail?: string }>;
+  /** Citation resolution is not proof that model-written framing is supported. */
+  claimStatus?: 'inferred';
   projectIds?: string[];
   imageIds?: string[];
   productIds?: string[];

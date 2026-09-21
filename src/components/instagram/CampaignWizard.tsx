@@ -12,6 +12,7 @@ interface CampaignWizardProps {
 type CampaignPreset = 'compact' | 'standard' | 'complete';
 
 interface ContentSelection {
+  readyCandidates?: Array<{ id: string; title: string; caption: string; imageUrls: string[] }>;
   preset: CampaignPreset;
   totalPosts: number;
   projectTitle: string;
@@ -45,6 +46,7 @@ interface ContentSelection {
 }
 
 type PostMockup =
+  | { type: 'editorial_story'; imageUrl: string; title: string; subtitle: string; slideCount: number }
   | { type: 'launch'; imageUrl: string; title: string; subtitle: string }
   | { type: 'room_spotlight'; imageUrl: string; title: string; subtitle: string; slideCount: number }
   | { type: 'product_feature'; imageUrl: string; title: string; subtitle: string }
@@ -53,6 +55,9 @@ type PostMockup =
   | { type: 'closer'; imageUrl: string; title: string; subtitle: string };
 
 function buildPostMockups(c: ContentSelection): PostMockup[] {
+  if (c.readyCandidates) return c.readyCandidates.map(candidate => ({ type: 'editorial_story',
+    imageUrl: candidate.imageUrls[0] || '', title: candidate.title, subtitle: candidate.caption,
+    slideCount: candidate.imageUrls.length }));
   const posts: PostMockup[] = [];
   const urlFor = (id: string | undefined) =>
     (id && c.imagesById[id]?.url) || '';
@@ -221,7 +226,7 @@ export function CampaignWizard({ projectId, projectTitle, onClose }: CampaignWiz
         {/* Content */}
         <div className="min-h-0 overflow-y-auto p-4 sm:p-6">
           {/* Preset Selection */}
-          <div className="mb-6">
+          {!contentSelection?.readyCandidates && <div className="mb-6">
             <h3 className="mb-3 text-sm font-medium text-folio-text-primary">Campaign Size</h3>
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
               <button
@@ -258,7 +263,7 @@ export function CampaignWizard({ projectId, projectTitle, onClose }: CampaignWiz
                 <div className="mt-1 text-sm text-folio-text-secondary">15-20+ posts</div>
               </button>
             </div>
-          </div>
+          </div>}
 
           {/* Content Preview */}
           {loading && (
@@ -293,14 +298,14 @@ export function CampaignWizard({ projectId, projectTitle, onClose }: CampaignWiz
                 </div>
 
                 <div className="mt-4 flex flex-wrap gap-x-4 gap-y-1 text-xs text-folio-text-secondary">
-                  <span>1 launch</span>
+                  {contentSelection.readyCandidates ? <span>Approved stories only · captions and selected photos are preserved</span> : <span>1 launch</span>}
                   {selectedRooms > 0 && <span>· {selectedRooms} room{selectedRooms === 1 ? '' : 's'}</span>}
                   {selectedProducts > 0 && <span>· {selectedProducts} product{selectedProducts === 1 ? '' : 's'}</span>}
                   {selectedQuotes > 0 && <span>· {selectedQuotes} quote{selectedQuotes === 1 ? '' : 's'}</span>}
                   {contentSelection.details.length > 0 && (
                     <span>· {contentSelection.details.length} detail{contentSelection.details.length === 1 ? '' : 's'}</span>
                   )}
-                  <span>· 1 closer</span>
+                  {!contentSelection.readyCandidates && <span>· 1 closer</span>}
                 </div>
               </div>
 
@@ -336,7 +341,7 @@ export function CampaignWizard({ projectId, projectTitle, onClose }: CampaignWiz
           </button>
           <button
             onClick={handleGenerate}
-            disabled={!contentSelection || generating}
+            disabled={!contentSelection || !totalPosts || generating || loading}
             className="flex items-center gap-2 rounded-lg bg-[var(--accent)] px-6 py-2.5 text-sm font-medium text-white hover:bg-[var(--accent-hover)] disabled:cursor-not-allowed disabled:opacity-50"
           >
             {generating ? (
@@ -378,6 +383,13 @@ function PostMockupCard({
     </span>
   );
 
+  if (post.type === 'editorial_story') return <figure className="w-[140px] flex-shrink-0 space-y-2">
+    {/* The export contains photographs with separate copy, not template overlays. */}
+    {/* eslint-disable-next-line @next/next/no-img-element */}
+    <img src={post.imageUrl} alt={post.title} className="aspect-[4/5] w-full rounded-md object-cover" />
+    <figcaption className="folio-meta">{sequenceNum}/{total} · {post.slideCount} photograph{post.slideCount === 1 ? '' : 's'}<span className="block">{post.title}</span></figcaption>
+  </figure>;
+
   if (post.type === 'quote') {
     return (
       <div className="relative flex h-[175px] w-[140px] flex-shrink-0 flex-col justify-center rounded-md bg-folio-ink p-3 text-white">
@@ -393,7 +405,7 @@ function PostMockupCard({
     );
   }
 
-  const typeLabel: Record<Exclude<PostMockup['type'], 'quote'>, string> = {
+  const typeLabel: Record<Exclude<PostMockup['type'], 'quote' | 'editorial_story'>, string> = {
     launch: 'Launch',
     room_spotlight: 'Room',
     product_feature: 'Product',

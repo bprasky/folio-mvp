@@ -4,12 +4,14 @@ export interface StudioFeedCard {
   kind: 'suggestion' | 'carousel' | 'campaign' | 'idea';
   format: string; status: string; updatedAt: string;
   exportId?: string; campaignId?: string; roomId?: string; canPolish: boolean; revision?: string;
+  candidateId?: string;
   pitch?: string; rationale?: string; beats?: string[]; slideCount?: number;
   headlineOptions?: string[]; captionOptions?: string[];
   preview?: { headlinePosition: 'bottom_left' | 'bottom_center' | 'top_left'; watermarkStyle: 'folio_x' | 'folio_presents' | 'minimal'; aspectRatio: '1:1' | '4:5' | '9:16'; watermarkText?: string };
 }
 
 export interface StudioData {
+  readinessEnabled?: boolean;
   evaluatedAt?: string;
   feed: StudioFeedCard[];
   workspace: { id: string | null; name: string };
@@ -17,7 +19,7 @@ export interface StudioData {
   editorials: { id: string; projectId: string; title: string; slug: string; status: string; format: string; updatedAt: string }[];
   ideas: {
     id: string; title: string; format: string; status: string; createdAt: string;
-    projectIds: string[]; prompts: { id: string; prompt: string; hint?: string }[]; reason: string;
+    projectIds: string[]; prompts: { id: string; prompt: string; hint?: string; optionA?: string; optionB?: string }[]; reason: string;
   }[];
   posts: {
     id: string; projectId: string; title: string; caption: string; status: string;

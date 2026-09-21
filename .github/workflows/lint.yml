@@ -67,6 +67,12 @@ jobs:
           node scripts/check-studio-landing.cjs
           node scripts/check-studio-briefs.cjs
           node scripts/check-studio-recommendations.cjs
+          node scripts/check-readiness-engine.cjs
+          node scripts/check-readiness-service.cjs
+          node scripts/check-readiness-sources.cjs
+          node scripts/check-readiness-ui.cjs
+          node scripts/check-campaign-readiness.cjs
+          node scripts/check-editorial-queue-readiness.cjs
           node scripts/check-carousel-editor.cjs
           node scripts/check-carousel-persistence.cjs
           node scripts/check-carousel-page.cjs

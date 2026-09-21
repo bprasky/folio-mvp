@@ -23,6 +23,12 @@ expected+='\n'+read('docs/proposals/spotlight-durable-interview/models.prisma');
 // Separately approved 2026-09-18 completion-date migration; preserve the exact
 // full-schema comparison rather than allowing arbitrary Project changes.
 expected=expected.replace('model Project {','model Project {\ncompletedYear Int?\ncompletedMonth Int?');
+// Separately approved 2026-09-21 Editorial Readiness models. Pin the reviewed
+// artifact before adding it to the expected schema: editing the proposal must
+// never authorize arbitrary new tokens or weaken the Spotlight comparison.
+const readinessModels=read('docs/reviews/studio-readiness-proposed.prisma');
+assert.equal(hash(readinessModels),'739c6ad26cd2777ea09a6a4a237425294c4fb9142afacae5c31ad0a043b86874','Approved Editorial Readiness model artifact');
+expected+='\n'+readinessModels;
 const tokens=s=>(s.match(/"(?:\\.|[^"\\])*"|\/\/[^\n]*|[^\s"]/g)||[]).filter(x=>!x.startsWith('//')).join('');
 assert.equal(tokens(read('prisma/schema.prisma')),tokens(expected),'Only reviewed schema tokens');
 assert.equal(JSON.parse(read('vercel.json')).git.deploymentEnabled,false);

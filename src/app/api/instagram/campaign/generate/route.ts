@@ -7,7 +7,10 @@ import { generateLaunchCard } from '@/lib/instagram/campaign/generateLaunchCard'
 import { generateRoomSpotlight } from '@/lib/instagram/campaign/generateRoomSpotlight';
 import { generateCaption, generateCaptionsFile } from '@/lib/instagram/campaign/generateCaptions';
 import JSZip from 'jszip';
+import { revalidatePath } from 'next/cache';
+import { StudioAccessError } from '@/lib/publishing-studio/data';
 import { assertProjectWrite } from '@/lib/authz/access';
+import { generateReadyCampaign } from '@/lib/instagram/campaign/generateReadyCampaign';
 
 export const runtime = 'nodejs';
 export const maxDuration = 300; // 5 minutes for campaign generation
@@ -33,7 +36,7 @@ export async function POST(request: NextRequest) {
     const body: GenerateCampaignRequest = await request.json();
     const { projectId, preset, formats, customSelections } = body;
 
-    if (!projectId || !preset || !formats || formats.length === 0) {
+    if (!projectId || !['compact', 'standard', 'complete', 'custom'].includes(preset) || !formats || !Array.isArray(formats) || formats.length === 0 || formats.some(format => !['square', 'portrait', 'story'].includes(format))) {
       return NextResponse.json(
         { error: 'Missing required fields: projectId, preset, formats' },
         { status: 400 }
@@ -45,6 +48,19 @@ export async function POST(request: NextRequest) {
     } catch {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
+
+    if (process.env.STUDIO_EDITORIAL_READINESS === 'true') {
+      const result = await generateReadyCampaign(session.user.id, projectId, Array.from(new Set(formats)));
+      revalidatePath('/designer/studio');
+      revalidatePath(`/project/${projectId}`);
+      return new NextResponse(result.base64Zip, { status: 200, headers: {
+        'Content-Type': 'application/zip',
+        'Content-Disposition': `attachment; filename="${result.title.replace(/[^a-z0-9]/gi, '-').toLowerCase()}-instagram-campaign.zip"`,
+        'X-Campaign-Id': result.campaignId,
+      } });
+    }
+    // Resolve current workspace and source eligibility before reading generation assets.
+    const contentSelection = await selectCampaignContent(projectId, preset, session.user.id);
 
     // Fetch project data
     const project = await prisma.project.findUnique({
@@ -58,6 +74,7 @@ export async function POST(request: NextRequest) {
           },
         },
         images: {
+          where: { inclusion: 'INCLUDED' },
           orderBy: { displayOrder: 'asc' },
           include: {
             tags: {
@@ -73,6 +90,7 @@ export async function POST(request: NextRequest) {
         },
         post: {
           select: {
+            status: true,
             slug: true,
             excerpt: true,
           },
@@ -80,15 +98,12 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    if (!project || !project.post) {
+    if (!project?.isPublic || project.post?.status !== 'PUBLISHED') {
       return NextResponse.json(
         { error: 'Project not found or not published' },
         { status: 404 }
       );
     }
-
-    // Select campaign content
-    const contentSelection = await selectCampaignContent(projectId, preset);
 
     // Apply custom selections if provided
     if (customSelections) {
@@ -183,7 +198,7 @@ export async function POST(request: NextRequest) {
       const launchCard = await generateLaunchCard({
         projectTitle: project.title,
         designerName: projectData.designerName,
-        heroImageUrl: project.images[0].url,
+        heroImageUrl: contentSelection.imagesById[contentSelection.launch.heroImageId].url,
         projectSlug: project.post.slug,
         format,
         seriesInfo: { current: postNumber, total: totalPosts },
@@ -208,7 +223,7 @@ export async function POST(request: NextRequest) {
       caption: launchCaption.caption,
       hashtags: launchCaption.hashtags,
       format: formats,
-      imageIds: [project.images[0].id],
+      imageIds: [contentSelection.launch.heroImageId],
       productIds: [],
       roomName: null,
     });
@@ -314,43 +329,13 @@ export async function POST(request: NextRequest) {
       postNumber++;
     }
 
-    // 4. Generate Quote Cards (Phase 2 - skip for now, just captions)
-    for (const quote of selectedQuotes) {
-      const quoteCaption = generateCaption({
-        postType: 'quote',
-        project: projectData,
-        context: {
-          quoteText: quote.text,
-          quoteAuthorship: quote.authorship,
-        },
-      });
-      captionData.push({
-        postNumber,
-        postType: 'quote',
-        ...quoteCaption,
-      });
-      postRows.push({
-        campaignId: campaign.id,
-        postType: 'quote',
-        sequenceNum: postNumber,
-        title: null,
-        caption: quoteCaption.caption,
-        hashtags: quoteCaption.hashtags,
-        format: formats,
-        imageIds: [],
-        productIds: [],
-        roomName: null,
-      });
-      postNumber++;
-    }
-
     // 5. Generate Closer Card
     const closerFolder = zip.folder(`${String(postNumber).padStart(2, '0')}-closer`)!;
     for (const format of formats) {
       const closerCard = await generateLaunchCard({
         projectTitle: project.title,
         designerName: 'Explore the full project on Folio',
-        heroImageUrl: project.images[Math.min(1, project.images.length - 1)].url,
+        heroImageUrl: contentSelection.imagesById[contentSelection.closer.imageId].url,
         projectSlug: project.post.slug,
         format,
         seriesInfo: { current: postNumber, total: totalPosts },
@@ -375,12 +360,14 @@ export async function POST(request: NextRequest) {
       caption: closerCaption.caption,
       hashtags: closerCaption.hashtags,
       format: formats,
-      imageIds: [project.images[Math.min(1, project.images.length - 1)].id],
+      imageIds: [contentSelection.closer.imageId],
       productIds: [],
       roomName: null,
     });
 
     await prisma.instagramCampaignPost.createMany({ data: postRows });
+    revalidatePath('/designer/studio');
+    revalidatePath(`/project/${projectId}`);
 
     // Add captions.txt file
     const captionsContent = generateCaptionsFile(captionData);
@@ -432,6 +419,7 @@ Generated: ${new Date().toISOString().split('T')[0]}
     });
   } catch (error: any) {
     console.error('Campaign generation error:', error);
+    if (error instanceof StudioAccessError) return NextResponse.json({ error: error.message }, { status: error.status });
     const raw = error?.message || 'Failed to generate campaign';
     const ineligible = raw.startsWith('CAMPAIGN_INELIGIBLE:');
     const message = ineligible ? raw.replace(/^CAMPAIGN_INELIGIBLE:\s*/, '') : raw;

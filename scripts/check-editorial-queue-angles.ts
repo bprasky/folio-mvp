@@ -126,7 +126,7 @@ check('prompt includes published project title', prompt.includes('Hobbs House'))
 const parsed = parseAngleResponse('```json\n{"angles":[{"angleType":"material_loyalty","summary":"x","signalIds":["rep:finish:brass"],"confidence":0.7}]}\n```');
 check('parses fenced JSON', parsed.length === 1 && parsed[0].signalIds[0] === 'rep:finish:brass');
 check('parses malformed JSON to empty array', parseAngleResponse('not json').length === 0);
-check('drops non-string signalIds', parseAngleResponse('{"angles":[{"angleType":"process","summary":"y","signalIds":[1,"rep:finish:brass",null]}]}')[0].signalIds.length === 1);
+check('rejects non-string signalIds', parseAngleResponse('{"angles":[{"angleType":"process","summary":"y","signalIds":[1,"rep:finish:brass",null]}]}').length === 0);
 
 // End-to-end on the parsed output: parse → validate, the real pipeline shape.
 const e2e = validateAngles(
@@ -166,19 +166,19 @@ check('prompt-gen input carries the format brief', promptUser.includes('MATERIAL
 check('prompt-gen input surfaces evidence facts', promptUser.includes('brass'));
 
 const promptStruct = parsePromptResponse(
-  '```json\n{"intro":"On the brass you keep coming back to","items":[{"prompt":"What do you tell clients about patina?","hint":"material philosophy"},{"prompt":"Where do you source it?"}]}\n```',
+  '```json\n{"intro":"On the brass you keep coming back to","items":[{"prompt":"What do you tell clients about patina?","hint":"material philosophy"},{"prompt":"Where do you source it?"},{"prompt":"How do you choose the finish?"}]}\n```',
   'MATERIAL_STUDY',
 );
-check('parses prompt structure with intro + items', !!promptStruct && promptStruct.items.length === 2, promptStruct);
+check('parses prompt structure with intro + items', !!promptStruct && promptStruct.items.length === 3, promptStruct);
 check('every prompt item gets a stable id', !!promptStruct && promptStruct.items.every((i) => typeof i.id === 'string' && i.id.length > 0));
 check('format stamped on structure', promptStruct?.format === 'MATERIAL_STUDY');
-check('items with no prompt text are dropped', parsePromptResponse('{"intro":"x","items":[{"prompt":""},{"prompt":"real"}]}', 'QA')?.items.length === 1);
+check('insufficient surviving prompts rejected', parsePromptResponse('{"intro":"x","items":[{"prompt":""},{"prompt":"real"}]}', 'QA') === null);
 check('empty items list → null', parsePromptResponse('{"intro":"x","items":[]}', 'QA') === null);
 check('malformed prompt JSON → null', parsePromptResponse('nope', 'QA') === null);
-check('missing intro falls back, does not fail', parsePromptResponse('{"items":[{"prompt":"q"}]}', 'GET_TO_KNOW')?.intro !== undefined);
+check('missing intro falls back, does not fail', parsePromptResponse('{"items":[{"prompt":"q1"},{"prompt":"q2"},{"prompt":"q3"},{"prompt":"q4"}]}', 'GET_TO_KNOW')?.intro !== undefined);
 
 const thisOrThat = parsePromptResponse(
-  '{"intro":"Pick a lane","items":[{"prompt":"Which anchors a room?","optionA":"unlacquered brass","optionB":"polished nickel"}]}',
+  '{"intro":"Pick a lane","items":[{"prompt":"Which anchors a room?","optionA":"unlacquered brass","optionB":"polished nickel"},{"prompt":"Which texture?","optionA":"linen","optionB":"velvet"},{"prompt":"Which color?","optionA":"blue","optionB":"green"}]}',
   'THIS_OR_THAT',
 );
 check('this_or_that options preserved', thisOrThat?.items[0].optionA === 'unlacquered brass' && thisOrThat?.items[0].optionB === 'polished nickel');
