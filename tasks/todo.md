@@ -423,3 +423,11 @@ Scope: implement attached Publishing Studio Editorial Readiness Specification v1
 Plan check-in: implement product contract using exact source excerpts for factual copy and explicit image assessment, never inferred intent as fact. Browsing reads persisted recommendations only. Refresh performs bounded evaluation; unknown visual/source quality cannot be promoted to Ready. No production AI calls or database writes during implementation. New database structures will be reviewed in full before application.
 
 Review: implementation and automated checks are complete; see docs/reviews/STUDIO_READINESS_IMPLEMENTATION.md. Exact schema/SQL is proposed only. Migration application and human benchmark remain gated. Preserve feature-off default; no production writes or live AI evaluation.
+
+## Approved readiness migration and merge — 2026-09-21
+- [x] Back up schema, append exact approved models and migration, validate and generate.
+- [x] Apply only approved migration and verify live columns/constraints/indexes/RLS/bookkeeping.
+- [ ] Commit/push, verify PR checks, merge PR788; keep rollout disabled.
+Approval: user said "approved, merge" after exact SQL/model review. If format/validate/generate/migrate-status fails unexpectedly, restore tasks/schema-prisma-backup-readiness-approved.prisma and stop.
+
+Application review: approved migration applied;3 tables/20 columns and all constraints/indexes/RLS verified,112 bookkeeping records and zero unfinished. Prisma status/client alignment clean. Rollout disabled; merge pending CI.
