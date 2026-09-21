@@ -13,10 +13,10 @@ function load(file, mocks) {
   return exports;
 }
 async function main() {
-  let enabled = true, sources = [], stored = [], events = [], saves = [], evaluations = 0, modelHistory = [], mutationHistory = [];
+  let enabled = true, sources = [], stored = [], events = [], saves = [], evaluations = 0, modelHistory = [], mutationHistory = [], work = [];
   let workspace = { id: null, name: 'Studio', canWriteCampaigns: false }, budget = true, mutateAfterEvaluate;
   const policy = 'test-policy';
-  const source = { key: 'project:p1', fingerprint: 'source-a', projectIds: ['p1'], evidence: [], images: [] };
+  const source = { key: 'project:p1', origin: 'project', title: 'Project One', fingerprint: 'source-a', projectIds: ['p1'], evidence: [], images: [] };
   const fixture = () => ({ id: 'candidate-1', version: 1, sourceVersion: 'source-a', sourceKey: source.key, policy,
     designerId: 'owner', organizationId: null, projectIds: ['p1'], source, evidence: [], blockers: [], claims: [],
     readiness: 'ready', dismissed: false, dimensions: {}, score: 80, reasons: [], visuals: [{ id: 'image', url: 'photo', reason: 'proof' }],
@@ -31,7 +31,7 @@ async function main() {
       evaluateCandidate: (candidate, history = []) => { mutationHistory = history; return { ...candidate, readiness: candidate.blockers.length ? 'quick' : candidate.readiness }; },
       answerBlocker: (candidate, id, answer) => ({ ...structuredClone(candidate), evidence: [...candidate.evidence, { id, text: answer, source: 'designer_answer' }] }) },
     './evaluator': { evaluateSource: async (s, user, org, history) => { modelHistory = history; evaluations++; if (mutateAfterEvaluate) mutateAfterEvaluate(); return { ...fixture(), sourceVersion: s.fingerprint }; } },
-    './store': { CandidateConflictError: Conflict, listStoredCandidates: async () => structuredClone(stored),
+    './store': { CandidateConflictError: Conflict, listStoredCandidates: async () => structuredClone(stored), listCandidateWork: async () => structuredClone(work),
       saveCandidate: async (candidate, expected, kind, payload, secondaryEvents = []) => { saves.push({ candidate: structuredClone(candidate), expected, kind, payload, secondaryEvents }); stored = [structuredClone(candidate)]; events.push(...secondaryEvents.map(event => ({ candidate, ...event, atomic: true }))); return candidate; },
       appendEvent: async (candidate, kind, payload, id) => events.push({ candidate, kind, payload, id }) },
   });
@@ -101,6 +101,45 @@ async function main() {
   stored = [fixture(), second, stale];
   await service.changeCandidate('owner', 'candidate-1', { version: 1, sourceVersion: 'source-a', action: 'answer', blockerId: 'test', answer: 'A direct answer' });
   assert.deepEqual(Array.from(mutationHistory, c => c.id), ['candidate-2'], 'answers recheck current other stories');
-  console.log('PASS readiness service: read-only browsing, disabled/workspace/ownership guards, stale source/version rejection, attributed edits, image scope, explicit publication, idempotent view keys, budget and provider-race handling.');
+  sources = [source]; stored = [fixture()];
+  work = [
+    { candidate: { ...fixture(), id: 'started', readiness: 'quick' }, lastWorkedAt: '2026-09-22T12:00:00Z', exportedAt: null },
+    { candidate: { ...fixture(), id: 'stale', sourceVersion: 'older' }, lastWorkedAt: '2026-09-21T12:00:00Z', exportedAt: null },
+    { candidate: { ...fixture(), id: 'exported' }, lastWorkedAt: null, exportedAt: '2026-09-22T13:00:00Z' },
+    { candidate: { ...fixture(), id: 'stale-export', sourceVersion: 'older' }, lastWorkedAt: null, exportedAt: '2026-09-21T13:00:00Z' },
+    { candidate: { ...fixture(), id: 'dismissed', dismissed: true }, lastWorkedAt: '2026-09-23T00:00:00Z', exportedAt: null },
+  ].map(item => ({ ...item, isCurrent: true }));
+  const projection = await service.listReadiness('owner');
+  assert.equal(projection.projects.length, 1);
+  assert.equal(projection.projects[0].title, 'Project One');
+  sources = [source, { ...source }, { ...source, key: 'room:p1:r1', origin: 'room', title: 'Room title' }];
+  const labels = (await service.listReadiness('owner')).projects;
+  assert.equal(labels.length, 1, 'project labels deduplicate and exclude room candidates');
+  assert.equal(labels[0].title, 'Project One');
+  assert.equal(projection.inProgress.length, 2);
+  assert.equal(projection.inProgress[0].candidate.id, 'started');
+  assert.equal(projection.inProgress[0].needsReview, false);
+  assert.equal(projection.inProgress[1].needsReview, true, 'started stale work remains readable without being ready');
+  assert.equal(projection.exports[0].canDownload, true);
+  assert.equal(projection.exports[1].canDownload, false, 'stale export history is not a downloadable current package');
+  assert.equal(projection.exports[1].needsReview, true);
+  work = [
+    { candidate: { ...fixture(), version: 2, confirmedPublishedAt: '2026-09-22T14:00:00Z' }, isCurrent: true, lastWorkedAt: '2026-09-22T12:00:00Z', exportedAt: null },
+    { candidate: fixture(), isCurrent: false, lastWorkedAt: null, exportedAt: '2026-09-22T13:00:00Z' },
+  ];
+  const afterPublication = await service.listReadiness('owner');
+  assert.equal(afterPublication.inProgress.length, 1, 'publication is saved work without implying a downloaded current version');
+  assert.equal(afterPublication.exports.length, 1, 'published successor retains actual exported snapshot');
+  assert.equal(afterPublication.exports[0].candidate.version, 1);
+  assert.equal(afterPublication.exports[0].needsReview, true);
+  assert.equal(afterPublication.exports[0].canDownload, false, 'historical version is read-only even when source fingerprint matches');
+  work = [work[0]];
+  sources = [];
+  const publicationOnly = await service.listReadiness('owner');
+  assert.equal(publicationOnly.inProgress.length, 1, 'authorized publication-only work survives missing/private source');
+  assert.ok(publicationOnly.inProgress[0].candidate.confirmedPublishedAt);
+  assert.equal(publicationOnly.inProgress[0].needsReview, true);
+  assert.equal(publicationOnly.exports.length, 0, 'recording publication does not fabricate an export');
+  console.log('PASS readiness service: read-only browsing, auth/staleness checks, attributed edits, publication, lifecycle events, and truthful started/exported work projections.');
 }
 main().catch(error => { console.error(error); process.exitCode = 1; });

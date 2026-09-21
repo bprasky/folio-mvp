@@ -2,109 +2,102 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
+import dynamic from 'next/dynamic';
 import { useRouter, useSearchParams } from 'next/navigation';
 import type { Candidate } from '@/lib/publishing-studio/readiness/types';
 import { DISMISSAL_REASONS } from '@/lib/publishing-studio/readiness/types';
+import { candidatePresentation, preparationLine, storySections } from '@/lib/publishing-studio/readiness/presentation';
 import { CandidateConfigurator, updateCandidate } from './CandidateConfigurator';
+import { StudioIntro, StudioPhoto, StudioTabs, studioAction, type StudioTab } from './StudioWorkspace';
 
-const button = 'folio-ui rounded-full border border-folio-border-subtle px-4 py-2 disabled:opacity-50';
-type Data = { candidates: Candidate[]; developing: Candidate[]; workspace?: { name: string } };
+const SavedWork = dynamic(() => import('./PublishingStudio').then(module => module.PublishingStudio));
+const quietAction = 'folio-meta text-folio-text-secondary underline underline-offset-4 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 disabled:opacity-50';
+type Work = { candidate: Candidate; needsReview: boolean; lastWorkedAt?: string; exportedAt?: string; canDownload?: boolean };
+type Data = { candidates: Candidate[]; developing: Candidate[]; dismissed?: Candidate[]; inProgress?: Work[]; exports?: Work[]; projects?: {id:string;title:string}[]; workspace?: {name:string} };
 async function event(candidate: Candidate, kind: 'shown' | 'opened', eventId: string) {
-  const response = await fetch(`/api/publishing-studio/readiness/${encodeURIComponent(candidate.id)}/events`, {
-    method: 'POST', headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ version: candidate.version, sourceVersion: candidate.sourceVersion, kind, eventId }),
-  });
+  const response = await fetch(`/api/publishing-studio/readiness/${encodeURIComponent(candidate.id)}/events`, { method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({version:candidate.version,sourceVersion:candidate.sourceVersion,kind,eventId}) });
   if (!response.ok) throw new Error('Could not record story view');
 }
 
-function CandidateCard({ candidate, onOpen, onDismiss }: { candidate: Candidate; onOpen: () => void; onDismiss: (reason: string) => void }) {
+export function CandidateCard({ candidate, projectNames, onOpen, onDismiss, portfolio = false }: { candidate: Candidate; projectNames: (id:string)=>string; onOpen:()=>void; onDismiss?:(reason:string)=>void; portfolio?:boolean }) {
   const ref = useRef<HTMLElement>(null);
-  const tracked = useRef(new Map<string, { id: string; complete: boolean; pending: boolean }>());
-  const [reason, setReason] = useState('');
-  useEffect(() => {
-    const node = ref.current;
-    if (!node || typeof IntersectionObserver === 'undefined') return;
-    const key = `${candidate.id}:${candidate.version}:${candidate.sourceVersion}`;
-    const state = tracked.current.get(key) || { id: crypto.randomUUID(), complete: false, pending: false };
-    tracked.current.set(key, state);
-    const observer = new IntersectionObserver(entries => {
-      if (!entries.some(entry => entry.isIntersecting && entry.intersectionRatio >= 0.5) || state.complete || state.pending) return;
-      state.pending = true;
-      // A retry retains the same identity, so the server can deduplicate delivery.
-      void event(candidate, 'shown', state.id).catch(() => event(candidate, 'shown', state.id)).then(() => { state.complete = true; }).catch(() => {}).finally(() => { state.pending = false; });
-    }, { threshold: 0.5 });
-    observer.observe(node); return () => observer.disconnect();
-  }, [candidate]);
-  return <article ref={ref} className="min-w-0 space-y-4 rounded-xl border border-folio-border-subtle p-5">
-    {candidate.visuals[0] && <img src={candidate.visuals[0].url} alt={candidate.draft.headline} className="aspect-[4/5] w-full rounded-lg object-cover" /> /* eslint-disable-line @next/next/no-img-element */}
-    <p className="folio-meta">{candidate.readiness === 'ready' ? 'Ready to publish' : 'Quick Finish'} · {candidate.format === 'carousel' ? 'Carousel' : 'Single image'}</p>
-    <h2 className="folio-h3">{candidate.thesis}</h2><p className="folio-body">{candidate.audienceValue}</p>
-    <div className="space-y-1"><p className="folio-meta">Prepared caption</p><p className="whitespace-pre-line folio-body">{candidate.draft.caption}</p></div>
-    <p className="folio-meta">{candidate.rationale}</p>
-    <button className={button} onClick={onOpen}>{candidate.readiness === 'ready' ? 'Review and publish' : 'Finish this story'}</button>
-    <details><summary className="cursor-pointer folio-ui">Dismiss suggestion</summary><div className="mt-3 flex flex-wrap gap-2"><select aria-label="Optional dismissal reason" className={button} value={reason} onChange={e => setReason(e.target.value)}><option value="">Reason (optional)</option>{DISMISSAL_REASONS.map(item => <option key={item} value={item}>{item.replaceAll('_', ' ')}</option>)}</select><button className={button} onClick={() => onDismiss(reason)}>Dismiss</button></div></details>
+  const tracked = useRef(new Map<string,{id:string;complete:boolean;pending:boolean}>());
+  const [reason,setReason]=useState('');
+  const [imageUnavailable,setImageUnavailable]=useState(false);
+  useEffect(()=>{
+    const node=ref.current;if(!node||typeof IntersectionObserver==='undefined')return;
+    const key=`${candidate.id}:${candidate.version}:${candidate.sourceVersion}`;
+    const state=tracked.current.get(key)||{id:crypto.randomUUID(),complete:false,pending:false};tracked.current.set(key,state);
+    const observer=new IntersectionObserver(entries=>{
+      if(!entries.some(entry=>entry.isIntersecting&&entry.intersectionRatio>=.5)||state.complete||state.pending)return;
+      state.pending=true;void event(candidate,'shown',state.id).catch(()=>event(candidate,'shown',state.id)).then(()=>{state.complete=true}).catch(()=>{}).finally(()=>{state.pending=false});
+    },{threshold:.5});observer.observe(node);return()=>observer.disconnect();
+  },[candidate]);
+  const info=candidatePresentation(candidate);
+  const projectImages=candidate.projectIds.map(id=>candidate.visuals.find(image=>image.projectId===id)).filter((image):image is Candidate['visuals'][number]=>Boolean(image));
+  return <article ref={ref} className={portfolio?'grid gap-6 md:grid-cols-2':'flex min-w-0 flex-col'}>
+    {portfolio?<div className="grid grid-cols-2 gap-3">{projectImages.map(image=><figure key={image.id}><StudioPhoto images={[image]} alt={projectNames(image.projectId)} className="aspect-[4/3]"/><figcaption className="mt-2 folio-meta text-folio-text-secondary">{projectNames(image.projectId)}</figcaption></figure>)}</div>:<StudioPhoto images={candidate.visuals} onUnavailable={setImageUnavailable} alt={candidate.draft.headline} className="aspect-[4/3]"/>}
+    <div className={`flex flex-1 flex-col items-start ${portfolio?'':'pt-4'}`}>
+      <p className="rounded-full bg-surface-elevated px-3 py-1 folio-meta text-folio-text-primary">{info.label}</p>
+      <p className="mt-3 folio-meta text-folio-text-secondary">{candidate.projectIds.map(projectNames).join(' · ')} · {candidate.shape?.replaceAll('_',' ') || 'Project story'}</p>
+      <h3 className="folio-h3 mt-2 break-words">{candidate.draft.headline || candidate.thesis}</h3>
+      <p className="folio-body mt-3">{candidate.audienceValue || candidate.rationale}</p>
+      <p className="folio-meta mt-4 text-folio-text-secondary">{imageUnavailable?'Source image unavailable · review imagery':info.preparation}{candidate.visuals.length>1?` · ${candidate.visuals.length} photographs`:''}</p>
+      <details className="mt-3 w-full"><summary className="cursor-pointer folio-meta text-folio-text-secondary">Prepared caption</summary><p className="folio-body mt-2 whitespace-pre-line">{candidate.draft.caption || 'No caption saved yet.'}</p></details>
+      <div className="mt-auto w-full pt-5"><button className={studioAction} onClick={onOpen}>{info.action}</button>
+      {onDismiss&&<details className="mt-3"><summary className="cursor-pointer folio-meta text-folio-text-secondary">Dismiss suggestion</summary><div className="mt-2 flex flex-wrap gap-2"><select aria-label="Optional dismissal reason" className="min-w-0 max-w-full border border-folio-border-subtle bg-surface-canvas p-2 folio-meta" value={reason} onChange={e=>setReason(e.target.value)}><option value="">Reason (optional)</option>{DISMISSAL_REASONS.map(item=><option key={item} value={item}>{item.replaceAll('_',' ')}</option>)}</select><button className={quietAction} onClick={()=>onDismiss(reason)}>Dismiss</button></div></details>}</div>
+    </div>
   </article>;
 }
 
 export function ReadinessStudio() {
-  const params = useSearchParams();
-  const router = useRouter();
-  const projectId = params.get('project');
-  const candidateId = params.get('candidate');
-  const [data, setData] = useState<Data | null>(null);
-  const [selected, setSelected] = useState<Candidate | null>(null);
-  const [dismissed, setDismissed] = useState<Candidate[]>([]);
-  const [error, setError] = useState('');
-  const [pending, setPending] = useState(false);
-  const openedQuery = useRef<string | null>(null);
-  const primary = data?.candidates.filter(candidate => !projectId || projectId === 'studio-wide' || candidate.projectIds.includes(projectId)) || [];
-  const developing = data?.developing.filter(candidate => !projectId || projectId === 'studio-wide' || candidate.projectIds.includes(projectId)) || [];
-  useEffect(() => {
-    if (!candidateId) { openedQuery.current = null; return; }
-    if (openedQuery.current === candidateId || !data) return;
-    const match = [...data.candidates, ...data.developing].find(candidate => candidate.id === candidateId);
-    if (match && match.readiness !== 'developing') { openedQuery.current = candidateId; setSelected(match); }
-  }, [candidateId, data]);
-  const reload = useCallback(async () => {
-    const response = await fetch('/api/publishing-studio/readiness', { cache: 'no-store' });
-    const result = await response.json();
-    if (!response.ok) throw new Error(result.error || 'Could not open Publishing Studio');
-    setData(result);
-    setDismissed(result.dismissed || []);
-  }, []);
-  useEffect(() => { void reload().catch(err => setError(err.message)); }, [reload]);
-  async function refresh() {
-    setPending(true); setError('');
-    try {
-      const response = await fetch('/api/publishing-studio/readiness', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'refresh' }) });
-      const result = await response.json();
-      if (!response.ok) throw new Error(result.error || 'Could not evaluate stories');
-      await reload();
-    } catch (err) { setError(err instanceof Error ? err.message : 'Could not evaluate stories'); } finally { setPending(false); }
-  }
-  function change(candidate: Candidate) {
-    setSelected(candidate);
-    setData(current => current && ({ ...current, candidates: current.candidates.map(item => item.id === candidate.id ? candidate : item) }));
-  }
-  async function dismiss(candidate: Candidate, reason: string) {
-    setError('');
-    try { const result = await updateCandidate(candidate, { action: 'dismiss', ...(reason ? { reason } : {}) }); setDismissed(items => [...items.filter(item => item.id !== result.id), result]); await reload(); }
-    catch (err) { setError(err instanceof Error ? err.message : 'Could not dismiss story'); }
-  }
-  async function restore(candidate: Candidate) {
-    try { await updateCandidate(candidate, { action: 'restore' }); setDismissed(items => items.filter(item => item.id !== candidate.id)); await reload(); }
-    catch (err) { setError(err instanceof Error ? err.message : 'Could not restore story'); }
-  }
-  return <main className="mx-auto max-w-6xl space-y-8 p-4 sm:p-8">
-    <header className="flex flex-wrap items-center justify-between gap-4"><div><p className="folio-meta">{data?.workspace?.name || 'Your studio'}</p><h1 className="folio-h1">Publishing Studio</h1><p className="folio-body">A few stories worth sharing, grounded in your work.</p></div><button className={button} disabled={pending || !!selected} onClick={refresh}>{pending ? 'Evaluating stories…' : 'Find ready stories'}</button></header>
-    <nav className="flex flex-wrap gap-4 folio-ui"><Link href="/designer/studio" className="underline underline-offset-4">All studio stories</Link><Link href="/designer/studio?view=saved" className="underline underline-offset-4">Saved carousels and campaigns</Link></nav>
-    {error && <div role="alert" className="space-y-2 folio-body"><p>{error}</p><button className={button} onClick={() => { setError(''); void reload().catch(err => setError(err.message)); }}>Reload</button></div>}
-    {selected ? <CandidateConfigurator key={selected.id} candidate={selected} onChange={change} onClose={() => { const next = new URLSearchParams(params.toString()); next.delete('candidate'); router.replace(`/designer/studio${next.size ? `?${next}` : ''}`); setSelected(null); void reload().catch(err => setError(err.message)); }} /> : <>
-      {!data && !error && <p className="folio-body">Opening your stories…</p>}
-      {data && !primary.length && <div className="space-y-3 rounded-xl border border-folio-border-subtle p-6"><h2 className="folio-h2">No ready stories yet</h2><p className="folio-body">Evaluate your published projects to find supported stories. Some ideas may need more source material before they are ready.</p></div>}
-      <div className="grid gap-5 md:grid-cols-2">{primary.map(candidate => <CandidateCard key={candidate.id} candidate={candidate} onOpen={() => { setSelected(candidate); const next = new URLSearchParams(params.toString()); next.set('candidate', candidate.id); router.replace(`/designer/studio?${next}`, { scroll: false }); const id = crypto.randomUUID(); void event(candidate, 'opened', id).catch(() => event(candidate, 'opened', id)).catch(() => {}); }} onDismiss={reason => { void dismiss(candidate, reason); }} />)}</div>
-      {!!developing.length && <details className="rounded-xl border border-folio-border-subtle p-5"><summary className="cursor-pointer folio-ui">Developing ideas ({developing.length})</summary><div className="mt-4 space-y-4">{developing.map(candidate => <article key={candidate.id} className="space-y-2"><h2 className="folio-h3">{candidate.thesis}</h2><p className="folio-body">{candidate.reasons.join(' ')}</p>{candidate.projectIds.map(id => <Link key={id} href={`/project/${encodeURIComponent(id)}`} className="folio-ui underline underline-offset-4">Add project context</Link>)}</article>)}</div></details>}
-      {!!dismissed.length && <details><summary className="cursor-pointer folio-ui">Recently dismissed</summary>{dismissed.map(candidate => <div key={candidate.id} className="mt-3 flex flex-wrap items-center gap-3"><span className="folio-body">{candidate.thesis}</span><button className={button} onClick={() => restore(candidate)}>Restore</button></div>)}</details>}
-    </>}
+  const params=useSearchParams(),router=useRouter();
+  const project=params.get('project')||'';
+  const tab:StudioTab=params.get('tab')==='progress'?'progress':params.get('tab')==='exports'?'exports':'suggestions';
+  const candidateId=params.get('candidate'), candidateVersion=params.get('candidateVersion');
+  const [data,setData]=useState<Data|null>(null),[selected,setSelected]=useState<Candidate|null>(null);
+  const [readOnly,setReadOnly]=useState(false),[error,setError]=useState(''),[pending,setPending]=useState(false),[showMore,setShowMore]=useState(false);
+  const openedQuery=useRef<string|null>(null);
+  const matches=(candidate:Candidate)=>!project||project==='studio-wide'||(project==='cross-project'?candidate.projectIds.length>1:candidate.projectIds.includes(project));
+  const ranked=(data?.candidates||[]).filter(matches);
+  const sections=storySections(ranked);
+  const developing=(data?.developing||[]).filter(matches);
+  const projects=data?.projects||[];
+  const projectName=(id:string)=>projects.find(item=>item.id===id)?.title||ranked.find(item=>item.projectIds.length===1&&item.projectIds[0]===id)?.source?.title||'Project';
+  const reload=useCallback(async()=>{const response=await fetch('/api/publishing-studio/readiness',{cache:'no-store'});const result=await response.json();if(!response.ok)throw new Error(result.error||'Could not open Publishing Studio');setData(result)},[]);
+  useEffect(()=>{void reload().catch(err=>setError(err.message))},[reload]);
+  useEffect(()=>{
+    if(!candidateId){openedQuery.current=null;setSelected(null);setReadOnly(false);return}const queryKey=`${candidateId}:${candidateVersion||''}`;if(openedQuery.current===queryKey||!data)return;
+    const work=[...(data.inProgress||[]),...(data.exports||[])].find(item=>item.candidate.id===candidateId&&(!candidateVersion||String(item.candidate.version)===candidateVersion));
+    const match=(candidateVersion?work?.candidate:undefined)||[...data.candidates,...data.developing,...(data.dismissed||[])].find(item=>item.id===candidateId&&(!candidateVersion||String(item.version)===candidateVersion))||work?.candidate;
+    if(match){openedQuery.current=queryKey;setSelected(match);setReadOnly(Boolean((work?.candidate.version===match.version&&work.needsReview)||match.confirmedPublishedAt))}else{setSelected(null);setReadOnly(false)}
+  },[candidateId,candidateVersion,data]);
+  function navigate(changes:Record<string,string|null>){const next=new URLSearchParams(params.toString());for(const[key,value]of Object.entries(changes))value?next.set(key,value):next.delete(key);router.replace(`/designer/studio${next.size?`?${next}`:''}`,{scroll:false})}
+  function open(candidate:Candidate,readonly=false){setSelected(candidate);setReadOnly(readonly);openedQuery.current=`${candidate.id}:${readonly?candidate.version:''}`;navigate({candidate:candidate.id,candidateVersion:readonly?String(candidate.version):null});if(!readonly){const id=crypto.randomUUID();void event(candidate,'opened',id).catch(()=>event(candidate,'opened',id)).catch(()=>{})}}
+  async function refresh(){setPending(true);setError('');try{const response=await fetch('/api/publishing-studio/readiness',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'refresh'})});const result=await response.json();if(!response.ok)throw new Error(result.error||'Could not evaluate stories');await reload()}catch(err){setError(err instanceof Error?err.message:'Could not evaluate stories')}finally{setPending(false)}}
+  async function dismiss(candidate:Candidate,reason:string){try{await updateCandidate(candidate,{action:'dismiss',...(reason?{reason}:{})});await reload()}catch(err){setError(err instanceof Error?err.message:'Could not dismiss story')}}
+  async function restore(candidate:Candidate){try{await updateCandidate(candidate,{action:'restore'});await reload()}catch(err){setError(err instanceof Error?err.message:'Could not restore story')}}
+  const card=(candidate:Candidate)=><CandidateCard key={candidate.id} candidate={candidate} projectNames={projectName} onOpen={()=>open(candidate)} onDismiss={reason=>void dismiss(candidate,reason)}/>;
+  const work=tab==='progress'?data?.inProgress||[]:data?.exports||[];
+  return <main className="mx-auto max-w-6xl space-y-6 px-4 py-6 text-folio-text-primary sm:px-6 sm:py-8">
+    <StudioIntro/>
+    {!selected&&<StudioTabs value={tab} onChange={value=>{setShowMore(false);navigate({tab:value==='suggestions'?null:value,candidate:null,candidateVersion:null})}}/>}
+    {error&&<div role="alert" className="folio-body"><p>{error}</p><button className={`${quietAction} mt-2`} onClick={()=>{setError('');void reload().catch(err=>setError(err.message))}}>Reload stories</button></div>}
+    {selected?<><CandidateConfigurator key={`${selected.id}:${readOnly?selected.version:'current'}`}  candidate={selected} readOnly={readOnly} onChange={candidate=>{setSelected(candidate);void reload().catch(err=>setError(err.message))}} onClose={()=>{navigate({candidate:null,candidateVersion:null});setSelected(null);void reload().catch(err=>setError(err.message))}}/>{readOnly&&<p className="folio-body">Your saved version is retained for reference. {selected.projectIds.map(id=><Link key={id} href={`/project/${encodeURIComponent(id)}`} className={quietAction}>Open project </Link>)}</p>}</>:<section id="studio-panel" role="tabpanel" aria-labelledby={`studio-tab-${tab}`} tabIndex={0} className="space-y-6 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4">
+      {tab==='suggestions'?<>
+        <div className="flex flex-wrap items-end justify-between gap-3"><div><h2 className="folio-h2">Your next stories</h2><p className="folio-body mt-1">{ranked.length?preparationLine(sections.primary):'Specific stories from your published work, when the source is ready.'}</p></div><div className="flex flex-wrap items-center gap-4"><label><span className="sr-only">Filter stories by project</span><select className="max-w-full border-b border-folio-border-subtle bg-surface-canvas py-2 folio-meta text-folio-text-secondary" value={project} onChange={e=>{setShowMore(false);navigate({project:e.target.value||null})}}><option value="">All projects</option><option value="cross-project">Across projects</option>{projects.map(item=><option key={item.id} value={item.id}>{item.title}</option>)}</select></label><button className={quietAction} disabled={pending} onClick={refresh}>{pending?'Reviewing stories…':'Refresh suggestions'}</button></div></div>
+        {!data&&!error&&<p role="status" className="folio-body py-8">Opening your stories…</p>}
+        {data&&!ranked.length&&<div className="bg-surface-ground p-6"><h3 className="folio-h3">No stories ready for review yet</h3><p className="folio-body mt-2">Refresh suggestions to review your published work. Your saved drafts remain in In progress.</p></div>}
+        <div className="grid grid-cols-1 gap-x-6 gap-y-10 sm:grid-cols-2 lg:grid-cols-3" aria-label="Recommended stories">{sections.primary.map(card)}</div>
+        {!!sections.more.length&&<div>{showMore?<div className="grid grid-cols-1 gap-x-6 gap-y-10 sm:grid-cols-2 lg:grid-cols-3">{sections.more.map(card)}</div>:null}<button className={`${quietAction} mt-4`} onClick={()=>setShowMore(value=>!value)}>{showMore?'Show fewer stories':`More prepared stories (${sections.more.length})`}</button></div>}
+        {sections.portfolio&&<section className="space-y-4 border-t border-folio-border-subtle pt-6" aria-label="Across your portfolio"><h2 className="folio-h3">Across your portfolio</h2><CandidateCard candidate={sections.portfolio} projectNames={projectName} portfolio onOpen={()=>open(sections.portfolio!)} onDismiss={reason=>void dismiss(sections.portfolio!,reason)}/></section>}
+        {!!developing.length&&<details className="border-t border-folio-border-subtle pt-5"><summary className="cursor-pointer folio-ui text-folio-text-secondary">More opportunities to develop ({developing.length})</summary><div className="mt-4 space-y-5">{developing.map(candidate=><article key={candidate.id}><h3 className="folio-h3">{candidate.thesis||candidate.source?.title}</h3><p className="folio-body mt-2">This story needs more source material or editorial development.</p><button className={`${quietAction} mt-2`} onClick={()=>open(candidate)}>Review saved material</button></article>)}</div></details>}
+        {!!data?.dismissed?.filter(matches).length&&<details className="border-t border-folio-border-subtle pt-5"><summary className="cursor-pointer folio-meta text-folio-text-secondary">Dismissed suggestions</summary>{data.dismissed.filter(matches).map(candidate=><div key={candidate.id} className="mt-3 flex flex-wrap items-center justify-between gap-3"><span className="folio-body">{candidate.thesis}</span><button className={quietAction} onClick={()=>restore(candidate)}>Restore</button></div>)}</details>}
+      </>:<>
+        <div><h2 className="folio-h2">{tab==='progress'?'Pick up where you left off':'Your exports'}</h2><p className="folio-body mt-1">{tab==='progress'?'Your saved words, selected images, and started stories.':'Previously prepared downloads. Exporting does not confirm publication.'}</p></div>
+        {work.filter(item=>matches(item.candidate)).map(item=><article key={`${item.candidate.id}:${item.candidate.version}`} className="flex flex-wrap items-center justify-between gap-4 border-b border-folio-border-subtle py-4"><div className="min-w-0 flex-1"><p className="folio-meta text-folio-text-secondary">{item.candidate.confirmedPublishedAt?'Publication recorded':item.needsReview?'Earlier version · saved work retained':tab==='exports'?'Download prepared':'Saved draft'}{item.candidate.confirmedPublishedAt?' · Publication confirmed by you':''}</p><h3 className="folio-h3 mt-1">{item.candidate.draft.headline}</h3><p className="folio-body mt-2 whitespace-pre-line">{item.candidate.draft.caption}</p></div><button className={studioAction} onClick={()=>open(item.candidate,item.needsReview||Boolean(item.candidate.confirmedPublishedAt))}>{item.needsReview||item.candidate.confirmedPublishedAt?'View saved work':tab==='exports'&&item.canDownload?'Review and download':'Resume story'}</button></article>)}
+        <SavedWork embedded/>
+      </>}
+    </section>}
   </main>;
 }

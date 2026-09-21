@@ -20,10 +20,11 @@ const path = require('node:path');
       INSERT INTO users VALUES ('actor','DESIGNER',NULL),('intruder','DESIGNER',NULL);
       INSERT INTO projects VALUES ('project',NULL,'actor','actor',true);
       INSERT INTO project_posts VALUES ('project','PUBLISHED');`);
+    let allowedProjectIds = ['project'], lastProjectWhere;
     const adapt = client => ({
       $queryRaw: async (parts, ...values) => { const query = Array.isArray(parts) ? Prisma.sql(parts, ...values) : parts; return (await client.query(query.text, query.values)).rows; },
       $executeRaw: async (parts, ...values) => { const query = Prisma.sql(parts, ...values); return (await client.query(query.text, query.values)).affectedRows; },
-      project: { findMany: async () => [{ id: 'project' }] },
+      project: { findMany: async ({ where }) => { lastProjectWhere = where; return allowedProjectIds.map(id => ({ id })); } },
     });
     const fakePrisma = { $transaction: fn => db.transaction(tx => fn(adapt(tx))) };
     const file = 'src/lib/publishing-studio/readiness/store.ts';
@@ -50,6 +51,7 @@ const path = require('node:path');
     assert.equal((await db.query('SELECT count(*)::int AS n FROM studio_candidate_events')).rows[0].n, 3);
     await assert.rejects(store.saveCandidate(candidate, null, 'generated'), store.CandidateConflictError);
     await store.appendEvent(candidate, 'shown', { score: -1 }, 'shown-id');
+    assert.equal((await store.listCandidateWork('actor', null)).length, 0, 'generated/scored/ready/shown do not imply started work');
     await store.appendEvent(candidate, 'shown', { score: -1 }, 'shown-id');
     assert.equal((await db.query(`SELECT payload FROM studio_candidate_events WHERE id='shown-id'`)).rows[0].payload.score, 80);
     await assert.rejects(store.appendEvent(candidate, 'opened', {}, 'shown-id'), store.CandidateConflictError);
@@ -57,16 +59,51 @@ const path = require('node:path');
     currentSource = 'source-b';
     await assert.rejects(store.saveCandidate({ ...candidate, version: 2 }, 1, 'edited'), store.CandidateConflictError);
     await store.saveCandidate({ ...candidate, version: 2, sourceVersion: 'source-b' }, 1, 'edited');
+    assert.ok((await store.listCandidateWork('actor', null))[0].lastWorkedAt, 'edited events mark actual started work');
+    await store.appendEvent({ ...candidate, version: 2, sourceVersion: 'source-b' }, 'exported', { campaignId: 'campaign' });
+    assert.equal((await store.listCandidateWork('actor', null))[0].exportedAt, null, 'campaign event is not a downloadable package');
+    await store.appendEvent({ ...candidate, version: 2, sourceVersion: 'source-b' }, 'exported', { destination: 'download' });
+    assert.ok((await store.listCandidateWork('actor', null))[0].exportedAt);
+    // An export on an older version must not advertise a package for newer work.
+    await store.saveCandidate({ ...candidate, version: 3, sourceVersion: 'source-b', confirmedPublishedAt: '2026-09-22T00:00:00Z' }, 2, 'published');
+    const publishedHistory = await store.listCandidateWork('actor', null);
+    assert.equal(publishedHistory[0].exportedAt, null);
+    assert.equal(publishedHistory[0].isCurrent, true);
+    assert.equal(publishedHistory[1].candidate.version, 2);
+    assert.equal(publishedHistory[1].isCurrent, false);
+    assert.ok(publishedHistory[1].exportedAt, 'actual exported version survives a publication successor');
+    currentSource = 'source-c';
+    await store.saveCandidate({ ...candidate, version: 4, sourceVersion: 'source-c' }, 3, 'generated');
+    const refreshedHistory = await store.listCandidateWork('actor', null);
+    assert.equal(refreshedHistory[0].candidate.version, 4);
+    assert.equal(refreshedHistory[0].exportedAt, null);
+    assert.equal(refreshedHistory[1].candidate.sourceVersion, 'source-b');
+    assert.ok(refreshedHistory[1].exportedAt, 'source refresh retains original export identity');
     await assert.rejects(store.appendEvent(candidate, 'opened'), store.CandidateConflictError);
     await assert.rejects(store.saveCandidate({ ...candidate, version: 2 }, 1, 'edited'), store.CandidateConflictError);
-    assert.equal((await store.listStoredCandidates('actor', null))[0].version, 2);
-    assert.equal((await db.query('SELECT count(*)::int AS n FROM studio_candidate_versions')).rows[0].n, 2);
+    assert.equal((await store.listStoredCandidates('actor', null))[0].version, 4);
+    assert.equal((await db.query('SELECT count(*)::int AS n FROM studio_candidate_versions')).rows[0].n, 4);
+    const publicationOnly = { ...candidate, id: 'publication-only', sourceVersion: 'source-c' };
+    await store.saveCandidate(publicationOnly, null, 'generated');
+    await store.saveCandidate({ ...publicationOnly, version: 2, confirmedPublishedAt: '2026-09-22T12:00:00Z' }, 1, 'published');
+    const publicationWork = (await store.listCandidateWork('actor', null)).find(row => row.candidate.id === 'publication-only');
+    assert.ok(publicationWork.lastWorkedAt, 'publication alone is an actual saved-work event without a prior edit');
+    assert.equal(publicationWork.exportedAt, null, 'publication alone is not an export');
     await db.exec(`UPDATE project_posts SET status='DRAFT'`);
     await assert.rejects(store.appendEvent({ ...candidate, version: 2, sourceVersion: 'source-b' }, 'opened'), /no longer published/);
     await db.exec(`UPDATE project_posts SET status='PUBLISHED'; UPDATE projects SET "isPublic"=false`);
+    assert.equal((await store.listCandidateWork('actor', null)).length, 3, 'own saved work, publication-only work and export history remain readable when source becomes private');
+    assert.equal(lastProjectWhere.isPublic, undefined, 'author history does not require public status');
+    assert.equal((await store.listCandidateWork('intruder', null)).length, 0, 'another actor cannot read saved work');
+    allowedProjectIds = [];
+    assert.equal((await store.listCandidateWork('actor', null)).length, 0, 'source ownership loss hides saved snapshots');
+    allowedProjectIds = ['project'];
     await assert.rejects(store.saveCandidate({ ...candidate, version: 3 }, 2, 'edited'), /source access/);
     await db.exec(`UPDATE projects SET "isPublic"=true`);
     await db.exec(`UPDATE users SET "operatingAsOrgId"='changed' WHERE id='actor'`);
+    await db.exec(`INSERT INTO organization_users VALUES ('actor','changed',true,'MEMBER')`);
+    assert.equal((await store.listCandidateWork('actor', 'changed')).length, 0, 'personal work does not cross workspace');
+    assert.deepEqual(lastProjectWhere.OR, [{ ownerId: 'actor' }, { designerId: 'actor' }, { isPublic: true, post: { status: 'PUBLISHED' } }], 'private colleague projects excluded from org author-history scope');
     await assert.rejects(store.appendEvent({ ...candidate, version: 2, sourceVersion: 'source-b' }, 'opened'));
     console.log('PASS real store against disposable PostgreSQL: immutable version history, optimistic conflicts, actor/source ownership, workspace change denial, idempotent exact-version events, authoritative scores, latest list.');
   } finally { await db.close(); }

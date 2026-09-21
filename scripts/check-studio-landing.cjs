@@ -8,7 +8,8 @@ let params = new URLSearchParams();
 const data = { workspace: { name: 'BP Design', id: 'bp' }, projects: ['Meru', 'La Gorce'].map((title, i) => ({ id: `p${i}`, title, published: true, canCreate: true, canCreateCampaign: true })), editorials: [], posts: [], campaigns: [], ideas: [], feed: ['Meru', 'La Gorce'].map((title, i) => ({id:`suggestion:p${i}`,projectIds:[`p${i}`],title:`Inside ${title}`,caption:`Prepared caption for ${title}`,imageUrl:`https://example.com/${i}.jpg`,imageUrls:[`https://example.com/${i}.jpg`],pitch:'A focused story about the decision behind this room.',rationale:'Supported by the published design change.',slideCount:2,revision:'source-v1',kind:'suggestion',format:'project_story',status:'recommended',updatedAt:'2026-09-17',canPolish:true})) };
 const hero = load('src/components/instagram-export/CarouselHero.tsx', {});
 const feedCard = load('src/components/publishing-studio/StudioFeedCard.tsx', { '@/components/instagram-export/CarouselHero': hero });
-const imports = { '@/lib/publishing-studio/recommendations': load('src/lib/publishing-studio/recommendations.ts', {}), 'next/dynamic': {default: () => props => React.createElement('div', {'data-campaign-project':props.projectId}, props.projectTitle)}, 'next/link': { default: ({ children, ...props }) => React.createElement('a', props, children) }, 'next/navigation': { useRouter: () => ({ replace() { }, push(href) { destinations.push(href); } }), useSearchParams: () => params }, './useStudio': { useStudio: () => ({ data, reload() { } }) }, './StudioFeedCard': feedCard, '@/lib/publishing-studio/navigation': navigation };
+const workspace = load('src/components/publishing-studio/StudioWorkspace.tsx', {});
+const imports = { './StudioWorkspace': workspace, '@/lib/publishing-studio/recommendations': load('src/lib/publishing-studio/recommendations.ts', {}), 'next/dynamic': {default: () => props => React.createElement('div', {'data-campaign-project':props.projectId}, props.projectTitle)}, 'next/link': { default: ({ children, ...props }) => React.createElement('a', props, children) }, 'next/navigation': { useRouter: () => ({ replace() { }, push(href) { destinations.push(href); } }), useSearchParams: () => params }, './useStudio': { useStudio: () => ({ data, reload() { } }) }, './StudioFeedCard': feedCard, '@/lib/publishing-studio/navigation': navigation };
 const { PublishingStudio } = load('src/components/publishing-studio/PublishingStudio.tsx', imports);
 let html = renderToStaticMarkup(React.createElement(PublishingStudio));
 assert.match(html, /A focused story about the decision behind this room/);assert.match(html,/2 slides/);
@@ -26,6 +27,27 @@ const {ProjectSocialPanel}=load('src/components/publishing-studio/ProjectSocialP
 html=renderToStaticMarkup(React.createElement(ProjectSocialPanel,{projectId:'p0'}));
 assert.match(html,/href="\/designer\/studio\?project=p0"/); assert.match(html,/Inside Meru/); assert.doesNotMatch(html,/Inside La Gorce|create=|view=campaigns/);
 params=new URLSearchParams('type=campaign'); html=renderToStaticMarkup(React.createElement(PublishingStudio)); assert.match(html,/No posts match/);
+const originalFeed = data.feed;
+assert.match(html, /Your work has more to say/);
+for (const count of [0, 1, 2, 3, 4]) {
+ params = new URLSearchParams();
+ data.feed = Array.from({length: count}, (_, index) => ({...originalFeed[0], id: `proposal:${index}`, title: `Prepared story ${index}`}));
+ html = renderToStaticMarkup(React.createElement(PublishingStudio));
+ assert.equal((html.match(/aria-label="Polish this post:/g) || []).length, Math.min(count, 3), 'Three is a maximum, never a quota');
+ if (count === 4) assert.match(html, /More suggestions/);
+}
+data.feed = [{...originalFeed[0], id:'carousel:saved', kind:'carousel', status:'generated', exportId:'saved'}, {...originalFeed[0],id:'carousel:draft',kind:'carousel',status:'draft',exportId:'draft'}];
+data.campaigns = [{id:'unfinished',projectId:'p0',title:'Unfinished campaign',postCount:0,totalPosts:4,posts:[]}];
+params = new URLSearchParams('tab=progress');
+html = renderToStaticMarkup(React.createElement(PublishingStudio));
+assert.match(html,/Continue editing/); assert.match(html,/Unfinished campaign/); assert.match(html,/without generated posts/);
+params = new URLSearchParams('tab=exports');
+html = renderToStaticMarkup(React.createElement(PublishingStudio));
+assert.match(html,/No stored download packages/); assert.doesNotMatch(html,/aria-label="Continue editing:/);
+params = new URLSearchParams('tab=progress&view=saved');
+html = renderToStaticMarkup(React.createElement(PublishingStudio,{embedded:true}));
+assert.doesNotMatch(html,/role="tablist"|role="tabpanel"|Your work has more to say/); assert.match(html,/Continue editing/);
+data.feed=originalFeed;data.campaigns=[];
 console.log('PASS Studio feed: photo-led proposed posts without social history; legacy campaign link stays populated; same scoped project cards and canonical hub link; explicit type filter.');
 
 
@@ -37,7 +59,7 @@ async function checkInteractions() {
  const root=createRoot(document.getElementById('root'));
  await act(async()=>root.render(React.createElement(PublishingStudio)));
  assert.equal(requests.length,0,'Browsing available cards must not call preparation or generation');
- await act(async()=>[...document.querySelector('section[aria-label="Stories from Meru"]').querySelectorAll('button')].find(button=>button.textContent==='Build a campaign').click());
+ await act(async()=>[...document.querySelector('section[aria-label="Your next stories"]').parentElement.querySelectorAll('button')].find(button=>button.textContent==='Build a campaign for Meru').click());
  assert.equal(document.querySelector('[data-campaign-project]').getAttribute('data-campaign-project'),'p0','Campaign opens directly with source project selected');
  const button=()=>document.querySelector('button[aria-label="Polish this post: Inside Meru"]');
  await act(async()=>button().click());
