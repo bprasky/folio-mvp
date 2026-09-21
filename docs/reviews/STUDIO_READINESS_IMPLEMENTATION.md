@@ -1,6 +1,6 @@
 # Editorial readiness implementation review — 2026-09-21
 
-Status: implemented for controlled evaluation; rollout disabled. The additive database proposal is not applied. No production content writes or paid AI calls were made.
+Status: implemented for controlled evaluation; rollout disabled. The approved additive database migration is applied and verified. No production content writes or paid AI calls were made.
 
 ## Delivered
 
@@ -29,4 +29,4 @@ The actual React components were checked in a local browser with synthetic trans
 
 ## Database review
 
-Exact additive model and SQL proposals are in `studio-readiness-proposed.prisma` and `studio-readiness-proposed.sql`; authorization, recon, test evidence and application/rollback steps are in `STUDIO_READINESS_PERSISTENCE.md`. Canonical schema and migrations are unchanged pending the project-required exact-change approval.
+Exact additive model and SQL proposals are in `studio-readiness-proposed.prisma` and `studio-readiness-proposed.sql`; authorization, recon, test evidence and application/rollback steps are in `STUDIO_READINESS_PERSISTENCE.md`. User approval was received; the exact schema and migration are installed. Live postflight and clean migration status are recorded in the persistence review.

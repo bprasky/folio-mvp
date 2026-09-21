@@ -1,6 +1,6 @@
 # Publishing Studio editorial readiness persistence review
 
-Status: proposed only; no canonical schema edits, migration application, or live data writes.
+Status: approved and applied on 2026-09-21 as `20260921160000_studio_readiness_candidates`. The exact reviewed SQL and model blocks are installed. Rollout remains disabled.
 
 ## Change summary and classification
 
@@ -41,7 +41,7 @@ Every new mutation must recheck authenticated actor, current workspace membershi
 | Evaluate / prepare / mark ready | Authenticated author mutation | Same ownership + role checks inside transaction; published/included/confirmed requirements belong to readiness evaluation, not blanket author-source filters |
 | Event history / observability | Authenticated author workspace | Same ownership boundary; no public endpoint |
 
-`authorize()` / `authorizeSource()` in `src/lib/publishing-studio/readiness/store.ts` lock and recheck user role/current workspace, writable active membership, public project ownership, and PUBLISHED post state within every write transaction. Image/room rows and direction queue/angle rows are locked; the canonical source is rebuilt with the same transaction and its fingerprint checked before persistence. Store operations reject calls unless `STUDIO_EDITORIAL_READINESS=true`. The service must supply actor identity from the authenticated session. Schema application remains pending.
+`authorize()` / `authorizeSource()` in `src/lib/publishing-studio/readiness/store.ts` lock and recheck user role/current workspace, writable active membership, public project ownership, and PUBLISHED post state within every write transaction. Image/room rows and direction queue/angle rows are locked; the canonical source is rebuilt with the same transaction and its fingerprint checked before persistence. Store operations reject calls unless `STUDIO_EDITORIAL_READINESS=true`. The service must supply actor identity from the authenticated session. Schema application completed after explicit user approval.
 
 ## Validation
 
@@ -103,3 +103,11 @@ Rollback: disable the readiness persistence feature and retain new tables/data. 
 - `currentVersion` is positive but is not a database FK to its child, avoiding a circular insert dependency. The transaction must maintain this pointer and state consistently.
 - Version immutability and legal state/event vocabulary are service contracts, not database triggers/enums. Regression tests should cover stale version races, cross-actor/workspace denial, idempotent events, source changes, and preservation of saved work.
 - There are no User/Organization FKs, so deletion cleanup must be explicit.
+
+## Approved application — 2026-09-21
+
+User approved the exact SQL/model packet and merge. Backed up canonical schema, appended only the approved model blocks, and copied the exact SQL to the timestamped migration. Format, validate, generate and client-sync checks pass. Before application, verified identical application/migration Supabase project identity, session-port5432 connection and exactly one pending migration. Applied with guarded `prisma migrate deploy`; migrate status is clean. No development reset or schema push was used.
+
+Read-only postflight verifies3 tables,20 columns, all primary/foreign/check constraints, unique/query indexes, RLS with no client policies, exact migration checksum,112 bookkeeping records and zero unfinished migrations. Existing data was not modified. The local schema backup is `tasks/schema-prisma-backup-readiness-approved.prisma`. `pg_dump` is unavailable locally; no local full-database backup was created. This additive production deployment uses the production deploy path, whose repository backup script documents infrastructure-managed backups; no infrastructure restore test is claimed.
+
+The general `db:check` script is still absent; scoped metadata verification above is its explicitly documented substitute for this migration only. Human benchmark and authenticated rollout verification remain pending; the readiness flag has not been enabled.
