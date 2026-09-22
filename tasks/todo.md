@@ -488,3 +488,8 @@ Review: implemented behind disabled flag; no schema or production changes. Compi
 Plan check-in: implement the user's correction across both Studio paths using existing data and actions. Keep saved-work behavior intact. No schema changes or production writes; feature availability changes in code, without editing hosted settings.
 
 Review: implemented both Studio paths, shared accessible pitch dialogs, searchable project gallery and default-on expertise with explicit kill switch. Compile, lint, TypeScript 903/904, guards and targeted regression/UI/storage checks pass. Synthetic desktop/mobile browser review complete. See docs/reviews/studio-window-shopping/README.md. No production environment edits or deployment.
+
+## Studio pitch photographs — 2026-09-22
+- [x] Carry project and expertise photography into the pitch modal; omit decorative personal covers.
+- [x] Verify exact image retention and existing browse/action regressions.
+- [ ] Browser-check and merge PR793 after CI passes, as approved by the user.

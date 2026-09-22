@@ -37,9 +37,10 @@ export function StudioPitchDialog({ title, children, onClose }: { title: string;
 }
 
 /** Browsing opens a pitch; only its explicit CTA enters the existing work flow. */
-export function StudioPitchCard({ eyebrow, title, image, children, actionLabel, href, onAction, disabled = false }: {
+export function StudioPitchCard({ eyebrow, title, image, children, actionLabel, href, onAction, disabled = false, showImageInPitch = true }: {
   eyebrow: string; title: string; image?: ReactNode; children: ReactNode;
   actionLabel: string; href?: string; onAction?(): void; disabled?: boolean;
+  showImageInPitch?: boolean;
 }) {
   const [open, setOpen] = useState(false);
   return <article className="min-w-0">
@@ -53,7 +54,10 @@ export function StudioPitchCard({ eyebrow, title, image, children, actionLabel, 
     </button>
     {open && <StudioPitchDialog title={title} onClose={() => setOpen(false)}>
       <p className="folio-meta mb-4 text-folio-text-secondary">{eyebrow}</p>
-      <div className="space-y-4 folio-body">{children}</div>
+      <div className={image && showImageInPitch ? 'grid items-start gap-6 sm:grid-cols-2' : ''}>
+        {image && showImageInPitch && <div className="mx-auto w-full max-w-xs [&>img]:rounded-xl [&>div]:rounded-xl">{image}</div>}
+        <div className="space-y-4 folio-body">{children}</div>
+      </div>
       <div className="mt-8 border-t border-folio-border-subtle pt-5">
         {href ? <Link href={href} className={studioAction}>{actionLabel}</Link> : <button type="button" disabled={disabled} className={studioAction} onClick={() => { setOpen(false); onAction?.(); }}>{actionLabel}</button>}
       </div>

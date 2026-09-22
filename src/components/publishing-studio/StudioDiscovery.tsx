@@ -60,6 +60,7 @@ export function AboutMeInvitation({ compact = false, bio = false, introduction }
   const published = !bio && introduction?.status === 'published' && !introduction.needsReview;
   const draft = !bio && (introduction?.status === 'draft' || introduction?.needsReview);
   return <div className={compact ? 'order-first sm:order-none' : ''}><StudioPitchCard
+    showImageInPitch={false}
     eyebrow={bio ? 'Profile bio' : published ? '20 Questions · Published' : draft ? '20 Questions · In progress' : '20 Questions'}
     title={published ? 'Your introduction is ready to share.' : draft ? 'Keep shaping your introduction.' : bio ? 'Help the right clients find you.' : 'Meet the person behind the projects.'}
     image={<PersonalCover tall={compact} label={bio ? 'In your words.' : 'Meet me.'} detail={bio ? 'Your practice' : '20 Questions'} />}
@@ -84,7 +85,7 @@ export function ActivityInvitations({ project, format = '', personal = false, om
         const label = format === 'material' ? 'Material choices' : format === 'method' ? 'My process' : format === 'twenty_questions' ? '20 Questions' : project ? 'Room Q&A' : 'My perspective';
         const cover = format === 'material' ? 'Why this?' : format === 'method' ? 'How I work.' : format === 'twenty_questions' ? 'The story within.' : 'Through my eyes.';
         const title = format === 'material' ? 'The thinking behind a material choice.' : format === 'method' ? 'What working with you feels like.' : format === 'twenty_questions' ? `Get to know ${project?.title}.` : project ? 'A room worth a closer look.' : 'What you notice—and why.';
-        return <StudioPitchCard key={format} eyebrow={label} title={title}
+        return <StudioPitchCard key={format} eyebrow={label} title={title} showImageInPitch={Boolean(project?.thumbnail)}
           image={project?.thumbnail ? <StudioPhoto images={[{ id: project.id, url: project.thumbnail }]} alt="" className="aspect-[4/3]" /> : <PersonalCover label={cover} detail={label} />}
           actionLabel={opportunity.action} href={opportunity.href!}>
           <p>{opportunity.reason}</p><p>{opportunity.path}</p><p>{opportunity.result} {opportunity.destination}</p><p className="folio-meta">{opportunity.metadata}</p>

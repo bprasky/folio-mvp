@@ -31,12 +31,13 @@ const click = async label => { assert(button(label), label); await React.act(asy
   const root = createRoot(document.getElementById('root'));
   const { StudioPitchCard } = load('src/components/publishing-studio/StudioPitchCard.tsx');
   let starts = 0;
-  await React.act(async () => root.render(React.createElement(StudioPitchCard, { title: 'Make a small room work harder', eyebrow: 'Room feature', actionLabel: 'Polish this post', onAction: () => starts++ }, 'The full prepared pitch.')));
+  await React.act(async () => root.render(React.createElement(StudioPitchCard, { title: 'Make a small room work harder', eyebrow: 'Room feature', image: React.createElement('img', { src: '/project-room.jpg', alt: 'The selected project room' }), actionLabel: 'Polish this post', onAction: () => starts++ }, 'The full prepared pitch.')));
   assert(!document.body.textContent.includes('The full prepared pitch.'));
   const trigger = button('View idea: Make a small room work harder'); trigger.focus();
   await click('View idea: Make a small room work harder');
   assert.equal(starts, 0, 'Opening a pitch does not start or save work');
   assert(document.querySelector('dialog[open]')); assert(document.body.textContent.includes('The full prepared pitch.'));
+  assert.equal(document.querySelector('dialog img').getAttribute('src'), '/project-room.jpg', 'The exact project photo remains visible inside the pitch');
   assert.equal(document.body.style.overflow, 'hidden');
   await React.act(async () => document.querySelector('dialog').dispatchEvent(new window.Event('cancel', { bubbles: false, cancelable: true })));
   assert(!document.querySelector('dialog')); assert.ok(document.activeElement === trigger, 'Closing the dialog restores focus to its card trigger');

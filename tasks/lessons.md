@@ -1120,3 +1120,6 @@ Lead with why this matters to the designer, how Folio helps and the concrete res
 
 ## 2026-09-22 — Studio is window shopping, not an explanation page
 Keep browse cards to a visual, a concrete activity label and a specific reason/title. Put pitch, preparation, benefits and primary action in an accessible click-open modal. Do not replace dropdowns with a cramped thumbnail slider; use a clean subject control and searchable project gallery. A merged feature must have a visible usable entry when the user expects it; explicitly account for rollout flags.
+
+## 2026-09-22 — Keep the visual context inside the pitch
+When a Studio card represents a project or has photography, carry the same relevant photos into its modal alongside the pitch. Do not make the designer close the modal to remember the visual context.
