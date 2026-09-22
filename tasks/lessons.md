@@ -1117,3 +1117,6 @@ Once the user says merge, check CI, repair failures and finish the merge without
 
 ## 2026-09-22 — A Studio opportunity begins with a designer purpose
 Lead with why this matters to the designer, how Folio helps and the concrete result. Formats are means, not the recommendation. Carry purpose and sources into the destination, group coherent project outputs without duplicates, and keep promises bounded by real review, placement, export and publication behavior. Missing publication data is unknown.
+
+## 2026-09-22 — Studio is window shopping, not an explanation page
+Keep browse cards to a visual, a concrete activity label and a specific reason/title. Put pitch, preparation, benefits and primary action in an accessible click-open modal. Do not replace dropdowns with a cramped thumbnail slider; use a clean subject control and searchable project gallery. A merged feature must have a visible usable entry when the user expects it; explicitly account for rollout flags.

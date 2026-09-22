@@ -65,6 +65,7 @@ jobs:
         run: |
           node scripts/check-publishing-studio-data.cjs
           node scripts/check-studio-landing.cjs
+          node scripts/check-studio-pitches.cjs
           node scripts/check-studio-opportunities.cjs
           node scripts/check-expertise-engine.cjs
           node scripts/check-expertise-ui.cjs

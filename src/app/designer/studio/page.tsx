@@ -1,3 +1,4 @@
+import { expertiseEnabled } from '@/lib/publishing-studio/expertise/flag';
 import { Suspense } from 'react';
 import { getServerSession } from 'next-auth';
 import { redirect } from 'next/navigation';
@@ -10,5 +11,5 @@ export const metadata = { title: 'Publishing Studio | Folio' };
 export default async function PublishingStudioPage({ searchParams }: { searchParams?: { view?: string } }) {
   const session = await getServerSession(authOptions);
   if (!session?.user?.id) redirect('/auth/signin');
-  return <Suspense fallback={<p className="p-8 folio-body">Opening Publishing Studio…</p>}>{process.env.STUDIO_EDITORIAL_READINESS === 'true' && searchParams?.view !== 'saved' ? <ReadinessStudio expertiseEnabled={process.env.STUDIO_MY_EXPERTISE === 'true'} /> : <PublishingStudio expertiseEnabled={process.env.STUDIO_MY_EXPERTISE === 'true'} />}</Suspense>;
+  return <Suspense fallback={<p className="p-8 folio-body">Opening Publishing Studio…</p>}>{process.env.STUDIO_EDITORIAL_READINESS === 'true' && searchParams?.view !== 'saved' ? <ReadinessStudio expertiseEnabled={expertiseEnabled()} /> : <PublishingStudio expertiseEnabled={expertiseEnabled()} />}</Suspense>;
 }

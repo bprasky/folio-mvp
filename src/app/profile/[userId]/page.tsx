@@ -1,3 +1,4 @@
+import { expertiseEnabled } from '@/lib/publishing-studio/expertise/flag';
 import { Suspense } from 'react';
 import { notFound } from 'next/navigation';
 import { prisma } from '@/lib/prisma';
@@ -113,10 +114,10 @@ export default async function ProfilePage({ params, searchParams }: Props) {
       {pinnedItems.length > 0 && <PinnedCarousel items={pinnedItems} />}
 
       {activeTab !== 'about' && <PublishedStudioStories userId={resolvedParams.userId} />}
-      <ProfileTabs activeTab={activeTab} userId={resolvedParams.userId} expertiseEnabled={process.env.STUDIO_MY_EXPERTISE === 'true'} />
+      <ProfileTabs activeTab={activeTab} userId={resolvedParams.userId} expertiseEnabled={expertiseEnabled()} />
 
       <div className="max-w-6xl mx-auto px-6 py-8">
-        {activeTab === 'expertise' && process.env.STUDIO_MY_EXPERTISE === 'true' && <PublishedExpertise userId={resolvedParams.userId} />}
+        {activeTab === 'expertise' && expertiseEnabled() && <PublishedExpertise userId={resolvedParams.userId} />}
         {activeTab === 'feed' && (
           <Suspense fallback={<FeedSkeleton />}>
             <ProfileFeed

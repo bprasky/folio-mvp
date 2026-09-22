@@ -1,4 +1,5 @@
 import 'server-only';
+import { expertiseEnabled } from './flag';
 import { Prisma } from '@prisma/client';
 import { prisma } from '@/lib/prisma';
 import { checkRateLimit } from '@/lib/rateLimit';
@@ -280,7 +281,7 @@ export async function changeExpertise(actor: string, id: string, body: unknown):
 
 /** Public reads never trust persisted URLs or the owner's currently selected workspace. */
 export async function publicExpertise(slug: string) {
-  if (process.env.STUDIO_MY_EXPERTISE !== 'true') return null;
+  if (!expertiseEnabled()) return null;
   const story = await prisma.editorialStory.findFirst({ where: { slug, format: 'expertise', status: 'published' }, include: { owner: { select: { id: true, name: true, profileImage: true, brandProfile: { select: { logoImageUrl: true } } } }, publishedRevision: { include: includeRevision } } });
   const revision = story?.publishedRevision;
   if (!story || !revision?.approvedAt || !revision.publishedAt) return null;
@@ -296,7 +297,7 @@ export async function publicExpertise(slug: string) {
   return { id: story.id, slug: story.slug, title: article.title, article: { ...article, featured: featured ? object(featured.payload).featured === true : article.featured }, owner: { id: story.owner.id, name: story.owner.name }, publishedAt: revision.publishedAt.toISOString() };
 }
 export async function publishedExpertise(userId: string) {
-  if (process.env.STUDIO_MY_EXPERTISE !== 'true') return [];
+  if (!expertiseEnabled()) return [];
   const rows = await prisma.editorialStory.findMany({ where: { ownerId: userId, format: 'expertise', status: 'published' }, select: { slug: true }, orderBy: { updatedAt: 'desc' }, take: 24 });
   return (await Promise.all(rows.map(row => publicExpertise(row.slug)))).filter((row): row is NonNullable<typeof row> => row !== null);
 }
