@@ -1,3 +1,4 @@
+import { ExpertiseProjectReturn } from '@/components/publishing-studio/ExpertiseProjectReturn';
 import { prisma } from '@/lib/prisma';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
@@ -156,7 +157,7 @@ export default async function ProjectPage({
   searchParams,
 }: {
   params: { id: string };
-  searchParams: { view?: string; step?: string };
+  searchParams: { view?: string; step?: string; expertiseTopic?: string; expertiseProjects?: string };
 }) {
   const session = await getServerSession(authOptions);
   const viewerId = session?.user?.id ?? null;
@@ -444,6 +445,8 @@ export default async function ProjectPage({
   const hasRooms = base.rooms && base.rooms.length > 0;
   const isProjectEmpty = !hasMedia && !hasRooms;
 
+  const expertiseReturn = process.env.STUDIO_MY_EXPERTISE === 'true' && isOwner && viewerId ? <ExpertiseProjectReturn actorId={viewerId} workspaceId={operatingAsOrgId} projectId={params.id} topic={searchParams.expertiseTopic} projectIds={searchParams.expertiseProjects} /> : null;
+
   if (isProjectEmpty) {
     // URL/portfolio import is a Pro feature; it's available on any project,
     // not just completed ones (spec follow-up). Compute once.
@@ -451,13 +454,13 @@ export default async function ProjectPage({
     // Completed ("PAST") projects get the guided New Project Wizard in every context.
     // Checked before the org/individual split so individual designers get it too.
     if (sanitizedProject.timeline === 'PAST') {
-      return <NewProjectWizard project={sanitizedProject} canScrape={canScrape} />;
+      return <>{expertiseReturn}<NewProjectWizard project={sanitizedProject} canScrape={canScrape} /></>;
     }
     const isOrganizationContext = !!operatingAsOrgId;
     if (isOrganizationContext) {
-      return <ProjectEmptyState project={sanitizedProject} canScrape={canScrape} />;
+      return <>{expertiseReturn}<ProjectEmptyState project={sanitizedProject} canScrape={canScrape} /></>;
     } else {
-      return <ProjectEmptyStateDiscovery project={sanitizedProject} />;
+      return <>{expertiseReturn}<ProjectEmptyStateDiscovery project={sanitizedProject} /></>;
     }
   }
 
@@ -466,6 +469,7 @@ export default async function ProjectPage({
 
   return (
     <div className="min-h-screen bg-surface-canvas">
+      {expertiseReturn}
       {/* Header area — breadcrumbs + editorial header + tabs */}
       <div className="max-w-[1280px] mx-auto px-10 pt-6">
         {/* Breadcrumbs */}

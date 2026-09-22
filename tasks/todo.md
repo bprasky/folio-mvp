@@ -467,3 +467,14 @@ Review: test-only CI corrections preserve exact schema/SQL approval hashes and r
 Plan check-in: keep the photography-led design and current quality gates. Recommendations lead with a designer purpose; formats are secondary. Reuse existing JSON storage only when its ownership and consumer contracts permit durable plans. Planning dates never imply automatic scheduling. Preserve unrelated work.
 
 Review: implemented and verified; see docs/reviews/studio-purpose/README.md for walkthroughs, screenshots, test evidence and supported boundaries. Production compile, lint, guards, all existing Studio checks and new persistence/UI regressions pass. TypeScript budget 903/904, baseline unchanged. Committed on the scoped local branch. Push and draft PR blocked by automatic approval review pending explicit destination approval; no production writes, migrations, merge or deployment.
+
+## My expertise — 2026-09-22
+- [x] Trace Studio, evidence, interview, publication, profile and asset contracts against the specification.
+- [x] Implement qualified comparison discovery, durable feedback, source references and feature gate.
+- [x] Implement saved adaptive interviews, corrections, gaps and exact evidence selection.
+- [x] Implement reviewed illustrated articles, explicit profile featuring and versioned sharing.
+- [x] Verify authorization, source revocation, retries, correction propagation and desktop/mobile flows.
+- [x] Record supported behavior, pilot limitations, screenshots and scoped commit/PR.
+Plan check-in: implement the user-approved My Expertise specification behind a disabled-by-default feature flag, reusing existing storage where its contracts fit. Keep personal introductions and release plans intact. No production data writes, migration application, deployment or feature activation. If schema changes prove necessary, present exact blocks under the repository approval gate before applying them.
+
+Review: implemented behind disabled flag; no schema or production changes. Compile, lint, TypeScript budget (903/904 unchanged baseline), guards, new engine/UI/service/PostgreSQL checks and existing Studio regressions pass. Desktop/mobile synthetic browser walkthrough complete. See docs/reviews/my-expertise/README.md for evidence and required live-model/designer pilot gates. Ready for scoped commit and draft PR; no merge or deployment.

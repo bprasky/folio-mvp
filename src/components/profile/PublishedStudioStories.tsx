@@ -3,7 +3,7 @@ import { prisma } from '@/lib/prisma';
 import { publicStory } from '@/lib/publishing-studio/story-service';
 /** Only the owner's explicitly published articles belong on their profile. Private drafts stay workspace-scoped. */
 export async function PublishedStudioStories({ userId }: { userId: string }) {
-  const rows = await prisma.editorialStory.findMany({ where: { ownerId: userId, status: 'published' },
+  const rows = await prisma.editorialStory.findMany({ where: { ownerId: userId, status: 'published', format: { not: 'expertise' } },
     select: { slug: true }, orderBy: { updatedAt: 'desc' }, take: 12 });
   const stories = (await Promise.all(rows.map(row => publicStory(row.slug)))).filter(story => story !== null);
   if (!stories.length) return null;

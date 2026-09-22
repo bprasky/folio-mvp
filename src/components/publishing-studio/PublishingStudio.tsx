@@ -13,13 +13,14 @@ import { StudioIntro, StudioTabs, StudioPhoto, type StudioTab } from './StudioWo
 import { StudioDiscovery, AboutMeInvitation, ActivityInvitations, matchesStoryFormat } from './StudioDiscovery';
 import { StudioReleaseOpportunities, useReleaseOpportunities } from './StudioReleaseOpportunities';
 import { StudioSavedActivities } from './StudioSavedActivities';
+import { ExpertiseSection } from './expertise/ExpertiseSection';
 import { matchesStudioItem } from '@/lib/publishing-studio/navigation';
 
 const CampaignWizard = dynamic(() => import('@/components/instagram/CampaignWizard').then(module => module.CampaignWizard), { ssr: false });
 const fieldClass = 'max-w-full min-w-0 rounded-full border border-folio-border-subtle bg-surface-canvas px-4 py-2 folio-ui';
 const actionClass = 'folio-ui underline underline-offset-4 disabled:opacity-50';
 
-export function PublishingStudio({ embedded = false }: { embedded?: boolean } = {}) {
+export function PublishingStudio({ embedded = false, expertiseEnabled = false }: { embedded?: boolean; expertiseEnabled?: boolean } = {}) {
   const router = useRouter();
   const params = useSearchParams();
   const project = params.get('project') === 'studio-wide' ? '' : params.get('project') || '';
@@ -147,6 +148,7 @@ export function PublishingStudio({ embedded = false }: { embedded?: boolean } = 
           {primary.length || releaseGroups.length || (!subject && !format) ? <div className="grid grid-flow-col auto-cols-[85%] items-stretch gap-5 overflow-x-auto pb-3 sm:grid-flow-row sm:auto-cols-auto sm:grid-cols-2 lg:grid-cols-3">{!embedded&&<StudioReleaseOpportunities cardsOnly opportunities={releaseGroups.slice(0,1)}/>}
             {!subject && !format && <AboutMeInvitation compact introduction={introduction?.status==='published'?null:introduction} />}{primary.map(renderCard)}</div> : <p className="folio-body text-folio-text-secondary">{project || kind || query || status ? 'No posts match this selection. Try another project or clear your filters.' : 'No prepared stories yet. Useful introductions need a coherent published overview and suitable photography; focused stories need supported detail.'}</p>}
         </section>}
+    {!embedded && expertiseEnabled && <ExpertiseSection />}
     {!embedded && <StudioDiscovery projects={data.projects} subject={subject} format={format} onSubject={value => navigate({ subject: value === 'about-me' ? value : null, project: value === 'about-me' ? null : value, format: null, item: null })} onFormat={value => navigate({ format: value, type: null, item: null })} />}
         {!embedded&&releaseGroups.length>1&&<StudioReleaseOpportunities opportunities={releaseGroups.slice(1)}/>}
         {!embedded&&releases.error&&<p role="status" className="folio-meta">{releases.error} <button className={actionClass} onClick={releases.retry}>Try again</button></p>}
@@ -158,7 +160,7 @@ export function PublishingStudio({ embedded = false }: { embedded?: boolean } = 
         {subject !== 'about-me' && !selectedProject && data.projects.some(item => item.canCreateCampaign) && <details className="border-t border-folio-border-subtle pt-4"><summary className="cursor-pointer folio-ui">Project campaigns</summary><div className="mt-3 flex flex-wrap gap-4">{data.projects.filter(item => item.canCreateCampaign).map(item => <button key={item.id} className={actionClass} disabled={pending !== null} onClick={() => setCampaignProject(item.id)}>Build a campaign for {item.title}</button>)}</div></details>}
       </>}
       {tab === 'progress' && <section aria-label="Saved work"><header className="mb-5"><h2 className="folio-h2">{embedded ? "Earlier saved work" : "Saved work"}</h2><p className="folio-body mt-2 text-folio-text-secondary">Your drafts, generated work and kept directions. Generated work is not confirmed publication.</p></header>
-        {!embedded && <><StudioSavedActivities /><StudioReleaseOpportunities saved opportunities={releases.plans.filter(item=>!project||item.projectId===project)} loading={releases.loading} error={releases.error} onRetry={releases.retry}/></>}
+        {!embedded && <>{expertiseEnabled && <ExpertiseSection saved />}<StudioSavedActivities /><StudioReleaseOpportunities saved opportunities={releases.plans.filter(item=>!project||item.projectId===project)} loading={releases.loading} error={releases.error} onRetry={releases.retry}/></>}
         {saved.length > 0 && <div className="grid grid-cols-1 gap-x-5 gap-y-8 md:grid-cols-2 lg:grid-cols-3">{saved.map(renderCard)}</div>}
         {emptyCampaigns.map(item => <article key={item.id} className="mt-4 border-t border-folio-border-subtle pt-4"><h3 className="folio-h3">{item.title}</h3><p className="folio-body mt-2">Campaign saved without generated posts.</p><Link href={`/project/${encodeURIComponent(item.projectId)}`} className={actionClass}>View project</Link>{data.projects.find(project => project.id === item.projectId)?.canCreateCampaign && <button className={`${actionClass} ml-4`} onClick={() => setCampaignProject(item.projectId)}>Start a new campaign</button>}</article>)}
         {!saved.length && !emptyCampaigns.length && <p className="folio-body text-folio-text-secondary">{embedded ? "No earlier carousels or campaigns match this selection." : "No saved carousels or campaigns match this selection."}</p>}

@@ -12,6 +12,7 @@ import { candidatePresentation, preparationLine, storySections } from '@/lib/pub
 import { CandidateConfigurator, updateCandidate } from './CandidateConfigurator';
 import { StudioDiscovery, AboutMeInvitation, ActivityInvitations, matchesStoryFormat } from './StudioDiscovery';
 import { StudioSavedActivities } from './StudioSavedActivities';
+import { ExpertiseSection } from './expertise/ExpertiseSection';
 import { StudioIntro, StudioPhoto, StudioTabs, studioAction, type StudioTab } from './StudioWorkspace';
 
 const SavedWork = dynamic(() => import('./PublishingStudio').then(module => module.PublishingStudio));
@@ -55,7 +56,7 @@ export function CandidateCard({ candidate, projectNames, onOpen, onDismiss, port
   </article>;
 }
 
-export function ReadinessStudio() {
+export function ReadinessStudio({ expertiseEnabled = false }: { expertiseEnabled?: boolean } = {}) {
   const params=useSearchParams(),router=useRouter();
   const {introduction,error:introductionError,reload:reloadIntroduction}=usePersonalIntroduction();
   const project=params.get('project')||'';
@@ -103,6 +104,7 @@ export function ReadinessStudio() {
         {!data&&!error&&<p role="status" className="folio-body py-8">Opening your stories…</p>}
         {data&&subject!=='about-me'&&format!=='twenty_questions'&&!ranked.length&&<div className="bg-surface-ground p-6"><h3 className="folio-h3">No stories ready for review yet</h3><p className="folio-body mt-2">Refresh suggestions to review your published work. Your saved drafts remain in In progress.</p></div>}
         <div className="grid grid-flow-col auto-cols-[85%] gap-5 overflow-x-auto pb-3 sm:grid-flow-row sm:auto-cols-auto sm:grid-cols-2 lg:grid-cols-3" aria-label="Recommended stories">{primary.slice(0,1).map(card)}{!subject&&!format&&<AboutMeInvitation compact introduction={introduction?.status==='published'?null:introduction}/>}{primary.slice(1).map(card)}</div>
+        {expertiseEnabled && <ExpertiseSection />}
         <StudioDiscovery projects={projects} subject={subject} format={format} onSubject={value=>navigate({subject:value==='about-me'?value:null,project:value==='about-me'?null:value,format:null})} onFormat={value=>navigate({format:value})}/>
         {introductionError&&<p role="status" className="folio-meta">{introductionError} <button className={quietAction} onClick={()=>void reloadIntroduction()}>Try again</button></p>}
         <ActivityInvitations introduction={introduction} omitTwenty={!subject && !format} project={selectedProject} format={format} personal={!project||subject==='about-me'}/>
@@ -113,7 +115,7 @@ export function ReadinessStudio() {
       </>:<>
         <div><h2 className="folio-h2">{tab==='progress'?'Pick up where you left off':'Your exports'}</h2><p className="folio-body mt-1">{tab==='progress'?'Your saved words, selected images, and started stories.':'Previously prepared downloads. Exporting does not confirm publication.'}</p></div>
         {work.filter(item=>matches(item.candidate)).map(item=><article key={`${item.candidate.id}:${item.candidate.version}`} className="flex flex-wrap items-center justify-between gap-4 border-b border-folio-border-subtle py-4"><div className="min-w-0 flex-1"><p className="folio-meta text-folio-text-secondary">{item.candidate.confirmedPublishedAt?'Publication recorded':item.needsReview?'Earlier version · saved work retained':tab==='exports'?'Download prepared':'Saved draft'}{item.candidate.confirmedPublishedAt?' · Publication confirmed by you':''}</p><h3 className="folio-h3 mt-1">{item.candidate.draft.headline}</h3><p className="folio-body mt-2 whitespace-pre-line">{item.candidate.draft.caption}</p></div><button className={studioAction} onClick={()=>open(item.candidate,item.needsReview||Boolean(item.candidate.confirmedPublishedAt))}>{item.needsReview||item.candidate.confirmedPublishedAt?'View saved work':tab==='exports'&&item.canDownload?'Review and download':'Resume story'}</button>{tab==='progress'&&!item.needsReview&&!item.candidate.confirmedPublishedAt&&<button className={quietAction} onClick={()=>setRemoveDraft(item.candidate)}>Remove draft</button>}</article>)}
-        {tab==='progress'&&<StudioSavedActivities/>}
+        {tab==='progress'&&<>{expertiseEnabled&&<ExpertiseSection saved/>}<StudioSavedActivities/></>}
         <SavedWork embedded/>
       </>}
     </section>}

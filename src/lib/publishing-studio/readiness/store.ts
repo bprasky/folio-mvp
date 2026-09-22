@@ -91,7 +91,7 @@ export async function listStoredCandidates(designerId: string, organizationId: s
     const rows = await tx.$queryRaw<{ snapshot: Candidate }[]>`
       SELECT v.snapshot FROM studio_candidates c JOIN studio_candidate_versions v
         ON v."candidateId"=c.id AND v.version=c."currentVersion"
-      WHERE c."designerId"=${designerId} AND c."organizationId" IS NOT DISTINCT FROM ${organizationId}::text
+      WHERE c."designerId"=${designerId} AND c.id NOT LIKE 'expertise_%' AND c."organizationId" IS NOT DISTINCT FROM ${organizationId}::text
       ORDER BY c."updatedAt" DESC,c.id ASC`;
     const projects = await tx.project.findMany({
       where: { isPublic: true, post: { status: 'PUBLISHED' }, ...(organizationId ? { designerOrgId: organizationId } : {
@@ -127,7 +127,7 @@ export async function listCandidateWork(designerId: string, organizationId: stri
           AND e.kind='exported' AND e.payload->>'destination'='download') AS "exportedAt"
       FROM studio_candidates c JOIN studio_candidate_versions v
         ON v."candidateId"=c.id
-      WHERE c."designerId"=${designerId} AND c."organizationId" IS NOT DISTINCT FROM ${organizationId}::text
+      WHERE c."designerId"=${designerId} AND c.id NOT LIKE 'expertise_%' AND c."organizationId" IS NOT DISTINCT FROM ${organizationId}::text
         AND (v.version=c."currentVersion" OR EXISTS (
           SELECT 1 FROM studio_candidate_events e WHERE e."candidateId"=c.id AND e.version=v.version
             AND e."sourceVersion"=v."sourceVersion" AND e.kind='exported' AND e.payload->>'destination'='download'))
