@@ -7,8 +7,8 @@ import { resolvePublishingStudioContext, StudioAccessError } from '../data';
 import { extractTextFromBlocks } from '@/lib/instagram-export/generation';
 import type { ExpertiseEvidence } from './types';
 import { verifiedImageObservation } from './engine';
+import { expertiseEnabled } from './flag';
 
-export const expertiseEnabled = () => process.env.STUDIO_MY_EXPERTISE === 'true';
 export const digest = (value: unknown) => createHash('sha256').update(JSON.stringify(value)).digest('hex');
 export const object = (value: unknown): Record<string, any> => value && typeof value === 'object' && !Array.isArray(value) ? value as Record<string, any> : {};
 export function requireExpertise() { if (!expertiseEnabled()) throw new StudioAccessError('My expertise is not enabled.', 404); }

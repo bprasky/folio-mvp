@@ -15,3 +15,10 @@ assert.equal(url.hash, '#my-expertise');
 assert.equal(exported.expertiseIntent('a'.repeat(1000), '').topic.length, 240);
 assert.equal(exported.expertiseIntent(null, {}).projectIds.length, 0);
 console.log('PASS expertise upload return: bounded intent, project deduplication, safe local destination and comparison retention.');
+
+const flagCode = ts.transpileModule(fs.readFileSync('src/lib/publishing-studio/expertise/flag.ts', 'utf8'), { compilerOptions: { module: ts.ModuleKind.CommonJS } }).outputText;
+for (const [value, expected] of [[undefined, true], ['true', true], ['false', false]]) {
+  const flags = {}; vm.runInNewContext(flagCode, { exports: flags, process: { env: { STUDIO_MY_EXPERTISE: value } } });
+  assert.equal(flags.expertiseEnabled(), expected, `Expertise flag ${value}: default availability and explicit kill switch`);
+}
+console.log('PASS expertise availability: absent flag enables; explicit false disables.');

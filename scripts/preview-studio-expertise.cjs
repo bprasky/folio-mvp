@@ -1,6 +1,7 @@
 const fs = require('node:fs'), http = require('node:http'), esbuild = require('esbuild');
 const postcss = require('postcss'), tailwind = require('tailwindcss');
 // Synthetic local UI fixture. No application database, external model or production writes.
+const port = Number(process.env.STUDIO_PREVIEW_PORT || 4185);
 const photos = ['1586023492125-27b2c045efd7','1631049307264-da0ec9d70304'].map(id=>`https://images.unsplash.com/photo-${id}?w=1000&auto=format&fit=crop&q=85`);
 const evidence = ['Courtyard House','Hill House'].flatMap((projectName,i)=>[
  {id:`photo-${i}`,revision:'fixture1',projectId:`p${i}`,projectName,roomId:`r${i}`,roomName:i?'Bedroom':'Living room',kind:'observation',text:'Synthetic fixture photograph reference; not evidence about a real designer.',visibility:'public',assetId:`asset-${i}`,imageUrl:photos[i],photographer:'Public demo image · Unsplash',alt:`Synthetic ${projectName} example`},
@@ -27,8 +28,8 @@ async function main(){
  if(body.action==='feature')snapshot.article.featured=body.featured;
  snapshot.version++;return res.end(JSON.stringify(snapshot))}
  return res.end(JSON.stringify(url.pathname.endsWith('/expertise')?listing():snapshot));}
- if(url.pathname.endsWith('/stories'))return res.end(JSON.stringify({stories:[],personalIntroduction:{status:'published'}}));
- if(url.pathname.endsWith('/releases'))return res.end(JSON.stringify({opportunities:[],plans:[]}));
- return res.end(JSON.stringify({workspace:{id:null,name:'Example Studio'},projects:evidence.filter(e=>e.assetId).map(e=>({id:e.projectId,title:e.projectName,thumbnail:e.imageUrl,rooms:[],published:true})),feed:[],campaigns:[],ideas:[],posts:[],editorials:[]}));}
- res.setHeader('Content-Type','text/html; charset=utf-8');res.end('<!doctype html><html><head><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="stylesheet" href="/fixture.css"></head><body><div id="root"></div><script src="/fixture.js"></script></body></html>');}).listen(4185,'127.0.0.1',()=>console.log('Synthetic My expertise preview: http://127.0.0.1:4185/designer/studio'));
+ if(url.pathname.endsWith('/stories'))return res.end(JSON.stringify({stories:[],personalIntroduction:{status:'available'}}));
+ if(url.pathname.endsWith('/releases'))return res.end(JSON.stringify({opportunities:[{projectId:'p0',projectTitle:'Courtyard House',imageUrl:photos[0],purpose:'Give Courtyard House a fuller introduction.',reason:'A project introduction and two room stories are ready to shape into a series.',roomCount:2,hasPlan:false,sourceIds:[]}],plans:[]}));
+ return res.end(JSON.stringify({workspace:{id:null,name:'Example Studio'},projects:evidence.filter(e=>e.assetId).map(e=>({id:e.projectId,title:e.projectName,thumbnail:e.imageUrl,rooms:[],published:true})),feed:[{id:'suggestion:p1',projectIds:['p1'],title:'A quiet corner at Hill House',pitch:'A place to read, without lighting the whole room.',caption:'The bedroom needed a reading spot with its own light. This is synthetic review copy.',rationale:'A small change with a clear effect on everyday use.',imageUrl:photos[1],imageUrls:[photos[1]],slideCount:2,revision:'fixture',kind:'suggestion',format:'room_story',status:'recommended',updatedAt:'2026-09-22',canPolish:true}],campaigns:[],ideas:[],posts:[],editorials:[]}));}
+ res.setHeader('Content-Type','text/html; charset=utf-8');res.end('<!doctype html><html><head><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="stylesheet" href="/fixture.css"></head><body><div id="root"></div><script src="/fixture.js"></script></body></html>');}).listen(port,'127.0.0.1',()=>console.log('Synthetic Studio preview: http://127.0.0.1:'+port+'/designer/studio'));
 }main().catch(error=>{console.error(error);process.exitCode=1});

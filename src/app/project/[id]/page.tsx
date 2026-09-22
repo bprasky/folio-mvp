@@ -1,3 +1,4 @@
+import { expertiseEnabled } from '@/lib/publishing-studio/expertise/flag';
 import { ExpertiseProjectReturn } from '@/components/publishing-studio/ExpertiseProjectReturn';
 import { prisma } from '@/lib/prisma';
 import { getServerSession } from 'next-auth';
@@ -445,7 +446,7 @@ export default async function ProjectPage({
   const hasRooms = base.rooms && base.rooms.length > 0;
   const isProjectEmpty = !hasMedia && !hasRooms;
 
-  const expertiseReturn = process.env.STUDIO_MY_EXPERTISE === 'true' && isOwner && viewerId ? <ExpertiseProjectReturn actorId={viewerId} workspaceId={operatingAsOrgId} projectId={params.id} topic={searchParams.expertiseTopic} projectIds={searchParams.expertiseProjects} /> : null;
+  const expertiseReturn = expertiseEnabled() && isOwner && viewerId ? <ExpertiseProjectReturn actorId={viewerId} workspaceId={operatingAsOrgId} projectId={params.id} topic={searchParams.expertiseTopic} projectIds={searchParams.expertiseProjects} /> : null;
 
   if (isProjectEmpty) {
     // URL/portfolio import is a Pro feature; it's available on any project,

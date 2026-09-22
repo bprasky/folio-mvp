@@ -49,7 +49,7 @@ const db = {
 db.$transaction=async fn=>{const before=clone(state);try{return await fn(db);}catch(error){state=before;throw error;}};
 const sources={digest:hash,object,requireExpertise(){},expertiseOwner:async actor=>{if(actor!=='owner')throw new AccessError('Forbidden',403);return{workspace:corpus.workspace,identity:corpus.identity};},expertiseSources:async actor=>{await sources.expertiseOwner(actor);return clone(corpus);},portfolioEvidence:async()=>clone(corpus),changedEvidence:(saved,fresh)=>saved.filter(e=>!fresh.some(f=>e.id===f.id&&e.revision===f.revision&&e.visibility===f.visibility)).map(e=>e.id)};
 const prisma={PrismaClientKnownRequestError:PrismaError};
-const common={'server-only':{},'@prisma/client':{Prisma:prisma},'@/lib/prisma':{prisma:db},'../data':{StudioAccessError:AccessError},'./sources':sources};
+const common={'./flag':{expertiseEnabled:()=>true},'server-only':{},'@prisma/client':{Prisma:prisma},'@/lib/prisma':{prisma:db},'../data':{StudioAccessError:AccessError},'./sources':sources};
 const store=load('src/lib/publishing-studio/expertise/store.ts',common);
 const schemas=load('src/lib/publishing-studio/expertise/generation.schemas.ts',{zod:require('zod')});
 const engine=load('src/lib/publishing-studio/expertise/engine.ts',{'./generation.schemas':schemas});

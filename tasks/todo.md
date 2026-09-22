@@ -478,3 +478,18 @@ Review: implemented and verified; see docs/reviews/studio-purpose/README.md for 
 Plan check-in: implement the user-approved My Expertise specification behind a disabled-by-default feature flag, reusing existing storage where its contracts fit. Keep personal introductions and release plans intact. No production data writes, migration application, deployment or feature activation. If schema changes prove necessary, present exact blocks under the repository approval gate before applying them.
 
 Review: implemented behind disabled flag; no schema or production changes. Compile, lint, TypeScript budget (903/904 unchanged baseline), guards, new engine/UI/service/PostgreSQL checks and existing Studio regressions pass. Desktop/mobile synthetic browser walkthrough complete. See docs/reviews/my-expertise/README.md for evidence and required live-model/designer pilot gates. Ready for scoped commit and draft PR; no merge or deployment.
+
+## Studio window shopping — 2026-09-22
+- [x] Sync merged main; audit card and feature-gate callers.
+- [x] Reduce browse cards to visuals, activity labels and specific titles; move pitches/actions into accessible dialogs.
+- [x] Replace crowded project slider with a searchable project gallery and consistent format controls.
+- [x] Make My expertise accessible with consistent server-side feature checks.
+- [x] Verify browse-without-writes, dialogs, keyboard/mobile, existing routes and regression checks.
+Plan check-in: implement the user's correction across both Studio paths using existing data and actions. Keep saved-work behavior intact. No schema changes or production writes; feature availability changes in code, without editing hosted settings.
+
+Review: implemented both Studio paths, shared accessible pitch dialogs, searchable project gallery and default-on expertise with explicit kill switch. Compile, lint, TypeScript 903/904, guards and targeted regression/UI/storage checks pass. Synthetic desktop/mobile browser review complete. See docs/reviews/studio-window-shopping/README.md. No production environment edits or deployment.
+
+## Studio pitch photographs — 2026-09-22
+- [x] Carry project and expertise photography into the pitch modal; omit decorative personal covers.
+- [x] Verify exact image retention and existing browse/action regressions.
+- [ ] Browser-check and merge PR793 after CI passes, as approved by the user.
