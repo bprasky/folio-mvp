@@ -111,7 +111,7 @@ export default async function ProfilePage({ params, searchParams }: Props) {
 
       {pinnedItems.length > 0 && <PinnedCarousel items={pinnedItems} />}
 
-      <PublishedStudioStories userId={resolvedParams.userId} />
+      {activeTab !== 'about' && <PublishedStudioStories userId={resolvedParams.userId} />}
       <ProfileTabs activeTab={activeTab} userId={resolvedParams.userId} />
 
       <div className="max-w-6xl mx-auto px-6 py-8">
@@ -130,6 +130,7 @@ export default async function ProfilePage({ params, searchParams }: Props) {
           </Suspense>
         )}
         {activeTab === 'about' && (
+          <>
           <ProfileAbout
             user={user}
             team={team}
@@ -144,6 +145,8 @@ export default async function ProfilePage({ params, searchParams }: Props) {
                 : null
             }
           />
+          <PublishedStudioStories userId={resolvedParams.userId} />
+          </>
         )}
       </div>
     </div>

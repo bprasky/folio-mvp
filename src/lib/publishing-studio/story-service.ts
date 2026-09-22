@@ -7,7 +7,7 @@ import { checkRateLimit } from '@/lib/rateLimit';
 import { extractTextFromBlocks, publishedRoomSource } from '@/lib/instagram-export/generation';
 import { resolvePublishingStudioContext } from './data';
 import { generateActivity } from './generate-activity';
-import { activityProgress, createActivity, prepareActivityDraft, type ActivityAnswer, type ActivityBrief, type ActivityContext, type ActivityDefinition, type ActivityDraft } from './activities';
+import { activityProgress, createActivity, prepareActivityDraft, editActivityDraft, type ActivityAnswer, type ActivityBrief, type ActivityContext, type ActivityDefinition, type ActivityDraft } from './activities';
 
 export class StoryError extends Error { constructor(message: string, public status = 400) { super(message); } }
 const canonical = (value: unknown): unknown => Array.isArray(value) ? value.map(canonical)
@@ -39,12 +39,13 @@ export async function storyContext(userId: string, db: Prisma.TransactionClient 
   return { workspace, context, sources: projects.map(p => ({ projectPostId: p.post!.id, projectId: p.id,
     sourceDigest: hash([p.id, p.post!.updatedAt.toISOString(), p.post!.expandedBlocks]) })) };
 }
-function snapshot(story: { id: string; slug: string; status: string; publishedRevisionNumber: number | null }, revision: Revision) {
+function snapshot(story: { id: string; slug: string; status: string; publishedRevisionNumber: number | null; ownerId?: string }, revision: Revision) {
   return { id: story.id, revision: revision.editVersion, definition: revision.interview as unknown as ActivityDefinition,
     answers: revision.answers.map(a => ({ questionId: a.promptId, text: a.answerText })), reviewed: !!revision.answersReviewedAt,
     draft: Object.keys(revision.blocks as object).length ? revision.blocks as unknown as ActivityDraft : null,
     status: story.status === 'withdrawn' ? 'withdrawn' : story.publishedRevisionNumber === revision.number ? story.status : 'draft',
     publishedUrl: story.publishedRevisionNumber === revision.number ? `/stories/${story.slug}` : null,
+    profileUrl: story.ownerId ? `/profile/${story.ownerId}?tab=about` : null,
     previousPublishedUrl: story.publishedRevisionNumber && story.publishedRevisionNumber !== revision.number ? `/stories/${story.slug}` : null };
 }
 async function owned(userId: string, id: string, db: Prisma.TransactionClient) {
@@ -59,10 +60,30 @@ export async function listStories(userId: string) {
   const stories = await prisma.editorialStory.findMany({ where: { ownerId: userId, organizationId: data.workspace.id, status: { not: 'withdrawn' },
     revisions: { some: { OR: [{ editVersion: { gt: 1 } }, { answers: { some: {} } }] } } },
     orderBy: { updatedAt: 'desc' }, take: 100, include: { revisions: { orderBy: { number: 'desc' }, take: 1, include: includeRevision } } });
-  return { context: data.context, stories: stories.filter(s => s.status !== 'withdrawn' && s.revisions[0] &&
+  // Dedicated bounded lookups keep completion detection independent of the latest 100 activities.
+  const personal = { ownerId: userId, organizationId: data.workspace.id, format: 'twenty_questions' };
+  const personalRevision = { interview: { path: ['brief', 'subject'], equals: 'designer' } };
+  const completed = await prisma.editorialStory.findFirst({ where: { ...personal, status: 'published', publishedRevisionNumber: { not: null },
+    revisions: { some: personalRevision } }, orderBy: { updatedAt: 'desc' }, select: { id: true, slug: true } });
+  const inProgress = completed ? null : await prisma.editorialStory.findFirst({ where: { ...personal, status: { not: 'withdrawn' },
+    revisions: { some: { ...personalRevision, OR: [{ editVersion: { gt: 1 } }, { answers: { some: {} } }] } } },
+    orderBy: { updatedAt: 'desc' }, select: { id: true, slug: true } });
+  const introduction = completed || inProgress;
+  const needsReview = completed ? !(await publicStory(completed.slug)) : false;
+  const personalIntroduction = introduction ? { status: completed ? 'published' as const : 'draft' as const, id: introduction.id,
+    href: `/designer/studio/activity?id=${encodeURIComponent(introduction.id)}`,
+    needsReview, publishedUrl: completed && !needsReview ? `/stories/${completed.slug}` : null } : { status: 'available' as const };
+  return { context: data.context, personalIntroduction, stories: stories.filter(s => s.status !== 'withdrawn' && s.revisions[0] &&
     (s.revisions[0].editVersion > 1 || s.revisions[0].answers.length > 0)).map(s => snapshot(s, s.revisions[0])) };
 }
-export async function readStory(userId: string, id: string) { const { story, revision } = await owned(userId, id, prisma); return snapshot(story, revision); }
+export async function readStory(userId: string, id: string) {
+  const { story, revision } = await owned(userId, id, prisma);
+  const saved = snapshot(story, revision);
+  if (story.publishedRevisionNumber !== null && !(await publicStory(story.slug))) {
+    return { ...saved, publishedUrl: null, previousPublishedUrl: null, publicationNeedsReview: true };
+  }
+  return saved;
+}
 
 export async function startStory(userId: string, brief: ActivityBrief, key: string) {
   if (typeof key !== 'string' || !/^[a-zA-Z0-9-]{16,80}$/.test(key)) throw new StoryError('A creation key is required.');
@@ -98,8 +119,8 @@ export async function startStory(userId: string, brief: ActivityBrief, key: stri
   } throw error; }
 }
 
-export async function changeStory(userId: string, id: string, input: { action?: unknown; revision?: unknown; answers?: unknown; reviewed?: unknown }) {
-  if (!Number.isInteger(input.revision) || !['save', 'review', 'prepare', 'publish', 'discard'].includes(String(input.action))) throw new StoryError('Choose a valid story action and revision.');
+export async function changeStory(userId: string, id: string, input: { action?: unknown; revision?: unknown; answers?: unknown; reviewed?: unknown; draft?: unknown; articleReviewed?: unknown }) {
+  if (!Number.isInteger(input.revision) || !['save', 'review', 'prepare', 'edit_article', 'publish', 'discard'].includes(String(input.action))) throw new StoryError('Choose a valid story action and revision.');
   return prisma.$transaction(async db => {
     // All answer, approval and publication writers serialize on the parent, including clone creation.
     await db.$queryRaw`SELECT id FROM editorial_stories WHERE id = ${id} FOR UPDATE`;
@@ -129,7 +150,7 @@ export async function changeStory(userId: string, id: string, input: { action?: 
     let changes: Prisma.EditorialStoryRevisionUpdateInput = { editVersion: { increment: 1 } };
     if (input.action === 'save') {
       // Clients may revoke review; granting review still requires the explicit server-validated action.
-      if (input.reviewed === false) changes = { ...changes, blocks: {}, answersReviewedAt: null };
+      if (input.reviewed === false) changes = { ...changes, answersReviewedAt: null };
       const before = new Map(revision.answers.map(a => [a.promptId, a.answerText]));
       const changed = definition.questions.some(q => (before.get(q.id) || '') !== (answers.find(a => a.questionId === q.id)?.text || ''));
       if (changed) {
@@ -146,10 +167,18 @@ export async function changeStory(userId: string, id: string, input: { action?: 
       if (input.action === 'review') changes.answersReviewedAt = new Date();
       else {
         if (!revision.answersReviewedAt) throw new StoryError('Review your answers first.');
-        const draft = prepareActivityDraft(definition, answers, true);
-        if (input.action === 'prepare') changes.blocks = json(draft);
+        if (input.action === 'prepare') {
+          // Repeated saves/review must preserve already edited article copy.
+          if (!Object.keys(revision.blocks as object).length) changes.blocks = json(prepareActivityDraft(definition, answers, true));
+        } else if (input.action === 'edit_article') {
+          if (!Object.keys(revision.blocks as object).length) throw new StoryError('Prepare the article before editing it.');
+          let draft: ActivityDraft;
+          try { draft = editActivityDraft(definition, input.draft); } catch (error) { throw new StoryError(error instanceof Error ? error.message : 'Invalid article.'); }
+          changes = { ...changes, blocks: json(draft), title: draft.title };
+        }
         else {
-          if (hash(revision.blocks) !== hash(draft)) throw new StoryError('Prepare and review the article before publishing.');
+          if (input.articleReviewed !== true) throw new StoryError('Review the finished article before publishing.');
+          try { editActivityDraft(definition, revision.blocks); } catch { throw new StoryError('Prepare and review the article before publishing.'); }
           changes = { ...changes, approvedBy: { connect: { id: userId } }, approvedAt: new Date(), publishedAt: new Date(), consentScope: 'feed_only' };
           await db.editorialStory.update({ where: { id }, data: { status: 'published', publishedRevisionNumber: revision.number } });
         }

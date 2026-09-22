@@ -4,6 +4,8 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import dynamic from 'next/dynamic';
 import { useRouter, useSearchParams } from 'next/navigation';
+import { candidateOpportunity } from '@/lib/publishing-studio/opportunities';
+import { usePersonalIntroduction } from './usePersonalIntroduction';
 import type { Candidate } from '@/lib/publishing-studio/readiness/types';
 import { DISMISSAL_REASONS } from '@/lib/publishing-studio/readiness/types';
 import { candidatePresentation, preparationLine, storySections } from '@/lib/publishing-studio/readiness/presentation';
@@ -36,16 +38,18 @@ export function CandidateCard({ candidate, projectNames, onOpen, onDismiss, port
     },{threshold:.5});observer.observe(node);return()=>observer.disconnect();
   },[candidate]);
   const info=candidatePresentation(candidate);
+  const opportunity=candidateOpportunity(candidate);
   const projectImages=candidate.projectIds.map(id=>candidate.visuals.find(image=>image.projectId===id)).filter((image):image is Candidate['visuals'][number]=>Boolean(image));
   return <article ref={ref} className={portfolio?'grid gap-6 md:grid-cols-2':'flex min-w-0 flex-col'}>
     {portfolio?<div className="grid grid-cols-2 gap-3">{projectImages.map(image=><figure key={image.id}><StudioPhoto images={[image]} alt={projectNames(image.projectId)} className="aspect-[4/3]"/><figcaption className="mt-2 folio-meta text-folio-text-secondary">{projectNames(image.projectId)}</figcaption></figure>)}</div>:<StudioPhoto images={candidate.visuals} onUnavailable={setImageUnavailable} alt={candidate.draft.headline} className="aspect-[4/3]"/>}
     <div className={`flex flex-1 flex-col items-start ${portfolio?'':'pt-4'}`}>
       <p className="rounded-full bg-surface-elevated px-3 py-1 folio-meta text-folio-text-primary">{info.label}</p>
       <p className="mt-3 folio-meta text-folio-text-secondary">{candidate.projectIds.map(projectNames).join(' · ')} · {candidate.shape?.replaceAll('_',' ') || 'Project story'}</p>
-      <h3 className="folio-h3 mt-2 break-words">{candidate.draft.headline || candidate.thesis}</h3>
-      <p className="folio-body mt-3 line-clamp-2">{candidate.draft.caption || candidate.audienceValue || candidate.rationale}</p>
+      <h3 className="folio-h3 mt-2 break-words">{opportunity.purpose}</h3>
+      <p className="folio-ui mt-2 line-clamp-2">{candidate.thesis}</p>
+      <p className="folio-body mt-3 line-clamp-2">{opportunity.reason}</p><p className="folio-body mt-3 text-folio-text-secondary">{opportunity.path}</p><p className="folio-meta mt-3 text-folio-text-secondary">{opportunity.result} {opportunity.destination}</p>
       <p className="folio-meta mt-4 text-folio-text-secondary">{imageUnavailable?'Source image unavailable · review imagery':info.preparation}{candidate.visuals.length>1?` · ${candidate.visuals.length} photographs`:''}</p>
-      <div className="mt-auto w-full pt-5"><button className={studioAction} onClick={onOpen}>{info.action}</button>
+      <div className="mt-auto w-full pt-5"><button className={studioAction} onClick={onOpen}>{opportunity.action}</button>
       {onDismiss&&<details className="mt-3"><summary className="cursor-pointer folio-meta text-folio-text-secondary">Dismiss suggestion</summary><div className="mt-2 flex flex-wrap gap-2"><div role="group" aria-label="Optional dismissal reason" className="flex flex-wrap gap-2">{DISMISSAL_REASONS.map(item=><button key={item} type="button" aria-pressed={reason===item} className="rounded-full border border-folio-border-subtle px-3 py-1 folio-meta" onClick={()=>setReason(reason===item?'':item)}>{item.replaceAll('_',' ')}</button>)}</div><button className={quietAction} onClick={()=>onDismiss(reason)}>Dismiss</button></div></details>}</div>
     </div>
   </article>;
@@ -53,6 +57,7 @@ export function CandidateCard({ candidate, projectNames, onOpen, onDismiss, port
 
 export function ReadinessStudio() {
   const params=useSearchParams(),router=useRouter();
+  const {introduction,error:introductionError,reload:reloadIntroduction}=usePersonalIntroduction();
   const project=params.get('project')||'';
   const tab:StudioTab=params.get('tab')==='progress'?'progress':params.get('tab')==='exports'?'exports':'suggestions';
   const candidateId=params.get('candidate'), candidateVersion=params.get('candidateVersion');
@@ -93,12 +98,14 @@ export function ReadinessStudio() {
     {error&&<div role="alert" className="folio-body"><p>{error}</p><button className={`${quietAction} mt-2`} onClick={()=>{setError('');void reload().catch(err=>setError(err.message))}}>Reload stories</button></div>}
     {selected?<><CandidateConfigurator key={`${selected.id}:${readOnly?selected.version:'current'}`}  candidate={selected} readOnly={readOnly} onChange={candidate=>{setSelected(candidate);void reload().catch(err=>setError(err.message))}} onClose={()=>{navigate({candidate:null,candidateVersion:null});setSelected(null);void reload().catch(err=>setError(err.message))}}/>{readOnly&&<p className="folio-body">Your saved version is retained for reference. {selected.projectIds.map(id=><Link key={id} href={`/project/${encodeURIComponent(id)}`} className={quietAction}>Open project </Link>)}</p>}</>:<section id="studio-panel" role="tabpanel" aria-labelledby={`studio-tab-${tab}`} tabIndex={0} className="space-y-6 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4">
       {tab==='suggestions'?<>
-        <StudioDiscovery projects={projects} subject={subject} format={format} onSubject={value=>navigate({subject:value==='about-me'?value:null,project:value==='about-me'?null:value,format:null})} onFormat={value=>navigate({format:value})}/>
+
         {subject!=='about-me'&&format!=='twenty_questions'&&<div className="flex flex-wrap items-end justify-between gap-3"><div><h2 className="folio-h2">{project||format?'Stories to explore':'Recommended for you'}</h2><p className="folio-body mt-1">{ranked.length?preparationLine(primary):'Specific stories from your published work, when the source is ready.'}</p></div><button className={quietAction} disabled={pending} onClick={refresh}>{pending?'Reviewing stories…':'Refresh suggestions'}</button></div>}
         {!data&&!error&&<p role="status" className="folio-body py-8">Opening your stories…</p>}
         {data&&subject!=='about-me'&&format!=='twenty_questions'&&!ranked.length&&<div className="bg-surface-ground p-6"><h3 className="folio-h3">No stories ready for review yet</h3><p className="folio-body mt-2">Refresh suggestions to review your published work. Your saved drafts remain in In progress.</p></div>}
-        <div className="grid grid-flow-col auto-cols-[85%] gap-5 overflow-x-auto pb-3 sm:grid-flow-row sm:auto-cols-auto sm:grid-cols-2 lg:grid-cols-3" aria-label="Recommended stories">{primary.slice(0,1).map(card)}{!subject&&!format&&<AboutMeInvitation compact/>}{primary.slice(1).map(card)}</div>
-        <ActivityInvitations omitTwenty={!subject && !format} project={selectedProject} format={format} personal={!project||subject==='about-me'}/>
+        <div className="grid grid-flow-col auto-cols-[85%] gap-5 overflow-x-auto pb-3 sm:grid-flow-row sm:auto-cols-auto sm:grid-cols-2 lg:grid-cols-3" aria-label="Recommended stories">{primary.slice(0,1).map(card)}{!subject&&!format&&<AboutMeInvitation compact introduction={introduction?.status==='published'?null:introduction}/>}{primary.slice(1).map(card)}</div>
+        <StudioDiscovery projects={projects} subject={subject} format={format} onSubject={value=>navigate({subject:value==='about-me'?value:null,project:value==='about-me'?null:value,format:null})} onFormat={value=>navigate({format:value})}/>
+        {introductionError&&<p role="status" className="folio-meta">{introductionError} <button className={quietAction} onClick={()=>void reloadIntroduction()}>Try again</button></p>}
+        <ActivityInvitations introduction={introduction} omitTwenty={!subject && !format} project={selectedProject} format={format} personal={!project||subject==='about-me'}/>
         {!!more.length&&<section aria-label="More stories to tell"><h2 className="folio-h2 mb-5">More stories to tell</h2><div className="grid grid-cols-1 gap-x-6 gap-y-10 sm:grid-cols-2 lg:grid-cols-3">{more.map(card)}</div></section>}
         {sections.portfolio&&<section className="space-y-4 border-t border-folio-border-subtle pt-6" aria-label="Across your portfolio"><h2 className="folio-h3">Across your portfolio</h2><CandidateCard candidate={sections.portfolio} projectNames={projectName} portfolio onOpen={()=>open(sections.portfolio!)} onDismiss={reason=>void dismiss(sections.portfolio!,reason)}/></section>}
         {!!developing.length&&<section className="border-t border-folio-border-subtle pt-5"><h2 className="folio-h3">More opportunities to develop ({developing.length})</h2><div className="mt-4 space-y-5">{developing.map(candidate=><article key={candidate.id}><h3 className="folio-h3">{candidate.thesis||candidate.source?.title}</h3><p className="folio-body mt-2">This story needs more source material or editorial development.</p><button className={`${quietAction} mt-2`} onClick={()=>open(candidate)}>Review saved material</button></article>)}</div></section>}

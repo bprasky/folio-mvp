@@ -1,6 +1,6 @@
 const assert = require('node:assert/strict'), fs = require('node:fs'), vm = require('node:vm'), ts = require('typescript');
 const React = require('react'), { renderToStaticMarkup } = require('react-dom/server');
-const candidate = { id: 'c', version: 1, sourceVersion: 's', readiness: 'quick', thesis: 'A considered decision', audienceValue: 'Why the plan changed', rationale: 'Specific source',
+const candidate = { shape:'decision', id: 'c', version: 1, sourceVersion: 's', readiness: 'quick', thesis: 'A considered decision', audienceValue: 'Why the plan changed', rationale: 'Specific source',
   source: { title: 'Home', images: [] }, projectIds: ['p'], format: 'single_image', visuals: [{ id: 'image', projectId: 'p', url: 'https://fixture.test/photo.jpg', role: 'hero', reason: 'Shows the result' }],
   evidence: [{ id: 'e', text: 'We changed the plan.', tier: 'direct' }],
   draft: { headline: 'The new plan', caption: 'The room opened up.', credits: { designer: 'Designer', photographer: 'Photographer' } },
@@ -11,7 +11,7 @@ function load(file, mocks = {}) {
   vm.runInNewContext(ts.transpileModule(fs.readFileSync(file, 'utf8'), { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2020, jsx: ts.JsxEmit.ReactJSX } }).outputText, {
     exports, URLSearchParams, window: { get location() { return global.window?.location; }, get history() { return global.window?.history; }, get sessionStorage() { return global.window?.sessionStorage; }, addEventListener: (...args) => global.window?.addEventListener(...args), removeEventListener: (...args) => global.window?.removeEventListener(...args) },
     URL: { createObjectURL: () => 'blob:test', revokeObjectURL() {} }, document: { addEventListener: (...args) => global.document?.addEventListener(...args), removeEventListener: (...args) => global.document?.removeEventListener(...args), createElement: () => ({ click() {}, remove() {} }), body: { appendChild() {} } },
-    require: id => id in mocks ? mocks[id] : require(id), console, crypto: require('node:crypto').webcrypto,
+    require: id => id in mocks ? mocks[id] : id === '@/lib/publishing-studio/opportunities' ? load('src/lib/publishing-studio/opportunities.ts') : require(id), console, crypto: require('node:crypto').webcrypto,
     fetch: async (url, options) => { calls.push({ url, body: options?.body && JSON.parse(options.body) }); return { ok: true, json: async () => url.endsWith('/export') ? { images: [{ name: 'slide.jpg', dataUrl: 'data:image/jpeg;base64,eA==' }], caption: 'Caption', filename: 'post.zip' } : options?.method === 'PATCH' ? { candidate: { ...candidate, readiness: 'ready', version: 2, blockers: [{ ...candidate.blockers[0], answer: 'Verified' }] } } : data }; },
   });
   return exports;
@@ -21,7 +21,7 @@ const workspace = load('src/components/publishing-studio/StudioWorkspace.tsx');
 const discovery=load('src/components/publishing-studio/StudioDiscovery.tsx',{'./StudioWorkspace':workspace,'next/link':{default:({children,...props})=>React.createElement('a',props,children)}});
 const presentation = load('src/lib/publishing-studio/readiness/presentation.ts');
 const { ReadinessStudio } = load('src/components/publishing-studio/ReadinessStudio.tsx', {
-  'next/link': { default: ({ children, ...props }) => React.createElement('a', props, children) },
+  './usePersonalIntroduction':{usePersonalIntroduction:()=>({introduction:{status:"available"},error:'',reload(){}})}, 'next/link': { default: ({ children, ...props }) => React.createElement('a', props, children) },
   'next/dynamic': { default: () => () => React.createElement('section', { 'data-saved-work': true }, 'Existing saved work') },
   'next/navigation': { useRouter: () => ({ replace: url => navigation.push(url) }), useSearchParams: () => params },
   '@/lib/publishing-studio/readiness/types': { DISMISSAL_REASONS: [] },
@@ -57,7 +57,7 @@ async function interactions() {
     await mount();
     assert.equal(document.querySelectorAll('[aria-label="Recommended stories"] > article').length, Math.min(count, 2)+1, `${count} qualified candidates: a personal activity is always visible alongside prepared work`);
     if (!count) assert.match(document.body.textContent, /No stories ready for review yet/);
-    assert.equal(buttons().filter(node=>node.textContent==='Review post').length,count,'All qualified stories visible without expansion');
+    assert.equal(buttons().filter(node=>node.textContent==='Review this story').length,count,'All qualified stories visible without expansion');
     assert.equal(document.querySelectorAll('select').length,0);
     assert.ok([...document.querySelectorAll('a')].some(a=>a.getAttribute('href')==='/designer/studio/activity?subject=designer&format=twenty_questions'));
     await unmount();
@@ -65,9 +65,9 @@ async function interactions() {
   data = { candidates: [make(0), make(1, 'quick', [{ id: 'q1', kind: 'truth', question: 'Which detail changed?' }]), make(2, 'quick', [{ id: 'q2', kind: 'credit', question: 'Photo credit?' }, { id: 'q3', kind: 'voice', question: 'Your wording?' }])], developing: [], dismissed: [] };
   await mount();
   assert.match(document.body.textContent, /Ready for review/); assert.match(document.body.textContent, /One answer needed/); assert.match(document.body.textContent, /2 steps remaining/);
-  assert.ok(button('Review post')); assert.ok(button('Answer one question')); assert.ok(button('Finish this story'));
-  await act(async () => button('Answer one question').click());
-  assert.equal(document.getElementById('candidate-title').textContent, 'Story thesis 1', 'Exact candidate opens in real configurator');
+  assert.ok(button('Review this story')); assert.ok(button('Develop this story')); assert.ok(button('Develop this story'));
+  await act(async () => button('Develop this story').click());
+  assert.equal(document.getElementById('candidate-title').textContent, 'Help readers understand this design decision.', 'Purpose carries into configurator'); assert.equal(document.querySelector('input').value, 'Prepared story 1', 'Exact candidate copy opens in configurator');
   assert.equal(document.getElementById('candidate-question').textContent, 'Which detail changed?');
   assert.ok(!calls.some(call => call.body?.kind === 'opened'), 'Opening a story writes no activity or draft');
   assert.equal(document.querySelector('[role="tablist"]'), null, 'Workspace tabs cannot bypass an active draft guard');
@@ -82,10 +82,10 @@ async function interactions() {
   params = new URLSearchParams();
   await mount();
   assert.match(document.body.textContent, /An earlier dismissed story/); assert.ok(button('Restore'), 'Persisted dismissal offers restore after fresh load');
-  assert.match(document.body.textContent, /Prepared caption 0/, 'Prepared copy is accessible before opening a story');
+  assert.match(document.body.textContent, /Why the plan changed/, 'Supported audience value is visible before opening a story');
   assert.ok(document.querySelector('[aria-label="Across your portfolio"]'));
   assert.ok(document.querySelector('[aria-label="More stories to tell"]'), 'Additional stories are exposed without a disclosure');
-  assert.equal([...document.querySelectorAll('h3')].filter(node => node.textContent === 'Prepared story 3').length, 1, 'Portfolio candidate is not duplicated in recommendations');
+  assert.equal(document.querySelectorAll('img[src="https://fixture.test/3.jpg"]').length, 1, 'Portfolio candidate is not duplicated in recommendations');
   const tabs = document.querySelectorAll('[role="tab"]');
   await act(async () => tabs[0].dispatchEvent(new dom.window.KeyboardEvent('keydown', { key: 'ArrowRight', bubbles: true })));
   assert.match(navigation.at(-1), /tab=progress/); assert.equal(document.activeElement.id, 'studio-tab-progress');

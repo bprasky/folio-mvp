@@ -65,6 +65,10 @@ jobs:
         run: |
           node scripts/check-publishing-studio-data.cjs
           node scripts/check-studio-landing.cjs
+          node scripts/check-studio-opportunities.cjs
+          node scripts/check-release-plans.cjs
+          node scripts/check-release-plan-persistence.cjs
+          node scripts/check-studio-release-ui.cjs
           node scripts/check-studio-draft-removal.cjs
           node scripts/check-studio-briefs.cjs
           node scripts/check-studio-recommendations.cjs

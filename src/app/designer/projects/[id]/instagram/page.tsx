@@ -12,7 +12,7 @@ export default async function InstagramExportPage({
   searchParams,
 }: {
   params: { id: string };
-  searchParams: { export?: string; studio?: string; proposal?: string; revision?: string };
+  searchParams: { export?: string; studio?: string; proposal?: string; revision?: string; release?: string };
 }) {
   const session = await getServerSession(authOptions);
   if (!session?.user) redirect('/auth/signin');
@@ -139,6 +139,7 @@ export default async function InstagramExportPage({
       initialPreview={initialPreview}
       initialExport={initialExport ? { ...initialExport, config: savedConfig, updatedAt: initialExport.updatedAt.toISOString() } : null}
       studioScope={searchParams.studio === 'all' ? 'all' : 'project'}
+      releaseProject={searchParams.release === project.id ? project.id : undefined}
       project={serializedProject}
       post={serializedPost}
       designer={serializedDesigner}

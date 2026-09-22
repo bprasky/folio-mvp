@@ -88,7 +88,7 @@ function setup(options = {}) {
         return created;
       } },
   };
-  const feed = load('src/lib/publishing-studio/feed.ts', { crypto: require('node:crypto') });
+  const feed = load('src/lib/publishing-studio/feed.ts', { crypto: require('node:crypto'), './opportunities':load('src/lib/publishing-studio/opportunities.ts',{}) });
   const data = load('src/lib/publishing-studio/data.ts', { 'server-only': {}, '@/lib/prisma': { prisma }, './feed': feed });
   const permissions = load('src/lib/permissions.ts', { '@/lib/prisma': { prisma } });
   const route = load('src/app/api/publishing-studio/ideas/[id]/route.ts', {
@@ -201,7 +201,7 @@ async function main() {
     assert.equal((await f.getStudioData('me')).feed.find(c => c.id === 'carousel:carousel-p1').preview.watermarkText, label);
   }
   console.log('PASS source-backed feed, exact prepared snapshot, retry idempotence, draft preservation, public-source and role boundaries');
-  const feedModule = load('src/lib/publishing-studio/feed.ts', { crypto: require('node:crypto') });
+  const feedModule = load('src/lib/publishing-studio/feed.ts', { crypto: require('node:crypto'), './opportunities':load('src/lib/publishing-studio/opportunities.ts',{}) });
   const strong = 'After fifteen iterations, the curved staircase finally worked. The original plan had a straight staircase along the wall. Once we opened up the floor plan, the entry felt empty. The architect and designer refined the curve until it anchored the space.';
   const weak = 'Wood paneling greets you first, chosen for a very practical reason. The paneling is warm enough and durable enough on an entry to be a great choice. The wood survives daily traffic without losing its warmth.';
   assert.equal(feedModule.publishedStoryProposal([weak]), null, 'Routine material benefits are clutter, not an angle');

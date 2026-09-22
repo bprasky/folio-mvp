@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import type { Candidate } from '@/lib/publishing-studio/readiness/types';
+import { candidateOpportunity } from '@/lib/publishing-studio/opportunities';
 
 const button = 'folio-ui inline-flex items-center justify-center rounded-full border border-folio-border-subtle px-4 py-2 text-folio-text-primary transition-colors hover:bg-surface-ground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--folio-gold)] focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50';
 const primaryButton = `${button} border-transparent bg-[var(--folio-gold)] text-white hover:bg-[var(--folio-gold-hover)]`;
@@ -208,7 +209,7 @@ export function CandidateConfigurator({ candidate, onChange, onClose, readOnly =
       <div className="flex flex-wrap gap-2"><button className={primaryButton} disabled={locked} onClick={() => { leaveAction.current = null; setLeaveRequested(false); }}>Keep editing</button><button className={button} disabled={locked} onClick={() => { try { window.sessionStorage.removeItem(storageKey); } catch { /* Closing does not depend on browser storage. */ } finishLeaving(); }}>Discard changes</button></div>
       </div>
     </dialog>}
-    <header className="max-w-3xl space-y-2"><p className="folio-meta text-folio-text-secondary">{candidate.source?.title || 'Your project'} · {candidate.format === 'carousel' ? 'Carousel' : 'Single photograph'}</p><h2 id="candidate-title" className="folio-h2">{candidate.thesis}</h2><p className="folio-body text-folio-text-secondary">{candidate.audienceValue}</p></header>
+    <header className="max-w-3xl space-y-2"><p className="folio-meta text-folio-text-secondary">{candidate.source?.title || 'Your project'} · {candidate.format === 'carousel' ? 'Carousel' : 'Single photograph'}</p><h2 id="candidate-title" className="folio-h2">{candidateOpportunity(candidate).purpose}</h2><p className="folio-body">{candidate.thesis}</p><p className="folio-body text-folio-text-secondary">{candidateOpportunity(candidate).reason} {candidateOpportunity(candidate).path}</p><p className="folio-meta text-folio-text-secondary">{candidateOpportunity(candidate).result} {candidateOpportunity(candidate).destination}</p></header>
     {error && <p role="alert" className="border-l-2 border-[var(--folio-gold)] bg-surface-ground p-4 folio-body">{error}</p>}
     {saveNotice && <p role="status" className="border-l border-folio-border-subtle pl-4 folio-body">{saveNotice}</p>}
     <div className="grid items-start gap-8 lg:grid-cols-5">

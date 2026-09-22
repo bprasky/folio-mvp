@@ -58,6 +58,20 @@ export interface ActivityDraft {
   socialOptions: { questionId: string; text: string }[];
 }
 
+/** Edits affect the article, never the original interview. Social excerpts follow the edited copy. */
+export function editActivityDraft(definition: ActivityDefinition, input: unknown): ActivityDraft {
+  const draft = input as ActivityDraft | null;
+  if (!draft || typeof draft.title !== 'string' || !draft.title.trim() || draft.title.length > 240 ||
+      !Array.isArray(draft.entries) || draft.entries.length !== definition.questions.length) throw new Error('Add a title and keep every interview entry.');
+  const ids = new Set(definition.questions.map(question => question.id));
+  if (new Set(draft.entries.map(entry => entry?.questionId)).size !== ids.size || draft.entries.some(entry =>
+    !entry || !ids.has(entry.questionId) || typeof entry.question !== 'string' || !entry.question.trim() || entry.question.length > 2000 ||
+    typeof entry.answer !== 'string' || !entry.answer.trim() || entry.answer.length > 8000)) throw new Error('Every article question and answer needs text within its limit.');
+  const entries = draft.entries.map(({ questionId, question, answer }) => ({ questionId, question, answer }));
+  return { title: draft.title, entries, socialOptions: entries.filter(entry => entry.answer.trim().length <= 1800)
+    .map(entry => ({ questionId: entry.questionId, text: `${entry.question}\n\n${entry.answer}` })) };
+}
+
 function validBrief(input: ActivityBrief, context: ActivityContext): { subjectLabel: string; brief: ActivityBrief } {
   if (!input || !['designer', 'firm', 'project'].includes(input.subject) || !Object.hasOwn(ACTIVITY_FORMATS, input.format)) throw new Error('Choose a subject and activity.');
   if (input.subject !== 'project' && (input.projectId || input.roomId)) throw new Error('Project and room selections do not belong to this subject.');

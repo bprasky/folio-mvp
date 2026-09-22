@@ -1,12 +1,14 @@
 'use client';
 
 import { useState } from 'react';
+import { activityOpportunity } from '@/lib/publishing-studio/opportunities';
 import Link from 'next/link';
 import BioSetupFlow from '@/components/designer-bio/BioSetupFlow';
 import type { DesignerBioData } from '@/app/designer/profile/types';
 
 /** Existing bio persistence is loaded only after the designer explicitly starts. */
 export function StudioBioActivity({ profileUrl }: { profileUrl: string }) {
+  const opportunity = activityOpportunity('bio');
   const [activity, setActivity] = useState<{ bio: DesignerBioData | null; website: string | null } | null>(null);
   const [pending, setPending] = useState(false);
   const [error, setError] = useState('');
@@ -35,8 +37,8 @@ export function StudioBioActivity({ profileUrl }: { profileUrl: string }) {
   return <main className="mx-auto max-w-4xl px-5 py-12 sm:px-8">
     <Link href="/designer/studio" className="folio-ui underline underline-offset-4">Back to Studio</Link>
     <p className="folio-meta mt-10 text-folio-text-secondary">About me</p>
-    <h1 className="folio-h1 mt-2">A bio that sounds like you.</h1>
-    <p className="folio-body mt-4 mb-8 max-w-2xl text-folio-text-secondary">Tell us about your work and your approach. Review the finished bio, make it yours, and choose when to publish it to your Folio profile.</p>
+    <h1 className="folio-h1 mt-2">{opportunity.purpose}</h1>
+    <p className="folio-body mt-4 mb-8 max-w-2xl text-folio-text-secondary">{opportunity.reason} {opportunity.path} {opportunity.destination}</p>
     {error && <p role="alert" className="folio-body my-4">{error}</p>}
     {published ? <section className="rounded-2xl border border-folio-border-subtle p-6">
       <h2 className="folio-h3">Your story is on your profile.</h2>
