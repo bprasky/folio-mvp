@@ -50,14 +50,14 @@ function snapshot(story: { id: string; slug: string; status: string; publishedRe
 }
 async function owned(userId: string, id: string, db: Prisma.TransactionClient) {
   const data = await storyContext(userId, db);
-  const story = await db.editorialStory.findFirst({ where: { id, ownerId: userId, organizationId: data.workspace.id },
+  const story = await db.editorialStory.findFirst({ where: { id, ownerId: userId, organizationId: data.workspace.id, format: { not: 'expertise' } },
     include: { revisions: { orderBy: { number: 'desc' }, take: 1, include: includeRevision } } });
   if (!story || story.status === 'withdrawn' || !story.revisions[0]) throw new StoryError('Story not found in this workspace.', 404);
   return { data, story, revision: story.revisions[0] };
 }
 export async function listStories(userId: string) {
   const data = await storyContext(userId);
-  const stories = await prisma.editorialStory.findMany({ where: { ownerId: userId, organizationId: data.workspace.id, status: { not: 'withdrawn' },
+  const stories = await prisma.editorialStory.findMany({ where: { ownerId: userId, organizationId: data.workspace.id, format: { not: 'expertise' }, status: { not: 'withdrawn' },
     revisions: { some: { OR: [{ editVersion: { gt: 1 } }, { answers: { some: {} } }] } } },
     orderBy: { updatedAt: 'desc' }, take: 100, include: { revisions: { orderBy: { number: 'desc' }, take: 1, include: includeRevision } } });
   // Dedicated bounded lookups keep completion detection independent of the latest 100 activities.
@@ -192,7 +192,7 @@ export async function changeStory(userId: string, id: string, input: { action?: 
 
 /** Public reads use only the approved published pointer and currently public source projects. */
 export async function publicStory(slug: string) {
-  const story = await prisma.editorialStory.findFirst({ where: { slug, status: 'published' }, include: { owner: { select: { id: true, name: true } },
+  const story = await prisma.editorialStory.findFirst({ where: { slug, status: 'published', format: { not: 'expertise' } }, include: { owner: { select: { id: true, name: true } },
     publishedRevision: { include: { sources: { include: { projectPost: { select: { status: true, updatedAt: true, expandedBlocks: true, project: { select: { id: true, isPublic: true } } } } } } } } } });
   const revision = story?.publishedRevision;
   if (!story || !revision?.approvedAt || !revision.publishedAt || revision.sources.some(s => s.projectPost.status !== 'PUBLISHED' || !s.projectPost.project.isPublic ||

@@ -1,7 +1,8 @@
 'use client';
 
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { expertiseIntent } from '@/lib/publishing-studio/expertise-navigation';
 import { useSession } from 'next-auth/react';
 
 type ProjectStatus = 'new_project' | 'completed_project';
@@ -14,6 +15,7 @@ type DetailsCore = {
 // Unified Create Project UI - single form with optional advanced details
 export default function UnifiedCreateProjectUI() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { data: session } = useSession();
   const operatingAsOrgId = (session?.user as any)?.operatingAsOrgId as string | null ?? null;
   const operatingAsOrgName = (session?.user as any)?.operatingAsOrg?.name as string | null ?? null;
@@ -69,7 +71,12 @@ export default function UnifiedCreateProjectUI() {
           return;
         }
         // Both new and completed projects go to media tab to upload images
-        router.replace(`/project/${id}?view=media`);
+        const next = new URLSearchParams({ view: 'media' });
+        if (searchParams.has('expertiseTopic') || searchParams.has('expertiseProjects')) {
+          const intent = expertiseIntent(searchParams.get('expertiseTopic'), searchParams.get('expertiseProjects'));
+          next.set('expertiseTopic', intent.topic); next.set('expertiseProjects', intent.projectIds.join(','));
+        }
+        router.replace(`/project/${encodeURIComponent(id)}?${next}`);
       }
     } catch (e: any) {
       setErr(e.message || 'Failed to create project');

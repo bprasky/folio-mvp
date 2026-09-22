@@ -66,6 +66,11 @@ jobs:
           node scripts/check-publishing-studio-data.cjs
           node scripts/check-studio-landing.cjs
           node scripts/check-studio-opportunities.cjs
+          node scripts/check-expertise-engine.cjs
+          node scripts/check-expertise-ui.cjs
+          node scripts/check-expertise-navigation.cjs
+          node scripts/check-expertise-persistence.cjs
+          node scripts/check-expertise-postgres.cjs
           node scripts/check-release-plans.cjs
           node scripts/check-release-plan-persistence.cjs
           node scripts/check-studio-release-ui.cjs

@@ -6,6 +6,7 @@ import { useSearchParams } from 'next/navigation';
 interface ProfileTabsProps {
   userId: string;
   activeTab: string;
+  expertiseEnabled?: boolean;
 }
 
 const TABS = [
@@ -14,14 +15,14 @@ const TABS = [
   { id: 'about', label: 'About' },
 ];
 
-export default function ProfileTabs({ userId, activeTab }: ProfileTabsProps) {
+export default function ProfileTabs({ userId, activeTab, expertiseEnabled = false }: ProfileTabsProps) {
   const searchParams = useSearchParams();
 
   const createTabUrl = (tabId: string) => {
     const params = new URLSearchParams(searchParams.toString());
     params.set('tab', tabId);
     // Remove feed-specific params when switching to about or shop tab
-    if (tabId === 'about' || tabId === 'shop') {
+    if (tabId !== 'feed') {
       params.delete('filter');
       params.delete('sort');
     }
@@ -31,8 +32,8 @@ export default function ProfileTabs({ userId, activeTab }: ProfileTabsProps) {
   return (
     <div className="border-b border-folio-border-subtle">
       <div className="max-w-6xl mx-auto px-6">
-        <nav className="flex gap-8" aria-label="Profile tabs">
-          {TABS.map(tab => (
+        <nav className="flex gap-8 overflow-x-auto" aria-label="Profile tabs">
+          {(expertiseEnabled ? [...TABS, { id: 'expertise', label: 'Expertise' }] : TABS).map(tab => (
             <Link
               key={tab.id}
               href={createTabUrl(tab.id)}

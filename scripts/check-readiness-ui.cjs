@@ -26,7 +26,7 @@ const { ReadinessStudio } = load('src/components/publishing-studio/ReadinessStud
   'next/navigation': { useRouter: () => ({ replace: url => navigation.push(url) }), useSearchParams: () => params },
   '@/lib/publishing-studio/readiness/types': { DISMISSAL_REASONS: [] },
   '@/lib/publishing-studio/readiness/presentation': presentation,
-  './StudioDiscovery':discovery, './StudioSavedActivities':{StudioSavedActivities:()=>null}, './StudioWorkspace': workspace, './CandidateConfigurator': configurator,
+  './StudioDiscovery':discovery, './expertise/ExpertiseSection':{ExpertiseSection:({saved})=>React.createElement('section',{'data-expertise':saved?'saved':'suggested'},'My expertise')}, './StudioSavedActivities':{StudioSavedActivities:()=>null}, './StudioWorkspace': workspace, './CandidateConfigurator': configurator,
 });
 const make = (index, readiness = 'ready', blockers = []) => ({ ...candidate, id: `candidate-${index}`, readiness, blockers, thesis: `Story thesis ${index}`,
   draft: { ...candidate.draft, headline: `Prepared story ${index}`, caption: `Prepared caption ${index}` },

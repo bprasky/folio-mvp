@@ -11,7 +11,7 @@ const feedCard = load('src/components/publishing-studio/StudioFeedCard.tsx', { '
 const workspace = load('src/components/publishing-studio/StudioWorkspace.tsx', {});
 const discovery = load('src/components/publishing-studio/StudioDiscovery.tsx', {'./StudioWorkspace':workspace, 'next/link':{default:({children,...props})=>React.createElement('a',props,children)}});
 let introduction = {status:"available"}; const releaseState = { opportunities: [], plans: [], loading: false, error: '', retry() {} };
-const imports = { './usePersonalIntroduction':{usePersonalIntroduction:()=>({introduction,error:'',reload(){}})}, './StudioReleaseOpportunities':{useReleaseOpportunities:()=>releaseState,StudioReleaseOpportunities:({opportunities})=>React.createElement('div',null,opportunities.map(item=>React.createElement('a',{key:item.projectId,href:'/designer/studio/release?projectId='+item.projectId},item.purpose)))}, './StudioDiscovery':discovery, './StudioSavedActivities':{StudioSavedActivities:()=>null}, './StudioWorkspace': workspace, '@/lib/publishing-studio/recommendations': load('src/lib/publishing-studio/recommendations.ts', {}), 'next/dynamic': {default: () => props => React.createElement('div', {'data-campaign-project':props.projectId}, props.projectTitle)}, 'next/link': { default: ({ children, ...props }) => React.createElement('a', props, children) }, 'next/navigation': { useRouter: () => ({ replace() { }, push(href) { destinations.push(href); } }), useSearchParams: () => params }, './useStudio': { useStudio: () => ({ data, reload() { } }) }, './StudioFeedCard': feedCard, '@/lib/publishing-studio/navigation': navigation };
+const imports = { './usePersonalIntroduction':{usePersonalIntroduction:()=>({introduction,error:'',reload(){}})}, './StudioReleaseOpportunities':{useReleaseOpportunities:()=>releaseState,StudioReleaseOpportunities:({opportunities})=>React.createElement('div',null,opportunities.map(item=>React.createElement('a',{key:item.projectId,href:'/designer/studio/release?projectId='+item.projectId},item.purpose)))}, './StudioDiscovery':discovery, './expertise/ExpertiseSection':{ExpertiseSection:({saved})=>React.createElement('section',{'data-expertise':saved?'saved':'suggested'},'My expertise')}, './StudioSavedActivities':{StudioSavedActivities:()=>null}, './StudioWorkspace': workspace, '@/lib/publishing-studio/recommendations': load('src/lib/publishing-studio/recommendations.ts', {}), 'next/dynamic': {default: () => props => React.createElement('div', {'data-campaign-project':props.projectId}, props.projectTitle)}, 'next/link': { default: ({ children, ...props }) => React.createElement('a', props, children) }, 'next/navigation': { useRouter: () => ({ replace() { }, push(href) { destinations.push(href); } }), useSearchParams: () => params }, './useStudio': { useStudio: () => ({ data, reload() { } }) }, './StudioFeedCard': feedCard, '@/lib/publishing-studio/navigation': navigation };
 const { PublishingStudio } = load('src/components/publishing-studio/PublishingStudio.tsx', imports);
 let html = renderToStaticMarkup(React.createElement(PublishingStudio));
 assert.match(html, /Give Meru a fuller introduction/);assert.match(html,/2 slides/);
@@ -136,4 +136,17 @@ async function checkInteractions() {
  await act(async()=>root.unmount());
  console.log('PASS Studio interactions: no browse generation; exact prepared card/revision; direct global/project editor routes; visible preparation failure without navigation.');
 }
+
+// Feature-gate integration: disabled retains current Studio; enabled has one dedicated section.
+params = new URLSearchParams();
+html = renderToStaticMarkup(React.createElement(PublishingStudio, { expertiseEnabled: false }));
+assert.doesNotMatch(html, /data-expertise=/);
+html = renderToStaticMarkup(React.createElement(PublishingStudio, { expertiseEnabled: true }));
+assert.equal((html.match(/data-expertise="suggested"/g)||[]).length, 1);
+assert.ok(html.indexOf('data-expertise="suggested"') > html.indexOf('Recommended for you'));
+assert.ok(html.indexOf('data-expertise="suggested"') < html.indexOf('Explore by project or format'));
+params = new URLSearchParams('tab=progress');
+html = renderToStaticMarkup(React.createElement(PublishingStudio, { expertiseEnabled: true }));
+assert.match(html, /data-expertise="saved"/);
+
 checkInteractions().catch(error=>{console.error(error);process.exitCode=1;});

@@ -10,6 +10,7 @@ import ProfileShop from '@/components/profile/unified/ProfileShop';
 import ProfileAbout from '@/components/profile/unified/ProfileAbout';
 import PinnedCarousel from '@/components/profile/unified/PinnedCarousel';
 import { PublishedStudioStories } from '@/components/profile/PublishedStudioStories';
+import { PublishedExpertise } from '@/components/profile/PublishedExpertise';
 
 export const dynamic = 'force-dynamic';
 
@@ -112,9 +113,10 @@ export default async function ProfilePage({ params, searchParams }: Props) {
       {pinnedItems.length > 0 && <PinnedCarousel items={pinnedItems} />}
 
       {activeTab !== 'about' && <PublishedStudioStories userId={resolvedParams.userId} />}
-      <ProfileTabs activeTab={activeTab} userId={resolvedParams.userId} />
+      <ProfileTabs activeTab={activeTab} userId={resolvedParams.userId} expertiseEnabled={process.env.STUDIO_MY_EXPERTISE === 'true'} />
 
       <div className="max-w-6xl mx-auto px-6 py-8">
+        {activeTab === 'expertise' && process.env.STUDIO_MY_EXPERTISE === 'true' && <PublishedExpertise userId={resolvedParams.userId} />}
         {activeTab === 'feed' && (
           <Suspense fallback={<FeedSkeleton />}>
             <ProfileFeed
