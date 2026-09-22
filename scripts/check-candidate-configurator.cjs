@@ -10,7 +10,7 @@ global.IS_REACT_ACT_ENVIRONMENT = true;
 const { createRoot } = require('react-dom/client');
 const { Simulate } = require('react-dom/test-utils');
 const { act } = React;
-const fixture = { id: 'story', version: 1, sourceVersion: 'source', readiness: 'quick', thesis: 'A considered room', audienceValue: 'Show the decision behind the room.', source: { title: 'A home' },
+const fixture = { shape:'decision', id: 'story', version: 1, sourceVersion: 'source', readiness: 'quick', thesis: 'A considered room', audienceValue: 'Show the decision behind the room.', source: { title: 'A home' },
   projectIds: ['p'], format: 'single_image', visuals: [{ id: 'image', url: '/fixture.jpg', role: 'hero', reason: 'The finished room' }],
   draft: { headline: 'A considered room', caption: 'The original saved caption.', credits: { designer: 'Designer', photographer: 'Photographer' } },
   evidence: [{ id: 'e', text: 'Published project detail.', tier: 'direct' }],
@@ -18,7 +18,7 @@ const fixture = { id: 'story', version: 1, sourceVersion: 'source', readiness: '
 const calls = [];
 const exported = {};
 vm.runInNewContext(ts.transpileModule(fs.readFileSync('src/components/publishing-studio/CandidateConfigurator.tsx', 'utf8'), { compilerOptions: { module: ts.ModuleKind.CommonJS, jsx: ts.JsxEmit.ReactJSX, target: ts.ScriptTarget.ES2020 } }).outputText,
- { exports: exported, require, window: dom.window, document: dom.window.document, console,
+ { exports: exported, require: id => { if(id === '@/lib/publishing-studio/opportunities') { const exports={};vm.runInNewContext(ts.transpileModule(fs.readFileSync('src/lib/publishing-studio/opportunities.ts','utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022}}).outputText,{exports,URLSearchParams});return exports;} return require(id); }, window: dom.window, document: dom.window.document, console,
    fetch: (url, options) => new Promise(resolve => calls.push({ url, body: JSON.parse(options.body), resolve })) });
 let candidate = structuredClone(fixture), readOnly = false, closed = 0;
 let root;

@@ -21,6 +21,7 @@ export interface SlideData {
 }
 
 interface Props {
+  releaseProject?: string;
   studioScope?: 'all' | 'project';
   initialPreview?: { config: any; headline?: string | null; caption?: string | null; bioText?: string | null } | null;
   initialExport?: { id: string; updatedAt?: string; config: any; headline?: string | null; bioText?: string | null; caption?: string | null } | null;
@@ -64,7 +65,7 @@ interface Props {
 
 export type TabType = 'format' | 'headline' | 'designer' | 'caption';
 
-export function InstagramExportEditor({ project, designer, images, rooms, initialExport, initialPreview, studioScope = 'project' }: Props) {
+export function InstagramExportEditor({ project, designer, images, rooms, initialExport, initialPreview, studioScope = 'project', releaseProject }: Props) {
   const initial = initialExport || initialPreview;
   const saved = initial?.config || {};
   const [activeTab, setActiveTab] = useState<TabType>('caption');
@@ -342,8 +343,8 @@ export function InstagramExportEditor({ project, designer, images, rooms, initia
         }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '16px', flexWrap: 'wrap' }}>
             <Link
-              href={studioScope === 'all' ? '/designer/studio' : `/designer/studio?project=${encodeURIComponent(project.id)}`}
-              aria-label="Back to Publishing Studio"
+              href={releaseProject ? `/designer/studio/release?projectId=${encodeURIComponent(releaseProject)}` : studioScope === 'all' ? '/designer/studio' : `/designer/studio?project=${encodeURIComponent(project.id)}`}
+              aria-label={releaseProject ? 'Back to release plan' : 'Back to Publishing Studio'}
               style={{ color: '#8B7B68', transition: 'color 0.2s', display: 'flex', alignItems: 'center' }}
             >
               <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
@@ -386,6 +387,8 @@ export function InstagramExportEditor({ project, designer, images, rooms, initia
           />
         </div>
       </header>
+
+      {(releaseProject || saved.opportunity) && <section className="mx-auto max-w-6xl px-4 py-5"><h1 className="folio-h3">{releaseProject ? `Give ${project.title} a fuller introduction.` : saved.opportunity?.purpose}</h1><p className="folio-body mt-2 text-folio-text-secondary">Review this caption and its images. Save your draft or download the post for sharing on Instagram.{releaseProject ? ' Return to your release plan to review the sequence and planning dates.' : ''}</p></section>}
 
       {/* Room selector */}
       {!initial && rooms.length > 1 && (

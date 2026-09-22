@@ -29,13 +29,14 @@ export function StudioActivityHost() {
         const search = new URLSearchParams(query);
         const data = await request('/api/publishing-studio/stories');
         const id = search.get('id');
-        const initial = id ? await request(`/api/publishing-studio/stories/${encodeURIComponent(id)}`) : undefined;
         const subject = search.get('subject') || 'designer';
         const format = search.get('format') || 'twenty_questions';
+        const resumeId = id || (subject === 'designer' && format === 'twenty_questions' ? data.personalIntroduction?.id : undefined);
+        const initial = resumeId ? await request(`/api/publishing-studio/stories/${encodeURIComponent(resumeId)}`) : undefined;
         if (!['designer', 'firm', 'project'].includes(subject) || !Object.hasOwn(ACTIVITY_FORMATS, format)) throw new Error('Choose an available activity from the Studio.');
         const brief = { subject, format, ...(search.get('projectId') ? { projectId: search.get('projectId') } : {}), ...(search.get('roomId') ? { roomId: search.get('roomId') } : {}) } as ActivityBrief;
         if (!initial) createActivity(brief, data.context);
-        if (!cancelled) setState({ context: data.context, initial, brief });
+        if (!cancelled) setState({ context: data.context, initial, brief: initial?.definition.brief || brief });
       } catch (cause) { if (!cancelled) setError(cause instanceof Error ? cause.message : 'Could not open your activity.'); }
     })();
     return () => { cancelled = true; };
@@ -59,9 +60,11 @@ export function StudioActivityHost() {
       if (snapshot.reviewed && snapshot.draft) {
         saved = await request(url, { action: 'prepare', revision: saved.revision }, 'PATCH');
         completedRevision.current.set(snapshot.id, saved.revision);
+        saved = await request(url, { action: 'edit_article', revision: saved.revision, draft: snapshot.draft }, 'PATCH');
+        completedRevision.current.set(snapshot.id, saved.revision);
       }
       return saved;
     },
-    publish: snapshot => request(`/api/publishing-studio/stories/${encodeURIComponent(snapshot.id)}`, { action: 'publish', revision: snapshot.revision }, 'PATCH'),
+    publish: snapshot => request(`/api/publishing-studio/stories/${encodeURIComponent(snapshot.id)}`, { action: 'publish', revision: snapshot.revision, articleReviewed: snapshot.articleReviewed === true }, 'PATCH'),
   }} />;
 }

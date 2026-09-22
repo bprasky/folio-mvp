@@ -1,5 +1,6 @@
 import { createHash } from 'crypto';
 import type { StudioFeedCard, StudioData } from './types';
+import { feedOpportunity } from './opportunities';
 
 type Project = {
   id: string; title: string; ownerId: string; designerId: string | null; isPublic: boolean;
@@ -139,6 +140,7 @@ function stringList(value: unknown): string[] | undefined {
 
 export function preparedConfig(card: StudioFeedCard) {
   return { studioCardId: card.id, aspectRatio: '4:5', headlinePosition: 'bottom_left', watermarkStyle: 'minimal',
+    opportunity: feedOpportunity(card, card.title),
     slideCount: card.imageUrls.length + 1, bioEnabled: false,
     pitch: card.pitch, rationale: card.rationale, beats: card.beats,
     headlineOptions: card.headlineOptions, captionOptions: card.captionOptions,

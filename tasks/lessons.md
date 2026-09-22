@@ -1114,3 +1114,6 @@ Do not hide available stories behind dropdowns or More suggestions. Make About m
 
 ## 2026-09-22 — Complete the release after explicit merge approval
 Once the user says merge, check CI, repair failures and finish the merge without another approval loop. Match CI Node versions in browser fixtures; pin separately approved schema additions in historical exact-schema guards.
+
+## 2026-09-22 — A Studio opportunity begins with a designer purpose
+Lead with why this matters to the designer, how Folio helps and the concrete result. Formats are means, not the recommendation. Carry purpose and sources into the destination, group coherent project outputs without duplicates, and keep promises bounded by real review, placement, export and publication behavior. Missing publication data is unknown.

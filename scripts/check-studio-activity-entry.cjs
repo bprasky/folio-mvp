@@ -11,6 +11,7 @@ if(name==='next/link')return {default:({href,children})=>React.createElement('a'
 if(name==='next/navigation')return {useSearchParams:()=>new URLSearchParams('subject=designer&format=twenty_questions'),useRouter:()=>({push(){}})};
 if(name==='@/components/designer-bio/BioSetupFlow')return {default:props=>{bioProps=props;return React.createElement('button',{onClick:props.onPublished},'Publish fixture');}};
 if(name==='./StoryActivity')return {StoryActivity:props=>{activityProps=props;return null;}};
+if(name==='@/lib/publishing-studio/opportunities')return load('src/lib/publishing-studio/opportunities.ts');
 if(name==='@/lib/publishing-studio/activities')return load('src/lib/publishing-studio/activities.ts');
 if(name==='@/components/publishing-studio/UnsavedActivityDialog')return load('src/components/publishing-studio/UnsavedActivityDialog.tsx');
 if(name==='framer-motion')return {AnimatePresence:({children})=>children,motion:{div:({children})=>React.createElement('div',null,children)}};
@@ -33,8 +34,12 @@ const {StudioActivityHost}=load('src/components/publishing-studio/StudioActivity
 const context={designerName:'A',firmName:'B',projects:[],profile:{hasBio:true,hasPointOfView:true}};
 respond=async()=>({ok:true,json:async()=>({context,stories:[]})});calls=[];
 await React.act(async()=>{root.render(React.createElement(StudioActivityHost));await flush();});assert.equal(calls.length,1);assert.equal(calls[0].options.method,undefined);assert.equal(activityProps.initialBrief.format,'twenty_questions');
+const savedIntroduction={id:'intro',revision:7,definition:{brief:{subject:'designer',format:'twenty_questions'}},answers:[{questionId:'q1',text:'Saved words'}]};
+respond=async url=>({ok:true,json:async()=>url.endsWith('/intro')?savedIntroduction:{context,stories:[],personalIntroduction:{status:'draft',id:'intro'}}});calls=[];
+await React.act(async()=>{root.render(React.createElement(StudioActivityHost,{key:'resume'}));await flush();});
+assert.equal(calls.length,2);assert(calls.every(call=>!call.options.method),'Preset known introduction resumes with reads only');assert.equal(activityProps.initial.answers[0].text,'Saved words');
 let revision=1;respond=async()=>({ok:true,json:async()=>({id:'s',revision:++revision})});calls=[];
-await activityProps.persistence.save({id:'s',revision:1,answers:[{questionId:'q',text:'words'}],reviewed:true,draft:{}});assert.deepEqual(calls.map(c=>JSON.parse(c.options.body).action),['save','review','prepare']);assert.deepEqual(calls.map(c=>JSON.parse(c.options.body).revision),[1,2,3]);
+await activityProps.persistence.save({id:'s',revision:1,answers:[{questionId:'q',text:'words'}],reviewed:true,draft:{}});assert.deepEqual(calls.map(c=>JSON.parse(c.options.body).action),['save','review','prepare','edit_article']);assert.deepEqual(calls.map(c=>JSON.parse(c.options.body).revision),[1,2,3,4]);
 calls=[];
 await activityProps.persistence.save({id:'s',revision:4,answers:[{questionId:'q',text:'words'}],reviewed:false,draft:{}});
 assert.equal(calls.length,1,'Revoked review must never trigger prepare even if stale client draft remains');

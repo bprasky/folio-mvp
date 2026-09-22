@@ -456,3 +456,14 @@ Review: see docs/reviews/studio-discovery/README.md. User explicitly approved th
 - [x] Verify guard mutation tests and activity entry with native navigator disabled.
 - [ ] Verify remote CI and merge the approved PR790.
 Review: test-only CI corrections preserve exact schema/SQL approval hashes and reject unauthorized changes. No application or database changes in this follow-up.
+
+## Studio purpose-led opportunities — 2026-09-22
+- [x] Audit reusable opportunity, activity, profile placement and campaign persistence contracts.
+- [x] Add a shared purpose/reason/path/result/destination adapter, contextual selection and nonduplicated presentation.
+- [x] Deliver editable personal introductions with real resume/completion state and truthful profile placement.
+- [x] Deliver a project-specific release flow with explicit room selection, saved sequence, dates and existing individual editors.
+- [x] Verify authorization, stale sources, reload persistence, readiness, purpose-to-outcome parity, desktop/mobile and keyboard states.
+- [x] Capture screenshots, walkthroughs, review and scoped commit/PR. No production mutations, migrations, merge or deployment.
+Plan check-in: keep the photography-led design and current quality gates. Recommendations lead with a designer purpose; formats are secondary. Reuse existing JSON storage only when its ownership and consumer contracts permit durable plans. Planning dates never imply automatic scheduling. Preserve unrelated work.
+
+Review: implemented and verified; see docs/reviews/studio-purpose/README.md for walkthroughs, screenshots, test evidence and supported boundaries. Production compile, lint, guards, all existing Studio checks and new persistence/UI regressions pass. TypeScript budget 903/904, baseline unchanged. Committed on the scoped local branch. Push and draft PR blocked by automatic approval review pending explicit destination approval; no production writes, migrations, merge or deployment.

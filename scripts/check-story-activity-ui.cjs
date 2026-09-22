@@ -6,12 +6,12 @@ const React = require('react');
 const { JSDOM } = require('jsdom');
 const dom = new JSDOM('<div id="root"></div>', { url: 'https://fixture.test' });
 global.window = dom.window; global.document = dom.window.document; global.IS_REACT_ACT_ENVIRONMENT = true;
-global.navigator = dom.window.navigator;
+Object.defineProperty(global, 'navigator', {value:dom.window.navigator, configurable:true});
 const { createRoot } = require('react-dom/client');
 function load(file) {
   const exports = {};
   vm.runInNewContext(ts.transpileModule(fs.readFileSync(file, 'utf8'), { compilerOptions: { module: ts.ModuleKind.CommonJS, jsx: ts.JsxEmit.ReactJSX, target: ts.ScriptTarget.ES2022 } }).outputText,
-    { exports, console, Error, navigator: {}, window: dom.window, document: dom.window.document, require: name => name === '@/lib/publishing-studio/activities' ? activities : name === './ActivitySocialCard' ? { ActivitySocialCard: () => null } : name === './UnsavedActivityDialog' ? load('src/components/publishing-studio/UnsavedActivityDialog.tsx') : name === './StoryConfigurator' ? load('src/components/publishing-studio/StoryConfigurator.tsx') : require(name) });
+    { exports, console, Error, URLSearchParams, navigator: {}, window: dom.window, document: dom.window.document, require: name => name === '@/lib/publishing-studio/opportunities' ? load('src/lib/publishing-studio/opportunities.ts') : name === '@/lib/publishing-studio/activities' ? activities : name === './ActivitySocialCard' ? { ActivitySocialCard: () => null } : name === './UnsavedActivityDialog' ? load('src/components/publishing-studio/UnsavedActivityDialog.tsx') : name === './StoryConfigurator' ? load('src/components/publishing-studio/StoryConfigurator.tsx') : require(name) });
   return exports;
 }
 const activities = load('src/lib/publishing-studio/activities.ts');
@@ -22,7 +22,7 @@ const definition = activities.createActivity({ subject: 'designer', format: 'qa'
   definition.questions.forEach((q,i) => { q.prompt = 'Fixture question '+(i+1)+'?'; });
 let snapshot = { id: 'activity', revision: 1, definition, answers: [], reviewed: false, draft: null };
 const calls = []; let closeCount = 0;
-const persistence = { create: async () => snapshot, save: next => new Promise((resolve, reject) => calls.push({ next, resolve, reject })) };
+const persistence = { create: async () => snapshot, publish: async next => ({ ...next, publishedUrl: '/stories/published' }), save: next => new Promise((resolve, reject) => calls.push({ next, resolve, reject })) };
 const button = name => [...document.querySelectorAll('button')].find(item => item.textContent === name);
 async function click(name) { assert(button(name), name); await React.act(async () => button(name).click()); }
 async function typeAnswer(text) {
@@ -84,20 +84,61 @@ async function main() {
   assert.equal(prepared.next.draft.entries.length, 5);
   await React.act(async () => prepared.resolve({ ...prepared.next, revision: 3 }));
   assert(document.body.textContent.includes('Draft preview'));
+  assert(button('Publish article to my profile').disabled, 'The finished article requires its own explicit review');
+  await React.act(async () => document.querySelector('input[type=checkbox]').click());
+  assert(!button('Publish article to my profile').disabled);
+  const articleTitle = document.querySelector('input:not([type=checkbox])');
+  await React.act(async () => { Object.getOwnPropertyDescriptor(dom.window.HTMLInputElement.prototype, 'value').set.call(articleTitle, 'Meet me through my work'); articleTitle.dispatchEvent(new dom.window.Event('input', { bubbles: true })); });
+  assert(button('Publish article to my profile').disabled, 'Editing the article revokes final approval');
+  await typeAnswer('Edited for the article; the original interview remains unchanged.');
+  await click('Back to Studio');await click('Keep editing');
+  await click('Save article edits');
+  const articleSave = calls.at(-1);
+  assert.equal(articleSave.next.draft.title, 'Meet me through my work');
+  assert.equal(articleSave.next.draft.entries[0].answer, 'Edited for the article; the original interview remains unchanged.');
+  assert.notEqual(articleSave.next.answers[0].text, articleSave.next.draft.entries[0].answer);
+  await React.act(async () => articleSave.resolve({ ...articleSave.next, revision: 4 }));
+  assert(button('Publish article to my profile').disabled, 'Saving alone does not publish or approve the article');
+
+  await click('Review or edit answers');
+  await click('Prepare my draft');
+  const unchangedReview = calls.at(-1);
+  assert.equal(unchangedReview.next.draft.title, 'Meet me through my work', 'Re-reviewing unchanged answers retains edited article title');
+  assert.equal(unchangedReview.next.draft.entries[0].answer, articleSave.next.draft.entries[0].answer, 'Re-preparing does not overwrite edited article answers');
+  await React.act(async () => unchangedReview.resolve({ ...unchangedReview.next, revision: 5 }));
+  await click('Review or edit answers');
+  await React.act(async () => document.querySelector('input[type=checkbox]').click());
+  assert(button('Prepare my draft').disabled);
+  await React.act(async () => document.querySelector('input[type=checkbox]').click());
+  await click('Prepare my draft');
+  const toggledReview = calls.at(-1);
+  assert.equal(toggledReview.next.draft.title, 'Meet me through my work', 'Toggling answer review does not erase article edits');
+  await React.act(async () => toggledReview.resolve({ ...toggledReview.next, revision: 6 }));
   await click('Review or edit answers');
   await React.act(async () => document.querySelector('input[type=checkbox]').click());
   await click('Back to Studio');
   await click('Save draft and exit');
   const revoked = calls.at(-1);
   assert.equal(revoked.next.reviewed, false, 'Review can be revoked after preparation');
-  assert.equal(revoked.next.draft, null, 'Revoking review clears prepared output');
+  assert.equal(revoked.next.draft.title, 'Meet me through my work', 'Revoking review preserves article edits while blocking publication');
   await React.act(async () => revoked.resolve({ ...revoked.next, revision: 4 }));
   assert(!document.querySelector('dialog'), 'Successful revoked-review save exits without preparing again');
+  await React.act(async () => root.render(React.createElement(StoryActivity, { key: 'revoked-resume', context, persistence, initial: { ...revoked.next, revision: 6 }, onClose() {} })));
+  assert(button('Prepare my draft').disabled, 'Resuming a saved revoked review requires answer review first');
+  assert.equal(document.querySelectorAll('textarea').length, 0, 'Unreviewed article edits cannot appear editable and then fail to persist');
+  assert.equal(document.querySelector('input[type=checkbox]').checked, false);
+
   await click('Edit answer 1');
   await typeAnswer('An edited original answer.');
   await click('See all questions and answers');
   assert(button('Prepare my draft').disabled, 'Editing invalidates review and old draft');
   assert.equal(document.querySelector('input[type=checkbox]').checked, false);
+  await React.act(async () => document.querySelector('input[type=checkbox]').click());
+  await click('Prepare my draft');
+  const changedAnswer = calls.at(-1);
+  assert.equal(changedAnswer.next.draft.entries[0].answer, 'An edited original answer.', 'Actual interview edits invalidate the earlier article');
+  assert.equal(changedAnswer.next.draft.title, definition.title);
+  await React.act(async () => changedAnswer.resolve({ ...changedAnswer.next, revision: 7 }));
   await React.act(async () => root.unmount());
   console.log('PASS interview UI: one question, retained answers on failure, save-before-exit, resume, review requirement and edit invalidation.');
 }
