@@ -2,6 +2,7 @@ const assert = require('node:assert/strict'), fs = require('node:fs'), vm = requ
 const React = require('react'), { JSDOM } = require('jsdom');
 const dom = new JSDOM('<div id="root"></div>', {url:'https://folio.test/designer/studio/activity'});
 Object.assign(global,{window:dom.window,document:dom.window.document,IS_REACT_ACT_ENVIRONMENT:true});
+Object.defineProperty(global, 'navigator', {value:dom.window.navigator, configurable:true});
 const {createRoot}=require('react-dom/client');
 let calls=[],respond,bioProps,activityProps;
 const fetch=async(url,options)=>{calls.push({url,options});return respond(url,options);};

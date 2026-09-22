@@ -450,3 +450,9 @@ Review: targeted editor, persistence, readiness, landing and draft-removal regre
 Plan check-in: implement the approved proposal using existing source and activity contracts, with no fabricated completion dates or automatic publication/profile edits. Preserve unrelated work and the completed draft fix. Inspect persistence before choosing the smallest safe integration.
 
 Review: see docs/reviews/studio-discovery/README.md. User explicitly approved the exact four-table SQL/model batch; applied with clean postflight. Independent review found no remaining blockers after fixes. Compile, regressions, client/migration guards and TypeScript budget pass (903/904, exact display equivalence proof, baseline unchanged). Browser walkthrough used synthetic content only. Application awaits merge/deployment.
+
+## Studio discovery merge — 2026-09-22
+- [x] Inspect PR790 checks and repair Node20 browser globals and approved-schema guard expectations.
+- [x] Verify guard mutation tests and activity entry with native navigator disabled.
+- [ ] Verify remote CI and merge the approved PR790.
+Review: test-only CI corrections preserve exact schema/SQL approval hashes and reject unauthorized changes. No application or database changes in this follow-up.

@@ -1111,3 +1111,6 @@ Browsing or opening prepared work must not create an In progress record. Track c
 
 ## 2026-09-21 — Studio discovery must expose the reward
 Do not hide available stories behind dropdowns or More suggestions. Make About me visible beside projects, and surface personal activities in the default feed. Show the finished outcome before asking for interview effort. Preserve a distinction between prepared posts and invitations, and connect profile/share rewards to real reviewed actions.
+
+## 2026-09-22 — Complete the release after explicit merge approval
+Once the user says merge, check CI, repair failures and finish the merge without another approval loop. Match CI Node versions in browser fixtures; pin separately approved schema additions in historical exact-schema guards.
