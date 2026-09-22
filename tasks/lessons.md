@@ -1105,3 +1105,12 @@ Firm History is not a general firm topic. Exclude both Material story and How it
 
 ## 2026-09-18 — Studio recommendations need editorial order and honest timing
 Group prepared pitches under a clear recommendation and explain why now before users read every card. Rank by supported story substance, true publication timing and saved activity; do not equate updates, completion, exports and actual social publication. Trends need fresh measured evidence. Keep saved work stable while recommendations evolve.
+
+## 2026-09-21 — Opening a Studio suggestion is not starting a draft
+Browsing or opening prepared work must not create an In progress record. Track changes against the opened/saved content, not navigation or selection. Clean exit is immediate; dirty exit offers Save draft and exit, Discard changes, and Keep editing. Preserve existing saved work unless the user explicitly removes it, and test both legacy and readiness editors.
+
+## 2026-09-21 — Studio discovery must expose the reward
+Do not hide available stories behind dropdowns or More suggestions. Make About me visible beside projects, and surface personal activities in the default feed. Show the finished outcome before asking for interview effort. Preserve a distinction between prepared posts and invitations, and connect profile/share rewards to real reviewed actions.
+
+## 2026-09-22 — Complete the release after explicit merge approval
+Once the user says merge, check CI, repair failures and finish the merge without another approval loop. Match CI Node versions in browser fixtures; pin separately approved schema additions in historical exact-schema guards.

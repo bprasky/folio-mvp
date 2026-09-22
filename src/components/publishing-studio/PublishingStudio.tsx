@@ -6,9 +6,11 @@ import dynamic from 'next/dynamic';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Sparkles } from 'lucide-react';
 import { useStudio } from './useStudio';
-import { StudioFeedCard, type FeedItem, feedLabel } from './StudioFeedCard';
+import { StudioFeedCard, type FeedItem } from './StudioFeedCard';
 import { recommendStudioStories } from '@/lib/publishing-studio/recommendations';
 import { StudioIntro, StudioTabs, StudioPhoto, type StudioTab } from './StudioWorkspace';
+import { StudioDiscovery, AboutMeInvitation, ActivityInvitations, matchesStoryFormat } from './StudioDiscovery';
+import { StudioSavedActivities } from './StudioSavedActivities';
 import { matchesStudioItem } from '@/lib/publishing-studio/navigation';
 
 const CampaignWizard = dynamic(() => import('@/components/instagram/CampaignWizard').then(module => module.CampaignWizard), { ssr: false });
@@ -21,7 +23,8 @@ export function PublishingStudio({ embedded = false }: { embedded?: boolean } = 
   const project = params.get('project') === 'studio-wide' ? '' : params.get('project') || '';
   const tab: StudioTab = params.get('tab') === 'exports' ? 'exports' : params.get('tab') === 'progress' || (!params.get('tab') && params.get('view') === 'saved') ? 'progress' : 'suggestions';
   const kind = params.get('type') || '';
-  const [showMore, setShowMore] = useState(false);
+  const subject = params.get('subject') === 'about-me' ? 'about-me' : project;
+  const format = params.get('format') || '';
   const query = params.get('q') || '';
   const status = params.get('status') || '';
   const { data, error, reload } = useStudio();
@@ -29,13 +32,13 @@ export function PublishingStudio({ embedded = false }: { embedded?: boolean } = 
   const [notice, setNotice] = useState('');
   const [campaignProject, setCampaignProject] = useState<string | null>(null);
   const [actionError, setActionError] = useState('');
+  const [removingDraft, setRemovingDraft] = useState<FeedItem | null>(null);
 
   function navigate(changes: Record<string, string | null>) {
     const next = new URLSearchParams(params.toString());
     // Old tab/create links now open this same workspace, without another chooser.
     if (next.get('view') !== 'saved') next.delete('view');
     next.delete('create');
-    setShowMore(false);
     for (const [key, value] of Object.entries(changes)) value ? next.set(key, value) : next.delete(key);
     router.replace(`/designer/studio${next.size ? `?${next}` : ''}`, { scroll: false });
   }
@@ -54,6 +57,21 @@ export function PublishingStudio({ embedded = false }: { embedded?: boolean } = 
       if (!response.ok || !result.href) throw new Error(result.error || 'Could not open this post. Please try again.');
       router.push(`${result.href}${result.href.includes('?') ? '&' : '?'}studio=${project ? 'project' : 'all'}`);
     } catch (error) { setActionError(error instanceof Error ? error.message : 'Could not open this post.'); }
+    finally { setPending(null); }
+  }
+
+  async function removeDraft() {
+    if (!removingDraft?.exportId) return;
+    setPending(removingDraft.id); setActionError(''); setNotice('');
+    try {
+      const response = await fetch(`/api/publishing-studio/drafts/${encodeURIComponent(removingDraft.exportId)}`, {
+        method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ updatedAt: removingDraft.updatedAt }),
+      });
+      const result = await response.json();
+      if (!response.ok) throw new Error(result.error || 'Could not remove this draft.');
+      setRemovingDraft(null); setNotice('Draft removed. Its original suggestion can return if the source is still available.');
+      navigate({ item: null }); reload();
+    } catch (error) { setActionError(error instanceof Error ? error.message : 'Could not remove this draft.'); }
     finally { setPending(null); }
   }
 
@@ -85,7 +103,7 @@ export function PublishingStudio({ embedded = false }: { embedded?: boolean } = 
   const projectName = (id: string) => data.projects.find(item => item.id === id)?.title || 'Project';
   const activeCampaign = data.projects.find(item => item.id === campaignProject);
   const selectedProject = data.projects.find(item => item.id === project);
-  const feed = data.feed.filter(item => (!data.readinessEnabled || ['carousel', 'campaign'].includes(item.kind)) && matchesStudioItem({ ...item, title: `${item.title} ${item.caption} ${item.projectIds.map(projectName).join(' ')}` }, { project, query, status }) && (!kind || item.kind === kind) && (status || item.status !== 'dismissed'));
+  const feed = data.feed.filter(item => (!data.readinessEnabled || ['carousel', 'campaign'].includes(item.kind)) && matchesStudioItem({ ...item, title: `${item.title} ${item.caption} ${item.projectIds.map(projectName).join(' ')}` }, { project, query, status }) && (!kind || item.kind === kind) && (tab !== 'suggestions' || (subject !== 'about-me' && matchesStoryFormat(item, format))) && (status || item.status !== 'dismissed'));
   const selected = data.feed.find(item => item.id === params.get('item') || item.id === `idea:${params.get('item')}` || item.exportId === params.get('item') || item.campaignId === params.get('item'));
   const campaign = selected?.campaignId ? data.campaigns.find(item => item.id === selected.campaignId) : undefined;
   const idea = selected?.kind === 'idea' ? data.ideas.find(item => item.id === selected.id || selected.id === `idea:${item.id}`) : undefined;
@@ -93,36 +111,43 @@ export function PublishingStudio({ embedded = false }: { embedded?: boolean } = 
   const recommendations = recommendStudioStories(data, feed);
   const recommendedIds = new Set(recommendations.flatMap(group => group.cards.map(card => card.id)));
   const ranked = recommendations.flatMap(group => group.cards);
-  const primary = ranked.slice(0, 3);
-  const portfolio = ranked.slice(3).find(card => card.kind === 'idea' && card.projectIds.length > 1 && card.imageUrls.length > 0);
-  const additional = ranked.slice(3).filter(card => card.id !== portfolio?.id);
+  const primary = ranked.slice(0, subject || format ? 3 : 2);
+  const portfolio = ranked.slice(primary.length).find(card => card.kind === 'idea' && card.projectIds.length > 1 && card.imageUrls.length > 0);
+  const remaining = ranked.slice(primary.length).filter(card => card.id !== portfolio?.id);
+  const archiveIds = new Set(recommendations.filter(group => group.label === 'From your archive').flatMap(group => group.cards.map(card => card.id)));
+  const archive = remaining.filter(card => archiveIds.has(card.id));
+  const additional = remaining.filter(card => !archiveIds.has(card.id));
   const saved = feed.filter(card => card.kind !== 'suggestion' && !recommendedIds.has(card.id))
     .sort((a, b) => b.updatedAt.localeCompare(a.updatedAt) || a.id.localeCompare(b.id));
   const emptyCampaigns = data.campaigns.filter(item => item.postCount === 0 &&
     matchesStudioItem({ title: item.title, projectIds: [item.projectId], status: 'draft' }, { project, query, status }) && (!kind || kind === 'campaign'));
-  const renderCard = (item: FeedItem) => <StudioFeedCard key={item.id} item={item} projectNames={item.projectIds.map(projectName).join(' · ')} onOpen={() => openItem(item)} pending={pending === item.id} disabled={pending !== null} />;
+  const renderCard = (item: FeedItem) => <StudioFeedCard key={item.id} item={item} projectNames={item.projectIds.map(projectName).join(' · ')} onOpen={() => openItem(item)} onRemove={item.kind === 'carousel' && item.exportId && item.status === 'draft' && item.canPolish ? () => setRemovingDraft(item) : undefined} pending={pending === item.id} disabled={pending !== null} />;
 
   return <section className={embedded ? 'space-y-6' : 'mx-auto max-w-6xl px-4 py-8 sm:px-6 md:py-10'}>
+    {removingDraft && <section aria-label="Confirm draft removal" className="mb-6 rounded-xl border border-folio-border-subtle p-5"><h2 className="folio-h3">Remove “{removingDraft.title || 'Untitled draft'}”?</h2><p className="folio-body mt-2">This discards the saved draft and its changes. The original suggestion can return if its source is still available.</p><div className="mt-4 flex flex-wrap gap-4"><button type="button" className={actionClass} disabled={pending !== null} onClick={() => setRemovingDraft(null)}>Keep draft</button><button type="button" className={actionClass} disabled={pending !== null} onClick={removeDraft}>{pending === removingDraft.id ? 'Removing…' : 'Remove saved draft'}</button></div></section>}
     {!embedded && <><StudioIntro /><StudioTabs value={tab} onChange={value => navigate({ tab: value, item: null })} /></>}
-    <div className="relative my-6 flex flex-wrap items-center gap-3">
-      <label className="min-w-0"><span className="sr-only">Project</span><select className={fieldClass} value={project} onChange={event => navigate({ project: event.target.value, item: null })}><option value="">All projects</option><option value="cross-project">Across projects</option>{data.projects.map(item => <option key={item.id} value={item.id}>{item.title}</option>)}</select></label>
-      <label className="min-w-0"><span className="sr-only">Content type</span><select className={fieldClass} value={kind} onChange={event => navigate({ type: event.target.value, item: null })}><option value="">All types</option><option value="suggestion">Proposed posts</option><option value="carousel">Saved carousels</option><option value="campaign">Campaigns</option><option value="idea">Story directions</option></select></label>
-      <details><summary className="cursor-pointer folio-meta text-folio-text-secondary">Filters</summary><div className="absolute left-0 top-full z-20 mt-2 grid w-64 max-w-full gap-3 rounded-xl border border-folio-border-subtle bg-surface-canvas p-4 shadow-sm"><label className="grid gap-1 folio-meta">Search<input className={fieldClass} type="search" value={query} onChange={event => navigate({ q: event.target.value })} /></label><label className="grid gap-1 folio-meta">Status<select className={fieldClass} value={status} onChange={event => navigate({ status: event.target.value })}><option value="">All statuses</option>{['recommended', 'in_progress', 'draft', 'generated', 'exported', 'dismissed'].map(value => <option key={value} value={value}>{feedLabel(value)}</option>)}</select></label></div></details>
-      {!data.readinessEnabled && tab === 'suggestions' && <button className="ml-auto inline-flex items-center gap-1.5 py-2 folio-meta text-folio-text-secondary disabled:opacity-50" disabled={pending !== null} onClick={discover}><Sparkles className="h-4 w-4" aria-hidden="true" />{pending === 'discover' ? 'Looking for connections…' : 'Find more connections'}</button>}
+    {!embedded && <StudioDiscovery projects={data.projects} subject={subject} format={format} onSubject={value => navigate({ subject: value === 'about-me' ? value : null, project: value === 'about-me' ? null : value, format: null, item: null })} onFormat={value => navigate({ format: value, type: null, item: null })} />}
+    <div className="mb-6 flex flex-wrap items-center gap-3">
+      <label className="min-w-0"><span className="sr-only">Search stories</span><input className={fieldClass} type="search" placeholder="Search your stories" value={query} onChange={event => navigate({ q: event.target.value })} /></label>
+      {(kind || status || query) && <button className={actionClass} onClick={() => navigate({ type: null, status: null, q: null })}>Clear filters</button>}
+      {!data.readinessEnabled && tab === 'suggestions' && subject !== 'about-me' && <button className="ml-auto inline-flex items-center gap-1.5 py-2 folio-meta text-folio-text-secondary disabled:opacity-50" disabled={pending !== null} onClick={discover}><Sparkles className="h-4 w-4" aria-hidden="true" />{pending === 'discover' ? 'Looking for connections…' : 'Find more connections'}</button>}
     </div>
     {selectedProject && <div className="mb-5 flex flex-wrap items-center justify-between gap-2"><h2 className="folio-h3">{selectedProject.title}</h2>{selectedProject.canCreateCampaign && <button className={actionClass} disabled={pending !== null} onClick={() => setCampaignProject(selectedProject.id)}>Build a campaign</button>}<Link href={`/project/${encodeURIComponent(project)}`} className="folio-meta text-folio-text-secondary underline underline-offset-4">View project</Link></div>}
     {notice && <p role="status" className="mb-5 folio-ui">{notice}</p>}{actionError && <p role="alert" className="mb-5 folio-ui">{actionError}</p>}
     {selected && <section aria-label={selected.title} className="mb-6 rounded-xl border border-folio-border-subtle p-5"><div className="flex items-start justify-between gap-4"><h2 className="folio-h3">{selected.title}</h2><button className={actionClass} onClick={() => navigate({ item: null })}>Close</button></div><p className="folio-body mt-3 whitespace-pre-wrap">{selected.caption}</p>{campaign && <ol className="mt-5 space-y-4">{campaign.posts.map(post => <li key={post.id}><h3 className="folio-ui">{post.sequenceNum}. {post.title}</h3><p className="folio-body mt-1 whitespace-pre-wrap text-folio-text-secondary">{post.caption}</p></li>)}</ol>}{idea && <><p className="folio-meta mt-4 text-folio-text-secondary">This direction needs your perspective before it becomes a finished post.</p>{idea.prompts.map(prompt => <p key={prompt.id} className="folio-body mt-3">{prompt.prompt}{prompt.optionA && prompt.optionB && <span className="mt-1 block folio-meta">{prompt.optionA} or {prompt.optionB}</span>}</p>)}<div className="mt-4 flex flex-wrap gap-4">{idea.status === 'recommended' && <button disabled={pending !== null} className={actionClass} onClick={() => updateIdea(idea.id, 'in_progress')}>Keep this direction</button>}{['recommended', 'in_progress'].includes(idea.status) && <button disabled={pending !== null} className={actionClass} onClick={() => updateIdea(idea.id, 'dismissed')}>Dismiss</button>}{idea.status === 'dismissed' && <button disabled={pending !== null} className={actionClass} onClick={() => updateIdea(idea.id, 'recommended')}>Restore</button>}</div></>}{!selected.canPolish && selected.kind === 'suggestion' && <p className="folio-meta mt-3">Editing this project’s social posts is not available for your account.</p>}</section>}
     <div role={embedded ? undefined : "tabpanel"} id={embedded ? undefined : "studio-panel"} aria-labelledby={embedded ? undefined : `studio-tab-${tab}`} className="space-y-8">
       {tab === 'suggestions' && <>
-        <section aria-label="Your next stories"><header className="mb-5"><h2 className="folio-h2">Your next stories</h2><p className="folio-body mt-2 text-folio-text-secondary">Prepared directions from your work, with room for your perspective.</p></header>
-          {primary.length ? <div className="grid grid-cols-1 items-stretch gap-x-5 gap-y-8 md:grid-cols-2 lg:grid-cols-3">{primary.map(renderCard)}</div> : <p className="folio-body text-folio-text-secondary">{project || kind || query || status ? 'No posts match this selection. Try another project or clear your filters.' : 'No prepared stories yet. Strong proposals need published photos and a specific design decision, challenge or outcome.'}</p>}
-        </section>
+        {subject !== 'about-me' && format !== 'twenty_questions' && <section aria-label="Your next stories"><header className="mb-5"><h2 className="folio-h2">{project || format ? 'Stories to explore' : 'Recommended for you'}</h2><p className="folio-body mt-2 text-folio-text-secondary">Prepared directions from your work, with room for your perspective.</p></header>
+          {primary.length || (!subject && !format) ? <div className="grid grid-flow-col auto-cols-[85%] items-stretch gap-5 overflow-x-auto pb-3 sm:grid-flow-row sm:auto-cols-auto sm:grid-cols-2 lg:grid-cols-3">{primary.slice(0, 1).map(renderCard)}{!subject && !format && <AboutMeInvitation compact />}{primary.slice(1).map(renderCard)}</div> : <p className="folio-body text-folio-text-secondary">{project || kind || query || status ? 'No posts match this selection. Try another project or clear your filters.' : 'No prepared stories yet. Strong proposals need published photos and a specific design decision, challenge or outcome.'}</p>}
+        </section>}
+        {!embedded && <ActivityInvitations omitTwenty={!subject && !format} project={selectedProject} format={format} personal={!project || subject === 'about-me'} />}
         {portfolio && <section aria-label="Across your portfolio" className="border-t border-folio-border-subtle pt-6"><p className="folio-meta text-folio-text-secondary">Across your portfolio</p><h2 className="folio-h3 mt-2">{portfolio.title}</h2><p className="folio-body mt-2">{portfolio.caption}</p><div className="mt-4 flex flex-wrap gap-4">{portfolio.imageUrls.map((url, index) => <figure key={`${url}:${index}`} className="w-28"><StudioPhoto images={[{ id: `${portfolio.id}:${index}`, url }]} alt={portfolio.projectIds.map(projectName).join(' · ')} className="aspect-[4/5] w-full rounded-lg" /><figcaption className="folio-meta mt-1">{data.projects.find(project => project.thumbnail === url)?.title || portfolio.projectIds.map(projectName).join(' · ')}</figcaption></figure>)}</div><button className={`${actionClass} mt-4`} onClick={() => openItem(portfolio)}>Explore this direction</button></section>}
-        {additional.length > 0 && <div><button className={actionClass} aria-expanded={showMore} onClick={() => setShowMore(value => !value)}>{showMore ? 'Show fewer stories' : `More suggestions (${additional.length})`}</button>{showMore && <div className="mt-5 grid grid-cols-1 gap-x-5 gap-y-8 md:grid-cols-2 lg:grid-cols-3">{additional.map(renderCard)}</div>}</div>}
-        {!selectedProject && data.projects.some(item => item.canCreateCampaign) && <details className="border-t border-folio-border-subtle pt-4"><summary className="cursor-pointer folio-ui">Project campaigns</summary><div className="mt-3 flex flex-wrap gap-4">{data.projects.filter(item => item.canCreateCampaign).map(item => <button key={item.id} className={actionClass} disabled={pending !== null} onClick={() => setCampaignProject(item.id)}>Build a campaign for {item.title}</button>)}</div></details>}
+        {archive.length > 0 && <section aria-label="Rediscover your work"><header className="mb-5"><h2 className="folio-h2">Rediscover your work</h2><p className="folio-body mt-2 text-folio-text-secondary">Published on Folio more than six months ago. Still full of stories worth telling.</p></header><div className="grid grid-cols-1 gap-x-5 gap-y-8 md:grid-cols-2 lg:grid-cols-3">{archive.map(renderCard)}</div></section>}
+        {additional.length > 0 && <section aria-label="More stories to tell"><h2 className="folio-h2 mb-5">More stories to tell</h2><div className="grid grid-cols-1 gap-x-5 gap-y-8 md:grid-cols-2 lg:grid-cols-3">{additional.map(renderCard)}</div></section>}
+        {subject !== 'about-me' && !selectedProject && data.projects.some(item => item.canCreateCampaign) && <details className="border-t border-folio-border-subtle pt-4"><summary className="cursor-pointer folio-ui">Project campaigns</summary><div className="mt-3 flex flex-wrap gap-4">{data.projects.filter(item => item.canCreateCampaign).map(item => <button key={item.id} className={actionClass} disabled={pending !== null} onClick={() => setCampaignProject(item.id)}>Build a campaign for {item.title}</button>)}</div></details>}
       </>}
       {tab === 'progress' && <section aria-label="Saved work"><header className="mb-5"><h2 className="folio-h2">{embedded ? "Earlier saved work" : "Saved work"}</h2><p className="folio-body mt-2 text-folio-text-secondary">Your drafts, generated work and kept directions. Generated work is not confirmed publication.</p></header>
+        {!embedded && <StudioSavedActivities />}
         {saved.length > 0 && <div className="grid grid-cols-1 gap-x-5 gap-y-8 md:grid-cols-2 lg:grid-cols-3">{saved.map(renderCard)}</div>}
         {emptyCampaigns.map(item => <article key={item.id} className="mt-4 border-t border-folio-border-subtle pt-4"><h3 className="folio-h3">{item.title}</h3><p className="folio-body mt-2">Campaign saved without generated posts.</p><Link href={`/project/${encodeURIComponent(item.projectId)}`} className={actionClass}>View project</Link>{data.projects.find(project => project.id === item.projectId)?.canCreateCampaign && <button className={`${actionClass} ml-4`} onClick={() => setCampaignProject(item.projectId)}>Start a new campaign</button>}</article>)}
         {!saved.length && !emptyCampaigns.length && <p className="folio-body text-folio-text-secondary">{embedded ? "No earlier carousels or campaigns match this selection." : "No saved work matches this selection."}</p>}

@@ -13,6 +13,15 @@ function run(mutate = (_path, text) => text) {
   });
 }
 run();
+for (const pathToMutate of ['docs/reviews/story-activities/migration.sql','prisma/migrations/20260921220000_editorial_story_activities/migration.sql']) {
+  assert.throws(() => run((path, text) => path === pathToMutate ? text + '\nSELECT 1;\n' : text), /Studio activity SQL/, 'Changed approved or installed SQL must fail');
+}
+assert.throws(() => run((path, text) => path === 'prisma/schema.prisma'
+  ? text.replace(/(model EditorialStory \{[\s\S]*?ownerId\s+)String/, '$1Int') : text), /Only reviewed schema tokens/, 'Changed activity fields must fail');
+assert.throws(() => run((path, text) => path === 'prisma/schema.prisma'
+  ? text.replace(/studioStoryAnswers\s+EditorialStoryAnswer\[\]/, 'studioStoryAnswers EditorialStoryAnswer?') : text), /Only reviewed schema tokens/, 'Changed activity inverse relations must fail');
+assert.throws(() => run((path, text) => path === 'docs/reviews/story-activities/schema.prisma.txt'
+  ? text.replace('ownerId String', 'ownerId Int') : text), /Approved Studio activity model artifact/, 'Editing the activity proposal cannot authorize schema changes');
 assert.throws(() => run((path, text) => path === 'prisma/schema.prisma'
   ? text.replace(/(model StudioCandidate \{[\s\S]*?currentVersion\s+)Int/, '$1String') : text), /Only reviewed schema tokens/, 'A changed readiness field must fail');
 assert.throws(() => run((path, text) => path === 'prisma/schema.prisma'

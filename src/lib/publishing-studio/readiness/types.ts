@@ -30,7 +30,7 @@ export interface Candidate {
   format: 'single_image' | 'carousel'; evidence: Evidence[];
   claims: { text: string; evidenceIds: string[] }[];
   visuals: CandidateVisual[];
-  draft: { headline: string; caption: string; credits: { designer: string; photographer: string | null }; slides: { imageId: string; purpose: string }[] };
+  draft: { headline: string; caption: string; credits: { designer: string; photographer: string | null }; slides: { imageId: string; purpose: string }[]; pendingAnswer?: { blockerId: string; text: string } };
   dimensions: Record<Dimension, number>; penalties: Record<Penalty, number>;
   score: number; readiness: Readiness; blockers: Blocker[]; reasons: string[];
   dismissed: boolean; confirmedPublishedAt?: string; createdAt: string;

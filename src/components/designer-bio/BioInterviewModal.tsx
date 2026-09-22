@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { X, Loader2 } from 'lucide-react';
+import { useActivityExit } from '@/components/publishing-studio/UnsavedActivityDialog';
 import { cn } from '@/lib/utils';
 import { InterviewQuestion } from '@/components/interview/shared/InterviewQuestion';
 import { ProgressIndicator } from '@/components/interview/shared/ProgressIndicator';
@@ -32,6 +33,8 @@ export default function BioInterviewModal({ onComplete, onClose }: BioInterviewM
   const [questions, setQuestions] = useState<BioQuestion[]>([]);
   const [currentIdx, setCurrentIdx] = useState(0);
   const [answer, setAnswer] = useState('');
+  const [savedAnswer, setSavedAnswer] = useState('');
+  const [error, setError] = useState('');
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [lastAnswer, setLastAnswer] = useState('');
@@ -71,6 +74,7 @@ export default function BioInterviewModal({ onComplete, onClose }: BioInterviewM
     try {
       const res = await fetch(`/api/designer/bio/questions?round=${questionRound}`);
       const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Could not load questions.');
       const qs: BioQuestion[] = data.questions || [];
 
       if (qs.length === 0 && questionRound === 'followup') {
@@ -80,27 +84,42 @@ export default function BioInterviewModal({ onComplete, onClose }: BioInterviewM
         return;
       }
 
-      setQuestions(qs);
-      setCurrentIdx(0);
+      const savedResponse = await fetch('/api/designer/bio', { cache: 'no-store' });
+      if (!savedResponse.ok) throw new Error('Could not load saved answers.');
+      const saved = await savedResponse.json();
+      const answers = saved.bio?.interviewAnswers || [];
+      // Generated question IDs can be positional. An existing answer always keeps
+      // its original question; never relabel it with regenerated prompt text.
+      const stableQuestions = qs.map(item => {
+        const original = answers.find((entry: { id: string; question: string; round: string }) => entry.id === item.id && entry.round === questionRound);
+        return original?.question ? { ...item, question: original.question } : item;
+      });
+      setQuestions(stableQuestions);
+      setCanGenerate(answers.filter((entry: { round: string; answer: string }) => entry.round === 'base' && entry.answer.trim()).length >= 3);
+      const unanswered = qs.findIndex(item => !answers.some((entry: { id: string; answer: string }) => entry.id === item.id && entry.answer.trim()));
+      const nextIndex = Math.max(0, unanswered);
+      setCurrentIdx(nextIndex);
+      const previous = answers.find((entry: { id: string; answer: string }) => entry.id === qs[nextIndex]?.id)?.answer || '';
+      setAnswer(previous); setSavedAnswer(previous);
       setRound(questionRound);
-      setState('question');
+      setState(unanswered === -1 && qs.length > 0 ? 'end-of-round' : 'question');
     } catch (err) {
-      console.error('Failed to load questions:', err);
+      setError(err instanceof Error ? err.message : 'Could not load questions.');
     } finally {
       setLoading(false);
     }
   }
 
   const handleSubmit = useCallback(async () => {
-    if (!answer.trim() || submitting) return;
+    if (!answer.trim() || submitting) return false;
     const currentQ = questions[currentIdx];
-    if (!currentQ) return;
+    if (!currentQ) return false;
 
     const answerText = answer.trim();
     setSubmitting(true);
     setLastAnswer(answerText);
     setState('transition');
-    setAnswer('');
+    setError('');
 
     try {
       const res = await fetch('/api/designer/bio/answer', {
@@ -115,6 +134,8 @@ export default function BioInterviewModal({ onComplete, onClose }: BioInterviewM
       });
 
       const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Could not save your answer.');
+      setAnswer(''); setSavedAnswer('');
       setCanGenerate(data.canGenerateBio || false);
 
       const nextIdx = currentIdx + 1;
@@ -129,19 +150,17 @@ export default function BioInterviewModal({ onComplete, onClose }: BioInterviewM
           setState('end-of-round');
         }
       }
+      return true;
     } catch (err) {
-      console.error('Failed to submit answer:', err);
-      // Move to next question on error
-      if (currentIdx + 1 < questions.length) {
-        setCurrentIdx((prev) => prev + 1);
-      } else {
-        setState('end-of-round');
-      }
+      setError(err instanceof Error ? err.message : 'Could not save your answer.');
       setState('question');
+      return false;
     } finally {
       setSubmitting(false);
     }
   }, [answer, submitting, questions, currentIdx]);
+
+  const exit = useActivityExit(answer !== savedAnswer, submitting || generating, handleSubmit);
 
   async function handleGenerate() {
     setGenerating(true);
@@ -154,7 +173,7 @@ export default function BioInterviewModal({ onComplete, onClose }: BioInterviewM
       }
       onComplete();
     } catch (err) {
-      console.error('Failed to generate bio:', err);
+      setError(err instanceof Error ? err.message : 'Could not generate your bio.');
       setGenerating(false);
       setState('end-of-round');
     }
@@ -177,10 +196,11 @@ export default function BioInterviewModal({ onComplete, onClose }: BioInterviewM
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
+      {exit.dialog}
       {/* Backdrop */}
       <div
         className="absolute inset-0 glass-backdrop"
-        onClick={onClose}
+        onClick={() => exit.requestExit(onClose)}
       />
 
       {/* Modal */}
@@ -188,7 +208,7 @@ export default function BioInterviewModal({ onComplete, onClose }: BioInterviewM
         {/* Close button */}
         <button
           type="button"
-          onClick={onClose}
+          onClick={() => exit.requestExit(onClose)}
           className="absolute top-4 right-4 z-10 p-2 text-folio-text-tertiary hover:text-folio-text-secondary transition-colors"
           aria-label="Close interview"
         >
@@ -202,6 +222,7 @@ export default function BioInterviewModal({ onComplete, onClose }: BioInterviewM
           </div>
         )}
 
+        {error && <p role="alert" className="px-8 pt-14">{error}</p>}
         {/* Content */}
         <AnimatePresence mode="wait">
           {state === 'transition' ? (
@@ -317,7 +338,7 @@ export default function BioInterviewModal({ onComplete, onClose }: BioInterviewM
                   <div className="flex items-center justify-between max-w-2xl mx-auto w-full">
                     <button
                       type="button"
-                      onClick={handleSkip}
+                      onClick={() => { if (answer !== savedAnswer) { setError('Save this answer before moving to another question.'); return; } setAnswer(''); setSavedAnswer(''); handleSkip(); }}
                       disabled={submitting}
                       className="text-folio-text-secondary hover:text-folio-text-primary text-sm py-2 px-3 transition-colors disabled:opacity-50"
                     >

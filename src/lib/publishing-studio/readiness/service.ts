@@ -101,8 +101,9 @@ export async function currentCandidate(userId: string, id: string, version?: num
 }
 
 export interface CandidateChange {
-  version: number; sourceVersion: string; action: 'answer' | 'edit' | 'dismiss' | 'restore' | 'published';
+  version: number; sourceVersion: string; action: 'answer' | 'edit' | 'draft' | 'dismiss' | 'restore' | 'published';
   blockerId?: string; answer?: string; headline?: string; caption?: string; imageIds?: string[]; reason?: string;
+  pendingAnswer?: { blockerId: string; text: string } | null;
 }
 
 export async function changeCandidate(userId: string, id: string, change: CandidateChange) {
@@ -113,7 +114,8 @@ export async function changeCandidate(userId: string, id: string, change: Candid
   if (change.action === 'answer') {
     if (!change.blockerId || typeof change.answer !== 'string') throw new ReadinessError('Answer the current step.');
     next = evaluateCandidate(answerBlocker(original, change.blockerId, change.answer), history); event = 'answered';
-  } else if (change.action === 'edit') {
+    if (next.draft.pendingAnswer?.blockerId === change.blockerId) delete next.draft.pendingAnswer;
+  } else if (change.action === 'edit' || change.action === 'draft') {
     for (const [key, text] of [['headline', change.headline], ['caption', change.caption]] as const) {
       if (text === undefined) continue;
       if (!text.trim() || text.length > (key === 'headline' ? 180 : 2200)) throw new ReadinessError('Keep the headline or caption within the supported length.');
@@ -129,6 +131,16 @@ export async function changeCandidate(userId: string, id: string, change: Candid
       next.visuals = change.imageIds.map(id => original.visuals.find(image => image.id === id)!);
       next.format = next.visuals.length > 1 ? 'carousel' : 'single_image';
       next.draft.slides = next.visuals.map(image => ({ imageId: image.id, purpose: image.reason }));
+    }
+    if (change.action === 'draft' && change.pendingAnswer !== undefined) {
+      if (change.pendingAnswer === null) delete next.draft.pendingAnswer;
+      else {
+        const pending = change.pendingAnswer;
+        if (typeof pending.blockerId !== 'string' || typeof pending.text !== 'string' || !pending.text.trim() || pending.text.length > 2200 ||
+          !original.blockers.some(blocker => blocker.id === pending.blockerId && !blocker.answer?.trim())) throw new ReadinessError('Save an answer for an unfinished step within the supported length.');
+        // An unfinished answer is retained verbatim, never promoted to evidence.
+        next.draft.pendingAnswer = { blockerId: pending.blockerId, text: pending.text };
+      }
     }
     // User edits are attributed evidence, but do not automatically raise editorial quality.
     next = evaluateCandidate(next, history); event = 'edited';

@@ -9,7 +9,7 @@ function load(file, imports) {
   const js = ts.transpileModule(fs.readFileSync(file, 'utf8'), {
     compilerOptions: { target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.CommonJS },
   }).outputText;
-  vm.runInNewContext(js, { exports, console, require(name) {
+  vm.runInNewContext(js, { exports, console, URLSearchParams, require(name) {
     if (!(name in imports)) throw new Error(`Unexpected dependency: ${name}`);
     return imports[name];
   } }, { filename: file });
@@ -177,15 +177,13 @@ async function main() {
   assert.equal(f.calls.filter(c => c.table === 'prepare').length, 0, 'GET never writes');
   const prepared = await f.prepare(card.id);
   assert.equal(prepared.status, 200);
-  const draft = f.carousels.find(c => c.id === prepared.body.exportId);
-  assert.equal(draft.headline, card.title);
-  assert.equal(draft.caption, card.caption);
-  assert.deepEqual(plain(draft.config.selectedImageUrls), plain(card.imageUrls));
-  draft.caption = 'Designer polished caption';
-  assert.equal((await f.prepare(card.id)).body.exportId, prepared.body.exportId);
-  assert.equal(draft.caption, 'Designer polished caption');
-  assert.equal(f.calls.filter(c => c.table === 'prepare').length, 1);
-  assert.ok(!(await f.getStudioData('me')).feed.some(c => c.id === card.id), 'Saved idea no longer duplicated as suggestion');
+  const preview = new URL(prepared.body.href, 'https://fixture.test');
+  assert.equal(preview.searchParams.get('proposal'), card.id);
+  assert.equal(preview.searchParams.get('revision'), card.revision);
+  assert.equal(prepared.body.exportId, undefined);
+  assert.equal((await f.prepare(card.id)).body.href, prepared.body.href);
+  assert.equal(f.calls.filter(c => c.table === 'prepare').length, 0, 'Opening or reopening never persists');
+  assert.ok((await f.getStudioData('me')).feed.some(c => c.id === card.id), 'Preview stays a suggestion until an explicit save');
   assert.equal((await f.prepare('project:other')).status, 404);
   assert.equal((await setup({ role: 'HOMEOWNER' }).prepare('project:p1')).status, 403);
   assert.equal((await setup({ signedOut: true }).prepare('project:p1')).status, 401);

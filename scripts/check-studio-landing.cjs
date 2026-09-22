@@ -2,14 +2,15 @@ const assert = require('node:assert/strict'), fs = require('fs'), vm = require('
 const { renderToStaticMarkup } = require('react-dom/server');
 function load(file, imports) { const exports = {}; vm.runInNewContext(ts.transpileModule(fs.readFileSync(file, 'utf8'), { compilerOptions: { jsx: ts.JsxEmit.ReactJSX, module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 } }).outputText, { exports, URLSearchParams, fetch: fetchMock, require: id => id in imports ? imports[id] : require(id) }); return exports; }
 const requests = [], destinations = [];
-function fetchMock(url, options) { return new Promise(resolve => requests.push({url,body:JSON.parse(options.body),resolve})); }
+function fetchMock(url, options) { return new Promise(resolve => requests.push({url,method:options.method,body:JSON.parse(options.body),resolve})); }
 const navigation = load('src/lib/publishing-studio/navigation.ts', {});
 let params = new URLSearchParams();
 const data = { workspace: { name: 'BP Design', id: 'bp' }, projects: ['Meru', 'La Gorce'].map((title, i) => ({ id: `p${i}`, title, published: true, canCreate: true, canCreateCampaign: true })), editorials: [], posts: [], campaigns: [], ideas: [], feed: ['Meru', 'La Gorce'].map((title, i) => ({id:`suggestion:p${i}`,projectIds:[`p${i}`],title:`Inside ${title}`,caption:`Prepared caption for ${title}`,imageUrl:`https://example.com/${i}.jpg`,imageUrls:[`https://example.com/${i}.jpg`],pitch:'A focused story about the decision behind this room.',rationale:'Supported by the published design change.',slideCount:2,revision:'source-v1',kind:'suggestion',format:'project_story',status:'recommended',updatedAt:'2026-09-17',canPolish:true})) };
 const hero = load('src/components/instagram-export/CarouselHero.tsx', {});
 const feedCard = load('src/components/publishing-studio/StudioFeedCard.tsx', { '@/components/instagram-export/CarouselHero': hero });
 const workspace = load('src/components/publishing-studio/StudioWorkspace.tsx', {});
-const imports = { './StudioWorkspace': workspace, '@/lib/publishing-studio/recommendations': load('src/lib/publishing-studio/recommendations.ts', {}), 'next/dynamic': {default: () => props => React.createElement('div', {'data-campaign-project':props.projectId}, props.projectTitle)}, 'next/link': { default: ({ children, ...props }) => React.createElement('a', props, children) }, 'next/navigation': { useRouter: () => ({ replace() { }, push(href) { destinations.push(href); } }), useSearchParams: () => params }, './useStudio': { useStudio: () => ({ data, reload() { } }) }, './StudioFeedCard': feedCard, '@/lib/publishing-studio/navigation': navigation };
+const discovery = load('src/components/publishing-studio/StudioDiscovery.tsx', {'./StudioWorkspace':workspace, 'next/link':{default:({children,...props})=>React.createElement('a',props,children)}});
+const imports = { './StudioDiscovery':discovery, './StudioSavedActivities':{StudioSavedActivities:()=>null}, './StudioWorkspace': workspace, '@/lib/publishing-studio/recommendations': load('src/lib/publishing-studio/recommendations.ts', {}), 'next/dynamic': {default: () => props => React.createElement('div', {'data-campaign-project':props.projectId}, props.projectTitle)}, 'next/link': { default: ({ children, ...props }) => React.createElement('a', props, children) }, 'next/navigation': { useRouter: () => ({ replace() { }, push(href) { destinations.push(href); } }), useSearchParams: () => params }, './useStudio': { useStudio: () => ({ data, reload() { } }) }, './StudioFeedCard': feedCard, '@/lib/publishing-studio/navigation': navigation };
 const { PublishingStudio } = load('src/components/publishing-studio/PublishingStudio.tsx', imports);
 let html = renderToStaticMarkup(React.createElement(PublishingStudio));
 assert.match(html, /A focused story about the decision behind this room/);assert.match(html,/2 slides/);
@@ -26,16 +27,31 @@ assert.match(html,/Polish this post: Inside Meru/); assert.doesNotMatch(html,/In
 const {ProjectSocialPanel}=load('src/components/publishing-studio/ProjectSocialPanel.tsx',imports);
 html=renderToStaticMarkup(React.createElement(ProjectSocialPanel,{projectId:'p0'}));
 assert.match(html,/href="\/designer\/studio\?project=p0"/); assert.match(html,/Inside Meru/); assert.doesNotMatch(html,/Inside La Gorce|create=|view=campaigns/);
-params=new URLSearchParams('type=campaign'); html=renderToStaticMarkup(React.createElement(PublishingStudio)); assert.match(html,/No posts match/);
+params=new URLSearchParams('type=campaign'); html=renderToStaticMarkup(React.createElement(PublishingStudio)); assert.doesNotMatch(html,/aria-label="Polish this post:/); assert.match(html,/Clear filters/);
 const originalFeed = data.feed;
 assert.match(html, /Your work has more to say/);
 for (const count of [0, 1, 2, 3, 4]) {
  params = new URLSearchParams();
  data.feed = Array.from({length: count}, (_, index) => ({...originalFeed[0], id: `proposal:${index}`, title: `Prepared story ${index}`}));
  html = renderToStaticMarkup(React.createElement(PublishingStudio));
- assert.equal((html.match(/aria-label="Polish this post:/g) || []).length, Math.min(count, 3), 'Three is a maximum, never a quota');
- if (count === 4) assert.match(html, /More suggestions/);
+ assert.equal((html.match(/aria-label="Polish this post:/g) || []).length, count, 'Every available story remains visible without expanding a gate');
+ if (count === 4) assert.match(html, /More stories to tell/);
+ assert.doesNotMatch(html, /<select|More suggestions/);
+ assert.match(html, /Start my 20 Questions/);
 }
+// Discovery choices narrow actual source-backed cards and never hide personal activities behind a dropdown.
+data.feed=[{...originalFeed[0],roomId:'room',format:'room_story'},originalFeed[1]];
+params=new URLSearchParams('format=room');html=renderToStaticMarkup(React.createElement(PublishingStudio));
+assert.match(html,/Polish this post: Inside Meru/);assert.doesNotMatch(html,/Polish this post: Inside La Gorce/);
+params=new URLSearchParams('subject=about-me');html=renderToStaticMarkup(React.createElement(PublishingStudio));
+assert.match(html,/Make your profile yours/);assert.match(html,/Shape my bio/);assert.match(html,/Start 20 Questions/);assert.doesNotMatch(html,/Polish this post:/);
+params=new URLSearchParams('project=p0&format=twenty_questions');html=renderToStaticMarkup(React.createElement(PublishingStudio));
+assert.match(html,/subject=project&amp;format=twenty_questions&amp;projectId=p0/);assert.doesNotMatch(html,/Polish this post:/);
+params=new URLSearchParams('project=p0&format=room');html=renderToStaticMarkup(React.createElement(PublishingStudio));
+assert.match(html,/chooseRoom=1/);
+assert.equal(discovery.matchesStoryFormat({format:'MATERIAL_STUDY'},'material'),true);
+assert.equal(discovery.matchesStoryFormat({format:'project_story'},'room'),false);
+data.feed=originalFeed;
 data.feed = [{...originalFeed[0], id:'carousel:saved', kind:'carousel', status:'generated', exportId:'saved'}, {...originalFeed[0],id:'carousel:draft',kind:'carousel',status:'draft',exportId:'draft'}];
 data.campaigns = [{id:'unfinished',projectId:'p0',title:'Unfinished campaign',postCount:0,totalPosts:4,posts:[]}];
 params = new URLSearchParams('tab=progress');
@@ -76,6 +92,28 @@ async function checkInteractions() {
  await act(async()=>button().click());
  await act(async()=>requests[2].resolve({ok:true,json:async()=>({href:'/designer/projects/p0/instagram?export=saved'})}));
  assert.equal(destinations.at(-1),'/designer/projects/p0/instagram?export=saved&studio=project');
+ params=new URLSearchParams('tab=progress');
+ data.feed=[{...originalFeed[0],id:'carousel:draft',kind:'carousel',status:'draft',exportId:'draft',updatedAt:'2026-09-21T12:00:00.000Z'},
+   {...originalFeed[1],id:'carousel:generated',kind:'carousel',status:'generated',exportId:'generated'}];
+ await act(async()=>root.render(React.createElement(PublishingStudio)));
+ const buttonsWithText=text=>[...document.querySelectorAll('button')].filter(button=>button.textContent===text);
+ assert.equal(buttonsWithText('Remove draft').length,1,'generated work has no removal control');
+ await act(async()=>buttonsWithText('Remove draft')[0].click());
+ assert.equal(requests.length,3,'opening removal confirmation does not delete');
+ assert.match(document.querySelector('[aria-label="Confirm draft removal"]').textContent,/discards the saved draft and its changes/);
+ await act(async()=>buttonsWithText('Keep draft')[0].click());
+ assert.equal(requests.length,3,'cancelling leaves the saved draft intact');
+ await act(async()=>buttonsWithText('Remove draft')[0].click());
+ await act(async()=>buttonsWithText('Remove saved draft')[0].click());
+ assert.equal(requests[3].method,'DELETE');assert.equal(requests[3].url,'/api/publishing-studio/drafts/draft');
+ assert.equal(requests[3].body.updatedAt,'2026-09-21T12:00:00.000Z');
+ await act(async()=>requests[3].resolve({ok:false,json:async()=>({error:'Draft changed. Refresh first.'})}));
+ assert.match(document.querySelector('[role="alert"]').textContent,/Draft changed/);
+ assert.ok(document.querySelector('[aria-label="Confirm draft removal"]'),'failed deletion retains confirmation and saved content');
+ await act(async()=>buttonsWithText('Remove saved draft')[0].click());
+ await act(async()=>requests[4].resolve({ok:true,json:async()=>({removed:true})}));
+ assert.equal(document.querySelector('[aria-label="Confirm draft removal"]'),null);
+ data.feed=originalFeed;
  await act(async()=>root.unmount());
  console.log('PASS Studio interactions: no browse generation; exact prepared card/revision; direct global/project editor routes; visible preparation failure without navigation.');
 }

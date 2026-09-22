@@ -65,12 +65,14 @@ jobs:
         run: |
           node scripts/check-publishing-studio-data.cjs
           node scripts/check-studio-landing.cjs
+          node scripts/check-studio-draft-removal.cjs
           node scripts/check-studio-briefs.cjs
           node scripts/check-studio-recommendations.cjs
           node scripts/check-readiness-engine.cjs
           node scripts/check-readiness-service.cjs
           node scripts/check-readiness-sources.cjs
           node scripts/check-readiness-ui.cjs
+          node scripts/check-candidate-configurator.cjs
           node scripts/check-campaign-readiness.cjs
           node scripts/check-editorial-queue-readiness.cjs
           node scripts/check-carousel-editor.cjs
@@ -80,6 +82,12 @@ jobs:
           node scripts/check-social-generation-route.cjs
           node scripts/check-story-activities.cjs
           node scripts/check-story-activity-ui.cjs
+          node scripts/check-studio-activity-entry.cjs
+          node scripts/check-activity-social-card.cjs
+          node scripts/check-studio-bio-publication.cjs
+          node scripts/check-story-creation.cjs
+          node scripts/check-story-http.cjs
+          node scripts/check-story-persistence.cjs
           node scripts/check-activity-questions.cjs
 
   eslint:

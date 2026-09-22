@@ -4,6 +4,7 @@ import { prisma } from '@/lib/prisma';
 import { assertProjectWrite } from '@/lib/authz/access';
 import { authOptions } from '@/app/api/auth/[...nextauth]/options';
 import { getStudioData, StudioAccessError } from '@/lib/publishing-studio/data';
+import { preparedConfig } from '@/lib/publishing-studio/feed';
 import { InstagramExportEditor } from '@/components/instagram-export/InstagramExportEditor';
 
 export default async function InstagramExportPage({
@@ -11,7 +12,7 @@ export default async function InstagramExportPage({
   searchParams,
 }: {
   params: { id: string };
-  searchParams: { export?: string; studio?: string };
+  searchParams: { export?: string; studio?: string; proposal?: string; revision?: string };
 }) {
   const session = await getServerSession(authOptions);
   if (!session?.user) redirect('/auth/signin');
@@ -50,6 +51,19 @@ export default async function InstagramExportPage({
     select: { id: true, config: true, headline: true, bioText: true, caption: true, updatedAt: true },
   }) : null;
   if (searchParams.export && !initialExport) notFound();
+
+  let initialPreview = null;
+  if (!initialExport && searchParams.proposal) {
+    try {
+      const studio = await getStudioData(session.user.id, project.id);
+      const card = studio.feed.find(item => item.id === searchParams.proposal);
+      if (!card || card.revision !== searchParams.revision || card.kind !== 'suggestion' || !card.canPolish || !card.imageUrl || card.projectIds.length !== 1 || card.projectIds[0] !== project.id) notFound();
+      initialPreview = { config: { ...preparedConfig(card), studioRevision: card.revision }, headline: card.title, caption: card.caption };
+    } catch (error) {
+      if (error instanceof StudioAccessError) notFound();
+      throw error;
+    }
+  }
 
   // Older prepared drafts predate the pitch/options fields. Reuse exactly the
   // source-backed proposal shown in Studio, without replacing any saved edits.
@@ -121,7 +135,8 @@ export default async function InstagramExportPage({
 
   return (
     <InstagramExportEditor
-      key={initialExport?.id ?? project.id}
+      key={initialExport?.id ?? (initialPreview ? `${searchParams.proposal}:${searchParams.revision}` : project.id)}
+      initialPreview={initialPreview}
       initialExport={initialExport ? { ...initialExport, config: savedConfig, updatedAt: initialExport.updatedAt.toISOString() } : null}
       studioScope={searchParams.studio === 'all' ? 'all' : 'project'}
       project={serializedProject}

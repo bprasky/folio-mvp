@@ -7,6 +7,7 @@ import { getDesignerPublishedProjects } from "@/server/queries/getDesignerProjec
 import { detectAesthetic, AestheticProfile, BrandAssets } from "@/lib/aesthetic";
 import { getProfileState } from "@/lib/profile/getProfileState";
 import DesignerProfileShell from "@/components/profile/DesignerProfileShell";
+import { PublishedStudioStories } from '@/components/profile/PublishedStudioStories';
 
 /**
  * Get viewer fingerprint for personalization
@@ -303,6 +304,7 @@ export default async function DesignerProfilePage({
   }
 
   return (
+    <>
     <DesignerProfileShell
       state={state}
       designer={{
@@ -319,6 +321,8 @@ export default async function DesignerProfilePage({
       viewerContext={viewerContext}
       isOwner={isOwner}
     />
+    <PublishedStudioStories userId={designer.id} />
+    </>
   );
 }
 

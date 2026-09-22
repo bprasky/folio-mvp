@@ -29,6 +29,17 @@ expected=expected.replace('model Project {','model Project {\ncompletedYear Int?
 const readinessModels=read('docs/reviews/studio-readiness-proposed.prisma');
 assert.equal(hash(readinessModels),'739c6ad26cd2777ea09a6a4a237425294c4fb9142afacae5c31ad0a043b86874','Approved Editorial Readiness model artifact');
 expected+='\n'+readinessModels;
+// Separately approved four-table Studio activity batch and inverse relations.
+const storyModels=read('docs/reviews/story-activities/schema.prisma.txt');
+assert.equal(hash(storyModels),'6558b351f9363ce856ac244ba667e118307ff6d0e81e4c2e5a034790b1c8cd3c','Approved Studio activity model artifact');
+const storySqlHash='f9088338b93877bda5646f77b1dce0f19c1af8c895c34796005a0b31f28ef193';
+assert.equal(hash(read('docs/reviews/story-activities/migration.sql')),storySqlHash,'Approved Studio activity SQL artifact');
+assert.equal(hash(read('prisma/migrations/20260921220000_editorial_story_activities/migration.sql')),storySqlHash,'Installed Studio activity SQL');
+const [storyDefinitions, storyInverses]=storyModels.split('// Inverse-only additions to existing model blocks:');
+expected+='\n'+storyDefinitions;
+for(const [,model,fields] of storyInverses.matchAll(/\/\/ (User|Organization|EditorialQueueItem|ProjectPost)\n([\s\S]*?)(?=\n\/\/ |$)/g)) {
+  expected=expected.replace('model '+model+' {','model '+model+' {\n'+fields.trim()+'\n');
+}
 const tokens=s=>(s.match(/"(?:\\.|[^"\\])*"|\/\/[^\n]*|[^\s"]/g)||[]).filter(x=>!x.startsWith('//')).join('');
 assert.equal(tokens(read('prisma/schema.prisma')),tokens(expected),'Only reviewed schema tokens');
 assert.equal(JSON.parse(read('vercel.json')).git.deploymentEnabled,false);

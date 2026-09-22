@@ -431,3 +431,28 @@ Review: implementation and automated checks are complete; see docs/reviews/STUDI
 Approval: user said "approved, merge" after exact SQL/model review. If format/validate/generate/migrate-status fails unexpectedly, restore tasks/schema-prisma-backup-readiness-approved.prisma and stop.
 
 Application review: approved migration applied;3 tables/20 columns and all constraints/indexes/RLS verified,112 bookkeeping records and zero unfinished. Prisma status/client alignment clean. Rollout disabled; merge pending CI.
+
+## Studio explicit draft lifecycle — 2026-09-21
+- [x] Trace open-time writes across legacy, readiness and local preview.
+- [x] Make legacy proposal opening read-only; persist only explicit saves/downloads.
+- [x] Add meaningful dirty checks, save/discard/keep exit choices, and clear saved-work actions.
+- [x] Persist incomplete readiness answers as drafts without resolving blockers; remove image reorder autosaves.
+- [x] Verify clean open/exit, dirty save/discard, failed save, resume, authorization and existing drafts.
+Plan: repair existing editor/persistence contracts without schema or production changes. Do not automatically delete historical drafts that may contain user work.
+
+Review: targeted editor, persistence, readiness, landing and draft-removal regressions pass, including first-save retries/concurrency, failed-save retention and authorization. Local browser verified clean exit, partial-answer save/resume and explicit removal. Client-import and migration-discipline guards pass; TypeScript budget passes at 903 against 904 baseline (existing debt remains). Added configurator and draft-removal checks to CI. Changes remain local, unmerged and undeployed.
+
+## Studio discovery and About me — 2026-09-21
+- [x] Replace hidden project/type choices with accessible subject thumbnails and visible format buttons in both Studio paths.
+- [x] Surface personal activities, recommended work and archive stories in visible compact feeds.
+- [x] Connect preset activities to authenticated persistence and useful profile/social completion actions.
+- [x] Verify routing, filters, activity lifecycle, empty states and responsive browser presentation; preserve explicit draft behavior.
+Plan check-in: implement the approved proposal using existing source and activity contracts, with no fabricated completion dates or automatic publication/profile edits. Preserve unrelated work and the completed draft fix. Inspect persistence before choosing the smallest safe integration.
+
+Review: see docs/reviews/studio-discovery/README.md. User explicitly approved the exact four-table SQL/model batch; applied with clean postflight. Independent review found no remaining blockers after fixes. Compile, regressions, client/migration guards and TypeScript budget pass (903/904, exact display equivalence proof, baseline unchanged). Browser walkthrough used synthetic content only. Application awaits merge/deployment.
+
+## Studio discovery merge — 2026-09-22
+- [x] Inspect PR790 checks and repair Node20 browser globals and approved-schema guard expectations.
+- [x] Verify guard mutation tests and activity entry with native navigator disabled.
+- [ ] Verify remote CI and merge the approved PR790.
+Review: test-only CI corrections preserve exact schema/SQL approval hashes and reject unauthorized changes. No application or database changes in this follow-up.
