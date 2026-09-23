@@ -5,6 +5,8 @@ import { prisma } from '@/lib/prisma';
 import { canAccessDesignerTools } from '@/lib/permissions';
 import { resolvePublishingStudioContext, StudioAccessError } from './data';
 import { buildStudioFeed, configObject, savedPublicationPreview } from './feed';
+import { readPublicationHistory } from './publication-history';
+import { shouldSuppressPublication } from './history';
 import type { StudioFeedCard } from './types';
 import { validateReleaseItems, type ReleaseOption, type ReleasePlanResponse, type ReleasePlanItem, type ReleaseDiscovery, type ReleaseOpportunity } from './release-plan';
 
@@ -38,12 +40,13 @@ export async function listReleasePlans(actor: string): Promise<ReleaseDiscovery>
     ...(workspace.id ? {} : { OR: [{ ownerId: actor }, { designerId: actor }] }) }, select: projectSelect,
     orderBy: [{ updatedAt: 'desc' }, { id: 'asc' }], take: 100 });
   const saved = await prisma.editorialDraft.findMany({ where: { id: { in: projects.map(project => planId(actor, workspace.id, project.id)) }, status: 'release_plan' }, select: { projectId: true, rawState: true } });
-  const exports = await prisma.instagramExport.findMany({ where: { projectId: { in: projects.map(project => project.id) }, designerId: actor }, select: { projectId: true, headline: true, config: true }, orderBy: [{ updatedAt: 'desc' }, { id: 'asc' }], take: 500 });
+  const exports = await prisma.instagramExport.findMany({ where: { projectId: { in: projects.map(project => project.id) }, designerId: actor }, select: { id: true, projectId: true, headline: true, config: true }, orderBy: [{ updatedAt: 'desc' }, { id: 'asc' }], take: 500 });
   const output: ReleaseDiscovery = { opportunities: [], plans: [] };
+  const history = await readPublicationHistory(actor, workspace.id, projects.map(project => project.id));
   for (const project of projects) {
     const cards = process.env.STUDIO_EDITORIAL_READINESS === 'true' ? [] : distinctCards(buildStudioFeed([project], [], [], [], actor, workspace.canWriteCampaigns), project.post?.excerpt);
     const introduction = cards.find(card => !card.roomId);
-    const rooms = cards.filter(card => card.roomId);
+    const rooms = cards.filter(card => card.roomId && !shouldSuppressPublication(card, history.find(row => row.projectId === project.id)?.entries || []));
     const raw = configObject(saved.find(row => row.projectId === project.id)?.rawState);
     const hasPlan = raw.kind === namespace && raw.actor === actor && raw.workspace === workspace.id && raw.projectId === project.id;
     const available = Boolean(introduction && rooms.length);
@@ -52,11 +55,11 @@ export async function listReleasePlans(actor: string): Promise<ReleaseDiscovery>
     });
     const openingDraft = exports.find(row => row.projectId === project.id && configObject(row.config).studioCardId === introduction?.id);
     const opening = openingDraft ? savedPublicationPreview(configObject(openingDraft.config), project.images, project.designer?.name || 'Designer') : introduction;
-    const item: ReleaseOpportunity = { projectId: project.id, projectTitle: project.title, imageUrl: opening?.imageUrl ?? null, title: openingDraft?.headline ?? introduction?.title ?? project.title, preview: opening?.preview,
+    const item: ReleaseOpportunity = { historySourceId: openingDraft ? `carousel:${openingDraft.id}` : introduction?.id, projectId: project.id, projectTitle: project.title, imageUrl: opening?.imageUrl ?? null, title: openingDraft?.headline ?? introduction?.title ?? project.title, preview: opening?.preview,
       purpose: `Give ${project.title} a fuller introduction.`, reason: 'A prepared project introduction and distinct, supported room stories can form a considered sequence.',
       roomCount: rooms.length, hasPlan, sourceIds: [introduction, ...rooms].flatMap(card => card ? [card.id] : []), ...(hasPlan ? { needsReview } : {}) };
     if (hasPlan) output.plans.push(item);
-    else if (available) output.opportunities.push(item);
+    else if (available && introduction && !shouldSuppressPublication(introduction, history.find(row => row.projectId === project.id)?.entries || [])) output.opportunities.push(item);
   }
   return output;
 }
@@ -74,12 +77,15 @@ async function context(actor: string, projectId: string, db: Prisma.TransactionC
   const exports = await db.instagramExport.findMany({ where: { projectId, designerId: actor }, select: {
     id: true, headline: true, caption: true, status: true, config: true,
   }, orderBy: [{ updatedAt: 'desc' }, { id: 'asc' }], take: 500 });
+  const publicationHistory = await readPublicationHistory(actor, workspace.id, [projectId], db);
   const options: ReleaseOption[] = (process.env.STUDIO_EDITORIAL_READINESS === 'true' ? [] : distinctCards(buildStudioFeed([project], [], [], [], actor, workspace.canWriteCampaigns), project.post?.excerpt)).map(card => {
       const saved = exports.find(row => configObject(row.config).studioCardId === card.id);
+      const publication = publicationHistory.flatMap(row => row.entries).find(entry => shouldSuppressPublication(card, [entry]));
       const preview = saved ? savedPublicationPreview(configObject(saved.config), project.images, project.designer?.name || 'Designer') : card;
       const query = saved ? new URLSearchParams({ export: saved.id }) : new URLSearchParams({ proposal: card.id, revision: card.revision! });
       query.set('release', projectId);
       return { sourceId: card.id, revision: card.revision!, kind: card.roomId ? 'room' : 'introduction',
+        ...(publication ? { publication: { kind: publication.kind, destination: publication.destination } } : {}),
         title: saved?.headline ?? card.title, caption: saved?.caption ?? card.caption, imageUrl: preview.imageUrl, preview: preview.preview,
         ...(card.roomId ? { roomId: card.roomId } : {}), editorHref: `/designer/projects/${encodeURIComponent(projectId)}/instagram?${query}`,
         // Legacy 'generated' is recorded before the browser download succeeds.

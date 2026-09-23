@@ -7,7 +7,7 @@ export default async function StoryPage({ params }: { params: { slug: string } }
   const story = await publicStory(params.slug);
   if (!story) notFound();
   return <article className="mx-auto max-w-3xl px-6 py-16">
-    <ActivityArticleCover heading title={story.draft.title || story.title} identity={{name:story.owner.name || "The designer", portraitUrl:story.owner.profileImage, logoUrl:story.owner.brandProfile?.logoImageUrl}} />
+    <ActivityArticleCover heading title={story.draft.title || story.title} projectImageUrl={story.projectImageUrl} identity={{name:story.owner.name || "The designer", portraitUrl:story.owner.profileImage, logoUrl:story.owner.brandProfile?.logoImageUrl}} />
     <Link href={`/profile/${story.owner.id}`} className="mt-4 inline-block folio-body underline underline-offset-4">{story.owner.name || 'Meet the designer'}</Link>
     <div className="mt-12 space-y-10">{story.draft.entries.map(entry => <section key={entry.questionId}>
       <h2 className="folio-h3">{entry.question}</h2><p className="mt-4 whitespace-pre-wrap folio-body">{entry.answer}</p>

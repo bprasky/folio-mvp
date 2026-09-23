@@ -1,6 +1,7 @@
 'use client';
 
 import { ActivityArticleCover } from './ActivityArticleCover';
+import { activityHeadline } from '@/lib/publishing-studio/publication-headlines';
 import { useState } from 'react';
 import { activityOpportunity } from '@/lib/publishing-studio/opportunities';
 import { StoryConfigurator } from './StoryConfigurator';
@@ -20,6 +21,7 @@ export interface ActivitySnapshot {
   articleReviewed?: boolean;
   publicationNeedsReview?: boolean;
   profileUrl?: string | null;
+  projectImageUrl?: string | null;
   draft: ActivityDraft | null;
   publishedUrl?: string | null;
   previousPublishedUrl?: string | null;
@@ -50,6 +52,9 @@ export function StoryActivity({ context, persistence, initial, initialBrief, cho
   const [savedDraft, setSavedDraft] = useState(JSON.stringify(initial?.draft || null));
   const dirty = !!snapshot && (answerKey(snapshot.answers) !== savedAnswers || snapshot.reviewed !== savedReviewed || JSON.stringify(snapshot.draft) !== savedDraft);
   const activeBrief = snapshot?.definition.brief || brief;
+  const previewProject = context.projects.find(project => project.id === activeBrief.projectId);
+  const projectImageUrl = activeBrief.subject !== 'project' ? undefined : snapshot ? snapshot.projectImageUrl ?? null
+    : activeBrief.roomId ? previewProject?.rooms.find(room => room.id === activeBrief.roomId)?.imageUrl ?? null : previewProject?.imageUrl ?? null;
   const opportunity = activityOpportunity(activeBrief.format, activeBrief.subject === 'project' ? context.projects.find(project => project.id === activeBrief.projectId) : undefined);
   const [error, setError] = useState('');
   const [notice, setNotice] = useState('');
@@ -118,7 +123,7 @@ export function StoryActivity({ context, persistence, initial, initialBrief, cho
       <div><p className="folio-meta text-folio-text-secondary">Publishing Studio</p><h1 className="folio-h2 mt-2">{customize && !snapshot ? 'Build a story' : opportunity.purpose}</h1><p className="folio-meta mt-3 text-folio-text-secondary">{opportunity.metadata}</p></div>
       <button className={secondary} disabled={pending} onClick={close}>Back to Studio</button>
     </header>
-    <details className="mb-6"><summary className="folio-ui cursor-pointer underline underline-offset-4">Publication preview</summary><div className="mt-4 max-w-md"><ActivityArticleCover title={snapshot?.draft?.title || snapshot?.definition.title || (brief.format === 'twenty_questions' ? `Meet ${context.designerName}` : opportunity.purpose)} identity={context.identity || {name:context.designerName}} working={!snapshot?.draft} /></div></details>
+    <details className="mb-6"><summary className="folio-ui cursor-pointer underline underline-offset-4">Publication preview</summary><div className="mt-4 max-w-md"><ActivityArticleCover title={snapshot?.draft?.title || snapshot?.definition.title || activityHeadline(activeBrief.format, context.designerName, context.projects.find(project => project.id === activeBrief.projectId)?.title)} identity={context.identity || {name:context.designerName}} projectImageUrl={projectImageUrl} working={!snapshot?.draft} /></div></details>
     {error && <p role="alert" className="mb-4 folio-body">{error}</p>}
     {notice && <p role="status" className="mb-4 folio-meta">{notice}</p>}
     {step === 'configure' && (customize ? <StoryConfigurator brief={brief} context={context} pending={pending} onChange={setBrief} onStart={start} /> : <div className="rounded-2xl border border-folio-border-subtle bg-surface-muted p-6 sm:p-8">

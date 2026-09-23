@@ -1,4 +1,4 @@
-import type { ExpertiseArticle, ExpertiseEvidence } from '@/lib/publishing-studio/expertise/types';
+import type { ExpertiseArticle, ExpertiseEvidence, ExpertiseOpportunity, ExpertiseSession } from '@/lib/publishing-studio/expertise/types';
 import type { ExpertiseSnapshot } from './transport';
 
 /** The same cover, source selection and typography serve the feed, interview and published article. */
@@ -26,10 +26,21 @@ export function ExpertiseArticleCover({ title, name, article, evidence = [], wor
   </header>;
 }
 
+/** Persisted discovery hook is usable only for its original, still-supported premise. */
+export function expertiseWorkingHeadline(opportunity: ExpertiseOpportunity, session?: ExpertiseSession) {
+  if (session && (session.thesisRevision > 1 || session.thesis !== opportunity.thesis)) return session.thesis;
+  const headline = opportunity.headline?.trim();
+  const citations = opportunity.headlineSources;
+  const supported = headline && headline.length <= 110 && headline.endsWith('?') && headline.split(/\s+/).length <= 18 && citations?.length &&
+    citations.every(citation => citation.quote.trim() && opportunity.evidence.some(source => source.id === citation.evidenceId && source.text.includes(citation.quote))) &&
+    new Set(citations.map(citation => opportunity.evidence.find(source => source.id === citation.evidenceId)?.projectId)).size >= 2;
+  return supported ? headline : session?.thesis || opportunity.thesis;
+}
+
 export function expertisePreviewState(item: ExpertiseSnapshot) {
   const currentArticle = item.article && item.article.thesisRevision === item.session.thesisRevision ? item.article : null;
   const needsSources = item.sourceChanges.length > 0;
-  const title = currentArticle?.title || item.session.thesis;
+  const title = currentArticle?.title || expertiseWorkingHeadline(item.opportunity, item.session);
   const contribution = needsSources ? 'Review the project evidence that changed.' : currentArticle ? item.publishedUrl && currentArticle.reviewed ? 'Your article is published; sharing assets are available in the article.' : 'Review your words, photographs and cover before publishing.' : item.session.status === 'confirm' ? 'Confirm that this framing represents your thinking.' : item.session.status === 'ready' ? 'Prepare your article from the answers you have saved.' : item.session.nextQuestion?.text || 'Continue the interview from your saved answers.';
   const actionLabel = needsSources ? 'Review sources' : currentArticle ? item.publishedUrl && currentArticle.reviewed ? 'Open my article' : 'Review and publish' : item.session.status === 'confirm' ? 'Confirm the framing' : item.session.status === 'ready' ? 'Prepare my article' : 'Continue my interview';
   return { title, article: currentArticle, contribution, actionLabel };

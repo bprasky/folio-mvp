@@ -53,8 +53,8 @@ export function evaluateCandidate(input: Candidate, history: Candidate[] = []): 
   if (candidate.evidence.some(e => !candidate.projectIds.includes(e.projectId))) reasons.push('unauthorized_evidence');
   if (candidate.visuals.some((image, index) => candidate.visuals.slice(0, index).some(other => imageSimilarity(image, other) >= .9))) reasons.push('repetitive_sequence');
   if (candidate.format === 'carousel' && candidate.visuals.length < 2) reasons.push('insufficient_sequence');
-  const previous = history.filter(item => item.id !== candidate.id && !item.dismissed &&
-    (item.readiness === 'ready' || item.readiness === 'quick' || item.confirmedPublishedAt));
+  const previous = history.filter(item => item.id !== candidate.id &&
+    (item.dismissed || item.readiness === 'ready' || item.readiness === 'quick' || item.confirmedPublishedAt));
   if (previous.some(item => storySimilarity(candidate, item) >= .7)) reasons.push('duplicate_story');
   if (previous.some(item => item.visuals.some(image => candidate.visuals.some(own => imageSimilarity(own, image) >= .9)))) {
     candidate.penalties.visualRepetition = 20;

@@ -1,3 +1,4 @@
+import { activityHeadline } from './publication-headlines';
 /** Versioned activity structure. Questions are prepared from context on explicit start. */
 export const ACTIVITY_VERSION = 2;
 export const ACTIVITY_FORMATS = {
@@ -41,7 +42,7 @@ export interface ActivityContext {
   designerName: string;
   identity?: { name: string; portraitUrl?: string | null; logoUrl?: string | null };
   firmName: string;
-  projects: { id: string; title: string; rooms: { id: string; name: string }[] }[];
+  projects: { id: string; title: string; imageUrl?: string | null; rooms: { id: string; name: string; imageUrl?: string | null }[] }[];
   profile: { hasBio: boolean; hasPointOfView: boolean };
   references?: ActivityReference[];
 }
@@ -90,7 +91,8 @@ export function createActivity(input: ActivityBrief, context: ActivityContext): 
   const { brief, subjectLabel } = validBrief(input, context);
   const count = brief.format === 'twenty_questions' ? 20 : 5;
   return { questionSource: 'template', version: ACTIVITY_VERSION, brief, subjectLabel,
-    title: `${activityFormatsFor(brief.subject).find(format => format.key === brief.format)!.label}: ${subjectLabel}`,
+    title: brief.subject === 'firm' ? `${activityFormatsFor(brief.subject).find(format => format.key === brief.format)!.label}: ${subjectLabel}`
+      : activityHeadline(brief.format, context.designerName, brief.subject === 'project' ? subjectLabel : undefined),
     intro: brief.format === 'twenty_questions' ? 'Twenty questions, in your words. Short answers are welcome. You can pause and come back.'
       : 'Use a real example. Your original answers stay intact when you review the draft.',
     questions: Array.from({ length: count }, (_, index) => ({ id: `${brief.format}:v${ACTIVITY_VERSION}:${index + 1}`, prompt: '',

@@ -27,7 +27,7 @@ function fixture(index = 0) {
   const projectId = `p${index}`, text = `Decision${index} choice${index} outcome${index} meaning${index}.`;
   const source = { key: projectId, projectIds: [projectId], title: 'House', origin: 'project', designerName: 'Designer', photographer: 'Photographer',
     evidence: [{ id: 'e', projectId, tier: 'direct', text, source: 'published_prose' }], images: [{ id: `i${index}`, projectId, url: `https://photos/${index}`, approved: true }] };
-  const result = { shape: 'decision', thesis: text, audienceValue: 'A specific choice', claims: [{ text, evidenceIds: ['e'] }],
+  const result = { shape: 'decision', thesis: text, headline: `Decision${index} choice${index}`, audienceValue: 'A specific choice', claims: [{ text, evidenceIds: ['e'] }],
     dimensions: { story: 1, evidence: 1, visual: 1, specificity: 1, novelty: 1, designerFit: 1, formatFit: 1 },
     penalties: { semanticOverlap: 0, visualRepetition: 0, genericFraming: 0, commercialDistortion: 0, staleness: 0 },
     images: [{ id: `i${index}`, role: 'hero', reason: 'Shows decision', technical: 1, relevance: 1, aesthetic: 1, crop: 1 }], question: null, contradictions: [] };
@@ -38,6 +38,26 @@ function candidate(index = 0) { const f = fixture(index); return assembleCandida
 function changed(change) { const c = candidate(); change(c); return engine.evaluateCandidate(c); }
 assert.equal(candidate().score, 100);
 assert.equal(candidate().readiness, 'ready');
+assert.notEqual(candidate().thesis, candidate().draft.headline, 'Public hook is separate from the complete evidence thesis');
+for (const [text, headline] of [
+  ['We kept the existing cabinetry because the budget went to better windows.', 'We kept the existing cabinetry'],
+  ['Open shelves put their ceramic collection within reach.', 'their ceramic collection'],
+  ['The island moved so the door could open fully.', 'The island moved'],
+  ['We tested three finishes before choosing the matte surface.', 'We tested three finishes'],
+  ['The low ceiling determined the lighting choice.', 'The low ceiling'],
+]) {
+  const short = fixture();
+  short.source.evidence[0].text = text;
+  short.result.thesis = text;
+  short.result.headline = headline;
+  short.result.claims[0].text = text;
+  const prepared = assembleCandidate(short.source, 'u', null, EvaluationSchema.parse(short.result), short.measures, []);
+  assert.equal(prepared.readiness, 'ready');
+  assert.equal(prepared.thesis, text);
+  assert.equal(prepared.draft.headline, short.result.headline);
+  short.result.headline = 'A quieter kitchen for entertaining';
+  assert.ok(assembleCandidate(short.source, 'u', null, EvaluationSchema.parse(short.result), short.measures, []).reasons.includes('unsupported_copy'), 'New hooks retain exact grounding');
+}
 assert.equal(changed(c => c.penalties.semanticOverlap = 20).readiness, 'ready');
 assert.equal(changed(c => c.penalties.semanticOverlap = 21).readiness, 'developing');
 const quick = changed(c => { c.penalties.semanticOverlap = 25; c.penalties.staleness = 8; c.penalties.genericFraming = 2;
@@ -81,13 +101,19 @@ assert.equal(engine.selectCandidates([{ ...candidate(), dismissed: true }]).leng
 assert.equal(engine.selectCandidates([{ ...candidate(), confirmedPublishedAt: new Date().toISOString() }]).length, 0);
 const longHeadline = fixture(); longHeadline.result.thesis = 'x'.repeat(181);
 assert.equal(EvaluationSchema.safeParse(longHeadline.result).success, false);
+const oversizedHook = fixture(); oversizedHook.result.headline = 'x'.repeat(101);
+assert.equal(EvaluationSchema.safeParse(oversizedHook.result).success, false);
 const semantic = fixture(1); semantic.result.duplicateOf = ['p0'];
 const semanticallyRepeated = assembleCandidate(semantic.source, 'u', null, EvaluationSchema.parse(semantic.result), semantic.measures, [candidate()]);
 assert.equal(semanticallyRepeated.readiness, 'suppressed');
 assert.ok(engine.evaluateCandidate(semanticallyRepeated).reasons.includes('semantic_duplicate'));
+const dismissedRepeat = assembleCandidate(semantic.source, 'u', null, EvaluationSchema.parse(semantic.result), semantic.measures, [{ ...candidate(), dismissed: true }]);
+assert.equal(dismissedRepeat.readiness, 'suppressed', 'A paraphrase of a dismissed idea cannot resurface');
+assert.ok(dismissedRepeat.reasons.includes('semantic_duplicate'));
 semantic.result.duplicateOf = ['unknown'];
 assert.throws(() => assembleCandidate(semantic.source, 'u', null, EvaluationSchema.parse(semantic.result), semantic.measures, [candidate()]));
 assert.equal(engine.imageSimilarity({ id: 'a', url: 'a', perceptualHash: '1111111111' }, { id: 'b', url: 'b', perceptualHash: '1111111110' }), .9);
 const duplicate = candidate(); duplicate.id = 'new'; duplicate.thesis = 'Alternate framing';
 assert.ok(engine.evaluateCandidate(duplicate, [candidate()]).reasons.includes('duplicate_story'));
+assert.ok(engine.evaluateCandidate(duplicate, [{ ...candidate(), dismissed: true, readiness: 'suppressed' }]).reasons.includes('duplicate_story'), 'Dismissed history also blocks duplicates without a model judgment');
 console.log('PASS readiness engine: score bands, exact grounding, visual gates, duplicate diversity, answers, immutable inputs, unknown images, persistent contradictions');

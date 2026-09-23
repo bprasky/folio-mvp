@@ -6,6 +6,7 @@ import { StudioPitchDialog } from './StudioPitchCard';
 import { StudioPublicationCard } from './StudioPublicationCard';
 import { ActivityArticleCover } from './ActivityArticleCover';
 import { activityOpportunity } from '@/lib/publishing-studio/opportunities';
+import { activityHeadline } from '@/lib/publishing-studio/publication-headlines';
 import type { PersonalIntroduction } from './usePersonalIntroduction';
 
 export type DiscoveryProject = { id: string; title: string; thumbnail?: string | null };
@@ -50,7 +51,7 @@ export function AboutMeInvitation({ compact = false, bio = false, introduction }
   const published = !bio && introduction.status === 'published' && !introduction.needsReview;
   const draft = !bio && (introduction.status === 'draft' || introduction.needsReview);
   const article = introduction.stage === 'article';
-  const title = !bio && introduction.title || (bio ? `The practice of ${identity.name}` : `Meet ${identity.name}`);
+  const title = !bio && introduction.title || activityHeadline(bio ? 'bio' : 'twenty_questions', identity.name);
   return <div className={compact ? 'min-w-0' : ''}><StudioPublicationCard
     title={title} preview={<ActivityArticleCover title={title} identity={identity} working={!published && !article} label={bio ? 'Profile introduction' : 'In conversation with Folio'} />}
     metadata={published ? 'Published on Folio' : draft ? 'Saved work' : 'Working preview'}
@@ -72,10 +73,10 @@ export function ActivityInvitations({ project, format = '', personal = false, om
       {formats.map(format => {
         if (format === 'twenty_questions' && !project) return <AboutMeInvitation key={format} introduction={introduction} />;
         const opportunity = activityOpportunity(format, project);
-        const title = format === 'material' ? 'The thinking behind a material choice' : format === 'method' ? 'How I work' : format === 'twenty_questions' ? `Inside ${project?.title}` : project ? `A closer look at ${project.title}` : 'What I notice—and why';
+        const title = activityHeadline(format, introduction?.identity?.name || 'The designer', project?.title);
         return <StudioPublicationCard key={format} title={title}
-          preview={<ActivityArticleCover title={title} identity={introduction?.identity || {name:'The designer'}} working />}
-          benefit={opportunity.purpose} contribution={project ? 'Choose the specific example, then share the decisions behind it.' : 'Your interview answers will form this article.'}
+          preview={<ActivityArticleCover title={title} identity={introduction?.identity || {name:'The designer'}} projectImageUrl={project ? project.thumbnail ?? null : undefined} working />}
+          benefit={opportunity.purpose} contribution={project ? 'Which specific decision should readers understand? Choose an example to give this question its story.' : 'Your answers will give this open question its story.'}
           actionLabel="Start my interview" href={opportunity.href!} metadata={project?.title || 'Working preview'} readiness="working" supportingSources={project ? [project.id] : []} />;
       })}
     </div>

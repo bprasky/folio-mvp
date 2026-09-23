@@ -219,6 +219,7 @@ export interface QueuePromptItem {
 // value (string here to avoid a module cycle with assignFormat).
 export interface PromptStructure {
   format: string;
+  headline?: string;
   intro: string;
   items: QueuePromptItem[];
 }

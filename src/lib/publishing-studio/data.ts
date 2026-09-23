@@ -3,6 +3,9 @@ import { prisma } from '@/lib/prisma';
 import type { Prisma } from '@prisma/client';
 import type { StudioData } from './types';
 import { buildStudioFeed } from './feed';
+import { readPublicationHistory } from './publication-history';
+import { shouldSuppressPublication } from './history';
+import { publicationHeadlines } from './publication-headlines';
 
 export class StudioAccessError extends Error {
   constructor(message: string, public readonly status: number) { super(message); }
@@ -59,7 +62,7 @@ export async function getStudioData(userId: string, projectId?: string): Promise
   const scoped = authorized.filter(p => !projectId || p.id === projectId);
   const ids = scoped.map(p => p.id);
   const titles = new Map(authorized.map(p => [p.id, p.title || 'Untitled project']));
-  const [ideaRows, campaignRows, exportRows] = await Promise.all([
+  const [ideaRows, campaignRows, exportRows, publicationHistory] = await Promise.all([
     prisma.editorialQueueItem.findMany({
       where: { designerId: userId, angle: { designerId: userId, organizationId: orgId },
         status: { in: ['recommended', 'in_progress', 'dismissed', 'completed', 'scheduled', 'published'] } },
@@ -80,6 +83,7 @@ export async function getStudioData(userId: string, projectId?: string): Promise
       select: { id: true, projectId: true, headline: true, caption: true, status: true, updatedAt: true, config: true },
       orderBy: [{ updatedAt: 'desc' }, { id: 'asc' }], take: 501,
     }),
+    readPublicationHistory(userId, workspace.id, ids),
   ]);
 
   const ideas: StudioData['ideas'] = [];
@@ -101,7 +105,11 @@ export async function getStudioData(userId: string, projectId?: string): Promise
         ...(typeof prompt.optionB === 'string' ? { optionB: prompt.optionB } : {}),
         ...(typeof prompt.hint === 'string' ? { hint: prompt.hint } : {}) });
     }
-    ideas.push({ id: item.id, title: item.angle.summary, format: item.format, status: item.status,
+    const headline = publicationHeadlines([structure.headline, ...prompts.map(prompt => prompt.prompt), item.angle.summary], [])[0];
+    // A long internal angle is not cover copy. Keep saved work available, but
+    // abstain from recommending an old direction without a usable public hook.
+    if (!headline && item.status === 'recommended') continue;
+    ideas.push({ id: item.id, title: headline || item.angle.summary, format: item.format, status: item.status,
       createdAt: item.createdAt.toISOString(), projectIds, prompts,
       reason: typeof structure.intro === 'string' ? structure.intro : item.angle.summary });
   }
@@ -121,12 +129,14 @@ export async function getStudioData(userId: string, projectId?: string): Promise
   ].sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
   return {
     evaluatedAt: new Date().toISOString(),
+    publicationHistory,
     feed: buildStudioFeed(authorized, exportRows.slice(0, 500), campaignRows.slice(0, 100), ideas, userId, workspace.canWriteCampaigns)
-      .filter(card => !projectId || card.projectIds.includes(projectId)),
+      .filter(card => (!projectId || card.projectIds.includes(projectId)) && (card.kind !== 'suggestion' ||
+        !shouldSuppressPublication(card, publicationHistory.filter(history => card.projectIds.includes(history.projectId)).flatMap(history => history.entries)))),
     workspace,
     projects: scoped.map(p => ({ id: p.id, title: p.title || 'Untitled project',
       publishedAt: p.publishedAt?.toISOString() ?? null,
-      thumbnail: p.images[0]?.url ?? null, published: p.post?.status === 'PUBLISHED',
+      thumbnail: p.images.find(image => image.inclusion === 'INCLUDED')?.url ?? null, published: p.post?.status === 'PUBLISHED',
       canCreateCampaign: p.post?.status === 'PUBLISHED' && (workspace.canWriteCampaigns || p.ownerId === userId || p.designerId === userId),
       canCreate: p.post?.status === 'PUBLISHED' && (p.ownerId === userId || p.designerId === userId) })),
     editorials: scoped.flatMap(p => p.post ? [{ id: p.post.id, projectId: p.id, title: p.title || 'Untitled project',

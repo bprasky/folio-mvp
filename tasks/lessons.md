@@ -1126,3 +1126,6 @@ When a Studio card represents a project or has photography, carry the same relev
 
 ## 2026-09-23 — Publications are the Studio's visual hook
 A concise card is insufficient if it conceals the intended publication. Show the real post/article cover first, then a specific benefit, unresolved contribution and direct stage-aware CTA. Share content identity/renderers with the final output; keep filters and export navigation secondary. The concierge brief supersedes the earlier modal-first card pattern.
+
+## 2026-09-23 — The card hook belongs to the audience
+A project name, internal pitch or generic activity invitation is not a publication hook. Prepare a concise, evidence-grounded audience headline before the click and carry it unchanged into the workspace until the designer edits it. Keep private benefit/contribution separate. Suppress repeats by subject and semantic angle, not just title; distinguish confirmed publication, drafts, schedules, exports and uploads. Unknown external history needs a lightweight correction, not an assumption.

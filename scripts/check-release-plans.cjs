@@ -5,7 +5,7 @@ const ts = require('typescript');
 function load(file, mocks) {
   const exports = {};
   vm.runInNewContext(ts.transpileModule(fs.readFileSync(file, 'utf8'), { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 } }).outputText,
-    { exports, require: name => { if (!(name in mocks)) throw Error(name); return mocks[name]; }, process, URLSearchParams, console });
+    { exports, require: name => { if (!(name in mocks)) { const pure = require('./studio-publication-test-import.cjs')(name); if (pure) return pure; throw Error(name); } return mocks[name]; }, process, URLSearchParams, console });
   return exports;
 }
 (async () => {
@@ -38,7 +38,8 @@ function load(file, mocks) {
   const service = load('src/lib/publishing-studio/release-plan-service.ts', {
     'server-only': {}, crypto: require('node:crypto'), '@prisma/client': { Prisma: { TransactionIsolationLevel: { Serializable: 'Serializable' }, PrismaClientKnownRequestError: class extends Error {} } },
     '@/lib/prisma': { prisma: db }, '@/lib/permissions': { canAccessDesignerTools: value => value === 'DESIGNER' },
-    './data': { StudioAccessError: AccessError, resolvePublishingStudioContext: async () => ({ id: workspace, canWriteCampaigns: false }) }, './feed': feed, './release-plan': model,
+    './publication-history': { readPublicationHistory: async () => [] },
+      './data': { StudioAccessError: AccessError, resolvePublishingStudioContext: async () => ({ id: workspace, canWriteCampaigns: false }) }, './feed': feed, './release-plan': model,
   });
   const initial = await service.readReleasePlan('owner', 'p');
   assert.equal(writes, 0); assert.equal(initial.plan, null);

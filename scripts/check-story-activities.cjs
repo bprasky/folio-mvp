@@ -4,7 +4,7 @@ const vm = require('node:vm');
 const ts = require('typescript');
 function load(file) {
   const exports = {};
-  vm.runInNewContext(ts.transpileModule(fs.readFileSync(file, 'utf8'), { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 } }).outputText, { exports }, { filename: file });
+  vm.runInNewContext(ts.transpileModule(fs.readFileSync(file, 'utf8'), { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 } }).outputText, { exports, require: name => require('./studio-publication-test-import.cjs')(name) || require(name) }, { filename: file });
   return exports;
 }
 const { createActivity, activityProgress, prepareActivityDraft, profileActivitySuggestions } = load('src/lib/publishing-studio/activities.ts');
