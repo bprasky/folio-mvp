@@ -20,7 +20,7 @@ function load(file, mocks) {
       ['export-r1', 'p', 'owner', JSON.stringify({ studioCardId: 'room:p:r1' }), 'Saved lighting headline', 'The original hand-edited caption.', 'draft']);
     const rows = async (sql, args = []) => (await pg.query(sql, args)).rows;
     const overview = 'A coastal house brings sheltered courtyards, generous family spaces and a quiet palette together through a coherent architectural plan.';
-    const project = { id: 'p', title: 'House', ownerId: 'owner', designerId: 'owner', post: { excerpt: overview } };
+    const project = { id: 'p', title: 'House', images: [{url:'photo'}], ownerId: 'owner', designerId: 'owner', post: { excerpt: overview } };
     const cards = [
       { id: 'project:p', revision: 'intro-v1', title: 'House', caption: overview },
       { id: 'room:p:r1', revision: 'room1-v1', title: 'Living room', roomId: 'r1', caption: 'We rejected a brass chandelier when its weight distorted the ceiling beams, choosing lighter glass instead.' },
@@ -29,7 +29,7 @@ function load(file, mocks) {
     const db = {
       user: { findUnique: async () => ({ role: 'DESIGNER' }) },
       project: { findFirst: async ({ where }) => where.id === 'p' && where.designerOrgId === null ? project : null, findMany: async () => [project] },
-      instagramExport: { findMany: async ({ where }) => rows('SELECT * FROM instagram_exports WHERE "projectId"=$1 AND "designerId"=$2 ORDER BY "updatedAt" DESC,id', [where.projectId, where.designerId]) },
+      instagramExport: { findMany: async ({ where }) => rows('SELECT * FROM instagram_exports WHERE "projectId"=$1 AND "designerId"=$2 ORDER BY "updatedAt" DESC,id', [typeof where.projectId === 'string' ? where.projectId : where.projectId.in[0], where.designerId]) },
       editorialDraft: {
         findUnique: async ({ where }) => (await rows('SELECT * FROM editorial_drafts WHERE id=$1', [where.id]))[0] || null,
         findMany: async ({ where }) => rows('SELECT * FROM editorial_drafts WHERE id=ANY($1::text[]) AND status=$2', [where.id.in, where.status]),
@@ -43,7 +43,7 @@ function load(file, mocks) {
     const mocks = { 'server-only': {}, crypto: require('node:crypto'), '@prisma/client': require('@prisma/client'), '@/lib/prisma': { prisma: db },
       '@/lib/permissions': { canAccessDesignerTools: role => role === 'DESIGNER' },
       './data': { StudioAccessError: AccessError, resolvePublishingStudioContext: async () => ({ id: null, canWriteCampaigns: false }) },
-      './feed': { configObject: value => value && typeof value === 'object' ? value : {}, buildStudioFeed: () => cards }, './release-plan': model };
+      './feed': { savedPublicationPreview: load('src/lib/publishing-studio/feed.ts', {'crypto':require('node:crypto'),'./opportunities':{feedOpportunity:()=>({})}}).savedPublicationPreview, configObject: value => value && typeof value === 'object' ? value : {}, buildStudioFeed: () => cards }, './release-plan': model };
     const instance = () => load('src/lib/publishing-studio/release-plan-service.ts', mocks);
     const first = instance();
     assert.equal((await first.readReleasePlan('owner', 'p')).plan, null);

@@ -118,9 +118,6 @@ export function createWatermarkSVG(
   height: number,
   position: HeadlinePosition
 ): string {
-  const fontSize = Math.round(width * 0.013);
-  const padding = Math.round(width * 0.04);
-
   let watermarkText: string;
   switch (watermarkStyle) {
     case 'folio_x':
@@ -134,6 +131,14 @@ export function createWatermarkSVG(
       watermarkText = 'folio';
       break;
   }
+
+  return createWatermarkTextSVG(watermarkText, width, height, position);
+}
+
+/** Shared by the browser cover and raster export. */
+export function createWatermarkTextSVG(watermarkText: string, width: number, height: number, position: HeadlinePosition): string {
+  const fontSize = Math.round(width * 0.013);
+  const padding = Math.round(width * 0.04);
 
   // Watermark goes opposite to headline position
   let x: number;

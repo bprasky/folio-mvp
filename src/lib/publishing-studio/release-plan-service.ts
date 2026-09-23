@@ -4,7 +4,7 @@ import { Prisma } from '@prisma/client';
 import { prisma } from '@/lib/prisma';
 import { canAccessDesignerTools } from '@/lib/permissions';
 import { resolvePublishingStudioContext, StudioAccessError } from './data';
-import { buildStudioFeed, configObject } from './feed';
+import { buildStudioFeed, configObject, savedPublicationPreview } from './feed';
 import type { StudioFeedCard } from './types';
 import { validateReleaseItems, type ReleaseOption, type ReleasePlanResponse, type ReleasePlanItem, type ReleaseDiscovery, type ReleaseOpportunity } from './release-plan';
 
@@ -38,6 +38,7 @@ export async function listReleasePlans(actor: string): Promise<ReleaseDiscovery>
     ...(workspace.id ? {} : { OR: [{ ownerId: actor }, { designerId: actor }] }) }, select: projectSelect,
     orderBy: [{ updatedAt: 'desc' }, { id: 'asc' }], take: 100 });
   const saved = await prisma.editorialDraft.findMany({ where: { id: { in: projects.map(project => planId(actor, workspace.id, project.id)) }, status: 'release_plan' }, select: { projectId: true, rawState: true } });
+  const exports = await prisma.instagramExport.findMany({ where: { projectId: { in: projects.map(project => project.id) }, designerId: actor }, select: { projectId: true, headline: true, config: true }, orderBy: [{ updatedAt: 'desc' }, { id: 'asc' }], take: 500 });
   const output: ReleaseDiscovery = { opportunities: [], plans: [] };
   for (const project of projects) {
     const cards = process.env.STUDIO_EDITORIAL_READINESS === 'true' ? [] : distinctCards(buildStudioFeed([project], [], [], [], actor, workspace.canWriteCampaigns), project.post?.excerpt);
@@ -49,7 +50,9 @@ export async function listReleasePlans(actor: string): Promise<ReleaseDiscovery>
     const needsReview = !available || !Array.isArray(raw.items) || raw.items.some(item => {
       const value = configObject(item); return !cards.some(card => card.id === value.sourceId && card.revision === value.revision);
     });
-    const item: ReleaseOpportunity = { projectId: project.id, projectTitle: project.title, imageUrl: introduction?.imageUrl ?? null,
+    const openingDraft = exports.find(row => row.projectId === project.id && configObject(row.config).studioCardId === introduction?.id);
+    const opening = openingDraft ? savedPublicationPreview(configObject(openingDraft.config), project.images, project.designer?.name || 'Designer') : introduction;
+    const item: ReleaseOpportunity = { projectId: project.id, projectTitle: project.title, imageUrl: opening?.imageUrl ?? null, title: openingDraft?.headline ?? introduction?.title ?? project.title, preview: opening?.preview,
       purpose: `Give ${project.title} a fuller introduction.`, reason: 'A prepared project introduction and distinct, supported room stories can form a considered sequence.',
       roomCount: rooms.length, hasPlan, sourceIds: [introduction, ...rooms].flatMap(card => card ? [card.id] : []), ...(hasPlan ? { needsReview } : {}) };
     if (hasPlan) output.plans.push(item);
@@ -73,10 +76,11 @@ async function context(actor: string, projectId: string, db: Prisma.TransactionC
   }, orderBy: [{ updatedAt: 'desc' }, { id: 'asc' }], take: 500 });
   const options: ReleaseOption[] = (process.env.STUDIO_EDITORIAL_READINESS === 'true' ? [] : distinctCards(buildStudioFeed([project], [], [], [], actor, workspace.canWriteCampaigns), project.post?.excerpt)).map(card => {
       const saved = exports.find(row => configObject(row.config).studioCardId === card.id);
+      const preview = saved ? savedPublicationPreview(configObject(saved.config), project.images, project.designer?.name || 'Designer') : card;
       const query = saved ? new URLSearchParams({ export: saved.id }) : new URLSearchParams({ proposal: card.id, revision: card.revision! });
       query.set('release', projectId);
       return { sourceId: card.id, revision: card.revision!, kind: card.roomId ? 'room' : 'introduction',
-        title: saved?.headline ?? card.title, caption: saved?.caption ?? card.caption, imageUrl: card.imageUrl,
+        title: saved?.headline ?? card.title, caption: saved?.caption ?? card.caption, imageUrl: preview.imageUrl, preview: preview.preview,
         ...(card.roomId ? { roomId: card.roomId } : {}), editorHref: `/designer/projects/${encodeURIComponent(projectId)}/instagram?${query}`,
         // Legacy 'generated' is recorded before the browser download succeeds.
         status: saved ? 'draft_saved' : 'prepared' };

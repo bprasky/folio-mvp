@@ -1,10 +1,11 @@
+import type { StudioFeedCard } from './types';
 export type ReleasePlanItem = { sourceId: string; revision: string; planningDate: string | null };
-export type ReleaseOption = { sourceId: string; revision: string; kind: 'introduction' | 'room'; title: string; caption: string; imageUrl: string | null; roomId?: string; editorHref: string; status: 'prepared' | 'draft_saved' | 'export_generated' };
+export type ReleaseOption = { preview?: StudioFeedCard['preview']; sourceId: string; revision: string; kind: 'introduction' | 'room'; title: string; caption: string; imageUrl: string | null; roomId?: string; editorHref: string; status: 'prepared' | 'draft_saved' | 'export_generated' };
 export type ReleasePlanResponse = {
   project: { id: string; title: string }; purpose: string; options: ReleaseOption[];
   plan: { version: number; items: ReleasePlanItem[]; needsReview: boolean } | null;
 };
-export type ReleaseOpportunity = { projectId: string; projectTitle: string; imageUrl: string | null; purpose: string; reason: string; roomCount: number; hasPlan: boolean; sourceIds: string[]; needsReview?: boolean };
+export type ReleaseOpportunity = { title?: string; preview?: StudioFeedCard['preview']; projectId: string; projectTitle: string; imageUrl: string | null; purpose: string; reason: string; roomCount: number; hasPlan: boolean; sourceIds: string[]; needsReview?: boolean };
 export type ReleaseDiscovery = { opportunities: ReleaseOpportunity[]; plans: ReleaseOpportunity[] };
 
 /** Dates are personal planning notes, never a scheduler or publication claim. */

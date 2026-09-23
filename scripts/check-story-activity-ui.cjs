@@ -11,7 +11,7 @@ const { createRoot } = require('react-dom/client');
 function load(file) {
   const exports = {};
   vm.runInNewContext(ts.transpileModule(fs.readFileSync(file, 'utf8'), { compilerOptions: { module: ts.ModuleKind.CommonJS, jsx: ts.JsxEmit.ReactJSX, target: ts.ScriptTarget.ES2022 } }).outputText,
-    { exports, console, Error, URLSearchParams, navigator: {}, window: dom.window, document: dom.window.document, require: name => name === '@/lib/publishing-studio/opportunities' ? load('src/lib/publishing-studio/opportunities.ts') : name === '@/lib/publishing-studio/activities' ? activities : name === './ActivitySocialCard' ? { ActivitySocialCard: () => null } : name === './UnsavedActivityDialog' ? load('src/components/publishing-studio/UnsavedActivityDialog.tsx') : name === './StoryConfigurator' ? load('src/components/publishing-studio/StoryConfigurator.tsx') : require(name) });
+    { exports, console, Error, URLSearchParams, navigator: {}, window: dom.window, document: dom.window.document, require: name => name === '@/lib/publishing-studio/opportunities' ? load('src/lib/publishing-studio/opportunities.ts') : name === '@/lib/publishing-studio/activities' ? activities : name === './ActivitySocialCard' ? { ActivitySocialCard: () => null } : name === './UnsavedActivityDialog' ? load('src/components/publishing-studio/UnsavedActivityDialog.tsx') : name === './StoryConfigurator' ? load('src/components/publishing-studio/StoryConfigurator.tsx') : require('./studio-publication-test-import.cjs')(name) || require(name) });
   return exports;
 }
 const activities = load('src/lib/publishing-studio/activities.ts');

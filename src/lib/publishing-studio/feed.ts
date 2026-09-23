@@ -17,6 +17,23 @@ export function configObject(value: unknown): Record<string, unknown> {
 const defaultPreview: NonNullable<StudioFeedCard['preview']> = { aspectRatio: '4:5', headlinePosition: 'bottom_left', watermarkStyle: 'minimal' };
 const MAX_PROPOSAL_OPTION_LENGTH = 5000;
 
+/** One asset/layout resolver for saved cards, release plans and editor entry. */
+export function savedPublicationPreview(config: Record<string, unknown>, sourceImages: {url:string}[], fallbackName: string) {
+  const allowed = new Set(sourceImages.map(image => image.url));
+  const requested = Array.isArray(config.selectedImageUrls) ? config.selectedImageUrls : [];
+  const images = requested.filter((url): url is string => typeof url === 'string' && allowed.has(url));
+  // Do not substitute a project hero for a missing saved first image.
+  const first = typeof requested[0] === 'string' && allowed.has(requested[0]) ? requested[0] : null;
+  const preview = { ...defaultPreview, watermarkStyle: 'folio_x' as const } as NonNullable<StudioFeedCard['preview']>;
+  if (['1:1', '4:5', '9:16'].includes(String(config.aspectRatio))) preview.aspectRatio = config.aspectRatio as typeof preview.aspectRatio;
+  if (['bottom_left', 'bottom_center', 'top_left'].includes(String(config.headlinePosition))) preview.headlinePosition = config.headlinePosition as typeof preview.headlinePosition;
+  if (['folio_x', 'folio_presents', 'minimal'].includes(String(config.watermarkStyle))) preview.watermarkStyle = config.watermarkStyle as typeof preview.watermarkStyle;
+  const designerName = typeof config.designerName === 'string' ? config.designerName : fallbackName;
+  preview.watermarkText = preview.watermarkStyle === 'minimal' ? 'folio'
+    : preview.watermarkStyle === 'folio_presents' ? `folio presents ${designerName}` : `folio × ${designerName}`;
+  return { imageUrl: first, imageUrls: images, preview };
+}
+
 // Keep whole source passages rather than truncating a quote or changing its meaning.
 function proposalOptions(options: string[]): string[] {
   return options.filter(option => option.length <= MAX_PROPOSAL_OPTION_LENGTH).slice(0, 10);
@@ -96,18 +113,7 @@ export function buildStudioFeed(projects: Project[], saved: Saved[], campaigns: 
     const proposal = typeof config.studioCardId === 'string' ? sourceProposals.get(config.studioCardId) : undefined;
     const bioSlides = config.bioEnabled !== false ? 1 : 0;
     const configuredSlides = [2, 3, 4, 5].includes(Number(config.slideCount)) ? Number(config.slideCount) : 5;
-    const allowed = new Set(p.images.map(image => image.url));
-    const requested = Array.isArray(config.selectedImageUrls) ? config.selectedImageUrls : [];
-    const images = requested.filter((url): url is string => typeof url === 'string' && allowed.has(url));
-    // Do not substitute a project hero for a missing saved first image.
-    const first = typeof requested[0] === 'string' && allowed.has(requested[0]) ? requested[0] : null;
-    const preview = { ...defaultPreview, watermarkStyle: 'folio_x' as const } as NonNullable<StudioFeedCard['preview']>;
-    if (['1:1', '4:5', '9:16'].includes(String(config.aspectRatio))) preview.aspectRatio = config.aspectRatio as typeof preview.aspectRatio;
-    if (['bottom_left', 'bottom_center', 'top_left'].includes(String(config.headlinePosition))) preview.headlinePosition = config.headlinePosition as typeof preview.headlinePosition;
-    if (['folio_x', 'folio_presents', 'minimal'].includes(String(config.watermarkStyle))) preview.watermarkStyle = config.watermarkStyle as typeof preview.watermarkStyle;
-    const designerName = typeof config.designerName === 'string' ? config.designerName : p.designer?.name || 'Designer';
-    preview.watermarkText = preview.watermarkStyle === 'minimal' ? 'folio'
-      : preview.watermarkStyle === 'folio_presents' ? 'a folio editorial' : `folio × ${designerName.toLowerCase()}`;
+    const { imageUrl: first, imageUrls: images, preview } = savedPublicationPreview(config, p.images, p.designer?.name || 'Designer');
     feed.push({ id: `carousel:${s.id}`, projectIds: [p.id], title: s.headline ?? '', caption: s.caption ?? '',
       imageUrl: first, imageUrls: images, kind: 'carousel', format: 'Carousel', status: s.status,
       updatedAt: s.updatedAt.toISOString(), exportId: s.id, canPolish: canWrite(p), preview,

@@ -23,7 +23,7 @@ function load(file) {
     if (id === 'next/navigation') return { useRouter: () => ({ push: href => destinations.push(href) }) };
     if (id === 'next/link') return { default: ({ children, ...props }) => React.createElement('a', props, children) };
     if (id.startsWith('./')) return load(require('node:path').resolve(require('node:path').dirname(file), id + '.tsx'));
-    return require(id);
+    return require('./studio-publication-test-import.cjs')(id) || require(id);
   } });
   return loaded.exports;
 }

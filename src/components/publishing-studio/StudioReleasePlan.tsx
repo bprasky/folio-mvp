@@ -1,5 +1,6 @@
 'use client';
 
+import { CarouselHero } from '@/components/instagram-export/CarouselHero';
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
@@ -58,7 +59,7 @@ export function StudioReleasePlan() {
   }
   function postPreview(post: Post) {
     return <div className="grid gap-5 sm:grid-cols-[160px_1fr]">
-      {post.imageUrl && <img src={post.imageUrl} alt="" className="aspect-[4/5] w-full max-w-xs rounded-xl object-cover" />}
+      {post.imageUrl && <div style={{aspectRatio:(post.preview?.aspectRatio || "4:5").replace(":","/")}}><CarouselHero imageUrl={post.imageUrl} headline={post.title} headlinePosition={post.preview?.headlinePosition} watermarkText={post.preview?.watermarkText || "folio"} aspectRatio={post.preview?.aspectRatio} /></div>}
       <div><p className="folio-meta text-folio-text-secondary">{post.kind === 'room' ? 'Room story' : 'Project introduction'} · {post.status === 'draft_saved' ? 'Draft saved' : post.status === 'export_generated' ? 'Export generated' : 'Prepared post'}</p><h3 className="folio-h3 my-2">{post.title}</h3><p className="folio-body whitespace-pre-line">{post.caption}</p><Link href={`${post.editorHref}${post.editorHref.includes('?') ? '&' : '?'}release=${encodeURIComponent(projectId)}`} className="folio-ui mt-4 inline-block underline underline-offset-4">Review and edit this post</Link></div>
     </div>;
   }

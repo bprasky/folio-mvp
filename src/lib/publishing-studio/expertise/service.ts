@@ -40,7 +40,7 @@ export async function listExpertise(actor: string) {
   const used = new Set(work.map(s => s.opportunity.id));
   const current = stored.filter(s => s.opportunity.state === 'active' && !changedEvidence(s.opportunity.evidence, fresh.evidence).length);
   const cache = await discoveryState(actor, fresh.workspace.id);
-  return { enabled: true as const, opportunities: current.filter(s => !used.has(s.opportunity.id)).map(s => s.opportunity).slice(0, 3), work: work.filter(s => s.status !== 'archived'), projects: fresh.projects, selectableEvidence: fresh.evidence.filter(e => e.assetId && e.imageUrl),
+  return { enabled: true as const, identity: fresh.identity, opportunities: current.filter(s => !used.has(s.opportunity.id)).map(s => s.opportunity).slice(0, 3), work: work.filter(s => s.status !== 'archived'), projects: fresh.projects, selectableEvidence: fresh.evidence.filter(e => e.assetId && e.imageUrl),
     discovery: { status: cache?.status === 'processing' && Date.now() - cache.updatedAt.getTime() < 300000 ? 'processing' : cache?.status === 'error' ? 'error' : !cache ? 'not_started' : cache.signature !== fresh.signature ? 'changed' : current.length ? 'current' : 'empty',
       message: cache?.status === 'error' ? 'Folio could not retrieve the comparison. Your saved work is unchanged. Try again.' : fresh.projects.length < 2 ? 'Choose another relevant project to explore how your approach changes between homes.' : undefined } };
 }

@@ -39,6 +39,7 @@ export interface ActivityBrief {
 }
 export interface ActivityContext {
   designerName: string;
+  identity?: { name: string; portraitUrl?: string | null; logoUrl?: string | null };
   firmName: string;
   projects: { id: string; title: string; rooms: { id: string; name: string }[] }[];
   profile: { hasBio: boolean; hasPointOfView: boolean };

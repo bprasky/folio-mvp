@@ -4,7 +4,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import dynamic from 'next/dynamic';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { StudioPitchCard } from './StudioPitchCard';
+import { StudioPublicationCard } from './StudioPublicationCard';
 import { candidateOpportunity } from '@/lib/publishing-studio/opportunities';
 import { usePersonalIntroduction } from './usePersonalIntroduction';
 import type { Candidate } from '@/lib/publishing-studio/readiness/types';
@@ -41,18 +41,15 @@ export function CandidateCard({ candidate, projectNames, onOpen, onDismiss, port
   },[candidate]);
   const info=candidatePresentation(candidate);
   const opportunity=candidateOpportunity(candidate);
-  const projectImages=candidate.projectIds.map(id=>candidate.visuals.find(image=>image.projectId===id)).filter((image):image is Candidate['visuals'][number]=>Boolean(image));
+  const blockers = candidate.blockers.filter(blocker => !blocker.answer?.trim());
+  const actionLabel = blockers[0]?.kind === 'visual' ? 'Choose your cover' : blockers[0]?.kind === 'credit' ? 'Complete the credit' : blockers.length ? 'Add your perspective' : 'Polish this post';
   return <div ref={ref} className="min-w-0">
-    <StudioPitchCard eyebrow={`${opportunity.metadata} · ${candidate.projectIds.map(projectNames).join(' · ')}`}
-      title={candidate.thesis || candidate.draft.headline}
-      image={portfolio ? <div className="grid aspect-[4/5] grid-cols-2 gap-1">{projectImages.slice(0,2).map(image => <StudioPhoto key={image.id} images={[image]} alt={projectNames(image.projectId)} className="h-full" />)}</div> : <StudioPhoto images={candidate.visuals} onUnavailable={setImageUnavailable} alt="" className="aspect-[4/5]" />}
-      actionLabel={candidate.blockers.some(blocker => !blocker.answer?.trim()) ? 'Answer questions' : 'Polish this post'} onAction={onOpen}>
-      <p className="folio-meta text-folio-text-secondary">{info.label}</p>
-      <p>{opportunity.reason}</p><p>{opportunity.path}</p>
-      <p className="text-folio-text-secondary">{opportunity.result} {opportunity.destination}</p>
-      <p className="folio-meta">{imageUnavailable ? 'Source image unavailable · review imagery' : info.preparation}</p>
-      {onDismiss && <details><summary className="cursor-pointer folio-meta text-folio-text-secondary">Dismiss suggestion</summary><div className="mt-3 space-y-3"><div role="group" aria-label="Optional dismissal reason" className="flex flex-wrap gap-2">{DISMISSAL_REASONS.map(item => <button key={item} type="button" aria-pressed={reason === item} className="rounded-full border border-folio-border-subtle px-3 py-1 folio-meta" onClick={() => setReason(reason === item ? '' : item)}>{item.replaceAll('_',' ')}</button>)}</div><button className={quietAction} onClick={() => onDismiss(reason)}>Dismiss</button></div></details>}
-    </StudioPitchCard>
+    <StudioPublicationCard title={candidate.draft.headline}
+      metadata={`${info.label} · ${candidate.projectIds.map(projectNames).join(' · ')}`}
+      preview={<div><StudioPhoto images={candidate.visuals.slice(0,1)} onUnavailable={setImageUnavailable} alt={candidate.draft.headline} className="aspect-[4/5] rounded-xl" /><h3 className="folio-h4 mt-3">{candidate.draft.headline}</h3></div>}
+      benefit={opportunity.purpose} contribution={imageUnavailable ? 'Review the unavailable cover image.' : blockers[0]?.question || 'Review your caption and photographs before downloading.'}
+      actionLabel={actionLabel} onAction={onOpen} supportingSources={candidate.projectIds} readiness={candidate.readiness === 'ready' ? 'prepared' : 'working'} />
+    {onDismiss && <details className="mt-3"><summary className="cursor-pointer folio-meta text-folio-text-secondary">Dismiss suggestion</summary><div className="mt-3 space-y-3"><div role="group" aria-label="Optional dismissal reason" className="flex flex-wrap gap-2">{DISMISSAL_REASONS.map(item => <button key={item} type="button" aria-pressed={reason === item} className="rounded-full border border-folio-border-subtle px-3 py-1 folio-meta" onClick={() => setReason(reason === item ? '' : item)}>{item.replaceAll('_',' ')}</button>)}</div><button className={quietAction} onClick={() => onDismiss(reason)}>Dismiss</button></div></details>}
   </div>;
 }
 
@@ -97,11 +94,11 @@ export function ReadinessStudio({ expertiseEnabled = false }: { expertiseEnabled
     {removeDraft&&<div role="alert" className="space-y-3 border border-folio-border-subtle bg-surface-ground p-4"><p className="folio-body">Remove “{removeDraft.draft.headline}” from In progress? Your saved version will remain available under Dismissed suggestions.</p><div className="flex gap-3"><button className={studioAction} onClick={()=>void dismiss(removeDraft,'other')}>Remove from In progress</button><button className={quietAction} onClick={()=>setRemoveDraft(null)}>Keep draft</button></div></div>}
     {!selected&&<StudioTabs value={tab} onChange={value=>{navigate({tab:value==='suggestions'?null:value,candidate:null,candidateVersion:null})}}/>}
     {error&&<div role="alert" className="folio-body"><p>{error}</p><button className={`${quietAction} mt-2`} onClick={()=>{setError('');void reload().catch(err=>setError(err.message))}}>Reload stories</button></div>}
-    {selected?<><CandidateConfigurator key={`${selected.id}:${readOnly?selected.version:'current'}`}  candidate={selected} readOnly={readOnly} onChange={candidate=>{setSelected(candidate);void reload().catch(err=>setError(err.message))}} onClose={()=>{navigate({candidate:null,candidateVersion:null});setSelected(null);void reload().catch(err=>setError(err.message))}}/>{readOnly&&<p className="folio-body">Your saved version is retained for reference. {selected.projectIds.map(id=><Link key={id} href={`/project/${encodeURIComponent(id)}`} className={quietAction}>Open project </Link>)}</p>}</>:<section id="studio-panel" role="tabpanel" aria-labelledby={`studio-tab-${tab}`} tabIndex={0} className="space-y-6 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4">
+    {selected?<><CandidateConfigurator key={`${selected.id}:${readOnly?selected.version:'current'}`}  candidate={selected} readOnly={readOnly} onChange={candidate=>{setSelected(candidate);void reload().catch(err=>setError(err.message))}} onClose={()=>{navigate({candidate:null,candidateVersion:null});setSelected(null);void reload().catch(err=>setError(err.message))}}/>{readOnly&&<p className="folio-body">Your saved version is retained for reference. {selected.projectIds.map(id=><Link key={id} href={`/project/${encodeURIComponent(id)}`} className={quietAction}>Open project </Link>)}</p>}</>:<section id="studio-panel" role="tabpanel" aria-labelledby={`studio-tab-${tab === 'exports' ? 'progress' : tab}`} tabIndex={0} className="space-y-6 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4">
       {tab==='suggestions'?<>
-        <StudioDiscovery projects={projects} subject={subject} format={format} onSubject={value=>navigate({subject:value==='about-me'?value:null,project:value==='about-me'?null:value,format:null})} onFormat={value=>navigate({format:value})}/>
+        <StudioDiscovery onClear={() => navigate({ subject: null, project: null, format: null, type: null, item: null })} projects={projects} subject={subject} format={format} onSubject={value=>navigate({subject:value==='about-me'?value:null,project:value==='about-me'?null:value,format:null})} onFormat={value=>navigate({format:value})}/>
 
-        {subject!=='about-me'&&format!=='twenty_questions'&&<div className="flex flex-wrap items-end justify-between gap-3"><div><h2 className="folio-h2">{project||format?'Stories to explore':'Recommended for you'}</h2></div><button className={quietAction} disabled={pending} onClick={refresh}>{pending?'Reviewing stories…':'Refresh suggestions'}</button></div>}
+        {subject!=='about-me'&&format!=='twenty_questions'&&<div className="flex flex-wrap items-end justify-between gap-3"><div><h2 className="folio-h3 sm:folio-h2">{project||format?'Stories to explore':'Recommended for you'}</h2></div><button className={quietAction} disabled={pending} onClick={refresh}>{pending?'Reviewing stories…':'Refresh suggestions'}</button></div>}
         {!data&&!error&&<p role="status" className="folio-body py-8">Opening your stories…</p>}
         {data&&subject!=='about-me'&&format!=='twenty_questions'&&!ranked.length&&<div className="bg-surface-ground p-6"><h3 className="folio-h3">No stories ready for review yet</h3><p className="folio-body mt-2">Refresh suggestions to review your published work. Your saved drafts remain in In progress.</p></div>}
         <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3" aria-label="Recommended stories">{primary.slice(0,1).map(card)}{!subject&&!format&&<AboutMeInvitation compact introduction={introduction?.status==='published'?null:introduction}/>}{primary.slice(1).map(card)}</div>
@@ -113,7 +110,12 @@ export function ReadinessStudio({ expertiseEnabled = false }: { expertiseEnabled
         {!!data?.dismissed?.filter(matches).length&&<details className="border-t border-folio-border-subtle pt-5"><summary className="cursor-pointer folio-meta text-folio-text-secondary">Dismissed suggestions</summary>{data.dismissed.filter(matches).map(candidate=><div key={candidate.id} className="mt-3 flex flex-wrap items-center justify-between gap-3"><span className="folio-body">{candidate.thesis}</span><button className={quietAction} onClick={()=>restore(candidate)}>Restore</button></div>)}</details>}
       </>:<>
         <div><h2 className="folio-h2">{tab==='progress'?'Pick up where you left off':'Your exports'}</h2><p className="folio-body mt-1">{tab==='progress'?'Your saved words, selected images, and started stories.':'Previously prepared downloads. Exporting does not confirm publication.'}</p></div>
-        {work.filter(item=>matches(item.candidate)).map(item=><article key={`${item.candidate.id}:${item.candidate.version}`} className="flex flex-wrap items-center justify-between gap-4 border-b border-folio-border-subtle py-4"><div className="min-w-0 flex-1"><p className="folio-meta text-folio-text-secondary">{item.candidate.confirmedPublishedAt?'Publication recorded':item.needsReview?'Earlier version · saved work retained':tab==='exports'?'Download prepared':'Saved draft'}{item.candidate.confirmedPublishedAt?' · Publication confirmed by you':''}</p><h3 className="folio-h3 mt-1">{item.candidate.draft.headline}</h3><p className="folio-body mt-2 whitespace-pre-line">{item.candidate.draft.caption}</p></div><button className={studioAction} onClick={()=>open(item.candidate,item.needsReview||Boolean(item.candidate.confirmedPublishedAt))}>{item.needsReview||item.candidate.confirmedPublishedAt?'View saved work':tab==='exports'&&item.canDownload?'Review and download':'Resume story'}</button>{tab==='progress'&&!item.needsReview&&!item.candidate.confirmedPublishedAt&&<button className={quietAction} onClick={()=>setRemoveDraft(item.candidate)}>Remove draft</button>}</article>)}
+        <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-3">{work.filter(item=>matches(item.candidate)).map(item=><div key={`${item.candidate.id}:${item.candidate.version}`}>
+          <StudioPublicationCard title={item.candidate.draft.headline} preview={<div><StudioPhoto images={item.candidate.visuals.slice(0,1)} alt={item.candidate.draft.headline} className="aspect-[4/5] rounded-xl" /><h3 className="folio-h4 mt-3">{item.candidate.draft.headline}</h3></div>}
+            metadata={item.candidate.confirmedPublishedAt ? 'Publication recorded · Confirmed by you' : item.needsReview ? 'Earlier version · saved work retained' : 'Saved work'} benefit={item.candidate.audienceValue} contribution={item.needsReview ? 'Review the changed sources before continuing.' : 'Review your saved caption and photographs.'}
+            actionLabel={item.needsReview||item.candidate.confirmedPublishedAt?'View saved work':tab==='exports'&&item.canDownload?'Review and download':'Continue editing'} onAction={()=>open(item.candidate,item.needsReview||Boolean(item.candidate.confirmedPublishedAt))} readiness="saved" />
+          {tab==='progress'&&!item.needsReview&&!item.candidate.confirmedPublishedAt&&<button className={`${quietAction} mt-3`} onClick={()=>setRemoveDraft(item.candidate)}>Remove draft</button>}
+        </div>)}</div>
         {tab==='progress'&&<>{expertiseEnabled&&<ExpertiseSection saved/>}<StudioSavedActivities/></>}
         <SavedWork embedded/>
       </>}

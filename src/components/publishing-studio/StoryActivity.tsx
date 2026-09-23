@@ -1,5 +1,6 @@
 'use client';
 
+import { ActivityArticleCover } from './ActivityArticleCover';
 import { useState } from 'react';
 import { activityOpportunity } from '@/lib/publishing-studio/opportunities';
 import { StoryConfigurator } from './StoryConfigurator';
@@ -117,6 +118,7 @@ export function StoryActivity({ context, persistence, initial, initialBrief, cho
       <div><p className="folio-meta text-folio-text-secondary">Publishing Studio</p><h1 className="folio-h2 mt-2">{customize && !snapshot ? 'Build a story' : opportunity.purpose}</h1><p className="folio-meta mt-3 text-folio-text-secondary">{opportunity.metadata}</p></div>
       <button className={secondary} disabled={pending} onClick={close}>Back to Studio</button>
     </header>
+    <details className="mb-6"><summary className="folio-ui cursor-pointer underline underline-offset-4">Publication preview</summary><div className="mt-4 max-w-md"><ActivityArticleCover title={snapshot?.draft?.title || snapshot?.definition.title || (brief.format === 'twenty_questions' ? `Meet ${context.designerName}` : opportunity.purpose)} identity={context.identity || {name:context.designerName}} working={!snapshot?.draft} /></div></details>
     {error && <p role="alert" className="mb-4 folio-body">{error}</p>}
     {notice && <p role="status" className="mb-4 folio-meta">{notice}</p>}
     {step === 'configure' && (customize ? <StoryConfigurator brief={brief} context={context} pending={pending} onChange={setBrief} onStart={start} /> : <div className="rounded-2xl border border-folio-border-subtle bg-surface-muted p-6 sm:p-8">

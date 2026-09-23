@@ -46,12 +46,12 @@ const click = async label => { assert(button(label), label); await React.act(asy
   const { StudioDiscovery } = load('src/components/publishing-studio/StudioDiscovery.tsx');
   let chosen = null;
   await React.act(async () => root.render(React.createElement(StudioDiscovery, { projects: [{ id: 'one', title: 'Courtyard House' }, { id: 'two', title: 'Hill House' }], subject: '', format: '', onSubject: value => chosen = value, onFormat() {} })));
-  assert(!document.querySelector('select')); await click('Choose project');
+  assert(!document.querySelector('select')); await click('Filter');
   assert(document.querySelector('dialog[open]'));
   await React.act(async () => Simulate.change(document.querySelector('input'), { target: { value: 'Hill' } }));
   assert(!document.querySelector('[aria-label="Projects"]').textContent.includes('Courtyard'));
   await React.act(async () => document.querySelector('[aria-label="Projects"] button').click());
-  assert.equal(chosen, 'two'); assert(!document.querySelector('dialog[open]'));
+  assert.equal(chosen, 'two'); await click('Show publications'); assert(!document.querySelector('dialog[open]'));
   await React.act(async () => root.unmount());
   console.log('PASS Studio pitches: hidden detail, read-only opening, explicit action, Escape/focus restoration and searchable project gallery.');
 })().catch(error => { console.error(error); process.exitCode = 1; });

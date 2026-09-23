@@ -21,3 +21,6 @@ The empty expertise entry opens its setup in a modal. It does not claim a compar
 Screenshots: [desktop](desktop.png), [expertise and About me](expertise-about.png), [mobile pitch](mobile-pitch.png). Local fixture: `STUDIO_PREVIEW_PORT=4186 node scripts/preview-studio-expertise.cjs` (set the variable using your shell's syntax).
 
 No migrations, production data writes, merge or deployment in this implementation.
+
+
+Current direction: the [Publishing Studio product standard](../../PUBLISHING_STUDIO_PRODUCT_STANDARD.md) supersedes this historical modal-first browsing review.

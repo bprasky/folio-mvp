@@ -6,6 +6,7 @@ export interface ExpertiseSnapshot {
   exports?: { id: string; revision: number; title: string; caption: string; mediaIds: string[]; images?: ExpertiseArticle['media']; createdAt: string }[];
 }
 export interface ExpertiseListing {
+  identity?: ExpertiseSnapshot['identity'];
   selectableEvidence?: ExpertiseEvidence[]; enabled: boolean; opportunities: ExpertiseOpportunity[]; work: ExpertiseSnapshot[]; projects: { id: string; title: string }[];
   discovery: { status: 'not_started' | 'current' | 'changed' | 'empty' | 'processing' | 'error'; message?: string };
 }

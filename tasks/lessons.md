@@ -1123,3 +1123,6 @@ Keep browse cards to a visual, a concrete activity label and a specific reason/t
 
 ## 2026-09-22 — Keep the visual context inside the pitch
 When a Studio card represents a project or has photography, carry the same relevant photos into its modal alongside the pitch. Do not make the designer close the modal to remember the visual context.
+
+## 2026-09-23 — Publications are the Studio's visual hook
+A concise card is insufficient if it conceals the intended publication. Show the real post/article cover first, then a specific benefit, unresolved contribution and direct stage-aware CTA. Share content identity/renderers with the final output; keep filters and export navigation secondary. The concierge brief supersedes the earlier modal-first card pattern.
