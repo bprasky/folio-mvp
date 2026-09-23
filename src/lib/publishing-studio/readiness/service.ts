@@ -22,8 +22,12 @@ async function context(userId: string) {
 }
 
 function currentHistory(data: Awaited<ReturnType<typeof context>>, sourceKey?: string) {
-  return data.stored.filter(candidate => candidate.sourceKey !== sourceKey && candidate.policy === READINESS_POLICY &&
-    data.sources.some(source => source.key === candidate.sourceKey && sourceVersion(source) === candidate.sourceVersion));
+  const authorizedProjects = new Set(data.sources.flatMap(source => source.projectIds));
+  // Retained decisions are deduplication context, never current publication evidence.
+  return data.stored.filter(candidate => candidate.sourceKey !== sourceKey && candidate.projectIds.length > 0 &&
+    candidate.projectIds.every(id => authorizedProjects.has(id)) &&
+    (candidate.dismissed || candidate.confirmedPublishedAt || (candidate.policy === READINESS_POLICY &&
+      data.sources.some(source => source.key === candidate.sourceKey && sourceVersion(source) === candidate.sourceVersion))));
 }
 
 export async function listReadiness(userId: string) {
@@ -75,6 +79,7 @@ export async function refreshReadiness(userId: string) {
     if (previous) {
       candidate.dismissed = previous.dismissed;
       candidate.confirmedPublishedAt = previous.confirmedPublishedAt;
+      candidate.confirmedPublicationDestination = previous.confirmedPublicationDestination;
       // Original contributions remain readable in every revision, never replaced by generated copy.
       candidate.evidence.push(...previous.evidence.filter(e => e.source === 'designer_answer'));
       if (previous.evidence.some(e => e.source === 'designer_answer')) {
@@ -103,6 +108,7 @@ export async function currentCandidate(userId: string, id: string, version?: num
 export interface CandidateChange {
   version: number; sourceVersion: string; action: 'answer' | 'edit' | 'draft' | 'dismiss' | 'restore' | 'published';
   blockerId?: string; answer?: string; headline?: string; caption?: string; imageIds?: string[]; reason?: string;
+  publicationDestination?: string;
   pendingAnswer?: { blockerId: string; text: string } | null;
 }
 
@@ -123,8 +129,7 @@ export async function changeCandidate(userId: string, id: string, change: Candid
       next.evidence = next.evidence.filter(e => e.id !== evidenceId);
       next.evidence.push({ id: evidenceId, projectId: next.projectIds[0], text: text.trim(), tier: 'direct', source: 'designer_answer' });
       next.draft[key] = text.trim();
-      if (key === 'headline') next.thesis = text.trim();
-      else next.claims = [{ text: text.trim(), evidenceIds: [evidenceId] }];
+      if (key === 'caption') next.claims = [{ text: text.trim(), evidenceIds: [evidenceId] }];
     }
     if (change.imageIds) {
       if (!change.imageIds.length || change.imageIds.length > 4 || new Set(change.imageIds).size !== change.imageIds.length || change.imageIds.some(id => !original.visuals.some(image => image.id === id))) throw new ReadinessError('Choose distinct reviewed images from this story.');
@@ -149,13 +154,16 @@ export async function changeCandidate(userId: string, id: string, change: Candid
     next.dismissed = true; event = 'dismissed';
   } else if (change.action === 'restore') { next.dismissed = false; next = evaluateCandidate(next, history); event = 'restored'; }
   else if (change.action === 'published') {
+    if (change.publicationDestination !== undefined && (typeof change.publicationDestination !== 'string' || change.publicationDestination.length > 120)) throw new ReadinessError('Keep the publication destination within 120 characters.');
     next = evaluateCandidate(next, history);
     if (next.readiness !== 'ready' || next.dismissed) throw new ReadinessError('Finish and review this story before confirming publication.', 409);
+    if (change.publicationDestination?.trim()) next.confirmedPublicationDestination = change.publicationDestination.trim();
     next.confirmedPublishedAt = new Date().toISOString(); event = 'published';
   } else throw new ReadinessError('Unsupported story action.');
   next.version = original.version + 1;
   const secondaryEvents: SecondaryCandidateEvent[] = next.readiness === 'ready' && original.readiness !== 'ready' ? [{ kind: 'ready' }] : [];
-  const saved = await saveCandidate(next, original.version, event, { reason: change.reason ?? null, blockerId: change.blockerId ?? null }, secondaryEvents);
+  const saved = await saveCandidate(next, original.version, event, { reason: change.reason ?? null, blockerId: change.blockerId ?? null,
+    ...(event === 'published' && next.confirmedPublicationDestination ? { destination: next.confirmedPublicationDestination } : {}) }, secondaryEvents);
   return saved;
 }
 

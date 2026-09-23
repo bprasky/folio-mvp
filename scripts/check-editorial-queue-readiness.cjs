@@ -53,6 +53,18 @@ async function main() {
   assert.equal(parsePromptResponse(JSON.stringify({ items: [{ prompt: 'one' }] }), 'QA'), null);
   const rows = [1, 2, 3].map(i => ({ prompt: `choice ${i}`, optionA: 'oak', optionB: 'ash' }));
   assert.ok(parsePromptResponse(JSON.stringify({ items: rows }), 'THIS_OR_THAT'));
+  const intro = 'Compare the oak and ash documented in your project.';
+  const headline = 'How do you choose between oak and ash?';
+  const structure = parsePromptResponse(JSON.stringify({ headline, intro, items: rows }), 'THIS_OR_THAT');
+  assert.equal(structure.headline, headline);
+  assert.equal(structure.intro, intro);
+  assert.deepEqual(Array.from(structure.items, item => item.prompt), rows.map(item => item.prompt));
+  assert.equal(structure.items[0].optionA, 'oak');
+  assert.equal(structure.items[0].optionB, 'ash');
+  assert.equal(parsePromptResponse(JSON.stringify({ intro, items: rows }), 'THIS_OR_THAT').headline, undefined);
+  for (const invalid of ['Oak transforms every room.', `${'oak '.repeat(30)}?`, 'How do you choose between oak and ash for every room in your home?']) {
+    assert.equal(parsePromptResponse(JSON.stringify({ headline: invalid, intro, items: rows }), 'THIS_OR_THAT'), null);
+  }
   rows[1].optionB = 'oak';
   assert.equal(parsePromptResponse(JSON.stringify({ items: rows }), 'THIS_OR_THAT'), null);
   const { validateAngles } = load('src/lib/editorial-queue/validateAngles.ts');

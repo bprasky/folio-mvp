@@ -61,6 +61,11 @@ async function main() {
   assert.equal(saves[0].expected, 1);
   assert.equal(saves[0].kind, 'edited');
   assert.equal(edited.confirmedPublishedAt, undefined, 'editing must never imply social publication');
+  stored = [{ ...fixture(), thesis: 'The complete supported design decision.' }];
+  const renamed = await service.changeCandidate('owner', 'candidate-1', { version: 1, sourceVersion: 'source-a', action: 'edit', headline: 'An audience-facing hook' });
+  assert.equal(renamed.draft.headline, 'An audience-facing hook');
+  assert.equal(renamed.thesis, 'The complete supported design decision.', 'Editing public copy preserves the evidence thesis');
+  assert.equal(renamed.evidence.at(-1).text, 'An audience-facing hook', 'Designer edits remain attributed evidence');
   useRealEngine = true;
   const pendingFixture = fixture();
   pendingFixture.thesis = pendingFixture.draft.headline;
@@ -112,8 +117,13 @@ async function main() {
   assert.equal(events.at(-1).id, 'view:owner:view-id');
   const published = await service.changeCandidate('owner', 'candidate-1', { version: 1, sourceVersion: 'source-a', action: 'published' });
   assert.ok(published.confirmedPublishedAt);
+  assert.equal(published.confirmedPublicationDestination, undefined, 'Old clients do not imply any destination');
+  assert.equal(saves.at(-1).payload.destination, undefined);
   assert.equal(saves.at(-1).kind, 'published');
   await assert.rejects(service.changeCandidate('owner', 'candidate-1', { version: 2, sourceVersion: 'source-a', action: 'restore' }));
+  const evaluatedBeforePublishedRefresh = evaluations;
+  await service.refreshReadiness('owner');
+  assert.equal(evaluations, evaluatedBeforePublishedRefresh, 'A current-source published angle is not regenerated');
   stored = []; saves = []; events = []; budget = false;
   await assert.rejects(service.refreshReadiness('owner'), e => e.status === 429);
   assert.equal(evaluations, 0);
@@ -136,6 +146,14 @@ async function main() {
   sources = [{ ...source, fingerprint: 'changed' }, secondSource]; stored = [fixture(), second, stale];
   await service.refreshReadiness('owner');
   assert.deepEqual(Array.from(modelHistory, c => c.id), ['candidate-2'], 'model history excludes self and stale/out-of-corpus sources');
+  const retainedDismissal = { ...stale, id: 'retained-dismissal', dismissed: true, policy: 'older-policy', projectIds: ['p2'] };
+  const retainedPublication = { ...stale, id: 'retained-publication', confirmedPublishedAt: '2026-09-20T12:00:00Z', policy: 'older-policy', projectIds: ['p1', 'p2'], evidence: [{ id: 'history-only', text: 'A former claim', source: 'published_prose', tier: 'direct', projectId: 'p2' }] };
+  const revokedHistory = { ...retainedPublication, id: 'revoked-history', projectIds: ['p1', 'not-authorized'] };
+  stored = [fixture(), second, retainedDismissal, retainedPublication, revokedHistory];
+  await assert.rejects(service.currentCandidate('owner', retainedPublication.id), Conflict, 'Historical publication is not current exportable work');
+  await service.refreshReadiness('owner');
+  assert.deepEqual(Array.from(modelHistory, c => c.id), ['candidate-2', 'retained-dismissal', 'retained-publication'], 'Authorized stale published and dismissed decisions remain deduplication context; partially revoked comparisons do not');
+  assert.ok(!saves.at(-1).candidate.evidence.some(e => e.id === 'history-only'), 'History is not copied into publication evidence');
   sources = [source, secondSource]; stored = [fixture(), second, stale];
   await service.changeCandidate('owner', 'candidate-1', change);
   assert.deepEqual(Array.from(mutationHistory, c => c.id), ['candidate-2'], 'edits recheck current other stories');
@@ -181,6 +199,16 @@ async function main() {
   assert.ok(publicationOnly.inProgress[0].candidate.confirmedPublishedAt);
   assert.equal(publicationOnly.inProgress[0].needsReview, true);
   assert.equal(publicationOnly.exports.length, 0, 'recording publication does not fabricate an export');
+  sources = [source]; stored = [fixture()]; work = [];
+  await assert.rejects(service.changeCandidate('owner', 'candidate-1', { version: 1, sourceVersion: 'source-a', action: 'published', publicationDestination: 'x'.repeat(121) }));
+  const withDestination = await service.changeCandidate('owner', 'candidate-1', { version: 1, sourceVersion: 'source-a', action: 'published', publicationDestination: '  LinkedIn  ' });
+  assert.equal(withDestination.confirmedPublicationDestination, 'LinkedIn');
+  assert.equal(saves.at(-1).payload.destination, 'LinkedIn', 'Only the explicit user-provided destination is recorded');
+  sources = [{ ...source, fingerprint: 'new-source' }];
+  await service.refreshReadiness('owner');
+  assert.equal(stored[0].confirmedPublicationDestination, 'LinkedIn', 'Source refresh retains explicit publication history');
+  assert.equal(stored[0].confirmedPublishedAt, withDestination.confirmedPublishedAt);
+  assert.equal((await service.listReadiness('owner')).candidates.length, 0, 'Source refresh does not resurface the published angle');
   console.log('PASS readiness service: read-only browsing, auth/staleness checks, attributed edits, publication, lifecycle events, and truthful started/exported work projections.');
 }
 main().catch(error => { console.error(error); process.exitCode = 1; });

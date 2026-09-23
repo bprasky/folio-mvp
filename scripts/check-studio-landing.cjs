@@ -47,9 +47,9 @@ assert.match(html,/Polish this post: Inside Meru/);assert.doesNotMatch(html,/Pol
 params=new URLSearchParams('subject=about-me');html=renderToStaticMarkup(React.createElement(PublishingStudio));
 assert.match(html,/Help the right clients understand your practice/);assert.match(html,/Profile introduction/);assert.match(html,/Let potential clients meet the person behind your projects/);assert.doesNotMatch(html,/Polish this post:/);
 params=new URLSearchParams('project=p0&format=twenty_questions');html=renderToStaticMarkup(React.createElement(PublishingStudio));
-assert.match(html,/Inside Meru/);assert.doesNotMatch(html,/Polish this post:/);
+assert.match(html,/The story behind Meru/);assert.doesNotMatch(html,/Polish this post:/);
 params=new URLSearchParams('project=p0&format=room');html=renderToStaticMarkup(React.createElement(PublishingStudio));
-assert.match(html,/A closer look at Meru/);
+assert.match(html,/Which decision defines Meru\?/);
 assert.equal(discovery.matchesStoryFormat({format:'MATERIAL_STUDY'},'material'),true);
 assert.equal(discovery.matchesStoryFormat({format:'project_story'},'room'),false);
 data.feed=originalFeed;

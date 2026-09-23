@@ -1,6 +1,7 @@
 import { z } from 'zod';
 const citation = z.object({ evidenceId: z.string(), quote: z.string().min(1) });
 export const DiscoverySchema = z.object({ opportunities: z.array(z.object({
+  headline: z.string().trim().min(1).max(110).optional(), headlineSources: z.array(citation).min(2).max(12).optional(),
   thesis: z.string().min(1).max(240), readerBenefit: z.string().min(1).max(400), comparisonType: z.string().min(1).max(80),
   evidence: z.array(citation).min(2).max(12), gaps: z.array(z.string().max(300)).max(8),
   qualification: z.array(z.string().max(400)).min(1).max(5),

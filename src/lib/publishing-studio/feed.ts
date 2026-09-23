@@ -1,6 +1,7 @@
 import { createHash } from 'crypto';
 import type { StudioFeedCard, StudioData } from './types';
 import { feedOpportunity } from './opportunities';
+import { publicationHeadlines, sourceSentences } from './publication-headlines';
 
 type Project = {
   id: string; title: string; ownerId: string; designerId: string | null; isPublic: boolean;
@@ -43,7 +44,7 @@ function proposalOptions(options: string[]): string[] {
 // prose; a room label, materials list, or attractive photograph is not a story angle.
 export function publishedStoryProposal(body: unknown) {
   const paragraphs = Array.isArray(body) ? body.filter((v): v is string => typeof v === 'string' && Boolean(v.trim())).map(v => v.trim()) : [];
-  const sentences = paragraphs.flatMap(p => p.match(/[^.!?]+[.!?]+["”’']?|[^.!?]+$/g) || []).map(s => s.trim()).filter(Boolean);
+  const sentences = paragraphs.flatMap(sourceSentences).filter(Boolean);
   const change = /\b(iterations?|mock-?ups?|prototypes?|replaced?|rejected?|abandoned|cracked|original plan|wasn't (?:the|part of the) plan)\b/i;
   const constraint = /\b(too (?:flat|large|small|dark|heavy)|didn't (?:fit|work)|wouldn't|couldn't|constraint|challenge|risk|nervous|blocking|needed|had to|without)\b/i;
   const resolution = /\b(finally|ended up|until|so that|because|replaced|paid off|made (?:it|the room)|while|rather than)\b/i;
@@ -74,14 +75,19 @@ export function buildStudioFeed(projects: Project[], saved: Saved[], campaigns: 
     const hero = photos.find(image => image.id === p.post?.heroAssetId) || photos[0];
     if (!hero) continue;
     const images = [hero, ...photos.filter(image => image.id !== hero.id)].slice(0, 4).map(image => image.url);
-    const title = p.title || 'Project story';
-    const projectCard: StudioFeedCard = { id: `project:${p.id}`, projectIds: [p.id], title,
-      caption: p.post.excerpt?.trim() || `A closer look at ${title}.`, imageUrl: images[0], imageUrls: images,
+    const projectName = p.title || 'Untitled project';
+    const blocks = configObject(p.post.expandedBlocks);
+    const lead = configObject(blocks.lead);
+    const headlines = publicationHeadlines([lead.kicker, lead.title,
+      ...sourceSentences(p.post.excerpt || '')], [projectName]);
+    const title = headlines[0] || `Inside ${projectName}`;
+    const projectCard: StudioFeedCard = { id: `project:${p.id}`, projectIds: [p.id], projectTitle: projectName, title,
+      caption: p.post.excerpt?.trim() || '', imageUrl: images[0], imageUrls: images,
       kind: 'suggestion', format: 'Project story', status: 'suggested', updatedAt: p.post.updatedAt.toISOString(),
       canPolish: canWrite(p), preview: defaultPreview,
-      pitch: `A ${images.length + 1}-slide introduction to ${title}.`,
+      pitch: `Share the published introduction to ${projectName} with a new audience.`, publicationIntent: 'cross_post',
       rationale: 'A project overview drawn from the published story.', beats: p.post.excerpt ? proposalOptions([p.post.excerpt.trim()]) : [],
-      slideCount: images.length + 1, headlineOptions: proposalOptions([title]), captionOptions: proposalOptions([p.post.excerpt?.trim() || `A closer look at ${title}.`]) };
+      slideCount: images.length + 1, headlineOptions: [title, ...headlines.filter(value => value !== title)], captionOptions: proposalOptions([p.post.excerpt?.trim() || '']) };
     sourceProposals.set(projectCard.id, projectCard);
     if (!sourceKeys.has(projectCard.id)) feed.push(projectCard);
     const roomCards: { card: StudioFeedCard; score: number }[] = [];
@@ -96,10 +102,15 @@ export function buildStudioFeed(projects: Project[], saved: Saved[], campaigns: 
         (!c.roomId && Array.isArray(c.imageIds) && c.imageIds.some(imageId => typeof imageId === 'string' && photoIds.has(imageId))));
       const proposal = publishedStoryProposal(chapter?.body);
       if (!proposal) continue;
-      const roomTitle = room.name + ' at ' + title;
+      const roomHeadlines = publicationHeadlines([chapter?.title, ...sourceSentences(proposal.pitch),
+        ...proposal.beats.flatMap(sourceSentences)], [room.name, projectName, `${room.name} at ${projectName}`, title]);
+      // If the published decision cannot supply a concise hook, ask for its angle
+      // in an interview instead of placing a paragraph or room label on a cover.
+      if (!roomHeadlines.length) continue;
+      const roomTitle = roomHeadlines[0];
       roomCards.push({ score: proposal.score, card: { ...projectCard, id, roomId: room.id, title: roomTitle,
         caption: proposal.caption, pitch: proposal.pitch, rationale: proposal.rationale, beats: proposal.beats,
-        headlineOptions: proposalOptions([roomTitle, 'The design decision: ' + room.name]), captionOptions: proposal.captionOptions,
+        headlineOptions: roomHeadlines, captionOptions: proposal.captionOptions, publicationIntent: 'story',
         slideCount: roomImages.length + 1,
         imageUrl: roomImages[0], imageUrls: roomImages, format: 'Room story' } });
     }
@@ -115,6 +126,7 @@ export function buildStudioFeed(projects: Project[], saved: Saved[], campaigns: 
     const configuredSlides = [2, 3, 4, 5].includes(Number(config.slideCount)) ? Number(config.slideCount) : 5;
     const { imageUrl: first, imageUrls: images, preview } = savedPublicationPreview(config, p.images, p.designer?.name || 'Designer');
     feed.push({ id: `carousel:${s.id}`, projectIds: [p.id], title: s.headline ?? '', caption: s.caption ?? '',
+      roomId: proposal?.roomId || (typeof config.roomId === 'string' && p.rooms.some(room => room.id === config.roomId) ? config.roomId : undefined),
       imageUrl: first, imageUrls: images, kind: 'carousel', format: 'Carousel', status: s.status,
       updatedAt: s.updatedAt.toISOString(), exportId: s.id, canPolish: canWrite(p), preview,
       pitch: typeof config.pitch === 'string' ? config.pitch : proposal?.pitch,
@@ -146,7 +158,7 @@ function stringList(value: unknown): string[] | undefined {
 
 export function preparedConfig(card: StudioFeedCard) {
   return { studioCardId: card.id, aspectRatio: '4:5', headlinePosition: 'bottom_left', watermarkStyle: 'minimal',
-    opportunity: feedOpportunity(card, card.title),
+    opportunity: feedOpportunity(card, card.projectTitle || card.title),
     slideCount: card.imageUrls.length + 1, bioEnabled: false,
     pitch: card.pitch, rationale: card.rationale, beats: card.beats,
     headlineOptions: card.headlineOptions, captionOptions: card.captionOptions,

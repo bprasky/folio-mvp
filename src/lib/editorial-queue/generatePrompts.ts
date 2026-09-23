@@ -15,6 +15,7 @@ import { callLLM } from '@/lib/posting/llmClient';
 import type { QueueFormat } from './assignFormat';
 import type { ExtractedAngle, PromptStructure, QueuePromptItem } from './types';
 import { FOLIO_INTERVIEWER_PERSONA } from '@/lib/interview/prompts/persona';
+import { FOLIO_TONE, EDITORIAL_BANNED_PHRASES } from '@/lib/interview/prompts/editorialTone';
 import { SHARED_RULE_BLOCK, ARRIVALS_CONTRAST_POLICY } from '@/lib/interview/prompts/rules';
 import { isArrivalSafe } from '@/lib/interview/prompts/validateQuestion';
 import { FORMAT_COUNTS, PromptResponseSchema } from './generation.schemas';
@@ -47,12 +48,18 @@ ${SHARED_RULE_BLOCK}
 
 ${ARRIVALS_CONTRAST_POLICY}
 
+PUBLIC HEADLINE VOICE:
+${FOLIO_TONE}
+${EDITORIAL_BANNED_PHRASES}
+
 YOUR TASK: you are handed ONE editorial angle about a designer's body of work, plus the FORMAT the finished piece will take. Write the specific prompts the designer will answer.
 
 The whole point is specificity: every prompt must be grounded in THIS angle and its evidence — the kind of question that could only be asked of this designer. Never write a generic prompt ("what inspires you?").
 
+Also write a separate public-facing headline: one concise neutral question, 4–12 words and at most 100 characters, ending with a question mark. Name a concrete topic present in the supporting evidence. The editorial framing is an unverified inference, not evidence. Ask about the designer's perspective without assuming an answer, motive, change, success, or repeated practice. For evidence of oak in a project, "How do you choose oak for a room?" is a possible question; "Why does oak transform every room?" invents both effect and frequency. Do not expose private benefits, interview instructions, source analysis, or the full angle summary. Omit headline if the evidence supplies no specific topic. Keep intro as the separate private framing; do not replace it with the headline.
+
 Return ONLY a JSON object, no prose, no markdown fences:
-{"intro": "one-line framing shown to the designer", "items": [{"prompt": "...", "hint": "what we're listening for", "optionA": "only for this_or_that", "optionB": "only for this_or_that"}]}
+{"headline": "concise evidence-grounded public question?", "intro": "one-line framing shown to the designer", "items": [{"prompt": "...", "hint": "what we're listening for", "optionA": "only for this_or_that", "optionB": "only for this_or_that"}]}
 Omit optionA/optionB unless the format asks for them.`;
 
 // Pure: assemble the user prompt from the angle + format. Testable without a call.
@@ -79,6 +86,7 @@ export function parsePromptResponse(raw: string, format: QueueFormat): PromptStr
   const validated = PromptResponseSchema.safeParse(parsed);
   if (!validated.success) return null;
   const obj = validated.data;
+  if (obj.headline && !isArrivalSafe(obj.headline)) return null;
   if (!Array.isArray(obj.items) || obj.items.length === 0) return null;
 
   const items: QueuePromptItem[] = [];
@@ -104,7 +112,7 @@ export function parsePromptResponse(raw: string, format: QueueFormat): PromptStr
     || item.optionA.toLowerCase() === item.optionB.toLowerCase())) return null;
 
   const intro = typeof obj.intro === 'string' && obj.intro.trim() ? obj.intro.trim() : angleIntroFallback(format);
-  return { format, intro, items };
+  return { format, ...(obj.headline ? { headline: obj.headline } : {}), intro, items };
 }
 
 function angleIntroFallback(format: QueueFormat): string {

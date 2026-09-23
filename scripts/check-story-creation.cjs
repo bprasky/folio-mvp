@@ -2,7 +2,7 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const vm = require('node:vm');
 const ts = require('typescript');
-function load(file, mocks) { const exports = {}; vm.runInNewContext(ts.transpileModule(fs.readFileSync(file, 'utf8'), { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 } }).outputText, { exports, console, Date, require: key => { if (!(key in mocks)) throw Error(key); return mocks[key]; } }); return exports; }
+function load(file, mocks) { const exports = {}; vm.runInNewContext(ts.transpileModule(fs.readFileSync(file, 'utf8'), { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 } }).outputText, { exports, console, Date, require: key => { if (!(key in mocks)) { const pure = require('./studio-publication-test-import.cjs')(key); if (pure) return pure; throw Error(key); } return mocks[key]; } }); return exports; }
 (async () => {
   const activities = load('src/lib/publishing-studio/activities.ts', {});
   let generations = 0, created, contextSeen, mutateOnGenerate = false, role = 'DESIGNER';

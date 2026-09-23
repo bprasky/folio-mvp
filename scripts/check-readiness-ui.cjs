@@ -2,6 +2,7 @@ const assert = require('node:assert/strict'), fs = require('node:fs'), vm = requ
 const React = require('react'), { renderToStaticMarkup } = require('react-dom/server');
 const candidate = { shape:'decision', id: 'c', version: 1, sourceVersion: 's', readiness: 'quick', thesis: 'A considered decision', audienceValue: 'Why the plan changed', rationale: 'Specific source',
   source: { title: 'Home', images: [] }, projectIds: ['p'], format: 'single_image', visuals: [{ id: 'image', projectId: 'p', url: 'https://fixture.test/photo.jpg', role: 'hero', reason: 'Shows the result' }],
+  claims: [{ text: 'We changed the plan.', evidenceIds: ['e'] }],
   evidence: [{ id: 'e', text: 'We changed the plan.', tier: 'direct' }],
   draft: { headline: 'The new plan', caption: 'The room opened up.', credits: { designer: 'Designer', photographer: 'Photographer' } },
   blockers: [{ id: 'b', kind: 'truth', question: 'What changed?' }], reasons: ['More source material needed'] };

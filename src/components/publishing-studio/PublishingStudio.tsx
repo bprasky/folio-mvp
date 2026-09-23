@@ -14,6 +14,7 @@ import { StudioDiscovery, AboutMeInvitation, ActivityInvitations, matchesStoryFo
 import { StudioReleaseOpportunities, useReleaseOpportunities } from './StudioReleaseOpportunities';
 import { StudioSavedActivities } from './StudioSavedActivities';
 import { ExpertiseSection } from './expertise/ExpertiseSection';
+import { StudioPublicationHistory } from './StudioPublicationHistory';
 import { matchesStudioItem } from '@/lib/publishing-studio/navigation';
 
 const CampaignWizard = dynamic(() => import('@/components/instagram/CampaignWizard').then(module => module.CampaignWizard), { ssr: false });
@@ -38,6 +39,7 @@ export function PublishingStudio({ embedded = false, expertiseEnabled = false }:
   const [campaignProject, setCampaignProject] = useState<string | null>(null);
   const [actionError, setActionError] = useState('');
   const [removingDraft, setRemovingDraft] = useState<FeedItem | null>(null);
+  const [historyItem, setHistoryItem] = useState<FeedItem | null>(null);
 
   function navigate(changes: Record<string, string | null>) {
     const next = new URLSearchParams(params.toString());
@@ -128,7 +130,7 @@ export function PublishingStudio({ embedded = false, expertiseEnabled = false }:
     .sort((a, b) => b.updatedAt.localeCompare(a.updatedAt) || a.id.localeCompare(b.id));
   const emptyCampaigns = data.campaigns.filter(item => item.postCount === 0 &&
     matchesStudioItem({ title: item.title, projectIds: [item.projectId], status: 'draft' }, { project, query, status }) && (!kind || kind === 'campaign'));
-  const renderCard = (item: FeedItem) => <StudioFeedCard key={item.id} item={item} projectNames={item.projectIds.map(projectName).join(' · ')} onOpen={() => openItem(item)} onRemove={item.kind === 'carousel' && item.exportId && item.status === 'draft' && item.canPolish ? () => setRemovingDraft(item) : undefined} pending={pending === item.id} disabled={pending !== null} />;
+  const renderCard = (item: FeedItem) => <StudioFeedCard key={item.id} item={item} projectNames={item.projectIds.map(projectName).join(' · ')} onOpen={() => openItem(item)} onHistory={item.canPolish && ['suggestion','carousel'].includes(item.kind) ? () => setHistoryItem(item) : undefined} onRemove={item.kind === 'carousel' && item.exportId && item.status === 'draft' && item.canPolish ? () => setRemovingDraft(item) : undefined} pending={pending === item.id} disabled={pending !== null} />;
 
   return <section className={embedded ? 'space-y-6' : 'mx-auto max-w-6xl px-4 py-5 sm:px-6 md:py-8'}>
     {removingDraft && <section aria-label="Confirm draft removal" className="mb-6 rounded-xl border border-folio-border-subtle p-5"><h2 className="folio-h3">Remove “{removingDraft.title || 'Untitled draft'}”?</h2><p className="folio-body mt-2">This discards the saved draft and its changes. The original suggestion can return if its source is still available.</p><div className="mt-4 flex flex-wrap gap-4"><button type="button" className={actionClass} disabled={pending !== null} onClick={() => setRemovingDraft(null)}>Keep draft</button><button type="button" className={actionClass} disabled={pending !== null} onClick={removeDraft}>{pending === removingDraft.id ? 'Removing…' : 'Remove saved draft'}</button></div></section>}
@@ -138,6 +140,7 @@ export function PublishingStudio({ embedded = false, expertiseEnabled = false }:
     {!embedded && <StudioDiscovery onClear={() => navigate({ subject: null, project: null, format: null, type: null, item: null })} projects={data.projects} subject={subject} format={format} onSubject={value => navigate({ subject: value === 'about-me' ? value : null, project: value === 'about-me' ? null : value, format: null, item: null })} onFormat={value => navigate({ format: value, type: null, item: null })} />}
       <label className="min-w-0"><span className="sr-only">Search stories</span><input className={fieldClass} type="search" placeholder="Search your stories" value={query} onChange={event => navigate({ q: event.target.value })} /></label>
       {(kind || status || query) && <button className={actionClass} onClick={() => navigate({ type: null, status: null, q: null })}>Clear filters</button>}
+    <StudioPublicationHistory item={historyItem} history={data.publicationHistory || []} onClose={() => setHistoryItem(null)} onChanged={() => { reload(); releases.retry(); }} />
 
     </div>
     {selectedProject && <div className="mb-5 flex flex-wrap items-center justify-between gap-2"><h2 className="folio-h3">{selectedProject.title}</h2>{selectedProject.canCreateCampaign && <button className={actionClass} disabled={pending !== null} onClick={() => setCampaignProject(selectedProject.id)}>Build a campaign</button>}<Link href={`/project/${encodeURIComponent(project)}`} className="folio-meta text-folio-text-secondary underline underline-offset-4">View project</Link></div>}
@@ -146,7 +149,7 @@ export function PublishingStudio({ embedded = false, expertiseEnabled = false }:
     <div role={embedded ? undefined : "tabpanel"} id={embedded ? undefined : "studio-panel"} aria-labelledby={embedded ? undefined : `studio-tab-${tab === 'exports' ? 'progress' : tab}`} className="space-y-8">
       {tab === 'suggestions' && <>
         {subject !== 'about-me' && format !== 'twenty_questions' && <section aria-label="Your next stories"><header className="mb-5"><h2 className="folio-h3 sm:folio-h2">{project || format ? 'Stories to explore' : 'Recommended for you'}</h2></header>
-          {primary.length || releaseGroups.length || (!subject && !format) ? <div className="grid grid-cols-1 items-start gap-5 sm:grid-cols-2 lg:grid-cols-3">{!embedded&&<StudioReleaseOpportunities cardsOnly opportunities={releaseGroups.slice(0,1)}/>}
+          {primary.length || releaseGroups.length || (!subject && !format) ? <div className="grid grid-cols-1 items-start gap-5 sm:grid-cols-2 lg:grid-cols-3">{!embedded&&<StudioReleaseOpportunities cardsOnly onHistory={id => setHistoryItem(data.feed.find(item => item.id === id) || null)} opportunities={releaseGroups.slice(0,1)}/>}
             {!subject && !format && <AboutMeInvitation compact introduction={introduction?.status==='published'?null:introduction} />}{primary.map(renderCard)}</div> : <p className="folio-body text-folio-text-secondary">{project || kind || query || status ? 'No posts match this selection. Try another project or clear your filters.' : 'No prepared stories yet. Useful introductions need a coherent published overview and suitable photography; focused stories need supported detail.'}</p>}
         </section>}
     {!data.readinessEnabled && tab === 'suggestions' && subject !== 'about-me' && <button className="ml-auto inline-flex items-center gap-1.5 py-2 folio-meta text-folio-text-secondary disabled:opacity-50" disabled={pending !== null} onClick={discover}><Sparkles className="h-4 w-4" aria-hidden="true" />{pending === 'discover' ? 'Looking for connections…' : 'Find more connections'}</button>}
@@ -157,7 +160,7 @@ export function PublishingStudio({ embedded = false, expertiseEnabled = false }:
         {(releaseGroups.length > 1 || portfolio || archive.length > 0 || additional.length > 0) && <section aria-label="From your projects">
           <h2 className="folio-h2 mb-5">From your projects</h2>
           <div className="grid grid-cols-1 gap-x-5 gap-y-8 sm:grid-cols-2 lg:grid-cols-3">
-            {!embedded && <StudioReleaseOpportunities cardsOnly opportunities={releaseGroups.slice(1)} />}
+            {!embedded && <StudioReleaseOpportunities cardsOnly onHistory={id => setHistoryItem(data.feed.find(item => item.id === id) || null)} opportunities={releaseGroups.slice(1)} />}
             {portfolio && renderCard(portfolio)}{archive.map(renderCard)}{additional.map(renderCard)}
           </div>
         </section>}

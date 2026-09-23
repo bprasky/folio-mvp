@@ -10,7 +10,7 @@ function load(file, imports) {
     compilerOptions: { target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.CommonJS },
   }).outputText;
   vm.runInNewContext(js, { exports, console, URLSearchParams, require(name) {
-    if (!(name in imports)) throw new Error(`Unexpected dependency: ${name}`);
+    if (!(name in imports)) { const pure = require('./studio-publication-test-import.cjs')(name); if (pure) return pure; throw new Error(`Unexpected dependency: ${name}`); }
     return imports[name];
   } }, { filename: file });
   return exports;
@@ -89,7 +89,7 @@ function setup(options = {}) {
       } },
   };
   const feed = load('src/lib/publishing-studio/feed.ts', { crypto: require('node:crypto'), './opportunities':load('src/lib/publishing-studio/opportunities.ts',{}) });
-  const data = load('src/lib/publishing-studio/data.ts', { 'server-only': {}, '@/lib/prisma': { prisma }, './feed': feed });
+  const data = load('src/lib/publishing-studio/data.ts', { 'server-only': {}, '@/lib/prisma': { prisma }, './feed': feed, './publication-history': { readPublicationHistory: async () => [] } });
   const permissions = load('src/lib/permissions.ts', { '@/lib/prisma': { prisma } });
   const route = load('src/app/api/publishing-studio/ideas/[id]/route.ts', {
     'next/server': { NextResponse: { json: (body, init) => ({ body, status: init?.status || 200 }) } },

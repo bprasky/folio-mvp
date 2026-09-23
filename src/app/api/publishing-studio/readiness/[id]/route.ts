@@ -6,6 +6,7 @@ const schema = z.object({ version: z.number().int().positive(), sourceVersion: z
   action: z.enum(['answer', 'edit', 'draft', 'dismiss', 'restore', 'published']), blockerId: z.string().max(100).optional(),
   answer: z.string().max(2200).optional(), headline: z.string().max(180).optional(), caption: z.string().max(2200).optional(),
   imageIds: z.array(z.string().max(100)).max(4).optional(), reason: z.string().max(100).optional(),
+  publicationDestination: z.string().max(120).optional(),
   pendingAnswer: z.object({ blockerId: z.string().min(1).max(100), text: z.string().min(1).max(2200) }).strict().nullable().optional() }).strict();
 export async function PATCH(request: NextRequest, { params }: { params: { id: string } }) {
   try {

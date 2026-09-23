@@ -5,7 +5,7 @@ export interface ExpertiseEvidence {
   assetId?: string; imageUrl?: string; photographer?: string; alt?: string;
 }
 export interface ExpertiseOpportunity {
-  id: string; thesis: string; readerBenefit: string; comparisonType: string; projectIds: string[];
+  id: string; thesis: string; headline?: string; headlineSources?: { evidenceId: string; quote: string }[]; readerBenefit: string; comparisonType: string; projectIds: string[];
   evidence: ExpertiseEvidence[]; gaps: string[]; qualification: string[];
   ranking: { evidence: number; specificity: number; clientValue: number; novelty: number; effort: number };
   sourceSignature: string; state: 'active' | 'dismissed' | 'archived';

@@ -5,12 +5,15 @@ export interface StudioFeedCard {
   format: string; status: string; updatedAt: string;
   exportId?: string; campaignId?: string; roomId?: string; canPolish: boolean; revision?: string;
   candidateId?: string;
+  publicationIntent?: 'cross_post' | 'story';
+  projectTitle?: string;
   pitch?: string; rationale?: string; beats?: string[]; slideCount?: number;
   headlineOptions?: string[]; captionOptions?: string[];
   preview?: { headlinePosition: 'bottom_left' | 'bottom_center' | 'top_left'; watermarkStyle: 'folio_x' | 'folio_presents' | 'minimal'; aspectRatio: '1:1' | '4:5' | '9:16'; watermarkText?: string };
 }
 
 export interface StudioData {
+  publicationHistory?: import('./history').ProjectPublicationHistory[];
   readinessEnabled?: boolean;
   evaluatedAt?: string;
   feed: StudioFeedCard[];

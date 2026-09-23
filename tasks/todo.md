@@ -504,3 +504,14 @@ Review: implemented both Studio paths, shared accessible pitch dialogs, searchab
 Plan check-in: follow the new concierge PR definition, superseding modal-first browsing. Reuse actual source identity and existing work; no fabricated prose, new tables, or production writes. Preserve all saved paths and exports.
 
 Review: implemented publication-led cards and direct actions across both Studio paths, shared production previews, actual identity/saved titles, one Filter control and secondary exports. Compile, 37 regression scripts, scoped ESLint, client/migration guards and TypeScript budget (903/904, unchanged baseline) pass. Synthetic desktop/mobile and saved-expertise browser walkthrough captured in docs/reviews/studio-publication-previews/README.md. Scoped implementation ready for commit and draft PR; no merge, deployment or production writes.
+
+## Studio audience hooks and publishing history — 2026-09-23
+- [x] Audit every content-card source, headline generator, saved handoff and publication-history store.
+- [x] Prepare concise evidence-grounded public headlines before opening, separate from private guidance.
+- [x] Apply audience-facing previews across project/room/detail/material, expertise, personal and saved work.
+- [x] Use publication/draft/schedule history and semantic angle overlap; add scoped already-shared corrections with existing storage where appropriate.
+- [x] Verify source/ownership boundaries, preservation of edits, repeat suppression, direct handoffs and responsive rendering.
+- [x] Document supported history coverage and screenshots; commit, push and create a scoped PR.
+Plan check-in: refine the merged implementation around audience-facing hooks. Keep uploads, Folio publication, external publication, generated exports and planning dates distinct. Treat the truncated final sentence as a request to avoid repeatedly recommending the same weak or already-covered story. Audit existing persistence before adding any storage; schema changes require the exact review gate.
+
+Review: public hooks are distinct from private guidance across prepared and saved Studio paths; project/room interview covers resolve current INCLUDED source photos, personal covers retain identity, and designer edits remain authoritative. Sharing corrections are explicit, scoped and reversible; confirmed project introductions do not reappear under new wording. 39 focused/regression scripts passed across the run, with affected checks rerun after changes. Production compile, scoped ESLint, client/migration guards and TypeScript budget (903/904; baseline unchanged) passed. Synthetic desktop/mobile correction-and-undo review is recorded in docs/reviews/studio-audience-hooks/README.md. No schema migration, paid model backfill, live publication or deployment.

@@ -1,4 +1,5 @@
 'use client';
+import { publicationHeadlines, sourceSentences } from '@/lib/publishing-studio/publication-headlines';
 
 import { useEffect, useRef, useState } from 'react';
 import type { Candidate } from '@/lib/publishing-studio/readiness/types';
@@ -52,6 +53,7 @@ export function CandidateConfigurator({ candidate, onChange, onClose, readOnly =
     if (leaveRequested) exitDialog.current?.showModal?.();
   }, [leaveRequested]);
   const [published, setPublished] = useState(false);
+  const [publicationDestination, setPublicationDestination] = useState('');
   const [downloaded, setDownloaded] = useState(false);
   const [missingImages, setMissingImages] = useState<string[]>([]);
   const [hydratedKey, setHydratedKey] = useState<string | null>(null);
@@ -227,6 +229,7 @@ export function CandidateConfigurator({ candidate, onChange, onClose, readOnly =
         </div>
         <div className="space-y-4 border-t border-folio-border-subtle pt-5"><h3 className="folio-h3">Your post</h3>
           <label className="block space-y-2 folio-ui">Headline<input className={field} value={headline} disabled={!!pending} readOnly={readOnly} onChange={event => setHeadline(event.target.value)} maxLength={180} /></label>
+          {!readOnly && <div className="flex flex-wrap gap-2" role="group" aria-label="Supported headline alternatives">{publicationHeadlines([candidate.draft.headline, ...candidate.claims.flatMap(claim => sourceSentences(claim.text))], []).filter(option => option !== headline).slice(0, 3).map(option => <button key={option} type="button" disabled={locked} className={button} onClick={() => setHeadline(option)}>{option}</button>)}</div>}
           <label className="block space-y-2 folio-ui">Caption<textarea className={field} rows={7} value={caption} disabled={!!pending} readOnly={readOnly} onChange={event => setCaption(event.target.value)} maxLength={2200} /></label>
           {!readOnly && <div className="flex flex-wrap items-center gap-3"><button className={button} disabled={locked || !hasUnsavedChanges || !headline.trim() || headline.length > 180 || !caption.trim() || caption.length > 2200} onClick={() => saveDraft()}>Save draft</button>{(hasUnsavedCopy || hasUnsavedImages) && <p className="folio-meta text-folio-text-secondary">Save your draft before completing another step.</p>}</div>}
           <p className="folio-meta text-folio-text-secondary">Design: {candidate.draft.credits.designer}<br />Photography: {candidate.draft.credits.photographer || 'Credit needs confirmation'}</p>
@@ -246,7 +249,7 @@ export function CandidateConfigurator({ candidate, onChange, onClose, readOnly =
           <button className={primaryButton} disabled={locked || candidate.readiness !== 'ready' || !!blocker || hasUnsavedChanges || !candidate.visuals.length || !!missingImages.length} onClick={download}>Download post</button>
           <p className="folio-meta text-folio-text-secondary">Includes the selected 4:5 photographs and a separate caption with credits. Downloading does not publish to social media.</p>
           {downloaded && <p role="status" className="folio-body">Download prepared. Your story is still saved here.</p>}
-          {candidate.confirmedPublishedAt ? <p className="folio-body">You marked this story as published.</p> : <details className="pt-2"><summary className="cursor-pointer folio-ui">Already shared this post?</summary><div className="mt-3 space-y-3"><label className="flex items-start gap-2 folio-ui"><input type="checkbox" checked={published} disabled={locked} onChange={event => setPublished(event.target.checked)} />I have published this story on my social account.</label><button className={button} disabled={locked || hasUnsavedChanges || !published || candidate.readiness !== 'ready'} onClick={() => save({ action: 'published' })}>Record publication</button></div></details>}
+          {candidate.confirmedPublishedAt ? <p className="folio-body">You marked this story as published{candidate.confirmedPublicationDestination ? ` on ${candidate.confirmedPublicationDestination}` : ''}.</p> : <details className="pt-2"><summary className="cursor-pointer folio-ui">Already shared this post?</summary><div className="mt-3 space-y-3"><label className="flex items-start gap-2 folio-ui"><input type="checkbox" checked={published} disabled={locked} onChange={event => setPublished(event.target.checked)} />I have published this story on my social account.</label><label className="block folio-ui">Where did you share it? (Optional)<input className="mt-2 w-full rounded border border-folio-border-subtle bg-white p-3" maxLength={120} value={publicationDestination} disabled={locked} onChange={event => setPublicationDestination(event.target.value)} placeholder="For example, Instagram" /></label><button className={button} disabled={locked || hasUnsavedChanges || !published || candidate.readiness !== 'ready'} onClick={() => save({ action: 'published', ...(publicationDestination.trim() ? { publicationDestination: publicationDestination.trim() } : {}) })}>Record publication</button></div></details>}
         </div>}
       </aside>
     </div>

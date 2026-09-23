@@ -9,7 +9,7 @@ const fs=require('fs'),assert=require('assert/strict'),vm=require('vm'),ts=requi
  async function story(where){let sql='SELECT * FROM editorial_stories WHERE id=$1';let args=[where.id];if(where.ownerId){sql+=' AND "ownerId"=$2 AND "organizationId" IS NOT DISTINCT FROM $3';args.push(where.ownerId,where.organizationId)}const s=(await q(sql,args))[0];if(!s)return null;const latest=(await q('SELECT id FROM editorial_story_revisions WHERE "storyId"=$1 ORDER BY number DESC LIMIT 1',[s.id]))[0];s.revisions=[await revision(latest.id)];return s;}
  const db={user:{findUnique:async({where})=>({id:where.id,name:'Designer',bio:'Published bio',role})},project:{findMany:async()=>availableSources},$queryRaw:async(strings,...values)=>{let sql=strings[0];for(let i=0;i<values.length;i++)sql+='$'+(i+1)+strings[i+1];return q(sql,values)},editorialStory:{findFirst:async({where})=>{if(typeof where.format === 'string'){const rows=await q('SELECT * FROM editorial_stories WHERE "ownerId"=$1 AND "organizationId" IS NOT DISTINCT FROM $2 AND format=$3 ORDER BY "updatedAt" DESC',[where.ownerId,where.organizationId,where.format]);for(const row of rows){if(where.status==='published'?(row.status!=='published'||row.publishedRevisionNumber===null):row.status==='withdrawn')continue;const revs=await q('SELECT * FROM editorial_story_revisions WHERE "storyId"=$1',[row.id]);for(const r of revs){if(r.interview?.brief?.subject!=='designer')continue;if(where.revisions.some.OR){const count=await q('SELECT id FROM editorial_story_answers WHERE "revisionId"=$1',[r.id]);if(r.editVersion<=1&&!count.length)continue;}return {id:row.id,slug:row.slug,publishedRevisionNumber:row.publishedRevisionNumber,revisions:revs.sort((a,b)=>b.number-a.number).slice(0,1)};}}return null;}if(!where.slug)return story(where);const row=(await q('SELECT * FROM editorial_stories WHERE slug=$1 AND status=$2',[where.slug,where.status]))[0];if(!row)return null;const r=(await q('SELECT id FROM editorial_story_revisions WHERE "storyId"=$1 AND number=$2',[row.id,row.publishedRevisionNumber]))[0];row.publishedRevision=r?await revision(r.id):null;if(row.publishedRevision)row.publishedRevision.sources=row.publishedRevision.sources.map(source=>({...source,projectPost:{status:'DRAFT',project:{id:'withdrawn-project',isPublic:false}}}));row.owner={id:row.ownerId,name:'Designer'};return row},update:async({where,data})=>{const keys=Object.keys(data),args=keys.map(k=>data[k]);args.push(where.id);await q(`UPDATE editorial_stories SET ${keys.map((k,i)=>'"'+k+'"=$'+(i+1)).join(',')} WHERE id=$${args.length}`,args);return story(where)}},editorialStoryRevision:{create:async({data})=>{const id='revision-'+(++seq);await q('INSERT INTO editorial_story_revisions (id,"storyId",number,title,blocks,interview,"editVersion") VALUES ($1,$2,$3,$4,$5,$6,$7)',[id,data.storyId,data.number,data.title,JSON.stringify(data.blocks),JSON.stringify(data.interview),data.editVersion]);for(const a of data.answers.create)await q('INSERT INTO editorial_story_answers (id,"revisionId","promptId","questionText","answerText","answeredById","answeredAt") VALUES ($1,$2,$3,$4,$5,$6,$7)',['answer-'+(++seq),id,a.promptId,a.questionText,a.answerText,a.answeredById,a.answeredAt]);for(const s of data.sources.create)await q('INSERT INTO editorial_story_sources VALUES ($1,$2,$3)',[id,s.projectPostId,s.sourceDigest]);return revision(id)},update:async({where,data})=>{const sets=[],args=[];for(const [k,v] of Object.entries(data)){if(k==='editVersion'){sets.push('"editVersion"="editVersion"+1');continue}const column=k==='approvedBy'?'approvedById':k;args.push(k==='approvedBy'?v.connect.id:k==='blocks'?JSON.stringify(v):v);sets.push('"'+column+'"=$'+args.length)}args.push(where.id);await q(`UPDATE editorial_story_revisions SET ${sets.join(',')} WHERE id=$${args.length}`,args);return revision(where.id)}},editorialStoryAnswer:{upsert:async({where,create,update})=>{const prior=(await q('SELECT id FROM editorial_story_answers WHERE "revisionId"=$1 AND "promptId"=$2',[where.revisionId_promptId.revisionId,where.revisionId_promptId.promptId]))[0];if(prior)await q('UPDATE editorial_story_answers SET "answerText"=$1,"answeredById"=$2,"answeredAt"=$3 WHERE id=$4',[update.answerText,update.answeredById,update.answeredAt,prior.id]);else await q('INSERT INTO editorial_story_answers (id,"revisionId","promptId","questionText","answerText","answeredById") VALUES ($1,$2,$3,$4,$5,$6)',['answer-'+(++seq),create.revisionId,create.promptId,create.questionText,create.answerText,create.answeredById]);}}};
  db.$transaction=async(fn)=>{await pg.exec('BEGIN');try{const r=await fn(db);await pg.exec('COMMIT');return r}catch(e){await pg.exec('ROLLBACK');throw e}};
- const activityExports={};vm.runInNewContext(ts.transpileModule(fs.readFileSync('src/lib/publishing-studio/activities.ts','utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022}}).outputText,{exports:activityExports});
+ const activityExports={};vm.runInNewContext(ts.transpileModule(fs.readFileSync('src/lib/publishing-studio/activities.ts','utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022}}).outputText,{exports:activityExports,require:name=>require('./studio-publication-test-import.cjs')(name)||require(name)});
  const mocks={'server-only':{},crypto:require('crypto'),'@prisma/client':require('@prisma/client'),'@/lib/prisma':{prisma:db},'@/lib/permissions':{canAccessDesignerTools:r=>r==='DESIGNER'},'@/lib/rateLimit':{},'@/lib/instagram-export/generation':{extractTextFromBlocks:b=>JSON.stringify(b)},'./data':{resolvePublishingStudioContext:async()=>({id:workspace,name:'Practice',canWriteCampaigns:true})},'./generate-activity':{},'./activities':activityExports};const service={};vm.runInNewContext(ts.transpileModule(fs.readFileSync('src/lib/publishing-studio/story-service.ts','utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022}}).outputText,{exports:service,Date,console,require:id=>{if(!(id in mocks))throw Error('Missing '+id);return mocks[id]}});
  db.editorialStory.findMany=async()=>{const rows=await q('SELECT id FROM editorial_stories');return Promise.all(rows.map(row=>story({id:row.id})));};
  assert.equal((await service.listStories('owner')).stories.length,0,'opening a generated interview is not saved progress');
@@ -55,5 +55,63 @@ const fs=require('fs'),assert=require('assert/strict'),vm=require('vm'),ts=requi
  assert.equal((await service.listStories('owner')).stories.some(item=>item.id==='remove'),false);
  await assert.rejects(service.readStory('owner','remove'),e=>e.status===404);
  await assert.rejects(service.changeStory('owner','remove',{action:'save',revision:removed.revision,answers:[]}),e=>e.status===404);
- console.log('PASS PostgreSQL service lifecycle: owner/role/workspace checks, partial resume, stale version rejection, incomplete review rejection, exact-answer JSONB draft/publish, immutable published revision, new draft isolation and source withdrawal rollback.');
+ // Cover projections read current permitted photos, never persisted URLs or a different room.
+ let contextQuery, publicQuery, photoQuery, photoQueries=0;
+ availableSources=[{id:'house',title:'House',rooms:[{id:'kitchen',name:'Kitchen'},{id:'bedroom',name:'Bedroom'}],
+  images:[{id:'excluded',roomId:'kitchen',url:'excluded.jpg',inclusion:'EXCLUDED'},
+   {id:'living',roomId:'living',url:'living.jpg',inclusion:'INCLUDED'},
+   {id:'kitchen-photo',roomId:'kitchen',url:'kitchen.jpg',inclusion:'INCLUDED'}],
+  post:{id:'house-post',updatedAt:new Date('2026-09-22'),expandedBlocks:'House story'}}];
+ db.project.findMany=async query=>{contextQuery=query;return availableSources};
+ mocks['@/lib/instagram-export/generation'].publishedRoomSource=()=>'';
+ const context=await service.storyContext('owner');
+ assert.equal(context.context.projects[0].imageUrl,'living.jpg');
+ assert.equal(context.context.projects[0].rooms[0].imageUrl,'kitchen.jpg');
+ assert.equal(context.context.projects[0].rooms[1].imageUrl,null,'no other room photo substitute');
+ assert.equal(contextQuery.where.isPublic,true);assert.equal(contextQuery.where.post.status,'PUBLISHED');
+ assert.equal(JSON.stringify(contextQuery.select.images.orderBy),JSON.stringify([{displayOrder:'asc'},{id:'asc'}]));
+ const roomDefinition={...definition,brief:{subject:'project',projectId:'house',roomId:'kitchen',format:'qa'}};
+ const coverRevision={...await revision('revision'),interview:roomDefinition};
+ const coverStory={id:'cover-story',ownerId:'owner',slug:'cover',status:'draft',publishedRevisionNumber:null,revisions:[coverRevision]};
+ db.editorialStory.findFirst=async()=>coverStory;
+ assert.equal((await service.readStory('owner','cover-story')).projectImageUrl,'kitchen.jpg');
+ availableSources[0].images=availableSources[0].images.filter(image=>image.roomId!=='kitchen');
+ assert.equal((await service.readStory('owner','cover-story')).projectImageUrl,null,'removed photo disappears on fresh read without deleting saved work');
+ assert.equal((await service.readStory('owner','cover-story')).draft.title,'My edited introduction');
+ availableSources=[];
+ assert.equal((await service.readStory('owner','cover-story')).projectImageUrl,null,'unavailable project cannot leak a saved photo');
+ coverRevision.interview=null;
+ assert.equal((await service.readStory('owner','cover-story')).projectImageUrl,undefined,'legacy saved work without a brief remains readable');
+ coverRevision.interview=roomDefinition;
+ const publicProject={id:'house',isPublic:true,images:[{url:'living.jpg',roomId:'living'},{url:'kitchen.jpg',roomId:'kitchen'}]};
+ const publicRevision={...coverRevision,sources:[{sourceDigest:context.sources[0].sourceDigest,projectPost:{status:'PUBLISHED',updatedAt:new Date('2026-09-22'),expandedBlocks:'House story',project:publicProject}}]};
+ db.editorialStory.findFirst=async query=>{publicQuery=query;return {...coverStory,status:'published',owner:{id:'owner',name:'Designer'},publishedRevision:publicRevision}};
+ db.project.findFirst=async query=>{photoQuery=query;photoQueries++;return publicProject.isPublic?{images:publicProject.images.filter(image=>!query.select.images.where.roomId||image.roomId===query.select.images.where.roomId).slice(0,query.select.images.take)}:null};
+ assert.equal((await service.publicStory('cover')).projectImageUrl,'kitchen.jpg');
+ assert.equal(publicQuery.include.publishedRevision.include.sources.include.projectPost.select.project.select.images,undefined,'source validation does not load photo collections');
+ assert.equal(photoQuery.where.id,'house');assert.equal(photoQuery.where.isPublic,true);assert.equal(photoQuery.where.post.status,'PUBLISHED');
+ const imageQuery=photoQuery.select.images;
+ assert.equal(imageQuery.take,1);assert.equal(imageQuery.where.roomId,'kitchen');
+ assert.equal(imageQuery.where.inclusion,'INCLUDED');
+ assert.equal(JSON.stringify(imageQuery.orderBy),JSON.stringify([{displayOrder:'asc'},{id:'asc'}]));
+ publicProject.images=[{url:'living.jpg',roomId:'living'}];
+ assert.equal((await service.publicStory('cover')).projectImageUrl,null);
+ publicRevision.interview={...roomDefinition,brief:{...roomDefinition.brief,roomId:undefined}};
+ assert.equal((await service.publicStory('cover')).projectImageUrl,'living.jpg');
+ publicRevision.interview=definition;
+ const photoCount=photoQueries;
+ assert.equal((await service.publicStory('cover')).projectImageUrl,undefined,'personal identity cover stays personal');
+ assert.equal(photoQueries,photoCount,'personal stories never query project photos');
+ for(const interview of [null,{}, {brief:null}, {brief:{subject:'project',projectId:'house',roomId:{invalid:true}}}]){
+  publicRevision.interview=interview;
+  assert(await service.publicStory('cover'),'legacy or malformed brief does not break approved article reads');
+ }
+ assert.equal(photoQueries,photoCount,'missing or malformed briefs never query project photos');
+ publicProject.isPublic=false;assert.equal(await service.publicStory('cover'),null,'private source withholds public article');
+ const React=require('react'),{renderToStaticMarkup}=require('react-dom/server'),coverExports={};
+ vm.runInNewContext(ts.transpileModule(fs.readFileSync('src/components/publishing-studio/ActivityArticleCover.tsx','utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022,jsx:ts.JsxEmit.ReactJSX}}).outputText,{exports:coverExports,require});
+ const markup=projectImageUrl=>renderToStaticMarkup(React.createElement(coverExports.ActivityArticleCover,{title:'House story',identity:{name:'Designer',portraitUrl:'portrait.jpg',logoUrl:'logo.jpg'},projectImageUrl}));
+ assert(markup('kitchen.jpg').includes('src="kitchen.jpg"'));assert(!markup('kitchen.jpg').includes('portrait.jpg'));
+ assert(!markup(null).includes('<img'),'missing project photo uses typography');assert(markup(undefined).includes('portrait.jpg'));
+ console.log('PASS PostgreSQL story lifecycle and fresh project/room cover fidelity: scoped current photos, no excluded or wrong-room substitution, preserved saved copy and typographic fallback.');
  }finally{await pg.close()}})().catch(e=>{console.error(e);process.exitCode=1});

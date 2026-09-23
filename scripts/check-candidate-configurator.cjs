@@ -13,12 +13,13 @@ const { act } = React;
 const fixture = { shape:'decision', id: 'story', version: 1, sourceVersion: 'source', readiness: 'quick', thesis: 'A considered room', audienceValue: 'Show the decision behind the room.', source: { title: 'A home' },
   projectIds: ['p'], format: 'single_image', visuals: [{ id: 'image', url: '/fixture.jpg', role: 'hero', reason: 'The finished room' }],
   draft: { headline: 'A considered room', caption: 'The original saved caption.', credits: { designer: 'Designer', photographer: 'Photographer' } },
+  claims: [{ id: 'claim', text: 'Closed storage keeps the room calm.', evidenceIds: ['e'], status: 'supported' }],
   evidence: [{ id: 'e', text: 'Published project detail.', tier: 'direct' }],
   blockers: [{ id: 'question', kind: 'truth', question: 'Which decision changed the room?' }], reasons: ['The answer still needs clarification.'] };
 const calls = [];
 const exported = {};
 vm.runInNewContext(ts.transpileModule(fs.readFileSync('src/components/publishing-studio/CandidateConfigurator.tsx', 'utf8'), { compilerOptions: { module: ts.ModuleKind.CommonJS, jsx: ts.JsxEmit.ReactJSX, target: ts.ScriptTarget.ES2020 } }).outputText,
- { exports: exported, require: id => { if(id === '@/lib/publishing-studio/opportunities') { const exports={};vm.runInNewContext(ts.transpileModule(fs.readFileSync('src/lib/publishing-studio/opportunities.ts','utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022}}).outputText,{exports,URLSearchParams});return exports;} return require(id); }, window: dom.window, document: dom.window.document, console,
+ { exports: exported, require: id => { if(id === '@/lib/publishing-studio/opportunities') { const exports={};vm.runInNewContext(ts.transpileModule(fs.readFileSync('src/lib/publishing-studio/opportunities.ts','utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022}}).outputText,{exports,URLSearchParams});return exports;} return require('./studio-publication-test-import.cjs')(id) || require(id); }, window: dom.window, document: dom.window.document, console,
    fetch: (url, options) => new Promise(resolve => calls.push({ url, body: JSON.parse(options.body), resolve })) });
 let candidate = structuredClone(fixture), readOnly = false, closed = 0;
 let root;
@@ -161,15 +162,44 @@ const assertChoices = () => ['Save draft and exit', 'Discard changes', 'Keep edi
   assert.equal(document.querySelector('figure img').getAttribute('src'), '/second.jpg');
   assert.equal(unloadIsBlocked(), false);
 
+  candidate = structuredClone(fixture); window.sessionStorage.clear();
+  await mount();
+  const beforeHeadlineChoice = calls.length;
+  await click('Closed storage keeps the room calm.');
+  assert.equal(document.querySelector('input').value, 'Closed storage keeps the room calm.');
+  assert.equal(candidate.draft.headline, fixture.draft.headline, 'Choosing an alternative leaves the saved candidate unchanged');
+  assert.equal(calls.length, beforeHeadlineChoice, 'Choosing supported copy is local until explicit Save');
+  assert.equal(button('Save draft').disabled, false, 'Choosing an alternative marks the draft dirty');
+  assert.equal(unloadIsBlocked(), true);
+  await click('Save draft');
+  assert.equal(calls.length, beforeHeadlineChoice + 1);
+  assert.equal(calls.at(-1).body.headline, 'Closed storage keeps the room calm.');
+  assert.equal(calls.at(-1).body.caption, undefined, 'Headline choice does not rewrite the caption');
+  await resolveSave({ ...candidate, version: 2, draft: { ...candidate.draft, headline: 'Closed storage keeps the room calm.' } });
+  assert.equal(button('Save draft').disabled, true);
+
   candidate = { ...savedNonready, readiness: 'ready' }; readOnly = true;
   await mount();
   const beforeRead = calls.length;
   assert.equal(button('Save draft'), undefined); assert.equal(button('Download post'), undefined);
   assert.equal(document.querySelector('input').readOnly, true);
+  assert.equal(document.querySelector('[aria-label="Supported headline alternatives"]'), null, 'Historical versions expose no editable alternative chips');
   assert.match(document.body.textContent, /Saved version · read only/);
   assert.match(document.body.textContent, /An unfinished answer/);
   await click('Back to stories');
   assert.equal(calls.length, beforeRead, 'Reading history never mutates');
+  candidate = { ...structuredClone(fixture), readiness: 'ready', blockers: [] }; readOnly = false;
+  window.sessionStorage.clear();
+  await mount();
+  const destination = document.querySelector('input[placeholder="For example, Instagram"]');
+  assert.equal(destination.value, '', 'Publication destination is never guessed');
+  assert.equal(button('Record publication').disabled, true);
+  await change(destination, 'LinkedIn');
+  await act(async () => Simulate.change(document.querySelector('input[type="checkbox"]'), { target: { checked: true } }));
+  await click('Record publication');
+  assert.equal(calls.at(-1).body.publicationDestination, 'LinkedIn');
+  await resolveSave({ ...candidate, version: 2, confirmedPublishedAt: '2026-09-23T12:00:00Z', confirmedPublicationDestination: 'LinkedIn' });
+  assert.match(document.body.textContent, /published on LinkedIn/);
   await act(async () => root.unmount());
   console.log('PASS configurator: clean and reverted exits, three-way dirty exits, failed-save retention, explicit partial draft save/resume, authoritative readiness, local image ordering, recovery, link/back/reload guards, and read-only history.');
 })().catch(error => { console.error(error); process.exitCode = 1; });

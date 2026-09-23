@@ -33,7 +33,7 @@ export interface Candidate {
   draft: { headline: string; caption: string; credits: { designer: string; photographer: string | null }; slides: { imageId: string; purpose: string }[]; pendingAnswer?: { blockerId: string; text: string } };
   dimensions: Record<Dimension, number>; penalties: Record<Penalty, number>;
   score: number; readiness: Readiness; blockers: Blocker[]; reasons: string[];
-  dismissed: boolean; confirmedPublishedAt?: string; createdAt: string;
+  dismissed: boolean; confirmedPublishedAt?: string; confirmedPublicationDestination?: string; createdAt: string;
 }
 export const DISMISSAL_REASONS = ['not_accurate', 'already_shared', 'weak_imagery', 'not_my_voice', 'not_important', 'other'] as const;
 export type CandidateEventKind = 'generated' | 'scored' | 'suppressed' | 'shown' | 'opened' | 'configured' | 'answered' | 'edited' | 'dismissed' | 'restored' | 'ready' | 'exported' | 'published' | 'superseded';

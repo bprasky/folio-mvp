@@ -50,7 +50,7 @@ export function StudioSavedActivities() {
     </dialog>}
     <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-3">{stories.map(story => <div key={story.id}>
       <StudioPublicationCard title={story.draft?.title || story.definition.title}
-        preview={<ActivityArticleCover title={story.draft?.title || story.definition.title} identity={identity} working={!story.draft} />}
+        preview={<ActivityArticleCover title={story.draft?.title || story.definition.title} identity={identity} projectImageUrl={story.projectImageUrl} working={!story.draft} />}
         benefit="Let readers hear the thinking behind your work."
         metadata={story.publishedUrl ? 'Published' : 'Saved work'}
         contribution={story.draft ? story.publishedUrl ? 'Your article is ready to share.' : 'Review your saved article before publishing.' : `${story.answers.filter(answer => answer.text.trim()).length} of ${story.definition.questions.length} answers saved.`}

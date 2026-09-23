@@ -59,6 +59,7 @@ export function StudioReleasePlan() {
   }
   function postPreview(post: Post) {
     return <div className="grid gap-5 sm:grid-cols-[160px_1fr]">
+      {post.publication && <p className="folio-meta sm:col-span-2">{post.publication.kind === 'dismissed' ? 'You dismissed this story. It remains in your saved plan.' : `Already shared ${post.publication.destination === 'instagram' ? 'on Instagram' : 'elsewhere'} · Sharing again will reuse an existing story.`}</p>}
       {post.imageUrl && <div style={{aspectRatio:(post.preview?.aspectRatio || "4:5").replace(":","/")}}><CarouselHero imageUrl={post.imageUrl} headline={post.title} headlinePosition={post.preview?.headlinePosition} watermarkText={post.preview?.watermarkText || "folio"} aspectRatio={post.preview?.aspectRatio} /></div>}
       <div><p className="folio-meta text-folio-text-secondary">{post.kind === 'room' ? 'Room story' : 'Project introduction'} · {post.status === 'draft_saved' ? 'Draft saved' : post.status === 'export_generated' ? 'Export generated' : 'Prepared post'}</p><h3 className="folio-h3 my-2">{post.title}</h3><p className="folio-body whitespace-pre-line">{post.caption}</p><Link href={`${post.editorHref}${post.editorHref.includes('?') ? '&' : '?'}release=${encodeURIComponent(projectId)}`} className="folio-ui mt-4 inline-block underline underline-offset-4">Review and edit this post</Link></div>
     </div>;

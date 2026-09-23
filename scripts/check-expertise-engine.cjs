@@ -7,6 +7,14 @@ const balanced=gen.discoveryEvidence([...Array.from({length:60},(_,i)=>({...evid
 const proposal={thesis:'What belongs on display?',readerBenefit:'Help clients understand storage choices.',comparisonType:'storage choice',evidence:evidence.map(e=>({evidenceId:e.id,quote:e.text})),gaps:['Explain the comparison'],qualification:['Exact contrasting decisions'],ranking:{evidence:5,specificity:5,clientValue:5,novelty:4,effort:2},duplicateOf:[]};
 const discover=p=>gen.assembleExpertiseDiscovery(JSON.stringify({opportunities:[p]}),evidence);
 const opportunity=discover(proposal)[0];assert.ok(opportunity);assert.equal(opportunity.projectIds.length,2);
+const hookProposal={...proposal,headline:'What should a kitchen put on display?',headlineSources:[proposal.evidence[0],proposal.evidence[2]]};
+const withHook=discover(hookProposal)[0];assert.equal(withHook.headline,hookProposal.headline);assert.equal(withHook.thesis,proposal.thesis,'Audience hook never rewrites the interview premise');assert.equal(withHook.headlineSources.length,2);
+assert.equal(discover({...hookProposal,headline:'Open shelves improve every kitchen.'})[0].headline,undefined,'Working hook cannot be an asserted conclusion');
+assert.equal(discover({...hookProposal,headlineSources:[proposal.evidence[0],proposal.evidence[1]]})[0].headline,undefined,'Hook needs two supporting projects');
+assert.equal(discover({...hookProposal,headlineSources:[proposal.evidence[0],{evidenceId:'invented',quote:'Unsupported claim'}]})[0].headline,undefined,'Unsupported hook is dropped without discarding the grounded comparison');
+assert.equal(discover({...hookProposal,headlineSources:[proposal.evidence[0],{...proposal.evidence[2],quote:'Invented client intention'}]})[0].headline,undefined,'Hook provenance must match an exact source excerpt');
+assert.equal(discover(proposal)[0].headline,undefined,'Existing opportunities without hooks remain valid');
+
 assert.equal(gen.assembleExpertiseDiscovery(JSON.stringify({opportunities:[{...proposal,thesis:'How do you choose storage?'}]}),evidence,[opportunity]).length,0,'same argument different title');
 assert.throws(()=>discover({...proposal,evidence:[{evidenceId:'invented',quote:'x'},proposal.evidence[0]]}),/matched/);
 assert.equal(discover({...proposal,thesis:'Storage improves acoustics'}).length,0,'asserted premise fails');

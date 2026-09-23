@@ -25,11 +25,13 @@ export async function storyContext(userId: string, db: Prisma.TransactionClient 
   if (workspace.id && !workspace.canWriteCampaigns) throw new StoryError('Editing is not available in this workspace.', 403);
   const projects = await db.project.findMany({ where: { designerOrgId: workspace.id, isPublic: true, post: { status: 'PUBLISHED' },
     ...(workspace.id ? {} : { OR: [{ ownerId: userId }, { designerId: userId }] }) },
-    select: { id: true, title: true, rooms: { select: { id: true, name: true } }, images: { select: { id: true, roomId: true } }, post: { select: { id: true, expandedBlocks: true, updatedAt: true } } },
+    select: { id: true, title: true, rooms: { select: { id: true, name: true } }, images: { select: { id: true, roomId: true, url: true, inclusion: true }, orderBy: [{ displayOrder: 'asc' }, { id: 'asc' }] }, post: { select: { id: true, expandedBlocks: true, updatedAt: true } } },
     orderBy: [{ updatedAt: 'desc' }, { id: 'asc' }], take: 100 });
   const context: ActivityContext = { designerName: user.name || 'The designer', firmName: workspace.name,
     identity: { name: user.name || 'The designer', portraitUrl: user.profileImage, logoUrl: user.brandProfile?.logoImageUrl },
-    profile: { hasBio: !!user.bio?.trim(), hasPointOfView: false }, projects: projects.map(p => ({ id: p.id, title: p.title, rooms: p.rooms })),
+    profile: { hasBio: !!user.bio?.trim(), hasPointOfView: false }, projects: projects.map(p => ({ id: p.id, title: p.title,
+      imageUrl: p.images.find(image => image.inclusion === 'INCLUDED')?.url || null,
+      rooms: p.rooms.map(room => ({ ...room, imageUrl: p.images.find(image => image.inclusion === 'INCLUDED' && image.roomId === room.id)?.url || null })) })),
     references: [ ...(user.bio?.trim() ? [{ id: `bio:${userId}`, kind: 'bio' as const, text: user.bio }] : []),
       ...projects.flatMap(p => {
         const text = extractTextFromBlocks(p.post?.expandedBlocks).trim();
@@ -40,8 +42,14 @@ export async function storyContext(userId: string, db: Prisma.TransactionClient 
   return { workspace, context, sources: projects.map(p => ({ projectPostId: p.post!.id, projectId: p.id,
     sourceDigest: hash([p.id, p.post!.updatedAt.toISOString(), p.post!.expandedBlocks]) })) };
 }
-function snapshot(story: { id: string; slug: string; status: string; publishedRevisionNumber: number | null; ownerId?: string }, revision: Revision) {
+function projectCover(brief: ActivityBrief | undefined, context: ActivityContext) {
+  if (brief?.subject !== 'project') return undefined;
+  const project = context.projects.find(project => project.id === brief.projectId);
+  return (brief.roomId ? project?.rooms.find(room => room.id === brief.roomId)?.imageUrl : project?.imageUrl) || null;
+}
+function snapshot(story: { id: string; slug: string; status: string; publishedRevisionNumber: number | null; ownerId?: string }, revision: Revision, context: ActivityContext) {
   return { id: story.id, revision: revision.editVersion, definition: revision.interview as unknown as ActivityDefinition,
+    projectImageUrl: projectCover((revision.interview as unknown as ActivityDefinition | null)?.brief, context),
     answers: revision.answers.map(a => ({ questionId: a.promptId, text: a.answerText })), reviewed: !!revision.answersReviewedAt,
     draft: Object.keys(revision.blocks as object).length ? revision.blocks as unknown as ActivityDraft : null,
     status: story.status === 'withdrawn' ? 'withdrawn' : story.publishedRevisionNumber === revision.number ? story.status : 'draft',
@@ -79,11 +87,11 @@ export async function listStories(userId: string) {
     href: `/designer/studio/activity?id=${encodeURIComponent(introduction.id)}`,
     needsReview, publishedUrl: completed && !needsReview ? `/stories/${completed.slug}` : null } : { status: 'available' as const };
   return { context: data.context, personalIntroduction, stories: stories.filter(s => s.status !== 'withdrawn' && s.revisions[0] &&
-    (s.revisions[0].editVersion > 1 || s.revisions[0].answers.length > 0)).map(s => snapshot(s, s.revisions[0])) };
+    (s.revisions[0].editVersion > 1 || s.revisions[0].answers.length > 0)).map(s => snapshot(s, s.revisions[0], data.context)) };
 }
 export async function readStory(userId: string, id: string) {
-  const { story, revision } = await owned(userId, id, prisma);
-  const saved = snapshot(story, revision);
+  const { data, story, revision } = await owned(userId, id, prisma);
+  const saved = snapshot(story, revision, data.context);
   if (story.publishedRevisionNumber !== null && !(await publicStory(story.slug))) {
     return { ...saved, publishedUrl: null, previousPublishedUrl: null, publicationNeedsReview: true };
   }
@@ -115,7 +123,7 @@ export async function startStory(userId: string, brief: ActivityBrief, key: stri
         revisions: { create: { number: 1, title: definition.title, blocks: {}, interview: json(definition),
           sources: { create: sources.map(({ projectPostId, sourceDigest }) => ({ projectPostId, sourceDigest })) } } } },
         include: { revisions: { include: includeRevision } } });
-      return snapshot(story, story.revisions[0]);
+      return snapshot(story, story.revisions[0], fresh.context);
     }, { isolationLevel: 'Serializable' });
   } catch (error) { if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
     const saved = await readStory(userId, id);
@@ -135,7 +143,7 @@ export async function changeStory(userId: string, id: string, input: { action?: 
       if (story.publishedRevisionNumber !== null || current.approvedAt) throw new StoryError('A published article cannot be removed as an interview draft.', 409);
       const saved = await db.editorialStoryRevision.update({ where: { id: current.id }, data: { editVersion: { increment: 1 } }, include: includeRevision });
       const archived = await db.editorialStory.update({ where: { id }, data: { status: 'withdrawn', updatedAt: new Date() } });
-      return snapshot(archived, saved);
+      return snapshot(archived, saved, data.context);
     }
     if (current.sources.some(s => !data.sources.some(f => f.projectPostId === s.projectPostId && f.sourceDigest === s.sourceDigest))) throw new StoryError('A source changed or is no longer published. Start a fresh interview from the current work.', 409);
     const definition = current.interview as unknown as ActivityDefinition;
@@ -191,7 +199,7 @@ export async function changeStory(userId: string, id: string, input: { action?: 
     }
     const saved = await db.editorialStoryRevision.update({ where: { id: revision.id }, data: changes, include: includeRevision });
     const final = await db.editorialStory.update({ where: { id }, data: { updatedAt: new Date() } });
-    return snapshot(final, saved);
+    return snapshot(final, saved, data.context);
   }, { isolationLevel: 'Serializable' });
 }
 
@@ -202,5 +210,15 @@ export async function publicStory(slug: string) {
   const revision = story?.publishedRevision;
   if (!story || !revision?.approvedAt || !revision.publishedAt || revision.sources.some(s => s.projectPost.status !== 'PUBLISHED' || !s.projectPost.project.isPublic ||
     s.sourceDigest !== hash([s.projectPost.project.id, s.projectPost.updatedAt.toISOString(), s.projectPost.expandedBlocks]))) return null;
-  return { title: revision.title, draft: revision.blocks as unknown as ActivityDraft, owner: story.owner, slug: story.slug };
+  const brief = (revision.interview as unknown as ActivityDefinition | null)?.brief;
+  let projectImageUrl: string | null | undefined = brief?.subject === 'project' ? null : undefined;
+  if (brief?.subject === 'project' && typeof brief.projectId === 'string' &&
+    (brief.roomId === undefined || typeof brief.roomId === 'string') &&
+    revision.sources.some(source => source.projectPost.project.id === brief.projectId)) {
+    const project = await prisma.project.findFirst({ where: { id: brief.projectId, isPublic: true, post: { status: 'PUBLISHED' } },
+      select: { images: { where: { inclusion: 'INCLUDED', ...(brief.roomId ? { roomId: brief.roomId } : {}) },
+        select: { url: true }, orderBy: [{ displayOrder: 'asc' }, { id: 'asc' }], take: 1 } } });
+    projectImageUrl = project?.images[0]?.url || null;
+  }
+  return { title: revision.title, draft: revision.blocks as unknown as ActivityDraft, owner: story.owner, slug: story.slug, projectImageUrl };
 }

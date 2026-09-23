@@ -9,6 +9,8 @@ export const AngleResponseSchema = z.object({
 });
 
 export const PromptResponseSchema = z.object({
+  headline: z.string().trim().min(8).max(100).regex(/\?$/)
+    .refine(value => value.split(/\s+/).length <= 12).optional(),
   intro: z.string().optional(),
   items: z.array(z.object({
     prompt: z.string(), hint: z.string().optional(),
