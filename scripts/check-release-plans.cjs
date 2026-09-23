@@ -20,7 +20,7 @@ function load(file, mocks) {
   assert.equal(model.validPlanningDate('2026-09-22'), true);
   let saved = null, writes = 0, role = 'DESIGNER', workspace = null, source = 'two', isPublic = true;
   class AccessError extends Error { constructor(message, status) { super(message); this.status = status; } }
-  const project = { id: 'p', title: 'House', ownerId: 'owner', designerId: 'owner', post: { excerpt: 'This published introduction describes a coastal house arranged around sheltered courtyards and generous spaces for family gatherings.' } };
+  const project = { id: 'p', title: 'House', images: [{url:'photo'}], ownerId: 'owner', designerId: 'owner', post: { excerpt: 'This published introduction describes a coastal house arranged around sheltered courtyards and generous spaces for family gatherings.' } };
   const db = {
     user: { findUnique: async () => ({ role }) },
     project: { findFirst: async ({ where }) => where.id === 'p' && where.designerOrgId === null ? project : null, findMany: async () => [project] },
@@ -34,7 +34,7 @@ function load(file, mocks) {
     $transaction: async callback => callback(db),
   };
   let duplicate = false;
-  const feed = { configObject: value => value && typeof value === 'object' ? value : {}, buildStudioFeed: () => isPublic ? options.map((option, index) => ({ id: option.sourceId, revision: index ? source : option.revision, roomId: index ? 'r' : undefined, canPolish: true, caption: index && !duplicate ? 'We rejected the brass chandelier because its weight distorted our ceiling beams, choosing lighter glass instead.' : project.post.excerpt + (index ? ' Beautiful.' : ''), title: `Post ${index}`, imageUrl: 'photo' })) : [] };
+  const feed = { savedPublicationPreview: load('src/lib/publishing-studio/feed.ts', {'crypto':require('node:crypto'),'./opportunities':{feedOpportunity:()=>({})}}).savedPublicationPreview, configObject: value => value && typeof value === 'object' ? value : {}, buildStudioFeed: () => isPublic ? options.map((option, index) => ({ id: option.sourceId, revision: index ? source : option.revision, roomId: index ? 'r' : undefined, canPolish: true, caption: index && !duplicate ? 'We rejected the brass chandelier because its weight distorted our ceiling beams, choosing lighter glass instead.' : project.post.excerpt + (index ? ' Beautiful.' : ''), title: `Post ${index}`, imageUrl: 'photo' })) : [] };
   const service = load('src/lib/publishing-studio/release-plan-service.ts', {
     'server-only': {}, crypto: require('node:crypto'), '@prisma/client': { Prisma: { TransactionIsolationLevel: { Serializable: 'Serializable' }, PrismaClientKnownRequestError: class extends Error {} } },
     '@/lib/prisma': { prisma: db }, '@/lib/permissions': { canAccessDesignerTools: value => value === 'DESIGNER' },

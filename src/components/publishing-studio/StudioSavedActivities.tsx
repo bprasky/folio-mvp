@@ -1,11 +1,14 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import Link from 'next/link';
+import { ActivityArticleCover } from './ActivityArticleCover';
+import { StudioPublicationCard } from './StudioPublicationCard';
+import type { ActivityContext } from '@/lib/publishing-studio/activities';
 import type { ActivitySnapshot } from './StoryActivity';
 
 export function StudioSavedActivities() {
   const [stories, setStories] = useState<ActivitySnapshot[]>([]);
+  const [identity, setIdentity] = useState<NonNullable<ActivityContext['identity']>>({name:'The designer'});
   const [error, setError] = useState('');
   const [removing, setRemoving] = useState<ActivitySnapshot | null>(null);
   const [removeError, setRemoveError] = useState('');
@@ -32,7 +35,7 @@ export function StudioSavedActivities() {
     fetch('/api/publishing-studio/stories', { cache: 'no-store' }).then(async response => {
       const data = await response.json();
       if (!response.ok) throw new Error(data.error || 'Could not load your interviews.');
-      if (!cancelled) setStories(data.stories);
+      if (!cancelled) { setStories(data.stories); setIdentity(data.context?.identity || {name:data.context?.designerName || 'The designer'}); }
     }).catch(() => { if (!cancelled) setError('Your interviews could not be loaded. Refresh to try again.'); });
     return () => { cancelled = true; };
   }, []);
@@ -45,5 +48,14 @@ export function StudioSavedActivities() {
       {removeError && <p role="alert" className="folio-body my-4">{removeError}</p>}
       <div className="flex flex-wrap gap-4"><button disabled={pending} className="folio-ui underline underline-offset-4" onClick={removeDraft}>{pending ? 'Removing…' : 'Remove saved draft'}</button><button disabled={pending} className="folio-ui underline underline-offset-4" onClick={() => setRemoving(null)}>Keep draft</button></div>
     </dialog>}
-    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">{stories.map(story => <article key={story.id} className="rounded-2xl border border-folio-border-subtle p-5"><p className="folio-meta text-folio-text-secondary">{story.publishedUrl ? 'Published' : `${story.answers.filter(answer => answer.text.trim()).length} of ${story.definition.questions.length} answered`}</p><h3 className="folio-h4 my-3">{story.definition.title}</h3><div className="flex flex-wrap gap-4"><Link className="folio-ui underline underline-offset-4" href={`/designer/studio/activity?id=${encodeURIComponent(story.id)}`}>{story.publishedUrl ? 'View article' : story.draft ? 'Review draft' : 'Resume interview'}</Link>{!story.publishedUrl && !story.previousPublishedUrl && <button className="folio-ui underline underline-offset-4" onClick={() => { setRemoving(story); setRemoveError(''); }}>Remove draft</button>}</div></article>)}</div></section>;
+    <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-3">{stories.map(story => <div key={story.id}>
+      <StudioPublicationCard title={story.draft?.title || story.definition.title}
+        preview={<ActivityArticleCover title={story.draft?.title || story.definition.title} identity={identity} working={!story.draft} />}
+        benefit="Let readers hear the thinking behind your work."
+        metadata={story.publishedUrl ? 'Published' : 'Saved work'}
+        contribution={story.draft ? story.publishedUrl ? 'Your article is ready to share.' : 'Review your saved article before publishing.' : `${story.answers.filter(answer => answer.text.trim()).length} of ${story.definition.questions.length} answers saved.`}
+        actionLabel={story.publishedUrl ? 'View article' : story.draft ? 'Review and publish' : 'Continue my interview'}
+        href={`/designer/studio/activity?id=${encodeURIComponent(story.id)}`} readiness={story.publishedUrl ? 'published' : 'saved'} />
+      {!story.publishedUrl && !story.previousPublishedUrl && <button className="folio-meta mt-3 underline underline-offset-4" onClick={() => { setRemoving(story); setRemoveError(''); }}>Remove draft</button>}
+    </div>)}</div></section>;
 }

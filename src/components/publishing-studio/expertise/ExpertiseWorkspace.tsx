@@ -5,6 +5,7 @@ import { useEffect, useState } from 'react';
 import type { ExpertiseArticle, ExpertiseOpportunity } from '@/lib/publishing-studio/expertise/types';
 import { useActivityExit } from '../UnsavedActivityDialog';
 import { ExpertiseEvidence } from './ExpertiseEvidence';
+import { ExpertiseArticleCover } from './ExpertiseArticleCover';
 import { ExpertiseArticleView } from './ExpertiseArticleView';
 import type { ExpertiseListing, ExpertiseSnapshot } from './transport';
 const action = 'folio-ui underline underline-offset-4 disabled:opacity-50';
@@ -14,6 +15,7 @@ export function ExpertiseWorkspace() {
   const params = useSearchParams(); const router = useRouter();
   const id = params.get('id'); const opportunityId = params.get('opportunity');
   const [snapshot, setSnapshot] = useState<ExpertiseSnapshot | null>(null);
+  const [identity, setIdentity] = useState<ExpertiseSnapshot['identity'] | null>(null);
   const [opportunity, setOpportunity] = useState<ExpertiseOpportunity | null>(null);
   const [text, setText] = useState(''); const [correcting, setCorrecting] = useState(false);
   const [article, setArticle] = useState<ExpertiseArticle | null>(null);
@@ -21,14 +23,14 @@ export function ExpertiseWorkspace() {
   const [archiving, setArchiving] = useState(false);
   const [preview, setPreview] = useState(false); const [notice, setNotice] = useState('');
   const [replacement, setReplacement] = useState<string[]>([]);
-  function accept(next: ExpertiseSnapshot) { setSnapshot(next); setArticle(next.article); setOpportunity(next.opportunity); setError(next.error || ''); setText(''); setCorrecting(false); }
+  function accept(next: ExpertiseSnapshot) { setSnapshot(next); setArticle(next.article); setOpportunity(next.opportunity); setIdentity(next.identity); setError(next.error || ''); setText(''); setCorrecting(false); }
   useEffect(() => {
     let cancelled = false;
     setError('');
     fetch(id ? `/api/publishing-studio/expertise/${encodeURIComponent(id)}` : '/api/publishing-studio/expertise', { cache: 'no-store' }).then(async response => {
       const result = await response.json(); if (!response.ok) throw new Error(result.error || 'Could not open your article.');
       if (cancelled) return;
-      if (id) accept(result); else { const found = (result as ExpertiseListing).opportunities.find(item => item.id === opportunityId); if (!found) throw new Error('This connection is no longer available. Return to My expertise to choose current work.'); setOpportunity(found); }
+      if (id) accept(result); else { const found = (result as ExpertiseListing).opportunities.find(item => item.id === opportunityId); if (!found) throw new Error('This connection is no longer available. Return to My expertise to choose current work.'); setOpportunity(found); setIdentity((result as ExpertiseListing).identity || null); }
     }).catch(cause => { if (!cancelled) setError(cause instanceof Error ? cause.message : 'Could not open your article.'); });
     return () => { cancelled = true; };
   }, [id, opportunityId]);
@@ -86,8 +88,9 @@ export function ExpertiseWorkspace() {
     {error && <p role="alert" className="folio-body">{error}</p>}{notice && <p role="status" className="folio-body">{notice}</p>}
     {!opportunity && !error && <p role="status">Opening your comparison…</p>}
     {!!snapshot?.sourceChanges.length && <section className="rounded-xl border border-folio-border-subtle p-5"><h2 className="folio-h3">Review changed sources</h2>{snapshot.sourceChanges.map(item => <p className="folio-body mt-2" key={item}>{item}</p>)}<p className="folio-meta mt-3">Your saved answers remain here. Replace affected evidence before publication.</p></section>}
-    {opportunity && !snapshot && <><ExpertiseEvidence evidence={evidence} /><p className="folio-body">Discuss what connects these projects. Folio will use your explanations and exact project photographs to prepare an editable article for your profile.</p><button disabled={pending} className={action} onClick={() => void start()}>{pending ? 'Opening interview…' : 'Start this article'}</button></>}
+    {opportunity && !snapshot && <><ExpertiseArticleCover compact title={opportunity.thesis} name={identity?.name} evidence={evidence} working /><p className="folio-body">Discuss what connects these projects. Folio will use your explanations and exact project photographs to prepare an editable article for your profile.</p><button disabled={pending} className={action} onClick={() => void start()}>{pending ? 'Opening interview…' : 'Start this article'}</button></>}
     {snapshot && (!article || needsInterview) && <>
+      <details><summary className="cursor-pointer folio-ui">Your working article cover</summary><ExpertiseArticleCover compact title={snapshot.session.thesis} name={snapshot.identity.name} evidence={evidence} working /></details>
       <ExpertiseEvidence evidence={questionEvidence} />
       {snapshot.session.answers.some(answer => !answer.invalidated && !answer.skipped) && <details className="border-t border-folio-border-subtle py-4"><summary className="cursor-pointer folio-ui">Your saved context and answers</summary>{snapshot.session.answers.filter(answer => !answer.invalidated && !answer.skipped).map(answer => <p key={answer.id} className="folio-body mt-3 whitespace-pre-wrap">{answer.text}</p>)}</details>}
       {question && snapshot.session.status !== 'confirm' && <section className="max-w-3xl space-y-4"><h2 className="folio-h2">{correcting ? 'What should we understand differently?' : question.text}</h2><label className="block"><span className="sr-only">{correcting ? 'Correct the premise' : 'Your answer'}</span><textarea className={`${field} min-h-40`} value={text} onChange={event => setText(event.target.value)} /></label><div className="flex flex-wrap gap-5"><button disabled={pending || !text.trim()} className={action} onClick={() => void save()}>{pending ? 'Saving…' : correcting ? 'Save correction' : 'Save answer and continue'}</button><button disabled={pending} className={action} onClick={() => setCorrecting(value => !value)}>{correcting ? 'Return to question' : 'That’s not what happened'}</button><button disabled={pending || Boolean(text.trim())} className={action} onClick={() => void change({ action: 'skip' })}>Skip this question</button></div>{question.choices && <p className="folio-meta">You can move on, replace an example below, or save for later.</p>}</section>}

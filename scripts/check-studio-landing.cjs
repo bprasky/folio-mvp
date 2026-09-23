@@ -1,6 +1,6 @@
 const assert = require('node:assert/strict'), fs = require('fs'), vm = require('vm'), ts = require('typescript'), React = require('react');
 const { renderToStaticMarkup } = require('react-dom/server');
-function load(file, imports = {}) { const exports = {}; vm.runInNewContext(ts.transpileModule(fs.readFileSync(file, 'utf8'), { compilerOptions: { jsx: ts.JsxEmit.ReactJSX, module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 } }).outputText, { exports, URLSearchParams, document: new Proxy({}, {get:(_,key)=>typeof global.document?.[key] === 'function' ? global.document[key].bind(global.document) : global.document?.[key]}), fetch: fetchMock, require: id => id in imports ? imports[id] : id === './StudioPitchCard' ? load('src/components/publishing-studio/StudioPitchCard.tsx', {'./StudioWorkspace':load('src/components/publishing-studio/StudioWorkspace.tsx'), 'next/link':{default:({children,...props})=>React.createElement('a',props,children)}}) : id === '@/lib/publishing-studio/opportunities' ? load('src/lib/publishing-studio/opportunities.ts', {}) : require(id) }); return exports; }
+function load(file, imports = {}) { const exports = {}; vm.runInNewContext(ts.transpileModule(fs.readFileSync(file, 'utf8'), { compilerOptions: { jsx: ts.JsxEmit.ReactJSX, module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 } }).outputText, { exports, URLSearchParams, document: new Proxy({}, {get:(_,key)=>typeof global.document?.[key] === 'function' ? global.document[key].bind(global.document) : global.document?.[key]}), fetch: fetchMock, require: id => id in imports ? imports[id] : id === './StudioPitchCard' ? load('src/components/publishing-studio/StudioPitchCard.tsx', {'./StudioWorkspace':load('src/components/publishing-studio/StudioWorkspace.tsx'), 'next/link':{default:({children,...props})=>React.createElement('a',props,children)}}) : id === '@/lib/publishing-studio/opportunities' ? load('src/lib/publishing-studio/opportunities.ts', {}) : require('./studio-publication-test-import.cjs')(id) || require(id) }); return exports; }
 const requests = [], destinations = [];
 function fetchMock(url, options) { return new Promise(resolve => requests.push({url,method:options.method,body:JSON.parse(options.body),resolve})); }
 const navigation = load('src/lib/publishing-studio/navigation.ts', {});
@@ -15,41 +15,41 @@ const imports = { './usePersonalIntroduction':{usePersonalIntroduction:()=>({int
 const { PublishingStudio } = load('src/components/publishing-studio/PublishingStudio.tsx', imports);
 let html = renderToStaticMarkup(React.createElement(PublishingStudio));
 assert.match(html, /Give Meru a fuller introduction/);assert.match(html,/2 slides/);
-assert.match(html, /View idea: Give Meru a fuller introduction./); assert.doesNotMatch(html, /Supported by the published design change/); assert.match(html, /Inside La Gorce/);
+assert.match(html, /Polish this post: Inside Meru/); assert.doesNotMatch(html, /Supported by the published design change/); assert.match(html, /Inside La Gorce/);
 assert.doesNotMatch(html, /Start a project campaign|Choose a published project|Create a post/);
-assert.equal((html.match(/aria-label="View idea: Give/g)||[]).length, 2);
+assert.equal((html.match(/aria-label="Polish this post:/g)||[]).length, 2);
 params = new URLSearchParams('project=studio-wide');
 html = renderToStaticMarkup(React.createElement(PublishingStudio));assert.match(html,/Inside Meru/);assert.match(html,/Inside La Gorce/);assert.doesNotMatch(html,/>Studio-wide</);
 assert.equal(navigation.matchesStudioItem({title:'Across homes',projectIds:['p0','p1'],status:'recommended'},{project:'cross-project',query:'',status:''}),true);
 assert.equal(navigation.matchesStudioItem({title:'One home',projectIds:['p0'],status:'recommended'},{project:'cross-project',query:'',status:''}),false);
 params = new URLSearchParams('project=p0&view=campaigns&create=campaign');
 html = renderToStaticMarkup(React.createElement(PublishingStudio));
-assert.match(html,/View idea: Give Meru a fuller introduction./); assert.doesNotMatch(html,/Inside La Gorce|Choose a published project/);
+assert.match(html,/Polish this post: Inside Meru/); assert.doesNotMatch(html,/Inside La Gorce|Choose a published project/);
 const {ProjectSocialPanel}=load('src/components/publishing-studio/ProjectSocialPanel.tsx',imports);
 html=renderToStaticMarkup(React.createElement(ProjectSocialPanel,{projectId:'p0'}));
 assert.match(html,/href="\/designer\/studio\?project=p0"/); assert.match(html,/Inside Meru/); assert.doesNotMatch(html,/Inside La Gorce|create=|view=campaigns/);
-params=new URLSearchParams('type=campaign'); html=renderToStaticMarkup(React.createElement(PublishingStudio)); assert.doesNotMatch(html,/aria-label="View idea: Give/); assert.match(html,/Clear filters/);
+params=new URLSearchParams('type=campaign'); html=renderToStaticMarkup(React.createElement(PublishingStudio)); assert.doesNotMatch(html,/aria-label="Polish this post:/); assert.match(html,/Clear filters/);
 const originalFeed = data.feed;
-assert.match(html, /Your work has more to say/);
+assert.match(html, /Your next publication/);
 for (const count of [0, 1, 2, 3, 4]) {
  params = new URLSearchParams();
  data.feed = Array.from({length: count}, (_, index) => ({...originalFeed[0], id: `proposal:${index}`, title: `Prepared story ${index}`}));
  html = renderToStaticMarkup(React.createElement(PublishingStudio));
- assert.equal((html.match(/aria-label="View idea: Give/g) || []).length, count, 'Every available story remains visible without expanding a gate');
+ assert.equal((html.match(/aria-label="Polish this post:/g) || []).length, count, 'Every available story remains visible without expanding a gate');
  if (count === 4) assert.match(html, /From your projects/);
  assert.doesNotMatch(html, /<select|More suggestions/);
- assert.match(html, /Meet the person behind the projects/);
+ assert.match(html, /Let potential clients meet the person behind your projects/);
 }
 // Discovery choices narrow actual source-backed cards and never hide personal activities behind a dropdown.
 data.feed=[{...originalFeed[0],roomId:'room',format:'room_story'},originalFeed[1]];
 params=new URLSearchParams('format=room');html=renderToStaticMarkup(React.createElement(PublishingStudio));
-assert.match(html,/View idea: Give Meru a fuller introduction./);assert.doesNotMatch(html,/View idea: Give La Gorce a fuller introduction./);
+assert.match(html,/Polish this post: Inside Meru/);assert.doesNotMatch(html,/Polish this post: Inside La Gorce/);
 params=new URLSearchParams('subject=about-me');html=renderToStaticMarkup(React.createElement(PublishingStudio));
-assert.match(html,/Help the right clients find you/);assert.match(html,/Profile bio/);assert.match(html,/Meet the person behind the projects/);assert.doesNotMatch(html,/View idea: Give/);
+assert.match(html,/Help the right clients understand your practice/);assert.match(html,/Profile introduction/);assert.match(html,/Let potential clients meet the person behind your projects/);assert.doesNotMatch(html,/Polish this post:/);
 params=new URLSearchParams('project=p0&format=twenty_questions');html=renderToStaticMarkup(React.createElement(PublishingStudio));
-assert.match(html,/Get to know Meru/);assert.doesNotMatch(html,/View idea: Give/);
+assert.match(html,/Inside Meru/);assert.doesNotMatch(html,/Polish this post:/);
 params=new URLSearchParams('project=p0&format=room');html=renderToStaticMarkup(React.createElement(PublishingStudio));
-assert.match(html,/A room worth a closer look/);
+assert.match(html,/A closer look at Meru/);
 assert.equal(discovery.matchesStoryFormat({format:'MATERIAL_STUDY'},'material'),true);
 assert.equal(discovery.matchesStoryFormat({format:'project_story'},'room'),false);
 data.feed=originalFeed;
@@ -57,13 +57,13 @@ data.feed = [{...originalFeed[0], id:'carousel:saved', kind:'carousel', status:'
 data.campaigns = [{id:'unfinished',projectId:'p0',title:'Unfinished campaign',postCount:0,totalPosts:4,posts:[]}];
 params = new URLSearchParams('tab=progress');
 html = renderToStaticMarkup(React.createElement(PublishingStudio));
-assert.match(html,/View idea: Give/); assert.match(html,/Unfinished campaign/); assert.match(html,/without generated posts/);
+assert.match(html,/Continue editing:/); assert.match(html,/Unfinished campaign/); assert.match(html,/without generated posts/);
 params = new URLSearchParams('tab=exports');
 html = renderToStaticMarkup(React.createElement(PublishingStudio));
 assert.match(html,/No stored download packages/); assert.doesNotMatch(html,/aria-label="Continue editing:/);
 params = new URLSearchParams('tab=progress&view=saved');
 html = renderToStaticMarkup(React.createElement(PublishingStudio,{embedded:true}));
-assert.doesNotMatch(html,/role="tablist"|role="tabpanel"|Your work has more to say/); assert.match(html,/View idea: Give/);
+assert.doesNotMatch(html,/role="tablist"|role="tabpanel"|Your next publication/); assert.match(html,/Continue editing:/);
 data.feed=originalFeed;data.campaigns=[];
 params=new URLSearchParams();
 introduction={status:'published',publishedUrl:'/stories/known-introduction'};
@@ -71,17 +71,17 @@ html=renderToStaticMarkup(React.createElement(PublishingStudio));
 assert.doesNotMatch(html,/Create my introduction/,'Completed introductions are not recommended as new tasks');
 introduction={status:'draft',href:'/designer/studio/activity?id=saved-interview'};
 html=renderToStaticMarkup(React.createElement(PublishingStudio));
-assert.match(html,/Keep shaping your introduction/,'Saved interview has a distinct browsing card');
-assert.equal((html.match(/aria-label="View idea: Keep shaping your introduction/g)||[]).length,1,'Personal introduction appears once across prominent sections');
+assert.match(html,/Continue my interview: Meet The designer/,'Saved interview has a distinct browsing card');
+assert.equal((html.match(/aria-label="Continue my interview: Meet The designer/g)||[]).length,1,'Personal introduction appears once across prominent sections');
 introduction={status:'available'};
 releaseState.opportunities=[{projectId:'p0',projectTitle:'Meru',purpose:'Give Meru a fuller introduction.',sourceIds:['suggestion:p0']}];
 html=renderToStaticMarkup(React.createElement(PublishingStudio));
 assert.match(html,/href="\/designer\/studio\/release\?projectId=p0"/,'Grouped opportunity opens its project plan');
-assert.doesNotMatch(html,/aria-label="View idea: Give Meru a fuller introduction."/,'Grouped source is not also a standalone recommendation');
-assert.match(html,/aria-label="View idea: Give La Gorce a fuller introduction."/,'Unrelated individual access remains visible');
+assert.doesNotMatch(html,/aria-label="Polish this post: Inside Meru"/,'Grouped source is not also a standalone recommendation');
+assert.match(html,/aria-label="Polish this post: Inside La Gorce"/,'Unrelated individual access remains visible');
 params=new URLSearchParams('format=project');
 html=renderToStaticMarkup(React.createElement(PublishingStudio));
-assert.match(html,/aria-label="View idea: Give Meru a fuller introduction."/,'Explicit format browsing preserves individual access');
+assert.match(html,/aria-label="Polish this post: Inside Meru"/,'Explicit format browsing preserves individual access');
 releaseState.opportunities=[];
 console.log('PASS Studio feed: photo-led proposed posts without social history; legacy campaign link stays populated; same scoped project cards and canonical hub link; explicit type filter.');
 
@@ -99,29 +99,21 @@ async function checkInteractions() {
  assert.equal(requests.length,0,'Browsing available cards must not call preparation or generation');
  introduction={status:'draft',href:'/designer/studio/activity?id=saved-interview'};
  await act(async()=>root.render(React.createElement(PublishingStudio)));
- await act(async()=>document.querySelector('[aria-label="View idea: Keep shaping your introduction."]').click());
- assert.equal(document.querySelector('dialog[open] a').getAttribute('href'),'/designer/studio/activity?id=saved-interview','Explicit continuation keeps the exact saved interview');
+ assert(document.querySelector('[aria-label="Continue my interview: Meet The designer"]'));
+ assert.equal(document.querySelector('[aria-label="Continue my interview: Meet The designer"]').getAttribute('href'),'/designer/studio/activity?id=saved-interview','Explicit continuation keeps the exact saved interview');
  assert.equal(requests.length,0);assert.equal(destinations.length,0);
- await act(async()=>document.querySelector('[aria-label="Close details"]').click());
  introduction={status:'available'};
  await act(async()=>root.render(React.createElement(PublishingStudio)));
- await act(async()=>[...document.querySelectorAll('button')].find(button=>button.textContent==='Choose project').click());
+ await act(async()=>[...document.querySelectorAll('button')].find(button=>button.textContent==='Filter').click());
  assert.match(document.querySelector('dialog[open]').textContent,/Meru/);assert.match(document.querySelector('dialog[open]').textContent,/La Gorce/);
  assert.equal(requests.length,0,'Browsing project grid writes nothing');
- await act(async()=>document.querySelector('[aria-label="Close project picker"]').click());
+ await act(async()=>document.querySelector('[aria-label="Close details"]').click());
  await act(async()=>[...document.querySelectorAll('button')].find(button=>button.textContent==='Build a campaign for Meru').click());
  assert.equal(document.querySelector('[data-campaign-project]').getAttribute('data-campaign-project'),'p0','Campaign opens directly with source project selected');
- const button=()=>document.querySelector('button[aria-label="View idea: Give Meru a fuller introduction."]');
+ const button=()=>document.querySelector('button[aria-label="Polish this post: Inside Meru"]');
  async function browseThenPolish() {
- const beforeAction=requests.length, beforeNavigation=destinations.length;
- await act(async()=>button().click());
- assert.ok(document.querySelector('dialog[open]'),'Card opens a local pitch');
- assert.equal(requests.length,beforeAction,'Opening a pitch does not prepare work');assert.equal(destinations.length,beforeNavigation,'Opening a pitch does not navigate');
- assert.match(document.querySelector('dialog[open]').textContent,/Supported by the published design change/);
- await act(async()=>document.querySelector('[aria-label="Close details"]').click());
- assert.equal(requests.length,beforeAction,'Closing a pitch does not prepare work');assert.equal(destinations.length,beforeNavigation,'Browsing a pitch does not navigate');
- await act(async()=>button().click());
- await act(async()=>[...document.querySelectorAll('dialog[open] button')].find(node=>node.textContent==='Polish this post').click());
+   await act(async()=>button().click());
+   assert.equal(document.querySelector('dialog[open]'),null,'Preview opens the actual work directly');
  }
  await browseThenPolish();
  assert.equal(requests.length,1);assert.equal(requests[0].url,'/api/publishing-studio/prepare');

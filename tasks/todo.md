@@ -493,3 +493,14 @@ Review: implemented both Studio paths, shared accessible pitch dialogs, searchab
 - [x] Carry project and expertise photography into the pitch modal; omit decorative personal covers.
 - [x] Verify exact image retention and existing browse/action regressions.
 - [ ] Browser-check and merge PR793 after CI passes, as approved by the user.
+
+## Studio concierge publications — 2026-09-23
+- [x] Trace prepared sources, saved work, renderers, entry stages and identity assets.
+- [x] Define shared publication card contract; show faithful post/article covers and truthful remaining contributions.
+- [x] Simplify navigation to Suggestions/In progress plus quiet filter and secondary exports.
+- [x] Connect personal/expertise identity and saved previews to production renderers and actual work.
+- [x] Update enduring Studio product guidance; verify routes, edits, mobile, keyboard and source fidelity.
+- [x] Capture representative screenshots and ship scoped implementation PR.
+Plan check-in: follow the new concierge PR definition, superseding modal-first browsing. Reuse actual source identity and existing work; no fabricated prose, new tables, or production writes. Preserve all saved paths and exports.
+
+Review: implemented publication-led cards and direct actions across both Studio paths, shared production previews, actual identity/saved titles, one Filter control and secondary exports. Compile, 37 regression scripts, scoped ESLint, client/migration guards and TypeScript budget (903/904, unchanged baseline) pass. Synthetic desktop/mobile and saved-expertise browser walkthrough captured in docs/reviews/studio-publication-previews/README.md. Scoped implementation ready for commit and draft PR; no merge, deployment or production writes.

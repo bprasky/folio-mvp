@@ -13,7 +13,7 @@ function load(file) { const exports = {}; vm.runInNewContext(ts.transpileModule(
   calls.push({ url, init });
   if (init?.method === 'PUT') { if (fail) return { ok: false, json: async () => ({ error: 'Save failed; retry.' }) }; const body = JSON.parse(init.body); assert.equal(body.expectedVersion, persisted?.version ?? 0); persisted = { version: (persisted?.version ?? 0) + 1, items: body.items, needsReview: false }; }
   return { ok: true, json: async () => ({ project: { id: 'p', title: 'Project' }, purpose: 'Give Project a fuller introduction.', options, plan: persisted }) };
-}, require(name) { if (name === 'next/link') return { default: ({ href, children, ...rest }) => React.createElement('a', { href, ...rest }, children) }; if (name === 'next/navigation') return { useSearchParams: () => new URLSearchParams('projectId=p') }; if (name === './UnsavedActivityDialog') return load('src/components/publishing-studio/UnsavedActivityDialog.tsx'); return require(name); } }); return exports; }
+}, require(name) { if (name === 'next/link') return { default: ({ href, children, ...rest }) => React.createElement('a', { href, ...rest }, children) }; if (name === 'next/navigation') return { useSearchParams: () => new URLSearchParams('projectId=p') }; if (name === './UnsavedActivityDialog') return load('src/components/publishing-studio/UnsavedActivityDialog.tsx'); return require('./studio-publication-test-import.cjs')(name) || require(name); } }); return exports; }
 const button = text => [...document.querySelectorAll('button')].find(el => el.textContent === text);
 async function click(text) { await React.act(async () => button(text).click()); }
 async function main() {

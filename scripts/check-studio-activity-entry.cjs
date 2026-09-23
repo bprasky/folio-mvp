@@ -20,7 +20,7 @@ if(name==='@/lib/utils')return {cn:(...values)=>values.filter(Boolean).join(' ')
 if(name.includes('/InterviewQuestion'))return {InterviewQuestion:({question})=>React.createElement('p',null,question)};
 if(name.includes('/ProgressIndicator'))return {ProgressIndicator:()=>null};
 if(name.includes('/FollowUpTransition'))return {FollowUpTransition:()=>null};
-return require(name);}});return exports;}
+return require('./studio-publication-test-import.cjs')(name) || require(name);}});return exports;}
 const button=text=>[...document.querySelectorAll('button')].find(item=>item.textContent===text);
 const flush=()=>new Promise(resolve=>setTimeout(resolve,0));
 async function type(text){await React.act(async()=>{const el=document.querySelector('textarea');Object.getOwnPropertyDescriptor(dom.window.HTMLTextAreaElement.prototype,'value').set.call(el,text);el.dispatchEvent(new dom.window.Event('input',{bubbles:true}));});}

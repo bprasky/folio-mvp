@@ -196,7 +196,7 @@ async function main() {
   assert.equal(invalidHero.imageUrl, null, 'Never replace missing saved cover with another photo');
   assert.deepEqual(plain(invalidHero.imageUrls), ['p1.jpg'], 'Foreign image URL never returned');
   const savedCarousel = f.carousels.find(c => c.id === 'carousel-p1');
-  for (const [style, label] of [['minimal', 'folio'], ['folio_presents', 'a folio editorial'], ['folio_x', 'folio × designer']]) {
+  for (const [style, label] of [['minimal', 'folio'], ['folio_presents', 'folio presents Designer'], ['folio_x', 'folio × Designer']]) {
     savedCarousel.config.watermarkStyle = style;
     assert.equal((await f.getStudioData('me')).feed.find(c => c.id === 'carousel:carousel-p1').preview.watermarkText, label);
   }

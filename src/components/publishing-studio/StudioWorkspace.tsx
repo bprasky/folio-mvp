@@ -8,21 +8,21 @@ export const studioAction = 'inline-flex items-center justify-center rounded-ful
 export function StudioIntro() {
   return <header className="space-y-2">
     <p className="folio-meta uppercase tracking-widest text-folio-text-secondary">Publishing Studio</p>
-    <h1 className="folio-h2 sm:folio-h1">Your work has more to say.</h1>
+    <h1 className="folio-h3 sm:folio-h2">Your next publication.</h1>
   </header>;
 }
 
 export function StudioTabs({ value, onChange }: { value: StudioTab; onChange: (tab: StudioTab) => void }) {
-  const tabs: { id: StudioTab; label: string }[] = [{ id: 'suggestions', label: 'Suggestions' }, { id: 'progress', label: 'In progress' }, { id: 'exports', label: 'Exports' }];
+  const tabs: { id: StudioTab; label: string }[] = [{ id: 'suggestions', label: 'Suggestions' }, { id: 'progress', label: 'In progress' }];
   const refs = useRef<(HTMLButtonElement | null)[]>([]);
-  return <div role="tablist" aria-label="Publishing workspace" className="flex gap-6 border-b border-folio-border-subtle sm:gap-8">
+  return <div className="flex items-center justify-between gap-4"><div role="tablist" aria-label="Publishing workspace" className="flex gap-6 border-b border-folio-border-subtle sm:gap-8">
     {tabs.map((tab, index) => <button key={tab.id} id={`studio-tab-${tab.id}`} ref={node => { refs.current[index] = node; }}
-      role="tab" type="button" aria-selected={value === tab.id} aria-controls="studio-panel" tabIndex={value === tab.id ? 0 : -1}
+      role="tab" type="button" aria-selected={(value === 'exports' ? 'progress' : value) === tab.id} aria-controls="studio-panel" tabIndex={(value === 'exports' ? 'progress' : value) === tab.id ? 0 : -1}
       onClick={() => onChange(tab.id)} onKeyDown={event => {
         const next = event.key === 'ArrowRight' ? (index + 1) % tabs.length : event.key === 'ArrowLeft' ? (index + tabs.length - 1) % tabs.length : event.key === 'Home' ? 0 : event.key === 'End' ? tabs.length - 1 : -1;
         if (next < 0) return; event.preventDefault(); onChange(tabs[next].id); refs.current[next]?.focus();
-      }} className={`border-b-2 py-4 folio-ui focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-folio-text-primary ${value === tab.id ? 'border-folio-text-primary text-folio-text-primary' : 'border-transparent text-folio-text-secondary hover:text-folio-text-primary'}`}>{tab.label}</button>)}
-  </div>;
+      }} className={`border-b-2 py-4 folio-ui focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-folio-text-primary ${(value === 'exports' ? 'progress' : value) === tab.id ? 'border-folio-text-primary text-folio-text-primary' : 'border-transparent text-folio-text-secondary hover:text-folio-text-primary'}`}>{tab.label}</button>)}
+  </div><button type="button" onClick={() => onChange('exports')} aria-current={value === 'exports' ? 'page' : undefined} className="folio-meta text-folio-text-secondary underline underline-offset-4">Exports</button></div>;
 }
 
 /** Only the supplied candidate assets are eligible; failed imagery is never a finished cover. */

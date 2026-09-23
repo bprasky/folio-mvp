@@ -19,7 +19,7 @@ type Revision = Prisma.EditorialStoryRevisionGetPayload<{ include: typeof includ
 
 /** Server-only context. Every private read and mutation resolves the current workspace afresh. */
 export async function storyContext(userId: string, db: Prisma.TransactionClient = prisma) {
-  const user = await db.user.findUnique({ where: { id: userId }, select: { name: true, bio: true, role: true } });
+  const user = await db.user.findUnique({ where: { id: userId }, select: { name: true, bio: true, role: true, profileImage: true, brandProfile: { select: { logoImageUrl: true } } } });
   if (!user || !canAccessDesignerTools(user.role)) throw new StoryError('Designer access required.', 403);
   const workspace = await resolvePublishingStudioContext(userId, db);
   if (workspace.id && !workspace.canWriteCampaigns) throw new StoryError('Editing is not available in this workspace.', 403);
@@ -28,6 +28,7 @@ export async function storyContext(userId: string, db: Prisma.TransactionClient 
     select: { id: true, title: true, rooms: { select: { id: true, name: true } }, images: { select: { id: true, roomId: true } }, post: { select: { id: true, expandedBlocks: true, updatedAt: true } } },
     orderBy: [{ updatedAt: 'desc' }, { id: 'asc' }], take: 100 });
   const context: ActivityContext = { designerName: user.name || 'The designer', firmName: workspace.name,
+    identity: { name: user.name || 'The designer', portraitUrl: user.profileImage, logoUrl: user.brandProfile?.logoImageUrl },
     profile: { hasBio: !!user.bio?.trim(), hasPointOfView: false }, projects: projects.map(p => ({ id: p.id, title: p.title, rooms: p.rooms })),
     references: [ ...(user.bio?.trim() ? [{ id: `bio:${userId}`, kind: 'bio' as const, text: user.bio }] : []),
       ...projects.flatMap(p => {
@@ -63,14 +64,18 @@ export async function listStories(userId: string) {
   // Dedicated bounded lookups keep completion detection independent of the latest 100 activities.
   const personal = { ownerId: userId, organizationId: data.workspace.id, format: 'twenty_questions' };
   const personalRevision = { interview: { path: ['brief', 'subject'], equals: 'designer' } };
+  const personalSelect = { id: true, slug: true, publishedRevisionNumber: true, revisions: { orderBy: { number: 'desc' as const }, take: 1, select: { number: true, title: true, blocks: true } } };
   const completed = await prisma.editorialStory.findFirst({ where: { ...personal, status: 'published', publishedRevisionNumber: { not: null },
-    revisions: { some: personalRevision } }, orderBy: { updatedAt: 'desc' }, select: { id: true, slug: true } });
+    revisions: { some: personalRevision } }, orderBy: { updatedAt: 'desc' }, select: personalSelect });
   const inProgress = completed ? null : await prisma.editorialStory.findFirst({ where: { ...personal, status: { not: 'withdrawn' },
     revisions: { some: { ...personalRevision, OR: [{ editVersion: { gt: 1 } }, { answers: { some: {} } }] } } },
-    orderBy: { updatedAt: 'desc' }, select: { id: true, slug: true } });
+    orderBy: { updatedAt: 'desc' }, select: personalSelect });
   const introduction = completed || inProgress;
   const needsReview = completed ? !(await publicStory(completed.slug)) : false;
-  const personalIntroduction = introduction ? { status: completed ? 'published' as const : 'draft' as const, id: introduction.id,
+  const latest = introduction?.revisions?.[0];
+  const currentPublished = Boolean(completed && latest?.number === completed.publishedRevisionNumber);
+  const personalIntroduction = introduction ? { status: currentPublished ? 'published' as const : 'draft' as const, id: introduction.id,
+    title: latest?.title, stage: currentPublished ? 'published' : latest?.blocks && Object.keys(latest.blocks as object).length ? 'article' : 'interview',
     href: `/designer/studio/activity?id=${encodeURIComponent(introduction.id)}`,
     needsReview, publishedUrl: completed && !needsReview ? `/stories/${completed.slug}` : null } : { status: 'available' as const };
   return { context: data.context, personalIntroduction, stories: stories.filter(s => s.status !== 'withdrawn' && s.revisions[0] &&
@@ -192,7 +197,7 @@ export async function changeStory(userId: string, id: string, input: { action?: 
 
 /** Public reads use only the approved published pointer and currently public source projects. */
 export async function publicStory(slug: string) {
-  const story = await prisma.editorialStory.findFirst({ where: { slug, status: 'published', format: { not: 'expertise' } }, include: { owner: { select: { id: true, name: true } },
+  const story = await prisma.editorialStory.findFirst({ where: { slug, status: 'published', format: { not: 'expertise' } }, include: { owner: { select: { id: true, name: true, profileImage: true, brandProfile: { select: { logoImageUrl: true } } } },
     publishedRevision: { include: { sources: { include: { projectPost: { select: { status: true, updatedAt: true, expandedBlocks: true, project: { select: { id: true, isPublic: true } } } } } } } } } });
   const revision = story?.publishedRevision;
   if (!story || !revision?.approvedAt || !revision.publishedAt || revision.sources.some(s => s.projectPost.status !== 'PUBLISHED' || !s.projectPost.project.isPublic ||

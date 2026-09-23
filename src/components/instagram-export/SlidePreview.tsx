@@ -27,9 +27,9 @@ interface Props {
 function getWatermarkText(style: WatermarkStyle, designerName: string): string {
   switch (style) {
     case 'folio_x':
-      return `folio \u00D7 ${designerName.toLowerCase()}`;
+      return `folio \u00D7 ${designerName}`;
     case 'folio_presents':
-      return 'a folio editorial';
+      return `folio presents ${designerName}`;
     case 'minimal':
     default:
       return 'folio';
@@ -60,7 +60,7 @@ export function SlidePreview({
   if (!slide) return null;
 
   const watermarkText = getWatermarkText(watermarkStyle, designerName);
-  const handle = designerHandle || designerName.toLowerCase().replace(/\s+/g, '');
+  const handle = designerHandle || designerName.replace(/\s+/g, '');
 
   const renderSlide = () => {
     // Bio slide
@@ -128,7 +128,7 @@ export function SlidePreview({
     }
 
     // Reuse the feed's exact first-slide composition.
-    if (slide.type === 'hero') return <CarouselHero imageUrl={slide.imageUrl} headline={headline || 'Your headline here'} headlinePosition={headlinePosition} watermarkText={watermarkText} />;
+    if (slide.type === 'hero') return <CarouselHero imageUrl={slide.imageUrl} headline={headline || 'Your headline here'} headlinePosition={headlinePosition} watermarkText={watermarkText} aspectRatio={aspectRatio} />;
 
     return (
       <div style={{ width: '100%', height: '100%', position: 'relative', overflow: 'hidden' }}>
