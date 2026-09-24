@@ -7,9 +7,9 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { compare, measure, normalizeMessage, validateBaseline } from './check-typescript-budget.mjs';
 
-test('124 reviewed display equivalents preserve counts and reject changed errors', () => {
+test('128 reviewed display equivalents preserve counts and reject changed errors', () => {
   const { entries } = JSON.parse(readFileSync(new URL('../tools/typescript-display-equivalences.json', import.meta.url), 'utf8'));
-  assert.equal(entries.length, 124);
+  assert.equal(entries.length, 128);
   for (const e of entries) {
     const old = [e.file,e.code,e.before,e.count], current = [e.file,e.code,e.after,e.count];
     const baseline = { total:e.count,diagnostics:[old] };

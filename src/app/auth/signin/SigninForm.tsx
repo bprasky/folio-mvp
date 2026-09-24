@@ -2,7 +2,8 @@
 
 import { useState } from 'react';
 import { signIn } from 'next-auth/react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { safeCallbackPath } from '@/lib/onboarding/professional-entry';
 import Link from 'next/link';
 import styles from './signin.module.css';
 
@@ -13,6 +14,9 @@ type SigninFormProps = {
 
 export function SigninForm({ showGoogle, showApple }: SigninFormProps) {
   const router = useRouter();
+  const params = useSearchParams();
+  const callbackUrl = safeCallbackPath(params.get('callbackUrl') ?? params.get('callback'));
+  const signupHref = `/auth/signup?callbackUrl=${encodeURIComponent(callbackUrl)}`;
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [remember, setRemember] = useState(true);
@@ -32,7 +36,7 @@ export function SigninForm({ showGoogle, showApple }: SigninFormProps) {
       if (res?.error) {
         setErr(res.error || 'Invalid email or password');
       } else {
-        router.replace('/');
+        router.replace(callbackUrl);
         router.refresh();
       }
     } finally {
@@ -63,7 +67,7 @@ export function SigninForm({ showGoogle, showApple }: SigninFormProps) {
               <button
                 type="button"
                 className={styles.ssoButton}
-                onClick={() => signIn('google', { callbackUrl: '/' })}
+                onClick={() => signIn('google', { callbackUrl })}
                 disabled={loading}
               >
                 <GoogleIcon />
@@ -74,7 +78,7 @@ export function SigninForm({ showGoogle, showApple }: SigninFormProps) {
               <button
                 type="button"
                 className={styles.ssoButton}
-                onClick={() => signIn('apple', { callbackUrl: '/' })}
+                onClick={() => signIn('apple', { callbackUrl })}
                 disabled={loading}
               >
                 <AppleIcon />
@@ -157,7 +161,7 @@ export function SigninForm({ showGoogle, showApple }: SigninFormProps) {
 
       <p className={styles.formFooter}>
         New to Folio?{' '}
-        <Link href="/auth/signup" className={styles.formFooterLink}>
+        <Link href={signupHref} className={styles.formFooterLink}>
           Request an invite
         </Link>
         {' '}— applications are reviewed weekly.

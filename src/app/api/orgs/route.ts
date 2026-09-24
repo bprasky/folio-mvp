@@ -2,8 +2,8 @@
 export const dynamic = 'force-dynamic';
 
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/app/api/auth/[...nextauth]/options';
+
+
 import { prisma } from '@/lib/prisma';
 
 /**
@@ -113,110 +113,6 @@ export async function GET(request: NextRequest) {
   }
 }
 
-/**
- * POST /api/orgs - Create a new organization
- * Body: { name, type, website? }
- *
- * Creates org with minimal data, adds creator as member
- */
-export async function POST(request: NextRequest) {
-  try {
-    const session = await getServerSession(authOptions);
 
-    if (!session?.user?.id) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
-    const body = await request.json();
-    const { name, type, website, workEmail } = body;
-
-    // Validate required fields
-    if (!name || !name.trim()) {
-      return NextResponse.json(
-        { error: 'Organization name is required' },
-        { status: 400 }
-      );
-    }
-
-    if (!workEmail || !workEmail.trim()) {
-      return NextResponse.json(
-        { error: 'Work email is required' },
-        { status: 400 }
-      );
-    }
-
-    // Validate org type - includes new ARCHITECTURE_FIRM
-    const validTypes = ['VENDOR', 'DESIGN_FIRM', 'MANUFACTURER', 'SHOWROOM', 'CONTRACTOR', 'ARCHITECTURE_FIRM'];
-    const orgType = type?.toUpperCase() || 'DESIGN_FIRM';
-    if (!validTypes.includes(orgType)) {
-      return NextResponse.json(
-        { error: `Invalid type. Must be one of: ${validTypes.join(', ')}` },
-        { status: 400 }
-      );
-    }
-
-    // Use raw SQL to avoid Prisma trying to set default values for missing columns
-    const orgId = crypto.randomUUID();
-    const orgUserId = crypto.randomUUID();
-    const trimmedName = name.trim();
-    const trimmedWebsite = website?.trim() || null;
-    const trimmedWorkEmail = workEmail.trim();
-
-    await prisma.$executeRaw`
-      INSERT INTO organizations (id, name, type, website, "createdAt", "updatedAt")
-      VALUES (${orgId}, ${trimmedName}, ${orgType}::"OrgType", ${trimmedWebsite}, NOW(), NOW())
-    `;
-
-    // Add creator as member with work email
-    // Note: workEmail column may not exist in prod yet - try with it, fall back without
-    try {
-      await prisma.$executeRaw`
-        INSERT INTO organization_users (id, "userId", "organizationId", role, "joinedAt", "workEmail")
-        VALUES (${orgUserId}, ${session.user.id}, ${orgId}, 'OWNER'::"OrgUserRole", NOW(), ${trimmedWorkEmail})
-      `;
-    } catch (emailError: any) {
-      // workEmail column doesn't exist yet, insert without it
-      console.log('[POST /api/orgs] workEmail column not available, inserting without:', trimmedWorkEmail);
-      await prisma.$executeRaw`
-        INSERT INTO organization_users (id, "userId", "organizationId", role, "joinedAt")
-        VALUES (${orgUserId}, ${session.user.id}, ${orgId}, 'OWNER'::"OrgUserRole", NOW())
-      `;
-    }
-
-    // Update user's role based on org type using Prisma ORM
-    // (role column exists in prod, only need raw SQL for tables with missing columns)
-    // Map org type to user role:
-    // - DESIGN_FIRM -> DESIGNER
-    // - ARCHITECTURE_FIRM -> ARCHITECT
-    // - CONTRACTOR -> BUILDER
-    // - All others (VENDOR, MANUFACTURER, SHOWROOM) -> VENDOR
-    let userRole = 'VENDOR';
-    if (orgType === 'DESIGN_FIRM') userRole = 'DESIGNER';
-    else if (orgType === 'ARCHITECTURE_FIRM') userRole = 'ARCHITECT';
-    else if (orgType === 'CONTRACTOR') userRole = 'BUILDER';
-
-    await prisma.user.update({
-      where: { id: session.user.id },
-      data: { role: userRole as any },
-    });
-
-    return NextResponse.json({
-      org: { id: orgId, name: trimmedName, type: orgType },
-      message: 'Organization created successfully',
-    }, { status: 201 });
-  } catch (error: any) {
-    console.error('[POST /api/orgs] Error:', error);
-
-    if (error.code === 'P2002' || error.message?.includes('unique')) {
-      return NextResponse.json(
-        { error: 'An organization with this name already exists' },
-        { status: 409 }
-      );
-    }
-
-    return NextResponse.json(
-      { error: 'Failed to create organization', debug: error?.message },
-      { status: 500 }
-    );
-  }
-}
+// Legacy creator uses the same confirmation and duplicate-safe transaction.
+export { POST } from '@/app/api/auth/org-setup/route';

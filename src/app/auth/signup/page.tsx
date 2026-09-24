@@ -1,9 +1,10 @@
 'use client';
 
-import React, { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import React, { useEffect, useState } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { safeCallbackPath, professionalSetupHref } from '@/lib/onboarding/professional-entry';
 import Link from 'next/link';
-import { signIn } from 'next-auth/react';
+import { signIn, useSession } from 'next-auth/react';
 
 import { Topbar } from '../_components/Topbar';
 import { PhotoPanel } from '../_components/PhotoPanel';
@@ -32,12 +33,24 @@ const INTENT_OPTIONS: { value: UserIntent; label: string }[] = [
 
 function intentToRedirect(intent: UserIntent): string {
   if (intent === 'browsing') return POST_SIGNUP_REDIRECT_BROWSING;
-  return `/auth/org-setup?type=${intent}`;
+  return professionalSetupHref(intent);
 }
 
-export default function SignupPage() {
+function SignupForm() {
   const router = useRouter();
-  const [intent, setIntent] = useState<UserIntent>('browsing');
+  const params = useSearchParams();
+  const { status } = useSession();
+  const requestedCallback = params.get('callbackUrl') ?? params.get('callback');
+  const callbackUrl = requestedCallback ? safeCallbackPath(requestedCallback) : null;
+  const [intent, setIntent] = useState<UserIntent>(() => {
+    const type = params.get('type');
+    return INTENT_OPTIONS.some(option => option.value === type) ? type as UserIntent : 'browsing';
+  });
+  const destination = callbackUrl ?? intentToRedirect(intent);
+  const signinHref = '/auth/signin?callbackUrl=' + encodeURIComponent(destination);
+  useEffect(() => {
+    if (status === 'authenticated') router.replace(destination);
+  }, [status, router, destination]);
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [email, setEmail] = useState('');
@@ -118,7 +131,7 @@ export default function SignupPage() {
 
       // Intent overrides the API's onboarding redirect: pros go to org setup,
       // browsers continue to the existing onboarding diagnostic.
-      router.replace(intentToRedirect(intent));
+      router.replace(destination);
       router.refresh();
     } catch (error) {
       console.error('Signup error:', error);
@@ -129,13 +142,13 @@ export default function SignupPage() {
   };
 
   const handleGoogle = () =>
-    signIn('google', { callbackUrl: intentToRedirect(intent) });
+    signIn('google', { callbackUrl: destination });
   const handleApple = () =>
-    signIn('apple', { callbackUrl: intentToRedirect(intent) });
+    signIn('apple', { callbackUrl: destination });
 
   return (
     <div className="auth-shell">
-      <Topbar rightCta={{ label: 'Sign in', href: '/auth/signin' }} />
+      <Topbar rightCta={{ label: 'Sign in', href: signinHref }} />
 
       <main className="auth-stage">
         <PhotoPanel
@@ -274,7 +287,7 @@ export default function SignupPage() {
 
           <div className="auth-form-foot">
             Already with us?{' '}
-            <Link href="/auth/signin">Sign in</Link>{' '}
+            <Link href={signinHref}>Sign in</Link>{' '}
             — we&rsquo;ll take you back to your projects.
           </div>
         </section>
@@ -283,4 +296,8 @@ export default function SignupPage() {
       <PageFooter />
     </div>
   );
+}
+
+export default function SignupPage() {
+  return <React.Suspense fallback={null}><SignupForm /></React.Suspense>;
 }

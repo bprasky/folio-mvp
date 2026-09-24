@@ -2,6 +2,7 @@ import 'server-only';
 import { expertiseEnabled } from './flag';
 import { Prisma } from '@prisma/client';
 import { prisma } from '@/lib/prisma';
+import { canPublishFromOrg } from '@/lib/permissions';
 import { checkRateLimit } from '@/lib/rateLimit';
 import { StudioAccessError } from '../data';
 import { answerSession, createSession, readyToDraft, validateArticle } from './engine';
@@ -249,6 +250,9 @@ export async function changeExpertise(actor: string, id: string, body: unknown):
       if (article.cover !== 'project' && !coverUrl) fail('Choose an available portrait or logo, or use a project photograph.');
       article = { ...article, coverUrl, reviewed: false };
     } else if (input.action === 'publish') {
+      if (!fresh.workspace.id || !(await canPublishFromOrg(actor, fresh.workspace.id, db)).ok) {
+        fail('Join or create a firm with posting access before publishing.', 403);
+      }
       if (!article) fail('Compose and review the article first.');
       validateArticle(article!, interview.opportunity, interview.session);
       if (input.reviewed !== true && !revision.approvedAt) fail('Review this article version before publishing or exporting.');

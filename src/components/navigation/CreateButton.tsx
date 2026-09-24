@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
+import { projectEntryHref } from "@/lib/onboarding/professional-entry";
 import { useSession } from "next-auth/react";
 import { Plus, ChevronDown, FileText, Package, FolderPlus } from "lucide-react";
 import { normalizeRole } from "@/lib/permissions";
@@ -26,11 +27,11 @@ export function CreateButton() {
   }, []);
 
   // Don't show if not authenticated or loading
-  if (status === "loading" || !session?.user) {
+  if (status === "loading") {
     return null;
   }
 
-  const role = normalizeRole(session.user.role);
+  const role = normalizeRole(session?.user?.role);
   const isVendor = role === "VENDOR";
 
   // For vendors, show dropdown with multiple options
@@ -103,7 +104,7 @@ export function CreateButton() {
   // For individuals, designers, and other authenticated users - simple create project button
   return (
     <Link
-      href="/projects/new"
+      href={projectEntryHref(session?.user)}
       className="flex items-center gap-1.5 px-3 py-1.5 folio-ui text-surface-canvas bg-folio-text-primary rounded-full hover:opacity-90 transition-colors"
     >
       <Plus className="h-4 w-4" />

@@ -7,6 +7,7 @@ import { prisma } from '@/lib/prisma';
 import { z } from 'zod';
 import { assertCollaborationStoryEdit } from '@/lib/collaboration/auth';
 import { CollaborationStoryStatus } from '@prisma/client';
+import { canPublishFromOrg } from '@/lib/permissions';
 
 const ApproveSchema = z.object({
   approved: z.boolean(),
@@ -128,6 +129,11 @@ export async function POST(
       } else {
         newStatus = 'DESIGNER_APPROVED';
       }
+    }
+
+    if (bothApproved) {
+      const gate = await canPublishFromOrg(session.user.id, role === 'vendor' ? story.vendorOrgId : null);
+      if (gate.ok === false) return NextResponse.json({ error: 'Forbidden', reason: gate.reason }, { status: 403 });
     }
 
     const updatedStory = await prisma.collaborationStory.update({

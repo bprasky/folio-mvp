@@ -19,7 +19,7 @@ export default function RoleBasedLayout({ children }: RoleBasedLayoutProps) {
   const pathname = usePathname();
 
   // Check if we're on an auth page where we might want to suppress navigation
-  const isAuthPage = pathname?.startsWith('/auth/');
+  const isAuthPage = pathname?.startsWith('/auth/') || pathname?.startsWith('/onboarding');
   
   // For auth pages, render without layout to avoid navigation interference
   if (isAuthPage) {

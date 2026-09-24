@@ -1,100 +1,42 @@
+import Link from 'next/link';
 import { redirect } from 'next/navigation';
-import { getServerSession, type Session } from 'next-auth';
+import { getServerSession } from 'next-auth';
 import { authOptions } from '@/app/api/auth/[...nextauth]/options';
 import { prisma } from '@/lib/prisma';
-import { Topbar } from '../_components/Topbar';
-import { PhotoPanel } from '../_components/PhotoPanel';
-import { PageFooter } from '../_components/PageFooter';
+import { safeProfessionalCallback } from '@/lib/onboarding/professional-entry';
 import { ScenarioA, type OrgIntent } from './_ScenarioA';
-import { ScenarioB, type UserOrg } from './_ScenarioB';
 import '../_components/auth.css';
 
 export const dynamic = 'force-dynamic';
 
-function isOrgIntent(v: string | string[] | undefined): v is OrgIntent {
-  return v === 'designer' || v === 'architect' || v === 'builder' || v === 'vendor';
-}
-
-export default async function OrgSetupPage({
-  searchParams,
-}: {
-  searchParams: { type?: string };
+export default async function OrgSetupPage({ searchParams }: {
+  searchParams: { type?: string; callbackUrl?: string; add?: string };
 }) {
-  let session: Session | null = null;
-  try {
-    session = await getServerSession(authOptions);
-  } catch (err) {
-    // Missing NEXTAUTH_SECRET in non-prod envs would throw here; degrade to
-    // anonymous rather than erroring the whole page.
-    console.error('[/auth/org-setup] getServerSession failed:', err);
-  }
-
-  // Auth is required. Without a session every action on this page (search,
-  // request-to-join, create, claim-invite mint) returns 401 from the API and
-  // the user sees a button that just silently does nothing. Bounce to
-  // signin with a callback so we end back here when the cookie is real.
-  // The most common cause: the signup page's auto-signIn('credentials')
-  // call after POST /api/auth/signup races or silently fails (the API
-  // doesn't set a session itself).
+  const callbackUrl = safeProfessionalCallback(searchParams.callbackUrl);
+  const type = ['designer', 'architect', 'builder', 'vendor'].includes(searchParams.type ?? '') ? searchParams.type as OrgIntent : null;
+  const session = await getServerSession(authOptions);
   if (!session?.user?.id) {
-    const typeQs = isOrgIntent(searchParams.type) ? `?type=${searchParams.type}` : '';
-    const callback = `/auth/org-setup${typeQs}`;
-    redirect(`/auth/signin?callbackUrl=${encodeURIComponent(callback)}`);
+    const params = new URLSearchParams({ callbackUrl });
+    if (type) params.set('type', type);
+    if (searchParams.add === '1') params.set('add', '1');
+    redirect(`/auth/signin?callbackUrl=${encodeURIComponent('/auth/org-setup?' + params)}`);
   }
-
-  // Logged-in path: fetch existing memberships to decide scenario A vs B.
-  let userOrgs: UserOrg[] = [];
-  try {
-    const memberships = await prisma.organizationUser.findMany({
-      where: { userId: session.user.id, isActive: true },
-      select: {
-        role: true,
-        organization: {
-          select: { id: true, name: true, type: true, capabilities: true },
-        },
-      },
-      orderBy: { joinedAt: 'asc' },
-    });
-    userOrgs = memberships.map((m) => ({
-      id: m.organization.id,
-      name: m.organization.name,
-      type: m.organization.type,
-      capabilities: m.organization.capabilities,
-      membershipRole: m.role,
-    }));
-  } catch (err) {
-    // DB hiccup: degrade gracefully to scenario A rather than crashing the
-    // page. The "no orgs" branch still works for everyone.
-    console.error('[/auth/org-setup] Failed to load memberships:', err);
-  }
-
-  const initialIntent = isOrgIntent(searchParams.type) ? searchParams.type : null;
-  const isScenarioB = userOrgs.length > 0;
-
-  const photoDescription = isScenarioB
-    ? 'Stack another capability on the page you already run, or stand up a new one alongside it. Either way, the credit line stays with the people who did the work.'
-    : 'Where the work gets named. Your organization becomes the credit line on every project you bring to Folio — pieces tagged, rooms attributed, story intact.';
-
+  const memberships = await prisma.organizationUser.findMany({
+    where: { userId: session.user.id, isActive: true },
+    select: { role: true, organization: { select: { id: true, name: true, type: true, location: true } } },
+    orderBy: { joinedAt: 'asc' },
+  });
+  const firms = memberships.map(({ role, organization }) => ({ ...organization, membershipRole: role }));
+  const eligible = firms.filter((org) => org.membershipRole !== 'VIEWER');
+  const existingOnly = !!searchParams.callbackUrl && searchParams.add !== '1' && eligible.length > 0;
   return (
     <div className="auth-shell">
-      <Topbar />
-      <main className="auth-stage">
-        <PhotoPanel
-          imageSrc="https://images.unsplash.com/photo-1618220179428-22790b461013?auto=format&fit=crop&w=1800&q=80"
-          imageAlt="Sitting room in cream linen and oak, soft afternoon light"
-          eyebrow="From Issue 09 · Cape Town"
-          description={photoDescription}
-          counter="04 / 04"
-        />
-        <section className="auth-form-panel" aria-label="Organization setup">
-          {isScenarioB ? (
-            <ScenarioB initialIntent={initialIntent} userOrgs={userOrgs} />
-          ) : (
-            <ScenarioA initialIntent={initialIntent} />
-          )}
-        </section>
+      <header className="px-6 py-6 border-b border-folio-border-subtle">
+        <Link href="/" className="folio-logo-text" aria-label="Folio home">Folio</Link>
+      </header>
+      <main className="w-full max-w-lg mx-auto px-6 py-8 sm:py-12 space-y-6">
+        <ScenarioA initialIntent={type} callbackUrl={callbackUrl} memberships={existingOnly ? eligible : firms} existingOnly={existingOnly} />
       </main>
-      <PageFooter />
     </div>
   );
 }

@@ -1,6 +1,6 @@
 import { Prisma, type PostStatus } from '@prisma/client';
 import { prisma } from '@/lib/prisma';
-import { assertProjectWrite, assertProjectPublish } from '@/lib/authz/access';
+import { assertProjectWrite, assertProjectPublish, assertProjectUnpublish } from '@/lib/authz/access';
 import { computePublishReadiness, isDocumentImage } from '@/lib/publish/computePublishReadiness';
 import { makeSlug } from '@/lib/posting/slug';
 
@@ -79,8 +79,10 @@ export async function transitionEditorial(input: {
     await assertProjectWrite(userId, projectId);
     // A writer can submit a private draft. Withdrawing an already-public
     // project still requires the existing publish capability.
-    try { await assertProjectPublish(userId, projectId); }
+    try { await assertProjectUnpublish(userId, projectId); }
     catch { mayHidePublicProject = false; }
+  } else if (action === 'unpublish' || action === 'archive') {
+    await assertProjectUnpublish(userId, projectId);
   } else {
     await assertProjectPublish(userId, projectId);
   }

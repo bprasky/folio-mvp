@@ -6,90 +6,27 @@ import { authOptions } from '@/app/api/auth/[...nextauth]/options';
 import { prisma } from '@/lib/prisma';
 import { roleForOrgType } from '@/lib/onboarding/role-org-mapping';
 
-// Best-effort inbox ping for the org's admins when a join request lands.
-// Lands as a Conversation row so the mailbox icon (which polls
-// /api/messages/unread-count and sums ConversationParticipant.unreadCount)
-// surfaces the badge — keeping all "needs your attention" pings in one place.
-// Wrapped in try/catch and called after the join request is committed; if
-// the notification fails the request still stands.
-async function pingAdminsOnJoinRequest(args: {
-  orgId: string;
-  orgName: string;
-  requesterId: string;
-}) {
-  const { orgId, orgName, requesterId } = args;
-  try {
-    const [admins, requester] = await Promise.all([
-      prisma.organizationUser.findMany({
-        where: {
-          organizationId: orgId,
-          role: { in: ['OWNER', 'ADMIN'] },
-          isActive: true,
-          userId: { not: requesterId },
-        },
-        select: { userId: true },
-      }),
-      prisma.user.findUnique({
-        where: { id: requesterId },
-        select: { name: true, email: true },
-      }),
-    ]);
-    if (admins.length === 0 || !requester) return;
+import { notifyOrgJoinRequest } from '@/lib/notifications/org-join';
+import { revalidatePath } from 'next/cache';
 
-    const requesterName = requester.name?.trim() || requester.email;
-    const subject = `${requesterName} requested to join ${orgName}`;
-    const body = `${requesterName} (${requester.email}) wants to join ${orgName}.`;
-    const now = new Date();
-
-    // Find or reuse a pending join-request row id so the inbox conversation
-    // can resolve to the same OrgJoinRequest for inline Approve / Decline.
-    const joinRequestRow = await prisma.orgJoinRequest.findFirst({
-      where: { userId: requesterId, organizationId: orgId, status: 'PENDING' },
-      select: { id: true },
-    });
-
-    await prisma.$transaction(async (tx) => {
-      const conversation = await tx.conversation.create({
-        data: {
-          initiatorUserId: requesterId,
-          recipientOrgId: orgId,
-          subject,
-          context: 'PLATFORM',
-          category: 'GENERAL',
-          status: 'ACTIVE',
-          lastMessageAt: now,
-          // Marker the inbox thread reads to decide whether to render inline
-          // Approve / Decline. Tied to the OrgJoinRequest row so PATCHing is
-          // a single round-trip from the conversation.
-          structuredData: {
-            kind: 'orgJoinRequest',
-            joinRequestId: joinRequestRow?.id ?? null,
-            organizationId: orgId,
-            requesterUserId: requesterId,
-          },
-        },
-      });
-
-      await tx.message.create({
-        data: {
-          conversationId: conversation.id,
-          senderUserId: requesterId,
-          body,
-        },
-      });
-
-      await tx.conversationParticipant.createMany({
-        data: admins.map((a) => ({
-          conversationId: conversation.id,
-          userId: a.userId,
-          orgId,
-          unreadCount: 1,
-        })),
-      });
-    });
-  } catch (err) {
-    console.error('[POST /api/orgs/[orgId]/join] inbox ping failed:', err);
+async function notifyAdmins(args: Parameters<typeof notifyOrgJoinRequest>[0]) {
+  try { return await notifyOrgJoinRequest(args); }
+  catch (error) {
+    console.error('[org join] notification failed:', error);
+    return { inApp: null, email: 'unavailable' as const };
   }
+}
+
+// Retry reports who can currently review the saved request, without claiming
+// that a notification was delivered or sending another email.
+async function pendingAdminAvailability(orgId: string, requesterId: string) {
+  const admin = await prisma.organizationUser.findFirst({
+    where: { organizationId: orgId, isActive: true, role: { in: ['OWNER', 'ADMIN'] }, userId: { not: requesterId } },
+    select: { id: true },
+  });
+  return admin
+    ? { adminAvailable: true }
+    : { adminAvailable: false, inApp: false, email: 'unavailable' as const };
 }
 
 /**
@@ -100,16 +37,18 @@ export async function POST(
   request: NextRequest,
   { params }: { params: { orgId: string } }
 ) {
+  let requesterId: string | undefined;
   try {
     const session = await getServerSession(authOptions);
 
     if (!session?.user?.id) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
+    requesterId = session.user.id;
 
     const { orgId } = params;
     const body = await request.json().catch(() => ({}));
-    const { message } = body;
+    const message = body?.message;
 
     // Check if org exists
     const org = await prisma.organization.findUnique({
@@ -131,7 +70,7 @@ export async function POST(
       }
     });
 
-    if (existingMembership) {
+    if (existingMembership?.isActive) {
       return NextResponse.json(
         { error: 'You are already a member of this organization' },
         { status: 400 }
@@ -148,57 +87,51 @@ export async function POST(
       }
     });
 
-    if (existingRequest) {
-      if (existingRequest.status === 'PENDING') {
-        return NextResponse.json(
-          { error: 'You already have a pending join request for this organization' },
-          { status: 400 }
-        );
-      }
-
-      // If previous request was rejected, allow re-request
-      if (existingRequest.status === 'REJECTED') {
-        await prisma.orgJoinRequest.update({
-          where: { id: existingRequest.id },
-          data: {
-            status: 'PENDING',
-            message: message?.trim() || null,
-            reviewedBy: null,
-            reviewedAt: null,
-            createdAt: new Date(),
-          }
-        });
-
-        await pingAdminsOnJoinRequest({ orgId, orgName: org.name, requesterId: session.user.id });
-
-        return NextResponse.json({
-          message: 'Join request submitted successfully',
-        });
-      }
+    if (existingRequest?.status === 'PENDING') {
+      return NextResponse.json({ message: 'Your request is saved', pending: true,
+        notifications: await pendingAdminAvailability(orgId, session.user.id) });
     }
-
-    // Create join request
-    await prisma.orgJoinRequest.create({
-      data: {
-        userId: session.user.id,
-        organizationId: orgId,
-        status: 'PENDING',
-        message: message?.trim() || null,
+    const now = new Date();
+    const submitted = await prisma.$transaction(async (tx) => {
+      // Compare-and-set prevents concurrent resubmissions from notifying twice.
+      if (existingRequest) {
+        const changed = await tx.orgJoinRequest.updateMany({
+          where: { id: existingRequest.id, status: existingRequest.status },
+          data: { status: 'PENDING', message: typeof message === 'string' ? message.trim() || null : null,
+            reviewedBy: null, reviewedAt: null, createdAt: now },
+        });
+        if (changed.count !== 1) return null;
+      } else {
+        await tx.orgJoinRequest.create({ data: {
+          userId: session.user.id, organizationId: orgId, status: 'PENDING',
+          message: typeof message === 'string' ? message.trim() || null : null,
+        } });
       }
+      // A pending request allows browsing, never professional posting access.
+      await tx.user.update({ where: { id: session.user.id }, data: {
+        onboardingDiagnosticAt: now, onboardingFirmContextAt: now,
+        onboardingBioCaptureAt: now, onboardingProfilePreviewAt: now,
+      } });
+      return tx.orgJoinRequest.findUniqueOrThrow({
+        where: { userId_organizationId: { userId: session.user.id, organizationId: orgId } }, select: { id: true },
+      });
     });
-
-    await pingAdminsOnJoinRequest({ orgId, orgName: org.name, requesterId: session.user.id });
-
-    return NextResponse.json({
-      message: 'Join request submitted successfully',
-    }, { status: 201 });
+    const notifications = submitted
+      ? await notifyAdmins({ orgId, orgName: org.name, requesterId: session.user.id, joinRequestId: submitted.id })
+      : await pendingAdminAvailability(orgId, session.user.id);
+    revalidatePath('/inbox');
+    revalidatePath('/auth/org-setup');
+    return NextResponse.json({ message: 'Your request is awaiting firm approval', pending: true, notifications }, { status: submitted ? 201 : 200 });
   } catch (error: any) {
     console.error('[POST /api/orgs/[orgId]/join] Error:', error);
 
     if (error.code === 'P2002') {
+      const notifications = requesterId
+        ? await pendingAdminAvailability(params.orgId, requesterId).catch(() => ({ inApp: null, email: 'unavailable' as const }))
+        : undefined;
       return NextResponse.json(
-        { error: 'Join request already exists' },
-        { status: 409 }
+        { message: 'Your request already exists; check its status in your account', pending: true, notifications },
+        { status: 200 }
       );
     }
 
@@ -346,45 +279,43 @@ export async function PATCH(
       });
       const targetRole = org ? roleForOrgType(org.type) : null;
 
-      // Create membership + approve request + promote role (if still
-      // INDIVIDUAL) atomically. The `updateMany` with role guard makes
-      // role-promotion a no-op for already-promoted users, never overwriting.
-      // See docs/AUTH_ORG_ENROLLMENT_FLOW.md.
-      await prisma.$transaction([
-        prisma.organizationUser.create({
-          data: {
-            userId: joinRequest.userId,
-            organizationId: orgId,
-            role: 'MEMBER',
-            isActive: true,
-            showOnProfile: true,
-          }
-        }),
-        prisma.orgJoinRequest.update({
-          where: { id: requestId },
-          data: {
-            status: 'APPROVED',
-            reviewedBy: session.user.id,
-            reviewedAt: new Date(),
-          }
-        }),
-        ...(targetRole
-          ? [
-              prisma.user.updateMany({
-                where: { id: joinRequest.userId, role: 'INDIVIDUAL' },
-                data: { role: targetRole },
-              }),
-            ]
-          : []),
-      ]);
+      await prisma.$transaction(async (tx) => {
+        const reviewed = await tx.orgJoinRequest.updateMany({
+          where: { id: requestId, organizationId: orgId, status: 'PENDING' },
+          data: { status: 'APPROVED', reviewedBy: session.user.id, reviewedAt: new Date() },
+        });
+        if (reviewed.count !== 1) throw new Error('REQUEST_ALREADY_REVIEWED');
+        const currentMember = await tx.organizationUser.findUnique({
+          where: { userId_organizationId: { userId: joinRequest.userId, organizationId: orgId } },
+        });
+        if (!currentMember?.isActive) {
+          await tx.organizationUser.upsert({
+            where: { userId_organizationId: { userId: joinRequest.userId, organizationId: orgId } },
+            create: { userId: joinRequest.userId, organizationId: orgId, role: 'MEMBER', isActive: true, showOnProfile: true },
+            // Rejoining never resurrects a former admin's privileges.
+            update: { role: 'MEMBER', isActive: true, joinedAt: new Date() },
+          });
+        }
+        if (targetRole) await tx.user.updateMany({
+          where: { id: joinRequest.userId, role: 'INDIVIDUAL' }, data: { role: targetRole },
+        });
+        await tx.user.updateMany({
+          where: { id: joinRequest.userId, operatingAsOrgId: null },
+          data: { operatingAsOrgId: orgId, onboardingDiagnosticAt: new Date(), onboardingFirmContextAt: new Date(),
+            onboardingBioCaptureAt: new Date(), onboardingProfilePreviewAt: new Date() },
+        });
+      });
+      revalidatePath('/org/' + orgId + '/settings');
+      revalidatePath('/inbox');
+      revalidatePath('/auth/org-setup');
 
       return NextResponse.json({
         message: `${joinRequest.user.name} has been added to the organization`,
       });
     } else {
       // Reject request
-      await prisma.orgJoinRequest.update({
-        where: { id: requestId },
+      const rejected = await prisma.orgJoinRequest.updateMany({
+        where: { id: requestId, organizationId: orgId, status: 'PENDING' },
         data: {
           status: 'REJECTED',
           reviewedBy: session.user.id,
@@ -392,11 +323,15 @@ export async function PATCH(
         }
       });
 
+      if (rejected.count !== 1) return NextResponse.json({ error: 'This request has already been reviewed' }, { status: 409 });
+      revalidatePath('/org/' + orgId + '/settings');
+      revalidatePath('/inbox');
       return NextResponse.json({
         message: 'Join request rejected',
       });
     }
   } catch (error: any) {
+    if (error.message === 'REQUEST_ALREADY_REVIEWED') return NextResponse.json({ error: 'This request has already been reviewed' }, { status: 409 });
     console.error('[PATCH /api/orgs/[orgId]/join] Error:', error);
 
     if (error.code === 'P2002') {

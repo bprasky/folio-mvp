@@ -55,6 +55,10 @@ const schemas=load('src/lib/publishing-studio/expertise/generation.schemas.ts',{
 const engine=load('src/lib/publishing-studio/expertise/engine.ts',{'./generation.schemas':schemas});
 let modelFails=true, calls=0;
 const generation={discoverExpertise:async()=>[],nextExpertiseQuestion:async(_o,s)=>{calls++;if(modelFails)throw Error('provider failed');return{...s,coverage:{angle:true,examples:['p1','p2'],reasoning:true,judgment:true,confirmed:false,contradictions:[],gaps:[]},nextQuestion:{id:'confirm',purpose:'confirm',text:'Confirm framing',evidenceIds:evidence.map(e=>e.id),gapId:'confirm',thesisRevision:s.thesisRevision,followUp:0},questions:[...s.questions,{id:'confirm',purpose:'confirm',text:'Confirm framing',evidenceIds:evidence.map(e=>e.id)}],status:'confirm'};},composeExpertiseArticle:async(o,s)=>({title:s.thesis,introduction:'',claims:[{id:'claim',text:s.answers[0].text,evidenceIds:evidence.map(e=>e.id),answerIds:[s.answers[0].id],status:'designer_confirmed'}],media:o.evidence.map(e=>({evidenceId:e.id,assetId:e.assetId,projectId:e.projectId,projectName:e.projectName,url:e.imageUrl,caption:e.projectName,alt:e.alt})),cover:'project',featured:false,thesisRevision:s.thesisRevision,reviewed:false})};
+let membersCanPublish=true,activeMember=true;
+db.organization={findUnique:async({where,select})=>{assert.equal(where.id,'firm');assert.equal(select.users.where.userId,'owner');assert.equal(select.users.where.isActive,true);return {status:'CLAIMED',membersCanPublish,users:activeMember?[{role:'MEMBER'}]:[]}}};
+const orgPolicy=load('src/lib/orgPermissions.ts',{});
+common['@/lib/permissions']=load('src/lib/permissions.ts',{'@/lib/prisma':{prisma:db},'@/lib/orgPermissions':orgPolicy});
 const service=()=>load('src/lib/publishing-studio/expertise/service.ts',{...common,'@/lib/rateLimit':{checkRateLimit:async()=>({success:true})},'./store':store,'./engine':engine,'./generation':generation});
 (async()=>{
   let api=service(); let saved=await api.startExpertise('owner',opportunity.id);
@@ -69,6 +73,11 @@ const service=()=>load('src/lib/publishing-studio/expertise/service.ts',{...comm
   saved=await api.changeExpertise('owner',saved.id,{action:'compose',expectedVersion:saved.version});assert.ok(saved.article);
   const title='The designer’s edited storage story';saved=await api.changeExpertise('owner',saved.id,{action:'edit',expectedVersion:saved.version,article:{...saved.article,title}});
   saved=await api.changeExpertise('owner',saved.id,{action:'compose',expectedVersion:saved.version});assert.equal(saved.article.title,title,'compose retry preserves manual edit');
+  await assert.rejects(api.changeExpertise('owner',saved.id,{action:'publish',expectedVersion:saved.version,reviewed:true}),e=>e.status===403);
+  assert.equal(state.stories[0].publishedRevisionNumber,null,'personal publication denial preserves the draft');
+  corpus.workspace.id='firm';for(const row of [...state.stories,...state.candidates])row.organizationId='firm';
+  activeMember=false;await assert.rejects(api.changeExpertise('owner',saved.id,{action:'publish',expectedVersion:saved.version,reviewed:true}),e=>e.status===403);activeMember=true;
+  membersCanPublish=false;await assert.rejects(api.changeExpertise('owner',saved.id,{action:'publish',expectedVersion:saved.version,reviewed:true}),e=>e.status===403);membersCanPublish=true;
   saved=await api.changeExpertise('owner',saved.id,{action:'publish',expectedVersion:saved.version,reviewed:true});assert.ok(saved.publishedUrl);
   const published=clone(state.revisions[0].blocks);const count=state.revisions.length;
   for(const featured of [true,false,true])saved=await api.changeExpertise('owner',saved.id,{action:'feature',expectedVersion:saved.version,featured});

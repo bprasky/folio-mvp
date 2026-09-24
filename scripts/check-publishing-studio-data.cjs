@@ -90,7 +90,7 @@ function setup(options = {}) {
   };
   const feed = load('src/lib/publishing-studio/feed.ts', { crypto: require('node:crypto'), './opportunities':load('src/lib/publishing-studio/opportunities.ts',{}) });
   const data = load('src/lib/publishing-studio/data.ts', { 'server-only': {}, '@/lib/prisma': { prisma }, './feed': feed, './publication-history': { readPublicationHistory: async () => [] } });
-  const permissions = load('src/lib/permissions.ts', { '@/lib/prisma': { prisma } });
+  const permissions = load('src/lib/permissions.ts', { '@/lib/prisma': { prisma }, '@/lib/orgPermissions': load('src/lib/orgPermissions.ts', {}) });
   const route = load('src/app/api/publishing-studio/ideas/[id]/route.ts', {
     'next/server': { NextResponse: { json: (body, init) => ({ body, status: init?.status || 200 }) } },
     'next-auth': { getServerSession: async () => options.signedOut ? null : { user: { id: 'me', role: options.role || 'DESIGNER' } } },

@@ -13,6 +13,10 @@ function run(mutate = (_path, text) => text) {
   });
 }
 run();
+assert.throws(() => run((path, text) => path === 'prisma/migrations/20260924120000_org_member_posting_policy/migration.sql'
+  ? text + '\nSELECT 1;\n' : text), /Approved firm posting policy SQL/, 'Changed approved firm SQL must fail');
+assert.throws(() => run((path, text) => path === 'prisma/schema.prisma'
+  ? text.replace(/membersCanPublish\s+Boolean\s+@default\(true\)/, 'membersCanPublish Boolean @default(false)') : text), /Only reviewed schema tokens/, 'Changed approved member posting default must fail');
 for (const pathToMutate of ['docs/reviews/story-activities/migration.sql','prisma/migrations/20260921220000_editorial_story_activities/migration.sql']) {
   assert.throws(() => run((path, text) => path === pathToMutate ? text + '\nSELECT 1;\n' : text), /Studio activity SQL/, 'Changed approved or installed SQL must fail');
 }

@@ -8,7 +8,8 @@ import { prisma } from '@/lib/prisma';
 import { logPassiveEvent } from '@/lib/analytics';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/app/api/auth/[...nextauth]/options';
-import { normalizeRole, canPerformAction } from '@/lib/permissions';
+import { normalizeRole } from '@/lib/permissions';
+import { canCreateFirmProject } from '@/lib/orgPermissions';
 import { normalizeCreatePayload } from './normalizeCreatePayload';
 import { logDbEnv } from '@/lib/dbEnv';
 import { assertProjectWrite } from "@/lib/authz/access";
@@ -105,14 +106,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'You must be signed in' }, { status: 401 });
     }
 
-    // Check org-based permission (user must be operating as a design firm)
-    const canCreate = await canPerformAction(userId, 'create_project');
-    if (!canCreate) {
-      return NextResponse.json({
-        error: 'You must be operating as a design firm to create projects'
-      }, { status: 403 });
-    }
-
+    // Authorize the target firm after resolving the requested workspace.
     let json: any;
     try {
       json = await req.json();
@@ -139,11 +133,11 @@ export async function POST(req: Request) {
     if (requestedOrgId) {
       const membership = await prisma.organizationUser.findFirst({
         where: { userId, organizationId: requestedOrgId, isActive: true },
-        select: { id: true },
+        select: { id: true, role: true, organization: { select: { type: true } } },
       });
-      if (!membership) {
+      if (!membership || !canCreateFirmProject(membership.role, membership.organization.type)) {
         return NextResponse.json({
-          error: 'You are not a member of this organization'
+          error: 'You need active project access to this firm.', nextPath: '/auth/org-setup'
         }, { status: 403 });
       }
       validatedOrgId = requestedOrgId;
@@ -152,8 +146,8 @@ export async function POST(req: Request) {
     // Require org context — no orphan projects
     if (!validatedOrgId) {
       return NextResponse.json({
-        error: 'Organization context required. Select a firm from your workspace menu.'
-      }, { status: 400 });
+        error: 'Connect your firm before creating a project.', nextPath: '/auth/org-setup'
+      }, { status: 403 });
     }
 
     const data = normalizeCreatePayload(json); // accepts both shapes, returns canonical

@@ -10,6 +10,7 @@ import {
 } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { projectEntryHref, professionalEntryHref } from '@/lib/onboarding/professional-entry';
 import { useSession } from 'next-auth/react';
 import { useForm, Controller } from 'react-hook-form';
 import toast from 'react-hot-toast';
@@ -91,6 +92,30 @@ function initialsFromName(name?: string | null): string {
 export default function CreateProjectPage() {
   const router = useRouter();
   const { data: session, status: sessionStatus } = useSession();
+  const [verifiedWorkspace, setVerifiedWorkspace] = useState<string | null>(null);
+  useEffect(() => {
+    if (sessionStatus === 'loading') return;
+    let cancelled = false;
+    const callback = window.location.pathname + window.location.search;
+    const user = session?.user;
+    if (!user?.operatingAsOrgId) {
+      router.replace(projectEntryHref(user, callback));
+      return;
+    }
+    // Session workspace IDs can outlive a removed membership. Check current state
+    // before showing the form; the create API remains the authorization boundary.
+    fetch('/api/user/workspace-context').then(async response => {
+      if (!response.ok) throw new Error('Workspace unavailable');
+      const data = await response.json();
+      const membership = data.organizations?.find((org: { id: string; userRole: string }) => org.id === user.operatingAsOrgId && org.userRole !== 'VIEWER');
+      if (cancelled) return;
+      if (membership && data.operatingAsOrgId === user.operatingAsOrgId) setVerifiedWorkspace(user.operatingAsOrgId);
+      else router.replace(professionalEntryHref(true, 'designer', callback));
+    }).catch(() => {
+      if (!cancelled) router.replace(professionalEntryHref(true, 'designer', callback));
+    });
+    return () => { cancelled = true; };
+  }, [sessionStatus, session?.user?.id, session?.user?.operatingAsOrgId, router]);
   const operatingAsOrgId =
     ((session?.user as any)?.operatingAsOrgId as string | null | undefined) ?? null;
   const operatingAsOrgName =
@@ -298,7 +323,7 @@ export default function CreateProjectPage() {
     if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
-  if (sessionStatus === 'loading') {
+  if (sessionStatus === 'loading' || !operatingAsOrgId || verifiedWorkspace !== operatingAsOrgId) {
     return (
       <main
         className="mx-auto"

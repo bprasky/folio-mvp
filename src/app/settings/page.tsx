@@ -115,6 +115,7 @@ export default function SettingsHubPage() {
         </div>
 
         <Section title="Organizations">
+          {orgs.length > 0 ? <Link href="/auth/org-setup?add=1" className="inline-block mb-4 text-sm underline underline-offset-4">Add another firm</Link> : null}
           {orgs.length === 0 ? (
             <div
               className="p-4 rounded-xl text-sm flex items-center justify-between gap-3"

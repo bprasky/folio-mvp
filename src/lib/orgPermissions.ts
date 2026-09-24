@@ -132,9 +132,11 @@ const ROLE_CAPABILITIES: Record<OrgRole, ReadonlySet<OrgCapability>> = {
 
 export function can(
   role: OrgRole | null | undefined,
-  capability: OrgCapability
+  capability: OrgCapability,
+  policy: { membersCanPublish: boolean } = { membersCanPublish: true }
 ): boolean {
   if (!role) return false;
+  if (role === 'MEMBER' && capability === 'publish_projects') return policy.membersCanPublish;
   return ROLE_CAPABILITIES[role]?.has(capability) ?? false;
 }
 
@@ -145,4 +147,8 @@ export function isOrgRole(value: unknown): value is OrgRole {
     typeof value === 'string' &&
     (ORG_ROLES as readonly string[]).includes(value)
   );
+}
+
+export function canCreateFirmProject(role: OrgRole | null | undefined, orgType: string): boolean {
+  return ['DESIGN_FIRM', 'ARCHITECTURE_FIRM', 'CONTRACTOR'].includes(orgType) && can(role, 'create_and_edit_projects');
 }

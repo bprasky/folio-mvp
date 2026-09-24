@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth';
 import { z } from 'zod';
 import { authOptions } from '@/app/api/auth/[...nextauth]/options';
 import { prisma } from '@/lib/prisma';
+import { professionalSetupHref } from '@/lib/onboarding/professional-entry';
 
 export const dynamic = 'force-dynamic';
 
@@ -33,13 +34,13 @@ export async function POST(request: NextRequest) {
   const { role } = parsed.data;
   const now = new Date();
 
-  // INDIVIDUAL completes onboarding immediately (no firm/bio/preview steps).
+  // Intent does not grant a global professional role. Membership enrollment owns promotion.
+  // Browsers may finish immediately; professional intent continues to firm setup.
   const stampAll = role === 'INDIVIDUAL';
 
   await prisma.user.update({
     where: { id: session.user.id },
     data: {
-      role,
       onboardingDiagnosticAt: now,
       ...(stampAll
         ? {
@@ -53,6 +54,6 @@ export async function POST(request: NextRequest) {
 
   return NextResponse.json({
     ok: true,
-    nextPath: stampAll ? '/' : '/onboarding/firm',
+    nextPath: stampAll ? '/' : professionalSetupHref(role.toLowerCase()),
   });
 }
