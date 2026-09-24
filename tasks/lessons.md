@@ -1135,3 +1135,6 @@ The founder clarified that accounts belong to people throughout their careers. P
 
 ## 2026-09-24 — One smart firm field and creator-confirmed posting
 The founder replaced separate Find/Create choices with one autocomplete field: selecting an existing firm offers Request access to join firm; a completed unmatched name offers Create firm. New requests must notify active firm admins in Folio and by email. Creator confirmation is sufficient for new-firm posting now; do not add external verification or a Folio approval queue. Approved firm members may post by default unless an org admin disables automatic posting. Keep pending access requests distinct from approved memberships, prevent duplicate firm creation server-side and preserve one personal account across organizations. Stronger verification and disputes are future scope.
+
+## 2026-09-24 — Professional navigation is not project creation
+For Professionals is account/firm navigation. Never invent a project callback when no action was requested. Preserve absent intent through signin/signup and aliases. Signed-in visitors should see their identity and live operating context, plus join/create another firm; an action-specific workspace chooser is reserved for an explicit return action. Do not infer current firm from the first membership or from a stale session alone.

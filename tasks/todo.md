@@ -548,3 +548,12 @@ Studio story/expertise persistence regressions also pass using real permission h
 Approval/merge continuation: founder approved exact migration and merge. Only the approved additive migration applied and recorded; 113 migrations, clean status, all four existing organizations enabled. Prisma format/validate/generate/sync passed. Production compile, full source/script lint (zero errors), core 8/1 skipped, vendor access17, posting policy5, 39 focused scripts and exact-schema guards pass. Final TypeScript display-equivalence verification and remote CI/merge in progress. Automatic Git deployment is disabled; this task authorizes merge, not an extra deployment.
 
 Final review: PR796 prepared and reviewed. TypeScript ratchet passed903/904 with unchanged budget; all seven display-equivalence guard tests passed. Pull-quote, Folio lines, story editing and regeneration contracts pass locally (Git Bash used for Unix-dependent scripts). GitHub Actions jobs did not start: account billing/spending-limit restriction, confirmed in run36012720988 annotations. Remote disposable PostgreSQL checks therefore remain unexecuted. Proceeding with the explicitly approved normal merge using local validation; no protection changes or synthetic passing statuses.
+
+## Professional navigation and account context — 2026-09-24
+- [x] Audit navigation, marketing/auth aliases and login-state routing; identify fabricated project intent.
+- [x] Preserve explicit versus absent return actions across authentication and legacy routes.
+- [x] Show signed-in identity and live operating context; expose join/create another firm without launching project creation.
+- [x] Verify logged-out, personal, single/multiple firm, stale access and explicit-action flows; review and prepare PR.
+Plan check-in: fix the routing distinction and inconsistent professional links with existing enrollment/workspace infrastructure. No schema or permission expansion. Previous merge approval covered PR796; this correction will be prepared for review.
+
+Review: canonical routing, signed-in redirects, account status and view-only membership behavior verified. Focused routing/auth/enrollment/notification regressions, client import guard, scoped lint, production compile and TypeScript ratchet903/904 pass. Core8 passed/1 disposable-DB skipped. Synthetic desktop/mobile walkthroughs passed; screenshots in docs/reviews/professional-account-routing. Specialist reviews found no blockers. No deployment or live account writes.

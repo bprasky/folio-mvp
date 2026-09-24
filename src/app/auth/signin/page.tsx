@@ -1,5 +1,8 @@
 import Link from 'next/link';
 import { Suspense } from 'react';
+import { redirect } from 'next/navigation';
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@/app/api/auth/[...nextauth]/options';
 import { safeCallbackPath } from '@/lib/onboarding/professional-entry';
 import { getSigninHero } from '@/lib/auth/getSigninHero';
 import { SigninForm } from './SigninForm';
@@ -9,6 +12,11 @@ export const dynamic = 'force-dynamic';
 
 export default async function SigninPage({ searchParams }: { searchParams: { callbackUrl?: string; callback?: string } }) {
   const callbackUrl = safeCallbackPath(searchParams.callbackUrl ?? searchParams.callback);
+  const session = await getServerSession(authOptions);
+  if (session?.user?.id) {
+    const pathname = decodeURIComponent(new URL(callbackUrl, 'https://folio.invalid').pathname);
+    redirect(/^\/auth\/(signin|signup)(\/|$)/i.test(pathname) ? '/' : callbackUrl);
+  }
   const signupHref = '/auth/signup?callbackUrl=' + encodeURIComponent(callbackUrl);
   const [hero] = await Promise.all([getSigninHero()]);
 
@@ -31,7 +39,7 @@ export default async function SigninPage({ searchParams }: { searchParams: { cal
             <ul className={styles.navList}>
               <li><Link href="/magazine" className={styles.navLink}>Magazine</Link></li>
               <li><Link href="/about" className={styles.navLink}>About</Link></li>
-              <li><Link href="/for-designers" className={styles.navLink}>For professionals</Link></li>
+              <li><Link href="/professionals" className={styles.navLink}>For professionals</Link></li>
             </ul>
           </nav>
         </div>
