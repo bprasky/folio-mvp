@@ -6,6 +6,10 @@ const source = fs.readFileSync('src/lib/onboarding/professional-entry.ts', 'utf8
 const result = {};
 vm.runInNewContext(ts.transpileModule(source, { compilerOptions: { module: ts.ModuleKind.CommonJS } }).outputText, { exports: result, URL, URLSearchParams });
 const { firmWorkspaceDestination, safeProfessionalCallback, safeCallbackPath, projectEntryHref, professionalSetupHref } = result;
+assert.equal(professionalSetupHref(), '/auth/org-setup', 'navigation must not invent a project action');
+assert.equal(professionalSetupHref('designer'), '/auth/org-setup?type=designer');
+assert.equal(result.professionalEntryHref(true), '/auth/org-setup');
+assert.equal(new URL(result.professionalEntryHref(false), 'https://folio.test').searchParams.get('callbackUrl'), '/auth/org-setup');
 for (const path of ['https://evil.test', '//evil.test', '/%2fevil.test', '/%5cevil.test', '/%0aevil', '/%ZZ']) assert.equal(safeCallbackPath(path, '/projects'), '/projects');
 assert.equal(safeCallbackPath('/projects/new?visitToken=abc'), '/projects/new?visitToken=abc');
 const personal = projectEntryHref({ role: 'INDIVIDUAL' });

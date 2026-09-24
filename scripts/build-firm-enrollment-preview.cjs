@@ -15,7 +15,11 @@ const firm={id:'north',name:'North Studio',type:'DESIGN_FIRM',location:'New York
 const side={id:'side',name:'Side Practice',type:'ARCHITECTURE_FIRM',location:'Brooklyn, NY'};
 const mode=new URLSearchParams(location.search).get('mode');
 const add=new URLSearchParams(location.search).get('add')==='1';
-const memberships=mode==='memberships'||add?[{...firm,membershipRole:'MEMBER'},{...side,membershipRole:'OWNER'}]:[];
+const hasFirm=['account','multiple','personal','stale','viewer','memberships'].includes(mode)||add;
+const memberships=hasFirm?[{...firm,membershipRole:mode==='viewer'?'VIEWER':'MEMBER'},...(['multiple','memberships'].includes(mode)?[{...side,membershipRole:'OWNER'}]:[])]:[];
+const account={name:'Example Designer',email:'example@example.test',operatingAsOrgId:mode==='personal'||!hasFirm?null:mode==='stale'?'revoked':mode==='multiple'?'side':'north'};
+const accountOverview=hasFirm&&mode!=='memberships'&&!add;
+const callbackUrl=new URLSearchParams(location.search).get('callbackUrl')||(mode==='memberships'?'/projects/new':'/settings');
 window.fixtureCalls=[];
 window.fetch=async(input,options={})=>{
  const url=new URL(String(input),location.origin); const body=options.body?JSON.parse(options.body):{};
@@ -44,7 +48,7 @@ window.fixtureNavigate=(url)=>{
 document.addEventListener('click',event=>{const anchor=event.target.closest('a');if(anchor&&anchor.getAttribute('href')?.startsWith('/')){event.preventDefault();window.fixtureNavigate(anchor.getAttribute('href'));}});
 createRoot(document.getElementById('root')).render(<div className="auth-shell">
  <header className="px-6 py-6 border-b border-folio-border-subtle"><a href="/" className="folio-logo-text" aria-label="Folio home">Folio</a></header>
- <main className="w-full max-w-lg mx-auto px-6 py-8 sm:py-12 space-y-6"><ScenarioA initialIntent={null} callbackUrl="/projects/new" memberships={memberships} existingOnly={mode==='memberships'&&!add}/></main>
+ <main className="w-full max-w-lg mx-auto px-6 py-8 sm:py-12 space-y-6"><ScenarioA initialIntent={null} callbackUrl={callbackUrl} memberships={memberships} account={account} accountOverview={accountOverview} existingOnly={mode==='memberships'&&!add}/></main>
 </div>);
 `;
 async function main() {
@@ -64,7 +68,7 @@ async function main() {
   });
   const globals = fs.readFileSync(path.join(root, 'src/app/globals.css'), 'utf8').replace(/@import\s+"([^"]+)";/g, (_, file) => file.startsWith('../styles/') ? fs.readFileSync(path.resolve(root, 'src/app', file), 'utf8') : '');
   const config = require(path.join(root, 'tailwind.config.js'));
-  config.content = [{ raw: entry, extension: 'tsx' }, path.join(root, 'src/app/auth/org-setup/_ScenarioA.tsx')];
+  config.content = [{ raw: entry, extension: 'tsx' }, path.join(root, 'src/app/auth/org-setup/*.tsx')];
   let css = (await postcss([tailwind(config)]).process(globals, { from: path.join(root, 'src/app/globals.css') })).css;
   css += fs.readFileSync(path.join(root, 'src/app/auth/_components/auth.css'), 'utf8');
   const cssDir = path.join(root, '.next/static/css');

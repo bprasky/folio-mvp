@@ -25,7 +25,7 @@ export function Topbar({ rightCta }: TopbarProps) {
         <ul>
           <li><Link href="/magazine">Magazine</Link></li>
           <li><Link href="/about">About</Link></li>
-          <li><Link href="/for-professionals">For Professionals</Link></li>
+          <li><Link href="/professionals">For Professionals</Link></li>
         </ul>
       </nav>
       {rightCta ? (

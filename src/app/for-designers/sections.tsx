@@ -249,7 +249,7 @@ export function FoundingCohort() {
               the platform from the ground up.
             </p>
             <Link
-              href="/auth/signup"
+              href="/professionals"
               className="accent-btn inline-block px-8 py-3.5 text-base"
             >
               Apply to Join

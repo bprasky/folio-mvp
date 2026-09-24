@@ -6,6 +6,7 @@ import { useSession } from 'next-auth/react';
 import Link from 'next/link';
 import { normalizeFirmName, type FirmMatch } from '@/lib/onboarding/firm-name';
 import { safeProfessionalCallback, firmWorkspaceDestination } from '@/lib/onboarding/professional-entry';
+import { AccountStatus, type ProfessionalAccount } from './_AccountStatus';
 
 export type OrgIntent = 'designer' | 'architect' | 'builder' | 'vendor';
 export type FirmMembership = FirmMatch & { membershipRole: string };
@@ -15,15 +16,18 @@ type Props = {
   callbackUrl?: string;
   memberships?: FirmMembership[];
   existingOnly?: boolean;
+  accountOverview?: boolean;
+  account?: ProfessionalAccount;
+  initialFirm?: FirmMatch | null;
 };
 
-export function ScenarioA({ initialIntent, callbackUrl = '/projects/new', memberships = [], existingOnly = false }: Props) {
+export function ScenarioA({ initialIntent, callbackUrl = '/projects/new', memberships = [], existingOnly = false, accountOverview = false, account, initialFirm = null }: Props) {
   const router = useRouter();
   const { update } = useSession();
-  const [query, setQuery] = useState('');
+  const [query, setQuery] = useState(initialFirm?.name ?? '');
   const [intent, setIntent] = useState<OrgIntent>(initialIntent ?? 'designer');
   const [results, setResults] = useState<FirmMatch[]>([]);
-  const [selected, setSelected] = useState<FirmMatch | null>(null);
+  const [selected, setSelected] = useState<FirmMatch | null>(initialFirm);
   const [searchedQuery, setSearchedQuery] = useState<string | null>(null);
   const [searchError, setSearchError] = useState('');
   const [retry, setRetry] = useState(0);
@@ -42,13 +46,16 @@ export function ScenarioA({ initialIntent, callbackUrl = '/projects/new', member
   const exactMatches = ready ? results.filter((org) => normalizeFirmName(org.name) === key) : [];
   const match = selected ?? (exactMatches.length === 1 ? exactMatches[0] : ready && results.length === 1 ? results[0] : null);
   const ownMembership = match ? memberships.find((org) => org.id === match.id) : undefined;
+  const viewOwnFirm = ownMembership?.membershipRole === 'VIEWER' || destination === '/settings';
+  const ownFirmAction = viewOwnFirm ? 'View firm' : 'Continue with firm';
   const ambiguous = !selected && !match && ready && results.length > 1;
   const canCreate = key.length >= 2 && ready && !searchError && !match && !ambiguous;
   const busy = key.length >= 2 && !ready && !searchError;
   const options = showResults && !selected && ready ? results : [];
+  const accountStatus = account ? <AccountStatus account={account} memberships={memberships} /> : null;
 
   useEffect(() => {
-    if (selected || existingOnly) return;
+    if (selected || existingOnly || accountOverview) return;
     setSearchError('');
     setActiveIndex(-1);
     if (key.length < 2) { setResults([]); setSearchedQuery(null); return; }
@@ -71,7 +78,7 @@ export function ScenarioA({ initialIntent, callbackUrl = '/projects/new', member
       }
     }, 250);
     return () => { clearTimeout(timer); controller.abort(); };
-  }, [query, key, selected, retry, existingOnly]);
+  }, [query, key, selected, retry, existingOnly, accountOverview]);
 
   function choose(org: FirmMatch) {
     setSelected(org);
@@ -108,7 +115,11 @@ export function ScenarioA({ initialIntent, callbackUrl = '/projects/new', member
   async function submit(event: React.FormEvent) {
     event.preventDefault();
     if (submittingRef.current || !ready || searchError || ambiguous || key.length < 2) return;
-    if (ownMembership) { await openWorkspace(ownMembership.id); return; }
+    if (ownMembership) {
+      if (viewOwnFirm) router.push(`/org/${ownMembership.id}`);
+      else await openWorkspace(ownMembership.id);
+      return;
+    }
     if (!match && (!canCreate || !confirmed)) return;
     submittingRef.current = true;
     setSubmitting(true);
@@ -143,12 +154,29 @@ export function ScenarioA({ initialIntent, callbackUrl = '/projects/new', member
     }
   }
 
+  if (accountOverview) return (
+    <>
+      <h1 className="folio-h2">Your professional account</h1>
+      {accountStatus}
+      {memberships.length > 1 ? <section aria-label="Firm memberships" className="space-y-3">
+        <h2 className="folio-ui">Your firms</h2>
+        {memberships.map((org) => <div key={org.id} className="flex justify-between gap-4 folio-body">
+          <Link className="underline underline-offset-4" href={`/org/${org.id}`}>{org.name}</Link>
+          <span className="folio-meta text-folio-text-secondary">{org.membershipRole.charAt(0) + org.membershipRole.slice(1).toLowerCase()}</span>
+        </div>)}
+      </section> : null}
+      <Link className="auth-submit" href="/auth/org-setup?add=1">Join or create another firm</Link>
+      <Link className="underline underline-offset-4" href="/settings">Manage firm access</Link>
+    </>
+  );
+
   if (existingOnly) return (
     <>
       <h1 className="folio-h2">Choose your firm</h1>
       <p className="folio-body text-folio-text-secondary">Where does this work belong?</p>
+      {accountStatus}
       <div className="space-y-3">
-        {memberships.map((org) => <button key={org.id} type="button" className="auth-secondary" disabled={submitting} onClick={() => openWorkspace(org.id)}>{org.name}</button>)}
+        {memberships.filter((org) => org.membershipRole !== 'VIEWER').map((org) => <button key={org.id} type="button" className="auth-secondary" disabled={submitting} onClick={() => openWorkspace(org.id)}>{org.name}</button>)}
       </div>
       {error ? <p role="alert" className="auth-message auth-message--error">{error}</p> : null}
       <Link className="underline underline-offset-4" href={`/auth/org-setup?add=1&callbackUrl=${encodeURIComponent(destination)}`}>Add another firm</Link>
@@ -172,6 +200,7 @@ export function ScenarioA({ initialIntent, callbackUrl = '/projects/new', member
         <h1 className="folio-h2">{memberships.length ? 'Add another firm' : 'What is your firm called?'}</h1>
         <p className="folio-body text-folio-text-secondary mt-3">Find your firm or create its page to post on Folio. Your personal account stays with you.</p>
       </div>
+      {accountStatus}
       <form onSubmit={submit} className="space-y-5">
         <div>
           <label htmlFor="firm-name" className="block folio-ui mb-2">Firm name</label>
@@ -209,9 +238,10 @@ export function ScenarioA({ initialIntent, callbackUrl = '/projects/new', member
         </> : null}
         {error ? <p role="alert" className="auth-message auth-message--error">{error}</p> : null}
         <button type="submit" className="auth-submit" disabled={submitting || !ready || !!searchError || ambiguous || key.length < 2 || (!match && !confirmed)}>
-          {submitting ? 'Saving…' : ownMembership ? 'Open firm' : match ? 'Request access to join firm' : busy ? 'Searching…' : ambiguous ? 'Select your firm' : 'Create firm'}
+          {submitting ? 'Saving…' : ownMembership ? ownFirmAction : match ? 'Request access to join firm' : busy ? 'Searching…' : ambiguous ? 'Select your firm' : 'Create firm'}
         </button>
         {match && !ownMembership ? <p className="folio-meta text-folio-text-secondary">A firm admin will review your request. Posting access starts after approval and follows the firm’s settings.</p> : null}
+        {ownMembership?.membershipRole === 'VIEWER' ? <p className="folio-meta text-folio-text-secondary">You have view-only access to this firm. Ask a firm admin for permission to create or post work.</p> : null}
       </form>
     </>
   );

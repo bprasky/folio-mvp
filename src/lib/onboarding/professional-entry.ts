@@ -18,8 +18,8 @@ export function safeProfessionalCallback(value: string | null | undefined): stri
 export function professionalSetupHref(type?: string | null, callbackUrl?: string | null): string {
   const query = new URLSearchParams();
   if (type && ['designer', 'architect', 'builder', 'vendor'].includes(type.toLowerCase())) query.set('type', type.toLowerCase());
-  query.set('callbackUrl', safeProfessionalCallback(callbackUrl));
-  return '/auth/org-setup?' + query;
+  if (callbackUrl) query.set('callbackUrl', safeProfessionalCallback(callbackUrl));
+  return '/auth/org-setup' + (query.size ? '?' + query : '');
 }
 export function professionalEntryHref(signedIn: boolean, type?: string | null, callbackUrl?: string | null): string {
   const setup = professionalSetupHref(type, callbackUrl);
