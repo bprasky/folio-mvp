@@ -128,7 +128,7 @@ export default function OrgMemberships({ userId }: OrgMembershipsProps) {
       <div className="flex items-center justify-between mb-4">
         <h3 className="text-lg font-medium text-folio-text-primary">Organizations</h3>
         <Link
-          href="/professionals/join"
+          href="/auth/org-setup?add=1"
           className="text-sm text-[var(--accent)] hover:text-blue-800"
         >
           Join or create

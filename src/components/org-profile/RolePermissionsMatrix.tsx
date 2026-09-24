@@ -15,7 +15,7 @@ import {
 // on /org/[orgId]/settings so admins can explain to themselves what each
 // role's seat actually buys.
 
-export function RolePermissionsMatrix() {
+export function RolePermissionsMatrix({ membersCanPublish = true }: { membersCanPublish?: boolean }) {
   return (
     <section
       className="mb-10 p-5 rounded-2xl border"
@@ -30,11 +30,7 @@ export function RolePermissionsMatrix() {
           Roles &amp; permissions
         </h2>
         <p className="text-xs" style={{ color: '#8B8178' }}>
-          What each seat buys. Source of truth lives in{' '}
-          <code style={{ fontFamily: 'monospace', fontSize: '0.95em' }}>
-            src/lib/orgPermissions.ts
-          </code>
-          .
+          What each role can do in your firm. Member posting follows your setting above.
         </p>
       </div>
 
@@ -97,7 +93,7 @@ export function RolePermissionsMatrix() {
                 </td>
                 {ORG_ROLES.map((r) => (
                   <td key={r} className="py-2 px-3 text-center">
-                    {can(r, cap) ? (
+                    {can(r, cap, { membersCanPublish }) ? (
                       <Check
                         className="inline-block w-3.5 h-3.5"
                         style={{ color: '#2C2825' }}

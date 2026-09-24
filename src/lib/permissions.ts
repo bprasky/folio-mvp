@@ -1,4 +1,6 @@
 import { prisma } from "@/lib/prisma";
+import { can, isOrgRole, canCreateFirmProject } from '@/lib/orgPermissions';
+import type { Prisma } from '@prisma/client';
 
 export async function assertProjectAccess(params: {
   projectId: string;
@@ -402,8 +404,13 @@ export async function canPerformAction(
 
     switch (action) {
       case 'create_project':
-        // Must be operating as a design firm
-        return orgType === 'DESIGN_FIRM';
+        {
+          const membership = await prisma.organizationUser.findFirst({
+            where: { userId, organizationId: user.operatingAsOrg.id, isActive: true },
+            select: { role: true },
+          });
+          return !!membership && canCreateFirmProject(membership.role, orgType);
+        }
       case 'premium_features':
       case 'generate_images':
       case 'connect_clients':
@@ -438,8 +445,8 @@ export async function canPerformAction(
 /**
  * Publishing gate: can this user push something to PUBLISHED right now?
  *
- * Rule: publishing requires the backing organization to be CLAIMED or
- * PROFESSIONAL. UNCLAIMED orgs are placeholders the firm's actual admin
+ * Rule: publishing requires active membership and posting permission in a
+ * CLAIMED or PROFESSIONAL firm. UNCLAIMED orgs are placeholders the firm's actual admin
  * hasn't set up yet — designers attached to one can draft and use Folio,
  * but they can't broadcast on a page that isn't really configured. See
  * docs/AUTH_ORG_ENROLLMENT_FLOW.md.
@@ -456,42 +463,52 @@ export async function canPerformAction(
  */
 export type PublishGateResult =
   | { ok: true }
-  | { ok: false; reason: 'org_unclaimed' | 'no_org' | 'not_a_member' | 'org_not_found' };
+  | { ok: false; reason: 'org_unclaimed' | 'no_org' | 'not_a_member' | 'org_not_found' | 'posting_restricted' };
 
 export async function canPublishFromOrg(
   userId: string,
-  organizationId: string | null
+  organizationId: string | null,
+  db: Pick<Prisma.TransactionClient, 'organization' | 'organizationUser' | 'user'> = prisma
 ): Promise<PublishGateResult> {
   if (organizationId) {
-    const org = await prisma.organization.findUnique({
+    const org = await db.organization.findUnique({
       where: { id: organizationId },
-      select: { status: true },
+      select: {
+        status: true, membersCanPublish: true,
+        users: { where: { userId, isActive: true }, select: { role: true } },
+      },
     });
     if (!org) return { ok: false, reason: 'org_not_found' };
-    if (org.status === 'CLAIMED' || org.status === 'PROFESSIONAL') return { ok: true };
-    return { ok: false, reason: 'org_unclaimed' };
+    const membership = org.users[0];
+    if (!membership) return { ok: false, reason: 'not_a_member' };
+    if (org.status !== 'CLAIMED' && org.status !== 'PROFESSIONAL') return { ok: false, reason: 'org_unclaimed' };
+    if (!isOrgRole(membership.role) || !can(membership.role, 'publish_projects', org)) {
+      return { ok: false, reason: 'posting_restricted' };
+    }
+    return { ok: true };
   }
 
   // User-scoped content: prefer the user's operatingAs context, otherwise
   // look for any CLAIMED+ membership.
-  const user = await prisma.user.findUnique({
+  const user = await db.user.findUnique({
     where: { id: userId },
     select: { operatingAsOrgId: true },
   });
 
   if (user?.operatingAsOrgId) {
-    return canPublishFromOrg(userId, user.operatingAsOrgId);
+    return canPublishFromOrg(userId, user.operatingAsOrgId, db);
   }
 
-  const claimedMembership = await prisma.organizationUser.findFirst({
+  const claimedMemberships = await db.organizationUser.findMany({
     where: {
       userId,
       isActive: true,
       organization: { status: { in: ['CLAIMED', 'PROFESSIONAL'] } },
     },
-    select: { id: true },
+    select: { role: true, organization: { select: { membersCanPublish: true } } },
   });
-  if (claimedMembership) return { ok: true };
+  if (claimedMemberships.some(m => isOrgRole(m.role) && can(m.role, 'publish_projects', m.organization))) return { ok: true };
+  if (claimedMemberships.length) return { ok: false, reason: 'posting_restricted' };
 
   // No org context at all: deny with no_org so callers can prompt sign-up
   // into a firm before publishing. INDIVIDUAL users always land here.

@@ -172,17 +172,18 @@ test('legacy organization claim cannot make a stranger or inactive member vendor
 test('organization creation binds membership to the session, not spoofed user or role', async () => {
   const {f,vendor}=await setup(); const other=await f.user(); const route=h.route('organizations');
   h.anonymous(); assert.equal((await route.POST(r({name:'Spoof',type:'VENDOR',userId:other.id}))).status,401);
-  // Supply the nested-create database boundary unsupported by the shared double.
-  const delegate=db.organization;
-  db.organization=new Proxy(delegate,{get:(target,key)=>key==='create'?async args=>{
-    const {users,...data}=args.data;const org=await target.create({data});
-    await db.organizationUser.create({data:{...users.create,organizationId:org.id}});return org;
-  }:target[key]});
-  await h.login(vendor); const result=await route.POST(r({name:'New catalog',type:'VENDOR',userId:other.id,userRole:'ADMIN'}));
-  assert.equal(result.status,200); const org=await result.json();
+  await h.login(vendor);
+  const payload={name:'New catalog',type:'VENDOR',userId:other.id,userRole:'ADMIN',role:'ADMIN'};
+  assert.equal((await route.POST(r(payload))).status,400,'confirmation is required');
+  const result=await route.POST(r({...payload,confirmed:true}));
+  assert.equal(result.status,201); const created=await result.json();
+  const org=await db.organization.findUniqueOrThrow({where:{id:created.organizationId}});
   const rows=await db.organizationUser.findMany({where:{organizationId:org.id}});
   assert.equal(rows.length,1); assert.equal(rows[0].userId,vendor.id); assert.equal(rows[0].role,'OWNER');
-  assert.equal(org.verifiedAt,null);
+  assert.equal(rows[0].isActive,true); assert.equal(org.createdById,vendor.id);
+  assert.equal(org.status,'CLAIMED'); assert.equal(org.verifiedAt,null);
+  assert.equal(await db.organizationUser.count({where:{organizationId:org.id,userId:other.id}}),0);
+  assert.equal((await db.user.findUniqueOrThrow({where:{id:vendor.id}})).operatingAsOrgId,org.id);
 });
 test('claim invitation sender cannot retarget an existing recipient or another creator invite', async () => {
   const {f,org,vendor}=await setup(); const token='scoped-email-fixture-token';

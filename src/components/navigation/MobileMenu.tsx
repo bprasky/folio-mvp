@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { projectEntryHref } from "@/lib/onboarding/professional-entry";
 import { Menu, X, Plus, FileText, Package, FolderPlus } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
@@ -91,7 +92,7 @@ export function MobileMenu() {
           </div>
 
           {/* Create Section - Role-based */}
-          {user && (
+          {(
             <div className="py-2 border-b border-folio-border-subtle">
               {isVendor ? (
                 <>
@@ -122,7 +123,7 @@ export function MobileMenu() {
                   </MobileNavLink>
                 </>
               ) : (
-                <MobileNavLink href="/projects/new" onClick={() => setIsOpen(false)}>
+                <MobileNavLink href={projectEntryHref(session?.user)} onClick={() => setIsOpen(false)}>
                   <span className="flex items-center gap-3">
                     <Plus className="h-4 w-4" />
                     Create Project

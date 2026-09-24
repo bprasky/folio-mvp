@@ -62,9 +62,8 @@ export async function POST(
       }
     });
 
-    if (['VENDOR', 'MANUFACTURER', 'SHOWROOM'].includes(org.type) &&
-        (!existingMembership?.isActive || !['OWNER', 'ADMIN'].includes(existingMembership.role))) {
-      return NextResponse.json({ error: 'An active organization owner or admin must claim this vendor organization.' }, { status: 403 });
+    if (!existingMembership?.isActive || !['OWNER', 'ADMIN'].includes(existingMembership.role)) {
+      return NextResponse.json({ error: 'An active firm owner or admin must confirm this page. Request access or use your setup invitation.' }, { status: 403 });
     }
 
     // Perform the claim in a transaction
@@ -103,7 +102,6 @@ export async function POST(
         where: { id: orgId },
         data: {
           status: 'CLAIMED',
-          verifiedAt: new Date(),
           salesNotes: verificationNote
             ? `${org.salesNotes || ''}\n\nCLAIM NOTE: ${verificationNote}`.trim()
             : org.salesNotes,

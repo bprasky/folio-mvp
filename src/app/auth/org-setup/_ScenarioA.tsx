@@ -1,674 +1,218 @@
 'use client';
 
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { useSession } from 'next-auth/react';
 import Link from 'next/link';
+import { normalizeFirmName, type FirmMatch } from '@/lib/onboarding/firm-name';
+import { safeProfessionalCallback, firmWorkspaceDestination } from '@/lib/onboarding/professional-entry';
 
 export type OrgIntent = 'designer' | 'architect' | 'builder' | 'vendor';
-
-const TYPE_COPY: Record<OrgIntent, { noun: string }> = {
-  designer: { noun: 'studio' },
-  architect: { noun: 'practice' },
-  builder: { noun: 'company' },
-  vendor: { noun: 'brand' },
-};
-
-const INTENT_TO_SEARCH_TYPE: Record<OrgIntent, string> = {
-  designer: 'DESIGNER',
-  architect: 'ARCHITECT',
-  builder: 'BUILDER',
-  vendor: 'VENDOR',
-};
-
-const INTENT_OPTIONS: { value: OrgIntent; label: string }[] = [
-  { value: 'designer', label: 'Designer' },
-  { value: 'architect', label: 'Architect' },
-  { value: 'builder', label: 'Builder' },
-  { value: 'vendor', label: 'Vendor' },
-];
-
-const ORG_TYPE_LABEL: Record<string, string> = {
-  DESIGN_FIRM: 'Design firm',
-  ARCHITECTURE_FIRM: 'Architecture firm',
-  CONTRACTOR: 'Construction',
-  VENDOR: 'Vendor',
-  MANUFACTURER: 'Manufacturer',
-  SHOWROOM: 'Showroom',
-  PHOTOGRAPHY_STUDIO: 'Photography',
-  DEVELOPER: 'Developer',
-};
-
-const ONBOARDING_REDIRECT = '/onboarding/diagnostic';
-
-type SearchOrg = {
-  id: string;
-  name: string;
-  type: string;
-  status?: string;
-};
+export type FirmMembership = FirmMatch & { membershipRole: string };
 
 type Props = {
   initialIntent: OrgIntent | null;
-  // Heading override (used when ScenarioB embeds this flow under "Create separate").
-  headingOverride?: { eyebrowGold?: string; title?: string; sub?: string };
-  // When ScenarioB renders this, suppress the eyebrow row entirely so the page
-  // doesn't show two eyebrows stacked.
-  hideEyebrow?: boolean;
-  // Called when the user wants to back out of the create-separate flow.
-  onBack?: () => void;
+  callbackUrl?: string;
+  memberships?: FirmMembership[];
+  existingOnly?: boolean;
 };
 
-export function ScenarioA({ initialIntent, headingOverride, hideEyebrow, onBack }: Props) {
+export function ScenarioA({ initialIntent, callbackUrl = '/projects/new', memberships = [], existingOnly = false }: Props) {
   const router = useRouter();
-  const [intent, setIntent] = useState<OrgIntent | null>(initialIntent);
-  const copy = intent ? TYPE_COPY[intent] : null;
-
+  const { update } = useSession();
   const [query, setQuery] = useState('');
-  const [results, setResults] = useState<SearchOrg[]>([]);
-  const [searching, setSearching] = useState(false);
+  const [intent, setIntent] = useState<OrgIntent>(initialIntent ?? 'designer');
+  const [results, setResults] = useState<FirmMatch[]>([]);
+  const [selected, setSelected] = useState<FirmMatch | null>(null);
+  const [searchedQuery, setSearchedQuery] = useState<string | null>(null);
   const [searchError, setSearchError] = useState('');
-
-  const [mode, setMode] = useState<'search' | 'create'>('search');
-  const [createName, setCreateName] = useState('');
-  const [createWebsite, setCreateWebsite] = useState('');
-  const [createLocation, setCreateLocation] = useState('');
-  // Founder/member fork. Default = "I'm setting this up" (owner). The
-  // member branch lets a teammate stand up a placeholder org and email a
-  // claim invite to whoever can actually configure the page. See
-  // docs/AUTH_ORG_ENROLLMENT_FLOW.md.
-  const [createRole, setCreateRole] = useState<'owner' | 'member'>('owner');
-
+  const [retry, setRetry] = useState(0);
+  const [activeIndex, setActiveIndex] = useState(-1);
+  const [showResults, setShowResults] = useState(true);
+  const [confirmed, setConfirmed] = useState(false);
   const [submitting, setSubmitting] = useState(false);
-  const [statusMessage, setStatusMessage] = useState('');
-  const [statusType, setStatusType] = useState<'error' | 'success' | null>(null);
-  const [done, setDone] = useState(false);
-
-  // Populated after a successful member-branch create. Renders the
-  // claim-link confirmation panel; clears all other UI.
-  const [inviteResult, setInviteResult] = useState<{
-    organizationId: string;
-    organizationName: string;
-    claimUrl: string;
-    claimToken: string;
-  } | null>(null);
-  const [copied, setCopied] = useState(false);
-  const [inviteEmail, setInviteEmail] = useState('');
-  const [inviteEmailStatus, setInviteEmailStatus] = useState<
-    'idle' | 'sending' | 'sent' | 'error'
-  >('idle');
-  const [inviteEmailMessage, setInviteEmailMessage] = useState('');
-
-  const searchAbortRef = useRef<AbortController | null>(null);
-
-  const runSearch = useCallback(
-    async (q: string) => {
-      if (!intent) return;
-      if (q.trim().length < 2) {
-        setResults([]);
-        setSearchError('');
-        setSearching(false);
-        return;
-      }
-      searchAbortRef.current?.abort();
-      const ac = new AbortController();
-      searchAbortRef.current = ac;
-      setSearching(true);
-      setSearchError('');
-      try {
-        const url = `/api/orgs/search?q=${encodeURIComponent(q.trim())}&type=${INTENT_TO_SEARCH_TYPE[intent]}`;
-        const res = await fetch(url, { signal: ac.signal });
-        const data = await res.json();
-        if (!res.ok) {
-          setSearchError(data.error || 'Search failed');
-          setResults([]);
-        } else {
-          setResults(Array.isArray(data.organizations) ? data.organizations : []);
-        }
-      } catch (err: any) {
-        if (err.name !== 'AbortError') {
-          setSearchError('Search failed. Please try again.');
-          setResults([]);
-        }
-      } finally {
-        if (!ac.signal.aborted) setSearching(false);
-      }
-    },
-    [intent]
-  );
+  const submittingRef = useRef(false);
+  const [error, setError] = useState('');
+  const [requested, setRequested] = useState<string | null>(null);
+  const [notificationIssue, setNotificationIssue] = useState(false);
+  const [needsAdmin, setNeedsAdmin] = useState(false);
+  const destination = safeProfessionalCallback(callbackUrl);
+  const key = normalizeFirmName(query);
+  const ready = selected !== null || searchedQuery === key;
+  const exactMatches = ready ? results.filter((org) => normalizeFirmName(org.name) === key) : [];
+  const match = selected ?? (exactMatches.length === 1 ? exactMatches[0] : ready && results.length === 1 ? results[0] : null);
+  const ownMembership = match ? memberships.find((org) => org.id === match.id) : undefined;
+  const ambiguous = !selected && !match && ready && results.length > 1;
+  const canCreate = key.length >= 2 && ready && !searchError && !match && !ambiguous;
+  const busy = key.length >= 2 && !ready && !searchError;
+  const options = showResults && !selected && ready ? results : [];
 
   useEffect(() => {
-    if (!intent) return;
-    const handle = setTimeout(() => runSearch(query), 250);
-    return () => clearTimeout(handle);
-  }, [query, intent, runSearch]);
-
-  const handleJoin = async (org: SearchOrg) => {
-    if (submitting) return;
-    setSubmitting(true);
-    setStatusMessage('');
-    setStatusType(null);
-    try {
-      // Request-based join: creates an OrgJoinRequest (PENDING). Admin
-      // approves via PATCH /api/orgs/[orgId]/join. User.role is promoted on
-      // approval, not on request. See docs/AUTH_ORG_ENROLLMENT_FLOW.md.
-      const res = await fetch(`/api/orgs/${org.id}/join`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({}),
-      });
-      const data = await res.json();
-      if (!res.ok) {
-        setStatusMessage(data.error || 'Could not send your request.');
-        setStatusType('error');
-        setSubmitting(false);
-        return;
-      }
-      setStatusMessage(
-        `Request sent to ${org.name}. We’ll let you know when an admin reviews it. Taking you home…`
-      );
-      setStatusType('success');
-      setDone(true);
-      setTimeout(() => {
-        // User stays INDIVIDUAL until approved, so don't push them into
-        // pro-onboarding yet — drop them on the magazine.
-        router.replace('/');
-        router.refresh();
-      }, 1400);
-    } catch {
-      setStatusMessage('Could not send your request. Please try again.');
-      setStatusType('error');
-      setSubmitting(false);
-    }
-  };
-
-  const handleCreate = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (submitting || !intent) return;
-    if (createName.trim().length < 2) {
-      setStatusMessage('Organization name must be at least 2 characters.');
-      setStatusType('error');
-      return;
-    }
-    setSubmitting(true);
-    setStatusMessage('');
-    setStatusType(null);
-    try {
-      const res = await fetch('/api/auth/org-setup', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          name: createName.trim(),
-          type: intent,
-          role: createRole,
-          website: createWebsite.trim() || undefined,
-          location: createLocation.trim() || undefined,
-        }),
-      });
-      const data = await res.json();
-      if (!res.ok) {
-        setStatusMessage(data.error || 'Could not create your organization.');
-        setStatusType('error');
-        setSubmitting(false);
-        return;
-      }
-
-      // Owner branch: jump into pro onboarding. Member branch: stay on this
-      // page and surface the claim-link confirmation panel — there's still
-      // work the user can do (paste link into Slack, type a recipient
-      // email) before they leave.
-      if (createRole === 'owner') {
-        setStatusMessage(
-          `${data.organizationName} is on Folio. Taking you to onboarding next…`
-        );
-        setStatusType('success');
-        setDone(true);
-        setTimeout(() => {
-          router.replace(ONBOARDING_REDIRECT);
-          router.refresh();
-        }, 1400);
-      } else {
-        setInviteResult({
-          organizationId: data.organizationId,
-          organizationName: data.organizationName,
-          claimUrl: data.claimUrl,
-          claimToken: data.claimInviteToken,
-        });
-        setSubmitting(false);
-      }
-    } catch {
-      setStatusMessage('Could not create your organization. Please try again.');
-      setStatusType('error');
-      setSubmitting(false);
-    }
-  };
-
-  const handleCopyClaim = async () => {
-    if (!inviteResult) return;
-    try {
-      await navigator.clipboard.writeText(inviteResult.claimUrl);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    } catch {
-      // Clipboard unavailable (insecure context, focus issues) — fall back
-      // to inline message so users can copy the visible URL manually.
-      setCopied(false);
-    }
-  };
-
-  const handleSendInvite = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!inviteResult || inviteEmailStatus === 'sending') return;
-    if (!inviteEmail.trim() || !inviteEmail.includes('@')) {
-      setInviteEmailStatus('error');
-      setInviteEmailMessage('Enter a valid email.');
-      return;
-    }
-    setInviteEmailStatus('sending');
-    setInviteEmailMessage('');
-    try {
-      const res = await fetch(
-        `/api/orgs/${inviteResult.organizationId}/claim-invite/email`,
-        {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            token: inviteResult.claimToken,
-            recipientEmail: inviteEmail.trim(),
-          }),
+    if (selected || existingOnly) return;
+    setSearchError('');
+    setActiveIndex(-1);
+    if (key.length < 2) { setResults([]); setSearchedQuery(null); return; }
+    const controller = new AbortController();
+    const timer = setTimeout(async () => {
+      try {
+        const response = await fetch(`/api/onboarding/firm/search?q=${encodeURIComponent(query.trim())}`, { signal: controller.signal });
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.error || 'Could not search firms.');
+        if (!controller.signal.aborted) {
+          setResults(data.results ?? []);
+          setSearchedQuery(key);
         }
-      );
-      const data = await res.json();
-      if (!res.ok) {
-        setInviteEmailStatus('error');
-        setInviteEmailMessage(data.error || 'Could not send the email.');
-        return;
+      } catch (err) {
+        if (!controller.signal.aborted) {
+          setResults([]);
+          setSearchedQuery(null);
+          setSearchError(err instanceof Error ? err.message : 'Could not search firms.');
+        }
       }
-      setInviteEmailStatus('sent');
-      setInviteEmailMessage(
-        data.delivered
-          ? `Sent to ${inviteEmail.trim()}.`
-          : `Saved. (Outbound email isn’t wired yet, but we recorded the recipient.)`
-      );
-    } catch {
-      setInviteEmailStatus('error');
-      setInviteEmailMessage('Could not send the email. Please try again.');
-    }
-  };
+    }, 250);
+    return () => { clearTimeout(timer); controller.abort(); };
+  }, [query, key, selected, retry, existingOnly]);
 
-  const startCreate = () => {
-    setMode('create');
-    if (!createName) setCreateName(query.trim());
-    setStatusMessage('');
-    setStatusType(null);
-  };
-
-  const backToSearch = () => {
-    setMode('search');
-    setStatusMessage('');
-    setStatusType(null);
-  };
-
-  // No intent yet — render an inline picker so a logged-in individual user
-  // (e.g., arriving from the "Go Professional" link in UserMenu) can choose
-  // their role without being bounced back to /auth/signup, which would put
-  // them through the name/email/password form a second time.
-  if (!intent) {
-    return (
-      <>
-        {!hideEyebrow ? (
-          <div className="auth-eyebrow">
-            <span className="auth-eyebrow__gold">Almost there</span>
-            <span className="auth-eyebrow__dot" />
-            <span>Step two</span>
-          </div>
-        ) : null}
-        <h1 className="auth-title">Which kind of professional are you?</h1>
-        <p className="auth-sub">
-          Pick the role that fits your practice. We&rsquo;ll help you find your
-          organization on Folio or add a new one in a moment.
-        </p>
-
-        <fieldset className="auth-intent">
-          <legend className="auth-intent__legend">I&rsquo;m a</legend>
-          <div className="auth-intent__chips" role="radiogroup" aria-label="I'm a">
-            {INTENT_OPTIONS.map((opt) => (
-              <label key={opt.value} className="auth-intent__chip">
-                <input
-                  type="radio"
-                  name="org-setup-intent"
-                  value={opt.value}
-                  checked={false}
-                  onChange={() => setIntent(opt.value)}
-                />
-                <span>{opt.label}</span>
-              </label>
-            ))}
-          </div>
-        </fieldset>
-
-        <div className="auth-form-foot">
-          <Link href={ONBOARDING_REDIRECT}>I&rsquo;ll do this later</Link> — you
-          can add an organization any time from your profile.
-        </div>
-      </>
-    );
+  function choose(org: FirmMatch) {
+    setSelected(org);
+    setQuery(org.name);
+    setError('');
+    setConfirmed(false);
+    setShowResults(false);
+    setActiveIndex(-1);
   }
 
-  const eyebrowGold = headingOverride?.eyebrowGold ?? 'Almost there';
-  const titleSearch = headingOverride?.title ?? `Let’s find your ${copy!.noun}.`;
-  const subSearch =
-    headingOverride?.sub ??
-    `Search by name. If your ${copy!.noun} isn’t on Folio yet, you can add it in a moment.`;
+  async function openWorkspace(organizationId: string) {
+    if (submittingRef.current) return;
+    submittingRef.current = true;
+    setSubmitting(true);
+    setError('');
+    try {
+      const response = await fetch('/api/user/workspace-context', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ operatingAsOrgId: organizationId }),
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || 'Could not open your firm.');
+      await update();
+      const firm = data.user?.operatingAsOrg;
+      router.replace(firm ? firmWorkspaceDestination(firm, destination) : destination);
+      router.refresh();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Could not open your firm.');
+      submittingRef.current = false;
+      setSubmitting(false);
+    }
+  }
+
+  async function submit(event: React.FormEvent) {
+    event.preventDefault();
+    if (submittingRef.current || !ready || searchError || ambiguous || key.length < 2) return;
+    if (ownMembership) { await openWorkspace(ownMembership.id); return; }
+    if (!match && (!canCreate || !confirmed)) return;
+    submittingRef.current = true;
+    setSubmitting(true);
+    setError('');
+    try {
+      const response = await fetch(match ? `/api/orgs/${match.id}/join` : '/api/auth/org-setup', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(match ? {} : { name: query.trim(), type: intent, confirmed: true }),
+      });
+      const data = await response.json();
+      if (response.status === 409 && data.code === 'FIRM_EXISTS' && data.organization) {
+        choose(data.organization);
+        setResults([data.organization]);
+        setError('This firm is already on Folio. Request access to its existing page.');
+        return;
+      }
+      if (!response.ok) throw new Error(data.error || 'Could not save your request.');
+      await update();
+      if (match) {
+        setRequested(match.name);
+        setNeedsAdmin(data.notifications?.inApp === false);
+        setNotificationIssue(data.notifications?.inApp !== true && data.notifications?.inApp !== undefined || data.notifications?.email === 'failed' || data.notifications?.email === 'unavailable');
+      } else {
+        router.replace(firmWorkspaceDestination(data.org, destination));
+        router.refresh();
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Something went wrong. Please try again.');
+    } finally {
+      submittingRef.current = false;
+      setSubmitting(false);
+    }
+  }
+
+  if (existingOnly) return (
+    <>
+      <h1 className="folio-h2">Choose your firm</h1>
+      <p className="folio-body text-folio-text-secondary">Where does this work belong?</p>
+      <div className="space-y-3">
+        {memberships.map((org) => <button key={org.id} type="button" className="auth-secondary" disabled={submitting} onClick={() => openWorkspace(org.id)}>{org.name}</button>)}
+      </div>
+      {error ? <p role="alert" className="auth-message auth-message--error">{error}</p> : null}
+      <Link className="underline underline-offset-4" href={`/auth/org-setup?add=1&callbackUrl=${encodeURIComponent(destination)}`}>Add another firm</Link>
+    </>
+  );
+
+  if (requested) return (
+    <>
+      <h1 className="folio-h2">{needsAdmin ? 'Request saved' : 'Request sent'}</h1>
+      <p className="folio-body text-folio-text-secondary">{needsAdmin ? `${requested} doesn’t have an active admin yet. Your request is saved. Contact Folio to arrange access to its existing page.` : `Your request to join ${requested} is awaiting approval from a firm admin. You can browse Folio while you wait.`}</p>
+      {needsAdmin ? <a href={`mailto:support@folioad.com?subject=${encodeURIComponent(`Firm access: ${requested}`)}`} className="underline underline-offset-4">Contact Folio about this firm</a> : notificationIssue ? <p role="status" className="folio-meta text-folio-text-secondary">Your request is saved, but we couldn’t send every admin notification. You can contact your firm’s admin directly or check the request in Settings.</p> : null}
+      <Link className="auth-submit" href="/">Explore Folio</Link>
+      <Link className="underline underline-offset-4" href="/settings">View your access requests</Link>
+    </>
+  );
 
   return (
     <>
-      {!hideEyebrow ? (
-        <div className="auth-eyebrow">
-          <span className="auth-eyebrow__gold">{eyebrowGold}</span>
-          <span className="auth-eyebrow__dot" />
-          <span>Step two</span>
+      <div>
+        <p className="folio-meta text-folio-text-secondary mb-2">Professional setup</p>
+        <h1 className="folio-h2">{memberships.length ? 'Add another firm' : 'What is your firm called?'}</h1>
+        <p className="folio-body text-folio-text-secondary mt-3">Find your firm or create its page to post on Folio. Your personal account stays with you.</p>
+      </div>
+      <form onSubmit={submit} className="space-y-5">
+        <div>
+          <label htmlFor="firm-name" className="block folio-ui mb-2">Firm name</label>
+          <input id="firm-name" name="firmName" role="combobox" aria-autocomplete="list" aria-expanded={options.length > 0}
+            aria-controls="firm-options" aria-activedescendant={activeIndex >= 0 && options[activeIndex] ? `firm-option-${options[activeIndex].id}` : undefined}
+            aria-describedby="firm-help firm-search-status" autoComplete="off" maxLength={120} required minLength={2}
+            className="auth-field__input" placeholder="Start typing your firm name" value={query} disabled={submitting}
+            onFocus={() => setShowResults(true)}
+            onChange={(event) => { setQuery(event.target.value); setSelected(null); setConfirmed(false); setError(''); setShowResults(true); }}
+            onKeyDown={(event) => {
+              if (event.key === 'ArrowDown' && options.length) { event.preventDefault(); setActiveIndex((index) => (index + 1) % options.length); }
+              if (event.key === 'ArrowUp' && options.length) { event.preventDefault(); setActiveIndex((index) => (index - 1 + options.length) % options.length); }
+              if (event.key === 'Escape') { setShowResults(false); setActiveIndex(-1); }
+              if (event.key === 'Enter' && activeIndex >= 0 && options[activeIndex]) { event.preventDefault(); choose(options[activeIndex]); }
+            }} />
+          <p id="firm-help" className="folio-meta text-folio-text-secondary mt-2">Select a match, or keep typing the full name of your new firm.</p>
+          <p id="firm-search-status" role="status" aria-live="polite" className="folio-meta text-folio-text-secondary mt-2">
+            {busy ? 'Searching firms…' : match ? `${match.name} is already on Folio.` : ambiguous ? 'Select your firm below, or keep typing its full name.' : ready && key.length >= 2 && !searchError ? 'You can create a firm with this name.' : ''}
+          </p>
+          {options.length ? <ul id="firm-options" role="listbox" aria-label="Matching firms" className="mt-3 divide-y divide-folio-border-subtle rounded-xl border border-folio-border-subtle overflow-hidden">
+            {options.map((org, index) => <li key={org.id} role="presentation"><button type="button" role="option" id={`firm-option-${org.id}`} aria-selected={activeIndex === index || match?.id === org.id} tabIndex={-1}
+              className={`w-full text-left px-4 py-3 hover:bg-surface-ground ${activeIndex === index ? 'bg-surface-ground' : ''}`} onClick={() => choose(org)}>
+              <span className="block folio-ui">{org.name}</span><span className="folio-meta text-folio-text-secondary">{[org.location, org.type.toLowerCase().replace(/_/g, ' ')].filter(Boolean).join(' · ')}</span>
+            </button></li>)}
+          </ul> : <ul id="firm-options" role="listbox" aria-label="Matching firms" hidden />}
         </div>
-      ) : null}
-
-      {mode === 'search' ? (
-        <>
-          <h1 className="auth-title">{titleSearch}</h1>
-          <p className="auth-sub">{subSearch}</p>
-
-          <div className="auth-search">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true" className="auth-search__icon">
-              <circle cx="11" cy="11" r="7" />
-              <path d="m20 20-3.5-3.5" />
-            </svg>
-            <input
-              type="text"
-              className="auth-search__input"
-              placeholder={`Search for your ${copy!.noun}`}
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              autoFocus
-              autoComplete="off"
-              disabled={submitting || done}
-            />
-            {searching ? <span className="auth-search__hint">Searching…</span> : null}
-          </div>
-
-          {searchError ? (
-            <div className="auth-message auth-message--error" role="alert">
-              {searchError}
-            </div>
-          ) : null}
-
-          {query.trim().length >= 2 && !searching && results.length === 0 && !searchError ? (
-            <p className="auth-search__empty">No matches for &ldquo;{query.trim()}&rdquo; yet.</p>
-          ) : null}
-
-          {results.length > 0 ? (
-            <ul className="auth-results">
-              {results.map((org) => (
-                <li key={org.id} className="auth-result">
-                  <div className="auth-result__main">
-                    <span className="auth-result__name">{org.name}</span>
-                    <span className="auth-result__meta">
-                      {ORG_TYPE_LABEL[org.type] ?? org.type}
-                      {org.status && org.status !== 'UNCLAIMED' ? ` · ${org.status.toLowerCase()}` : ''}
-                    </span>
-                  </div>
-                  <button
-                    type="button"
-                    className="auth-result__cta"
-                    onClick={() => handleJoin(org)}
-                    disabled={submitting || done}
-                  >
-                    {submitting ? 'Joining…' : 'Join'}
-                  </button>
-                </li>
-              ))}
-            </ul>
-          ) : null}
-
-          {statusMessage ? (
-            <div
-              className={`auth-message ${
-                statusType === 'success' ? 'auth-message--success' : 'auth-message--error'
-              }`}
-              role={statusType === 'error' ? 'alert' : 'status'}
-            >
-              {statusMessage}
-            </div>
-          ) : null}
-
-          <button
-            type="button"
-            className="auth-secondary"
-            onClick={startCreate}
-            disabled={submitting || done}
-          >
-            I don&rsquo;t see my {copy!.noun} — create one
-          </button>
-
-          <div className="auth-form-foot">
-            {onBack ? (
-              <button type="button" className="auth-linklike" onClick={onBack} disabled={submitting || done}>
-                ← Back
-              </button>
-            ) : (
-              <>
-                <Link href={ONBOARDING_REDIRECT}>I&rsquo;ll do this later</Link> — you
-                can add an organization any time from your profile.
-              </>
-            )}
-          </div>
-        </>
-      ) : inviteResult ? (
-        <>
-          <h1 className="auth-title">{inviteResult.organizationName} is saved as a placeholder.</h1>
-          <p className="auth-sub">
-            Send this setup link to whoever can configure {inviteResult.organizationName}&rsquo;s
-            page on Folio. You can keep drafting in the meantime — you just
-            can&rsquo;t publish until someone claims the firm.
-          </p>
-
-          <div className="auth-claim-link">
-            <code className="auth-claim-link__url">{inviteResult.claimUrl}</code>
-            <button
-              type="button"
-              className="auth-claim-link__copy"
-              onClick={handleCopyClaim}
-            >
-              {copied ? 'Copied' : 'Copy link'}
-            </button>
-          </div>
-
-          <form className="auth-form" onSubmit={handleSendInvite} noValidate>
-            <div className="auth-field">
-              <div className="auth-field__head">
-                <label htmlFor="invite-email" className="auth-field__label">
-                  Email the link
-                </label>
-                <span className="auth-field__helper">Optional</span>
-              </div>
-              <input
-                id="invite-email"
-                name="invite-email"
-                type="email"
-                className="auth-field__input"
-                placeholder="founder@studiox.com"
-                value={inviteEmail}
-                onChange={(e) => setInviteEmail(e.target.value)}
-                disabled={inviteEmailStatus === 'sending'}
-                autoComplete="off"
-              />
-            </div>
-
-            {inviteEmailStatus !== 'idle' && inviteEmailMessage ? (
-              <div
-                className={`auth-message ${
-                  inviteEmailStatus === 'sent'
-                    ? 'auth-message--success'
-                    : inviteEmailStatus === 'error'
-                    ? 'auth-message--error'
-                    : ''
-                }`}
-                role={inviteEmailStatus === 'error' ? 'alert' : 'status'}
-              >
-                {inviteEmailMessage}
-              </div>
-            ) : null}
-
-            <button
-              type="submit"
-              className="auth-submit"
-              disabled={inviteEmailStatus === 'sending' || !inviteEmail.trim()}
-            >
-              {inviteEmailStatus === 'sending' ? 'Sending…' : 'Send setup link'}
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
-                <path d="M5 12h14" />
-                <path d="m13 6 6 6-6 6" />
-              </svg>
-            </button>
-          </form>
-
-          <div className="auth-form-foot">
-            <Link href="/">Continue to Folio</Link> — you can resend the link from
-            your firm settings later.
-          </div>
-        </>
-      ) : (
-        <>
-          <h1 className="auth-title">Add your {copy!.noun}.</h1>
-          <p className="auth-sub">
-            Name it as it appears on your work. You can fill in the rest of the
-            details later.
-          </p>
-
-          <form className="auth-form" onSubmit={handleCreate} noValidate>
-            <fieldset className="auth-intent" style={{ marginBottom: 18 }}>
-              <legend className="auth-intent__legend">
-                Are you setting up this {copy!.noun}?
-              </legend>
-              <div className="auth-role-choice">
-                <label className={`auth-role-option${createRole === 'owner' ? ' auth-role-option--on' : ''}`}>
-                  <input
-                    type="radio"
-                    name="create-role"
-                    value="owner"
-                    checked={createRole === 'owner'}
-                    onChange={() => setCreateRole('owner')}
-                  />
-                  <span className="auth-role-option__title">Yes, I&rsquo;m the founder or an admin</span>
-                  <span className="auth-role-option__sub">
-                    You&rsquo;ll be the owner of the page and can publish right away.
-                  </span>
-                </label>
-                <label className={`auth-role-option${createRole === 'member' ? ' auth-role-option--on' : ''}`}>
-                  <input
-                    type="radio"
-                    name="create-role"
-                    value="member"
-                    checked={createRole === 'member'}
-                    onChange={() => setCreateRole('member')}
-                  />
-                  <span className="auth-role-option__title">I work here — someone else will set up the page</span>
-                  <span className="auth-role-option__sub">
-                    We&rsquo;ll save the {copy!.noun} as a placeholder and give you a
-                    link to send to whoever can configure it. You can draft in
-                    the meantime, but you can&rsquo;t publish until it&rsquo;s claimed.
-                  </span>
-                </label>
-              </div>
-            </fieldset>
-
-            <div className="auth-field">
-              <div className="auth-field__head">
-                <label htmlFor="org-name" className="auth-field__label">
-                  {copy!.noun.charAt(0).toUpperCase() + copy!.noun.slice(1)} name
-                </label>
-              </div>
-              <input
-                id="org-name"
-                name="name"
-                type="text"
-                className="auth-field__input"
-                placeholder={`Your ${copy!.noun}`}
-                value={createName}
-                onChange={(e) => setCreateName(e.target.value)}
-                required
-                minLength={2}
-                disabled={submitting || done}
-                autoFocus
-              />
-            </div>
-
-            <div className="auth-field">
-              <div className="auth-field__head">
-                <label htmlFor="org-location" className="auth-field__label">
-                  Location
-                </label>
-                <span className="auth-field__helper">Optional</span>
-              </div>
-              <input
-                id="org-location"
-                name="location"
-                type="text"
-                className="auth-field__input"
-                placeholder="City, country"
-                value={createLocation}
-                onChange={(e) => setCreateLocation(e.target.value)}
-                disabled={submitting || done}
-              />
-            </div>
-
-            <div className="auth-field">
-              <div className="auth-field__head">
-                <label htmlFor="org-website" className="auth-field__label">
-                  Website
-                </label>
-                <span className="auth-field__helper">Optional</span>
-              </div>
-              <input
-                id="org-website"
-                name="website"
-                type="url"
-                className="auth-field__input"
-                placeholder="https://"
-                value={createWebsite}
-                onChange={(e) => setCreateWebsite(e.target.value)}
-                disabled={submitting || done}
-              />
-            </div>
-
-            {statusMessage ? (
-              <div
-                className={`auth-message ${
-                  statusType === 'success' ? 'auth-message--success' : 'auth-message--error'
-                }`}
-                role={statusType === 'error' ? 'alert' : 'status'}
-              >
-                {statusMessage}
-              </div>
-            ) : null}
-
-            <button
-              type="submit"
-              className="auth-submit"
-              disabled={submitting || done || createName.trim().length < 2}
-            >
-              {submitting ? 'Creating…' : `Add ${copy!.noun}`}
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
-                <path d="M5 12h14" />
-                <path d="m13 6 6 6-6 6" />
-              </svg>
-            </button>
-          </form>
-
-          <div className="auth-form-foot">
-            <button type="button" className="auth-linklike" onClick={backToSearch} disabled={submitting || done}>
-              Back to search
-            </button>
-          </div>
-        </>
-      )}
+        {searchError ? <div role="alert" className="auth-message auth-message--error">{searchError} <button type="button" className="underline" onClick={() => setRetry((value) => value + 1)}>Try again</button></div> : null}
+        {canCreate ? <>
+          <label className="block folio-ui">Firm type<select className="auth-field__input mt-2" value={intent} onChange={(event) => setIntent(event.target.value as OrgIntent)} disabled={submitting}>
+            <option value="designer">Design firm</option><option value="architect">Architecture firm</option><option value="builder">Building company</option><option value="vendor">Vendor or brand</option>
+          </select></label>
+          <label className="flex items-start gap-3 folio-meta text-folio-text-secondary"><input type="checkbox" className="mt-1" checked={confirmed} onChange={(event) => setConfirmed(event.target.checked)} disabled={submitting} />
+            <span>I confirm I’m authorized to create this firm’s page. I’ll be its owner and can post right away.</span>
+          </label>
+        </> : null}
+        {error ? <p role="alert" className="auth-message auth-message--error">{error}</p> : null}
+        <button type="submit" className="auth-submit" disabled={submitting || !ready || !!searchError || ambiguous || key.length < 2 || (!match && !confirmed)}>
+          {submitting ? 'Saving…' : ownMembership ? 'Open firm' : match ? 'Request access to join firm' : busy ? 'Searching…' : ambiguous ? 'Select your firm' : 'Create firm'}
+        </button>
+        {match && !ownMembership ? <p className="folio-meta text-folio-text-secondary">A firm admin will review your request. Posting access starts after approval and follows the firm’s settings.</p> : null}
+      </form>
     </>
   );
 }

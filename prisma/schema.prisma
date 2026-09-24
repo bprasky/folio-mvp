@@ -1055,9 +1055,10 @@ model Organization {
   certifications String[] // LEED, WELL, Passive House
 
   // Phase 2: Organization tier and verification
-  status  OrgStatus @default(UNCLAIMED)
-  address String? // Required for creation in Phase 2
-  phone   String? // Required for creation in Phase 2
+  membersCanPublish Boolean   @default(true)
+  status            OrgStatus @default(UNCLAIMED)
+  address           String? // Required for creation in Phase 2
+  phone             String? // Required for creation in Phase 2
 
   // Verification fields (populated during claim/upgrade)
   businessLicense String? // URL to uploaded license

@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { Prisma } from "@prisma/client";
 import { can, isOrgRole, type OrgCapability } from "@/lib/orgPermissions";
+import { canPublishFromOrg } from '@/lib/permissions';
 
 const E = (Prisma as any).$Enums ?? (Prisma as any);
 const ParticipantSide = E.ParticipantSide ?? {};
@@ -276,14 +277,25 @@ async function assertProjectCapability(
 }
 
 /**
- * Publish gate: Owner/Admin/Manager of the project's org, OR creator of
- * a non-org project, OR global admin, OR ProjectParticipant OWNER.
+ * Publishing requires active membership of the project's claimed firm and
+ * its current posting permission. Personal ownership alone is insufficient.
  */
 export async function assertProjectPublish(
   userId: string,
   projectId: string
 ): Promise<void> {
-  return assertProjectCapability(userId, projectId, "publish_projects");
+  const project = await prisma.project.findUnique({
+    where: { id: projectId }, select: { designerOrgId: true },
+  });
+  if (!project) throw new Error('NotFound');
+  if (!project.designerOrgId) throw new Error('Forbidden');
+  const gate = await canPublishFromOrg(userId, project.designerOrgId);
+  if (!gate.ok) throw new Error('Forbidden');
+}
+
+/** Withdrawing public work remains possible when a firm disables member posting. */
+export async function assertProjectUnpublish(userId: string, projectId: string): Promise<void> {
+  return assertProjectCapability(userId, projectId, 'publish_projects');
 }
 
 /**

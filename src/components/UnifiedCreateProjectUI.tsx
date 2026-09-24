@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { projectEntryHref } from '@/lib/onboarding/professional-entry';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { expertiseIntent } from '@/lib/publishing-studio/expertise-navigation';
 import { useSession } from 'next-auth/react';
@@ -91,13 +92,13 @@ export default function UnifiedCreateProjectUI() {
         <div className="max-w-md w-full ridge-card p-8 text-center">
           <h1 className="text-2xl font-bold mb-4 text-folio-text-primary" style={{ fontFamily: 'var(--font-headline)' }}>Select a firm to create projects under</h1>
           <p className="text-folio-text-secondary mb-6">
-            Use the <strong>&ldquo;Operating as&rdquo;</strong> menu in your profile to switch to a design firm workspace.
+            Find your firm or create one to share your work. Your personal account stays with you.
           </p>
           <button
-            onClick={() => router.push('/projects')}
+            onClick={() => router.push(projectEntryHref(session?.user, `/designer/create?${searchParams.toString()}`))}
             className="rounded-lg px-6 py-2 bg-[var(--accent)] text-white font-medium hover:bg-[var(--accent-hover)] transition-colors"
           >
-            Back to Projects
+            Find or create my firm
           </button>
         </div>
       </div>

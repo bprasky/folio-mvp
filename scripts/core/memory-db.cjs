@@ -88,11 +88,17 @@ function memoryDatabase() {
   const db = { calls, $disconnect: async () => {}, $transaction: async work => typeof work === 'function' ? work(db) : Promise.all(work),
     $queryRaw: async (sql, first, second) => {
       if (sql.join('').includes('organization_users')) return tables.get('OrganizationUser').filter(m => m.userId === first && m.organizationId === second).map(m => ({ id: m.id }));
+      // Enrollment identity lookup only; this double does not implement SQL or locks.
+      if (sql.join('').includes("lower(regexp_replace(btrim(name)")) {
+        const normalize = name => name.trim().replace(/\s+/g, ' ').toLowerCase();
+        return tables.get('Organization').filter(o => normalize(o.name) === first && o.id !== second).sort((a, b) => +a.createdAt - +b.createdAt || a.id.localeCompare(b.id)).slice(0, 1).map(clone);
+      }
       if (sql.join('').includes('FROM organizations')) return tables.get('Organization').filter(o => o.id === first).map(clone);
       if (sql.join('').includes('operatingAsOrgId')) return tables.get('User').filter(u => u.id === first).map(u => ({ operatingAsOrgId: u.operatingAsOrgId }));
       throw Error('Unexpected raw SQL in local orchestration test');
     },
     $executeRaw: async (sql, orgId, userId) => {
+      if (sql.join('').trim() === 'SELECT pg_advisory_xact_lock(73194, 2049)') return 1; // ordering only, no database concurrency proof
       if (!sql.join('').includes('UPDATE users SET "operatingAsOrgId"')) throw Error('Unexpected raw SQL mutation');
       const user = tables.get('User').find(u => u.id === userId); user.operatingAsOrgId = orgId; return 1;
     } };

@@ -40,6 +40,10 @@ expected+='\n'+storyDefinitions;
 for(const [,model,fields] of storyInverses.matchAll(/\/\/ (User|Organization|EditorialQueueItem|ProjectPost)\n([\s\S]*?)(?=\n\/\/ |$)/g)) {
   expected=expected.replace('model '+model+' {','model '+model+' {\n'+fields.trim()+'\n');
 }
+// Separately approved 2026-09-24 firm member posting policy. Pin both the
+// exact additive SQL and the one permitted Organization field.
+assert.equal(hash(read('prisma/migrations/20260924120000_org_member_posting_policy/migration.sql')),'ff6fa82f8627f4272c57b61a8c4cae1764e5dd52643588f1e977eb7e6dc629ee','Approved firm posting policy SQL');
+expected=expected.replace(/(model Organization \{[\s\S]*?)(\s+status\s+OrgStatus)/,'$1\nmembersCanPublish Boolean @default(true)\n$2');
 const tokens=s=>(s.match(/"(?:\\.|[^"\\])*"|\/\/[^\n]*|[^\s"]/g)||[]).filter(x=>!x.startsWith('//')).join('');
 assert.equal(tokens(read('prisma/schema.prisma')),tokens(expected),'Only reviewed schema tokens');
 assert.equal(JSON.parse(read('vercel.json')).git.deploymentEnabled,false);

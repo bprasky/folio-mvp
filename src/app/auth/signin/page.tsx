@@ -1,11 +1,15 @@
 import Link from 'next/link';
+import { Suspense } from 'react';
+import { safeCallbackPath } from '@/lib/onboarding/professional-entry';
 import { getSigninHero } from '@/lib/auth/getSigninHero';
 import { SigninForm } from './SigninForm';
 import styles from './signin.module.css';
 
 export const dynamic = 'force-dynamic';
 
-export default async function SigninPage() {
+export default async function SigninPage({ searchParams }: { searchParams: { callbackUrl?: string; callback?: string } }) {
+  const callbackUrl = safeCallbackPath(searchParams.callbackUrl ?? searchParams.callback);
+  const signupHref = '/auth/signup?callbackUrl=' + encodeURIComponent(callbackUrl);
   const [hero] = await Promise.all([getSigninHero()]);
 
   const showGoogle = Boolean(process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET);
@@ -32,7 +36,7 @@ export default async function SigninPage() {
           </nav>
         </div>
 
-        <Link href="/auth/signup" className={styles.invitePill}>
+        <Link href={signupHref} className={styles.invitePill}>
           Request invite
         </Link>
       </header>
@@ -61,7 +65,7 @@ export default async function SigninPage() {
           )}
         </section>
 
-        <SigninForm showGoogle={showGoogle} showApple={showApple} />
+        <Suspense fallback={null}><SigninForm showGoogle={showGoogle} showApple={showApple} /></Suspense>
       </main>
 
       <footer className={styles.pageFooter}>

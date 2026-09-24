@@ -51,6 +51,9 @@ export default function OrgSettingsPage() {
   const [loading, setLoading] = useState(true);
   const [isAuthorized, setIsAuthorized] = useState(false);
   const [orgName, setOrgName] = useState('');
+  const [membersCanPublish, setMembersCanPublish] = useState(true);
+  const [savingPosting, setSavingPosting] = useState(false);
+  const [postingError, setPostingError] = useState<string | null>(null);
 
   const [pendingRequests, setPendingRequests] = useState<PendingJoinRequest[]>([]);
   const [requestActioningId, setRequestActioningId] = useState<string | null>(null);
@@ -74,6 +77,7 @@ export default function OrgSettingsPage() {
         if (res.ok) {
           const data = await res.json();
           setOrgName(data.name || '');
+          setMembersCanPublish(data.membersCanPublish === true);
           const userMember = data.members?.find(
             (m: any) => m.userId === session?.user?.id
           );
@@ -107,6 +111,21 @@ export default function OrgSettingsPage() {
     } catch {
       // Soft-fail
     }
+  };
+
+  const saveMemberPosting = async (enabled: boolean) => {
+    setSavingPosting(true);
+    setPostingError(null);
+    try {
+      const response = await fetch(`/api/orgs/${orgId}`, {
+        method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ membersCanPublish: enabled }),
+      });
+      if (!response.ok) throw new Error('Could not save posting permissions. Please try again.');
+      setMembersCanPublish(enabled);
+    } catch (error) {
+      setPostingError(error instanceof Error ? error.message : 'Could not save posting permissions.');
+    } finally { setSavingPosting(false); }
   };
 
   const fetchPendingRequests = async () => {
@@ -592,7 +611,19 @@ export default function OrgSettingsPage() {
           </section>
         )}
 
-        <RolePermissionsMatrix />
+        <section className="mb-6 p-5 rounded-2xl border bg-white" aria-label="Posting permissions">
+          <h2 className="text-lg mb-3">Posting permissions</h2>
+          <label className="flex items-start gap-3 text-sm">
+            <input type="checkbox" className="mt-1" checked={membersCanPublish} disabled={savingPosting}
+              onChange={event => saveMemberPosting(event.target.checked)} />
+            <span>Allow approved members to publish
+              <span className="block text-xs text-gray-600 mt-1">When off, only owners, admins and managers can publish. Members can still prepare drafts. Pending join requests never grant posting access.</span>
+            </span>
+          </label>
+          {savingPosting && <p role="status" className="text-xs mt-2">Saving…</p>}
+          {postingError && <p role="alert" className="text-sm text-red-700 mt-2">{postingError}</p>}
+        </section>
+        <RolePermissionsMatrix membersCanPublish={membersCanPublish} />
       </div>
     </div>
   );

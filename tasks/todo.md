@@ -515,3 +515,34 @@ Review: implemented publication-led cards and direct actions across both Studio 
 Plan check-in: refine the merged implementation around audience-facing hooks. Keep uploads, Folio publication, external publication, generated exports and planning dates distinct. Treat the truncated final sentence as a request to avoid repeatedly recommending the same weak or already-covered story. Audit existing persistence before adding any storage; schema changes require the exact review gate.
 
 Review: public hooks are distinct from private guidance across prepared and saved Studio paths; project/room interview covers resolve current INCLUDED source photos, personal covers retain identity, and designer edits remain authoritative. Sharing corrections are explicit, scoped and reversible; confirmed project introductions do not reappear under new wording. 39 focused/regression scripts passed across the run, with affected checks rerun after changes. Production compile, scoped ESLint, client/migration guards and TypeScript budget (903/904; baseline unchanged) passed. Synthetic desktop/mobile correction-and-undo review is recorded in docs/reviews/studio-audience-hooks/README.md. No schema migration, paid model backfill, live publication or deployment.
+
+## Signup and firm onboarding audit — 2026-09-23
+- [x] Trace individual signup, firm search/join/create/solo, and posting eligibility.
+- [x] Identify mobile layout and form-state friction using supplied screenshot and source.
+- [x] Document a short-form replacement flow, implementation priorities and verification cases.
+Plan check-in: audit current behavior and prepare a concrete simplification proposal. This directly serves designer onboarding. No application or production changes in this audit.
+- [x] Source and screenshot audit completed; findings, replacement forms and acceptance cases recorded in docs/audits/SIGNUP_FIRM_FLOW_2026-09-23.md.
+Review: confirmed duplicate enrollment, conflicting join rules, broken skip, hidden create, search errors/races, nested mobile shell, missing initial workspace selection and nonuniform publishing gates. Audit only; no application changes or live-account tests.
+
+
+## Professional enrollment audit clarification — 2026-09-24
+- [x] Map individual-account posting/upgrade entry points to professional enrollment and identify alternate paths.
+- [x] Check duplicate prevention and multi-organization identity/context behavior.
+- [x] Correct the signup audit to the founder's Find my firm / Create my firm model and record policy decisions still needed.
+Plan check-in: refine the existing audit and produce a concrete route and permission contract before implementation. Preserve individual identity and per-organization membership roles. No production or permission changes during the audit.
+
+Review: corrected the product contract and documented route/callback gaps, duplicate-creation paths, existing-member/second-firm UX and claim/workspace authorization gaps. Source review only. Newly created firm verification policy asked, not assumed; no application or production changes.
+
+## Smart firm enrollment implementation — 2026-09-24
+- [x] Consolidate professional setup into one autocomplete with explicit join/create outcomes and duplicate-safe creation.
+- [x] Preserve one account, callbacks, initial workspace, existing memberships and add-another-firm entry points.
+- [x] Send Folio notification and admin email on join requests; reuse pending requests without repeated notifications.
+- [x] Apply creator-confirmed posting and an admin-controlled member posting setting, using the required schema review gate if needed.
+- [ ] Verify permission boundaries, enrollment routes, autocomplete states and mobile rendering; review and prepare a scoped PR.
+Plan check-in: implement the founder's smart-field flow using existing NextAuth, organization membership and messaging infrastructure. New firms require creator confirmation, not external verification. No live signup or emails in testing. Any new schema column will be printed for the repository's required approval before application.
+
+Review in progress: mobile synthetic component walkthrough and focused enrollment, routing, notifications and policy checks pass. Core suite 8 passed/1 disposable-DB skipped. Fixed review findings for actual target-firm authorization, vendor destination, and no-admin pending retries. Awaiting explicit approval for the printed membersCanPublish schema/migration before generation, full validation and shipping. No production mutation, live email or deployment. Preview: docs/reviews/smart-firm-enrollment/mobile-create.png.
+
+Studio story/expertise persistence regressions also pass using real permission helpers: personal/no-membership/admin-disabled denied, approved active MEMBER allowed. Existing publication immutability, source revocation and retry assertions retained.
+
+Approval/merge continuation: founder approved exact migration and merge. Only the approved additive migration applied and recorded; 113 migrations, clean status, all four existing organizations enabled. Prisma format/validate/generate/sync passed. Production compile, full source/script lint (zero errors), core 8/1 skipped, vendor access17, posting policy5, 39 focused scripts and exact-schema guards pass. Final TypeScript display-equivalence verification and remote CI/merge in progress. Automatic Git deployment is disabled; this task authorizes merge, not an extra deployment.

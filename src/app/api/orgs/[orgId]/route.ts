@@ -5,6 +5,8 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/app/api/auth/[...nextauth]/options';
 import { prisma } from '@/lib/prisma';
 import { getUserOrgMemberships, isOrgAdmin, isOrgOwner } from '@/lib/permissions';
+import { assertFirmNameAvailable, FirmAlreadyExists } from '@/lib/onboarding/create-firm';
+import { can, isOrgRole } from '@/lib/orgPermissions';
 
 /**
  * GET /api/orgs/[orgId] - Get organization details
@@ -75,6 +77,7 @@ export async function GET(
       name: org.name,
       type: org.type,
       status: org.status,
+      membersCanPublish: org.membersCanPublish,
       description: org.description,
       website: org.website,
       logo: org.logo,
@@ -120,10 +123,17 @@ export async function PATCH(
     }
 
     const body = await request.json();
+    if (body.membersCanPublish !== undefined && typeof body.membersCanPublish !== 'boolean') {
+      return NextResponse.json({ error: 'Member posting must be true or false' }, { status: 400 });
+    }
+    if (body.name !== undefined && (typeof body.name !== 'string' || !body.name.trim())) {
+      return NextResponse.json({ error: 'Firm name is required' }, { status: 400 });
+    }
     const { name, description, website, logo, address, phone, tagline, philosophy, location, foundedYear, specialties } = body;
 
     // Build update data (only include provided fields)
     const updateData: any = {};
+    if (body.membersCanPublish !== undefined) updateData.membersCanPublish = body.membersCanPublish;
     if (name !== undefined) updateData.name = name.trim();
     if (description !== undefined) updateData.description = description?.trim() || null;
     if (website !== undefined) updateData.website = website?.trim() || null;
@@ -147,21 +157,30 @@ export async function PATCH(
       }
     }
 
-    const org = await prisma.organization.update({
-      where: { id: orgId },
-      data: updateData,
-      select: {
-        id: true,
-        name: true,
-        type: true,
-        status: true,
-        description: true,
-        website: true,
-        logo: true,
-        address: true,
-        phone: true,
-        updatedAt: true,
-      }
+    const org = await prisma.$transaction(async tx => {
+      const admin = await tx.organizationUser.findFirst({
+        where: { userId: session.user.id, organizationId: orgId, isActive: true },
+        select: { role: true },
+      });
+      if (!admin || !isOrgRole(admin.role) || !can(admin.role, 'change_member_roles')) throw new Error('Forbidden');
+      if (name !== undefined) await assertFirmNameAvailable(tx, updateData.name, orgId);
+      return tx.organization.update({
+        where: { id: orgId },
+        data: updateData,
+        select: {
+          id: true,
+          name: true,
+          type: true,
+          status: true,
+          membersCanPublish: true,
+          description: true,
+          website: true,
+          logo: true,
+          address: true,
+          phone: true,
+          updatedAt: true,
+        }
+      });
     });
 
     return NextResponse.json({
@@ -170,6 +189,10 @@ export async function PATCH(
     });
   } catch (error: any) {
     console.error('[PATCH /api/orgs/[orgId]] Error:', error);
+    if (error instanceof FirmAlreadyExists) {
+      return NextResponse.json({ error: error.message, organization: error.organization }, { status: 409 });
+    }
+    if (error.message === 'Forbidden') return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
 
     if (error.code === 'P2025') {
       return NextResponse.json({ error: 'Organization not found' }, { status: 404 });

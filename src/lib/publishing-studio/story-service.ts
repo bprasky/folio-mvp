@@ -2,7 +2,7 @@ import 'server-only';
 import { createHash } from 'crypto';
 import { Prisma } from '@prisma/client';
 import { prisma } from '@/lib/prisma';
-import { canAccessDesignerTools } from '@/lib/permissions';
+import { canAccessDesignerTools, canPublishFromOrg } from '@/lib/permissions';
 import { checkRateLimit } from '@/lib/rateLimit';
 import { extractTextFromBlocks, publishedRoomSource } from '@/lib/instagram-export/generation';
 import { resolvePublishingStudioContext } from './data';
@@ -190,6 +190,9 @@ export async function changeStory(userId: string, id: string, input: { action?: 
           changes = { ...changes, blocks: json(draft), title: draft.title };
         }
         else {
+          if (!data.workspace.id || !(await canPublishFromOrg(userId, data.workspace.id, db)).ok) {
+            throw new StoryError('Join or create a firm with posting access before publishing.', 403);
+          }
           if (input.articleReviewed !== true) throw new StoryError('Review the finished article before publishing.');
           try { editActivityDraft(definition, revision.blocks); } catch { throw new StoryError('Prepare and review the article before publishing.'); }
           changes = { ...changes, approvedBy: { connect: { id: userId } }, approvedAt: new Date(), publishedAt: new Date(), consentScope: 'feed_only' };
