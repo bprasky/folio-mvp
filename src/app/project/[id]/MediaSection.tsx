@@ -390,10 +390,10 @@ export default function MediaSection({ project, isOwner, images, projectPost, in
           onExit={() => setShowTagger(false)}
           onImportFinishBook={routeDocument}
           onProceed={() => {
-            // The interview belongs to the Story step, not Tags — hand off to
-            // that surface rather than opening the modal over the tagger.
+            // This button promises the interview, so carry its explicit intent
+            // to Story's shared modal instead of requiring a second Start click.
             setShowTagger(false);
-            router.push(`/project/${project.id}?view=story`);
+            router.push(`/project/${project.id}?view=story&action=interview`);
           }}
         />
       ) : (

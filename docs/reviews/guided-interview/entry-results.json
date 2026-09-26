@@ -1,0 +1,51 @@
+{
+  "baseline": false,
+  "baselineCommit": null,
+  "fixture": "Actual Tracker → Story → InterviewModal → GuidedInterviewWorkspace and protected interview components; synthetic Next navigation/image/dynamic and loopback HTTP responses, pure guided controller, no AI or database. No deployed/authenticated Next server verification.",
+  "results": [
+    {
+      "name": "Lifecycle Start interview opens the first question while the saved-only Story read is pending",
+      "status": "pass"
+    },
+    {
+      "name": "Close consumes navigation intent; explicit reopen restores the saved cursor",
+      "status": "pass"
+    },
+    {
+      "name": "Ordinary empty Story is review only and has no draft, context or restart controls",
+      "status": "pass"
+    },
+    {
+      "name": "Question-only saved rows do not unlock generation or count as room answers",
+      "status": "pass"
+    },
+    {
+      "name": "An accepted room answer unlocks draft controls and generates through the canonical route",
+      "status": "pass"
+    },
+    {
+      "name": "Server-enabled new guided session works with a client built flag-off",
+      "status": "pass"
+    },
+    {
+      "name": "An explicit guided 404 retains the actual legacy question flow",
+      "status": "pass"
+    },
+    {
+      "name": "Unverified guided availability fails closed: {\"guidedStatus\":503}",
+      "status": "pass"
+    },
+    {
+      "name": "Unverified guided availability fails closed: {\"invalidGuided\":true}",
+      "status": "pass"
+    },
+    {
+      "name": "Protected spotlight takes precedence when enabled=false",
+      "status": "pass"
+    },
+    {
+      "name": "Protected spotlight takes precedence when enabled=true",
+      "status": "pass"
+    }
+  ]
+}

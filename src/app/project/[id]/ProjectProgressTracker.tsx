@@ -44,11 +44,10 @@ function actionHref(projectId: string, action: TrackerAction): string {
   if (action === 'publish') {
     return `/project/${projectId}?view=publish`;
   }
-  // The interview now lives on the Story tab, which owns its progress, coverage
-  // and the Generate action — so the Story step routes there rather than opening
-  // the modal over the Media surface.
+  // Explicit Start/Continue actions open the interview hosted by Story. The
+  // stepper's plain Story link remains a visit to saved answers and coverage.
   if (action === 'interview') {
-    return `/project/${projectId}?view=story`;
+    return `/project/${projectId}?view=story&action=interview`;
   }
   return `/project/${projectId}?view=media&action=${action}`;
 }
@@ -79,12 +78,8 @@ export default function ProjectProgressTracker({
   const showCollapsedBar = materialsExist && !showImportCards;
   const onLastStep = currentIndex === steps.length - 1;
 
-  // A CTA that routes to the surface already on screen is a control that looks
-  // live and does nothing. The `interview` and `publish` actions route to a bare
-  // view — no `action` param for the surface to pick up — so on that view they
-  // reload the page you are reading. Both surfaces own their next action inline
-  // anyway (Story has Generate; Publish has the sticky Publish footer), so the
-  // tracker collapses to the stepper rather than competing with them.
+  // Story already owns its Start/Resume control; Publish owns its publishing
+  // footer. Keep one next action on either surface by collapsing to the stepper.
   //
   // Note this reads the MERGED copy, so a publish step whose gate is closed —
   // PUBLISH_BLOCKED_COPY swaps the action to `sort-rooms` / `tag` — keeps its

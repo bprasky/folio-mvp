@@ -423,29 +423,6 @@ export async function GET(
   const spotlightBoundary = await legacyInterviewBoundary(request);
   if (spotlightBoundary) return spotlightBoundary;
 
-  // Try to get contextual questions from AI classification
-  let contextualQuestions: any[] = [];
-  try {
-    const { getInterviewQuestions } = await import('@/lib/editorial/getInterviewQuestions');
-    const questions = await getInterviewQuestions(params.projectId);
-    contextualQuestions = questions
-      .filter(q => q.questionType === 'contextual')
-      .map(q => ({
-        id: q.id,
-        prompt: q.questionText,
-        section: 'what', // Contextual questions are about "what" they chose
-        role: 'DESIGNER' as const,
-        contextual: {
-          linkedImageId: q.linkedImageId,
-          linkedProductId: q.linkedProductId,
-          attributeType: q.attributeType,
-          attributeValue: q.attributeValue,
-        },
-      }));
-  } catch (error) {
-    console.error('[interview/GET] Failed to load contextual questions:', error);
-    // Continue without contextual questions
-  }
   try {
     if (!POSTING_V1_ENABLED) {
       return NextResponse.json(
@@ -466,6 +443,35 @@ export async function GET(
       where: { projectId },
       select: { provenance: true },
     });
+
+    // Story review reads saved evidence only; opening it must not generate rooms.
+    // Keep legacy question preparation behind authorization and out of guided reads.
+    const provenance = (post?.provenance as any) || {};
+    const savedOnly = new URL(request.url).searchParams.get('savedOnly') === '1';
+    let contextualQuestions: any[] = [];
+    if (!savedOnly && !provenance.interview?.guided) {
+      try {
+        const { getInterviewQuestions } = await import('@/lib/editorial/getInterviewQuestions');
+        const questions = await getInterviewQuestions(params.projectId);
+        contextualQuestions = questions
+          .filter(q => q.questionType === 'contextual')
+          .map(q => ({
+            id: q.id,
+            prompt: q.questionText,
+            section: 'what', // Contextual questions are about "what" they chose
+            role: 'DESIGNER' as const,
+            contextual: {
+              linkedImageId: q.linkedImageId,
+              linkedProductId: q.linkedProductId,
+              attributeType: q.attributeType,
+              attributeValue: q.attributeValue,
+            },
+          }));
+      } catch (error) {
+        console.error('[interview/GET] Failed to load contextual questions:', error);
+        // Continue without contextual questions
+      }
+    }
 
     // Fetch room progress from EditorialInterview (Phase B)
     // Wrapped defensively — room_progress column may not exist if migration hasn't been applied
@@ -489,7 +495,6 @@ export async function GET(
       });
     }
 
-    const provenance = (post.provenance as any) || {};
     const interview = provenance.interview || {};
     const payload = interview.payload || {};
 

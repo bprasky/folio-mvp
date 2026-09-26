@@ -117,12 +117,13 @@ check('an org-owned project says "our studio", not "my"',
   /availability\.bio\.source === 'org'/.test(options));
 check('a failed probe hides the options rather than guessing',
   /if \(!availability\) return null/.test(options));
-check('both surfaces use the one component', (() => {
+check('all three generation surfaces use the one component', (() => {
   const hits = execSync("grep -rl '<GenerationContextOptions' --include=*.tsx src/ || true", { encoding: 'utf8' })
     .split('\n').filter(Boolean);
-  return hits.length === 2
+  return hits.length === 3
     && hits.some(f => f.includes('StoryInterviewPanel'))
-    && hits.some(f => f.includes('StagingPublishPanel'));
+    && hits.some(f => f.includes('StagingPublishPanel'))
+    && hits.some(f => f.includes('GuidedInterviewWorkspace'));
 })());
 
 console.log('\n7. The options are asked where the run is started');
@@ -138,7 +139,7 @@ check('the Story tab offers the choice next to Generate',
 // A useCallback that closes over state without declaring it keeps the value
 // from first render — the checkbox would move and the request would not.
 check('the generate callback depends on the choice, so a change is not stale',
-  /\}, \[projectId, writeUpRoomIds, router, contextChoice\]\)/.test(story));
+  /\}, \[(?:canGenerate, )?projectId, writeUpRoomIds, router, contextChoice\]\)/.test(story));
 
 const panel = readFileSync('src/app/project/[id]/StagingPublishPanel.tsx', 'utf8');
 check('the permanent checkbox row is gone from the Publish page',

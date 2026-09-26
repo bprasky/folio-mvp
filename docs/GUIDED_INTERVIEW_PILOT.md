@@ -11,9 +11,13 @@ $env:NEXT_PUBLIC_FLAG_GUIDED_INTERVIEW = '1'
 npm run dev
 ```
 
-Sign in as an authorized project editor, open a project, select **Story**, and open the existing interview entry point. The pilot prepares or restores its saved questions automatically. Recording starts only when the microphone button is pressed. The same wrapper covers the project wizard and designer preview entry points.
+Sign in as an authorized project editor, open a project, and select **Start interview** or **Continue interview** in project progress. The action opens the interview directly; the tagging handoff does the same. A normal **Story** tab/step visit remains the saved-answer review, with its own Start/Resume control. The pilot prepares or restores its saved questions automatically. Recording starts only when the microphone button is pressed. The same protected wrapper covers the project wizard and designer preview entry points.
+
+The Story review hides Generate draft, its context options, and Restart until accepted nonblank answers exist. Its room-answer requirement still controls whether generation is available. Closing an interview consumes the original start action so a refresh does not immediately reopen it; a later explicit Start/Resume opens it again. Saved-answer reads use `?savedOnly=1` and do not prepare questions or delay opening the interview. Remaining legacy question preparation runs only after project authorization.
 
 This is a build-time public flag: restart development or rebuild a local production build after changing it. No production settings or flags were changed by this implementation.
+
+**Merging does not activate the live pilot.** This repository has Vercel Git deployments disabled. The live site needs a deployment containing the change, built with `NEXT_PUBLIC_FLAG_GUIDED_INTERVIEW=1` in its production environment. Setting the flag locally or merging the branch does neither. The wrapper also honors the authenticated server's guided availability when a client has an older disabled flag; authorization errors still block entry, and protected spotlight enrollment still takes precedence.
 
 For rollback, unset the variable or set it to `0` and restart/rebuild. Projects without a saved guided session use the existing interview. Existing guided sessions keep their guided reader/writer so they can finish without losing their cursor or history. The flag controls **new pilot sessions**, not an emergency kill switch. Spotlight enrollment and its existing account gates/kill switches remain authoritative in either flag state.
 
@@ -69,10 +73,13 @@ Verified:
 - Browser: automatic start, independent browsing, save failure/retry, lost successful acknowledgement, pause/reload, complete long transcription, room transitions, scroll preservation, desktop/mobile bounds, correction-draft resume, and explicit draft handoff.
 - Five live **synthetic** follow-up evaluations: rich answer advances, thin answer gets one room-level follow-up, corrected premise advances, volunteered unselected pendant is not pursued, and “move on” advances. The shared provider/model configuration was reused.
 - Focused ESLint, client-import guard, migration-discipline check, Prisma schema/client sync, existing generation/quote persistence checks, and core regressions.
-- All **14 browser scenarios** pass. The TypeScript diagnostic ratchet passes with **903 diagnostics against the existing 904 baseline**, with no new diagnostic fingerprints; this repository does not have a clean full-project TypeScript baseline. Guided regression checks are included in the existing CI core job.
+- All **14 workspace browser scenarios** and **11 entry-flow browser scenarios** pass. Entry coverage includes the original lifecycle CTA through its first question while Story reads are held, consumed close/reopen intent, empty/question-only evidence, canonical generation, server-enabled routing with a flag-off client, legacy fallback, availability errors, and spotlight precedence. The entry script reproduces six failures on the original merged commit `6885f576`; both result files record their verification scope. Eight actual GET-handler cases also check saved-evidence reads and authorization before model preparation.
+- The TypeScript diagnostic ratchet passes with **903 diagnostics against the existing 904 baseline**, with no new diagnostic fingerprints; this repository does not have a clean full-project TypeScript baseline. Guided regression checks are included in the existing CI core job.
 - The authorization scanner reports no finding for the new guided route. Its overall CI command remains failing on seven critical findings in five unchanged Publishing Studio route files. Those pre-existing scanner findings were not changed or treated as verified vulnerabilities in this work.
 
 Review screenshots: [desktop](reviews/guided-interview/desktop.png), [mobile](reviews/guided-interview/mobile.png). [Browser check results](reviews/guided-interview/browser-results.json). [Synthetic prompt evaluation](reviews/guided-interview/prompt-evaluation.json).
+
+Entry correction: [first question after the original CTA](reviews/guided-interview/entry.png), [passing checks](reviews/guided-interview/entry-results.json), and [original merged-code failures](reviews/guided-interview/entry-baseline-results.json). All are synthetic local fixtures, not live-site verification.
 
 ## Changed code
 
@@ -81,6 +88,7 @@ Review screenshots: [desktop](reviews/guided-interview/desktop.png), [mobile](re
 - `src/components/posting/interview/GuidedInterviewWorkspace.tsx`, `guidedWorkspaceState.ts`, `InterviewModal.tsx`, and `useVoiceRecording.ts`: workspace, local recovery, protected entry routing, and lossless recording lifecycle.
 - Existing interview save/generation/transcription/follow-up/status/completion/realtime routes, room rename, and editorial question/reverse-sync helpers: narrow guards and concurrent-write protection for shared provenance.
 - `src/lib/flags.ts`: default-off pilot enrollment flag.
+- Project progress and tagging CTAs, `ProjectTabs.tsx`, and `StoryInterviewPanel.tsx`: consume explicit interview intent, preserve ordinary Story review, and require accepted answer content before exposing draft controls.
 - `scripts/check-guided-*`, `scripts/eval-guided-interview.cjs`, `scripts/fixtures/guided-interview-evaluation.json`, and existing core/quote checks: regression coverage and synthetic evaluation. `package.json` and `.github/workflows/lint.yml` expose and run the focused checks.
 
 ## Limits of this delivery

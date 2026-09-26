@@ -58,6 +58,52 @@ async function checkGenerationMetadata() {
   console.log('PASS generation metadata CAS retries without erasing a concurrent guided turn');
 }
 
+async function checkSavedEvidenceRead() {
+  const source = read(routeRoot + 'route.ts');
+  const actual = ['buildQuestionTextMap', 'answerRoomKey', 'buildCoverage', 'GET']
+    .map(name => namedFunction(source, name)).join('\n') + '\nGET';
+  for (const mode of ['saved-only', 'guided', 'legacy', 'empty', 'anonymous', 'forbidden', 'spotlight', 'disabled']) {
+    const events = [];
+    const provenance = { interview: {
+      ...(mode === 'guided' ? { guided: { id: 'existing-guided' } } : {}),
+      payload: { answers: [{ questionId: 'q1', answer: 'We kept the route open.', roomId: 'room' }] },
+      questionSet: { rooms: { result: { rooms: [{ roomId: 'room', roomName: 'Living room', questions: [{ id: 'q1', questionText: 'What shaped this room?' }] }] } } },
+    } };
+    const original = JSON.stringify(provenance);
+    const get = evaluate(actual, {
+      URL, POSTING_V1_ENABLED: mode !== 'disabled', authOptions: {},
+      console: { log() {}, warn() {}, error() {} },
+      legacyInterviewBoundary: async () => mode === 'spotlight' ? { status: 409 } : null,
+      getServerSession: async () => mode === 'anonymous' ? null : { user: { id: 'owner' } },
+      assertProjectView: async () => { events.push('authorize'); if (mode === 'forbidden') throw new Error('Forbidden'); },
+      prisma: {
+        projectPost: { findUnique: async () => { events.push('read'); return mode === 'empty' ? null : { provenance }; } },
+        editorialInterview: { findUnique: async () => ({ roomProgress: { room: 'complete' } }) },
+      },
+      NextResponse: { json: (body, options) => ({ body: JSON.parse(JSON.stringify(body)), status: options?.status ?? 200 }) },
+      require: name => {
+        assert.equal(name, '@/lib/editorial/getInterviewQuestions');
+        return { getInterviewQuestions: async () => { events.push('prepare'); return [{ id: 'contextual', questionType: 'contextual', questionText: 'A legacy question' }]; } };
+      },
+    });
+    const savedOnly = ['saved-only', 'empty'].includes(mode);
+    const result = await get({ url: 'https://folio.test/api/posting/project/project/interview' + (savedOnly ? '?savedOnly=1' : '') }, { params: { projectId: 'project' } });
+    assert.equal(events.filter(event => event === 'prepare').length, mode === 'legacy' ? 1 : 0, mode + ' must not generate questions while reading evidence');
+    assert.equal(JSON.stringify(provenance), original, 'Reads must preserve saved provenance');
+    if (['saved-only', 'guided', 'legacy'].includes(mode)) {
+      assert.equal(result.status, 200);
+      assert.equal(result.body.answers[0].prompt, 'What shaped this room?');
+      assert.equal(result.body.answers[0].answer, 'We kept the route open.');
+      assert.deepEqual(result.body.coverage, [{ roomId: 'room', roomName: 'Living room', answered: 1, total: 1, complete: true }]);
+      assert.equal(result.body.contextualQuestions.length, mode === 'legacy' ? 1 : 0);
+    } else if (mode === 'empty') {
+      assert.equal(result.status, 200); assert.deepEqual(result.body.answers, []);
+    } else assert.notEqual(result.status, 200, mode + ' must remain blocked');
+    if (mode === 'legacy') assert.ok(events.indexOf('authorize') < events.indexOf('prepare'));
+  }
+  console.log('PASS saved-evidence and guided reads preserve answers/coverage without model preparation; legacy preparation follows authorization');
+}
+
 async function checkLegacySave() {
   const source = read(routeRoot + 'route.ts');
   const guidedGuard = between(source, 'const existingProvenance = (currentPost.provenance as any) || {};', '// Clearing is DESTRUCTIVE');
@@ -314,6 +360,6 @@ async function checkCompletionAuthorization() {
 }
 
 (async () => {
-  await checkGenerationMetadata(); await checkLegacySave(); await checkRealtime(); await checkFollowups();
+  await checkGenerationMetadata(); await checkSavedEvidenceRead(); await checkLegacySave(); await checkRealtime(); await checkFollowups();
   await checkQuestionCaches(); await checkReverseSync(); await checkRoomRename(); await checkCompletionAuthorization();
 })().catch(error => { console.error(error); process.exitCode = 1; });

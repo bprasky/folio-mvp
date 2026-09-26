@@ -86,7 +86,7 @@
     "report:quote-provenance": "tsx scripts/report-quote-provenance.ts",
     "test:core": "tsx --test scripts/core/safety.test.cjs scripts/core/journeys.test.cjs",
     "test:guided": "node scripts/check-guided-interview-prompts.cjs && tsx scripts/check-guided-controller.ts && node scripts/check-guided-service.cjs && node scripts/check-guided-provenance-writers.cjs",
-    "test:guided:browser": "node scripts/check-guided-browser.cjs",
+    "test:guided:browser": "node scripts/check-guided-browser.cjs && node scripts/check-guided-entry-browser.cjs",
     "test:persistence": "tsx --test scripts/persistence/integrity.test.cjs",
     "test:vendor-claims": "tsx --test scripts/core/vendor-claims.test.cjs",
     "test:product-attribution": "tsx --test scripts/core/product-attribution.test.cjs",

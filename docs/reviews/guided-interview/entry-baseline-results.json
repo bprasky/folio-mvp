@@ -1,0 +1,75 @@
+{
+  "baseline": true,
+  "baselineCommit": "6885f576d181f672409da46bc9c3863776d68786",
+  "fixture": "Actual Tracker → Story → InterviewModal → GuidedInterviewWorkspace and protected interview components; synthetic Next navigation/image/dynamic and loopback HTTP responses, pure guided controller, no AI or database. No deployed/authenticated Next server verification.",
+  "results": [
+    {
+      "name": "Lifecycle Start interview opens the first question while the saved-only Story read is pending",
+      "status": "fail",
+      "error": "Waiting for selector `[data-testid=\"guided-current-question\"]` failed",
+      "pageErrors": [],
+      "unexpected": [],
+      "text": "STEP 4 OF 5 — STORY\n\nYour story, room by room\n\nOpen a room to read or edit what you said. Generate the draft whenever you're ready — you review it in Publish, and you can come back and add rooms after.\n\nRestart\nStart interview\nGenerate draft\nWrite it using\nMy bio and design philosophy\nMy other published projects (2)\n0/1 rooms\n\nLoading your answers…"
+    },
+    {
+      "name": "Close consumes navigation intent; explicit reopen restores the saved cursor",
+      "status": "fail",
+      "error": "Waiting for selector `[data-testid=\"guided-current-question\"]` failed",
+      "pageErrors": [],
+      "unexpected": [],
+      "text": "STEP 4 OF 5 — STORY\n\nYour story, room by room\n\nOpen a room to read or edit what you said. Generate the draft whenever you're ready — you review it in Publish, and you can come back and add rooms after.\n\nRestart\nStart interview\nGenerate draft\nWrite it using\nMy bio and design philosophy\nMy other published projects (2)\n0/1 rooms\nThe project\n\nThe frame the whole piece hangs on\n\n0/5 answered\nORIGIN STORY\nNothing here yet.\nNeeds a line\nSCOPE\nNothing here yet.\nNeeds a line\nDESIGN DIRECTION\nNothing here yet.\nNeeds a line\nSIGNATURE\nNothing here yet.\nNeeds a line\nTURNING POINT\nNothing here yet.\nNeeds a line\nNo write-up yet\n\nThese rooms publish as photos only until you say something about them\n\n1 room\nLiving room\n1 photo, no write-up\nAnswer"
+    },
+    {
+      "name": "Ordinary empty Story is review only and has no draft, context or restart controls",
+      "status": "fail",
+      "error": "The expression evaluated to a falsy value:\n\n  assert.ok(!buttons.includes('Generate draft'))\n",
+      "pageErrors": [],
+      "unexpected": [],
+      "text": "STEP 4 OF 5 — STORY\n\nYour story, room by room\n\nOpen a room to read or edit what you said. Generate the draft whenever you're ready — you review it in Publish, and you can come back and add rooms after.\n\nRestart\nStart interview\nGenerate draft\nWrite it using\nMy bio and design philosophy\nMy other published projects (2)\n0/1 rooms\nThe project\n\nThe frame the whole piece hangs on\n\n0/5 answered\nORIGIN STORY\nNothing here yet.\nNeeds a line\nSCOPE\nNothing here yet.\nNeeds a line\nDESIGN DIRECTION\nNothing here yet.\nNeeds a line\nSIGNATURE\nNothing here yet.\nNeeds a line\nTURNING POINT\nNothing here yet.\nNeeds a line\nNo write-up yet\n\nThese rooms publish as photos only until you say something about them\n\n1 room\nLiving room\n1 photo, no write-up\nAnswer"
+    },
+    {
+      "name": "Question-only saved rows do not unlock generation or count as room answers",
+      "status": "fail",
+      "error": "The expression evaluated to a falsy value:\n\n  assert.ok(!buttons.includes('Generate draft'))\n",
+      "pageErrors": [],
+      "unexpected": [],
+      "text": "STEP 4 OF 5 — STORY\n\nYour story, room by room\n\nOpen a room to read or edit what you said. Generate the draft whenever you're ready — you review it in Publish, and you can come back and add rooms after.\n\nRestart\nResume interview\nGenerate draft\nWrite it using\nMy bio and design philosophy\nMy other published projects (2)\n1/1 rooms\nThe project\n\nThe frame the whole piece hangs on\n\n0/5 answered\nORIGIN STORY\nNothing here yet.\nNeeds a line\nSCOPE\nNothing here yet.\nNeeds a line\nDESIGN DIRECTION\nNothing here yet.\nNeeds a line\nSIGNATURE\nNothing here yet.\nNeeds a line\nTURNING POINT\nNothing here yet.\nNeeds a line\nWritten up\n\nOpen a room to read, edit, or add\n\n1 room · 1 answer\n1 more to go\nLiving room\n1 answer · 1 photo"
+    },
+    {
+      "name": "An accepted room answer unlocks draft controls and generates through the canonical route",
+      "status": "pass"
+    },
+    {
+      "name": "Server-enabled new guided session works with a client built flag-off",
+      "status": "fail",
+      "error": "Waiting for selector `[data-testid=\"guided-current-question\"]` failed",
+      "pageErrors": [],
+      "unexpected": [],
+      "text": "QUESTION 01 · ABOUT THIS PROJECT\n\nLegacy fixture question?\nYOUR RESPONSE\nSpeak or type — a sentence or two is plenty\nSkip\nFinish & generate story\n⌘↵"
+    },
+    {
+      "name": "An explicit guided 404 retains the actual legacy question flow",
+      "status": "pass"
+    },
+    {
+      "name": "Unverified guided availability fails closed: {\"guidedStatus\":503}",
+      "status": "pass"
+    },
+    {
+      "name": "Unverified guided availability fails closed: {\"invalidGuided\":true}",
+      "status": "fail",
+      "error": "Waiting failed: 6000ms exceeded",
+      "pageErrors": [],
+      "unexpected": [],
+      "text": "QUESTION 01 · ABOUT THIS PROJECT\n\nLegacy fixture question?\nYOUR RESPONSE\nSpeak or type — a sentence or two is plenty\nSkip\nFinish & generate story\n⌘↵"
+    },
+    {
+      "name": "Protected spotlight takes precedence when enabled=false",
+      "status": "pass"
+    },
+    {
+      "name": "Protected spotlight takes precedence when enabled=true",
+      "status": "pass"
+    }
+  ]
+}
