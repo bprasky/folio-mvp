@@ -13,13 +13,13 @@ import {
 } from "@/lib/posting/interviewSchemas";
 import { makeSlug } from "@/lib/posting/slug";
 import {
-  getOrCreateEditorialInterview,
   rebuildAnswerProjection,
   type AnswerAudioMap,
 } from "@/lib/editorial/syncInterviewAnswers";
 import { moderateAnswers } from "@/lib/posting/moderation";
 import { z } from "zod";
 import { randomUUID } from "crypto";
+import { Prisma } from '@prisma/client';
 
 // Helper types and functions for tolerant normalization
 type QA = {
@@ -574,6 +574,10 @@ export async function POST(
     }
 
     // Tolerant body parsing - accept any reasonable shape
+    const guidedPost = await prisma.projectPost.findUnique({ where: { projectId }, select: { provenance: true } });
+    if ((guidedPost?.provenance as any)?.interview?.guided) {
+      return NextResponse.json({ ok: false, code: 'GUIDED_INTERVIEW_REQUIRED', message: 'Continue this interview or correct its answers in the guided workspace.' }, { status: 409 });
+    }
     let body: any = {};
     try { 
       body = await request.json(); 
@@ -758,7 +762,7 @@ export async function POST(
     // Fetch fresh post after potential create
     const currentPost = await prisma.projectPost.findUnique({
       where: { projectId },
-      select: { provenance: true },
+      select: { provenance: true, updatedAt: true },
     });
 
     if (!currentPost) {
@@ -767,6 +771,9 @@ export async function POST(
 
     // Build new interview payload segment with intelligent merging
     const existingProvenance = (currentPost.provenance as any) || {};
+    if (existingProvenance.interview?.guided) {
+      return NextResponse.json({ ok: false, code: 'GUIDED_INTERVIEW_REQUIRED', message: 'Continue this interview or correct its answers in the guided workspace.' }, { status: 409 });
+    }
     
     // Clearing is DESTRUCTIVE and must be asked for. It used to be inferred from
     // "the request carried no answers", which is also what a room-status-only
@@ -912,38 +919,15 @@ export async function POST(
       }
     });
 
-    await prisma.projectPost.update({
-      where: { projectId },
-      data: { provenance: nextProvenance as any },
-    });
-
-    // Verify the write by reading back (diagnostic - helps catch silent write failures)
-    try {
-      const verifyPost = await prisma.projectPost.findUnique({
-        where: { projectId },
-        select: { provenance: true },
+    // Keep the successful post-row CAS locked through both projection writes.
+    // Otherwise a guided answer could commit after this CAS, then be erased by
+    // this request's older answer list or room-progress projection.
+    const saved = await prisma.$transaction(async (tx) => {
+      const changed = await tx.projectPost.updateMany({
+        where: { projectId, updatedAt: currentPost.updatedAt, provenance: { equals: currentPost.provenance === null ? Prisma.DbNull : currentPost.provenance } },
+        data: { provenance: nextProvenance as any },
       });
-      const verifyAnswers = (verifyPost?.provenance as any)?.interview?.payload?.answers;
-      const verifyLegacy = (verifyPost?.provenance as any)?.interview?.answers;
-      console.log('[interview/POST] Write verification:', {
-        requestId,
-        writtenPayloadAnswers: nextInterviewPayload.answers.length,
-        readBackPayloadAnswers: Array.isArray(verifyAnswers) ? verifyAnswers.length : 'missing',
-        readBackLegacyAnswers: Array.isArray(verifyLegacy) ? verifyLegacy.length : 'missing',
-        match: Array.isArray(verifyAnswers) && verifyAnswers.length === nextInterviewPayload.answers.length,
-      });
-    } catch (verifyErr) {
-      console.warn('[interview/POST] Write verification failed (non-blocking):', verifyErr);
-    }
-
-    // Sync answers to EditorialInterviewAnswer + merge room progress.
-    //
-    // The read/record split (D5b): provenance.interview.payload.answers (written
-    // atomically just above) is CANONICAL — anything that decides reads it.
-    // EditorialInterviewAnswer is a queryable PROJECTION of that provenance —
-    // nothing decides on it, and it is exactly as complete as provenance, never
-    // more. That is the intended direction of the dependency.
-    try {
+      if (changed.count !== 1) return false;
       // The rebuild runs whenever answers were saved, full stop. It used to run
       // only when an incoming answer happened to carry one of a handful of
       // fields (`hasNewFields`) — so an interview that produced none of them
@@ -953,7 +937,11 @@ export async function POST(
       const shouldSync = hasAnswerWrite || roomStatuses.length > 0;
 
       if (shouldSync) {
-        const interview = await getOrCreateEditorialInterview(projectId);
+        const interview = await tx.editorialInterview.upsert({
+          where: { projectId },
+          create: { projectId, status: 'IN_PROGRESS', selectedQuestionIds: nextInterviewPayload.selectedQuestionIds },
+          update: {},
+        });
 
         // One writer owns the row shape (see rebuildAnswerProjection). A
         // skip-only save must not wipe and recreate the answer set, so the
@@ -965,8 +953,9 @@ export async function POST(
           // preserves the key, and this is the post-write state.
           await rebuildAnswerProjection(
             interview.id,
-            mergedAnswers as any,
+            mergedAnswers.map(answer => ({ ...answer, questionCategory: answer.section ?? null })),
             ((nextProvenance as any)?.interview?.audio as AnswerAudioMap) || {},
+            tx,
           );
         }
 
@@ -1029,17 +1018,18 @@ export async function POST(
           }
         }
 
-        await prisma.editorialInterview.update({
+        await tx.editorialInterview.update({
           where: { id: interview.id },
           data: {
-            selectedQuestionIds,
+            selectedQuestionIds: nextInterviewPayload.selectedQuestionIds,
             ...(Object.keys(nextRP).length > 0 ? { roomProgress: nextRP } : {}),
           },
         });
       }
-    } catch (error) {
-      // Don't fail the save if sync fails
-      console.error('[interview/POST] Failed to sync to EditorialInterviewAnswer:', error);
+      return true;
+    }, { maxWait: 5000, timeout: 20000 });
+    if (!saved) {
+      return NextResponse.json({ ok: false, code: 'STALE_INTERVIEW', message: 'The interview changed while saving. Reload its saved state and retry.' }, { status: 409 });
     }
 
     // Calculate saved count (new answers only)

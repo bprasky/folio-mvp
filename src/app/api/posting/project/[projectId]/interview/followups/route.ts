@@ -5,6 +5,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/options";
 import { prisma } from "@/lib/prisma";
+import { Prisma } from '@prisma/client';
 import { assertProjectWrite } from "@/lib/authz/access";
 import { normalizeAnswers, makeAnswerKey } from "@/lib/posting/interviewSchemas";
 import { moderateAnswers } from "@/lib/posting/moderation";
@@ -130,6 +131,11 @@ export async function POST(
         return NextResponse.json({ error: "Project not found" }, { status: 404 });
       }
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
+
+    const savedPost = await prisma.projectPost.findUnique({ where: { projectId }, select: { provenance: true } });
+    if ((savedPost?.provenance as any)?.interview?.guided) {
+      return NextResponse.json({ error: 'GUIDED_INTERVIEW_ACTIVE', message: 'Continue the saved guided interview.' }, { status: 409 });
     }
 
     // Validate input
@@ -433,12 +439,11 @@ export async function POST(
       }
 
       // Save to ProjectPost.provenance.interview.followUps (optional persistence)
-      // IMPORTANT: Read-then-write must be atomic to avoid overwriting concurrent answer saves.
-      // We re-read provenance immediately before writing to minimize the race window.
+      // Recheck guided ownership after the model call, then CAS the fresh snapshot.
       try {
         const freshPost = await prisma.projectPost.findUnique({
           where: { projectId },
-          select: { provenance: true },
+          select: { provenance: true, updatedAt: true },
         });
 
         if (freshPost) {
@@ -454,10 +459,13 @@ export async function POST(
           // Re-read provenance fresh to avoid overwriting concurrent writes (e.g., answer saves)
           const freshProvenance = (freshPost.provenance as any) || {};
           const freshInterview = { ...(freshProvenance.interview || {}) };
+          if (freshInterview.guided) {
+            return NextResponse.json({ error: 'GUIDED_INTERVIEW_ACTIVE', message: 'Continue the saved guided interview.' }, { status: 409 });
+          }
           freshInterview.followUps = groupedFollowUps;
 
-          await prisma.projectPost.update({
-            where: { projectId },
+          const saved = await prisma.projectPost.updateMany({
+            where: { projectId, updatedAt: freshPost.updatedAt, provenance: { equals: freshPost.provenance === null ? Prisma.DbNull : freshPost.provenance } },
             data: {
               provenance: {
                 ...freshProvenance,
@@ -465,6 +473,9 @@ export async function POST(
               },
             },
           });
+          if (saved.count !== 1) {
+            return NextResponse.json({ error: 'INTERVIEW_CHANGED', message: 'The interview changed. Reload before continuing.' }, { status: 409 });
+          }
         }
       } catch (persistError) {
         console.warn("[followups] Failed to persist follow-ups (non-blocking):", persistError);

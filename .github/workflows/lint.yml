@@ -61,6 +61,8 @@ jobs:
       - run: npm ci
       - run: npx prisma generate
       - run: npm run test:core
+      - name: Guided interview regression checks
+        run: npm run test:guided
       - name: Firm enrollment and posting permissions
         run: |
           node scripts/check-firm-enrollment.cjs

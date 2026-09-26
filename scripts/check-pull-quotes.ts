@@ -601,7 +601,7 @@ async function reverseSyncChecks() {
       return { prisma: { spotlightQuestion: { findMany: async () => [{ id: "durable-private" }] },
         editorialInterview: { findUnique: async () => ({ answers: ROWS }) },
         project: { findUnique: async () => ({ images: [], title: 'P' }) },
-        projectPost: { findUnique: async () => ({ provenance: {} }), update: async () => ({}), create: async () => ({ provenance: {} }) },
+        projectPost: { findUnique: async () => ({ provenance: {}, updatedAt: new Date(0) }), updateMany: async () => ({ count: 1 }), create: async () => ({ provenance: {}, updatedAt: new Date(0) }) },
       } };
     }
     return origLoad.apply(this, arguments as any);

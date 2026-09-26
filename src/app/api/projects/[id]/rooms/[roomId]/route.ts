@@ -2,6 +2,7 @@ export const dynamic = 'force-dynamic';
 
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { Prisma } from '@prisma/client';
 import { formatRoomName } from '@/lib/utils/formatRoomName';
 import { inferRoomType } from '@/lib/rooms/utils';
 import { getServerSession } from 'next-auth';
@@ -152,10 +153,10 @@ export async function PUT(
         if (post) {
           const postWithProv = await tx.projectPost.findFirst({
             where: { projectId },
-            select: { id: true, provenance: true },
+            select: { id: true, provenance: true, updatedAt: true },
           });
           if (postWithProv?.provenance) {
-            const prov = postWithProv.provenance as any;
+            const prov = structuredClone(postWithProv.provenance) as any;
             const payloadAnswers = prov?.interview?.payload?.answers;
             if (Array.isArray(payloadAnswers)) {
               let provChanged = false;
@@ -166,10 +167,11 @@ export async function PUT(
                 }
               }
               if (provChanged) {
-                await tx.projectPost.update({
-                  where: { id: postWithProv.id },
+                const saved = await tx.projectPost.updateMany({
+                  where: { id: postWithProv.id, updatedAt: postWithProv.updatedAt, provenance: { equals: postWithProv.provenance === null ? Prisma.DbNull : postWithProv.provenance } },
                   data: { provenance: prov },
                 });
+                if (saved.count !== 1) throw Object.assign(new Error('The interview changed while the room was renamed. Retry the rename.'), { status: 409 });
               }
             }
           }
@@ -237,6 +239,9 @@ export async function PUT(
     return NextResponse.json(room);
   } catch (error) {
     console.error('Error updating room:', error);
+    if ((error as { status?: number }).status === 409) {
+      return NextResponse.json({ error: (error as Error).message }, { status: 409 });
+    }
     return NextResponse.json(
       { error: 'Failed to update room' },
       { status: 500 }

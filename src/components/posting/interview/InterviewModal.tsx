@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { PrivateSpotlightInterview } from '@/components/spotlight/PrivateSpotlightInterview';
+import dynamic from 'next/dynamic';
 import { useRouter } from "next/navigation";
 import { X } from "lucide-react";
 import {
@@ -31,6 +32,8 @@ import { GenerationProgress } from "@/components/ui/GenerationProgress";
 import { computeRoundBudget } from "@/lib/editorial/roomPacing";
 import type { RoomProgressStatus } from "@/lib/editorial/roomPacing";
 import type { InterviewQuestion as ContextualQuestion } from "@/types/interview";
+
+const GuidedInterviewWorkspace = dynamic(() => import('./GuidedInterviewWorkspace').then(module => module.GuidedInterviewWorkspace), { ssr: false });
 
 interface InterviewModalProps {
   open: boolean;
@@ -3072,15 +3075,26 @@ function mapValidationIssues(
 
 
 export function InterviewModal(props: InterviewModalProps) {
-  const [gate, setGate] = useState<{ enrolled: boolean; enabled: boolean; actorId: string } | null>(null);
+  const [gate, setGate] = useState<{ enrolled: boolean; enabled: boolean; actorId: string; guidedSaved?: boolean } | null>(null);
   const [error, setError] = useState('');
   useEffect(() => {
     setGate(null); setError(''); let active = true;
-    if (props.open) fetch('/api/projects/' + encodeURIComponent(props.projectId) + '/spotlight').then(async r => { if (!r.ok) throw new Error('Unable to verify interview access.'); return r.json(); }).then(g => { if (active) setGate(g); }).catch(e => { if (active) setError(e.message); });
+    if (props.open) fetch('/api/projects/' + encodeURIComponent(props.projectId) + '/spotlight')
+      .then(async r => { if (!r.ok) throw new Error('Unable to verify interview access.'); return r.json(); })
+      .then(async g => {
+        // Spotlight enrollment remains authoritative before any pilot fallback.
+        if (!g.enrolled && !flags.guidedInterview) {
+          const response = await fetch(`/api/posting/project/${encodeURIComponent(props.projectId)}/interview/guided`, { cache: 'no-store' });
+          if (!response.ok && response.status !== 404) throw new Error('Unable to restore interview access. Please retry.');
+          if (response.ok) g.guidedSaved = !!(await response.json()).session;
+        }
+        if (active) setGate(g);
+      }).catch(e => { if (active) setError(e.message); });
     return () => { active = false; };
   }, [props.open, props.projectId]);
   if (!props.open) return null;
   if (!gate || (gate.enrolled && !gate.enabled)) return <div role="dialog" className="fixed inset-0 z-[100] bg-white p-8"><button onClick={() => props.onOpenChange(false)}>Close</button><p>{error || (gate ? 'Private interviews are paused for this project or account.' : 'Checking interview access…')}</p></div>;
   if (gate.enrolled) return <PrivateSpotlightInterview projectId={props.projectId} actorId={gate.actorId} onClose={() => props.onOpenChange(false)} />;
+  if (flags.guidedInterview || gate.guidedSaved) return <GuidedInterviewWorkspace key={props.projectId} projectId={props.projectId} actorId={gate.actorId} projectName={props.projectName} images={props.images} initialRoomId={props.initialRoomId} onClose={() => props.onOpenChange(false)} onDraftGenerated={props.onDraftGenerated} />;
   return <LegacyInterviewModal {...props} />;
 }

@@ -7,7 +7,7 @@ import { authOptions } from '@/app/api/auth/[...nextauth]/options';
 import { processInterviewAnswers } from '@/lib/editorial/processInterviewAnswers';
 import { syncAnswersToEditorialInterview } from '@/lib/editorial/syncInterviewAnswers';
 import { prisma } from '@/lib/prisma';
-import { assertProjectView } from '@/lib/authz/access';
+import { assertProjectWrite } from '@/lib/authz/access';
 import { EditorialInterviewStatus } from '@prisma/client';
 
 export async function PATCH(
@@ -24,7 +24,11 @@ export async function PATCH(
     }
 
     const projectId = params.projectId;
-    await assertProjectView(session.user.id, projectId);
+    await assertProjectWrite(session.user.id, projectId);
+    const post = await prisma.projectPost.findUnique({ where: { projectId }, select: { provenance: true } });
+    if ((post?.provenance as any)?.interview?.guided) {
+      return NextResponse.json({ error: 'GUIDED_INTERVIEW_REQUIRED', message: 'Finish or resume this interview in the guided workspace.' }, { status: 409 });
+    }
 
     const { status } = await request.json();
 

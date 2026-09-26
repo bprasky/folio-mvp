@@ -9,6 +9,8 @@ export const flags = {
   vendorDemoData: process.env.NEXT_PUBLIC_FLAG_VENDOR_DEMO_DATA === '1',
   /** Enable real-time conversational interview (LiveKit + Deepgram + Cartesia) */
   realtimeInterview: process.env.NEXT_PUBLIC_FLAG_REALTIME_INTERVIEW === '1',
+  /** Opt in new guided sessions; saved sessions can finish after rollback. Spotlight takes precedence. */
+  guidedInterview: process.env.NEXT_PUBLIC_FLAG_GUIDED_INTERVIEW === '1',
 } as const;
 
 /** Real-time interview configuration */

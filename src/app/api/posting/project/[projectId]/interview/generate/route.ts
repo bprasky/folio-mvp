@@ -13,6 +13,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/options";
 import { prisma } from "@/lib/prisma";
+import { Prisma } from '@prisma/client';
+import { jsonObject } from '@/lib/editorial/lifecycle';
 import { assertProjectWrite, assertProjectPublish } from "@/lib/authz/access";
 import { BlocksSchema } from "@/lib/posting/schemas";
 import { savedEmbeddedQuoteChoices } from '@/lib/posting/embeddedQuotes';
@@ -37,6 +39,25 @@ const POSTING_V1_ENABLED =
   (process.env.POSTING_V1 ?? "").toLowerCase() === "true" ||
   (process.env.NEXT_PUBLIC_POSTING_V1 ?? "").toLowerCase() === "true" ||
   process.env.NODE_ENV !== "production";
+
+/** Generation owns its metadata, never an older copy of the interview evidence. */
+async function patchGenerationInterview(projectId: string, actorId: string, patch: (interview: any) => Record<string, unknown> | null) {
+  await assertProjectWrite(actorId, projectId);
+  for (let attempt = 0; attempt < 3; attempt++) {
+    const post = await prisma.projectPost.findUnique({ where: { projectId }, select: { provenance: true, updatedAt: true } });
+    if (!post) return;
+    const provenance = jsonObject(post.provenance);
+    const interview = jsonObject(provenance.interview);
+    const changes = patch(interview);
+    if (!changes) return;
+    const saved = await prisma.projectPost.updateMany({
+      where: { projectId, updatedAt: post.updatedAt, provenance: { equals: post.provenance === null ? Prisma.DbNull : post.provenance } },
+      data: { provenance: { ...provenance, interview: { ...interview, ...changes } } as Prisma.InputJsonValue },
+    });
+    if (saved.count === 1) return;
+  }
+  throw Object.assign(new Error('The interview changed while generation was saving. Retry from the saved interview.'), { status: 409 });
+}
 
 // Safe body reader that doesn't consume the stream
 async function readJsonBody(req: Request) {
@@ -271,6 +292,7 @@ export async function POST(
   const _cid = cid('generate');
   const projectId = params.projectId; // Extract early for catch block access
   let duration = 0;
+  let authorizedActorId: string | null = null;
   
   /* [AUDIT] START: log incoming projectId, lock status, and critical branches. */
   console.log("[AUDIT] generate:start", { projectId, _cid });
@@ -345,6 +367,7 @@ export async function POST(
     // Check project write access (owner, designer, org member, or admin)
     try {
       await assertProjectWrite(session.user.id, projectId);
+      authorizedActorId = session.user.id;
     } catch (e: any) {
       if (e.message === "NotFound") {
         return NextResponse.json({ error: "Project not found" }, { status: 404 });
@@ -506,18 +529,7 @@ export async function POST(
           // Lock is stale (> 2 minutes), auto-release it and CONTINUE
           console.log("[AUDIT] generate:stale-lock", { projectId, ageMs: age, _cid });
           console.warn("[posting/interview/generate] Releasing stale generation lock", { _cid, age });
-          await prisma.projectPost.update({
-            where: { projectId },
-            data: {
-              provenance: {
-                ...(post?.provenance as any || {}),
-                interview: {
-                  ...((post?.provenance as any)?.interview || {}),
-                  status: { phase: 'idle', endedAt: Date.now() },
-                },
-              } as any,
-            },
-          });
+          await patchGenerationInterview(projectId, session.user.id, () => ({ status: { phase: 'idle', endedAt: Date.now() } }));
           // IMPORTANT: do NOT return here — proceed to set a fresh lock
         }
       }
@@ -713,18 +725,7 @@ export async function POST(
 
     // Set generation lock before starting (skip when force=true or debug mode)
     if (acquireLock) {
-      await prisma.projectPost.update({
-        where: { projectId },
-        data: {
-          provenance: {
-            ...((post?.provenance as any) || {}),
-            interview: {
-              ...(((post?.provenance as any)?.interview) || {}),
-              status: { phase: 'generating', startedAt: Date.now() },
-            },
-          } as any,
-        },
-      });
+      await patchGenerationInterview(projectId, session.user.id, () => ({ status: { phase: 'generating', startedAt: Date.now() } }));
     }
 
     // Use overrides if provided, otherwise use interview data
@@ -1287,12 +1288,8 @@ export async function POST(
       // Unlock if we acquired a lock
       if (acquireLock) {
         try {
-          const fresh = await prisma.projectPost.findUnique({ where: { projectId }, select: { provenance: true } });
-          const prov = { ...((fresh?.provenance as any) ?? {}) };
-          if (prov.interview?.status?.phase === 'generating') {
-            prov.interview.status = { phase: 'idle', endedAt: Date.now(), lastDurationMs: Date.now() - started };
-            await prisma.projectPost.update({ where: { projectId }, data: { provenance: prov as any } });
-          }
+          await patchGenerationInterview(projectId, session.user.id, current => current.status?.phase === 'generating'
+            ? { status: { phase: 'idle', endedAt: Date.now(), lastDurationMs: Date.now() - started } } : null);
         } catch (unlockErr) {
           console.error("[posting/interview/generate] Unlock failed", { _cid, unlockErr });
         }
@@ -1502,25 +1499,6 @@ export async function POST(
       slug = makeSlug(projectData.title || undefined, projectId);
     }
     
-    // Re-read provenance fresh to avoid overwriting concurrent writes (e.g., answer saves
-    // that happened during the LLM composition call, which can take 30-60 seconds)
-    const freshPostForSave = await prisma.projectPost.findUnique({
-      where: { projectId },
-      select: { provenance: true },
-    });
-    const existingProvenance = (freshPostForSave?.provenance as any) || (post?.provenance as any) || {};
-    const existingInterview = existingProvenance.interview || {};
-    const existingPayload = existingInterview.payload || {};
-
-    // Use the freshest answers: prefer what's in the DB (may have been updated during composition),
-    // fall back to what the generate endpoint read at request start, then to overrides
-    const freshAnswers = existingPayload.answers?.length > 0
-      ? existingPayload.answers
-      : (interview?.payload?.answers?.length > 0 ? interview.payload.answers : (answersOverride ?? []));
-    const freshFollowups = existingPayload.followups?.length > 0
-      ? existingPayload.followups
-      : (interview?.payload?.followups ?? []);
-
     // Auto-populate heroAssetId, excerpt, and credits if missing
     // 1. heroAssetId: use first image from galleryChapters[0].imageIds or projectData.images[0]
     let heroAssetId = post ? post.heroAssetId : null;
@@ -1559,8 +1537,23 @@ export async function POST(
       credits = expandedBlocks.credits;
     }
     
+    await assertProjectWrite(session.user.id, projectId);
     const saved = await prisma.$transaction(async tx => {
       const current = await tx.projectPost.findUniqueOrThrow({ where: { projectId } });
+      // Build the merge from the very row used by the CAS. An earlier "fresh"
+      // read can still precede a guided answer/correction and erase its history.
+      const existingProvenance = jsonObject(current.provenance) as any;
+      const existingInterview = existingProvenance.interview || {};
+      const existingPayload = existingInterview.payload || {};
+      const guided = existingInterview.guided;
+      const sourceGuided = interview.guided;
+      if ((guided || sourceGuided) && (guided?.id !== sourceGuided?.id || guided?.version !== sourceGuided?.version)) {
+        throw Object.assign(new Error('Your interview changed while the draft was being prepared. Generate again using the saved answers.'), { status: 409 });
+      }
+      // Empty arrays are an intentional saved state, not permission to restore
+      // answers removed by a correction or explicit reset.
+      const freshAnswers = Array.isArray(existingPayload.answers) ? existingPayload.answers : (interview?.payload?.answers ?? answersOverride ?? []);
+      const freshFollowups = Array.isArray(existingPayload.followups) ? existingPayload.followups : (interview?.payload?.followups ?? []);
       const visibility = await tx.project.findUniqueOrThrow({ where: { id: projectId }, select: { isPublic: true } });
       if (current.status === 'REVIEW' || current.status === 'ARCHIVED' || (post && current.status !== post.status) || (visibility.isPublic && !projectData.isPublic)) {
         throw Object.assign(new Error('Publication state changed during generation. Retry from the current draft.'), { status: 409 });
@@ -1570,7 +1563,7 @@ export async function POST(
       const embeddedQuotes = savedEmbeddedQuoteChoices(current.expandedBlocks);
       if (embeddedQuotes.length) expandedBlocks.embeddedQuotes = embeddedQuotes;
       const result = await tx.projectPost.update({
-      where: { projectId, updatedAt: current.updatedAt, status: current.status },
+      where: { projectId, updatedAt: current.updatedAt, status: current.status, provenance: { equals: current.provenance === null ? Prisma.DbNull : current.provenance } },
       data: {
         status: 'DRAFT',
         expandedBlocks: expandedBlocks,
@@ -1641,12 +1634,8 @@ export async function POST(
     if (acquireLock) {
       try {
         console.log("[AUDIT] finally: unlock", { projectId, ok: true, _cid });
-        const fresh = await prisma.projectPost.findUnique({ where: { projectId }, select: { provenance: true } });
-        const prov = { ...((fresh?.provenance as any) ?? {}) };
-        if (prov.interview?.status?.phase === 'generating') {
-          prov.interview.status = { phase: 'idle', endedAt: Date.now(), lastDurationMs: duration };
-          await prisma.projectPost.update({ where: { projectId }, data: { provenance: prov as any } });
-        }
+        await patchGenerationInterview(projectId, session.user.id, current => current.status?.phase === 'generating'
+          ? { status: { phase: 'idle', endedAt: Date.now(), lastDurationMs: duration } } : null);
       } catch (unlockErr) {
         console.error("[posting/interview/generate] Unlock failed", { _cid, unlockErr });
       }
@@ -1720,28 +1709,22 @@ export async function POST(
     // Also persist lastGenerationError so the preview page can surface it after navigation
     try {
       console.log("[AUDIT] finally: unlock", { projectId, ok: false, _cid });
-      const fresh = await prisma.projectPost.findUnique({ where: { projectId }, select: { provenance: true } });
-      const prov = { ...((fresh?.provenance as any) ?? {}) };
-      let provDirty = false;
-      if (prov.interview?.status?.phase === 'generating') {
-        const lockStarted = prov.interview.status.startedAt;
-        const lockDuration = lockStarted ? Date.now() - lockStarted : undefined;
-        prov.interview.status = { phase: 'idle', endedAt: Date.now(), lastDurationMs: lockDuration };
-        provDirty = true;
-      }
-      // Persist a user-facing error on composition/LLM failures so the preview page can show it
-      if (error?.code === 'COMPOSE_INVALID' || error?.code === 'COMPOSE_LLM_ERROR' || error?.status === 502) {
-        prov.interview = prov.interview || {};
-        prov.interview.lastGenerationError = {
-          code: error.code || 'COMPOSE_FAILED',
-          message: String(error?.message || 'Story generation failed'),
-          failedAt: Date.now(),
-        };
-        provDirty = true;
-      }
-      if (provDirty) {
-        await prisma.projectPost.update({ where: { projectId }, data: { provenance: prov as any } });
-      }
+      if (authorizedActorId) await patchGenerationInterview(projectId, authorizedActorId, current => {
+        const changes: Record<string, unknown> = {};
+        if (current.status?.phase === 'generating') {
+          const lockStarted = current.status.startedAt;
+          changes.status = { phase: 'idle', endedAt: Date.now(), lastDurationMs: lockStarted ? Date.now() - lockStarted : undefined };
+        }
+        // Persist a user-facing composition failure without replacing evidence.
+        if (error?.code === 'COMPOSE_INVALID' || error?.code === 'COMPOSE_LLM_ERROR' || error?.status === 502) {
+          changes.lastGenerationError = {
+            code: error.code || 'COMPOSE_FAILED',
+            message: String(error?.message || 'Story generation failed'),
+            failedAt: Date.now(),
+          };
+        }
+        return Object.keys(changes).length ? changes : null;
+      });
     } catch (unlockErr) {
       console.error("[posting/interview/generate] Unlock failed in catch", { _cid, unlockErr });
     }
@@ -1765,7 +1748,7 @@ export async function POST(
     }
     console.error("[posting/interview/generate] Error:", error);
     // Respect explicit error.status (e.g. 502 from composeEditorialHard) rather than flattening to 500
-    const status = typeof error?.status === 'number' ? error.status : 500;
+    const status = error?.code === 'P2025' ? 409 : typeof error?.status === 'number' ? error.status : 500;
     return NextResponse.json(
       { error: status === 502 ? "Story generation failed" : "Internal server error", details: error.message, code: error?.code },
       { status }

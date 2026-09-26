@@ -5,6 +5,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/options";
 import { prisma } from "@/lib/prisma";
+import { Prisma } from '@prisma/client';
 import { assertProjectWrite } from "@/lib/authz/access";
 import { callLLM } from "@/lib/posting/llmClient";
 import { ensureUnder, summarizeBudget } from "@/lib/posting/contextBudget";
@@ -173,6 +174,10 @@ export async function POST(
         select: { provenance: true },
       }),
     ]);
+
+    if ((projectPost?.provenance as any)?.interview?.guided) {
+      return NextResponse.json({ error: 'GUIDED_INTERVIEW_ACTIVE', message: 'Continue the saved guided interview.' }, { status: 409 });
+    }
 
     // Build images and products context
     const imagesCompact = compactImages(
@@ -371,16 +376,19 @@ Do NOT re-ask any of this — it is settled ground. Use it only to sharpen wordi
       generated: followUps.length,
     });
 
-    // Persist to provenance (non-blocking)
+    // Recheck guided ownership after the model call, then CAS the fresh snapshot.
     try {
       const freshPost = await prisma.projectPost.findUnique({
         where: { projectId },
-        select: { provenance: true },
+        select: { provenance: true, updatedAt: true },
       });
 
       if (freshPost) {
         const freshProvenance = (freshPost.provenance as any) || {};
         const freshInterview = { ...(freshProvenance.interview || {}) };
+        if (freshInterview.guided) {
+          return NextResponse.json({ error: 'GUIDED_INTERVIEW_ACTIVE', message: 'Continue the saved guided interview.' }, { status: 409 });
+        }
         const existingFollowUps = freshInterview.followUps || [];
 
         const batchKey = `batch-${validated.roomId}-r${validated.round}`;
@@ -397,8 +405,8 @@ Do NOT re-ask any of this — it is settled ground. Use it only to sharpen wordi
 
         freshInterview.followUps = [...filtered, newGroup];
 
-        await prisma.projectPost.update({
-          where: { projectId },
+        const saved = await prisma.projectPost.updateMany({
+          where: { projectId, updatedAt: freshPost.updatedAt, provenance: { equals: freshPost.provenance === null ? Prisma.DbNull : freshPost.provenance } },
           data: {
             provenance: {
               ...freshProvenance,
@@ -406,6 +414,9 @@ Do NOT re-ask any of this — it is settled ground. Use it only to sharpen wordi
             },
           },
         });
+        if (saved.count !== 1) {
+          return NextResponse.json({ error: 'INTERVIEW_CHANGED', message: 'The interview changed. Reload before continuing.' }, { status: 409 });
+        }
       }
     } catch (persistError) {
       console.warn("[followups-batch] Failed to persist (non-blocking):", persistError);
