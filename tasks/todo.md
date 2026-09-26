@@ -1,5 +1,7 @@
 # Guided interview entry-flow correction — 2026-09-26
 
+Production follow-up: Vercel showed PR #799 already deployed while the guided flag was absent. The user approved “Enable and redeploy now.” Added `NEXT_PUBLIC_FLAG_GUIDED_INTERVIEW=1` for Production only and rebuilt the same reviewed source without build cache. Deployment `59xQXpdZ45pHdxAGwBjwk2GC8Td7` is Ready and assigned to `folioad.com`; public homepage HTTP 200 and unauthenticated guided API HTTP 401 verified. This browser is not signed into Folio, so private first-question behavior is not live-verified. No schema or interview-answer writes. See docs/reviews/guided-interview/production-rollout.md for the corrected deployment history and verification limits.
+
 Scope: correct the reported live-site Start interview journey while keeping deployment and pilot activation distinct from source-code readiness. Preserve protected spotlight routing and unrelated local edits.
 
 - [x] Reproduce the original CTA-to-interview route and separate live rollout state from UI defects.

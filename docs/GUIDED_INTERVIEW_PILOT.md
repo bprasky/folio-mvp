@@ -2,6 +2,8 @@
 
 Implementation of the supplied **Folio Guided Interview Codex Prompt**, reviewed against main `b79564f8` on 26 September 2026.
 
+**Production activation, 26 September 2026:** after explicit approval, Production was rebuilt from PR #799 with `NEXT_PUBLIC_FLAG_GUIDED_INTERVIEW=1`. Vercel reports the deployment Ready on `folioad.com`. See the [rollout record and verification limits](reviews/guided-interview/production-rollout.md). The original implementation kept activation separate; the approved rollout supersedes that original hold.
+
 ## Use locally
 
 Keep the existing database, authentication, storage, and AI configuration. No schema migration or new service is required. From the repository in PowerShell:
