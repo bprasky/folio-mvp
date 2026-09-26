@@ -29,12 +29,16 @@ const fixture = {
   // The hook shifts the index and the empty room is absent from it.
   pullQuotes: [{ text: 'Every room needed its own character.' }, { text: selection.selected.text, sourceSection: 'Dining Room' }],
 };
-async function persist(source) {
+async function persist(source, { currentProvenance = {}, sourceInterview = { payload: {} }, verifyWrite } = {}) {
   let written;
-  const post = { id: 'post', slug: 'story', status: 'DRAFT', updatedAt: new Date(0), provenance: {},
+  const post = { id: 'post', slug: 'story', status: 'DRAFT', updatedAt: new Date(0), provenance: currentProvenance,
     expandedBlocks: { embeddedQuotes: [{ slotId: 'breather-2', sourceId: 'designer', text: selection.selected.text, attribution: 'organization' }] } };
   const tx = {
-    projectPost: { findUniqueOrThrow: async () => post, update: async ({ data }) => { written = JSON.parse(JSON.stringify(data.expandedBlocks)); return { ...post, ...data }; } },
+    projectPost: { findUniqueOrThrow: async () => post, update: async ({ where, data }) => {
+      assert.deepEqual(where.provenance.equals, post.provenance, 'CAS must compare the same provenance used to build the update');
+      verifyWrite?.(data);
+      written = JSON.parse(JSON.stringify(data.expandedBlocks)); return { ...post, ...data };
+    } },
     project: { findUniqueOrThrow: async () => ({ isPublic: false }), update: async () => ({}) },
   };
   const context = {
@@ -42,9 +46,13 @@ async function persist(source) {
     validImages: [], normalizedAnswers: [], normalizedFollowUps: [], allSelections: [], imageOrder: [],
     frozenChapters: [], existingOverrides: [], existingHistory: [],
     designerBio: null, projectHistory: null, atelierSummary: null, duration: 1, _cid: 'test',
-    interview: { payload: {} }, answersOverride: [], acquireLock: false,
+    interview: sourceInterview, answersOverride: [], acquireLock: false,
     verifyProductAccuracy: () => ({ warnings: [] }),
     savedEmbeddedQuoteChoices,
+    session: { user: { id: 'owner' } },
+    assertProjectWrite: async (actorId, projectId) => { assert.equal(actorId, 'owner'); assert.equal(projectId, 'project'); },
+    jsonObject: value => value && typeof value === 'object' && !Array.isArray(value) ? value : {},
+    Prisma: require('@prisma/client').Prisma,
     prisma: { projectPost: { findUnique: async () => post }, $transaction: async callback => callback(tx) },
     console: { log() {}, warn() {} },
   };
@@ -85,6 +93,23 @@ async function main() {
   console.log('PASS explicit full regeneration replaces removed selection with verified default and alternatives');
   assertCanonical(await persist(savePath));
   console.log('PASS route persistence retains null room, multi-option selection and provenance with hook index');
+  const guided = { id: 'guided-session', version: 3, turns: [{ id: 'original' }, { id: 'correction', supersedes: 'original' }] };
+  await persist(savePath, {
+    currentProvenance: { preserve: 'other data', interview: { guided, payload: { answers: [], followups: [] } } },
+    sourceInterview: { guided, payload: { answers: [{ answer: 'removed answer' }], followups: [{ answer: 'invalidated followup' }] } },
+    verifyWrite: data => {
+      assert.deepEqual(data.provenance.interview.guided, guided, 'Raw guided revisions survive generation');
+      assert.equal(data.provenance.preserve, 'other data');
+      assert.equal(data.provenance.interview.payload.answers.length, 0, 'Do not revive explicitly removed answers');
+      assert.equal(data.provenance.interview.payload.followups.length, 0, 'Do not revive invalidated followups');
+    },
+  });
+  await assert.rejects(persist(savePath, {
+    currentProvenance: { interview: { guided, payload: { answers: [], followups: [] } } },
+    sourceInterview: { guided: { ...guided, version: 2 }, payload: {} },
+    verifyWrite: () => assert.fail('A draft composed before a correction must not be saved'),
+  }), error => error.status === 409);
+  console.log('PASS generation preserves guided history and explicit empty answers; changed session rejects stale draft');
   const redistribution = `
     if (validatedBlocks.pullQuotes?.length && validatedBlocks.galleryChapters?.length) {
       for (let i = 0; i < validatedBlocks.galleryChapters.length && i < validatedBlocks.pullQuotes.length; i++) {

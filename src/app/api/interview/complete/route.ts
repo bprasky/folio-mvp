@@ -4,7 +4,7 @@ export const dynamic = "force-dynamic";
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/options";
-import { prisma } from "@/lib/prisma";
+import { assertProjectWrite } from "@/lib/authz/access";
 import { z } from "zod";
 import { syncEditorialAnswersToProvenance } from "@/lib/editorial/syncEditorialAnswersToProvenance";
 
@@ -28,7 +28,7 @@ export async function POST(request: NextRequest) {
   try {
     // Authenticate
     const session = await getServerSession(authOptions);
-    if (!session?.user?.email) {
+    if (!session?.user?.id) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
@@ -44,17 +44,8 @@ export async function POST(request: NextRequest) {
 
     const { projectId } = parsed.data;
 
-    // Verify project exists and user has access
-    const user = await prisma.user.findUnique({
-      where: { email: session.user.email },
-      select: { id: true },
-    });
-    if (!user) {
-      return NextResponse.json({ error: "User not found" }, { status: 404 });
-    }
-
-    const { assertProjectView } = await import("@/lib/authz/access");
-    await assertProjectView(user.id, projectId);
+    // Completion writes canonical evidence, so view access is insufficient.
+    await assertProjectWrite(session.user.id, projectId);
 
     // Sync answers to provenance and get formatted overrides
     const result = await syncEditorialAnswersToProvenance(projectId);
@@ -80,6 +71,12 @@ export async function POST(request: NextRequest) {
       followups: result.followups,
     });
   } catch (error: any) {
+    if (error?.status === 409 || error?.code === 'P2002') {
+      return NextResponse.json({ error: error.message, code: 'INTERVIEW_CONFLICT' }, { status: 409 });
+    }
+    if (error?.message === 'NotFound') {
+      return NextResponse.json({ error: 'Project not found' }, { status: 404 });
+    }
     if (error?.message === "Forbidden") {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }

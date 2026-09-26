@@ -1,5 +1,6 @@
 import { assertLegacyInterviewAllowed } from '@/lib/spotlight/legacyBoundary';
 import { prisma } from '@/lib/prisma';
+import { Prisma } from '@prisma/client';
 
 /**
  * Sync answers FROM EditorialInterviewAnswer table TO ProjectPost.provenance
@@ -144,7 +145,7 @@ export async function syncEditorialAnswersToProvenance(
   // 4. Find or create ProjectPost, then merge into provenance
   let post = await prisma.projectPost.findUnique({
     where: { projectId },
-    select: { provenance: true },
+    select: { provenance: true, updatedAt: true },
   });
 
   if (!post) {
@@ -161,11 +162,14 @@ export async function syncEditorialAnswersToProvenance(
         status: 'DRAFT',
         provenance: {},
       },
-      select: { provenance: true },
+      select: { provenance: true, updatedAt: true },
     });
   }
 
   const existingProvenance = (post.provenance as any) || {};
+  if (existingProvenance.interview?.guided) {
+    throw Object.assign(new Error('Continue the saved guided interview. Legacy completion cannot replace its answer history.'), { status: 409 });
+  }
 
   const nextInterviewPayload = {
     ...(existingProvenance.interview?.payload ?? {}),
@@ -184,10 +188,11 @@ export async function syncEditorialAnswersToProvenance(
     },
   });
 
-  await prisma.projectPost.update({
-    where: { projectId },
+  const saved = await prisma.projectPost.updateMany({
+    where: { projectId, updatedAt: post.updatedAt, provenance: { equals: post.provenance === null ? Prisma.DbNull : post.provenance } },
     data: { provenance: nextProvenance as any },
   });
+  if (saved.count !== 1) throw Object.assign(new Error('The interview changed during completion. Reload before continuing.'), { status: 409 });
 
   console.log('[syncEditorialAnswersToProvenance] Synced', {
     projectId,

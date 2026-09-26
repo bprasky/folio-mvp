@@ -5,6 +5,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/app/api/auth/[...nextauth]/options';
 import { prisma } from '@/lib/prisma';
+import { Prisma } from '@prisma/client';
 import { assertProjectWrite } from '@/lib/authz/access';
 import { makeSlug } from '@/lib/posting/slug';
 import { jsonObject } from '@/lib/editorial/lifecycle';
@@ -90,20 +91,6 @@ export async function POST(req: NextRequest) {
       };
     });
 
-    // Upsert EditorialInterview
-    const editorialInterview = await prisma.editorialInterview.upsert({
-      where: { projectId: realtimeSession.projectId },
-      create: {
-        projectId: realtimeSession.projectId,
-        status: 'COMPLETED',
-        selectedQuestionIds: answers.map((a) => a.questionId),
-      },
-      update: {
-        status: 'COMPLETED',
-        selectedQuestionIds: answers.map((a) => a.questionId),
-      },
-    });
-
     // Replace this session's answers.
     //
     // The delete used to be scoped to questionSource = 'realtime_interview'
@@ -132,27 +119,6 @@ export async function POST(req: NextRequest) {
     // statements would leave the interview with its answers removed and none
     // written back.
     const realtimeQuestionIds = answers.map((a) => a.questionId);
-    await prisma.$transaction([
-      prisma.editorialInterviewAnswer.deleteMany({
-        where: {
-          interviewId: editorialInterview.id,
-          OR: [
-            { questionSource: 'realtime_interview' },
-            { questionId: { in: realtimeQuestionIds } },
-          ],
-        },
-      }),
-      prisma.editorialInterviewAnswer.createMany({
-        data: answers.map((a) => ({
-          interviewId: editorialInterview.id,
-          questionId: a.questionId,
-          answerText: a.answerText,
-          inputModality: 'voice',
-          questionSource: 'realtime_interview',
-        })),
-      }),
-    ]);
-
     // Build provenance data
     const extractedQuotes = realtimeSession.extractedQuotes as string[] | null;
     const extractedThemes = realtimeSession.extractedThemes as string[] | null;
@@ -180,27 +146,42 @@ export async function POST(req: NextRequest) {
     // Generate slug for post
     const projectSlug = makeSlug(realtimeSession.project.title || 'project');
 
-    // Preserve the persisted review audit when refreshing interview source data.
-    await prisma.$transaction(async tx => {
+    // Source replacement and projection must share the same transaction. A
+    // guided interview can never be overwritten by a late realtime conversion.
+    const editorialInterview = await prisma.$transaction(async tx => {
       const current = await tx.projectPost.findUnique({ where: { projectId: realtimeSession.projectId }, select: { provenance: true, updatedAt: true } });
-      await tx.projectPost.upsert({
-      where: { projectId: realtimeSession.projectId, updatedAt: current?.updatedAt },
-      create: {
-        projectId: realtimeSession.projectId,
-        slug: `${projectSlug}-${realtimeSession.projectId.slice(0, 8)}`,
-        status: 'DRAFT',
-        provenance: provenancePayload,
-      },
-      update: {
-        provenance: { ...jsonObject(current?.provenance), ...provenancePayload },
-      },
+      if (jsonObject(jsonObject(current?.provenance).interview).guided) {
+        throw Object.assign(new Error('Continue the saved guided interview. Realtime conversion cannot replace its answer history.'), { status: 409 });
+      }
+      if (current) {
+        const updated = await tx.projectPost.updateMany({
+          where: { projectId: realtimeSession.projectId, updatedAt: current.updatedAt, provenance: { equals: current.provenance === null ? Prisma.DbNull : current.provenance } },
+          data: { provenance: { ...jsonObject(current.provenance), ...provenancePayload } },
+        });
+        if (updated.count !== 1) throw Object.assign(new Error('The interview changed during conversion. Reload before continuing.'), { status: 409 });
+      } else {
+        await tx.projectPost.create({ data: {
+          projectId: realtimeSession.projectId,
+          slug: `${projectSlug}-${realtimeSession.projectId.slice(0, 8)}`,
+          status: 'DRAFT', provenance: provenancePayload,
+        } });
+      }
+      const editorial = await tx.editorialInterview.upsert({
+        where: { projectId: realtimeSession.projectId },
+        create: { projectId: realtimeSession.projectId, status: 'COMPLETED', selectedQuestionIds: realtimeQuestionIds },
+        update: { status: 'COMPLETED', selectedQuestionIds: realtimeQuestionIds },
       });
-    });
-
-    // Link session to editorial interview
-    await prisma.realtimeInterviewSession.update({
-      where: { id: sessionId },
-      data: { editorialInterviewId: editorialInterview.id },
+      await tx.editorialInterviewAnswer.deleteMany({
+        where: { interviewId: editorial.id, OR: [
+          { questionSource: 'realtime_interview' }, { questionId: { in: realtimeQuestionIds } },
+        ] },
+      });
+      await tx.editorialInterviewAnswer.createMany({
+        data: answers.map(a => ({ interviewId: editorial.id, questionId: a.questionId,
+          answerText: a.answerText, inputModality: 'voice', questionSource: 'realtime_interview' })),
+      });
+      await tx.realtimeInterviewSession.update({ where: { id: sessionId }, data: { editorialInterviewId: editorial.id } });
+      return editorial;
     });
 
     return NextResponse.json({
@@ -212,6 +193,9 @@ export async function POST(req: NextRequest) {
     });
   } catch (error) {
     console.error('Failed to convert session:', error);
+    if ((error as any)?.status === 409 || (error as any)?.code === 'P2002') {
+      return NextResponse.json({ error: (error as Error).message, code: 'INTERVIEW_CONFLICT' }, { status: 409 });
+    }
     return NextResponse.json(
       { error: 'Failed to convert session' },
       { status: 500 }

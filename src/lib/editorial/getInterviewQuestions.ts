@@ -16,6 +16,7 @@ import type { GeneratedQuestion } from '@/lib/interview/generateQuestions';
 import { assessProjectContext, type ProjectContext } from '@/lib/interview/contextLevel';
 import { distillInterviewFacts, type KnownFacts } from '@/lib/interview/distillInterviewFacts';
 import { prisma } from '@/lib/prisma';
+import { Prisma } from '@prisma/client';
 import { createHash } from 'crypto';
 
 export interface InterviewQuestion {
@@ -329,20 +330,21 @@ async function readAboutProjectAnswers(
 
 /**
  * Persist the fact digest to provenance so follow-up generation can reuse it
- * without re-distilling. Fresh-read before write to shrink the window for
- * clobbering concurrent answer saves (same pattern as the followups routes).
+ * without re-distilling. A guided session owns its own context; a legacy
+ * request already in flight must not replace it or a newer answer save.
  */
 async function persistKnownFacts(projectId: string, knownFacts: KnownFacts): Promise<void> {
   try {
     const freshPost = await prisma.projectPost.findUnique({
       where: { projectId },
-      select: { provenance: true },
+      select: { provenance: true, updatedAt: true },
     });
     if (!freshPost) return;
     const freshProvenance = (freshPost.provenance as any) || {};
+    if (freshProvenance.interview?.guided) return;
     const freshInterview = { ...(freshProvenance.interview || {}), knownFacts };
-    await prisma.projectPost.update({
-      where: { projectId },
+    await prisma.projectPost.updateMany({
+      where: { projectId, updatedAt: freshPost.updatedAt, provenance: { equals: freshPost.provenance === null ? Prisma.DbNull : freshPost.provenance } },
       data: {
         provenance: {
           ...freshProvenance,
@@ -480,10 +482,9 @@ async function readPersistedQuestionSet(
 }
 
 /**
- * Persist a freshly generated question set for a phase. Fresh-read-before-write
- * (mirrors persistKnownFacts) and only touches `interview.questionSet.<phase>`,
- * so it preserves the other phase's snapshot and every other provenance sibling
- * (answers, knownFacts). No-ops when no ProjectPost exists yet.
+ * Persist a freshly generated legacy question set for a phase. CAS preserves
+ * concurrent evidence; a guided session keeps its own prepared plan.
+ * No-ops when no ProjectPost exists yet or another writer changed it.
  */
 async function persistQuestionSet(
   projectId: string,
@@ -494,14 +495,15 @@ async function persistQuestionSet(
   try {
     const freshPost = await prisma.projectPost.findUnique({
       where: { projectId },
-      select: { provenance: true },
+      select: { provenance: true, updatedAt: true },
     });
     if (!freshPost) return;
     const freshProvenance = (freshPost.provenance as any) || {};
+    if (freshProvenance.interview?.guided) return;
     const freshInterview = freshProvenance.interview || {};
     const freshQuestionSet = freshInterview.questionSet || {};
-    await prisma.projectPost.update({
-      where: { projectId },
+    await prisma.projectPost.updateMany({
+      where: { projectId, updatedAt: freshPost.updatedAt, provenance: { equals: freshPost.provenance === null ? Prisma.DbNull : freshPost.provenance } },
       data: {
         provenance: {
           ...freshProvenance,

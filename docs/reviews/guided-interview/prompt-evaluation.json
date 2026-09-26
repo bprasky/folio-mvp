@@ -1,0 +1,111 @@
+{
+  "before": [
+    {
+      "fixture": "rich-spatial-answer",
+      "expected": "advance",
+      "model": "claude-sonnet-5",
+      "inputTokens": 2033,
+      "outputTokens": 136,
+      "output": "{\n  \"followUps\": [\n    { \"id\": \"fu-1\", \"prompt\": \"Testing at full scale with the clients — what did that mockup actually consist of, and what surprised you in the room?\" },\n    { \"id\": \"fu-2\", \"prompt\": \"How did widening that route to the kitchen change the furniture plan itself — what shifted or shrank to make room?\" }\n  ],\n  \"questionUpdates\": []\n}",
+      "committed": null
+    },
+    {
+      "fixture": "thin-atmosphere",
+      "expected": "followup",
+      "model": "claude-sonnet-5",
+      "inputTokens": 1971,
+      "outputTokens": 158,
+      "output": "{\n  \"acknowledgment\": \"That balance between calm and welcoming is worth unpacking a bit more.\",\n  \"followUps\": [\n    { \"id\": \"fu-1\", \"prompt\": \"What's one piece or arrangement in the living room that makes it feel calm day-to-day?\" },\n    { \"id\": \"fu-2\", \"prompt\": \"Walk us through how the room shifts when it's full of people — what changes, what stays put?\" }\n  ],\n  \"questionUpdates\": []\n}",
+      "committed": null
+    },
+    {
+      "fixture": "corrected-premise",
+      "expected": "advance",
+      "model": "claude-sonnet-5",
+      "inputTokens": 1904,
+      "outputTokens": 177,
+      "output": "{\n  \"acknowledgment\": \"Good to clarify that pacing — a room built for departure rather than settling in changes the brief entirely.\",\n  \"followUps\": [\n    { \"id\": \"fu-1\", \"prompt\": \"What in the room signals 'we're about to go outside' rather than 'we're staying in for the evening'?\" },\n    { \"id\": \"fu-2\", \"prompt\": \"Is there a specific spot — a bench, a mudroom edge — where the gathering happens before people head out?\" }\n  ],\n  \"questionUpdates\": []\n}",
+      "committed": null
+    },
+    {
+      "fixture": "unselected-product",
+      "expected": "no-product-target",
+      "model": "claude-sonnet-5",
+      "inputTokens": 1981,
+      "outputTokens": 156,
+      "output": "{\n  \"acknowledgment\": \"That vintage find sounds like a real turning point for the room.\",\n  \"followUps\": [\n    {\"id\": \"fu-1\", \"prompt\": \"What was it about that pendant, the moment you saw it in the shop, that told you it was the one?\"},\n    {\"id\": \"fu-2\", \"prompt\": \"You said it 'changed everything' — what had to shift elsewhere in the room once it went in?\"}\n  ],\n  \"questionUpdates\": []\n}",
+      "committed": null
+    },
+    {
+      "fixture": "move-on",
+      "expected": "advance",
+      "model": "claude-sonnet-5",
+      "inputTokens": 1959,
+      "outputTokens": 85,
+      "output": "{\"acknowledgment\": \"Sure, let's move on.\", \"followUps\": [{\"id\": \"fu-1\", \"prompt\": \"Walk us through the first decision you made for the Living Room — what set the direction for everything after?\"}], \"questionUpdates\": []}",
+      "committed": null
+    }
+  ],
+  "after": [
+    {
+      "fixture": "rich-spatial-answer",
+      "expected": "advance",
+      "model": "claude-sonnet-5",
+      "inputTokens": 2103,
+      "outputTokens": 12,
+      "output": "{\"kind\":\"advance\"}",
+      "committed": {
+        "kind": "advance"
+      }
+    },
+    {
+      "fixture": "thin-atmosphere",
+      "expected": "followup",
+      "model": "claude-sonnet-5",
+      "inputTokens": 2012,
+      "outputTokens": 63,
+      "output": "{\"kind\":\"followup\",\"purpose\":\"room_decision\",\"sourceAnswerIds\":[\"turn-1\"],\"evidence\":\"Calm, but also welcoming when they have everyone over.\"}",
+      "committed": {
+        "kind": "followup",
+        "text": "What spatial decision helped this room work for the way it is used?",
+        "purpose": "Explain the spatial decision behind the stated room-wide intention or use.",
+        "sourceAnswerIds": [
+          "turn-1"
+        ]
+      }
+    },
+    {
+      "fixture": "corrected-premise",
+      "expected": "advance",
+      "model": "claude-sonnet-5",
+      "inputTokens": 2027,
+      "outputTokens": 12,
+      "output": "{\"kind\":\"advance\"}",
+      "committed": {
+        "kind": "advance"
+      }
+    },
+    {
+      "fixture": "unselected-product",
+      "expected": "no-product-target",
+      "model": "claude-sonnet-5",
+      "inputTokens": 2023,
+      "outputTokens": 12,
+      "output": "{\"kind\":\"advance\"}",
+      "committed": {
+        "kind": "advance"
+      }
+    },
+    {
+      "fixture": "move-on",
+      "expected": "advance",
+      "model": "claude-sonnet-5",
+      "inputTokens": 2000,
+      "outputTokens": 12,
+      "output": "{\"kind\":\"advance\"}",
+      "committed": {
+        "kind": "advance"
+      }
+    }
+  ]
+}

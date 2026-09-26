@@ -1,3 +1,26 @@
+# Guided project interview pilot — 2026-09-26
+
+Scope: implement the founder's supplied guided-interview brief through the current project interview entry point. This serves Folio's core project-story capture; no biography, realtime infrastructure, new ingestion, deployment, merge, production migration, or production flag activation.
+
+- [x] Review the supplied brief, current interview canon, lessons, entry points, staged generators, and protected spotlight boundary; sync a scoped branch from main.
+- [x] Preserve actual prepared questions in a durable, versioned session within ProjectPost interview provenance; commit answers and the canonical evidence together before deciding the next turn.
+- [x] Add bounded, canon-composed next-turn decisions, stable parentage, explicit skips and corrections, staged room preparation, failure/retry handling, and safe completion.
+- [x] Add an opt-in photo workspace with compact conversation, lossless microphone input, independent browsing, explicit photo attribution, and accurate pause/resume.
+- [x] Verify controller/prompt invariants, concurrent/idempotent persistence, protected routing, desktop/mobile browser behavior, and canonical draft handoff; retain review screenshots.
+- [x] Review the scoped diff and document activation, tested behavior, and remaining limitations; commit/push scoped implementation only.
+
+Plan check-in: use the existing ProjectPost.provenance.interview JSON and existing generation/projection services. Keep legacy available behind the opt-in flag and private spotlight enrollment authoritative. The guided pilot does not implement the protected spotlight UI. Preserve all existing local document edits. No schema change is planned; if one proves necessary, stop that part for concrete review under the existing migration discipline.
+
+### Review
+
+Implemented the default-off guided workspace and versioned prepared-question plan in existing ProjectPost provenance. Answers, revisions, skips, exact source IDs and canonical projections persist atomically before bounded next-turn decisions. Existing shared-JSON writers have narrow guards/CAS protection. The photo canvas supports independent browsing and explicit attribution; recording waits for its final data event, retains full transcription and retries, and uses immutable recording IDs. Saved sessions remain usable when pilot enrollment is switched off. Private spotlight projects retain their protected existing flow.
+
+Verification: guided controller/prompt/service/writer checks pass; 14 actual-component browser scenarios pass; core suite has 10 passes and one disposable-database skip, including the guided API-to-editable-DRAFT journey with corrections, two rooms/photos and a public-reader denial. Five live synthetic prompt evaluations pass. ESLint, client-import guard, Prisma sync, migration discipline and existing quote/persistence checks pass. TypeScript diagnostic ratchet passes with 903 diagnostics against 904 baseline and no new fingerprints. The authorization scanner has no finding for the new guided route; its overall command still fails on seven pre-existing critical findings in five unchanged Publishing Studio route files. Final specialist review found no remaining issues.
+
+Activation, changed-file map, desktop/mobile screenshots, synthetic prompt results and limits are in docs/GUIDED_INTERVIEW_PILOT.md. Real PostgreSQL isolation, physical microphone/Whisper and a full authenticated browser journey against a disposable database remain unverified. No schema change, production setting change, merge, deployment, or production activation.
+
+---
+
 # Embedded article quote choices — 2026-09-16
 
 Scope: let the owner choose the standalone quotes between rooms using existing saved interview quotes. Default display attribution to the project's designer organization (studio/person fallback), with an explicit individual option. Contributor quotes retain their own credit. No additional interview or generation work.

@@ -9,6 +9,7 @@ import { prisma } from "@/lib/prisma";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
 import OpenAI from "openai";
 import { z } from "zod";
+import { randomUUID } from 'crypto';
 
 // Matches the bucket the other interview upload path uses
 // (src/app/api/interviews/[id]/upload/route.ts).
@@ -44,6 +45,8 @@ function extensionFor(file: File): string {
  * rather than by answer revision means re-answering never orphans the audio,
  * and the interview save preserves this key because it spreads
  * `existingProvenance.interview` (interview/route.ts, nextProvenance).
+ * Guided interviews instead stage immutable recording IDs in `guidedAudio`;
+ * only an accepted answer copies its chosen recording into canonical `audio`.
  *
  * Never throws. Losing the recording must not cost the designer their answer.
  */
@@ -53,9 +56,14 @@ async function retainAudio(
   file: File,
   buffer: Buffer,
   words: AnswerAudio["words"],
-): Promise<string | null> {
+  guided: boolean,
+  transcript: string,
+): Promise<{ audioUrl: string; recordingId?: string } | null> {
   try {
-    const storageKey = `interviews/${projectId}/answers/${questionId}.${extensionFor(file)}`;
+    const recordingId = guided ? randomUUID() : undefined;
+    const storageKey = guided
+      ? `interviews/${projectId}/answers/${questionId}/${recordingId}.${extensionFor(file)}`
+      : `interviews/${projectId}/answers/${questionId}.${extensionFor(file)}`;
 
     const { error: uploadError } = await supabaseAdmin.storage
       .from(BUCKET)
@@ -83,30 +91,34 @@ async function retainAudio(
 
     // No post yet means the interview has never been saved. The blob is already
     // in storage under a deterministic key, so the reference can be recovered.
-    if (!post) return audioUrl;
+    if (!post) return guided ? null : { audioUrl };
 
-    const provenance = (post.provenance as any) || {};
-    const interview = provenance.interview || {};
-    const entry: AnswerAudio = {
+    const entry = {
       audioUrl,
       words,
       capturedAt: new Date().toISOString(),
+      ...(guided ? { id: recordingId, projectId, questionId, transcript } : {}),
     };
+    // Guided audio remains provisional until its text turn is accepted. This
+    // prevents an abandoned re-recording from changing an accepted quotation.
+    const audioKey = guided ? 'guidedAudio' : 'audio';
+    const entryKey = recordingId ?? questionId;
 
-    await prisma.projectPost.update({
-      where: { projectId },
-      data: {
-        provenance: {
-          ...provenance,
-          interview: {
-            ...interview,
-            audio: { ...(interview.audio ?? {}), [questionId]: entry },
-          },
-        } as any,
-      },
-    });
+    // Merge only the audio leaf against the current row. A transcription may
+    // finish while an accepted guided answer or cursor is being committed.
+    // Rewriting the previously read provenance would erase that newer turn.
+    const updated = await prisma.$executeRaw`
+      UPDATE "project_posts"
+      SET "provenance" = jsonb_set(
+        COALESCE("provenance", '{}'::jsonb), '{interview}',
+        COALESCE("provenance"->'interview', '{}'::jsonb) || jsonb_build_object(
+          ${audioKey}::text, COALESCE("provenance"->'interview'->${audioKey}::text, '{}'::jsonb) || jsonb_build_object(${entryKey}::text, ${JSON.stringify(entry)}::jsonb)
+        ), true
+      ), "updatedAt" = NOW()
+      WHERE "projectId" = ${projectId}
+    `;
 
-    return audioUrl;
+    return updated ? { audioUrl, ...(recordingId ? { recordingId } : {}) } : null;
   } catch (error) {
     console.error("[interview/transcribe] Audio retention failed:", error);
     return null;
@@ -166,6 +178,11 @@ export async function POST(
     const formData = await request.formData();
     const audioFile = formData.get("audio") as File | null;
     const questionId = formData.get("questionId") as string | null;
+    const interviewPost = await prisma.projectPost.findUnique({ where: { projectId }, select: { provenance: true } });
+    const guided = (interviewPost?.provenance as any)?.interview?.guided;
+    if (guided && (!questionId || !guided.plan?.some((q: any) => q.id === questionId && ['active', 'answered'].includes(q.status)))) {
+      return NextResponse.json({ error: 'guided_question_unavailable', message: 'Resume the guided question before recording.' }, { status: 409 });
+    }
 
     if (!audioFile) {
       return NextResponse.json(
@@ -229,9 +246,10 @@ export async function POST(
 
       // Retain the recording. Non-blocking on failure: the answer is the critical
       // path, the recording is the asset.
-      const audioUrl = questionId
-        ? await retainAudio(projectId, questionId, audioFile, buffer, words)
+      const retained = questionId
+        ? await retainAudio(projectId, questionId, audioFile, buffer, words, !!guided, transcript)
         : null;
+      const audioUrl = retained?.audioUrl;
 
       // Analytics (non-blocking)
       import("@/lib/analytics")
@@ -261,6 +279,7 @@ export async function POST(
           transcript,
           questionId: questionId || undefined,
           audioUrl: audioUrl || undefined,
+          recordingId: retained?.recordingId,
           words: words.length ? words : undefined,
         },
         { status: 200 }

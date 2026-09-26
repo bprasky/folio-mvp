@@ -1,0 +1,19 @@
+{
+  "fixture": "Actual React component + controller; synthetic API, model, microphone and memory persistence; no production data.",
+  "passed": [
+    "Automatic preparation; microphone remains off until user action",
+    "Browsing during typing preserves the question and explicit image attribution",
+    "Failed saves retain composer text and retry uses the same request ID",
+    "Lost successful response replays once without duplicate evidence",
+    "Pause and refresh restore the exact cursor and unsent response",
+    "Long transcription is retained in full and blocked explicitly at save limit",
+    "Project obligations precede rooms; room transition uses exact image IDs",
+    "Room skip preserves accepted material and records intentional skips",
+    "Earlier conversation stays still while typing",
+    "Mobile panel and composer fit without horizontal overflow",
+    "Corrections keep original exchange and replace accepted evidence",
+    "Partial completion offers an editable draft and never publishes",
+    "A partial finished interview resumes its remaining prepared question",
+    "Skipping every remaining question still discloses shorter coverage"
+  ]
+}

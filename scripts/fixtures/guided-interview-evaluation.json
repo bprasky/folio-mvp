@@ -1,0 +1,7 @@
+[
+  {"id":"rich-spatial-answer","question":"How did you want this room to support daily life?","answer":"The living room needed to work for quiet weekday evenings and larger gatherings. We widened the route to the kitchen because guests kept crossing the conversation area. Then we tested the layout at full scale with the clients. Two people could pass without interrupting anyone seated, so we kept that route clear. The room now supports both uses without rearranging it.","expected":"advance"},
+  {"id":"thin-atmosphere","question":"What did you want this room to feel like?","answer":"Calm, but also welcoming when they have everyone over.","expected":"followup"},
+  {"id":"corrected-premise","question":"How did you want this room to support daily life?","answer":"A correction: this was a weekend house, not their full-time home. They use the room to gather before heading outside.","kind":"correction","expected":"advance"},
+  {"id":"unselected-product","question":"What did you want this room to feel like?","answer":"I love the brass pendant above the table. We found it in a vintage shop and it changed everything.","expected":"no-product-target"},
+  {"id":"move-on","question":"What did you want this room to feel like?","answer":"Let's move on.","expected":"advance"}
+]

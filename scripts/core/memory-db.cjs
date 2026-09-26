@@ -2,6 +2,7 @@
 // Only the query operators exercised by this suite are supported; others throw.
 const { Prisma } = require('@prisma/client');
 const { randomUUID } = require('node:crypto');
+const { isDeepStrictEqual } = require('node:util');
 
 function memoryDatabase() {
   const models = new Map(Prisma.dmmf.datamodel.models.map(m => [m.name, m]));
@@ -42,7 +43,10 @@ function memoryDatabase() {
       return Object.entries(value).every(([op, expected]) => {
         const text = v => value.mode === 'insensitive' ? String(v).toLowerCase() : String(v);
         if (op === 'mode') return true;
-        if (op === 'equals') return text(actual) === text(expected);
+        if (op === 'equals') {
+          if (field.type === 'Json') return expected === Prisma.DbNull ? actual === null : isDeepStrictEqual(actual, expected);
+          return text(actual) === text(expected);
+        }
         if (op === 'in') return expected.includes(actual);
         if (op === 'notIn') return !expected.includes(actual);
         if (op === 'not') return !equal(actual, expected);

@@ -1,180 +1,141 @@
 "use client";
 
-import { useState, useRef, useCallback } from "react";
+import { useState, useRef, useCallback, useEffect } from "react";
 
 export type RecordingStatus = "idle" | "recording" | "paused" | "transcribing";
 
 interface UseVoiceRecordingOptions {
-  onTranscriptionComplete?: (transcript: string) => void;
+  onTranscriptionComplete?: (transcript: string, metadata?: { recordingId?: string }) => void;
   onError?: (error: string) => void;
 }
 
-export function useVoiceRecording({
-  onTranscriptionComplete,
-  onError,
-}: UseVoiceRecordingOptions = {}) {
+/** Existing microphone/transcription transport shared by both interview UIs. */
+export function useVoiceRecording({ onTranscriptionComplete, onError }: UseVoiceRecordingOptions = {}) {
   const [status, setStatus] = useState<RecordingStatus>("idle");
   const [recordingTime, setRecordingTime] = useState(0);
   const [error, setError] = useState<string | null>(null);
-
+  const [hasRecording, setHasRecording] = useState(false);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const chunksRef = useRef<Blob[]>([]);
-  const timerRef = useRef<NodeJS.Timeout | null>(null);
+  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const audioBlobRef = useRef<Blob | null>(null);
+  const stoppedRef = useRef<Promise<void> | null>(null);
+  const resolveStopRef = useRef<(() => void) | null>(null);
+  const epochRef = useRef(0);
+  const transcriptionRef = useRef<AbortController | null>(null);
 
-  const formatTime = useCallback((seconds: number) => {
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return `${mins}:${secs.toString().padStart(2, "0")}`;
+  const formatTime = useCallback((seconds: number) => `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, "0")}`, []);
+  const clearTimer = useCallback(() => {
+    if (timerRef.current) clearInterval(timerRef.current);
+    timerRef.current = null;
   }, []);
 
-  const startRecording = useCallback(async () => {
-    try {
-      setError(null);
-      setStatus("recording");
-      setRecordingTime(0);
-
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      streamRef.current = stream;
-
-      const mimeType = MediaRecorder.isTypeSupported("audio/webm")
-        ? "audio/webm"
-        : MediaRecorder.isTypeSupported("audio/ogg")
-        ? "audio/ogg"
-        : "audio/webm"; // Fallback
-
-      const mediaRecorder = new MediaRecorder(stream, { mimeType });
-      mediaRecorderRef.current = mediaRecorder;
-      chunksRef.current = [];
-
-      mediaRecorder.ondataavailable = (event) => {
-        if (event.data.size > 0) {
-          chunksRef.current.push(event.data);
-        }
-      };
-
-      mediaRecorder.onstop = () => {
-        const blob = new Blob(chunksRef.current, { type: mimeType });
-        audioBlobRef.current = blob;
-        stream.getTracks().forEach((track) => track.stop());
-      };
-
-      mediaRecorder.start();
-      
-      // Start timer
-      timerRef.current = setInterval(() => {
-        setRecordingTime((prev) => prev + 1);
-      }, 1000);
-    } catch (err) {
-      console.error("Error starting recording:", err);
-      const errorMessage = "Failed to access microphone. Please check permissions.";
-      setError(errorMessage);
-      setStatus("idle");
-      onError?.(errorMessage);
-    }
-  }, [onError]);
-
-  const stopRecording = useCallback(() => {
-    if (mediaRecorderRef.current && status === "recording") {
-      mediaRecorderRef.current.stop();
-      if (timerRef.current) {
-        clearInterval(timerRef.current);
-        timerRef.current = null;
-      }
-    }
-  }, [status]);
-
-  const transcribeRecording = useCallback(
-    async (projectId: string, questionId: string): Promise<string | null> => {
-      if (!audioBlobRef.current) {
-        return null;
-      }
-
-      setStatus("transcribing");
-      setError(null);
-
-      try {
-        const formData = new FormData();
-        formData.append("audio", audioBlobRef.current, "recording.webm");
-        formData.append("questionId", questionId);
-
-        const response = await fetch(
-          `/api/posting/project/${projectId}/interview/transcribe`,
-          {
-            method: "POST",
-            body: formData,
-          }
-        );
-
-        if (!response.ok) {
-          const errorData = await response.json().catch(() => ({}));
-          throw new Error(errorData.error || "Transcription failed");
-        }
-
-        const data = await response.json();
-        const transcript = data.transcript || "";
-
-        setStatus("idle");
-        audioBlobRef.current = null;
-        setRecordingTime(0);
-
-        onTranscriptionComplete?.(transcript);
-        return transcript;
-      } catch (err) {
-        console.error("Transcription error:", err);
-        const errorMessage =
-          err instanceof Error ? err.message : "Transcription failed";
-        setError(errorMessage);
-        setStatus("idle");
-        onError?.(errorMessage);
-        return null;
-      }
-    },
-    [onTranscriptionComplete, onError]
-  );
-
-  const cancelRecording = useCallback(() => {
-    if (mediaRecorderRef.current && status === "recording") {
-      mediaRecorderRef.current.stop();
-    }
-    if (streamRef.current) {
-      streamRef.current.getTracks().forEach((track) => track.stop());
-    }
-    if (timerRef.current) {
-      clearInterval(timerRef.current);
-      timerRef.current = null;
-    }
-    setStatus("idle");
-    setRecordingTime(0);
+  const cleanup = useCallback(() => {
+    epochRef.current += 1;
+    transcriptionRef.current?.abort();
+    transcriptionRef.current = null;
+    const recorder = mediaRecorderRef.current;
+    if (recorder && recorder.state !== "inactive") recorder.stop();
+    streamRef.current?.getTracks().forEach(track => track.stop());
+    streamRef.current = null;
+    clearTimer();
     audioBlobRef.current = null;
     chunksRef.current = [];
+    resolveStopRef.current?.();
+    resolveStopRef.current = null;
+    stoppedRef.current = null;
+    mediaRecorderRef.current = null;
+  }, [clearTimer]);
+
+  useEffect(() => cleanup, [cleanup]);
+
+  const startRecording = useCallback(async () => {
+    cleanup();
+    const epoch = epochRef.current;
     setError(null);
-  }, [status]);
-
-  // Cleanup on unmount
-  const cleanup = useCallback(() => {
-    if (streamRef.current) {
-      streamRef.current.getTracks().forEach((track) => track.stop());
+    setHasRecording(false);
+    setStatus("recording");
+    setRecordingTime(0);
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      // The dialog may have closed while the permission request was visible.
+      if (epoch !== epochRef.current) { stream.getTracks().forEach(track => track.stop()); return; }
+      streamRef.current = stream;
+      const mimeType = ["audio/webm", "audio/ogg", "audio/mp4"].find(type => MediaRecorder.isTypeSupported(type));
+      const recorder = new MediaRecorder(stream, mimeType ? { mimeType } : undefined);
+      mediaRecorderRef.current = recorder;
+      stoppedRef.current = new Promise<void>(resolve => { resolveStopRef.current = resolve; });
+      recorder.ondataavailable = event => {
+        if (epoch === epochRef.current && event.data.size > 0) chunksRef.current.push(event.data);
+      };
+      recorder.onstop = () => {
+        stream.getTracks().forEach(track => track.stop());
+        if (epoch !== epochRef.current) return;
+        audioBlobRef.current = new Blob(chunksRef.current, { type: recorder.mimeType || mimeType || "audio/webm" });
+        setHasRecording(audioBlobRef.current.size > 0);
+        setStatus("paused");
+        clearTimer();
+        resolveStopRef.current?.();
+        resolveStopRef.current = null;
+      };
+      recorder.start();
+      timerRef.current = setInterval(() => setRecordingTime(value => value + 1), 1000);
+    } catch {
+      if (epoch !== epochRef.current) return;
+      cleanup();
+      const message = "Failed to access microphone. Please check permissions.";
+      setError(message); setStatus("idle"); onError?.(message);
     }
-    if (timerRef.current) {
-      clearInterval(timerRef.current);
-    }
-  }, []);
+  }, [cleanup, clearTimer, onError]);
 
-  return {
-    status,
-    recordingTime,
-    error,
-    formatTime,
-    startRecording,
-    stopRecording,
-    transcribeRecording,
-    cancelRecording,
-    cleanup,
-    isRecording: status === "recording",
-    isTranscribing: status === "transcribing",
-  };
+  // Wait for the recorder's final data event; a timer is not a reliable flush.
+  const stopRecording = useCallback(async () => {
+    const recorder = mediaRecorderRef.current;
+    if (recorder && recorder.state !== "inactive") recorder.stop();
+    clearTimer();
+    await stoppedRef.current;
+  }, [clearTimer]);
+
+  const transcribeRecording = useCallback(async (projectId: string, questionId: string): Promise<string | null> => {
+    await stopRecording();
+    const blob = audioBlobRef.current;
+    if (!blob?.size || transcriptionRef.current) return null;
+    const epoch = epochRef.current;
+    const controller = new AbortController();
+    transcriptionRef.current = controller;
+    setStatus("transcribing"); setError(null);
+    try {
+      const extension = blob.type.includes("mp4") ? "mp4" : blob.type.includes("ogg") ? "ogg" : "webm";
+      const data = new FormData();
+      data.append("audio", blob, `recording.${extension}`);
+      data.append("questionId", questionId);
+      const response = await fetch(`/api/posting/project/${encodeURIComponent(projectId)}/interview/transcribe`, {
+        method: "POST", body: data, signal: controller.signal,
+      });
+      const result = await response.json();
+      if (!response.ok) throw new Error(result.error || "Transcription failed");
+      if (typeof result.transcript !== "string") throw new Error("No transcription was returned. Please retry.");
+      if (epoch !== epochRef.current) return null;
+      audioBlobRef.current = null;
+      setHasRecording(false); setStatus("idle"); setRecordingTime(0);
+      onTranscriptionComplete?.(result.transcript, { recordingId: typeof result.recordingId === 'string' ? result.recordingId : undefined });
+      return result.transcript;
+    } catch (err) {
+      if (epoch !== epochRef.current) return null;
+      const message = err instanceof Error ? err.message : "Transcription failed";
+      // Keep the original audio in memory so retry does not require re-recording.
+      setError(message); setStatus("idle"); onError?.(message);
+      return null;
+    } finally {
+      if (transcriptionRef.current === controller) transcriptionRef.current = null;
+    }
+  }, [stopRecording, onTranscriptionComplete, onError]);
+
+  const cancelRecording = useCallback(() => {
+    cleanup(); setStatus("idle"); setRecordingTime(0); setHasRecording(false); setError(null);
+  }, [cleanup]);
+
+  return { status, recordingTime, error, hasRecording, formatTime, startRecording, stopRecording,
+    transcribeRecording, cancelRecording, cleanup, isRecording: status === "recording", isTranscribing: status === "transcribing" };
 }
-
-
