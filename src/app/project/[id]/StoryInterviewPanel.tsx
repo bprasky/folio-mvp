@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback, useMemo, useRef } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Pencil, Sparkles } from "lucide-react";
 import { InterviewModal } from "@/components/posting/interview/InterviewModal";
 import { AnswerModal } from "@/components/posting/interview/AnswerModal";
@@ -128,6 +128,10 @@ export default function StoryInterviewPanel({
   taggedPhotoCount,
 }: StoryInterviewPanelProps) {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const entryAction = searchParams.get("action");
+  const entryRoomId = searchParams.get("room");
+  const consumedEntryRef = useRef(false);
   const [answers, setAnswers] = useState<QA[]>([]);
   const [coverage, setCoverage] = useState<Coverage[]>([]);
   const [loading, setLoading] = useState(true);
@@ -175,7 +179,7 @@ export default function StoryInterviewPanel({
 
   const fetchAnswers = useCallback(async () => {
     try {
-      const res = await fetch(`/api/posting/project/${projectId}/interview`);
+      const res = await fetch(`/api/posting/project/${projectId}/interview?savedOnly=1`);
       if (res.ok) {
         const data = await res.json();
         const raw = Array.isArray(data.answers) ? data.answers : [];
@@ -184,13 +188,15 @@ export default function StoryInterviewPanel({
             // The GET backfills `prompt` from the persisted question set, so
             // answers saved before question text was stored still read correctly.
             q: a.prompt || a.question || a.q || "",
-            a: a.answer || a.a || "",
+            a: typeof a.answer === "string" ? a.answer : typeof a.a === "string" ? a.a : "",
             questionId: a.questionId || a.id,
             roomId: a.roomId ?? null,
             section: a.section,
             isFeatured: !!a.isFeatured,
           }))
-          .filter((qa: QA) => (qa.q || "").trim() || (qa.a || "").trim());
+          // A prepared question is not accepted interview evidence. It cannot
+          // unlock draft controls or make an unanswered room look written up.
+          .filter((qa: QA) => qa.a.trim().length > 0);
         setAnswers(mapped);
         setCoverage(Array.isArray(data.coverage) ? data.coverage : []);
       }
@@ -324,7 +330,8 @@ export default function StoryInterviewPanel({
    * "Written up" is exactly what comes back written up.
    */
   const writeUpRoomIds = useMemo(() => writtenUp.map((r) => r.roomId), [writtenUp]);
-  const canGenerate = writeUpRoomIds.length > 0 && !generating;
+  const hasAnswers = answers.some((answer) => answer.a.trim().length > 0);
+  const canGenerate = hasAnswers && writeUpRoomIds.length > 0 && !loading && !generating;
 
   /**
    * Written up, but under the question target the interview set for them. These
@@ -352,7 +359,29 @@ export default function StoryInterviewPanel({
     return notWrittenUp[0]?.roomId;
   }, [roomEntries, notWrittenUp]);
 
+  // A Start/Continue CTA is a one-time command, while a plain Story visit is
+  // review. Consume the URL before opening so close/refresh cannot reopen it;
+  // seeing the clean URL re-arms a later explicit Start/Continue click.
+  useEffect(() => {
+    if (entryAction !== "interview") {
+      consumedEntryRef.current = false;
+      return;
+    }
+    if (consumedEntryRef.current) return;
+    consumedEntryRef.current = true;
+    const params = new URLSearchParams(searchParams.toString());
+    params.delete("action");
+    params.delete("room");
+    router.replace(`/project/${projectId}?${params.toString()}`, { scroll: false });
+    const requestedRoom = entryRoomId && rooms.some((room) => room.id === entryRoomId)
+      ? entryRoomId : undefined;
+    // The protected modal restores its own cursor. A slow saved-answer index
+    // must not delay opening or guess a room before that restore has happened.
+    setInterview({ intent: "resume", roomId: requestedRoom });
+  }, [entryAction, entryRoomId, projectId, rooms, router, searchParams]);
+
   function openRestart() {
+    if (!hasAnswers) return;
     const ok = window.confirm(
       "This clears your saved interview answers and starts a new interview. Continue?",
     );
@@ -419,6 +448,7 @@ export default function StoryInterviewPanel({
    * them stay photos-only.
    */
   const handleGenerate = useCallback(async () => {
+    if (!canGenerate) return;
     setGenerating(true);
     setGenerateError(null);
     try {
@@ -457,7 +487,7 @@ export default function StoryInterviewPanel({
     } finally {
       setGenerating(false);
     }
-  }, [projectId, writeUpRoomIds, router, contextChoice]);
+  }, [canGenerate, projectId, writeUpRoomIds, router, contextChoice]);
 
   /**
    * Generate is one click unless something would make the draft thinner than it
@@ -467,6 +497,7 @@ export default function StoryInterviewPanel({
    * is worth making once, not every time.
    */
   const requestGenerate = useCallback(() => {
+    if (!canGenerate) return;
     // Tagging first: it is the only one of the two that changes what the writing
     // has to work from, and it is the harder thing to act on once a draft exists.
     if (untaggedPhotoCount > 0 && !untaggedWarningAcceptedRef.current) {
@@ -478,7 +509,7 @@ export default function StoryInterviewPanel({
       return;
     }
     handleGenerate();
-  }, [untaggedPhotoCount, partlyAnswered, handleGenerate]);
+  }, [canGenerate, untaggedPhotoCount, partlyAnswered, handleGenerate]);
 
   const openRoom = openRoomId
     ? roomEntries.find((r) => r.roomId === openRoomId) ?? null
@@ -497,28 +528,30 @@ export default function StoryInterviewPanel({
               Your story, room by room
             </h1>
             <p className="mt-2 text-folio-body text-folio-text-secondary">
-              Open a room to read or edit what you said. Generate the draft whenever you&apos;re
-              ready — you review it in Publish, and you can come back and add rooms after.
+              {hasAnswers
+                ? "Open a room to read or edit what you said. Generate the draft when you’re ready — you review it in Publish, and you can come back and add rooms after."
+                : "Start the interview to tell the story behind your project. Your saved answers will appear here."}
             </p>
           </div>
 
           <div className="flex shrink-0 flex-col items-start gap-4 lg:items-end">
             <div className="flex flex-wrap items-center gap-3">
-              <button
+              {hasAnswers && <button
                 type="button"
                 onClick={openRestart}
                 className="rounded-sm px-3 py-2 text-folio-ui font-medium text-folio-text-tertiary transition-colors duration-150 ease-folio hover:text-folio-text-primary focus:outline-none focus-visible:ring-2 focus-visible:ring-folio-gold"
               >
                 Restart
-              </button>
+              </button>}
               <button
                 type="button"
-                onClick={() => setInterview({ intent: "resume", roomId: resumeRoomId })}
+                onClick={() => setInterview({ intent: "resume", roomId: hasAnswers ? resumeRoomId : undefined })}
+                disabled={generating}
                 className="rounded-sm border border-folio-gold px-4 py-2.5 text-folio-ui font-medium text-folio-gold transition-[transform,background-color] duration-150 ease-folio hover:-translate-y-px hover:bg-folio-gold/10 focus:outline-none focus-visible:ring-2 focus-visible:ring-folio-gold"
               >
-                {answers.length > 0 ? "Resume interview" : "Start interview"}
+                {hasAnswers ? "Resume interview" : "Start interview"}
               </button>
-              <button
+              {hasAnswers && <button
                 type="button"
                 onClick={requestGenerate}
                 disabled={!canGenerate}
@@ -531,17 +564,17 @@ export default function StoryInterviewPanel({
               >
                 <Sparkles className="h-4 w-4" aria-hidden />
                 {generating ? "Generating draft…" : "Generate draft"}
-              </button>
+              </button>}
             </div>
 
             {/* What the draft may draw on, beside the button that draws on it.
                 Renders nothing when neither would contribute anything. */}
-            <GenerationContextOptions
+            {hasAnswers && <GenerationContextOptions
               availability={contextAvailability}
               value={contextChoice}
               onChange={setContextChoice}
               className="mt-3"
-            />
+            />}
 
             <div className="flex items-center gap-3">
               <div

@@ -1138,3 +1138,10 @@ The founder replaced separate Find/Create choices with one autocomplete field: s
 
 ## 2026-09-24 — Professional navigation is not project creation
 For Professionals is account/firm navigation. Never invent a project callback when no action was requested. Preserve absent intent through signin/signup and aliases. Signed-in visitors should see their identity and live operating context, plus join/create another firm; an action-specific workspace chooser is reserved for an explicit return action. Do not infer current firm from the first membership or from a stale session alone.
+
+
+## 2026-09-26 — Verify the interview from its original entry point
+
+The user found that Start interview only opened the Story index, exposing a second Start action and Generate draft with no recorded answers. Component-only workspace verification did not cover that journey. Merging a default-off pilot also did not make it testable on the live site.
+
+Rule: verify the original lifecycle CTA through the first question, close/resume, and empty-answer controls. An explicit Start/Resume action must open the interview, while a plain Story-tab visit remains an answer-review destination. Only show draft-generation controls after accepted answer content exists. Saved-answer reads must not prepare model questions or delay explicit entry; test with that read still pending. Report source merge, deployment and feature activation as separate states; never imply a merged default-off pilot is live.

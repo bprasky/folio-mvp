@@ -3075,7 +3075,7 @@ function mapValidationIssues(
 
 
 export function InterviewModal(props: InterviewModalProps) {
-  const [gate, setGate] = useState<{ enrolled: boolean; enabled: boolean; actorId: string; guidedSaved?: boolean } | null>(null);
+  const [gate, setGate] = useState<{ enrolled: boolean; enabled: boolean; actorId: string; guidedAvailable?: boolean } | null>(null);
   const [error, setError] = useState('');
   useEffect(() => {
     setGate(null); setError(''); let active = true;
@@ -3086,7 +3086,13 @@ export function InterviewModal(props: InterviewModalProps) {
         if (!g.enrolled && !flags.guidedInterview) {
           const response = await fetch(`/api/posting/project/${encodeURIComponent(props.projectId)}/interview/guided`, { cache: 'no-store' });
           if (!response.ok && response.status !== 404) throw new Error('Unable to restore interview access. Please retry.');
-          if (response.ok) g.guidedSaved = !!(await response.json()).session;
+          if (response.ok) {
+            const guided = await response.json();
+            if (guided.ok !== true) throw new Error('Unable to restore interview access. Please retry.');
+            // The authorized server allows new sessions or a saved session to finish.
+            // Its availability also covers clients built before the pilot was enabled.
+            g.guidedAvailable = true;
+          }
         }
         if (active) setGate(g);
       }).catch(e => { if (active) setError(e.message); });
@@ -3095,6 +3101,6 @@ export function InterviewModal(props: InterviewModalProps) {
   if (!props.open) return null;
   if (!gate || (gate.enrolled && !gate.enabled)) return <div role="dialog" className="fixed inset-0 z-[100] bg-white p-8"><button onClick={() => props.onOpenChange(false)}>Close</button><p>{error || (gate ? 'Private interviews are paused for this project or account.' : 'Checking interview access…')}</p></div>;
   if (gate.enrolled) return <PrivateSpotlightInterview projectId={props.projectId} actorId={gate.actorId} onClose={() => props.onOpenChange(false)} />;
-  if (flags.guidedInterview || gate.guidedSaved) return <GuidedInterviewWorkspace key={props.projectId} projectId={props.projectId} actorId={gate.actorId} projectName={props.projectName} images={props.images} initialRoomId={props.initialRoomId} onClose={() => props.onOpenChange(false)} onDraftGenerated={props.onDraftGenerated} />;
+  if (flags.guidedInterview || gate.guidedAvailable) return <GuidedInterviewWorkspace key={props.projectId} projectId={props.projectId} actorId={gate.actorId} projectName={props.projectName} images={props.images} initialRoomId={props.initialRoomId} onClose={() => props.onOpenChange(false)} onDraftGenerated={props.onDraftGenerated} />;
   return <LegacyInterviewModal {...props} />;
 }

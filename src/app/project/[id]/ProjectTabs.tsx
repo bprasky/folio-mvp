@@ -49,6 +49,8 @@ export default function ProjectTabs({
     const params = new URLSearchParams(searchParams.toString());
     params.set('view', view);
     params.delete('room');
+    // Tab navigation reviews a surface; it must not replay a prior CTA command.
+    params.delete('action');
     router.replace(`${pathname}?${params.toString()}`);
   };
 

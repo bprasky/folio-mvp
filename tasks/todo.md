@@ -1,3 +1,24 @@
+# Guided interview entry-flow correction — 2026-09-26
+
+Scope: correct the reported live-site Start interview journey while keeping deployment and pilot activation distinct from source-code readiness. Preserve protected spotlight routing and unrelated local edits.
+
+- [x] Reproduce the original CTA-to-interview route and separate live rollout state from UI defects.
+- [x] Open the interview directly from an explicit Start/Resume action; hide drafting controls until accepted answers exist.
+- [x] Verify actual entry components, pilot/server routing, close/reopen behavior, and regression checks.
+- [x] Review the scoped fix for commit/merge and document the concrete live deployment/activation step required by the original brief.
+
+Plan check-in: retain the Story tab as an answer-review destination; carry an explicit interview-open intent from Start/Resume CTAs. Use the existing protected InterviewModal. Keep pilot enrollment default-off; no production changes without resolving the original no-deployment/no-activation instruction.
+
+### Review
+
+User confirmed the live site, which has not received the merged pilot deployment or activation. Explicit lifecycle and tagging actions now open the protected interview immediately; ordinary Story navigation remains review. Accepted nonblank answers gate draft/context/restart controls. Story uses a saved-only read that does not generate room questions or delay entry. Legacy question preparation now follows authorization. The wrapper honors authenticated guided availability even for a flag-off client, while spotlight remains authoritative.
+
+Verification: 11 actual-entry browser checks pass, including a first question while saved-answer loading is held; the same fixture reproduces six failures on merged commit 6885f576. All 14 existing workspace browser cases, guided controller/prompt/service/writer checks, eight GET read/auth modes, generation-context check, client-import guard, migration discipline, and focused lint pass. Core suite: 10 passed, one disposable-database skip. TypeScript ratchet: 903 diagnostics against 904 baseline, no new fingerprints. Final specialist review found no actionable issues. Screenshots and old/new entry results are retained under docs/reviews/guided-interview; these are local fixtures, not live verification.
+
+No schema, deployment setting, or production flag changes. Git deployments remain disabled. To make the reviewed correction and pilot available live requires a production deployment built with NEXT_PUBLIC_FLAG_GUIDED_INTERVIEW=1; the supplied brief explicitly excludes deployment/production activation, so approval for that concrete rollout is still needed. Existing user document edits are excluded from the commit.
+
+---
+
 # Guided project interview pilot — 2026-09-26
 
 Scope: implement the founder's supplied guided-interview brief through the current project interview entry point. This serves Folio's core project-story capture; no biography, realtime infrastructure, new ingestion, deployment, merge, production migration, or production flag activation.
