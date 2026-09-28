@@ -46,7 +46,7 @@ async function persist(source, { currentProvenance = {}, sourceInterview = { pay
     validImages: [], normalizedAnswers: [], normalizedFollowUps: [], allSelections: [], imageOrder: [],
     frozenChapters: [], existingOverrides: [], existingHistory: [],
     designerBio: null, projectHistory: null, atelierSummary: null, duration: 1, _cid: 'test',
-    interview: sourceInterview, answersOverride: [], acquireLock: false,
+    interview: sourceInterview, generationResetId: sourceInterview.resetId ?? null, answersOverride: [], acquireLock: false,
     verifyProductAccuracy: () => ({ warnings: [] }),
     savedEmbeddedQuoteChoices,
     session: { user: { id: 'owner' } },
@@ -110,6 +110,18 @@ async function main() {
     verifyWrite: () => assert.fail('A draft composed before a correction must not be saved'),
   }), error => error.status === 409);
   console.log('PASS generation preserves guided history and explicit empty answers; changed session rejects stale draft');
+  const resetInterview = { resetId: 'reset-current', payload: { answers: [], followups: [] } };
+  assertCanonical(await persist(savePath, {
+    currentProvenance: { interview: resetInterview }, sourceInterview: resetInterview,
+  }));
+  for (const sourceResetId of [null, 'reset-previous']) {
+    await assert.rejects(persist(savePath, {
+      currentProvenance: { interview: resetInterview },
+      sourceInterview: { resetId: sourceResetId, payload: { answers: [{ answer: 'Before the reset' }] } },
+      verifyWrite: () => assert.fail('Generation from an earlier interview must not save after a reset'),
+    }), error => error.status === 409 && /restarted/.test(error.message));
+  }
+  console.log('PASS matching reset permits generation; first and later resets reject stale saves before any update');
   const redistribution = `
     if (validatedBlocks.pullQuotes?.length && validatedBlocks.galleryChapters?.length) {
       for (let i = 0; i < validatedBlocks.galleryChapters.length && i < validatedBlocks.pullQuotes.length; i++) {

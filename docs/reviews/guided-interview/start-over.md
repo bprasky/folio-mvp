@@ -18,3 +18,11 @@ The old Restart intent never reached a reset in the guided workspace. The browse
 Screenshots: [desktop](resume-desktop.png), [mobile](resume-mobile.png), [confirmation](reset-confirmation.png).
 
 The browser uses mocked HTTP boundaries; service tests use an in-memory transactional database double. They do not establish real PostgreSQL isolation or authenticated production behavior. No production reset or paid model call is used for verification.
+
+## Release and dependent checks
+
+PR #801 merged as `691b99029613569dc9f02926c8701217d0146e95`. GitHub Actions did not start: its run annotation reports failed account payments or a spending limit. Local validation is the completed evidence, not a green hosted CI run.
+
+Additional checks found two dependent test fixtures that needed the new reset contract: the generation save-path VM needs the captured reset identity, and the quote projection double needs to execute the interactive transaction and its canonical compare-and-swap. Those fixtures are updated in the follow-up; application behavior is unchanged. The seven workflow design guards and product-record invariants also pass locally. Shell-based checks run with Git Bash on Windows.
+
+Follow-up verification: the full pull-quote contract and all three regeneration checks pass, including matching-reset saves, rejection of first/later-reset stale saves, and projection-lock failure before any derived write. Existing quote/category assertions remain. Final two-script review and full lint pass.

@@ -6,11 +6,13 @@ Scope: simplify the Story/in-progress screen into one clear resume action, visib
 - [x] Implement scoped reset with stale-tab, late-response, retry and local-draft protection.
 - [x] Simplify Story and its step navigation; disclose reset scope and retain draft/review access.
 - [x] Verify reset persistence, cancellation/failure/resume, original entry, desktop/mobile and protected paths; review before commit.
-- [ ] Commit/push the scoped change and record release status.
+- [x] Commit/push the scoped change and record release status.
 
 Plan check-in: the old Story Restart passes an intent that guided ignores; legacy clearAll rejects guided sessions. Use the existing interview transaction/CAS machinery and keep reset separate from question generation so a provider failure cannot restore old answers. The UI offers confirmation rather than deleting the user's current answers during implementation.
 
 Review: dedicated atomic reset, stale-tab/request guards and local draft identity checks implemented. Guided regressions pass; browser workspace 16/16 and entry 16/16; core 10 pass, one disposable-database skip. Full lint, client-import guard, migration discipline and compile pass; TypeScript ratchet 903/904, no new fingerprints. Desktop/mobile/confirmation visually reviewed and final source review has no blockers. No production answers cleared. Details and test limitations: docs/reviews/guided-interview/start-over.md.
+
+Release: PR #801 merged as 691b990. Hosted CI could not start because of account billing. A follow-up updates dependent quote/projection test fixtures for the reset contract; production rollout is being verified separately. The live release result belongs in the PR record rather than being inferred from the merge.
 
 ---
 
