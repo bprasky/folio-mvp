@@ -1,0 +1,141 @@
+{
+  "status": "One final stability repeat using the same frozen decision prompt hash.",
+  "metadata": {
+    "promptHash": "e07871374219dfef204c90cab4ad1c3b2c3e0784644a713d2e666c1cafd12ebb",
+    "capturedAt": "2026-09-28T14:07:42.406Z"
+  },
+  "sequential": [
+    {
+      "step": 1,
+      "user": "The clients are old friends who moved from New York to Miami. They wanted to keep the bones of the house but redesign every space. The exterior should stay quiet; inside, they wanted it to feel personal and show their personalities.",
+      "proposal": {
+        "kind": "ask_prepared",
+        "questionId": "SCOPE_PARAMETERS",
+        "text": "Within 'keeping the bones,' were you free to move walls and change the structure, or was that off the table?",
+        "purpose": "The brief gives scope as keeping the house's bones while redesigning every space, but the structural limit within that is unclear. This asks that one missing parameter.",
+        "sourceAnswerIds": [
+          "broad-answer"
+        ],
+        "evidence": [
+          {
+            "answerId": "broad-answer",
+            "quote": "They wanted to keep the bones of the house but redesign every space."
+          }
+        ]
+      },
+      "continuation": "Within 'keeping the bones,' were you free to move walls and change the structure, or was that off the table?",
+      "qualityNotes": [],
+      "calls": [
+        {
+          "inputTokens": 5974,
+          "outputTokens": 269,
+          "model": "claude-sonnet-5",
+          "milliseconds": 5007,
+          "output": "{\"purpose\":\"The brief establishes the clients wanted to keep the house's bones but redesign every space, with a quiet exterior and personal, personality-driven interior. This gives the design direction (quiet outside, personal inside) but leaves scope parameters like structural limits, timeline or budget unaddressed.\",\"evidence\":[{\"answerId\":\"broad-answer\",\"quote\":\"They wanted to keep the bones of the house but redesign every space.\"}],\"sourceAnswerIds\":[\"broad-answer\"],\"kind\":\"ask_prepared\",\"questionId\":\"SCOPE_PARAMETERS\",\"reaction\":\"Keeping the bones while redesigning every space still leaves the question of how far you could go structurally.\",\"text\":\"Within 'keeping the bones,' were you free to move walls and change the structure, or was that off the table?\"}"
+        },
+        {
+          "inputTokens": 6427,
+          "outputTokens": 188,
+          "model": "claude-sonnet-5",
+          "milliseconds": 2278,
+          "output": "{\"purpose\":\"The brief gives scope as keeping the house's bones while redesigning every space, but the structural limit within that is unclear. This asks that one missing parameter.\",\"evidence\":[{\"answerId\":\"broad-answer\",\"quote\":\"They wanted to keep the bones of the house but redesign every space.\"}],\"sourceAnswerIds\":[\"broad-answer\"],\"kind\":\"ask_prepared\",\"questionId\":\"SCOPE_PARAMETERS\",\"text\":\"Within 'keeping the bones,' were you free to move walls and change the structure, or was that off the table?\"}"
+        },
+        {
+          "inputTokens": 4861,
+          "outputTokens": 85,
+          "model": "claude-sonnet-5",
+          "milliseconds": 2048,
+          "output": "{\"valid\":true,\"reason\":\"Given the client wanted to keep 'the bones' while redesigning every space, asking whether structural changes (moving walls) were permitted is the specific missing parameter, avoiding the generic 'what were you working within' repeat.\"}"
+        }
+      ]
+    },
+    {
+      "step": 2,
+      "user": "The structure and exterior stayed. Inside we could change every room, but it all had to be ready before their move in September.",
+      "proposal": {
+        "kind": "confirm_coverage",
+        "questionId": "DESIGN_DIRECTION",
+        "text": "Was the guiding idea to keep the exterior quiet while letting the interiors express the clients' personalities?",
+        "purpose": "SCOPE_PARAMETERS is fully answered. DESIGN_DIRECTION is next; the brief already states the direction (quiet exterior, personal/expressive interior), so confirm rather than re-ask.",
+        "sourceAnswerIds": [
+          "broad-answer"
+        ],
+        "evidence": [
+          {
+            "answerId": "broad-answer",
+            "quote": "The exterior should stay quiet; inside, they wanted it to feel personal and show their personalities."
+          }
+        ]
+      },
+      "continuation": "Was the guiding idea to keep the exterior quiet while letting the interiors express the clients' personalities?",
+      "qualityNotes": [],
+      "calls": [
+        {
+          "inputTokens": 6040,
+          "outputTokens": 272,
+          "model": "claude-sonnet-5",
+          "milliseconds": 3958,
+          "output": "{\"purpose\":\"SCOPE_PARAMETERS is now fully answered: structure/exterior fixed, interiors fully changeable, with a September move-in deadline. DESIGN_DIRECTION is the next pending obligation; the broad answer already states a direction (keep exterior quiet, make interior personal and expressive of the owners), so this should be confirmed rather than asked again.\",\"evidence\":[{\"answerId\":\"broad-answer\",\"quote\":\"The exterior should stay quiet; inside, they wanted it to feel personal and show their personalities.\"}],\"sourceAnswerIds\":[\"broad-answer\"],\"kind\":\"confirm_coverage\",\"questionId\":\"DESIGN_DIRECTION\",\"text\":\"Was the guiding idea to keep the exterior quiet while letting the interiors express the clients' personalities?\"}"
+        },
+        {
+          "inputTokens": 6491,
+          "outputTokens": 224,
+          "model": "claude-sonnet-5",
+          "milliseconds": 3226,
+          "output": "{\"purpose\":\"SCOPE_PARAMETERS is fully answered. DESIGN_DIRECTION is next; the brief already states the direction (quiet exterior, personal/expressive interior), so confirm rather than re-ask.\",\"evidence\":[{\"answerId\":\"broad-answer\",\"quote\":\"The exterior should stay quiet; inside, they wanted it to feel personal and show their personalities.\"}],\"sourceAnswerIds\":[\"broad-answer\"],\"kind\":\"confirm_coverage\",\"questionId\":\"DESIGN_DIRECTION\",\"text\":\"Was the guiding idea to keep the exterior quiet while letting the interiors express the clients' personalities?\"}"
+        },
+        {
+          "inputTokens": 4926,
+          "outputTokens": 92,
+          "model": "claude-sonnet-5",
+          "milliseconds": 5909,
+          "output": "{\"valid\":true,\"reason\":\"The quoted passage directly states the quiet-exterior/personal-interior direction, which the prepared DESIGN_DIRECTION question asks for; confirming it rather than re-asking is appropriate and the passage substantively covers the obligation.\"}"
+        }
+      ]
+    },
+    {
+      "step": 3,
+      "user": "(Skip)",
+      "proposal": {
+        "kind": "ask_prepared",
+        "questionId": "SIGNATURE_IDENTITY",
+        "text": "Across all the rooms you were free to change, what feels most recognizably yours?",
+        "purpose": "DESIGN_DIRECTION was intentionally skipped and is not eligible to re-ask or confirm; the next obligation is SIGNATURE_IDENTITY, which no accepted answer addresses yet.",
+        "sourceAnswerIds": [
+          "d8461922-927c-4765-a424-9928e2bb5dce"
+        ],
+        "evidence": [
+          {
+            "answerId": "d8461922-927c-4765-a424-9928e2bb5dce",
+            "quote": "Inside we could change every room, but it all had to be ready before their move in September."
+          }
+        ]
+      },
+      "continuation": "Across all the rooms you were free to change, what feels most recognizably yours?",
+      "qualityNotes": [],
+      "calls": [
+        {
+          "inputTokens": 5966,
+          "outputTokens": 263,
+          "model": "claude-sonnet-5",
+          "milliseconds": 5448,
+          "output": "{\"purpose\":\"DESIGN_DIRECTION was skipped, but the earlier brief answer already states this exact idea: exterior stays quiet, interiors express the clients' personalities. That obligation is fully covered by an existing answer, so it should be confirmed rather than treated as answered by the skip or re-asked.\",\"evidence\":[{\"answerId\":\"broad-answer\",\"quote\":\"The exterior should stay quiet; inside, they wanted it to feel personal and show their personalities.\"}],\"sourceAnswerIds\":[\"broad-answer\"],\"kind\":\"confirm_coverage\",\"questionId\":\"DESIGN_DIRECTION\",\"text\":\"Just to confirm for the record: was keeping the exterior quiet while letting the interiors show the clients' personalities the guiding idea behind the project?\"}"
+        },
+        {
+          "inputTokens": 6303,
+          "outputTokens": 242,
+          "model": "claude-sonnet-5",
+          "milliseconds": 6670,
+          "output": "{\"purpose\":\"DESIGN_DIRECTION was intentionally skipped and is not eligible to re-ask or confirm; the next obligation is SIGNATURE_IDENTITY, which no accepted answer addresses yet.\",\"evidence\":[{\"answerId\":\"d8461922-927c-4765-a424-9928e2bb5dce\",\"quote\":\"Inside we could change every room, but it all had to be ready before their move in September.\"}],\"sourceAnswerIds\":[\"d8461922-927c-4765-a424-9928e2bb5dce\"],\"kind\":\"ask_prepared\",\"questionId\":\"SIGNATURE_IDENTITY\",\"text\":\"Across all the rooms you were free to change, what feels most recognizably yours?\"}"
+        },
+        {
+          "inputTokens": 4937,
+          "outputTokens": 97,
+          "model": "claude-sonnet-5",
+          "milliseconds": 2020,
+          "output": "{\"valid\":true,\"reason\":\"Correctly targets the unaddressed SIGNATURE_IDENTITY obligation after DESIGN_DIRECTION was skipped, lightly grounded in the accepted answer about full interior freedom, without asserting new facts or repeating prior content.\"}"
+        }
+      ]
+    }
+  ]
+}

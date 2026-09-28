@@ -3,9 +3,18 @@ export const GUIDED_ANSWER_LIMIT = 2000;
 export const PROJECT_CATEGORIES = ['CLIENT_BRIEF', 'SCOPE_PARAMETERS', 'DESIGN_DIRECTION', 'SIGNATURE_IDENTITY', 'SURPRISE_PIVOT'] as const;
 export type GuidedQuestionStatus = 'pending' | 'active' | 'answered' | 'skipped' | 'invalidated';
 
+export interface GuidedEvidence {
+  answerId: string;
+  quote: string;
+}
+
 export interface GuidedQuestion {
   id: string;
   text: string;
+  reaction?: string;
+  baselineText?: string;
+  adaptation?: { remainingDetail: string; evidence: GuidedEvidence[] };
+  confirmation?: GuidedEvidence;
   /** Original generated wording, retained when the display validator rejects it. */
   preparedText?: string;
   preparedCategory?: string;
@@ -21,7 +30,7 @@ export interface GuidedQuestion {
   parentAnswerId?: string;
   purpose?: string;
   invalidationReason?: string;
-  wordingHistory?: Array<{ text: string; correctedAnswerId: string }>;
+  wordingHistory?: Array<{ text: string; reaction?: string; sourceAnswerIds?: string[]; correctedAnswerId?: string }>;
   preparationHistory?: Array<{ text: string; sourceImageIds: string[]; sourceAnswerIds: string[]; reason: string }>;
 }
 
@@ -38,12 +47,15 @@ export interface GuidedTurn {
   requestId: string;
   questionId: string;
   questionText: string;
+  reaction?: string;
+  reusedFromAnswerId?: string;
+  confirmationText?: string;
   text: string;
   roomId: string | null;
   sourceImageIds: string[];
   selectedImageId: string | null;
   inputModality: 'text' | 'voice' | 'mixed';
-  kind: 'answer' | 'correction' | 'skip';
+  kind: 'answer' | 'correction' | 'skip' | 'confirmation';
   createdAt: string;
   supersedes?: string;
   supersededBy?: string;
@@ -94,12 +106,22 @@ export interface GuidedPreparation {
 export type GuidedNextProposal = { kind: 'advance' } | {
   kind: 'followup' | 'clarification';
   text: string;
+  reaction?: string;
   purpose: string;
   sourceAnswerIds: string[];
+  evidence?: GuidedEvidence[];
+} | {
+  kind: 'ask_prepared' | 'confirm_coverage';
+  questionId: string;
+  text: string;
+  reaction?: string;
+  purpose: string;
+  sourceAnswerIds: string[];
+  evidence: GuidedEvidence[];
 };
 
 export interface GuidedCommand {
-  action: 'start' | 'answer' | 'skip' | 'skip_room' | 'section' | 'pause' | 'resume' | 'retry' | 'finish' | 'correct';
+  action: 'start' | 'answer' | 'confirm' | 'skip' | 'skip_room' | 'section' | 'pause' | 'resume' | 'retry' | 'finish' | 'correct';
   requestId: string;
   version: number;
   questionId?: string;

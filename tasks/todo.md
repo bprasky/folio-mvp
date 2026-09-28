@@ -1,4 +1,28 @@
+# Guided interview conversational quality — correction, 2026-09-26
+
+Implementation plan after the founder's clarification: make each server-validated interviewer reply contain an optional meaningful reaction and one grounded question; display three animated dots only during real pending work. Supply accepted conversation and remaining prepared obligations, adapt overlapping questions to missing detail, and allow explicit evidence reuse confirmation. Preserve raw answers, exact question IDs, correction invalidation, product/spotlight restrictions, budgets, atomic save-before-decision, and existing sessions. No schema migration or flag change is needed.
+
+- [x] Implement the conversational decision/validation contract and preserve contextual preparation; run bounded before/after transcript evaluations with token costs.
+- [x] Persist grounded reactions, adapted question history, and explicit reuse confirmation; invalidate dependent wording/evidence after corrections.
+- [x] Render the response naturally with real-work three-dot status, accessible reduced-motion behavior, and confirmation controls.
+- [x] Verify complete multi-turn continuity, no repetitive coverage, failure/retry/resume, provenance, and browser behavior; obtain final specialist review.
+
+The founder's live screenshots show a substantive regression: a broad answer supplies brief, scope and design direction, yet the guided UI asks generic versions of those topics again. This is core interview behavior, not a cosmetic wording issue.
+
+- [x] Compare the screenshots and original brief with preparation, decision, progression, and verification code.
+- [x] Reproduce the fixed follow-up and rejection of grounded contextual wording using the existing offline test boundaries.
+- [x] Identify the implementation compromises and define the required conversational behavior before changing runtime code.
+- [x] Correct the decision/preparation/controller contract and verify complete multi-turn conversations, preserving evidence and confirmation rules.
+
+Diagnosis: the original decision.ts prohibited model-authored questions/acknowledgments and offers four fixed follow-up strings; it receives only two earlier same-room exchanges and no remaining plan. preparation.ts rejects contextual wording outside narrow regular-expression grammars and substitutes generic fallback questions. controller.ts advances to the first pending obligation without assessing overlap with already accepted material. Offline diagnosis reproduces the exact screenshot follow-up and shows grounded scope/design questions being rejected. Existing tests primarily validate boundaries, persistence and isolated decisions, not conversational continuity or repeated coverage. That diagnosis preceded the implementation below. Required correction: preserve prepared identities/obligations while allowing validated answer-grounded wording, explicit evidence-linked overlap handling under existing confirmation policy, and realistic conversation-level editorial evaluation.
+
+Final review, 28 September: contextual preparation and evidence-first next-turn wording replace the fixed-string interview. Full-history adaptation, exact-passage confirmations (button or simple typed affirmation), correction invalidation and real-work three-dot chat behavior are implemented. Five live synthetic continuations and two complete three-turn sequences pass on the final prompt; trial failures and wording/cost limitations are retained in docs/reviews/guided-interview/conversation-quality.md. Workspace browser 16/16, entry 11/11 and core 10 passing/one disposable-database skip. Full lint, client-import guard and migration discipline pass. Final TypeScript ratchet: 903 diagnostics against 904 baseline, no new fingerprints. Final source review has no blockers. Merge and production verification follow; authenticated production interview behavior remains unverified.
+
+---
+
 # Guided interview entry-flow correction — 2026-09-26
+
+Production follow-up: Vercel showed PR #799 already deployed while the guided flag was absent. The user approved “Enable and redeploy now.” Added `NEXT_PUBLIC_FLAG_GUIDED_INTERVIEW=1` for Production only and rebuilt the same reviewed source without build cache. Deployment `59xQXpdZ45pHdxAGwBjwk2GC8Td7` is Ready and assigned to `folioad.com`; public homepage HTTP 200 and unauthenticated guided API HTTP 401 verified. This browser is not signed into Folio, so private first-question behavior is not live-verified. No schema or interview-answer writes. See docs/reviews/guided-interview/production-rollout.md for the corrected deployment history and verification limits.
 
 Scope: correct the reported live-site Start interview journey while keeping deployment and pilot activation distinct from source-code readiness. Preserve protected spotlight routing and unrelated local edits.
 

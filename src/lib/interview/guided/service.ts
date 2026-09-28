@@ -11,7 +11,6 @@ async function refreshContext(session: GuidedSession, actorId: string) {
   const context = await readGuidedContext(session.projectId);
   if (context.contextFingerprint === session.contextFingerprint) return null;
   const next = structuredClone(session);
-  const projectAnswers = next.turns.filter(t => t.roomId === null && !t.supersededBy && t.kind !== 'skip').map(t => t.id);
   for (const q of next.plan.filter(q => ['pending', 'active'].includes(q.status))) {
     q.preparationHistory = [...(q.preparationHistory ?? []), { text: q.text, sourceImageIds: [...q.sourceImageIds], sourceAnswerIds: [...q.sourceAnswerIds], reason: 'Project sources or room assignments changed.' }];
     const room = context.rooms.find(room => room.id === q.roomId);
@@ -20,18 +19,23 @@ async function refreshContext(session: GuidedSession, actorId: string) {
     } else if (room) {
       // Safe room wording is revalidated against current persisted room IDs.
       const slot = next.plan.filter(p => p.roomId === room.id && p.kind === 'prepared' && p.status !== 'invalidated').findIndex(p => p.id === q.id);
-      const refreshed = adaptGuidedRoomQuestions([], room, projectAnswers, context.rooms.map(r => r.name))[Math.max(0, slot) % room.baseQuestions];
+      const refreshed = adaptGuidedRoomQuestions([], room)[Math.max(0, slot) % room.baseQuestions];
       Object.assign(q, { text: refreshed.text, sourceImageIds: refreshed.sourceImageIds, sourceAnswerIds: refreshed.sourceAnswerIds });
     } else {
       q.sourceImageIds = context.images.filter(image => image.roomId).slice(0, 3).map(image => image.id);
+      q.text = q.baselineText ?? q.text;
     }
+    delete q.reaction;
+    delete q.adaptation;
+    delete q.confirmation;
+    delete q.baselineText;
   }
   next.rooms = context.rooms;
   if (next.roomsPrepared) {
     for (const room of next.rooms) {
       const existing = next.plan.filter(q => q.roomId === room.id && q.kind === 'prepared' && q.status !== 'invalidated');
       const missing = Math.max(0, room.baseQuestions - existing.length);
-      if (missing) next.plan.push(...adaptGuidedRoomQuestions([], room, projectAnswers, context.rooms.map(r => r.name)).slice(0, missing));
+      if (missing) next.plan.push(...adaptGuidedRoomQuestions([], room).slice(0, missing));
     }
   }
   next.contextFingerprint = context.contextFingerprint;
@@ -60,13 +64,28 @@ async function finishDecision(session: GuidedSession, actorId: string): Promise<
   try {
     const turn = next.turns.find(t => t.id === next.pendingDecisionTurnId && !t.supersededBy);
     const parent = turn && next.plan.find(q => q.id === turn.questionId);
-    const proposal = turn && parent && followUpAllowed(next, parent)
+    const prepareRooms = async () => {
+      const roomQuestions = await prepareGuidedRoomPlan(next.projectId, next);
+      appendRoomPlan(next, roomQuestions);
+      if (turn) {
+        const first = next.plan.find(q => q.id === next.activeQuestionId);
+        if (first) first.status = 'pending';
+        next.activeQuestionId = null;
+        next.pendingDecisionTurnId = turn.id;
+        next.status = 'deciding';
+      }
+    };
+    // Once optional project follow-ups are exhausted, the next reply can move
+    // naturally into the first room using the complete accepted conversation.
+    if (!next.roomsPrepared && projectPhaseComplete(next) && (!parent || !followUpAllowed(next, parent)))
+      await prepareRooms();
+    const proposal = turn && parent
       ? await proposeGuidedNext(next, parent, turn)
       : { kind: 'advance' as const };
     applyDecision(next, proposal);
     if (!next.roomsPrepared && projectPhaseComplete(next) && !next.activeQuestionId) {
-      const roomQuestions = await prepareGuidedRoomPlan(next.projectId, next);
-      appendRoomPlan(next, roomQuestions);
+      await prepareRooms();
+      if (turn && parent) applyDecision(next, await proposeGuidedNext(next, parent, turn));
     }
     const changedContext = await refreshContext(session, actorId);
     if (changedContext) return changedContext;

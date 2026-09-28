@@ -1,0 +1,119 @@
+{
+  "status": "Earlier completed sequence, not the final frozen prompt; preserved for comparison only.",
+  "metadata": {
+    "promptHash": "98d2cd83613ea9ecac5f22e9f6bc626b1e0c4a0b27f890843594ed2cbc7fd1ba",
+    "capturedAt": "2026-09-28T13:55:06.625Z"
+  },
+  "sequential": [
+    {
+      "step": 1,
+      "user": "The clients are old friends who moved from New York to Miami. They wanted to keep the bones of the house but redesign every space. The exterior should stay quiet; inside, they wanted it to feel personal and show their personalities.",
+      "proposal": {
+        "kind": "confirm_coverage",
+        "questionId": "DESIGN_DIRECTION",
+        "text": "Was the guiding idea to keep the exterior quiet while letting the interiors express the clients' personalities, within the existing structure?",
+        "reaction": "Keeping the bones but redesigning every space, with a quiet exterior and a personal interior, already sounds like the shape of the design idea.",
+        "purpose": "Confirm that the stated exterior/interior contrast is the central design direction before moving to scope or signature questions.",
+        "sourceAnswerIds": [
+          "broad-answer"
+        ],
+        "evidence": [
+          {
+            "answerId": "broad-answer",
+            "quote": "They wanted to keep the bones of the house but redesign every space. The exterior should stay quiet; inside, they wanted it to feel personal and show their personalities."
+          }
+        ]
+      },
+      "continuation": "Keeping the bones but redesigning every space, with a quiet exterior and a personal interior, already sounds like the shape of the design idea. Was the guiding idea to keep the exterior quiet while letting the interiors express the clients' personalities, within the existing structure?",
+      "calls": [
+        {
+          "inputTokens": 5470,
+          "outputTokens": 264,
+          "model": "claude-sonnet-5",
+          "milliseconds": 4809,
+          "output": "{\"kind\":\"confirm_coverage\",\"questionId\":\"DESIGN_DIRECTION\",\"text\":\"Was the guiding idea to keep the exterior quiet while letting the interiors express the clients' personalities, within the existing structure?\",\"reaction\":\"Keeping the bones but redesigning every space, with a quiet exterior and a personal interior, already sounds like the shape of the design idea.\",\"purpose\":\"Confirm that the stated exterior/interior contrast is the central design direction before moving to scope or signature questions.\",\"sourceAnswerIds\":[\"broad-answer\"],\"evidence\":[{\"answerId\":\"broad-answer\",\"quote\":\"They wanted to keep the bones of the house but redesign every space. The exterior should stay quiet; inside, they wanted it to feel personal and show their personalities.\"}]}"
+        },
+        {
+          "inputTokens": 4763,
+          "outputTokens": 83,
+          "model": "claude-sonnet-5",
+          "milliseconds": 2717,
+          "output": "{\"valid\":true,\"reason\":\"The quoted passage directly supports the confirmation of exterior/interior contrast as the design direction, and the reaction accurately reflects that stated intent without asserting new facts.  This is a valid confirm_coverage.\"}"
+        }
+      ]
+    },
+    {
+      "step": 2,
+      "user": "They wanted to keep the bones of the house but redesign every space. The exterior should stay quiet; inside, they wanted it to feel personal and show their personalities.",
+      "proposal": {
+        "kind": "ask_prepared",
+        "questionId": "SCOPE_PARAMETERS",
+        "text": "Keeping the bones of the house but redesigning every space — what were the actual parameters you were working within, structurally or otherwise?",
+        "reaction": "That gives a clear frame: existing structure kept, interiors reworked room by room.",
+        "purpose": "Establishes the concrete scope/constraints of the project beyond the general design direction already confirmed.",
+        "sourceAnswerIds": [
+          "2b5bd61f-86e0-4955-bf31-c2cbd09ad961"
+        ],
+        "evidence": [
+          {
+            "answerId": "2b5bd61f-86e0-4955-bf31-c2cbd09ad961",
+            "quote": "They wanted to keep the bones of the house but redesign every space."
+          }
+        ]
+      },
+      "continuation": "That gives a clear frame: existing structure kept, interiors reworked room by room. Keeping the bones of the house but redesigning every space — what were the actual parameters you were working within, structurally or otherwise?",
+      "calls": [
+        {
+          "inputTokens": 5600,
+          "outputTokens": 256,
+          "model": "claude-sonnet-5",
+          "milliseconds": 7644,
+          "output": "{\"kind\":\"ask_prepared\",\"questionId\":\"SCOPE_PARAMETERS\",\"text\":\"Keeping the bones of the house but redesigning every space — what were the actual parameters you were working within, structurally or otherwise?\",\"reaction\":\"That gives a clear frame: existing structure kept, interiors reworked room by room.\",\"purpose\":\"Establishes the concrete scope/constraints of the project beyond the general design direction already confirmed.\",\"sourceAnswerIds\":[\"2b5bd61f-86e0-4955-bf31-c2cbd09ad961\"],\"evidence\":[{\"answerId\":\"2b5bd61f-86e0-4955-bf31-c2cbd09ad961\",\"quote\":\"They wanted to keep the bones of the house but redesign every space.\"}]}"
+        },
+        {
+          "inputTokens": 4843,
+          "outputTokens": 80,
+          "model": "claude-sonnet-5",
+          "milliseconds": 2198,
+          "output": "{\"valid\":true,\"reason\":\"Question asks for concrete constraints beyond the already-stated scope, correctly targeting the remaining SCOPE_PARAMETERS obligation; reaction accurately reflects the accepted answer.\"}"
+        }
+      ]
+    },
+    {
+      "step": 3,
+      "user": "(Skip)",
+      "proposal": {
+        "kind": "ask_prepared",
+        "questionId": "SIGNATURE_IDENTITY",
+        "text": "Working within the existing bones and a quiet exterior, what in this project feels most recognizably yours?",
+        "purpose": "Moves to the next prepared obligation since SCOPE_PARAMETERS was intentionally skipped; asks what marks the designer's hand within the stated constraints.",
+        "sourceAnswerIds": [
+          "broad-answer"
+        ],
+        "evidence": [
+          {
+            "answerId": "broad-answer",
+            "quote": "They wanted to keep the bones of the house but redesign every space. The exterior should stay quiet"
+          }
+        ]
+      },
+      "continuation": "Working within the existing bones and a quiet exterior, what in this project feels most recognizably yours?",
+      "calls": [
+        {
+          "inputTokens": 5504,
+          "outputTokens": 204,
+          "model": "claude-sonnet-5",
+          "milliseconds": 2756,
+          "output": "{\"kind\":\"ask_prepared\",\"questionId\":\"SIGNATURE_IDENTITY\",\"text\":\"Working within the existing bones and a quiet exterior, what in this project feels most recognizably yours?\",\"purpose\":\"Moves to the next prepared obligation since SCOPE_PARAMETERS was intentionally skipped; asks what marks the designer's hand within the stated constraints.\",\"sourceAnswerIds\":[\"broad-answer\"],\"evidence\":[{\"answerId\":\"broad-answer\",\"quote\":\"They wanted to keep the bones of the house but redesign every space. The exterior should stay quiet\"}]}"
+        },
+        {
+          "inputTokens": 4750,
+          "outputTokens": 102,
+          "model": "claude-sonnet-5",
+          "milliseconds": 2950,
+          "output": "{\"valid\":true,\"reason\":\"Correctly moves to the SIGNATURE_IDENTITY prepared question, grounded in the accepted brief answer about bones/quiet exterior, and asks about the designer's own signature rather than the clients' wishes—an appropriately new, non-repetitive angle.\"}"
+        }
+      ]
+    }
+  ]
+}

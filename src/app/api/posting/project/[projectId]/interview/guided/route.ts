@@ -13,7 +13,7 @@ export const dynamic = 'force-dynamic';
 export const maxDuration = 120;
 
 const commandSchema = z.object({
-  action: z.enum(['start', 'answer', 'skip', 'skip_room', 'section', 'pause', 'resume', 'retry', 'finish', 'correct']),
+  action: z.enum(['start', 'answer', 'confirm', 'skip', 'skip_room', 'section', 'pause', 'resume', 'retry', 'finish', 'correct']),
   requestId: z.string().min(8).max(100), version: z.number().int().nonnegative(),
   questionId: z.string().min(1).max(200).optional(), text: z.string().max(2000).optional(),
   inputModality: z.enum(['text', 'voice', 'mixed']).optional(),

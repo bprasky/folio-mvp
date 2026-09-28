@@ -45,6 +45,7 @@ assert.ok(s.turns[0].supersededBy);
 assert.equal(s.plan.find(q => q.id === followup.id)?.status, 'invalidated');
 assert.equal(canonicalGuidedAnswers(s).length, 1, 'a superseded premise cannot retain dependent accepted follow-up evidence');
 assert.match(canonicalGuidedAnswers(s)[0].answer, /^Correction/);
+applyDecision(s, { kind: 'advance' });
 
 assert.throws(() => acceptCommand(s, command(s, { text: 'x'.repeat(2001) })), /2,000|2000/);
 assert.throws(() => acceptCommand(s, command(s, { text: '    ' })), /characters/);
@@ -88,8 +89,10 @@ navigation = acceptCommand(navigation, skipRoom);
 assert.equal(navigation.plan.filter(q => q.roomId === 'room-b' && q.status === 'skipped').length, 3);
 assert.equal(navigation.turns.filter(t => t.requestId === skipRoom.requestId && t.kind === 'skip').length, 3);
 assert.equal(acceptCommand(navigation, skipRoom), navigation, 'retrying a room skip must not duplicate skip turns');
+applyDecision(navigation, { kind: 'advance' });
 assert.equal(navigation.activeQuestionId, unfinished);
 navigation = acceptCommand(navigation, command(navigation, { action: 'skip_room' }));
+applyDecision(navigation, { kind: 'advance' });
 assert.equal(navigation.plan.find(q => q.id === 'room-a-q-0')?.status, 'answered', 'room skip retains already accepted room answers');
 assert.equal(canonicalGuidedAnswers(navigation).filter(a => a.roomId === 'room-a').length, 1);
 for (let i = 0; i < 6; i++) {
@@ -105,4 +108,97 @@ assert.equal(acceptCommand(complete, command(complete, { action: 'finish' })).st
 const pausedPending = acceptCommand(acceptCommand(initial(), command(initial(), {})), command({ ...initial(), version: 2 }, { action: 'pause', version: 2 }));
 assert.equal(pausedPending.status, 'paused');
 assert.ok(pausedPending.pendingDecisionTurnId, 'pause while deciding preserves accepted turn awaiting a next decision');
+
+// One broad answer can supply several topics, but only the designer can accept
+// reuse. The application retains prepared IDs and the original answer verbatim.
+const broadText = 'We kept the existing footprint and renovated the shared rooms. The design direction was calm, open rooms for family gatherings.';
+let adaptive = acceptCommand(initial(), command(initial(), { text: broadText }));
+const broad = adaptive.turns[0], scopeId = adaptive.plan[1].id, designId = adaptive.plan[2].id;
+const scopeBaseline = adaptive.plan[1].text;
+const reaction = 'The existing footprint gives the renovation a clear boundary.';
+const scopeWording = 'What timing shaped the renovation within the existing footprint?';
+applyDecision(adaptive, { kind: 'ask_prepared', questionId: scopeId, text: scopeWording, reaction,
+  purpose: 'Clarify the timing, since the extent of the renovation is already supplied.',
+  sourceAnswerIds: [broad.id], evidence: [{ answerId: broad.id, quote: 'kept the existing footprint' }] });
+assert.equal(currentQuestion(adaptive)?.id, scopeId);
+assert.equal(currentQuestion(adaptive)?.text, scopeWording);
+assert.equal(currentQuestion(adaptive)?.baselineText, scopeBaseline);
+assert.equal(currentQuestion(adaptive)?.reaction, reaction);
+assert.deepEqual(adaptive.plan.filter(question => question.kind === 'prepared').map(question => question.id), ids);
+assert.equal(canonicalGuidedAnswers(adaptive).length, 1, 'natural wording does not silently satisfy a prepared obligation');
+adaptive = acceptCommand(adaptive, command(adaptive, { text: 'We had nine months before the family moved back.' }));
+assert.equal(adaptive.turns.at(-1)?.reaction, reaction, 'the reaction stays with the exchange for a faithful resume');
+assert.equal(adaptive.turns.at(-1)?.questionText, scopeWording, 'history records the question actually asked');
+const designQuote = 'The design direction was calm, open rooms for family gatherings.';
+applyDecision(adaptive, { kind: 'confirm_coverage', questionId: designId,
+  text: 'Does your earlier description of calm, open rooms capture the design direction?',
+  reaction: 'You have already described the direction in your opening answer.',
+  purpose: 'Confirm that the supplied design direction covers this prepared topic.',
+  sourceAnswerIds: [broad.id], evidence: [{ answerId: broad.id, quote: designQuote }] });
+assert.equal(currentQuestion(adaptive)?.status, 'active');
+assert.equal(canonicalGuidedAnswers(adaptive).length, 2, 'a proposed confirmation is not accepted evidence');
+assert.deepEqual(currentQuestion(adaptive)?.confirmation, { answerId: broad.id, quote: designQuote });
+const typedCommand = command(adaptive, { text: '  Yes!  ' });
+let typed = acceptCommand(adaptive, typedCommand);
+assert.equal(typed.turns.at(-1)?.kind, 'confirmation');
+assert.equal(typed.turns.at(-1)?.text, designQuote); assert.equal(typed.turns.at(-1)?.confirmationText, '  Yes!  ');
+assert.equal(acceptCommand(typed, typedCommand), typed, 'typed confirmation retries retain the original answer command digest');
+assert.throws(() => acceptCommand(typed, { ...typedCommand, action: 'confirm', text: undefined }), /different content/);
+const qualification = 'Yes, but the enclosed rooms matter just as much.';
+const qualified = acceptCommand(adaptive, command(adaptive, { text: qualification }));
+assert.equal(qualified.turns.at(-1)?.kind, 'answer'); assert.equal(qualified.turns.at(-1)?.text, qualification);
+assert.equal(acceptCommand(initial(), command(initial(), { text: 'Yes!' })).turns.at(-1)?.kind, 'answer', 'ordinary questions never reinterpret yes as reused evidence');
+assert.equal(acceptCommand(adaptive, command(adaptive, { text: 'Yes!', selectedImageId: 'photo-a' })).turns.at(-1)?.kind, 'answer', 'a photo-bearing answer is not silently converted to confirmation');
+applyDecision(typed, { kind: 'advance' });
+typed = acceptCommand(typed, command(typed, { action: 'correct', questionId: broad.questionId, text: 'The direction changed to enclosed rooms.' }));
+assert.ok(!canonicalGuidedAnswers(typed).some(answer => answer.questionId === designId), 'correcting the source reopens a typed confirmation too');
+assert.equal(typed.turns.find(turn => turn.requestId === typedCommand.requestId)?.confirmationText, '  Yes!  ', 'literal confirmation input remains in immutable history');
+const forgedSource = structuredClone(adaptive);
+currentQuestion(forgedSource)!.confirmation!.answerId = 'not-an-accepted-project-answer';
+assert.throws(() => acceptCommand(forgedSource, command(forgedSource, { action: 'confirm', text: undefined })), /source|answer|confirm/i);
+const confirm = command(adaptive, { action: 'confirm', text: undefined });
+adaptive = acceptCommand(adaptive, confirm);
+const reused = adaptive.turns.at(-1)!;
+assert.equal(reused.kind, 'confirmation'); assert.equal(reused.reusedFromAnswerId, broad.id);
+assert.equal(reused.text, designQuote, 'confirmation copies exactly the raw excerpt shown for consent, never an assistant summary');
+assert.equal(acceptCommand(adaptive, confirm), adaptive, 'duplicate confirmation cannot duplicate accepted evidence');
+assert.equal(canonicalGuidedAnswers(adaptive).find(answer => answer.questionId === designId)?.answer, designQuote);
+assert.ok(canonicalGuidedAnswers(adaptive).every(answer => !('reaction' in answer) && !answer.answer.includes(reaction)), 'assistant reactions never enter designer quotations');
+const signature = adaptive.plan[3], signatureBaseline = signature.text;
+applyDecision(adaptive, { kind: 'ask_prepared', questionId: signature.id, text: 'How did the calm, open rooms express your own approach?',
+  purpose: 'Ask how the supplied overall direction relates to the designer’s identity.', sourceAnswerIds: [broad.id], evidence: [{ answerId: broad.id, quote: 'calm, open rooms' }] });
+const correctedAdaptive = acceptCommand(adaptive, command(adaptive, { action: 'correct', questionId: broad.questionId, text: 'Correction: we extended the footprint and designed a sequence of enclosed rooms.' }));
+assert.equal(correctedAdaptive.turns.find(turn => turn.id === broad.id)?.text, broadText);
+assert.equal(correctedAdaptive.turns.find(turn => turn.id === reused.id)?.text, designQuote);
+assert.ok(!acceptedTurns(correctedAdaptive).some(turn => turn.id === reused.id), 'a correction invalidates previously confirmed reuse of the replaced answer');
+assert.ok(['pending', 'active'].includes(correctedAdaptive.plan.find(question => question.id === designId)!.status), 'the confirmed obligation is reopened rather than erased');
+assert.ok(!canonicalGuidedAnswers(correctedAdaptive).some(answer => answer.questionId === designId));
+const resetSignature = correctedAdaptive.plan.find(question => question.id === signature.id)!;
+assert.equal(resetSignature.text, signatureBaseline, 'a pending question cannot keep wording grounded in corrected-away evidence');
+assert.equal(resetSignature.adaptation, undefined);
+assert.ok(!acceptedTurns(correctedAdaptive).some(turn => turn.questionId === scopeId), 'an answered adaptation also loses its invalid premise');
+
+// Dependency invalidation must follow answer -> adapted answer -> adapted answer,
+// while ordinary preparation context does not itself make an accepted answer dependent.
+let chain = acceptCommand(initial(), command(initial(), { text: broadText }));
+const chainA = chain.turns[0];
+applyDecision(chain, { kind: 'ask_prepared', questionId: scopeId, text: scopeWording, purpose: 'Ask the remaining timing constraint.',
+  sourceAnswerIds: [chainA.id], evidence: [{ answerId: chainA.id, quote: 'kept the existing footprint' }] });
+chain = acceptCommand(chain, command(chain, { text: 'The nine-month construction schedule shaped our choices.' }));
+const chainB = chain.turns.at(-1)!;
+applyDecision(chain, { kind: 'ask_prepared', questionId: designId, text: 'How did the nine-month schedule affect the design direction?', purpose: 'Relate the stated schedule to the design.',
+  sourceAnswerIds: [chainB.id], evidence: [{ answerId: chainB.id, quote: 'nine-month construction schedule' }] });
+chain = acceptCommand(chain, command(chain, { text: 'We limited the material palette so decisions could be made together.' }));
+const chainC = chain.turns.at(-1)!;
+applyDecision(chain, { kind: 'advance' });
+currentQuestion(chain)!.sourceAnswerIds = [chainA.id];
+chain = acceptCommand(chain, command(chain, { text: 'The curve of the stair is our signature.' }));
+const independent = chain.turns.at(-1)!;
+applyDecision(chain, { kind: 'advance' });
+chain = acceptCommand(chain, command(chain, { action: 'correct', questionId: chainA.questionId, text: 'Correction: we extended the footprint and had two years.' }));
+assert.ok([chainB.id, chainC.id].every(id => !acceptedTurns(chain).some(turn => turn.id === id)), 'transitively grounded accepted answers are invalidated');
+assert.ok([scopeId, designId].every(id => chain.plan.find(question => question.id === id)?.status === 'pending'), 'dependent prepared obligations reopen');
+assert.ok(acceptedTurns(chain).some(turn => turn.id === independent.id), 'preparation context alone must not invalidate an independent answer');
+assert.ok([chainA, chainB, chainC].every(original => chain.turns.find(turn => turn.id === original.id)?.text === original.text), 'invalidated exchanges stay immutable in history');
+console.log('PASS grounded prepared adaptation, retained actual wording/reactions, explicit raw-answer confirmation, forged source rejection, duplicate confirmation and correction reopening');
 console.log('PASS guided controller: prepared obligations, bounded follow-ups, canonical evidence, revisions, skip/partial finish, length/image scope, duplicate/stale versions and pause/resume');
