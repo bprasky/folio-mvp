@@ -66,6 +66,7 @@ export function GuidedInterviewWorkspace({ projectId, actorId, projectName = 'Yo
   const staleDraft = !!draft.text && draft.questionId !== activeQuestion?.id;
 
   const saveDraft = useCallback((next: GuidedLocalDraft) => {
+    next = { ...next, sessionId: sessionRef.current?.id ?? next.sessionId };
     draftRef.current = next;
     setDraft(next);
     try { localStorage.setItem(storageKey, JSON.stringify(next)); setStorageError(false); }
@@ -128,7 +129,7 @@ export function GuidedInterviewWorkspace({ projectId, actorId, projectName = 'Yo
   }, [acceptSession, endpoint, saveDraft]);
 
   const command = useCallback((action: GuidedCommand['action'], extra: Partial<GuidedCommand> = {}) => sendCommand({
-    action, requestId: crypto.randomUUID(), version: sessionRef.current?.version ?? 0, ...extra,
+    action, requestId: crypto.randomUUID(), version: sessionRef.current?.version ?? 0, sessionId: sessionRef.current?.id, ...extra,
   }), [sendCommand]);
 
   const loadSession = useCallback(async () => {
@@ -139,6 +140,9 @@ export function GuidedInterviewWorkspace({ projectId, actorId, projectName = 'Yo
       if (!mounted.current) return;
       if (!response.ok) throw new Error(data.message || data.error || 'Unable to load your interview.');
       if (data.session) acceptSession(data.session);
+      const local = draftRef.current;
+      if (data.session && ((local.sessionId && local.sessionId !== data.session.id) || (data.session.resetId && !local.sessionId)))
+        saveDraft(emptyGuidedDraft());
       const pending = draftRef.current.pending;
       if (pending) {
         const restored = await sendCommand(pending);
@@ -153,7 +157,7 @@ export function GuidedInterviewWorkspace({ projectId, actorId, projectName = 'Yo
     } finally {
       if (mounted.current) setLoadingSession(false);
     }
-  }, [acceptSession, command, endpoint, sendCommand]);
+  }, [acceptSession, command, endpoint, saveDraft, sendCommand]);
 
   useEffect(() => {
     mounted.current = true;

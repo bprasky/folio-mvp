@@ -133,12 +133,15 @@ export async function POST(
     }
 
     const savedPost = await prisma.projectPost.findUnique({ where: { projectId }, select: { provenance: true } });
+    const sourceResetId = (savedPost?.provenance as any)?.interview?.resetId ?? null;
     if ((savedPost?.provenance as any)?.interview?.guided) {
       return NextResponse.json({ error: 'GUIDED_INTERVIEW_ACTIVE', message: 'Continue the saved guided interview.' }, { status: 409 });
     }
 
     // Validate input
     const body = await request.json();
+    if ((body?.resetId ?? null) !== sourceResetId)
+      return NextResponse.json({ error: 'INTERVIEW_RESET', message: 'This interview was started over. Reload before continuing.' }, { status: 409 });
     let validated;
     try {
       validated = SingleFollowUpRequestSchema.parse(body);
@@ -230,7 +233,7 @@ export async function POST(
     if (!ANTHROPIC_ENABLED) {
       console.warn('[followups-single] LLM disabled/unavailable');
       // Check cache before returning error
-      const cacheKey = `${projectId}:${validated.questionId}`;
+      const cacheKey = `${projectId}:${sourceResetId ?? 'initial'}:${validated.questionId}`;
       const cached = lastGoodFollowups.get(cacheKey);
       if (cached?.length) {
         console.warn('[followups-single] LLM unavailable; serving cached followups');
@@ -399,7 +402,7 @@ export async function POST(
       });
       
       // Check cache before returning error
-      const cacheKey = `${projectId}:${validated.questionId}`;
+      const cacheKey = `${projectId}:${sourceResetId ?? 'initial'}:${validated.questionId}`;
       const cached = lastGoodFollowups.get(cacheKey);
       if (cached?.length) {
         console.warn('[followups-single] llm_fail; serving cached followups', { _cid });
@@ -515,7 +518,7 @@ export async function POST(
     };
 
     // Cache successful follow-ups for this question
-    const cacheKey = `${projectId}:${validated.questionId}`;
+    const cacheKey = `${projectId}:${sourceResetId ?? 'initial'}:${validated.questionId}`;
     if (followupsWithKeys.length > 0) {
       const cachedFormat = followupsWithKeys.map((fu) => ({
         id: fu.id,
@@ -536,6 +539,9 @@ export async function POST(
       if (freshPost) {
         const freshProvenance = (freshPost.provenance as any) || {};
         const freshInterview = { ...(freshProvenance.interview || {}) };
+        if ((freshInterview.resetId ?? null) !== sourceResetId) {
+          return NextResponse.json({ error: 'INTERVIEW_CHANGED', message: 'The interview was restarted. Continue from the beginning.' }, { status: 409 });
+        }
         if (freshInterview.guided) {
           return NextResponse.json({ error: 'GUIDED_INTERVIEW_ACTIVE', message: 'Continue the saved guided interview.' }, { status: 409 });
         }

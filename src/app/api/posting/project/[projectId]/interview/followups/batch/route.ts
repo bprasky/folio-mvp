@@ -175,6 +175,9 @@ export async function POST(
       }),
     ]);
 
+    const sourceResetId = (projectPost?.provenance as any)?.interview?.resetId ?? null;
+    if ((body?.resetId ?? null) !== sourceResetId)
+      return NextResponse.json({ error: 'INTERVIEW_RESET', message: 'This interview was started over. Reload before continuing.' }, { status: 409 });
     if ((projectPost?.provenance as any)?.interview?.guided) {
       return NextResponse.json({ error: 'GUIDED_INTERVIEW_ACTIVE', message: 'Continue the saved guided interview.' }, { status: 409 });
     }
@@ -386,6 +389,9 @@ Do NOT re-ask any of this — it is settled ground. Use it only to sharpen wordi
       if (freshPost) {
         const freshProvenance = (freshPost.provenance as any) || {};
         const freshInterview = { ...(freshProvenance.interview || {}) };
+        if ((freshInterview.resetId ?? null) !== sourceResetId) {
+          return NextResponse.json({ error: 'INTERVIEW_CHANGED', message: 'The interview was restarted. Continue from the beginning.' }, { status: 409 });
+        }
         if (freshInterview.guided) {
           return NextResponse.json({ error: 'GUIDED_INTERVIEW_ACTIVE', message: 'Continue the saved guided interview.' }, { status: 409 });
         }

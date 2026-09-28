@@ -1,0 +1,16 @@
+{
+  "baseline": true,
+  "baselineCommit": "bbc758179425eef9c902d0f3f6805021bf83493a",
+  "selectedCase": "Explicit restart intent",
+  "fixture": "Actual Tracker → Story → InterviewModal → GuidedInterviewWorkspace and protected interview components; synthetic Next navigation/image/dynamic and loopback HTTP responses, pure guided controller, no AI or database. No deployed/authenticated Next server verification.",
+  "results": [
+    {
+      "name": "Explicit restart intent resets before guided entry instead of resuming the old interview",
+      "status": "fail",
+      "error": "Expected values to be strictly equal:\n+ actual - expected\n\n+ 'What was the overall design idea for this project?'\n- 'What did the clients come to you wanting from this project?'\n",
+      "pageErrors": [],
+      "unexpected": [],
+      "text": "Your project\n\nProject photographs · Guided interview\n\nPause & close\nLiving room · 1 / 1\nDiscuss this photo\n\nFolio AI interviewer\n\nAbout this project\n\nSections\n\nAbout this project\n\nWhat did the clients come to you wanting from this project?\n\nYou\n\nThe clients wanted quiet rooms and an open route toward the garden.\n\nCorrect this answer\n\nWhat was the overall design idea for this project?\n\nYour response\nUp to 2,000 characters · Ctrl/⌘ + Enter to send\nSkip question\nSend\n\nAll accepted answers saved\n\nFinish with what I have"
+    }
+  ]
+}

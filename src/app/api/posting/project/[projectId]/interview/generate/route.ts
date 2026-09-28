@@ -41,13 +41,16 @@ const POSTING_V1_ENABLED =
   process.env.NODE_ENV !== "production";
 
 /** Generation owns its metadata, never an older copy of the interview evidence. */
-async function patchGenerationInterview(projectId: string, actorId: string, patch: (interview: any) => Record<string, unknown> | null) {
+async function patchGenerationInterview(projectId: string, actorId: string, expectedResetId: string | null, patch: (interview: any) => Record<string, unknown> | null) {
   await assertProjectWrite(actorId, projectId);
   for (let attempt = 0; attempt < 3; attempt++) {
     const post = await prisma.projectPost.findUnique({ where: { projectId }, select: { provenance: true, updatedAt: true } });
     if (!post) return;
     const provenance = jsonObject(post.provenance);
     const interview = jsonObject(provenance.interview);
+    if ((interview.resetId ?? null) !== expectedResetId) {
+      throw Object.assign(new Error('The interview was restarted. Generate again using the new answers.'), { status: 409 });
+    }
     const changes = patch(interview);
     if (!changes) return;
     const saved = await prisma.projectPost.updateMany({
@@ -293,6 +296,7 @@ export async function POST(
   const projectId = params.projectId; // Extract early for catch block access
   let duration = 0;
   let authorizedActorId: string | null = null;
+  let generationResetId: string | null | undefined;
   
   /* [AUDIT] START: log incoming projectId, lock status, and critical branches. */
   console.log("[AUDIT] generate:start", { projectId, _cid });
@@ -493,6 +497,13 @@ export async function POST(
       },
     });
 
+    // Every later metadata/final write belongs to this interview incarnation.
+    // A restart must also invalidate legacy generation, which has no guided ID.
+    generationResetId = ((post?.provenance as any)?.interview?.resetId ?? null) as string | null;
+    if ((Array.isArray(body.answersOverride) || Array.isArray(body.followupsOverride)) && (body.resetId ?? null) !== generationResetId) {
+      return NextResponse.json({ ok: false, code: 'INTERVIEW_RESET', error: 'This interview was started over. Reload before preparing a draft from your answers.' }, { status: 409 });
+    }
+
     // Check for existing draft and respect forceOverwriteDraft flag
     if (post?.status === 'REVIEW' || post?.status === 'ARCHIVED') {
       return NextResponse.json({ error: 'Return the post to draft before regenerating' }, { status: 409 });
@@ -529,7 +540,7 @@ export async function POST(
           // Lock is stale (> 2 minutes), auto-release it and CONTINUE
           console.log("[AUDIT] generate:stale-lock", { projectId, ageMs: age, _cid });
           console.warn("[posting/interview/generate] Releasing stale generation lock", { _cid, age });
-          await patchGenerationInterview(projectId, session.user.id, () => ({ status: { phase: 'idle', endedAt: Date.now() } }));
+          await patchGenerationInterview(projectId, session.user.id, generationResetId, () => ({ status: { phase: 'idle', endedAt: Date.now() } }));
           // IMPORTANT: do NOT return here — proceed to set a fresh lock
         }
       }
@@ -582,6 +593,9 @@ export async function POST(
       });
 
       if (refreshedPost) {
+        if (((refreshedPost.provenance as any)?.interview?.resetId ?? null) !== generationResetId) {
+          throw Object.assign(new Error('The interview was restarted. Generate again using the new answers.'), { status: 409 });
+        }
         provenance = (await stripPrivateInterviewData(refreshedPost.provenance) as any) || {};
         interview = provenance.interview || {};
       }
@@ -669,6 +683,9 @@ export async function POST(
         });
         const lastResortProv = (await stripPrivateInterviewData(lastResortPost?.provenance) as any) || {};
         const lastResortInterview = lastResortProv.interview || {};
+        if ((lastResortInterview.resetId ?? null) !== generationResetId) {
+          throw Object.assign(new Error('The interview was restarted. Generate again using the new answers.'), { status: 409 });
+        }
         const lastResortAnswers = lastResortInterview.payload?.answers || lastResortInterview.answers || [];
 
         if (Array.isArray(lastResortAnswers) && lastResortAnswers.length > 0) {
@@ -725,7 +742,7 @@ export async function POST(
 
     // Set generation lock before starting (skip when force=true or debug mode)
     if (acquireLock) {
-      await patchGenerationInterview(projectId, session.user.id, () => ({ status: { phase: 'generating', startedAt: Date.now() } }));
+      await patchGenerationInterview(projectId, session.user.id, generationResetId, () => ({ status: { phase: 'generating', startedAt: Date.now() } }));
     }
 
     // Use overrides if provided, otherwise use interview data
@@ -1288,7 +1305,7 @@ export async function POST(
       // Unlock if we acquired a lock
       if (acquireLock) {
         try {
-          await patchGenerationInterview(projectId, session.user.id, current => current.status?.phase === 'generating'
+          await patchGenerationInterview(projectId, session.user.id, generationResetId, current => current.status?.phase === 'generating'
             ? { status: { phase: 'idle', endedAt: Date.now(), lastDurationMs: Date.now() - started } } : null);
         } catch (unlockErr) {
           console.error("[posting/interview/generate] Unlock failed", { _cid, unlockErr });
@@ -1544,6 +1561,9 @@ export async function POST(
       // read can still precede a guided answer/correction and erase its history.
       const existingProvenance = jsonObject(current.provenance) as any;
       const existingInterview = existingProvenance.interview || {};
+      if ((existingInterview.resetId ?? null) !== generationResetId) {
+        throw Object.assign(new Error('The interview was restarted. Generate again using the new answers.'), { status: 409 });
+      }
       const existingPayload = existingInterview.payload || {};
       const guided = existingInterview.guided;
       const sourceGuided = interview.guided;
@@ -1634,7 +1654,7 @@ export async function POST(
     if (acquireLock) {
       try {
         console.log("[AUDIT] finally: unlock", { projectId, ok: true, _cid });
-        await patchGenerationInterview(projectId, session.user.id, current => current.status?.phase === 'generating'
+        await patchGenerationInterview(projectId, session.user.id, generationResetId, current => current.status?.phase === 'generating'
           ? { status: { phase: 'idle', endedAt: Date.now(), lastDurationMs: duration } } : null);
       } catch (unlockErr) {
         console.error("[posting/interview/generate] Unlock failed", { _cid, unlockErr });
@@ -1709,7 +1729,7 @@ export async function POST(
     // Also persist lastGenerationError so the preview page can surface it after navigation
     try {
       console.log("[AUDIT] finally: unlock", { projectId, ok: false, _cid });
-      if (authorizedActorId) await patchGenerationInterview(projectId, authorizedActorId, current => {
+      if (authorizedActorId && generationResetId !== undefined) await patchGenerationInterview(projectId, authorizedActorId, generationResetId, current => {
         const changes: Record<string, unknown> = {};
         if (current.status?.phase === 'generating') {
           const lockStarted = current.status.startedAt;

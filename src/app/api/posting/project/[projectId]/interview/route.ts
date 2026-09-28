@@ -488,6 +488,7 @@ export async function GET(
 
     if (!post) {
       return NextResponse.json({
+        guided: false, resetId: null,
         answers: [],
         followUps: [],
         selectedQuestionIds: [],
@@ -528,6 +529,7 @@ export async function GET(
     });
 
     return NextResponse.json({
+      guided: !!interview.guided, resetId: interview.resetId ?? null,
       answers,
       followUps,
       selectedQuestionIds,
@@ -589,6 +591,9 @@ export async function POST(
     } catch { 
       body = {}; 
     }
+    const resetId = (guidedPost?.provenance as any)?.interview?.resetId ?? null;
+    if ((body.resetId ?? null) !== resetId)
+      return NextResponse.json({ ok: false, code: 'INTERVIEW_RESET', message: 'This interview was started over. Reload before saving another answer.' }, { status: 409 });
 
     const selectedQuestionIds =
       body?.selectedQuestionIds ??
@@ -776,6 +781,8 @@ export async function POST(
 
     // Build new interview payload segment with intelligent merging
     const existingProvenance = (currentPost.provenance as any) || {};
+    if ((existingProvenance.interview?.resetId ?? null) !== resetId)
+      return NextResponse.json({ ok: false, code: 'INTERVIEW_RESET', message: 'This interview was started over while the answer was saving. Reload to continue.' }, { status: 409 });
     if (existingProvenance.interview?.guided) {
       return NextResponse.json({ ok: false, code: 'GUIDED_INTERVIEW_REQUIRED', message: 'Continue this interview or correct its answers in the guided workspace.' }, { status: 409 });
     }
@@ -1102,4 +1109,3 @@ function mergeAnswers(
 
   return merged;
 }
-

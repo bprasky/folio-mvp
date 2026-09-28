@@ -30,6 +30,7 @@ async function checkGenerationMetadata() {
   const helper = between(generation, 'async function patchGenerationInterview(', '// Safe body reader');
   let state = { unrelated: 'keep', interview: { guided: { version: 2, turns: [{ id: 'first' }] }, payload: { answers: [], followups: [] } } };
   let writes = 0;
+  let resetDuringCas = false;
   let authorizations = 0;
   const patch = evaluate(helper + '\npatchGenerationInterview', {
     assertProjectWrite: async (actorId, projectId) => { assert.equal(actorId, 'owner'); assert.equal(projectId, 'project'); authorizations++; },
@@ -39,7 +40,8 @@ async function checkGenerationMetadata() {
         writes++;
         assert.ok(where.provenance.equals, 'CAS must include the JSON snapshot');
         if (writes === 1) {
-          state.interview.guided = { version: 3, turns: [{ id: 'first' }, { id: 'accepted-during-save' }] };
+          if (resetDuringCas) state.interview = { resetId: 'new-reset', payload: { answers: [] } };
+          else state.interview.guided = { version: 3, turns: [{ id: 'first' }, { id: 'accepted-during-save' }] };
           return { count: 0 };
         }
         state = data.provenance;
@@ -47,7 +49,7 @@ async function checkGenerationMetadata() {
       },
     } },
   });
-  await patch('project', 'owner', () => ({ status: { phase: 'idle' } }));
+  await patch('project', 'owner', null, () => ({ status: { phase: 'idle' } }));
   assert.equal(writes, 2);
   assert.equal(authorizations, 1);
   assert.equal(state.interview.guided.version, 3);
@@ -55,6 +57,12 @@ async function checkGenerationMetadata() {
   assert.equal(state.interview.payload.answers.length, 0);
   assert.equal(state.unrelated, 'keep');
   assert.equal(state.interview.status.phase, 'idle');
+  writes = 0; resetDuringCas = true;
+  await assert.rejects(patch('project', 'owner', null, () => ({ status: { phase: 'old-generation-finished' } })), error => error.status === 409);
+  assert.equal(writes, 1, 'a reset during CAS must stop the old generation retry before another write');
+  assert.equal(state.interview.resetId, 'new-reset'); assert.equal(state.interview.status, undefined);
+  await assert.rejects(patch('project', 'owner', null, () => ({ status: { phase: 'stale' } })), error => error.status === 409);
+  assert.equal(writes, 1, 'an already stale generation may not call the patch writer');
   console.log('PASS generation metadata CAS retries without erasing a concurrent guided turn');
 }
 
@@ -96,6 +104,7 @@ async function checkSavedEvidenceRead() {
       assert.equal(result.body.answers[0].answer, 'We kept the route open.');
       assert.deepEqual(result.body.coverage, [{ roomId: 'room', roomName: 'Living room', answered: 1, total: 1, complete: true }]);
       assert.equal(result.body.contextualQuestions.length, mode === 'legacy' ? 1 : 0);
+      assert.equal(result.body.guided, mode === 'guided', 'saved evidence identifies the correct editor without preparing questions');
     } else if (mode === 'empty') {
       assert.equal(result.status, 200); assert.deepEqual(result.body.answers, []);
     } else assert.notEqual(result.status, 200, mode + ' must remain blocked');
@@ -108,15 +117,15 @@ async function checkLegacySave() {
   const source = read(routeRoot + 'route.ts');
   const guidedGuard = between(source, 'const existingProvenance = (currentPost.provenance as any) || {};', '// Clearing is DESTRUCTIVE');
   const persistence = between(source, 'const saved = await prisma.$transaction(async (tx) => {', '// Calculate saved count');
-  for (const mode of ['guided', 'race', 'projection-failure', 'progress-failure', 'legacy']) {
-    const original = { provenance: { interview: { ...(mode === 'guided' ? { guided: { id: 'saved-guided-session' } } : {}), payload: { answers: ['old answer'] } } }, answers: ['old answer'], roomProgress: {} };
+  for (const mode of ['guided', 'reset', 'race', 'projection-failure', 'progress-failure', 'legacy']) {
+    const original = { provenance: { interview: { ...(mode === 'guided' ? { guided: { id: 'saved-guided-session' } } : {}), ...(mode === 'reset' ? { resetId: 'new-reset' } : {}), payload: { answers: ['old answer'] } } }, answers: ['old answer'], roomProgress: {} };
     let state = structuredClone(original);
     let transactionCount = 0;
     const writes = [];
     const nextProvenance = { interview: { payload: { answers: ['new answer'] } } };
     let tx;
     const context = {
-      projectId: 'project', currentPost: { provenance: state.provenance, updatedAt: new Date(0) },
+      projectId: 'project', resetId: null, currentPost: { provenance: state.provenance, updatedAt: new Date(0) },
       nextProvenance, nextInterviewPayload: { selectedQuestionIds: ['q1'] },
       incomingAnswers: [{ questionId: 'q1' }], isClearing: false,
       mergedAnswers: [{ questionId: 'q1', roomId: 'room', answer: 'new answer', section: 'designIntent' }],
@@ -174,10 +183,10 @@ async function checkLegacySave() {
         assert.equal(state.roomProgress.room.answeredCount, 1);
       } else {
         assert.deepEqual(state, original);
-        assert.deepEqual(writes, mode === 'guided' ? [] : ['canonical']);
+        assert.deepEqual(writes, ['guided', 'reset'].includes(mode) ? [] : ['canonical']);
       }
     }
-    assert.equal(transactionCount, mode === 'guided' ? 0 : 1);
+    assert.equal(transactionCount, ['guided', 'reset'].includes(mode) ? 0 : 1);
   }
   console.log('PASS legacy save keeps CAS, answers and room progress in one transaction; guided/race guards and failure propagation preserve state');
 }
@@ -224,12 +233,12 @@ async function checkFollowups() {
     const persistenceEnd = route.indexOf(name === 'batch/' ? '\n    return NextResponse.json(' : '// Analytics', persistenceStart);
     assert.ok(persistenceStart >= 0 && persistenceEnd > persistenceStart);
     const block = route.slice(persistenceStart, persistenceEnd);
-    async function persist(guided, conflict = false) {
+    async function persist(guided, conflict = false, reset = false) {
       let writes = 0;
       let captured;
-      const provenance = { interview: { payload: { answers: [{ answer: 'saved' }] }, followUps: [], ...(guided ? { guided: { id: 'saved' } } : {}) } };
+      const provenance = { interview: { payload: { answers: [{ answer: 'saved' }] }, followUps: [], ...(guided ? { guided: { id: 'saved' } } : {}), ...(reset ? { resetId: 'new-reset' } : {}) } };
       const result = await evaluate(`(async () => { ${block} return { status: 200 }; })()`, {
-        projectId: 'project', validated: { questionId: 'q1', roomId: 'room1', round: 1 },
+        projectId: 'project', sourceResetId: null, validated: { questionId: 'q1', roomId: 'room1', round: 1 },
         followupsWithKeys: [{ id: 'fu1', text: 'A followup' }], followUps: [{ id: 'fu1', question: 'A followup' }],
         followUpsRaw: [{ questionId: 'q1', followUps: [{ id: 'fu1', prompt: 'A followup' }] }],
         NextResponse: { json: (body, options) => ({ body, status: options.status }) },
@@ -254,11 +263,41 @@ async function checkFollowups() {
     outcome = await persist(false, true);
     assert.equal(outcome.result.status, 409);
     assert.equal(outcome.writes, 1);
+    outcome = await persist(false, false, true);
+    assert.equal(outcome.result.status, 409); assert.equal(outcome.writes, 0, 'a follow-up prepared before reset cannot repopulate the new interview');
     outcome = await persist(false);
     assert.equal(outcome.result.status, 200);
     assert.equal(outcome.writes, 1);
   }
   console.log('PASS all three legacy followup writers reject guided sessions and CAS races; ordinary writes preserve evidence');
+}
+
+async function checkResetRequestEpochs() {
+  for (const name of ['', 'single/', 'batch/']) {
+    const source = read(routeRoot + 'followups/' + name + 'route.ts');
+    const block = name === 'batch/'
+      ? between(source, '    const sourceResetId = ', '    // Build images and products context')
+      : between(source, '    const savedPost = await prisma.projectPost.findUnique(', '    let validated;');
+    for (const [savedEpoch, requestEpoch, expectedStatus] of [['new-reset', null, 409], ['new-reset', 'old-reset', 409], ['new-reset', 'new-reset', 200], [null, null, 200]]) {
+      const post = { provenance: { interview: savedEpoch ? { resetId: savedEpoch } : {} } };
+      const body = { resetId: requestEpoch, answers: [{ answer: 'A response composed in another tab.' }] };
+      const result = await evaluate(`(async () => { ${block} return { status: 200 }; })()`, {
+        projectId: 'project', projectPost: post, body, request: { json: async () => body },
+        prisma: { projectPost: { findUnique: async () => post } },
+        NextResponse: { json: (body, options) => ({ body, status: options.status }) },
+      });
+      assert.equal(result.status, expectedStatus, `${name || 'default/'} rejects an old client before preparing follow-ups`);
+    }
+  }
+  const overrideGuard = between(generation, '    generationResetId = ', '    // Check for existing draft');
+  for (const body of [{ answersOverride: [] }, { followupsOverride: [] }, { answersOverride: [], resetId: 'old-reset' }, { answersOverride: [], resetId: 'new-reset' }, {}]) {
+    const result = await evaluate(`(async () => { let generationResetId; ${overrideGuard} return { status: 200 }; })()`, {
+      body, post: { provenance: { interview: { resetId: 'new-reset' } } },
+      NextResponse: { json: (body, options) => ({ body, status: options.status }) },
+    });
+    assert.equal(result.status, (Array.isArray(body.answersOverride) || Array.isArray(body.followupsOverride)) && body.resetId !== 'new-reset' ? 409 : 200);
+  }
+  console.log('PASS new follow-up requests and generation override arrays require the current reset epoch; canonical-only generation stays available');
 }
 
 async function checkQuestionCaches() {
@@ -291,8 +330,9 @@ async function checkQuestionCaches() {
 async function checkReverseSync() {
   const source = read('src/lib/editorial/syncEditorialAnswersToProvenance.ts');
   const helper = ['slugify', 'deriveSection', 'categoryFor', 'deepMerge', 'syncEditorialAnswersToProvenance'].map(name => namedFunction(source, name)).join('\n');
-  for (const mode of ['guided', 'race', 'legacy']) {
+  for (const mode of ['guided', 'race', 'legacy', 'reset']) {
     let writes = 0;
+    let reads = 0;
     const provenance = { interview: { ...(mode === 'guided' ? { guided: { id: 'guided' } } : {}), payload: { answers: [] } } };
     const sync = evaluate(helper + '\nsyncEditorialAnswersToProvenance', {
       assertLegacyInterviewAllowed() {}, ALLOWED_SECTIONS: new Set(['what', 'how']),
@@ -301,7 +341,7 @@ async function checkReverseSync() {
         editorialInterview: { findUnique: async () => ({ selectedQuestionIds: ['q1'], answers: [{ questionId: 'q1', questionText: 'Question', answerText: 'Answer', questionCategory: 'what', isFollowUp: false }] }) },
         project: { findUnique: async () => ({ images: [] }) },
         projectPost: {
-          findUnique: async () => ({ provenance, updatedAt: new Date(0) }),
+          findUnique: async () => { reads++; return { provenance: mode === 'reset' && reads > 1 ? { interview: { resetId: 'new-reset', payload: { answers: [] } } } : provenance, updatedAt: new Date(0) }; },
           updateMany: async ({ where, data }) => {
             writes++;
             assert.deepEqual(where.provenance.equals, provenance);
@@ -313,9 +353,42 @@ async function checkReverseSync() {
     });
     if (mode === 'legacy') assert.equal((await sync('project')).answerCount, 1);
     else await assert.rejects(sync('project'), error => error.status === 409);
-    assert.equal(writes, mode === 'guided' ? 0 : 1);
+    assert.equal(writes, ['guided', 'reset'].includes(mode) ? 0 : 1);
   }
   console.log('PASS reverse projection sync cannot replace guided evidence; ordinary categories survive');
+}
+
+async function checkForwardSync() {
+  const source = read('src/lib/editorial/syncInterviewAnswers.ts');
+  const helpers = between(source, 'const rowKey = ', '/**\n * Rewrite one interview');
+  const actual = helpers + '\n' + namedFunction(source, 'rebuildAnswerProjection') + '\n' + namedFunction(source, 'syncAnswersToEditorialInterview') + '\nsyncAnswersToEditorialInterview';
+  for (const mode of ['reset-during-read', 'already-reset', 'ordinary']) {
+    let canonical = { id: 'post', updatedAt: new Date(0), provenance: { interview: { payload: { answers: [{ questionId: 'q1', prompt: 'Saved question?', answer: 'Saved source evidence.', section: 'what' }] } } } };
+    if (mode === 'already-reset') canonical.provenance.interview = { resetId: 'new-reset', payload: { answers: [], followups: [] } };
+    let projection = [{ questionId: 'q1', answerText: 'Old projected evidence', isFollowUp: false, createdAt: new Date(0) }];
+    const events = [];
+    const tx = {
+      projectPost: { findUnique: async () => { events.push('read'); return structuredClone(canonical); }, updateMany: async ({ where, data }) => {
+        events.push('cas'); assert.deepEqual(where.provenance.equals, canonical.provenance); assert.deepEqual(data.provenance, canonical.provenance);
+        if (mode === 'reset-during-read') { canonical.provenance.interview = { resetId: 'new-reset', payload: { answers: [] } }; projection = []; return { count: 0 }; }
+        return { count: 1 };
+      } },
+      editorialInterview: { upsert: async () => { events.push('editorial'); return { id: 'interview' }; } },
+      editorialInterviewAnswer: { findMany: async () => projection, deleteMany: async () => { events.push('delete'); projection = []; }, create: async ({ data }) => { events.push('insert'); projection.push(data); } },
+    };
+    const sync = evaluate(actual, { assertLegacyInterviewAllowed() {}, randomUUID: require('node:crypto').randomUUID,
+      SECTION_ENUM: { safeParse: value => ({ success: value === 'what' }) }, prisma: { $transaction: async work => work(tx) } });
+    if (mode === 'reset-during-read') {
+      await assert.rejects(sync('project'), error => error.status === 409);
+      assert.deepEqual(events, ['read', 'cas']); assert.deepEqual(projection, [], 'old canonical read cannot recreate rows after reset');
+    } else {
+      const result = await sync('project'); assert.equal(result.answersCreated, mode === 'already-reset' ? 0 : 1);
+      assert.deepEqual(events.slice(0, 3), ['read', 'cas', 'editorial']);
+      if (mode === 'already-reset') assert.deepEqual(projection, [], 'an empty canonical reset clears any stale projection');
+      else assert.equal(projection[0].answerText, 'Saved source evidence.');
+    }
+  }
+  console.log('PASS forward projection sync holds canonical CAS before rebuilding; reset races cannot restore removed answer rows');
 }
 
 async function checkRoomRename() {
@@ -361,5 +434,5 @@ async function checkCompletionAuthorization() {
 
 (async () => {
   await checkGenerationMetadata(); await checkSavedEvidenceRead(); await checkLegacySave(); await checkRealtime(); await checkFollowups();
-  await checkQuestionCaches(); await checkReverseSync(); await checkRoomRename(); await checkCompletionAuthorization();
+  await checkResetRequestEpochs(); await checkQuestionCaches(); await checkReverseSync(); await checkForwardSync(); await checkRoomRename(); await checkCompletionAuthorization();
 })().catch(error => { console.error(error); process.exitCode = 1; });

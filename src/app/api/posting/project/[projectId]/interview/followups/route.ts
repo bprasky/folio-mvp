@@ -134,12 +134,16 @@ export async function POST(
     }
 
     const savedPost = await prisma.projectPost.findUnique({ where: { projectId }, select: { provenance: true } });
+    const sourceResetId = (savedPost?.provenance as any)?.interview?.resetId ?? null;
+    const cacheKey = `${projectId}:${sourceResetId ?? 'initial'}`;
     if ((savedPost?.provenance as any)?.interview?.guided) {
       return NextResponse.json({ error: 'GUIDED_INTERVIEW_ACTIVE', message: 'Continue the saved guided interview.' }, { status: 409 });
     }
 
     // Validate input
     const body = await request.json();
+    if ((body?.resetId ?? null) !== sourceResetId)
+      return NextResponse.json({ error: 'INTERVIEW_RESET', message: 'This interview was started over. Reload before continuing.' }, { status: 409 });
     let validated;
     try {
       validated = FollowUpsRequestSchema.parse(body);
@@ -225,7 +229,7 @@ export async function POST(
     if (!ANTHROPIC_ENABLED) {
       console.warn('[followups] LLM disabled/unavailable');
       // Check cache before returning error
-      const cached = lastGoodFollowups.get(projectId);
+      const cached = lastGoodFollowups.get(cacheKey);
       if (cached?.length) {
         console.warn('[followups] LLM unavailable; serving cached followups');
         return NextResponse.json({ ok: true, followups: cached, _cid }, { status: 200 });
@@ -317,7 +321,7 @@ export async function POST(
       });
       
       // Check cache before returning error
-      const cached = lastGoodFollowups.get(projectId);
+      const cached = lastGoodFollowups.get(cacheKey);
       if (cached?.length) {
         console.warn('[followups] llm_fail; serving cached followups', { _cid });
         return NextResponse.json({ ok: true, followups: cached, _cid }, { status: 200 });
@@ -435,7 +439,7 @@ export async function POST(
           id: fu.id,
           prompt: fu.text,
         }));
-        lastGoodFollowups.set(projectId, cachedFormat);
+        lastGoodFollowups.set(cacheKey, cachedFormat);
       }
 
       // Save to ProjectPost.provenance.interview.followUps (optional persistence)
@@ -459,6 +463,9 @@ export async function POST(
           // Re-read provenance fresh to avoid overwriting concurrent writes (e.g., answer saves)
           const freshProvenance = (freshPost.provenance as any) || {};
           const freshInterview = { ...(freshProvenance.interview || {}) };
+          if ((freshInterview.resetId ?? null) !== sourceResetId) {
+            return NextResponse.json({ error: 'INTERVIEW_CHANGED', message: 'The interview was restarted. Continue from the beginning.' }, { status: 409 });
+          }
           if (freshInterview.guided) {
             return NextResponse.json({ error: 'GUIDED_INTERVIEW_ACTIVE', message: 'Continue the saved guided interview.' }, { status: 409 });
           }

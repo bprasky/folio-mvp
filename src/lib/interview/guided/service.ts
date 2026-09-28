@@ -111,6 +111,8 @@ export async function runGuidedCommand(projectId: string, actorId: string, comma
   assertLegacyInterviewAllowed(projectId);
   await assertProjectWrite(actorId, projectId);
   let current = await getGuidedSession(projectId, actorId);
+  if (current && command.sessionId && command.sessionId !== current.id)
+    throw new GuidedConflict('STALE_SESSION', 'This interview was started over in another tab. Reload to continue with the new interview.');
   if (!current) {
     if (command.action !== 'start') throw new GuidedConflict('NOT_STARTED', 'Open the guided interview to prepare its questions.', 422);
     await ensureGuidedPost(projectId, actorId);
