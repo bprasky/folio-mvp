@@ -22,6 +22,7 @@ export function resolvePhotoTransition(pending: PendingPhotoTransition | null, n
 }
 
 export interface GuidedLocalDraft {
+  sessionId?: string;
   questionId: string | null;
   text: string;
   inputModality: 'text' | 'voice' | 'mixed';

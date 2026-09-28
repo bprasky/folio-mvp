@@ -7,7 +7,7 @@ import { authOptions } from '@/app/api/auth/[...nextauth]/options';
 import { processInterviewAnswers } from '@/lib/editorial/processInterviewAnswers';
 import { syncAnswersToEditorialInterview } from '@/lib/editorial/syncInterviewAnswers';
 import { prisma } from '@/lib/prisma';
-import { assertProjectView } from '@/lib/authz/access';
+import { assertProjectWrite } from '@/lib/authz/access';
 
 export async function POST(
   request: NextRequest,
@@ -23,7 +23,7 @@ export async function POST(
     }
 
     const projectId = params.projectId;
-    await assertProjectView(session.user.id, projectId);
+    await assertProjectWrite(session.user.id, projectId);
 
     // Find the interview for this project, or sync from ProjectPost
     let interview = await prisma.editorialInterview.findUnique({

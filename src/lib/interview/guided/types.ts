@@ -78,6 +78,8 @@ export interface GuidedSession {
   id: string;
   schemaVersion: 1;
   projectId: string;
+  /** Present after an explicit reset, also invalidates older unbound local drafts. */
+  resetId?: string;
   version: number;
   status: 'active' | 'paused' | 'deciding' | 'ready' | 'finished' | 'needs_review';
   phase: 'project' | 'rooms' | 'review';
@@ -124,6 +126,7 @@ export interface GuidedCommand {
   action: 'start' | 'answer' | 'confirm' | 'skip' | 'skip_room' | 'section' | 'pause' | 'resume' | 'retry' | 'finish' | 'correct';
   requestId: string;
   version: number;
+  sessionId?: string;
   questionId?: string;
   text?: string;
   inputModality?: 'text' | 'voice' | 'mixed';

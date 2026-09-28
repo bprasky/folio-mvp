@@ -20,7 +20,23 @@
       "status": "pass"
     },
     {
-      "name": "An accepted room answer unlocks draft controls and generates through the canonical route",
+      "name": "Saved answers have a simple resume screen; draft settings open only on request",
+      "status": "pass"
+    },
+    {
+      "name": "Start over explains deletion; cancellation preserves saved answers and local drafts",
+      "status": "pass"
+    },
+    {
+      "name": "Explicit restart intent resets before guided entry instead of resuming the old interview",
+      "status": "pass"
+    },
+    {
+      "name": "Failed reset retains work; retry starts once at the first question and clears stale local recovery",
+      "status": "pass"
+    },
+    {
+      "name": "A delayed reset acknowledgement preserves a new-session draft written by another tab",
       "status": "pass"
     },
     {
@@ -29,6 +45,10 @@
     },
     {
       "name": "An explicit guided 404 retains the actual legacy question flow",
+      "status": "pass"
+    },
+    {
+      "name": "Legacy recovery rejects pre-reset unbound drafts and preserves drafts bound to the current reset",
       "status": "pass"
     },
     {

@@ -89,6 +89,23 @@ export default function ProjectProgressTracker({
     (copy.action === 'interview' && currentView === 'story') ||
     (copy.action === 'publish' && currentView === 'publish');
 
+  // The interview resume screen needs navigation, not another progress card.
+  if (currentView === 'story') {
+    return (
+      <nav aria-label="Project steps" className="flex flex-wrap gap-1 border-b border-folio-border-subtle pb-3">
+        {steps.map(step => step.locked ? (
+          <span key={step.key} aria-disabled="true" className="px-3 py-2 text-folio-ui text-folio-text-tertiary">{step.label}</span>
+        ) : (
+          <Link key={step.key} href={stepHref(projectId, step.key)} aria-current={step.key === 'story' ? 'step' : undefined}
+            className={cn('rounded-sm px-3 py-2 text-folio-ui transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-folio-gold',
+              step.key === 'story' ? 'bg-surface-ground font-medium text-folio-text-primary' : 'text-folio-text-secondary hover:bg-surface-ground')}>
+            {step.label}
+          </Link>
+        ))}
+      </nav>
+    );
+  }
+
   // The surface below owns this step's next-action inline — show only progress.
   if (hideNextAction || ctaRoutesToCurrentSurface) {
     return (

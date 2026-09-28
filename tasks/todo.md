@@ -1,3 +1,19 @@
+# Interview resume screen and Start over — 2026-09-28
+
+Scope: simplify the Story/in-progress screen into one clear resume action, visible Start over, optional saved-answer review and contextual draft controls. Start over requires an in-product confirmation, resets interview-derived state atomically, and opens the first question. Preserve project assets and existing draft/publication. No production answer clearing by the agent and no schema migration.
+
+- [x] Trace existing restart, canonical/projection/cache ownership and concurrent writers.
+- [x] Implement scoped reset with stale-tab, late-response, retry and local-draft protection.
+- [x] Simplify Story and its step navigation; disclose reset scope and retain draft/review access.
+- [x] Verify reset persistence, cancellation/failure/resume, original entry, desktop/mobile and protected paths; review before commit.
+- [ ] Commit/push the scoped change and record release status.
+
+Plan check-in: the old Story Restart passes an intent that guided ignores; legacy clearAll rejects guided sessions. Use the existing interview transaction/CAS machinery and keep reset separate from question generation so a provider failure cannot restore old answers. The UI offers confirmation rather than deleting the user's current answers during implementation.
+
+Review: dedicated atomic reset, stale-tab/request guards and local draft identity checks implemented. Guided regressions pass; browser workspace 16/16 and entry 16/16; core 10 pass, one disposable-database skip. Full lint, client-import guard, migration discipline and compile pass; TypeScript ratchet 903/904, no new fingerprints. Desktop/mobile/confirmation visually reviewed and final source review has no blockers. No production answers cleared. Details and test limitations: docs/reviews/guided-interview/start-over.md.
+
+---
+
 # Guided interview conversational quality — correction, 2026-09-26
 
 Implementation plan after the founder's clarification: make each server-validated interviewer reply contain an optional meaningful reaction and one grounded question; display three animated dots only during real pending work. Supply accepted conversation and remaining prepared obligations, adapt overlapping questions to missing detail, and allow explicit evidence reuse confirmation. Preserve raw answers, exact question IDs, correction invalidation, product/spotlight restrictions, budgets, atomic save-before-decision, and existing sessions. No schema migration or flag change is needed.

@@ -10,6 +10,7 @@ export class GuidedConflict extends Error {
 export function commandDigest(command: GuidedCommand) {
   return createHash('sha256').update(JSON.stringify({
     action: command.action, version: command.version, questionId: command.questionId ?? null,
+    ...(command.sessionId !== undefined ? { sessionId: command.sessionId } : {}),
     text: command.text ?? null, inputModality: command.inputModality ?? 'text',
     selectedImageId: command.selectedImageId ?? null, recordingId: command.recordingId ?? null,
     roomId: command.roomId ?? null, roomSpecified: command.roomId !== undefined,

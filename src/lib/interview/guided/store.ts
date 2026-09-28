@@ -43,7 +43,8 @@ export async function commitGuidedSession(projectId: string, actorId: string, ex
     const post = await tx.projectPost.findUnique({ where: { projectId }, select: { id: true, provenance: true, updatedAt: true } });
     if (!post) throw new GuidedConflict('NOT_FOUND', 'The saved project is unavailable.', 404);
     const current = savedGuidedSession(post.provenance);
-    if ((current?.version ?? null) !== expectedVersion) throw new GuidedConflict('STALE_VERSION', 'The saved interview changed. Reload to continue.');
+    if ((current?.version ?? null) !== expectedVersion || (current?.id ?? null) !== (expectedVersion === null ? null : next.id))
+      throw new GuidedConflict('STALE_VERSION', 'The saved interview changed. Reload to continue.');
     const provenance = objectValue(post.provenance);
     const interview = objectValue(provenance.interview);
     // Resolve the exact immutable clip returned to this tab. Using the latest

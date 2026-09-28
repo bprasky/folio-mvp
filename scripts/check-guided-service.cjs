@@ -9,6 +9,7 @@ const vm = require('node:vm');
 const ts = require('typescript');
 const { memoryDatabase } = require('./core/memory-db.cjs');
 const { Prisma } = require('@prisma/client');
+const { randomUUID } = require('node:crypto');
 
 const environment = {
   NODE_ENV: 'test', NEXT_PUBLIC_FLAG_GUIDED_INTERVIEW: '1',
@@ -18,7 +19,7 @@ const environment = {
 };
 let database, authUser = 'owner', providerCalls = [], networkCalls = 0;
 let decisionMode = 'advance', pendingModel = null, decisionEntered = null;
-let failNextCas = false, failProjection = false, failNextDecisionCommit = false;
+let failNextCas = false, failProjection = false, failNextDecisionCommit = false, failResetProjection = false;
 const cache = new Map();
 const PROJECT_TEXT = [
   'What did the clients come to you wanting from this project?',
@@ -125,7 +126,7 @@ function load(file) {
 
 async function fixture() {
   database = memoryDatabase(); authUser = 'owner'; providerCalls = []; decisionMode = 'advance';
-  failNextCas = false; failProjection = false; failNextDecisionCommit = false;
+  failNextCas = false; failProjection = false; failNextDecisionCommit = false; failResetProjection = false;
   environment.NEXT_PUBLIC_FLAG_GUIDED_INTERVIEW = '1'; environment.SPOTLIGHT_PROJECT_IDS = '';
   const postModel = database.projectPost;
   database.projectPost = new Proxy(postModel, { get: (target, method) => {
@@ -141,6 +142,7 @@ async function fixture() {
   } });
   const answerModel = database.editorialInterviewAnswer;
   database.editorialInterviewAnswer = new Proxy(answerModel, { get: (target, method) => {
+    if (method === 'deleteMany') return async args => { if (failResetProjection) { failResetProjection = false; throw new Error('synthetic reset projection failure'); } return target.deleteMany(args); };
     if (method === 'create') return async args => { if (failProjection) { failProjection = false; throw new Error('synthetic projection failure'); } return target.create(args); };
     return target[method];
   } });
@@ -169,6 +171,7 @@ async function fixture() {
   await database.projectImage.create({ data: { id: 'photo', projectId: 'project', roomId: 'room', room: 'room', url: 'https://fixture.invalid/room.jpg', inclusion: 'INCLUDED', aiClassification: {} } });
 }
 const route = load('src/app/api/posting/project/[projectId]/interview/guided/route.ts');
+const resetRoute = load('src/app/api/posting/project/[projectId]/interview/reset/route.ts');
 const { InterviewPayloadSchema } = load('src/lib/posting/interviewSchemas.ts');
 const params = { params: { projectId: 'project' } };
 let sequence = 0;
@@ -184,6 +187,14 @@ async function saved() { return (await database.projectPost.findUnique({ where: 
 async function answer(session, text = 'Calm and welcoming.', extras = {}) {
   return post({ action: 'answer', version: session.version, questionId: session.activeQuestionId, requestId: requestId(), text, ...extras });
 }
+async function resetSnapshot() {
+  const response = await resetRoute.GET(new Request('http://folio.test/interview/reset'), params);
+  return { status: response.status, ...(await response.json()) };
+}
+async function resetInterview(command) {
+  const response = await resetRoute.POST(new Request('http://folio.test/interview/reset', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(command) }), params);
+  return { status: response.status, ...(await response.json()) };
+}
 
 async function run() {
   await fixture();
@@ -198,6 +209,72 @@ async function run() {
   assert.equal((await post({ action: 'start', version: 0, requestId: requestId() })).status, 404);
   assert.equal(providerCalls.length, 0); assert.equal(await database.projectPost.count(), 0);
   console.log('PASS actual authorization, pilot flag, and protected spotlight routing before preparation or writes');
+
+  await fixture();
+  authUser = null; assert.equal((await resetSnapshot()).status, 401);
+  authUser = 'other'; assert.equal((await resetSnapshot()).status, 403);
+  authUser = 'owner'; environment.SPOTLIGHT_PROJECT_IDS = 'project'; assert.equal((await resetSnapshot()).status, 409);
+  environment.SPOTLIGHT_PROJECT_IDS = '';
+  let beforeReset = (await answer(await start(), 'We kept the existing footprint and opened the route to the garden.')).session;
+  const seededPost = await database.projectPost.findUnique({ where: { projectId: 'project' } });
+  const draftBlocks = [{ type: 'paragraph', text: 'An existing editable draft stays intact.' }];
+  await database.projectPost.update({ where: { id: seededPost.id }, data: { expandedBlocks: draftBlocks, status: 'DRAFT', provenance: {
+    ...seededPost.provenance, retainedOuterMetadata: { value: 'keep' }, interview: { ...seededPost.provenance.interview,
+      payload: { ...seededPost.provenance.interview.payload, imageOrder: ['photo'] },
+      knownFacts: { text: 'Old premise' }, questionSet: { rooms: 'old cache' }, followUps: ['old followup'],
+      audio: { old: { audioUrl: 'fixture recording' } }, guidedAudio: { old: { transcript: 'old transcript' } },
+    },
+  } } });
+  const originalPost = await database.projectPost.findUnique({ where: { projectId: 'project' } });
+  const originalAnswers = await database.editorialInterviewAnswer.findMany();
+  const originalAssets = await database.projectImage.findMany();
+  const resetCommand = { requestId: randomUUID(), ...(await resetSnapshot()).snapshot };
+  const modelCallsBeforeReset = providerCalls.length;
+  assert.equal((await resetInterview({ ...resetCommand, unexpected: true })).status, 422);
+  failResetProjection = true;
+  assert.equal((await resetInterview(resetCommand)).status, 500);
+  const rolledBackPost = await database.projectPost.findUnique({ where: { projectId: 'project' } });
+  assert.deepEqual({ ...rolledBackPost, updatedAt: originalPost.updatedAt }, originalPost, 'a projection failure rolls back canonical content');
+  assert.deepEqual(await database.editorialInterviewAnswer.findMany(), originalAnswers);
+  // The shared memory double restores rows by reinserting them, which refreshes
+  // updatedAt; a real transaction rollback would retain the timestamp too.
+  resetCommand.revision = (await resetSnapshot()).snapshot.revision;
+  environment.NEXT_PUBLIC_FLAG_GUIDED_INTERVIEW = '0';
+  const resetResult = await resetInterview(resetCommand); assert.equal(resetResult.status, 200);
+  assert.equal(providerCalls.length, modelCallsBeforeReset, 'reset and its fresh opening question require no model call');
+  assert.notEqual(resetResult.session.id, beforeReset.id); assert.ok(resetResult.session.version > beforeReset.version);
+  assert.equal(resetResult.session.turns.length, 0); assert.equal(resetResult.session.roomsPrepared, false);
+  assert.equal(resetResult.session.plan[0].category, 'CLIENT_BRIEF');
+  assert.ok(resetResult.session.plan.every(question => !beforeReset.plan.some(old => old.id === question.id)), 'fresh question IDs cannot accept old tab responses');
+  const afterReset = await database.projectPost.findUnique({ where: { projectId: 'project' } });
+  assert.deepEqual(afterReset.expandedBlocks, draftBlocks); assert.equal(afterReset.status, 'DRAFT');
+  assert.deepEqual(afterReset.provenance.retainedOuterMetadata, { value: 'keep' });
+  assert.deepEqual(afterReset.provenance.interview.payload, { imageOrder: ['photo'], answers: [], followups: [], selectedQuestionIds: [] });
+  for (const field of ['knownFacts', 'questionSet', 'followUps', 'audio', 'guidedAudio']) assert.equal(afterReset.provenance.interview[field], undefined);
+  assert.equal(await database.editorialInterviewAnswer.count(), 0);
+  const resetProjection = await database.editorialInterview.findUnique({ where: { projectId: 'project' } });
+  assert.deepEqual(resetProjection.roomProgress, {}); assert.deepEqual(resetProjection.selectedQuestionIds, []);
+  assert.deepEqual(await database.projectImage.findMany(), originalAssets);
+  assert.deepEqual(await resetInterview(resetCommand), resetResult, 'retrying the same confirmed reset restores its receipt, not another blank session');
+  assert.equal((await resetInterview({ ...resetCommand, revision: '0'.repeat(64) })).code, 'REQUEST_ID_REUSED');
+  assert.equal((await resetInterview({ ...resetCommand, requestId: randomUUID() })).code, 'STALE_RESET');
+  assert.equal((await answer(beforeReset, 'A response composed before reset.')).status, 409);
+  assert.equal((await answer(resetResult.session, 'An old question must not be reused.', { questionId: beforeReset.activeQuestionId })).status, 409);
+  assert.equal((await saved()).turns.length, 0);
+  console.log('PASS reset authorization, atomic rollback, cache/audio/projection cleanup, stable assets/draft, model-free fresh session, idempotent receipt and stale-tab rejection');
+
+  await fixture(); environment.NEXT_PUBLIC_FLAG_GUIDED_INTERVIEW = '0';
+  const legacyPost = await database.projectPost.create({ data: { projectId: 'project', slug: 'legacy-reset-fixture', status: 'PUBLISHED', expandedBlocks: draftBlocks,
+    provenance: { interview: { payload: { answers: [{ questionId: 'old-legacy', answer: 'An old answer.' }], imageOrder: ['photo'] }, questionSet: { old: true } } } } });
+  await database.editorialInterview.create({ data: { id: 'legacy-editorial', projectId: 'project', status: 'PUBLISHED', selectedQuestionIds: ['old-legacy'], roomProgress: { room: { status: 'complete' } } } });
+  await database.editorialInterviewAnswer.create({ data: { interviewId: 'legacy-editorial', questionId: 'old-legacy', questionText: 'Old question?', answerText: 'An old answer.' } });
+  const legacyReset = await resetInterview({ requestId: randomUUID(), ...(await resetSnapshot()).snapshot });
+  assert.equal(legacyReset.status, 200); assert.equal(legacyReset.session, null); assert.equal(providerCalls.length, 0);
+  const retainedPublication = await database.projectPost.findUnique({ where: { id: legacyPost.id } });
+  assert.equal(retainedPublication.status, 'PUBLISHED'); assert.deepEqual(retainedPublication.expandedBlocks, draftBlocks);
+  assert.equal((await database.editorialInterview.findUnique({ where: { id: 'legacy-editorial' } })).status, 'PUBLISHED');
+  assert.equal(await database.editorialInterviewAnswer.count(), 0);
+  console.log('PASS flag-off legacy reset clears only interview evidence and preserves existing publication state without paid preparation');
 
   await fixture();
   let adaptive = await start();

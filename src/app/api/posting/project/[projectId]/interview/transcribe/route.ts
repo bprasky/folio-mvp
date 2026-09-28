@@ -58,19 +58,24 @@ async function retainAudio(
   words: AnswerAudio["words"],
   guided: boolean,
   transcript: string,
+  expectedResetId: string | null,
+  expectedSessionId: string | null,
 ): Promise<{ audioUrl: string; recordingId?: string } | null> {
   try {
+    const current = await prisma.projectPost.findUnique({ where: { projectId }, select: { provenance: true } });
+    const interview = (current?.provenance as any)?.interview;
+    if ((interview?.resetId ?? null) !== expectedResetId || (interview?.guided?.id ?? null) !== expectedSessionId)
+      return null;
     const recordingId = guided ? randomUUID() : undefined;
-    const storageKey = guided
-      ? `interviews/${projectId}/answers/${questionId}/${recordingId}.${extensionFor(file)}`
-      : `interviews/${projectId}/answers/${questionId}.${extensionFor(file)}`;
+    // Unique object names prevent an old transcription from overwriting a new
+    // recording (or a recording still referenced by the preserved story draft).
+    const storageKey = `interviews/${projectId}/answers/${questionId}/${recordingId ?? randomUUID()}.${extensionFor(file)}`;
 
     const { error: uploadError } = await supabaseAdmin.storage
       .from(BUCKET)
       .upload(storageKey, buffer, {
         contentType: file.type || "audio/webm",
-        // Re-recording an answer replaces its audio, as it replaces its text.
-        upsert: true,
+        upsert: false,
       });
 
     if (uploadError) {
@@ -89,8 +94,7 @@ async function retainAudio(
       select: { provenance: true },
     });
 
-    // No post yet means the interview has never been saved. The blob is already
-    // in storage under a deterministic key, so the reference can be recovered.
+    // No post yet means the interview has never been saved.
     if (!post) return guided ? null : { audioUrl };
 
     const entry = {
@@ -116,6 +120,12 @@ async function retainAudio(
         ), true
       ), "updatedAt" = NOW()
       WHERE "projectId" = ${projectId}
+        AND COALESCE("provenance"->'interview'->>'resetId', '') = ${expectedResetId ?? ''}
+        AND COALESCE("provenance"->'interview'->'guided'->>'id', '') = ${expectedSessionId ?? ''}
+        AND (${expectedSessionId}::text IS NULL OR EXISTS (
+          SELECT 1 FROM jsonb_array_elements(COALESCE("provenance"->'interview'->'guided'->'plan', '[]'::jsonb)) question
+          WHERE question->>'id' = ${questionId} AND question->>'status' IN ('active', 'answered')
+        ))
     `;
 
     return updated ? { audioUrl, ...(recordingId ? { recordingId } : {}) } : null;
@@ -180,6 +190,7 @@ export async function POST(
     const questionId = formData.get("questionId") as string | null;
     const interviewPost = await prisma.projectPost.findUnique({ where: { projectId }, select: { provenance: true } });
     const guided = (interviewPost?.provenance as any)?.interview?.guided;
+    const resetId = (interviewPost?.provenance as any)?.interview?.resetId ?? null;
     if (guided && (!questionId || !guided.plan?.some((q: any) => q.id === questionId && ['active', 'answered'].includes(q.status)))) {
       return NextResponse.json({ error: 'guided_question_unavailable', message: 'Resume the guided question before recording.' }, { status: 409 });
     }
@@ -247,7 +258,7 @@ export async function POST(
       // Retain the recording. Non-blocking on failure: the answer is the critical
       // path, the recording is the asset.
       const retained = questionId
-        ? await retainAudio(projectId, questionId, audioFile, buffer, words, !!guided, transcript)
+        ? await retainAudio(projectId, questionId, audioFile, buffer, words, !!guided, transcript, resetId, guided?.id ?? null)
         : null;
       const audioUrl = retained?.audioUrl;
 

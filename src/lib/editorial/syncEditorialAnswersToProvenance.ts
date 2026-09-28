@@ -95,6 +95,13 @@ export async function syncEditorialAnswersToProvenance(
 ): Promise<SyncResult> {
   assertLegacyInterviewAllowed(projectId);
 
+  // Capture the incarnation before reading the projection. A restart can clear
+  // those rows before the later post read; it must not restore this older copy.
+  const sourcePost = await prisma.projectPost.findUnique({
+    where: { projectId }, select: { provenance: true },
+  });
+  const sourceResetId = (sourcePost?.provenance as any)?.interview?.resetId ?? null;
+
   // 1. Read all answers from EditorialInterviewAnswer
   const editorialInterview = await prisma.editorialInterview.findUnique({
     where: { projectId },
@@ -167,6 +174,9 @@ export async function syncEditorialAnswersToProvenance(
   }
 
   const existingProvenance = (post.provenance as any) || {};
+  if ((existingProvenance.interview?.resetId ?? null) !== sourceResetId) {
+    throw Object.assign(new Error('The interview was restarted. Continue from the beginning.'), { status: 409 });
+  }
   if (existingProvenance.interview?.guided) {
     throw Object.assign(new Error('Continue the saved guided interview. Legacy completion cannot replace its answer history.'), { status: 409 });
   }

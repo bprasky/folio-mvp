@@ -1,4 +1,4 @@
-import type { Prisma } from '@prisma/client';
+import { Prisma } from '@prisma/client';
 import { assertLegacyInterviewAllowed } from '@/lib/spotlight/legacyBoundary';
 import { prisma } from '@/lib/prisma';
 import { randomUUID } from 'crypto';
@@ -192,39 +192,52 @@ export async function syncAnswersToEditorialInterview(
   projectId: string
 ): Promise<{ interviewId: string; answersCreated: number }> {
   assertLegacyInterviewAllowed(projectId);
-  const interview = await getOrCreateEditorialInterview(projectId);
+  return prisma.$transaction(async tx => {
+    const post = await tx.projectPost.findUnique({
+      where: { projectId }, select: { id: true, provenance: true, updatedAt: true },
+    });
+    // Hold the canonical row through the projection rebuild. A reset and this
+    // derived-table refresh must serialize, or old answer rows can return after
+    // the reset has already cleared both copies.
+    if (post) {
+      const locked = await tx.projectPost.updateMany({
+        where: { id: post.id, updatedAt: post.updatedAt, provenance: { equals: post.provenance === null ? Prisma.DbNull : post.provenance } },
+        data: { provenance: post.provenance === null ? Prisma.DbNull : post.provenance as Prisma.InputJsonValue },
+      });
+      if (locked.count !== 1) throw Object.assign(new Error('Interview changed before its answer projection could be refreshed.'), { status: 409 });
+    }
+    const interview = await tx.editorialInterview.upsert({
+      where: { projectId }, create: { projectId, status: 'IN_PROGRESS', selectedQuestionIds: [] }, update: {},
+    });
 
-  const post = await prisma.projectPost.findUnique({
-    where: { projectId },
-    select: { provenance: true },
-  });
+    if (!post || !post.provenance) {
+      return { interviewId: interview.id, answersCreated: 0 };
+    }
 
-  if (!post || !post.provenance) {
-    return { interviewId: interview.id, answersCreated: 0 };
-  }
+    const provenance = post.provenance as any;
+    const payload = provenance.interview?.payload || {};
 
-  const provenance = post.provenance as any;
-  const payload = provenance.interview?.payload || {};
+    // Provenance names the question category `section`. Carry it across under the
+    // name the column uses, and only when it is a real SECTION_ENUM member —
+    // anything else is a value some earlier derivation invented, and null is the
+    // honest record of "we do not know".
+    const withCategory = (a: any): ProjectionAnswer => ({
+      ...a,
+      questionCategory: SECTION_ENUM.safeParse(a?.section).success ? a.section : null,
+    });
 
-  // Provenance names the question category `section`. Carry it across under the
-  // name the column uses, and only when it is a real SECTION_ENUM member —
-  // anything else is a value some earlier derivation invented, and null is the
-  // honest record of "we do not know".
-  const withCategory = (a: any): ProjectionAnswer => ({
-    ...a,
-    questionCategory: SECTION_ENUM.safeParse(a?.section).success ? a.section : null,
-  });
+    const answers: ProjectionAnswer[] = (payload.answers || []).map(withCategory);
+    const followups: ProjectionAnswer[] = (payload.followups || []).map(
+      (f: ProjectionAnswer) => ({ ...withCategory(f), isFollowUp: true }),
+    );
 
-  const answers: ProjectionAnswer[] = (payload.answers || []).map(withCategory);
-  const followups: ProjectionAnswer[] = (payload.followups || []).map(
-    (f: ProjectionAnswer) => ({ ...withCategory(f), isFollowUp: true }),
-  );
+    const answersCreated = await rebuildAnswerProjection(
+      interview.id,
+      [...answers, ...followups],
+      (provenance.interview?.audio as AnswerAudioMap) || {},
+      tx,
+    );
 
-  const answersCreated = await rebuildAnswerProjection(
-    interview.id,
-    [...answers, ...followups],
-    (provenance.interview?.audio as AnswerAudioMap) || {},
-  );
-
-  return { interviewId: interview.id, answersCreated };
+    return { interviewId: interview.id, answersCreated };
+  }, { maxWait: 5000, timeout: 20000 });
 }

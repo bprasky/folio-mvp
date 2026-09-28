@@ -32,6 +32,7 @@ import { GenerationProgress } from "@/components/ui/GenerationProgress";
 import { computeRoundBudget } from "@/lib/editorial/roomPacing";
 import type { RoomProgressStatus } from "@/lib/editorial/roomPacing";
 import type { InterviewQuestion as ContextualQuestion } from "@/types/interview";
+import type { InterviewResetRequest } from '@/lib/interview/reset';
 
 const GuidedInterviewWorkspace = dynamic(() => import('./GuidedInterviewWorkspace').then(module => module.GuidedInterviewWorkspace), { ssr: false });
 
@@ -151,7 +152,8 @@ function LegacyInterviewModal({
   initialIntent = null,
   initialRoomId = null,
   initialMode,
-}: InterviewModalProps) {
+  onRestartRequested,
+}: InterviewModalProps & { onRestartRequested: () => void }) {
   const router = useRouter();
   // Interview mode: 'select' shows mode picker, 'realtime' for voice, 'text' for traditional
   const [interviewMode, setInterviewMode] = useState<"select" | "realtime" | "text">(() => {
@@ -208,6 +210,8 @@ function LegacyInterviewModal({
   const { evaluate: bgEvaluate, flush: bgFlush, cancel: bgCancel } = useBackgroundEvaluation(projectId);
 
   const saveAbortRef = useRef<AbortController | null>(null);
+  const resetIdRef = useRef<string | null>(null);
+  const [resetLoaded, setResetLoaded] = useState(false);
   const bannerTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const autosaveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -299,7 +303,7 @@ function LegacyInterviewModal({
 
   // Autosave to localStorage (debounced)
   useEffect(() => {
-    if (!open) return;
+    if (!open || !resetLoaded) return;
 
     if (autosaveTimeoutRef.current) {
       clearTimeout(autosaveTimeoutRef.current);
@@ -309,6 +313,7 @@ function LegacyInterviewModal({
       const draftKey = `interviewDraft:${projectId}`;
       try {
         localStorage.setItem(draftKey, JSON.stringify({
+          resetId: resetIdRef.current,
           answers: answers.filter(a => a.answer.trim().length > 0),
           followups: followUps,
           currentQuestionIndex,
@@ -327,7 +332,7 @@ function LegacyInterviewModal({
         clearTimeout(autosaveTimeoutRef.current);
       }
     };
-  }, [open, projectId, answers, followUps, currentQuestionIndex, phase, roomStatuses, answerModality, answerRoomIds]);
+  }, [open, projectId, answers, followUps, currentQuestionIndex, phase, roomStatuses, answerModality, answerRoomIds, resetLoaded]);
 
   // Preload answers from server and localStorage on open
   useEffect(() => {
@@ -337,14 +342,17 @@ function LegacyInterviewModal({
     // Re-arm the render gate: hold the question phase on a spinner until this
     // GET resolves so Q1 never flashes ahead of the resume decision.
     setPreloadComplete(false);
+    setResetLoaded(false);
 
     (async () => {
       try {
-        const res = await fetch(`/api/posting/project/${projectId}/interview`, { method: 'GET' });
+        const res = await fetch(`/api/posting/project/${projectId}/interview`, { method: 'GET', cache: 'no-store' });
         if (cancelled) return;
         
         if (res.ok) {
           const data = await res.json();
+          resetIdRef.current = data.resetId ?? null;
+          setResetLoaded(true);
           console.log('[InterviewModal] Preloaded data:', { 
             answerCount: data?.answers?.length || 0, 
             followUpsCount: data?.followUps?.length || 0,
@@ -411,6 +419,14 @@ function LegacyInterviewModal({
             
             // Restore draft from localStorage if exists (only if server has data - don't restore if cleared)
             draft = localStorage.getItem(draftKey);
+            if (draft) {
+              try {
+                if ((JSON.parse(draft).resetId ?? null) !== resetIdRef.current) {
+                  draft = null;
+                  localStorage.removeItem(draftKey);
+                }
+              } catch { draft = null; }
+            }
             if (draft && !cancelled) {
               try {
                 const { answers: da = [], followups: df = [] } = JSON.parse(draft);
@@ -562,11 +578,12 @@ function LegacyInterviewModal({
   // inputModality: restore per-question source flags from the draft on open, so
   // a reload doesn't downgrade a previously-spoken answer to 'text'.
   useEffect(() => {
-    if (!open) return;
+    if (!open || !resetLoaded) return;
     try {
       const raw = localStorage.getItem(`interviewDraft:${projectId}`);
       if (raw) {
         const d = JSON.parse(raw);
+        if ((d?.resetId ?? null) !== resetIdRef.current) return;
         if (d?.answerModality && typeof d.answerModality === 'object') {
           setAnswerModality(d.answerModality);
         }
@@ -577,7 +594,7 @@ function LegacyInterviewModal({
         }
       }
     } catch { /* ignore */ }
-  }, [open, projectId]);
+  }, [open, projectId, resetLoaded]);
 
   useEffect(() => {
     if (open) {
@@ -1066,6 +1083,7 @@ function LegacyInterviewModal({
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
+          resetId: resetIdRef.current,
           questionId,
           answer: answerText,
           previousAnswers,
@@ -1174,6 +1192,7 @@ function LegacyInterviewModal({
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
+              resetId: resetIdRef.current,
               roomId: room.roomId,
               roomName: room.roomName,
               previousAnswers: roomAnswers,
@@ -1370,7 +1389,7 @@ function LegacyInterviewModal({
   // or completed room survives reload without moving the designer. Keyed on
   // rooms.length so it reruns when phase-2 room questions land.
   useEffect(() => {
-    if (!open || !hasRoomPacing) return;
+    if (!open || !hasRoomPacing || !resetLoaded) return;
     const map = new Map<string, RoomProgressStatus>();
     const rp = serverRoomProgressRef.current;
     if (rp) {
@@ -1383,7 +1402,7 @@ function LegacyInterviewModal({
       const raw = localStorage.getItem(`interviewDraft:${projectId}`);
       if (raw) {
         const d = JSON.parse(raw);
-        if (d?.roomStatuses && typeof d.roomStatuses === 'object') {
+        if ((d?.resetId ?? null) === resetIdRef.current && d?.roomStatuses && typeof d.roomStatuses === 'object') {
           for (const [id, st] of Object.entries(d.roomStatuses)) {
             if (st === 'complete' || st === 'skipped') map.set(id, st as RoomProgressStatus);
           }
@@ -1402,7 +1421,7 @@ function LegacyInterviewModal({
   // serverProgressVersion re-runs this once the preload GET populates the
   // server snapshot, closing the race where this settled before the GET landed.
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open, hasRoomPacing, roomFlow.rooms.length, serverProgressVersion]);
+  }, [open, hasRoomPacing, roomFlow.rooms.length, serverProgressVersion, resetLoaded]);
 
   // Start over — clear the saved interview (client + server) and begin fresh.
   // Extracted so both the "Welcome back" screen's button AND the restart intent
@@ -1411,66 +1430,15 @@ function LegacyInterviewModal({
     async (opts?: { skipConfirm?: boolean }) => {
       if (!opts?.skipConfirm) {
         const confirmed = window.confirm(
-          "This will clear your current reflections and begin a new interview. Continue?",
+          "This permanently clears your interview answers and conversation. Photos, rooms, tags and any existing draft stay in place. Start over?",
         );
         if (!confirmed) return;
       }
 
       setIsClearing(true);
-      // Flag so the preload effect skips draft resume if it races.
-      startingFreshRef.current = true;
-      try {
-        // Clear client state
-        localStorage.removeItem(`interviewDraft:${projectId}`);
-        localStorage.removeItem(`interview-draft-${projectId}`);
-        setAnswers([]);
-        setFollowUps([]);
-        setMorphedQuestions(new Map());
-        setSelectedQuestionIds([]);
-        setCurrentQuestionIndex(0);
-        setPhase("question");
-        setStep("answer");
-        setShowDraftResume(false);
-        answerSnapshotsRef.current.clear();
-        setShowRegeneratePrompt(false);
-        setPendingResubmitQuestionId(null);
-        // Reset room-pacing flow + client status map so cleared progress can't
-        // leak into resume nav / finish detection. Clearing resumeRequested
-        // disarms the resume effect, and roomFlow.reset() restores a pristine
-        // (all not_started) flow so the fresh interview starts at room 0. Drop
-        // the persisted server snapshot and re-arm the one-time guard so the NEW
-        // interview's live two-phase entry still works.
-        roomFlow.reset();
-        setRoomStatuses({});
-        setResumeRequested(false);
-        serverRoomProgressRef.current = null;
-        didResumeNavRef.current = false;
-
-        // Clear server-side answers (matches DraftsPanel pattern)
-        const clearRes = await fetch(`/api/posting/project/${projectId}/interview`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          // clearAll is what makes this destructive — without it the server
-          // treats an empty answer list as "nothing to save" and keeps what it
-          // has, so no other code path can wipe an interview by omission.
-          body: JSON.stringify({ clearAll: true, answers: [], followUps: [], selectedQuestionIds: [] }),
-        });
-
-        if (!clearRes.ok) {
-          const data = await clearRes.json().catch(() => ({}));
-          throw new Error(data.error || "Failed to clear answers");
-        }
-
-        console.log('[InterviewModal] Starting over — draft and server answers cleared');
-      } catch (err) {
-        console.error('[InterviewModal] Start over error:', err);
-        alert("Failed to reset interview: " + (err instanceof Error ? err.message : "Unknown error"));
-      } finally {
-        setIsClearing(false);
-      }
+      onRestartRequested();
     },
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [projectId, roomFlow],
+    [onRestartRequested],
   );
 
   // Restart intent (tracker "Restart interview"): clear and begin fresh on open,
@@ -1777,6 +1745,7 @@ function LegacyInterviewModal({
     try {
         // Include metadata from questionMetadataMap
         const payload = {
+          resetId: resetIdRef.current,
           selectedQuestionIds,
           answers: sanitized
             .filter((item): item is NonNullable<typeof item> => item !== null)
@@ -2054,6 +2023,7 @@ function LegacyInterviewModal({
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
+            resetId: resetIdRef.current,
             forceOverwriteDraft: true,
             mode: 'recomposition',
             // Only fully-answered rooms compose into the story; the server
@@ -2127,6 +2097,7 @@ function LegacyInterviewModal({
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
+              resetId: resetIdRef.current,
               forceOverwriteDraft: true,
               mode: 'recomposition',
               answersOverride: baseAnswers.map(a => ({
@@ -2325,6 +2296,7 @@ function LegacyInterviewModal({
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
+          resetId: resetIdRef.current,
           answers: baseAnswers.map((answer) => ({
             questionId: answer.questionId,
             answer: answer.answer,
@@ -3077,8 +3049,16 @@ function mapValidationIssues(
 export function InterviewModal(props: InterviewModalProps) {
   const [gate, setGate] = useState<{ enrolled: boolean; enabled: boolean; actorId: string; guidedAvailable?: boolean } | null>(null);
   const [error, setError] = useState('');
+  const [startingOver, setStartingOver] = useState(false);
+  const [attempt, setAttempt] = useState(0);
+  const [restartRequested, setRestartRequested] = useState(false);
+  const resetRequest = useRef<InterviewResetRequest | null>(null);
+  const resetProjectId = useRef(props.projectId);
   useEffect(() => {
-    setGate(null); setError(''); let active = true;
+    setGate(null); setError(''); setStartingOver(false); let active = true;
+    if (!props.open || resetProjectId.current !== props.projectId) {
+      resetRequest.current = null; resetProjectId.current = props.projectId; setRestartRequested(false);
+    }
     if (props.open) fetch('/api/projects/' + encodeURIComponent(props.projectId) + '/spotlight')
       .then(async r => { if (!r.ok) throw new Error('Unable to verify interview access.'); return r.json(); })
       .then(async g => {
@@ -3094,13 +3074,53 @@ export function InterviewModal(props: InterviewModalProps) {
             g.guidedAvailable = true;
           }
         }
-        if (active) setGate(g);
-      }).catch(e => { if (active) setError(e.message); });
+        if (!active) return;
+        if (!g.enrolled && (props.initialIntent === 'restart' || restartRequested)) {
+          setStartingOver(true);
+          const endpoint = `/api/posting/project/${encodeURIComponent(props.projectId)}/interview/reset`;
+          if (!resetRequest.current) {
+            const response = await fetch(endpoint, { cache: 'no-store' });
+            const data = await response.json();
+            if (!response.ok || !data.snapshot) throw new Error(data.message || 'Unable to check the saved interview.');
+            if (!active) return;
+            resetRequest.current = { requestId: crypto.randomUUID(), ...data.snapshot };
+          }
+          const response = await fetch(endpoint, {
+            method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(resetRequest.current),
+          });
+          const data = await response.json();
+          if (!response.ok || !data.ok) throw new Error(data.message || 'Unable to start a new interview.');
+          // Server confirmation precedes local deletion. A failed or uncertain
+          // reset keeps the exact request for an idempotent retry and leaves
+          // unsent answers available on this device.
+          try {
+            for (const key of [
+              `folio.guided.draft.${g.actorId}.${props.projectId}`,
+              `interviewDraft:${props.projectId}`, `interview-draft-${props.projectId}`,
+              `folio.interview.qcache.flat.${props.projectId}`, `folio.interview.qcache.grouped.${props.projectId}`,
+            ]) {
+              const raw = localStorage.getItem(key);
+              if (raw) {
+                try {
+                  const local = JSON.parse(raw);
+                  // Another tab can already be answering the reset session
+                  // while this HTTP response is travelling back. Keep its work.
+                  if ((data.session && local?.sessionId === data.session.id) || local?.resetId === data.resetId) continue;
+                } catch { /* Invalid old cache entries can be discarded. */ }
+              }
+              localStorage.removeItem(key);
+            }
+            sessionStorage.removeItem(`folio.interview.validation.${props.projectId}`);
+          } catch { /* The new session identity also rejects stale local drafts. */ }
+          g.guidedAvailable = !!data.session;
+        }
+        if (active) { setGate(g); setStartingOver(false); }
+      }).catch(e => { if (active) { setError(e.message); setStartingOver(false); } });
     return () => { active = false; };
-  }, [props.open, props.projectId]);
+  }, [props.open, props.projectId, props.initialIntent, attempt, restartRequested]);
   if (!props.open) return null;
-  if (!gate || (gate.enrolled && !gate.enabled)) return <div role="dialog" className="fixed inset-0 z-[100] bg-white p-8"><button onClick={() => props.onOpenChange(false)}>Close</button><p>{error || (gate ? 'Private interviews are paused for this project or account.' : 'Checking interview access…')}</p></div>;
+  if (!gate || (gate.enrolled && !gate.enabled)) return <div role="dialog" aria-label="Interview access" className="fixed inset-0 z-[100] bg-white p-8"><button onClick={() => props.onOpenChange(false)}>Close</button><p role={error ? 'alert' : 'status'}>{error || (gate ? 'Private interviews are paused for this project or account.' : startingOver ? 'Starting a new interview…' : 'Checking interview access…')}</p>{error && <button onClick={() => setAttempt(value => value + 1)}>Retry</button>}</div>;
   if (gate.enrolled) return <PrivateSpotlightInterview projectId={props.projectId} actorId={gate.actorId} onClose={() => props.onOpenChange(false)} />;
-  if (flags.guidedInterview || gate.guidedAvailable) return <GuidedInterviewWorkspace key={props.projectId} projectId={props.projectId} actorId={gate.actorId} projectName={props.projectName} images={props.images} initialRoomId={props.initialRoomId} onClose={() => props.onOpenChange(false)} onDraftGenerated={props.onDraftGenerated} />;
-  return <LegacyInterviewModal {...props} />;
+  if (flags.guidedInterview || gate.guidedAvailable) return <GuidedInterviewWorkspace key={props.projectId} projectId={props.projectId} actorId={gate.actorId} projectName={props.projectName} images={props.images} initialRoomId={props.initialIntent === 'restart' || restartRequested ? null : props.initialRoomId} onClose={() => props.onOpenChange(false)} onDraftGenerated={props.onDraftGenerated} />;
+  return <LegacyInterviewModal {...props} onRestartRequested={() => setRestartRequested(true)} initialIntent={props.initialIntent === 'restart' || restartRequested ? 'resume' : props.initialIntent} initialRoomId={props.initialIntent === 'restart' || restartRequested ? null : props.initialRoomId} />;
 }
