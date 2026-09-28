@@ -1,6 +1,7 @@
 {
   "fixture": "Actual React component + controller; synthetic API, model, microphone and memory persistence; no production data.",
   "passed": [
+    "Three working dots correspond to the unresolved preparation request and stop on completion",
     "Automatic preparation; microphone remains off until user action",
     "Browsing during typing preserves the question and explicit image attribution",
     "Failed saves retain composer text and retry uses the same request ID",
@@ -14,6 +15,7 @@
     "Corrections keep original exchange and replace accepted evidence",
     "Partial completion offers an editable draft and never publishes",
     "A partial finished interview resumes its remaining prepared question",
-    "Skipping every remaining question still discloses shorter coverage"
+    "Skipping every remaining question still discloses shorter coverage",
+    "Covered topics require explicit confirmation of the original answer, with retained reaction and attribution"
   ]
 }

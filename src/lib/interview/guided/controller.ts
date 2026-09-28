@@ -1,7 +1,7 @@
 import { createHash, randomUUID } from 'crypto';
 import { InterviewAnswerSchema, type InterviewAnswer } from '@/lib/posting/interviewSchemas';
 import { isArrivalSafe } from '@/lib/interview/prompts/validateQuestion';
-import { GUIDED_ANSWER_LIMIT, PROJECT_CATEGORIES, type GuidedCommand, type GuidedNextProposal, type GuidedPreparation, type GuidedQuestion, type GuidedSession, type GuidedTurn } from './types';
+import { GUIDED_ANSWER_LIMIT, PROJECT_CATEGORIES, type GuidedCommand, type GuidedEvidence, type GuidedNextProposal, type GuidedPreparation, type GuidedQuestion, type GuidedSession, type GuidedTurn } from './types';
 
 export class GuidedConflict extends Error {
   constructor(public code: string, message: string, public status = 409) { super(message); }
@@ -93,23 +93,84 @@ export function appendRoomPlan(session: GuidedSession, questions: GuidedQuestion
 }
 
 export function followUpAllowed(session: GuidedSession, parent: GuidedQuestion) {
-  if (parent.kind !== 'prepared' || session.plan.some(q => q.parentQuestionId === parent.id)) return false;
+  if (parent.kind !== 'prepared' || parent.status !== 'answered' || (parent.roomId === null && session.roomsPrepared) || session.plan.some(q => q.parentQuestionId === parent.id)) return false;
+  const remaining = eligiblePreparedQuestions(session);
+  if (parent.roomId && remaining.length && remaining.every(q => q.roomId !== parent.roomId)) return false;
   const allowance = parent.roomId ? session.rooms.find(r => r.id === parent.roomId)?.maxFollowUps ?? 0 : 2;
   return session.plan.filter(q => q.roomId === parent.roomId && q.kind !== 'prepared').length < allowance;
 }
 
-/** Only validated adapter text is accepted; the model cannot move the cursor or declare coverage. */
+/** The model can choose a remaining obligation only within the current section. */
+export function eligiblePreparedQuestions(session: GuidedSession) {
+  const pending = session.plan.filter(q => q.kind === 'prepared' && q.status === 'pending');
+  const project = pending.filter(q => q.roomId === null);
+  if (project.length) return project;
+  if (!session.roomsPrepared) return [];
+  const turn = session.turns.find(t => t.id === session.pendingDecisionTurnId);
+  const roomId = turn?.roomId ?? currentQuestion(session)?.roomId;
+  const room = pending.filter(q => q.roomId === roomId);
+  return room.length ? room : pending.filter(q => q.roomId === pending[0]?.roomId);
+}
+
+function evidenceSource(session: GuidedSession, target: GuidedQuestion, evidence: GuidedEvidence, rawOnly = false) {
+  const source = acceptedTurns(session).find(t => t.id === evidence.answerId);
+  if (!source || (rawOnly && !['answer', 'correction'].includes(source.kind)) ||
+      !evidence.quote?.trim() || !source.text.includes(evidence.quote) ||
+      (source.roomId !== null && source.roomId !== target.roomId))
+    throw new GuidedConflict('INVALID_ANSWER_SOURCE', 'The earlier answer source needs to be checked again.', 422);
+  return source;
+}
+
+function resetGroundedQuestion(question: GuidedQuestion, correctedAnswerId?: string) {
+  question.wordingHistory = [...(question.wordingHistory ?? []), {
+    text: question.text, reaction: question.reaction, sourceAnswerIds: [...question.sourceAnswerIds], correctedAnswerId,
+  }];
+  question.text = question.baselineText ?? question.text;
+  delete question.reaction;
+  delete question.adaptation;
+  delete question.confirmation;
+  question.sourceAnswerIds = [];
+}
+
+/** Validated wording may adapt the plan; only designer actions accept evidence. */
 export function applyDecision(session: GuidedSession, proposal: GuidedNextProposal) {
   const turn = session.turns.find(t => t.id === session.pendingDecisionTurnId);
   const parent = turn && session.plan.find(q => q.id === turn.questionId);
-  if (proposal.kind !== 'advance' && turn && parent && !turn.supersededBy && followUpAllowed(session, parent)) {
+  if (proposal.kind === 'ask_prepared' || proposal.kind === 'confirm_coverage') {
+    const target = eligiblePreparedQuestions(session).find(q => q.id === proposal.questionId);
+    if (!turn || turn.supersededBy || !target || !proposal.purpose?.trim() || proposal.purpose.length > 300 ||
+        proposal.sourceAnswerIds.some(id => !proposal.evidence.some(e => e.answerId === id)) ||
+        proposal.evidence.some(e => !proposal.sourceAnswerIds.includes(e.answerId)) ||
+        (proposal.reaction?.length ?? 0) > 400 ||
+        (proposal.kind === 'confirm_coverage' && proposal.evidence.length !== 1))
+      throw new GuidedConflict('INVALID_ADAPTATION', 'The next question needs to be retried.', 422);
+    for (const evidence of proposal.evidence) evidenceSource(session, target, evidence, proposal.kind === 'confirm_coverage');
+    validatePlan([{ ...target, text: proposal.text, sourceAnswerIds: proposal.sourceAnswerIds }], session);
+    target.baselineText ??= target.text;
+    target.wordingHistory = [...(target.wordingHistory ?? []), { text: target.text, reaction: target.reaction, sourceAnswerIds: [...target.sourceAnswerIds] }];
+    target.text = proposal.text;
+    target.reaction = proposal.reaction;
+    target.adaptation = { remainingDetail: proposal.purpose, evidence: proposal.evidence };
+    target.sourceAnswerIds = [...proposal.sourceAnswerIds];
+    if (proposal.kind === 'confirm_coverage') target.confirmation = proposal.evidence[0];
+    else delete target.confirmation;
+    target.status = 'active';
+    session.activeQuestionId = target.id;
+    session.phase = target.roomId ? 'rooms' : 'project';
+    session.status = 'active';
+    session.pendingDecisionTurnId = null;
+    return;
+  }
+  if ((proposal.kind === 'followup' || proposal.kind === 'clarification') && turn && parent && !turn.supersededBy && followUpAllowed(session, parent)) {
     if (!proposal.purpose?.trim() || proposal.purpose.length > 300 || !proposal.sourceAnswerIds.includes(turn.id))
       throw new GuidedConflict('INVALID_FOLLOWUP', 'The follow-up needs to be retried.', 422);
     const followup: GuidedQuestion = {
-      id: randomUUID(), text: proposal.text, category: parent.category, roomId: parent.roomId,
+      id: randomUUID(), text: proposal.text, reaction: proposal.reaction, category: parent.category, roomId: parent.roomId,
       sourceImageIds: [...parent.sourceImageIds], sourceAnswerIds: proposal.sourceAnswerIds,
       status: 'active', kind: proposal.kind, parentQuestionId: parent.id, parentAnswerId: turn.id, purpose: proposal.purpose,
     };
+    if ((proposal.reaction?.length ?? 0) > 400) throw new GuidedConflict('INVALID_FOLLOWUP', 'The follow-up needs to be retried.', 422);
+    for (const evidence of proposal.evidence ?? []) evidenceSource(session, followup, evidence);
     validatePlan([followup], session);
     // Put the follow-up immediately after its parent without changing any prepared obligation.
     session.plan.splice(session.plan.indexOf(parent) + 1, 0, followup);
@@ -170,8 +231,9 @@ export function acceptCommand(original: GuidedSession, command: GuidedCommand): 
       pending.status = 'skipped';
     }
     session.activeQuestionId = null;
-    session.pendingDecisionTurnId = null;
-    activateNext(session);
+    session.pendingDecisionTurnId = session.turns.at(-1)!.id;
+    session.status = 'deciding';
+    if (!acceptedTurns(session).length) { session.pendingDecisionTurnId = null; activateNext(session); }
   } else if (command.action === 'pause') { session.status = 'paused'; }
   else if (command.action === 'resume') {
     session.status = session.pendingDecisionTurnId || (!session.activeQuestionId && !session.roomsPrepared) ? 'deciding' : session.activeQuestionId ? 'active' : 'ready';
@@ -183,7 +245,7 @@ export function acceptCommand(original: GuidedSession, command: GuidedCommand): 
       throw new GuidedConflict('PARTIAL_CONFIRMATION_REQUIRED', 'Answer at least one prepared question and confirm the shorter coverage before finishing.', 422);
     session.status = 'finished';
     session.notice = completion.complete ? null : 'Some questions remain unanswered. Your draft will have shorter coverage; you can resume to add more.';
-  } else if (command.action === 'answer' || command.action === 'skip' || command.action === 'correct') {
+  } else if (command.action === 'answer' || command.action === 'confirm' || command.action === 'skip' || command.action === 'correct') {
     const correction = command.action === 'correct';
     const target = correction ? session.plan.find(p => p.id === command.questionId && p.status === 'answered') : q;
     if (!target || target.id !== command.questionId || (!correction && session.status !== 'active'))
@@ -194,43 +256,72 @@ export function acceptCommand(original: GuidedSession, command: GuidedCommand): 
     if (command.selectedImageId && !allowedImageIds.includes(command.selectedImageId))
       throw new GuidedConflict('IMAGE_SCOPE', 'Choose a photograph from the question’s room, or send without attaching a photograph.', 422);
     const isSkip = command.action === 'skip';
-    const text = command.text ?? '';
+    const typedConfirmation = command.action === 'answer' && !!target.confirmation &&
+      /^(?:yes|yes please|correct|exactly|that's right)[.!]?$/i.test((command.text ?? '').trim()) &&
+      (!command.inputModality || command.inputModality === 'text') && !command.recordingId && !command.selectedImageId;
+    const confirming = command.action === 'confirm' || typedConfirmation;
+    if (command.action === 'confirm' && (!target.confirmation || command.text || command.recordingId || command.selectedImageId || (command.inputModality && command.inputModality !== 'text')))
+      throw new GuidedConflict('INVALID_CONFIRMATION', 'Confirm the saved earlier answer or send a new answer.', 422);
+    const reused = confirming ? evidenceSource(session, target, target.confirmation!, true) : undefined;
+    const text = reused ? target.confirmation!.quote : command.text ?? '';
     if (!isSkip && (!text.trim() || text.length > GUIDED_ANSWER_LIMIT))
       throw new GuidedConflict('ANSWER_LENGTH', `Answers must contain 1–${GUIDED_ANSWER_LIMIT} characters. Your full text is preserved in the composer.`, 422);
     const prior = correction ? [...session.turns].reverse().find(t => t.questionId === target.id && !t.supersededBy && t.kind !== 'skip') : undefined;
     const turn: GuidedTurn = {
-      id: randomUUID(), requestId: command.requestId, questionId: target.id, questionText: target.text,
+      id: randomUUID(), requestId: command.requestId, questionId: target.id, questionText: target.text, reaction: target.reaction,
       text, roomId: target.roomId, sourceImageIds: [...target.sourceImageIds],
       selectedImageId: command.selectedImageId ?? null, inputModality: command.inputModality ?? 'text',
-      kind: isSkip ? 'skip' : correction ? 'correction' : 'answer', createdAt: new Date().toISOString(),
+      kind: isSkip ? 'skip' : correction ? 'correction' : confirming ? 'confirmation' : 'answer', createdAt: new Date().toISOString(),
+      ...(reused ? { reusedFromAnswerId: reused.id } : {}),
+      ...(typedConfirmation ? { confirmationText: command.text } : {}),
       ...(prior ? { supersedes: prior.id } : {}),
       ...(command.recordingId ? { recordingId: command.recordingId } : {}),
     };
     if (prior) {
       prior.supersededBy = turn.id;
-      // Follow-up evidence tied to the replaced premise is retained in history,
-      // but cannot remain accepted without designer confirmation.
-      for (const dependent of session.plan.filter(p => p.kind !== 'prepared' && (p.parentAnswerId === prior.id || p.sourceAnswerIds.includes(prior.id)))) {
-        dependent.status = 'invalidated'; dependent.invalidationReason = 'The parent answer was corrected.';
+      const invalidSources = new Set([prior.id]);
+      const reset = new Set<string>();
+      // Walk the evidence dependencies: an answer given to a replaced premise
+      // cannot silently remain canonical, including later questions using it.
+      let changed = true;
+      while (changed) {
+        changed = false;
+        for (const dependent of session.plan) {
+          if (dependent.id === target.id || reset.has(dependent.id)) continue;
+          const dependsOnCorrection = (dependent.kind !== 'prepared' || dependent.adaptation || dependent.confirmation) &&
+            (invalidSources.has(dependent.parentAnswerId ?? '') || dependent.sourceAnswerIds.some(id => invalidSources.has(id)));
+          if (!dependsOnCorrection) continue;
+          reset.add(dependent.id);
+          for (const old of session.turns.filter(t => t.questionId === dependent.id && !t.supersededBy && t.kind !== 'skip')) {
+            old.supersededBy = turn.id;
+            invalidSources.add(old.id);
+            changed = true;
+          }
+          if (dependent.kind === 'prepared') {
+            if (dependent.status === 'answered') dependent.status = 'pending';
+            resetGroundedQuestion(dependent, prior.id);
+          } else {
+            dependent.status = 'invalidated'; dependent.invalidationReason = 'An answer used by this question was corrected.';
+          }
+        }
       }
-      // Prepared wording is constrained to room/project-level questions without
-      // factual premises. Keep that actual wording and replace its accepted
-      // context references; adaptive questions using the old premise are above.
-      for (const pending of session.plan.filter(p => ['pending', 'active'].includes(p.status) && p.sourceAnswerIds.includes(prior.id))) {
-        pending.wordingHistory = [...(pending.wordingHistory ?? []), { text: pending.text, correctedAnswerId: prior.id }];
-        pending.sourceAnswerIds = pending.sourceAnswerIds.map(id => id === prior.id ? turn.id : id);
+      for (const pending of session.plan.filter(p => ['pending', 'active'].includes(p.status) && p.sourceAnswerIds.some(id => invalidSources.has(id)))) {
+        resetGroundedQuestion(pending, prior.id);
       }
     }
     session.turns.push(turn);
     target.status = isSkip ? 'skipped' : 'answered';
     if (correction) {
-      if (q?.status === 'invalidated') { session.activeQuestionId = null; activateNext(session); }
+      if (q?.status === 'active') q.status = 'pending';
+      session.activeQuestionId = null;
+      session.pendingDecisionTurnId = turn.id;
+      session.status = 'deciding';
       session.notice = 'Your correction is saved. The original exchange remains in the interview history.';
     } else {
       session.activeQuestionId = null;
-      session.pendingDecisionTurnId = isSkip ? null : turn.id;
+      session.pendingDecisionTurnId = turn.id;
       session.status = 'deciding';
-      if (isSkip) activateNext(session);
+      if (isSkip && !acceptedTurns(session).length) { session.pendingDecisionTurnId = null; activateNext(session); }
     }
   }
   session.requestIds.push(command.requestId);

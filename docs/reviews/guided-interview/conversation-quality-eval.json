@@ -1,0 +1,433 @@
+{
+  "before": [
+    {
+      "fixture": "friends-new-york-miami",
+      "expected": "After the useful personality follow-up, acknowledge the answer only if useful and confirm already stated scope, or ask a remaining scope detail. Do not ask the full generic scope or direction again.",
+      "proposal": {
+        "kind": "advance"
+      },
+      "continuation": "What were you working within on this project?",
+      "calls": [],
+      "milliseconds": 1
+    },
+    {
+      "fixture": "concise-rich-answer",
+      "expected": "Treat two concise factual answers as useful evidence. Adapt design-direction or confirm it; do not demand a generic example or repeat the full brief/scope.",
+      "proposal": {
+        "kind": "followup",
+        "text": "What mattered most in deciding the overall direction for this project?",
+        "purpose": "Explain the reason behind the stated project-level direction.",
+        "sourceAnswerIds": [
+          "concise-scope"
+        ]
+      },
+      "continuation": "What mattered most in deciding the overall direction for this project?",
+      "calls": [
+        {
+          "inputTokens": 2085,
+          "outputTokens": 59,
+          "model": "claude-sonnet-5",
+          "milliseconds": 2689,
+          "output": "{\"kind\":\"followup\",\"purpose\":\"project_reason\",\"sourceAnswerIds\":[\"concise-scope\"],\"evidence\":\"a clear path from shared life to privacy\"}"
+        }
+      ],
+      "milliseconds": 2698
+    },
+    {
+      "fixture": "correction",
+      "expected": "Use corrected permanent-home purpose and disregard superseded holiday-home premise. Continue with a scope question grounded in the corrected brief, without inventing remaining work.",
+      "proposal": {
+        "kind": "advance"
+      },
+      "continuation": "What were you working within on this project?",
+      "calls": [],
+      "milliseconds": 0
+    },
+    {
+      "fixture": "room-progression",
+      "expected": "Close the Living Room naturally and ask a kitchen-level question. Do not import a living-room spatial choice into the Kitchen as fact.",
+      "proposal": {
+        "kind": "followup",
+        "text": "What moment of using this room best shows the atmosphere you wanted?",
+        "purpose": "Ground the stated room atmosphere in a concrete experience of the whole room.",
+        "sourceAnswerIds": [
+          "living-2"
+        ]
+      },
+      "continuation": "What moment of using this room best shows the atmosphere you wanted?",
+      "calls": [
+        {
+          "inputTokens": 2067,
+          "outputTokens": 57,
+          "model": "claude-sonnet-5",
+          "milliseconds": 1467,
+          "output": "{\"kind\":\"followup\",\"purpose\":\"room_example\",\"sourceAnswerIds\":[\"living-2\"],\"evidence\":\"cross the room without interrupting someone reading\"}"
+        }
+      ],
+      "milliseconds": 1469
+    },
+    {
+      "fixture": "unselected-product",
+      "expected": "Do not ask about the volunteered lamp or its designer, placement, effect or descriptor. Use accepted family routine to ask the remaining room-wide use/layout gap.",
+      "proposal": {
+        "kind": "followup",
+        "text": "What moment of using this room best shows the atmosphere you wanted?",
+        "purpose": "Ground the stated room atmosphere in a concrete experience of the whole room.",
+        "sourceAnswerIds": [
+          "lamp-answer"
+        ]
+      },
+      "continuation": "What moment of using this room best shows the atmosphere you wanted?",
+      "calls": [
+        {
+          "inputTokens": 2032,
+          "outputTokens": 55,
+          "model": "claude-sonnet-5",
+          "milliseconds": 1992,
+          "output": "{\"kind\":\"followup\",\"purpose\":\"room_example\",\"sourceAnswerIds\":[\"lamp-answer\"],\"evidence\":\"Warm and relaxed\"}"
+        }
+      ],
+      "milliseconds": 1994
+    }
+  ],
+  "after": [
+    {
+      "fixture": "friends-new-york-miami",
+      "expected": "After the useful personality follow-up, acknowledge the answer only if useful and confirm already stated scope, or ask a remaining scope detail. Do not ask the full generic scope or direction again.",
+      "proposal": {
+        "kind": "ask_prepared",
+        "questionId": "SCOPE_PARAMETERS",
+        "text": "Within that boundary of keeping the bones, was there a deadline or budget shaping the redesign?",
+        "purpose": "Brief covers keeping the house's bones while redesigning every space; SCOPE_PARAMETERS still lacks a specific constraint like timeline or budget.",
+        "sourceAnswerIds": [
+          "broad-answer"
+        ],
+        "evidence": [
+          {
+            "answerId": "broad-answer",
+            "quote": "They wanted to keep the bones of the house but redesign every space."
+          }
+        ]
+      },
+      "continuation": "Within that boundary of keeping the bones, was there a deadline or budget shaping the redesign?",
+      "qualityNotes": [
+        "The scope question offers multiple parameters as examples/options. This is a style note; it could be shorter and more focused."
+      ],
+      "calls": [
+        {
+          "inputTokens": 6021,
+          "outputTokens": 286,
+          "model": "claude-sonnet-5",
+          "milliseconds": 6256,
+          "output": "{\"purpose\":\"The brief is established: keep exterior quiet, redesign interior to feel personal and reflect the clients as playful collectors who also want relaxed everyday living. SCOPE_PARAMETERS remains uncollected — the known scope is 'keep the bones, redesign every space,' but a specific constraint like budget, timeline, or structural limits is still missing.\",\"evidence\":[{\"answerId\":\"broad-answer\",\"quote\":\"They wanted to keep the bones of the house but redesign every space.\"}],\"sourceAnswerIds\":[\"broad-answer\"],\"kind\":\"ask_prepared\",\"questionId\":\"SCOPE_PARAMETERS\",\"reaction\":\"Keeping the bones while redesigning every space is a clear starting boundary.\",\"text\":\"Within that boundary of keeping the bones, was there a deadline or budget limit shaping the redesign?\"}"
+        },
+        {
+          "inputTokens": 6491,
+          "outputTokens": 191,
+          "model": "claude-sonnet-5",
+          "milliseconds": 5029,
+          "output": "{\"purpose\":\"Brief covers keeping the house's bones while redesigning every space; SCOPE_PARAMETERS still lacks a specific constraint like timeline or budget.\",\"evidence\":[{\"answerId\":\"broad-answer\",\"quote\":\"They wanted to keep the bones of the house but redesign every space.\"}],\"sourceAnswerIds\":[\"broad-answer\"],\"kind\":\"ask_prepared\",\"questionId\":\"SCOPE_PARAMETERS\",\"text\":\"Within that boundary of keeping the bones, was there a deadline or budget shaping the redesign?\"}"
+        },
+        {
+          "inputTokens": 4928,
+          "outputTokens": 107,
+          "model": "claude-sonnet-5",
+          "milliseconds": 3441,
+          "output": "{\"valid\":true,\"reason\":\"The question asks a specific missing constraint (deadline/budget) not yet covered by the broad brief, correctly narrowing SCOPE_PARAMETERS rather than repeating the generic prepared text, and grounds the reference to 'keeping the bones' accurately in the cited answer.\"}"
+        }
+      ],
+      "milliseconds": 14740
+    },
+    {
+      "fixture": "concise-rich-answer",
+      "expected": "Treat two concise factual answers as useful evidence. Adapt design-direction or confirm it; do not demand a generic example or repeat the full brief/scope.",
+      "proposal": {
+        "kind": "confirm_coverage",
+        "questionId": "DESIGN_DIRECTION",
+        "text": "Was creating a clear path from shared life to privacy the overall design idea for this project?",
+        "purpose": "The scope answer covers footprint and wall changes, and already states a design idea: a clear path from shared life to privacy, which matches the pending DESIGN_DIRECTION obligation. This should be confirmed rather than asked again as an open question.",
+        "sourceAnswerIds": [
+          "concise-scope"
+        ],
+        "evidence": [
+          {
+            "answerId": "concise-scope",
+            "quote": "The idea was a clear path from shared life to privacy."
+          }
+        ]
+      },
+      "continuation": "Was creating a clear path from shared life to privacy the overall design idea for this project?",
+      "qualityNotes": [],
+      "calls": [
+        {
+          "inputTokens": 5911,
+          "outputTokens": 208,
+          "model": "claude-sonnet-5",
+          "milliseconds": 8829,
+          "output": "{\"purpose\":\"The scope answer covers footprint and wall changes, and already states a design idea: a clear path from shared life to privacy, which matches the pending DESIGN_DIRECTION obligation. This should be confirmed rather than asked again as an open question.\",\"evidence\":[{\"answerId\":\"concise-scope\",\"quote\":\"The idea was a clear path from shared life to privacy.\"}],\"sourceAnswerIds\":[\"concise-scope\"],\"kind\":\"confirm_coverage\",\"questionId\":\"DESIGN_DIRECTION\",\"text\":\"Was creating a clear path from shared life to privacy the overall design idea for this project?\"}"
+        },
+        {
+          "inputTokens": 4801,
+          "outputTokens": 67,
+          "model": "claude-sonnet-5",
+          "milliseconds": 1626,
+          "output": "{\"valid\":true,\"reason\":\"The cited quote directly states the design idea, matching the DESIGN_DIRECTION obligation. Confirming it rather than re-asking is appropriate coverage.\"}"
+        }
+      ],
+      "milliseconds": 10458
+    },
+    {
+      "fixture": "correction",
+      "expected": "Use corrected permanent-home purpose and disregard superseded holiday-home premise. Continue with a scope question grounded in the corrected brief, without inventing remaining work.",
+      "proposal": {
+        "kind": "ask_prepared",
+        "questionId": "DESIGN_DIRECTION",
+        "text": "What was the overall design idea for balancing that privacy with keeping the rooms feeling connected?",
+        "reaction": "Got it — permanent home, not a move from New York.",
+        "purpose": "The correction establishes the brief: permanent home, wanting more privacy without disconnecting the rooms. That covers CLIENT_BRIEF, but DESIGN_DIRECTION - how that balance was actually approached - remains unanswered.",
+        "sourceAnswerIds": [
+          "corrected-client"
+        ],
+        "evidence": [
+          {
+            "answerId": "corrected-client",
+            "quote": "They wanted more privacy without making the rooms feel disconnected."
+          }
+        ]
+      },
+      "continuation": "Got it — permanent home, not a move from New York. What was the overall design idea for balancing that privacy with keeping the rooms feeling connected?",
+      "qualityNotes": [],
+      "calls": [
+        {
+          "inputTokens": 5920,
+          "outputTokens": 268,
+          "model": "claude-sonnet-5",
+          "milliseconds": 5030,
+          "output": "{\"purpose\":\"The correction establishes the brief clearly: this is the clients' permanent home, and they wanted more privacy without disconnecting the rooms. That covers CLIENT_BRIEF, but the design idea (DESIGN_DIRECTION) - how privacy without disconnection was actually approached - is still an open obligation, not yet stated.\",\"evidence\":[{\"answerId\":\"corrected-client\",\"quote\":\"They wanted more privacy without making the rooms feel disconnected.\"}],\"sourceAnswerIds\":[\"corrected-client\"],\"kind\":\"ask_prepared\",\"questionId\":\"DESIGN_DIRECTION\",\"reaction\":\"Got it — permanent home, not a move from New York.\",\"text\":\"What was the overall design idea for balancing that privacy with keeping the rooms feeling connected?\"}"
+        },
+        {
+          "inputTokens": 6372,
+          "outputTokens": 239,
+          "model": "claude-sonnet-5",
+          "milliseconds": 4986,
+          "output": "{\"purpose\":\"The correction establishes the brief: permanent home, wanting more privacy without disconnecting the rooms. That covers CLIENT_BRIEF, but DESIGN_DIRECTION - how that balance was actually approached - remains unanswered.\",\"evidence\":[{\"answerId\":\"corrected-client\",\"quote\":\"They wanted more privacy without making the rooms feel disconnected.\"}],\"sourceAnswerIds\":[\"corrected-client\"],\"kind\":\"ask_prepared\",\"questionId\":\"DESIGN_DIRECTION\",\"reaction\":\"Got it — permanent home, not a move from New York.\",\"text\":\"What was the overall design idea for balancing that privacy with keeping the rooms feeling connected?\"}"
+        },
+        {
+          "inputTokens": 4859,
+          "outputTokens": 85,
+          "model": "claude-sonnet-5",
+          "milliseconds": 2934,
+          "output": "{\"valid\":true,\"reason\":\"The correction only established the brief (privacy vs. connection); DESIGN_DIRECTION about how that balance was approached remains unanswered. The question targets that specific gap and the reaction accurately reflects the correction just given.\"}"
+        }
+      ],
+      "milliseconds": 12954
+    },
+    {
+      "fixture": "room-progression",
+      "expected": "Close the Living Room naturally and ask a kitchen-level question. Do not import a living-room spatial choice into the Kitchen as fact.",
+      "proposal": {
+        "kind": "ask_prepared",
+        "questionId": "kitchen-intent",
+        "text": "Moving to the Kitchen — what did you want this room to make possible?",
+        "purpose": "The living room layout question is fully covered: keeping the middle open so people can cross without interrupting a reader explains the layout decision. No gap remains there, so the interview moves to the Kitchen's intent, which is unaddressed.",
+        "sourceAnswerIds": [],
+        "evidence": []
+      },
+      "continuation": "Moving to the Kitchen — what did you want this room to make possible?",
+      "qualityNotes": [],
+      "calls": [
+        {
+          "inputTokens": 5755,
+          "outputTokens": 194,
+          "model": "claude-sonnet-5",
+          "milliseconds": 3447,
+          "output": "{\"purpose\":\"The living room layout question is fully covered: the designer explained the open middle was to let people cross without interrupting a reader. No gap remains for that room, so the interview moves to the Kitchen's intent, which is unaddressed.\",\"evidence\":[{\"answerId\":\"living-2\",\"quote\":\"We kept the middle open so people can cross the room without interrupting someone reading.\"}],\"sourceAnswerIds\":[\"living-2\"],\"kind\":\"ask_prepared\",\"questionId\":\"kitchen-intent\",\"text\":\"Moving to the Kitchen — what did you want this room to make possible?\"}"
+        },
+        {
+          "inputTokens": 6034,
+          "outputTokens": 152,
+          "model": "claude-sonnet-5",
+          "milliseconds": 2601,
+          "output": "{\"purpose\":\"The living room layout question is fully covered: keeping the middle open so people can cross without interrupting a reader explains the layout decision. No gap remains there, so the interview moves to the Kitchen's intent, which is unaddressed.\",\"evidence\":[],\"sourceAnswerIds\":[],\"kind\":\"ask_prepared\",\"questionId\":\"kitchen-intent\",\"text\":\"Moving to the Kitchen — what did you want this room to make possible?\"}"
+        },
+        {
+          "inputTokens": 4567,
+          "outputTokens": 71,
+          "model": "claude-sonnet-5",
+          "milliseconds": 2076,
+          "output": "{\"valid\":true,\"reason\":\"Living room layout obligation is fully covered by the cited answer, and the candidate correctly transitions to the next room's unaddressed intent question, matching the target verbatim in substance.\"}"
+        }
+      ],
+      "milliseconds": 8127
+    },
+    {
+      "fixture": "unselected-product",
+      "expected": "Do not ask about the volunteered lamp or its designer, placement, effect or descriptor. Use accepted family routine to ask the remaining room-wide use/layout gap.",
+      "proposal": {
+        "kind": "ask_prepared",
+        "questionId": "living-use",
+        "text": "With the family wanting somewhere to gather after school and spread out with homework, how did you want this room to support that daily use?",
+        "purpose": "The atmosphere question is covered ('Warm and relaxed'), and the family's wish for a gather-after-school, spread-out-homework space is already known from the project brief. The remaining gap is how the living room itself was meant to support that daily life, which living-use asks directly.",
+        "sourceAnswerIds": [
+          "product-brief"
+        ],
+        "evidence": [
+          {
+            "answerId": "product-brief",
+            "quote": "The family wanted somewhere to gather after school, and enough room to spread out with homework."
+          }
+        ]
+      },
+      "continuation": "With the family wanting somewhere to gather after school and spread out with homework, how did you want this room to support that daily use?",
+      "qualityNotes": [],
+      "calls": [
+        {
+          "inputTokens": 5767,
+          "outputTokens": 225,
+          "model": "claude-sonnet-5",
+          "milliseconds": 4364,
+          "output": "{\"purpose\":\"The atmosphere question is covered ('Warm and relaxed'), and the family's wish for a gather-after-school, spread-out-homework space is already known from the project brief. The remaining gap is how the living room itself was meant to support that daily life, which living-use asks directly.\",\"evidence\":[{\"answerId\":\"product-brief\",\"quote\":\"The family wanted somewhere to gather after school, and enough room to spread out with homework.\"}],\"sourceAnswerIds\":[\"product-brief\"],\"kind\":\"ask_prepared\",\"questionId\":\"living-use\",\"text\":\"With the family wanting somewhere to gather after school and spread out with homework, how did you want this room to support that daily use?\"}"
+        },
+        {
+          "inputTokens": 4702,
+          "outputTokens": 80,
+          "model": "claude-sonnet-5",
+          "milliseconds": 1671,
+          "output": "{\"valid\":true,\"reason\":\"The question builds on the already-known family brief and asks the specific remaining gap—how the living room was designed to support that daily use—without repeating the atmosphere question or asserting new facts.reason under 300 chars\"}"
+        }
+      ],
+      "milliseconds": 6037
+    }
+  ],
+  "sequential": [
+    {
+      "step": 1,
+      "user": "The clients are old friends who moved from New York to Miami. They wanted to keep the bones of the house but redesign every space. The exterior should stay quiet; inside, they wanted it to feel personal and show their personalities.",
+      "proposal": {
+        "kind": "ask_prepared",
+        "questionId": "SCOPE_PARAMETERS",
+        "text": "Within keeping the existing bones, were there structural changes that were off the table, or was it more a matter of budget or timeline?",
+        "reaction": "Keeping the bones while redesigning every space is a clear enough directive, but it leaves the practical limits open.",
+        "purpose": "The brief establishes scope in general terms—keep the bones, redesign every space, quiet exterior, personal interior—but doesn't name a concrete working constraint like budget, timeline, or structural limits. SCOPE_PARAMETERS remains unanswered on that specific point.",
+        "sourceAnswerIds": [
+          "broad-answer"
+        ],
+        "evidence": [
+          {
+            "answerId": "broad-answer",
+            "quote": "They wanted to keep the bones of the house but redesign every space."
+          }
+        ]
+      },
+      "continuation": "Keeping the bones while redesigning every space is a clear enough directive, but it leaves the practical limits open. Within keeping the existing bones, were there structural changes that were off the table, or was it more a matter of budget or timeline?",
+      "qualityNotes": [
+        "The scope question offers multiple parameters as examples/options. This is a style note; it could be shorter and more focused."
+      ],
+      "calls": [
+        {
+          "inputTokens": 5974,
+          "outputTokens": 277,
+          "model": "claude-sonnet-5",
+          "milliseconds": 5783,
+          "output": "{\"purpose\":\"The brief establishes scope in general terms—keep the bones, redesign every space, quiet exterior, personal interior—but doesn't name a concrete working constraint like budget, timeline, or structural limits. SCOPE_PARAMETERS remains unanswered on that specific point.\",\"evidence\":[{\"answerId\":\"broad-answer\",\"quote\":\"They wanted to keep the bones of the house but redesign every space.\"}],\"sourceAnswerIds\":[\"broad-answer\"],\"kind\":\"ask_prepared\",\"questionId\":\"SCOPE_PARAMETERS\",\"reaction\":\"Keeping the bones while redesigning every space is a clear enough directive, but it leaves the practical limits open.\",\"text\":\"Within keeping the existing bones, were there structural changes that were off the table, or was it more a matter of budget or timeline?\"}"
+        },
+        {
+          "inputTokens": 4950,
+          "outputTokens": 82,
+          "model": "claude-sonnet-5",
+          "milliseconds": 2607,
+          "output": "{\"valid\":true,\"reason\":\"The candidate offers a specific missing gap (structural limits vs budget/timeline) rather than repeating the generic scope question, and the reaction accurately reflects the prior answer without asserting unverified facts.'\"}"
+        }
+      ]
+    },
+    {
+      "step": 2,
+      "user": "The structure and exterior stayed. Inside we could change every room, but it all had to be ready before their move in September.",
+      "proposal": {
+        "kind": "confirm_coverage",
+        "questionId": "DESIGN_DIRECTION",
+        "text": "Was the guiding idea keeping the exterior quiet while letting the interior express the clients' personalities?",
+        "purpose": "SCOPE_PARAMETERS is fully covered by the current answer. DESIGN_DIRECTION is already substantively answered by the brief: quiet exterior, personal interior reflecting personalities. This should be confirmed, not re-asked.",
+        "sourceAnswerIds": [
+          "broad-answer"
+        ],
+        "evidence": [
+          {
+            "answerId": "broad-answer",
+            "quote": "The exterior should stay quiet; inside, they wanted it to feel personal and show their personalities."
+          }
+        ]
+      },
+      "continuation": "Was the guiding idea keeping the exterior quiet while letting the interior express the clients' personalities?",
+      "qualityNotes": [],
+      "calls": [
+        {
+          "inputTokens": 6056,
+          "outputTokens": 269,
+          "model": "claude-sonnet-5",
+          "milliseconds": 3506,
+          "output": "{\"purpose\":\"SCOPE_PARAMETERS is now fully covered: structure/exterior fixed, full interior freedom, and a September move-in deadline. The next obligation is DESIGN_DIRECTION, which the broad brief answer already substantively addresses (quiet exterior, personal interior reflecting personalities), so that should be confirmed rather than re-asked.\",\"evidence\":[{\"answerId\":\"broad-answer\",\"quote\":\"The exterior should stay quiet; inside, they wanted it to feel personal and show their personalities.\"}],\"sourceAnswerIds\":[\"broad-answer\"],\"kind\":\"confirm_coverage\",\"questionId\":\"DESIGN_DIRECTION\",\"text\":\"Was the guiding idea keeping the exterior quiet while letting the interior express the clients' personalities?\"}"
+        },
+        {
+          "inputTokens": 6504,
+          "outputTokens": 233,
+          "model": "claude-sonnet-5",
+          "milliseconds": 5161,
+          "output": "{\"purpose\":\"SCOPE_PARAMETERS is fully covered by the current answer. DESIGN_DIRECTION is already substantively answered by the brief: quiet exterior, personal interior reflecting personalities. This should be confirmed, not re-asked.\",\"evidence\":[{\"answerId\":\"broad-answer\",\"quote\":\"The exterior should stay quiet; inside, they wanted it to feel personal and show their personalities.\"}],\"sourceAnswerIds\":[\"broad-answer\"],\"kind\":\"confirm_coverage\",\"questionId\":\"DESIGN_DIRECTION\",\"text\":\"Was the guiding idea keeping the exterior quiet while letting the interior express the clients' personalities?\"}"
+        },
+        {
+          "inputTokens": 4941,
+          "outputTokens": 93,
+          "model": "claude-sonnet-5",
+          "milliseconds": 1973,
+          "output": "{\"valid\":true,\"reason\":\"The quoted passage directly states the quiet-exterior/personal-interior direction, which the candidate offers back as a confirmable statement rather than re-asking the generic question. This matches the required confirm_coverage behavior for an already-covered obligation.\"}"
+        }
+      ]
+    },
+    {
+      "step": 3,
+      "user": "(Skip)",
+      "proposal": {
+        "kind": "ask_prepared",
+        "questionId": "SIGNATURE_IDENTITY",
+        "text": "Across all these rooms, what feels most recognizably yours?",
+        "purpose": "DESIGN_DIRECTION was intentionally skipped, but the earlier brief answer already states the guiding idea: exterior stays quiet, interior expresses the clients' personalities. No gap remains for that obligation; move to the next prepared question, SIGNATURE_IDENTITY.",
+        "sourceAnswerIds": [
+          "broad-answer"
+        ],
+        "evidence": [
+          {
+            "answerId": "broad-answer",
+            "quote": "The exterior should stay quiet; inside, they wanted it to feel personal and show their personalities."
+          }
+        ]
+      },
+      "continuation": "Across all these rooms, what feels most recognizably yours?",
+      "qualityNotes": [],
+      "calls": [
+        {
+          "inputTokens": 5975,
+          "outputTokens": 235,
+          "model": "claude-sonnet-5",
+          "milliseconds": 3488,
+          "output": "{\"purpose\":\"DESIGN_DIRECTION was intentionally skipped, but the earlier brief answer already states the guiding idea: exterior stays quiet, interior expresses the clients' personalities. No gap remains for that obligation; move to the next prepared question, SIGNATURE_IDENTITY.\",\"evidence\":[{\"answerId\":\"broad-answer\",\"quote\":\"The exterior should stay quiet; inside, they wanted it to feel personal and show their personalities.\"}],\"sourceAnswerIds\":[\"broad-answer\"],\"kind\":\"ask_prepared\",\"questionId\":\"SIGNATURE_IDENTITY\",\"text\":\"Across all these rooms, what feels most recognizably yours?\"}"
+        },
+        {
+          "inputTokens": 4934,
+          "outputTokens": 93,
+          "model": "claude-sonnet-5",
+          "milliseconds": 2426,
+          "output": "{\"valid\":true,\"reason\":\"Correctly moves to the SIGNATURE_IDENTITY target after DESIGN_DIRECTION was validly skipped and covered by the brief answer; question targets project-wide authorship without asserting new facts, matching remaining obligation.\"}"
+        }
+      ]
+    }
+  ],
+  "afterMetadata": {
+    "promptHash": "e07871374219dfef204c90cab4ad1c3b2c3e0784644a713d2e666c1cafd12ebb",
+    "capturedAt": "2026-09-28T14:06:12.736Z"
+  },
+  "sequentialMetadata": {
+    "promptHash": "e07871374219dfef204c90cab4ad1c3b2c3e0784644a713d2e666c1cafd12ebb",
+    "capturedAt": "2026-09-28T14:06:12.736Z"
+  }
+}

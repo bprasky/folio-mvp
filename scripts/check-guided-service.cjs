@@ -38,13 +38,19 @@ class AnthropicFixture {
   messages = { create: async input => {
     providerCalls.push(input);
     const text = JSON.stringify(input.messages);
+    if (String(input.system || '').includes('Review a guided preparation batch')) {
+      const { candidates } = JSON.parse(input.messages[0].content);
+      return fixtureResponse({ reviews: candidates.map(candidate => ({ id: candidate.id, valid: true, reason: 'Neutral question fits the prepared topic.', evidence: [] })) });
+    }
+    if (String(input.system || '').includes('Review a guided interview candidate'))
+      return fixtureResponse({ valid: true, reason: 'Grounded, one question, fits the remaining obligation.' });
     if (String(input.system || '').includes('bounded next-turn proposal')) {
       // This assertion is inside the provider boundary: answers/projection must
       // already be durable before the application asks for a next-turn proposal.
-      const accepted = JSON.parse(input.messages[0].content).currentAnswer;
+      const context = JSON.parse(input.messages[0].content), accepted = context.currentAnswer;
       const post = await database.projectPost.findUnique({ where: { projectId: 'project' } });
       assert.ok(post.provenance.interview.guided.turns.some(t => t.id === accepted.id && t.text === accepted.text));
-      assert.ok((await database.editorialInterviewAnswer.findMany()).some(a => a.answerText === accepted.text.trim()));
+      if (accepted.kind !== 'skip') assert.ok((await database.editorialInterviewAnswer.findMany()).some(a => a.answerText === accepted.text.trim()));
       if (failNextDecisionCommit) { failNextDecisionCommit = false; failNextCas = true; }
       if (decisionMode === 'reject') throw new Error('synthetic provider outage');
       if (decisionMode === 'defer') {
@@ -52,10 +58,28 @@ class AnthropicFixture {
         return fixtureResponse(await pendingModel.promise);
       }
       if (decisionMode === 'followup') {
-        const scope = JSON.parse(input.messages[0].content).scope;
-        return fixtureResponse({ kind: 'followup', purpose: scope === 'room' ? 'room_decision' : 'project_example', sourceAnswerIds: [accepted.id], evidence: accepted.text.slice(0, 100) });
+        return fixtureResponse({ kind: 'followup', text: 'What is one moment in the project that best shows that quieter daily rhythm?',
+          reaction: 'The quieter daily rhythm gives us a useful direction.', purpose: 'Ground the stated project rhythm in a specific experience.',
+          sourceAnswerIds: [accepted.id], evidence: [{ answerId: accepted.id, quote: accepted.text.slice(0, 100) }] });
       }
-      return fixtureResponse({ kind: 'advance' });
+      if (decisionMode === 'adapt') {
+        const target = context.remainingPreparedQuestions?.find(question => question.category === 'SCOPE_PARAMETERS');
+        assert.ok(target, 'the proposal context includes the next unsatisfied scope obligation even after a follow-up answer');
+        return fixtureResponse({ kind: 'ask_prepared', questionId: target.id, text: 'What timing shaped the renovation within the existing footprint?',
+          reaction: 'The existing footprint gives the renovation a clear boundary.', purpose: 'Ask the remaining timing constraint without repeating the already described scope.',
+          sourceAnswerIds: [accepted.id], evidence: [{ answerId: accepted.id, quote: 'kept the existing footprint' }] });
+      }
+      if (decisionMode === 'confirm') {
+        const target = context.remainingPreparedQuestions?.find(question => question.category === 'DESIGN_DIRECTION');
+        const source = context.acceptedConversation?.find(turn => turn.answer.includes('The design direction was calm, open rooms for family gatherings.'));
+        assert.ok(target); assert.ok(source);
+        return fixtureResponse({ kind: 'confirm_coverage', questionId: target.id, text: 'Does your earlier description of calm, open rooms capture the design direction?',
+          reaction: 'You already described the direction in your opening answer.', purpose: 'Confirm the supplied design direction rather than ask for it again.',
+          sourceAnswerIds: [source.id], evidence: [{ answerId: source.id, quote: 'The design direction was calm, open rooms for family gatherings.' }] });
+      }
+      const nextPrepared = context.remainingPreparedQuestions?.[0];
+      return fixtureResponse(nextPrepared ? { kind: 'ask_prepared', questionId: nextPrepared.id, text: nextPrepared.text,
+        purpose: 'Ask the next unaddressed prepared topic without adding a factual premise.', sourceAnswerIds: [], evidence: [] } : { kind: 'advance' });
     }
     if (text.includes('opening interview questions')) return fixtureResponse({ questions: CATEGORIES.map((category, i) => ({ category, question: PROJECT_TEXT[i] })) });
     if (text.includes("interviewer's notebook")) return fixtureResponse({ direction: 'A room intended to support daily life.' });
@@ -176,6 +200,77 @@ async function run() {
   console.log('PASS actual authorization, pilot flag, and protected spotlight routing before preparation or writes');
 
   await fixture();
+  let adaptive = await start();
+  const rawBroadAnswer = 'We kept the existing footprint and renovated the shared rooms. The design direction was calm, open rooms for family gatherings.';
+  const scopeId = adaptive.plan.find(question => question.category === 'SCOPE_PARAMETERS').id;
+  const scopeBaseline = adaptive.plan.find(question => question.id === scopeId).text;
+  decisionMode = 'adapt';
+  let adapted = await answer(adaptive, rawBroadAnswer); assert.equal(adapted.status, 200); adaptive = adapted.session;
+  const scope = adaptive.plan.find(question => question.id === adaptive.activeQuestionId);
+  assert.equal(scope.id, scopeId); assert.equal(scope.text, 'What timing shaped the renovation within the existing footprint?');
+  assert.equal(scope.baselineText, scopeBaseline); assert.ok(scope.reaction);
+  assert.equal(await database.editorialInterviewAnswer.count(), 1, 'rewriting a future question cannot invent accepted coverage');
+  decisionMode = 'confirm';
+  adapted = await answer(adaptive, 'We had nine months before the family moved back.'); assert.equal(adapted.status, 200); adaptive = adapted.session;
+  const confirmation = adaptive.plan.find(question => question.id === adaptive.activeQuestionId);
+  assert.equal(confirmation.category, 'DESIGN_DIRECTION'); assert.equal(confirmation.confirmation.answerId, adaptive.turns[0].id);
+  assert.equal(await database.editorialInterviewAnswer.count(), 2);
+  const confirmationCommand = { action: 'confirm', questionId: confirmation.id, version: adaptive.version, requestId: requestId() };
+  for (const forged of [{ text: 'A fabricated assistant summary.' }, { selectedImageId: 'photo' }, { inputModality: 'voice' }, { recordingId: '11111111-1111-4111-8111-111111111111' }]) {
+    const rejected = await post({ ...confirmationCommand, requestId: requestId(), ...forged });
+    assert.equal(rejected.status, 422); assert.equal((await saved()).turns.length, 2);
+  }
+  decisionMode = 'advance';
+  const confirmed = await post(confirmationCommand); assert.equal(confirmed.status, 200);
+  assert.equal((await post(confirmationCommand)).status, 200);
+  assert.equal((await saved()).turns.length, 3);
+  assert.equal(confirmed.session.turns[2].kind, 'confirmation'); assert.equal(confirmed.session.turns[2].text, confirmation.confirmation.quote);
+  assert.equal(confirmed.session.turns[2].reusedFromAnswerId, confirmed.session.turns[0].id);
+  const projectedConfirmation = (await database.editorialInterviewAnswer.findMany()).find(row => row.questionId === confirmation.id);
+  assert.equal(projectedConfirmation.answerText, confirmation.confirmation.quote); assert.equal(projectedConfirmation.questionText, confirmation.text);
+  const reloadedAdaptive = await route.GET(new Request('http://folio.test/api/test'), params);
+  assert.deepEqual((await reloadedAdaptive.json()).session, confirmed.session, 'resume preserves reaction and evidence-linked wording');
+  const correctedCoverage = await post({ action: 'correct', questionId: confirmed.session.turns[0].questionId, version: confirmed.session.version, requestId: requestId(), text: 'We extended the footprint and made enclosed rooms for separate routines.' });
+  assert.equal(correctedCoverage.status, 200);
+  assert.ok(['pending', 'active'].includes(correctedCoverage.session.plan.find(question => question.id === confirmation.id).status));
+  assert.ok(!(await database.editorialInterviewAnswer.findMany()).some(row => row.questionId === confirmation.id));
+  assert.equal(correctedCoverage.session.turns.find(turn => turn.kind === 'confirmation').text, confirmation.confirmation.quote);
+  assert.ok((await database.editorialInterviewAnswer.findMany()).every(row => !row.answerText.includes('You already described the direction')));
+  console.log('PASS broad answer adapts only the remaining scope gap; explicit coverage confirmation keeps raw source, rejects forged content, survives exact retry/resume and reopens after correction');
+
+  await fixture(); adaptive = await start(); decisionMode = 'followup';
+  let followupResponse = await answer(adaptive, 'The project needed a quieter daily rhythm.'); assert.equal(followupResponse.status, 200);
+  const followupQuestion = followupResponse.session.plan.find(question => question.id === followupResponse.session.activeQuestionId);
+  assert.equal(followupQuestion.kind, 'followup');
+  decisionMode = 'adapt';
+  const afterFollowup = await answer(followupResponse.session, 'We kept the existing footprint and moved shared activities along a clear route.');
+  assert.equal(afterFollowup.status, 200);
+  const adaptedAfterFollowup = afterFollowup.session.plan.find(question => question.id === afterFollowup.session.activeQuestionId);
+  assert.equal(adaptedAfterFollowup.category, 'SCOPE_PARAMETERS');
+  assert.equal(adaptedAfterFollowup.text, 'What timing shaped the renovation within the existing footprint?');
+  assert.ok(adaptedAfterFollowup.sourceAnswerIds.includes(afterFollowup.session.turns[1].id));
+  assert.equal(afterFollowup.session.plan.filter(question => question.kind === 'followup').length, 1);
+  console.log('PASS answering a follow-up still adapts the next prepared question without creating another follow-up chain');
+
+  await fixture(); adaptive = await start(); decisionMode = 'adapt';
+  const beforeSkip = await answer(adaptive, rawBroadAnswer); assert.equal(beforeSkip.status, 200);
+  decisionMode = 'confirm';
+  const afterSkip = await post({ action: 'skip', version: beforeSkip.session.version, questionId: beforeSkip.session.activeQuestionId, requestId: requestId() });
+  assert.equal(afterSkip.status, 200); assert.equal(afterSkip.session.status, 'active');
+  assert.equal(afterSkip.session.turns.at(-1).kind, 'skip');
+  const afterSkipQuestion = afterSkip.session.plan.find(question => question.id === afterSkip.session.activeQuestionId);
+  assert.equal(afterSkipQuestion.category, 'DESIGN_DIRECTION'); assert.equal(afterSkipQuestion.confirmation.answerId, afterSkip.session.turns[0].id);
+  assert.equal(await database.editorialInterviewAnswer.count(), 1, 'skipping and proposing confirmation create no invented accepted answer');
+  decisionMode = 'advance';
+  const typedConfirmation = { action: 'answer', version: afterSkip.session.version, questionId: afterSkipQuestion.id, requestId: requestId(), text: 'Yes!' };
+  const typedAccepted = await post(typedConfirmation); assert.equal(typedAccepted.status, 200);
+  assert.equal((await post(typedConfirmation)).status, 200); assert.equal((await saved()).turns.length, 3);
+  assert.equal(typedAccepted.session.turns.at(-1).confirmationText, 'Yes!');
+  assert.equal(typedAccepted.session.turns.at(-1).text, afterSkipQuestion.confirmation.quote);
+  assert.equal((await database.editorialInterviewAnswer.findMany()).find(row => row.questionId === afterSkipQuestion.id).answerText, afterSkipQuestion.confirmation.quote);
+  console.log('PASS skipping a topic still prepares a grounded next question from earlier accepted evidence');
+
+  await fixture();
   const beforeRollback = await start();
   environment.NEXT_PUBLIC_FLAG_GUIDED_INTERVIEW = '0';
   const drainRead = await route.GET(new Request('http://folio.test/interview/guided'), params);
@@ -236,14 +331,19 @@ async function run() {
   decisionMode = 'reject';
   const outage = await answer(session, 'Quiet and open.'); assert.equal(outage.status, 200);
   assert.equal(outage.session.turns[0].text, 'Quiet and open.');
-  assert.notEqual(outage.session.activeQuestionId, session.activeQuestionId);
-  decisionMode = 'advance'; session = outage.session; failNextDecisionCommit = true;
+  assert.equal(outage.session.status, 'deciding', 'provider failure keeps an explicit resumable next-turn operation');
+  assert.match(outage.session.notice, /answer is saved/i);
+  decisionMode = 'advance';
+  const recoveredDecision = await post({ action: 'retry', version: outage.session.version, requestId: requestId() });
+  assert.equal(recoveredDecision.status, 200); assert.equal(recoveredDecision.session.turns.length, 1);
+  assert.equal(recoveredDecision.session.status, 'active');
+  session = recoveredDecision.session; failNextDecisionCommit = true;
   const interrupted = await answer(session, 'A compact renovation.'); assert.equal(interrupted.status, 200);
   assert.equal(interrupted.session.status, 'deciding'); assert.match(interrupted.session.notice, /answer is saved/i);
   assert.equal(interrupted.session.turns.length, 2);
   const retried = await post({ action: 'retry', version: interrupted.session.version, requestId: requestId() });
   assert.equal(retried.status, 200); assert.equal(retried.session.turns.length, 2); assert.equal(retried.session.status, 'active');
-  console.log('PASS answer and canonical projection commit before provider; provider outage continuation and failed decision-save retry');
+  console.log('PASS answer and canonical projection commit before provider; explicit provider-outage retry and failed decision-save retry');
 
   await fixture(); session = await start();
   failProjection = true;
@@ -258,7 +358,8 @@ async function run() {
   const inFlight = answer(session, 'An open room.'); await decisionEntered.promise;
   const accepted = await saved(); assert.equal(accepted.status, 'deciding'); assert.equal(accepted.turns.length, 1);
   const paused = await post({ action: 'pause', version: accepted.version, requestId: requestId() }); assert.equal(paused.status, 200);
-  pendingModel.resolve({ kind: 'followup', purpose: 'project_example', sourceAnswerIds: [accepted.turns[0].id], evidence: 'An open room.' });
+  pendingModel.resolve({ kind: 'followup', text: 'How did the open room shape the family’s routines?', reaction: 'The open room gives us a concrete starting point.',
+    purpose: 'Understand the stated room intent.', sourceAnswerIds: [accepted.turns[0].id], evidence: [{ answerId: accepted.turns[0].id, quote: 'An open room.' }] });
   const late = await inFlight;
   assert.equal(late.session.status, 'paused'); assert.equal(late.session.version, paused.session.version);
   assert.equal(late.session.plan.filter(q => q.kind === 'followup').length, 0);
@@ -271,6 +372,7 @@ async function run() {
   let result = await answer(session, 'The project needed a quieter daily rhythm.'); assert.equal(result.status, 200); session = result.session;
   const parent = session.turns[0]; const followup = session.plan.find(q => q.id === session.activeQuestionId);
   assert.equal(followup.parentAnswerId, parent.id);
+  decisionMode = 'advance';
   result = await answer(session, 'We began with the daily route through the home.'); assert.equal(result.status, 200); session = result.session;
   const rows = await database.editorialInterviewAnswer.findMany();
   const parentRow = rows.find(row => row.questionId === parent.questionId);

@@ -48,10 +48,21 @@ class AnthropicFixture {
     modelCalls.push(input);
     const system = typeof input.system === 'string' ? input.system : JSON.stringify(input.system);
     const questionRequest = JSON.stringify(input.messages).includes('Generate room-level questions');
-    const output = questionRequest
+    let output = questionRequest
       ? { questions: [{ text: 'How did the doorway change the route through this room?', type: 'opening', vendors: [], products: [], boostable: false, topic: 'doorway' }] }
       : /select.*quote|choose.*quote|pick.*quote/i.test(system) ? { quote: null } : article;
-    return { id: 'fixture-message', type: 'message', role: 'assistant', stop_reason: 'end_turn', content: [{ type: 'text', text: JSON.stringify(output) }] };
+    if (system.includes('bounded next-turn proposal')) {
+      const context = JSON.parse(input.messages[0].content), next = context.remainingPreparedQuestions[0];
+      output = next ? { kind: 'ask_prepared', questionId: next.id, text: next.text,
+        purpose: 'Ask the next remaining prepared topic without adding a factual premise.', sourceAnswerIds: [], evidence: [] } : { kind: 'advance' };
+    } else if (system.includes('Review a guided interview candidate')) {
+      output = { valid: true, reason: 'Neutral fixture wording preserves the prepared obligation.' };
+    } else if (system.includes('Review a guided preparation batch')) {
+      // The doorway candidate remains unverified so the real preparer supplies
+      // safe, complete room slots, as intended by this canonical draft journey.
+      output = { reviews: JSON.parse(input.messages[0].content).candidates.map(candidate => ({ id: candidate.id, valid: false, reason: 'The fixture supplies no verified doorway premise.', evidence: [] })) };
+    }
+    return { id: 'fixture-message', type: 'message', role: 'assistant', model: 'core-fixture-model', usage: { input_tokens: 10, output_tokens: 5 }, stop_reason: 'end_turn', content: [{ type: 'text', text: JSON.stringify(output) }] };
   } };
 }
 replace('@anthropic-ai/sdk', AnthropicFixture);

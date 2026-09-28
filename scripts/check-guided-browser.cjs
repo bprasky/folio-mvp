@@ -27,6 +27,13 @@ const questions = ['What did the clients come to you wanting from this project?'
 const prepared = { rooms, contextFingerprint: 'local-fixture', minimumTotalAnswers: 5, questions: categories.map((category, i) => ({ id: 'project-' + category + '-fixture', text: questions[i], category, roomId: null, sourceImageIds: rooms.flatMap(room => room.imageIds), sourceAnswerIds: [], kind: 'prepared', status: 'pending' })) };
 const roomPlan = () => rooms.flatMap(room => ['What did you want this room to make possible?', 'What shaped the layout of this room?'].map((text, index) => ({ id: room.id + '-' + index, text, roomId: room.id, category: 'room_design', sourceImageIds: room.imageIds, sourceAnswerIds: [], kind: 'prepared', status: 'pending' })));
 let saved = null, failSave = false, loseReply = false, failTranscription = false, transcript = 'The two doorways leave a clear path through the room.', generationCalls = 0;
+let holdGuidedResponse = true, heldResponse = null;
+let responseHeld;
+const waitForHeldResponse = () => heldResponse ? Promise.resolve() : new Promise((resolve, reject) => {
+  const timeout = setTimeout(() => reject(new Error('Expected a real pending guided HTTP response')), 10000);
+  responseHeld = () => { clearTimeout(timeout); resolve(); };
+});
+const followupReaction = 'That sets the atmosphere; one lived moment would make it concrete.';
 const requests = [];
 const entry = `
 import React,{useState} from 'react';import {createRoot} from 'react-dom/client';
@@ -94,11 +101,12 @@ function serverHandler(req, res) {
           const turn = saved.turns.find(turn => turn.id === saved.pendingDecisionTurnId);
           const q = saved.plan.find(q => q.id === turn?.questionId);
           controller.applyDecision(saved, turn?.text === 'It should feel calm.' && controller.followUpAllowed(saved, q)
-            ? { kind: 'followup', text: 'What is one moment in the project that best shows that idea in practice?', purpose: 'Ground the stated idea.', sourceAnswerIds: [turn.id] } : { kind: 'advance' });
+            ? { kind: 'followup', text: 'What is one moment in the project that best shows that idea in practice?', reaction: followupReaction, purpose: 'Ground the stated idea.', sourceAnswerIds: [turn.id], evidence: [{ answerId: turn.id, quote: turn.text }] } : { kind: 'advance' });
           if (!saved.roomsPrepared && controller.projectPhaseComplete(saved) && !saved.activeQuestionId) controller.appendRoomPlan(saved, roomPlan());
           saved.version++;
         }
         if (loseReply) { loseReply = false; return json({ message: 'Fixture lost the successful save acknowledgement' }, 503); }
+        if (holdGuidedResponse) { holdGuidedResponse = false; heldResponse = () => { json({ ok: true, session: saved }); heldResponse = null; }; responseHeld?.(); responseHeld = null; return; }
         json({ ok: true, session: saved });
       } catch (error) { json({ code: error.code, message: error.message }, error.status || 500); }
     }); return;
@@ -127,10 +135,20 @@ async function main() {
     for (const button of buttons) if ((await button.evaluate(el => el.textContent)).trim() === text) { await button.click(); return; }
     throw new Error('Missing button: ' + text);
   };
-  const idle = () => page.waitForFunction(() => !document.querySelector('[aria-label="Send response"]')?.disabled && !document.querySelector('#guided-response')?.disabled || document.querySelector('#guided-response') && !document.querySelector('#guided-response').disabled, { timeout: 10000 });
+  const idle = () => page.waitForFunction(() => { const composer = document.querySelector('#guided-response');
+    return composer && !composer.disabled && !document.querySelector('[data-testid="guided-working"]'); }, { timeout: 10000 });
   const fill = async text => { await page.$eval('#guided-response', (el, value) => { const setter = Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype, 'value').set; setter.call(el, value); el.dispatchEvent(new Event('input', { bubbles: true })); }, text); };
   try {
-    await page.setViewport({ width: 1440, height: 960 }); await page.goto(base); await page.waitForSelector('#guided-response'); await idle();
+    await page.setViewport({ width: 1440, height: 960 }); await page.goto(base);
+    await capture('Three working dots correspond to the unresolved preparation request and stop on completion', async () => {
+      await page.waitForSelector('[data-testid="guided-working"]');
+      assert.equal(await page.$$eval('[data-testid="guided-working"] [aria-hidden="true"] span', elements => elements.length), 3);
+      assert.equal(await page.$('[data-testid="guided-current-question"]'), null);
+      await waitForHeldResponse();
+      assert.ok(heldResponse, 'the fixture must hold a real HTTP response, not simulate work with a UI timer');
+      heldResponse(); await page.waitForSelector('#guided-response'); await idle();
+      await page.waitForSelector('[data-testid="guided-working"]', { hidden: true });
+    });
     await capture('Automatic preparation; microphone remains off until user action', async () => {
       assert.equal(await page.evaluate(() => window.microphoneStarts), 0); assert.equal(saved.plan.length, 5);
       assert.equal(await page.$eval('[data-testid="guided-current-question"]', el => el.textContent), questions[0]);
@@ -138,9 +156,20 @@ async function main() {
     await capture('Browsing during typing preserves the question and explicit image attribution', async () => {
       await fill('It should feel calm.'); await page.click('[aria-label="Next photograph"]');
       assert.equal(await page.$eval('[data-testid="guided-current-question"]', el => el.textContent), questions[0]);
-      await page.click('[aria-label="Send response"]'); await idle();
+      holdGuidedResponse = true; await page.click('[aria-label="Send response"]');
+      await page.waitForSelector('[data-testid="guided-pending-answer"]');
+      assert.match(await page.$eval('[data-testid="guided-pending-answer"]', el => el.textContent), /It should feel calm\./);
+      assert.match(await page.$eval('[data-testid="guided-pending-answer"]', el => el.textContent), /Awaiting save confirmation/);
+      assert.ok(await page.$('[data-testid="guided-working"]'));
+      assert.equal(await page.evaluate(() => document.body.textContent.includes('All accepted answers saved')), false);
+      await page.screenshot({ path: path.join(out, 'conversation-working.png'), fullPage: true });
+      await waitForHeldResponse();
+      assert.ok(heldResponse); heldResponse(); await idle();
+      await page.waitForSelector('[data-testid="guided-working"]', { hidden: true });
+      assert.equal(await page.$('[data-testid="guided-pending-answer"]'), null);
       assert.equal(saved.turns[0].selectedImageId, null); assert.equal(saved.plan.length, 6);
       assert.equal(saved.plan.find(q => q.id === saved.activeQuestionId).kind, 'followup');
+      assert.equal(await page.$eval('[data-testid="guided-reaction"]', el => el.textContent), followupReaction);
     });
     await page.screenshot({ path: path.join(out, 'desktop.png'), fullPage: true });
     await capture('Failed saves retain composer text and retry uses the same request ID', async () => {
@@ -159,6 +188,8 @@ async function main() {
       await clickText('Pause & close'); await page.waitForSelector('#guided-response', { hidden: true });
       await page.reload(); await page.waitForSelector('#guided-response'); await idle();
       assert.equal(saved.activeQuestionId, question); assert.equal(await page.$eval('#guided-response', el => el.value), 'The plan began with a clear route from the entrance.');
+      assert.ok(await page.$$eval('[data-testid="guided-turn-reaction"]', (elements, reaction) => elements.some(el => el.textContent === reaction), followupReaction));
+      assert.ok(controller.canonicalGuidedAnswers(saved).every(answer => !answer.answer.includes(followupReaction) && !('reaction' in answer)), 'an assistant reaction is not a designer quote');
     });
     await capture('Long transcription is retained in full and blocked explicitly at save limit', async () => {
       await fill(''); transcript = 'Spoken detail '.repeat(190); failTranscription = true;
@@ -197,11 +228,14 @@ async function main() {
       await fill('The shared view across the room organized the plan.');
       assert.equal(await page.$eval('[role="log"]', el => el.scrollTop), 0);
       await clickText('Latest question');
+      await page.waitForFunction(() => { const log = document.querySelector('[role="log"]'), question = document.querySelector('[data-testid="guided-current-question"]');
+        const visible = log?.getBoundingClientRect(), current = question?.getBoundingClientRect(); return current && visible && current.top >= visible.top && current.bottom <= visible.bottom; }, { timeout: 10000 });
     });
     await page.setViewport({ width: 390, height: 844 });
     await capture('Mobile panel and composer fit without horizontal overflow', async () => {
       assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth));
-      await page.waitForFunction(() => { const rect = document.querySelector('[data-testid="guided-current-question"]')?.getBoundingClientRect(); return rect && rect.top >= 0 && rect.bottom <= innerHeight; });
+      await page.waitForFunction(() => { const rect = document.querySelector('[data-testid="guided-current-question"]')?.getBoundingClientRect(), log = document.querySelector('[role="log"]')?.getBoundingClientRect();
+        return rect && log && rect.top >= log.top && rect.bottom <= log.bottom && rect.top >= 0 && rect.bottom <= innerHeight; }, { timeout: 10000 });
       const rect = await page.$eval('[aria-label="Send response"]', el => ({ top: el.getBoundingClientRect().top, bottom: el.getBoundingClientRect().bottom }));
       assert.ok(rect.top >= 0 && rect.bottom <= 844, JSON.stringify(rect));
     });
@@ -233,11 +267,46 @@ async function main() {
       assert.equal(saved.plan.filter(question => ['pending', 'active'].includes(question.status)).length, 0);
       assert.ok(await page.evaluate(() => document.body.textContent.includes('questions were skipped') && document.body.textContent.includes('shorter coverage')));
     });
+    await capture('Covered topics require explicit confirmation of the original answer, with retained reaction and attribution', async () => {
+      saved = controller.createGuidedSession('fixture-project', prepared, 'confirmation-start');
+      const quote = 'We renovated the shared rooms within the existing footprint. The project took nine months.';
+      const text = quote + ' The kitchen has a blue tiled island.';
+      saved = controller.acceptCommand(saved, { action: 'answer', requestId: 'confirmation-opening', version: saved.version, questionId: saved.activeQuestionId, text });
+      const source = saved.turns[0], target = saved.plan[1];
+      const reaction = 'You have already described the extent and timing of the renovation.';
+      controller.applyDecision(saved, { kind: 'confirm_coverage', questionId: target.id, text: 'Does your earlier description cover the scope and timing?', reaction,
+        purpose: 'Confirm the already supplied project scope.', sourceAnswerIds: [source.id], evidence: [{ answerId: source.id, quote }] });
+      await page.setViewport({ width: 1440, height: 960 }); await page.reload();
+      await page.waitForSelector('[data-testid="guided-confirmation-source"]');
+      const displayedSource = await page.$eval('[data-testid="guided-confirmation-source"]', el => el.textContent);
+      assert.ok(displayedSource.includes(quote)); assert.ok(!displayedSource.includes('blue tiled island'), 'consent shows precisely the excerpt being reused');
+      assert.equal(controller.canonicalGuidedAnswers(saved).length, 1, 'rendering a confirmation must not count as accepting it');
+      const awaitingConfirmation = structuredClone(saved);
+      await page.screenshot({ path: path.join(out, 'conversation-confirmation.png'), fullPage: true });
+      await clickText('Use this answer'); await idle();
+      assert.equal(saved.turns.at(-1).kind, 'confirmation'); assert.equal(saved.turns.at(-1).reusedFromAnswerId, source.id);
+      assert.equal(saved.turns.at(-1).text, quote); assert.equal(saved.turns.at(-1).reaction, reaction);
+      assert.equal(controller.canonicalGuidedAnswers(saved).length, 2);
+      await page.reload(); await page.waitForSelector('[data-testid="guided-turn-reaction"]');
+      assert.ok(await page.evaluate(() => document.body.textContent.includes('You · confirmed earlier answer')));
+      assert.ok(await page.$$eval('[data-testid="guided-turn-reaction"]', (elements, reaction) => elements.some(el => el.textContent === reaction), reaction));
+      saved = awaitingConfirmation; await page.reload(); await page.waitForSelector('[data-testid="guided-confirmation-source"]'); await idle();
+      await fill('Yes!'); await page.click('[aria-label="Send response"]'); await idle();
+      assert.equal(saved.turns.at(-1).kind, 'confirmation'); assert.equal(saved.turns.at(-1).text, quote); assert.equal(saved.turns.at(-1).confirmationText, 'Yes!');
+      await page.reload(); await page.waitForFunction(() => document.body.textContent.includes('Confirmed passage:'));
+      assert.ok(await page.evaluate(() => document.body.textContent.includes('Yes!')), 'history shows the designer’s literal affirmation alongside its confirmed excerpt');
+    });
     assert.deepEqual(errors, []);
     fs.writeFileSync(path.join(out, 'browser-results.json'), JSON.stringify({ fixture: 'Actual React component + controller; synthetic API, model, microphone and memory persistence; no production data.', passed: results }, null, 2));
   } catch (error) {
     await page.screenshot({ path: path.join(out, 'failure.png'), fullPage: true });
-    console.error('Fixture failure state:', await page.evaluate(() => ({ text: document.body.innerText.slice(-3500), draft: document.querySelector('#guided-response')?.value })));
+    console.error('Fixture failure state:', await page.evaluate(() => {
+      const log = document.querySelector('[role="log"]'), question = document.querySelector('[data-testid="guided-current-question"]');
+      const rect = element => { const bounds = element?.getBoundingClientRect(); return bounds ? { top: bounds.top, bottom: bounds.bottom, height: bounds.height } : null; };
+      return { text: document.body.innerText.slice(-3500), draft: document.querySelector('#guided-response')?.value,
+        conversation: log && { clientHeight: log.clientHeight, scrollHeight: log.scrollHeight, scrollTop: log.scrollTop, rect: rect(log) },
+        question: rect(question), latestQuestionButton: [...document.querySelectorAll('button')].some(button => button.textContent === 'Latest question') };
+    }));
     throw error;
   } finally { await browser.close(); await new Promise(resolve => server.close(resolve)); }
 }
