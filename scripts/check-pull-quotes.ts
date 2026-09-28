@@ -642,18 +642,30 @@ async function projectionWriteChecks() {
     { questionId: 'q-what', section: 'what', prompt: 'Why the paneling?', answer: 'It gives the eye somewhere to rest.', isFollowUp: false },
     { questionId: 'q-junk', section: 'notACategory', prompt: 'And the stair?', answer: 'It took four tries before it belonged.', isFollowUp: false },
   ];
+  const post = { id: 'post1', updatedAt: new Date(0), provenance: { interview: { payload: { answers: PAYLOAD, followups: [] } } } };
+  const operations: string[] = [];
+  let resetDuringRead = false;
+  let matchesCanonicalRead = true;
+  const tx = {
+    projectPost: {
+      findUnique: async () => { operations.push('read'); return post; },
+      updateMany: async ({ where, data }: any) => {
+        operations.push('lock');
+        matchesCanonicalRead &&= where.id === post.id && where.updatedAt === post.updatedAt
+          && where.provenance?.equals === post.provenance && data.provenance === post.provenance;
+        return { count: resetDuringRead ? 0 : 1 };
+      },
+    },
+    editorialInterview: { upsert: async () => { operations.push('interview'); return { id: 'i1', projectId: 'p1' }; } },
+    editorialInterviewAnswer: {
+      findMany: async () => [],
+      deleteMany: async () => { operations.push('delete'); return { count: 0 }; },
+      create: async (args: any) => { operations.push('create'); created.push(args.data); return args.data; },
+    },
+  };
   (Module.default as any)._load = function (request: string) {
     if (request === '@/lib/prisma' || request.endsWith('/lib/prisma')) {
-      return { prisma: { spotlightQuestion: { findMany: async () => [{ id: "durable-private" }] },
-        editorialInterview: { findUnique: async () => ({ id: 'i1', projectId: 'p1' }), create: async () => ({ id: 'i1' }) },
-        projectPost: { findUnique: async () => ({ provenance: { interview: { payload: { answers: PAYLOAD, followups: [] } } } }) },
-        editorialInterviewAnswer: {
-          findMany: async () => [],
-          deleteMany: () => ({ __op: 'deleteMany' }),
-          create: (args: any) => { created.push(args.data); return { __op: 'create' }; },
-        },
-        $transaction: async (ops: any[]) => ops,
-      } };
+      return { prisma: { $transaction: async (callback: (writer: typeof tx) => Promise<unknown>) => callback(tx) } };
     }
     return origLoad.apply(this, arguments as any);
   };
@@ -661,17 +673,27 @@ async function projectionWriteChecks() {
   try {
     const mod = await import('../src/lib/editorial/syncInterviewAnswers');
     await mod.syncAnswersToEditorialInterview('p1');
+    const row = (qid: string) => created.find((r) => r.questionId === qid);
+    check('the projection was exercised at all (guards the two checks below)', created.length === 2,
+      `${created.length} row(s) created`);
+    check('a real category is written to the column',
+      row('q-what')?.questionCategory === 'what', JSON.stringify(row('q-what')?.questionCategory));
+    check('a section that is not a real category is written as null, not as itself',
+      row('q-junk')?.questionCategory === null, JSON.stringify(row('q-junk')?.questionCategory));
+    check('projection rebuild locks the canonical snapshot before modifying derived rows',
+      matchesCanonicalRead && operations.join(',') === 'read,lock,interview,delete,create,create', operations.join(','));
+
+    // A reset between the canonical read and lock must stop this stale rebuild.
+    resetDuringRead = true;
+    created.length = 0;
+    operations.length = 0;
+    let conflict: any;
+    try { await mod.syncAnswersToEditorialInterview('p1'); } catch (error) { conflict = error; }
+    check('a reset race rejects stale projection writes with a conflict',
+      conflict?.status === 409 && created.length === 0 && operations.join(',') === 'read,lock', operations.join(','));
   } finally {
     (Module.default as any)._load = origLoad;
   }
-
-  const row = (qid: string) => created.find((r) => r.questionId === qid);
-  check('the projection was exercised at all (guards the two checks below)', created.length === 2,
-    `${created.length} row(s) created`);
-  check('a real category is written to the column',
-    row('q-what')?.questionCategory === 'what', JSON.stringify(row('q-what')?.questionCategory));
-  check('a section that is not a real category is written as null, not as itself',
-    row('q-junk')?.questionCategory === null, JSON.stringify(row('q-junk')?.questionCategory));
 }
 
 // ─── 19. Provenance: the durable pointer survives to the stored selection ────
