@@ -1,3 +1,13 @@
+# Welcome promise wording — 2026-09-29
+
+- [x] Apply the founder-approved description naming expertise, editorial features, social posts and designer control.
+- [x] Keep the current photograph pending permission to use another image.
+- [x] Check desktop, mobile and landscape text fit in the existing Next.js fixture.
+
+Review: description-only change; image, styles and Explore dismissal are unchanged. Browser layout checks passed at 1440×1000, 390×844, 320×568 and 667×375; whitespace check passed. Signup guidance remains a product discussion, with no routing changes in this patch. No deployment.
+
+---
+
 # Single-screen editorial welcome — 2026-09-29
 
 Scope: replace the logged-out homepage's three-video tour with one interior photograph and the promise “Folio. Your new publishing team.” Explore Folio dismisses into the existing page. Preserve per-session dismissal, hide during authentication/loading, and provide keyboard/focus/mobile support. No deployment or publishing-flow changes.

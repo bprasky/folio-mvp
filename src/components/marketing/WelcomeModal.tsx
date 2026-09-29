@@ -99,7 +99,7 @@ export function WelcomeModal() {
                 publishing team.
               </Dialog.Title>
               <Dialog.Description className={styles.description}>
-                We help turn your best work into compelling stories, with your voice and final say.
+                Help people see the expertise behind your work. We prepare editorial features and social posts from your projects and perspective—with you in control of what gets published.
               </Dialog.Description>
               <button
                 ref={exploreButton}
