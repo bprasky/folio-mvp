@@ -1,6 +1,6 @@
-# Onboarding modal video assets
+# For Designers video assets
 
-Drop video files into this directory to activate the demo modal frames.
+These videos support the existing For Designers marketing page. The homepage welcome uses a single still photograph and no longer loads these assets.
 
 | Frame | Filename (base) | Headline |
 |---|---|---|
@@ -26,11 +26,10 @@ Each base needs both formats:
 
 ## Empty-state behavior
 
-If a file is missing, the corresponding `<video>` element fires `onError` and the modal renders a soft `warm-mesh` fallback at the same 16:10 aspect ratio. The modal ships fully functional without these files; recordings activate the real demo when dropped in.
+If a file is missing, the corresponding `<video>` element fires `onError` and the marketing page renders a soft `warm-mesh` fallback at the same 16:10 aspect ratio.
 
 ## Surfaces consuming these paths
 
-- `src/components/marketing/WelcomeModal.tsx` (modal demo, click-to-advance)
 - `src/app/for-designers/sections.tsx` (marketing-page version, alternating layout)
 
-Both surfaces reference the same video bases. Re-encoding a file updates both surfaces.
+The welcome image is configured in `src/components/marketing/WelcomeModal.tsx` and reuses existing Folio login photography. Its crop, contrast scrim and typography live in `WelcomeModal.module.css`. Replacing the photograph requires checking both desktop and mobile crops.

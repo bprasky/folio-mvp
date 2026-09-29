@@ -1,3 +1,20 @@
+# Single-screen editorial welcome — 2026-09-29
+
+Scope: replace the logged-out homepage's three-video tour with one interior photograph and the promise “Folio. Your new publishing team.” Explore Folio dismisses into the existing page. Preserve per-session dismissal, hide during authentication/loading, and provide keyboard/focus/mobile support. No deployment or publishing-flow changes.
+
+- [x] Inspect the current modal, repository guidance, shared primitives and existing photography.
+- [x] Implement the static photographic welcome and truthful single-screen telemetry.
+- [x] Verify desktop/mobile presentation, dismissal, keyboard access, authentication and storage failure.
+- [x] Review and commit the scoped change on a branch for review.
+
+Plan check-in: reuse existing Folio login photography and the already-installed Radix dialog primitive. Keep instructional content out of the welcome; existing marketing-page videos remain available.
+
+Review: replaced the tour with one still interior, canonical Folio typography, the publishing-team promise and an Explore dismissal. Reused the installed Radix dialog for focus trapping, Escape, backdrop dismissal and scroll locking. Existing session key is retained; blocked storage has an in-memory fallback. Telemetry reports frame 1 for the new CTA.
+
+Verification: seven browser checks passed against the actual component in a local Next.js fixture, using real brand CSS/fonts and the existing photograph served locally. Desktop (1440×1000), mobile (390×844 and 320×568) and landscape (667×375) were checked; focus restoration, auth/loading, remembered dismissal, blocked storage and failed imagery passed. Focused ESLint, strict fixture TypeScript and whitespace checks passed. The fixture mocks session state and image delivery; full application compile/typecheck:prepare/typecheck and integrated homepage verification were not run because this workspace only contains the scoped repository files. No baseline, deployment or production settings changed. Prepared on codex/editorial-welcome-modal for draft PR review.
+
+---
+
 # Interview resume screen and Start over — 2026-09-28
 
 Scope: simplify the Story/in-progress screen into one clear resume action, visible Start over, optional saved-answer review and contextual draft controls. Start over requires an in-product confirmation, resets interview-derived state atomically, and opens the first question. Preserve project assets and existing draft/publication. No production answer clearing by the agent and no schema migration.

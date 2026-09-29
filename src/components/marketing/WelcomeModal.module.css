@@ -1,0 +1,118 @@
+.backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 80;
+  background: rgb(0 0 0 / 38%);
+  backdrop-filter: blur(8px);
+}
+
+.panel {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  z-index: 81;
+  width: calc(100vw - 2rem);
+  max-width: 60rem;
+  max-height: calc(100svh - 2rem);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  transform: translate(-50%, -50%);
+  border-radius: 1rem;
+  background: var(--folio-text-primary);
+  color: white;
+  box-shadow: 0 24px 80px rgb(0 0 0 / 25%);
+}
+
+.cover {
+  position: relative;
+  display: flex;
+  align-items: flex-end;
+  min-height: min(40rem, calc(100svh - 2rem));
+  padding: 5rem 3rem 3rem;
+  isolation: isolate;
+}
+
+.photograph {
+  z-index: -2;
+  object-fit: cover;
+  object-position: 62% center;
+}
+
+.scrim {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: linear-gradient(90deg, rgb(0 0 0 / 64%), rgb(0 0 0 / 12%) 75%),
+    linear-gradient(0deg, rgb(0 0 0 / 45%), transparent 80%);
+}
+
+.copy { max-width: 28rem; }
+
+.title {
+  margin: 0;
+  color: white;
+  font-family: var(--font-headline);
+  font-size: var(--type-h1);
+  font-weight: var(--w-h1);
+  line-height: var(--lh-h1);
+  letter-spacing: var(--ls-tight);
+}
+
+.description {
+  max-width: 23rem;
+  margin: 1.25rem 0 1.75rem;
+  color: white;
+  font-family: var(--font-body);
+  font-size: var(--type-body);
+  font-weight: var(--w-body);
+  line-height: var(--lh-body);
+}
+
+.explore {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1.25rem;
+  min-height: 3rem;
+  padding: 0.75rem 1.5rem;
+  border-radius: 999px;
+  background: var(--surface-canvas);
+  color: var(--folio-text-primary);
+  font-family: var(--font-body);
+  font-size: var(--type-ui);
+  font-weight: var(--w-ui);
+  line-height: var(--lh-ui);
+}
+
+.explore:hover { background: var(--surface-ground); }
+
+.close {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  display: grid;
+  place-items: center;
+  width: 2.75rem;
+  height: 2.75rem;
+  border-radius: 50%;
+  background: rgb(0 0 0 / 45%);
+  color: white;
+}
+
+.close:hover { background: rgb(0 0 0 / 65%); }
+.explore:focus-visible, .close:focus-visible {
+  outline: 2px solid white;
+  outline-offset: 4px;
+}
+
+@media (max-width: 639px) {
+  .cover {
+    min-height: min(42rem, calc(100svh - 2rem));
+    padding: 5rem 1.5rem 2rem;
+  }
+  .title { font-size: var(--type-h2); line-height: var(--lh-h2); }
+  .photograph { object-position: 64% center; }
+  .scrim {
+    background: linear-gradient(0deg, rgb(0 0 0 / 84%), rgb(0 0 0 / 52%) 45%, rgb(0 0 0 / 8%) 85%);
+  }
+}
