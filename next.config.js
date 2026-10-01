@@ -129,7 +129,12 @@ const nextConfig = {
               "style-src 'self' 'unsafe-inline'",
               "img-src 'self' data: blob: https:",
               "font-src 'self'",
-              "connect-src 'self' blob: https://*.supabase.co wss://*.supabase.co https://api.openai.com https://api.anthropic.com https://api.stripe.com",
+              // Daily's bundled call-object loader fetches its CDN code; its
+              // signaling sockets use both *.wss and *-wss hostnames. Include
+              // the documented fallback domains without allowing arbitrary WSS.
+              "connect-src 'self' blob: https://*.supabase.co wss://*.supabase.co https://api.openai.com https://api.anthropic.com https://api.stripe.com https://*.daily.co https://*.dailywebrtc.com https://*.dailywebrtc.net https://prod-ks.pluot.blue wss://*.daily.co wss://*.dailywebrtc.com wss://*.dailywebrtc.net",
+              "worker-src 'self' blob:",
+              "media-src 'self' blob: https://*.supabase.co",
               "frame-ancestors 'none'",
             ].join('; '),
           },

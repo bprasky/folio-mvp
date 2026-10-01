@@ -5,6 +5,14 @@ import { assertLiveActor } from '@/lib/live-interview/store';
 import type { MediaRecord, MediaJob } from './types';
 import { MediaError } from './types';
 
+/** Catalog-only rollout check; existing archives stay available when creation flags are off. */
+export async function mediaSchemaReady(): Promise<boolean> {
+  const rows = await prisma.$queryRaw<{ ready: boolean }[]>`SELECT
+    to_regclass('public.live_interview_sessions') IS NOT NULL
+    AND to_regclass('public.interview_media_records') IS NOT NULL AS ready`;
+  return rows[0]?.ready === true;
+}
+
 export async function readMedia<T>(actor: string, id: string): Promise<MediaRecord<T>> {
   const row = (await prisma.$queryRaw<MediaRecord<T>[]>`SELECT * FROM interview_media_records WHERE id=${id} AND "actorId"=${actor}`)[0];
   if (!row) throw new MediaError('Media not found.', 404);

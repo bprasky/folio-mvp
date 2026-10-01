@@ -69,6 +69,8 @@ jobs:
           sudo apt-get install -y ffmpeg fonts-dejavu-core
           node scripts/check-live-interviews.cjs
           node scripts/check-live-adapters.cjs
+          node scripts/check-live-csp.cjs
+          node scripts/check-media-rollout.cjs
           npm run test:live:media
           npm run test:live:journey
       - name: Firm enrollment and posting permissions

@@ -85,6 +85,11 @@ deployment or migration resolve was run. Use safe migration commands only after
 separate database-application approval. Unexpected validation/history failures
 require restoring the backup and stopping.
 
+Release follow-up, 2026-10-01: after the founder's separate SQL approval, the
+exact reviewed migration was applied through the guarded `npm run migrate:deploy`
+command. The earlier schema-only approval and pending status above describe
+the implementation checkpoint, not the current production migration state.
+
 Rollback disables creation/export flags and the worker while preserving private
 tables, original chunks and accepted interview evidence. Do not drop user media
 as a rollout rollback.

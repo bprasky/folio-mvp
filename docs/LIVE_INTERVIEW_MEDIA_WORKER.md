@@ -6,7 +6,7 @@ leases remain private. Existing canonical interviews remain authoritative.
 The same recording can produce portrait, landscape or audio editions, each
 with an exact immutable edit plan and separate approval.
 
-## Required infrastructure (not deployed by this implementation)
+## Required infrastructure
 
 1. Review `prisma/migrations/20261001120000_live_interview_private_media/migration.sql`.
    It adds two private SQL tables, actor/session foreign keys, claim indexes and
@@ -14,8 +14,9 @@ with an exact immutable edit plan and separate approval.
    no generated delegate is needed at runtime. The companion Prisma model
    proposal was approved and applied to the branch schema; see
    `docs/LIVE_INTERVIEW_MEDIA_SCHEMA_REVIEW.md`. This
-   migration has **not** been applied to the existing database. The schema
-   recon was read-only; synthetic tests apply it twice to disposable PGlite.
+   migration was applied to production on 2026-10-01 after separate explicit
+   approval using `npm run migrate:deploy`. Synthetic tests also apply it
+   twice to disposable PGlite. Other environments need their own migration.
 2. Use the existing private Supabase bucket named `interview-media`.
    Keep public access **off**. Configure allowed MIME types `audio/webm`,
    `video/webm`, `audio/mp4`, `video/mp4` and a sufficient object size limit
@@ -32,7 +33,8 @@ with an exact immutable edit plan and separate approval.
    and export uses `FOLIO_INTERVIEW_MEDIA_EXPORTS=1`. Archived authorized
    previews remain accessible when flags are disabled.
 
-No production migration, flags, bucket change, deployment or paid test call
+Production migration application was separately approved and completed;
+creation flags remain off and the worker is not deployed. No paid test call
 was performed. Existing `npm run db:check` points to a missing
 `scripts/db-check.ts` in this checkout; this is a pre-existing setup gap.
 
@@ -88,7 +90,7 @@ npm run db:check
 ```
 
 Do not run `schema:push` on production. The approved branch schema and generated
-client include both new models; the shared database migration remains pending.
+client include both new models; the approved shared database migration was applied.
 Rollback is disabling the flags and stopping new jobs; preserve
 both private tables and stored media so accepted evidence is not deleted.
 

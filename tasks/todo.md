@@ -693,6 +693,8 @@ User approved merging and proceeding after adding the Tavus key to Production. R
 
 - [x] Inspect hosted failures; repair older component fixtures and pin the approved schema in the exact-scope guard without weakening assertions.
 - [x] Verify all 36 Publishing Studio scripts and schema scope/negative tests locally.
+- [x] Fix and browser-test the production CSP; verify missing-schema rollout and flags-off archive reads.
+- [x] Obtain separate SQL approval, verify production identity and apply the exact reviewed migration with the repository guard.
 - [ ] Verify hosted CI and merge PR #805.
 - [ ] Deploy the merged revision and verify public/authenticated route behavior.
 - [ ] Complete or explicitly report remaining migration, account allowlist, bucket, persistent worker and real device/provider acceptance requirements.

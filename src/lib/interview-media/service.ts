@@ -2,7 +2,7 @@ import 'server-only';
 import { z } from 'zod';
 import { getLiveSession } from '@/lib/live-interview/store';
 import { resolveMediaSource } from '@/lib/live-interview/adapters';
-import { createMedia, readMedia, listMedia, mutateMedia, enqueueMedia, cancelMediaJobs, publishedMedia, reservedSessionBytes } from './store';
+import { createMedia, readMedia, listMedia, mutateMedia, enqueueMedia, cancelMediaJobs, publishedMedia, reservedSessionBytes, mediaSchemaReady } from './store';
 import { assertCaptureStorageReady, chunkUpload, inspectChunk, signedPrivate, storageKey, assertStorageKey } from './storage';
 import { planDigest, planInput, validatePlanSources } from './plan';
 import { MediaError, captureMime, MAX_CAPTURE_BYTES, MAX_CAPTURE_MS, MAX_CHUNK_BYTES, MAX_CHUNKS } from './types';
@@ -119,6 +119,7 @@ export async function mediaEligibility(actor: string, record: MediaRecord<EditPl
   return { current, captures };
 }
 export async function mediaLibrary(actor: string, sessionId?: string) {
+  if (!await mediaSchemaReady()) throw new MediaError('Interview media is not available yet.', 503);
   const rows = await listMedia(actor, sessionId);
   const result: Record<string, unknown>[] = [];
   const contexts = new Map<string, Promise<Awaited<ReturnType<typeof resolveMediaSource>>>>();
