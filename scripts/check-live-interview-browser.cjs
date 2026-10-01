@@ -157,7 +157,11 @@ async function main() {
     for (const button of await page.$$('button')) if ((await button.evaluate(el => el.textContent)).trim() === text) { await button.click(); return; }
     throw new Error(`Missing button ${text}`);
   };
-  const text = value => page.waitForFunction(value => document.body.textContent.includes(value), {}, value);
+  const text = value => page.waitForFunction(value => document.body.innerText.includes(value), {}, value);
+  const callReady = () => page.waitForFunction(() => window.joined && window.dailyOptions && !window.left && !window.destroyed
+    && [...document.querySelectorAll('button')].some(button => button.textContent === 'End' && !button.disabled && button.getBoundingClientRect().height > 0));
+  const callEnded = () => page.waitForFunction(() => window.left && window.destroyed
+    && [...document.querySelectorAll('button')].some(button => ['Start with typed replies', 'Resume live interview'].includes(button.textContent) && !button.disabled && button.getBoundingClientRect().height > 0));
   const fillReply = value => page.$eval('textarea', (element, value) => {
     Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype, 'value').set.call(element, value);
     element.dispatchEvent(new Event('input', { bubbles: true }));
@@ -177,7 +181,7 @@ async function main() {
       assert.equal(runNumber, 0); await page.click('input[value="none"]');
     });
     await check('explicit no-recording start joins once and keeps camera off', async () => {
-      await click('Start live interview'); await page.waitForFunction(()=>window.joined && window.dailyOptions); assert.equal(starts, 1); assert.equal(runNumber, 0);
+      await click('Start live interview'); await callReady(); assert.equal(starts, 1); assert.equal(runNumber, 0);
       assert.equal(await page.evaluate(() => window.dailyOptions.videoSource), false);
       assert.equal(await page.evaluate(() => window.permissions.at(-1).video), false);
     });
@@ -270,7 +274,7 @@ async function main() {
       const before = { starts, captures: runNumber };
       await click('Type instead'); await text('Start with typed replies');
       assert.equal(starts, before.starts); assert.equal(await page.evaluate(() => window.permissions.length), 0);
-      await click('Start with typed replies'); await text('Microphone off · your interviewer still speaks');
+      await click('Start with typed replies'); await callReady(); await text('Microphone off · your interviewer still speaks');
       assert.equal(starts, before.starts + 1); assert.equal(runNumber, before.captures);
       assert.equal(await page.evaluate(() => window.permissions.length), 0);
       assert.equal(await page.evaluate(() => window.dailyOptions.audioSource), false);
@@ -283,18 +287,18 @@ async function main() {
       const mobile = await page.$eval('video[aria-label="Folio AI interviewer"]', element => ({ width: element.getBoundingClientRect().width, parent: element.closest('section').getBoundingClientRect().width }));
       assert.ok(mobile.width >= mobile.parent - 40, JSON.stringify(mobile));
       await page.screenshot({ path: path.join(out, 'primary-typed-mobile.png'), fullPage: true });
-      await click('End'); await page.waitForFunction(() => window.left && window.destroyed);
+      await click('End'); await callEnded();
       assert.equal(actionCalls.at(-1), 'end');
     });
     await check('restored unsent text never auto-joins or resends; unresolved submitted text remains retained', async () => {
-      await click('Start with typed replies'); await text('Microphone off · your interviewer still speaks');
+      await click('Start with typed replies'); await callReady(); await text('Microphone off · your interviewer still speaks');
       const reply = 'Restore this draft without sending it for me.';
       await fillReply(reply);
       const before = { starts, replies: providerReplies.length, registrations: textRegistrations.length };
       await page.reload(); await text('Start with typed replies');
       assert.equal(starts, before.starts); assert.equal(providerReplies.length, before.replies);
       assert.equal(await page.evaluate(() => window.permissions.length), 0);
-      await click('Start with typed replies'); await text('Microphone off · your interviewer still speaks');
+      await click('Start with typed replies'); await callReady(); await text('Microphone off · your interviewer still speaks');
       assert.equal(await page.$eval('textarea', element => element.value), reply);
       const delivered = page.waitForResponse(response => response.url().endsWith('/api/fixture/provider-respond'));
       await click('Send reply'); await delivered;
@@ -326,17 +330,17 @@ async function main() {
       const turn = live.turns.at(-1); turn.status = 'saved'; turn.response = 'The late save is confirmed.';
       live.snapshot = { ...live.snapshot, version: 'late-confirmed' };
       const replies = providerReplies.length;
-      await click('Start with typed replies'); await text('Microphone off · your interviewer still speaks');
+      await click('Start with typed replies'); await callReady(); await text('Microphone off · your interviewer still speaks');
       await page.waitForFunction(() => document.querySelector('textarea')?.value === '' && !document.querySelector('textarea')?.disabled);
       assert.equal(providerReplies.length, replies);
       assert.equal(await page.evaluate(scope => sessionStorage.getItem('folio.live.text.v1.' + scope), draftScope), null);
-      await click('End'); await page.waitForFunction(() => window.left && window.destroyed);
+      await click('End'); await callEnded();
     });
     await check('failed recording upload during Type instead preserves the call and resets the next start to no recording', async () => {
       recordingEnabled = true;
       await page.reload(); await text('Resume live interview');
       await page.click('input[value="audio"]'); await page.click('input[type="checkbox"]');
-      await click('Resume live interview'); await text('Recording your voice');
+      await click('Resume live interview'); await callReady(); await text('Recording your voice');
       const before = await page.evaluate(() => ({ calls: window.dailyCalls.length, permissions: window.permissions.length }));
       const captures = runNumber;
       uploadFailure = true;
@@ -345,12 +349,12 @@ async function main() {
       assert.equal(await page.evaluate(() => !!window.left || !!window.destroyed || window.micOn), false);
       assert.equal(await page.evaluate(() => window.dailyCalls.length), before.calls);
       assert.equal(await page.evaluate(() => window.dailyOptions.audioSource), false);
-      await click('End'); await page.waitForFunction(() => window.left && window.destroyed);
-      await click('Start with typed replies'); await text('Microphone off · your interviewer still speaks');
+      await click('End'); await callEnded();
+      await click('Start with typed replies'); await callReady(); await text('Microphone off · your interviewer still speaks');
       assert.equal(startRequests.at(-1).mode, 'none'); assert.equal(startRequests.at(-1).inputMode, 'text');
       assert.equal(await page.evaluate(() => window.permissions.length), before.permissions);
       assert.equal(runNumber, captures);
-      await click('End'); await page.waitForFunction(() => window.left && window.destroyed);
+      await click('End'); await callEnded();
       await page.evaluate(() => window.capture.discardStoredCaptures('live-fixture'));
       recordingEnabled = false;
     });
