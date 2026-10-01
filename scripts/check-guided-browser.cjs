@@ -1,5 +1,6 @@
 // Actual guided React UI + pure controller in a loopback-only fixture.
 // Preparation, transcription, persistence and generation transports are synthetic.
+// The live-first layout cases swap only the live transport panel for a lifecycle fixture.
 // No application env, auth cookie, production API or database is loaded.
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
@@ -51,6 +52,29 @@ async function build() {
   await esbuild.build({ stdin: { contents: entry, resolveDir: root, sourcefile: 'fixture.tsx', loader: 'tsx' }, bundle: true,
     outfile: path.join(fixtureOut, 'app.js'), platform: 'browser', jsx: 'automatic', alias: { '@': path.join(root, 'src') },
     define: { 'process.env.NODE_ENV': '"development"' }, plugins: [{ name: 'fixture-next', setup(build) {
+      build.onResolve({ filter: /^@\/components\/interviews\/LiveInterviewPanel$/ }, () => ({ path: 'live-panel', namespace: 'fixture-live' }));
+      build.onLoad({ filter: /.*/, namespace: 'fixture-live' }, () => ({ loader: 'jsx', resolveDir: root, contents: `
+        import React,{useEffect,useState} from 'react';
+        import {LiveInterviewPanel as ActualPanel} from ${JSON.stringify(path.join(root, 'src/components/interviews/LiveInterviewPanel.tsx'))};
+        function LifecyclePanel(props){
+          const[available,setAvailable]=useState(true),[active,setActive]=useState(false);
+          useEffect(()=>{window.livePanelMounts=(window.livePanelMounts||0)+1;return()=>{window.livePanelUnmounts=(window.livePanelUnmounts||0)+1}},[]);
+          useEffect(()=>{props.onAvailabilityChange?.(available)},[available,props.onAvailabilityChange]);
+          window.setLiveFixtureAvailability=setAvailable;
+          window.refreshLiveFixture=()=>props.onCanonicalChange?.();
+          const stop=()=>{setActive(false);props.onActiveChange?.(false)};
+          if(!available)return null;
+          return <div data-testid="live-layout-fixture" data-presentation={props.presentation} data-active={active}>
+            <p>Live interview fixture</p>
+            <button onClick={()=>{setActive(true);props.onActiveChange?.(true)}}>Start fixture live interview</button>
+            <button onClick={stop}>End fixture live interview</button>
+            <button onClick={()=>{stop();props.onOpenWorkspace?.()}}>Review saved answers</button>
+          </div>
+        }
+        export function LiveInterviewPanel(props){
+          return new URLSearchParams(location.search).has('live-layout')?<LifecyclePanel {...props}/>:<ActualPanel {...props}/>;
+        }
+      ` }));
       build.onResolve({ filter: /^(next\/navigation|next\/image)$/ }, args => ({ path: args.path, namespace: 'fixture' }));
       build.onLoad({ filter: /.*/, namespace: 'fixture' }, args => ({ loader: 'jsx', resolveDir: root, contents: args.path === 'next/navigation'
         ? 'export const useRouter=()=>({push:url=>{document.getElementById("destination").textContent=url},refresh:()=>{}});'
@@ -295,6 +319,62 @@ async function main() {
       assert.equal(saved.turns.at(-1).kind, 'confirmation'); assert.equal(saved.turns.at(-1).text, quote); assert.equal(saved.turns.at(-1).confirmationText, 'Yes!');
       await page.reload(); await page.waitForFunction(() => document.body.textContent.includes('Confirmed passage:'));
       assert.ok(await page.evaluate(() => document.body.textContent.includes('Yes!')), 'history shows the designer’s literal affirmation alongside its confirmed excerpt');
+    });
+    await capture('Enabled live interview is the primary workspace, with explicit saved-answer review and return', async () => {
+      saved = controller.createGuidedSession('fixture-project', prepared, 'live-layout-start');
+      await page.goto(base + '/?live-layout=1');
+      await page.waitForSelector('[data-testid="live-layout-fixture"]', { visible: true });
+      assert.equal(await page.$eval('[data-testid="live-layout-fixture"]', el => el.dataset.presentation), 'primary');
+      assert.equal(await page.$('#guided-response'), null, 'the legacy composer must not compete with live mode');
+      assert.equal(await page.$('[role="log"]'), null, 'the same question must not appear in a second chat panel');
+      assert.ok(await page.$('[aria-label="Next photograph"]'));
+      await clickText('Review saved answers'); await idle();
+      assert.ok(await page.$('#guided-response'));
+      await clickText('Return to live interview');
+      await page.waitForSelector('[data-testid="live-layout-fixture"]', { visible: true });
+      assert.equal(await page.$('#guided-response'), null);
+      assert.equal(await page.evaluate(() => window.microphoneStarts), 0, 'opening live mode does not start a microphone');
+    });
+    await capture('Canonical question preparation preserves the active live component and photo browsing', async () => {
+      await clickText('Start fixture live interview');
+      const mounts = await page.evaluate(() => window.livePanelMounts);
+      const active = saved.activeQuestionId;
+      saved = { ...saved, status: 'deciding', activeQuestionId: null, version: saved.version + 1 };
+      await page.evaluate(() => window.refreshLiveFixture());
+      assert.equal(await page.$eval('[data-testid="live-layout-fixture"]', el => el.dataset.active), 'true');
+      assert.equal(await page.evaluate(() => window.livePanelMounts), mounts);
+      assert.equal(await page.evaluate(() => window.livePanelUnmounts || 0), 0);
+      await page.click('[aria-label="Next photograph"]');
+      saved = { ...saved, status: 'active', activeQuestionId: active, version: saved.version + 1 };
+      await page.evaluate(() => window.refreshLiveFixture());
+      assert.equal(await page.evaluate(() => window.livePanelMounts), mounts);
+      await clickText('End fixture live interview');
+    });
+    await capture('Unsaved legacy replies stay visible and intact before returning to the live interview', async () => {
+      await clickText('Review saved answers'); await idle();
+      await fill('Keep this unsent response exactly as written.');
+      const question = saved.activeQuestionId;
+      await page.reload(); await idle();
+      assert.equal(await page.$eval('#guided-response', el => el.value), 'Keep this unsent response exactly as written.');
+      assert.equal(saved.activeQuestionId, question);
+      assert.equal(await page.$('[data-testid="live-layout-fixture"]'), null);
+      await fill('');
+      await page.waitForSelector('[data-testid="live-layout-fixture"]', { visible: true });
+      assert.equal(await page.$('#guided-response'), null);
+    });
+    await capture('Live unavailability falls back safely, and the primary panel fits on mobile', async () => {
+      await page.evaluate(() => window.setLiveFixtureAvailability(false)); await idle();
+      assert.ok(await page.$('#guided-response'));
+      await page.evaluate(() => window.setLiveFixtureAvailability(true));
+      await page.waitForSelector('[data-testid="live-layout-fixture"]', { visible: true });
+      await page.setViewport({ width: 390, height: 844 });
+      assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth));
+      const bounds = await page.$eval('[aria-label="Conversation with Folio"]', el => ({ top: el.getBoundingClientRect().top, bottom: el.getBoundingClientRect().bottom }));
+      assert.ok(bounds.top >= 0 && bounds.bottom <= 844, JSON.stringify(bounds));
+      saved = { ...saved, status: 'ready', activeQuestionId: null, version: saved.version + 1 };
+      await page.evaluate(() => window.refreshLiveFixture());
+      await page.waitForFunction(() => document.body.textContent.includes('Prepare editable draft'));
+      assert.equal(await page.$('[data-testid="live-layout-fixture"]'), null, 'finished questions return to the draft review');
     });
     assert.deepEqual(errors, []);
     fs.writeFileSync(path.join(out, 'browser-results.json'), JSON.stringify({ fixture: 'Actual React component + controller; synthetic API, model, microphone and memory persistence; no production data.', passed: results }, null, 2));

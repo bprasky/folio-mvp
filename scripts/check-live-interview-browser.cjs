@@ -5,11 +5,16 @@ const fs = require('node:fs');
 const path = require('node:path');
 const http = require('node:http');
 const esbuild = require('esbuild');
+const postcss = require('postcss');
+const tailwind = require('tailwindcss');
 const puppeteer = require('puppeteer-core');
 const root = path.resolve(__dirname, '..');
 const out = path.join(root, '.tmp/live-browser');
 const results = [];
 let starts = 0, enabled = true, eventCalls = [], actionCalls = [], uploadFailure = false, runNumber = 0;
+let draftScope = 'a'.repeat(64), liveOwnerScope = null, recordingEnabled = true;
+const startRequests = [], textRegistrations = [], providerReplies = [];
+let canonicalTextSaves = 0;
 const runs = new Map();
 const deniedRuns = new Set();
 const captureRequests = [];
@@ -22,6 +27,7 @@ import React from 'react'; import {createRoot} from 'react-dom/client';
 import {LiveInterviewPanel} from './src/components/interviews/LiveInterviewPanel';
 import * as capture from './src/lib/live-interview/capture';
 window.capture=capture; window.permissionDenied=false; window.permissions=[]; window.trackClones=[];
+window.dailyCalls=[];window.respondMessages=[];window.activeChanges=[];
 window.makeStream=()=>{const audio=new AudioContext(); const destination=audio.createMediaStreamDestination();
  const original=destination.stream.getAudioTracks()[0]; const clone=original.clone.bind(original);
  original.clone=()=>{const track=clone();window.trackClones.push(track);return track};return destination.stream;};
@@ -38,11 +44,23 @@ window.recoveryData=async()=>{const db=await new Promise((resolve,reject)=>{cons
 window.seedRecovery=async records=>{const db=await new Promise((resolve,reject)=>{const request=indexedDB.open('folio-private-live-capture',1);request.onsuccess=()=>resolve(request.result);request.onerror=()=>reject(request.error)});
  try{await new Promise((resolve,reject)=>{const tx=db.transaction(['runs','chunks'],'readwrite');for(const {run,chunks} of records){tx.objectStore('runs').put(run);for(const [index,text] of chunks.entries())tx.objectStore('chunks').put({runId:run.runId,index,blob:new Blob([text],{type:run.mimeType})})}tx.oncomplete=()=>resolve();tx.onerror=()=>reject(tx.error)})}finally{db.close()}};
 window.fixtureRoot=createRoot(document.getElementById('root'));
-window.fixtureRoot.render(<LiveInterviewPanel source={{kind:'project',id:'synthetic-project'}}/>);`;
+window.fixtureRoot.render(<LiveInterviewPanel source={{kind:'project',id:'synthetic-project'}} presentation="primary" onActiveChange={value=>window.activeChanges.push(value)}/>);`;
 const dailyFixture = `export default {createCallObject(options){window.dailyOptions=options;const handlers={};const call={
- on(name,handler){(handlers[name]??=[]).push(handler);return call},participants(){return{}},async join(){window.joined=true},
- setLocalAudio(value){window.micOn=value;return call},async leave(){window.left=true},async destroy(){window.destroyed=true}};
+ on(name,handler){(handlers[name]??=[]).push(handler);return call},participants(){return{}},async join(){window.joined=true;window.left=false;window.destroyed=false},
+ setLocalAudio(value){window.micOn=value;return call},async setInputDevicesAsync(input){Object.assign(window.dailyOptions,input)},
+ sendAppMessage(message,target){window.respondMessages.push({message,target});void fetch('/api/fixture/provider-respond',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(message)})},
+ async leave(){window.left=true},async destroy(){window.destroyed=true}};
+ window.dailyCalls.push(call);
  window.dailyCall=call;window.emitProvider=data=>(handlers['app-message']||[]).forEach(fn=>fn({data}));return call}};`;
+
+function completeTypedReplies() {
+  for (const reply of providerReplies) {
+    const turn = live?.turns.find(turn => turn.inputMode === 'text' && turn.raw === reply.properties.text && turn.status === 'awaiting_final');
+    if (!turn) continue;
+    turn.status = 'saved'; turn.response = 'What was the next design decision?'; canonicalTextSaves++;
+    live.snapshot = { ...live.snapshot, version: 'v' + (canonicalTextSaves + 1), currentQuestion: { id: 'q' + (canonicalTextSaves + 1), text: turn.response, sourceImageIds: [] } };
+  }
+}
 
 async function build() {
   fs.mkdirSync(out, { recursive: true });
@@ -52,14 +70,20 @@ async function build() {
       build.onResolve({ filter: /^@daily-co\/daily-js$/ }, () => ({ path: 'daily', namespace: 'fixture' }));
       build.onLoad({ filter: /.*/, namespace: 'fixture' }, () => ({ contents: dailyFixture, loader: 'js' }));
     } }] });
+  const config = require(path.join(root, 'tailwind.config.js'));
+  config.content = [path.join(root, 'src/components/interviews/LiveInterviewPanel.tsx')];
+  const globals = fs.readFileSync(path.join(root, 'src/app/globals.css'), 'utf8').replace(/@import\s+"([^"]+)";/g, (_, file) => file.startsWith('../styles/') ? fs.readFileSync(path.resolve(root, 'src/app', file), 'utf8') : '');
+  const css = (await postcss([tailwind(config)]).process(globals, { from: path.join(root, 'src/app/globals.css') })).css;
+  fs.writeFileSync(path.join(out, 'app.css'), css + '\n:root{--font-headline:Georgia;--font-body:Arial}');
 }
 function handler(req, res) {
   const url = new URL(req.url, 'http://fixture');
   const json = (value, code = 200) => { res.writeHead(code, { 'Content-Type': 'application/json' }); res.end(JSON.stringify(value)); };
   if (url.pathname === '/app.js') { res.setHeader('Content-Type', 'text/javascript'); fs.createReadStream(path.join(out, 'app.js')).pipe(res); return; }
-  if (!url.pathname.startsWith('/api/') && !url.pathname.startsWith('/storage/')) { res.end('<!doctype html><html><head><meta name="viewport" content="width=device-width,initial-scale=1"></head><body><main id="root"></main><script src="/app.js"></script></body></html>'); return; }
-  if (req.method === 'GET' && url.pathname === '/api/live-interviews') return json({ enabled, recordingEnabled: true });
-  if (req.method === 'GET' && url.pathname === '/api/live-interviews/live-fixture') return json(live);
+  if (url.pathname === '/app.css') { res.setHeader('Content-Type', 'text/css'); fs.createReadStream(path.join(out, 'app.css')).pipe(res); return; }
+  if (!url.pathname.startsWith('/api/') && !url.pathname.startsWith('/storage/')) { res.end('<!doctype html><html><head><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="stylesheet" href="/app.css"></head><body><main id="root" style="max-width:520px;margin:auto"></main><script src="/app.js"></script></body></html>'); return; }
+  if (req.method === 'GET' && url.pathname === '/api/live-interviews') return json({ enabled, recordingEnabled, draftScope });
+  if (req.method === 'GET' && url.pathname === '/api/live-interviews/live-fixture') return liveOwnerScope === draftScope ? json(live) : json({ error: 'Session unavailable' }, 404);
   const chunks = []; req.on('data', part => chunks.push(part)); req.on('end', () => {
     try {
       if (url.pathname.startsWith('/storage/')) {
@@ -69,15 +93,25 @@ function handler(req, res) {
         run.chunks[Number(index)].body = Buffer.concat(chunks); return json({ ok: true });
       }
       const body = JSON.parse(Buffer.concat(chunks).toString() || '{}');
+      if (url.pathname === '/api/fixture/provider-respond') { providerReplies.push(body); return json({ retained: true }); }
       if (url.pathname === '/api/live-interviews') {
-        starts++; live = { id: 'live-fixture', status: 'active', snapshot, turns: [], recordingEnabled: true,
+        starts++; startRequests.push(body); liveOwnerScope = draftScope; live = { id: 'live-fixture', status: 'active', snapshot: structuredClone(snapshot), turns: [], recordingEnabled,
           join: { url: 'https://synthetic.daily.co/fixture', token: 'synthetic-join-token', conversationId: 'synthetic-conversation' } };
         return json(live);
       }
       if (url.pathname === '/api/live-interviews/live-fixture') {
         actionCalls.push(body.action);
         if (body.action === 'event') eventCalls.push(body.event);
-        if (['end', 'pause', 'switch_to_text'].includes(body.action)) live.status = 'ended';
+        if (body.action === 'prepare_text') {
+          textRegistrations.push(body);
+          const prior = live.turns.find(turn => turn.requestId === body.requestId);
+          if (!prior) live.turns.push({ position: live.turns.length + 1, requestId: body.requestId, raw: body.text, inputMode: 'text', status: 'awaiting_final', questionId: body.questionId, receipt: 'synthetic-' + body.requestId });
+          return json({ ...live, textRegistration: { created: !prior, requestId: body.requestId } });
+        }
+        if (['end', 'pause', 'switch_to_text'].includes(body.action)) {
+          live.status = 'ended';
+          for (const turn of live.turns) if (turn.status === 'awaiting_final' && turn.inputMode === 'text') { turn.status = 'needs_review'; turn.error = 'Your typed answer is retained. Review it before continuing.'; }
+        }
         return json(live);
       }
       if (url.pathname === '/api/interview-media/capture') {
@@ -124,6 +158,10 @@ async function main() {
     throw new Error(`Missing button ${text}`);
   };
   const text = value => page.waitForFunction(value => document.body.textContent.includes(value), {}, value);
+  const fillReply = value => page.$eval('textarea', (element, value) => {
+    Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype, 'value').set.call(element, value);
+    element.dispatchEvent(new Event('input', { bubbles: true }));
+  }, value);
   try {
     await page.goto(base); await text('Start live interview');
     await check('page load neither opens microphone nor creates paid session', async () => {
@@ -152,15 +190,179 @@ async function main() {
       await page.waitForFunction(() => !!window.joined); await new Promise(resolve => setTimeout(resolve, 150));
       assert.equal(eventCalls.length, 1); assert.equal(eventCalls[0].properties.role, 'pal'); assert.equal(eventCalls[0].conversation_id, 'synthetic-conversation');
     });
-    await check('switch to text ends provider and releases call', async () => {
-      await click('Switch to text'); await page.waitForFunction(()=>window.destroyed && window.left && [...document.querySelectorAll('button')].some(button=>button.textContent==='Resume live interview'&&!button.disabled)); assert.ok(actionCalls.includes('switch_to_text'));
-      assert.equal(await page.evaluate(() => window.destroyed && window.left), true);
+    await check('Type instead releases the microphone and keeps the same call and avatar visible', async () => {
+      const before = await page.evaluate(() => { window.voiceTrack = window.dailyOptions.audioSource; window.avatarElement = document.querySelector('video[aria-label="Folio AI interviewer"]'); return { calls: window.dailyCalls.length, permissions: window.permissions.length }; });
+      await click('Type instead'); await text('Microphone off · your interviewer still speaks');
+      await page.waitForFunction(() => window.dailyOptions.audioSource === false);
+      assert.deepEqual(await page.evaluate(() => ({ calls: window.dailyCalls.length, permissions: window.permissions.length })), before);
+      assert.equal(await page.evaluate(() => window.voiceTrack.readyState), 'ended');
+      assert.equal(await page.evaluate(() => window.micOn), false);
+      assert.equal(await page.evaluate(() => !!window.left || !!window.destroyed), false);
+      assert.equal(await page.evaluate(() => window.avatarElement === document.querySelector('video[aria-label="Folio AI interviewer"]') && window.avatarElement.getBoundingClientRect().height > 0), true);
+      assert.equal(actionCalls.includes('switch_to_text'), false);
+    });
+    await check('typed replies register once, send exactly conversation.respond, and clear only after canonical confirmation', async () => {
+      const reply = 'The doorway set the rhythm of the whole room.';
+      const before = { registrations: textRegistrations.length, replies: providerReplies.length, saves: canonicalTextSaves };
+      await fillReply(reply);
+      const delivered = page.waitForResponse(response => response.url().endsWith('/api/fixture/provider-respond'));
+      await page.$eval('form', form => { form.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true })); form.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true })); });
+      await delivered;
+      assert.equal(textRegistrations.length, before.registrations + 1);
+      assert.equal(providerReplies.length, before.replies + 1);
+      assert.deepEqual(await page.evaluate(() => window.respondMessages.at(-1)), { message: { message_type: 'conversation', event_type: 'conversation.respond', conversation_id: 'synthetic-conversation', properties: { text: reply } }, target: '*' });
+      assert.equal(await page.$eval('textarea', element => element.value), reply);
+      assert.equal(await page.$eval('textarea', element => element.disabled), true);
+      assert.equal(live.turns.at(-1).status, 'awaiting_final'); assert.equal(canonicalTextSaves, before.saves);
+      completeTypedReplies(); completeTypedReplies();
+      await page.waitForFunction(() => document.querySelector('textarea')?.value === '' && !document.querySelector('textarea')?.disabled);
+      assert.equal(canonicalTextSaves, before.saves + 1);
+      assert.equal(live.turns.at(-1).raw, reply);
+      assert.equal(await page.evaluate(scope => sessionStorage.getItem('folio.live.text.v1.' + scope), draftScope), null);
+    });
+    await check('unsent text stays bound to its original question and blocks microphone re-entry', async () => {
+      const reply = 'This answer belongs to the question I started with.';
+      const original = structuredClone(live.snapshot);
+      await fillReply(reply);
+      assert.equal(await page.$$eval('button', buttons => buttons.find(button => button.textContent === 'Use microphone instead').disabled), true);
+      live.snapshot = { ...live.snapshot, version: 'v3', currentQuestion: { id: 'q3', text: 'A different question from another tab.', sourceImageIds: [] } };
+      await text('This draft was written for:');
+      assert.equal(await page.$eval('textarea', element => element.value), reply);
+      assert.equal(await page.$eval('button[type="submit"]', element => element.disabled), true);
+      const registered = textRegistrations.length;
+      await page.$eval('form', form => form.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true })));
+      await text('The question changed while you were typing.');
+      assert.equal(textRegistrations.length, registered);
+      const retained = await page.evaluate(scope => JSON.parse(sessionStorage.getItem('folio.live.text.v1.' + scope)), draftScope);
+      assert.equal(retained.questionId, original.currentQuestion.id); assert.equal(retained.version, original.version);
+      await click('Use this draft for the current question');
+      assert.equal(await page.$eval('button[type="submit"]', element => element.disabled), false);
+      assert.equal(await page.evaluate(scope => JSON.parse(sessionStorage.getItem('folio.live.text.v1.' + scope)).questionId, draftScope), 'q3');
+      await click('Clear unsent reply');
+      assert.equal(await page.$eval('textarea', element => element.value), '');
+    });
+    await check('voice re-entry requests consent; denial keeps the typed call available', async () => {
+      const before = await page.evaluate(() => ({ calls: window.dailyCalls.length, permissions: window.permissions.length }));
+      await page.evaluate(() => { window.permissionDenied = true; });
+      await click('Use microphone instead'); await text('Microphone permission denied.');
+      assert.equal(await page.evaluate(() => window.permissions.length), before.permissions + 1);
+      assert.equal(await page.evaluate(() => window.dailyCalls.length), before.calls);
+      assert.equal(await page.evaluate(() => !!window.left || !!window.destroyed || window.micOn), false);
+      assert.ok(await page.$('textarea'));
+      await page.evaluate(() => { window.permissionDenied = false; });
+      await click('Use microphone instead'); await text('Mute microphone');
+      assert.equal(await page.evaluate(() => window.permissions.length), before.permissions + 2);
+      assert.equal(await page.evaluate(() => window.dailyCalls.length), before.calls);
+      assert.equal(await page.evaluate(() => window.micOn), true);
+      assert.equal(await page.$('form textarea'), null);
     });
     await check('microphone permission loss ends the call and releases resources', async () => {
-      await click('Resume live interview');await page.waitForFunction(()=>window.dailyOptions.audioSource.readyState==='live');
+      await page.waitForFunction(()=>window.dailyOptions.audioSource.readyState==='live');
       await page.evaluate(()=>window.dailyOptions.audioSource.dispatchEvent(new Event('ended')));
       await text('Microphone access ended. The call stopped');
       assert.ok(actionCalls.includes('pause'));assert.equal(await page.evaluate(()=>window.dailyOptions.audioSource.readyState),'ended');
+    });
+    await check('explicit typed start creates no microphone or recording and End still releases the call', async () => {
+      recordingEnabled = false;
+      await page.evaluate(() => sessionStorage.clear()); await page.reload(); await text('Start live interview');
+      await page.setViewport({ width: 1280, height: 900 });
+      await page.screenshot({ path: path.join(out, 'primary-entry-desktop.png'), fullPage: true });
+      const before = { starts, captures: runNumber };
+      await click('Type instead'); await text('Start with typed replies');
+      assert.equal(starts, before.starts); assert.equal(await page.evaluate(() => window.permissions.length), 0);
+      await click('Start with typed replies'); await text('Microphone off · your interviewer still speaks');
+      assert.equal(starts, before.starts + 1); assert.equal(runNumber, before.captures);
+      assert.equal(await page.evaluate(() => window.permissions.length), 0);
+      assert.equal(await page.evaluate(() => window.dailyOptions.audioSource), false);
+      assert.equal(startRequests.at(-1).inputMode, 'text'); assert.equal(startRequests.at(-1).microphoneReady, false);
+      const desktop = await page.$eval('video[aria-label="Folio AI interviewer"]', element => ({ width: element.getBoundingClientRect().width, parent: element.closest('section').getBoundingClientRect().width }));
+      assert.ok(desktop.width >= desktop.parent - 40, JSON.stringify(desktop));
+      await page.screenshot({ path: path.join(out, 'primary-typed-desktop.png'), fullPage: true });
+      await page.setViewport({ width: 390, height: 844 });
+      assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth));
+      const mobile = await page.$eval('video[aria-label="Folio AI interviewer"]', element => ({ width: element.getBoundingClientRect().width, parent: element.closest('section').getBoundingClientRect().width }));
+      assert.ok(mobile.width >= mobile.parent - 40, JSON.stringify(mobile));
+      await page.screenshot({ path: path.join(out, 'primary-typed-mobile.png'), fullPage: true });
+      await click('End'); await page.waitForFunction(() => window.left && window.destroyed);
+      assert.equal(actionCalls.at(-1), 'end');
+    });
+    await check('restored unsent text never auto-joins or resends; unresolved submitted text remains retained', async () => {
+      await click('Start with typed replies'); await text('Microphone off · your interviewer still speaks');
+      const reply = 'Restore this draft without sending it for me.';
+      await fillReply(reply);
+      const before = { starts, replies: providerReplies.length, registrations: textRegistrations.length };
+      await page.reload(); await text('Start with typed replies');
+      assert.equal(starts, before.starts); assert.equal(providerReplies.length, before.replies);
+      assert.equal(await page.evaluate(() => window.permissions.length), 0);
+      await click('Start with typed replies'); await text('Microphone off · your interviewer still speaks');
+      assert.equal(await page.$eval('textarea', element => element.value), reply);
+      const delivered = page.waitForResponse(response => response.url().endsWith('/api/fixture/provider-respond'));
+      await click('Send reply'); await delivered;
+      assert.equal(textRegistrations.length, before.registrations + 1);
+      assert.equal(providerReplies.length, before.replies + 1);
+      const pendingStarts = starts;
+      await page.reload(); await text('Review this answer');
+      assert.equal(starts, pendingStarts); assert.equal(providerReplies.length, before.replies + 1);
+      assert.equal(textRegistrations.length, before.registrations + 1);
+      assert.equal(live.turns.at(-1).status, 'needs_review'); assert.equal(live.turns.at(-1).raw, reply);
+      assert.equal(await page.evaluate(scope => JSON.parse(sessionStorage.getItem('folio.live.text.v1.' + scope)).text, draftScope), reply);
+    });
+    await check('draft restoration is isolated to the account authorized by availability', async () => {
+      const originalScope = draftScope;
+      const retained = await page.evaluate(scope => sessionStorage.getItem('folio.live.text.v1.' + scope), originalScope);
+      assert.ok(retained);
+      draftScope = 'b'.repeat(64);
+      const before = starts;
+      await page.reload(); await text('Start live interview');
+      assert.equal(starts, before);
+      assert.equal(await page.evaluate(() => document.body.textContent.includes('Restore this draft without sending it for me.')), false);
+      assert.equal(await page.evaluate(scope => sessionStorage.getItem('folio.live.text.v1.' + scope), originalScope), retained);
+      assert.equal(await page.evaluate(scope => sessionStorage.getItem('folio.live.text.v1.' + scope), draftScope), null);
+      draftScope = originalScope;
+      await page.reload(); await text('Review this answer');
+      assert.equal(await page.evaluate(scope => JSON.parse(sessionStorage.getItem('folio.live.text.v1.' + scope)).text, draftScope), JSON.parse(retained).text);
+    });
+    await check('a previous reply confirmed after End is cleared before starting another call', async () => {
+      const turn = live.turns.at(-1); turn.status = 'saved'; turn.response = 'The late save is confirmed.';
+      live.snapshot = { ...live.snapshot, version: 'late-confirmed' };
+      const replies = providerReplies.length;
+      await click('Start with typed replies'); await text('Microphone off · your interviewer still speaks');
+      await page.waitForFunction(() => document.querySelector('textarea')?.value === '' && !document.querySelector('textarea')?.disabled);
+      assert.equal(providerReplies.length, replies);
+      assert.equal(await page.evaluate(scope => sessionStorage.getItem('folio.live.text.v1.' + scope), draftScope), null);
+      await click('End'); await page.waitForFunction(() => window.left && window.destroyed);
+    });
+    await check('failed recording upload during Type instead preserves the call and resets the next start to no recording', async () => {
+      recordingEnabled = true;
+      await page.reload(); await text('Resume live interview');
+      await page.click('input[value="audio"]'); await page.click('input[type="checkbox"]');
+      await click('Resume live interview'); await text('Recording your voice');
+      const before = await page.evaluate(() => ({ calls: window.dailyCalls.length, permissions: window.permissions.length }));
+      const captures = runNumber;
+      uploadFailure = true;
+      await click('Type instead'); await text('Recording needs attention');
+      await text('Microphone off · your interviewer still speaks');
+      assert.equal(await page.evaluate(() => !!window.left || !!window.destroyed || window.micOn), false);
+      assert.equal(await page.evaluate(() => window.dailyCalls.length), before.calls);
+      assert.equal(await page.evaluate(() => window.dailyOptions.audioSource), false);
+      await click('End'); await page.waitForFunction(() => window.left && window.destroyed);
+      await click('Start with typed replies'); await text('Microphone off · your interviewer still speaks');
+      assert.equal(startRequests.at(-1).mode, 'none'); assert.equal(startRequests.at(-1).inputMode, 'text');
+      assert.equal(await page.evaluate(() => window.permissions.length), before.permissions);
+      assert.equal(runNumber, captures);
+      await click('End'); await page.waitForFunction(() => window.left && window.destroyed);
+      await page.evaluate(() => window.capture.discardStoredCaptures('live-fixture'));
+      recordingEnabled = false;
+    });
+    await check('an inactive unsent draft can be cleared without starting a call or microphone', async () => {
+      await page.evaluate(scope => sessionStorage.setItem('folio.live.text.v1.' + scope, JSON.stringify({ text: 'Clear this before joining.', questionId: 'q1', version: 'v1', questionText: 'What shaped this room?' })), draftScope);
+      const before = starts;
+      await page.reload(); await text('Clear this before joining.');
+      assert.ok(await page.$('[aria-label="Unsent typed reply"]'));
+      await click('Clear unsent reply');
+      assert.equal(starts, before); assert.equal(await page.evaluate(() => window.permissions.length), 0);
+      assert.equal(await page.evaluate(scope => JSON.parse(sessionStorage.getItem('folio.live.text.v1.' + scope)).text, draftScope), '');
+      assert.equal(await page.$('[aria-label="Unsent typed reply"]'), null);
     });
     await check('capture final chunk uploads before finalize; clones stop independently', async () => {
       const runId = await page.evaluate(async () => {

@@ -3,7 +3,7 @@
 const assert=require('node:assert/strict');
 const fs=require('node:fs');const path=require('node:path');const vm=require('node:vm');const ts=require('typescript');
 const root=path.resolve(__dirname,'..');
-let sessions,approved,workspace,sourceAllowed,saves,providerCalls,saveFailure,providerFailure,storageReady,failReceiptOnce,canonicalIndex;
+let sessions,approved,workspace,sourceAllowed,saves,providerCalls,saveFailure,providerFailure,storageReady,failReceiptOnce,canonicalIndex,routeActor='owner';
 const env={NODE_ENV:'test',FOLIO_LIVE_INTERVIEWS:'1',FOLIO_LIVE_ALLOWLIST:'owner,other',FOLIO_INTERVIEW_RECORDING:'1',FOLIO_LIVE_BASE_URL:'https://folio.test',NEXTAUTH_SECRET:'synthetic-session-secret',TAVUS_API_KEY:'synthetic-provider-key'};
 const clone=structuredClone;const cache=new Map();
 function snapshot(index=1){return {source:{kind:'project',id:'project'},interviewId:'canonical',version:String(index),status:'active',currentQuestion:{id:`q${index}`,text:`Question ${index}?`,sourceImageIds:[]},sourceRefs:[],state:{schemaVersion:1,skipped:[],receipts:{},native:{rooms:[{id:'room',imageIds:['image-one','image-two']}]}}};}
@@ -13,6 +13,10 @@ const mocks={
  '@/lib/rateLimit':{checkRateLimit:async()=>({success:true})},
  '@/lib/publishing-studio/data':{resolvePublishingStudioContext:async()=>({id:workspace})},
  '@/lib/interview-media/storage':{assertCaptureStorageReady:async()=>{if(!storageReady)throw Error('private storage unavailable');}},
+ '@/lib/live-interview/http':{
+  assertLiveBrowserActor:async()=>{if(!routeActor)throw Error('Sign in required');return routeActor;},
+  readLiveJson:request=>request.json(),liveResponse:value=>Response.json(value),liveFailure:error=>Response.json({error:error.message},{status:error.status||503}),
+ },
 };
 const store={
  createLiveSession:async(input)=>{
@@ -52,7 +56,7 @@ async function fakeFetch(url,options={}){
 }
 function load(file){
  const resolved=path.resolve(root,file);if(cache.has(resolved))return cache.get(resolved).exports;
- const module={exports:{}};cache.set(resolved,module);
+ const compiled={exports:{}};cache.set(resolved,compiled);
  const code=ts.transpileModule(fs.readFileSync(resolved,'utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022}}).outputText;
  const requireLocal=(name)=>{
   if(mocks[name])return mocks[name];
@@ -62,12 +66,14 @@ function load(file){
   if(target)return load(path.relative(root,target+'.ts'));
   return require(name);
  };
- vm.runInNewContext(`(function(require,module,exports){${code}\n})`,{process:{env},Buffer,URL,Response,Request,AbortSignal,structuredClone,Date,console,fetch:fakeFetch,setTimeout,clearTimeout})(requireLocal,module,module.exports);
- return module.exports;
+ vm.runInNewContext(`(function(require,module,exports){${code}\n})`,{process:{env},Buffer,URL,Response,Request,AbortSignal,structuredClone,Date,console,fetch:fakeFetch,setTimeout,clearTimeout})(requireLocal,compiled,compiled.exports);
+ return compiled.exports;
 }
 const service=load('src/lib/live-interview/service.ts');const turns=load('src/lib/live-interview/turns.ts');const provider=load('src/lib/live-interview/provider.ts');const config=load('src/lib/live-interview/config.ts');
-function reset(){sessions=new Map();approved=true;workspace='org';sourceAllowed=true;saves=[];providerCalls=[];saveFailure=false;providerFailure=false;storageReady=true;failReceiptOnce=false;canonicalIndex=1;providerState.clear();env.FOLIO_LIVE_INTERVIEWS='1';}
+function reset(){sessions=new Map();approved=true;workspace='org';sourceAllowed=true;saves=[];providerCalls=[];saveFailure=false;providerFailure=false;storageReady=true;failReceiptOnce=false;canonicalIndex=1;routeActor='owner';providerState.clear();env.FOLIO_LIVE_INTERVIEWS='1';}
 const start=()=>service.startLiveSession('owner',{source:{kind:'project',id:'project'},requestId:'synthetic-start-request',mode:'none',consentVersion:'2026-10-01',microphoneReady:true});
+const startText=()=>service.startLiveSession('owner',{source:{kind:'project',id:'project'},requestId:'synthetic-text-start',mode:'none',consentVersion:'2026-10-01',inputMode:'text'});
+const textInput=(session,text='Typed answer.',requestId='synthetic-typed-answer')=>({requestId,text,questionId:session.snapshot.currentQuestion.id,version:session.snapshot.version});
 function event(seq,event_type,role,speech,interrupted=false,inference_id='inference'){return {message_type:'conversation',conversation_id:'conversation',seq,event_type,inference_id,properties:{role,...(speech===undefined?{}:{speech}),interrupted}};}
 async function deliver(id,index,offset,raw='Yes.'){
  await service.receiveLiveEvent('owner',id,event(offset+1,'conversation.utterance','pal',`Question ${index}?`,false,`inference-${index}`));
@@ -82,6 +88,120 @@ test('disabled beta, unauthorized source, unapproved account prevent paid calls'
 test('explicit readiness and recording consent required; private storage checked before paid creation',async()=>{
  for(const patch of [{microphoneReady:false},{mode:'invalid'},{consentVersion:'old'}])await assert.rejects(()=>service.startLiveSession('owner',{source:{kind:'project',id:'project'},requestId:'synthetic-start-request',mode:'none',consentVersion:'2026-10-01',microphoneReady:true,...patch}));
  storageReady=false;await assert.rejects(()=>service.startLiveSession('owner',{source:{kind:'project',id:'project'},requestId:'synthetic-start-request',mode:'audio',consentVersion:'2026-10-01',microphoneReady:true}));assert.equal(providerCalls.length,0);
+});
+
+test('typed start needs consent and no recording but never needs a microphone or storage worker',async()=>{
+ const base={source:{kind:'project',id:'project'},requestId:'synthetic-text-start',mode:'none',consentVersion:'2026-10-01',inputMode:'text'};
+ for(const patch of [{mode:'audio'},{mode:'video'},{consentVersion:'old'},{inputMode:'invalid'}])await assert.rejects(()=>service.startLiveSession('owner',{...base,...patch}));
+ assert.equal(providerCalls.length,0);
+ storageReady=false;const a=await startText();assert(a.join);assert.equal(a.consent.mode,'none');assert.equal(saves.length,0);
+});
+
+test('typed draft scope is issued only after fresh availability authorization and separates actors and sources',async()=>{
+ const source={kind:'project',id:'project'},a=await service.liveAvailability('owner',source);
+ assert.match(a.draftScope,/^[a-f0-9]{64}$/);assert.equal((await service.liveAvailability('owner',source)).draftScope,a.draftScope);
+ assert.notEqual((await service.liveAvailability('other',source)).draftScope,a.draftScope);
+ assert.notEqual((await service.liveAvailability('owner',{...source,id:'other-project'})).draftScope,a.draftScope);
+ sourceAllowed=false;await assert.rejects(()=>service.liveAvailability('owner',source));sourceAllowed=true;
+ env.FOLIO_LIVE_INTERVIEWS='0';assert.equal((await service.liveAvailability('owner',source)).draftScope,undefined);
+});
+
+test('typed registration is explicit and idempotent; only exact provider callback writes canonical text',async()=>{
+ const a=await startText(),input=textInput(a);
+ const first=await service.prepareLiveText('owner',a.id,input);assert.equal(first.textRegistration.created,true);assert.equal(first.textRegistration.position,1);
+ assert.equal(first.turns[0].requestId,input.requestId);assert.equal(first.turns[0].inputMode,'text');assert.equal(first.turns[0].version,a.snapshot.version);assert.equal(saves.length,0);
+ assert.equal((await service.prepareLiveText('owner',a.id,input)).textRegistration.created,false,'same receipt never authorizes a blind resend');
+ await assert.rejects(()=>service.controlLiveSession('owner',a.id,{action:'skip',questionId:'q1',requestId:'control-pending-text'}));
+ assert.equal(await service.processBackendTurn(sessions.get(a.id),[input.text]),'Question 2?');
+ assert.equal(await service.processBackendTurn(sessions.get(a.id),[input.text]),'Question 2?');
+ assert.equal(saves.length,1);assert.equal(saves[0].inputModality,'text');assert.equal(saves[0].questionId,'q1');
+ assert.equal(sessions.get(a.id).payload.turnState.events.length,0,'typed text never fabricates speech delivery');
+ const replay=await service.prepareLiveText('owner',a.id,input);assert.equal(replay.textRegistration.created,false);assert.equal(replay.textRegistration.status,'saved');
+});
+
+test('prepare_text route keeps owner and same-origin boundaries and never writes a canonical answer',async()=>{
+ const a=await startText(),input=textInput(a),route=load('src/app/api/live-interviews/[id]/route.ts');
+ const invoke=origin=>route.POST(new Request(`https://folio.test/api/live-interviews/${a.id}`,{method:'POST',headers:{origin,'content-type':'application/json'},body:JSON.stringify({action:'prepare_text',...input})}),{params:{id:a.id}});
+ assert.equal((await invoke('https://evil.test')).status,403);
+ routeActor='other';assert.equal((await invoke('https://folio.test')).status,404);routeActor='owner';
+ const response=await invoke('https://folio.test');assert.equal(response.status,200);assert.equal((await response.json()).textRegistration.created,true);assert.equal(saves.length,0);
+});
+
+test('typed registration rejects stale input, reused receipts, pending speech and fresh permission failures',async()=>{
+ const a=await startText(),input=textInput(a);
+ for(const patch of [{text:' '},{text:'x'.repeat(2001)},{questionId:'stale'},{version:'stale'},{requestId:'bad'}])await assert.rejects(()=>service.prepareLiveText('owner',a.id,{...input,...patch}));
+ await assert.rejects(()=>service.prepareLiveText('other',a.id,input));
+ sourceAllowed=false;await assert.rejects(()=>service.prepareLiveText('owner',a.id,input));sourceAllowed=true;
+ workspace='other';await assert.rejects(()=>service.prepareLiveText('owner',a.id,input));workspace='org';
+ env.FOLIO_LIVE_INTERVIEWS='0';await assert.rejects(()=>service.prepareLiveText('owner',a.id,input));env.FOLIO_LIVE_INTERVIEWS='1';
+ await deliver(a.id,1,0,'Unresolved spoken answer.');
+ await assert.rejects(()=>service.prepareLiveText('owner',a.id,input),/spoken answer/);
+ assert.equal(saves.length,0);assert.equal(sessions.get(a.id).payload.turnState.turns.length,0);
+ await service.processBackendTurn(sessions.get(a.id),['Unresolved spoken answer.']);
+ const current=await service.readLiveSession('owner',a.id),next=textInput(current);
+ await service.prepareLiveText('owner',a.id,next);
+ await assert.rejects(()=>service.prepareLiveText('owner',a.id,{...next,text:'Changed text.'}),/receipt/);
+ await assert.rejects(()=>service.prepareLiveText('owner',a.id,{...next,requestId:'different-pending-text'}),/pending answer/);
+});
+
+test('typed callbacks reject mismatched/reordered history while preserving the exact registered answer',async()=>{
+ const a=await startText(),input=textInput(a);await service.prepareLiveText('owner',a.id,input);
+ await assert.rejects(()=>service.processBackendTurn(sessions.get(a.id),['Different text.']));
+ await assert.rejects(()=>service.processBackendTurn(sessions.get(a.id),[input.text,'Unexpected later turn.']));
+ assert.equal(saves.length,0);assert.equal(sessions.get(a.id).payload.turnState.turns[0].raw,input.text);
+ await service.processBackendTurn(sessions.get(a.id),[input.text]);assert.equal(saves.length,1);
+});
+
+test('typed and voice answers share natural progression and keep their own source modality',async()=>{
+ const a=await startText();await service.prepareLiveText('owner',a.id,textInput(a,'Repeated words.'));
+ await service.processBackendTurn(sessions.get(a.id),['Repeated words.']);
+ await deliver(a.id,2,10,'Spoken answer.');await service.processBackendTurn(sessions.get(a.id),['Repeated words.','Spoken answer.']);
+ const current=await service.readLiveSession('owner',a.id);await service.prepareLiveText('owner',a.id,textInput(current,'Repeated words.','synthetic-typed-third'));
+ await service.processBackendTurn(sessions.get(a.id),['Repeated words.','Spoken answer.','Repeated words.']);
+ assert.deepEqual(saves.map(save=>save.inputModality||'voice'),['text','voice','text']);assert.deepEqual(saves.map(save=>save.questionId),['q1','q2','q3']);
+ assert.equal(new Set(saves.map(save=>save.requestId)).size,3);
+});
+
+test('a typed user-utterance echo cannot supply evidence for a later voice answer with identical words',async()=>{
+ const a=await startText();
+ await service.receiveLiveEvent('owner',a.id,event(1,'conversation.utterance','pal','Question 1?',false,'first-question'));
+ await service.receiveLiveEvent('owner',a.id,event(2,'conversation.stopped_speaking','pal',undefined,false,'first-question'));
+ await service.prepareLiveText('owner',a.id,textInput(a,'Same words.'));
+ await service.receiveLiveEvent('owner',a.id,event(3,'conversation.utterance','user','Same words.'));
+ await service.processBackendTurn(sessions.get(a.id),['Same words.']);
+ await deliver(a.id,2,10,'Same words.');
+ const interrupted=clone(sessions.get(a.id).payload.turnState);interrupted.speech.at(-1).delivered=false;
+ assert.equal(turns.finalSpeechForTurn(interrupted,{position:2,raw:'Same words.'}),undefined,'an older delivered question cannot substitute for the current interrupted question');
+ await service.processBackendTurn(sessions.get(a.id),['Same words.','Same words.']);
+ assert.equal(saves.length,2);assert.equal(saves[1].questionId,'q2');assert.equal(saves[1].inputModality,undefined);
+ assert.equal(sessions.get(a.id).payload.turnState.turns[1].eventSeq,14,'voice binds only to the utterance after its own delivered question');
+});
+
+test('ending or expiring before a typed callback retains review and prevents another paid start',async()=>{
+ const a=await startText(),input=textInput(a);await service.prepareLiveText('owner',a.id,input);
+ const ended=await service.endLiveSession('owner',a.id,'end');assert.equal(ended.turns[0].status,'needs_review');assert.equal(ended.turns[0].raw,input.text);
+ const resumed=await startText();assert.equal(resumed.id,a.id);assert.equal(resumed.turns[0].requestId,input.requestId);assert.equal(resumed.join,undefined);
+ assert.equal(providerCalls.filter(call=>call.url.endsWith('/conversations')&&call.method==='POST').length,1);
+ await service.recoverLiveTurn('owner',a.id,{turnPosition:1,target:'current',text:input.text});assert.equal(saves[0].inputModality,'text');assert.equal(saves[0].text,input.text);
+ reset();const expired=await startText();await service.prepareLiveText('owner',expired.id,textInput(expired));sessions.get(expired.id).expiresAt=new Date(0);
+ assert.equal((await service.readLiveSession('owner',expired.id)).turns[0].status,'needs_review');
+});
+
+test('a crashed typed save retains its receipt and blocks new calls until the save lease can be reviewed',async()=>{
+ const a=await startText(),input=textInput(a);await service.prepareLiveText('owner',a.id,input);
+ const turn=sessions.get(a.id).payload.turnState.turns[0];turn.status='saving';turn.leaseUntil=Date.now()+120_000;
+ await service.endLiveSession('owner',a.id,'end');const pending=await startText();assert.equal(pending.id,a.id);assert.equal(pending.turns[0].status,'saving');
+ sessions.get(a.id).payload.turnState.turns[0].leaseUntil=0;
+ const review=await service.readLiveSession('owner',a.id);assert.equal(review.turns[0].status,'needs_review');assert.equal(review.turns[0].requestId,input.requestId);
+ assert.equal(providerCalls.filter(call=>call.url.endsWith('/conversations')&&call.method==='POST').length,1);
+});
+
+test('typed canonical drift and a lost transport receipt retain recoverable text without duplicate canonical saves',async()=>{
+ const a=await startText(),input=textInput(a);await service.prepareLiveText('owner',a.id,input);canonicalIndex=2;
+ await service.processBackendTurn(sessions.get(a.id),[input.text]);assert.equal(saves.length,0);assert.equal(sessions.get(a.id).payload.turnState.turns[0].status,'needs_review');
+ reset();const b=await startText(),second=textInput(b);await service.prepareLiveText('owner',b.id,second);failReceiptOnce=true;
+ await service.processBackendTurn(sessions.get(b.id),[second.text]);assert.equal(saves.length,1);
+ await service.recoverLiveTurn('owner',b.id,{turnPosition:1,target:'current',text:second.text});assert.equal(saves.length,1);assert.equal(saves[0].inputModality,'text');
 });
 test('start reserves once, secret backend token excluded, join token encrypted, first question once',async()=>{
  const a=await start();const b=await start();assert.equal(a.id,b.id);assert.equal(providerCalls.filter(c=>c.url.endsWith('/conversations')).length,1);

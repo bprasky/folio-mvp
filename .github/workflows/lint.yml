@@ -63,6 +63,11 @@ jobs:
       - run: npm run test:core
       - name: Guided interview regression checks
         run: npm run test:guided
+      - name: Live and guided browser regression checks
+        run: |
+          export GUIDED_TEST_BROWSER="$(command -v google-chrome || command -v chromium)"
+          node scripts/check-live-interview-browser.cjs
+          npm run test:guided:browser
       - name: Live interview and playable media regression checks
         run: |
           sudo apt-get update

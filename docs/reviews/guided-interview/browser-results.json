@@ -16,6 +16,10 @@
     "Partial completion offers an editable draft and never publishes",
     "A partial finished interview resumes its remaining prepared question",
     "Skipping every remaining question still discloses shorter coverage",
-    "Covered topics require explicit confirmation of the original answer, with retained reaction and attribution"
+    "Covered topics require explicit confirmation of the original answer, with retained reaction and attribution",
+    "Enabled live interview is the primary workspace, with explicit saved-answer review and return",
+    "Canonical question preparation preserves the active live component and photo browsing",
+    "Unsaved legacy replies stay visible and intact before returning to the live interview",
+    "Live unavailability falls back safely, and the primary panel fits on mobile"
   ]
 }

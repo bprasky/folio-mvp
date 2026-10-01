@@ -21,4 +21,5 @@ export interface LiveAdapterSnapshot {
 export interface LiveAdapterCommand {
   action: 'answer' | 'correct' | 'skip' | 'reuse' | 'pause' | 'resume' | 'retry' | 'finish';
   requestId: string; questionId?: string; text?: string; confirmPartial?: boolean; selectedImageId?: string;
+  inputModality?: 'voice' | 'text';
 }

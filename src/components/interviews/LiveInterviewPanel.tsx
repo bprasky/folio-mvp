@@ -10,8 +10,10 @@ interface LiveState {
   id: string; status: string; snapshot?: Omit<LiveAdapterSnapshot, 'state'>; turns?: LiveTurn[]; notice?: string;
   join?: { url: string; token: string; conversationId: string }; recordingEnabled?: boolean;
 }
-interface Props { source: LiveSource; onCanonicalChange?: (snapshot?: Omit<LiveAdapterSnapshot,'state'>) => void; onActiveChange?: (active: boolean) => void; beforeStart?: () => Promise<void>; selectedImageId?:string|null; onSessionChange?:(id:string)=>void }
+interface Props { source: LiveSource; onCanonicalChange?: (snapshot?: Omit<LiveAdapterSnapshot,'state'>) => void; onActiveChange?: (active: boolean) => void; beforeStart?: () => Promise<void>; selectedImageId?:string|null; onSessionChange?:(id:string)=>void;
+  presentation?: 'compact' | 'primary'; onAvailabilityChange?: (available: boolean) => void; onOpenWorkspace?: () => void }
 type Mode = 'none' | 'audio' | 'video';
+type TypedQuestion = { questionId: string; version: string; questionText: string };
 const button = 'rounded-sm border border-border px-3 py-2 text-folio-meta font-medium hover:bg-surface-ground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-folio-gold disabled:cursor-not-allowed disabled:opacity-50';
 const object = (value: unknown): Record<string, unknown> => value && typeof value === 'object' && !Array.isArray(value) ? value as Record<string, unknown> : {};
 
@@ -24,7 +26,7 @@ async function liveRequest<T>(path: string, body?: unknown): Promise<T> {
 }
 
 /** Embedded in each existing interview; never starts a paid call on mount. */
-export function LiveInterviewPanel({ source, onCanonicalChange, onActiveChange, beforeStart, selectedImageId, onSessionChange }: Props) {
+export function LiveInterviewPanel({ source, onCanonicalChange, onActiveChange, beforeStart, selectedImageId, onSessionChange, presentation = 'compact', onAvailabilityChange, onOpenWorkspace }: Props) {
   const fieldId = useId();
   const sourceKey = JSON.stringify(source);
   const [available, setAvailable] = useState(false);
@@ -43,6 +45,11 @@ export function LiveInterviewPanel({ source, onCanonicalChange, onActiveChange, 
   const [recordingMessage, setRecordingMessage] = useState('');
   const [recovery, setRecovery] = useState<{ position: number; text: string; target: 'current' | 'previous' } | null>(null);
   const [audioBlocked, setAudioBlocked] = useState(false);
+  const [inputMode, setInputMode] = useState<'voice' | 'text'>('voice');
+  const [typedDraft, setTypedDraft] = useState('');
+  const [typedQuestion, setTypedQuestion] = useState<TypedQuestion | null>(null);
+  const typedReceipt = useRef<{ requestId: string; text: string } | null>(null);
+  const typedStorageKey = useRef<string | null>(null);
   const stateRef = useRef<LiveState | null>(null);
   const callRef = useRef<DailyCall | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
@@ -54,8 +61,8 @@ export function LiveInterviewPanel({ source, onCanonicalChange, onActiveChange, 
   const eventTail = useRef(Promise.resolve());
   const eventBacklog = useRef(0);
   const eventKeys = useRef(new Set<string>());
-  const callbacks = useRef({ onCanonicalChange, onActiveChange, onSessionChange });
-  callbacks.current = { onCanonicalChange, onActiveChange, onSessionChange };
+  const callbacks = useRef({ onCanonicalChange, onActiveChange, onSessionChange, onAvailabilityChange, onOpenWorkspace });
+  callbacks.current = { onCanonicalChange, onActiveChange, onSessionChange, onAvailabilityChange, onOpenWorkspace };
   const remoteVideo = useRef<HTMLVideoElement>(null);
   const remoteAudio = useRef<HTMLAudioElement>(null);
   const localVideo = useRef<HTMLVideoElement>(null);
@@ -67,6 +74,11 @@ export function LiveInterviewPanel({ source, onCanonicalChange, onActiveChange, 
     stateRef.current = { ...stateRef.current, ...next };
     if (!mounted.current) return;
     setState(stateRef.current);
+    const receipt = typedReceipt.current;
+    if (receipt && next.turns?.some(turn => turn.requestId === receipt.requestId && turn.status === 'saved')) {
+      typedReceipt.current = null; setTypedDraft(''); setTypedQuestion(null);
+      try { if (typedStorageKey.current) sessionStorage.removeItem(typedStorageKey.current); } catch { /* saved on server */ }
+    }
     callbacks.current.onSessionChange?.(next.id);
     // Only an opaque Folio identifier is retained; joining secrets stay in memory.
     try { sessionStorage.setItem(`folio.live.session.${mountedSource.current}`, next.id); } catch { /* server reservation still prevents duplicate calls */ }
@@ -112,16 +124,33 @@ export function LiveInterviewPanel({ source, onCanonicalChange, onActiveChange, 
   useEffect(() => {
     let cancelled = false;
     setAvailable(false);
+    callbacks.current.onAvailabilityChange?.(false);
+    typedStorageKey.current = null;
     void purgeExpiredCaptures().catch(()=>{});
     void (async () => {
       if (mountedSource.current !== sourceKey) {
         await endRef.current('end');
         if (cancelled) return;
         mountedSource.current = sourceKey; startKey.current = null; stateRef.current = null; captureRef.current = null;
-        setState(null); setMode('none'); setConsent(false); setRecording(null); setRecovery(null);
+        setState(null); setMode('none'); setConsent(false); setRecording(null); setRecovery(null); typedReceipt.current = null;
+        setTypedDraft(''); setTypedQuestion(null);
       }
-      void liveRequest<{ enabled?: boolean; available?: boolean; recordingEnabled?: boolean }>(`/api/live-interviews?source=${encodeURIComponent(sourceKey)}`)
-        .then(result => { if (!cancelled) { setAvailable(result.enabled === true || result.available === true); setRecordingAvailable(result.recordingEnabled === true); } })
+      await liveRequest<{ enabled?: boolean; available?: boolean; recordingEnabled?: boolean; draftScope?: string }>(`/api/live-interviews?source=${encodeURIComponent(sourceKey)}`)
+        .then(result => { if (!cancelled) {
+          const enabled = result.enabled === true || result.available === true;
+          setAvailable(enabled); callbacks.current.onAvailabilityChange?.(enabled); setRecordingAvailable(result.recordingEnabled === true);
+          if (enabled && result.draftScope) {
+            const key = `folio.live.text.v1.${result.draftScope}`; typedStorageKey.current = key;
+            try {
+              const saved = JSON.parse(sessionStorage.getItem(key) || 'null');
+              if (typeof saved?.text === 'string' && saved.text && typeof saved.questionId === 'string' && typeof saved.version === 'string') {
+                setTypedDraft(saved.text); setInputMode('text');
+                setTypedQuestion({ questionId: saved.questionId, version: saved.version, questionText: typeof saved.questionText === 'string' ? saved.questionText : 'Your earlier question' });
+                if (typeof saved.requestId === 'string') typedReceipt.current = { requestId: saved.requestId, text: saved.text };
+              }
+            } catch { /* current input stays in memory */ }
+          }
+        } })
         .catch(() => {});
       try {
         const savedId = sessionStorage.getItem(`folio.live.session.${sourceKey}`);
@@ -223,36 +252,57 @@ export function LiveInterviewPanel({ source, onCanonicalChange, onActiveChange, 
     }).catch(() => {}).finally(() => { eventBacklog.current--; });
   }, [setCurrent]);
 
+  const openMicrophone = async () => {
+    if (!navigator.mediaDevices?.getUserMedia) throw new Error('Microphone access is unavailable. Choose Type instead to continue with the interviewer.');
+    const stream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true }, video: false });
+    if (!mounted.current) { stream.getTracks().forEach(track => track.stop()); throw new Error('The interview has closed.'); }
+    streamRef.current = stream;
+    if (!stream.getAudioTracks().some(track => track.readyState === 'live')) throw new Error('The microphone is not ready. Check its permission or choose Type instead.');
+    stream.getAudioTracks().forEach(track => track.addEventListener('ended', () => {
+      if (streamRef.current !== stream) return;
+      void endRef.current('pause').finally(() => { if (mounted.current) setError('Microphone access ended. The call stopped; saved answers and uploaded recording remain available.'); });
+    }, { once: true }));
+    return stream;
+  };
+
   const start = async () => {
     if (inFlight.current || callRef.current) return;
     if (mode !== 'none' && !consent) { setError('Confirm recording consent before starting.'); return; }
     inFlight.current = true; setBusy(true); setError('');
+    callbacks.current.onActiveChange?.(true);
     let startedSessionId: string | undefined;
     try {
       await beforeStart?.();
-      if (!navigator.mediaDevices?.getUserMedia) throw new Error('A secure browser with microphone access is required. You can continue in text.');
+      let draftAtStart = typedDraft; let questionAtStart = typedQuestion;
+      // An answer can finish saving after End stopped polling. Confirm its receipt
+      // before starting another call or offering the same text for another question.
+      const priorReceipt = typedReceipt.current; const priorId = stateRef.current?.id;
+      if (priorReceipt && priorId) {
+        const prior = await liveRequest<LiveState>(`/api/live-interviews/${encodeURIComponent(priorId)}`);
+        setCurrent(prior);
+        if (prior.turns?.some(turn => turn.requestId === priorReceipt.requestId && turn.status === 'saved')) {
+          draftAtStart = ''; questionAtStart = null;
+        }
+      }
       if (mode !== 'none') await checkCaptureReady(mode);
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true }, video: false });
-      if (!mounted.current) { stream.getTracks().forEach(track => track.stop()); return; }
-      streamRef.current = stream;
-      if (!stream.getAudioTracks().some(track => track.readyState === 'live')) throw new Error('The microphone is not ready. Check its permission and try again.');
-      stream.getAudioTracks().forEach(track=>track.addEventListener('ended',()=>{
-        if(streamRef.current!==stream)return;
-        void endRef.current('pause').finally(()=>{if(mounted.current)setError('Microphone access ended. The call stopped; saved answers and uploaded recording remain available.');});
-      },{once:true}));
+      const stream = inputMode === 'voice' ? await openMicrophone() : null;
       const Daily = (await import('@daily-co/daily-js')).default;
       if (!mounted.current) { await release(); return; }
-      if(streamRef.current!==stream || !stream.getAudioTracks().some(track=>track.readyState==='live'))throw new Error('Microphone access ended before the call could start.');
+      if(stream && (streamRef.current!==stream || !stream.getAudioTracks().some(track=>track.readyState==='live')))throw new Error('Microphone access ended before the call could start.');
       // Preserve this key after an ambiguous provider-create result. Never blind retry a paid call.
       startKey.current ??= crypto.randomUUID();
       const next = await liveRequest<LiveState>('/api/live-interviews', { source: JSON.parse(sourceKey), requestId: startKey.current,
-        mode, consentVersion: '2026-10-01', microphoneReady: true, selectedImageId });
+        mode, inputMode, consentVersion: '2026-10-01', microphoneReady: !!stream, selectedImageId });
       startedSessionId = next.id;
+      if (next.id !== stateRef.current?.id && !next.turns?.some(turn => turn.status !== 'saved')) {
+        typedReceipt.current = null;
+        try { if (typedStorageKey.current) sessionStorage.setItem(typedStorageKey.current, JSON.stringify({ text: draftAtStart, ...questionAtStart })); } catch { /* input stays in memory */ }
+      }
       setCurrent(next);
       if (!mounted.current) { await endRef.current('end'); return; }
-      if(streamRef.current!==stream || !stream.getAudioTracks().some(track=>track.readyState==='live'))throw new Error('Microphone access ended while starting. The provider call is being stopped.');
+      if(stream && (streamRef.current!==stream || !stream.getAudioTracks().some(track=>track.readyState==='live')))throw new Error('Microphone access ended while starting. The provider call is being stopped.');
       if (!next.join?.url || !next.join.token) throw new Error(next.notice || 'The session is being reconciled. Retry with this same request; no second call will be requested.');
-      const call = Daily.createCallObject({ audioSource: stream.getAudioTracks()[0], videoSource: false, startAudioOff: true, startVideoOff: true });
+      const call = Daily.createCallObject({ audioSource: stream?.getAudioTracks()[0] || false, videoSource: false, startAudioOff: true, startVideoOff: true });
       callRef.current = call;
       call.on('participant-joined', syncTracks).on('participant-updated', syncTracks).on('participant-left', syncTracks)
         .on('track-started', syncTracks).on('track-stopped', syncTracks)
@@ -262,12 +312,12 @@ export function LiveInterviewPanel({ source, onCanonicalChange, onActiveChange, 
       if (!mounted.current) { await endRef.current('end'); return; }
       joinedAt.current = performance.now();
       setActive(true); callbacks.current.onActiveChange?.(true); setCamera(false);
-      if (mode !== 'none') {
+      if (mode !== 'none' && stream) {
         if (next.recordingEnabled === false) throw new Error('Recording could not start. This session has been stopped; choose another mode.');
         captureRef.current = await startCreatorCapture({ sessionId: next.id, stream, mode: 'audio', offsetMs: Math.round(performance.now() - joinedAt.current), onProgress: progress });
       } else { captureRef.current = null; setRecording(null); }
-      call.setLocalAudio(true); setMuted(false); syncTracks();
-      captureRef.current?.setMuted(false);
+      call.setLocalAudio(!!stream); setMuted(!stream); syncTracks();
+      captureRef.current?.setMuted(!stream);
       startKey.current = null;
     } catch (failure) {
       const message = failure instanceof Error ? failure.message : 'The live interview could not start.';
@@ -275,6 +325,70 @@ export function LiveInterviewPanel({ source, onCanonicalChange, onActiveChange, 
       else await release();
       if (mounted.current) setError(message);
     } finally { inFlight.current = false; if (mounted.current) setBusy(false); }
+  };
+
+  const changeInput = async (next: 'voice' | 'text') => {
+    if (busy || next === inputMode || (next === 'voice' && !!typedDraft.trim())) return;
+    setError('');
+    if (!active) { setInputMode(next); if (next === 'text') { setMode('none'); setConsent(false); } return; }
+    setBusy(true);
+    try {
+      if (next === 'text') {
+        callRef.current?.setLocalAudio(false);
+        const finishing = captureRef.current?.stop().catch(() => progress('incomplete', 'Your recording is retained for upload retry. You can continue typing.'));
+        const stream = streamRef.current; streamRef.current = null;
+        stream?.getTracks().forEach(track => { track.enabled = false; track.stop(); });
+        setMuted(true); setCamera(false); setInputMode('text'); setMode('none'); setConsent(false);
+        await callRef.current?.setInputDevicesAsync({ audioSource: false, videoSource: false });
+        await finishing;
+      } else {
+        const stream = await openMicrophone();
+        if (!callRef.current || !mounted.current) { stream.getTracks().forEach(track => track.stop()); return; }
+        await callRef.current.setInputDevicesAsync({ audioSource: stream.getAudioTracks()[0] });
+        callRef.current.setLocalAudio(true); setMuted(false); setInputMode('voice');
+      }
+    } catch (failure) {
+      if (next === 'voice') { const stream = streamRef.current; streamRef.current = null; stream?.getTracks().forEach(track => track.stop()); }
+      setError(failure instanceof Error ? failure.message : 'The input could not change. Your interview remains open.');
+    } finally { if (mounted.current) setBusy(false); }
+  };
+
+  const updateTypedDraft = (text: string) => {
+    setTypedDraft(text);
+    const snapshot = stateRef.current?.snapshot;
+    const question = !text ? null : typedQuestion ?? (snapshot?.currentQuestion ? { questionId: snapshot.currentQuestion.id, version: snapshot.version, questionText: snapshot.currentQuestion.text } : null);
+    setTypedQuestion(question);
+    try { if (typedStorageKey.current) sessionStorage.setItem(typedStorageKey.current, JSON.stringify({ text, ...question })); } catch { /* current input stays in memory */ }
+  };
+  const sendTyped = async () => {
+    const current = stateRef.current;
+    if (busy || inFlight.current || !active || !callRef.current || !current?.snapshot?.currentQuestion || !typedDraft.trim()) return;
+    if (!typedQuestion || typedQuestion.questionId !== current.snapshot.currentQuestion.id || typedQuestion.version !== current.snapshot.version) {
+      setError('The question changed while you were typing. Review which question this reply belongs to before sending.'); return;
+    }
+    inFlight.current = true; setBusy(true); setError('');
+    const receipt = typedReceipt.current ?? { requestId: crypto.randomUUID(), text: typedDraft };
+    typedReceipt.current = receipt;
+    try { if (typedStorageKey.current) sessionStorage.setItem(typedStorageKey.current, JSON.stringify({ ...receipt, ...typedQuestion })); } catch { /* server registration retains the submitted reply */ }
+    try {
+      const next = await liveRequest<LiveState & { textRegistration: { created: boolean; requestId: string } }>(`/api/live-interviews/${encodeURIComponent(current.id)}`, {
+        action: 'prepare_text', ...receipt, questionId: typedQuestion.questionId, version: typedQuestion.version,
+      });
+      setCurrent(next);
+      if (!next.textRegistration.created) {
+        setError('This reply is already retained. Waiting for confirmation; end the call to review it if delivery cannot be confirmed.'); return;
+      }
+      if (!mounted.current || !callRef.current || !stateRef.current?.join) throw new Error('The call disconnected. Your reply is retained for review.');
+      callRef.current.sendAppMessage({ message_type: 'conversation', event_type: 'conversation.respond',
+        conversation_id: stateRef.current.join.conversationId, properties: { text: receipt.text } }, '*');
+    } catch (failure) {
+      setError(failure instanceof Error ? failure.message : 'Your reply is retained. End the call to review it before trying again.');
+    } finally { inFlight.current = false; if (mounted.current) setBusy(false); }
+  };
+
+  const openWorkspace = async () => {
+    if (active) await end('end');
+    callbacks.current.onOpenWorkspace?.();
   };
 
   const control = async (action: 'skip' | 'retry') => {
@@ -334,35 +448,51 @@ export function LiveInterviewPanel({ source, onCanonicalChange, onActiveChange, 
   if (!available && !state) return null;
   const unresolved = state?.turns?.filter(turn => turn.status === 'needs_review') || [];
   const savedTurns = state?.turns?.filter(turn => turn.status === 'saved') || [];
-  return <section aria-label="Live interview" className="w-full min-w-0 rounded-sm border border-border bg-surface-canvas p-4 text-folio-body text-text-primary">
+  const pendingTyped = state?.turns?.find(turn => turn.inputMode === 'text' && turn.status !== 'saved');
+  const awaitingReply = !!typedReceipt.current || !!pendingTyped;
+  const draftQuestionChanged = !!typedDraft && !!typedQuestion && !!state?.snapshot
+    && (typedQuestion.questionId !== state.snapshot.currentQuestion?.id || typedQuestion.version !== state.snapshot.version);
+  const primary = presentation === 'primary';
+  return <section aria-label="Live interview" className={`w-full min-w-0 bg-surface-canvas p-4 text-folio-body text-text-primary ${primary ? 'space-y-4' : 'rounded-sm border border-border'}`}>
     <div className="flex items-start justify-between gap-3">
-      <div><h3 className="text-folio-ui font-semibold">Folio Interviewer</h3><p className="text-folio-meta text-text-secondary">AI interviewer · your saved Folio questions</p></div>
-      <span className="text-folio-meta" role="status">{active ? 'Live' : busy ? 'Connecting…' : 'Optional'}</span>
+      <div><h3 className={primary ? 'font-headline text-folio-h4' : 'text-folio-ui font-semibold'}>{active ? 'Your Folio interviewer' : 'Tell the story behind your work'}</h3><p className="text-folio-meta text-text-secondary">AI interviewer · your project, in your words</p></div>
+      <span className="text-folio-meta" role="status">{active ? 'Live' : busy ? 'Connecting…' : 'Ready'}</span>
     </div>
     {!active ? <div className="mt-3 space-y-3">
-      <p className="text-folio-meta">Speak naturally while you explore your work. Your answers return to this interview.</p>
-      <fieldset disabled={busy} className="space-y-2"><legend className="text-folio-meta font-medium">Before you start</legend>
+      {primary ? <div className="flex aspect-video flex-col items-center justify-center gap-3 rounded-lg bg-surface-ground px-6 text-center" aria-label="Interviewer preview">
+        <svg aria-hidden="true" viewBox="0 0 48 48" className="h-12 w-12 text-folio-text-secondary" fill="none" stroke="currentColor" strokeWidth="1.5"><rect x="5" y="12" width="26" height="24" rx="6" /><path d="m31 19 12-6v22l-12-6" /></svg>
+        <p className="font-headline text-folio-h4">A conversation about your project</p>
+        <p className="max-w-sm text-folio-meta text-text-secondary">Your interviewer appears here when you start. Keep exploring your photographs as you talk.</p>
+      </div> : null}
+      <p className="text-folio-meta">{inputMode === 'voice' ? 'Speak naturally with your interviewer. Your answers are saved as you go.' : 'Type your replies while your interviewer stays on screen and speaks. Your microphone stays off.'}</p>
+      {!!typedDraft && !awaitingReply ? <div className="space-y-2 rounded-sm bg-surface-ground p-3 text-folio-meta" aria-label="Unsent typed reply">
+        <p className="font-medium">Your unsent reply</p><p className="text-text-secondary">{typedQuestion?.questionText}</p>
+        <p className="max-h-32 overflow-auto whitespace-pre-wrap break-words">{typedDraft}</p>
+        <button type="button" className={button} disabled={busy} onClick={() => updateTypedDraft('')}>Clear unsent reply</button>
+      </div> : null}
+      {recordingAvailable && inputMode === 'voice' ? <fieldset disabled={busy} className="space-y-2"><legend className="text-folio-meta font-medium">Recording preference</legend>
         {([['none', 'Interview without saving audio or video'], ['audio', 'Save my voice for media'], ['video', 'Save my voice and camera for media']] as const).map(([value, label]) =>
           <label key={value} className="flex items-start gap-2 text-folio-meta"><input type="radio" name={`${fieldId}-mode`} value={value} checked={mode === value} disabled={value !== 'none' && !recordingAvailable}
             onChange={() => { setMode(value); setConsent(false); }} className="mt-1 accent-folio-gold" /><span>{label}</span></label>)}
-      </fieldset>
-      <p className="text-folio-meta text-text-secondary">Live speech is processed and transcribed by our interview providers in every mode. Provider processing may include retention. Camera starts off; voice and camera mode lets you turn it on during the interview.</p>
+      </fieldset> : <p className="text-folio-meta text-text-secondary">Your camera stays off. Folio saves your answers, without saving an audio or video recording.</p>}
+      <p className="text-folio-meta text-text-secondary">Tavus processes your {inputMode === 'text' ? 'typed replies' : 'speech'} for this AI conversation. Provider processing may include retention.</p>
       {mode !== 'none' ? <label className="flex items-start gap-2 text-folio-meta"><input type="checkbox" checked={consent} disabled={busy} onChange={event => setConsent(event.target.checked)} className="mt-1 accent-folio-gold" />
         <span>I consent to private capture and processing of my {mode === 'video' ? 'voice and camera footage' : 'voice'} for media preparation. Publishing requires my separate approval. My camera footage is not sent to the live interviewer.</span></label> : null}
       {mode !== 'none' ? <p className="text-folio-meta text-text-secondary">Upload recovery temporarily stores recording chunks on this device. Capture stops when pending data reaches 25 MiB, retaining the final recorder data. Uploaded chunks are removed; recovery expires after 24 hours and is cleared when Folio next opens. You can discard retained device recordings below.</p> : null}
-      <button type="button" className={button} disabled={busy || (mode !== 'none' && !consent)} onClick={() => void start()}>{busy ? 'Preparing live interview…' : state ? 'Resume live interview' : 'Start live interview'}</button>
+      <button type="button" className={primary ? 'w-full rounded-sm bg-folio-text-primary px-4 py-3 text-folio-ui font-medium text-white disabled:opacity-50 focus-visible:ring-2 focus-visible:ring-folio-gold' : button} disabled={busy || (mode !== 'none' && !consent)} onClick={() => void start()}>{busy ? 'Preparing live interview…' : inputMode === 'text' ? 'Start with typed replies' : state ? 'Resume live interview' : 'Start live interview'}</button>
+      <button type="button" className={`${button} ${primary ? 'w-full border-transparent underline underline-offset-4' : 'ml-2'}`} disabled={busy || awaitingReply || (inputMode === 'text' && !!typedDraft.trim())} onClick={() => void changeInput(inputMode === 'voice' ? 'text' : 'voice')}>{inputMode === 'voice' ? 'Type instead' : 'Use microphone instead'}</button>
       {state?.id && !['ended', 'ENDED', 'expired', 'EXPIRED'].includes(state.status) ? <button type="button" className={`${button} ml-2`} disabled={busy} onClick={() => void end('end')}>End saved live session</button> : null}
     </div> : null}
     <div className={active ? 'mt-3 space-y-3' : 'hidden'}>
-      <div className="flex items-end gap-3">
-        <video ref={remoteVideo} muted autoPlay playsInline aria-label="Folio AI interviewer" className="aspect-video w-40 max-w-full rounded-sm bg-surface-ground object-cover" />
+      <div className={primary ? 'relative' : 'flex items-end gap-3'}>
+        <video ref={remoteVideo} muted autoPlay playsInline aria-label="Folio AI interviewer" className={`aspect-video max-w-full rounded-lg bg-surface-ground object-cover ${primary ? 'w-full' : 'w-40'}`} />
         {camera ? <video ref={localVideo} muted autoPlay playsInline aria-label="Your private camera preview" className="aspect-video w-24 rounded-sm bg-surface-ground object-cover" /> : null}
         <audio ref={remoteAudio} autoPlay />
       </div>
       {audioBlocked ? <button type="button" className={button} onClick={() => { void remoteAudio.current?.play().then(() => setAudioBlocked(false)).catch(() => setError('Audio playback is blocked. Check browser sound permissions.')); }}>Play interviewer audio</button> : null}
       {state?.snapshot?.currentQuestion ? <p className="text-folio-ui">{state.snapshot.currentQuestion.text}</p> : null}
       <div className="flex flex-wrap gap-2">
-        <button type="button" className={button} aria-pressed={muted} onClick={() => { const next = !muted; streamRef.current?.getAudioTracks().forEach(track=>{track.enabled=!next;}); callRef.current?.setLocalAudio(!next); captureRef.current?.setMuted(next); setMuted(next); }}>{muted ? 'Unmute microphone' : 'Mute microphone'}</button>
+        {inputMode === 'voice' ? <button type="button" className={button} disabled={busy || awaitingReply} aria-pressed={muted} onClick={() => { const next = !muted; streamRef.current?.getAudioTracks().forEach(track=>{track.enabled=!next;}); callRef.current?.setLocalAudio(!next); captureRef.current?.setMuted(next); setMuted(next); }}>{muted ? 'Unmute microphone' : 'Mute microphone'}</button> : null}
         {mode === 'video' && recording === 'recording' ? <button type="button" className={button} disabled={busy} onClick={() => void toggleCamera()}>{camera ? 'Turn camera off' : 'Turn camera on for recording'}</button> : null}
         <button type="button" className={button} aria-pressed={captions} onClick={() => setCaptions(value => !value)}>Captions</button>
         {recording === 'recording' ? <button type="button" className={button} disabled={busy} onClick={() => {
@@ -371,9 +501,27 @@ export function LiveInterviewPanel({ source, onCanonicalChange, onActiveChange, 
         }}>Stop recording</button> : null}
         <button type="button" className={button} disabled={busy} onClick={() => void end('pause')}>Pause</button>
         <button type="button" className={button} disabled={busy} onClick={() => void end('end')}>End</button>
-        <button type="button" className={button} disabled={busy} onClick={() => void end('switch_to_text')}>Switch to text</button>
+        <button type="button" className={button} disabled={busy || awaitingReply || !!unresolved.length || (inputMode === 'text' && !!typedDraft.trim())} onClick={() => void changeInput(inputMode === 'voice' ? 'text' : 'voice')}>{inputMode === 'voice' ? 'Type instead' : 'Use microphone instead'}</button>
         <button type="button" className={button} disabled={busy || !!unresolved.length} onClick={() => void control('skip')}>Skip question</button>
       </div>
+      {inputMode === 'text' ? <form className="space-y-2" onSubmit={event => { event.preventDefault(); void sendTyped(); }}>
+        <label htmlFor={`${fieldId}-typed`} className="text-folio-meta font-medium">Your reply</label>
+        {draftQuestionChanged && !awaitingReply ? <div role="status" className="space-y-2 rounded-sm bg-surface-ground p-3 text-folio-meta">
+          <p>This draft was written for: {typedQuestion?.questionText}</p><p>The question has changed. Keep the draft, or explicitly use it for the current question.</p>
+          {state?.snapshot?.currentQuestion ? <button type="button" className={button} onClick={() => {
+            const snapshot = stateRef.current?.snapshot; if (!snapshot?.currentQuestion) return;
+            const question = { questionId: snapshot.currentQuestion.id, version: snapshot.version, questionText: snapshot.currentQuestion.text };
+            setTypedQuestion(question); setError('');
+            try { if (typedStorageKey.current) sessionStorage.setItem(typedStorageKey.current, JSON.stringify({ text: typedDraft, ...question })); } catch { /* draft stays in memory */ }
+          }}>Use this draft for the current question</button> : null}
+        </div> : null}
+        <textarea id={`${fieldId}-typed`} value={typedDraft || pendingTyped?.raw || ''} onChange={event => updateTypedDraft(event.target.value)} maxLength={2000} rows={4}
+          disabled={busy || awaitingReply || !!unresolved.length} placeholder="Tell your interviewer about the project…"
+          className="w-full rounded-sm border border-border bg-surface-ground p-3 text-folio-body focus-visible:ring-2 focus-visible:ring-folio-gold disabled:opacity-70" />
+        <div className="flex items-center justify-between gap-3"><p className="text-folio-meta text-text-secondary">Microphone off · your interviewer still speaks</p>
+          <button type="submit" className={button} disabled={busy || awaitingReply || !!unresolved.length || !typedDraft.trim() || draftQuestionChanged}>{awaitingReply ? 'Awaiting saved reply…' : 'Send reply'}</button></div>
+        {!!typedDraft && !awaitingReply ? <button type="button" className={`${button} border-transparent text-text-secondary`} disabled={busy} onClick={() => updateTypedDraft('')}>Clear unsent reply</button> : null}
+      </form> : null}
       {captions && caption ? <div className="max-h-32 overflow-auto whitespace-pre-wrap text-folio-meta" aria-live="polite"><p className="text-text-secondary">Live captions · awaiting canonical save</p>{caption}</div> : null}
     </div>
     <div className="mt-3 space-y-2 text-folio-meta" aria-live="polite">
@@ -385,7 +533,7 @@ export function LiveInterviewPanel({ source, onCanonicalChange, onActiveChange, 
       {state?.notice || state?.snapshot?.notice ? <p>{state.notice || state.snapshot?.notice}</p> : null}
       {error ? <p role="alert">{error}</p> : null}
     </div>
-    {savedTurns.length ? <details className="mt-3 text-folio-meta"><summary className="cursor-pointer focus-visible:ring-2 focus-visible:ring-folio-gold">Saved transcript</summary>
+    {savedTurns.length ? <details className="mt-3 text-folio-meta"><summary className="cursor-pointer focus-visible:ring-2 focus-visible:ring-folio-gold">Saved answers</summary>
       <ol className="mt-2 max-h-48 space-y-2 overflow-auto">{savedTurns.map(turn => <li key={turn.position} className="whitespace-pre-wrap">{turn.raw}</li>)}</ol></details> : null}
     {unresolved.map(turn => <div key={turn.position} className="mt-3 space-y-2 border-t border-border pt-3">
       <p className="text-folio-meta">This speech needs review before it can count as an answer. {turn.error}</p><p className="max-h-36 overflow-auto whitespace-pre-wrap text-folio-meta">{turn.raw}</p>
@@ -402,6 +550,7 @@ export function LiveInterviewPanel({ source, onCanonicalChange, onActiveChange, 
       <button type="button" className={`${button} ml-2`} disabled={busy} onClick={() => setRecovery(null)}>Keep for later</button>
     </div> : null}
     {state?.snapshot?.status === 'needs_review' && !unresolved.length ? <button type="button" className={`${button} mt-3`} disabled={busy} onClick={() => void control('retry')}>Retry next question</button> : null}
+    {onOpenWorkspace ? <button type="button" className={`${button} mt-4 w-full border-transparent text-text-secondary underline underline-offset-4`} disabled={busy || awaitingReply || !!unresolved.length} onClick={() => void openWorkspace()}>Review saved answers</button> : null}
   </section>;
 }
 

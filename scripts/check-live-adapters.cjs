@@ -87,8 +87,11 @@ const answer = (source, previous, text, id = 'receipt-0001', questionId = previo
   guided = { id: 'guided-id', version: 4, status: 'active', plan: [q('g1'), q('g2')], activeQuestionId: 'g1', contextFingerprint: 'source-v1', turns: [] };
   let source = { kind: 'project', id: 'project' }; let saved = await adapter.prepareLiveInterview('owner', source, 'start-0001');
   saved = await answer(source, saved, 'A quieter daily rhythm.'); assert.equal(guided.turns[0].questionText, 'Exact question g1?'); assert.equal(saved.currentQuestion.id, 'g2');
+  assert.equal(calls.filter(([kind,command])=>kind==='guided'&&command.action==='answer').at(-1)[1].inputModality,'voice');
   assert.equal((await answer(source, saved, 'A quieter daily rhythm.', 'receipt-0001', 'g1')).version, saved.version, 'receipt replay returns saved turn');
   await assert.rejects(() => answer(source, saved, 'Changed replay.', 'receipt-0001', 'g1'), /already used/);
+  saved = await adapter.executeLiveCommand('owner',source,saved,{action:'answer',requestId:'typed-receipt-0002',questionId:'g2',text:'A typed design decision.',inputModality:'text'});
+  assert.equal(calls.filter(([kind,command])=>kind==='guided'&&command.action==='answer').at(-1)[1].inputModality,'text','typed answer provenance reaches the canonical engine');
   await assert.rejects(() => adapter.prepareLiveInterview('owner', { kind: 'project', id: 'protected' }, 'start-0002'), /protected Spotlight/);
   spotlight = { ordinary: [], questions: [{ id: 's1', wording: 'Why did you choose this selected piece?', spotlightId: 'selected', eligible: true, questionVersion: 7, selectionVersion: 3, stateVersion: 2, currentAnswerNumber: null, currentAnswer: null }], spotlights: [{ id: 'selected', roomId: 'room' }] };
   source = { kind: 'spotlight', id: 'project' }; saved = await adapter.prepareLiveInterview('owner', source, 'spotlight-start'); saved = await answer(source, saved, 'It makes the corner useful.');
