@@ -720,3 +720,16 @@ User corrected the in-progress activation: Tavus is the prominent default and Ty
 - [ ] Review final scope, update PR806, merge/redeploy and verify actual signed-in production UI.
 
 Live-first review:30 transport checks, seven-kind adapter/provenance checks,26 actual-panel browser/capture checks,20 guided workspace and16 entry browser checks passed. Browser fixtures use synthetic provider/recording data; actual Tavus audiovisual quality is still unverified. Reviewed actor/source draft isolation, frozen question attribution, pending/late-save recovery, speech echo boundaries, capture-stop failure and stable mounting. Lint passes with existing warnings; hosted CI now includes actual live and guided browser suites. Production build from activation-only commit is held; release uses final revised UI.
+
+Release checkpoint: PR806 merged as 6f24c2f5 after all nine active CI checks passed (Supabase Preview skipped). Identical-tree final build dpl_961vnsHH9pkqvigjzMzJHhmSERWf promoted. Signed-in entry and input selection verified, authenticated cleanup200 and unauthenticated401 verified, natural minutely executions200 observed. The founder subsequently reported actual live startup failing and rejected the second Start step; real provider acceptance remains unmet.
+
+## Direct interview entry and startup repair — 2026-10-01
+Plan check-in: the original Start/Resume click starts the live greeting. Diagnose the actual production failure, remove the duplicate start step while preserving passive/review behavior and typing, then verify the real path and release the correction. Conversation-led Create+ uploads are the product direction; this repair first establishes the working interview entry. No schema change or recording activation.
+- [x] Identify the failing browser/provider startup boundary using production evidence.
+- [x] Carry explicit entry intent into one live startup with clear connecting/error recovery and typed input.
+- [x] Add targeted regressions for entry, failure and duplicate prevention; verify actual provider readiness.
+- [ ] Review, commit, push, merge and deploy the repair; document precisely what was observed.
+
+Diagnosis: production live-start requests returned503 because Prisma could not deserialize PostgreSQL void from SELECT pg_advisory_xact_lock. Actual Prisma against the configured database reproduced P2010 and verified the execute-only replacement, transaction-held lock and release. Probe transactions were read-only, with zero application rows changed and zero provider calls. Read-only Tavus configured-face lookup returned200/completed. New real-Prisma reservation tests cover the boundary missed by the previous PGlite wrapper.
+
+Source verification:33 live panel browser checks and17 composed entry regressions pass with synthetic provider/device boundaries. Actual Start/Resume handoff, passive review/refresh, microphone-denied typed fallback, pending-mic typing, once-only entry, cancelled late join and retry identity are covered. Full/scoped lint and client/migration guards pass. Hosted real-Prisma concurrency, final build and actual Tavus connection remain release verification steps.

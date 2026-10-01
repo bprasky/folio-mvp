@@ -15,6 +15,9 @@ let starts = 0, enabled = true, eventCalls = [], actionCalls = [], uploadFailure
 let draftScope = 'a'.repeat(64), liveOwnerScope = null, recordingEnabled = true;
 const startRequests = [], textRegistrations = [], providerReplies = [];
 let canonicalTextSaves = 0;
+let failStart = false;
+let loseStartResponse = false, restoredSession = null;
+const startReceipts = new Map();
 const runs = new Map();
 const deniedRuns = new Set();
 const captureRequests = [];
@@ -26,12 +29,12 @@ const entry = `
 import React from 'react'; import {createRoot} from 'react-dom/client';
 import {LiveInterviewPanel} from './src/components/interviews/LiveInterviewPanel';
 import * as capture from './src/lib/live-interview/capture';
-window.capture=capture; window.permissionDenied=false; window.permissions=[]; window.trackClones=[];
+window.capture=capture; window.permissionDenied=false; window.holdMicrophone=false; window.permissions=[]; window.trackClones=[];
 window.dailyCalls=[];window.respondMessages=[];window.activeChanges=[];
 window.makeStream=()=>{const audio=new AudioContext(); const destination=audio.createMediaStreamDestination();
  const original=destination.stream.getAudioTracks()[0]; const clone=original.clone.bind(original);
  original.clone=()=>{const track=clone();window.trackClones.push(track);return track};return destination.stream;};
-Object.defineProperty(navigator,'mediaDevices',{value:{getUserMedia:async options=>{window.permissions.push(options); if(window.permissionDenied)throw new Error('Microphone permission denied.');return window.makeStream();}}});
+Object.defineProperty(navigator,'mediaDevices',{value:{getUserMedia:async options=>{window.permissions.push(options); if(window.permissionDenied)throw new Error('Microphone permission denied.');if(window.holdMicrophone)await new Promise(resolve=>{window.resolveMicrophone=resolve});return window.makeStream();}}});
 class Recorder{static instances=[];static isTypeSupported(type){return type.startsWith('audio/webm')||type.startsWith('video/webm')};
  constructor(stream,options){this.stream=stream;this.mimeType=options.mimeType;this.state='inactive';Recorder.instances.push(this)}
  start(){this.audioEnabledAtStart=this.stream.getAudioTracks().map(track=>track.enabled);this.state='recording'} emit(value){this.ondataavailable?.({data:new Blob([value],{type:this.mimeType})})}
@@ -44,9 +47,10 @@ window.recoveryData=async()=>{const db=await new Promise((resolve,reject)=>{cons
 window.seedRecovery=async records=>{const db=await new Promise((resolve,reject)=>{const request=indexedDB.open('folio-private-live-capture',1);request.onsuccess=()=>resolve(request.result);request.onerror=()=>reject(request.error)});
  try{await new Promise((resolve,reject)=>{const tx=db.transaction(['runs','chunks'],'readwrite');for(const {run,chunks} of records){tx.objectStore('runs').put(run);for(const [index,text] of chunks.entries())tx.objectStore('chunks').put({runId:run.runId,index,blob:new Blob([text],{type:run.mimeType})})}tx.oncomplete=()=>resolve();tx.onerror=()=>reject(tx.error)})}finally{db.close()}};
 window.fixtureRoot=createRoot(document.getElementById('root'));
+window.renderDirect=(key='direct',id='synthetic-project')=>window.fixtureRoot.render(<React.StrictMode><LiveInterviewPanel key={key} source={{kind:'project',id}} startIntent={window.entryIntent} presentation="primary" onActiveChange={value=>window.activeChanges.push(value)}/></React.StrictMode>);
 window.fixtureRoot.render(<LiveInterviewPanel source={{kind:'project',id:'synthetic-project'}} presentation="primary" onActiveChange={value=>window.activeChanges.push(value)}/>);`;
 const dailyFixture = `export default {createCallObject(options){window.dailyOptions=options;const handlers={};const call={
- on(name,handler){(handlers[name]??=[]).push(handler);return call},participants(){return{}},async join(){window.joined=true;window.left=false;window.destroyed=false},
+ on(name,handler){(handlers[name]??=[]).push(handler);return call},participants(){return{}},async join(){if(window.failJoin)throw Error('Synthetic join failed');if(window.holdJoin)await new Promise(resolve=>window.resolveJoin=resolve);window.joined=true;window.left=false;window.destroyed=false},
  setLocalAudio(value){window.micOn=value;return call},async setInputDevicesAsync(input){Object.assign(window.dailyOptions,input)},
  sendAppMessage(message,target){window.respondMessages.push({message,target});void fetch('/api/fixture/provider-respond',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(message)})},
  async leave(){window.left=true},async destroy(){window.destroyed=true}};
@@ -83,7 +87,7 @@ function handler(req, res) {
   if (url.pathname === '/app.css') { res.setHeader('Content-Type', 'text/css'); fs.createReadStream(path.join(out, 'app.css')).pipe(res); return; }
   if (!url.pathname.startsWith('/api/') && !url.pathname.startsWith('/storage/')) { res.end('<!doctype html><html><head><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="stylesheet" href="/app.css"></head><body><main id="root" style="max-width:520px;margin:auto"></main><script src="/app.js"></script></body></html>'); return; }
   if (req.method === 'GET' && url.pathname === '/api/live-interviews') return json({ enabled, recordingEnabled, draftScope });
-  if (req.method === 'GET' && url.pathname === '/api/live-interviews/live-fixture') return liveOwnerScope === draftScope ? json(live) : json({ error: 'Session unavailable' }, 404);
+  if (req.method === 'GET' && url.pathname === '/api/live-interviews/live-fixture') return liveOwnerScope === draftScope ? json(restoredSession || live) : json({ error: 'Session unavailable' }, 404);
   const chunks = []; req.on('data', part => chunks.push(part)); req.on('end', () => {
     try {
       if (url.pathname.startsWith('/storage/')) {
@@ -95,8 +99,13 @@ function handler(req, res) {
       const body = JSON.parse(Buffer.concat(chunks).toString() || '{}');
       if (url.pathname === '/api/fixture/provider-respond') { providerReplies.push(body); return json({ retained: true }); }
       if (url.pathname === '/api/live-interviews') {
-        starts++; startRequests.push(body); liveOwnerScope = draftScope; live = { id: 'live-fixture', status: 'active', snapshot: structuredClone(snapshot), turns: [], recordingEnabled,
+        starts++; startRequests.push(body); if(failStart)return json({message:'Synthetic start failed. Retry this interview.'},503);
+        const prior = startReceipts.get(body.requestId);
+        if (prior) return json(prior.status === 'ended' ? { ...prior, join: undefined } : prior);
+        liveOwnerScope = draftScope; live = { id: 'live-fixture', status: 'active', snapshot: structuredClone(snapshot), turns: [], recordingEnabled,
           join: { url: 'https://synthetic.daily.co/fixture', token: 'synthetic-join-token', conversationId: 'synthetic-conversation' } };
+        startReceipts.set(body.requestId,live);
+        if (loseStartResponse) { loseStartResponse=false; return json({message:'Synthetic create response lost.'},503); }
         return json(live);
       }
       if (url.pathname === '/api/live-interviews/live-fixture') {
@@ -492,6 +501,78 @@ async function main() {
       const local = await page.evaluate(() => window.recoveryData());
       assert.ok(!local.runs.some(run => run.runId === runId)); assert.ok(!local.chunks.some(chunk => chunk.runId === runId));
       assert.ok(local.runs.some(run => run.runId === 'unexpired-recovery'), 'another session is retained');
+    });
+    await check('explicit entry starts once under StrictMode without a second Start button; microphone denial uses typed Tavus', async () => {
+      await page.evaluate(() => sessionStorage.clear()); await page.reload(); await text('Start live interview');
+      const before=starts;
+      await page.evaluate(() => {window.permissionDenied=true;window.entryIntent={requestId:'explicit-entry-denied-mic',consumed:false};window.renderDirect();});
+      await callReady();assert.equal(starts,before+1);assert.equal(startRequests.at(-1).inputMode,'text');assert.equal(startRequests.at(-1).mode,'none');
+      assert.equal(startRequests.at(-1).microphoneReady,false);assert.equal(await page.evaluate(()=>window.dailyCalls.length),1);
+      await click('End');await callEnded();
+      await page.evaluate(()=>window.renderDirect('same-intent-remount'));await text('Use microphone instead');
+      assert.equal(starts,before+1,'remount cannot replay consumed entry');
+      await page.reload();await text('Resume live interview');assert.equal(starts,before+1,'refresh does not retain entry authorization');
+    });
+    await check('Type instead while permission is pending joins the same intended call without waiting for microphone', async()=>{
+      await page.evaluate(()=>sessionStorage.clear());await page.reload();await text('Start live interview');const before=starts;
+      await page.evaluate(()=>{window.holdMicrophone=true;window.entryIntent={requestId:'explicit-entry-typed-optout',consumed:false};window.renderDirect();});
+      await page.waitForFunction(()=>!!window.resolveMicrophone);await click('Type instead');await callReady();
+      assert.equal(starts,before+1);assert.equal(startRequests.at(-1).inputMode,'text');assert.equal(startRequests.at(-1).microphoneReady,false);
+      await page.evaluate(()=>window.resolveMicrophone());assert.equal(await page.evaluate(()=>window.micOn),false);
+      await click('End');await callEnded();
+    });
+    await check('failed explicit entry stops automatic attempts and preserves request identity for deliberate Retry', async()=>{
+      await page.evaluate(()=>sessionStorage.clear());await page.reload();await text('Start live interview');const before=starts;failStart=true;
+      await page.evaluate(()=>{window.permissionDenied=true;window.entryIntent={requestId:'explicit-entry-failure-receipt',consumed:false};window.renderDirect();});
+      await text('Retry interview');assert.equal(starts,before+1);assert.equal(await page.evaluate(()=>window.dailyCalls.length),0);
+      await page.evaluate(()=>window.renderDirect());assert.equal(starts,before+1);
+      await page.evaluate(()=>window.renderDirect('failed-entry-remount'));await text('Retry interview');
+      assert.equal(starts,before+1,'a consumed failed entry remount exposes Retry without automatically retrying');
+      failStart=false;await click('Retry interview');await callReady();assert.equal(starts,before+2);
+      assert.equal(startRequests.at(-1).requestId,startRequests.at(-2).requestId);
+      await click('End');await callEnded();
+    });
+    await check('source replacement cancels an unresolved microphone start before provider creation', async()=>{
+      await page.evaluate(()=>sessionStorage.clear());await page.reload();await text('Start live interview');const before=starts;
+      await page.evaluate(()=>{window.holdMicrophone=true;window.entryIntent={requestId:'explicit-entry-source-change',consumed:false};window.renderDirect();});
+      await page.waitForFunction(()=>!!window.resolveMicrophone);
+      await page.evaluate(()=>window.renderDirect('different-source','other-project'));
+      await page.evaluate(()=>window.resolveMicrophone());await text('Type instead');assert.equal(starts,before);
+    });
+    await check('a confirmed ended session after join failure allows a fresh deliberate Retry', async()=>{
+      await page.evaluate(()=>sessionStorage.clear());await page.reload();await text('Start live interview');const before=starts;
+      await page.evaluate(()=>{window.permissionDenied=true;window.failJoin=true;window.entryIntent={requestId:'explicit-entry-join-failure',consumed:false};window.renderDirect();});
+      await text('Retry interview');assert.equal(live.status,'ended');assert.equal(starts,before+1);
+      const failedRequest=startRequests.at(-1).requestId;
+      await page.evaluate(()=>{window.failJoin=false});loseStartResponse=true;await click('Retry interview');await text('Retry interview');
+      assert.equal(starts,before+2);assert.notEqual(startRequests.at(-1).requestId,failedRequest);
+      const unknownRetryKey=startRequests.at(-1).requestId;
+      await page.evaluate(()=>window.renderDirect('unknown-second-attempt'));await text('Retry interview');
+      await click('Retry interview');await callReady();assert.equal(starts,before+3);
+      assert.equal(startRequests.at(-1).requestId,unknownRetryKey,'a lost response to a fresh deliberate retry survives remount');
+      await click('End');await callEnded();
+    });
+    await check('an older restored ended session cannot rotate an unknown newer start key, including after remount', async()=>{
+      for(const remount of [false,true]) {
+        restoredSession={id:'live-fixture',status:'ended',snapshot:structuredClone(snapshot),turns:[]};liveOwnerScope=draftScope;
+        await page.evaluate(()=>{sessionStorage.clear();sessionStorage.setItem('folio.live.session.'+JSON.stringify({kind:'project',id:'synthetic-project'}),'live-fixture')});
+        await page.reload();await text('Resume live interview');loseStartResponse=true;const before=starts;
+        await page.evaluate(remount=>{window.permissionDenied=true;window.entryIntent={requestId:'entry-unknown-after-ended-'+remount,consumed:false};window.renderDirect();},remount);
+        await text('Retry interview');assert.equal(starts,before+1);const unknownKey=startRequests.at(-1).requestId;
+        if(remount){await page.evaluate(()=>window.renderDirect('unknown-after-ended-remount'));await text('Retry interview');}
+        await click('Retry interview');await callReady();assert.equal(starts,before+2);
+        assert.equal(startRequests.at(-1).requestId,unknownKey,'the old terminal session cannot prove this newer request failed');
+        restoredSession=null;await click('End');await callEnded();
+      }
+    });
+    await check('source replacement during provider join cannot activate the obsolete call after join resolves', async()=>{
+      await page.evaluate(()=>sessionStorage.clear());await page.reload();await text('Start live interview');const before=starts;
+      await page.evaluate(()=>{window.permissionDenied=true;window.holdJoin=true;window.entryIntent={requestId:'explicit-entry-pending-join',consumed:false};window.renderDirect();});
+      await page.waitForFunction(()=>!!window.resolveJoin);assert.equal(starts,before+1);
+      await page.evaluate(()=>window.renderDirect('different-source-join','other-project'));await text('Use microphone instead');
+      await page.waitForFunction(()=>window.left && window.destroyed);await page.evaluate(()=>window.resolveJoin());
+      await page.waitForFunction(()=>window.left && window.destroyed);
+      assert.equal(await page.evaluate(()=>window.activeChanges.at(-1)),false);assert.equal(live.status,'ended');assert.equal(starts,before+1);
     });
     await check('rollout disabled hides new live entry', async () => {
       enabled = false; await page.evaluate(() => sessionStorage.clear()); await page.reload(); await page.waitForFunction(() => !!window.capture);

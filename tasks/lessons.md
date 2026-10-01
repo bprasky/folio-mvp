@@ -1162,3 +1162,6 @@ The founder found the Story screen cluttered with empty answer cards, room grids
 
 ## 2026-10-01 — Lead the interview with live presence
 The founder wants Tavus to be the main interview, not an optional card above the existing chat. Default to a prominent interviewer beside project photos. Type instead switches only designer input to the keyboard while the same Tavus avatar and conversation continue. Preserve canonical progress across input changes; do not silently route the choice to the old chat or imply Tavus supplies a different editorial brain. No microphone or paid session starts on page load.
+
+## 2026-10-01 — The interview entry is the start gesture
+The founder rejected a second Start live interview button after choosing Start/Resume interview. Treat that original intentional entry as the start request: show connecting progress and let Tavus greet the designer, with typing available as the input fallback. Distinguish that action from passive Story visits, saved-answer review and page refresh; avoid duplicate calls on remount. A visible launch panel and mocked transport tests are not proof that real Tavus startup works: inspect the actual failed provider/browser boundary and verify the repaired path. Product direction is conversation-led Create+ with photo uploads and links in the conversation, retaining the stepped uploader as backup.

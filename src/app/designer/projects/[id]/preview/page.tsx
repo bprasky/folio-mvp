@@ -23,6 +23,7 @@ export default function ProjectPostPreviewPage() {
   const [loading, setLoading] = useState(true);
   const [initializing, setInitializing] = useState(false);
   const [showInterviewModal, setShowInterviewModal] = useState(false);
+  const [interviewIntent, setInterviewIntent] = useState<'resume' | undefined>();
   const [validationWarning, setValidationWarning] = useState(false);
   const [generating, setGenerating] = useState(false);
   const [generateError, setGenerateError] = useState<string | null>(null);
@@ -64,6 +65,7 @@ export default function ProjectPostPreviewPage() {
     // Only process once, and only when post is loaded
     if (shouldStartInterview && !hasProcessedStartInterview.current && !loading && post) {
       hasProcessedStartInterview.current = true;
+      setInterviewIntent('resume');
       console.log('[preview] Auto-opening interview modal from startInterview param', { postId: post?.post?.id });
 
       // Remove the query param from URL to clean up
@@ -586,7 +588,7 @@ export default function ProjectPostPreviewPage() {
             )}
             {post.post.expandedBlocks && (
               <button
-                onClick={() => setShowInterviewModal(true)}
+                onClick={() => { setInterviewIntent(undefined); setShowInterviewModal(true); }}
                 className="px-4 py-2 text-sm font-medium text-[var(--accent)] bg-[var(--accent)]/5 border border-[var(--accent)]/20 rounded-lg hover:bg-[var(--accent)]/10 transition-colors"
               >
                 Edit Answers / Regenerate
@@ -605,6 +607,7 @@ export default function ProjectPostPreviewPage() {
           projectId={projectId}
           onAutoTagComplete={() => fetchPost()}
           onStartInterview={() => {
+            setInterviewIntent('resume');
             setShowTagDiagnostic(false);
             fetchPost().then(() => setShowInterviewModal(true));
           }}
@@ -614,6 +617,7 @@ export default function ProjectPostPreviewPage() {
       {showInterviewModal && post && (
         <InterviewModal
           open={showInterviewModal}
+          initialIntent={interviewIntent}
           onOpenChange={(open) => {
             setShowInterviewModal(open);
             if (!open) {

@@ -24,7 +24,7 @@ export async function createLiveSession(input: NewLiveSession, limits: { maxActi
   return prisma.$transaction(async tx => {
     await assertLiveActor(tx, input.actorId);
     // Serialize reservations only. No provider network calls may run under this lock.
-    await tx.$queryRaw`SELECT pg_advisory_xact_lock(73119401)`;
+    await tx.$executeRaw`SELECT pg_advisory_xact_lock(73119401)`;
     if (input.payload.startRequestId) {
       const retry = (await tx.$queryRaw<LiveSession[]>`SELECT * FROM live_interview_sessions WHERE "actorId"=${input.actorId}
         AND payload->>'startRequestId'=${String(input.payload.startRequestId)} ORDER BY "createdAt" DESC LIMIT 1`)[0];

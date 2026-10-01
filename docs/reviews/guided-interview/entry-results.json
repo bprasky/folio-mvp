@@ -1,8 +1,12 @@
 {
   "baseline": false,
   "baselineCommit": null,
-  "fixture": "Actual Tracker → Story → InterviewModal → GuidedInterviewWorkspace and protected interview components; synthetic Next navigation/image/dynamic and loopback HTTP responses, pure guided controller, no AI or database. No deployed/authenticated Next server verification.",
+  "fixture": "Actual Tracker → Story → InterviewModal → GuidedInterviewWorkspace → LiveInterviewPanel and protected interview components; synthetic Next navigation/image/dynamic, loopback HTTP, Daily and microphone denial, pure guided controller, no AI or database. No deployed/authenticated Next server verification.",
   "results": [
+    {
+      "name": "Live original entry starts once; saved-answer review and refresh stay passive; explicit reopen starts anew",
+      "status": "pass"
+    },
     {
       "name": "Lifecycle Start interview opens the first question while the saved-only Story read is pending",
       "status": "pass"

@@ -811,6 +811,7 @@ export default function NewProjectWizard({ project, canScrape }: NewProjectWizar
 
       <InterviewModal
         open={interviewOpen}
+        initialIntent="resume"
         onOpenChange={(open) => {
           setInterviewOpen(open);
           if (!open) goToProject();
