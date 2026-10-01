@@ -42,6 +42,8 @@ CI includes the pure live/adapter suites, native FFmpeg media tests and composed
 
 ## Founder test path
 
+Release follow-up, 2026-10-01: the founder added `TAVUS_API_KEY` to Vercel Production and approved merge/release. Initial hosted CI exposed older VM component loaders and the historical exact-schema guard. The three UI fixtures now explicitly model disabled live UI (and the bio fixture's authenticated owner). The schema guard pins the approved live proposal/SQL while still rejecting changes to either model, User inverse relations, deletion semantics and proposal artifacts. All 36 Publishing Studio scripts and focused schema scope/negative checks pass locally. Production activation still requires the documented infrastructure and acceptance steps below.
+
 Follow [setup and tunnel commands](../../LIVE_INTERVIEWS.md) and [worker/migration/bucket setup](../../LIVE_INTERVIEW_MEDIA_WORKER.md). Open an existing supported interview, choose **Start live interview**, select the recording choice and consent, then explicitly start. Review raw source and actual rendered pieces at **Publishing Studio → Interview recordings and media** (`/designer/studio/media`). Review, approve the exact version, publish to Folio, then export.
 
 Stopping the rollout means disabling new-live/recording/export flags and stopping new worker work. Preserve canonical answers, private tables and original recordings. End and cleanup remain available when access/flags change; provider maximum duration remains a final bound if cleanup is unavailable. Private signed URLs already issued expire normally; external downloaded files cannot be recalled.

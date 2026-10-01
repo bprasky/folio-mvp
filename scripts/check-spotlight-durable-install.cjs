@@ -44,6 +44,18 @@ for(const [,model,fields] of storyInverses.matchAll(/\/\/ (User|Organization|Edi
 // exact additive SQL and the one permitted Organization field.
 assert.equal(hash(read('prisma/migrations/20260924120000_org_member_posting_policy/migration.sql')),'ff6fa82f8627f4272c57b61a8c4cae1764e5dd52643588f1e977eb7e6dc629ee','Approved firm posting policy SQL');
 expected=expected.replace(/(model Organization \{[\s\S]*?)(\s+status\s+OrgStatus)/,'$1\nmembersCanPublish Boolean @default(true)\n$2');
+// Separately approved 2026-10-01 private live-interview models and User inverses.
+// Read definitions only from the pinned review patch, never from the schema
+// under test. Prisma format places the inverse fields before User's @@map.
+const livePatch=read('docs/reviews/live-interviews/schema-proposal.patch');
+assert.equal(hash(livePatch),'2aef1e60909e194a457311c403594c58f5172d95431ea8274049275c8a4269b6','Approved live interview schema artifact');
+assert.equal(hash(read('prisma/migrations/20261001120000_live_interview_private_media/migration.sql')),'fddd410cfe7bbcc43eae19769fd11d3b41c3e271392196230c6af04d7f7172e3','Approved live interview SQL');
+const liveAdditions=livePatch.split('\n').filter(line=>line.startsWith('+')&&!line.startsWith('+++')).map(line=>line.slice(1));
+const liveModelsIndex=liveAdditions.indexOf('model LiveInterviewSession {');
+assert.ok(liveModelsIndex>0,'Reviewed live model definitions exist');
+const liveInverses=liveAdditions.slice(0,liveModelsIndex).join('\n');
+expected=expected.replace(/(model User \{[\s\S]*?)(\n\s*@@map\("users"\)\s*\n\})/,'$1\n'+liveInverses+'$2');
+expected+='\n'+liveAdditions.slice(liveModelsIndex).join('\n');
 const tokens=s=>(s.match(/"(?:\\.|[^"\\])*"|\/\/[^\n]*|[^\s"]/g)||[]).filter(x=>!x.startsWith('//')).join('');
 assert.equal(tokens(read('prisma/schema.prisma')),tokens(expected),'Only reviewed schema tokens');
 assert.equal(JSON.parse(read('vercel.json')).git.deploymentEnabled,false);

@@ -686,3 +686,13 @@ Scope: implement the supplied live interview specification across actual Folio i
 Verification plan: provider boundaries mocked unless a bounded live test is explicitly available; synthetic recordings rendered with real FFmpeg; external database state inspected read-only. Any schema proposal is additive and remains unapplied to production. Before schema edits create a backup; if format/validate/generate/migrate-status fails, restore from backup and stop schema work. Migration application is a separate approval gate.
 
 Review: draft PR #805 contains seven real entry integrations, canonical speech ingestion and recovery, private creator capture, Studio review/publication and native FFmpeg outputs. Transport19, browser17, native media2, composed project/bio2, adapter seven-kind, guided, core10/1 skipped and existing recorded-media33 checks passed. Guided browsers16+16, lint/import/migration guards, approved Prisma format/validate/generate/verify and type ratchet903/904 passed. IDOR retains the identical existing nine Critical findings. Rebased onto main0127d3a4; unrelated local work preserved. User approved only branch schema alignment; read-only migration status shows the one expected unapplied migration. No production changes or real paid call. Missing Tavus/origin/allowlist configuration, bucket MIME expansion, migration application, worker deployment and bounded real device/provider smoke test remain rollout gates. Precise evidence/exclusions: docs/reviews/live-interviews/results.md. Setup: docs/LIVE_INTERVIEWS.md and docs/LIVE_INTERVIEW_MEDIA_WORKER.md.
+
+## Live interview release — 2026-10-01
+
+User approved merging and proceeding after adding the Tavus key to Production. Release plan: repair hosted CI, merge the verified revision, release the committed web application, and verify production readiness. Preserve the separate migration review gate and keep unavailable recording/worker capabilities disabled.
+
+- [x] Inspect hosted failures; repair older component fixtures and pin the approved schema in the exact-scope guard without weakening assertions.
+- [x] Verify all 36 Publishing Studio scripts and schema scope/negative tests locally.
+- [ ] Verify hosted CI and merge PR #805.
+- [ ] Deploy the merged revision and verify public/authenticated route behavior.
+- [ ] Complete or explicitly report remaining migration, account allowlist, bucket, persistent worker and real device/provider acceptance requirements.
