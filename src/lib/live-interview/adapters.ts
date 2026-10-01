@@ -140,7 +140,7 @@ export async function executeLiveCommand(actorId: string, source: LiveSource, pr
     const native = previous.state.native as GuidedSession;
     const result = await runGuidedCommand(source.id, actorId, { action: command.action === 'reuse' ? 'confirm' : command.action,
       requestId: command.requestId, version: Number(previous.version), sessionId: native.id,
-      questionId: command.questionId, text: command.text, inputModality: 'voice', confirmPartial: command.confirmPartial,
+      questionId: command.questionId, text: command.text, inputModality: command.inputModality || 'voice', confirmPartial: command.confirmPartial,
       selectedImageId: command.selectedImageId });
     state.receipts[command.requestId] = digest;
     revalidatePath(`/project/${source.id}`); revalidatePath('/designer/projects');

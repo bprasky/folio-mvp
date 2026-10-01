@@ -42,20 +42,22 @@ export async function liveAvailability(actorId: string, source: LiveSource) {
   if (!liveEnabled(actorId)) return {enabled:false, recordingEnabled:false};
   await authorizeActor(actorId, source);
   liveConfig();
-  return {enabled:true,recordingEnabled:recordingEnabled(),consentVersion:CAPTURE_CONSENT_VERSION,disclosure:CAPTURE_DISCLOSURE};
+  return {enabled:true,recordingEnabled:recordingEnabled(),consentVersion:CAPTURE_CONSENT_VERSION,disclosure:CAPTURE_DISCLOSURE,
+    draftScope:backendHash(JSON.stringify([actorId,source]))};
 }
 function clientState(session: LiveSession, includeJoin = false) {
   const p = payload(session); const snapshot = p.snapshot;
   return {id:session.id,status:session.status,expiresAt:session.expiresAt.toISOString(),
     snapshot:snapshot ? {source:snapshot.source,interviewId:snapshot.interviewId,version:snapshot.version,status:snapshot.status,
       currentQuestion:snapshot.currentQuestion,sourceRefs:snapshot.sourceRefs,notice:snapshot.notice} : undefined,
-    turns:p.turnState.turns.map(({position,raw,status,response,questionId,asked,error})=>({position,raw,status,response,questionId,asked,error})),
+    turns:p.turnState.turns.map(({position,raw,status,response,questionId,asked,error,inputMode,requestId,snapshot:askedSnapshot})=>({position,raw,status,response,questionId,asked,error,inputMode,requestId,version:askedSnapshot?.version})),
     notice:p.notice,recordingEnabled:recordingEnabled(),consent:p.consent,
     ...(includeJoin && active(session) && p.sealedJoin ? {join:openJoin(p.sealedJoin)} : {})};
 }
 export async function readLiveSession(actorId: string, id: string) {
-  const session = await ownedSession(actorId,id);
+  let session = await ownedSession(actorId,id);
   await authorizeActor(actorId,payload(session).source,payload(session).workspaceId);
+  session = await reviewExpiredText(session);
   return clientState(session);
 }
 async function ownedSession(actorId: string, id: string) {
@@ -63,9 +65,11 @@ async function ownedSession(actorId: string, id: string) {
   if (!session || session.actorId !== actorId) throw new LiveError('Interview not found.',404);
   return session;
 }
-export async function startLiveSession(actorId: string, input: {source:unknown; requestId:string; mode:CaptureMode; consentVersion:string; microphoneReady:boolean; selectedImageId?:string|null}) {
+export async function startLiveSession(actorId: string, input: {source:unknown; requestId:string; mode:CaptureMode; consentVersion:string; microphoneReady?:boolean; inputMode?:'voice'|'text'; selectedImageId?:string|null}) {
   if (!liveEnabled(actorId)) throw new LiveError('Live interviews are not available for this account.',403);
-  if (!/^[a-zA-Z0-9-]{16,80}$/.test(input.requestId ?? '') || input.microphoneReady !== true
+  const inputMode=input.inputMode ?? 'voice';
+  if (!/^[a-zA-Z0-9-]{16,80}$/.test(input.requestId ?? '') || !['voice','text'].includes(inputMode)
+    || (inputMode==='voice' && input.microphoneReady !== true) || (inputMode==='text' && input.mode!=='none')
     || !['none','audio','video'].includes(input.mode) || input.consentVersion !== CAPTURE_CONSENT_VERSION)
     throw new LiveError('Confirm the recording choice and microphone permission before starting.',400);
   const source = parseLiveSource(input.source);
@@ -75,9 +79,12 @@ export async function startLiveSession(actorId: string, input: {source:unknown; 
     if (!recordingEnabled()) throw new LiveError('Recording is not available. Choose an interview without recording.',403);
     await assertCaptureStorageReady();
   }
-  const latest=await getLatestLiveSession(actorId,source.kind,source.id,undefined,source.round||1);
+  const previous=await getLatestLiveSession(actorId,source.kind,source.id,undefined,source.round||1);
+  const latest=previous ? await reviewExpiredText(previous) : null;
   if(latest && payload(latest).turnState.turns.some(turn=>turn.status==='needs_review'))
-    return {...clientState(latest),notice:'Review the retained speech from your previous live session before starting another call.'};
+    return {...clientState(latest),notice:'Review the retained answer from your previous live session before starting another call.'};
+  if(latest && payload(latest).turnState.turns.some(turn=>turn.inputMode==='text' && turn.status!=='saved'))
+    return {...clientState(latest),notice:'Your typed answer is retained. Wait for it to save, or end this call and review it before starting another.'};
   const id = randomUUID(); const credential = randomBytes(32).toString('base64url');
   const reservation = await createLiveSession({id,actorId,sourceType:source.kind,sourceId:source.id,canonicalId:source.id,
     status:'starting',credentialHash:backendHash(credential),expiresAt:new Date(Date.now()+config.duration*1000),providerIds:{},
@@ -159,6 +166,59 @@ export function parseUserHistory(body:unknown) {
 }
 const REVIEW_RESPONSE='Your words are retained. Please review the highlighted answer in Folio before we continue.';
 
+function textNeedsReview(turn:LiveTurn) {
+  return turn.inputMode==='text' && (turn.status==='awaiting_final' || (turn.status==='saving' && (turn.leaseUntil??0)<=Date.now()));
+}
+function retainPendingText(session:LiveSession) {
+  for(const turn of payload(session).turnState?.turns??[])if(textNeedsReview(turn)) {
+    turn.status='needs_review';turn.response=REVIEW_RESPONSE;
+    turn.error='Your typed answer is retained. Review it before continuing.';delete turn.leaseUntil;
+  }
+}
+async function reviewExpiredText(session:LiveSession) {
+  if(active(session) || !payload(session).turnState.turns.some(textNeedsReview))return session;
+  return mutateLiveSession(session.id,s=>{if(!active(s))retainPendingText(s);},{cleanup:true});
+}
+
+/** Register explicit text before sending conversation.respond; only the backend may ingest it. */
+export async function prepareLiveText(actorId:string,id:string,input:{requestId:string;text:string;questionId:string;version:string}) {
+  if(!liveEnabled(actorId))throw new LiveError('Live interviews are not available for this account.',403);
+  if(!/^[a-zA-Z0-9-]{16,80}$/.test(input.requestId??'') || typeof input.text!=='string' || !input.text.trim()
+    || input.text.length>2000 || typeof input.questionId!=='string' || typeof input.version!=='string')
+    throw new LiveError('Enter an answer of up to 2,000 characters for the current question.',400);
+  const session=await ownedSession(actorId,id);const p=payload(session);
+  await authorizeActor(actorId,p.source,p.workspaceId);
+  let created=false;
+  const current=await mutateLiveSession(id,s=>{
+    const state=payload(s);const turns=state.turnState.turns;
+    const prior=turns.find(t=>t.requestId===input.requestId);
+    if(prior) {
+      if(prior.raw!==input.text || prior.snapshot?.currentQuestion?.id!==input.questionId || prior.snapshot?.version!==input.version)
+        throw new LiveError('This typed answer receipt was already used. Review the retained answer.',409);
+      return;
+    }
+    const snapshot=state.snapshot;
+    if(!active(s))throw new LiveError('The live session has ended.');
+    if((state.commandLease??0)>Date.now() || turns.some(t=>t.status!=='saved'))throw new LiveError('Wait for the pending answer or control to finish before typing another answer.');
+    if(!snapshot?.currentQuestion || snapshot.currentQuestion.id!==input.questionId || snapshot.version!==input.version)
+      throw new LiveError('The interview question changed. Review your typed answer before sending.',409);
+    // Speech already observed by Folio must finish its own backend turn first.
+    const boundary=Math.max(-1,...turns.map(t=>t.eventSeq??-1),...state.turnState.speech.filter(speech=>speech.delivered).map(speech=>speech.stoppedSeq??-1));
+    if(state.turnState.events.some(event=>event.seq>boundary && event.properties.role==='user'
+      && ['conversation.started_speaking','conversation.utterance'].includes(event.event_type)))
+      throw new LiveError('Wait for the spoken answer to finish saving before typing.',409);
+    if(turns.length>=250)throw new LiveError('Pause and resume this interview to continue.');
+    const position=turns.length+1;
+    turns.push({position,raw:input.text,historyHash:backendHash(JSON.stringify([...turns.map(t=>t.raw),input.text])),
+      status:'awaiting_final',receipt:`live-${s.id}-${position}`,inputMode:'text',requestId:input.requestId,
+      questionId:input.questionId,asked:snapshot.currentQuestion.text,snapshot:structuredClone(snapshot),
+      selectedImageId:state.imageBinding?.questionId===input.questionId?state.imageBinding.imageId:null});
+    created=true;
+  });
+  const turn=payload(current).turnState.turns.find(t=>t.requestId===input.requestId)!;
+  return {...clientState(current),textRegistration:{requestId:input.requestId,position:turn.position,status:turn.status,created}};
+}
+
 /** The ONLY live answer ingestion boundary. Browser events never call executeLiveCommand(answer). */
 export async function processBackendTurn(session:LiveSession,users:string[]) {
   if(!users.length) return ''; // custom_greeting owns the first question, exactly once.
@@ -180,7 +240,7 @@ export async function processBackendTurn(session:LiveSession,users:string[]) {
   if(turn.response) return turn.response;
   // Backend input finality is not promised by PAL docs. Wait for the full utterance event.
   const until=Date.now()+12_000;
-  while(!finalSpeechForTurn(payload(current).turnState,turn) && Date.now()<until) {
+  while(turn.inputMode!=='text' && !finalSpeechForTurn(payload(current).turnState,turn) && Date.now()<until) {
     await new Promise(resolve=>setTimeout(resolve,150));
     const refreshed=await getLiveSession(session.id);
     if(!refreshed || !active(refreshed)) throw new LiveError('The session has ended.');
@@ -192,6 +252,13 @@ export async function processBackendTurn(session:LiveSession,users:string[]) {
     const p=payload(s);const t=p.turnState.turns[position-1];
     if(t.response)return;
     if(t.status==='saving' && (t.leaseUntil??0)>Date.now()) throw new LiveError('This answer is being saved. Retry the same turn.',409);
+    if(t.inputMode==='text') {
+      if(t.raw!==raw || t.historyHash!==digest || !t.snapshot || t.snapshot.version!==p.snapshot?.version
+        || t.questionId!==p.snapshot?.currentQuestion?.id) {
+        t.status='needs_review';t.error='The question changed before your typed answer was saved.';t.response=REVIEW_RESPONSE;return;
+      }
+      t.status='saving';t.leaseUntil=Date.now()+120_000;return;
+    }
     const final=finalSpeechForTurn(p.turnState,t);const asked=final && questionForFinal(p.turnState,final);
     t.eventSeq=final?.seq;t.questionId=asked?.question.id;t.asked=asked?.question.text;t.snapshot=asked?.snapshot;
     t.selectedImageId=p.imageBinding?.questionId===t.questionId?p.imageBinding.imageId:null;
@@ -210,7 +277,8 @@ async function saveTurn(session:LiveSession,turn:LiveTurn,action:'answer'|'corre
   const p=payload(session);const snapshot=p.snapshot;
   if(!snapshot)throw new LiveError('Interview state is unavailable.');
   try {
-    const next=await executeLiveCommand(session.actorId,p.source,snapshot,{action,requestId:turn.receipt,questionId:turn.questionId,text,selectedImageId:turn.selectedImageId});
+    const next=await executeLiveCommand(session.actorId,p.source,snapshot,{action,requestId:turn.receipt,questionId:turn.questionId,text,selectedImageId:turn.selectedImageId,
+      ...(turn.inputMode==='text'?{inputModality:'text' as const}:{})});
     const response=spokenQuestion(next) || (next.status==='needs_review' ? 'Your answer is saved. Please retry the next question in Folio.' : 'Your interview progress is saved. You can review it in Folio.');
     await mutateLiveSession(session.id,s=>{
       const state=payload(s);const t=state.turnState.turns.find(t=>t.position===turn.position)!;
@@ -302,13 +370,13 @@ export async function controlLiveSession(actorId:string,id:string,command:LiveAd
 /** End is allowed after flags, permissions, or account status change: it only reduces access/cost. */
 export async function endLiveSession(actorId:string,id:string,reason:string) {
   await ownedSession(actorId,id);
-  await mutateLiveSession(id,s=>{s.status='ending';payload(s).endReason=reason;delete payload(s).sealedJoin;},{cleanup:true});
+  await mutateLiveSession(id,s=>{s.status='ending';payload(s).endReason=reason;delete payload(s).sealedJoin;retainPendingText(s);},{cleanup:true});
   await reconcileLiveSession(id);
   return clientState((await getLiveSession(id))!);
 }
 export async function reconcileLiveSession(id:string) {
   const session=await getLiveSession(id);if(!session)return;
-  if(active(session))return;
+  if(session.status==='ended' || active(session))return;
   try{
     const p=payload(session);
     const conversations=session.providerIds.conversationId
@@ -325,13 +393,17 @@ export async function reconcileLiveSession(id:string) {
     if(p.cleanupStage==='creating_pal' && !pals.length && session.expiresAt.getTime()>Date.now())
       throw new LiveError('An uncertain PAL create is still being reconciled.');
     for(const pal of pals){try{await deletePal(pal);}catch(e){if(!(e instanceof ProviderError && e.status===404))throw e;}}
-    await mutateLiveSession(id,s=>{s.status='ended';s.expiresAt=new Date();payload(s).cleanupStage='complete';delete payload(s).sealedJoin;},{cleanup:true});
+    await mutateLiveSession(id,s=>{s.status='ended';s.expiresAt=new Date();payload(s).cleanupStage='complete';delete payload(s).sealedJoin;retainPendingText(s);},{cleanup:true});
   }catch{
-    await mutateLiveSession(id,s=>{s.status='uncertain';payload(s).notice='Provider cleanup is pending. This session is reserved until reconciliation succeeds.';},{cleanup:true});
+    await mutateLiveSession(id,s=>{
+      // Another cleanup invocation may have completed while this provider request failed.
+      if(s.status==='ended' || payload(s).cleanupStage==='complete')return;
+      s.status='uncertain';payload(s).notice='Provider cleanup is pending. This session is reserved until reconciliation succeeds.';
+    },{cleanup:true});
   }
 }
-export async function cleanupLiveSessions() {
-  const sessions=await listLiveSessionsForCleanup();
+export async function cleanupLiveSessions(limit = 100) {
+  const sessions=await listLiveSessionsForCleanup(limit);
   for(const session of sessions)await reconcileLiveSession(session.id);
   return {checked:sessions.length};
 }

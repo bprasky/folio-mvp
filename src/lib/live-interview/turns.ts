@@ -15,6 +15,7 @@ export interface LiveTurn {
   eventSeq?: number; receipt: string; leaseUntil?: number; error?: string;
   snapshot?: LiveAdapterSnapshot; reviewedText?: string; saveAction?: 'answer' | 'correct';
   selectedImageId?: string | null;
+  inputMode?: 'voice' | 'text'; requestId?: string;
 }
 export interface TurnState {
   turns: LiveTurn[]; speech: PreparedSpeech[]; events: SpeechEvent[];
@@ -60,7 +61,15 @@ export function acceptSpeechEvent(state: TurnState, input: SpeechEvent) {
 export function finalSpeechForTurn(state: TurnState, turn: LiveTurn) {
   const used = new Set(state.turns.filter(t => t.position !== turn.position).map(t => t.eventSeq));
   // Position is stable across retries. Text is only corroboration inside that position, never a global dedupe key.
-  const previous = state.turns.filter(t => t.position < turn.position).at(-1)?.eventSeq ?? -1;
+  const prior = state.turns.filter(t => t.position < turn.position).at(-1);
+  let previous = prior?.eventSeq ?? -1;
+  // A text response may also emit a user utterance. It is not proof of a later
+  // spoken answer, even when the words match; wait for the next delivered question.
+  if (prior?.inputMode === 'text') {
+    const current = state.speech.at(-1);
+    if (!current?.delivered || current.stoppedSeq === undefined) return undefined;
+    previous = Math.max(previous, current.stoppedSeq);
+  }
   return state.events.find(e => e.event_type === 'conversation.utterance' && e.properties.role === 'user'
     && e.seq > previous && !used.has(e.seq) && sameSpeech(e.properties.speech ?? '', turn.raw));
 }

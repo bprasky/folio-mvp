@@ -1148,6 +1148,8 @@ Rule: verify the original lifecycle CTA through the first question, close/resume
 
 Follow-up correction: do not infer the current live revision from local `vercel.json`, GitHub CI, or which deployments this agent performed. The Vercel production dashboard showed PR #799 (`56dad57`) already live while the guided flag was absent from both project and shared environment variables. Inspect the actual production deployment and the specific flag before attributing old behavior to a missing deployment.
 
+2026-10-01 follow-up: a deployed Tavus panel can still be invisible when the live flag and account allowlist are absent. Explain the actual entry in the designer's current workspace and distinguish deployment from activation. Separate unrecorded live-interview requirements (account access, Tavus, canonical engine, reachable backend and session cleanup) from saved-media requirements (worker, transcription key and storage capacity); do not imply the media worker blocks every live call. Verify the visible enabled entry before calling the interview experience ready.
+
 ## 2026-09-26 — Preserve conversational intelligence, not only interview mechanics
 
 The founder's guided-interview screenshots showed generic repetition after a rich answer. The implementation narrowed the model to four canned follow-ups, prohibited acknowledgments or new wording, rejected contextual prepared wording through tiny regex grammars, and treated the plan as a queue without evidence-linked overlap handling. Those were implementation compromises, not requirements of the supplied brief; they defeated its central product intent.
@@ -1157,3 +1159,6 @@ Rule: preserve stable question identities, provenance and server-controlled prog
 ## 2026-09-28 — A paused interview needs a simple way back in
 
 The founder found the Story screen cluttered with empty answer cards, room grids, draft settings and repeated progress, while its Restart button could not reset a guided session. Lead with Resume interview and a visible Start over action; disclose destructive scope in-product. Keep review and draft options behind deliberate actions. Test reset through the actual guided/legacy dispatch, persistent evidence, stale tabs and local drafts—not merely a button or cursor change.
+
+## 2026-10-01 — Lead the interview with live presence
+The founder wants Tavus to be the main interview, not an optional card above the existing chat. Default to a prominent interviewer beside project photos. Type instead switches only designer input to the keyboard while the same Tavus avatar and conversation continue. Preserve canonical progress across input changes; do not silently route the choice to the old chat or imply Tavus supplies a different editorial brain. No microphone or paid session starts on page load.

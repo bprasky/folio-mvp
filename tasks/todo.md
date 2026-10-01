@@ -695,6 +695,28 @@ User approved merging and proceeding after adding the Tavus key to Production. R
 - [x] Verify all 36 Publishing Studio scripts and schema scope/negative tests locally.
 - [x] Fix and browser-test the production CSP; verify missing-schema rollout and flags-off archive reads.
 - [x] Obtain separate SQL approval, verify production identity and apply the exact reviewed migration with the repository guard.
-- [ ] Verify hosted CI and merge PR #805.
-- [ ] Deploy the merged revision and verify public/authenticated route behavior.
-- [ ] Complete or explicitly report remaining migration, account allowlist, bucket, persistent worker and real device/provider acceptance requirements.
+- [x] Verify hosted CI and merge PR #805.
+- [x] Deploy the merged revision and verify the public homepage and private-route authentication boundaries.
+- [x] Complete or explicitly report remaining migration, account allowlist, bucket, persistent worker and real device/provider acceptance requirements.
+
+Release review: PR805 merged as b3d570c6 after all ten required hosted checks passed (Supabase Preview skipped). Deployment dpl_4n7cyKPaUe8uUpuQPGdCF5q67XDj was built from the identical committed file tree and promoted to folioad.com. Public homepage200 and all three live/media authentication probes401; corrected CSP confirmed publicly. All114 migrations current; production postflight12/12 passed. Private bucket audio/video MIME expansion succeeded; requested512MiB rejected by project maximum, so existing20MiB limit preserved. Worker native/storage checks pass but OPENAI_API_KEY is absent. Live/recording/export flags remain off pending account allowlist, persistent worker and minute-based cleanup hosting, transcription credentials, storage capacity and real provider/device acceptance. No paid call. Awaiting founder's account email and worker host details; merge, deployment and approved SQL application are complete.
+
+## Activate live project interview — 2026-10-01
+
+The founder supplied javier@phase3.us to enable the first live test from the existing guided workspace. Plan: verify exact account/source access, schedule authenticated bounded session cleanup on the existing Vercel Pro project, then enable only live interviewing for that account and verify the actual visible entry. Recording and exports stay off; their worker/ASR/storage requirements are separate. Branch codex/live-interview-activation starts from merged main b3d570c6; unrelated local edits remain preserved.
+
+- [x] Verify approved account and project access for the supplied email.
+- [x] Add and test fail-closed scheduled cleanup, including flags-off reconciliation and bounded work.
+- [ ] Configure the account allowlist/live switch and cleanup secret; review, merge and deploy the activation change.
+- [ ] Verify production scheduling, authorization, visible live entry and report real-device test limits.
+
+Activation review: exact account APPROVED/DESIGNER and screenshot project ownership/write access confirmed read-only. Production CRON_SECRET, account-ID FOLIO_LIVE_ALLOWLIST and FOLIO_LIVE_INTERVIEWS=1 saved; recording/export flags remain absent/off. Cleanup regression (including reproduced/fixed overlapping termination race), transport19, seven-kind adapters, browser17, lint, import/migration guards and type ratchet903/904 pass. Reviewer reports no remaining blockers. Browser awaits account sign-in; merge/deployment, registered schedule and real-device/provider behavior are not yet verified.
+
+## Live-first interview correction — 2026-10-01
+User corrected the in-progress activation: Tavus is the prominent default and Type instead keeps the same avatar speaking while the designer types. Hold promotion of activation-only build and extend PR806. Plan: keep photo navigation, reuse one Tavus conversation and Folio canonical engine, add explicit typed receipts through documented conversation.respond, preserve draft/review controls and microphone consent. Recording remains off.
+- [x] Make enabled project interview live-first with full-width avatar and secondary keyboard mode.
+- [x] Support microphone-free typed starts and same-call switching with durable typed receipts and single canonical save.
+- [x] Verify auth, retries/stale answers, voice/text switching, draft restoration and desktop/mobile presentation.
+- [ ] Review final scope, update PR806, merge/redeploy and verify actual signed-in production UI.
+
+Live-first review:30 transport checks, seven-kind adapter/provenance checks,26 actual-panel browser/capture checks,20 guided workspace and16 entry browser checks passed. Browser fixtures use synthetic provider/recording data; actual Tavus audiovisual quality is still unverified. Reviewed actor/source draft isolation, frozen question attribution, pending/late-save recovery, speech echo boundaries, capture-stop failure and stable mounting. Lint passes with existing warnings; hosted CI now includes actual live and guided browser suites. Production build from activation-only commit is held; release uses final revised UI.

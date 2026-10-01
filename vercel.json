@@ -2,5 +2,6 @@
   "git": { "deploymentEnabled": false },
   "regions": ["iad1"],
   "installCommand": "npm install --legacy-peer-deps",
-  "buildCommand": "prisma generate && next build"
+  "buildCommand": "prisma generate && next build",
+  "crons": [{ "path": "/api/cron/live-interviews", "schedule": "* * * * *" }]
 }

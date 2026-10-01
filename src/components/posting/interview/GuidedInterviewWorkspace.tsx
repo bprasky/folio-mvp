@@ -33,6 +33,8 @@ export function GuidedInterviewWorkspace({ projectId, actorId, projectName = 'Yo
   const [commandBusy, setBusy] = useState(false);
   const [liveActive, setLiveActive] = useState(false);
   const [liveSessionId, setLiveSessionId] = useState<string|null>(null);
+  const [liveAvailable, setLiveAvailable] = useState(false);
+  const [workspaceRequested, setWorkspaceRequested] = useState(false);
   const busy = commandBusy || liveActive;
   const [workingCommand, setWorkingCommand] = useState<GuidedCommand | null>(null);
   const inFlight = useRef(false);
@@ -87,6 +89,13 @@ export function GuidedInterviewWorkspace({ projectId, actorId, projectName = 'Yo
     },
   });
   const voiceBusy = voice.isRecording || voice.isTranscribing || voice.status === 'paused';
+  const reviewVisible = showFinish || (session && ['ready', 'finished'].includes(session.status));
+  const readyToAnswer = activeQuestion && session?.status === 'active' && !reviewVisible && !showSkipRoom;
+  const liveEligible = loaded && !loadingSession && !!readyToAnswer && !draft.text && !draft.pending
+    && !voiceBusy && !voice.hasRecording && !correcting && !commandBusy;
+  // Canonical progress may temporarily have no active question while the next one
+  // is prepared. Keep the same live component mounted until its call has ended.
+  const showLive = liveActive || (liveAvailable && liveEligible && !workspaceRequested);
 
   const acceptSession = useCallback((next: GuidedSession) => {
     // A late HTTP response cannot move a newer session backwards.
@@ -243,7 +252,7 @@ export function GuidedInterviewWorkspace({ projectId, actorId, projectName = 'Yo
     };
     window.addEventListener('resize', resize);
     return () => { observer.disconnect(); window.removeEventListener('resize', resize); cancelAnimationFrame(frame); };
-  }, [loaded]);
+  }, [loaded, showLive]);
 
   useEffect(() => {
     if (!activeQuestion || previousRoom.current === activeQuestion.roomId) return;
@@ -266,7 +275,7 @@ export function GuidedInterviewWorkspace({ projectId, actorId, projectName = 'Yo
   };
 
   const pause = async () => {
-    if (liveActive) { setError('Use Pause or Switch to text in the live interview panel before closing.'); return; }
+    if (liveActive) { setError('Pause or end the live interview before closing.'); return; }
     if (voiceBusy || voice.hasRecording) { setError('Finish transcribing or discard the recording before closing.'); return; }
     if (busy || generating) { setError('Please wait for the current save to finish.'); return; }
     saveDraft(draftRef.current);
@@ -323,8 +332,6 @@ export function GuidedInterviewWorkspace({ projectId, actorId, projectName = 'Yo
   const unfinished = session?.plan.filter(question => ['active', 'pending'].includes(question.status)).length ?? 0;
   const skipped = session?.plan.filter(question => question.status === 'skipped').length ?? 0;
   const shorterCoverage = unfinished > 0 || skipped > 0 || !session?.roomsPrepared || answers.length < (session?.minimumTotalAnswers ?? 0);
-  const reviewVisible = showFinish || (session && ['ready', 'finished'].includes(session.status));
-  const readyToAnswer = activeQuestion && session?.status === 'active' && !reviewVisible && !showSkipRoom;
   const photoInScope = photo && activeQuestion && (!activeQuestion.roomId || session?.rooms.find(room => room.id === activeQuestion.roomId)?.imageIds.includes(photo.id));
   const photoIndex = photo ? photos.findIndex(image => image.id === photo.id) : 0;
   const savedLabel = generating ? 'Preparing your draft…' : busy ? pendingAnswer ? 'Awaiting save confirmation' : 'Updating your interview…' : loadingSession ? 'Loading your interview…' : voice.isTranscribing ? 'Transcribing…' : draft.pending ? 'Save not confirmed — retry' : draft.text ? storageError ? 'Response not saved on this device' : 'Unsent response · saved on this device' : session ? 'All accepted answers saved' : 'Interview not loaded';
@@ -340,7 +347,7 @@ export function GuidedInterviewWorkspace({ projectId, actorId, projectName = 'Yo
           <button type="button" disabled={liveActive} onClick={() => void pause()} className={`${buttonClass} flex shrink-0 items-center gap-2`}><Pause size={15} aria-hidden />Pause & close</button>
         </header>
 
-        <div className="grid min-h-0 flex-1 grid-rows-[minmax(120px,30dvh)_minmax(0,1fr)] gap-3 p-3 md:grid-cols-[minmax(0,1fr)_390px] md:grid-rows-1 md:gap-6 md:p-6 lg:grid-cols-[minmax(0,1fr)_420px]">
+        <div className={`grid min-h-0 flex-1 grid-rows-[minmax(120px,30dvh)_minmax(0,1fr)] gap-3 p-3 md:grid-rows-1 md:gap-6 md:p-6 ${showLive ? 'md:grid-cols-[minmax(0,1fr)_minmax(320px,45%)] lg:grid-cols-[minmax(0,1fr)_480px] xl:grid-cols-[minmax(0,1fr)_520px]' : 'md:grid-cols-[minmax(0,1fr)_390px] lg:grid-cols-[minmax(0,1fr)_420px]'}`}>
           <section aria-label="Project photographs" className="flex min-h-0 min-w-0 flex-col gap-2">
             <div className="relative min-h-0 flex-1 overflow-hidden rounded-lg bg-surface-ground">
               {photo ? <Image src={photo.url} alt={photo.name || `${roomName(photo.roomId)} photograph`} fill unoptimized sizes="(min-width: 768px) 65vw, 100vw" className="object-contain" />
@@ -363,7 +370,7 @@ export function GuidedInterviewWorkspace({ projectId, actorId, projectName = 'Yo
             </div>
           </section>
 
-          <section aria-label="Conversation with Folio" className="flex min-h-0 flex-col overflow-hidden rounded-lg border border-folio-border-subtle bg-surface-canvas shadow-folio2 md:max-h-[min(720px,100%)] md:self-end">
+          <section aria-label="Conversation with Folio" className={`flex min-h-0 min-w-0 flex-col overflow-hidden rounded-lg border border-folio-border-subtle bg-surface-canvas shadow-folio2 ${showLive ? '' : 'md:max-h-[min(720px,100%)] md:self-end'}`}>
             <div className="flex shrink-0 items-start justify-between gap-2 border-b border-folio-border-subtle px-4 py-3">
               <div><p className="font-headline text-folio-h4">Folio <span className="font-body text-folio-meta text-folio-text-secondary">AI interviewer</span></p>
                 <p className="text-folio-meta text-folio-text-secondary">{activeRoomName}</p></div>
@@ -381,11 +388,15 @@ export function GuidedInterviewWorkspace({ projectId, actorId, projectName = 'Yo
               </details>}
             </div>
 
-            <div className="max-h-[55%] shrink-0 overflow-y-auto">
-              {!draft.text && !draft.pending && !voiceBusy && !voice.hasRecording && !correcting && <LiveInterviewPanel
+            <div className={showLive ? 'min-h-0 flex-1 overflow-y-auto overscroll-contain' : 'hidden'}>
+              {showLive && error && <div role="alert" className="m-4 rounded-sm bg-surface-ground p-3 text-folio-meta"><p>{error}</p><button aria-label="Dismiss message" className={buttonClass} onClick={() => setError('')}><X size={14} /></button></div>}
+              {(liveEligible || liveActive) && <LiveInterviewPanel presentation="primary"
                 source={{ kind: 'project', id: projectId }} onActiveChange={setLiveActive} onCanonicalChange={refreshLiveProgress}
+                onAvailabilityChange={setLiveAvailable} onOpenWorkspace={() => setWorkspaceRequested(true)}
                 selectedImageId={draft.selectedImageId} onSessionChange={setLiveSessionId} />}
             </div>
+            {!showLive && <>
+            {liveAvailable && liveEligible && <button type="button" className={`${buttonClass} mx-4 mt-3 self-start`} onClick={() => { setWorkspaceRequested(false); setEarlierTurns(false); }}>Return to live interview</button>}
             <div ref={conversationRef} className="min-h-0 flex-1 space-y-5 overflow-y-auto overscroll-contain px-4 py-4 md:min-h-40" role="log" aria-label="Interview conversation"
               onScroll={event => { if (resizingConversation.current) return; const el = event.currentTarget; followBottom.current = el.scrollHeight - el.scrollTop - el.clientHeight < 70; setEarlierTurns(!followBottom.current); }}>
               {initialRoomId && !session?.roomsPrepared && <p className="text-folio-meta text-folio-text-secondary">We’ll finish the project context before preparing the room questions.</p>}
@@ -466,6 +477,7 @@ export function GuidedInterviewWorkspace({ projectId, actorId, projectName = 'Yo
               <div className="mt-2 flex flex-wrap items-center justify-between gap-1"><p id="guided-save-status" role="status" aria-live="polite" className="flex items-center gap-1 text-folio-meta text-folio-text-secondary">{!busy && !loadingSession && session && !draft.text && !draft.pending && <Check size={12} aria-hidden />}{savedLabel}</p>
                 {answers.length > 0 && !reviewVisible && <button className={buttonClass} disabled={busy || voiceBusy || !!draft.text || !!draft.pending} onClick={() => setShowFinish(true)}>Finish with what I have</button>}</div>
             </div>
+            </>}
           </section>
         </div>
       </Dialog.Content>
