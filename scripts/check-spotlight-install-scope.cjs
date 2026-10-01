@@ -34,4 +34,18 @@ assert.throws(() => run((path, text) => path === 'prisma/schema.prisma'
   ? text.replace(/(model SpotlightAnswerRevision \{[\s\S]*?revisionNumber\s+)Int/, '$1String') : text), /Only reviewed schema tokens/, 'Historical Spotlight token protection must remain');
 assert.throws(() => run((path, text) => path === 'docs/reviews/studio-readiness-proposed.prisma'
   ? text.replace('currentVersion Int', 'currentVersion String') : text), /Approved Editorial Readiness model artifact/, 'Editing a proposal cannot authorize schema changes');
-console.log('PASS exact installation scope: approved schema accepted; changed readiness field, extra model, changed Spotlight field and tampered approval artifact rejected.');
+for (const model of ['LiveInterviewSession', 'InterviewMediaRecord']) {
+  assert.throws(() => run((path, text) => path === 'prisma/schema.prisma'
+    ? text.replace(new RegExp('(model '+model+' \\{[\\s\\S]*?actorId\\s+)String'), '$1Int') : text), /Only reviewed schema tokens/, 'Changed live actor ownership field must fail');
+}
+for (const [field, model] of [['liveInterviewSessions', 'LiveInterviewSession'], ['interviewMediaRecords', 'InterviewMediaRecord']]) {
+  assert.throws(() => run((path, text) => path === 'prisma/schema.prisma'
+    ? text.replace(new RegExp(field+'\\s+'+model+'\\[\\]'), field+' '+model+'?') : text), /Only reviewed schema tokens/, 'Changed live User inverse relation must fail');
+}
+assert.throws(() => run((path, text) => path === 'prisma/schema.prisma'
+  ? text.replace(/(model InterviewMediaRecord \{[\s\S]*?onDelete: )Cascade/, '$1NoAction') : text), /Only reviewed schema tokens/, 'Changed live deletion semantics must fail');
+assert.throws(() => run((path, text) => path === 'docs/reviews/live-interviews/schema-proposal.patch'
+  ? text.replace(/(actorId\s+)String/, '$1Int') : text), /Approved live interview schema artifact/, 'Editing the live proposal cannot authorize schema changes');
+assert.throws(() => run((path, text) => path === 'prisma/migrations/20261001120000_live_interview_private_media/migration.sql'
+  ? text + '\nSELECT 1;\n' : text), /Approved live interview SQL/, 'Changed approved live SQL must fail');
+console.log('PASS exact installation scope: approved schema accepted; changed fields, inverse relations, deletion semantics, extra model and tampered approval artifacts rejected.');

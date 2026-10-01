@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
+import { LiveInterviewPanel } from '@/components/interviews/LiveInterviewPanel';
 import { toast } from 'sonner';
 
 interface Question {
@@ -25,6 +26,7 @@ interface InterviewRoundProps {
   role: 'VENDOR' | 'DESIGNER';
   otherPartyName?: string; // For Round 3
   onComplete?: () => void;
+  onLiveActiveChange?: (active: boolean) => void;
 }
 
 export function InterviewRound({
@@ -33,11 +35,14 @@ export function InterviewRound({
   role,
   otherPartyName,
   onComplete,
+  onLiveActiveChange,
 }: InterviewRoundProps) {
   const [questions, setQuestions] = useState<Question[]>([]);
   const [responses, setResponses] = useState<Record<string, string>>({});
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
+  const [liveActive, setLiveActive] = useState(false);
+  const [savedResponses, setSavedResponses] = useState('{}');
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
 
   // Fetch questions for this round
@@ -59,7 +64,7 @@ export function InterviewRound({
         (data.existingResponses || []).forEach((r: Response) => {
           existing[r.questionId] = r.answer;
         });
-        setResponses(existing);
+        setResponses(existing); setSavedResponses(JSON.stringify(existing));
       } catch (error: any) {
         console.error('Failed to load questions:', error);
         toast.error(error.message || 'Failed to load questions');
@@ -79,6 +84,7 @@ export function InterviewRound({
   };
 
   const handleSave = async (isComplete = false) => {
+    if (liveActive) return;
     const answeredResponses = Object.entries(responses)
       .filter(([, answer]) => answer.trim().length > 0)
       .map(([questionId, answer]) => ({
@@ -105,6 +111,7 @@ export function InterviewRound({
       }
 
       const data = await res.json();
+      setSavedResponses(JSON.stringify(responses));
       toast.success(
         data.isComplete
           ? `Round ${round} complete!`
@@ -144,6 +151,13 @@ export function InterviewRound({
 
   return (
     <div className="max-w-2xl mx-auto">
+      {JSON.stringify(responses) === savedResponses && <LiveInterviewPanel source={{ kind: 'collaboration', id: storyId, round }} onActiveChange={active => { setLiveActive(active); onLiveActiveChange?.(active); }} onCanonicalChange={async () => {
+        const response = await fetch('/api/collaboration/stories/' + encodeURIComponent(storyId) + '/round/' + round, { cache: 'no-store' });
+        if (!response.ok) return;
+        const data = await response.json(); const next = Object.fromEntries((data.existingResponses || []).map((answer: Response) => [answer.questionId, answer.answer]));
+        setResponses(next); setSavedResponses(JSON.stringify(next));
+      }} />}
+      <fieldset disabled={liveActive} className="min-w-0 border-0 p-0">
       {/* Header */}
       <div className="mb-8">
         <div className="flex items-center justify-between mb-4">
@@ -281,6 +295,7 @@ export function InterviewRound({
           </Button>
         </div>
       </div>
+      </fieldset>
     </div>
   );
 }

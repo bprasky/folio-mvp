@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect } from 'react';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
+import { LiveInterviewPanel } from '@/components/interviews/LiveInterviewPanel';
 import { useSession } from 'next-auth/react';
 import {
   ChevronRight,
@@ -62,6 +63,7 @@ export default function OrgAboutInterviewPage() {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [answers, setAnswers] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [liveActive, setLiveActive] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   // Determine which questions to ask based on coverage
@@ -112,7 +114,7 @@ export default function OrgAboutInterviewPage() {
       window.addEventListener('keydown', handleKeyDown);
       return () => window.removeEventListener('keydown', handleKeyDown);
     }
-  }, [step, isSubmitting, currentIndex, answers]);
+  }, [step, isSubmitting, currentIndex, answers, liveActive]);
 
   // --- Handlers ---
 
@@ -202,6 +204,7 @@ export default function OrgAboutInterviewPage() {
   };
 
   const handleNext = async () => {
+    if (liveActive) return;
     if (currentIndex < activeQuestions.length - 1) {
       setCurrentIndex((i) => i + 1);
     } else {
@@ -210,10 +213,12 @@ export default function OrgAboutInterviewPage() {
   };
 
   const handleBack = () => {
+    if (liveActive) return;
     if (currentIndex > 0) setCurrentIndex((i) => i - 1);
   };
 
   const handleSubmit = async () => {
+    if (liveActive) return;
     setStep('generating');
     setIsSubmitting(true);
     setError(null);
@@ -656,6 +661,7 @@ export default function OrgAboutInterviewPage() {
       <div className="flex items-center justify-between px-8 py-4 border-b" style={{ borderColor: '#E8E4DF' }}>
         <button
           onClick={() => {
+            if (liveActive) return;
             if (bioImportType !== 'FRESH' && currentIndex === 0) {
               setStep('coverage');
             } else {
@@ -700,6 +706,23 @@ export default function OrgAboutInterviewPage() {
         </div>
       )}
 
+      <div className="mx-8 my-4">
+        <LiveInterviewPanel source={{ kind: 'org_bio', id: orgId }} beforeStart={async () => {
+          setIsSubmitting(true); setError(null);
+          try {
+            const saved = await fetch('/api/orgs/' + orgId + '/bio-interview', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ answers, format: 'conversational', importedBioText: importedBioText || null, importedBioUrl: bioUrl.trim() || null, bioImportType }) });
+            if (!saved.ok) throw new Error('Could not save interview progress.');
+            if (coverage.length) { const result = await fetch('/api/orgs/' + orgId + '/bio-interview/coverage', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ coverage }) }); if (!result.ok) throw new Error('Could not save the prepared questions.'); }
+          } catch (cause) { setError(cause instanceof Error ? cause.message : 'Could not save.'); throw cause; }
+          finally { setIsSubmitting(false); }
+        }} onActiveChange={setLiveActive} onCanonicalChange={async () => {
+          const response = await fetch('/api/orgs/' + orgId + '/bio-interview', { cache: 'no-store' });
+          if (!response.ok) return;
+          const data = await response.json(); const next = data.interview?.conversationalAnswers || {}; setAnswers(next);
+          setCurrentIndex(Math.max(0, activeQuestions.findIndex(q => !next[q.id]?.trim())));
+        }} />
+      </div>
+      <fieldset disabled={liveActive} className="min-w-0 flex-1 border-0 p-0">
       {/* Question */}
       {currentQuestion && (
         <div className="flex-1 flex flex-col min-h-0 overflow-y-auto">
@@ -763,6 +786,7 @@ export default function OrgAboutInterviewPage() {
           <ChevronRight className="w-5 h-5" />
         </button>
       </div>
+      </fieldset>
     </div>
   );
 }

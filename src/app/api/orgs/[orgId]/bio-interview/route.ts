@@ -4,6 +4,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/app/api/auth/[...nextauth]/options';
 import { prisma } from '@/lib/prisma';
+import { saveOrgConversation } from '@/lib/org-onboarding/interview-service';
+import { revalidatePath } from 'next/cache';
 import { getUserOrgMemberships, isOrgAdmin } from '@/lib/permissions';
 
 /**
@@ -40,20 +42,8 @@ export async function POST(
           }
         : {};
 
-      const interview = await prisma.orgBioInterview.upsert({
-        where: { organizationId: orgId },
-        create: {
-          organizationId: orgId,
-          conversationalAnswers: answers,
-          interviewFormat: 'conversational',
-          ...importData,
-        },
-        update: {
-          conversationalAnswers: answers,
-          interviewFormat: 'conversational',
-          ...importData,
-        },
-      });
+      const interview = await saveOrgConversation(session.user.id, orgId, answers, importData);
+      revalidatePath('/org/' + orgId + '/settings/about-interview');
 
       return NextResponse.json({ success: true, interview });
     }

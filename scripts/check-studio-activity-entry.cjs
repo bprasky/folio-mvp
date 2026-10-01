@@ -7,6 +7,9 @@ const {createRoot}=require('react-dom/client');
 let calls=[],respond,bioProps,activityProps;
 const fetch=async(url,options)=>{calls.push({url,options});return respond(url,options);};
 function load(file){const exports={};vm.runInNewContext(ts.transpileModule(fs.readFileSync(file,'utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,jsx:ts.JsxEmit.ReactJSX,target:ts.ScriptTarget.ES2022}}).outputText,{exports,console,window:dom.window,document:dom.window.document,navigator:dom.window.navigator,URL,URLSearchParams,fetch,globalThis:{crypto:require('node:crypto').webcrypto},require(name){
+// Existing text-interview fixture: live is disabled; authentication stays explicit.
+if(name==='@/components/interviews/LiveInterviewPanel')return {LiveInterviewPanel:()=>null};
+if(name==='next-auth/react')return {useSession:()=>({data:{user:{id:'owner'}},status:'authenticated'})};
 if(name==='next/link')return {default:({href,children})=>React.createElement('a',{href},children)};
 if(name==='next/navigation')return {useSearchParams:()=>new URLSearchParams('subject=designer&format=twenty_questions'),useRouter:()=>({push(){}})};
 if(name==='@/components/designer-bio/BioSetupFlow')return {default:props=>{bioProps=props;return React.createElement('button',{onClick:props.onPublished},'Publish fixture');}};

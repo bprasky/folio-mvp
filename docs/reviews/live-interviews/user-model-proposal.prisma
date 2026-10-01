@@ -1,0 +1,296 @@
+// REVIEW ONLY: complete User block with the two proposed inverse fields.
+model User {
+  studioStories        EditorialStory[]         @relation("StudioStoryOwner")
+  studioStoryApprovals EditorialStoryRevision[] @relation("StudioStoryApprover")
+  studioStoryAnswers   EditorialStoryAnswer[]   @relation("StudioStoryAnswerer")
+
+  spotlightAnswerRevisions SpotlightAnswerRevision[] @relation("SpotlightAnsweringUser")
+  // Product spotlight draft selection
+  spotlightsAsPublisher    ProductSpotlight[]        @relation("SpotlightPublisher")
+  selectedSpotlights       ProductSpotlight[]        @relation("SpotlightSelector")
+
+  id                             String                    @id @default(uuid())
+  email                          String                    @unique
+  name                           String
+  bio                            String?
+  profileImage                   String?
+  location                       String?
+  title                          String?
+  phone                          String?
+  studio                         String?
+  specialties                    String[]
+  website                        String?
+  instagram                      String?
+  linkedin                       String?
+  companyName                    String?
+  budgetRange                    String?
+  desiredRooms                   String[]
+  serviceLevel                   String?
+  projectStatus                  String?
+  followers                      Int                       @default(0)
+  following                      Int                       @default(0)
+  views                          Int                       @default(0)
+  createdAt                      DateTime                  @default(now())
+  updatedAt                      DateTime                  @updatedAt
+  role                           Role                      @default(INDIVIDUAL)
+  passwordHash                   String
+  // Account approval system
+  accountStatus                  AccountStatus             @default(APPROVED)
+  approvedAt                     DateTime?
+  approvedBy                     String?
+  rejectionReason                String?
+  applicationNote                String?
+  onboardingCompletedAt          DateTime?
+  // Designer onboarding tracking
+  onboardingBrandStepCompletedAt DateTime?
+  // Granular onboarding flow (17_ONBOARDING_FLOW)
+  onboardingDiagnosticAt         DateTime?
+  onboardingFirmContextAt        DateTime?
+  onboardingBioCaptureAt         DateTime?
+  onboardingProfilePreviewAt     DateTime?
+  // Brand profile relation (for designers)
+  brandProfile                   DesignerBrandProfile?
+  // Aesthetic detection
+  aestheticProfile               Json? // Stores AestheticProfile
+  aestheticDetectedAt            DateTime?
+  profileState                   String                    @default("empty") // ProfileState enum as string
+  brandAssets                    DesignerBrandAssets?
+  engagementEvents               EngagementEvent[]
+  rsvps                          EventRSVP[]               @relation("UserRSVPs")
+  events                         Event[]                   @relation("EventCreator")
+  folders                        Folder[]
+  organizationUsers              OrganizationUser[]
+  posts                          Post[]
+  products                       Product[]                 @relation("VendorProducts")
+  designerProjects               Project[]                 @relation("DesignerProjects")
+  ownedProjects                  Project[]                 @relation("OwnedProjects")
+  vendorQuotes                   Quote[]                   @relation("VendorQuotes")
+  vendorSelections               Selection[]               @relation("VendorSelections")
+  stories                        Story[]
+  vendorStories                  Story[]                   @relation("StoryToVendor")
+  projectParticipants            ProjectParticipant[]
+  projectModules                 ProjectModule[]
+  // Removed - AttributeVerification doesn't have designerId field
+  designerDecisions              DesignerDecision[]
+  voiceProfile                   DesignerVoiceProfile?
+  reasoningProfile               DesignerReasoningProfile?
+  // Impersonation relations
+  adminImpersonations            ImpersonationLog[]        @relation("AdminImpersonations")
+  userImpersonations             ImpersonationLog[]        @relation("UserImpersonations")
+  // Collaboration stories (as designer)
+  collaborationStories           CollaborationStory[]      @relation("CollaborationStoryDesigner")
+  // Phase 2: Org join requests
+  orgJoinRequests                OrgJoinRequest[]
+  mintedOrgClaimInvites          OrgClaimInvite[]          @relation("ClaimInviteCreator")
+  claimedOrgInvites              OrgClaimInvite[]          @relation("ClaimInviteClaimer")
+
+  // Workspace context: null = operating as individual, orgId = operating as that org
+  operatingAsOrgId String?
+  operatingAsOrg   Organization? @relation("UserOperatingAs", fields: [operatingAsOrgId], references: [id])
+
+  // Presale consultation relations
+  buyerConsultations    Consultation[]        @relation("BuyerConsultations")
+  designerConsultations Consultation[]        @relation("DesignerConsultations")
+  developmentDesigners  DevelopmentDesigner[]
+  consultationBuyer     ConsultationBuyer?
+
+  // Boost system relations
+  boostOpportunities       BoostOpportunity[]       @relation("DesignerBoostOpportunities")
+  approvedBoosts           Boost[]                  @relation("UserBoosts")
+  inContextBoosts          InContextBoost[]         @relation("DesignerInContextBoosts")
+  vendorPosts              VendorPost[]             @relation("UserVendorPosts")
+  notifications            Notification[]
+  deletionRequestsMade     ProjectDeletionRequest[] @relation("DeletionRequestsMade")
+  deletionRequestsResolved ProjectDeletionRequest[] @relation("DeletionRequestsResolved")
+
+  // Architect-specific profile fields
+  architectLicenseNumber   String? // Professional license number
+  architectLicensedStates  String[] // e.g., ["CA", "NY", "TX"]
+  architectProjectScale    String[] // e.g., ["residential", "commercial", "institutional"]
+  architectSpecializations String[] // e.g., ["adaptive_reuse", "ground_up", "historic_preservation"]
+
+  // Builder-specific profile fields
+  builderProjectTypes       String[] // e.g., ["custom_homes", "renovations", "commercial_ti"]
+  builderSquareFootageRange String? // e.g., "5000-25000" or "25000+"
+  builderSpecialtyTrades    String[] // e.g., ["millwork", "steel", "concrete", "glass"]
+  builderYearsInBusiness    Int?
+
+  // Photographer-specific profile fields
+  photographyStyles String[] // e.g. ["interior", "architectural", "lifestyle", "portrait", "commercial"]
+  travelRadius      String? // e.g. "Southeast US", "Nationwide", "Orlando Metro"
+  bookingEmail      String? // separate from account email, for hire inquiries
+  bookingUrl        String? // external booking link (Calendly, HoneyBook, etc.)
+
+  // Commerce & Credit relations
+  creditAccount            CreditAccount?
+  purchaserOrders          Order[]        @relation("PurchaserOrders")
+  attributedDesignerOrders Order[]        @relation("AttributedDesignerOrders")
+  attributedRepOrders      Order[]        @relation("AttributedRepOrders")
+
+  // Directory & Subscription
+  subscriptionTier      SubscriptionTier  @default(FREE)
+  subscriptionExpiresAt DateTime? // null = lifetime (founding designers)
+  showRankInBio         Boolean           @default(true)
+  directoryRanking      DirectoryRanking?
+
+  // Profile System relations
+  media                Media[]
+  recognition          Recognition[]
+  collaborations       Collaboration[]
+  collaborationPartner Collaboration[]   @relation("CollaborationPartner")
+  profileInterview     ProfileInterview?
+  teamMemberships      TeamMember[]
+
+  // Team member invites
+  invitedTeamMembers TeamMemberInvite[] @relation("InvitedTeamMembers")
+  claimedInvites     TeamMemberInvite[] @relation("ClaimedInvites")
+
+  // Legal consent tracking
+  tosAcceptedAt     DateTime?
+  privacyAcceptedAt DateTime?
+  tosVersion        String? // e.g., "2026-01-19"
+  privacyVersion    String? // e.g., "2026-01-19"
+
+  // Designer Attribution & Compensation System
+  vendorVisibility          Boolean         @default(false) // Whether vendors can see designer's active specifications
+  vendorVisibilityEnabledAt DateTime? // When visibility was turned on
+  influenceScore            Float? // Calculated influence score 0-100
+  influenceScoreUpdatedAt   DateTime? // Last score calculation
+  folioCreditBalance        Decimal         @default(0) @db.Decimal(10, 2) // Current Folio Credit balance in USD
+  stripeConnectAccountId    String? // Stripe Connect account for payouts
+  payoutRequests            PayoutRequest[] @relation("UserPayoutRequests")
+
+  // Product search and rep contact relations
+  productSearchLogs ProductSearchLog[]
+  vendorRepContacts VendorRepContact[]
+
+  // Intelligence System relations
+  likes                  Like[]                  @relation("UserLikes")
+  saves                  Save[]                  @relation("UserSaves")
+  postSaves              PostSave[]              @relation("UserPostSaves")
+  boards                 Board[]                 @relation("UserBoards")
+  tasteInferences        TasteInference[]        @relation("UserTasteInferences")
+  tasteProfile           UserTasteProfile?       @relation("UserTasteProfile")
+  trendInterviewRequests TrendInterviewRequest[] @relation("DesignerTrendInterviews")
+
+  // Contributor/Voice System relations
+  contributions              Contribution[]      @relation("UserContributions")
+  contributorBadges          ContributorBadge[]  @relation("UserContributorBadges")
+  supplementalQuotes         SupplementalQuote[] @relation("UserSupplementalQuotes")
+  contributionCount          Int                 @default(0)
+  publishedContributionCount Int                 @default(0)
+  contributorLevel           BadgeLevel?
+
+  // Designer Shop System relations
+  shopProducts ShopProduct[] @relation("DesignerShopProducts")
+
+  // Vendor Invite & Presentation System
+  vendorInvitesClaimed    VendorInvite[]           @relation("VendorInvitesClaimed")
+  vendorInvitesAdmin      VendorInvite[]           @relation("VendorInvitesAdmin")
+  vendorPresentationViews VendorPresentationView[] @relation("VendorPresentationViews")
+
+  // Product Cache & Relationship System
+  claimedCachedProducts    CachedProduct[]           @relation("ClaimedCachedProducts")
+  cachedProductEngagements CachedProductEngagement[] @relation("CachedProductEngagements")
+
+  // Designer Fingerprint Tracking
+  productAffinities    DesignerProductAffinity[]
+  designerPairings     DesignerPairing[]
+  designerStyleProfile DesignerStyleProfile?
+
+  // Design Journey Tracking
+  selectionChanges SelectionHistory[]
+
+  // Instagram Export System
+  instagramExports InstagramExport[] @relation("DesignerInstagramExports")
+
+  // Designer Bio & Profile Q&A
+  designerBio DesignerBio?
+  profileQAs  ProfileQA[]
+
+  // Prompted Content System
+  promptedQuestions PromptedQuestion[] @relation("UserPromptedQuestions")
+  promptedAnswers   PromptedAnswer[]   @relation("UserPromptedAnswers")
+
+  // Event Product Scans
+  productScans EventProductScan[]
+
+  // QR Exchange / Visit System
+  initiatedVisits VisitRecord[] @relation("initiatedVisits")
+  receivedVisits  VisitRecord[] @relation("receivedVisits")
+
+  // Territory assignments (as rep)
+  territoryAssignments OrgTerritoryAssignment[] @relation("RepTerritoryAssignments")
+
+  // Interview-first profile system
+  interviewProfileExtractedAt DateTime?
+  profileSourcedFromInterview Boolean              @default(false)
+  profileFieldSources         ProfileFieldSource[]
+
+  // Relationship Graph
+  followingRelationships UserRelationship[] @relation("Follower")
+  followerRelationships  UserRelationship[] @relation("Following")
+
+  // Messaging System
+  initiatedConversations  Conversation[]            @relation("InitiatedConversations")
+  receivedConversations   Conversation[]            @relation("ReceivedConversations")
+  sentMessages            Message[]
+  conversationMemberships ConversationParticipant[]
+  messagingPreferences    MessagingPreferences?
+
+  // Sourcebook & Directory Bookmarks
+  sourcebookEntries  SourcebookEntry[]   @relation("UserSourcebookEntries")
+  directoryBookmarks DirectoryBookmark[] @relation("UserDirectoryBookmarks")
+  bookmarkedBy       DirectoryBookmark[] @relation("BookmarkedByUsers")
+
+  // Pending Actions (structured requests awaiting rep signup)
+  pendingActions PendingAction[] @relation("UserPendingActions")
+
+  // Phase 3: Project-Level Actions
+  quotedPricing       ProjectProductPricing[] @relation("QuotedByUser")
+  bulkPricingRequests BulkPricingRequest[]    @relation("BulkRequestRep")
+
+  // Phase 4: Shadow Profiles
+  repShadowProfile RepShadowProfile? @relation("RepShadowUser")
+
+  // Phase 5: Email Integration & Contact Import
+  emailSendPreference     String?            @default("folio") // "folio" | "mailto" | "ask"
+  signatureIncludeFirm    Boolean            @default(true)
+  signatureIncludePhone   Boolean            @default(true)
+  signatureIncludeProfile Boolean            @default(true)
+  signatureIncludeEmail   Boolean            @default(false)
+  proxyAddress            ProxyAddress?
+  emailThreads            EmailThread[]      @relation("UserEmailThreads")
+  designerContacts        DesignerContact[]  @relation("UserDesignerContacts")
+  contactImportJobs       ContactImportJob[] @relation("UserContactImportJobs")
+
+  // --- Phase 5H1 Bucket A inverse relations ---
+  actionItemsAssigned         ActionItem[]            @relation("action_items_assignedToIdTousers")
+  actionItemsCreated          ActionItem[]            @relation("action_items_createdByIdTousers")
+  eventContacts               EventContact[]
+  eventDesignerEdges          EventDesignerEdge[]
+  eventHostProfile            EventHostProfile?
+  eventInvites                EventInvite[]
+  eventRepEdges               EventRepEdge[]
+  recordedVendorInterviews    InterviewSession[]      @relation("RecordedInterviewVendor")
+  recordedVendorBoostRequests VendorBoostRequest[]    @relation("RecordedBoostVendor")
+  interviewSessions           InterviewSession[]
+  vendorBoostRequests         VendorBoostRequest[]
+  vendorInviteCandidates      VendorInviteCandidate[]
+
+  // --- Phase 5H2 Bucket B inverse relations ---
+  vendorProductMatchScores     VendorProductMatchScore[]
+  projectLifecycleScores       ProjectLifecycleScore[]
+  designerActivityProfile      DesignerActivityProfile?
+  proximityToPurchaseIndicator ProximityToPurchaseIndicator?
+  outgoingFollows              Follow[]                      @relation("follows_followerIdTousers")
+  incomingFollows              Follow[]                      @relation("follows_followingIdTousers")
+  pendingRepInvitesAsDesigner  PendingRepInvite[]            @relation("pending_rep_invites_designerIdTousers")
+  pendingRepInvitesAsRep       PendingRepInvite[]            @relation("pending_rep_invites_repUserIdTousers")
+  productClaimReviews          ProductClaimCandidate[]
+
+  @@map("users")
+
+  liveInterviewSessions LiveInterviewSession[] @relation("LiveInterviewActor")
+  interviewMediaRecords InterviewMediaRecord[] @relation("InterviewMediaActor")
+}

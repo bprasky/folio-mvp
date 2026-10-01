@@ -4,6 +4,9 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { X, Loader2 } from 'lucide-react';
 import { useActivityExit } from '@/components/publishing-studio/UnsavedActivityDialog';
+import { useSession } from 'next-auth/react';
+import type { LiveAdapterSnapshot } from '@/lib/live-interview/adapter-types';
+import { LiveInterviewPanel } from '@/components/interviews/LiveInterviewPanel';
 import { cn } from '@/lib/utils';
 import { InterviewQuestion } from '@/components/interview/shared/InterviewQuestion';
 import { ProgressIndicator } from '@/components/interview/shared/ProgressIndicator';
@@ -30,6 +33,8 @@ const questionTransition = {
 };
 
 export default function BioInterviewModal({ onComplete, onClose }: BioInterviewModalProps) {
+  const { data: authSession } = useSession();
+  const [liveActive, setLiveActive] = useState(false);
   const [questions, setQuestions] = useState<BioQuestion[]>([]);
   const [currentIdx, setCurrentIdx] = useState(0);
   const [answer, setAnswer] = useState('');
@@ -110,8 +115,26 @@ export default function BioInterviewModal({ onComplete, onClose }: BioInterviewM
     }
   }
 
+  async function refreshLiveAnswers(live?: Omit<LiveAdapterSnapshot, 'state'>) {
+    try {
+      const response = await fetch('/api/designer/bio', { cache: 'no-store' });
+      if (!response.ok) throw new Error('Could not refresh saved answers.');
+      const result = await response.json();
+      const saved: { id: string; question: string; answer: string; round: string }[] = result.bio?.interviewAnswers || [];
+      const next = questions.map(question => ({ ...question, question: live?.currentQuestion?.id === question.id ? live.currentQuestion.text
+        : saved.find(answer => answer.id === question.id && answer.round === round)?.question || question.question }));
+      if (live?.currentQuestion && !next.some(q => q.id === live.currentQuestion!.id)) next.push({ id: live.currentQuestion.id, question: live.currentQuestion.text, round });
+      setQuestions(next);
+      setCanGenerate(saved.filter(answer => answer.round === 'base' && answer.answer.trim()).length >= 3);
+      const index = live?.currentQuestion ? next.findIndex(q => q.id === live.currentQuestion!.id) : next.findIndex(q => !saved.some(a => a.id === q.id && a.answer.trim()));
+      setCurrentIdx(Math.max(0, index));
+      const text = saved.find(answer => answer.id === next[Math.max(0, index)]?.id)?.answer || '';
+      setAnswer(text); setSavedAnswer(text); setState(index === -1 ? 'end-of-round' : 'question');
+    } catch (cause) { setError(cause instanceof Error ? cause.message : 'Could not refresh saved answers.'); }
+  }
+
   const handleSubmit = useCallback(async () => {
-    if (!answer.trim() || submitting) return false;
+    if (!answer.trim() || submitting || liveActive) return false;
     const currentQ = questions[currentIdx];
     if (!currentQ) return false;
 
@@ -158,7 +181,7 @@ export default function BioInterviewModal({ onComplete, onClose }: BioInterviewM
     } finally {
       setSubmitting(false);
     }
-  }, [answer, submitting, questions, currentIdx]);
+  }, [answer, submitting, questions, currentIdx, liveActive]);
 
   const exit = useActivityExit(answer !== savedAnswer, submitting || generating, handleSubmit);
 
@@ -224,7 +247,9 @@ export default function BioInterviewModal({ onComplete, onClose }: BioInterviewM
 
         {error && <p role="alert" className="px-8 pt-14">{error}</p>}
         {/* Content */}
-        <AnimatePresence mode="wait">
+        {authSession?.user?.id && answer === savedAnswer && <LiveInterviewPanel source={{ kind: 'designer_bio', id: authSession.user.id, round: round === 'base' ? 1 : 2 }} onActiveChange={setLiveActive} onCanonicalChange={refreshLiveAnswers} />}
+      <fieldset disabled={liveActive} className="min-w-0 border-0 p-0">
+      <AnimatePresence mode="wait">
           {state === 'transition' ? (
             <motion.div
               key="transition"
@@ -377,6 +402,7 @@ export default function BioInterviewModal({ onComplete, onClose }: BioInterviewM
             </motion.div>
           ) : null}
         </AnimatePresence>
+      </fieldset>
       </div>
     </div>
   );

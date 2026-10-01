@@ -51,7 +51,7 @@ export function StudioActivityHost() {
     },
     save: async snapshot => {
       const url = `/api/publishing-studio/stories/${encodeURIComponent(snapshot.id)}`;
-      let saved = await request(url, { action: 'save', revision: completedRevision.current.get(snapshot.id) ?? snapshot.revision, answers: snapshot.answers, ...(!snapshot.reviewed ? { reviewed: false } : {}) }, 'PATCH');
+      let saved = await request(url, { action: 'save', revision: Math.max(completedRevision.current.get(snapshot.id) || 0, snapshot.revision), answers: snapshot.answers, ...(!snapshot.reviewed ? { reviewed: false } : {}) }, 'PATCH');
       completedRevision.current.set(snapshot.id, saved.revision);
       if (snapshot.reviewed) {
         saved = await request(url, { action: 'review', revision: saved.revision }, 'PATCH');
