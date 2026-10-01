@@ -39,7 +39,9 @@ export async function mutateMedia<T>(actor: string, id: string, change: (row: Me
     const row = (await tx.$queryRaw<MediaRecord<T>[]>`SELECT * FROM interview_media_records WHERE id=${id} AND "actorId"=${actor} FOR UPDATE`)[0];
     if (!row) throw new MediaError('Media not found.', 404);
     if (expected !== undefined && row.version !== expected) throw new MediaError('This media version changed. Reload.', 409);
+    const previousState = row.state, previousPayload = JSON.stringify(row.payload);
     change(row);
+    if (row.state === previousState && JSON.stringify(row.payload) === previousPayload) return row;
     return (await tx.$queryRaw<MediaRecord<T>[]>`UPDATE interview_media_records SET state=${row.state},payload=${JSON.stringify(row.payload)}::jsonb,
       version=version+1,"updatedAt"=now() WHERE id=${id} AND "actorId"=${actor} RETURNING *`)[0];
   });

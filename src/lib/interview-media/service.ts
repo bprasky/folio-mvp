@@ -50,8 +50,11 @@ export async function captureAction(actor: string, raw: unknown) {
   await ownedSession(actor, run.sessionId);
   if (input.action === 'incomplete') {
     if (['ready', 'processing'].includes(run.state)) return { state: run.state };
-    await mutateMedia<Capture>(actor, run.id, row => { row.state = 'incomplete'; row.payload.error = 'Recording stopped before a complete upload. Saved interview answers are unaffected.'; });
-    return { state: 'incomplete' };
+    const current = await mutateMedia<Capture>(actor, run.id, row => {
+      if (!['recording', 'incomplete'].includes(row.state)) return;
+      row.state = 'incomplete'; row.payload.error = 'Recording stopped before a complete upload. Saved interview answers are unaffected.';
+    });
+    return { state: current.state };
   }
   if (input.action === 'retry') {
     if (run.state !== 'failed' || !run.payload.durationMs || run.payload.chunks.some(chunk => !chunk.uploaded))
@@ -64,6 +67,7 @@ export async function captureAction(actor: string, raw: unknown) {
     if (run.state === 'processing') await enqueueMedia(actor, run, 'finalize');
     return { state: run.state };
   }
+  if (input.action === 'ack' && run.payload.chunks[input.index]?.uploaded) return { saved: true };
   if (run.state !== 'recording') throw new MediaError('This recording run is closed.', 409);
   if (input.action === 'chunk') {
     if (!run.payload.chunks[input.index] && await reservedSessionBytes(actor, run.sessionId) + input.bytes > MAX_CAPTURE_BYTES)
@@ -83,16 +87,21 @@ export async function captureAction(actor: string, raw: unknown) {
     const chunk = run.payload.chunks[input.index];
     if (!chunk) throw new MediaError('This chunk was not reserved.', 409);
     await inspectChunk(chunk.key, chunk.bytes, run.payload.mimeType);
-    await mutateMedia<Capture>(actor, run.id, row => { row.payload.chunks[input.index].uploaded = true; });
+    await mutateMedia<Capture>(actor, run.id, row => {
+      if (row.payload.chunks[input.index].uploaded) return;
+      if (row.state !== 'recording') throw new MediaError('This recording run is closed.', 409);
+      row.payload.chunks[input.index].uploaded = true;
+    });
     return { saved: true };
   }
   const finalized = await mutateMedia<Capture>(actor, run.id, row => {
+    if (['processing', 'ready'].includes(row.state) && row.payload.chunks.length === input.chunkCount && row.payload.durationMs === input.durationMs) return;
     if (row.state !== 'recording' || row.payload.chunks.length !== input.chunkCount || row.payload.chunks.some((c, i) => !c.uploaded || c.index !== i))
       throw new MediaError('Wait for every recording chunk, including the final data, to upload.', 409);
     row.state = 'processing'; row.payload.durationMs = input.durationMs;
   });
-  await enqueueMedia(actor, finalized, 'finalize');
-  return { state: 'processing' };
+  if (finalized.state === 'processing') await enqueueMedia(actor, finalized, 'finalize');
+  return { state: finalized.state };
 }
 
 /** One eligibility boundary shared by worker, preview, approval, publication and delivery. */

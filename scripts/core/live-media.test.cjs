@@ -97,6 +97,11 @@ test('durable private recording, leased worker, actual short/episode/audio, appr
     await assert.rejects(service.captureAction('owner', { action: 'finalize', runId, chunkCount: 3, durationMs: 2000 }), /every recording chunk/);
     await service.captureAction('owner', { action: 'finalize', runId, chunkCount: 2, durationMs: 2000 });
     await service.captureAction('owner', { action: 'finalize', runId, chunkCount: 2, durationMs: 2000 });
+    const finalizedVersion = (await store.readMedia('owner', runId)).version;
+    await service.captureAction('owner', { action: 'ack', runId, index: 1 });
+    assert.equal((await store.readMedia('owner', runId)).version, finalizedVersion, 'late acknowledgement never invalidates a queued finalization');
+    await store.mutateMedia('owner', runId, () => {});
+    assert.equal((await store.readMedia('owner', runId)).version, finalizedVersion, 'unchanged transaction callbacks do not invent a new source version');
     const worker = load('src/lib/interview-media/worker.ts', { 'server-only': {}, '@/lib/supabaseAdmin': supabase, '@/lib/interviews/media': { mediaBucket: () => 'interview-media' },
       '@/lib/interviews/providers': { transcribeRecording: async () => ({ segments: [{ start: 0, end: 1, text: 'Synthetic fixture caption.' }, { start: 1, end: 2, text: 'Second fixture phrase.' }] }) },
       '@/lib/live-interview/adapters': adapter, '@/lib/live-interview/store': live, '@/lib/server/safe-product-url': { safeProductResource: async url => { assert.equal(url, 'https://fixture.invalid/rights-cleared-photo.png'); return { status: 200, headers: { 'content-type': 'image/png' }, body: imageBytes }; } },

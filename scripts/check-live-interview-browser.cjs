@@ -139,7 +139,7 @@ async function main() {
       assert.equal(runNumber, 0); await page.click('input[value="none"]');
     });
     await check('explicit no-recording start joins once and keeps camera off', async () => {
-      await click('Start live interview'); await text('Mute microphone'); assert.equal(starts, 1); assert.equal(runNumber, 0);
+      await click('Start live interview'); await page.waitForFunction(()=>window.joined && window.dailyOptions); assert.equal(starts, 1); assert.equal(runNumber, 0);
       assert.equal(await page.evaluate(() => window.dailyOptions.videoSource), false);
       assert.equal(await page.evaluate(() => window.permissions.at(-1).video), false);
     });
@@ -153,8 +153,14 @@ async function main() {
       assert.equal(eventCalls.length, 1); assert.equal(eventCalls[0].properties.role, 'pal'); assert.equal(eventCalls[0].conversation_id, 'synthetic-conversation');
     });
     await check('switch to text ends provider and releases call', async () => {
-      await click('Switch to text'); await text('Resume live interview'); assert.ok(actionCalls.includes('switch_to_text'));
+      await click('Switch to text'); await page.waitForFunction(()=>window.destroyed && window.left && [...document.querySelectorAll('button')].some(button=>button.textContent==='Resume live interview'&&!button.disabled)); assert.ok(actionCalls.includes('switch_to_text'));
       assert.equal(await page.evaluate(() => window.destroyed && window.left), true);
+    });
+    await check('microphone permission loss ends the call and releases resources', async () => {
+      await click('Resume live interview');await page.waitForFunction(()=>window.dailyOptions.audioSource.readyState==='live');
+      await page.evaluate(()=>window.dailyOptions.audioSource.dispatchEvent(new Event('ended')));
+      await text('Microphone access ended. The call stopped');
+      assert.ok(actionCalls.includes('pause'));assert.equal(await page.evaluate(()=>window.dailyOptions.audioSource.readyState),'ended');
     });
     await check('capture final chunk uploads before finalize; clones stop independently', async () => {
       const runId = await page.evaluate(async () => {

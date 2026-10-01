@@ -236,8 +236,13 @@ export function LiveInterviewPanel({ source, onCanonicalChange, onActiveChange, 
       if (!mounted.current) { stream.getTracks().forEach(track => track.stop()); return; }
       streamRef.current = stream;
       if (!stream.getAudioTracks().some(track => track.readyState === 'live')) throw new Error('The microphone is not ready. Check its permission and try again.');
+      stream.getAudioTracks().forEach(track=>track.addEventListener('ended',()=>{
+        if(streamRef.current!==stream)return;
+        void endRef.current('pause').finally(()=>{if(mounted.current)setError('Microphone access ended. The call stopped; saved answers and uploaded recording remain available.');});
+      },{once:true}));
       const Daily = (await import('@daily-co/daily-js')).default;
       if (!mounted.current) { await release(); return; }
+      if(streamRef.current!==stream || !stream.getAudioTracks().some(track=>track.readyState==='live'))throw new Error('Microphone access ended before the call could start.');
       // Preserve this key after an ambiguous provider-create result. Never blind retry a paid call.
       startKey.current ??= crypto.randomUUID();
       const next = await liveRequest<LiveState>('/api/live-interviews', { source: JSON.parse(sourceKey), requestId: startKey.current,
@@ -245,6 +250,7 @@ export function LiveInterviewPanel({ source, onCanonicalChange, onActiveChange, 
       startedSessionId = next.id;
       setCurrent(next);
       if (!mounted.current) { await endRef.current('end'); return; }
+      if(streamRef.current!==stream || !stream.getAudioTracks().some(track=>track.readyState==='live'))throw new Error('Microphone access ended while starting. The provider call is being stopped.');
       if (!next.join?.url || !next.join.token) throw new Error(next.notice || 'The session is being reconciled. Retry with this same request; no second call will be requested.');
       const call = Daily.createCallObject({ audioSource: stream.getAudioTracks()[0], videoSource: false, startAudioOff: true, startVideoOff: true });
       callRef.current = call;
