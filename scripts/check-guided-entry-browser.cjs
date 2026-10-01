@@ -136,6 +136,7 @@ function handler(req, res) {
       const question = { id: 'legacy-question', text: 'Legacy fixture question?', questionText: 'Legacy fixture question?', questionType: 'contextual', section: 'why', role: 'DESIGNER', type: 'generic', rooms: [], products: [], vendors: [] };
       return json({ questions: [question], rooms: [{ roomId: 'project', roomName: 'About This Project', questions: [question], budget: { baseQuestions: 5, maxFollowUps: 1 } }], globalGates: { minimumTotalAnswers: 5, warnings: [] }, projectSize: { roomCount: 0, targetQuestionCount: 5, size: 'focused' } });
     }
+    if (endpoint === '/api/live-interviews' && req.method === 'GET') return json({ enabled: false, recordingEnabled: false });
     if (endpoint === '/api/health/llm') return json({ ok: true });
     if (endpoint === `/api/projects/${projectId}`) return json({ rooms: [{ id: 'living', name: 'Living room' }], images: [] });
     if (endpoint.endsWith('/status')) return json({ status: 'DRAFT' });

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { LiveInterviewPanel } from "@/components/interviews/LiveInterviewPanel";
 import { Button } from "@/components/ui/button";
 import { Dialog } from "@/components/ui/dialog";
 import type { runSpotlight, SpotlightCommand } from "@/lib/spotlight/service";
@@ -463,6 +464,7 @@ export function PrivateSpotlightInterview({
 }) {
   const [state, setState] = useState<State | null>(null);
   const [error, setError] = useState("");
+  const [liveActive, setLiveActive] = useState(false);
   useEffect(() => {
     spotlightRequest(projectId, { action: "schedule" })
       .then(setState)
@@ -472,7 +474,7 @@ export function PrivateSpotlightInterview({
     <Dialog
       open
       onOpenChange={(open) => {
-        if (!open) onClose();
+        if (!open && !liveActive) onClose();
       }}
     >
       <div
@@ -486,6 +488,7 @@ export function PrivateSpotlightInterview({
             variant="ridge"
             size="sm"
             className="mr-2 mb-2"
+            disabled={liveActive}
             onClick={onClose}
           >
             Close interview
@@ -496,6 +499,8 @@ export function PrivateSpotlightInterview({
             does not publish or contact vendors.
           </p>
           {error && <p role="alert">{error}</p>}
+          {state && <LiveInterviewPanel source={{ kind: 'spotlight', id: projectId }} onActiveChange={setLiveActive} onCanonicalChange={async () => setState(await spotlightRequest(projectId, { action: 'resume' }))} />}
+          <fieldset disabled={liveActive} className="min-w-0 border-0 p-0">
           {state ? (
             <>
               <p>
@@ -553,6 +558,7 @@ export function PrivateSpotlightInterview({
           ) : (
             <p>Loading saved interview…</p>
           )}
+          </fieldset>
         </div>
       </div>
     </Dialog>

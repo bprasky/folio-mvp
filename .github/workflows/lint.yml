@@ -63,6 +63,14 @@ jobs:
       - run: npm run test:core
       - name: Guided interview regression checks
         run: npm run test:guided
+      - name: Live interview and playable media regression checks
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ffmpeg fonts-dejavu-core
+          node scripts/check-live-interviews.cjs
+          node scripts/check-live-adapters.cjs
+          npm run test:live:media
+          npm run test:live:journey
       - name: Firm enrollment and posting permissions
         run: |
           node scripts/check-firm-enrollment.cjs

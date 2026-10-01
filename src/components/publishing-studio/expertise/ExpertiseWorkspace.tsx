@@ -1,5 +1,6 @@
 'use client';
 import Link from 'next/link';
+import { LiveInterviewPanel } from '@/components/interviews/LiveInterviewPanel';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import type { ExpertiseArticle, ExpertiseOpportunity } from '@/lib/publishing-studio/expertise/types';
@@ -21,6 +22,7 @@ export function ExpertiseWorkspace() {
   const [article, setArticle] = useState<ExpertiseArticle | null>(null);
   const [pending, setPending] = useState(false); const [error, setError] = useState('');
   const [archiving, setArchiving] = useState(false);
+  const [liveActive, setLiveActive] = useState(false);
   const [preview, setPreview] = useState(false); const [notice, setNotice] = useState('');
   const [replacement, setReplacement] = useState<string[]>([]);
   function accept(next: ExpertiseSnapshot) { setSnapshot(next); setArticle(next.article); setOpportunity(next.opportunity); setIdentity(next.identity); setError(next.error || ''); setText(''); setCorrecting(false); }
@@ -35,7 +37,7 @@ export function ExpertiseWorkspace() {
     return () => { cancelled = true; };
   }, [id, opportunityId]);
   async function change(body: Record<string, unknown>): Promise<boolean> {
-    if (!snapshot || pending) return false;
+    if (!snapshot || pending || liveActive) return false;
     setPending(true); setError(''); setNotice('');
     try {
       const response = await fetch(`/api/publishing-studio/expertise/${encodeURIComponent(snapshot.id)}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ...body, expectedVersion: snapshot.version }) });
@@ -89,7 +91,11 @@ export function ExpertiseWorkspace() {
     {!opportunity && !error && <p role="status">Opening your comparison…</p>}
     {!!snapshot?.sourceChanges.length && <section className="rounded-xl border border-folio-border-subtle p-5"><h2 className="folio-h3">Review changed sources</h2>{snapshot.sourceChanges.map(item => <p className="folio-body mt-2" key={item}>{item}</p>)}<p className="folio-meta mt-3">Your saved answers remain here. Replace affected evidence before publication.</p></section>}
     {opportunity && !snapshot && <><ExpertiseArticleCover compact title={expertiseWorkingHeadline(opportunity)} name={identity?.name} evidence={evidence} working /><p className="folio-body">Discuss what connects these projects. Folio will use your explanations and exact project photographs to prepare an editable article for your profile.</p><button disabled={pending} className={action} onClick={() => void start()}>{pending ? 'Opening interview…' : 'Start this article'}</button></>}
-    {snapshot && (!article || needsInterview) && <>
+    {snapshot && (!article || needsInterview) && !text.trim() && <LiveInterviewPanel source={{ kind: 'expertise', id: snapshot.id }} onActiveChange={setLiveActive} onCanonicalChange={async () => {
+      const response = await fetch('/api/publishing-studio/expertise/' + encodeURIComponent(snapshot.id), { cache: 'no-store' });
+      if (response.ok) accept(await response.json());
+    }} />}
+    {snapshot && (!article || needsInterview) && <fieldset disabled={liveActive} className="min-w-0 space-y-4 border-0 p-0">
       <details><summary className="cursor-pointer folio-ui">Your working article cover</summary><ExpertiseArticleCover compact title={expertiseWorkingHeadline(snapshot.opportunity, snapshot.session)} name={snapshot.identity.name} evidence={evidence} working /></details>
       <ExpertiseEvidence evidence={questionEvidence} />
       {snapshot.session.answers.some(answer => !answer.invalidated && !answer.skipped) && <details className="border-t border-folio-border-subtle py-4"><summary className="cursor-pointer folio-ui">Your saved context and answers</summary>{snapshot.session.answers.filter(answer => !answer.invalidated && !answer.skipped).map(answer => <p key={answer.id} className="folio-body mt-3 whitespace-pre-wrap">{answer.text}</p>)}</details>}
@@ -98,7 +104,7 @@ export function ExpertiseWorkspace() {
       {snapshot.session.status === 'confirm' && <section className="space-y-4"><h2 className="folio-h2">Confirm the framing</h2><p className="folio-body">{snapshot.session.thesis}</p><button className={action} disabled={pending} onClick={() => void change({ action: 'confirm', text: 'These examples and this framing represent my thinking.' })}>This represents my thinking</button><label className="block max-w-3xl"><span className="folio-ui">Or correct the framing</span><textarea className={`${field} mt-2`} value={text} onChange={event => { setCorrecting(true); setText(event.target.value); }} /></label><button disabled={pending || !text.trim()} className={action} onClick={() => void change({ action: 'correct', text, evidenceIds: evidence.map(item => item.id) })}>Save corrected framing</button></section>}
       {snapshot.session.status === 'ready' && <button disabled={pending} className={action} onClick={() => void change({ action: 'compose' })}>{pending ? 'Preparing your article…' : article ? 'Prepare revised article' : 'Prepare my article'}</button>}
       {!!snapshot.session.coverage.gaps.length && <div className="folio-meta"><p>Still needed for this angle:</p><ul className="mt-2 list-disc pl-5">{snapshot.session.coverage.gaps.map(gap => <li key={gap}>{gap}</li>)}</ul></div>}
-    </>}
+    </fieldset>}
     {snapshot && article && !needsInterview && <>
       <div className="flex flex-wrap gap-5"><button className={action} onClick={() => setPreview(value => !value)}>{preview ? 'Edit article' : 'Preview article'}</button><button className={action} disabled={pending || !articleDirty} onClick={() => void change({ action: 'edit', article })}>Save article changes</button></div>
       {preview ? <ExpertiseArticleView article={article} author={author} /> : <section className="space-y-6">

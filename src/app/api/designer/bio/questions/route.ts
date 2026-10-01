@@ -4,12 +4,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/app/api/auth/[...nextauth]/options';
 import { prisma } from '@/lib/prisma';
-import {
-  getBlankSlateQuestions,
-  generateWebsiteContextQuestions,
-  generateFollowUpQuestions,
-} from '@/lib/designer-bio/questions';
-import type { InterviewAnswer } from '@/lib/designer-bio/constants';
+import { prepareBioQuestions } from '@/lib/designer-bio/interview-service';
 
 /**
  * GET /api/designer/bio/questions
@@ -28,60 +23,13 @@ export async function GET(request: NextRequest) {
     const userId = session.user.id;
     const round = request.nextUrl.searchParams.get('round') || 'base';
 
-    // Get user info
-    const user = await prisma.user.findUnique({
-      where: { id: userId },
-      select: { role: true },
-    });
-
     // Get bio record
     const bio = await prisma.designerBio.findUnique({
       where: { userId },
     });
 
-    if (round === 'followup') {
-      // Generate follow-up questions from base answers
-      const answers = (bio?.interviewAnswers as InterviewAnswer[] | null) || [];
-      const baseAnswers = answers.filter((a) => a.round === 'base');
-
-      if (baseAnswers.length < 3) {
-        return NextResponse.json({
-          questions: [],
-          message: 'Need at least 3 base answers before follow-up questions are available',
-        });
-      }
-
-      const followUps = await generateFollowUpQuestions(
-        baseAnswers,
-        user?.role || 'DESIGNER',
-        bio?.scrapedData as Record<string, unknown> | null
-      );
-
-      // Update bio status to interviewing
-      if (bio && bio.status === 'scraped') {
-        await prisma.designerBio.update({
-          where: { userId },
-          data: { status: 'interviewing' },
-        });
-      }
-
-      return NextResponse.json({ questions: followUps, round: 'followup' });
-    }
-
-    // Base questions
+    const questions = await prepareBioQuestions(userId, round === 'followup' ? 'followup' : 'base');
     const hasScrapedData = bio?.scrapedData && bio.status !== 'empty';
-
-    let questions;
-    if (hasScrapedData) {
-      // Website exists path
-      questions = await generateWebsiteContextQuestions(
-        bio!.scrapedData as Record<string, unknown>,
-        user?.role || 'DESIGNER'
-      );
-    } else {
-      // Blank slate path
-      questions = getBlankSlateQuestions(user?.role || 'DESIGNER');
-    }
 
     // Update bio status to interviewing
     if (bio && (bio.status === 'empty' || bio.status === 'scraped')) {
@@ -97,7 +45,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({
       questions,
-      round: 'base',
+      round: round === 'followup' ? 'followup' : 'base',
       path: hasScrapedData ? 'website_exists' : 'blank_slate',
     });
   } catch (error: any) {

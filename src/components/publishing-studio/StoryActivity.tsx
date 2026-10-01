@@ -1,5 +1,6 @@
 'use client';
 
+import { LiveInterviewPanel } from '@/components/interviews/LiveInterviewPanel';
 import { ActivityArticleCover } from './ActivityArticleCover';
 import { activityHeadline } from '@/lib/publishing-studio/publication-headlines';
 import { useState } from 'react';
@@ -47,6 +48,7 @@ export function StoryActivity({ context, persistence, initial, initialBrief, cho
   const [step, setStep] = useState<'configure' | 'interview' | 'review' | 'draft'>(initial?.draft ? initial.reviewed ? 'draft' : 'review' : initial ? 'interview' : 'configure');
   const [index, setIndex] = useState(() => Math.max(0, initial?.definition.questions.findIndex(question => !initial.answers.some(answer => answer.questionId === question.id && answer.text.trim())) ?? 0));
   const [pending, setPending] = useState(false);
+  const [liveActive, setLiveActive] = useState(false);
   const [savedAnswers, setSavedAnswers] = useState(answerKey(initial?.answers || []));
   const [savedReviewed, setSavedReviewed] = useState(initial?.reviewed || false);
   const [savedDraft, setSavedDraft] = useState(JSON.stringify(initial?.draft || null));
@@ -121,11 +123,18 @@ export function StoryActivity({ context, persistence, initial, initialBrief, cho
     {exit.dialog}
     <header className="mb-6 flex flex-wrap items-start justify-between gap-4">
       <div><p className="folio-meta text-folio-text-secondary">Publishing Studio</p><h1 className="folio-h2 mt-2">{customize && !snapshot ? 'Build a story' : opportunity.purpose}</h1><p className="folio-meta mt-3 text-folio-text-secondary">{opportunity.metadata}</p></div>
-      <button className={secondary} disabled={pending} onClick={close}>Back to Studio</button>
+      <button className={secondary} disabled={pending || liveActive} onClick={close}>Back to Studio</button>
     </header>
     <details className="mb-6"><summary className="folio-ui cursor-pointer underline underline-offset-4">Publication preview</summary><div className="mt-4 max-w-md"><ActivityArticleCover title={snapshot?.draft?.title || snapshot?.definition.title || activityHeadline(activeBrief.format, context.designerName, context.projects.find(project => project.id === activeBrief.projectId)?.title)} identity={context.identity || {name:context.designerName}} projectImageUrl={projectImageUrl} working={!snapshot?.draft} /></div></details>
     {error && <p role="alert" className="mb-4 folio-body">{error}</p>}
     {notice && <p role="status" className="mb-4 folio-meta">{notice}</p>}
+    {snapshot && step === 'interview' && !dirty && <LiveInterviewPanel source={{ kind: 'story', id: snapshot.id }} onActiveChange={setLiveActive} onCanonicalChange={async () => {
+      const response = await fetch('/api/publishing-studio/stories/' + encodeURIComponent(snapshot.id), { cache: 'no-store' });
+      if (!response.ok) return;
+      const saved: ActivitySnapshot = await response.json(); setSnapshot(saved); setSavedAnswers(answerKey(saved.answers)); setSavedReviewed(saved.reviewed); setSavedDraft(JSON.stringify(saved.draft));
+      setIndex(Math.max(0, saved.definition.questions.findIndex(q => !saved.answers.some(a => a.questionId === q.id && a.text.trim()))));
+    }} />}
+    <fieldset disabled={liveActive} className="min-w-0 border-0 p-0">
     {step === 'configure' && (customize ? <StoryConfigurator brief={brief} context={context} pending={pending} onChange={setBrief} onStart={start} /> : <div className="rounded-2xl border border-folio-border-subtle bg-surface-muted p-6 sm:p-8">
       <h2 className="folio-h3">{ACTIVITY_FORMATS[brief.format].label}</h2>
       <p className="folio-body my-4">{opportunity.reason} {opportunity.path}</p>
@@ -162,5 +171,6 @@ export function StoryActivity({ context, persistence, initial, initialBrief, cho
       { <section aria-label="Social draft options"><h3 className="folio-h4">An answer to lead with</h3><p className="folio-meta mt-2">Choose a short answer for a finished Instagram image, or copy an excerpt for your caption.</p><div className="mt-4 grid gap-4 sm:grid-cols-2">{snapshot.draft.socialOptions.map(option => <article key={option.questionId} className="rounded-xl border border-folio-border-subtle p-4"><p className="folio-body whitespace-pre-wrap">{option.text}</p><button className="folio-meta mt-3 underline underline-offset-4" onClick={() => copy(option.text)}>Copy excerpt</button><ActivitySocialCard key={`${option.questionId}:${option.text}`} question={snapshot.draft!.entries.find(entry => entry.questionId === option.questionId)!.question} answer={snapshot.draft!.entries.find(entry => entry.questionId === option.questionId)!.answer} designerName={context.designerName} /></article>)}</div>{!snapshot.draft.socialOptions.length && <p className="folio-body mt-3">These answers need a shorter excerpt before a social version can be prepared.</p>}</section>}
       {!snapshot.publishedUrl && !snapshot.publicationNeedsReview && <button className={secondary} onClick={() => setStep('review')}>Review or edit answers</button>}
     </div>}
+    </fieldset>
   </section>;
 }

@@ -10,6 +10,7 @@ import GenerationContextOptions, { useGenerationContext } from '@/components/pos
 import { useVoiceRecording } from './useVoiceRecording';
 import type { RoomPhotoImage } from './RoomPhoto';
 import { appendTranscript, emptyGuidedDraft, guidedTextIntent, resolvePhotoTransition, type GuidedLocalDraft, type PendingPhotoTransition } from './guidedWorkspaceState';
+import { LiveInterviewPanel } from '@/components/interviews/LiveInterviewPanel';
 
 interface GuidedInterviewWorkspaceProps {
   projectId: string;
@@ -29,7 +30,10 @@ export function GuidedInterviewWorkspace({ projectId, actorId, projectName = 'Yo
   const sessionRef = useRef<GuidedSession | null>(null);
   const [draft, setDraft] = useState<GuidedLocalDraft>(emptyGuidedDraft);
   const draftRef = useRef(draft);
-  const [busy, setBusy] = useState(false);
+  const [commandBusy, setBusy] = useState(false);
+  const [liveActive, setLiveActive] = useState(false);
+  const [liveSessionId, setLiveSessionId] = useState<string|null>(null);
+  const busy = commandBusy || liveActive;
   const [workingCommand, setWorkingCommand] = useState<GuidedCommand | null>(null);
   const inFlight = useRef(false);
   const mounted = useRef(true);
@@ -90,6 +94,29 @@ export function GuidedInterviewWorkspace({ projectId, actorId, projectName = 'Yo
     sessionRef.current = next;
     setSession(next);
   }, []);
+
+  const refreshLiveProgress = useCallback(async () => {
+    const response = await fetch(`${endpoint}?state=1`, { cache: 'no-store' });
+    if (response.ok) {
+      const data = await response.json();
+      if (mounted.current && data.session) {
+        acceptSession(data.session);
+        if(!draftRef.current.text && draftRef.current.questionId!==data.session.activeQuestionId)saveDraft(emptyGuidedDraft());
+      }
+    }
+  }, [endpoint, acceptSession, saveDraft]);
+  const linkPhoto = async (imageId:string|null) => {
+    const questionId=activeQuestionRef.current?.id??null;
+    if(liveActive && liveSessionId){
+      setBusy(true);setError('');
+      try{
+        const response=await fetch(`/api/live-interviews/${encodeURIComponent(liveSessionId)}`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'link_image',questionId,selectedImageId:imageId})});
+        const result=await response.json();if(!response.ok)throw new Error(result.message||'The photograph could not be linked.');
+        saveDraft({...draftRef.current,questionId,selectedImageId:imageId});
+      }catch(failure){setError(failure instanceof Error?failure.message:'The photograph could not be linked.');}
+      finally{setBusy(false);}
+    }else saveDraft({...draftRef.current,questionId,selectedImageId:imageId});
+  };
 
   const sendCommand = useCallback(async (command: GuidedCommand): Promise<GuidedSession | null> => {
     if (inFlight.current) return null;
@@ -239,6 +266,7 @@ export function GuidedInterviewWorkspace({ projectId, actorId, projectName = 'Yo
   };
 
   const pause = async () => {
+    if (liveActive) { setError('Use Pause or Switch to text in the live interview panel before closing.'); return; }
     if (voiceBusy || voice.hasRecording) { setError('Finish transcribing or discard the recording before closing.'); return; }
     if (busy || generating) { setError('Please wait for the current save to finish.'); return; }
     saveDraft(draftRef.current);
@@ -309,7 +337,7 @@ export function GuidedInterviewWorkspace({ projectId, actorId, projectName = 'Yo
         <header className="flex shrink-0 items-center justify-between gap-3 border-b border-folio-border-subtle px-4 py-3 md:px-7">
           <div className="min-w-0"><Dialog.Title className="truncate font-headline text-folio-h4">{projectName}</Dialog.Title>
             <Dialog.Description className="text-folio-meta text-folio-text-secondary">Project photographs · Guided interview</Dialog.Description></div>
-          <button type="button" onClick={() => void pause()} className={`${buttonClass} flex shrink-0 items-center gap-2`}><Pause size={15} aria-hidden />Pause & close</button>
+          <button type="button" disabled={liveActive} onClick={() => void pause()} className={`${buttonClass} flex shrink-0 items-center gap-2`}><Pause size={15} aria-hidden />Pause & close</button>
         </header>
 
         <div className="grid min-h-0 flex-1 grid-rows-[minmax(120px,30dvh)_minmax(0,1fr)] gap-3 p-3 md:grid-cols-[minmax(0,1fr)_390px] md:grid-rows-1 md:gap-6 md:p-6 lg:grid-cols-[minmax(0,1fr)_420px]">
@@ -324,8 +352,8 @@ export function GuidedInterviewWorkspace({ projectId, actorId, projectName = 'Yo
             </div>
             <div className="flex min-w-0 items-center justify-between gap-2 text-folio-meta text-folio-text-secondary">
               <span className="truncate">{photo ? `${roomName(photo.roomId)} · ${photoIndex + 1} / ${photos.length}` : 'No photographs'}</span>
-              {photoInScope && <button type="button" disabled={!!draft.text || voiceBusy || busy || !readyToAnswer} className={buttonClass}
-                onClick={() => saveDraft({ ...draftRef.current, questionId: activeQuestion?.id ?? null, selectedImageId: photo.id })}>{draft.selectedImageId === photo.id ? 'Photo linked to this answer' : 'Discuss this photo'}</button>}
+              {photoInScope && <button type="button" disabled={!!draft.text || voiceBusy || commandBusy || !readyToAnswer} className={buttonClass}
+                onClick={() => void linkPhoto(photo.id)}>{draft.selectedImageId === photo.id ? 'Photo linked to this answer' : 'Discuss this photo'}</button>}
             </div>
             <div className="hidden shrink-0 gap-2 overflow-x-auto pb-1 md:flex" aria-label="Choose a photograph">
               {photos.map(image => <button key={image.id} aria-label={`View ${image.name || roomName(image.roomId)} photograph`} aria-pressed={photo?.id === image.id}
@@ -353,6 +381,11 @@ export function GuidedInterviewWorkspace({ projectId, actorId, projectName = 'Yo
               </details>}
             </div>
 
+            <div className="max-h-[55%] shrink-0 overflow-y-auto">
+              {!draft.text && !draft.pending && !voiceBusy && !voice.hasRecording && !correcting && <LiveInterviewPanel
+                source={{ kind: 'project', id: projectId }} onActiveChange={setLiveActive} onCanonicalChange={refreshLiveProgress}
+                selectedImageId={draft.selectedImageId} onSessionChange={setLiveSessionId} />}
+            </div>
             <div ref={conversationRef} className="min-h-0 flex-1 space-y-5 overflow-y-auto overscroll-contain px-4 py-4 md:min-h-40" role="log" aria-label="Interview conversation"
               onScroll={event => { if (resizingConversation.current) return; const el = event.currentTarget; followBottom.current = el.scrollHeight - el.scrollTop - el.clientHeight < 70; setEarlierTurns(!followBottom.current); }}>
               {initialRoomId && !session?.roomsPrepared && <p className="text-folio-meta text-folio-text-secondary">We’ll finish the project context before preparing the room questions.</p>}
@@ -411,7 +444,7 @@ export function GuidedInterviewWorkspace({ projectId, actorId, projectName = 'Yo
               </div>}
               {staleDraft && <div className="mb-3 rounded-sm bg-surface-ground p-3 text-folio-meta" role="status"><p>Your unsent response belongs to an earlier question. It has not been applied to this one.</p><details><summary>Show unsent response</summary><p className="mt-2 whitespace-pre-wrap">{draft.text}</p></details><button className={buttonClass} onClick={() => void navigator.clipboard.writeText(draft.text).catch(() => setError('Select the response text to copy it.'))}>Copy response</button><button className={buttonClass} onClick={() => saveDraft(emptyGuidedDraft())}>Discard unsent response</button></div>}
               {(readyToAnswer || correcting) && !staleDraft && <>
-                {draft.selectedImageId && <p className="mb-2 text-folio-meta text-folio-text-secondary">Answer linked to {photos.find(image => image.id === draft.selectedImageId)?.name || 'the selected photograph'}<button className={buttonClass} disabled={voiceBusy || busy || !!draft.pending} onClick={() => saveDraft({ ...draftRef.current, selectedImageId: null })}>Unlink</button></p>}
+                {draft.selectedImageId && <p className="mb-2 text-folio-meta text-folio-text-secondary">Answer linked to {photos.find(image => image.id === draft.selectedImageId)?.name || 'the selected photograph'}<button className={buttonClass} disabled={voiceBusy || commandBusy || !!draft.pending} onClick={() => void linkPhoto(null)}>Unlink</button></p>}
                 <label className="sr-only" htmlFor="guided-response">Your response</label>
                 <textarea id="guided-response" ref={composerRef} value={pendingAnswer ? '' : draft.text} rows={2} disabled={busy || voiceBusy || !!draft.pending}
                   aria-describedby="guided-input-help guided-save-status" aria-invalid={draft.text.length > GUIDED_ANSWER_LIMIT}
