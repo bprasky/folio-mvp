@@ -1,5 +1,5 @@
 // Actual tracker, Story, modal, guided and protected interview components.
-// Only Next navigation/image/dynamic and loopback API responses are synthetic.
+// Next navigation/image/dynamic, loopback API responses, Daily and microphone denial are synthetic.
 // --baseline bundles the committed entry components in memory: no source edits.
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
@@ -30,6 +30,7 @@ const prepared = {
   questions: categories.map((category, index) => ({ id: `project-${category}-fixture`, text: index === 0 ? firstQuestion : 'What was the overall design idea for this project?', category, roomId: null, sourceImageIds: ['photo'], sourceAnswerIds: [], kind: 'prepared', status: 'pending' })),
 };
 let scenario = {}, saved = null;
+const liveSessions = new Map();
 let resetReceipt = null;
 let heldResetResponse = null, resetHeldSignal = null;
 const draftKey = `folio.guided.draft.fixture-designer.${projectId}`;
@@ -48,6 +49,8 @@ import Tracker from './src/app/project/[id]/ProjectProgressTracker';
 import Story from './src/app/project/[id]/StoryInterviewPanel';
 import {InterviewModal} from './src/components/posting/interview/InterviewModal';
 import {deriveTrackerState} from './src/lib/publish/computeTrackerState';
+window.microphoneRequests=0;window.dailyJoins=0;
+Object.defineProperty(navigator,'mediaDevices',{value:{getUserMedia:async()=>{window.microphoneRequests++;throw new Error('Synthetic microphone denial');}}});
 const images=[{id:'photo',url:'/room.svg',name:'Living room',roomId:'living',room:'Living room',displayOrder:0,tags:[],noProducts:true}];
 const rooms=[{id:'living',name:'Living room'}];
 const state=deriveTrackerState({type:'completed',complete:{photos:true,rooms:true,tags:true,story:false,publish:false},materialsExist:true});
@@ -65,11 +68,15 @@ export const useSearchParams=()=>new URLSearchParams(useSyncExternalStore(subscr
 export const usePathname=()=>useSyncExternalStore(subscribe,()=>location.pathname);
 export const redirect=url=>go(url); export const notFound=()=>{throw Error('Unexpected notFound')};
 export default function Link({href,children,prefetch,replace,...props}){return <a {...props} href={href} onClick={e=>{props.onClick?.(e);if(!e.defaultPrevented){e.preventDefault();go(href,replace)}}}>{children}</a>};`;
+const dailyFixture = `export default {createCallObject(){const call={on(){return call},participants(){return{}},
+async join(){window.dailyJoins++},setLocalAudio(){return call},async setInputDevicesAsync(){},async leave(){},async destroy(){}};return call}};`;
 
 async function build() {
   fs.mkdirSync(out, { recursive: true });
   fs.mkdirSync(reviewOut, { recursive: true });
   await esbuild.build({ stdin: { contents: entry, resolveDir: root, sourcefile: 'entry-fixture.tsx', loader: 'tsx' }, bundle: true, outfile: path.join(out, 'app.js'), platform: 'browser', jsx: 'automatic', alias: { '@': path.join(root, 'src') }, define: { 'process.env.NODE_ENV': '"development"', 'process.env': '{}' }, plugins: [{ name: 'fixture-boundaries', setup(build) {
+    build.onResolve({ filter: /^@daily-co\/daily-js$/ }, () => ({ path: 'daily', namespace: 'daily-fixture' }));
+    build.onLoad({ filter: /.*/, namespace: 'daily-fixture' }, () => ({ contents: dailyFixture, loader: 'js' }));
     build.onResolve({ filter: /^(next\/navigation|next\/link|next\/image|next\/dynamic)$/ }, args => ({ path: args.path, namespace: 'fixture' }));
     build.onLoad({ filter: /.*/, namespace: 'fixture' }, args => ({ loader: 'jsx', resolveDir: root, contents:
       /navigation|link/.test(args.path) ? navigation : args.path === 'next/dynamic'
@@ -136,7 +143,28 @@ function handler(req, res) {
       const question = { id: 'legacy-question', text: 'Legacy fixture question?', questionText: 'Legacy fixture question?', questionType: 'contextual', section: 'why', role: 'DESIGNER', type: 'generic', rooms: [], products: [], vendors: [] };
       return json({ questions: [question], rooms: [{ roomId: 'project', roomName: 'About This Project', questions: [question], budget: { baseQuestions: 5, maxFollowUps: 1 } }], globalGates: { minimumTotalAnswers: 5, warnings: [] }, projectSize: { roomCount: 0, targetQuestionCount: 5, size: 'focused' } });
     }
-    if (endpoint === '/api/live-interviews' && req.method === 'GET') return json({ enabled: false, recordingEnabled: false });
+    if (endpoint === '/api/live-interviews' && req.method === 'GET') return json({ enabled: !!scenario.live, recordingEnabled: false, ...(scenario.live ? { draftScope: 'entry-fixture-draft-scope' } : {}) });
+    if (endpoint === '/api/live-interviews' && req.method === 'POST') {
+      let text = ''; req.on('data', chunk => { text += chunk; }); req.on('end', () => {
+        record.liveStart = JSON.parse(text);
+        const id = 'live-entry-' + liveSessions.size;
+        const question = saved.plan.find(question => question.id === saved.activeQuestionId);
+        const session = { id, status: 'active', turns: [], recordingEnabled: false,
+          snapshot: { source: { kind: 'project', id: projectId }, interviewId: saved.id, version: String(saved.version), status: saved.status, currentQuestion: question, sourceRefs: [] },
+          join: { url: 'https://synthetic.daily.co/entry', token: 'synthetic-only', conversationId: id } };
+        liveSessions.set(id, session); json(session);
+      }); return;
+    }
+    if (endpoint.startsWith('/api/live-interviews/')) {
+      const session = liveSessions.get(endpoint.split('/').at(-1));
+      if (!session) return json({ error: 'No fixture session' }, 404);
+      if (req.method === 'GET') return json(session);
+      let text = ''; req.on('data', chunk => { text += chunk; }); req.on('end', () => {
+        record.liveAction = JSON.parse(text).action;
+        if (['end', 'pause', 'switch_to_text'].includes(record.liveAction)) session.status = 'ended';
+        json(session);
+      }); return;
+    }
     if (endpoint === '/api/health/llm') return json({ ok: true });
     if (endpoint === `/api/projects/${projectId}`) return json({ rooms: [{ id: 'living', name: 'Living room' }], images: [] });
     if (endpoint.endsWith('/status')) return json({ status: 'DRAFT' });
@@ -158,6 +186,7 @@ async function main() {
   const open = async (view, setup = {}) => {
     if (page) await page.browserContext().close();
     scenario = setup; saved = setup.saved ? savedSession() : null; resetReceipt = null; heldResetResponse = null; resetHeldSignal = null; requests.length = 0; unexpected.length = 0; pendingReads.length = 0; pageErrors = [];
+    liveSessions.clear();
     const context = await browser.createBrowserContext(); page = await context.newPage();
     if (setup.legacyDraft) await page.evaluateOnNewDocument((id, draft) => localStorage.setItem('interviewDraft:' + id, JSON.stringify(draft)), projectId, setup.legacyDraft);
     page.setDefaultTimeout(6000); await page.setViewport({ width: 1440, height: 1000 });
@@ -193,6 +222,27 @@ async function main() {
     }
   };
   try {
+    await capture('Live original entry starts once; saved-answer review and refresh stay passive; explicit reopen starts anew', async () => {
+      await open('story', { live: true }); await storyReady();
+      const starts = () => requests.filter(request => request.liveStart);
+      assert.equal(starts().length, 0); assert.equal(await page.evaluate(() => window.microphoneRequests), 0);
+      await click('Start interview');
+      await page.waitForFunction(() => window.dailyJoins === 1 && [...document.querySelectorAll('button')].some(button => button.textContent === 'End' && !button.disabled && button.getBoundingClientRect().height > 0));
+      assert.equal(starts().length, 1); assert.equal(starts()[0].liveStart.inputMode, 'text');
+      assert.equal(starts()[0].liveStart.microphoneReady, false);
+      assert.ok(!(await page.evaluate(() => document.body.innerText)).includes('Start live interview'));
+      const firstRequestId = starts()[0].liveStart.requestId;
+      await click('Review saved answers'); await guidedReady();
+      assert.equal(starts().length, 1); assert.equal([...liveSessions.values()][0].status, 'ended');
+      await click('Pause & close'); await page.waitForSelector('[role="dialog"]', { hidden: true }); await storyReady();
+      await page.reload(); await storyReady();
+      assert.equal(starts().length, 1); assert.equal(await page.evaluate(() => window.microphoneRequests), 0);
+      await click('Resume interview');
+      await page.waitForFunction(() => window.dailyJoins === 1 && [...document.querySelectorAll('button')].some(button => button.textContent === 'End' && !button.disabled && button.getBoundingClientRect().height > 0));
+      assert.equal(starts().length, 2); assert.notEqual(starts()[1].liveStart.requestId, firstRequestId);
+      assert.equal(saved.turns.length, 0, 'connection verification never fabricates interview answers');
+      await click('End');
+    });
     await capture('Lifecycle Start interview opens the first question while the saved-only Story read is pending', async () => {
       await open('overview', { holdRead: true }); await click('Start interview'); await guidedReady();
       assert.equal(await page.$eval('[data-testid="guided-current-question"]', el => el.textContent), firstQuestion);
@@ -353,7 +403,7 @@ async function main() {
       noGuidedCalls(); assert.equal(await page.$('#guided-response'), null);
       assert.ok(!requests.some(request => request.endpoint.endsWith('/interview/reset')), 'spotlight protection precedes any ordinary restart');
     });
-    const report = JSON.stringify({ baseline, baselineCommit, selectedCase, fixture: 'Actual Tracker → Story → InterviewModal → GuidedInterviewWorkspace and protected interview components; synthetic Next navigation/image/dynamic and loopback HTTP responses, pure guided controller, no AI or database. No deployed/authenticated Next server verification.', results }, null, 2);
+    const report = JSON.stringify({ baseline, baselineCommit, selectedCase, fixture: 'Actual Tracker → Story → InterviewModal → GuidedInterviewWorkspace → LiveInterviewPanel and protected interview components; synthetic Next navigation/image/dynamic, loopback HTTP, Daily and microphone denial, pure guided controller, no AI or database. No deployed/authenticated Next server verification.', results }, null, 2);
     fs.writeFileSync(path.join(out, 'results.json'), report);
     fs.writeFileSync(path.join(reviewOut, baseline ? selectedCase ? 'reset-baseline-results.json' : 'entry-baseline-results.json' : 'entry-results.json'), report);
     console.log(`${results.filter(result => result.status === 'pass').length}/${results.length} entry regressions passed (${baseline ? 'committed baseline' : 'working tree'}).`);

@@ -10,7 +10,7 @@ import GenerationContextOptions, { useGenerationContext } from '@/components/pos
 import { useVoiceRecording } from './useVoiceRecording';
 import type { RoomPhotoImage } from './RoomPhoto';
 import { appendTranscript, emptyGuidedDraft, guidedTextIntent, resolvePhotoTransition, type GuidedLocalDraft, type PendingPhotoTransition } from './guidedWorkspaceState';
-import { LiveInterviewPanel } from '@/components/interviews/LiveInterviewPanel';
+import { LiveInterviewPanel, type LiveStartIntent } from '@/components/interviews/LiveInterviewPanel';
 
 interface GuidedInterviewWorkspaceProps {
   projectId: string;
@@ -20,11 +20,12 @@ interface GuidedInterviewWorkspaceProps {
   onClose: () => void;
   onDraftGenerated?: () => void;
   initialRoomId?: string | null;
+  liveStartIntent?: LiveStartIntent;
 }
 
 const buttonClass = 'rounded-sm px-3 py-2 text-folio-meta font-medium transition-colors hover:bg-surface-ground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-folio-gold disabled:cursor-not-allowed disabled:opacity-50';
 
-export function GuidedInterviewWorkspace({ projectId, actorId, projectName = 'Your project', images, onClose, onDraftGenerated, initialRoomId }: GuidedInterviewWorkspaceProps) {
+export function GuidedInterviewWorkspace({ projectId, actorId, projectName = 'Your project', images, onClose, onDraftGenerated, initialRoomId, liveStartIntent }: GuidedInterviewWorkspaceProps) {
   const router = useRouter();
   const [session, setSession] = useState<GuidedSession | null>(null);
   const sessionRef = useRef<GuidedSession | null>(null);
@@ -32,6 +33,7 @@ export function GuidedInterviewWorkspace({ projectId, actorId, projectName = 'Yo
   const draftRef = useRef(draft);
   const [commandBusy, setBusy] = useState(false);
   const [liveActive, setLiveActive] = useState(false);
+  const [liveStarting, setLiveStarting] = useState(false);
   const [liveSessionId, setLiveSessionId] = useState<string|null>(null);
   const [liveAvailable, setLiveAvailable] = useState(false);
   const [workspaceRequested, setWorkspaceRequested] = useState(false);
@@ -63,6 +65,7 @@ export function GuidedInterviewWorkspace({ projectId, actorId, projectName = 'Yo
   const pendingPhoto = useRef<PendingPhotoTransition | null>(null);
   const previousRoom = useRef<string | null | undefined>(undefined);
   const initialRoomHandled = useRef(false);
+  const [initialRoomSettled, setInitialRoomSettled] = useState(!initialRoomId);
   const activeQuestion = session?.plan.find(question => question.id === (correcting?.questionId ?? session.activeQuestionId)) ?? null;
   const activeQuestionRef = useRef(activeQuestion);
   activeQuestionRef.current = activeQuestion;
@@ -209,11 +212,13 @@ export function GuidedInterviewWorkspace({ projectId, actorId, projectName = 'Yo
 
   useEffect(() => {
     if (!loaded || busy || initialRoomHandled.current || !initialRoomId || !session) return;
-    if (initialRoomId !== 'project' && !session.roomsPrepared) return;
+    if (initialRoomId !== 'project' && !session.roomsPrepared) { setInitialRoomSettled(true); return; }
     initialRoomHandled.current = true;
     const roomId = initialRoomId === 'project' ? null : initialRoomId;
-    if (draftRef.current.text || session.status !== 'active' || activeQuestion?.roomId === roomId) return;
-    if (session.plan.some(question => question.roomId === roomId && question.status === 'pending')) void command('section', { roomId });
+    if (draftRef.current.text || session.status !== 'active' || activeQuestion?.roomId === roomId) { setInitialRoomSettled(true); return; }
+    if (session.plan.some(question => question.roomId === roomId && question.status === 'pending')) {
+      setInitialRoomSettled(false); void command('section', { roomId }).then(next => setInitialRoomSettled(!!next));
+    } else setInitialRoomSettled(true);
   }, [activeQuestion?.roomId, busy, command, initialRoomId, loaded, session]);
 
   useEffect(() => {
@@ -275,6 +280,7 @@ export function GuidedInterviewWorkspace({ projectId, actorId, projectName = 'Yo
   };
 
   const pause = async () => {
+    if (liveStarting) { onClose(); return; }
     if (liveActive) { setError('Pause or end the live interview before closing.'); return; }
     if (voiceBusy || voice.hasRecording) { setError('Finish transcribing or discard the recording before closing.'); return; }
     if (busy || generating) { setError('Please wait for the current save to finish.'); return; }
@@ -344,7 +350,7 @@ export function GuidedInterviewWorkspace({ projectId, actorId, projectName = 'Yo
         <header className="flex shrink-0 items-center justify-between gap-3 border-b border-folio-border-subtle px-4 py-3 md:px-7">
           <div className="min-w-0"><Dialog.Title className="truncate font-headline text-folio-h4">{projectName}</Dialog.Title>
             <Dialog.Description className="text-folio-meta text-folio-text-secondary">Project photographs · Guided interview</Dialog.Description></div>
-          <button type="button" disabled={liveActive} onClick={() => void pause()} className={`${buttonClass} flex shrink-0 items-center gap-2`}><Pause size={15} aria-hidden />Pause & close</button>
+          <button type="button" disabled={liveActive && !liveStarting} onClick={() => void pause()} className={`${buttonClass} flex shrink-0 items-center gap-2`}><Pause size={15} aria-hidden />Pause & close</button>
         </header>
 
         <div className={`grid min-h-0 flex-1 grid-rows-[minmax(120px,30dvh)_minmax(0,1fr)] gap-3 p-3 md:grid-rows-1 md:gap-6 md:p-6 ${showLive ? 'md:grid-cols-[minmax(0,1fr)_minmax(320px,45%)] lg:grid-cols-[minmax(0,1fr)_480px] xl:grid-cols-[minmax(0,1fr)_520px]' : 'md:grid-cols-[minmax(0,1fr)_390px] lg:grid-cols-[minmax(0,1fr)_420px]'}`}>
@@ -391,7 +397,8 @@ export function GuidedInterviewWorkspace({ projectId, actorId, projectName = 'Yo
             <div className={showLive ? 'min-h-0 flex-1 overflow-y-auto overscroll-contain' : 'hidden'}>
               {showLive && error && <div role="alert" className="m-4 rounded-sm bg-surface-ground p-3 text-folio-meta"><p>{error}</p><button aria-label="Dismiss message" className={buttonClass} onClick={() => setError('')}><X size={14} /></button></div>}
               {(liveEligible || liveActive) && <LiveInterviewPanel presentation="primary"
-                source={{ kind: 'project', id: projectId }} onActiveChange={setLiveActive} onCanonicalChange={refreshLiveProgress}
+                startIntent={initialRoomSettled && liveEligible ? liveStartIntent : undefined}
+                source={{ kind: 'project', id: projectId }} onActiveChange={setLiveActive} onStartingChange={setLiveStarting} onCanonicalChange={refreshLiveProgress}
                 onAvailabilityChange={setLiveAvailable} onOpenWorkspace={() => setWorkspaceRequested(true)}
                 selectedImageId={draft.selectedImageId} onSessionChange={setLiveSessionId} />}
             </div>

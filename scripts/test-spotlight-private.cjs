@@ -63,12 +63,13 @@ async function main() {
   for(const [dir,hash] of [['20260910180000_add_product_spotlight_draft_selection','77fa2afe19f2f1e61d344f54d78381ca18d862b795e48edca9b3101c939291ab'],['20260910210000_add_spotlight_durable_interview','50adeaf12a7b402181769746caed685ba3c0a5b58821528f83cffa397e5e2c10']]) {
     const migration=fs.readFileSync(path.join(root,'prisma/migrations',dir,'migration.sql'),'utf8').replace(/\r\n/g,'\n'); assert.equal(crypto.createHash('sha256').update(migration).digest('hex'),hash); await sql(migration); evidence[dir]=hash;
   }
+  await tool('Actual Prisma live reservations and transaction locking',['scripts/spotlight-private/live-store.test.cjs'],60000);
   await tool('Real services, privacy readers and concurrency',[path.join(root,'node_modules/tsx/dist/cli.mjs'),'scripts/spotlight-private/service.test.ts'],300000);
   await tool('Real Next API and Chromium save/restart/resume journey',[path.join(root,'node_modules/tsx/dist/cli.mjs'),'scripts/spotlight-private/browser.test.ts'],600000);
   evidence.status='passed';
 }
 main().catch(e=>{evidence.status=container?'failed':'blocked';evidence.error=e.message;process.exitCode=1;console.error(e.message);}).finally(async()=>{
-  if(scratch) for(const file of ['spotlight-private-services.json','spotlight-private-browser.json','spotlight-private-browser.png']) {const from=path.join(scratch,'tasks',file);if(fs.existsSync(from))fs.copyFileSync(from,path.join(root,'tasks',file));}
+  if(scratch) for(const file of ['spotlight-private-live-store.json','spotlight-private-services.json','spotlight-private-browser.json','spotlight-private-browser.png']) {const from=path.join(scratch,'tasks',file);if(fs.existsSync(from))fs.copyFileSync(from,path.join(root,'tasks',file));}
   if(container)try{await verify();await docker(['rm','-f','-v',container]);evidence.disposableContainerRemoved=true;}catch(e){evidence.cleanupError=e.message;process.exitCode=1;}
   if(scratch&&(!container||evidence.disposableContainerRemoved)){assert.ok(path.resolve(scratch).startsWith(path.resolve(os.tmpdir())+path.sep+'folio-private-'));fs.rmSync(scratch,{recursive:true,force:true});}
   evidence.finishedAt=new Date().toISOString();fs.writeFileSync(path.join(root,'tasks/spotlight-private-results.json'),JSON.stringify(evidence,null,2)+'\n');
