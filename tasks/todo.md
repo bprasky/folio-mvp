@@ -670,3 +670,19 @@ Final review: PR796 prepared and reviewed. TypeScript ratchet passed903/904 with
 Plan check-in: fix the routing distinction and inconsistent professional links with existing enrollment/workspace infrastructure. No schema or permission expansion. Previous merge approval covered PR796; this correction will be prepared for review.
 
 Review: canonical routing, signed-in redirects, account status and view-only membership behavior verified. Focused routing/auth/enrollment/notification regressions, client import guard, scoped lint, production compile and TypeScript ratchet903/904 pass. Core8 passed/1 disposable-DB skipped. Synthetic desktop/mobile walkthroughs passed; screenshots in docs/reviews/professional-account-routing. Specialist reviews found no blockers. No deployment or live account writes.
+
+# Live interviews, private recording, and media outputs — 2026-10-01
+
+Scope: implement the supplied live interview specification across actual Folio interview entry points, retaining authoritative editorial services. Branch `codex/live-interviews-media` starts at current main; unrelated local edits remain untouched. No production migration, deployment, flag activation, or merge is authorized.
+
+- [x] Audit canonical interview types, source authorization, provider contracts, capture storage, and publishing/export machinery.
+- [x] A: Implement default-off authenticated live sessions, per-session Tavus configuration, durable receipts, guided-engine answer ingestion, and existing-workspace call UI.
+- [x] B: Implement explicit recording consent, bounded private uploads, ordered recorder runs, playable validation, and source review.
+- [x] C: Wire shared adapters into every implemented interview type with its own gates and persistence.
+- [x] D: Implement versioned source edit plans, durable FFmpeg rendering, actual preview files, exact-version approval and publication/export checks in Studio.
+- [x] Verify targeted security/turn/recording/media/cross-type tests, existing guided/core/browser checks, type ratchet, lint and import/migration guards.
+- [x] Review diff, commit coherent changes, push and prepare PR; document precise setup and mocked/local/live evidence.
+
+Verification plan: provider boundaries mocked unless a bounded live test is explicitly available; synthetic recordings rendered with real FFmpeg; external database state inspected read-only. Any schema proposal is additive and remains unapplied to production. Before schema edits create a backup; if format/validate/generate/migrate-status fails, restore from backup and stop schema work. Migration application is a separate approval gate.
+
+Review: draft PR #805 contains seven real entry integrations, canonical speech ingestion and recovery, private creator capture, Studio review/publication and native FFmpeg outputs. Transport19, browser17, native media2, composed project/bio2, adapter seven-kind, guided, core10/1 skipped and existing recorded-media33 checks passed. Guided browsers16+16, lint/import/migration guards, approved Prisma format/validate/generate/verify and type ratchet903/904 passed. IDOR retains the identical existing nine Critical findings. Rebased onto main0127d3a4; unrelated local work preserved. User approved only branch schema alignment; read-only migration status shows the one expected unapplied migration. No production changes or real paid call. Missing Tavus/origin/allowlist configuration, bucket MIME expansion, migration application, worker deployment and bounded real device/provider smoke test remain rollout gates. Precise evidence/exclusions: docs/reviews/live-interviews/results.md. Setup: docs/LIVE_INTERVIEWS.md and docs/LIVE_INTERVIEW_MEDIA_WORKER.md.
