@@ -308,7 +308,7 @@ export async function endLiveSession(actorId:string,id:string,reason:string) {
 }
 export async function reconcileLiveSession(id:string) {
   const session=await getLiveSession(id);if(!session)return;
-  if(active(session))return;
+  if(session.status==='ended' || active(session))return;
   try{
     const p=payload(session);
     const conversations=session.providerIds.conversationId
@@ -327,11 +327,15 @@ export async function reconcileLiveSession(id:string) {
     for(const pal of pals){try{await deletePal(pal);}catch(e){if(!(e instanceof ProviderError && e.status===404))throw e;}}
     await mutateLiveSession(id,s=>{s.status='ended';s.expiresAt=new Date();payload(s).cleanupStage='complete';delete payload(s).sealedJoin;},{cleanup:true});
   }catch{
-    await mutateLiveSession(id,s=>{s.status='uncertain';payload(s).notice='Provider cleanup is pending. This session is reserved until reconciliation succeeds.';},{cleanup:true});
+    await mutateLiveSession(id,s=>{
+      // Another cleanup invocation may have completed while this provider request failed.
+      if(s.status==='ended' || payload(s).cleanupStage==='complete')return;
+      s.status='uncertain';payload(s).notice='Provider cleanup is pending. This session is reserved until reconciliation succeeds.';
+    },{cleanup:true});
   }
 }
-export async function cleanupLiveSessions() {
-  const sessions=await listLiveSessionsForCleanup();
+export async function cleanupLiveSessions(limit = 100) {
+  const sessions=await listLiveSessionsForCleanup(limit);
   for(const session of sessions)await reconcileLiveSession(session.id);
   return {checked:sessions.length};
 }

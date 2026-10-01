@@ -20,7 +20,11 @@ FOLIO_LIVE_MAX_DAILY_PER_ACTOR=5
 INTERVIEW_MEDIA_BUCKET=interview-media
 ```
 
-These are **development/preview** settings, not authorization to activate production. Existing `DATABASE_URL`, `NEXTAUTH_SECRET`, Supabase server credentials, `OPENAI_API_KEY` (recording-aligned Whisper transcription), and Folio's existing interview-generation credentials remain required. Production rate limiting uses the existing Upstash configuration. Keep the existing guided, Spotlight, expertise, organization and account gates as configured; the live flag never bypasses them.
+These are **development/preview** settings, not authorization to activate production. Existing `DATABASE_URL`, `NEXTAUTH_SECRET`, Supabase server credentials, and Folio's existing interview-generation credentials remain required. Saved recordings additionally require `OPENAI_API_KEY` for recording-aligned Whisper transcription. Production rate limiting uses the existing Upstash configuration. Keep the existing guided, Spotlight, expertise, organization and account gates as configured; the live flag never bypasses them.
+
+### Live interviews without saved recordings
+
+Unrecorded live interviews require the migrated database, Tavus key, reachable callback origin, approved account ID in `FOLIO_LIVE_ALLOWLIST`, `FOLIO_LIVE_INTERVIEWS=1`, existing canonical interview credentials, and scheduled session cleanup. Keep `FOLIO_INTERVIEW_RECORDING=0` and `FOLIO_INTERVIEW_MEDIA_EXPORTS=0` until the media worker is ready. This mode does not require Whisper transcription, FFmpeg or a persistent media worker; Tavus supplies live speech and the avatar, and Folio saves accepted answers through the existing interview engine. Recording options stay unavailable.
 
 `NEXTAUTH_SECRET` encrypts stored private joining tokens; backend credentials are stored as SHA-256 hashes. Changing that secret invalidates old encrypted join responses. Only authenticated owners receive joining credentials, with no-store/no-referrer responses.
 
@@ -70,7 +74,11 @@ Use **Publishing Studio → Interview media** to listen to source recordings, se
 
 Heavy remuxing, decoding, recording-aligned transcription and FFmpeg rendering run in a separate worker, never in the live request. Run one worker per deployment initially. The worker claims durable jobs with leases, rechecks permission/version boundaries and cleans its temporary files. See `Dockerfile.interview-media` and the worker command in `package.json`. This is a runnable worker implementation, not a deployed worker.
 
-Run `npm run live:cleanup` at least once per minute in the same trusted worker environment. It reconciles abandoned/uncertain creates through authenticated provider reads, ends conversations and removes ephemeral PALs. Provider maximum-duration, absent-participant and disconnect timeouts remain the last protection if the worker is unavailable. Ambiguous creates retain a durable reservation; they are never retried as new paid POSTs.
+The production Vercel Pro deployment schedules `GET /api/cron/live-interviews` every minute through `vercel.json`. Set a random Production `CRON_SECRET` of at least 32 characters and redeploy; Vercel sends it as `Authorization: Bearer ...`. The endpoint fails closed when the secret is missing or wrong, accepts no browser-session substitute, and returns only a checked count or a generic error with `private, no-store`. Confirm the schedule and successful invocations in Vercel's Cron Jobs dashboard after deployment. [Vercel cron authentication](https://vercel.com/docs/cron-jobs/manage-cron-jobs#securing-cron-jobs).
+
+Each invocation reconciles at most one eligible session using the existing retry logic. Its Pro function duration is 800 seconds to accommodate paginated provider reads; individual provider requests time out after 20 seconds. Calls can overlap, so reconciliation remains idempotent and pending cleanup retains its durable reservation for a later invocation. Cleanup is independent of live, recording and export flags. It ends abandoned conversations and removes ephemeral PALs without creating new paid calls or holding a database transaction during provider requests. Provider maximum-duration, absent-participant and disconnect timeouts remain the last protection when cleanup is unavailable.
+
+For another host, schedule `npm run live:cleanup` at least once per minute in a trusted environment. That CLI retains its default batch of up to 100 sessions and does not require the media worker or native FFmpeg binaries. Avoid running a second scheduler for the same deployment unnecessarily.
 
 No callback ingestion endpoint is provided: the reviewed callback documentation does not establish a verifiable signature contract, and callback-supplied download URLs are not accepted. Authoritative cleanup uses authenticated provider reads.
 
