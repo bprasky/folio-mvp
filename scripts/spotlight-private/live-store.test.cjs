@@ -39,11 +39,11 @@ vm.runInNewContext(ts.transpileModule(fs.readFileSync('src/lib/live-interview/st
 }, structuredClone, Date });
 const live = moduleValue.exports;
 async function test(name, run) { await run(); tests.push({ name, result: 'passed' }); console.log('PASS ' + name); }
-async function waitForBlockedReservation() {
+async function waitForBlockedReservation(blockedCount = 1) {
   const deadline = Date.now() + 5000;
   do {
     const rows = await prisma.$queryRaw`SELECT granted FROM pg_locks WHERE locktype='advisory' AND classid=0 AND objid=73119401 AND objsubid=1 AND database=(SELECT oid FROM pg_database WHERE datname=current_database())`;
-    if (rows.some(row => row.granted) && rows.some(row => !row.granted)) return;
+    if (rows.some(row => row.granted) && rows.filter(row => !row.granted).length >= blockedCount) return;
     await new Promise(resolve => setTimeout(resolve, 20));
   } while (Date.now() < deadline);
   assert.fail('Second reservation did not wait on the actual transaction advisory lock');
@@ -54,8 +54,8 @@ async function main() {
   assert.equal(binding.nonce, process.env.FOLIO_TEST_NONCE);
   assert.equal(binding.system, process.env.FOLIO_TEST_SYSTEM_ID);
   assert.equal(binding.address, null);
-  const actorId = randomUUID(), deniedId = randomUUID();
-  for (const [id, role] of [[actorId, 'DESIGNER'], [deniedId, 'HOMEOWNER']]) {
+  const actorId = randomUUID(), deniedId = randomUUID(), contributorId = randomUUID();
+  for (const [id, role] of [[actorId, 'DESIGNER'], [deniedId, 'HOMEOWNER'], [contributorId, 'DESIGNER']]) {
     await prisma.user.create({ data: { id, role, name: 'Live reservation fixture', email: `${id}@example.invalid`, passwordHash: 'fixture-not-a-login', specialties: [], desiredRooms: [] } });
   }
   const request = (extra = {}) => ({ id: randomUUID(), actorId, sourceType: 'designer_bio', sourceId: actorId, canonicalId: actorId,
@@ -94,7 +94,30 @@ async function main() {
     await assert.rejects(live.createLiveSession(request({ actorId: deniedId, sourceId: deniedId }), limits), error => error.status === 403);
     assert.equal(await prisma.liveInterviewSession.count({ where: { actorId: deniedId } }), 0);
   });
-  await prisma.user.deleteMany({ where: { id: { in: [actorId, deniedId] } } });
+  for (const [firstKind, competingKind] of [['project', 'project_guide'], ['project_guide', 'project']]) {
+    await test(`Actual Prisma ${firstKind} reservation excludes concurrent ${competingKind} calls from either actor`, async () => {
+      const gate = { inserted: deferred(), release: deferred() }; holdInsert = gate;
+      const projectId = randomUUID(), aliasLimits = { maxActive: 10, maxDailyActor: 10 };
+      const firstCall = live.createLiveSession(request({ sourceType: firstKind, sourceId: projectId }), aliasLimits);
+      await Promise.race([gate.inserted.promise, firstCall.then(() => { throw Error('Reservation completed before hold'); })]);
+      const sameActor = live.createLiveSession(request({ sourceType: competingKind, sourceId: projectId }), aliasLimits);
+      const otherActor = live.createLiveSession(request({ actorId: contributorId, sourceType: competingKind, sourceId: projectId }), aliasLimits);
+      // Capture all rejections before observing the real lock wait. A precheck
+      // without the transaction lock would incorrectly insert a second row.
+      const outcomes = Promise.allSettled([firstCall, sameActor, otherActor]);
+      let observed;
+      try { await waitForBlockedReservation(2); }
+      catch (error) { observed = error; }
+      finally { gate.release.resolve(); }
+      const results = await outcomes;
+      if (observed) throw observed;
+      assert.equal(results[0].status, 'fulfilled'); assert.equal(results[0].value.created, true);
+      for (const result of results.slice(1)) { assert.equal(result.status, 'rejected'); assert.equal(result.reason.status, 409); }
+      const rows = await prisma.liveInterviewSession.findMany({ where: { sourceId: projectId } });
+      assert.equal(rows.length, 1); assert.equal(rows[0].sourceType, firstKind); assert.equal(rows[0].actorId, actorId);
+    });
+  }
+  await prisma.user.deleteMany({ where: { id: { in: [actorId, deniedId, contributorId] } } });
 }
 main().then(() => fs.writeFileSync('tasks/spotlight-private-live-store.json', JSON.stringify({ status: 'passed', tests }, null, 2) + '\n'))
   .catch(error => { console.error(error); process.exitCode = 1; })

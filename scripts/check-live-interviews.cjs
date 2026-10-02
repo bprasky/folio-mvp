@@ -35,7 +35,8 @@ const adapters={
  prepareLiveInterview:async()=>snapshot(canonicalIndex),
  executeLiveCommand:async(_actor,_source,previous,command)=>{
   if(saveFailure)throw Error('synthetic canonical failure');
-  if(command.text.length>2000)throw Error('canonical limit');
+  if(command.action==='guide'&&command.guideAction==='refresh')return {...previous,guide:{...previous.guide,photoCount:4}};
+  if(command.text?.length>2000)throw Error('canonical limit');
   const replay=saves.find(s=>s.requestId===command.requestId);if(replay)return replay.next;
   if(Number(previous.version)!==canonicalIndex)throw Error('stale canonical version');
   canonicalIndex++;
@@ -267,6 +268,7 @@ test('partials are not accepted as final events',async()=>{
 });
 test('pending reviewed speech is restored before another paid start; wrong-round duplicate start cannot join',async()=>{
  const a=await start();await assert.rejects(()=>service.startLiveSession('owner',{source:{kind:'project',id:'project',round:2},requestId:'new-round-request-id',mode:'none',consentVersion:'2026-10-01',microphoneReady:true}));
+ await assert.rejects(()=>service.startLiveSession('owner',{source:{kind:'project_guide',id:'project'},requestId:'synthetic-start-request',mode:'none',consentVersion:'2026-10-01',microphoneReady:true}),/existing live session/);
  saveFailure=true;await deliver(a.id,1,0);await service.processBackendTurn(sessions.get(a.id),['Yes.']);await service.endLiveSession('owner',a.id,'pause');
  const restored=await start();assert.equal(restored.id,a.id);assert.equal(restored.turns[0].status,'needs_review');assert.equal(providerCalls.filter(c=>c.url.endsWith('/conversations')&&c.method==='POST').length,1);
 });
@@ -282,5 +284,58 @@ test('SSE is OpenAI-compatible, terminated, and never embeds unescaped newlines'
 test('browser writes require same origin, not just cookies',async()=>{
  assert.throws(()=>config.assertLiveOrigin(new Request('https://folio.test/api/live-interviews',{method:'POST',headers:{origin:'https://evil.test'}})));
  config.assertLiveOrigin(new Request('https://folio.test/api/live-interviews',{method:'POST',headers:{origin:'https://folio.test'}}));
+});
+function guideSession(id,phase='guide') {
+ const row=sessions.get(id);row.sourceType='project_guide';row.payload.source={kind:'project_guide',id:'project'};
+ row.payload.snapshot.source=row.payload.source;row.payload.snapshot.guide={phase};
+ if(phase==='interview')row.payload.snapshot.state.native={kind:'project_guide',canonical:row.payload.snapshot.state.native};
+ return clone(row);
+}
+test('guide recording is unavailable and rejected before any provider or canonical work',async()=>{
+ const source={kind:'project_guide',id:'project'};
+ assert.equal((await service.liveAvailability('owner',source)).recordingEnabled,false);
+ await assert.rejects(service.startLiveSession('owner',{source,requestId:'guide-recording-request',mode:'audio',microphoneReady:true,consentVersion:'2026-10-01'}),error=>error.status===403);
+ assert.equal(providerCalls.length,0);assert.equal(sessions.size,0);assert.equal(saves.length,0);
+});
+test('a complete guide reply can interrupt its welcome without being treated as an unheard editorial question',async()=>{
+ const a=await start();guideSession(a.id);
+ await service.receiveLiveEvent('owner',a.id,event(1,'conversation.utterance','pal','Question 1?',true));
+ await service.receiveLiveEvent('owner',a.id,event(2,'conversation.stopped_speaking','pal',undefined,true));
+ await service.receiveLiveEvent('owner',a.id,event(3,'conversation.started_speaking','user'));
+ await service.receiveLiveEvent('owner',a.id,event(4,'conversation.utterance','user','How do I upload photos?'));
+ const response=await service.processBackendTurn(clone(sessions.get(a.id)),['How do I upload photos?']);
+ assert.equal(response,'Question 2?');assert.equal(sessions.get(a.id).payload.turnState.turns[0].snapshot.guide.phase,'guide');
+ assert.equal(sessions.get(a.id).payload.turnState.turns[0].status,'saved');
+});
+test('guide refresh and skip refuse pending user speech before the provider callback arrives',async()=>{
+ const a=await start();guideSession(a.id,'interview');
+ await service.receiveLiveEvent('owner',a.id,event(1,'conversation.started_speaking','user'));
+ for(const command of [{action:'guide',guideAction:'refresh'},{action:'skip',questionId:'q1'}])
+  await assert.rejects(service.controlLiveSession('owner',a.id,{...command,requestId:'guide-control-request'}),/spoken reply/);
+ assert.equal(saves.length,0);
+});
+test('metadata-only guide refresh updates client facts without creating duplicate speech slots',async()=>{
+ const a=await start();guideSession(a.id,'interview');
+ const before=clone(sessions.get(a.id).payload.turnState.speech);
+ const command={action:'guide',guideAction:'refresh',requestId:'guide-refresh-noop'};
+ const refreshed=await service.controlLiveSession('owner',a.id,command);await service.controlLiveSession('owner',a.id,command);
+ assert.equal(refreshed.snapshot.guide.photoCount,4);assert.equal(refreshed.snapshot.version,'1');
+ assert.deepEqual(sessions.get(a.id).payload.turnState.speech,before);assert.equal(saves.length,0);
+});
+test('guide interview image binding unwraps canonical scope while setup phase cannot bind a photograph',async()=>{
+ const a=await start();guideSession(a.id);
+ await assert.rejects(service.linkLiveImage('owner',a.id,{questionId:'q1',selectedImageId:'image-one'}));
+ guideSession(a.id,'interview');
+ await service.linkLiveImage('owner',a.id,{questionId:'q1',selectedImageId:'image-one'});
+ assert.equal(sessions.get(a.id).payload.imageBinding.imageId,'image-one');
+ await assert.rejects(service.linkLiveImage('owner',a.id,{questionId:'q1',selectedImageId:'foreign'}));
+});
+test('retained guide speech cannot be manually reassigned to canonical interview evidence',async()=>{
+ const a=await start();guideSession(a.id);
+ const row=sessions.get(a.id),old=clone(row.payload.snapshot);
+ row.payload.turnState.turns.push({position:1,raw:'Where do I upload?',historyHash:provider.backendHash(JSON.stringify(['Where do I upload?'])),status:'needs_review',receipt:'setup-retained',snapshot:old});
+ guideSession(a.id,'interview');
+ await assert.rejects(service.recoverLiveTurn('owner',a.id,{turnPosition:1,target:'current',text:'Where do I upload?'}),/cannot be reassigned/);
+ assert.equal(saves.length,0);assert.equal(sessions.get(a.id).payload.turnState.turns[0].status,'needs_review');
 });
 (async()=>{for(const[name,fn]of cases){reset();await fn();console.log('PASS',name);}console.log(`${cases.length} live transport checks passed; provider, canonical and DB boundaries mocked.`);})().catch(error=>{console.error(error);process.exitCode=1;});

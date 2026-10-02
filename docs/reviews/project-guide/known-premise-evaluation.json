@@ -1,0 +1,92 @@
+{
+  "capturedAt": "2026-10-02T15:08:44.507Z",
+  "boundary": "Two actual review calls over preserved synthetic flawed candidates; no generation, database, Tavus or real designer content.",
+  "cases": [
+    {
+      "id": "unexpected-discovery",
+      "candidate": {
+        "kind": "followup",
+        "text": "Once privacy was no longer the only goal, how did finding that courtyard actually change what you designed?",
+        "purpose": "Answer names the courtyard discovery but not how it changed the brief; the consequence is untold and SURPRISE_PIVOT asks only about the discovery itself.",
+        "sourceAnswerIds": [
+          "corrected-client"
+        ],
+        "evidence": [
+          {
+            "answerId": "corrected-client",
+            "quote": "Halfway through demolition, we discovered a sealed courtyard behind the kitchen, and suddenly the whole brief changed."
+          }
+        ]
+      },
+      "review": {
+        "requestedInformation": "How the discovery of the sealed courtyard actually changed the design direction or brief for the project.",
+        "evidence": [
+          {
+            "answerId": "corrected-client",
+            "quote": "Halfway through demolition, we discovered a sealed courtyard behind the kitchen, and suddenly the whole brief changed."
+          }
+        ],
+        "coverage": "partial",
+        "remainingGap": "What specifically changed in the design once the courtyard was found.",
+        "unsupportedPremises": [],
+        "valid": true,
+        "reason": "Answer states the brief changed but not how; this follow-up asks for that untold consequence, grounded in the current answer.'"
+      },
+      "calls": [
+        {
+          "model": "claude-sonnet-5",
+          "inputTokens": 5370,
+          "outputTokens": 204,
+          "milliseconds": 3011,
+          "output": "{\"requestedInformation\":\"How the discovery of the sealed courtyard actually changed the design direction or brief for the project.\",\"evidence\":[{\"answerId\":\"corrected-client\",\"quote\":\"Halfway through demolition, we discovered a sealed courtyard behind the kitchen, and suddenly the whole brief changed.\"}],\"coverage\":\"partial\",\"remainingGap\":\"What specifically changed in the design once the courtyard was found.\",\"unsupportedPremises\":[],\"valid\":true,\"reason\":\"Answer states the brief changed but not how; this follow-up asks for that untold consequence, grounded in the current answer.'\"}"
+        }
+      ]
+    },
+    {
+      "id": "concise-rich-answer",
+      "candidate": {
+        "kind": "confirm_coverage",
+        "questionId": "DESIGN_DIRECTION",
+        "text": "Would it be fair to say the overall design idea here was that clear path from shared life to privacy, achieved by moving those two internal walls?",
+        "purpose": "Scope and layout intent are answered; the clear path from shared to private life already states design direction, so confirm coverage rather than re-ask broadly.",
+        "sourceAnswerIds": [
+          "concise-scope"
+        ],
+        "evidence": [
+          {
+            "answerId": "concise-scope",
+            "quote": "We kept the footprint and moved two internal walls. The idea was a clear path from shared life to privacy."
+          }
+        ]
+      },
+      "review": {
+        "requestedInformation": "Confirmation that the overall design idea was the clear path from shared life to privacy, achieved by moving two internal walls.",
+        "evidence": [
+          {
+            "answerId": "concise-scope",
+            "quote": "We kept the footprint and moved two internal walls. The idea was a clear path from shared life to privacy."
+          }
+        ],
+        "coverage": "complete",
+        "remainingGap": "",
+        "unsupportedPremises": [],
+        "valid": true,
+        "reason": "The cited passage states both the wall move and the clear-path-to-privacy idea in one coherent statement, supporting the confirmation exactly."
+      },
+      "calls": [
+        {
+          "model": "claude-sonnet-5",
+          "inputTokens": 5364,
+          "outputTokens": 192,
+          "milliseconds": 2767,
+          "output": "{\"requestedInformation\":\"Confirmation that the overall design idea was the clear path from shared life to privacy, achieved by moving two internal walls.\",\"evidence\":[{\"answerId\":\"concise-scope\",\"quote\":\"We kept the footprint and moved two internal walls. The idea was a clear path from shared life to privacy.\"}],\"coverage\":\"complete\",\"remainingGap\":\"\",\"unsupportedPremises\":[],\"valid\":true,\"reason\":\"The cited passage states both the wall move and the clear-path-to-privacy idea in one coherent statement, supporting the confirmation exactly.\"}"
+        }
+      ]
+    }
+  ],
+  "status": "failed",
+  "sourceHashes": {
+    "src/lib/interview/guided/decision.ts": "c62f0cc56f25aeefd814ae1fa869d6feca501d6f90a483d3b686ad3d8e1459f0",
+    "src/lib/interview/guided/decision.schemas.ts": "5b06e6d2fc9768464004684fc292f21840207262a3b13448e1abd8eceb7bdd01"
+  }
+}

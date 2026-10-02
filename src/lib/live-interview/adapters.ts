@@ -30,6 +30,7 @@ export async function authorizeLiveSource(actorId: string, source: LiveSource) {
   if (!actor || actor.accountStatus !== 'APPROVED') fail('FORBIDDEN', 'Approved account access is required.', 403);
   if (!source.id || source.id.length > 200) fail('INVALID_SOURCE', 'Choose an existing interview.', 422);
   switch (source.kind) {
+    case 'project_guide': await (await import('./project-guide')).authorizeProjectGuide(actorId, source.id); break;
     case 'project': assertLegacyInterviewAllowed(source.id); await assertProjectWrite(actorId, source.id); break;
     case 'spotlight': await runSpotlight(source.id, actorId, { action: 'resume' }); break;
     case 'expertise': await readExpertise(actorId, source.id); break;
@@ -87,6 +88,7 @@ function expertiseSnapshot(source: LiveSource, native: ExpertiseSnapshot, state:
 export async function prepareLiveInterview(actorId: string, source: LiveSource, requestId: string, priorState?: LiveAdapterState): Promise<LiveAdapterSnapshot> {
   await authorizeLiveSource(actorId, source);
   const state = priorState ? structuredClone(priorState) : freshState();
+  if (source.kind === 'project_guide') return (await import('./project-guide')).prepareProjectGuide(actorId, source, requestId, priorState);
   if (source.kind === 'project') {
     let native = await getGuidedSession(source.id, actorId);
     if (!native && process.env.NEXT_PUBLIC_FLAG_GUIDED_INTERVIEW !== '1') fail('PILOT_DISABLED', 'New guided interviews are not enabled.', 404);
@@ -136,6 +138,12 @@ export async function executeLiveCommand(actorId: string, source: LiveSource, pr
   if (evidence && (!command.text?.trim() && command.action !== 'reuse')) fail('EMPTY_ANSWER', 'Speak an answer or use an interview control.', 422);
   if (['answer', 'skip', 'reuse'].includes(command.action) && (!previous.currentQuestion || command.questionId !== previous.currentQuestion.id))
     fail('QUESTION_CHANGED', 'The question changed. Review your preserved transcription before saving.');
+  if (source.kind === 'project_guide') {
+    const result = await (await import('./project-guide')).executeProjectGuide(actorId, source, previous, command);
+    if (!source.id.startsWith('new:')) revalidatePath(`/project/${source.id}`);
+    return result;
+  }
+  if (command.action === 'guide') throw new LiveAdapterError('GUIDE_UNAVAILABLE', 'This interview does not support project guidance.', 400);
   if (source.kind === 'project') {
     const native = previous.state.native as GuidedSession;
     const result = await runGuidedCommand(source.id, actorId, { action: command.action === 'reuse' ? 'confirm' : command.action,
@@ -217,6 +225,7 @@ export async function executeLiveCommand(actorId: string, source: LiveSource, pr
 /** Delivery rechecks the actual public source. A recording consent is never a publication grant. */
 export async function resolveMediaSource(actorId: string, input: { sourceType: string; sourceId: string; canonicalId?: string }, purpose: 'preview' | 'export') {
   const source = { kind: input.sourceType, id: input.sourceId } as LiveSource;
+  if (source.kind === 'project_guide') fail('GUIDE_MEDIA_UNAVAILABLE', 'Project guidance cannot be recorded or published as interview media.', 403);
   await authorizeLiveSource(actorId, source);
   const actor = await prisma.user.findUnique({ where: { id: actorId }, select: { name: true } });
   let version = ''; let recordingScopeVersion = hash([source.kind, source.id]); let destination: string | null = null;

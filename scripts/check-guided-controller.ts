@@ -149,6 +149,36 @@ const qualified = acceptCommand(adaptive, command(adaptive, { text: qualificatio
 assert.equal(qualified.turns.at(-1)?.kind, 'answer'); assert.equal(qualified.turns.at(-1)?.text, qualification);
 assert.equal(acceptCommand(initial(), command(initial(), { text: 'Yes!' })).turns.at(-1)?.kind, 'answer', 'ordinary questions never reinterpret yes as reused evidence');
 assert.equal(acceptCommand(adaptive, command(adaptive, { text: 'Yes!', selectedImageId: 'photo-a' })).turns.at(-1)?.kind, 'answer', 'a photo-bearing answer is not silently converted to confirmation');
+const podcastConfirmation = structuredClone(adaptive); podcastConfirmation.conversationStyle = 'podcast';
+for (const inputModality of ['voice', 'text', undefined] as const) for (const affirmation of ['Yes', '  Yes, exactly.  ', "That's right!"]) {
+  const affirmationCommand = command(podcastConfirmation, { text: affirmation, inputModality });
+  const confirmed = acceptCommand(podcastConfirmation, affirmationCommand), turn = confirmed.turns.at(-1)!;
+  assert.equal(turn.kind, 'confirmation'); assert.equal(turn.text, designQuote); assert.equal(turn.reusedFromAnswerId, broad.id);
+  assert.equal(turn.inputModality, inputModality || 'text'); assert.equal(turn.confirmationText, affirmation, 'literal affirmation remains in history');
+  assert.equal(acceptCommand(confirmed, affirmationCommand), confirmed, 'confirmation replay does not duplicate source evidence');
+}
+for (const inputModality of ['voice', 'text'] as const) for (const fields of [
+  { text: 'No, that is not right.' }, { text: 'Yes, but the enclosed rooms matter just as much.' },
+  { text: 'Yes. We also wanted more light.' }, { text: 'Yes', recordingId: 'recording' }, { text: 'Yes', selectedImageId: 'photo-a' },
+]) {
+  const answer = acceptCommand(podcastConfirmation, command(podcastConfirmation, { inputModality, ...fields })).turns.at(-1)!;
+  assert.equal(answer.kind, 'answer'); assert.equal(answer.text, fields.text); assert.equal(answer.confirmationText, undefined);
+}
+assert.equal(acceptCommand(adaptive, command(adaptive, { text: 'Yes', inputModality: 'voice' })).turns.at(-1)?.kind, 'answer', 'legacy voice behavior is unchanged');
+for (const inputModality of ['voice', 'text', undefined] as const)
+  assert.equal(acceptCommand(adaptive, command(adaptive, { text: 'Yes, exactly.', inputModality })).turns.at(-1)?.kind, 'answer', 'podcast affirmation grammar never widens legacy parsing');
+const ordinaryPodcast = initial(); ordinaryPodcast.conversationStyle = 'podcast';
+assert.equal(acceptCommand(ordinaryPodcast, command(ordinaryPodcast, { text: 'Yes', inputModality: 'voice' })).turns.at(-1)?.kind, 'answer', 'a non-confirmation question cannot reuse unrelated evidence');
+const voiceCommand = command(podcastConfirmation, { text: 'Yes, exactly.', inputModality: 'voice' });
+let voiceConfirmed = acceptCommand(podcastConfirmation, voiceCommand);
+applyDecision(voiceConfirmed, { kind: 'advance' });
+voiceConfirmed = acceptCommand(voiceConfirmed, command(voiceConfirmed, { action: 'correct', questionId: broad.questionId, text: 'The direction changed to enclosed rooms.' }));
+assert.ok(!canonicalGuidedAnswers(voiceConfirmed).some(answer => answer.questionId === designId), 'source correction invalidates the spoken confirmation and reopens its prepared obligation');
+assert.equal(voiceConfirmed.plan.find(question => question.id === designId)?.status, 'pending');
+assert.equal(voiceConfirmed.turns.find(turn => turn.requestId === voiceCommand.requestId)?.confirmationText, 'Yes, exactly.');
+const forgedVoice = structuredClone(podcastConfirmation); currentQuestion(forgedVoice)!.confirmation!.answerId = 'replaced-answer';
+assert.throws(() => acceptCommand(forgedVoice, command(forgedVoice, { text: 'Yes', inputModality: 'voice' })), /source|answer/i);
+console.log('PASS podcast voice/text affirmation uses validated evidence, retains literal input, and invalidates on source correction');
 applyDecision(typed, { kind: 'advance' });
 typed = acceptCommand(typed, command(typed, { action: 'correct', questionId: broad.questionId, text: 'The direction changed to enclosed rooms.' }));
 assert.ok(!canonicalGuidedAnswers(typed).some(answer => answer.questionId === designId), 'correcting the source reopens a typed confirmation too');
@@ -202,3 +232,38 @@ assert.ok(acceptedTurns(chain).some(turn => turn.id === independent.id), 'prepar
 assert.ok([chainA, chainB, chainC].every(original => chain.turns.find(turn => turn.id === original.id)?.text === original.text), 'invalidated exchanges stay immutable in history');
 console.log('PASS grounded prepared adaptation, retained actual wording/reactions, explicit raw-answer confirmation, forged source rejection, duplicate confirmation and correction reopening');
 console.log('PASS guided controller: prepared obligations, bounded follow-ups, canonical evidence, revisions, skip/partial finish, length/image scope, duplicate/stale versions and pause/resume');
+
+let podcast = createGuidedSession('project-a', structuredClone(preparation), 'podcast-start', { action: 'start', requestId: 'podcast-start', version: 0, conversationStyle: 'podcast' });
+assert.equal(podcast.conversationStyle, 'podcast');
+const podcastBackbone = podcast.plan.map(q => q.id);
+for (let root = 0; root < 2; root++) {
+  podcast = acceptCommand(podcast, command(podcast, { text: 'The window seat changed how the family uses this room.' }));
+  for (let depth = 0; depth < 3; depth++) {
+    const answer = podcast.turns.at(-1)!;
+    const parent = podcast.plan.find(q => q.id === answer.questionId)!;
+    assert.equal(followUpAllowed(podcast, parent), true);
+    applyDecision(podcast, { kind: 'followup', text: 'How did that change their daily routine?', purpose: 'Explore the stated daily-use consequence.', sourceAnswerIds: [answer.id] });
+    assert.equal(currentQuestion(podcast)?.roomId, parent.roomId, 'a podcast follow-up retains its parent room');
+    podcast = acceptCommand(podcast, command(podcast, { text: `The family reads together there after school, detail ${root}-${depth}.` }));
+  }
+  assert.equal(followUpAllowed(podcast, podcast.plan.find(q => q.id === podcast.turns.at(-1)!.questionId)!), false, 'chain depth is bounded at three');
+  applyDecision(podcast, { kind: 'advance' });
+}
+podcast = acceptCommand(podcast, command(podcast, { text: 'The garden shaped the project direction.' }));
+assert.equal(followUpAllowed(podcast, podcast.plan.find(q => q.id === podcast.turns.at(-1)!.questionId)!), false, 'six follow-ups exhaust the project section budget');
+assert.deepEqual(podcast.plan.filter(q => q.kind === 'prepared').map(q => q.id), podcastBackbone, 'podcast branching retains every prepared obligation');
+
+let completed = initial();
+completed = acceptCommand(completed, command(completed, { text: 'The saved original project brief.' }));
+completed.plan.filter(q => q.status === 'pending').forEach(q => { q.status = 'skipped'; });
+completed.roomsPrepared = true; completed.status = 'finished'; completed.activeQuestionId = null; completed.pendingDecisionTurnId = null;
+const beforeDetail = canonicalGuidedAnswers(completed);
+const addDetail: GuidedCommand = { action: 'add_detail', requestId: 'detail-request', version: completed.version, conversationStyle: 'podcast' };
+completed = acceptCommand(completed, addDetail);
+assert.equal(completed.status, 'active'); assert.equal(completed.conversationStyle, 'podcast');
+assert.equal(acceptCommand(completed, addDetail), completed, 'duplicate add-detail control creates one canonical question');
+completed = acceptCommand(completed, command(completed, { text: 'An additional detail that belongs in the saved interview.' }));
+assert.deepEqual(canonicalGuidedAnswers(completed).slice(0, beforeDetail.length), beforeDetail, 'adding detail preserves all prior accepted evidence');
+assert.equal(canonicalGuidedAnswers(completed).at(-1)?.answer, 'An additional detail that belongs in the saved interview.');
+assert.throws(() => acceptCommand(initial(), { action: 'add_detail', requestId: 'too-soon-detail', version: 1 }), /Resume the remaining/);
+console.log('PASS podcast chain depth/section budget and additive completed interview evidence preserve the canonical backbone');

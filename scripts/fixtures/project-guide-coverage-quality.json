@@ -1,0 +1,111 @@
+[
+  {
+    "id": "post-surprise-history",
+    "sourceArtifact": "docs/reviews/project-guide/sequence-evaluation.json",
+    "sourceAttempt": 11,
+    "expectedCovered": [
+      "DESIGN_DIRECTION"
+    ],
+    "expectedAbsent": [
+      "SIGNATURE_IDENTITY"
+    ],
+    "input": {
+      "acceptedAnswers": [
+        {
+          "id": "4c1c0287-4324-4182-8905-e947f4ef8b52",
+          "text": "The clients wanted more privacy without disconnecting the rooms. We kept the footprint and moved two internal walls. The idea was a clear path from shared life to privacy. Halfway through demolition, we discovered a sealed courtyard behind the kitchen, and that changed the design.",
+          "roomId": null
+        },
+        {
+          "id": "a6044a7d-2267-47f0-abb2-0a8921db0170",
+          "text": "We reopened the courtyard and redirected the kitchen circulation around it. That gave the clients a private outdoor place while keeping a connection between the kitchen and the living spaces.",
+          "roomId": null
+        },
+        {
+          "id": "d36d3258-f6e6-4a62-8916-fee72381ea72",
+          "text": "We had ten months from design through completion. The clients set a fixed budget and wanted to keep the existing footprint. The two internal walls we moved were not load-bearing, and we kept the exterior structure. Those were the limits we worked within.",
+          "roomId": null
+        }
+      ],
+      "pendingTargets": [
+        {
+          "id": "DESIGN_DIRECTION",
+          "question": "What was the overall design idea for this project?",
+          "roomId": null
+        },
+        {
+          "id": "SIGNATURE_IDENTITY",
+          "question": "What in this project is most recognizably yours?",
+          "roomId": null
+        }
+      ]
+    }
+  },
+  {
+    "id": "concise-rich-answer",
+    "sourceArtifact": "scripts/fixtures/podcast-interview-quality.cjs",
+    "sourceAttempt": "concise-rich-answer",
+    "expectedCovered": [
+      "DESIGN_DIRECTION"
+    ],
+    "expectedAbsent": [
+      "SIGNATURE_IDENTITY",
+      "SURPRISE_PIVOT"
+    ],
+    "input": {
+      "acceptedAnswers": [
+        {
+          "id": "concise-brief",
+          "text": "A family of four wanted separate quiet and social areas without adding any floor area.",
+          "roomId": null
+        },
+        {
+          "id": "concise-scope",
+          "text": "We kept the footprint and moved two internal walls. The idea was a clear path from shared life to privacy.",
+          "roomId": null
+        }
+      ],
+      "pendingTargets": [
+        {
+          "id": "DESIGN_DIRECTION",
+          "question": "What was the overall design idea for this project?",
+          "roomId": null
+        },
+        {
+          "id": "SIGNATURE_IDENTITY",
+          "question": "What in this project is most recognizably yours?",
+          "roomId": null
+        },
+        {
+          "id": "SURPRISE_PIVOT",
+          "question": "What discovery changed the direction of this project along the way?",
+          "roomId": null
+        }
+      ]
+    }
+  },
+  {
+    "id": "physical-scope-without-intent",
+    "sourceArtifact": "Synthetic negative control derived from the scope fact alone; no stated design goal or concept.",
+    "expectedCovered": [],
+    "expectedAbsent": [
+      "DESIGN_DIRECTION"
+    ],
+    "input": {
+      "acceptedAnswers": [
+        {
+          "id": "scope-fact-only",
+          "text": "We kept the footprint and moved two internal walls.",
+          "roomId": null
+        }
+      ],
+      "pendingTargets": [
+        {
+          "id": "DESIGN_DIRECTION",
+          "question": "What was the overall design idea for this project?",
+          "roomId": null
+        }
+      ]
+    }
+  }
+]

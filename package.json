@@ -7,6 +7,7 @@
   },
   "scripts": {
     "test:live": "node scripts/check-live-interviews.cjs && node scripts/check-live-adapters.cjs && node scripts/check-live-interview-browser.cjs",
+    "test:project-guide": "node scripts/check-project-guide-planner.cjs && node scripts/check-project-guide-adapter.cjs && node scripts/check-project-guide-upload.cjs",
     "check:live:setup": "node scripts/check-live-setup.cjs",
     "live:cleanup": "node scripts/live-interview-cleanup.cjs",
     "media:worker": "node scripts/interview-media-worker.cjs",

@@ -1,0 +1,17 @@
+{
+  "boundary": "Actual UI; synthetic provider/video/auth/API. No real call.",
+  "results": [
+    "actual Create+ hosts immediately once and creates no project on landing",
+    "real file control creates once, uploads, ends intake and opens project host",
+    "empty/populated refresh, tagging and Story navigation retain one host and hide old launcher",
+    "lost guide transition retries its receipt and speaks first canonical question exactly once",
+    "browsing does not link a photo; explicit Discuss does",
+    "URL control imports selected photos into existing project without creating another call",
+    "no-op refreshed metadata does not replay speech and unsent typed draft blocks refresh",
+    "completed-project offered detail is editable and saves only after explicit confirmation",
+    "manual fallback ends the guide and restores existing Story controls",
+    "partial intake upload retains failed files and expertise return context until deliberate continuation",
+    "disabled Create+ automatically uses original full form without mic or calls",
+    "Publish, project home and non-owner presentation do not create guide calls"
+  ]
+}

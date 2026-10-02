@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { projectEntryHref } from '@/lib/onboarding/professional-entry';
+import { CreateProjectGuide } from '@/components/interviews/CreateProjectGuide';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { expertiseIntent } from '@/lib/publishing-studio/expertise-navigation';
 import { useSession } from 'next-auth/react';
@@ -15,6 +16,7 @@ type DetailsCore = {
 
 // Unified Create Project UI - single form with optional advanced details
 export default function UnifiedCreateProjectUI() {
+  const [manualEntry, setManualEntry] = useState(false);
   const router = useRouter();
   const searchParams = useSearchParams();
   const { data: session } = useSession();
@@ -104,6 +106,8 @@ export default function UnifiedCreateProjectUI() {
       </div>
     );
   }
+
+  if (!manualEntry && session?.user?.id) return <CreateProjectGuide key={`${session.user.id}:${operatingAsOrgId}`} actorId={session.user.id} workspaceId={operatingAsOrgId} onManual={() => setManualEntry(true)} />;
 
   return (
     <div className="min-h-screen bg-surface-ground flex items-center justify-center p-6">

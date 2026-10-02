@@ -78,6 +78,7 @@ export interface GuidedSession {
   id: string;
   schemaVersion: 1;
   projectId: string;
+  conversationStyle?: 'podcast';
   /** Present after an explicit reset, also invalidates older unbound local drafts. */
   resetId?: string;
   version: number;
@@ -123,8 +124,11 @@ export type GuidedNextProposal = { kind: 'advance' } | {
 };
 
 export interface GuidedCommand {
-  action: 'start' | 'answer' | 'confirm' | 'skip' | 'skip_room' | 'section' | 'pause' | 'resume' | 'retry' | 'finish' | 'correct';
+  action: 'start' | 'answer' | 'confirm' | 'skip' | 'skip_room' | 'section' | 'pause' | 'resume' | 'retry' | 'finish' | 'correct' | 'add_detail';
   requestId: string;
+  conversationStyle?: 'podcast';
+  /** Binds a live guide transition to its exact originating command, never answer evidence. */
+  guideCommandDigest?: string;
   version: number;
   sessionId?: string;
   questionId?: string;

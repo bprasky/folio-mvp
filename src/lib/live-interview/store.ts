@@ -25,16 +25,22 @@ export async function createLiveSession(input: NewLiveSession, limits: { maxActi
     await assertLiveActor(tx, input.actorId);
     // Serialize reservations only. No provider network calls may run under this lock.
     await tx.$executeRaw`SELECT pg_advisory_xact_lock(73119401)`;
+    // Both entry surfaces write the same canonical project interview. Reserve
+    // that project once, under the same lock, regardless of the UI source kind.
+    const sourceKinds = ['project', 'project_guide'].includes(input.sourceType)
+      ? ['project', 'project_guide'] : [input.sourceType];
     if (input.payload.startRequestId) {
       const retry = (await tx.$queryRaw<LiveSession[]>`SELECT * FROM live_interview_sessions WHERE "actorId"=${input.actorId}
         AND payload->>'startRequestId'=${String(input.payload.startRequestId)} ORDER BY "createdAt" DESC LIMIT 1`)[0];
       if (retry) return { session: retry, created: false };
     }
-    const competing = await tx.$queryRaw<{ id: string }[]>`SELECT id FROM live_interview_sessions WHERE "sourceType"=${input.sourceType}
+    const competing = await tx.$queryRaw<{ id: string }[]>`SELECT id FROM live_interview_sessions WHERE "sourceType"=ANY(${sourceKinds}::text[])
       AND "sourceId"=${input.sourceId} AND "actorId"<>${input.actorId} AND status=ANY(${active}::text[]) LIMIT 1`;
     if (competing.length) throw new LiveStoreError('Another contributor is interviewing this source. Try again after they finish.', 409);
     const prior = await tx.$queryRaw<LiveSession[]>`SELECT * FROM live_interview_sessions WHERE "actorId"=${input.actorId}
-      AND "sourceType"=${input.sourceType} AND "sourceId"=${input.sourceId} AND status=ANY(${active}::text[]) ORDER BY "createdAt" DESC LIMIT 1`;
+      AND "sourceType"=ANY(${sourceKinds}::text[]) AND "sourceId"=${input.sourceId} AND status=ANY(${active}::text[]) ORDER BY "createdAt" DESC LIMIT 1`;
+    if (prior[0] && prior[0].sourceType !== input.sourceType)
+      throw new LiveStoreError('This project already has a live interview open. End that call before starting from another interview surface.');
     if (prior[0]) return { session: prior[0], created: false };
     const counts = await tx.$queryRaw<{ active: bigint; daily: bigint }[]>`SELECT
       count(*) FILTER (WHERE status=ANY(${active}::text[])) AS active,

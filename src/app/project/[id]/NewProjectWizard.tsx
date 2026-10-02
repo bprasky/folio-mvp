@@ -14,6 +14,7 @@ import {
   FaMagic,
 } from 'react-icons/fa';
 import { InterviewModal } from '@/components/posting/interview/InterviewModal';
+import { useProjectConversation } from '@/components/interviews/ProjectConversationHost';
 
 /**
  * New Project Wizard — guided setup for completed ("PAST" timeline) projects.
@@ -73,6 +74,7 @@ function fileToBase64(file: File): Promise<string> {
 }
 
 export default function NewProjectWizard({ project, canScrape }: NewProjectWizardProps) {
+  const conversation = useProjectConversation();
   const router = useRouter();
   const [step, setStep] = useState(1);
   const [images, setImages] = useState<AddedImage[]>([]);
@@ -810,6 +812,7 @@ export default function NewProjectWizard({ project, canScrape }: NewProjectWizar
       </main>
 
       <InterviewModal
+        disableLive={conversation?.manual}
         open={interviewOpen}
         initialIntent="resume"
         onOpenChange={(open) => {

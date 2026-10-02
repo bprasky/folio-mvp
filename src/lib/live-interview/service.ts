@@ -24,7 +24,7 @@ const active = (session: LiveSession) => session.status === 'active' && session.
 export function parseLiveSource(value: unknown): LiveSource {
   if (!value || typeof value !== 'object') throw new LiveError('Choose an interview source.', 400);
   const source = value as LiveSource;
-  if (!['project','spotlight','expertise','story','designer_bio','org_bio','collaboration'].includes(source.kind)
+  if (!['project','project_guide','spotlight','expertise','story','designer_bio','org_bio','collaboration'].includes(source.kind)
     || typeof source.id !== 'string' || !source.id || source.id.length > 160
     || (source.round !== undefined && ![1,2,3].includes(source.round))) throw new LiveError('Invalid interview source.', 400);
   return {kind:source.kind,id:source.id,...(source.round ? {round:source.round} : {})};
@@ -42,16 +42,16 @@ export async function liveAvailability(actorId: string, source: LiveSource) {
   if (!liveEnabled(actorId)) return {enabled:false, recordingEnabled:false};
   await authorizeActor(actorId, source);
   liveConfig();
-  return {enabled:true,recordingEnabled:recordingEnabled(),consentVersion:CAPTURE_CONSENT_VERSION,disclosure:CAPTURE_DISCLOSURE,
+  return {enabled:true,recordingEnabled:source.kind!=='project_guide' && recordingEnabled(),consentVersion:CAPTURE_CONSENT_VERSION,disclosure:CAPTURE_DISCLOSURE,
     draftScope:backendHash(JSON.stringify([actorId,source]))};
 }
 function clientState(session: LiveSession, includeJoin = false) {
   const p = payload(session); const snapshot = p.snapshot;
   return {id:session.id,status:session.status,expiresAt:session.expiresAt.toISOString(),
     snapshot:snapshot ? {source:snapshot.source,interviewId:snapshot.interviewId,version:snapshot.version,status:snapshot.status,
-      currentQuestion:snapshot.currentQuestion,sourceRefs:snapshot.sourceRefs,notice:snapshot.notice} : undefined,
+      currentQuestion:snapshot.currentQuestion,sourceRefs:snapshot.sourceRefs,notice:snapshot.notice,...(snapshot.guide?{guide:snapshot.guide}:{})} : undefined,
     turns:p.turnState.turns.map(({position,raw,status,response,questionId,asked,error,inputMode,requestId,snapshot:askedSnapshot})=>({position,raw,status,response,questionId,asked,error,inputMode,requestId,version:askedSnapshot?.version})),
-    notice:p.notice,recordingEnabled:recordingEnabled(),consent:p.consent,
+    notice:p.notice,recordingEnabled:p.source.kind!=='project_guide' && recordingEnabled(),consent:p.consent,
     ...(includeJoin && active(session) && p.sealedJoin ? {join:openJoin(p.sealedJoin)} : {})};
 }
 export async function readLiveSession(actorId: string, id: string) {
@@ -73,6 +73,7 @@ export async function startLiveSession(actorId: string, input: {source:unknown; 
     || !['none','audio','video'].includes(input.mode) || input.consentVersion !== CAPTURE_CONSENT_VERSION)
     throw new LiveError('Confirm the recording choice and microphone permission before starting.',400);
   const source = parseLiveSource(input.source);
+  if (source.kind==='project_guide' && input.mode!=='none') throw new LiveError('Project guidance is available without recording.',403);
   const workspace = await authorizeActor(actorId,source); const config = liveConfig();
   if (!(await checkRateLimit(`live-start:${actorId}`,{max:12,windowMs:60_000})).success) throw new LiveError('Please wait before starting again.',429);
   if (input.mode !== 'none') {
@@ -221,6 +222,7 @@ export async function prepareLiveText(actorId:string,id:string,input:{requestId:
 
 /** The ONLY live answer ingestion boundary. Browser events never call executeLiveCommand(answer). */
 export async function processBackendTurn(session:LiveSession,users:string[]) {
+  const startedAt=Date.now();
   if(!users.length) return ''; // custom_greeting owns the first question, exactly once.
   const position=users.length; const raw=users[position-1];
   const digest=backendHash(JSON.stringify(users));
@@ -234,7 +236,8 @@ export async function processBackendTurn(session:LiveSession,users:string[]) {
     if(old) return;
     if(position!==turns.length+1 || turns.some(t=>t.status!=='saved')) throw new LiveError('Review or save the preceding answer first.');
     if(turns.length>=250) throw new LiveError('Pause and resume this interview to continue.');
-    turns.push({position,raw,historyHash:digest,status:'awaiting_final',receipt:`live-${s.id}-${position}`});
+    turns.push({position,raw,historyHash:digest,status:'awaiting_final',receipt:`live-${s.id}-${position}`,
+      ...(p.snapshot?.guide && p.snapshot.guide.phase!=='interview'?{snapshot:structuredClone(p.snapshot)}:{})});
   });
   let turn=payload(current).turnState.turns[position-1];
   if(turn.response) return turn.response;
@@ -247,6 +250,7 @@ export async function processBackendTurn(session:LiveSession,users:string[]) {
     current=refreshed;turn=payload(current).turnState.turns[position-1];
     if(turn.response)return turn.response;
   }
+  console.info('[live-turn-latency]',{stage:'finality',elapsedMs:Date.now()-startedAt,sourceKind:payload(current).source.kind,inputMode:turn.inputMode||'voice'});
   current=await mutateLiveSession(session.id,s=>{
     if(!active(s))throw new LiveError('The session has ended.');
     const p=payload(s);const t=p.turnState.turns[position-1];
@@ -259,7 +263,11 @@ export async function processBackendTurn(session:LiveSession,users:string[]) {
       }
       t.status='saving';t.leaseUntil=Date.now()+120_000;return;
     }
-    const final=finalSpeechForTurn(p.turnState,t);const asked=final && questionForFinal(p.turnState,final);
+    const final=finalSpeechForTurn(p.turnState,t);
+    // Setup replies may interrupt the welcome. They are bound to the immutable
+    // guide phase captured at receipt and can never become editorial answers.
+    const guideSnapshot=t.snapshot?.guide && t.snapshot.guide.phase!=='interview' && t.snapshot.version===p.snapshot?.version?t.snapshot:undefined;
+    const asked=final && (guideSnapshot?.currentQuestion?{question:guideSnapshot.currentQuestion,snapshot:guideSnapshot}:questionForFinal(p.turnState,final));
     t.eventSeq=final?.seq;t.questionId=asked?.question.id;t.asked=asked?.question.text;t.snapshot=asked?.snapshot;
     t.selectedImageId=p.imageBinding?.questionId===t.questionId?p.imageBinding.imageId:null;
     if(!final || !asked || asked.question.id!==p.snapshot?.currentQuestion?.id) {
@@ -270,10 +278,13 @@ export async function processBackendTurn(session:LiveSession,users:string[]) {
   });
   turn=payload(current).turnState.turns[position-1];
   if(turn.response)return turn.response;
-  return saveTurn(current,turn,'answer',turn.raw);
+  const response=await saveTurn(current,turn,'answer',turn.raw);
+  console.info('[live-turn-latency]',{stage:'backend',elapsedMs:Date.now()-startedAt,sourceKind:payload(current).source.kind});
+  return response;
 }
 
 async function saveTurn(session:LiveSession,turn:LiveTurn,action:'answer'|'correct',text:string) {
+  const startedAt=Date.now();
   const p=payload(session);const snapshot=p.snapshot;
   if(!snapshot)throw new LiveError('Interview state is unavailable.');
   try {
@@ -284,9 +295,11 @@ async function saveTurn(session:LiveSession,turn:LiveTurn,action:'answer'|'corre
       const state=payload(s);const t=state.turnState.turns.find(t=>t.position===turn.position)!;
       t.status='saved';t.response=response;t.error=undefined;t.leaseUntil=undefined;
       state.snapshot=next;
+      s.canonicalId=next.interviewId;
       delete state.imageBinding;
       if(active(s))prepareSpeech(state.turnState,next);
     },{cleanup:true});
+    console.info('[live-turn-latency]',{stage:'save',elapsedMs:Date.now()-startedAt,sourceKind:p.source.kind,phase:snapshot.guide?.phase||'interview',outcome:'saved'});
     return response;
   }catch(error){
     await mutateLiveSession(session.id,s=>{
@@ -294,13 +307,14 @@ async function saveTurn(session:LiveSession,turn:LiveTurn,action:'answer'|'corre
       t.status='needs_review';t.leaseUntil=undefined;t.error='The canonical save or next question needs review. Your full original speech is retained.';
       t.response=REVIEW_RESPONSE;
     },{cleanup:true});
+    console.info('[live-turn-latency]',{stage:'save',elapsedMs:Date.now()-startedAt,sourceKind:p.source.kind,phase:snapshot.guide?.phase||'interview',outcome:'needs_review'});
     return REVIEW_RESPONSE;
   }
 }
 function validateImageBinding(source:LiveSource,snapshot:LiveAdapterSnapshot,imageId:unknown):string|null {
   if(imageId===undefined || imageId===null)return null;
-  if(source.kind!=='project' || typeof imageId!=='string' || imageId.length>200)throw new LiveError('Choose a photograph from this project.',422);
-  const native=snapshot.state.native as GuidedSession;const q=snapshot.currentQuestion;
+  if((source.kind!=='project' && !(source.kind==='project_guide' && snapshot.guide?.phase==='interview')) || typeof imageId!=='string' || imageId.length>200)throw new LiveError('Choose a photograph from this project.',422);
+  const native=(source.kind==='project_guide'?(snapshot.state.native as {canonical:GuidedSession}).canonical:snapshot.state.native) as GuidedSession;const q=snapshot.currentQuestion;
   const allowed=q?.roomId==null?native.rooms.flatMap(room=>room.imageIds):native.rooms.find(room=>room.id===q.roomId)?.imageIds??[];
   if(!allowed.includes(imageId))throw new LiveError('Choose a photograph from the current question’s room.',422);
   return imageId;
@@ -323,7 +337,9 @@ export async function refreshLiveReview(actorId:string,id:string) {
     state.commandLease=Date.now()+120_000;
   });
   try {
-    const snapshot=await prepareLiveInterview(actorId,p.source,`review-refresh-${randomUUID()}`,p.snapshot?.state);
+    const snapshot=p.source.kind==='project_guide' && p.snapshot
+      ? await (await import('./project-guide')).refreshProjectGuideReview(actorId,p.source,p.snapshot,`review-refresh-${randomUUID()}`)
+      : await prepareLiveInterview(actorId,p.source,`review-refresh-${randomUUID()}`,p.snapshot?.state);
     return clientState(await mutateLiveSession(id,s=>{payload(s).snapshot=snapshot;delete payload(s).imageBinding;}));
   } finally {await mutateLiveSession(id,s=>{payload(s).commandLease=undefined;},{cleanup:true});}
 }
@@ -336,6 +352,8 @@ export async function recoverLiveTurn(actorId:string,id:string,input:{turnPositi
     if(!t || t.status!=='needs_review')throw new LiveError('This answer is not awaiting review.');
     if((state.commandLease??0)>Date.now()||state.turnState.turns.some(other=>other.status==='saving'))throw new LiveError('An answer is still saving.');
     const previous=state.turnState.turns.filter(other=>other.position<t.position && other.status==='saved').at(-1);
+    if(state.source.kind==='project_guide' && ((t.snapshot?.guide?.phase==='interview')!==(state.snapshot?.guide?.phase==='interview')
+      || (input.target==='previous' && (previous?.snapshot?.guide?.phase==='interview')!==(t.snapshot?.guide?.phase==='interview'))))throw new LiveError('Setup conversation cannot be reassigned as an interview answer.');
     const questionId=input.target==='previous'?previous?.questionId:state.snapshot?.currentQuestion?.id;
     if(!questionId)throw new LiveError('No question is available for that attribution.');
     const saveAction=input.target==='previous'?'correct':'answer';
@@ -354,16 +372,21 @@ export async function recoverLiveTurn(actorId:string,id:string,input:{turnPositi
 export async function controlLiveSession(actorId:string,id:string,command:LiveAdapterCommand) {
   const session=await ownedSession(actorId,id);const p=payload(session);
   await authorizeActor(actorId,p.source,p.workspaceId);
-  if(!command || !['skip','reuse','retry','finish','correct'].includes(command.action))throw new LiveError('Use the spoken answer flow for new answers.',400);
+  if(!command || !['skip','reuse','retry','finish','correct','guide'].includes(command.action))throw new LiveError('Use the spoken answer flow for new answers.',400);
+  if(command.action==='guide' && (p.source.kind!=='project_guide' || !['refresh','return_guide','start_interview','resume_interview','start_over','add_more','open_upload','open_tagging','none'].includes(command.guideAction??'')))throw new LiveError('Choose a valid project guide action.',400);
   if(!/^[a-zA-Z0-9-]{8,100}$/.test(command.requestId??''))throw new LiveError('A control receipt is required.',400);
   await mutateLiveSession(id,s=>{
     const state=payload(s);
     if((state.commandLease??0)>Date.now() || state.turnState.turns.some(t=>t.status!=='saved'))throw new LiveError('Save or review the pending speech before using interview controls.');
+    if(p.source.kind==='project_guide') {
+      const boundary=Math.max(-1,...state.turnState.turns.map(t=>t.eventSeq??-1),...state.turnState.speech.filter(speech=>speech.delivered).map(speech=>speech.stoppedSeq??-1));
+      if(state.turnState.events.some(event=>event.seq>boundary && event.properties.role==='user' && ['conversation.started_speaking','conversation.utterance'].includes(event.event_type)))throw new LiveError('Wait for your spoken reply to finish before changing guide steps.');
+    }
     state.commandLease=Date.now()+120_000;state.commandReceipt=command.requestId;
   });
   try{
     const snapshot=await executeLiveCommand(actorId,p.source,p.snapshot!,command);
-    return clientState(await mutateLiveSession(id,s=>{const state=payload(s);state.snapshot=snapshot;state.commandLease=undefined;prepareSpeech(state.turnState,snapshot);}));
+    return clientState(await mutateLiveSession(id,s=>{const state=payload(s);const changed=state.snapshot?.version!==snapshot.version;state.snapshot=snapshot;s.canonicalId=snapshot.interviewId;state.commandLease=undefined;if(changed)prepareSpeech(state.turnState,snapshot);}));
   }finally{await mutateLiveSession(id,s=>{payload(s).commandLease=undefined;},{cleanup:true});}
 }
 

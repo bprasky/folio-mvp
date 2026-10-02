@@ -1,0 +1,510 @@
+[
+  {
+    "id": "unexpected-discovery",
+    "expectedValid": false,
+    "expected": "Reject the unsupported assertion that privacy had been the only goal.",
+    "candidate": {
+      "kind": "followup",
+      "text": "Once privacy was no longer the only goal, how did finding that courtyard actually change what you designed?",
+      "purpose": "Answer names the courtyard discovery but not how it changed the brief; the consequence is untold and SURPRISE_PIVOT asks only about the discovery itself.",
+      "sourceAnswerIds": [
+        "corrected-client"
+      ],
+      "evidence": [
+        {
+          "answerId": "corrected-client",
+          "quote": "Halfway through demolition, we discovered a sealed courtyard behind the kitchen, and suddenly the whole brief changed."
+        }
+      ]
+    },
+    "context": {
+      "mode": "next_turn",
+      "conversationStyle": "podcast",
+      "currentAction": "answer",
+      "intentionalSkips": [],
+      "rooms": [
+        {
+          "id": "living",
+          "name": "Living Room"
+        },
+        {
+          "id": "kitchen",
+          "name": "Kitchen"
+        }
+      ],
+      "remainingPreparedQuestions": [
+        {
+          "id": "SCOPE_PARAMETERS",
+          "text": "What were you working within on this project?",
+          "category": "SCOPE_PARAMETERS",
+          "roomId": null
+        },
+        {
+          "id": "DESIGN_DIRECTION",
+          "text": "What was the overall design idea for this project?",
+          "category": "DESIGN_DIRECTION",
+          "roomId": null
+        },
+        {
+          "id": "SIGNATURE_IDENTITY",
+          "text": "What in this project is most recognizably yours?",
+          "category": "SIGNATURE_IDENTITY",
+          "roomId": null
+        },
+        {
+          "id": "SURPRISE_PIVOT",
+          "text": "What discovery changed the direction of this project along the way?",
+          "category": "SURPRISE_PIVOT",
+          "roomId": null
+        }
+      ],
+      "target": {
+        "text": "What did the clients come to you wanting from this project?",
+        "category": "CLIENT_BRIEF",
+        "roomId": null
+      },
+      "currentQuestion": {
+        "text": "What did the clients come to you wanting from this project?",
+        "category": "CLIENT_BRIEF",
+        "roomId": null
+      },
+      "currentAnswer": {
+        "id": "corrected-client",
+        "text": "The clients wanted more privacy. Halfway through demolition, we discovered a sealed courtyard behind the kitchen, and suddenly the whole brief changed.",
+        "kind": "answer"
+      },
+      "acceptedConversation": [
+        {
+          "id": "corrected-client",
+          "questionId": "CLIENT_BRIEF",
+          "question": "What did the clients come to you wanting from this project?",
+          "answer": "The clients wanted more privacy. Halfway through demolition, we discovered a sealed courtyard behind the kitchen, and suddenly the whole brief changed.",
+          "kind": "answer",
+          "roomId": null
+        }
+      ],
+      "citedConversation": [
+        {
+          "id": "corrected-client",
+          "questionId": "CLIENT_BRIEF",
+          "question": "What did the clients come to you wanting from this project?",
+          "answer": "The clients wanted more privacy. Halfway through demolition, we discovered a sealed courtyard behind the kitchen, and suddenly the whole brief changed.",
+          "kind": "answer",
+          "roomId": null
+        }
+      ],
+      "followupPermitted": true
+    }
+  },
+  {
+    "id": "concise-rich-answer",
+    "expectedValid": true,
+    "expected": "Accept an explicitly tentative question about the relationship between two grounded facts; only the independently relevant exact original passage may be copied, never the proposed inference.",
+    "candidate": {
+      "kind": "confirm_coverage",
+      "questionId": "DESIGN_DIRECTION",
+      "text": "Would it be fair to say the overall design idea here was that clear path from shared life to privacy, achieved by moving those two internal walls?",
+      "purpose": "Scope and layout intent are answered; the clear path from shared to private life already states design direction, so confirm coverage rather than re-ask broadly.",
+      "sourceAnswerIds": [
+        "concise-scope"
+      ],
+      "evidence": [
+        {
+          "answerId": "concise-scope",
+          "quote": "We kept the footprint and moved two internal walls. The idea was a clear path from shared life to privacy."
+        }
+      ]
+    },
+    "context": {
+      "mode": "next_turn",
+      "conversationStyle": "podcast",
+      "currentAction": "answer",
+      "intentionalSkips": [],
+      "rooms": [
+        {
+          "id": "living",
+          "name": "Living Room"
+        },
+        {
+          "id": "kitchen",
+          "name": "Kitchen"
+        }
+      ],
+      "remainingPreparedQuestions": [
+        {
+          "id": "DESIGN_DIRECTION",
+          "text": "What was the overall design idea for this project?",
+          "category": "DESIGN_DIRECTION",
+          "roomId": null
+        },
+        {
+          "id": "SIGNATURE_IDENTITY",
+          "text": "What in this project is most recognizably yours?",
+          "category": "SIGNATURE_IDENTITY",
+          "roomId": null
+        },
+        {
+          "id": "SURPRISE_PIVOT",
+          "text": "What discovery changed the direction of this project along the way?",
+          "category": "SURPRISE_PIVOT",
+          "roomId": null
+        }
+      ],
+      "target": {
+        "id": "DESIGN_DIRECTION",
+        "text": "What was the overall design idea for this project?",
+        "category": "DESIGN_DIRECTION",
+        "roomId": null
+      },
+      "currentQuestion": {
+        "text": "What were you working within on this project?",
+        "category": "SCOPE_PARAMETERS",
+        "roomId": null
+      },
+      "currentAnswer": {
+        "id": "concise-scope",
+        "text": "We kept the footprint and moved two internal walls. The idea was a clear path from shared life to privacy.",
+        "kind": "answer"
+      },
+      "acceptedConversation": [
+        {
+          "id": "concise-brief",
+          "questionId": "CLIENT_BRIEF",
+          "question": "What did the clients come to you wanting from this project?",
+          "answer": "A family of four wanted separate quiet and social areas without adding any floor area.",
+          "kind": "answer",
+          "roomId": null
+        },
+        {
+          "id": "concise-scope",
+          "questionId": "SCOPE_PARAMETERS",
+          "question": "What were you working within on this project?",
+          "answer": "We kept the footprint and moved two internal walls. The idea was a clear path from shared life to privacy.",
+          "kind": "answer",
+          "roomId": null
+        }
+      ],
+      "citedConversation": [
+        {
+          "id": "concise-scope",
+          "questionId": "SCOPE_PARAMETERS",
+          "question": "What were you working within on this project?",
+          "answer": "We kept the footprint and moved two internal walls. The idea was a clear path from shared life to privacy.",
+          "kind": "answer",
+          "roomId": null
+        }
+      ],
+      "followupPermitted": true
+    },
+    "expectationRevision": "Originally expected false for inferred causality. Independent product review distinguishes an explicit relationship question from an asserted causal premise; prior failed runs and inaccurate reviewer rationale are preserved."
+  },
+  {
+    "id": "valid-unsuperseded-confirmation",
+    "expectedValid": true,
+    "expected": "Accept exact design-idea reuse consent; a later design discovery is not an explicit correction of this idea.",
+    "candidate": {
+      "kind": "confirm_coverage",
+      "questionId": "DESIGN_DIRECTION",
+      "text": "You mentioned the idea was a clear path from shared life to privacy — is that the overall design idea for this project?",
+      "purpose": "Pivot confirmation and its consequence are resolved; move to the next pending obligation about overall design direction.",
+      "sourceAnswerIds": [
+        "bb089247-74ce-440d-a934-2638a1e27ccf"
+      ],
+      "evidence": [
+        {
+          "answerId": "bb089247-74ce-440d-a934-2638a1e27ccf",
+          "quote": "The idea was a clear path from shared life to privacy."
+        }
+      ]
+    },
+    "context": {
+      "mode": "next_turn",
+      "currentAction": "confirmation",
+      "intentionalSkips": [],
+      "rooms": [
+        {
+          "id": "living",
+          "name": "Living Room"
+        },
+        {
+          "id": "kitchen",
+          "name": "Kitchen"
+        }
+      ],
+      "remainingPreparedQuestions": [
+        {
+          "id": "DESIGN_DIRECTION",
+          "text": "What was the overall design idea for this project?",
+          "category": "DESIGN_DIRECTION",
+          "roomId": null
+        },
+        {
+          "id": "SIGNATURE_IDENTITY",
+          "text": "What in this project is most recognizably yours?",
+          "category": "SIGNATURE_IDENTITY",
+          "roomId": null
+        }
+      ],
+      "target": {
+        "id": "DESIGN_DIRECTION",
+        "text": "What was the overall design idea for this project?",
+        "category": "DESIGN_DIRECTION",
+        "roomId": null
+      },
+      "currentQuestion": {
+        "text": "Just to confirm for the record: the discovery that changed this project's direction was finding the sealed courtyard behind the kitchen during demolition — is that the one worth naming as the pivot?",
+        "category": "SURPRISE_PIVOT",
+        "roomId": null
+      },
+      "currentAnswer": {
+        "id": "175571ff-a5d6-4771-a909-834129a1909d",
+        "text": "Halfway through demolition, we discovered a sealed courtyard behind the kitchen, and that changed the design.",
+        "kind": "confirmation"
+      },
+      "acceptedConversation": [
+        {
+          "id": "bb089247-74ce-440d-a934-2638a1e27ccf",
+          "questionId": "CLIENT_BRIEF",
+          "question": "What did the clients come to you wanting from this project?",
+          "answer": "The clients wanted more privacy without disconnecting the rooms. We kept the footprint and moved two internal walls. The idea was a clear path from shared life to privacy. Halfway through demolition, we discovered a sealed courtyard behind the kitchen, and that changed the design.",
+          "kind": "answer",
+          "roomId": null
+        },
+        {
+          "id": "848e01a6-2def-43d3-9ab8-cccefc318ad0",
+          "questionId": "a66d8246-140f-4921-a047-00bd1339ddc6",
+          "question": "How did finding that sealed courtyard behind the kitchen actually change the design?",
+          "answer": "We reopened the courtyard and redirected the kitchen circulation around it. That gave the clients a private outdoor place while keeping a connection between the kitchen and the living spaces.",
+          "kind": "answer",
+          "roomId": null
+        },
+        {
+          "id": "66b7248c-c31e-449a-9972-79df1dbbc3ad",
+          "questionId": "SCOPE_PARAMETERS",
+          "question": "Beyond keeping the footprint and moving those two walls, was there a structural limit, like load-bearing walls or the existing roofline, that shaped what you could do?",
+          "answer": "We had ten months from design through completion. The clients set a fixed budget and wanted to keep the existing footprint. The two internal walls we moved were not load-bearing, and we kept the exterior structure. Those were the limits we worked within.",
+          "kind": "answer",
+          "roomId": null
+        },
+        {
+          "id": "175571ff-a5d6-4771-a909-834129a1909d",
+          "questionId": "SURPRISE_PIVOT",
+          "question": "Just to confirm for the record: the discovery that changed this project's direction was finding the sealed courtyard behind the kitchen during demolition — is that the one worth naming as the pivot?",
+          "answer": "Halfway through demolition, we discovered a sealed courtyard behind the kitchen, and that changed the design.",
+          "kind": "confirmation",
+          "roomId": null
+        }
+      ],
+      "citedConversation": [
+        {
+          "id": "bb089247-74ce-440d-a934-2638a1e27ccf",
+          "questionId": "CLIENT_BRIEF",
+          "question": "What did the clients come to you wanting from this project?",
+          "answer": "The clients wanted more privacy without disconnecting the rooms. We kept the footprint and moved two internal walls. The idea was a clear path from shared life to privacy. Halfway through demolition, we discovered a sealed courtyard behind the kitchen, and that changed the design.",
+          "kind": "answer",
+          "roomId": null
+        }
+      ],
+      "followupPermitted": true,
+      "conversationStyle": "podcast"
+    }
+  },
+  {
+    "id": "valid-grounded-followup",
+    "expectedValid": true,
+    "expected": "Accept a direct question about the discovery consequence without an invented bridge.",
+    "candidate": {
+      "kind": "followup",
+      "text": "How did finding that courtyard change what you actually designed?",
+      "purpose": "Answer names the courtyard discovery but not how it changed the brief; the consequence is untold and SURPRISE_PIVOT asks only about the discovery itself.",
+      "sourceAnswerIds": [
+        "corrected-client"
+      ],
+      "evidence": [
+        {
+          "answerId": "corrected-client",
+          "quote": "Halfway through demolition, we discovered a sealed courtyard behind the kitchen, and suddenly the whole brief changed."
+        }
+      ]
+    },
+    "context": {
+      "mode": "next_turn",
+      "conversationStyle": "podcast",
+      "currentAction": "answer",
+      "intentionalSkips": [],
+      "rooms": [
+        {
+          "id": "living",
+          "name": "Living Room"
+        },
+        {
+          "id": "kitchen",
+          "name": "Kitchen"
+        }
+      ],
+      "remainingPreparedQuestions": [
+        {
+          "id": "SCOPE_PARAMETERS",
+          "text": "What were you working within on this project?",
+          "category": "SCOPE_PARAMETERS",
+          "roomId": null
+        },
+        {
+          "id": "DESIGN_DIRECTION",
+          "text": "What was the overall design idea for this project?",
+          "category": "DESIGN_DIRECTION",
+          "roomId": null
+        },
+        {
+          "id": "SIGNATURE_IDENTITY",
+          "text": "What in this project is most recognizably yours?",
+          "category": "SIGNATURE_IDENTITY",
+          "roomId": null
+        },
+        {
+          "id": "SURPRISE_PIVOT",
+          "text": "What discovery changed the direction of this project along the way?",
+          "category": "SURPRISE_PIVOT",
+          "roomId": null
+        }
+      ],
+      "target": {
+        "text": "What did the clients come to you wanting from this project?",
+        "category": "CLIENT_BRIEF",
+        "roomId": null
+      },
+      "currentQuestion": {
+        "text": "What did the clients come to you wanting from this project?",
+        "category": "CLIENT_BRIEF",
+        "roomId": null
+      },
+      "currentAnswer": {
+        "id": "corrected-client",
+        "text": "The clients wanted more privacy. Halfway through demolition, we discovered a sealed courtyard behind the kitchen, and suddenly the whole brief changed.",
+        "kind": "answer"
+      },
+      "acceptedConversation": [
+        {
+          "id": "corrected-client",
+          "questionId": "CLIENT_BRIEF",
+          "question": "What did the clients come to you wanting from this project?",
+          "answer": "The clients wanted more privacy. Halfway through demolition, we discovered a sealed courtyard behind the kitchen, and suddenly the whole brief changed.",
+          "kind": "answer",
+          "roomId": null
+        }
+      ],
+      "citedConversation": [
+        {
+          "id": "corrected-client",
+          "questionId": "CLIENT_BRIEF",
+          "question": "What did the clients come to you wanting from this project?",
+          "answer": "The clients wanted more privacy. Halfway through demolition, we discovered a sealed courtyard behind the kitchen, and suddenly the whole brief changed.",
+          "kind": "answer",
+          "roomId": null
+        }
+      ],
+      "followupPermitted": true
+    }
+  },
+  {
+    "id": "unsupported-asserted-causality",
+    "expectedValid": false,
+    "expected": "Reject the introductory assertion that the wall moves achieved the idea; the source states the move and idea without their causal relationship.",
+    "candidate": {
+      "kind": "confirm_coverage",
+      "questionId": "DESIGN_DIRECTION",
+      "text": "Since moving those two internal walls achieved the clear path from shared life to privacy, was that the overall design idea?",
+      "purpose": "Scope and layout intent are answered; the clear path from shared to private life already states design direction, so confirm coverage rather than re-ask broadly.",
+      "sourceAnswerIds": [
+        "concise-scope"
+      ],
+      "evidence": [
+        {
+          "answerId": "concise-scope",
+          "quote": "We kept the footprint and moved two internal walls. The idea was a clear path from shared life to privacy."
+        }
+      ]
+    },
+    "context": {
+      "mode": "next_turn",
+      "conversationStyle": "podcast",
+      "currentAction": "answer",
+      "intentionalSkips": [],
+      "rooms": [
+        {
+          "id": "living",
+          "name": "Living Room"
+        },
+        {
+          "id": "kitchen",
+          "name": "Kitchen"
+        }
+      ],
+      "remainingPreparedQuestions": [
+        {
+          "id": "DESIGN_DIRECTION",
+          "text": "What was the overall design idea for this project?",
+          "category": "DESIGN_DIRECTION",
+          "roomId": null
+        },
+        {
+          "id": "SIGNATURE_IDENTITY",
+          "text": "What in this project is most recognizably yours?",
+          "category": "SIGNATURE_IDENTITY",
+          "roomId": null
+        },
+        {
+          "id": "SURPRISE_PIVOT",
+          "text": "What discovery changed the direction of this project along the way?",
+          "category": "SURPRISE_PIVOT",
+          "roomId": null
+        }
+      ],
+      "target": {
+        "id": "DESIGN_DIRECTION",
+        "text": "What was the overall design idea for this project?",
+        "category": "DESIGN_DIRECTION",
+        "roomId": null
+      },
+      "currentQuestion": {
+        "text": "What were you working within on this project?",
+        "category": "SCOPE_PARAMETERS",
+        "roomId": null
+      },
+      "currentAnswer": {
+        "id": "concise-scope",
+        "text": "We kept the footprint and moved two internal walls. The idea was a clear path from shared life to privacy.",
+        "kind": "answer"
+      },
+      "acceptedConversation": [
+        {
+          "id": "concise-brief",
+          "questionId": "CLIENT_BRIEF",
+          "question": "What did the clients come to you wanting from this project?",
+          "answer": "A family of four wanted separate quiet and social areas without adding any floor area.",
+          "kind": "answer",
+          "roomId": null
+        },
+        {
+          "id": "concise-scope",
+          "questionId": "SCOPE_PARAMETERS",
+          "question": "What were you working within on this project?",
+          "answer": "We kept the footprint and moved two internal walls. The idea was a clear path from shared life to privacy.",
+          "kind": "answer",
+          "roomId": null
+        }
+      ],
+      "citedConversation": [
+        {
+          "id": "concise-scope",
+          "questionId": "SCOPE_PARAMETERS",
+          "question": "What were you working within on this project?",
+          "answer": "We kept the footprint and moved two internal walls. The idea was a clear path from shared life to privacy.",
+          "kind": "answer",
+          "roomId": null
+        }
+      ],
+      "followupPermitted": true
+    }
+  }
+]

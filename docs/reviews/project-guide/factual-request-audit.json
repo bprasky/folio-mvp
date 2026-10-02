@@ -1,0 +1,70 @@
+{
+  "capturedAt": "2026-10-02T17:19:30.178Z",
+  "providerCalls": 0,
+  "boundary": "Historical artifacts preserved. Recorded model/input/settings are compared directly; full request objects are reconstructed by executing the exact evaluator and production paths against a mocked Anthropic transport. Historical artifacts did not store full serialized request bytes.",
+  "fixtureId": "unsupported-asserted-causality",
+  "semanticallyIdenticalRequest": true,
+  "rawJsonByteIdentical": false,
+  "onlySerializationDifference": "output_config key insertion order: standalone format,effort; integrated effort,format. Values and schema are equal.",
+  "commonFields": {
+    "model": "claude-sonnet-5",
+    "thinking": {
+      "type": "adaptive"
+    },
+    "effort": "medium",
+    "maxTokens": 2400,
+    "input": {
+      "question": "Since moving those two internal walls achieved the clear path from shared life to privacy, was that the overall design idea?",
+      "citedPassages": [
+        "We kept the footprint and moved two internal walls. The idea was a clear path from shared life to privacy."
+      ],
+      "knownRoomNames": [
+        "Living Room",
+        "Kitchen"
+      ]
+    }
+  },
+  "hashEquality": {
+    "system": "fb73023d9bb1a7ed8f7e125f93bd41ffe2aae51ae22e6731b73ed1efe4f2262e",
+    "messages": "6589b77eed39d2374b47ad66433e33ce32deb0b5a50054dd8ee0e6a2c16a7a31",
+    "userContent": "ed75f47b985a2f6f9a19e9fe6afee08880a4e653acfd52a65d4645e7c23bc090",
+    "outputFormat": "619dc4be48ea60aec0681ad72d41c2e6617516749263d0b49b9f444b98a28b81",
+    "canonicalRequest": "81c703bb08e64622e216b2cc032cc2063709c1f392bc039ab0d4f41d551ffece"
+  },
+  "clientOptions": {
+    "standalone": {
+      "timeout": 20000,
+      "maxRetries": 0
+    },
+    "integrated": {
+      "timeout": 20000,
+      "maxRetries": 0
+    }
+  },
+  "sdk": {
+    "entry": "C:\\Users\\bpras\\folio-mvp\\node_modules\\@anthropic-ai\\sdk\\index.js",
+    "version": "0.115.0",
+    "endpoint": "messages.create(request) in both; no per-request options or alternate endpoint"
+  },
+  "executionDifference": {
+    "standalone": "One SDK client reused across eight sequential factual calls.",
+    "integrated": "A fresh client per audit; factual call runs concurrently with separate conversation audit. No shared request or response state."
+  },
+  "sourceHashes": {
+    "src/lib/interview/guided/decision.ts": "2df9e5c99ad7264b4c4c74eb7594f9db2af7f6bd5284059ecb4fb2cf40ed0745",
+    "src/lib/interview/guided/factual-review.ts": "a505b55dabe566735d673b0a4d4c7e02f2d8a7c2d3f915f3397dc60265c4396f",
+    "src/lib/interview/guided/factual-review.schemas.ts": "932d87a0a580f3b8b28e76c2620c1464215a761a255af491b723430a593dc301",
+    "scripts/eval-project-guide-review.cjs": "5ce63bda48e8959e5d6ba3e6ab9290ba7e531554b33390426906a46b43d10228",
+    "scripts/eval-project-guide-entailment.cjs": "bd6356fa0ed1e1a39c7752274232c51a8e860fbf80469b9bb03ee075a105c388"
+  },
+  "historicalOutcomes": {
+    "standalone": {
+      "reason": "The 'Since' clause asserts moving the walls achieved the clear path, but passage only states that was the idea, not a confirmed outcome—unsupported causal premise.",
+      "valid": false
+    },
+    "integrated": {
+      "reason": "Passage states the idea behind moving the two walls was a clear path from shared life to privacy, supporting the 'Since' premise directly.",
+      "valid": true
+    }
+  }
+}

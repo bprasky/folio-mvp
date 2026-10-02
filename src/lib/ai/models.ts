@@ -57,6 +57,11 @@ export const MODEL_FOR = {
    */
   interview: MODELS.sonnet,
 
+  /** Spoken-premise entailment: the isolated eight-case evaluation rejected
+   * unsupported constraints and causes that Sonnet accepted. Generation stays
+   * on Sonnet; this narrower audit trades additional latency/cost for grounding. */
+  interviewGrounding: MODELS.opus,
+
   /**
    * Text or an image in, a fixed JSON shape out, no tools. Wrong fields are
    * visible and correctable at the point of entry rather than baked into a

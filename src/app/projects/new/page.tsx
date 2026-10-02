@@ -15,6 +15,7 @@ import { useSession } from 'next-auth/react';
 import { useForm, Controller } from 'react-hook-form';
 import toast from 'react-hot-toast';
 import { Settings2, ChevronDown, X, ArrowRight } from 'lucide-react';
+import { CreateProjectGuide } from '@/components/interviews/CreateProjectGuide';
 
 type ProjectStatus = 'in_progress' | 'completed' | 'concept';
 type Visibility = 'private' | 'unlisted' | 'public';
@@ -93,6 +94,7 @@ export default function CreateProjectPage() {
   const router = useRouter();
   const { data: session, status: sessionStatus } = useSession();
   const [verifiedWorkspace, setVerifiedWorkspace] = useState<string | null>(null);
+  const [manualEntry, setManualEntry] = useState(false);
   useEffect(() => {
     if (sessionStatus === 'loading') return;
     let cancelled = false;
@@ -338,6 +340,8 @@ export default function CreateProjectPage() {
       </main>
     );
   }
+
+  if (!manualEntry && session?.user?.id) return <CreateProjectGuide key={`${session.user.id}:${operatingAsOrgId}`} actorId={session.user.id} workspaceId={operatingAsOrgId} onManual={() => setManualEntry(true)} />;
 
   return (
     <main
