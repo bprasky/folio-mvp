@@ -52,7 +52,7 @@ function load(file, mocks) {
   class ProviderError extends Error {}
   const service = load('src/lib/live-interview/service.ts', {
     'server-only': {}, '@/lib/prisma': {}, '@/lib/rateLimit': {}, '@/lib/publishing-studio/data': {},
-    '@/lib/interview-media/storage': {}, './adapters': {}, './config': {}, './turns': {}, './store': store,
+    '@/lib/interview-media/storage': {}, './adapters': {}, './adapter-types': load('src/lib/live-interview/adapter-types.ts', {}), './config': {}, './turns': {}, './store': store,
     './provider': {
       ProviderError,
       getConversation: async id => {
