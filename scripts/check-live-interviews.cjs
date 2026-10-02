@@ -83,6 +83,27 @@ async function deliver(id,index,offset,raw='Yes.'){
  await service.receiveLiveEvent('owner',id,event(offset+4,'conversation.utterance','user',raw));
 }
 const cases=[];const test=(name,fn)=>cases.push([name,fn]);
+
+test('guide intake carries only same-owner same-workspace conversation history into the project',async()=>{
+ const originalPrepare=adapters.prepareLiveInterview;
+ const history=[{role:'user',text:'I would like to discuss restoration.'}];let prepared;
+ adapters.prepareLiveInterview=async(actor,source,requestId,previous,step)=>{
+  prepared={actor,source,previous,step};return {...snapshot(),source,state:{schemaVersion:1,skipped:[],receipts:{},native:{kind:'project_guide',phase:'guide',revision:1,recentTurns:history}},guide:{phase:'guide',workspaceStep:step}};
+ };
+ try{
+  const input={source:{kind:'project_guide',id:'new:owner'},requestId:'intake-start-request',mode:'none',consentVersion:'2026-10-01',inputMode:'text',workspaceStep:'photos'};
+  const intake=await service.startLiveSession('owner',input);await service.endLiveSession('owner',intake.id,'end');
+  const row=sessions.get(intake.id);row.payload.snapshot.state.receipts.private='old-receipt';row.payload.snapshot.state.native.canonical={id:'must-not-copy'};
+  const project=await service.startLiveSession('owner',{...input,source:{kind:'project_guide',id:'project'},requestId:'project-start-request',intakeSessionId:intake.id});
+  assert.equal(prepared.step,'photos');assert.deepEqual(prepared.previous.native.recentTurns,history);assert.equal(prepared.previous.native.canonical,undefined);assert.equal(Object.keys(prepared.previous.receipts).length,0);
+  await service.endLiveSession('owner',project.id,'end');
+  const callsBefore=providerCalls.length;
+  await assert.rejects(service.startLiveSession('other',{...input,source:{kind:'project_guide',id:'other-project'},requestId:'other-start-request',intakeSessionId:intake.id}),/not found/);
+  workspace='different-workspace';
+  await assert.rejects(service.startLiveSession('owner',{...input,source:{kind:'project_guide',id:'second-project'},requestId:'workspace-start-request',intakeSessionId:intake.id}),/cannot be carried/);
+  assert.equal(providerCalls.length,callsBefore,'Invalid intake history must fail before provider creation.');
+ }finally{adapters.prepareLiveInterview=originalPrepare;}
+});
 test('disabled beta, unauthorized source, unapproved account prevent paid calls',async()=>{
  env.FOLIO_LIVE_INTERVIEWS='0';await assert.rejects(start);env.FOLIO_LIVE_INTERVIEWS='1';sourceAllowed=false;await assert.rejects(start);sourceAllowed=true;approved=false;await assert.rejects(start);assert.equal(providerCalls.length,0);
 });

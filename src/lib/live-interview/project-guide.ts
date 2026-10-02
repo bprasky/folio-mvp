@@ -11,12 +11,13 @@ import { loadInterviewAnswers } from '@/lib/posting/loadInterviewAnswers';
 import type { GuidedSession } from '@/lib/interview/guided/types';
 import { LiveError, recordingEnabled } from './config';
 import { planProjectGuide } from './project-guide-planner';
-import type { LiveAdapterCommand, LiveAdapterSnapshot, LiveAdapterState, LiveSource, ProjectGuideAction, ProjectGuideMetadata } from './adapter-types';
+import type { LiveAdapterCommand, LiveAdapterSnapshot, LiveAdapterState, LiveSource, ProjectGuideAction, ProjectGuideMetadata, ProjectGuideStep } from './adapter-types';
 
 const hash = (value: unknown) => createHash('sha256').update(JSON.stringify(value)).digest('hex');
 export interface ProjectGuideState {
   kind: 'project_guide'; phase: ProjectGuideMetadata['phase']; revision: number;
   canonical?: GuidedSession;
+  workspaceStep?: ProjectGuideStep;
   offeredDetail?: ProjectGuideMetadata['offeredDetail'];
   recentTurns: Array<{ role: 'user' | 'assistant'; text: string }>;
 }
@@ -62,7 +63,7 @@ export async function readProjectGuideContext(actorId: string, source: LiveSourc
   const complete = !!canonical && (canonical.status === 'finished' || (canonical.status === 'ready' && remainingQuestionCount === 0));
   const stage: ProjectGuideMetadata['stage'] = complete ? 'interview_complete' : legacyInterview || (canonical && canonical.turns.length > 0) ? 'interview_resume' : !included.length ? 'upload'
     : !readiness.gates.rooms.complete || !readiness.gates.tags.complete ? 'tagging' : 'interview_new';
-  const allowedActions: ProjectGuideAction[] = ['open_upload', 'open_tagging'];
+  const allowedActions: ProjectGuideAction[] = ['open_upload', 'open_rooms', 'open_tagging'];
   if (included.length || legacyInterview) allowedActions.push(complete ? 'add_more' : canonical || legacyInterview ? 'resume_interview' : 'start_interview');
   if (canonical || legacyInterview) allowedActions.push('start_over');
   return { projectId: project.id, projectName: project.title || 'Your project', photoCount: included.length,
@@ -74,11 +75,11 @@ export async function readProjectGuideContext(actorId: string, source: LiveSourc
     version: hash([photos.map(image => [image.id, image.inclusion, image.roomId, image.noProducts, image._count.tags]), Array.from(rooms), canonical?.id, canonical?.version]) };
 }
 type Context = Awaited<ReturnType<typeof readProjectGuideContext>>;
-function plannerInput(context: Context, userText: string, recentTurns: ProjectGuideState['recentTurns']) {
+function plannerInput(context: Context, userText: string, recentTurns: ProjectGuideState['recentTurns'], workspaceStep?: ProjectGuideStep) {
   return { stage: context.stage, projectId: context.projectId || undefined, projectName: context.projectName,
     photoCount: context.photoCount, taggedPhotoCount: context.taggedPhotoCount, unreviewedPhotoCount: context.unreviewedPhotoCount,
     sortedPhotoCount: context.sortedPhotoCount, answeredCount: context.answeredCount, remainingQuestionCount: context.remainingQuestionCount,
-    allowedActions: context.allowedActions, recordingAvailable: !!context.projectId && recordingEnabled(), userText, recentTurns };
+    workspaceStep, allowedActions: context.allowedActions, recordingAvailable: !!context.projectId && recordingEnabled(), userText, recentTurns };
 }
 function metadata(context: Context, phase: ProjectGuideMetadata['phase'], action: ProjectGuideAction, actionId: string): ProjectGuideMetadata {
   return { projectId: context.projectId, projectName: context.projectName, stage: context.stage,
@@ -104,16 +105,17 @@ function buildSnapshot(source: LiveSource, context: Context, state: LiveAdapterS
     currentQuestion: question ? { id: question.id, text: question.text, reaction: question.reaction, sourceImageIds: question.sourceImageIds, roomId: question.roomId }
       : canonical ? null : { id: `guide-${receipt}`, text, sourceImageIds: [] },
     sourceRefs: context.projectId ? [{ kind: 'project', id: context.projectId, projectId: context.projectId, version: context.version, publicEligible: false }] : [],
-    state: { ...state, native }, guide: { ...metadata(context, native.phase, action, receipt), ...(native.offeredDetail ? { offeredDetail: native.offeredDetail } : {}) }, notice: canonical?.notice || undefined };
+    state: { ...state, native }, guide: { ...metadata(context, native.phase, action, receipt), workspaceStep: native.workspaceStep, ...(native.offeredDetail ? { offeredDetail: native.offeredDetail } : {}) }, notice: canonical?.notice || undefined };
 }
-export async function prepareProjectGuide(actorId: string, source: LiveSource, requestId: string, previous?: LiveAdapterState) {
+export async function prepareProjectGuide(actorId: string, source: LiveSource, requestId: string, previous?: LiveAdapterState, workspaceStep?: ProjectGuideStep) {
   const context = await readProjectGuideContext(actorId, source);
   const state = previous ? structuredClone(previous) : { schemaVersion: 1 as const, skipped: [], receipts: {} };
   const native = nativeState(state);
+  native.workspaceStep = workspaceStep ?? native.workspaceStep;
   // Every new call opens with context and the creator's choice. It never starts
   // or resumes the canonical interview merely because a Story page was opened.
   native.phase = context.stage === 'interview_complete' ? 'complete' : 'guide'; native.revision++;
-  const response = await planProjectGuide(plannerInput(context, '', native.recentTurns));
+  const response = await planProjectGuide(plannerInput(context, '', native.recentTurns, native.workspaceStep));
   native.recentTurns = [...native.recentTurns, { role: 'assistant' as const, text: response.reply }].slice(-8);
   return buildSnapshot(source, context, state, native, response.reply, 'none', requestId);
 }
@@ -124,7 +126,7 @@ export async function refreshProjectGuideReview(actorId: string, source: LiveSou
   native.canonical = context.canonical; native.revision++;
   return buildSnapshot(source, context, previous.state, native, '', 'none', requestId);
 }
-export async function executeProjectGuide(actorId: string, source: LiveSource, previous: LiveAdapterSnapshot, command: LiveAdapterCommand) {
+export async function executeProjectGuide(actorId: string, source: LiveSource, previous: LiveAdapterSnapshot, command: LiveAdapterCommand): Promise<LiveAdapterSnapshot> {
   const context = await readProjectGuideContext(actorId, source);
   const state = structuredClone(previous.state); const native = nativeState(state);
   const digest = hash(command);
@@ -132,6 +134,9 @@ export async function executeProjectGuide(actorId: string, source: LiveSource, p
     if (state.receipts[command.requestId] !== digest) throw new LiveError('That guide request was already used for different content.');
     return previous;
   }
+  const stepChanged = command.workspaceStep !== undefined && command.workspaceStep !== native.workspaceStep;
+  if (command.workspaceStep !== undefined) native.workspaceStep = command.workspaceStep;
+  state.native = native;
   let action: ProjectGuideAction = 'none'; let reply = ''; let offeredText: string | undefined;
   // The canonical transition may have committed before the live snapshot write.
   // Reconstruct only the transition allowed by the original guide snapshot and
@@ -147,7 +152,7 @@ export async function executeProjectGuide(actorId: string, source: LiveSource, p
     if (!recoveredAction) throw new LiveError('That guide request was already used for different content.');
     native.canonical = context.canonical; native.phase = 'interview'; native.revision++; state.receipts[command.requestId] = digest;
     if (recoveredAction === 'add_more' && command.action === 'answer' && previous.guide?.stage === 'interview_complete') {
-      const response = await planProjectGuide(plannerInput({ ...context, ...previous.guide, canonical: prior || null }, command.text || '', native.recentTurns));
+      const response = await planProjectGuide(plannerInput({ ...context, ...previous.guide, canonical: prior || null }, command.text || '', native.recentTurns, native.workspaceStep));
       if (response.detailText && command.text?.includes(response.detailText) && native.canonical.activeQuestionId)
         native.offeredDetail = { text: response.detailText, questionId: native.canonical.activeQuestionId };
     }
@@ -164,13 +169,17 @@ export async function executeProjectGuide(actorId: string, source: LiveSource, p
     if (canonical.status !== 'ready' && canonical.status !== 'finished') return buildSnapshot(source, context, state, native, '', 'none', command.requestId);
     native.phase = 'complete';
     const refreshed = await readProjectGuideContext(actorId, source);
-    const response = await planProjectGuide(plannerInput(refreshed, '', []));
+    const response = await planProjectGuide(plannerInput(refreshed, '', native.recentTurns, native.workspaceStep));
     native.recentTurns = [...native.recentTurns, { role: 'assistant' as const, text: response.reply }].slice(-8);
     return buildSnapshot(source, refreshed, state, native, response.reply, 'none', command.requestId);
   }
   if (command.action === 'guide') {
     if (!command.guideAction) throw new LiveError('Choose a guide action.', 400);
-    if (command.guideAction === 'refresh' && native.phase === 'interview') {
+    if (command.guideAction === 'refresh' && !stepChanged && native.phase !== 'interview' && previous.sourceRefs.some(ref => ref.kind === 'project' && ref.version === context.version)) {
+      state.receipts[command.requestId] = digest;
+      return { ...previous, state, guide: { ...previous.guide!, action: 'none', actionId: command.requestId } };
+    }
+    if (command.guideAction === 'refresh' && native.phase === 'interview' && (!native.workspaceStep || native.workspaceStep === 'story')) {
       // Refresh saved setup facts beside an active interview without changing
       // its question/version, native evidence, or delivered-speech attribution.
       // The transport/UI use the unchanged version to avoid preparing or echoing
@@ -178,12 +187,12 @@ export async function executeProjectGuide(actorId: string, source: LiveSource, p
       state.receipts[command.requestId] = digest;
       return { ...previous, state,
         sourceRefs: previous.sourceRefs.map(ref => ref.kind === 'project' && ref.id === context.projectId ? { ...ref, version: context.version } : ref),
-        guide: { ...metadata(context, 'interview', 'none', command.requestId), ...(previous.guide?.offeredDetail ? { offeredDetail: previous.guide.offeredDetail } : {}) } };
+        guide: { ...metadata(context, 'interview', 'none', command.requestId), workspaceStep: native.workspaceStep, ...(previous.guide?.offeredDetail ? { offeredDetail: previous.guide.offeredDetail } : {}) } };
     }
     action = ['refresh', 'return_guide'].includes(command.guideAction) ? 'none' : command.guideAction as ProjectGuideAction;
   } else {
     if (command.action !== 'answer') throw new LiveError('Choose a guide action before editing interview answers.', 400);
-    const response = await planProjectGuide(plannerInput(context, command.text || '', native.recentTurns));
+    const response = await planProjectGuide(plannerInput(context, command.text || '', native.recentTurns, native.workspaceStep));
     action = response.action; reply = response.reply;
     if (context.stage === 'interview_complete' && action === 'add_more' && response.detailText && (command.text || '').includes(response.detailText)) offeredText = response.detailText;
     native.recentTurns = [...native.recentTurns, { role: 'user' as const, text: command.text || '' }, { role: 'assistant' as const, text: reply }].slice(-8);
@@ -200,14 +209,17 @@ export async function executeProjectGuide(actorId: string, source: LiveSource, p
     if (!current && process.env.NEXT_PUBLIC_FLAG_GUIDED_INTERVIEW !== '1') throw new LiveError('New guided interviews are not enabled.', 404);
     native.canonical = await runGuidedCommand(context.projectId, actorId, { action: canonicalAction, requestId: command.requestId,
       version: current?.version || 0, sessionId: current?.id, conversationStyle: 'podcast', guideCommandDigest: digest });
-    native.phase = 'interview';
+    native.phase = 'interview'; native.workspaceStep = 'story';
     if (canonicalAction === 'add_detail' && offeredText && native.canonical.activeQuestionId) {
       native.offeredDetail = { text: offeredText, questionId: native.canonical.activeQuestionId };
     }
   } else {
+    if (action === 'open_upload') native.workspaceStep = 'photos';
+    if (action === 'open_rooms') native.workspaceStep = 'rooms';
+    if (action === 'open_tagging') native.workspaceStep = 'tags';
     native.phase = context.stage === 'interview_complete' ? 'complete' : 'guide';
     if (!reply) {
-      reply = (await planProjectGuide(plannerInput(context, '', native.recentTurns))).reply;
+      reply = (await planProjectGuide(plannerInput(context, '', native.recentTurns, native.workspaceStep))).reply;
       native.recentTurns = [...native.recentTurns, { role: 'assistant' as const, text: reply }].slice(-8);
     }
   }

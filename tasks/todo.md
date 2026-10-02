@@ -791,3 +791,14 @@ Design: the host greets on arrival without a second start button. Recording begi
 Review: 41 transport, 35 live browser/capture, 19 composed guide browser, 15 guide adapter, planner/seven-kind adapter and native media/SQL checks pass. TypeScript remains904/904; scoped lint has existing warnings only; client and migration guards pass. Desktop/mobile inspected. The pilot hit exactly five ended provider conversations, the previous default daily cap. New default20 plus separate reset-time/capacity errors repair that limit UX. Recording is consented in-call with stable project media identity and private camera preview; upload actions navigate to setup and leave Story clean.
 
 Remaining production dependency: private storage accepts all capture formats but its20MiB object cap needs expansion for normalized files. Production recording/export flags and an OpenAI transcription key are absent; persistent worker hosting is not established. Asked the founder which background host is available. Keep capture flags off until infrastructure acceptance; release the setup/retry repair without claiming recorded media is active. See docs/reviews/interview-media-setup.md.
+
+## Tavus inside the guided steps — 2026-10-02
+
+PR810 is merged; its build is held for this correction before promotion. Preserve the existing adaptive tracker, active step tools and publish gates. One persistent host accompanies the actual workflow rather than creating a second one. No schema changes or real designer test answers.
+
+- [x] Restore one existing project stepper and active-step surface inside the host layout; keep the original workspace available without Tavus.
+- [x] Pass the viewed step to guidance without reconnecting; keep uploads in Photos and editorial answers in Story.
+- [x] Verify navigation, saved progress, single-call continuity, reset, fallback, responsive layout and current-step greetings.
+- [ ] Review, commit/push, pass hosted checks and finish the authorized merge/deployment. Recording remains dependent on storage/worker/transcription readiness.
+
+Review: the same project call survives all five step transitions. Guide history and saved project facts follow the active step; unchanged refreshes do not repeat a greeting. Create-to-project handoff carries only authorized same-workspace guide history. Back to setup finalizes a recording while keeping the host and canonical answers. Local20 composed browser,35 live/capture,42 transport,16 adapter and planner/seven-kind/upload checks pass; type ratchet903/904, scoped lint and import/migration guards pass. Mobile step navigation and desktop layout inspected with synthetic step bodies. No real designer test answers, resets or paid calls. See docs/reviews/tavus-guided-steps.md.

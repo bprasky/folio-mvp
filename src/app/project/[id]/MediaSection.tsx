@@ -13,6 +13,7 @@ import DocumentImportModal from './DocumentImportModal';
 import TagReviewPanel from './TagReviewPanel';
 import ProjectCreditsCard from './ProjectCreditsCard';
 import type { EditorialState } from '@/lib/editorial/getEditorialState';
+import { useProjectConversation } from '@/components/interviews/ProjectConversationHost';
 
 interface ProductTag {
   id: string;
@@ -64,6 +65,8 @@ interface MediaSectionProps {
 export default function MediaSection({ project, isOwner, images, projectPost, initialTagging = false, showCredits = false }: MediaSectionProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const conversation = useProjectConversation();
+  const allowPhotoUploads = !conversation?.managed || ['photos', 'references'].includes(conversation.workspaceStep || 'photos');
   const [showUploadModal, setShowUploadModal] = useState(false);
   const [showTagger, setShowTagger] = useState(initialTagging);
   const [showMaterials, setShowMaterials] = useState(false);
@@ -424,10 +427,10 @@ export default function MediaSection({ project, isOwner, images, projectPost, in
       <section
         id="uploaded-media-section"
         ref={images.length > 0 ? dropZoneRef : undefined}
-        onDragEnter={images.length > 0 ? handleDragEnter : undefined}
-        onDragLeave={images.length > 0 ? handleDragLeave : undefined}
-        onDragOver={images.length > 0 ? handleDragOver : undefined}
-        onDrop={images.length > 0 ? handleDrop : undefined}
+        onDragEnter={allowPhotoUploads && images.length > 0 ? handleDragEnter : undefined}
+        onDragLeave={allowPhotoUploads && images.length > 0 ? handleDragLeave : undefined}
+        onDragOver={allowPhotoUploads && images.length > 0 ? handleDragOver : undefined}
+        onDrop={allowPhotoUploads && images.length > 0 ? handleDrop : undefined}
         className={`transition-all ${
           images.length > 0 && isDragOver ? 'ring-2 ring-[var(--accent)] ring-offset-2 rounded-xl' : ''
         }`}
@@ -437,7 +440,7 @@ export default function MediaSection({ project, isOwner, images, projectPost, in
             <h3 className="folio-ui font-semibold text-folio-text-secondary uppercase tracking-wider">
               Uploaded Media
             </h3>
-            {isOwner && (
+            {isOwner && allowPhotoUploads && (
               <button
                 onClick={() => setShowUploadModal(true)}
                 className="flex items-center gap-2 px-3 py-1.5 folio-meta font-medium text-[var(--accent)] hover:text-[var(--accent-hover)] border border-folio-border-subtle rounded-lg hover:bg-surface-ground transition-colors"

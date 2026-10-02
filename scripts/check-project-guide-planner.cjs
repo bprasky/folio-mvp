@@ -26,6 +26,16 @@ async function main() {
     const reply = await planner.planProjectGuide({ ...base, stage, userText: '' });
     assert.equal(reply.action, 'none'); assert.ok(reply.reply.length > 10);
   }
+  const first=planner.projectGuideGreeting({...base,stage:'upload',workspaceStep:'photos',photoCount:0,recentTurns:[]});
+  assert.match(first,/Hello!.*uploading.*organize and tag.*full interview/s);
+  assert.doesNotMatch(first,/recorded media/);
+  const remembered=[{role:'user',text:'I want to focus on the restoration.'},{role:'assistant',text:'We can explore that together.'}];
+  for(const workspaceStep of ['photos','rooms','tags','publish']){
+    const reply=planner.projectGuideGreeting({...base,workspaceStep,recentTurns:remembered});
+    assert.doesNotMatch(reply,/Hello|pick up where|start over/,'Step changes must not restart the introduction or interview.');
+  }
+  assert.match(planner.projectGuideGreeting({...base,workspaceStep:'rooms'}),/organized by room/);
+  assert.match(planner.projectGuideGreeting({...base,workspaceStep:'story',stage:'tagging',answeredCount:2}),/2 saved answers/);
   const skippedAll = await planner.planProjectGuide({ ...base, stage: 'interview_complete', answeredCount: 0, remainingQuestionCount: 0, userText: '' });
   assert.match(skippedAll.reply, /no project answers are saved yet/);
   assert.doesNotMatch(skippedAll.reply, /enough/i, 'Exhausting questions by skipping is not evidence of a usable story.');

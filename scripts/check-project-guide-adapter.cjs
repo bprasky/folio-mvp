@@ -4,6 +4,7 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs'), path = require('node:path'), vm = require('node:vm');
 const ts = require('typescript');
 const root = path.resolve(__dirname, '..'), cache = new Map();
+let plannerInputs = [];
 let canonical = null, legacy = [], planAction = 'none', planDetail, membership = true, calls = [];
 const project = { id: 'project', title: 'Fixture House', rooms: [{ id: 'room' }], images: [
   { id: 'tagged', inclusion: 'INCLUDED', roomId: 'room', noProducts: false, _count: { tags: 1 } },
@@ -31,6 +32,7 @@ const mocks = {
     },
   },
   './project-guide-planner': { planProjectGuide: async input => {
+    plannerInputs.push(structuredClone(input));
     assert.equal('canonical' in input, false); assert.equal('version' in input, false);
     assert.equal('reviewedPhotoCount' in input, false, 'strict planner schema receives only the declared contract');
     return { reply: 'Saved project context is available. What would you like to do next?', action: input.userText ? planAction : 'none', detailText: input.userText ? planDetail : undefined };
@@ -197,6 +199,25 @@ const command = (guideAction, requestId = `request-${Math.random()}`) => ({ acti
     await assert.rejects(adapters.resolveMediaSource('other',{sourceType:'project_guide',sourceId:'project'},'preview'),/Forbidden/);
     await assert.rejects(adapters.resolveMediaSource('owner',{sourceType:'project_guide',sourceId:'new:owner'},'preview'),/existing project/);
     await assert.rejects(adapters.resolveMediaSource('owner',{sourceType:'project_guide',sourceId:'project'},'export'),/Publish and review/);
+  });
+  await test('workspace steps retain guide history and canonical progress; unchanged refresh does not repeat a greeting',async()=>{
+    planAction='none';calls=[];plannerInputs=[];
+    let current=await guide.prepareProjectGuide('owner',source,'step-prepare',undefined,'photos');
+    current=await guide.executeProjectGuide('owner',source,current,{action:'answer',requestId:'setup-detail',text:'Please focus on restoration.'});
+    for(const workspaceStep of ['rooms','tags','story','publish']){
+      current=await guide.executeProjectGuide('owner',source,current,{action:'guide',guideAction:'refresh',requestId:'step-'+workspaceStep,workspaceStep});
+      assert.equal(current.guide.workspaceStep,workspaceStep);
+      assert(plannerInputs.at(-1).recentTurns.some(turn=>turn.text==='Please focus on restoration.'));
+      assert.equal(calls.length,0,'Navigating must not start/reset/save canonical answers.');
+    }
+    const version=current.version, count=plannerInputs.length;
+    current=await guide.executeProjectGuide('owner',source,current,{action:'guide',guideAction:'refresh',requestId:'same-step',workspaceStep:'publish'});
+    assert.equal(current.version,version);assert.equal(plannerInputs.length,count);
+    current=await guide.executeProjectGuide('owner',source,current,{action:'guide',guideAction:'resume_interview',requestId:'begin-step',workspaceStep:'story'});
+    const canonicalBefore=JSON.stringify(canonical);calls=[];
+    current=await guide.executeProjectGuide('owner',source,current,{action:'guide',guideAction:'refresh',requestId:'back-rooms',workspaceStep:'rooms'});
+    assert.equal(current.guide.phase,'guide');assert.equal(JSON.stringify(canonical),canonicalBefore);assert.equal(calls.length,0);
+    assert.equal(current.state.native.canonical.id,canonical.id);
   });
   console.log(`${count} project guide adapter checks passed; provider/model/database boundaries are synthetic.`);
 })().catch(error => { console.error(error); process.exitCode = 1; });

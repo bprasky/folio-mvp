@@ -1,9 +1,12 @@
 /** Wire types only. Source and snapshot are resolved on the server, never from speech. */
 export type LiveSourceKind = 'project' | 'project_guide' | 'spotlight' | 'expertise' | 'story' | 'designer_bio' | 'org_bio' | 'collaboration';
 export interface LiveSource { kind: LiveSourceKind; id: string; round?: 1 | 2 | 3 }
+export const PROJECT_GUIDE_STEPS = ['photos', 'rooms', 'tags', 'story', 'publish', 'references', 'spaces', 'products', 'share'] as const;
+export type ProjectGuideStep = typeof PROJECT_GUIDE_STEPS[number];
 export type ProjectGuideStage = 'upload' | 'tagging' | 'interview_new' | 'interview_resume' | 'interview_complete';
-export type ProjectGuideAction = 'start_interview' | 'resume_interview' | 'start_over' | 'add_more' | 'open_upload' | 'open_tagging' | 'none';
+export type ProjectGuideAction = 'start_interview' | 'resume_interview' | 'start_over' | 'add_more' | 'open_upload' | 'open_rooms' | 'open_tagging' | 'none';
 export interface ProjectGuideMetadata {
+  workspaceStep?: ProjectGuideStep;
   phase: 'guide' | 'interview' | 'complete'; stage: ProjectGuideStage;
   projectId: string | null; projectName: string;
   photoCount: number; taggedPhotoCount: number; reviewedPhotoCount: number; unreviewedPhotoCount: number; sortedPhotoCount: number;
@@ -36,4 +39,5 @@ export interface LiveAdapterCommand {
   requestId: string; questionId?: string; text?: string; confirmPartial?: boolean; selectedImageId?: string;
   inputModality?: 'voice' | 'text';
   guideAction?: ProjectGuideAction | 'refresh' | 'return_guide';
+  workspaceStep?: ProjectGuideStep;
 }

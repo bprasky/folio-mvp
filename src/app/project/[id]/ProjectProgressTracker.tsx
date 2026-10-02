@@ -25,6 +25,8 @@ interface ProjectProgressTrackerProps {
    * the tracker's cards don't duplicate it.
    */
   hideNextAction?: boolean;
+  /** The guided host owns the active surface; keep this same navigation compact. */
+  compact?: boolean;
 }
 
 const IMPORT_ICONS = {
@@ -62,6 +64,7 @@ export default function ProjectProgressTracker({
   state,
   currentView,
   hideNextAction = false,
+  compact = false,
 }: ProjectProgressTrackerProps) {
   const { steps, currentIndex, reachedIndex, materialsIndex, materialsExist, type, endCap } =
     state;
@@ -90,15 +93,15 @@ export default function ProjectProgressTracker({
     (copy.action === 'publish' && currentView === 'publish');
 
   // The interview resume screen needs navigation, not another progress card.
-  if (currentView === 'story') {
+  if (compact || currentView === 'story') {
     return (
       <nav aria-label="Project steps" className="flex flex-wrap gap-1 border-b border-folio-border-subtle pb-3">
         {steps.map(step => step.locked ? (
           <span key={step.key} aria-disabled="true" className="px-3 py-2 text-folio-ui text-folio-text-tertiary">{step.label}</span>
         ) : (
-          <Link key={step.key} href={stepHref(projectId, step.key)} aria-current={step.key === 'story' ? 'step' : undefined}
+          <Link key={step.key} href={stepHref(projectId, step.key)} aria-current={step.active ? 'step' : undefined}
             className={cn('rounded-sm px-3 py-2 text-folio-ui transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-folio-gold',
-              step.key === 'story' ? 'bg-surface-ground font-medium text-folio-text-primary' : 'text-folio-text-secondary hover:bg-surface-ground')}>
+              step.active ? 'bg-surface-ground font-medium text-folio-text-primary' : 'text-folio-text-secondary hover:bg-surface-ground')}>
             {step.label}
           </Link>
         ))}

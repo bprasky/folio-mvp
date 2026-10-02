@@ -17,10 +17,11 @@ export function CreateProjectGuide({ actorId, workspaceId, onManual }: { actorId
   const project = useRef<string | null>(null);
   const creation = useRef<Promise<string> | null>(null);
   const controls = useRef<LivePanelControls | null>(null);
+  const intakeSession = useRef<string | null>(null);
   const intent = useRef<LiveStartIntent>({ requestId: crypto.randomUUID(), consumed: false });
   const onControlsReady = useCallback((next: LivePanelControls | null) => { controls.current = next; }, []);
   const projectHref = (id: string, manual = false) => {
-    const next = new URLSearchParams({ view: 'media' });
+    const next = new URLSearchParams({ view: 'media', step: timeline === 'FUTURE' ? 'references' : 'photos' });
     if (manual) next.set('manual', '1');
     if (search.has('expertiseTopic') || search.has('expertiseProjects')) { const intent = expertiseIntent(search.get('expertiseTopic'), search.get('expertiseProjects')); next.set('expertiseTopic', intent.topic); next.set('expertiseProjects', intent.projectIds.join(',')); }
     return `/project/${encodeURIComponent(id)}?${next}`;
@@ -39,11 +40,11 @@ export function CreateProjectGuide({ actorId, workspaceId, onManual }: { actorId
   };
   return <main className="mx-auto max-w-5xl space-y-6 px-4 py-8 md:px-8" aria-label="Create a project with Folio">
     <header><p className="text-folio-meta uppercase tracking-widest text-text-secondary">Folio interviews</p><h1 className="mt-2 font-headline text-folio-h2">A conversation worth sharing</h1><p className="mt-3 max-w-2xl text-folio-body text-text-secondary">Bring your project photographs for a podcast-style conversation about the decisions, surprises and details behind your work. We’ll shape it into your project story.</p></header>
-    {available !== false ? <LiveInterviewPanel source={{ kind: 'project_guide', id: `new:${actorId}` }} startIntent={intent.current} presentation="primary" onAvailabilityChange={enabled => { setAvailable(enabled); if (!enabled) onManual(); }} onControlsReady={onControlsReady} /> : null}
+    {available !== false ? <LiveInterviewPanel source={{ kind: 'project_guide', id: `new:${actorId}` }} startIntent={intent.current} presentation="primary" workspaceStep={timeline === 'FUTURE' ? 'references' : 'photos'} onSessionChange={id => { intakeSession.current = id; }} onAvailabilityChange={enabled => { setAvailable(enabled); if (!enabled) onManual(); }} onControlsReady={onControlsReady} /> : null}
     {available === null ? <p role="status" className="text-folio-meta">Getting your Folio host ready…</p> : null}
     <section className="space-y-4" aria-label="Project basics"><div className="grid gap-4 sm:grid-cols-2"><label className="text-folio-meta">Project name<input aria-label="Project name" value={title} disabled={!!createdId} onChange={event => setTitle(event.target.value)} maxLength={80} placeholder="Name your project" className="mt-1 w-full rounded-sm border border-border bg-surface-ground px-3 py-2 text-folio-body" /></label><label className="text-folio-meta">Project stage<select aria-label="Project stage" value={timeline} disabled={!!createdId} onChange={event => setTimeline(event.target.value as typeof timeline)} className="mt-1 w-full rounded-sm border border-border bg-surface-ground px-3 py-2 text-folio-body"><option value="PAST">Completed project</option><option value="PRESENT">In progress</option><option value="FUTURE">Concept</option></select></label></div>
-      <ProjectGuideUploads ensureProject={ensureProject} onAdded={async (id, _photos, complete) => { if (!complete) return; await controls.current?.stop(); router.push(projectHref(id)); }} />
-      <p className="text-folio-meta text-text-secondary">Add a link or files, sort your photographs into rooms, and explore the story together. Product tags add context whenever you want to include them.</p>
+      <ProjectGuideUploads ensureProject={ensureProject} onAdded={async (id, _photos, complete) => { if (!complete) return; await controls.current?.stop(); if (intakeSession.current) { try { sessionStorage.setItem(`folio.live.intake.${id}`, intakeSession.current); } catch { /* saved project context still follows */ } } router.push(projectHref(id)); }} />
+      <p className="text-folio-meta text-text-secondary">Add a link or files, sort your photographs into rooms, and explore the story together. Each step gives our full interview more context. Your host will follow along.</p>
     </section>
     <button type="button" className="rounded-sm px-3 py-2 text-folio-ui underline underline-offset-4 focus-visible:ring-2 focus-visible:ring-folio-gold" onClick={() => void manual()}>Use the full project form and step-by-step workspace</button>
   </main>;

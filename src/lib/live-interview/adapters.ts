@@ -14,8 +14,8 @@ import { bioAnswerVersion, readBioInterview, prepareBioQuestions, saveBioAnswer 
 import { orgInterviewVersion, readOrgInterview, saveOrgInterviewAnswer } from '@/lib/org-onboarding/interview-service';
 import { ORG_ABOUT_QUESTIONS } from '@/lib/org-onboarding/conversational-interview-questions';
 import { collaborationVersion, readCollaborationInterview, prepareCollaborationQuestions, saveCollaborationResponses } from '@/lib/collaboration/interview-service';
-import type { LiveAdapterCommand, LiveAdapterSnapshot, LiveAdapterState, LiveQuestion, LiveSource, LiveSourceRef } from './adapter-types';
-export type { LiveAdapterCommand, LiveAdapterSnapshot, LiveAdapterState, LiveQuestion, LiveSource, LiveSourceRef } from './adapter-types';
+import type { LiveAdapterCommand, LiveAdapterSnapshot, LiveAdapterState, LiveQuestion, LiveSource, LiveSourceRef, ProjectGuideStep } from './adapter-types';
+export type { LiveAdapterCommand, LiveAdapterSnapshot, LiveAdapterState, LiveQuestion, LiveSource, LiveSourceRef, ProjectGuideStep } from './adapter-types';
 
 const hash = (value: unknown) => createHash('sha256').update(JSON.stringify(value)).digest('hex');
 const freshState = (): LiveAdapterState => ({ schemaVersion: 1, skipped: [], receipts: {} });
@@ -85,10 +85,10 @@ function expertiseSnapshot(source: LiveSource, native: ExpertiseSnapshot, state:
 }
 
 /** Only call after an explicit start; preparation may call existing question generators. */
-export async function prepareLiveInterview(actorId: string, source: LiveSource, requestId: string, priorState?: LiveAdapterState): Promise<LiveAdapterSnapshot> {
+export async function prepareLiveInterview(actorId: string, source: LiveSource, requestId: string, priorState?: LiveAdapterState, workspaceStep?: ProjectGuideStep): Promise<LiveAdapterSnapshot> {
   await authorizeLiveSource(actorId, source);
   const state = priorState ? structuredClone(priorState) : freshState();
-  if (source.kind === 'project_guide') return (await import('./project-guide')).prepareProjectGuide(actorId, source, requestId, priorState);
+  if (source.kind === 'project_guide') return (await import('./project-guide')).prepareProjectGuide(actorId, source, requestId, priorState, workspaceStep);
   if (source.kind === 'project') {
     let native = await getGuidedSession(source.id, actorId);
     if (!native && process.env.NEXT_PUBLIC_FLAG_GUIDED_INTERVIEW !== '1') fail('PILOT_DISABLED', 'New guided interviews are not enabled.', 404);
