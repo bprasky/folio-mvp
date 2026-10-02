@@ -1186,3 +1186,7 @@ The founder wants the host to explain URL/file uploads first, then remove upload
 Keep the real Photos, Rooms, Tags, Story/interview and Publish sequence, including its completion and permission gates. The founder explicitly rejected blending them into a Photos & details conversation screen. Add the host alongside each step's existing tools, give it the currently viewed step, and confine photo uploads to Photos. Reuse the existing tracker and surfaces; do not stack a second project page below the host or replace the workflow with a parallel navigation system.
 
 Follow-up: the host should follow the designer across steps without a fresh introduction or lost context. Keep one live session across project-step navigation, preserve guide history and canonical answers, and carry authorized intake history into the newly created project. The initial welcome should explain Photos → organize/tag → full interview and the value of context; media promises must reflect enabled capture and processing.
+
+## 2026-10-02 — Present the interview as a call, not an embedded form
+
+The founder's live screenshot showed photography at twice the host video's height, stacked text buttons and a duplicated transcript. Give photography and the host balanced stage proportions, use a cohesive call toolbar and a single readable caption surface. Speaking/listening indicators must come from real call events; keep provider video uncropped, preserve camera consent and retain the existing guided steps and persistent connection.

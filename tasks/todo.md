@@ -802,3 +802,13 @@ PR810 is merged; its build is held for this correction before promotion. Preserv
 - [ ] Review, commit/push, pass hosted checks and finish the authorized merge/deployment. Recording remains dependent on storage/worker/transcription readiness.
 
 Review: the same project call survives all five step transitions. Guide history and saved project facts follow the active step; unchanged refreshes do not repeat a greeting. Create-to-project handoff carries only authorized same-workspace guide history. Back to setup finalizes a recording while keeping the host and canonical answers. Local20 composed browser,35 live/capture,42 transport,16 adapter and planner/seven-kind/upload checks pass; type ratchet903/904, scoped lint and import/migration guards pass. Mobile step navigation and desktop layout inspected with synthetic step bodies. No real designer test answers, resets or paid calls. See docs/reviews/tavus-guided-steps.md.
+
+## Interview call presentation — 2026-10-02
+
+Preserve the guided workflow and live behavior. Rebalance the interview to approximately55/45 with aligned photograph/host stages, an integrated call toolbar, one caption surface and event-backed activity states. Keep the provider frame uncropped and camera preview tied to explicit capture consent. No backend, schema or activation changes.
+
+- [x] Refine stage proportions and the active/inactive call presentation while retaining accessible controls and all recovery paths.
+- [x] Verify live controls, captions, step continuity and responsive screenshots with synthetic provider/device boundaries.
+- [ ] Review, commit/push and finish the authorized release after hosted checks; document visual and production verification limits.
+
+Review: Story uses approximately55/45 photography/host columns with aligned stage heights; the host retains the full video frame. Primary calls have one icon control dock, consented camera picture-in-picture, in-frame audio recovery and a single bounded caption surface. Real provider speaking events drive activity, and new canonical questions clear stale captions. Setup retains its guided steps and the same mounted call. Local36 live/capture checks and20 composed guide browser checks pass, including320–1920px overflow/touch sizing, stage geometry, caption toggle, microphone controls, mismatched-conversation rejection and step continuity. Desktop/mobile screenshots inspected. Scoped lint has only existing warnings; client/migration guards pass; TypeScript903/904. All device/provider/API tests are synthetic; no paid live session or designer answers were created. Hosted checks and production release remain pending.

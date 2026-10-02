@@ -49,7 +49,7 @@ window.seedRecovery=async records=>{const db=await new Promise((resolve,reject)=
  try{await new Promise((resolve,reject)=>{const tx=db.transaction(['runs','chunks'],'readwrite');for(const {run,chunks} of records){tx.objectStore('runs').put(run);for(const [index,text] of chunks.entries())tx.objectStore('chunks').put({runId:run.runId,index,blob:new Blob([text],{type:run.mimeType})})}tx.oncomplete=()=>resolve();tx.onerror=()=>reject(tx.error)})}finally{db.close()}};
 window.fixtureRoot=createRoot(document.getElementById('root'));
 window.renderDirect=(key='direct',id='synthetic-project')=>window.fixtureRoot.render(<React.StrictMode><LiveInterviewPanel key={key} source={{kind:'project',id}} startIntent={window.entryIntent} presentation="primary" onActiveChange={value=>window.activeChanges.push(value)}/></React.StrictMode>);
-window.renderGuide=(step='story')=>window.fixtureRoot.render(<LiveInterviewPanel key="guide-recording" source={{kind:'project_guide',id:'synthetic-project'}} startIntent={window.entryIntent} presentation="primary" recordingSetup={step==='story'} workspaceStep={step}/>);
+window.renderGuide=(step='story')=>window.fixtureRoot.render(<LiveInterviewPanel key="guide-recording" source={{kind:'project_guide',id:'synthetic-project'}} startIntent={window.entryIntent} presentation="primary" recordingSetup={step==='story'} callStage={step==='story'} workspaceStep={step}/>);
 window.fixtureRoot.render(<LiveInterviewPanel source={{kind:'project',id:'synthetic-project'}} presentation="primary" onActiveChange={value=>window.activeChanges.push(value)}/>);`;
 const dailyFixture = `export default {createCallObject(options){window.dailyOptions=options;const handlers={};const call={
  on(name,handler){(handlers[name]??=[]).push(handler);return call},participants(){return{}},async join(){if(window.failJoin)throw Error('Synthetic join failed');if(window.holdJoin)await new Promise(resolve=>window.resolveJoin=resolve);window.joined=true;window.left=false;window.destroyed=false},
@@ -207,6 +207,25 @@ async function main() {
       await page.waitForFunction(() => !!window.joined); await new Promise(resolve => setTimeout(resolve, 150));
       assert.equal(eventCalls.length, 1); assert.equal(eventCalls[0].properties.role, 'pal'); assert.equal(eventCalls[0].conversation_id, 'synthetic-conversation');
     });
+    await check('one caption surface and real speaking events drive the call display without another session', async () => {
+      const before=starts;
+      const status=()=>page.$eval('[data-testid="host-call-stage"] [role=status]',node=>node.textContent);
+      assert.equal(await status(),'Connected');
+      assert.equal(await page.$$eval('[aria-label="Conversation captions"]',nodes=>nodes.length),1);
+      assert.equal(await page.evaluate(()=>document.body.innerText.includes('awaiting canonical save')),false);
+      await click('Captions');assert.equal(await page.$('[aria-label="Conversation captions"]'),null);
+      await click('Captions');await text('A provisional caption');
+      await click('Mute microphone');await text('Microphone muted');
+      assert.equal(await page.evaluate(()=>window.dailyOptions.audioSource.enabled),false);
+      await click('Unmute microphone');assert.equal(await status(),'Connected');
+      const speaking=async(type,role,seq,conversation_id='synthetic-conversation')=>page.evaluate(data=>window.emitProvider(data),{message_type:'conversation',event_type:'conversation.'+type,conversation_id,seq,properties:{role}});
+      await speaking('started_speaking','replica',100);await text('Host speaking');
+      await speaking('started_speaking','user',101,'another-conversation');assert.equal(await status(),'Host speaking');
+      await speaking('started_speaking','user',102);await text('Listening to you');
+      await speaking('stopped_speaking','pal',103);assert.equal(await status(),'Listening to you');
+      await speaking('stopped_speaking','user',104);await page.waitForFunction(()=>document.querySelector('[data-testid="host-call-stage"] [role=status]').textContent==='Connected');
+      assert.equal(starts,before);
+    });
     await check('Type instead releases the microphone and keeps the same call and avatar visible', async () => {
       const before = await page.evaluate(() => { window.voiceTrack = window.dailyOptions.audioSource; window.avatarElement = document.querySelector('video[aria-label="Folio AI interviewer"]'); return { calls: window.dailyCalls.length, permissions: window.permissions.length }; });
       await click('Type instead'); await text('Microphone off · your interviewer still speaks');
@@ -235,6 +254,7 @@ async function main() {
       await page.waitForFunction(() => document.querySelector('textarea')?.value === '' && !document.querySelector('textarea')?.disabled);
       assert.equal(canonicalTextSaves, before.saves + 1);
       assert.equal(live.turns.at(-1).raw, reply);
+      assert.equal(await page.$eval('[aria-label="Conversation captions"]',node=>node.textContent),live.snapshot.currentQuestion.text,'a new canonical question replaces stale captions');
       assert.equal(await page.evaluate(scope => sessionStorage.getItem('folio.live.text.v1.' + scope), draftScope), null);
     });
     await check('unsent text stays bound to its original question and blocks microphone re-entry', async () => {
