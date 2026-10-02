@@ -67,6 +67,7 @@ jobs:
         run: |
           export GUIDED_TEST_BROWSER="$(command -v google-chrome || command -v chromium)"
           node scripts/check-live-interview-browser.cjs
+          node scripts/check-project-guide-browser.cjs
           npm run test:guided:browser
       - name: Live interview and playable media regression checks
         run: |
@@ -75,6 +76,7 @@ jobs:
           node scripts/check-live-interviews.cjs
           node scripts/check-live-cleanup.cjs
           node scripts/check-live-adapters.cjs
+          npm run test:project-guide
           node scripts/check-live-csp.cjs
           node scripts/check-media-rollout.cjs
           npm run test:live:media

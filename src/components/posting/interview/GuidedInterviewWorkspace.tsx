@@ -13,6 +13,7 @@ import { appendTranscript, emptyGuidedDraft, guidedTextIntent, resolvePhotoTrans
 import { LiveInterviewPanel, type LiveStartIntent } from '@/components/interviews/LiveInterviewPanel';
 
 interface GuidedInterviewWorkspaceProps {
+  disableLive?: boolean;
   projectId: string;
   actorId: string;
   projectName?: string;
@@ -25,7 +26,7 @@ interface GuidedInterviewWorkspaceProps {
 
 const buttonClass = 'rounded-sm px-3 py-2 text-folio-meta font-medium transition-colors hover:bg-surface-ground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-folio-gold disabled:cursor-not-allowed disabled:opacity-50';
 
-export function GuidedInterviewWorkspace({ projectId, actorId, projectName = 'Your project', images, onClose, onDraftGenerated, initialRoomId, liveStartIntent }: GuidedInterviewWorkspaceProps) {
+export function GuidedInterviewWorkspace({ projectId, actorId, projectName = 'Your project', images, onClose, onDraftGenerated, initialRoomId, liveStartIntent, disableLive = false }: GuidedInterviewWorkspaceProps) {
   const router = useRouter();
   const [session, setSession] = useState<GuidedSession | null>(null);
   const sessionRef = useRef<GuidedSession | null>(null);
@@ -94,7 +95,7 @@ export function GuidedInterviewWorkspace({ projectId, actorId, projectName = 'Yo
   const voiceBusy = voice.isRecording || voice.isTranscribing || voice.status === 'paused';
   const reviewVisible = showFinish || (session && ['ready', 'finished'].includes(session.status));
   const readyToAnswer = activeQuestion && session?.status === 'active' && !reviewVisible && !showSkipRoom;
-  const liveEligible = loaded && !loadingSession && !!readyToAnswer && !draft.text && !draft.pending
+  const liveEligible = !disableLive && loaded && !loadingSession && !!readyToAnswer && !draft.text && !draft.pending
     && !voiceBusy && !voice.hasRecording && !correcting && !commandBusy;
   // Canonical progress may temporarily have no active question while the next one
   // is prepared. Keep the same live component mounted until its call has ended.

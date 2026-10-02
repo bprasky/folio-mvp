@@ -733,3 +733,30 @@ Plan check-in: the original Start/Resume click starts the live greeting. Diagnos
 Diagnosis: production live-start requests returned503 because Prisma could not deserialize PostgreSQL void from SELECT pg_advisory_xact_lock. Actual Prisma against the configured database reproduced P2010 and verified the execute-only replacement, transaction-held lock and release. Probe transactions were read-only, with zero application rows changed and zero provider calls. Read-only Tavus configured-face lookup returned200/completed. New real-Prisma reservation tests cover the boundary missed by the previous PGlite wrapper.
 
 Source verification:33 live panel browser checks and17 composed entry regressions pass with synthetic provider/device boundaries. Actual Start/Resume handoff, passive review/refresh, microphone-denied typed fallback, pending-mic typing, once-only entry, cancelled late join and retry identity are covered. Full/scoped lint and client/migration guards pass. Hosted real-Prisma concurrency, final build and actual Tavus connection remain release verification steps.
+
+## Tavus as project guide — 2026-10-02
+
+Plan: make Tavus present on Create+, upload/tagging and interview progress. Use saved readiness and stage-aware greetings, preserve typed and stepped-workspace options, and keep setup guidance separate from editorial evidence. Podcast conversation follows useful stories before returning to the prepared outline; detect when earlier answers already cover later topics.
+
+- [x] Audit entry points, readiness data, provider turns, feature gates and latency boundaries.
+- [x] Implement new/partial/completed guidance and safe canonical begin/resume/restart/detail transitions.
+- [x] Embed the host beside working URL/file inputs on Create+ and project surfaces.
+- [x] Verify ownership, stale context, retries, guide/editorial separation, exact evidence and voice/text confirmations through local integration and browser tests.
+- [x] Pass final actual-model calibration, independent scenarios and complete project conversations including designer reflection.
+- [ ] Complete review, scoped commit/push and PR; run hosted CI including real Prisma reservation races.
+
+Review checkpoint: local mechanics, lint, client/migration guards, production compile and TypeScript ratchet pass. Browser/model data is synthetic; no fabricated answers or destructive resets touch the founder's project. Current production remains PR807. Recording/media rollout is separate.
+
+Quality re-plan: actual-model tests exposed broad repetition, coverage priming and unsupported causal bridges. Independent raw-answer coverage and separate factual/conversation audits address those responsibilities without adding another serial stage. Selection is four normal/seven maximum requests per invocation, with one repair. Failed trials remain in docs/reviews/project-guide; no isolated pass supersedes a later failure.
+
+Disabled, low and medium Sonnet factual-review experiments still inferred unsupported causality or rejected ordinary questions. Offline SDK/wire parity ruled out integration differences. A fixed-input comparison justified a separate Opus grounding class, preserving Sonnet generation/coverage/conversation review. The direct joint calibration remains honestly 7/8 because of an intermittent neutral-question false rejection; all unsupported-assertion controls passed. Evaluate that false rejection through the real bounded repair path rather than treating one checker verdict as the whole conversation. No canned-question or regex workaround.
+
+Five actual selection scenarios passed on the narrowed reviewer context. Full sequences then exposed two application/grammar issues: an allowed advance rationale was rejected by the strict local shape, and repair confused a covered target ID with the meaning of a new consequence question. Accept only the optional advance rationale and project it to a clean state action; preserve useful follow-up wording when repairing a target/action mismatch, with all coverage/evidence guards intact. Re-run the independent scenarios and complete project conversations after those scoped fixes. Repeated consent exchanges remain an explicit pacing concern, not proof of podcast polish.
+
+Final evidence and cost/wall-time comparison will be recorded in docs/reviews/project-guide/results.md. Summed provider durations are not response latency; actual Tavus voice delivery remains a separate acceptance boundary.
+
+Full-dialogue review after provider-enum repair found three consecutive reuse confirmations before an untouched reflection topic. Preserve that trial as a pacing failure. Prioritize unanswered topics before administrative reuse and keep spatial follow-ups about lived experience. The sequence fixture also repeated its authored application answer to a different question; record that limitation explicitly rather than claiming the host elicited another useful quote.
+
+Final calibration correction: distinguish ordinary invitations to describe unspecified goals ("none" is a valid answer) from embedded specific unsupported premises. The unchanged eight-case joint calibration passes, including all negative controls. Final independent scenarios pass manual review with minor wording limitations retained; complete final-source sequences and hosted CI are the remaining checks. Source and provenance policies were not weakened to obtain a pass.
+
+Final-source model review: independent5/5, joint calibration8/8, unchanged raw coverage3/3 and two complete six-turn sequences pass. Both sequences accept the actual fictional designer-reflection reply and complete the project phase; source hashes match all frozen production model modules. Minor scope-menu/generic wording and explicit reuse pacing remain documented. Final sequence turns3.977–9.279s before Tavus; an earlier repaired turn26.008s warns against a speed claim. Cost, historical failures and full transcripts are preserved in docs/reviews/project-guide. Full guided regressions and scoped lint pass after the schema changes; final type ratchet903/904. Commit/PR and hosted DB/CI checks follow.

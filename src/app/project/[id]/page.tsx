@@ -26,6 +26,7 @@ import {
   isDocumentImage,
 } from '@/lib/publish/computePublishReadiness';
 import ProjectProgressTracker from './ProjectProgressTracker';
+import { ProjectConversationHost } from '@/components/interviews/ProjectConversationHost';
 import {
   deriveTrackerState,
   activeStepKeyForView,
@@ -158,7 +159,7 @@ export default async function ProjectPage({
   searchParams,
 }: {
   params: { id: string };
-  searchParams: { view?: string; step?: string; expertiseTopic?: string; expertiseProjects?: string };
+  searchParams: { view?: string; step?: string; manual?: string; expertiseTopic?: string; expertiseProjects?: string };
 }) {
   const session = await getServerSession(authOptions);
   const viewerId = session?.user?.id ?? null;
@@ -445,23 +446,30 @@ export default async function ProjectPage({
   const hasMedia = base.images && base.images.length > 0;
   const hasRooms = base.rooms && base.rooms.length > 0;
   const isProjectEmpty = !hasMedia && !hasRooms;
+  const canScrape = viewerId ? await canUsePortfolioScrape(viewerId) : false;
+  const conversationProps = {
+    projectId: base.id, projectName: base.title, actorId: viewerId!, activeView: view, isEmpty: isProjectEmpty,
+    canImport: canScrape, initiallyManual: searchParams.manual === '1', canHost: isOwner && !isProjectHome && !!viewerId,
+    images: base.images.filter(img => !isDocumentImage(img.name)).map(img => ({ id: img.id, url: img.url, name: img.name, room: img.room, roomId: img.roomId })),
+    refreshKey: JSON.stringify([base.images.map(img => [img.id, img.roomId, img.inclusion, img.noProducts, img.tags.map(tag => tag.id)]), base.rooms.map(room => room.id), editorialState, interviewAnswerCount]),
+  };
+  const conversationKey = `${viewerId}:${operatingAsOrgId || 'personal'}:${base.id}`;
 
   const expertiseReturn = expertiseEnabled() && isOwner && viewerId ? <ExpertiseProjectReturn actorId={viewerId} workspaceId={operatingAsOrgId} projectId={params.id} topic={searchParams.expertiseTopic} projectIds={searchParams.expertiseProjects} /> : null;
 
   if (isProjectEmpty) {
     // URL/portfolio import is a Pro feature; it's available on any project,
     // not just completed ones (spec follow-up). Compute once.
-    const canScrape = viewerId ? await canUsePortfolioScrape(viewerId) : false;
     // Completed ("PAST") projects get the guided New Project Wizard in every context.
     // Checked before the org/individual split so individual designers get it too.
     if (sanitizedProject.timeline === 'PAST') {
-      return <>{expertiseReturn}<NewProjectWizard project={sanitizedProject} canScrape={canScrape} /></>;
+      return <ProjectConversationHost key={conversationKey} {...conversationProps}>{expertiseReturn}<NewProjectWizard project={sanitizedProject} canScrape={canScrape} /></ProjectConversationHost>;
     }
     const isOrganizationContext = !!operatingAsOrgId;
     if (isOrganizationContext) {
-      return <>{expertiseReturn}<ProjectEmptyState project={sanitizedProject} canScrape={canScrape} /></>;
+      return <ProjectConversationHost key={conversationKey} {...conversationProps}>{expertiseReturn}<ProjectEmptyState project={sanitizedProject} canScrape={canScrape} /></ProjectConversationHost>;
     } else {
-      return <>{expertiseReturn}<ProjectEmptyStateDiscovery project={sanitizedProject} /></>;
+      return <ProjectConversationHost key={conversationKey} {...conversationProps}>{expertiseReturn}<ProjectEmptyStateDiscovery project={sanitizedProject} /></ProjectConversationHost>;
     }
   }
 
@@ -469,6 +477,7 @@ export default async function ProjectPage({
   const crumbStatusSlug = statusSlug(editorialState);
 
   return (
+    <ProjectConversationHost key={conversationKey} {...conversationProps}>
     <div className="min-h-screen bg-surface-canvas">
       {expertiseReturn}
       {/* Header area — breadcrumbs + editorial header + tabs */}
@@ -667,6 +676,7 @@ export default async function ProjectPage({
         </main>
       )}
     </div>
+    </ProjectConversationHost>
   );
 }
 

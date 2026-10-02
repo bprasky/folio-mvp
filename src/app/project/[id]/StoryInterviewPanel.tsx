@@ -6,6 +6,7 @@ import * as Dialog from "@radix-ui/react-dialog";
 import { ChevronDown } from "lucide-react";
 import { InterviewModal } from "@/components/posting/interview/InterviewModal";
 import { AnswerModal } from "@/components/posting/interview/AnswerModal";
+import { useProjectConversation } from '@/components/interviews/ProjectConversationHost';
 import GenerationContextOptions, { useGenerationContext, type ContextChoice } from "@/components/posting/GenerationContextOptions";
 
 type QA = { q: string; a: string; questionId?: string; roomId: string | null; isFeatured?: boolean };
@@ -26,6 +27,7 @@ const dialogClass = "fixed left-1/2 top-1/2 z-[81] max-h-[85dvh] w-[calc(100%-2r
 
 /** A paused interview has one next action. Review and draft choices are deliberate disclosures. */
 export default function StoryInterviewPanel({ projectId, projectName, images, rooms, untaggedPhotoCount, taggedPhotoCount }: StoryInterviewPanelProps) {
+  const conversation = useProjectConversation();
   const router = useRouter();
   const searchParams = useSearchParams();
   const consumedEntryRef = useRef(false);
@@ -75,12 +77,14 @@ export default function StoryInterviewPanel({ projectId, projectName, images, ro
     }
   }, [projectId]);
 
-  useEffect(() => { void fetchAnswers(); return () => { readSequence.current++; }; }, [fetchAnswers]);
+  useEffect(() => { void fetchAnswers(); return () => { readSequence.current++; }; }, [fetchAnswers, conversation?.revision]);
+  useEffect(() => { if (conversation?.restartId) setShowRestart(true); }, [conversation?.restartId]);
 
   // Explicit project CTAs still open immediately, without waiting for this review read.
   const entryAction = searchParams.get("action");
   const entryRoomId = searchParams.get("room");
   useEffect(() => {
+    if (conversation?.managed) return;
     if (entryAction !== "interview") { consumedEntryRef.current = false; return; }
     if (consumedEntryRef.current) return;
     consumedEntryRef.current = true;
@@ -88,7 +92,7 @@ export default function StoryInterviewPanel({ projectId, projectName, images, ro
     params.delete("action"); params.delete("room");
     router.replace(`/project/${projectId}?${params.toString()}`, { scroll: false });
     setInterview({ intent: "resume", roomId: entryRoomId && rooms.some(room => room.id === entryRoomId) ? entryRoomId : undefined });
-  }, [entryAction, entryRoomId, projectId, rooms, router, searchParams]);
+  }, [conversation?.managed, entryAction, entryRoomId, projectId, rooms, router, searchParams]);
 
   const hasAnswers = answers.length > 0;
   const writeUpRoomIds = useMemo(() => Array.from(new Set(answers.map(answer => answer.roomId).filter((id): id is string => !!id && id !== "project"))), [answers]);
@@ -134,7 +138,7 @@ export default function StoryInterviewPanel({ projectId, projectName, images, ro
 
   return (
     <section aria-label="Your interview" className="max-w-3xl space-y-6">
-      <div className="rounded-md border border-folio-border-subtle bg-surface-ground p-6 sm:p-8">
+      <div className={conversation?.managed ? 'space-y-3' : 'rounded-md border border-folio-border-subtle bg-surface-ground p-6 sm:p-8'}>
         <h2 className="font-headline text-folio-h3 text-folio-text-primary">Your interview</h2>
         <p className="mt-2 text-folio-body text-folio-text-secondary" aria-live="polite">
           {loading ? "Loading your answers…" : loadError ? "Your saved answers could not be loaded." : hasAnswers
@@ -142,12 +146,12 @@ export default function StoryInterviewPanel({ projectId, projectName, images, ro
             : "Tell the story behind this project. You can pause whenever you like."}
         </p>
         <div className="mt-6 flex flex-wrap items-center gap-3">
-          <button type="button" className={primaryButton} disabled={generating} onClick={() => setInterview({ intent: "resume" })}>
+          {!conversation?.managed ? <button type="button" className={primaryButton} disabled={generating} onClick={() => setInterview({ intent: "resume" })}>
             {started || loading || loadError ? "Resume interview" : "Start interview"}
-          </button>
+          </button> : null}
           {loadError && <button type="button" className={quietButton} onClick={() => void fetchAnswers()}>Retry loading answers</button>}
           {started && !loading && !loadError && (
-            <Dialog.Root open={showRestart} onOpenChange={setShowRestart}>
+            <Dialog.Root open={showRestart} onOpenChange={open => { setShowRestart(open); if (!open) conversation?.clearRestart(); }}>
               <Dialog.Trigger asChild><button type="button" className={quietButton} disabled={generating}>Start over</button></Dialog.Trigger>
               <Dialog.Portal>
                 <Dialog.Overlay className="fixed inset-0 z-[80] bg-black/40" />
@@ -158,7 +162,7 @@ export default function StoryInterviewPanel({ projectId, projectName, images, ro
                   </Dialog.Description>
                   <div className="mt-6 flex flex-wrap justify-end gap-3">
                     <Dialog.Close asChild><button id="keep-interview" type="button" className={quietButton}>Keep my answers</button></Dialog.Close>
-                    <button type="button" className={primaryButton} onClick={() => { setShowRestart(false); setInterview({ intent: "restart" }); }}>Clear answers and start over</button>
+                    <button type="button" className={primaryButton} onClick={() => { setShowRestart(false); if (conversation?.managed) void conversation.restart(); else setInterview({ intent: "restart" }); }}>Clear answers and start over</button>
                   </div>
                 </Dialog.Content>
               </Dialog.Portal>
@@ -208,7 +212,7 @@ export default function StoryInterviewPanel({ projectId, projectName, images, ro
       )}
 
       {interview && <InterviewModal open onOpenChange={closeInterview} projectId={projectId} projectName={projectName}
-        images={images.map(image => ({ ...image, name: image.name ?? undefined }))} initialIntent={interview.intent} initialRoomId={interview.roomId ?? null} initialMode={interview.mode} />}
+        images={images.map(image => ({ ...image, name: image.name ?? undefined }))} disableLive={conversation?.manual} initialIntent={interview.intent} initialRoomId={interview.roomId ?? null} initialMode={interview.mode} />}
       {editing && <AnswerModal contextLabel={contextFor(editing)} position={{ index: answers.indexOf(editing) + 1, total: answers.length }} question={editing.q} initialValue={editing.a} saving={saving}
         onCancel={() => setEditing(null)} onSave={saveEdit} onReRecord={() => { setInterview({ intent: "resume", roomId: editing.roomId, mode: "realtime" }); setEditing(null); }} />}
     </section>

@@ -10,6 +10,8 @@ export class GuidedConflict extends Error {
 export function commandDigest(command: GuidedCommand) {
   return createHash('sha256').update(JSON.stringify({
     action: command.action, version: command.version, questionId: command.questionId ?? null,
+    ...(command.conversationStyle ? { conversationStyle: command.conversationStyle } : {}),
+    ...(command.guideCommandDigest ? { guideCommandDigest: command.guideCommandDigest } : {}),
     ...(command.sessionId !== undefined ? { sessionId: command.sessionId } : {}),
     text: command.text ?? null, inputModality: command.inputModality ?? 'text',
     selectedImageId: command.selectedImageId ?? null, recordingId: command.recordingId ?? null,
@@ -57,6 +59,7 @@ export function createGuidedSession(projectId: string, preparation: GuidedPrepar
   }
   const session: GuidedSession = {
     id: randomUUID(), schemaVersion: 1, projectId, version: 1, status: 'active', phase: 'project',
+    ...(startCommand?.conversationStyle === 'podcast' ? { conversationStyle: 'podcast' as const } : {}),
     plan: preparation.questions.map(q => ({ ...q, status: 'pending' })), rooms: preparation.rooms,
     turns: [], activeQuestionId: null, roomsPrepared: false, contextFingerprint: preparation.contextFingerprint,
     minimumTotalAnswers: preparation.minimumTotalAnswers, pendingDecisionTurnId: null,
@@ -94,6 +97,18 @@ export function appendRoomPlan(session: GuidedSession, questions: GuidedQuestion
 }
 
 export function followUpAllowed(session: GuidedSession, parent: GuidedQuestion) {
+  if (session.conversationStyle === 'podcast') {
+    if (parent.status !== 'answered' || session.plan.some(q => q.parentQuestionId === parent.id) || (parent.roomId === null && session.roomsPrepared && parent.category !== 'additional_detail')) return false;
+    let root = parent; let depth = 0;
+    while (root.parentQuestionId) {
+      const ancestor = session.plan.find(q => q.id === root.parentQuestionId);
+      if (!ancestor || ancestor.roomId !== parent.roomId || ++depth >= 3) return false;
+      root = ancestor;
+    }
+    if (root.kind !== 'prepared' && root.category !== 'additional_detail') return false;
+    const budget = parent.roomId ? Math.max(session.rooms.find(r => r.id === parent.roomId)?.maxFollowUps ?? 0, 6) : 6;
+    return session.plan.filter(q => q.roomId === parent.roomId && !!q.parentQuestionId).length < budget;
+  }
   if (parent.kind !== 'prepared' || parent.status !== 'answered' || (parent.roomId === null && session.roomsPrepared) || session.plan.some(q => q.parentQuestionId === parent.id)) return false;
   const remaining = eligiblePreparedQuestions(session);
   if (parent.roomId && remaining.length && remaining.every(q => q.roomId !== parent.roomId)) return false;
@@ -209,9 +224,16 @@ export function acceptCommand(original: GuidedSession, command: GuidedCommand): 
   if (isRequestReplay(original, command)) return original;
   if (command.version !== original.version) throw new GuidedConflict('STALE_VERSION', 'This interview changed in another tab. Your text is still here; reload the saved interview.');
   const session = structuredClone(original);
+  if (command.conversationStyle === 'podcast' && ['resume', 'add_detail'].includes(command.action)) session.conversationStyle = 'podcast';
   session.notice = null;
   const q = currentQuestion(session);
-  if (command.action === 'section') {
+  if (command.action === 'add_detail') {
+    if (!['ready', 'finished'].includes(session.status) || session.plan.some(p => ['active', 'pending'].includes(p.status)))
+      throw new GuidedConflict('DETAIL_UNAVAILABLE', 'Resume the remaining questions before adding another detail.');
+    const detail: GuidedQuestion = { id: `detail-${command.requestId}`, text: 'What else would you like to add about this project?',
+      category: 'additional_detail', roomId: null, sourceImageIds: [], sourceAnswerIds: [], status: 'active', kind: 'clarification' };
+    session.plan.push(detail); session.activeQuestionId = detail.id; session.status = 'active'; session.phase = 'review'; session.pendingDecisionTurnId = null;
+  } else if (command.action === 'section') {
     if (command.roomId === undefined || !['active', 'ready'].includes(session.status) || (command.roomId !== null && !session.roomsPrepared))
       throw new GuidedConflict('SECTION_UNAVAILABLE', 'Finish preparing the current section before changing sections.');
     const target = session.plan.find(p => p.roomId === command.roomId && ['pending', 'active'].includes(p.status));
@@ -260,7 +282,10 @@ export function acceptCommand(original: GuidedSession, command: GuidedCommand): 
     const typedConfirmation = command.action === 'answer' && !!target.confirmation &&
       /^(?:yes|yes please|correct|exactly|that's right)[.!]?$/i.test((command.text ?? '').trim()) &&
       (!command.inputModality || command.inputModality === 'text') && !command.recordingId && !command.selectedImageId;
-    const confirming = command.action === 'confirm' || typedConfirmation;
+    const podcastConfirmation = session.conversationStyle === 'podcast' && command.action === 'answer' && !!target.confirmation &&
+      (!command.inputModality || command.inputModality === 'voice' || command.inputModality === 'text') && !command.recordingId && !command.selectedImageId &&
+      /^(?:yes(?:,?\s+(?:exactly|correct|that's right))?|yes please|correct|exactly|that's right)[.!]?$/i.test((command.text ?? '').trim());
+    const confirming = command.action === 'confirm' || typedConfirmation || podcastConfirmation;
     if (command.action === 'confirm' && (!target.confirmation || command.text || command.recordingId || command.selectedImageId || (command.inputModality && command.inputModality !== 'text')))
       throw new GuidedConflict('INVALID_CONFIRMATION', 'Confirm the saved earlier answer or send a new answer.', 422);
     const reused = confirming ? evidenceSource(session, target, target.confirmation!, true) : undefined;
@@ -274,7 +299,7 @@ export function acceptCommand(original: GuidedSession, command: GuidedCommand): 
       selectedImageId: command.selectedImageId ?? null, inputModality: command.inputModality ?? 'text',
       kind: isSkip ? 'skip' : correction ? 'correction' : confirming ? 'confirmation' : 'answer', createdAt: new Date().toISOString(),
       ...(reused ? { reusedFromAnswerId: reused.id } : {}),
-      ...(typedConfirmation ? { confirmationText: command.text } : {}),
+      ...(typedConfirmation || podcastConfirmation ? { confirmationText: command.text } : {}),
       ...(prior ? { supersedes: prior.id } : {}),
       ...(command.recordingId ? { recordingId: command.recordingId } : {}),
     };

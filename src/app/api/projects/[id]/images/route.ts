@@ -4,7 +4,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/app/api/auth/[...nextauth]/options';
 import { prisma } from '@/lib/prisma';
-import { assertProjectView } from '@/lib/authz/access';
+import { assertProjectWrite } from '@/lib/authz/access';
+import { revalidatePath } from 'next/cache';
 import { saveBufferToProjectStorage } from '@/lib/storage';
 import { indexMoment } from '@/lib/search/indexMoment';
 
@@ -22,7 +23,7 @@ export async function POST(
     const userId = session.user.id;
 
     // Check project access
-    await assertProjectView(userId, projectId);
+    await assertProjectWrite(userId, projectId);
 
     const body = await request.json();
     let { url, name, room } = body;
@@ -142,13 +143,14 @@ export async function POST(
       // Don't fail the upload if indexing fails
     });
 
+    revalidatePath(`/project/${projectId}`);
     return NextResponse.json({ 
       success: true, 
       image 
     }, { status: 201 });
 
   } catch (error: any) {
-    if (error.message === 'Forbidden') {
+    if (typeof error.message === 'string' && error.message.startsWith('Forbidden')) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
     console.error('[POST /api/projects/[id]/images] Error:', error);

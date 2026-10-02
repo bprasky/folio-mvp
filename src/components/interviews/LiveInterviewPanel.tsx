@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useId, useRef, useState } from 'react';
 import type { DailyCall } from '@daily-co/daily-js';
-import type { LiveAdapterSnapshot, LiveSource } from '@/lib/live-interview/adapter-types';
+import type { LiveAdapterSnapshot, LiveSource, ProjectGuideAction } from '@/lib/live-interview/adapter-types';
 import type { LiveTurn } from '@/lib/live-interview/turns';
 import { checkCaptureReady, discardStoredCaptures, purgeExpiredCaptures, retryStoredCaptures, startCreatorCapture, type CaptureHandle, type CaptureState } from '@/lib/live-interview/capture';
 
@@ -11,8 +11,10 @@ interface LiveState {
   join?: { url: string; token: string; conversationId: string }; recordingEnabled?: boolean;
 }
 export interface LiveStartIntent { requestId: string; consumed: boolean; inputMode?: 'voice' | 'text'; settled?: boolean }
+export interface LivePanelControls { stop: () => Promise<void>; guide: (action: ProjectGuideAction | 'refresh' | 'return_guide') => Promise<boolean>; linkPhoto: (id: string, questionId: string) => Promise<boolean> }
 interface Props { source: LiveSource; startIntent?: LiveStartIntent; onStartingChange?: (starting: boolean) => void; onCanonicalChange?: (snapshot?: Omit<LiveAdapterSnapshot,'state'>) => void; onActiveChange?: (active: boolean) => void; beforeStart?: () => Promise<void>; selectedImageId?:string|null; onSessionChange?:(id:string)=>void;
-  presentation?: 'compact' | 'primary'; onAvailabilityChange?: (available: boolean) => void; onOpenWorkspace?: () => void }
+  presentation?: 'compact' | 'primary'; onAvailabilityChange?: (available: boolean) => void; onOpenWorkspace?: () => void;
+  onControlsReady?: (controls: LivePanelControls | null) => void; guideRefreshKey?: string }
 type Mode = 'none' | 'audio' | 'video';
 type TypedQuestion = { questionId: string; version: string; questionText: string };
 const button = 'rounded-sm border border-border px-3 py-2 text-folio-meta font-medium hover:bg-surface-ground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-folio-gold disabled:cursor-not-allowed disabled:opacity-50';
@@ -22,12 +24,12 @@ async function liveRequest<T>(path: string, body?: unknown): Promise<T> {
   const response = await fetch(path, { method: body === undefined ? 'GET' : 'POST', cache: 'no-store', credentials: 'same-origin',
     ...(body === undefined ? {} : { headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) }), signal: AbortSignal.timeout(120_000) });
   const result = await response.json().catch(() => ({}));
-  if (!response.ok) throw new Error(result.message || result.error || 'The live interview is unavailable. Your saved answers are unchanged.');
+  if (!response.ok) throw Object.assign(new Error(result.message || result.error || 'The live interview is unavailable. Your saved answers are unchanged.'), { status: response.status });
   return result as T;
 }
 
 /** A passive mount never starts a call. An explicit entry intent is consumed once. */
-export function LiveInterviewPanel({ source, startIntent, onStartingChange, onCanonicalChange, onActiveChange, beforeStart, selectedImageId, onSessionChange, presentation = 'compact', onAvailabilityChange, onOpenWorkspace }: Props) {
+export function LiveInterviewPanel({ source, startIntent, onStartingChange, onCanonicalChange, onActiveChange, beforeStart, selectedImageId, onSessionChange, presentation = 'compact', onAvailabilityChange, onOpenWorkspace, onControlsReady, guideRefreshKey }: Props) {
   const fieldId = useId();
   const sourceKey = JSON.stringify(source);
   const [available, setAvailable] = useState(false);
@@ -74,6 +76,9 @@ export function LiveInterviewPanel({ source, startIntent, onStartingChange, onCa
   const mountedSource = useRef(sourceKey);
   const sourceEpoch = useRef(0);
   const chooseTextDuringStart = useRef<(() => void) | null>(null);
+  const guideReceipt = useRef<{ action: ProjectGuideAction | 'refresh' | 'return_guide' | 'skip' | 'retry'; requestId: string; fromVersion: string; questionId?: string } | null>(null);
+  const echoedVersions = useRef(new Set<string>());
+  const lastGuide = useRef('');
 
   const setCurrent = useCallback((next: LiveState) => {
     stateRef.current = { ...stateRef.current, ...next };
@@ -88,8 +93,9 @@ export function LiveInterviewPanel({ source, startIntent, onStartingChange, onCa
     // Only an opaque Folio identifier is retained; joining secrets stay in memory.
     try { sessionStorage.setItem(`folio.live.session.${mountedSource.current}`, next.id); } catch { /* server reservation still prevents duplicate calls */ }
     const version = next.snapshot?.version;
-    if (version && version !== lastVersion.current) {
-      lastVersion.current = version; callbacks.current.onCanonicalChange?.(next.snapshot);
+    const guideMetadata = JSON.stringify(next.snapshot?.guide ?? null);
+    if (version && (version !== lastVersion.current || guideMetadata !== lastGuide.current)) {
+      lastVersion.current = version; lastGuide.current = guideMetadata; callbacks.current.onCanonicalChange?.(next.snapshot);
     }
   }, []);
   const progress = useCallback((next: CaptureState, message?: string) => {
@@ -131,7 +137,6 @@ export function LiveInterviewPanel({ source, startIntent, onStartingChange, onCa
     let cancelled = false;
     sourceEpoch.current++; setReadySource(null);
     setAvailable(false);
-    callbacks.current.onAvailabilityChange?.(false);
     typedStorageKey.current = null;
     void purgeExpiredCaptures().catch(()=>{});
     void (async () => {
@@ -158,7 +163,7 @@ export function LiveInterviewPanel({ source, startIntent, onStartingChange, onCa
             } catch { /* current input stays in memory */ }
           }
         } })
-        .catch(() => {});
+        .catch(() => { if (!cancelled) callbacks.current.onAvailabilityChange?.(false); });
       try {
         const savedId = sessionStorage.getItem(`folio.live.session.${sourceKey}`);
         if (savedId) await liveRequest<LiveState>(`/api/live-interviews/${encodeURIComponent(savedId)}`)
@@ -405,26 +410,30 @@ export function LiveInterviewPanel({ source, startIntent, onStartingChange, onCa
     } finally { if (mounted.current) setBusy(false); }
   };
 
-  const updateTypedDraft = (text: string) => {
+  const updateTypedDraft = (text: string, binding?: { questionId: string; version: string; questionText: string }) => {
     setTypedDraft(text);
     const snapshot = stateRef.current?.snapshot;
-    const question = !text ? null : typedQuestion ?? (snapshot?.currentQuestion ? { questionId: snapshot.currentQuestion.id, version: snapshot.version, questionText: snapshot.currentQuestion.text } : null);
+    const question = !text ? null : binding ?? typedQuestion ?? (snapshot?.currentQuestion ? { questionId: snapshot.currentQuestion.id, version: snapshot.version, questionText: snapshot.currentQuestion.text } : null);
     setTypedQuestion(question);
     try { if (typedStorageKey.current) sessionStorage.setItem(typedStorageKey.current, JSON.stringify({ text, ...question })); } catch { /* current input stays in memory */ }
   };
-  const sendTyped = async () => {
+  const sendTyped = async (offered?: { text: string; questionId: string }) => {
     const current = stateRef.current;
-    if (busy || inFlight.current || !active || !callRef.current || !current?.snapshot?.currentQuestion || !typedDraft.trim()) return;
-    if (!typedQuestion || typedQuestion.questionId !== current.snapshot.currentQuestion.id || typedQuestion.version !== current.snapshot.version) {
+    const text = offered?.text ?? typedDraft;
+    if (busy || inFlight.current || !active || !callRef.current || !current?.snapshot?.currentQuestion || !text.trim()) return;
+    if (offered && (typedDraft.trim() || typedReceipt.current || offered.questionId !== current.snapshot.currentQuestion.id || offered.text !== current.snapshot.guide?.offeredDetail?.text)) return;
+    const question = offered ? { questionId: offered.questionId, version: current.snapshot.version, questionText: current.snapshot.currentQuestion.text } : typedQuestion;
+    if (!question || question.questionId !== current.snapshot.currentQuestion.id || question.version !== current.snapshot.version) {
       setError('The question changed while you were typing. Review which question this reply belongs to before sending.'); return;
     }
     inFlight.current = true; setBusy(true); setError('');
-    const receipt = typedReceipt.current ?? { requestId: crypto.randomUUID(), text: typedDraft };
+    const receipt = typedReceipt.current ?? { requestId: crypto.randomUUID(), text };
     typedReceipt.current = receipt;
-    try { if (typedStorageKey.current) sessionStorage.setItem(typedStorageKey.current, JSON.stringify({ ...receipt, ...typedQuestion })); } catch { /* server registration retains the submitted reply */ }
+    try { if (typedStorageKey.current) sessionStorage.setItem(typedStorageKey.current, JSON.stringify({ ...receipt, ...question })); } catch { /* server registration retains the submitted reply */ }
     try {
+      if (offered) { setTypedDraft(text); setTypedQuestion(question); await changeInput('text'); }
       const next = await liveRequest<LiveState & { textRegistration: { created: boolean; requestId: string } }>(`/api/live-interviews/${encodeURIComponent(current.id)}`, {
-        action: 'prepare_text', ...receipt, questionId: typedQuestion.questionId, version: typedQuestion.version,
+        action: 'prepare_text', ...receipt, questionId: question.questionId, version: question.version,
       });
       setCurrent(next);
       if (!next.textRegistration.created) {
@@ -444,11 +453,15 @@ export function LiveInterviewPanel({ source, startIntent, onStartingChange, onCa
   };
 
   const control = async (action: 'skip' | 'retry') => {
-    if (!state?.id || busy) return;
+    if (!state?.id || busy || (state.snapshot?.guide && (typedDraft.trim() || typedReceipt.current))) return;
+    if (state.snapshot?.guide) { await guideControl(action); return; }
     if (active) await end('switch_to_text');
     setBusy(true); setError('');
-    try { setCurrent(await liveRequest<LiveState>(`/api/live-interviews/${encodeURIComponent(state.id)}`, { action: 'control',
-      command: { action, requestId: crypto.randomUUID(), questionId: state.snapshot?.currentQuestion?.id } })); }
+    try {
+      await eventTail.current;
+      const next = await liveRequest<LiveState>(`/api/live-interviews/${encodeURIComponent(state.id)}`, { action: 'control', command: { action, requestId: crypto.randomUUID(), questionId: state.snapshot?.currentQuestion?.id } });
+      setCurrent(next);
+    }
     catch (failure) { setError(failure instanceof Error ? failure.message : 'The interview could not be updated.'); }
     finally { setBusy(false); }
   };
@@ -470,6 +483,58 @@ export function LiveInterviewPanel({ source, startIntent, onStartingChange, onCa
     catch(failure){setError(failure instanceof Error?failure.message:'Current interview state could not be loaded. Your original speech is retained.');}
     finally{setBusy(false);}
   };
+  const guideControl = useCallback(async (action: ProjectGuideAction | 'refresh' | 'return_guide' | 'skip' | 'retry', quiet = false) => {
+    const current = stateRef.current;
+    if (!current?.id || !current.snapshot?.guide || inFlight.current || typedDraft.trim() || typedReceipt.current) return false;
+    if (guideReceipt.current && guideReceipt.current.action !== action) { if (!quiet) setError('Retry the previous conversation choice before choosing another.'); return false; }
+    guideReceipt.current ??= { action, requestId: crypto.randomUUID(), fromVersion: current.snapshot.version, questionId: current.snapshot.currentQuestion?.id };
+    const receipt = guideReceipt.current;
+    inFlight.current = true; setBusy(true); if (!quiet) setError('');
+    try {
+      await eventTail.current;
+      const next = await liveRequest<LiveState>(`/api/live-interviews/${encodeURIComponent(current.id)}`, { action: 'control',
+        command: action === 'skip' || action === 'retry' ? { action, requestId: receipt.requestId, questionId: receipt.questionId } : { action: 'guide', guideAction: action, requestId: receipt.requestId } });
+      setCurrent(next);
+      const question = next.snapshot?.currentQuestion;
+      const version = next.snapshot?.version;
+      if (callRef.current && question && version && version !== receipt.fromVersion && !echoedVersions.current.has(version) && stateRef.current?.join) {
+        // This is server-prepared host speech, never a fabricated designer answer.
+        callRef.current.sendAppMessage({ message_type: 'conversation', event_type: 'conversation.echo',
+          conversation_id: stateRef.current.join.conversationId, properties: { text: [question.reaction, question.text].filter(Boolean).join(' ') } }, '*');
+        echoedVersions.current.add(version);
+      }
+      guideReceipt.current = null;
+      return true;
+    } catch (failure) {
+      const status = (failure as { status?: number }).status;
+      if (status && status < 500) guideReceipt.current = null;
+      if (mounted.current && (!quiet || !status || status >= 500)) setError(failure instanceof Error ? failure.message : 'Wait for your current reply to save, then try again.'); return false;
+    }
+    finally { inFlight.current = false; if (mounted.current) setBusy(false); }
+  }, [setCurrent, typedDraft]);
+  useEffect(() => {
+    onControlsReady?.({ guide: guideControl, linkPhoto: async (id, questionId) => {
+      const current = stateRef.current;
+      if (!current?.id || current.snapshot?.currentQuestion?.id !== questionId || inFlight.current || typedDraft.trim() || typedReceipt.current) return false;
+      inFlight.current = true; setBusy(true); setError('');
+      try { await eventTail.current; setCurrent(await liveRequest<LiveState>(`/api/live-interviews/${encodeURIComponent(current.id)}`, { action: 'link_image', questionId, selectedImageId: id })); return true; }
+      catch (failure) { if (mounted.current) setError(failure instanceof Error ? failure.message : 'The photo could not be linked.'); return false; }
+      finally { inFlight.current = false; if (mounted.current) setBusy(false); }
+    }, stop: async () => {
+      sourceEpoch.current++; chooseTextDuringStart.current?.(); chooseTextDuringStart.current = null;
+      await endRef.current('end');
+    } });
+    return () => onControlsReady?.(null);
+  }, [guideControl, onControlsReady, setCurrent, typedDraft]);
+  const refreshedGuide = useRef(guideRefreshKey);
+  const guideRefreshAttempt = useRef('');
+  useEffect(() => {
+    if (!active || busy || !guideRefreshKey || refreshedGuide.current === guideRefreshKey || typedDraft.trim() || typedReceipt.current || !state?.snapshot?.guide) return;
+    const attempt = `${guideRefreshKey}:${state.snapshot.version}`;
+    if (guideRefreshAttempt.current === attempt) return;
+    guideRefreshAttempt.current = attempt;
+    void guideControl('refresh', true).then(ok => { if (ok) refreshedGuide.current = guideRefreshKey; });
+  }, [active, busy, guideControl, guideRefreshKey, state, typedDraft]);
   const retryRecording = async () => {
     try {
       if (captureRef.current) await captureRef.current.retry();
@@ -505,9 +570,11 @@ export function LiveInterviewPanel({ source, startIntent, onStartingChange, onCa
   const draftQuestionChanged = !!typedDraft && !!typedQuestion && !!state?.snapshot
     && (typedQuestion.questionId !== state.snapshot.currentQuestion?.id || typedQuestion.version !== state.snapshot.version);
   const primary = presentation === 'primary';
+  const guide = state?.snapshot?.guide;
+  const guideLabels: Partial<Record<ProjectGuideAction, string>> = { start_interview: 'Let’s talk about the project', resume_interview: 'Continue our conversation', start_over: 'Start over', add_more: 'Add another detail', open_upload: 'Add photographs', open_tagging: 'Tag project details' };
   return <section aria-label="Live interview" className={`w-full min-w-0 bg-surface-canvas p-4 text-folio-body text-text-primary ${primary ? 'space-y-4' : 'rounded-sm border border-border'}`}>
     <div className="flex items-start justify-between gap-3">
-      <div><h3 className={primary ? 'font-headline text-folio-h4' : 'text-folio-ui font-semibold'}>{active ? 'Your Folio interviewer' : 'Tell the story behind your work'}</h3><p className="text-folio-meta text-text-secondary">AI interviewer · your project, in your words</p></div>
+      <div><h3 className={primary ? 'font-headline text-folio-h4' : 'text-folio-ui font-semibold'}>{active ? 'Your Folio host' : 'Tell the story behind your work'}</h3><p className="text-folio-meta text-text-secondary">AI host · your project, in your words</p></div>
       <span className="text-folio-meta" role="status">{active ? 'Live' : busy ? 'Connecting…' : 'Ready'}</span>
     </div>
     {!active ? <div className="mt-3 space-y-3">
@@ -554,8 +621,10 @@ export function LiveInterviewPanel({ source, startIntent, onStartingChange, onCa
         <button type="button" className={button} disabled={busy} onClick={() => void end('pause')}>Pause</button>
         <button type="button" className={button} disabled={busy} onClick={() => void end('end')}>End</button>
         <button type="button" className={button} disabled={busy || awaitingReply || !!unresolved.length || (inputMode === 'text' && !!typedDraft.trim())} onClick={() => void changeInput(inputMode === 'voice' ? 'text' : 'voice')}>{inputMode === 'voice' ? 'Type instead' : 'Use microphone instead'}</button>
-        <button type="button" className={button} disabled={busy || !!unresolved.length} onClick={() => void control('skip')}>Skip question</button>
+        {(!guide || guide.phase === 'interview') ? <button type="button" className={button} disabled={busy || !!unresolved.length || (guide && !!typedDraft.trim())} onClick={() => void control('skip')}>{guide ? 'Move on' : 'Skip question'}</button> : null}
       </div>
+      {guide ? <div className="flex flex-wrap gap-2" aria-label="Conversation choices">{guide.allowedActions.filter(action => guideLabels[action]).map(action => <button key={action} type="button" className={button} disabled={busy || awaitingReply || !!typedDraft.trim() || !!unresolved.length} onClick={() => void guideControl(action)}>{guideLabels[action]}</button>)}{guide.phase === 'interview' ? <button type="button" className={button} disabled={busy || awaitingReply || !!typedDraft.trim()} onClick={() => void guideControl('return_guide')}>Photographs & project details</button> : null}</div> : null}
+      {guide?.offeredDetail && guide.offeredDetail.questionId === state?.snapshot?.currentQuestion?.id && !awaitingReply && !typedDraft ? <div className="space-y-2 rounded-sm bg-surface-ground p-3 text-folio-meta"><p>You just shared:</p><p className="whitespace-pre-wrap">{guide.offeredDetail.text}</p><div className="flex flex-wrap gap-2"><button type="button" className={button} disabled={busy || !!unresolved.length} onClick={() => void sendTyped(guide.offeredDetail)}>Use what I just shared</button><button type="button" className={button} disabled={busy || !!unresolved.length} onClick={() => { const detail = guide.offeredDetail; const snapshot = stateRef.current?.snapshot; if (!detail || !snapshot?.currentQuestion || detail.questionId !== snapshot.currentQuestion.id) return; const binding = { questionId: detail.questionId, version: snapshot.version, questionText: snapshot.currentQuestion.text }; void changeInput('text').then(() => updateTypedDraft(detail.text, binding)); }}>Edit this detail</button></div></div> : null}
       {inputMode === 'text' ? <form className="space-y-2" onSubmit={event => { event.preventDefault(); void sendTyped(); }}>
         <label htmlFor={`${fieldId}-typed`} className="text-folio-meta font-medium">Your reply</label>
         {draftQuestionChanged && !awaitingReply ? <div role="status" className="space-y-2 rounded-sm bg-surface-ground p-3 text-folio-meta">
@@ -577,15 +646,16 @@ export function LiveInterviewPanel({ source, startIntent, onStartingChange, onCa
       {captions && caption ? <div className="max-h-32 overflow-auto whitespace-pre-wrap text-folio-meta" aria-live="polite"><p className="text-text-secondary">Live captions · awaiting canonical save</p>{caption}</div> : null}
     </div>
     <div className="mt-3 space-y-2 text-folio-meta" aria-live="polite">
-      {state ? <p>{savedTurns.length} {savedTurns.length === 1 ? 'answer' : 'answers'} saved in this live session.{state.turns?.some(turn => turn.status === 'awaiting_final' || turn.status === 'saving') ? ' Latest speech is awaiting save.' : ''}</p> : null}
+      {state && (!guide || guide.projectId) ? <p>{guide ? `${guide.answeredCount} project answers saved.` : `${savedTurns.length} ${savedTurns.length === 1 ? 'answer' : 'answers'} saved in this live session.`}{state.turns?.some(turn => turn.status === 'awaiting_final' || turn.status === 'saving') ? ' Latest speech is awaiting save.' : ''}</p> : null}
       {recording ? <p>{recording === 'recording' ? `Recording your ${camera ? 'voice and camera' : 'voice'}` : recording === 'uploading' ? 'Finishing private upload…' : recording === 'processing' ? 'Private recording is processing' : 'Recording needs attention'}{recordingMessage ? ` — ${recordingMessage}` : ''}</p> : null}
       {recording === 'incomplete' ? <button type="button" className={button} onClick={() => void retryRecording()}>Retry recording upload</button> : null}
       {state?.id && !active && !recording ? <button type="button" className={button} onClick={() => void retryRecording()}>Recover retained recording uploads</button> : null}
       {state?.id && !active ? <button type="button" className={button} onClick={() => { void discardStoredCaptures(state.id).then(()=>{captureRef.current=null;setRecording(null);setRecordingMessage('Device recovery deleted. Uploaded sources and saved answers are unchanged.');}).catch(()=>setError('Device recovery could not be discarded. Sign in as the interview owner and retry.')); }}>Discard device recording recovery</button> : null}
       {state?.notice || state?.snapshot?.notice ? <p>{state.notice || state.snapshot?.notice}</p> : null}
       {error ? <p role="alert">{error}</p> : null}
+      {error && guideReceipt.current ? <button type="button" className={button} disabled={busy} onClick={() => { if (guideReceipt.current) void guideControl(guideReceipt.current.action); }}>Retry conversation choice</button> : null}
     </div>
-    {savedTurns.length ? <details className="mt-3 text-folio-meta"><summary className="cursor-pointer focus-visible:ring-2 focus-visible:ring-folio-gold">Saved answers</summary>
+    {savedTurns.length ? <details className="mt-3 text-folio-meta"><summary className="cursor-pointer focus-visible:ring-2 focus-visible:ring-folio-gold">{guide ? 'Conversation so far' : 'Saved answers'}</summary>
       <ol className="mt-2 max-h-48 space-y-2 overflow-auto">{savedTurns.map(turn => <li key={turn.position} className="whitespace-pre-wrap">{turn.raw}</li>)}</ol></details> : null}
     {unresolved.map(turn => <div key={turn.position} className="mt-3 space-y-2 border-t border-border pt-3">
       <p className="text-folio-meta">This speech needs review before it can count as an answer. {turn.error}</p><p className="max-h-36 overflow-auto whitespace-pre-wrap text-folio-meta">{turn.raw}</p>

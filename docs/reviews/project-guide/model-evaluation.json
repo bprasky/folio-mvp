@@ -1,0 +1,467 @@
+{
+  "before": {
+    "capturedAt": "2026-10-02T13:58:29.487Z",
+    "podcast": [
+      {
+        "id": "unexpected-discovery",
+        "expected": "Follow the volunteered surprise about discovering a hidden courtyard, rather than changing topics to generic scope.",
+        "proposal": {
+          "kind": "confirm_coverage",
+          "questionId": "SURPRISE_PIVOT",
+          "text": "Was finding that sealed courtyard behind the kitchen the discovery that changed the project's direction?",
+          "purpose": "The brief answer covers SURPRISE_PIVOT: it names a mid-demolition discovery (sealed courtyard) that changed the brief. SCOPE_PARAMETERS remains unaddressed; no constraint like budget, timeline, or structural permission is stated.",
+          "sourceAnswerIds": [
+            "corrected-client"
+          ],
+          "evidence": [
+            {
+              "answerId": "corrected-client",
+              "quote": "Halfway through demolition, we discovered a sealed courtyard behind the kitchen, and suddenly the whole brief changed."
+            }
+          ]
+        },
+        "calls": [
+          {
+            "model": "claude-sonnet-5",
+            "inputTokens": 5942,
+            "outputTokens": 310,
+            "milliseconds": 3953,
+            "output": "{\"purpose\":\"The client brief answer establishes the initial want (privacy) and names a mid-project discovery (a sealed courtyard) that changed the brief, which directly covers the SURPRISE_PIVOT obligation. SCOPE_PARAMETERS remains unaddressed — no constraint like budget, timeline, or structural permission has been stated.\",\"evidence\":[{\"answerId\":\"corrected-client\",\"quote\":\"Halfway through demolition, we discovered a sealed courtyard behind the kitchen, and suddenly the whole brief changed.\"}],\"sourceAnswerIds\":[\"corrected-client\"],\"kind\":\"confirm_coverage\",\"questionId\":\"SURPRISE_PIVOT\",\"reaction\":\"A sealed courtyard turning up mid-demolition is the kind of discovery that resets a brief.\",\"text\":\"Was finding that sealed courtyard behind the kitchen the discovery that changed the project's direction?\"}"
+          },
+          {
+            "model": "claude-sonnet-5",
+            "inputTokens": 6436,
+            "outputTokens": 252,
+            "milliseconds": 2904,
+            "output": "{\"purpose\":\"The brief answer covers SURPRISE_PIVOT: it names a mid-demolition discovery (sealed courtyard) that changed the brief. SCOPE_PARAMETERS remains unaddressed; no constraint like budget, timeline, or structural permission is stated.\",\"evidence\":[{\"answerId\":\"corrected-client\",\"quote\":\"Halfway through demolition, we discovered a sealed courtyard behind the kitchen, and suddenly the whole brief changed.\"}],\"sourceAnswerIds\":[\"corrected-client\"],\"kind\":\"confirm_coverage\",\"questionId\":\"SURPRISE_PIVOT\",\"text\":\"Was finding that sealed courtyard behind the kitchen the discovery that changed the project's direction?\"}"
+          },
+          {
+            "model": "claude-sonnet-5",
+            "inputTokens": 4898,
+            "outputTokens": 87,
+            "milliseconds": 1977,
+            "output": "{\"valid\":true,\"reason\":\"The cited passage directly states the sealed courtyard discovery changed the brief mid-demolition, substantively covering SURPRISE_PIVOT; the confirm_coverage question accurately reflects that quote without fabrication.\"}"
+          }
+        ],
+        "milliseconds": 8845
+      },
+      {
+        "id": "tangent-resolves",
+        "expected": "A resolved tangent returns to an uncovered prepared obligation without repeating the known design direction.",
+        "proposal": {
+          "kind": "ask_prepared",
+          "questionId": "SCOPE_PARAMETERS",
+          "text": "Keeping the house's bones while redesigning every space - were there structural elements you were not permitted to change?",
+          "purpose": "The personality follow-up was declined without new detail. SCOPE_PARAMETERS remains open: the brief names keeping the house's bones but no constraint like timeline, budget, or structural permission has been stated.",
+          "sourceAnswerIds": [
+            "broad-answer"
+          ],
+          "evidence": [
+            {
+              "answerId": "broad-answer",
+              "quote": "They wanted to keep the bones of the house but redesign every space."
+            }
+          ]
+        },
+        "calls": [
+          {
+            "model": "claude-sonnet-5",
+            "inputTokens": 6020,
+            "outputTokens": 236,
+            "milliseconds": 3147,
+            "output": "{\"purpose\":\"The client-brief question about personalities was declined without new detail; the designer signaled readiness to move on. The next obligation, SCOPE_PARAMETERS, is still fully open: the brief mentions keeping the house's bones but no constraint like timeline, budget, or permission to alter structure has been named.\",\"evidence\":[{\"answerId\":\"broad-answer\",\"quote\":\"They wanted to keep the bones of the house but redesign every space.\"}],\"sourceAnswerIds\":[\"broad-answer\"],\"kind\":\"ask_prepared\",\"questionId\":\"SCOPE_PARAMETERS\",\"text\":\"Keeping the house's bones while redesigning every space - were there structural elements you were not permitted to change?\"}"
+          },
+          {
+            "model": "claude-sonnet-5",
+            "inputTokens": 6435,
+            "outputTokens": 207,
+            "milliseconds": 2080,
+            "output": "{\"purpose\":\"The personality follow-up was declined without new detail. SCOPE_PARAMETERS remains open: the brief names keeping the house's bones but no constraint like timeline, budget, or structural permission has been stated.\",\"evidence\":[{\"answerId\":\"broad-answer\",\"quote\":\"They wanted to keep the bones of the house but redesign every space.\"}],\"sourceAnswerIds\":[\"broad-answer\"],\"kind\":\"ask_prepared\",\"questionId\":\"SCOPE_PARAMETERS\",\"text\":\"Keeping the house's bones while redesigning every space - were there structural elements you were not permitted to change?\"}"
+          },
+          {
+            "model": "claude-sonnet-5",
+            "inputTokens": 4937,
+            "outputTokens": 98,
+            "milliseconds": 1767,
+            "output": "{\"valid\":true,\"reason\":\"The candidate asks a specific remaining gap (structural constraints) grounded in the stated 'keep the bones' brief, rather than repeating the generic 'what were you working within' question. It targets the open SCOPE_PARAMETERS obligation appropriately.\"}"
+          }
+        ],
+        "milliseconds": 6999
+      },
+      {
+        "id": "concise-rich-answer",
+        "expected": "Treat two concise factual answers as useful evidence. Adapt design-direction or confirm it; do not demand a generic example or repeat the full brief/scope.",
+        "proposal": {
+          "kind": "confirm_coverage",
+          "questionId": "DESIGN_DIRECTION",
+          "text": "Was creating a clear path from shared life to privacy, within the existing footprint, the central design idea here?",
+          "purpose": "The scope answer already states the design idea: a clear path from shared life to privacy, achieved by keeping the footprint and moving two internal walls. This directly answers DESIGN_DIRECTION, so confirm it rather than asking the broad question again.",
+          "sourceAnswerIds": [
+            "concise-scope"
+          ],
+          "evidence": [
+            {
+              "answerId": "concise-scope",
+              "quote": "The idea was a clear path from shared life to privacy."
+            }
+          ]
+        },
+        "calls": [
+          {
+            "model": "claude-sonnet-5",
+            "inputTokens": 5911,
+            "outputTokens": 216,
+            "milliseconds": 2780,
+            "output": "{\"purpose\":\"The scope answer already states the design idea: a clear path from shared life to privacy, achieved by keeping the footprint and moving two internal walls. This directly answers DESIGN_DIRECTION, so confirm it rather than asking the broad question again.\",\"evidence\":[{\"answerId\":\"concise-scope\",\"quote\":\"The idea was a clear path from shared life to privacy.\"}],\"sourceAnswerIds\":[\"concise-scope\"],\"kind\":\"confirm_coverage\",\"questionId\":\"DESIGN_DIRECTION\",\"text\":\"Was creating a clear path from shared life to privacy, within the existing footprint, the central design idea here?\"}"
+          },
+          {
+            "model": "claude-sonnet-5",
+            "inputTokens": 4809,
+            "outputTokens": 90,
+            "milliseconds": 2134,
+            "output": "{\"valid\":true,\"reason\":\"The cited quote directly states the design idea (clear path from shared life to privacy, within kept footprint), which substantively covers DESIGN_DIRECTION, and the confirm question accurately paraphrases it without adding unsupported detail.\"}"
+          }
+        ],
+        "milliseconds": 4917
+      },
+      {
+        "id": "correction",
+        "expected": "Use corrected permanent-home purpose and disregard superseded holiday-home premise. Continue with a scope question grounded in the corrected brief, without inventing remaining work.",
+        "proposal": {
+          "kind": "confirm_coverage",
+          "questionId": "DESIGN_DIRECTION",
+          "text": "Was balancing privacy with keeping the rooms feeling connected the central design idea guiding this project?",
+          "purpose": "The correction establishes the brief: privacy without disconnecting rooms, in their permanent home. This already states a design direction (resolving privacy vs. connection), so DESIGN_DIRECTION can be confirmed rather than asked again from scratch.",
+          "sourceAnswerIds": [
+            "corrected-client"
+          ],
+          "evidence": [
+            {
+              "answerId": "corrected-client",
+              "quote": "They wanted more privacy without making the rooms feel disconnected."
+            }
+          ]
+        },
+        "calls": [
+          {
+            "model": "claude-sonnet-5",
+            "inputTokens": 5920,
+            "outputTokens": 221,
+            "milliseconds": 2664,
+            "output": "{\"purpose\":\"The correction establishes the brief: privacy without disconnecting rooms, in their permanent home. This already states a design direction (resolving privacy vs. connection), so DESIGN_DIRECTION can be confirmed rather than asked again from scratch.\",\"evidence\":[{\"answerId\":\"corrected-client\",\"quote\":\"They wanted more privacy without making the rooms feel disconnected.\"}],\"sourceAnswerIds\":[\"corrected-client\"],\"kind\":\"confirm_coverage\",\"questionId\":\"DESIGN_DIRECTION\",\"text\":\"Was balancing privacy with keeping the rooms feeling connected the central design idea guiding this project?\"}"
+          },
+          {
+            "model": "claude-sonnet-5",
+            "inputTokens": 4841,
+            "outputTokens": 82,
+            "milliseconds": 2749,
+            "output": "{\"valid\":true,\"reason\":\"The cited quote directly states the privacy-vs-connection brief, which substantively covers DESIGN_DIRECTION; confirming it rather than re-asking from scratch is appropriate and non-repetitive.\"}"
+          }
+        ],
+        "milliseconds": 5415
+      },
+      {
+        "id": "room-progression",
+        "error": "The saved answer needs a new interviewer reply: The proposal is outside the available question scope.",
+        "calls": [
+          {
+            "model": "claude-sonnet-5",
+            "inputTokens": 5768,
+            "outputTokens": 207,
+            "milliseconds": 2913,
+            "output": "{\"purpose\":\"The living room layout question is already answered: keeping the middle open so people can cross without disrupting a reader explains the spatial logic. No gap remains for this obligation, so it should be confirmed rather than re-asked before moving to the Kitchen.\",\"evidence\":[{\"answerId\":\"living-2\",\"quote\":\"We kept the middle open so people can cross the room without interrupting someone reading.\"}],\"sourceAnswerIds\":[\"living-2\"],\"kind\":\"confirm_coverage\",\"text\":\"Was keeping the middle of the room open, so people could pass through without disturbing a reader, the main thing that shaped the layout?\"}"
+          },
+          {
+            "model": "claude-sonnet-5",
+            "inputTokens": 6124,
+            "outputTokens": 219,
+            "milliseconds": 2488,
+            "output": "{\"purpose\":\"The living room layout obligation is already answered: keeping the middle open so people can cross without disturbing a reader explains the spatial logic behind the layout. No gap remains, so this should be confirmed rather than re-asked before moving to the Kitchen.\",\"evidence\":[{\"answerId\":\"living-2\",\"quote\":\"We kept the middle open so people can cross the room without interrupting someone reading.\"}],\"sourceAnswerIds\":[\"living-2\"],\"kind\":\"confirm_coverage\",\"questionId\":\"living-layout\",\"text\":\"Was keeping the middle of the room open, so people could pass through without disturbing a reader, the main thing that shaped the layout?\"}"
+          }
+        ],
+        "milliseconds": 5403
+      }
+    ],
+    "guide": []
+  },
+  "after": {
+    "capturedAt": "2026-10-02T14:16:32.498Z",
+    "podcast": [
+      {
+        "id": "tangent-resolves",
+        "expected": "A resolved tangent returns to an uncovered prepared obligation without repeating the known design direction.",
+        "proposal": {
+          "kind": "ask_prepared",
+          "questionId": "SCOPE_PARAMETERS",
+          "text": "Keeping the bones but redesigning every space — what constraints, structural or otherwise, were you working within to make that happen?",
+          "purpose": "Designer closed the personality thread; move to an unaddressed obligation about project constraints like timeline or structure.",
+          "sourceAnswerIds": [
+            "broad-answer"
+          ],
+          "evidence": [
+            {
+              "answerId": "broad-answer",
+              "quote": "They wanted to keep the bones of the house but redesign every space."
+            }
+          ]
+        },
+        "calls": [
+          {
+            "model": "claude-sonnet-5",
+            "inputTokens": 5145,
+            "outputTokens": 181,
+            "milliseconds": 5439,
+            "output": "{\"purpose\":\"Designer closed the personality thread; move to an unaddressed obligation about project constraints like timeline or structure.\",\"evidence\":[{\"answerId\":\"broad-answer\",\"quote\":\"They wanted to keep the bones of the house but redesign every space.\"}],\"sourceAnswerIds\":[\"broad-answer\"],\"kind\":\"ask_prepared\",\"questionId\":\"SCOPE_PARAMETERS\",\"text\":\"Keeping the bones but redesigning every space — what constraints, structural or otherwise, were you working within to make that happen?\"}"
+          },
+          {
+            "model": "claude-sonnet-5",
+            "inputTokens": 4308,
+            "outputTokens": 66,
+            "milliseconds": 4794,
+            "output": "{\"valid\":true,\"reason\":\"Valid move to unaddressed SCOPE_PARAMETERS obligation, grounded in the accepted answer about keeping the bones while redesigning every space.\"}"
+          }
+        ],
+        "milliseconds": 10235
+      },
+      {
+        "id": "concise-rich-answer",
+        "expected": "Treat two concise factual answers as useful evidence. Adapt design-direction or confirm it; do not demand a generic example or repeat the full brief/scope.",
+        "proposal": {
+          "kind": "confirm_coverage",
+          "questionId": "DESIGN_DIRECTION",
+          "text": "Would you say that clear path from shared life to privacy was the overall design idea guiding the project?",
+          "purpose": "Design direction already stated via the shared-to-private path; confirm coverage rather than re-asking it as new.",
+          "sourceAnswerIds": [
+            "concise-scope"
+          ],
+          "evidence": [
+            {
+              "answerId": "concise-scope",
+              "quote": "The idea was a clear path from shared life to privacy."
+            }
+          ]
+        },
+        "calls": [
+          {
+            "model": "claude-sonnet-5",
+            "inputTokens": 5036,
+            "outputTokens": 166,
+            "milliseconds": 5333,
+            "output": "{\"purpose\":\"Scope and path concept are covered; move to overall design idea, which hasn't been asked yet.\",\"evidence\":[{\"answerId\":\"concise-scope\",\"quote\":\"The idea was a clear path from shared life to privacy.\"}],\"sourceAnswerIds\":[\"concise-scope\"],\"kind\":\"ask_prepared\",\"questionId\":\"DESIGN_DIRECTION\",\"text\":\"You mentioned a clear path from shared life to privacy — what was the overall design idea that grew from that?\"}"
+          },
+          {
+            "model": "claude-sonnet-5",
+            "inputTokens": 4156,
+            "outputTokens": 67,
+            "milliseconds": 2253,
+            "output": "{\"valid\":false,\"reason\":\"Design direction already stated ('clear path from shared life to privacy'); re-asking it as if unanswered duplicates covered ground rather than a genuinely new angle.\"}"
+          },
+          {
+            "model": "claude-sonnet-5",
+            "inputTokens": 5316,
+            "outputTokens": 168,
+            "milliseconds": 2889,
+            "output": "{\"purpose\":\"Design direction already stated via the shared-to-private path; confirm coverage rather than re-asking it as new.\",\"evidence\":[{\"answerId\":\"concise-scope\",\"quote\":\"The idea was a clear path from shared life to privacy.\"}],\"sourceAnswerIds\":[\"concise-scope\"],\"kind\":\"confirm_coverage\",\"questionId\":\"DESIGN_DIRECTION\",\"text\":\"Would you say that clear path from shared life to privacy was the overall design idea guiding the project?\"}"
+          },
+          {
+            "model": "claude-sonnet-5",
+            "inputTokens": 4158,
+            "outputTokens": 57,
+            "milliseconds": 2011,
+            "output": "{\"valid\":true,\"reason\":\"Valid confirm_coverage: design direction was already stated in the accepted answer and this properly confirms it rather than re-asking as new.\"}"
+          }
+        ],
+        "milliseconds": 12492
+      },
+      {
+        "id": "correction",
+        "expected": "Use corrected permanent-home purpose and disregard superseded holiday-home premise. Continue with a scope question grounded in the corrected brief, without inventing remaining work.",
+        "proposal": {
+          "kind": "followup",
+          "text": "That tension between privacy and connection is a tricky one to resolve - what was the first move you made to address it?",
+          "purpose": "Correction clarifies privacy-without-disconnection brief; follow up on how that tension was resolved before moving to design direction.",
+          "sourceAnswerIds": [
+            "corrected-client"
+          ],
+          "evidence": [
+            {
+              "answerId": "corrected-client",
+              "quote": "They wanted more privacy without making the rooms feel disconnected."
+            }
+          ]
+        },
+        "calls": [
+          {
+            "model": "claude-sonnet-5",
+            "inputTokens": 5045,
+            "outputTokens": 158,
+            "milliseconds": 5025,
+            "output": "{\"purpose\":\"Correction clarifies privacy-without-disconnection brief; follow up on how that tension was resolved before moving to design direction.\",\"evidence\":[{\"answerId\":\"corrected-client\",\"quote\":\"They wanted more privacy without making the rooms feel disconnected.\"}],\"sourceAnswerIds\":[\"corrected-client\"],\"kind\":\"followup\",\"text\":\"That tension between privacy and connection is a tricky one to resolve - what was the first move you made to address it?\"}"
+          },
+          {
+            "model": "claude-sonnet-5",
+            "inputTokens": 4161,
+            "outputTokens": 59,
+            "milliseconds": 1793,
+            "output": "{\"valid\":true,\"reason\":\"Valid followup pursuing untold resolution of the privacy-vs-connection tension, grounded in the corrected answer, not yet covered.\"}"
+          }
+        ],
+        "milliseconds": 6820
+      },
+      {
+        "id": "room-progression",
+        "expected": "Close the Living Room naturally and ask a kitchen-level question. Do not import a living-room spatial choice into the Kitchen as fact.",
+        "proposal": {
+          "kind": "ask_prepared",
+          "questionId": "kitchen-intent",
+          "text": "Turning to the Kitchen — what did you want that room to make possible?",
+          "purpose": "Living room layout and intent are both fully covered by two concise answers; move to kitchen room obligations.",
+          "sourceAnswerIds": [],
+          "evidence": []
+        },
+        "calls": [
+          {
+            "model": "claude-sonnet-5",
+            "inputTokens": 4893,
+            "outputTokens": 112,
+            "milliseconds": 2228,
+            "output": "{\"purpose\":\"Living room layout and intent are both fully covered by two concise answers; move to kitchen room obligations.\",\"evidence\":[],\"sourceAnswerIds\":[],\"kind\":\"ask_prepared\",\"questionId\":\"kitchen-intent\",\"text\":\"Turning to the Kitchen — what did you want that room to make possible?\"}"
+          },
+          {
+            "model": "claude-sonnet-5",
+            "inputTokens": 3924,
+            "outputTokens": 51,
+            "milliseconds": 5915,
+            "output": "{\"valid\":true,\"reason\":\"Valid room transition to an unasked prepared question targeting the kitchen, with no unsupported facts or repetition.\"}"
+          }
+        ],
+        "milliseconds": 8145
+      },
+      {
+        "id": "unexpected-discovery",
+        "expected": "Follow the volunteered surprise about discovering a hidden courtyard, rather than changing topics to generic scope.",
+        "proposal": {
+          "kind": "followup",
+          "text": "Once you found that courtyard, what changed about what you designed?",
+          "purpose": "The courtyard discovery is an untold pivot; ask how it reshaped the brief before covering SURPRISE_PIVOT formally.",
+          "sourceAnswerIds": [
+            "corrected-client"
+          ],
+          "evidence": [
+            {
+              "answerId": "corrected-client",
+              "quote": "Halfway through demolition, we discovered a sealed courtyard behind the kitchen, and suddenly the whole brief changed."
+            }
+          ]
+        },
+        "calls": [
+          {
+            "model": "claude-sonnet-5",
+            "inputTokens": 5067,
+            "outputTokens": 171,
+            "milliseconds": 2456,
+            "output": "{\"purpose\":\"The courtyard discovery is an untold pivot; ask how it reshaped the brief before covering SURPRISE_PIVOT formally.\",\"evidence\":[{\"answerId\":\"corrected-client\",\"quote\":\"Halfway through demolition, we discovered a sealed courtyard behind the kitchen, and suddenly the whole brief changed.\"}],\"sourceAnswerIds\":[\"corrected-client\"],\"kind\":\"followup\",\"text\":\"Once you found that courtyard, what changed about what you designed?\"}"
+          },
+          {
+            "model": "claude-sonnet-5",
+            "inputTokens": 4229,
+            "outputTokens": 69,
+            "milliseconds": 1665,
+            "output": "{\"valid\":true,\"reason\":\"Valid followup: pursues the untold consequence of the courtyard discovery, grounded in the accepted answer, before SURPRISE_PIVOT is formally asked.\"}"
+          }
+        ],
+        "milliseconds": 4131
+      }
+    ],
+    "guide": [
+      {
+        "id": "upload-before-project",
+        "reply": {
+          "reply": "Yes, there's a URL import option alongside file upload, so you can pull photos in from a link. Want me to open that panel?",
+          "action": "none"
+        },
+        "calls": [
+          {
+            "model": "claude-sonnet-5",
+            "inputTokens": 2590,
+            "outputTokens": 53,
+            "milliseconds": 2774,
+            "output": "{\"reply\":\"Yes, there's a URL import option alongside file upload, so you can pull photos in from a link. Want me to open that panel?\",\"action\":\"none\"}"
+          }
+        ],
+        "milliseconds": 2781
+      },
+      {
+        "id": "tagging-counts",
+        "reply": {
+          "reply": "You've tagged 5 of your 12 photos, with 4 still unreviewed. Tagging isn't required to continue — you can pick up the interview questions whenever you're ready.",
+          "action": "none"
+        },
+        "calls": [
+          {
+            "model": "claude-sonnet-5",
+            "inputTokens": 2624,
+            "outputTokens": 71,
+            "milliseconds": 2260,
+            "output": "{\"reply\":\"You've tagged 5 of your 12 photos, with 4 still unreviewed. Tagging isn't required to continue — you can pick up the interview questions whenever you're ready.\",\"action\":\"none\"}"
+          }
+        ],
+        "milliseconds": 2262
+      },
+      {
+        "id": "ambiguous-resume",
+        "reply": {
+          "reply": "Which option would you like to take?",
+          "action": "none"
+        },
+        "calls": [],
+        "milliseconds": 1
+      },
+      {
+        "id": "restart-question-is-not-command",
+        "reply": {
+          "reply": "Good question — no action yet. Starting over does prompt a confirmation step, but I won't clear anything unless you decide to go through with it.",
+          "action": "none"
+        },
+        "calls": [
+          {
+            "model": "claude-sonnet-5",
+            "inputTokens": 2624,
+            "outputTokens": 57,
+            "milliseconds": 4618,
+            "output": "{\"reply\":\"Good question — no action yet. Starting over does prompt a confirmation step, but I won't clear anything unless you decide to go through with it.\",\"action\":\"none\"}"
+          }
+        ],
+        "milliseconds": 4618
+      },
+      {
+        "id": "completed-add-detail",
+        "reply": {
+          "reply": "That's a good detail—the week in the house reshaping the brief. Let's add it to the interview so it's part of the record.",
+          "action": "add_more",
+          "detailText": "The clients changed their minds about the open kitchen after staying in the house for a week. We kept a separate kitchen instead."
+        },
+        "calls": [
+          {
+            "model": "claude-sonnet-5",
+            "inputTokens": 2641,
+            "outputTokens": 96,
+            "milliseconds": 1798,
+            "output": "{\"reply\":\"That's a good detail—the week in the house reshaping the brief. Let's add it to the interview so it's part of the record.\",\"action\":\"add_more\",\"detailText\":\"The clients changed their minds about the open kitchen after staying in the house for a week. We kept a separate kitchen instead.\"}"
+          }
+        ],
+        "milliseconds": 1799
+      }
+    ]
+  },
+  "evaluationNotes": {
+    "data": "Synthetic fixtures only. No database or Tavus writes.",
+    "podcast": "Five-fixture original baseline; final question-only run followed by one targeted discovery recheck after correcting the reviewer related-topic rejection. Earlier failed trials retained in trial-1 through trial-4.",
+    "guide": "New surface: no previous guide model path; final five fixtures include verbatim optional detailText. Greetings and six exact commands are deterministic and covered by focused tests.",
+    "finalSourceHashes": {
+      "src/lib/interview/guided/decision.ts": "1039b86449008a3b78db07dacb298f646bfd8a0e67b67b6a6102e30b90f2868e",
+      "src/lib/live-interview/project-guide-planner.ts": "ef9c49f0d65eb3c13c89a48907196df06783bc4fcba955a57b4a8152c5864040",
+      "src/lib/live-interview/project-guide-planner.schemas.ts": "61ba7b76553f68a511d0f60b8e66e701c718eb6bfb1cd20a0f7e596765d46571"
+    }
+  }
+}
