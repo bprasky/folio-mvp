@@ -148,7 +148,7 @@ export async function startCreatorCapture(options: {
   let recorder: MediaRecorder;
   try {
     await write('runs', run);
-    recorder = new MediaRecorder(stream, { mimeType, audioBitsPerSecond: 96_000, ...(options.mode === 'video' ? { videoBitsPerSecond: 800_000 } : {}) });
+    recorder = new MediaRecorder(stream, { mimeType, audioBitsPerSecond: 96_000, ...(options.mode === 'video' ? { videoBitsPerSecond: 2_000_000 } : {}) });
   } catch (error) {
     stream.getTracks().forEach(track => track.stop());
     void request({ action: 'incomplete', runId: run.runId, error: 'capture_start_failed' }).catch(() => {});

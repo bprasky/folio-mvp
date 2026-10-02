@@ -9,7 +9,7 @@ import { getGuidedSession, runGuidedCommand } from '@/lib/interview/guided/servi
 import { acceptedTurns, commandDigest } from '@/lib/interview/guided/controller';
 import { loadInterviewAnswers } from '@/lib/posting/loadInterviewAnswers';
 import type { GuidedSession } from '@/lib/interview/guided/types';
-import { LiveError } from './config';
+import { LiveError, recordingEnabled } from './config';
 import { planProjectGuide } from './project-guide-planner';
 import type { LiveAdapterCommand, LiveAdapterSnapshot, LiveAdapterState, LiveSource, ProjectGuideAction, ProjectGuideMetadata } from './adapter-types';
 
@@ -78,7 +78,7 @@ function plannerInput(context: Context, userText: string, recentTurns: ProjectGu
   return { stage: context.stage, projectId: context.projectId || undefined, projectName: context.projectName,
     photoCount: context.photoCount, taggedPhotoCount: context.taggedPhotoCount, unreviewedPhotoCount: context.unreviewedPhotoCount,
     sortedPhotoCount: context.sortedPhotoCount, answeredCount: context.answeredCount, remainingQuestionCount: context.remainingQuestionCount,
-    allowedActions: context.allowedActions, userText, recentTurns };
+    allowedActions: context.allowedActions, recordingAvailable: !!context.projectId && recordingEnabled(), userText, recentTurns };
 }
 function metadata(context: Context, phase: ProjectGuideMetadata['phase'], action: ProjectGuideAction, actionId: string): ProjectGuideMetadata {
   return { projectId: context.projectId, projectName: context.projectName, stage: context.stage,

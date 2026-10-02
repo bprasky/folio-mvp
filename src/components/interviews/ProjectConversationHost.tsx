@@ -57,6 +57,10 @@ export function ProjectConversationHost({ projectId, projectName, actorId, activ
   const open = useCallback(() => { setManual(false); setAvailable(null); intent.current = { requestId: crypto.randomUUID(), consumed: false }; }, []);
   const fallback = async () => { await controls.current?.stop(); setManual(true); setError(''); };
   const requestRestart = useCallback(() => { setRestartOpen(true); }, []);
+  const navigateView = async (view: string) => {
+    if (view === 'media' && guide?.phase === 'interview' && !await controls.current?.guide('return_guide')) return;
+    router.replace(`/project/${encodeURIComponent(projectId)}?view=${view}`, { scroll: false });
+  };
   const onSnapshot = useCallback((snapshot?: Omit<LiveAdapterSnapshot, 'state'>) => {
     if (!snapshot?.guide || resetInFlight.current) return;
     const next = snapshot.guide; setGuide(next); setQuestion(snapshot.currentQuestion); setRevision(value => value + 1);
@@ -65,7 +69,8 @@ export function ProjectConversationHost({ projectId, projectName, actorId, activ
     if (next.action === 'resume_interview' && next.legacyInterview) { void controls.current?.stop().then(() => { setManual(true); setLegacyOpen(true); }); return; }
     if (next.action === 'start_over') requestRestart();
     else if (next.action === 'open_tagging') router.replace(`/project/${encodeURIComponent(projectId)}?view=media&step=tags&action=tag`, { scroll: false });
-    else if (next.action === 'open_upload') { setUploadsOpen(true); document.getElementById(`guide-uploads-${projectId}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' }); }
+    else if (next.action === 'open_upload') { setUploadsOpen(true); router.replace(`/project/${encodeURIComponent(projectId)}?view=media`, { scroll: false }); }
+    else if (['start_interview', 'resume_interview', 'add_more'].includes(next.action)) router.replace(`/project/${encodeURIComponent(projectId)}?view=story`, { scroll: false });
   }, [projectId, requestRestart, router]);
   const previousEligible = useRef(eligible);
   useEffect(() => {
@@ -122,7 +127,7 @@ export function ProjectConversationHost({ projectId, projectName, actorId, activ
           <div><p className="text-folio-meta uppercase tracking-widest text-text-secondary">Folio · Podcast-style interview</p><h1 className="mt-1 font-headline text-folio-h3">{projectName}</h1><p className="mt-1 text-folio-meta text-text-secondary">The decisions, surprises and details worth sharing.</p></div>
         </header>
         <div className="flex flex-wrap items-center justify-between gap-3">
-          <nav className="flex gap-1 rounded-full bg-surface-ground p-1" aria-label="Conversation workspace">{[['media', 'Photos & details'], ['story', 'Interview']].map(([view, label]) => <button key={view} type="button" className={`rounded-full px-4 py-2 text-folio-meta ${activeView === view ? 'bg-surface-canvas shadow-sm' : 'text-text-secondary'}`} aria-current={activeView === view ? 'page' : undefined} onClick={() => router.replace(`/project/${encodeURIComponent(projectId)}?view=${view}`, { scroll: false })}>{label}</button>)}</nav>
+          <nav className="flex gap-1 rounded-full bg-surface-ground p-1" aria-label="Conversation workspace">{[['media', 'Photos & details'], ['story', 'Interview']].map(([view, label]) => <button key={view} type="button" className={`rounded-full px-4 py-2 text-folio-meta ${activeView === view ? 'bg-surface-canvas shadow-sm' : 'text-text-secondary'}`} aria-current={activeView === view ? 'page' : undefined} onClick={() => void navigateView(view)}>{label}</button>)}</nav>
           <div className="flex items-center gap-4" aria-label="Interview tools">
             {focusedInterview && interviewContent ? <button type="button" className="text-folio-meta underline underline-offset-4" aria-expanded={reviewOpen} aria-controls={`interview-notes-${projectId}`} onClick={() => setReviewOpen(value => !value)}>Review saved answers</button> : null}
             <button type="button" className="text-folio-meta text-text-secondary underline underline-offset-4" onClick={requestRestart}>Start over</button>
@@ -131,7 +136,7 @@ export function ProjectConversationHost({ projectId, projectName, actorId, activ
         {focusedInterview && interviewContent ? <div id={`interview-notes-${projectId}`} hidden={!reviewOpen} className="rounded-lg border border-border bg-surface-ground p-5">{interviewContent}</div> : null}
         <div className={photo && !toolsAlongside ? 'grid items-start gap-6 lg:grid-cols-[minmax(0,1.2fr)_minmax(360px,1fr)]' : 'mx-auto max-w-3xl'}>
           <div className={!toolsAlongside ? 'min-w-0 rounded-xl border border-border bg-surface-canvas lg:col-start-2 lg:row-start-1' : 'min-w-0'}>
-          <LiveInterviewPanel key={connection} source={{ kind: 'project_guide', id: projectId }} startIntent={intent.current} presentation="primary" onCanonicalChange={onSnapshot} onAvailabilityChange={setAvailable} onControlsReady={onControlsReady} guideRefreshKey={`${refreshKey}:${localPhotos.map(item => item.id).join(',')}`} />
+          <LiveInterviewPanel key={connection} source={{ kind: 'project_guide', id: projectId }} startIntent={intent.current} presentation="primary" recordingSetup={focusedInterview} onCanonicalChange={onSnapshot} onAvailabilityChange={setAvailable} onControlsReady={onControlsReady} guideRefreshKey={`${refreshKey}:${localPhotos.map(item => item.id).join(',')}`} />
           </div>
           {photo ? <section aria-label="Project photographs" className={toolsAlongside ? 'hidden' : 'min-w-0 space-y-3 lg:col-start-1 lg:row-start-1'}>
             <div className="relative overflow-hidden rounded-xl bg-surface-ground"><img src={photo.url} alt={photo.name || projectName} className="h-[42dvh] min-h-64 w-full object-contain lg:h-[min(56dvh,640px)]" />
@@ -143,7 +148,7 @@ export function ProjectConversationHost({ projectId, projectName, actorId, activ
           </section> : null}
         </div>
         {available === null ? <p role="status" className="text-folio-meta">Getting your Folio host ready…</p> : null}
-        <details id={`guide-uploads-${projectId}`} open={uploadsOpen} onToggle={event => setUploadsOpen(event.currentTarget.open)}><summary className="cursor-pointer py-2 text-folio-ui">Add photographs or a project link</summary><ProjectGuideUploads projectId={projectId} canImport={canImport} onAdded={(_id, added) => { setLocalPhotos(current => [...current, ...added]); router.refresh(); }} /></details>
+        {!focusedInterview ? <details id={`guide-uploads-${projectId}`} open={uploadsOpen} onToggle={event => setUploadsOpen(event.currentTarget.open)}><summary className="cursor-pointer py-2 text-folio-ui">Add photographs or a project link</summary><ProjectGuideUploads projectId={projectId} canImport={canImport} onAdded={(_id, added) => { setLocalPhotos(current => [...current, ...added]); router.refresh(); }} /></details> : null}
       </> : <div className="flex flex-wrap items-center justify-between gap-3"><p className="text-folio-meta text-text-secondary">{available === false ? 'Your project workspace is ready. Live hosting is not available for this account right now.' : 'Continue with photographs, rooms and your saved interview below.'}</p>{available !== false ? <button type="button" className={button} onClick={open}>Return to the conversation</button> : null}</div>}
     </section> : null}
     {!focusedInterview ? <div className="min-w-0" hidden={managed && isEmpty}>{children}</div> : null}

@@ -14,6 +14,7 @@ export const ProjectGuideInputSchema = z.object({
   sortedPhotoCount: z.number().int().nonnegative(),
   answeredCount: z.number().int().nonnegative(),
   remainingQuestionCount: z.number().int().nonnegative().nullable(),
+  recordingAvailable: z.boolean().optional(),
   allowedActions: z.array(ProjectGuideActionSchema).max(PROJECT_GUIDE_ACTIONS.length),
   userText: z.string().max(2000),
   recentTurns: z.array(z.object({ role: z.enum(['user', 'assistant']), text: z.string().max(2000) }).strict()).max(8).optional(),

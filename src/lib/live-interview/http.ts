@@ -28,6 +28,7 @@ export function liveResponse(value:unknown){return NextResponse.json(value,{head
 export function liveFailure(error:unknown){
   const known=error instanceof LiveError || error instanceof LiveStoreError;
   return NextResponse.json({error:known?error.message:'The live interview request could not be completed. Your saved progress is retained.',
-    message:known?error.message:'The live interview request could not be completed. Your saved progress is retained.'},
+    message:known?error.message:'The live interview request could not be completed. Your saved progress is retained.',
+    ...(error instanceof LiveStoreError ? {code:error.code,retryAt:error.retryAt} : {})},
     {status:known?error.status:503,headers:PRIVATE_HEADERS});
 }

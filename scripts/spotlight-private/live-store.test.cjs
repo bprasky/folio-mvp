@@ -117,6 +117,19 @@ async function main() {
       assert.equal(rows.length, 1); assert.equal(rows[0].sourceType, firstKind); assert.equal(rows[0].actorId, actorId);
     });
   }
+  await test('Daily allowance counts provider calls, excludes confirmed pre-provider failures and reports reset time', async () => {
+    await prisma.liveInterviewSession.updateMany({ where: { actorId }, data: { status: 'failed', providerIds: {} } });
+    const dailyLimits={maxActive:10,maxDailyActor:1};
+    const a=await live.createLiveSession(request({sourceId:randomUUID()}),dailyLimits);
+    assert.equal(a.created,true,'confirmed failures did not consume the daily allowance');
+    await prisma.liveInterviewSession.update({where:{id:a.session.id},data:{status:'ended',providerIds:{conversationId:'synthetic-paid-conversation'}}});
+    await assert.rejects(live.createLiveSession(request({sourceId:randomUUID()}),dailyLimits),error=>{
+      assert.equal(error.code,'LIVE_DAILY_LIMIT');assert.equal(error.status,429);
+      assert.equal(Date.parse(error.retryAt),a.session.createdAt.getTime()+86400000);return true;
+    });
+    await prisma.liveInterviewSession.update({where:{id:a.session.id},data:{createdAt:new Date(Date.now()-86401000)}});
+    assert.equal((await live.createLiveSession(request({sourceId:randomUUID()}),dailyLimits)).created,true);
+  });
   await prisma.user.deleteMany({ where: { id: { in: [actorId, deniedId, contributorId] } } });
 }
 main().then(() => fs.writeFileSync('tasks/spotlight-private-live-store.json', JSON.stringify({ status: 'passed', tests }, null, 2) + '\n'))

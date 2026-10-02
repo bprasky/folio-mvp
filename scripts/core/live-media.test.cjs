@@ -162,6 +162,15 @@ test('durable private recording, leased worker, actual short/episode/audio, appr
     assert.equal((await live.getLatestLiveSession('owner', 'designer_bio', 'owner', undefined, 1)).id, request.id);
     assert.equal((await live.getLatestLiveSession('owner', 'designer_bio', 'owner', undefined, 2)).id, roundTwo.session.id);
     assert.equal(await live.getLatestLiveSession('owner', 'designer_bio', 'owner', roundTwo.session.id, 2), null);
+    await live.mutateLiveSession(request.id,row=>{row.providerIds.conversationId='synthetic-paid-call';});
+    const quotaRequest={...request,id:crypto.randomUUID(),sourceId:'different-source',credentialHash:'quota-check',payload:{startRequestId:'quota-check'}};
+    await assert.rejects(live.createLiveSession(quotaRequest,{maxActive:3,maxDailyActor:1}),error=>{
+      assert.equal(error.code,'LIVE_DAILY_LIMIT');assert.equal(error.retryAt,new Date(reservation.session.createdAt.getTime()+86400000).toISOString());return true;
+    });
+    await live.mutateLiveSession(request.id,row=>{row.status='failed';row.providerIds={};});
+    const recovered=await live.createLiveSession(quotaRequest,{maxActive:3,maxDailyActor:1});
+    assert.equal(recovered.created,true,'confirmed pre-provider failures and ended non-provider reservations do not consume paid allowance');
+    await assert.rejects(live.createLiveSession({...quotaRequest,id:crypto.randomUUID(),sourceId:'another-source',payload:{startRequestId:'capacity-check'}},{maxActive:1,maxDailyActor:20}),error=>error.code==='LIVE_CAPACITY');
     console.log('PASS actual FFmpeg files: portrait short, chaptered landscape episode, audio-only, private marked previews; PostgreSQL and mocked external boundaries.');
   } finally { await pg.close(); await fsp.rm(dir, { recursive: true, force: true }); }
 });

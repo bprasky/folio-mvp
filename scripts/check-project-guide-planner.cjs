@@ -73,7 +73,10 @@ async function main() {
   assert.ok(planner.PROJECT_GUIDE_PROMPT.includes(tone.EDITORIAL_BANNED_PHRASES));
   assert.ok(planner.PROJECT_GUIDE_PROMPT.includes(tone.EDITORIAL_ACCURACY_RULES));
   assert.match(planner.PROJECT_GUIDE_PROMPT, /not an editorial answer/);
-  assert.match(planner.PROJECT_GUIDE_PROMPT, /Never promise recording/);
+  assert.match(planner.PROJECT_GUIDE_PROMPT, /recordingAvailable is true/);
+  assert.match(planner.PROJECT_GUIDE_PROMPT, /Never promise automatic clipping/);
+  assert.match(planner.projectGuideGreeting({...base,stage:'interview_new',recordingAvailable:true}),/private recording/);
+  assert.doesNotMatch(planner.projectGuideGreeting({...base,stage:'interview_new',recordingAvailable:false}),/clips/);
   console.log('Project guide planner: five deterministic greetings, allowed-action and structured-output boundaries, provider failure, count bounds, and canonical tone pass.');
 }
 main().catch(e => { console.error(e); process.exitCode = 1; });

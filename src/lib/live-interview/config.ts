@@ -26,7 +26,7 @@ export function liveConfig() {
   return { baseUrl: base.origin, faceId: process.env.TAVUS_FACE_ID || 'rc9cff32ceba',
     duration: bounded('FOLIO_LIVE_MAX_SECONDS', 1800, 3600),
     maxActive: bounded('FOLIO_LIVE_MAX_CONCURRENT', 3, 20),
-    maxDailyActor: bounded('FOLIO_LIVE_MAX_DAILY_PER_ACTOR', 5, 30) };
+    maxDailyActor: bounded('FOLIO_LIVE_MAX_DAILY_PER_ACTOR', 20, 30) };
 }
 
 /** Applied only to browser mutations. The separate machine route authenticates a bearer credential. */
