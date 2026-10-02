@@ -225,12 +225,12 @@ export async function executeLiveCommand(actorId: string, source: LiveSource, pr
 /** Delivery rechecks the actual public source. A recording consent is never a publication grant. */
 export async function resolveMediaSource(actorId: string, input: { sourceType: string; sourceId: string; canonicalId?: string }, purpose: 'preview' | 'export') {
   const source = { kind: input.sourceType, id: input.sourceId } as LiveSource;
-  if (source.kind === 'project_guide') fail('GUIDE_MEDIA_UNAVAILABLE', 'Project guidance cannot be recorded or published as interview media.', 403);
+  if (source.kind === 'project_guide' && source.id.startsWith('new:')) fail('GUIDE_MEDIA_UNAVAILABLE', 'Choose an existing project before recording media.', 403);
   await authorizeLiveSource(actorId, source);
   const actor = await prisma.user.findUnique({ where: { id: actorId }, select: { name: true } });
   let version = ''; let recordingScopeVersion = hash([source.kind, source.id]); let destination: string | null = null;
   let images: Array<{ id: string; url: string; credit?: string }> = [];
-  if (source.kind === 'project' || source.kind === 'spotlight') {
+  if (source.kind === 'project' || source.kind === 'project_guide' || source.kind === 'spotlight') {
     const project = await prisma.project.findUnique({ where: { id: source.id }, select: { isPublic: true, status: true, designerOrgId: true,
       post: { select: { id: true, slug: true, status: true, publishedAt: true, expandedBlocks: true, provenance: true, credits: true } },
       images: { where: { inclusion: 'INCLUDED' }, select: { id: true, url: true, roomId: true }, orderBy: [{ displayOrder: 'asc' }, { id: 'asc' }] } } });

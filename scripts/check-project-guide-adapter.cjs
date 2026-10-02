@@ -191,5 +191,12 @@ const command = (guideAction, requestId = `request-${Math.random()}`) => ({ acti
     const context = await guide.readProjectGuideContext('owner', source);
     assert.equal(context.answeredCount, 0); assert.equal(context.stage, 'interview_new');
   });
+  await test('existing-project guide recording reuses project media permissions and private publication boundary',async()=>{
+    const media=await adapters.resolveMediaSource('owner',{sourceType:'project_guide',sourceId:'project',canonicalId:'project'},'preview');
+    assert.equal(media.destination,null);assert.ok(media.recordingScopeVersion);assert.equal(media.images.length,project.images.length);
+    await assert.rejects(adapters.resolveMediaSource('other',{sourceType:'project_guide',sourceId:'project'},'preview'),/Forbidden/);
+    await assert.rejects(adapters.resolveMediaSource('owner',{sourceType:'project_guide',sourceId:'new:owner'},'preview'),/existing project/);
+    await assert.rejects(adapters.resolveMediaSource('owner',{sourceType:'project_guide',sourceId:'project'},'export'),/Publish and review/);
+  });
   console.log(`${count} project guide adapter checks passed; provider/model/database boundaries are synthetic.`);
 })().catch(error => { console.error(error); process.exitCode = 1; });

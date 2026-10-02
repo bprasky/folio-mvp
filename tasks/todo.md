@@ -775,3 +775,19 @@ Scope correction from the founder's screenshot: the host is stacked above the fu
 Review: production recorded two successful resets three seconds apart and subsequent zero-answer reads. The remaining call had status ending with provider cleanup already complete. Reproduced the late-start resurrection in the actual transport service, and navigation/unstable confirmation through the composed host. One host-owned dialog now waits for acknowledgement, preserves uncertain receipts, refreshes rejected stale receipts and removes the ended-call cache before fresh entry. Completed cleanup is terminal and repairs historical stuck reservations. Story renders one project header and photo/host workspace, with review disclosure, nearby restart, photo thumbnails and the explicit stepped fallback; project routes use the small Folio wordmark. Unrecorded guide calls no longer show recording-recovery controls, and duplicate notices are suppressed.
 
 Verification: 18 composed guide browser checks, 33 live browser/capture checks, 17 guided/legacy entry checks, 39 transport checks, reset service/atomicity tests, cleanup concurrency, scoped lint and client/migration guards pass. Desktop/mobile screenshots inspected; all browser/provider/database test boundaries are synthetic. TypeScript ratchet passes at904/904. No designer answers were created or reset by testing. Hosted checks and deployed cleanup recovery remain the release gate.
+
+## Guided setup, media recording and retry — 2026-10-02
+
+The founder wants uploads only in the opening guided setup, a recording-ready media opportunity with preparation/consent, and a working retry. Trace setup → live reservation → consented capture → private media before claiming success. Preserve automatic host presence, canonical answers, typed input and the stepped fallback. No schema changes or destructive production tests.
+
+- [x] Establish daily/concurrent limit cause and recording infrastructure readiness from read-only evidence.
+- [x] Keep upload controls in Photos & details; route spoken upload requests there and keep Interview focused.
+- [x] Add truthful media preparation and explicit in-call recording consent, using the existing private capture/media pipeline.
+- [x] Repair quota accounting/retry feedback and verify real store, transport and composed UI boundaries.
+- [ ] Review scoped changes, commit/push and finish the authorized release with infrastructure limitations stated precisely.
+
+Design: the host greets on arrival without a second start button. Recording begins only after the designer explicitly chooses and consents; camera/voice controls and private/publication status must reflect actual capture. Upload guidance and editorial evidence stay separate. Never present an identical retry as a solution to an unchanged daily quota.
+
+Review: 41 transport, 35 live browser/capture, 19 composed guide browser, 15 guide adapter, planner/seven-kind adapter and native media/SQL checks pass. TypeScript remains904/904; scoped lint has existing warnings only; client and migration guards pass. Desktop/mobile inspected. The pilot hit exactly five ended provider conversations, the previous default daily cap. New default20 plus separate reset-time/capacity errors repair that limit UX. Recording is consented in-call with stable project media identity and private camera preview; upload actions navigate to setup and leave Story clean.
+
+Remaining production dependency: private storage accepts all capture formats but its20MiB object cap needs expansion for normalized files. Production recording/export flags and an OpenAI transcription key are absent; persistent worker hosting is not established. Asked the founder which background host is available. Keep capture flags off until infrastructure acceptance; release the setup/retry repair without claiming recorded media is active. See docs/reviews/interview-media-setup.md.

@@ -291,11 +291,30 @@ function guideSession(id,phase='guide') {
  if(phase==='interview')row.payload.snapshot.state.native={kind:'project_guide',canonical:row.payload.snapshot.state.native};
  return clone(row);
 }
-test('guide recording is unavailable and rejected before any provider or canonical work',async()=>{
+test('guide recording is offered for existing projects but never starts as part of automatic entry',async()=>{
  const source={kind:'project_guide',id:'project'};
- assert.equal((await service.liveAvailability('owner',source)).recordingEnabled,false);
+ assert.equal((await service.liveAvailability('owner',source)).recordingEnabled,true);
+ assert.equal((await service.liveAvailability('owner',{kind:'project_guide',id:'new:owner'})).recordingEnabled,false);
  await assert.rejects(service.startLiveSession('owner',{source,requestId:'guide-recording-request',mode:'audio',microphoneReady:true,consentVersion:'2026-10-01'}),error=>error.status===403);
  assert.equal(providerCalls.length,0);assert.equal(sessions.size,0);assert.equal(saves.length,0);
+});
+test('explicit in-call consent enables creator capture without another provider call or answer write',async()=>{
+ const a=await start();guideSession(a.id);const count=providerCalls.length;
+ const next=await service.consentLiveRecording('owner',a.id,{mode:'video',consent:true,consentVersion:'2026-10-01'});
+ assert.equal(next.consent.mode,'video');assert.equal(sessions.get(a.id).canonicalId,'project');
+ assert.equal(providerCalls.length,count);assert.equal(saves.length,0);
+ await service.controlLiveSession('owner',a.id,{action:'guide',guideAction:'refresh',requestId:'consent-refresh-request'});
+ assert.equal(sessions.get(a.id).canonicalId,'project','media identity survives guide/interview state changes');
+});
+test('recording consent rejects missing permission, another actor, disabled capture, Create+ and ended calls',async()=>{
+ const a=await start();guideSession(a.id);const input={mode:'audio',consent:true,consentVersion:'2026-10-01'};
+ await assert.rejects(service.consentLiveRecording('owner',a.id,{...input,consent:false}),e=>e.status===400);
+ await assert.rejects(service.consentLiveRecording('other',a.id,input),e=>e.status===404);
+ env.FOLIO_INTERVIEW_RECORDING='0';await assert.rejects(service.consentLiveRecording('owner',a.id,input),e=>e.status===403);env.FOLIO_INTERVIEW_RECORDING='1';
+ sessions.get(a.id).payload.source.id='new:owner';await assert.rejects(service.consentLiveRecording('owner',a.id,input),e=>e.status===403);sessions.get(a.id).payload.source.id='project';
+ storageReady=false;await assert.rejects(service.consentLiveRecording('owner',a.id,input));storageReady=true;
+ await service.endLiveSession('owner',a.id,'end');await assert.rejects(service.consentLiveRecording('owner',a.id,input),/Reconnect/);
+ assert.equal(sessions.get(a.id).payload.consent.mode,'none');
 });
 test('late cancelled startup cannot resurrect a call whose provider cleanup already completed',async()=>{
  afterConversationCreate=async()=>{const id=[...sessions.keys()][0];await service.endLiveSession('owner',id,'end');assert.equal(sessions.get(id).status,'ended');};

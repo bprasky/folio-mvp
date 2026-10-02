@@ -10,7 +10,7 @@ export interface LiveSession {
 }
 export type NewLiveSession = Omit<LiveSession, 'version' | 'createdAt' | 'updatedAt'>;
 export class LiveStoreError extends Error {
-  constructor(message: string, public status = 409) { super(message); }
+  constructor(message: string, public status = 409, public code?: string, public retryAt?: string) { super(message); }
 }
 const active = ['starting', 'active', 'paused', 'ending', 'uncertain'];
 
@@ -44,9 +44,19 @@ export async function createLiveSession(input: NewLiveSession, limits: { maxActi
     if (prior[0]) return { session: prior[0], created: false };
     const counts = await tx.$queryRaw<{ active: bigint; daily: bigint }[]>`SELECT
       count(*) FILTER (WHERE status=ANY(${active}::text[])) AS active,
-      count(*) FILTER (WHERE "actorId"=${input.actorId} AND "createdAt">now()-interval '24 hours') AS daily FROM live_interview_sessions`;
-    if (Number(counts[0]?.active) >= limits.maxActive || Number(counts[0]?.daily) >= limits.maxDailyActor)
-      throw new LiveStoreError('The live interview limit has been reached. Continue in text or try later.', 429);
+      count(*) FILTER (WHERE "actorId"=${input.actorId} AND "createdAt">now()-interval '24 hours'
+        AND (status=ANY(${active}::text[]) OR "providerIds" ? 'conversationId')) AS daily FROM live_interview_sessions`;
+    if (Number(counts[0]?.active) >= limits.maxActive)
+      throw new LiveStoreError('All live interview spaces are in use. Try again shortly, or use the step-by-step workspace.', 429, 'LIVE_CAPACITY');
+    if (Number(counts[0]?.daily) >= limits.maxDailyActor) {
+      // Use the reservation that must expire before another call fits, even
+      // when an operator has reduced the cap below current usage.
+      const reset = await tx.$queryRaw<{ retryAt: Date }[]>`SELECT "createdAt" + interval '24 hours' AS "retryAt"
+        FROM live_interview_sessions WHERE "actorId"=${input.actorId} AND "createdAt">now()-interval '24 hours'
+        AND (status=ANY(${active}::text[]) OR "providerIds" ? 'conversationId')
+        ORDER BY "createdAt" DESC OFFSET ${limits.maxDailyActor - 1} LIMIT 1`;
+      throw new LiveStoreError('You have used today’s live interview allowance. Your answers are saved; you can continue in the step-by-step workspace.', 429, 'LIVE_DAILY_LIMIT', reset[0]?.retryAt.toISOString());
+    }
     const rows = await tx.$queryRaw<LiveSession[]>`INSERT INTO live_interview_sessions
       (id,"actorId","sourceType","sourceId","canonicalId",status,"credentialHash","expiresAt","providerIds",payload)
       VALUES (${input.id},${input.actorId},${input.sourceType},${input.sourceId},${input.canonicalId},${input.status},

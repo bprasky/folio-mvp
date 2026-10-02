@@ -16,6 +16,7 @@ let draftScope = 'a'.repeat(64), liveOwnerScope = null, recordingEnabled = true;
 const startRequests = [], textRegistrations = [], providerReplies = [];
 let canonicalTextSaves = 0;
 let failStart = false;
+let limitStart = false;
 let loseStartResponse = false, restoredSession = null;
 const startReceipts = new Map();
 const runs = new Map();
@@ -34,7 +35,7 @@ window.dailyCalls=[];window.respondMessages=[];window.activeChanges=[];
 window.makeStream=()=>{const audio=new AudioContext(); const destination=audio.createMediaStreamDestination();
  const original=destination.stream.getAudioTracks()[0]; const clone=original.clone.bind(original);
  original.clone=()=>{const track=clone();window.trackClones.push(track);return track};return destination.stream;};
-Object.defineProperty(navigator,'mediaDevices',{value:{getUserMedia:async options=>{window.permissions.push(options); if(window.permissionDenied)throw new Error('Microphone permission denied.');if(window.holdMicrophone)await new Promise(resolve=>{window.resolveMicrophone=resolve});return window.makeStream();}}});
+Object.defineProperty(navigator,'mediaDevices',{value:{getUserMedia:async options=>{window.permissions.push(options); if(window.permissionDenied)throw new Error('Microphone permission denied.');if(options.video){if(window.cameraDenied)throw new Error('Synthetic camera permission denied.');const canvas=document.createElement('canvas');canvas.width=1280;canvas.height=720;canvas.getContext('2d').fillRect(0,0,1280,720);return canvas.captureStream(24);}if(window.holdMicrophone)await new Promise(resolve=>{window.resolveMicrophone=resolve});return window.makeStream();}}});
 class Recorder{static instances=[];static isTypeSupported(type){return type.startsWith('audio/webm')||type.startsWith('video/webm')};
  constructor(stream,options){this.stream=stream;this.mimeType=options.mimeType;this.state='inactive';Recorder.instances.push(this)}
  start(){this.audioEnabledAtStart=this.stream.getAudioTracks().map(track=>track.enabled);this.state='recording'} emit(value){this.ondataavailable?.({data:new Blob([value],{type:this.mimeType})})}
@@ -48,6 +49,7 @@ window.seedRecovery=async records=>{const db=await new Promise((resolve,reject)=
  try{await new Promise((resolve,reject)=>{const tx=db.transaction(['runs','chunks'],'readwrite');for(const {run,chunks} of records){tx.objectStore('runs').put(run);for(const [index,text] of chunks.entries())tx.objectStore('chunks').put({runId:run.runId,index,blob:new Blob([text],{type:run.mimeType})})}tx.oncomplete=()=>resolve();tx.onerror=()=>reject(tx.error)})}finally{db.close()}};
 window.fixtureRoot=createRoot(document.getElementById('root'));
 window.renderDirect=(key='direct',id='synthetic-project')=>window.fixtureRoot.render(<React.StrictMode><LiveInterviewPanel key={key} source={{kind:'project',id}} startIntent={window.entryIntent} presentation="primary" onActiveChange={value=>window.activeChanges.push(value)}/></React.StrictMode>);
+window.renderGuide=()=>window.fixtureRoot.render(<LiveInterviewPanel key="guide-recording" source={{kind:'project_guide',id:'synthetic-project'}} startIntent={window.entryIntent} presentation="primary" recordingSetup/>);
 window.fixtureRoot.render(<LiveInterviewPanel source={{kind:'project',id:'synthetic-project'}} presentation="primary" onActiveChange={value=>window.activeChanges.push(value)}/>);`;
 const dailyFixture = `export default {createCallObject(options){window.dailyOptions=options;const handlers={};const call={
  on(name,handler){(handlers[name]??=[]).push(handler);return call},participants(){return{}},async join(){if(window.failJoin)throw Error('Synthetic join failed');if(window.holdJoin)await new Promise(resolve=>window.resolveJoin=resolve);window.joined=true;window.left=false;window.destroyed=false},
@@ -99,6 +101,7 @@ function handler(req, res) {
       const body = JSON.parse(Buffer.concat(chunks).toString() || '{}');
       if (url.pathname === '/api/fixture/provider-respond') { providerReplies.push(body); return json({ retained: true }); }
       if (url.pathname === '/api/live-interviews') {
+        if(limitStart) return json({message:'Daily allowance used. Continue in the step-by-step workspace.',code:'LIVE_DAILY_LIMIT',retryAt:new Date(Date.now()+60000).toISOString()},429);
         starts++; startRequests.push(body); if(failStart)return json({message:'Synthetic start failed. Retry this interview.'},503);
         const prior = startReceipts.get(body.requestId);
         if (prior) return json(prior.status === 'ended' ? { ...prior, join: undefined } : prior);
@@ -110,6 +113,7 @@ function handler(req, res) {
       }
       if (url.pathname === '/api/live-interviews/live-fixture') {
         actionCalls.push(body.action);
+        if(body.action==='consent_recording') { assert.equal(body.consent,true);live.consent={mode:body.mode};return json(live); }
         if (body.action === 'event') eventCalls.push(body.event);
         if (body.action === 'prepare_text') {
           textRegistrations.push(body);
@@ -573,6 +577,33 @@ async function main() {
       await page.waitForFunction(()=>window.left && window.destroyed);await page.evaluate(()=>window.resolveJoin());
       await page.waitForFunction(()=>window.left && window.destroyed);
       assert.equal(await page.evaluate(()=>window.activeChanges.at(-1)),false);assert.equal(live.status,'ended');assert.equal(starts,before+1);
+    });
+    await check('project host can consent and record during the same call; Stop finalizes without ending Tavus', async () => {
+      recordingEnabled=true;
+      await page.evaluate(()=>{sessionStorage.clear();window.permissionDenied=false;window.holdJoin=false;window.entryIntent={requestId:'guide-media-synthetic-entry',consumed:false};window.renderGuide();});
+      await callReady();await text('Make something worth sharing');const before=starts,captured=captureRequests.length;
+      assert.equal(await page.$eval('[aria-label="Prepare your interview recording"] button',e=>e.disabled),true);
+      assert.equal(captureRequests.length,captured,'auto-entry did not record');
+      await page.select('[aria-label="Prepare your interview recording"] select','audio');
+      await page.click('[aria-label="Prepare your interview recording"] input[type=checkbox]');
+      await click('Record my voice');await text('Recording your voice');assert.equal(starts,before);assert.ok(actionCalls.includes('consent_recording'));
+      assert.equal(captureRequests.filter(r=>r.action==='start').at(-1).mimeType.split(';')[0],'audio/webm');
+      await click('Stop recording');await text('Private recording is processing');assert.equal(await page.evaluate(()=>window.left),false);
+      assert.ok(captureRequests.some(r=>r.action==='finalize'));
+      await page.select('[aria-label="Prepare your interview recording"] select','video');
+      await page.click('[aria-label="Prepare your interview recording"] input[type=checkbox]');await page.evaluate(()=>window.cameraDenied=true);
+      const priorRuns=captureRequests.filter(r=>r.action==='start').length;
+      await click('Record camera and voice');await text('Synthetic camera permission denied');
+      assert.equal(captureRequests.filter(r=>r.action==='start').length,priorRuns);assert.equal(await page.evaluate(()=>window.left),false);
+      await page.evaluate(()=>window.cameraDenied=false);await click('Record camera and voice');await text('Recording your voice and camera');
+      assert.equal(starts,before);assert.equal(await page.evaluate(()=>window.dailyOptions.videoSource),false,'camera is private, not sent to Tavus');
+      assert.equal(await page.$eval('video[aria-label="Your private camera preview"]',e=>e.srcObject.getVideoTracks()[0].getSettings().width),1280);
+      await click('End');await callEnded();
+    });
+    await check('daily quota shows its reset time and blocks an identical retry instead of looping', async () => {
+      limitStart=true;await page.evaluate(()=>{sessionStorage.clear();window.entryIntent={requestId:'limited-synthetic-entry',consumed:false};window.renderDirect('limited');});
+      await text('Live interview available later');assert.equal(await page.$$eval('button',items=>items.find(e=>e.textContent==='Live interview available later').disabled),true);
+      await text('step-by-step workspace');limitStart=false;
     });
     await check('rollout disabled hides new live entry', async () => {
       enabled = false; await page.evaluate(() => sessionStorage.clear()); await page.reload(); await page.waitForFunction(() => !!window.capture);

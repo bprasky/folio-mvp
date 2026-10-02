@@ -42,7 +42,7 @@ export async function liveAvailability(actorId: string, source: LiveSource) {
   if (!liveEnabled(actorId)) return {enabled:false, recordingEnabled:false};
   await authorizeActor(actorId, source);
   liveConfig();
-  return {enabled:true,recordingEnabled:source.kind!=='project_guide' && recordingEnabled(),consentVersion:CAPTURE_CONSENT_VERSION,disclosure:CAPTURE_DISCLOSURE,
+  return {enabled:true,recordingEnabled:!source.id.startsWith('new:') && recordingEnabled(),consentVersion:CAPTURE_CONSENT_VERSION,disclosure:CAPTURE_DISCLOSURE,
     draftScope:backendHash(JSON.stringify([actorId,source]))};
 }
 function clientState(session: LiveSession, includeJoin = false) {
@@ -51,7 +51,7 @@ function clientState(session: LiveSession, includeJoin = false) {
     snapshot:snapshot ? {source:snapshot.source,interviewId:snapshot.interviewId,version:snapshot.version,status:snapshot.status,
       currentQuestion:snapshot.currentQuestion,sourceRefs:snapshot.sourceRefs,notice:snapshot.notice,...(snapshot.guide?{guide:snapshot.guide}:{})} : undefined,
     turns:p.turnState.turns.map(({position,raw,status,response,questionId,asked,error,inputMode,requestId,snapshot:askedSnapshot})=>({position,raw,status,response,questionId,asked,error,inputMode,requestId,version:askedSnapshot?.version})),
-    notice:p.notice,recordingEnabled:p.source.kind!=='project_guide' && recordingEnabled(),consent:p.consent,
+    notice:p.notice,recordingEnabled:!p.source.id.startsWith('new:') && recordingEnabled(),consent:p.consent,
     ...(includeJoin && active(session) && p.sealedJoin ? {join:openJoin(p.sealedJoin)} : {})};
 }
 export async function readLiveSession(actorId: string, id: string) {
@@ -73,7 +73,7 @@ export async function startLiveSession(actorId: string, input: {source:unknown; 
     || !['none','audio','video'].includes(input.mode) || input.consentVersion !== CAPTURE_CONSENT_VERSION)
     throw new LiveError('Confirm the recording choice and microphone permission before starting.',400);
   const source = parseLiveSource(input.source);
-  if (source.kind==='project_guide' && input.mode!=='none') throw new LiveError('Project guidance is available without recording.',403);
+  if (source.kind==='project_guide' && input.mode!=='none') throw new LiveError('Join your host, then choose recording with explicit consent.',403);
   const workspace = await authorizeActor(actorId,source); const config = liveConfig();
   if (!(await checkRateLimit(`live-start:${actorId}`,{max:12,windowMs:60_000})).success) throw new LiveError('Please wait before starting again.',429);
   if (input.mode !== 'none') {
@@ -103,7 +103,7 @@ export async function startLiveSession(actorId: string, input: {source:unknown; 
       prior ? payload(prior).snapshot?.state : undefined);
     if (!snapshot.currentQuestion || snapshot.status === 'finished') throw new LiveError('This interview has no current question. Review it in the text workspace.');
     const imageId=validateImageBinding(source,snapshot,input.selectedImageId);
-    await mutateLiveSession(id,s=>{const p=payload(s);p.snapshot=snapshot;s.canonicalId=snapshot.interviewId;prepareSpeech(p.turnState,snapshot);
+    await mutateLiveSession(id,s=>{const p=payload(s);p.snapshot=snapshot;s.canonicalId=source.kind==='project_guide'?source.id:snapshot.interviewId;prepareSpeech(p.turnState,snapshot);
       if(imageId)p.imageBinding={questionId:snapshot.currentQuestion!.id,imageId};});
     // Persist each completed provider step before starting the next, so cleanup can reconcile a crash.
     await mutateLiveSession(id,s=>{if(s.status!=='starting')throw new LiveError('Live start was cancelled.');payload(s).cleanupStage='creating_pal';});
@@ -132,6 +132,25 @@ export async function startLiveSession(actorId: string, input: {source:unknown; 
     // No provider-create retry. Cleanup reconciles potentially created paid conversations.
     throw error;
   }
+}
+
+/** Recording is a separate, explicit choice after the host has already joined.
+ * Never reconnect (or create another paid conversation) to enable capture. */
+export async function consentLiveRecording(actorId:string,id:string,input:{mode:CaptureMode;consentVersion:string;consent?:boolean}) {
+  if (!liveEnabled(actorId) || !recordingEnabled()) throw new LiveError('Recording is not available yet.',403);
+  if (!['audio','video'].includes(input.mode) || input.consent!==true || input.consentVersion!==CAPTURE_CONSENT_VERSION)
+    throw new LiveError('Confirm private recording consent before recording.',400);
+  const session=await ownedSession(actorId,id);const p=payload(session);
+  await authorizeActor(actorId,p.source,p.workspaceId);
+  if (p.source.kind!=='project_guide' || p.source.id.startsWith('new:')) throw new LiveError('Choose an existing project before recording.',403);
+  await assertCaptureStorageReady();
+  return clientState(await mutateLiveSession(id,s=>{
+    if (!active(s)) throw new LiveError('Reconnect with your host before recording.');
+    // Scope remains the project through guide/interview transitions; canonical
+    // answer identity continues to live in the authoritative snapshot.
+    s.canonicalId=payload(s).source.id;
+    payload(s).consent={version:CAPTURE_CONSENT_VERSION,at:new Date().toISOString(),mode:input.mode,disclosure:CAPTURE_DISCLOSURE};
+  }));
 }
 
 export async function receiveLiveEvent(actorId: string,id:string,event:unknown) {
@@ -298,7 +317,7 @@ async function saveTurn(session:LiveSession,turn:LiveTurn,action:'answer'|'corre
       const state=payload(s);const t=state.turnState.turns.find(t=>t.position===turn.position)!;
       t.status='saved';t.response=response;t.error=undefined;t.leaseUntil=undefined;
       state.snapshot=next;
-      s.canonicalId=next.interviewId;
+      s.canonicalId=p.source.kind==='project_guide'?p.source.id:next.interviewId;
       delete state.imageBinding;
       if(active(s))prepareSpeech(state.turnState,next);
     },{cleanup:true});
@@ -389,7 +408,7 @@ export async function controlLiveSession(actorId:string,id:string,command:LiveAd
   });
   try{
     const snapshot=await executeLiveCommand(actorId,p.source,p.snapshot!,command);
-    return clientState(await mutateLiveSession(id,s=>{const state=payload(s);const changed=state.snapshot?.version!==snapshot.version;state.snapshot=snapshot;s.canonicalId=snapshot.interviewId;state.commandLease=undefined;if(changed)prepareSpeech(state.turnState,snapshot);}));
+    return clientState(await mutateLiveSession(id,s=>{const state=payload(s);const changed=state.snapshot?.version!==snapshot.version;state.snapshot=snapshot;s.canonicalId=p.source.kind==='project_guide'?p.source.id:snapshot.interviewId;state.commandLease=undefined;if(changed)prepareSpeech(state.turnState,snapshot);}));
   }finally{await mutateLiveSession(id,s=>{payload(s).commandLease=undefined;},{cleanup:true});}
 }
 
