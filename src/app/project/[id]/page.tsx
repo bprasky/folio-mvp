@@ -454,6 +454,13 @@ export default async function ProjectPage({
     refreshKey: JSON.stringify([base.images.map(img => [img.id, img.roomId, img.inclusion, img.noProducts, img.tags.map(tag => tag.id)]), base.rooms.map(room => room.id), editorialState, interviewAnswerCount]),
   };
   const conversationKey = `${viewerId}:${operatingAsOrgId || 'personal'}:${base.id}`;
+  // The live host presents the same saved-answer tools inside its focused
+  // workspace; the stepped fallback keeps them in the original Story tab.
+  const storyContent = <StoryPanel projectId={base.id} project={sanitizedProject} isOwner={isOwner}
+    untaggedPhotoCount={untaggedPhotoCount} taggedPhotoCount={includedPhotoCount - untaggedPhotoCount}
+    images={base.images.filter(img => !isDocumentImage(img.name)).map(img => ({
+      id: img.id, url: img.url, name: img.name, room: img.room ?? null, roomId: img.roomId ?? null, displayOrder: img.displayOrder ?? null,
+    }))} rooms={base.rooms.map(room => ({ id: room.id, name: room.name }))} />;
 
   const expertiseReturn = expertiseEnabled() && isOwner && viewerId ? <ExpertiseProjectReturn actorId={viewerId} workspaceId={operatingAsOrgId} projectId={params.id} topic={searchParams.expertiseTopic} projectIds={searchParams.expertiseProjects} /> : null;
 
@@ -477,7 +484,7 @@ export default async function ProjectPage({
   const crumbStatusSlug = statusSlug(editorialState);
 
   return (
-    <ProjectConversationHost key={conversationKey} {...conversationProps}>
+    <ProjectConversationHost key={conversationKey} {...conversationProps} interviewContent={storyContent}>
     <div className="min-h-screen bg-surface-canvas">
       {expertiseReturn}
       {/* Header area — breadcrumbs + editorial header + tabs */}
@@ -598,36 +605,7 @@ export default async function ProjectPage({
             />
           )}
 
-          {view === 'story' && (
-            <StoryPanel
-              projectId={sanitizedProject.id}
-              project={sanitizedProject}
-              // Tagging changes what the interview can be written about, so the
-              // Story step raises it before generating rather than after. Both
-              // counts are over INCLUDED photos, matching what the readiness
-              // selector counts — an excluded photo is not work left undone.
-              untaggedPhotoCount={untaggedPhotoCount}
-              taggedPhotoCount={includedPhotoCount - untaggedPhotoCount}
-              // Photos only, with their room. The Story index draws each room's
-              // hero from the first photo in that room, so documents (which have
-              // no visual to show) are filtered out here rather than counted.
-              images={base.images
-                .filter(img => !isDocumentImage(img.name))
-                .map(img => ({
-                  id: img.id,
-                  url: img.url,
-                  name: img.name,
-                  room: img.room ?? null,
-                  roomId: img.roomId ?? null,
-                  displayOrder: img.displayOrder ?? null,
-                }))}
-              // Room names for indexing the saved answers. Taken from the Room
-              // rows rather than the interview's question set, which is
-              // regenerated (and loses rooms) whenever the project is retagged.
-              rooms={base.rooms.map(room => ({ id: room.id, name: room.name }))}
-              isOwner={isOwner}
-            />
-          )}
+          {view === 'story' && storyContent}
 
           {view === 'actions' && (
             <ActionItemsPanel

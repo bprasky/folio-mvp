@@ -123,6 +123,9 @@ export async function startLiveSession(actorId: string, input: {source:unknown; 
   } catch(error) {
     const session = await getLiveSession(id);
     if (session) await mutateLiveSession(id,s=>{
+      // Reset/navigation can finish shutdown while provider startup is still
+      // returning. A late failure must not reserve that completed call again.
+      if (s.status==='ended' || payload(s).cleanupStage==='complete') return;
       s.status=(error instanceof ProviderError && error.ambiguous) || !!s.providerIds.palId ? 'uncertain' : 'failed';
       payload(s).notice='Starting could not be confirmed. Saved interview progress is retained. Folio will reconcile this session before another call can start.';
     },{cleanup:true});
@@ -393,12 +396,26 @@ export async function controlLiveSession(actorId:string,id:string,command:LiveAd
 /** End is allowed after flags, permissions, or account status change: it only reduces access/cost. */
 export async function endLiveSession(actorId:string,id:string,reason:string) {
   await ownedSession(actorId,id);
-  await mutateLiveSession(id,s=>{s.status='ending';payload(s).endReason=reason;delete payload(s).sealedJoin;retainPendingText(s);},{cleanup:true});
+  await mutateLiveSession(id,s=>{
+    if(s.status==='ended' || payload(s).cleanupStage==='complete') {
+      s.status='ended';delete payload(s).notice;delete payload(s).sealedJoin;return;
+    }
+    s.status='ending';payload(s).endReason=reason;delete payload(s).sealedJoin;retainPendingText(s);
+  },{cleanup:true});
   await reconcileLiveSession(id);
   return clientState((await getLiveSession(id))!);
 }
 export async function reconcileLiveSession(id:string) {
   const session=await getLiveSession(id);if(!session)return;
+  // Repair reservations left by older late-start/end races. "complete" is
+  // written only after authenticated provider shutdown and PAL deletion.
+  if(payload(session).cleanupStage==='complete') {
+    if(session.status!=='ended' || payload(session).notice) await mutateLiveSession(id,s=>{
+      if(payload(s).cleanupStage!=='complete')return;
+      s.status='ended';s.expiresAt=new Date();delete payload(s).notice;delete payload(s).sealedJoin;retainPendingText(s);
+    },{cleanup:true});
+    return;
+  }
   if(session.status==='ended' || active(session))return;
   try{
     const p=payload(session);
@@ -416,7 +433,7 @@ export async function reconcileLiveSession(id:string) {
     if(p.cleanupStage==='creating_pal' && !pals.length && session.expiresAt.getTime()>Date.now())
       throw new LiveError('An uncertain PAL create is still being reconciled.');
     for(const pal of pals){try{await deletePal(pal);}catch(e){if(!(e instanceof ProviderError && e.status===404))throw e;}}
-    await mutateLiveSession(id,s=>{s.status='ended';s.expiresAt=new Date();payload(s).cleanupStage='complete';delete payload(s).sealedJoin;retainPendingText(s);},{cleanup:true});
+    await mutateLiveSession(id,s=>{s.status='ended';s.expiresAt=new Date();payload(s).cleanupStage='complete';delete payload(s).notice;delete payload(s).sealedJoin;retainPendingText(s);},{cleanup:true});
   }catch{
     await mutateLiveSession(id,s=>{
       // Another cleanup invocation may have completed while this provider request failed.
