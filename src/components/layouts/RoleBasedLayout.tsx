@@ -67,13 +67,14 @@ export default function RoleBasedLayout({ children }: RoleBasedLayoutProps) {
   const isEditorialRoute =
     pathname?.startsWith('/editorials/') ||
     pathname?.startsWith('/p/');
+  const isProjectWorkspace = pathname?.startsWith('/project/') || pathname === '/projects/new';
 
   // Use new top navigation instead of NavFrame/GlassNavRail
   return (
     <div className={`flex flex-col min-h-screen${isEditorialRoute ? ' editorial-surface' : ''}`}>
       <Navigation />
       {/* Use MainLayout for admin and vendor users (more features) */}
-      {['admin', 'vendor'].includes(userRole) ? (
+      {isProjectWorkspace ? <main className="min-w-0 flex-1">{children}</main> : ['admin', 'vendor'].includes(userRole) ? (
         <MainLayout>{children}</MainLayout>
       ) : (
         <SimpleLayout>{children}</SimpleLayout>
@@ -81,4 +82,4 @@ export default function RoleBasedLayout({ children }: RoleBasedLayoutProps) {
       <Footer />
     </div>
   );
-} 
+}

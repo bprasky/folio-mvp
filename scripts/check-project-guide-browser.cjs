@@ -2,16 +2,19 @@
 // Synthetic Next/auth/Daily/HTTP boundaries; no real devices, provider, credentials or database.
 const assert=require('node:assert/strict'),fs=require('node:fs'),path=require('node:path'),http=require('node:http');
 const esbuild=require('esbuild'),puppeteer=require('puppeteer-core'),postcss=require('postcss'),tailwind=require('tailwindcss');
-const root=path.resolve(__dirname,'..'),out=path.join(root,'.tmp/project-guide-browser'),review=path.join(root,'docs/reviews/project-guide');
+const root=path.resolve(__dirname,'..'),out=path.join(root,'.tmp/project-guide-browser'),review=path.resolve(process.env.PROJECT_GUIDE_REVIEW_DIR||path.join(out,'review'));
+let savedAnswers=1,resetPosts=[],resetCommits=0,resetReads=0,resetFailure=null,holdReset=null,holdAnswers=false,pendingAnswers=[],restoredSessions=[];
+const resetReceipts=new Map();
+async function waitFor(predicate){const deadline=Date.now()+5000;while(!predicate()){if(Date.now()>deadline)throw Error('Fixture request did not arrive');await new Promise(resolve=>setTimeout(resolve,10))}}
 let enabled=true,starts=0,creates=0,uploads=0,version=0,photos=[],actions=[],live=null,refreshNoop=false,loseControlResponse=false,failNextUpload=false;
 const sessions=new Map(),controlReceipts=new Map(),results=[];
-function metadata(source){return{phase:'guide',stage:source.id.startsWith('new:')?'upload':'interview_resume',projectId:source.id.startsWith('new:')?null:'project',projectName:'Garden House',photoCount:photos.length,taggedPhotoCount:0,reviewedPhotoCount:0,unreviewedPhotoCount:photos.length,sortedPhotoCount:photos.length,answeredCount:source.id.startsWith('new:')?0:1,remainingQuestionCount:null,allowedActions:source.id.startsWith('new:')?['open_upload']:['resume_interview','open_upload','open_tagging'],action:'none',actionId:'welcome'}};
+function metadata(source){return{phase:'guide',stage:source.id.startsWith('new:')?'upload':savedAnswers?'interview_resume':'interview_new',projectId:source.id.startsWith('new:')?null:'project',projectName:'Garden House',photoCount:photos.length,taggedPhotoCount:0,reviewedPhotoCount:0,unreviewedPhotoCount:photos.length,sortedPhotoCount:photos.length,answeredCount:source.id.startsWith('new:')?0:savedAnswers,remainingQuestionCount:null,allowedActions:source.id.startsWith('new:')?['open_upload']:['resume_interview','start_over','open_upload','open_tagging'],action:'none',actionId:'welcome'}};
 function snapshot(source,guide){return{source,interviewId:'project-guide',version:String(++version),status:'active',currentQuestion:{id:'guide-'+version,text:guide.phase==='interview'?'What did the clients want from this project?':'Welcome. Bring your photographs and we will find the story together.',sourceImageIds:photos.map(p=>p.id)},sourceRefs:[],guide}};
 const entry=`import React,{useEffect,useState} from 'react';import{createRoot}from'react-dom/client';import{useSearchParams}from'next/navigation';
 import Create from './src/app/projects/new/page';import{ProjectConversationHost}from'./src/components/interviews/ProjectConversationHost';import Story from './src/app/project/[id]/StoryInterviewPanel';
 window.dailyCalls=[];window.messages=[];window.permissions=0;Object.defineProperty(navigator,'mediaDevices',{value:{getUserMedia:async()=>{window.permissions++;throw Error('Synthetic microphone denial')}}});
 function App(){const search=useSearchParams();const [photos,setPhotos]=useState([]);const [revision,setRevision]=useState(0);const pathname=location.pathname;const view=search.get('view')||'media';useEffect(()=>{fetch('/api/fixture/photos').then(r=>r.json()).then(setPhotos)},[search.toString(),pathname,revision]);useEffect(()=>{const refresh=()=>setRevision(n=>n+1);window.addEventListener('fixture-refresh',refresh);return()=>window.removeEventListener('fixture-refresh',refresh)},[]);
-if(pathname==='/projects/new')return <Create/>;return <ProjectConversationHost key="actor:workspace:project" projectId="project" projectName="Garden House" actorId="actor" activeView={view} isEmpty={!photos.length} canImport images={photos} refreshKey={JSON.stringify([photos,revision])} canHost={search.get('readonly')!=='1'}><div data-testid="existing-workspace">{view==='story'?<Story projectId="project" projectName="Garden House" images={photos} rooms={[{id:'living',name:'Living room'}]} taggedPhotoCount={0} untaggedPhotoCount={photos.length}/>:<p>{photos.length?'Existing room and tagging workspace':'Existing stepped upload workspace'}</p>}</div></ProjectConversationHost>}
+if(pathname==='/projects/new')return <Create/>;const story=<Story projectId="project" projectName="Garden House" images={photos} rooms={[{id:'living',name:'Living room'}]} taggedPhotoCount={0} untaggedPhotoCount={photos.length}/>;return <ProjectConversationHost key="actor:workspace:project" projectId="project" projectName="Garden House" actorId="actor" activeView={view} isEmpty={!photos.length} canImport images={photos} refreshKey={JSON.stringify([photos,revision])} canHost={search.get('readonly')!=='1'} interviewContent={story}><div data-testid="existing-workspace"><h1>Legacy project heading</h1><nav>Photos · Rooms · Tags · Story · Publish</nav>{view==='story'?story:<p>{photos.length?'Existing room and tagging workspace':'Existing stepped upload workspace'}</p>}</div></ProjectConversationHost>}
 createRoot(document.getElementById('root')).render(<React.StrictMode><App/></React.StrictMode>);`;
 const navigation=`import React,{useSyncExternalStore}from'react';const subscribe=fn=>{window.addEventListener('nav',fn);return()=>window.removeEventListener('nav',fn)};window.navigate=url=>{history.pushState({},'',url);window.dispatchEvent(new Event('nav'))};const router={push:window.navigate,replace:window.navigate,refresh:()=>window.dispatchEvent(new Event('fixture-refresh')),back:()=>history.back()};export const useRouter=()=>router;export const useSearchParams=()=>new URLSearchParams(useSyncExternalStore(subscribe,()=>location.pathname+location.search).split('?')[1]||'');export const usePathname=()=>location.pathname;export const useParams=()=>({id:'project'});export const redirect=window.navigate;export const notFound=()=>{};export default function Link({href,children,prefetch,...props}){return<a {...props} href={href} onClick={e=>{e.preventDefault();window.navigate(href)}}>{children}</a>}`;
 const daily=`export default{createCallObject(options){const handlers={};const call={options,on(name,fn){(handlers[name]??=[]).push(fn);return call},participants(){return{}},async join(){call.joined=true},setLocalAudio(){},async setInputDevicesAsync(){},sendAppMessage(message){window.messages.push(message)},async leave(){call.left=true},async destroy(){call.destroyed=true}};window.dailyCalls.push(call);return call}}`;
@@ -24,13 +27,23 @@ function handler(req,res){const url=new URL(req.url,'http://local'),route=url.pa
   if(route==='/api/user/workspace-context')return json({operatingAsOrgId:'workspace',organizations:[{id:'workspace',userRole:'ADMIN'}]});
   if(route==='/api/fixture/photos')return json(photos);
   if(route==='/api/live-interviews')return json({enabled,recordingEnabled:false,draftScope:'actor-guide'});
-  if(route.startsWith('/api/live-interviews/'))return json(sessions.get(route.split('/').at(-1)));
+  if(route.startsWith('/api/live-interviews/')){restoredSessions.push(route.split('/').at(-1));return json(sessions.get(route.split('/').at(-1)))}
   if(route.endsWith('/generation-context'))return json({bio:{available:false},projectHistory:{available:false,count:0}});
-  if(route.endsWith('/interview'))return json({guided:true,answers:[{questionId:'saved',prompt:'Earlier question',answer:'Saved design detail.',roomId:'living'}],coverage:[]});
+  if(route.endsWith('/interview/reset')){resetReads++;return json({ok:true,snapshot:{revision:String(resetCommits).padStart(64,'0'),sessionId:'guided-'+resetCommits}})}
+  if(route.endsWith('/interview')){const reply=()=>json({guided:true,answers:savedAnswers?[{questionId:'saved',prompt:'Earlier question',answer:'Saved design detail.',roomId:'living'}]:[],coverage:[]});if(holdAnswers){pendingAnswers.push(reply);return}return reply()}
   if(route==='/api/import/import-fixture')return json({status:'READY_FOR_REVIEW',processingMeta:{candidates:[{url:'http://'+req.headers.host+'/photo.svg',alt:'Imported room'}]}});
   return json({});
  }
  let body='';req.on('data',part=>body+=part);req.on('end',()=>{const data=JSON.parse(body||'{}');
+  if(route.endsWith('/interview/reset')){
+    resetPosts.push(data);
+    if(resetFailure==='stale'){resetFailure=null;resetCommits++;return json({ok:false,code:'STALE_RESET',message:'The interview changed. Review it and try again.'},409)}
+    if(resetFailure==='unavailable'){resetFailure=null;return json({ok:false,message:'Synthetic reset unavailable. Retry clearing your answers.'},503)}
+    let result=resetReceipts.get(data.requestId);
+    if(!result){assert.equal(data.revision,String(resetCommits).padStart(64,'0'));assert.equal(data.sessionId,'guided-'+resetCommits);savedAnswers=0;resetCommits++;result={ok:true,session:{id:'guided-'+resetCommits},resetId:'reset-'+resetCommits};resetReceipts.set(data.requestId,result)}
+    if(resetFailure==='lost'){resetFailure=null;return json({ok:false,message:'Synthetic reset acknowledgement lost. Retry clearing your answers.'},503)}
+    if(holdReset){holdReset=()=>json(result);return}return json(result);
+  }
   if(route==='/api/projects'){creates++;assert.equal(data.designerOrgId,'workspace');return json({id:'project'})}
   if(route==='/api/projects/project/images'){if(failNextUpload){failNextUpload=false;return json({message:'Synthetic failed photograph'},503)}uploads++;const image={id:'photo-'+uploads,url:'/photo.svg',name:data.name||'Room',roomId:'living',room:'Living room'};photos.push(image);return json({image},201)}
   if(route==='/api/import/website')return json({sessionId:'import-fixture'});
@@ -53,7 +66,76 @@ async function main(){await build();const server=http.createServer(handler);awai
   await check('URL control imports selected photos into existing project without creating another call',async()=>{const before=starts;await page.$eval('details[id^=guide-uploads]',e=>{e.open=true;e.dispatchEvent(new Event('toggle'))});await page.type('input[aria-label="Project or portfolio link"]','https://designer.example/project');await click('Find photos');await text('Choose the photographs');await click('Add selected photos');await page.waitForFunction(()=>document.body.innerText.includes('2 photographs'));assert.equal(creates,1);assert.equal(uploads,2);assert.equal(starts,before);});
   await check('no-op refreshed metadata does not replay speech and unsent typed draft blocks refresh',async()=>{refreshNoop=true;const before=await page.evaluate(()=>window.messages.length);await page.evaluate(()=>window.dispatchEvent(new Event('fixture-refresh')));await page.waitForFunction(()=>document.body.innerText.includes('What did the clients want'));await new Promise(r=>setTimeout(r,100));assert.equal(await page.evaluate(()=>window.messages.length),before);await page.type('textarea','An unsent detail.');const count=actions.filter(a=>a.command?.guideAction==='refresh').length;await page.evaluate(()=>window.dispatchEvent(new Event('fixture-refresh')));await new Promise(r=>setTimeout(r,100));assert.equal(actions.filter(a=>a.command?.guideAction==='refresh').length,count);assert.equal(await page.$eval('textarea',e=>e.value),'An unsent detail.');});
   await check('completed-project offered detail is editable and saves only after explicit confirmation',async()=>{await click('Clear unsent reply');const detail='We found the antique mirror in a local salvage yard.';live.snapshot=snapshot(live.snapshot.source,{...live.snapshot.guide,phase:'interview'});live.snapshot.guide.offeredDetail={text:detail,questionId:live.snapshot.currentQuestion.id};const before=actions.filter(a=>a.action==='prepare_text').length;await text('Use what I just shared');assert.equal(actions.filter(a=>a.action==='prepare_text').length,before);await click('Edit this detail');assert.equal(await page.$eval('textarea',e=>e.value),detail);await click('Clear unsent reply');await click('Use what I just shared');await page.waitForFunction(detail=>window.messages.some(m=>m.event_type==='conversation.respond'&&m.properties.text===detail),{},detail);const receipt=actions.filter(a=>a.action==='prepare_text').at(-1);assert.equal(receipt.questionId,live.snapshot.currentQuestion.id);assert.equal(receipt.version,live.snapshot.version);live.turns.at(-1).status='saved';delete live.snapshot.guide.offeredDetail;await page.waitForFunction(()=>document.querySelector('textarea').value==='');});
-  await check('manual fallback ends the guide and restores existing Story controls',async()=>{await click('Use the step-by-step workspace');await text('Resume interview');assert.equal(live.status,'ended');assert.equal(await page.$('section[aria-label="Live interview"]'),null);});
+  await check('host restart opens one in-place confirmation from Photos and cancellation retains answers',async()=>{
+    await page.goto(base+'/project/project?view=media');await ready();const before=starts;
+    await click('Start over');await text('Start this interview over?');
+    assert.equal(await page.evaluate(()=>new URLSearchParams(location.search).get('view')),'media','restart must not navigate to another confirmation page');
+    assert.equal(await page.$$eval('[role=dialog]',nodes=>nodes.length),1);
+    await click('Keep my answers');assert.equal(resetPosts.length,0);assert.equal(savedAnswers,1);assert.equal(starts,before);
+  });
+  await check('saved-answer refresh cannot unmount a pending confirmation or expose a second one',async()=>{
+    await page.evaluate(()=>window.navigate('/project/project?view=story'));await text('Review saved answers');
+    await page.$eval('[aria-label="Interview tools"]',section=>[...section.querySelectorAll('button')].find(button=>button.textContent==='Start over').click());await text('Start this interview over?');
+    const dialog=await page.$('[role=dialog]');holdAnswers=true;
+    live.snapshot=snapshot(live.snapshot.source,{...live.snapshot.guide,action:'none',actionId:'refresh-during-confirmation'});
+    await page.waitForFunction(()=>document.body.textContent.includes('Loading your answers'));
+    assert(await dialog.evaluate(node=>node.isConnected),'the same confirmation must stay mounted across a background read');
+    holdAnswers=false;pendingAnswers.splice(0).forEach(reply=>reply());await click('Keep my answers');
+  });
+  await check('one confirmation clears once, waits for acknowledgement and starts one fresh host without restoring the old call',async()=>{
+    await text('Review saved answers');await page.$eval('[aria-label="Interview tools"]',section=>[...section.querySelectorAll('button')].find(button=>button.textContent==='Start over').click());
+    const before=starts,oldSession=live.id;holdReset=true;
+    await page.evaluate(()=>localStorage.setItem('interviewDraft:project',JSON.stringify({answers:['Old draft']})));
+    await click('Clear answers and start over');await text('Clearing your answers…');
+    await page.waitForFunction(()=>[...document.querySelectorAll('[role=dialog] button')].every(button=>button.disabled));
+    await waitFor(()=>typeof holdReset==='function');const restoresBefore=restoredSessions.filter(id=>id===oldSession).length;
+    assert.equal(starts,before);assert.equal(resetPosts.length,1);assert.equal(live.status,'ended');
+    assert(await page.evaluate(()=>!!localStorage.getItem('interviewDraft:project')),'local recovery remains until acknowledgement');
+    await page.keyboard.press('Escape');assert.equal(await page.$$eval('[role=dialog]',nodes=>nodes.length),1);
+    assert.equal(typeof holdReset,'function');const release=holdReset;holdReset=null;release();await ready();await text('0 project answers saved.');
+    assert.equal(starts,before+1);assert.equal(resetPosts.length,1);assert.equal(savedAnswers,0);
+    assert.equal(restoredSessions.filter(id=>id===oldSession).length,restoresBefore,'fresh host must not load the ended pre-reset conversation');
+    assert.equal(await page.evaluate(()=>localStorage.getItem('interviewDraft:project')),null);assert.equal(await page.$$eval('[role=dialog]',nodes=>nodes.length),0);
+  });
+  await check('lost acknowledgement stays in one dialog and retry reuses the exact committed reset',async()=>{
+    savedAnswers=1;await page.goto(base+'/project/project?view=story');await ready();await text('Review saved answers');
+    live.snapshot=snapshot(live.snapshot.source,{...live.snapshot.guide,action:'start_over',actionId:'spoken-restart'});await text('Start this interview over?');const before=starts,commits=resetCommits;resetFailure='lost';
+    await click('Clear answers and start over');await text('Synthetic reset acknowledgement lost');
+    assert.equal(await page.$$eval('[role=dialog]',nodes=>nodes.length),1);assert.equal(starts,before);const command=resetPosts.at(-1);
+    await click('Retry clearing answers');await ready();await text('0 project answers saved.');
+    assert.deepEqual(resetPosts.at(-1),command);assert.equal(resetCommits,commits+1);assert.equal(starts,before+1);
+  });
+  await check('failed reset preserves saved and local answers; rapid confirmation submits once and delayed success preserves a new-session draft',async()=>{
+    savedAnswers=1;await page.goto(base+'/project/project?view=story');await ready();await text('Review saved answers');
+    const draftKey='folio.guided.draft.actor.project';await page.evaluate(key=>localStorage.setItem(key,JSON.stringify({sessionId:'old',text:'Keep this unsent detail'})),draftKey);
+    await page.$eval('[aria-label="Interview tools"]',section=>[...section.querySelectorAll('button')].find(button=>button.textContent==='Start over').click());resetFailure='unavailable';const before=resetPosts.length;
+    await page.$eval('[role=dialog]',dialog=>{const button=[...dialog.querySelectorAll('button')].find(node=>node.textContent==='Clear answers and start over');button.click();button.click()});
+    await text('Synthetic reset unavailable');assert.equal(resetPosts.length,before+1);assert.equal(savedAnswers,1);
+    assert.equal(await page.evaluate(key=>JSON.parse(localStorage.getItem(key)).text,draftKey),'Keep this unsent detail');
+    holdReset=true;await click('Retry clearing answers');await waitFor(()=>typeof holdReset==='function');
+    const result=resetReceipts.get(resetPosts.at(-1).requestId);await page.evaluate((key,result)=>localStorage.setItem(key,JSON.stringify({sessionId:result.session.id,resetId:result.resetId,text:'New-session detail'})),draftKey,result);
+    const release=holdReset;holdReset=null;release();await ready();await text('0 project answers saved.');
+    assert.equal(await page.evaluate(key=>JSON.parse(localStorage.getItem(key)).text,draftKey),'New-session detail');
+  });
+  await check('a rejected stale reset can be retried with a fresh snapshot instead of looping on the rejected receipt',async()=>{
+    savedAnswers=1;await page.goto(base+'/project/project?view=story');await ready();await text('Review saved answers');
+    await page.$eval('[aria-label="Interview tools"]',section=>[...section.querySelectorAll('button')].find(button=>button.textContent==='Start over').click());resetFailure='stale';
+    await click('Clear answers and start over');await text('The interview changed. Review it and try again.');
+    assert.equal(savedAnswers,1);const command=resetPosts.at(-1),reads=resetReads;
+    await click('Retry clearing answers');await ready();await text('0 project answers saved.');
+    assert.notEqual(resetPosts.at(-1).requestId,command.requestId);assert.equal(resetReads,reads+1);
+  });
+  await check('focused Story has one project heading, nearby restart and disclosed answer tools; fallback restores the full workspace',async()=>{
+    savedAnswers=1;await page.goto(base+'/project/project?view=story');await ready();const before=starts;
+    assert.equal(await page.$('[data-testid=existing-workspace]'),null);assert.equal(await page.$$eval('h1',nodes=>nodes.length),1);
+    assert.equal(await page.$eval('[id^=interview-notes]',node=>node.hidden),true);
+    assert.equal(await page.$eval('details[id^=guide-uploads]',node=>node.open),false);
+    await click('Review saved answers');await text('1 answer saved');await click('Review saved answers');assert.equal(starts,before);
+    await page.setViewport({width:1366,height:900});await page.screenshot({path:path.join(review,'focused-interview-desktop.png'),fullPage:true});
+    assert(await page.$eval('[aria-label="Interview tools"]',node=>node.getBoundingClientRect().bottom<innerHeight/2));
+    await page.setViewport({width:390,height:844});assert(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));await page.screenshot({path:path.join(review,'focused-interview-mobile.png'),fullPage:true});await page.setViewport({width:1440,height:1100});
+    await click('Step-by-step workspace');await text('Resume interview');assert.equal(live.status,'ended');assert.equal(await page.$('section[aria-label="Live interview"]'),null);assert(await page.$('[data-testid=existing-workspace]'));
+  });
   await check('partial intake upload retains failed files and expertise return context until deliberate continuation',async()=>{const before=creates;failNextUpload=true;await page.goto(base+'/projects/new?expertiseTopic=Historic%20renovation&expertiseProjects=existing');await ready();await page.type('input[aria-label="Project name"]','Another project');await(await page.$('input[type=file]')).uploadFile(path.join(out,'photo.png'),path.join(out,'photo.png'));await text('Retry failed photos');assert.equal(await page.evaluate(()=>location.pathname),'/projects/new');assert.equal(creates,before+1);await click('Continue with saved photos');await page.waitForFunction(()=>location.pathname==='/project/project');assert.equal(await page.evaluate(()=>new URLSearchParams(location.search).get('expertiseTopic')),'Historic renovation');assert.equal(await page.evaluate(()=>new URLSearchParams(location.search).get('expertiseProjects')),'existing');await ready();});
   await check('disabled Create+ automatically uses original full form without mic or calls',async()=>{enabled=false;const before=starts;await page.goto(base+'/projects/new');await text('Project title');assert.equal(starts,before);assert.equal(await page.evaluate(()=>window.permissions),0);assert.equal(await page.$('main[aria-label="Create a project with Folio"]'),null);});
   await check('Publish, project home and non-owner presentation do not create guide calls',async()=>{enabled=true;const before=starts;for(const suffix of ['view=publish','view=overview','view=story&readonly=1']){await page.goto(base+'/project/project?'+suffix);await page.waitForSelector('[data-testid=existing-workspace]');assert.equal(await page.$('section[aria-label="Live interview"]'),null)}assert.equal(starts,before)});

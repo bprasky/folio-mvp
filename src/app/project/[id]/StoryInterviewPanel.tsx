@@ -78,7 +78,6 @@ export default function StoryInterviewPanel({ projectId, projectName, images, ro
   }, [projectId]);
 
   useEffect(() => { void fetchAnswers(); return () => { readSequence.current++; }; }, [fetchAnswers, conversation?.revision]);
-  useEffect(() => { if (conversation?.restartId) setShowRestart(true); }, [conversation?.restartId]);
 
   // Explicit project CTAs still open immediately, without waiting for this review read.
   const entryAction = searchParams.get("action");
@@ -139,7 +138,7 @@ export default function StoryInterviewPanel({ projectId, projectName, images, ro
   return (
     <section aria-label="Your interview" className="max-w-3xl space-y-6">
       <div className={conversation?.managed ? 'space-y-3' : 'rounded-md border border-folio-border-subtle bg-surface-ground p-6 sm:p-8'}>
-        <h2 className="font-headline text-folio-h3 text-folio-text-primary">Your interview</h2>
+        <h2 className="font-headline text-folio-h3 text-folio-text-primary">{conversation?.managed ? 'Saved answers' : 'Your interview'}</h2>
         <p className="mt-2 text-folio-body text-folio-text-secondary" aria-live="polite">
           {loading ? "Loading your answers…" : loadError ? "Your saved answers could not be loaded." : hasAnswers
             ? `${answers.length} ${answers.length === 1 ? "answer" : "answers"} saved. Pick up where you left off.`
@@ -150,9 +149,9 @@ export default function StoryInterviewPanel({ projectId, projectName, images, ro
             {started || loading || loadError ? "Resume interview" : "Start interview"}
           </button> : null}
           {loadError && <button type="button" className={quietButton} onClick={() => void fetchAnswers()}>Retry loading answers</button>}
-          {started && !loading && !loadError && (
-            <Dialog.Root open={showRestart} onOpenChange={open => { setShowRestart(open); if (!open) conversation?.clearRestart(); }}>
-              <Dialog.Trigger asChild><button type="button" className={quietButton} disabled={generating}>Start over</button></Dialog.Trigger>
+          {!conversation?.managed && (
+            <Dialog.Root open={showRestart} onOpenChange={setShowRestart}>
+              {started && !loading && !loadError && <Dialog.Trigger asChild><button type="button" className={quietButton} disabled={generating}>Start over</button></Dialog.Trigger>}
               <Dialog.Portal>
                 <Dialog.Overlay className="fixed inset-0 z-[80] bg-black/40" />
                 <Dialog.Content className={dialogClass} onOpenAutoFocus={event => { event.preventDefault(); document.getElementById("keep-interview")?.focus(); }}>
@@ -162,7 +161,7 @@ export default function StoryInterviewPanel({ projectId, projectName, images, ro
                   </Dialog.Description>
                   <div className="mt-6 flex flex-wrap justify-end gap-3">
                     <Dialog.Close asChild><button id="keep-interview" type="button" className={quietButton}>Keep my answers</button></Dialog.Close>
-                    <button type="button" className={primaryButton} onClick={() => { setShowRestart(false); if (conversation?.managed) void conversation.restart(); else setInterview({ intent: "restart" }); }}>Clear answers and start over</button>
+                    <button type="button" className={primaryButton} onClick={() => { setShowRestart(false); setInterview({ intent: "restart" }); }}>Clear answers and start over</button>
                   </div>
                 </Dialog.Content>
               </Dialog.Portal>

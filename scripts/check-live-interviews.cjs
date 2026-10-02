@@ -3,7 +3,7 @@
 const assert=require('node:assert/strict');
 const fs=require('node:fs');const path=require('node:path');const vm=require('node:vm');const ts=require('typescript');
 const root=path.resolve(__dirname,'..');
-let sessions,approved,workspace,sourceAllowed,saves,providerCalls,saveFailure,providerFailure,storageReady,failReceiptOnce,canonicalIndex,routeActor='owner';
+let sessions,approved,workspace,sourceAllowed,saves,providerCalls,saveFailure,providerFailure,storageReady,failReceiptOnce,canonicalIndex,afterConversationCreate,routeActor='owner';
 const env={NODE_ENV:'test',FOLIO_LIVE_INTERVIEWS:'1',FOLIO_LIVE_ALLOWLIST:'owner,other',FOLIO_INTERVIEW_RECORDING:'1',FOLIO_LIVE_BASE_URL:'https://folio.test',NEXTAUTH_SECRET:'synthetic-session-secret',TAVUS_API_KEY:'synthetic-provider-key'};
 const clone=structuredClone;const cache=new Map();
 function snapshot(index=1){return {source:{kind:'project',id:'project'},interviewId:'canonical',version:String(index),status:'active',currentQuestion:{id:`q${index}`,text:`Question ${index}?`,sourceImageIds:[]},sourceRefs:[],state:{schemaVersion:1,skipped:[],receipts:{},native:{rooms:[{id:'room',imageIds:['image-one','image-two']}]}}};}
@@ -48,7 +48,7 @@ async function fakeFetch(url,options={}){
  const body=options.body?JSON.parse(options.body):undefined;providerCalls.push({url,method:options.method,body});
  if(providerFailure && url.endsWith('/conversations')&&options.method==='POST')throw Error('synthetic ambiguous network failure');
  if(url.endsWith('/pals')&&options.method==='POST')return Response.json({pal_id:'pal'});
- if(url.endsWith('/conversations')&&options.method==='POST'){const c={conversation_id:'conversation',pal_id:'pal',conversation_name:body.conversation_name,conversation_url:'https://tavus.daily.co/synthetic',meeting_token:'private-join',status:'active'};providerState.set('conversation',c);return Response.json(c);}
+ if(url.endsWith('/conversations')&&options.method==='POST'){const c={conversation_id:'conversation',pal_id:'pal',conversation_name:body.conversation_name,conversation_url:'https://tavus.daily.co/synthetic',meeting_token:'private-join',status:'active'};providerState.set('conversation',c);if(afterConversationCreate)await afterConversationCreate();return Response.json(c);}
  if(url.endsWith('/conversation/end')){providerState.get('conversation').status='ended';return new Response(null,{status:204});}
  if(url.endsWith('/conversations/conversation'))return Response.json(providerState.get('conversation'));
  if(url.includes('/conversations?'))return Response.json({data:[...providerState.values()],total_count:providerState.size});
@@ -71,7 +71,7 @@ function load(file){
  return compiled.exports;
 }
 const service=load('src/lib/live-interview/service.ts');const turns=load('src/lib/live-interview/turns.ts');const provider=load('src/lib/live-interview/provider.ts');const config=load('src/lib/live-interview/config.ts');
-function reset(){sessions=new Map();approved=true;workspace='org';sourceAllowed=true;saves=[];providerCalls=[];saveFailure=false;providerFailure=false;storageReady=true;failReceiptOnce=false;canonicalIndex=1;routeActor='owner';providerState.clear();env.FOLIO_LIVE_INTERVIEWS='1';}
+function reset(){sessions=new Map();approved=true;workspace='org';sourceAllowed=true;saves=[];providerCalls=[];saveFailure=false;providerFailure=false;storageReady=true;failReceiptOnce=false;canonicalIndex=1;afterConversationCreate=null;routeActor='owner';providerState.clear();env.FOLIO_LIVE_INTERVIEWS='1';}
 const start=()=>service.startLiveSession('owner',{source:{kind:'project',id:'project'},requestId:'synthetic-start-request',mode:'none',consentVersion:'2026-10-01',microphoneReady:true});
 const startText=()=>service.startLiveSession('owner',{source:{kind:'project',id:'project'},requestId:'synthetic-text-start',mode:'none',consentVersion:'2026-10-01',inputMode:'text'});
 const textInput=(session,text='Typed answer.',requestId='synthetic-typed-answer')=>({requestId,text,questionId:session.snapshot.currentQuestion.id,version:session.snapshot.version});
@@ -296,6 +296,20 @@ test('guide recording is unavailable and rejected before any provider or canonic
  assert.equal((await service.liveAvailability('owner',source)).recordingEnabled,false);
  await assert.rejects(service.startLiveSession('owner',{source,requestId:'guide-recording-request',mode:'audio',microphoneReady:true,consentVersion:'2026-10-01'}),error=>error.status===403);
  assert.equal(providerCalls.length,0);assert.equal(sessions.size,0);assert.equal(saves.length,0);
+});
+test('late cancelled startup cannot resurrect a call whose provider cleanup already completed',async()=>{
+ afterConversationCreate=async()=>{const id=[...sessions.keys()][0];await service.endLiveSession('owner',id,'end');assert.equal(sessions.get(id).status,'ended');};
+ await assert.rejects(start,/cancelled/);const session=[...sessions.values()][0];
+ assert.equal(session.status,'ended');assert.equal(session.payload.cleanupStage,'complete');assert.equal(session.payload.notice,undefined);
+});
+test('repeated End is idempotent even after provider resources disappear',async()=>{
+ const a=await start();await service.endLiveSession('owner',a.id,'end');providerState.clear();const calls=providerCalls.length;
+ await service.endLiveSession('owner',a.id,'end');await service.endLiveSession('owner',a.id,'end');
+ assert.equal(sessions.get(a.id).status,'ended');assert.equal(providerCalls.length,calls);
+});
+test('cleanup repairs a historical ending reservation with completed provider cleanup',async()=>{
+ const a=await start();await service.endLiveSession('owner',a.id,'end');const row=sessions.get(a.id);row.status='ending';row.payload.notice='Stale startup notice';providerState.clear();const calls=providerCalls.length;
+ await service.reconcileLiveSession(a.id);assert.equal(sessions.get(a.id).status,'ended');assert.equal(sessions.get(a.id).payload.notice,undefined);assert.equal(providerCalls.length,calls);
 });
 test('a complete guide reply can interrupt its welcome without being treated as an unheard editorial question',async()=>{
  const a=await start();guideSession(a.id);

@@ -9,6 +9,7 @@ import { checkCaptureReady, discardStoredCaptures, purgeExpiredCaptures, retrySt
 interface LiveState {
   id: string; status: string; snapshot?: Omit<LiveAdapterSnapshot, 'state'>; turns?: LiveTurn[]; notice?: string;
   join?: { url: string; token: string; conversationId: string }; recordingEnabled?: boolean;
+  consent?: { mode: Mode };
 }
 export interface LiveStartIntent { requestId: string; consumed: boolean; inputMode?: 'voice' | 'text'; settled?: boolean }
 export interface LivePanelControls { stop: () => Promise<void>; guide: (action: ProjectGuideAction | 'refresh' | 'return_guide') => Promise<boolean>; linkPhoto: (id: string, questionId: string) => Promise<boolean> }
@@ -570,20 +571,23 @@ export function LiveInterviewPanel({ source, startIntent, onStartingChange, onCa
   const draftQuestionChanged = !!typedDraft && !!typedQuestion && !!state?.snapshot
     && (typedQuestion.questionId !== state.snapshot.currentQuestion?.id || typedQuestion.version !== state.snapshot.version);
   const primary = presentation === 'primary';
+  const projectHost = primary && source.kind === 'project_guide';
   const guide = state?.snapshot?.guide;
+  const hasRecording = mode !== 'none' || !!recording || (!!state?.consent?.mode && state.consent.mode !== 'none');
+  const notice = state?.notice || state?.snapshot?.notice;
   const guideLabels: Partial<Record<ProjectGuideAction, string>> = { start_interview: 'Let’s talk about the project', resume_interview: 'Continue our conversation', start_over: 'Start over', add_more: 'Add another detail', open_upload: 'Add photographs', open_tagging: 'Tag project details' };
   return <section aria-label="Live interview" className={`w-full min-w-0 bg-surface-canvas p-4 text-folio-body text-text-primary ${primary ? 'space-y-4' : 'rounded-sm border border-border'}`}>
     <div className="flex items-start justify-between gap-3">
-      <div><h3 className={primary ? 'font-headline text-folio-h4' : 'text-folio-ui font-semibold'}>{active ? 'Your Folio host' : 'Tell the story behind your work'}</h3><p className="text-folio-meta text-text-secondary">AI host · your project, in your words</p></div>
-      <span className="text-folio-meta" role="status">{active ? 'Live' : busy ? 'Connecting…' : 'Ready'}</span>
+      <div><h3 className={primary ? 'font-headline text-folio-h4' : 'text-folio-ui font-semibold'}>{active || projectHost ? 'Your Folio host' : 'Tell the story behind your work'}</h3><p className="text-folio-meta text-text-secondary">AI host · your project, in your words</p></div>
+      <span className="text-folio-meta" role="status">{active ? 'Live' : busy ? 'Connecting…' : error ? 'Connection paused' : 'Ready'}</span>
     </div>
     {!active ? <div className="mt-3 space-y-3">
       {primary ? <div className="flex aspect-video flex-col items-center justify-center gap-3 rounded-lg bg-surface-ground px-6 text-center" aria-label="Interviewer preview">
         <svg aria-hidden="true" viewBox="0 0 48 48" className="h-12 w-12 text-folio-text-secondary" fill="none" stroke="currentColor" strokeWidth="1.5"><rect x="5" y="12" width="26" height="24" rx="6" /><path d="m31 19 12-6v22l-12-6" /></svg>
-        <p className="font-headline text-folio-h4">A conversation about your project</p>
-        <p className="max-w-sm text-folio-meta text-text-secondary">{startIntent && (!startIntent.consumed || busy) && !error ? 'Connecting your interviewer. Keep exploring your photographs as you talk.' : 'Your interviewer appears here when you start. Keep exploring your photographs as you talk.'}</p>
+        <p className="font-headline text-folio-h4">{error ? 'Let’s reconnect' : busy ? 'Your host is joining you' : 'The story behind your work'}</p>
+        <p className="max-w-sm text-folio-meta text-text-secondary">{startIntent && (!startIntent.consumed || busy) && !error ? 'Take a look through your photographs while we connect.' : error ? 'Your saved answers are still here.' : 'A conversation about the thinking behind the photographs.'}</p>
       </div> : null}
-      <p className="text-folio-meta">{inputMode === 'voice' ? 'Speak naturally with your interviewer. Your answers are saved as you go.' : 'Type your replies while your interviewer stays on screen and speaks. Your microphone stays off.'}</p>
+      {!projectHost ? <p className="text-folio-meta">{inputMode === 'voice' ? 'Speak naturally with your interviewer. Your answers are saved as you go.' : 'Type your replies while your interviewer stays on screen and speaks. Your microphone stays off.'}</p> : null}
       {!!typedDraft && !awaitingReply ? <div className="space-y-2 rounded-sm bg-surface-ground p-3 text-folio-meta" aria-label="Unsent typed reply">
         <p className="font-medium">Your unsent reply</p><p className="text-text-secondary">{typedQuestion?.questionText}</p>
         <p className="max-h-32 overflow-auto whitespace-pre-wrap break-words">{typedDraft}</p>
@@ -593,8 +597,8 @@ export function LiveInterviewPanel({ source, startIntent, onStartingChange, onCa
         {([['none', 'Interview without saving audio or video'], ['audio', 'Save my voice for media'], ['video', 'Save my voice and camera for media']] as const).map(([value, label]) =>
           <label key={value} className="flex items-start gap-2 text-folio-meta"><input type="radio" name={`${fieldId}-mode`} value={value} checked={mode === value} disabled={value !== 'none' && !recordingAvailable}
             onChange={() => { setMode(value); setConsent(false); }} className="mt-1 accent-folio-gold" /><span>{label}</span></label>)}
-      </fieldset> : <p className="text-folio-meta text-text-secondary">Your camera stays off. Folio saves your answers, without saving an audio or video recording.</p>}
-      <p className="text-folio-meta text-text-secondary">Tavus processes your {inputMode === 'text' ? 'typed replies' : 'speech'} for this AI conversation. Provider processing may include retention.</p>
+      </fieldset> : !projectHost ? <p className="text-folio-meta text-text-secondary">Your camera stays off. Folio saves your answers, without saving an audio or video recording.</p> : null}
+      {!projectHost ? <p className="text-folio-meta text-text-secondary">Tavus processes your {inputMode === 'text' ? 'typed replies' : 'speech'} for this AI conversation. Provider processing may include retention.</p> : null}
       {mode !== 'none' ? <label className="flex items-start gap-2 text-folio-meta"><input type="checkbox" checked={consent} disabled={busy} onChange={event => setConsent(event.target.checked)} className="mt-1 accent-folio-gold" />
         <span>I consent to private capture and processing of my {mode === 'video' ? 'voice and camera footage' : 'voice'} for media preparation. Publishing requires my separate approval. My camera footage is not sent to the live interviewer.</span></label> : null}
       {mode !== 'none' ? <p className="text-folio-meta text-text-secondary">Upload recovery temporarily stores recording chunks on this device. Capture stops when pending data reaches 25 MiB, retaining the final recorder data. Uploaded chunks are removed; recovery expires after 24 hours and is cleared when Folio next opens. You can discard retained device recordings below.</p> : null}
@@ -604,7 +608,7 @@ export function LiveInterviewPanel({ source, startIntent, onStartingChange, onCa
     </div> : null}
     <div className={active ? 'mt-3 space-y-3' : 'hidden'}>
       <div className={primary ? 'relative' : 'flex items-end gap-3'}>
-        <video ref={remoteVideo} muted autoPlay playsInline aria-label="Folio AI interviewer" className={`aspect-video max-w-full rounded-lg bg-surface-ground object-cover ${primary ? 'w-full' : 'w-40'}`} />
+        <video ref={remoteVideo} muted autoPlay playsInline aria-label="Folio AI interviewer" className={`aspect-video max-w-full rounded-lg bg-surface-ground object-cover ${primary ? 'w-full' : 'w-40'} ${projectHost ? 'lg:max-h-[28dvh]' : ''}`} />
         {camera ? <video ref={localVideo} muted autoPlay playsInline aria-label="Your private camera preview" className="aspect-video w-24 rounded-sm bg-surface-ground object-cover" /> : null}
         <audio ref={remoteAudio} autoPlay />
       </div>
@@ -623,7 +627,7 @@ export function LiveInterviewPanel({ source, startIntent, onStartingChange, onCa
         <button type="button" className={button} disabled={busy || awaitingReply || !!unresolved.length || (inputMode === 'text' && !!typedDraft.trim())} onClick={() => void changeInput(inputMode === 'voice' ? 'text' : 'voice')}>{inputMode === 'voice' ? 'Type instead' : 'Use microphone instead'}</button>
         {(!guide || guide.phase === 'interview') ? <button type="button" className={button} disabled={busy || !!unresolved.length || (guide && !!typedDraft.trim())} onClick={() => void control('skip')}>{guide ? 'Move on' : 'Skip question'}</button> : null}
       </div>
-      {guide ? <div className="flex flex-wrap gap-2" aria-label="Conversation choices">{guide.allowedActions.filter(action => guideLabels[action]).map(action => <button key={action} type="button" className={button} disabled={busy || awaitingReply || !!typedDraft.trim() || !!unresolved.length} onClick={() => void guideControl(action)}>{guideLabels[action]}</button>)}{guide.phase === 'interview' ? <button type="button" className={button} disabled={busy || awaitingReply || !!typedDraft.trim()} onClick={() => void guideControl('return_guide')}>Photographs & project details</button> : null}</div> : null}
+      {guide ? <div className="flex flex-wrap gap-2" aria-label="Conversation choices">{guide.allowedActions.filter(action => guideLabels[action] && (!projectHost || ['start_interview', 'resume_interview', 'add_more'].includes(action))).map(action => <button key={action} type="button" className={button} disabled={busy || awaitingReply || !!typedDraft.trim() || !!unresolved.length} onClick={() => void guideControl(action)}>{guideLabels[action]}</button>)}{guide.phase === 'interview' ? <button type="button" className={button} disabled={busy || awaitingReply || !!typedDraft.trim()} onClick={() => void guideControl('return_guide')}>Photographs & project details</button> : null}</div> : null}
       {guide?.offeredDetail && guide.offeredDetail.questionId === state?.snapshot?.currentQuestion?.id && !awaitingReply && !typedDraft ? <div className="space-y-2 rounded-sm bg-surface-ground p-3 text-folio-meta"><p>You just shared:</p><p className="whitespace-pre-wrap">{guide.offeredDetail.text}</p><div className="flex flex-wrap gap-2"><button type="button" className={button} disabled={busy || !!unresolved.length} onClick={() => void sendTyped(guide.offeredDetail)}>Use what I just shared</button><button type="button" className={button} disabled={busy || !!unresolved.length} onClick={() => { const detail = guide.offeredDetail; const snapshot = stateRef.current?.snapshot; if (!detail || !snapshot?.currentQuestion || detail.questionId !== snapshot.currentQuestion.id) return; const binding = { questionId: detail.questionId, version: snapshot.version, questionText: snapshot.currentQuestion.text }; void changeInput('text').then(() => updateTypedDraft(detail.text, binding)); }}>Edit this detail</button></div></div> : null}
       {inputMode === 'text' ? <form className="space-y-2" onSubmit={event => { event.preventDefault(); void sendTyped(); }}>
         <label htmlFor={`${fieldId}-typed`} className="text-folio-meta font-medium">Your reply</label>
@@ -636,7 +640,7 @@ export function LiveInterviewPanel({ source, startIntent, onStartingChange, onCa
             try { if (typedStorageKey.current) sessionStorage.setItem(typedStorageKey.current, JSON.stringify({ text: typedDraft, ...question })); } catch { /* draft stays in memory */ }
           }}>Use this draft for the current question</button> : null}
         </div> : null}
-        <textarea id={`${fieldId}-typed`} value={typedDraft || pendingTyped?.raw || ''} onChange={event => updateTypedDraft(event.target.value)} maxLength={2000} rows={4}
+        <textarea id={`${fieldId}-typed`} value={typedDraft || pendingTyped?.raw || ''} onChange={event => updateTypedDraft(event.target.value)} maxLength={2000} rows={projectHost ? 3 : 4}
           disabled={busy || awaitingReply || !!unresolved.length} placeholder="Tell your interviewer about the project…"
           className="w-full rounded-sm border border-border bg-surface-ground p-3 text-folio-body focus-visible:ring-2 focus-visible:ring-folio-gold disabled:opacity-70" />
         <div className="flex items-center justify-between gap-3"><p className="text-folio-meta text-text-secondary">Microphone off · your interviewer still speaks</p>
@@ -649,12 +653,13 @@ export function LiveInterviewPanel({ source, startIntent, onStartingChange, onCa
       {state && (!guide || guide.projectId) ? <p>{guide ? `${guide.answeredCount} project answers saved.` : `${savedTurns.length} ${savedTurns.length === 1 ? 'answer' : 'answers'} saved in this live session.`}{state.turns?.some(turn => turn.status === 'awaiting_final' || turn.status === 'saving') ? ' Latest speech is awaiting save.' : ''}</p> : null}
       {recording ? <p>{recording === 'recording' ? `Recording your ${camera ? 'voice and camera' : 'voice'}` : recording === 'uploading' ? 'Finishing private upload…' : recording === 'processing' ? 'Private recording is processing' : 'Recording needs attention'}{recordingMessage ? ` — ${recordingMessage}` : ''}</p> : null}
       {recording === 'incomplete' ? <button type="button" className={button} onClick={() => void retryRecording()}>Retry recording upload</button> : null}
-      {state?.id && !active && !recording ? <button type="button" className={button} onClick={() => void retryRecording()}>Recover retained recording uploads</button> : null}
-      {state?.id && !active ? <button type="button" className={button} onClick={() => { void discardStoredCaptures(state.id).then(()=>{captureRef.current=null;setRecording(null);setRecordingMessage('Device recovery deleted. Uploaded sources and saved answers are unchanged.');}).catch(()=>setError('Device recovery could not be discarded. Sign in as the interview owner and retry.')); }}>Discard device recording recovery</button> : null}
-      {state?.notice || state?.snapshot?.notice ? <p>{state.notice || state.snapshot?.notice}</p> : null}
+      {state?.id && !active && !recording && hasRecording ? <button type="button" className={button} onClick={() => void retryRecording()}>Recover retained recording uploads</button> : null}
+      {state?.id && !active && hasRecording ? <button type="button" className={button} onClick={() => { void discardStoredCaptures(state.id).then(()=>{captureRef.current=null;setRecording(null);setRecordingMessage('Device recovery deleted. Uploaded sources and saved answers are unchanged.');}).catch(()=>setError('Device recovery could not be discarded. Sign in as the interview owner and retry.')); }}>Discard device recording recovery</button> : null}
+      {notice && notice !== error ? <p>{notice}</p> : null}
       {error ? <p role="alert">{error}</p> : null}
       {error && guideReceipt.current ? <button type="button" className={button} disabled={busy} onClick={() => { if (guideReceipt.current) void guideControl(guideReceipt.current.action); }}>Retry conversation choice</button> : null}
     </div>
+    {projectHost ? <details className="border-t border-border pt-3 text-folio-meta text-text-secondary"><summary className="cursor-pointer">Camera off · answers saved as you go</summary><p className="mt-2">Folio does not save audio or video for this conversation. Tavus processes your {inputMode === 'text' ? 'typed replies' : 'speech'} to bring the AI host to life; provider processing may include retention.</p></details> : null}
     {savedTurns.length ? <details className="mt-3 text-folio-meta"><summary className="cursor-pointer focus-visible:ring-2 focus-visible:ring-folio-gold">{guide ? 'Conversation so far' : 'Saved answers'}</summary>
       <ol className="mt-2 max-h-48 space-y-2 overflow-auto">{savedTurns.map(turn => <li key={turn.position} className="whitespace-pre-wrap">{turn.raw}</li>)}</ol></details> : null}
     {unresolved.map(turn => <div key={turn.position} className="mt-3 space-y-2 border-t border-border pt-3">
