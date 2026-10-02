@@ -5,23 +5,23 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { ArrowLeft, ChevronLeft, ChevronRight } from 'lucide-react';
 import * as Dialog from '@radix-ui/react-dialog';
-import type { LiveAdapterSnapshot, ProjectGuideMetadata } from '@/lib/live-interview/adapter-types';
+import type { LiveAdapterSnapshot, ProjectGuideMetadata, ProjectGuideStep } from '@/lib/live-interview/adapter-types';
 import type { InterviewResetRequest } from '@/lib/interview/reset';
 import { LiveInterviewPanel, type LivePanelControls, type LiveStartIntent } from './LiveInterviewPanel';
 import { ProjectGuideUploads, type GuidePhoto } from './ProjectGuideUploads';
 import { InterviewModal } from '@/components/posting/interview/InterviewModal';
 
-const GuideContext = createContext<{ managed: boolean; manual: boolean; revision: number; open: () => void; requestRestart: () => void } | null>(null);
+const GuideContext = createContext<{ managed: boolean; manual: boolean; revision: number; workspaceStep?: ProjectGuideStep; open: () => void; requestRestart: () => void } | null>(null);
 export const useProjectConversation = () => useContext(GuideContext);
 const button = 'rounded-sm border border-border px-4 py-2 text-folio-ui hover:bg-surface-ground disabled:opacity-50 focus-visible:ring-2 focus-visible:ring-folio-gold';
 
 /** This boundary stays at the same page position across upload, room, tag and Story refreshes. */
-export function ProjectConversationHost({ projectId, projectName, actorId, activeView, isEmpty, canImport, images, refreshKey, children, interviewContent, initiallyManual = false, canHost = true }: {
+export function ProjectConversationHost({ projectId, projectName, actorId, activeView, isEmpty, canImport, images, refreshKey, children, interviewContent, stepContent, stepNavigation, workspaceStep, initiallyManual = false, canHost = true }: {
   projectId: string; projectName: string; actorId: string; activeView: string; isEmpty: boolean;
-  canImport: boolean; images: GuidePhoto[]; refreshKey: string; children: ReactNode; interviewContent?: ReactNode; initiallyManual?: boolean; canHost?: boolean;
+  canImport: boolean; images: GuidePhoto[]; refreshKey: string; children: ReactNode; interviewContent?: ReactNode; stepContent?: ReactNode; stepNavigation?: ReactNode; workspaceStep?: ProjectGuideStep; initiallyManual?: boolean; canHost?: boolean;
 }) {
   const router = useRouter();
-  const eligible = canHost && (['media', 'story'].includes(activeView) || (isEmpty && !['publish', 'actions', 'boards'].includes(activeView)));
+  const eligible = canHost && (['media', 'story', 'publish'].includes(activeView) || (isEmpty && !['publish', 'actions', 'boards'].includes(activeView)));
   const [manual, setManual] = useState(initiallyManual);
   const [available, setAvailable] = useState<boolean | null>(null);
   const [guide, setGuide] = useState<ProjectGuideMetadata | null>(null);
@@ -35,7 +35,6 @@ export function ProjectConversationHost({ projectId, projectName, actorId, activ
   const [legacyOpen, setLegacyOpen] = useState(false);
   const [question, setQuestion] = useState<LiveAdapterSnapshot['currentQuestion']>(null);
   const [photoMessage, setPhotoMessage] = useState('');
-  const [uploadsOpen, setUploadsOpen] = useState(isEmpty && activeView !== 'story');
   const [reviewOpen, setReviewOpen] = useState(false);
   const intent = useRef<LiveStartIntent>({ requestId: crypto.randomUUID(), consumed: false });
   const controls = useRef<LivePanelControls | null>(null);
@@ -43,7 +42,8 @@ export function ProjectConversationHost({ projectId, projectName, actorId, activ
   const resetReceipt = useRef<InterviewResetRequest | null>(null);
   const resetInFlight = useRef(false);
   const managed = eligible && !manual && available !== false;
-  const toolsAlongside = managed && activeView === 'media' && !isEmpty;
+  const toolsAlongside = managed && activeView !== 'story';
+  const uploadsVisible = ['photos', 'references'].includes(workspaceStep || (activeView === 'media' ? 'photos' : ''));
   const focusedInterview = managed && activeView === 'story';
   const shownPhotos = [...images, ...localPhotos.filter(photo => !images.some(saved => saved.id === photo.id))];
   const photo = shownPhotos[photoIndex % Math.max(1, shownPhotos.length)];
@@ -52,15 +52,10 @@ export function ProjectConversationHost({ projectId, projectName, actorId, activ
     const index = images.findIndex(image => question?.sourceImageIds.includes(image.id));
     if (index >= 0) setPhotoIndex(index);
   }, [question?.id, images]);
-  useEffect(() => { if (activeView === 'story') setUploadsOpen(false); }, [activeView]);
   const onControlsReady = useCallback((next: LivePanelControls | null) => { controls.current = next; }, []);
   const open = useCallback(() => { setManual(false); setAvailable(null); intent.current = { requestId: crypto.randomUUID(), consumed: false }; }, []);
   const fallback = async () => { await controls.current?.stop(); setManual(true); setError(''); };
   const requestRestart = useCallback(() => { setRestartOpen(true); }, []);
-  const navigateView = async (view: string) => {
-    if (view === 'media' && guide?.phase === 'interview' && !await controls.current?.guide('return_guide')) return;
-    router.replace(`/project/${encodeURIComponent(projectId)}?view=${view}`, { scroll: false });
-  };
   const onSnapshot = useCallback((snapshot?: Omit<LiveAdapterSnapshot, 'state'>) => {
     if (!snapshot?.guide || resetInFlight.current) return;
     const next = snapshot.guide; setGuide(next); setQuestion(snapshot.currentQuestion); setRevision(value => value + 1);
@@ -68,8 +63,9 @@ export function ProjectConversationHost({ projectId, projectName, actorId, activ
     seenAction.current = next.actionId;
     if (next.action === 'resume_interview' && next.legacyInterview) { void controls.current?.stop().then(() => { setManual(true); setLegacyOpen(true); }); return; }
     if (next.action === 'start_over') requestRestart();
+    else if (next.action === 'open_rooms') router.replace(`/project/${encodeURIComponent(projectId)}?view=media&step=rooms&action=sort-rooms`, { scroll: false });
     else if (next.action === 'open_tagging') router.replace(`/project/${encodeURIComponent(projectId)}?view=media&step=tags&action=tag`, { scroll: false });
-    else if (next.action === 'open_upload') { setUploadsOpen(true); router.replace(`/project/${encodeURIComponent(projectId)}?view=media`, { scroll: false }); }
+    else if (next.action === 'open_upload') router.replace(`/project/${encodeURIComponent(projectId)}?view=media&step=photos`, { scroll: false });
     else if (['start_interview', 'resume_interview', 'add_more'].includes(next.action)) router.replace(`/project/${encodeURIComponent(projectId)}?view=story`, { scroll: false });
   }, [projectId, requestRestart, router]);
   const previousEligible = useRef(eligible);
@@ -118,27 +114,31 @@ export function ProjectConversationHost({ projectId, projectName, actorId, activ
     } catch (failure) { setError(failure instanceof Error ? failure.message : 'Please retry restarting your interview.'); }
     finally { resetInFlight.current = false; setResetting(false); }
   };
-  return <GuideContext.Provider value={{ managed, manual, revision, open, requestRestart }}>
-    <div className={toolsAlongside ? 'mx-auto max-w-[1600px] lg:grid items-start gap-4 lg:grid-cols-[minmax(320px,35%)_minmax(0,1fr)]' : ''}>
-    {eligible ? <section className={`mx-auto w-full min-w-0 max-w-[1440px] space-y-5 px-4 py-5 ${toolsAlongside ? 'lg:sticky lg:top-20 lg:max-h-[calc(100dvh-6rem)] lg:overflow-y-auto' : 'md:px-8'}`} aria-label="Folio project conversation">
+  return <GuideContext.Provider value={{ managed, manual, revision, workspaceStep, open, requestRestart }}>
+    <div>
+    {eligible ? <section className="mx-auto w-full min-w-0 max-w-[1440px] space-y-5 px-4 py-5 md:px-8" aria-label="Folio project conversation">
       {managed ? <>
         <header className="space-y-3 border-b border-border pb-4">
-          <div className="flex flex-wrap items-center justify-between gap-3"><Link href="/projects" className="inline-flex items-center gap-2 text-folio-meta text-text-secondary"><ArrowLeft size={14} aria-hidden /> Projects</Link><button type="button" aria-label="Use the step-by-step workspace" className="text-folio-meta text-text-secondary underline underline-offset-4" onClick={() => void fallback()}>Step-by-step workspace</button></div>
-          <div><p className="text-folio-meta uppercase tracking-widest text-text-secondary">Folio · Podcast-style interview</p><h1 className="mt-1 font-headline text-folio-h3">{projectName}</h1><p className="mt-1 text-folio-meta text-text-secondary">The decisions, surprises and details worth sharing.</p></div>
+          <div className="flex flex-wrap items-center justify-between gap-3"><Link href="/projects" className="inline-flex items-center gap-2 text-folio-meta text-text-secondary"><ArrowLeft size={14} aria-hidden /> Projects</Link><button type="button" aria-label="Use the step-by-step workspace" className="text-folio-meta text-text-secondary underline underline-offset-4" onClick={() => void fallback()}>Continue without the host</button></div>
+          <div><p className="text-folio-meta uppercase tracking-widest text-text-secondary">{focusedInterview ? 'Folio · Podcast-style interview' : 'Folio · Your project, step by step'}</p><h1 className="mt-1 font-headline text-folio-h3">{projectName}</h1><p className="mt-1 text-folio-meta text-text-secondary">{focusedInterview ? 'The decisions, surprises and details worth sharing.' : 'Your host is here to help with each step.'}</p></div>
         </header>
         <div className="flex flex-wrap items-center justify-between gap-3">
-          <nav className="flex gap-1 rounded-full bg-surface-ground p-1" aria-label="Conversation workspace">{[['media', 'Photos & details'], ['story', 'Interview']].map(([view, label]) => <button key={view} type="button" className={`rounded-full px-4 py-2 text-folio-meta ${activeView === view ? 'bg-surface-canvas shadow-sm' : 'text-text-secondary'}`} aria-current={activeView === view ? 'page' : undefined} onClick={() => void navigateView(view)}>{label}</button>)}</nav>
-          <div className="flex items-center gap-4" aria-label="Interview tools">
+          <div className="min-w-0 basis-full sm:flex-1 sm:basis-0">{stepNavigation}</div>
+          <div className="ml-auto flex items-center gap-4" aria-label="Interview tools">
             {focusedInterview && interviewContent ? <button type="button" className="text-folio-meta underline underline-offset-4" aria-expanded={reviewOpen} aria-controls={`interview-notes-${projectId}`} onClick={() => setReviewOpen(value => !value)}>Review saved answers</button> : null}
             <button type="button" className="text-folio-meta text-text-secondary underline underline-offset-4" onClick={requestRestart}>Start over</button>
           </div>
         </div>
         {focusedInterview && interviewContent ? <div id={`interview-notes-${projectId}`} hidden={!reviewOpen} className="rounded-lg border border-border bg-surface-ground p-5">{interviewContent}</div> : null}
-        <div className={photo && !toolsAlongside ? 'grid items-start gap-6 lg:grid-cols-[minmax(0,1.2fr)_minmax(360px,1fr)]' : 'mx-auto max-w-3xl'}>
-          <div className={!toolsAlongside ? 'min-w-0 rounded-xl border border-border bg-surface-canvas lg:col-start-2 lg:row-start-1' : 'min-w-0'}>
-          <LiveInterviewPanel key={connection} source={{ kind: 'project_guide', id: projectId }} startIntent={intent.current} presentation="primary" recordingSetup={focusedInterview} onCanonicalChange={onSnapshot} onAvailabilityChange={setAvailable} onControlsReady={onControlsReady} guideRefreshKey={`${refreshKey}:${localPhotos.map(item => item.id).join(',')}`} />
+        <div className={toolsAlongside || photo ? 'grid items-start gap-6 lg:grid-cols-[minmax(0,1.5fr)_minmax(340px,1fr)]' : 'mx-auto max-w-3xl'}>
+          <div className="min-w-0 rounded-xl border border-border bg-surface-canvas lg:sticky lg:top-20 lg:col-start-2 lg:row-start-1">
+          <LiveInterviewPanel key={connection} source={{ kind: 'project_guide', id: projectId }} startIntent={intent.current} presentation="primary" recordingSetup={focusedInterview} workspaceStep={workspaceStep} onCanonicalChange={onSnapshot} onAvailabilityChange={setAvailable} onControlsReady={onControlsReady} guideRefreshKey={`${refreshKey}:${localPhotos.map(item => item.id).join(',')}`} />
           </div>
-          {photo ? <section aria-label="Project photographs" className={toolsAlongside ? 'hidden' : 'min-w-0 space-y-3 lg:col-start-1 lg:row-start-1'}>
+          {toolsAlongside ? <div className="min-w-0 space-y-6 lg:col-start-1 lg:row-start-1">
+            {uploadsVisible ? <ProjectGuideUploads projectId={projectId} canImport={canImport} onAdded={(_id, added) => { setLocalPhotos(current => [...current, ...added]); router.refresh(); }} /> : null}
+            {stepContent}
+          </div> : null}
+          {photo && focusedInterview ? <section aria-label="Project photographs" className={toolsAlongside ? 'hidden' : 'min-w-0 space-y-3 lg:col-start-1 lg:row-start-1'}>
             <div className="relative overflow-hidden rounded-xl bg-surface-ground"><img src={photo.url} alt={photo.name || projectName} className="h-[42dvh] min-h-64 w-full object-contain lg:h-[min(56dvh,640px)]" />
               <div className="absolute inset-x-4 bottom-4 flex items-center justify-between gap-3"><button type="button" className="rounded-full bg-surface-canvas p-3 shadow-sm disabled:opacity-40" aria-label="Previous photo" disabled={shownPhotos.length < 2} onClick={() => setPhotoIndex(value => (value + shownPhotos.length - 1) % shownPhotos.length)}><ChevronLeft size={18} aria-hidden /></button><p className="rounded-full bg-surface-canvas px-4 py-2 text-folio-meta">{(photoIndex % shownPhotos.length) + 1} of {shownPhotos.length}{photo.room ? ` · ${photo.room}` : ''}</p><button type="button" className="rounded-full bg-surface-canvas p-3 shadow-sm disabled:opacity-40" aria-label="Next photo" disabled={shownPhotos.length < 2} onClick={() => setPhotoIndex(value => (value + 1) % shownPhotos.length)}><ChevronRight size={18} aria-hidden /></button></div>
             </div>
@@ -148,10 +148,9 @@ export function ProjectConversationHost({ projectId, projectName, actorId, activ
           </section> : null}
         </div>
         {available === null ? <p role="status" className="text-folio-meta">Getting your Folio host ready…</p> : null}
-        {!focusedInterview ? <details id={`guide-uploads-${projectId}`} open={uploadsOpen} onToggle={event => setUploadsOpen(event.currentTarget.open)}><summary className="cursor-pointer py-2 text-folio-ui">Add photographs or a project link</summary><ProjectGuideUploads projectId={projectId} canImport={canImport} onAdded={(_id, added) => { setLocalPhotos(current => [...current, ...added]); router.refresh(); }} /></details> : null}
       </> : <div className="flex flex-wrap items-center justify-between gap-3"><p className="text-folio-meta text-text-secondary">{available === false ? 'Your project workspace is ready. Live hosting is not available for this account right now.' : 'Continue with photographs, rooms and your saved interview below.'}</p>{available !== false ? <button type="button" className={button} onClick={open}>Return to the conversation</button> : null}</div>}
     </section> : null}
-    {!focusedInterview ? <div className="min-w-0" hidden={managed && isEmpty}>{children}</div> : null}
+    {!managed ? <div className="min-w-0">{children}</div> : null}
     </div>
     <Dialog.Root open={restartOpen} onOpenChange={next => { if (!resetInFlight.current) setRestartOpen(next); }}>
       <Dialog.Portal>

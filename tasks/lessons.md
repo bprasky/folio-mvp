@@ -1180,3 +1180,9 @@ The live host must own the interview page composition, not sit above a second fu
 ## 2026-10-02 — Setup gives way to the recorded interview
 
 The founder wants the host to explain URL/file uploads first, then remove upload controls from the Interview view. A collapsed upload section still exposes setup during the interview. Recording is a core media opportunity: provide preparation, explicit private capture consent and truthful live status; never hard-code no-recording promises across a recordable interview. Activation requires real private storage and media processing readiness, not copy changes. Differentiate daily quota from concurrency/rate limits, and do not offer an immediate retry that cannot succeed under the same limit.
+
+## 2026-10-02 — Tavus belongs inside the existing guided steps
+
+Keep the real Photos, Rooms, Tags, Story/interview and Publish sequence, including its completion and permission gates. The founder explicitly rejected blending them into a Photos & details conversation screen. Add the host alongside each step's existing tools, give it the currently viewed step, and confine photo uploads to Photos. Reuse the existing tracker and surfaces; do not stack a second project page below the host or replace the workflow with a parallel navigation system.
+
+Follow-up: the host should follow the designer across steps without a fresh introduction or lost context. Keep one live session across project-step navigation, preserve guide history and canonical answers, and carry authorized intake history into the newly created project. The initial welcome should explain Photos → organize/tag → full interview and the value of context; media promises must reflect enabled capture and processing.

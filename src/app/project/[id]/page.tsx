@@ -447,8 +447,28 @@ export default async function ProjectPage({
   const hasRooms = base.rooms && base.rooms.length > 0;
   const isProjectEmpty = !hasMedia && !hasRooms;
   const canScrape = viewerId ? await canUsePortfolioScrape(viewerId) : false;
+  const mediaContent = <MediaSection project={sanitizedProject} isOwner={isOwner} images={base.images}
+    isPublished={isPublished} editorialState={editorialState} initialTagging={startInTagging}
+    showCredits={isOwner && currentStepKey === 'rooms'} />;
+  const publishContent = <PublishTabContent
+          projectId={sanitizedProject.id}
+          images={base.images}
+          isOwner={isOwner}
+          editorialState={editorialState}
+          canPublish={publishReadiness.canPublish}
+          taggedPhotoCount={
+            base.images.filter(
+              img => !isDocumentImage(img.name) && img.tags.length > 0,
+            ).length
+          }
+          untaggedPhotoCount={publishReadiness.gates.tags.remaining}
+          unsortedPhotoCount={publishReadiness.gates.rooms.remaining}
+        />;
+  const stepNavigation = trackerState ? <ProjectProgressTracker projectId={base.id} state={trackerState} currentView={view} compact /> : null;
   const conversationProps = {
     projectId: base.id, projectName: base.title, actorId: viewerId!, activeView: view, isEmpty: isProjectEmpty,
+    workspaceStep: (currentStepKey || (view === 'story' ? 'story' : 'photos')) as import('@/lib/live-interview/adapter-types').ProjectGuideStep,
+    stepNavigation, stepContent: view === 'publish' ? publishContent : isProjectEmpty ? null : mediaContent,
     canImport: canScrape, initiallyManual: searchParams.manual === '1', canHost: isOwner && !isProjectHome && !!viewerId,
     images: base.images.filter(img => !isDocumentImage(img.name)).map(img => ({ id: img.id, url: img.url, name: img.name, room: img.room, roomId: img.roomId })),
     refreshKey: JSON.stringify([base.images.map(img => [img.id, img.roomId, img.inclusion, img.noProducts, img.tags.map(tag => tag.id)]), base.rooms.map(room => room.id), editorialState, interviewAnswerCount]),
@@ -561,20 +581,7 @@ export default async function ProjectPage({
 
       {/* PUBLISH tab — full-bleed immersive preview */}
       {view === 'publish' && (
-        <PublishTabContent
-          projectId={sanitizedProject.id}
-          images={base.images}
-          isOwner={isOwner}
-          editorialState={editorialState}
-          canPublish={publishReadiness.canPublish}
-          taggedPhotoCount={
-            base.images.filter(
-              img => !isDocumentImage(img.name) && img.tags.length > 0,
-            ).length
-          }
-          untaggedPhotoCount={publishReadiness.gates.tags.remaining}
-          unsortedPhotoCount={publishReadiness.gates.rooms.remaining}
-        />
+        publishContent
       )}
 
       {/* All other tabs */}
@@ -592,17 +599,7 @@ export default async function ProjectPage({
             />
           )}
           {view === 'media' && (
-            <MediaSection
-              project={sanitizedProject}
-              isOwner={isOwner}
-              images={base.images}
-              isPublished={isPublished}
-              editorialState={editorialState}
-              initialTagging={startInTagging}
-              // Credits moved off the Story tab: naming collaborators belongs
-              // with sorting rooms, before the interview, not after the writing.
-              showCredits={isOwner && currentStepKey === 'rooms'}
-            />
+            mediaContent
           )}
 
           {view === 'story' && storyContent}

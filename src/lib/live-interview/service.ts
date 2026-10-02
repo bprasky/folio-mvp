@@ -5,7 +5,7 @@ import { checkRateLimit } from '@/lib/rateLimit';
 import { resolvePublishingStudioContext } from '@/lib/publishing-studio/data';
 import { assertCaptureStorageReady } from '@/lib/interview-media/storage';
 import { authorizeLiveSource, executeLiveCommand, prepareLiveInterview } from './adapters';
-import type { LiveAdapterCommand, LiveAdapterSnapshot, LiveSource } from './adapter-types';
+import { PROJECT_GUIDE_STEPS, type ProjectGuideStep, type LiveAdapterCommand, type LiveAdapterSnapshot, type LiveSource } from './adapter-types';
 import type { GuidedSession } from '@/lib/interview/guided/types';
 import { CAPTURE_CONSENT_VERSION, CAPTURE_DISCLOSURE, LiveError, liveConfig, liveEnabled, recordingEnabled, type CaptureMode } from './config';
 import { backendHash, createConversation, createPal, deletePal, endConversation, findConversations, findPals, getConversation, openJoin, ProviderError, sealJoin } from './provider';
@@ -65,7 +65,7 @@ async function ownedSession(actorId: string, id: string) {
   if (!session || session.actorId !== actorId) throw new LiveError('Interview not found.',404);
   return session;
 }
-export async function startLiveSession(actorId: string, input: {source:unknown; requestId:string; mode:CaptureMode; consentVersion:string; microphoneReady?:boolean; inputMode?:'voice'|'text'; selectedImageId?:string|null}) {
+export async function startLiveSession(actorId: string, input: {source:unknown; requestId:string; mode:CaptureMode; consentVersion:string; microphoneReady?:boolean; inputMode?:'voice'|'text'; selectedImageId?:string|null; workspaceStep?:ProjectGuideStep; intakeSessionId?:string}) {
   if (!liveEnabled(actorId)) throw new LiveError('Live interviews are not available for this account.',403);
   const inputMode=input.inputMode ?? 'voice';
   if (!/^[a-zA-Z0-9-]{16,80}$/.test(input.requestId ?? '') || !['voice','text'].includes(inputMode)
@@ -73,6 +73,7 @@ export async function startLiveSession(actorId: string, input: {source:unknown; 
     || !['none','audio','video'].includes(input.mode) || input.consentVersion !== CAPTURE_CONSENT_VERSION)
     throw new LiveError('Confirm the recording choice and microphone permission before starting.',400);
   const source = parseLiveSource(input.source);
+  if (input.workspaceStep !== undefined && (source.kind !== 'project_guide' || !PROJECT_GUIDE_STEPS.includes(input.workspaceStep))) throw new LiveError('Choose a valid project step.',400);
   if (source.kind==='project_guide' && input.mode!=='none') throw new LiveError('Join your host, then choose recording with explicit consent.',403);
   const workspace = await authorizeActor(actorId,source); const config = liveConfig();
   if (!(await checkRateLimit(`live-start:${actorId}`,{max:12,windowMs:60_000})).success) throw new LiveError('Please wait before starting again.',429);
@@ -99,8 +100,17 @@ export async function startLiveSession(actorId: string, input: {source:unknown; 
   }
   try {
     const prior = await getLatestLiveSession(actorId,source.kind,source.id,id,source.round||1);
-    const snapshot = await prepareLiveInterview(actorId,source,`prepare-${id}`,
-      prior ? payload(prior).snapshot?.state : undefined);
+    let priorState = prior ? payload(prior).snapshot?.state : undefined;
+    if (!priorState && source.kind === 'project_guide' && !source.id.startsWith('new:') && input.intakeSessionId) {
+      const intake = await ownedSession(actorId,input.intakeSessionId);
+      const intakePayload = payload(intake);
+      if (intakePayload.source.kind !== 'project_guide' || intakePayload.source.id !== `new:${actorId}` || intakePayload.workspaceId !== workspace.id || intake.status !== 'ended')
+        throw new LiveError('The opening conversation cannot be carried into this project.',409);
+      // Only guide history follows intake. Never copy receipts or canonical answers.
+      const native = intakePayload.snapshot?.state.native as import('./project-guide').ProjectGuideState | undefined;
+      if (native?.kind === 'project_guide') priorState = { schemaVersion:1, skipped:[], receipts:{}, native:{kind:'project_guide', phase:'guide', revision:0, recentTurns:native.recentTurns} };
+    }
+    const snapshot = await prepareLiveInterview(actorId,source,`prepare-${id}`,priorState,input.workspaceStep);
     if (!snapshot.currentQuestion || snapshot.status === 'finished') throw new LiveError('This interview has no current question. Review it in the text workspace.');
     const imageId=validateImageBinding(source,snapshot,input.selectedImageId);
     await mutateLiveSession(id,s=>{const p=payload(s);p.snapshot=snapshot;s.canonicalId=source.kind==='project_guide'?source.id:snapshot.interviewId;prepareSpeech(p.turnState,snapshot);
@@ -395,7 +405,8 @@ export async function controlLiveSession(actorId:string,id:string,command:LiveAd
   const session=await ownedSession(actorId,id);const p=payload(session);
   await authorizeActor(actorId,p.source,p.workspaceId);
   if(!command || !['skip','reuse','retry','finish','correct','guide'].includes(command.action))throw new LiveError('Use the spoken answer flow for new answers.',400);
-  if(command.action==='guide' && (p.source.kind!=='project_guide' || !['refresh','return_guide','start_interview','resume_interview','start_over','add_more','open_upload','open_tagging','none'].includes(command.guideAction??'')))throw new LiveError('Choose a valid project guide action.',400);
+  if(command.action==='guide' && (p.source.kind!=='project_guide' || !['refresh','return_guide','start_interview','resume_interview','start_over','add_more','open_upload','open_rooms','open_tagging','none'].includes(command.guideAction??'')))throw new LiveError('Choose a valid project guide action.',400);
+  if(command.workspaceStep !== undefined && (p.source.kind !== 'project_guide' || command.action !== 'guide' || !PROJECT_GUIDE_STEPS.includes(command.workspaceStep)))throw new LiveError('Choose a valid project step.',400);
   if(!/^[a-zA-Z0-9-]{8,100}$/.test(command.requestId??''))throw new LiveError('A control receipt is required.',400);
   await mutateLiveSession(id,s=>{
     const state=payload(s);

@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useId, useRef, useState } from 'react';
 import type { DailyCall } from '@daily-co/daily-js';
-import type { LiveAdapterSnapshot, LiveSource, ProjectGuideAction } from '@/lib/live-interview/adapter-types';
+import type { LiveAdapterSnapshot, LiveSource, ProjectGuideAction, ProjectGuideStep } from '@/lib/live-interview/adapter-types';
 import type { LiveTurn } from '@/lib/live-interview/turns';
 import { checkCaptureReady, discardStoredCaptures, purgeExpiredCaptures, retryStoredCaptures, startCreatorCapture, type CaptureHandle, type CaptureState } from '@/lib/live-interview/capture';
 
@@ -15,7 +15,7 @@ export interface LiveStartIntent { requestId: string; consumed: boolean; inputMo
 export interface LivePanelControls { stop: () => Promise<void>; guide: (action: ProjectGuideAction | 'refresh' | 'return_guide') => Promise<boolean>; linkPhoto: (id: string, questionId: string) => Promise<boolean> }
 interface Props { source: LiveSource; startIntent?: LiveStartIntent; onStartingChange?: (starting: boolean) => void; onCanonicalChange?: (snapshot?: Omit<LiveAdapterSnapshot,'state'>) => void; onActiveChange?: (active: boolean) => void; beforeStart?: () => Promise<void>; selectedImageId?:string|null; onSessionChange?:(id:string)=>void;
   presentation?: 'compact' | 'primary'; onAvailabilityChange?: (available: boolean) => void; onOpenWorkspace?: () => void;
-  onControlsReady?: (controls: LivePanelControls | null) => void; guideRefreshKey?: string; recordingSetup?: boolean }
+  onControlsReady?: (controls: LivePanelControls | null) => void; guideRefreshKey?: string; recordingSetup?: boolean; workspaceStep?: ProjectGuideStep }
 type Mode = 'none' | 'audio' | 'video';
 type TypedQuestion = { questionId: string; version: string; questionText: string };
 const button = 'rounded-sm border border-border px-3 py-2 text-folio-meta font-medium hover:bg-surface-ground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-folio-gold disabled:cursor-not-allowed disabled:opacity-50';
@@ -30,9 +30,11 @@ async function liveRequest<T>(path: string, body?: unknown): Promise<T> {
 }
 
 /** A passive mount never starts a call. An explicit entry intent is consumed once. */
-export function LiveInterviewPanel({ source, startIntent, onStartingChange, onCanonicalChange, onActiveChange, beforeStart, selectedImageId, onSessionChange, presentation = 'compact', onAvailabilityChange, onOpenWorkspace, onControlsReady, guideRefreshKey, recordingSetup = false }: Props) {
+export function LiveInterviewPanel({ source, startIntent, onStartingChange, onCanonicalChange, onActiveChange, beforeStart, selectedImageId, onSessionChange, presentation = 'compact', onAvailabilityChange, onOpenWorkspace, onControlsReady, guideRefreshKey, recordingSetup = false, workspaceStep }: Props) {
   const fieldId = useId();
   const sourceKey = JSON.stringify(source);
+  const workspaceStepRef = useRef(workspaceStep);
+  workspaceStepRef.current = workspaceStep;
   const [available, setAvailable] = useState(false);
   const [recordingAvailable, setRecordingAvailable] = useState(false);
   const [mode, setMode] = useState<Mode>('none');
@@ -80,7 +82,7 @@ export function LiveInterviewPanel({ source, startIntent, onStartingChange, onCa
   const mountedSource = useRef(sourceKey);
   const sourceEpoch = useRef(0);
   const chooseTextDuringStart = useRef<(() => void) | null>(null);
-  const guideReceipt = useRef<{ action: ProjectGuideAction | 'refresh' | 'return_guide' | 'skip' | 'retry'; requestId: string; fromVersion: string; questionId?: string } | null>(null);
+  const guideReceipt = useRef<{ action: ProjectGuideAction | 'refresh' | 'return_guide' | 'skip' | 'retry'; requestId: string; fromVersion: string; questionId?: string; workspaceStep?: ProjectGuideStep } | null>(null);
   const echoedVersions = useRef(new Set<string>());
   const lastGuide = useRef('');
   const captureStarting = useRef(false);
@@ -337,8 +339,11 @@ export function LiveInterviewPanel({ source, startIntent, onStartingChange, onCa
       chooseTextDuringStart.current = null; setStartInputOpen(false);
       const requestMode = chosenInput === 'text' ? 'none' : captureMode;
       if (startIntent) { startIntent.requestId = startKey.current; startIntent.inputMode = chosenInput; startIntent.settled = false; }
+      let intakeSessionId: string | undefined;
+      try { if (source.kind === 'project_guide' && !source.id.startsWith('new:')) intakeSessionId = sessionStorage.getItem(`folio.live.intake.${source.id}`) || undefined; } catch { /* saved project context still follows */ }
       const next = await liveRequest<LiveState>('/api/live-interviews', { source: JSON.parse(sourceKey), requestId: startKey.current,
-        mode: requestMode, inputMode: chosenInput, consentVersion: '2026-10-01', microphoneReady: !!stream, selectedImageId });
+        mode: requestMode, inputMode: chosenInput, consentVersion: '2026-10-01', microphoneReady: !!stream, selectedImageId, workspaceStep: workspaceStepRef.current,
+        intakeSessionId });
       startedSessionId = next.id;
       if (!currentAttempt()) {
         if (next.id) await liveRequest(`/api/live-interviews/${encodeURIComponent(next.id)}`, { action: 'end' });
@@ -502,13 +507,13 @@ export function LiveInterviewPanel({ source, startIntent, onStartingChange, onCa
     const current = stateRef.current;
     if (!current?.id || !current.snapshot?.guide || inFlight.current || typedDraft.trim() || typedReceipt.current) return false;
     if (guideReceipt.current && guideReceipt.current.action !== action) { if (!quiet) setError('Retry the previous conversation choice before choosing another.'); return false; }
-    guideReceipt.current ??= { action, requestId: crypto.randomUUID(), fromVersion: current.snapshot.version, questionId: current.snapshot.currentQuestion?.id };
+    guideReceipt.current ??= { action, requestId: crypto.randomUUID(), fromVersion: current.snapshot.version, questionId: current.snapshot.currentQuestion?.id, workspaceStep: workspaceStepRef.current };
     const receipt = guideReceipt.current;
     inFlight.current = true; setBusy(true); if (!quiet) setError('');
     try {
       await eventTail.current;
       const next = await liveRequest<LiveState>(`/api/live-interviews/${encodeURIComponent(current.id)}`, { action: 'control',
-        command: action === 'skip' || action === 'retry' ? { action, requestId: receipt.requestId, questionId: receipt.questionId } : { action: 'guide', guideAction: action, requestId: receipt.requestId } });
+        command: action === 'skip' || action === 'retry' ? { action, requestId: receipt.requestId, questionId: receipt.questionId } : { action: 'guide', guideAction: action, requestId: receipt.requestId, workspaceStep: receipt.workspaceStep } });
       setCurrent(next);
       const question = next.snapshot?.currentQuestion;
       const version = next.snapshot?.version;
@@ -544,12 +549,19 @@ export function LiveInterviewPanel({ source, startIntent, onStartingChange, onCa
   const refreshedGuide = useRef(guideRefreshKey);
   const guideRefreshAttempt = useRef('');
   useEffect(() => {
-    if (!active || busy || !guideRefreshKey || refreshedGuide.current === guideRefreshKey || typedDraft.trim() || typedReceipt.current || !state?.snapshot?.guide) return;
-    const attempt = `${guideRefreshKey}:${state.snapshot.version}`;
+    if (!active || busy || !guideRefreshKey || (refreshedGuide.current === guideRefreshKey && (!workspaceStep || state?.snapshot?.guide?.workspaceStep === workspaceStep)) || typedDraft.trim() || typedReceipt.current || !state?.snapshot?.guide) return;
+    const attempt = `${workspaceStep}:${guideRefreshKey}:${state.snapshot.version}`;
     if (guideRefreshAttempt.current === attempt) return;
     guideRefreshAttempt.current = attempt;
     void guideControl('refresh', true).then(ok => { if (ok) refreshedGuide.current = guideRefreshKey; });
-  }, [active, busy, guideControl, guideRefreshKey, state, typedDraft]);
+  }, [active, busy, guideControl, guideRefreshKey, state, typedDraft, workspaceStep]);
+  useEffect(() => {
+    if (source.kind !== 'project_guide' || !workspaceStep || workspaceStep === 'story') return;
+    // Returning to setup finishes the clip while retaining the host connection.
+    void captureRef.current?.stop().catch(() => progress('incomplete', 'Retry the final recording upload.'));
+    streamRef.current?.getVideoTracks().forEach(track => { streamRef.current?.removeTrack(track); track.stop(); });
+    setCamera(false);
+  }, [source.kind, workspaceStep, progress]);
   const retryRecording = async () => {
     try {
       if (captureRef.current) await captureRef.current.retry();
@@ -582,7 +594,7 @@ export function LiveInterviewPanel({ source, startIntent, onStartingChange, onCa
     captureStarting.current = true; setBusy(true); setError('');
     const sessionId = stateRef.current.id; const stream = streamRef.current; const epoch = sourceEpoch.current;
     let acquired: MediaStream | null = null;
-    const stillHere = () => mounted.current && sourceEpoch.current === epoch && stateRef.current?.id === sessionId && streamRef.current === stream && !!callRef.current && !ending.current;
+    const stillHere = () => mounted.current && sourceEpoch.current === epoch && stateRef.current?.id === sessionId && streamRef.current === stream && !!callRef.current && !ending.current && (!workspaceStepRef.current || workspaceStepRef.current === 'story');
     try {
       await checkCaptureReady(mediaMode);
       if (mediaMode === 'video') acquired = await navigator.mediaDevices.getUserMedia({ audio: false, video: { width: { ideal: 1280 }, height: { ideal: 720 }, frameRate: { ideal: 24, max: 30 } } });
@@ -671,7 +683,7 @@ export function LiveInterviewPanel({ source, startIntent, onStartingChange, onCa
         <button type="button" className={button} disabled={busy || awaitingReply || !!unresolved.length || (inputMode === 'text' && !!typedDraft.trim())} onClick={() => void changeInput(inputMode === 'voice' ? 'text' : 'voice')}>{inputMode === 'voice' ? 'Type instead' : 'Use microphone instead'}</button>
         {(!guide || guide.phase === 'interview') ? <button type="button" className={button} disabled={busy || !!unresolved.length || (guide && !!typedDraft.trim())} onClick={() => void control('skip')}>{guide ? 'Move on' : 'Skip question'}</button> : null}
       </div>
-      {guide ? <div className="flex flex-wrap gap-2" aria-label="Conversation choices">{guide.allowedActions.filter(action => guideLabels[action] && (!projectHost || ['start_interview', 'resume_interview', 'add_more'].includes(action))).map(action => <button key={action} type="button" className={button} disabled={busy || awaitingReply || !!typedDraft.trim() || !!unresolved.length} onClick={() => void guideControl(action)}>{guideLabels[action]}</button>)}{guide.phase === 'interview' && !projectHost ? <button type="button" className={button} disabled={busy || awaitingReply || !!typedDraft.trim()} onClick={() => void guideControl('return_guide')}>Photographs & project details</button> : null}</div> : null}
+      {guide ? <div className="flex flex-wrap gap-2" aria-label="Conversation choices">{guide.allowedActions.filter(action => guideLabels[action] && (!projectHost || ((!workspaceStep || workspaceStep === 'story') && ['start_interview', 'resume_interview', 'add_more'].includes(action)))).map(action => <button key={action} type="button" className={button} disabled={busy || awaitingReply || !!typedDraft.trim() || !!unresolved.length} onClick={() => void guideControl(action)}>{guideLabels[action]}</button>)}{guide.phase === 'interview' && !projectHost ? <button type="button" className={button} disabled={busy || awaitingReply || !!typedDraft.trim()} onClick={() => void guideControl('return_guide')}>Photographs & project details</button> : null}</div> : null}
       {guide?.offeredDetail && guide.offeredDetail.questionId === state?.snapshot?.currentQuestion?.id && !awaitingReply && !typedDraft ? <div className="space-y-2 rounded-sm bg-surface-ground p-3 text-folio-meta"><p>You just shared:</p><p className="whitespace-pre-wrap">{guide.offeredDetail.text}</p><div className="flex flex-wrap gap-2"><button type="button" className={button} disabled={busy || !!unresolved.length} onClick={() => void sendTyped(guide.offeredDetail)}>Use what I just shared</button><button type="button" className={button} disabled={busy || !!unresolved.length} onClick={() => { const detail = guide.offeredDetail; const snapshot = stateRef.current?.snapshot; if (!detail || !snapshot?.currentQuestion || detail.questionId !== snapshot.currentQuestion.id) return; const binding = { questionId: detail.questionId, version: snapshot.version, questionText: snapshot.currentQuestion.text }; void changeInput('text').then(() => updateTypedDraft(detail.text, binding)); }}>Edit this detail</button></div></div> : null}
       {inputMode === 'text' ? <form className="space-y-2" onSubmit={event => { event.preventDefault(); void sendTyped(); }}>
         <label htmlFor={`${fieldId}-typed`} className="text-folio-meta font-medium">Your reply</label>

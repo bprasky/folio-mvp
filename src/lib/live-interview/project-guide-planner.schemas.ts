@@ -1,6 +1,7 @@
 import { z } from 'zod';
+import { PROJECT_GUIDE_STEPS } from './adapter-types';
 
-export const PROJECT_GUIDE_ACTIONS = ['start_interview', 'resume_interview', 'start_over', 'add_more', 'open_upload', 'open_tagging', 'none'] as const;
+export const PROJECT_GUIDE_ACTIONS = ['start_interview', 'resume_interview', 'start_over', 'add_more', 'open_upload', 'open_rooms', 'open_tagging', 'none'] as const;
 export const ProjectGuideActionSchema = z.enum(PROJECT_GUIDE_ACTIONS);
 export type GuideAction = z.infer<typeof ProjectGuideActionSchema>;
 
@@ -15,6 +16,7 @@ export const ProjectGuideInputSchema = z.object({
   answeredCount: z.number().int().nonnegative(),
   remainingQuestionCount: z.number().int().nonnegative().nullable(),
   recordingAvailable: z.boolean().optional(),
+  workspaceStep: z.enum(PROJECT_GUIDE_STEPS).optional(),
   allowedActions: z.array(ProjectGuideActionSchema).max(PROJECT_GUIDE_ACTIONS.length),
   userText: z.string().max(2000),
   recentTurns: z.array(z.object({ role: z.enum(['user', 'assistant']), text: z.string().max(2000) }).strict()).max(8).optional(),

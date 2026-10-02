@@ -82,7 +82,7 @@ export function ProjectGuideUploads({ projectId, ensureProject, canImport = true
     setPartialProject(null);
   });
   return <section className="space-y-4 rounded-lg border border-border bg-surface-canvas p-5" aria-label="Add project photographs">
-    <div><h3 className="font-headline text-folio-h4">Bring your project into the conversation</h3><p className="mt-1 text-folio-meta text-text-secondary">Add photographs while we talk. You can sort rooms and tag details as you go.</p></div>
+    <div><h3 className="font-headline text-folio-h4">Bring your project into the conversation</h3><p className="mt-1 text-folio-meta text-text-secondary">Add a project link or upload your photographs. Next, we’ll organize rooms and tag the details before the interview.</p></div>
     {canImport ? <form className="flex flex-wrap gap-2" onSubmit={event => { event.preventDefault(); void importUrl(); }}>
       <label className="min-w-0 flex-1 text-folio-meta">Project or portfolio link<input aria-label="Project or portfolio link" type="url" required value={url} onChange={event => setUrl(event.target.value)} disabled={busy} placeholder="https://…" className="mt-1 w-full rounded-sm border border-border bg-surface-ground px-3 py-2 text-folio-body" /></label>
       <button className={`${button} self-end`} disabled={busy || !url.trim()}>{busy ? 'Working…' : 'Find photos'}</button>

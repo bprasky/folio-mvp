@@ -49,7 +49,7 @@ window.seedRecovery=async records=>{const db=await new Promise((resolve,reject)=
  try{await new Promise((resolve,reject)=>{const tx=db.transaction(['runs','chunks'],'readwrite');for(const {run,chunks} of records){tx.objectStore('runs').put(run);for(const [index,text] of chunks.entries())tx.objectStore('chunks').put({runId:run.runId,index,blob:new Blob([text],{type:run.mimeType})})}tx.oncomplete=()=>resolve();tx.onerror=()=>reject(tx.error)})}finally{db.close()}};
 window.fixtureRoot=createRoot(document.getElementById('root'));
 window.renderDirect=(key='direct',id='synthetic-project')=>window.fixtureRoot.render(<React.StrictMode><LiveInterviewPanel key={key} source={{kind:'project',id}} startIntent={window.entryIntent} presentation="primary" onActiveChange={value=>window.activeChanges.push(value)}/></React.StrictMode>);
-window.renderGuide=()=>window.fixtureRoot.render(<LiveInterviewPanel key="guide-recording" source={{kind:'project_guide',id:'synthetic-project'}} startIntent={window.entryIntent} presentation="primary" recordingSetup/>);
+window.renderGuide=(step='story')=>window.fixtureRoot.render(<LiveInterviewPanel key="guide-recording" source={{kind:'project_guide',id:'synthetic-project'}} startIntent={window.entryIntent} presentation="primary" recordingSetup={step==='story'} workspaceStep={step}/>);
 window.fixtureRoot.render(<LiveInterviewPanel source={{kind:'project',id:'synthetic-project'}} presentation="primary" onActiveChange={value=>window.activeChanges.push(value)}/>);`;
 const dailyFixture = `export default {createCallObject(options){window.dailyOptions=options;const handlers={};const call={
  on(name,handler){(handlers[name]??=[]).push(handler);return call},participants(){return{}},async join(){if(window.failJoin)throw Error('Synthetic join failed');if(window.holdJoin)await new Promise(resolve=>window.resolveJoin=resolve);window.joined=true;window.left=false;window.destroyed=false},
@@ -598,6 +598,12 @@ async function main() {
       await page.evaluate(()=>window.cameraDenied=false);await click('Record camera and voice');await text('Recording your voice and camera');
       assert.equal(starts,before);assert.equal(await page.evaluate(()=>window.dailyOptions.videoSource),false,'camera is private, not sent to Tavus');
       assert.equal(await page.$eval('video[aria-label="Your private camera preview"]',e=>e.srcObject.getVideoTracks()[0].getSettings().width),1280);
+      const finalized=captureRequests.filter(r=>r.action==='finalize').length;
+      await page.evaluate(()=>window.renderGuide('rooms'));await text('Private recording is processing');
+      assert.equal(await page.$('video[aria-label="Your private camera preview"]'),null);
+      assert.equal(await page.$('[aria-label="Prepare your interview recording"]'),null);
+      assert.equal(captureRequests.filter(r=>r.action==='finalize').length,finalized+1);
+      assert.equal(starts,before);assert.equal(await page.evaluate(()=>window.left),false,'Leaving Story finishes capture but keeps the host.');
       await click('End');await callEnded();
     });
     await check('daily quota shows its reset time and blocks an identical retry instead of looping', async () => {
