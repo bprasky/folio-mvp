@@ -4,7 +4,7 @@ const {spawnSync}=require('node:child_process');
 const args=new Set(process.argv.slice(2));let failed=false;
 function report(name,ok,detail=''){console.log(`${ok?'PASS':'MISSING'} ${name}${detail?`: ${detail}`:''}`);if(!ok)failed=true;}
 async function main(){
- const required=['TAVUS_API_KEY','NEXTAUTH_SECRET','DATABASE_URL','FOLIO_LIVE_BASE_URL','FOLIO_LIVE_ALLOWLIST'];
+ const required=['TAVUS_API_KEY','NEXTAUTH_SECRET','DATABASE_URL','FOLIO_LIVE_BASE_URL'];
  for(const name of required)report(name,Boolean(process.env[name]?.trim()));
  let base;try{base=new URL(process.env.FOLIO_LIVE_BASE_URL);report('HTTPS backend origin',base.protocol==='https:'&&base.pathname==='/'&&!base.username&&!base.password&&!base.search&&!base.hash);}catch{report('HTTPS backend origin',false);}
  console.log('STATIC flags: live='+ (process.env.FOLIO_LIVE_INTERVIEWS==='1')+', recording='+(process.env.FOLIO_INTERVIEW_RECORDING==='1')+', exports='+(process.env.FOLIO_INTERVIEW_MEDIA_EXPORTS==='1'));

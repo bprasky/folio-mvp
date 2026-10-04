@@ -4,7 +4,7 @@ const assert=require('node:assert/strict');
 const fs=require('node:fs');const path=require('node:path');const vm=require('node:vm');const ts=require('typescript');
 const root=path.resolve(__dirname,'..');
 let sessions,approved,workspace,sourceAllowed,saves,providerCalls,saveFailure,providerFailure,storageReady,failReceiptOnce,canonicalIndex,afterConversationCreate,routeActor='owner';
-const env={NODE_ENV:'test',FOLIO_LIVE_INTERVIEWS:'1',FOLIO_LIVE_ALLOWLIST:'owner,other',FOLIO_INTERVIEW_RECORDING:'1',FOLIO_LIVE_BASE_URL:'https://folio.test',NEXTAUTH_SECRET:'synthetic-session-secret',TAVUS_API_KEY:'synthetic-provider-key'};
+const env={NODE_ENV:'test',FOLIO_LIVE_INTERVIEWS:'1',FOLIO_INTERVIEW_RECORDING:'1',FOLIO_LIVE_BASE_URL:'https://folio.test',NEXTAUTH_SECRET:'synthetic-session-secret',TAVUS_API_KEY:'synthetic-provider-key'};
 const clone=structuredClone;const cache=new Map();
 function snapshot(index=1){return {source:{kind:'project',id:'project'},interviewId:'canonical',version:String(index),status:'active',currentQuestion:{id:`q${index}`,text:`Question ${index}?`,sourceImageIds:[]},sourceRefs:[],state:{schemaVersion:1,skipped:[],receipts:{},native:{rooms:[{id:'room',imageIds:['image-one','image-two']}]}}};}
 const mocks={

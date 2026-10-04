@@ -1,6 +1,6 @@
 # Folio live interviews and recorded media
 
-This implementation extends Folio's existing interview workspaces and Publishing Studio. Folio prepares and validates every question and persists answers through the existing editorial services. Tavus supplies the full speech/avatar pipeline with a per-session PAL and Folio's authenticated custom chat-completions endpoint. All three rollout flags default off. The separately approved October 1–2 release configured the database, Tavus key, callback origin and private bucket name and enabled the live pilot for one approved account. Recording and exports remain off pending the separate setup below. The project-guide/podcast change has its own [verification and release record](reviews/project-guide/results.md).
+This implementation extends Folio's existing interview workspaces and Publishing Studio. Folio prepares and validates every question and persists answers through the existing editorial services. Tavus supplies the full speech/avatar pipeline with a per-session PAL and Folio's authenticated custom chat-completions endpoint. All three rollout flags default off. The separately approved October 1–2 release configured the database, Tavus key, callback origin and private bucket name and enabled the live pilot for one approved account. The account allowlist has since been removed: when `FOLIO_LIVE_INTERVIEWS=1`, Tavus is available to every otherwise eligible designer. Recording and exports remain off pending the separate setup below. The project-guide/podcast change has its own [verification and release record](reviews/project-guide/results.md).
 
 ## Setup
 
@@ -11,7 +11,6 @@ TAVUS_API_KEY=...
 FOLIO_LIVE_BASE_URL=https://your-reachable-development-origin
 TAVUS_FACE_ID=rc9cff32ceba
 FOLIO_LIVE_INTERVIEWS=1
-FOLIO_LIVE_ALLOWLIST=comma-separated-approved-Folio-user-IDs
 FOLIO_INTERVIEW_RECORDING=1
 FOLIO_INTERVIEW_MEDIA_EXPORTS=1
 FOLIO_LIVE_MAX_SECONDS=1800
@@ -24,7 +23,7 @@ These are **development/preview** settings, not authorization to activate produc
 
 ### Live interviews without saved recordings
 
-Unrecorded live interviews require the migrated database, Tavus key, reachable callback origin, approved account ID in `FOLIO_LIVE_ALLOWLIST`, `FOLIO_LIVE_INTERVIEWS=1`, existing canonical interview credentials, and scheduled session cleanup. Keep `FOLIO_INTERVIEW_RECORDING=0` and `FOLIO_INTERVIEW_MEDIA_EXPORTS=0` until the media worker is ready. This mode does not require Whisper transcription, FFmpeg or a persistent media worker; Tavus supplies live speech and the avatar, and Folio saves accepted answers through the existing interview engine. Recording options stay unavailable.
+Unrecorded live interviews require the migrated database, Tavus key, reachable callback origin, `FOLIO_LIVE_INTERVIEWS=1`, existing canonical interview credentials, and scheduled session cleanup. Keep `FOLIO_INTERVIEW_RECORDING=0` and `FOLIO_INTERVIEW_MEDIA_EXPORTS=0` until the media worker is ready. This mode does not require Whisper transcription, FFmpeg or a persistent media worker; Tavus supplies live speech and the avatar, and Folio saves accepted answers through the existing interview engine. Recording options stay unavailable.
 
 `NEXTAUTH_SECRET` encrypts stored private joining tokens; backend credentials are stored as SHA-256 hashes. Changing that secret invalidates old encrypted join responses. Only authenticated owners receive joining credentials, with no-store/no-referrer responses.
 
@@ -60,7 +59,7 @@ For protected previews, the exact machine path `/api/live-interviews/provider/*/
 
 ## Interview and review
 
-For an allowlisted, approved designer, **Create+** immediately hosts the Folio interviewer above the file and project-link upload controls. Authorized project owners also meet the host on upload, tagging and Story interview surfaces. Opening those workflow surfaces starts a guide conversation after server availability and access checks; it does not prepare or answer canonical interview questions. Existing projects keep the same mounted call across photo, tagging and Story navigation. Published project home pages, public readers and Publish screens remain passive; a published project's owner can still use its editing/interview views. Disabled accounts retain the existing forms and interview workspace. This entry behavior supersedes the earlier explicit-launcher design.
+For an approved designer with live interviews enabled, **Create+** immediately hosts the Folio interviewer above the file and project-link upload controls. Authorized project owners also meet the host on upload, tagging and Story interview surfaces. Opening those workflow surfaces starts a guide conversation after server availability and access checks; it does not prepare or answer canonical interview questions. Existing projects keep the same mounted call across photo, tagging and Story navigation. Published project home pages, public readers and Publish screens remain passive; a published project's owner can still use its editing/interview views. Disabled accounts retain the existing forms and interview workspace. This entry behavior supersedes the earlier explicit-launcher design.
 
 The guide reads saved project facts: included photographs, valid room assignments, product tags, photographs intentionally marked product-free, and accepted interview answers. Upload candidates and documents do not inflate readiness. New projects receive an introduction; partial interviews offer resume or confirmed restart; completed interviews offer additional detail. Upload help and those choices remain separate from editorial evidence. A deliberate spoken, typed or button choice begins the canonical podcast interview. A completed-project anecdote is shown for explicit reuse before it can become a canonical answer. Legacy-only answers open their existing workspace without being replaced by a new guided session.
 
