@@ -11,9 +11,8 @@ function bounded(name: string, fallback: number, max: number) {
   if (!Number.isInteger(value) || value < 1 || value > max) throw new LiveError(`Invalid ${name} configuration.`, 503);
   return value;
 }
-export function liveEnabled(actorId: string) {
-  return process.env.FOLIO_LIVE_INTERVIEWS === '1'
-    && (process.env.FOLIO_LIVE_ALLOWLIST ?? '').split(',').map(s => s.trim()).filter(Boolean).includes(actorId);
+export function liveEnabled(_actorId: string) {
+  return process.env.FOLIO_LIVE_INTERVIEWS === '1';
 }
 export function recordingEnabled() { return process.env.FOLIO_INTERVIEW_RECORDING === '1'; }
 export function liveConfig() {
