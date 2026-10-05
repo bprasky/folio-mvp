@@ -466,10 +466,9 @@ export default async function ProjectPage({
         />;
   const stepNavigation = trackerState ? <ProjectProgressTracker projectId={base.id} state={trackerState} currentView={view} compact /> : null;
   const conversationProps = {
-    projectId: base.id, projectName: base.title, actorId: viewerId!, activeView: view, isEmpty: isProjectEmpty,
+    projectId: base.id, projectName: base.title, actorId: viewerId!, activeView: view,
     workspaceStep: (currentStepKey || (view === 'story' ? 'story' : 'photos')) as import('@/lib/live-interview/adapter-types').ProjectGuideStep,
-    stepNavigation, stepContent: view === 'publish' ? publishContent : isProjectEmpty ? null : mediaContent,
-    canImport: canScrape, initiallyManual: searchParams.manual === '1', canHost: isOwner && !isProjectHome && !!viewerId,
+    stepNavigation, initiallyManual: searchParams.manual === '1', canHost: isOwner && !isProjectHome && !!viewerId,
     images: base.images.filter(img => !isDocumentImage(img.name)).map(img => ({ id: img.id, url: img.url, name: img.name, room: img.room, roomId: img.roomId })),
     refreshKey: JSON.stringify([base.images.map(img => [img.id, img.roomId, img.inclusion, img.noProducts, img.tags.map(tag => tag.id)]), base.rooms.map(room => room.id), editorialState, interviewAnswerCount]),
   };

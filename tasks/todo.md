@@ -812,3 +812,16 @@ Preserve the guided workflow and live behavior. Rebalance the interview to appro
 - [ ] Review, commit/push and finish the authorized release after hosted checks; document visual and production verification limits.
 
 Review: Story uses approximately55/45 photography/host columns with aligned stage heights; the host retains the full video frame. Primary calls have one icon control dock, consented camera picture-in-picture, in-frame audio recovery and a single bounded caption surface. Real provider speaking events drive activity, and new canonical questions clear stale captions. Setup retains its guided steps and the same mounted call. Local36 live/capture checks and20 composed guide browser checks pass, including320–1920px overflow/touch sizing, stage geometry, caption toggle, microphone controls, mismatched-conversation rejection and step continuity. Desktop/mobile screenshots inspected. Scoped lint has only existing warnings; client/migration guards pass; TypeScript903/904. All device/provider/API tests are synthetic; no paid live session or designer answers were created. Hosted checks and production release remain pending.
+# Simplify project setup — 2026-10-05
+
+The walkthrough exposed unnecessary transition screens and an intrusive live host during uploads/tagging. Keep the short create form, useful review steps, saved data and Story interview; remove setup ceremony. No schema or provider changes.
+
+- [x] Remove Tavus from the short create/upload form and all non-Story project steps; end the call when leaving Story.
+- [x] Route successful initial photo uploads directly into room organization.
+- [x] Replace the duplicate completed-project wizard with the shared upload control and canonical Rooms workspace. Remove its Specs/Done stops and interview launcher; specs remain optional in tagging.
+- [x] Verify upload/import failure recovery, direct navigation, Story entry/exit and responsive layout with the existing browser harness; run focused lint, types and guards.
+- [x] Review the scoped diff and prepare the verified change for commit/push and draft PR review.
+
+Design review: the old wizard only saved room labels while the canonical tracker requires room IDs. Reusing the existing workspace removes that duplicate flow without changing database or publishing gates. Historical session restoration now updates progress without replaying old navigation commands.
+
+Verification: 21 composed guide browser checks, 7 setup browser checks, 36 live browser/capture checks, 42 transport checks, source adapters and upload authorization pass. Desktop and 320/390px screenshots inspected; shared file chooser overflow fixed. Full/focused lint (existing warnings), client-import and migration guards pass. TypeScript compared with identical dependencies/route declarations: main 903, changed 903, no added diagnostics. The standard ratchet's worktree path/type-display differences also occur on main; its committed baseline is unchanged. All browser/provider/API data was synthetic; no paid call or designer data was used. Canonical room persistence was reused, not rewritten or exercised against production.

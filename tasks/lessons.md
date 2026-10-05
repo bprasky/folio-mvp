@@ -1,5 +1,9 @@
 # Lessons Learned
 
+## 2026-10-05 — Shorten setup and keep Tavus in the interview
+
+The founder's upload walkthrough rejected the redundant Done screen and live hosting during upload and tagging. This supersedes the October 2 direction to keep Tavus across every setup step. Keep the short project-name/photo entry and open the next useful workspace directly. Reuse the canonical room and tagging surfaces rather than maintaining duplicate wizard steps; specs stay optional in tagging. Do not send users back to the long full project form to remove the host. Mount Tavus only on Story; leaving Story must end the call. Preserve partial-upload recovery and restore historical session progress without replaying old navigation commands.
+
 ## 2026-09-15 — Place project actions by lifecycle; preserve clean preview
 
 The user clarified that export and project details are useful but belong on a published project's home, alongside social tools, rather than in the busy publishing workflow. Do not interpret misplaced controls as unwanted capabilities. Inline article editing still needs a reader preview that hides title/quote choices and editing controls. Sharing the public renderer does not by itself make the editor a clean preview.

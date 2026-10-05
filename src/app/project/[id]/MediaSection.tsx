@@ -66,7 +66,7 @@ export default function MediaSection({ project, isOwner, images, projectPost, in
   const router = useRouter();
   const searchParams = useSearchParams();
   const conversation = useProjectConversation();
-  const allowPhotoUploads = !conversation?.managed || ['photos', 'references'].includes(conversation.workspaceStep || 'photos');
+  const allowPhotoUploads = ['photos', 'references'].includes(conversation?.workspaceStep || 'photos');
   const [showUploadModal, setShowUploadModal] = useState(false);
   const [showTagger, setShowTagger] = useState(initialTagging);
   const [showMaterials, setShowMaterials] = useState(false);

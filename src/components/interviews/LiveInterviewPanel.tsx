@@ -15,7 +15,7 @@ interface LiveState {
 }
 export interface LiveStartIntent { requestId: string; consumed: boolean; inputMode?: 'voice' | 'text'; settled?: boolean }
 export interface LivePanelControls { stop: () => Promise<void>; guide: (action: ProjectGuideAction | 'refresh' | 'return_guide') => Promise<boolean>; linkPhoto: (id: string, questionId: string) => Promise<boolean> }
-interface Props { source: LiveSource; startIntent?: LiveStartIntent; onStartingChange?: (starting: boolean) => void; onCanonicalChange?: (snapshot?: Omit<LiveAdapterSnapshot,'state'>) => void; onActiveChange?: (active: boolean) => void; beforeStart?: () => Promise<void>; selectedImageId?:string|null; onSessionChange?:(id:string)=>void;
+interface Props { source: LiveSource; startIntent?: LiveStartIntent; onStartingChange?: (starting: boolean) => void; onCanonicalChange?: (snapshot?: Omit<LiveAdapterSnapshot,'state'>, allowGuideActions?: boolean) => void; onActiveChange?: (active: boolean) => void; beforeStart?: () => Promise<void>; selectedImageId?:string|null; onSessionChange?:(id:string)=>void;
   presentation?: 'compact' | 'primary'; onAvailabilityChange?: (available: boolean) => void; onOpenWorkspace?: () => void;
   onControlsReady?: (controls: LivePanelControls | null) => void; guideRefreshKey?: string; recordingSetup?: boolean; workspaceStep?: ProjectGuideStep; callStage?: boolean }
 type Mode = 'none' | 'audio' | 'video';
@@ -104,7 +104,7 @@ export function LiveInterviewPanel({ source, startIntent, onStartingChange, onCa
     return () => clearTimeout(timer);
   }, [retryAt]);
 
-  const setCurrent = useCallback((next: LiveState) => {
+  const setCurrent = useCallback((next: LiveState, allowGuideActions = true) => {
     const changedQuestion = !!next.snapshot && next.snapshot.currentQuestion?.id !== stateRef.current?.snapshot?.currentQuestion?.id;
     stateRef.current = { ...stateRef.current, ...next };
     if (!mounted.current) return;
@@ -121,7 +121,8 @@ export function LiveInterviewPanel({ source, startIntent, onStartingChange, onCa
     const version = next.snapshot?.version;
     const guideMetadata = JSON.stringify(next.snapshot?.guide ?? null);
     if (version && (version !== lastVersion.current || guideMetadata !== lastGuide.current)) {
-      lastVersion.current = version; lastGuide.current = guideMetadata; callbacks.current.onCanonicalChange?.(next.snapshot);
+      lastVersion.current = version; lastGuide.current = guideMetadata;
+      callbacks.current.onCanonicalChange?.(next.snapshot, allowGuideActions && next.status === 'active');
     }
   }, []);
   const progress = useCallback((next: CaptureState, message?: string) => {
@@ -147,14 +148,14 @@ export function LiveInterviewPanel({ source, startIntent, onStartingChange, onCa
     const releasing = release();
     try {
       const id = stateRef.current?.id;
-      if (id) setCurrent(await liveRequest<LiveState>(`/api/live-interviews/${encodeURIComponent(id)}`, { action }));
+      if (id) setCurrent(await liveRequest<LiveState>(`/api/live-interviews/${encodeURIComponent(id)}`, { action }), false);
     } catch (failure) {
       if (mounted.current) setError(failure instanceof Error ? failure.message : 'The end request could not be confirmed. Retry End; automatic session cleanup remains active.');
     } finally {
       await releasing; await finishing;
       ending.current = false; inFlight.current = false;
       if (mounted.current) setBusy(false);
-      callbacks.current.onCanonicalChange?.(stateRef.current?.snapshot);
+      callbacks.current.onCanonicalChange?.(stateRef.current?.snapshot, false);
     }
   }, [progress, release, setCurrent]);
   const endRef = useRef(end); endRef.current = end;
@@ -193,7 +194,8 @@ export function LiveInterviewPanel({ source, startIntent, onStartingChange, onCa
       try {
         const savedId = sessionStorage.getItem(`folio.live.session.${sourceKey}`);
         if (savedId) await liveRequest<LiveState>(`/api/live-interviews/${encodeURIComponent(savedId)}`)
-          .then(next => { if (!cancelled) setCurrent(next); }).catch(() => {});
+          // Restore progress and pending replies without replaying an old navigation command.
+          .then(next => { if (!cancelled) setCurrent(next, false); }).catch(() => {});
       } catch { /* saving interview progress does not depend on browser storage */ }
       if (!cancelled) setReadySource(sourceKey);
     })();
@@ -329,7 +331,7 @@ export function LiveInterviewPanel({ source, startIntent, onStartingChange, onCa
       const priorReceipt = typedReceipt.current; const priorId = stateRef.current?.id;
       if (priorReceipt && priorId) {
         const prior = await liveRequest<LiveState>(`/api/live-interviews/${encodeURIComponent(priorId)}`);
-        setCurrent(prior);
+        setCurrent(prior, false);
         if (prior.turns?.some(turn => turn.requestId === priorReceipt.requestId && turn.status === 'saved')) {
           draftAtStart = ''; questionAtStart = null;
         }
