@@ -12,22 +12,22 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { projectEntryHref, professionalEntryHref } from '@/lib/onboarding/professional-entry';
 import { useSession } from 'next-auth/react';
-import { useForm, Controller } from 'react-hook-form';
+import { useForm } from 'react-hook-form';
 import toast from 'react-hot-toast';
 import { Settings2, ChevronDown, X, ArrowRight } from 'lucide-react';
 import { CreateProjectGuide } from '@/components/interviews/CreateProjectGuide';
+import { COMPLETION_MONTHS, completionDateInputError } from '@/lib/projects/completionDate';
 
-type ProjectStatus = 'in_progress' | 'completed' | 'concept';
 type Visibility = 'private' | 'unlisted' | 'public';
 
 type FormValues = {
   title: string;
   description: string;
-  status: ProjectStatus;
   projectType: string;
   discipline: string;
   location: string;
   year: string;
+  month: string;
   tags: string[];
   visibility: Visibility;
 };
@@ -128,7 +128,6 @@ export default function CreateProjectPage() {
   const {
     register,
     handleSubmit,
-    control,
     watch,
     setValue,
     setFocus,
@@ -140,11 +139,11 @@ export default function CreateProjectPage() {
     defaultValues: {
       title: '',
       description: '',
-      status: 'in_progress',
       projectType: '',
       discipline: '',
       location: '',
       year: '',
+      month: '',
       tags: [],
       visibility: 'private',
     },
@@ -152,6 +151,8 @@ export default function CreateProjectPage() {
 
   const title = watch('title');
   const description = watch('description');
+  const year = watch('year');
+  const month = watch('month');
   const tags = watch('tags');
 
   const [submitting, setSubmitting] = useState(false);
@@ -162,27 +163,19 @@ export default function CreateProjectPage() {
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   const buildPayload = useCallback(
-    (overrideStatus?: 'draft' | ProjectStatus) => {
+    (overrideStatus?: 'draft') => {
       const v = getValues();
-      const uiStatus = overrideStatus ?? v.status;
-      // Existing API expects projectStatus in {'new_project','completed_project'};
-      // internally maps new_project → DB status 'draft', completed_project → 'active'.
-      // Completed AND In progress are real (active) projects; Concept and explicit
-      // draft saves stay 'new_project' → draft. The 'draft' override is used by the
-      // save-draft / autosave paths to keep a work-in-progress project private.
+      // The project is completed even while its Folio entry is saved as a draft.
       const projectStatus: 'new_project' | 'completed_project' =
-        uiStatus === 'draft' || uiStatus === 'concept' ? 'new_project' : 'completed_project';
-
-      // Timeline reflects the user's actual radio selection (not the draft override),
-      // so a saved draft still records the intended orientation.
-      const timeline: 'PAST' | 'PRESENT' | 'FUTURE' =
-        v.status === 'completed' ? 'PAST' : v.status === 'concept' ? 'FUTURE' : 'PRESENT';
+        overrideStatus === 'draft' ? 'new_project' : 'completed_project';
 
       return {
         title: v.title.trim(),
         description: v.description?.trim() || null,
         projectStatus,
-        timeline,
+        timeline: 'PAST',
+        completedYear: v.year ? Number(v.year) : null,
+        completedMonth: v.month ? Number(v.month) : null,
         projectType: v.projectType
           ? PROJECT_TYPE_TO_ENUM[v.projectType] ?? 'OTHER'
           : 'UNSPECIFIED',
@@ -283,7 +276,7 @@ export default function CreateProjectPage() {
     return () => {
       if (autosaveTimer.current) clearTimeout(autosaveTimer.current);
     };
-  }, [title, description, draftId, buildPayload]);
+  }, [title, description, year, month, draftId, buildPayload]);
 
   const commitTag = useCallback(() => {
     const next = tagInput.trim();
@@ -810,6 +803,32 @@ export default function CreateProjectPage() {
           )}
         </Field>
 
+        <Field label="When was it completed?" required help="For older projects, the year alone is fine.">
+          <div className="fpn-two-col" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 18 }}>
+            <label style={{ fontSize: 13, color: C.textPrimary }}>Year
+              <input
+                {...register('year', { validate: value => completionDateInputError(value, '') ?? true })}
+                aria-label="Completion year"
+                aria-invalid={!!errors.year}
+                type="number" inputMode="numeric" min={1800} max={new Date().getUTCFullYear()} required
+                className="fpn-input fpn-focusable" placeholder="e.g., 2024"
+              />
+            </label>
+            <label style={{ fontSize: 13, color: C.textPrimary }}>Month, if known
+              <select
+                {...register('month', { validate: value => !getValues('year') || (completionDateInputError(getValues('year'), value) ?? true) })}
+                aria-label="Completion month"
+                aria-invalid={!!errors.month}
+                className="fpn-select fpn-focusable"
+              >
+                <option value="">Month unknown</option>
+                {COMPLETION_MONTHS.map((label, index) => <option key={label} value={index + 1}>{label}</option>)}
+              </select>
+            </label>
+          </div>
+          {(errors.year?.message || errors.month?.message) && <p role="alert" style={{ marginTop: 8, color: C.cognac, fontSize: 12 }}>{errors.year?.message || errors.month?.message}</p>}
+        </Field>
+
         {/* Description */}
         <Field
           label="Description"
@@ -823,54 +842,6 @@ export default function CreateProjectPage() {
             maxLength={DESCRIPTION_MAX}
           />
           <Counter value={`${description.length} / ${DESCRIPTION_MAX}`} />
-        </Field>
-
-        {/* Project status */}
-        <Field label="Project status" required>
-          <Controller
-            control={control}
-            name="status"
-            render={({ field }) => (
-              <div
-                className="fpn-tile-grid"
-                style={{
-                  display: 'grid',
-                  gridTemplateColumns: '1fr 1fr 1fr',
-                  gap: 14,
-                }}
-                role="radiogroup"
-                aria-label="Project status"
-              >
-                <StatusTile
-                  selected={field.value === 'in_progress'}
-                  value="in_progress"
-                  name="status"
-                  onSelect={() => field.onChange('in_progress')}
-                  title="In progress"
-                  tag="Working"
-                  subtitle="Private — visible only to your workspace. Add rooms and tile items as you go."
-                />
-                <StatusTile
-                  selected={field.value === 'completed'}
-                  value="completed"
-                  name="status"
-                  onSelect={() => field.onChange('completed')}
-                  title="Completed"
-                  tag="Ready to publish"
-                  subtitle="The work is installed. Ready to showcase in your portfolio and the directory."
-                />
-                <StatusTile
-                  selected={field.value === 'concept'}
-                  value="concept"
-                  name="status"
-                  onSelect={() => field.onChange('concept')}
-                  title="Concept"
-                  tag="Exploring"
-                  subtitle="An idea you're shaping. Private while you browse and ideate."
-                />
-              </div>
-            )}
-          />
         </Field>
 
         {/* Advanced details */}
@@ -1037,7 +1008,7 @@ export default function CreateProjectPage() {
               </SubField>
             </div>
 
-            {/* Location + Year */}
+            {/* Location */}
             <div
               className="fpn-two-col"
               style={{
@@ -1052,14 +1023,6 @@ export default function CreateProjectPage() {
                   {...register('location')}
                   className="fpn-input fpn-focusable"
                   placeholder="City, country"
-                />
-              </SubField>
-              <SubField label="Year" optional>
-                <input
-                  {...register('year')}
-                  className="fpn-input fpn-focusable"
-                  placeholder="2026"
-                  inputMode="numeric"
                 />
               </SubField>
             </div>
@@ -1300,71 +1263,6 @@ function SubField({
         </p>
       )}
     </div>
-  );
-}
-
-function StatusTile({
-  selected,
-  onSelect,
-  title,
-  tag,
-  subtitle,
-  value,
-  name,
-}: {
-  selected: boolean;
-  onSelect: () => void;
-  title: string;
-  tag: string;
-  subtitle: string;
-  value: string;
-  name: string;
-}) {
-  return (
-    <label className="fpn-tile" data-selected={selected ? 'true' : 'false'}>
-      <input
-        type="radio"
-        name={name}
-        value={value}
-        checked={selected}
-        onChange={onSelect}
-        className="fpn-focusable"
-        style={{
-          position: 'absolute',
-          opacity: 0,
-          width: 1,
-          height: 1,
-          margin: 0,
-          pointerEvents: 'none',
-        }}
-      />
-      <span className="fpn-tile-ring" aria-hidden>
-        <span className="fpn-tile-disc" />
-      </span>
-      <div
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: 10,
-          fontSize: 14,
-          fontWeight: 'var(--w-ui)',
-          color: C.textPrimary,
-        }}
-      >
-        <span>{title}</span>
-        <span className="fpn-status-chip">{tag}</span>
-      </div>
-      <div
-        style={{
-          marginTop: 6,
-          fontSize: 12,
-          color: C.textSecondary,
-          lineHeight: 1.45,
-        }}
-      >
-        {subtitle}
-      </div>
-    </label>
   );
 }
 

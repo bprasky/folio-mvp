@@ -57,7 +57,7 @@ function clientState(session: LiveSession, includeJoin = false) {
 export async function readLiveSession(actorId: string, id: string) {
   let session = await ownedSession(actorId,id);
   await authorizeActor(actorId,payload(session).source,payload(session).workspaceId);
-  session = await reviewExpiredText(session);
+  session = await reviewExpiredTurns(session);
   return clientState(session);
 }
 async function ownedSession(actorId: string, id: string) {
@@ -82,11 +82,11 @@ export async function startLiveSession(actorId: string, input: {source:unknown; 
     await assertCaptureStorageReady();
   }
   const previous=await getLatestLiveSession(actorId,source.kind,source.id,undefined,source.round||1);
-  const latest=previous ? await reviewExpiredText(previous) : null;
+  const latest=previous ? await reviewExpiredTurns(previous) : null;
   if(latest && payload(latest).turnState.turns.some(turn=>turn.status==='needs_review'))
     return {...clientState(latest),notice:'Review the retained answer from your previous live session before starting another call.'};
-  if(latest && payload(latest).turnState.turns.some(turn=>turn.inputMode==='text' && turn.status!=='saved'))
-    return {...clientState(latest),notice:'Your typed answer is retained. Wait for it to save, or end this call and review it before starting another.'};
+  if(latest && payload(latest).turnState.turns.some(turn=>turn.status!=='saved'))
+    return {...clientState(latest),notice:'Your answer is retained. Wait for it to save, or end this call and review it before starting another.'};
   const id = randomUUID(); const credential = randomBytes(32).toString('base64url');
   const reservation = await createLiveSession({id,actorId,sourceType:source.kind,sourceId:source.id,canonicalId:source.id,
     status:'starting',credentialHash:backendHash(credential),expiresAt:new Date(Date.now()+config.duration*1000),providerIds:{},
@@ -96,7 +96,18 @@ export async function startLiveSession(actorId: string, input: {source:unknown; 
   if (!reservation.created) {
     const prior=payload(reservation.session);
     if (prior.workspaceId !== workspace.id || prior.consent.mode !== input.mode || prior.source.kind!==source.kind || prior.source.id!==source.id || (prior.source.round||1)!==(source.round||1)) throw new LiveError('End the existing live session before changing recording, interview round or publishing identity.');
-    return clientState(reservation.session,true);
+    let existing=reservation.session;
+    if(existing.status==='active') {
+      if(!active(existing))return endLiveSession(actorId,existing.id,'expired');
+      // Tavus can end before Folio's lifetime expires. An explicit reconnect
+      // must confirm this conversation is still live before reusing its token.
+      const conversation=existing.providerIds.conversationId ? await getConversation(existing.providerIds.conversationId) : null;
+      if(conversation?.status==='ended')return endLiveSession(actorId,existing.id,'provider_ended');
+      if(conversation?.status!=='active')throw new LiveError('The current call status could not be confirmed. Please try reconnecting again.',503);
+      // Pause or navigation may have completed while the provider read ran.
+      existing=await ownedSession(actorId,existing.id);
+    }
+    return clientState(existing,true);
   }
   try {
     const prior = await getLatestLiveSession(actorId,source.kind,source.id,id,source.round||1);
@@ -199,18 +210,26 @@ export function parseUserHistory(body:unknown) {
 }
 const REVIEW_RESPONSE='Your words are retained. Please review the highlighted answer in Folio before we continue.';
 
-function textNeedsReview(turn:LiveTurn) {
-  return turn.inputMode==='text' && (turn.status==='awaiting_final' || (turn.status==='saving' && (turn.leaseUntil??0)<=Date.now()));
+function turnNeedsReview(turn:LiveTurn) {
+  return turn.status==='awaiting_final' || (turn.status==='saving' && (turn.leaseUntil??0)<=Date.now());
 }
-function retainPendingText(session:LiveSession) {
-  for(const turn of payload(session).turnState?.turns??[])if(textNeedsReview(turn)) {
+function retainPendingTurns(session:LiveSession) {
+  const state=payload(session).turnState;
+  for(const turn of state?.turns??[])if(turnNeedsReview(turn)) {
+    if(turn.inputMode!=='text' && turn.status==='awaiting_final' && !turn.snapshot && state.turns.at(-1)===turn) {
+      // Legacy voice receipts omitted their phase snapshot. The last prepared
+      // speech is immutable; no next turn/control can advance while this turn
+      // is pending. Recover phase evidence, never an unconfirmed attribution.
+      const prepared=state.speech.at(-1);
+      if(prepared?.snapshot)turn.snapshot=structuredClone(prepared.snapshot);
+    }
     turn.status='needs_review';turn.response=REVIEW_RESPONSE;
-    turn.error='Your typed answer is retained. Review it before continuing.';delete turn.leaseUntil;
+    turn.error=turn.inputMode==='text'?'Your typed answer is retained. Review it before continuing.':'Your original speech is retained. Review its wording and question before continuing.';delete turn.leaseUntil;
   }
 }
-async function reviewExpiredText(session:LiveSession) {
-  if(active(session) || !payload(session).turnState.turns.some(textNeedsReview))return session;
-  return mutateLiveSession(session.id,s=>{if(!active(s))retainPendingText(s);},{cleanup:true});
+async function reviewExpiredTurns(session:LiveSession) {
+  if(active(session) || !payload(session).turnState.turns.some(turnNeedsReview))return session;
+  return mutateLiveSession(session.id,s=>{if(!active(s))retainPendingTurns(s);},{cleanup:true});
 }
 
 /** Register explicit text before sending conversation.respond; only the backend may ingest it. */
@@ -269,7 +288,9 @@ export async function processBackendTurn(session:LiveSession,users:string[]) {
     if(position!==turns.length+1 || turns.some(t=>t.status!=='saved')) throw new LiveError('Review or save the preceding answer first.');
     if(turns.length>=250) throw new LiveError('Pause and resume this interview to continue.');
     turns.push({position,raw,historyHash:digest,status:'awaiting_final',receipt:`live-${s.id}-${position}`,
-      ...(p.snapshot?.guide && p.snapshot.guide.phase!=='interview'?{snapshot:structuredClone(p.snapshot)}:{})});
+      // Preserve the phase for explicit review if the call ends before finality.
+      // A snapshot alone does not establish which question the designer heard.
+      ...(p.snapshot?{snapshot:structuredClone(p.snapshot)}:{})});
   });
   let turn=payload(current).turnState.turns[position-1];
   if(turn.response) return turn.response;
@@ -300,7 +321,7 @@ export async function processBackendTurn(session:LiveSession,users:string[]) {
     // guide phase captured at receipt and can never become editorial answers.
     const guideSnapshot=t.snapshot?.guide && t.snapshot.guide.phase!=='interview' && t.snapshot.version===p.snapshot?.version?t.snapshot:undefined;
     const asked=final && (guideSnapshot?.currentQuestion?{question:guideSnapshot.currentQuestion,snapshot:guideSnapshot}:questionForFinal(p.turnState,final));
-    t.eventSeq=final?.seq;t.questionId=asked?.question.id;t.asked=asked?.question.text;t.snapshot=asked?.snapshot;
+    t.eventSeq=final?.seq;t.questionId=asked?.question.id;t.asked=asked?.question.text;t.snapshot=asked?.snapshot??t.snapshot;
     t.selectedImageId=p.imageBinding?.questionId===t.questionId?p.imageBinding.imageId:null;
     if(!final || !asked || asked.question.id!==p.snapshot?.currentQuestion?.id) {
       t.status='needs_review';t.error=!final?'Full speech delivery was not confirmed.':'The question was interrupted or the answer may continue an earlier turn.';
@@ -430,7 +451,7 @@ export async function endLiveSession(actorId:string,id:string,reason:string) {
     if(s.status==='ended' || payload(s).cleanupStage==='complete') {
       s.status='ended';delete payload(s).notice;delete payload(s).sealedJoin;return;
     }
-    s.status='ending';payload(s).endReason=reason;delete payload(s).sealedJoin;retainPendingText(s);
+    s.status='ending';payload(s).endReason=reason;delete payload(s).sealedJoin;retainPendingTurns(s);
   },{cleanup:true});
   await reconcileLiveSession(id);
   return clientState((await getLiveSession(id))!);
@@ -442,7 +463,7 @@ export async function reconcileLiveSession(id:string) {
   if(payload(session).cleanupStage==='complete') {
     if(session.status!=='ended' || payload(session).notice) await mutateLiveSession(id,s=>{
       if(payload(s).cleanupStage!=='complete')return;
-      s.status='ended';s.expiresAt=new Date();delete payload(s).notice;delete payload(s).sealedJoin;retainPendingText(s);
+      s.status='ended';s.expiresAt=new Date();delete payload(s).notice;delete payload(s).sealedJoin;retainPendingTurns(s);
     },{cleanup:true});
     return;
   }
@@ -463,7 +484,7 @@ export async function reconcileLiveSession(id:string) {
     if(p.cleanupStage==='creating_pal' && !pals.length && session.expiresAt.getTime()>Date.now())
       throw new LiveError('An uncertain PAL create is still being reconciled.');
     for(const pal of pals){try{await deletePal(pal);}catch(e){if(!(e instanceof ProviderError && e.status===404))throw e;}}
-    await mutateLiveSession(id,s=>{s.status='ended';s.expiresAt=new Date();payload(s).cleanupStage='complete';delete payload(s).notice;delete payload(s).sealedJoin;retainPendingText(s);},{cleanup:true});
+    await mutateLiveSession(id,s=>{s.status='ended';s.expiresAt=new Date();payload(s).cleanupStage='complete';delete payload(s).notice;delete payload(s).sealedJoin;retainPendingTurns(s);},{cleanup:true});
   }catch{
     await mutateLiveSession(id,s=>{
       // Another cleanup invocation may have completed while this provider request failed.

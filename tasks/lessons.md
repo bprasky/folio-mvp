@@ -1,5 +1,27 @@
 # Lessons Learned
 
+## 2026-10-05 — A live conversation must recover after a natural pause
+
+The founder reported another unrecoverable reconnect after asking Tavus to wait. Removing the host from setup reduces call churn but does not prove disconnect/retry recovery. Diagnose silence, provider-ended calls, stale join state and capacity separately from daily quota. Reproduce a waiting conversation losing its provider connection, and prove retry preserves saved answers while obtaining a usable connection. Never assume a limit increase fixes a stale session.
+
+A local reservation does not prove the provider call is still joinable. Verify it before reusing credentials; reconcile a confirmed end and retain uncertain reservations. Handle meeting/host departure, scope delayed events and join promises to their original call/start attempt, and never automatically create a paid replacement after a disconnect. One deliberate Resume can replace a confirmed-ended call after cleanup, provided no answer still needs review.
+
+Shutdown retention must cover voice as well as typed input. Preserve unfinished speech and immutable interview-phase evidence for explicit review, allow active save leases to finish, and never infer which question was heard from a receipt snapshot alone. Historical recovery may use stored prepared-speech evidence; absent evidence must not be replaced with a guess from the current screen.
+
+## 2026-10-05 — Designers name rooms; do not infer setup structure from photos
+
+The founder removed AI room detection because it was slow, clunky and too generic. Remove automatic upload/board detection calls, inferred room preselection and detection waiting screens together. Keep manual room naming and assignment immediate, preserve existing saved organization, and distinguish room sorting from product tagging and background search indexing.
+
+## 2026-10-05 — Start with completed archives and easy factual questions
+
+Initial project creation should expose only the reviewed completed-project path. Keep Concept/In progress capabilities for later review without offering them as intake choices. The founder rejected vague description-writing and hiding essential facts behind Advanced details: one visible page should gather concrete facts with clear labels. Audit what fields actually save before recommending them; defer narrative to the interview and publishing choices to their own stage. Removing questions must not silently discard essential structured context.
+
+Completion date is an essential archive fact, distinct from upload or publication date. The founder chose month and year with year-only allowed for older work. Persist unknown months as null, preserve that precision in display and sorting, and never invent January or backfill from creation timestamps.
+
+## 2026-10-05 — Shorten setup and keep Tavus in the interview
+
+The founder's upload walkthrough rejected the redundant Done screen and live hosting during upload and tagging. This supersedes the October 2 direction to keep Tavus across every setup step. Keep the short project-name/photo entry and open the next useful workspace directly. Reuse the canonical room and tagging surfaces rather than maintaining duplicate wizard steps; specs stay optional in tagging. Do not send users back to the long full project form to remove the host. Mount Tavus only on Story; leaving Story must end the call. Preserve partial-upload recovery and restore historical session progress without replaying old navigation commands.
+
 ## 2026-09-15 — Place project actions by lifecycle; preserve clean preview
 
 The user clarified that export and project details are useful but belong on a published project's home, alongside social tools, rather than in the busy publishing workflow. Do not interpret misplaced controls as unwanted capabilities. Inline article editing still needs a reader preview that hides title/quote choices and editing controls. Sharing the public renderer does not by itself make the editor a clean preview.

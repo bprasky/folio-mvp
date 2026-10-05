@@ -37,7 +37,6 @@ interface WorkspaceImage {
   roomId?: string | null;
   inclusion?: 'INCLUDED' | 'EXCLUDED';
   noProducts?: boolean;
-  aiSpaces?: string[];
   tags: Array<{ id: string }>;
 }
 
@@ -57,18 +56,6 @@ interface RoomGroupedMediaProps {
   onSetCover: (imageId: string) => void;
   onDelete: (imageId: string) => void;
   onChanged: () => void;
-}
-
-const norm = (s: string) => s.trim().toLowerCase().replace(/[\s_-]+/g, '');
-
-/** Suggest a room for an uncategorized photo from AI signals — never auto-applied. */
-function suggestRoomId(img: WorkspaceImage, rooms: RoomLite[]): string {
-  const hints = [...(img.aiSpaces ?? []), img.room ?? ''].map(norm).filter(Boolean);
-  if (hints.length === 0) return '';
-  const match = rooms.find(
-    r => hints.includes(norm(r.name)) || (r.type ? hints.includes(norm(r.type)) : false),
-  );
-  return match?.id ?? '';
 }
 
 /**
@@ -229,9 +216,8 @@ export default function RoomGroupedMedia({
         {/* Room names appear in the published article — nudge to make them specific. */}
         {roomBuckets.length > 0 && (
           <p className="folio-meta text-folio-text-tertiary">
-            Room names appear in your published article. We sorted your photos and numbered any
-            repeats — rename rooms to be specific (e.g. “Primary Bath”, “Powder Room”). Drag any
-            photo to move it.
+            Room names appear in your published article. Use specific names, such as “Primary Bath”
+            or “Powder Room”. Drag a photo to move it to another room.
           </p>
         )}
 
@@ -750,13 +736,10 @@ function UncategorizedResolver({
   onExclude: () => void;
   onChanged: () => void;
 }) {
-  const suggestedId = useMemo(() => suggestRoomId(img, rooms), [img, rooms]);
-  const [selected, setSelected] = useState<string>(suggestedId);
+  const [selected, setSelected] = useState('');
   const [creating, setCreating] = useState(false);
   const [newName, setNewName] = useState('');
   const [busy, setBusy] = useState(false);
-
-  const suggestedRoom = rooms.find(r => r.id === suggestedId);
 
   async function handleCreateAndAssign() {
     if (!newName.trim()) return;
@@ -810,6 +793,7 @@ function UncategorizedResolver({
     <div className="space-y-1.5">
       <div className="flex items-center gap-2">
         <select
+          aria-label={`Room for ${img.name || 'photo'}`}
           value={selected}
           onChange={e => {
             if (e.target.value === '__new__') {
@@ -841,11 +825,6 @@ function UncategorizedResolver({
           Leave out
         </button>
       </div>
-      {suggestedRoom && selected === suggestedRoom.id && (
-        <p className="folio-meta text-folio-text-tertiary">
-          Suggested: {suggestedRoom.name}
-        </p>
-      )}
     </div>
   );
 }

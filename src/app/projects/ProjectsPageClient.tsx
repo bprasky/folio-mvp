@@ -23,6 +23,7 @@ import { cn } from '@/lib/utils';
 import { useUserCapabilities } from '@/hooks/useUserCapabilities';
 import { EmptyStateHero, GuideCard, UpgradePrompt } from '@/components/projects';
 import { Button } from '@/components/ui/button';
+import { compareCompletionDates, formatCompletionDate } from '@/lib/projects/completionDate';
 
 // ============================================================================
 // TYPES
@@ -47,6 +48,8 @@ export type ProjectLite = {
   coverUrl?: string | null;
   createdAt?: string | Date;
   updatedAt?: string | Date;
+  completedYear?: number | null;
+  completedMonth?: number | null;
   taggedCount?: number;
   savesByOthers?: number;
   influenceValueUsd?: number;
@@ -83,7 +86,7 @@ export type DeletionRequestLite = {
 };
 
 type StatusTab = 'all' | 'progress' | 'published' | 'drafts';
-type SortOption = 'Recent' | 'Name A–Z' | 'Most items';
+type SortOption = 'Recent' | 'Completion date' | 'Name A–Z' | 'Most items';
 
 interface ProjectsPageClientProps {
   projectsRaw: ProjectLite[];
@@ -156,6 +159,10 @@ export default function ProjectsPageClient({ projectsRaw, operatingAsOrgId, pend
       );
     } else {
       arr.sort((a, b) => {
+        if (sort === 'Completion date') {
+          const completionOrder = compareCompletionDates(a, b);
+          if (completionOrder) return completionOrder;
+        }
         const da = new Date(a.updatedAt ?? a.createdAt ?? 0).getTime();
         const db = new Date(b.updatedAt ?? b.createdAt ?? 0).getTime();
         return db - da;
@@ -773,7 +780,7 @@ function NewProjectTile() {
 // SORT MENU
 // ============================================================================
 
-const SORT_OPTIONS: SortOption[] = ['Recent', 'Name A–Z', 'Most items'];
+const SORT_OPTIONS: SortOption[] = ['Recent', 'Completion date', 'Name A–Z', 'Most items'];
 
 function SortMenu({ value, onChange }: { value: SortOption; onChange: (v: SortOption) => void }) {
   const [open, setOpen] = useState(false);
@@ -848,7 +855,8 @@ function ProjectCard({ p, onRename, onDelete, onForceDelete, onRequestDeletion }
   const statusDot = isPublished ? 'bg-[#6FA67A]' : isDraft ? 'bg-folio-text-tertiary' : 'bg-folio-gold-ornament';
 
   const itemCount = (p.taggedCount ?? 0) + (p.roomCount ?? 0);
-  const category = p.stage ? stageLabelShort(p.stage) : '';
+  const completionDate = formatCompletionDate(p);
+  const category = !completionDate && p.stage ? stageLabelShort(p.stage) : '';
   const subline = isPublished && p.publishedAt
     ? formatShort(new Date(p.publishedAt))
     : `${p.roomCount ?? 0} ${(p.roomCount ?? 0) === 1 ? 'room' : 'rooms'}`;
@@ -1098,6 +1106,7 @@ function ProjectCard({ p, onRename, onDelete, onForceDelete, onRequestDeletion }
             <div className={"font-headline font-medium text-[19px] leading-tight text-folio-text-primary mb-1 truncate" /* folio-design-system: off-scale */}>
               {p.title}
             </div>
+            {completionDate && <p className="mb-1 text-xs text-folio-text-secondary">{completionDate}</p>}
             <div className="flex items-center gap-2 text-xs text-folio-text-tertiary">
               {category && <span>{category}</span>}
               {category && <span className="w-[3px] h-[3px] rounded-full bg-folio-text-tertiary flex-shrink-0" />}

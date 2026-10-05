@@ -812,3 +812,56 @@ Preserve the guided workflow and live behavior. Rebalance the interview to appro
 - [ ] Review, commit/push and finish the authorized release after hosted checks; document visual and production verification limits.
 
 Review: Story uses approximately55/45 photography/host columns with aligned stage heights; the host retains the full video frame. Primary calls have one icon control dock, consented camera picture-in-picture, in-frame audio recovery and a single bounded caption surface. Real provider speaking events drive activity, and new canonical questions clear stale captions. Setup retains its guided steps and the same mounted call. Local36 live/capture checks and20 composed guide browser checks pass, including320–1920px overflow/touch sizing, stage geometry, caption toggle, microphone controls, mismatched-conversation rejection and step continuity. Desktop/mobile screenshots inspected. Scoped lint has only existing warnings; client/migration guards pass; TypeScript903/904. All device/provider/API tests are synthetic; no paid live session or designer answers were created. Hosted checks and production release remain pending.
+# Simplify project setup — 2026-10-05
+
+The walkthrough exposed unnecessary transition screens and an intrusive live host during uploads/tagging. Keep the short create form, useful review steps, saved data and Story interview; remove setup ceremony. No schema or provider changes.
+
+- [x] Remove Tavus from the short create/upload form and all non-Story project steps; end the call when leaving Story.
+- [x] Route successful initial photo uploads directly into room organization.
+- [x] Replace the duplicate completed-project wizard with the shared upload control and canonical Rooms workspace. Remove its Specs/Done stops and interview launcher; specs remain optional in tagging.
+- [x] Verify upload/import failure recovery, direct navigation, Story entry/exit and responsive layout with the existing browser harness; run focused lint, types and guards.
+- [x] Review the scoped diff and prepare the verified change for commit/push and draft PR review.
+
+Design review: the old wizard only saved room labels while the canonical tracker requires room IDs. Reusing the existing workspace removes that duplicate flow without changing database or publishing gates. Historical session restoration now updates progress without replaying old navigation commands.
+
+Verification: 21 composed guide browser checks, 7 setup browser checks, 36 live browser/capture checks, 42 transport checks, source adapters and upload authorization pass. Desktop and 320/390px screenshots inspected; shared file chooser overflow fixed. Full/focused lint (existing warnings), client-import and migration guards pass. TypeScript compared with identical dependencies/route declarations: main 903, changed 903, no added diagnostics. The standard ratchet's worktree path/type-display differences also occur on main; its committed baseline is unchanged. All browser/provider/API data was synthetic; no paid call or designer data was used. Canonical room persistence was reused, not rewritten or exercised against production.
+
+## Completed-project entry and factual setup review — 2026-10-05
+
+Focus initial designer intake on completed archives. Hide Concept/In progress choices but preserve their existing models and workspaces for later feature review. Review the factual fields before replacing the advanced form; avoid inventing required data or collecting fields that are discarded.
+
+- [x] Audit creation entrypoints and trace displayed fields through persistence and downstream use.
+- [x] Remove stage choices from the three main designer intake forms and persist PAST explicitly, including fallback forms.
+- [x] Save completion year and optional month through creation/editing, expose it on project cards and add completion-date sorting. Keep unknown months null; validate future/invalid dates. Existing columns require no migration.
+- [x] Verify direct and fallback creation payloads, navigation and existing upload recovery; review and prepare the scoped changes for the existing draft PR.
+- [x] Document the recommended single-page factual intake, with deferred questions and data gaps identified, in docs/reviews/completed-project-intake.md.
+
+Review: completed-only intake preserves the unfinished concept/in-progress models for later review. Completion date is required in the new intake UI and optional for existing API callers; year-only dates remain truthful in persistence, cards and sorting. Private Folio draft status remains distinct from completion of the underlying design project. The wider one-page form replacement is a product review specification, not an implemented redesign; scope/country need storage decisions, and separate sourcing modals need review before applying an app-wide creation restriction.
+
+Verification: 26 composed guide browser checks and 14 completion normalization/API/authorization/query/sort checks pass. The browser suite covers all three intake forms, year-only/month-year payloads, missing-year protection, draft edits, upload recovery and real project-list sorting. Desktop/mobile screenshots inspected. Dated cards suppress the legacy Concept phase label; undated cards retain their existing phase. Prisma client parity and read-only database column/migration audit pass; no schema changes or database writes. Full/focused lint (existing warnings), client-import and migration guards pass. TypeScript compared against main with identical dependencies/route declarations: 903 each, no new diagnostics. Browser/provider/auth/API boundaries are synthetic. Broader factual-page replacement and production deployment remain outside this reviewed increment.
+
+## Remove AI photo room detection — 2026-10-05
+
+The founder rejected automatic photo room detection as slow and insufficiently specific. Stop automatic calls and inferred room suggestions, retaining explicit room naming/assignment and product tagging. Preserve saved rooms/photos/tags and background search indexing; no schema or production data changes.
+
+- [x] Remove upload/import/board auto-detection triggers and the analysis waiting screen; use the manual room workspace immediately.
+- [x] Remove AI-prefilled room choices; retire both room-detection endpoints so old tabs cannot run them.
+- [x] Verify no detection request on uploads/board visits and manual create/assign/exclude/rename; review and prepare the changes for the existing draft PR.
+
+Review: both retired endpoints return 410 without importing model, auth or database services. Manual room controls retain saved assignments, create/name rooms, assign photos, rename rooms, exclude and restore photos. Product tagging and explicitly reviewed document extraction are untouched. Background search indexing remains independent of room sorting. No schema or production-data changes; existing AI-created rooms are preserved.
+
+Verification: six focused manual-room/retired-route checks and seven upload/recovery browser checks pass against actual components with synthetic action/API boundaries. Both retired handlers execute with only NextResponse mocked. The upload check covers the real MediaSection and ProjectCreationModal completion path. Desktop/mobile screenshots inspected. Full/scoped lint passes with existing warnings; client-import and migration guards pass; same-environment TypeScript comparison remains 903 on main and 903 here with no added diagnostics. Code and database-boundary reviews found no blockers. Not deployed.
+
+## Recover Tavus after waiting/disconnect — 2026-10-05
+
+- [x] Inspect client/provider/session evidence for the reported pause followed by nonfunctional reconnect; distinguish quota from stale/ended provider state.
+- [x] Reproduce the failure with synthetic provider/browser boundaries and implement the smallest recovery fix without losing saved answers or duplicating uncertain provider calls.
+- [x] Verify disconnect/retry, capacity/quota feedback and existing live flows; review and prepare the scoped commit/push. State any production-verification limits.
+
+Review: provider-ended conversations can outlive an active Folio reservation. Reconnect now verifies the provider before reusing credentials and reconciles confirmed shutdown. Unexpected participant departure or meeting exit closes the browser call and offers explicit Resume; delayed events from old calls cannot end a replacement. A deliberate Resume may replace one confirmed-ended call in the same click, while unknown results and retained answers preserve their request identity. No automatic paid reconnect or quota changes.
+
+Interrupted voice now becomes explicitly reviewable on shutdown/expiry, like typed answers; active saves keep their lease and can finish once. New receipts preserve interview-phase evidence. Historical receipts recover phase only from stored prepared speech, never by inventing a heard question or using unrelated current state. Missing phase evidence remains guarded.
+
+Verification: 52 service/transport checks, 46 actual-panel browser/capture checks and scheduled-cleanup checks pass. Old-code probes reproduce failed disconnect cleanup and unusable confirmed-ended retry. Coverage includes delayed join/HTTP responses, reuse of the same session/request, unfinished speech, active/expired save leases and legacy guide/interview separation. Code review found no remaining blockers. Scoped/full lint passes with existing warnings; client-import and migration guards pass. Same-environment TypeScript comparison is 903 diagnostics on main and here, with no new fingerprints; the final live files have no diagnostics. Six manual-room checks pass with the reload-stable upload fixture included.
+
+Production incident attribution remains unverified: Vercel runtime/deployment read access returned 403, and cached production database credentials failed authentication. No incident records were read, no production state changed and no paid provider calls were made. The local diagnostics entrypoint is missing from this checkout; targeted transport/browser regressions provided verification. Changes remain in draft PR 814; not deployed.

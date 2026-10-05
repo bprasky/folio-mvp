@@ -66,7 +66,7 @@ export default function MediaSection({ project, isOwner, images, projectPost, in
   const router = useRouter();
   const searchParams = useSearchParams();
   const conversation = useProjectConversation();
-  const allowPhotoUploads = !conversation?.managed || ['photos', 'references'].includes(conversation.workspaceStep || 'photos');
+  const allowPhotoUploads = ['photos', 'references'].includes(conversation?.workspaceStep || 'photos');
   const [showUploadModal, setShowUploadModal] = useState(false);
   const [showTagger, setShowTagger] = useState(initialTagging);
   const [showMaterials, setShowMaterials] = useState(false);
@@ -165,19 +165,9 @@ export default function MediaSection({ project, isOwner, images, projectPost, in
     input.click();
   }, []);
 
-  // Fire background analysis for any new unanalyzed images
-  const triggerBackgroundAnalysis = useCallback(() => {
-    fetch(`/api/projects/${project.id}/analyze-images`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({}),
-    }).catch(err => console.error('[MediaSection] Background analysis failed:', err));
-  }, [project.id]);
-
   const handlePresentationImportComplete = useCallback(() => {
-    triggerBackgroundAnalysis();
     router.refresh();
-  }, [router, triggerBackgroundAnalysis]);
+  }, [router]);
 
   const handlePdfSpecImportComplete = useCallback(() => {
     router.refresh();
@@ -585,9 +575,8 @@ export default function MediaSection({ project, isOwner, images, projectPost, in
         <ProjectCreationModal
           isOpen={showUploadModal}
           onClose={() => setShowUploadModal(false)}
-          onProjectCreated={(updatedProject) => {
+          onProjectCreated={() => {
             setShowUploadModal(false);
-            triggerBackgroundAnalysis();
             router.refresh();
           }}
           editingProject={project}

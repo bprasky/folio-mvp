@@ -702,13 +702,6 @@ const ProjectCreationModal: React.FC<ProjectCreationModalProps> = ({
           console.error('Error uploading images:', imageError);
           // Don't fail the whole operation if image upload fails
         }
-
-        // Fire AI analysis in the background — don't await, let user proceed immediately
-        fetch(`/api/projects/${projectId}/analyze-images`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({}),
-        }).catch(err => console.error('[ProjectCreation] Background analysis failed:', err));
       }
 
       // Clear the draft since project was created/updated successfully
@@ -1816,4 +1809,4 @@ const ProjectCreationModal: React.FC<ProjectCreationModalProps> = ({
   );
 };
 
-export default ProjectCreationModal; 
+export default ProjectCreationModal;

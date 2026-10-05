@@ -10,7 +10,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/app/api/auth/[...nextauth]/options';
 import { normalizeRole } from '@/lib/permissions';
 import { canCreateFirmProject } from '@/lib/orgPermissions';
-import { normalizeCreatePayload } from './normalizeCreatePayload';
+import { CompletionDateSchema, normalizeCreatePayload } from './normalizeCreatePayload';
 import { logDbEnv } from '@/lib/dbEnv';
 import { assertProjectWrite } from "@/lib/authz/access";
 import { CLIENT_BY_LABEL, PROJECT_TYPE_BY_LABEL, DEFAULTS } from '@/domain/project/enums';
@@ -172,6 +172,8 @@ export async function POST(req: Request) {
         regionState: data.regionState ?? null,
         description: data.description ?? null,
         timeline: data.timeline ?? null,
+        completedYear: data.completedYear ?? null,
+        completedMonth: data.completedMonth ?? null,
         designerId: userId,
         ownerId: userId,
         designerOrgId: validatedOrgId,
@@ -297,6 +299,27 @@ export async function PUT(request: NextRequest) {
       if (key in normalizedData) {
         filteredData[key] = normalizedData[key];
       }
+    }
+
+    if ('completedYear' in normalizedData || 'completedMonth' in normalizedData) {
+      const current = await prisma.project.findUnique({
+        where: { id },
+        select: { completedYear: true, completedMonth: true },
+      });
+      if (!current) throw new Error('NotFound');
+      const completionDate = CompletionDateSchema.safeParse({
+        completedYear: 'completedYear' in normalizedData ? normalizedData.completedYear : current.completedYear,
+        completedMonth: 'completedMonth' in normalizedData ? normalizedData.completedMonth : current.completedMonth,
+      });
+      if (!completionDate.success) {
+        return NextResponse.json({
+          error: 'ValidationError',
+          issues: completionDate.error.flatten(),
+          message: 'Invalid completion date',
+        }, { status: 422 });
+      }
+      // Persist the validated pair together, including an explicitly unknown month.
+      Object.assign(filteredData, completionDate.data);
     }
 
     const updatedProject = await prisma.project.update({
