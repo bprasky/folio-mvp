@@ -109,7 +109,7 @@ async function main() {
     assert.equal(state.query.view, 'media'); assert.equal(state.query.step, 'rooms'); assert.equal(state.query.action, 'sort-rooms');
     assert.equal(state.query.expertiseTopic, 'Historic renovation'); assert.equal(state.query.expertiseProjects, 'existing');
     assert.equal(state.navigations.length, 1); assert.equal(state.navigations[0].method, 'replace'); assert.equal(state.refreshes, 1); assert.equal(state.interviews, 0);
-    assert.equal(requests.some(request => /live-interviews|import-spec|finalize|detect-rooms/.test(request.route)), false);
+    assert.equal(requests.some(request => /live-interviews|import-spec|finalize|detect-rooms|analyze-images/.test(request.route)), false);
     assert.equal(await page.evaluate(() => document.body.innerText.includes('Your project is set up')), false);
   };
   const check = async (id, name, run) => {

@@ -1,5 +1,9 @@
 # Lessons Learned
 
+## 2026-10-05 — Designers name rooms; do not infer setup structure from photos
+
+The founder removed AI room detection because it was slow, clunky and too generic. Remove automatic upload/board detection calls, inferred room preselection and detection waiting screens together. Keep manual room naming and assignment immediate, preserve existing saved organization, and distinguish room sorting from product tagging and background search indexing.
+
 ## 2026-10-05 — Start with completed archives and easy factual questions
 
 Initial project creation should expose only the reviewed completed-project path. Keep Concept/In progress capabilities for later review without offering them as intake choices. The founder rejected vague description-writing and hiding essential facts behind Advanced details: one visible page should gather concrete facts with clear labels. Audit what fields actually save before recommending them; defer narrative to the interview and publishing choices to their own stage. Removing questions must not silently discard essential structured context.

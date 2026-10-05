@@ -1,13 +1,14 @@
 'use client';
 
-import { useState, useMemo, useCallback, useEffect, useRef } from 'react';
+import { useState, useMemo, useCallback, useEffect } from 'react';
+import Link from 'next/link';
 import clsx from 'clsx';
 import { useRouter } from 'next/navigation';
 import DesignerBoardRoom from './DesignerBoardRoom';
 import { getRoomTemplate, RoomTemplate } from './roomTemplates';
 import { formatRoomName } from '@/lib/utils/formatRoomName';
 import { computeTileSize as dimensionComputeTileSize } from './tileSizing';
-import { FaImage, FaSpinner } from 'react-icons/fa';
+import { FaImage } from 'react-icons/fa';
 import GenerateDialog from '@/components/boards/GenerateDialog';
 import GeneratedGrid from '@/components/boards/GeneratedGrid';
 import ExportSpecModal from './ExportSpecModal';
@@ -93,7 +94,7 @@ type DesignerBoardProps = {
   projectId: string;
   project: Project;
   showAll?: boolean; // default true
-  imageCount?: number; // number of images in the project (for analyzing state)
+  imageCount?: number;
   images?: TaggedImage[]; // project images with ProductTag data
 };
 
@@ -130,8 +131,6 @@ export default function DesignerBoard({
     metadata?: any;
   }>>([]);
   const [loadingImages, setLoadingImages] = useState(false);
-  const [isAnalyzing, setIsAnalyzing] = useState(false);
-  const analysisTriggeredRef = useRef(false);
 
   // Pricing data for status indicators on board tiles
   const [pricingData, setPricingData] = useState<Record<string, { status: string; unitPriceTrade: number | null; leadTimeWeeks: number | null; availability: string | null }>>({});
@@ -171,32 +170,6 @@ export default function DesignerBoard({
       })
       .catch(() => {});
   };
-
-  // Auto-trigger image analysis when images exist but no rooms have been created yet
-  useEffect(() => {
-    if (imageCount > 0 && project.rooms.length === 0 && !analysisTriggeredRef.current) {
-      analysisTriggeredRef.current = true;
-      setIsAnalyzing(true);
-
-      fetch(`/api/projects/${projectId}/analyze-images`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({}),
-      })
-        .then(res => res.json())
-        .then(data => {
-          console.log('[DesignerBoard] Analysis complete:', data);
-          if (data.roomsCreated > 0 || data.analyzed > 0) {
-            router.refresh();
-          }
-          setIsAnalyzing(false);
-        })
-        .catch(err => {
-          console.error('[DesignerBoard] Analysis failed:', err);
-          setIsAnalyzing(false);
-        });
-    }
-  }, [imageCount, project.rooms.length, projectId, router]);
 
   // Filter rooms based on selection
   const filteredRooms = useMemo(() => {
@@ -445,36 +418,18 @@ export default function DesignerBoard({
 
       {filteredRooms.length === 0 && project.rooms.length === 0 && imageCount > 0 && (
         <div className="max-w-md mx-auto py-16 text-center">
-          {isAnalyzing ? (
-            <>
-              <FaSpinner className="w-8 h-8 mx-auto mb-4 text-[var(--accent)] animate-spin" />
-              <h3 className="folio-ui font-semibold text-folio-text-primary mb-2">
-                Analyzing your photos
-              </h3>
-              <p className="folio-body text-folio-text-secondary mb-6">
-                AI is detecting rooms and products from your {imageCount} image{imageCount !== 1 ? 's' : ''}.
-                This usually takes 30-60 seconds.
-              </p>
-            </>
-          ) : (
-            <>
-              <h3 className="folio-ui font-semibold text-folio-text-primary mb-2">
-                Analysis complete
-              </h3>
-              <p className="folio-body text-folio-text-secondary mb-6">
-                No rooms were detected. Try uploading more interior photos.
-              </p>
-            </>
-          )}
-          <button
-            onClick={() => {
-              analysisTriggeredRef.current = false;
-              router.refresh();
-            }}
+          <h3 className="folio-ui font-semibold text-folio-text-primary mb-2">
+            Organize your photos by room
+          </h3>
+          <p className="folio-body text-folio-text-secondary mb-6">
+            Name each room and choose the photos that belong to it.
+          </p>
+          <Link
+            href={`/project/${encodeURIComponent(projectId)}?view=media&step=rooms&action=sort-rooms`}
             className="ridge-btn px-4 py-2"
           >
-            Refresh
-          </button>
+            Organize rooms
+          </Link>
         </div>
       )}
 

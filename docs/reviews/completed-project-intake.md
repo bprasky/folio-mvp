@@ -22,6 +22,8 @@ Heading: **Add a completed project**. Supporting text: **A few facts about the p
 
 One primary action: **Continue to photos**, opening the upload controls directly. No stage choice, Advanced details disclosure, readiness screen, interview invitation or paragraph-writing task on this page. Photos lead directly to room organization after successful upload. Tavus stays in Story.
 
+Follow-up decision: remove AI photo room detection. Uploads and empty room boards no longer launch automatic detection; the room menu starts with no inferred selection. Designers create, name and assign their own rooms. Both retired detection endpoints return 410 to old clients. Existing room assignments, product tagging, reviewed document extraction and independent background search indexing are preserved.
+
 Scope labels still need product review: the existing Discipline list mixes Full interior, Furniture & FF&E, Renovation and Styling. These overlap, so forcing a single choice is misleading. Avoid asking designers to define an aesthetic, invent a concept or write marketing copy during setup.
 
 ## Where the other questions belong
