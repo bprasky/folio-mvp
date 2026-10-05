@@ -24,6 +24,28 @@ const CreditSchema = z.object({
 // Project status: new_project (in progress) or completed_project (ready to showcase)
 type ProjectStatus = 'new_project' | 'completed_project';
 
+const CompletionDateFields = {
+  completedYear: z.number().int().min(1800).max(9999).optional().nullable(),
+  completedMonth: z.number().int().min(1).max(12).optional().nullable(),
+};
+
+function validateCompletionDate(
+  date: { completedYear?: number | null; completedMonth?: number | null },
+  ctx: z.RefinementCtx,
+) {
+  if (date.completedMonth != null && date.completedYear == null) {
+    ctx.addIssue({ code: 'custom', path: ['completedYear'], message: 'Add a completion year with the month.' });
+  }
+  const now = new Date();
+  if (date.completedYear != null && date.completedYear > now.getUTCFullYear()) {
+    ctx.addIssue({ code: 'custom', path: ['completedYear'], message: 'Completion year cannot be in the future.' });
+  } else if (date.completedYear === now.getUTCFullYear() && date.completedMonth != null && date.completedMonth > now.getUTCMonth() + 1) {
+    ctx.addIssue({ code: 'custom', path: ['completedMonth'], message: 'Completion month cannot be in the future.' });
+  }
+}
+
+export const CompletionDateSchema = z.object(CompletionDateFields).superRefine(validateCompletionDate);
+
 // Canonical API shape we persist
 export const CanonicalCreateSchema = z.object({
   title: z.string().min(1),
@@ -36,8 +58,9 @@ export const CanonicalCreateSchema = z.object({
   regionState: z.string().optional().nullable(), // ← optional for now
   description: z.string().optional().nullable(),
   timeline: z.enum(['PAST', 'PRESENT', 'FUTURE']).optional().nullable(), // project timeline orientation
+  ...CompletionDateFields,
   credits: z.array(CreditSchema).optional(),     // ← credits for ProjectPost
-});
+}).superRefine(validateCompletionDate);
 
 // Legacy UI shape (current form) - now includes projectStatus
 const LegacySchema = z.object({
@@ -49,15 +72,13 @@ const LegacySchema = z.object({
   images: z.any().optional(),                 // ignored by create API
   credits: z.array(CreditSchema).optional(),  // ← credits for ProjectPost
   detailsCore: z.any().optional(),            // advanced details from form
+  ...CompletionDateFields,
   // no stage/budget/city/region in legacy
-});
-
-// Canonical incoming passthrough (for future form)
-const CanonicalIncoming = CanonicalCreateSchema.extend({});
+}).superRefine(validateCompletionDate);
 
 export function normalizeCreatePayload(raw: unknown) {
   // Try canonical first
-  const asCanonical = CanonicalIncoming.safeParse(raw);
+  const asCanonical = CanonicalCreateSchema.safeParse(raw);
   if (asCanonical.success) return asCanonical.data;
 
   // Try legacy and map to canonical
@@ -100,6 +121,8 @@ export function normalizeCreatePayload(raw: unknown) {
       city,
       regionState,
       stage,
+      completedYear: l.completedYear ?? null,
+      completedMonth: l.completedMonth ?? null,
     };
 
     // Pass through credits if provided

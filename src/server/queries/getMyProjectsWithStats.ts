@@ -22,6 +22,8 @@ export type ProjectWithStats = {
   views: number;
   createdAt: Date;
   updatedAt: Date;
+  completedYear: number | null;
+  completedMonth: number | null;
   coverUrl: string | null;
   taggedCount: number;
   influenceValueUsd: number;
@@ -112,6 +114,8 @@ export async function getMyProjectsWithStats(operatingAsOrgId?: string | null): 
         views: true,
         createdAt: true,
         updatedAt: true,
+        completedYear: true,
+        completedMonth: true,
         designerId: true,
         ownerId: true,
         designerOrgId: true,
@@ -284,6 +288,8 @@ export async function getMyProjectsWithStats(operatingAsOrgId?: string | null): 
         views: project.views,
         createdAt: project.createdAt,
         updatedAt: project.updatedAt,
+        completedYear: project.completedYear,
+        completedMonth: project.completedMonth,
         coverUrl,
         taggedCount,
         influenceValueUsd,

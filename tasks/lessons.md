@@ -1,5 +1,11 @@
 # Lessons Learned
 
+## 2026-10-05 — Start with completed archives and easy factual questions
+
+Initial project creation should expose only the reviewed completed-project path. Keep Concept/In progress capabilities for later review without offering them as intake choices. The founder rejected vague description-writing and hiding essential facts behind Advanced details: one visible page should gather concrete facts with clear labels. Audit what fields actually save before recommending them; defer narrative to the interview and publishing choices to their own stage. Removing questions must not silently discard essential structured context.
+
+Completion date is an essential archive fact, distinct from upload or publication date. The founder chose month and year with year-only allowed for older work. Persist unknown months as null, preserve that precision in display and sorting, and never invent January or backfill from creation timestamps.
+
 ## 2026-10-05 — Shorten setup and keep Tavus in the interview
 
 The founder's upload walkthrough rejected the redundant Done screen and live hosting during upload and tagging. This supersedes the October 2 direction to keep Tavus across every setup step. Keep the short project-name/photo entry and open the next useful workspace directly. Reuse the canonical room and tagging surfaces rather than maintaining duplicate wizard steps; specs stay optional in tagging. Do not send users back to the long full project form to remove the host. Mount Tavus only on Story; leaving Story must end the call. Preserve partial-upload recovery and restore historical session progress without replaying old navigation commands.

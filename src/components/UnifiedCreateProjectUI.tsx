@@ -3,16 +3,10 @@
 import { useState } from 'react';
 import { projectEntryHref } from '@/lib/onboarding/professional-entry';
 import { CreateProjectGuide } from '@/components/interviews/CreateProjectGuide';
+import { COMPLETION_MONTHS, completionDateInputError } from '@/lib/projects/completionDate';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { expertiseIntent } from '@/lib/publishing-studio/expertise-navigation';
 import { useSession } from 'next-auth/react';
-
-type ProjectStatus = 'new_project' | 'completed_project';
-
-type DetailsCore = {
-  clientType: 'Residential' | 'Commercial';
-  location: { city: string; region: string; country?: string };
-};
 
 // Unified Create Project UI - single form with optional advanced details
 export default function UnifiedCreateProjectUI() {
@@ -23,8 +17,9 @@ export default function UnifiedCreateProjectUI() {
   const operatingAsOrgId = (session?.user as any)?.operatingAsOrgId as string | null ?? null;
   const operatingAsOrgName = (session?.user as any)?.operatingAsOrg?.name as string | null ?? null;
   const [name, setName] = useState('');
+  const [year, setYear] = useState('');
+  const [month, setMonth] = useState('');
   const [description, setDescription] = useState('');
-  const [projectStatus, setProjectStatus] = useState<ProjectStatus | ''>('');
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [clientType, setClientType] = useState<'Residential' | 'Commercial'>('Residential');
   const [locationCity, setLocationCity] = useState('');
@@ -36,18 +31,10 @@ export default function UnifiedCreateProjectUI() {
     e.preventDefault();
     setErr(null);
 
-    // Validate required project status
-    if (!projectStatus) {
-      setErr('Please select a project status.');
-      return;
-    }
+    const dateError = completionDateInputError(year, month);
+    if (dateError) { setErr(dateError); return; }
 
     setLoading(true);
-
-    const detailsCore: DetailsCore = {
-      clientType,
-      location: { city: locationCity, region: locationRegion, country: 'US' },
-    };
 
     try {
       const r = await fetch('/api/projects', {
@@ -56,7 +43,12 @@ export default function UnifiedCreateProjectUI() {
           'Content-Type': 'application/json',
         },
         credentials: 'same-origin',
-        body: JSON.stringify({ name, description, projectStatus, detailsCore, designerOrgId: operatingAsOrgId }),
+        body: JSON.stringify({
+          title: name.trim(), description, projectStatus: 'completed_project', timeline: 'PAST',
+          clientType: clientType === 'Residential' ? 'RESIDENTIAL' : 'COMMERCIAL',
+          city: locationCity, regionState: locationRegion, designerOrgId: operatingAsOrgId,
+          completedYear: Number(year), completedMonth: month ? Number(month) : null,
+        }),
       });
 
       if (r.status === 401) {
@@ -73,7 +65,7 @@ export default function UnifiedCreateProjectUI() {
           setErr('Create API did not return an id.');
           return;
         }
-        // Both new and completed projects go to media tab to upload images
+        // Completed projects start with photographs.
         const next = new URLSearchParams({ view: 'media' });
         if (searchParams.has('expertiseTopic') || searchParams.has('expertiseProjects')) {
           const intent = expertiseIntent(searchParams.get('expertiseTopic'), searchParams.get('expertiseProjects'));
@@ -112,7 +104,7 @@ export default function UnifiedCreateProjectUI() {
   return (
     <div className="min-h-screen bg-surface-ground flex items-center justify-center p-6">
       <div className="max-w-2xl w-full ridge-card p-8">
-        <h1 className="text-3xl font-bold mb-2 text-folio-text-primary" style={{ fontFamily: 'var(--font-headline)' }}>Create a Project</h1>
+        <h1 className="text-3xl font-bold mb-2 text-folio-text-primary" style={{ fontFamily: 'var(--font-headline)' }}>Add a completed project</h1>
         <p className="text-folio-text-secondary mb-6">
           Creating under <strong>{operatingAsOrgName || 'your firm'}</strong>
         </p>
@@ -130,6 +122,22 @@ export default function UnifiedCreateProjectUI() {
             />
           </div>
 
+          <fieldset className="space-y-2">
+            <legend className="text-sm font-medium text-folio-text-primary">When was it completed?</legend>
+            <div className="grid gap-4 sm:grid-cols-2">
+              <label className="block text-sm text-folio-text-primary">Year *
+                <input aria-label="Completion year" type="number" inputMode="numeric" min={1800} max={new Date().getUTCFullYear()} required value={year} onChange={event => setYear(event.target.value)} placeholder="e.g., 2024" className="mt-1 w-full border border-folio-border-subtle rounded-lg px-4 py-3 bg-white" />
+              </label>
+              <label className="block text-sm text-folio-text-primary">Month, if known
+                <select aria-label="Completion month" value={month} onChange={event => setMonth(event.target.value)} className="mt-1 w-full border border-folio-border-subtle rounded-lg px-4 py-3 bg-white">
+                  <option value="">Month unknown</option>
+                  {COMPLETION_MONTHS.map((label, index) => <option key={label} value={index + 1}>{label}</option>)}
+                </select>
+              </label>
+            </div>
+            <p className="text-sm text-folio-text-secondary">For older projects, the year alone is fine.</p>
+          </fieldset>
+
           <div>
             <label className="block text-sm font-medium mb-2 text-folio-text-primary">Description (optional)</label>
             <textarea
@@ -139,36 +147,6 @@ export default function UnifiedCreateProjectUI() {
               onChange={(e) => setDescription(e.target.value)}
               rows={3}
             />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium mb-2 text-folio-text-primary">Project Status *</label>
-            <div className="flex gap-4">
-              <label className="flex items-center cursor-pointer">
-                <input
-                  type="radio"
-                  name="projectStatus"
-                  value="new_project"
-                  checked={projectStatus === 'new_project'}
-                  onChange={(e) => setProjectStatus(e.target.value as ProjectStatus)}
-                  className="mr-2 accent-[var(--accent)]"
-                />
-                <span className="text-folio-text-primary">New Project</span>
-                <span className="ml-2 text-xs text-folio-text-tertiary">(still in progress)</span>
-              </label>
-              <label className="flex items-center cursor-pointer">
-                <input
-                  type="radio"
-                  name="projectStatus"
-                  value="completed_project"
-                  checked={projectStatus === 'completed_project'}
-                  onChange={(e) => setProjectStatus(e.target.value as ProjectStatus)}
-                  className="mr-2 accent-[var(--accent)]"
-                />
-                <span className="text-folio-text-primary">Completed Project</span>
-                <span className="ml-2 text-xs text-folio-text-tertiary">(ready to showcase)</span>
-              </label>
-            </div>
           </div>
 
           {/* Advanced Details Accordion */}
