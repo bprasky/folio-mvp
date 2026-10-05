@@ -90,6 +90,7 @@ export function LiveInterviewPanel({ source, startIntent, onStartingChange, onCa
   const joinedAt = useRef(0);
   const mountedSource = useRef(sourceKey);
   const sourceEpoch = useRef(0);
+  const startEpoch = useRef(0);
   const chooseTextDuringStart = useRef<(() => void) | null>(null);
   const guideReceipt = useRef<{ action: ProjectGuideAction | 'refresh' | 'return_guide' | 'skip' | 'retry'; requestId: string; fromVersion: string; questionId?: string; workspaceStep?: ProjectGuideStep } | null>(null);
   const echoedVersions = useRef(new Set<string>());
@@ -280,16 +281,24 @@ export function LiveInterviewPanel({ source, startIntent, onStartingChange, onCa
     eventBacklog.current++;
     if (eventBacklog.current > 50) { void endRef.current('pause'); return; }
     const sessionId = stateRef.current?.id;
+    const epoch = sourceEpoch.current; const eventStart = startEpoch.current;
+    const currentEvent = () => mounted.current && sourceEpoch.current === epoch && startEpoch.current === eventStart
+      && stateRef.current?.id === sessionId && !!callRef.current;
     eventTail.current = eventTail.current.then(async () => {
       if (!sessionId) return;
       // Retry the same provider sequence; a new receipt would misattribute old speech.
       for (let attempt = 0; attempt < 3; attempt++) {
         try {
           const next = await liveRequest<LiveState>(`/api/live-interviews/${encodeURIComponent(sessionId)}`, { action: 'event', event });
-          if (next.id) setCurrent(next);
+          if (next.id && currentEvent()) setCurrent(next);
           return;
         } catch {
-          if (attempt === 2) { if (mounted.current) setError('Speech confirmation failed. The call is paused; review the retained turn before continuing.'); void endRef.current('pause'); }
+          if (attempt === 2 && currentEvent()) {
+            void endRef.current('pause').finally(() => {
+              if (mounted.current && startEpoch.current === eventStart && stateRef.current?.id === sessionId)
+                setError(current => current || 'Speech confirmation failed. The call is paused; review the retained turn before continuing.');
+            });
+          }
         }
       }
     }).catch(() => {}).finally(() => { eventBacklog.current--; });
@@ -309,13 +318,22 @@ export function LiveInterviewPanel({ source, startIntent, onStartingChange, onCa
   };
 
   const start = async (fromIntent = false) => {
-    if (inFlight.current || callRef.current || (retryAt && Date.parse(retryAt) > Date.now())) return;
+    if (inFlight.current || ending.current || callRef.current || (retryAt && Date.parse(retryAt) > Date.now())) return;
     const captureMode = fromIntent || source.kind === 'project_guide' ? 'none' : mode;
     if (captureMode !== 'none' && !consent) { setError('Confirm recording consent before starting.'); return; }
     inFlight.current = true; setBusy(true); setError('');
     callbacks.current.onStartingChange?.(true);
     const epoch = sourceEpoch.current;
-    const currentAttempt = () => mounted.current && sourceEpoch.current === epoch && mountedSource.current === sourceKey;
+    const attempt = ++startEpoch.current;
+    const currentAttempt = () => mounted.current && sourceEpoch.current === epoch && startEpoch.current === attempt && mountedSource.current === sourceKey;
+    let attemptRequestId: string | null = null;
+    const endUnclaimedSession = async (id: string) => {
+      // A newer attempt can rejoin this same still-active provider session.
+      // An obsolete response must not end the connection it has reclaimed.
+      if (mounted.current && startEpoch.current !== attempt && (stateRef.current?.id === id
+        || (attemptRequestId && mountedSource.current === sourceKey && startKey.current === attemptRequestId))) return;
+      await liveRequest(`/api/live-interviews/${encodeURIComponent(id)}`, { action: 'end' });
+    };
     let chosenInput = inputMode;
     let chooseTyped: () => void;
     const textChosen = new Promise<null>(resolve => { chooseTyped = () => { chosenInput = 'text'; if (mounted.current) { setInputMode('text'); setMode('none'); setConsent(false); } resolve(null); }; });
@@ -356,12 +374,25 @@ export function LiveInterviewPanel({ source, startIntent, onStartingChange, onCa
       if (startIntent) { startIntent.requestId = startKey.current; startIntent.inputMode = chosenInput; startIntent.settled = false; }
       let intakeSessionId: string | undefined;
       try { if (source.kind === 'project_guide' && !source.id.startsWith('new:')) intakeSessionId = sessionStorage.getItem(`folio.live.intake.${source.id}`) || undefined; } catch { /* saved project context still follows */ }
-      const next = await liveRequest<LiveState>('/api/live-interviews', { source: JSON.parse(sourceKey), requestId: startKey.current,
-        mode: requestMode, inputMode: chosenInput, consentVersion: '2026-10-01', microphoneReady: !!stream, selectedImageId, workspaceStep: workspaceStepRef.current,
-        intakeSessionId });
+      const requestStart = () => {
+        attemptRequestId = startKey.current;
+        return liveRequest<LiveState>('/api/live-interviews', { source: JSON.parse(sourceKey), requestId: attemptRequestId,
+          mode: requestMode, inputMode: chosenInput, consentVersion: '2026-10-01', microphoneReady: !!stream, selectedImageId, workspaceStep: workspaceStepRef.current,
+          intakeSessionId });
+      };
+      let next = await requestStart();
+      // A deliberate Resume can discover that Tavus already ended the old call.
+      // Replace it once only after confirmed cleanup, never after an uncertain start
+      // or while an answer still needs review. Keep the new key if its response is lost.
+      if (currentAttempt() && next.status === 'ended' && !next.turns?.some(turn => turn.status !== 'saved')) {
+        setCurrent(next, false);
+        startKey.current = crypto.randomUUID();
+        if (startIntent) { startIntent.requestId = startKey.current; startIntent.settled = false; }
+        next = await requestStart();
+      }
       startedSessionId = next.id;
       if (!currentAttempt()) {
-        if (next.id) await liveRequest(`/api/live-interviews/${encodeURIComponent(next.id)}`, { action: 'end' });
+        if (next.id) await endUnclaimedSession(next.id);
         return;
       }
       if (next.id !== stateRef.current?.id && !next.turns?.some(turn => turn.status !== 'saved')) {
@@ -374,18 +405,32 @@ export function LiveInterviewPanel({ source, startIntent, onStartingChange, onCa
       if (!next.join?.url || !next.join.token) throw new Error(next.notice || 'The session is being reconciled. Retry with this same request; no second call will be requested.');
       const call = Daily.createCallObject({ audioSource: stream?.getAudioTracks()[0] || false, videoSource: false, startAudioOff: true, startVideoOff: true });
       callRef.current = call;
-      call.on('participant-joined', syncTracks).on('participant-updated', syncTracks).on('participant-left', syncTracks)
-        .on('track-started', syncTracks).on('track-stopped', syncTracks)
-        .on('app-message', event => providerEvent(event?.data, next.join!.conversationId))
-        .on('error', () => { if (mounted.current) setError('The live connection failed. Saved answers are retained.'); void endRef.current('pause'); });
+      const currentCall = () => currentAttempt() && callRef.current === call;
+      const syncCallTracks = () => { if (currentCall()) syncTracks(); };
+      const disconnected = () => {
+        if (!currentCall()) return;
+        // release() detaches this call before leave() emits another event. Late
+        // events from a replaced call must never shut down its replacement.
+        void endRef.current('pause').finally(() => {
+          if (currentAttempt() && stateRef.current?.id === next.id && !callRef.current)
+            setError(current => current || 'The live call disconnected. Your saved answers are here. Resume when you’re ready.');
+        });
+      };
+      call.on('participant-joined', syncCallTracks).on('participant-updated', syncCallTracks)
+        .on('participant-left', event => { if (event?.participant && !event.participant.local && event.reason !== 'hidden') disconnected(); })
+        .on('left-meeting', disconnected)
+        .on('track-started', syncCallTracks).on('track-stopped', syncCallTracks)
+        .on('app-message', event => { if (currentCall()) providerEvent(event?.data, next.join!.conversationId); })
+        .on('error', disconnected);
       await call.join({ url: next.join.url, token: next.join.token });
       if (!currentAttempt()) { await call.leave().catch(() => {}); await call.destroy().catch(() => {}); return; }
+      if (!currentCall()) return;
       joinedAt.current = performance.now();
       setActive(true); callbacks.current.onActiveChange?.(true); setCamera(false);
       if (requestMode !== 'none' && stream) {
         if (next.recordingEnabled === false) throw new Error('Recording could not start. This session has been stopped; choose another mode.');
         const capture = await startCreatorCapture({ sessionId: next.id, stream, mode: 'audio', offsetMs: Math.round(performance.now() - joinedAt.current), onProgress: progress });
-        if (!currentAttempt()) { await capture.stop(); return; }
+        if (!currentCall()) { await capture.stop(); return; }
         captureRef.current = capture;
       } else { captureRef.current = null; setRecording(null); }
       call.setLocalAudio(!!stream); setMuted(!stream); syncTracks();
@@ -397,17 +442,23 @@ export function LiveInterviewPanel({ source, startIntent, onStartingChange, onCa
       const detail = object(failure);
       if (detail.code === 'LIVE_DAILY_LIMIT' && typeof detail.retryAt === 'string' && Number.isFinite(Date.parse(detail.retryAt))) setRetryAt(detail.retryAt);
       if (startedSessionId && currentAttempt()) await endRef.current('end');
-      else if (startedSessionId) await liveRequest(`/api/live-interviews/${encodeURIComponent(startedSessionId)}`, { action: 'end' }).catch(() => {});
+      else if (startedSessionId) await endUnclaimedSession(startedSessionId).catch(() => {});
       else if (currentAttempt()) await release();
       // An older restored session says nothing about an unacknowledged new start.
       // Rotate only after this attempt's own session is confirmed terminal.
-      if (currentAttempt() && startedSessionId && startedSessionId === stateRef.current?.id && ['ended', 'expired', 'failed'].includes(stateRef.current.status.toLowerCase())) {
+      if (currentAttempt() && startedSessionId && startedSessionId === stateRef.current?.id && ['ended', 'expired', 'failed'].includes(stateRef.current.status.toLowerCase())
+        && !stateRef.current.turns?.some(turn => turn.status !== 'saved')) {
         if (startIntent?.requestId === startKey.current) startIntent.settled = true;
         startKey.current = null;
       }
       if (currentAttempt()) setError(message);
     } finally {
-      if (currentAttempt()) { chooseTextDuringStart.current = null; inFlight.current = false; setBusy(false); setStartInputOpen(false); callbacks.current.onStartingChange?.(false); }
+      if (currentAttempt()) {
+        chooseTextDuringStart.current = null; setStartInputOpen(false); callbacks.current.onStartingChange?.(false);
+        // A disconnect can finish join() while its shutdown request is still
+        // pending. Keep Resume locked until that request can no longer overwrite it.
+        if (!ending.current) { inFlight.current = false; setBusy(false); }
+      }
     }
   };
   const startRef = useRef(start); startRef.current = start;

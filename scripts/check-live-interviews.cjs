@@ -3,7 +3,7 @@
 const assert=require('node:assert/strict');
 const fs=require('node:fs');const path=require('node:path');const vm=require('node:vm');const ts=require('typescript');
 const root=path.resolve(__dirname,'..');
-let sessions,approved,workspace,sourceAllowed,saves,providerCalls,saveFailure,providerFailure,storageReady,failReceiptOnce,canonicalIndex,afterConversationCreate,routeActor='owner';
+let sessions,approved,workspace,sourceAllowed,saves,providerCalls,saveFailure,providerFailure,providerReadFailure,storageReady,failReceiptOnce,canonicalIndex,afterConversationCreate,afterConversationRead,routeActor='owner';
 const env={NODE_ENV:'test',FOLIO_LIVE_INTERVIEWS:'1',FOLIO_INTERVIEW_RECORDING:'1',FOLIO_LIVE_BASE_URL:'https://folio.test',NEXTAUTH_SECRET:'synthetic-session-secret',TAVUS_API_KEY:'synthetic-provider-key'};
 const clone=structuredClone;const cache=new Map();
 function snapshot(index=1){return {source:{kind:'project',id:'project'},interviewId:'canonical',version:String(index),status:'active',currentQuestion:{id:`q${index}`,text:`Question ${index}?`,sourceImageIds:[]},sourceRefs:[],state:{schemaVersion:1,skipped:[],receipts:{},native:{rooms:[{id:'room',imageIds:['image-one','image-two']}]}}};}
@@ -50,7 +50,7 @@ async function fakeFetch(url,options={}){
  if(url.endsWith('/pals')&&options.method==='POST')return Response.json({pal_id:'pal'});
  if(url.endsWith('/conversations')&&options.method==='POST'){const c={conversation_id:'conversation',pal_id:'pal',conversation_name:body.conversation_name,conversation_url:'https://tavus.daily.co/synthetic',meeting_token:'private-join',status:'active'};providerState.set('conversation',c);if(afterConversationCreate)await afterConversationCreate();return Response.json(c);}
  if(url.endsWith('/conversation/end')){providerState.get('conversation').status='ended';return new Response(null,{status:204});}
- if(url.endsWith('/conversations/conversation'))return Response.json(providerState.get('conversation'));
+ if(url.endsWith('/conversations/conversation')){if(providerReadFailure)throw Error('synthetic provider status failure');const result=clone(providerState.get('conversation'));if(afterConversationRead){const callback=afterConversationRead;afterConversationRead=null;await callback();}return Response.json(result);}
  if(url.includes('/conversations?'))return Response.json({data:[...providerState.values()],total_count:providerState.size});
  if(options.method==='DELETE')return new Response(null,{status:204});
  throw Error(`Unexpected synthetic HTTP ${url}`);
@@ -71,7 +71,7 @@ function load(file){
  return compiled.exports;
 }
 const service=load('src/lib/live-interview/service.ts');const turns=load('src/lib/live-interview/turns.ts');const provider=load('src/lib/live-interview/provider.ts');const config=load('src/lib/live-interview/config.ts');
-function reset(){sessions=new Map();approved=true;workspace='org';sourceAllowed=true;saves=[];providerCalls=[];saveFailure=false;providerFailure=false;storageReady=true;failReceiptOnce=false;canonicalIndex=1;afterConversationCreate=null;routeActor='owner';providerState.clear();env.FOLIO_LIVE_INTERVIEWS='1';}
+function reset(){sessions=new Map();approved=true;workspace='org';sourceAllowed=true;saves=[];providerCalls=[];saveFailure=false;providerFailure=false;providerReadFailure=false;storageReady=true;failReceiptOnce=false;canonicalIndex=1;afterConversationCreate=null;afterConversationRead=null;routeActor='owner';providerState.clear();env.FOLIO_LIVE_INTERVIEWS='1';}
 const start=()=>service.startLiveSession('owner',{source:{kind:'project',id:'project'},requestId:'synthetic-start-request',mode:'none',consentVersion:'2026-10-01',microphoneReady:true});
 const startText=()=>service.startLiveSession('owner',{source:{kind:'project',id:'project'},requestId:'synthetic-text-start',mode:'none',consentVersion:'2026-10-01',inputMode:'text'});
 const textInput=(session,text='Typed answer.',requestId='synthetic-typed-answer')=>({requestId,text,questionId:session.snapshot.currentQuestion.id,version:session.snapshot.version});
@@ -218,6 +218,83 @@ test('a crashed typed save retains its receipt and blocks new calls until the sa
  assert.equal(providerCalls.filter(call=>call.url.endsWith('/conversations')&&call.method==='POST').length,1);
 });
 
+test('ending during voice finality retains raw speech for explicit review before a fresh call',async()=>{
+ const a=await start(),raw='Retain this interrupted voice answer.';
+ const pending=service.processBackendTurn(sessions.get(a.id),[raw]).then(()=>null,error=>error.message);
+ await new Promise(resolve=>setTimeout(resolve,30));
+ const ended=await service.endLiveSession('owner',a.id,'provider_ended');await pending;
+ assert.equal(ended.turns[0].status,'needs_review');assert.equal(ended.turns[0].raw,raw);assert.equal(ended.turns[0].questionId,undefined,'unconfirmed delivery must not silently choose an answered question');
+ const resumed=await service.startLiveSession('owner',{source:{kind:'project',id:'project'},requestId:'voice-review-restart',mode:'none',consentVersion:'2026-10-01',microphoneReady:true});
+ assert.equal(resumed.id,a.id);assert.equal(resumed.join,undefined);assert.equal(saves.length,0);
+ assert.equal(providerCalls.filter(call=>call.url.endsWith('/conversations')&&call.method==='POST').length,1);
+ await service.recoverLiveTurn('owner',a.id,{turnPosition:1,target:'current',text:raw});assert.equal(saves.length,1);assert.equal(saves[0].text,raw);assert.equal(saves[0].inputModality,undefined);
+});
+
+test('expired voice finality becomes reviewable with its immutable interview phase',async()=>{
+ const a=await start();guideSession(a.id,'interview');const raw='The room feels welcoming.';
+ const pending=service.processBackendTurn(sessions.get(a.id),[raw]).then(()=>null,error=>error.message);
+ await new Promise(resolve=>setTimeout(resolve,30));sessions.get(a.id).expiresAt=new Date(0);await pending;
+ const review=await service.readLiveSession('owner',a.id);assert.equal(review.turns[0].status,'needs_review');assert.equal(review.turns[0].questionId,undefined);
+ assert.equal(sessions.get(a.id).payload.turnState.turns[0].snapshot.guide.phase,'interview');assert.equal(saves.length,0);
+ await service.recoverLiveTurn('owner',a.id,{turnPosition:1,target:'current',text:raw});assert.equal(saves.length,1);assert.equal(saves[0].text,raw);
+});
+
+test('legacy voice finality recovers phase from the last immutable prepared speech after guide-to-interview transition',async()=>{
+ const a=await start();guideSession(a.id);const row=sessions.get(a.id),raw='An older interrupted interview answer.';
+ row.payload.turnState.speech=[];turns.prepareSpeech(row.payload.turnState,row.payload.snapshot);
+  guideSession(a.id,'interview');turns.prepareSpeech(row.payload.turnState,row.payload.snapshot);
+  const pending=service.processBackendTurn(clone(row),[raw]).then(()=>null,error=>error.message);
+ await new Promise(resolve=>setTimeout(resolve,30));
+ await assert.rejects(service.controlLiveSession('owner',a.id,{action:'guide',guideAction:'return_guide',requestId:'blocked-phase-advance'}),/pending speech/);
+ await assert.rejects(service.processBackendTurn(clone(sessions.get(a.id)),[raw,'Another answer.']),/preceding answer/);
+ assert.equal(sessions.get(a.id).payload.turnState.speech.length,2,'pending voice prevents another prepared question from replacing its phase evidence');
+ delete sessions.get(a.id).payload.turnState.turns[0].snapshot;
+ const ended=await service.endLiveSession('owner',a.id,'pause');await pending;
+ assert.equal(ended.turns[0].status,'needs_review');assert.equal(ended.turns[0].questionId,undefined);assert.equal(ended.turns[0].asked,undefined);
+ const retained=sessions.get(a.id).payload.turnState.turns[0];assert.equal(retained.snapshot.guide.phase,'interview');assert.equal(saves.length,0);
+ await service.recoverLiveTurn('owner',a.id,{turnPosition:1,target:'current',text:raw});assert.equal(saves.length,1);assert.equal(saves[0].text,raw);
+});
+
+test('legacy voice recovery never substitutes current interview phase for setup or missing prepared evidence',async()=>{
+ for(const evidence of ['guide','missing']) {
+  reset();const a=await start();guideSession(a.id);const row=sessions.get(a.id),raw='Where should I upload my images?';
+  row.payload.turnState.speech=[];if(evidence==='guide')turns.prepareSpeech(row.payload.turnState,row.payload.snapshot);
+  const pending=service.processBackendTurn(clone(row),[raw]).then(()=>null,error=>error.message);
+  await new Promise(resolve=>setTimeout(resolve,30));delete sessions.get(a.id).payload.turnState.turns[0].snapshot;
+  await service.endLiveSession('owner',a.id,'pause');await pending;guideSession(a.id,'interview');
+  const retained=sessions.get(a.id).payload.turnState.turns[0];assert.equal(retained.status,'needs_review');assert.equal(retained.questionId,undefined);
+  assert.equal(retained.snapshot?.guide?.phase,evidence==='guide'?'guide':undefined);
+  await assert.rejects(service.recoverLiveTurn('owner',a.id,{turnPosition:1,target:'current',text:raw}),/cannot be reassigned/);assert.equal(saves.length,0);
+ }
+});
+
+test('interrupted voice save retains its lease and receipt until safe review is possible',async()=>{
+ const a=await start(),raw='Preserve the answer being saved.';
+ const pending=service.processBackendTurn(sessions.get(a.id),[raw]).then(()=>null,error=>error.message);
+ await new Promise(resolve=>setTimeout(resolve,30));
+ const turn=sessions.get(a.id).payload.turnState.turns[0],receipt=turn.receipt;turn.status='saving';turn.leaseUntil=Date.now()+120_000;
+ const ended=await service.endLiveSession('owner',a.id,'pause');await pending;assert.equal(ended.turns[0].status,'saving');
+ const resumed=await service.startLiveSession('owner',{source:{kind:'project',id:'project'},requestId:'voice-saving-restart',mode:'none',consentVersion:'2026-10-01',microphoneReady:true});
+ assert.equal(resumed.id,a.id);assert.equal(resumed.join,undefined);assert.equal(sessions.get(a.id).payload.turnState.turns[0].receipt,receipt);
+ await assert.rejects(service.recoverLiveTurn('owner',a.id,{turnPosition:1,target:'current',text:raw}),/not awaiting review/);
+ sessions.get(a.id).payload.turnState.turns[0].leaseUntil=0;
+ const review=await service.readLiveSession('owner',a.id);assert.equal(review.turns[0].status,'needs_review');assert.equal(review.turns[0].raw,raw);assert.equal(sessions.get(a.id).payload.turnState.turns[0].receipt,receipt);
+ assert.equal(providerCalls.filter(call=>call.url.endsWith('/conversations')&&call.method==='POST').length,1);assert.equal(saves.length,0);
+});
+
+test('pausing while a live voice save is in flight lets that save finish once',async()=>{
+ const a=await start(),raw='This answer can finish saving.';await deliver(a.id,1,0,raw);
+ const execute=adapters.executeLiveCommand;let releaseSave,enteredSave;
+ const entered=new Promise(resolve=>{enteredSave=resolve;});const release=new Promise(resolve=>{releaseSave=resolve;});
+ adapters.executeLiveCommand=async(...args)=>{enteredSave();await release;return execute(...args);};
+ try {
+  const pending=service.processBackendTurn(sessions.get(a.id),[raw]);await entered;
+  const ended=await service.endLiveSession('owner',a.id,'pause');assert.equal(ended.turns[0].status,'saving');
+  releaseSave();await pending;const saved=await service.readLiveSession('owner',a.id);
+  assert.equal(saved.status,'ended');assert.equal(saved.turns[0].status,'saved');assert.equal(saves.length,1);assert.equal(saves[0].text,raw);
+ }finally{releaseSave();adapters.executeLiveCommand=execute;}
+});
+
 test('typed canonical drift and a lost transport receipt retain recoverable text without duplicate canonical saves',async()=>{
  const a=await startText(),input=textInput(a);await service.prepareLiveText('owner',a.id,input);canonicalIndex=2;
  await service.processBackendTurn(sessions.get(a.id),[input.text]);assert.equal(saves.length,0);assert.equal(sessions.get(a.id).payload.turnState.turns[0].status,'needs_review');
@@ -228,9 +305,35 @@ test('typed canonical drift and a lost transport receipt retain recoverable text
 test('start reserves once, secret backend token excluded, join token encrypted, first question once',async()=>{
  const a=await start();const b=await start();assert.equal(a.id,b.id);assert.equal(providerCalls.filter(c=>c.url.endsWith('/conversations')).length,1);
  const pal=providerCalls.find(c=>c.url.endsWith('/pals')).body;assert.equal(pal.pipeline_mode,'full');assert.equal(pal.layers.llm.speculative_inference,false);assert.equal(pal.layers.perception.perception_model,'off');assert.equal(pal.greeting,'');assert.ok(pal.layers.llm.base_url.endsWith(`/${a.id}/v1`));
- assert.equal(providerCalls.at(-1).body.custom_greeting,'Question 1?');assert.equal(providerCalls.at(-1).body.require_auth,true);
+ const conversation=providerCalls.find(c=>c.url.endsWith('/conversations')&&c.method==='POST').body;
+ assert.equal(conversation.custom_greeting,'Question 1?');assert.equal(conversation.require_auth,true);assert.ok(b.join,'confirmed active calls remain reconnectable');
  assert.ok(!JSON.stringify(a).includes(pal.layers.llm.api_key));assert.ok(!JSON.stringify(sessions.get(a.id)).includes('private-join'));
  assert.equal(await service.processBackendTurn(sessions.get(a.id),[]),'');
+});
+test('reconnect closes a provider-ended call before offering a fresh explicit start',async()=>{
+ const a=await start();providerState.get('conversation').status='ended';
+ const ended=await start();assert.equal(ended.id,a.id);assert.equal(ended.status,'ended');assert.equal(ended.join,undefined);
+ assert.equal(sessions.get(a.id).payload.cleanupStage,'complete');assert.equal(sessions.get(a.id).payload.endReason,'provider_ended');
+ assert.equal(providerCalls.filter(c=>c.url.endsWith('/conversations')&&c.method==='POST').length,1,'reconnect never creates another paid call automatically');
+ const restarted=await service.startLiveSession('owner',{source:{kind:'project',id:'project'},requestId:'fresh-explicit-start',mode:'none',consentVersion:'2026-10-01',microphoneReady:true});
+ assert.notEqual(restarted.id,a.id);assert.ok(restarted.join);assert.equal(sessions.size,2);
+});
+test('expired reconnect ends the reservation without waiting for scheduled cleanup',async()=>{
+ const a=await start();sessions.get(a.id).expiresAt=new Date(0);
+ const ended=await start();assert.equal(ended.id,a.id);assert.equal(ended.status,'ended');assert.equal(ended.join,undefined);
+ assert.equal(sessions.get(a.id).payload.endReason,'expired');assert.equal(providerCalls.filter(c=>c.url.endsWith('/conversations')&&c.method==='POST').length,1);
+});
+test('unconfirmed provider status retains the reservation without returning a join or creating another call',async()=>{
+ const a=await start();providerReadFailure=true;
+ await assert.rejects(start,error=>error instanceof provider.ProviderError&&error.ambiguous);
+ assert.equal(sessions.get(a.id).status,'active');assert.equal(sessions.get(a.id).payload.cleanupStage,'conversation_active');
+ providerReadFailure=false;providerState.get('conversation').status='unknown';await assert.rejects(start,/status could not be confirmed/);
+ assert.equal(providerCalls.filter(c=>c.url.endsWith('/conversations')&&c.method==='POST').length,1);assert.equal(sessions.size,1);
+ providerState.get('conversation').status='active';assert.equal((await start()).id,a.id);
+});
+test('a concurrent pause cannot return an old join after provider status verification',async()=>{
+ const a=await start();afterConversationRead=()=>service.endLiveSession('owner',a.id,'pause');
+ const ended=await start();assert.equal(ended.status,'ended');assert.equal(ended.join,undefined);assert.equal(sessions.size,1);
 });
 test('invalid, expired and cross-session credentials rejected; fresh workspace authorization',async()=>{
  const a=await start();const key=providerCalls.find(c=>c.url.endsWith('/pals')).body.layers.llm.api_key;

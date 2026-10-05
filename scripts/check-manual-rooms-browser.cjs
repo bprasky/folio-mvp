@@ -21,8 +21,8 @@ function reset() {
 const navigation = `
 import React,{useSyncExternalStore}from'react';
 const subscribe=fn=>{window.addEventListener('nav',fn);return()=>window.removeEventListener('nav',fn)};
-window.refreshes=0;window.navigate=url=>{history.pushState({},'',url);window.dispatchEvent(new Event('nav'))};
-const router={push:window.navigate,replace:window.navigate,refresh:()=>{window.refreshes++;window.dispatchEvent(new Event('refresh'))}};
+window.refreshes=Number(sessionStorage.getItem('fixture-refreshes')||0);window.navigate=url=>{history.pushState({},'',url);window.dispatchEvent(new Event('nav'))};
+const router={push:window.navigate,replace:window.navigate,refresh:()=>{window.refreshes++;sessionStorage.setItem('fixture-refreshes',String(window.refreshes));window.dispatchEvent(new Event('refresh'))}};
 export const useRouter=()=>router;export const useSearchParams=()=>new URLSearchParams(useSyncExternalStore(subscribe,()=>location.search));
 export default function Link({href,children,prefetch,...props}){return <a {...props} href={href} onClick={event=>{event.preventDefault();window.navigate(href)}}>{children}</a>}
 `;
@@ -162,7 +162,7 @@ async function main() {
       await page.click('a[href*="action=sort-rooms"]'); await page.waitForFunction(() => new URLSearchParams(location.search).get('step') === 'rooms'); noDetection();
     });
     await check('upload', 'media image upload and its completion callback refresh without launching room detection', async () => {
-      reset(); await page.goto(base + '/?surface=media&action=upload'); await click('Next: Add Images');
+      reset(); await page.goto(base + '/?surface=media&action=upload'); await page.evaluate(() => { window.refreshes = 0; sessionStorage.setItem('fixture-refreshes', '0'); }); await click('Next: Add Images');
       await (await page.$('input[type=file]')).uploadFile(path.join(out, 'photo.png')); await click('Next: Tag Products'); await click('Update Project');
       await page.waitForFunction(() => window.refreshes > 0); assert(requests.some(request => request.route.endsWith('/images') && request.method === 'POST')); noDetection();
     });
@@ -170,8 +170,9 @@ async function main() {
     fs.writeFileSync(path.join(review, process.env.MANUAL_ROOMS_CHECK ? 'filtered-results.json' : 'browser-results.json'), JSON.stringify({ boundary: 'Actual room, board and upload components; synthetic actions/HTTP. Real retired route modules.', results }, null, 2));
     console.log('PASS ' + results.length + ' manual room checks.');
   } catch (error) {
-    console.error(await page.evaluate(() => ({ url: location.href, body: document.body.innerText.slice(0,2200) })), { detectionRequests: requests.filter(request => /analyze-images|detect-rooms/.test(request.route)) });
-    await page.screenshot({ path: path.join(review, 'failure.png'), fullPage: true }); throw error;
+    console.error({ detectionRequests: requests.filter(request => /analyze-images|detect-rooms/.test(request.route)) });
+    console.error(await page.evaluate(() => ({ url: location.href, body: document.body.innerText.slice(0,2200) })).catch(() => ({ url: page.url(), body: 'Page navigated during failure diagnostics.' })));
+    await page.screenshot({ path: path.join(review, 'failure.png'), fullPage: true }).catch(() => {}); throw error;
   } finally { await browser.close(); await new Promise(resolve => server.close(resolve)); }
 }
 main().catch(error => { console.error(error); process.exitCode = 1; });

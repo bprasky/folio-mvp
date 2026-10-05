@@ -8,17 +8,25 @@ const esbuild = require('esbuild');
 const postcss = require('postcss');
 const tailwind = require('tailwindcss');
 const puppeteer = require('puppeteer-core');
+const { execFileSync } = require('node:child_process');
 const root = path.resolve(__dirname, '..');
 const out = path.join(root, '.tmp/live-browser');
 const results = [];
 let starts = 0, enabled = true, eventCalls = [], actionCalls = [], uploadFailure = false, runNumber = 0;
 let draftScope = 'a'.repeat(64), liveOwnerScope = null, recordingEnabled = true;
 const startRequests = [], textRegistrations = [], providerReplies = [];
+const startResponses = [];
 let canonicalTextSaves = 0;
 let failStart = false;
 let limitStart = false;
 let loseStartResponse = false, restoredSession = null;
+let holdPause = false, releasePause = null, pauseObserved = null;
+let heldProviderEvent = null, releaseProviderEvent = null, providerEventObserved = null;
+let failedProviderSequence = null;
+let holdStarts = false, startHeld = null;
+const heldStarts = [];
 const startReceipts = new Map();
+const liveSessions = new Map();
 const runs = new Map();
 const deniedRuns = new Set();
 const captureRequests = [];
@@ -31,7 +39,7 @@ import React from 'react'; import {createRoot} from 'react-dom/client';
 import {LiveInterviewPanel} from './src/components/interviews/LiveInterviewPanel';
 import * as capture from './src/lib/live-interview/capture';
 window.capture=capture; window.permissionDenied=false; window.holdMicrophone=false; window.permissions=[]; window.trackClones=[];
-window.dailyCalls=[];window.respondMessages=[];window.activeChanges=[];
+window.dailyCalls=[];window.respondMessages=[];window.activeChanges=[];window.canonicalChanges=[];
 window.makeStream=()=>{const audio=new AudioContext(); const destination=audio.createMediaStreamDestination();
  const original=destination.stream.getAudioTracks()[0]; const clone=original.clone.bind(original);
  original.clone=()=>{const track=clone();window.trackClones.push(track);return track};return destination.stream;};
@@ -48,14 +56,15 @@ window.recoveryData=async()=>{const db=await new Promise((resolve,reject)=>{cons
 window.seedRecovery=async records=>{const db=await new Promise((resolve,reject)=>{const request=indexedDB.open('folio-private-live-capture',1);request.onsuccess=()=>resolve(request.result);request.onerror=()=>reject(request.error)});
  try{await new Promise((resolve,reject)=>{const tx=db.transaction(['runs','chunks'],'readwrite');for(const {run,chunks} of records){tx.objectStore('runs').put(run);for(const [index,text] of chunks.entries())tx.objectStore('chunks').put({runId:run.runId,index,blob:new Blob([text],{type:run.mimeType})})}tx.oncomplete=()=>resolve();tx.onerror=()=>reject(tx.error)})}finally{db.close()}};
 window.fixtureRoot=createRoot(document.getElementById('root'));
-window.renderDirect=(key='direct',id='synthetic-project')=>window.fixtureRoot.render(<React.StrictMode><LiveInterviewPanel key={key} source={{kind:'project',id}} startIntent={window.entryIntent} presentation="primary" onActiveChange={value=>window.activeChanges.push(value)}/></React.StrictMode>);
+window.renderDirect=(key='direct',id='synthetic-project')=>window.fixtureRoot.render(<React.StrictMode><LiveInterviewPanel key={key} source={{kind:'project',id}} startIntent={window.entryIntent} presentation="primary" onActiveChange={value=>window.activeChanges.push(value)} onCanonicalChange={value=>window.canonicalChanges.push(value)}/></React.StrictMode>);
 window.renderGuide=(step='story')=>window.fixtureRoot.render(<LiveInterviewPanel key="guide-recording" source={{kind:'project_guide',id:'synthetic-project'}} startIntent={window.entryIntent} presentation="primary" recordingSetup={step==='story'} callStage={step==='story'} workspaceStep={step}/>);
-window.fixtureRoot.render(<LiveInterviewPanel source={{kind:'project',id:'synthetic-project'}} presentation="primary" onActiveChange={value=>window.activeChanges.push(value)}/>);`;
+window.fixtureRoot.render(<LiveInterviewPanel source={{kind:'project',id:'synthetic-project'}} presentation="primary" onActiveChange={value=>window.activeChanges.push(value)} onCanonicalChange={value=>window.canonicalChanges.push(value)} onControlsReady={value=>window.panelControls=value}/>);`;
 const dailyFixture = `export default {createCallObject(options){window.dailyOptions=options;const handlers={};const call={
- on(name,handler){(handlers[name]??=[]).push(handler);return call},participants(){return{}},async join(){if(window.failJoin)throw Error('Synthetic join failed');if(window.holdJoin)await new Promise(resolve=>window.resolveJoin=resolve);window.joined=true;window.left=false;window.destroyed=false},
+ leaveCount:0,destroyCount:0,emit(name,event){for(const handler of handlers[name]||[])handler(event)},
+ on(name,handler){(handlers[name]??=[]).push(handler);return call},participants(){return{}},async join(){if(window.failJoin)throw Error('Synthetic join failed');if(window.holdJoin)await new Promise((resolve,reject)=>{window.resolveJoin=resolve;window.rejectJoin=reject});if(!call.leaveCount){window.joined=true;window.left=false;window.destroyed=false}},
  setLocalAudio(value){window.micOn=value;return call},async setInputDevicesAsync(input){Object.assign(window.dailyOptions,input)},
  sendAppMessage(message,target){window.respondMessages.push({message,target});void fetch('/api/fixture/provider-respond',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(message)})},
- async leave(){window.left=true},async destroy(){window.destroyed=true}};
+ async leave(){call.leaveCount++;window.left=true;call.emit('left-meeting')},async destroy(){call.destroyCount++;window.destroyed=true}};
  window.dailyCalls.push(call);
  window.dailyCall=call;window.emitProvider=data=>(handlers['app-message']||[]).forEach(fn=>fn({data}));return call}};`;
 
@@ -73,6 +82,9 @@ async function build() {
   await esbuild.build({ stdin: { contents: entry, resolveDir: root, sourcefile: 'live-fixture.tsx', loader: 'tsx' }, bundle: true,
     outfile: path.join(out, 'app.js'), platform: 'browser', jsx: 'automatic', alias: { '@': path.join(root, 'src') },
     define: { 'process.env.NODE_ENV': '"test"' }, plugins: [{ name: 'fake-daily', setup(build) {
+      if (process.env.LIVE_BROWSER_SOURCE_REF) build.onLoad({ filter: /LiveInterviewPanel\.tsx$/ }, args => ({
+        contents: execFileSync('git', ['show', process.env.LIVE_BROWSER_SOURCE_REF + ':' + path.relative(root, args.path).replaceAll('\\', '/')], { cwd: root, encoding: 'utf8' }), loader: 'tsx', resolveDir: path.dirname(args.path),
+      }));
       build.onResolve({ filter: /^@daily-co\/daily-js$/ }, () => ({ path: 'daily', namespace: 'fixture' }));
       build.onLoad({ filter: /.*/, namespace: 'fixture' }, () => ({ contents: dailyFixture, loader: 'js' }));
     } }] });
@@ -89,7 +101,7 @@ function handler(req, res) {
   if (url.pathname === '/app.css') { res.setHeader('Content-Type', 'text/css'); fs.createReadStream(path.join(out, 'app.css')).pipe(res); return; }
   if (!url.pathname.startsWith('/api/') && !url.pathname.startsWith('/storage/')) { res.end('<!doctype html><html><head><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="stylesheet" href="/app.css"></head><body><main id="root" style="max-width:520px;margin:auto"></main><script src="/app.js"></script></body></html>'); return; }
   if (req.method === 'GET' && url.pathname === '/api/live-interviews') return json({ enabled, recordingEnabled, draftScope });
-  if (req.method === 'GET' && url.pathname === '/api/live-interviews/live-fixture') return liveOwnerScope === draftScope ? json(restoredSession || live) : json({ error: 'Session unavailable' }, 404);
+  if (req.method === 'GET' && url.pathname.startsWith('/api/live-interviews/')) return liveOwnerScope === draftScope ? json(restoredSession || liveSessions.get(url.pathname.split('/').at(-1)) || live) : json({ error: 'Session unavailable' }, 404);
   const chunks = []; req.on('data', part => chunks.push(part)); req.on('end', () => {
     try {
       if (url.pathname.startsWith('/storage/')) {
@@ -101,31 +113,46 @@ function handler(req, res) {
       const body = JSON.parse(Buffer.concat(chunks).toString() || '{}');
       if (url.pathname === '/api/fixture/provider-respond') { providerReplies.push(body); return json({ retained: true }); }
       if (url.pathname === '/api/live-interviews') {
+        const reply = value => { if (holdStarts) { heldStarts.push(() => json(value)); startHeld?.(); return; } return json(value); };
         if(limitStart) return json({message:'Daily allowance used. Continue in the step-by-step workspace.',code:'LIVE_DAILY_LIMIT',retryAt:new Date(Date.now()+60000).toISOString()},429);
         starts++; startRequests.push(body); if(failStart)return json({message:'Synthetic start failed. Retry this interview.'},503);
+        if (startResponses.length) {
+          liveOwnerScope = draftScope; live = structuredClone(startResponses.shift()); startReceipts.set(body.requestId, live); liveSessions.set(live.id, live); return reply(live);
+        }
         const prior = startReceipts.get(body.requestId);
-        if (prior) return json(prior.status === 'ended' ? { ...prior, join: undefined } : prior);
+        if (prior) return reply(prior.status === 'ended' ? { ...prior, join: undefined } : prior);
         liveOwnerScope = draftScope; live = { id: 'live-fixture', status: 'active', snapshot: structuredClone(snapshot), turns: [], recordingEnabled,
           join: { url: 'https://synthetic.daily.co/fixture', token: 'synthetic-join-token', conversationId: 'synthetic-conversation' } };
         startReceipts.set(body.requestId,live);
+        liveSessions.set(live.id, live);
         if (loseStartResponse) { loseStartResponse=false; return json({message:'Synthetic create response lost.'},503); }
-        return json(live);
+        return reply(live);
       }
-      if (url.pathname === '/api/live-interviews/live-fixture') {
+      if (url.pathname.startsWith('/api/live-interviews/')) {
+        const session = liveSessions.get(url.pathname.split('/').at(-1)) || live;
         actionCalls.push(body.action);
-        if(body.action==='consent_recording') { assert.equal(body.consent,true);live.consent={mode:body.mode};return json(live); }
-        if (body.action === 'event') eventCalls.push(body.event);
+        if(body.action==='consent_recording') { assert.equal(body.consent,true);session.consent={mode:body.mode};return json(session); }
+        if (body.action === 'event') {
+          eventCalls.push(body.event);
+          if (heldProviderEvent) {
+            const response = structuredClone(session), fails = heldProviderEvent === 'failure'; heldProviderEvent = null;
+            releaseProviderEvent = () => json(fails ? { message: 'Synthetic old event failed.' } : response, fails ? 503 : 200);
+            providerEventObserved?.(); return;
+          }
+          if (body.event.seq === failedProviderSequence) return json({ message: 'Synthetic old event failed.' }, 503);
+        }
         if (body.action === 'prepare_text') {
           textRegistrations.push(body);
-          const prior = live.turns.find(turn => turn.requestId === body.requestId);
-          if (!prior) live.turns.push({ position: live.turns.length + 1, requestId: body.requestId, raw: body.text, inputMode: 'text', status: 'awaiting_final', questionId: body.questionId, receipt: 'synthetic-' + body.requestId });
-          return json({ ...live, textRegistration: { created: !prior, requestId: body.requestId } });
+          const prior = session.turns.find(turn => turn.requestId === body.requestId);
+          if (!prior) session.turns.push({ position: session.turns.length + 1, requestId: body.requestId, raw: body.text, inputMode: 'text', status: 'awaiting_final', questionId: body.questionId, receipt: 'synthetic-' + body.requestId });
+          return json({ ...session, textRegistration: { created: !prior, requestId: body.requestId } });
         }
         if (['end', 'pause', 'switch_to_text'].includes(body.action)) {
-          live.status = 'ended';
-          for (const turn of live.turns) if (turn.status === 'awaiting_final' && turn.inputMode === 'text') { turn.status = 'needs_review'; turn.error = 'Your typed answer is retained. Review it before continuing.'; }
+          if (!['uncertain', 'starting', 'reconciling'].includes(session.status)) session.status = 'ended';
+          for (const turn of session.turns) if (turn.status === 'awaiting_final' && turn.inputMode === 'text') { turn.status = 'needs_review'; turn.error = 'Your typed answer is retained. Review it before continuing.'; }
         }
-        return json(live);
+        if (body.action === 'pause' && holdPause) { releasePause = () => json(session); pauseObserved?.(); return; }
+        return json(session);
       }
       if (url.pathname === '/api/interview-media/capture') {
         captureRequests.push(body);
@@ -163,9 +190,10 @@ async function main() {
   assert.ok(executablePath, 'Chromium is required for the real IndexedDB capture checks.');
   const browser = await puppeteer.launch({ executablePath, headless: true, args: ['--no-sandbox', '--disable-dev-shm-usage'] });
   const page = await browser.newPage(); const errors = [];
+  if (process.env.LIVE_BROWSER_CHECK) page.setDefaultTimeout(5000);
   page.on('pageerror', error => errors.push(error.message));
   await page.setRequestInterception(true); page.on('request', request => request.url().startsWith(base) || request.url().startsWith('data:') ? request.continue() : request.abort());
-  const check = async (name, test) => { await test(); results.push(name); console.log(`PASS ${name}`); };
+  const check = async (name, test) => { if (process.env.LIVE_BROWSER_CHECK && !name.includes(process.env.LIVE_BROWSER_CHECK)) return; await test(); results.push(name); console.log(`PASS ${name}`); };
   const click = async text => {
     for (const button of await page.$$('button')) if ((await button.evaluate(el => el.textContent)).trim() === text) { await button.click(); return; }
     throw new Error(`Missing button ${text}`);
@@ -179,6 +207,16 @@ async function main() {
     Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype, 'value').set.call(element, value);
     element.dispatchEvent(new Event('input', { bubbles: true }));
   }, value);
+  const freshPanel = async () => {
+    recordingEnabled = false; restoredSession = null; startResponses.length = 0;
+    await page.evaluate(() => sessionStorage.clear()); await page.reload(); await text('Start live interview');
+  };
+  const savedProgress = (status = 'active') => ({ id: 'live-fixture', status, recordingEnabled: false,
+    snapshot: { ...structuredClone(snapshot), version: 'saved-room-story', currentQuestion: { id: 'q-next', text: 'How did you choose the materials?', sourceImageIds: [] } },
+    turns: [{ position: 1, status: 'saved', raw: 'The existing doorway set the proportions.', questionId: 'q1', receipt: 'saved-room-answer' }],
+    ...(status === 'active' ? { join: { url: 'https://synthetic.daily.co/fixture', token: 'synthetic-join-token', conversationId: 'synthetic-conversation' } } : {}),
+  });
+  const flushEvents = () => page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))));
   try {
     await page.goto(base); await text('Start live interview');
     await check('page load neither opens microphone nor creates paid session', async () => {
@@ -597,6 +635,150 @@ async function main() {
       await page.waitForFunction(()=>window.left && window.destroyed);await page.evaluate(()=>window.resolveJoin());
       await page.waitForFunction(()=>window.left && window.destroyed);
       assert.equal(await page.evaluate(()=>window.activeChanges.at(-1)),false);assert.equal(live.status,'ended');assert.equal(starts,before+1);
+    });
+    await check('disconnect recovery pauses once, resumes saved progress on one click, and ignores obsolete call events', async () => {
+      for (const event of ['participant-left', 'left-meeting', 'error']) {
+        await freshPanel(); startResponses.push(savedProgress()); await click('Start live interview'); await callReady();
+        const before = { starts, pauses: actionCalls.filter(action => action === 'pause').length };
+        await page.evaluate(() => {
+          window.dailyCall.emit('participant-left', { participant: { local: true } });
+          window.dailyCall.emit('participant-left', { participant: { local: false }, reason: 'hidden' });
+          window.dailyCall.emit('track-stopped', { participant: { local: false } });
+        });
+        assert.equal(await page.evaluate(() => window.left), false, 'local departure or stopped media is not a remote disconnect');
+        await page.evaluate(event => { window.disconnectedCall = window.dailyCall; window.dailyCall.emit(event, { participant: { local: false } }); }, event);
+        await page.waitForFunction(() => window.left && window.destroyed, { timeout: 5000 }); await callEnded();
+        assert.equal(actionCalls.filter(action => action === 'pause').length, before.pauses + 1, 'leave-meeting cascade must not end twice');
+        assert.deepEqual(await page.evaluate(() => [window.disconnectedCall.leaveCount, window.disconnectedCall.destroyCount]), [1, 1]);
+        assert.equal(starts, before.starts, 'disconnect does not authorize a replacement call');
+        assert.equal(live.turns[0].raw, 'The existing doorway set the proportions.');
+        startResponses.push(savedProgress()); await click('Resume live interview'); await callReady();
+        assert.equal(starts, before.starts + 1); assert.equal(await page.evaluate(() => window.canonicalChanges.at(-1).version), 'saved-room-story');
+        const actionsBefore = actionCalls.length, eventsBefore = eventCalls.length;
+        await page.evaluate(() => {
+          for (const event of ['participant-left', 'left-meeting', 'error']) window.disconnectedCall.emit(event, { participant: { local: false } });
+          window.disconnectedCall.emit('app-message', { data: { message_type: 'conversation', event_type: 'conversation.stopped_speaking', seq: 999, inference_id: 'obsolete-call', properties: { role: 'pal', interrupted: false } } });
+        });
+        await flushEvents(); assert.equal(actionCalls.length, actionsBefore); assert.equal(eventCalls.length, eventsBefore);
+        assert.equal(await page.evaluate(() => window.activeChanges.at(-1)), true); assert.equal(await page.evaluate(() => window.left || window.destroyed), false);
+        await click('End'); await callEnded();
+      }
+    });
+    await check('disconnect recovery cannot reactivate a call whose pending join resolves after departure', async () => {
+      await freshPanel(); await page.evaluate(() => { window.holdJoin = true; }); await click('Start live interview');
+      await page.waitForFunction(() => !!window.resolveJoin); const before = starts;
+      await page.evaluate(() => window.dailyCall.emit('left-meeting'));
+      await page.waitForFunction(() => window.left && window.destroyed, { timeout: 5000 }); await callEnded();
+      await page.evaluate(() => window.resolveJoin()); await flushEvents();
+      assert.equal(await page.evaluate(() => window.activeChanges.at(-1)), false); assert.equal(starts, before);
+        assert.equal(await page.$$eval('button', buttons => buttons.some(button => button.textContent === 'End' && button.getBoundingClientRect().height > 0)), false);
+    });
+    await check('disconnect recovery replaces a confirmed ended response once and keeps the saved question', async () => {
+      await freshPanel(); restoredSession = savedProgress('ended'); liveOwnerScope = draftScope;
+      await page.evaluate(() => sessionStorage.setItem('folio.live.session.' + JSON.stringify({ kind: 'project', id: 'synthetic-project' }), 'live-fixture'));
+      await page.reload(); await text('Resume live interview'); restoredSession = null;
+      const before = starts; startResponses.push(savedProgress('ended'), savedProgress());
+      await click('Resume live interview'); await callReady(); assert.equal(starts, before + 2);
+      assert.notEqual(startRequests.at(-1).requestId, startRequests.at(-2).requestId);
+      assert.equal(await page.evaluate(() => window.dailyCalls.length), 1);
+      assert.equal(await page.evaluate(() => window.canonicalChanges.at(-1).currentQuestion.id), 'q-next');
+      assert.equal(live.turns[0].receipt, 'saved-room-answer'); await click('End'); await callEnded();
+    });
+    await check('disconnect recovery keeps Resume disabled until pending pause cleanup completes despite an old join resolving', async () => {
+      await freshPanel(); await page.evaluate(() => { window.holdJoin = true; }); await click('Start live interview');
+      await page.waitForFunction(() => !!window.resolveJoin); const before = starts;
+      holdPause = true; const observed = new Promise(resolve => { pauseObserved = resolve; });
+      try {
+        await page.evaluate(() => window.dailyCall.emit('left-meeting')); await observed;
+        await page.evaluate(() => window.resolveJoin()); await flushEvents();
+        assert.equal(await page.$$eval('button', buttons => buttons.find(button => /Preparing live interview|Resume live interview/.test(button.textContent)).disabled), true);
+        await page.$$eval('button', buttons => buttons.find(button => /Preparing live interview|Resume live interview/.test(button.textContent)).click());
+        assert.equal(starts, before); assert.equal(await page.evaluate(() => window.activeChanges.at(-1)), false);
+      } finally { holdPause = false; pauseObserved = null; releasePause?.(); releasePause = null; }
+      await callEnded(); assert.equal(starts, before);
+    });
+    await check('disconnect recovery ignores a late rejected old join after a replacement call is active', async () => {
+      for (const resumedId of ['live-resumed', 'live-fixture']) {
+      await freshPanel(); await page.evaluate(() => { window.holdJoin = true; }); await click('Start live interview');
+      await page.waitForFunction(() => !!window.rejectJoin);
+      await page.evaluate(() => { window.rejectOldJoin = window.rejectJoin; window.dailyCall.emit('left-meeting'); });
+      await page.waitForFunction(() => window.left && window.destroyed, { timeout: 5000 }); await callEnded();
+      await page.evaluate(() => { window.holdJoin = false; });
+      startResponses.push(savedProgress('ended'), { ...savedProgress(), id: resumedId });
+      await click('Resume live interview'); await callReady(); const before = starts;
+      await page.evaluate(() => window.rejectOldJoin(new Error('Synthetic obsolete join rejection'))); await flushEvents();
+      assert.equal(live.id, resumedId); assert.equal(live.status, 'active'); assert.equal(starts, before);
+      assert.equal(await page.evaluate(() => window.activeChanges.at(-1)), true);
+      assert.equal(await page.$$eval('button', buttons => buttons.find(button => button.textContent === 'End').disabled), false);
+      assert.equal(await page.evaluate(() => document.body.innerText.includes('Synthetic obsolete join rejection')), false);
+      await click('End'); await callEnded();
+      }
+    });
+    await check('disconnect recovery ignores an old provider event response or failure after same-session rejoin', async () => {
+      for (const outcome of ['success', 'failure']) {
+        await freshPanel(); startResponses.push(savedProgress()); await click('Start live interview'); await callReady();
+        heldProviderEvent = outcome; failedProviderSequence = outcome === 'failure' ? 12345 : null;
+        const previousEvents = eventCalls.filter(event => event.inference_id === 'old-event-response').length;
+        const observed = new Promise(resolve => { providerEventObserved = resolve; });
+        await page.evaluate(() => window.emitProvider({ message_type: 'conversation', event_type: 'conversation.stopped_speaking', seq: 12345, inference_id: 'old-event-response', properties: { role: 'pal', interrupted: false } }));
+        await observed; await page.evaluate(() => window.dailyCall.emit('left-meeting')); await callEnded();
+        const resumed = savedProgress(); resumed.snapshot.version = 'replacement-question'; resumed.snapshot.currentQuestion.id = 'replacement-question';
+        startResponses.push(resumed); await click('Resume live interview'); await callReady();
+        const before = { starts, pauses: actionCalls.filter(action => action === 'pause').length };
+        const delivered = page.waitForResponse(response => response.request().postData()?.includes('old-event-response')
+          && (outcome === 'success' || eventCalls.filter(event => event.inference_id === 'old-event-response').length >= previousEvents + 3));
+        releaseProviderEvent(); await delivered; await flushEvents();
+        assert.equal(await page.evaluate(() => window.canonicalChanges.at(-1).version), 'replacement-question');
+        assert.equal(await page.evaluate(() => window.activeChanges.at(-1)), true); assert.equal(live.status, 'active');
+        assert.equal(starts, before.starts); assert.equal(actionCalls.filter(action => action === 'pause').length, before.pauses);
+        providerEventObserved = null; releaseProviderEvent = null; failedProviderSequence = null;
+        await click('End'); await callEnded();
+      }
+    });
+    await check('disconnect recovery preserves an active same-key retry when the canceled start response arrives first', async () => {
+      await freshPanel(); holdStarts = true; const before = { starts, actions: actionCalls.length };
+      try {
+        let observed = new Promise(resolve => { startHeld = resolve; });
+        await click('Start live interview'); await observed;
+        await page.evaluate(() => window.panelControls.stop());
+        observed = new Promise(resolve => { startHeld = resolve; });
+        await click('Start live interview'); await observed;
+        assert.equal(starts, before.starts + 2); assert.equal(startRequests.at(-1).requestId, startRequests.at(-2).requestId);
+        const firstDelivered = page.waitForResponse(response => response.url().endsWith('/api/live-interviews') && response.request().method() === 'POST');
+        heldStarts.shift()(); await firstDelivered; await flushEvents();
+        assert.equal(actionCalls.length, before.actions, 'the old response must not end the session claimed by the pending retry');
+        assert.equal(live.status, 'active'); assert.equal(await page.evaluate(() => window.dailyCalls.length), 0);
+        heldStarts.shift()(); await callReady(); assert.equal(starts, before.starts + 2);
+        assert.equal(await page.evaluate(() => window.dailyCalls.length), 1);
+      } finally { holdStarts = false; startHeld = null; for (const release of heldStarts.splice(0)) release(); }
+      await click('End'); await callEnded();
+    });
+    await check('disconnect recovery is bounded when both the original and replacement responses are ended', async () => {
+      await freshPanel(); const before = starts; startResponses.push(savedProgress('ended'), savedProgress('ended'));
+      await click('Start live interview'); await text('The session is being reconciled.'); await flushEvents();
+      assert.equal(starts, before + 2); assert.notEqual(startRequests.at(-1).requestId, startRequests.at(-2).requestId);
+      assert.equal(await page.evaluate(() => window.dailyCalls.length), 0); assert.equal(startResponses.length, 0);
+    });
+    await check('disconnect recovery preserves uncertain and retained-answer request identities without replacement', async () => {
+      for (const status of ['uncertain', 'reconciling', 'ended']) {
+        await freshPanel(); const before = starts; const response = savedProgress(status); response.notice = 'Synthetic retained response: review or reconcile before continuing.';
+        if (status === 'ended') response.turns[0].status = 'needs_review';
+        startResponses.push(response); await click('Start live interview'); await text(response.notice);
+        assert.equal(starts, before + 1); const key = startRequests.at(-1).requestId;
+        await click('Resume live interview'); await text(response.notice); await flushEvents();
+        assert.equal(starts, before + 2); assert.equal(startRequests.at(-1).requestId, key);
+        assert.equal(await page.evaluate(() => window.dailyCalls.length), 0); assert.equal(live.turns[0].raw, response.turns[0].raw);
+      }
+    });
+    await check('disconnect recovery retains a lost replacement response key through remount and deliberate Retry', async () => {
+      await freshPanel(); const before = starts; startResponses.push(savedProgress('ended')); loseStartResponse = true;
+      await page.evaluate(() => { window.permissionDenied = true; window.entryIntent = { requestId: 'confirmed-ended-lost-replacement', consumed: false }; window.renderDirect(); });
+      await text('Retry interview'); assert.equal(starts, before + 2);
+      const replacementKey = startRequests.at(-1).requestId; assert.notEqual(replacementKey, startRequests.at(-2).requestId);
+      assert.equal(await page.evaluate(() => window.dailyCalls.length), 0);
+      await page.evaluate(() => window.renderDirect('lost-replacement-remount')); await text('Retry interview'); assert.equal(starts, before + 2);
+      await click('Retry interview'); await callReady(); assert.equal(starts, before + 3); assert.equal(startRequests.at(-1).requestId, replacementKey);
+      await click('End'); await callEnded();
     });
     await check('project host can consent and record during the same call; Stop finalizes without ending Tavus', async () => {
       recordingEnabled=true;
