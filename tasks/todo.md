@@ -1,3 +1,22 @@
+# Magazine welcome promise — 2026-10-23
+
+Scope: lead the logged-out homepage modal with the founder's exact headline, “Folio is the magazine of YOU”. Explain that Folio turns projects and the thinking behind them into editorial stories. This makes the interview's value clear to prospective designers.
+
+- [x] Confirm the intended wording and inspect the current modal on latest main.
+- [x] Update the headline and supporting copy while retaining the current photograph, Explore Folio dismissal and existing modal behavior.
+- [x] Check real-component desktop/mobile/landscape layout, keyboard dismissal and focused lint; review the scoped diff.
+- [x] Prepare the scoped change for commit and PR review, recording verification and release status.
+
+Plan check-in: the founder selected “Folio is the magazine of YOU”, superseding the alternate “Your work. Your perspective. Your magazine.” headline. Keep this change confined to the landing promise; physical print editions are separate work.
+
+Review: headline and description only; the photograph, CSS, CTA, authentication, telemetry and session dismissal logic are unchanged. Supporting copy: “Folio turns your projects and the thinking behind them into editorial stories, giving future clients a reason to choose you.”
+
+Verification: focused ESLint and whitespace checks pass. Actual component/CSS/Radix/Next Image browser fixture passed at 1440×1000, 390×844, 320×568 and 667×375, with the existing photograph and loaded Cormorant Garamond/Instrument Sans fonts. Screenshots were inspected. Escape, remembered session dismissal, Explore dismissal and authenticated/loading suppression pass without browser exceptions. The fixture supplies synthetic auth and bypasses Next image optimization; it does not verify the integrated homepage or production. A full application build was not run for this copy-only change. Scoped diff review found no blockers.
+
+Release: prepared on codex/magazine-welcome from current origin/main for PR review. Not merged or deployed.
+
+---
+
 # Welcome promise wording — 2026-09-29
 
 - [x] Apply the founder-approved description naming expertise, editorial features, social posts and designer control.
