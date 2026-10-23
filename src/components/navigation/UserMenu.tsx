@@ -129,12 +129,21 @@ export function UserMenu() {
 
   if (!session?.user) {
     return (
-      <button
-        onClick={goToSigninFresh}
-        className="px-4 py-2 folio-ui text-[var(--surface-canvas)] bg-[var(--text-primary)] rounded-full hover:opacity-90 transition-colors"
-      >
-        Sign In
-      </button>
+      <div className="flex shrink-0 items-center gap-1 sm:gap-2 whitespace-nowrap">
+        <button
+          type="button"
+          onClick={goToSigninFresh}
+          className="px-1.5 sm:px-3 py-2 folio-ui text-folio-text-primary rounded-full hover:bg-surface-ground transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2"
+        >
+          Sign in
+        </button>
+        <Link
+          href="/auth/signup"
+          className="px-3 sm:px-4 py-2 folio-ui text-[var(--surface-canvas)] bg-[var(--text-primary)] rounded-full hover:opacity-90 transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2"
+        >
+          Sign up
+        </Link>
+      </div>
     );
   }
 

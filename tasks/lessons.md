@@ -1,5 +1,9 @@
 # Lessons Learned
 
+## 2026-10-23 — Logged-out discovery needs visible account entry points
+
+The welcome and persistent header must both offer explicit Sign up and Sign in actions using the existing auth routes. A dismiss-only welcome and a sign-in-only header hide onboarding. Verify the closed-modal state and narrow-screen header as well as the initial welcome; preserve an intentional option to browse.
+
 ## 2026-10-23 — Preserve the founder's chosen landing headline
 
 The founder selected “Folio is the magazine of YOU” after an alternate headline was proposed. Use that exact wording and capitalization. An earlier assistant suggestion is not approval to replace the founder's positioning; supporting copy should explain the value of showing the thinking behind the work.
