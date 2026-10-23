@@ -1,3 +1,20 @@
+# Publication economics framing — 2026-10-23
+
+Scope: incorporate the founder's correction that Folio addresses the cost and access barriers of design-industry publishing. Lead with universal publication access and designer economics; explain AI interviewing as the mechanism. Keep future influence-based earnings and potential client affordability benefits explicitly aspirational, without promising third-party editorial placement or measured savings.
+
+- [x] Revise the README's problem, value proposition, and future direction; align the engineering tour's introduction.
+- [x] Record the positioning correction in lessons and review the wording for unsupported outcome claims.
+- [x] Check documentation links and the scoped diff, then update the existing documentation PR.
+
+Plan check-in: the founder clarified that Folio is for studios of every size; smaller studios illustrate the access benefit but do not define the audience. Documentation only, continuing PR #816. No new product, pricing, payout, publishing, or deployment behavior.
+
+### Review
+
+Updated the README to lead with “Good design deserves to be published.” The problem statement now covers editorial production, PR/publication access, and the pressure those costs place on project margins. Universal applicability is explicit; studio size and media budget do not define the audience. A separate future-vision section describes intended margin/client-affordability benefits and earnings from completed projects’ influence without claiming measured savings, third-party placement, or currently delivered payouts. Aligned the engineering introduction and recorded both founder corrections in lessons.
+
+Verification: reviewed the four-file prose diff, checked all 38 relative links/anchors in the revised README and tour, and passed git diff --check. Runtime code and commands are unchanged; the previous core/guided suite results remain the relevant implementation evidence. Continuing the same PR #816; no merge or deployment.
+
+---
 # Repository presentation for AI builder application — 2026-10-23
 
 Scope: make Folio understandable to an external reviewer through a product-first README, a source-linked AI engineering tour, and accurate development instructions. Documentation only; retain existing product behavior and the repository's private visibility.

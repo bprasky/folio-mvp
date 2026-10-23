@@ -1,10 +1,14 @@
 # Folio
 
-**Turn the story behind a designed space into a lasting project archive.**
+**Good design deserves to be published.**
 
-Folio is an AI-assisted publishing platform for interior designers. It brings project photographs, product references, and the designer's own explanations together, then uses that material to prepare editorial features and social content for review.
+Folio is an AI-assisted publishing platform that gives design studios a publication of their own. It helps designers explain how and why they approach each project, bringing photographs, product references, and their own words together into editorial features and social content they can review and publish.
 
-The problem is simple: a portfolio photograph shows the finished room, but rarely captures why it works. Those decisions live in conversations, scattered files, and the designer's memory. Folio's interviewer, Sofia, helps capture that knowledge and connect it to the rooms and objects it describes.
+## Why Folio exists
+
+Good design involves decisions that a photograph alone cannot explain. Communicating that thinking takes interviewing, writing, editing, and production. Studios can hire dedicated media teams or invest in PR to pursue placement in leading publications, but those costs compete with the time and margins available for the design work itself.
+
+Folio brings those publishing capabilities into the designer's workflow. Its interviewer, Sofia, captures the thinking behind a project and helps turn it into a story the designer can share. The aim is to make publication accessible across the industry, so the quality of the work and the ideas behind it can be expressed regardless of a studio's size or media budget.
 
 [AI engineering tour](docs/AI_ENGINEERING.md) · [Development guide](docs/DEVELOPMENT.md) · [Regression journeys](docs/CORE_REGRESSION_JOURNEYS.md)
 
@@ -20,6 +24,12 @@ The problem is simple: a portfolio photograph shows the finished room, but rarel
 4. **Publish and reuse.** Publish the approved project and prepare further stories and social assets in Publishing Studio.
 
 The repository also includes live avatar interviews, product attribution, designer profiles, and portfolio-based expertise stories. Availability depends on the configured services, feature flags, and account permissions.
+
+## Longer-term vision
+
+Folio's economic ambition is to make design practice more viable. Reducing the overhead of producing and publishing project stories is intended to protect designers' margins and create room for more accessible client pricing.
+
+Future phases aim to let designers earn from the influence their completed projects generate. That would give quality work an additional way to produce income, allowing designers to grow their earnings without relying solely on higher fees for clients. These future earnings capabilities build on today's focus: capturing expertise, publishing it, and making it reusable.
 
 ## Engineering highlights
 

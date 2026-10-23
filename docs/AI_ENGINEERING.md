@@ -1,6 +1,6 @@
 # AI engineering tour
 
-Folio's central workflow turns a designer's project archive and interview answers into reusable, structured source material. This guide follows the implementation from the conversation through editorial generation and review.
+Folio aims to make publication accessible to design studios of every size by bringing interviewing, writing, and editorial production into their workflow. Its central AI system turns project archives and the designer's own explanations into reusable, structured source material. This guide follows the implementation from the conversation through editorial generation and review.
 
 ```mermaid
 flowchart LR

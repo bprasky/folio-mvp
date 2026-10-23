@@ -1218,3 +1218,9 @@ Follow-up: the host should follow the designer across steps without a fresh intr
 ## 2026-10-02 — Present the interview as a call, not an embedded form
 
 The founder's live screenshot showed photography at twice the host video's height, stacked text buttons and a duplicated transcript. Give photography and the host balanced stage proportions, use a cohesive call toolbar and a single readable caption surface. Speaking/listening indicators must come from real call events; keep provider video uncropped, preserve camera consent and retain the existing guided steps and persistent connection.
+
+## 2026-10-23 — Lead Folio's positioning with publication access and designer economics
+
+The founder corrected a repository introduction that reduced Folio's purpose to preserving project archives, then clarified that the audience is universal, not just small studios. Folio makes publication accessible across the design industry so good work and the thinking behind it can be communicated without depending on a large PR or media budget. Interviews and structured archives are the mechanism. Describe the cost of producing stories and pursuing publication, the effect on project margins, and the ambition to make design practice more viable. Studios of every size are the audience; smaller studios illustrate the access benefit rather than define the market.
+
+Keep current publication capabilities distinct from intended downstream effects. More accessible client pricing and future earnings from the influence of completed quality projects are the economic vision, not measured savings or a currently verified payout promise. Do not imply guaranteed placement in third-party publications. Future influence earnings should explain how quality completed work could support designer income without relying solely on higher client fees.
