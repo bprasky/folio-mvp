@@ -4,6 +4,8 @@
 
 The founder selected “Folio is the magazine of YOU” after an alternate headline was proposed. Use that exact wording and capitalization. An earlier assistant suggestion is not approval to replace the founder's positioning; supporting copy should explain the value of showing the thinking behind the work.
 
+Follow-up: the founder then approved “Folio is your studio’s magazine.” for a more assured editorial tone. This supersedes the earlier headline. Avoid promotional all-caps emphasis on this surface; preserve the latest approved wording and distinguish the work itself from the thinking its stories reveal.
+
 ## 2026-10-05 — A live conversation must recover after a natural pause
 
 The founder reported another unrecoverable reconnect after asking Tavus to wait. Removing the host from setup reduces call churn but does not prove disconnect/retry recovery. Diagnose silence, provider-ended calls, stale join state and capacity separately from daily quota. Reproduce a waiting conversation losing its provider connection, and prove retry preserves saved answers while obtaining a usable connection. Never assume a limit increase fixes a stale session.

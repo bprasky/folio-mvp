@@ -1,19 +1,19 @@
 # Magazine welcome promise — 2026-10-23
 
-Scope: lead the logged-out homepage modal with the founder's exact headline, “Folio is the magazine of YOU”. Explain that Folio turns projects and the thinking behind them into editorial stories. This makes the interview's value clear to prospective designers.
+Scope: lead the logged-out homepage modal with the founder-approved headline, “Folio is your studio’s magazine.” Explain how the work and the thinking behind it come together in a publication of the designer's own. This makes the interview's value clear to prospective designers.
 
 - [x] Confirm the intended wording and inspect the current modal on latest main.
 - [x] Update the headline and supporting copy while retaining the current photograph, Explore Folio dismissal and existing modal behavior.
 - [x] Check real-component desktop/mobile/landscape layout, keyboard dismissal and focused lint; review the scoped diff.
 - [x] Prepare the scoped change for commit and PR review, recording verification and release status.
 
-Plan check-in: the founder selected “Folio is the magazine of YOU”, superseding the alternate “Your work. Your perspective. Your magazine.” headline. Keep this change confined to the landing promise; physical print editions are separate work.
+Plan check-in: the founder approved the more editorial “Folio is your studio’s magazine.” and its three-sentence description, superseding the earlier “magazine of YOU” wording. Apply the exact copy, recheck layout and dismissal, and merge PR #815 under the founder's explicit approval. Physical print editions are separate work.
 
-Review: headline and description only; the photograph, CSS, CTA, authentication, telemetry and session dismissal logic are unchanged. Supporting copy: “Folio turns your projects and the thinking behind them into editorial stories, giving future clients a reason to choose you.”
+Review: headline and description only; the photograph, CSS, CTA, authentication, telemetry and session dismissal logic are unchanged. Supporting copy: “Your projects tell people what you create. The stories behind them reveal how you think. Folio brings both together in a publication of your own.”
 
 Verification: focused ESLint and whitespace checks pass. Actual component/CSS/Radix/Next Image browser fixture passed at 1440×1000, 390×844, 320×568 and 667×375, with the existing photograph and loaded Cormorant Garamond/Instrument Sans fonts. Screenshots were inspected. Escape, remembered session dismissal, Explore dismissal and authenticated/loading suppression pass without browser exceptions. The fixture supplies synthetic auth and bypasses Next image optimization; it does not verify the integrated homepage or production. A full application build was not run for this copy-only change. Scoped diff review found no blockers.
 
-Release: prepared on codex/magazine-welcome from current origin/main for PR review. Not merged or deployed.
+Release: PR #815 on codex/magazine-welcome. The founder explicitly authorized the revised wording and merge; merge and deployment status are recorded in the PR.
 
 ---
 
