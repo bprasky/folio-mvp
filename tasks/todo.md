@@ -1,3 +1,27 @@
+# Repository presentation for AI builder application — 2026-10-23
+
+Scope: make Folio understandable to an external reviewer through a product-first README, a source-linked AI engineering tour, and accurate development instructions. Documentation only; retain existing product behavior and the repository's private visibility.
+
+- [x] Inspect repository presentation, latest main, core AI implementation, CI, and current development instructions.
+- [x] Rewrite the README around the problem, product workflow, implementation evidence, and an authentic existing preview.
+- [x] Add a concise AI engineering tour and development guide; verify commands and relative links against the source.
+- [x] Check tracked files for obvious credentials and document the limits of that check.
+- [x] Review the scoped diff, record verification, and prepare a documentation PR.
+
+Plan check-in: the application targets builders who use AI. Lead with demonstrated product and engineering choices; do not claim unverified traction, authorship detail, performance, or complete test coverage. Work from origin/main in an isolated worktree so existing uncommitted work stays intact.
+
+### Review
+
+Replaced the minimal README with a product introduction, an existing synthetic UI preview, workflow, source-linked engineering highlights, stack, verified local checks, and an honest development-status note. Added an AI engineering tour and a development guide matching the npm lockfile and current CI. Reviewed source links, state/persistence claims, optional service requirements, and the screenshot's fixture context. No runtime, dependency, schema, or feature-flag changes.
+
+Validation in a fresh worktree at origin/main 06e52199 on Node 22.17.0: npm ci; Prisma Client 6.18.0 generation; test:core (10 pass, 0 fail, 1 explicitly skipped live-database group); test:guided (all four scripts passed); client-import boundary guard; migration-discipline CI check; 45 relative documentation links and named npm scripts; git diff --check. A configured application startup, full build, live model evaluation, production/database writes, and historical secret scanning were not performed.
+
+Sharing finding: the tracked legacy src/DATABASE_SETUP.md contained an apparent non-placeholder Supabase database password. Its validity was not tested and the value was not printed. The old guide was replaced by links to the current development and migration instructions, removing the value from this branch's current files. A literal-match search found the same value only in that tracked file on origin/main. Git history still contains it: confirm revocation or rotate it before granting new access. The targeted scan covered common API-token/private-key patterns and credential-bearing PostgreSQL URLs in current tracked text, not every secret format or the repository history. The GitHub repository remains private; reviewer access must be arranged separately.
+
+Release: prepared PR #816. Rebased onto the concurrent welcome-copy change 0df0c322; both task records are preserved. That update changes marketing copy and does not alter the documented interview, setup, or regression paths.
+
+---
+
 # Magazine welcome promise — 2026-10-23
 
 Scope: lead the logged-out homepage modal with the founder-approved headline, “Folio is your studio’s magazine.” Explain how the work and the thinking behind it come together in a publication of the designer's own. This makes the interview's value clear to prospective designers.
