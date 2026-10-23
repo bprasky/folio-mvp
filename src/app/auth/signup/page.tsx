@@ -31,9 +31,9 @@ const INTENT_OPTIONS: { value: UserIntent; label: string }[] = [
   { value: 'vendor', label: 'Vendor' },
 ];
 
-function intentToRedirect(intent: UserIntent): string {
+function intentToRedirect(intent: UserIntent, startProject: boolean): string {
   if (intent === 'browsing') return POST_SIGNUP_REDIRECT_BROWSING;
-  return professionalSetupHref(intent);
+  return professionalSetupHref(intent, startProject ? '/projects/new' : undefined);
 }
 
 function SignupForm() {
@@ -46,7 +46,7 @@ function SignupForm() {
     const type = params.get('type');
     return INTENT_OPTIONS.some(option => option.value === type) ? type as UserIntent : 'browsing';
   });
-  const destination = callbackUrl ?? intentToRedirect(intent);
+  const destination = callbackUrl ?? intentToRedirect(intent, params.get('next') === 'project');
   const signinHref = '/auth/signin?callbackUrl=' + encodeURIComponent(destination);
   useEffect(() => {
     if (status === 'authenticated') router.replace(destination);
@@ -161,14 +161,12 @@ function SignupForm() {
 
         <section className="auth-form-panel" aria-label="Join Folio">
           <div className="auth-eyebrow">
-            <span className="auth-eyebrow__gold">Apply</span>
+            <span className="auth-eyebrow__gold">Sign up</span>
           </div>
-          <h1 className="auth-title">Join Folio — on the trade&rsquo;s own terms.</h1>
+          <h1 className="auth-title">Create your Folio account.</h1>
           <p className="auth-sub">
-            Read the design story straight from the studios that wrote it —
-            every room credits its designer, every piece its maker. The private
-            network for studios and the brands they specify opens once your
-            organization joins.
+            Your account belongs to you. To publish your work, join or create
+            your firm, then bring in your first project.
           </p>
 
           <fieldset className="auth-intent">
@@ -277,7 +275,7 @@ function SignupForm() {
             ) : null}
 
             <button type="submit" className="auth-submit" disabled={!canSubmit}>
-              {isLoading ? 'Requesting access…' : 'Request access'}
+              {isLoading ? 'Creating your account…' : 'Sign up'}
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
                 <path d="M5 12h14" />
                 <path d="m13 6 6 6-6 6" />

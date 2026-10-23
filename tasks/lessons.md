@@ -1,5 +1,15 @@
 # Lessons Learned
 
+## 2026-10-23 — About must show the publication designers receive
+
+Lead with tangible outcomes alongside the process: full editorial articles, Folio-generated ideas beyond new project uploads, and Publishing Studio for managing social content and sharing. Describe the future printed studio magazine separately and explicitly as coming soon: projects, the people behind the practice and how they design, suitable for office copies, portfolios and promotion. Do not present print or automatic social publishing as currently available.
+
+## 2026-10-23 — Welcome explains and guides the first project
+
+Keep About beside the welcome signup action so visitors can understand Folio before committing. A signup button alone does not complete onboarding: explicit first-project intent must survive account creation and firm enrollment into upload. About should connect the publication promise, the project-informed interview and the practical next step; do not end that journey at an old application form or Settings. Preserve ordinary browsing and professional-account navigation.
+
+The About project CTA must check the current session: wait for loading, preserve the existing account for signed-in visitors and offer sign-in as well as signup to signed-out visitors. Verify both authentication paths retain project creation through any required firm enrollment.
+
 ## 2026-10-23 — Logged-out discovery needs visible account entry points
 
 The welcome and persistent header must both offer explicit Sign up and Sign in actions using the existing auth routes. A dismiss-only welcome and a sign-in-only header hide onboarding. Verify the closed-modal state and narrow-screen header as well as the initial welcome; preserve an intentional option to browse.

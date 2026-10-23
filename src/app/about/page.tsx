@@ -1,11 +1,10 @@
-import { Metadata } from "next";
-import Link from "next/link";
+import type { Metadata } from "next";
 import { AboutPageContent } from "./content";
 
 export const metadata: Metadata = {
   title: "About | FOLIO",
   description:
-    "Design work deserves a better home. Folio is a professional platform where designers publish their work with editorial quality and proper attribution.",
+    "Good design deserves to be published. Turn your projects and the thinking behind them into your studio’s own publication, with Folio’s project-informed interviews, editorial features and social content.",
 };
 
 export default function AboutPage() {

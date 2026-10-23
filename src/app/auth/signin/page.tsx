@@ -45,7 +45,7 @@ export default async function SigninPage({ searchParams }: { searchParams: { cal
         </div>
 
         <Link href={signupHref} className={styles.invitePill}>
-          Request invite
+          Sign up
         </Link>
       </header>
 

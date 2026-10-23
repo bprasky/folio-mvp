@@ -31,7 +31,7 @@ export function EditorialMasthead() {
   // the corner mark in the topbar is the only Folio mark on that page.
   const isArticlePage = pathname?.startsWith("/p/");
   const isProjectWorkspace = pathname?.startsWith('/project/') || pathname === '/projects/new';
-  const hidesMasthead = isDesignerPage || isProductPage || isMagazinePage || isArticlePage || isProjectWorkspace;
+  const hidesMasthead = isDesignerPage || isProductPage || isMagazinePage || isArticlePage || isProjectWorkspace || pathname === '/about';
   // Homepage renders a solid canvas-background bar above the editorial hero
   // with the corner FOLIO wordmark always visible — one wordmark, in the nav.
   // (The hero no longer embosses a second FOLIO into the photo.)

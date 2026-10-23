@@ -1,0 +1,70 @@
+{
+  "fixture": "Actual welcome, About, masthead, signup, sign-in and firm setup components. Synthetic auth/providers/API responses. Final upload destination is a route boundary, not a real upload. External requests blocked except the existing Folio interior photograph.",
+  "results": [
+    {
+      "layout": 1440,
+      "passed": true
+    },
+    {
+      "layout": 1024,
+      "passed": true
+    },
+    {
+      "layout": 768,
+      "passed": true
+    },
+    {
+      "layout": 390,
+      "passed": true
+    },
+    {
+      "layout": 320,
+      "passed": true
+    },
+    {
+      "journey": "welcome → about → signup → create firm → project upload",
+      "passed": true
+    },
+    {
+      "journey": "about → signin → existing firm → project upload",
+      "passed": true
+    },
+    {
+      "signedIn": "firm selection",
+      "passed": true
+    },
+    {
+      "signedIn": "active firm",
+      "passed": true
+    },
+    {
+      "auth": "loading waits, then uses resolved session",
+      "passed": true
+    },
+    {
+      "journey": "signup ↔ signin preserves first project",
+      "passed": true
+    },
+    {
+      "oauth": "Google",
+      "passed": true
+    },
+    {
+      "oauth": "Apple",
+      "passed": true
+    },
+    {
+      "auth": "generic browsing, changed role and explicit callback preserved",
+      "passed": true
+    },
+    {
+      "auth": "signup/signin errors preserve destination for retry",
+      "passed": true
+    },
+    {
+      "permissions": "pending firm request cannot enter upload",
+      "passed": true
+    }
+  ],
+  "errors": []
+}
