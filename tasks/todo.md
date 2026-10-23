@@ -1,3 +1,15 @@
+# Contextual interview wording — 2026-10-23
+
+- [x] Replace Sofia-specific README wording with a project-informed interview tailored to the designer and their work.
+- [x] Align the workflow step and capture the founder's wording preference in lessons.
+- [x] Verify the scoped prose diff and update PR #816.
+
+Plan check-in: two README passages plus task/lesson records; preserve universal publication positioning and the existing technical tour.
+
+Review: both README passages now describe Folio reviewing the supplied project material before a tailored interview that develops with the designer's answers. Sofia is no longer named in the README. Reviewed the two prose changes and passed git diff --check; links, commands, technical claims, and runtime code are unchanged. No runtime tests needed for this wording-only correction. Continuing PR #816 without merging.
+
+---
+
 # Publication economics framing — 2026-10-23
 
 Scope: incorporate the founder's correction that Folio addresses the cost and access barriers of design-industry publishing. Lead with universal publication access and designer economics; explain AI interviewing as the mechanism. Keep future influence-based earnings and potential client affordability benefits explicitly aspirational, without promising third-party editorial placement or measured savings.

@@ -8,7 +8,7 @@ Folio is an AI-assisted publishing platform that gives design studios a publicat
 
 Good design involves decisions that a photograph alone cannot explain. Communicating that thinking takes interviewing, writing, editing, and production. Studios can hire dedicated media teams or invest in PR to pursue placement in leading publications, but those costs compete with the time and margins available for the design work itself.
 
-Folio brings those publishing capabilities into the designer's workflow. Its interviewer, Sofia, captures the thinking behind a project and helps turn it into a story the designer can share. The aim is to make publication accessible across the industry, so the quality of the work and the ideas behind it can be expressed regardless of a studio's size or media budget.
+Folio reviews your project before you sit down for an interview tailored to your work and perspective. The conversation builds on the material you've shared and the answers you give, drawing out the decisions and thinking behind the design. The aim is to make publication accessible across the industry, so the quality of the work and the ideas behind it can be expressed regardless of a studio's size or media budget.
 
 [AI engineering tour](docs/AI_ENGINEERING.md) · [Development guide](docs/DEVELOPMENT.md) · [Regression journeys](docs/CORE_REGRESSION_JOURNEYS.md)
 
@@ -19,7 +19,7 @@ Folio brings those publishing capabilities into the designer's workflow. Its int
 ## From project archive to publication
 
 1. **Bring in the project.** Upload photographs, organize rooms, and tag products to preserve the context behind each image.
-2. **Tell the story.** Sofia asks about the project and individual rooms. Saved answers provide the source material for follow-up questions and writing.
+2. **Tell the story.** Sit down with Folio for an interview informed by your project. Questions evolve with your answers, drawing out the context, choices, and intentions behind the work.
 3. **Review the draft.** Generate an illustrated editorial draft, review the text and quotations, and choose how the work is presented.
 4. **Publish and reuse.** Publish the approved project and prepare further stories and social assets in Publishing Studio.
 

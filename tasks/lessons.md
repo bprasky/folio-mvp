@@ -1224,3 +1224,8 @@ The founder's live screenshot showed photography at twice the host video's heigh
 The founder corrected a repository introduction that reduced Folio's purpose to preserving project archives, then clarified that the audience is universal, not just small studios. Folio makes publication accessible across the design industry so good work and the thinking behind it can be communicated without depending on a large PR or media budget. Interviews and structured archives are the mechanism. Describe the cost of producing stories and pursuing publication, the effect on project margins, and the ambition to make design practice more viable. Studios of every size are the audience; smaller studios illustrate the access benefit rather than define the market.
 
 Keep current publication capabilities distinct from intended downstream effects. More accessible client pricing and future earnings from the influence of completed quality projects are the economic vision, not measured savings or a currently verified payout promise. Do not imply guaranteed placement in third-party publications. Future influence earnings should explain how quality completed work could support designer income without relying solely on higher client fees.
+
+
+## 2026-10-23 — Describe the Folio interview through the designer experience
+
+The founder wants public-facing repository copy to describe sitting down with Folio after it reviews the project material, for an interview tailored to the designer and project. Avoid centering the Sofia persona. Explain that the conversation uses shared project context and evolves with the answers to draw out the thinking behind the work; do not imply omniscience or that every possible factor is known. Keep implementation detail in the engineering tour.
