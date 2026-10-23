@@ -94,12 +94,11 @@ export function WelcomeModal() {
             <div className={styles.scrim} aria-hidden="true" />
             <div className={styles.copy}>
               <Dialog.Title className={styles.title}>
-                Folio.<br />
-                Your new<br />
-                publishing team.
+                Folio is your<br />
+                studio’s magazine.
               </Dialog.Title>
               <Dialog.Description className={styles.description}>
-                Help people see the expertise behind your work. We prepare editorial features and social posts from your projects and perspective—with you in control of what gets published.
+                Your projects tell people what you create. The stories behind them reveal how you think. Folio brings both together in a publication of your own.
               </Dialog.Description>
               <button
                 ref={exploreButton}
