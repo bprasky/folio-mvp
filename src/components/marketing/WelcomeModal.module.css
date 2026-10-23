@@ -101,6 +101,21 @@
 
 .signin:hover { background: rgb(255 255 255 / 15%); }
 
+.nextStep {
+  max-width: 23rem;
+  margin: 1rem 0 0;
+  color: white;
+  font-family: var(--font-body);
+  font-size: var(--type-meta);
+  line-height: var(--lh-meta);
+}
+
+.secondaryActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1.5rem;
+}
+
 .explore {
   display: inline-flex;
   align-items: center;

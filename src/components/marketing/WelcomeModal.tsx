@@ -104,27 +104,35 @@ export function WelcomeModal() {
               <div className={styles.actions}>
                 <Link
                   ref={signupLink}
-                  href="/auth/signup"
+                  href="/auth/signup?type=designer&next=project"
                   className={styles.signup}
                   onClick={() => dismiss(true)}
                 >
                   Sign up <ArrowRight size={18} aria-hidden="true" />
                 </Link>
                 <Link
-                  href="/auth/signin"
+                  href="/about"
                   className={styles.signin}
                   onClick={() => dismiss(true)}
                 >
-                  Sign in
+                  About Folio
                 </Link>
               </div>
-              <button
-                type="button"
-                className={styles.explore}
-                onClick={() => dismiss(true)}
-              >
-                Explore Folio
-              </button>
+              <p className={styles.nextStep}>
+                Create your account, set up your firm, then bring in your first project.
+              </p>
+              <div className={styles.secondaryActions}>
+                <Link href="/auth/signin" className={styles.explore} onClick={() => dismiss(true)}>
+                  Sign in
+                </Link>
+                <button
+                  type="button"
+                  className={styles.explore}
+                  onClick={() => dismiss(true)}
+                >
+                  Explore Folio
+                </button>
+              </div>
             </div>
             <Dialog.Close className={styles.close} aria-label="Close welcome" type="button">
               <X size={20} aria-hidden="true" />

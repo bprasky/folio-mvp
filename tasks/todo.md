@@ -1,3 +1,24 @@
+# About page and first-project journey — 2026-10-23
+
+- [x] Review the current About page, approved product positioning and signup/firm/upload routing.
+- [x] Add About beside welcome signup and carry explicit first-project intent through professional signup.
+- [x] Replace the About manifesto/application dead end with an editorial introduction, practical workflow and direct project entry.
+- [x] Verify actual signup callbacks, firm gating, welcome/About navigation and responsive layout; prepare the reviewed follow-up.
+
+Plan check-in: preserve the approved magazine headline. Lead About with publication access for studios of every size, explain the project-informed interview and designer review, and guide the next action to signup, firm setup and project upload. Generic signup/browsing and professional navigation keep their existing destinations; no schema, permissions or provider changes. Merge the already-approved PR #817 once its checks pass.
+
+### Review
+
+The About page now leads with full editorial features, new story ideas beyond project uploads, and Publishing Studio for social assets/sharing. A separate Coming soon section introduces a printed studio magazine for office copies, portfolios and promotion, including projects, team stories and design perspective. The editorial layout reuses approved imagery and canonical typography. Welcome has About beside Sign up, with sign-in/browsing still available.
+
+The About project CTA waits for session resolution and routes existing users through projectEntryHref. Anonymous visitors start signup with designer/project intent or use sign-in with the same firm-setup/project callback. Signup preserves that explicit intent across credentials and provider auth; generic signup, browsing and explicit claim callbacks retain their prior behavior. Removed stale invitation/waitlist language from the auth UI. Existing firm and project authorization remain unchanged.
+
+Verification: 16 actual-component browser cases pass, covering five viewport widths (320–1440px), the signup/new-firm/project destination, sign-in/existing-firm destination, signed-in/loading cases, auth switching, Google/Apple callback routing, role/browsing/explicit callbacks, failed-auth retry and pending firm approval. Professional entry/routing/alias suites pass. Focused lint, client boundary and migration guards pass; TypeScript ratchet passes at 895 diagnostics against 904 baseline. Screenshots inspected; evidence in docs/reviews/about-first-project. Auth/providers/API responses are synthetic and the final project URL is an asserted route boundary; no live accounts or uploads were created. Full application build and production verification were not run.
+
+Release: original PR #817 merged as 272d2382 after nine successful active checks (Supabase Preview skipped). This follow-up is prepared separately on codex/about-first-project for review.
+
+---
+
 # Logged-out signup entry points — 2026-10-23
 
 - [x] Trace welcome dismissal and header account actions to the existing authentication pages.

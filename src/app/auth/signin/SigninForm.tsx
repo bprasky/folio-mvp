@@ -51,7 +51,7 @@ export function SigninForm({ showGoogle, showApple }: SigninFormProps) {
       <div className={styles.eyebrow}>
         <span className={styles.eyebrowMembers}>Members</span>
         <span className={styles.eyebrowDot} aria-hidden="true" />
-        <span>By invitation</span>
+        <span>Sign in</span>
       </div>
 
       <h1 className={styles.headline}>Welcome — sign back in.</h1>
@@ -162,9 +162,9 @@ export function SigninForm({ showGoogle, showApple }: SigninFormProps) {
       <p className={styles.formFooter}>
         New to Folio?{' '}
         <Link href={signupHref} className={styles.formFooterLink}>
-          Request an invite
+          Sign up
         </Link>
-        {' '}— applications are reviewed weekly.
+        {' '}to create your account.
       </p>
     </div>
   );
