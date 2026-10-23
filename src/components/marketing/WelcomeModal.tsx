@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import Image from 'next/image';
+import Link from 'next/link';
 import { useSession } from 'next-auth/react';
 import * as Dialog from '@radix-ui/react-dialog';
 import { ArrowRight, X } from 'lucide-react';
@@ -22,7 +23,7 @@ export function WelcomeModal() {
   const [imageFailed, setImageFailed] = useState(false);
   const hasViewed = useRef(false);
   const previousFocus = useRef<HTMLElement | null>(null);
-  const exploreButton = useRef<HTMLButtonElement>(null);
+  const signupLink = useRef<HTMLAnchorElement>(null);
 
   useEffect(() => {
     if (status !== 'unauthenticated' || dismissedInMemory) {
@@ -72,7 +73,7 @@ export function WelcomeModal() {
           className={styles.panel}
           onOpenAutoFocus={(event) => {
             event.preventDefault();
-            exploreButton.current?.focus();
+            signupLink.current?.focus();
           }}
           onCloseAutoFocus={(event) => {
             event.preventDefault();
@@ -100,13 +101,29 @@ export function WelcomeModal() {
               <Dialog.Description className={styles.description}>
                 Your projects tell people what you create. The stories behind them reveal how you think. Folio brings both together in a publication of your own.
               </Dialog.Description>
+              <div className={styles.actions}>
+                <Link
+                  ref={signupLink}
+                  href="/auth/signup"
+                  className={styles.signup}
+                  onClick={() => dismiss(true)}
+                >
+                  Sign up <ArrowRight size={18} aria-hidden="true" />
+                </Link>
+                <Link
+                  href="/auth/signin"
+                  className={styles.signin}
+                  onClick={() => dismiss(true)}
+                >
+                  Sign in
+                </Link>
+              </div>
               <button
-                ref={exploreButton}
                 type="button"
                 className={styles.explore}
                 onClick={() => dismiss(true)}
               >
-                Explore Folio <ArrowRight size={18} aria-hidden="true" />
+                Explore Folio
               </button>
             </div>
             <Dialog.Close className={styles.close} aria-label="Close welcome" type="button">

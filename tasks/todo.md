@@ -1,3 +1,21 @@
+# Logged-out signup entry points — 2026-10-23
+
+- [x] Trace welcome dismissal and header account actions to the existing authentication pages.
+- [x] Add prominent signup and clear sign-in actions to the welcome and logged-out header; retain guest browsing.
+- [x] Verify navigation, keyboard access and narrow-screen layout; review the scoped diff.
+
+Plan check-in: use the existing /auth/signup and /auth/signin routes. Keep dismissal remembered for the visit and preserve the signed-in menu. This directly supports designer onboarding.
+
+### Review
+
+Added primary Sign up and secondary Sign in actions to the welcome and logged-out header, using the existing auth pages. Explore remains available; account actions persist after dismissal. Narrow screens use the existing menu search so both account actions fit. Retained the latest magazine headline and the signed-in menu.
+
+Verification: actual welcome and masthead browser fixture passed at 1440x1000, 390x844, 320x568 and 667x375. Verified all four auth navigations, initial signup focus, Escape/Explore/close dismissal, remembered dismissal and authenticated/loading suppression; inspected mobile screenshots. Focused ESLint passes with two pre-existing UserMenu warnings; client-import and migration-discipline guards pass. Browser fixture uses synthetic auth/destination pages and blocks external requests, so photography, authentication submission and production are not verified. No full application build.
+
+Release: scoped branch codex/logged-out-auth-links; not deployed.
+
+---
+
 # Contextual interview wording — 2026-10-23
 
 - [x] Replace Sofia-specific README wording with a project-informed interview tailored to the designer and their work.

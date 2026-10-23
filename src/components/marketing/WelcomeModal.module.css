@@ -68,7 +68,14 @@
   line-height: var(--lh-body);
 }
 
-.explore {
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.signup, .signin {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -84,7 +91,31 @@
   line-height: var(--lh-ui);
 }
 
-.explore:hover { background: var(--surface-ground); }
+.signup:hover { background: var(--surface-ground); }
+
+.signin {
+  background: rgb(0 0 0 / 20%);
+  color: white;
+  border: 1px solid rgb(255 255 255 / 65%);
+}
+
+.signin:hover { background: rgb(255 255 255 / 15%); }
+
+.explore {
+  display: inline-flex;
+  align-items: center;
+  min-height: 2.75rem;
+  margin-top: 0.75rem;
+  color: white;
+  font-family: var(--font-body);
+  font-size: var(--type-ui);
+  font-weight: var(--w-ui);
+  line-height: var(--lh-ui);
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+
+.explore:hover { text-decoration: none; }
 
 .close {
   position: absolute;
@@ -100,7 +131,7 @@
 }
 
 .close:hover { background: rgb(0 0 0 / 65%); }
-.explore:focus-visible, .close:focus-visible {
+.signup:focus-visible, .signin:focus-visible, .explore:focus-visible, .close:focus-visible {
   outline: 2px solid white;
   outline-offset: 4px;
 }

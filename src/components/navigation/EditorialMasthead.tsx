@@ -103,7 +103,7 @@ export function EditorialMasthead() {
         }}
       >
         <nav className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center gap-4 min-w-0">
+          <div className="flex items-center gap-2 sm:gap-4 min-w-0">
             <MobileMenu />
 
             {/* Corner FOLIO mark — hidden while the big wordmark is in view */}
@@ -133,8 +133,9 @@ export function EditorialMasthead() {
           </div>
 
           {/* Right: Create Button + User Menu */}
-          <div className="flex items-center gap-3">
-            <div className="md:hidden">
+          <div className="flex items-center gap-2 sm:gap-3">
+            {/* Narrow screens keep search in MobileMenu so account actions fit. */}
+            <div className="hidden sm:block md:hidden">
               <GlobalSearch placeholder="Search..." />
             </div>
             <NotificationBell />
