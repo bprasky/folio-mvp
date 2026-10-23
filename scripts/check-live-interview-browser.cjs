@@ -741,6 +741,7 @@ async function main() {
         let observed = new Promise(resolve => { startHeld = resolve; });
         await click('Start live interview'); await observed;
         await page.evaluate(() => window.panelControls.stop());
+        await page.waitForFunction(() => [...document.querySelectorAll('button')].some(button => button.textContent === 'Start live interview' && !button.disabled));
         observed = new Promise(resolve => { startHeld = resolve; });
         await click('Start live interview'); await observed;
         assert.equal(starts, before.starts + 2); assert.equal(startRequests.at(-1).requestId, startRequests.at(-2).requestId);

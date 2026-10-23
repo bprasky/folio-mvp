@@ -17,6 +17,8 @@ Verification: 16 actual-component browser cases pass, covering five viewport wid
 
 Release: original PR #817 merged as 272d2382 after nine successful active checks (Supabase Preview skipped). This follow-up is prepared separately on codex/about-first-project for review.
 
+CI follow-up: the existing live-interview browser test tried to restart before React rendered the start control after stop. Wait for the enabled start button before retrying; all 46 live browser/capture checks pass locally with the same synthetic provider boundaries. The founder approved the About design and merge; PR #818 remains gated on hosted checks.
+
 ---
 
 # Logged-out signup entry points — 2026-10-23
