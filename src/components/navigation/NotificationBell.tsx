@@ -82,7 +82,7 @@ export function NotificationBell() {
       <button
         type="button"
         onClick={() => setOpen((o) => !o)}
-        className="relative flex items-center justify-center"
+        className="relative flex h-11 w-11 sm:h-auto sm:w-auto items-center justify-center"
         title="Notifications"
         aria-label="Notifications"
       >
@@ -115,7 +115,7 @@ export function NotificationBell() {
       </button>
 
       {open && (
-        <div className="absolute right-0 top-full mt-2 w-80 max-h-96 overflow-y-auto rounded-xl border border-folio-border-subtle bg-surface-card shadow-xl z-50">
+        <div className="fixed left-4 right-4 top-16 sm:absolute sm:left-auto sm:right-0 sm:top-full mt-2 sm:w-80 max-h-96 overflow-y-auto rounded-xl border border-folio-border-subtle bg-surface-card shadow-xl z-50">
           <div className="flex items-center justify-between px-4 py-3 border-b border-folio-border-subtle">
             <span className="text-sm font-semibold text-folio-text-primary">Notifications</span>
             {unread > 0 && (

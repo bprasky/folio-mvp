@@ -151,7 +151,7 @@ export function StoryRenderer({ post }: StoryRendererProps) {
         )}
 
         {/* Mosaic: Room grid with expand-to-detail */}
-        <div className="mt-10">
+        <div id="tagged-products" className="mt-10 scroll-mt-20">
           <Mosaic
             roomTiles={story.roomTiles}
             breathers={story.breathers}

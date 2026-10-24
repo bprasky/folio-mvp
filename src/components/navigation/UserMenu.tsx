@@ -133,13 +133,13 @@ export function UserMenu() {
         <button
           type="button"
           onClick={goToSigninFresh}
-          className="px-1.5 sm:px-3 py-2 folio-ui text-folio-text-primary rounded-full hover:bg-surface-ground transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2"
+          className="hidden sm:block px-1.5 sm:px-3 py-2 folio-ui text-folio-text-primary rounded-full hover:bg-surface-ground transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2"
         >
           Sign in
         </button>
         <Link
           href="/auth/signup"
-          className="px-3 sm:px-4 py-2 folio-ui text-[var(--surface-canvas)] bg-[var(--text-primary)] rounded-full hover:opacity-90 transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2"
+          className="min-h-11 inline-flex items-center px-3 sm:px-4 py-2 folio-ui text-[var(--surface-canvas)] bg-[var(--text-primary)] rounded-full hover:opacity-90 transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2"
         >
           Sign up
         </Link>

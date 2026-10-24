@@ -11,7 +11,6 @@
 
 import { HomepagePage } from "@/components/homepage/HomepagePage";
 import { WelcomeModal } from "@/components/marketing/WelcomeModal";
-import { FoundingCTABar } from "@/components/marketing/FoundingCTABar";
 
 // Hero selection involves a window check against `now()`; rendering must not
 // be cached at the route level. Inner fetches use their own cache strategy.
@@ -22,7 +21,6 @@ export default function Home() {
     <>
       <HomepagePage />
       <WelcomeModal />
-      <FoundingCTABar />
     </>
   );
 }

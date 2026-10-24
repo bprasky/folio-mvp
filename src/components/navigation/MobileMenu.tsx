@@ -6,6 +6,7 @@ import { projectEntryHref } from "@/lib/onboarding/professional-entry";
 import { Menu, X, Plus, FileText, Package, FolderPlus } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
+import { BadgeButton } from "./BadgeButton";
 import { UserAvatar } from "./UserAvatar";
 import { normalizeRole } from "@/lib/permissions";
 import { CreateCollaborationModal } from "@/components/collaboration/CreateCollaborationModal";
@@ -59,7 +60,7 @@ export function MobileMenu() {
     <div className="md:hidden">
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="p-2 rounded-lg hover:bg-surface-ground transition-colors"
+        className="h-11 w-11 inline-flex items-center justify-center rounded-lg hover:bg-surface-ground transition-colors"
         aria-label="Toggle menu"
       >
         {isOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
@@ -67,7 +68,7 @@ export function MobileMenu() {
 
       {isOpen && (
         <div
-          className="fixed top-16 left-0 right-0 border-b border-white/15 z-50 glass-overlay rounded-none"
+          className="fixed top-16 left-0 right-0 max-h-[calc(100dvh-64px)] overflow-y-auto border-b border-white/15 z-50 glass-overlay rounded-none"
         >
           {/* Mobile search */}
           <div className="p-4 border-b border-folio-border-subtle">
@@ -188,6 +189,11 @@ export function MobileMenu() {
             )}
           </nav>
 
+          {!user && <MobileNavLink href="/auth/signin" onClick={() => setIsOpen(false)}>Sign in</MobileNavLink>}
+          {user && <>
+            <MobileNavLink href="/inbox" onClick={() => setIsOpen(false)}>Inbox</MobileNavLink>
+            <div className="px-4 py-3 flex items-center gap-3"><BadgeButton /><span className="folio-ui">My Folio Badge</span></div>
+          </>}
           {/* User section */}
           {user && (
             <div className="p-4 border-t border-folio-border-subtle flex items-center gap-3">

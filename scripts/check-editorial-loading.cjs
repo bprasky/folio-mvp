@@ -88,7 +88,7 @@ async function main() {
       assert.equal(await page.$eval('.folio-loading-mark',e=>getComputedStyle(e).pointerEvents),'none');
       await page.screenshot({path:path.join(out,`home-loading-${width}.png`)});
       await set({loading:false});
-      const loaded=await page.$eval('[data-ready] section a',e=>({x:e.getBoundingClientRect().x,y:e.getBoundingClientRect().y,width:e.getBoundingClientRect().width,height:e.getBoundingClientRect().height}));
+      const loaded=await page.$eval('[data-ready] section a > div:first-child',e=>({x:e.getBoundingClientRect().x,y:e.getBoundingClientRect().y,width:e.getBoundingClientRect().width,height:e.getBoundingClientRect().height}));
       assert.deepEqual(initial,loaded,'Homepage hero geometry must match');
       assert.ok(await page.$('[data-ready]'),'Content ready before animation finishes');
       await waitHidden();
