@@ -10,6 +10,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
+import Link from "next/link";
 
 import type { BoostReelItem } from "@/lib/homepage/getHomepageData";
 
@@ -93,31 +94,29 @@ export function BoostReel({ items, totalTagged, postSlug }: Props) {
   const remaining = Math.max(0, totalTagged - items.length);
 
   return (
-    <div
-      ref={containerRef}
-      // Desktop: 8 cells in one row (7 product + optional +N).
-      // Mobile (<sm): 4 cells per row, wrapping into 2 rows. The
-      // IntersectionObserver targets each cell individually, so the layout
-      // change doesn't affect viewability tracking.
-      className="grid grid-cols-4 sm:grid-cols-8 gap-3 sm:gap-4"
-      role="list"
-      aria-label="Products tagged in this editorial"
-    >
-      {items.map((item) => (
-        <div key={item.productId} role="listitem">
-          <BoostReelCell item={item} onClick={handleClick} />
-        </div>
-      ))}
-      {remaining > 0 && (
-        // The "+N View all" cell loses meaning when the reel itself is
-        // already wrapping into multiple rows (the user can simply scroll
-        // through to see them). Hide it below 480px; show at 480px+ where
-        // the row spacing leaves it visually distinct.
-        <div role="listitem" className="hidden min-[480px]:block">
-          <BoostReelViewAllCell count={remaining} postSlug={postSlug} />
-        </div>
-      )}
-    </div>
+    <>
+      <div className="sm:hidden flex items-center justify-between gap-4 border-t border-folio-border-subtle pt-4 mb-3">
+        <h2 className="font-serif text-xl">In this project</h2>
+        <Link href={`/p/${postSlug}#tagged-products`} className="text-sm min-h-11 inline-flex items-center">View all <span aria-hidden className="ml-2">→</span></Link>
+      </div>
+      <div
+        ref={containerRef}
+        className="flex sm:grid sm:grid-cols-8 gap-3 sm:gap-4 overflow-x-auto sm:overflow-visible snap-x snap-proximity -mx-4 px-4 pb-2 sm:mx-0 sm:px-0 sm:pb-0 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+        role="list"
+        aria-label="Products tagged in this editorial"
+      >
+        {items.map((item) => (
+          <div key={item.productId} role="listitem" className="w-[104px] shrink-0 snap-start sm:w-auto min-w-0">
+            <BoostReelCell item={item} onClick={handleClick} />
+          </div>
+        ))}
+        {remaining > 0 && (
+          <div role="listitem" className="w-[104px] shrink-0 snap-start sm:w-auto min-w-0">
+            <BoostReelViewAllCell count={remaining} postSlug={postSlug} />
+          </div>
+        )}
+      </div>
+    </>
   );
 }
 

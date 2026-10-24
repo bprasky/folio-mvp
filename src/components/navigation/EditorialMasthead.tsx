@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { Search } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { GlobalSearch } from "./GlobalSearch";
@@ -93,15 +94,18 @@ export function EditorialMasthead() {
           </div>
 
           {/* Right: Create Button + User Menu */}
-          <div className="flex items-center gap-2 sm:gap-3">
-            {/* Narrow screens keep search in MobileMenu so account actions fit. */}
+          <div className="flex shrink-0 items-center gap-1 sm:gap-3">
+            {/* Compact search link on phones; full search field on larger screens. */}
             <div className="hidden sm:block md:hidden">
               <GlobalSearch placeholder="Search..." />
             </div>
+            <Link href="/search" aria-label="Search Folio" className="sm:hidden inline-flex h-11 w-11 items-center justify-center rounded-full hover:bg-surface-ground"><Search className="h-5 w-5" /></Link>
             <NotificationBell />
-            <InboxButton />
-            <BadgeButton />
-            <CreateButton />
+            <div className="hidden sm:flex items-center gap-3">
+              <InboxButton />
+              <BadgeButton />
+              <CreateButton />
+            </div>
             <UserMenu />
           </div>
         </nav>

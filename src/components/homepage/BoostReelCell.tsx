@@ -70,7 +70,7 @@ export function BoostReelCell({ item, onClick }: ProductCellProps) {
       data-slot={item.slotPosition}
       data-boosted={item.isBoosted ? "true" : "false"}
     >
-      <div className="relative aspect-square rounded-xl overflow-hidden bg-surface-ground">
+      <div className="relative aspect-square rounded-md sm:rounded-xl overflow-hidden bg-surface-ground">
         <BoostReelCellLayer layer={layer} item={item} onError={advance} />
 
         {item.isBoosted && (
@@ -87,7 +87,7 @@ export function BoostReelCell({ item, onClick }: ProductCellProps) {
       </div>
       <div className="mt-2 px-0.5">
         <p
-          className="folio-ui truncate text-folio-text-primary"
+          className="folio-ui line-clamp-2 sm:truncate text-folio-text-primary"
           title={item.name}
         >
           {item.name}
@@ -127,7 +127,7 @@ function BoostReelCellLayer({
         src={layer.src}
         alt={item.name}
         fill
-        sizes="(min-width: 1440px) 160px, 12vw"
+        sizes="(max-width: 639px) 104px, (min-width: 1440px) 160px, 12vw"
         className="object-cover transition-transform duration-300 group-hover:scale-[1.03]"
         onError={onError}
       />
@@ -145,7 +145,7 @@ function BoostReelCellLayer({
         src={layer.src}
         alt={item.name}
         fill
-        sizes="(min-width: 1440px) 160px, 12vw"
+        sizes="(max-width: 639px) 104px, (min-width: 1440px) 160px, 12vw"
         className="object-cover transition-transform duration-300 group-hover:scale-[1.03]"
         style={{
           transform: `scale(${FOCAL_ZOOM})`,
@@ -196,7 +196,7 @@ export function BoostReelViewAllCell({ count, postSlug }: ViewAllCellProps) {
       className="relative block group"
     >
       <div
-        className="relative aspect-square rounded-xl overflow-hidden flex items-center justify-center"
+        className="relative aspect-square rounded-md sm:rounded-xl overflow-hidden flex items-center justify-center"
         style={{
           background: "var(--surface-ground)",
           border: "1px solid var(--folio-border-subtle)",

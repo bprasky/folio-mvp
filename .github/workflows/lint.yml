@@ -49,6 +49,23 @@ on:
   workflow_dispatch:
 
 jobs:
+  mobile-editorial:
+    name: Mobile editorial layout
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - name: Check responsive components
+        run: LOADING_TEST_BROWSER="$(command -v google-chrome || command -v chromium)" node scripts/check-mobile-editorial.cjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: mobile-editorial-screenshots
+          path: .tmp/mobile-editorial/*.png
   core:
     name: Core regression journeys
     runs-on: ubuntu-latest
