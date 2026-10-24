@@ -101,7 +101,7 @@ export function BoostReel({ items, totalTagged, postSlug }: Props) {
       </div>
       <div
         ref={containerRef}
-        className="flex sm:grid sm:grid-cols-8 gap-3 sm:gap-4 overflow-x-auto sm:overflow-visible snap-x snap-proximity -mx-4 px-4 pb-2 sm:mx-0 sm:px-0 sm:pb-0 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+        className="flex sm:grid sm:grid-cols-8 gap-3 sm:gap-4 overflow-x-auto sm:overflow-visible snap-x snap-proximity scroll-px-4 sm:scroll-px-0 -mx-4 px-4 pb-2 sm:mx-0 sm:px-0 sm:pb-0 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
         role="list"
         aria-label="Products tagged in this editorial"
       >

@@ -17,7 +17,7 @@ export function HomepageHeroXL({ hero }: { hero: HomepageHero }) {
           <span className="folio-eyebrow text-folio-text-primary sm:inline-block sm:px-4 sm:py-1.5 sm:rounded-full sm:bg-white/90 sm:backdrop-blur-md">{hero.eyebrow}</span>
         </div>
         <div className="mt-2 sm:mt-0 sm:absolute sm:left-9 sm:right-9 sm:bottom-9">
-          <h1 className="max-w-[800px] text-folio-text-primary sm:text-white break-words [font-family:var(--font-headline)] [letter-spacing:var(--ls-tight)] text-[30px] leading-[1.1] sm:[font-size:var(--type-h1)] sm:[line-height:var(--lh-h1)] [font-weight:var(--w-h1)]">{hero.title}</h1>
+          <h1 className="max-w-[800px] text-folio-text-primary sm:text-white break-words [font-family:var(--font-headline)] [letter-spacing:var(--ls-tight)] [font-size:var(--type-h3)] [line-height:var(--lh-h3)] sm:[font-size:var(--type-h1)] sm:[line-height:var(--lh-h1)] [font-weight:var(--w-h1)]">{hero.title}</h1>
           <div className="mt-3 sm:mt-2 flex items-center justify-between gap-4">
             {(hero.designerName || hero.studio) && <p className="folio-meta text-folio-text-secondary sm:text-white/85 min-w-0 break-words">{hero.studio ?? hero.designerName}</p>}
             <span className="sm:hidden shrink-0 text-sm text-folio-text-primary">Read story <span aria-hidden>↗</span></span>
