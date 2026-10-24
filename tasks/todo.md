@@ -978,3 +978,13 @@ Interrupted voice now becomes explicitly reviewable on shutdown/expiry, like typ
 Verification: 52 service/transport checks, 46 actual-panel browser/capture checks and scheduled-cleanup checks pass. Old-code probes reproduce failed disconnect cleanup and unusable confirmed-ended retry. Coverage includes delayed join/HTTP responses, reuse of the same session/request, unfinished speech, active/expired save leases and legacy guide/interview separation. Code review found no remaining blockers. Scoped/full lint passes with existing warnings; client-import and migration guards pass. Same-environment TypeScript comparison is 903 diagnostics on main and here, with no new fingerprints; the final live files have no diagnostics. Six manual-room checks pass with the reload-stable upload fixture included.
 
 Production incident attribution remains unverified: Vercel runtime/deployment read access returned 403, and cached production database credentials failed authentication. No incident records were read, no production state changed and no paid provider calls were made. The local diagnostics entrypoint is missing from this checkout; targeted transport/browser regressions provided verification. Changes remain in draft PR 814; not deployed.
+
+## Remove invitation-only homepage banner — 2026-10-24
+
+Open designer registration must not be contradicted by an invitation-only rail.
+
+- [x] Remove the homepage InviteRibbon mount and obsolete component.
+- [x] Preserve signup access and clearance for the remaining founding-designer bar.
+- [ ] Verify references and diff; run available checks and open a scoped PR.
+
+Review: removed the only InviteRibbon caller and the unused component. Source search confirms no remaining homepage references; root signup bar and welcome signup/About links remain. Diff whitespace, client-import guard and migration guard pass. Type preparation and ratchet were attempted but cannot execute without Prisma/TypeScript dependencies in this fresh checkout. Hosted CI remains the build/type verification gate. Not deployed.
