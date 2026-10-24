@@ -1,0 +1,18 @@
+{
+  "results": [
+    "Matched hero geometry and no loading overflow at 320px across five layouts",
+    "Matched hero geometry and no loading overflow at 390px across five layouts",
+    "Matched hero geometry and no loading overflow at 768px across five layouts",
+    "Matched hero geometry and no loading overflow at 1440px across five layouts",
+    "Resize, persistent header across session resolution, and ready content interaction",
+    "Fast load skips branding",
+    "Interrupted transition remains loading",
+    "Nested fallback handoff",
+    "Reduced motion has no collapse animation",
+    "Inherited root fallback never impersonates homepage",
+    "Auth routes remain unbranded"
+  ],
+  "errors": [],
+  "fonts": "__Cormorant_Garamond_733947",
+  "scope": "Actual React components; synthetic router/session/data. No production API calls."
+}

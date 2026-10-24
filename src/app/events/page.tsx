@@ -1,4 +1,3 @@
-import { Suspense } from "react";
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/app/api/auth/[...nextauth]/options';
 import Link from 'next/link';
@@ -59,9 +58,7 @@ export default async function EventsPage({
 
       {/* Edge-to-edge Festival Carousel */}
       <section aria-label="Festival timeline" className="mb-12">
-        <Suspense fallback={<div className="h-[400px] bg-surface-canvas" />}>
-          <FestivalsCarousel festivals={festivals} />
-        </Suspense>
+        <FestivalsCarousel festivals={festivals} />
       </section>
 
       {/* Edge-to-edge Local Events Feed */}

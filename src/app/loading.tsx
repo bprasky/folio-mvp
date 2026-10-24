@@ -1,13 +1,18 @@
+'use client';
+
+import { usePathname } from 'next/navigation';
+import { LoadingSurface } from '@/components/loading/LoadingBrand';
+import { HomepageSkeleton } from '@/components/homepage/HomepageSkeleton';
+
 export default function Loading() {
+  const pathname = usePathname();
+  // This root boundary is inherited by other routes. Never show the homepage
+  // layout on a workspace/article/auth route that has no dedicated skeleton.
   return (
-    <div className="min-h-screen bg-primary flex items-center justify-center">
-      <div className="text-center">
-        <div className="relative">
-          <div className="w-16 h-16 border-4 border-secondary/20 border-t-secondary rounded-full animate-spin mx-auto mb-4"></div>
-        </div>
-        <h2 className="text-xl font-semibold text-folio-text-primary mb-2">Loading...</h2>
-        <p className="text-folio-text-secondary">Please wait while we load your content</p>
-      </div>
-    </div>
+    <LoadingSurface>
+      {pathname === '/' || pathname === '/magazine'
+        ? <HomepageSkeleton />
+        : <div className="min-h-[40vh]" />}
+    </LoadingSurface>
   );
-} 
+}

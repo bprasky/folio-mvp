@@ -6,7 +6,8 @@ import Link from "next/link";
 import { getPublishedProjectPosts } from "@/lib/feed/getPublishedProjectPosts";
 import { getRecentProjectModules } from "@/lib/feed/getRecentProjectModules";
 import { getUpdatesCarousel } from "@/lib/feed/getUpdatesCarousel";
-import { FeedSkeleton } from "./skeleton";
+import { FeedContentSkeleton } from "./skeleton";
+import { LoadingSurface } from "@/components/loading/LoadingBrand";
 import { EmptyFeedOutline } from "./states";
 import { FeedHeroCard, FeedGridCard } from "./ui/cards";
 import { SideTrending, SideAISuggested } from "./ui/side";
@@ -94,7 +95,7 @@ export default async function FeedPage({
           </Link>
         </div>
 
-        <Suspense fallback={<FeedSkeleton />}>
+        <Suspense fallback={<LoadingSurface label="Loading Discover stories"><FeedContentSkeleton updates={mode === "updates"} /></LoadingSurface>}>
           {mode === "featured" ? (
             <div className="space-y-8">
               {/* Updates Carousel (always show, skeleton when empty) */}
