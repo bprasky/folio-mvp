@@ -12,7 +12,6 @@ import { HomepageHeroXL } from "./HomepageHeroXL";
 import { BoostReel } from "./BoostReel";
 import { HomepageFilterChips } from "./HomepageFilterChips";
 import { HomepageMosaicSection } from "./HomepageMosaicSection";
-import { InviteRibbon } from "./InviteRibbon";
 
 export async function HomepagePage() {
   const session = await auth();
@@ -23,11 +22,10 @@ export async function HomepagePage() {
 
   // Mobile vs desktop edge padding:
   //   - Mobile (<sm): 16px side padding, tighter vertical rhythm so the
-  //     hero sits closer to the section above and the InviteRibbon doesn't
-  //     push content off-screen.
+  //     hero sits closer to the section above.
   //   - Desktop (sm+): 40px side padding (matches existing magazine spacing
   //     tokens), generous vertical rhythm.
-  // pb-32 on mobile gives the InviteRibbon clearance + iOS safe-area room.
+  // Keep clearance for the remaining founding-designer CTA bar on the root page.
   return (
     <div className="bg-surface-canvas min-h-screen pb-32 sm:pb-24">
       {/* Editorial XL hero */}
@@ -65,9 +63,6 @@ export async function HomepagePage() {
           isOut={isOut}
         />
       </section>
-
-      {/* Invite ribbon — sticky bottom, logged-out only */}
-      {isOut && <InviteRibbon />}
     </div>
   );
 }
