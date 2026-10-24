@@ -1,8 +1,6 @@
 "use client";
 import { ReactNode } from "react";
-import { useSession } from "next-auth/react";
 import { usePathname } from "next/navigation";
-import MainLayout from "./MainLayout";
 import SimpleLayout from "./SimpleLayout";
 import { Navigation } from "../navigation";
 import { Footer } from "../Footer";
@@ -15,7 +13,6 @@ interface RoleBasedLayoutProps {
 }
 
 export default function RoleBasedLayout({ children }: RoleBasedLayoutProps) {
-  const { data: session, status } = useSession();
   const pathname = usePathname();
 
   // Check if we're on an auth page where we might want to suppress navigation
@@ -40,27 +37,9 @@ export default function RoleBasedLayout({ children }: RoleBasedLayoutProps) {
     );
   }
 
-  // Show loading state while session is being determined (authenticated routes only)
-  if (status === 'loading') {
-    return (
-      <div className="flex flex-col min-h-screen w-full bg-surface-canvas">
-        <div className="h-16 bg-surface-canvas border-b border-folio-border-subtle animate-pulse" />
-        <main className="flex-1 pt-4 px-6 pb-8 overflow-auto">
-          <div className="animate-pulse">
-            <div className="h-8 bg-surface-ground rounded mb-4"></div>
-            <div className="space-y-2">
-              {[...Array(4)].map((_, i) => (
-                <div key={i} className="h-4 bg-surface-ground rounded"></div>
-              ))}
-            </div>
-          </div>
-        </main>
-      </div>
-    );
-  }
-
-  // Determine which layout to use based on user role
-  const userRole = session?.user?.role?.toLowerCase() || 'guest';
+  // Session resolution belongs to account controls and protected pages. Do not
+  // replace public content with a generic skeleton or remount it on role changes.
+  // MainLayout and SimpleLayout have identical content geometry; use one stable shell.
 
   // Long-form editorial routes paint a warm cream field. The class overrides
   // --surface so the sticky header's scrolled-state tint matches the page.
@@ -73,10 +52,8 @@ export default function RoleBasedLayout({ children }: RoleBasedLayoutProps) {
   return (
     <div className={`flex flex-col min-h-screen${isEditorialRoute ? ' editorial-surface' : ''}`}>
       <Navigation />
-      {/* Use MainLayout for admin and vendor users (more features) */}
-      {isProjectWorkspace ? <main className="min-w-0 flex-1">{children}</main> : ['admin', 'vendor'].includes(userRole) ? (
-        <MainLayout>{children}</MainLayout>
-      ) : (
+      {/* Keep the content shell stable while the session resolves. */}
+      {isProjectWorkspace ? <main className="min-w-0 flex-1">{children}</main> : (
         <SimpleLayout>{children}</SimpleLayout>
       )}
       <Footer />

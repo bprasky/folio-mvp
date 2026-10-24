@@ -2175,3 +2175,23 @@ body.frame-dark::before {
 .folio-nav-pulse {
   animation: folio-nav-pulse 0.8s ease-out forwards;
 }
+/* A temporary editorial impression, never a screen-covering loading layer.
+   Fixed positioning leaves the destination skeleton's geometry unchanged. */
+.folio-loading-mark {
+  position: fixed;
+  z-index: 51;
+  pointer-events: none;
+  user-select: none;
+  opacity: 0;
+  font-family: var(--font-headline);
+  font-weight: 500;
+  font-size: clamp(48px, 7vw, 88px); /* folio-design-system: off-scale — transient masthead */
+  line-height: 1;
+  letter-spacing: var(--ls-tight);
+  color: var(--folio-text-primary);
+  text-shadow: 0 3px 9px color-mix(in srgb, var(--folio-text-primary) 12%, transparent);
+  transform-origin: top left;
+}
+.folio-loading-skeleton .animate-pulse {
+  animation: none;
+}

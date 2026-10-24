@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { Cormorant_Garamond, Instrument_Sans, IBM_Plex_Mono } from 'next/font/google';
 import './globals.css';
+import { LoadingBrandProvider } from '@/components/loading/LoadingBrand';
 import Providers from './providers';
 import SessionRoleSync from '../components/SessionRoleSync';
 import RoleBasedLayout from '../components/layouts/RoleBasedLayout';
@@ -48,9 +49,9 @@ export default function RootLayout({
         <Providers>
           <SessionRoleSync />
           <ImpersonationBanner />
-          <RoleBasedLayout>
-            {children}
-          </RoleBasedLayout>
+          <LoadingBrandProvider>
+            <RoleBasedLayout>{children}</RoleBasedLayout>
+          </LoadingBrandProvider>
           <Toaster position="top-right" />
           <CookieConsentBanner />
         </Providers>

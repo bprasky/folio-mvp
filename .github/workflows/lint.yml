@@ -71,6 +71,7 @@ jobs:
           node scripts/check-project-setup-browser.cjs
           node scripts/check-manual-rooms-browser.cjs
           node scripts/check-project-completion-date.cjs
+          LOADING_TEST_BROWSER="$GUIDED_TEST_BROWSER" node scripts/check-editorial-loading.cjs
           npm run test:guided:browser
       - name: Live interview and playable media regression checks
         run: |
