@@ -1243,3 +1243,7 @@ Keep current publication capabilities distinct from intended downstream effects.
 ## 2026-10-23 — Describe the Folio interview through the designer experience
 
 The founder wants public-facing repository copy to describe sitting down with Folio after it reviews the project material, for an interview tailored to the designer and project. Avoid centering the Sofia persona. Explain that the conversation uses shared project context and evolves with the answers to draw out the thinking behind the work; do not imply omniscience or that every possible factor is known. Keep implementation detail in the engineering tour.
+
+## 2026-10-24 — Public registration copy must match open enrollment
+
+Designer registration is open. Do not describe Folio as invitation-only or render a separate invitation rail over the founding-designer signup bar. Review the composed homepage for contradictory or duplicate registration messaging.
