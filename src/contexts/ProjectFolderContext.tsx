@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
 
 interface ProjectFolderContextType {
   currentFolderId: string | null;
@@ -23,7 +23,7 @@ export function ProjectFolderProvider({ children }: { children: ReactNode }) {
   }, []);
 
   // Persist to localStorage when it changes
-  const handleSetCurrentFolderId = (folderId: string | null) => {
+  const handleSetCurrentFolderId = useCallback((folderId: string | null) => {
     setCurrentFolderId(folderId);
     if (typeof window !== 'undefined') {
       if (folderId) {
@@ -32,7 +32,7 @@ export function ProjectFolderProvider({ children }: { children: ReactNode }) {
         localStorage.removeItem('currentFolderId');
       }
     }
-  };
+  }, []);
 
   return (
     <ProjectFolderContext.Provider
