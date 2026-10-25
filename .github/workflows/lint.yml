@@ -182,6 +182,8 @@ jobs:
         run: npm ci
       - name: Test the diagnostic guard
         run: npm run typecheck:test
+      - name: Render folder routes with their provider
+        run: node scripts/check-folder-prerender.cjs
       # Next 14 compile mode emits real route types without prerendering or DB access.
       - name: Generate Prisma and Next route types
         run: npm run typecheck:prepare
