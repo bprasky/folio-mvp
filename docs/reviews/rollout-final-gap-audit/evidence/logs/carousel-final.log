@@ -1,0 +1,1 @@
+Carousel persistence API checks passed: save without render, caption, stable record, new insert, ownership/project, stale and racing writes, unpublished/auth/image gates.

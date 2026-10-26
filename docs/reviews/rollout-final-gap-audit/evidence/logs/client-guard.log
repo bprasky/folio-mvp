@@ -1,0 +1,14 @@
+
+> folio-mvp@0.2.0 guard:client-imports
+> node scripts/guard-client-imports.js
+
+
+guard:client-imports — 2357 files under src/, 910 client modules
+
+  PASS  @supabase/supabase-js imported directly under src/app/
+  PASS  service-role key referenced under src/app/
+  PASS  runtime Prisma import in a client module
+  PASS  @prisma/client imported into a client module without `type`
+
+No client-boundary violations.
+

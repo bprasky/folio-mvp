@@ -1,0 +1,125 @@
+
+> folio-mvp@0.2.0 db:guard
+> tsx scripts/guard-migrations.ts
+
+
+db:guard — pre-apply checks
+
+  ....  no .env.local or .env found; using the ambient environment only
+  PASS  the connection is safe for schema work
+        target: 127.0.0.1:55440/folio_rollout_test
+  PASS  the migration target is the app database
+        database: folio_rollout_test
+  PASS  no failed or drifted migration; pending work is what an apply is for
+        108 pending, will be applied by the next link in the chain:
+  20250101000000_remove_homeowner_enum
+  20250120000000_add_project_archive_fields
+  20250127000000_add_living_project_system
+  20250127000000_add_notes_attachments_action_items
+  20250127120000_add_recorded_reflection_system
+  20250130000000_add_vendor_invite_candidates
+  20250719230944_initial_schema_with_organizations
+  20250728154431_add_spec_sheet_fields
+  20250728183105_add_product_url_and_tags_to_selections
+  20250814234946_add_engagement_models
+  20250819192703_flexible_events
+  20250822150707_rename_password_to_password_hash_make_required
+  20251029152414_init_context_graph
+  20251104143437_add_project_post
+  20251109120000_editorial_curator_integration
+  20251117180827_add_ai_compiled_flag_to_project_module
+  20251125194840_add_designer_brand_profile
+  20251202042801_add_atelier_models
+  20251202043216_add_events_engine_models
+  20251205125155_add_individual_role
+  20251206040707_add_cutout_image_url_to_product
+  20260104220000_add_editorial_interview_models
+  20260106171829_add_aesthetic_profile_fields
+  20260108000000_add_account_approval_system
+  20260115999999_fix_participant_side_enum
+  20260116000000_add_architect_builder_types
+  20260119000000_add_import_session_tables
+  20260119000000_add_legal_consent_fields
+  20260214000000_add_question_text_to_interview_answers
+  20260226000000_add_supplemental_quotes_table
+  20260303000000_add_instagram_exports
+  20260303100000_add_instagram_campaigns
+  20260311000000_add_designer_bio_and_profile_qa
+  20260312000000_add_publication_other_recognition_types
+  20260319000000_add_user_relationship_graph
+  20260319000000_interview_first_profile
+  20260319100000_bio_import
+  20260320000000_messaging_system
+  20260401000000_split_directory_sourcebook
+  20260401100000_phase2_communication_layer
+  20260401200000_phase3_project_actions
+  20260401300000_phase4_shadow_profiles
+  20260401400000_phase5_commerce_ranking
+  20260401500000_email_contact_integration
+  20260409000000_add_product_scene_preset
+  20260420120000_fix_collaboration_story_status_enum_values
+  20260420120300_fix_project_participant_role_enum
+  20260420120400_fix_user_subscription_tier_enum
+  20260420120500_fix_organization_vendor_tier_enum
+  20260420120600_fix_conversation_category_and_pending_action_enums
+  20260420120700_fix_notification_phantom_model
+  20260420120800_fix_media_phantom_model
+  20260420120900_fix_recognition_phantom_model
+  20260420121000_fix_collaboration_phantom_model
+  20260421103000_record_bucket_b_project_product_tags
+  20260421103001_record_bucket_b_meeting_notes
+  20260421103002_record_bucket_b_vendors
+  20260421103003_record_bucket_b_vendor_preview_tokens
+  20260421103004_record_bucket_b_pending_rep_invites
+  20260421103005_record_bucket_b_vendor_product_match_scores
+  20260421103006_record_bucket_b_room_intents
+  20260421103007_record_bucket_b_project_lifecycle_scores
+  20260421103008_record_bucket_b_project_intents
+  20260421103009_record_bucket_b_designer_activity_profiles
+  20260421103010_record_bucket_b_proximity_to_purchase_indicators
+  20260421103011_record_bucket_b_follows
+  20260421103012_record_bucket_b_editorial_drafts
+  20260501190000_homepage_xl_and_reel_boosts
+  20260518190000_add_show_rank_in_bio_to_users
+  20260518210000_backfill_missing_user_columns
+  20260518213609_add_granular_onboarding_timestamps
+  20260525120000_add_organization_capabilities
+  20260525183000_add_org_claim_invites
+  20260527150000_record_phase2_org_fields_and_join_requests
+  20260528200935_add_project_timeline
+  20260529211050_add_pending_tag_source
+  20260601120000_add_project_image_inclusion_tagstate_room
+  20260602120000_add_project_image_no_products
+  20260603120000_add_vision_label_events
+  20260608120000_add_project_deletion_requests
+  20260609120000_add_image_provenance
+  20260609120000_add_scrape_attempt
+  20260613120000_add_product_scrape_status
+  20260615191300_add_cost_event
+  20260616120000_add_product_claim_candidate
+  20260617120000_add_product_tag_reviewed_at
+  20260623120000_add_scrape_attempt_error
+  20260624120000_add_atelier_signal_source_type_values
+  20260624120100_create_vendor_rep_contacts
+  20260709163000_add_pdf_extractions_skeleton_items
+  20260710200000_add_product_tag_ai_position
+  20260713120000_add_editorial_queue_post_variants
+  20260713120100_create_designer_angles
+  20260713120200_create_editorial_queue_items
+  20260804120000_add_word_timings_to_editorial_interview_answers
+  20260804140000_add_finish_capture_to_product_tags
+  20260804140100_add_finish_to_cached_products
+  20260817120000_add_product_record_system
+  20260904141505_add_question_category_to_editorial_interview_answers
+  20260904193000_add_row_key_unique_to_editorial_interview_answers
+  20260909180000_recorded_vendor_user_identity
+  20260910180000_add_product_spotlight_draft_selection
+  20260910210000_add_spotlight_durable_interview
+  20260918180000_add_project_completion_date
+  20260921160000_studio_readiness_candidates
+  20260921220000_editorial_story_activities
+  20260924120000_org_member_posting_policy
+  20261001120000_live_interview_private_media
+
+Pre-apply checks passed. Proceeding.
+

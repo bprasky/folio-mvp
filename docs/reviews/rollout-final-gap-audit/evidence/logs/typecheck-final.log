@@ -1,0 +1,28 @@
+
+> folio-mvp@0.2.0 typecheck
+> node scripts/check-typescript-budget.mjs
+
+
+Baseline integrity against HEAD
+Baseline: 880
+Current: 880
+Delta: +0
+PASS — No new TypeScript diagnostics.
+Top codes: TS2339=273, TS2551=141, TS2322=106, TS2353=98, TS2802=59, TS2304=40, TS2561=33, TS2345=30, TS2582=17, TS2352=13
+Top files:
+  54 src/lib/atelier/__tests__/differentiation.test.ts
+  43 src/app/product/[productId]/page.tsx
+  19 src/app/api/consultations/[consultationId]/chat/route.ts
+  18 src/lib/living/skeleton.ts
+  17 src/app/api/designer/recall/route.ts
+  15 src/components/EventFeed.tsx
+  14 src/app/api/designer/recall/recent/route.ts
+  14 src/app/api/events/[id]/audience/premium/route.ts
+  14 src/lib/events/inheritance.ts
+  13 src/app/api/admin/pending-invites/route.ts
+
+TypeScript diagnostic budget
+Baseline: 880
+Current: 867
+Delta: -13
+PASS — TypeScript debt decreased by 13.

@@ -1,0 +1,7 @@
+PASS analyze-images returns 410 without importing auth, AI, or database services
+PASS detect-rooms returns 410 without importing auth, AI, or database services
+PASS historical AI suggestions never preselect rooms and saved assignments remain intact
+PASS designers can assign, create and name rooms, rename them, exclude photos and restore them
+PASS photos without rooms open manual organization immediately without a detection request or waiting screen
+PASS media image upload and its completion callback refresh without launching room detection
+PASS 6 manual room checks.

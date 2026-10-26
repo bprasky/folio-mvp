@@ -1,0 +1,7 @@
+PASS refresh retains unsaved project facts
+PASS unsupported/oversized files rejected before project creation
+PASS lost creation response, partial upload, offline retry and mobile recovery preserve identities
+PASS navigation during upload stops remaining work and late completion cannot redirect; reselection recovers
+PASS failed publish, same-tick repeated clicks, deliberate retry and reopened publication
+PASS delayed draft read cannot replace a newer read
+PASS actual tagging surface reports expired-session/server failures and refreshes only after success

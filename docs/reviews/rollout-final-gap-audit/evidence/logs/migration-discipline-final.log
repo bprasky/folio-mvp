@@ -1,0 +1,2 @@
+[phase5e-check] OK — all counts at or below baseline.
+  looseSql=32/32 phantomCalls=0/0 missingSql=0/0 nonIdempotent=0/0

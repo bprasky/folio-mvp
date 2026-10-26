@@ -1,0 +1,1800 @@
+TAP version 13
+# DEBUG: NextAuth Environment Check
+# NEXTAUTH_SECRET exists: true
+# NEXTAUTH_SECRET length: 35
+# NEXTAUTH_URL: http://folio.test
+# Current working directory: C:\\Users\\bpras\\.codex\\worktrees\\rollout-hardening\\folio-mvp
+# Environment variables loaded: [ 'NEXTAUTH_SECRET', 'NEXTAUTH_URL' ]
+# DEBUG: Entering JWT callback
+# DEBUG: JWT callback - Setting token.id: d3e88b9c-051d-40f0-85cc-9f62dceebc18
+# Hydrated from DB - role: DESIGNER accountStatus: APPROVED subscriptionTier: FREE isFoundingDesigner: false
+# Subtest: designer authorization: real handlers, isolated identities, local data boundary
+    # Subtest: anonymous cannot mutate projects, rooms, photos, tags, interview, publication or admin projects
+    ok 1 - anonymous cannot mutate projects, rooms, photos, tags, interview, publication or admin projects
+      ---
+      duration_ms: 424.5038
+      type: 'test'
+      ...
+# DEBUG: Session callback — token.role: DESIGNER token.id: d3e88b9c-051d-40f0-85cc-9f62dceebc18 token.accountStatus: APPROVED operatingAsOrgId: null subscriptionTier: FREE isFoundingDesigner: false
+# DEBUG: Session callback - Setting session.user.id: d3e88b9c-051d-40f0-85cc-9f62dceebc18
+# DEBUG: Entering JWT callback
+# DEBUG: JWT callback - Setting token.id: bf43715a-528a-498d-a467-fa363ac7a8c3
+# Hydrated from DB - role: DESIGNER accountStatus: APPROVED subscriptionTier: FREE isFoundingDesigner: false
+# DEBUG: Session callback — token.role: DESIGNER token.id: bf43715a-528a-498d-a467-fa363ac7a8c3 token.accountStatus: APPROVED operatingAsOrgId: null subscriptionTier: FREE isFoundingDesigner: false
+# DEBUG: Session callback - Setting session.user.id: bf43715a-528a-498d-a467-fa363ac7a8c3
+# DEBUG: Entering JWT callback
+# DEBUG: JWT callback - Setting token.id: a3dc6e49-1b31-4dc9-b2ff-95447ec88431
+# Hydrated from DB - role: DESIGNER accountStatus: APPROVED subscriptionTier: FREE isFoundingDesigner: false
+    # Subtest: two designers cannot read/write each other; nested foreign room delete preserves selections
+    ok 2 - two designers cannot read/write each other; nested foreign room delete preserves selections
+      ---
+      duration_ms: 24.6762
+      type: 'test'
+      ...
+# DEBUG: Session callback — token.role: DESIGNER token.id: a3dc6e49-1b31-4dc9-b2ff-95447ec88431 token.accountStatus: APPROVED operatingAsOrgId: null subscriptionTier: FREE isFoundingDesigner: false
+# DEBUG: Session callback - Setting session.user.id: a3dc6e49-1b31-4dc9-b2ff-95447ec88431
+# DEBUG: Entering JWT callback
+# DEBUG: JWT callback - Setting token.id: a562fca2-9e32-402b-b30c-c33bdb024c8c
+# Hydrated from DB - role: DESIGNER accountStatus: APPROVED subscriptionTier: FREE isFoundingDesigner: false
+# DEBUG: Session callback — token.role: DESIGNER token.id: a562fca2-9e32-402b-b30c-c33bdb024c8c token.accountStatus: APPROVED operatingAsOrgId: null subscriptionTier: FREE isFoundingDesigner: false
+# DEBUG: Session callback - Setting session.user.id: a562fca2-9e32-402b-b30c-c33bdb024c8c
+# DEBUG: Entering JWT callback
+# DEBUG: JWT callback - Setting token.id: fac0319a-778c-43ff-9677-f4c02b8a3a85
+# Hydrated from DB - role: ADMIN accountStatus: APPROVED subscriptionTier: FREE isFoundingDesigner: false
+# DEBUG: Session callback — token.role: ADMIN token.id: fac0319a-778c-43ff-9677-f4c02b8a3a85 token.accountStatus: APPROVED operatingAsOrgId: null subscriptionTier: FREE isFoundingDesigner: false
+# DEBUG: Session callback - Setting session.user.id: fac0319a-778c-43ff-9677-f4c02b8a3a85
+# DEBUG: Entering JWT callback
+# DEBUG: JWT callback - Setting token.id: d3e88b9c-051d-40f0-85cc-9f62dceebc18
+# Hydrated from DB - role: DESIGNER accountStatus: APPROVED subscriptionTier: FREE isFoundingDesigner: false
+    # Subtest: viewer shares remain readable, but cannot create rooms or reorder; editor and admin can write
+    ok 3 - viewer shares remain readable, but cannot create rooms or reorder; editor and admin can write
+      ---
+      duration_ms: 12.0239
+      type: 'test'
+      ...
+# DEBUG: Session callback — token.role: DESIGNER token.id: d3e88b9c-051d-40f0-85cc-9f62dceebc18 token.accountStatus: APPROVED operatingAsOrgId: null subscriptionTier: FREE isFoundingDesigner: false
+# DEBUG: Session callback - Setting session.user.id: d3e88b9c-051d-40f0-85cc-9f62dceebc18
+# [ProductTag] Backfill created selection: {
+#   selectionId: '0219908d-207c-471a-86b3-04d8ea20ebbe',
+#   tagId: '56ba444c-2846-4ff6-99fb-ab62b65c2638'
+# }
+# DEBUG: Entering JWT callback
+# DEBUG: JWT callback - Setting token.id: bf43715a-528a-498d-a467-fa363ac7a8c3
+# Hydrated from DB - role: DESIGNER accountStatus: APPROVED subscriptionTier: FREE isFoundingDesigner: false
+# DEBUG: Session callback — token.role: DESIGNER token.id: bf43715a-528a-498d-a467-fa363ac7a8c3 token.accountStatus: APPROVED operatingAsOrgId: null subscriptionTier: FREE isFoundingDesigner: false
+# DEBUG: Session callback - Setting session.user.id: bf43715a-528a-498d-a467-fa363ac7a8c3
+# DEBUG: Entering JWT callback
+# DEBUG: JWT callback - Setting token.id: d3e88b9c-051d-40f0-85cc-9f62dceebc18
+# Hydrated from DB - role: DESIGNER accountStatus: APPROVED subscriptionTier: FREE isFoundingDesigner: false
+# DEBUG: Session callback — token.role: DESIGNER token.id: d3e88b9c-051d-40f0-85cc-9f62dceebc18 token.accountStatus: APPROVED operatingAsOrgId: null subscriptionTier: FREE isFoundingDesigner: false
+# DEBUG: Session callback - Setting session.user.id: d3e88b9c-051d-40f0-85cc-9f62dceebc18
+# DEBUG: Entering JWT callback
+# DEBUG: JWT callback - Setting token.id: a562fca2-9e32-402b-b30c-c33bdb024c8c
+# Hydrated from DB - role: DESIGNER accountStatus: APPROVED subscriptionTier: FREE isFoundingDesigner: false
+    # Subtest: validation fails before writes; duplicate tag submission returns same tag and selection
+    ok 4 - validation fails before writes; duplicate tag submission returns same tag and selection
+      ---
+      duration_ms: 16.3425
+      type: 'test'
+      ...
+# DEBUG: Session callback — token.role: DESIGNER token.id: a562fca2-9e32-402b-b30c-c33bdb024c8c token.accountStatus: APPROVED operatingAsOrgId: null subscriptionTier: FREE isFoundingDesigner: false
+# DEBUG: Session callback - Setting session.user.id: a562fca2-9e32-402b-b30c-c33bdb024c8c
+# DEBUG: Entering JWT callback
+# DEBUG: JWT callback - Setting token.id: d3e88b9c-051d-40f0-85cc-9f62dceebc18
+# Hydrated from DB - role: DESIGNER accountStatus: APPROVED subscriptionTier: FREE isFoundingDesigner: false
+# DEBUG: Session callback — token.role: DESIGNER token.id: d3e88b9c-051d-40f0-85cc-9f62dceebc18 token.accountStatus: APPROVED operatingAsOrgId: null subscriptionTier: FREE isFoundingDesigner: false
+# DEBUG: Session callback - Setting session.user.id: d3e88b9c-051d-40f0-85cc-9f62dceebc18
+# DEBUG: Entering JWT callback
+# DEBUG: JWT callback - Setting token.id: bf43715a-528a-498d-a467-fa363ac7a8c3
+# Hydrated from DB - role: DESIGNER accountStatus: APPROVED subscriptionTier: FREE isFoundingDesigner: false
+    # Subtest: project edit cannot promote visibility or ownership; collection delete respects delete capability
+    ok 5 - project edit cannot promote visibility or ownership; collection delete respects delete capability
+      ---
+      duration_ms: 76.6834
+      type: 'test'
+      ...
+# DEBUG: Session callback — token.role: DESIGNER token.id: bf43715a-528a-498d-a467-fa363ac7a8c3 token.accountStatus: APPROVED operatingAsOrgId: null subscriptionTier: FREE isFoundingDesigner: false
+# DEBUG: Session callback - Setting session.user.id: bf43715a-528a-498d-a467-fa363ac7a8c3
+# DEBUG: Entering JWT callback
+# DEBUG: JWT callback - Setting token.id: fac0319a-778c-43ff-9677-f4c02b8a3a85
+# Hydrated from DB - role: ADMIN accountStatus: APPROVED subscriptionTier: FREE isFoundingDesigner: false
+# DEBUG: Session callback — token.role: ADMIN token.id: fac0319a-778c-43ff-9677-f4c02b8a3a85 token.accountStatus: APPROVED operatingAsOrgId: null subscriptionTier: FREE isFoundingDesigner: false
+# DEBUG: Session callback - Setting session.user.id: fac0319a-778c-43ff-9677-f4c02b8a3a85
+# DEBUG: Entering JWT callback
+# DEBUG: JWT callback - Setting token.id: a3dc6e49-1b31-4dc9-b2ff-95447ec88431
+# Hydrated from DB - role: DESIGNER accountStatus: APPROVED subscriptionTier: FREE isFoundingDesigner: false
+# DEBUG: Session callback — token.role: DESIGNER token.id: a3dc6e49-1b31-4dc9-b2ff-95447ec88431 token.accountStatus: APPROVED operatingAsOrgId: null subscriptionTier: FREE isFoundingDesigner: false
+# DEBUG: Session callback - Setting session.user.id: a3dc6e49-1b31-4dc9-b2ff-95447ec88431
+# DEBUG: Entering JWT callback
+# DEBUG: JWT callback - Setting token.id: d3e88b9c-051d-40f0-85cc-9f62dceebc18
+# Hydrated from DB - role: DESIGNER accountStatus: APPROVED subscriptionTier: FREE isFoundingDesigner: false
+    # Subtest: private tag queries and unfiltered enumeration hide drafts; published reads and shares still work
+    ok 6 - private tag queries and unfiltered enumeration hide drafts; published reads and shares still work
+      ---
+      duration_ms: 9.3306
+      type: 'test'
+      ...
+# DEBUG: Session callback — token.role: DESIGNER token.id: d3e88b9c-051d-40f0-85cc-9f62dceebc18 token.accountStatus: APPROVED operatingAsOrgId: null subscriptionTier: FREE isFoundingDesigner: false
+# DEBUG: Session callback - Setting session.user.id: d3e88b9c-051d-40f0-85cc-9f62dceebc18
+# DEBUG: Entering JWT callback
+# DEBUG: JWT callback - Setting token.id: 1fd883b0-2289-4f9b-8cf9-f9254de9c07a
+# Hydrated from DB - role: DESIGNER accountStatus: APPROVED subscriptionTier: FREE isFoundingDesigner: false
+    # Subtest: room response projects vendor identity without credentials or private user fields
+    ok 7 - room response projects vendor identity without credentials or private user fields
+      ---
+      duration_ms: 2.8733
+      type: 'test'
+      ...
+    1..7
+ok 1 - designer authorization: real handlers, isolated identities, local data boundary
+  ---
+  duration_ms: 1168.0873
+  type: 'test'
+  ...
+# Subtest: public story exposes published content, not raw answers or editorial history
+ok 2 - public story exposes published content, not raw answers or editorial history
+  ---
+  duration_ms: 12.9104
+  type: 'test'
+  ...
+# DEBUG: Session callback — token.role: DESIGNER token.id: 1fd883b0-2289-4f9b-8cf9-f9254de9c07a token.accountStatus: APPROVED operatingAsOrgId: null subscriptionTier: FREE isFoundingDesigner: false
+# DEBUG: Session callback - Setting session.user.id: 1fd883b0-2289-4f9b-8cf9-f9254de9c07a
+# DEBUG: Entering JWT callback
+# DEBUG: JWT callback - Setting token.id: d1704d1b-8d26-4b16-8093-4964e2562fcd
+# Hydrated from DB - role: DESIGNER accountStatus: APPROVED subscriptionTier: FREE isFoundingDesigner: false
+# DEBUG: Session callback — token.role: DESIGNER token.id: d1704d1b-8d26-4b16-8093-4964e2562fcd token.accountStatus: APPROVED operatingAsOrgId: null subscriptionTier: FREE isFoundingDesigner: false
+# DEBUG: Session callback - Setting session.user.id: d1704d1b-8d26-4b16-8093-4964e2562fcd
+# [DELETE image] Starting: {
+#   projectId: '657fecd9-de4b-4560-9f0b-417747e57c30',
+#   imageId: 'ab92f6e7-e0ea-400c-9bdb-fb24420df944',
+#   userId: 'd1704d1b-8d26-4b16-8093-4964e2562fcd'
+# }
+# [DELETE image] Image lookup: { id: 'ab92f6e7-e0ea-400c-9bdb-fb24420df944', name: null }
+# [DELETE image] Performing hard delete for imageId: ab92f6e7-e0ea-400c-9bdb-fb24420df944
+# [DELETE image] Prisma delete returned: ab92f6e7-e0ea-400c-9bdb-fb24420df944
+# [DELETE image] Verification - image still exists?: false
+# [DELETE image] SUCCESS - returning 200
+# DEBUG: Entering JWT callback
+# DEBUG: JWT callback - Setting token.id: d1704d1b-8d26-4b16-8093-4964e2562fcd
+# Hydrated from DB - role: DESIGNER accountStatus: APPROVED subscriptionTier: FREE isFoundingDesigner: false
+# DEBUG: Session callback — token.role: DESIGNER token.id: d1704d1b-8d26-4b16-8093-4964e2562fcd token.accountStatus: APPROVED operatingAsOrgId: null subscriptionTier: FREE isFoundingDesigner: false
+# DEBUG: Session callback - Setting session.user.id: d1704d1b-8d26-4b16-8093-4964e2562fcd
+# [POST /api/projects/[id]/images] Error: Error: PRIVATE-INSERT-FAILURE
+#     at Proxy.<anonymous> (C:\\Users\\bpras\\.codex\\worktrees\\rollout-hardening\\folio-mvp\\scripts\\core\\designer-authorization.test.cjs:180:53)
+#     at Object.POST (C:\\Users\\bpras\\.codex\\worktrees\\rollout-hardening\\folio-mvp\\src\\app\\api\\projects\\[id]\\images\\route.ts:76:45)
+#     at async TestContext.<anonymous> (C:\\Users\\bpras\\.codex\\worktrees\\rollout-hardening\\folio-mvp\\scripts\\core\\designer-authorization.test.cjs:187:22)
+#     at async Test.run (node:internal/test_runner/test:1054:7)
+#     at async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+# Subtest: upload validates before storage/writes and deleting an imported reference never deletes its shared object
+ok 3 - upload validates before storage/writes and deleting an imported reference never deletes its shared object
+  ---
+  duration_ms: 245.8711
+  type: 'test'
+  ...
+# DEBUG: Entering JWT callback
+# DEBUG: JWT callback - Setting token.id: 683b02c9-b297-4f76-b1ed-7fe0640d5259
+# Subtest: designer authorization against disposable PostgreSQL
+    # Subtest: anonymous cannot mutate projects, rooms, photos, tags, interview, publication or admin projects
+    ok 1 - anonymous cannot mutate projects, rooms, photos, tags, interview, publication or admin projects
+      ---
+      duration_ms: 1.8897
+      type: 'test'
+      ...
+# Hydrated from DB - role: DESIGNER accountStatus: APPROVED subscriptionTier: FREE isFoundingDesigner: false
+# DEBUG: Session callback — token.role: DESIGNER token.id: 683b02c9-b297-4f76-b1ed-7fe0640d5259 token.accountStatus: APPROVED operatingAsOrgId: null subscriptionTier: FREE isFoundingDesigner: false
+# DEBUG: Session callback - Setting session.user.id: 683b02c9-b297-4f76-b1ed-7fe0640d5259
+# DEBUG: Entering JWT callback
+# DEBUG: JWT callback - Setting token.id: b5300bc3-4259-493a-8e44-9a27783ebe26
+# Hydrated from DB - role: DESIGNER accountStatus: APPROVED subscriptionTier: FREE isFoundingDesigner: false
+# DEBUG: Session callback — token.role: DESIGNER token.id: b5300bc3-4259-493a-8e44-9a27783ebe26 token.accountStatus: APPROVED operatingAsOrgId: null subscriptionTier: FREE isFoundingDesigner: false
+# DEBUG: Session callback - Setting session.user.id: b5300bc3-4259-493a-8e44-9a27783ebe26
+# DEBUG: Entering JWT callback
+# DEBUG: JWT callback - Setting token.id: 8eb9014a-83c4-4de6-9e95-2eea6a3ee543
+    # Subtest: two designers cannot read/write each other; nested foreign room delete preserves selections
+    ok 2 - two designers cannot read/write each other; nested foreign room delete preserves selections
+      ---
+      duration_ms: 78.7966
+      type: 'test'
+      ...
+# Hydrated from DB - role: DESIGNER accountStatus: APPROVED subscriptionTier: FREE isFoundingDesigner: false
+# DEBUG: Session callback — token.role: DESIGNER token.id: 8eb9014a-83c4-4de6-9e95-2eea6a3ee543 token.accountStatus: APPROVED operatingAsOrgId: null subscriptionTier: FREE isFoundingDesigner: false
+# DEBUG: Session callback - Setting session.user.id: 8eb9014a-83c4-4de6-9e95-2eea6a3ee543
+# DEBUG: Entering JWT callback
+# DEBUG: JWT callback - Setting token.id: af6940ba-9594-437a-b685-0c9d49e2ea0f
+# Hydrated from DB - role: DESIGNER accountStatus: APPROVED subscriptionTier: FREE isFoundingDesigner: false
+# DEBUG: Session callback — token.role: DESIGNER token.id: af6940ba-9594-437a-b685-0c9d49e2ea0f token.accountStatus: APPROVED operatingAsOrgId: null subscriptionTier: FREE isFoundingDesigner: false
+# DEBUG: Session callback - Setting session.user.id: af6940ba-9594-437a-b685-0c9d49e2ea0f
+# DEBUG: Entering JWT callback
+# DEBUG: JWT callback - Setting token.id: dd1030e7-e335-4501-a7d4-031f37c1cc18
+# Hydrated from DB - role: ADMIN accountStatus: APPROVED subscriptionTier: FREE isFoundingDesigner: false
+# DEBUG: Session callback — token.role: ADMIN token.id: dd1030e7-e335-4501-a7d4-031f37c1cc18 token.accountStatus: APPROVED operatingAsOrgId: null subscriptionTier: FREE isFoundingDesigner: false
+# DEBUG: Session callback - Setting session.user.id: dd1030e7-e335-4501-a7d4-031f37c1cc18
+# DEBUG: Entering JWT callback
+# DEBUG: JWT callback - Setting token.id: 683b02c9-b297-4f76-b1ed-7fe0640d5259
+    # Subtest: viewer shares remain readable, but cannot create rooms or reorder; editor and admin can write
+    ok 3 - viewer shares remain readable, but cannot create rooms or reorder; editor and admin can write
+      ---
+      duration_ms: 99.6579
+      type: 'test'
+      ...
+# Hydrated from DB - role: DESIGNER accountStatus: APPROVED subscriptionTier: FREE isFoundingDesigner: false
+# DEBUG: Session callback — token.role: DESIGNER token.id: 683b02c9-b297-4f76-b1ed-7fe0640d5259 token.accountStatus: APPROVED operatingAsOrgId: null subscriptionTier: FREE isFoundingDesigner: false
+# DEBUG: Session callback - Setting session.user.id: 683b02c9-b297-4f76-b1ed-7fe0640d5259
+# [ProductTag] Backfill created selection: {
+#   selectionId: '0c6fdabf-2d28-4565-a8d8-b0c1fa676ffc',
+#   tagId: 'acaf53cc-220b-4566-a6a6-799e9e803485'
+# }
+# DEBUG: Entering JWT callback
+# DEBUG: JWT callback - Setting token.id: b5300bc3-4259-493a-8e44-9a27783ebe26
+# Hydrated from DB - role: DESIGNER accountStatus: APPROVED subscriptionTier: FREE isFoundingDesigner: false
+# DEBUG: Session callback — token.role: DESIGNER token.id: b5300bc3-4259-493a-8e44-9a27783ebe26 token.accountStatus: APPROVED operatingAsOrgId: null subscriptionTier: FREE isFoundingDesigner: false
+# DEBUG: Session callback - Setting session.user.id: b5300bc3-4259-493a-8e44-9a27783ebe26
+# DEBUG: Entering JWT callback
+# DEBUG: JWT callback - Setting token.id: 683b02c9-b297-4f76-b1ed-7fe0640d5259
+# Hydrated from DB - role: DESIGNER accountStatus: APPROVED subscriptionTier: FREE isFoundingDesigner: false
+# DEBUG: Session callback — token.role: DESIGNER token.id: 683b02c9-b297-4f76-b1ed-7fe0640d5259 token.accountStatus: APPROVED operatingAsOrgId: null subscriptionTier: FREE isFoundingDesigner: false
+# DEBUG: Session callback - Setting session.user.id: 683b02c9-b297-4f76-b1ed-7fe0640d5259
+    # Subtest: validation fails before writes; duplicate tag submission returns same tag and selection
+    ok 4 - validation fails before writes; duplicate tag submission returns same tag and selection
+      ---
+      duration_ms: 107.6138
+      type: 'test'
+      ...
+# DEBUG: Entering JWT callback
+# DEBUG: JWT callback - Setting token.id: af6940ba-9594-437a-b685-0c9d49e2ea0f
+# Hydrated from DB - role: DESIGNER accountStatus: APPROVED subscriptionTier: FREE isFoundingDesigner: false
+# DEBUG: Session callback — token.role: DESIGNER token.id: af6940ba-9594-437a-b685-0c9d49e2ea0f token.accountStatus: APPROVED operatingAsOrgId: null subscriptionTier: FREE isFoundingDesigner: false
+# DEBUG: Session callback - Setting session.user.id: af6940ba-9594-437a-b685-0c9d49e2ea0f
+# DEBUG: Entering JWT callback
+# DEBUG: JWT callback - Setting token.id: 683b02c9-b297-4f76-b1ed-7fe0640d5259
+# Hydrated from DB - role: DESIGNER accountStatus: APPROVED subscriptionTier: FREE isFoundingDesigner: false
+# DEBUG: Session callback — token.role: DESIGNER token.id: 683b02c9-b297-4f76-b1ed-7fe0640d5259 token.accountStatus: APPROVED operatingAsOrgId: null subscriptionTier: FREE isFoundingDesigner: false
+# DEBUG: Session callback - Setting session.user.id: 683b02c9-b297-4f76-b1ed-7fe0640d5259
+    # Subtest: project edit cannot promote visibility or ownership; collection delete respects delete capability
+    ok 5 - project edit cannot promote visibility or ownership; collection delete respects delete capability
+      ---
+      duration_ms: 42.6915
+      type: 'test'
+      ...
+# DEBUG: Entering JWT callback
+# DEBUG: JWT callback - Setting token.id: b5300bc3-4259-493a-8e44-9a27783ebe26
+# Hydrated from DB - role: DESIGNER accountStatus: APPROVED subscriptionTier: FREE isFoundingDesigner: false
+# DEBUG: Session callback — token.role: DESIGNER token.id: b5300bc3-4259-493a-8e44-9a27783ebe26 token.accountStatus: APPROVED operatingAsOrgId: null subscriptionTier: FREE isFoundingDesigner: false
+# DEBUG: Session callback - Setting session.user.id: b5300bc3-4259-493a-8e44-9a27783ebe26
+# DEBUG: Entering JWT callback
+# DEBUG: JWT callback - Setting token.id: dd1030e7-e335-4501-a7d4-031f37c1cc18
+# Hydrated from DB - role: ADMIN accountStatus: APPROVED subscriptionTier: FREE isFoundingDesigner: false
+# DEBUG: Session callback — token.role: ADMIN token.id: dd1030e7-e335-4501-a7d4-031f37c1cc18 token.accountStatus: APPROVED operatingAsOrgId: null subscriptionTier: FREE isFoundingDesigner: false
+# DEBUG: Session callback - Setting session.user.id: dd1030e7-e335-4501-a7d4-031f37c1cc18
+# DEBUG: Entering JWT callback
+# DEBUG: JWT callback - Setting token.id: 8eb9014a-83c4-4de6-9e95-2eea6a3ee543
+# Hydrated from DB - role: DESIGNER accountStatus: APPROVED subscriptionTier: FREE isFoundingDesigner: false
+# DEBUG: Session callback — token.role: DESIGNER token.id: 8eb9014a-83c4-4de6-9e95-2eea6a3ee543 token.accountStatus: APPROVED operatingAsOrgId: null subscriptionTier: FREE isFoundingDesigner: false
+# DEBUG: Session callback - Setting session.user.id: 8eb9014a-83c4-4de6-9e95-2eea6a3ee543
+    # Subtest: private tag queries and unfiltered enumeration hide drafts; published reads and shares still work
+    ok 6 - private tag queries and unfiltered enumeration hide drafts; published reads and shares still work
+      ---
+      duration_ms: 100.2779
+      type: 'test'
+      ...
+# DEBUG: Entering JWT callback
+# DEBUG: JWT callback - Setting token.id: 683b02c9-b297-4f76-b1ed-7fe0640d5259
+# Hydrated from DB - role: DESIGNER accountStatus: APPROVED subscriptionTier: FREE isFoundingDesigner: false
+# DEBUG: Session callback — token.role: DESIGNER token.id: 683b02c9-b297-4f76-b1ed-7fe0640d5259 token.accountStatus: APPROVED operatingAsOrgId: null subscriptionTier: FREE isFoundingDesigner: false
+# DEBUG: Session callback - Setting session.user.id: 683b02c9-b297-4f76-b1ed-7fe0640d5259
+    # Subtest: room response projects vendor identity without credentials or private user fields
+    ok 7 - room response projects vendor identity without credentials or private user fields
+      ---
+      duration_ms: 23.3161
+      type: 'test'
+      ...
+# DEBUG: Entering JWT callback
+# DEBUG: JWT callback - Setting token.id: fe99e058-58d8-4271-9451-1911eae054a1
+# Hydrated from DB - role: DESIGNER accountStatus: APPROVED subscriptionTier: FREE isFoundingDesigner: false
+# DEBUG: Session callback — token.role: DESIGNER token.id: fe99e058-58d8-4271-9451-1911eae054a1 token.accountStatus: APPROVED operatingAsOrgId: null subscriptionTier: FREE isFoundingDesigner: false
+# DEBUG: Session callback - Setting session.user.id: fe99e058-58d8-4271-9451-1911eae054a1
+# DEBUG: Entering JWT callback
+# DEBUG: JWT callback - Setting token.id: fe99e058-58d8-4271-9451-1911eae054a1
+# Hydrated from DB - role: DESIGNER accountStatus: APPROVED subscriptionTier: FREE isFoundingDesigner: false
+# DEBUG: Session callback — token.role: DESIGNER token.id: fe99e058-58d8-4271-9451-1911eae054a1 token.accountStatus: APPROVED operatingAsOrgId: null subscriptionTier: FREE isFoundingDesigner: false
+# DEBUG: Session callback - Setting session.user.id: fe99e058-58d8-4271-9451-1911eae054a1
+# Failed to create product tag: Error: PRIVATE-DB-FAILURE
+#     at Proxy.<anonymous> (C:\\Users\\bpras\\.codex\\worktrees\\rollout-hardening\\folio-mvp\\scripts\\core\\designer-authorization.test.cjs:215:59)
+#     at <anonymous> (C:\\Users\\bpras\\.codex\\worktrees\\rollout-hardening\\folio-mvp\\src\\app\\api\\tag-product-to-image\\route.ts:188:49)
+#     at async Proxy._transactionWithCallback (C:\\Users\\bpras\\.codex\\worktrees\\rollout-hardening\\folio-mvp\\node_modules\\@prisma\\client\\src\\runtime\\getPrismaClient.ts:722:18)
+#     at async Object.POST (C:\\Users\\bpras\\.codex\\worktrees\\rollout-hardening\\folio-mvp\\src\\app\\api\\tag-product-to-image\\route.ts:113:40)
+#     at async TestContext.<anonymous> (C:\\Users\\bpras\\.codex\\worktrees\\rollout-hardening\\folio-mvp\\scripts\\core\\designer-authorization.test.cjs:223:23)
+#     at async Test.run (node:internal/test_runner/test:1054:7)
+#     at async TestContext.<anonymous> (C:\\Users\\bpras\\.codex\\worktrees\\rollout-hardening\\folio-mvp\\scripts\\core\\designer-authorization.test.cjs:204:5)
+#     at async Test.run (node:internal/test_runner/test:1054:7)
+#     at async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+# DEBUG: Entering JWT callback
+# DEBUG: JWT callback - Setting token.id: fe99e058-58d8-4271-9451-1911eae054a1
+# Hydrated from DB - role: DESIGNER accountStatus: APPROVED subscriptionTier: FREE isFoundingDesigner: false
+# DEBUG: Session callback — token.role: DESIGNER token.id: fe99e058-58d8-4271-9451-1911eae054a1 token.accountStatus: APPROVED operatingAsOrgId: null subscriptionTier: FREE isFoundingDesigner: false
+# DEBUG: Session callback - Setting session.user.id: fe99e058-58d8-4271-9451-1911eae054a1
+# [ProductTag] Backfill created selection: {
+#   selectionId: '5fcf5cc0-e8f2-4acd-b5a3-776b544027aa',
+#   tagId: '02f58159-f5b0-41ae-ab04-5ace690a3bd7'
+# }
+# DEBUG: Entering JWT callback
+# DEBUG: JWT callback - Setting token.id: fe99e058-58d8-4271-9451-1911eae054a1
+# Hydrated from DB - role: DESIGNER accountStatus: APPROVED subscriptionTier: FREE isFoundingDesigner: false
+# DEBUG: Session callback — token.role: DESIGNER token.id: fe99e058-58d8-4271-9451-1911eae054a1 token.accountStatus: APPROVED operatingAsOrgId: null subscriptionTier: FREE isFoundingDesigner: false
+# DEBUG: Session callback - Setting session.user.id: fe99e058-58d8-4271-9451-1911eae054a1
+# Error updating project: Error: PRIVATE-CREDITS-FAILURE
+#     at Proxy.<anonymous> (C:\\Users\\bpras\\.codex\\worktrees\\rollout-hardening\\folio-mvp\\scripts\\core\\designer-authorization.test.cjs:236:59)
+#     at <anonymous> (C:\\Users\\bpras\\.codex\\worktrees\\rollout-hardening\\folio-mvp\\src\\app\\api\\projects\\route.ts:324:30)
+#     at async Proxy._transactionWithCallback (C:\\Users\\bpras\\.codex\\worktrees\\rollout-hardening\\folio-mvp\\node_modules\\@prisma\\client\\src\\runtime\\getPrismaClient.ts:722:18)
+#     at async Object.PUT (C:\\Users\\bpras\\.codex\\worktrees\\rollout-hardening\\folio-mvp\\src\\app\\api\\projects\\route.ts:303:28)
+#     at async TestContext.<anonymous> (C:\\Users\\bpras\\.codex\\worktrees\\rollout-hardening\\folio-mvp\\scripts\\core\\designer-authorization.test.cjs:245:20)
+#     at async Test.run (node:internal/test_runner/test:1054:7)
+#     at async TestContext.<anonymous> (C:\\Users\\bpras\\.codex\\worktrees\\rollout-hardening\\folio-mvp\\scripts\\core\\designer-authorization.test.cjs:204:5)
+#     at async Test.run (node:internal/test_runner/test:1054:7)
+#     at async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+# DEBUG: Entering JWT callback
+# DEBUG: JWT callback - Setting token.id: fe99e058-58d8-4271-9451-1911eae054a1
+# Hydrated from DB - role: DESIGNER accountStatus: APPROVED subscriptionTier: FREE isFoundingDesigner: false
+# DEBUG: Session callback — token.role: DESIGNER token.id: fe99e058-58d8-4271-9451-1911eae054a1 token.accountStatus: APPROVED operatingAsOrgId: null subscriptionTier: FREE isFoundingDesigner: false
+# DEBUG: Session callback - Setting session.user.id: fe99e058-58d8-4271-9451-1911eae054a1
+    # Subtest: real transaction rolls back tag/image writes on selection failure; concurrent retries create one tag
+    ok 8 - real transaction rolls back tag/image writes on selection failure; concurrent retries create one tag
+      ---
+      duration_ms: 166.1746
+      type: 'test'
+      ...
+    1..8
+ok 4 - designer authorization against disposable PostgreSQL
+  ---
+  duration_ms: 748.5034
+  type: 'test'
+  ...
+# Subtest: publishing image proxy rejects private addresses and non-HTTP URLs without leaking errors
+ok 5 - publishing image proxy rejects private addresses and non-HTTP URLs without leaking errors
+  ---
+  duration_ms: 18.8819
+  type: 'test'
+  ...
+# DEBUG: NextAuth Environment Check
+# NEXTAUTH_SECRET exists: true
+# NEXTAUTH_SECRET length: 35
+# NEXTAUTH_URL: http://folio.test
+# Current working directory: C:\\Users\\bpras\\.codex\\worktrees\\rollout-hardening\\folio-mvp
+# Environment variables loaded: [ 'NEXTAUTH_SECRET', 'NEXTAUTH_URL' ]
+# [Signup API] Request received
+# [Signup API] Request body: {
+#   name: 'Core Designer',
+#   email: 'a78478fb-e8bd-41b5-8b2a-3c2f5eada640@core.test',
+#   password: '[REDACTED]',
+#   acceptedTerms: true
+# }
+# [Signup API] Checking for existing user with email: a78478fb-e8bd-41b5-8b2a-3c2f5eada640@core.test
+# [Signup API] findFirst completed, existingUser: not found
+# [Signup API] Hashing password...
+# [Signup API] Password hashed successfully
+# [Signup API] Creating user with status: APPROVED, role: INDIVIDUAL
+# [Signup API] User created successfully with ID: ebf71edc-7364-430c-a640-201cf34bfa5a
+# [Signup API] Request received
+# [Signup API] Request body: {
+#   name: 'Core Designer',
+#   email: 'A78478FB-E8BD-41B5-8B2A-3C2F5EADA640@CORE.TEST',
+#   password: '[REDACTED]',
+#   acceptedTerms: true
+# }
+# [Signup API] Checking for existing user with email: A78478FB-E8BD-41B5-8B2A-3C2F5EADA640@CORE.TEST
+# [Signup API] findFirst completed, existingUser: found
+# [Signup API] User already exists with email: A78478FB-E8BD-41B5-8B2A-3C2F5EADA640@CORE.TEST
+# DEBUG authorize - Prisma user found: {
+#   id: 'ebf71edc-7364-430c-a640-201cf34bfa5a',
+#   email: 'a78478fb-e8bd-41b5-8b2a-3c2f5eada640@core.test',
+#   role: 'INDIVIDUAL',
+#   name: 'Core Designer'
+# }
+# Invalid password for user: a78478fb-e8bd-41b5-8b2a-3c2f5eada640@core.test
+# DEBUG authorize - Prisma user found: {
+#   id: 'ebf71edc-7364-430c-a640-201cf34bfa5a',
+#   email: 'a78478fb-e8bd-41b5-8b2a-3c2f5eada640@core.test',
+#   role: 'INDIVIDUAL',
+#   name: 'Core Designer'
+# }
+# DEBUG authorize - User authenticated: {
+#   id: 'ebf71edc-7364-430c-a640-201cf34bfa5a',
+#   email: 'a78478fb-e8bd-41b5-8b2a-3c2f5eada640@core.test',
+#   role: 'INDIVIDUAL'
+# }
+# DEBUG: Entering JWT callback
+# DEBUG: JWT callback - Setting token.id: ebf71edc-7364-430c-a640-201cf34bfa5a
+# Hydrated from DB - role: INDIVIDUAL accountStatus: APPROVED subscriptionTier: FREE isFoundingDesigner: false
+# DEBUG: Session callback — token.role: INDIVIDUAL token.id: ebf71edc-7364-430c-a640-201cf34bfa5a token.accountStatus: APPROVED operatingAsOrgId: null subscriptionTier: FREE isFoundingDesigner: false
+# DEBUG: Session callback - Setting session.user.id: ebf71edc-7364-430c-a640-201cf34bfa5a
+# DEBUG: Entering JWT callback
+# DEBUG: JWT callback - Setting token.id: ebf71edc-7364-430c-a640-201cf34bfa5a
+# Hydrated from DB - role: INDIVIDUAL accountStatus: APPROVED subscriptionTier: FREE isFoundingDesigner: false
+# DEBUG: Session callback — token.role: INDIVIDUAL token.id: ebf71edc-7364-430c-a640-201cf34bfa5a token.accountStatus: APPROVED operatingAsOrgId: null subscriptionTier: FREE isFoundingDesigner: false
+# DEBUG: Session callback - Setting session.user.id: ebf71edc-7364-430c-a640-201cf34bfa5a
+# [db-env] (create-project) DATABASE_URL = postgresql://127.0.0.1:55440/folio_rollout_test
+# [create-project] cookie? false
+# [create-project] session {
+#   email: 'a78478fb-e8bd-41b5-8b2a-3c2f5eada640@core.test',
+#   role: 'INDIVIDUAL',
+#   userId: 'ebf71edc-7364-430c-a640-201cf34bfa5a'
+# }
+# DEBUG: Entering JWT callback
+# DEBUG: JWT callback - Setting token.id: ebf71edc-7364-430c-a640-201cf34bfa5a
+# Hydrated from DB - role: DESIGNER accountStatus: APPROVED subscriptionTier: FREE isFoundingDesigner: false
+# DEBUG: Session callback — token.role: DESIGNER token.id: ebf71edc-7364-430c-a640-201cf34bfa5a token.accountStatus: APPROVED operatingAsOrgId: d18c27e9-d5e5-4c24-9001-d852723f0928 subscriptionTier: FREE isFoundingDesigner: false
+# DEBUG: Session callback - Setting session.user.id: ebf71edc-7364-430c-a640-201cf34bfa5a
+# DEBUG: Entering JWT callback
+# DEBUG: JWT callback - Setting token.id: ebf71edc-7364-430c-a640-201cf34bfa5a
+# Hydrated from DB - role: DESIGNER accountStatus: APPROVED subscriptionTier: FREE isFoundingDesigner: false
+# DEBUG: Session callback — token.role: DESIGNER token.id: ebf71edc-7364-430c-a640-201cf34bfa5a token.accountStatus: APPROVED operatingAsOrgId: d18c27e9-d5e5-4c24-9001-d852723f0928 subscriptionTier: FREE isFoundingDesigner: false
+# DEBUG: Session callback - Setting session.user.id: ebf71edc-7364-430c-a640-201cf34bfa5a
+# DEBUG: Entering JWT callback
+# DEBUG: JWT callback - Setting token.id: ebf71edc-7364-430c-a640-201cf34bfa5a
+# Hydrated from DB - role: DESIGNER accountStatus: APPROVED subscriptionTier: FREE isFoundingDesigner: false
+# Subtest: CORE LOCAL/CI — real orchestration with deterministic database double (not persistence proof)
+    # Subtest: 1 signup, credentials, signed cookie, designer onboarding and subsequent authenticated request
+    ok 1 - 1 signup, credentials, signed cookie, designer onboarding and subsequent authenticated request
+      ---
+      duration_ms: 824.8166
+      type: 'test'
+      ...
+# DEBUG: Session callback — token.role: DESIGNER token.id: ebf71edc-7364-430c-a640-201cf34bfa5a token.accountStatus: APPROVED operatingAsOrgId: d18c27e9-d5e5-4c24-9001-d852723f0928 subscriptionTier: FREE isFoundingDesigner: false
+# DEBUG: Session callback - Setting session.user.id: ebf71edc-7364-430c-a640-201cf34bfa5a
+# [db-env] (create-project) DATABASE_URL = postgresql://127.0.0.1:55440/folio_rollout_test
+# [create-project] cookie? false
+# [create-project] session {
+#   email: 'a78478fb-e8bd-41b5-8b2a-3c2f5eada640@core.test',
+#   role: 'DESIGNER',
+#   userId: 'ebf71edc-7364-430c-a640-201cf34bfa5a'
+# }
+# [db-env] (create-project) DATABASE_URL = postgresql://127.0.0.1:55440/folio_rollout_test
+# [create-project] cookie? false
+# [create-project] session {
+#   email: 'a78478fb-e8bd-41b5-8b2a-3c2f5eada640@core.test',
+#   role: 'DESIGNER',
+#   userId: 'ebf71edc-7364-430c-a640-201cf34bfa5a'
+# }
+# [ProductTag] Backfill created selection: {
+#   selectionId: 'ad069ee8-6943-49b2-b5e1-02d944eeb371',
+#   tagId: 'e2ef4c23-ab81-4d1c-a433-b0b5a08694e3'
+# }
+# DEBUG: Entering JWT callback
+# DEBUG: JWT callback - Setting token.id: 9fe63cdc-e7b4-420a-a3b2-ff6d2a624d8e
+# Hydrated from DB - role: DESIGNER accountStatus: APPROVED subscriptionTier: FREE isFoundingDesigner: false
+    # Subtest: 2 create project, room, image upload and product tag; canonical readback preserves relationships
+    ok 2 - 2 create project, room, image upload and product tag; canonical readback preserves relationships
+      ---
+      duration_ms: 378.1289
+      type: 'test'
+      ...
+# DEBUG: Session callback — token.role: DESIGNER token.id: 9fe63cdc-e7b4-420a-a3b2-ff6d2a624d8e token.accountStatus: APPROVED operatingAsOrgId: null subscriptionTier: FREE isFoundingDesigner: false
+# DEBUG: Session callback - Setting session.user.id: 9fe63cdc-e7b4-420a-a3b2-ff6d2a624d8e
+# DEBUG: Entering JWT callback
+# DEBUG: JWT callback - Setting token.id: 1501a93a-cbe3-43e4-b9a1-c1f513b1edc3
+# Hydrated from DB - role: DESIGNER accountStatus: APPROVED subscriptionTier: FREE isFoundingDesigner: false
+# Image classification failed: TypeError: Cannot read properties of undefined (reading 'includes')
+#     at Object.create (C:\\Users\\bpras\\.codex\\worktrees\\rollout-hardening\\folio-mvp\\scripts\\core\\harness.cjs:56:16)
+#     at classifyImage (C:\\Users\\bpras\\.codex\\worktrees\\rollout-hardening\\folio-mvp\\src\\lib\\aesthetic\\imageClassification.ts:21:47)
+#     at detectAITags (C:\\Users\\bpras\\.codex\\worktrees\\rollout-hardening\\folio-mvp\\src\\lib\\search\\indexMoment.ts:36:34)
+#     at indexMoment (C:\\Users\\bpras\\.codex\\worktrees\\rollout-hardening\\folio-mvp\\src\\lib\\search\\indexMoment.ts:328:24)
+# Claude Vision returned empty, falling back to Sharp
+# DEBUG: Session callback — token.role: DESIGNER token.id: 1501a93a-cbe3-43e4-b9a1-c1f513b1edc3 token.accountStatus: APPROVED operatingAsOrgId: null subscriptionTier: FREE isFoundingDesigner: false
+# DEBUG: Session callback - Setting session.user.id: 1501a93a-cbe3-43e4-b9a1-c1f513b1edc3
+# DEBUG: Entering JWT callback
+# DEBUG: JWT callback - Setting token.id: 1501a93a-cbe3-43e4-b9a1-c1f513b1edc3
+# Hydrated from DB - role: DESIGNER accountStatus: APPROVED subscriptionTier: FREE isFoundingDesigner: false
+# DEBUG: Session callback — token.role: DESIGNER token.id: 1501a93a-cbe3-43e4-b9a1-c1f513b1edc3 token.accountStatus: APPROVED operatingAsOrgId: null subscriptionTier: FREE isFoundingDesigner: false
+# DEBUG: Session callback - Setting session.user.id: 1501a93a-cbe3-43e4-b9a1-c1f513b1edc3
+# DEBUG: Entering JWT callback
+# DEBUG: JWT callback - Setting token.id: ebf71edc-7364-430c-a640-201cf34bfa5a
+# Hydrated from DB - role: DESIGNER accountStatus: APPROVED subscriptionTier: FREE isFoundingDesigner: false
+# DEBUG: Session callback — token.role: DESIGNER token.id: ebf71edc-7364-430c-a640-201cf34bfa5a token.accountStatus: APPROVED operatingAsOrgId: d18c27e9-d5e5-4c24-9001-d852723f0928 subscriptionTier: FREE isFoundingDesigner: false
+# DEBUG: Session callback - Setting session.user.id: ebf71edc-7364-430c-a640-201cf34bfa5a
+# DEBUG: Entering JWT callback
+# DEBUG: JWT callback - Setting token.id: ebf71edc-7364-430c-a640-201cf34bfa5a
+# Hydrated from DB - role: DESIGNER accountStatus: APPROVED subscriptionTier: FREE isFoundingDesigner: false
+    # Subtest: 3 direct owner/stranger requests and canonical organization write authorization
+    ok 3 - 3 direct owner/stranger requests and canonical organization write authorization
+      ---
+      duration_ms: 21.6656
+      type: 'test'
+      ...
+# DEBUG: Session callback — token.role: DESIGNER token.id: ebf71edc-7364-430c-a640-201cf34bfa5a token.accountStatus: APPROVED operatingAsOrgId: d18c27e9-d5e5-4c24-9001-d852723f0928 subscriptionTier: FREE isFoundingDesigner: false
+# DEBUG: Session callback - Setting session.user.id: ebf71edc-7364-430c-a640-201cf34bfa5a
+# [interview/POST] Clear check: {
+#   cleanedAnswersLength: 3,
+#   cleanedFollowupsLength: 0,
+#   clearAllRequested: false,
+#   shouldClearSelectedQuestions: false,
+#   incomingSelectedQuestionIds: 3
+# }
+# [interview/POST] Final payload: { selectedQuestionIdsCount: 3, answersCount: 3, followupsCount: 0 }
+# [QUESTION_GEN] Starting per-room generation for project e7e303e6-8539-5057-93be-aec3d363f353
+# [QUESTION_GEN] Rooms: Living Room | Computing budgets...
+# [QUESTION_GEN] Total budget: 3 { perRoom: 'Living Room=3' }
+# [QUESTION_GEN] Living Room: budget=3, images=1, tags=1
+# [QUESTION_GEN] Living Room: FAILED - Cannot read properties of undefined (reading 'includes')
+# [QUESTION_GEN] Complete: 0 questions across 1 rooms
+# [AUDIT] schema: BlocksSchema configured {
+#   strict: true,
+#   hasLead: true,
+#   hasGalleryChapters: true,
+#   hasCredits: true
+# }
+# [AUDIT] generate:start {
+#   projectId: 'e7e303e6-8539-5057-93be-aec3d363f353',
+#   _cid: 'generate_0fc091358fbd'
+# }
+# [AUDIT] generate:entry {
+#   projectId: 'e7e303e6-8539-5057-93be-aec3d363f353',
+#   forceOverwriteDraft: true,
+#   source: 'unknown',
+#   debugEcho: false,
+#   mode: 'recomposition',
+#   overrides: { answers: 0, followups: 0 },
+#   _cid: 'generate_0fc091358fbd'
+# }
+# [AUDIT] generate:lock:return-202 {
+#   projectId: 'e7e303e6-8539-5057-93be-aec3d363f353',
+#   ageMs: 5,
+#   reason: 'fresh-lock',
+#   _cid: 'generate_0fc091358fbd'
+# }
+# [AUDIT] generate:start {
+#   projectId: 'e7e303e6-8539-5057-93be-aec3d363f353',
+#   _cid: 'generate_4fa87ac235f6'
+# }
+# [AUDIT] generate:entry {
+#   projectId: 'e7e303e6-8539-5057-93be-aec3d363f353',
+#   forceOverwriteDraft: false,
+#   source: 'unknown',
+#   debugEcho: false,
+#   mode: 'recomposition',
+#   overrides: { answers: 0, followups: 0 },
+#   _cid: 'generate_4fa87ac235f6'
+# }
+# [AUDIT] generate:stale-lock {
+#   projectId: 'e7e303e6-8539-5057-93be-aec3d363f353',
+#   ageMs: 900001,
+#   _cid: 'generate_4fa87ac235f6'
+# }
+# [posting/interview/generate] Releasing stale generation lock { _cid: 'generate_4fa87ac235f6', age: 900001 }
+# [posting/interview/generate] Interview data: {
+#   _cid: 'generate_4fa87ac235f6',
+#   hasInterview: true,
+#   hasPayload: true,
+#   hasAnswers: true,
+#   answerCount: 3,
+#   interviewKeys: [ 'payload', 'answers', 'status' ],
+#   payloadKeys: [ 'selectedQuestionIds', 'answers', 'followups' ],
+#   force: true
+# }
+# [AUDIT] generate:inputs {
+#   answersLen: 3,
+#   followupsLen: 0,
+#   usingOverrides: { answers: false, followups: false },
+#   _cid: 'generate_4fa87ac235f6'
+# }
+# [AUDIT] generate: using project images as imageOrder fallback { count: 1, _cid: 'generate_4fa87ac235f6' }
+# [ROOM DEBUG] Rooms formatted for generation prompt: {
+#   answerRoomNames: [ 'Living Room' ],
+#   followupRoomNames: [],
+#   imageRooms: [ 'Living Room' ],
+#   _cid: 'generate_4fa87ac235f6'
+# }
+# [ROOM ORGANIZATION] {
+#   projectId: 'e7e303e6-8539-5057-93be-aec3d363f353',
+#   rooms: [ 'Living Room' ],
+#   roomDetails: [
+#     {
+#       room: 'Living Room',
+#       imageCount: 1,
+#       products: 1,
+#       productNames: [Array]
+#     }
+#   ],
+#   totalImages: 1,
+#   totalProducts: 1,
+#   _cid: 'generate_4fa87ac235f6'
+# }
+# [generate] append-only split {
+#   _cid: 'generate_4fa87ac235f6',
+#   mode: 'initial',
+#   frozen: 0,
+#   writeRooms: [ 'Living Room' ],
+#   galleryRooms: []
+# }
+# [generate] llm_ok {
+#   _cid: 'generate_4fa87ac235f6',
+#   attempt: 1,
+#   model: 'claude-sonnet-5',
+#   stopReason: 'end_turn',
+#   outputTokens: 5,
+#   maxTokens: 5500,
+#   adaptiveThinking: false,
+#   effort: null,
+#   cacheRead: undefined,
+#   cacheWrite: undefined
+# }
+# [GENERATE] LLM call complete, proceeding to repair { _cid: 'generate_4fa87ac235f6' }
+# [GENERATE] calling repairAndBuildBlocks { _cid: 'generate_4fa87ac235f6' }
+# [generate] headline departs from house style {
+#   _cid: 'generate_4fa87ac235f6',
+#   kicker: 'A Door Opens Toward the Garden',
+#   issues: [ 'TITLE_CASE: reads as Title Case; house style is sentence case' ]
+# }
+# [VERIFY] spliceHookQuote: REGEX FALLBACK path
+# [fixSentenceOpeners] entry {
+#   _cid: 'generate_4fa87ac235f6',
+#   totalParagraphs: 2,
+#   matchingThePattern: 2,
+#   flaggedForRewrite: 0
+# }
+# [naming] product_naming_gate {
+#   cid: 'generate_4fa87ac235f6',
+#   source: 'generate',
+#   products: 1,
+#   gated: 1,
+#   replacements: 0
+# }
+# [GENERATED STRUCTURE] {
+#   projectId: 'e7e303e6-8539-5057-93be-aec3d363f353',
+#   hasLead: true,
+#   leadKicker: 'A Door Opens Toward the Garden',
+#   leadDeck: 'A changed doorway brings afternoon reading closer to the garden.',
+#   chapterCount: 1,
+#   chapters: [
+#     {
+#       title: 'Living Room',
+#       bodyParagraphs: 2,
+#       imageCount: 1,
+#       firstParagraphPreview: 'The doorway now faces the garden. A chair sits beside the opening, leaving a cle'
+#     }
+#   ],
+#   pullQuotesCount: 1,
+#   materialsCount: 1,
+#   durationMs: 17,
+#   _cid: 'generate_4fa87ac235f6'
+# }
+# [EDITORIAL_GENERATION_META] {"projectId":"e7e303e6-8539-5057-93be-aec3d363f353","wordCount":94,"sectionCount":1,"pullQuoteCount":1,"roomsCovered":["Living Room"],"productsInText":[],"productsInTags":["Core Chair"],"unmatchedProducts":["Core Chair"],"accuracyWarnings":[],"interviewAnswerCount":3,"hasFollowUps":false,"hasBrandProfile":false,"hasBio":false,"hasProjectHistory":false,"hasFingerprint":false,"durationMs":17,"_cid":"generate_4fa87ac235f6"}
+# [AUDIT] generate:saved {
+#   projectId: 'e7e303e6-8539-5057-93be-aec3d363f353',
+#   mode: 'recomposition',
+#   narrativeCount: 2,
+#   chapterBodyLen: 2,
+#   lead: true,
+#   pullQuotes: 1,
+#   _cid: 'generate_4fa87ac235f6'
+# }
+# [AUDIT] finally: unlock {
+#   projectId: 'e7e303e6-8539-5057-93be-aec3d363f353',
+#   ok: true,
+#   _cid: 'generate_4fa87ac235f6'
+# }
+# [generate] Queueing crop generation for 1 tags {
+#   projectId: 'e7e303e6-8539-5057-93be-aec3d363f353',
+#   _cid: 'generate_4fa87ac235f6'
+# }
+# DEBUG: Entering JWT callback
+# DEBUG: JWT callback - Setting token.id: 76be4ba2-a2f7-4aee-bd6a-bf2008b8cc22
+# Hydrated from DB - role: ADMIN accountStatus: APPROVED subscriptionTier: FREE isFoundingDesigner: false
+# DEBUG: Session callback — token.role: ADMIN token.id: 76be4ba2-a2f7-4aee-bd6a-bf2008b8cc22 token.accountStatus: APPROVED operatingAsOrgId: null subscriptionTier: FREE isFoundingDesigner: false
+# DEBUG: Session callback - Setting session.user.id: 76be4ba2-a2f7-4aee-bd6a-bf2008b8cc22
+# [notifyTaggedVendors] Completed for project e7e303e6-8539-5057-93be-aec3d363f353: { notified: 0, skipped: 0, errors: 0 }
+# DEBUG: Entering JWT callback
+# DEBUG: JWT callback - Setting token.id: ebf71edc-7364-430c-a640-201cf34bfa5a
+# Hydrated from DB - role: DESIGNER accountStatus: APPROVED subscriptionTier: FREE isFoundingDesigner: false
+# DEBUG: Session callback — token.role: DESIGNER token.id: ebf71edc-7364-430c-a640-201cf34bfa5a token.accountStatus: APPROVED operatingAsOrgId: d18c27e9-d5e5-4c24-9001-d852723f0928 subscriptionTier: FREE isFoundingDesigner: false
+# DEBUG: Session callback - Setting session.user.id: ebf71edc-7364-430c-a640-201cf34bfa5a
+# DEBUG: Entering JWT callback
+# DEBUG: JWT callback - Setting token.id: 6e24627f-04f0-4bea-9bf5-334dd6616e75
+# Hydrated from DB - role: VENDOR accountStatus: APPROVED subscriptionTier: FREE isFoundingDesigner: false
+    # Subtest: 4 saved interview, real deterministic generation, review/publication and public slug identity
+    ok 4 - 4 saved interview, real deterministic generation, review/publication and public slug identity
+      ---
+      duration_ms: 575.0658
+      type: 'test'
+      ...
+# [generate] Crop generation complete: 0/1 { projectId: 'e7e303e6-8539-5057-93be-aec3d363f353' }
+# DEBUG: Session callback — token.role: VENDOR token.id: 6e24627f-04f0-4bea-9bf5-334dd6616e75 token.accountStatus: APPROVED operatingAsOrgId: null subscriptionTier: FREE isFoundingDesigner: false
+# DEBUG: Session callback - Setting session.user.id: 6e24627f-04f0-4bea-9bf5-334dd6616e75
+# [collaboration/stories] Created: {
+#   storyId: 'e99d9211-084c-40b0-93fc-3450e88971e4',
+#   vendorOrgId: 'a4a66ac1-a39b-49ab-843a-5344d78f9854',
+#   designerUserId: 'ebf71edc-7364-430c-a640-201cf34bfa5a'
+# }
+# DEBUG: Entering JWT callback
+# DEBUG: JWT callback - Setting token.id: 680cf871-5169-485c-9987-e75794595643
+# Hydrated from DB - role: VENDOR accountStatus: APPROVED subscriptionTier: FREE isFoundingDesigner: false
+# DEBUG: Session callback — token.role: VENDOR token.id: 680cf871-5169-485c-9987-e75794595643 token.accountStatus: APPROVED operatingAsOrgId: null subscriptionTier: FREE isFoundingDesigner: false
+# DEBUG: Session callback - Setting session.user.id: 680cf871-5169-485c-9987-e75794595643
+# DEBUG: Entering JWT callback
+# DEBUG: JWT callback - Setting token.id: ebf71edc-7364-430c-a640-201cf34bfa5a
+# Hydrated from DB - role: DESIGNER accountStatus: APPROVED subscriptionTier: FREE isFoundingDesigner: false
+# DEBUG: Session callback — token.role: DESIGNER token.id: ebf71edc-7364-430c-a640-201cf34bfa5a token.accountStatus: APPROVED operatingAsOrgId: d18c27e9-d5e5-4c24-9001-d852723f0928 subscriptionTier: FREE isFoundingDesigner: false
+# DEBUG: Session callback - Setting session.user.id: ebf71edc-7364-430c-a640-201cf34bfa5a
+# [collaboration/stories/respond] Accepted: {
+#   storyId: 'e99d9211-084c-40b0-93fc-3450e88971e4',
+#   designerUserId: 'ebf71edc-7364-430c-a640-201cf34bfa5a'
+# }
+# DEBUG: Entering JWT callback
+# DEBUG: JWT callback - Setting token.id: 6e24627f-04f0-4bea-9bf5-334dd6616e75
+# Hydrated from DB - role: VENDOR accountStatus: APPROVED subscriptionTier: FREE isFoundingDesigner: false
+# DEBUG: Session callback — token.role: VENDOR token.id: 6e24627f-04f0-4bea-9bf5-334dd6616e75 token.accountStatus: APPROVED operatingAsOrgId: null subscriptionTier: FREE isFoundingDesigner: false
+# DEBUG: Session callback - Setting session.user.id: 6e24627f-04f0-4bea-9bf5-334dd6616e75
+# DEBUG: Entering JWT callback
+# DEBUG: JWT callback - Setting token.id: ebf71edc-7364-430c-a640-201cf34bfa5a
+# Hydrated from DB - role: DESIGNER accountStatus: APPROVED subscriptionTier: FREE isFoundingDesigner: false
+    # Subtest: 5 mounted vendor collaboration invitation, designer acceptance, readback and unrelated vendor isolation
+    ok 5 - 5 mounted vendor collaboration invitation, designer acceptance, readback and unrelated vendor isolation
+      ---
+      duration_ms: 130.3176
+      type: 'test'
+      ...
+# DEBUG: Session callback — token.role: DESIGNER token.id: ebf71edc-7364-430c-a640-201cf34bfa5a token.accountStatus: APPROVED operatingAsOrgId: d18c27e9-d5e5-4c24-9001-d852723f0928 subscriptionTier: FREE isFoundingDesigner: false
+# DEBUG: Session callback - Setting session.user.id: ebf71edc-7364-430c-a640-201cf34bfa5a
+# [guided-interview] model usage {
+#   operation: 'guided-interview-decision',
+#   model: 'core-fixture-model',
+#   inputTokens: 10,
+#   outputTokens: 5,
+#   elapsedMs: 0
+# }
+# [guided-interview] model usage {
+#   operation: 'guided-interview-review',
+#   model: 'core-fixture-model',
+#   inputTokens: 10,
+#   outputTokens: 5,
+#   elapsedMs: 0
+# }
+# [guided-interview] model usage {
+#   operation: 'guided-interview-decision',
+#   model: 'core-fixture-model',
+#   inputTokens: 10,
+#   outputTokens: 5,
+#   elapsedMs: 0
+# }
+# [guided-interview] model usage {
+#   operation: 'guided-interview-review',
+#   model: 'core-fixture-model',
+#   inputTokens: 10,
+#   outputTokens: 5,
+#   elapsedMs: 0
+# }
+# [guided-interview] model usage {
+#   operation: 'guided-interview-decision',
+#   model: 'core-fixture-model',
+#   inputTokens: 10,
+#   outputTokens: 5,
+#   elapsedMs: 0
+# }
+# [guided-interview] model usage {
+#   operation: 'guided-interview-review',
+#   model: 'core-fixture-model',
+#   inputTokens: 10,
+#   outputTokens: 5,
+#   elapsedMs: 0
+# }
+# [guided-interview] model usage {
+#   operation: 'guided-interview-decision',
+#   model: 'core-fixture-model',
+#   inputTokens: 10,
+#   outputTokens: 5,
+#   elapsedMs: 0
+# }
+# [guided-interview] model usage {
+#   operation: 'guided-interview-review',
+#   model: 'core-fixture-model',
+#   inputTokens: 10,
+#   outputTokens: 5,
+#   elapsedMs: 0
+# }
+# [guided-interview] model usage {
+#   operation: 'guided-interview-decision',
+#   model: 'core-fixture-model',
+#   inputTokens: 10,
+#   outputTokens: 5,
+#   elapsedMs: 0
+# }
+# [guided-interview] model usage {
+#   operation: 'guided-interview-review',
+#   model: 'core-fixture-model',
+#   inputTokens: 10,
+#   outputTokens: 5,
+#   elapsedMs: 0
+# }
+# [distillInterviewFacts] Distillation failed (non-blocking): TypeError: Cannot read properties of undefined (reading 'includes')
+#     at Object.create (C:\\Users\\bpras\\.codex\\worktrees\\rollout-hardening\\folio-mvp\\scripts\\core\\harness.cjs:56:16)
+#     at distillInterviewFacts (C:\\Users\\bpras\\.codex\\worktrees\\rollout-hardening\\folio-mvp\\src\\lib\\interview\\distillInterviewFacts.ts:74:47)
+#     at prepareGuidedRoomPlan (C:\\Users\\bpras\\.codex\\worktrees\\rollout-hardening\\folio-mvp\\src\\lib\\interview\\guided\\preparation.ts:233:13)
+#     at async prepareRooms (C:\\Users\\bpras\\.codex\\worktrees\\rollout-hardening\\folio-mvp\\src\\lib\\interview\\guided\\service.ts:68:29)
+#     at async finishDecision (C:\\Users\\bpras\\.codex\\worktrees\\rollout-hardening\\folio-mvp\\src\\lib\\interview\\guided\\service.ts:87:7)
+#     at async Object.POST (C:\\Users\\bpras\\.codex\\worktrees\\rollout-hardening\\folio-mvp\\src\\app\\api\\posting\\project\\[projectId]\\interview\\guided\\route.ts:65:21)
+#     at async send (C:\\Users\\bpras\\.codex\\worktrees\\rollout-hardening\\folio-mvp\\scripts\\core\\journeys.test.cjs:233:29)
+#     at async recordAnswer (C:\\Users\\bpras\\.codex\\worktrees\\rollout-hardening\\folio-mvp\\scripts\\core\\journeys.test.cjs:239:7)
+#     at async TestContext.<anonymous> (C:\\Users\\bpras\\.codex\\worktrees\\rollout-hardening\\folio-mvp\\scripts\\core\\journeys.test.cjs:251:9)
+#     at async Test.run (node:internal/test_runner/test:1054:7)
+# [guided-interview] model usage {
+#   operation: 'guided-interview-decision',
+#   model: 'core-fixture-model',
+#   inputTokens: 10,
+#   outputTokens: 5,
+#   elapsedMs: 0
+# }
+# [guided-interview] model usage {
+#   operation: 'guided-interview-review',
+#   model: 'core-fixture-model',
+#   inputTokens: 10,
+#   outputTokens: 5,
+#   elapsedMs: 0
+# }
+# [guided-interview] model usage {
+#   operation: 'guided-interview-decision',
+#   model: 'core-fixture-model',
+#   inputTokens: 10,
+#   outputTokens: 5,
+#   elapsedMs: 1
+# }
+# [guided-interview] model usage {
+#   operation: 'guided-interview-review',
+#   model: 'core-fixture-model',
+#   inputTokens: 10,
+#   outputTokens: 5,
+#   elapsedMs: 0
+# }
+# [guided-interview] model usage {
+#   operation: 'guided-interview-decision',
+#   model: 'core-fixture-model',
+#   inputTokens: 10,
+#   outputTokens: 5,
+#   elapsedMs: 0
+# }
+# [guided-interview] model usage {
+#   operation: 'guided-interview-review',
+#   model: 'core-fixture-model',
+#   inputTokens: 10,
+#   outputTokens: 5,
+#   elapsedMs: 0
+# }
+# [guided-interview] model usage {
+#   operation: 'guided-interview-decision',
+#   model: 'core-fixture-model',
+#   inputTokens: 10,
+#   outputTokens: 5,
+#   elapsedMs: 0
+# }
+# [guided-interview] model usage {
+#   operation: 'guided-interview-review',
+#   model: 'core-fixture-model',
+#   inputTokens: 10,
+#   outputTokens: 5,
+#   elapsedMs: 0
+# }
+# [guided-interview] model usage {
+#   operation: 'guided-interview-decision',
+#   model: 'core-fixture-model',
+#   inputTokens: 10,
+#   outputTokens: 5,
+#   elapsedMs: 0
+# }
+# [guided-interview] model usage {
+#   operation: 'guided-interview-review',
+#   model: 'core-fixture-model',
+#   inputTokens: 10,
+#   outputTokens: 5,
+#   elapsedMs: 0
+# }
+# [guided-interview] model usage {
+#   operation: 'guided-interview-decision',
+#   model: 'core-fixture-model',
+#   inputTokens: 10,
+#   outputTokens: 5,
+#   elapsedMs: 0
+# }
+# [guided-interview] model usage {
+#   operation: 'guided-interview-review',
+#   model: 'core-fixture-model',
+#   inputTokens: 10,
+#   outputTokens: 5,
+#   elapsedMs: 0
+# }
+# [guided-interview] model usage {
+#   operation: 'guided-interview-decision',
+#   model: 'core-fixture-model',
+#   inputTokens: 10,
+#   outputTokens: 5,
+#   elapsedMs: 0
+# }
+# [guided-interview] model usage {
+#   operation: 'guided-interview-review',
+#   model: 'core-fixture-model',
+#   inputTokens: 10,
+#   outputTokens: 5,
+#   elapsedMs: 0
+# }
+# [guided-interview] model usage {
+#   operation: 'guided-interview-decision',
+#   model: 'core-fixture-model',
+#   inputTokens: 10,
+#   outputTokens: 5,
+#   elapsedMs: 0
+# }
+# [guided-interview] model usage {
+#   operation: 'guided-interview-review',
+#   model: 'core-fixture-model',
+#   inputTokens: 10,
+#   outputTokens: 5,
+#   elapsedMs: 0
+# }
+# [AUDIT] generate:start {
+#   projectId: 'e4975271-a881-4e40-9aa0-bec9bce3be67',
+#   _cid: 'generate_041dea00c09e'
+# }
+# [AUDIT] generate:entry {
+#   projectId: 'e4975271-a881-4e40-9aa0-bec9bce3be67',
+#   forceOverwriteDraft: false,
+#   source: 'unknown',
+#   debugEcho: false,
+#   mode: 'recomposition',
+#   overrides: { answers: 0, followups: 0 },
+#   _cid: 'generate_041dea00c09e'
+# }
+# [posting/interview/generate] Interview data: {
+#   _cid: 'generate_041dea00c09e',
+#   hasInterview: true,
+#   hasPayload: true,
+#   hasAnswers: true,
+#   answerCount: 11,
+#   interviewKeys: [ 'guided', 'payload', 'answers', 'audio' ],
+#   payloadKeys: [ 'answers', 'followups', 'selectedQuestionIds' ],
+#   force: true
+# }
+# [AUDIT] generate:inputs {
+#   answersLen: 11,
+#   followupsLen: 0,
+#   usingOverrides: { answers: false, followups: false },
+#   _cid: 'generate_041dea00c09e'
+# }
+# [AUDIT] generate: using project images as imageOrder fallback { count: 2, _cid: 'generate_041dea00c09e' }
+# [ROOM DEBUG] Rooms formatted for generation prompt: {
+#   answerRoomNames: [ 'Reading Room', 'Dining Room' ],
+#   followupRoomNames: [],
+#   imageRooms: [ 'Reading Room', 'Dining Room' ],
+#   _cid: 'generate_041dea00c09e'
+# }
+# [ROOM ORGANIZATION] {
+#   projectId: 'e4975271-a881-4e40-9aa0-bec9bce3be67',
+#   rooms: [ 'Reading Room', 'Dining Room' ],
+#   roomDetails: [
+#     {
+#       room: 'Reading Room',
+#       imageCount: 1,
+#       products: 0,
+#       productNames: []
+#     },
+#     {
+#       room: 'Dining Room',
+#       imageCount: 1,
+#       products: 0,
+#       productNames: []
+#     }
+#   ],
+#   totalImages: 2,
+#   totalProducts: 0,
+#   _cid: 'generate_041dea00c09e'
+# }
+# [generate] append-only split {
+#   _cid: 'generate_041dea00c09e',
+#   mode: 'initial',
+#   frozen: 0,
+#   writeRooms: [ 'Reading Room', 'Dining Room' ],
+#   galleryRooms: []
+# }
+# [generate] llm_ok {
+#   _cid: 'generate_041dea00c09e',
+#   attempt: 1,
+#   model: 'claude-sonnet-5',
+#   stopReason: 'end_turn',
+#   outputTokens: 5,
+#   maxTokens: 5500,
+#   adaptiveThinking: false,
+#   effort: null,
+#   cacheRead: undefined,
+#   cacheWrite: undefined
+# }
+# [GENERATE] LLM call complete, proceeding to repair { _cid: 'generate_041dea00c09e' }
+# [GENERATE] calling repairAndBuildBlocks { _cid: 'generate_041dea00c09e' }
+# [generate] headline departs from house style {
+#   _cid: 'generate_041dea00c09e',
+#   kicker: 'Rooms Opening Toward the Garden',
+#   issues: [ 'TITLE_CASE: reads as Title Case; house style is sentence case' ]
+# }
+# [VERIFY] spliceHookQuote: REGEX FALLBACK path
+# [fixSentenceOpeners] entry {
+#   _cid: 'generate_041dea00c09e',
+#   totalParagraphs: 4,
+#   matchingThePattern: 0,
+#   flaggedForRewrite: 0
+# }
+# [GENERATED STRUCTURE] {
+#   projectId: 'e4975271-a881-4e40-9aa0-bec9bce3be67',
+#   hasLead: true,
+#   leadKicker: 'Rooms Opening Toward the Garden',
+#   leadDeck: 'An open route connects two rooms with the family garden.',
+#   chapterCount: 2,
+#   chapters: [
+#     {
+#       title: 'Reading Room',
+#       bodyParagraphs: 2,
+#       imageCount: 1,
+#       firstParagraphPreview: 'Afternoon light reaches the garden-facing doorway. A clear route through the roo'
+#     },
+#     {
+#       title: 'Dining Room',
+#       bodyParagraphs: 2,
+#       imageCount: 1,
+#       firstParagraphPreview: 'Afternoon light reaches the garden-facing doorway. A clear route through the roo'
+#     }
+#   ],
+#   pullQuotesCount: 2,
+#   materialsCount: 0,
+#   durationMs: 7,
+#   _cid: 'generate_041dea00c09e'
+# }
+# [EDITORIAL_GENERATION_META] {"projectId":"e4975271-a881-4e40-9aa0-bec9bce3be67","wordCount":167,"sectionCount":2,"pullQuoteCount":2,"roomsCovered":["Reading Room","Dining Room"],"productsInText":[],"productsInTags":[],"unmatchedProducts":[],"accuracyWarnings":[],"interviewAnswerCount":11,"hasFollowUps":false,"hasBrandProfile":false,"hasBio":false,"hasProjectHistory":false,"hasFingerprint":false,"durationMs":7,"_cid":"generate_041dea00c09e"}
+# [AUDIT] generate:saved {
+#   projectId: 'e4975271-a881-4e40-9aa0-bec9bce3be67',
+#   mode: 'recomposition',
+#   narrativeCount: 2,
+#   chapterBodyLen: 2,
+#   lead: true,
+#   pullQuotes: 2,
+#   _cid: 'generate_041dea00c09e'
+# }
+# [AUDIT] finally: unlock {
+#   projectId: 'e4975271-a881-4e40-9aa0-bec9bce3be67',
+#   ok: true,
+#   _cid: 'generate_041dea00c09e'
+# }
+    # Subtest: 6 guided interview with correction, canonical evidence and private editable draft
+    ok 6 - 6 guided interview with correction, canonical evidence and private editable draft
+      ---
+      duration_ms: 386.2484
+      type: 'test'
+      ...
+    1..6
+ok 6 - CORE LOCAL/CI — real orchestration with deterministic database double (not persistence proof)
+  ---
+  duration_ms: 3681.6339
+  type: 'test'
+  ...
+# [Signup API] Request received
+# [Signup API] Request body: {
+#   name: 'Core Designer',
+#   email: '49c26146-dfec-460c-ad57-16d2617e5b6c@core.test',
+#   password: '[REDACTED]',
+#   acceptedTerms: true
+# }
+# [Signup API] Checking for existing user with email: 49c26146-dfec-460c-ad57-16d2617e5b6c@core.test
+# [Signup API] findFirst completed, existingUser: not found
+# [Signup API] Hashing password...
+# [Signup API] Password hashed successfully
+# [Signup API] Creating user with status: APPROVED, role: INDIVIDUAL
+# [Signup API] User created successfully with ID: d8b0e786-27ae-4f46-9337-7ceb8ee56c61
+# [Signup API] Request received
+# [Signup API] Request body: {
+#   name: 'Core Designer',
+#   email: '49C26146-DFEC-460C-AD57-16D2617E5B6C@CORE.TEST',
+#   password: '[REDACTED]',
+#   acceptedTerms: true
+# }
+# [Signup API] Checking for existing user with email: 49C26146-DFEC-460C-AD57-16D2617E5B6C@CORE.TEST
+# [Signup API] findFirst completed, existingUser: found
+# [Signup API] User already exists with email: 49C26146-DFEC-460C-AD57-16D2617E5B6C@CORE.TEST
+# DEBUG authorize - Prisma user found: {
+#   id: 'd8b0e786-27ae-4f46-9337-7ceb8ee56c61',
+#   email: '49c26146-dfec-460c-ad57-16d2617e5b6c@core.test',
+#   role: 'INDIVIDUAL',
+#   name: 'Core Designer'
+# }
+# Invalid password for user: 49c26146-dfec-460c-ad57-16d2617e5b6c@core.test
+# DEBUG authorize - Prisma user found: {
+#   id: 'd8b0e786-27ae-4f46-9337-7ceb8ee56c61',
+#   email: '49c26146-dfec-460c-ad57-16d2617e5b6c@core.test',
+#   role: 'INDIVIDUAL',
+#   name: 'Core Designer'
+# }
+# DEBUG authorize - User authenticated: {
+#   id: 'd8b0e786-27ae-4f46-9337-7ceb8ee56c61',
+#   email: '49c26146-dfec-460c-ad57-16d2617e5b6c@core.test',
+#   role: 'INDIVIDUAL'
+# }
+# DEBUG: Entering JWT callback
+# DEBUG: JWT callback - Setting token.id: d8b0e786-27ae-4f46-9337-7ceb8ee56c61
+# Hydrated from DB - role: INDIVIDUAL accountStatus: APPROVED subscriptionTier: FREE isFoundingDesigner: false
+# DEBUG: Session callback — token.role: INDIVIDUAL token.id: d8b0e786-27ae-4f46-9337-7ceb8ee56c61 token.accountStatus: APPROVED operatingAsOrgId: null subscriptionTier: FREE isFoundingDesigner: false
+# DEBUG: Session callback - Setting session.user.id: d8b0e786-27ae-4f46-9337-7ceb8ee56c61
+# DEBUG: Entering JWT callback
+# DEBUG: JWT callback - Setting token.id: d8b0e786-27ae-4f46-9337-7ceb8ee56c61
+# Hydrated from DB - role: INDIVIDUAL accountStatus: APPROVED subscriptionTier: FREE isFoundingDesigner: false
+# DEBUG: Session callback — token.role: INDIVIDUAL token.id: d8b0e786-27ae-4f46-9337-7ceb8ee56c61 token.accountStatus: APPROVED operatingAsOrgId: null subscriptionTier: FREE isFoundingDesigner: false
+# DEBUG: Session callback - Setting session.user.id: d8b0e786-27ae-4f46-9337-7ceb8ee56c61
+# [db-env] (create-project) DATABASE_URL = postgresql://127.0.0.1:55440/folio_rollout_test
+# [create-project] cookie? false
+# [create-project] session {
+#   email: '49c26146-dfec-460c-ad57-16d2617e5b6c@core.test',
+#   role: 'INDIVIDUAL',
+#   userId: 'd8b0e786-27ae-4f46-9337-7ceb8ee56c61'
+# }
+# DEBUG: Entering JWT callback
+# DEBUG: JWT callback - Setting token.id: d8b0e786-27ae-4f46-9337-7ceb8ee56c61
+# Hydrated from DB - role: DESIGNER accountStatus: APPROVED subscriptionTier: FREE isFoundingDesigner: false
+# DEBUG: Session callback — token.role: DESIGNER token.id: d8b0e786-27ae-4f46-9337-7ceb8ee56c61 token.accountStatus: APPROVED operatingAsOrgId: 9dd20406-5aeb-4722-a2ad-40ca13032771 subscriptionTier: FREE isFoundingDesigner: false
+# DEBUG: Session callback - Setting session.user.id: d8b0e786-27ae-4f46-9337-7ceb8ee56c61
+# DEBUG: Entering JWT callback
+# DEBUG: JWT callback - Setting token.id: d8b0e786-27ae-4f46-9337-7ceb8ee56c61
+# Hydrated from DB - role: DESIGNER accountStatus: APPROVED subscriptionTier: FREE isFoundingDesigner: false
+# DEBUG: Session callback — token.role: DESIGNER token.id: d8b0e786-27ae-4f46-9337-7ceb8ee56c61 token.accountStatus: APPROVED operatingAsOrgId: 9dd20406-5aeb-4722-a2ad-40ca13032771 subscriptionTier: FREE isFoundingDesigner: false
+# DEBUG: Session callback - Setting session.user.id: d8b0e786-27ae-4f46-9337-7ceb8ee56c61
+# DEBUG: Entering JWT callback
+# DEBUG: JWT callback - Setting token.id: d8b0e786-27ae-4f46-9337-7ceb8ee56c61
+# Subtest: DATABASE JOURNEYS — all six journeys against disposable Prisma transaction
+    # Subtest: 1 signup, credentials, signed cookie, designer onboarding and subsequent authenticated request
+    ok 1 - 1 signup, credentials, signed cookie, designer onboarding and subsequent authenticated request
+      ---
+      duration_ms: 910.3306
+      type: 'test'
+      ...
+# Hydrated from DB - role: DESIGNER accountStatus: APPROVED subscriptionTier: FREE isFoundingDesigner: false
+# DEBUG: Session callback — token.role: DESIGNER token.id: d8b0e786-27ae-4f46-9337-7ceb8ee56c61 token.accountStatus: APPROVED operatingAsOrgId: 9dd20406-5aeb-4722-a2ad-40ca13032771 subscriptionTier: FREE isFoundingDesigner: false
+# DEBUG: Session callback - Setting session.user.id: d8b0e786-27ae-4f46-9337-7ceb8ee56c61
+# [db-env] (create-project) DATABASE_URL = postgresql://127.0.0.1:55440/folio_rollout_test
+# [create-project] cookie? false
+# [create-project] session {
+#   email: '49c26146-dfec-460c-ad57-16d2617e5b6c@core.test',
+#   role: 'DESIGNER',
+#   userId: 'd8b0e786-27ae-4f46-9337-7ceb8ee56c61'
+# }
+# [db-env] (create-project) DATABASE_URL = postgresql://127.0.0.1:55440/folio_rollout_test
+# [create-project] cookie? false
+# [create-project] session {
+#   email: '49c26146-dfec-460c-ad57-16d2617e5b6c@core.test',
+#   role: 'DESIGNER',
+#   userId: 'd8b0e786-27ae-4f46-9337-7ceb8ee56c61'
+# }
+# Image classification failed: TypeError: Cannot read properties of undefined (reading 'includes')
+#     at Object.create (C:\\Users\\bpras\\.codex\\worktrees\\rollout-hardening\\folio-mvp\\scripts\\core\\harness.cjs:56:16)
+#     at classifyImage (C:\\Users\\bpras\\.codex\\worktrees\\rollout-hardening\\folio-mvp\\src\\lib\\aesthetic\\imageClassification.ts:21:47)
+#     at detectAITags (C:\\Users\\bpras\\.codex\\worktrees\\rollout-hardening\\folio-mvp\\src\\lib\\search\\indexMoment.ts:36:34)
+#     at indexMoment (C:\\Users\\bpras\\.codex\\worktrees\\rollout-hardening\\folio-mvp\\src\\lib\\search\\indexMoment.ts:328:24)
+# Claude Vision returned empty, falling back to Sharp
+# [ProductTag] Backfill created selection: {
+#   selectionId: '8c335007-7e53-4460-a739-ca069a264916',
+#   tagId: '2939ecc6-e7a8-42a1-9628-4f81266ac5b7'
+# }
+    # Subtest: 2 create project, room, image upload and product tag; canonical readback preserves relationships
+    ok 2 - 2 create project, room, image upload and product tag; canonical readback preserves relationships
+      ---
+      duration_ms: 192.4498
+      type: 'test'
+      ...
+# DEBUG: Entering JWT callback
+# DEBUG: JWT callback - Setting token.id: e90b5387-019b-4bdd-9ca7-be7230dead76
+# Hydrated from DB - role: DESIGNER accountStatus: APPROVED subscriptionTier: FREE isFoundingDesigner: false
+# DEBUG: Session callback — token.role: DESIGNER token.id: e90b5387-019b-4bdd-9ca7-be7230dead76 token.accountStatus: APPROVED operatingAsOrgId: null subscriptionTier: FREE isFoundingDesigner: false
+# DEBUG: Session callback - Setting session.user.id: e90b5387-019b-4bdd-9ca7-be7230dead76
+# DEBUG: Entering JWT callback
+# DEBUG: JWT callback - Setting token.id: 1e4c9689-f0ac-4f57-a3d9-bd85ad23fba8
+# Hydrated from DB - role: DESIGNER accountStatus: APPROVED subscriptionTier: FREE isFoundingDesigner: false
+# DEBUG: Session callback — token.role: DESIGNER token.id: 1e4c9689-f0ac-4f57-a3d9-bd85ad23fba8 token.accountStatus: APPROVED operatingAsOrgId: null subscriptionTier: FREE isFoundingDesigner: false
+# DEBUG: Session callback - Setting session.user.id: 1e4c9689-f0ac-4f57-a3d9-bd85ad23fba8
+# DEBUG: Entering JWT callback
+# DEBUG: JWT callback - Setting token.id: 1e4c9689-f0ac-4f57-a3d9-bd85ad23fba8
+# Hydrated from DB - role: DESIGNER accountStatus: APPROVED subscriptionTier: FREE isFoundingDesigner: false
+# DEBUG: Session callback — token.role: DESIGNER token.id: 1e4c9689-f0ac-4f57-a3d9-bd85ad23fba8 token.accountStatus: APPROVED operatingAsOrgId: null subscriptionTier: FREE isFoundingDesigner: false
+# DEBUG: Session callback - Setting session.user.id: 1e4c9689-f0ac-4f57-a3d9-bd85ad23fba8
+# DEBUG: Entering JWT callback
+# DEBUG: JWT callback - Setting token.id: d8b0e786-27ae-4f46-9337-7ceb8ee56c61
+# Hydrated from DB - role: DESIGNER accountStatus: APPROVED subscriptionTier: FREE isFoundingDesigner: false
+# DEBUG: Session callback — token.role: DESIGNER token.id: d8b0e786-27ae-4f46-9337-7ceb8ee56c61 token.accountStatus: APPROVED operatingAsOrgId: 9dd20406-5aeb-4722-a2ad-40ca13032771 subscriptionTier: FREE isFoundingDesigner: false
+# DEBUG: Session callback - Setting session.user.id: d8b0e786-27ae-4f46-9337-7ceb8ee56c61
+# DEBUG: Entering JWT callback
+# DEBUG: JWT callback - Setting token.id: d8b0e786-27ae-4f46-9337-7ceb8ee56c61
+    # Subtest: 3 direct owner/stranger requests and canonical organization write authorization
+    ok 3 - 3 direct owner/stranger requests and canonical organization write authorization
+      ---
+      duration_ms: 144.074
+      type: 'test'
+      ...
+# Hydrated from DB - role: DESIGNER accountStatus: APPROVED subscriptionTier: FREE isFoundingDesigner: false
+# DEBUG: Session callback — token.role: DESIGNER token.id: d8b0e786-27ae-4f46-9337-7ceb8ee56c61 token.accountStatus: APPROVED operatingAsOrgId: 9dd20406-5aeb-4722-a2ad-40ca13032771 subscriptionTier: FREE isFoundingDesigner: false
+# DEBUG: Session callback - Setting session.user.id: d8b0e786-27ae-4f46-9337-7ceb8ee56c61
+# [interview/POST] Clear check: {
+#   cleanedAnswersLength: 3,
+#   cleanedFollowupsLength: 0,
+#   clearAllRequested: false,
+#   shouldClearSelectedQuestions: false,
+#   incomingSelectedQuestionIds: 3
+# }
+# [interview/POST] Final payload: { selectedQuestionIdsCount: 3, answersCount: 3, followupsCount: 0 }
+# [QUESTION_GEN] Starting per-room generation for project 7a3ef593-b76c-5b1c-b5aa-9321932356e8
+# [QUESTION_GEN] Rooms: Living Room | Computing budgets...
+# [QUESTION_GEN] Total budget: 3 { perRoom: 'Living Room=3' }
+# [QUESTION_GEN] Living Room: budget=3, images=1, tags=1
+# [QUESTION_GEN] Living Room: FAILED - Cannot read properties of undefined (reading 'includes')
+# [QUESTION_GEN] Complete: 0 questions across 1 rooms
+# [AUDIT] generate:start {
+#   projectId: '7a3ef593-b76c-5b1c-b5aa-9321932356e8',
+#   _cid: 'generate_bcce93fbe95b'
+# }
+# [AUDIT] generate:entry {
+#   projectId: '7a3ef593-b76c-5b1c-b5aa-9321932356e8',
+#   forceOverwriteDraft: true,
+#   source: 'unknown',
+#   debugEcho: false,
+#   mode: 'recomposition',
+#   overrides: { answers: 0, followups: 0 },
+#   _cid: 'generate_bcce93fbe95b'
+# }
+# [AUDIT] generate:lock:return-202 {
+#   projectId: '7a3ef593-b76c-5b1c-b5aa-9321932356e8',
+#   ageMs: 17,
+#   reason: 'fresh-lock',
+#   _cid: 'generate_bcce93fbe95b'
+# }
+# [AUDIT] generate:start {
+#   projectId: '7a3ef593-b76c-5b1c-b5aa-9321932356e8',
+#   _cid: 'generate_50b59be18d46'
+# }
+# [AUDIT] generate:entry {
+#   projectId: '7a3ef593-b76c-5b1c-b5aa-9321932356e8',
+#   forceOverwriteDraft: false,
+#   source: 'unknown',
+#   debugEcho: false,
+#   mode: 'recomposition',
+#   overrides: { answers: 0, followups: 0 },
+#   _cid: 'generate_50b59be18d46'
+# }
+# [AUDIT] generate:stale-lock {
+#   projectId: '7a3ef593-b76c-5b1c-b5aa-9321932356e8',
+#   ageMs: 900013,
+#   _cid: 'generate_50b59be18d46'
+# }
+# [posting/interview/generate] Releasing stale generation lock { _cid: 'generate_50b59be18d46', age: 900013 }
+# [posting/interview/generate] Interview data: {
+#   _cid: 'generate_50b59be18d46',
+#   hasInterview: true,
+#   hasPayload: true,
+#   hasAnswers: true,
+#   answerCount: 3,
+#   interviewKeys: [ 'status', 'answers', 'payload' ],
+#   payloadKeys: [ 'answers', 'followups', 'selectedQuestionIds' ],
+#   force: true
+# }
+# [AUDIT] generate:inputs {
+#   answersLen: 3,
+#   followupsLen: 0,
+#   usingOverrides: { answers: false, followups: false },
+#   _cid: 'generate_50b59be18d46'
+# }
+# [AUDIT] generate: using project images as imageOrder fallback { count: 1, _cid: 'generate_50b59be18d46' }
+# [ROOM DEBUG] Rooms formatted for generation prompt: {
+#   answerRoomNames: [ 'Living Room' ],
+#   followupRoomNames: [],
+#   imageRooms: [ 'Living Room' ],
+#   _cid: 'generate_50b59be18d46'
+# }
+# [ROOM ORGANIZATION] {
+#   projectId: '7a3ef593-b76c-5b1c-b5aa-9321932356e8',
+#   rooms: [ 'Living Room' ],
+#   roomDetails: [
+#     {
+#       room: 'Living Room',
+#       imageCount: 1,
+#       products: 1,
+#       productNames: [Array]
+#     }
+#   ],
+#   totalImages: 1,
+#   totalProducts: 1,
+#   _cid: 'generate_50b59be18d46'
+# }
+# [generate] append-only split {
+#   _cid: 'generate_50b59be18d46',
+#   mode: 'initial',
+#   frozen: 0,
+#   writeRooms: [ 'Living Room' ],
+#   galleryRooms: []
+# }
+# [generate] llm_ok {
+#   _cid: 'generate_50b59be18d46',
+#   attempt: 1,
+#   model: 'claude-sonnet-5',
+#   stopReason: 'end_turn',
+#   outputTokens: 5,
+#   maxTokens: 5500,
+#   adaptiveThinking: false,
+#   effort: null,
+#   cacheRead: undefined,
+#   cacheWrite: undefined
+# }
+# [generate] headline departs from house style {
+#   _cid: 'generate_50b59be18d46',
+#   kicker: 'A Door Opens Toward the Garden',
+#   issues: [ 'TITLE_CASE: reads as Title Case; house style is sentence case' ]
+# }
+# [GENERATE] LLM call complete, proceeding to repair { _cid: 'generate_50b59be18d46' }
+# [GENERATE] calling repairAndBuildBlocks { _cid: 'generate_50b59be18d46' }
+# [VERIFY] spliceHookQuote: REGEX FALLBACK path
+# [fixSentenceOpeners] entry {
+#   _cid: 'generate_50b59be18d46',
+#   totalParagraphs: 2,
+#   matchingThePattern: 2,
+#   flaggedForRewrite: 0
+# }
+# [naming] product_naming_gate {
+#   cid: 'generate_50b59be18d46',
+#   source: 'generate',
+#   products: 1,
+#   gated: 1,
+#   replacements: 0
+# }
+# [GENERATED STRUCTURE] {
+#   projectId: '7a3ef593-b76c-5b1c-b5aa-9321932356e8',
+#   hasLead: true,
+#   leadKicker: 'A Door Opens Toward the Garden',
+#   leadDeck: 'A changed doorway brings afternoon reading closer to the garden.',
+#   chapterCount: 1,
+#   chapters: [
+#     {
+#       title: 'Living Room',
+#       bodyParagraphs: 2,
+#       imageCount: 1,
+#       firstParagraphPreview: 'The doorway now faces the garden. A chair sits beside the opening, leaving a cle'
+#     }
+#   ],
+#   pullQuotesCount: 1,
+#   materialsCount: 1,
+#   durationMs: 40,
+#   _cid: 'generate_50b59be18d46'
+# }
+# [EDITORIAL_GENERATION_META] {"projectId":"7a3ef593-b76c-5b1c-b5aa-9321932356e8","wordCount":94,"sectionCount":1,"pullQuoteCount":1,"roomsCovered":["Living Room"],"productsInText":[],"productsInTags":["Core Chair"],"unmatchedProducts":["Core Chair"],"accuracyWarnings":[],"interviewAnswerCount":3,"hasFollowUps":false,"hasBrandProfile":false,"hasBio":false,"hasProjectHistory":false,"hasFingerprint":false,"durationMs":40,"_cid":"generate_50b59be18d46"}
+# [AUDIT] generate:saved {
+#   projectId: '7a3ef593-b76c-5b1c-b5aa-9321932356e8',
+#   mode: 'recomposition',
+#   narrativeCount: 2,
+#   chapterBodyLen: 2,
+#   lead: true,
+#   pullQuotes: 1,
+#   _cid: 'generate_50b59be18d46'
+# }
+# [AUDIT] finally: unlock {
+#   projectId: '7a3ef593-b76c-5b1c-b5aa-9321932356e8',
+#   ok: true,
+#   _cid: 'generate_50b59be18d46'
+# }
+# [generate] Queueing crop generation for 1 tags {
+#   projectId: '7a3ef593-b76c-5b1c-b5aa-9321932356e8',
+#   _cid: 'generate_50b59be18d46'
+# }
+# [generate] Crop generation complete: 0/1 { projectId: '7a3ef593-b76c-5b1c-b5aa-9321932356e8' }
+# DEBUG: Entering JWT callback
+# DEBUG: JWT callback - Setting token.id: dd8e8708-d559-4778-90f1-0b3218d473fa
+# Hydrated from DB - role: ADMIN accountStatus: APPROVED subscriptionTier: FREE isFoundingDesigner: false
+# DEBUG: Session callback — token.role: ADMIN token.id: dd8e8708-d559-4778-90f1-0b3218d473fa token.accountStatus: APPROVED operatingAsOrgId: null subscriptionTier: FREE isFoundingDesigner: false
+# DEBUG: Session callback - Setting session.user.id: dd8e8708-d559-4778-90f1-0b3218d473fa
+# [notifyTaggedVendors] Completed for project 7a3ef593-b76c-5b1c-b5aa-9321932356e8: { notified: 0, skipped: 0, errors: 0 }
+# DEBUG: Entering JWT callback
+# DEBUG: JWT callback - Setting token.id: d8b0e786-27ae-4f46-9337-7ceb8ee56c61
+# Hydrated from DB - role: DESIGNER accountStatus: APPROVED subscriptionTier: FREE isFoundingDesigner: false
+# DEBUG: Session callback — token.role: DESIGNER token.id: d8b0e786-27ae-4f46-9337-7ceb8ee56c61 token.accountStatus: APPROVED operatingAsOrgId: 9dd20406-5aeb-4722-a2ad-40ca13032771 subscriptionTier: FREE isFoundingDesigner: false
+# DEBUG: Session callback - Setting session.user.id: d8b0e786-27ae-4f46-9337-7ceb8ee56c61
+    # Subtest: 4 saved interview, real deterministic generation, review/publication and public slug identity
+    ok 4 - 4 saved interview, real deterministic generation, review/publication and public slug identity
+      ---
+      duration_ms: 342.6848
+      type: 'test'
+      ...
+# DEBUG: Entering JWT callback
+# DEBUG: JWT callback - Setting token.id: 59f58b21-3f63-487e-899c-3ed0d186db9b
+# Hydrated from DB - role: VENDOR accountStatus: APPROVED subscriptionTier: FREE isFoundingDesigner: false
+# DEBUG: Session callback — token.role: VENDOR token.id: 59f58b21-3f63-487e-899c-3ed0d186db9b token.accountStatus: APPROVED operatingAsOrgId: null subscriptionTier: FREE isFoundingDesigner: false
+# DEBUG: Session callback - Setting session.user.id: 59f58b21-3f63-487e-899c-3ed0d186db9b
+# [collaboration/stories] Created: {
+#   storyId: 'cmvpsn4xs000dqd5wqnv5fs81',
+#   vendorOrgId: 'b1ce3d7f-32ee-4511-8643-6fc0f703adfc',
+#   designerUserId: 'd8b0e786-27ae-4f46-9337-7ceb8ee56c61'
+# }
+# DEBUG: Entering JWT callback
+# DEBUG: JWT callback - Setting token.id: 851833de-63f6-4185-85c7-3478d719be14
+# Hydrated from DB - role: VENDOR accountStatus: APPROVED subscriptionTier: FREE isFoundingDesigner: false
+# DEBUG: Session callback — token.role: VENDOR token.id: 851833de-63f6-4185-85c7-3478d719be14 token.accountStatus: APPROVED operatingAsOrgId: null subscriptionTier: FREE isFoundingDesigner: false
+# DEBUG: Session callback - Setting session.user.id: 851833de-63f6-4185-85c7-3478d719be14
+# DEBUG: Entering JWT callback
+# DEBUG: JWT callback - Setting token.id: d8b0e786-27ae-4f46-9337-7ceb8ee56c61
+# Hydrated from DB - role: DESIGNER accountStatus: APPROVED subscriptionTier: FREE isFoundingDesigner: false
+# DEBUG: Session callback — token.role: DESIGNER token.id: d8b0e786-27ae-4f46-9337-7ceb8ee56c61 token.accountStatus: APPROVED operatingAsOrgId: 9dd20406-5aeb-4722-a2ad-40ca13032771 subscriptionTier: FREE isFoundingDesigner: false
+# DEBUG: Session callback - Setting session.user.id: d8b0e786-27ae-4f46-9337-7ceb8ee56c61
+# [collaboration/stories/respond] Accepted: {
+#   storyId: 'cmvpsn4xs000dqd5wqnv5fs81',
+#   designerUserId: 'd8b0e786-27ae-4f46-9337-7ceb8ee56c61'
+# }
+# DEBUG: Entering JWT callback
+# DEBUG: JWT callback - Setting token.id: 59f58b21-3f63-487e-899c-3ed0d186db9b
+# Hydrated from DB - role: VENDOR accountStatus: APPROVED subscriptionTier: FREE isFoundingDesigner: false
+# DEBUG: Session callback — token.role: VENDOR token.id: 59f58b21-3f63-487e-899c-3ed0d186db9b token.accountStatus: APPROVED operatingAsOrgId: null subscriptionTier: FREE isFoundingDesigner: false
+# DEBUG: Session callback - Setting session.user.id: 59f58b21-3f63-487e-899c-3ed0d186db9b
+# DEBUG: Entering JWT callback
+# DEBUG: JWT callback - Setting token.id: d8b0e786-27ae-4f46-9337-7ceb8ee56c61
+    # Subtest: 5 mounted vendor collaboration invitation, designer acceptance, readback and unrelated vendor isolation
+    ok 5 - 5 mounted vendor collaboration invitation, designer acceptance, readback and unrelated vendor isolation
+      ---
+      duration_ms: 118.5074
+      type: 'test'
+      ...
+# Hydrated from DB - role: DESIGNER accountStatus: APPROVED subscriptionTier: FREE isFoundingDesigner: false
+# DEBUG: Session callback — token.role: DESIGNER token.id: d8b0e786-27ae-4f46-9337-7ceb8ee56c61 token.accountStatus: APPROVED operatingAsOrgId: 9dd20406-5aeb-4722-a2ad-40ca13032771 subscriptionTier: FREE isFoundingDesigner: false
+# DEBUG: Session callback - Setting session.user.id: d8b0e786-27ae-4f46-9337-7ceb8ee56c61
+# [guided-interview] model usage {
+#   operation: 'guided-interview-decision',
+#   model: 'core-fixture-model',
+#   inputTokens: 10,
+#   outputTokens: 5,
+#   elapsedMs: 0
+# }
+# [guided-interview] model usage {
+#   operation: 'guided-interview-review',
+#   model: 'core-fixture-model',
+#   inputTokens: 10,
+#   outputTokens: 5,
+#   elapsedMs: 0
+# }
+# [guided-interview] model usage {
+#   operation: 'guided-interview-decision',
+#   model: 'core-fixture-model',
+#   inputTokens: 10,
+#   outputTokens: 5,
+#   elapsedMs: 0
+# }
+# [guided-interview] model usage {
+#   operation: 'guided-interview-review',
+#   model: 'core-fixture-model',
+#   inputTokens: 10,
+#   outputTokens: 5,
+#   elapsedMs: 0
+# }
+# [guided-interview] model usage {
+#   operation: 'guided-interview-decision',
+#   model: 'core-fixture-model',
+#   inputTokens: 10,
+#   outputTokens: 5,
+#   elapsedMs: 1
+# }
+# [guided-interview] model usage {
+#   operation: 'guided-interview-review',
+#   model: 'core-fixture-model',
+#   inputTokens: 10,
+#   outputTokens: 5,
+#   elapsedMs: 0
+# }
+# [guided-interview] model usage {
+#   operation: 'guided-interview-decision',
+#   model: 'core-fixture-model',
+#   inputTokens: 10,
+#   outputTokens: 5,
+#   elapsedMs: 0
+# }
+# [guided-interview] model usage {
+#   operation: 'guided-interview-review',
+#   model: 'core-fixture-model',
+#   inputTokens: 10,
+#   outputTokens: 5,
+#   elapsedMs: 0
+# }
+# [guided-interview] model usage {
+#   operation: 'guided-interview-decision',
+#   model: 'core-fixture-model',
+#   inputTokens: 10,
+#   outputTokens: 5,
+#   elapsedMs: 0
+# }
+# [guided-interview] model usage {
+#   operation: 'guided-interview-review',
+#   model: 'core-fixture-model',
+#   inputTokens: 10,
+#   outputTokens: 5,
+#   elapsedMs: 0
+# }
+# [distillInterviewFacts] Distillation failed (non-blocking): TypeError: Cannot read properties of undefined (reading 'includes')
+#     at Object.create (C:\\Users\\bpras\\.codex\\worktrees\\rollout-hardening\\folio-mvp\\scripts\\core\\harness.cjs:56:16)
+#     at distillInterviewFacts (C:\\Users\\bpras\\.codex\\worktrees\\rollout-hardening\\folio-mvp\\src\\lib\\interview\\distillInterviewFacts.ts:74:47)
+#     at prepareGuidedRoomPlan (C:\\Users\\bpras\\.codex\\worktrees\\rollout-hardening\\folio-mvp\\src\\lib\\interview\\guided\\preparation.ts:233:13)
+#     at async prepareRooms (C:\\Users\\bpras\\.codex\\worktrees\\rollout-hardening\\folio-mvp\\src\\lib\\interview\\guided\\service.ts:68:29)
+#     at async finishDecision (C:\\Users\\bpras\\.codex\\worktrees\\rollout-hardening\\folio-mvp\\src\\lib\\interview\\guided\\service.ts:87:7)
+#     at async Object.POST (C:\\Users\\bpras\\.codex\\worktrees\\rollout-hardening\\folio-mvp\\src\\app\\api\\posting\\project\\[projectId]\\interview\\guided\\route.ts:65:21)
+#     at async send (C:\\Users\\bpras\\.codex\\worktrees\\rollout-hardening\\folio-mvp\\scripts\\core\\journeys.test.cjs:233:29)
+#     at async recordAnswer (C:\\Users\\bpras\\.codex\\worktrees\\rollout-hardening\\folio-mvp\\scripts\\core\\journeys.test.cjs:239:7)
+#     at async TestContext.<anonymous> (C:\\Users\\bpras\\.codex\\worktrees\\rollout-hardening\\folio-mvp\\scripts\\core\\journeys.test.cjs:251:9)
+#     at async Test.run (node:internal/test_runner/test:1054:7)
+# [guided-interview] model usage {
+#   operation: 'guided-interview-decision',
+#   model: 'core-fixture-model',
+#   inputTokens: 10,
+#   outputTokens: 5,
+#   elapsedMs: 0
+# }
+# [guided-interview] model usage {
+#   operation: 'guided-interview-review',
+#   model: 'core-fixture-model',
+#   inputTokens: 10,
+#   outputTokens: 5,
+#   elapsedMs: 0
+# }
+# [guided-interview] model usage {
+#   operation: 'guided-interview-decision',
+#   model: 'core-fixture-model',
+#   inputTokens: 10,
+#   outputTokens: 5,
+#   elapsedMs: 0
+# }
+# [guided-interview] model usage {
+#   operation: 'guided-interview-review',
+#   model: 'core-fixture-model',
+#   inputTokens: 10,
+#   outputTokens: 5,
+#   elapsedMs: 0
+# }
+# [guided-interview] model usage {
+#   operation: 'guided-interview-decision',
+#   model: 'core-fixture-model',
+#   inputTokens: 10,
+#   outputTokens: 5,
+#   elapsedMs: 0
+# }
+# [guided-interview] model usage {
+#   operation: 'guided-interview-review',
+#   model: 'core-fixture-model',
+#   inputTokens: 10,
+#   outputTokens: 5,
+#   elapsedMs: 0
+# }
+# [guided-interview] model usage {
+#   operation: 'guided-interview-decision',
+#   model: 'core-fixture-model',
+#   inputTokens: 10,
+#   outputTokens: 5,
+#   elapsedMs: 0
+# }
+# [guided-interview] model usage {
+#   operation: 'guided-interview-review',
+#   model: 'core-fixture-model',
+#   inputTokens: 10,
+#   outputTokens: 5,
+#   elapsedMs: 0
+# }
+# [guided-interview] model usage {
+#   operation: 'guided-interview-decision',
+#   model: 'core-fixture-model',
+#   inputTokens: 10,
+#   outputTokens: 5,
+#   elapsedMs: 0
+# }
+# [guided-interview] model usage {
+#   operation: 'guided-interview-review',
+#   model: 'core-fixture-model',
+#   inputTokens: 10,
+#   outputTokens: 5,
+#   elapsedMs: 0
+# }
+# [guided-interview] model usage {
+#   operation: 'guided-interview-decision',
+#   model: 'core-fixture-model',
+#   inputTokens: 10,
+#   outputTokens: 5,
+#   elapsedMs: 0
+# }
+# [guided-interview] model usage {
+#   operation: 'guided-interview-review',
+#   model: 'core-fixture-model',
+#   inputTokens: 10,
+#   outputTokens: 5,
+#   elapsedMs: 0
+# }
+# [guided-interview] model usage {
+#   operation: 'guided-interview-decision',
+#   model: 'core-fixture-model',
+#   inputTokens: 10,
+#   outputTokens: 5,
+#   elapsedMs: 0
+# }
+# [guided-interview] model usage {
+#   operation: 'guided-interview-review',
+#   model: 'core-fixture-model',
+#   inputTokens: 10,
+#   outputTokens: 5,
+#   elapsedMs: 0
+# }
+# [guided-interview] model usage {
+#   operation: 'guided-interview-decision',
+#   model: 'core-fixture-model',
+#   inputTokens: 10,
+#   outputTokens: 5,
+#   elapsedMs: 0
+# }
+# [guided-interview] model usage {
+#   operation: 'guided-interview-review',
+#   model: 'core-fixture-model',
+#   inputTokens: 10,
+#   outputTokens: 5,
+#   elapsedMs: 0
+# }
+# [AUDIT] generate:start {
+#   projectId: '69bd9684-fbc7-4524-b194-65c94a7db9eb',
+#   _cid: 'generate_1dc2693b97c9'
+# }
+# [AUDIT] generate:entry {
+#   projectId: '69bd9684-fbc7-4524-b194-65c94a7db9eb',
+#   forceOverwriteDraft: false,
+#   source: 'unknown',
+#   debugEcho: false,
+#   mode: 'recomposition',
+#   overrides: { answers: 0, followups: 0 },
+#   _cid: 'generate_1dc2693b97c9'
+# }
+# [posting/interview/generate] Interview data: {
+#   _cid: 'generate_1dc2693b97c9',
+#   hasInterview: true,
+#   hasPayload: true,
+#   hasAnswers: true,
+#   answerCount: 11,
+#   interviewKeys: [ 'audio', 'guided', 'answers', 'payload' ],
+#   payloadKeys: [ 'answers', 'followups', 'selectedQuestionIds' ],
+#   force: true
+# }
+# [AUDIT] generate:inputs {
+#   answersLen: 11,
+#   followupsLen: 0,
+#   usingOverrides: { answers: false, followups: false },
+#   _cid: 'generate_1dc2693b97c9'
+# }
+# [AUDIT] generate: using project images as imageOrder fallback { count: 2, _cid: 'generate_1dc2693b97c9' }
+# [ROOM DEBUG] Rooms formatted for generation prompt: {
+#   answerRoomNames: [ 'Reading Room', 'Dining Room' ],
+#   followupRoomNames: [],
+#   imageRooms: [ 'Dining Room', 'Reading Room' ],
+#   _cid: 'generate_1dc2693b97c9'
+# }
+# [ROOM ORGANIZATION] {
+#   projectId: '69bd9684-fbc7-4524-b194-65c94a7db9eb',
+#   rooms: [ 'Dining Room', 'Reading Room' ],
+#   roomDetails: [
+#     {
+#       room: 'Dining Room',
+#       imageCount: 1,
+#       products: 0,
+#       productNames: []
+#     },
+#     {
+#       room: 'Reading Room',
+#       imageCount: 1,
+#       products: 0,
+#       productNames: []
+#     }
+#   ],
+#   totalImages: 2,
+#   totalProducts: 0,
+#   _cid: 'generate_1dc2693b97c9'
+# }
+# [generate] append-only split {
+#   _cid: 'generate_1dc2693b97c9',
+#   mode: 'initial',
+#   frozen: 0,
+#   writeRooms: [ 'Reading Room', 'Dining Room' ],
+#   galleryRooms: []
+# }
+# [generate] llm_ok {
+#   _cid: 'generate_1dc2693b97c9',
+#   attempt: 1,
+#   model: 'claude-sonnet-5',
+#   stopReason: 'end_turn',
+#   outputTokens: 5,
+#   maxTokens: 5500,
+#   adaptiveThinking: false,
+#   effort: null,
+#   cacheRead: undefined,
+#   cacheWrite: undefined
+# }
+# [GENERATE] LLM call complete, proceeding to repair { _cid: 'generate_1dc2693b97c9' }
+# [GENERATE] calling repairAndBuildBlocks { _cid: 'generate_1dc2693b97c9' }
+# [generate] headline departs from house style {
+#   _cid: 'generate_1dc2693b97c9',
+#   kicker: 'Rooms Opening Toward the Garden',
+#   issues: [ 'TITLE_CASE: reads as Title Case; house style is sentence case' ]
+# }
+# [VERIFY] spliceHookQuote: REGEX FALLBACK path
+# [fixSentenceOpeners] entry {
+#   _cid: 'generate_1dc2693b97c9',
+#   totalParagraphs: 4,
+#   matchingThePattern: 0,
+#   flaggedForRewrite: 0
+# }
+# [GENERATED STRUCTURE] {
+#   projectId: '69bd9684-fbc7-4524-b194-65c94a7db9eb',
+#   hasLead: true,
+#   leadKicker: 'Rooms Opening Toward the Garden',
+#   leadDeck: 'An open route connects two rooms with the family garden.',
+#   chapterCount: 2,
+#   chapters: [
+#     {
+#       title: 'Reading Room',
+#       bodyParagraphs: 2,
+#       imageCount: 1,
+#       firstParagraphPreview: 'Afternoon light reaches the garden-facing doorway. A clear route through the roo'
+#     },
+#     {
+#       title: 'Dining Room',
+#       bodyParagraphs: 2,
+#       imageCount: 1,
+#       firstParagraphPreview: 'Afternoon light reaches the garden-facing doorway. A clear route through the roo'
+#     }
+#   ],
+#   pullQuotesCount: 2,
+#   materialsCount: 0,
+#   durationMs: 68,
+#   _cid: 'generate_1dc2693b97c9'
+# }
+# [EDITORIAL_GENERATION_META] {"projectId":"69bd9684-fbc7-4524-b194-65c94a7db9eb","wordCount":167,"sectionCount":2,"pullQuoteCount":2,"roomsCovered":["Reading Room","Dining Room"],"productsInText":[],"productsInTags":[],"unmatchedProducts":[],"accuracyWarnings":[],"interviewAnswerCount":11,"hasFollowUps":false,"hasBrandProfile":false,"hasBio":false,"hasProjectHistory":false,"hasFingerprint":false,"durationMs":68,"_cid":"generate_1dc2693b97c9"}
+# [AUDIT] generate:saved {
+#   projectId: '69bd9684-fbc7-4524-b194-65c94a7db9eb',
+#   mode: 'recomposition',
+#   narrativeCount: 2,
+#   chapterBodyLen: 2,
+#   lead: true,
+#   pullQuotes: 2,
+#   _cid: 'generate_1dc2693b97c9'
+# }
+# [AUDIT] finally: unlock {
+#   projectId: '69bd9684-fbc7-4524-b194-65c94a7db9eb',
+#   ok: true,
+#   _cid: 'generate_1dc2693b97c9'
+# }
+    # Subtest: 6 guided interview with correction, canonical evidence and private editable draft
+    ok 6 - 6 guided interview with correction, canonical evidence and private editable draft
+      ---
+      duration_ms: 1994.8684
+      type: 'test'
+      ...
+    1..6
+ok 7 - DATABASE JOURNEYS — all six journeys against disposable Prisma transaction
+  ---
+  duration_ms: 3748.8051
+  type: 'test'
+  ...
+# Subtest: database execution is absent by default and requires explicit disposable acknowledgement
+ok 8 - database execution is absent by default and requires explicit disposable acknowledgement
+  ---
+  duration_ms: 1.1399
+  type: 'test'
+  ...
+# Subtest: database gate refuses application identities, schema bypasses and non-test databases
+ok 9 - database gate refuses application identities, schema bypasses and non-test databases
+  ---
+  duration_ms: 0.8515
+  type: 'test'
+  ...
+# Subtest: local double compares JSON snapshots structurally and recognizes SQL null in CAS filters
+ok 10 - local double compares JSON snapshots structurally and recognizes SQL null in CAS filters
+  ---
+  duration_ms: 4.4596
+  type: 'test'
+  ...
+1..10
+# tests 37
+# suites 0
+# pass 37
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 8687.0045

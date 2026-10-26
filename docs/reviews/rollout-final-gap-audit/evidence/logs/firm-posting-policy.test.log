@@ -1,0 +1,47 @@
+TAP version 13
+# DEBUG: NextAuth Environment Check
+# NEXTAUTH_SECRET exists: true
+# NEXTAUTH_SECRET length: 35
+# NEXTAUTH_URL: http://folio.test
+# Current working directory: C:\\Users\\bpras\\.codex\\worktrees\\rollout-hardening\\folio-mvp
+# Environment variables loaded: [ 'NEXTAUTH_SECRET', 'NEXTAUTH_URL' ]
+# Subtest: member posting policy never grants leadership or viewer access
+ok 1 - member posting policy never grants leadership or viewer access
+  ---
+  duration_ms: 0.804
+  type: 'test'
+  ...
+# Subtest: publish gate scopes active membership and policy to the backing firm
+ok 2 - publish gate scopes active membership and policy to the backing firm
+  ---
+  duration_ms: 1.0418
+  type: 'test'
+  ...
+# Subtest: a personal project owner cannot publish without a firm but can withdraw work
+ok 3 - a personal project owner cannot publish without a firm but can withdraw work
+  ---
+  duration_ms: 0.6905
+  type: 'test'
+  ...
+# Subtest: an opted-out member can withdraw existing firm work
+ok 4 - an opted-out member can withdraw existing firm work
+  ---
+  duration_ms: 0.287
+  type: 'test'
+  ...
+# Subtest: transaction-backed posting rejects browsing accounts and firm opt-outs
+ok 5 - transaction-backed posting rejects browsing accounts and firm opt-outs
+  ---
+  duration_ms: 0.316
+  type: 'test'
+  ...
+1..5
+# tests 5
+# suites 0
+# pass 5
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 1097.2565
+

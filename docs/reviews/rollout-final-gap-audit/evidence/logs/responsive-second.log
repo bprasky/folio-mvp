@@ -1,0 +1,17 @@
+PASS Dialog traps focus, preserves native space typing, scrolls to the action and restores focus
+PASS Photo viewer fits a short viewport, exposes captions, navigates and restores focus
+PASS Import dialog keeps its footer reachable while the body scrolls in a short viewport
+PASS Portrait preview preserves image proportions and pin coordinates across resizing
+PASS Touch pin placement and dragging save normalized coordinates; keyboard adjustment is available
+PASS Room actions are visible without hover and assigned photos have keyboard/tap room controls
+PASS Product editor failure offers retry and success exposes a reachable Save action
+PASS Studio tabs respond to keyboard; its pitch dialog closes and returns focus
+PASS Reduced-motion preference removes CSS animation and transition motion
+PASS Public product drawer scrolls, traps focus and restores focus at every viewport
+PASS Public profile loading, empty and error states are distinct
+{
+  "phase": "after",
+  "captures": 115,
+  "overflow": [],
+  "errors": []
+}

@@ -1,0 +1,27 @@
+PASS actual Create+ is a short upload form with no live call or microphone request
+PASS upload creates one project and opens room sorting directly without a host or completion page
+PASS tagging stays host-free and Story alone starts one interviewer with no extra launcher
+PASS leaving Story ends the call; Photos, Rooms, Tags and Publish stay host-free; returning starts one call
+PASS lost guide transition retries its receipt and speaks first canonical question exactly once
+PASS browsing does not link a photo; explicit Discuss does
+PASS a spoken upload request exits Story, ends its call, and returns to Photos
+PASS URL intake imports selected photos without a call and Story returns to the saved conversation
+PASS no-op refreshed metadata does not replay speech and unsent typed draft blocks refresh
+PASS completed-project offered detail is editable and saves only after explicit confirmation
+PASS host restart opens one in-place confirmation on Story and cancellation retains answers
+PASS saved-answer refresh cannot unmount a pending confirmation or expose a second one
+PASS one confirmation clears once, waits for acknowledgement and starts one fresh host without restoring the old call
+PASS lost acknowledgement stays in one dialog and retry reuses the exact committed reset
+PASS failed reset preserves saved and local answers; rapid confirmation submits once and delayed success preserves a new-session draft
+PASS a rejected stale reset can be retried with a fresh snapshot instead of looping on the rejected receipt
+PASS focused Story has one project heading, nearby restart and disclosed answer tools; fallback restores the full workspace
+PASS partial intake upload retains failed files and expertise return context until deliberate continuation
+PASS short Create+ is independent of live availability and the full form remains an explicit option
+PASS completed-only creation requires a completion year before creating or uploading a project
+PASS completed-only shared creation has no stage selector and uploads a completed archive
+PASS completed-only full form Create submits a completed archive without stage choices
+PASS completed-only full form Save draft retains the PAST timeline on create and update
+PASS completed-only Unified fallback sends canonical title and factual fields without stage choices
+PASS completed archive list sorts by real completion dates and preserves truthful date labels
+PASS project home and non-owner presentation do not create guide calls
+PASS 26 composed guide browser checks.

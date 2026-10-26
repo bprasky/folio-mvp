@@ -1,0 +1,15 @@
+PASS normalization preserves actual month/year and permits year-only archives
+PASS existing canonical and legacy callers may omit dates; legacy dates are retained
+PASS invalid or future completion values cannot pass canonical or legacy normalization
+PASS POST persists completion facts and preserves owner/firm/private project data
+PASS POST keeps an unknown month null and supports undated legacy projects
+PASS POST rejects bad dates, anonymous users and invalid firm permissions before writing
+PASS PUT validates partial completion changes against saved values and writes the pair
+PASS PUT rejects orphan months and future combinations formed by a partial change
+PASS PUT explicitly clears both completion fields and leaves dates alone for unrelated edits
+PASS PUT refuses another user before reading completion values or writing
+PASS designer project listing returns stored date precision for sorting
+PASS completion sorting orders actual years and months newest first, with unknown precision last
+PASS completion labels preserve year-only precision and never invent a date for undated projects
+PASS intake validation requires a valid year, permits unknown months and rejects future completion
+Project completion date: 14 checks passed.

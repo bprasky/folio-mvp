@@ -1,0 +1,45 @@
+
+> folio-mvp@0.2.0 test:project-guide
+> node scripts/check-project-guide-planner.cjs && node scripts/check-project-guide-adapter.cjs && node scripts/check-project-guide-upload.cjs
+
+Project guide planner: five deterministic greetings, allowed-action and structured-output boundaries, provider failure, count bounds, and canonical tone pass.
+PASS author-only context counts saved included photographs and distinguishes tags from product-free review
+PASS pre-project guide is actor-bound and checks actual firm create eligibility
+PASS welcome and housekeeping replies do not prepare or save canonical interview evidence
+PASS explicit natural start prepares podcast canonical state but never saves setup speech as an answer
+PASS interview answer dispatch preserves exact evidence, modality, question and selected photograph
+PASS saved upload/tag changes refresh active interview metadata without changing its question or canonical version
+PASS return to guide and restart request preserve canonical answers and only request UI confirmation
+PASS fresh-call resume recovers a canonical commit after its live snapshot write is lost
+PASS common adapter replays a committed guide skip before validating the now-changed question
+PASS completed interview can append a real canonical detail without replacing earlier evidence
+PASS a completed-guide anecdote is offered verbatim for confirmation without becoming evidence until accepted
+PASS a fabricated model detail cannot be offered as designer text
+PASS legacy-only answers remain untouched and resume hands off to their existing workspace
+PASS an empty prepared plan is a new interview rather than saved-answer progress
+PASS existing-project guide recording reuses project media permissions and private publication boundary
+PASS workspace steps retain guide history and canonical progress; unchanged refresh does not repeat a greeting
+16 project guide adapter checks passed; provider/model/database boundaries are synthetic.
+[POST /api/projects/[id]/images] Error: Error: Injected storage failure
+    at saveBufferToProjectStorage (C:\Users\bpras\.codex\worktrees\rollout-hardening\folio-mvp\scripts\check-project-guide-upload.cjs:36:62)
+    at Object.POST (evalmachine.<anonymous>:71:71)
+    at async C:\Users\bpras\.codex\worktrees\rollout-hardening\folio-mvp\scripts\check-project-guide-upload.cjs:51:37
+[POST /api/projects/[id]/images] Error: Error: Injected database failure
+    at Object.create (C:\Users\bpras\.codex\worktrees\rollout-hardening\folio-mvp\scripts\check-project-guide-upload.cjs:29:49)
+    at Object.POST (evalmachine.<anonymous>:77:58)
+    at async C:\Users\bpras\.codex\worktrees\rollout-hardening\folio-mvp\scripts\check-project-guide-upload.cjs:52:35
+[POST /api/projects/[id]/images] Failed to index moment 193a9f09-1bb3-501c-b8c7-5f7832eee779: Error: Injected indexing failure
+    at indexMoment (C:\Users\bpras\.codex\worktrees\rollout-hardening\folio-mvp\scripts\check-project-guide-upload.cjs:39:66)
+    at Object.POST (evalmachine.<anonymous>:102:39)
+    at async Promise.all (index 0)
+    at async C:\Users\bpras\.codex\worktrees\rollout-hardening\folio-mvp\scripts\check-project-guide-upload.cjs:53:21
+[POST /api/projects/[id]/images] Failed to index moment 193a9f09-1bb3-501c-b8c7-5f7832eee779: Error: Injected indexing failure
+    at indexMoment (C:\Users\bpras\.codex\worktrees\rollout-hardening\folio-mvp\scripts\check-project-guide-upload.cjs:39:66)
+    at Object.POST (evalmachine.<anonymous>:102:39)
+    at async Promise.all (index 1)
+    at async C:\Users\bpras\.codex\worktrees\rollout-hardening\folio-mvp\scripts\check-project-guide-upload.cjs:53:21
+[POST /api/projects/[id]/images] Failed to index moment c3af9136-d73e-5666-ab86-2bb1f3fbaa22: Error: Injected indexing failure
+    at indexMoment (C:\Users\bpras\.codex\worktrees\rollout-hardening\folio-mvp\scripts\check-project-guide-upload.cjs:39:66)
+    at Object.POST (evalmachine.<anonymous>:102:39)
+    at async C:\Users\bpras\.codex\worktrees\rollout-hardening\folio-mvp\scripts\check-project-guide-upload.cjs:62:27
+PASS upload interruptions: auth, type/size validation, storage/database failures, concurrent/lost-response retries, project isolation and indexing failure. Simulated services only.

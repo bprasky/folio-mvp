@@ -1,0 +1,2385 @@
+{
+  "boundary": "Chromium emulation with actual components and canonical CSS. Full visual mode requires brand fonts; quick behavioral mode permits system fonts. Synthetic API/auth/image fixtures; no physical-device verification.",
+  "results": [
+    {
+      "name": "signup",
+      "width": 360,
+      "scrollWidth": 360,
+      "overflow": [],
+      "headings": [
+        {
+          "text": "Create your Folio account.",
+          "font": "__Cormorant_Garamond_733947"
+        }
+      ]
+    },
+    {
+      "name": "onboarding",
+      "width": 360,
+      "scrollWidth": 360,
+      "overflow": [],
+      "headings": [
+        {
+          "text": "What is your firm called?",
+          "font": "__Cormorant_Garamond_733947"
+        }
+      ]
+    },
+    {
+      "name": "create",
+      "width": 360,
+      "scrollWidth": 360,
+      "overflow": [],
+      "headings": [
+        {
+          "text": "Add a completed project",
+          "font": "__Cormorant_Garamond_733947"
+        }
+      ]
+    },
+    {
+      "name": "uploads",
+      "width": 360,
+      "scrollWidth": 360,
+      "overflow": [],
+      "headings": [
+        {
+          "text": "The Courtyard Residence — A Home for Three Generations and Their Collected Objects",
+          "font": "__Cormorant_Garamond_733947"
+        }
+      ]
+    },
+    {
+      "name": "rooms",
+      "width": 360,
+      "scrollWidth": 360,
+      "overflow": [],
+      "headings": []
+    },
+    {
+      "name": "tagging",
+      "width": 360,
+      "scrollWidth": 360,
+      "overflow": [],
+      "headings": []
+    },
+    {
+      "name": "studio",
+      "width": 360,
+      "scrollWidth": 360,
+      "overflow": [],
+      "headings": [
+        {
+          "text": "Your next publication.",
+          "font": "__Cormorant_Garamond_733947"
+        }
+      ]
+    },
+    {
+      "name": "project",
+      "width": 360,
+      "scrollWidth": 360,
+      "overflow": [],
+      "headings": [
+        {
+          "text": "The Courtyard Residence — A Home for Three Generations and Their Collected Objects",
+          "font": "__Cormorant_Garamond_733947"
+        }
+      ]
+    },
+    {
+      "name": "profile",
+      "width": 360,
+      "scrollWidth": 360,
+      "overflow": [],
+      "headings": [
+        {
+          "text": "The Courtyard Residence — A Home for Three Generations and Their Collected Objects",
+          "font": "__Cormorant_Garamond_733947"
+        }
+      ]
+    },
+    {
+      "name": "personal-profile",
+      "width": 360,
+      "scrollWidth": 360,
+      "overflow": [],
+      "headings": [
+        {
+          "text": "The Courtyard Residence — A Home for Three Generations and Their Collected Objects",
+          "font": "__Cormorant_Garamond_733947"
+        }
+      ]
+    },
+    {
+      "name": "profile-feed",
+      "width": 360,
+      "scrollWidth": 360,
+      "overflow": [],
+      "headings": []
+    },
+    {
+      "name": "public-sheet",
+      "width": 360,
+      "scrollWidth": 360,
+      "overflow": [],
+      "headings": []
+    },
+    {
+      "name": "dialog",
+      "width": 360,
+      "scrollWidth": 360,
+      "overflow": [],
+      "headings": []
+    },
+    {
+      "name": "lightbox",
+      "width": 360,
+      "scrollWidth": 360,
+      "overflow": [],
+      "headings": []
+    },
+    {
+      "name": "signup",
+      "width": 390,
+      "scrollWidth": 390,
+      "overflow": [],
+      "headings": [
+        {
+          "text": "Create your Folio account.",
+          "font": "__Cormorant_Garamond_733947"
+        }
+      ]
+    },
+    {
+      "name": "onboarding",
+      "width": 390,
+      "scrollWidth": 390,
+      "overflow": [],
+      "headings": [
+        {
+          "text": "What is your firm called?",
+          "font": "__Cormorant_Garamond_733947"
+        }
+      ]
+    },
+    {
+      "name": "create",
+      "width": 390,
+      "scrollWidth": 390,
+      "overflow": [],
+      "headings": [
+        {
+          "text": "Add a completed project",
+          "font": "__Cormorant_Garamond_733947"
+        }
+      ]
+    },
+    {
+      "name": "uploads",
+      "width": 390,
+      "scrollWidth": 390,
+      "overflow": [],
+      "headings": [
+        {
+          "text": "The Courtyard Residence — A Home for Three Generations and Their Collected Objects",
+          "font": "__Cormorant_Garamond_733947"
+        }
+      ]
+    },
+    {
+      "name": "rooms",
+      "width": 390,
+      "scrollWidth": 390,
+      "overflow": [],
+      "headings": []
+    },
+    {
+      "name": "tagging",
+      "width": 390,
+      "scrollWidth": 390,
+      "overflow": [],
+      "headings": []
+    },
+    {
+      "name": "studio",
+      "width": 390,
+      "scrollWidth": 390,
+      "overflow": [],
+      "headings": [
+        {
+          "text": "Your next publication.",
+          "font": "__Cormorant_Garamond_733947"
+        }
+      ]
+    },
+    {
+      "name": "project",
+      "width": 390,
+      "scrollWidth": 390,
+      "overflow": [],
+      "headings": [
+        {
+          "text": "The Courtyard Residence — A Home for Three Generations and Their Collected Objects",
+          "font": "__Cormorant_Garamond_733947"
+        }
+      ]
+    },
+    {
+      "name": "profile",
+      "width": 390,
+      "scrollWidth": 390,
+      "overflow": [],
+      "headings": [
+        {
+          "text": "The Courtyard Residence — A Home for Three Generations and Their Collected Objects",
+          "font": "__Cormorant_Garamond_733947"
+        }
+      ]
+    },
+    {
+      "name": "personal-profile",
+      "width": 390,
+      "scrollWidth": 390,
+      "overflow": [],
+      "headings": [
+        {
+          "text": "The Courtyard Residence — A Home for Three Generations and Their Collected Objects",
+          "font": "__Cormorant_Garamond_733947"
+        }
+      ]
+    },
+    {
+      "name": "profile-feed",
+      "width": 390,
+      "scrollWidth": 390,
+      "overflow": [],
+      "headings": []
+    },
+    {
+      "name": "public-sheet",
+      "width": 390,
+      "scrollWidth": 390,
+      "overflow": [],
+      "headings": []
+    },
+    {
+      "name": "dialog",
+      "width": 390,
+      "scrollWidth": 390,
+      "overflow": [],
+      "headings": []
+    },
+    {
+      "name": "lightbox",
+      "width": 390,
+      "scrollWidth": 390,
+      "overflow": [],
+      "headings": []
+    },
+    {
+      "name": "signup",
+      "width": 768,
+      "scrollWidth": 768,
+      "overflow": [],
+      "headings": [
+        {
+          "text": "Create your Folio account.",
+          "font": "__Cormorant_Garamond_733947"
+        }
+      ]
+    },
+    {
+      "name": "onboarding",
+      "width": 768,
+      "scrollWidth": 768,
+      "overflow": [],
+      "headings": [
+        {
+          "text": "What is your firm called?",
+          "font": "__Cormorant_Garamond_733947"
+        }
+      ]
+    },
+    {
+      "name": "create",
+      "width": 768,
+      "scrollWidth": 768,
+      "overflow": [],
+      "headings": [
+        {
+          "text": "Add a completed project",
+          "font": "__Cormorant_Garamond_733947"
+        }
+      ]
+    },
+    {
+      "name": "uploads",
+      "width": 768,
+      "scrollWidth": 768,
+      "overflow": [],
+      "headings": [
+        {
+          "text": "The Courtyard Residence — A Home for Three Generations and Their Collected Objects",
+          "font": "__Cormorant_Garamond_733947"
+        }
+      ]
+    },
+    {
+      "name": "rooms",
+      "width": 768,
+      "scrollWidth": 768,
+      "overflow": [],
+      "headings": []
+    },
+    {
+      "name": "tagging",
+      "width": 768,
+      "scrollWidth": 768,
+      "overflow": [],
+      "headings": []
+    },
+    {
+      "name": "studio",
+      "width": 768,
+      "scrollWidth": 768,
+      "overflow": [],
+      "headings": [
+        {
+          "text": "Your next publication.",
+          "font": "__Cormorant_Garamond_733947"
+        }
+      ]
+    },
+    {
+      "name": "project",
+      "width": 768,
+      "scrollWidth": 768,
+      "overflow": [],
+      "headings": [
+        {
+          "text": "The Courtyard Residence — A Home for Three Generations and Their Collected Objects",
+          "font": "__Cormorant_Garamond_733947"
+        }
+      ]
+    },
+    {
+      "name": "profile",
+      "width": 768,
+      "scrollWidth": 768,
+      "overflow": [],
+      "headings": [
+        {
+          "text": "The Courtyard Residence — A Home for Three Generations and Their Collected Objects",
+          "font": "__Cormorant_Garamond_733947"
+        }
+      ]
+    },
+    {
+      "name": "personal-profile",
+      "width": 768,
+      "scrollWidth": 768,
+      "overflow": [],
+      "headings": [
+        {
+          "text": "The Courtyard Residence — A Home for Three Generations and Their Collected Objects",
+          "font": "__Cormorant_Garamond_733947"
+        }
+      ]
+    },
+    {
+      "name": "profile-feed",
+      "width": 768,
+      "scrollWidth": 768,
+      "overflow": [],
+      "headings": []
+    },
+    {
+      "name": "public-sheet",
+      "width": 768,
+      "scrollWidth": 768,
+      "overflow": [],
+      "headings": []
+    },
+    {
+      "name": "dialog",
+      "width": 768,
+      "scrollWidth": 768,
+      "overflow": [],
+      "headings": []
+    },
+    {
+      "name": "lightbox",
+      "width": 768,
+      "scrollWidth": 768,
+      "overflow": [],
+      "headings": []
+    },
+    {
+      "name": "signup",
+      "width": 1440,
+      "scrollWidth": 1440,
+      "overflow": [],
+      "headings": [
+        {
+          "text": "Create your Folio account.",
+          "font": "__Cormorant_Garamond_733947"
+        }
+      ]
+    },
+    {
+      "name": "onboarding",
+      "width": 1440,
+      "scrollWidth": 1440,
+      "overflow": [],
+      "headings": [
+        {
+          "text": "What is your firm called?",
+          "font": "__Cormorant_Garamond_733947"
+        }
+      ]
+    },
+    {
+      "name": "create",
+      "width": 1440,
+      "scrollWidth": 1440,
+      "overflow": [],
+      "headings": [
+        {
+          "text": "Add a completed project",
+          "font": "__Cormorant_Garamond_733947"
+        }
+      ]
+    },
+    {
+      "name": "uploads",
+      "width": 1440,
+      "scrollWidth": 1440,
+      "overflow": [],
+      "headings": [
+        {
+          "text": "The Courtyard Residence — A Home for Three Generations and Their Collected Objects",
+          "font": "__Cormorant_Garamond_733947"
+        }
+      ]
+    },
+    {
+      "name": "rooms",
+      "width": 1440,
+      "scrollWidth": 1440,
+      "overflow": [],
+      "headings": []
+    },
+    {
+      "name": "tagging",
+      "width": 1440,
+      "scrollWidth": 1440,
+      "overflow": [],
+      "headings": []
+    },
+    {
+      "name": "studio",
+      "width": 1440,
+      "scrollWidth": 1440,
+      "overflow": [],
+      "headings": [
+        {
+          "text": "Your next publication.",
+          "font": "__Cormorant_Garamond_733947"
+        }
+      ]
+    },
+    {
+      "name": "project",
+      "width": 1440,
+      "scrollWidth": 1440,
+      "overflow": [],
+      "headings": [
+        {
+          "text": "The Courtyard Residence — A Home for Three Generations and Their Collected Objects",
+          "font": "__Cormorant_Garamond_733947"
+        }
+      ]
+    },
+    {
+      "name": "profile",
+      "width": 1440,
+      "scrollWidth": 1440,
+      "overflow": [],
+      "headings": [
+        {
+          "text": "The Courtyard Residence — A Home for Three Generations and Their Collected Objects",
+          "font": "__Cormorant_Garamond_733947"
+        }
+      ]
+    },
+    {
+      "name": "personal-profile",
+      "width": 1440,
+      "scrollWidth": 1440,
+      "overflow": [],
+      "headings": [
+        {
+          "text": "The Courtyard Residence — A Home for Three Generations and Their Collected Objects",
+          "font": "__Cormorant_Garamond_733947"
+        }
+      ]
+    },
+    {
+      "name": "profile-feed",
+      "width": 1440,
+      "scrollWidth": 1440,
+      "overflow": [],
+      "headings": []
+    },
+    {
+      "name": "public-sheet",
+      "width": 1440,
+      "scrollWidth": 1440,
+      "overflow": [],
+      "headings": []
+    },
+    {
+      "name": "dialog",
+      "width": 1440,
+      "scrollWidth": 1440,
+      "overflow": [],
+      "headings": []
+    },
+    {
+      "name": "lightbox",
+      "width": 1440,
+      "scrollWidth": 1440,
+      "overflow": [],
+      "headings": []
+    },
+    {
+      "name": "rooms-empty",
+      "width": 360,
+      "scrollWidth": 360,
+      "overflow": [],
+      "headings": []
+    },
+    {
+      "name": "rooms-many",
+      "width": 360,
+      "scrollWidth": 360,
+      "overflow": [],
+      "headings": []
+    },
+    {
+      "name": "tagging-empty",
+      "width": 360,
+      "scrollWidth": 360,
+      "overflow": [],
+      "headings": []
+    },
+    {
+      "name": "studio-loading",
+      "width": 360,
+      "scrollWidth": 360,
+      "overflow": [],
+      "headings": [
+        {
+          "text": "Publishing Studio",
+          "font": "__Cormorant_Garamond_733947"
+        }
+      ]
+    },
+    {
+      "name": "studio-empty",
+      "width": 360,
+      "scrollWidth": 360,
+      "overflow": [],
+      "headings": [
+        {
+          "text": "Your next publication.",
+          "font": "__Cormorant_Garamond_733947"
+        }
+      ]
+    },
+    {
+      "name": "studio-error",
+      "width": 360,
+      "scrollWidth": 360,
+      "overflow": [],
+      "headings": [
+        {
+          "text": "Publishing Studio",
+          "font": "__Cormorant_Garamond_733947"
+        }
+      ]
+    },
+    {
+      "name": "tagging-active",
+      "width": 390,
+      "scrollWidth": 390,
+      "overflow": [],
+      "headings": []
+    },
+    {
+      "name": "tagging-picker",
+      "width": 390,
+      "scrollWidth": 390,
+      "overflow": [],
+      "headings": []
+    },
+    {
+      "name": "dialog-short",
+      "width": 390,
+      "scrollWidth": 390,
+      "overflow": [],
+      "headings": []
+    },
+    {
+      "name": "dialog-short-action",
+      "width": 390,
+      "scrollWidth": 390,
+      "overflow": [],
+      "headings": []
+    },
+    {
+      "interaction": "Dialog traps focus, preserves native space typing, scrolls to the action and restores focus",
+      "passed": true
+    },
+    {
+      "name": "lightbox-short-caption",
+      "width": 390,
+      "scrollWidth": 390,
+      "overflow": [],
+      "headings": []
+    },
+    {
+      "interaction": "Photo viewer fits a short viewport, exposes captions, navigates and restores focus",
+      "passed": true
+    },
+    {
+      "name": "import-dialog-short",
+      "width": 390,
+      "scrollWidth": 390,
+      "overflow": [],
+      "headings": []
+    },
+    {
+      "interaction": "Import dialog keeps its footer reachable while the body scrolls in a short viewport",
+      "passed": true
+    },
+    {
+      "interaction": "Portrait preview preserves image proportions and pin coordinates across resizing",
+      "passed": true
+    },
+    {
+      "name": "tagging-touch-picker",
+      "width": 390,
+      "scrollWidth": 390,
+      "overflow": [],
+      "headings": []
+    },
+    {
+      "name": "tagging-link",
+      "width": 390,
+      "scrollWidth": 390,
+      "overflow": [],
+      "headings": []
+    },
+    {
+      "interaction": "Touch pin placement and dragging save normalized coordinates; keyboard adjustment is available",
+      "passed": true
+    },
+    {
+      "interaction": "Room actions are visible without hover and assigned photos have keyboard/tap room controls",
+      "passed": true
+    },
+    {
+      "name": "product-editor-error",
+      "width": 390,
+      "scrollWidth": 390,
+      "overflow": [],
+      "headings": []
+    },
+    {
+      "interaction": "Product editor failure offers retry and success exposes a reachable Save action",
+      "passed": true
+    },
+    {
+      "name": "studio-pitch",
+      "width": 360,
+      "scrollWidth": 360,
+      "overflow": [],
+      "headings": [
+        {
+          "text": "Your next publication.",
+          "font": "__Cormorant_Garamond_733947"
+        }
+      ]
+    },
+    {
+      "interaction": "Studio tabs respond to keyboard; its pitch dialog closes and returns focus",
+      "passed": true
+    },
+    {
+      "interaction": "Reduced-motion preference removes CSS animation and transition motion",
+      "passed": true
+    },
+    {
+      "name": "public-sheet-scroll",
+      "width": 360,
+      "scrollWidth": 360,
+      "overflow": [],
+      "headings": []
+    },
+    {
+      "name": "public-sheet-scroll",
+      "width": 390,
+      "scrollWidth": 390,
+      "overflow": [],
+      "headings": []
+    },
+    {
+      "name": "public-sheet-scroll",
+      "width": 768,
+      "scrollWidth": 768,
+      "overflow": [],
+      "headings": []
+    },
+    {
+      "name": "public-sheet-scroll",
+      "width": 1440,
+      "scrollWidth": 1440,
+      "overflow": [],
+      "headings": []
+    },
+    {
+      "interaction": "Public product drawer scrolls, traps focus and restores focus at every viewport",
+      "passed": true
+    },
+    {
+      "name": "profile-feed-loading",
+      "width": 360,
+      "scrollWidth": 360,
+      "overflow": [],
+      "headings": []
+    },
+    {
+      "name": "profile-feed-empty",
+      "width": 360,
+      "scrollWidth": 360,
+      "overflow": [],
+      "headings": []
+    },
+    {
+      "name": "profile-feed-error",
+      "width": 360,
+      "scrollWidth": 360,
+      "overflow": [],
+      "headings": []
+    },
+    {
+      "interaction": "Public profile loading, empty and error states are distinct",
+      "passed": true
+    },
+    {
+      "name": "rooms",
+      "width": 639,
+      "scrollWidth": 639,
+      "overflow": [],
+      "headings": []
+    },
+    {
+      "name": "tagging",
+      "width": 639,
+      "scrollWidth": 639,
+      "overflow": [],
+      "headings": []
+    },
+    {
+      "name": "project",
+      "width": 639,
+      "scrollWidth": 639,
+      "overflow": [],
+      "headings": [
+        {
+          "text": "The Courtyard Residence — A Home for Three Generations and Their Collected Objects",
+          "font": "__Cormorant_Garamond_733947"
+        }
+      ]
+    },
+    {
+      "name": "profile",
+      "width": 639,
+      "scrollWidth": 639,
+      "overflow": [],
+      "headings": [
+        {
+          "text": "The Courtyard Residence — A Home for Three Generations and Their Collected Objects",
+          "font": "__Cormorant_Garamond_733947"
+        }
+      ]
+    },
+    {
+      "name": "studio",
+      "width": 639,
+      "scrollWidth": 639,
+      "overflow": [],
+      "headings": [
+        {
+          "text": "Your next publication.",
+          "font": "__Cormorant_Garamond_733947"
+        }
+      ]
+    },
+    {
+      "name": "rooms",
+      "width": 640,
+      "scrollWidth": 640,
+      "overflow": [],
+      "headings": []
+    },
+    {
+      "name": "tagging",
+      "width": 640,
+      "scrollWidth": 640,
+      "overflow": [],
+      "headings": []
+    },
+    {
+      "name": "project",
+      "width": 640,
+      "scrollWidth": 640,
+      "overflow": [],
+      "headings": [
+        {
+          "text": "The Courtyard Residence — A Home for Three Generations and Their Collected Objects",
+          "font": "__Cormorant_Garamond_733947"
+        }
+      ]
+    },
+    {
+      "name": "profile",
+      "width": 640,
+      "scrollWidth": 640,
+      "overflow": [],
+      "headings": [
+        {
+          "text": "The Courtyard Residence — A Home for Three Generations and Their Collected Objects",
+          "font": "__Cormorant_Garamond_733947"
+        }
+      ]
+    },
+    {
+      "name": "studio",
+      "width": 640,
+      "scrollWidth": 640,
+      "overflow": [],
+      "headings": [
+        {
+          "text": "Your next publication.",
+          "font": "__Cormorant_Garamond_733947"
+        }
+      ]
+    },
+    {
+      "name": "rooms",
+      "width": 767,
+      "scrollWidth": 767,
+      "overflow": [],
+      "headings": []
+    },
+    {
+      "name": "tagging",
+      "width": 767,
+      "scrollWidth": 767,
+      "overflow": [],
+      "headings": []
+    },
+    {
+      "name": "project",
+      "width": 767,
+      "scrollWidth": 767,
+      "overflow": [],
+      "headings": [
+        {
+          "text": "The Courtyard Residence — A Home for Three Generations and Their Collected Objects",
+          "font": "__Cormorant_Garamond_733947"
+        }
+      ]
+    },
+    {
+      "name": "profile",
+      "width": 767,
+      "scrollWidth": 767,
+      "overflow": [],
+      "headings": [
+        {
+          "text": "The Courtyard Residence — A Home for Three Generations and Their Collected Objects",
+          "font": "__Cormorant_Garamond_733947"
+        }
+      ]
+    },
+    {
+      "name": "studio",
+      "width": 767,
+      "scrollWidth": 767,
+      "overflow": [],
+      "headings": [
+        {
+          "text": "Your next publication.",
+          "font": "__Cormorant_Garamond_733947"
+        }
+      ]
+    },
+    {
+      "name": "rooms",
+      "width": 1023,
+      "scrollWidth": 1023,
+      "overflow": [],
+      "headings": []
+    },
+    {
+      "name": "tagging",
+      "width": 1023,
+      "scrollWidth": 1023,
+      "overflow": [],
+      "headings": []
+    },
+    {
+      "name": "project",
+      "width": 1023,
+      "scrollWidth": 1023,
+      "overflow": [],
+      "headings": [
+        {
+          "text": "The Courtyard Residence — A Home for Three Generations and Their Collected Objects",
+          "font": "__Cormorant_Garamond_733947"
+        }
+      ]
+    },
+    {
+      "name": "profile",
+      "width": 1023,
+      "scrollWidth": 1023,
+      "overflow": [],
+      "headings": [
+        {
+          "text": "The Courtyard Residence — A Home for Three Generations and Their Collected Objects",
+          "font": "__Cormorant_Garamond_733947"
+        }
+      ]
+    },
+    {
+      "name": "studio",
+      "width": 1023,
+      "scrollWidth": 1023,
+      "overflow": [],
+      "headings": [
+        {
+          "text": "Your next publication.",
+          "font": "__Cormorant_Garamond_733947"
+        }
+      ]
+    },
+    {
+      "name": "rooms",
+      "width": 1024,
+      "scrollWidth": 1024,
+      "overflow": [],
+      "headings": []
+    },
+    {
+      "name": "tagging",
+      "width": 1024,
+      "scrollWidth": 1024,
+      "overflow": [],
+      "headings": []
+    },
+    {
+      "name": "project",
+      "width": 1024,
+      "scrollWidth": 1024,
+      "overflow": [],
+      "headings": [
+        {
+          "text": "The Courtyard Residence — A Home for Three Generations and Their Collected Objects",
+          "font": "__Cormorant_Garamond_733947"
+        }
+      ]
+    },
+    {
+      "name": "profile",
+      "width": 1024,
+      "scrollWidth": 1024,
+      "overflow": [],
+      "headings": [
+        {
+          "text": "The Courtyard Residence — A Home for Three Generations and Their Collected Objects",
+          "font": "__Cormorant_Garamond_733947"
+        }
+      ]
+    },
+    {
+      "name": "studio",
+      "width": 1024,
+      "scrollWidth": 1024,
+      "overflow": [],
+      "headings": [
+        {
+          "text": "Your next publication.",
+          "font": "__Cormorant_Garamond_733947"
+        }
+      ]
+    }
+  ],
+  "errors": [],
+  "requests": [
+    {
+      "path": "/api/notifications",
+      "method": "GET",
+      "body": ""
+    },
+    {
+      "path": "/api/messages/unread-count",
+      "method": "GET",
+      "body": ""
+    },
+    {
+      "path": "/api/notifications",
+      "method": "GET",
+      "body": ""
+    },
+    {
+      "path": "/api/messages/unread-count",
+      "method": "GET",
+      "body": ""
+    },
+    {
+      "path": "/api/notifications",
+      "method": "GET",
+      "body": ""
+    },
+    {
+      "path": "/api/messages/unread-count",
+      "method": "GET",
+      "body": ""
+    },
+    {
+      "path": "/api/notifications",
+      "method": "GET",
+      "body": ""
+    },
+    {
+      "path": "/api/messages/unread-count",
+      "method": "GET",
+      "body": ""
+    },
+    {
+      "path": "/api/notifications",
+      "method": "GET",
+      "body": ""
+    },
+    {
+      "path": "/api/messages/unread-count",
+      "method": "GET",
+      "body": ""
+    },
+    {
+      "path": "/api/projects/project/pending-spec-tags",
+      "method": "GET",
+      "body": ""
+    },
+    {
+      "path": "/api/notifications",
+      "method": "GET",
+      "body": ""
+    },
+    {
+      "path": "/api/messages/unread-count",
+      "method": "GET",
+      "body": ""
+    },
+    {
+      "path": "/api/publishing-studio",
+      "method": "GET",
+      "body": ""
+    },
+    {
+      "path": "/api/publishing-studio/stories",
+      "method": "GET",
+      "body": ""
+    },
+    {
+      "path": "/api/publishing-studio/releases",
+      "method": "GET",
+      "body": ""
+    },
+    {
+      "path": "/api/notifications",
+      "method": "GET",
+      "body": ""
+    },
+    {
+      "path": "/api/messages/unread-count",
+      "method": "GET",
+      "body": ""
+    },
+    {
+      "path": "/api/notifications",
+      "method": "GET",
+      "body": ""
+    },
+    {
+      "path": "/api/messages/unread-count",
+      "method": "GET",
+      "body": ""
+    },
+    {
+      "path": "/api/notifications",
+      "method": "GET",
+      "body": ""
+    },
+    {
+      "path": "/api/messages/unread-count",
+      "method": "GET",
+      "body": ""
+    },
+    {
+      "path": "/api/notifications",
+      "method": "GET",
+      "body": ""
+    },
+    {
+      "path": "/api/messages/unread-count",
+      "method": "GET",
+      "body": ""
+    },
+    {
+      "path": "/api/org/firm/feed",
+      "method": "GET",
+      "body": ""
+    },
+    {
+      "path": "/api/notifications",
+      "method": "GET",
+      "body": ""
+    },
+    {
+      "path": "/api/messages/unread-count",
+      "method": "GET",
+      "body": ""
+    },
+    {
+      "path": "/api/notifications",
+      "method": "GET",
+      "body": ""
+    },
+    {
+      "path": "/api/messages/unread-count",
+      "method": "GET",
+      "body": ""
+    },
+    {
+      "path": "/api/notifications",
+      "method": "GET",
+      "body": ""
+    },
+    {
+      "path": "/api/messages/unread-count",
+      "method": "GET",
+      "body": ""
+    },
+    {
+      "path": "/api/notifications",
+      "method": "GET",
+      "body": ""
+    },
+    {
+      "path": "/api/messages/unread-count",
+      "method": "GET",
+      "body": ""
+    },
+    {
+      "path": "/api/notifications",
+      "method": "GET",
+      "body": ""
+    },
+    {
+      "path": "/api/messages/unread-count",
+      "method": "GET",
+      "body": ""
+    },
+    {
+      "path": "/api/notifications",
+      "method": "GET",
+      "body": ""
+    },
+    {
+      "path": "/api/messages/unread-count",
+      "method": "GET",
+      "body": ""
+    },
+    {
+      "path": "/api/projects/project/pending-spec-tags",
+      "method": "GET",
+      "body": ""
+    },
+    {
+      "path": "/api/notifications",
+      "method": "GET",
+      "body": ""
+    },
+    {
+      "path": "/api/publishing-studio",
+      "method": "GET",
+      "body": ""
+    },
+    {
+      "path": "/api/messages/unread-count",
+      "method": "GET",
+      "body": ""
+    },
+    {
+      "path": "/api/publishing-studio/stories",
+      "method": "GET",
+      "body": ""
+    },
+    {
+      "path": "/api/publishing-studio/releases",
+      "method": "GET",
+      "body": ""
+    },
+    {
+      "path": "/api/notifications",
+      "method": "GET",
+      "body": ""
+    },
+    {
+      "path": "/api/messages/unread-count",
+      "method": "GET",
+      "body": ""
+    },
+    {
+      "path": "/api/notifications",
+      "method": "GET",
+      "body": ""
+    },
+    {
+      "path": "/api/messages/unread-count",
+      "method": "GET",
+      "body": ""
+    },
+    {
+      "path": "/api/notifications",
+      "method": "GET",
+      "body": ""
+    },
+    {
+      "path": "/api/messages/unread-count",
+      "method": "GET",
+      "body": ""
+    },
+    {
+      "path": "/api/notifications",
+      "method": "GET",
+      "body": ""
+    },
+    {
+      "path": "/api/messages/unread-count",
+      "method": "GET",
+      "body": ""
+    },
+    {
+      "path": "/api/org/firm/feed",
+      "method": "GET",
+      "body": ""
+    },
+    {
+      "path": "/api/notifications",
+      "method": "GET",
+      "body": ""
+    },
+    {
+      "path": "/api/messages/unread-count",
+      "method": "GET",
+      "body": ""
+    },
+    {
+      "path": "/api/notifications",
+      "method": "GET",
+      "body": ""
+    },
+    {
+      "path": "/api/messages/unread-count",
+      "method": "GET",
+      "body": ""
+    },
+    {
+      "path": "/api/notifications",
+      "method": "GET",
+      "body": ""
+    },
+    {
+      "path": "/api/messages/unread-count",
+      "method": "GET",
+      "body": ""
+    },
+    {
+      "path": "/api/notifications",
+      "method": "GET",
+      "body": ""
+    },
+    {
+      "path": "/api/messages/unread-count",
+      "method": "GET",
+      "body": ""
+    },
+    {
+      "path": "/api/notifications",
+      "method": "GET",
+      "body": ""
+    },
+    {
+      "path": "/api/messages/unread-count",
+      "method": "GET",
+      "body": ""
+    },
+    {
+      "path": "/api/messages/unread-count",
+      "method": "GET",
+      "body": ""
+    },
+    {
+      "path": "/api/projects/project/pending-spec-tags",
+      "method": "GET",
+      "body": ""
+    },
+    {
+      "path": "/api/notifications",
+      "method": "GET",
+      "body": ""
+    },
+    {
+      "path": "/api/notifications",
+      "method": "GET",
+      "body": ""
+    },
+    {
+      "path": "/api/messages/unread-count",
+      "method": "GET",
+      "body": ""
+    },
+    {
+      "path": "/api/publishing-studio",
+      "method": "GET",
+      "body": ""
+    },
+    {
+      "path": "/api/publishing-studio/stories",
+      "method": "GET",
+      "body": ""
+    },
+    {
+      "path": "/api/publishing-studio/releases",
+      "method": "GET",
+      "body": ""
+    },
+    {
+      "path": "/api/notifications",
+      "method": "GET",
+      "body": ""
+    },
+    {
+      "path": "/api/messages/unread-count",
+      "method": "GET",
+      "body": ""
+    },
+    {
+      "path": "/api/notifications",
+      "method": "GET",
+      "body": ""
+    },
+    {
+      "path": "/api/messages/unread-count",
+      "method": "GET",
+      "body": ""
+    },
+    {
+      "path": "/api/notifications",
+      "method": "GET",
+      "body": ""
+    },
+    {
+      "path": "/api/messages/unread-count",
+      "method": "GET",
+      "body": ""
+    },
+    {
+      "path": "/api/notifications",
+      "method": "GET",
+      "body": ""
+    },
+    {
+      "path": "/api/messages/unread-count",
+      "method": "GET",
+      "body": ""
+    },
+    {
+      "path": "/api/org/firm/feed",
+      "method": "GET",
+      "body": ""
+    },
+    {
+      "path": "/api/notifications",
+      "method": "GET",
+      "body": ""
+    },
+    {
+      "path": "/api/messages/unread-count",
+      "method": "GET",
+      "body": ""
+    },
+    {
+      "path": "/api/notifications",
+      "method": "GET",
+      "body": ""
+    },
+    {
+      "path": "/api/messages/unread-count",
+      "method": "GET",
+      "body": ""
+    },
+    {
+      "path": "/api/notifications",
+      "method": "GET",
+      "body": ""
+    },
+    {
+      "path": "/api/messages/unread-count",
+      "method": "GET",
+      "body": ""
+    },
+    {
+      "path": "/api/notifications",
+      "method": "GET",
+      "body": ""
+    },
+    {
+      "path": "/api/messages/unread-count",
+      "method": "GET",
+      "body": ""
+    },
+    {
+      "path": "/api/notifications",
+      "method": "GET",
+      "body": ""
+    },
+    {
+      "path": "/api/messages/unread-count",
+      "method": "GET",
+      "body": ""
+    },
+    {
+      "path": "/api/notifications",
+      "method": "GET",
+      "body": ""
+    },
+    {
+      "path": "/api/messages/unread-count",
+      "method": "GET",
+      "body": ""
+    },
+    {
+      "path": "/api/projects/project/pending-spec-tags",
+      "method": "GET",
+      "body": ""
+    },
+    {
+      "path": "/api/notifications",
+      "method": "GET",
+      "body": ""
+    },
+    {
+      "path": "/api/messages/unread-count",
+      "method": "GET",
+      "body": ""
+    },
+    {
+      "path": "/api/publishing-studio",
+      "method": "GET",
+      "body": ""
+    },
+    {
+      "path": "/api/publishing-studio/stories",
+      "method": "GET",
+      "body": ""
+    },
+    {
+      "path": "/api/publishing-studio/releases",
+      "method": "GET",
+      "body": ""
+    },
+    {
+      "path": "/api/notifications",
+      "method": "GET",
+      "body": ""
+    },
+    {
+      "path": "/api/messages/unread-count",
+      "method": "GET",
+      "body": ""
+    },
+    {
+      "path": "/api/notifications",
+      "method": "GET",
+      "body": ""
+    },
+    {
+      "path": "/api/messages/unread-count",
+      "method": "GET",
+      "body": ""
+    },
+    {
+      "path": "/api/notifications",
+      "method": "GET",
+      "body": ""
+    },
+    {
+      "path": "/api/messages/unread-count",
+      "method": "GET",
+      "body": ""
+    },
+    {
+      "path": "/api/notifications",
+      "method": "GET",
+      "body": ""
+    },
+    {
+      "path": "/api/messages/unread-count",
+      "method": "GET",
+      "body": ""
+    },
+    {
+      "path": "/api/org/firm/feed",
+      "method": "GET",
+      "body": ""
+    },
+    {
+      "path": "/api/notifications",
+      "method": "GET",
+      "body": ""
+    },
+    {
+      "path": "/api/messages/unread-count",
+      "method": "GET",
+      "body": ""
+    },
+    {
+      "path": "/api/notifications",
+      "method": "GET",
+      "body": ""
+    },
+    {
+      "path": "/api/messages/unread-count",
+      "method": "GET",
+      "body": ""
+    },
+    {
+      "path": "/api/notifications",
+      "method": "GET",
+      "body": ""
+    },
+    {
+      "path": "/api/messages/unread-count",
+      "method": "GET",
+      "body": ""
+    },
+    {
+      "path": "/api/notifications",
+      "method": "GET",
+      "body": ""
+    },
+    {
+      "path": "/api/messages/unread-count",
+      "method": "GET",
+      "body": ""
+    },
+    {
+      "path": "/api/projects/project/pending-spec-tags",
+      "method": "GET",
+      "body": ""
+    },
+    {
+      "path": "/api/notifications",
+      "method": "GET",
+      "body": ""
+    },
+    {
+      "path": "/api/messages/unread-count",
+      "method": "GET",
+      "body": ""
+    },
+    {
+      "path": "/api/publishing-studio",
+      "method": "GET",
+      "body": ""
+    },
+    {
+      "path": "/api/publishing-studio/stories",
+      "method": "GET",
+      "body": ""
+    },
+    {
+      "path": "/api/publishing-studio/releases",
+      "method": "GET",
+      "body": ""
+    },
+    {
+      "path": "/api/notifications",
+      "method": "GET",
+      "body": ""
+    },
+    {
+      "path": "/api/messages/unread-count",
+      "method": "GET",
+      "body": ""
+    },
+    {
+      "path": "/api/publishing-studio",
+      "method": "GET",
+      "body": ""
+    },
+    {
+      "path": "/api/publishing-studio/stories",
+      "method": "GET",
+      "body": ""
+    },
+    {
+      "path": "/api/publishing-studio/releases",
+      "method": "GET",
+      "body": ""
+    },
+    {
+      "path": "/api/notifications",
+      "method": "GET",
+      "body": ""
+    },
+    {
+      "path": "/api/messages/unread-count",
+      "method": "GET",
+      "body": ""
+    },
+    {
+      "path": "/api/publishing-studio",
+      "method": "GET",
+      "body": ""
+    },
+    {
+      "path": "/api/publishing-studio/stories",
+      "method": "GET",
+      "body": ""
+    },
+    {
+      "path": "/api/publishing-studio/releases",
+      "method": "GET",
+      "body": ""
+    },
+    {
+      "path": "/api/notifications",
+      "method": "GET",
+      "body": ""
+    },
+    {
+      "path": "/api/messages/unread-count",
+      "method": "GET",
+      "body": ""
+    },
+    {
+      "path": "/api/publishing-studio",
+      "method": "GET",
+      "body": ""
+    },
+    {
+      "path": "/api/publishing-studio/stories",
+      "method": "GET",
+      "body": ""
+    },
+    {
+      "path": "/api/publishing-studio/releases",
+      "method": "GET",
+      "body": ""
+    },
+    {
+      "path": "/api/notifications",
+      "method": "GET",
+      "body": ""
+    },
+    {
+      "path": "/api/messages/unread-count",
+      "method": "GET",
+      "body": ""
+    },
+    {
+      "path": "/api/projects/project/pending-spec-tags",
+      "method": "GET",
+      "body": ""
+    },
+    {
+      "path": "/api/notifications",
+      "method": "GET",
+      "body": ""
+    },
+    {
+      "path": "/api/messages/unread-count",
+      "method": "GET",
+      "body": ""
+    },
+    {
+      "path": "/api/projects/project/pending-spec-tags",
+      "method": "GET",
+      "body": ""
+    },
+    {
+      "path": "/api/notifications",
+      "method": "GET",
+      "body": ""
+    },
+    {
+      "path": "/api/messages/unread-count",
+      "method": "GET",
+      "body": ""
+    },
+    {
+      "path": "/api/notifications",
+      "method": "GET",
+      "body": ""
+    },
+    {
+      "path": "/api/messages/unread-count",
+      "method": "GET",
+      "body": ""
+    },
+    {
+      "path": "/api/projects/project/pending-spec-tags",
+      "method": "GET",
+      "body": ""
+    },
+    {
+      "path": "/api/notifications",
+      "method": "GET",
+      "body": ""
+    },
+    {
+      "path": "/api/messages/unread-count",
+      "method": "GET",
+      "body": ""
+    },
+    {
+      "path": "/api/projects/project/pending-spec-tags",
+      "method": "GET",
+      "body": ""
+    },
+    {
+      "path": "/api/notifications",
+      "method": "GET",
+      "body": ""
+    },
+    {
+      "path": "/api/messages/unread-count",
+      "method": "GET",
+      "body": ""
+    },
+    {
+      "path": "/api/projects/project/pending-spec-tags",
+      "method": "GET",
+      "body": ""
+    },
+    {
+      "path": "/api/notifications",
+      "method": "GET",
+      "body": ""
+    },
+    {
+      "path": "/api/messages/unread-count",
+      "method": "GET",
+      "body": ""
+    },
+    {
+      "path": "/api/projects/project/pending-spec-tags",
+      "method": "GET",
+      "body": ""
+    },
+    {
+      "path": "/api/tag-product-to-image",
+      "method": "PATCH",
+      "body": "{\"id\":\"tag1\",\"x\":55.00000189550175,\"y\":45.00000126366783,\"expected\":{\"imageId\":\"photo0\",\"x\":25,\"y\":35}}"
+    },
+    {
+      "path": "/api/tag-product-to-image",
+      "method": "PATCH",
+      "body": "{\"id\":\"tag1\",\"x\":26,\"y\":35,\"expected\":{\"imageId\":\"photo0\",\"x\":25,\"y\":35}}"
+    },
+    {
+      "path": "/api/notifications",
+      "method": "GET",
+      "body": ""
+    },
+    {
+      "path": "/api/messages/unread-count",
+      "method": "GET",
+      "body": ""
+    },
+    {
+      "path": "/api/notifications",
+      "method": "GET",
+      "body": ""
+    },
+    {
+      "path": "/api/messages/unread-count",
+      "method": "GET",
+      "body": ""
+    },
+    {
+      "path": "/api/products/product1",
+      "method": "GET",
+      "body": ""
+    },
+    {
+      "path": "/api/products/product1",
+      "method": "GET",
+      "body": ""
+    },
+    {
+      "path": "/api/notifications",
+      "method": "GET",
+      "body": ""
+    },
+    {
+      "path": "/api/messages/unread-count",
+      "method": "GET",
+      "body": ""
+    },
+    {
+      "path": "/api/products/product1",
+      "method": "GET",
+      "body": ""
+    },
+    {
+      "path": "/api/notifications",
+      "method": "GET",
+      "body": ""
+    },
+    {
+      "path": "/api/messages/unread-count",
+      "method": "GET",
+      "body": ""
+    },
+    {
+      "path": "/api/products/product1",
+      "method": "GET",
+      "body": ""
+    },
+    {
+      "path": "/api/products/product1",
+      "method": "PUT",
+      "body": "{\"name\":\"Handcrafted oak chair\",\"brand\":\"Example maker\",\"priceCents\":120000,\"category\":\"Seating\",\"description\":\"An oak chair with a woven seat.\",\"imageUrl\":\"/photo.svg\",\"url\":\"https://example.test/chair\"}"
+    },
+    {
+      "path": "/api/publishing-studio",
+      "method": "GET",
+      "body": ""
+    },
+    {
+      "path": "/api/notifications",
+      "method": "GET",
+      "body": ""
+    },
+    {
+      "path": "/api/publishing-studio/stories",
+      "method": "GET",
+      "body": ""
+    },
+    {
+      "path": "/api/messages/unread-count",
+      "method": "GET",
+      "body": ""
+    },
+    {
+      "path": "/api/publishing-studio/releases",
+      "method": "GET",
+      "body": ""
+    },
+    {
+      "path": "/api/publishing-studio/stories",
+      "method": "GET",
+      "body": ""
+    },
+    {
+      "path": "/api/notifications",
+      "method": "GET",
+      "body": ""
+    },
+    {
+      "path": "/api/messages/unread-count",
+      "method": "GET",
+      "body": ""
+    },
+    {
+      "path": "/api/notifications",
+      "method": "GET",
+      "body": ""
+    },
+    {
+      "path": "/api/messages/unread-count",
+      "method": "GET",
+      "body": ""
+    },
+    {
+      "path": "/api/notifications",
+      "method": "GET",
+      "body": ""
+    },
+    {
+      "path": "/api/messages/unread-count",
+      "method": "GET",
+      "body": ""
+    },
+    {
+      "path": "/api/notifications",
+      "method": "GET",
+      "body": ""
+    },
+    {
+      "path": "/api/messages/unread-count",
+      "method": "GET",
+      "body": ""
+    },
+    {
+      "path": "/api/notifications",
+      "method": "GET",
+      "body": ""
+    },
+    {
+      "path": "/api/messages/unread-count",
+      "method": "GET",
+      "body": ""
+    },
+    {
+      "path": "/api/notifications",
+      "method": "GET",
+      "body": ""
+    },
+    {
+      "path": "/api/messages/unread-count",
+      "method": "GET",
+      "body": ""
+    },
+    {
+      "path": "/api/notifications",
+      "method": "GET",
+      "body": ""
+    },
+    {
+      "path": "/api/messages/unread-count",
+      "method": "GET",
+      "body": ""
+    },
+    {
+      "path": "/api/notifications",
+      "method": "GET",
+      "body": ""
+    },
+    {
+      "path": "/api/messages/unread-count",
+      "method": "GET",
+      "body": ""
+    },
+    {
+      "path": "/api/org/firm/feed",
+      "method": "GET",
+      "body": ""
+    },
+    {
+      "path": "/api/notifications",
+      "method": "GET",
+      "body": ""
+    },
+    {
+      "path": "/api/messages/unread-count",
+      "method": "GET",
+      "body": ""
+    },
+    {
+      "path": "/api/org/firm/feed",
+      "method": "GET",
+      "body": ""
+    },
+    {
+      "path": "/api/notifications",
+      "method": "GET",
+      "body": ""
+    },
+    {
+      "path": "/api/messages/unread-count",
+      "method": "GET",
+      "body": ""
+    },
+    {
+      "path": "/api/org/firm/feed",
+      "method": "GET",
+      "body": ""
+    },
+    {
+      "path": "/api/org/firm/feed",
+      "method": "GET",
+      "body": ""
+    },
+    {
+      "path": "/api/notifications",
+      "method": "GET",
+      "body": ""
+    },
+    {
+      "path": "/api/messages/unread-count",
+      "method": "GET",
+      "body": ""
+    },
+    {
+      "path": "/api/notifications",
+      "method": "GET",
+      "body": ""
+    },
+    {
+      "path": "/api/messages/unread-count",
+      "method": "GET",
+      "body": ""
+    },
+    {
+      "path": "/api/projects/project/pending-spec-tags",
+      "method": "GET",
+      "body": ""
+    },
+    {
+      "path": "/api/notifications",
+      "method": "GET",
+      "body": ""
+    },
+    {
+      "path": "/api/messages/unread-count",
+      "method": "GET",
+      "body": ""
+    },
+    {
+      "path": "/api/notifications",
+      "method": "GET",
+      "body": ""
+    },
+    {
+      "path": "/api/messages/unread-count",
+      "method": "GET",
+      "body": ""
+    },
+    {
+      "path": "/api/publishing-studio",
+      "method": "GET",
+      "body": ""
+    },
+    {
+      "path": "/api/notifications",
+      "method": "GET",
+      "body": ""
+    },
+    {
+      "path": "/api/messages/unread-count",
+      "method": "GET",
+      "body": ""
+    },
+    {
+      "path": "/api/publishing-studio/stories",
+      "method": "GET",
+      "body": ""
+    },
+    {
+      "path": "/api/publishing-studio/releases",
+      "method": "GET",
+      "body": ""
+    },
+    {
+      "path": "/api/notifications",
+      "method": "GET",
+      "body": ""
+    },
+    {
+      "path": "/api/messages/unread-count",
+      "method": "GET",
+      "body": ""
+    },
+    {
+      "path": "/api/notifications",
+      "method": "GET",
+      "body": ""
+    },
+    {
+      "path": "/api/messages/unread-count",
+      "method": "GET",
+      "body": ""
+    },
+    {
+      "path": "/api/projects/project/pending-spec-tags",
+      "method": "GET",
+      "body": ""
+    },
+    {
+      "path": "/api/notifications",
+      "method": "GET",
+      "body": ""
+    },
+    {
+      "path": "/api/messages/unread-count",
+      "method": "GET",
+      "body": ""
+    },
+    {
+      "path": "/api/notifications",
+      "method": "GET",
+      "body": ""
+    },
+    {
+      "path": "/api/messages/unread-count",
+      "method": "GET",
+      "body": ""
+    },
+    {
+      "path": "/api/notifications",
+      "method": "GET",
+      "body": ""
+    },
+    {
+      "path": "/api/messages/unread-count",
+      "method": "GET",
+      "body": ""
+    },
+    {
+      "path": "/api/publishing-studio",
+      "method": "GET",
+      "body": ""
+    },
+    {
+      "path": "/api/publishing-studio/stories",
+      "method": "GET",
+      "body": ""
+    },
+    {
+      "path": "/api/publishing-studio/releases",
+      "method": "GET",
+      "body": ""
+    },
+    {
+      "path": "/api/notifications",
+      "method": "GET",
+      "body": ""
+    },
+    {
+      "path": "/api/messages/unread-count",
+      "method": "GET",
+      "body": ""
+    },
+    {
+      "path": "/api/notifications",
+      "method": "GET",
+      "body": ""
+    },
+    {
+      "path": "/api/messages/unread-count",
+      "method": "GET",
+      "body": ""
+    },
+    {
+      "path": "/api/projects/project/pending-spec-tags",
+      "method": "GET",
+      "body": ""
+    },
+    {
+      "path": "/api/notifications",
+      "method": "GET",
+      "body": ""
+    },
+    {
+      "path": "/api/messages/unread-count",
+      "method": "GET",
+      "body": ""
+    },
+    {
+      "path": "/api/notifications",
+      "method": "GET",
+      "body": ""
+    },
+    {
+      "path": "/api/messages/unread-count",
+      "method": "GET",
+      "body": ""
+    },
+    {
+      "path": "/api/notifications",
+      "method": "GET",
+      "body": ""
+    },
+    {
+      "path": "/api/messages/unread-count",
+      "method": "GET",
+      "body": ""
+    },
+    {
+      "path": "/api/publishing-studio",
+      "method": "GET",
+      "body": ""
+    },
+    {
+      "path": "/api/publishing-studio/stories",
+      "method": "GET",
+      "body": ""
+    },
+    {
+      "path": "/api/publishing-studio/releases",
+      "method": "GET",
+      "body": ""
+    },
+    {
+      "path": "/api/notifications",
+      "method": "GET",
+      "body": ""
+    },
+    {
+      "path": "/api/messages/unread-count",
+      "method": "GET",
+      "body": ""
+    },
+    {
+      "path": "/api/notifications",
+      "method": "GET",
+      "body": ""
+    },
+    {
+      "path": "/api/projects/project/pending-spec-tags",
+      "method": "GET",
+      "body": ""
+    },
+    {
+      "path": "/api/messages/unread-count",
+      "method": "GET",
+      "body": ""
+    },
+    {
+      "path": "/api/notifications",
+      "method": "GET",
+      "body": ""
+    },
+    {
+      "path": "/api/messages/unread-count",
+      "method": "GET",
+      "body": ""
+    },
+    {
+      "path": "/api/notifications",
+      "method": "GET",
+      "body": ""
+    },
+    {
+      "path": "/api/messages/unread-count",
+      "method": "GET",
+      "body": ""
+    },
+    {
+      "path": "/api/notifications",
+      "method": "GET",
+      "body": ""
+    },
+    {
+      "path": "/api/messages/unread-count",
+      "method": "GET",
+      "body": ""
+    },
+    {
+      "path": "/api/publishing-studio",
+      "method": "GET",
+      "body": ""
+    },
+    {
+      "path": "/api/publishing-studio/stories",
+      "method": "GET",
+      "body": ""
+    },
+    {
+      "path": "/api/publishing-studio/releases",
+      "method": "GET",
+      "body": ""
+    },
+    {
+      "path": "/api/notifications",
+      "method": "GET",
+      "body": ""
+    },
+    {
+      "path": "/api/messages/unread-count",
+      "method": "GET",
+      "body": ""
+    },
+    {
+      "path": "/api/notifications",
+      "method": "GET",
+      "body": ""
+    },
+    {
+      "path": "/api/messages/unread-count",
+      "method": "GET",
+      "body": ""
+    },
+    {
+      "path": "/api/projects/project/pending-spec-tags",
+      "method": "GET",
+      "body": ""
+    },
+    {
+      "path": "/api/notifications",
+      "method": "GET",
+      "body": ""
+    },
+    {
+      "path": "/api/messages/unread-count",
+      "method": "GET",
+      "body": ""
+    },
+    {
+      "path": "/api/notifications",
+      "method": "GET",
+      "body": ""
+    },
+    {
+      "path": "/api/messages/unread-count",
+      "method": "GET",
+      "body": ""
+    },
+    {
+      "path": "/api/publishing-studio",
+      "method": "GET",
+      "body": ""
+    },
+    {
+      "path": "/api/notifications",
+      "method": "GET",
+      "body": ""
+    },
+    {
+      "path": "/api/messages/unread-count",
+      "method": "GET",
+      "body": ""
+    },
+    {
+      "path": "/api/publishing-studio/stories",
+      "method": "GET",
+      "body": ""
+    },
+    {
+      "path": "/api/publishing-studio/releases",
+      "method": "GET",
+      "body": ""
+    }
+  ]
+}

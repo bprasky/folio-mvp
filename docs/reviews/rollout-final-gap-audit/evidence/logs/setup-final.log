@@ -1,0 +1,8 @@
+PASS an existing empty project uploads directly into canonical room sorting without intermediate setup pages
+PASS an in-flight upload stays in place with disabled upload controls until its save is acknowledged
+PASS partial upload retains failed files and retries only those files before advancing
+PASS partial upload advances only when the designer chooses Continue with saved photos
+PASS website import saves only selected photographs then opens canonical room sorting
+PASS partially failed import keeps only the failed selection for retry and preserves saved photos
+PASS website import capability does not block local photo upload
+PASS 7 project setup browser checks.

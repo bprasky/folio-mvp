@@ -1,0 +1,460 @@
+
+> folio-mvp@0.2.0 test:persistence
+> tsx --test scripts/persistence/integrity.test.cjs
+
+TAP version 13
+# DEBUG: NextAuth Environment Check
+# NEXTAUTH_SECRET exists: true
+# NEXTAUTH_SECRET length: 35
+# NEXTAUTH_URL: http://folio.test
+# Current working directory: C:\\Users\\bpras\\.codex\\worktrees\\rollout-hardening\\folio-mvp
+# Environment variables loaded: [ 'NEXTAUTH_SECRET', 'NEXTAUTH_URL' ]
+# DEBUG: Entering JWT callback
+# DEBUG: JWT callback - Setting token.id: 9f415a88-2ba4-41a6-b5ca-723507a5802f
+# Hydrated from DB - role: DESIGNER accountStatus: APPROVED subscriptionTier: FREE isFoundingDesigner: false
+# DEBUG: Session callback — token.role: DESIGNER token.id: 9f415a88-2ba4-41a6-b5ca-723507a5802f token.accountStatus: APPROVED operatingAsOrgId: null subscriptionTier: FREE isFoundingDesigner: false
+# DEBUG: Session callback - Setting session.user.id: 9f415a88-2ba4-41a6-b5ca-723507a5802f
+# DEBUG: Entering JWT callback
+# DEBUG: JWT callback - Setting token.id: 79a98c71-976b-47b0-a094-da0608443825
+# Hydrated from DB - role: DESIGNER accountStatus: APPROVED subscriptionTier: FREE isFoundingDesigner: false
+# Subtest: retired /api/get-designer-profile rejects every old method without data or writes
+ok 1 - retired /api/get-designer-profile rejects every old method without data or writes
+  ---
+  duration_ms: 130.5093
+  type: 'test'
+  ...
+# DEBUG: Session callback — token.role: DESIGNER token.id: 79a98c71-976b-47b0-a094-da0608443825 token.accountStatus: APPROVED operatingAsOrgId: null subscriptionTier: FREE isFoundingDesigner: false
+# DEBUG: Session callback - Setting session.user.id: 79a98c71-976b-47b0-a094-da0608443825
+# DEBUG: Entering JWT callback
+# DEBUG: JWT callback - Setting token.id: 3aca2e96-c956-4dcb-9fef-d45a10ec208e
+# Hydrated from DB - role: DESIGNER accountStatus: APPROVED subscriptionTier: FREE isFoundingDesigner: false
+# Subtest: retired /api/update-designer-profile rejects every old method without data or writes
+ok 2 - retired /api/update-designer-profile rejects every old method without data or writes
+  ---
+  duration_ms: 35.6009
+  type: 'test'
+  ...
+# DEBUG: Session callback — token.role: DESIGNER token.id: 3aca2e96-c956-4dcb-9fef-d45a10ec208e token.accountStatus: APPROVED operatingAsOrgId: null subscriptionTier: FREE isFoundingDesigner: false
+# DEBUG: Session callback - Setting session.user.id: 3aca2e96-c956-4dcb-9fef-d45a10ec208e
+# DEBUG: Entering JWT callback
+# DEBUG: JWT callback - Setting token.id: 449dc146-6ca2-48f1-b77e-a34043178af9
+# Hydrated from DB - role: DESIGNER accountStatus: APPROVED subscriptionTier: FREE isFoundingDesigner: false
+# Subtest: retired /api/set-active-profile rejects every old method without data or writes
+ok 3 - retired /api/set-active-profile rejects every old method without data or writes
+  ---
+  duration_ms: 33.9579
+  type: 'test'
+  ...
+# DEBUG: Session callback — token.role: DESIGNER token.id: 449dc146-6ca2-48f1-b77e-a34043178af9 token.accountStatus: APPROVED operatingAsOrgId: null subscriptionTier: FREE isFoundingDesigner: false
+# DEBUG: Session callback - Setting session.user.id: 449dc146-6ca2-48f1-b77e-a34043178af9
+# DEBUG: Entering JWT callback
+# DEBUG: JWT callback - Setting token.id: 242bc02e-c7cc-4a8b-ad00-f94f6ed93e36
+# Hydrated from DB - role: DESIGNER accountStatus: APPROVED subscriptionTier: FREE isFoundingDesigner: false
+# Subtest: retired /api/assign-projects rejects every old method without data or writes
+ok 4 - retired /api/assign-projects rejects every old method without data or writes
+  ---
+  duration_ms: 23.4162
+  type: 'test'
+  ...
+# DEBUG: Session callback — token.role: DESIGNER token.id: 242bc02e-c7cc-4a8b-ad00-f94f6ed93e36 token.accountStatus: APPROVED operatingAsOrgId: null subscriptionTier: FREE isFoundingDesigner: false
+# DEBUG: Session callback - Setting session.user.id: 242bc02e-c7cc-4a8b-ad00-f94f6ed93e36
+# DEBUG: Entering JWT callback
+# DEBUG: JWT callback - Setting token.id: 788e05af-d44d-414e-bfc5-672ade71fea1
+# Hydrated from DB - role: DESIGNER accountStatus: APPROVED subscriptionTier: FREE isFoundingDesigner: false
+# Subtest: retired /api/export-all-tagged-products rejects every old method without data or writes
+ok 5 - retired /api/export-all-tagged-products rejects every old method without data or writes
+  ---
+  duration_ms: 24.7284
+  type: 'test'
+  ...
+# DEBUG: Session callback — token.role: DESIGNER token.id: 788e05af-d44d-414e-bfc5-672ade71fea1 token.accountStatus: APPROVED operatingAsOrgId: null subscriptionTier: FREE isFoundingDesigner: false
+# DEBUG: Session callback - Setting session.user.id: 788e05af-d44d-414e-bfc5-672ade71fea1
+# DEBUG: Entering JWT callback
+# DEBUG: JWT callback - Setting token.id: 628afdb6-7272-41bc-a0f2-c7232ce043ae
+# Hydrated from DB - role: DESIGNER accountStatus: APPROVED subscriptionTier: FREE isFoundingDesigner: false
+# Subtest: retired /api/export-project-tags rejects every old method without data or writes
+ok 6 - retired /api/export-project-tags rejects every old method without data or writes
+  ---
+  duration_ms: 22.1694
+  type: 'test'
+  ...
+# DEBUG: Session callback — token.role: DESIGNER token.id: 628afdb6-7272-41bc-a0f2-c7232ce043ae token.accountStatus: APPROVED operatingAsOrgId: null subscriptionTier: FREE isFoundingDesigner: false
+# DEBUG: Session callback - Setting session.user.id: 628afdb6-7272-41bc-a0f2-c7232ce043ae
+# DEBUG: Entering JWT callback
+# DEBUG: JWT callback - Setting token.id: e5135e88-1846-4553-8330-a4aaacb1b6d2
+# Hydrated from DB - role: DESIGNER accountStatus: APPROVED subscriptionTier: FREE isFoundingDesigner: false
+# Subtest: retired /api/export-tearsheet rejects every old method without data or writes
+ok 7 - retired /api/export-tearsheet rejects every old method without data or writes
+  ---
+  duration_ms: 22.798
+  type: 'test'
+  ...
+# DEBUG: Session callback — token.role: DESIGNER token.id: e5135e88-1846-4553-8330-a4aaacb1b6d2 token.accountStatus: APPROVED operatingAsOrgId: null subscriptionTier: FREE isFoundingDesigner: false
+# DEBUG: Session callback - Setting session.user.id: e5135e88-1846-4553-8330-a4aaacb1b6d2
+# DEBUG: Entering JWT callback
+# DEBUG: JWT callback - Setting token.id: 21c75c84-a526-49d3-9b0d-88ebcdf40a74
+# Hydrated from DB - role: DESIGNER accountStatus: APPROVED subscriptionTier: FREE isFoundingDesigner: false
+# Subtest: retired /api/videos/[id] rejects every old method without data or writes
+ok 8 - retired /api/videos/[id] rejects every old method without data or writes
+  ---
+  duration_ms: 22.5445
+  type: 'test'
+  ...
+# DEBUG: Session callback — token.role: DESIGNER token.id: 21c75c84-a526-49d3-9b0d-88ebcdf40a74 token.accountStatus: APPROVED operatingAsOrgId: null subscriptionTier: FREE isFoundingDesigner: false
+# DEBUG: Session callback - Setting session.user.id: 21c75c84-a526-49d3-9b0d-88ebcdf40a74
+# DEBUG: Entering JWT callback
+# DEBUG: JWT callback - Setting token.id: d6c77fba-ca53-4934-a1e7-42faa14c6eaa
+# Hydrated from DB - role: DESIGNER accountStatus: APPROVED subscriptionTier: FREE isFoundingDesigner: false
+# Subtest: retired /api/videos/clips rejects every old method without data or writes
+ok 9 - retired /api/videos/clips rejects every old method without data or writes
+  ---
+  duration_ms: 22.9046
+  type: 'test'
+  ...
+# DEBUG: Session callback — token.role: DESIGNER token.id: d6c77fba-ca53-4934-a1e7-42faa14c6eaa token.accountStatus: APPROVED operatingAsOrgId: null subscriptionTier: FREE isFoundingDesigner: false
+# DEBUG: Session callback - Setting session.user.id: d6c77fba-ca53-4934-a1e7-42faa14c6eaa
+# DEBUG: Entering JWT callback
+# DEBUG: JWT callback - Setting token.id: fbdbde76-2b80-4a49-9be5-51b3a055b7a4
+# Hydrated from DB - role: DESIGNER accountStatus: APPROVED subscriptionTier: FREE isFoundingDesigner: false
+# Subtest: retired /api/inspire rejects every old method without data or writes
+ok 10 - retired /api/inspire rejects every old method without data or writes
+  ---
+  duration_ms: 22.285
+  type: 'test'
+  ...
+# DEBUG: Session callback — token.role: DESIGNER token.id: fbdbde76-2b80-4a49-9be5-51b3a055b7a4 token.accountStatus: APPROVED operatingAsOrgId: null subscriptionTier: FREE isFoundingDesigner: false
+# DEBUG: Session callback - Setting session.user.id: fbdbde76-2b80-4a49-9be5-51b3a055b7a4
+# DEBUG: Entering JWT callback
+# DEBUG: JWT callback - Setting token.id: 58421c99-8137-4e8c-94ba-ae9f06ae4004
+# Hydrated from DB - role: DESIGNER accountStatus: APPROVED subscriptionTier: FREE isFoundingDesigner: false
+# Subtest: retired /api/event-import rejects every old method without data or writes
+ok 11 - retired /api/event-import rejects every old method without data or writes
+  ---
+  duration_ms: 19.8271
+  type: 'test'
+  ...
+# DEBUG: Session callback — token.role: DESIGNER token.id: 58421c99-8137-4e8c-94ba-ae9f06ae4004 token.accountStatus: APPROVED operatingAsOrgId: null subscriptionTier: FREE isFoundingDesigner: false
+# DEBUG: Session callback - Setting session.user.id: 58421c99-8137-4e8c-94ba-ae9f06ae4004
+# DEBUG: Entering JWT callback
+# DEBUG: JWT callback - Setting token.id: 7761eb4c-14f8-4047-9d93-7529b7b87787
+# Hydrated from DB - role: DESIGNER accountStatus: APPROVED subscriptionTier: FREE isFoundingDesigner: false
+# Subtest: retired /api/projects/handoff rejects every old method without data or writes
+ok 12 - retired /api/projects/handoff rejects every old method without data or writes
+  ---
+  duration_ms: 21.0227
+  type: 'test'
+  ...
+# DEBUG: Session callback — token.role: DESIGNER token.id: 7761eb4c-14f8-4047-9d93-7529b7b87787 token.accountStatus: APPROVED operatingAsOrgId: null subscriptionTier: FREE isFoundingDesigner: false
+# DEBUG: Session callback - Setting session.user.id: 7761eb4c-14f8-4047-9d93-7529b7b87787
+# DEBUG: Entering JWT callback
+# DEBUG: JWT callback - Setting token.id: 136b00e4-a359-4d42-907a-21a3ef7680bb
+# Hydrated from DB - role: DESIGNER accountStatus: APPROVED subscriptionTier: FREE isFoundingDesigner: false
+# Subtest: retired /api/designer/folders/[id]/assign-sections rejects every old method without data or writes
+ok 13 - retired /api/designer/folders/[id]/assign-sections rejects every old method without data or writes
+  ---
+  duration_ms: 21.8661
+  type: 'test'
+  ...
+# DEBUG: Session callback — token.role: DESIGNER token.id: 136b00e4-a359-4d42-907a-21a3ef7680bb token.accountStatus: APPROVED operatingAsOrgId: null subscriptionTier: FREE isFoundingDesigner: false
+# DEBUG: Session callback - Setting session.user.id: 136b00e4-a359-4d42-907a-21a3ef7680bb
+# DEBUG: Entering JWT callback
+# DEBUG: JWT callback - Setting token.id: 0df62f69-6118-4e4a-abb5-50d084bce325
+# Hydrated from DB - role: DESIGNER accountStatus: APPROVED subscriptionTier: FREE isFoundingDesigner: false
+# Subtest: retired /api/vendor-actions/create-appreciation-dinner rejects every old method without data or writes
+ok 14 - retired /api/vendor-actions/create-appreciation-dinner rejects every old method without data or writes
+  ---
+  duration_ms: 22.9114
+  type: 'test'
+  ...
+# DEBUG: Session callback — token.role: DESIGNER token.id: 0df62f69-6118-4e4a-abb5-50d084bce325 token.accountStatus: APPROVED operatingAsOrgId: null subscriptionTier: FREE isFoundingDesigner: false
+# DEBUG: Session callback - Setting session.user.id: 0df62f69-6118-4e4a-abb5-50d084bce325
+# DEBUG: Entering JWT callback
+# DEBUG: JWT callback - Setting token.id: d2f866cd-26d2-45eb-81b4-38c69eafe3e6
+# Hydrated from DB - role: DESIGNER accountStatus: APPROVED subscriptionTier: FREE isFoundingDesigner: false
+# Subtest: retired /api/vendor/projects/[id]/quick-actions/offer-boost rejects every old method without data or writes
+ok 15 - retired /api/vendor/projects/[id]/quick-actions/offer-boost rejects every old method without data or writes
+  ---
+  duration_ms: 29.5556
+  type: 'test'
+  ...
+# DEBUG: Session callback — token.role: DESIGNER token.id: d2f866cd-26d2-45eb-81b4-38c69eafe3e6 token.accountStatus: APPROVED operatingAsOrgId: null subscriptionTier: FREE isFoundingDesigner: false
+# DEBUG: Session callback - Setting session.user.id: d2f866cd-26d2-45eb-81b4-38c69eafe3e6
+# DEBUG: Entering JWT callback
+# DEBUG: JWT callback - Setting token.id: 69821dc7-4901-43e0-b4d7-2aa919f03faa
+# Hydrated from DB - role: DESIGNER accountStatus: APPROVED subscriptionTier: FREE isFoundingDesigner: false
+# Subtest: retired /api/vendor/projects/[id]/quick-actions/invite-to-event rejects every old method without data or writes
+ok 16 - retired /api/vendor/projects/[id]/quick-actions/invite-to-event rejects every old method without data or writes
+  ---
+  duration_ms: 31.5022
+  type: 'test'
+  ...
+# DEBUG: Session callback — token.role: DESIGNER token.id: 69821dc7-4901-43e0-b4d7-2aa919f03faa token.accountStatus: APPROVED operatingAsOrgId: null subscriptionTier: FREE isFoundingDesigner: false
+# DEBUG: Session callback - Setting session.user.id: 69821dc7-4901-43e0-b4d7-2aa919f03faa
+# DEBUG: Entering JWT callback
+# DEBUG: JWT callback - Setting token.id: d262846e-1aef-4655-9844-15ee2c52f5a5
+# Hydrated from DB - role: DESIGNER accountStatus: APPROVED subscriptionTier: FREE isFoundingDesigner: false
+# Subtest: retired /api/vendor/projects/[id]/quick-actions/request-missing rejects every old method without data or writes
+ok 17 - retired /api/vendor/projects/[id]/quick-actions/request-missing rejects every old method without data or writes
+  ---
+  duration_ms: 37.1064
+  type: 'test'
+  ...
+# DEBUG: Session callback — token.role: DESIGNER token.id: d262846e-1aef-4655-9844-15ee2c52f5a5 token.accountStatus: APPROVED operatingAsOrgId: null subscriptionTier: FREE isFoundingDesigner: false
+# DEBUG: Session callback - Setting session.user.id: d262846e-1aef-4655-9844-15ee2c52f5a5
+# DEBUG: Entering JWT callback
+# DEBUG: JWT callback - Setting token.id: 265efdd2-c675-470c-9fe4-ab53f6b45df1
+# Hydrated from DB - role: DESIGNER accountStatus: APPROVED subscriptionTier: FREE isFoundingDesigner: false
+# Subtest: retired /api/vendor/projects/[id]/quick-actions/extend-discount rejects every old method without data or writes
+ok 18 - retired /api/vendor/projects/[id]/quick-actions/extend-discount rejects every old method without data or writes
+  ---
+  duration_ms: 29.6428
+  type: 'test'
+  ...
+# DEBUG: Session callback — token.role: DESIGNER token.id: 265efdd2-c675-470c-9fe4-ab53f6b45df1 token.accountStatus: APPROVED operatingAsOrgId: null subscriptionTier: FREE isFoundingDesigner: false
+# DEBUG: Session callback - Setting session.user.id: 265efdd2-c675-470c-9fe4-ab53f6b45df1
+# DEBUG: Entering JWT callback
+# DEBUG: JWT callback - Setting token.id: f594bb88-451f-4aec-969d-d48fb5772646
+# Hydrated from DB - role: DESIGNER accountStatus: APPROVED subscriptionTier: FREE isFoundingDesigner: false
+# Subtest: retired /api/vendor/actions/promote-project rejects every old method without data or writes
+ok 19 - retired /api/vendor/actions/promote-project rejects every old method without data or writes
+  ---
+  duration_ms: 25.0542
+  type: 'test'
+  ...
+# DEBUG: Session callback — token.role: DESIGNER token.id: f594bb88-451f-4aec-969d-d48fb5772646 token.accountStatus: APPROVED operatingAsOrgId: null subscriptionTier: FREE isFoundingDesigner: false
+# DEBUG: Session callback - Setting session.user.id: f594bb88-451f-4aec-969d-d48fb5772646
+# DEBUG: Entering JWT callback
+# DEBUG: JWT callback - Setting token.id: 650c6606-e33b-4acf-8ea1-31561ea14b98
+# Hydrated from DB - role: DESIGNER accountStatus: APPROVED subscriptionTier: FREE isFoundingDesigner: false
+# Subtest: retired /api/vendor/actions/priority-support rejects every old method without data or writes
+ok 20 - retired /api/vendor/actions/priority-support rejects every old method without data or writes
+  ---
+  duration_ms: 24.6618
+  type: 'test'
+  ...
+# DEBUG: Session callback — token.role: DESIGNER token.id: 650c6606-e33b-4acf-8ea1-31561ea14b98 token.accountStatus: APPROVED operatingAsOrgId: null subscriptionTier: FREE isFoundingDesigner: false
+# DEBUG: Session callback - Setting session.user.id: 650c6606-e33b-4acf-8ea1-31561ea14b98
+# DEBUG: Entering JWT callback
+# DEBUG: JWT callback - Setting token.id: bd5be9a1-76c8-4002-b69e-89bd3d250bac
+# Hydrated from DB - role: DESIGNER accountStatus: APPROVED subscriptionTier: FREE isFoundingDesigner: false
+# Subtest: retired /api/vendor/actions/confirm-spec rejects every old method without data or writes
+ok 21 - retired /api/vendor/actions/confirm-spec rejects every old method without data or writes
+  ---
+  duration_ms: 28.3341
+  type: 'test'
+  ...
+# DEBUG: Session callback — token.role: DESIGNER token.id: bd5be9a1-76c8-4002-b69e-89bd3d250bac token.accountStatus: APPROVED operatingAsOrgId: null subscriptionTier: FREE isFoundingDesigner: false
+# DEBUG: Session callback - Setting session.user.id: bd5be9a1-76c8-4002-b69e-89bd3d250bac
+# DEBUG: Entering JWT callback
+# DEBUG: JWT callback - Setting token.id: 054288af-bb54-430e-8b7e-3afa300f34f8
+# Hydrated from DB - role: DESIGNER accountStatus: APPROVED subscriptionTier: FREE isFoundingDesigner: false
+# Subtest: retired /api/vendor/actions/invite-event rejects every old method without data or writes
+ok 22 - retired /api/vendor/actions/invite-event rejects every old method without data or writes
+  ---
+  duration_ms: 21.1724
+  type: 'test'
+  ...
+# DEBUG: Session callback — token.role: DESIGNER token.id: 054288af-bb54-430e-8b7e-3afa300f34f8 token.accountStatus: APPROVED operatingAsOrgId: null subscriptionTier: FREE isFoundingDesigner: false
+# DEBUG: Session callback - Setting session.user.id: 054288af-bb54-430e-8b7e-3afa300f34f8
+# DEBUG: Entering JWT callback
+# DEBUG: JWT callback - Setting token.id: 9907f80a-e7b6-462a-b858-dfca586905d7
+# Hydrated from DB - role: DESIGNER accountStatus: APPROVED subscriptionTier: FREE isFoundingDesigner: false
+# Subtest: retired /api/rep-contacts/request-spec rejects every old method without data or writes
+ok 23 - retired /api/rep-contacts/request-spec rejects every old method without data or writes
+  ---
+  duration_ms: 25.5583
+  type: 'test'
+  ...
+# DEBUG: Session callback — token.role: DESIGNER token.id: 9907f80a-e7b6-462a-b858-dfca586905d7 token.accountStatus: APPROVED operatingAsOrgId: null subscriptionTier: FREE isFoundingDesigner: false
+# DEBUG: Session callback - Setting session.user.id: 9907f80a-e7b6-462a-b858-dfca586905d7
+# DEBUG: Entering JWT callback
+# DEBUG: JWT callback - Setting token.id: 98f6e9ba-07da-4224-b883-083e39d2f343
+# Hydrated from DB - role: DESIGNER accountStatus: APPROVED subscriptionTier: FREE isFoundingDesigner: false
+# Subtest: retired /api/events/[id]/live-activity rejects every old method without data or writes
+ok 24 - retired /api/events/[id]/live-activity rejects every old method without data or writes
+  ---
+  duration_ms: 29.2225
+  type: 'test'
+  ...
+# DEBUG: Session callback — token.role: DESIGNER token.id: 98f6e9ba-07da-4224-b883-083e39d2f343 token.accountStatus: APPROVED operatingAsOrgId: null subscriptionTier: FREE isFoundingDesigner: false
+# DEBUG: Session callback - Setting session.user.id: 98f6e9ba-07da-4224-b883-083e39d2f343
+# DEBUG: Entering JWT callback
+# DEBUG: JWT callback - Setting token.id: b8404b1f-214c-433f-a572-d52fd43ef2a7
+# Hydrated from DB - role: DESIGNER accountStatus: APPROVED subscriptionTier: FREE isFoundingDesigner: false
+# Subtest: retired /api/vendor/invite-designer rejects every old method without data or writes
+ok 25 - retired /api/vendor/invite-designer rejects every old method without data or writes
+  ---
+  duration_ms: 25.2159
+  type: 'test'
+  ...
+# DEBUG: Session callback — token.role: DESIGNER token.id: b8404b1f-214c-433f-a572-d52fd43ef2a7 token.accountStatus: APPROVED operatingAsOrgId: null subscriptionTier: FREE isFoundingDesigner: false
+# DEBUG: Session callback - Setting session.user.id: b8404b1f-214c-433f-a572-d52fd43ef2a7
+# DEBUG: Entering JWT callback
+# DEBUG: JWT callback - Setting token.id: 08936042-ac50-4ba5-86c1-f724ba9719e8
+# Hydrated from DB - role: DESIGNER accountStatus: APPROVED subscriptionTier: FREE isFoundingDesigner: false
+# Subtest: retired /api/vendor/qbr rejects every old method without data or writes
+ok 26 - retired /api/vendor/qbr rejects every old method without data or writes
+  ---
+  duration_ms: 27.5632
+  type: 'test'
+  ...
+# DEBUG: Session callback — token.role: DESIGNER token.id: 08936042-ac50-4ba5-86c1-f724ba9719e8 token.accountStatus: APPROVED operatingAsOrgId: null subscriptionTier: FREE isFoundingDesigner: false
+# DEBUG: Session callback - Setting session.user.id: 08936042-ac50-4ba5-86c1-f724ba9719e8
+# DEBUG: Entering JWT callback
+# DEBUG: JWT callback - Setting token.id: ac11b347-187d-46ba-9713-faaa8df2a967
+# Hydrated from DB - role: DESIGNER accountStatus: APPROVED subscriptionTier: FREE isFoundingDesigner: false
+# DEBUG: Session callback — token.role: DESIGNER token.id: ac11b347-187d-46ba-9713-faaa8df2a967 token.accountStatus: APPROVED operatingAsOrgId: null subscriptionTier: FREE isFoundingDesigner: false
+# DEBUG: Session callback - Setting session.user.id: ac11b347-187d-46ba-9713-faaa8df2a967
+# DEBUG: Entering JWT callback
+# DEBUG: JWT callback - Setting token.id: 08936042-ac50-4ba5-86c1-f724ba9719e8
+# Hydrated from DB - role: DESIGNER accountStatus: APPROVED subscriptionTier: FREE isFoundingDesigner: false
+# DEBUG: Session callback — token.role: DESIGNER token.id: 08936042-ac50-4ba5-86c1-f724ba9719e8 token.accountStatus: APPROVED operatingAsOrgId: null subscriptionTier: FREE isFoundingDesigner: false
+# DEBUG: Session callback - Setting session.user.id: 08936042-ac50-4ba5-86c1-f724ba9719e8
+# Spec sheet upload failed: Error: Fixture storage outage
+#     at Object.upload (C:\\Users\\bpras\\.codex\\worktrees\\rollout-hardening\\folio-mvp\\scripts\\persistence\\integrity.test.cjs:173:40)
+#     at POST (C:\\Users\\bpras\\.codex\\worktrees\\rollout-hardening\\folio-mvp\\src\\app\\api\\upload-spec-sheet\\route.ts:32:36)
+#     at async TestContext.<anonymous> (C:\\Users\\bpras\\.codex\\worktrees\\rollout-hardening\\folio-mvp\\scripts\\persistence\\integrity.test.cjs:234:18)
+#     at async Test.run (node:internal/test_runner/test:1054:7)
+#     at async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+# [ensureProduct] Created Product "Fixture chair" (0d300f74-1bb9-48c7-a689-7babbd15d1e0)
+# DEBUG: Entering JWT callback
+# DEBUG: JWT callback - Setting token.id: 705c00fd-c15e-4425-a463-29ac6ceee77f
+# Hydrated from DB - role: DESIGNER accountStatus: APPROVED subscriptionTier: FREE isFoundingDesigner: false
+# Subtest: spec sheets require authenticated project write access, validated file and successful object upload
+ok 27 - spec sheets require authenticated project write access, validated file and successful object upload
+  ---
+  duration_ms: 592.1927
+  type: 'test'
+  ...
+# DEBUG: Session callback — token.role: DESIGNER token.id: 705c00fd-c15e-4425-a463-29ac6ceee77f token.accountStatus: APPROVED operatingAsOrgId: null subscriptionTier: FREE isFoundingDesigner: false
+# DEBUG: Session callback - Setting session.user.id: 705c00fd-c15e-4425-a463-29ac6ceee77f
+# DEBUG: Entering JWT callback
+# DEBUG: JWT callback - Setting token.id: 7bcfcc89-345c-4f0e-9d61-2c51679324f8
+# Hydrated from DB - role: DESIGNER accountStatus: APPROVED subscriptionTier: FREE isFoundingDesigner: false
+# DEBUG: Session callback — token.role: DESIGNER token.id: 7bcfcc89-345c-4f0e-9d61-2c51679324f8 token.accountStatus: APPROVED operatingAsOrgId: null subscriptionTier: FREE isFoundingDesigner: false
+# DEBUG: Session callback - Setting session.user.id: 7bcfcc89-345c-4f0e-9d61-2c51679324f8
+# DEBUG: Entering JWT callback
+# DEBUG: JWT callback - Setting token.id: 705c00fd-c15e-4425-a463-29ac6ceee77f
+# Hydrated from DB - role: DESIGNER accountStatus: APPROVED subscriptionTier: FREE isFoundingDesigner: false
+# DEBUG: Session callback — token.role: DESIGNER token.id: 705c00fd-c15e-4425-a463-29ac6ceee77f token.accountStatus: APPROVED operatingAsOrgId: null subscriptionTier: FREE isFoundingDesigner: false
+# DEBUG: Session callback - Setting session.user.id: 705c00fd-c15e-4425-a463-29ac6ceee77f
+# DEBUG: Entering JWT callback
+# DEBUG: JWT callback - Setting token.id: 705c00fd-c15e-4425-a463-29ac6ceee77f
+# Hydrated from DB - role: DESIGNER accountStatus: APPROVED subscriptionTier: FREE isFoundingDesigner: false
+# DEBUG: Session callback — token.role: DESIGNER token.id: 705c00fd-c15e-4425-a463-29ac6ceee77f token.accountStatus: APPROVED operatingAsOrgId: null subscriptionTier: FREE isFoundingDesigner: false
+# DEBUG: Session callback - Setting session.user.id: 705c00fd-c15e-4425-a463-29ac6ceee77f
+# [reupload-client] Uploading image 42dec626-d404-4e38-a8ba-a8f881471ba6 to Supabase, size: 5 bytes, room: default, mime: image/png
+# [reupload-client] Upload successful, publicUrl: https://storage.test/851012c1-1eb5-4a01-a9dd-527e1eba75b6/fixture.png
+# [reupload-client] Database update failed for image 42dec626-d404-4e38-a8ba-a8f881471ba6: Error: Fixture database outage
+#     at Proxy.<anonymous> (C:\\Users\\bpras\\.codex\\worktrees\\rollout-hardening\\folio-mvp\\scripts\\persistence\\integrity.test.cjs:260:172)
+#     at POST (C:\\Users\\bpras\\.codex\\worktrees\\rollout-hardening\\folio-mvp\\src\\app\\api\\projects\\[id]\\images\\reupload-client\\route.ts:99:33)
+#     at async TestContext.<anonymous> (C:\\Users\\bpras\\.codex\\worktrees\\rollout-hardening\\folio-mvp\\scripts\\persistence\\integrity.test.cjs:262:18)
+#     at async Test.run (node:internal/test_runner/test:1054:7)
+#     at async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+# DEBUG: Entering JWT callback
+# DEBUG: JWT callback - Setting token.id: 705c00fd-c15e-4425-a463-29ac6ceee77f
+# Hydrated from DB - role: DESIGNER accountStatus: APPROVED subscriptionTier: FREE isFoundingDesigner: false
+# DEBUG: Session callback — token.role: DESIGNER token.id: 705c00fd-c15e-4425-a463-29ac6ceee77f token.accountStatus: APPROVED operatingAsOrgId: null subscriptionTier: FREE isFoundingDesigner: false
+# DEBUG: Session callback - Setting session.user.id: 705c00fd-c15e-4425-a463-29ac6ceee77f
+# [reupload-client] Uploading image 42dec626-d404-4e38-a8ba-a8f881471ba6 to Supabase, size: 5 bytes, room: default, mime: image/png
+# [reupload-client] Upload successful, publicUrl: https://storage.test/851012c1-1eb5-4a01-a9dd-527e1eba75b6/fixture.png
+# [reupload-client] Database updated successfully for image 42dec626-d404-4e38-a8ba-a8f881471ba6
+# [reupload-client] Successfully re-uploaded image 42dec626-d404-4e38-a8ba-a8f881471ba6 to Supabase: https://storage.test/851012c1-1eb5-4a01-a9dd-527e1eba75b6/fixture.png
+# DEBUG: Entering JWT callback
+# DEBUG: JWT callback - Setting token.id: 5d8aa5ad-8b5a-4619-ba41-b5dac5bbdac6
+# Hydrated from DB - role: DESIGNER accountStatus: APPROVED subscriptionTier: FREE isFoundingDesigner: false
+# Subtest: image reupload cannot acknowledge a failed database write and forbids other users
+ok 28 - image reupload cannot acknowledge a failed database write and forbids other users
+  ---
+  duration_ms: 334.4055
+  type: 'test'
+  ...
+# DEBUG: Session callback — token.role: DESIGNER token.id: 5d8aa5ad-8b5a-4619-ba41-b5dac5bbdac6 token.accountStatus: APPROVED operatingAsOrgId: null subscriptionTier: FREE isFoundingDesigner: false
+# DEBUG: Session callback - Setting session.user.id: 5d8aa5ad-8b5a-4619-ba41-b5dac5bbdac6
+# DEBUG: Entering JWT callback
+# DEBUG: JWT callback - Setting token.id: 5d8aa5ad-8b5a-4619-ba41-b5dac5bbdac6
+# Hydrated from DB - role: DESIGNER accountStatus: APPROVED subscriptionTier: FREE isFoundingDesigner: false
+# DEBUG: Session callback — token.role: DESIGNER token.id: 5d8aa5ad-8b5a-4619-ba41-b5dac5bbdac6 token.accountStatus: APPROVED operatingAsOrgId: null subscriptionTier: FREE isFoundingDesigner: false
+# DEBUG: Session callback - Setting session.user.id: 5d8aa5ad-8b5a-4619-ba41-b5dac5bbdac6
+# DEBUG: Entering JWT callback
+# DEBUG: JWT callback - Setting token.id: b50c4d01-d17b-40a2-927a-801e58f2e133
+# Hydrated from DB - role: ADMIN accountStatus: APPROVED subscriptionTier: FREE isFoundingDesigner: false
+# DEBUG: Session callback — token.role: ADMIN token.id: b50c4d01-d17b-40a2-927a-801e58f2e133 token.accountStatus: APPROVED operatingAsOrgId: null subscriptionTier: FREE isFoundingDesigner: false
+# DEBUG: Session callback - Setting session.user.id: b50c4d01-d17b-40a2-927a-801e58f2e133
+# DEBUG: Entering JWT callback
+# DEBUG: JWT callback - Setting token.id: 0a1408f1-e845-4ee1-92af-40f14acc6d7b
+# Hydrated from DB - role: DESIGNER accountStatus: APPROVED subscriptionTier: FREE isFoundingDesigner: false
+# Subtest: admin export notice checks database role; no export data is returned
+ok 29 - admin export notice checks database role; no export data is returned
+  ---
+  duration_ms: 447.122
+  type: 'test'
+  ...
+# DEBUG: Session callback — token.role: DESIGNER token.id: 0a1408f1-e845-4ee1-92af-40f14acc6d7b token.accountStatus: APPROVED operatingAsOrgId: null subscriptionTier: FREE isFoundingDesigner: false
+# DEBUG: Session callback - Setting session.user.id: 0a1408f1-e845-4ee1-92af-40f14acc6d7b
+# DEBUG: Entering JWT callback
+# DEBUG: JWT callback - Setting token.id: 24c3226e-6cf3-4caa-afef-978e28f4f9a9
+# Hydrated from DB - role: DESIGNER accountStatus: APPROVED subscriptionTier: FREE isFoundingDesigner: false
+# DEBUG: Session callback — token.role: DESIGNER token.id: 24c3226e-6cf3-4caa-afef-978e28f4f9a9 token.accountStatus: APPROVED operatingAsOrgId: null subscriptionTier: FREE isFoundingDesigner: false
+# DEBUG: Session callback - Setting session.user.id: 24c3226e-6cf3-4caa-afef-978e28f4f9a9
+# DEBUG: Entering JWT callback
+# DEBUG: JWT callback - Setting token.id: 0a1408f1-e845-4ee1-92af-40f14acc6d7b
+# Hydrated from DB - role: DESIGNER accountStatus: APPROVED subscriptionTier: FREE isFoundingDesigner: false
+# DEBUG: Session callback — token.role: DESIGNER token.id: 0a1408f1-e845-4ee1-92af-40f14acc6d7b token.accountStatus: APPROVED operatingAsOrgId: null subscriptionTier: FREE isFoundingDesigner: false
+# DEBUG: Session callback - Setting session.user.id: 0a1408f1-e845-4ee1-92af-40f14acc6d7b
+# DEBUG: Entering JWT callback
+# DEBUG: JWT callback - Setting token.id: 54214d07-b60d-4140-a173-d0ad97c443f6
+# Hydrated from DB - role: DESIGNER accountStatus: APPROVED subscriptionTier: FREE isFoundingDesigner: false
+# Subtest: canonical recorded upload still writes storage then MediaAsset and InterviewSession
+ok 30 - canonical recorded upload still writes storage then MediaAsset and InterviewSession
+  ---
+  duration_ms: 81.7497
+  type: 'test'
+  ...
+# DEBUG: Session callback — token.role: DESIGNER token.id: 54214d07-b60d-4140-a173-d0ad97c443f6 token.accountStatus: APPROVED operatingAsOrgId: null subscriptionTier: FREE isFoundingDesigner: false
+# DEBUG: Session callback - Setting session.user.id: 54214d07-b60d-4140-a173-d0ad97c443f6
+# DEBUG: Entering JWT callback
+# DEBUG: JWT callback - Setting token.id: 350f162c-b3ef-4074-a1a1-4b8d09a97e0d
+# Hydrated from DB - role: DESIGNER accountStatus: APPROVED subscriptionTier: FREE isFoundingDesigner: false
+# DEBUG: Session callback — token.role: DESIGNER token.id: 350f162c-b3ef-4074-a1a1-4b8d09a97e0d token.accountStatus: APPROVED operatingAsOrgId: null subscriptionTier: FREE isFoundingDesigner: false
+# DEBUG: Session callback - Setting session.user.id: 350f162c-b3ef-4074-a1a1-4b8d09a97e0d
+# DEBUG: Entering JWT callback
+# DEBUG: JWT callback - Setting token.id: 54214d07-b60d-4140-a173-d0ad97c443f6
+# Hydrated from DB - role: DESIGNER accountStatus: APPROVED subscriptionTier: FREE isFoundingDesigner: false
+# DEBUG: Session callback — token.role: DESIGNER token.id: 54214d07-b60d-4140-a173-d0ad97c443f6 token.accountStatus: APPROVED operatingAsOrgId: null subscriptionTier: FREE isFoundingDesigner: false
+# DEBUG: Session callback - Setting session.user.id: 54214d07-b60d-4140-a173-d0ad97c443f6
+# [Email] No RESEND_API_KEY — skipping email to fixture@example.test: Fixture
+# [Email] No RESEND_API_KEY — skipping proxy email to fixture@example.test: Fixture
+# Subtest: upgrade requests retain requested details for claimed organizations and reject nonmembers
+ok 31 - upgrade requests retain requested details for claimed organizations and reject nonmembers
+  ---
+  duration_ms: 41.682
+  type: 'test'
+  ...
+# Subtest: missing email configuration never acknowledges sending
+ok 32 - missing email configuration never acknowledges sending
+  ---
+  duration_ms: 20.0115
+  type: 'test'
+  ...
+# Subtest: retired analytics, invitation and QBR surfaces render notices without fictional account data
+ok 33 - retired analytics, invitation and QBR surfaces render notices without fictional account data
+  ---
+  duration_ms: 63.0258
+  type: 'test'
+  ...
+# Subtest: retained vendor sample analytics are explicitly labeled as fictional demo data
+ok 34 - retained vendor sample analytics are explicitly labeled as fictional demo data
+  ---
+  duration_ms: 255.8537
+  type: 'test'
+  ...
+1..34
+# tests 34
+# suites 0
+# pass 34
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 3854.1877

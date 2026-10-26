@@ -1,0 +1,95 @@
+TAP version 13
+# DEBUG: NextAuth Environment Check
+# NEXTAUTH_SECRET exists: true
+# NEXTAUTH_SECRET length: 30
+# NEXTAUTH_URL: http://folio.test
+# Current working directory: C:\\Users\\bpras\\.codex\\worktrees\\rollout-hardening\\folio-mvp
+# Environment variables loaded: [ 'NEXTAUTH_SECRET', 'NEXTAUTH_URL' ]
+# Subtest: actual image bytes across private storage HTTP, project visibility, revocation and concurrent upload cleanup
+    # Subtest: two immutable uploads share one private object; anonymous bucket URLs cannot read its bytes
+    ok 1 - two immutable uploads share one private object; anonymous bucket URLs cannot read its bytes
+      ---
+      duration_ms: 147.8062
+      type: 'test'
+      ...
+    # Subtest: authorized owner and viewer receive sanitized bytes; stranger and revoked participant do not
+    ok 2 - authorized owner and viewer receive sanitized bytes; stranger and revoked participant do not
+      ---
+      duration_ms: 95.6874
+      type: 'test'
+      ...
+    # Subtest: publication serves bytes; exclusion, unpublishing and deletion revoke the same URL and tag query
+    ok 3 - publication serves bytes; exclusion, unpublishing and deletion revoke the same URL and tag query
+      ---
+      duration_ms: 88.1115
+      type: 'test'
+      ...
+    # Subtest: private crops follow source visibility and a stale generation cannot attach after a move
+    ok 4 - private crops follow source visibility and a stale generation cannot attach after a move
+      ---
+      duration_ms: 178.3275
+      type: 'test'
+      ...
+    # Subtest: legacy copy-before-switch preserves a shared import and permits an isolated reference rollback
+    ok 5 - legacy copy-before-switch preserves a shared import and permits an isolated reference rollback
+      ---
+      duration_ms: 124.7961
+      type: 'test'
+      ...
+    # Subtest: public/missing bucket configuration fails closed before new writes
+    ok 6 - public/missing bucket configuration fails closed before new writes
+      ---
+      duration_ms: 22.6116
+      type: 'test'
+      ...
+# prisma:error 
+# Invalid `prisma.projectImage.create()` invocation in
+# C:\\Users\\bpras\\.codex\\worktrees\\rollout-hardening\\folio-mvp\\src\\app\\api\\projects\\[id]\\images\\route.ts:76:45
+#   73 const url = stored.publicUrl;
+#   74 
+#   75 // Create ProjectImage record
+# → 76 const image = await prisma.projectImage.create(
+# Error occurred during query execution:
+# ConnectorError(ConnectorError { user_facing_error: None, kind: QueryError(PostgresError { code: "P0001", message: "rollout forced image write failure", severity: "ERROR", detail: None, column: None, hint: None }), transient: false })
+# [POST /api/projects/[id]/images] Error: PrismaClientUnknownRequestError: 
+# Invalid `prisma.projectImage.create()` invocation in
+# C:\\Users\\bpras\\.codex\\worktrees\\rollout-hardening\\folio-mvp\\src\\app\\api\\projects\\[id]\\images\\route.ts:76:45
+#   73 const url = stored.publicUrl;
+#   74 
+#   75 // Create ProjectImage record
+# → 76 const image = await prisma.projectImage.create(
+# Error occurred during query execution:
+# ConnectorError(ConnectorError { user_facing_error: None, kind: QueryError(PostgresError { code: "P0001", message: "rollout forced image write failure", severity: "ERROR", detail: None, column: None, hint: None }), transient: false })
+#     at ei.handleRequestError (C:\\Users\\bpras\\.codex\\worktrees\\rollout-hardening\\folio-mvp\\node_modules\\@prisma\\client\\src\\runtime\\RequestHandler.ts:237:13)
+#     at ei.handleAndLogRequestError (C:\\Users\\bpras\\.codex\\worktrees\\rollout-hardening\\folio-mvp\\node_modules\\@prisma\\client\\src\\runtime\\RequestHandler.ts:174:12)
+#     at ei.request (C:\\Users\\bpras\\.codex\\worktrees\\rollout-hardening\\folio-mvp\\node_modules\\@prisma\\client\\src\\runtime\\RequestHandler.ts:143:12)
+#     at async a (C:\\Users\\bpras\\.codex\\worktrees\\rollout-hardening\\folio-mvp\\node_modules\\@prisma\\client\\src\\runtime\\getPrismaClient.ts:833:24)
+#     at async Object.POST (C:\\Users\\bpras\\.codex\\worktrees\\rollout-hardening\\folio-mvp\\src\\app\\api\\projects\\[id]\\images\\route.ts:76:19)
+#     at async Promise.all (index 0)
+#     at async TestContext.<anonymous> (C:\\Users\\bpras\\.codex\\worktrees\\rollout-hardening\\folio-mvp\\scripts\\rollout\\privacy-storage.test.cjs:136:27)
+#     at async Test.run (node:internal/test_runner/test:1054:7)
+#     at async TestContext.<anonymous> (C:\\Users\\bpras\\.codex\\worktrees\\rollout-hardening\\folio-mvp\\scripts\\rollout\\privacy-storage.test.cjs:127:5)
+#     at async Test.run (node:internal/test_runner/test:1054:7) {
+#   clientVersion: '6.18.0'
+# }
+    # Subtest: concurrent request failure cannot delete the successful request’s object; replay retains metadata
+    ok 7 - concurrent request failure cannot delete the successful request’s object; replay retains metadata
+      ---
+      duration_ms: 122.6365
+      type: 'test'
+      ...
+    1..7
+ok 1 - actual image bytes across private storage HTTP, project visibility, revocation and concurrent upload cleanup
+  ---
+  duration_ms: 3080.6192
+  type: 'test'
+  ...
+1..1
+# tests 8
+# suites 0
+# pass 8
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 3542.5953

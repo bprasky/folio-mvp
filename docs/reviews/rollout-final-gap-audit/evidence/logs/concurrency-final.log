@@ -1,0 +1,87 @@
+TAP version 13
+# DEBUG: NextAuth Environment Check
+# NEXTAUTH_SECRET exists: true
+# NEXTAUTH_SECRET length: 35
+# NEXTAUTH_URL: http://folio.test
+# Current working directory: C:\\Users\\bpras\\.codex\\worktrees\\rollout-hardening\\folio-mvp
+# Environment variables loaded: [ 'NEXTAUTH_SECRET', 'NEXTAUTH_URL' ]
+# Subtest: rollout independent PostgreSQL workers: atomic credits, creation identity, tag/selection consistency and cascades
+    # Subtest: simultaneous project creates have one committed project and one credit record; lost acknowledgement replays
+    ok 1 - simultaneous project creates have one committed project and one credit record; lost acknowledgement replays
+      ---
+      duration_ms: 1646.3554
+      type: 'test'
+      ...
+    # Subtest: credit failure rolls the project back; same request succeeds after recovery
+    ok 2 - credit failure rolls the project back; same request succeeds after recovery
+      ---
+      duration_ms: 47.8275
+      type: 'test'
+      ...
+    # Subtest: room retries coalesce across workers; changed payload conflicts; a fresh operation allows the same name
+    ok 3 - room retries coalesce across workers; changed payload conflicts; a fresh operation allows the same name
+      ---
+      duration_ms: 46.7703
+      type: 'test'
+      ...
+    # Subtest: competing tag moves commit one location and its linked selection; stale and bare requests cannot overwrite
+    ok 4 - competing tag moves commit one location and its linked selection; stale and bare requests cannot overwrite
+      ---
+      duration_ms: 216.6921
+      type: 'test'
+      ...
+# DEBUG: Entering JWT callback
+# DEBUG: JWT callback - Setting token.id: 45844431-29b4-4622-89f4-a73fe58458ca
+    # Subtest: selection-write failure rolls back the tag and target review state
+    ok 5 - selection-write failure rolls back the tag and target review state
+      ---
+      duration_ms: 41.9808
+      type: 'test'
+      ...
+# Hydrated from DB - role: DESIGNER accountStatus: APPROVED subscriptionTier: FREE isFoundingDesigner: false
+# DEBUG: Session callback — token.role: DESIGNER token.id: 45844431-29b4-4622-89f4-a73fe58458ca token.accountStatus: APPROVED operatingAsOrgId: null subscriptionTier: FREE isFoundingDesigner: false
+# DEBUG: Session callback - Setting session.user.id: 45844431-29b4-4622-89f4-a73fe58458ca
+# [interview/POST] Clear check: {
+#   cleanedAnswersLength: 3,
+#   cleanedFollowupsLength: 0,
+#   clearAllRequested: false,
+#   shouldClearSelectedQuestions: false,
+#   incomingSelectedQuestionIds: 3
+# }
+# [interview/POST] Final payload: { selectedQuestionIdsCount: 3, answersCount: 3, followupsCount: 0 }
+# [QUESTION_GEN] Starting per-room generation for project b6bd9f16-2de9-56ec-b350-9f5572a0d587
+# [Interview Context] Missing vendor for selection 57734de0-1b1e-466b-b90f-98bc28c7f317 (product: Core Chair) — data quality issue
+# [QUESTION_GEN] Rooms: Living, Living | Computing budgets...
+# [QUESTION_GEN] Total budget: 6 { perRoom: 'Living=3, Living=3' }
+# [QUESTION_GEN] Living: budget=3, images=0, tags=0
+# [QUESTION_GEN] Living: budget=3, images=0, tags=0
+# [QUESTION_GEN] Living: FAILED - Cannot read properties of undefined (reading 'includes')
+# [QUESTION_GEN] Living: FAILED - Cannot read properties of undefined (reading 'includes')
+# [QUESTION_GEN] Complete: 0 questions across 2 rooms
+    # Subtest: competing generators: expired worker cannot save over or unlock a newer lease
+    ok 6 - competing generators: expired worker cannot save over or unlock a newer lease
+      ---
+      duration_ms: 3735.4381
+      type: 'test'
+      ...
+    # Subtest: project deletion cascades through rooms, tags, images, linked selections and credits
+    ok 7 - project deletion cascades through rooms, tags, images, linked selections and credits
+      ---
+      duration_ms: 81.0943
+      type: 'test'
+      ...
+    1..7
+ok 1 - rollout independent PostgreSQL workers: atomic credits, creation identity, tag/selection consistency and cascades
+  ---
+  duration_ms: 6053.7339
+  type: 'test'
+  ...
+1..1
+# tests 8
+# suites 0
+# pass 8
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 7137.792

@@ -1,0 +1,671 @@
+{
+  "applicationCommit": "70636d1f0a33f8e51e99c96b281bc680632e864a",
+  "finalTestCommit": "5c1d99a87e0fd6e65cd2b2f6a0c0a0e2bfd14994",
+  "baseCommit": "1020fef5a5970d9d3abaf3034c410d1dc5569227",
+  "recordedAt": "2026-10-26T22:01:07.549Z",
+  "sourceState": "Application source is unchanged after 70636d1f. Earlier combined runs used the working tree captured in that commit. 2ccafea5 adds test-only secure-cookie/mobile/nested-dialog and room fixtures; 5c1d99a8 adds pure-test dependency boundaries. Final desktop/mobile runs use committed 5c1d99a8. README and evidence were uncommitted during tests; generated .tmp and unrelated generated review output are excluded. No schema/package/baseline diff.",
+  "environment": {
+    "node": "v22.17.0",
+    "postgresql": "18.6 native",
+    "pgvector": "0.8.1",
+    "redis": "8.4.2 native with test-only Upstash HTTP adapter",
+    "next": "14.2.33",
+    "chromeExecutable": "C:/Program Files/Google/Chrome/Application/chrome.exe",
+    "CORE_TEST_DATABASE_URL": "postgresql://folio_test@127.0.0.1:55440/folio_rollout_test",
+    "CORE_TEST_DATABASE_DISPOSABLE": "1",
+    "DATABASE_URL": "unset for core/connected disposable gate; explicitly local for build/db guard",
+    "DIRECT_URL": "same handling as DATABASE_URL",
+    "network": "connected app non-loopback requests blocked; email disabled; local model/storage fixtures only"
+  },
+  "requiredSkips": 0,
+  "runs": [
+    {
+      "command": "node scripts/core/run-db.cjs",
+      "result": "37 pass / 0 fail / 0 skip",
+      "boundary": "native PostgreSQL; safety + journeys + designer authorization",
+      "exit": 0,
+      "log": "logs/core-final.log"
+    },
+    {
+      "command": "node --import tsx --test scripts/core/rollout-concurrency.test.cjs",
+      "result": "8 pass / 0 skip",
+      "boundary": "independent processes/connections; native PostgreSQL",
+      "exit": 0,
+      "log": "logs/concurrency-final.log"
+    },
+    {
+      "command": "node --import tsx --test scripts/rollout/privacy-storage.test.cjs",
+      "result": "8 pass / 0 skip",
+      "boundary": "native PostgreSQL, real bytes/HTTP/Sharp; synthetic storage policy",
+      "exit": 0,
+      "log": "logs/privacy-final.log"
+    },
+    {
+      "command": "node scripts/rollout/connected-journey.cjs",
+      "result": "12 groups pass",
+      "boundary": "actual Next/session/PostgreSQL/Redis; synthetic model/storage HTTP",
+      "exit": 0,
+      "log": "logs/connected-desktop-final.log",
+      "environment": {
+        "ROLLOUT_EVIDENCE_DIR": ".tmp/connected-desktop-final",
+        "ROLLOUT_MOBILE": "unset"
+      }
+    },
+    {
+      "command": "node scripts/rollout/connected-journey.cjs",
+      "result": "12 groups pass",
+      "boundary": "same real boundaries, starts at 390px with simulated touch",
+      "exit": 0,
+      "log": "logs/connected-mobile-final.log",
+      "environment": {
+        "ROLLOUT_EVIDENCE_DIR": ".tmp/connected-mobile-final",
+        "ROLLOUT_MOBILE": "1"
+      }
+    },
+    {
+      "command": "node scripts/rollout/photo-intake.cjs",
+      "result": "pass; 41.55 dB fixture preview PSNR",
+      "boundary": "real Chrome, canvas, Sharp; synthetic high-detail source",
+      "exit": 0,
+      "log": "logs/photo-intake.log"
+    },
+    {
+      "command": "node scripts/check-responsive-journey.cjs",
+      "result": "115 entries, no overflow/errors; 11 behavioral groups",
+      "boundary": "actual components/CSS/fonts, synthetic HTTP/auth",
+      "exit": 0,
+      "log": "logs/responsive-second.log",
+      "environment": {
+        "RESPONSIVE_REVIEW_DIR": ".tmp/responsive-final",
+        "RESPONSIVE_QUICK": "unset"
+      }
+    },
+    {
+      "command": "node scripts/check-responsive-journey.cjs",
+      "result": "27 entries, no overflow/errors; 12 behavioral groups",
+      "boundary": "nested dialog/dirty guard added after full sweep; same application source",
+      "exit": 0,
+      "log": "logs/responsive-nested.log",
+      "environment": {
+        "RESPONSIVE_REVIEW_DIR": ".tmp/responsive-nested",
+        "RESPONSIVE_QUICK": "1"
+      }
+    },
+    {
+      "command": "node scripts/check-designer-interruptions.cjs",
+      "result": "7 groups pass",
+      "boundary": "browser components; synthetic HTTP",
+      "exit": 0,
+      "log": "logs/interruptions-final.log"
+    },
+    {
+      "command": "node scripts/check-manual-rooms-browser.cjs",
+      "result": "6 groups pass",
+      "boundary": "browser components; synthetic HTTP",
+      "exit": 0,
+      "log": "logs/rooms-final.log"
+    },
+    {
+      "command": "node scripts/check-project-setup-browser.cjs",
+      "result": "7 groups pass",
+      "boundary": "browser components; synthetic HTTP",
+      "exit": 0,
+      "log": "logs/setup-final.log"
+    },
+    {
+      "command": "node scripts/check-project-draft-browser.cjs",
+      "result": "desktop/mobile pass",
+      "boundary": "browser components; synthetic HTTP",
+      "exit": 0,
+      "log": "logs/manual-draft.log"
+    },
+    {
+      "command": "node scripts/check-project-completion-date.cjs",
+      "result": "14 checks pass",
+      "boundary": "real validators/query handlers, synthetic persistence",
+      "exit": 0,
+      "log": "logs/completion-date.log"
+    },
+    {
+      "command": "npm run test:persistence",
+      "result": "34 pass / 0 skip",
+      "boundary": "fixture persistence suite",
+      "exit": 0,
+      "log": "logs/persistence-combined.log"
+    },
+    {
+      "command": "npm run test:interruptions",
+      "result": "pass",
+      "boundary": "synthetic transport/provider",
+      "exit": 0,
+      "log": "logs/interruptions-unit.log"
+    },
+    {
+      "command": "npm run test:project-guide",
+      "result": "pass",
+      "boundary": "synthetic transport/provider",
+      "exit": 0,
+      "log": "logs/project-guide-regression.log"
+    },
+    {
+      "command": "npm run test:rollout",
+      "result": "pass",
+      "boundary": "handler/transport/public projection fixtures",
+      "exit": 0,
+      "log": "logs/rollout-regression.log"
+    },
+    {
+      "command": "npm run test:guided",
+      "result": "pass",
+      "boundary": "synthetic provider/HTTP",
+      "exit": 0,
+      "log": "logs/guided-combined.log"
+    },
+    {
+      "command": "npm run test:guided:browser",
+      "result": "pass, including 17 entry regressions",
+      "boundary": "browser components; synthetic provider/HTTP",
+      "exit": 0,
+      "log": "logs/guided-browser-final.log"
+    },
+    {
+      "command": "node scripts/check-project-guide-browser.cjs",
+      "result": "26 composed checks pass",
+      "boundary": "browser components; synthetic HTTP",
+      "exit": 0,
+      "log": "logs/guide-browser-final.log"
+    },
+    {
+      "command": "node scripts/check-rollout-recovery-browser.cjs",
+      "result": "390px and 1440px pass",
+      "boundary": "browser components; synthetic HTTP",
+      "exit": 0,
+      "log": "logs/recovery-browser-final.log"
+    },
+    {
+      "command": "npm run test:live",
+      "result": "52 transport and 46 browser/capture checks pass",
+      "boundary": "synthetic provider and recording bytes",
+      "exit": 0,
+      "log": "logs/live-regression.log"
+    },
+    {
+      "command": "node scripts/check-carousel-persistence.cjs",
+      "result": "pass",
+      "boundary": "synthetic database/model boundaries; native export covered by connected test",
+      "exit": 0,
+      "log": "logs/carousel-final.log"
+    },
+    {
+      "command": "node scripts/check-readiness-service.cjs",
+      "result": "pass",
+      "boundary": "synthetic service boundaries",
+      "exit": 0,
+      "log": "logs/readiness-service-final.log"
+    },
+    {
+      "command": "node scripts/check-readiness-engine.cjs",
+      "result": "pass",
+      "boundary": "pure readiness calculation; image/provider calls forbidden",
+      "exit": 0,
+      "log": "logs/readiness-engine-final.log"
+    },
+    {
+      "command": "node --experimental-vm-modules scripts/check-project-list-privacy.cjs",
+      "result": "6 checks pass",
+      "boundary": "real GET/filter, synthetic auth/Prisma",
+      "exit": 0,
+      "log": "logs/project-list-final.log"
+    },
+    {
+      "command": "node scripts/check-campaign-readiness.cjs",
+      "result": "pass",
+      "boundary": "source/readiness fixtures",
+      "exit": 0,
+      "log": "logs/check-campaign-readiness.cjs.log"
+    },
+    {
+      "command": "node scripts/check-carousel-page.cjs",
+      "result": "pass",
+      "boundary": "persisted-page fixtures",
+      "exit": 0,
+      "log": "logs/check-carousel-page.cjs.log"
+    },
+    {
+      "command": "node scripts/check-social-generation-route.cjs",
+      "result": "pass",
+      "boundary": "real route, synthetic provider",
+      "exit": 0,
+      "log": "logs/check-social-generation-route.cjs.log"
+    },
+    {
+      "command": "node node_modules/tsx/dist/cli.mjs --test scripts/core/project-draft.test.cjs",
+      "result": "4 pass / 0 skip",
+      "boundary": "client writer fixtures",
+      "exit": 0,
+      "log": "logs/project-draft.test.log"
+    },
+    {
+      "command": "node node_modules/tsx/dist/cli.mjs --test scripts/core/firm-posting-policy.test.cjs",
+      "result": "5 pass / 0 skip",
+      "boundary": "permission matrix fixtures",
+      "exit": 0,
+      "log": "logs/firm-posting-policy.test.log"
+    },
+    {
+      "command": "npm run typecheck:prepare",
+      "result": "pass with existing warnings",
+      "boundary": "Prisma generation + Next compiled route types",
+      "exit": 0,
+      "log": "logs/typecheck-prepare-final.log"
+    },
+    {
+      "command": "npm run typecheck",
+      "result": "pass; 867 diagnostics / unchanged baseline 880",
+      "boundary": "prepared debt ratchet; not zero diagnostics",
+      "exit": 0,
+      "log": "logs/typecheck-final.log"
+    },
+    {
+      "command": "npm run lint",
+      "result": "pass with existing warnings",
+      "boundary": "full repository lint",
+      "exit": 0,
+      "log": "logs/lint-final.log"
+    },
+    {
+      "command": "npm run guard:client-imports",
+      "result": "pass",
+      "boundary": "client/server boundary guard",
+      "exit": 0,
+      "log": "logs/client-guard.log"
+    },
+    {
+      "command": "npm run db:guard",
+      "result": "pass",
+      "boundary": "explicit disposable database; db-push schema, not production migration history",
+      "exit": 0,
+      "log": "logs/db-guard-local.log"
+    },
+    {
+      "command": "node scripts/phase5e-check-plan.mjs --ci",
+      "result": "pass; 32/32 loose SQL, 0 phantom/missing/non-idempotent",
+      "boundary": "unchanged repository baseline",
+      "exit": 0,
+      "log": "logs/migration-discipline-final.log"
+    }
+  ],
+  "artifacts": [
+    {
+      "source": ".tmp/core-final.log",
+      "destination": "evidence/logs/core-final.log",
+      "bytes": 92960,
+      "sha256": "124bd07acaf7cc69bfb0f50e258bc5d844db6670851b592ddec0e7183faefbf4",
+      "capturedAt": "2026-10-26T21:53:47.777Z"
+    },
+    {
+      "source": ".tmp/concurrency-final.log",
+      "destination": "evidence/logs/concurrency-final.log",
+      "bytes": 4217,
+      "sha256": "27ea52a080974362e154a0499e8f9e9121184bf38542322a15388eceef2ef2bf",
+      "capturedAt": "2026-10-26T21:53:54.995Z"
+    },
+    {
+      "source": ".tmp/privacy-final.log",
+      "destination": "evidence/logs/privacy-final.log",
+      "bytes": 5325,
+      "sha256": "8a1f1cc55dcfcfdbbe296c100a54d48e771a42fd4a51c7b0c86d945fd7c750f9",
+      "capturedAt": "2026-10-26T21:43:33.713Z"
+    },
+    {
+      "source": ".tmp/connected-desktop-final.log",
+      "destination": "evidence/logs/connected-desktop-final.log",
+      "bytes": 1285,
+      "sha256": "5afe86e04f80181ad8c0531919a3de022a64271e3531c5a4d7552a524b139c80",
+      "capturedAt": "2026-10-26T21:59:43.657Z"
+    },
+    {
+      "source": ".tmp/connected-mobile-final.log",
+      "destination": "evidence/logs/connected-mobile-final.log",
+      "bytes": 1285,
+      "sha256": "b093febb1838e49c9c6485a54fa3eb5421a29e3a94cf4ebaaffa8ab5c0ace127",
+      "capturedAt": "2026-10-26T22:00:14.154Z"
+    },
+    {
+      "source": ".tmp/photo-intake.log",
+      "destination": "evidence/logs/photo-intake.log",
+      "bytes": 318,
+      "sha256": "7860a5c13c467b179b70e9782670c7e59422a6b28b995d8d643f970fd8076004",
+      "capturedAt": "2026-10-26T21:26:34.109Z"
+    },
+    {
+      "source": ".tmp/responsive-second.log",
+      "destination": "evidence/logs/responsive-second.log",
+      "bytes": 1039,
+      "sha256": "f99e49f2b7e7f5931675e4b640ce21517018b5494634358e1cece6836bf7597f",
+      "capturedAt": "2026-10-26T21:33:49.142Z"
+    },
+    {
+      "source": ".tmp/responsive-nested.log",
+      "destination": "evidence/logs/responsive-nested.log",
+      "bytes": 1133,
+      "sha256": "c4cc6705c2a0eafa69f15e23ff4505dbedc49e8251bed1ceeef8b00fe61c3665",
+      "capturedAt": "2026-10-26T21:49:58.100Z"
+    },
+    {
+      "source": ".tmp/interruptions-final.log",
+      "destination": "evidence/logs/interruptions-final.log",
+      "bytes": 567,
+      "sha256": "48752b0702ff4dd5fe5757f8f5aaba5bf1711cc5e32e4c4719478205c56b1a79",
+      "capturedAt": "2026-10-26T21:43:58.066Z"
+    },
+    {
+      "source": ".tmp/rooms-final.log",
+      "destination": "evidence/logs/rooms-final.log",
+      "bytes": 580,
+      "sha256": "0b5032df2ccbb7ea36c2354729aeeecadb4662825230e053dff69ca83f9444cb",
+      "capturedAt": "2026-10-26T21:46:56.105Z"
+    },
+    {
+      "source": ".tmp/setup-final.log",
+      "destination": "evidence/logs/setup-final.log",
+      "bytes": 678,
+      "sha256": "7edbfd0cffe9e33a8606861a2423de803d5c716d0e08c11ff5497bce9884753e",
+      "capturedAt": "2026-10-26T21:46:59.641Z"
+    },
+    {
+      "source": ".tmp/manual-draft.log",
+      "destination": "evidence/logs/manual-draft.log",
+      "bytes": 187,
+      "sha256": "878b6fcfac2314a7f4a3d48980eea4c36003b88dc816841605e7809468e77d5b",
+      "capturedAt": "2026-10-26T21:35:14.741Z"
+    },
+    {
+      "source": ".tmp/completion-date.log",
+      "destination": "evidence/logs/completion-date.log",
+      "bytes": 1255,
+      "sha256": "43a8645f7137978a4ce356ba980b0ec3053048e4bcfe6ec1b96b5fab9dc0fc89",
+      "capturedAt": "2026-10-26T21:35:49.213Z"
+    },
+    {
+      "source": ".tmp/persistence-combined.log",
+      "destination": "evidence/logs/persistence-combined.log",
+      "bytes": 33426,
+      "sha256": "edb2062bbb0c947f2e70c93006857716f34dcd68e8add35c6149cf1153e3fa02",
+      "capturedAt": "2026-10-26T21:36:05.967Z"
+    },
+    {
+      "source": ".tmp/interruptions-unit.log",
+      "destination": "evidence/logs/interruptions-unit.log",
+      "bytes": 4039,
+      "sha256": "a5ed75826d796717668b6e266adbf3c9326ea6c55f4ac7c49f758766b07bb318",
+      "capturedAt": "2026-10-26T21:36:01.265Z"
+    },
+    {
+      "source": ".tmp/project-guide-regression.log",
+      "destination": "evidence/logs/project-guide-regression.log",
+      "bytes": 4284,
+      "sha256": "034004df9ba7c97f88b6e17dc1a35daa4fb4e9f8492c20642d952bafe6817de8",
+      "capturedAt": "2026-10-26T21:41:17.278Z"
+    },
+    {
+      "source": ".tmp/rollout-regression.log",
+      "destination": "evidence/logs/rollout-regression.log",
+      "bytes": 7949,
+      "sha256": "0d8e3adc27bb01be469e11754fa77b2a2524960dc7b4eabc42f870b9da2a9922",
+      "capturedAt": "2026-10-26T21:41:14.941Z"
+    },
+    {
+      "source": ".tmp/guided-combined.log",
+      "destination": "evidence/logs/guided-combined.log",
+      "bytes": 32107,
+      "sha256": "1604d49472acf8461b3ffce76ef3e4265226951b312d0ef851710ea18d2618bf",
+      "capturedAt": "2026-10-26T21:36:10.401Z"
+    },
+    {
+      "source": ".tmp/guided-browser-final.log",
+      "destination": "evidence/logs/guided-browser-final.log",
+      "bytes": 3288,
+      "sha256": "6e89a4dd7987710bd7c8de62c31290d10bdc4f06c8fd5eba21ee5f663245e944",
+      "capturedAt": "2026-10-26T21:41:39.917Z"
+    },
+    {
+      "source": ".tmp/guide-browser-final.log",
+      "destination": "evidence/logs/guide-browser-final.log",
+      "bytes": 2548,
+      "sha256": "5f6245c5ab5e283c5e34f869230e49e7b703ca1ccdb9e2767d7c459c0105afbc",
+      "capturedAt": "2026-10-26T21:55:06.449Z"
+    },
+    {
+      "source": ".tmp/recovery-browser-final.log",
+      "destination": "evidence/logs/recovery-browser-final.log",
+      "bytes": 143,
+      "sha256": "ebb6a0acefb63bd164d39c85bb2fa455f9aae5d96f4c56cf7c65b269a0b84e0e",
+      "capturedAt": "2026-10-26T21:55:08.436Z"
+    },
+    {
+      "source": ".tmp/live-regression.log",
+      "destination": "evidence/logs/live-regression.log",
+      "bytes": 18815,
+      "sha256": "a7ef5239253f0eea87122003c2fa97c27f12d6583524ea1e292edf1ef069745b",
+      "capturedAt": "2026-10-26T21:41:40.670Z"
+    },
+    {
+      "source": ".tmp/carousel-final.log",
+      "destination": "evidence/logs/carousel-final.log",
+      "bytes": 172,
+      "sha256": "96e8989f8b794240c11508c0214e0ac82dbbf65fddaf0f5010d991d21f100a52",
+      "capturedAt": "2026-10-26T21:42:36.260Z"
+    },
+    {
+      "source": ".tmp/readiness-service-final.log",
+      "destination": "evidence/logs/readiness-service-final.log",
+      "bytes": 165,
+      "sha256": "bbf1521d6dba276ec09291d80941668ce78e9f5d01ef6db34fd1a31404d47179",
+      "capturedAt": "2026-10-26T21:41:41.926Z"
+    },
+    {
+      "source": ".tmp/readiness-engine-final.log",
+      "destination": "evidence/logs/readiness-engine-final.log",
+      "bytes": 158,
+      "sha256": "8e6dea08ddaf61d9022ad40afc23344bd5e44ffaa341bc5e7846486603acf2f1",
+      "capturedAt": "2026-10-26T21:58:42.389Z"
+    },
+    {
+      "source": ".tmp/project-list-final.log",
+      "destination": "evidence/logs/project-list-final.log",
+      "bytes": 660,
+      "sha256": "699db00ff5c95381e94e307e4d2a6bfb254d9c72ea341853bcd6ef7aab54517b",
+      "capturedAt": "2026-10-26T21:59:00.003Z"
+    },
+    {
+      "source": ".tmp/check-campaign-readiness.cjs.log",
+      "destination": "evidence/logs/check-campaign-readiness.cjs.log",
+      "bytes": 136,
+      "sha256": "dce2bd426843d6533fca7ddcf629c5b6b4d91519503b0cce8eebcfe447ca4b0c",
+      "capturedAt": "2026-10-26T21:54:50.155Z"
+    },
+    {
+      "source": ".tmp/check-carousel-page.cjs.log",
+      "destination": "evidence/logs/check-carousel-page.cjs.log",
+      "bytes": 152,
+      "sha256": "7a206fd0acba3ce9929e3128f44be54915855f6fc44bc0c043790ab1db794e4c",
+      "capturedAt": "2026-10-26T21:54:50.463Z"
+    },
+    {
+      "source": ".tmp/check-social-generation-route.cjs.log",
+      "destination": "evidence/logs/check-social-generation-route.cjs.log",
+      "bytes": 132,
+      "sha256": "cb2e6dfd50cf0de7a93504e22946cac5340c80adf8090e4ed0112b5b4e0f3b93",
+      "capturedAt": "2026-10-26T21:54:50.755Z"
+    },
+    {
+      "source": ".tmp/project-draft.test.log",
+      "destination": "evidence/logs/project-draft.test.log",
+      "bytes": 999,
+      "sha256": "fce364960458c591bbdfe62cdf8e0e8374c853c3f664d96b12a08ec33525726e",
+      "capturedAt": "2026-10-26T21:54:51.657Z"
+    },
+    {
+      "source": ".tmp/firm-posting-policy.test.log",
+      "destination": "evidence/logs/firm-posting-policy.test.log",
+      "bytes": 1410,
+      "sha256": "cbb4b441bc616e292e3b6d2da66a0761a80f097439a3d783338d8fc995a3fab5",
+      "capturedAt": "2026-10-26T21:54:52.956Z"
+    },
+    {
+      "source": ".tmp/typecheck-prepare-final.log",
+      "destination": "evidence/logs/typecheck-prepare-final.log",
+      "bytes": 30550,
+      "sha256": "183d4d145cb5dfb1f9df5c6d187b492096ce82f85eb3abaa828e3cb04efd07cb",
+      "capturedAt": "2026-10-26T21:41:43.238Z"
+    },
+    {
+      "source": ".tmp/typecheck-final.log",
+      "destination": "evidence/logs/typecheck-final.log",
+      "bytes": 909,
+      "sha256": "9514c80abfd517fced3276c9781fa0c9470b58c592c38fcee9ae851c6941c0f5",
+      "capturedAt": "2026-10-26T21:43:16.865Z"
+    },
+    {
+      "source": ".tmp/lint-final.log",
+      "destination": "evidence/logs/lint-final.log",
+      "bytes": 382876,
+      "sha256": "d7dcc2e9ba27a870466c617ed79f3c99834ca47e008ef074cb4c848149526b20",
+      "capturedAt": "2026-10-26T21:40:08.275Z"
+    },
+    {
+      "source": ".tmp/client-guard.log",
+      "destination": "evidence/logs/client-guard.log",
+      "bytes": 427,
+      "sha256": "0b62e3abe2961d125f55964b54c73a7eef6a9526e655a5634b577a38653bc23a",
+      "capturedAt": "2026-10-26T21:40:11.319Z"
+    },
+    {
+      "source": ".tmp/db-guard-local.log",
+      "destination": "evidence/logs/db-guard-local.log",
+      "bytes": 5724,
+      "sha256": "0ca4fbb493ab033be97bf859cf2cdc5d16f8eaf8962b0dd6f4aa8d4bc6bff8d1",
+      "capturedAt": "2026-10-26T21:40:39.367Z"
+    },
+    {
+      "source": ".tmp/migration-discipline-final.log",
+      "destination": "evidence/logs/migration-discipline-final.log",
+      "bytes": 125,
+      "sha256": "c79169a1d2f55e4ee8f0ce255bc759d99fe5840467b48ffcf7b8e91b12dbb24b",
+      "capturedAt": "2026-10-26T21:59:39.291Z"
+    },
+    {
+      "source": ".tmp/connected-desktop-final/results.json",
+      "destination": "evidence/connected-desktop.json",
+      "bytes": 2221,
+      "sha256": "19f79eee2a32b0a9d127703fce822196bdbc1b1c2f9f2c4efa2792a82d70ff6a",
+      "capturedAt": "2026-10-26T21:59:43.658Z"
+    },
+    {
+      "source": ".tmp/connected-mobile-final/results.json",
+      "destination": "evidence/connected-mobile.json",
+      "bytes": 2219,
+      "sha256": "5da98ebe3cab20f1e50ddf5b84face7b8cbee546e51f9fa27c81e204f4b5ba4b",
+      "capturedAt": "2026-10-26T22:00:14.155Z"
+    },
+    {
+      "source": ".tmp/responsive-final/results.json",
+      "destination": "evidence/responsive-full.json",
+      "bytes": 49084,
+      "sha256": "a84606f91d3702b122302360d42171ac48a0c265ffdf66960401b0fa88c5cb57",
+      "capturedAt": "2026-10-26T21:33:49.141Z"
+    },
+    {
+      "source": ".tmp/responsive-nested/results.json",
+      "destination": "evidence/responsive-nested.json",
+      "bytes": 10363,
+      "sha256": "3cf7e5341867aa79d586428cfb04b4d9475e9ee18485755d7a58c397f4a38eef",
+      "capturedAt": "2026-10-26T21:49:58.100Z"
+    },
+    {
+      "source": ".tmp/photo-intake/results.json",
+      "destination": "evidence/photo-intake.json",
+      "bytes": 309,
+      "sha256": "0f69450382f2ca4c7e4da08a2b3bde9c9391172764ad123bebf7711f3d1a5004",
+      "capturedAt": "2026-10-26T21:26:34.105Z"
+    },
+    {
+      "source": ".tmp/connected-desktop-final/manual-create-1440.png",
+      "destination": "screenshots/connected-manual-1440.png",
+      "bytes": 184710,
+      "sha256": "8a574fa26d305215564ff1882f7aadf6bff9719cbb5d4dd5cb5191f44149ab2a",
+      "capturedAt": "2026-10-26T21:59:20.354Z"
+    },
+    {
+      "source": ".tmp/connected-desktop-final/workspace-1440.png",
+      "destination": "screenshots/connected-workspace-1440.png",
+      "bytes": 247394,
+      "sha256": "4777dfc2ad4b9f7360b1d6dead15a1e7fe6ab9953329738ead6205eaa4711315",
+      "capturedAt": "2026-10-26T21:59:27.941Z"
+    },
+    {
+      "source": ".tmp/connected-desktop-final/public-story-1440.png",
+      "destination": "screenshots/connected-story-1440.png",
+      "bytes": 122052,
+      "sha256": "5e61deaa7e99f743690995b5efbafbc55e892e21c4222c17f71f35412590956c",
+      "capturedAt": "2026-10-26T21:59:38.804Z"
+    },
+    {
+      "source": ".tmp/connected-mobile-final/manual-create-390.png",
+      "destination": "screenshots/connected-manual-390.png",
+      "bytes": 145710,
+      "sha256": "8a2dcbf4a6cbe591b67bdc77e8ced508071f9c6614881d5ca46cd365534828e1",
+      "capturedAt": "2026-10-26T21:59:51.187Z"
+    },
+    {
+      "source": ".tmp/connected-mobile-final/workspace-390.png",
+      "destination": "screenshots/connected-workspace-390.png",
+      "bytes": 243535,
+      "sha256": "afcd6c7ea0f818f8e29ec09b77679ca15c7660052c8f20afba49cafd886f02fd",
+      "capturedAt": "2026-10-26T21:59:57.424Z"
+    },
+    {
+      "source": ".tmp/connected-mobile-final/public-story-390.png",
+      "destination": "screenshots/connected-story-390.png",
+      "bytes": 84298,
+      "sha256": "3fc9191157f3d75908937ca86320eafda76aaf493b42c5853fe6b740605482a8",
+      "capturedAt": "2026-10-26T22:00:08.396Z"
+    },
+    {
+      "source": ".tmp/connected-mobile-final/public-profile-390.png",
+      "destination": "screenshots/connected-profile-390.png",
+      "bytes": 55097,
+      "sha256": "0f52a1047210df0d8bdafbe4af1ddae2c901248c7054fbeb43fd6191e57b1f20",
+      "capturedAt": "2026-10-26T22:00:11.336Z"
+    },
+    {
+      "source": ".tmp/responsive-final/dialog-short-action-390.png",
+      "destination": "screenshots/dialog-short-action-390.png",
+      "bytes": 45083,
+      "sha256": "59d2cb6568d73caccb48bb52fb5da1c215f49f968fb445979265b5812e91917e",
+      "capturedAt": "2026-10-26T21:32:58.644Z"
+    },
+    {
+      "source": ".tmp/responsive-final/tagging-active-390.png",
+      "destination": "screenshots/tagging-active-390.png",
+      "bytes": 112974,
+      "sha256": "77c5c2bdfe7644e7a5798257e7cf7b91e902d48df0b958466a0df843b8943b62",
+      "capturedAt": "2026-10-26T21:32:56.498Z"
+    },
+    {
+      "source": ".tmp/responsive-final/project-360.png",
+      "destination": "screenshots/story-long-360.png",
+      "bytes": 111836,
+      "sha256": "19fb1c2c01de1ddad8f56fe0053b3f0a9f6317d5dfcef8e5e00228256a8e4a63",
+      "capturedAt": "2026-10-26T21:32:01.933Z"
+    },
+    {
+      "source": ".tmp/responsive-final/profile-feed-error-360.png",
+      "destination": "screenshots/profile-feed-error-360.png",
+      "bytes": 18314,
+      "sha256": "d16a4b0c28452eed265009e2796f5de93c00778bd2e9580626960e8706c8f50b",
+      "capturedAt": "2026-10-26T21:33:18.878Z"
+    }
+  ]
+}

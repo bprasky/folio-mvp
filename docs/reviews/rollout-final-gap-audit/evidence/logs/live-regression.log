@@ -1,0 +1,515 @@
+
+> folio-mvp@0.2.0 test:live
+> node scripts/check-live-interviews.cjs && node scripts/check-live-adapters.cjs && node scripts/check-live-interview-browser.cjs
+
+PASS guide intake carries only same-owner same-workspace conversation history into the project
+PASS disabled beta, unauthorized source, unapproved account prevent paid calls
+PASS explicit readiness and recording consent required; private storage checked before paid creation
+PASS typed start needs consent and no recording but never needs a microphone or storage worker
+PASS typed draft scope is issued only after fresh availability authorization and separates actors and sources
+[live-turn-latency] {
+  stage: 'finality',
+  elapsedMs: 1,
+  sourceKind: 'project',
+  inputMode: 'text'
+}
+[live-turn-latency] {
+  stage: 'save',
+  elapsedMs: 0,
+  sourceKind: 'project',
+  phase: 'interview',
+  outcome: 'saved'
+}
+[live-turn-latency] { stage: 'backend', elapsedMs: 3, sourceKind: 'project' }
+PASS typed registration is explicit and idempotent; only exact provider callback writes canonical text
+PASS prepare_text route keeps owner and same-origin boundaries and never writes a canonical answer
+[live-turn-latency] {
+  stage: 'finality',
+  elapsedMs: 0,
+  sourceKind: 'project',
+  inputMode: 'voice'
+}
+[live-turn-latency] {
+  stage: 'save',
+  elapsedMs: 0,
+  sourceKind: 'project',
+  phase: 'interview',
+  outcome: 'saved'
+}
+[live-turn-latency] { stage: 'backend', elapsedMs: 1, sourceKind: 'project' }
+PASS typed registration rejects stale input, reused receipts, pending speech and fresh permission failures
+[live-turn-latency] {
+  stage: 'finality',
+  elapsedMs: 0,
+  sourceKind: 'project',
+  inputMode: 'text'
+}
+[live-turn-latency] {
+  stage: 'save',
+  elapsedMs: 0,
+  sourceKind: 'project',
+  phase: 'interview',
+  outcome: 'saved'
+}
+[live-turn-latency] { stage: 'backend', elapsedMs: 1, sourceKind: 'project' }
+PASS typed callbacks reject mismatched/reordered history while preserving the exact registered answer
+[live-turn-latency] {
+  stage: 'finality',
+  elapsedMs: 0,
+  sourceKind: 'project',
+  inputMode: 'text'
+}
+[live-turn-latency] {
+  stage: 'save',
+  elapsedMs: 0,
+  sourceKind: 'project',
+  phase: 'interview',
+  outcome: 'saved'
+}
+[live-turn-latency] { stage: 'backend', elapsedMs: 1, sourceKind: 'project' }
+[live-turn-latency] {
+  stage: 'finality',
+  elapsedMs: 0,
+  sourceKind: 'project',
+  inputMode: 'voice'
+}
+[live-turn-latency] {
+  stage: 'save',
+  elapsedMs: 0,
+  sourceKind: 'project',
+  phase: 'interview',
+  outcome: 'saved'
+}
+[live-turn-latency] { stage: 'backend', elapsedMs: 1, sourceKind: 'project' }
+[live-turn-latency] {
+  stage: 'finality',
+  elapsedMs: 0,
+  sourceKind: 'project',
+  inputMode: 'text'
+}
+[live-turn-latency] {
+  stage: 'save',
+  elapsedMs: 0,
+  sourceKind: 'project',
+  phase: 'interview',
+  outcome: 'saved'
+}
+[live-turn-latency] { stage: 'backend', elapsedMs: 1, sourceKind: 'project' }
+PASS typed and voice answers share natural progression and keep their own source modality
+[live-turn-latency] {
+  stage: 'finality',
+  elapsedMs: 0,
+  sourceKind: 'project',
+  inputMode: 'text'
+}
+[live-turn-latency] {
+  stage: 'save',
+  elapsedMs: 1,
+  sourceKind: 'project',
+  phase: 'interview',
+  outcome: 'saved'
+}
+[live-turn-latency] { stage: 'backend', elapsedMs: 1, sourceKind: 'project' }
+[live-turn-latency] {
+  stage: 'finality',
+  elapsedMs: 0,
+  sourceKind: 'project',
+  inputMode: 'voice'
+}
+[live-turn-latency] {
+  stage: 'save',
+  elapsedMs: 0,
+  sourceKind: 'project',
+  phase: 'interview',
+  outcome: 'saved'
+}
+[live-turn-latency] { stage: 'backend', elapsedMs: 0, sourceKind: 'project' }
+PASS a typed user-utterance echo cannot supply evidence for a later voice answer with identical words
+[live-turn-latency] {
+  stage: 'save',
+  elapsedMs: 0,
+  sourceKind: 'project',
+  phase: 'interview',
+  outcome: 'saved'
+}
+PASS ending or expiring before a typed callback retains review and prevents another paid start
+PASS a crashed typed save retains its receipt and blocks new calls until the save lease can be reviewed
+[live-turn-latency] {
+  stage: 'save',
+  elapsedMs: 1,
+  sourceKind: 'project',
+  phase: 'interview',
+  outcome: 'saved'
+}
+PASS ending during voice finality retains raw speech for explicit review before a fresh call
+[live-turn-latency] {
+  stage: 'save',
+  elapsedMs: 0,
+  sourceKind: 'project_guide',
+  phase: 'interview',
+  outcome: 'saved'
+}
+PASS expired voice finality becomes reviewable with its immutable interview phase
+[live-turn-latency] {
+  stage: 'save',
+  elapsedMs: 0,
+  sourceKind: 'project_guide',
+  phase: 'interview',
+  outcome: 'saved'
+}
+PASS legacy voice finality recovers phase from the last immutable prepared speech after guide-to-interview transition
+PASS legacy voice recovery never substitutes current interview phase for setup or missing prepared evidence
+PASS interrupted voice save retains its lease and receipt until safe review is possible
+[live-turn-latency] {
+  stage: 'finality',
+  elapsedMs: 0,
+  sourceKind: 'project',
+  inputMode: 'voice'
+}
+[live-turn-latency] {
+  stage: 'save',
+  elapsedMs: 2,
+  sourceKind: 'project',
+  phase: 'interview',
+  outcome: 'saved'
+}
+[live-turn-latency] { stage: 'backend', elapsedMs: 2, sourceKind: 'project' }
+PASS pausing while a live voice save is in flight lets that save finish once
+[live-turn-latency] {
+  stage: 'finality',
+  elapsedMs: 0,
+  sourceKind: 'project',
+  inputMode: 'text'
+}
+[live-turn-latency] {
+  stage: 'save',
+  elapsedMs: 1,
+  sourceKind: 'project',
+  phase: 'interview',
+  outcome: 'needs_review'
+}
+[live-turn-latency] { stage: 'backend', elapsedMs: 1, sourceKind: 'project' }
+[live-turn-latency] {
+  stage: 'finality',
+  elapsedMs: 0,
+  sourceKind: 'project',
+  inputMode: 'text'
+}
+[live-turn-latency] {
+  stage: 'save',
+  elapsedMs: 1,
+  sourceKind: 'project',
+  phase: 'interview',
+  outcome: 'needs_review'
+}
+[live-turn-latency] { stage: 'backend', elapsedMs: 1, sourceKind: 'project' }
+[live-turn-latency] {
+  stage: 'save',
+  elapsedMs: 0,
+  sourceKind: 'project',
+  phase: 'interview',
+  outcome: 'saved'
+}
+PASS typed canonical drift and a lost transport receipt retain recoverable text without duplicate canonical saves
+PASS start reserves once, secret backend token excluded, join token encrypted, first question once
+PASS reconnect closes a provider-ended call before offering a fresh explicit start
+PASS expired reconnect ends the reservation without waiting for scheduled cleanup
+PASS unconfirmed provider status retains the reservation without returning a join or creating another call
+PASS a concurrent pause cannot return an old join after provider status verification
+PASS invalid, expired and cross-session credentials rejected; fresh workspace authorization
+[live-turn-latency] {
+  stage: 'finality',
+  elapsedMs: 0,
+  sourceKind: 'project',
+  inputMode: 'voice'
+}
+[live-turn-latency] {
+  stage: 'save',
+  elapsedMs: 1,
+  sourceKind: 'project',
+  phase: 'interview',
+  outcome: 'saved'
+}
+[live-turn-latency] { stage: 'backend', elapsedMs: 1, sourceKind: 'project' }
+PASS complete events corroborate a single ingestion; duplicate legacy events and provider retries replay
+[live-turn-latency] {
+  stage: 'finality',
+  elapsedMs: 0,
+  sourceKind: 'project',
+  inputMode: 'voice'
+}
+[live-turn-latency] {
+  stage: 'save',
+  elapsedMs: 1,
+  sourceKind: 'project',
+  phase: 'interview',
+  outcome: 'saved'
+}
+[live-turn-latency] { stage: 'backend', elapsedMs: 1, sourceKind: 'project' }
+[live-turn-latency] {
+  stage: 'finality',
+  elapsedMs: 1,
+  sourceKind: 'project',
+  inputMode: 'voice'
+}
+[live-turn-latency] {
+  stage: 'save',
+  elapsedMs: 0,
+  sourceKind: 'project',
+  phase: 'interview',
+  outcome: 'saved'
+}
+[live-turn-latency] { stage: 'backend', elapsedMs: 1, sourceKind: 'project' }
+PASS identical speech on different questions is legitimate evidence
+[live-turn-latency] {
+  stage: 'finality',
+  elapsedMs: 0,
+  sourceKind: 'project',
+  inputMode: 'voice'
+}
+[live-turn-latency] {
+  stage: 'save',
+  elapsedMs: 1,
+  sourceKind: 'project',
+  phase: 'interview',
+  outcome: 'saved'
+}
+[live-turn-latency] { stage: 'backend', elapsedMs: 1, sourceKind: 'project' }
+PASS old/history-changing retries never bind to the now-current question
+PASS reordered full and stopped events still distinguish delivered from interrupted
+[live-turn-latency] {
+  stage: 'finality',
+  elapsedMs: 0,
+  sourceKind: 'project',
+  inputMode: 'voice'
+}
+[live-turn-latency] {
+  stage: 'save',
+  elapsedMs: 0,
+  sourceKind: 'project',
+  phase: 'interview',
+  outcome: 'saved'
+}
+[live-turn-latency] { stage: 'backend', elapsedMs: 0, sourceKind: 'project' }
+[live-turn-latency] {
+  stage: 'finality',
+  elapsedMs: 1,
+  sourceKind: 'project',
+  inputMode: 'voice'
+}
+[live-turn-latency] {
+  stage: 'save',
+  elapsedMs: 0,
+  sourceKind: 'project',
+  phase: 'interview',
+  outcome: 'saved'
+}
+PASS interruption continuing earlier answer retained for explicit attribution
+[live-turn-latency] {
+  stage: 'finality',
+  elapsedMs: 1,
+  sourceKind: 'project',
+  inputMode: 'voice'
+}
+[live-turn-latency] {
+  stage: 'save',
+  elapsedMs: 0,
+  sourceKind: 'project',
+  phase: 'interview',
+  outcome: 'needs_review'
+}
+[live-turn-latency] { stage: 'backend', elapsedMs: 2, sourceKind: 'project' }
+PASS long speech remains complete when canonical limit rejects it; failed save retains source
+[live-turn-latency] {
+  stage: 'finality',
+  elapsedMs: 0,
+  sourceKind: 'project',
+  inputMode: 'voice'
+}
+[live-turn-latency] {
+  stage: 'save',
+  elapsedMs: 0,
+  sourceKind: 'project',
+  phase: 'interview',
+  outcome: 'needs_review'
+}
+[live-turn-latency] { stage: 'backend', elapsedMs: 1, sourceKind: 'project' }
+[live-turn-latency] {
+  stage: 'save',
+  elapsedMs: 0,
+  sourceKind: 'project',
+  phase: 'interview',
+  outcome: 'saved'
+}
+PASS lost transport receipt after canonical commit recovers with the original receipt
+[live-turn-latency] {
+  stage: 'finality',
+  elapsedMs: 0,
+  sourceKind: 'project',
+  inputMode: 'voice'
+}
+[live-turn-latency] {
+  stage: 'save',
+  elapsedMs: 0,
+  sourceKind: 'project',
+  phase: 'interview',
+  outcome: 'needs_review'
+}
+[live-turn-latency] { stage: 'backend', elapsedMs: 1, sourceKind: 'project' }
+[live-turn-latency] {
+  stage: 'save',
+  elapsedMs: 0,
+  sourceKind: 'project',
+  phase: 'interview',
+  outcome: 'saved'
+}
+PASS stale canonical version refresh preserves raw/asked evidence and requires explicit reattribution
+[live-turn-latency] {
+  stage: 'finality',
+  elapsedMs: 0,
+  sourceKind: 'project',
+  inputMode: 'voice'
+}
+[live-turn-latency] {
+  stage: 'save',
+  elapsedMs: 0,
+  sourceKind: 'project',
+  phase: 'interview',
+  outcome: 'saved'
+}
+[live-turn-latency] { stage: 'backend', elapsedMs: 1, sourceKind: 'project' }
+[live-turn-latency] {
+  stage: 'finality',
+  elapsedMs: 0,
+  sourceKind: 'project',
+  inputMode: 'voice'
+}
+[live-turn-latency] {
+  stage: 'save',
+  elapsedMs: 0,
+  sourceKind: 'project',
+  phase: 'interview',
+  outcome: 'saved'
+}
+[live-turn-latency] { stage: 'backend', elapsedMs: 1, sourceKind: 'project' }
+[live-turn-latency] {
+  stage: 'finality',
+  elapsedMs: 1,
+  sourceKind: 'project',
+  inputMode: 'voice'
+}
+[live-turn-latency] {
+  stage: 'save',
+  elapsedMs: 0,
+  sourceKind: 'project',
+  phase: 'interview',
+  outcome: 'saved'
+}
+[live-turn-latency] { stage: 'backend', elapsedMs: 1, sourceKind: 'project' }
+PASS explicit initial and live photo links persist once, reject foreign images, and do not follow browsing/next question
+PASS partials are not accepted as final events
+[live-turn-latency] {
+  stage: 'finality',
+  elapsedMs: 0,
+  sourceKind: 'project',
+  inputMode: 'voice'
+}
+[live-turn-latency] {
+  stage: 'save',
+  elapsedMs: 1,
+  sourceKind: 'project',
+  phase: 'interview',
+  outcome: 'needs_review'
+}
+[live-turn-latency] { stage: 'backend', elapsedMs: 1, sourceKind: 'project' }
+PASS pending reviewed speech is restored before another paid start; wrong-round duplicate start cannot join
+PASS ambiguous provider create never blindly retries paid creation
+PASS end remains available with disabled flags and revoked source access, confirms provider end and PAL cleanup
+PASS SSE is OpenAI-compatible, terminated, and never embeds unescaped newlines
+PASS browser writes require same origin, not just cookies
+PASS guide recording is offered for existing projects but never starts as part of automatic entry
+PASS explicit in-call consent enables creator capture without another provider call or answer write
+PASS recording consent rejects missing permission, another actor, disabled capture, Create+ and ended calls
+PASS late cancelled startup cannot resurrect a call whose provider cleanup already completed
+PASS repeated End is idempotent even after provider resources disappear
+PASS cleanup repairs a historical ending reservation with completed provider cleanup
+[live-turn-latency] {
+  stage: 'finality',
+  elapsedMs: 0,
+  sourceKind: 'project_guide',
+  inputMode: 'voice'
+}
+[live-turn-latency] {
+  stage: 'save',
+  elapsedMs: 0,
+  sourceKind: 'project_guide',
+  phase: 'guide',
+  outcome: 'saved'
+}
+[live-turn-latency] { stage: 'backend', elapsedMs: 0, sourceKind: 'project_guide' }
+PASS a complete guide reply can interrupt its welcome without being treated as an unheard editorial question
+PASS guide refresh and skip refuse pending user speech before the provider callback arrives
+PASS metadata-only guide refresh updates client facts without creating duplicate speech slots
+PASS guide interview image binding unwraps canonical scope while setup phase cannot bind a photograph
+PASS retained guide speech cannot be manually reassigned to canonical interview evidence
+52 live transport checks passed; provider, canonical and DB boundaries mocked.
+[collaboration/stories/approve] Approved: {
+  storyId: 'collab',
+  role: 'designer',
+  newStatus: 'DESIGNER_APPROVED',
+  bothApproved: false
+}
+[collaboration/stories/approve] Approved: {
+  storyId: 'collab',
+  role: 'vendor',
+  newStatus: 'PUBLISHED',
+  bothApproved: true
+}
+PASS live adapters: all seven real source kinds dispatch; bio/org/vendor collaboration persist through actual shared writers; replay, exact wording, correction, partial finish, protected routing and revoked access. Native engine boundaries are doubled here; no provider/database isolation claim.
+PASS page load neither opens microphone nor creates paid session
+PASS microphone denial prevents provider creation
+PASS recording requires separate explicit consent
+PASS explicit no-recording start joins once and keeps camera off
+PASS partial captions never ingest answers; duplicate PAL events normalized
+PASS one caption surface and real speaking events drive the call display without another session
+PASS Type instead releases the microphone and keeps the same call and avatar visible
+PASS typed replies register once, send exactly conversation.respond, and clear only after canonical confirmation
+PASS unsent text stays bound to its original question and blocks microphone re-entry
+PASS voice re-entry requests consent; denial keeps the typed call available
+PASS microphone permission loss ends the call and releases resources
+PASS explicit typed start creates no microphone or recording and End still releases the call
+PASS restored unsent text never auto-joins or resends; unresolved submitted text remains retained
+PASS draft restoration is isolated to the account authorized by availability
+PASS a previous reply confirmed after End is cleared before starting another call
+PASS failed recording upload during Type instead preserves the call and resets the next start to no recording
+PASS an inactive unsent draft can be cleared without starting a call or microphone
+PASS capture final chunk uploads before finalize; clones stop independently
+PASS initial mute is effective at recorder start and preserves source track state
+PASS bounded chunks and upload backpressure stop recorder without dropping produced bytes
+PASS upload failure stops capture and retries same retained sequence
+PASS recording readiness purges legacy and expired recovery while preserving unexpired bytes
+PASS failed discard authorization retains every scoped recovery byte
+PASS authenticated discard removes only requested session runs and chunks
+PASS global retained backlog blocks a new recorder before server reservation
+PASS page reload restores stopped queued capture and finalizes exact original sequence
+PASS explicit entry starts once under StrictMode without a second Start button; microphone denial uses typed Tavus
+PASS Type instead while permission is pending joins the same intended call without waiting for microphone
+PASS failed explicit entry stops automatic attempts and preserves request identity for deliberate Retry
+PASS source replacement cancels an unresolved microphone start before provider creation
+PASS a confirmed ended session after join failure allows a fresh deliberate Retry
+PASS an older restored ended session cannot rotate an unknown newer start key, including after remount
+PASS source replacement during provider join cannot activate the obsolete call after join resolves
+PASS disconnect recovery pauses once, resumes saved progress on one click, and ignores obsolete call events
+PASS disconnect recovery cannot reactivate a call whose pending join resolves after departure
+PASS disconnect recovery replaces a confirmed ended response once and keeps the saved question
+PASS disconnect recovery keeps Resume disabled until pending pause cleanup completes despite an old join resolving
+PASS disconnect recovery ignores a late rejected old join after a replacement call is active
+PASS disconnect recovery ignores an old provider event response or failure after same-session rejoin
+PASS disconnect recovery preserves an active same-key retry when the canceled start response arrives first
+PASS disconnect recovery is bounded when both the original and replacement responses are ended
+PASS disconnect recovery preserves uncertain and retained-answer request identities without replacement
+PASS disconnect recovery retains a lost replacement response key through remount and deliberate Retry
+PASS project host can consent and record during the same call; Stop finalizes without ending Tavus
+PASS daily quota shows its reset time and blocks an identical retry instead of looping
+PASS rollout disabled hides new live entry
+PASS 46 live browser/capture checks; all provider and recording bytes synthetic.
