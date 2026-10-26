@@ -5,7 +5,6 @@ import {
   useEffect,
   useRef,
   useState,
-  type KeyboardEvent,
   type ReactNode,
 } from 'react';
 import Link from 'next/link';
@@ -14,27 +13,23 @@ import { projectEntryHref, professionalEntryHref } from '@/lib/onboarding/profes
 import { useSession } from 'next-auth/react';
 import { useForm } from 'react-hook-form';
 import toast from 'react-hot-toast';
-import { Settings2, ChevronDown, X, ArrowRight } from 'lucide-react';
+import { Settings2, ChevronDown, ArrowRight } from 'lucide-react';
 import { CreateProjectGuide } from '@/components/interviews/CreateProjectGuide';
 import { COMPLETION_MONTHS, completionDateInputError } from '@/lib/projects/completionDate';
 
-type Visibility = 'private' | 'unlisted' | 'public';
+import { createProjectDraftWriter } from '@/lib/projects/saveProjectDraft';
 
 type FormValues = {
   title: string;
   description: string;
   projectType: string;
-  discipline: string;
   location: string;
   year: string;
   month: string;
-  tags: string[];
-  visibility: Visibility;
 };
 
 const TITLE_MAX = 80;
 const DESCRIPTION_MAX = 280;
-const TAG_LIMIT = 6;
 
 // UI tokens. The three surface levels and the two accents below map 1:1 onto
 // globals.css and reference it directly; the remaining entries are editorial
@@ -67,13 +62,6 @@ const PROJECT_TYPES = [
   'Set',
 ];
 
-const DISCIPLINES = [
-  'Full interior',
-  'Furniture & FF&E',
-  'Renovation',
-  'Styling',
-];
-
 // Map UI labels to the Prisma ProjectType enum that the API accepts.
 const PROJECT_TYPE_TO_ENUM: Record<string, string> = {
   Residential: 'RESIDENTIAL',
@@ -91,6 +79,12 @@ function initialsFromName(name?: string | null): string {
 }
 
 export default function CreateProjectPage() {
+  const { data: session } = useSession();
+  // A saved draft must never carry across accounts or firm workspace switches.
+  return <CreateProjectForm key={`${session?.user?.id ?? 'guest'}:${session?.user?.operatingAsOrgId ?? ''}`} />;
+}
+
+function CreateProjectForm() {
   const router = useRouter();
   const { data: session, status: sessionStatus } = useSession();
   const [verifiedWorkspace, setVerifiedWorkspace] = useState<string | null>(null);
@@ -129,7 +123,6 @@ export default function CreateProjectPage() {
     register,
     handleSubmit,
     watch,
-    setValue,
     setFocus,
     setError,
     clearErrors,
@@ -140,12 +133,9 @@ export default function CreateProjectPage() {
       title: '',
       description: '',
       projectType: '',
-      discipline: '',
       location: '',
       year: '',
       month: '',
-      tags: [],
-      visibility: 'private',
     },
   });
 
@@ -153,14 +143,18 @@ export default function CreateProjectPage() {
   const description = watch('description');
   const year = watch('year');
   const month = watch('month');
-  const tags = watch('tags');
+  const projectType = watch('projectType');
+  const location = watch('location');
 
   const [submitting, setSubmitting] = useState(false);
   const [savingDraft, setSavingDraft] = useState(false);
   const [draftId, setDraftId] = useState<string | null>(null);
-  const [coverFile, setCoverFile] = useState<File | null>(null);
-  const [tagInput, setTagInput] = useState('');
-  const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const writer = useRef<ReturnType<typeof createProjectDraftWriter> | null>(null);
+  if (!writer.current) writer.current = createProjectDraftWriter();
+  const continuing = useRef(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
+  const [autosaving, setAutosaving] = useState(false);
+  const autosaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const buildPayload = useCallback(
     (overrideStatus?: 'draft') => {
@@ -196,127 +190,60 @@ export default function CreateProjectPage() {
       return;
     }
     clearErrors('title');
+    continuing.current = true;
+    if (autosaveTimer.current) clearTimeout(autosaveTimer.current);
     setSubmitting(true);
-
+    setSaveError(null);
     try {
-      const res = await fetch('/api/projects', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'same-origin',
-        body: JSON.stringify(buildPayload()),
-      });
-
-      if (!res.ok) {
-        const data = await res.json().catch(() => ({}));
-        toast.error(data?.error ?? 'Could not create project.');
-        setSubmitting(false);
-        return;
-      }
-
-      const json = await res.json();
-      const id = json?.id as string | undefined;
-      if (!id) {
-        toast.error('Create did not return an id.');
-        setSubmitting(false);
-        return;
-      }
-      toast.success('Project created.');
-      router.push(`/projects/${id}`);
+      const id = await writer.current!(buildPayload());
+      setDraftId(id);
+      toast.success('Project saved.');
+      router.push(`/project/${encodeURIComponent(id)}?view=media`);
     } catch (err: any) {
-      toast.error(err?.message ?? 'Could not create project.');
+      continuing.current = false;
+      setSaveError(err?.message ?? 'Could not save project.');
       setSubmitting(false);
     }
   });
 
   const onSaveDraft = useCallback(async () => {
+    if (!getValues('title').trim()) {
+      setError('title', { message: 'Add a name to save your draft.' });
+      setFocus('title');
+      return;
+    }
+    if (autosaveTimer.current) clearTimeout(autosaveTimer.current);
     setSavingDraft(true);
+    setSaveError(null);
     try {
-      if (draftId) {
-        const res = await fetch('/api/projects', {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          credentials: 'same-origin',
-          body: JSON.stringify({ id: draftId, ...buildPayload('draft') }),
-        });
-        if (!res.ok) throw new Error('Draft update failed.');
-      } else {
-        const res = await fetch('/api/projects', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          credentials: 'same-origin',
-          body: JSON.stringify(buildPayload('draft')),
-        });
-        if (!res.ok) throw new Error('Draft save failed.');
-        const json = await res.json();
-        if (json?.id) setDraftId(json.id);
-      }
+      const id = await writer.current!(buildPayload('draft'));
+      setDraftId(id);
       toast.success('Draft saved.');
     } catch (err: any) {
-      toast.error(err?.message ?? 'Could not save draft.');
+      setSaveError(err?.message ?? 'Could not save draft.');
     } finally {
       setSavingDraft(false);
     }
-  }, [draftId, buildPayload]);
+  }, [buildPayload, getValues, setError, setFocus]);
 
-  // Debounced autosave (PUT) once a draft exists.
-  const autosaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   useEffect(() => {
-    if (!draftId) return;
-    if (autosaveTimer.current) clearTimeout(autosaveTimer.current);
+    if (!draftId || continuing.current) return;
+    if (!title.trim()) {
+      setSaveError('Add a name before saving your changes.');
+      return;
+    }
     autosaveTimer.current = setTimeout(() => {
-      fetch('/api/projects', {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'same-origin',
-        body: JSON.stringify({ id: draftId, ...buildPayload('draft') }),
-      }).catch(() => {
-        // Silent — autosave failures shouldn't interrupt typing.
-      });
+      setAutosaving(true);
+      writer.current!(buildPayload('draft')).then(() => {
+        setSaveError(null);
+      }).catch((error: Error) => {
+        setSaveError(error.message || 'Changes could not be saved. Try Save draft again.');
+      }).finally(() => setAutosaving(false));
     }, 2000);
     return () => {
       if (autosaveTimer.current) clearTimeout(autosaveTimer.current);
     };
-  }, [title, description, year, month, draftId, buildPayload]);
-
-  const commitTag = useCallback(() => {
-    const next = tagInput.trim();
-    if (!next) return;
-    if (tags.length >= TAG_LIMIT) return;
-    if (tags.includes(next)) {
-      setTagInput('');
-      return;
-    }
-    setValue('tags', [...tags, next], { shouldDirty: true });
-    setTagInput('');
-  }, [tagInput, tags, setValue]);
-
-  const removeTag = useCallback(
-    (i: number) => {
-      const next = [...tags];
-      next.splice(i, 1);
-      setValue('tags', next, { shouldDirty: true });
-    },
-    [tags, setValue]
-  );
-
-  const onTagKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter') {
-      e.preventDefault();
-      commitTag();
-    } else if (e.key === 'Backspace' && !tagInput && tags.length > 0) {
-      removeTag(tags.length - 1);
-    }
-  };
-
-  const onPickCover = () => fileInputRef.current?.click();
-  const onCoverChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const f = e.target.files?.[0];
-    if (f) setCoverFile(f);
-  };
-  const onRemoveCover = () => {
-    setCoverFile(null);
-    if (fileInputRef.current) fileInputRef.current.value = '';
-  };
+  }, [title, description, year, month, projectType, location, draftId, buildPayload]);
 
   if (sessionStatus === 'loading' || !operatingAsOrgId || verifiedWorkspace !== operatingAsOrgId) {
     return (
@@ -891,76 +818,7 @@ export default function CreateProjectPage() {
               borderTop: `1px solid ${C.borderSubtle}`,
             }}
           >
-            {/* Cover image */}
-            <SubField label="Cover image" optional style={{ marginTop: 22 }}>
-              {!coverFile ? (
-                <button
-                  type="button"
-                  onClick={onPickCover}
-                  className="fpn-cover-tile fpn-focusable"
-                  style={{ width: '100%', textAlign: 'left' }}
-                  aria-label="Choose cover image"
-                >
-                  <span className="fpn-cover-thumb">
-                    <span className="fpn-cover-label">Cover</span>
-                  </span>
-                  <span style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-                    <span style={{ fontSize: 14, fontWeight: 'var(--w-ui)', color: C.textPrimary }}>
-                      Drop a hero image here
-                    </span>
-                    <span style={{ fontSize: 12, color: C.textTertiary }}>
-                      Or <span className="fpn-link-copper">browse files</span> — JPG,
-                      PNG, HEIC. Up to 24 MB.
-                    </span>
-                  </span>
-                </button>
-              ) : (
-                <div
-                  style={{
-                    display: 'flex',
-                    gap: 18,
-                    alignItems: 'center',
-                    padding: 18,
-                    border: `1px solid ${C.borderSubtle}`,
-                    borderRadius: 12,
-                    background: C.canvas,
-                  }}
-                >
-                  <CoverPreview file={coverFile} />
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 6, flex: 1 }}>
-                    <span style={{ fontSize: 14, color: C.textPrimary, fontWeight: 'var(--w-ui)' }}>
-                      {coverFile.name}
-                    </span>
-                    <span style={{ display: 'flex', gap: 16 }}>
-                      <button
-                        type="button"
-                        onClick={onPickCover}
-                        className="fpn-btn-text fpn-focusable"
-                        style={{ color: C.copper, fontWeight: 'var(--w-ui)' }}
-                      >
-                        Replace
-                      </button>
-                      <button
-                        type="button"
-                        onClick={onRemoveCover}
-                        className="fpn-btn-text fpn-focusable"
-                      >
-                        Remove
-                      </button>
-                    </span>
-                  </div>
-                </div>
-              )}
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept="image/*"
-                onChange={onCoverChange}
-                hidden
-              />
-            </SubField>
-
-            {/* Project type + Discipline */}
+            {/* Project type */}
             <div
               className="fpn-two-col"
               style={{
@@ -988,24 +846,7 @@ export default function CreateProjectPage() {
                   </select>
                 </div>
               </SubField>
-              <SubField label="Discipline" optional>
-                <div className="fpn-select-wrap">
-                  <select
-                    {...register('discipline')}
-                    className="fpn-select fpn-focusable"
-                    defaultValue=""
-                  >
-                    <option value="" disabled>
-                      Select discipline
-                    </option>
-                    {DISCIPLINES.map((d) => (
-                      <option key={d} value={d}>
-                        {d}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              </SubField>
+
             </div>
 
             {/* Location */}
@@ -1027,62 +868,13 @@ export default function CreateProjectPage() {
               </SubField>
             </div>
 
-            {/* Tags */}
-            <SubField
-              label="Tags"
-              rightLabel={
-                <span style={{ fontSize: 12, color: C.textTertiary }}>Up to 6</span>
-              }
-              style={{ marginTop: 22 }}
-            >
-              <div className="fpn-tag-container">
-                {tags.map((t, i) => (
-                  <span key={`${t}-${i}`} className="fpn-tag-chip">
-                    {t}
-                    <button
-                      type="button"
-                      onClick={() => removeTag(i)}
-                      className="fpn-tag-remove fpn-focusable"
-                      aria-label={`Remove ${t}`}
-                    >
-                      <X size={10} strokeWidth={2} />
-                    </button>
-                  </span>
-                ))}
-                {tags.length < TAG_LIMIT && (
-                  <input
-                    className="fpn-tag-input fpn-focusable"
-                    placeholder={tags.length === 0 ? 'Add a tag…' : ''}
-                    value={tagInput}
-                    onChange={(e) => setTagInput(e.target.value)}
-                    onKeyDown={onTagKeyDown}
-                    onBlur={commitTag}
-                  />
-                )}
-              </div>
-            </SubField>
 
-            {/* Visibility */}
-            <SubField
-              label="Visibility"
-              optional
-              help="You can change this any time. Published projects are reviewed before appearing in the public directory."
-              style={{ marginTop: 22 }}
-            >
-              <div className="fpn-select-wrap">
-                <select
-                  {...register('visibility')}
-                  className="fpn-select fpn-focusable"
-                >
-                  <option value="private">Private — workspace only</option>
-                  <option value="unlisted">Unlisted — anyone with the link</option>
-                  <option value="public">Public — listed in the directory</option>
-                </select>
-              </div>
-            </SubField>
           </div>
         </details>
 
+        <p className="text-folio-meta text-text-secondary">Add photos and product tags in the project workspace. Your project stays private until the publishing review is complete.</p>
+        {saveError && <p role="alert" style={{ marginTop: 16, color: C.cognac }}>{saveError} Your latest changes may not be saved. Try Save draft again.</p>}
+        {autosaving && <p role="status">Saving changes…</p>}
         {/* Footer */}
         <div
           style={{
@@ -1107,7 +899,7 @@ export default function CreateProjectPage() {
             <span aria-hidden style={{ color: C.gold, marginRight: 6 }}>
               {'✦'}
             </span>
-            Drafts save automatically. You can return any time from{' '}
+            {draftId ? 'Draft saved. Later edits save automatically; check for any save error before leaving.' : 'Choose Save draft to keep your work before leaving.'} You can return from{' '}
             <Link
               href="/projects"
               className="fpn-link-secondary fpn-focusable"
@@ -1128,14 +920,14 @@ export default function CreateProjectPage() {
             type="button"
             className="fpn-btn-ghost fpn-focusable"
             onClick={onSaveDraft}
-            disabled={savingDraft}
+            disabled={savingDraft || submitting || autosaving}
           >
             {savingDraft ? 'Saving…' : 'Save draft'}
           </button>
           <button
             type="submit"
             className="fpn-btn-primary fpn-focusable"
-            disabled={submitting}
+            disabled={submitting || savingDraft || autosaving}
           >
             {submitting ? 'Creating…' : 'Create project'}
             <ArrowRight size={14} strokeWidth={2} />
@@ -1266,33 +1058,3 @@ function SubField({
   );
 }
 
-function CoverPreview({ file }: { file: File }) {
-  const [url, setUrl] = useState<string | null>(null);
-  useEffect(() => {
-    const u = URL.createObjectURL(file);
-    setUrl(u);
-    return () => URL.revokeObjectURL(u);
-  }, [file]);
-  return (
-    <span
-      style={{
-        width: 88,
-        height: 66,
-        borderRadius: 8,
-        overflow: 'hidden',
-        background: C.elevated,
-        flexShrink: 0,
-        display: 'block',
-      }}
-    >
-      {url && (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img
-          src={url}
-          alt=""
-          style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-        />
-      )}
-    </span>
-  );
-}

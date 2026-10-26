@@ -78,6 +78,11 @@ jobs:
       - run: npm ci
       - run: npx prisma generate
       - run: npm run test:core
+      - name: Project draft persistence and listing privacy
+        run: |
+          npx tsx --test scripts/core/project-draft.test.cjs
+          node --experimental-vm-modules scripts/check-project-list-privacy.cjs
+          GUIDED_TEST_BROWSER="$(command -v google-chrome || command -v chromium)" node scripts/check-project-draft-browser.cjs
       - name: Guided interview regression checks
         run: npm run test:guided
       - name: Live and guided browser regression checks
@@ -193,3 +198,4 @@ jobs:
           NODE_OPTIONS: --max-old-space-size=4096
           TYPESCRIPT_BUDGET_BASE_REF: ${{ github.event.pull_request.base.sha || github.event.before || 'origin/main' }}
         run: npm run typecheck
+
