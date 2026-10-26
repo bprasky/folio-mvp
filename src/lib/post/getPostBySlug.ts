@@ -9,7 +9,8 @@ export async function getPostBySlug(slug: string) {
       where: { slug },
       include: {
         project: {
-          include: {
+          select: {
+            id: true, title: true, description: true, city: true, regionState: true, isPublic: true,
             designerOrg: { select: { name: true } },
             designer: {
               select: {
@@ -24,7 +25,9 @@ export async function getPostBySlug(slug: string) {
               },
             },
             images: {
-              include: {
+              where: { inclusion: 'INCLUDED' },
+              select: {
+                id: true, url: true, name: true, room: true, roomId: true, displayOrder: true,
                 // Exclude tags pointing at pending/unclaimed products so they
                 // don't leak onto the public post. Pending products are
                 // designer- or import-created stubs awaiting vendor claim;
@@ -78,6 +81,15 @@ export async function getPostBySlug(slug: string) {
     // This object crosses into StoryRenderer's client props on the public page.
     return await stripPrivateInterviewData({
       ...post,
+      // Raw answers, generation evidence and edit history are author-only.
+      provenance: null,
+      credits: Array.isArray(post.credits) ? post.credits.map(credit => {
+        if (!credit || typeof credit !== 'object' || Array.isArray(credit)) return null;
+        return Object.fromEntries(Object.entries(credit).filter(([key]) =>
+          ['role', 'userId', 'name', 'profileImage', 'studio', 'url'].includes(key)));
+      }).filter(Boolean) : null,
+      sectionHistory: null,
+      lastGenerationNote: null,
       expandedBlocks: publicFolioBlocks(post.expandedBlocks),
       modules,
     });

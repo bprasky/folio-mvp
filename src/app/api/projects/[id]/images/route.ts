@@ -6,13 +6,39 @@ import { authOptions } from '@/app/api/auth/[...nextauth]/options';
 import { prisma } from '@/lib/prisma';
 import { assertProjectWrite } from '@/lib/authz/access';
 import { revalidatePath } from 'next/cache';
-import { saveBufferToProjectStorage } from '@/lib/storage';
+import { saveBufferToProjectStorage, deleteProjectImage } from '@/lib/storage';
+import { z } from 'zod';
+import { parseProductUrl, safeProductResource, UnsafeProductUrl } from '@/lib/server/safe-product-url';
 import { indexMoment } from '@/lib/search/indexMoment';
+
+const uploadInput = z.object({
+  url: z.string().url().max(4096).optional(),
+  name: z.string().max(500).nullable().optional(),
+  room: z.string().max(200).nullable().optional(),
+  imageData: z.string().min(4).max(20 * 1024 * 1024).regex(/^[A-Za-z0-9+/]+={0,2}$/).optional(),
+  mimeType: z.enum(['image/jpeg', 'image/png', 'image/webp']).optional(),
+}).refine(value => Boolean(value.url) !== Boolean(value.imageData));
+
+async function fetchImage(url: string, redirects = 0): Promise<{ buffer: Buffer; mime: string }> {
+  if (redirects > 5) throw new UnsafeProductUrl();
+  const response = await safeProductResource(url);
+  if ([301, 302, 303, 307, 308].includes(response.status)) {
+    if (!response.headers.location) throw new UnsafeProductUrl();
+    return fetchImage(new URL(response.headers.location, url).href, redirects + 1);
+  }
+  const mime = response.headers['content-type']?.split(';')[0];
+  if (response.status !== 200 || !['image/jpeg', 'image/png', 'image/webp'].includes(mime) || !response.body.length) {
+    throw new UnsafeProductUrl();
+  }
+  return { buffer: response.body, mime };
+}
 
 export async function POST(
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {
+  let storedUpload: { bucket: string; path: string } | undefined;
+  let persisted = false;
   try {
     const session = await getServerSession(authOptions);
     if (!session?.user?.id) {
@@ -25,7 +51,8 @@ export async function POST(
     // Check project access
     await assertProjectWrite(userId, projectId);
 
-    const body = await request.json();
+    const body = uploadInput.parse(await request.json());
+    if (body.url) parseProductUrl(body.url);
     let { url, name, room } = body;
     const { imageData, mimeType } = body;
 
@@ -34,13 +61,14 @@ export async function POST(
     if (!url && imageData) {
       try {
         const buffer = Buffer.from(imageData, 'base64');
-        const { publicUrl } = await saveBufferToProjectStorage({
+        const stored = await saveBufferToProjectStorage({
           projectId,
           roomId: room || 'default',
           buffer,
           mime: mimeType || 'image/jpeg',
         });
-        url = publicUrl;
+        storedUpload = stored;
+        url = stored.publicUrl;
       } catch (uploadError: any) {
         console.error('[POST /api/projects/[id]/images] base64 upload failed:', uploadError?.message);
         return NextResponse.json({ error: 'Failed to store uploaded image' }, { status: 500 });
@@ -54,70 +82,14 @@ export async function POST(
       );
     }
 
-    // Check if URL is external (not Supabase) and needs to be re-uploaded
-    const isExternalUrl = !url.includes(process.env.NEXT_PUBLIC_SUPABASE_URL || '') && 
-                         (url.startsWith('http://') || url.startsWith('https://'));
-    
-    // Re-upload external images to Supabase to avoid CDN restrictions
-    if (isExternalUrl) {
-      try {
-        console.log(`[POST /api/projects/[id]/images] Re-uploading external image to Supabase: ${url.substring(0, 100)}...`);
-        
-        // Fetch the image
-        const imageResponse = await fetch(url, {
-          headers: {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
-            'Referer': url.split('/').slice(0, 3).join('/') + '/',
-          },
-          signal: AbortSignal.timeout(30000),
-        });
-
-        if (!imageResponse.ok) {
-          // If fetch fails, try without Referer
-          const retryResponse = await fetch(url, {
-            headers: { 'User-Agent': 'Mozilla/5.0' },
-            signal: AbortSignal.timeout(30000),
-          });
-          
-          if (!retryResponse.ok) {
-            console.warn(`[POST /api/projects/[id]/images] Failed to fetch external image, storing original URL: ${retryResponse.status}`);
-            // Fall through to store original URL
-          } else {
-            const arrayBuffer = await retryResponse.arrayBuffer();
-            const buffer = Buffer.from(arrayBuffer);
-            const contentType = retryResponse.headers.get('content-type') || 'image/jpeg';
-            
-            // Upload to Supabase
-            const { publicUrl } = await saveBufferToProjectStorage({
-              projectId,
-              roomId: room || 'default',
-              buffer,
-              mime: contentType,
-            });
-            
-            url = publicUrl;
-            console.log(`[POST /api/projects/[id]/images] Successfully re-uploaded to Supabase: ${url}`);
-          }
-        } else {
-          const arrayBuffer = await imageResponse.arrayBuffer();
-          const buffer = Buffer.from(arrayBuffer);
-          const contentType = imageResponse.headers.get('content-type') || 'image/jpeg';
-          
-          // Upload to Supabase
-          const { publicUrl } = await saveBufferToProjectStorage({
-            projectId,
-            roomId: room || 'default',
-            buffer,
-            mime: contentType,
-          });
-          
-          url = publicUrl;
-          console.log(`[POST /api/projects/[id]/images] Successfully re-uploaded to Supabase: ${url}`);
-        }
-      } catch (error: any) {
-        console.warn(`[POST /api/projects/[id]/images] Failed to re-upload external image, storing original URL:`, error.message);
-        // Fall through to store original URL - better than failing completely
-      }
+    // Only an exact storage origin is local. A substring match can be forged.
+    const storageOrigin = process.env.NEXT_PUBLIC_SUPABASE_URL
+      ? new URL(process.env.NEXT_PUBLIC_SUPABASE_URL).origin : null;
+    if (new URL(url).origin !== storageOrigin) {
+      const { buffer, mime } = await fetchImage(url);
+      const stored = await saveBufferToProjectStorage({ projectId, roomId: room || 'default', buffer, mime });
+      storedUpload = stored;
+      url = stored.publicUrl;
     }
 
     // Create ProjectImage record
@@ -137,6 +109,8 @@ export async function POST(
       },
     });
 
+    persisted = true;
+
     // Index the moment for search (async, don't block response)
     indexMoment(image.id).catch(err => {
       console.error(`[POST /api/projects/[id]/images] Failed to index moment ${image.id}:`, err);
@@ -150,12 +124,19 @@ export async function POST(
     }, { status: 201 });
 
   } catch (error: any) {
+    // Compensate only a new object returned by this request's storage write.
+    // Never derive deletion authority from a caller-supplied URL.
+    if (storedUpload && !persisted) {
+      try { await deleteProjectImage(`${storedUpload.bucket}/${storedUpload.path}`); }
+      catch { console.error('[project image] Failed to clean up unlinked upload'); }
+    }
+    if (error instanceof z.ZodError || error instanceof SyntaxError || error instanceof UnsafeProductUrl) return NextResponse.json({ error: "Invalid image upload" }, { status: 400 });
     if (typeof error.message === 'string' && error.message.startsWith('Forbidden')) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
     console.error('[POST /api/projects/[id]/images] Error:', error);
     return NextResponse.json(
-      { error: 'Failed to upload image: ' + (error instanceof Error ? error.message : 'Unknown error') },
+      { error: 'Failed to upload image' },
       { status: 500 }
     );
   }
