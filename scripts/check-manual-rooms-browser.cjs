@@ -84,6 +84,11 @@ function handler(req, res) {
   }
   let body = ''; req.on('data', part => { body += part; }); req.on('end', () => {
     const data = JSON.parse(body || '{}');
+    if (route === '/api/projects/project/rooms') {
+      assert.match(data.requestId, /^[a-zA-Z0-9-]{16,80}$/);
+      const room = { id: 'room-' + rooms.length, name: data.name }; rooms.push(room);
+      actions.push({ name: 'create', args: data }); return json(room);
+    }
     if (route === '/api/fixture/actions') {
       const { name, args } = data; actions.push(data);
       const image = images.find(image => image.id === args.imageId);

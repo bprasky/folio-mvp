@@ -36,6 +36,22 @@ module.exports = async function interactions({ page, go, capture, requests, resu
     await page.keyboard.press('Escape'); await page.waitForSelector('[role=dialog]', { hidden: true });
     assert.equal(await page.evaluate(() => document.activeElement.id), 'opener');
   });
+  await check('Nested dialog closes only its own layer and a controlled unsaved-work guard retains text', async () => {
+    await go('nested-dialog'); await page.click('#outer-opener');
+    await page.type('#guarded-value', 'Keep my unsaved room');
+    await page.click('#inner-opener'); await page.waitForSelector('input[aria-label="Nested search"]');
+    await page.type('input[aria-label="Nested search"]', 'A chair with space');
+    await page.keyboard.press('Escape'); await page.waitForSelector('input[aria-label="Nested search"]', { hidden: true });
+    await page.waitForFunction(() => document.activeElement.id === 'inner-opener', { timeout: 2000 });
+    assert.equal(await page.$eval('#guarded-value', e => e.value), 'Keep my unsaved room');
+    await page.keyboard.press('Escape'); await page.waitForFunction(() => document.body.textContent.includes('Discard unsaved changes?'));
+    await clickText('Keep editing'); await page.waitForFunction(() => !document.body.textContent.includes('Discard unsaved changes?'));
+    assert.equal(await page.$eval('#guarded-value', e => e.value), 'Keep my unsaved room');
+    await capture('nested-dialog-retained', 390);
+    await page.keyboard.press('Escape'); await page.waitForFunction(() => document.body.textContent.includes('Discard unsaved changes?'));
+    await clickText('Discard changes'); await page.waitForSelector('[role=dialog]', { hidden: true });
+    await page.waitForFunction(() => document.activeElement.id === 'outer-opener', { timeout: 2000 });
+  });
   await check('Import dialog keeps its footer reachable while the body scrolls in a short viewport', async () => {
     await go('glass-modal'); await page.waitForSelector('[role=dialog]');
     await page.$$eval('[role=dialog] input',inputs=>inputs.at(-1).focus());

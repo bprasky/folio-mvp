@@ -84,6 +84,9 @@ async function main() {
   assert.ok(ready, 'Next server did not start; see next.log');
   browser = await puppeteer.launch({ executablePath: process.env.GUIDED_TEST_BROWSER || 'C:/Program Files/Google/Chrome/Application/chrome.exe', headless: true, args: ['--no-sandbox', '--disable-dev-shm-usage'] });
   const owner = await contextPage();
+  const startingWidth = process.env.ROLLOUT_MOBILE === '1' ? 390 : 1440;
+  await owner.setViewport({ width: startingWidth, height: 920, isMobile: startingWidth < 500, hasTouch: startingWidth < 500 });
+  evidence.startingWidth = startingWidth;
   await owner.goto(origin + '/auth/signup?intent=designer&next=project', { waitUntil: 'networkidle2' });
   const email = `${runId}@rollout.test`;
   await owner.type('#firstName', 'Rollout'); await owner.type('#lastName', 'Designer');
@@ -106,6 +109,7 @@ async function main() {
   await owner.waitForSelector('input[name="title"]');
   const title = `Rollout Courtyard House ${runId.slice(0, 8)}`;
   await owner.type('input[name="title"]', title); await owner.type('input[name="year"]', '2024');
+  await shot(owner, 'manual-create', startingWidth);
   // Discard a real committed response at the client boundary. The request still
   // reaches Next/PostgreSQL; neither API handler nor persistence is replaced.
   await owner.evaluate(() => { const original = window.fetch; let drop = true; window.fetch = async (input, init) => { const r = await original(input, init); if (drop && String(input) === '/api/projects' && init?.method === 'POST' && r.ok) { drop = false; throw new TypeError('Fixture lost acknowledgement after commit'); } return r; }; });
@@ -214,11 +218,11 @@ async function main() {
   await editor.waitForFunction(() => [...document.querySelectorAll('button')].some(b => b.textContent.trim() === 'Follow'));
   assert.equal(await db.userRelationship.count({ where: { followerId: collaborator.id, followingId: userId } }), 0);
   passed('mobile profile follow/unfollow confirms database state and survives refresh');
-  const cookie = (await editor.cookies()).find(c => c.name === 'next-auth.session-token'); assert.ok(cookie);
+  const cookie = (await editor.cookies()).find(c => c.name.endsWith('next-auth.session-token')); assert.ok(cookie);
   const { encode, decode } = require('next-auth/jwt');
   const secret = 'rollout-fixture-session-secret-only';
   const expired = await encode({ token: await decode({ token: cookie.value, secret }), secret, maxAge: -60 });
-  await editor.setCookie({ name: cookie.name, value: expired, url: origin, httpOnly: true });
+  await editor.setCookie({ name: cookie.name, value: expired, url: origin, httpOnly: true, secure: cookie.secure, path: '/' });
   await api(editor, `/api/projects/${projectId}/rooms`, { name: 'Expired session blocked', requestId: randomUUID() }, 'POST', 401);
   passed('expired signed NextAuth token cannot mutate after session expiry');
   passed('saved interview, local-model generation, failed owner publish, approved retry and public project/profile', { modelCalls, slug: published.slug });
