@@ -6,6 +6,7 @@ import NextImage from 'next/image';
 import { FaTimes, FaPlus, FaUpload, FaLink, FaTag, FaTrash, FaSearch, FaCheck, FaSpinner, FaExclamationTriangle, FaEnvelope, FaUser } from 'react-icons/fa';
 import { PROJECT_TYPE_BY_LABEL, CLIENT_BY_LABEL, DEFAULTS } from '@/domain/project/enums';
 import { GlassInput } from '@/components/ui/glass-input';
+import { newPhotoSaveProgress, saveProjectPhotos } from '@/lib/projects/saveProjectPhotos';
 import { getMonographUrl } from '@/lib/utils/getMonographUrl';
 
 interface ProjectImage {
@@ -79,6 +80,9 @@ const ProjectCreationModal: React.FC<ProjectCreationModalProps> = ({
   currentUserId,
   currentUserRole
 }) => {
+  const saveProgress = useRef(newPhotoSaveProgress());
+  const submitting = useRef(false);
+  useEffect(() => { if (!isOpen) saveProgress.current = newPhotoSaveProgress(); }, [isOpen]);
   const [currentStep, setCurrentStep] = useState<'details' | 'images' | 'tagging'>('details');
   const [projectName, setProjectName] = useState('');
   const [projectClient, setProjectClient] = useState('');
@@ -385,9 +389,9 @@ const ProjectCreationModal: React.FC<ProjectCreationModalProps> = ({
         continue;
       }
       
-      // Validate file size (max 10MB)
-      if (file.size > 10 * 1024 * 1024) {
-        setError(`File ${file.name} is too large. Maximum size is 10MB`);
+      // Validate file size (matches the 8 MB ingestion limit)
+      if (file.size > 8 * 1024 * 1024) {
+        setError(`File ${file.name} is too large. Maximum size is 8 MB`);
         continue;
       }
       
@@ -506,7 +510,7 @@ const ProjectCreationModal: React.FC<ProjectCreationModalProps> = ({
 
   const handleCreateProject = async () => {
     // Prevent multiple simultaneous submissions
-    if (isSubmitting) {
+    if (submitting.current) {
       return;
     }
 
@@ -516,6 +520,7 @@ const ProjectCreationModal: React.FC<ProjectCreationModalProps> = ({
       return;
     }
 
+    submitting.current = true;
     setIsSubmitting(true);
     setError(null);
     
@@ -587,9 +592,8 @@ const ProjectCreationModal: React.FC<ProjectCreationModalProps> = ({
       // designerId should not be updated via this endpoint
 
       // If editing, include the project ID
-      if (editingProject) {
-        projectData.id = editingProject.id;
-      }
+      const savedProjectId = editingProject?.id || saveProgress.current.projectId;
+      if (savedProjectId) projectData.id = savedProjectId;
 
       // Final safety check: remove any fields that shouldn't be sent
       const allowedFields = ['id', 'title', 'clientType', 'projectType', 'stage', 'budgetBand', 'city', 'regionState', 'credits'];
@@ -601,7 +605,7 @@ const ProjectCreationModal: React.FC<ProjectCreationModalProps> = ({
       }
 
       const response = await fetch('/api/projects', {
-        method: editingProject ? 'PUT' : 'POST',
+        method: savedProjectId ? 'PUT' : 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
@@ -616,93 +620,10 @@ const ProjectCreationModal: React.FC<ProjectCreationModalProps> = ({
       }
 
       const project = await response.json();
-      const projectId = project.id || editingProject.id;
-      
-      // Upload images separately if we have any
-      if (validImages.length > 0 && projectId) {
-        try {
-          // Upload each image to the database
-          for (const image of validImages) {
-            // Skip if image already has a database ID (already uploaded)
-            if (image.id && image.id.includes('-') && !image.id.startsWith('pending-') && image.id.length > 20) {
-              // Likely already a database UUID, skip
-              continue;
-            }
-
-            // Upload image
-            const imageRes = await fetch(`/api/projects/${projectId}/images`, {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({
-                url: image.url,
-                name: image.name || 'Project image',
-                room: image.room || null,
-              }),
-            });
-
-            if (imageRes.ok) {
-              const imageData = await imageRes.json();
-              const dbImageId = imageData.image.id;
-
-              // Create pending products and tags if needed
-              if (image.tags && image.tags.length > 0) {
-                for (const tag of image.tags) {
-                  // Create or get product
-                  let productId = tag.productId;
-                  
-                  if (tag.isPending || tag.productId.startsWith('pending-')) {
-                    // Create pending product
-                    const productRes = await fetch('/api/products', {
-                      method: 'POST',
-                      headers: { 'Content-Type': 'application/json' },
-                      body: JSON.stringify({
-                        name: tag.productName,
-                        imageUrl: tag.productImage,
-                        price: tag.productPrice || 0,
-                        brand: tag.productBrand,
-                        isPending: true,
-                      }),
-                    });
-
-                    if (productRes.ok) {
-                      const productData = await productRes.json();
-                      productId = productData.id;
-                    } else {
-                      console.warn('Failed to create pending product:', tag.productName);
-                      continue; // Skip this tag
-                    }
-                  }
-
-                  // Create tag. Finish is deliberately absent here (spec 21
-                  // delta D3): this is a bulk loop with no per-tag interaction,
-                  // and the products it creates come from a name with no URL, so
-                  // there is no page to observe a finish from and no
-                  // specification event to record one against. Asking here would
-                  // produce guesses; proposing here would have nothing to
-                  // propose. These tags become capture sites if they are later
-                  // opened in the tagging UI. Do not "fix" this by adding a field.
-                  await fetch('/api/tag-product-to-image', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                      x: tag.x,
-                      y: tag.y,
-                      productId,
-                      imageId: dbImageId,
-                      projectId,
-                    }),
-                  });
-                }
-              }
-            } else {
-              console.warn('Failed to upload image:', image.url);
-            }
-          }
-        } catch (imageError) {
-          console.error('Error uploading images:', imageError);
-          // Don't fail the whole operation if image upload fails
-        }
-      }
+      const projectId = project.id || savedProjectId;
+      if (!projectId) throw new Error('Project save could not be confirmed. Please retry.');
+      saveProgress.current.projectId = projectId;
+      await saveProjectPhotos(projectId, validImages, saveProgress.current);
 
       // Clear the draft since project was created/updated successfully
       clearDraft();
@@ -730,6 +651,7 @@ const ProjectCreationModal: React.FC<ProjectCreationModalProps> = ({
       console.error(`Error ${editingProject ? 'updating' : 'creating'} project:`, error);
       setError(error instanceof Error ? error.message : `Failed to ${editingProject ? 'update' : 'create'} project. Please try again.`);
     } finally {
+      submitting.current = false;
       setIsSubmitting(false);
     }
   };

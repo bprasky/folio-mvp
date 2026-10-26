@@ -66,6 +66,7 @@ export async function getDesignerPublishedProjects(designerId: string) {
       regionState: true,
       views: true,
       images: {
+        where: { inclusion: { not: 'EXCLUDED' } },
         take: 1,
         select: {
           id: true,
@@ -88,11 +89,7 @@ export async function getTaggedProductsForDesigner(designerId: string) {
       where: {
         designerId,
         // Only published projects (same filter as public feed)
-        OR: [
-          { isPublic: true },
-          { publishedAt: { not: null } },
-          { status: 'published' }
-        ]
+        ...PUBLISHED_PROJECT_FILTER
       },
       select: { id: true },
     });
@@ -106,7 +103,8 @@ export async function getTaggedProductsForDesigner(designerId: string) {
     const productTags = await prisma.productTag.findMany({
     where: {
       image: {
-        projectId: { in: projectIds }
+        projectId: { in: projectIds },
+        inclusion: { not: 'EXCLUDED' }
       }
     },
     include: {
@@ -202,7 +200,8 @@ export async function getProjectTagCounts(projectIds: string[]): Promise<Map<str
     const productTags = await prisma.productTag.findMany({
       where: {
         image: {
-          projectId: { in: projectIds }
+          projectId: { in: projectIds },
+        inclusion: { not: 'EXCLUDED' }
         }
       },
       select: {

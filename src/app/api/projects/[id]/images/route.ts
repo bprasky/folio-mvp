@@ -7,31 +7,9 @@ import { prisma } from '@/lib/prisma';
 import { assertProjectWrite } from '@/lib/authz/access';
 import { revalidatePath } from 'next/cache';
 import { saveBufferToProjectStorage, deleteProjectImage } from '@/lib/storage';
-import { z } from 'zod';
-import { parseProductUrl, safeProductResource, UnsafeProductUrl } from '@/lib/server/safe-product-url';
+import { decodeImage, fetchProjectImage, readImageBody, ImageInputError } from '@/lib/server/project-image-input';
+import { UnsafeProductUrl } from '@/lib/server/safe-product-url';
 import { indexMoment } from '@/lib/search/indexMoment';
-
-const uploadInput = z.object({
-  url: z.string().url().max(4096).optional(),
-  name: z.string().max(500).nullable().optional(),
-  room: z.string().max(200).nullable().optional(),
-  imageData: z.string().min(4).max(20 * 1024 * 1024).regex(/^[A-Za-z0-9+/]+={0,2}$/).optional(),
-  mimeType: z.enum(['image/jpeg', 'image/png', 'image/webp']).optional(),
-}).refine(value => Boolean(value.url) !== Boolean(value.imageData));
-
-async function fetchImage(url: string, redirects = 0): Promise<{ buffer: Buffer; mime: string }> {
-  if (redirects > 5) throw new UnsafeProductUrl();
-  const response = await safeProductResource(url);
-  if ([301, 302, 303, 307, 308].includes(response.status)) {
-    if (!response.headers.location) throw new UnsafeProductUrl();
-    return fetchImage(new URL(response.headers.location, url).href, redirects + 1);
-  }
-  const mime = response.headers['content-type']?.split(';')[0];
-  if (response.status !== 200 || !['image/jpeg', 'image/png', 'image/webp'].includes(mime) || !response.body.length) {
-    throw new UnsafeProductUrl();
-  }
-  return { buffer: response.body, mime };
-}
 
 export async function POST(
   request: NextRequest,
@@ -51,46 +29,34 @@ export async function POST(
     // Check project access
     await assertProjectWrite(userId, projectId);
 
-    const body = uploadInput.parse(await request.json());
-    if (body.url) parseProductUrl(body.url);
-    let { url, name, room } = body;
-    const { imageData, mimeType } = body;
-
-    // Path B (manual upload): no url, but raw base64 image data. Store it to
-    // Supabase first, then proceed as if a url had been supplied.
-    if (!url && imageData) {
-      try {
-        const buffer = Buffer.from(imageData, 'base64');
-        const stored = await saveBufferToProjectStorage({
-          projectId,
-          roomId: room || 'default',
-          buffer,
-          mime: mimeType || 'image/jpeg',
-        });
-        storedUpload = stored;
-        url = stored.publicUrl;
-      } catch (uploadError: any) {
-        console.error('[POST /api/projects/[id]/images] base64 upload failed:', uploadError?.message);
-        return NextResponse.json({ error: 'Failed to store uploaded image' }, { status: 500 });
-      }
+    const body = await readImageBody(request);
+    const { name, room } = body;
+    if (Boolean(body.url) === Boolean(body.imageData) ||
+        (body.mimeType !== undefined && !['image/jpeg', 'image/png', 'image/webp'].includes(body.mimeType))) {
+      throw new ImageInputError('Invalid photograph input.');
     }
-
-    if (!url) {
-      return NextResponse.json(
-        { error: 'Image URL or image data is required' },
-        { status: 400 }
-      );
+    if ((name != null && (typeof name !== 'string' || name.length > 500)) ||
+        (room != null && (typeof room !== 'string' || room.length > 200))) {
+      throw new ImageInputError('Invalid photograph name or room.');
     }
-
-    // Only an exact storage origin is local. A substring match can be forged.
-    const storageOrigin = process.env.NEXT_PUBLIC_SUPABASE_URL
-      ? new URL(process.env.NEXT_PUBLIC_SUPABASE_URL).origin : null;
-    if (new URL(url).origin !== storageOrigin) {
-      const { buffer, mime } = await fetchImage(url);
-      const stored = await saveBufferToProjectStorage({ projectId, roomId: room || 'default', buffer, mime });
-      storedUpload = stored;
-      url = stored.publicUrl;
+    let source: { buffer: Buffer; mime: string };
+    if (body.imageData) {
+      source = { buffer: decodeImage(body.imageData), mime: typeof body.mimeType === 'string' ? body.mimeType : 'image/jpeg' };
+    } else if (typeof body.url === 'string' && body.url.startsWith('data:image/')) {
+      const match = /^data:(image\/[a-zA-Z0-9.+-]+);base64,(.*)$/.exec(body.url);
+      if (!match) throw new ImageInputError('Invalid photograph data.');
+      source = { buffer: decodeImage(match[2]), mime: match[1] };
+    } else if (typeof body.url === 'string') {
+      source = await fetchProjectImage(body.url);
+    } else {
+      throw new ImageInputError('Image URL or image data is required');
     }
+    // Every path is decoded/sanitized by storage. Never persist an unverified URL.
+    const stored = await saveBufferToProjectStorage({
+      projectId, roomId: room || 'default', ...source,
+    });
+    storedUpload = stored;
+    const url = stored.publicUrl;
 
     // Create ProjectImage record
     const image = await prisma.projectImage.create({
@@ -124,19 +90,19 @@ export async function POST(
     }, { status: 201 });
 
   } catch (error: any) {
-    // Compensate only a new object returned by this request's storage write.
-    // Never derive deletion authority from a caller-supplied URL.
+    // Keep main's compensation: only delete a newly stored object from this request.
     if (storedUpload && !persisted) {
       try { await deleteProjectImage(`${storedUpload.bucket}/${storedUpload.path}`); }
       catch { console.error('[project image] Failed to clean up unlinked upload'); }
     }
-    if (error instanceof z.ZodError || error instanceof SyntaxError || error instanceof UnsafeProductUrl) return NextResponse.json({ error: "Invalid image upload" }, { status: 400 });
+    if (error instanceof ImageInputError) return NextResponse.json({ error: error.message }, { status: error.status });
+    if (error instanceof UnsafeProductUrl) return NextResponse.json({ error: 'This photo link cannot be imported. Upload the file instead.' }, { status: 400 });
     if (typeof error.message === 'string' && error.message.startsWith('Forbidden')) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
     console.error('[POST /api/projects/[id]/images] Error:', error);
     return NextResponse.json(
-      { error: 'Failed to upload image' },
+      { error: 'Failed to upload image. Your other saved photos are safe; please retry.' },
       { status: 500 }
     );
   }

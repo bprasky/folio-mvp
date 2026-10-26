@@ -43,15 +43,22 @@ export interface SafeResource {
 }
 
 /** One request only. DNS results are validated and pinned to the actual socket. */
-export async function safeProductResource(input: string): Promise<SafeResource> {
-  const { url, address } = await validateProductUrl(input);
+export async function safeProductResource(input: string, options: { maxBytes?: number; timeoutMs?: number; accept?: string } = {}): Promise<SafeResource> {
+  const deadline = Date.now() + (options.timeoutMs ?? 15000);
+  let dnsTimer: ReturnType<typeof setTimeout> | undefined;
+  const { url, address } = await Promise.race([
+    validateProductUrl(input),
+    new Promise<never>((_resolve, reject) => {
+      dnsTimer = setTimeout(() => reject(new UnsafeProductUrl()), Math.max(1, deadline - Date.now()));
+    }),
+  ]).finally(() => clearTimeout(dnsTimer));
   return new Promise<SafeResource>((resolve, reject) => {
     const request = url.protocol === 'https:' ? httpsRequest : httpRequest;
     const req = request(url, {
       agent: false,
       family: address.family,
       lookup: (_host, _options, callback) => callback(null, address.address, address.family),
-      headers: { 'User-Agent': 'Mozilla/5.0 (compatible; FolioProduct/1.0)', Accept: 'text/html,application/xhtml+xml', 'Accept-Encoding': 'identity' },
+      headers: { 'User-Agent': 'Mozilla/5.0 (compatible; FolioProduct/1.0)', Accept: options.accept ?? 'text/html,application/xhtml+xml', 'Accept-Encoding': 'identity' },
     }, (res) => {
       const status = res.statusCode || 502;
       const headers: Record<string, string> = {};
@@ -67,13 +74,13 @@ export async function safeProductResource(input: string): Promise<SafeResource> 
       let bytes = 0;
       res.on('data', (chunk: Buffer) => {
         bytes += chunk.length;
-        if (bytes > 5 * 1024 * 1024) { res.destroy(); reject(new UnsafeProductUrl()); }
+        if (bytes > (options.maxBytes ?? 5 * 1024 * 1024)) { res.destroy(); reject(new UnsafeProductUrl()); }
         else chunks.push(chunk);
       });
       res.on('end', () => resolve({ status, headers, body: Buffer.concat(chunks) }));
       res.on('error', reject);
     });
-    const timer = setTimeout(() => req.destroy(new UnsafeProductUrl()), 15000);
+    const timer = setTimeout(() => req.destroy(new UnsafeProductUrl()), Math.max(1, deadline - Date.now()));
     req.on('close', () => clearTimeout(timer));
     req.on('error', reject);
     req.end();

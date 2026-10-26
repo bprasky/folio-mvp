@@ -6,7 +6,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getRelatedProjects } from "@/lib/article/getRelatedProjects";
 import { getProjectModules } from "@/lib/modules/getProjectModules";
-import { publicFolioBlocks } from '@/lib/posting/publicFolioBlocks';
+import { publicPost } from '@/lib/post/publicPost';
 
 export async function GET(
   request: NextRequest,
@@ -74,12 +74,13 @@ export async function GET(
       );
     }
 
-    const { project } = post;
+    const published = publicPost(await stripPrivateInterviewData(post));
+    const { project } = published;
 
     // Derive materials ledger if not in expandedBlocks
     let materialsLedger: any[] = [];
     if (post.expandedBlocks && typeof post.expandedBlocks === "object") {
-      const blocks = post.expandedBlocks as any;
+      const blocks = published.expandedBlocks;
       if (blocks.materialsLedger?.items && Array.isArray(blocks.materialsLedger.items)) {
         materialsLedger = blocks.materialsLedger.items;
       }
@@ -138,9 +139,8 @@ export async function GET(
         slug: post.slug,
         excerpt: post.excerpt,
         keywords: post.keywords,
-        expandedBlocks: publicFolioBlocks(post.expandedBlocks),
-        provenance: await stripPrivateInterviewData(post.provenance),
-        credits: post.credits,
+        expandedBlocks: published.expandedBlocks,
+        credits: published.credits,
         publishedAt: post.publishedAt,
       },
       project: {
@@ -150,8 +150,6 @@ export async function GET(
         city: project.city,
         regionState: project.regionState,
         projectType: project.projectType,
-        clientType: project.clientType,
-        budgetBand: project.budgetBand,
       },
       heroImage: heroImage ? {
         id: heroImage.id,

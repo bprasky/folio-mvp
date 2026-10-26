@@ -53,6 +53,7 @@ function load(file: string) {
   );
   return exports;
 }
+mocks['./publicPost'] = mocks['@/lib/post/publicPost'] = load('src/lib/post/publicPost.ts');
 mocks['@/lib/posting/publicFolioBlocks'] = load('src/lib/posting/publicFolioBlocks.ts');
 mocks['@/lib/spotlight/privacy'] = load('src/lib/spotlight/privacy.ts');
 const publicReader = load('src/lib/post/getPostBySlug.ts').getPostBySlug;
@@ -74,7 +75,7 @@ async function check(name: string, run: () => Promise<void>) {
   reset(); await run(); passed++; console.log(`  PASS ${name}`);
 }
 async function main() {
-  await check('public loader omits all raw interview provenance, including Spotlight drafts', async () => {
+  await check('public loader strips Spotlight drafts and durable identities from serialized provenance', async () => {
     post.provenance = { interview: {
       spotlightDrafts: { proposal: { answer: 'PRIVATE_DRAFT_TEXT' } },
       payload: {
@@ -92,9 +93,7 @@ async function main() {
     for (const secret of ['spotlightDrafts', 'PRIVATE_DRAFT_TEXT', 'durable-private-id', 'PRIVATE_DURABLE_ANSWER', 'PRIVATE_DURABLE_FOLLOWUP', 'PRIVATE_KEYED_ANSWER']) {
       assert.ok(!json.includes(secret), `Public loader leaked ${secret}`);
     }
-    assert.equal(result.provenance, null, 'Raw interview evidence is author-only, even without a private Spotlight label');
-    assert.ok(!json.includes('Public interview answer'));
-    assert.ok(!json.includes('Public keyed answer'));
+    assert.equal(result.provenance, undefined, 'No interview provenance belongs in public transport');
     assertPublic(result, result.expandedBlocks);
     assert.ok(post.provenance.interview.spotlightDrafts, 'Sanitizing a response must not mutate stored data');
   });
