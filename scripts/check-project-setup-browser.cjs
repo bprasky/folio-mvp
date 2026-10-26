@@ -96,9 +96,9 @@ async function main() {
   const open = async (extra = '') => {
     uploaded = []; requests = []; failedNames = new Set(); holdUpload = false; releaseUpload = null;
     await page.goto(base + '/project/project?view=media&action=upload&expertiseTopic=Historic%20renovation&expertiseProjects=existing' + extra);
-    await page.waitForSelector('input[type=file][accept="image/*"]');
+    await page.waitForSelector('input[type=file][aria-label="Upload project photos"]');
   };
-  const upload = async (files = ['first.png']) => (await page.$('input[type=file][accept="image/*"]')).uploadFile(...files.map(file => path.join(out, file)));
+  const upload = async (files = ['first.png']) => (await page.$('input[type=file][aria-label="Upload project photos"]')).uploadFile(...files.map(file => path.join(out, file)));
   const importPhotos = async () => {
     await page.type('input[aria-label="Project or portfolio link"]', 'https://designer.example/project');
     await click('Find photos'); await text('Choose the photographs to add.');
