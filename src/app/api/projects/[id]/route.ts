@@ -112,7 +112,7 @@ export async function DELETE(
       );
     }
     return NextResponse.json(
-      { error: 'Failed to delete project: ' + message },
+      { error: 'Failed to delete project' },
       { status: 500 }
     );
   }

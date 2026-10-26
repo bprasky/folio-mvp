@@ -2,6 +2,7 @@ export const dynamic = 'force-dynamic';
 
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { z } from 'zod';
 import { Prisma } from '@prisma/client';
 import { formatRoomName } from '@/lib/utils/formatRoomName';
 import { inferRoomType } from '@/lib/rooms/utils';
@@ -46,6 +47,9 @@ export async function GET(
 
     return NextResponse.json(room);
   } catch (error) {
+    if (error instanceof z.ZodError || error instanceof SyntaxError) return NextResponse.json({ error: "Invalid request" }, { status: 400 });
+    if (error instanceof Error && error.message === "Forbidden") return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    if (error instanceof Error && error.message === "NotFound") return NextResponse.json({ error: "Project not found" }, { status: 404 });
     console.error('Error fetching room:', error);
     return NextResponse.json(
       { error: 'Failed to fetch room' },
@@ -67,7 +71,10 @@ export async function PUT(
     }
     await assertProjectWrite(session.user.id, projectId);
 
-    const body = await request.json();
+    const body = z.object({
+      name: z.string().trim().min(1).max(200).optional(),
+      type: z.string().trim().min(1).max(100).nullable().optional(),
+    }).refine(value => value.name !== undefined || value.type !== undefined).parse(await request.json());
 
     // Build update data - only include fields that are provided
     const updateData: { name?: string; type?: string | null } = {};
@@ -83,6 +90,8 @@ export async function PUT(
       where: { id: roomId, projectId },
       select: { name: true },
     });
+
+    if (!existingRoom) return NextResponse.json({ error: 'Room not found' }, { status: 404 });
 
     const nameChanged =
       body.name !== undefined &&
@@ -238,6 +247,9 @@ export async function PUT(
 
     return NextResponse.json(room);
   } catch (error) {
+    if (error instanceof z.ZodError || error instanceof SyntaxError) return NextResponse.json({ error: "Invalid request" }, { status: 400 });
+    if (error instanceof Error && error.message === "Forbidden") return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    if (error instanceof Error && error.message === "NotFound") return NextResponse.json({ error: "Project not found" }, { status: 404 });
     console.error('Error updating room:', error);
     if ((error as { status?: number }).status === 409) {
       return NextResponse.json({ error: (error as Error).message }, { status: 409 });
@@ -262,23 +274,16 @@ export async function DELETE(
     }
     await assertProjectWrite(session.user.id, projectId);
 
-    // Delete all selections in the room first
-    await prisma.selection.deleteMany({
-      where: {
-        roomId: roomId,
-      },
-    });
-
-    // Delete the room
-    await prisma.room.delete({
-      where: {
-        id: roomId,
-        projectId: projectId,
-      },
-    });
+    // The scoped parent delete is atomic. PostgreSQL cascades selections/quotes
+    // and sets ProjectImage.roomId to null; never delete by an unchecked child ID.
+    const deleted = await prisma.room.deleteMany({ where: { id: roomId, projectId } });
+    if (!deleted.count) return NextResponse.json({ error: 'Room not found' }, { status: 404 });
 
     return NextResponse.json({ message: 'Room deleted successfully' });
   } catch (error) {
+    if (error instanceof z.ZodError || error instanceof SyntaxError) return NextResponse.json({ error: "Invalid request" }, { status: 400 });
+    if (error instanceof Error && error.message === "Forbidden") return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    if (error instanceof Error && error.message === "NotFound") return NextResponse.json({ error: "Project not found" }, { status: 404 });
     console.error('Error deleting room:', error);
     return NextResponse.json(
       { error: 'Failed to delete room' },

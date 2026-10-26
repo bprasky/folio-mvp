@@ -9,11 +9,11 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/app/api/auth/[...nextauth]/options';
 import { prisma } from '@/lib/prisma';
-import { assertProjectView } from '@/lib/authz/access';
+import { assertProjectWrite } from '@/lib/authz/access';
 import { z } from 'zod';
 
 const ReorderSchema = z.object({
-  imageIds: z.array(z.string().uuid()).min(1),
+  imageIds: z.array(z.string().uuid()).min(1).max(1000).refine(ids => new Set(ids).size === ids.length),
 });
 
 export async function PATCH(
@@ -30,7 +30,7 @@ export async function PATCH(
     const projectId = params.id;
 
     // Verify project access
-    await assertProjectView(userId, projectId);
+    await assertProjectWrite(userId, projectId);
 
     // Parse request body
     const body = await request.json();
@@ -56,7 +56,7 @@ export async function PATCH(
     await prisma.$transaction(
       imageIds.map((imageId, index) =>
         prisma.projectImage.update({
-          where: { id: imageId },
+          where: { id: imageId, projectId },
           data: { displayOrder: index },
         })
       )
@@ -64,6 +64,7 @@ export async function PATCH(
 
     return NextResponse.json({ success: true });
   } catch (error: any) {
+    if (error instanceof SyntaxError) return NextResponse.json({ error: 'Invalid request' }, { status: 400 });
     if (error.name === 'ZodError') {
       return NextResponse.json(
         { error: 'Invalid request', issues: error.issues },

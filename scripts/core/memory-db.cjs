@@ -97,6 +97,7 @@ function memoryDatabase() {
         const normalize = name => name.trim().replace(/\s+/g, ' ').toLowerCase();
         return tables.get('Organization').filter(o => normalize(o.name) === first && o.id !== second).sort((a, b) => +a.createdAt - +b.createdAt || a.id.localeCompare(b.id)).slice(0, 1).map(clone);
       }
+      if (sql.join('').includes('FROM projects WHERE')) return tables.get('Project').filter(i => i.id === first).map(i => ({ id: i.id })); // lock ordering only
       if (sql.join('').includes('FROM organizations')) return tables.get('Organization').filter(o => o.id === first).map(clone);
       if (sql.join('').includes('operatingAsOrgId')) return tables.get('User').filter(u => u.id === first).map(u => ({ operatingAsOrgId: u.operatingAsOrgId }));
       throw Error('Unexpected raw SQL in local orchestration test');
@@ -118,6 +119,7 @@ function memoryDatabase() {
         if (!row && method.endsWith('OrThrow')) throw Error('Record not found');
         return project(model, row, args);
       }
+      if (method === 'delete') { const row = found()[0]; if (!row) throw Error('Record not found'); const result = project(model, row, args); rows.splice(rows.indexOf(row), 1); return result; }
       if (method === 'deleteMany') { const selected = found(); selected.forEach(row => rows.splice(rows.indexOf(row), 1)); return { count: selected.length }; }
       if (method === 'updateMany') { const selected = found(); selected.forEach(row => apply(model, row, args.data)); return { count: selected.length }; }
       if (method === 'update' || method === 'upsert' && found().length) {

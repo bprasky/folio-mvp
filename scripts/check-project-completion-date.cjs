@@ -56,11 +56,13 @@ const mocks = {
     projectImage: { findMany: async () => [] },
   } },
 };
+// Route writes now share one transaction; this fixture tests date orchestration only.
+mocks['@/lib/prisma'].prisma.$transaction = work => work(mocks['@/lib/prisma'].prisma);
 function load(relative) {
   const file = path.resolve(root, relative);
   if (cache.has(file)) return cache.get(file);
-  const module = { exports: {} };
-  cache.set(file, module.exports);
+  const fixtureModule = { exports: {} };
+  cache.set(file, fixtureModule.exports);
   const localRequire = name => {
     if (name in mocks) return mocks[name];
     const target = name.startsWith('@/') ? path.join(root, 'src', name.slice(2))
@@ -72,8 +74,8 @@ function load(relative) {
   }).outputText;
   vm.runInNewContext(`(function(require,module,exports){${code}\n})`, {
     Date: FixedDate, Error, console: { log() {}, warn() {}, error() {} }, process: { env: { NODE_ENV: 'production' } },
-  })(localRequire, module, module.exports);
-  return module.exports;
+  })(localRequire, fixtureModule, fixtureModule.exports);
+  return fixtureModule.exports;
 }
 
 const { normalizeCreatePayload, CompletionDateSchema } = load('src/app/api/projects/normalizeCreatePayload.ts');

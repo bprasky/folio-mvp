@@ -978,3 +978,13 @@ Interrupted voice now becomes explicitly reviewable on shutdown/expiry, like typ
 Verification: 52 service/transport checks, 46 actual-panel browser/capture checks and scheduled-cleanup checks pass. Old-code probes reproduce failed disconnect cleanup and unusable confirmed-ended retry. Coverage includes delayed join/HTTP responses, reuse of the same session/request, unfinished speech, active/expired save leases and legacy guide/interview separation. Code review found no remaining blockers. Scoped/full lint passes with existing warnings; client-import and migration guards pass. Same-environment TypeScript comparison is 903 diagnostics on main and here, with no new fingerprints; the final live files have no diagnostics. Six manual-room checks pass with the reload-stable upload fixture included.
 
 Production incident attribution remains unverified: Vercel runtime/deployment read access returned 403, and cached production database credentials failed authentication. No incident records were read, no production state changed and no paid provider calls were made. The local diagnostics entrypoint is missing from this checkout; targeted transport/browser regressions provided verification. Changes remain in draft PR 814; not deployed.
+
+## Designer rollout authorization audit — 2026-10-26
+
+- [x] Map actual roles, sharing, publication, storage, public projections and prior findings.
+- [x] Reproduce direct-handler failures with isolated designers, anonymous, participants, firm roles and admin.
+- [x] Fix confirmed authorization, validation and integrity failures using existing helpers; preserve public/share paths.
+- [x] Run focused regressions, core/persistence suites, type preparation/ratchet and repository guards.
+- [x] Record evidence and remaining storage/database/HTTP limitations. No production access, migrations, merge or deployment.
+
+Review: confirmed nested-room destructive IDOR, viewer mutations, project-delete alias bypass, private tag/User/interview leakage, unsafe storage deletion and external image fetching. Fixed with existing authorization/schema/transport patterns and atomic writes. Tests include two designers, anonymous, participants, firm roles, admin and vendors; actual PostgreSQL rollback/concurrent retry checks pass. See `docs/audits/DESIGNER_AUTHORIZATION_2026-10-26.md` for results and the unresolved private-photo storage policy gate. Local only; no production access, migrations, merge or deployment.
