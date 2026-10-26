@@ -25,6 +25,24 @@ The integrated authorization audit also identifies an unresolved private-photo o
 
 ---
 
+# Designer interruption recovery — 2026-10-26
+
+- [x] Read guidance, prior rollout/persistence findings and trace active workflows.
+- [x] Reproduce interruption failures with isolated browser and route fixtures.
+- [x] Harden upload retries/validation, request completion and accurate tagging feedback.
+- [x] Run focused regression suites and required guards; record real-service limitations.
+- [x] Update rollout evidence and remaining gaps. No deployment, merge or production migration.
+
+Plan check-in: reuse existing synthetic harnesses and inline feedback. Preserve project intake, manual rooms, interview versioning and publication authorization. No live services or communications. Inspect current persistence before changing contracts.
+
+### Review
+
+Implemented local intake recovery and stable project/photo/tag retry identities, atomic opt-in tagging, position conflict checks, bounded workflow requests, accurate failed/pending feedback, tab-local interview recovery and generation lease ownership. Reused mounted toast/inline feedback. The upload batch stops scheduling work after navigation; late completion cannot navigate the user back.
+
+Core (10 passing, live DB group skipped), guided, project-guide, interruption transport/route/save-path checks, 21 guided-browser scenarios, seven interruption-browser groups, 26 project-guide browser scenarios and 14 completion-date checks pass. Type preparation completed with existing build import warnings; final prepared ratchet reports 895/904 but fails on the unchanged rep-contacts route exporting listAllContacts (earlier pre-generation pass is superseded); focused lint has no errors, client/migration guards pass. Evidence and explicit remaining integration/legacy-editor gaps are in docs/reviews/designer-interruptions/README.md. No production operations, deployment, merge or migration. Branch remains local for review.
+
+---
+
 # About page and first-project journey — 2026-10-23
 
 - [x] Review the current About page, approved product positioning and signup/firm/upload routing.

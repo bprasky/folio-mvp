@@ -84,6 +84,7 @@ jobs:
           npx tsx --test scripts/core/project-draft.test.cjs
           node --experimental-vm-modules scripts/check-project-list-privacy.cjs
           GUIDED_TEST_BROWSER="$(command -v google-chrome || command -v chromium)" node scripts/check-project-draft-browser.cjs
+      - run: npm run test:interruptions
       - name: Guided interview regression checks
         run: npm run test:guided
       - name: Live and guided browser regression checks
@@ -91,6 +92,7 @@ jobs:
           export GUIDED_TEST_BROWSER="$(command -v google-chrome || command -v chromium)"
           node scripts/check-live-interview-browser.cjs
           node scripts/check-project-guide-browser.cjs
+          npm run test:interruptions:browser
           node scripts/check-project-setup-browser.cjs
           node scripts/check-rollout-recovery-browser.cjs
           node scripts/check-manual-rooms-browser.cjs

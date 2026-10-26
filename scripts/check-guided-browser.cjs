@@ -27,6 +27,8 @@ const categories = ['CLIENT_BRIEF', 'SCOPE_PARAMETERS', 'DESIGN_DIRECTION', 'SIG
 const questions = ['What did the clients come to you wanting from this project?', 'What were you working within on this project?', 'What was the overall design idea for this project?', 'What in this project is most recognizably yours?', 'What discovery changed the direction of this project along the way?'];
 const prepared = { rooms, contextFingerprint: 'local-fixture', minimumTotalAnswers: 5, questions: categories.map((category, i) => ({ id: 'project-' + category + '-fixture', text: questions[i], category, roomId: null, sourceImageIds: rooms.flatMap(room => room.imageIds), sourceAnswerIds: [], kind: 'prepared', status: 'pending' })) };
 const roomPlan = () => rooms.flatMap(room => ['What did you want this room to make possible?', 'What shaped the layout of this room?'].map((text, index) => ({ id: room.id + '-' + index, text, roomId: room.id, category: 'room_design', sourceImageIds: room.imageIds, sourceAnswerIds: [], kind: 'prepared', status: 'pending' })));
+let generationPending = false;
+let stalledSave = false;
 let saved = null, failSave = false, loseReply = false, failTranscription = false, transcript = 'The two doorways leave a clear path through the room.', generationCalls = 0;
 let holdGuidedResponse = true, heldResponse = null;
 let responseHeld;
@@ -112,13 +114,14 @@ function serverHandler(req, res) {
     req.resume(); if (failTranscription) { failTranscription = false; return json({ error: 'Fixture transcription unavailable' }, 503); }
     return json({ transcript });
   }
-  if (pathname.endsWith('/interview/generate')) { generationCalls++; req.resume(); return json({ ok: true }); }
+  if (pathname.endsWith('/interview/generate')) { generationCalls++; req.resume(); if (generationPending) { generationPending = false; return json({ status: 'in-progress' }, 202); } return json({ ok: true }); }
   if (pathname.endsWith('/interview/guided')) {
     if (req.method === 'GET') return json({ ok: true, session: saved });
     let body = ''; req.on('data', chunk => { body += chunk; }); req.on('end', () => {
       try {
         const command = JSON.parse(body); requests.push(command);
-        if (failSave) { failSave = false; return json({ message: 'Fixture save unavailable' }, 503); }
+        if (stalledSave) { stalledSave = false; return; }
+        if (failSave) { const status = typeof failSave === 'number' ? failSave : 503; failSave = false; return json({ message: 'Fixture save unavailable' }, status); }
         if (!saved) saved = controller.createGuidedSession('fixture-project', prepared, command.requestId);
         else if (command.action !== 'start') saved = controller.acceptCommand(saved, command);
         if (saved.status === 'deciding') {
@@ -200,6 +203,15 @@ async function main() {
       failSave = true; await fill('The first gathering showed how easily people could move between the two rooms.'); await page.click('[aria-label="Send response"]');
       await page.waitForFunction(() => document.body.textContent.includes('Fixture save unavailable'));
       const failed = requests.at(-1); assert.equal(await page.$eval('#guided-response', el => el.value), failed.text);
+      failSave = 401; await clickText('Retry save');
+      await page.waitForFunction(() => document.body.textContent.includes('Sign in again'));
+      assert.equal(await page.$eval('#guided-response', el => el.value), failed.text);
+      stalledSave = true;
+      await page.evaluate(() => { window.originalTimeout = window.setTimeout; window.setTimeout = (fn, ms, ...args) => window.originalTimeout(fn, ms === 90000 ? 100 : ms, ...args); });
+      await clickText('Retry save');
+      await page.waitForFunction(() => document.body.textContent.includes('request timed out'));
+      await page.evaluate(() => { window.setTimeout = window.originalTimeout; });
+      assert.equal(await page.$eval('#guided-response', el => el.value), failed.text);
       await clickText('Retry save'); await idle(); assert.equal(requests.at(-1).requestId, failed.requestId);
     });
     await capture('Lost successful response replays once without duplicate evidence', async () => {
@@ -214,6 +226,18 @@ async function main() {
       assert.equal(saved.activeQuestionId, question); assert.equal(await page.$eval('#guided-response', el => el.value), 'The plan began with a clear route from the entrance.');
       assert.ok(await page.$$eval('[data-testid="guided-turn-reaction"]', (elements, reaction) => elements.some(el => el.textContent === reaction), followupReaction));
       assert.ok(controller.canonicalGuidedAnswers(saved).every(answer => !answer.answer.includes(followupReaction) && !('reaction' in answer)), 'an assistant reaction is not a designer quote');
+    });
+    await capture('Two tabs retain separate unsent replies through refresh and browser back', async () => {
+      const firstText = await page.$eval('#guided-response', el => el.value);
+      const secondTab = await browser.newPage();
+      await secondTab.goto(base); await secondTab.waitForSelector('#guided-response');
+      await secondTab.$eval('#guided-response', el => { const setter = Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype, 'value').set; setter.call(el, 'A separate tab reply.'); el.dispatchEvent(new Event('input', { bubbles: true })); });
+      await page.reload(); await page.waitForSelector('#guided-response'); await idle();
+      assert.equal(await page.$eval('#guided-response', el => el.value), firstText);
+      await page.goto('about:blank'); await page.goBack(); await page.waitForSelector('#guided-response'); await idle();
+      assert.equal(await page.$eval('#guided-response', el => el.value), firstText);
+      assert.equal(await secondTab.$eval('#guided-response', el => el.value), 'A separate tab reply.');
+      await secondTab.close();
     });
     await capture('Long transcription is retained in full and blocked explicitly at save limit', async () => {
       await fill(''); transcript = 'Spoken detail '.repeat(190); failTranscription = true;
@@ -277,8 +301,11 @@ async function main() {
     await capture('Partial completion offers an editable draft and never publishes', async () => {
       await clickText('Finish with what I have'); await page.waitForFunction(() => document.body.textContent.includes('Prepare editable draft'));
       assert.ok(await page.evaluate(() => document.body.textContent.includes('shorter coverage')));
+      generationPending = true; await clickText('Prepare editable draft');
+      await page.waitForFunction(() => document.body.textContent.includes('still being prepared'));
+      assert.notEqual(await page.$eval('#destination', el => el.textContent), 'Editable draft review');
       await clickText('Prepare editable draft'); await page.waitForFunction(() => document.querySelector('#destination')?.textContent === 'Editable draft review');
-      assert.equal(generationCalls, 1); assert.equal(saved.status, 'finished'); assert.ok(!requests.some(request => request.action === 'publish'));
+      assert.equal(generationCalls, 2); assert.equal(saved.status, 'finished'); assert.ok(!requests.some(request => request.action === 'publish'));
     });
     await capture('A partial finished interview resumes its remaining prepared question', async () => {
       await clickText('Resume guided interview'); await page.waitForFunction(() => document.body.textContent.includes('Resume remaining questions'));

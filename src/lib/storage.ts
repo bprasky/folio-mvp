@@ -43,14 +43,17 @@ export async function saveBufferToProjectStorage({
   roomId,
   buffer,
   mime,
+  storageId,
 }: {
   projectId: string;
   roomId: string;
   buffer: Buffer;
   mime: string;
+  storageId?: string;
 }) {
   const { ulid } = await import("ulid");
-  const id = ulid();
+  if (storageId && !/^[a-f0-9]{8}-[a-f0-9]{4}-5[a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$/.test(storageId)) throw new Error('Invalid upload identity');
+  const id = storageId || ulid();
   const ext = mime === "image/png" ? "png" : "jpg";
 
   // Strip EXIF metadata for privacy (removes GPS, timestamps, camera info)
@@ -63,7 +66,7 @@ export async function saveBufferToProjectStorage({
   const supabase = getSupabase();
   let up = await supabase.storage.from(BUCKET).upload(path, sanitizedBuffer, {
     contentType: mime === 'image/png' ? 'image/png' : 'image/jpeg',
-    upsert: false,
+    upsert: !!storageId,
   });
 
   // If anon client fails, try with admin client (bypasses RLS)
@@ -72,7 +75,7 @@ export async function saveBufferToProjectStorage({
     const { supabaseAdmin } = await import('./supabaseAdmin');
     const adminUp = await supabaseAdmin.storage.from(BUCKET).upload(path, sanitizedBuffer, {
       contentType: mime === 'image/png' ? 'image/png' : 'image/jpeg',
-      upsert: false,
+      upsert: !!storageId,
     });
     if (adminUp.error) {
       console.error(`[saveBufferToProjectStorage] Admin client upload also failed:`, adminUp.error);

@@ -105,7 +105,9 @@
     "test:recorded-media": "tsx --test scripts/core/media-integrity.test.cjs",
     "test:vendor-boost": "tsx --test --test-name-pattern=\"boost|vendor request|canonical vendor\" scripts/core/media-integrity.test.cjs",
     "test:rollout": "node --import tsx scripts/core/rollout-privacy.test.cjs && node --import tsx scripts/security/rollout-images.test.ts && node scripts/security/rollout-transport.test.cjs && node --import tsx scripts/check-public-folio.ts",
-    "test:rollout:browser": "node scripts/check-rollout-recovery-browser.cjs"
+    "test:rollout:browser": "node scripts/check-rollout-recovery-browser.cjs",
+    "test:interruptions": "node scripts/check-workflow-request.cjs && node scripts/check-project-guide-upload.cjs && node scripts/check-generation-quote-persistence.cjs",
+    "test:interruptions:browser": "node scripts/check-designer-interruptions.cjs"
   },
   "buildTimestamp": "2025-01-18T20:15:00Z",
   "prisma": {

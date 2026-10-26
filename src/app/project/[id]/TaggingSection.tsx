@@ -1,4 +1,6 @@
 'use client';
+import { toast } from 'react-hot-toast';
+import { workflowRequest } from '@/lib/client/workflowRequest';
 import { SpotlightSelections } from '@/components/spotlight/PrivateSpotlightInterview';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
@@ -19,6 +21,15 @@ import { isDocumentImage } from '@/lib/publish/computePublishReadiness';
 import { setImageNoProducts } from '@/app/actions/projectImages';
 import { ProductTagPicker } from '@/components/project/ProductTagPicker';
 import { ProductEditModal } from '@/components/project/ProductEditModal';
+
+async function saveTagChange(path: string, init: RequestInit) {
+  const response = await workflowRequest(path, init);
+  if (!response.ok) {
+    const data = await response.json().catch(() => ({}));
+    throw new Error(data.message || data.error || 'Your tag change was not confirmed. Try again.');
+  }
+  return response;
+}
 
 /** Tag rows carry the full product so the list can show name + category. */
 type TagRow = {
@@ -133,7 +144,7 @@ export default function TaggingSection({
   // Place the active finish-schedule product onto a photo at the given spot.
   const placeProduct = async (tagId: string, imageId: string, x: number, y: number) => {
     try {
-      const res = await fetch(`/api/import/pending-tag/${tagId}/place`, {
+      const res = await saveTagChange(`/api/import/pending-tag/${tagId}/place`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ imageId, x, y }),
@@ -148,13 +159,14 @@ export default function TaggingSection({
       onChanged();
     } catch (err) {
       console.error('[TaggingSection] place error:', err);
+      toast.error(err instanceof Error ? err.message : 'Your tag change was not confirmed. Try again.');
     }
   };
 
   // Drop a parsed product we don't want to place.
   const dismissUnplaced = async (tagId: string) => {
     try {
-      await fetch(`/api/import/pending-tag/${tagId}/verify`, {
+      await saveTagChange(`/api/import/pending-tag/${tagId}/verify`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ action: 'dismiss' }),
@@ -163,6 +175,7 @@ export default function TaggingSection({
       await refetchUnplaced();
     } catch (err) {
       console.error('[TaggingSection] dismiss error:', err);
+      toast.error(err instanceof Error ? err.message : 'Your tag change was not confirmed. Try again.');
     }
   };
 
@@ -191,7 +204,7 @@ export default function TaggingSection({
   // create a pending product for flagged domains / bot-walled scrapes).
   const confirmTag = async (tagId: string) => {
     try {
-      await fetch('/api/tag-product-to-image', {
+      await saveTagChange('/api/tag-product-to-image', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ id: tagId, reviewed: true }),
@@ -199,6 +212,7 @@ export default function TaggingSection({
       onChanged();
     } catch (err) {
       console.error('[TaggingSection] confirm error:', err);
+      toast.error(err instanceof Error ? err.message : 'Your tag change was not confirmed. Try again.');
     }
   };
 
@@ -637,14 +651,15 @@ function PhotoTagger({
   // left untouched so the AI-vs-designer delta is captured for later training.
   const moveTag = async (tagId: string, x: number, y: number) => {
     try {
-      await fetch('/api/tag-product-to-image', {
+      await saveTagChange('/api/tag-product-to-image', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id: tagId, x, y }),
+        body: JSON.stringify({ id: tagId, x, y, expected: { imageId: photo.id, x: photo.tags.find(tag => tag.id === tagId)?.x, y: photo.tags.find(tag => tag.id === tagId)?.y } }),
       });
       onChanged();
     } catch (err) {
       console.error('[TaggingSection] move tag error:', err);
+      toast.error(err instanceof Error ? err.message : 'Your tag change was not confirmed. Try again.');
     }
   };
 
@@ -689,24 +704,26 @@ function PhotoTagger({
 
   const handleDelete = async (tagId: string) => {
     try {
-      const res = await fetch(`/api/tag-product-to-image?id=${tagId}`, { method: 'DELETE' });
+      const res = await saveTagChange(`/api/tag-product-to-image?id=${tagId}`, { method: 'DELETE' });
       if (res.ok) onChanged();
     } catch (err) {
       console.error('[TaggingSection] delete error:', err);
+      toast.error(err instanceof Error ? err.message : 'Your tag change was not confirmed. Try again.');
     }
   };
 
   // Move a tag to another photo in the same room (centered; drag to fine-tune).
   const handleMove = async (tagId: string, targetImageId: string) => {
     try {
-      const res = await fetch('/api/tag-product-to-image', {
+      const res = await saveTagChange('/api/tag-product-to-image', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id: tagId, imageId: targetImageId }),
+        body: JSON.stringify({ id: tagId, imageId: targetImageId, expected: { imageId: photo.id, x: photo.tags.find(tag => tag.id === tagId)?.x, y: photo.tags.find(tag => tag.id === tagId)?.y } }),
       });
       if (res.ok) onChanged();
     } catch (err) {
       console.error('[TaggingSection] move tag error:', err);
+      toast.error(err instanceof Error ? err.message : 'Your tag change was not confirmed. Try again.');
     }
   };
 

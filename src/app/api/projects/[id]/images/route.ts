@@ -1,5 +1,7 @@
 export const dynamic = 'force-dynamic';
 
+import { requestIdentity } from '@/lib/persistence/requestIdentity';
+import { projectPhotoError } from '@/lib/files/projectPhoto';
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/app/api/auth/[...nextauth]/options';
@@ -17,6 +19,7 @@ export async function POST(
 ) {
   let storedUpload: { bucket: string; path: string } | undefined;
   let persisted = false;
+  let sharedUpload = false;
   try {
     const session = await getServerSession(authOptions);
     if (!session?.user?.id) {
@@ -51,9 +54,20 @@ export async function POST(
     } else {
       throw new ImageInputError('Image URL or image data is required');
     }
+    if (body.deduplicate === true && body.imageData) {
+      const validation = projectPhotoError(source.mime, source.buffer.length);
+      if (validation) throw new ImageInputError(validation, 422);
+    }
+    const imageId = body.deduplicate === true ? requestIdentity('photo-upload', [projectId, source.buffer.toString('base64'), source.mime]) : undefined;
+    const include = { tags: { include: { product: true } } };
+    if (imageId) {
+      const saved = await prisma.projectImage.findUnique({ where: { id: imageId }, include });
+      if (saved) return NextResponse.json({ success: true, image: saved }, { status: 200 });
+      sharedUpload = true;
+    }
     // Every path is decoded/sanitized by storage. Never persist an unverified URL.
     const stored = await saveBufferToProjectStorage({
-      projectId, roomId: room || 'default', ...source,
+      projectId, roomId: imageId ? 'default' : room || 'default', ...source, storageId: imageId,
     });
     storedUpload = stored;
     const url = stored.publicUrl;
@@ -61,6 +75,7 @@ export async function POST(
     // Create ProjectImage record
     const image = await prisma.projectImage.create({
       data: {
+        ...(imageId ? { id: imageId } : {}),
         url,
         name: name || null,
         room: room || null,
@@ -73,6 +88,12 @@ export async function POST(
           },
         },
       },
+    }).catch(async error => {
+      if (imageId && error?.code === 'P2002') {
+        const saved = await prisma.projectImage.findUnique({ where: { id: imageId }, include });
+        if (saved) return saved;
+      }
+      throw error;
     });
 
     persisted = true;
@@ -90,8 +111,9 @@ export async function POST(
     }, { status: 201 });
 
   } catch (error: any) {
-    // Keep main's compensation: only delete a newly stored object from this request.
-    if (storedUpload && !persisted) {
+    // Only compensate objects exclusively owned by this request. A deterministic
+    // path may already belong to a concurrent winner; retain it for safe retry.
+    if (storedUpload && !persisted && !sharedUpload) {
       try { await deleteProjectImage(`${storedUpload.bucket}/${storedUpload.path}`); }
       catch { console.error('[project image] Failed to clean up unlinked upload'); }
     }

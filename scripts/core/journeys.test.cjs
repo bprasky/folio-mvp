@@ -77,7 +77,11 @@ async function journeys(t, database) {
   });
   await t.test('2 create project, room, image upload and product tag; canonical readback preserves relationships', async () => {
     await h.login(owner);
-    projectId = (await body(await projects.POST(r({ title: 'Core House', projectStatus: 'new_project', designerOrgId: orgId })), 201)).id;
+    const creation = { title: 'Core House', projectStatus: 'new_project', designerOrgId: orgId, requestId: randomUUID() };
+    projectId = (await body(await projects.POST(r(creation)), 201)).id;
+    assert.match(projectId, /^[a-f0-9]{8}-[a-f0-9]{4}-5[a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$/);
+    assert.equal((await body(await projects.POST(r(creation)), 200)).id, projectId, 'lost creation acknowledgement reuses the project');
+    assert.equal(await db.project.count({ where: { id: projectId } }), 1);
     const saved = await db.project.findUniqueOrThrow({ where: { id: projectId } });
     assert.equal(saved.ownerId, owner.id); assert.equal(saved.designerId, owner.id); assert.equal(saved.designerOrgId, orgId); assert.equal(saved.isPublic, false);
     room = await body(await rooms.POST(r({ name: 'Living Room' }), context(projectId)));
@@ -94,16 +98,26 @@ async function journeys(t, database) {
     product = await db.product.findUniqueOrThrow({ where: { id: createdProduct.productId } });
     assert.equal(product.brand, 'Core Workshop'); assert.equal(product.vendorId, null);
     assert.equal(await db.user.count(), userCount);
-    tag = await body(await tagging.POST(r({ projectId, imageId: image.id, productId: product.id, x: 0.25, y: 0.75, createSelection: true, finishRaw: 'Oak', finishConfirmed: true })));
+    tag = await body(await tagging.POST(r({ projectId, imageId: image.id, productId: product.id, x: 0.25, y: 0.75, createSelection: true, finishRaw: 'Oak', finishConfirmed: true, deduplicate: true })));
     const persisted = await db.productTag.findFirst({ where: { imageId: image.id, productId: product.id } });
     assert.ok(persisted); assert.equal(persisted.x, 0.25); assert.equal(persisted.y, 0.75); assert.equal(persisted.finishRaw, 'Oak');
     tag = persisted;
+    const replayTag = await body(await tagging.POST(r({ projectId, imageId: image.id, productId: product.id, x: 0.25, y: 0.75, createSelection: true, finishRaw: 'Oak', finishConfirmed: true, deduplicate: true })));
+    assert.equal(replayTag.id, tag.id);
+    assert.equal(await db.selection.count({ where: { productTagId: tag.id } }), 1);
     const selection = await db.selection.findFirst({ where: { productTagId: tag.id } });
     assert.equal(selection.projectId, projectId); assert.equal(selection.roomId, room.id);
     const reloaded = await body(await projects.GET(r(undefined, 'GET', '/api/projects?mine=true')));
     const own = reloaded.find(p => p.id === projectId), photo = own.images.find(i => i.id === image.id);
     assert.equal(own.designerId, owner.id); assert.equal(photo.noProducts, false);
     assert.deepEqual(photo.tags.map(t => [t.id, t.product.id, t.x, t.y]), [[tag.id, product.id, 0.25, 0.75]]);
+    const expected = { imageId: image.id, x: 0.25, y: 0.75 };
+    const firstMove = { id: tag.id, x: 30, y: 40, expected };
+    await body(await tagging.PATCH(r(firstMove, 'PATCH')));
+    await body(await tagging.PATCH(r(firstMove, 'PATCH'))); // uncertain-result replay
+    assert.equal((await tagging.PATCH(r({ id: tag.id, x: 60, y: 70, expected }, 'PATCH'))).status, 409);
+    assert.equal((await db.productTag.findUniqueOrThrow({ where: { id: tag.id } })).x, 30);
+
     assert.equal((await body(await detail.GET(r(), context(projectId)))).rooms[0].id, room.id);
   });
   await t.test('3 direct owner/stranger requests and canonical organization write authorization', async () => {
@@ -145,6 +159,14 @@ async function journeys(t, database) {
     const narrative = 'The doorway now faces the garden. A chair sits beside the opening, leaving a clear route through the room. The designer arranged this place for reading in afternoon light. The change follows the daily pattern described in the interview.';
     h.setArticle({ lead: { title: 'A Door Opens Toward the Garden', kicker: 'A Door Opens Toward the Garden', deck: 'A changed doorway brings afternoon reading closer to the garden.' }, sections: [0, 1, 2].map(() => ({ type: 'narrative', heading: 'Living Room', body: narrative })), galleryChapters: [{ title: 'Living Room', imageIds: [image.id], body: [narrative, narrative] }], pullQuotes: [], credits: [] });
     const beforeGeneration = h.modelCalls.length;
+    const generationRoute = h.route('posting/project/[projectId]/interview/generate');
+    const locked = { ...read.provenance, interview: { ...read.provenance.interview, status: { phase: 'generating', startedAt: Date.now(), requestId: 'other-writer' } } };
+    await db.projectPost.update({ where: { projectId }, data: { provenance: locked } });
+    assert.equal((await generationRoute.POST(r({ forceOverwriteDraft: true, includeBio: false, includeProjectHistory: false }), editorial(projectId))).status, 202, 'force must not bypass another generator');
+    assert.equal(h.modelCalls.length, beforeGeneration);
+    locked.interview.status.startedAt = Date.now() - 900000;
+    await db.projectPost.update({ where: { projectId }, data: { provenance: locked } });
+
     await body(await h.route('posting/project/[projectId]/interview/generate').POST(r({ force: true, includeBio: false, includeProjectHistory: false }), editorial(projectId)));
     const draft = await db.projectPost.findUniqueOrThrow({ where: { projectId } });
     assert.equal(draft.id, first.id); assert.equal(draft.status, 'DRAFT'); assert.ok(draft.expandedBlocks.galleryChapters.length);

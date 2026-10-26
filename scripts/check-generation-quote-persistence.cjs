@@ -29,7 +29,7 @@ const fixture = {
   // The hook shifts the index and the empty room is absent from it.
   pullQuotes: [{ text: 'Every room needed its own character.' }, { text: selection.selected.text, sourceSection: 'Dining Room' }],
 };
-async function persist(source, { currentProvenance = {}, sourceInterview = { payload: {} }, verifyWrite } = {}) {
+async function persist(source, { currentProvenance = {}, sourceInterview = { payload: {} }, acquireLock = false, verifyWrite } = {}) {
   let written;
   const post = { id: 'post', slug: 'story', status: 'DRAFT', updatedAt: new Date(0), provenance: currentProvenance,
     expandedBlocks: { embeddedQuotes: [{ slotId: 'breather-2', sourceId: 'designer', text: selection.selected.text, attribution: 'organization' }] } };
@@ -46,7 +46,7 @@ async function persist(source, { currentProvenance = {}, sourceInterview = { pay
     validImages: [], normalizedAnswers: [], normalizedFollowUps: [], allSelections: [], imageOrder: [],
     frozenChapters: [], existingOverrides: [], existingHistory: [],
     designerBio: null, projectHistory: null, atelierSummary: null, duration: 1, _cid: 'test',
-    interview: sourceInterview, generationResetId: sourceInterview.resetId ?? null, answersOverride: [], acquireLock: false,
+    interview: sourceInterview, generationResetId: sourceInterview.resetId ?? null, answersOverride: [], acquireLock,
     verifyProductAccuracy: () => ({ warnings: [] }),
     savedEmbeddedQuoteChoices,
     session: { user: { id: 'owner' } },
@@ -122,6 +122,15 @@ async function main() {
     }), error => error.status === 409 && /restarted/.test(error.message));
   }
   console.log('PASS matching reset permits generation; first and later resets reject stale saves before any update');
+  await assert.rejects(persist(savePath, {
+    acquireLock: true,
+    currentProvenance: { interview: { status: { phase: 'generating', requestId: 'newer-attempt' }, payload: {} } },
+    verifyWrite: () => assert.fail('An expired writer cannot overwrite its replacement'),
+  }), error => error.status === 409 && /newer generation/.test(error.message));
+  assertCanonical(await persist(savePath, {
+    acquireLock: true, currentProvenance: { interview: { status: { phase: 'generating', requestId: 'test' }, payload: {} } },
+  }));
+  console.log('PASS generation lease owner saves; replaced late writer cannot update the draft');
   const redistribution = `
     if (validatedBlocks.pullQuotes?.length && validatedBlocks.galleryChapters?.length) {
       for (let i = 0; i < validatedBlocks.galleryChapters.length && i < validatedBlocks.pullQuotes.length; i++) {

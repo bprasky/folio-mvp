@@ -515,19 +515,16 @@ export async function POST(
       return NextResponse.json({ status: 'already_has_draft' }, { status: 202 });
     }
 
-    // if you have a lock, bypass when force=true
-    const acquireLock = !forceOverwriteDraft && !debugEcho;
-    if (!acquireLock) {
-      console.log('[AUDIT] generate:force — skipping lock');
-    }
+    // Recomposition permits replacing a draft, never bypassing an active writer.
+    const acquireLock = !debugEcho;
 
-    // Check for generation lock and auto-release stale locks (skip when force=true or debug mode)
+    // Expiry covers the route runtime; a replacement also fences late results.
     if (acquireLock) {
       const existingLock = (post?.provenance as any)?.interview?.status;
       if (existingLock?.phase === 'generating') {
         const age = Date.now() - (existingLock.startedAt ?? 0);
-        if (age < 120000) {
-          // Lock is fresh (< 2 minutes), return 202 (in progress)
+        if (age < (maxDuration + 30) * 1000) {
+          // The prior writer may still be running; return 202 (in progress)
           console.log("[AUDIT] generate:lock:return-202", { projectId, ageMs: age, reason: "fresh-lock", _cid });
           return NextResponse.json(
             { 
@@ -537,10 +534,10 @@ export async function POST(
             { status: 202 }
           );
         } else {
-          // Lock is stale (> 2 minutes), auto-release it and CONTINUE
+          // The prior runtime has expired; acquisition will replace its lease.
           console.log("[AUDIT] generate:stale-lock", { projectId, ageMs: age, _cid });
           console.warn("[posting/interview/generate] Releasing stale generation lock", { _cid, age });
-          await patchGenerationInterview(projectId, session.user.id, generationResetId, () => ({ status: { phase: 'idle', endedAt: Date.now() } }));
+          // Replace an expired lease only in the atomic acquisition below.
           // IMPORTANT: do NOT return here — proceed to set a fresh lock
         }
       }
@@ -740,9 +737,14 @@ export async function POST(
       followupsCount = followups;
     }
 
-    // Set generation lock before starting (skip when force=true or debug mode)
+    // Acquire against the current provenance, so simultaneous requests cannot both win.
     if (acquireLock) {
-      await patchGenerationInterview(projectId, session.user.id, generationResetId, () => ({ status: { phase: 'generating', startedAt: Date.now() } }));
+      await patchGenerationInterview(projectId, session.user.id, generationResetId, current => {
+        if (current.status?.phase === 'generating' && Date.now() - (current.status.startedAt ?? 0) < (maxDuration + 30) * 1000) {
+          throw Object.assign(new Error('Generation is already in progress. Check the saved draft before retrying.'), { status: 409 });
+        }
+        return { status: { phase: 'generating', startedAt: Date.now(), requestId: _cid } };
+      });
     }
 
     // Use overrides if provided, otherwise use interview data
@@ -1305,7 +1307,7 @@ export async function POST(
       // Unlock if we acquired a lock
       if (acquireLock) {
         try {
-          await patchGenerationInterview(projectId, session.user.id, generationResetId, current => current.status?.phase === 'generating'
+          await patchGenerationInterview(projectId, session.user.id, generationResetId, current => current.status?.phase === 'generating' && current.status.requestId === _cid
             ? { status: { phase: 'idle', endedAt: Date.now(), lastDurationMs: Date.now() - started } } : null);
         } catch (unlockErr) {
           console.error("[posting/interview/generate] Unlock failed", { _cid, unlockErr });
@@ -1564,6 +1566,9 @@ export async function POST(
       if ((existingInterview.resetId ?? null) !== generationResetId) {
         throw Object.assign(new Error('The interview was restarted. Generate again using the new answers.'), { status: 409 });
       }
+      if (acquireLock && (existingInterview.status?.phase !== 'generating' || existingInterview.status.requestId !== _cid)) {
+        throw Object.assign(new Error('A newer generation attempt owns this draft. Reload to review the saved result.'), { status: 409 });
+      }
       const existingPayload = existingInterview.payload || {};
       const guided = existingInterview.guided;
       const sourceGuided = interview.guided;
@@ -1654,7 +1659,7 @@ export async function POST(
     if (acquireLock) {
       try {
         console.log("[AUDIT] finally: unlock", { projectId, ok: true, _cid });
-        await patchGenerationInterview(projectId, session.user.id, generationResetId, current => current.status?.phase === 'generating'
+        await patchGenerationInterview(projectId, session.user.id, generationResetId, current => current.status?.phase === 'generating' && current.status.requestId === _cid
           ? { status: { phase: 'idle', endedAt: Date.now(), lastDurationMs: duration } } : null);
       } catch (unlockErr) {
         console.error("[posting/interview/generate] Unlock failed", { _cid, unlockErr });
@@ -1730,8 +1735,9 @@ export async function POST(
     try {
       console.log("[AUDIT] finally: unlock", { projectId, ok: false, _cid });
       if (authorizedActorId && generationResetId !== undefined) await patchGenerationInterview(projectId, authorizedActorId, generationResetId, current => {
+        if (current.status?.phase === 'generating' && current.status.requestId !== _cid) return null;
         const changes: Record<string, unknown> = {};
-        if (current.status?.phase === 'generating') {
+        if (current.status?.phase === 'generating' && current.status.requestId === _cid) {
           const lockStarted = current.status.startedAt;
           changes.status = { phase: 'idle', endedAt: Date.now(), lastDurationMs: lockStarted ? Date.now() - lockStarted : undefined };
         }
@@ -1770,7 +1776,7 @@ export async function POST(
     // Respect explicit error.status (e.g. 502 from composeEditorialHard) rather than flattening to 500
     const status = error?.code === 'P2025' ? 409 : typeof error?.status === 'number' ? error.status : 500;
     return NextResponse.json(
-      { error: status === 502 ? "Story generation failed" : "Internal server error", details: error.message, code: error?.code },
+      { error: status === 502 ? "Story generation failed" : status === 409 ? error.message : "Internal server error", details: error.message, code: error?.code },
       { status }
     );
   }

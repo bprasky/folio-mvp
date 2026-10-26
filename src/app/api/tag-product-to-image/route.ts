@@ -15,6 +15,7 @@ const tagInput = z.object({
 const tagPatch = z.object({
   id: z.string().min(1), x: coordinate.optional(), y: coordinate.optional(),
   reviewed: z.boolean().optional(), imageId: z.string().min(1).optional(),
+  expected: z.object({ imageId: z.string().min(1), x: coordinate, y: coordinate }).optional(),
 });
 
 export async function POST(request: NextRequest) {
@@ -348,7 +349,7 @@ export async function PATCH(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { id, x, y, reviewed, imageId: targetImageId } = tagPatch.parse(await request.json());
+    const { id, x, y, reviewed, imageId: targetImageId, expected } = tagPatch.parse(await request.json());
 
     // Three modes: reposition (x, y), mark-reviewed (reviewed: true), or move to
     // another photo (imageId). The reviewed flag confirms a deferred-scrape tag.
@@ -404,7 +405,15 @@ export async function PATCH(request: NextRequest) {
     }
 
     const updated = await prisma.$transaction(async tx => {
-      const updated = await tx.productTag.update({ where: { id }, data });
+      let updated;
+      if (expected) {
+        const matches = Object.entries(data).every(([key, value]) => key === 'reviewedAt' ? !!tag.reviewedAt : tag[key as 'x' | 'y' | 'imageId'] === value);
+        if (!matches) {
+          const changed = await tx.productTag.updateMany({ where: { id, imageId: expected.imageId, x: expected.x, y: expected.y }, data });
+          if (changed.count !== 1) throw Object.assign(new Error('This tag changed in another edit. Refresh the project, then try again.'), { status: 409 });
+        }
+        updated = await tx.productTag.findUniqueOrThrow({ where: { id } });
+      } else updated = await tx.productTag.update({ where: { id }, data });
       if (isMoveMode && !isReviewMode) {
         await tx.projectImage.update({ where: { id: targetImageId, projectId: tag.image.projectId }, data: { noProducts: false } });
       }
@@ -414,6 +423,7 @@ export async function PATCH(request: NextRequest) {
     return NextResponse.json(updated);
 
   } catch (error) {
+    if (error instanceof Error && 'status' in error && error.status === 409) return NextResponse.json({ error: error.message }, { status: 409 });
     if (error instanceof z.ZodError || error instanceof SyntaxError) return NextResponse.json({ error: "Invalid request" }, { status: 400 });
     console.error('Failed to update product tag:', error);
     return NextResponse.json(

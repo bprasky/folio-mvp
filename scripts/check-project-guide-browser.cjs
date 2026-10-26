@@ -190,6 +190,8 @@ async function main(){await build();const server=http.createServer(handler);awai
     assert.match(await page.$eval('[role=alert]',node=>node.textContent),/year/i);assert.equal(projectWrites.length,writes);assert.equal(uploads,beforeUploads);assert.equal(await page.evaluate(()=>location.pathname),'/projects/new');assert.equal(starts,before);
   });
   await check('completed-only shared creation has no stage selector and uploads a completed archive',async()=>{
+    // Independent scenario: explicitly discard the preceding deliberately incomplete intake fixture.
+    await page.evaluate(()=>{for(const storage of [localStorage,sessionStorage])for(const key of Object.keys(storage))if(key.startsWith('folio.project-intake.'))storage.removeItem(key)});
     const before=starts,writes=projectWrites.length;await page.goto(base+'/projects/new');await page.waitForSelector('input[aria-label="Project name"]');await assertCompletedOnly();
     await fillCompletion(5);await page.type('input[aria-label="Project name"]','Completed archive');await(await page.$('input[type=file]')).uploadFile(path.join(out,'photo.png'));await page.waitForFunction(()=>location.pathname==='/project/project');
     assert.equal(projectWrites.length,writes+1);assertCompletedPayload(projectWrites.at(-1),'completed_project',5);assert.equal(projectWrites.at(-1).data.title,'Completed archive');assert.equal(await page.evaluate(()=>new URLSearchParams(location.search).get('step')),'rooms');assert.equal(starts,before);
