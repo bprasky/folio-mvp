@@ -26,33 +26,10 @@ const MESH_BUCKET = 'product-meshes';
  * @param mime - MIME type of the image
  * @returns Buffer with EXIF data removed
  */
-async function stripExifMetadata(buffer: Buffer, mime: string): Promise<Buffer> {
-  try {
-    // Determine output format based on MIME type
-    const isJpeg = mime.includes('jpeg') || mime.includes('jpg');
-    const isPng = mime.includes('png');
-
-    let processor = sharp(buffer)
-      .rotate() // Auto-rotate based on EXIF orientation, then remove EXIF
-      .withMetadata({
-        // Keep only ICC color profile for color accuracy
-        // Remove all EXIF, XMP, and IPTC metadata
-      });
-
-    // Convert to appropriate format
-    if (isPng) {
-      processor = processor.png({ quality: 95 });
-    } else {
-      // Default to JPEG for other formats
-      processor = processor.jpeg({ quality: 90 });
-    }
-
-    return await processor.toBuffer();
-  } catch (error) {
-    console.error('[stripExifMetadata] Error stripping EXIF:', error);
-    // If stripping fails, return original buffer rather than failing the upload
-    return buffer;
-  }
+export async function stripExifMetadata(buffer: Buffer, mime: string): Promise<Buffer> {
+  // Sharp strips metadata by default. Never return original bytes on decode failure.
+  const processor = sharp(buffer, { limitInputPixels: 40_000_000, animated: false }).rotate();
+  return mime === 'image/png' ? processor.png().toBuffer() : processor.jpeg({ quality: 90 }).toBuffer();
 }
 
 export interface StorageResult {
@@ -85,7 +62,7 @@ export async function saveBufferToProjectStorage({
   // Try with anon client first (faster if RLS allows it)
   const supabase = getSupabase();
   let up = await supabase.storage.from(BUCKET).upload(path, sanitizedBuffer, {
-    contentType: mime,
+    contentType: mime === 'image/png' ? 'image/png' : 'image/jpeg',
     upsert: false,
   });
 
@@ -94,7 +71,7 @@ export async function saveBufferToProjectStorage({
     console.log(`[saveBufferToProjectStorage] Anon client upload failed, trying admin client: ${up.error.message}`);
     const { supabaseAdmin } = await import('./supabaseAdmin');
     const adminUp = await supabaseAdmin.storage.from(BUCKET).upload(path, sanitizedBuffer, {
-      contentType: mime,
+      contentType: mime === 'image/png' ? 'image/png' : 'image/jpeg',
       upsert: false,
     });
     if (adminUp.error) {
@@ -172,7 +149,7 @@ export async function uploadGeneratedCutout({
 
   const { supabaseAdmin } = await import('./supabaseAdmin');
   const { error } = await supabaseAdmin.storage.from(BUCKET).upload(path, sanitizedBuffer, {
-    contentType: mime,
+    contentType: mime === 'image/png' ? 'image/png' : 'image/jpeg',
     upsert: false,
   });
 

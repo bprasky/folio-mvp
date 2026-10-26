@@ -1,6 +1,6 @@
 import { prisma } from "@/lib/prisma";
-import { getProjectModules } from "@/lib/modules/getProjectModules";
-import { publicFolioBlocks } from "@/lib/posting/publicFolioBlocks";
+import { publicPost } from "./publicPost";
+
 import { stripPrivateInterviewData } from "@/lib/spotlight/privacy";
 
 export async function getPostBySlug(slug: string) {
@@ -76,23 +76,8 @@ export async function getPostBySlug(slug: string) {
       return null;
     }
 
-    const modules = await getProjectModules(post.projectId);
+    return publicPost(await stripPrivateInterviewData(post));
 
-    // This object crosses into StoryRenderer's client props on the public page.
-    return await stripPrivateInterviewData({
-      ...post,
-      // Raw answers, generation evidence and edit history are author-only.
-      provenance: null,
-      credits: Array.isArray(post.credits) ? post.credits.map(credit => {
-        if (!credit || typeof credit !== 'object' || Array.isArray(credit)) return null;
-        return Object.fromEntries(Object.entries(credit).filter(([key]) =>
-          ['role', 'userId', 'name', 'profileImage', 'studio', 'url'].includes(key)));
-      }).filter(Boolean) : null,
-      sectionHistory: null,
-      lastGenerationNote: null,
-      expandedBlocks: publicFolioBlocks(post.expandedBlocks),
-      modules,
-    });
   } catch (error) {
     console.error("[getPostBySlug] Failed to fetch post:", slug, error);
     return null;

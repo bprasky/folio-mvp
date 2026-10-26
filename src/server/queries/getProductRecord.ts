@@ -172,11 +172,8 @@ export async function getProductRecord(
   if (!product) return null;
 
   const tags = await prisma.productTag.findMany({
-    // PUBLISHED_PROJECT_FILTER is `as const`, so its OR array is readonly and
-    // does not satisfy Prisma's mutable `ProjectWhereInput[]` in a nested
-    // relation filter. Copy the array rather than widening the shared constant,
-    // which every other caller spreads at top level.
-    where: { productId, image: { project: { OR: [...PUBLISHED_PROJECT_FILTER.OR] } } },
+    // A stale publication timestamp must never override explicit project privacy.
+    where: { productId, image: { inclusion: { not: 'EXCLUDED' }, project: PUBLISHED_PROJECT_FILTER } },
     select: {
       id: true,
       cropUrl: true,

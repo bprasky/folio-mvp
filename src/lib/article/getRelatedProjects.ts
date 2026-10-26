@@ -11,7 +11,7 @@ export async function getRelatedProjects(
     ? await prisma.projectPost.findMany({
         where: {
           status: "PUBLISHED",
-          project: { designerId },
+          project: { designerId, isPublic: true },
           projectId: { not: projectId },
         },
         orderBy: { publishedAt: "desc" },
@@ -24,6 +24,7 @@ export async function getRelatedProjects(
             select: {
               title: true,
             images: {
+              where: { inclusion: { not: 'EXCLUDED' } },
               select: { id: true, url: true },
               take: 3,
               orderBy: { createdAt: "asc" },
@@ -61,6 +62,7 @@ export async function getRelatedProjects(
   const recent = await prisma.projectPost.findMany({
     where: {
       status: "PUBLISHED",
+      project: { isPublic: true },
       projectId: { not: projectId },
     },
     orderBy: { publishedAt: "desc" },
@@ -73,6 +75,7 @@ export async function getRelatedProjects(
         select: {
           title: true,
             images: {
+              where: { inclusion: { not: 'EXCLUDED' } },
               select: { id: true, url: true },
               take: 3,
               orderBy: { createdAt: "asc" },

@@ -12,6 +12,11 @@ const mocks={
  '@/lib/storage':{saveBufferToProjectStorage:async()=>{storage++;return{publicUrl:'https://storage.test/image'}}},
  '@/lib/search/indexMoment':{indexMoment:async()=>{}},'next/cache':{revalidatePath:path=>revalidated.push(path)}
 };
+// Load the real bounded-input helper; only its network transport is synthetic.
+mocks['./safe-product-url']=mocks['@/lib/server/safe-product-url'];
+const inputExports={};
+vm.runInNewContext(ts.transpileModule(fs.readFileSync('src/lib/server/project-image-input.ts','utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022}}).outputText,{exports:inputExports,require:name=>{if(!(name in mocks))throw Error(name);return mocks[name]},Buffer,URL,setTimeout,clearTimeout});
+mocks['@/lib/server/project-image-input']=inputExports;
 const exportsObject={};
 vm.runInNewContext(ts.transpileModule(fs.readFileSync('src/app/api/projects/[id]/images/route.ts','utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022}}).outputText,{exports:exportsObject,require:name=>{if(!(name in mocks))throw Error(name);return mocks[name]},console:{log(){},error(){},warn(){}},Buffer,URL,process:{env:{NEXT_PUBLIC_SUPABASE_URL:'https://storage.test'}},fetch:()=>{throw Error('Unexpected external fetch')},AbortSignal});
 const upload=()=>exportsObject.POST(new Request('https://folio.test/api/projects/project/images',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({imageData:'aW1hZ2U=',mimeType:'image/png',name:'Room'})}),{params:{id:'project'}});

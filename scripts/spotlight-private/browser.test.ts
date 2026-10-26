@@ -408,6 +408,7 @@ async function main() {
   await prisma.projectPost.update({
     where: { id: publicPost.id },
     data: {
+      expandedBlocks: { introduction: ["Published ordinary editorial paragraph."] },
       provenance: {
         interview: {
           spotlightDrafts: { secret: "PRIVATE_SUBTREE" },
@@ -442,7 +443,10 @@ async function main() {
     assert.ok(
       !text.includes("PRIVATE_SENTINEL") && !text.includes("PRIVATE_SUBTREE"),
     );
-    assert.ok(text.includes("Ordinary control"));
+    // Publication includes authored article text, never raw interview answers,
+    // including legacy answers that are not Spotlight-private.
+    assert.ok(text.includes("Published ordinary editorial paragraph."));
+    assert.ok(!text.includes("Ordinary control"));
   });
   await test("Actual section regeneration model input excludes private answers and retains ordinary context", async () => {
     const post = await prisma.projectPost.findUniqueOrThrow({

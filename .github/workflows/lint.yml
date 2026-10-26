@@ -78,6 +78,7 @@ jobs:
       - run: npm ci
       - run: npx prisma generate
       - run: npm run test:core
+      - run: npm run test:rollout
       - name: Project draft persistence and listing privacy
         run: |
           npx tsx --test scripts/core/project-draft.test.cjs
@@ -91,6 +92,7 @@ jobs:
           node scripts/check-live-interview-browser.cjs
           node scripts/check-project-guide-browser.cjs
           node scripts/check-project-setup-browser.cjs
+          node scripts/check-rollout-recovery-browser.cjs
           node scripts/check-manual-rooms-browser.cjs
           node scripts/check-project-completion-date.cjs
           LOADING_TEST_BROWSER="$GUIDED_TEST_BROWSER" node scripts/check-editorial-loading.cjs

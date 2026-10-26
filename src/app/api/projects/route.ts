@@ -16,6 +16,7 @@ import { logDbEnv } from '@/lib/dbEnv';
 import { assertProjectWrite, assertProjectDelete } from "@/lib/authz/access";
 import { CLIENT_BY_LABEL, PROJECT_TYPE_BY_LABEL, DEFAULTS } from '@/domain/project/enums';
 import { makeSlug } from '@/lib/posting/slug';
+import { publicProject } from '@/lib/post/publicPost';
 import { PUBLISHED_PROJECT_FILTER } from '@/server/queries/filters';
 
 const isDev = process.env.NODE_ENV !== 'production';
@@ -87,7 +88,7 @@ export async function GET(request: NextRequest) {
       },
     });
     
-    return NextResponse.json(projects);
+    return NextResponse.json(mine || includeDrafts ? projects : projects.map(publicProject));
   } catch (error) {
     if (error instanceof SpotlightConflict) return NextResponse.json({ code: error.code, error: error.message }, { status: error.status });
     console.error('Error fetching projects:', error);

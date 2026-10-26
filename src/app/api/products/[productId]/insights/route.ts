@@ -10,7 +10,7 @@ export async function GET(request: NextRequest, { params }: { params: { productI
   const limit = Number.isFinite(requested) ? Math.max(1, Math.min(Math.floor(requested), 50)) : 10;
   const highlights = await prisma.quoteHighlight.findMany({
     where: { productId: params.productId, useCase: 'PRODUCT_PAGE_INSIGHT', approvedByDesigner: true,
-      InterviewSession: { status: 'PUBLISHED', productId: params.productId, projects: { OR: [...PUBLISHED_PROJECT_FILTER.OR] } } },
+      InterviewSession: { status: 'PUBLISHED', productId: params.productId, projects: PUBLISHED_PROJECT_FILTER } },
     orderBy: { score: 'desc' }, take: limit,
     select: { id: true, quoteText: true, startMs: true, endMs: true,
       InterviewSession: { select: { id: true, recordedAt: true, projects: { select: { id: true, title: true, post: { select: { slug: true } } } }, users: { select: { id: true, name: true, profileImage: true } } } } },

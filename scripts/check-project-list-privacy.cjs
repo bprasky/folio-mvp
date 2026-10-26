@@ -71,6 +71,7 @@ async function load(name) {
   const real = {
     route: 'src/app/api/projects/route.ts',
     '@/lib/permissions': 'src/lib/permissions.ts',
+    '@/lib/post/publicPost': 'src/lib/post/publicPost.ts',
     '@/server/queries/filters': 'src/server/queries/filters.ts',
   }[name];
   assert.ok(real, `Unexpected dependency: ${name}`);
