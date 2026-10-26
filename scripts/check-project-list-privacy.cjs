@@ -22,6 +22,7 @@ function matches(row, where) {
   });
 }
 const mocks = {
+  '@/lib/persistence/requestIdentity': { requestIdentity: () => { throw Error('Unexpected create identity'); } },
   zod: { z: { string: () => field, object: () => ({}) } },
   'next/server': { NextRequest: Request, NextResponse: { json: (data, init) => Response.json(data, init) } },
   'next-auth': { getServerSession: async () => actor && { user: { id: actor, role: 'ADMIN' } } },

@@ -7,7 +7,7 @@ import { usePublishFlow, type UsePublishFlowReturn } from '../src/hooks/usePubli
 const { JSDOM } = require('jsdom');
 const dom = new JSDOM('<div id="root"></div>', { url: 'http://localhost' });
 Object.assign(globalThis, { window: dom.window, document: dom.window.document, IS_REACT_ACT_ENVIRONMENT: true });
-const reply = (status: number, body: unknown) => ({ status, ok: status >= 200 && status < 300, json: async () => body });
+const reply = (status: number, body: unknown) => Response.json(body, { status });
 
 async function scenario(name: string, generationStatus: number, titleStatus: number | 'network') {
   const calls: { url: string; method: string; body?: string }[] = [];
