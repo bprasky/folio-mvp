@@ -1,12 +1,12 @@
 PASS signup UI, real credential exchange and signed browser session {"userId":"edf06295-8654-41e6-a116-5f13c2b14a2a"}
-PASS designer onboarding and active firm saved through authenticated Next APIs 
+PASS designer onboarding and active firm saved through authenticated Next APIs
 PASS manual creation UI lost-response retry and refresh/resume retain one database project {"projectId":"fbc2317d-201e-563f-b4e7-c1844ba7dff1"}
-PASS legacy publication page derives readiness from all eleven images and exclusion 
-PASS photo bytes, room replay, assignment and product tagging persisted and rendered at four widths 
+PASS legacy publication page derives readiness from all eleven images and exclusion
+PASS photo bytes, room replay, assignment and product tagging persisted and rendered at four widths
 PASS real Next private byte proxy and optimizer bypass denial {"status":200,"size":22768,"cache":"private, no-store, max-age=0"}
-PASS authenticated collaborator page admission, permitted write, viewer write denial and revoked page denial 
-PASS separate carousel export reads protected source and returns two real 1080×1350 JPEGs 
-PASS mobile profile follow/unfollow confirms database state and survives refresh 
-PASS expired signed NextAuth token cannot mutate after session expiry 
+PASS authenticated collaborator page admission, permitted write, viewer write denial and revoked page denial
+PASS separate carousel export reads protected source and returns two real 1080×1350 JPEGs
+PASS mobile profile follow/unfollow confirms database state and survives refresh
+PASS expired signed NextAuth token cannot mutate after session expiry
 PASS saved interview, local-model generation, failed owner publish, approved retry and public project/profile {"modelCalls":8,"slug":"rollout-courtyard-house-7522ffce-6HQYKA"}
-PASS unpublishing revokes anonymous story and original byte URL on real Next server 
+PASS unpublishing revokes anonymous story and original byte URL on real Next server

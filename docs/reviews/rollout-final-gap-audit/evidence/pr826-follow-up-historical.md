@@ -55,4 +55,3 @@ The fresh follow-up did not rebuild/typecheck locally: exact-head hosted build/t
 The earlier statement “recovery fixes are unmerged and the TypeScript gate is failing” is now superseded: **#826 is merged, deployed, and its hosted gate passed**.
 
 The remaining rollout decision still depends on the excluded-photo disclosure, manual/legacy retry gaps, collaborator page admission, shared dialogs/mobile presentation, lost credits and missing real integration evidence. #826 is substantial progress on recovery; it is not a complete resolution of the final audit.
-

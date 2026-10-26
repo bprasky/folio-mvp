@@ -44,4 +44,3 @@ ok 5 - transaction-backed posting rejects browsing accounts and firm opt-outs
 # skipped 0
 # todo 0
 # duration_ms 1097.2565
-

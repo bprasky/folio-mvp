@@ -17,4 +17,3 @@ Implementation decisions: use existing stable UUID request identities and unique
 
 
 Final local implementation and verification complete. Hosted storage activation/legacy retirement, hosted smoke and physical devices remain open rollout gates; see README. PR publication is the final delivery step; no merge/deploy.
-

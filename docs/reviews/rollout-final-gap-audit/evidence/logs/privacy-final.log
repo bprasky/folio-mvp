@@ -42,20 +42,20 @@ TAP version 13
       duration_ms: 22.6116
       type: 'test'
       ...
-# prisma:error 
+# prisma:error
 # Invalid `prisma.projectImage.create()` invocation in
 # C:\\Users\\bpras\\.codex\\worktrees\\rollout-hardening\\folio-mvp\\src\\app\\api\\projects\\[id]\\images\\route.ts:76:45
 #   73 const url = stored.publicUrl;
-#   74 
+#   74
 #   75 // Create ProjectImage record
 # → 76 const image = await prisma.projectImage.create(
 # Error occurred during query execution:
 # ConnectorError(ConnectorError { user_facing_error: None, kind: QueryError(PostgresError { code: "P0001", message: "rollout forced image write failure", severity: "ERROR", detail: None, column: None, hint: None }), transient: false })
-# [POST /api/projects/[id]/images] Error: PrismaClientUnknownRequestError: 
+# [POST /api/projects/[id]/images] Error: PrismaClientUnknownRequestError:
 # Invalid `prisma.projectImage.create()` invocation in
 # C:\\Users\\bpras\\.codex\\worktrees\\rollout-hardening\\folio-mvp\\src\\app\\api\\projects\\[id]\\images\\route.ts:76:45
 #   73 const url = stored.publicUrl;
-#   74 
+#   74
 #   75 // Create ProjectImage record
 # → 76 const image = await prisma.projectImage.create(
 # Error occurred during query execution:

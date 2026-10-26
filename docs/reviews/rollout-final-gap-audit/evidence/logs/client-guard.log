@@ -11,4 +11,3 @@ guard:client-imports — 2357 files under src/, 910 client modules
   PASS  @prisma/client imported into a client module without `type`
 
 No client-boundary violations.
-
