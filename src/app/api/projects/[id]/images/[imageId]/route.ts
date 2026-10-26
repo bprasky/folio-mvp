@@ -5,7 +5,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { assertProjectWrite } from '@/lib/authz/access';
-import { deleteProjectImage } from '@/lib/storage';
+import { z } from 'zod';
 
 export async function DELETE(
   request: NextRequest,
@@ -44,25 +44,14 @@ export async function DELETE(
       return NextResponse.json({ error: 'Image not found' }, { status: 404 });
     }
 
-    // Try to delete from storage if URL points to our storage
-    if (image.url.includes('supabase') || image.url.includes('project-assets')) {
-      try {
-        const urlParts = image.url.split('/');
-        const storageIndex = urlParts.indexOf('project-assets');
-        if (storageIndex !== -1) {
-          const storagePath = urlParts.slice(storageIndex).join('/');
-          await deleteProjectImage(storagePath);
-        }
-      } catch (storageError) {
-        console.warn('Storage deletion failed:', storageError);
-        // Continue with database deletion even if storage fails
-      }
-    }
+    // URLs can be shared or imported. Deleting a project reference must not
+    // delete an object owned by another project (or still used elsewhere).
+    // Storage reclamation requires a separately verified ownership/reference check.
 
     // Always hard delete - soft delete was causing images to persist
     console.log('[DELETE image] Performing hard delete for imageId:', imageId);
     const deleted = await prisma.projectImage.delete({
-      where: { id: imageId }
+      where: { id: imageId, projectId }
     });
     console.log('[DELETE image] Prisma delete returned:', deleted?.id);
 
@@ -74,6 +63,7 @@ export async function DELETE(
     return NextResponse.json({ success: true });
 
   } catch (error: any) {
+    if (error instanceof z.ZodError || error instanceof SyntaxError) return NextResponse.json({ error: "Invalid request" }, { status: 400 });
     console.error('Failed to delete image:', error);
     return NextResponse.json(
       { error: 'Failed to delete image' },
@@ -105,8 +95,7 @@ export async function PATCH(
       return NextResponse.json({ error: 'Project not found' }, { status: 404 });
     }
 
-    const body = await request.json();
-    const { room } = body as { room?: string | null };
+    const { room } = z.object({ room: z.string().trim().max(200).nullable() }).parse(await request.json());
 
     if (room === undefined) {
       return NextResponse.json({ error: 'Nothing to update' }, { status: 400 });
@@ -127,6 +116,7 @@ export async function PATCH(
 
     return NextResponse.json({ success: true, image: updated });
   } catch (error: any) {
+    if (error instanceof z.ZodError || error instanceof SyntaxError) return NextResponse.json({ error: "Invalid request" }, { status: 400 });
     console.error('[PATCH image] Failed to update image:', error);
     return NextResponse.json({ error: 'Failed to update image' }, { status: 500 });
   }

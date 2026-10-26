@@ -4,7 +4,19 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/app/api/auth/[...nextauth]/options';
 import { prisma } from '@/lib/prisma';
-import { assertProjectWrite } from '@/lib/authz/access';
+import { z } from 'zod';
+import { assertProjectView, assertProjectWrite } from '@/lib/authz/access';
+const coordinate = z.number().finite().min(0).max(100);
+const tagInput = z.object({
+  projectId: z.string().min(1), imageId: z.string().min(1), productId: z.string().min(1),
+  x: coordinate, y: coordinate, createSelection: z.boolean().optional(),
+  finishRaw: z.string().max(1000).nullable().optional(), finishConfirmed: z.boolean().optional(),
+});
+const tagPatch = z.object({
+  id: z.string().min(1), x: coordinate.optional(), y: coordinate.optional(),
+  reviewed: z.boolean().optional(), imageId: z.string().min(1).optional(),
+});
+
 export async function POST(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
@@ -12,30 +24,8 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const {
-      x,
-      y,
-      productId,
-      projectId,
-      imageId,
-      // Optional decision capture fields
-      decisionReasoning,
-      alternativesConsidered,
-      tradeoffs,
-      convictionLevel,
-      // Shop product fields
-      addToShop,
-      shopQuote,
-      // Backfill option: create a Selection on the design board if none matches
-      createSelection,
-      // Finish capture (spec 21 delta D3). This is the CAPTURE site: the designer
-      // is looking at the product as they tag it, so extraction proposes and the
-      // designer confirms. `finishConfirmed` records whether a human actually
-      // stated this finish — it is the only thing separating an observed finish
-      // from a suggested one, and Material Study depends on that distinction.
-      finishRaw,
-      finishConfirmed,
-    } = await request.json();
+    const { x, y, productId, projectId, imageId, createSelection, finishRaw, finishConfirmed } =
+      tagInput.parse(await request.json());
 
     // Validate required fields
     if (x == null || y == null || !productId || !imageId) {
@@ -117,97 +107,108 @@ export async function POST(request: NextRequest) {
     const trimmedFinish =
       typeof finishRaw === 'string' && finishRaw.trim() ? finishRaw.trim() : null;
 
-    const tag = await prisma.productTag.create({
-      data: {
-        x: parseFloat(String(x)),
-        y: parseFloat(String(y)),
-        productId,
-        imageId,
-        // Finish capture (spec 21 delta D3). A finish with no value is NULL
-        // rather than an empty string: an empty string reads as an observed
-        // absence, and NULL is the accurate statement that nothing was said.
-        finishRaw: trimmedFinish,
-        // True only when the client says a human supplied or edited this value.
-        // A finish that passed through from extraction untouched stays false,
-        // even though it arrived on the same request.
+    const { tag, linkedSelectionId } = await prisma.$transaction(async tx => {
+      // Serialize retries and selection backfill across all photos in this
+      // project; two photos can otherwise claim the same unlinked selection.
+      await tx.$queryRaw`SELECT id FROM projects WHERE id = ${projectId} FOR UPDATE`;
+      const existing = await tx.productTag.findFirst({ where: {
+        imageId, productId, x, y, finishRaw: trimmedFinish,
         finishConfirmed: trimmedFinish ? finishConfirmed === true : false,
-      },
-      include: {
-        product: true,
-      }
-    });
+      } });
+      const tag = existing || await tx.productTag.create({
+        data: {
+          x: parseFloat(String(x)),
+          y: parseFloat(String(y)),
+          productId,
+          imageId,
+          // Finish capture (spec 21 delta D3). A finish with no value is NULL
+          // rather than an empty string: an empty string reads as an observed
+          // absence, and NULL is the accurate statement that nothing was said.
+          finishRaw: trimmedFinish,
+          // True only when the client says a human supplied or edited this value.
+          // A finish that passed through from extraction untouched stays false,
+          // even though it arrived on the same request.
+          finishConfirmed: trimmedFinish ? finishConfirmed === true : false,
+        },
+        include: {
+          product: true,
+        }
+      });
 
-    // A tagged photo cannot be "no products" — clearing keeps the derived
-    // review gate honest if this tag is later dismissed (spec 20 §3d).
-    await prisma.projectImage.update({
-      where: { id: imageId },
-      data: { noProducts: false },
-    });
+      // A tagged photo cannot be "no products" — clearing keeps the derived
+      // review gate honest if this tag is later dismissed (spec 20 §3d).
+      await tx.projectImage.update({
+        where: { id: imageId },
+        data: { noProducts: false },
+      });
 
-    // Backfill: link an existing Selection to this tag (or create one)
-    let linkedSelectionId: string | null = null;
-    try {
-      if (image.room) {
-        const room = await prisma.room.findFirst({
-          where: {
-            projectId,
-            name: { equals: image.room, mode: 'insensitive' },
-          },
-        });
+      // Backfill: link an existing Selection to this tag (or create one)
+      let linkedSelectionId: string | null = null;
+      if (!existing) {
+        if (image.room) {
+          const room = await tx.room.findFirst({
+            where: {
+              projectId,
+              name: { equals: image.room, mode: 'insensitive' },
+            },
+          });
 
-        if (room) {
-          // Find an unlinked selection that matches this product
-          const orConditions: any[] = [];
-          if (product.url) {
-            orConditions.push({ cachedProductLinks: { some: { cachedProduct: { url: product.url } } } });
-          }
-          if (product.name) {
-            orConditions.push({ productName: { contains: product.name, mode: 'insensitive' } });
-          }
+          if (room) {
+            // Find an unlinked selection that matches this product
+            const orConditions: any[] = [];
+            if (product.url) {
+              orConditions.push({ cachedProductLinks: { some: { cachedProduct: { url: product.url } } } });
+            }
+            if (product.name) {
+              orConditions.push({ productName: { contains: product.name, mode: 'insensitive' } });
+            }
 
-          const matchingSelection = orConditions.length > 0
-            ? await prisma.selection.findFirst({
-                where: {
+            const matchingSelection = orConditions.length > 0
+              ? await tx.selection.findFirst({
+                  where: {
+                    roomId: room.id,
+                    productTagId: null,
+                    OR: orConditions,
+                  },
+                })
+              : null;
+
+            if (matchingSelection) {
+              await tx.selection.update({
+                where: { id: matchingSelection.id },
+                data: { productTagId: tag.id },
+              });
+              linkedSelectionId = matchingSelection.id;
+              console.log('[ProductTag] Backfill linked selection:', { selectionId: matchingSelection.id, tagId: tag.id });
+            } else if (createSelection) {
+              // Optionally create a new Selection for this product
+              const newSel = await tx.selection.create({
+                data: {
+                  projectId,
                   roomId: room.id,
-                  productTagId: null,
-                  OR: orConditions,
+                  productName: product.name,
+                  vendorName: product.brand ?? null,
+                  productTagId: tag.id,
+                  source: 'auto_tag',
                 },
-              })
-            : null;
-
-          if (matchingSelection) {
-            await prisma.selection.update({
-              where: { id: matchingSelection.id },
-              data: { productTagId: tag.id },
-            });
-            linkedSelectionId = matchingSelection.id;
-            console.log('[ProductTag] Backfill linked selection:', { selectionId: matchingSelection.id, tagId: tag.id });
-          } else if (createSelection) {
-            // Optionally create a new Selection for this product
-            const newSel = await prisma.selection.create({
-              data: {
-                projectId,
-                roomId: room.id,
-                productName: product.name,
-                vendorName: product.brand ?? null,
-                productTagId: tag.id,
-                source: 'auto_tag',
-              },
-            });
-            linkedSelectionId = newSel.id;
-            console.log('[ProductTag] Backfill created selection:', { selectionId: newSel.id, tagId: tag.id });
+              });
+              linkedSelectionId = newSel.id;
+              console.log('[ProductTag] Backfill created selection:', { selectionId: newSel.id, tagId: tag.id });
+            }
           }
         }
+      } else {
+        linkedSelectionId = (await tx.selection.findFirst({ where: { productTagId: tag.id }, select: { id: true } }))?.id ?? null;
       }
-    } catch (backfillError) {
-      // Log but don't fail the tag creation
-      console.error('[ProductTag] Backfill error:', backfillError);
-    }
+
+      return { tag, linkedSelectionId };
+    });
 
     return NextResponse.json({ success: true, id: tag.id, tag, linkedSelectionId, shopProduct: null, incompleteProduct: null, inContextBoost: null });
 
 
   } catch (error) {
+    if (error instanceof z.ZodError || error instanceof SyntaxError) return NextResponse.json({ error: "Invalid request" }, { status: 400 });
     console.error('Failed to create product tag:', error);
     return NextResponse.json(
       { error: 'Failed to create product tag' },
@@ -222,16 +223,33 @@ export async function GET(request: NextRequest) {
     const projectId = searchParams.get('projectId');
     const imageId = searchParams.get('imageId');
 
-    const whereClause: any = {};
-
-    // Build query based on filters
+    const session = await getServerSession(authOptions);
+    let privateAccess = false;
+    let scope = projectId;
     if (imageId) {
-      whereClause.imageId = imageId;
-    } else if (projectId) {
-      whereClause.image = {
-        projectId: projectId
-      };
+      const image = await prisma.projectImage.findUnique({ where: { id: imageId }, select: { projectId: true } });
+      if (!image || (projectId && projectId !== image.projectId)) {
+        return NextResponse.json([], { headers: { 'Cache-Control': 'private, no-store' } });
+      }
+      scope = image.projectId;
     }
+    if (scope && session?.user?.id) {
+      try { await assertProjectView(session.user.id, scope); privateAccess = true; }
+      catch (error) {
+        if (!(error instanceof Error) || error.message !== 'Forbidden') throw error;
+        // Canonical writers also include firm contributors and global admins.
+        try { await assertProjectWrite(session.user.id, scope); privateAccess = true; }
+        catch (writeError) {
+          if (!(writeError instanceof Error) || !['Forbidden', 'NotFound'].includes(writeError.message)) throw writeError;
+        }
+      }
+    }
+    // Public enumeration remains supported, but never includes private projects.
+    const whereClause = {
+      ...(imageId ? { imageId } : {}),
+      image: { ...(scope ? { projectId: scope } : {}), ...(privateAccess ? {} : { project: { isPublic: true } }) },
+      ...(privateAccess ? {} : { product: { isPending: false } }),
+    };
 
     // Fetch tags from database
     const tags = await prisma.productTag.findMany({
@@ -250,9 +268,10 @@ export async function GET(request: NextRequest) {
       }
     });
 
-    return NextResponse.json(tags);
+    return NextResponse.json(tags, { headers: { 'Cache-Control': 'private, no-store' } });
 
   } catch (error) {
+    if (error instanceof z.ZodError || error instanceof SyntaxError) return NextResponse.json({ error: "Invalid request" }, { status: 400 });
     console.error('Failed to fetch product tags:', error);
     return NextResponse.json(
       { error: 'Failed to fetch product tags' },
@@ -313,6 +332,7 @@ export async function DELETE(request: NextRequest) {
     return NextResponse.json({ success: true });
 
   } catch (error) {
+    if (error instanceof z.ZodError || error instanceof SyntaxError) return NextResponse.json({ error: "Invalid request" }, { status: 400 });
     console.error('Failed to delete product tag:', error);
     return NextResponse.json(
       { error: 'Failed to delete product tag' },
@@ -328,7 +348,7 @@ export async function PATCH(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { id, x, y, reviewed, imageId: targetImageId } = await request.json();
+    const { id, x, y, reviewed, imageId: targetImageId } = tagPatch.parse(await request.json());
 
     // Three modes: reposition (x, y), mark-reviewed (reviewed: true), or move to
     // another photo (imageId). The reviewed flag confirms a deferred-scrape tag.
@@ -383,11 +403,18 @@ export async function PATCH(request: NextRequest) {
       data = { x, y };
     }
 
-    const updated = await prisma.productTag.update({ where: { id }, data });
+    const updated = await prisma.$transaction(async tx => {
+      const updated = await tx.productTag.update({ where: { id }, data });
+      if (isMoveMode && !isReviewMode) {
+        await tx.projectImage.update({ where: { id: targetImageId, projectId: tag.image.projectId }, data: { noProducts: false } });
+      }
+      return updated;
+    });
 
     return NextResponse.json(updated);
 
   } catch (error) {
+    if (error instanceof z.ZodError || error instanceof SyntaxError) return NextResponse.json({ error: "Invalid request" }, { status: 400 });
     console.error('Failed to update product tag:', error);
     return NextResponse.json(
       { error: 'Failed to update product tag' },

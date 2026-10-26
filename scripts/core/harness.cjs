@@ -28,7 +28,9 @@ function replace(name, exports) {
   require.cache[path] = { id: path, filename: path, loaded: true, exports };
 }
 const facade = new Proxy({}, { get: (_, key) => {
-  if (key === '$transaction') return async work => typeof work === 'function' ? work(facade) : Promise.all(work);
+  if (key === '$transaction') return async (work, options) => database.$transaction
+    ? database.$transaction(work, options)
+    : typeof work === 'function' ? work(facade) : Promise.all(work);
   const value = database[key];
   return typeof value === 'function' ? value.bind(database) : value;
 } });

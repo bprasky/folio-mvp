@@ -10,9 +10,10 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/app/api/auth/[...nextauth]/options';
 import { normalizeRole } from '@/lib/permissions';
 import { canCreateFirmProject } from '@/lib/orgPermissions';
-import { CompletionDateSchema, normalizeCreatePayload } from './normalizeCreatePayload';
+import { z } from 'zod';
+import { CanonicalCreateSchema, CompletionDateSchema, normalizeCreatePayload } from './normalizeCreatePayload';
 import { logDbEnv } from '@/lib/dbEnv';
-import { assertProjectWrite } from "@/lib/authz/access";
+import { assertProjectWrite, assertProjectDelete } from "@/lib/authz/access";
 import { CLIENT_BY_LABEL, PROJECT_TYPE_BY_LABEL, DEFAULTS } from '@/domain/project/enums';
 import { makeSlug } from '@/lib/posting/slug';
 import { PUBLISHED_PROJECT_FILTER } from '@/server/queries/filters';
@@ -260,6 +261,24 @@ export async function POST(req: Request) {
   }
 }
 
+const ProjectUpdateSchema = z.object({
+  id: z.string().min(1),
+  title: CanonicalCreateSchema.shape.title.optional(),
+  name: z.string().min(1).optional(),
+  description: CanonicalCreateSchema.shape.description,
+  stage: CanonicalCreateSchema.shape.stage.unwrap().optional(),
+  projectType: CanonicalCreateSchema.shape.projectType.unwrap().optional(),
+  clientType: CanonicalCreateSchema.shape.clientType.unwrap().optional(),
+  budgetBand: CanonicalCreateSchema.shape.budgetBand.unwrap().optional(),
+  city: CanonicalCreateSchema.shape.city,
+  regionState: CanonicalCreateSchema.shape.regionState,
+  completedYear: CanonicalCreateSchema.shape.completedYear,
+  completedMonth: CanonicalCreateSchema.shape.completedMonth,
+  credits: CanonicalCreateSchema.shape.credits,
+  client: z.string().nullable().optional(),
+  category: z.string().nullable().optional(),
+});
+
 export async function PUT(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
@@ -267,9 +286,9 @@ export async function PUT(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const projectData = await request.json();
+    const projectData = ProjectUpdateSchema.parse(await request.json());
 
-    const { id, images, status, isDraft, designerId, credits, ...updateData } = projectData;
+    const { id, credits, ...updateData } = projectData;
     
     if (!id) {
       return NextResponse.json(
@@ -333,64 +352,39 @@ export async function PUT(request: NextRequest) {
       Object.assign(filteredData, completionDate.data);
     }
 
-    const updatedProject = await prisma.project.update({
-      where: { id },
-      data: {
-        ...filteredData,
-        updatedAt: new Date(),
-      },
-      include: {
-        images: {
-          include: {
-            tags: {
-              include: {
-                product: true,
+    const updatedProject = await prisma.$transaction(async tx => {
+      const updatedProject = await tx.project.update({
+        where: { id },
+        data: {
+          ...filteredData,
+          updatedAt: new Date(),
+        },
+        include: {
+          images: {
+            include: {
+              tags: {
+                include: {
+                  product: true,
+                },
               },
             },
           },
         },
-      },
-    });
+      });
     
-    console.log('Project updated successfully:', updatedProject);
-
-    // Handle credits update - upsert ProjectPost with credits
-    if (credits && Array.isArray(credits)) {
-      try {
-        const existingPost = await prisma.projectPost.findUnique({
+      if (credits !== undefined) {
+        await tx.projectPost.upsert({
           where: { projectId: id },
+          create: { projectId: id, slug: makeSlug(updatedProject.title || undefined, id), status: 'DRAFT', credits },
+          update: { credits },
         });
-
-        if (existingPost) {
-          // Update existing ProjectPost with new credits
-          await prisma.projectPost.update({
-            where: { projectId: id },
-            data: {
-              credits: credits,
-              updatedAt: new Date(),
-            },
-          });
-        } else {
-          // Create new ProjectPost with credits
-          const slug = makeSlug(updatedProject.title || undefined, id);
-          await prisma.projectPost.create({
-            data: {
-              projectId: id,
-              slug,
-              status: 'DRAFT',
-              credits: credits,
-            },
-          });
-        }
-        console.log('ProjectPost credits updated successfully');
-      } catch (postError) {
-        console.warn('Failed to update ProjectPost credits:', postError);
-        // Don't fail the whole request if credits update fails
       }
-    }
+      return updatedProject;
+    });
 
     return NextResponse.json(updatedProject, { status: 200 });
   } catch (error) {
+    if (error instanceof z.ZodError || error instanceof SyntaxError) return NextResponse.json({ error: "Invalid request" }, { status: 400 });
     if (error instanceof SpotlightConflict) return NextResponse.json({ code: error.code, error: error.message }, { status: error.status });
     if (error instanceof Error && error.message === 'Forbidden') {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
@@ -400,7 +394,7 @@ export async function PUT(request: NextRequest) {
     }
     console.error('Error updating project:', error);
     return NextResponse.json(
-      { error: 'Failed to update project: ' + (error instanceof Error ? error.message : 'Unknown error') },
+      { error: 'Failed to update project' },
       { status: 500 }
     );
   }
@@ -423,16 +417,18 @@ export async function DELETE(request: NextRequest) {
       );
     }
     
-    const access = await assertProjectWrite(session.user.id, id);
+    await assertProjectDelete(session.user.id, id);
 
     await deleteProjectWithSpotlightGuard(id);
     
     return NextResponse.json({ message: 'Project deleted successfully', deleted: true });
   } catch (error) {
+    if (error instanceof Error && error.message === "Forbidden") return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    if (error instanceof Error && error.message === "NotFound") return NextResponse.json({ error: "Project not found" }, { status: 404 });
     if (error instanceof SpotlightConflict) return NextResponse.json({ code: error.code, error: error.message }, { status: error.status });
     console.error('Error deleting project:', error);
     return NextResponse.json(
-      { error: 'Failed to delete project: ' + (error instanceof Error ? error.message : 'Unknown error') },
+      { error: 'Failed to delete project' },
       { status: 500 }
     );
   }

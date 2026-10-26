@@ -11,6 +11,9 @@ const rows = [
   { id: 'fixture-other-active', designerId: 'other', status: 'active', isPublic: false, publishedAt: null, images: [{ id: 'other-private-photo' }] },
   { id: 'fixture-public', designerId: 'other', status: 'published', isPublic: true, publishedAt: '2026-01-01', images: [{ id: 'public-photo' }] },
 ];
+// Schemas are evaluated at module load, but this suite calls only GET. Mutation
+// validation is covered by the core authorization suite, not these inert doubles.
+const field = { optional() { return this; }, nullable() { return this; }, min() { return this; }, unwrap() { return this; } };
 function matches(row, where) {
   return Object.entries(where).every(([key, value]) => {
     if (key === 'OR') return value.some(clause => matches(row, clause));
@@ -19,6 +22,7 @@ function matches(row, where) {
   });
 }
 const mocks = {
+  zod: { z: { string: () => field, object: () => ({}) } },
   'next/server': { NextRequest: Request, NextResponse: { json: (data, init) => Response.json(data, init) } },
   'next-auth': { getServerSession: async () => actor && { user: { id: actor, role: 'ADMIN' } } },
   '@/app/api/auth/[...nextauth]/options': { authOptions: {} },
@@ -33,9 +37,9 @@ const mocks = {
   '@/lib/orgPermissions': { can: () => false, isOrgRole: () => false, canCreateFirmProject: () => false },
   '@/lib/supabaseServer': { supabaseServer: null },
   '@/lib/analytics': { logPassiveEvent: () => { throw Error('Unexpected analytics'); } },
-  './normalizeCreatePayload': { CompletionDateSchema: null, normalizeCreatePayload: () => { throw Error('Unexpected create'); } },
+  './normalizeCreatePayload': { CanonicalCreateSchema: { shape: new Proxy({}, { get: () => field }) }, CompletionDateSchema: null, normalizeCreatePayload: () => { throw Error('Unexpected create'); } },
   '@/lib/dbEnv': { logDbEnv: () => {} },
-  '@/lib/authz/access': { assertProjectWrite: () => { throw Error('Unexpected write'); } },
+  '@/lib/authz/access': { assertProjectWrite: () => { throw Error('Unexpected write'); }, assertProjectDelete: () => { throw Error('Unexpected delete'); } },
   '@/domain/project/enums': { CLIENT_BY_LABEL: null, PROJECT_TYPE_BY_LABEL: null, DEFAULTS: null },
   '@/lib/posting/slug': { makeSlug: () => { throw Error('Unexpected slug'); } },
   '@/lib/spotlight/deletion': { deleteProjectWithSpotlightGuard: () => { throw Error('Unexpected delete'); } },

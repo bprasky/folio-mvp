@@ -74,7 +74,7 @@ async function check(name: string, run: () => Promise<void>) {
   reset(); await run(); passed++; console.log(`  PASS ${name}`);
 }
 async function main() {
-  await check('public loader strips Spotlight drafts and durable identities from serialized provenance', async () => {
+  await check('public loader omits all raw interview provenance, including Spotlight drafts', async () => {
     post.provenance = { interview: {
       spotlightDrafts: { proposal: { answer: 'PRIVATE_DRAFT_TEXT' } },
       payload: {
@@ -92,9 +92,9 @@ async function main() {
     for (const secret of ['spotlightDrafts', 'PRIVATE_DRAFT_TEXT', 'durable-private-id', 'PRIVATE_DURABLE_ANSWER', 'PRIVATE_DURABLE_FOLLOWUP', 'PRIVATE_KEYED_ANSWER']) {
       assert.ok(!json.includes(secret), `Public loader leaked ${secret}`);
     }
-    assert.deepEqual(result.provenance.interview.payload.answers, [{ questionId: 'public-question', answer: 'Public interview answer' }]);
-    assert.deepEqual(result.provenance.interview.payload.followups, []);
-    assert.equal(result.provenance.interview.payload.byQuestion['public-question'], 'Public keyed answer');
+    assert.equal(result.provenance, null, 'Raw interview evidence is author-only, even without a private Spotlight label');
+    assert.ok(!json.includes('Public interview answer'));
+    assert.ok(!json.includes('Public keyed answer'));
     assertPublic(result, result.expandedBlocks);
     assert.ok(post.provenance.interview.spotlightDrafts, 'Sanitizing a response must not mutate stored data');
   });
