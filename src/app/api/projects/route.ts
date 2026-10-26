@@ -29,26 +29,37 @@ export async function GET(request: NextRequest) {
 
     const whereClause: any = {};
 
-    if (mine) {
-      // Fetch current user's own projects (includes drafts)
+    if (mine || includeDrafts) {
+      // Draft access is authenticated and scoped; a query parameter is never
+      // permission to read another designer's unpublished work.
       const session = await getServerSession(authOptions);
       if (!session?.user?.id) {
         return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
       }
-      whereClause.designerId = session.user.id;
+      if (mine) {
+        whereClause.designerId = session.user.id;
+      } else {
+        const actor = await prisma.user.findUnique({
+          where: { id: session.user.id },
+          select: { role: true },
+        });
+        if (normalizeRole(actor?.role) === 'ADMIN') {
+          if (designerId) whereClause.designerId = designerId;
+        } else {
+          if (designerId && designerId !== session.user.id) {
+            return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+          }
+          whereClause.designerId = session.user.id;
+        }
+      }
     } else {
       // Filter projects by designer if specified
       if (designerId) {
         whereClause.designerId = designerId;
       }
 
-      // Public/non-owner listing: only surface published projects. This guards
-      // unpublished 'active' projects (e.g. "In progress" timeline) from leaking,
-      // since draft is no longer the only private status. `includeDrafts` keeps the
-      // legacy opt-in that returns everything (drafts + active + published).
-      if (!includeDrafts) {
-        Object.assign(whereClause, PUBLISHED_PROJECT_FILTER);
-      }
+      // Public listings always retain the canonical publication filter.
+      Object.assign(whereClause, PUBLISHED_PROJECT_FILTER);
     }
     
     const projects = await prisma.project.findMany({
@@ -422,3 +433,4 @@ export async function DELETE(request: NextRequest) {
     );
   }
 }
+

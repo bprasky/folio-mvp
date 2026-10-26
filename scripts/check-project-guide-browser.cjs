@@ -196,7 +196,7 @@ async function main(){await build();const server=http.createServer(handler);awai
   });
   await check('completed-only full form Create submits a completed archive without stage choices',async()=>{
     const before=starts,writes=projectWrites.length;await page.goto(base+'/projects/new');await click('Add project details first');await page.waitForSelector('input[name="title"]');await assertCompletedOnly();
-    await fillCompletion();await page.type('input[name="title"]','Completed full-form archive');await click('Create project');await page.waitForFunction(()=>location.pathname==='/projects/project');
+    await fillCompletion();await page.type('input[name="title"]','Completed full-form archive');await click('Create project');await page.waitForFunction(()=>location.pathname==='/project/project');assert.equal(await page.evaluate(()=>new URLSearchParams(location.search).get('view')),'media');
     assert.equal(projectWrites.length,writes+1);assert.equal(projectWrites.at(-1).method,'POST');assertCompletedPayload(projectWrites.at(-1));assert.equal(projectWrites.at(-1).data.title,'Completed full-form archive');assert.equal(starts,before);
   });
   await check('completed-only full form Save draft retains the PAST timeline on create and update',async()=>{

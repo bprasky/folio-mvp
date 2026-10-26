@@ -1,3 +1,30 @@
+# Founding-designer intake and project privacy — 2026-10-26
+
+- [x] Read guidance/audits and compare scoped patches against main f787200d, then integrated ea459003 (#823).
+- [x] Restrict includeDrafts to authenticated own-designer reads or current database admins.
+- [x] Serialize manual intake saves, autosave and continuation around one acknowledged ID.
+- [x] Surface failed autosaves and remove intake controls with no persistence contract.
+- [x] Add focused regressions and wire them into the existing core CI job.
+- [ ] Pass hosted CI, including the actual manual form at desktop and narrow mobile sizes.
+- [ ] Verify the complete signup → public project/profile journey on an isolated database.
+
+Plan check-in: preserve the existing Photos → Rooms → Tags → Story → Publish workflow and completion-year requirement. No schema or publication-policy changes. Prepare a draft PR; assess verification gaps before merge. No deployment or production test content.
+
+### Review
+
+The legacy project listing allowed anonymous includeDrafts=true to bypass the publication filter, exposing private rows and nested photos/tags. Own-designer requests now require authentication and scope to the session; other-designer requests are denied unless the database still records ADMIN. Public listing semantics and admin selection remain intact.
+
+Manual Save draft followed by Create project used to POST a duplicate. A serialized writer retains the confirmed ID for all subsequent writes and rejects failed/malformed responses. Continuation waits for saves and opens the canonical Photos workspace. Autosave includes location/type changes and reports failure. The form remounts across actor/workspace changes to prevent cross-account draft reuse. Unsupported cover/discipline/tags/visibility inputs never reached storage; removed those misleading controls and point photos/tags/publication at their existing workflow stages. No mandatory workflow step was removed.
+
+Local verification: four writer regressions and six actual-handler privacy scenarios pass with synthetic boundaries. The privacy suite fails on unchanged main (anonymous draft request returned 200 instead of 401). Browser-script syntax passes, but execution is blocked locally by unavailable npm dependencies (esbuild); the environment proxy prevents clone/install. The new desktop/mobile form test runs in existing CI with the repository's esbuild/Puppeteer setup.
+
+This is a scoped hardening patch, not complete journey sign-off. Signup, external storage, live interview, publishing studio, real commit durability, complete public profile projection, platform-specific interview branches and full journey navigation have not been reverified. No real invitations, outreach, paid model calls or production writes occurred.
+
+
+The integrated authorization audit also identifies an unresolved private-photo object-storage policy gate; listing authorization alone does not make public storage URLs private.
+
+---
+
 # About page and first-project journey — 2026-10-23
 
 - [x] Review the current About page, approved product positioning and signup/firm/upload routing.
