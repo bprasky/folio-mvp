@@ -1,3 +1,4 @@
+import { projectPhotoProcessingUrl } from '@/lib/server/protected-project-photo';
 /**
  * API route to generate a single Instagram slide at full resolution
  * POST /api/instagram/slide
@@ -153,12 +154,12 @@ export async function POST(request: NextRequest) {
     try {
       slideBuffer = await generateSingleSlide({
         projectTitle: project.title,
-        images: orderedImages.map(img => ({
+        images: await Promise.all(orderedImages.map(async img => ({
           id: img.id,
-          url: img.url,
+          url: await projectPhotoProcessingUrl(img.url, projectId),
           name: img.name,
           room: img.room,
-        })),
+        }))),
         slideIndex,
         quotes: selectedQuotes.length > 0 ? selectedQuotes.map(text => ({ text })) : undefined,
         heroImageUrl: project.post?.heroAssetId

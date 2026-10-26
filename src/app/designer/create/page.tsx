@@ -12,6 +12,7 @@ import { Input } from '@/components/ui/input';
 // DEPRECATED: Long form create UI (kept for reference, legacy links may still reference it)
 function LongFormCreateUI() {
   const router = useRouter();
+  const [requestId] = useState(() => crypto.randomUUID());
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
   const [projectType, setProjectType] = useState('');
@@ -43,7 +44,7 @@ function LongFormCreateUI() {
           'Content-Type': 'application/json',
         },
         credentials: 'same-origin',
-        body: JSON.stringify({ name, description, detailsCore }),
+        body: JSON.stringify({ requestId, projectStatus: 'new_project', name, description, detailsCore }),
       });
       
       if (r.status === 401) {
@@ -231,6 +232,7 @@ function LongFormCreateUI() {
 
 // Canonical Quick Create flow (simple title → media/tagging)
 function PublishNowFlow() {
+  const [requestId] = useState(() => crypto.randomUUID());
   const router = useRouter();
   const searchParams = useSearchParams();
   const [name, setName] = useState('');
@@ -244,7 +246,7 @@ function PublishNowFlow() {
     setLoading(true);
 
     try {
-      const res = await createProjectAction({ 
+      const res = await createProjectAction({ requestId,
         name, 
         description: desc, 
         intent: 'publish_now' 

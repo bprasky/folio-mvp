@@ -1,5 +1,6 @@
 'use client';
 
+import { workflowRequest } from '@/lib/client/workflowRequest';
 import { useState, useEffect } from 'react';
 import FeedFilters from './FeedFilters';
 import ProjectCard from './feed-cards/ProjectCard';
@@ -27,6 +28,7 @@ export default function ProfileFeed({
   initialFilter = 'all',
   initialSort = 'featured',
 }: ProfileFeedProps) {
+  const [retry, setRetry] = useState(0);
   const [items, setItems] = useState<FeedItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -34,6 +36,7 @@ export default function ProfileFeed({
   const [sort, setSort] = useState(initialSort);
 
   useEffect(() => {
+    let active = true;
     const fetchFeed = async () => {
       setLoading(true);
       setError(null);
@@ -44,22 +47,23 @@ export default function ProfileFeed({
           sort,
         });
 
-        const response = await fetch(`/api/profile/${userId}/feed?${params.toString()}`);
+        const response = await workflowRequest(`/api/profile/${userId}/feed?${params.toString()}`);
         if (!response.ok) {
           throw new Error('Failed to fetch feed');
         }
 
         const data = await response.json();
-        setItems(data.items || []);
+        if (active) setItems(data.items || []);
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'An error occurred');
+        if (active) setError(err instanceof Error ? err.message : 'An error occurred');
       } finally {
-        setLoading(false);
+        if (active) setLoading(false);
       }
     };
 
     fetchFeed();
-  }, [userId, filter, sort]);
+    return () => { active = false; };
+  }, [userId, filter, sort, retry]);
 
   // Update state when URL params change
   useEffect(() => {
@@ -74,7 +78,8 @@ export default function ProfileFeed({
   if (error) {
     return (
       <div className="text-center py-12">
-        <p style={{ color: '#8B8178' }}>Unable to load content. Please try again.</p>
+        <p role="alert" className="text-folio-text-secondary">Unable to load content.</p>
+        <button type="button" className="mt-3 min-h-11 rounded border px-4" onClick={() => setRetry(value => value + 1)}>Try again</button>
       </div>
     );
   }

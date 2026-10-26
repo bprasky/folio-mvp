@@ -492,15 +492,15 @@ export function ProductTagPicker({ projectId, imageId, pendingDot, onCancel, onT
   };
 
   return (
-    <div className="ridge-card w-full max-h-[70vh] flex flex-col overflow-hidden">
+    <div className="ridge-card w-full max-h-[70dvh] flex flex-col overflow-hidden">
       <div className="flex items-center justify-between px-5 py-4 border-b border-folio-border-subtle">
         <div>
           <h3 className="folio-ui text-folio-text-primary">Select Product</h3>
-          <p className="folio-meta text-folio-text-tertiary">
+          <p className="folio-meta text-folio-text-secondary">
             Position: {pendingDot.x.toFixed(1)}%, {pendingDot.y.toFixed(1)}%
           </p>
         </div>
-        <button onClick={onCancel} className="text-folio-text-secondary hover:text-folio-text-primary">
+        <button onClick={onCancel} aria-label="Cancel product selection" className="flex h-11 w-11 shrink-0 items-center justify-center text-folio-text-secondary hover:text-folio-text-primary">
           <FaTimes className="w-4 h-4" />
         </button>
       </div>
@@ -535,9 +535,10 @@ export function ProductTagPicker({ projectId, imageId, pendingDot, onCancel, onT
       {tagMode === "search" && (
         <div className="px-5 py-3 border-b border-folio-border-subtle">
           <div className="relative">
-            <FaSearch className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-folio-text-tertiary" />
+            <FaSearch className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-folio-text-secondary" />
             <input
               type="text"
+              aria-label="Search products"
               placeholder="Search products..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
@@ -554,13 +555,14 @@ export function ProductTagPicker({ projectId, imageId, pendingDot, onCancel, onT
           <div className="flex gap-2">
             <input
               type="url"
+              aria-label="Product link"
               placeholder="https://vendor.com/product"
               value={productUrl}
               onChange={(e) => setProductUrl(e.target.value)}
               onKeyDown={(e) => {
                 if (e.key === "Enter") handleFetchUrl();
               }}
-              className="flex-1 px-3 py-2 ridge-input text-sm"
+              className="min-w-0 flex-1 px-3 py-2 ridge-input text-sm"
               autoFocus
             />
             <button
@@ -590,7 +592,7 @@ export function ProductTagPicker({ projectId, imageId, pendingDot, onCancel, onT
                     className="h-12 w-12 flex-shrink-0 rounded-lg object-cover bg-surface-ground"
                   />
                 ) : (
-                  <div className="h-12 w-12 flex-shrink-0 flex items-center justify-center rounded-lg bg-surface-ground text-folio-text-tertiary">
+                  <div className="h-12 w-12 flex-shrink-0 flex items-center justify-center rounded-lg bg-surface-ground text-folio-text-secondary">
                     <FaImage className="w-4 h-4" />
                   </div>
                 )}
@@ -616,7 +618,7 @@ export function ProductTagPicker({ projectId, imageId, pendingDot, onCancel, onT
                           <span className="truncate">{f.message}</span>
                         </div>
                       ))}
-                      <div className="text-[var(--type-fine)] text-folio-text-tertiary">
+                      <div className="text-[var(--type-fine)] text-folio-text-secondary">
                         You can fix this after tagging.
                       </div>
                     </div>
@@ -656,7 +658,7 @@ export function ProductTagPicker({ projectId, imageId, pendingDot, onCancel, onT
           {urlError && <p className="folio-meta text-red-500">{urlError}</p>}
 
           {!existingMatch && !urlPreview && !urlFetching && !urlError && !showManual && (
-            <p className="text-center folio-meta text-folio-text-tertiary py-4">
+            <p className="text-center folio-meta text-folio-text-secondary py-4">
               Paste a product link and we&apos;ll pull the details.
             </p>
           )}
@@ -781,7 +783,7 @@ export function ProductTagPicker({ projectId, imageId, pendingDot, onCancel, onT
                   </div>
                 ) : (
                   !urlPreview.deferred && (
-                    <div className="h-12 w-12 flex-shrink-0 flex items-center justify-center rounded-lg bg-surface-ground text-folio-text-tertiary">
+                    <div className="h-12 w-12 flex-shrink-0 flex items-center justify-center rounded-lg bg-surface-ground text-folio-text-secondary">
                       <FaImage className="w-4 h-4" />
                     </div>
                   )
@@ -857,15 +859,15 @@ export function ProductTagPicker({ projectId, imageId, pendingDot, onCancel, onT
       {tagMode === "search" && (
         <div className="flex-1 overflow-y-auto px-5 py-3">
           {searching && (
-            <p className="text-center folio-meta text-folio-text-tertiary py-4">Searching...</p>
+            <p className="text-center folio-meta text-folio-text-secondary py-4">Searching...</p>
           )}
           {!searching && searchResults.length === 0 && searchTerm.trim() && (
-            <p className="text-center folio-meta text-folio-text-tertiary py-4">
+            <p className="text-center folio-meta text-folio-text-secondary py-4">
               No products found. Try a different search.
             </p>
           )}
           {!searching && !searchTerm.trim() && (
-            <p className="text-center folio-meta text-folio-text-tertiary py-4">
+            <p className="text-center folio-meta text-folio-text-secondary py-4">
               Type to search for a product
             </p>
           )}
@@ -924,9 +926,9 @@ export function ProductTagPicker({ projectId, imageId, pendingDot, onCancel, onT
               finishTouchedRef.current = true;
             }}
             placeholder="Unlacquered brass"
-            className="w-full rounded-lg border border-folio-border-subtle bg-surface-canvas px-3 py-2 text-sm text-folio-text-primary placeholder:text-folio-text-tertiary focus:outline-none focus:ring-2 focus:ring-[var(--accent)]/30"
+            className="w-full rounded-lg border border-folio-border-subtle bg-surface-canvas px-3 py-2 text-sm text-folio-text-primary placeholder:text-folio-text-secondary focus:outline-none focus:ring-2 focus:ring-[var(--accent)]/30"
           />
-          <p className="folio-meta text-folio-text-tertiary mt-1.5">
+          <p className="folio-meta text-folio-text-secondary mt-1.5">
             As the vendor names it. Optional.
           </p>
         </div>

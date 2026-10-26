@@ -1,3 +1,6 @@
+import { readProtectedProjectPhoto } from '@/lib/server/protected-project-photo';
+import { fetchProjectImage } from '@/lib/server/project-image-input';
+import { assertProjectWrite } from '@/lib/authz/access';
 export const dynamic = 'force-dynamic';
 
 import { NextRequest, NextResponse } from 'next/server';
@@ -64,14 +67,9 @@ export async function POST(
       return NextResponse.json({ error: "Image not found" }, { status: 404 });
     }
 
-    // Fetch the image content
-    const imageResponse = await fetch(sourceImage.url);
-    if (!imageResponse.ok) {
-      return NextResponse.json({ error: "Failed to fetch source image" }, { status: 500 });
-    }
-
-    const buffer = Buffer.from(await imageResponse.arrayBuffer());
-    const contentType = imageResponse.headers.get('content-type') || 'image/png';
+    await assertProjectWrite(userId, targetProjectId);
+    const source = await readProtectedProjectPhoto(sourceImage.url, sourceProjectId) || await fetchProjectImage(sourceImage.url);
+    const buffer = source.buffer, contentType = source.mime;
 
     // Save to target project storage
     const { publicUrl } = await saveBufferToProjectStorage({

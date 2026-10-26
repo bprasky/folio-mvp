@@ -44,32 +44,36 @@ export default function OrgProfileFeed({
 }: OrgProfileFeedProps) {
   const [items, setItems] = useState<FeedItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [attempt, setAttempt] = useState(0);
   const [filter, setFilter] = useState(initialFilter);
   const [sort, setSort] = useState(initialSort);
   const [recognitionModalOpen, setRecognitionModalOpen] = useState(false);
   const [inviteModalOpen, setInviteModalOpen] = useState(false);
 
   useEffect(() => {
+    let cancelled = false;
     async function loadFeed() {
       setLoading(true);
+      setError('');
       try {
         const params = new URLSearchParams();
         if (filter !== 'all') params.set('filter', filter);
         if (sort !== 'featured') params.set('sort', sort);
 
         const response = await fetch(`/api/org/${orgId}/feed?${params.toString()}`);
-        if (response.ok) {
-          const data = await response.json();
-          setItems(data.items || []);
-        }
+        if (!response.ok) throw new Error('The profile feed could not be loaded. Please try again.');
+        const data = await response.json();
+        if (!cancelled) setItems(data.items || []);
       } catch (error) {
-        console.error('Failed to load feed:', error);
+        if (!cancelled) setError(error instanceof Error ? error.message : 'The profile feed could not be loaded. Please try again.');
       } finally {
-        setLoading(false);
+        if (!cancelled) setLoading(false);
       }
     }
     loadFeed();
-  }, [orgId, filter, sort]);
+    return () => { cancelled = true; };
+  }, [orgId, filter, sort, attempt]);
 
   // Update filter/sort from URL changes
   useEffect(() => {
@@ -93,7 +97,7 @@ export default function OrgProfileFeed({
         onAddRecognition={() => setRecognitionModalOpen(true)}
       />
 
-      {items.length === 0 ? (
+      {error ? <div className="py-12 text-center"><p role="alert" className="folio-body">{error}</p><button className="mt-3 min-h-11 px-4 folio-ui underline" onClick={() => setAttempt(value => value + 1)}>Try again</button></div> : items.length === 0 ? (
         showSetupCard ? (
           <GuidedSetupCard
             orgId={orgId}
@@ -103,8 +107,8 @@ export default function OrgProfileFeed({
           />
         ) : (
           <div className="text-center py-16">
-            <p style={{ color: '#8B8178' }}>No content yet</p>
-            <p className="text-sm mt-2" style={{ color: '#A09890' }}>
+            <p className="text-folio-text-secondary">No content yet</p>
+            <p className="text-sm mt-2 text-folio-text-secondary">
               Projects and media will appear here once published
             </p>
           </div>
@@ -135,7 +139,7 @@ export default function OrgProfileFeed({
 
 function LoadingSkeleton({ projectCount }: { projectCount: number }) {
   return (
-    <div>
+    <div role="status" aria-label="Loading profile">
       {/* Filter skeleton */}
       <div className="flex gap-2 mb-6">
         {[1, 2, 3, 4, 5].map(i => (

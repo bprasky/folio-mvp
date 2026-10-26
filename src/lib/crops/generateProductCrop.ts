@@ -1,7 +1,10 @@
+import { readProtectedProjectPhoto } from '@/lib/server/protected-project-photo';
+import { fetchProjectImage } from '@/lib/server/project-image-input';
 import sharp from "sharp";
 import { getCategoryDefaultScale } from "./categoryDefaults";
 
 export interface CropOptions {
+  projectId?: string;
   tag: {
     x: number;
     y: number;
@@ -34,12 +37,8 @@ function parseAspect(aspect: string | null | undefined): { w: number; h: number 
 export async function generateProductCrop(options: CropOptions): Promise<CropResult> {
   const { tag, sourceImageUrl, outputSize = 600 } = options;
 
-  // Fetch source image
-  const response = await fetch(sourceImageUrl);
-  if (!response.ok) {
-    throw new Error(`Failed to fetch source image: ${response.status} ${response.statusText}`);
-  }
-  const imageBuffer = Buffer.from(await response.arrayBuffer());
+  const protectedPhoto = options.projectId ? await readProtectedProjectPhoto(sourceImageUrl, options.projectId) : null;
+  const { buffer: imageBuffer } = protectedPhoto || await fetchProjectImage(sourceImageUrl);
 
   // Get image metadata
   const metadata = await sharp(imageBuffer).metadata();
@@ -50,8 +49,8 @@ export async function generateProductCrop(options: CropOptions): Promise<CropRes
   // Tag x,y are stored as 0-100 percentages in the DB; normalize to 0-1
   const rawX = tag.cropX ?? tag.x;
   const rawY = tag.cropY ?? tag.y;
-  const normX = rawX > 1 ? rawX / 100 : rawX;
-  const normY = rawY > 1 ? rawY / 100 : rawY;
+  const normX = rawX / 100;
+  const normY = rawY / 100;
   const centerX = normX * imgWidth;
   const centerY = normY * imgHeight;
 

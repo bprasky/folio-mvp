@@ -60,7 +60,7 @@ async function suite(t, db) {
     for (const user of [editor, admin]) {
       await h.login(user);
       await expect(await reorder.PATCH(r({ imageIds: [ia.id] }, 'PATCH'), ctx(pa.id)), 200);
-      await expect(await rooms.POST(r({ name: `Room ${user.id}` }), ctx(pa.id)), 200);
+      await expect(await rooms.POST(r({ name: `Room ${user.id}`, requestId: require('node:crypto').randomUUID() }), ctx(pa.id)), 200);
     }
   });
   await t.test('validation fails before writes; duplicate tag submission returns same tag and selection', async () => {
@@ -78,7 +78,7 @@ async function suite(t, db) {
     await h.login(b);
     await expect(await tags.PATCH(r({ id: first.id, x: 30, y: 30 }, 'PATCH')), 403);
     await h.login(a);
-    await expect(await tags.PATCH(r({ id: first.id, imageId: ib.id }, 'PATCH')), 404);
+    await expect(await tags.PATCH(r({ id: first.id, imageId: ib.id, expected: { imageId: ia.id, x: tagBody.x, y: tagBody.y } }, 'PATCH')), 404);
     await expect(await tags.PATCH(r({ id: first.id, x: 'invalid', y: 30 }, 'PATCH')), 400);
   });
   await t.test('project edit cannot promote visibility or ownership; collection delete respects delete capability', async () => {

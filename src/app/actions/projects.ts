@@ -1,5 +1,7 @@
 'use server';
 
+import { createProjectOnce } from '@/lib/projects/createProject';
+import { canCreateFirmProject } from '@/lib/orgPermissions';
 import { stripPrivateInterviewData } from '@/lib/spotlight/privacy';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/app/api/auth/[...nextauth]/options';
@@ -64,6 +66,7 @@ export async function publishEditorial({ projectId }: { projectId: string }) {
 export async function createProjectAction(input: {
   name: string;
   description?: string;
+  requestId?: string;
   intent: 'folder' | 'publish_now'; // DEPRECATED: intent is ignored, always creates as draft
 }) {
   if (process.env.NODE_ENV === 'development') {
@@ -103,32 +106,18 @@ export async function createProjectAction(input: {
   if (designerOrgId) {
     const membership = await prisma.organizationUser.findFirst({
       where: { userId, organizationId: designerOrgId, isActive: true },
-      select: { id: true },
+      select: { id: true, role: true, organization: { select: { type: true } } },
     });
-    if (!membership) {
+    if (!membership || !canCreateFirmProject(membership.role, membership.organization.type)) {
       throw new Error('You are not a member of this organization');
     }
   } else {
     throw new Error('Organization context required to create projects');
   }
 
-  // Always create as draft - ignore intent param
-  const project = await prisma.project.create({
-    data: {
-      title: input.name.trim(),
-      description: input.description?.trim() || null,
-      designerId: userId,
-      ownerId: userId,
-      designerOrgId,
-      status: 'draft', // Explicitly set - always draft regardless of intent
-      isPublic: false, // Explicitly set
-      publishedAt: null, // Explicitly set
-      isAIEnabled: false,
-      views: 0,
-      saves: 0,
-      shares: 0,
-    },
-    select: { id: true, title: true },
+  if (!input.requestId || !/^[a-zA-Z0-9-]{16,80}$/.test(input.requestId)) throw new Error('Reload the creation form before retrying. A stable request ID is required.');
+  const project = await createProjectOnce(userId, designerOrgId, input.requestId, {
+    title: input.name.trim(), description: input.description?.trim() || null, projectStatus: 'new_project',
   });
 
   // Log analytics event

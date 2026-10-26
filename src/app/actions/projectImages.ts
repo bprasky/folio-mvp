@@ -9,6 +9,8 @@
  * image delete route and the rest of the project surface.
  */
 
+import { createRoomOnce, RoomCreationInput } from '@/lib/projects/createRoom';
+import { updateImageRoom } from '@/lib/projects/updateImageRoom';
 import { z } from 'zod';
 import { getServerSession } from 'next-auth';
 import { revalidatePath } from 'next/cache';
@@ -63,10 +65,7 @@ export async function assignImageToRoom(raw: unknown) {
   });
   if (!room) throw new Error('Room not found for this project');
 
-  await prisma.projectImage.update({
-    where: { id: imageId },
-    data: { roomId, inclusion: 'INCLUDED' },
-  });
+  await updateImageRoom(image.projectId, imageId, roomId, 'INCLUDED');
 
   await recordLabelEvent({
     projectId: image.projectId,
@@ -114,10 +113,7 @@ export async function includeImage(raw: unknown) {
   const { imageId } = ImageInput.parse(raw);
   const image = await authorizeImage(imageId);
 
-  await prisma.projectImage.update({
-    where: { id: imageId },
-    data: { inclusion: 'INCLUDED', roomId: null },
-  });
+  await updateImageRoom(image.projectId, imageId, null, 'INCLUDED');
 
   await recordLabelEvent({
     projectId: image.projectId,
@@ -138,10 +134,7 @@ export async function unassignImage(raw: unknown) {
   const { imageId } = ImageInput.parse(raw);
   const image = await authorizeImage(imageId);
 
-  await prisma.projectImage.update({
-    where: { id: imageId },
-    data: { roomId: null },
-  });
+  await updateImageRoom(image.projectId, imageId, null);
 
   await recordLabelEvent({
     projectId: image.projectId,
@@ -174,9 +167,10 @@ export async function setImageNoProducts(raw: unknown) {
   const { imageId, value } = NoProductsInput.parse(raw);
   const image = await authorizeImage(imageId);
 
-  await prisma.projectImage.update({
-    where: { id: imageId },
-    data: { noProducts: value },
+  await prisma.$transaction(async tx => {
+    await tx.$queryRaw`SELECT id FROM projects WHERE id = ${image.projectId} FOR UPDATE`;
+    if (value && await tx.productTag.count({ where: { imageId } })) throw new Error('This photo has product tags. Refresh to review them before marking it product-free.');
+    await tx.projectImage.update({ where: { id: imageId }, data: { noProducts: value } });
   });
 
   await recordLabelEvent({
@@ -217,7 +211,9 @@ export async function markRoomNoProducts(raw: unknown) {
   });
   if (!room) throw new Error('Room not found for this project');
 
-  const result = await prisma.projectImage.updateMany({
+  const result = await prisma.$transaction(async tx => {
+    await tx.$queryRaw`SELECT id FROM projects WHERE id = ${projectId} FOR UPDATE`;
+    return tx.projectImage.updateMany({
     where: {
       projectId,
       roomId,
@@ -226,6 +222,7 @@ export async function markRoomNoProducts(raw: unknown) {
       tags: { none: {} },
     },
     data: { noProducts: true },
+  });
   });
 
   revalidatePath(`/project/${projectId}`);
@@ -272,23 +269,17 @@ export async function renameRoom(raw: unknown) {
   return { ok: true };
 }
 
-const CreateRoomInput = z.object({
-  projectId: z.string().uuid(),
-  name: z.string().trim().min(1).max(120),
-});
+const CreateRoomInput = RoomCreationInput.extend({ projectId: z.string().uuid() });
 
 /** Create a room inline. Returns the new room so the caller can assign to it. */
 export async function createRoom(raw: unknown) {
-  const { projectId, name } = CreateRoomInput.parse(raw);
+  const { projectId, ...input } = CreateRoomInput.parse(raw);
 
   const session = await getServerSession(authOptions);
   if (!session?.user?.id) throw new Error('Unauthorized');
   await assertProjectWrite(session.user.id, projectId);
 
-  const room = await prisma.room.create({
-    data: { projectId, name },
-    select: { id: true, name: true, type: true },
-  });
+  const room = await createRoomOnce(session.user.id, projectId, input);
 
   revalidatePath(`/project/${projectId}`);
   return { ok: true, room };

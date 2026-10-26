@@ -1,3 +1,4 @@
+import { projectPhotoProcessingUrl } from '@/lib/server/protected-project-photo';
 import { prisma } from '@/lib/prisma';
 import { analyzeImage, ImageSignals } from '@/lib/aesthetic/imageSignals';
 import { extractMaterialSignals, MaterialSignals } from '@/lib/aesthetic/materialSignals';
@@ -320,10 +321,11 @@ export async function indexMoment(projectImageId: string): Promise<void> {
   // 2. Run AI analysis if not already done
   // Analyze image to get signals (used for AI tag detection)
   // Note: imageSignals are computed on-the-fly, not stored in the database
-  const imageSignals = await analyzeImage(projectImage.url);
+  const processingUrl = await projectPhotoProcessingUrl(projectImage.url, project.id);
+  const imageSignals = await analyzeImage(processingUrl);
   
   // 3. Detect AI tags (materials, spaces, colors, objects)
-  const aiTags = await detectAITags(projectImage.url, imageSignals);
+  const aiTags = await detectAITags(processingUrl, imageSignals);
   
   // Extract materials from product tags and rooms
   const materialSignals = extractMaterialSignals(

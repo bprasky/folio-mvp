@@ -2195,3 +2195,24 @@ body.frame-dark::before {
 .folio-loading-skeleton .animate-pulse {
   animation: none;
 }
+
+/* Form controls stay legible without mobile focus zoom; preserve desktop type scale. */
+@media (max-width: 767px) {
+  input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="file"]), textarea, select {
+    font-size: 1rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Hover-only photo controls must remain visible on touch tablets as well as phones. */
+@media (hover: none) {
+  .touch-action-visible { opacity: 1 !important; }
+}

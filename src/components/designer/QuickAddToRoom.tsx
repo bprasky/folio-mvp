@@ -1,4 +1,5 @@
 "use client";
+import { createRoom as createRoomWithRetry } from '@/lib/client/createRoom';
 import { useEffect, useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -70,13 +71,11 @@ export function QuickAddToRoom({ open, onOpenChange, productId, eventId, subeven
 
   const createRoom = async () => {
     if (!projectId || !newRoom.trim()) return;
-    const res = await fetch(`/api/designer/projects/${projectId}/rooms`, {
-      method:"POST", headers:{ "Content-Type":"application/json" }, body: JSON.stringify({ name: newRoom.trim() })
-    });
-    const room = await res.json();
-    setRooms(prev => [...prev, room]);
-    setRoomId(room.id);
-    setNewRoom("");
+    try {
+      const { room } = await createRoomWithRetry({ projectId, name: newRoom.trim() });
+      setRooms(prev => [...prev.filter(r => r.id !== room.id), room]);
+      setRoomId(room.id); setNewRoom(''); setError(null);
+    } catch (error) { setError(error instanceof Error ? error.message : 'Could not create room. Retry to check.'); }
   };
 
   const save = async () => {

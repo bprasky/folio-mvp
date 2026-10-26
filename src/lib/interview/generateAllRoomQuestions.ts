@@ -175,7 +175,7 @@ export async function generateAllRoomQuestions(
 
     console.info(`[QUESTION_GEN] ${rb.room.name}: budget=${rb.budget}, images=${rb.images.length}, tags=${roomTags.length}`);
 
-    return generateRoomQuestions({
+    return generateRoomQuestions({ projectId,
       roomName: rb.room.name,
       roomImages,
       roomTags,

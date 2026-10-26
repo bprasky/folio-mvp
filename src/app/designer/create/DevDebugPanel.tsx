@@ -4,6 +4,7 @@ import { useSession } from 'next-auth/react';
 
 export default function DevDebugPanel() {
   const { data: session, status } = useSession();
+  const [requestId] = useState(() => crypto.randomUUID());
   const [cookie, setCookie] = useState<string>('');
   const [ping, setPing] = useState<any>(null);
   const [serverSession, setServerSession] = useState<any>(null);
@@ -27,7 +28,7 @@ export default function DevDebugPanel() {
         headers: { 'Content-Type': 'application/json' },
         credentials: 'same-origin',
         body: JSON.stringify({
-          name: 'Dev Test',
+          requestId, projectStatus: 'new_project', name: 'Dev Test',
           projectType: 'TEST',
           stage: 'TEST',
           clientType: 'TEST',

@@ -2,11 +2,11 @@
 
 // ProductSheet — Desktop: right side panel. Mobile: bottom sheet.
 // Shows product image, in-situ context, designer quote, vendor link.
-// Rule: the mosaic stays visible (side panel, not modal).
+// Keep the mosaic visible behind the drawer while focus stays within it.
 
-import { useEffect, useRef } from "react";
+import { useRef } from "react";
 import Image from "next/image";
-import { motion, AnimatePresence } from "framer-motion";
+import * as Dialog from "@radix-ui/react-dialog";
 
 interface ProductSheetProps {
   product: any | null;
@@ -47,109 +47,33 @@ export function ProductSheet({
   designerName,
   supplementalQuotes,
 }: ProductSheetProps) {
-  const sheetRef = useRef<HTMLDivElement>(null);
+  const previousFocus = useRef<HTMLElement | null>(null);
+  const swipeStart = useRef<number | null>(null);
+  if (!product) return null;
+  const imageUrl = resolveImage(product);
+  const vendorName = product.vendor?.name || product.vendor?.companyName || null;
+  const vendorUrl = product.vendor?.website || null;
+  const quote = getProductQuote(product, supplementalQuotes);
 
-  // Close on escape
-  useEffect(() => {
-    const handler = (e: KeyboardEvent) => {
-      if (e.key === "Escape") {
-        e.preventDefault();
-        onClose();
-      }
-    };
-    if (product) {
-      document.addEventListener("keydown", handler);
-      return () => document.removeEventListener("keydown", handler);
-    }
-  }, [product, onClose]);
-
-  const imageUrl = product ? resolveImage(product) : null;
-  const vendorName =
-    product?.vendor?.name || product?.vendor?.companyName || null;
-  const vendorUrl = product?.vendor?.website || null;
-  const quote = product ? getProductQuote(product, supplementalQuotes) : null;
-
-  return (
-    <AnimatePresence>
-      {product && (
-        <>
-          {/* Backdrop — subtle on desktop, more visible on mobile */}
-          <motion.div
-            className="fixed inset-0 z-40 bg-black/10 md:bg-transparent"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            onClick={onClose}
-          />
-
-          {/* Desktop: Right side panel */}
-          <motion.div
-            ref={sheetRef}
-            className="fixed z-50 hidden md:flex flex-col top-0 right-0 h-full overflow-y-auto"
-            style={{
-              width: 400,
-              maxWidth: "40vw",
-              background: "rgba(255, 252, 248, 0.88)",
-              backdropFilter: "blur(24px)",
-              WebkitBackdropFilter: "blur(24px)",
-              borderLeft: "1px solid rgba(255, 252, 248, 0.4)",
-              boxShadow: "-8px 0 32px rgba(87, 75, 67, 0.06)",
-            }}
-            initial={{ x: "100%" }}
-            animate={{ x: 0 }}
-            exit={{ x: "100%" }}
-            transition={{ type: "spring", stiffness: 300, damping: 30 }}
-          >
-            <SheetContent
-              product={product}
-              imageUrl={imageUrl}
-              vendorName={vendorName}
-              vendorUrl={vendorUrl}
-              designerName={designerName}
-              quote={quote}
-              onClose={onClose}
-            />
-          </motion.div>
-
-          {/* Mobile: Bottom sheet */}
-          <motion.div
-            className="fixed z-50 md:hidden left-0 right-0 bottom-0 overflow-y-auto rounded-t-[20px]"
-            style={{
-              maxHeight: "70vh",
-              background: "rgba(255, 252, 248, 0.95)",
-              backdropFilter: "blur(24px)",
-              WebkitBackdropFilter: "blur(24px)",
-              boxShadow: "0 -8px 32px rgba(87, 75, 67, 0.12)",
-            }}
-            initial={{ y: "100%" }}
-            animate={{ y: 0 }}
-            exit={{ y: "100%" }}
-            transition={{ type: "spring", stiffness: 300, damping: 30 }}
-            drag="y"
-            dragConstraints={{ top: 0 }}
-            dragElastic={0.1}
-            onDragEnd={(_, info) => {
-              if (info.offset.y > 100) onClose();
-            }}
-          >
-            {/* Drag handle */}
-            <div className="flex justify-center py-3">
-              <div className="w-10 h-1 rounded-full bg-[rgba(87,75,67,0.15)]" />
-            </div>
-            <SheetContent
-              product={product}
-              imageUrl={imageUrl}
-              vendorName={vendorName}
-              vendorUrl={vendorUrl}
-              designerName={designerName}
-              quote={quote}
-              onClose={onClose}
-            />
-          </motion.div>
-        </>
-      )}
-    </AnimatePresence>
-  );
+  return <Dialog.Root open onOpenChange={open => { if (!open) onClose(); }}>
+    <Dialog.Portal>
+      <Dialog.Overlay className="fixed inset-0 z-[79] bg-black/10 md:bg-transparent" />
+      <Dialog.Content aria-describedby={undefined}
+        className="fixed inset-x-0 bottom-0 z-[80] max-h-[70dvh] w-full overflow-y-auto overscroll-contain rounded-t-[20px] bg-surface-canvas shadow-xl backdrop-blur-xl focus:outline-none md:inset-x-auto md:inset-y-0 md:right-0 md:h-dvh md:max-h-dvh md:w-[400px] md:max-w-[40vw] md:rounded-none md:border-l md:border-folio-border-subtle"
+        style={{ backgroundColor: 'color-mix(in srgb, var(--surface-canvas) 95%, transparent)' }}
+        onOpenAutoFocus={() => { previousFocus.current = document.activeElement as HTMLElement; }}
+        onCloseAutoFocus={event => { event.preventDefault(); previousFocus.current?.focus(); }}>
+        {/* Swipe the handle to dismiss; swiping the content remains native scrolling. */}
+        <div aria-hidden className="flex touch-none justify-center py-3 md:hidden"
+          onPointerDown={event => { swipeStart.current = event.clientY; event.currentTarget.setPointerCapture(event.pointerId); }}
+          onPointerCancel={() => { swipeStart.current = null; }}
+          onPointerUp={event => { if (swipeStart.current !== null && event.clientY - swipeStart.current > 100) onClose(); swipeStart.current = null; }}>
+          <div className="h-1 w-10 rounded-full bg-folio-border-strong" />
+        </div>
+        <SheetContent product={product} imageUrl={imageUrl} vendorName={vendorName} vendorUrl={vendorUrl} designerName={designerName} quote={quote} onClose={onClose} />
+      </Dialog.Content>
+    </Dialog.Portal>
+  </Dialog.Root>;
 }
 
 function SheetContent({
@@ -174,7 +98,7 @@ function SheetContent({
       {/* Close button */}
       <button
         onClick={onClose}
-        className="self-end text-[rgba(87,75,67,0.4)] hover:text-[rgba(87,75,67,0.7)] transition-colors"
+        className="sticky top-0 flex h-11 w-11 shrink-0 self-end items-center justify-center rounded-full bg-surface-canvas text-folio-text-secondary hover:text-folio-text-primary transition-colors"
         aria-label="Close"
       >
         <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
@@ -202,7 +126,7 @@ function SheetContent({
 
       {/* Product name + vendor */}
       <div>
-        <h3
+        <Dialog.Title className="break-words"
           style={{
             fontSize: 'var(--type-body)',
             fontWeight: 'var(--w-h1)',
@@ -210,12 +134,12 @@ function SheetContent({
           }}
         >
           {product.name}
-        </h3>
+        </Dialog.Title>
         {vendorName && (
           <p
             style={{
               fontSize: 'var(--type-ui)',
-              color: "rgba(87, 75, 67, 0.55)"
+              color: "var(--folio-text-secondary)"
             }}
           >
             {vendorName}
@@ -232,7 +156,7 @@ function SheetContent({
             fontFamily: "var(--font-headline)",
             fontSize: 'var(--type-body)',
             fontStyle: "italic",
-            color: "rgba(87, 75, 67, 0.7)",
+            color: "var(--folio-text-secondary)",
           }}
         >
           &ldquo;{quote.text}&rdquo;
@@ -240,7 +164,7 @@ function SheetContent({
             className="mt-1 not-italic"
             style={{
               fontSize: 'var(--type-eyebrow)',
-              color: "rgba(87, 75, 67, 0.4)"
+              color: "var(--folio-text-secondary)"
             }}
           >
             &mdash; {designerName}, {quote.role}
@@ -258,7 +182,7 @@ function SheetContent({
           style={{
             fontSize: 'var(--type-meta)',
             fontWeight: 'var(--w-h1)',
-            color: "rgba(87, 75, 67, 0.7)",
+            color: "var(--folio-text-secondary)",
             border: "1px solid rgba(87, 75, 67, 0.12)"
           }}
         >

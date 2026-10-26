@@ -1,4 +1,5 @@
 'use client';
+import { useProjectDraftWriter } from '@/lib/projects/useProjectDraftWriter';
 
 import { useState, useEffect, useMemo } from 'react';
 import { useSession } from 'next-auth/react';
@@ -45,6 +46,7 @@ export default function AddToProjectModal({
   eventTitle,
   onSuccess,
 }: AddToProjectModalProps) {
+  const writeProject = useProjectDraftWriter('AddToProjectModal.tsx');
   const { data: session } = useSession();
   const router = useRouter();
   const [projects, setProjects] = useState<Project[]>([]);
@@ -178,26 +180,15 @@ export default function AddToProjectModal({
 
       // Create new project if needed
       if (createNew) {
-        const createResponse = await fetch('/api/projects', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
+        const createdId = await writeProject({ ...{
             title: newProjectTitle,
             description: 'Created from event',
             projectType: 'RESIDENTIAL',
             clientType: 'RESIDENTIAL',
             budgetBand: 'UNSPECIFIED',
             stage: 'concept',
-          }),
-        });
-
-        if (createResponse.ok) {
-          const newProject = await createResponse.json();
-          projectIdsToSave.push(newProject.id);
-        } else {
-          const errorData = await createResponse.json().catch(() => ({}));
-          throw new Error(errorData.error || 'Failed to create project');
-        }
+          }, projectStatus: 'new_project' });
+        projectIdsToSave.push(createdId);
       } else {
         projectIdsToSave = Array.from(selectedProjectIds);
       }

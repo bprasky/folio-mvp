@@ -25,7 +25,7 @@ export async function generateReadyCampaign(userId: string, projectId: string, f
       const height = format === 'square' ? 1080 : format === 'portrait' ? 1350 : 1920;
       if (!candidate.imageUrls.length) throw new Error('Campaign story has no approved images');
       for (const [slideIndex, url] of Array.from(candidate.imageUrls.entries())) {
-        const image = await renderApprovedImage(url, 1080, height);
+        const image = await renderApprovedImage(url, 1080, height, projectId);
         folder.file(`slide-${slideIndex + 1}-${format}.jpg`, image);
       }
     }

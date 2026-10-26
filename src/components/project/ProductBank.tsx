@@ -203,7 +203,7 @@ export function ProductBank({ post, supplementalQuotes = [], isOwner = false }: 
   const projectId = post?.projectId || post?.project?.id;
   const hasMissingCrops = products.some((p) => !p.cropUrl && p.sourceImageUrl);
   const hasStaleCoordCrops = products.some(
-    (p) => p.cropUrl && !p.cropUrl.includes("&s=2")
+    (p) => p.cropUrl && !p.cropUrl.includes("&s=2") && !p.cropUrl.startsWith("/api/project-photos/")
   );
   const needsCropWork = hasMissingCrops || hasStaleCoordCrops;
   const cropTriggerRef = useRef(false);

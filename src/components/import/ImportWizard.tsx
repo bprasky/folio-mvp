@@ -197,7 +197,7 @@ export function ImportWizard({ open, onOpenChange, projectId, onComplete }: Impo
   }, [session, onComplete, handleClose]);
 
   return (
-    <GlassModal open={open} onOpenChange={handleClose} size="xl">
+    <GlassModal title="Import products" open={open} onOpenChange={handleClose} size="xl">
       <GlassModalHeader>
         <div className="flex items-center justify-between">
           <h2 className="text-xl font-serif text-stone-900">Import Project</h2>

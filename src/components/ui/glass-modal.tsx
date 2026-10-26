@@ -1,7 +1,7 @@
 "use client";
 
 import { cn } from "@/lib/utils";
-import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { forwardRef } from "react";
 
 interface GlassModalProps {
@@ -9,6 +9,7 @@ interface GlassModalProps {
   onOpenChange: (open: boolean) => void;
   children: React.ReactNode;
   className?: string;
+  title?: string;
   size?: "sm" | "md" | "lg" | "xl" | "full";
 }
 
@@ -21,10 +22,12 @@ const sizes = {
 };
 
 const GlassModal = forwardRef<HTMLDivElement, GlassModalProps>(
-  ({ open, onOpenChange, children, className, size = "lg" }, ref) => {
+  ({ open, onOpenChange, children, className, title = "Project details", size = "lg" }, ref) => {
     return (
       <Dialog open={open} onOpenChange={onOpenChange}>
         <DialogContent
+          ref={ref}
+          aria-describedby={undefined}
           className={cn(
             "w-full h-auto max-h-[90vh]",
             sizes[size],
@@ -35,6 +38,7 @@ const GlassModal = forwardRef<HTMLDivElement, GlassModalProps>(
             className
           )}
         >
+          <DialogTitle className="sr-only">{title}</DialogTitle>
           {children}
         </DialogContent>
       </Dialog>
@@ -46,19 +50,19 @@ GlassModal.displayName = "GlassModal";
 
 // Sub-components for modal structure
 const GlassModalHeader = ({ children, className }: { children: React.ReactNode; className?: string }) => (
-  <div className={cn("px-8 py-4 border-b border-[rgba(190,175,155,0.24)] bg-white/25", className)}>
+  <div className={cn("shrink-0 px-4 sm:px-8 py-4 border-b border-[rgba(190,175,155,0.24)] bg-white/25", className)}>
     {children}
   </div>
 );
 
 const GlassModalBody = ({ children, className }: { children: React.ReactNode; className?: string }) => (
-  <div className={cn("flex-1 overflow-y-auto px-8 md:px-12 py-8", className)}>
+  <div className={cn("min-h-0 flex-1 overflow-y-auto px-4 sm:px-8 md:px-12 py-8", className)}>
     {children}
   </div>
 );
 
 const GlassModalFooter = ({ children, className }: { children: React.ReactNode; className?: string }) => (
-  <div className={cn("px-8 py-4 border-t border-[rgba(190,175,155,0.24)] bg-white/25", className)}>
+  <div className={cn("shrink-0 px-4 sm:px-8 py-4 border-t border-[rgba(190,175,155,0.24)] bg-white/25", className)}>
     {children}
   </div>
 );

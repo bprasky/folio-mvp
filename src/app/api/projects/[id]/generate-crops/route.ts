@@ -106,13 +106,7 @@ export async function POST(
             cropAspect: tag.cropAspect,
             category: tag.product.category,
           },
-          sourceImageUrl: tag.image.url,
-        });
-
-        const uploadResult = await uploadCrop({
-          buffer: cropResult.buffer,
-          tagId: tag.id,
-          projectId: tag.image.projectId,
+          sourceImageUrl: tag.image.url, projectId: tag.image.projectId,
         });
 
         // Update tag with crop metadata
@@ -122,14 +116,10 @@ export async function POST(
           ? (tag.cropManual ? tag.cropScale : null) ?? getCategoryDefaultScale(tag.product.category)
           : tag.cropScale ?? getCategoryDefaultScale(tag.product.category);
 
-        await prisma.productTag.update({
-          where: { id: tag.id },
-          data: {
-            cropX: tag.cropX ?? tag.x,
-            cropY: tag.cropY ?? tag.y,
-            cropScale: effectiveScale,
-            cropAspect: tag.cropAspect ?? "1:1",
-          },
+        const uploadResult = await uploadCrop({
+          buffer: cropResult.buffer, tagId: tag.id, projectId: tag.image.projectId,
+          expected: { imageId: tag.imageId, x: tag.x, y: tag.y, updatedAt: tag.updatedAt },
+          metadata: { cropX: tag.cropX ?? tag.x, cropY: tag.cropY ?? tag.y, cropScale: effectiveScale, cropAspect: tag.cropAspect ?? "1:1" },
         });
 
         return uploadResult;

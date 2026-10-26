@@ -1,46 +1,21 @@
-import { prisma } from "@/lib/prisma";
+import { prisma } from '@/lib/prisma';
+import { saveBufferToProjectStorage } from '@/lib/storage';
 
-const BUCKET = process.env.SB_BUCKET_NAME || "event-images";
+export interface UploadCropResult { bucket: string; path: string; publicUrl: string }
 
-export interface UploadCropResult {
-  bucket: string;
-  path: string;
-  publicUrl: string;
-}
-
-export async function uploadCrop({
-  buffer,
-  tagId,
-  projectId,
-}: {
-  buffer: Buffer;
-  tagId: string;
-  projectId: string;
+export async function uploadCrop({ buffer, tagId, projectId, expected, metadata }: {
+  buffer: Buffer; tagId: string; projectId: string;
+  expected: { imageId: string; x: number; y: number; updatedAt: Date };
+  metadata: { cropX: number; cropY: number; cropScale: number; cropAspect: string; cropManual?: boolean };
 }): Promise<UploadCropResult> {
-  const path = `crops/${projectId}/${tagId}.webp`;
-
-  const { supabaseAdmin } = await import("@/lib/supabaseAdmin");
-
-  // Upsert: overwrite if a crop already exists for this tag
-  const { error } = await supabaseAdmin.storage.from(BUCKET).upload(path, buffer, {
-    contentType: "image/webp",
-    upsert: true,
+  // Immutable private derivatives follow the source photo's current visibility.
+  const stored = await saveBufferToProjectStorage({ projectId, roomId: 'crops/' + tagId + '/v2', buffer, mime: 'image/png' });
+  // A completed derivative must still belong to the exact source snapshot.
+  // In particular, never attach bytes from an excluded photo to a moved tag.
+  const changed = await prisma.productTag.updateMany({
+    where: { id: tagId, image: { projectId }, ...expected },
+    data: { ...metadata, cropUrl: stored.publicUrl },
   });
-
-  if (error) {
-    console.error("[uploadCrop] Upload failed:", error);
-    throw error;
-  }
-
-  const { data: pub } = supabaseAdmin.storage.from(BUCKET).getPublicUrl(path);
-  // Cache-buster + scale version marker for stale crop detection
-  const publicUrl = `${pub.publicUrl}?v=${Date.now()}&s=2`;
-
-  // Update the ProductTag record with the crop URL
-  await prisma.productTag.update({
-    where: { id: tagId },
-    data: { cropUrl: publicUrl },
-  });
-
-  return { bucket: BUCKET, path, publicUrl };
+  if (changed.count !== 1) throw Object.assign(new Error('This tag changed while its crop was being made. Refresh and try again.'), { status: 409 });
+  return stored;
 }

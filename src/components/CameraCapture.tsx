@@ -1,4 +1,5 @@
 'use client';
+import { createRoom as createRoomWithRetry } from '@/lib/client/createRoom';
 
 import { useState, useRef, useCallback, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -276,24 +277,8 @@ export default function CameraCapture({
     if (!newRoomName.trim() || !selectedProjectId) return;
 
     try {
-      const response = await fetch(`/api/designer/projects/${selectedProjectId}/rooms`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ name: newRoomName.trim() }),
-      });
-
-      if (response.ok) {
-        const newRoom = await response.json();
-        setSelectedRoomId(newRoom.id);
-        setShowNewRoomInput(false);
-        setNewRoomName('');
-        // Refresh rooms list
-        window.location.reload();
-      } else {
-        alert('Failed to create room');
-      }
+      const { room } = await createRoomWithRetry({ projectId: selectedProjectId, name: newRoomName.trim() });
+      setSelectedRoomId(room.id); setShowNewRoomInput(false); setNewRoomName('');
     } catch (error) {
       console.error('Error creating room:', error);
       alert('Failed to create room');

@@ -531,7 +531,7 @@ export function PresentationImportModal({
   );
 
   return (
-    <GlassModal open={open} onOpenChange={handleClose} size="xl">
+    <GlassModal title="Import a presentation" open={open} onOpenChange={handleClose} size="xl">
       <GlassModalHeader>
         <div className="flex items-center justify-between">
           <div>

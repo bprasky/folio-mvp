@@ -1,5 +1,6 @@
 'use client';
 
+import ProfileFollowButton from './ProfileFollowButton';
 import Link from 'next/link';
 import SafeImage from '@/components/SafeImage';
 
@@ -26,6 +27,7 @@ interface ProfileHeroProps {
   projectCount?: number;
   featuredCount?: number;
   isOwner?: boolean;
+  initiallyFollowing?: boolean;
 }
 
 export default function ProfileHero({
@@ -33,6 +35,7 @@ export default function ProfileHero({
   projectCount = 0,
   featuredCount = 0,
   isOwner = false,
+  initiallyFollowing = false,
 }: ProfileHeroProps) {
   const tagline = user.profileInterview?.philosophyStatement || user.bio;
   const initials = user.name
@@ -60,7 +63,7 @@ export default function ProfileHero({
               />
             ) : (
               <div
-                className="w-full h-full flex items-center justify-center text-2xl md:text-3xl font-light bg-folio-border-subtle text-folio-text-secondary"
+                className="w-full h-full flex items-center justify-center text-2xl md:text-3xl font-medium bg-folio-border-subtle text-folio-text-secondary"
               >
                 {initials}
               </div>
@@ -72,8 +75,8 @@ export default function ProfileHero({
             <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
               <div className="min-w-0">
                 <h1
-                  className="text-2xl md:text-3xl font-light tracking-tight text-folio-text-primary"
-                  style={{ fontFamily: 'Georgia, serif' }}
+                  className="break-words text-folio-h3 md:text-folio-h2 font-medium tracking-tight text-folio-text-primary"
+                  style={{ fontFamily: 'var(--font-headline)' }}
                 >
                   {user.name}
                 </h1>
@@ -125,22 +128,15 @@ export default function ProfileHero({
                   {isOwner ? (
                     <Link
                       href="/profile"
-                      className="px-5 py-2 text-sm rounded-full transition-all hover:opacity-80 bg-folio-text-primary text-surface-ground"
+                      className="min-h-11 px-5 py-2 text-sm rounded-full transition-all hover:opacity-80 bg-folio-text-primary text-surface-ground"
                     >
                       Edit Profile
                     </Link>
                   ) : (
                     <>
-                      <button
-                        className="px-5 py-2 text-sm rounded-full transition-all hover:opacity-80 bg-folio-text-primary text-surface-ground"
-                      >
-                        Follow
-                      </button>
-                      <button
-                        className="px-5 py-2 text-sm rounded-full border transition-all hover:bg-stone-50 border-folio-text-primary text-folio-text-primary"
-                      >
-                        Contact
-                      </button>
+                      <ProfileFollowButton userId={user.id} initiallyFollowing={initiallyFollowing} />
+                      {user.website && <a href={user.website} target="_blank" rel="noopener noreferrer"
+                        className="min-h-11 px-5 py-2 text-sm rounded-full border border-folio-text-primary text-folio-text-primary">Visit website</a>}
                     </>
                   )}
                 </div>
@@ -194,7 +190,7 @@ function Stat({ label, value }: { label: string; value: number }) {
 
   return (
     <div className="text-center">
-      <div className="text-xl md:text-2xl font-light text-folio-text-primary">
+      <div className="text-xl md:text-2xl font-medium text-folio-text-primary">
         {formatted}
       </div>
       <div className="text-xs text-folio-text-secondary">

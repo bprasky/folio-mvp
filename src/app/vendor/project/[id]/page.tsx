@@ -1,4 +1,5 @@
 'use client';
+import { createRoom as createRoomWithRetry } from '@/lib/client/createRoom';
 
 import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
@@ -100,23 +101,11 @@ export default function VendorProjectDetailPage() {
 
     setIsAddingRoom(true);
     try {
-      const response = await fetch(`/api/vendor/projects/${projectId}/rooms`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ name: newRoomName }),
-      });
-
-      if (response.ok) {
-        setNewRoomName('');
-        setShowAddRoom(false);
-        fetchProject();
-      } else {
-        console.error('Failed to add room');
-      }
+      await createRoomWithRetry({ projectId, name: newRoomName });
+      setNewRoomName(''); setShowAddRoom(false); fetchProject();
     } catch (error) {
       console.error('Error adding room:', error);
+      alert(error instanceof Error ? error.message : 'Could not create room. Retry to check.');
     } finally {
       setIsAddingRoom(false);
     }

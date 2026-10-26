@@ -84,7 +84,7 @@ async function journeys(t, database) {
     assert.equal(await db.project.count({ where: { id: projectId } }), 1);
     const saved = await db.project.findUniqueOrThrow({ where: { id: projectId } });
     assert.equal(saved.ownerId, owner.id); assert.equal(saved.designerId, owner.id); assert.equal(saved.designerOrgId, orgId); assert.equal(saved.isPublic, false);
-    room = await body(await rooms.POST(r({ name: 'Living Room' }), context(projectId)));
+    room = await body(await rooms.POST(r({ name: 'Living Room', requestId: require('node:crypto').randomUUID() }), context(projectId)));
     image = (await body(await images.POST(r({ name: 'Room photo', room: room.name, imageData: 'dGVzdC1pbWFnZQ==', mimeType: 'image/png' }), context(projectId)), 201)).image;
     assert.equal(image.projectId, projectId); assert.equal(image.room, room.name);
     const { assignImageToRoom } = require(resolve('src/app/actions/projectImages.ts'));
@@ -192,7 +192,7 @@ async function journeys(t, database) {
     const privateProject = await db.project.findUniqueOrThrow({ where: { id: projectId } }); assert.equal(privateProject.isPublic, false); assert.equal(privateProject.publishedAt, null);
   });
   await t.test('5 mounted vendor collaboration invitation, designer acceptance, readback and unrelated vendor isolation', async () => {
-    const vendor = await f.user({ role: 'VENDOR' }), vendorOrg = await f.organization({ type: 'VENDOR', vendorTier: 'PRO' });
+    const vendor = await f.user({ role: 'VENDOR' }), vendorOrg = await f.organization({ type: 'VENDOR', vendorTier: 'PROFESSIONAL' });
     await f.membership(vendor.id, vendorOrg.id);
     const stories = h.route('collaboration/stories'), storyRoute = h.route('collaboration/stories/[id]');
     await h.login(vendor);
@@ -201,7 +201,7 @@ async function journeys(t, database) {
     const story = created.story || created;
     assert.equal(story.vendorOrgId, vendorOrg.id); assert.equal(story.designerUserId, owner.id); assert.equal(story.taggedProjectId, projectId);
     assert.equal((await stories.POST(r(invite))).status, 409);
-    const stranger = await f.user({ role: 'VENDOR' }), otherOrg = await f.organization({ type: 'VENDOR', vendorTier: 'PRO' }); await f.membership(stranger.id, otherOrg.id);
+    const stranger = await f.user({ role: 'VENDOR' }), otherOrg = await f.organization({ type: 'VENDOR', vendorTier: 'PROFESSIONAL' }); await f.membership(stranger.id, otherOrg.id);
     await h.login(stranger);
     assert.equal((await storyRoute.GET(r(), context(story.id))).status, 403);
     assert.equal((await storyRoute.PATCH(r({ title: 'Stolen' }, 'PATCH'), context(story.id))).status, 403);

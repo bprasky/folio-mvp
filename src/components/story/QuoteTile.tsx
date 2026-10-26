@@ -112,7 +112,7 @@ export function QuoteTile({
       onClick={editable ? undefined : onClick}
       role={editable ? undefined : "button"}
       tabIndex={editable ? undefined : 0}
-      onKeyDown={editable ? undefined : (e) => e.key === "Enter" && onClick()}
+      onKeyDown={editable ? undefined : event => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); onClick(); } }}
       className={clsx(
         !editable && "cursor-pointer",
         "rounded-[12px] transition-colors duration-200 group",
@@ -137,7 +137,7 @@ export function QuoteTile({
             fontWeight: 'var(--w-h1)',
             textTransform: "uppercase",
             letterSpacing: 'var(--ls-wide)',
-            color: "rgba(87, 75, 67, 0.55)",
+            color: "var(--folio-text-secondary)",
             ...stagger(0)
           }}
         >
@@ -235,7 +235,7 @@ export function QuoteTile({
         <span
           style={{
             fontSize: 'var(--type-meta)',
-            color: "rgba(87, 75, 67, 0.55)",
+            color: "var(--folio-text-secondary)",
             ...stagger(160)
           }}
         >
@@ -248,7 +248,7 @@ export function QuoteTile({
             style={{
               fontSize: 'var(--type-meta)',
               lineHeight: 'var(--lh-body)',
-              color: "rgba(87, 75, 67, 0.45)",
+              color: "var(--folio-text-secondary)",
               ...stagger(240)
             }}
           >
@@ -267,12 +267,12 @@ export function QuoteTile({
         )}
         style={{
           fontSize: 'var(--type-meta)',
-          color: "rgba(87, 75, 67, 0.55)",
+          color: "var(--folio-text-secondary)",
           ...stagger(320)
         }}
       >
         {productCount > 0 && (
-          <span style={{ fontSize: 'var(--type-eyebrow)', color: "rgba(87, 75, 67, 0.4)" }}>
+          <span style={{ fontSize: 'var(--type-eyebrow)', color: "var(--folio-text-secondary)" }}>
             {productCount} product{productCount !== 1 ? "s" : ""}
           </span>
         )}

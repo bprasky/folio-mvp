@@ -1,4 +1,4 @@
-import { requestIdentity } from '@/lib/persistence/requestIdentity';
+import { createProjectOnce, CreationConflict } from '@/lib/projects/createProject';
 import { deleteProjectWithSpotlightGuard } from '@/lib/spotlight/deletion';
 import { SpotlightConflict } from '@/lib/spotlight/gate';
 export const dynamic = 'force-dynamic';
@@ -165,63 +165,14 @@ export async function POST(req: Request) {
     }
 
     const requestId = json?.requestId;
-    if (requestId !== undefined && (typeof requestId !== 'string' || !/^[a-zA-Z0-9-]{16,80}$/.test(requestId))) {
-      return NextResponse.json({ error: 'Invalid creation request' }, { status: 400 });
+    if (typeof requestId !== 'string' || !/^[a-zA-Z0-9-]{16,80}$/.test(requestId)) {
+      return NextResponse.json({ error: 'A stable creation request ID is required. Reload this form and try again.' }, { status: 428 });
     }
-    const creationId = requestId ? requestIdentity('project-create', [userId, validatedOrgId, requestId]) : undefined;
-    if (creationId) {
-      const existing = await prisma.project.findUnique({ where: { id: creationId }, select: { id: true } });
-      if (existing) return NextResponse.json(existing, { status: 200 });
-    }
-
-    const data = normalizeCreatePayload(json); // accepts both shapes, returns canonical
-
-    if (isDev) {
-      console.log('[create-project] normalized data:', data, 'orgId:', validatedOrgId);
-    }
-
-    // Map projectStatus to database status
-    // new_project -> draft (work in progress)
-    // completed_project -> active (ready to showcase)
-    const dbStatus = data.projectStatus === 'completed_project' ? 'active' : 'draft';
-
-    const project = await prisma.project.create({
-      data: {
-        ...(creationId ? { id: creationId } : {}),
-        title: data.title,
-        stage: data.stage,
-        projectType: data.projectType,
-        clientType: data.clientType,
-        budgetBand: data.budgetBand,
-        city: data.city ?? null,
-        regionState: data.regionState ?? null,
-        description: data.description ?? null,
-        timeline: data.timeline ?? null,
-        completedYear: data.completedYear ?? null,
-        completedMonth: data.completedMonth ?? null,
-        designerId: userId,
-        ownerId: userId,
-        designerOrgId: validatedOrgId,
-        status: dbStatus,
-        isPublic: false,
-        publishedAt: null,
-        isAIEnabled: false,
-        views: 0,
-        saves: 0,
-        shares: 0,
-      },
-      select: { id: true },
-    }).catch(async error => {
-      if (creationId && error?.code === 'P2002') {
-        const existing = await prisma.project.findUnique({ where: { id: creationId }, select: { id: true } });
-        if (existing) return existing;
-      }
-      throw error;
-    });
+    const project = await createProjectOnce(userId, validatedOrgId, requestId, json);
 
     // Log analytics event
     try {
-      await logPassiveEvent({
+      if (!project.replayed) await logPassiveEvent({
         projectId: project.id,
         type: 'project_create',
         actorId: userId,
@@ -231,29 +182,9 @@ export async function POST(req: Request) {
       console.warn('Analytics logging failed:', analyticsError);
     }
 
-    // Create ProjectPost with credits if provided
-    if (data.credits && Array.isArray(data.credits) && data.credits.length > 0) {
-      try {
-        const slug = makeSlug(data.title || undefined, project.id);
-        await prisma.projectPost.create({
-          data: {
-            projectId: project.id,
-            slug,
-            status: 'DRAFT',
-            credits: data.credits,
-          },
-        });
-        if (isDev) {
-          console.log('[create-project] Created ProjectPost with credits');
-        }
-      } catch (postError) {
-        console.warn('[create-project] Failed to create ProjectPost with credits:', postError);
-        // Don't fail the whole request if ProjectPost creation fails
-      }
-    }
-
-    return NextResponse.json({ id: project.id }, { status: 201 });
+    return NextResponse.json({ id: project.id }, { status: project.replayed ? 200 : 201 });
   } catch (e: any) {
+    if (e instanceof CreationConflict) return NextResponse.json({ error: e.message, id: e.id }, { status: 409 });
     // ZodError → 422
     if (e?.name === 'ZodError') {
       if (isDev) {
@@ -271,9 +202,7 @@ export async function POST(req: Request) {
     return NextResponse.json(
       {
         error: 'CreateFailed',
-        code: e?.code ?? null,
-        meta: e?.meta ?? null,
-        message: e?.message ?? 'Unknown error',
+        message: 'Could not save this project. Your details have not been discarded; retry the same request.',
       },
       { status: 500 }
     );

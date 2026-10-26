@@ -1,12 +1,14 @@
 'use client';
 
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { projectEntryHref } from '@/lib/onboarding/professional-entry';
 import { CreateProjectGuide } from '@/components/interviews/CreateProjectGuide';
 import { COMPLETION_MONTHS, completionDateInputError } from '@/lib/projects/completionDate';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { expertiseIntent } from '@/lib/publishing-studio/expertise-navigation';
 import { useSession } from 'next-auth/react';
+
+import { createProjectDraftWriter } from '@/lib/projects/saveProjectDraft';
 
 // Unified Create Project UI - single form with optional advanced details
 export default function UnifiedCreateProjectUI() {
@@ -16,6 +18,7 @@ export default function UnifiedCreateProjectUI() {
   const { data: session } = useSession();
   const operatingAsOrgId = (session?.user as any)?.operatingAsOrgId as string | null ?? null;
   const operatingAsOrgName = (session?.user as any)?.operatingAsOrg?.name as string | null ?? null;
+  const writer = useMemo(() => createProjectDraftWriter(undefined, `folio:legacy-create:${session?.user?.id}:${operatingAsOrgId}`), [session?.user?.id, operatingAsOrgId]);
   const [name, setName] = useState('');
   const [year, setYear] = useState('');
   const [month, setMonth] = useState('');
@@ -37,34 +40,12 @@ export default function UnifiedCreateProjectUI() {
     setLoading(true);
 
     try {
-      const r = await fetch('/api/projects', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        credentials: 'same-origin',
-        body: JSON.stringify({
-          title: name.trim(), description, projectStatus: 'completed_project', timeline: 'PAST',
-          clientType: clientType === 'Residential' ? 'RESIDENTIAL' : 'COMMERCIAL',
-          city: locationCity, regionState: locationRegion, designerOrgId: operatingAsOrgId,
-          completedYear: Number(year), completedMonth: month ? Number(month) : null,
-        }),
+      const id = await writer({
+        title: name.trim(), description, projectStatus: 'completed_project', timeline: 'PAST',
+        clientType: clientType === 'Residential' ? 'RESIDENTIAL' : 'COMMERCIAL',
+        city: locationCity, regionState: locationRegion, designerOrgId: operatingAsOrgId,
+        completedYear: Number(year), completedMonth: month ? Number(month) : null,
       });
-
-      if (r.status === 401) {
-        setErr('You must be signed in to create projects.');
-      } else if (r.status === 403) {
-        setErr('You must be operating as a design firm to create projects. Check your workspace in the profile menu.');
-      } else if (!r.ok) {
-        const errorData = await r.json().catch(() => ({}));
-        setErr(errorData.error || 'Failed to create project.');
-      } else {
-        const json = await r.json();
-        const id = json?.id;
-        if (!id) {
-          setErr('Create API did not return an id.');
-          return;
-        }
         // Completed projects start with photographs.
         const next = new URLSearchParams({ view: 'media' });
         if (searchParams.has('expertiseTopic') || searchParams.has('expertiseProjects')) {
@@ -72,7 +53,6 @@ export default function UnifiedCreateProjectUI() {
           next.set('expertiseTopic', intent.topic); next.set('expertiseProjects', intent.projectIds.join(','));
         }
         router.replace(`/project/${encodeURIComponent(id)}?${next}`);
-      }
     } catch (e: any) {
       setErr(e.message || 'Failed to create project');
     } finally {

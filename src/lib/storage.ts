@@ -1,3 +1,5 @@
+import { protectedPhotoUrl } from '@/lib/files/projectPhotoUrl';
+import { PRIVATE_PHOTO_BUCKET } from '@/lib/server/protected-project-photo';
 import { createClient, SupabaseClient } from "@supabase/supabase-js";
 import sharp from "sharp";
 
@@ -58,43 +60,23 @@ export async function saveBufferToProjectStorage({
 
   // Strip EXIF metadata for privacy (removes GPS, timestamps, camera info)
   const sanitizedBuffer = await stripExifMetadata(buffer, mime);
+  if (sanitizedBuffer.length > 20 * 1024 * 1024) throw new Error('Prepared project photo exceeds the storage limit.');
 
   // Keep the prefix out of the path if the bucket already implies purpose
   const path = `${projectId}/${roomId}/generated/${id}.${ext}`;
 
-  // Try with anon client first (faster if RLS allows it)
-  const supabase = getSupabase();
-  let up = await supabase.storage.from(BUCKET).upload(path, sanitizedBuffer, {
-    contentType: mime === 'image/png' ? 'image/png' : 'image/jpeg',
-    upsert: !!storageId,
+  const { supabaseAdmin } = await import('./supabaseAdmin');
+  // Provision a separate private bucket before rollout; never change legacy visibility.
+  const bucket = await supabaseAdmin.storage.getBucket(PRIVATE_PHOTO_BUCKET);
+  if (bucket.error || !bucket.data || bucket.data.public !== false) throw new Error('Private project photo storage is not configured.');
+  const upload = await supabaseAdmin.storage.from(PRIVATE_PHOTO_BUCKET).upload(path, sanitizedBuffer, {
+    contentType: mime === 'image/png' ? 'image/png' : 'image/jpeg', upsert: false, cacheControl: '0',
   });
+  // Identical deterministic uploads are immutable. A losing request uses the same
+  // object and must never delete it during cleanup (the caller tracks this).
+  if (upload.error && !(storageId && String((upload.error as any).statusCode) === '409')) throw upload.error;
+  return { bucket: PRIVATE_PHOTO_BUCKET, path, publicUrl: protectedPhotoUrl(path) };
 
-  // If anon client fails, try with admin client (bypasses RLS)
-  if (up.error) {
-    console.log(`[saveBufferToProjectStorage] Anon client upload failed, trying admin client: ${up.error.message}`);
-    const { supabaseAdmin } = await import('./supabaseAdmin');
-    const adminUp = await supabaseAdmin.storage.from(BUCKET).upload(path, sanitizedBuffer, {
-      contentType: mime === 'image/png' ? 'image/png' : 'image/jpeg',
-      upsert: !!storageId,
-    });
-    if (adminUp.error) {
-      console.error(`[saveBufferToProjectStorage] Admin client upload also failed:`, adminUp.error);
-      throw adminUp.error;
-    }
-    // Use admin client for public URL too
-    const { data: pub } = supabaseAdmin.storage.from(BUCKET).getPublicUrl(path);
-    return { bucket: BUCKET, path, publicUrl: pub.publicUrl };
-  }
-
-  // OPTION A: public bucket (simple)
-  const pub = supabase.storage.from(BUCKET).getPublicUrl(path);
-  const publicUrl = pub.data.publicUrl;
-
-  // OPTION B (if bucket is private): signed URL for 7 days
-  // const signed = await supabase.storage.from(BUCKET).createSignedUrl(path, 60 * 60 * 24 * 7);
-  // const publicUrl = signed.data.signedUrl;
-
-  return { bucket: BUCKET, path, publicUrl };
 }
 
 export async function deleteProjectImage(path: string): Promise<void> {

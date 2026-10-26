@@ -229,19 +229,15 @@ function LandscapeHero({ story, publishedAt }: { story: StoryData; publishedAt: 
 
   return (
     <section
-      className="mx-auto"
+      className="mx-auto px-4 sm:px-8 lg:px-14"
       style={{
         maxWidth: 1168, /* folio-design-system: off-scale */
-        paddingLeft: 56, /* folio-design-system: off-scale */
-        paddingRight: 56, /* folio-design-system: off-scale */
       }}
     >
       {/* Title row: 8fr title + 4fr stats stack, baselined to bottom */}
       <div
-        className="grid"
+        className="grid grid-cols-1 gap-6 md:grid-cols-[minmax(0,8fr)_minmax(0,4fr)] md:gap-14"
         style={{
-          gridTemplateColumns: "8fr 4fr",
-          gap: 56, /* folio-design-system: off-scale */
           alignItems: "end",
         }}
       >
@@ -252,7 +248,7 @@ function LandscapeHero({ story, publishedAt }: { story: StoryData; publishedAt: 
               fontFamily: "var(--font-headline)",
               fontStyle: "italic",
               fontWeight: "var(--w-body)",
-              fontSize: 60, /* folio-design-system: off-scale */
+              fontSize: "clamp(var(--type-h2), 5vw, 60px)", /* folio-design-system: off-scale — preserve desktop display size */
               lineHeight: 1.02, /* folio-design-system: off-scale */
               letterSpacing: "-0.012em" /* folio-design-system: off-scale */,
               textWrap: "balance" as any,
@@ -278,7 +274,7 @@ function LandscapeHero({ story, publishedAt }: { story: StoryData; publishedAt: 
             fontFamily: "var(--font-body)",
             fontSize: 13, /* folio-design-system: off-scale */
             lineHeight: 1.5, /* folio-design-system: off-scale */
-            color: "rgba(87, 75, 67, 0.45)",
+            color: "var(--folio-text-secondary)",
             display: "flex",
             flexDirection: "column",
             gap: 14, /* folio-design-system: off-scale */
@@ -333,7 +329,7 @@ function LandscapeHero({ story, publishedAt }: { story: StoryData; publishedAt: 
                 fontSize: 10, /* folio-design-system: off-scale */
                 textTransform: "uppercase",
                 letterSpacing: "0.14em" /* folio-design-system: off-scale */,
-                color: "rgba(87, 75, 67, 0.55)",
+                color: "var(--folio-text-secondary)",
                 whiteSpace: "nowrap",
               }}
             >
@@ -346,7 +342,7 @@ function LandscapeHero({ story, publishedAt }: { story: StoryData; publishedAt: 
               className="truncate"
               style={{
                 fontSize: 12, /* folio-design-system: off-scale */
-                color: "rgba(87, 75, 67, 0.45)",
+                color: "var(--folio-text-secondary)",
               }}
             >
               {captionText}
@@ -360,7 +356,7 @@ function LandscapeHero({ story, publishedAt }: { story: StoryData; publishedAt: 
               fontSize: 10, /* folio-design-system: off-scale */
               textTransform: "uppercase",
               letterSpacing: "0.14em" /* folio-design-system: off-scale */,
-              color: "rgba(87, 75, 67, 0.45)",
+              color: "var(--folio-text-secondary)",
               whiteSpace: "nowrap",
             }}
           >
@@ -400,7 +396,7 @@ function LandscapeHero({ story, publishedAt }: { story: StoryData; publishedAt: 
                     marginTop: 8, /* folio-design-system: off-scale */
                     fontStyle: "normal",
                     fontSize: "var(--type-meta)",
-                    color: "rgba(87, 75, 67, 0.55)",
+                    color: "var(--folio-text-secondary)",
                   }}
                 >
                   &mdash; {story.designerName}
@@ -441,13 +437,13 @@ function LandscapeHero({ story, publishedAt }: { story: StoryData; publishedAt: 
 
 function BylineRow({ label, value }: { label: string; value: string }) {
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
+    <div className="min-w-0 break-words" style={{ display: "flex", flexDirection: "column", gap: 2 }}>
       <span
         style={{
           fontSize: 10, /* folio-design-system: off-scale */
           textTransform: "uppercase",
           letterSpacing: 'var(--ls-eyebrow)',
-          color: "rgba(87, 75, 67, 0.55)",
+          color: "var(--folio-text-secondary)",
         }}
       >
         {label}

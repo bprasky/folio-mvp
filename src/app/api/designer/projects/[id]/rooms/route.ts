@@ -1,3 +1,5 @@
+import { z } from 'zod';
+import { createRoomOnce } from '@/lib/projects/createRoom';
 export const dynamic = 'force-dynamic';
 
 import { NextRequest, NextResponse } from 'next/server';
@@ -23,13 +25,7 @@ export async function GET(
     // Fetch real rooms from Prisma
     const rooms = await prisma.room.findMany({
       where: { 
-        projectId,
-        project: { 
-          OR: [
-            { ownerId: session.user.id },
-            { designerId: session.user.id }
-          ]
-        }
+        projectId
       },
       select: { id: true, name: true },
       orderBy: { name: "asc" },
@@ -37,6 +33,9 @@ export async function GET(
     
     return NextResponse.json({ rooms });
   } catch (error) {
+    if (error instanceof Error && 'status' in error && error.status === 409) return NextResponse.json({ error: error.message }, { status: 409 });
+    if (error instanceof z.ZodError) return NextResponse.json({ error: 'A valid room name and stable request ID are required.' }, { status: 400 });
+    if (error instanceof Error && ['Forbidden', 'NotFound'].includes(error.message)) return NextResponse.json({ error: error.message }, { status: error.message === 'Forbidden' ? 403 : 404 });
     console.error('Error fetching rooms:', error);
     return NextResponse.json(
       { error: 'Failed to fetch rooms', details: error instanceof Error ? error.message : 'Unknown error' },
@@ -56,42 +55,13 @@ export async function POST(
     }
     await assertProjectWrite(session.user.id, params.id);
 
-    const body = await request.json();
-    const { name, type } = body;
-
-    if (!name || !name.trim()) {
-      return NextResponse.json(
-        { error: 'Room name is required' },
-        { status: 400 }
-      );
-    }
-
-    // Verify project exists
-    const project = await prisma.project.findUnique({
-      where: { id: params.id }
-    });
-
-    if (!project) {
-      return NextResponse.json(
-        { error: 'Project not found' },
-        { status: 404 }
-      );
-    }
-
-    // Create the room
-    const room = await prisma.room.create({
-      data: {
-        name: name.trim(),
-        type: type || null,
-        projectId: params.id
-      },
-      include: {
-        selections: true
-      }
-    });
+    const room = await createRoomOnce(session.user.id, params.id, await request.json());
 
     return NextResponse.json(room, { status: 201 });
   } catch (error) {
+    if (error instanceof Error && 'status' in error && error.status === 409) return NextResponse.json({ error: error.message }, { status: 409 });
+    if (error instanceof z.ZodError) return NextResponse.json({ error: 'A valid room name and stable request ID are required.' }, { status: 400 });
+    if (error instanceof Error && ['Forbidden', 'NotFound'].includes(error.message)) return NextResponse.json({ error: error.message }, { status: error.message === 'Forbidden' ? 403 : 404 });
     console.error('Error creating room:', error);
     return NextResponse.json(
       { error: 'Failed to create room', details: error instanceof Error ? error.message : 'Unknown error' },

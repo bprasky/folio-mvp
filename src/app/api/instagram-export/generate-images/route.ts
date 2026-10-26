@@ -8,6 +8,7 @@ import { prisma } from '@/lib/prisma';
 import { getStudioData, StudioAccessError } from '@/lib/publishing-studio/data';
 import { revalidatePath } from 'next/cache';
 import { assertProjectWrite } from '@/lib/authz/access';
+import { projectPhotoProcessingUrl } from '@/lib/server/protected-project-photo';
 import {
   generateAllSlides,
   type ExportConfig,
@@ -37,7 +38,7 @@ export async function POST(request: NextRequest) {
       include: {
         post: true,
         designer: true,
-        images: { orderBy: { displayOrder: 'asc' } },
+        images: { where: { inclusion: 'INCLUDED' }, orderBy: { displayOrder: 'asc' } },
       },
     });
 
@@ -139,7 +140,11 @@ export async function POST(request: NextRequest) {
     };
     if (firstSaved && !sameFirstSave(firstSaved)) return NextResponse.json({ error: 'This story already has a different saved draft. Reopen it from In progress before saving.' }, { status: 409 });
 
-    const slides = saveOnly ? [] : await generateAllSlides(exportConfig, designer?.profileImage || undefined);
+    // Provider-only URLs are never persisted in the saved export configuration.
+    const renderConfig = saveOnly ? exportConfig : { ...exportConfig,
+      selectedImageUrls: await Promise.all(exportConfig.selectedImageUrls.map(url => projectPhotoProcessingUrl(url, project.id))),
+    };
+    const slides = saveOnly ? [] : await generateAllSlides(renderConfig, designer?.profileImage || undefined);
 
     // Return images as base64-encoded data URLs for client-side download
     const images = slides.map((slide) => ({

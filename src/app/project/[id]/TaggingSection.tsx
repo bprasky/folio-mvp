@@ -4,7 +4,6 @@ import { workflowRequest } from '@/lib/client/workflowRequest';
 import { SpotlightSelections } from '@/components/spotlight/PrivateSpotlightInterview';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
-import Image from 'next/image';
 import {
   FaTag,
   FaTrash,
@@ -272,7 +271,7 @@ export default function TaggingSection({
         </p>
         {unresolvedCount > 0 && (
           <p className="folio-meta text-folio-text-primary">
-            <span className="font-semibold text-[var(--folio-gold-ornament)] tabular-nums">
+            <span className="font-semibold text-[var(--folio-gold)] tabular-nums">
               {unresolvedCount} of {photos.length}{' '}
               {photos.length === 1 ? 'photo' : 'photos'}
             </span>{' '}
@@ -288,7 +287,7 @@ export default function TaggingSection({
 
       <div className="flex items-center gap-4" role="separator">
         <span className="h-px flex-1 bg-folio-border-subtle" />
-        <span className="folio-meta text-folio-text-tertiary whitespace-nowrap">
+        <span className="folio-meta text-folio-text-secondary whitespace-nowrap">
           or tag by hand, room by room
         </span>
         <span className="h-px flex-1 bg-folio-border-subtle" />
@@ -449,11 +448,11 @@ function FinishBookDropZone({ onFile }: { onFile?: (file: File) => void }) {
         aria-disabled="true"
         className="relative rounded-2xl border-2 border-dashed border-folio-border-subtle bg-surface-ground/60 px-6 py-8 text-center opacity-70 cursor-not-allowed select-none"
       >
-        <span className="absolute top-3 right-3 inline-flex items-center gap-1 rounded-full bg-surface-canvas border border-folio-border-subtle px-2.5 py-1 folio-meta text-folio-text-tertiary">
+        <span className="absolute top-3 right-3 inline-flex items-center gap-1 rounded-full bg-surface-canvas border border-folio-border-subtle px-2.5 py-1 folio-meta text-folio-text-secondary">
           <FaRegClock className="w-3 h-3" />
           Coming soon
         </span>
-        <Sparkles className="w-8 h-8 mx-auto mb-3 text-[var(--folio-gold-ornament)]" />
+        <Sparkles className="w-8 h-8 mx-auto mb-3 text-[var(--folio-gold)]" />
         <h3 className="folio-ui font-semibold text-folio-text-primary">Tag everything at once</h3>
         <p className="folio-meta text-folio-text-secondary mt-1 max-w-md mx-auto">
           Drop your finish book and we&apos;ll pull the products out for you.
@@ -502,7 +501,7 @@ function FinishBookDropZone({ onFile }: { onFile?: (file: File) => void }) {
           e.currentTarget.value = '';
         }}
       />
-      <Sparkles className="w-8 h-8 mx-auto mb-3 text-[var(--folio-gold-ornament)]" />
+      <Sparkles className="w-8 h-8 mx-auto mb-3 text-[var(--folio-gold)]" />
       <h3 className="folio-ui font-semibold text-folio-text-primary">Tag everything at once</h3>
       <p className="folio-meta text-folio-text-secondary mt-1 max-w-md mx-auto">
         {isOver
@@ -576,7 +575,7 @@ function UnplacedTray({
               <button
                 onClick={() => onDismiss(tag.id)}
                 title="Dismiss"
-                className="flex-shrink-0 flex h-7 w-7 items-center justify-center rounded-full text-folio-text-tertiary hover:text-red-600 hover:bg-red-50 transition-colors"
+                className="flex-shrink-0 flex h-11 w-11 items-center justify-center rounded-full text-folio-text-secondary hover:text-red-600 hover:bg-red-50 transition-colors"
               >
                 <FaTimes className="w-3 h-3" />
               </button>
@@ -597,11 +596,11 @@ function RoomLabel({ name, count, left }: { name: string; count: number; left?: 
   return (
     <div className="flex items-baseline justify-between gap-3 border-b border-folio-border-subtle pb-2">
       <h3 className="font-headline italic text-2xl text-folio-text-primary">{name}</h3>
-      <span className="folio-meta text-folio-text-tertiary tabular-nums whitespace-nowrap">
+      <span className="folio-meta text-folio-text-secondary tabular-nums whitespace-nowrap">
         {count} {count === 1 ? 'photo' : 'photos'}
         {left === undefined ? '' : left > 0 ? '' : ' · all confirmed'}
         {left !== undefined && left > 0 && (
-          <span className="font-medium text-[var(--folio-gold-ornament)]"> · {left} left</span>
+          <span className="font-medium text-[var(--folio-gold)]"> · {left} left</span>
         )}
       </span>
     </div>
@@ -645,21 +644,25 @@ function PhotoTagger({
   // A tag being dragged to a new spot; its live position overrides the stored one.
   const [drag, setDrag] = useState<{ id: string; x: number; y: number } | null>(null);
   const [marking, setMarking] = useState(false);
+  const [moveError, setMoveError] = useState('');
   const imageRef = useRef<HTMLImageElement | null>(null);
 
   // Persist a dragged tag's new position. The stored AI position (aiX/aiY) is
   // left untouched so the AI-vs-designer delta is captured for later training.
   const moveTag = async (tagId: string, x: number, y: number) => {
     try {
-      await saveTagChange('/api/tag-product-to-image', {
+      setMoveError('');
+      const response = await saveTagChange('/api/tag-product-to-image', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ id: tagId, x, y, expected: { imageId: photo.id, x: photo.tags.find(tag => tag.id === tagId)?.x, y: photo.tags.find(tag => tag.id === tagId)?.y } }),
       });
+      if (!response.ok) throw new Error('The pin could not be moved. Please try again.');
       onChanged();
     } catch (err) {
       console.error('[TaggingSection] move tag error:', err);
       toast.error(err instanceof Error ? err.message : 'Your tag change was not confirmed. Try again.');
+      setMoveError(err instanceof Error ? err.message : 'The pin could not be moved. Please try again.');
     }
   };
 
@@ -681,7 +684,7 @@ function PhotoTagger({
 
   const clientToPct = (clientX: number, clientY: number) => {
     const rect = imageRef.current?.getBoundingClientRect();
-    if (!rect) return null;
+    if (!rect || !rect.width || !rect.height) return null;
     return {
       x: Math.min(100, Math.max(0, ((clientX - rect.left) / rect.width) * 100)),
       y: Math.min(100, Math.max(0, ((clientY - rect.top) / rect.height) * 100)),
@@ -695,11 +698,8 @@ function PhotoTagger({
   }, [placing]);
 
   const placePin = (e: React.MouseEvent<HTMLImageElement>) => {
-    const rect = imageRef.current?.getBoundingClientRect();
-    if (!rect) return;
-    const x = ((e.clientX - rect.left) / rect.width) * 100;
-    const y = ((e.clientY - rect.top) / rect.height) * 100;
-    setPendingDot({ x, y });
+    const point = clientToPct(e.clientX, e.clientY);
+    if (point) setPendingDot(point);
   };
 
   const handleDelete = async (tagId: string) => {
@@ -738,18 +738,14 @@ function PhotoTagger({
       <div className="grid grid-cols-1 sm:grid-cols-[minmax(0,340px)_1fr] gap-4 items-start">
         <button
           onClick={isOwner ? onActivate : undefined}
-          className={`group relative aspect-[4/3] w-full rounded-[20px] overflow-hidden border-2 transition-all ${
+          className={`group relative w-full rounded-[20px] overflow-hidden border-2 transition-all ${
             placing ? 'border-[var(--accent)] ring-2 ring-[var(--accent)]/30' : 'border-folio-border-subtle hover:border-[var(--accent)]'
           }`}
           title={isOwner ? (placing ? 'Click to place here' : 'Click to tag products') : undefined}
         >
-          <Image
-            src={photo.url}
-            alt={photo.name || 'Project photo'}
-            fill
-            className="object-cover"
-            sizes="(max-width: 640px) 100vw, 340px"
-          />
+          {/* Keep the whole image: pins use coordinates relative to its uncropped bounds. */}
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={photo.url} alt={photo.name || 'Project photo'} className="block h-auto w-full" loading="lazy" />
           {/* Numbered pins for an at-a-glance view of where products are tagged. */}
           {photo.tags.map((t, i) => (
             <span
@@ -776,7 +772,7 @@ function PhotoTagger({
           )}
           {isOwner && (
             <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-colors flex items-center justify-center">
-              <span className="opacity-0 group-hover:opacity-100 bg-white/90 px-3 py-1.5 rounded-full text-sm font-medium text-folio-text-primary transition-opacity">
+              <span className="touch-action-visible opacity-100 sm:opacity-0 sm:group-hover:opacity-100 sm:group-focus-within:opacity-100 bg-white/90 px-3 py-1.5 rounded-full text-sm font-medium text-folio-text-primary transition-opacity">
                 {placing ? 'Place here' : 'Tag products'}
               </span>
             </div>
@@ -795,6 +791,7 @@ function PhotoTagger({
   // Active (expanded) working state — enlarges in place, pushing the room down.
   return (
     <div className="rounded-2xl border-2 border-[var(--accent)] bg-surface-canvas p-4 sm:p-5">
+      {moveError && <p role="alert" className="mb-3 folio-meta text-red-700">{moveError} <button type="button" className="min-h-11 underline" onClick={onChanged}>Refresh project</button></p>}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
         {/* Photo — the transient pin is the only mark placed on it */}
         <div>
@@ -805,6 +802,10 @@ function PhotoTagger({
               src={photo.url}
               alt={photo.name || 'Project photo'}
               onClick={placePin}
+              role="button"
+              tabIndex={0}
+              aria-label="Add a product pin to this photo"
+              onKeyDown={event => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); setPendingDot({ x: 50, y: 50 }); } }}
               className="w-full rounded-xl cursor-crosshair"
             />
             {/* Placed product tags, shown as numbered pins (pin #n === list row
@@ -813,11 +814,25 @@ function PhotoTagger({
             {photo.tags.map((t, i) => {
               const pos = drag?.id === t.id ? drag : { x: t.x, y: t.y };
               return (
-                <div
+                <button
+                  type="button"
                   key={t.id}
-                  className="absolute z-10 cursor-grab touch-none active:cursor-grabbing"
+                  aria-label={`Move ${t.product?.name || 'product'} pin. Use arrow keys to adjust.`}
+                  className="absolute z-10 flex h-11 w-11 items-center justify-center rounded-full cursor-grab touch-none active:cursor-grabbing focus-visible:ring-2 focus-visible:ring-folio-gold"
                   style={{ left: `${pos.x}%`, top: `${pos.y}%`, transform: 'translate(-50%, -50%)' }}
                   title={t.product?.name ? `${t.product.name} — drag to move` : 'Drag to move'}
+                  onPointerCancel={() => setDrag(null)}
+                  onKeyDown={event => {
+                    const offsets: Record<string, [number, number]> = { ArrowLeft: [-1, 0], ArrowRight: [1, 0], ArrowUp: [0, -1], ArrowDown: [0, 1] };
+                    const delta = offsets[event.key];
+                    if (!delta) return;
+                    event.preventDefault();
+                    const current = drag?.id === t.id ? drag : t;
+                    setDrag({ id: t.id, x: Math.max(0, Math.min(100, current.x + delta[0])), y: Math.max(0, Math.min(100, current.y + delta[1])) });
+                  }}
+                  onKeyUp={event => {
+                    if (event.key.startsWith('Arrow') && drag?.id === t.id) { void moveTag(t.id, drag.x, drag.y); setDrag(null); }
+                  }}
                   onPointerDown={(e) => {
                     e.stopPropagation();
                     e.preventDefault();
@@ -832,7 +847,7 @@ function PhotoTagger({
                   onPointerUp={(e) => {
                     if (drag?.id !== t.id) return;
                     e.currentTarget.releasePointerCapture(e.pointerId);
-                    const finalPos = drag;
+                    const finalPos = clientToPct(e.clientX, e.clientY) || drag;
                     setDrag(null);
                     moveTag(t.id, finalPos.x, finalPos.y);
                   }}
@@ -840,7 +855,7 @@ function PhotoTagger({
                   <div className="flex h-5 w-5 items-center justify-center rounded-full bg-[var(--accent)] border-2 border-white shadow-md">
                     <span className="text-[length:var(--type-fine)] font-semibold leading-none text-white">{i + 1}</span>
                   </div>
-                </div>
+                </button>
               );
             })}
             {/* The transient placement pin while adding a new product. */}
@@ -936,7 +951,7 @@ function PhotoTagger({
             <div className="space-y-3">
               <SpotlightSelections projectId={projectId} tagIds={photo.tags.map(t => t.id)} />
           <TagList tags={photo.tags} isOwner={isOwner} onEdit={onEditProduct} onDelete={handleDelete} onConfirm={onConfirm} siblingPhotos={siblingPhotos} onMove={handleMove} />
-              <p className="folio-meta text-folio-text-tertiary">
+              <p className="folio-meta text-folio-text-secondary">
                 Click the photo to add another product.
               </p>
               <ResolveRow photo={photo} isOwner={isOwner} busy={marking} onMark={markNoProducts} />
@@ -969,7 +984,7 @@ function ResolveRow({
 
   if (photo.noProducts) {
     return (
-      <p className="inline-flex items-center gap-2 folio-meta text-folio-text-tertiary">
+      <p className="inline-flex items-center gap-2 folio-meta text-folio-text-secondary">
         <FaCheckCircle className="w-3 h-3 text-[var(--accent)]" />
         Marked as having no products
         <button
@@ -1020,7 +1035,7 @@ function TagList({
 }) {
   if (tags.length === 0) {
     return (
-      <p className="folio-meta text-folio-text-tertiary py-2">
+      <p className="folio-meta text-folio-text-secondary py-2">
         No products tagged yet.
       </p>
     );
@@ -1035,23 +1050,23 @@ function TagList({
         return (
           <li
             key={tag.id}
-            className="flex items-center gap-3 rounded-xl border border-folio-border-subtle bg-surface-canvas px-3 py-2"
+            className="flex flex-wrap items-center gap-3 rounded-xl border border-folio-border-subtle bg-surface-canvas px-3 py-2"
           >
             {/* Matches the numbered pin on the photo. */}
             <span className="flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full bg-[var(--accent)] text-[length:var(--type-fine)] font-semibold text-white">
               {i + 1}
             </span>
             <div className="min-w-0 flex-1">
-              <p className="folio-ui font-medium text-folio-text-primary truncate">
+              <p className="folio-ui font-medium text-folio-text-primary break-words">
                 {product?.name ?? 'Product'}
               </p>
-              <div className="flex items-center gap-2 mt-0.5">
+              <div className="flex flex-wrap items-center gap-2 mt-0.5">
                 {product?.category && (
                   <span className="folio-meta text-folio-text-secondary truncate">
                     {product.category}
                   </span>
                 )}
-                <span className="inline-flex items-center gap-1 folio-meta text-folio-text-tertiary">
+                <span className="inline-flex items-center gap-1 folio-meta text-folio-text-secondary">
                   <FaMapMarkerAlt className="w-2.5 h-2.5 text-[var(--accent)]" />
                   Placed
                 </span>
@@ -1069,13 +1084,13 @@ function TagList({
               </div>
             </div>
             {isOwner && (
-              <div className="flex items-center gap-1 flex-shrink-0">
+              <div className="flex w-full justify-end items-center gap-1 flex-shrink-0 sm:w-auto">
                 {/* Move this tag to another photo in the same room (wrong-photo fix) */}
                 {onMove && siblingPhotos.length === 1 && (
                   <button
                     onClick={() => onMove(tag.id, siblingPhotos[0].id)}
                     title="Move to the other photo in this room"
-                    className="flex h-7 w-7 items-center justify-center rounded-full text-folio-text-secondary hover:text-[var(--accent)] hover:bg-surface-ground transition-colors"
+                    className="flex h-11 w-11 items-center justify-center rounded-full text-folio-text-secondary hover:text-[var(--accent)] hover:bg-surface-ground transition-colors"
                   >
                     <FaArrowRight className="w-3 h-3" />
                   </button>
@@ -1099,7 +1114,7 @@ function TagList({
                   <button
                     onClick={() => onConfirm(tag.id)}
                     title="Confirm this tag"
-                    className="flex h-7 w-7 items-center justify-center rounded-full text-[var(--accent)] hover:bg-[var(--accent)]/10 transition-colors"
+                    className="flex h-11 w-11 items-center justify-center rounded-full text-[var(--accent)] hover:bg-[var(--accent)]/10 transition-colors"
                   >
                     <FaCheck className="w-3 h-3" />
                   </button>
@@ -1108,14 +1123,14 @@ function TagList({
                   onClick={() => product && onEdit(product.id, tag.id)}
                   disabled={!product}
                   title="Edit product details"
-                  className="flex h-7 w-7 items-center justify-center rounded-full text-folio-text-secondary hover:text-folio-text-primary hover:bg-surface-ground transition-colors disabled:opacity-40"
+                  className="flex h-11 w-11 items-center justify-center rounded-full text-folio-text-secondary hover:text-folio-text-primary hover:bg-surface-ground transition-colors disabled:opacity-40"
                 >
                   <FaPen className="w-3 h-3" />
                 </button>
                 <button
                   onClick={() => onDelete(tag.id)}
                   title="Remove tag"
-                  className="flex h-7 w-7 items-center justify-center rounded-full text-red-400 hover:text-red-600 hover:bg-red-50 transition-colors"
+                  className="flex h-11 w-11 items-center justify-center rounded-full text-red-400 hover:text-red-600 hover:bg-red-50 transition-colors"
                 >
                   <FaTrash className="w-3 h-3" />
                 </button>

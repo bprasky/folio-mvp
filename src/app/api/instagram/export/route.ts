@@ -1,3 +1,4 @@
+import { projectPhotoProcessingUrl } from '@/lib/server/protected-project-photo';
 export const dynamic = 'force-dynamic';
 
 /**
@@ -143,14 +144,14 @@ export async function POST(request: NextRequest) {
     try {
       slides = await generateCarouselSlides({
         projectTitle: project.title,
-        images: orderedImages.map(img => ({
+        images: await Promise.all(orderedImages.map(async img => ({
           id: img.id,
-          url: img.url,
+          url: await projectPhotoProcessingUrl(img.url, projectId),
           name: img.name,
           room: img.room,
-        })),
+        }))),
         quotes: selectedQuotes.length > 0 ? selectedQuotes.map(text => ({ text })) : undefined,
-        heroImageUrl: heroImage?.url,
+        heroImageUrl: heroImage?.url ? await projectPhotoProcessingUrl(heroImage.url, projectId) : undefined,
         projectSlug: project.post?.slug || undefined,
         projectId: project.id,
         expandedBlocks: project.post?.expandedBlocks as any,

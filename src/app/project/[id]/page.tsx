@@ -1,3 +1,4 @@
+import { assertProjectView, assertProjectWrite, assertProjectPublish } from '@/lib/authz/access';
 import { expertiseEnabled } from '@/lib/publishing-studio/expertise/flag';
 import { ExpertiseProjectReturn } from '@/components/publishing-studio/ExpertiseProjectReturn';
 import { prisma } from '@/lib/prisma';
@@ -234,21 +235,16 @@ export default async function ProjectPage({
     designerId = extra?.designerId ?? null;
   } catch {}
 
-  const isOwner =
-    viewerRole === 'ADMIN' ||
-    (!!viewerId &&
-      (viewerId === base.ownerId || (!!designerId && viewerId === designerId)));
-
-  if (!isOwner) {
-    console.warn('[project-detail] forbidden', {
-      projectId: base.id,
-      viewerId,
-      viewerRole,
-      ownerId: base.ownerId,
-      designerId,
-    });
-    notFound();
-  }
+  if (!viewerId) notFound();
+  try { await assertProjectView(viewerId, base.id); }
+  catch (error) { if (error instanceof Error && error.message === 'Forbidden') notFound(); throw error; }
+  // Existing isOwner props control editing, while admission also permits viewers.
+  let isOwner = false;
+  let mayPublish = false;
+  try { await assertProjectWrite(viewerId, base.id); isOwner = true; }
+  catch (error) { if (!(error instanceof Error) || error.message !== 'Forbidden') throw error; }
+  try { await assertProjectPublish(viewerId, base.id); mayPublish = true; }
+  catch (error) { if (!(error instanceof Error) || error.message !== 'Forbidden') throw error; }
 
   const interviewAnswerCount = await prisma.editorialInterviewAnswer.count({
     where: { interview: { projectId: params.id } },
@@ -455,7 +451,7 @@ export default async function ProjectPage({
           images={base.images}
           isOwner={isOwner}
           editorialState={editorialState}
-          canPublish={publishReadiness.canPublish}
+          canPublish={mayPublish && publishReadiness.canPublish}
           taggedPhotoCount={
             base.images.filter(
               img => !isDocumentImage(img.name) && img.tags.length > 0,

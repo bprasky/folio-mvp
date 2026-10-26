@@ -2,10 +2,11 @@
  * Authorization helpers for Collaboration Stories
  */
 
+import type { VendorTier } from '@prisma/client';
 import { prisma } from '@/lib/prisma';
 
 export type VendorTierInfo = {
-  tier: 'FREE' | 'PLUS' | 'PRO' | null;
+  tier: VendorTier | null;
   orgId: string;
   orgName: string;
   canCreateCollaborations: boolean;
@@ -39,14 +40,14 @@ export async function getVendorContext(userId: string): Promise<VendorTierInfo |
     return null;
   }
 
-  const tier = membership.organization.vendorTier as 'FREE' | 'PLUS' | 'PRO' | null;
+  const tier = membership.organization.vendorTier;
 
   return {
     tier,
     orgId: membership.organization.id,
     orgName: membership.organization.name,
-    // Pro+ means PLUS or PRO tier can create collaboration stories
-    canCreateCollaborations: tier === 'PLUS' || tier === 'PRO',
+    // Paid collaboration access uses the persisted VendorTier enum.
+    canCreateCollaborations: tier === 'GROWTH' || tier === 'PROFESSIONAL' || tier === 'ENTERPRISE',
   };
 }
 
@@ -56,7 +57,7 @@ export async function getVendorContext(userId: string): Promise<VendorTierInfo |
  */
 export async function assertVendorTier(
   userId: string,
-  requiredTiers: ('PLUS' | 'PRO')[] = ['PLUS', 'PRO']
+  requiredTiers: VendorTier[] = ['GROWTH', 'PROFESSIONAL', 'ENTERPRISE']
 ): Promise<VendorTierInfo> {
   const context = await getVendorContext(userId);
 
@@ -68,7 +69,7 @@ export async function assertVendorTier(
     throw new Error('NoTier: Vendor organization has no tier assigned');
   }
 
-  if (!requiredTiers.includes(context.tier as 'PLUS' | 'PRO')) {
+  if (!requiredTiers.includes(context.tier)) {
     throw new Error(`InsufficientTier: Requires ${requiredTiers.join(' or ')} tier`);
   }
 

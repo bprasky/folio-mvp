@@ -1,3 +1,5 @@
+import { publicProduct } from '@/lib/post/publicPost';
+import { PUBLISHED_PROJECT_FILTER } from '@/server/queries/filters';
 export const dynamic = 'force-dynamic';
 
 import { NextRequest, NextResponse } from 'next/server';
@@ -248,7 +250,7 @@ export async function GET(request: NextRequest) {
     // Public enumeration remains supported, but never includes private projects.
     const whereClause = {
       ...(imageId ? { imageId } : {}),
-      image: { ...(scope ? { projectId: scope } : {}), ...(privateAccess ? {} : { project: { isPublic: true } }) },
+      image: { ...(scope ? { projectId: scope } : {}), ...(privateAccess ? {} : { inclusion: 'INCLUDED' as const, project: PUBLISHED_PROJECT_FILTER }) },
       ...(privateAccess ? {} : { product: { isPending: false } }),
     };
 
@@ -269,7 +271,11 @@ export async function GET(request: NextRequest) {
       }
     });
 
-    return NextResponse.json(tags, { headers: { 'Cache-Control': 'private, no-store' } });
+    return NextResponse.json(privateAccess ? tags : tags.map(tag => ({
+      id: tag.id, imageId: tag.imageId, productId: tag.productId, x: tag.x, y: tag.y,
+      cropUrl: tag.cropUrl, finishRaw: tag.finishRaw, product: publicProduct(tag.product),
+      image: { url: tag.image.url, projectId: tag.image.projectId },
+    })), { headers: { 'Cache-Control': 'private, no-store' } });
 
   } catch (error) {
     if (error instanceof z.ZodError || error instanceof SyntaxError) return NextResponse.json({ error: "Invalid request" }, { status: 400 });
@@ -383,6 +389,10 @@ export async function PATCH(request: NextRequest) {
       );
     }
 
+    if (!isReviewMode && !expected) return NextResponse.json({
+      error: 'This editor needs the saved tag position. Refresh the project before moving the tag.',
+    }, { status: 428 });
+
     let data: { reviewedAt: Date } | { x: number; y: number } | { imageId: string; x: number; y: number };
     if (isReviewMode) {
       data = { reviewedAt: new Date() };
@@ -405,19 +415,23 @@ export async function PATCH(request: NextRequest) {
     }
 
     const updated = await prisma.$transaction(async tx => {
-      let updated;
+      // Share the project lock with tag creation and photo room assignment.
+      await tx.$queryRaw`SELECT id FROM projects WHERE id = ${tag.image.projectId} FOR UPDATE`;
+      const current = await tx.productTag.findUniqueOrThrow({ where: { id } });
       if (expected) {
-        const matches = Object.entries(data).every(([key, value]) => key === 'reviewedAt' ? !!tag.reviewedAt : tag[key as 'x' | 'y' | 'imageId'] === value);
-        if (!matches) {
-          const changed = await tx.productTag.updateMany({ where: { id, imageId: expected.imageId, x: expected.x, y: expected.y }, data });
+        const alreadySaved = Object.entries(data).every(([key, value]) => key === 'reviewedAt' ? !!current.reviewedAt : current[key as 'x' | 'y' | 'imageId'] === value);
+        if (!alreadySaved) {
+          const changed = await tx.productTag.updateMany({ where: { id, imageId: expected.imageId, x: expected.x, y: expected.y },
+            data: { ...data, ...(!isReviewMode ? { cropUrl: null, cropX: null, cropY: null, cropScale: null, cropAspect: null, cropManual: false } : {}) } });
           if (changed.count !== 1) throw Object.assign(new Error('This tag changed in another edit. Refresh the project, then try again.'), { status: 409 });
         }
-        updated = await tx.productTag.findUniqueOrThrow({ where: { id } });
-      } else updated = await tx.productTag.update({ where: { id }, data });
+      } else await tx.productTag.update({ where: { id }, data }); // review-only acknowledgement
       if (isMoveMode && !isReviewMode) {
-        await tx.projectImage.update({ where: { id: targetImageId, projectId: tag.image.projectId }, data: { noProducts: false } });
+        const target = await tx.projectImage.update({ where: { id: targetImageId, projectId: tag.image.projectId }, data: { noProducts: false } });
+        await tx.selection.updateMany({ where: { productTagId: id, projectId: tag.image.projectId },
+          data: { roomId: target.roomId ?? null, photo: target.url } });
       }
-      return updated;
+      return tx.productTag.findUniqueOrThrow({ where: { id } });
     });
 
     return NextResponse.json(updated);

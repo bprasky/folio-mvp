@@ -1,3 +1,4 @@
+import { updateImageRoom } from '@/lib/projects/updateImageRoom';
 export const dynamic = 'force-dynamic';
 
 import { NextRequest, NextResponse } from 'next/server';
@@ -109,10 +110,9 @@ export async function PATCH(
       return NextResponse.json({ error: 'Image not found' }, { status: 404 });
     }
 
-    const updated = await prisma.projectImage.update({
-      where: { id: imageId },
-      data: { room: room?.trim() || null },
-    });
+    const roomName = room?.trim() || null;
+    const assigned = roomName ? await prisma.room.findFirst({ where: { projectId, name: { equals: roomName, mode: 'insensitive' } }, select: { id: true } }) : null;
+    const updated = await updateImageRoom(projectId, imageId, assigned?.id ?? null, undefined, roomName);
 
     return NextResponse.json({ success: true, image: updated });
   } catch (error: any) {

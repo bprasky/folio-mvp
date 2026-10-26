@@ -1033,3 +1033,13 @@ Production incident attribution remains unverified: Vercel runtime/deployment re
 - [x] Record evidence and remaining storage/database/HTTP limitations. No production access, migrations, merge or deployment.
 
 Review: confirmed nested-room destructive IDOR, viewer mutations, project-delete alias bypass, private tag/User/interview leakage, unsafe storage deletion and external image fetching. Fixed with existing authorization/schema/transport patterns and atomic writes. Tests include two designers, anonymous, participants, firm roles, admin and vendors; actual PostgreSQL rollback/concurrent retry checks pass. See `docs/audits/DESIGNER_AUTHORIZATION_2026-10-26.md` for results and the unresolved private-photo storage policy gate. Local only; no production access, migrations, merge or deployment.
+
+## Founding-designer rollout hardening — 2026-10-26
+
+- [x] Reconcile merged 1020fef5 / PR826 and responsive f000a0da; isolate codex/rollout-hardening and preserve other worktrees.
+- [x] Implement private photo/crop transport, atomic creation and credits, project/room identities, tag/Selection consistency, canonical page permissions, readiness and essential feedback.
+- [x] Integrate responsive fixes; prepare large original photos within the existing transport cap.
+- [x] Execute exact native PostgreSQL groups, independent worker/lease races, actual HTTP image bytes, Chrome image-quality and authenticated Next/session/database journey.
+- [ ] Finish final combined validation/evidence, operational storage procedure and reviewable PR. Do not merge or deploy.
+
+Review: no schema change or baseline update. New uploads require a separately provisioned private project-photos bucket; legacy public objects need reviewed copying/reference migration and retirement before rollout. Synthetic AI and storage-policy boundaries remain explicit. See docs/reviews/rollout-final-gap-audit/README.md for final results and limitations.
