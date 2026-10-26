@@ -1,3 +1,4 @@
+import { requestIdentity } from '@/lib/persistence/requestIdentity';
 import { deleteProjectWithSpotlightGuard } from '@/lib/spotlight/deletion';
 import { SpotlightConflict } from '@/lib/spotlight/gate';
 export const dynamic = 'force-dynamic';
@@ -163,6 +164,16 @@ export async function POST(req: Request) {
       }, { status: 403 });
     }
 
+    const requestId = json?.requestId;
+    if (requestId !== undefined && (typeof requestId !== 'string' || !/^[a-zA-Z0-9-]{16,80}$/.test(requestId))) {
+      return NextResponse.json({ error: 'Invalid creation request' }, { status: 400 });
+    }
+    const creationId = requestId ? requestIdentity('project-create', [userId, validatedOrgId, requestId]) : undefined;
+    if (creationId) {
+      const existing = await prisma.project.findUnique({ where: { id: creationId }, select: { id: true } });
+      if (existing) return NextResponse.json(existing, { status: 200 });
+    }
+
     const data = normalizeCreatePayload(json); // accepts both shapes, returns canonical
 
     if (isDev) {
@@ -176,6 +187,7 @@ export async function POST(req: Request) {
 
     const project = await prisma.project.create({
       data: {
+        ...(creationId ? { id: creationId } : {}),
         title: data.title,
         stage: data.stage,
         projectType: data.projectType,
@@ -199,6 +211,12 @@ export async function POST(req: Request) {
         shares: 0,
       },
       select: { id: true },
+    }).catch(async error => {
+      if (creationId && error?.code === 'P2002') {
+        const existing = await prisma.project.findUnique({ where: { id: creationId }, select: { id: true } });
+        if (existing) return existing;
+      }
+      throw error;
     });
 
     // Log analytics event

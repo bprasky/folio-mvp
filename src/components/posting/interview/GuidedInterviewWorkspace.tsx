@@ -1,5 +1,7 @@
 'use client';
 
+import { workflowRequest } from '@/lib/client/workflowRequest';
+
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import * as Dialog from '@radix-ui/react-dialog';
 import Image from 'next/image';
@@ -79,7 +81,7 @@ export function GuidedInterviewWorkspace({ projectId, actorId, projectName = 'Yo
     next = { ...next, sessionId: sessionRef.current?.id ?? next.sessionId };
     draftRef.current = next;
     setDraft(next);
-    try { localStorage.setItem(storageKey, JSON.stringify(next)); setStorageError(false); }
+    try { sessionStorage.setItem(storageKey, JSON.stringify(next)); localStorage.setItem(storageKey, JSON.stringify(next)); setStorageError(false); }
     catch { setStorageError(true); }
   }, [storageKey]);
 
@@ -109,7 +111,7 @@ export function GuidedInterviewWorkspace({ projectId, actorId, projectName = 'Yo
   }, []);
 
   const refreshLiveProgress = useCallback(async () => {
-    const response = await fetch(`${endpoint}?state=1`, { cache: 'no-store' });
+    const response = await workflowRequest(`${endpoint}?state=1`, { cache: 'no-store' });
     if (response.ok) {
       const data = await response.json();
       if (mounted.current && data.session) {
@@ -123,7 +125,7 @@ export function GuidedInterviewWorkspace({ projectId, actorId, projectName = 'Yo
     if(liveActive && liveSessionId){
       setBusy(true);setError('');
       try{
-        const response=await fetch(`/api/live-interviews/${encodeURIComponent(liveSessionId)}`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'link_image',questionId,selectedImageId:imageId})});
+        const response=await workflowRequest(`/api/live-interviews/${encodeURIComponent(liveSessionId)}`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'link_image',questionId,selectedImageId:imageId})});
         const result=await response.json();if(!response.ok)throw new Error(result.message||'The photograph could not be linked.');
         saveDraft({...draftRef.current,questionId,selectedImageId:imageId});
       }catch(failure){setError(failure instanceof Error?failure.message:'The photograph could not be linked.');}
@@ -136,14 +138,14 @@ export function GuidedInterviewWorkspace({ projectId, actorId, projectName = 'Yo
     inFlight.current = true; setBusy(true); setWorkingCommand(command); setError('');
     saveDraft({ ...draftRef.current, pending: command });
     try {
-      const response = await fetch(endpoint, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(command) });
+      const response = await workflowRequest(endpoint, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(command) });
       const data = await response.json();
       if (!mounted.current) return null;
       if (data.session) acceptSession(data.session);
       if (!response.ok) {
         if ([400, 409, 422].includes(response.status)) saveDraft({ ...draftRef.current, pending: null });
         if (response.status === 409) {
-          const latest = await fetch(endpoint, { cache: 'no-store' });
+          const latest = await workflowRequest(endpoint, { cache: 'no-store' });
           if (latest.ok) { const saved = await latest.json(); if (saved.session) acceptSession(saved.session); }
         }
         throw new Error(data.message || data.error || 'Unable to save. Your response is still here.');
@@ -175,7 +177,7 @@ export function GuidedInterviewWorkspace({ projectId, actorId, projectName = 'Yo
   const loadSession = useCallback(async () => {
     setError(''); setLoadingSession(true);
     try {
-      const response = await fetch(endpoint, { cache: 'no-store' });
+      const response = await workflowRequest(endpoint, { cache: 'no-store' });
       const data = await response.json();
       if (!mounted.current) return;
       if (!response.ok) throw new Error(data.message || data.error || 'Unable to load your interview.');
@@ -202,7 +204,7 @@ export function GuidedInterviewWorkspace({ projectId, actorId, projectName = 'Yo
   useEffect(() => {
     mounted.current = true;
     try {
-      const saved = JSON.parse(localStorage.getItem(storageKey) || 'null');
+      const saved = JSON.parse(sessionStorage.getItem(storageKey) || localStorage.getItem(storageKey) || 'null');
       if (saved && typeof saved.text === 'string' && ['text', 'voice', 'mixed'].includes(saved.inputModality)) {
         draftRef.current = saved; setDraft(saved);
       }
@@ -314,11 +316,12 @@ export function GuidedInterviewWorkspace({ projectId, actorId, projectName = 'Yo
     if (!finished) return;
     setGenerating(true); setError('');
     try {
-      const response = await fetch(`/api/posting/project/${encodeURIComponent(projectId)}/interview/generate?forceOverwriteDraft=true&mode=recomposition`, {
+      const response = await workflowRequest(`/api/posting/project/${encodeURIComponent(projectId)}/interview/generate?forceOverwriteDraft=true&mode=recomposition`, {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ forceOverwriteDraft: true, mode: 'recomposition', ...contextChoice }),
       });
-      if (!response.ok && response.status !== 202) {
+      if (response.status === 202) throw new Error('Your draft is still being prepared. Your interview is saved. Open Publish to check its status before trying again.');
+      if (!response.ok) {
         const data = await response.json(); throw new Error(data.message || data.error || 'Draft generation failed. Your interview is saved.');
       }
       onClose();

@@ -133,14 +133,3 @@ export async function POST(req: NextRequest) {
     );
   }
 }
-
-/**
- * GET /api/rep-contacts (with no vendorName)
- * List all rep contacts for the user
- */
-export async function listAllContacts(userId: string) {
-  return prisma.vendorRepContact.findMany({
-    where: { userId },
-    orderBy: { vendorName: 'asc' },
-  });
-}

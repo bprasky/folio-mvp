@@ -19,3 +19,8 @@ The user approved **Enable and redeploy now** after the missing production flag 
 - No database schema, project answers, publication state, or protected spotlight enrollment was changed during rollout.
 
 Reload an already-open project page before starting the interview so it loads the new deployment. Protected spotlight projects retain their existing dedicated flow. To stop new guided sessions, set this production flag to `0` and rebuild; saved guided sessions remain accessible for continuity.
+
+
+## Local interruption hardening follow-up — 2026-10-26
+
+[Designer interruption findings](../designer-interruptions/README.md) record local recovery fixes and regression evidence for intake/uploads, tags, guided interviews, generation and publication. The 21 guided browser scenarios now include injected session expiry/timeouts, independent two-tab drafts and pending-generation feedback. Core route tests cover creation/tag replay and generation lease ownership. These are simulated-service results, not a new production postflight. No deployment or configuration was changed; disposable PostgreSQL/Supabase and real authentication/worker checks remain outstanding.

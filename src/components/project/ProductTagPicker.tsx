@@ -1,5 +1,7 @@
 "use client";
 
+import { workflowRequest } from '@/lib/client/workflowRequest';
+import { toast } from 'react-hot-toast';
 import { useEffect, useState, useRef } from "react";
 import {
   FaTimes,
@@ -374,9 +376,11 @@ export function ProductTagPicker({ projectId, imageId, pendingDot, onCancel, onT
   const reuseExistingProduct = async (forceEdit = false) => {
     if (!existingMatch) return;
     const { id, complete, claimed } = existingMatch;
+    if (tagWriteBusy.current) return;
+    tagWriteBusy.current = true;
     setReusing(true);
     try {
-      const res = await fetch("/api/tag-product-to-image", {
+      const res = await workflowRequest("/api/tag-product-to-image", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -386,8 +390,10 @@ export function ProductTagPicker({ projectId, imageId, pendingDot, onCancel, onT
           imageId,
           projectId,
           ...finishPayload(),
+          deduplicate: true,
         }),
       });
+      if (!res.ok) { const data = await res.json().catch(() => ({})); throw new Error(data.message || data.error || 'Your product tag was not saved. Try again.'); }
       if (res.ok) {
         await onTagged({
           productId: id,
@@ -397,7 +403,9 @@ export function ProductTagPicker({ projectId, imageId, pendingDot, onCancel, onT
       }
     } catch (err) {
       console.error("[ProductTagPicker] reuse error:", err);
+      toast.error(err instanceof Error ? err.message : "Your product tag was not saved. Try again.");
     } finally {
+      tagWriteBusy.current = false;
       setReusing(false);
     }
   };
@@ -409,47 +417,55 @@ export function ProductTagPicker({ projectId, imageId, pendingDot, onCancel, onT
     handleFetchUrl();
   };
 
+  const tagWriteBusy = useRef(false);
+  const createdProduct = useRef<{ input: string; id: string } | null>(null);
   const saveTag = async () => {
     if (tagMode === "search" && !selectedProduct) return;
     if (tagMode === "url" && !urlModeProduct) return;
     const deferred = tagMode === "url" && urlPreview?.deferred === true;
+    if (tagWriteBusy.current) return;
+    tagWriteBusy.current = true;
     setSaving(true);
     try {
       // In URL mode, create the product from the preview/manual capture first.
       let productId: string;
       if (tagMode === "url" && urlModeProduct) {
-        const priceNum = parseFloat(String(urlModeProduct.price ?? "").replace(/[^0-9.]/g, ""));
-        const createRes = await fetch("/api/products", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            name: urlModeProduct.name?.trim() || urlModeProduct.brand?.trim() || "Untitled product",
-            imageUrl: urlModeProduct.imageUrl,
-            price: Number.isFinite(priceNum) ? priceNum : undefined,
-            brand: urlModeProduct.brand,
-            url: urlModeProduct.url,
-            category: (urlModeProduct as any).category ?? undefined,
-            description:
-              composeDescription({
-                description: (urlModeProduct as any).description,
-                dimensions: (urlModeProduct as any).dimensions,
-                materials: (urlModeProduct as any).materials,
-                colors: (urlModeProduct as any).colors,
-              }) || undefined,
-            isPending: true,
-            scrapeStatus: deferred ? "pending" : undefined,
-          }),
-        });
-        const created = await createRes.json();
-        if (!createRes.ok || !created.id) {
-          throw new Error(created.error || "Failed to create product");
+        const input = JSON.stringify(urlModeProduct);
+        if (createdProduct.current?.input === input) { productId = createdProduct.current.id; } else {
+          const priceNum = parseFloat(String(urlModeProduct.price ?? "").replace(/[^0-9.]/g, ""));
+          const createRes = await workflowRequest("/api/products", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              name: urlModeProduct.name?.trim() || urlModeProduct.brand?.trim() || "Untitled product",
+              imageUrl: urlModeProduct.imageUrl,
+              price: Number.isFinite(priceNum) ? priceNum : undefined,
+              brand: urlModeProduct.brand,
+              url: urlModeProduct.url,
+              category: (urlModeProduct as any).category ?? undefined,
+              description:
+                composeDescription({
+                  description: (urlModeProduct as any).description,
+                  dimensions: (urlModeProduct as any).dimensions,
+                  materials: (urlModeProduct as any).materials,
+                  colors: (urlModeProduct as any).colors,
+                }) || undefined,
+              isPending: true,
+              scrapeStatus: deferred ? "pending" : undefined,
+            }),
+          });
+          const created = await createRes.json();
+          if (!createRes.ok || !created.id) {
+            throw new Error(created.error || "Failed to create product");
+          }
+          productId = created.id;
+          createdProduct.current = { input, id: productId };
         }
-        productId = created.id;
       } else {
         productId = selectedProduct!.id;
       }
 
-      const res = await fetch("/api/tag-product-to-image", {
+      const res = await workflowRequest("/api/tag-product-to-image", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -459,14 +475,18 @@ export function ProductTagPicker({ projectId, imageId, pendingDot, onCancel, onT
           imageId,
           projectId,
           ...finishPayload(),
+          deduplicate: true,
         }),
       });
+      if (!res.ok) { const data = await res.json().catch(() => ({})); throw new Error(data.message || data.error || 'Your product tag was not saved. Try again.'); }
       if (res.ok) {
         await onTagged({ productId, deferred });
       }
     } catch (err) {
       console.error("[ProductTagPicker] save error:", err);
+      toast.error(err instanceof Error ? err.message : "Your product tag was not saved. Try again.");
     } finally {
+      tagWriteBusy.current = false;
       setSaving(false);
     }
   };

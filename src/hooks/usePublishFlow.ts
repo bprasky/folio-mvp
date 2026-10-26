@@ -1,6 +1,8 @@
 "use client";
 
-import { useState, useMemo, useEffect, useCallback } from "react";
+import { workflowRequest } from '@/lib/client/workflowRequest';
+
+import { useState, useMemo, useEffect, useCallback, useRef } from "react";
 
 export type DraftVersion = {
   id: string;
@@ -51,6 +53,10 @@ export interface UsePublishFlowReturn {
 }
 
 export function usePublishFlow(projectId: string): UsePublishFlowReturn {
+  const actionInFlight = useRef(false);
+  const readVersion = useRef(0);
+  const currentProject = useRef(projectId);
+  currentProject.current = projectId;
   const [isLoading, setIsLoading] = useState(true);
   const [data, setData] = useState<{
     interview: any;
@@ -84,26 +90,29 @@ export function usePublishFlow(projectId: string): UsePublishFlowReturn {
 
   // Fetch draft data
   const fetchData = useCallback(async () => {
+    const version = ++readVersion.current;
     try {
       setIsLoading(true);
-      const res = await fetch(`/api/posting/project/${projectId}/drafts`);
+      const res = await workflowRequest(`/api/posting/project/${projectId}/drafts`);
       if (res.ok) {
         const result = await res.json();
-        setData(result);
-      }
+        if (version === readVersion.current && currentProject.current === projectId) setData(result);
+      } else throw new Error("Your draft could not be loaded. Try again.");
     } catch (err) {
+      if (version === readVersion.current && currentProject.current === projectId) setError(err instanceof Error ? err.message : "Your draft could not be loaded. Try again.");
       console.error("[usePublishFlow] Fetch failed", err);
     } finally {
-      setIsLoading(false);
+      if (version === readVersion.current && currentProject.current === projectId) setIsLoading(false);
     }
   }, [projectId]);
 
   // Fetch hero asset and credits for readiness checks
   const fetchReadiness = useCallback(async () => {
     try {
-      const postRes = await fetch(`/api/posting/project/${projectId}`);
+      const postRes = await workflowRequest(`/api/posting/project/${projectId}`);
       if (postRes.ok) {
         const postData = await postRes.json();
+        if (currentProject.current !== projectId) return;
         setHeroAssetId(postData.post?.heroAssetId || null);
         if (postData.post?.status === "PUBLISHED") {
           setPublishSuccess(true);
@@ -111,9 +120,10 @@ export function usePublishFlow(projectId: string): UsePublishFlowReturn {
         }
       }
 
-      const creditsRes = await fetch(`/api/posting/project/${projectId}/credits`);
+      const creditsRes = await workflowRequest(`/api/posting/project/${projectId}/credits`);
       if (creditsRes.ok) {
         const creditsData = await creditsRes.json();
+        if (currentProject.current !== projectId) return;
         setHasCredits(
           (creditsData.credits || []).some(
             (c: any) => c.role.toLowerCase() !== "designer"
@@ -149,6 +159,8 @@ export function usePublishFlow(projectId: string): UsePublishFlowReturn {
   }, [currentPost]);
 
   const generateDraft = useCallback(async () => {
+    if (actionInFlight.current) return;
+    actionInFlight.current = true;
     try {
       setRegenBusy(true);
       setError(null);
@@ -158,7 +170,7 @@ export function usePublishFlow(projectId: string): UsePublishFlowReturn {
       let followupsToSend: any[] = [];
 
       try {
-        const interviewRes = await fetch(
+        const interviewRes = await workflowRequest(
           `/api/posting/project/${projectId}/interview`
         );
         if (interviewRes.ok) {
@@ -204,7 +216,7 @@ export function usePublishFlow(projectId: string): UsePublishFlowReturn {
         payload.followupsOverride = followupsToSend;
       }
 
-      const res = await fetch(url, {
+      const res = await workflowRequest(url, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         cache: "no-store",
@@ -244,7 +256,7 @@ export function usePublishFlow(projectId: string): UsePublishFlowReturn {
       // The article generator writes one title. Prepare the review pool separately
       // without replacing that title or losing the saved article if this step fails.
       try {
-        const titleRes = await fetch(
+        const titleRes = await workflowRequest(
           `/api/posting/project/${projectId}/sections/headline/regenerate`,
           {
             method: "POST",
@@ -265,16 +277,19 @@ export function usePublishFlow(projectId: string): UsePublishFlowReturn {
       console.error("[usePublishFlow] Generate failed", err);
       setError(err.message || "Failed to generate draft");
     } finally {
+      actionInFlight.current = false;
       setRegenBusy(false);
     }
   }, [projectId, fetchData, contextToggles]);
 
   const publish = useCallback(async (): Promise<{ slug: string | null }> => {
+    if (actionInFlight.current) return { slug: null };
+    actionInFlight.current = true;
     try {
       setIsPublishing(true);
       setError(null);
 
-      const res = await fetch(
+      const res = await workflowRequest(
         `/api/projects/${projectId}/approvals/publish-editorial`,
         {
           method: "POST",
@@ -296,16 +311,19 @@ export function usePublishFlow(projectId: string): UsePublishFlowReturn {
       setError(err.message || "Failed to publish");
       return { slug: null };
     } finally {
+      actionInFlight.current = false;
       setIsPublishing(false);
     }
   }, [projectId]);
 
   const unpublish = useCallback(async (): Promise<{ ok: boolean }> => {
+    if (actionInFlight.current) return { ok: false };
+    actionInFlight.current = true;
     try {
       setIsUnpublishing(true);
       setError(null);
 
-      const res = await fetch(
+      const res = await workflowRequest(
         `/api/posting/project/${projectId}/status`,
         {
           method: "PATCH",
@@ -327,6 +345,7 @@ export function usePublishFlow(projectId: string): UsePublishFlowReturn {
       setError(err.message || "Failed to unpublish");
       return { ok: false };
     } finally {
+      actionInFlight.current = false;
       setIsUnpublishing(false);
     }
   }, [projectId]);

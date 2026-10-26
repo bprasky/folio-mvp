@@ -25,6 +25,24 @@ The integrated authorization audit also identifies an unresolved private-photo o
 
 ---
 
+# Designer interruption recovery — 2026-10-26
+
+- [x] Read guidance, prior rollout/persistence findings and trace active workflows.
+- [x] Reproduce interruption failures with isolated browser and route fixtures.
+- [x] Harden upload retries/validation, request completion and accurate tagging feedback.
+- [x] Run focused regression suites and required guards; record real-service limitations.
+- [x] Update rollout evidence and remaining gaps. No deployment, merge or production migration.
+
+Plan check-in: reuse existing synthetic harnesses and inline feedback. Preserve project intake, manual rooms, interview versioning and publication authorization. No live services or communications. Inspect current persistence before changing contracts.
+
+### Review
+
+Implemented local intake recovery and stable project/photo/tag retry identities, atomic opt-in tagging, position conflict checks, bounded workflow requests, accurate failed/pending feedback, tab-local interview recovery and generation lease ownership. Reused mounted toast/inline feedback. The upload batch stops scheduling work after navigation; late completion cannot navigate the user back.
+
+Release follow-up authorized by the owner: rebased onto PRs #823–#825; core now passes 21 tests with two explicit integration skips. Guided, project-guide, interruption and rollout checks pass, including seven interruption browser groups, 26 project-guide scenarios and desktop/mobile manual draft recovery. Removed the unsupported unused route export; prepared TypeScript passes and baseline decreased from 904 to 880. Hosted CI exposed two outdated fixtures, now corrected and passing locally. PR #826 is rerunning CI before merge/deployment. See docs/reviews/designer-interruptions/README.md for integration limits. No production migration.
+
+---
+
 # About page and first-project journey — 2026-10-23
 
 - [x] Review the current About page, approved product positioning and signup/firm/upload routing.

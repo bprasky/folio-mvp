@@ -7,6 +7,7 @@
     "Failed saves retain composer text and retry uses the same request ID",
     "Lost successful response replays once without duplicate evidence",
     "Pause and refresh restore the exact cursor and unsent response",
+    "Two tabs retain separate unsent replies through refresh and browser back",
     "Long transcription is retained in full and blocked explicitly at save limit",
     "Project obligations precede rooms; room transition uses exact image IDs",
     "Room skip preserves accepted material and records intentional skips",
