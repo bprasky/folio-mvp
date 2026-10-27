@@ -34,6 +34,7 @@ module.exports = async function interactions({ page, go, capture, requests, resu
     await page.$eval('[role=status]', e => e.scrollIntoView()); await capture('lightbox-short-caption', 390);
     assert(await page.$eval('[role=dialog]', e => e.scrollHeight > e.clientHeight));
     await page.keyboard.press('Escape'); await page.waitForSelector('[role=dialog]', { hidden: true });
+    await page.waitForFunction(() => document.activeElement.id === 'opener', { timeout: 2000 });
     assert.equal(await page.evaluate(() => document.activeElement.id), 'opener');
   });
   await check('Nested dialog closes only its own layer and a controlled unsaved-work guard retains text', async () => {
@@ -158,6 +159,7 @@ module.exports = async function interactions({ page, go, capture, requests, resu
       await page.keyboard.press('Escape'); await page.waitForSelector('[role=dialog]',{hidden:true});
       await page.click('#opener'); await page.waitForSelector('[role=dialog]');
       await page.keyboard.press('Escape'); await page.waitForSelector('[role=dialog]',{hidden:true});
+      await page.waitForFunction(() => document.activeElement.id === 'opener', { timeout: 2000 });
       assert.equal(await page.evaluate(()=>document.activeElement.id),'opener');
     }
   });

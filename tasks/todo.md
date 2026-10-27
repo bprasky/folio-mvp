@@ -1043,3 +1043,12 @@ Review: confirmed nested-room destructive IDOR, viewer mutations, project-delete
 - [x] Finish final combined validation/evidence and operational storage procedure; prepare the reviewed branch for PR publication. Do not merge or deploy.
 
 Review: 37 required core checks, 8 independent-process concurrency checks and 8 byte-storage checks pass without skips. Final committed desktop/mobile Next/session/database journeys each pass 12 groups. Prepared TypeScript ratchet passes at 867/880; lint, client, DB and migration-discipline guards pass. No schema change or baseline update. New uploads require a separately provisioned private project-photos bucket; legacy public objects need reviewed copying/reference migration and retirement before rollout. Synthetic AI and storage-policy boundaries remain explicit. See docs/reviews/rollout-final-gap-audit/README.md for evidence, remaining gates and Brad's smoke.
+
+## Authorized PR827 release — 2026-10-27
+
+- [x] Inspect current main, PR checks/reviews, production target and required storage configuration.
+- [x] Repair the hosted focus-test timing failure without weakening assertions; rerun all responsive interactions.
+- [x] Provision the separate private photo bucket; verify and remove a synthetic hosted byte canary.
+- [ ] Wait for updated hosted checks, merge the reviewed SHA, deploy that exact merged commit and verify production domain/anonymous boundaries.
+
+Release preflight is recorded in docs/reviews/rollout-final-gap-audit/evidence/release-preflight.md. Runtime source is unchanged; legacy image retirement and signed-in/device rollout smoke remain separately scoped.
