@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter, useParams } from 'next/navigation';
-import Image from 'next/image';
+import Image from '@/components/FolioImage';
 import Link from 'next/link';
 import { RidgeCard } from '@/components/ui/ridge-card';
 import { Button } from '@/components/ui/button';

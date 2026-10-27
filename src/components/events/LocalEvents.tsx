@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import Image from "next/image";
+import Image from '@/components/FolioImage';
 import ModalChromeClient from "@/components/modal/ModalChromeClient";
 import EventModalBodyClient from "@/components/events/modal/EventModalBodyClient";
 

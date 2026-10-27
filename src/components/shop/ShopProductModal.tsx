@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import Image from 'next/image';
+import Image from '@/components/FolioImage';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FaTimes, FaBookmark, FaQuoteLeft } from 'react-icons/fa';

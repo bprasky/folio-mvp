@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import Image from "next/image";
+import Image from '@/components/FolioImage';
 import Link from "next/link";
 import dynamic from "next/dynamic";
 import { type MagazineProduct } from "@/lib/magazine/getMagazineData";

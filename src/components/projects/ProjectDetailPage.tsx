@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import Image from 'next/image';
+import Image from '@/components/FolioImage';
 import Link from 'next/link';
 import { FaArrowLeft, FaEdit, FaSave, FaTimes, FaTag, FaPlus, FaDownload, FaFilePdf, FaPencilAlt, FaEye, FaPrint, FaShareAlt, FaTrash, FaThLarge } from 'react-icons/fa';
 import DesignerBoard from '@/app/project/[id]/DesignerBoard';

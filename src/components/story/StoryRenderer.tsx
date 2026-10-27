@@ -5,7 +5,7 @@
 // Manages ProductSheet state and deep link routing.
 
 import { useState, useCallback, useEffect, useMemo } from "react";
-import Image from "next/image";
+import Image from '@/components/FolioImage';
 import { useSearchParams } from "next/navigation";
 import { buildStoryData, type StoryData } from "@/lib/story/buildRoomTiles";
 import { StoryHero } from "./StoryHero";

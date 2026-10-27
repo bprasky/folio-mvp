@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useCallback } from 'react';
-import Image from 'next/image';
+import Image from '@/components/FolioImage';
 import { X, Globe, Loader2, Check } from 'lucide-react';
 
 interface Candidate {

@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import Image from "next/image";
+import Image from '@/components/FolioImage';
 import { useMemo, useState, useEffect } from "react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";

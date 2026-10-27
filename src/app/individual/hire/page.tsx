@@ -3,7 +3,7 @@
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
-import Image from 'next/image';
+import Image from '@/components/FolioImage';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
 import { FaMapMarkerAlt, FaCheck, FaExternalLinkAlt, FaSpinner } from 'react-icons/fa';

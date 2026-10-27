@@ -2,7 +2,7 @@
 import { SpotlightSelections } from '@/components/spotlight/PrivateSpotlightInterview';
 
 import { useMemo, useTransition } from 'react';
-import Image from 'next/image';
+import Image from '@/components/FolioImage';
 import { X, Check, Tag, CircleSlash, Layers } from 'lucide-react';
 import { setImageNoProducts, markRoomNoProducts } from '@/app/actions/projectImages';
 import { isDocumentImage } from '@/lib/publish/computePublishReadiness';

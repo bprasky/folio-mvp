@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import Image from 'next/image';
+import Image from '@/components/FolioImage';
 import ScrollSection from './ScrollSection';
 import LiveMetric from './LiveMetric';
 import { useScrollTracking } from '@/hooks/useScrollTracking';

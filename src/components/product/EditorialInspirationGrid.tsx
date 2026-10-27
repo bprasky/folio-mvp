@@ -4,7 +4,7 @@ import React from "react";
 import { motion } from "framer-motion";
 import { TaggedImage } from "@/lib/mock/product";
 import { Heart, User } from "lucide-react";
-import Image from "next/image";
+import Image from '@/components/FolioImage';
 
 interface EditorialInspirationGridProps {
   items: TaggedImage[];

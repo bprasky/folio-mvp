@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import Image from 'next/image';
+import Image from '@/components/FolioImage';
 import Link from 'next/link';
 import { FaPlus, FaSearch, FaEdit, FaTrash, FaChartLine, FaShoppingCart, FaStore, FaUser, FaToggleOn, FaToggleOff } from 'react-icons/fa';
 import VendorDashboard from '@/app/vendor/dashboard/page';

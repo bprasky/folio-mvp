@@ -79,6 +79,8 @@ jobs:
       - run: npx prisma generate
       - run: npm run test:core
       - run: npm run test:rollout
+      - name: Production-mode public and protected image delivery
+        run: node scripts/check-image-delivery.cjs
       - name: Project draft persistence and listing privacy
         run: |
           npx tsx --test scripts/core/project-draft.test.cjs

@@ -2,7 +2,7 @@
 
 import { useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import Image from 'next/image';
+import Image from '@/components/FolioImage';
 import { GlassModal, GlassModalBody } from '@/components/ui/glass-modal';
 
 interface SearchResult {

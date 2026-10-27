@@ -9,7 +9,7 @@
 // - Designer attribution visible
 // - Tight spacing, magazine density
 
-import Image from "next/image";
+import Image from '@/components/FolioImage';
 import Link from "next/link";
 import { type MagazineHero as HeroType } from "@/lib/magazine/getMagazineData";
 import { type MagazineEditionConfig } from "@/lib/magazine/editions";

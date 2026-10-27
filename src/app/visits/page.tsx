@@ -1,7 +1,7 @@
 import { redirect } from 'next/navigation';
 import { prisma } from '@/lib/prisma';
 import { auth } from '@/lib/auth';
-import Image from 'next/image';
+import Image from '@/components/FolioImage';
 import Link from 'next/link';
 import AddConnectionButton from '@/components/visits/AddConnectionButton';
 

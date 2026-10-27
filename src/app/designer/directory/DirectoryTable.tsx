@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import Image from 'next/image';
+import Image from '@/components/FolioImage';
 import Link from 'next/link';
 import { FaSort, FaSortUp, FaSortDown, FaChevronDown, FaChevronRight } from 'react-icons/fa';
 import { DirectoryEntry, SortField, SortDirection } from '@/types/directory';

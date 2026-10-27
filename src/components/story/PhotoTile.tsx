@@ -8,7 +8,7 @@
 // TaggedImage owns desktop and touch visibility so a parent cannot hide an
 // active tag or product card.
 
-import Image from "next/image";
+import Image from '@/components/FolioImage';
 import { useRef } from "react";
 import { motion, useScroll, useTransform } from "framer-motion";
 import { TaggedImage } from "@/components/project/interaction/TaggedImage";

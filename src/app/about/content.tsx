@@ -1,6 +1,6 @@
 "use client";
 
-import Image from "next/image";
+import Image from '@/components/FolioImage';
 import Link from "next/link";
 import { useState, type MouseEvent } from "react";
 import { useSession } from "next-auth/react";

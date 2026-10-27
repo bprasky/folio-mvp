@@ -1,6 +1,6 @@
 'use client';
 
-import Image, { ImageProps } from 'next/image';
+import Image, { ImageProps } from '@/components/FolioImage';
 import { useState } from 'react';
 import { Package } from 'lucide-react';
 

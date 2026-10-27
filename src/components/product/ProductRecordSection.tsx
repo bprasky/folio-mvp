@@ -11,7 +11,7 @@
  * the ratio is unflattering is the failure mode disclosure exists to prevent.
  */
 
-import Image from 'next/image';
+import Image from '@/components/FolioImage';
 import Link from 'next/link';
 import type { ProductRecordView } from '@/server/queries/getProductRecord';
 

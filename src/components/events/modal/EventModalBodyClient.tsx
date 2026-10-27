@@ -1,6 +1,6 @@
 "use client";
 
-import Image from "next/image";
+import Image from '@/components/FolioImage';
 import { CalendarDays, MapPin } from "lucide-react";
 
 import RsvpControl from "@/components/events/RsvpControl";

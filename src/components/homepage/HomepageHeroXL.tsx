@@ -1,5 +1,5 @@
 import Link from "next/link";
-import Image from "next/image";
+import Image from '@/components/FolioImage';
 import type { HomepageHero } from "@/lib/homepage/getHomepageData";
 
 export function HomepageHeroXL({ hero }: { hero: HomepageHero }) {

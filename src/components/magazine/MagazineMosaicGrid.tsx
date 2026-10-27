@@ -10,7 +10,7 @@
 // - Fills left-to-right naturally
 // - Tight spacing matching festivals page
 
-import Image from "next/image";
+import Image from '@/components/FolioImage';
 import Link from "next/link";
 import { useMemo } from "react";
 import clsx from "clsx";

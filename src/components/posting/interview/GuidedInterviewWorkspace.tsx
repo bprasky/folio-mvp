@@ -4,7 +4,7 @@ import { workflowRequest } from '@/lib/client/workflowRequest';
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import * as Dialog from '@radix-ui/react-dialog';
-import Image from 'next/image';
+import Image from '@/components/FolioImage';
 import { useRouter } from 'next/navigation';
 import { ArrowDown, ArrowUp, Check, ChevronLeft, ChevronRight, Loader2, Mic, Pause, Square, X } from 'lucide-react';
 import { GUIDED_ANSWER_LIMIT, type GuidedCommand, type GuidedSession, type GuidedTurn } from '@/lib/interview/guided/types';

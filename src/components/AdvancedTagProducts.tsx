@@ -4,7 +4,7 @@ import { SpotlightSelections } from '@/components/spotlight/PrivateSpotlightInte
 
 import { useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import Image from "next/image";
+import Image from '@/components/FolioImage';
 import { FaTimes, FaCheck, FaTag, FaSearch, FaTrash, FaStore } from "react-icons/fa";
 
 interface Product {

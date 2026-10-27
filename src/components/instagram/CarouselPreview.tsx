@@ -6,7 +6,7 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
-import Image from 'next/image';
+import Image from '@/components/FolioImage';
 import { matchQuotesToImages } from '@/lib/instagram/matchQuoteToImage';
 
 import { extractRoomTeasers, matchRoomTeasersToImages } from '@/lib/instagram/roomTeasers';

@@ -1,7 +1,7 @@
 // src/components/SafeImage.tsx
 'use client';
 import { useState } from 'react';
-import Image, { ImageProps } from 'next/image';
+import Image, { ImageProps } from '@/components/FolioImage';
 
 function isValidSrc(src: ImageProps['src']) {
   if (!src) return false;

@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import Image from "next/image";
+import Image from '@/components/FolioImage';
 import clsx from "clsx";
 import useCountdown from "@/hooks/useCountdown";
 

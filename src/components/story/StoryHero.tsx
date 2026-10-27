@@ -6,7 +6,7 @@
 // fills its sidebar column. The viewport-height cap (--story-photo-vmax × aspect)
 // keeps the whole image visible even on tall landscape ratios like 3:2.
 
-import Image from "next/image";
+import Image from '@/components/FolioImage';
 import { useImageAspect } from "./useImageAspect";
 import { TaggedImage } from "@/components/project/interaction/TaggedImage";
 

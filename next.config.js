@@ -181,8 +181,15 @@ const nextConfig = {
     return config;
   },
   images: {
-    loader: 'custom',
-    loaderFile: './src/lib/files/imageLoader.ts',
+    // Only static local files may enter the shared optimizer cache. Protected
+    // photo API routes must be read directly on every request. Next 14 skips
+    // middleware for its image endpoint, so enforce this in the optimizer.
+    localPatterns: [
+      { pathname: '/assets/**' },
+      { pathname: '/onboarding/**' },
+      { pathname: '/_next/static/media/**' },
+      ...['jpg', 'jpeg', 'png', 'webp', 'avif', 'gif', 'svg', 'ico'].map(ext => ({ pathname: `/*.${ext}` })),
+    ],
     remotePatterns: [
       // Allow your Supabase Storage images
       ...(supaHost

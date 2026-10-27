@@ -8,7 +8,7 @@
 // Renders nothing if no products are available.
 
 import { type MagazineProduct } from "@/lib/magazine/getMagazineData";
-import Image from "next/image";
+import Image from '@/components/FolioImage';
 import { decodeHtmlEntities } from "@/lib/utils";
 
 interface Props {

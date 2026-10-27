@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import Image from 'next/image';
+import Image from '@/components/FolioImage';
 import { Settings, Eye, Camera, ExternalLink } from 'lucide-react';
 
 interface DashboardData {

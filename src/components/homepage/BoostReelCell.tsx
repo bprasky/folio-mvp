@@ -8,7 +8,7 @@
 
 import { useState, useMemo, useEffect } from "react";
 import Link from "next/link";
-import Image from "next/image";
+import Image from '@/components/FolioImage';
 
 import type { BoostReelItem } from "@/lib/homepage/getHomepageData";
 

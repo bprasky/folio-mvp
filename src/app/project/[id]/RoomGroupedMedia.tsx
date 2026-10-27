@@ -3,7 +3,7 @@
 import { createRoom } from '@/lib/client/createRoom';
 
 import { useState, useMemo, useTransition, useEffect } from 'react';
-import Image from 'next/image';
+import Image from '@/components/FolioImage';
 import { FaImage, FaTag, FaCheckCircle, FaTrash } from 'react-icons/fa';
 import { ChevronDown, ChevronRight, Plus, X, Undo2, DoorOpen, Ban, Maximize2 } from 'lucide-react';
 import Lightbox from '@/components/article/images/Lightbox';
