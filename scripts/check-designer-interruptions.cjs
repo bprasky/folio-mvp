@@ -86,14 +86,14 @@ function App(){const[away,setAway]=useState(false);window.leaveIntake=()=>setAwa
   const click = async value => { await page.evaluate(value => { const el = [...document.querySelectorAll('button')].find(el => el.textContent === value); if (!el || el.disabled) throw Error('Unavailable control: '+value); el.click(); }, value); };
   const upload = async files => { const input = await page.$('input[type=file]'); await input.uploadFile(...files); };
   const first = path.join(out, 'first.png'), second = path.join(out, 'second.png'), invalid = path.join(out, 'unsupported.txt'), large = path.join(out, 'large.png');
-  fs.writeFileSync(first, 'synthetic first'); fs.writeFileSync(second, 'synthetic second'); fs.writeFileSync(invalid, 'unsupported'); fs.writeFileSync(large, Buffer.alloc(3 * 1024 * 1024 + 1));
+  fs.writeFileSync(first, await require('sharp')({ create: { width: 32, height: 24, channels: 3, background: '#a8785f' } }).png().toBuffer()); fs.writeFileSync(second, await require('sharp')({ create: { width: 32, height: 24, channels: 3, background: '#5f78a8' } }).png().toBuffer()); fs.writeFileSync(invalid, 'unsupported'); fs.writeFileSync(large, Buffer.alloc(32 * 1024 * 1024 + 1));
   try {
     await page.goto(base); await page.waitForSelector('input[aria-label="Project name"]:not(:disabled)');
     await page.type('[aria-label="Project name"]', 'Interruption fixture'); await page.type('[aria-label="Completion year"]', '2024');
     await page.reload(); await page.waitForSelector('input[type=file]');
     assert.equal(await page.$eval('[aria-label="Project name"]', el => el.value), 'Interruption fixture');
     console.log('PASS refresh retains unsaved project facts');
-    await upload([invalid, large]); await text('no larger than 3 MB'); assert.equal(creates, 0);
+    await upload([invalid, large]); await text('under 32 MiB'); assert.equal(creates, 0);
     console.log('PASS unsupported/oversized files rejected before project creation');
     await upload([first]); await text('Creation acknowledgement lost'); assert.equal(projects.size, 1);
     await page.reload(); await page.waitForSelector('input[type=file]');
@@ -114,7 +114,7 @@ function App(){const[away,setAway]=useState(false);window.leaveIntake=()=>setAwa
     assert.equal(images.size, 2); assert.equal(projects.size, 1);
     await page.goto(base); await page.waitForSelector('input[type=file]');
     await page.type('[aria-label="Project name"]', 'Navigation fixture'); await page.type('[aria-label="Completion year"]', '2024');
-    const third = path.join(out, 'third.png'), fourth = path.join(out, 'fourth.png'); fs.writeFileSync(third, 'third'); fs.writeFileSync(fourth, 'fourth');
+    const third = path.join(out, 'third.png'), fourth = path.join(out, 'fourth.png'); fs.writeFileSync(third, await require('sharp')({ create: { width: 36, height: 24, channels: 3, background: '#a8785f' } }).png().toBuffer()); fs.writeFileSync(fourth, await require('sharp')({ create: { width: 36, height: 24, channels: 3, background: '#5f78a8' } }).png().toBuffer());
     const priorImages = images.size, priorUploads = uploadCalls; holdUpload = true;
     await upload([third, fourth]);
     for (let i = 0; !releaseUpload && i < 100; i++) await new Promise(resolve => setTimeout(resolve, 10));

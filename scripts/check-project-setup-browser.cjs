@@ -120,7 +120,7 @@ async function main() {
   try {
     await check('upload', 'an existing empty project uploads directly into canonical room sorting without intermediate setup pages', async () => {
       await open();
-      for (const width of [1440, 390, 320]) {
+      for (const width of [1440, 768, 640, 639, 390, 360, 320]) {
         await page.setViewport({ width, height: width === 1440 ? 1100 : 844 });
         assert(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), 'no horizontal overflow at ' + width);
         await page.screenshot({ path: path.join(review, 'upload-' + width + '.png'), fullPage: true });

@@ -1,4 +1,6 @@
 'use client';
+import { useProjectDraftWriter } from '@/lib/projects/useProjectDraftWriter';
+import { workflowRequest } from '@/lib/client/workflowRequest';
 
 import React, { useState, useCallback, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -80,6 +82,7 @@ const ProjectCreationModal: React.FC<ProjectCreationModalProps> = ({
   currentUserId,
   currentUserRole
 }) => {
+  const writeProject = useProjectDraftWriter('project-modal');
   const saveProgress = useRef(newPhotoSaveProgress());
   const submitting = useRef(false);
   useEffect(() => { if (!isOpen) saveProgress.current = newPhotoSaveProgress(); }, [isOpen]);
@@ -604,13 +607,13 @@ const ProjectCreationModal: React.FC<ProjectCreationModalProps> = ({
         }
       }
 
-      const response = await fetch('/api/projects', {
+      const response = savedProjectId ? await workflowRequest('/api/projects', {
         method: savedProjectId ? 'PUT' : 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify(cleanedData),
-      });
+      }) : Response.json({ id: await writeProject({ ...cleanedData, projectStatus: 'new_project' }) });
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({ 

@@ -1,0 +1,9 @@
+(node:9308) ExperimentalWarning: VM Modules is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+PASS anonymous and signed-in public lists omit private projects, images and tags
+PASS anonymous draft and mine parameters cannot expose saved projects
+PASS designer can resume own draft through legacy and canonical lists
+PASS another designer and a stale admin session cannot request private work
+PASS current database admin retains all-designer and selected-designer access
+PASS database failure does not return a successful empty list
+Project listing privacy: 6 checks passed.

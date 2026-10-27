@@ -22,6 +22,7 @@ function matches(row, where) {
   });
 }
 const mocks = {
+  '@/lib/projects/createProject': { createProjectOnce: () => { throw Error('Unexpected project creation in GET checks'); }, CreationConflict: class extends Error {} },
   '@/lib/persistence/requestIdentity': { requestIdentity: () => { throw Error('Unexpected create identity'); } },
   zod: { z: { string: () => field, object: () => ({}) } },
   'next/server': { NextRequest: Request, NextResponse: { json: (data, init) => Response.json(data, init) } },

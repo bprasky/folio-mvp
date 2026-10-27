@@ -373,7 +373,7 @@ export function PdfSpecImportModal({
   ).sort((a, b) => a.localeCompare(b));
 
   return (
-    <GlassModal open={open} onOpenChange={handleClose} size="xl">
+    <GlassModal title="Import a finish schedule" open={open} onOpenChange={handleClose} size="xl">
       <GlassModalHeader>
         <div className="flex items-center justify-between">
           <div>

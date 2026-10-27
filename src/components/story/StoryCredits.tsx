@@ -11,7 +11,7 @@ export function StoryCredits({ credits }: StoryCreditProps) {
 
   return (
     <section
-      className="pt-8 pb-12 border-t"
+      className="px-4 sm:px-8 pt-8 pb-12 border-t"
       style={{ borderColor: "rgba(87, 75, 67, 0.06)" }}
     >
       <h4
@@ -19,7 +19,7 @@ export function StoryCredits({ credits }: StoryCreditProps) {
         style={{
           fontSize: 'var(--type-fine)',
           fontWeight: 'var(--w-h1)',
-          color: "rgba(87, 75, 67, 0.3)"
+          color: "var(--folio-text-secondary)"
         }}
       >
         Credits
@@ -30,10 +30,10 @@ export function StoryCredits({ credits }: StoryCreditProps) {
             key={i}
             style={{
               fontSize: 'var(--type-eyebrow)',
-              color: "rgba(87, 75, 67, 0.55)"
+              color: "var(--folio-text-secondary)"
             }}
           >
-            <span className="uppercase tracking-[1px]">{credit.role}</span> /* folio-design-system: off-scale */
+            <span className="uppercase tracking-[var(--ls-wide)]">{credit.role}</span>
             {": "}
             {credit.url ? (
               <a
@@ -41,12 +41,12 @@ export function StoryCredits({ credits }: StoryCreditProps) {
                 target="_blank"
                 rel="noopener noreferrer"
                 className="hover:underline"
-                style={{ color: "rgba(87, 75, 67, 0.7)" }}
+                style={{ color: "var(--folio-text-secondary)" }}
               >
                 {credit.name}
               </a>
             ) : (
-              <span style={{ color: "rgba(87, 75, 67, 0.7)" }}>{credit.name}</span>
+              <span style={{ color: "var(--folio-text-secondary)" }}>{credit.name}</span>
             )}
           </div>
         ))}

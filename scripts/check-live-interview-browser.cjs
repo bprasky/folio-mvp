@@ -357,6 +357,12 @@ async function main() {
       assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth));
       const mobile = await page.$eval('video[aria-label="Folio AI interviewer"]', element => ({ width: element.getBoundingClientRect().width, parent: element.closest('section').getBoundingClientRect().width }));
       assert.ok(mobile.width >= mobile.parent - 40, JSON.stringify(mobile));
+      for(const width of [360,390,768,1440]) {
+        await page.setViewport({width,height:width===1440?1000:844});
+        assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));
+        await page.screenshot({path:path.join(out,'primary-typed-'+width+'.png'),fullPage:true});
+      }
+      await page.setViewport({width:390,height:844});
       await page.screenshot({ path: path.join(out, 'primary-typed-mobile.png'), fullPage: true });
       await click('End'); await callEnded();
       assert.equal(actionCalls.at(-1), 'end');

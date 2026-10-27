@@ -201,7 +201,7 @@ export async function prepareGuidedProjectPlan(projectId: string): Promise<Guide
   let generated: unknown = [];
   if (process.env.ANTHROPIC_API_KEY && process.env.ANTHROPIC_ENABLED !== 'false') {
     try {
-      generated = (await generateProjectQuestions({
+      generated = (await generateProjectQuestions({ projectId,
         projectTitle: project.title, projectDescription: project.description ?? undefined,
         designerName: project.designer?.name ?? undefined, studioName: project.designerOrg?.name ?? undefined,
         location: [project.city, project.regionState].filter(Boolean).join(', '),
@@ -238,7 +238,7 @@ export async function prepareGuidedRoomPlan(projectId: string, session: GuidedSe
     let generated: unknown = [];
     if (process.env.ANTHROPIC_API_KEY && process.env.ANTHROPIC_ENABLED !== 'false') {
       try {
-        generated = (await generateRoomQuestions({
+        generated = (await generateRoomQuestions({ projectId,
           roomName: room.name, roomImages: current.images.filter(image => image.roomId === room.id).map(image => ({ url: image.url, classification: image.aiClassification as Record<string, unknown> | null })),
           // General-room questions cannot select products. The legacy generator's
           // subscription naming lane is deliberately empty in this pilot.

@@ -1,3 +1,4 @@
+import { createRoomOnce } from '@/lib/projects/createRoom';
 export const dynamic = 'force-dynamic';
 
 import { NextRequest, NextResponse } from 'next/server';
@@ -19,27 +20,13 @@ export async function POST(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
     await assertProjectWrite(session.user.id, projectId);
-    const { name } = z.object({ name: z.string().trim().min(1).max(200) }).parse(await request.json());
-
-    if (!name) {
-      return NextResponse.json(
-        { error: 'Room name is required' },
-        { status: 400 }
-      );
-    }
-
-    const room = await prisma.room.create({
-      data: {
-        name,
-        projectId,
-      },
-      include: {
-        selections: true,
-      },
-    });
+    const room = await createRoomOnce(session.user.id, params.id, await request.json());
 
     return NextResponse.json(room);
   } catch (error) {
+    if (error instanceof Error && 'status' in error && error.status === 409) return NextResponse.json({ error: error.message }, { status: 409 });
+    if (error instanceof z.ZodError) return NextResponse.json({ error: 'A valid room name and stable request ID are required.' }, { status: 400 });
+    if (error instanceof Error && ['Forbidden', 'NotFound'].includes(error.message)) return NextResponse.json({ error: error.message }, { status: error.message === 'Forbidden' ? 403 : 404 });
     if (error instanceof z.ZodError || error instanceof SyntaxError) return NextResponse.json({ error: "Invalid request" }, { status: 400 });
     if (error instanceof Error && error.message === "Forbidden") return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     if (error instanceof Error && error.message === "NotFound") return NextResponse.json({ error: "Project not found" }, { status: 404 });
@@ -80,6 +67,9 @@ export async function GET(
 
     return NextResponse.json(rooms);
   } catch (error) {
+    if (error instanceof Error && 'status' in error && error.status === 409) return NextResponse.json({ error: error.message }, { status: 409 });
+    if (error instanceof z.ZodError) return NextResponse.json({ error: 'A valid room name and stable request ID are required.' }, { status: 400 });
+    if (error instanceof Error && ['Forbidden', 'NotFound'].includes(error.message)) return NextResponse.json({ error: error.message }, { status: error.message === 'Forbidden' ? 403 : 404 });
     if (error instanceof z.ZodError || error instanceof SyntaxError) return NextResponse.json({ error: "Invalid request" }, { status: 400 });
     if (error instanceof Error && error.message === "Forbidden") return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     if (error instanceof Error && error.message === "NotFound") return NextResponse.json({ error: "Project not found" }, { status: 404 });

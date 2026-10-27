@@ -1,5 +1,6 @@
 "use client";
 
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { useEffect, useState } from "react";
 import { FaTimes, FaImage, FaExternalLinkAlt, FaExclamationCircle } from "react-icons/fa";
 import { assessProductHealth } from "@/lib/products/productHealth";
@@ -35,6 +36,7 @@ export function ProductEditModal({ productId, tagId = null, onClose, onSaved }: 
   const [editTarget, setEditTarget] = useState<EditTarget | null>(null);
   const [editSaving, setEditSaving] = useState(false);
   const [editError, setEditError] = useState<string | null>(null);
+  const [loadAttempt, setLoadAttempt] = useState(0);
   const [editPasteText, setEditPasteText] = useState("");
   const [editParsing, setEditParsing] = useState<null | "text" | "image">(null);
   const [rescraping, setRescraping] = useState(false);
@@ -42,10 +44,11 @@ export function ProductEditModal({ productId, tagId = null, onClose, onSaved }: 
   // Pre-fill from the current record.
   useEffect(() => {
     let cancelled = false;
+    setEditError(null);
     (async () => {
       try {
         const r = await fetch(`/api/products/${productId}`);
-        if (!r.ok) return;
+        if (!r.ok) throw new Error("Product details could not be loaded. Please try again.");
         const d = await r.json();
         if (cancelled) return;
         setEditTarget({
@@ -58,14 +61,14 @@ export function ProductEditModal({ productId, tagId = null, onClose, onSaved }: 
           imageUrl: d.imageUrl ?? "",
           url: d.url ?? "",
         });
-      } catch {
-        /* ignore — modal just shows the loading state */
+      } catch (error) {
+        if (!cancelled) setEditError(error instanceof Error ? error.message : 'Product details could not be loaded. Please try again.');
       }
     })();
     return () => {
       cancelled = true;
     };
-  }, [productId]);
+  }, [productId, loadAttempt]);
 
   const updateEdit = (patch: Partial<EditTarget>) =>
     setEditTarget((prev) => (prev ? { ...prev, ...patch } : prev));
@@ -213,19 +216,15 @@ export function ProductEditModal({ productId, tagId = null, onClose, onSaved }: 
   };
 
   return (
-    <div
-      className="fixed inset-0 z-[70] flex items-center justify-center bg-black/40 p-4"
-      onClick={() => !editSaving && onClose()}
-    >
-      <div
-        className="ridge-card w-full max-w-md max-h-[80vh] flex flex-col overflow-hidden"
-        onClick={(e) => e.stopPropagation()}
-      >
+    <Dialog open onOpenChange={open => { if (!open && !editSaving) onClose(); }} backdropClassName="bg-black/40">
+      <DialogContent aria-describedby={undefined} className="ridge-card w-full max-w-md flex flex-col overflow-hidden">
         <div className="flex items-center justify-between px-5 py-4 border-b border-folio-border-subtle">
-          <h3 className="folio-ui text-folio-text-primary">Edit product details</h3>
+          <DialogTitle className="folio-ui text-folio-text-primary">Edit product details</DialogTitle>
           <button
             onClick={onClose}
-            className="text-folio-text-tertiary hover:text-folio-text-primary"
+            disabled={editSaving}
+            aria-label="Close product details"
+            className="flex h-11 w-11 items-center justify-center text-folio-text-secondary hover:text-folio-text-primary"
             title="Close"
           >
             <FaTimes className="w-4 h-4" />
@@ -234,14 +233,16 @@ export function ProductEditModal({ productId, tagId = null, onClose, onSaved }: 
 
         {!editTarget ? (
           <div className="px-5 py-10 text-center">
-            <div className="animate-spin h-6 w-6 border-2 border-[var(--accent)] border-t-transparent rounded-full mx-auto mb-3" />
-            <p className="folio-meta text-folio-text-secondary">Loading product…</p>
+            {editError ? <><p role="alert" className="folio-body">{editError}</p><button className="mt-4 min-h-11 px-4 folio-ui underline" onClick={() => setLoadAttempt(value => value + 1)}>Try again</button></> : <>
+            <div aria-hidden className="animate-spin h-6 w-6 border-2 border-[var(--accent)] border-t-transparent rounded-full mx-auto mb-3" />
+            <p role="status" className="folio-meta text-folio-text-secondary">Loading product…</p>
+            </>}
           </div>
         ) : (
           <>
             <div className="flex-1 min-h-0 px-5 py-4 space-y-3 overflow-y-auto">
               {editError && (
-                <div className="flex items-start gap-2 rounded-md bg-red-50 text-red-600 px-2 py-1.5 text-xs">
+                <div role="alert" className="flex items-start gap-2 rounded-md bg-red-50 text-red-600 px-2 py-1.5 text-xs">
                   <FaExclamationCircle className="w-3.5 h-3.5 mt-0.5 flex-shrink-0" />
                   <span>{editError}</span>
                 </div>
@@ -295,6 +296,7 @@ export function ProductEditModal({ productId, tagId = null, onClose, onSaved }: 
                   )}
                 </div>
                 <textarea
+                  aria-label="Product page text for autofill"
                   value={editPasteText}
                   onChange={(e) => setEditPasteText(e.target.value)}
                   placeholder="Paste the product name, specs, price… from the page"
@@ -321,13 +323,13 @@ export function ProductEditModal({ productId, tagId = null, onClose, onSaved }: 
                   >
                     {editParsing === "text" ? "Reading…" : "Autofill from text"}
                   </button>
-                  <label className="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-dashed border-folio-border-subtle cursor-pointer hover:bg-surface-canvas transition-colors folio-meta text-folio-text-secondary">
+                  <label className="relative flex min-h-11 items-center gap-2 px-3 py-1.5 rounded-lg border border-dashed border-folio-border-subtle cursor-pointer hover:bg-surface-canvas focus-within:ring-2 focus-within:ring-folio-gold transition-colors folio-meta text-folio-text-secondary">
                     <FaImage className="w-3.5 h-3.5" />
                     {editParsing === "image" ? "Reading screenshot…" : "Upload a screenshot"}
                     <input
                       type="file"
                       accept="image/*"
-                      className="hidden"
+                      className="sr-only"
                       onChange={(e) => {
                         handleEditScreenshot(e.target.files?.[0]);
                         e.target.value = "";
@@ -369,7 +371,7 @@ export function ProductEditModal({ productId, tagId = null, onClose, onSaved }: 
             </div>
           </>
         )}
-      </div>
-    </div>
+      </DialogContent>
+    </Dialog>
   );
 }

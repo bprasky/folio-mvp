@@ -181,6 +181,8 @@ const nextConfig = {
     return config;
   },
   images: {
+    loader: 'custom',
+    loaderFile: './src/lib/files/imageLoader.ts',
     remotePatterns: [
       // Allow your Supabase Storage images
       ...(supaHost

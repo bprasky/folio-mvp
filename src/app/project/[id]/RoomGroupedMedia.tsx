@@ -1,5 +1,7 @@
 'use client';
 
+import { createRoom } from '@/lib/client/createRoom';
+
 import { useState, useMemo, useTransition, useEffect } from 'react';
 import Image from 'next/image';
 import { FaImage, FaTag, FaCheckCircle, FaTrash } from 'react-icons/fa';
@@ -8,7 +10,8 @@ import Lightbox from '@/components/article/images/Lightbox';
 import {
   DndContext,
   DragOverlay,
-  PointerSensor,
+  MouseSensor,
+  TouchSensor,
   useSensor,
   useSensors,
   useDraggable,
@@ -23,7 +26,6 @@ import {
   excludeImage,
   includeImage,
   unassignImage,
-  createRoom,
   setImageNoProducts,
   renameRoom,
 } from '@/app/actions/projectImages';
@@ -85,7 +87,8 @@ export default function RoomGroupedMedia({
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
 
   const sensors = useSensors(
-    useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
+    useSensor(MouseSensor, { activationConstraint: { distance: 8 } }),
+    useSensor(TouchSensor, { activationConstraint: { delay: 250, tolerance: 8 } }),
   );
 
   // Only photos are sorted into rooms; source documents are not portfolio shots.
@@ -175,7 +178,7 @@ export default function RoomGroupedMedia({
                 </h3>
                 <p className="folio-meta text-folio-text-secondary mt-1">
                   Drag a photo onto a room, or use the menu below each one.
-                  <span className="ml-1 text-folio-text-tertiary">
+                  <span className="ml-1 text-folio-text-secondary">
                     ({uncategorized.length} left)
                   </span>
                 </p>
@@ -215,7 +218,7 @@ export default function RoomGroupedMedia({
 
         {/* Room names appear in the published article — nudge to make them specific. */}
         {roomBuckets.length > 0 && (
-          <p className="folio-meta text-folio-text-tertiary">
+          <p className="folio-meta text-folio-text-secondary">
             Room names appear in your published article. Use specific names, such as “Primary Bath”
             or “Powder Room”. Drag a photo to move it to another room.
           </p>
@@ -251,6 +254,13 @@ export default function RoomGroupedMedia({
                       onDelete={onDelete}
                       onExpand={() => openExpand(img.id)}
                     />
+                    {isOwner && <label className="mt-2 block folio-meta text-folio-text-secondary">Move to room
+                      <select aria-label={`Room for ${img.name || 'photo'}`} value={img.roomId || ''} disabled={isPending}
+                        onChange={event => run(() => assignImageToRoom({ imageId: img.id, roomId: event.target.value }))}
+                        className="mt-1 min-h-11 w-full min-w-0 rounded-lg border border-folio-border-subtle bg-surface-canvas px-3 py-2">
+                        {rooms.map(room => <option key={room.id} value={room.id}>{room.name}</option>)}
+                      </select>
+                    </label>}
                   </DraggablePhoto>
                 ))}
               </div>
@@ -364,7 +374,7 @@ function DraggablePhoto({
     <div
       ref={setNodeRef}
       {...listeners}
-      className={`${disabled ? '' : 'cursor-grab active:cursor-grabbing touch-none'} ${
+      className={`${disabled ? '' : 'cursor-grab active:cursor-grabbing'} ${
         isDragging ? 'opacity-40' : ''
       }`}
     >
@@ -466,7 +476,7 @@ function OverlayTile({
       {icon && <span className="text-folio-text-secondary">{icon}</span>}
       <span className="folio-ui font-medium text-folio-text-primary leading-tight">{label}</span>
       {sub !== undefined && (
-        <span className="folio-meta text-folio-text-tertiary tabular-nums">{sub}</span>
+        <span className="folio-meta text-folio-text-secondary tabular-nums">{sub}</span>
       )}
     </div>
   );
@@ -606,7 +616,7 @@ function RoomHeader({
           {name}
         </button>
       )}
-      <span className="folio-meta text-folio-text-tertiary tabular-nums whitespace-nowrap">
+      <span className="folio-meta text-folio-text-secondary tabular-nums whitespace-nowrap">
         {photoCount} {photoCount === 1 ? 'photo' : 'photos'} · {taggedCount} tagged
       </span>
     </div>
@@ -661,7 +671,7 @@ function PhotoCard({
         <button
           onClick={e => { e.stopPropagation(); onExpand(); }}
           aria-label="View full photo"
-          className="absolute top-2 right-2 z-[3] inline-flex items-center justify-center w-7 h-7 rounded-full bg-black/55 text-white hover:bg-black/75 transition-colors opacity-0 group-hover:opacity-100"
+          className="absolute top-2 right-2 z-[3] inline-flex items-center justify-center w-11 h-11 rounded-full bg-black/55 text-white hover:bg-black/75 transition-colors touch-action-visible opacity-100 sm:opacity-0 sm:group-hover:opacity-100 sm:group-focus-within:opacity-100"
         >
           <Maximize2 className="w-3.5 h-3.5" />
         </button>
@@ -688,10 +698,10 @@ function PhotoCard({
       )}
 
       {isOwner && (
-        <div className="absolute inset-0 z-[2] bg-black/0 group-hover:bg-black/50 transition-all flex items-center justify-center gap-2 opacity-0 group-hover:opacity-100">
+        <div className="absolute inset-0 z-[2] bg-black/10 sm:bg-black/0 group-hover:bg-black/50 transition-all flex flex-wrap items-center justify-center gap-2 touch-action-visible opacity-100 sm:opacity-0 sm:group-hover:opacity-100 sm:group-focus-within:opacity-100">
           <button
             onClick={e => { e.stopPropagation(); onSetCover(img.id); }}
-            className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+            className={`min-h-11 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
               cover
                 ? 'bg-[var(--accent)] text-white'
                 : 'bg-surface-canvas text-folio-text-primary hover:bg-surface-ground'
@@ -700,15 +710,16 @@ function PhotoCard({
             {cover ? 'Cover Selected' : 'Set as Cover'}
           </button>
           <button
+            aria-label="Delete photo"
             onClick={e => { e.stopPropagation(); onDelete(img.id); }}
-            className="px-3 py-2 rounded-lg text-sm font-medium bg-[rgb(74,44,59)] text-white hover:bg-[rgb(74,44,59)]/80 transition-colors"
+            className="min-h-11 px-3 py-2 rounded-lg text-sm font-medium bg-[rgb(74,44,59)] text-white hover:bg-[rgb(74,44,59)]/80 transition-colors"
           >
             <FaTrash className="w-4 h-4" />
           </button>
           {onClearNoProducts && (
             <button
               onClick={e => { e.stopPropagation(); onClearNoProducts(); }}
-              className="px-3 py-2 rounded-lg text-sm font-medium bg-surface-canvas text-folio-text-primary hover:bg-surface-ground transition-colors"
+              className="min-h-11 px-3 py-2 rounded-lg text-sm font-medium bg-surface-canvas text-folio-text-primary hover:bg-surface-ground transition-colors"
             >
               Reopen to tag
             </button>
@@ -780,7 +791,7 @@ function UncategorizedResolver({
         </button>
         <button
           onClick={() => { setCreating(false); setNewName(''); }}
-          className="p-1.5 text-folio-text-tertiary hover:text-folio-text-secondary"
+          className="p-1.5 text-folio-text-secondary hover:text-folio-text-secondary"
           aria-label="Cancel"
         >
           <X className="w-4 h-4" />
@@ -890,7 +901,7 @@ function AddRoomAffordance({
       </button>
       <button
         onClick={() => { setOpen(false); setName(''); }}
-        className="p-2 text-folio-text-tertiary hover:text-folio-text-secondary"
+        className="p-2 text-folio-text-secondary hover:text-folio-text-secondary"
         aria-label="Cancel"
       >
         <X className="w-4 h-4" />

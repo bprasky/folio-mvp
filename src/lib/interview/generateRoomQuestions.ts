@@ -1,3 +1,4 @@
+import { projectPhotoProcessingUrl } from '@/lib/server/protected-project-photo';
 /**
  * Per-Room Interview Question Generation
  *
@@ -21,6 +22,7 @@ import { laneContract } from './prompts/sourceHandling';
 // ---------------------------------------------------------------------------
 
 export interface RoomQuestionInput {
+  projectId?: string;
   roomName: string;
   roomImages: Array<{
     url: string;
@@ -74,7 +76,7 @@ export async function generateRoomQuestions(
     if (img.url) {
       imageBlocks.push({
         type: 'image',
-        source: { type: 'url', url: img.url },
+        source: { type: 'url', url: input.projectId ? await projectPhotoProcessingUrl(img.url, input.projectId) : img.url },
       });
     }
   }

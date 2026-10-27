@@ -1,0 +1,168 @@
+
+> folio-mvp@0.2.0 test:rollout
+> node --import tsx scripts/core/rollout-privacy.test.cjs && node --import tsx scripts/security/rollout-images.test.ts && node scripts/security/rollout-transport.test.cjs && node --import tsx scripts/check-public-folio.ts
+
+DEBUG: NextAuth Environment Check
+NEXTAUTH_SECRET exists: true
+NEXTAUTH_SECRET length: 35
+NEXTAUTH_URL: http://folio.test
+Current working directory: C:\Users\bpras\.codex\worktrees\rollout-hardening\folio-mvp
+Environment variables loaded: [ 'NEXTAUTH_SECRET', 'NEXTAUTH_URL' ]
+DEBUG: Entering JWT callback
+DEBUG: JWT callback - Setting token.id: 39fae3ea-8609-4434-b521-2a185b900e3f
+Hydrated from DB - role: DESIGNER accountStatus: APPROVED subscriptionTier: FREE isFoundingDesigner: false
+TAP version 13
+DEBUG: Session callback — token.role: DESIGNER token.id: 39fae3ea-8609-4434-b521-2a185b900e3f token.accountStatus: APPROVED operatingAsOrgId: null subscriptionTier: FREE isFoundingDesigner: false
+DEBUG: Session callback - Setting session.user.id: 39fae3ea-8609-4434-b521-2a185b900e3f
+DEBUG: Entering JWT callback
+DEBUG: JWT callback - Setting token.id: ea2fafdc-b409-4966-94ee-b6e63753ea76
+Hydrated from DB - role: DESIGNER accountStatus: APPROVED subscriptionTier: FREE isFoundingDesigner: false
+DEBUG: Session callback — token.role: DESIGNER token.id: ea2fafdc-b409-4966-94ee-b6e63753ea76 token.accountStatus: APPROVED operatingAsOrgId: null subscriptionTier: FREE isFoundingDesigner: false
+DEBUG: Session callback - Setting session.user.id: ea2fafdc-b409-4966-94ee-b6e63753ea76
+DEBUG: Entering JWT callback
+DEBUG: JWT callback - Setting token.id: 93551273-9b1a-48f5-9ce4-a28ba0bdcd9f
+Hydrated from DB - role: DESIGNER accountStatus: APPROVED subscriptionTier: FREE isFoundingDesigner: false
+# Subtest: draft listing cannot be widened by anonymous or another designer
+ok 1 - draft listing cannot be widened by anonymous or another designer
+  ---
+  duration_ms: 512.1286
+  type: 'test'
+  ...
+# Subtest: public article DTO excludes raw evidence, private assets, pending products and private credits
+ok 2 - public article DTO excludes raw evidence, private assets, pending products and private credits
+  ---
+  duration_ms: 2.3158
+  type: 'test'
+  ...
+DEBUG: Session callback — token.role: DESIGNER token.id: 93551273-9b1a-48f5-9ce4-a28ba0bdcd9f token.accountStatus: APPROVED operatingAsOrgId: null subscriptionTier: FREE isFoundingDesigner: false
+DEBUG: Session callback - Setting session.user.id: 93551273-9b1a-48f5-9ce4-a28ba0bdcd9f
+DEBUG: Entering JWT callback
+DEBUG: JWT callback - Setting token.id: e0545674-e5c5-4bd9-b6fd-18bc376de825
+Hydrated from DB - role: DESIGNER accountStatus: APPROVED subscriptionTier: FREE isFoundingDesigner: false
+DEBUG: Session callback — token.role: DESIGNER token.id: e0545674-e5c5-4bd9-b6fd-18bc376de825 token.accountStatus: APPROVED operatingAsOrgId: null subscriptionTier: FREE isFoundingDesigner: false
+DEBUG: Session callback - Setting session.user.id: e0545674-e5c5-4bd9-b6fd-18bc376de825
+DEBUG: Entering JWT callback
+DEBUG: JWT callback - Setting token.id: f4aa55b2-2ac4-4d51-aca2-a623280bbd31
+Hydrated from DB - role: DESIGNER accountStatus: APPROVED subscriptionTier: FREE isFoundingDesigner: false
+# Subtest: image endpoint rejects private imports and invalid input without saving a URL
+ok 3 - image endpoint rejects private imports and invalid input without saving a URL
+  ---
+  duration_ms: 305.9774
+  type: 'test'
+  ...
+# Subtest: publication keeps a deliberately selected embedded alternative but drops other candidates
+ok 4 - publication keeps a deliberately selected embedded alternative but drops other candidates
+  ---
+  duration_ms: 2.0236
+  type: 'test'
+  ...
+DEBUG: Session callback — token.role: DESIGNER token.id: f4aa55b2-2ac4-4d51-aca2-a623280bbd31 token.accountStatus: APPROVED operatingAsOrgId: null subscriptionTier: FREE isFoundingDesigner: false
+DEBUG: Session callback - Setting session.user.id: f4aa55b2-2ac4-4d51-aca2-a623280bbd31
+[POST /api/projects/[id]/images] Error: Error: synthetic storage failure
+    at storage.saveBufferToProjectStorage (C:\Users\bpras\.codex\worktrees\rollout-hardening\folio-mvp\scripts\core\rollout-privacy.test.cjs:80:60)
+    at Object.POST (C:\Users\bpras\.codex\worktrees\rollout-hardening\folio-mvp\src\app\api\projects\[id]\images\route.ts:69:26)
+    at async TestContext.<anonymous> (C:\Users\bpras\.codex\worktrees\rollout-hardening\folio-mvp\scripts\core\rollout-privacy.test.cjs:82:20)
+    at async Test.run (node:internal/test_runner/test:1054:7)
+    at async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+[AUDIT] schema: BlocksSchema configured {
+  strict: true,
+  hasLead: true,
+  hasGalleryChapters: true,
+  hasCredits: true
+}
+# Subtest: storage failure never persists the submitted remote/data URL as a fallback
+ok 5 - storage failure never persists the submitted remote/data URL as a fallback
+  ---
+  duration_ms: 6.4908
+  type: 'test'
+  ...
+# Subtest: actual story transformer preserves published chapter prose, photographs and saved breather
+ok 6 - actual story transformer preserves published chapter prose, photographs and saved breather
+  ---
+  duration_ms: 149.5329
+  type: 'test'
+  ...
+1..6
+# tests 6
+# suites 0
+# pass 6
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 985.4571
+TAP version 13
+# Subtest: native Sharp strips metadata, normalizes output and rejects malformed images
+ok 1 - native Sharp strips metadata, normalizes output and rejects malformed images
+  ---
+  duration_ms: 80.5506
+  type: 'test'
+  ...
+# Subtest: image input rejects invalid/oversized bodies and private URL destinations
+ok 2 - image input rejects invalid/oversized bodies and private URL destinations
+  ---
+  duration_ms: 30.4514
+  type: 'test'
+  ...
+# Subtest: partial photo/tag failure retries remaining writes without recreating successful images/products/tags
+ok 3 - partial photo/tag failure retries remaining writes without recreating successful images/products/tags
+  ---
+  duration_ms: 2.2804
+  type: 'test'
+  ...
+1..3
+# tests 3
+# suites 0
+# pass 3
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 120.3397
+TAP version 13
+# Subtest: transport pins the validated public address and rejects mixed DNS answers before connecting
+ok 1 - transport pins the validated public address and rejects mixed DNS answers before connecting
+  ---
+  duration_ms: 152.2957
+  type: 'test'
+  ...
+# Subtest: redirects to metadata/private hosts never make a second connection
+ok 2 - redirects to metadata/private hosts never make a second connection
+  ---
+  duration_ms: 32.7202
+  type: 'test'
+  ...
+# Subtest: stream limit, stalled response, and stalled DNS all fail closed
+ok 3 - stream limit, stalled response, and stalled DNS all fail closed
+  ---
+  duration_ms: 118.36
+  type: 'test'
+  ...
+# Subtest: non-image and unsuccessful responses cannot become project assets
+ok 4 - non-image and unsuccessful responses cannot become project assets
+  ---
+  duration_ms: 35.9994
+  type: 'test'
+  ...
+1..4
+# tests 4
+# suites 0
+# pass 4
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 356.3863
+  PASS public loader strips Spotlight drafts and durable identities from serialized provenance
+  PASS public server reader removes evidence and alternatives
+  PASS public slug API removes evidence and alternatives
+  PASS shared project viewer receives display-only Folio
+  PASS owner retains full rewrite evidence
+  PASS authorized-editor retains full rewrite evidence
+  PASS boost response does not disclose Folio evidence
+  PASS unpublished public reader and API reject article
+  PASS private project rejected at public boundaries
+  PASS unauthorized project request cannot obtain evidence
+  PASS removed public selection remains removed
+
+11 serialized reader boundary scenarios passed.

@@ -1,0 +1,4 @@
+{"phase":"inspect","host":"gwdkhgejsyvynqzolyau.supabase.co","bucket":"project-photos","status":400,"error":"Bucket not found","metadata":null}
+Created separate private project-photos bucket.
+{"phase":"canary","privateBucket":true,"serviceReadExact":true,"anonymousPublicStatus":400,"anonymousPrivateDenied":true,"anonymousListDenied":true,"syntheticBytes":268}
+Removed only this release canary.

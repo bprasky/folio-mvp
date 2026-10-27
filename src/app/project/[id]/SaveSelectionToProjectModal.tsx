@@ -1,4 +1,5 @@
 'use client';
+import { useProjectDraftWriter } from '@/lib/projects/useProjectDraftWriter';
 
 import { useState, useEffect, useMemo } from 'react';
 import { useSession } from 'next-auth/react';
@@ -57,6 +58,7 @@ export default function SaveSelectionToProjectModal({
   selection,
   onSuccess,
 }: SaveSelectionToProjectModalProps) {
+  const writeProject = useProjectDraftWriter('SaveSelectionToProjectModal.tsx');
   const { data: session } = useSession();
   const [projects, setProjects] = useState<Project[]>([]);
   const [userOrgs, setUserOrgs] = useState<UserOrg[]>([]);
@@ -214,19 +216,8 @@ export default function SaveSelectionToProjectModal({
           createPayload.designerOrgId = newProjectOrgId;
         }
 
-        const createResponse = await fetch('/api/projects', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(createPayload),
-        });
-
-        if (createResponse.ok) {
-          const newProject = await createResponse.json();
-          targetProjectId = newProject.id;
-        } else {
-          const errorData = await createResponse.json().catch(() => ({}));
-          throw new Error(errorData.error || 'Failed to create project');
-        }
+        const createdId = await writeProject({ ...createPayload, projectStatus: 'new_project' });
+        targetProjectId = createdId;
       }
 
       if (!targetProjectId) {

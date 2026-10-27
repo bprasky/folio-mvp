@@ -1692,17 +1692,11 @@ export async function POST(
               batch.map(async (tag) => {
                 const crop = await generateProductCrop({
                   tag: { x: tag.x, y: tag.y, category: tag.product.category },
-                  sourceImageUrl: tag.image.url,
+                  sourceImageUrl: tag.image.url, projectId: tag.image.projectId,
                 });
-                await uploadCrop({ buffer: crop.buffer, tagId: tag.id, projectId: tag.image.projectId });
-                await prisma.productTag.update({
-                  where: { id: tag.id },
-                  data: {
-                    cropX: tag.x,
-                    cropY: tag.y,
-                    cropScale: getCategoryDefaultScale(tag.product.category),
-                    cropAspect: "1:1",
-                  },
+                await uploadCrop({ buffer: crop.buffer, tagId: tag.id, projectId: tag.image.projectId,
+                  expected: { imageId: tag.imageId, x: tag.x, y: tag.y, updatedAt: tag.updatedAt },
+                  metadata: { cropX: tag.x, cropY: tag.y, cropScale: getCategoryDefaultScale(tag.product.category), cropAspect: "1:1" },
                 });
               })
             );

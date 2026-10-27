@@ -1,3 +1,4 @@
+import { projectPhotoProcessingUrl } from '@/lib/server/protected-project-photo';
 /**
  * Project-Level Interview Question Generation
  *
@@ -36,6 +37,7 @@ export const PROJECT_QUESTION_CATEGORIES = [
 export type ProjectQuestionCategory = typeof PROJECT_QUESTION_CATEGORIES[number];
 
 export interface ProjectQuestionInput {
+  projectId?: string;
   projectTitle?: string;
   projectDescription?: string;
   designerName?: string;
@@ -121,7 +123,7 @@ export async function generateProjectQuestions(
     if (img.url) {
       imageBlocks.push({
         type: 'image',
-        source: { type: 'url', url: img.url },
+        source: { type: 'url', url: input.projectId ? await projectPhotoProcessingUrl(img.url, input.projectId) : img.url },
       });
     }
   }

@@ -1,4 +1,5 @@
 'use client';
+import { createRoom as createRoomWithRetry } from '@/lib/client/createRoom';
 
 import { useState, useCallback, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
@@ -192,20 +193,13 @@ export default function ProjectEmptyState({ project, canScrape = false }: Projec
     setIsCreatingRoom(true);
 
     try {
-      const res = await fetch(`/api/designer/projects/${project.id}/rooms`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name: 'New Room' })
-      });
-
-      if (!res.ok) {
-        throw new Error('Failed to create room');
-      }
+      await createRoomWithRetry({ projectId: project.id, name: 'New Room' });
 
       // Refresh to show the new room
       router.refresh();
     } catch (error) {
       console.error('Failed to create room:', error);
+      alert(error instanceof Error ? error.message : 'Could not create room. Retry to check.');
     } finally {
       setIsCreatingRoom(false);
     }

@@ -56,13 +56,12 @@ export default function OrgProfileHero({
     .toUpperCase();
 
   return (
-    <div className="border-b" style={{ borderColor: '#E8E4DF' }}>
+    <div className="border-b" style={{ borderColor: 'var(--folio-border-subtle)' }}>
       <div className="max-w-6xl mx-auto px-6 py-8">
         <div className="flex flex-col md:flex-row items-start gap-6 md:gap-8">
           {/* Logo */}
           <div
-            className="w-24 h-24 md:w-28 md:h-28 rounded-full overflow-hidden flex-shrink-0 ring-2"
-            style={{ ringColor: '#E8E4DF' }}
+            className="w-24 h-24 md:w-28 md:h-28 rounded-full overflow-hidden flex-shrink-0 ring-2 ring-folio-border-subtle"
           >
             {org.logo ? (
               <SafeImage
@@ -74,8 +73,8 @@ export default function OrgProfileHero({
               />
             ) : (
               <div
-                className="w-full h-full flex items-center justify-center text-2xl md:text-3xl font-light"
-                style={{ backgroundColor: '#E8E4DF', color: '#6B635B' }}
+                className="w-full h-full flex items-center justify-center text-2xl md:text-3xl font-medium"
+                style={{ backgroundColor: 'var(--folio-border-subtle)', color: 'var(--folio-text-secondary)' }}
               >
                 {initials}
               </div>
@@ -87,12 +86,12 @@ export default function OrgProfileHero({
             <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
               <div className="min-w-0">
                 <h1
-                  className="text-2xl md:text-3xl font-light tracking-tight"
-                  style={{ fontFamily: 'Georgia, serif', color: '#2C2825' }}
+                  className="break-words text-folio-h3 md:text-folio-h2 font-medium tracking-tight"
+                  style={{ fontFamily: 'var(--font-headline)', color: 'var(--folio-text-primary)' }}
                 >
                   {org.name}
                 </h1>
-                <p className="text-sm mt-1" style={{ color: '#8B8178' }}>
+                <p className="text-sm mt-1" style={{ color: 'var(--folio-text-secondary)' }}>
                   {getTypeLabel(org.type)}
                   {org.location && ` · ${org.location}`}
                 </p>
@@ -100,7 +99,7 @@ export default function OrgProfileHero({
                 {(org as any).tagline && (
                   <p
                     className="mt-3 text-base line-clamp-2"
-                    style={{ color: '#5C564F', maxWidth: '480px' }}
+                    style={{ color: 'var(--folio-text-secondary)', maxWidth: '480px' }}
                   >
                     {(org as any).tagline}
                   </p>
@@ -113,7 +112,7 @@ export default function OrgProfileHero({
                       <span
                         key={tag}
                         className="px-3 py-1 text-xs rounded-full"
-                        style={{ backgroundColor: '#F0EDE9', color: '#6B635B' }}
+                        style={{ backgroundColor: 'var(--surface-ground)', color: 'var(--folio-text-secondary)' }}
                       >
                         {tag}
                       </span>
@@ -121,7 +120,7 @@ export default function OrgProfileHero({
                     {(org as any).specialties.length > 5 && (
                       <span
                         className="px-3 py-1 text-xs rounded-full"
-                        style={{ backgroundColor: '#F0EDE9', color: '#8B8178' }}
+                        style={{ backgroundColor: 'var(--surface-ground)', color: 'var(--folio-text-secondary)' }}
                       >
                         +{(org as any).specialties.length - 5}
                       </span>
@@ -142,22 +141,22 @@ export default function OrgProfileHero({
                   {isOwner ? (
                     <Link
                       href={`/org/${org.id}/edit`}
-                      className="px-5 py-2 text-sm rounded-full transition-all hover:opacity-80"
-                      style={{ backgroundColor: '#2C2825', color: 'var(--surface-ground)' }}
+                      className="min-h-11 px-5 py-2 text-sm rounded-full transition-all hover:opacity-80"
+                      style={{ backgroundColor: 'var(--folio-text-primary)', color: 'var(--surface-ground)' }}
                     >
                       Edit Profile
                     </Link>
                   ) : (
                     <>
                       <button
-                        className="px-5 py-2 text-sm rounded-full transition-all hover:opacity-80"
-                        style={{ backgroundColor: '#2C2825', color: 'var(--surface-ground)' }}
+                        className="min-h-11 px-5 py-2 text-sm rounded-full transition-all hover:opacity-80"
+                        style={{ backgroundColor: 'var(--folio-text-primary)', color: 'var(--surface-ground)' }}
                       >
                         Follow
                       </button>
                       <button
-                        className="px-5 py-2 text-sm rounded-full border transition-all hover:bg-stone-50"
-                        style={{ borderColor: '#2C2825', color: '#2C2825' }}
+                        className="min-h-11 px-5 py-2 text-sm rounded-full border transition-all hover:bg-stone-50"
+                        style={{ borderColor: 'var(--folio-text-primary)', color: 'var(--folio-text-primary)' }}
                       >
                         Contact
                       </button>
@@ -169,7 +168,7 @@ export default function OrgProfileHero({
                       <button
                         onClick={() => setMenuOpen(!menuOpen)}
                         className="w-9 h-9 rounded-full border flex items-center justify-center transition-all hover:bg-stone-50"
-                        style={{ borderColor: '#E8E4DF', color: '#6B635B' }}
+                        style={{ borderColor: 'var(--folio-border-subtle)', color: 'var(--folio-text-secondary)' }}
                         aria-label="More options"
                       >
                         <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
@@ -182,12 +181,12 @@ export default function OrgProfileHero({
                       {menuOpen && (
                         <div
                           className="absolute right-0 mt-2 w-48 rounded-lg shadow-lg border z-50"
-                          style={{ backgroundColor: '#FFFFFF', borderColor: '#E8E4DF' }}
+                          style={{ backgroundColor: 'var(--surface-canvas)', borderColor: 'var(--folio-border-subtle)' }}
                         >
                           <Link
                             href={`/org/${org.id}/vendors`}
                             className="block px-4 py-3 text-sm transition-colors hover:bg-stone-50 rounded-lg"
-                            style={{ color: '#2C2825' }}
+                            style={{ color: 'var(--folio-text-primary)' }}
                             onClick={() => setMenuOpen(false)}
                           >
                             Our Vendors
@@ -204,8 +203,8 @@ export default function OrgProfileHero({
                     href={org.website}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-sm hover:underline"
-                    style={{ color: '#8B8178' }}
+                    className="max-w-full break-all text-sm hover:underline"
+                    style={{ color: 'var(--folio-text-secondary)' }}
                   >
                     {org.website.replace(/^https?:\/\//, '').replace(/\/$/, '')}
                   </a>
@@ -224,10 +223,10 @@ function Stat({ label, value }: { label: string; value: number }) {
 
   return (
     <div className="text-center">
-      <div className="text-xl md:text-2xl font-light" style={{ color: '#2C2825' }}>
+      <div className="text-xl md:text-2xl font-medium" style={{ color: 'var(--folio-text-primary)' }}>
         {formatted}
       </div>
-      <div className="text-xs" style={{ color: '#8B8178' }}>
+      <div className="text-xs" style={{ color: 'var(--folio-text-secondary)' }}>
         {label}
       </div>
     </div>

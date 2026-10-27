@@ -1,4 +1,5 @@
 'use client';
+import { workflowRequest } from '@/lib/client/workflowRequest';
 import { SpotlightSelections } from '@/components/spotlight/PrivateSpotlightInterview';
 
 import { useEffect, useRef, useState } from "react";
@@ -41,6 +42,7 @@ export default function AdvancedTagProducts({
   onTagsUpdate,
   isEditable = true 
 }: AdvancedTagProductsProps) {
+  const [saveError, setSaveError] = useState<string | null>(null);
   const [tags, setTags] = useState<ProductTag[]>(existingTags);
   const [products, setProducts] = useState<Product[]>([]);
   const [selected, setSelected] = useState<{ x: number; y: number } | null>(null);
@@ -171,6 +173,7 @@ export default function AdvancedTagProducts({
       const trimmedFinish = finish.trim();
       const payload = {
         ...basePayload,
+        deduplicate: true,
         // finishConfirmed is true only when the designer typed or edited it. A
         // proposal left untouched is written but stays unconfirmed.
         finishRaw: trimmedFinish || null,
@@ -179,7 +182,7 @@ export default function AdvancedTagProducts({
         shopQuote: addToShop && !addQuoteLater ? shopQuote : undefined,
       };
 
-      const res = await fetch("/api/tag-product-to-image", {
+      const res = await workflowRequest("/api/tag-product-to-image", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
@@ -206,10 +209,11 @@ export default function AdvancedTagProducts({
         setShowProductModal(false);
         resetShopState();
       } else {
-        console.error("Failed to create tag");
+        const error = await res.json().catch(() => null);
+        throw new Error(error?.error || "Could not save tag. Try again.");
       }
     } catch (error) {
-      console.error("Error creating tag:", error);
+      setSaveError(error instanceof Error ? error.message : "Could not save tag. Try again.");
     } finally {
       setIsLoading(false);
     }
@@ -220,7 +224,7 @@ export default function AdvancedTagProducts({
     if (!isEditable) return;
 
     try {
-      const res = await fetch(`/api/tag-product-to-image/${tagId}`, {
+      const res = await workflowRequest(`/api/tag-product-to-image?id=${encodeURIComponent(tagId)}`, {
         method: "DELETE",
       });
 
@@ -228,9 +232,9 @@ export default function AdvancedTagProducts({
         const updatedTags = tags.filter(tag => tag.id !== tagId);
         setTags(updatedTags);
         onTagsUpdate?.(updatedTags);
-      }
+      } else throw new Error("Could not delete tag. Refresh the project and try again.");
     } catch (error) {
-      console.error("Error deleting tag:", error);
+      setSaveError(error instanceof Error ? error.message : "Could not delete tag.");
     }
   };
 
@@ -240,7 +244,8 @@ export default function AdvancedTagProducts({
   };
 
   return (
-    <div className="relative w-full">
+<div className="relative w-full">
+      {saveError && <p role="alert">{saveError} <button type="button" onClick={() => window.location.reload()}>Refresh project</button></p>}
       <SpotlightSelections projectId={projectId} tagIds={tags.map(t => t.id)} />
       {/* Main Image Container */}
       <div className="relative group">

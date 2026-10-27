@@ -1,0 +1,68 @@
+{
+  "boundary": "Actual handlers/writer, mocked session acquisition and memory DB/storage; no production data or database proof",
+  "results": [
+    {
+      "id": "G2",
+      "probe": "Lost project-create acknowledgement, same mounted writer retries",
+      "expected": 1,
+      "actual": 2,
+      "confirmedFailure": true
+    },
+    {
+      "id": "G3",
+      "probe": "Apply newer position, then delayed older move",
+      "statuses": [
+        200,
+        200
+      ],
+      "expected": "80/80 retained or stale rejected 409",
+      "actual": [
+        30,
+        30
+      ],
+      "confirmedFailure": true
+    },
+    {
+      "id": "G6",
+      "probe": "Move tag to photo in Room B; read linked Selection",
+      "expectedRoom": "7b1dafc2-f350-4556-a018-71a1289db169",
+      "actualRoom": "e6f1d55a-db18-40ce-bb31-1bc3ec3e34d7",
+      "confirmedFailure": true
+    },
+    {
+      "id": "G1",
+      "probe": "Anonymous public-project tags contain EXCLUDED image URL",
+      "status": 200,
+      "expected": "Excluded photo absent",
+      "actualContainsExcluded": true,
+      "confirmedFailure": true
+    },
+    {
+      "id": "control-unpublish",
+      "probe": "Current isPublic=false blocks that tag response",
+      "passed": true
+    },
+    {
+      "id": "G2-room",
+      "probe": "Same room create request replayed",
+      "expected": "One room or explicit duplicate intent",
+      "actual": 2,
+      "confirmedFailure": true
+    },
+    {
+      "id": "G7",
+      "probe": "Initial project POST with credits; child post write fails",
+      "status": 201,
+      "projectPersisted": true,
+      "creditsPersisted": false,
+      "confirmedFailure": true
+    },
+    {
+      "id": "G4",
+      "probe": "Editor passes canonical API write access; page gate only owner/designer/admin",
+      "apiWritePermitted": true,
+      "sourceGate": "  const isOwner =\r\n    viewerRole === 'ADMIN' ||\r\n    (!!viewerId &&\r\n      (viewerId === base.ownerId || (!!designerId && viewerId === designerId)));\r\n\r\n  if (!isOwner) {\r\n    console.warn('[project-detail] forbidden', {\r\n      projectId: base.id,\r\n      viewerId,\r\n      viewerRole,\r\n      ownerId: base.ownerId,\r\n      designerId,\r\n    });\r\n    notFound();\r\n  }\r\n\r\n",
+      "boundary": "Page gate inspected, not full Next request"
+    }
+  ]
+}

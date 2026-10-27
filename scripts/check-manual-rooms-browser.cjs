@@ -84,6 +84,11 @@ function handler(req, res) {
   }
   let body = ''; req.on('data', part => { body += part; }); req.on('end', () => {
     const data = JSON.parse(body || '{}');
+    if (route === '/api/projects/project/rooms') {
+      assert.match(data.requestId, /^[a-zA-Z0-9-]{16,80}$/);
+      const room = { id: 'room-' + rooms.length, name: data.name }; rooms.push(room);
+      actions.push({ name: 'create', args: data }); return json(room);
+    }
     if (route === '/api/fixture/actions') {
       const { name, args } = data; actions.push(data);
       const image = images.find(image => image.id === args.imageId);
@@ -144,7 +149,7 @@ async function main() {
     await check('manual', 'designers can assign, create and name rooms, rename them, exclude photos and restore them', async () => {
       reset(); await page.goto(base + '/?surface=rooms'); await page.waitForSelector('select[aria-label="Room for Window detail"]');
       await page.select('select[aria-label="Room for Window detail"]', 'kitchen'); await actionFor('Window detail', 'Assign');
-      await page.waitForFunction(() => !document.querySelector('select[aria-label="Room for Window detail"]')); assert.equal(images.find(image => image.id === 'unassigned').roomId, 'kitchen');
+      await page.waitForFunction(() => !document.querySelector('#uncategorized-group select[aria-label="Room for Window detail"]')); assert.equal(images.find(image => image.id === 'unassigned').roomId, 'kitchen');
       await page.select('select[aria-label="Room for Garden"]', '__new__'); await page.type('input[placeholder="New room name"]', 'Courtyard'); await click('Add'); await text('Courtyard');
       const created = rooms.find(room => room.name === 'Courtyard'); assert(created); assert.equal(images.find(image => image.id === 'garden').roomId, created.id);
       await click('Courtyard'); await page.keyboard.down('Control'); await page.keyboard.press('KeyA'); await page.keyboard.up('Control');

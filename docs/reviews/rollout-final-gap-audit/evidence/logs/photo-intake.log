@@ -1,0 +1,12 @@
+PASS real Chrome photo intake {
+  smallFormats: [ 'jpeg', 'png', 'webp' ],
+  originalBytes: 12342530,
+  preparedBytes: 3103053,
+  width: 3200,
+  height: 2400,
+  previewPSNR: 41.55166479306634,
+  metadataStripped: true,
+  identityStable: true,
+  corruptRejected: true,
+  oversizedDimensionsRejected: true
+}

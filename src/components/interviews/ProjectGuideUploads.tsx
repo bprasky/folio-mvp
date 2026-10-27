@@ -2,7 +2,7 @@
 
 import { workflowRequest } from '@/lib/client/workflowRequest';
 
-import { projectPhotoError } from '@/lib/files/projectPhoto';
+import { originalPhotoError, prepareProjectPhoto } from '@/lib/files/prepareProjectPhoto';
 import { useEffect, useRef, useState } from 'react';
 
 type Candidate = { url: string; alt?: string };
@@ -29,6 +29,7 @@ export function ProjectGuideUploads({ projectId, ensureProject, canImport = true
   const [url, setUrl] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
+  const [preparationNotes, setPreparationNotes] = useState<string[]>([]);
   const [candidates, setCandidates] = useState<Candidate[]>([]);
   const [selected, setSelected] = useState<string[]>([]);
   const [importId, setImportId] = useState<string | null>(null);
@@ -50,15 +51,22 @@ export function ProjectGuideUploads({ projectId, ensureProject, canImport = true
     finally { working.current = false; setBusy(false); }
   };
   const upload = (files: File[]) => run(async () => {
-    const invalid = files.map(file => ({ file, error: projectPhotoError(file.type, file.size) })).filter(item => item.error);
-    const photos = files.filter(file => !projectPhotoError(file.type, file.size));
+    const invalid = files.map(file => ({ file, error: originalPhotoError(file.type, file.size) })).filter(item => item.error);
+    const photos = files.filter(file => !originalPhotoError(file.type, file.size));
     if (!photos.length) throw new Error(invalid.map(item => `${item.file.name}: ${item.error}`).join(' '));
     const id = await resolveProject(); const added: GuidePhoto[] = [];
     const failed: File[] = [];
     let failureMessage = '';
     for (const file of photos) {
       if (!mounted.current) return;
-      try { const data = await request(`/api/projects/${encodeURIComponent(id)}/images`, { imageData: await imageData(file), mimeType: file.type, name: file.name, deduplicate: true }); added.push(data.image); }
+      try {
+        const prepared = await prepareProjectPhoto(file);
+        if (!mounted.current) return;
+        if (prepared.notice) setPreparationNotes(notes => Array.from(new Set([...notes, prepared.notice!])));
+        const encoded = await imageData(prepared.file);
+        if (!mounted.current) return;
+        const data = await request(`/api/projects/${encodeURIComponent(id)}/images`, { imageData: encoded, mimeType: prepared.file.type, name: file.name, deduplicate: true }); added.push(data.image);
+      }
       catch (failure) { failed.push(file); if (!failureMessage && failure instanceof Error) failureMessage = failure.message; }
     }
     if (!mounted.current) return;
@@ -102,6 +110,8 @@ export function ProjectGuideUploads({ projectId, ensureProject, canImport = true
     </form> : <p className="text-folio-meta text-text-secondary">Website import is available with Pro. Upload your photographs below.</p>}
     <label className={`${button} flex max-w-full cursor-pointer flex-wrap items-center gap-2`}>Upload photos<input aria-label="Upload project photos" type="file" accept="image/jpeg,image/png,image/webp" multiple disabled={busy} className="min-w-0 max-w-full text-folio-meta" onChange={event => { const files = Array.from(event.target.files || []); event.target.value = ''; if (files.length) void upload(files); }} /></label>
     {candidates.length ? <div className="space-y-3"><p className="text-folio-meta">Choose the photographs to add.</p><div className="grid max-h-64 grid-cols-3 gap-2 overflow-auto sm:grid-cols-5">{candidates.map(item => <label key={item.url} className="relative cursor-pointer"><img src={item.url} alt={item.alt || 'Imported photograph'} className="aspect-square w-full rounded-sm object-cover" /><input type="checkbox" aria-label={`Select ${item.alt || 'photograph'}`} checked={selected.includes(item.url)} disabled={busy} onChange={event => setSelected(current => event.target.checked ? [...current, item.url] : current.filter(url => url !== item.url))} className="absolute left-2 top-2 accent-folio-gold" /></label>)}</div><button type="button" className={button} disabled={busy || !selected.length} onClick={() => void saveSelected()}>Add selected photos</button></div> : null}
+    <p className="text-folio-meta text-text-secondary">JPEG, PNG or WebP originals up to 32 MiB and 40 megapixels. Larger files are prepared as high-quality JPEG copies for upload.</p>
+    {preparationNotes.map(note => <p key={note} role="status" className="text-folio-meta">{note}</p>)}
     {busy ? <p role="status" className="text-folio-meta">Adding your project photographs…</p> : null}
     {error ? <p role="alert" className="text-folio-meta">{error}</p> : null}
     {failedFiles.length ? <div className="space-y-2 text-folio-meta"><p>Still to upload: {failedFiles.map(file => file.name).join(', ')}</p><button type="button" className={button} disabled={busy} onClick={() => void upload(failedFiles)}>Retry failed photos</button></div> : null}

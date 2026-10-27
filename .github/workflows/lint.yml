@@ -96,6 +96,7 @@ jobs:
           node scripts/check-project-setup-browser.cjs
           node scripts/check-rollout-recovery-browser.cjs
           node scripts/check-manual-rooms-browser.cjs
+          RESPONSIVE_QUICK=1 RESPONSIVE_BROWSER="$GUIDED_TEST_BROWSER" node scripts/check-responsive-journey.cjs
           node scripts/check-project-completion-date.cjs
           LOADING_TEST_BROWSER="$GUIDED_TEST_BROWSER" node scripts/check-editorial-loading.cjs
           npm run test:guided:browser

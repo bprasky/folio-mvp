@@ -1,17 +1,14 @@
 import { prisma } from "@/lib/prisma";
-import { Prisma } from "@prisma/client";
+import { ParticipantSide, ParticipantRole } from "@prisma/client";
 import { can, isOrgRole, type OrgCapability } from "@/lib/orgPermissions";
 import { canPublishFromOrg } from '@/lib/permissions';
 
-const E = (Prisma as any).$Enums ?? (Prisma as any);
-const ParticipantSide = E.ParticipantSide ?? {};
-const ParticipantRole = E.ParticipantRole ?? {};
 
 export async function getProjectAccess(userId: string, projectId: string) {
   // First check if user is owner or designer (direct access)
   const project = await prisma.project.findUnique({
     where: { id: projectId },
-    select: { ownerId: true, designerId: true },
+    select: { ownerId: true, designerId: true, designerOrgId: true },
   });
 
   if (!project) return null;
@@ -24,8 +21,15 @@ export async function getProjectAccess(userId: string, projectId: string) {
   // Find all orgs this user belongs to
   const memberships = await prisma.organizationUser.findMany({
     where: { userId, isActive: true },
-    select: { organizationId: true, organization: { select: { id: true, type: true } } },
+    select: { organizationId: true, role: true, organization: { select: { id: true, type: true } } },
   });
+  const user = await prisma.user.findUnique({ where: { id: userId }, select: { role: true } });
+  if (user?.role === 'ADMIN') return { role: ParticipantRole.OWNER, side: ParticipantSide.DESIGNER, vendorOrgId: null };
+  const firmMembership = memberships.find(m => m.organizationId === project.designerOrgId);
+  if (firmMembership && isOrgRole(firmMembership.role) && can(firmMembership.role, 'view_internal')) {
+    return { role: can(firmMembership.role, 'create_and_edit_projects') ? ParticipantRole.EDITOR : ParticipantRole.VIEWER,
+      side: ParticipantSide.DESIGNER, vendorOrgId: null };
+  }
   const orgIds = memberships.map(m => m.organizationId);
 
   // Is user a participant directly or via org?

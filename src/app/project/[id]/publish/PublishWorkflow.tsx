@@ -1,4 +1,5 @@
 'use client';
+import { workflowRequest } from '@/lib/client/workflowRequest';
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
@@ -10,6 +11,8 @@ import {
 import { toast } from 'sonner';
 
 interface PublishWorkflowProps {
+  canEdit: boolean;
+  canPublish: boolean;
   project: {
     id: string;
     title: string;
@@ -43,7 +46,7 @@ interface PublishWorkflowProps {
 }
 
 export default function PublishWorkflow({ 
-  project, 
+  project, canEdit, canPublish,
   images, 
   readiness,
   existingPost 
@@ -66,15 +69,15 @@ export default function PublishWorkflow({
 
   // Step 1: Create draft (via API)
   const handleCreateDraft = async () => {
-    if (!readiness.isReady) {
-      toast.error('Please add at least one image and tag a product before creating a draft.');
+    if (!canEdit || !readiness.isReady) {
+      toast.error('Add at least one included photo and assign every included photo to a room before creating a draft. Editing access is required.');
       return;
     }
 
     setIsCreatingDraft(true);
 
     try {
-      const response = await fetch(`/api/projects/${project.id}/approvals/draft-editorial`, {
+      const response = await workflowRequest(`/api/projects/${project.id}/approvals/draft-editorial`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
       });
@@ -103,11 +106,12 @@ export default function PublishWorkflow({
 
   // Step 2: Publish (explicit action via API)
   const handlePublish = async () => {
+    if (!canPublish || !readiness.isReady) { toast.error("Publishing requires your firm’s publishing permission and all included photos assigned to rooms."); return; }
     setIsPublishing(true);
     setStep('publishing');
 
     try {
-      const response = await fetch(`/api/projects/${project.id}/approvals/publish-editorial`, {
+      const response = await workflowRequest(`/api/projects/${project.id}/approvals/publish-editorial`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
       });
@@ -257,7 +261,7 @@ export default function PublishWorkflow({
                   <p className="folio-ui text-folio-text-secondary mt-1">
                     {readiness.imageCount === 0
                       ? 'Upload at least one image to your project.'
-                      : 'Tag at least one product in your images to unlock publishing.'}
+                      : 'Assign every included photo to a room before publishing.'}
                   </p>
                   <Link
                     href={`/project/${project.id}?view=media`}
@@ -280,7 +284,7 @@ export default function PublishWorkflow({
 
               <button
                 onClick={handleCreateDraft}
-                disabled={!readiness.isReady || isCreatingDraft}
+                disabled={!canEdit || !readiness.isReady || isCreatingDraft}
                 className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-[var(--accent)] hover:bg-[var(--accent-hover)] text-white font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <FaFileAlt className="w-4 h-4" />
@@ -377,7 +381,7 @@ export default function PublishWorkflow({
 
               <button
                 onClick={handlePublish}
-                disabled={isPublishing}
+                disabled={!canPublish || !readiness.isReady || isPublishing}
                 className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-[var(--accent)] hover:bg-[var(--accent-hover)] text-white font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <FaRocket className="w-4 h-4" />

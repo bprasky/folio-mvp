@@ -12,7 +12,7 @@ const postcss = require('postcss');
 const tailwind = require('tailwindcss');
 const puppeteer = require('puppeteer-core');
 const root = path.resolve(__dirname, '..');
-const out = path.join(root, 'docs/reviews/guided-interview');
+const out = path.join(root, 'docs/reviews/responsive-journey/interview');
 const fixtureOut = path.join(root, '.tmp/guided-browser');
 const results = [];
 const capture = async (name, fn) => { await fn(); results.push(name); console.log('PASS ' + name); };
@@ -287,6 +287,13 @@ async function main() {
       const rect = await page.$eval('[aria-label="Send response"]', el => ({ top: el.getBoundingClientRect().top, bottom: el.getBoundingClientRect().bottom }));
       assert.ok(rect.top >= 0 && rect.bottom <= 844, JSON.stringify(rect));
     });
+    for (const width of [360,390,767,768,1440]) {
+      await page.setViewport({width,height:width===1440?960:844});
+      assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));
+      assert.ok(await page.$eval('[aria-label="Send response"]',el=>el.getBoundingClientRect().bottom<=innerHeight));
+      await page.screenshot({path:path.join(out,'interview-'+width+'.png'),fullPage:true});
+    }
+    await page.setViewport({width:390,height:844});
     await page.screenshot({ path: path.join(out, 'mobile.png'), fullPage: true });
     await page.click('[aria-label="Send response"]'); await idle();
     await capture('Corrections keep original exchange and replace accepted evidence', async () => {

@@ -1,3 +1,5 @@
+import { z } from 'zod';
+import { createRoomOnce } from '@/lib/projects/createRoom';
 export const dynamic = 'force-dynamic';
 
 import { NextRequest, NextResponse } from 'next/server';
@@ -38,29 +40,13 @@ export async function POST(
     await assertProjectWrite(session.user.id, params.id);
 
     const projectId = params.id;
-    const body = await request.json();
-    const { name } = body;
+    const room = await createRoomOnce(session.user.id, params.id, await request.json());
 
-    if (!name || !name.trim()) {
-      return NextResponse.json(
-        { error: 'Room name is required' },
-        { status: 400 }
-      );
-    }
-
-    const room = await prisma.room.create({
-      data: {
-        name: name.trim(),
-        projectId: projectId
-      },
-      include: {
-        selections: true
-      }
-    });
-
-    console.log('Vendor project room created successfully:', room);
     return NextResponse.json(room, { status: 201 });
   } catch (error) {
+    if (error instanceof Error && 'status' in error && error.status === 409) return NextResponse.json({ error: error.message }, { status: 409 });
+    if (error instanceof z.ZodError) return NextResponse.json({ error: 'A valid room name and stable request ID are required.' }, { status: 400 });
+    if (error instanceof Error && ['Forbidden', 'NotFound'].includes(error.message)) return NextResponse.json({ error: error.message }, { status: error.message === 'Forbidden' ? 403 : 404 });
     console.error('Error creating vendor project room:', error);
     return NextResponse.json(
       { error: 'Failed to create room' },

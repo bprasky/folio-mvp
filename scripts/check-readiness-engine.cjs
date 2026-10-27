@@ -11,6 +11,7 @@ function load(file) {
   const js = ts.transpileModule(fs.readFileSync(file, 'utf8'), { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 } }).outputText;
   vm.runInNewContext(js, { exports, structuredClone, console, process, Date, require: name => {
     if (name === 'server-only') return {};
+    if (name === '@/lib/server/protected-project-photo') return { readProtectedProjectPhoto: () => { throw new Error('Unexpected image read in pure readiness checks'); } };
     if (name === '@anthropic-ai/sdk' || name === 'sharp') return () => { throw new Error('No live evaluation permitted'); };
     if (name === '@/lib/ai/models') return { MODELS: { sonnet: 'inert' } };
     if (name === '@/lib/interview/prompts/editorialTone') return load('src/lib/interview/prompts/editorialTone.ts');

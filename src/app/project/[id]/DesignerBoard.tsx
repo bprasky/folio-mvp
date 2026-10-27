@@ -1,4 +1,5 @@
 'use client';
+import { createRoom as createRoomWithRetry } from '@/lib/client/createRoom';
 
 import { useState, useMemo, useCallback, useEffect } from 'react';
 import Link from 'next/link';
@@ -215,15 +216,7 @@ export default function DesignerBoard({
     setIsCreatingRoom(true);
 
     try {
-      const res = await fetch(`/api/designer/projects/${projectId}/rooms`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name: 'New Room' })
-      });
-
-      if (!res.ok) {
-        throw new Error('Failed to create room');
-      }
+      await createRoomWithRetry({ projectId: projectId, name: 'New Room' });
 
       toast.success('Room created');
       router.refresh();

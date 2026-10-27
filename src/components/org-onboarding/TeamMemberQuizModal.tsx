@@ -146,6 +146,7 @@ export function TeamMemberQuizModal({
     return (
       <Dialog open={open} onOpenChange={() => {}}>
         <DialogContent className="sm:max-w-lg">
+          <DialogTitle className="sr-only">Creating your team profile</DialogTitle>
           <div className="flex flex-col items-center justify-center py-12 space-y-4">
             <Sparkles className="w-12 h-12 text-amber-600 animate-pulse" />
             <h3 className="text-xl" style={{ fontFamily: 'Georgia, serif' }}>

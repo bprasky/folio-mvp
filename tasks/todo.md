@@ -1033,3 +1033,22 @@ Production incident attribution remains unverified: Vercel runtime/deployment re
 - [x] Record evidence and remaining storage/database/HTTP limitations. No production access, migrations, merge or deployment.
 
 Review: confirmed nested-room destructive IDOR, viewer mutations, project-delete alias bypass, private tag/User/interview leakage, unsafe storage deletion and external image fetching. Fixed with existing authorization/schema/transport patterns and atomic writes. Tests include two designers, anonymous, participants, firm roles, admin and vendors; actual PostgreSQL rollback/concurrent retry checks pass. See `docs/audits/DESIGNER_AUTHORIZATION_2026-10-26.md` for results and the unresolved private-photo storage policy gate. Local only; no production access, migrations, merge or deployment.
+
+## Founding-designer rollout hardening — 2026-10-26
+
+- [x] Reconcile merged 1020fef5 / PR826 and responsive f000a0da; isolate codex/rollout-hardening and preserve other worktrees.
+- [x] Implement private photo/crop transport, atomic creation and credits, project/room identities, tag/Selection consistency, canonical page permissions, readiness and essential feedback.
+- [x] Integrate responsive fixes; prepare large original photos within the existing transport cap.
+- [x] Execute exact native PostgreSQL groups, independent worker/lease races, actual HTTP image bytes, Chrome image-quality and authenticated Next/session/database journey.
+- [x] Finish final combined validation/evidence and operational storage procedure; prepare the reviewed branch for PR publication. Do not merge or deploy.
+
+Review: 37 required core checks, 8 independent-process concurrency checks and 8 byte-storage checks pass without skips. Final committed desktop/mobile Next/session/database journeys each pass 12 groups. Prepared TypeScript ratchet passes at 867/880; lint, client, DB and migration-discipline guards pass. No schema change or baseline update. New uploads require a separately provisioned private project-photos bucket; legacy public objects need reviewed copying/reference migration and retirement before rollout. Synthetic AI and storage-policy boundaries remain explicit. See docs/reviews/rollout-final-gap-audit/README.md for evidence, remaining gates and Brad's smoke.
+
+## Authorized PR827 release — 2026-10-27
+
+- [x] Inspect current main, PR checks/reviews, production target and required storage configuration.
+- [x] Repair the hosted focus-test timing failure without weakening assertions; rerun all responsive interactions.
+- [x] Provision the separate private photo bucket; verify and remove a synthetic hosted byte canary.
+- [ ] Wait for updated hosted checks, merge the reviewed SHA, deploy that exact merged commit and verify production domain/anonymous boundaries.
+
+Release preflight is recorded in docs/reviews/rollout-final-gap-audit/evidence/release-preflight.md. Runtime source is unchanged; legacy image retirement and signed-in/device rollout smoke remain separately scoped.

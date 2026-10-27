@@ -1,8 +1,11 @@
+import { readProtectedProjectPhoto } from '@/lib/server/protected-project-photo';
 import 'server-only';
 import sharp from 'sharp';
 
 /** Read only reviewed first-party storage images, with bounded fetch and decoding. */
-export async function renderApprovedImage(source: string, width: number, height: number): Promise<Buffer> {
+export async function renderApprovedImage(source: string, width: number, height: number, projectId?: string): Promise<Buffer> {
+  const protectedImage = projectId ? await readProtectedProjectPhoto(source, projectId) : null;
+  if (protectedImage) return sharp(protectedImage.buffer, { limitInputPixels: 40_000_000 }).rotate().resize(width, height, { fit: 'cover' }).jpeg({ quality: 90 }).toBuffer();
   const url = new URL(source);
   const origin = process.env.NEXT_PUBLIC_SUPABASE_URL;
   if (!origin || url.origin !== new URL(origin).origin || url.protocol !== 'https:' || !url.pathname.startsWith('/storage/v1/object/public/')) {

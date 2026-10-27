@@ -16,7 +16,7 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
     if (candidate.readiness !== 'ready' || candidate.dismissed) throw new ReadinessError('Finish the remaining steps before exporting.', 409);
     const images = [];
     for (const [index, image] of Array.from(candidate.visuals.entries())) {
-      const buffer = await renderApprovedImage(image.url, 1080, 1350);
+      const buffer = await renderApprovedImage(image.url, 1080, 1350, image.projectId);
       images.push({ name: `${String(index + 1).padStart(2, '0')}.jpg`, dataUrl: `data:image/jpeg;base64,${buffer.toString('base64')}` });
     }
     const fresh = await currentCandidate(userId, candidate.id, candidate.version, candidate.sourceVersion);

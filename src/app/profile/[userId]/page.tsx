@@ -77,6 +77,9 @@ export default async function ProfilePage({ params, searchParams }: Props) {
   // Check if current user is viewing their own profile
   const session = await auth();
   const isOwner = session?.user?.id === user.id;
+  const initiallyFollowing = !!(session?.user?.id && !isOwner && await prisma.userRelationship.findUnique({
+    where: { followerId_followingId: { followerId: session.user.id, followingId: user.id } }, select: { id: true },
+  }));
 
   const activeTab = resolvedSearchParams.tab || 'feed';
   const activeFilter = resolvedSearchParams.filter || 'all';
@@ -109,6 +112,7 @@ export default async function ProfilePage({ params, searchParams }: Props) {
         projectCount={projectCount}
         featuredCount={featuredCount}
         isOwner={isOwner}
+        initiallyFollowing={initiallyFollowing}
       />
 
       {pinnedItems.length > 0 && <PinnedCarousel items={pinnedItems} />}

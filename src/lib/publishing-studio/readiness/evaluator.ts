@@ -1,3 +1,4 @@
+import { readProtectedProjectPhoto } from '@/lib/server/protected-project-photo';
 import 'server-only';
 import Anthropic from '@anthropic-ai/sdk';
 import sharp from 'sharp';
@@ -35,6 +36,10 @@ Return JSON only matching: {shape:"decision|constraint|transformation|material|p
 
 /** Only our configured public storage origin is fetched; redirects and oversized files fail closed. */
 async function inspectImage(image: CandidateSource['images'][number]) {
+  const protectedImage = await readProtectedProjectPhoto(image.url, image.projectId);
+  let buffer: Buffer;
+  if (protectedImage) buffer = protectedImage.buffer;
+  else {
   const origin = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const url = new URL(image.url);
   if (!origin || url.origin !== new URL(origin).origin || url.protocol !== 'https:' || !url.pathname.startsWith('/storage/v1/object/public/') || url.username || url.password) return null;
@@ -43,7 +48,8 @@ async function inspectImage(image: CandidateSource['images'][number]) {
   const reader = response.body.getReader(); const chunks: Uint8Array[] = []; let bytes = 0;
   try { while (true) { const chunk = await reader.read(); if (chunk.done) break; bytes += chunk.value.length; if (bytes > 15_000_000) throw new Error('Image exceeds evaluation limit'); chunks.push(chunk.value); } }
   finally { await reader.cancel(); }
-  const buffer = Buffer.concat(chunks);
+  buffer = Buffer.concat(chunks);
+  }
   const pipeline = sharp(buffer, { limitInputPixels: 50_000_000 }).rotate();
   const metadata = await pipeline.metadata();
   const pixels = await pipeline.clone().resize(9, 8, { fit: 'fill' }).greyscale().raw().toBuffer();

@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { LiveInterviewPanel } from "@/components/interviews/LiveInterviewPanel";
 import { Button } from "@/components/ui/button";
-import { Dialog } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import type { runSpotlight, SpotlightCommand } from "@/lib/spotlight/service";
 
 type State = Awaited<ReturnType<typeof runSpotlight>>;
@@ -477,7 +477,7 @@ export function PrivateSpotlightInterview({
         if (!open && !liveActive) onClose();
       }}
     >
-      <div
+      <DialogContent
         role="dialog"
         aria-modal="true"
         aria-label="Private spotlight interview"
@@ -493,7 +493,7 @@ export function PrivateSpotlightInterview({
           >
             Close interview
           </Button>
-          <h2>Private spotlight interview</h2>
+          <DialogTitle>Private spotlight interview</DialogTitle>
           <p>
             Each selected piece gets a question. Answers stay private. Saving
             does not publish or contact vendors.
@@ -560,7 +560,7 @@ export function PrivateSpotlightInterview({
           )}
           </fieldset>
         </div>
-      </div>
+      </DialogContent>
     </Dialog>
   );
 }

@@ -74,14 +74,7 @@ export async function POST(
         cropAspect: body.cropAspect ?? tag.cropAspect,
         category: tag.product.category,
       },
-      sourceImageUrl: tag.image.url,
-    });
-
-    // Upload the crop
-    const uploadResult = await uploadCrop({
-      buffer: cropResult.buffer,
-      tagId: tag.id,
-      projectId: tag.image.projectId,
+      sourceImageUrl: tag.image.url, projectId: tag.image.projectId,
     });
 
     // Update tag with crop metadata
@@ -90,16 +83,10 @@ export async function POST(
     const finalCropScale = body.cropScale ?? tag.cropScale ?? getCategoryDefaultScale(tag.product.category);
     const finalCropAspect = body.cropAspect ?? tag.cropAspect ?? "1:1";
 
-    await prisma.productTag.update({
-      where: { id: tagId },
-      data: {
-        cropUrl: uploadResult.publicUrl,
-        cropX: finalCropX,
-        cropY: finalCropY,
-        cropScale: finalCropScale,
-        cropAspect: finalCropAspect,
-        cropManual: isManual,
-      },
+    const uploadResult = await uploadCrop({
+      buffer: cropResult.buffer, tagId: tag.id, projectId: tag.image.projectId,
+      expected: { imageId: tag.imageId, x: tag.x, y: tag.y, updatedAt: tag.updatedAt },
+      metadata: { cropX: finalCropX, cropY: finalCropY, cropScale: finalCropScale, cropAspect: finalCropAspect, cropManual: isManual },
     });
 
     return NextResponse.json({
@@ -110,6 +97,7 @@ export async function POST(
       cropAspect: finalCropAspect,
     });
   } catch (error) {
+    if (error instanceof Error && 'status' in error && error.status === 409) return NextResponse.json({ error: error.message }, { status: 409 });
     console.error("[crop] Failed to generate crop:", error);
     return NextResponse.json(
       { error: "Failed to generate crop" },

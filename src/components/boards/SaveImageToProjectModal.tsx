@@ -1,4 +1,5 @@
 'use client';
+import { useProjectDraftWriter } from '@/lib/projects/useProjectDraftWriter';
 
 import { useState, useEffect, useMemo } from 'react';
 import { useSession } from 'next-auth/react';
@@ -47,6 +48,7 @@ export default function SaveImageToProjectModal({
   imageUrl,
   onSuccess,
 }: SaveImageToProjectModalProps) {
+  const writeProject = useProjectDraftWriter('SaveImageToProjectModal.tsx');
   const { data: session } = useSession();
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(false);
@@ -178,26 +180,15 @@ export default function SaveImageToProjectModal({
 
       // Create new project if needed
       if (createNew) {
-        const createResponse = await fetch('/api/projects', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
+        const createdId = await writeProject({ ...{
             title: newProjectTitle,
             description: 'Created from saved image',
             projectType: 'RESIDENTIAL',
             clientType: 'RESIDENTIAL',
             budgetBand: 'UNSPECIFIED',
             stage: 'concept',
-          }),
-        });
-
-        if (createResponse.ok) {
-          const newProject = await createResponse.json();
-          targetProjectId = newProject.id;
-        } else {
-          const errorData = await createResponse.json().catch(() => ({}));
-          throw new Error(errorData.error || 'Failed to create project');
-        }
+          }, projectStatus: 'new_project' });
+        targetProjectId = createdId;
       }
 
       if (!targetProjectId) {

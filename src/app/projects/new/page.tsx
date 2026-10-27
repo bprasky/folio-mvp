@@ -17,7 +17,7 @@ import { Settings2, ChevronDown, ArrowRight } from 'lucide-react';
 import { CreateProjectGuide } from '@/components/interviews/CreateProjectGuide';
 import { COMPLETION_MONTHS, completionDateInputError } from '@/lib/projects/completionDate';
 
-import { createProjectDraftWriter } from '@/lib/projects/saveProjectDraft';
+import { useProjectDraftWriter } from '@/lib/projects/useProjectDraftWriter';
 
 type FormValues = {
   title: string;
@@ -149,8 +149,7 @@ function CreateProjectForm() {
   const [submitting, setSubmitting] = useState(false);
   const [savingDraft, setSavingDraft] = useState(false);
   const [draftId, setDraftId] = useState<string | null>(null);
-  const writer = useRef<ReturnType<typeof createProjectDraftWriter> | null>(null);
-  if (!writer.current) writer.current = createProjectDraftWriter();
+  const writer = useProjectDraftWriter('manual');
   const continuing = useRef(false);
   const [saveError, setSaveError] = useState<string | null>(null);
   const [autosaving, setAutosaving] = useState(false);
@@ -195,7 +194,7 @@ function CreateProjectForm() {
     setSubmitting(true);
     setSaveError(null);
     try {
-      const id = await writer.current!(buildPayload());
+      const id = await writer(buildPayload());
       setDraftId(id);
       toast.success('Project saved.');
       router.push(`/project/${encodeURIComponent(id)}?view=media`);
@@ -216,7 +215,7 @@ function CreateProjectForm() {
     setSavingDraft(true);
     setSaveError(null);
     try {
-      const id = await writer.current!(buildPayload('draft'));
+      const id = await writer(buildPayload('draft'));
       setDraftId(id);
       toast.success('Draft saved.');
     } catch (err: any) {
@@ -234,7 +233,7 @@ function CreateProjectForm() {
     }
     autosaveTimer.current = setTimeout(() => {
       setAutosaving(true);
-      writer.current!(buildPayload('draft')).then(() => {
+      writer(buildPayload('draft')).then(() => {
         setSaveError(null);
       }).catch((error: Error) => {
         setSaveError(error.message || 'Changes could not be saved. Try Save draft again.');

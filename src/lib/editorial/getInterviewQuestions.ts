@@ -173,7 +173,7 @@ async function buildProjectGroup(
   let projectGenQuestions: GeneratedQuestion[] = [];
   try {
     const locationParts = [projectMeta?.city, projectMeta?.regionState].filter(Boolean);
-    const result = await generateProjectQuestions({
+    const result = await generateProjectQuestions({ projectId,
       projectTitle: context.projectTitle,
       projectDescription: context.projectDescription,
       designerName: brandIdentity,

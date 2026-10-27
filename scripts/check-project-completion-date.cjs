@@ -39,6 +39,7 @@ const mocks = {
     project: {
       create: async ({ data }) => { writes.push(structuredClone(data)); return { id: 'project' }; },
       findUnique: async ({ select }) => {
+        if (!select) return null; // fresh create identity; date reads below remain asserted
         events.push('read-completion');
         assert.deepEqual(Object.keys(select).sort(), ['completedMonth', 'completedYear']);
         return structuredClone(savedDate);
@@ -73,7 +74,7 @@ function load(relative) {
     compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 },
   }).outputText;
   vm.runInNewContext(`(function(require,module,exports){${code}\n})`, {
-    Date: FixedDate, Error, console: { log() {}, warn() {}, error() {} }, process: { env: { NODE_ENV: 'production' } },
+    Date: FixedDate, Buffer, Error, console: { log() {}, warn() {}, error() {} }, process: { env: { NODE_ENV: 'production' } },
   })(localRequire, fixtureModule, fixtureModule.exports);
   return fixtureModule.exports;
 }
@@ -84,7 +85,7 @@ const { getMyProjectsWithStats } = load('src/server/queries/getMyProjectsWithSta
 const { compareCompletionDates, formatCompletionDate, completionDateInputError } = load('src/lib/projects/completionDate.ts');
 const create = { title: 'Fixture House', projectStatus: 'completed_project', timeline: 'PAST' };
 const request = (method, data) => new Request('https://folio.test/api/projects', {
-  method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data),
+  method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(method === 'POST' ? { requestId: require('node:crypto').randomUUID(), ...data } : data),
 });
 let count = 0;
 async function test(name, work) {

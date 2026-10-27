@@ -1,0 +1,1208 @@
+
+> folio-mvp@0.2.0 test:guided
+> node scripts/check-guided-interview-prompts.cjs && tsx scripts/check-guided-controller.ts && node scripts/check-guided-service.cjs && node scripts/check-guided-provenance-writers.cjs
+
+[guided-interview] model usage {
+  operation: 'guided-interview-preparation-review',
+  model: 'synthetic',
+  inputTokens: 1,
+  outputTokens: 1,
+  elapsedMs: 0
+}
+[guided-interview] model usage {
+  operation: 'guided-interview-preparation-repair',
+  model: 'synthetic',
+  inputTokens: 1,
+  outputTokens: 1,
+  elapsedMs: 0
+}
+[guided-interview] model usage {
+  operation: 'guided-interview-preparation-review',
+  model: 'synthetic',
+  inputTokens: 1,
+  outputTokens: 1,
+  elapsedMs: 0
+}
+[guided-interview] model usage {
+  operation: 'guided-interview-preparation-review',
+  model: 'synthetic',
+  inputTokens: 1,
+  outputTokens: 1,
+  elapsedMs: 0
+}
+[guided-interview] model usage {
+  operation: 'guided-interview-decision',
+  model: 'synthetic',
+  inputTokens: 1,
+  outputTokens: 1,
+  elapsedMs: 0
+}
+[guided-interview] model usage {
+  operation: 'guided-interview-review',
+  model: 'synthetic',
+  inputTokens: 1,
+  outputTokens: 1,
+  elapsedMs: 0
+}
+[guided-interview] model usage {
+  operation: 'guided-interview-decision',
+  model: 'synthetic',
+  inputTokens: 1,
+  outputTokens: 1,
+  elapsedMs: 0
+}
+[guided-interview] model usage {
+  operation: 'guided-interview-review',
+  model: 'synthetic',
+  inputTokens: 1,
+  outputTokens: 1,
+  elapsedMs: 0
+}
+[guided-interview] model usage {
+  operation: 'guided-interview-decision',
+  model: 'synthetic',
+  inputTokens: 1,
+  outputTokens: 1,
+  elapsedMs: 0
+}
+[guided-interview] model usage {
+  operation: 'guided-interview-review',
+  model: 'synthetic',
+  inputTokens: 1,
+  outputTokens: 1,
+  elapsedMs: 0
+}
+[guided-interview] model usage {
+  operation: 'guided-interview-decision',
+  model: 'synthetic',
+  inputTokens: 1,
+  outputTokens: 1,
+  elapsedMs: 0
+}
+[guided-interview] model usage {
+  operation: 'guided-interview-review',
+  model: 'synthetic',
+  inputTokens: 1,
+  outputTokens: 1,
+  elapsedMs: 0
+}
+[guided-interview] model usage {
+  operation: 'guided-interview-decision',
+  model: 'synthetic',
+  inputTokens: 1,
+  outputTokens: 1,
+  elapsedMs: 0
+}
+[guided-interview] model usage {
+  operation: 'guided-interview-review',
+  model: 'synthetic',
+  inputTokens: 1,
+  outputTokens: 1,
+  elapsedMs: 1
+}
+[guided-interview] model usage {
+  operation: 'guided-interview-decision',
+  model: 'synthetic',
+  inputTokens: 1,
+  outputTokens: 1,
+  elapsedMs: 0
+}
+[guided-interview] model usage {
+  operation: 'guided-interview-review',
+  model: 'synthetic',
+  inputTokens: 1,
+  outputTokens: 1,
+  elapsedMs: 0
+}
+[guided-interview] model usage {
+  operation: 'guided-interview-decision',
+  model: 'synthetic',
+  inputTokens: 1,
+  outputTokens: 1,
+  elapsedMs: 0
+}
+[guided-interview] model usage {
+  operation: 'guided-interview-review',
+  model: 'synthetic',
+  inputTokens: 1,
+  outputTokens: 1,
+  elapsedMs: 0
+}
+[guided-interview] model usage {
+  operation: 'guided-interview-decision',
+  model: 'synthetic',
+  inputTokens: 1,
+  outputTokens: 1,
+  elapsedMs: 0
+}
+[guided-interview] model usage {
+  operation: 'guided-interview-review',
+  model: 'synthetic',
+  inputTokens: 1,
+  outputTokens: 1,
+  elapsedMs: 0
+}
+[guided-interview] model usage {
+  operation: 'guided-interview-decision',
+  model: 'synthetic',
+  inputTokens: 1,
+  outputTokens: 1,
+  elapsedMs: 0
+}
+[guided-interview] model usage {
+  operation: 'guided-interview-review',
+  model: 'synthetic',
+  inputTokens: 1,
+  outputTokens: 1,
+  elapsedMs: 0
+}
+[guided-interview] model usage {
+  operation: 'guided-interview-decision',
+  model: 'synthetic',
+  inputTokens: 1,
+  outputTokens: 1,
+  elapsedMs: 0
+}
+[guided-interview] model usage {
+  operation: 'guided-interview-review',
+  model: 'synthetic',
+  inputTokens: 1,
+  outputTokens: 1,
+  elapsedMs: 0
+}
+[guided-interview] model usage {
+  operation: 'guided-interview-decision',
+  model: 'synthetic',
+  inputTokens: 1,
+  outputTokens: 1,
+  elapsedMs: 0
+}
+[guided-interview] model usage {
+  operation: 'guided-interview-review',
+  model: 'synthetic',
+  inputTokens: 1,
+  outputTokens: 1,
+  elapsedMs: 0
+}
+[guided-interview] model usage {
+  operation: 'guided-interview-decision',
+  model: 'synthetic',
+  inputTokens: 1,
+  outputTokens: 1,
+  elapsedMs: 1
+}
+[guided-interview] model usage {
+  operation: 'guided-interview-coverage',
+  model: 'synthetic',
+  inputTokens: 1,
+  outputTokens: 1,
+  elapsedMs: 0
+}
+[guided-interview] model usage {
+  operation: 'guided-interview-review',
+  model: 'synthetic',
+  inputTokens: 1,
+  outputTokens: 1,
+  elapsedMs: 0
+}
+[guided-interview] model usage {
+  operation: 'guided-interview-factual-review',
+  model: 'synthetic',
+  inputTokens: 1,
+  outputTokens: 1,
+  elapsedMs: 0
+}
+[guided-interview] model usage {
+  operation: 'guided-interview-decision',
+  model: 'synthetic',
+  inputTokens: 1,
+  outputTokens: 1,
+  elapsedMs: 1
+}
+[guided-interview] model usage {
+  operation: 'guided-interview-coverage',
+  model: 'synthetic',
+  inputTokens: 1,
+  outputTokens: 1,
+  elapsedMs: 0
+}
+[guided-interview] model usage {
+  operation: 'guided-interview-review',
+  model: 'synthetic',
+  inputTokens: 1,
+  outputTokens: 1,
+  elapsedMs: 0
+}
+[guided-interview] model usage {
+  operation: 'guided-interview-factual-review',
+  model: 'synthetic',
+  inputTokens: 1,
+  outputTokens: 1,
+  elapsedMs: 0
+}
+[guided-interview] model usage {
+  operation: 'guided-interview-decision',
+  model: 'synthetic',
+  inputTokens: 1,
+  outputTokens: 1,
+  elapsedMs: 0
+}
+[guided-interview] model usage {
+  operation: 'guided-interview-review',
+  model: 'synthetic',
+  inputTokens: 1,
+  outputTokens: 1,
+  elapsedMs: 0
+}
+[guided-interview] model usage {
+  operation: 'guided-interview-factual-review',
+  model: 'synthetic',
+  inputTokens: 1,
+  outputTokens: 1,
+  elapsedMs: 0
+}
+[guided-interview] model usage {
+  operation: 'guided-interview-review',
+  model: 'synthetic',
+  inputTokens: 1,
+  outputTokens: 1,
+  elapsedMs: 0
+}
+[guided-interview] model usage {
+  operation: 'guided-interview-factual-review',
+  model: 'synthetic',
+  inputTokens: 1,
+  outputTokens: 1,
+  elapsedMs: 0
+}
+[guided-interview] model usage {
+  operation: 'guided-interview-review',
+  model: 'synthetic',
+  inputTokens: 1,
+  outputTokens: 1,
+  elapsedMs: 0
+}
+[guided-interview] model usage {
+  operation: 'guided-interview-factual-review',
+  model: 'synthetic',
+  inputTokens: 1,
+  outputTokens: 1,
+  elapsedMs: 0
+}
+[guided-interview] model usage {
+  operation: 'guided-interview-factual-review',
+  model: 'synthetic',
+  inputTokens: 1,
+  outputTokens: 1,
+  elapsedMs: 0
+}
+[guided-interview] model usage {
+  operation: 'guided-interview-factual-review',
+  model: 'synthetic',
+  inputTokens: 1,
+  outputTokens: 1,
+  elapsedMs: 0
+}
+[guided-interview] model usage {
+  operation: 'guided-interview-review',
+  model: 'synthetic',
+  inputTokens: 1,
+  outputTokens: 1,
+  elapsedMs: 0
+}
+[guided-interview] model usage {
+  operation: 'guided-interview-factual-review',
+  model: 'synthetic',
+  inputTokens: 1,
+  outputTokens: 1,
+  elapsedMs: 0
+}
+[guided-interview] model usage {
+  operation: 'guided-interview-review',
+  model: 'synthetic',
+  inputTokens: 1,
+  outputTokens: 1,
+  elapsedMs: 0
+}
+[guided-interview] model usage {
+  operation: 'guided-interview-factual-review',
+  model: 'synthetic',
+  inputTokens: 1,
+  outputTokens: 1,
+  elapsedMs: 0
+}
+[guided-interview] model usage {
+  operation: 'guided-interview-review',
+  model: 'synthetic',
+  inputTokens: 1,
+  outputTokens: 1,
+  elapsedMs: 0
+}
+[guided-interview] model usage {
+  operation: 'guided-interview-review',
+  model: 'synthetic',
+  inputTokens: 1,
+  outputTokens: 1,
+  elapsedMs: 0
+}
+[guided-interview] model usage {
+  operation: 'guided-interview-factual-review',
+  model: 'synthetic',
+  inputTokens: 1,
+  outputTokens: 1,
+  elapsedMs: 0
+}
+[guided-interview] model usage {
+  operation: 'guided-interview-review',
+  model: 'synthetic',
+  inputTokens: 1,
+  outputTokens: 1,
+  elapsedMs: 0
+}
+[guided-interview] model usage {
+  operation: 'guided-interview-factual-review',
+  model: 'synthetic',
+  inputTokens: 1,
+  outputTokens: 1,
+  elapsedMs: 0
+}
+[guided-interview] model usage {
+  operation: 'guided-interview-review',
+  model: 'synthetic',
+  inputTokens: 1,
+  outputTokens: 1,
+  elapsedMs: 0
+}
+[guided-interview] model usage {
+  operation: 'guided-interview-decision',
+  model: 'synthetic',
+  inputTokens: 1,
+  outputTokens: 1,
+  elapsedMs: 0
+}
+[guided-interview] model usage {
+  operation: 'guided-interview-coverage',
+  model: 'synthetic',
+  inputTokens: 1,
+  outputTokens: 1,
+  elapsedMs: 0
+}
+[guided-interview] model usage {
+  operation: 'guided-interview-decision',
+  model: 'synthetic',
+  inputTokens: 1,
+  outputTokens: 1,
+  elapsedMs: 0
+}
+[guided-interview] model usage {
+  operation: 'guided-interview-review',
+  model: 'synthetic',
+  inputTokens: 1,
+  outputTokens: 1,
+  elapsedMs: 0
+}
+[guided-interview] model usage {
+  operation: 'guided-interview-factual-review',
+  model: 'synthetic',
+  inputTokens: 1,
+  outputTokens: 1,
+  elapsedMs: 0
+}
+[guided-interview] model usage {
+  operation: 'guided-interview-decision',
+  model: 'synthetic',
+  inputTokens: 1,
+  outputTokens: 1,
+  elapsedMs: 1
+}
+[guided-interview] model usage {
+  operation: 'guided-interview-coverage',
+  model: 'synthetic',
+  inputTokens: 1,
+  outputTokens: 1,
+  elapsedMs: 0
+}
+[guided-interview] model usage {
+  operation: 'guided-interview-review',
+  model: 'synthetic',
+  inputTokens: 1,
+  outputTokens: 1,
+  elapsedMs: 0
+}
+[guided-interview] model usage {
+  operation: 'guided-interview-factual-review',
+  model: 'synthetic',
+  inputTokens: 1,
+  outputTokens: 1,
+  elapsedMs: 0
+}
+[guided-interview] model usage {
+  operation: 'guided-interview-decision',
+  model: 'synthetic',
+  inputTokens: 1,
+  outputTokens: 1,
+  elapsedMs: 1
+}
+[guided-interview] model usage {
+  operation: 'guided-interview-coverage',
+  model: 'synthetic',
+  inputTokens: 1,
+  outputTokens: 1,
+  elapsedMs: 0
+}
+[guided-interview] model usage {
+  operation: 'guided-interview-review',
+  model: 'synthetic',
+  inputTokens: 1,
+  outputTokens: 1,
+  elapsedMs: 0
+}
+[guided-interview] model usage {
+  operation: 'guided-interview-factual-review',
+  model: 'synthetic',
+  inputTokens: 1,
+  outputTokens: 1,
+  elapsedMs: 1
+}
+[guided-interview] model usage {
+  operation: 'guided-interview-decision',
+  model: 'synthetic',
+  inputTokens: 1,
+  outputTokens: 1,
+  elapsedMs: 1
+}
+[guided-interview] model usage {
+  operation: 'guided-interview-coverage',
+  model: 'synthetic',
+  inputTokens: 1,
+  outputTokens: 1,
+  elapsedMs: 0
+}
+[guided-interview] model usage {
+  operation: 'guided-interview-decision',
+  model: 'synthetic',
+  inputTokens: 1,
+  outputTokens: 1,
+  elapsedMs: 0
+}
+[guided-interview] model usage {
+  operation: 'guided-interview-review',
+  model: 'synthetic',
+  inputTokens: 1,
+  outputTokens: 1,
+  elapsedMs: 0
+}
+[guided-interview] model usage {
+  operation: 'guided-interview-factual-review',
+  model: 'synthetic',
+  inputTokens: 1,
+  outputTokens: 1,
+  elapsedMs: 0
+}
+[guided-interview] model usage {
+  operation: 'guided-interview-decision',
+  model: 'synthetic',
+  inputTokens: 1,
+  outputTokens: 1,
+  elapsedMs: 0
+}
+[guided-interview] model usage {
+  operation: 'guided-interview-coverage',
+  model: 'synthetic',
+  inputTokens: 1,
+  outputTokens: 1,
+  elapsedMs: 1
+}
+[guided-interview] model usage {
+  operation: 'guided-interview-decision',
+  model: 'synthetic',
+  inputTokens: 1,
+  outputTokens: 1,
+  elapsedMs: 0
+}
+[guided-interview] model usage {
+  operation: 'guided-interview-decision',
+  model: 'synthetic',
+  inputTokens: 1,
+  outputTokens: 1,
+  elapsedMs: 0
+}
+[guided-interview] model usage {
+  operation: 'guided-interview-coverage',
+  model: 'synthetic',
+  inputTokens: 1,
+  outputTokens: 1,
+  elapsedMs: 0
+}
+[guided-interview] model usage {
+  operation: 'guided-interview-decision',
+  model: 'synthetic',
+  inputTokens: 1,
+  outputTokens: 1,
+  elapsedMs: 0
+}
+[guided-interview] model usage {
+  operation: 'guided-interview-decision',
+  model: 'synthetic',
+  inputTokens: 1,
+  outputTokens: 1,
+  elapsedMs: 0
+}
+[guided-interview] model usage {
+  operation: 'guided-interview-decision',
+  model: 'synthetic',
+  inputTokens: 1,
+  outputTokens: 1,
+  elapsedMs: 0
+}
+[guided-interview] model usage {
+  operation: 'guided-interview-coverage',
+  model: 'synthetic',
+  inputTokens: 1,
+  outputTokens: 1,
+  elapsedMs: 0
+}
+[guided-interview] model usage {
+  operation: 'guided-interview-decision',
+  model: 'synthetic',
+  inputTokens: 1,
+  outputTokens: 1,
+  elapsedMs: 1
+}
+[guided-interview] model usage {
+  operation: 'guided-interview-coverage',
+  model: 'synthetic',
+  inputTokens: 1,
+  outputTokens: 1,
+  elapsedMs: 0
+}
+[guided-interview] model usage {
+  operation: 'guided-interview-decision',
+  model: 'synthetic',
+  inputTokens: 1,
+  outputTokens: 1,
+  elapsedMs: 0
+}
+[guided-interview] model usage {
+  operation: 'guided-interview-review',
+  model: 'synthetic',
+  inputTokens: 1,
+  outputTokens: 1,
+  elapsedMs: 1
+}
+[guided-interview] model usage {
+  operation: 'guided-interview-factual-review',
+  model: 'synthetic',
+  inputTokens: 1,
+  outputTokens: 1,
+  elapsedMs: 0
+}
+[guided-interview] model usage {
+  operation: 'guided-interview-decision',
+  model: 'synthetic',
+  inputTokens: 1,
+  outputTokens: 1,
+  elapsedMs: 0
+}
+[guided-interview] model usage {
+  operation: 'guided-interview-review',
+  model: 'synthetic',
+  inputTokens: 1,
+  outputTokens: 1,
+  elapsedMs: 0
+}
+[guided-interview] model usage {
+  operation: 'guided-interview-factual-review',
+  model: 'synthetic',
+  inputTokens: 1,
+  outputTokens: 1,
+  elapsedMs: 0
+}
+Guided prompt checks passed: contextual preparation/review/repair, preserved obligations and evidence, five multi-turn contexts, confirmation, corrections, skip adaptation, room transitions, semantic rejection, bounded retry and provider failure.
+PASS podcast voice/text affirmation uses validated evidence, retains literal input, and invalidates on source correction
+PASS grounded prepared adaptation, retained actual wording/reactions, explicit raw-answer confirmation, forged source rejection, duplicate confirmation and correction reopening
+PASS guided controller: prepared obligations, bounded follow-ups, canonical evidence, revisions, skip/partial finish, length/image scope, duplicate/stale versions and pause/resume
+PASS podcast chain depth/section budget and additive completed interview evidence preserve the canonical backbone
+PASS actual authorization, pilot flag, and protected spotlight routing before preparation or writes
+[guided-interview] model usage {
+  operation: 'guided-interview-preparation-review',
+  model: 'synthetic-guided-model',
+  inputTokens: 10,
+  outputTokens: 5,
+  elapsedMs: 0
+}
+[guided-interview] model usage {
+  operation: 'guided-interview-decision',
+  model: 'synthetic-guided-model',
+  inputTokens: 10,
+  outputTokens: 5,
+  elapsedMs: 0
+}
+[guided-interview] model usage {
+  operation: 'guided-interview-review',
+  model: 'synthetic-guided-model',
+  inputTokens: 10,
+  outputTokens: 5,
+  elapsedMs: 0
+}
+[interview/reset] Reset failed { kind: 'Error' }
+PASS reset authorization, atomic rollback, cache/audio/projection cleanup, stable assets/draft, model-free fresh session, idempotent receipt and stale-tab rejection
+PASS flag-off legacy reset clears only interview evidence and preserves existing publication state without paid preparation
+[guided-interview] model usage {
+  operation: 'guided-interview-preparation-review',
+  model: 'synthetic-guided-model',
+  inputTokens: 10,
+  outputTokens: 5,
+  elapsedMs: 0
+}
+[guided-interview] model usage {
+  operation: 'guided-interview-decision',
+  model: 'synthetic-guided-model',
+  inputTokens: 10,
+  outputTokens: 5,
+  elapsedMs: 0
+}
+[guided-interview] model usage {
+  operation: 'guided-interview-review',
+  model: 'synthetic-guided-model',
+  inputTokens: 10,
+  outputTokens: 5,
+  elapsedMs: 0
+}
+[guided-interview] model usage {
+  operation: 'guided-interview-decision',
+  model: 'synthetic-guided-model',
+  inputTokens: 10,
+  outputTokens: 5,
+  elapsedMs: 0
+}
+[guided-interview] model usage {
+  operation: 'guided-interview-review',
+  model: 'synthetic-guided-model',
+  inputTokens: 10,
+  outputTokens: 5,
+  elapsedMs: 0
+}
+[guided-interview] model usage {
+  operation: 'guided-interview-decision',
+  model: 'synthetic-guided-model',
+  inputTokens: 10,
+  outputTokens: 5,
+  elapsedMs: 0
+}
+[guided-interview] model usage {
+  operation: 'guided-interview-review',
+  model: 'synthetic-guided-model',
+  inputTokens: 10,
+  outputTokens: 5,
+  elapsedMs: 0
+}
+[guided-interview] model usage {
+  operation: 'guided-interview-decision',
+  model: 'synthetic-guided-model',
+  inputTokens: 10,
+  outputTokens: 5,
+  elapsedMs: 0
+}
+[guided-interview] model usage {
+  operation: 'guided-interview-review',
+  model: 'synthetic-guided-model',
+  inputTokens: 10,
+  outputTokens: 5,
+  elapsedMs: 0
+}
+PASS broad answer adapts only the remaining scope gap; explicit coverage confirmation keeps raw source, rejects forged content, survives exact retry/resume and reopens after correction
+[guided-interview] model usage {
+  operation: 'guided-interview-preparation-review',
+  model: 'synthetic-guided-model',
+  inputTokens: 10,
+  outputTokens: 5,
+  elapsedMs: 0
+}
+[guided-interview] model usage {
+  operation: 'guided-interview-decision',
+  model: 'synthetic-guided-model',
+  inputTokens: 10,
+  outputTokens: 5,
+  elapsedMs: 0
+}
+[guided-interview] model usage {
+  operation: 'guided-interview-review',
+  model: 'synthetic-guided-model',
+  inputTokens: 10,
+  outputTokens: 5,
+  elapsedMs: 0
+}
+[guided-interview] model usage {
+  operation: 'guided-interview-decision',
+  model: 'synthetic-guided-model',
+  inputTokens: 10,
+  outputTokens: 5,
+  elapsedMs: 1
+}
+[guided-interview] model usage {
+  operation: 'guided-interview-review',
+  model: 'synthetic-guided-model',
+  inputTokens: 10,
+  outputTokens: 5,
+  elapsedMs: 0
+}
+PASS answering a follow-up still adapts the next prepared question without creating another follow-up chain
+[guided-interview] model usage {
+  operation: 'guided-interview-preparation-review',
+  model: 'synthetic-guided-model',
+  inputTokens: 10,
+  outputTokens: 5,
+  elapsedMs: 0
+}
+[guided-interview] model usage {
+  operation: 'guided-interview-decision',
+  model: 'synthetic-guided-model',
+  inputTokens: 10,
+  outputTokens: 5,
+  elapsedMs: 1
+}
+[guided-interview] model usage {
+  operation: 'guided-interview-review',
+  model: 'synthetic-guided-model',
+  inputTokens: 10,
+  outputTokens: 5,
+  elapsedMs: 0
+}
+[guided-interview] model usage {
+  operation: 'guided-interview-decision',
+  model: 'synthetic-guided-model',
+  inputTokens: 10,
+  outputTokens: 5,
+  elapsedMs: 0
+}
+[guided-interview] model usage {
+  operation: 'guided-interview-review',
+  model: 'synthetic-guided-model',
+  inputTokens: 10,
+  outputTokens: 5,
+  elapsedMs: 0
+}
+[guided-interview] model usage {
+  operation: 'guided-interview-decision',
+  model: 'synthetic-guided-model',
+  inputTokens: 10,
+  outputTokens: 5,
+  elapsedMs: 0
+}
+[guided-interview] model usage {
+  operation: 'guided-interview-review',
+  model: 'synthetic-guided-model',
+  inputTokens: 10,
+  outputTokens: 5,
+  elapsedMs: 0
+}
+PASS skipping a topic still prepares a grounded next question from earlier accepted evidence
+[guided-interview] model usage {
+  operation: 'guided-interview-preparation-review',
+  model: 'synthetic-guided-model',
+  inputTokens: 10,
+  outputTokens: 5,
+  elapsedMs: 0
+}
+[guided-interview] model usage {
+  operation: 'guided-interview-decision',
+  model: 'synthetic-guided-model',
+  inputTokens: 10,
+  outputTokens: 5,
+  elapsedMs: 1
+}
+[guided-interview] model usage {
+  operation: 'guided-interview-review',
+  model: 'synthetic-guided-model',
+  inputTokens: 10,
+  outputTokens: 5,
+  elapsedMs: 0
+}
+PASS rollback stops enrollment but saved sessions finish through the protected guided writer
+[guided-interview] model usage {
+  operation: 'guided-interview-preparation-review',
+  model: 'synthetic-guided-model',
+  inputTokens: 10,
+  outputTokens: 5,
+  elapsedMs: 0
+}
+[guided-interview] model usage {
+  operation: 'guided-interview-decision',
+  model: 'synthetic-guided-model',
+  inputTokens: 10,
+  outputTokens: 5,
+  elapsedMs: 0
+}
+[guided-interview] model usage {
+  operation: 'guided-interview-review',
+  model: 'synthetic-guided-model',
+  inputTokens: 10,
+  outputTokens: 5,
+  elapsedMs: 0
+}
+PASS durable restore, exact replay, conflicting-payload request digest rejection, and stale tab rejection
+[guided-interview] model usage {
+  operation: 'guided-interview-preparation-review',
+  model: 'synthetic-guided-model',
+  inputTokens: 10,
+  outputTokens: 5,
+  elapsedMs: 0
+}
+[guided-interview] model usage {
+  operation: 'guided-interview-decision',
+  model: 'synthetic-guided-model',
+  inputTokens: 10,
+  outputTokens: 5,
+  elapsedMs: 1
+}
+[guided-interview] model usage {
+  operation: 'guided-interview-review',
+  model: 'synthetic-guided-model',
+  inputTokens: 10,
+  outputTokens: 5,
+  elapsedMs: 0
+}
+[guided-interview] model usage {
+  operation: 'guided-interview-decision',
+  model: 'synthetic-guided-model',
+  inputTokens: 10,
+  outputTokens: 5,
+  elapsedMs: 0
+}
+[guided-interview] model usage {
+  operation: 'guided-interview-review',
+  model: 'synthetic-guided-model',
+  inputTokens: 10,
+  outputTokens: 5,
+  elapsedMs: 0
+}
+PASS concurrent duplicate POSTs and competing same-version tabs produce one accepted turn and one next decision
+[guided-interview] model usage {
+  operation: 'guided-interview-preparation-review',
+  model: 'synthetic-guided-model',
+  inputTokens: 10,
+  outputTokens: 5,
+  elapsedMs: 0
+}
+[guided-interview] model usage {
+  operation: 'guided-interview-decision',
+  model: 'synthetic-guided-model',
+  inputTokens: 10,
+  outputTokens: 5,
+  elapsedMs: 0
+}
+[guided-interview] model usage {
+  operation: 'guided-interview-review',
+  model: 'synthetic-guided-model',
+  inputTokens: 10,
+  outputTokens: 5,
+  elapsedMs: 0
+}
+[guided-interview] model usage {
+  operation: 'guided-interview-decision',
+  model: 'synthetic-guided-model',
+  inputTokens: 10,
+  outputTokens: 5,
+  elapsedMs: 0
+}
+[guided-interview] model usage {
+  operation: 'guided-interview-review',
+  model: 'synthetic-guided-model',
+  inputTokens: 10,
+  outputTokens: 5,
+  elapsedMs: 0
+}
+[guided-interview] model usage {
+  operation: 'guided-interview-decision',
+  model: 'synthetic-guided-model',
+  inputTokens: 10,
+  outputTokens: 5,
+  elapsedMs: 0
+}
+[guided-interview] model usage {
+  operation: 'guided-interview-review',
+  model: 'synthetic-guided-model',
+  inputTokens: 10,
+  outputTokens: 5,
+  elapsedMs: 0
+}
+PASS answer and canonical projection commit before provider; explicit provider-outage retry and failed decision-save retry
+[guided-interview] model usage {
+  operation: 'guided-interview-preparation-review',
+  model: 'synthetic-guided-model',
+  inputTokens: 10,
+  outputTokens: 5,
+  elapsedMs: 1
+}
+[guided-interview] Request failed { kind: 'Error' }
+[guided-interview] model usage {
+  operation: 'guided-interview-decision',
+  model: 'synthetic-guided-model',
+  inputTokens: 10,
+  outputTokens: 5,
+  elapsedMs: 0
+}
+[guided-interview] model usage {
+  operation: 'guided-interview-review',
+  model: 'synthetic-guided-model',
+  inputTokens: 10,
+  outputTokens: 5,
+  elapsedMs: 0
+}
+PASS projection failure rolls back the answer and cursor, with successful retry
+[guided-interview] model usage {
+  operation: 'guided-interview-preparation-review',
+  model: 'synthetic-guided-model',
+  inputTokens: 10,
+  outputTokens: 5,
+  elapsedMs: 0
+}
+[guided-interview] model usage {
+  operation: 'guided-interview-decision',
+  model: 'synthetic-guided-model',
+  inputTokens: 10,
+  outputTokens: 5,
+  elapsedMs: 2
+}
+[guided-interview] model usage {
+  operation: 'guided-interview-review',
+  model: 'synthetic-guided-model',
+  inputTokens: 10,
+  outputTokens: 5,
+  elapsedMs: 0
+}
+[guided-interview] model usage {
+  operation: 'guided-interview-decision',
+  model: 'synthetic-guided-model',
+  inputTokens: 10,
+  outputTokens: 5,
+  elapsedMs: 0
+}
+[guided-interview] model usage {
+  operation: 'guided-interview-review',
+  model: 'synthetic-guided-model',
+  inputTokens: 10,
+  outputTokens: 5,
+  elapsedMs: 0
+}
+PASS late model response cannot overwrite a newer pause or create a duplicate next question
+[guided-interview] model usage {
+  operation: 'guided-interview-preparation-review',
+  model: 'synthetic-guided-model',
+  inputTokens: 10,
+  outputTokens: 5,
+  elapsedMs: 0
+}
+[guided-interview] model usage {
+  operation: 'guided-interview-decision',
+  model: 'synthetic-guided-model',
+  inputTokens: 10,
+  outputTokens: 5,
+  elapsedMs: 0
+}
+[guided-interview] model usage {
+  operation: 'guided-interview-review',
+  model: 'synthetic-guided-model',
+  inputTokens: 10,
+  outputTokens: 5,
+  elapsedMs: 0
+}
+[guided-interview] model usage {
+  operation: 'guided-interview-decision',
+  model: 'synthetic-guided-model',
+  inputTokens: 10,
+  outputTokens: 5,
+  elapsedMs: 0
+}
+[guided-interview] model usage {
+  operation: 'guided-interview-review',
+  model: 'synthetic-guided-model',
+  inputTokens: 10,
+  outputTokens: 5,
+  elapsedMs: 0
+}
+[guided-interview] model usage {
+  operation: 'guided-interview-decision',
+  model: 'synthetic-guided-model',
+  inputTokens: 10,
+  outputTokens: 5,
+  elapsedMs: 0
+}
+[guided-interview] model usage {
+  operation: 'guided-interview-review',
+  model: 'synthetic-guided-model',
+  inputTokens: 10,
+  outputTokens: 5,
+  elapsedMs: 0
+}
+PASS follow-up parentage in canonical projection; correction invalidates dependent evidence but retains history
+[guided-interview] model usage {
+  operation: 'guided-interview-preparation-review',
+  model: 'synthetic-guided-model',
+  inputTokens: 10,
+  outputTokens: 5,
+  elapsedMs: 0
+}
+[guided-interview] model usage {
+  operation: 'guided-interview-decision',
+  model: 'synthetic-guided-model',
+  inputTokens: 10,
+  outputTokens: 5,
+  elapsedMs: 0
+}
+[guided-interview] model usage {
+  operation: 'guided-interview-review',
+  model: 'synthetic-guided-model',
+  inputTokens: 10,
+  outputTokens: 5,
+  elapsedMs: 0
+}
+[guided-interview] model usage {
+  operation: 'guided-interview-decision',
+  model: 'synthetic-guided-model',
+  inputTokens: 10,
+  outputTokens: 5,
+  elapsedMs: 0
+}
+[guided-interview] model usage {
+  operation: 'guided-interview-review',
+  model: 'synthetic-guided-model',
+  inputTokens: 10,
+  outputTokens: 5,
+  elapsedMs: 0
+}
+[guided-interview] model usage {
+  operation: 'guided-interview-decision',
+  model: 'synthetic-guided-model',
+  inputTokens: 10,
+  outputTokens: 5,
+  elapsedMs: 0
+}
+[guided-interview] model usage {
+  operation: 'guided-interview-review',
+  model: 'synthetic-guided-model',
+  inputTokens: 10,
+  outputTokens: 5,
+  elapsedMs: 0
+}
+PASS exact recording IDs reject absent/foreign/question-mismatched clips, preserve each tab’s clip, and clear obsolete timing/audio after mixed/text edits
+[guided-interview] model usage {
+  operation: 'guided-interview-preparation-review',
+  model: 'synthetic-guided-model',
+  inputTokens: 10,
+  outputTokens: 5,
+  elapsedMs: 0
+}
+PASS changed photo room assignment refreshes the plan without accepting or reattributing the pending answer
+[guided-interview] model usage {
+  operation: 'guided-interview-preparation-review',
+  model: 'synthetic-guided-model',
+  inputTokens: 10,
+  outputTokens: 5,
+  elapsedMs: 0
+}
+[guided-interview] model usage {
+  operation: 'guided-interview-decision',
+  model: 'synthetic-guided-model',
+  inputTokens: 10,
+  outputTokens: 5,
+  elapsedMs: 0
+}
+[guided-interview] model usage {
+  operation: 'guided-interview-review',
+  model: 'synthetic-guided-model',
+  inputTokens: 10,
+  outputTokens: 5,
+  elapsedMs: 0
+}
+[guided-interview] model usage {
+  operation: 'guided-interview-decision',
+  model: 'synthetic-guided-model',
+  inputTokens: 10,
+  outputTokens: 5,
+  elapsedMs: 0
+}
+[guided-interview] model usage {
+  operation: 'guided-interview-review',
+  model: 'synthetic-guided-model',
+  inputTokens: 10,
+  outputTokens: 5,
+  elapsedMs: 0
+}
+[guided-interview] model usage {
+  operation: 'guided-interview-decision',
+  model: 'synthetic-guided-model',
+  inputTokens: 10,
+  outputTokens: 5,
+  elapsedMs: 0
+}
+[guided-interview] model usage {
+  operation: 'guided-interview-review',
+  model: 'synthetic-guided-model',
+  inputTokens: 10,
+  outputTokens: 5,
+  elapsedMs: 0
+}
+[guided-interview] model usage {
+  operation: 'guided-interview-decision',
+  model: 'synthetic-guided-model',
+  inputTokens: 10,
+  outputTokens: 5,
+  elapsedMs: 0
+}
+[guided-interview] model usage {
+  operation: 'guided-interview-review',
+  model: 'synthetic-guided-model',
+  inputTokens: 10,
+  outputTokens: 5,
+  elapsedMs: 0
+}
+[guided-interview] model usage {
+  operation: 'guided-interview-preparation-review',
+  model: 'synthetic-guided-model',
+  inputTokens: 10,
+  outputTokens: 5,
+  elapsedMs: 0
+}
+[guided-interview] model usage {
+  operation: 'guided-interview-decision',
+  model: 'synthetic-guided-model',
+  inputTokens: 10,
+  outputTokens: 5,
+  elapsedMs: 0
+}
+[guided-interview] model usage {
+  operation: 'guided-interview-review',
+  model: 'synthetic-guided-model',
+  inputTokens: 10,
+  outputTokens: 5,
+  elapsedMs: 0
+}
+[guided-interview] model usage {
+  operation: 'guided-interview-decision',
+  model: 'synthetic-guided-model',
+  inputTokens: 10,
+  outputTokens: 5,
+  elapsedMs: 0
+}
+[guided-interview] model usage {
+  operation: 'guided-interview-review',
+  model: 'synthetic-guided-model',
+  inputTokens: 10,
+  outputTokens: 5,
+  elapsedMs: 0
+}
+PASS lossless rejection of oversized text, skip provenance, staged five-category/room plan, attributable canonical draft payload, and explicit partial completion without publication
+Guided HTTP/service/store integration checks passed. PostgreSQL isolation, actual transcription, and editorial model generation are not simulated as verified.
+PASS generation metadata CAS retries without erasing a concurrent guided turn
+PASS saved-evidence and guided reads preserve answers/coverage without model preparation; legacy preparation follows authorization
+PASS legacy save keeps CAS, answers and room progress in one transaction; guided/race guards and failure propagation preserve state
+PASS realtime guided/race guards precede every projection write; ordinary conversion continues
+PASS all three legacy followup writers reject guided sessions and CAS races; ordinary writes preserve evidence
+PASS new follow-up requests and generation override arrays require the current reset epoch; canonical-only generation stays available
+PASS legacy fact/question caches skip guided sessions and compare the original JSON
+PASS reverse projection sync cannot replace guided evidence; ordinary categories survive
+PASS forward projection sync holds canonical CAS before rebuilding; reset races cannot restore removed answer rows
+PASS mixed legacy/guided room rename preserves history and fails CAS before a stale JSON replacement
+PASS legacy completion requires write permission and reports guided conflicts

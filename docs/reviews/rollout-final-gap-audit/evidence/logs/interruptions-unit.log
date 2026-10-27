@@ -1,0 +1,73 @@
+
+> folio-mvp@0.2.0 test:interruptions
+> node scripts/check-workflow-request.cjs && node scripts/check-project-guide-upload.cjs && node scripts/check-generation-quote-persistence.cjs
+
+TAP version 13
+# Subtest: stalled headers time out, abort and never retry
+ok 1 - stalled headers time out, abort and never retry
+  ---
+  duration_ms: 77.7378
+  type: 'test'
+  ...
+# Subtest: stalled body also times out and late completion cannot acknowledge success
+ok 2 - stalled body also times out and late completion cannot acknowledge success
+  ---
+  duration_ms: 30.5781
+  type: 'test'
+  ...
+# Subtest: session expiry gives a recovery action
+ok 3 - session expiry gives a recovery action
+  ---
+  duration_ms: 8.4499
+  type: 'test'
+  ...
+# Subtest: server errors stay errors and successful bodies remain readable
+ok 4 - server errors stay errors and successful bodies remain readable
+  ---
+  duration_ms: 15.8497
+  type: 'test'
+  ...
+1..4
+# tests 4
+# suites 0
+# pass 4
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 138.623
+[POST /api/projects/[id]/images] Error: Error: Injected storage failure
+    at saveBufferToProjectStorage (C:\Users\bpras\.codex\worktrees\rollout-hardening\folio-mvp\scripts\check-project-guide-upload.cjs:36:62)
+    at Object.POST (evalmachine.<anonymous>:71:71)
+    at async C:\Users\bpras\.codex\worktrees\rollout-hardening\folio-mvp\scripts\check-project-guide-upload.cjs:51:37
+[POST /api/projects/[id]/images] Error: Error: Injected database failure
+    at Object.create (C:\Users\bpras\.codex\worktrees\rollout-hardening\folio-mvp\scripts\check-project-guide-upload.cjs:29:49)
+    at Object.POST (evalmachine.<anonymous>:77:58)
+    at async C:\Users\bpras\.codex\worktrees\rollout-hardening\folio-mvp\scripts\check-project-guide-upload.cjs:52:35
+[POST /api/projects/[id]/images] Failed to index moment 193a9f09-1bb3-501c-b8c7-5f7832eee779: Error: Injected indexing failure
+    at indexMoment (C:\Users\bpras\.codex\worktrees\rollout-hardening\folio-mvp\scripts\check-project-guide-upload.cjs:39:66)
+    at Object.POST (evalmachine.<anonymous>:102:39)
+    at async Promise.all (index 0)
+    at async C:\Users\bpras\.codex\worktrees\rollout-hardening\folio-mvp\scripts\check-project-guide-upload.cjs:53:21
+[POST /api/projects/[id]/images] Failed to index moment 193a9f09-1bb3-501c-b8c7-5f7832eee779: Error: Injected indexing failure
+    at indexMoment (C:\Users\bpras\.codex\worktrees\rollout-hardening\folio-mvp\scripts\check-project-guide-upload.cjs:39:66)
+    at Object.POST (evalmachine.<anonymous>:102:39)
+    at async Promise.all (index 1)
+    at async C:\Users\bpras\.codex\worktrees\rollout-hardening\folio-mvp\scripts\check-project-guide-upload.cjs:53:21
+[POST /api/projects/[id]/images] Failed to index moment c3af9136-d73e-5666-ab86-2bb1f3fbaa22: Error: Injected indexing failure
+    at indexMoment (C:\Users\bpras\.codex\worktrees\rollout-hardening\folio-mvp\scripts\check-project-guide-upload.cjs:39:66)
+    at Object.POST (evalmachine.<anonymous>:102:39)
+    at async C:\Users\bpras\.codex\worktrees\rollout-hardening\folio-mvp\scripts\check-project-guide-upload.cjs:62:27
+PASS upload interruptions: auth, type/size validation, storage/database failures, concurrent/lost-response retries, project isolation and indexing failure. Simulated services only.
+[AUDIT] schema: BlocksSchema configured {
+  strict: true,
+  hasLead: true,
+  hasGalleryChapters: true,
+  hasCredits: true
+}
+PASS explicit full regeneration replaces removed selection with verified default and alternatives
+PASS route persistence retains null room, multi-option selection and provenance with hook index
+PASS generation preserves guided history and explicit empty answers; changed session rejects stale draft
+PASS matching reset permits generation; first and later resets reject stale saves before any update
+PASS generation lease owner saves; replaced late writer cannot update the draft
+PASS regression fixture rejects the original redistribution behavior
