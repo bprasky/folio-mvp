@@ -26,15 +26,6 @@ const EXEMPT_ROUTES = [
 const ONBOARDING_EXEMPT_ROLES = new Set(['ADMIN', 'VENDOR']);
 
 export async function middleware(request: NextRequest) {
-  if (request.nextUrl.pathname === '/_next/image') {
-    const source = request.nextUrl.searchParams.get('url') || '';
-    // The optimizer caches independently of project visibility and cookies.
-    try {
-      const target = new URL(source, request.url);
-      if (target.pathname.startsWith('/api/project-photos/')) return new NextResponse(null, { status: 404, headers: { 'Cache-Control': 'no-store' } });
-    } catch { return new NextResponse(null, { status: 400 }); }
-    return NextResponse.next();
-  }
   const { pathname } = request.nextUrl;
 
   // Skip exempt routes (onboarding pages, auth, api, public profile, etc.)
@@ -88,7 +79,6 @@ export async function middleware(request: NextRequest) {
 
 export const config = {
   matcher: [
-    '/_next/image',
     /*
      * Match all request paths except for the ones starting with:
      * - api (API routes)

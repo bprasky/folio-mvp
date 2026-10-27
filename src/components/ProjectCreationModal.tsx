@@ -4,7 +4,7 @@ import { workflowRequest } from '@/lib/client/workflowRequest';
 
 import React, { useState, useCallback, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import NextImage from 'next/image';
+import NextImage from '@/components/FolioImage';
 import { FaTimes, FaPlus, FaUpload, FaLink, FaTag, FaTrash, FaSearch, FaCheck, FaSpinner, FaExclamationTriangle, FaEnvelope, FaUser } from 'react-icons/fa';
 import { PROJECT_TYPE_BY_LABEL, CLIENT_BY_LABEL, DEFAULTS } from '@/domain/project/enums';
 import { GlassInput } from '@/components/ui/glass-input';

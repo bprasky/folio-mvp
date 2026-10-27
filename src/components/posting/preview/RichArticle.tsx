@@ -1,7 +1,7 @@
 "use client";
 
 import { Blocks, normalizePullQuote, getSelectedPullQuoteText } from "@/lib/posting/schemas";
-import Image from "next/image";
+import Image from '@/components/FolioImage';
 import { useMemo, useState, useEffect } from "react";
 import InlineTagLink from '@/components/posting/interactive/InlineTagLink';
 import InTheDetails from '@/components/posting/interactive/InTheDetails';

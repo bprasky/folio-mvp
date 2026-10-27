@@ -1052,3 +1052,13 @@ Review: 37 required core checks, 8 independent-process concurrency checks and 8 
 - [ ] Wait for updated hosted checks, merge the reviewed SHA, deploy that exact merged commit and verify production domain/anonymous boundaries.
 
 Release preflight is recorded in docs/reviews/rollout-final-gap-audit/evidence/release-preflight.md. Runtime source is unchanged; legacy image retirement and signed-in/device rollout smoke remain separately scoped.
+
+## Release image-delivery correction — 2026-10-27
+
+- [x] Merge PR827 after its 11 applicable hosted checks pass; create the separate private storage bucket and verify a synthetic hosted object.
+- [x] Detect failed ordinary image optimization in production smoke and restore the previous production deployment.
+- [x] Replace the global custom loader with an access-aware Image wrapper; allow only static local files in the optimizer and retain existing remote hosts.
+- [x] Add a real production-mode Next/Image regression covering ordinary bytes, protected access, and relative/absolute/encoded/traversing optimizer rejection.
+- [ ] Complete hosted checks, merge the corrective PR, stage production and verify images/private boundaries before promotion.
+
+The first deployment of 4829a94e reached READY but was rolled back: setting a global custom image loader disables the Vercel optimizer. Its 404 responses had masked that Next 14 also skips middleware for /_next/image. The correction uses the optimizer's own localPatterns allowlist, with 400 rejection before any protected photo fetch/cache. Private photo responses retain private/no-store headers. The 110 consumer changes only redirect imports to the shared wrapper. No storage/schema changes or unrelated onboarding-gate activation.

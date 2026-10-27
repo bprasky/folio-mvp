@@ -1,7 +1,7 @@
 import { notFound, redirect } from 'next/navigation';
 import { prisma } from '@/lib/prisma';
 import { auth } from '@/lib/auth';
-import Image from 'next/image';
+import Image from '@/components/FolioImage';
 import VisitProductCard from '@/components/visits/VisitProductCard';
 import VisitNotesForm from '@/components/visits/VisitNotesForm';
 

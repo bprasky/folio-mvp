@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { track } from '@/lib/interactive/analytics';
-import Image from 'next/image';
+import Image from '@/components/FolioImage';
 
 // paragraphs[i] -> related imageId(s)
 export default function ScrollSyncPanel({

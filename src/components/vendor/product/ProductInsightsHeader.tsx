@@ -1,6 +1,6 @@
 'use client';
 
-import Image from 'next/image';
+import Image from '@/components/FolioImage';
 import { FaEye, FaBookmark, FaCalendarAlt, FaMousePointer, FaRocket } from 'react-icons/fa';
 
 interface ProductInsightsHeaderProps {

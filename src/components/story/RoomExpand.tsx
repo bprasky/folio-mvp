@@ -5,7 +5,7 @@
 // images are large and immersive. Collapsing returns to the mosaic.
 // Rule 4: Expand Is the Only Way to Get Depth.
 
-import Image from "next/image";
+import Image from '@/components/FolioImage';
 import { motion, AnimatePresence } from "framer-motion";
 import { TaggedImage } from "@/components/project/interaction/TaggedImage";
 import type { RoomTileData } from "@/lib/story/buildRoomTiles";

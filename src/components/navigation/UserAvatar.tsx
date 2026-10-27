@@ -1,4 +1,4 @@
-import Image from "next/image";
+import Image from '@/components/FolioImage';
 import { User } from "lucide-react";
 
 interface UserAvatarProps {

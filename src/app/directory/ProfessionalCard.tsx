@@ -1,6 +1,6 @@
 'use client';
 
-import Image from 'next/image';
+import Image from '@/components/FolioImage';
 import Link from 'next/link';
 import BookmarkButton from './BookmarkButton';
 import type { DirectoryDesigner } from '@/lib/directory/types';

@@ -1,6 +1,6 @@
 'use client';
 
-import Image from 'next/image';
+import Image from '@/components/FolioImage';
 import { FaHeart, FaBookmark, FaEye, FaCube } from 'react-icons/fa';
 import { motion } from 'framer-motion';
 import { useState } from 'react';

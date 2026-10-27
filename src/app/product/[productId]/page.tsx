@@ -6,7 +6,7 @@ import type { Metadata } from "next";
 import { prisma } from "@/lib/prisma";
 import { isPubliclyDisplayable } from "@/lib/products/imageProvenance";
 import { notFound } from "next/navigation";
-import Image from "next/image";
+import Image from '@/components/FolioImage';
 import Link from "next/link";
 import { DesignerTestimonials } from "@/components/product/DesignerTestimonials";
 

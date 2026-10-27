@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import Image from 'next/image';
+import Image from '@/components/FolioImage';
 import { FaCalendarAlt, FaMapMarkerAlt, FaUsers, FaExpand, FaEdit } from 'react-icons/fa';
 // Define types locally to avoid import issues
 interface Event {

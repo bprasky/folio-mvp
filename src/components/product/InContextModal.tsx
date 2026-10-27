@@ -2,7 +2,7 @@
 
 import React from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import Image from "next/image";
+import Image from '@/components/FolioImage';
 import Link from "next/link";
 import { X } from "lucide-react";
 

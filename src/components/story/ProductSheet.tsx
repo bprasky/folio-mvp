@@ -5,7 +5,7 @@
 // Keep the mosaic visible behind the drawer while focus stays within it.
 
 import { useRef } from "react";
-import Image from "next/image";
+import Image from '@/components/FolioImage';
 import * as Dialog from "@radix-ui/react-dialog";
 
 interface ProductSheetProps {

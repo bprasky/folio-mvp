@@ -3,7 +3,7 @@
 // Folio Design System: Uses neumorphic styling, accent colors, and folio typography
 
 import { prisma } from "@/lib/prisma";
-import Image from "next/image";
+import Image from '@/components/FolioImage';
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import ModalChromeClient from "./ModalChromeClient";

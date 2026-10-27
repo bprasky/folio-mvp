@@ -1,6 +1,6 @@
 "use client";
 
-import Image from "next/image";
+import Image from '@/components/FolioImage';
 import { TagRail } from "./TagRail";
 import { MaterialsLedger } from "./MaterialsLedger";
 import { Credits } from "./Credits";

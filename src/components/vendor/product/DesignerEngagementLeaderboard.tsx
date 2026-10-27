@@ -1,6 +1,6 @@
 'use client';
 
-import Image from 'next/image';
+import Image from '@/components/FolioImage';
 import { FaTrophy } from 'react-icons/fa';
 
 interface DesignerEngagement {

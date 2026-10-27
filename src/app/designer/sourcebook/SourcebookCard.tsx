@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
-import Image from 'next/image';
+import Image from '@/components/FolioImage';
 import Link from 'next/link';
 import { RidgeCard } from '@/components/ui/ridge-card';
 import { Button } from '@/components/ui/button';

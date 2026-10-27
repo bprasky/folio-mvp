@@ -149,8 +149,8 @@ async function main() {
   assert.equal((await fetch(origin + image.url)).status, 404);
   const authorizedBytes = await owner.evaluate(async url => { const r = await fetch(url); return { status: r.status, size: (await r.arrayBuffer()).byteLength, cache: r.headers.get('cache-control') }; }, image.url);
   assert.equal(authorizedBytes.status, 200); assert.ok(authorizedBytes.size > 0); assert.match(authorizedBytes.cache, /no-store/);
-  assert.equal((await fetch(origin + '/_next/image?url=' + encodeURIComponent(image.url) + '&w=640&q=75')).status, 404);
-  assert.equal((await fetch(origin + '/_next/image?url=' + encodeURIComponent(origin + image.url) + '&w=640&q=75')).status, 404);
+  assert.equal((await fetch(origin + '/_next/image?url=' + encodeURIComponent(image.url) + '&w=640&q=75')).status, 400);
+  assert.equal((await fetch(origin + '/_next/image?url=' + encodeURIComponent(origin + image.url) + '&w=640&q=75')).status, 400);
   passed('real Next private byte proxy and optimizer bypass denial', authorizedBytes);
   const bcrypt = require('bcryptjs'); const passwordHash = await bcrypt.hash(password, 10);
   const collaborator = await f.user({ email: `${runId}-editor@rollout.test`, passwordHash, onboardingCompletedAt: new Date() });

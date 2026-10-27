@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import Image from 'next/image';
+import Image from '@/components/FolioImage';
 import Link from 'next/link';
 import { useSession } from 'next-auth/react';
 import * as Dialog from '@radix-ui/react-dialog';
