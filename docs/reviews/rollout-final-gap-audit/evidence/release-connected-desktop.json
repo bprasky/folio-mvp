@@ -1,0 +1,70 @@
+{
+  "runId": "52660f7d-5577-4a98-b340-b5e7899795db",
+  "boundary": "real Next server/session/PostgreSQL; local synthetic model and storage HTTP; email disabled",
+  "checks": [
+    {
+      "name": "signup UI, real credential exchange and signed browser session",
+      "detail": {
+        "userId": "ff037b3f-146a-46e0-b5ae-bc2186cb41bb"
+      }
+    },
+    {
+      "name": "designer onboarding and active firm saved through authenticated Next APIs"
+    },
+    {
+      "name": "manual creation UI lost-response retry and refresh/resume retain one database project",
+      "detail": {
+        "projectId": "9c31b3e5-b8cd-58f4-9d0a-7c5c9270701d"
+      }
+    },
+    {
+      "name": "legacy publication page derives readiness from all eleven images and exclusion"
+    },
+    {
+      "name": "photo bytes, room replay, assignment and product tagging persisted and rendered at four widths"
+    },
+    {
+      "name": "real Next private byte proxy and optimizer bypass denial",
+      "detail": {
+        "status": 200,
+        "size": 22768,
+        "cache": "private, no-store, max-age=0"
+      }
+    },
+    {
+      "name": "authenticated collaborator page admission, permitted write, viewer write denial and revoked page denial"
+    },
+    {
+      "name": "separate carousel export reads protected source and returns two real 1080×1350 JPEGs"
+    },
+    {
+      "name": "mobile profile follow/unfollow confirms database state and survives refresh"
+    },
+    {
+      "name": "expired signed NextAuth token cannot mutate after session expiry"
+    },
+    {
+      "name": "saved interview, local-model generation, failed owner publish, approved retry and public project/profile",
+      "detail": {
+        "modelCalls": 8,
+        "slug": "rollout-courtyard-house-52660f7d-AMN6JY"
+      }
+    },
+    {
+      "name": "unpublishing revokes anonymous story and original byte URL on real Next server"
+    }
+  ],
+  "screenshots": [
+    "manual-create-1440.png",
+    "workspace-360.png",
+    "workspace-390.png",
+    "workspace-768.png",
+    "workspace-1440.png",
+    "public-story-360.png",
+    "public-story-390.png",
+    "public-story-768.png",
+    "public-story-1440.png",
+    "public-profile-390.png"
+  ],
+  "startingWidth": 1440
+}

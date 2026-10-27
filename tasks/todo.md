@@ -1049,7 +1049,7 @@ Review: 37 required core checks, 8 independent-process concurrency checks and 8 
 - [x] Inspect current main, PR checks/reviews, production target and required storage configuration.
 - [x] Repair the hosted focus-test timing failure without weakening assertions; rerun all responsive interactions.
 - [x] Provision the separate private photo bucket; verify and remove a synthetic hosted byte canary.
-- [ ] Wait for updated hosted checks, merge the reviewed SHA, deploy that exact merged commit and verify production domain/anonymous boundaries.
+- [x] Wait for updated hosted checks, merge the reviewed SHA, deploy and verify production domain/anonymous boundaries. The initial merged deployment required the image correction recorded below.
 
 Release preflight is recorded in docs/reviews/rollout-final-gap-audit/evidence/release-preflight.md. Runtime source is unchanged; legacy image retirement and signed-in/device rollout smoke remain separately scoped.
 
@@ -1059,6 +1059,15 @@ Release preflight is recorded in docs/reviews/rollout-final-gap-audit/evidence/r
 - [x] Detect failed ordinary image optimization in production smoke and restore the previous production deployment.
 - [x] Replace the global custom loader with an access-aware Image wrapper; allow only static local files in the optimizer and retain existing remote hosts.
 - [x] Add a real production-mode Next/Image regression covering ordinary bytes, protected access, and relative/absolute/encoded/traversing optimizer rejection.
-- [ ] Complete hosted checks, merge the corrective PR, stage production and verify images/private boundaries before promotion.
+- [x] Complete hosted checks, merge the corrective PR, stage production and verify images/private boundaries before promotion.
 
 The first deployment of 4829a94e reached READY but was rolled back: setting a global custom image loader disables the Vercel optimizer. Its 404 responses had masked that Next 14 also skips middleware for /_next/image. The correction uses the optimizer's own localPatterns allowlist, with 400 rejection before any protected photo fetch/cache. Private photo responses retain private/no-store headers. The 110 consumer changes only redirect imports to the shared wrapper. No storage/schema changes or unrelated onboarding-gate activation.
+
+## Final release verification — 2026-10-27
+
+- [x] Confirm production serves reviewed efbc9ecf, whose tree matches merged main 09f92c22; all 11 repository checks and 17 final production HTTP/image checks passed.
+- [x] Rebuild final code with a fresh, explicitly disposable native PostgreSQL/pgvector and Redis environment.
+- [x] Repeat the real Next/session/persistence journey: 12 desktop groups and 12 mobile groups passed. Inspect selected screenshots and expected negative-test logs.
+- [x] Reconcile the audit's stale storage, middleware, source identity and release statements; preserve historical evidence and record precise remaining gates.
+
+Review: no runtime source changes were needed. Email/model/storage-policy boundaries remain synthetic in the connected runs; local services are stopped afterward. Legacy production migration, full signed-in hosted smoke, physical phones and optional provider activation remain separate. See docs/reviews/rollout-final-gap-audit/evidence/release-verification.md.
