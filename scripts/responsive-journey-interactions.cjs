@@ -165,8 +165,18 @@ module.exports = async function interactions({ page, go, capture, requests, resu
           && opener.contains(document.elementFromPoint(rect.x + rect.width / 2, rect.y + rect.height / 2));
       }, { timeout: 2000 });
       await page.locator('#opener').click(); await page.waitForSelector('[role=dialog]');
-      // Mounting the node is earlier than Radix's focus/keyboard setup.
-      await page.waitForFunction(() => document.querySelector('[role=dialog]')?.contains(document.activeElement), { timeout: 2000 });
+      // Radix registers the modal layer after mount/autofocus. Escape belongs to
+      // that layer only after the outside page is locked and the drawer is interactive.
+      await page.waitForFunction(() => {
+        const dialog = document.querySelector('[role=dialog]');
+        return dialog?.contains(document.activeElement)
+          && getComputedStyle(document.body).pointerEvents === 'none'
+          && getComputedStyle(dialog).pointerEvents === 'auto';
+      }, { timeout: 2000 });
+      // The layer's Escape callback ref is refreshed in a passive effect. Allow
+      // the committed modal state to paint before dispatching the next key.
+      await page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))));
+      console.log('PASS reopened product drawer accepts keyboard focus at ' + width + 'px');
       await page.keyboard.press('Escape'); await page.waitForSelector('[role=dialog]',{hidden:true});
       await page.waitForFunction(() => document.activeElement.id === 'opener', { timeout: 2000 });
       assert.equal(await page.evaluate(()=>document.activeElement.id),'opener');
