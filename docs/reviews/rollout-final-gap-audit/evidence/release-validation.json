@@ -1,0 +1,100 @@
+{
+  "recordedAt": "2026-10-27T19:04:02.041Z",
+  "applicationCommit": "09f92c228b87910c943bddfc4965447f3886e658",
+  "deployedHead": "efbc9ecf4b8f2fcbfced1bb672cab39fec5dcb45",
+  "deployment": "dpl_AHrfkcM64Vg8W6yY7fUQbsvc7YER",
+  "sourceState": "Only documentation/evidence uncommitted; application and test code match merged 09f92c22. No schema/package/baseline changes.",
+  "boundaries": {
+    "real": [
+      "Chrome",
+      "Next production build/server",
+      "NextAuth sessions",
+      "native PostgreSQL/pgvector",
+      "native Redis",
+      "Sharp image decoding",
+      "carousel rendering"
+    ],
+    "synthetic": [
+      "local Supabase-compatible storage policy",
+      "AI responses",
+      "test users/projects/photos"
+    ],
+    "disabled": [
+      "email",
+      "non-loopback runtime network",
+      "paid providers"
+    ]
+  },
+  "commands": [
+    {
+      "command": "node .tmp/reverify-release.cjs schema",
+      "executes": "node node_modules/prisma/build/index.js db push --skip-generate",
+      "result": "exit 0; fresh explicitly disposable local DB"
+    },
+    {
+      "command": "node .tmp/reverify-release.cjs build",
+      "executes": "node node_modules/next/dist/bin/next build",
+      "result": "exit 0",
+      "localLog": ".tmp/release-reverify-build.log",
+      "logSha256": "5060d8027f9f0d18cb114e83e739ff9dfffb4b26166027547fc0dc46b8bef1ef"
+    },
+    {
+      "command": "node .tmp/reverify-release.cjs desktop",
+      "executes": "node scripts/rollout/connected-journey.cjs",
+      "result": "12 groups pass; exit 0",
+      "startingWidth": 1440
+    },
+    {
+      "command": "node .tmp/reverify-release.cjs mobile",
+      "executes": "ROLLOUT_MOBILE=1 node scripts/rollout/connected-journey.cjs",
+      "result": "12 groups pass; exit 0",
+      "startingWidth": 390
+    }
+  ],
+  "failureNotes": [
+    "Initial initdb on the small WSL root filesystem ran out of space; initialized UTF-8 DB on a new dedicated 768 MiB tmpfs instead.",
+    "Forbidden-delete and expired-JWT messages in Next logs are deliberate negative assertions, not unhandled journey failures."
+  ],
+  "artifacts": [
+    {
+      "path": "evidence/release-production-smoke.json",
+      "bytes": 5716,
+      "sha256": "cc2821fe33a1a428c3a9022b0cfa6dacca54b9459c2ee5c13eaca86975a94404"
+    },
+    {
+      "path": "evidence/release-connected-desktop.json",
+      "bytes": 2221,
+      "sha256": "267fc76e3f5014d08675dfad0eb79bce58f16a62743bd82f4f675a96de87744e"
+    },
+    {
+      "path": "evidence/release-connected-mobile.json",
+      "bytes": 2219,
+      "sha256": "4fce2c155b5a6fcb38f22fef469cdd25e2dd4cb0283061023903fd0547649464"
+    },
+    {
+      "path": "evidence/logs/release-connected-desktop.log",
+      "bytes": 1273,
+      "sha256": "a0bcf1b91e3aa1ee534396b1cf18f518a920dd527b1973c03f93cc2b3bb48750"
+    },
+    {
+      "path": "evidence/logs/release-connected-mobile.log",
+      "bytes": 1273,
+      "sha256": "96faa688afc327b58f62efc525dbdb4363cbdf371fe9730e9c875577754f13a0"
+    },
+    {
+      "path": "screenshots/release-desktop-workspace.png",
+      "bytes": 248340,
+      "sha256": "cb3f3551c7da0f83be48672359a3aed26dc5581e03f22248301678d3f5ef8aae"
+    },
+    {
+      "path": "screenshots/release-mobile-intake.png",
+      "bytes": 145016,
+      "sha256": "7d1f88a5ab17cf849183d640d4101cda6da64452d3b92034e8eee93c03e7ff85"
+    },
+    {
+      "path": "screenshots/release-mobile-story.png",
+      "bytes": 83988,
+      "sha256": "fcd4efe455db75699d5c36e97f738e0ea8fd5f718418232048bd6356ffe88c9e"
+    }
+  ]
+}

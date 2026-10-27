@@ -1,5 +1,7 @@
 # Isolated verification environment
 
+The original environment and commands below describe the 26 October runs. The [release verification](release-verification.md) records the subsequent rebuild and final-code journey against merged `09f92c22`, including the refreshed disposable database.
+
 Application tree: 70636d1f. Final test tree: 5c1d99a8. The final desktop/mobile runs use that committed tree; only documentation/evidence and generated test output were uncommitted. No application changes followed the final prepared build.
 
 - Windows Node/Chrome, repository lockfile dependencies installed locally (`npm ci --ignore-scripts`, then `npx prisma generate`).

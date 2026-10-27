@@ -1,0 +1,157 @@
+{
+  "checkedAt": "2026-10-27T18:53:44.684Z",
+  "origin": "https://folioad.com",
+  "boundary": "anonymous read-only production HTTP and public image decoding; no user data mutations or model calls",
+  "results": [
+    {
+      "path": "/",
+      "status": 200,
+      "cache": "private, no-cache, no-store, max-age=0, must-revalidate",
+      "cdnCache": null,
+      "vercelCache": "MISS",
+      "contentType": "text/html; charset=utf-8",
+      "requestId": "iad1::iad1::d2j2m-1793127222520-093d216acddd"
+    },
+    {
+      "path": "/auth/signin",
+      "status": 200,
+      "cache": "private, no-cache, no-store, max-age=0, must-revalidate",
+      "cdnCache": null,
+      "vercelCache": "MISS",
+      "contentType": "text/html; charset=utf-8",
+      "requestId": "iad1::iad1::bhlxk-1793127223054-7ba3dcd25b78"
+    },
+    {
+      "path": "/auth/signup",
+      "status": 200,
+      "cache": "public, max-age=0, must-revalidate",
+      "cdnCache": null,
+      "vercelCache": "PRERENDER",
+      "contentType": "text/html; charset=utf-8",
+      "requestId": "iad1::rxkv8-1793127223194-b01427984afe"
+    },
+    {
+      "path": "/api/auth/session",
+      "status": 200,
+      "cache": "private, no-cache, no-store",
+      "cdnCache": null,
+      "vercelCache": "MISS",
+      "contentType": "application/json",
+      "requestId": "iad1::iad1::tq75w-1793127223455-82e56c7c6f5d"
+    },
+    {
+      "path": "/api/projects?mine=true",
+      "status": 401,
+      "cache": "public, max-age=0, must-revalidate",
+      "cdnCache": null,
+      "vercelCache": "MISS",
+      "contentType": "application/json",
+      "requestId": "iad1::iad1::pslcq-1793127223756-c1c8cf045a6a"
+    },
+    {
+      "path": "/api/project-photos/00000000-0000-4000-8000-000000000827/release-probe-does-not-exist.jpg",
+      "status": 404,
+      "cache": "private, no-store, max-age=0",
+      "cdnCache": "no-store",
+      "vercelCache": "MISS",
+      "contentType": null,
+      "requestId": "iad1::iad1::jncxz-1793127224121-0fda0d478756"
+    },
+    {
+      "path": "/_next/image?url=%2Fapi%2Fproject-photos%2F00000000-0000-4000-8000-000000000827%2Frelease-probe-does-not-exist.jpg&w=640&q=75",
+      "status": 400,
+      "cache": "public, max-age=0, must-revalidate",
+      "cdnCache": null,
+      "vercelCache": null,
+      "contentType": "text/plain; charset=utf-8",
+      "requestId": "iad1::hflrr-1793127224430-bc1ebfd2078c"
+    },
+    {
+      "path": "/_next/image?url=https%3A%2F%2Ffolioad.com%2Fapi%2Fproject-photos%2F00000000-0000-4000-8000-000000000827%2Frelease-probe-does-not-exist.jpg&w=640&q=75",
+      "status": 400,
+      "cache": "public, max-age=0, must-revalidate",
+      "cdnCache": null,
+      "vercelCache": null,
+      "contentType": "text/plain; charset=utf-8",
+      "requestId": "iad1::jncxz-1793127224475-a9ac673d0646"
+    },
+    {
+      "path": "/_next/image?url=%2F%2561pi%2Fproject-photos%2F00000000-0000-4000-8000-000000000827%2Frelease-probe-does-not-exist.jpg&w=640&q=75",
+      "status": 400,
+      "cache": "public, max-age=0, must-revalidate",
+      "cdnCache": null,
+      "vercelCache": null,
+      "contentType": "text/plain; charset=utf-8",
+      "requestId": "iad1::mp494-1793127224636-c764bdc59db5"
+    },
+    {
+      "path": "/_next/image?url=%2Fassets%2F..%2Fapi%2Fproject-photos%2F00000000-0000-4000-8000-000000000827%2Frelease-probe-does-not-exist.jpg&w=640&q=75",
+      "status": 400,
+      "cache": "public, max-age=0, must-revalidate",
+      "cdnCache": null,
+      "vercelCache": null,
+      "contentType": "text/plain; charset=utf-8",
+      "requestId": "iad1::j2wg5-1793127224681-88f2ed828d5e"
+    },
+    {
+      "path": "/_vercel/image?url=%2Fapi%2Fproject-photos%2F00000000-0000-4000-8000-000000000827%2Frelease-probe-does-not-exist.jpg&w=640&q=75",
+      "status": 400,
+      "cache": "public, max-age=0, must-revalidate",
+      "cdnCache": null,
+      "vercelCache": null,
+      "contentType": "text/plain; charset=utf-8",
+      "requestId": "iad1::krw8n-1793127224740-60cb0ae3510c"
+    },
+    {
+      "path": "/_vercel/image?url=https%3A%2F%2Ffolioad.com%2Fapi%2Fproject-photos%2F00000000-0000-4000-8000-000000000827%2Frelease-probe-does-not-exist.jpg&w=640&q=75",
+      "status": 400,
+      "cache": "public, max-age=0, must-revalidate",
+      "cdnCache": null,
+      "vercelCache": null,
+      "contentType": "text/plain; charset=utf-8",
+      "requestId": "iad1::kck65-1793127224809-3abc2435e46a"
+    },
+    {
+      "path": "/_vercel/image?url=%2F%2561pi%2Fproject-photos%2F00000000-0000-4000-8000-000000000827%2Frelease-probe-does-not-exist.jpg&w=640&q=75",
+      "status": 400,
+      "cache": "public, max-age=0, must-revalidate",
+      "cdnCache": null,
+      "vercelCache": null,
+      "contentType": "text/plain; charset=utf-8",
+      "requestId": "iad1::58x74-1793127224857-d576a1168ae0"
+    },
+    {
+      "path": "/_vercel/image?url=%2Fassets%2F..%2Fapi%2Fproject-photos%2F00000000-0000-4000-8000-000000000827%2Frelease-probe-does-not-exist.jpg&w=640&q=75",
+      "status": 400,
+      "cache": "public, max-age=0, must-revalidate",
+      "cdnCache": null,
+      "vercelCache": null,
+      "contentType": "text/plain; charset=utf-8",
+      "requestId": "iad1::cbbm2-1793127224911-a3700dd34bf7"
+    },
+    {
+      "check": "homepage-optimized-image",
+      "status": 200,
+      "bytes": 39818,
+      "width": 640,
+      "height": 416,
+      "format": "jpeg"
+    },
+    {
+      "check": "homepage-optimized-image",
+      "status": 200,
+      "bytes": 34868,
+      "width": 600,
+      "height": 600,
+      "format": "jpeg"
+    },
+    {
+      "check": "homepage-optimized-image",
+      "status": 200,
+      "bytes": 34700,
+      "width": 600,
+      "height": 600,
+      "format": "jpeg"
+    }
+  ]
+}

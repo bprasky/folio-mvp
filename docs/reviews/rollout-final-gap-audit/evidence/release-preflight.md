@@ -1,5 +1,7 @@
 # Release preflight — 27 October 2026
 
+This is the historical preflight record. PR827 and corrective PR828 subsequently merged and deployed. PR828 changed application image delivery, so the source-unchanged statements below apply only to preflight. See [final release and verification](release-verification.md) for the current result.
+
 User explicitly authorized merge and deploy after the original report. Target: GitHub `bprasky/folio-mvp` PR827; Vercel `folio-mvp` / `prj_x3AUoaFxpqS1yTKlF1kQfbQLbHg4` in `team_C6byv9SuLXADBaq6A6BJsn9r`; production domain `folioad.com`. Previous production was READY at main1020fef5, deployment `dpl_p9umFJfJREwzwuuno9A7LfzxjzAs`. Git auto-deployment remains disabled in vercel.json; deployment must explicitly select the merged SHA.
 
 Initial hosted CI at e3ad31a1: ten checks passed, Supabase Preview skipped because no Supabase-directory change, and Core regression journeys failed at the photo-viewer focus assertion. Radix restores focus after unmount; the fixture asserted immediately after disappearance. A two-second condition wait was added to both remaining photo-viewer/product-drawer checks, preserving the expected opener assertion. No application code, authorization, baseline or skip behavior changed.
