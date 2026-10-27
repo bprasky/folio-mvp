@@ -157,7 +157,14 @@ module.exports = async function interactions({ page, go, capture, requests, resu
       await page.keyboard.press('Tab'); assert(await page.$eval('[role=dialog]',e=>e.contains(document.activeElement)));
       await capture('public-sheet-scroll',width);
       await page.keyboard.press('Escape'); await page.waitForSelector('[role=dialog]',{hidden:true});
-      await page.click('#opener'); await page.waitForSelector('[role=dialog]');
+      // Disappearance precedes modal pointer-lock cleanup. Require a real hit
+      // target, then let the locator wait for stable layout before reopening.
+      await page.waitForFunction(() => {
+        const opener = document.getElementById('opener'), rect = opener.getBoundingClientRect();
+        return getComputedStyle(document.body).pointerEvents !== 'none'
+          && opener.contains(document.elementFromPoint(rect.x + rect.width / 2, rect.y + rect.height / 2));
+      }, { timeout: 2000 });
+      await page.locator('#opener').click(); await page.waitForSelector('[role=dialog]');
       await page.keyboard.press('Escape'); await page.waitForSelector('[role=dialog]',{hidden:true});
       await page.waitForFunction(() => document.activeElement.id === 'opener', { timeout: 2000 });
       assert.equal(await page.evaluate(()=>document.activeElement.id),'opener');
