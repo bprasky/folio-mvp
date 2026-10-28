@@ -4,7 +4,7 @@ import React, { useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { safeCallbackPath, professionalSetupHref } from '@/lib/onboarding/professional-entry';
 import Link from 'next/link';
-import { signIn, useSession } from 'next-auth/react';
+import { getProviders, signIn, useSession } from 'next-auth/react';
 
 import { Topbar } from '../_components/Topbar';
 import { PhotoPanel } from '../_components/PhotoPanel';
@@ -59,6 +59,17 @@ function SignupForm() {
   const [isLoading, setIsLoading] = useState(false);
   const [message, setMessage] = useState('');
   const [messageType, setMessageType] = useState<'error' | 'success' | null>(null);
+  const [providers, setProviders] = useState({ google: false, apple: false });
+
+  useEffect(() => {
+    let active = true;
+    getProviders().then((available) => {
+      if (active) setProviders({ google: !!available?.google, apple: !!available?.apple });
+    }).catch(() => {
+      // Email signup remains available if provider discovery fails.
+    });
+    return () => { active = false; };
+  }, []);
 
   const canSubmit =
     firstName.trim().length > 0 &&
@@ -141,10 +152,19 @@ function SignupForm() {
     }
   };
 
-  const handleGoogle = () =>
-    signIn('google', { callbackUrl: destination });
-  const handleApple = () =>
-    signIn('apple', { callbackUrl: destination });
+  const handleSso = async (provider: 'google' | 'apple') => {
+    setIsLoading(true);
+    setMessage('');
+    setMessageType(null);
+    try {
+      await signIn(provider, { callbackUrl: destination });
+    } catch {
+      setMessage('Unable to start sign-in. Please try again or sign up with email.');
+      setMessageType('error');
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   return (
     <div className="auth-shell">
@@ -190,9 +210,18 @@ function SignupForm() {
             </div>
           </fieldset>
 
-          <SsoRow onGoogleClick={handleGoogle} onAppleClick={handleApple} disabled={isLoading} />
-
-          <AuthDivider />
+          {(providers.google || providers.apple) && (
+            <>
+              <SsoRow
+                showGoogle={providers.google}
+                showApple={providers.apple}
+                onGoogleClick={() => handleSso('google')}
+                onAppleClick={() => handleSso('apple')}
+                disabled={isLoading}
+              />
+              <AuthDivider />
+            </>
+          )}
 
           <form className="auth-form" onSubmit={handleSubmit} noValidate>
             <div className="auth-row-2">

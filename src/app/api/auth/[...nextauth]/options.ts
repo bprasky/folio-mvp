@@ -263,6 +263,12 @@ export const authOptions: NextAuthOptions = {
         console.log("DEBUG: Entering JWT callback");
       }
 
+      // Credentials already carry the Folio ID. OAuth user.id belongs to the
+      // external provider and must never overwrite the resolved Folio ID.
+      if (user?.id && account?.provider === 'credentials') {
+        token.id = user.id;
+      }
+
       // For OAuth first sign-in, resolve the Folio user id by email so the
       // hydration block below (which queries by token.sub) finds the right row.
       if (
@@ -274,20 +280,12 @@ export const authOptions: NextAuthOptions = {
             where: { email: user.email.toLowerCase().trim() },
             select: { id: true },
           });
-          if (dbUser) {
-            token.id = dbUser.id;
-            token.sub = dbUser.id;
-          }
+          if (!dbUser) throw new Error('OAuth user has no Folio account');
+          token.id = dbUser.id;
+          token.sub = dbUser.id;
         } catch (e) {
           console.error('Error resolving OAuth user to Folio id:', e);
-        }
-      }
-
-      // Persist id on initial sign-in
-      if (user?.id) {
-        token.id = user.id;
-        if (process.env.NODE_ENV !== 'production') {
-          console.log("DEBUG: JWT callback - Setting token.id:", user.id);
+          throw e;
         }
       }
 
@@ -447,4 +445,4 @@ export const authOptions: NextAuthOptions = {
   secret: process.env.NEXTAUTH_SECRET,
   // Add NEXTAUTH_URL for production
   ...(process.env.NEXTAUTH_URL && { url: process.env.NEXTAUTH_URL }),
-}; 
+};
