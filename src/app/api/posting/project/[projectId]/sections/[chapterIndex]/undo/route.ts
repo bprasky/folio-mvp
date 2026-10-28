@@ -31,7 +31,7 @@ export async function POST(
 
     const post = await prisma.projectPost.findUnique({
       where: { projectId },
-      select: { id: true, expandedBlocks: true, sectionHistory: true },
+      select: { id: true, updatedAt: true, expandedBlocks: true, sectionHistory: true },
     });
 
     if (!post?.expandedBlocks) {
@@ -64,7 +64,7 @@ export async function POST(
     chapters[chapterIndex].body = previousVersion.body;
 
     await prisma.projectPost.update({
-      where: { id: post.id },
+      where: { id: post.id, updatedAt: post.updatedAt },
       data: {
         expandedBlocks: blocks as any,
         sectionHistory: history.length > 0 ? (history as any) : null,
@@ -79,6 +79,7 @@ export async function POST(
       },
     });
   } catch (error: any) {
+    if (error?.code === 'P2025') return NextResponse.json({ error: 'The article changed. Refresh and try again.' }, { status: 409 });
     if (error.message === 'NotFound') {
       return NextResponse.json({ error: 'Project not found' }, { status: 404 });
     }

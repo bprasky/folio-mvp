@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { PresentationSchema } from '@/lib/story/presentation';
 
 // [AUDIT] Log schema configuration
 console.log("[AUDIT] schema: BlocksSchema configured", {
@@ -224,6 +225,7 @@ export const EmbeddedQuoteChoiceSchema = z.object({
 export type EmbeddedQuoteChoice = z.infer<typeof EmbeddedQuoteChoiceSchema>;
 
 export const BlocksSchema = z.object({
+  presentation: PresentationSchema.optional(),
   embeddedQuotes: z.array(EmbeddedQuoteChoiceSchema).max(2).optional(),
   lead: z.object({
     title: z.string().max(120).optional(), // Support title field (LLM sometimes generates this)

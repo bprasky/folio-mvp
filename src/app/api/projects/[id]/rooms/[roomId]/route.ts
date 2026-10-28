@@ -130,7 +130,7 @@ export async function PUT(
         // 3. Cascade to ProjectPost.expandedBlocks galleryChapters titles
         const post = await tx.projectPost.findFirst({
           where: { projectId },
-          select: { id: true, expandedBlocks: true },
+          select: { id: true, updatedAt: true, expandedBlocks: true },
         });
 
         const oldFormatted = formatRoomName(oldName);
@@ -151,7 +151,7 @@ export async function PUT(
 
             if (changed) {
               await tx.projectPost.update({
-                where: { id: post.id },
+                where: { id: post.id, updatedAt: post.updatedAt },
                 data: { expandedBlocks: blocks },
               });
             }
@@ -251,6 +251,7 @@ export async function PUT(
     if (error instanceof Error && error.message === "Forbidden") return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     if (error instanceof Error && error.message === "NotFound") return NextResponse.json({ error: "Project not found" }, { status: 404 });
     console.error('Error updating room:', error);
+    if ((error as { code?: string }).code === 'P2025') return NextResponse.json({ error: 'The article changed. Refresh and try again.' }, { status: 409 });
     if ((error as { status?: number }).status === 409) {
       return NextResponse.json({ error: (error as Error).message }, { status: 409 });
     }

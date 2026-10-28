@@ -21,12 +21,14 @@ export default async function InstagramExportPage({
     where: { id: params.id },
     include: {
       images: {
+        where: { inclusion: 'INCLUDED' },
         include: {
           tags: { include: { product: true } },
         },
         orderBy: { displayOrder: 'asc' },
       },
       post: true,
+      designerOrg: { select: { name: true } },
       rooms: true,
     },
   });
@@ -96,6 +98,9 @@ export default async function InstagramExportPage({
     description: project.description,
     designerId: project.designerId,
     ownerId: project.ownerId,
+    city: project.city,
+    regionState: project.regionState,
+    designerOrg: project.designerOrg,
   };
 
   const serializedPost = {

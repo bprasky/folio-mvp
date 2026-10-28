@@ -11,7 +11,8 @@ import { buildStoryData, type StoryData } from "@/lib/story/buildRoomTiles";
 import { StoryHero } from "./StoryHero";
 import { StoryIntro } from "./StoryIntro";
 import { LeadHeadline, LeadDeck, LeadIntro } from "./StoryLead";
-import { Mosaic } from "./Mosaic";
+import { ImmersiveRooms } from "./ImmersiveRooms";
+import { BreatherQuote } from "./BreatherQuote";
 import { ProductSheet } from "./ProductSheet";
 import { StoryCredits } from "./StoryCredits";
 import { useImageAspect } from "./useImageAspect";
@@ -150,16 +151,16 @@ export function StoryRenderer({ post }: StoryRendererProps) {
           <LandscapeHero story={story} publishedAt={post?.publishedAt ?? null} />
         )}
 
-        {/* Mosaic: Room grid with expand-to-detail */}
+        {/* Direct room navigation, with the same composition in owner preview. */}
         <div id="tagged-products" className="mt-10 scroll-mt-20">
-          <Mosaic
-            roomTiles={story.roomTiles}
-            breathers={story.breathers}
-            supplementalQuotes={story.supplementalQuotes}
+          <ImmersiveRooms
+            story={story}
+            projectName={post.project.title}
+            presentation={post.expandedBlocks?.presentation}
             onProductClick={handleProductClick}
             autoExpandRoom={autoExpandRoom}
-            reducedMotion={reducedMotion}
           />
+          {story.breathers.map(breather => <BreatherQuote key={breather.id} breather={breather} reducedMotion={reducedMotion} />)}
         </div>
 
         {/* Credits */}

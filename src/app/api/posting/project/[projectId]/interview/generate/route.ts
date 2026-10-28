@@ -17,6 +17,7 @@ import { Prisma } from '@prisma/client';
 import { jsonObject } from '@/lib/editorial/lifecycle';
 import { assertProjectWrite, assertProjectPublish } from "@/lib/authz/access";
 import { BlocksSchema } from "@/lib/posting/schemas";
+import { preservePresentation } from '@/lib/story/presentation';
 import { savedEmbeddedQuoteChoices } from '@/lib/posting/embeddedQuotes';
 import { generateEditorialDraft, type GenInput } from "@/lib/posting/generateEditorialDraft";
 import { rateLimit } from "@/lib/rateLimit";
@@ -1591,7 +1592,7 @@ export async function POST(
       where: { projectId, updatedAt: current.updatedAt, status: current.status, provenance: { equals: current.provenance === null ? Prisma.DbNull : current.provenance } },
       data: {
         status: 'DRAFT',
-        expandedBlocks: expandedBlocks,
+        expandedBlocks: preservePresentation(expandedBlocks, current.expandedBlocks),
         // Merge, not replace (C3): keep override/history entries pointing at
         // lead/intro or a frozen chapter (stable indices); drop the rest.
         sectionOverrides: preservedOverrides as any,

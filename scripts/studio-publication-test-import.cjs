@@ -2,6 +2,9 @@ const fs = require('node:fs'), vm = require('node:vm'), path = require('node:pat
 /** Pure publication renderers used by the existing VM-based UI harnesses. */
 module.exports = function publicationImport(name) {
   const files = {
+    '@/lib/instagram-export/publication-photo': 'src/lib/instagram-export/publication-photo.ts',
+    '@/lib/story/presentation': 'src/lib/story/presentation.ts',
+    '@/lib/posting/schemas': 'src/lib/posting/schemas.ts',
     './publication-headlines': 'src/lib/publishing-studio/publication-headlines.ts',
     '@/lib/publishing-studio/publication-headlines': 'src/lib/publishing-studio/publication-headlines.ts',
     './history': 'src/lib/publishing-studio/history.ts',

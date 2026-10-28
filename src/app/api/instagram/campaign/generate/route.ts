@@ -11,6 +11,7 @@ import { revalidatePath } from 'next/cache';
 import { StudioAccessError } from '@/lib/publishing-studio/data';
 import { assertProjectWrite } from '@/lib/authz/access';
 import { generateReadyCampaign } from '@/lib/instagram/campaign/generateReadyCampaign';
+import { approvedPhotoPresentations } from '@/lib/instagram-export/approved-photo-presentations';
 
 export const runtime = 'nodejs';
 export const maxDuration = 300; // 5 minutes for campaign generation
@@ -230,6 +231,7 @@ export async function POST(request: NextRequest) {
     postNumber++;
 
     // 2. Generate Room Spotlights
+    const presentations = selectedRooms.length ? await approvedPhotoPresentations([projectId]) : {};
     for (const room of selectedRooms) {
       const roomFolder = zip.folder(
         `${String(postNumber).padStart(2, '0')}-${room.name.toLowerCase().replace(/\s+/g, '-')}`
@@ -239,13 +241,11 @@ export async function POST(request: NextRequest) {
 
       for (const format of formats) {
         const spotlightSlides = await generateRoomSpotlight({
-          roomName: room.name,
-          projectTitle: project.title,
-          designerName: projectData.designerName,
+          projectId,
+          publicationPhotos: presentations[projectId],
           projectSlug: project.post.slug,
           imageUrls: roomImages.map((img) => img.url),
           format,
-          seriesInfo: { current: postNumber, total: totalPosts },
         });
 
         spotlightSlides.forEach((slide, idx) => {

@@ -1,11 +1,14 @@
 import { readProtectedProjectPhoto } from '@/lib/server/protected-project-photo';
 import 'server-only';
 import sharp from 'sharp';
+import { renderPublicationPhoto } from '@/lib/instagram-export/render-publication-photo';
+import type { PublicationPhoto } from '@/lib/instagram-export/publication-photo';
 
 /** Read only reviewed first-party storage images, with bounded fetch and decoding. */
-export async function renderApprovedImage(source: string, width: number, height: number, projectId?: string): Promise<Buffer> {
+export async function renderApprovedImage(source: string, width: number, height: number, projectId?: string, presentation?: PublicationPhoto): Promise<Buffer> {
   const protectedImage = projectId ? await readProtectedProjectPhoto(source, projectId) : null;
-  if (protectedImage) return sharp(protectedImage.buffer, { limitInputPixels: 40_000_000 }).rotate().resize(width, height, { fit: 'cover' }).jpeg({ quality: 90 }).toBuffer();
+  if (protectedImage) return presentation ? renderPublicationPhoto(protectedImage.buffer, presentation, width, height)
+    : sharp(protectedImage.buffer, { limitInputPixels: 40_000_000 }).rotate().resize(width, height, { fit: 'cover' }).jpeg({ quality: 90 }).toBuffer();
   const url = new URL(source);
   const origin = process.env.NEXT_PUBLIC_SUPABASE_URL;
   if (!origin || url.origin !== new URL(origin).origin || url.protocol !== 'https:' || !url.pathname.startsWith('/storage/v1/object/public/')) {
@@ -25,5 +28,7 @@ export async function renderApprovedImage(source: string, width: number, height:
       chunks.push(chunk.value);
     }
   } finally { await reader.cancel(); }
-  return sharp(Buffer.concat(chunks), { limitInputPixels: 50_000_000 }).rotate().resize(width, height, { fit: 'cover' }).jpeg({ quality: 90 }).toBuffer();
+  const buffer = Buffer.concat(chunks);
+  return presentation ? renderPublicationPhoto(buffer, presentation, width, height)
+    : sharp(buffer, { limitInputPixels: 50_000_000 }).rotate().resize(width, height, { fit: 'cover' }).jpeg({ quality: 90 }).toBuffer();
 }

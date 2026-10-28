@@ -1,4 +1,7 @@
 import sharp from 'sharp';
+import { fetchProjectImage } from '@/lib/server/project-image-input';
+import { renderPublicationPhoto } from './render-publication-photo';
+import type { PublicationPhoto } from './publication-photo';
 import {
   createGradientOverlaySVG,
   createHeadlineSVG,
@@ -21,6 +24,8 @@ export type AspectRatio = keyof typeof DIMENSIONS;
 export type SlideType = 'hero' | 'detail' | 'bio' | 'cta';
 
 export interface ExportConfig {
+  coverTextMode?: 'room' | 'headline';
+  publicationPhotos?: Record<string, PublicationPhoto>;
   aspectRatio: AspectRatio;
   watermarkStyle: WatermarkStyle;
   headlinePosition: HeadlinePosition;
@@ -37,12 +42,7 @@ export interface ExportConfig {
 }
 
 async function fetchImageBuffer(url: string): Promise<Buffer> {
-  const response = await fetch(url);
-  if (!response.ok) {
-    throw new Error(`Failed to fetch image: ${url}`);
-  }
-  const arrayBuffer = await response.arrayBuffer();
-  return Buffer.from(arrayBuffer);
+  return (await fetchProjectImage(url)).buffer;
 }
 
 export async function generateHeroSlide(config: {
@@ -269,6 +269,17 @@ export async function generateAllSlides(
   for (let i = 0; i < slideSequence.length; i++) {
     const slide = slideSequence[i];
     let buffer: Buffer;
+
+    const sourcePhoto = slide.imageUrl && config.publicationPhotos?.[slide.imageUrl];
+    if (sourcePhoto && (slide.type === 'hero' || slide.type === 'detail')) {
+      const photo = slide.type === 'hero' && config.coverTextMode === 'headline' && config.headline.trim()
+        ? { ...sourcePhoto, quote: config.headline.trim(), attribution: null }
+        : sourcePhoto;
+      const { width, height } = DIMENSIONS[config.aspectRatio];
+      buffer = await renderPublicationPhoto(await fetchImageBuffer(slide.imageUrl!), photo, width, height);
+      results.push({ slideIndex: i, type: slide.type, buffer });
+      continue;
+    }
 
     switch (slide.type) {
       case 'hero':

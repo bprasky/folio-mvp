@@ -1,3 +1,5 @@
+import { readPresentation } from '@/lib/story/presentation';
+
 /** Explicit publication transport. Never serialize Prisma records or interview state. */
 const pick = <K extends string>(value: any, keys: K[]): Record<K, any> => Object.fromEntries(
   keys.filter(key => value?.[key] !== undefined).map(key => [key, value[key]]),
@@ -47,6 +49,7 @@ export function publicPost(post: any) {
     credits: credits(post.credits),
     project,
     expandedBlocks: {
+      presentation: readPresentation(blocks.presentation),
       headline: text(blocks.headline),
       lead: pick(blocks.lead, ['title', 'kicker', 'deck']),
       introduction: prose(blocks.introduction),

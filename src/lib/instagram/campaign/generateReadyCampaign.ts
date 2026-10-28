@@ -5,6 +5,7 @@ import type { RoomSpotlightFormat } from './generateRoomSpotlight';
 import { renderApprovedImage } from '@/lib/publishing-studio/readiness/render-image';
 import { generateCaptionsFile } from './generateCaptions';
 import { getApprovedCampaignCandidates, recordCampaignCandidateEvent } from '@/lib/publishing-studio/readiness/service';
+import { approvedPhotoPresentations, approvedHeadlinePhoto } from '@/lib/instagram-export/approved-photo-presentations';
 
 /** The readiness path exports only the current approved source snapshots. */
 export async function generateReadyCampaign(userId: string, projectId: string, formats: RoomSpotlightFormat[]) {
@@ -18,6 +19,7 @@ export async function generateReadyCampaign(userId: string, projectId: string, f
     throw new Error('CAMPAIGN_INELIGIBLE: Publish this project before building a campaign.');
   }
   const zip = new JSZip();
+  const presentations = await approvedPhotoPresentations([projectId]);
   const captions = [];
   for (const [index, candidate] of Array.from(candidates.entries())) {
     const folder = zip.folder(`${String(index + 1).padStart(2, '0')}-story`)!;
@@ -25,7 +27,8 @@ export async function generateReadyCampaign(userId: string, projectId: string, f
       const height = format === 'square' ? 1080 : format === 'portrait' ? 1350 : 1920;
       if (!candidate.imageUrls.length) throw new Error('Campaign story has no approved images');
       for (const [slideIndex, url] of Array.from(candidate.imageUrls.entries())) {
-        const image = await renderApprovedImage(url, 1080, height, projectId);
+        const photo = approvedHeadlinePhoto(presentations[projectId]?.[url], candidate.title, candidate.designerName);
+        const image = await renderApprovedImage(url, 1080, height, projectId, photo);
         folder.file(`slide-${slideIndex + 1}-${format}.jpg`, image);
       }
     }

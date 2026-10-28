@@ -1,6 +1,9 @@
 'use client';
 
+import { useMemo } from 'react';
 import { CarouselHero } from './CarouselHero';
+import { PublicationPhotoPreview } from './PublicationPhotoPreview';
+import type { PublicationPhoto } from '@/lib/instagram-export/publication-photo';
 
 import type { AspectRatio } from '@/lib/instagram-export/generate-images';
 import type { SlideData } from './InstagramExportEditor';
@@ -12,6 +15,8 @@ interface Props {
   activeIndex: number;
   onSelectSlide: (index: number) => void;
   headline: string;
+  coverTextMode?: 'room' | 'headline';
+  publicationPhotos?: Record<string, PublicationPhoto>;
   headlinePosition: HeadlinePosition;
   watermarkStyle: WatermarkStyle;
   designerName: string;
@@ -45,6 +50,8 @@ export function SlidePreview({
   activeIndex,
   onSelectSlide,
   headline,
+  coverTextMode,
+  publicationPhotos,
   headlinePosition,
   watermarkStyle,
   designerName,
@@ -57,6 +64,9 @@ export function SlidePreview({
   designerHandle,
 }: Props) {
   const slide = slides[activeIndex];
+  const source = slide?.imageUrl ? publicationPhotos?.[slide.imageUrl] : undefined;
+  const currentPhoto = useMemo(() => source && slide?.type === 'hero' && coverTextMode === 'headline' && headline.trim()
+    ? { ...source, quote: headline.trim(), attribution: null } : source, [source, slide?.type, coverTextMode, headline]);
   if (!slide) return null;
 
   const watermarkText = getWatermarkText(watermarkStyle, designerName);
@@ -127,7 +137,11 @@ export function SlidePreview({
       );
     }
 
-    // Reuse the feed's exact first-slide composition.
+    if (currentPhoto && slide.imageUrl) {
+      return <PublicationPhotoPreview imageUrl={slide.imageUrl} photo={currentPhoto} aspectRatio={aspectRatio} />;
+    }
+
+    // Legacy callers without article data retain their existing composition.
     if (slide.type === 'hero') return <CarouselHero imageUrl={slide.imageUrl} headline={headline || 'Your headline here'} headlinePosition={headlinePosition} watermarkText={watermarkText} aspectRatio={aspectRatio} />;
 
     return (

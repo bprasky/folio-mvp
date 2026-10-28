@@ -5,6 +5,8 @@ import type { AspectRatio } from '@/lib/instagram-export/generate-images';
 import type { HeadlinePosition, WatermarkStyle } from '@/lib/instagram-export/svg-templates';
 
 export interface ExportConfig {
+  coverTextMode?: 'room' | 'headline';
+  publicationRevision?: string;
   studioCardId?: string; studioRevision?: string;
   aspectRatio: AspectRatio;
   watermarkStyle: WatermarkStyle;
@@ -34,8 +36,8 @@ export const ExportButton = forwardRef<{ saveDraft: () => Promise<boolean> }, Pr
   const [progress, setProgress] = useState('');
 
   const handleExport = async (saveOnly = false) => {
-    if (!saveOnly && (!config.headline.trim() || !config.selectedImageUrls.length)) {
-      setError('Add a headline and at least one photo before exporting.');
+    if (!saveOnly && ((config.coverTextMode === 'headline' && !config.headline.trim()) || !config.selectedImageUrls.length)) {
+      setError('Choose a photo and add words if using an opening headline.');
       return false;
     }
 
@@ -58,6 +60,8 @@ export const ExportButton = forwardRef<{ saveDraft: () => Promise<boolean> }, Pr
           config: {
             studioCardId: config.studioCardId, studioRevision: config.studioRevision,
             aspectRatio: config.aspectRatio,
+            coverTextMode: config.coverTextMode,
+            publicationRevision: config.publicationRevision,
             watermarkStyle: config.watermarkStyle,
             headlinePosition: config.headlinePosition,
             headline: config.headline,
@@ -132,12 +136,12 @@ export const ExportButton = forwardRef<{ saveDraft: () => Promise<boolean> }, Pr
 
   useImperativeHandle(ref, () => ({ saveDraft: () => handleExport(true) }));
 
-  const unavailable = !config.headline.trim() || !config.selectedImageUrls.length;
+  const unavailable = (config.coverTextMode === 'headline' && !config.headline.trim()) || !config.selectedImageUrls.length;
   return (
     <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '12px' }}>
       {error && <span role="alert" style={{ color: '#A33', fontSize: 'var(--type-meta)' }}>{error}</span>}
       <button onClick={() => handleExport(true)} disabled={exporting} style={{ padding: '10px 16px', border: '1px solid #E8E0D8', borderRadius: '10px', fontSize: 'var(--type-meta)' }}>Save draft</button>
-      {unavailable && !exporting && <span className="folio-meta text-folio-text-secondary">Add a headline and photo to export.</span>}
+      {unavailable && !exporting && <span className="folio-meta text-folio-text-secondary">Choose a photo and complete your opening headline if selected.</span>}
       {progress && (
         <span style={{ fontSize: 'var(--type-meta)', color: '#8B7B68' }}>{progress}</span>
       )}

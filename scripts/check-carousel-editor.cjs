@@ -17,6 +17,9 @@ const destinations = [];
 const requests = [];
 const fetchMock = (url, options) => new Promise(resolve => requests.push({ url, body: JSON.parse(options.body), resolve }));
 function load(file) {
+  // Native drawing is checked by check-publication-social.ts and the browser
+  // fixture. This DOM harness focuses on the editor's persistence/exit controls.
+  if (file.endsWith('PublicationPhotoPreview.tsx')) return { PublicationPhotoPreview: ({ photo }) => React.createElement('div', { role: 'img', 'aria-label': photo.roomName }, photo.quote) };
   const loaded = { exports: {} };
   const code = ts.transpileModule(fs.readFileSync(file, 'utf8'), { compilerOptions: { jsx: ts.JsxEmit.ReactJSX, module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2020 } }).outputText;
   vm.runInNewContext(code, { exports: loaded.exports, module: loaded, console, window: dom.window, document: dom.window.document, URL, fetch: fetchMock, require: id => {
@@ -75,7 +78,7 @@ async function main() {
   assert.equal(document.querySelector('#instagram-caption').value, 'Saved caption', 'Alternatives never overwrite edits');
   await click('Second option');
   assert.equal(document.querySelector('#instagram-caption').value, 'Second option');
-  await act(async () => root.render(React.createElement(InstagramExportEditor, {...props,key:'five',initialExport:{...props.initialExport,config:{slideCount:5,bioEnabled:true,selectedImageUrls:['a','b','c','d']}}})));
+  await act(async () => root.render(React.createElement(InstagramExportEditor, {...props,key:'five',initialExport:{...props.initialExport,config:{slideCount:5,bioEnabled:true,selectedImageUrls:props.images.map(image=>image.url)}}})));
   await act(async () => [...document.querySelectorAll('button[aria-label^="Slide "]')].at(-1).click());
   await click('Images & style');
   await click('3 slides');

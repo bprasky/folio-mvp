@@ -79,7 +79,7 @@ export function buildEditorialChapters(post: any): EditorialChapter[] {
     // into indices that do not exist in expandedBlocks.
     const rawBody = ch.body ?? ch.narrative ?? null;
     const bodyParagraphs: string[] = Array.isArray(rawBody)
-      ? rawBody.filter((p: unknown): p is string => typeof p === 'string' && p.trim().length > 0)
+      ? rawBody.map((p: unknown): string => typeof p === 'string' ? p : '')
       : typeof rawBody === 'string' && rawBody.trim()
         ? [rawBody]
         : [];

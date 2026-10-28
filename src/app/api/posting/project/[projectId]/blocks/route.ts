@@ -6,6 +6,8 @@ import { authOptions } from "@/app/api/auth/[...nextauth]/options";
 import { prisma } from "@/lib/prisma";
 import { assertProjectWrite } from "@/lib/authz/access";
 import { BlocksSchema } from "@/lib/posting/schemas";
+import { preservePresentation } from '@/lib/story/presentation';
+import { Prisma } from '@prisma/client';
 
 export async function PATCH(
   request: NextRequest,
@@ -33,13 +35,19 @@ export async function PATCH(
     const body = await request.json();
     const validated = BlocksSchema.parse(body);
 
-    // Update post
-    const post = await prisma.projectPost.update({
-      where: { projectId },
+    // Full prose saves do not own presentation. Keep the saved choice even when
+    // an older editor submits a whole article without it (or with a stale copy).
+    const current = await prisma.projectPost.findUnique({ where: { projectId } });
+    if (!current) return NextResponse.json({ error: 'Article not found' }, { status: 404 });
+    const expandedBlocks = preservePresentation(validated, current.expandedBlocks);
+    const saved = await prisma.projectPost.updateMany({
+      where: { id: current.id, updatedAt: current.updatedAt },
       data: {
-        expandedBlocks: validated as any,
+        expandedBlocks: expandedBlocks as Prisma.InputJsonValue,
       },
     });
+    if (!saved.count) return NextResponse.json({ error: 'The article changed. Refresh and try again.' }, { status: 409 });
+    const post = { ...current, expandedBlocks };
 
     return NextResponse.json({ ok: true, post });
   } catch (error: any) {

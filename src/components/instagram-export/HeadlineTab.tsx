@@ -17,7 +17,7 @@ export function HeadlineTab({quoteOptions, selectedHeadline, setSelectedHeadline
   return <div className="space-y-6">
     <div>
       <label htmlFor="instagram-headline" className="block text-sm mb-2">Opening headline</label>
-      <textarea id="instagram-headline" value={selectedHeadline} onChange={(event) => setSelectedHeadline(event.target.value)} rows={3}
+      <textarea id="instagram-headline" value={selectedHeadline} onChange={(event) => setSelectedHeadline(event.target.value)} rows={3} maxLength={300}
         placeholder="Write the opening line for this story."
         className="w-full rounded-lg border border-neutral-200 p-3 text-sm leading-relaxed" />
     </div>

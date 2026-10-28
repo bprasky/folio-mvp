@@ -1247,3 +1247,7 @@ The founder wants public-facing repository copy to describe sitting down with Fo
 ## 2026-10-28 — One account entry and membership-based Create
 
 The founder replaced the separate header Sign in and Sign up controls with one account entry. Center the home-linked FOLIO wordmark, put search immediately before the account control on the right, and remove Magazine and For Professionals navigation links. This supersedes the earlier separate-header-actions instruction. Create requires a signed-in person with an active organization membership, including on mobile; a role label, skipped enrollment, pending request or stale selected organization is insufficient. Keep Go Professional in the individual-only profile dropdown so enrollment remains discoverable without exposing creation controls.
+
+## 2026-10-28 — Photo colors are suggestions, not an automatic theme
+
+The founder approved the immersive publication layout but rejected the automatically chosen green. Extract a small set of primary colors from eligible project photos and let the designer choose. Default to a neutral treatment until an explicit saved choice, allow resetting to neutral, and keep that choice consistent across the article and social export. Preserve source photographs; do not recolor them. Room ordering and layouts must follow deterministic rules rather than AI placement. Keep a single counter near navigation, horizontal mobile project/firm/location and prominent room names. Preserve real quote authorship and exclude rooms without photos.

@@ -3,6 +3,7 @@ import { readFileSync } from 'fs';
 import ts from 'typescript';
 import vm from 'vm';
 import assert from 'assert/strict';
+import * as presentation from '../src/lib/story/presentation';
 
 const selectedText = 'Glass gives this room space to breathe.';
 const originalText = 'PRIVATE_ORIGINAL: We chose a glass table because the room is small.';
@@ -26,6 +27,7 @@ function reset() {
 // Match JSON transport: callers inspect values after serialization, not references.
 const serialize = (value: unknown) => JSON.parse(JSON.stringify(value));
 const mocks: Record<string, any> = {
+  '@/lib/story/presentation': presentation,
   'next/server': { NextResponse: { json: (value: unknown, init?: { status?: number }) => ({ status: init?.status ?? 200, data: serialize(value) }) } },
   'next-auth': { getServerSession: async () => session },
   '@/app/api/auth/[...nextauth]/options': { authOptions: {} },

@@ -177,7 +177,8 @@ export async function getApprovedCampaignCandidates(userId: string, projectId: s
   const data = await listReadiness(userId);
   return data.candidates.filter(candidate => candidate.readiness === 'ready' && candidate.projectIds.length === 1 && candidate.projectIds[0] === projectId)
     .map(candidate => ({ id: candidate.id, version: candidate.version, sourceVersion: candidate.sourceVersion, projectIds: candidate.projectIds,
-      title: candidate.draft.headline, caption: `${candidate.draft.caption}\n\nDesign: ${candidate.draft.credits.designer}\nPhotography: ${candidate.draft.credits.photographer}`, imageIds: candidate.visuals.map(image => image.id), imageUrls: candidate.visuals.map(image => image.url) }));
+      title: candidate.draft.headline, designerName: candidate.draft.credits.designer,
+      caption: `${candidate.draft.caption}\n\nDesign: ${candidate.draft.credits.designer}\nPhotography: ${candidate.draft.credits.photographer}`, imageIds: candidate.visuals.map(image => image.id), imageUrls: candidate.visuals.map(image => image.url) }));
 }
 
 export async function recordCampaignCandidateEvent(userId: string, id: string, version: number, source: string, campaignId: string, kind: 'exported') {

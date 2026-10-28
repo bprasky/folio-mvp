@@ -7,10 +7,9 @@ import { PostCondensed } from "@/components/posting/PostCondensed";
 import { PostExpanded } from "@/components/posting/PostExpanded";
 import { InterviewModal } from "@/components/posting/interview/InterviewModal";
 import { TagDiagnosticModal } from "@/components/posting/interview/TagDiagnosticModal";
-import { RichArticle } from "@/components/posting/preview/RichArticle";
+import { StoryRenderer } from "@/components/story/StoryRenderer";
 import { CreditsEditor } from "@/components/posting/CreditsEditor";
 import { parseCredits, type CreditEntry } from "@/lib/posting/creditsSchema";
-import { Blocks } from "@/lib/posting/schemas";
 
 const POSTING_V1_ENABLED = process.env.NEXT_PUBLIC_POSTING_V1 === "true";
 
@@ -175,6 +174,9 @@ export default function ProjectPostPreviewPage() {
         setPost({
           post: {
             id: postData.id,
+            projectId: projectData.id,
+            heroAssetId: postData.heroAssetId,
+            publishedAt: postData.publishedAt,
             status: postData.status,
             slug: postData.slug,
             excerpt: postData.excerpt,
@@ -185,6 +187,9 @@ export default function ProjectPostPreviewPage() {
             id: projectData.id,
             title: projectData.title,
             description: projectData.description,
+            city: projectData.city,
+            regionState: projectData.regionState,
+            designerOrg: projectData.designerOrg,
           },
           heroImage: heroImage ? { id: heroImage.id, url: heroImage.url } : null,
           images: projectData.images || [],
@@ -535,19 +540,9 @@ export default function ProjectPostPreviewPage() {
 
       {/* Article View */}
       {view === "article" && post.post.expandedBlocks && (
-        <RichArticle
-          article={post.post.expandedBlocks as Blocks}
-          heroImage={post.heroImage}
-          tags={post.tags}
-          author={post.designer}
-          projectTitle={post.project.title}
-          credits={credits}
-          images={post.images?.map((img: any) => ({
-            id: img.id,
-            url: img.url,
-            caption: img.caption,
-          }))}
-        />
+        <StoryRenderer post={{ ...post.post, credits, project: {
+          ...post.project, designer: post.designer, images: post.images ?? [],
+        } }} />
       )}
 
       {/* Legacy Views */}

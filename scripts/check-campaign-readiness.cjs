@@ -45,6 +45,10 @@ const selection = load('src/lib/instagram/campaign/selectCampaignContent.ts', {
     'server-only': {}, jszip: Zip,
     '@/lib/prisma': { prisma: { project: { findUnique: async () => ({ ...project, isPublic: true }) }, instagramCampaign: { create: async args => { created = args.data; return { id: 'campaign' }; } } } },
     '@/lib/publishing-studio/readiness/render-image': { renderApprovedImage: async (url, width, height) => { renderInput = { url, width, height }; return Buffer.from('image'); } },
+    '@/lib/instagram-export/approved-photo-presentations': {
+      approvedPhotoPresentations: async () => ({ p: { 'approved-url': { accent: null, quote: 'An unrelated article quote' } } }),
+      approvedHeadlinePhoto: (photo, headline) => { assert.equal(headline, 'Decision'); assert.ok(photo); return { ...photo, quote: headline, attribution: null }; },
+    },
     './generateCaptions': { generateCaptionsFile: () => 'captions' },
     '@/lib/publishing-studio/readiness/service': { getApprovedCampaignCandidates: async () => approved, recordCampaignCandidateEvent: async (...args) => { if (eventFails) throw new Error('storage unavailable'); event = args; } },
   });
