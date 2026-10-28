@@ -24,7 +24,7 @@ function matches(row, where) {
 const mocks = {
   '@/lib/projects/createProject': { createProjectOnce: () => { throw Error('Unexpected project creation in GET checks'); }, CreationConflict: class extends Error {} },
   '@/lib/persistence/requestIdentity': { requestIdentity: () => { throw Error('Unexpected create identity'); } },
-  zod: { z: { string: () => field, object: () => ({}) } },
+  zod: require('zod'),
   'next/server': { NextRequest: Request, NextResponse: { json: (data, init) => Response.json(data, init) } },
   'next-auth': { getServerSession: async () => actor && { user: { id: actor, role: 'ADMIN' } } },
   '@/app/api/auth/[...nextauth]/options': { authOptions: {} },
@@ -64,23 +64,24 @@ async function load(name) {
   if (modules.has(name)) return modules.get(name);
   if (Object.hasOwn(mocks, name)) {
     const values = mocks[name];
-    const module = new vm.SyntheticModule(Object.keys(values), function () {
+    const loadedModule = new vm.SyntheticModule(Object.keys(values), function () {
       for (const [key, value] of Object.entries(values)) this.setExport(key, value);
     }, { context });
-    modules.set(name, module);
-    return module;
+    modules.set(name, loadedModule);
+    return loadedModule;
   }
   const real = {
     route: 'src/app/api/projects/route.ts',
     '@/lib/permissions': 'src/lib/permissions.ts',
     '@/lib/post/publicPost': 'src/lib/post/publicPost.ts',
+    '@/lib/story/presentation': 'src/lib/story/presentation.ts',
     '@/server/queries/filters': 'src/server/queries/filters.ts',
   }[name];
   assert.ok(real, `Unexpected dependency: ${name}`);
-  const module = new vm.SourceTextModule(compile(fs.readFileSync(path.join(root, real), 'utf8')), { context, identifier: real });
-  modules.set(name, module);
-  await module.link(load);
-  return module;
+  const loadedModule = new vm.SourceTextModule(compile(fs.readFileSync(path.join(root, real), 'utf8')), { context, identifier: real });
+  modules.set(name, loadedModule);
+  await loadedModule.link(load);
+  return loadedModule;
 }
 async function main() {
   const route = await load('route'); await route.evaluate();

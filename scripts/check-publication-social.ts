@@ -36,13 +36,13 @@ assert.equal(publicationPhotos(project, legacyPost, images, designer)[images[0].
 assert.equal(publicationPhotos({ ...project, designerOrg: { name: 'Current studio' } }, directPost, images, designer)[images[0].url].attribution, 'Current studio', 'Attribution matches the article organization priority');
 
 function loadRoute(mocks: Record<string, unknown>, file = 'src/app/api/instagram-export/generate-images/route.ts') {
-  const module = { exports: {} as any };
+  const loadedModule = { exports: {} as any };
   const code = ts.transpileModule(fs.readFileSync(file, 'utf8'), { compilerOptions: { target: ts.ScriptTarget.ES2020, module: ts.ModuleKind.CommonJS, esModuleInterop: true } }).outputText;
-  vm.runInNewContext(code, { module, exports: module.exports, require: (id: string) => {
+  vm.runInNewContext(code, { module: loadedModule, exports: loadedModule.exports, require: (id: string) => {
     if (id in mocks) return mocks[id];
     throw new Error(`Unexpected dependency: ${id}`);
   }, console, Buffer, URL, process: { env: {} } }, { filename: file });
-  return module.exports;
+  return loadedModule.exports;
 }
 
 async function main() {
