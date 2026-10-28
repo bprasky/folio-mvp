@@ -1,3 +1,24 @@
+# Immersive publications and designer-selected palette — 2026-10-28
+
+- [x] Implement the approved photo-led room reader on public articles and owner previews, retaining editorial edits, products and credits.
+- [x] Add deterministic room ordering and balanced photo-only galleries; omit rooms without eligible photos.
+- [x] Suggest primary photo colors on request; save only the designer's explicit choice, with a neutral reset.
+- [x] Carry the approved mobile composition and chosen palette into Instagram previews and downloaded photo slides.
+- [x] Verify persistence, authorization, public transport, long/sparse stories, responsive navigation and export rendering.
+- [x] Review changes, document results and prepare a scoped commit.
+
+Plan check-in: implementation is approved. Work from current main in the attached immersive-publications checkout. Keep existing publish gates and private/public boundaries. Store presentation preferences in existing article JSON; no schema migration. Use the approved La Gorce prototype as the visual reference, with centered FOLIO, horizontal mobile project/firm/location, right-only desktop blur, fading story preview and direct room access. The designer selects the palette; extracted colors never apply automatically. Preserve canonical chapter indexes through visual reordering.
+
+### Review
+Public and staging readers now share the immersive room navigator, right-edge desktop photo blend, mobile glass reader, direct room access, original-photo view and compact thumbnails. Editors retain paragraph/quote controls. Sparse rooms form balanced galleries; excluded/absent photos are omitted. Stable identities preserve paragraph/chapter addressing through visual ordering, including legacy shared photos. Long room names and quotes keep the read affordance reachable; the full heading and quote scroll with the article.
+
+Appearance is explicitly designer-owned JSON: neutral by default, up to six colors suggested from eight representative eligible photographs only on request, saved choice/reset/order with ownership checks and optimistic concurrency. Full generation and older prose writers preserve the settings. Public transport exposes only the selected preferences. Instagram preview/download share one renderer and licensed Folio fonts; current Studio room campaigns and approved-story exports reuse it without changing approved copy or attribution.
+
+Verification: full lint and real Next 14 compile pass (existing warnings). The first Google-font loader failure did not recur; the successful build used real font downloads, no mocked fonts. The TypeScript comparison has 866 diagnostics against baseline 880, with no new fingerprints after normalizing the shared dependency checkout path; the unnormalized guard flags five path-only fingerprints. Room checks cover 300 gallery sizes, 120-room order, missing/excluded photos, legacy duplicate identities and preserved blank paragraph indexes. All 24 presentation checks, 11 public-transport cases, generation-persistence, carousel, campaign and social regression suites pass. Actual social rasters verified at 1:1, 4:5 and 9:16. Client-import and migration-discipline guards pass. Browser inspection used actual components, Folio fonts and local La Gorce assets at desktop, tablet and 320/390px phone sizes; checked expand/collapse, original photo, keyboard return, long article scrolling, manual theme save/reset and neutral suggestions. New suites run in CI.
+
+No schema changes, production content writes or deployment. Browser/API persistence checks use isolated fixtures; a live database round trip and physical touch-device swipe were not exercised. Print/book production remains a later workflow. Detailed checks and reproduction: docs/reviews/immersive-publications.md.
+
+---
 # Navigation and professional account access — 2026-10-28
 
 - [x] Audit navigation variants, live membership source, and enrollment routing on current main.

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { SlidePreview } from './SlidePreview';
@@ -10,6 +10,7 @@ import { HeadlineTab } from './HeadlineTab';
 import { DesignerTab } from './DesignerTab';
 import { CaptionTab } from './CaptionTab';
 import { ExportButton } from './ExportButton';
+import { publicationPhotos, publicationRevision } from '@/lib/instagram-export/publication-photo';
 import type { AspectRatio } from '@/lib/instagram-export/generate-images';
 import type { HeadlinePosition, WatermarkStyle } from '@/lib/instagram-export/svg-templates';
 
@@ -31,6 +32,9 @@ interface Props {
     description: string | null;
     designerId: string | null;
     ownerId: string;
+    city?: string | null;
+    regionState?: string | null;
+    designerOrg?: { name: string } | null;
   };
   post: {
     id: string;
@@ -65,16 +69,18 @@ interface Props {
 
 export type TabType = 'format' | 'headline' | 'designer' | 'caption';
 
-export function InstagramExportEditor({ project, designer, images, rooms, initialExport, initialPreview, studioScope = 'project', releaseProject }: Props) {
+export function InstagramExportEditor({ project, post, designer, images, rooms, initialExport, initialPreview, studioScope = 'project', releaseProject }: Props) {
   const initial = initialExport || initialPreview;
   const saved = initial?.config || {};
   const [activeTab, setActiveTab] = useState<TabType>('caption');
   const [activeSlideIndex, setActiveSlideIndex] = useState(0);
 
   // Format state
-  const [aspectRatio, setAspectRatio] = useState<AspectRatio>(['1:1', '4:5', '9:16'].includes(saved.aspectRatio) ? saved.aspectRatio : '4:5');
+  const [aspectRatio, setAspectRatio] = useState<AspectRatio>(['1:1', '4:5', '9:16'].includes(saved.aspectRatio) ? saved.aspectRatio : '9:16');
+  const [coverTextMode, setCoverTextMode] = useState<'room' | 'headline'>(saved.coverTextMode === 'headline' || (!saved.coverTextMode && initialExport) ? 'headline' : 'room');
+  const photoPresentations = useMemo(() => publicationPhotos(project, post, images, designer), [project, post, images, designer]);
   const [watermarkStyle, setWatermarkStyle] = useState<WatermarkStyle>(['folio_x', 'folio_presents', 'minimal'].includes(saved.watermarkStyle) ? saved.watermarkStyle : 'folio_x');
-  const [headlinePosition, setHeadlinePosition] = useState<HeadlinePosition>(['bottom_left', 'bottom_center', 'top_left'].includes(saved.headlinePosition) ? saved.headlinePosition : 'bottom_left');
+  const [headlinePosition] = useState<HeadlinePosition>(['bottom_left', 'bottom_center', 'top_left'].includes(saved.headlinePosition) ? saved.headlinePosition : 'bottom_left');
   const [slideCount, setSlideCount] = useState<2 | 3 | 4 | 5>([2, 3, 4, 5].includes(saved.slideCount) ? (saved.slideCount === 2 && saved.bioEnabled !== false ? 3 : saved.slideCount) : 5);
 
   // Headline state
@@ -102,7 +108,7 @@ export function InstagramExportEditor({ project, designer, images, rooms, initia
   const [captionError, setCaptionError] = useState<string | null>(null);
   // Image selection
   const [selectedImageUrls, setSelectedImageUrls] = useState<string[]>(
-    Array.isArray(saved.selectedImageUrls) ? saved.selectedImageUrls.filter((url: unknown): url is string => typeof url === 'string') : images.slice(0, 5).map((img) => img.url)
+    Array.isArray(saved.selectedImageUrls) ? saved.selectedImageUrls.filter((url: unknown): url is string => typeof url === 'string' && images.some(image => image.url === url)) : images.slice(0, 5).map((img) => img.url)
   );
 
   const router = useRouter();
@@ -111,7 +117,7 @@ export function InstagramExportEditor({ project, designer, images, rooms, initia
   const [exitHref, setExitHref] = useState<string | null>(null);
   const [exitError, setExitError] = useState('');
   const dialogRef = useRef<HTMLDialogElement>(null);
-  const snapshot = JSON.stringify({ aspectRatio, watermarkStyle, headlinePosition, slideCount, selectedHeadline, bioEnabled, selectedBio, caption, selectedRoom, selectedImageUrls });
+  const snapshot = JSON.stringify({ aspectRatio, coverTextMode, watermarkStyle, headlinePosition, slideCount, selectedHeadline, bioEnabled, selectedBio, caption, selectedRoom, selectedImageUrls });
   const [baseline, setBaseline] = useState(snapshot);
   const dirty = snapshot !== baseline;
   const leaving = useRef(false);
@@ -293,10 +299,9 @@ export function InstagramExportEditor({ project, designer, images, rooms, initia
   useEffect(() => {
     if (!initial && !initialGeneration.current) {
       initialGeneration.current = true;
-      void generateQuotes();
       void generateCaption();
     }
-  }, [initial, generateQuotes, generateCaption]);
+  }, [initial, generateCaption]);
   useEffect(() => () => { headlineRequest.current++; captionRequest.current++; }, []);
 
   // Tab auto-navigation: switch to relevant slide when tab changes
@@ -374,6 +379,8 @@ export function InstagramExportEditor({ project, designer, images, rooms, initia
               headlineOptions: quoteOptions,
               captionOptions,
               aspectRatio,
+              coverTextMode,
+              publicationRevision: publicationRevision(photoPresentations),
               watermarkStyle,
               headlinePosition,
               headline: selectedHeadline,
@@ -453,6 +460,8 @@ export function InstagramExportEditor({ project, designer, images, rooms, initia
             activeIndex={safeSlideIndex}
             onSelectSlide={setActiveSlideIndex}
             headline={selectedHeadline}
+            coverTextMode={coverTextMode}
+            publicationPhotos={photoPresentations}
             headlinePosition={headlinePosition}
             watermarkStyle={watermarkStyle}
             designerName={designer?.name || 'Designer'}
@@ -525,8 +534,6 @@ export function InstagramExportEditor({ project, designer, images, rooms, initia
                 setAspectRatio={setAspectRatio}
                 watermarkStyle={watermarkStyle}
                 setWatermarkStyle={setWatermarkStyle}
-                headlinePosition={headlinePosition}
-                setHeadlinePosition={setHeadlinePosition}
                 bioEnabled={bioEnabled}
                 slideCount={slideCount}
                 setSlideCount={setSlideCount}
@@ -537,14 +544,21 @@ export function InstagramExportEditor({ project, designer, images, rooms, initia
             )}
 
             {activeTab === 'headline' && (
-              <HeadlineTab
+              <div className="space-y-5">
+                <fieldset className="space-y-3">
+                  <legend className="text-sm mb-2">Cover words</legend>
+                  <label className="flex items-center gap-2 text-sm"><input type="radio" name="cover-words" checked={coverTextMode === 'room'} onChange={() => setCoverTextMode('room')} />Use the article’s selected room quote</label>
+                  <label className="flex items-center gap-2 text-sm"><input type="radio" name="cover-words" checked={coverTextMode === 'headline'} onChange={() => setCoverTextMode('headline')} />Write an opening headline</label>
+                </fieldset>
+                {coverTextMode === 'room' ? <p className="text-sm text-folio-text-secondary">Room quotes and the chosen color follow your article. Change them in the article editor; photo-only rooms show their name.</p> : <HeadlineTab
                 error={headlineError}
                 quoteOptions={quoteOptions}
                 selectedHeadline={selectedHeadline}
                 setSelectedHeadline={setSelectedHeadline}
                 loading={quotesLoading}
                 onRegenerate={generateQuotes}
-              />
+              />}
+              </div>
             )}
 
             {activeTab === 'designer' && (

@@ -79,6 +79,7 @@ async function main() {
     '@/lib/instagram/campaign/selectCampaignContent': {},
     '@/lib/publishing-studio/data': {},
     '@/lib/instagram/campaign/generateReadyCampaign': {},
+    '@/lib/instagram-export/approved-photo-presentations': {},
     'next/cache': {},
     '@/lib/instagram/campaign/generateLaunchCard': {},
     '@/lib/instagram/campaign/generateRoomSpotlight': {},

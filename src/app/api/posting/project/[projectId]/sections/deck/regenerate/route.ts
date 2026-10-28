@@ -77,7 +77,7 @@ export async function POST(
 
     const post = await prisma.projectPost.findUnique({
       where: { projectId },
-      select: { id: true, expandedBlocks: true },
+      select: { id: true, updatedAt: true, expandedBlocks: true },
     });
     if (!post?.expandedBlocks) {
       return NextResponse.json({ error: 'No article to write a deck for' }, { status: 404 });
@@ -182,7 +182,7 @@ Return ONLY the deck text. No quotation marks around it, no preamble, no JSON.`;
     const previous: string = blocks.lead?.deck ?? '';
     blocks.lead = { ...(blocks.lead ?? {}), deck };
     await prisma.projectPost.update({
-      where: { id: post.id },
+      where: { id: post.id, updatedAt: post.updatedAt },
       data: { expandedBlocks: blocks as any },
     });
 
@@ -192,6 +192,7 @@ Return ONLY the deck text. No quotation marks around it, no preamble, no JSON.`;
 
     return NextResponse.json({ ok: true, deck });
   } catch (error: any) {
+    if (error?.code === 'P2025') return NextResponse.json({ error: 'The article changed. Refresh and try again.' }, { status: 409 });
     if (error?.message === 'NotFound') {
       return NextResponse.json({ error: 'Project not found' }, { status: 404 });
     }

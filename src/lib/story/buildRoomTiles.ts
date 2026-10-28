@@ -218,8 +218,22 @@ function placeBreathers(
 export function buildStoryData(post: any): StoryData | null {
   if (!post || !post.project) return null;
 
-  const chapters = buildEditorialChapters(post);
-  if (!chapters.length) return null;
+  // Preview and publication share the same eligible photo set. Legacy inline
+  // assets must resolve to a project record, never revive an excluded upload.
+  const eligibleImages = (Array.isArray(post.project.images) ? post.project.images : []).filter((image: any) => image?.url && image.inclusion !== 'EXCLUDED');
+  const eligibleById = new Map(eligibleImages.map((image: any) => [image.id, image]));
+  const rawChapters = Array.isArray(post.expandedBlocks?.galleryChapters) ? post.expandedBlocks.galleryChapters : [];
+  const safePost = { ...post, project: { ...post.project, images: eligibleImages }, expandedBlocks: {
+    ...post.expandedBlocks,
+    galleryChapters: rawChapters.map((chapter: any) => ({ ...chapter,
+      images: (Array.isArray(chapter.images) ? chapter.images : []).flatMap((image: any) => {
+        const found = eligibleById.get(image.id) ?? eligibleImages.find((candidate: any) => candidate.url === image.url);
+        return found ? [found] : [];
+      }),
+    })),
+  } };
+  const chapters = safePost.expandedBlocks.galleryChapters?.length ? buildEditorialChapters(safePost) : [];
+  if (!eligibleImages.length) return null;
 
   const blocks = post.expandedBlocks as any;
   const project = post.project;
@@ -297,7 +311,7 @@ export function buildStoryData(post: any): StoryData | null {
 
   // Hero image: first chapter's primary image, or heroAssetId, or first project image
   const heroAssetId = post.heroAssetId;
-  const projectImages = project.images ?? [];
+  const projectImages = eligibleImages;
   let heroImage: { id: string; url: string; name?: string | null; room?: string | null; tags?: any[] } | null = null;
 
   if (heroAssetId) {
@@ -313,8 +327,9 @@ export function buildStoryData(post: any): StoryData | null {
 
   // Credits
   const credits: Array<{ role: string; name: string; url?: string }> = [];
-  if (Array.isArray(blocks?.credits)) {
-    credits.push(...blocks.credits);
+  const savedCredits = Array.isArray(post.credits) && post.credits.length ? post.credits : blocks?.credits;
+  if (Array.isArray(savedCredits)) {
+    credits.push(...savedCredits.filter((credit: any) => credit?.name));
   }
   if (designer?.name && !credits.some((c) => c.name === designer.name)) {
     credits.unshift({ role: "Designer", name: designer.name, url: designer.website });
@@ -325,7 +340,7 @@ export function buildStoryData(post: any): StoryData | null {
 
   // Build room tiles from chapters
   const patterns = assignPatterns(chapters);
-  const designerName = designer?.studio || designer?.name || "Designer";
+  const designerName = project.designerOrg?.name || designer?.studio || designer?.name || "Designer";
 
   const roomTiles: RoomTileData[] = chapters
     .map((chapter, idx) => {
@@ -346,7 +361,7 @@ export function buildStoryData(post: any): StoryData | null {
       }
 
       return {
-        roomId: chapter.id,
+        roomId: blocks?.galleryChapters?.[chapter.index]?.roomId ?? blocks?.galleryChapters?.[chapter.index]?.id ?? chapter.primaryImage.id,
         chapterIndex: chapter.index,
         roomLabel,
         roomSlug,
@@ -367,6 +382,40 @@ export function buildStoryData(post: any): StoryData | null {
     })
     .filter(Boolean) as RoomTileData[];
 
+  // Legacy chapters may reuse a photograph (or carry duplicate room IDs).
+  // Disambiguate those exceptional identities without shifting edit indexes.
+  const identityCounts = new Map<string, number>();
+  for (const room of roomTiles) identityCounts.set(room.roomId, (identityCounts.get(room.roomId) ?? 0) + 1);
+  const assignedIds = new Set<string>();
+  for (const room of roomTiles) {
+    const base = room.roomId;
+    if (identityCounts.get(base)! > 1) room.roomId = `${base}:chapter-${room.chapterIndex}`;
+    while (assignedIds.has(room.roomId)) room.roomId += ':room';
+    assignedIds.add(room.roomId);
+  }
+
+  // Photo-only rooms still belong to the publication, even before a chapter has
+  // been written. Their photos appear in balanced galleries, without invented copy.
+  const usedImages = new Set(roomTiles.flatMap(room => [room.heroImage.id, ...room.additionalImages.map(image => image.id)]));
+  for (const image of eligibleImages) {
+    if (usedImages.has(image.id)) continue;
+    const key = image.roomId || image.id;
+    const existing = roomTiles.find(room => room.roomId === key);
+    if (existing) {
+      existing.additionalImages.push(image);
+      for (const tag of image.tags ?? []) {
+        if (tag.product && !existing.products.some(product => product.id === tag.product.id)) existing.products.push(tag.product);
+      }
+      existing.productCount = existing.products.length;
+    } else {
+      const label = formatRoomName(image.room || image.name || 'Project photographs');
+      const products = (image.tags ?? []).flatMap((tag: any) => tag.product ? [tag.product] : []);
+      roomTiles.push({ roomId: key, chapterIndex: -1, roomLabel: label, roomSlug: toRoomSlug(label), heroImage: image,
+        pullQuote: null, pullQuoteSelection: null, attribution: designerName, productCount: products.length, products,
+        additionalImages: [], editorialNarrative: null, editorialParagraphs: [], editorialTeaser: null, pattern: 1 });
+    }
+  }
+
   // Place breathers
   const breathers = placeBreathers(roomTiles, post);
 
@@ -383,7 +432,7 @@ export function buildStoryData(post: any): StoryData | null {
     titleAlternatives,
     credits,
     designerName,
-    designerStudio: designer?.studio ?? null,
+    designerStudio: project.designerOrg?.name ?? designer?.studio ?? null,
     designerProfileImage: designer?.profileImage ?? null,
     location,
     roomCount: roomTiles.length,

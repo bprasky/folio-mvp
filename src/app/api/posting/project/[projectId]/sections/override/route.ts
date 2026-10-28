@@ -60,7 +60,7 @@ export async function PATCH(
 
     const post = await prisma.projectPost.findUnique({
       where: { projectId },
-      select: { id: true, expandedBlocks: true, sectionOverrides: true },
+      select: { id: true, updatedAt: true, expandedBlocks: true, sectionOverrides: true },
     });
 
     if (!post) {
@@ -107,7 +107,7 @@ export async function PATCH(
     setFieldValue(blocks, chapterIndex, paragraphIndex, field, editedBody);
 
     await prisma.projectPost.update({
-      where: { id: post.id },
+      where: { id: post.id, updatedAt: post.updatedAt },
       data: {
         sectionOverrides: overrides as any,
         expandedBlocks: blocks as any,
@@ -116,6 +116,7 @@ export async function PATCH(
 
     return NextResponse.json({ ok: true, overrides });
   } catch (error: any) {
+    if (error?.code === 'P2025') return NextResponse.json({ error: 'The article changed. Refresh and try again.' }, { status: 409 });
     if (error.message === 'NotFound') {
       return NextResponse.json({ error: 'Project not found' }, { status: 404 });
     }
@@ -152,7 +153,7 @@ export async function DELETE(
 
     const post = await prisma.projectPost.findUnique({
       where: { projectId },
-      select: { id: true, expandedBlocks: true, sectionOverrides: true },
+      select: { id: true, updatedAt: true, expandedBlocks: true, sectionOverrides: true },
     });
 
     if (!post) {
@@ -183,7 +184,7 @@ export async function DELETE(
     overrides.splice(idx, 1);
 
     await prisma.projectPost.update({
-      where: { id: post.id },
+      where: { id: post.id, updatedAt: post.updatedAt },
       data: {
         sectionOverrides: overrides as any,
         expandedBlocks: blocks as any,
@@ -192,6 +193,7 @@ export async function DELETE(
 
     return NextResponse.json({ ok: true, overrides });
   } catch (error: any) {
+    if (error?.code === 'P2025') return NextResponse.json({ error: 'The article changed. Refresh and try again.' }, { status: 409 });
     if (error.message === 'NotFound') {
       return NextResponse.json({ error: 'Project not found' }, { status: 404 });
     }

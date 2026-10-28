@@ -1,15 +1,13 @@
 'use client';
 
 import type { AspectRatio } from '@/lib/instagram-export/generate-images';
-import type { HeadlinePosition, WatermarkStyle } from '@/lib/instagram-export/svg-templates';
+import type { WatermarkStyle } from '@/lib/instagram-export/svg-templates';
 
 interface Props {
   aspectRatio: AspectRatio;
   setAspectRatio: (v: AspectRatio) => void;
   watermarkStyle: WatermarkStyle;
   setWatermarkStyle: (v: WatermarkStyle) => void;
-  headlinePosition: HeadlinePosition;
-  setHeadlinePosition: (v: HeadlinePosition) => void;
   bioEnabled: boolean;
   slideCount: 2 | 3 | 4 | 5;
   setSlideCount: (v: 2 | 3 | 4 | 5) => void;
@@ -30,19 +28,11 @@ const ASPECT_OPTIONS: { value: AspectRatio; label: string; description: string }
   { value: '9:16', label: '9:16 Story', description: 'Full-screen stories' },
 ];
 
-const POSITION_OPTIONS: { value: HeadlinePosition; label: string }[] = [
-  { value: 'bottom_left', label: 'Bottom Left' },
-  { value: 'bottom_center', label: 'Bottom Center' },
-  { value: 'top_left', label: 'Top Left' },
-];
-
 export function FormatTab({
   aspectRatio,
   setAspectRatio,
   watermarkStyle,
   setWatermarkStyle,
-  headlinePosition,
-  setHeadlinePosition,
   bioEnabled,
   slideCount,
   setSlideCount,
@@ -62,10 +52,10 @@ export function FormatTab({
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '28px' }}>
-      {/* Watermark Style */}
-      <div>
+      {/* The photo slides always use the approved centered Folio mark. */}
+      {bioEnabled && <div>
         <div style={{ fontSize: 'var(--type-eyebrow)', letterSpacing: 'var(--ls-eyebrow)', textTransform: 'uppercase' as const, color: '#8B7B68', marginBottom: '12px', fontWeight: 'var(--w-h1)' }}>
-          Watermark Style
+          Bio watermark
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
           {WATERMARK_OPTIONS.map((opt) => (
@@ -111,7 +101,7 @@ export function FormatTab({
             </button>
           ))}
         </div>
-      </div>
+      </div>}
 
       {/* Aspect Ratio */}
       <div>
@@ -140,35 +130,6 @@ export function FormatTab({
               <div style={{ fontSize: 'var(--type-eyebrow)', color: '#A89880', marginTop: '2px' }}>
                 {opt.description}
               </div>
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {/* Headline Position */}
-      <div>
-        <div style={{ fontSize: 'var(--type-eyebrow)', letterSpacing: 'var(--ls-eyebrow)', textTransform: 'uppercase' as const, color: '#8B7B68', marginBottom: '12px', fontWeight: 'var(--w-h1)' }}>
-          Headline Position
-        </div>
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
-          {POSITION_OPTIONS.map((opt) => (
-            <button
-              key={opt.value}
-              onClick={() => setHeadlinePosition(opt.value)}
-              style={{
-                flex: 1,
-                padding: '10px 8px',
-                borderRadius: '10px',
-                border: headlinePosition === opt.value ? '1.5px solid #C4B5A0' : '1px solid #E8E0D8',
-                background: headlinePosition === opt.value ? '#FAF7F4' : '#FFFFFF',
-                cursor: 'pointer',
-                transition: 'all 0.2s',
-                fontSize: 'var(--type-meta)',
-                color: headlinePosition === opt.value ? '#2C2420' : '#8B7B68',
-                fontWeight: 'var(--w-h1)',
-              }}
-            >
-              {opt.label}
             </button>
           ))}
         </div>

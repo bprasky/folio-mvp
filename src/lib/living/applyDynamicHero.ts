@@ -39,6 +39,7 @@ export async function applyDynamicHeroForProject(
       status: true,
       heroAssetId: true,
       expandedBlocks: true,
+      updatedAt: true,
     },
   });
 
@@ -87,8 +88,8 @@ export async function applyDynamicHeroForProject(
   // threw PrismaClientValidationError and the hero was never actually applied.
   // The guardrail timestamp lives in `expandedBlocks.living.updatedAt`, stamped
   // just above and read back at the top of this function.
-  await prisma.projectPost.update({
-    where: { projectId },
+  await prisma.projectPost.updateMany({
+    where: { projectId, updatedAt: post.updatedAt },
     data: {
       heroAssetId: feature.heroAssetId,
       expandedBlocks,

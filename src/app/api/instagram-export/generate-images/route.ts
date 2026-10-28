@@ -15,6 +15,7 @@ import {
   type AspectRatio,
 } from '@/lib/instagram-export/generate-images';
 import type { HeadlinePosition, WatermarkStyle } from '@/lib/instagram-export/svg-templates';
+import { publicationPhotos, publicationRevision } from '@/lib/instagram-export/publication-photo';
 
 export async function POST(request: NextRequest) {
   try {
@@ -38,6 +39,7 @@ export async function POST(request: NextRequest) {
       include: {
         post: true,
         designer: true,
+        designerOrg: { select: { name: true } },
         images: { where: { inclusion: 'INCLUDED' }, orderBy: { displayOrder: 'asc' } },
       },
     });
@@ -61,14 +63,15 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'This carousel changed in another session. Reload before saving.' }, { status: 409 });
     }
     if ((config.aspectRatio && !['1:1', '4:5', '9:16'].includes(config.aspectRatio)) ||
+      (config.coverTextMode !== undefined && !['room', 'headline'].includes(config.coverTextMode)) ||
       (config.watermarkStyle && !['folio_x', 'folio_presents', 'minimal'].includes(config.watermarkStyle)) ||
       (config.headlinePosition && !['bottom_left', 'bottom_center', 'top_left'].includes(config.headlinePosition)) ||
       (config.slideCount !== undefined && ![2, 3, 4, 5].includes(config.slideCount)) ||
-      (config.headline !== undefined && typeof config.headline !== 'string') ||
+      (config.headline !== undefined && (typeof config.headline !== 'string' || config.headline.length > 300)) ||
       (config.bioText !== undefined && typeof config.bioText !== 'string') ||
       (config.bioEnabled !== undefined && typeof config.bioEnabled !== 'boolean') ||
       (config.roomId !== undefined && typeof config.roomId !== 'string') ||
-      (config.selectedImageUrls !== undefined && (!Array.isArray(config.selectedImageUrls) || config.selectedImageUrls.some((url: unknown) => typeof url !== 'string' || !project.images.some((image) => image.url === url))))) {
+      (config.selectedImageUrls !== undefined && (!Array.isArray(config.selectedImageUrls) || config.selectedImageUrls.length > 200 || config.selectedImageUrls.some((url: unknown) => typeof url !== 'string' || !project.images.some((image) => image.url === url))))) {
       return NextResponse.json({ error: 'Invalid carousel settings or project images' }, { status: 400 });
     }
 
@@ -110,16 +113,28 @@ export async function POST(request: NextRequest) {
       proposal[key] = value as string | string[];
     }
 
-    const designer = project.designer;
+    const designer = project.designer ?? await prisma.user.findUnique({
+      where: { id: project.ownerId },
+      select: { name: true, studio: true, companyName: true, title: true, profileImage: true },
+    });
+    const photos = publicationPhotos(project, project.post, project.images, designer);
+    if (config.publicationRevision !== undefined && config.publicationRevision !== publicationRevision(photos)) {
+      return NextResponse.json({ error: 'The article photos, words or theme changed. Refresh this preview before exporting.' }, { status: 409 });
+    }
+    if (!saveOnly && config.coverTextMode === 'headline' && !config.headline?.trim()) {
+      return NextResponse.json({ error: 'Add an opening headline or choose the article’s room quote.' }, { status: 400 });
+    }
 
     const exportConfig: ExportConfig = {
+      coverTextMode: config.coverTextMode === 'headline' ? 'headline' : 'room',
+      publicationPhotos: Object.fromEntries((config.selectedImageUrls || project.images.map(image => image.url)).map((url: string) => [url, photos[url]])),
       aspectRatio: (config.aspectRatio || '4:5') as AspectRatio,
       watermarkStyle: (config.watermarkStyle || 'folio_x') as WatermarkStyle,
       headlinePosition: (config.headlinePosition || 'bottom_left') as HeadlinePosition,
-      headline: config.headline || project.title,
+      headline: config.headline ?? project.title,
       designerName: designer?.name || 'Designer',
       designerTitle: designer?.title || undefined,
-      studioName: designer?.studio || designer?.companyName || undefined,
+      studioName: project.designerOrg?.name || designer?.studio || designer?.companyName || undefined,
       bioEnabled: config.bioEnabled ?? true,
       bioText: config.bioText,
       projectName: project.title,
@@ -127,6 +142,9 @@ export async function POST(request: NextRequest) {
       selectedImageUrls: config.selectedImageUrls || project.images.map((img) => img.url),
       roomId: config.roomId,
     };
+    if (!saveOnly && !exportConfig.selectedImageUrls.length) {
+      return NextResponse.json({ error: 'Choose at least one project photo before exporting.' }, { status: 400 });
+    }
 
     // Bind retries to the exact submitted content. Later explicit edits remove
     // this fingerprint, so an old first-save request can never overwrite them.
@@ -141,8 +159,14 @@ export async function POST(request: NextRequest) {
     if (firstSaved && !sameFirstSave(firstSaved)) return NextResponse.json({ error: 'This story already has a different saved draft. Reopen it from In progress before saving.' }, { status: 409 });
 
     // Provider-only URLs are never persisted in the saved export configuration.
-    const renderConfig = saveOnly ? exportConfig : { ...exportConfig,
-      selectedImageUrls: await Promise.all(exportConfig.selectedImageUrls.map(url => projectPhotoProcessingUrl(url, project.id))),
+    // Only the photo slots in this carousel need processing URLs; a large
+    // project can retain its full selection without signing hundreds of images.
+    const photoSlots = Math.max(1, exportConfig.slideCount - (exportConfig.bioEnabled ? 1 : 0) - 1);
+    const visibleUrls = exportConfig.selectedImageUrls.slice(0, photoSlots);
+    const renderUrls = saveOnly ? [] : await Promise.all(visibleUrls.map(url => projectPhotoProcessingUrl(url, project.id)));
+    const renderConfig = { ...exportConfig,
+      selectedImageUrls: renderUrls,
+      publicationPhotos: Object.fromEntries(visibleUrls.map((url, index) => [renderUrls[index], photos[url]])),
     };
     const slides = saveOnly ? [] : await generateAllSlides(renderConfig, designer?.profileImage || undefined);
 

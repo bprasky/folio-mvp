@@ -30,6 +30,24 @@ const nextConfig = {
     // was missing, giving "DOMMatrix is not defined".
     serverComponentsExternalPackages: ['@napi-rs/canvas'],
     outputFileTracingIncludes: {
+      '/api/instagram/campaign/generate': [
+        './node_modules/@napi-rs/canvas/**',
+        './node_modules/@napi-rs/canvas-linux-x64-gnu/**',
+        './node_modules/@napi-rs/canvas-linux-x64-musl/**',
+        './public/fonts/publication/*.ttf',
+      ],
+      '/api/publishing-studio/readiness/[id]/export': [
+        './node_modules/@napi-rs/canvas/**',
+        './node_modules/@napi-rs/canvas-linux-x64-gnu/**',
+        './node_modules/@napi-rs/canvas-linux-x64-musl/**',
+        './public/fonts/publication/*.ttf',
+      ],
+      '/api/instagram-export/generate-images': [
+        './node_modules/@napi-rs/canvas/**',
+        './node_modules/@napi-rs/canvas-linux-x64-gnu/**',
+        './node_modules/@napi-rs/canvas-linux-x64-musl/**',
+        './public/fonts/publication/*.ttf',
+      ],
       '/api/projects/[id]/extract-pdf': [
         // The main @napi-rs/canvas package (its index.js is what
         // `require('@napi-rs/canvas')` loads to polyfill DOMMatrix/ImageData/

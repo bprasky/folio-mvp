@@ -5,6 +5,7 @@ const vm = require('node:vm');
 const ts = require('typescript');
 require('tsx/cjs');
 const { savedEmbeddedQuoteChoices } = require('../src/lib/posting/embeddedQuotes.ts');
+const { preservePresentation } = require('../src/lib/story/presentation.ts');
 
 const route = fs.readFileSync('src/app/api/posting/project/[projectId]/interview/generate/route.ts', 'utf8');
 const start = route.indexOf('const validatedBlocks = composed;');
@@ -32,7 +33,8 @@ const fixture = {
 async function persist(source, { currentProvenance = {}, sourceInterview = { payload: {} }, acquireLock = false, verifyWrite } = {}) {
   let written;
   const post = { id: 'post', slug: 'story', status: 'DRAFT', updatedAt: new Date(0), provenance: currentProvenance,
-    expandedBlocks: { embeddedQuotes: [{ slotId: 'breather-2', sourceId: 'designer', text: selection.selected.text, attribution: 'organization' }] } };
+    expandedBlocks: { presentation: { version: 1, accent: '#715A44', roomOrder: ['dining'] },
+      embeddedQuotes: [{ slotId: 'breather-2', sourceId: 'designer', text: selection.selected.text, attribution: 'organization' }] } };
   const tx = {
     projectPost: { findUniqueOrThrow: async () => post, update: async ({ where, data }) => {
       assert.deepEqual(where.provenance.equals, post.provenance, 'CAS must compare the same provenance used to build the update');
@@ -48,7 +50,7 @@ async function persist(source, { currentProvenance = {}, sourceInterview = { pay
     designerBio: null, projectHistory: null, atelierSummary: null, duration: 1, _cid: 'test',
     interview: sourceInterview, generationResetId: sourceInterview.resetId ?? null, answersOverride: [], acquireLock,
     verifyProductAccuracy: () => ({ warnings: [] }),
-    savedEmbeddedQuoteChoices,
+    savedEmbeddedQuoteChoices, preservePresentation,
     session: { user: { id: 'owner' } },
     assertProjectWrite: async (actorId, projectId) => { assert.equal(actorId, 'owner'); assert.equal(projectId, 'project'); },
     jsonObject: value => value && typeof value === 'object' && !Array.isArray(value) ? value : {},
@@ -68,6 +70,7 @@ function assertCanonical(saved) {
   assert.deepEqual(saved.galleryChapters[1].pullQuote, selection, 'Selected text, provenance and all alternatives survive persistence');
   assert.deepEqual(saved.pullQuotes, fixture.pullQuotes, 'The top-level display index remains intact');
   assert.equal(saved.embeddedQuotes[0].text, selection.selected.text, 'Owner embedded quote survives the actual regeneration transaction');
+  assert.deepEqual(saved.presentation, { version: 1, accent: '#715A44', roomOrder: ['dining'] }, 'Latest designer theme/order survives actual generation persistence');
 }
 async function main() {
   const generator = fs.readFileSync('src/lib/posting/generateEditorialDraft.ts', 'utf8');

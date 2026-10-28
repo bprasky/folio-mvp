@@ -268,7 +268,7 @@ export async function POST(
 
     const post = await prisma.projectPost.findUnique({
       where: { projectId },
-      select: { id: true, expandedBlocks: true },
+      select: { id: true, updatedAt: true, expandedBlocks: true },
     });
     if (!post?.expandedBlocks) {
       return NextResponse.json({ error: 'No article to write a headline for' }, { status: 404 });
@@ -818,12 +818,13 @@ Return ONLY a JSON array of ${CANDIDATES_REQUESTED} strings, in that order.`;
       kickerAlternatives: { selected, alternatives } satisfies TitleSelection,
     };
     await prisma.projectPost.update({
-      where: { id: post.id },
+      where: { id: post.id, updatedAt: post.updatedAt },
       data: { expandedBlocks: blocks as any },
     });
 
     return NextResponse.json({ ok: true, current: currentKicker, alternatives });
   } catch (error: any) {
+    if (error?.code === 'P2025') return NextResponse.json({ error: 'The article changed. Refresh and try again.' }, { status: 409 });
     if (error?.message === 'NotFound') {
       return NextResponse.json({ error: 'Project not found' }, { status: 404 });
     }
