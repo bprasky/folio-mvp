@@ -41,12 +41,13 @@ export function GlobalSearch({ placeholder = "Search..." }: GlobalSearchProps) {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="relative w-full">
+    <form role="search" onSubmit={handleSubmit} className="relative w-full">
       <div className="relative">
         <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-folio-text-tertiary" />
         <input
           ref={inputRef}
           type="text"
+          aria-label="Search Folio"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           placeholder={placeholder}
@@ -59,6 +60,7 @@ export function GlobalSearch({ placeholder = "Search..." }: GlobalSearchProps) {
         {query && (
           <button
             type="button"
+            aria-label="Clear search"
             onClick={() => setQuery("")}
             className="absolute right-3 top-1/2 -translate-y-1/2 text-folio-text-tertiary hover:text-folio-text-secondary"
           >
@@ -67,7 +69,7 @@ export function GlobalSearch({ placeholder = "Search..." }: GlobalSearchProps) {
         )}
       </div>
       {/* Keyboard shortcut hint */}
-      <div className="absolute right-12 top-1/2 -translate-y-1/2 hidden sm:flex items-center gap-1 folio-meta text-folio-text-tertiary">
+      <div className="pointer-events-none absolute right-12 top-1/2 -translate-y-1/2 hidden xl:flex items-center gap-1 folio-meta text-folio-text-tertiary">
         <kbd className="px-1.5 py-0.5 rounded border border-folio-border-subtle bg-surface-ground font-mono">
           ⌘K
         </kbd>

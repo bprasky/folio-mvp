@@ -10,25 +10,26 @@ import { BadgeButton } from "./BadgeButton";
 import { UserAvatar } from "./UserAvatar";
 import { normalizeRole } from "@/lib/permissions";
 import { CreateCollaborationModal } from "@/components/collaboration/CreateCollaborationModal";
+import type { NavigationWorkspace } from "./useNavigationWorkspace";
 
-export function MobileMenu() {
+export function MobileMenu({ workspace }: { workspace: NavigationWorkspace | null }) {
   const [isOpen, setIsOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [showCollaborationModal, setShowCollaborationModal] = useState(false);
-  const { data: session } = useSession();
+  const { data: session, status } = useSession();
   const router = useRouter();
   const user = session?.user;
   const role = user?.role ? normalizeRole(user.role) : null;
-  const operatingAsOrgType = session?.user?.operatingAsOrg?.type;
+  const operatingAsOrgType = workspace?.operatingAsOrg?.type;
+  const hasMembership = status === "authenticated" && workspace?.user.id === user?.id && !!workspace?.organizations.length;
 
   // Check if user is effectively a designer (by base role OR org membership)
   const isDesigner = role === "DESIGNER" || operatingAsOrgType === "DESIGN_FIRM";
 
   // Check if user is effectively a vendor (by base role OR org membership)
-  const isVendor = role === "VENDOR" ||
-    operatingAsOrgType === "VENDOR" ||
-    operatingAsOrgType === "MANUFACTURER" ||
-    operatingAsOrgType === "SHOWROOM";
+  const isVendor = operatingAsOrgType
+    ? ["VENDOR", "MANUFACTURER", "SHOWROOM"].includes(operatingAsOrgType)
+    : role === "VENDOR";
 
   // Get dashboard link based on role
   const getDashboardLink = (userRole: string) => {
@@ -93,7 +94,7 @@ export function MobileMenu() {
           </div>
 
           {/* Create Section - Role-based */}
-          {(
+          {hasMembership && (
             <div className="py-2 border-b border-folio-border-subtle">
               {isVendor ? (
                 <>
@@ -124,7 +125,7 @@ export function MobileMenu() {
                   </MobileNavLink>
                 </>
               ) : (
-                <MobileNavLink href={projectEntryHref(session?.user)} onClick={() => setIsOpen(false)}>
+                <MobileNavLink href={projectEntryHref({ operatingAsOrgId: workspace?.operatingAsOrgId })} onClick={() => setIsOpen(false)}>
                   <span className="flex items-center gap-3">
                     <Plus className="h-4 w-4" />
                     Create Project
@@ -136,14 +137,8 @@ export function MobileMenu() {
 
           {/* Mobile nav links */}
           <nav className="py-2">
-            <MobileNavLink href="/magazine" onClick={() => setIsOpen(false)}>
-              Magazine
-            </MobileNavLink>
             <MobileNavLink href="/about" onClick={() => setIsOpen(false)}>
               About
-            </MobileNavLink>
-            <MobileNavLink href="/professionals" onClick={() => setIsOpen(false)}>
-              For Professionals
             </MobileNavLink>
 
             {isDesigner && (
@@ -189,7 +184,6 @@ export function MobileMenu() {
             )}
           </nav>
 
-          {!user && <MobileNavLink href="/auth/signin" onClick={() => setIsOpen(false)}>Sign in</MobileNavLink>}
           {user && <>
             <MobileNavLink href="/inbox" onClick={() => setIsOpen(false)}>Inbox</MobileNavLink>
             <div className="px-4 py-3 flex items-center gap-3"><BadgeButton /><span className="folio-ui">My Folio Badge</span></div>

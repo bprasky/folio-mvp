@@ -9,6 +9,7 @@ const postcss = require('postcss');
 const tailwind = require('tailwindcss');
 const puppeteer = require('puppeteer-core');
 const dependencies = path.resolve(__dirname, '..');
+const assets = process.env.MARKETING_TEST_ASSETS || path.dirname(fs.realpathSync(path.join(dependencies, 'node_modules')));
 const root = dependencies.replace(/\\/g, '/');
 const out = path.join(root, '.tmp/about-first-project');
 fs.mkdirSync(out, {recursive:true});
@@ -32,8 +33,8 @@ async function main() {
   config.content = [path.join(root, 'src/components/marketing/WelcomeModal.tsx'),path.join(root, 'src/components/navigation/**/*.tsx'),path.join(root,'src/app/about/**/*.tsx'),path.join(root,'src/app/auth/**/*.tsx')];
   let css = (await postcss([tailwind(config)]).process(globals, { from: path.join(root, 'src/app/globals.css') })).css;
   let fonts = '', heading, body;
-  for (const file of fs.readdirSync(path.join(dependencies, '.next/static/css')).filter(file => file.endsWith('.css'))) {
-    for (const face of fs.readFileSync(path.join(dependencies, '.next/static/css', file), 'utf8').match(/@font-face\{[^}]+\}/g) || []) {
+  for (const file of fs.readdirSync(path.join(assets, '.next/static/css')).filter(file => file.endsWith('.css'))) {
+    for (const face of fs.readFileSync(path.join(assets, '.next/static/css', file), 'utf8').match(/@font-face\{[^}]+\}/g) || []) {
       if (/Cormorant_Garamond|Instrument_Sans/.test(face)) {
         fonts += face;
         const family = face.match(/font-family:([^;]+)/)[1];
@@ -51,7 +52,7 @@ async function main() {
     if (pathname === '/auth/logout') {res.setHeader('Content-Type','application/json');return res.end('{}');}
     if (!pathname.includes('.') && !pathname.startsWith('/_next/')) { res.setHeader('Content-Type', 'text/html'); return res.end(html); }
     const file = pathname.startsWith('/_next/static/media/') || pathname.startsWith('/static/media/') || pathname.startsWith('/media/')
-      ? path.join(dependencies, '.next/static/media', path.basename(pathname)) : path.join(out, path.basename(pathname));
+      ? path.join(assets, '.next/static/media', path.basename(pathname)) : path.join(out, path.basename(pathname));
     if (!fs.existsSync(file)) { res.writeHead(404); return res.end(); }
     res.setHeader('Content-Type', file.endsWith('.css') ? 'text/css' : file.endsWith('.woff2') ? 'font/woff2' : 'application/javascript');
     fs.createReadStream(file).pipe(res);
@@ -64,6 +65,24 @@ async function main() {
   const url=`http://127.0.0.1:${server.address().port}`;
   const errors=[], results=[];let signupFails=false;
   page.on('pageerror',e=>errors.push(e.message));
+  // Navigation now reads memberships on mount. Keep that read in its own page
+  // context so a simultaneous route change cannot destroy a Node-side evaluate.
+  await page.evaluateOnNewDocument(() => {
+    const realFetch = window.fetch.bind(window);
+    window.fetch = (input, init) => {
+      const target = new URL(input instanceof Request ? input.url : String(input), location.href);
+      const method = (init?.method || (input instanceof Request ? input.method : 'GET')).toUpperCase();
+      if (target.origin === location.origin && target.pathname === '/api/user/workspace-context' && method === 'GET') {
+        const user = JSON.parse(sessionStorage.getItem('fixture-user') || 'null');
+        const org = { id: 'fixture-firm', name: 'Fixture Studio', type: 'DESIGN_FIRM', logo: null, userRole: 'OWNER' };
+        const organizations = sessionStorage.getItem('fixture-membership') === '1' || user?.operatingAsOrgId === 'fixture-firm' ? [org] : [];
+        const operatingAsOrg = organizations.find(org => org.id === user?.operatingAsOrgId) || null;
+        const body = user ? { user, organizations, operatingAsOrg, operatingAsOrgId: operatingAsOrg?.id || null } : { error: 'Unauthorized' };
+        return Promise.resolve(new Response(JSON.stringify(body), { status: user ? 200 : 401, headers: { 'Content-Type': 'application/json' } }));
+      }
+      return realFetch(input, init);
+    };
+  });
   await page.setRequestInterception(true);
   page.on('request',async request=>{
     const u=new URL(request.url());
@@ -79,7 +98,7 @@ async function main() {
       await page.evaluate(()=>{const user=JSON.parse(sessionStorage.getItem('fixture-user'));sessionStorage.setItem('fixture-user',JSON.stringify({...user,operatingAsOrgId:'fixture-firm'}));});
       return json({org:{id:'fixture-firm',type:'DESIGN_FIRM'}});
     }
-    if(u.pathname==='/api/user/workspace-context'){
+    if(u.pathname==='/api/user/workspace-context' && request.method()==='POST'){
       await page.evaluate(()=>{const user=JSON.parse(sessionStorage.getItem('fixture-user'));sessionStorage.setItem('fixture-user',JSON.stringify({...user,operatingAsOrgId:'fixture-firm'}));});
       return json({user:{operatingAsOrgId:'fixture-firm',operatingAsOrg:{id:'fixture-firm',type:'DESIGN_FIRM'}}});
     }

@@ -17,7 +17,7 @@ async function destination(page, props) {
   assert.fail('Expected redirect');
 }
 (async () => {
-  const signin = load('src/app/auth/signin/page.tsx', { ...common, 'next/link': {}, react: {}, 'react/jsx-runtime': {}, './signin.module.css': {}, './SigninForm': {}, '@/app/api/auth/[...nextauth]/options': { authOptions: {} }, 'next-auth': { getServerSession: async () => ({ user: { id: 'existing-person' } }) }, '@/lib/auth/getSigninHero': { getSigninHero: () => { throw Error('Authenticated users must redirect before loading signin content'); } } }).default;
+  const signin = load('src/app/auth/signin/page.tsx', { ...common, 'next/link': {}, react: {}, 'react/jsx-runtime': {}, './signin.module.css': {}, './SigninForm': {}, '../_components/Topbar': {}, '@/app/api/auth/[...nextauth]/options': { authOptions: {} }, 'next-auth': { getServerSession: async () => ({ user: { id: 'existing-person' } }) }, '@/lib/auth/getSigninHero': { getSigninHero: () => { throw Error('Authenticated users must redirect before loading signin content'); } } }).default;
   for (const callbackUrl of ['/auth/org-setup', '/auth/org-setup?callbackUrl=%2Fprojects%2Fnew', '/auth/claim?token=abc', '/projects']) assert.equal(await destination(signin, { searchParams: { callbackUrl } }), callbackUrl);
   for (const callbackUrl of ['/auth/signin', '/auth/signup?callbackUrl=/auth/signin', '/auth/%73ignin/', 'https://evil.test']) assert.equal(await destination(signin, { searchParams: { callbackUrl } }), '/');
   const legacy = load('src/app/for-professionals/page.tsx', common).default;
