@@ -20,34 +20,16 @@ import {
 } from "lucide-react";
 import SupportModal from "../SupportModal";
 import { normalizeRole } from "@/lib/permissions";
+import type { NavigationWorkspace } from "./useNavigationWorkspace";
 
-interface Organization {
-  id: string;
-  name: string;
-  logo: string | null;
-  type?: string;
-  userRole?: string;
-}
-
-interface WorkspaceContextData {
-  operatingAsOrgId: string | null;
-  operatingAsOrg: Organization | null;
-  organizations: Organization[];
-  user: {
-    id: string;
-    name: string;
-    email: string;
-    profileImage: string | null;
-  };
-}
-
-export function UserMenu() {
+export function UserMenu({ workspaceData, signedOutHref = "/auth/signin" }: {
+  workspaceData: NavigationWorkspace | null;
+  signedOutHref?: string;
+}) {
   const { data: session, status, update } = useSession();
   const [isOpen, setIsOpen] = useState(false);
   const [isSupportModalOpen, setIsSupportModalOpen] = useState(false);
   const [isWorkspaceDropdownOpen, setIsWorkspaceDropdownOpen] = useState(false);
-  const [workspaceData, setWorkspaceData] = useState<WorkspaceContextData | null>(null);
-  const [isLoadingWorkspace, setIsLoadingWorkspace] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
   const workspaceRef = useRef<HTMLDivElement>(null);
 
@@ -64,28 +46,6 @@ export function UserMenu() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  // Fetch workspace context when menu opens
-  useEffect(() => {
-    if (isOpen && session?.user?.id && !workspaceData) {
-      fetchWorkspaceContext();
-    }
-  }, [isOpen, session?.user?.id]);
-
-  const fetchWorkspaceContext = async () => {
-    setIsLoadingWorkspace(true);
-    try {
-      const response = await fetch('/api/user/workspace-context');
-      if (response.ok) {
-        const data = await response.json();
-        setWorkspaceData(data);
-      }
-    } catch (error) {
-      console.error('Error fetching workspace context:', error);
-    } finally {
-      setIsLoadingWorkspace(false);
-    }
-  };
-
   const handleWorkspaceChange = async (orgId: string | null) => {
     try {
       const response = await fetch('/api/user/workspace-context', {
@@ -95,12 +55,6 @@ export function UserMenu() {
       });
 
       if (response.ok) {
-        const data = await response.json();
-        setWorkspaceData(prev => prev ? {
-          ...prev,
-          operatingAsOrgId: data.user.operatingAsOrgId,
-          operatingAsOrg: data.user.operatingAsOrg,
-        } : null);
         // Update the session to reflect the change
         await update();
         setIsWorkspaceDropdownOpen(false);
@@ -112,15 +66,6 @@ export function UserMenu() {
     }
   };
 
-  // Function to handle Sign In with session cleanup
-  async function goToSigninFresh() {
-    try {
-      await signOut({ redirect: false });
-      await fetch("/auth/logout", { method: "POST" });
-    } catch {}
-    window.location.replace("/auth/signin");
-  }
-
   if (status === "loading") {
     return (
       <div className="h-10 w-10 rounded-full bg-surface-ground animate-pulse" />
@@ -129,21 +74,14 @@ export function UserMenu() {
 
   if (!session?.user) {
     return (
-      <div className="flex shrink-0 items-center gap-1 sm:gap-2 whitespace-nowrap">
-        <button
-          type="button"
-          onClick={goToSigninFresh}
-          className="hidden sm:block px-1.5 sm:px-3 py-2 folio-ui text-folio-text-primary rounded-full hover:bg-surface-ground transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2"
-        >
-          Sign in
-        </button>
-        <Link
-          href="/auth/signup"
-          className="min-h-11 inline-flex items-center px-3 sm:px-4 py-2 folio-ui text-[var(--surface-canvas)] bg-[var(--text-primary)] rounded-full hover:opacity-90 transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2"
-        >
-          Sign up
-        </Link>
-      </div>
+      <Link
+        href={signedOutHref}
+        aria-label="Sign in / Sign up"
+        className="shrink-0 min-h-11 px-3 sm:px-4 py-2 text-xs sm:text-sm leading-tight font-medium text-[var(--surface-canvas)] bg-[var(--text-primary)] rounded-full hover:opacity-90 transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2"
+      >
+        <span className="block sm:inline whitespace-nowrap">Sign in<span className="hidden sm:inline"> / </span></span>
+        <span className="block sm:inline whitespace-nowrap">Sign up</span>
+      </Link>
     );
   }
 
@@ -154,7 +92,7 @@ export function UserMenu() {
   // Determine if user has any orgs
   const hasOrgs = workspaceData && workspaceData.organizations.length > 0;
   const currentOrg = workspaceData?.operatingAsOrg;
-  const operatingAsOrgId = workspaceData?.operatingAsOrgId || session.user.operatingAsOrgId;
+  const operatingAsOrgId = workspaceData?.operatingAsOrgId;
 
   // Check if user is effectively a designer (by base role OR org membership)
   const isDesigner = role === "DESIGNER" ||
@@ -197,6 +135,7 @@ export function UserMenu() {
         onClick={() => setIsOpen(!isOpen)}
         className="flex items-center gap-2 rounded-full p-1 hover:bg-surface-ground transition-colors"
         aria-label="User menu"
+        aria-expanded={isOpen}
       >
         <UserAvatarWithBadge
           src={user.image}
@@ -258,7 +197,7 @@ export function UserMenu() {
               >
                 {workspaceData.organizations[0]?.name || "My Firm"}
               </MenuLink>
-            ) : (
+            ) : workspaceData ? (
               <MenuLink
                 href="/professionals"
                 icon={<Briefcase className="h-4 w-4" />}
@@ -266,7 +205,7 @@ export function UserMenu() {
               >
                 Go Professional
               </MenuLink>
-            )}
+            ) : null}
           </div>
 
           {/* Operating As dropdown - only show if user has orgs */}

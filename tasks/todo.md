@@ -1,3 +1,22 @@
+# Navigation and professional account access — 2026-10-28
+
+- [x] Audit navigation variants, live membership source, and enrollment routing on current main.
+- [x] Center the home-linked FOLIO wordmark, move search before one account button, and remove redundant discovery/professional links across site and auth headers.
+- [x] Share active membership state across desktop/mobile Create and the profile menu; preserve Go Professional for individual-only accounts.
+- [x] Verify membership/loading/error/account-switch states, responsive layout, existing professional journeys, and scoped code checks; review the fix.
+
+Plan check-in: this improves browsing and professional onboarding. Use the existing authenticated workspace-context lookup; a role label or stale selected firm does not prove membership. Keep project authorization and enrollment unchanged. Work from current main in an isolated checkout to preserve existing local work.
+
+### Review
+
+The site and auth pages now share the centered masthead. Search sits immediately before one Sign in / Sign up control; phones use a search icon and stacked account label. About and professional actions sit left. Removed Magazine and For Professionals from desktop/mobile navigation. Preserved phone notifications and aligned left-side dropdowns inward.
+
+One authenticated workspace lookup supplies current active memberships to both Create surfaces and the profile menu. Create stays hidden for anonymous/loading, skipped setup, pending membership, revoked/stale-session, lookup failure and account-switch states. Members in personal context reach the existing firm chooser; validated active context reaches creation. Individual-only accounts retain Go Professional. Existing server authorization remains unchanged.
+
+Verification: 16 navigation browser groups pass with actual components, Folio CSS/fonts and synthetic accounts/API replies at 320/390/768/1024/1440px; no browser errors. Old HEAD fails the same harness on anonymous Create. Centering, control/popup bounds, search, vendor options and delayed account-switch responses are covered. The existing marketing/auth browser suite also passes all 16 cases, including signup/signin/provider callbacks, opt-out, firm enrollment, pending access and first-project continuity. Professional entry/routing/auth-alias and firm-enrollment checks pass; all five firm-posting-policy tests pass. Scoped lint passes with two existing unused-variable warnings; client-import and migration-discipline checks pass. Source TypeScript diagnostics introduce no new fingerprints after normalizing the shared dependency path (866 vs committed 880); this isolated checkout lacks generated Next route types, so this is not a complete build/prepared typecheck. No schema, production account or deployment changes. Specialist review found no remaining issues.
+
+---
+
 # Founding-designer intake and project privacy — 2026-10-26
 
 - [x] Read guidance/audits and compare scoped patches against main f787200d, then integrated ea459003 (#823).

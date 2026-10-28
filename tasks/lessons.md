@@ -1243,3 +1243,7 @@ Keep current publication capabilities distinct from intended downstream effects.
 ## 2026-10-23 — Describe the Folio interview through the designer experience
 
 The founder wants public-facing repository copy to describe sitting down with Folio after it reviews the project material, for an interview tailored to the designer and project. Avoid centering the Sofia persona. Explain that the conversation uses shared project context and evolves with the answers to draw out the thinking behind the work; do not imply omniscience or that every possible factor is known. Keep implementation detail in the engineering tour.
+
+## 2026-10-28 — One account entry and membership-based Create
+
+The founder replaced the separate header Sign in and Sign up controls with one account entry. Center the home-linked FOLIO wordmark, put search immediately before the account control on the right, and remove Magazine and For Professionals navigation links. This supersedes the earlier separate-header-actions instruction. Create requires a signed-in person with an active organization membership, including on mobile; a role label, skipped enrollment, pending request or stale selected organization is insufficient. Keep Go Professional in the individual-only profile dropdown so enrollment remains discoverable without exposing creation controls.

@@ -6,9 +6,7 @@ import { cn } from "@/lib/utils";
 
 // Main Nav = Discovery (everyone else's content)
 const links = [
-  { href: "/magazine", label: "Magazine" },
   { href: "/about", label: "About" },
-  { href: "/professionals", label: "For Professionals" },
 ];
 
 export function NavLinks() {
@@ -22,7 +20,6 @@ export function NavLinks() {
           <Link
             key={link.href}
             href={link.href}
-            {...(link.href === "/professionals" ? { "data-folio-target": "for-professionals-nav" } : {})}
             className={cn(
               "px-4 py-2 folio-ui rounded-full transition-colors",
               isActive

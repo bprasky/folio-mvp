@@ -12,11 +12,13 @@ import { CreateButton } from "./CreateButton";
 import { BadgeButton } from "./BadgeButton";
 import { InboxButton } from "./InboxButton";
 import { NotificationBell } from "./NotificationBell";
+import { useNavigationWorkspace } from "./useNavigationWorkspace";
 
 const SCROLL_THRESHOLD = 40;
 
-export function EditorialMasthead() {
+export function EditorialMasthead({ signedOutHref }: { signedOutHref?: string }) {
   const pathname = usePathname();
+  const workspace = useNavigationWorkspace();
   const [isScrolled, setIsScrolled] = useState(false);
   const isHomePage = pathname === "/";
 
@@ -69,44 +71,35 @@ export function EditorialMasthead() {
               : {}),
         }}
       >
-        <nav className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center gap-2 sm:gap-4 min-w-0">
-            <MobileMenu />
-
-            {/* Stable destination for the loading masthead on every route. */}
-            <Link
-              href="/"
-              data-folio-brand-target
-              className="font-serif text-xl tracking-tight font-semibold text-folio-text-primary hover:text-folio-text-primary whitespace-nowrap"
-            >
-              FOLIO
-            </Link>
-
-            {/* Search Bar - always visible in nav */}
-            <div className="flex-1 max-w-md mx-4 hidden md:block">
-              <GlobalSearch placeholder="Search designers, products, events..." />
-            </div>
-          </div>
-
-          {/* Center: Nav Links (desktop) */}
-          <div className="hidden md:flex items-center gap-4">
+        <nav aria-label="Primary" className="mx-auto grid h-16 max-w-7xl grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-2 px-3 sm:px-6 lg:px-8">
+          <div className="flex min-w-0 items-center gap-1 sm:gap-3">
+            <MobileMenu workspace={workspace} />
             <NavLinks />
-          </div>
-
-          {/* Right: Create Button + User Menu */}
-          <div className="flex shrink-0 items-center gap-1 sm:gap-3">
-            {/* Compact search link on phones; full search field on larger screens. */}
-            <div className="hidden sm:block md:hidden">
-              <GlobalSearch placeholder="Search..." />
+            <div className="hidden md:flex items-center gap-3">
+              <CreateButton workspace={workspace} />
             </div>
-            <Link href="/search" aria-label="Search Folio" className="sm:hidden inline-flex h-11 w-11 items-center justify-center rounded-full hover:bg-surface-ground"><Search className="h-5 w-5" /></Link>
             <NotificationBell />
-            <div className="hidden sm:flex items-center gap-3">
+            <div className="hidden md:flex items-center gap-3">
               <InboxButton />
               <BadgeButton />
-              <CreateButton />
             </div>
-            <UserMenu />
+          </div>
+
+          <Link
+            href="/"
+            aria-label="Folio home"
+            data-folio-brand-target
+            className="justify-self-center font-serif text-xl tracking-tight font-semibold text-folio-text-primary whitespace-nowrap"
+          >
+            FOLIO
+          </Link>
+
+          <div className="flex min-w-0 items-center justify-end gap-1 sm:gap-3">
+            <div className="hidden min-w-0 w-full max-w-64 md:block">
+              <GlobalSearch placeholder="Search Folio" />
+            </div>
+            <Link href="/search" aria-label="Search Folio" className="md:hidden inline-flex h-9 w-8 shrink-0 items-center justify-center rounded-full hover:bg-surface-ground"><Search className="h-4 w-4" /></Link>
+            <UserMenu workspaceData={workspace} signedOutHref={signedOutHref} />
           </div>
         </nav>
       </header>

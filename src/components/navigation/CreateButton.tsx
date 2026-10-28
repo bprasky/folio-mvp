@@ -7,8 +7,9 @@ import { useSession } from "next-auth/react";
 import { Plus, ChevronDown, FileText, Package, FolderPlus } from "lucide-react";
 import { normalizeRole } from "@/lib/permissions";
 import { CreateCollaborationModal } from "@/components/collaboration/CreateCollaborationModal";
+import type { NavigationWorkspace } from "./useNavigationWorkspace";
 
-export function CreateButton() {
+export function CreateButton({ workspace }: { workspace: NavigationWorkspace | null }) {
   const { data: session, status } = useSession();
   const [isOpen, setIsOpen] = useState(false);
   const [showCollaborationModal, setShowCollaborationModal] = useState(false);
@@ -26,13 +27,13 @@ export function CreateButton() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  // Don't show if not authenticated or loading
-  if (status === "loading") {
+  if (status !== "authenticated" || workspace?.user.id !== session?.user?.id || !workspace?.organizations.length) {
     return null;
   }
 
   const role = normalizeRole(session?.user?.role);
-  const isVendor = role === "VENDOR";
+  const orgType = workspace.operatingAsOrg?.type;
+  const isVendor = orgType ? ["VENDOR", "MANUFACTURER", "SHOWROOM"].includes(orgType) : role === "VENDOR";
 
   // For vendors, show dropdown with multiple options
   if (isVendor) {
@@ -50,7 +51,7 @@ export function CreateButton() {
           </button>
 
           {isOpen && (
-            <div className="absolute right-0 mt-2 w-56 rounded-xl border border-folio-border-subtle bg-surface-canvas shadow-lg py-2 z-50">
+            <div className="absolute left-0 mt-2 w-56 rounded-xl border border-folio-border-subtle bg-surface-canvas shadow-lg py-2 z-50">
               <button
                 onClick={() => {
                   setIsOpen(false);
@@ -101,10 +102,10 @@ export function CreateButton() {
     );
   }
 
-  // For individuals, designers, and other authenticated users - simple create project button
+  // Personal workspace members choose a firm through the existing enrollment flow.
   return (
     <Link
-      href={projectEntryHref(session?.user)}
+      href={projectEntryHref({ operatingAsOrgId: workspace.operatingAsOrgId })}
       className="flex items-center gap-1.5 px-3 py-1.5 folio-ui text-surface-canvas bg-folio-text-primary rounded-full hover:opacity-90 transition-colors"
     >
       <Plus className="h-4 w-4" />

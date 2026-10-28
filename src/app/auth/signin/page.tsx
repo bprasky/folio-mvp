@@ -6,6 +6,7 @@ import { authOptions } from '@/app/api/auth/[...nextauth]/options';
 import { safeCallbackPath } from '@/lib/onboarding/professional-entry';
 import { getSigninHero } from '@/lib/auth/getSigninHero';
 import { SigninForm } from './SigninForm';
+import { Topbar } from '../_components/Topbar';
 import styles from './signin.module.css';
 
 export const dynamic = 'force-dynamic';
@@ -25,29 +26,7 @@ export default async function SigninPage({ searchParams }: { searchParams: { cal
 
   return (
     <div className={styles.page}>
-      <header className={styles.topbar}>
-        <Link href="/" className={styles.wordmark} aria-label="Folio home">
-          FOLIO
-        </Link>
-
-        <div className={styles.topbarCenter}>
-          <Link href="/search" className={styles.searchPill} aria-label="Search Folio">
-            <span>Search Folio</span>
-            <span className={styles.searchKbd} aria-hidden="true">⌘K</span>
-          </Link>
-          <nav aria-label="Primary">
-            <ul className={styles.navList}>
-              <li><Link href="/magazine" className={styles.navLink}>Magazine</Link></li>
-              <li><Link href="/about" className={styles.navLink}>About</Link></li>
-              <li><Link href="/professionals" className={styles.navLink}>For professionals</Link></li>
-            </ul>
-          </nav>
-        </div>
-
-        <Link href={signupHref} className={styles.invitePill}>
-          Sign up
-        </Link>
-      </header>
+      <Topbar rightCta={{ label: 'Sign up', href: signupHref }} />
 
       <main className={styles.stage}>
         <section className={styles.photoPanel} aria-label="Featured project">
