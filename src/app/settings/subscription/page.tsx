@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { ArrowLeft, Check } from 'lucide-react';
 import { UpcomingArchiveTools } from '@/components/pricing/UpcomingArchiveTools';
+import { FeatureComparison } from '@/components/pricing/FeatureComparison';
 import {
   type SubscriptionTierType,
   type TierConfig,
@@ -48,7 +49,6 @@ const PLAN_INTRO: Record<SubscriptionTierType, string> = {
 };
 
 const primaryLink = 'inline-flex min-h-11 items-center justify-center rounded-full bg-folio-text-primary px-5 py-2.5 folio-ui text-surface-canvas transition-opacity hover:opacity-80 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-folio-text-primary';
-const secondaryLink = 'inline-flex min-h-11 items-center justify-center rounded-full border border-folio-border-strong px-5 py-2.5 folio-ui text-folio-text-primary transition-colors hover:bg-surface-ground focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-folio-text-primary';
 
 export default function SubscriptionSettingsPage() {
   const { status } = useSession();
@@ -120,7 +120,6 @@ export default function SubscriptionSettingsPage() {
   const currentTier = planStatus.tier;
   // The dedicated program response is narrower than the generic paid/no-expiry flag.
   const isFoundingDesigner = Boolean(foundingDesigner?.isFoundingDesigner);
-  const otherTiers = PUBLIC_TIER_ORDER.filter((tier) => tier !== currentTier && tier !== 'FREE');
   const expiryDate = planStatus.expiresAt ? new Date(planStatus.expiresAt).toLocaleDateString(undefined, {
     month: 'long', day: 'numeric', year: 'numeric',
   }) : null;
@@ -207,34 +206,9 @@ export default function SubscriptionSettingsPage() {
         )}
 
         {currentTier !== 'ENTERPRISE' && (
-          <section aria-labelledby="other-plans" className="mt-12 border-t border-folio-border-subtle pt-10">
-            <div className="mb-6 max-w-2xl">
-              <h2 id="other-plans" className="folio-h3">Plans for your practice</h2>
-              <p className="folio-body mt-2 text-folio-text-secondary">Compare the space and seats included as your practice grows.</p>
-            </div>
-            <div className={`grid gap-4 ${otherTiers.length > 1 ? 'md:grid-cols-2' : ''}`}>
-              {otherTiers.map((tierKey) => {
-                const tier = TIER_CONFIGS[tierKey];
-                return (
-                  <article key={tierKey} className="flex flex-col rounded-3xl border border-folio-border-subtle p-6">
-                    <h3 className="folio-h3">{tier.name}</h3>
-                    <p className="folio-body mb-6 mt-2 text-folio-text-secondary">{PLAN_INTRO[tierKey]}</p>
-                    <div className="mt-auto"><PlanPrice config={tier} /></div>
-                    <ul className="my-6 space-y-3 folio-meta text-folio-text-secondary">
-                      <li>{tier.limits.designerSeats === -1 ? 'Unlimited team licenses' : `${tier.limits.designerSeats} ${tier.limits.designerSeats === 1 ? 'person' : 'people'} included`}</li>
-                      {tier.additionalSeatPricing && <li>Additional licenses: ${tier.additionalSeatPricing.monthly} / person / month, or ${tier.additionalSeatPricing.annually} / person / year billed annually</li>}
-                      <li>{formatLimit(tier.limits.projects)} projects</li>
-                      <li>{tier.limits.storageGb === -1 ? 'Unlimited storage' : `${tier.limits.storageGb} GB storage`}</li>
-                    </ul>
-                    <Link href={`/pricing?highlight=${tierKey}`} className={tierKey === 'PRO' ? primaryLink : secondaryLink}>
-                      Explore {tier.name}
-                    </Link>
-                  </article>
-                );
-              })}
-            </div>
-            <Link href="/pricing" className="folio-ui mt-6 inline-flex min-h-11 items-center text-folio-text-secondary underline underline-offset-4 hover:text-folio-text-primary">Compare all plans</Link>
-          </section>
+          <div className="mt-12 border-t border-folio-border-subtle pt-10">
+            <FeatureComparison tiers={PUBLIC_TIER_ORDER.map((tier) => TIER_CONFIGS[tier])} currentTier={planStatus.isActive ? currentTier : null} />
+          </div>
         )}
 
         <p className="folio-meta mt-10 border-t border-folio-border-subtle pt-6 text-folio-text-secondary">Questions about your membership? <a href="mailto:support@folioad.com?subject=Subscription" className="inline-flex min-h-11 items-center text-folio-text-primary underline underline-offset-4">Contact Folio</a></p>

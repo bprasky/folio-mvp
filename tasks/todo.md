@@ -1,5 +1,15 @@
 # Subscription brand refresh and billing review — 2026-10-29
 
+### Pricing matrix follow-up
+
+Replaced the hidden comparison and separate pricing cards with an always-visible Free / Pro / Studio matrix on Pricing and Subscription Settings. It uses Folio’s canonical typography, neutral surfaces, a quiet Pro column, monthly/annual controls, full annual totals, included people, license add-ons, grouped allowances and accessible included/not-included marks. Figures come from the approved tier configuration. Future archive AI stays in the separate Coming soon section, with Enterprise hidden. The public pricing page now centers on the matrix and a short FAQ; removed the old ROI/competitor marketing block and unverified automatic plan-change promises.
+
+The old paid upgrade actions pointed to a nonexistent checkout route. Matrix actions explicitly open a Pro/Studio membership inquiry with the chosen billing frequency; they do not imply an available payment flow. Existing subscribers see Current plan in their column. No price, entitlement, API, database or AI-feature changes in this follow-up.
+
+Reference patterns: [Notion pricing](https://www.notion.com/pricing) for plan comparison and clear billing periods; [Studio Designer pricing](https://www.studiodesigner.com/pricing/) for distinguishing full-access licenses and add-on units. These inform presentation only; no competitor prices or claims are reproduced.
+
+Verified the actual components with the existing synthetic subscription/auth boundaries and pricing-handler fixture: desktop matrix visible without expanding; monthly/annual amounts and billing-aware inquiry links; keyboard billing selection; Studio current-plan recognition; pricing error and retry recovery; 320px/390px layouts; horizontal comparison scrolling with a pinned feature column; light/dark display. Fixed screen-reader-only labels escaping the scroll container on mobile by positioning that container. Focused ESLint and TypeScript checks pass. Preview is not a live payment or full Next.js integration test.
+
 ### Approved pricing and public scope — supersedes the initial proposal below
 
 Pro is $29/month or $290/year for one person. Studio is $49/month or $490/year including three people, with additional licenses at $5/person/month or $50/person/year on annual billing. Annual billing keeps two months free. Five-person Studio totals $59/month or $590/year. Paid publishing remains unlimited; the founder does not want posting ceilings tied to team size.
