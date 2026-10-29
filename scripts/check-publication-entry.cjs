@@ -88,6 +88,7 @@ async function touch(type, x, y) {
   assert.equal(byLabel('Project introduction'), null);
   assert.equal(visibleIntro(), false);
   assert.equal(document.querySelector('[data-publication-view]').children.length, 1, 'No old title, hero, intro or credits stack beside the viewer');
+  assert.equal(byLabel('Folio'), null, 'The site navigation supplies publication branding');
   await act(async () => document.querySelector('[data-publication-phase]').dispatchEvent(new window.WheelEvent('wheel', { deltaY: 100, bubbles: true, cancelable: true })));
   assert.equal(phase(), 'opening', 'Desktop scrolling does not dismiss the click gate');
   await act(async () => document.querySelector('[data-publication-phase]').dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowRight', bubbles: true })));
@@ -101,6 +102,7 @@ async function touch(type, x, y) {
   assert.equal(visibleIntro(), true);
   await click(byLabel('Read project introduction'));
   assert.ok(byLabel('Project introduction').textContent.includes('The original introduction.'));
+  assert.equal(byLabel('View full photograph without text').parentElement.querySelector('img[alt="Existing house"]').style.objectFit, 'contain', 'The reader retains the full photograph');
   assert.ok(byLabel('Project credits'));
   await click(byLabel('Collapse project introduction'));
   await click(byLabel('Next room'));

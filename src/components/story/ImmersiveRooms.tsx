@@ -59,8 +59,8 @@ export function ImmersiveRooms({ story, projectName, presentation, autoExpandRoo
   const mobile = dimensions.width <= 800;
   const { phase, begin, suppressClickUntil } = usePublicationEntry(canvas, mobile, onEntered);
   const ready = phase === 'ready';
-  const availablePhotoHeight = Math.max(150, dimensions.height - labelHeight + 36);
-  const photoWidth = clean ? dimensions.width : mobile ? Math.min(dimensions.width, availablePhotoHeight * aspect) : dimensions.width;
+  const availablePhotoHeight = Math.max(150, reading ? dimensions.height * .42 : dimensions.height - labelHeight + 36);
+  const photoWidth = clean ? dimensions.width : mobile ? Math.min(dimensions.width, availablePhotoHeight * aspect) : dimensions.width * .64;
   const photoHeight = clean ? dimensions.height : mobile ? Math.min(dimensions.width / aspect, availablePhotoHeight) : dimensions.height;
 
   useEffect(() => {
@@ -102,9 +102,9 @@ export function ImmersiveRooms({ story, projectName, presentation, autoExpandRoo
   if (!image) return null;
 
   return <section className={styles.shell} aria-label={`${projectName} publication`}
-    style={{ '--room-bg': tokens.background, '--room-ink': tokens.text, '--room-glass': tokens.glass } as CSSProperties}>
+    style={{ '--room-bg': tokens.background, '--room-ink': tokens.text, '--room-glass': tokens.glass, '--photo-aspect': aspect } as CSSProperties}>
     <PublicationControls rooms={story.roomTiles} value={preferences} saved={saved} onChange={setPreferences} />
-    <div ref={canvas} tabIndex={-1} data-publication-phase={phase} className={[styles.canvas, reading ? styles.reading : '', clean ? styles.clean : '', slide?.kind === 'gallery' ? styles.galleryMode : '', cover ? styles.cover : ''].join(' ')}
+    <div ref={canvas} tabIndex={-1} data-publication-phase={phase} data-publication-reading={reading} className={[styles.canvas, clean ? styles.clean : '', slide?.kind === 'gallery' ? styles.galleryMode : '', cover ? styles.cover : ''].join(' ')}
       style={{ '--photo-end': `${photoWidth}px`, '--photo-left': `${mobile && !clean ? (dimensions.width - photoWidth) / 2 : 0}px`, '--photo-height': `${photoHeight}px`, '--arrow-y': `${Math.max(100, photoHeight * .5)}px`, '--mobile-quote-size': quote && quote.length > 180 ? '20px' : '25px' } as CSSProperties}
       onClickCapture={event => { if (Date.now() < suppressClickUntil.current) { event.preventDefault(); event.stopPropagation(); } }}
       onKeyDown={event => {
@@ -127,13 +127,12 @@ export function ImmersiveRooms({ story, projectName, presentation, autoExpandRoo
       <div className={styles.sideBlur} aria-hidden="true"><Image src={image.url} alt="" fill sizes="100vw" style={{ objectFit: 'cover' }} /></div>
       {(cover || slide?.kind === 'story' || clean) && <div className={styles.photo} aria-hidden={!ready}>
         <Image key={image.id} src={image.url} alt={imageRoom?.roomLabel || projectName} fill
-          sizes="100vw" priority={cover} style={{ objectFit: mobile || clean ? 'contain' : 'cover' }}
+          sizes="100vw" priority={cover} style={{ objectFit: 'contain' }}
           onLoad={event => { const target = event.currentTarget; if (target.naturalWidth && target.naturalHeight) setAspect(target.naturalWidth / target.naturalHeight); }} />
       </div>}
       <div className={styles.wash} aria-hidden="true" />
       <button type="button" ref={photoButton} className={styles.photoToggle} onClick={togglePhoto} aria-label={clean ? 'Show room details' : 'View full photograph without text'} disabled={!ready} tabIndex={!ready || reading ? -1 : 0} />
       {!clean && <div className={styles.details} aria-hidden={!ready} ref={element => { if (element) element.inert = !ready; }}>
-        <div className={styles.brand} aria-label="Folio">FOLIO</div>
         {slide?.kind === 'gallery' && <>
           <p className={styles.galleryIdentity}>{identity.join(' · ')}</p>
           <div className={styles.gallery} data-count={slide.photos.length}>
@@ -199,7 +198,6 @@ export function ImmersiveRooms({ story, projectName, presentation, autoExpandRoo
       {!ready && <div className={styles.opening} aria-hidden={phase !== 'opening'}>
         <Image src={story.heroImageUrl} alt={projectName} fill priority sizes="100vw" style={{ objectFit: 'cover' }} />
         <div className={styles.openingShade} />
-        <span className={styles.brand} aria-label="Folio">FOLIO</span>
         <h1>{projectName}</h1>
         <button type="button" className={styles.begin} onClick={begin} disabled={phase !== 'opening'} aria-label={`Begin ${projectName}`}>
           <span className={styles.desktopHint}>Click to begin</span><span className={styles.mobileHint}>Tap or scroll to begin</span>
