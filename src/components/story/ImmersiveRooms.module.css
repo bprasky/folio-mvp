@@ -166,6 +166,7 @@
 @container (max-width:350px) {
   .presentation { padding:18px; }
   .presentation h2 { font-size:14px; }
+  .presentation.introduction h2 { font-size:28px; }
   .quote { font-size:min(23px,var(--mobile-quote-size)); }
   .readerPanel { padding:16px 17px; }
   .copy { font-size:15px; }
