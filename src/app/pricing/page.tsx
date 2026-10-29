@@ -63,7 +63,7 @@ export default function PricingPage() {
           <p className="folio-body mt-5 max-w-2xl text-folio-text-secondary">Publish the projects and stories that define your practice. Bring your team when you’re ready.</p>
         </header>
 
-        <FeatureComparison tiers={pricingData.tiers} currentTier={currentTier} />
+        <FeatureComparison tiers={pricingData.tiers} currentTier={currentTier} isSignedIn={Boolean(session?.user)} />
         <div className="mt-12"><UpcomingArchiveTools /></div>
 
         <section aria-labelledby="membership-questions" className="mt-14 border-t border-folio-border-subtle pt-10">

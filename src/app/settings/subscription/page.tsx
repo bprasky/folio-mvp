@@ -23,6 +23,7 @@ interface SubscriptionData {
       isFoundingDesigner: boolean;
       inGracePeriod: boolean;
       daysUntilExpiry: number | null;
+      isComplimentary?: boolean;
     };
     config: TierConfig;
     limits: TierConfig['limits'];
@@ -118,6 +119,7 @@ export default function SubscriptionSettingsPage() {
   const { subscription, foundingDesigner } = subscriptionData;
   const { status: planStatus, config, limits, usage } = subscription;
   const currentTier = planStatus.tier;
+  const isComplimentary = Boolean(planStatus.isComplimentary);
   // The dedicated program response is narrower than the generic paid/no-expiry flag.
   const isFoundingDesigner = Boolean(foundingDesigner?.isFoundingDesigner);
   const expiryDate = planStatus.expiresAt ? new Date(planStatus.expiresAt).toLocaleDateString(undefined, {
@@ -139,17 +141,19 @@ export default function SubscriptionSettingsPage() {
         <section aria-labelledby="current-plan" className="rounded-3xl border border-folio-border-subtle bg-surface-ground p-6 sm:p-8">
           <div className="flex flex-col justify-between gap-6 sm:flex-row sm:items-start">
             <div className="max-w-lg">
-              <p className="folio-meta mb-3 text-folio-text-secondary">Current plan</p>
+              <p className="folio-meta mb-3 text-folio-text-secondary">{isComplimentary ? 'Current access' : 'Current plan'}</p>
               <div className="flex flex-wrap items-center gap-3">
-                <h2 id="current-plan" className="folio-h2">Folio {config.name}</h2>
+                <h2 id="current-plan" className="folio-h2">{isComplimentary ? 'Early designer access' : `Folio ${config.name}`}</h2>
                 {isFoundingDesigner && <span className="rounded-full border border-folio-border-strong px-3 py-1 folio-meta">Founding Designer</span>}
                 {planStatus.inGracePeriod && <span className="rounded-full border border-folio-border-strong px-3 py-1 folio-meta">Renewal needed</span>}
                 {!planStatus.isActive && <span className="rounded-full border border-folio-border-strong px-3 py-1 folio-meta">Expired</span>}
               </div>
-              <p className="folio-body mt-3 text-folio-text-secondary">{PLAN_INTRO[currentTier]}</p>
+              <p className="folio-body mt-3 text-folio-text-secondary">{isComplimentary ? 'Your first round with Folio is free, including your team. No payment is required.' : PLAN_INTRO[currentTier]}</p>
             </div>
             <div className="shrink-0 sm:text-right">
-              {isFoundingDesigner ? (
+              {isComplimentary ? (
+                <><p className="folio-stat">Complimentary</p><p className="folio-meta mt-1 text-folio-text-secondary">No payment required</p></>
+              ) : isFoundingDesigner ? (
                 <><p className="folio-stat">Complimentary</p><p className="folio-meta mt-1 text-folio-text-secondary">Lifetime Pro access</p></>
               ) : (
                 <><p className="folio-meta mb-2 text-folio-text-secondary">{config.pricing?.monthly === 0 ? 'No subscription fee' : 'Standard plan rate'}</p><PlanPrice config={config} /></>
@@ -157,7 +161,7 @@ export default function SubscriptionSettingsPage() {
             </div>
           </div>
 
-          {(expiryDate || isFoundingDesigner) && (
+          {!isComplimentary && (expiryDate || isFoundingDesigner) && (
             <p className="folio-meta mt-6 border-t border-folio-border-subtle pt-5 text-folio-text-secondary">
               {isFoundingDesigner ? 'Your Founding Designer membership includes Pro at no cost.'
                 : planStatus.inGracePeriod ? `Your subscription expired on ${expiryDate}. Renew to keep access to paid features.`
@@ -169,8 +173,8 @@ export default function SubscriptionSettingsPage() {
 
         <section aria-labelledby="plan-includes" className="mt-10">
           <div className="mb-5 flex flex-wrap items-baseline justify-between gap-2">
-            <h2 id="plan-includes" className="folio-h3">Included in your plan</h2>
-            <span className="folio-meta text-folio-text-secondary">{planStatus.isActive ? 'Your plan allowances' : 'Allowances when active'}</span>
+            <h2 id="plan-includes" className="folio-h3">{isComplimentary ? 'Included in your early access' : 'Included in your plan'}</h2>
+            <span className="folio-meta text-folio-text-secondary">{isComplimentary ? 'No subscription limits during this first round' : planStatus.isActive ? 'Your plan allowances' : 'Allowances when active'}</span>
           </div>
           <dl className="grid gap-x-10 md:grid-cols-2">
             <FeatureItem label="Projects" value={formatLimit(limits.projects)} detail={usage ? `${usage.projects.count} in your account` : undefined} />
@@ -180,7 +184,7 @@ export default function SubscriptionSettingsPage() {
             <FeatureItem label="AI editorial generations" value={limits.aiEditorialGenerationsPerMonth === null ? 'Unlimited' : limits.aiEditorialGenerationsPerMonth === 0 ? 'Not included' : `${limits.aiEditorialGenerationsPerMonth} / month`} />
             <FeatureItem label="Storage allowance" value={limits.storageGb === -1 ? 'Unlimited' : `${limits.storageGb} GB`} />
           </dl>
-          {config.additionalSeatPricing && (
+          {!isComplimentary && config.additionalSeatPricing && (
             <p className="folio-meta mt-4 text-folio-text-secondary">
               Additional licenses: ${config.additionalSeatPricing.monthly} per person / month, or ${config.additionalSeatPricing.annually} per person / year billed annually.
             </p>
@@ -189,7 +193,7 @@ export default function SubscriptionSettingsPage() {
 
         <div className="mt-10"><UpcomingArchiveTools /></div>
 
-        {isFoundingDesigner && foundingDesigner && (
+        {!isComplimentary && isFoundingDesigner && foundingDesigner && (
           <section aria-labelledby="founding-membership" className="mt-10 rounded-3xl border border-folio-border-subtle p-6 sm:p-8">
             <h2 id="founding-membership" className="folio-h3">Your founding membership</h2>
             <p className="folio-body mt-3 text-folio-text-secondary">Thank you for helping shape Folio.</p>
@@ -207,7 +211,7 @@ export default function SubscriptionSettingsPage() {
 
         {currentTier !== 'ENTERPRISE' && (
           <div className="mt-12 border-t border-folio-border-subtle pt-10">
-            <FeatureComparison tiers={PUBLIC_TIER_ORDER.map((tier) => TIER_CONFIGS[tier])} currentTier={planStatus.isActive ? currentTier : null} />
+            <FeatureComparison tiers={PUBLIC_TIER_ORDER.map((tier) => TIER_CONFIGS[tier])} currentTier={planStatus.isActive ? currentTier : null} isSignedIn />
           </div>
         )}
 

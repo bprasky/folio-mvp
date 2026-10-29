@@ -1,5 +1,13 @@
 # Subscription brand refresh and billing review — 2026-10-29
 
+### Release authorization and complimentary first round
+
+Founder approved merge/deploy and directed that the first round of designers stays free until explicit further instruction. Added one shared early-access policy, enabled with no expiry or automatic conversion to paid. Existing designer-subscription feature checks, project/moodboard/team limits, import tier checks and professional directory payment eligibility waive subscription requirements during this round. Unknown features and Enterprise-only capabilities are not newly granted. Existing authentication, professional role, firm membership, project ownership, privacy and vendor-subscription policies are unchanged. No paid tier, expiry, charge or founder enrollment is written to the database.
+
+Subscription Settings now identifies current access as complimentary with no payment required, and shows early-access allowances instead of the saved tier’s catalog limits. The comparison matrix is explicitly future standard pricing, with no subscription or additional-license charges during early access. Signup/account actions replace paid-plan inquiries while the policy is enabled. Future archive AI and Atelier remain concepts.
+
+Added `scripts/check-designer-early-access.cjs` to hosted regression checks. It exercises actual modules under complimentary and future paid policy: existing Free accounts with 30 projects, team access, AI editorial, imports, expired subscriptions, unknown/Enterprise-only features, missing users, directory role/vendor boundaries and signed-out feature-API denial. Both modes pass using synthetic persistence/session boundaries; there are no database writes. Merge and production deployment follow successful checks.
+
 ### Pricing matrix follow-up
 
 Replaced the hidden comparison and separate pricing cards with an always-visible Free / Pro / Studio matrix on Pricing and Subscription Settings. It uses Folio’s canonical typography, neutral surfaces, a quiet Pro column, monthly/annual controls, full annual totals, included people, license add-ons, grouped allowances and accessible included/not-included marks. Figures come from the approved tier configuration. Future archive AI stays in the separate Coming soon section, with Enterprise hidden. The public pricing page now centers on the matrix and a short FAQ; removed the old ROI/competitor marketing block and unverified automatic plan-change promises.

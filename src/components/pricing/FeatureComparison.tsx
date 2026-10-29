@@ -4,10 +4,12 @@ import { useId, useState } from 'react';
 import Link from 'next/link';
 import { Check, Minus } from 'lucide-react';
 import { PUBLIC_TIER_ORDER, hasFeature, type SubscriptionTierType, type TierConfig } from '@/lib/pricing/tiers';
+import { DESIGNER_EARLY_ACCESS_ENABLED } from '@/lib/pricing/early-access';
 
 interface FeatureComparisonProps {
   tiers: TierConfig[];
   currentTier?: SubscriptionTierType | null;
+  isSignedIn?: boolean;
 }
 
 const planDescriptions: Partial<Record<SubscriptionTierType, string>> = {
@@ -47,7 +49,7 @@ const featureGroups = [
 const rowHeading = 'sticky left-0 z-10 border-b border-r border-folio-border-subtle bg-surface-canvas px-4 py-4 text-left folio-ui md:px-6';
 const focusRing = 'focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-folio-text-primary';
 
-export function FeatureComparison({ tiers, currentTier }: FeatureComparisonProps) {
+export function FeatureComparison({ tiers, currentTier, isSignedIn = false }: FeatureComparisonProps) {
   const [billingCycle, setBillingCycle] = useState<'monthly' | 'annually'>('monthly');
   const headingId = useId();
   const scrollHintId = useId();
@@ -59,6 +61,12 @@ export function FeatureComparison({ tiers, currentTier }: FeatureComparisonProps
 
   return (
     <section aria-labelledby={headingId}>
+      {DESIGNER_EARLY_ACCESS_ENABLED && (
+        <div className="mb-7 rounded-3xl border border-folio-border-subtle bg-surface-ground p-6">
+          <p className="folio-ui">Early designer access is complimentary.</p>
+          <p className="folio-body mt-2 text-folio-text-secondary">No payment is required during this first round. The plans below show standard future pricing; project and team allowances do not limit your early access.</p>
+        </div>
+      )}
       <div className="mb-6 flex flex-col justify-between gap-5 sm:flex-row sm:items-end">
         <div>
           <h2 id={headingId} className="folio-h3">Compare memberships</h2>
@@ -88,7 +96,7 @@ export function FeatureComparison({ tiers, currentTier }: FeatureComparisonProps
                 <p className="folio-body mt-4 font-normal text-folio-text-secondary">A home for your work, at every stage.</p>
               </th>
               {publicTiers.map((tier) => {
-                const isCurrent = currentTier === tier.id;
+                const isCurrent = !DESIGNER_EARLY_ACCESS_ENABLED && currentTier === tier.id;
                 const price = billingCycle === 'monthly' ? tier.pricing?.monthly : tier.pricing?.annualMonthlyEquivalent;
                 return (
                   <th key={tier.id} scope="col" className={`${cellClass(tier)} align-top !py-7 font-normal`}>
@@ -97,7 +105,9 @@ export function FeatureComparison({ tiers, currentTier }: FeatureComparisonProps
                     <p className="folio-meta mx-auto mt-3 min-h-12 max-w-[220px] text-folio-text-secondary">{planDescriptions[tier.id]}</p>
                     <p className="mt-5 whitespace-nowrap"><span className="folio-stat">${price}</span><span className="folio-meta text-folio-text-secondary"> / month</span></p>
                     <p className="folio-meta mt-2 min-h-10 text-folio-text-secondary">{price === 0 ? 'No subscription fee' : billingCycle === 'annually' ? `$${tier.pricing?.annually.toLocaleString()} billed annually` : 'Billed monthly'}</p>
-                    {isCurrent ? (
+                    {DESIGNER_EARLY_ACCESS_ENABLED ? (
+                      <Link href={isSignedIn ? '/settings' : '/auth/signup'} className={`folio-ui mt-3 flex min-h-11 items-center justify-center rounded-full border border-folio-border-strong px-3 text-folio-text-primary ${focusRing}`}>{isSignedIn ? 'Your account' : 'Get started free'}</Link>
+                    ) : isCurrent ? (
                       <span className="folio-ui mt-3 flex min-h-11 items-center justify-center rounded-full border border-folio-border-subtle text-folio-text-secondary">Current plan</span>
                     ) : (
                       <Link href={tier.id === 'FREE' ? '/auth/signup' : `mailto:support@folioad.com?subject=${encodeURIComponent(`${tier.name} membership — ${billingCycle === 'monthly' ? 'monthly' : 'annual'} billing`)}`} className={`folio-ui mt-3 flex min-h-11 items-center justify-center rounded-full px-3 transition-opacity hover:opacity-75 ${focusRing} ${tier.id === 'PRO' ? 'bg-folio-text-primary text-surface-canvas' : 'border border-folio-border-strong text-folio-text-primary'}`}>
@@ -141,7 +151,7 @@ export function FeatureComparison({ tiers, currentTier }: FeatureComparisonProps
           ))}
         </table>
       </div>
-      <p className="folio-meta mt-4 text-folio-text-secondary">Standard membership rates. Contact Folio to arrange a paid membership. Additional Studio licenses follow your billing frequency.</p>
+      <p className="folio-meta mt-4 text-folio-text-secondary">{DESIGNER_EARLY_ACCESS_ENABLED ? 'Standard future rates. Early designer access has no subscription or additional-license charges.' : 'Standard membership rates. Contact Folio to arrange a paid membership. Additional Studio licenses follow your billing frequency.'}</p>
     </section>
   );
 }
