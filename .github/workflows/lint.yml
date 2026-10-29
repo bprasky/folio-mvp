@@ -89,7 +89,7 @@ jobs:
       - run: npm run test:interruptions
       - name: Signup and durable workspace import
         run: |
-            node scripts/check-signup-verification.cjs
+          node scripts/check-signup-verification.cjs
           node scripts/check-workspace-import.cjs
           node scripts/check-professional-entry.cjs
           node scripts/check-professional-routing.cjs
