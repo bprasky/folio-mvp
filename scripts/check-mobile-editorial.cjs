@@ -92,13 +92,16 @@ async function main() {
       }else{assert.ok(geometry.headline<geometry.imageBottom,'Desktop overlay retained');}
       await page.screenshot({path:path.join(out,'mobile-'+width+'.png')});
       await page.evaluate(()=>window.setUser({id:'fixture',name:'Designer',role:'DESIGNER'}));
-      await page.waitForSelector('[aria-label="Notifications"]');
+      await page.waitForSelector('button[aria-label="Notifications"]');
       assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),'Authenticated header fits '+width);
-      assert.equal(await page.$eval('[aria-label="Notifications"]',e=>e.getClientRects().length>0),false,'Notifications stay inside the closed account menu');
+      assert.equal(await page.$eval('button[aria-label="Notifications"]',e=>e.getClientRects().length>0),true,'Notifications are visible without opening the account menu');
+      assert.ok(await page.$eval('button[aria-label="Notifications"]',button=>{const b=button.getBoundingClientRect();const logo=document.querySelector('[data-folio-brand-target]').getBoundingClientRect();return b.right<=logo.left||b.left>=logo.right}),'Bell does not overlap the centered wordmark');
+      await page.click('button[aria-label="Notifications"]');
+      assert.ok(await page.$eval('button[aria-label="Notifications"]',button=>{const panel=document.getElementById(button.getAttribute('aria-controls'));const b=panel.getBoundingClientRect();return b.width>0&&b.left>=0&&b.right<=innerWidth}),'Notification panel fits');
+      await page.keyboard.press('Escape');
+      assert.equal(await page.$('[role="dialog"][aria-label="Notifications"]'),null,'Escape closes notifications');
+      assert.equal(await page.$eval('button[aria-label="Notifications"]',button=>document.activeElement===button),true,'Escape returns focus to bell');
       await page.click('[aria-label="User menu"]');
-      await page.click('[aria-label="Notifications"]');
-      assert.ok(await page.$eval('[aria-label="Notifications"]',button=>{const panel=document.getElementById(button.getAttribute('aria-controls'));const b=panel.getBoundingClientRect();return b.width>0&&b.left>=0&&b.right<=innerWidth}),'Notification panel fits');
-      await page.click('[aria-label="Notifications"]');
       for(const selector of ['a[href="/inbox"]','[aria-label="Open my Folio Badge"]']){
         assert.ok(await page.$eval(selector,e=>e.getClientRects().length>0),'Account utility remains visible: '+selector);
       }
