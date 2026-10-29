@@ -1,19 +1,22 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useId } from "react";
 import Link from "next/link";
 import { projectEntryHref } from "@/lib/onboarding/professional-entry";
 import { useSession } from "next-auth/react";
-import { Plus, ChevronDown, FileText, Package, FolderPlus } from "lucide-react";
+import { Plus, FileText, Package, FolderPlus } from "lucide-react";
 import { normalizeRole } from "@/lib/permissions";
 import { CreateCollaborationModal } from "@/components/collaboration/CreateCollaborationModal";
 import type { NavigationWorkspace } from "./useNavigationWorkspace";
+import styles from "./navigation.module.css";
 
 export function CreateButton({ workspace }: { workspace: NavigationWorkspace | null }) {
   const { data: session, status } = useSession();
   const [isOpen, setIsOpen] = useState(false);
   const [showCollaborationModal, setShowCollaborationModal] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
+  const buttonRef = useRef<HTMLButtonElement>(null);
+  const panelId = useId();
 
   // Close menu when clicking outside
   useEffect(() => {
@@ -26,6 +29,15 @@ export function CreateButton({ workspace }: { workspace: NavigationWorkspace | n
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    const onEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") { setIsOpen(false); buttonRef.current?.focus(); }
+    };
+    document.addEventListener("keydown", onEscape);
+    return () => document.removeEventListener("keydown", onEscape);
+  }, [isOpen]);
 
   if (status !== "authenticated" || workspace?.user.id !== session?.user?.id || !workspace?.organizations.length) {
     return null;
@@ -41,20 +53,23 @@ export function CreateButton({ workspace }: { workspace: NavigationWorkspace | n
       <>
         <div ref={menuRef} className="relative">
           <button
+            ref={buttonRef}
+            type="button"
             onClick={() => setIsOpen(!isOpen)}
-            className="flex items-center gap-1.5 px-3 py-1.5 folio-ui text-surface-canvas bg-folio-text-primary rounded-full hover:opacity-90 transition-colors"
+            className={styles.create}
             aria-label="Create menu"
+            aria-expanded={isOpen}
+            aria-controls={panelId}
           >
-            <Plus className="h-4 w-4" />
-            <span className="hidden sm:inline">Create</span>
-            <ChevronDown className={`h-3.5 w-3.5 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
+            Create <Plus aria-hidden="true" size={14} strokeWidth={1.5} />
           </button>
 
           {isOpen && (
-            <div className="absolute left-0 mt-2 w-56 rounded-xl border border-folio-border-subtle bg-surface-canvas shadow-lg py-2 z-50">
+            <div id={panelId} className={styles.popover}>
               <button
                 onClick={() => {
                   setIsOpen(false);
+                  buttonRef.current?.focus();
                   setShowCollaborationModal(true);
                 }}
                 className="flex w-full items-center gap-3 px-4 py-2.5 folio-ui text-folio-text-primary hover:bg-surface-ground transition-colors"
@@ -106,10 +121,9 @@ export function CreateButton({ workspace }: { workspace: NavigationWorkspace | n
   return (
     <Link
       href={projectEntryHref({ operatingAsOrgId: workspace.operatingAsOrgId })}
-      className="flex items-center gap-1.5 px-3 py-1.5 folio-ui text-surface-canvas bg-folio-text-primary rounded-full hover:opacity-90 transition-colors"
+      className={styles.create}
     >
-      <Plus className="h-4 w-4" />
-      <span className="hidden sm:inline">Create</span>
+      Create <Plus aria-hidden="true" size={14} strokeWidth={1.5} />
     </Link>
   );
 }

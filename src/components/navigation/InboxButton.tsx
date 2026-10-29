@@ -3,10 +3,12 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useSession } from 'next-auth/react';
+import { Mail } from 'lucide-react';
+import styles from './navigation.module.css';
 
 const POLL_INTERVAL = 60000; // 60 seconds
 
-export function InboxButton() {
+export function InboxButton({ onNavigate }: { onNavigate?: () => void }) {
   const { data: session } = useSession();
   const [unreadCount, setUnreadCount] = useState(0);
 
@@ -28,29 +30,13 @@ export function InboxButton() {
   if (!session?.user) return null;
 
   return (
-    <Link href="/inbox" className="relative flex items-center justify-center" title="Inbox">
-      <svg
-        width="20"
-        height="20"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="1.5"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        style={{ color: 'var(--text-secondary, #5C554D)' }}
-      >
-        <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" />
-        <polyline points="22,6 12,13 2,6" />
-      </svg>
+    <Link href="/inbox" onClick={onNavigate} className={styles.menuAction}>
+      <Mail size={16} strokeWidth={1.5} aria-hidden="true" />
+      Inbox
       {unreadCount > 0 && (
         <span
-          className="absolute -top-1 -right-1 w-4 h-4 rounded-full text-white flex items-center justify-center"
-          style={{
-            backgroundColor: '#2C2825',
-            fontSize: 'var(--type-fine)',
-            lineHeight: 'var(--lh-logo)',
-          }}
+          className={styles.unread}
+          aria-label={`${unreadCount} unread messages`}
         >
           {unreadCount > 9 ? '9+' : unreadCount}
         </span>
