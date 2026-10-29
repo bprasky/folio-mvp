@@ -28,7 +28,6 @@ import { normalizeRole } from "@/lib/permissions";
 import type { NavigationWorkspace } from "./useNavigationWorkspace";
 import { projectEntryHref } from "@/lib/onboarding/professional-entry";
 import { CreateCollaborationModal } from "@/components/collaboration/CreateCollaborationModal";
-import { NotificationBell } from "./NotificationBell";
 import { InboxButton } from "./InboxButton";
 import { BadgeButton } from "./BadgeButton";
 import styles from "./navigation.module.css";
@@ -128,10 +127,10 @@ export function UserMenu({ workspaceData, signedOutHref = "/auth/signin" }: {
   const operatingAsOrgId = workspaceData?.operatingAsOrgId;
 
   // Check if user is effectively a designer (by base role OR org membership)
-  const isDesigner = role === "DESIGNER" ||
-    currentOrg?.type === "DESIGN_FIRM" ||
-    session.user.operatingAsOrg?.type === "DESIGN_FIRM" ||
-    workspaceData?.organizations?.some(org => org.type === "DESIGN_FIRM");
+  const projectFirmTypes = ["DESIGN_FIRM", "ARCHITECTURE_FIRM", "CONTRACTOR"];
+  const isDesigner = ["DESIGNER", "ARCHITECT", "BUILDER"].includes(role) ||
+    projectFirmTypes.includes(currentOrg?.type || "") ||
+    workspaceData?.organizations?.some(org => projectFirmTypes.includes(org.type || ""));
 
   // Check if user is effectively a vendor (by base role OR org membership)
   const isVendor = role === "VENDOR" ||
@@ -147,6 +146,7 @@ export function UserMenu({ workspaceData, signedOutHref = "/auth/signin" }: {
 
   // Get profile link based on role and org membership
   const getProfileLink = () => {
+    if (currentOrg) return projectFirmTypes.includes(currentOrg.type || "") ? "/designer/profile" : isVendor ? "/vendor" : `/org/${currentOrg.id}`;
     // Check org context first (operating as or membership)
     if (isDesigner) {
       return "/designer/profile";
@@ -339,7 +339,6 @@ export function UserMenu({ workspaceData, signedOutHref = "/auth/signin" }: {
               </MenuLink>
             )}
 
-            <NotificationBell onNavigate={() => setIsOpen(false)} />
             <InboxButton onNavigate={() => setIsOpen(false)} />
             <BadgeButton onOpen={closeForDialog} />
 

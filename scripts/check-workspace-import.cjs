@@ -58,6 +58,7 @@ function load(file) {
       if (name === 'next-auth') return { getServerSession: async () => authUser ? { user: { id: authUser } } : null };
       if (name === '@/app/api/auth/[...nextauth]/options') return {};
       if (name === 'next/server') return { NextResponse: Response };
+      if (name === 'next/navigation') return { redirect: destination => { throw Object.assign(new Error('redirect'), { destination }); } };
       if (name === '@/lib/server/render-product') return { hasRenderWorker: () => false };
       if (name === '@/lib/server/safe-product-url') return {
         validateProductUrl: async url => { assert.equal(new URL(url).hostname, 'studio.test'); }, parseProductUrl: url => new URL(url),
@@ -102,7 +103,8 @@ const json = value => JSON.parse(JSON.stringify(value));
 function whereSql(where = {}, values = []) {
   const terms = [];
   for (const [key, value] of Object.entries(where)) {
-    if (key === 'AND') { for (const part of value) terms.push(whereSql(part, values).sql); }
+    if (key === 'AND') { for (const part of value) terms.push('(' + whereSql(part, values).sql + ')'); }
+    else if (key === 'OR') terms.push('(' + value.map(part => '(' + whereSql(part, values).sql + ')').join(' OR ') + ')');
     else if (key === 'processingMeta') {
       values.push(value.path ? JSON.stringify(value.path) : JSON.stringify(value.equals));
       if (value.path) { values.pop(); values.push(value.path, JSON.stringify(value.equals)); terms.push(`"processingMeta" #> $${values.length - 1}::text[] = $${values.length}::jsonb`); }
@@ -116,7 +118,7 @@ async function fixture() {
   db = memoryDatabase(); authUser = 'owner'; sends = []; generations = 0; pageCalls = []; failedPage = undefined; sendFails = false;
   pg ||= new PGlite();
   await pg.exec('DROP TABLE IF EXISTS runs; CREATE TABLE runs (id text PRIMARY KEY, "userId" text, "sourceType" text, "sourceUrl" text, status text, "processingMeta" jsonb, "createdAt" timestamptz DEFAULT now(), "updatedAt" timestamptz DEFAULT now(), "completedAt" timestamptz)');
-  const read = async ({ where, take } = {}) => { const query = whereSql(where); return (await pg.query(`SELECT * FROM runs WHERE ${query.sql} ORDER BY "updatedAt" ASC ${take ? 'LIMIT ' + Number(take) : ''}`, query.values)).rows; };
+  const read = async ({ where, take, orderBy } = {}) => { const query = whereSql(where); const order = orderBy?.createdAt === 'desc' ? '"createdAt" DESC' : '"updatedAt" ASC'; return (await pg.query(`SELECT * FROM runs WHERE ${query.sql} ORDER BY ${order} ${take ? 'LIMIT ' + Number(take) : ''}`, query.values)).rows; };
   db.importSession = {
     findMany: read, findUnique: async args => (await read(args))[0] || null, findFirst: async args => (await read(args))[0] || null,
     count: async args => (await read(args)).length,
@@ -164,6 +166,10 @@ const rowFor = id => db.importSession.findUnique({ where: { id } });
   assert.match(renderPreview({ projects: [previewProject] }), /Tag products manually/);
   assert.doesNotMatch(renderPreview({ projects: [previewProject] }), /Start.*interview<|Begin the interview/);
   assert.match(renderPreview({ projects: [previewProject] }), /Private draft/);
+  assert.match(renderPreview({ projects: [previewProject] }), /Continue project/);
+  const resumedPreview = renderPreview({ projects: [{ ...previewProject, hasSavedProgress: true }] });
+  assert.match(resumedPreview, /Pick up where you left off/);
+  assert.doesNotMatch(resumedPreview, /Upload a finish schedule|Tag products manually/);
   assert.doesNotMatch(renderPreview({ projects: [previewProject], canContribute: false }), /Upload a finish schedule|Tag products manually/);
   assert.match(renderPreview({ projects: [{ ...previewProject, photos: [] }] }), /Add photographs/);
   assert.doesNotMatch(renderPreview({ projects: [{ ...previewProject, photos: [] }] }), /Upload a finish schedule/);
@@ -195,6 +201,10 @@ const rowFor = id => db.importSession.findUnique({ where: { id } });
   assert.equal((await startRoute.POST(request({ ...input(), orgId: 'other' }))).status, 403);
   assert.equal((await startRoute.POST(request({ ...input(), bioUrl: 'https://elsewhere.test/me' }))).status, 400);
   const original = input(); const [a, b] = await Promise.all([store.createWorkspaceImport('owner', original), store.createWorkspaceImport('owner', original)]);
+  const profilePage = load('src/app/designer/profile/page.tsx').default;
+  const redirectsTo = async destination => assert.rejects(profilePage(), error => error.destination === destination);
+  await redirectsTo(`/onboarding/workspace?import=${encodeURIComponent(a)}`);
+  authUser = null; await redirectsTo('/auth/signin?callbackUrl=%2Fdesigner%2Fprofile'); authUser = 'owner';
   assert.equal(a, b); assert.equal(await db.importSession.count(), 1);
   await assert.rejects(store.createWorkspaceImport('owner', { ...original, sections: ['business'] }), { status: 409 });
   await assert.rejects(store.createWorkspaceImport('owner', input()), { status: 409 });
@@ -211,6 +221,8 @@ const rowFor = id => db.importSession.findUnique({ where: { id } });
   const emailHref = sends[0].html.match(/href="([^"]+)"/)[1].replaceAll('&amp;', '&');
   assert.equal(new URL(emailHref).searchParams.get('callbackUrl'), notifications[0].actionUrl, 'email and in-app notice return to the same preview');
   assert.match(sends[0].html, /Your next step/);
+  await db.notification.update({ where: { id: notifications[0].id }, data: { read: true, readAt: new Date() } });
+  await redirectsTo(notifications[0].actionUrl);
   for (const project of await db.project.findMany()) { assert.equal(project.status, 'draft'); assert.equal(project.timeline, null); assert.equal(project.isPublic, false); assert.equal(project.publishedAt, null); assert.equal(project.designerOrgId, 'firm'); }
   for (const post of await db.projectPost.findMany()) { assert.equal(post.status, 'DRAFT'); assert.equal(post.provenance.interview, undefined); }
   assert.equal((await db.organization.findUnique({ where: { id: 'firm' } })).description, null, 'business drafts stay private until reviewed');
@@ -219,6 +231,7 @@ const rowFor = id => db.importSession.findUnique({ where: { id } });
   assert.equal(view.profile.org.id, 'firm'); assert.equal(view.profile.cover, null, 'private imported photography must not become a public cover');
   assert.equal(view.profile.projectCount, 0);
   assert.equal(view.projects.length, 2); assert.equal(view.projects[0].isPublic, false); assert.match(view.projects[0].photos[0].url, /^\/api\/project-photos\//);
+  assert.ok(view.projects.every(project => project.hasSavedProgress === false));
   await review.reviewImport('owner', a, { action: 'business', version: view.business.updatedAt.toISOString(), description: 'Reviewed business description', location: 'Brooklyn', useLogo: false });
   assert.equal((await db.organization.findUnique({ where: { id: 'firm' } })).description, 'Reviewed business description');
   await assert.rejects(review.reviewImport('owner', a, { action: 'business', version: '2000-01-01T00:00:00.000Z', description: 'Stale edit', location: '', useLogo: false }), { status: 409 });
@@ -235,6 +248,7 @@ const rowFor = id => db.importSession.findUnique({ where: { id } });
   const pendingMaterial = await db.product.create({ data: { name: 'Brass lamp', scrapeStatus: 'PENDING' } });
   await db.productTag.create({ data: { productId: pendingMaterial.id, imageId: image.id, x: 20, y: 20 } });
   const context = await load('src/lib/interview/contextLevel.ts').assessProjectContext(project.id);
+  assert.equal((await review.readImportReview('owner', a)).projects.find(item => item.id === project.id).hasSavedProgress, true);
   assert.equal(context.selections.length, 0, 'tags contribute material themes without becoming product-question subjects');
   assert.equal(context.dominantVendors.length, 0, 'tags do not create vendor loyalty signals');
   assert.ok(context.materialThemes.includes('natural_stone')); assert.ok(!context.materialThemes.includes('brass_hardware'));
@@ -271,6 +285,22 @@ const rowFor = id => db.importSession.findUnique({ where: { id } });
   const again = await store.createWorkspaceImport('owner', input()); await processor.processWorkspaceImports();
   assert.equal(await db.project.count(), 2, 'another run reuses source projects'); assert.equal((await db.project.findUnique({ where: { id: project.id } })).description, 'Changed by the owner');
   assert.equal((await rowFor(again)).processingMeta.projects.filter(p => p.preparation).length, 0);
+  await pg.query('UPDATE runs SET "createdAt" = "createdAt" + interval \'1 minute\' WHERE id = $1', [again]);
+  await redirectsTo(`/onboarding/workspace?import=${encodeURIComponent(again)}`);
+  await db.organization.create({ data: { id: 'second', name: 'Second Studio', type: 'DESIGN_FIRM' } });
+  await db.organizationUser.create({ data: { userId: 'owner', organizationId: 'second', role: 'OWNER', isActive: true } });
+  await db.user.update({ where: { id: 'owner' }, data: { operatingAsOrgId: 'second' } });
+  await redirectsTo('/org/second'); // Do not switch back to another firm's import.
+  await db.user.create({ data: { id: 'coworker', email: 'coworker@example.test' } });
+  await db.organizationUser.create({ data: { userId: 'coworker', organizationId: 'firm', role: 'MEMBER', isActive: true } });
+  authUser = 'coworker'; await redirectsTo('/org/firm'); // Never open a colleague's private import.
+  authUser = 'owner';
+  await db.organizationUser.updateMany({ where: { userId: 'owner', organizationId: 'firm' }, data: { isActive: false } });
+  await db.user.update({ where: { id: 'owner' }, data: { operatingAsOrgId: 'firm' } });
+  await redirectsTo('/org/second'); // Stale selected membership cannot reopen private content.
+  await db.organizationUser.updateMany({ where: { userId: 'owner' }, data: { isActive: false } });
+  await redirectsTo('/onboarding/workspace');
+  console.log('PASS Profile resumes pending/completed/read imports, respects selected firms, and excludes other owners/revoked memberships');
   console.log('PASS auth, explicit consent, active business permissions, request replay, JSONB worker claims, separate private drafts, review and edit preservation');
 
   await fixture(); failedPage = '/work/court'; const partial = await store.createWorkspaceImport('owner', input()); await processor.processWorkspaceImports();

@@ -35,7 +35,7 @@ async function main() {
       build.onLoad({filter:/.*/,namespace:'empty'},()=>({contents:'export const Footer=()=>null;export const CreateCollaborationModal=()=>null;export default ()=>null;'}));
       build.onLoad({ filter: /.*/, namespace: 'fixture' }, args => ({ loader: 'jsx', resolveDir: root, contents: args.path === 'next-auth/react'
         ? `export const useSession=()=>({status:window.fixtureUser?'authenticated':'unauthenticated',data:window.fixtureUser?{user:window.fixtureUser}:null});export const signOut=()=>{};`
-        : args.path === 'next/navigation' ? `export const usePathname=()=>location.pathname;export const useRouter=()=>({push:()=>{},replace:()=>{}});export const useSearchParams=()=>new URLSearchParams(location.search);`
+        : args.path === 'next/navigation' ? `export const usePathname=()=>location.pathname;export const useRouter=()=>({push:path=>{window.fixtureDestination=path;window.setUser(null)},replace:()=>{}});export const useSearchParams=()=>new URLSearchParams(location.search);`
         : `import React from 'react';export default ({fill,priority,unoptimized,...p})=><img {...p} style={fill?{position:'absolute',inset:0,width:'100%',height:'100%'}:{}}/>;` }));
     } }],
   });
@@ -57,8 +57,14 @@ async function main() {
   css+=fonts+`\n:root{--font-headline:${heading};--font-body:${body}}`;
   fs.writeFileSync(path.join(out,'globals.css'),css);
   const html='<!doctype html><html><head><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="stylesheet" href="/globals.css"><link rel="stylesheet" href="/bundle.css"></head><body><div id="root"></div><script src="/bundle.js"></script></body></html>';
+  let notificationReady=false, notificationRead=false;
   const server=http.createServer((req,res)=>{
     const name=new URL(req.url,'http://localhost').pathname;
+    if(name==='/api/notifications'&&notificationReady){
+      res.setHeader('Content-Type','application/json');
+      if(req.method==='PATCH')return setTimeout(()=>{notificationRead=true;res.end('{"success":true}');},350);
+      return res.end(JSON.stringify({items:[{id:'ready',title:'Your imported profile is ready',body:'Continue your saved work.',read:notificationRead,actionUrl:'/onboarding/workspace?import=fixture'}],unreadCount:notificationRead?0:1}));
+    }
     if(name.startsWith('/api/')){res.setHeader('Content-Type','application/json');return res.end('{"notifications":[],"unreadCount":0}');}
     if(name==='/fixture.jpg'){res.setHeader('Content-Type','image/svg+xml');return res.end('<svg xmlns="http://www.w3.org/2000/svg" width="800" height="600"><rect width="800" height="600" fill="#ddd"/></svg>');}
     const file=/\.woff2$/.test(name)?path.join(root,'.next/static/media',path.basename(name)):path.join(out,path.basename(name));
@@ -92,19 +98,33 @@ async function main() {
       }else{assert.ok(geometry.headline<geometry.imageBottom,'Desktop overlay retained');}
       await page.screenshot({path:path.join(out,'mobile-'+width+'.png')});
       await page.evaluate(()=>window.setUser({id:'fixture',name:'Designer',role:'DESIGNER'}));
-      await page.waitForSelector('[aria-label="Notifications"]');
+      await page.waitForSelector('button[aria-label="Notifications"]');
       assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),'Authenticated header fits '+width);
-      assert.equal(await page.$eval('[aria-label="Notifications"]',e=>e.getClientRects().length>0),false,'Notifications stay inside the closed account menu');
+      assert.equal(await page.$eval('button[aria-label="Notifications"]',e=>e.getClientRects().length>0),true,'Notifications are visible without opening the account menu');
+      assert.ok(await page.$eval('button[aria-label="Notifications"]',button=>{const b=button.getBoundingClientRect();const logo=document.querySelector('[data-folio-brand-target]').getBoundingClientRect();return b.right<=logo.left||b.left>=logo.right}),'Bell does not overlap the centered wordmark');
+      await page.click('button[aria-label="Notifications"]');
+      assert.ok(await page.$eval('button[aria-label="Notifications"]',button=>{const panel=document.getElementById(button.getAttribute('aria-controls'));const b=panel.getBoundingClientRect();return b.width>0&&b.left>=0&&b.right<=innerWidth}),'Notification panel fits');
+      await page.keyboard.press('Escape');
+      assert.equal(await page.$('[role="dialog"][aria-label="Notifications"]'),null,'Escape closes notifications');
+      assert.equal(await page.$eval('button[aria-label="Notifications"]',button=>document.activeElement===button),true,'Escape returns focus to bell');
       await page.click('[aria-label="User menu"]');
-      await page.click('[aria-label="Notifications"]');
-      assert.ok(await page.$eval('[aria-label="Notifications"]',button=>{const panel=document.getElementById(button.getAttribute('aria-controls'));const b=panel.getBoundingClientRect();return b.width>0&&b.left>=0&&b.right<=innerWidth}),'Notification panel fits');
-      await page.click('[aria-label="Notifications"]');
       for(const selector of ['a[href="/inbox"]','[aria-label="Open my Folio Badge"]']){
         assert.ok(await page.$eval(selector,e=>e.getClientRects().length>0),'Account utility remains visible: '+selector);
       }
       await page.keyboard.press('Escape');
       results.push('PASS '+width+'px anonymous/authenticated, hero and reel');
     }
+    notificationReady=true;
+    await page.reload({waitUntil:'networkidle0'});
+    await page.evaluate(()=>window.setUser({id:'fixture',name:'Designer',role:'DESIGNER'}));
+    await page.waitForSelector('button[aria-label="Notifications, 1 unread"]');
+    await page.click('button[aria-label="Notifications, 1 unread"]');
+    await page.click('[role="dialog"] li button');
+    await page.waitForFunction(()=>window.fixtureDestination);
+    assert.equal(notificationRead,true,'Read acknowledgement completes before navigation unmounts the bell');
+    assert.equal(await page.evaluate(()=>window.fixtureDestination),'/onboarding/workspace?import=fixture');
+    assert.equal(await page.$('button[aria-label^="Notifications"]'),null,'Account notification state is removed on session change');
+    results.push('PASS notification read acknowledgement before destination navigation');
     assert.deepEqual(errors,[]);console.log(results.join('\n'));
   } finally {await browser.close();server.close();}
 }

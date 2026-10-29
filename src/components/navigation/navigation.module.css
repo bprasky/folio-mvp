@@ -138,7 +138,16 @@
 .menuAction:hover { background: var(--surface-ground); }
 .menuAction > svg { flex-shrink: 0; color: var(--folio-text-secondary); }
 .unread { margin-left: auto; font-size: var(--type-meta); }
-.notificationPanel { max-height: 280px; overflow-y: auto; border: 1px solid var(--folio-border-subtle); border-radius: 8px; }
+.notificationRoot { position: relative; }
+.notificationButton { position: relative; }
+.notificationBadge { position: absolute; top: 2px; right: 0; min-width: 16px; padding: 1px 3px; border-radius: 12px; background: var(--folio-text-primary); color: var(--surface-canvas); font-size: 10px; line-height: 14px; }
+.notificationPanel { width: min(352px, calc(100vw - 32px)); padding: 0; }
+@media (max-width: 767px) {
+  /* Keep the wordmark centered and the existing search/account targets on the right. */
+  .notificationRoot { display: contents; }
+  .notificationButton { position: absolute; left: 56px; top: calc((var(--masthead-height) - 44px) / 2); width: 36px; }
+  .notificationPanel { top: calc(var(--masthead-height) + 8px); left: 16px; right: 16px; width: auto; }
+}
 :global(body[data-immersive-state="orbiting"]) .surface { pointer-events: none; }
 @media (min-width: 768px) {
   .header { --masthead-rest-height: 96px; --masthead-height-change: 32px; --masthead-logo-size: 46px; --masthead-logo-change: 16px; }
@@ -152,6 +161,7 @@
 @media (max-width: 360px) {
   .header { --masthead-logo-size: 30px; --masthead-logo-change: 6px; }
   .nav { gap: 4px; padding: 0 12px; }
+  .right { gap: 2px; }
 }
 @media (prefers-reduced-motion: reduce) {
   .surface, .surface::before, .wordmark { transition: none; }

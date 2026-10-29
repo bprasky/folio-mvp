@@ -7,6 +7,7 @@ import { usePathname } from "next/navigation";
 import { GlobalSearch } from "./GlobalSearch";
 import { NavLinks } from "./NavLinks";
 import { UserMenu } from "./UserMenu";
+import { NotificationBell } from "./NotificationBell";
 import { MobileMenu } from "./MobileMenu";
 import { CreateButton } from "./CreateButton";
 import { useNavigationWorkspace } from "./useNavigationWorkspace";
@@ -53,6 +54,7 @@ export function EditorialMasthead({ signedOutHref }: { signedOutHref?: string })
               <Search aria-hidden="true" size={18} strokeWidth={1.5} />
             </Link>
             <div className={styles.desktopOnly}><CreateButton workspace={workspace} /></div>
+            <NotificationBell />
             <UserMenu workspaceData={workspace} signedOutHref={signedOutHref} />
           </div>
         </nav>

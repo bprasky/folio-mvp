@@ -227,17 +227,17 @@ async function main() {
         assert.ok(Math.abs(overlap.center - width / 2) <= 1, JSON.stringify(overlap));
         assert.ok(overlap.overflow <= width, JSON.stringify(overlap));
         assert.deepEqual(overlap.labels, [], `Authenticated controls must not overlap logo at ${width}px`);
-        assert.equal(await page.$eval('[aria-label="Notifications"]', el => el.getClientRects().length > 0), false, 'Utilities stay out of the top bar.');
+        assert.equal(await page.$eval('button[aria-label="Notifications"]', el => el.getClientRects().length > 0), true, 'Notifications remain visible in the header.');
         await accountToggle();
-        assert.equal(await page.$eval('[aria-label="Notifications"]', el => el.getClientRects().length > 0), true, `Notifications remain available in the account menu at ${width}px`);
+        assert.equal((await page.$$('button[aria-label="Notifications"]')).length, 1, `Only one notification bell is mounted at ${width}px`);
         assert.equal(await page.$eval('a[href="/inbox"]', el => el.getClientRects().length > 0), true);
         assert.equal(await page.$eval('[aria-label="Open my Folio Badge"]', el => el.getClientRects().length > 0), true);
-        await page.click('[aria-label="Notifications"]');
-        const notificationBounds = await page.$eval('[aria-label="Notifications"]', button => {
-          const r = button.nextElementSibling.getBoundingClientRect(); return { left: r.left, right: r.right };
+        await page.click('button[aria-label="Notifications"]');
+        const notificationBounds = await page.$eval('[role="dialog"][aria-label="Notifications"]', panel => {
+          const r = panel.getBoundingClientRect(); return { left: r.left, right: r.right };
         });
         assert.ok(notificationBounds.left >= 0 && notificationBounds.right <= width, `Notification popup remains in the viewport: ${JSON.stringify(notificationBounds)}`);
-        await page.click('[aria-label="Notifications"]');
+        await page.click('button[aria-label="Notifications"]');
         await page.screenshot({ path: path.join(out, `${personal ? 'personal-workspace' : 'firm-member'}-${width}.png`) });
         if (width < 768) assert.equal(await hasCreate(), true, 'Active member account menu must offer Create on mobile.');
         await page.keyboard.press('Escape');

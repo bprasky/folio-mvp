@@ -15,6 +15,7 @@ export type ImportedProject = {
 };
 export type WorkspacePreviewProject = {
   id: string; title: string; description: string | null; isPublic: boolean;
+  hasSavedProgress?: boolean;
   photos: Array<{ url: string; alt: string; width?: number; height?: number }>;
 };
 export type ProfileDraft = {

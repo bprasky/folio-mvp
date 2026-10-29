@@ -65,7 +65,10 @@ function memoryDatabase() {
     for (const [name, spec] of Object.entries(args.select || args.include || {})) {
       if (!spec) continue;
       if (name === '_count') {
-        output._count = Object.fromEntries(Object.keys(spec.select).map(key => [key, relation(model, row, model.fields.find(f => f.name === key)).length]));
+        output._count = Object.fromEntries(Object.entries(spec.select).map(([key, selection]) => {
+          const field = model.fields.find(f => f.name === key);
+          return [key, relation(model, row, field).filter(item => matches(models.get(field.type), item, selection.where)).length];
+        }));
         continue;
       }
       const field = model.fields.find(f => f.name === name);

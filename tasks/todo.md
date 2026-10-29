@@ -1355,3 +1355,10 @@ Approved scope: six-digit email ownership verification during signup; existing m
 - [x] Remove question generation from website import and ignore premature legacy import plans for new sessions.
 - [x] Use accepted photo tags as material themes alongside vision context, without adding product subjects or vendor-loyalty signals; standard room preparation excludes commercial questions.
 - [x] Verify corrected schedule/manual tagging destinations, responsive preview, prompt contract, import/sourcebook behavior and production compilation; fresh PR CI follows the final push.
+# 2026-10-29 — Resume imported profiles from navigation
+
+- [x] Replace the legacy designer Profile route with an authenticated, membership-scoped return to the saved import or current organization profile.
+- [x] Preserve the existing profile design and resume project progress through the canonical project workspace; fix the bio interview return link.
+- [x] Put the notification bell in the masthead, retain completion history, and synchronize read status safely.
+- [x] Verify dismiss → Profile recovery, account/org isolation, saved project continuation, and desktop/mobile notification behavior; run required checks.
+- [ ] Merge after CI and verify the production deployment. Evidence: `docs/reviews/profile-import-resume.md`.

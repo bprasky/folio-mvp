@@ -1,136 +1,121 @@
 'use client';
 
-import { useState, useEffect, useId } from 'react';
-import { useRouter } from 'next/navigation';
+import { useState, useEffect, useId, useRef } from 'react';
+import { usePathname, useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';
 import { Bell } from 'lucide-react';
+import { safeCallbackPath } from '@/lib/onboarding/professional-entry';
 import styles from './navigation.module.css';
 
-const POLL_INTERVAL = 60000; // 60s, matching InboxButton
+const CHANGED = 'folio:notifications-changed';
+type Notif = { id: string; title: string; body: string; actionUrl: string | null; read: boolean };
 
-type Notif = {
-  id: string;
-  title: string;
-  body: string;
-  actionUrl: string | null;
-  read: boolean;
-  createdAt: string;
-};
-
-export function NotificationBell({ onNavigate }: { onNavigate?: () => void }) {
+export function NotificationBell() {
   const { data: session } = useSession();
+  // Remount on account changes so another person's notices never remain visible.
+  return session?.user?.id ? <AccountNotifications key={session.user.id} /> : null;
+}
+
+function AccountNotifications() {
   const router = useRouter();
+  const pathname = usePathname();
   const [items, setItems] = useState<Notif[]>([]);
   const [unread, setUnread] = useState(0);
   const [open, setOpen] = useState(false);
+  const [loaded, setLoaded] = useState(false);
+  const [error, setError] = useState('');
+  const [saving, setSaving] = useState(false);
+  const root = useRef<HTMLDivElement>(null);
+  const button = useRef<HTMLButtonElement>(null);
+  const panel = useRef<HTMLDivElement>(null);
+  const controller = useRef<AbortController>();
   const panelId = useId();
 
   useEffect(() => {
-    if (!session?.user) return;
-    function load() {
-      fetch('/api/notifications')
-        .then((r) => r.json())
-        .then((d) => {
-          setItems(d.items ?? []);
-          setUnread(d.unreadCount ?? 0);
-        })
-        .catch(() => {});
+    const request = new AbortController();
+    controller.current = request;
+    let pending = false, reload = false;
+    async function load() {
+      if (document.visibilityState === 'hidden') return;
+      if (pending) { reload = true; return; }
+      pending = true;
+      try {
+        const response = await fetch('/api/notifications', { cache: 'no-store', signal: request.signal });
+        if (!response.ok) throw new Error('Could not load notifications.');
+        const data = await response.json();
+        if (request.signal.aborted) return;
+        setItems(data.items ?? []); setUnread(data.unreadCount ?? 0); setLoaded(true); setError('');
+      } catch { if (!request.signal.aborted) setError('Notifications are temporarily unavailable.'); }
+      finally { pending = false; if (reload && !request.signal.aborted) { reload = false; void load(); } }
     }
-    load();
-    const i = setInterval(load, POLL_INTERVAL);
-    return () => clearInterval(i);
-  }, [session?.user]);
+    void load();
+    const timer = setInterval(() => void load(), 60_000);
+    window.addEventListener('focus', load);
+    window.addEventListener(CHANGED, load);
+    document.addEventListener('visibilitychange', load);
+    return () => {
+      request.abort(); clearInterval(timer);
+      window.removeEventListener('focus', load); window.removeEventListener(CHANGED, load);
+      document.removeEventListener('visibilitychange', load);
+    };
+  }, []);
 
-  if (!session?.user) return null;
+  useEffect(() => { setOpen(false); }, [pathname]);
+  useEffect(() => {
+    if (!open) return;
+    panel.current?.focus();
+    window.dispatchEvent(new Event(CHANGED));
+    const outside = (event: PointerEvent) => { if (!root.current?.contains(event.target as Node)) setOpen(false); };
+    const escape = (event: KeyboardEvent) => { if (event.key === 'Escape') { setOpen(false); button.current?.focus(); } };
+    document.addEventListener('pointerdown', outside); document.addEventListener('keydown', escape);
+    return () => { document.removeEventListener('pointerdown', outside); document.removeEventListener('keydown', escape); };
+  }, [open]);
 
-  const markRead = (id: string) => {
-    fetch('/api/notifications', {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ id }),
-    }).catch(() => {});
-  };
+  async function markRead(body: { id: string } | { all: true }) {
+    setSaving(true);
+    try {
+      const response = await fetch('/api/notifications', { method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body), signal: controller.current?.signal });
+      if (!response.ok) throw new Error('Could not update notifications.');
+      if (!controller.current?.signal.aborted) window.dispatchEvent(new Event(CHANGED));
+    } catch { if (!controller.current?.signal.aborted) setError('Could not mark notifications as read. Please try again.'); }
+    finally { if (!controller.current?.signal.aborted) setSaving(false); }
+  }
 
-  const onItem = (n: Notif) => {
-    setOpen(false);
-    if (!n.read) {
-      markRead(n.id);
-      setUnread((u) => Math.max(0, u - 1));
-      setItems((prev) => prev.map((x) => (x.id === n.id ? { ...x, read: true } : x)));
-    }
-    if (n.actionUrl) { onNavigate?.(); router.push(n.actionUrl); }
-  };
+  async function onItem(item: Notif) {
+    // The onboarding destination removes the masthead. Finish acknowledgement
+    // before navigating so unmount cannot abort the read update.
+    if (!item.read) await markRead({ id: item.id });
+    if (controller.current?.signal.aborted) return;
+    const destination = safeCallbackPath(item.actionUrl, '');
+    if (destination) { setOpen(false); router.push(destination); }
+  }
 
-  const markAll = () => {
-    fetch('/api/notifications', {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ all: true }),
-    }).catch(() => {});
-    setUnread(0);
-    setItems((prev) => prev.map((x) => ({ ...x, read: true })));
-  };
-
-  return (
-    <div>
-      <button
-        type="button"
-        onClick={() => setOpen((o) => !o)}
-        className={styles.menuAction}
-        aria-label="Notifications"
-        aria-expanded={open}
-        aria-controls={panelId}
-      >
-        <Bell size={16} strokeWidth={1.5} aria-hidden="true" />
-        Notifications
-        {unread > 0 && (
-          <span
-            className={styles.unread}
-            aria-label={`${unread} unread notifications`}
-          >
-            {unread > 9 ? '9+' : unread}
+  return <div ref={root} className={styles.notificationRoot} onBlur={event => {
+    if (event.relatedTarget && !event.currentTarget.contains(event.relatedTarget as Node)) setOpen(false);
+  }}>
+    <button ref={button} type="button" onClick={() => setOpen(value => !value)}
+      className={`${styles.iconButton} ${styles.notificationButton}`} aria-label={unread ? `Notifications, ${unread} unread` : 'Notifications'}
+      aria-expanded={open} aria-controls={open ? panelId : undefined} aria-haspopup="dialog">
+      <Bell size={19} strokeWidth={1.5} aria-hidden="true" />
+      {unread > 0 && <span className={styles.notificationBadge} aria-hidden="true">{unread > 9 ? '9+' : unread}</span>}
+    </button>
+    <span className="sr-only" role="status">{loaded && unread > 0 ? `${unread} unread notifications` : ''}</span>
+    {open && <div ref={panel} id={panelId} role="dialog" aria-label="Notifications" tabIndex={-1} className={`${styles.popover} ${styles.notificationPanel}`}>
+      <div className="flex items-center justify-between gap-3 px-4 py-3 border-b border-folio-border-subtle">
+        <h2 className="text-sm font-semibold text-folio-text-primary">Notifications</h2>
+        {unread > 0 && <button type="button" disabled={saving} onClick={() => void markRead({ all: true })} className="text-xs text-folio-text-secondary underline underline-offset-4 disabled:opacity-50">Mark all read</button>}
+      </div>
+      {error && <p role="alert" className="px-4 py-3 text-sm text-folio-text-secondary">{error}</p>}
+      {!items.length && !error && <p className="px-4 py-6 text-sm text-folio-text-secondary text-center">{loaded ? 'You’re all caught up.' : 'Loading notifications…'}</p>}
+      <ul>{items.map(item => <li key={item.id}>
+        <button type="button" disabled={saving} onClick={() => void onItem(item)} className={`block w-full text-left px-4 py-3 border-b border-folio-border-subtle hover:bg-surface-ground transition-colors ${item.read ? 'opacity-70' : ''}`}>
+          <span className="flex items-start gap-2">
+            <span aria-hidden="true" className={`mt-1.5 h-2 w-2 flex-shrink-0 rounded-full ${item.read ? '' : 'bg-[var(--accent)]'}`} />
+            <span><span className="block text-sm font-medium text-folio-text-primary">{item.title}</span><span className="block text-xs text-folio-text-secondary mt-1">{item.body}</span></span>
           </span>
-        )}
-      </button>
-
-      {open && (
-        <div id={panelId} className={styles.notificationPanel}>
-          <div className="flex items-center justify-between px-4 py-3 border-b border-folio-border-subtle">
-            <span className="text-sm font-semibold text-folio-text-primary">Notifications</span>
-            {unread > 0 && (
-              <button onClick={markAll} className="text-xs text-folio-text-tertiary hover:text-folio-text-primary">
-                Mark all read
-              </button>
-            )}
-          </div>
-          {items.length === 0 ? (
-            <p className="px-4 py-6 text-sm text-folio-text-tertiary text-center">You&apos;re all caught up.</p>
-          ) : (
-            <ul>
-              {items.map((n) => (
-                <li key={n.id}>
-                  <button
-                    onClick={() => onItem(n)}
-                    className={`block w-full text-left px-4 py-3 border-b border-folio-border-subtle hover:bg-surface-ground transition-colors ${
-                      n.read ? 'opacity-60' : ''
-                    }`}
-                  >
-                    <span className="flex items-start gap-2">
-                      {!n.read && (
-                        <span className="mt-1.5 h-2 w-2 flex-shrink-0 rounded-full bg-[var(--accent)]" />
-                      )}
-                      <span className={n.read ? 'pl-4' : ''}>
-                        <span className="block text-sm font-medium text-folio-text-primary">{n.title}</span>
-                        <span className="block text-xs text-folio-text-secondary">{n.body}</span>
-                      </span>
-                    </span>
-                  </button>
-                </li>
-              ))}
-            </ul>
-          )}
-        </div>
-      )}
-    </div>
-  );
+        </button>
+      </li>)}</ul>
+    </div>}
+  </div>;
 }
