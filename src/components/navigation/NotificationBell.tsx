@@ -82,8 +82,11 @@ function AccountNotifications() {
     finally { if (!controller.current?.signal.aborted) setSaving(false); }
   }
 
-  function onItem(item: Notif) {
-    if (!item.read) void markRead({ id: item.id });
+  async function onItem(item: Notif) {
+    // The onboarding destination removes the masthead. Finish acknowledgement
+    // before navigating so unmount cannot abort the read update.
+    if (!item.read) await markRead({ id: item.id });
+    if (controller.current?.signal.aborted) return;
     const destination = safeCallbackPath(item.actionUrl, '');
     if (destination) { setOpen(false); router.push(destination); }
   }
@@ -106,7 +109,7 @@ function AccountNotifications() {
       {error && <p role="alert" className="px-4 py-3 text-sm text-folio-text-secondary">{error}</p>}
       {!items.length && !error && <p className="px-4 py-6 text-sm text-folio-text-secondary text-center">{loaded ? 'You’re all caught up.' : 'Loading notifications…'}</p>}
       <ul>{items.map(item => <li key={item.id}>
-        <button type="button" onClick={() => onItem(item)} className={`block w-full text-left px-4 py-3 border-b border-folio-border-subtle hover:bg-surface-ground transition-colors ${item.read ? 'opacity-70' : ''}`}>
+        <button type="button" disabled={saving} onClick={() => void onItem(item)} className={`block w-full text-left px-4 py-3 border-b border-folio-border-subtle hover:bg-surface-ground transition-colors ${item.read ? 'opacity-70' : ''}`}>
           <span className="flex items-start gap-2">
             <span aria-hidden="true" className={`mt-1.5 h-2 w-2 flex-shrink-0 rounded-full ${item.read ? '' : 'bg-[var(--accent)]'}`} />
             <span><span className="block text-sm font-medium text-folio-text-primary">{item.title}</span><span className="block text-xs text-folio-text-secondary mt-1">{item.body}</span></span>
