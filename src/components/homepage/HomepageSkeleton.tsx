@@ -4,7 +4,7 @@ import { SkeletonBlock as Block } from '@/components/loading/SkeletonBlock';
 export function HomepageSkeleton() {
   return (
     <div className="bg-surface-canvas min-h-screen pb-12 sm:pb-24">
-      <section className="pt-4 sm:pt-8">
+      <section className="pt-2">
         <div className="px-4 sm:px-10 max-w-[1440px] mx-auto">
           <div data-skeleton-hero className="relative overflow-hidden rounded-lg sm:rounded-3xl aspect-[4/3] sm:aspect-[21/10] min-h-0 sm:min-h-[600px] bg-surface-ground">
             <Block className="hidden sm:block absolute top-9 left-9 h-7 w-28 rounded-full" />

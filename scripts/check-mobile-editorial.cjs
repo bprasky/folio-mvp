@@ -24,7 +24,7 @@ async function main() {
       const hero={postSlug:'fixture',heroImageUrl:'/fixture.jpg',title:'Against Cape Town’s mountains, Bradley Prasky chose weight.',eyebrow:'Editorial feature',designerName:'Bradley Prasky'};
       const items=Array.from({length:7},(_,i)=>({productId:String(i),productSlug:'product-'+i,name:'Considered natural stone table '+i,imageUrl:'/fixture.jpg',vendorName:'Studio',isBoosted:false,slotPosition:i}));
       function App(){const [user,setUser]=useState(null);window.setUser=u=>{window.fixtureUser=u;setUser(u)};
-        return <><EditorialMasthead/><main><section className="pt-4 sm:pt-8"><HomepageHeroXL hero={hero}/></section><section className="px-4 sm:px-10 mt-6 sm:mt-4 max-w-[1440px] mx-auto"><BoostReel items={items} totalTagged={10} postSlug="fixture"/></section></main><div data-loading hidden><HomepageSkeleton/></div></>;
+        return <><EditorialMasthead/><main><section className="pt-2"><HomepageHeroXL hero={hero}/></section><section className="px-4 sm:px-10 mt-6 sm:mt-4 max-w-[1440px] mx-auto"><BoostReel items={items} totalTagged={10} postSlug="fixture"/></section></main><div data-loading hidden><HomepageSkeleton/></div></>;
       }createRoot(document.getElementById('root')).render(<App/>);
     `, resolveDir: root, loader: 'tsx' },
     outfile: path.join(out, 'bundle.js'), bundle: true, platform: 'browser', jsx: 'automatic',
@@ -41,7 +41,7 @@ async function main() {
   });
   const globals = fs.readFileSync(path.join(root, 'src/app/globals.css'), 'utf8').replace(/@import\s+"([^"]+)";/g, (_, file) => file.startsWith('../styles/') ? fs.readFileSync(path.resolve(root, 'src/app', file), 'utf8') : '');
   const config = require(path.join(root, 'tailwind.config.js'));
-  config.content = [path.join(root, 'src/**/*.{ts,tsx}'), {raw:'pt-4 sm:pt-8',extension:'html'}];
+  config.content = [path.join(root, 'src/**/*.{ts,tsx}'), {raw:'pt-2',extension:'html'}];
   let css = (await postcss([tailwind(config)]).process(globals, { from: path.join(root, 'src/app/globals.css') })).css;
   // Use build-produced fonts when available; functional checks do not rely on a font download.
   let fonts='', heading='Georgia', body='Arial';
@@ -56,7 +56,7 @@ async function main() {
   }
   css+=fonts+`\n:root{--font-headline:${heading};--font-body:${body}}`;
   fs.writeFileSync(path.join(out,'globals.css'),css);
-  const html='<!doctype html><html><head><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="stylesheet" href="/globals.css"></head><body><div id="root"></div><script src="/bundle.js"></script></body></html>';
+  const html='<!doctype html><html><head><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="stylesheet" href="/globals.css"><link rel="stylesheet" href="/bundle.css"></head><body><div id="root"></div><script src="/bundle.js"></script></body></html>';
   const server=http.createServer((req,res)=>{
     const name=new URL(req.url,'http://localhost').pathname;
     if(name.startsWith('/api/')){res.setHeader('Content-Type','application/json');return res.end('{"notifications":[],"unreadCount":0}');}
@@ -94,12 +94,15 @@ async function main() {
       await page.evaluate(()=>window.setUser({id:'fixture',name:'Designer',role:'DESIGNER'}));
       await page.waitForSelector('[aria-label="Notifications"]');
       assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),'Authenticated header fits '+width);
-      if(width<640){
-        await page.click('[aria-label="Notifications"]');
-        assert.ok(await page.evaluate(()=>{const e=[...document.querySelectorAll('div')].find(e=>e.className.includes('max-h-96'));const b=e.getBoundingClientRect();return b.left>=0&&b.right<=innerWidth}),'Notification panel fits');
-        await page.click('[aria-label="Notifications"]');
-        await page.click('[aria-label="Toggle menu"]');assert.ok(await page.$('a[href="/inbox"]'));assert.ok(await page.$('[aria-label="Open my Folio Badge"]'));
+      assert.equal(await page.$eval('[aria-label="Notifications"]',e=>e.getClientRects().length>0),false,'Notifications stay inside the closed account menu');
+      await page.click('[aria-label="User menu"]');
+      await page.click('[aria-label="Notifications"]');
+      assert.ok(await page.$eval('[aria-label="Notifications"]',button=>{const panel=document.getElementById(button.getAttribute('aria-controls'));const b=panel.getBoundingClientRect();return b.width>0&&b.left>=0&&b.right<=innerWidth}),'Notification panel fits');
+      await page.click('[aria-label="Notifications"]');
+      for(const selector of ['a[href="/inbox"]','[aria-label="Open my Folio Badge"]']){
+        assert.ok(await page.$eval(selector,e=>e.getClientRects().length>0),'Account utility remains visible: '+selector);
       }
+      await page.keyboard.press('Escape');
       results.push('PASS '+width+'px anonymous/authenticated, hero and reel');
     }
     assert.deepEqual(errors,[]);console.log(results.join('\n'));
