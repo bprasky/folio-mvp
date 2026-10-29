@@ -47,13 +47,14 @@ export default function RoleBasedLayout({ children }: RoleBasedLayoutProps) {
     pathname?.startsWith('/editorials/') ||
     pathname?.startsWith('/p/');
   const isProjectWorkspace = pathname?.startsWith('/project/') || pathname === '/projects/new';
+  const isPublication = pathname?.startsWith('/p/');
 
   // Use new top navigation instead of NavFrame/GlassNavRail
   return (
     <div className={`flex flex-col min-h-screen${isEditorialRoute ? ' editorial-surface' : ''}`}>
       <Navigation />
       {/* Keep the content shell stable while the session resolves. */}
-      {isProjectWorkspace || pathname === '/' ? <main className="min-w-0 flex-1">{children}</main> : (
+      {isProjectWorkspace || isPublication || pathname === '/' ? <main className="min-w-0 flex-1">{children}</main> : (
         <SimpleLayout>{children}</SimpleLayout>
       )}
       <Footer />
