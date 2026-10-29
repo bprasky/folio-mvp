@@ -112,8 +112,9 @@ export async function readGuidedContext(projectId: string) {
         id: true, name: true, type: true, selections: { select: { id: true } },
       } },
       images: { where: { inclusion: 'INCLUDED' }, orderBy: [{ displayOrder: 'asc' }, { id: 'asc' }], select: {
-        id: true, url: true, roomId: true, room: true, aiClassification: true,
-        tags: { select: { id: true, productId: true } },
+        id: true, url: true, roomId: true, room: true, aiClassification: true, aiMaterials: true,
+        tags: { select: { id: true, productId: true, reviewedAt: true, finishRaw: true, finishConfirmed: true,
+          product: { select: { name: true, scrapeStatus: true } } } },
       } },
     },
   });
@@ -134,7 +135,8 @@ export async function readGuidedContext(projectId: string) {
     project: [project.id, project.title, project.description, project.projectType, project.clientType, project.budgetBand, project.city, project.regionState],
     rooms: rooms.map(room => [room.id, room.name, room.baseQuestions, room.maxFollowUps,
       project.rooms.find(value => value.id === room.id)?.selections.map(selection => selection.id).sort()]),
-    images: images.map(image => [image.id, image.roomId, image.url, image.aiClassification, image.tags.map(tag => [tag.id, tag.productId]).sort()]),
+    images: images.map(image => [image.id, image.roomId, image.url, image.aiClassification, image.aiMaterials,
+      image.tags.map(tag => [tag.id, tag.productId, tag.reviewedAt, tag.finishRaw, tag.finishConfirmed, tag.product?.name, tag.product?.scrapeStatus]).sort()]),
   })).digest('hex');
   return { project, images, rooms, contextFingerprint };
 }

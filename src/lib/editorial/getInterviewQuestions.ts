@@ -409,7 +409,9 @@ async function computeQuestionSignature(
       clientType: true,
       designer: { select: { name: true, studio: true } },
       designerOrg: { select: { name: true } },
-      images: { select: { id: true, room: true, roomId: true, displayOrder: true } },
+      images: { select: { id: true, room: true, roomId: true, displayOrder: true, inclusion: true, aiMaterials: true,
+        tags: { select: { id: true, reviewedAt: true, finishRaw: true, finishConfirmed: true,
+          product: { select: { name: true, scrapeStatus: true } } } } } },
       rooms: {
         select: {
           id: true,
@@ -443,7 +445,8 @@ async function computeQuestionSignature(
     // Sort so ordering churn never invalidates an otherwise-identical project.
     // displayOrder is kept because the project questions use the top-N images.
     images: (proj?.images ?? [])
-      .map((i) => `${i.id}:${i.room ?? ''}:${i.roomId ?? ''}:${i.displayOrder ?? ''}`)
+      .map(i => JSON.stringify([i.id, i.room, i.roomId, i.displayOrder, i.inclusion, i.aiMaterials,
+        i.tags.map(tag => [tag.id, tag.reviewedAt, tag.finishRaw, tag.finishConfirmed, tag.product?.name, tag.product?.scrapeStatus]).sort()]))
       .sort(),
     // Per-room tag content, not just counts — a retag changes wording, not count.
     rooms: (proj?.rooms ?? [])

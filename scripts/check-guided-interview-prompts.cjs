@@ -463,6 +463,13 @@ async function run() {
   const scoped = await prep.readGuidedContext('p1');
   assert.equal(scoped.rooms[0].imageIds.join(','), 'photo1'); assert.equal(scoped.rooms[1].imageIds.join(','), 'photo3'); assert.equal(scoped.images[1].roomId, null);
   projectFixture.images[0].roomId = 'r2'; assert.notEqual((await prep.readGuidedContext('p1')).contextFingerprint, scoped.contextFingerprint);
+  projectFixture.images[0].tags = [{ id: 'tag1', productId: 'product1', finishRaw: 'Walnut', finishConfirmed: true, reviewedAt: null, product: { name: 'Accent table', scrapeStatus: 'PENDING' } }];
+  const materialFingerprint = (await prep.readGuidedContext('p1')).contextFingerprint;
+  projectFixture.images[0].tags[0].finishRaw = 'Oak';
+  const changedFinish = (await prep.readGuidedContext('p1')).contextFingerprint;
+  assert.notEqual(changedFinish, materialFingerprint, 'guided prep refreshes after an edited finish');
+  projectFixture.images[0].tags[0].reviewedAt = new Date();
+  assert.notEqual((await prep.readGuidedContext('p1')).contextFingerprint, changedFinish, 'guided prep refreshes after tag review');
   await assert.rejects(prep.prepareGuidedRoomPlan('p1', { projectId: 'p1', roomsPrepared: false, plan: [{ roomId: null, status: 'active' }] }), /Finish the prepared project section/);
   console.log('Guided prompt checks passed: contextual preparation/review/repair, preserved obligations and evidence, five multi-turn contexts, confirmation, corrections, skip adaptation, room transitions, semantic rejection, bounded retry and provider failure.');
 }
