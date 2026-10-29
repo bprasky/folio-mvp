@@ -53,7 +53,7 @@ export default function RoleBasedLayout({ children }: RoleBasedLayoutProps) {
     <div className={`flex flex-col min-h-screen${isEditorialRoute ? ' editorial-surface' : ''}`}>
       <Navigation />
       {/* Keep the content shell stable while the session resolves. */}
-      {isProjectWorkspace ? <main className="min-w-0 flex-1">{children}</main> : (
+      {isProjectWorkspace || pathname === '/' ? <main className="min-w-0 flex-1">{children}</main> : (
         <SimpleLayout>{children}</SimpleLayout>
       )}
       <Footer />

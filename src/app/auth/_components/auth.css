@@ -331,6 +331,7 @@
   cursor: pointer;
   transition: border-color var(--dur-fast) var(--ease), transform var(--dur-fast) var(--ease), box-shadow var(--dur-fast) var(--ease);
 }
+.auth-sso button:only-child { grid-column: 1 / -1; }
 .auth-sso button:hover:not(:disabled) {
   border-color: var(--auth-copper);
   transform: translateY(-1px);
@@ -879,7 +880,8 @@
     grid-template-columns: 1fr;
     gap: 40px;
   }
-  .auth-photo { min-height: 320px; }
+  .auth-form-panel { grid-row: 1; }
+  .auth-photo { flex: none; min-height: 0; height: 280px; }
   .auth-topbar__nav,
   .auth-topbar__search { display: none; }
   .auth-topbar { grid-template-columns: 1fr auto; }

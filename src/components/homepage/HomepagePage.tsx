@@ -24,7 +24,7 @@ export async function HomepagePage() {
     <div className="bg-surface-canvas min-h-screen pb-12 sm:pb-24">
       {/* Editorial XL hero */}
       {data.hero && (
-        <section className="pt-4 sm:pt-8">
+        <section className="pt-2">
           <HomepageHeroXL hero={data.hero} />
         </section>
       )}

@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useSession } from 'next-auth/react';
 import { Building2, CreditCard, Mail, Shield, ChevronRight } from 'lucide-react';
+import { ThemeToggle } from '@/components/ThemeToggle';
 
 type OrgRole = 'OWNER' | 'ADMIN' | 'MANAGER' | 'MEMBER' | 'VIEWER';
 
@@ -33,7 +34,7 @@ const ROLE_LABEL: Record<OrgRole, string> = {
 const CAN_MANAGE: OrgRole[] = ['OWNER', 'ADMIN'];
 
 export default function SettingsHubPage() {
-  const { data: session, status } = useSession();
+  const { status } = useSession();
   const [orgs, setOrgs] = useState<MyOrg[]>([]);
   const [requests, setRequests] = useState<PendingRequest[]>([]);
   const [loading, setLoading] = useState(true);
@@ -59,13 +60,13 @@ export default function SettingsHubPage() {
     };
   }, [status]);
 
-  if (status === 'loading' || loading) {
+  if (status === 'loading' || (status === 'authenticated' && loading)) {
     return (
       <div
         className="min-h-screen flex items-center justify-center"
         style={{ backgroundColor: 'var(--surface-ground)' }}
       >
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-neutral-900" />
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-folio-text-primary" />
       </div>
     );
   }
@@ -77,13 +78,13 @@ export default function SettingsHubPage() {
         style={{ backgroundColor: 'var(--surface-ground)' }}
       >
         <div className="text-center">
-          <p className="text-sm mb-4" style={{ color: '#8B8178' }}>
+          <p className="text-sm mb-4" style={{ color: 'var(--folio-text-secondary)' }}>
             Sign in to manage your settings.
           </p>
           <Link
             href="/auth/signin?callbackUrl=/settings"
             className="px-5 py-2 text-sm rounded-full"
-            style={{ backgroundColor: '#2C2825', color: 'var(--surface-ground)' }}
+            style={{ backgroundColor: 'var(--folio-text-primary)', color: 'var(--surface-ground)' }}
           >
             Sign in
           </Link>
@@ -103,29 +104,33 @@ export default function SettingsHubPage() {
             className="text-3xl italic mb-2"
             style={{
               fontFamily: 'var(--font-headline)',
-              color: '#2C2825',
+              color: 'var(--folio-text-primary)',
               fontWeight: 'var(--w-body)',
             }}
           >
             Settings
           </h1>
-          <p className="text-sm" style={{ color: '#8B8178' }}>
+          <p className="text-sm" style={{ color: 'var(--folio-text-secondary)' }}>
             Manage your account and the organizations you belong to.
           </p>
         </div>
+
+        <Section title="Appearance">
+          <ThemeToggle />
+        </Section>
 
         <Section title="Organizations">
           {orgs.length > 0 ? <Link href="/auth/org-setup?add=1" className="inline-block mb-4 text-sm underline underline-offset-4">Add another firm</Link> : null}
           {orgs.length === 0 ? (
             <div
               className="p-4 rounded-xl text-sm flex items-center justify-between gap-3"
-              style={{ backgroundColor: '#F5F3F0', color: '#5C554D' }}
+              style={{ backgroundColor: 'var(--surface-elevated)', color: 'var(--folio-text-secondary)' }}
             >
               <span>You&rsquo;re not a member of any organization yet.</span>
               <Link
                 href="/auth/org-setup"
                 className="text-xs px-3 py-1.5 rounded-full whitespace-nowrap"
-                style={{ backgroundColor: '#2C2825', color: 'var(--surface-ground)' }}
+                style={{ backgroundColor: 'var(--folio-text-primary)', color: 'var(--surface-ground)' }}
               >
                 Find yours
               </Link>
@@ -138,22 +143,22 @@ export default function SettingsHubPage() {
                   <li
                     key={org.id}
                     className="flex items-center gap-3 p-3 rounded-xl"
-                    style={{ backgroundColor: '#F5F3F0' }}
+                    style={{ backgroundColor: 'var(--surface-elevated)' }}
                   >
                     <div
                       className="w-9 h-9 rounded-full flex items-center justify-center shrink-0"
-                      style={{ backgroundColor: '#E8E4DF', color: '#6B635B' }}
+                      style={{ backgroundColor: 'var(--surface-ground)', color: 'var(--folio-text-secondary)' }}
                     >
                       <Building2 className="w-4 h-4" />
                     </div>
                     <div className="flex-1 min-w-0">
                       <p
                         className="text-sm font-medium truncate"
-                        style={{ color: '#2C2825' }}
+                        style={{ color: 'var(--folio-text-primary)' }}
                       >
                         {org.name}
                       </p>
-                      <p className="text-xs" style={{ color: '#8B8178' }}>
+                      <p className="text-xs" style={{ color: 'var(--folio-text-secondary)' }}>
                         {ROLE_LABEL[org.userRole] ?? org.userRole}
                       </p>
                     </div>
@@ -162,8 +167,8 @@ export default function SettingsHubPage() {
                         href={`/org/${org.id}`}
                         className="text-xs px-3 py-1.5 rounded-full"
                         style={{
-                          color: '#6B635B',
-                          border: '1px solid #D4CEC6',
+                          color: 'var(--folio-text-secondary)',
+                          border: '1px solid var(--folio-border-strong)',
                         }}
                       >
                         View
@@ -173,7 +178,7 @@ export default function SettingsHubPage() {
                           href={`/org/${org.id}/settings`}
                           className="text-xs px-3 py-1.5 rounded-full"
                           style={{
-                            backgroundColor: '#2C2825',
+                            backgroundColor: 'var(--folio-text-primary)',
                             color: 'var(--surface-ground)',
                           }}
                         >
@@ -195,29 +200,29 @@ export default function SettingsHubPage() {
                 <li
                   key={r.id}
                   className="flex items-center gap-3 p-3 rounded-xl"
-                  style={{ backgroundColor: '#F5F3F0' }}
+                  style={{ backgroundColor: 'var(--surface-elevated)' }}
                 >
                   <div
                     className="w-9 h-9 rounded-full flex items-center justify-center shrink-0"
-                    style={{ backgroundColor: '#E8E4DF', color: '#6B635B' }}
+                    style={{ backgroundColor: 'var(--surface-ground)', color: 'var(--folio-text-secondary)' }}
                   >
                     <Building2 className="w-4 h-4" />
                   </div>
                   <div className="flex-1 min-w-0">
                     <p
                       className="text-sm font-medium truncate"
-                      style={{ color: '#2C2825' }}
+                      style={{ color: 'var(--folio-text-primary)' }}
                     >
                       {r.organizationName}
                     </p>
-                    <p className="text-xs" style={{ color: '#8B8178' }}>
+                    <p className="text-xs" style={{ color: 'var(--folio-text-secondary)' }}>
                       Waiting for an admin to approve your request.
                     </p>
                   </div>
                   <Link
                     href={`/org/${r.organizationId}`}
                     className="text-xs px-3 py-1.5 rounded-full shrink-0"
-                    style={{ color: '#6B635B', border: '1px solid #D4CEC6' }}
+                    style={{ color: 'var(--folio-text-secondary)', border: '1px solid var(--folio-border-strong)' }}
                   >
                     View
                   </Link>
@@ -234,19 +239,19 @@ export default function SettingsHubPage() {
                 <li
                   key={r.id}
                   className="flex items-center gap-3 p-3 rounded-xl"
-                  style={{ backgroundColor: '#F5F3F0', opacity: 0.7 }}
+                  style={{ backgroundColor: 'var(--surface-elevated)', opacity: 0.7 }}
                 >
                   <div
                     className="w-9 h-9 rounded-full flex items-center justify-center shrink-0"
-                    style={{ backgroundColor: '#E8E4DF', color: '#6B635B' }}
+                    style={{ backgroundColor: 'var(--surface-ground)', color: 'var(--folio-text-secondary)' }}
                   >
                     <Building2 className="w-4 h-4" />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm" style={{ color: '#2C2825' }}>
+                    <p className="text-sm" style={{ color: 'var(--folio-text-primary)' }}>
                       {r.organizationName}
                     </p>
-                    <p className="text-xs" style={{ color: '#8B8178' }}>
+                    <p className="text-xs" style={{ color: 'var(--folio-text-secondary)' }}>
                       Your request was declined. You can request again from the
                       org&rsquo;s page.
                     </p>
@@ -291,7 +296,7 @@ function Section({ title, children }: { title: string; children: React.ReactNode
         className="text-lg italic mb-3"
         style={{
           fontFamily: 'var(--font-headline)',
-          color: '#2C2825',
+          color: 'var(--folio-text-primary)',
           fontWeight: 'var(--w-body)',
         }}
       >
@@ -317,24 +322,24 @@ function HubLink({
     <li>
       <Link
         href={href}
-        className="flex items-center gap-3 p-3 rounded-xl transition-colors hover:bg-[#F0EDE9]"
-        style={{ backgroundColor: '#F5F3F0' }}
+        className="flex items-center gap-3 p-3 rounded-xl transition-colors hover:brightness-95"
+        style={{ backgroundColor: 'var(--surface-elevated)' }}
       >
         <div
           className="w-9 h-9 rounded-full flex items-center justify-center shrink-0"
-          style={{ backgroundColor: '#E8E4DF', color: '#6B635B' }}
+          style={{ backgroundColor: 'var(--surface-ground)', color: 'var(--folio-text-secondary)' }}
         >
           {icon}
         </div>
         <div className="flex-1 min-w-0">
-          <p className="text-sm font-medium" style={{ color: '#2C2825' }}>
+          <p className="text-sm font-medium" style={{ color: 'var(--folio-text-primary)' }}>
             {title}
           </p>
-          <p className="text-xs" style={{ color: '#8B8178' }}>
+          <p className="text-xs" style={{ color: 'var(--folio-text-secondary)' }}>
             {sub}
           </p>
         </div>
-        <ChevronRight className="w-4 h-4 shrink-0" style={{ color: '#A69E96' }} />
+        <ChevronRight className="w-4 h-4 shrink-0" style={{ color: 'var(--folio-text-secondary)' }} />
       </Link>
     </li>
   );

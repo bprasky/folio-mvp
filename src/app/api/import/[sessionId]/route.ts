@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/app/api/auth/[...nextauth]/options';
 import { prisma } from '@/lib/prisma';
+import { isWorkspaceImport } from '@/lib/workspace-import/types';
 
 /**
  * GET /api/import/[sessionId]
@@ -37,6 +38,7 @@ export async function GET(
       return NextResponse.json({ error: 'Session not found' }, { status: 404 });
     }
 
+    if (isWorkspaceImport(importSession.processingMeta)) return NextResponse.json({ error: 'Open this import in your workspace.', href: `/onboarding/workspace?import=${sessionId}` }, { status: 409 });
     // Get status breakdown
     const statusCounts = await prisma.pendingProductTag.groupBy({
       by: ['status'],
@@ -93,6 +95,7 @@ export async function DELETE(
       return NextResponse.json({ error: 'Session not found' }, { status: 404 });
     }
 
+    if (isWorkspaceImport(importSession.processingMeta)) return NextResponse.json({ error: 'Manage this import from your workspace.' }, { status: 409 });
     // Delete session (pending tags will cascade delete)
     await prisma.importSession.delete({
       where: { id: sessionId },
@@ -140,6 +143,7 @@ export async function PATCH(
       return NextResponse.json({ error: 'Session not found' }, { status: 404 });
     }
 
+    if (isWorkspaceImport(importSession.processingMeta)) return NextResponse.json({ error: 'Manage this import from your workspace.' }, { status: 409 });
     const updateData: { status?: string; projectId?: string; completedAt?: Date } = {};
 
     if (status) {

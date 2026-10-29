@@ -1,3 +1,23 @@
+# Settings appearance toggle — 2026-10-29
+
+- [x] Inspect settings and existing theme tokens; start from current main in an isolated checkout.
+- [x] Add an accessible dark/light switch, browser persistence and theme initialization before paint.
+- [x] Verify switching, reload persistence, keyboard/mobile behavior and relevant repository checks.
+
+Plan check-in: keep this small convenience change scoped to Settings and the existing global palette. Light remains the default. Save the preference in this browser, activate both the existing data-theme tokens and Tailwind dark class, and make Settings use theme-aware colors. No database or account-preference migration.
+
+### Review
+
+Added Settings → Appearance → Dark mode with a labeled keyboard-accessible switch and a 48×44px target. The preference is stored as `folio-theme` in this browser; light is the default. A small document-head script restores it before client JavaScript loads and activates the existing palette plus Tailwind dark classes. Theme storage failures do not prevent switching during the current visit.
+
+Settings now uses canonical surface/text/border tokens. Improved dark secondary text and shared ridge-card/shadow colors, including cookie consent. The signed-out settings prompt can now render instead of remaining behind its unrelated organization-loading state. No new dependency, account mutation or database change.
+
+Verified the actual Next.js route with synthetic session/API responses (no real account writes): light/dark switching, reload persistence, restoration with external client scripts blocked, soft navigation to Privacy and back, Space/Enter, 1280/390/320px layouts, 44px minimum switch target, invalid/blocked theme storage, cookie-card background and signed-out state. Browser page/hydration errors: none. Visually inspected desktop and phone screenshots. Scoped lint, client-import guard, migration-discipline guard and diff whitespace checks pass.
+
+The repository TypeScript check reports 866 diagnostics against its 880 baseline; its five flagged fingerprints refer to external dependency paths through the shared node_modules junction, outside the changed files. Normalizing only that dependency-root path passes the baseline comparison with zero new fingerprints. Baseline and compiler settings remain unchanged.
+
+---
+
 # Immersive publications and designer-selected palette — 2026-10-28
 
 - [x] Implement the approved photo-led room reader on public articles and owner previews, retaining editorial edits, products and credits.
@@ -1111,3 +1131,95 @@ The first deployment of 4829a94e reached READY but was rolled back: setting a gl
 - [x] Reconcile the audit's stale storage, middleware, source identity and release statements; preserve historical evidence and record precise remaining gates.
 
 Review: no runtime source changes were needed. Email/model/storage-policy boundaries remain synthetic in the connected runs; local services are stopped afterward. Legacy production migration, full signed-in hosted smoke, physical phones and optional provider activation remain separate. See docs/reviews/rollout-final-gap-audit/evidence/release-verification.md.
+# Google and Apple signup repair — 2026-10-28
+
+- [x] Check production provider registration, deployment settings and signup/signin behavior.
+- [x] Offer only configured providers on signup; show returned authentication errors and preserve the requested destination.
+- [x] Fix OAuth session identity so Google/Apple identifiers never replace the Folio user ID.
+- [x] Run focused regression tests and required guards; review and publish an isolated fix branch.
+
+Plan check-in: production `/api/auth/providers` exposes credentials only, and Vercel contains neither Google nor Apple credential settings. The founder confirmed neither developer-console integration is set up. Signup currently renders both buttons unconditionally; NextAuth returns unknown-provider attempts to signin. Preserve email signup and project/firm intent. OAuth enablement remains dependent on developer-console setup and credentials; this repair must not claim it enables either provider. Work starts at current `origin/main` in an isolated worktree, preserving the existing dirty checkout. No schema or database changes.
+
+### Review
+
+Focused OAuth regression passes all provider combinations, provider discovery failures, Google/Apple Folio IDs, fail-closed identity resolution, credentials/session refresh, project callbacks and returned sign-in errors. Running the same identity regression against origin/main fails because the Google ID overwrites the Folio ID. Core suite: 21 passed, 2 database-dependent skips. Professional entry and auth-alias checks, scoped lint (existing warnings only), client boundary and migration discipline pass. Local full compilation fails in the unchanged Next Google-font loader; the shared dependency junction also creates path-specific TypeScript fingerprints in unrelated festival/import files. Full clean-environment verification remains pending CI. No provider login or production enablement has been claimed.
+
+Browser verification: rendered the actual signup/signin components with synthetic auth boundaries. With no OAuth provider, neither button nor divider appears. With Google only, Google appears and Apple remains absent; failed launch stays on signup with actionable feedback. OAuth callback errors are visible on signin and its signup link retains `/projects/new`. Single-provider signup buttons span the full row. Published fix as PR #831; CI pending.
+
+Setup follow-up: founder authorized saving Google branding and accepting its User Data Policy; saved in the existing Folio Google project. Founder explicitly requested skipping Apple. Google OAuth client creation, secret installation and rollout remain pending.
+
+---
+# First-time signup and website-assisted firm setup audit — 2026-10-29
+
+- [x] Walk the public signup entry and trace new-account, firm creation, join-request and resume paths on current main.
+- [x] Exercise current firm screens with the existing isolated browser fixture; distinguish observed UI from source-only findings.
+- [x] Inventory website/profile/project import capabilities and gaps, including permission, project boundaries and draft visibility.
+- [x] Extend the recommendation to the founder's clarified import-first experience: background preparation, useful starting questions and a readiness email.
+- [x] Record a concrete recommended journey, staged implementation scope and verification evidence.
+
+Plan check-in: evaluate the first-time experience and prepare an actionable recommendation. Preserve one personal account, real firm membership for posting, the unified firm autocomplete and creator-confirmed firm policy. Review latest main in an isolated checkout because the primary checkout contains unrelated work and predates recent signup fixes. No production accounts, firm records, imports or publication changes are part of this audit.
+
+### Review
+
+Scope: evaluation and an implementation-ready recommendation; no application implementation, production signup, website import, email send, database change or publication occurred. Latest production deployment dpl_MZg5vu1MbmCZrfcYzkSXD5vaCkF1 was READY at commit 4309b77397995a80529b0ee216a42a17b0ff01f1, matching audited origin/main. Vercel reports folioad.com, www.folioad.com and folio-mvp-s67w.vercel.app as aliases; opening www redirected to the latter.
+
+Observed and source-supported friction:
+
+1. The welcome signup explicitly chooses designer intent and a first project. Generic signup defaults to Just browsing, then offers another role diagnostic. Signup already explains account/firm/project in a paragraph, but has no labeled progress sequence shared with firm setup. This is a continuity problem, not an entirely missing explanation.
+2. At the actual browser width of 938px (height 764px), the live signup photo measured 1,506.9px tall and the form began at document position 1,766.25px. The form heading began at 1,804.75px. The responsive layout stacks the photo before the form below 960px, and sets only a minimum image height. This is an immediate first-screen conversion risk. The attempted viewport override did not change the measured browser width; do not report a verified 390px phone test.
+3. The canonical firm screen starts with What is your firm called?, followed by a relatively large Signed in as / Operating under card. No shared step indicator or explicit personal-account-complete transition appears. The new firm fields are name, type and authorization confirmation; there is no website input or import offer even though the API accepts website.
+4. Without an explicit callback, auth/org-setup chooses /settings. The existing browser fixture reproduced new-firm creation ending at Synthetic navigation: /settings. With next=project the welcome signup carries /projects/new. General professional navigation should keep its absent intent; new signup should get a deliberate useful completion destination rather than changing every account-navigation link into project creation.
+5. Joining an existing firm explains admin approval and leads to browsing/access requests. The join endpoint records no return action and stamps the onboarding sequence complete. A persisted return-to-setup/readiness experience is needed across an approval wait; pending membership must never authorize imports into that firm's projects or changes to its profile.
+6. Signup reached through generic signin can contain callbackUrl=/, which overrides the selected professional intent in SignupForm. Middleware then sends the new account through the diagnostic. Unify deliberate onboarding intent and harmless browse callbacks without discarding explicit action callbacks.
+
+Existing components and precise limits:
+
+- src/lib/onboarding/create-firm.ts handles normalized duplicate prevention, creator-confirmed CLAIMED firms, owner membership and current workspace in one transaction. It also stamps the bio/preview steps complete; those timestamps cannot establish that a website import or interview preparation finished.
+- src/app/api/import/website/route.ts reads a single URL for an already owned project, returns up to 40 image candidates plus a description, and runs synchronously. It does not discover separate project pages or create a portfolio batch. Existing client review selects photographs for that one project. URL import is currently open to signed-in users at the server entitlement helper's prelaunch early return; the Pro error string is not evidence that current users are blocked.
+- src/lib/browserless/client.ts is a compatibility wrapper over the protected fetch and isolated render worker. It is not evidence of an active Browserless provider integration. Reuse current URL validation, bounded fetches and image ingestion; do not revert to arbitrary remote-browser execution. Renderer availability/configuration was not tested in production. External feasibility cross-check: https://docs.browserless.io/rest-apis/content documents rendered-HTML extraction, but no provider migration is proposed.
+- src/app/api/designer/bio/scrape/route.ts stores extracted website context on DesignerBio. Extraction includes bio, firm, location and specialties, but not logos. This is personal bio storage, not organization-profile population; do not reuse its writes for a whole firm's About text or overwrite an existing person's bio blindly.
+- Organization already has website, logo, description, location, specialties and other useful profile fields. Firm profile extraction/review is new work. For existing firms, profile changes require the appropriate leadership permission.
+- src/lib/projects/createProject.ts already supports stable request identities and private creation (isPublic=false, publishedAt=null; any initial ProjectPost is DRAFT). Batch imports need source-page identity, resumable per-project/per-image results and a reviewed distinction between private visibility and completed-project lifecycle.
+- src/lib/designer-bio/interview-service.ts and questions.ts already prepare website-context questions. src/lib/interview/guided/preparation.ts prepares project questions and fingerprints project sources. Today preparation normally occurs after an explicit interview start; persistent precomputed preparation with safe invalidation is new work. Room-question preparation intentionally uses accepted project answers and cannot all be finalized before the conversation.
+- src/lib/email/sendEmail.ts wraps Resend and reports missing configuration/failure. A reliable ready-email event, deduplication, provider-acceptance tracking and delivery/retry handling are not supplied by the import path. Existing import-session statuses are not a durable multi-project job executor.
+
+Recommended designer experience:
+
+1. Your account. Explain: one personal login that stays with you; posting requires a business. Label the action Create my account and continue. Show Account → Business → Prepare your workspace. Keep signup visible in the first screen and label personal email simply Email.
+2. Your business. Confirm Your personal account is ready. Preserve the existing one-field autocomplete: select an existing firm and request access, or create a new firm with creator authorization. Solo practices use the same real-firm path. No website requirement and no new external verification rule.
+3. Let Folio prepare your workspace. Ask for the website once and let the owner explicitly choose business details/logo/about, their own bio if present, and portfolio projects. Explain that Folio will read the selected public material, save drafts and email when ready. Offer manual setup and skip. For an existing firm, use already approved data and respect profile-edit permissions rather than reimporting it for every joining employee.
+4. Work continues after they leave. Discover homepage/about/team/portfolio pages within a bounded approved scope; classify and retain source references. Keep each project separate, save photographs and supported facts, omit unknowns, and surface uncertain matches for review. Give an immediate confirmation and a persistent progress page. A failed section must not erase successful sections or block unrelated usable drafts.
+5. Prepare the start, then notify. Generate and store an initial project interview plan and relevant bio questions from saved source snapshots. Do not turn website copy into accepted interview testimony or infer room names from photographs. Existing page headings may provide room suggestions; the designer confirms structure. Refresh affected questions after source edits, and create answer-dependent follow-ups during the conversation. Do not provision a live voice/avatar call until they choose Start.
+6. Return to their work. The completion email links through authentication to the intended firm's prepared workspace. Report actual saved counts, which sections need attention and one clear next action: review the imported project and start its prepared interview. A fully successful run can say the workspace is ready; partial success must name what is ready rather than claim everything imported. If nothing usable was imported, send an honest action-needed notice with manual options. Pending firm access remains an access-pending state, not interview-ready.
+
+Implementation order (proposed, not built):
+
+- One complete vertical slice: guided account/firm continuity, consent and section selection, durable website-import run, firm/profile drafts, one or more separate private project drafts, saved opening questions and one readiness email. This is the first useful delivery; do not label copy-only changes as fulfillment of import-first onboarding.
+- Keep the first crawl bounded. Reuse current services, but add a durable run and item state machine with leases/retries, source identities and consent scope; do not hide long-running work in one request or a browser tab. Confirm the production schema before selecting storage or authoring migrations. Any schema/migration work follows the repository's backup, recon and review gates.
+- Resume and retries must not duplicate projects, replace designer edits or repeatedly send completion email. Persist selected sections, current firm, source manifest, saved draft IDs, preparation versions and notification status. Recheck organization permissions when committing background results.
+- Define readiness per section/project. Separate saved usable content, personalized-question readiness and items needing review. Email only after the corresponding committed state, with an idempotent notification key and retryable provider submission. Provider acceptance is not proof of delivery.
+- Record funnel milestones: account created, firm ready/access pending, import authorized, sections saved/failed, initial questions prepared, ready email accepted/delivered, workspace reopened and first interview started. Baseline real completion before making conversion claims; the audit found risks, not measured abandonment.
+
+Verification completed:
+
+- Live signed-out welcome → signup and generic signup → Designer selection observed. No production account was created and no OAuth flow submitted.
+- Existing local browser fixture rendered the actual current firm component with synthetic APIs; exercised unmatched name, authorization confirmation, create-to-Settings and existing-firm request/approval messaging. This is UI evidence, not an end-to-end production signup or database test.
+- Passed check-professional-entry.cjs, check-professional-routing.cjs, check-professional-auth-aliases.cjs, check-firm-enrollment.cjs and check-org-join-notifications.cjs. The join suite's concurrent-request error is an expected injected race followed by PASS.
+- Passed all five firm-posting-policy tests using the repository's tsx runner. An initial plain-node invocation could not load TypeScript; rerunning with tsx resolved the invocation issue. These checks preserve the restriction against personal-account publishing and do not prove a new background import pipeline.
+- First fixture build could not resolve React from the new checkout; linked the existing local dependencies and rebuilt successfully. No dependencies were installed or upgraded.
+
+Remaining validation for implementation: real fresh account/signup and OAuth, blocked/JS-heavy sites, multi-project boundaries, wrong-person bio, no-website/manual path, job restart and duplicate retry, partial failure, permission revocation, source changes invalidating questions, draft exclusion from public feeds/search, bounded cost, ready-email delivery and resume-after-login, plus actual phone layouts. No live crawl, generated questions, outbound email or import-readiness claim was tested in this audit.
+
+### Implementation — 2026-10-29
+
+- [x] Three-step account/business/workspace continuity, professional intent and requested-action preservation, narrow-screen signup form ordering, pending-business return state, manual setup and later re-entry.
+- [x] Explicit section consent; bounded same-site discovery; separate business/bio suggestions; sanitized logo and private project photo copies; source identities; canonical project drafts without inferred completion dates.
+- [x] Durable existing ImportSession storage, actor start quotas, expiring worker lease, JSON CAS checkpoints, partial recovery and permission rechecks. No Prisma migration was needed.
+- [x] Store opening plans without starting interviews or creating testimony. Reuse plans in guided and legacy project interviews; invalidate after source edits. Bio fingerprints survive JSONB key ordering.
+- [x] Persist readiness email payload before submission, provider idempotency, bounded delayed retries and no resend on manual recovery. Review links survive login and target the import's business.
+- [x] Regression checks and real-component synthetic browser walkthrough; compile and client boundary checks pass. See `docs/reviews/workspace-import/README.md` for exact evidence and test limits.
+- [ ] Disposable staging verification of real signup/OAuth, crawl/render/storage, cron continuation, provider delivery and authenticated return before production rollout.
+
+The later profile-hero reference was explicitly withdrawn by the user and is not implemented here.
+
+---

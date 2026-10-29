@@ -143,6 +143,8 @@ async function buildProjectGroup(
   projectId: string,
   context: ProjectContext,
 ): Promise<RoomQuestionsGroup> {
+  const { readPreparedProject } = await import('@/lib/workspace-import/prepared');
+  const prepared = await readPreparedProject(projectId);
   const projectMeta = await prisma.project.findUnique({
     where: { id: projectId },
     select: {
@@ -170,25 +172,33 @@ async function buildProjectGroup(
   // otherwise the individual designer.
   const brandIdentity = projectMeta?.designerOrg?.name || projectMeta?.designer?.name || undefined;
 
-  let projectGenQuestions: GeneratedQuestion[] = [];
+  // Both interview presentations can use the imported opening plan. Keep the
+  // legacy category-bearing IDs so its saved answers retain their attribution.
+  let projectGenQuestions: GeneratedQuestion[] = prepared ? prepared.questions.filter(q => q.roomId === null && q.kind === 'prepared').map(q => ({
+    id: `project-${q.category}-${q.id}`, text: q.text, contextLevel: context.level,
+    type: 'generic', rooms: [], products: [], vendors: [], boostable: false,
+    pullQuotePotential: 'medium', topic: `project_${q.category.toLowerCase()}`,
+  })) : [];
   try {
-    const locationParts = [projectMeta?.city, projectMeta?.regionState].filter(Boolean);
-    const result = await generateProjectQuestions({ projectId,
-      projectTitle: context.projectTitle,
-      projectDescription: context.projectDescription,
-      designerName: brandIdentity,
-      studioName: projectMeta?.designerOrg?.name || projectMeta?.designer?.studio || undefined,
-      location: locationParts.join(', ') || undefined,
-      projectType: projectMeta?.projectType || undefined,
-      clientType: projectMeta?.clientType || undefined,
-      representativeImages: (projectMeta?.images || []).map(img => ({ url: img.url })),
-      roomNames: context.rooms.map(r => r.name),
-      roomTypes: context.rooms.map(r => r.type || r.name),
-      materialPalette: context.materialThemes,
-      contextLevel: context.level,
-      respondentRole: 'DESIGNER',
-    });
-    projectGenQuestions = result.questions;
+    if (!projectGenQuestions.length) {
+      const locationParts = [projectMeta?.city, projectMeta?.regionState].filter(Boolean);
+      const result = await generateProjectQuestions({ projectId,
+        projectTitle: context.projectTitle,
+        projectDescription: context.projectDescription,
+        designerName: brandIdentity,
+        studioName: projectMeta?.designerOrg?.name || projectMeta?.designer?.studio || undefined,
+        location: locationParts.join(', ') || undefined,
+        projectType: projectMeta?.projectType || undefined,
+        clientType: projectMeta?.clientType || undefined,
+        representativeImages: (projectMeta?.images || []).map(img => ({ url: img.url })),
+        roomNames: context.rooms.map(r => r.name),
+        roomTypes: context.rooms.map(r => r.type || r.name),
+        materialPalette: context.materialThemes,
+        contextLevel: context.level,
+        respondentRole: 'DESIGNER',
+      });
+      projectGenQuestions = result.questions;
+    }
   } catch (err) {
     console.warn('[getInterviewQuestionsGroupedByRoom] Project question generation failed, using deterministic fallback:', err);
   }

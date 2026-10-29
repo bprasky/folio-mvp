@@ -1,0 +1,25 @@
+# Signup and background website import
+
+New professional signups now move through personal account → business access → workspace preparation. Browsing remains available without a business; posting permissions are unchanged. The same preparation step is reachable from the diagnostic and firm onboarding routes, and existing members can return from their professional account.
+
+The owner selects business details, their own bio, and/or project drafts, then explicitly consents to website reading, private copying, question preparation and a readiness email. Business profile changes require a separate review/save. Bio text becomes interview context, without replacing published copy or accepted answers. Projects are canonical private drafts with no inferred completion date or room assignments. Both guided and legacy project interviews reuse opening questions while the source fingerprint matches.
+
+## Operation
+
+- Existing `ImportSession.processingMeta` stores namespaced `workspace-import-v1` runs. No schema change, new service or dependency is required.
+- `/api/cron/workspace-imports` is triggered every minute by the Vercel cron entry. `CRON_SECRET` authenticates it. The worker uses full-JSON compare-and-swap, a six-minute lease and a checkpoint after every page/photo/preparation. Function duration is bounded to 300 seconds; the worker stops starting new units well before that limit.
+- Actor and business permissions are checked at start, before each unit and before committing project assets/preparation. Profile application uses version checks and a transaction. Legacy import mutation endpoints reject these runs.
+- Starts are serialized per actor using a transaction advisory lock: one active run and five new runs per day. Each run reads at most 18 pages, 10 projects and 30 photographs per project; manual retries are capped at three. Source/request identities prevent repeated starts and retries from duplicating projects or photographs.
+- Public web fetches reuse DNS-pinned safe transport. Optional `RENDER_WORKER_URL` / `RENDER_WORKER_API_KEY` support pages needing rendering; static content remains useful if rendering fails. Images use the existing validated private project storage. Logos are decoded/re-encoded as bounded PNG review candidates.
+- `RESEND_API_KEY` and `CRON_SECRET` must be configured before the import offer is enabled. Existing private project storage credentials are required for photographs. Existing model configuration prepares questions; deterministic project questions remain available if generation falls back. No browser process owns the run.
+- Readiness mail uses a persisted immutable payload and an idempotency key. Retry delays are recorded; ambiguous submission is never retried outside the provider's deduplication window. Manual recovery does not resend an already accepted email. Accepted is not a delivery receipt. Hard permission loss/repeated worker interruptions pause the run and expose recovery in the workspace.
+
+## Validation
+
+`node scripts/check-workspace-import.cjs` exercises real handlers, extraction, orchestration, project creation and review with synthetic external services. Import rows use in-memory PGlite/PostgreSQL JSONB to test competing claims, stale-worker fencing, lease expiry and fingerprint stability. Other models/transactions are boundary doubles, not proof of deployed Prisma isolation. The suite also covers consent, foreign actor/business rejection, duplicate requests, separate private drafts, logo decoding, partial recovery, permission revocation, source edits, both interview formats and delayed email retries.
+
+Other passing checks: professional entry/routing/auth aliases, firm enrollment, join notifications, firm posting policy, project draft persistence, image safety, guided service/provenance and client import boundaries. New importer files and screens pass targeted ESLint. Next compile succeeds with existing unrelated import warnings. TypeScript reports 866 existing diagnostics versus the 880 baseline and no new fingerprints after normalizing the shared dependency junction's absolute path; the unmodified ratchet reports five path-only differences in unrelated existing modules.
+
+`node scripts/build-workspace-import-preview.cjs --serve` serves real UI components with synthetic APIs on `127.0.0.1:3188`. Browser checks covered signup → authorized firm creation → consent → progress → review, explicit business/bio saves, and the 390px signup layout. `review.jpg` is a synthetic preview, not a production import. Generated fixture bundles and logs are ignored.
+
+Before production rollout, verify a disposable staging account through real email/OAuth, a multi-project website (including rendered pages), real private storage, a cron invocation after leaving the page, readiness email delivery and authenticated return. No real account, website crawl, model spend or outbound email was performed for these local tests. The profile redesign image sent to the wrong chat is outside this change.

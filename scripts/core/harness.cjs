@@ -27,6 +27,9 @@ function replace(name, exports) {
   const path = require.resolve(name.startsWith('src/') ? resolve(name) : name);
   require.cache[path] = { id: path, filename: path, loaded: true, exports };
 }
+// Node runs these server routes outside Next's react-server module condition.
+// Keep the application boundary marker intact while allowing the server harness.
+replace('server-only', {});
 const facade = new Proxy({}, { get: (_, key) => {
   if (key === '$transaction') return async (work, options) => database.$transaction
     ? database.$transaction(work, options)

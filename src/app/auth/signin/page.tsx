@@ -18,7 +18,7 @@ export default async function SigninPage({ searchParams }: { searchParams: { cal
     const pathname = decodeURIComponent(new URL(callbackUrl, 'https://folio.invalid').pathname);
     redirect(/^\/auth\/(signin|signup)(\/|$)/i.test(pathname) ? '/' : callbackUrl);
   }
-  const signupHref = '/auth/signup?callbackUrl=' + encodeURIComponent(callbackUrl);
+  const signinHref = '/auth/signin?callbackUrl=' + encodeURIComponent(callbackUrl);
   const [hero] = await Promise.all([getSigninHero()]);
 
   const showGoogle = Boolean(process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET);
@@ -26,7 +26,7 @@ export default async function SigninPage({ searchParams }: { searchParams: { cal
 
   return (
     <div className={styles.page}>
-      <Topbar rightCta={{ label: 'Sign up', href: signupHref }} />
+      <Topbar rightCta={{ label: 'Log in', href: signinHref }} />
 
       <main className={styles.stage}>
         <section className={styles.photoPanel} aria-label="Featured project">

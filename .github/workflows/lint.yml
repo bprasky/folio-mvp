@@ -87,6 +87,11 @@ jobs:
           node --experimental-vm-modules scripts/check-project-list-privacy.cjs
           GUIDED_TEST_BROWSER="$(command -v google-chrome || command -v chromium)" node scripts/check-project-draft-browser.cjs
       - run: npm run test:interruptions
+      - name: Signup and durable workspace import
+        run: |
+          node scripts/check-workspace-import.cjs
+          node scripts/check-professional-entry.cjs
+          node scripts/check-professional-routing.cjs
       - name: Guided interview regression checks
         run: npm run test:guided
       - name: Live and guided browser regression checks
@@ -120,6 +125,7 @@ jobs:
           node scripts/check-professional-entry.cjs
           node scripts/check-professional-routing.cjs
           node scripts/check-professional-auth-aliases.cjs
+          node scripts/check-auth-oauth.cjs
           node scripts/check-org-join-notifications.cjs
           npx tsx --test scripts/core/firm-posting-policy.test.cjs
       - name: Publishing Studio regression checks

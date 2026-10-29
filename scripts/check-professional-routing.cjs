@@ -23,6 +23,7 @@ const component = load('src/app/auth/org-setup/_ScenarioA.tsx', {
   'next/navigation': { useRouter: () => ({}) }, 'next-auth/react': { useSession: () => ({ update: async () => {} }) },
   '@/lib/onboarding/professional-entry': helper,
   '@/lib/onboarding/firm-name': load('src/lib/onboarding/firm-name.ts'),
+  '@/components/onboarding/SetupProgress': load('src/components/onboarding/SetupProgress.tsx'),
 }).ScenarioA;
 let session, memberships, account, selected;
 const page = load('src/app/auth/org-setup/page.tsx', {

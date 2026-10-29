@@ -1,230 +1,41 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef, useId } from "react";
 import Link from "next/link";
-import { projectEntryHref } from "@/lib/onboarding/professional-entry";
-import { Menu, X, Plus, FileText, Package, FolderPlus } from "lucide-react";
-import { useSession } from "next-auth/react";
-import { useRouter } from "next/navigation";
-import { BadgeButton } from "./BadgeButton";
-import { UserAvatar } from "./UserAvatar";
-import { normalizeRole } from "@/lib/permissions";
-import { CreateCollaborationModal } from "@/components/collaboration/CreateCollaborationModal";
-import type { NavigationWorkspace } from "./useNavigationWorkspace";
+import { Menu, X } from "lucide-react";
+import { usePathname } from "next/navigation";
+import styles from "./navigation.module.css";
 
-export function MobileMenu({ workspace }: { workspace: NavigationWorkspace | null }) {
+export function MobileMenu() {
   const [isOpen, setIsOpen] = useState(false);
-  const [searchQuery, setSearchQuery] = useState("");
-  const [showCollaborationModal, setShowCollaborationModal] = useState(false);
-  const { data: session, status } = useSession();
-  const router = useRouter();
-  const user = session?.user;
-  const role = user?.role ? normalizeRole(user.role) : null;
-  const operatingAsOrgType = workspace?.operatingAsOrg?.type;
-  const hasMembership = status === "authenticated" && workspace?.user.id === user?.id && !!workspace?.organizations.length;
+  const ref = useRef<HTMLDivElement>(null);
+  const buttonRef = useRef<HTMLButtonElement>(null);
+  const panelId = useId();
+  const pathname = usePathname();
 
-  // Check if user is effectively a designer (by base role OR org membership)
-  const isDesigner = role === "DESIGNER" || operatingAsOrgType === "DESIGN_FIRM";
-
-  // Check if user is effectively a vendor (by base role OR org membership)
-  const isVendor = operatingAsOrgType
-    ? ["VENDOR", "MANUFACTURER", "SHOWROOM"].includes(operatingAsOrgType)
-    : role === "VENDOR";
-
-  // Get dashboard link based on role
-  const getDashboardLink = (userRole: string) => {
-    switch (userRole) {
-      case "DESIGNER":
-        return "/designer/dashboard";
-      case "VENDOR":
-        return "/vendor/dashboard";
-      case "ADMIN":
-        return "/admin/dashboard";
-      default:
-        return "/";
-    }
-  };
-
-  // Get profile link based on role and org membership
-  const getProfileLink = () => {
-    if (!user) return "/profile";
-    if (isDesigner) {
-      return "/designer/profile";
-    }
-    if (isVendor) return "/vendor";
-    if (role === "STUDENT") return "/student";
-    if (role === "ADMIN") return "/admin";
-    return "/profile";
-  };
+  useEffect(() => { setIsOpen(false); }, [pathname]);
+  useEffect(() => {
+    if (!isOpen) return;
+    const closeOutside = (event: MouseEvent) => {
+      if (!ref.current?.contains(event.target as Node)) setIsOpen(false);
+    };
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") { setIsOpen(false); buttonRef.current?.focus(); }
+    };
+    document.addEventListener("mousedown", closeOutside);
+    document.addEventListener("keydown", closeOnEscape);
+    return () => { document.removeEventListener("mousedown", closeOutside); document.removeEventListener("keydown", closeOnEscape); };
+  }, [isOpen]);
 
   return (
-    <div className="md:hidden">
-      <button
-        onClick={() => setIsOpen(!isOpen)}
-        className="h-11 w-11 inline-flex items-center justify-center rounded-lg hover:bg-surface-ground transition-colors"
-        aria-label="Toggle menu"
-      >
-        {isOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+    <div ref={ref} className={`relative ${styles.mobileOnly}`}>
+      <button ref={buttonRef} type="button" onClick={() => setIsOpen(open => !open)} className={styles.iconButton}
+        aria-label="Toggle menu" aria-expanded={isOpen} aria-controls={panelId}>
+        {isOpen ? <X size={19} aria-hidden="true" /> : <Menu size={19} strokeWidth={1.5} aria-hidden="true" />}
       </button>
-
-      {isOpen && (
-        <div
-          className="fixed top-16 left-0 right-0 max-h-[calc(100dvh-64px)] overflow-y-auto border-b border-white/15 z-50 glass-overlay rounded-none"
-        >
-          {/* Mobile search */}
-          <div className="p-4 border-b border-folio-border-subtle">
-            <form
-              onSubmit={(e) => {
-                e.preventDefault();
-                if (searchQuery.trim()) {
-                  router.push(`/search?q=${encodeURIComponent(searchQuery.trim())}`);
-                  setIsOpen(false);
-                  setSearchQuery("");
-                }
-              }}
-            >
-              <input
-                type="text"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search..."
-                className="w-full h-10 pl-4 pr-4 rounded-full border border-folio-border-subtle bg-surface-ground folio-ui"
-              />
-            </form>
-          </div>
-
-          {/* Create Section - Role-based */}
-          {hasMembership && (
-            <div className="py-2 border-b border-folio-border-subtle">
-              {isVendor ? (
-                <>
-                  <p className="px-4 py-2 text-xs font-medium text-folio-text-secondary uppercase tracking-wider">
-                    Create
-                  </p>
-                  <button
-                    onClick={() => {
-                      setIsOpen(false);
-                      setShowCollaborationModal(true);
-                    }}
-                    className="flex w-full items-center gap-3 px-4 py-3 folio-ui text-folio-text-primary hover:bg-surface-ground transition-colors"
-                  >
-                    <FileText className="h-4 w-4 text-folio-text-secondary" />
-                    Collaboration Story
-                  </button>
-                  <MobileNavLink href="/vendor/products/new" onClick={() => setIsOpen(false)}>
-                    <span className="flex items-center gap-3">
-                      <Package className="h-4 w-4 text-folio-text-secondary" />
-                      Add Product
-                    </span>
-                  </MobileNavLink>
-                  <MobileNavLink href="/vendor/create-project" onClick={() => setIsOpen(false)}>
-                    <span className="flex items-center gap-3">
-                      <FolderPlus className="h-4 w-4 text-folio-text-secondary" />
-                      Project Handoff
-                    </span>
-                  </MobileNavLink>
-                </>
-              ) : (
-                <MobileNavLink href={projectEntryHref({ operatingAsOrgId: workspace?.operatingAsOrgId })} onClick={() => setIsOpen(false)}>
-                  <span className="flex items-center gap-3">
-                    <Plus className="h-4 w-4" />
-                    Create Project
-                  </span>
-                </MobileNavLink>
-              )}
-            </div>
-          )}
-
-          {/* Mobile nav links */}
-          <nav className="py-2">
-            <MobileNavLink href="/about" onClick={() => setIsOpen(false)}>
-              About
-            </MobileNavLink>
-
-            {isDesigner && (
-              <>
-                <div className="border-t border-folio-border-subtle my-2" />
-                <MobileNavLink href="/designer/projects" onClick={() => setIsOpen(false)}>
-                  Projects
-                </MobileNavLink>
-                <MobileNavLink href="/designer/sourcebook" onClick={() => setIsOpen(false)}>
-                  Sourcebook
-                </MobileNavLink>
-              </>
-            )}
-
-            {isVendor && (
-              <>
-                <div className="border-t border-folio-border-subtle my-2" />
-                <MobileNavLink href="/vendor/dashboard" onClick={() => setIsOpen(false)}>
-                  Dashboard
-                </MobileNavLink>
-              </>
-            )}
-
-            {role === "ADMIN" && (
-              <>
-                <div className="border-t border-folio-border-subtle my-2" />
-                <MobileNavLink href="/admin" onClick={() => setIsOpen(false)}>
-                  Admin Panel
-                </MobileNavLink>
-              </>
-            )}
-
-            {user && (isDesigner || isVendor || role === "ADMIN" || role === "STUDENT") && (
-              <>
-                <div className="border-t border-folio-border-subtle my-2" />
-                <MobileNavLink
-                  href={isDesigner ? "/designer/dashboard" : isVendor ? "/vendor/dashboard" : getDashboardLink(role || "")}
-                  onClick={() => setIsOpen(false)}
-                >
-                  Dashboard
-                </MobileNavLink>
-              </>
-            )}
-          </nav>
-
-          {user && <>
-            <MobileNavLink href="/inbox" onClick={() => setIsOpen(false)}>Inbox</MobileNavLink>
-            <div className="px-4 py-3 flex items-center gap-3"><BadgeButton /><span className="folio-ui">My Folio Badge</span></div>
-          </>}
-          {/* User section */}
-          {user && (
-            <div className="p-4 border-t border-folio-border-subtle flex items-center gap-3">
-              <UserAvatar src={user.image} alt={user.name || "User"} size="sm" />
-              <div className="flex-1 min-w-0">
-                <p className="folio-ui text-folio-text-primary truncate">{user.name || "User"}</p>
-                <p className="folio-meta text-folio-text-secondary truncate">{user.email}</p>
-              </div>
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* Collaboration Modal for Vendors */}
-      <CreateCollaborationModal
-        open={showCollaborationModal}
-        onOpenChange={setShowCollaborationModal}
-      />
+      {isOpen && <div id={panelId} className={`${styles.popover} ${styles.mobilePopover}`}>
+        <Link href="/about" onClick={() => setIsOpen(false)} className={styles.menuAction}>About Folio</Link>
+      </div>}
     </div>
   );
 }
-
-interface MobileNavLinkProps {
-  href: string;
-  children: React.ReactNode;
-  onClick?: () => void;
-}
-
-function MobileNavLink({ href, children, onClick }: MobileNavLinkProps) {
-  return (
-    <Link
-      href={href}
-      onClick={onClick}
-      className="block px-4 py-3 folio-ui text-folio-text-primary hover:bg-surface-ground transition-colors"
-    >
-      {children}
-    </Link>
-  );
-}
-

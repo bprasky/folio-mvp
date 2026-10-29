@@ -11,10 +11,12 @@ export async function sendEmail({
   to,
   subject,
   html,
+  idempotencyKey,
 }: {
   to: string;
   subject: string;
   html: string;
+  idempotencyKey?: string;
 }): Promise<{ success: boolean; error?: string }> {
   if (!resend) {
     console.log(`[Email] No RESEND_API_KEY — skipping email to ${to}: ${subject}`);
@@ -27,7 +29,7 @@ export async function sendEmail({
       to,
       subject,
       html,
-    });
+    }, idempotencyKey ? { idempotencyKey } : undefined);
     if (error) {
       console.error(`[Email] Failed to send to ${to}:`, error);
       return { success: false, error: error.message };

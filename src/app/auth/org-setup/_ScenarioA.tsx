@@ -7,6 +7,7 @@ import Link from 'next/link';
 import { normalizeFirmName, type FirmMatch } from '@/lib/onboarding/firm-name';
 import { safeProfessionalCallback, firmWorkspaceDestination } from '@/lib/onboarding/professional-entry';
 import { AccountStatus, type ProfessionalAccount } from './_AccountStatus';
+import { SetupProgress } from '@/components/onboarding/SetupProgress';
 
 export type OrgIntent = 'designer' | 'architect' | 'builder' | 'vendor';
 export type FirmMembership = FirmMatch & { membershipRole: string };
@@ -41,6 +42,7 @@ export function ScenarioA({ initialIntent, callbackUrl = '/projects/new', member
   const [notificationIssue, setNotificationIssue] = useState(false);
   const [needsAdmin, setNeedsAdmin] = useState(false);
   const destination = safeProfessionalCallback(callbackUrl);
+  const preparingWorkspace = destination.startsWith('/onboarding/workspace');
   const key = normalizeFirmName(query);
   const ready = selected !== null || searchedQuery === key;
   const exactMatches = ready ? results.filter((org) => normalizeFirmName(org.name) === key) : [];
@@ -166,12 +168,14 @@ export function ScenarioA({ initialIntent, callbackUrl = '/projects/new', member
         </div>)}
       </section> : null}
       <Link className="auth-submit" href="/auth/org-setup?add=1">Join or create another firm</Link>
+      <Link className="underline underline-offset-4" href="/onboarding/workspace">Import from your website</Link>
       <Link className="underline underline-offset-4" href="/settings">Manage firm access</Link>
     </>
   );
 
   if (existingOnly) return (
     <>
+      {preparingWorkspace ? <SetupProgress step={2} /> : null}
       <h1 className="folio-h2">Choose your firm</h1>
       <p className="folio-body text-folio-text-secondary">Where does this work belong?</p>
       {accountStatus}
@@ -185,20 +189,24 @@ export function ScenarioA({ initialIntent, callbackUrl = '/projects/new', member
 
   if (requested) return (
     <>
+      {preparingWorkspace ? <SetupProgress step={2} /> : null}
       <h1 className="folio-h2">{needsAdmin ? 'Request saved' : 'Request sent'}</h1>
       <p className="folio-body text-folio-text-secondary">{needsAdmin ? `${requested} doesn’t have an active admin yet. Your request is saved. Contact Folio to arrange access to its existing page.` : `Your request to join ${requested} is awaiting approval from a firm admin. You can browse Folio while you wait.`}</p>
       {needsAdmin ? <a href={`mailto:support@folioad.com?subject=${encodeURIComponent(`Firm access: ${requested}`)}`} className="underline underline-offset-4">Contact Folio about this firm</a> : notificationIssue ? <p role="status" className="folio-meta text-folio-text-secondary">Your request is saved, but we couldn’t send every admin notification. You can contact your firm’s admin directly or check the request in Settings.</p> : null}
       <Link className="auth-submit" href="/">Explore Folio</Link>
       <Link className="underline underline-offset-4" href="/settings">View your access requests</Link>
+      {preparingWorkspace ? <p className="folio-body text-folio-text-secondary">Once your admin approves access, <Link className="underline" href={match ? firmWorkspaceDestination(match, destination) : destination}>return here to prepare your workspace</Link>. We can then import your website and save project drafts.</p> : null}
     </>
   );
 
   return (
     <>
+      {preparingWorkspace ? <SetupProgress step={2} /> : null}
       <div>
         <p className="folio-meta text-folio-text-secondary mb-2">Professional setup</p>
         <h1 className="folio-h2">{memberships.length ? 'Add another firm' : 'What is your firm called?'}</h1>
-        <p className="folio-body text-folio-text-secondary mt-3">Find your firm or create its page to post on Folio. Your personal account stays with you.</p>
+        <p className="folio-body text-folio-text-secondary mt-3">Your personal account is ready. Posting on Folio requires a business. Find yours below, or create its page if it isn’t here yet.</p>
+        {preparingWorkspace ? <p className="folio-meta text-folio-text-secondary mt-3">Next: let Folio prepare your business details, bio, and project drafts from your website.</p> : null}
       </div>
       {accountStatus}
       <form onSubmit={submit} className="space-y-5">

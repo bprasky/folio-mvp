@@ -1,7 +1,8 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useId } from "react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { signOut, useSession } from "next-auth/react";
 import { UserAvatarWithBadge } from "./UserAvatarWithBadge";
 import {
@@ -16,11 +17,21 @@ import {
   Building2,
   Briefcase,
   Check,
-  Sparkles
+  Sparkles,
+  Plus,
+  FileText,
+  Package,
+  FolderPlus
 } from "lucide-react";
 import SupportModal from "../SupportModal";
 import { normalizeRole } from "@/lib/permissions";
 import type { NavigationWorkspace } from "./useNavigationWorkspace";
+import { projectEntryHref } from "@/lib/onboarding/professional-entry";
+import { CreateCollaborationModal } from "@/components/collaboration/CreateCollaborationModal";
+import { NotificationBell } from "./NotificationBell";
+import { InboxButton } from "./InboxButton";
+import { BadgeButton } from "./BadgeButton";
+import styles from "./navigation.module.css";
 
 export function UserMenu({ workspaceData, signedOutHref = "/auth/signin" }: {
   workspaceData: NavigationWorkspace | null;
@@ -30,8 +41,26 @@ export function UserMenu({ workspaceData, signedOutHref = "/auth/signin" }: {
   const [isOpen, setIsOpen] = useState(false);
   const [isSupportModalOpen, setIsSupportModalOpen] = useState(false);
   const [isWorkspaceDropdownOpen, setIsWorkspaceDropdownOpen] = useState(false);
+  const [showCollaborationModal, setShowCollaborationModal] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
   const workspaceRef = useRef<HTMLDivElement>(null);
+  const buttonRef = useRef<HTMLButtonElement>(null);
+  const panelId = useId();
+  const pathname = usePathname();
+
+  useEffect(() => { setIsOpen(false); setIsWorkspaceDropdownOpen(false); }, [pathname, session?.user?.id]);
+  useEffect(() => {
+    if (!isOpen) return;
+    const onEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        setIsOpen(false);
+        setIsWorkspaceDropdownOpen(false);
+        buttonRef.current?.focus();
+      }
+    };
+    document.addEventListener("keydown", onEscape);
+    return () => document.removeEventListener("keydown", onEscape);
+  }, [isOpen]);
 
   // Close menu when clicking outside
   useEffect(() => {
@@ -66,6 +95,12 @@ export function UserMenu({ workspaceData, signedOutHref = "/auth/signin" }: {
     }
   };
 
+  const closeForDialog = () => {
+    setIsOpen(false);
+    // Dialogs return focus here instead of to an item in the hidden menu.
+    buttonRef.current?.focus();
+  };
+
   if (status === "loading") {
     return (
       <div className="h-10 w-10 rounded-full bg-surface-ground animate-pulse" />
@@ -76,11 +111,9 @@ export function UserMenu({ workspaceData, signedOutHref = "/auth/signin" }: {
     return (
       <Link
         href={signedOutHref}
-        aria-label="Sign in / Sign up"
-        className="shrink-0 min-h-11 px-3 sm:px-4 py-2 text-xs sm:text-sm leading-tight font-medium text-[var(--surface-canvas)] bg-[var(--text-primary)] rounded-full hover:opacity-90 transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2"
+        className={styles.login}
       >
-        <span className="block sm:inline whitespace-nowrap">Sign in<span className="hidden sm:inline"> / </span></span>
-        <span className="block sm:inline whitespace-nowrap">Sign up</span>
+        Log in
       </Link>
     );
   }
@@ -90,7 +123,7 @@ export function UserMenu({ workspaceData, signedOutHref = "/auth/signin" }: {
   const isAdmin = role === "ADMIN";
 
   // Determine if user has any orgs
-  const hasOrgs = workspaceData && workspaceData.organizations.length > 0;
+  const hasOrgs = workspaceData?.user.id === user.id && workspaceData.organizations.length > 0;
   const currentOrg = workspaceData?.operatingAsOrg;
   const operatingAsOrgId = workspaceData?.operatingAsOrgId;
 
@@ -108,6 +141,9 @@ export function UserMenu({ workspaceData, signedOutHref = "/auth/signin" }: {
     session.user.operatingAsOrg?.type === "VENDOR" ||
     session.user.operatingAsOrg?.type === "MANUFACTURER" ||
     session.user.operatingAsOrg?.type === "SHOWROOM";
+  const createsVendorContent = currentOrg?.type
+    ? ["VENDOR", "MANUFACTURER", "SHOWROOM"].includes(currentOrg.type)
+    : role === "VENDOR";
 
   // Get profile link based on role and org membership
   const getProfileLink = () => {
@@ -130,25 +166,29 @@ export function UserMenu({ workspaceData, signedOutHref = "/auth/signin" }: {
   };
 
   return (
-    <div ref={menuRef} className="relative">
+    <div key={user.id} ref={menuRef} className="relative">
       <button
+        ref={buttonRef}
+        type="button"
         onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center gap-2 rounded-full p-1 hover:bg-surface-ground transition-colors"
+        className={styles.accountButton}
         aria-label="User menu"
         aria-expanded={isOpen}
+        aria-controls={panelId}
       >
         <UserAvatarWithBadge
           src={user.image}
           alt={user.name || "User"}
-          size="sm"
-          firmLogo={session.user.operatingAsOrg?.logo}
+          size="md"
         />
-        <ChevronDown className={`h-4 w-4 text-folio-text-secondary transition-transform ${isOpen ? 'rotate-180' : ''}`} />
       </button>
 
-      {isOpen && (
+      {/* Keep portal-backed badge dialogs mounted when the menu closes. */}
         <div
-          className="absolute right-0 mt-2 w-72 rounded-xl py-2 z-50 glass-overlay"
+          id={panelId}
+          hidden={!isOpen}
+          aria-label="Account menu"
+          className={styles.popover}
         >
           {/* User info header */}
           <div className="px-4 py-3 border-b border-folio-border-subtle">
@@ -170,7 +210,15 @@ export function UserMenu({ workspaceData, signedOutHref = "/auth/signin" }: {
             </div>
           </div>
 
-          {/* Primary actions: My Profile, My Projects, Firm */}
+          {hasOrgs && <div className={`${styles.mobileOnly} flex-col py-2 border-b border-folio-border-subtle`}>
+            {createsVendorContent ? <>
+              <button type="button" className={styles.menuAction} onClick={() => { closeForDialog(); setShowCollaborationModal(true); }}><FileText className="h-4 w-4" />Collaboration Story</button>
+              <MenuLink href="/vendor/products/new" icon={<Package className="h-4 w-4" />} onClick={() => setIsOpen(false)}>Add Product</MenuLink>
+              <MenuLink href="/vendor/create-project" icon={<FolderPlus className="h-4 w-4" />} onClick={() => setIsOpen(false)}>Project Handoff</MenuLink>
+            </> : <MenuLink href={projectEntryHref({ operatingAsOrgId })} icon={<Plus className="h-4 w-4" />} onClick={() => setIsOpen(false)}>Create Project</MenuLink>}
+          </div>}
+
+          {/* Primary account actions */}
           <div className="py-2 border-b border-folio-border-subtle">
             <MenuLink
               href={getProfileLink()}
@@ -180,13 +228,13 @@ export function UserMenu({ workspaceData, signedOutHref = "/auth/signin" }: {
               My Profile
             </MenuLink>
 
-            <MenuLink
+            {hasOrgs && <MenuLink
               href="/designer/projects"
               icon={<Folder className="h-4 w-4" />}
               onClick={() => setIsOpen(false)}
             >
               My Projects
-            </MenuLink>
+            </MenuLink>}
 
             {/* Firm row: Show firm name or "Go Professional" */}
             {hasOrgs ? (
@@ -291,6 +339,10 @@ export function UserMenu({ workspaceData, signedOutHref = "/auth/signin" }: {
               </MenuLink>
             )}
 
+            <NotificationBell onNavigate={() => setIsOpen(false)} />
+            <InboxButton onNavigate={() => setIsOpen(false)} />
+            <BadgeButton onOpen={closeForDialog} />
+
             <MenuLink
               href="/settings"
               icon={<Settings className="h-4 w-4" />}
@@ -301,10 +353,10 @@ export function UserMenu({ workspaceData, signedOutHref = "/auth/signin" }: {
 
             <button
               onClick={() => {
-                setIsOpen(false);
+                closeForDialog();
                 setIsSupportModalOpen(true);
               }}
-              className="flex w-full items-center gap-3 px-4 py-2 folio-ui text-folio-text-primary hover:bg-surface-ground transition-colors"
+              className={styles.menuAction}
             >
               <Headphones className="h-4 w-4" />
               Support
@@ -317,14 +369,15 @@ export function UserMenu({ workspaceData, signedOutHref = "/auth/signin" }: {
                   window.location.replace("/auth/signin");
                 });
               }}
-              className="flex w-full items-center gap-3 px-4 py-2 folio-ui text-folio-text-primary hover:bg-surface-ground transition-colors"
+              className={styles.menuAction}
             >
               <LogOut className="h-4 w-4" />
               Sign Out
             </button>
           </div>
         </div>
-      )}
+
+      <CreateCollaborationModal open={showCollaborationModal} onOpenChange={setShowCollaborationModal} />
 
       {/* Support Modal */}
       <SupportModal
@@ -347,7 +400,7 @@ function MenuLink({ href, icon, children, onClick }: MenuLinkProps) {
     <Link
       href={href}
       onClick={onClick}
-      className="flex items-center gap-3 px-4 py-2 folio-ui text-folio-text-primary hover:bg-surface-ground transition-colors"
+      className={styles.menuAction}
     >
       {icon}
       {children}

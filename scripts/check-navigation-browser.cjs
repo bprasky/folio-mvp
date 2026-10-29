@@ -26,7 +26,7 @@ createRoot(document.getElementById('root')).render(<>
   {location.pathname === '/auth/signup'
     ? <div className="auth-shell"><Topbar rightCta={{label:'Sign in',href:'/auth/signin?callbackUrl=%2Fprojects%2Fnew'}}/></div>
     : <EditorialMasthead/>}
-  <main style={{padding:24}}>Navigation verification fixture</main>
+  <main style={{padding:24,minHeight:1600}}>Navigation verification fixture</main>
 </>);`;
 
 const authSource = `
@@ -46,7 +46,7 @@ async function build() {
       b.onResolve({ filter: /^(next-auth\/react|next\/navigation)$/ }, args => ({ path: args.path, namespace: 'fixture' }));
       b.onLoad({ filter: /.*/, namespace: 'fixture' }, args => ({ loader: 'jsx', resolveDir: root, contents: args.path === 'next-auth/react' ? authSource :
         `export const usePathname=()=>location.pathname;export const useRouter=()=>({push:url=>location.assign(url),replace:url=>location.replace(url),refresh:()=>{}});export const useSearchParams=()=>new URLSearchParams(location.search);` }));
-      b.onResolve({ filter: /(^|\/)(SupportModal|FolioBadgeModal|CreateCollaborationModal)$/ }, args => ({ path: args.path, namespace: 'modal' }));
+      b.onResolve({ filter: /(^|\/)(SupportModal)$/ }, args => ({ path: args.path, namespace: 'modal' }));
       b.onLoad({ filter: /.*/, namespace: 'modal' }, () => ({ contents: 'export const CreateCollaborationModal=()=>null;export default ()=>null;' }));
       if (revision) b.onLoad({ filter: /\.(tsx?|css)$/ }, args => {
         const relative = path.relative(root, args.path).replace(/\\/g, '/');
@@ -57,7 +57,7 @@ async function build() {
   });
   const globals = fs.readFileSync(path.join(root, 'src/app/globals.css'), 'utf8').replace(/@import\s+"([^"]+)";/g, (_, file) => file.startsWith('../styles/') ? fs.readFileSync(path.resolve(root, 'src/app', file), 'utf8') : '');
   const config = require(path.join(root, 'tailwind.config.js'));
-  config.content = [path.join(root, 'src/components/navigation/**/*.tsx'), path.join(root, 'src/app/auth/**/*.tsx')];
+  config.content = [path.join(root, 'src/components/navigation/**/*.tsx'), path.join(root, 'src/components/badge/**/*.tsx'), path.join(root, 'src/components/collaboration/**/*.tsx'), path.join(root, 'src/components/ui/**/*.tsx'), path.join(root, 'src/app/auth/**/*.tsx')];
   let css = (await postcss([tailwind(config)]).process(globals, { from: path.join(root, 'src/app/globals.css') })).css;
   let faces = '', heading, body;
   for (const file of fs.readdirSync(path.join(assets, '.next/static/css')).filter(file => file.endsWith('.css'))) {
@@ -126,6 +126,7 @@ async function main() {
   const visibleText = async () => page.evaluate(() => [...document.querySelectorAll('header a,header button')].filter(el => el.getClientRects().length).map(el => el.textContent.replace(/\s+/g, ' ').trim()));
   const hasCreate = async () => (await visibleText()).some(text => /^(Create|Create Project|Collaboration Story|Add Product|Project Handoff)$/.test(text));
   const mobileToggle = async () => page.click('button[aria-label="Toggle menu"]');
+  const accountToggle = async () => page.click('button[aria-label="User menu"]');
   const assertNoCreate = async label => assert.equal(await hasCreate(), false, label);
   const flushHeld = async () => {
     for (const { request, reply } of held.splice(0)) {
@@ -147,7 +148,7 @@ async function main() {
         const rect = brand.getBoundingClientRect();
         const controls = [...document.querySelectorAll('header a,header button,header input')].filter(visible);
         const overlapping = controls.filter(el => el !== brand && !el.contains(brand) && !brand.contains(el)).map(el => ({ label: el.getAttribute('aria-label') || el.textContent.trim(), rect: el.getBoundingClientRect() })).filter(({ rect: other }) => other.left < rect.right && other.right > rect.left && other.top < rect.bottom && other.bottom > rect.top).map(el => el.label);
-        const accounts = controls.filter(el => /Sign in/.test(el.textContent) && /Sign up/.test(el.textContent));
+        const accounts = controls.filter(el => el.textContent.trim() === 'Log in');
         const search = controls.find(el => el.tagName === 'INPUT' || /Search/.test(el.getAttribute('aria-label') || ''));
         return { center: rect.left + rect.width / 2, viewport: innerWidth, overflow: document.documentElement.scrollWidth, href: brand.getAttribute('href'), overlapping, accounts: accounts.length, searchBeforeAccount: !!search && !!accounts[0] && search.getBoundingClientRect().right <= accounts[0].getBoundingClientRect().left + 1 };
       });
@@ -155,12 +156,33 @@ async function main() {
       assert.ok(Math.abs(layout.center - width / 2) <= 1, `FOLIO must remain centered: ${JSON.stringify(layout)}`);
       assert.ok(layout.overflow <= width, `No horizontal overflow: ${JSON.stringify(layout)}`);
       assert.deepEqual(layout.overlapping, [], `Controls must not overlap FOLIO at ${width}px`);
-      assert.equal(layout.accounts, 1, 'One combined sign-in/signup action.');
+      assert.equal(layout.accounts, 1, 'One Log in action for account access.');
       assert.equal(layout.searchBeforeAccount, true, 'Search immediately precedes account action.');
       assert.ok(!(await visibleText()).some(text => /^(Magazine|For Professionals)$/i.test(text)));
       await page.screenshot({ path: path.join(out, `anonymous-${width}.png`) });
       if (width < 768) { await mobileToggle(); await assertNoCreate('Signed-out mobile menu must not offer Create.'); assert.ok(!(await visibleText()).some(text => /^(Magazine|For Professionals)$/i.test(text))); }
       results.push(`anonymous navigation layout ${width}px`);
+    }
+
+    // The visible bar compacts without shifting the document underneath it.
+    for (const width of [390, 1440]) {
+      await page.setViewport({ width, height: 900 }); await go('/');
+      const resting = await page.evaluate(() => {
+        const header = document.querySelector('header');
+        return { logo: parseFloat(getComputedStyle(document.querySelector('[data-folio-brand-target]')).fontSize), contentTop: document.querySelector('main').getBoundingClientRect().top + scrollY, tint: getComputedStyle(header.firstElementChild, '::before').opacity, border: getComputedStyle(header).borderBottomWidth };
+      });
+      assert.equal(resting.logo, width < 768 ? 33 : 46);
+      assert.equal(resting.tint, '0', 'Header is transparent at the top.');
+      assert.equal(resting.border, '0px', 'Header has no divider line.');
+      await page.evaluate(() => scrollTo(0, 160));
+      await page.waitForFunction(expected => parseFloat(getComputedStyle(document.querySelector('[data-folio-brand-target]')).fontSize) === expected, {}, width < 768 ? 25 : 30);
+      const compact = await page.evaluate(() => ({ contentTop: document.querySelector('main').getBoundingClientRect().top + scrollY, tint: getComputedStyle(document.querySelector('header').firstElementChild, '::before').opacity }));
+      assert.equal(compact.contentTop, resting.contentTop, 'Shrinking the logo cannot move page content.');
+      assert.equal(compact.tint, '1');
+      await page.screenshot({ path: path.join(out, `scrolled-${width}.png`) });
+      await page.evaluate(() => scrollTo(0, 0));
+      await page.waitForFunction(expected => parseFloat(getComputedStyle(document.querySelector('[data-folio-brand-target]')).fontSize) === expected, {}, resting.logo);
+      results.push(`transparent masthead and stable scroll compaction ${width}px`);
     }
 
     await page.setViewport({ width: 1440, height: 900 });
@@ -176,7 +198,8 @@ async function main() {
       const upgrade = await page.$eval('a[href="/professionals"]', el => el.textContent.trim());
       assert.equal(upgrade, 'Go Professional');
       await page.setViewport({ width: 390, height: 844 });
-      await go('/'); await mobileToggle(); await assertNoCreate(`${label} on mobile`);
+      await go('/'); await accountToggle(); await assertNoCreate(`${label} on mobile`);
+      assert.equal(await page.$eval('a[href="/professionals"]', el => el.getClientRects().length > 0), true);
       await page.setViewport({ width: 1440, height: 900 });
       results.push(label);
     }
@@ -204,7 +227,11 @@ async function main() {
         assert.ok(Math.abs(overlap.center - width / 2) <= 1, JSON.stringify(overlap));
         assert.ok(overlap.overflow <= width, JSON.stringify(overlap));
         assert.deepEqual(overlap.labels, [], `Authenticated controls must not overlap logo at ${width}px`);
-        assert.equal(await page.$eval('[aria-label="Notifications"]', el => el.getClientRects().length > 0), true, `Notifications remain available at ${width}px`);
+        assert.equal(await page.$eval('[aria-label="Notifications"]', el => el.getClientRects().length > 0), false, 'Utilities stay out of the top bar.');
+        await accountToggle();
+        assert.equal(await page.$eval('[aria-label="Notifications"]', el => el.getClientRects().length > 0), true, `Notifications remain available in the account menu at ${width}px`);
+        assert.equal(await page.$eval('a[href="/inbox"]', el => el.getClientRects().length > 0), true);
+        assert.equal(await page.$eval('[aria-label="Open my Folio Badge"]', el => el.getClientRects().length > 0), true);
         await page.click('[aria-label="Notifications"]');
         const notificationBounds = await page.$eval('[aria-label="Notifications"]', button => {
           const r = button.nextElementSibling.getBoundingClientRect(); return { left: r.left, right: r.right };
@@ -212,7 +239,10 @@ async function main() {
         assert.ok(notificationBounds.left >= 0 && notificationBounds.right <= width, `Notification popup remains in the viewport: ${JSON.stringify(notificationBounds)}`);
         await page.click('[aria-label="Notifications"]');
         await page.screenshot({ path: path.join(out, `${personal ? 'personal-workspace' : 'firm-member'}-${width}.png`) });
-        if (width < 768) { await mobileToggle(); assert.equal(await hasCreate(), true, 'Active member mobile menu must offer Create.'); }
+        if (width < 768) assert.equal(await hasCreate(), true, 'Active member account menu must offer Create on mobile.');
+        await page.keyboard.press('Escape');
+        assert.equal(await page.$eval('[aria-label="Account menu"]', el => el.hidden), true);
+        assert.equal(await page.$eval('[aria-label="User menu"]', el => el === document.activeElement), true, 'Escape returns focus to account control.');
       }
       results.push(personal ? 'member using personal workspace reaches chooser' : 'active firm member reaches upload');
     }
@@ -228,8 +258,26 @@ async function main() {
     });
     assert.ok(createBounds.left >= 0 && createBounds.right <= 768, `Vendor Create popup remains in the viewport: ${JSON.stringify(createBounds)}`);
     await page.screenshot({ path: path.join(out, 'vendor-create-768.png') });
+    await page.keyboard.press('Escape');
+    await page.setViewport({ width: 390, height: 844 });
+    await go('/'); await accountToggle();
+    await page.$$eval('[aria-label="Account menu"] button', buttons => buttons.find(button => button.textContent.trim() === 'Collaboration Story').click());
+    await page.waitForSelector('[role="dialog"]', { visible: true });
+    assert.match(await page.$eval('[role="dialog"]', el => el.textContent), /New Collaboration Story/);
+    assert.equal(await page.$eval('[aria-label="Account menu"]', el => el.hidden), true, 'Mobile Create dialog survives closing the account menu.');
+    await page.keyboard.press('Escape');
+    await page.waitForSelector('[role="dialog"]', { hidden: true });
+    await page.waitForFunction(() => document.activeElement?.getAttribute('aria-label') === 'User menu');
+    await accountToggle();
+    await page.click('[aria-label="Open my Folio Badge"]');
+    await page.waitForSelector('[role="dialog"]', { visible: true });
+    assert.equal(await page.$eval('[aria-label="Account menu"]', el => el.hidden), true, 'Badge dialog survives closing the account menu.');
+    await page.keyboard.press('Escape');
+    await page.waitForSelector('[role="dialog"]', { hidden: true });
+    await page.waitForFunction(() => document.activeElement?.getAttribute('aria-label') === 'User menu');
     await page.setViewport({ width: 1440, height: 900 });
     results.push('vendor member retains product and collaboration actions');
+    results.push('mobile collaboration and badge dialogs remain usable outside account dropdown');
 
     // Hold the first account's request, change account, then release the obsolete response.
     const previousPerson = { ...member, id: 'previous-person' };
@@ -260,7 +308,7 @@ async function main() {
     results.push('search submits the entered query');
     await go('/auth/signup');
     assert.ok(!(await visibleText()).some(text => /^(Magazine|For Professionals)$/i.test(text)));
-    const authHref = await page.$$eval('header a', links => links.find(el => /Sign in/.test(el.textContent))?.getAttribute('href'));
+    const authHref = await page.$$eval('header a', links => links.find(el => el.textContent.trim() === 'Log in')?.getAttribute('href'));
     assert.equal(authHref, '/auth/signin?callbackUrl=%2Fprojects%2Fnew');
     results.push('auth topbar shares navigation and preserves destination');
     assert.deepEqual(errors, [], 'No browser runtime errors.');

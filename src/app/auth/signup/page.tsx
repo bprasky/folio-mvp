@@ -2,9 +2,10 @@
 
 import React, { useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { safeCallbackPath, professionalSetupHref } from '@/lib/onboarding/professional-entry';
+import { safeCallbackPath, signupDestination } from '@/lib/onboarding/professional-entry';
+import { SetupProgress } from '@/components/onboarding/SetupProgress';
 import Link from 'next/link';
-import { signIn, useSession } from 'next-auth/react';
+import { getProviders, signIn, useSession } from 'next-auth/react';
 
 import { Topbar } from '../_components/Topbar';
 import { PhotoPanel } from '../_components/PhotoPanel';
@@ -19,8 +20,6 @@ import '../_components/auth.css';
 // Individual-First Architecture: All users sign up as individuals.
 // Org membership (designer/vendor) is additive and handled separately.
 
-const POST_SIGNUP_REDIRECT_BROWSING = '/onboarding/diagnostic';
-
 type UserIntent = 'browsing' | 'designer' | 'architect' | 'builder' | 'vendor';
 
 const INTENT_OPTIONS: { value: UserIntent; label: string }[] = [
@@ -31,22 +30,17 @@ const INTENT_OPTIONS: { value: UserIntent; label: string }[] = [
   { value: 'vendor', label: 'Vendor' },
 ];
 
-function intentToRedirect(intent: UserIntent, startProject: boolean): string {
-  if (intent === 'browsing') return POST_SIGNUP_REDIRECT_BROWSING;
-  return professionalSetupHref(intent, startProject ? '/projects/new' : undefined);
-}
-
 function SignupForm() {
   const router = useRouter();
   const params = useSearchParams();
   const { status } = useSession();
   const requestedCallback = params.get('callbackUrl') ?? params.get('callback');
-  const callbackUrl = requestedCallback ? safeCallbackPath(requestedCallback) : null;
   const [intent, setIntent] = useState<UserIntent>(() => {
-    const type = params.get('type');
+    const callback = new URL(safeCallbackPath(requestedCallback), 'https://folio.invalid');
+    const type = params.get('type') || (callback.pathname === '/auth/org-setup' ? callback.searchParams.get('type') || 'designer' : null);
     return INTENT_OPTIONS.some(option => option.value === type) ? type as UserIntent : 'browsing';
   });
-  const destination = callbackUrl ?? intentToRedirect(intent, params.get('next') === 'project');
+  const destination = signupDestination(intent, requestedCallback, params.get('next') === 'project');
   const signinHref = '/auth/signin?callbackUrl=' + encodeURIComponent(destination);
   useEffect(() => {
     if (status === 'authenticated') router.replace(destination);
@@ -59,6 +53,17 @@ function SignupForm() {
   const [isLoading, setIsLoading] = useState(false);
   const [message, setMessage] = useState('');
   const [messageType, setMessageType] = useState<'error' | 'success' | null>(null);
+  const [providers, setProviders] = useState({ google: false, apple: false });
+
+  useEffect(() => {
+    let active = true;
+    getProviders().then((available) => {
+      if (active) setProviders({ google: !!available?.google, apple: !!available?.apple });
+    }).catch(() => {
+      // Email signup remains available if provider discovery fails.
+    });
+    return () => { active = false; };
+  }, []);
 
   const canSubmit =
     firstName.trim().length > 0 &&
@@ -141,10 +146,19 @@ function SignupForm() {
     }
   };
 
-  const handleGoogle = () =>
-    signIn('google', { callbackUrl: destination });
-  const handleApple = () =>
-    signIn('apple', { callbackUrl: destination });
+  const handleSso = async (provider: 'google' | 'apple') => {
+    setIsLoading(true);
+    setMessage('');
+    setMessageType(null);
+    try {
+      await signIn(provider, { callbackUrl: destination });
+    } catch {
+      setMessage('Unable to start sign-in. Please try again or sign up with email.');
+      setMessageType('error');
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   return (
     <div className="auth-shell">
@@ -163,10 +177,11 @@ function SignupForm() {
           <div className="auth-eyebrow">
             <span className="auth-eyebrow__gold">Sign up</span>
           </div>
-          <h1 className="auth-title">Create your Folio account.</h1>
+          {intent !== 'browsing' || destination.startsWith('/auth/org-setup') ? <SetupProgress step={1} /> : null}
+          <h1 className="auth-title">First, your personal account.</h1>
           <p className="auth-sub">
-            Your account belongs to you. To publish your work, join or create
-            your firm, then bring in your first project.
+            This is your own login. To post and contribute, you’ll next join or create your business.
+            Then we can bring in your website’s details and projects, ready for you to review.
           </p>
 
           <fieldset className="auth-intent">
@@ -190,9 +205,18 @@ function SignupForm() {
             </div>
           </fieldset>
 
-          <SsoRow onGoogleClick={handleGoogle} onAppleClick={handleApple} disabled={isLoading} />
-
-          <AuthDivider />
+          {(providers.google || providers.apple) && (
+            <>
+              <SsoRow
+                showGoogle={providers.google}
+                showApple={providers.apple}
+                onGoogleClick={() => handleSso('google')}
+                onAppleClick={() => handleSso('apple')}
+                disabled={isLoading}
+              />
+              <AuthDivider />
+            </>
+          )}
 
           <form className="auth-form" onSubmit={handleSubmit} noValidate>
             <div className="auth-row-2">
@@ -275,7 +299,7 @@ function SignupForm() {
             ) : null}
 
             <button type="submit" className="auth-submit" disabled={!canSubmit}>
-              {isLoading ? 'Creating your account…' : 'Sign up'}
+              {isLoading ? 'Creating your account…' : intent === 'browsing' && !destination.startsWith('/auth/org-setup') ? 'Create my account' : 'Create account & continue'}
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
                 <path d="M5 12h14" />
                 <path d="m13 6 6 6-6 6" />

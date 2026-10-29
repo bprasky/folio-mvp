@@ -26,7 +26,7 @@ async function main() {
       import {HomepageHeroXL} from './src/components/homepage/HomepageHeroXL';
       function App(){const [state,setState]=useState({loading:true,route:'/',nested:false});window.fixture=(next)=>{history.replaceState({},'',next.route||state.route);setState(s=>({...s,...next}))};
         const Component=state.route.startsWith('/feed')?Feed:state.route==='/events'?Events:state.route.startsWith('/photographer/')?Photographer:Home;
-        return <LoadingBrandProvider><Layout>{state.loading?<Component/>:<div data-ready><section className="pt-4 sm:pt-8"><HomepageHeroXL hero={{postSlug:'fixture',heroImageUrl:'/fixture.jpg',title:'A considered home',eyebrow:'At home',designerName:'Studio'}}/></section><button id="ready-action" onClick={()=>window.clicked=true}>Ready action</button></div>}{state.nested&&<LoadingSurface label="Loading section"><div style={{height:100}}/></LoadingSurface>}</Layout></LoadingBrandProvider>;
+        return <LoadingBrandProvider><Layout>{state.loading?<Component/>:<div data-ready><section className="pt-2"><HomepageHeroXL hero={{postSlug:'fixture',heroImageUrl:'/fixture.jpg',title:'A considered home',eyebrow:'At home',designerName:'Studio'}}/></section><button id="ready-action" onClick={()=>window.clicked=true}>Ready action</button></div>}{state.nested&&<LoadingSurface label="Loading section"><div style={{height:100}}/></LoadingSurface>}</Layout></LoadingBrandProvider>;
       }createRoot(document.getElementById('root')).render(<StrictMode><App/></StrictMode>);
     `, resolveDir: root, loader: 'tsx' },
     outfile: path.join(out, 'bundle.js'), bundle: true, platform: 'browser', jsx: 'automatic',
@@ -58,7 +58,7 @@ async function main() {
   }
   css+=fonts+`\n:root{--font-headline:${heading};--font-body:${body}}`;
   fs.writeFileSync(path.join(out,'globals.css'),css);
-  const html='<!doctype html><html><head><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="stylesheet" href="/globals.css"></head><body><div id="root"></div><script src="/bundle.js"></script></body></html>';
+  const html='<!doctype html><html><head><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="stylesheet" href="/globals.css"><link rel="stylesheet" href="/bundle.css"></head><body><div id="root"></div><script src="/bundle.js"></script></body></html>';
   const server=http.createServer((req,res)=>{
     const name=new URL(req.url,'http://localhost').pathname;
     if(name.startsWith('/api/')){res.setHeader('Content-Type','application/json');return res.end('{"notifications":[],"unreadCount":0}');}
