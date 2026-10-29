@@ -18,6 +18,7 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { TIER_CONFIGS, TIER_FEATURES, calculateMonthlyROI } from '@/lib/pricing/tiers';
 import { toast } from 'sonner';
+import { DESIGNER_EARLY_ACCESS_ENABLED } from '@/lib/pricing/early-access';
 
 const PROFESSIONAL_BENEFITS = [
   {
@@ -60,6 +61,7 @@ export default function DesignerUpgradePage() {
 
   // Fetch org details if we have an orgId
   useEffect(() => {
+    if (DESIGNER_EARLY_ACCESS_ENABLED) return;
     if (orgId) {
       fetch(`/api/orgs/${orgId}`)
         .then(res => res.json())
@@ -105,6 +107,16 @@ export default function DesignerUpgradePage() {
       setIsProcessing(false);
     }
   };
+
+  if (DESIGNER_EARLY_ACCESS_ENABLED) {
+    return (
+      <div className="mx-auto max-w-2xl px-6 py-16">
+        <h1 className="folio-h1">Early designer access is complimentary</h1>
+        <p className="folio-body mt-5">No payment or subscription upgrade is required during this first round.</p>
+        <Link href="/projects" className="folio-ui mt-8 inline-flex min-h-11 items-center rounded-full bg-folio-text-primary px-6 py-3 text-surface-canvas">Back to your projects</Link>
+      </div>
+    );
+  }
 
   const price = isYearly
     ? proConfig.pricing?.annualMonthlyEquivalent || 0

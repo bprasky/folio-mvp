@@ -3,6 +3,7 @@
 import { Sparkles, ChevronRight } from 'lucide-react';
 import Link from 'next/link';
 import { cn } from '@/lib/utils';
+import { DESIGNER_EARLY_ACCESS_ENABLED } from '@/lib/pricing/early-access';
 
 interface UpgradePromptProps {
   /** Optional className */
@@ -20,6 +21,7 @@ interface UpgradePromptProps {
  * Uses Folio neumorphic ridge-card styling.
  */
 export function UpgradePrompt({ className, variant = 'subtle' }: UpgradePromptProps) {
+  if (DESIGNER_EARLY_ACCESS_ENABLED) return null;
   if (variant === 'subtle') {
     return (
       <Link

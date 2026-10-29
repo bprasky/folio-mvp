@@ -83,6 +83,53 @@ async function checkPolicy(enabled) {
   user = { role: 'DESIGNER', subscriptionTier: 'FREE', subscriptionExpiresAt: null };
   session = { user: { id: 'designer' } };
   assert.equal((await route.GET(request)).body.hasAccess, enabled);
+
+  let capabilitySession = { user: { role: 'DESIGNER', operatingAsOrgId: 'firm', operatingAsOrg: { name: 'Firm', status: 'CLAIMED' } } };
+  const capabilities = load('src/hooks/useUserCapabilities.ts', {
+    react: { useMemo: (callback) => callback() },
+    'next-auth/react': { useSession: () => ({ data: capabilitySession, status: 'authenticated' }) },
+    '@/lib/permissions': { normalizeRole: (role) => role },
+    '@/lib/pricing/early-access': accessPolicy,
+  });
+  assert.equal(capabilities.useUserCapabilities().canGenerateImages, enabled);
+  assert.equal(capabilities.useUserCapabilities().isPaidDesigner, false, 'Complimentary access is not a paid account');
+  capabilitySession = null;
+  assert.equal(capabilities.useUserCapabilities().canGenerateImages, false);
+
+  let imageSession = { user: { id: 'designer', role: 'DESIGNER' } };
+  let imageAccess = { ok: true };
+  let imageOrg = { id: 'firm', type: 'DESIGN_FIRM', status: 'CLAIMED' };
+  let memberships = [{ organizationId: 'firm', isActive: true }];
+  let rateAllowed = true;
+  const imageRoute = load('src/app/api/projects/[id]/rooms/[roomId]/gen-image/route.ts', {
+    'next/server': { NextResponse: { json: (body, options) => ({ body, status: options?.status || 200 }) } },
+    '@/lib/auth': { auth: async () => imageSession },
+    '@/lib/permissions': { assertProjectAccess: async () => imageAccess, getUserOrgMemberships: async () => memberships },
+    '@/lib/pricing/early-access': accessPolicy,
+    '@/lib/prisma': { prisma: { project: { findUnique: async () => ({ designerOrgId: 'firm', designerOrg: imageOrg }) } } },
+    '@/lib/rateLimit': { rateLimit: async () => ({ ok: rateAllowed }) },
+    '@/lib/boards/prompt': {}, '@/lib/ai/imageGen': {}, '@/lib/storage': {},
+    '@/lib/analytics': {}, '@/lib/tagging/resolveSelectionToProduct': {}, '@/lib/products/proposedFinish': {},
+  });
+  const imageRequest = { json: async () => ({ n: 0 }) };
+  const params = { params: { id: 'project', roomId: 'room' } };
+  assert.equal((await imageRoute.POST(imageRequest, params)).status, enabled ? 400 : 403, 'Complimentary firm reaches input validation, with no model invocation');
+  if (enabled) {
+    rateAllowed = false;
+    assert.equal((await imageRoute.POST(imageRequest, params)).status, 429, 'Operational rate protection remains');
+    rateAllowed = true;
+  }
+  memberships = [];
+  assert.equal((await imageRoute.POST(imageRequest, params)).status, 403);
+  memberships = [{ organizationId: 'firm', isActive: true }];
+  imageOrg = { ...imageOrg, type: 'VENDOR' };
+  assert.equal((await imageRoute.POST(imageRequest, params)).status, 403, 'Designer waiver does not grant vendor subscriptions');
+  imageOrg = { ...imageOrg, type: 'DESIGN_FIRM', status: 'UNCLAIMED' };
+  assert.equal((await imageRoute.POST(imageRequest, params)).status, 403);
+  imageAccess = { ok: false, status: 403, reason: 'Forbidden' };
+  assert.equal((await imageRoute.POST(imageRequest, params)).status, 403);
+  imageSession = null;
+  assert.equal((await imageRoute.POST(imageRequest, params)).status, 401);
   console.log(`Designer subscription policy: ${enabled ? 'complimentary access' : 'paid-mode compatibility'} passed`);
 }
 

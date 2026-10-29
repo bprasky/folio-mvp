@@ -3,6 +3,7 @@
 import { useSession } from 'next-auth/react';
 import { useMemo } from 'react';
 import { normalizeRole } from '@/lib/permissions';
+import { DESIGNER_EARLY_ACCESS_ENABLED } from '@/lib/pricing/early-access';
 
 /**
  * User type for the projects page
@@ -187,11 +188,11 @@ function getCapabilitiesForType(userType: UserType, isLoading: boolean, orgInfo:
         canUseAIInterview: true,
         canShareToInstagram: true,
         canHaveDirectoryListing: true,
-        // Cannot do
-        canGenerateImages: false,
+        // Existing designer tools are complimentary during the first round.
+        canGenerateImages: DESIGNER_EARLY_ACCESS_ENABLED,
         canEarnAffiliate: false,
-        hasEnhancedDirectoryListing: false,
-        tagsVisibleOnFeed: false, // Hidden on feed for free
+        hasEnhancedDirectoryListing: DESIGNER_EARLY_ACCESS_ENABLED,
+        tagsVisibleOnFeed: DESIGNER_EARLY_ACCESS_ENABLED,
         // Stats
         showPublishedStat: true,
         showProductsTaggedStat: true,
@@ -246,7 +247,7 @@ function getCapabilitiesForType(userType: UserType, isLoading: boolean, orgInfo:
       };
 
     default:
-      return getCapabilitiesForType('INDIVIDUAL', isLoading);
+      return getCapabilitiesForType('INDIVIDUAL', isLoading, orgInfo);
   }
 }
 
