@@ -66,6 +66,7 @@ function formHarness(file, query = '', providers = {}, failDiscovery = false) {
       signIn: async (...args) => { calls.push(args); },
     },
     '@/lib/onboarding/professional-entry': helper,
+    '@/components/onboarding/SetupProgress': load('src/components/onboarding/SetupProgress.tsx'),
     '../_components/SsoRow': load('src/app/auth/_components/SsoRow.tsx'),
   };
   for (const name of ['Topbar', 'PhotoPanel', 'PageFooter', 'AuthFormField', 'AuthDivider', 'AgreementCheckbox', 'PasswordStrengthMeter']) {
@@ -136,7 +137,10 @@ function find(node, predicate) {
         assert.equal(call[0], provider);
         const destination = new URL(call[1].callbackUrl, 'https://folio.test');
         assert.equal(destination.pathname, '/auth/org-setup');
-        assert.equal(destination.searchParams.get('callbackUrl'), '/projects/new');
+        assert.equal(destination.searchParams.get('type'), 'designer');
+        const workspace = new URL(destination.searchParams.get('callbackUrl'), 'https://folio.test');
+        assert.equal(workspace.pathname, '/onboarding/workspace');
+        assert.equal(workspace.searchParams.get('returnTo'), '/projects/new');
       }
     }
   }
