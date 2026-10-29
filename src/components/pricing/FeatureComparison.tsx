@@ -1,6 +1,7 @@
 'use client';
 
-import { type SubscriptionTierType } from '@/lib/pricing';
+import { Fragment } from 'react';
+import { type SubscriptionTierType } from '@/lib/pricing/tiers';
 
 interface Feature {
   key: string;
@@ -40,8 +41,8 @@ export function FeatureComparison({ featureGroups, tiers }: FeatureComparisonPro
         </thead>
         <tbody>
           {featureGroups.map((group) => (
-            <>
-              <tr key={`group-${group.name}`} className="border-b border-neutral-200">
+            <Fragment key={group.name}>
+              <tr className="border-b border-neutral-200">
                 <td
                   colSpan={tiers.length + 1}
                   className="py-4 font-semibold text-neutral-900 bg-neutral-50"
@@ -94,7 +95,7 @@ export function FeatureComparison({ featureGroups, tiers }: FeatureComparisonPro
                   ))}
                 </tr>
               ))}
-            </>
+            </Fragment>
           ))}
         </tbody>
       </table>

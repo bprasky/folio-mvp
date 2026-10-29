@@ -4,7 +4,8 @@ import { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 import { PricingCard } from '@/components/pricing/PricingCard';
 import { FeatureComparison } from '@/components/pricing/FeatureComparison';
-import { type SubscriptionTierType, type TierConfig, TIER_ORDER } from '@/lib/pricing';
+import { UpcomingArchiveTools } from '@/components/pricing/UpcomingArchiveTools';
+import { type SubscriptionTierType, type TierConfig, PUBLIC_TIER_ORDER } from '@/lib/pricing/tiers';
 
 interface PricingData {
   tiers: TierConfig[];
@@ -55,10 +56,8 @@ export default function PricingPage() {
   }, []);
 
   const handleSelectTier = (tier: SubscriptionTierType) => {
-    if (tier === 'ENTERPRISE') {
-      // Open contact form or redirect to contact page
-      window.location.href = '/contact?subject=enterprise';
-    } else if (tier === 'FREE') {
+    if (!PUBLIC_TIER_ORDER.includes(tier)) return;
+    if (tier === 'FREE') {
       // Redirect to signup
       window.location.href = '/auth/signup';
     } else {
@@ -84,6 +83,13 @@ export default function PricingPage() {
   }
 
   const currentTier = pricingData.currentUserTier ?? (session?.user?.subscriptionTier as SubscriptionTierType);
+  const publicTiers = pricingData.tiers.filter((tier) => PUBLIC_TIER_ORDER.includes(tier.id));
+  const publicFeatureGroups = pricingData.featureGroups.map((group) => ({
+    ...group,
+    features: group.features.filter((feature) => feature.includedIn.some((tier) => PUBLIC_TIER_ORDER.includes(tier))),
+  })).filter((group) => group.features.length > 0);
+  const proTier = pricingData.tiers.find((tier) => tier.id === 'PRO');
+  const studioTier = pricingData.tiers.find((tier) => tier.id === 'STUDIO');
 
   return (
     <div className="min-h-screen bg-neutral-50">
@@ -108,6 +114,10 @@ export default function PricingPage() {
               Monthly
             </span>
             <button
+              type="button"
+              role="switch"
+              aria-label="Annual billing"
+              aria-checked={billingCycle === 'annually'}
               onClick={() =>
                 setBillingCycle(billingCycle === 'monthly' ? 'annually' : 'monthly')
               }
@@ -125,7 +135,7 @@ export default function PricingPage() {
               }`}
             >
               Annually
-              <span className="ml-1 text-green-600 font-medium">Save 17%</span>
+              <span className="ml-1 text-green-600 font-medium">Two months free</span>
             </span>
           </div>
         </div>
@@ -133,8 +143,8 @@ export default function PricingPage() {
 
       {/* Pricing Cards */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-          {pricingData.tiers.map((tier) => (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+          {publicTiers.map((tier) => (
             <PricingCard
               key={tier.id}
               tier={tier}
@@ -144,6 +154,7 @@ export default function PricingPage() {
             />
           ))}
         </div>
+        <div className="mt-10"><UpcomingArchiveTools /></div>
       </div>
 
       {/* Feature Comparison Toggle */}
@@ -176,8 +187,8 @@ export default function PricingPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-16">
           <div className="bg-white rounded-xl border border-neutral-200 p-6">
             <FeatureComparison
-              featureGroups={pricingData.featureGroups}
-              tiers={TIER_ORDER}
+              featureGroups={publicFeatureGroups}
+              tiers={publicTiers.map((tier) => tier.id)}
             />
           </div>
         </div>
@@ -233,8 +244,8 @@ export default function PricingPage() {
         </div>
         <div className="mt-8 text-center">
           <p className="text-neutral-600">
-            Folio Pro at <span className="font-semibold">$39-49/mo</span> delivers more value
-            than tools costing 2-3x as much.
+            Folio Pro {proTier?.pricing ? <>is <span className="font-semibold">${proTier.pricing.monthly}/month</span>. </> : null}
+            Choose annual billing for two months free.
           </p>
         </div>
       </div>
@@ -246,6 +257,12 @@ export default function PricingPage() {
             Frequently asked questions
           </h2>
           <div className="space-y-6">
+            {studioTier?.additionalSeatPricing && (
+              <FaqItem
+                question="How much does it cost to add my team?"
+                answer={`Studio includes ${studioTier.limits.designerSeats} people. Additional licenses are $${studioTier.additionalSeatPricing.monthly} per person per month, or $${studioTier.additionalSeatPricing.annually} per person per year when billed annually.`}
+              />
+            )}
             <FaqItem
               question="How does client collaboration work?"
               answer="Clients are invited viewers, not paying users. With Pro or Studio, you can invite unlimited clients to view moodboards, leave comments and approvals, see tagged products with purchase paths, and track project evolution. The designer pays, the client gets access—just like the industry works."
@@ -264,7 +281,7 @@ export default function PricingPage() {
             />
             <FaqItem
               question="How does annual billing work?"
-              answer="Annual billing gives you a 17% discount compared to monthly. You're billed once per year, and the price is locked in regardless of future increases."
+              answer="Annual billing is paid once per year at the price of ten monthly payments. Additional Studio licenses receive the same two-month discount."
             />
           </div>
         </div>

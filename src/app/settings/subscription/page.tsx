@@ -5,11 +5,12 @@ import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { ArrowLeft, Check } from 'lucide-react';
+import { UpcomingArchiveTools } from '@/components/pricing/UpcomingArchiveTools';
 import {
   type SubscriptionTierType,
   type TierConfig,
   TIER_CONFIGS,
-  TIER_ORDER,
+  PUBLIC_TIER_ORDER,
 } from '@/lib/pricing/tiers';
 
 interface SubscriptionData {
@@ -119,7 +120,7 @@ export default function SubscriptionSettingsPage() {
   const currentTier = planStatus.tier;
   // The dedicated program response is narrower than the generic paid/no-expiry flag.
   const isFoundingDesigner = Boolean(foundingDesigner?.isFoundingDesigner);
-  const otherTiers = TIER_ORDER.filter((tier) => tier !== currentTier && tier !== 'FREE');
+  const otherTiers = PUBLIC_TIER_ORDER.filter((tier) => tier !== currentTier && tier !== 'FREE');
   const expiryDate = planStatus.expiresAt ? new Date(planStatus.expiresAt).toLocaleDateString(undefined, {
     month: 'long', day: 'numeric', year: 'numeric',
   }) : null;
@@ -174,27 +175,20 @@ export default function SubscriptionSettingsPage() {
           </div>
           <dl className="grid gap-x-10 md:grid-cols-2">
             <FeatureItem label="Projects" value={formatLimit(limits.projects)} detail={usage ? `${usage.projects.count} in your account` : undefined} />
-            <FeatureItem label="Designer seats" value={formatLimit(limits.designerSeats)} />
+            <FeatureItem label="People included" value={formatLimit(limits.designerSeats)} />
             <FeatureItem label="Moodboards" value={formatLimit(limits.moodboards)} />
             <FeatureItem label="Clients per project" value={limits.clientsPerProject === 0 ? 'Not included' : formatLimit(limits.clientsPerProject)} />
             <FeatureItem label="AI editorial generations" value={limits.aiEditorialGenerationsPerMonth === null ? 'Unlimited' : limits.aiEditorialGenerationsPerMonth === 0 ? 'Not included' : `${limits.aiEditorialGenerationsPerMonth} / month`} />
             <FeatureItem label="Storage allowance" value={limits.storageGb === -1 ? 'Unlimited' : `${limits.storageGb} GB`} />
           </dl>
+          {config.additionalSeatPricing && (
+            <p className="folio-meta mt-4 text-folio-text-secondary">
+              Additional licenses: ${config.additionalSeatPricing.monthly} per person / month, or ${config.additionalSeatPricing.annually} per person / year billed annually.
+            </p>
+          )}
         </section>
 
-        <section aria-labelledby="studio-archive" className="mt-10 rounded-3xl border border-folio-border-subtle bg-surface-ground p-6 sm:p-8">
-          <p className="folio-meta mb-3 text-folio-text-secondary">Planned for Studio · Not available yet</p>
-          <div className="grid gap-6 md:grid-cols-2 md:gap-10">
-            <div>
-              <h2 id="studio-archive" className="folio-h3">Ask your firm’s archive</h2>
-              <p className="folio-body mt-3 text-folio-text-secondary">Give your team a way to find the details behind past projects. Search room specifications, materials and product selections in plain language.</p>
-            </div>
-            <div className="border-l border-folio-border-strong pl-5">
-              <p className="folio-body">“What flooring did we use in the son’s bathroom in the Smith project?”</p>
-              <p className="folio-meta mt-3 text-folio-text-secondary">The planned experience: an answer linked to the original room or specification, with access controlled by your firm.</p>
-            </div>
-          </div>
-        </section>
+        <div className="mt-10"><UpcomingArchiveTools /></div>
 
         {isFoundingDesigner && foundingDesigner && (
           <section aria-labelledby="founding-membership" className="mt-10 rounded-3xl border border-folio-border-subtle p-6 sm:p-8">
@@ -218,7 +212,7 @@ export default function SubscriptionSettingsPage() {
               <h2 id="other-plans" className="folio-h3">Plans for your practice</h2>
               <p className="folio-body mt-2 text-folio-text-secondary">Compare the space and seats included as your practice grows.</p>
             </div>
-            <div className={`grid gap-4 ${otherTiers.length === 3 ? 'md:grid-cols-3' : 'md:grid-cols-2'}`}>
+            <div className={`grid gap-4 ${otherTiers.length > 1 ? 'md:grid-cols-2' : ''}`}>
               {otherTiers.map((tierKey) => {
                 const tier = TIER_CONFIGS[tierKey];
                 return (
@@ -227,12 +221,13 @@ export default function SubscriptionSettingsPage() {
                     <p className="folio-body mb-6 mt-2 text-folio-text-secondary">{PLAN_INTRO[tierKey]}</p>
                     <div className="mt-auto"><PlanPrice config={tier} /></div>
                     <ul className="my-6 space-y-3 folio-meta text-folio-text-secondary">
-                      <li>{tier.limits.designerSeats === -1 ? 'Unlimited designer seats' : `${tier.limits.designerSeats} designer ${tier.limits.designerSeats === 1 ? 'seat' : 'seats'} included`}</li>
+                      <li>{tier.limits.designerSeats === -1 ? 'Unlimited team licenses' : `${tier.limits.designerSeats} ${tier.limits.designerSeats === 1 ? 'person' : 'people'} included`}</li>
+                      {tier.additionalSeatPricing && <li>Additional licenses: ${tier.additionalSeatPricing.monthly} / person / month, or ${tier.additionalSeatPricing.annually} / person / year billed annually</li>}
                       <li>{formatLimit(tier.limits.projects)} projects</li>
                       <li>{tier.limits.storageGb === -1 ? 'Unlimited storage' : `${tier.limits.storageGb} GB storage`}</li>
                     </ul>
-                    <Link href={tierKey === 'ENTERPRISE' ? 'mailto:support@folioad.com?subject=Enterprise%20membership' : `/pricing?highlight=${tierKey}`} className={tierKey === 'PRO' ? primaryLink : secondaryLink}>
-                      {tierKey === 'ENTERPRISE' ? 'Contact Folio' : `Explore ${tier.name}`}
+                    <Link href={`/pricing?highlight=${tierKey}`} className={tierKey === 'PRO' ? primaryLink : secondaryLink}>
+                      Explore {tier.name}
                     </Link>
                   </article>
                 );

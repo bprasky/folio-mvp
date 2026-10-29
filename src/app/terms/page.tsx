@@ -377,7 +377,6 @@ export default function TermsOfServicePage() {
           <li><strong>Free:</strong> Basic features with limitations</li>
           <li><strong>Pro:</strong> Enhanced features for professionals</li>
           <li><strong>Studio:</strong> Team and collaboration features</li>
-          <li><strong>Enterprise:</strong> Custom solutions for large organizations</li>
         </ul>
 
         <h3>8.2 Billing</h3>

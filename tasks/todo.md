@@ -1,5 +1,27 @@
 # Subscription brand refresh and billing review — 2026-10-29
 
+### Approved pricing and public scope — supersedes the initial proposal below
+
+Pro is $29/month or $290/year for one person. Studio is $49/month or $490/year including three people, with additional licenses at $5/person/month or $50/person/year on annual billing. Annual billing keeps two months free. Five-person Studio totals $59/month or $590/year. Paid publishing remains unlimited; the founder does not want posting ceilings tied to team size.
+
+Applied these catalog prices, the three-person Studio allowance and additional-license display to subscription settings, the pricing API, pricing cards and FAQ. These are catalog changes, not payment-provider setup or purchased-license provisioning; checkout and firm entitlement work remain outstanding. Founding membership remains complimentary Pro.
+
+Latest direction: do not show Enterprise on the site yet. Public plan cards, comparison columns/features and Terms list only Free, Pro and Studio. Both pricing surfaces show the restrained teaser “Coming soon — AI tools to leverage your past projects.” Enterprise's existing account configuration remains supported; the proposed $299/month or $2,990/year with unlimited team licenses is recorded here as a concept, not introduced as a public plan or billed rate. The public teaser does not assign future capabilities to a paid tier.
+
+Follow-up verification: approved Pro/Studio rates, included people, five-person totals and annual rounding pass. The actual pricing handler with synthetic session/response boundaries returns only public plans/features and the license add-on rates. No TypeScript diagnostics in the eight changed source files or their checked dependencies; focused ESLint, client-import and migration-discipline guards pass. Browser fixtures use the actual pages, canonical fonts/CSS and pricing-handler output: monthly/annual toggle, team FAQ, three-column feature comparison without Enterprise, desktop and 390px layouts and subscription dark mode pass; no browser warnings/errors. These checks do not exercise live checkout, payments or purchased-seat enforcement. No deployment.
+
+### Enterprise and Atelier — concept only, not implemented
+
+The firm’s private archive could become a source-linked knowledge base for historical specification questions, then drafts for new room specifications based on a prompt, a scaled plan, selected precedents and firm guidelines. Start with archive answers and a single-room specification/quote-request draft. Existing specification-upload and sourcebook request flows are useful building blocks, but do not yet provide this complete service. Quantity estimates need scale, dimensions, units, openings, waste/pack rules and designer review. Accurate 3D walkthroughs require a separate geometric workflow.
+
+A later client Atelier could offer a lower-fee design service using a designer-approved subset of that knowledge. It must not expose other clients’ private projects, addresses or trade pricing. Proposed sequence: client brief → source-linked design/specification draft → client approval → designer authorization → vendor quote requests → confirmed pricing/order. No autonomous vendor outreach or purchase is implemented.
+
+Every future brief, approved revision, quote, order, refund and payout should retain the originating firm, project, client and responsible actor. Separate design-service revenue, retail sales, supplier cost, Folio fees and designer commission in the ledger. Retail pricing does not itself establish a commission: supplier agreements, seller of record, fee/commission rates and payout/refund rules remain undecided. Unlimited team licenses does not promise unlimited AI processing. No new search, specification generation, Atelier, commerce, permissions or event credentials were built in this change.
+
+Supporting references: [Autodesk takeoff scale guidance](https://help.autodesk.com/cloudhelp/ENU/Takeoff-Takeoff/files/Set_Scale.html) and [Stripe merchant-of-record guidance](https://docs.stripe.com/connect/merchant-of-record).
+
+### Initial presentation pass
+
 - [x] Review the live subscription page, current plan definitions, billing integration and collaboration boundaries.
 - [x] Refresh the subscription page using canonical Folio typography, surfaces and responsive layouts.
 - [x] Verify representative subscription states, narrow screens, dark mode and relevant code checks.
@@ -15,7 +37,7 @@ The founder added a concrete Studio benefit during review: AI access to prior sp
 
 Verification: focused ESLint and TypeScript checks passed; the repository client-import guard and migration-discipline check passed; `git diff --check` passed. Bundled the actual page and canonical CSS/fonts in a temporary local browser harness with labeled sample accounts and framework/session adapters. All four tiers fit at 320, 390, 768 and 1280px. Verified founding/over-fulfilled commitment, zero commitment, grace, expired, absent usage, error-to-retry recovery, signed-out redirect destination, and loading state. Inspected desktop and 390px dark-mode renders. Browser warnings/errors: none on the final preview. An initial browser connection timeout was resolved with a new tab. This is component/browser validation with fixtures, not a live payment or full Next.js integration test. Preview tools and screenshots are untracked review artifacts only.
 
-### Billing recommendation — proposal, not implemented
+### Initial billing recommendation — superseded prices; remaining product concepts
 
 - Keep Pro at $49/month for one working account and generous publishing. A principal importing 20 firm projects is desired archive acquisition, not abuse. Do not require employee count to unlock publication, or impose five initial posts followed by one per month. Restrict access by real people and permissions; meter costly computation separately if necessary.
 - Test Studio at $79/month including three named people (owner plus two teammates), then $5/month for each additional person. Five people cost $89; ten cost $114. Current catalog is $199 for five seats, and moves six-person firms toward custom Enterprise. The proposed price is a hypothesis to validate against willingness to pay, retention, support and measured AI/indexing/storage costs, not a proven margin.
