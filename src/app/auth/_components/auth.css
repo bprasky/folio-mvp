@@ -891,3 +891,10 @@
 @media (max-width: 767px) {
   .auth-field__input, .auth-search__input { font-size: 1rem; }
 }
+.auth-verify-shell .auth-form-panel { justify-content: flex-start; }
+.auth-verify-shell .auth-photo img { position: absolute; inset: 0; }
+.auth-verify-help, .auth-verify-resend { font-size: 13px; line-height: 1.6; }
+.auth-verify-resend { margin: 20px 0; }
+.auth-verify-link { border: 0; background: none; padding: 4px 0; text-decoration: underline; cursor: pointer; font: inherit; color: inherit; }
+.auth-verify-link:disabled { opacity: 0.5; cursor: default; }
+#verification-code { font-size: 24px; letter-spacing: 0.3em; font-variant-numeric: tabular-nums; }

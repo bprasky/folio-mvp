@@ -12,10 +12,18 @@ const entry = `
 import React from 'react';
 import {createRoot} from 'react-dom/client';
 import Signup from '@/app/auth/signup/page';
+import VerifyEmail from '@/app/auth/verify-email/page';
 import {ScenarioA} from '@/app/auth/org-setup/_ScenarioA';
 import {WorkspaceImportClient} from '@/app/onboarding/workspace/WorkspaceImportClient';
 import {SetupProgress} from '@/components/onboarding/SetupProgress';
 const params=new URLSearchParams(location.search);
+const pendingKey='fixture-pending-signup';
+window.fixtureVerify=async(code)=>{
+ const pending=JSON.parse(sessionStorage.getItem(pendingKey)||'null');
+ if(!pending)return {ok:false,error:'MISSING'};
+ if(code!=='123456'){pending.attemptsRemaining--;sessionStorage.setItem(pendingKey,JSON.stringify(pending));return {ok:false,error:'INVALID'};}
+ sessionStorage.removeItem(pendingKey);return {ok:true};
+};
 const access={id:'firm',name:'North Studio',website:null,canEditProfile:true,canImportProjects:true,canContribute:true};
 const profile={website:'https://studio.test',description:'North Studio designs thoughtful homes shaped by light, natural materials, and everyday life.',location:'Brooklyn, NY',bio:'Jane established North Studio after a decade working on thoughtful homes and shared places.',bioQuestions:[{id:'b1',question:'What first drew you to the way light shapes a room?',round:'base'}],sourceUrl:'https://studio.test/about'};
 const run={kind:'workspace-import-v1',orgId:'firm',orgName:'North Studio',personName:'Jane Designer',website:'https://studio.test',sections:['business','bio','projects'],returnTo:'/projects/new',phase:'complete',consentAt:new Date().toISOString(),consentVersion:1,profile,notices:[],profileAttempts:1,profileReady:true,notification:{status:'accepted',attempts:1},pages:[{url:'https://studio.test',kind:'home',status:'saved',attempts:1}],projects:[{url:'https://studio.test/work/harbor',title:'Harbor House',description:'A bright home on the coast.',projectId:'harbor',status:'ready',attempts:0,photos:Array.from({length:8},(_,i)=>({url:'photo-'+i,status:'saved',attempts:1})),preparation:{questions:[],rooms:[],contextFingerprint:'fixture',minimumTotalAnswers:3}}]};
@@ -24,7 +32,22 @@ window.fetch=async(input,options={})=>{
  const url=new URL(String(input),location.origin),body=options.body?JSON.parse(options.body):{};
  await new Promise(resolve=>setTimeout(resolve,150));
  if(options.signal?.aborted)throw new DOMException('Aborted','AbortError');
- if(url.pathname==='/api/auth/signup')return result({ok:true},201);
+ if(url.pathname==='/api/auth/signup'){
+  sessionStorage.setItem(pendingKey,JSON.stringify({email:body.email,returnTo:body.returnTo,expiresAt:new Date(Date.now()+600000).toISOString(),resendAt:new Date(Date.now()+5000).toISOString(),attemptsRemaining:5,canResend:true,deliveryAccepted:true}));
+  return result({verificationRequired:true},202);
+ }
+ if(url.pathname==='/api/auth/email-verification'){
+  const pending=JSON.parse(sessionStorage.getItem(pendingKey)||'null');
+  if(!pending)return result({error:'This signup has expired or was already completed. Sign in or start again.'},404);
+  if(params.get('scenario')==='expired')pending.expiresAt=new Date(Date.now()-1000).toISOString();
+  if(params.get('scenario')==='failed')pending.deliveryAccepted=false;
+  if(params.get('scenario')==='locked'){pending.attemptsRemaining=0;pending.canResend=false;}
+  return result(pending);
+ }
+ if(url.pathname==='/api/auth/email-verification/resend'){
+  const pending=JSON.parse(sessionStorage.getItem(pendingKey)||'null');pending.resendAt=new Date(Date.now()+5000).toISOString();pending.deliveryAccepted=true;
+  sessionStorage.setItem(pendingKey,JSON.stringify(pending));return result({deliveryAccepted:true});
+ }
  if(url.pathname==='/api/onboarding/firm/search')return result({results:url.searchParams.get('q').toLowerCase().includes('existing')?[{id:'existing',name:'Existing Studio',type:'DESIGN_FIRM',location:'Boston'}]:[]});
  if(url.pathname==='/api/auth/org-setup')return result({org:{...access,type:'DESIGN_FIRM'}},201);
  if(url.pathname.endsWith('/join'))return result({pending:true,notifications:{inApp:true,email:'accepted'}},201);
@@ -43,11 +66,11 @@ window.fetch=async(input,options={})=>{
  if(url.pathname==='/api/user/workspace-context')return result({success:true,user:{operatingAsOrg:{...access,type:'DESIGN_FIRM'}}});
  throw Error('Synthetic preview blocked unexpected API: '+url.pathname);
 };
-window.fixtureNavigate=url=>{if(url.startsWith('/auth/org-setup')||url.startsWith('/onboarding/workspace')){location.href=url;return;}document.querySelector('#destination').textContent='Synthetic navigation: '+url;};
+window.fixtureNavigate=url=>{if(url.startsWith('/auth/org-setup')||url.startsWith('/auth/verify-email')||url.startsWith('/auth/signup')||url.startsWith('/onboarding/workspace')){location.href=url;return;}document.querySelector('#destination').textContent='Synthetic navigation: '+url;};
 document.addEventListener('click',event=>{const a=event.target.closest('a');if(a&&a.getAttribute('href')?.startsWith('/')){event.preventDefault();window.fixtureNavigate(a.getAttribute('href'));}});
 const shell=children=><div className="auth-shell"><header className="px-6 py-6 border-b border-folio-border-subtle"><a className="folio-logo-text" href="/">Folio</a></header><main className="max-w-3xl w-full mx-auto px-6 py-8 sm:py-12">{children}</main></div>;
 const view=location.pathname.includes('org-setup')?shell(<div className="max-w-lg mx-auto space-y-6"><ScenarioA initialIntent="designer" callbackUrl={params.get('callbackUrl')||'/onboarding/workspace?returnTo=%2Fprojects%2Fnew'} account={{name:'Jane Designer',email:'jane@studio.test',operatingAsOrgId:null}}/></div>):location.pathname.includes('/workspace')?shell(<><SetupProgress step={3}/><WorkspaceImportClient access={access} memberships={[access]} history={[]} initialId={params.get('import')||undefined} available returnTo="/projects/new"/></>):<Signup/>;
-createRoot(document.getElementById('root')).render(view);
+createRoot(document.getElementById('root')).render(location.pathname.includes('verify-email')?<VerifyEmail/>:view);
 `;
 (async () => {
   fs.mkdirSync(out, { recursive: true });
@@ -57,7 +80,7 @@ createRoot(document.getElementById('root')).render(view);
       build.onResolve({ filter: /^(next\/navigation|next\/link|next-auth\/react)$/ }, args => ({ path: args.path, namespace: 'fixture' }));
       build.onLoad({ filter: /.*/, namespace: 'fixture' }, args => ({ loader: 'jsx', resolveDir: root, contents:
         args.path === 'next/navigation' ? 'export const useRouter=()=>({replace:url=>window.fixtureNavigate(url),push:url=>window.fixtureNavigate(url),refresh:()=>{}});export const useSearchParams=()=>new URLSearchParams(location.search);export const usePathname=()=>location.pathname;' :
-        args.path === 'next-auth/react' ? 'export const getProviders=async()=>({});export const signIn=async()=>({ok:true});export const signOut=async()=>({});export const useSession=()=>({data:null,status:"unauthenticated",update:async()=>({})});' :
+        args.path === 'next-auth/react' ? 'export const getProviders=async()=>({});export const signIn=async(provider,options)=>provider==="email-verification"?window.fixtureVerify(options.code):({ok:true});export const signOut=async()=>({});export const useSession=()=>({data:null,status:"unauthenticated",update:async()=>({})});' :
         'import React from "react";export default function Link({children,...props}){return <a {...props}>{children}</a>}' }));
     } }],
   });

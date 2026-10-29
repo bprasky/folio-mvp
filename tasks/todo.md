@@ -1223,3 +1223,12 @@ Remaining validation for implementation: real fresh account/signup and OAuth, bl
 The later profile-hero reference was explicitly withdrawn by the user and is not implemented here.
 
 ---
+## Signup email verification — 2026-10-29
+
+Approved scope: six-digit email ownership verification during signup; existing member login remains unchanged. Google/Apple may skip the code only with a matching verified email claim. This is not ongoing two-factor authentication.
+
+- [x] Add an isolated pending signup record, hashed code and browser secret; create the account only after verification.
+- [x] Implement expiry, persistent guess limits, resend cooldown/limits and atomic single-use consumption.
+- [x] Preserve the chosen business/import destination and support resuming the verification page.
+- [ ] Test API/auth behavior, rollback/replay, delivery failures, OAuth claims and user-facing states.
+- [ ] Validate the additive migration, client boundaries, lint/types and regression suites; review and open a PR.
