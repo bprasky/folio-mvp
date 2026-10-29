@@ -169,7 +169,7 @@ export default function FlowMosaic({ events, canEdit = false, preserveOrder = fa
               {/* content overlay */}
               <div className="relative z-20 pointer-events-none flex h-full items-end p-3">
                 <div className="text-white w-full">
-                  <h3 className={clsx("font-semibold leading-tight",
+                  <h3 className={clsx("font-sans text-white font-semibold leading-tight",
                     size === "L" ? "text-xl" : size === "M" ? "text-lg" : "text-sm"
                   )}>
                     {item.title}

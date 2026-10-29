@@ -1042,12 +1042,13 @@ model Organization {
   updatedAt    DateTime    @updatedAt
 
   // Profile fields
-  tagline       String?
-  philosophy    String?  @db.Text
-  location      String?
-  foundedYear   Int?
-  specialties   String[]
-  followerCount Int      @default(0)
+  tagline           String?
+  philosophy        String?  @db.Text
+  location          String?
+  foundedYear       Int?
+  specialties       String[]
+  followerCount     Int      @default(0)
+  profileAppearance Json?
 
   // Studio details (structured)
   teamSizeRange  TeamSizeRange?

@@ -1,3 +1,24 @@
+# Organization magazine profile implementation — 2026-10-29
+
+- [x] Audit public profile, organization permissions, image eligibility and persistent appearance storage.
+- [x] Add a neutral frosted cover with firm identity, source-backed introduction and up to four chosen facts; preserve actual tabs and mosaic.
+- [x] Add owner/admin appearance settings with live preview, background color/reset, cover selection/upload and framing, logo/portrait and fact controls.
+- [x] Persist validated settings with server-side active owner/admin checks; verify uploaded images and public project eligibility.
+- [x] Verify save/reload, authorization, anonymous sharing, responsive layouts, empty states and existing navigation. Run client-import, migration and type checks.
+- [ ] Review the final diff, record results, and commit/push the isolated branch.
+
+Plan check-in: implement the approved organization cover on latest main. Retain Feed, Shop, About, Contact and their real categories, vendor variations, and the existing ProjectFlowMosaic. Default to Folio colors and existing imported identity/content; never insert prototype numbers or unsupported facts. A new nullable appearance field, if needed, follows the repository's explicit schema review gate before application. Back up schema before edits; restore and stop if schema validation/generation/migration status fails. Independently prepare the UI and tests while approval is pending. A safe public feed is required because the current design feed rejects visitors to a shared profile.
+
+### Review
+
+Implemented on `codex/organization-magazine` from `4cde03dd`. The public cover uses the organization name, existing description/logo and eligible public project photography. Optional short cover introduction, background/reset, image crop, independent uploaded logo/portrait and up to four ordered facts save in a validated nullable appearance object. Prototype sample statistics are never inserted. Original Feed/Shop/About/Contact and vendor variants remain; project mosaic is reused. Fixed the inherited dark title color on the shared photo mosaic.
+
+Appearance GET/PATCH and image uploads require active exact-organization Owner/Admin membership. Writes recheck the permission inside the transaction; uploads decode and strip metadata, keep immutable org-scoped paths, and retain existing assets on failure. Selected project photos remain references and are rechecked against current public status, inclusion and firm ownership. The design feed now accepts anonymous visitors with explicit public fields and current public exact-firm filters. Related pinned and Shop provenance use the same firm/photo eligibility.
+
+Verification: 17 data/route regressions passed and are included in CI; actual React settings/public components passed at 1440/768/390/320px with save/reload, upload, failure recovery, color contrast/reset, fact order/empty state, actual categories/mosaic and non-admin denial. Production-mode local BP Design page returned 200 at desktop/phone sizes, displayed all four published project links, had no horizontal overflow or browser exceptions, and loaded About/Shop/Contact. Guest feed returned 200; private appearance settings returned 401. Browser writes used isolated fixtures; existing firm data and assets were not changed. Approved migration was applied and verified; see the schema review. Production compilation passed with existing unrelated import warnings. Changed-file lint has no errors; client-import guard and migration discipline pass. TypeScript ratchet passes at 866 diagnostics against 880 baseline, with no new errors: seven unchanged missing-property errors have exact full-type/source-span evidence for four diagnostic display equivalents after the additive field. Baseline was not increased; all seven guard self-tests pass. Application code is not merged or deployed by this task.
+
+---
+
 # Immersive publications and designer-selected palette — 2026-10-28
 
 - [x] Implement the approved photo-led room reader on public articles and owner previews, retaining editorial edits, products and credits.

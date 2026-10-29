@@ -78,6 +78,8 @@ jobs:
       - run: npm ci
       - run: npx prisma generate
       - run: npm run test:core
+      - name: Organization appearance, permissions and public profile
+        run: npx tsx --test scripts/core/org-profile-appearance-data.test.cjs scripts/core/org-profile-appearance-routes.test.cjs
       - run: npm run test:rollout
       - name: Production-mode public and protected image delivery
         run: node scripts/check-image-delivery.cjs

@@ -2,9 +2,12 @@ import { Suspense } from 'react';
 import { notFound, redirect } from 'next/navigation';
 import { prisma } from '@/lib/prisma';
 import { PUBLISHED_PROJECT_FILTER } from '@/server/queries/filters';
+import { getOrgProfileAppearanceData } from '@/lib/server/org-profile-appearance';
+import { profilePageStyle } from '@/lib/org-profile-appearance';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/app/api/auth/[...nextauth]/options';
 import OrgProfileHero from '@/components/org-profile/OrgProfileHero';
+import styles from '@/components/org-profile/OrgProfileAppearance.module.css';
 import { OrgMemberNotices } from '@/components/org-profile/OrgMemberNotices';
 import { can, isOrgRole } from '@/lib/orgPermissions';
 import OrgProfileTabs from '@/components/org-profile/OrgProfileTabs';
@@ -57,8 +60,9 @@ export default async function OrgProfilePage({ params, searchParams }: Props) {
 
   // Fetch org without relations that might not exist in Prisma client yet
   let org;
+  let profileData;
   try {
-    org = await prisma.organization.findUnique({
+    [org, profileData] = await Promise.all([prisma.organization.findUnique({
       where: { id: resolvedParams.orgId },
       select: {
         id: true,
@@ -73,7 +77,6 @@ export default async function OrgProfilePage({ params, searchParams }: Props) {
         location: true,
         foundedYear: true,
         specialties: true,
-        followerCount: true,
         teamSizeRange: true,
         services: true,
         projectTypes: true,
@@ -81,13 +84,13 @@ export default async function OrgProfilePage({ params, searchParams }: Props) {
         memberships: true,
         certifications: true,
       },
-    });
+    }), getOrgProfileAppearanceData(resolvedParams.orgId)]);
   } catch (err) {
     console.error('[OrgProfilePage] Error fetching organization:', err);
     notFound();
   }
 
-  if (!org) {
+  if (!org || !profileData) {
     notFound();
   }
 
@@ -114,7 +117,6 @@ export default async function OrgProfilePage({ params, searchParams }: Props) {
     location: (org as any).location ?? null,
     foundedYear: (org as any).foundedYear ?? null,
     specialties: Array.isArray((org as any).specialties) ? (org as any).specialties : [],
-    followerCount: typeof (org as any).followerCount === 'number' ? (org as any).followerCount : 0,
     // Onboarding fields
     teamSizeRange: (org as any).teamSizeRange ?? null,
     services: Array.isArray((org as any).services) ? (org as any).services : [],
@@ -235,17 +237,8 @@ export default async function OrgProfilePage({ params, searchParams }: Props) {
     console.error('[OrgProfilePage] Error fetching member IDs:', err);
   }
 
-  // Get project count
-  let projectCount = 0;
-  if (memberIds.length > 0) {
-    try {
-      projectCount = await prisma.project.count({
-        where: { designerId: { in: memberIds }, ...PUBLISHED_PROJECT_FILTER },
-      });
-    } catch (err) {
-      console.error('[OrgProfilePage] Error counting projects:', err);
-    }
-  }
+  // Counts and cover choices share exact-firm, current-public eligibility.
+  const projectCount = profileData.projectCount;
 
   // Compute setup card completion state
   const setupState = {
@@ -268,58 +261,27 @@ export default async function OrgProfilePage({ params, searchParams }: Props) {
     }
   }
 
-  // Get featured count
-  let featuredCount = 0;
-  if (memberIds.length > 0) {
-    try {
-      featuredCount = await prisma.projectPost.count({
-        where: {
-          project: { designerId: { in: memberIds } },
-          status: 'PUBLISHED',
-        },
-      });
-    } catch (err) {
-      console.error('[OrgProfilePage] Error counting featured posts:', err);
-    }
-  }
-
-  // Get follower count from UserRelationship table
-  let followerCount = orgData.followerCount;
-  if (memberIds.length > 0) {
-    try {
-      const relationshipFollowerCount = await prisma.userRelationship.count({
-        where: { followingId: { in: memberIds } },
-      });
-      // Use the higher of denormalized count or actual relationship count
-      followerCount = Math.max(followerCount, relationshipFollowerCount);
-    } catch {
-      // UserRelationship table might not exist yet — fall back to denormalized count
-    }
-  }
-
   // Get pinned items (with fallback for missing fields)
-  const pinnedItems = await getPinnedItems(memberIds);
+  const pinnedItems = await getPinnedItems(resolvedParams.orgId);
 
   // Published projects also supply product provenance for the Shop tab.
   let orgProjects: any[] = [];
-  if (memberIds.length > 0) {
-    try {
-      orgProjects = await prisma.project.findMany({
-        where: { designerId: { in: memberIds }, ...PUBLISHED_PROJECT_FILTER },
-        orderBy: { publishedAt: 'desc' },
-        select: {
-          id: true,
-          title: true,
-          city: true,
-          regionState: true,
-          projectType: true,
-          createdAt: true,
-          images: { take: 1, orderBy: { displayOrder: 'asc' }, select: { url: true } },
-        },
-      });
-    } catch (err) {
-      console.error('[OrgProfilePage] Error fetching projects:', err);
-    }
+  try {
+    orgProjects = await prisma.project.findMany({
+      where: { designerOrgId: resolvedParams.orgId, ...PUBLISHED_PROJECT_FILTER },
+      orderBy: { publishedAt: 'desc' },
+      select: {
+        id: true,
+        title: true,
+        city: true,
+        regionState: true,
+        projectType: true,
+        createdAt: true,
+        images: { where: { inclusion: 'INCLUDED' }, take: 1, orderBy: { displayOrder: 'asc' }, select: { url: true } },
+      },
+    });
+  } catch (err) {
+    console.error('[OrgProfilePage] Error fetching projects:', err);
   }
 
   // Fetch products from org members' projects for the Shop tab
@@ -328,7 +290,10 @@ export default async function OrgProfilePage({ params, searchParams }: Props) {
     try {
       const projectIds = orgProjects.map((p: any) => p.id);
       const allProductTags = await prisma.productTag.findMany({
-        where: { image: { projectId: { in: projectIds } } },
+        where: {
+          image: { projectId: { in: projectIds }, inclusion: 'INCLUDED', project: { designerOrgId: resolvedParams.orgId, ...PUBLISHED_PROJECT_FILTER } },
+          product: { isPending: false },
+        },
         include: {
           product: {
             select: { id: true, name: true, brand: true, price: true, imageUrl: true, category: true },
@@ -430,14 +395,15 @@ export default async function OrgProfilePage({ params, searchParams }: Props) {
   }));
 
   return (
-    <div className="min-h-screen bg-surface-canvas">
+    <div className={`min-h-screen ${styles.page}`} style={profilePageStyle(profileData.appearance.backgroundColor)}>
       <OrgProfileHero
         org={orgData}
         projectCount={projectCount}
-        featuredCount={featuredCount}
-        followerCount={followerCount}
-        isOwner={isOwner}
+        isAdmin={isAdmin}
         isMember={isMember}
+        appearance={profileData.appearance}
+        cover={profileData.cover}
+        year={new Date().getUTCFullYear()}
       />
 
       <OrgMemberNotices
@@ -450,9 +416,10 @@ export default async function OrgProfilePage({ params, searchParams }: Props) {
 
       {pinnedItems.length > 0 && <PinnedCarousel items={pinnedItems} />}
 
+      <div id="profile-content" className="scroll-mt-20">
       <OrgProfileTabs activeTab={activeTab} orgId={resolvedParams.orgId} defaultTab={defaultTab} orgType={org.type} isMember={isMember} />
 
-      <div className={`${activeTab === 'feed' ? 'mx-[calc(50%-50vw)] px-4 md:px-6 lg:px-8' : 'max-w-6xl mx-auto px-6'} py-8`}>
+      <div className={`${activeTab === 'feed' ? 'mx-[calc(50%-50vw)] px-4 md:px-6 lg:px-8' : `max-w-6xl mx-auto px-6 ${styles.neutralContent}`} py-8`}>
         {/* Vendor-specific tab content */}
         {isVendorOrg && activeTab === 'feed' && (
           <Suspense fallback={<FeedSkeleton />}>
@@ -526,23 +493,22 @@ export default async function OrgProfilePage({ params, searchParams }: Props) {
           />
         )}
       </div>
+      </div>
     </div>
   );
 }
 
-async function getPinnedItems(memberIds: string[]) {
-  if (memberIds.length === 0) return [];
-
+async function getPinnedItems(orgId: string) {
   try {
     // Try to query with pinnedAt field
     const projects = await prisma.project.findMany({
       where: {
-        designerId: { in: memberIds },
+        designerOrgId: orgId,
         isPublic: true,
         pinnedAt: { not: null },
       },
       include: {
-        images: { take: 1, orderBy: { displayOrder: 'asc' } },
+        images: { where: { inclusion: 'INCLUDED' }, take: 1, orderBy: { displayOrder: 'asc' }, select: { url: true } },
       },
       orderBy: { pinOrder: 'asc' },
       take: 5,

@@ -1028,6 +1028,46 @@
       "after": "Property 'name' does not exist on type '{ owner: { name: string; id: string; email: string; }; designerOrg: { name: string; id: string; location: string; phone: string; specialties: string[]; website: string; createdAt: Date; updatedAt: Date; ... 30 more ...; dormancyThresholdDays: number; }; vendorOrg: { ...; }; rooms: ({ ...; } & { ...; })[]; selections...'.",
       "count": 3,
       "reason": "Approved Organization.membersCanPublish scalar changes only inferred type display; identical missing-property diagnostic at unchanged source span."
+    },
+    {
+      "file": "src/app/api/admin/organizations/route.ts",
+      "code": 2339,
+      "before": "Property '_count' does not exist on type '{ name: string; id: string; location: string; phone: string; specialties: string[]; website: string; createdAt: Date; updatedAt: Date; interviewProfileExtractedAt: Date; profileSourcedFromInterview: boolean; ... 27 more ...; dormancyThresholdDays: number; }'.",
+      "after": "Property '_count' does not exist on type '{ name: string; id: string; location: string; phone: string; specialties: string[]; website: string; createdAt: Date; updatedAt: Date; interviewProfileExtractedAt: Date; profileSourcedFromInterview: boolean; ... 29 more ...; dormancyThresholdDays: number; }'.",
+      "count": 2,
+      "reason": "additive-organization-profile-field-display",
+      "proof": "docs/reviews/org-profile-typescript-proof.json",
+      "priorDisplay": "Property '_count' does not exist on type '{ name: string; id: string; location: string; phone: string; specialties: string[]; website: string; createdAt: Date; updatedAt: Date; interviewProfileExtractedAt: Date; profileSourcedFromInterview: boolean; ... 28 more ...; dormancyThresholdDays: number; }'."
+    },
+    {
+      "file": "src/app/api/consultations/[consultationId]/chat/route.ts",
+      "code": 2339,
+      "before": "Property 'notes' does not exist on type '{ development: { developerOrg: { name: string; id: string; location: string; phone: string; specialties: string[]; website: string; createdAt: Date; updatedAt: Date; interviewProfileExtractedAt: Date; ... 28 more ...; dormancyThresholdDays: number; }; } & { ...; }; unitType: { ...; } & { ...; }; finishPackage: { ......'.",
+      "after": "Property 'notes' does not exist on type '{ development: { developerOrg: { name: string; id: string; location: string; phone: string; specialties: string[]; website: string; createdAt: Date; updatedAt: Date; interviewProfileExtractedAt: Date; ... 30 more ...; dormancyThresholdDays: number; }; } & { ...; }; unitType: { ...; } & { ...; }; finishPackage: { ......'.",
+      "count": 1,
+      "reason": "additive-organization-profile-field-display",
+      "proof": "docs/reviews/org-profile-typescript-proof.json",
+      "priorDisplay": "Property 'notes' does not exist on type '{ development: { developerOrg: { name: string; id: string; location: string; phone: string; specialties: string[]; website: string; createdAt: Date; updatedAt: Date; interviewProfileExtractedAt: Date; ... 29 more ...; dormancyThresholdDays: number; }; } & { ...; }; unitType: { ...; } & { ...; }; finishPackage: { ......'."
+    },
+    {
+      "file": "src/app/api/cron/dormancy-check/route.ts",
+      "code": 2339,
+      "before": "Property 'users' does not exist on type '{ name: string; id: string; location: string; phone: string; specialties: string[]; website: string; createdAt: Date; updatedAt: Date; interviewProfileExtractedAt: Date; profileSourcedFromInterview: boolean; ... 27 more ...; dormancyThresholdDays: number; }'.",
+      "after": "Property 'users' does not exist on type '{ name: string; id: string; location: string; phone: string; specialties: string[]; website: string; createdAt: Date; updatedAt: Date; interviewProfileExtractedAt: Date; profileSourcedFromInterview: boolean; ... 29 more ...; dormancyThresholdDays: number; }'.",
+      "count": 1,
+      "reason": "additive-organization-profile-field-display",
+      "proof": "docs/reviews/org-profile-typescript-proof.json",
+      "priorDisplay": "Property 'users' does not exist on type '{ name: string; id: string; location: string; phone: string; specialties: string[]; website: string; createdAt: Date; updatedAt: Date; interviewProfileExtractedAt: Date; profileSourcedFromInterview: boolean; ... 28 more ...; dormancyThresholdDays: number; }'."
+    },
+    {
+      "file": "src/app/api/projects/[id]/export/route.ts",
+      "code": 2339,
+      "before": "Property 'name' does not exist on type '{ designerOrg: { name: string; id: string; location: string; phone: string; specialties: string[]; website: string; createdAt: Date; updatedAt: Date; interviewProfileExtractedAt: Date; ... 28 more ...; dormancyThresholdDays: number; }; owner: { ...; }; vendorOrg: { ...; }; rooms: ({ ...; } & { ...; })[]; selections:...'.",
+      "after": "Property 'name' does not exist on type '{ owner: { name: string; id: string; email: string; }; designerOrg: { name: string; id: string; location: string; phone: string; specialties: string[]; website: string; createdAt: Date; updatedAt: Date; ... 31 more ...; dormancyThresholdDays: number; }; vendorOrg: { ...; }; rooms: ({ ...; } & { ...; })[]; selections...'.",
+      "count": 3,
+      "reason": "additive-organization-profile-field-display",
+      "proof": "docs/reviews/org-profile-typescript-proof.json",
+      "priorDisplay": "Property 'name' does not exist on type '{ owner: { name: string; id: string; email: string; }; designerOrg: { name: string; id: string; location: string; phone: string; specialties: string[]; website: string; createdAt: Date; updatedAt: Date; ... 30 more ...; dormancyThresholdDays: number; }; vendorOrg: { ...; }; rooms: ({ ...; } & { ...; })[]; selections...'."
     }
   ]
 }

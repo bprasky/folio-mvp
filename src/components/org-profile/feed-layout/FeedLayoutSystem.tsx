@@ -70,7 +70,7 @@ export default function FeedLayoutSystem({
       {otherItems.length > 0 && (
         <div className={`columns-1 sm:columns-2 gap-4 ${projects.length > 0 ? 'mt-8' : ''}`}>
           {otherItems.map(item => (
-            <div key={item.id} className="mb-4 break-inside-avoid">
+            <div key={item.id} className="mb-4 break-inside-avoid rounded-lg bg-surface-canvas">
               {renderNonProjectCard(item)}
             </div>
           ))}
