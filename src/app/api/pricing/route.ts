@@ -1,7 +1,7 @@
 /**
  * Pricing Tiers API
  *
- * GET /api/pricing - Get all pricing tiers and features
+ * GET /api/pricing - Get publicly offered pricing tiers and features
  */
 
 import { NextResponse } from 'next/server';
@@ -10,19 +10,19 @@ import { authOptions } from '@/app/api/auth/[...nextauth]/options';
 import {
   TIER_CONFIGS,
   TIER_FEATURES,
-  TIER_ORDER,
+  PUBLIC_TIER_ORDER,
   COMPETITIVE_BENCHMARKS,
   ROI_ASSUMPTIONS,
   calculateMonthlyROI,
   type SubscriptionTierType,
-} from '@/lib/pricing';
+} from '@/lib/pricing/tiers';
 
 export async function GET() {
   try {
     const session = await getServerSession(authOptions);
 
     // Build tiers array in order
-    const tiers = TIER_ORDER.map((tierKey) => {
+    const tiers = PUBLIC_TIER_ORDER.map((tierKey) => {
       const config = TIER_CONFIGS[tierKey];
       const roi = calculateMonthlyROI(tierKey);
 
@@ -34,6 +34,7 @@ export async function GET() {
         targetAudience: config.targetAudience,
         upgradeQuestion: config.upgradeQuestion,
         pricing: config.pricing,
+        additionalSeatPricing: config.additionalSeatPricing,
         limits: config.limits,
         highlighted: config.highlighted ?? false,
         roi: {
@@ -49,8 +50,8 @@ export async function GET() {
       key: feature.key,
       label: feature.label,
       description: feature.description,
-      includedIn: feature.includedInTiers,
-    }));
+      includedIn: feature.includedInTiers.filter((tier) => PUBLIC_TIER_ORDER.includes(tier)),
+    })).filter((feature) => feature.includedIn.length > 0);
 
     // Group features by category for UI
     const featureGroups = [
@@ -98,18 +99,6 @@ export async function GET() {
             'vendor_relationships',
             'client_handoff',
             'priority_support',
-          ].includes(f.key)
-        ),
-      },
-      {
-        name: 'Enterprise',
-        features: features.filter((f) =>
-          [
-            'unlimited_seats',
-            'api_integrations',
-            'custom_analytics',
-            'dedicated_account_manager',
-            'custom_onboarding',
           ].includes(f.key)
         ),
       },

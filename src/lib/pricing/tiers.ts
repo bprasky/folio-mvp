@@ -40,7 +40,8 @@ export interface TierConfig {
   description: string;
   targetAudience: string;
   upgradeQuestion: string;
-  pricing: TierPricing | null; // null for custom pricing (Enterprise)
+  pricing: TierPricing | null; // null for a separately quoted plan
+  additionalSeatPricing?: TierPricing; // Catalog rate; purchased seat entitlements are separate.
   limits: TierLimits;
   highlighted?: boolean; // For UI purposes (e.g., "Most Popular")
 }
@@ -79,9 +80,9 @@ export const TIER_CONFIGS: Record<SubscriptionTierType, TierConfig> = {
     targetAudience: 'Working designers with active practices',
     upgradeQuestion: 'I have other designers working with me',
     pricing: {
-      monthly: 49,
-      annually: 490,
-      annualMonthlyEquivalent: 40.83,
+      monthly: 29,
+      annually: 290,
+      annualMonthlyEquivalent: 24.17,
     },
     limits: {
       projects: null,
@@ -100,16 +101,21 @@ export const TIER_CONFIGS: Record<SubscriptionTierType, TierConfig> = {
     tagline: 'Team collaboration',
     description: 'Built for design firms with multiple designers who need shared resources and team analytics.',
     targetAudience: 'Design firms with multiple designers',
-    upgradeQuestion: 'We need enterprise features or more seats',
+    upgradeQuestion: 'We need custom integrations or support',
     pricing: {
-      monthly: 199,
-      annually: 1990,
-      annualMonthlyEquivalent: 165.83,
+      monthly: 49,
+      annually: 490,
+      annualMonthlyEquivalent: 40.83,
+    },
+    additionalSeatPricing: {
+      monthly: 5,
+      annually: 50,
+      annualMonthlyEquivalent: 4.17,
     },
     limits: {
       projects: null,
       moodboards: null,
-      designerSeats: 5,
+      designerSeats: 3,
       clientsPerProject: null,
       aiEditorialGenerationsPerMonth: null,
       storageGb: 200,
@@ -123,7 +129,7 @@ export const TIER_CONFIGS: Record<SubscriptionTierType, TierConfig> = {
     description: 'Custom solutions for large firms with advanced integration, analytics, and support needs.',
     targetAudience: 'Large firms with 6+ designers',
     upgradeQuestion: 'Contact us for custom solutions',
-    pricing: null, // Custom pricing
+    pricing: null, // Legacy plan; future Enterprise pricing remains a concept.
     limits: {
       projects: null,
       moodboards: null,
@@ -244,8 +250,8 @@ export const TIER_FEATURES: TierFeature[] = [
   // Team Features (Studio+)
   {
     key: 'team_seats',
-    label: '3-5 designer seats',
-    description: 'Add multiple designers to your firm account',
+    label: 'Team licenses',
+    description: 'Individual access for the people in your firm',
     includedInTiers: ['STUDIO', 'ENTERPRISE'],
   },
   {
@@ -344,6 +350,9 @@ export function isUnlimited(value: number | null): boolean {
  * Tier comparison helpers
  */
 export const TIER_ORDER: SubscriptionTierType[] = ['FREE', 'PRO', 'STUDIO', 'ENTERPRISE'];
+
+// Enterprise remains supported for existing accounts but is not offered publicly.
+export const PUBLIC_TIER_ORDER: SubscriptionTierType[] = ['FREE', 'PRO', 'STUDIO'];
 
 export function compareTiers(a: SubscriptionTierType, b: SubscriptionTierType): number {
   return TIER_ORDER.indexOf(a) - TIER_ORDER.indexOf(b);

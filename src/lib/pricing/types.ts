@@ -16,6 +16,7 @@ export interface SubscriptionStatus {
   isFoundingDesigner: boolean;
   inGracePeriod: boolean;
   daysUntilExpiry: number | null;
+  isComplimentary?: boolean;
 }
 
 /**

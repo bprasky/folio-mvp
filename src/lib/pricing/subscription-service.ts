@@ -6,6 +6,7 @@
  */
 
 import { prisma } from '@/lib/prisma';
+import { DESIGNER_EARLY_ACCESS_ENABLED, DESIGNER_EARLY_ACCESS_LIMITS } from './early-access';
 import {
   getTierConfig,
   getTierLimit,
@@ -14,6 +15,7 @@ import {
   isTeamTier,
   getNextUpgradeTier,
   type SubscriptionTierType,
+  type TierLimits,
 } from './tiers';
 import type {
   SubscriptionStatus,
@@ -57,6 +59,10 @@ export async function getSubscriptionStatus(userId: string): Promise<Subscriptio
 
   // Founding designers have null expiry date (lifetime access)
   const isFoundingDesigner = isPaidTier(tier) && expiresAt === null;
+
+  if (DESIGNER_EARLY_ACCESS_ENABLED) {
+    return { tier, isActive: true, expiresAt: null, isFoundingDesigner, inGracePeriod: false, daysUntilExpiry: null, isComplimentary: true };
+  }
 
   // Calculate if subscription is expired
   let isExpired = false;
@@ -102,7 +108,7 @@ export async function getUserSubscription(userId: string): Promise<UserSubscript
     userId,
     status,
     config,
-    limits: config.limits,
+    limits: status.isComplimentary ? DESIGNER_EARLY_ACCESS_LIMITS : config.limits,
   };
 }
 
@@ -111,7 +117,7 @@ export async function getUserSubscription(userId: string): Promise<UserSubscript
  */
 export async function getUserSubscriptionWithUsage(userId: string): Promise<UserSubscription> {
   const subscription = await getUserSubscription(userId);
-  const usage = await getSubscriptionUsage(userId, subscription.status.tier);
+  const usage = await getSubscriptionUsage(userId, subscription.status.tier, subscription.limits);
 
   return {
     ...subscription,
@@ -124,9 +130,9 @@ export async function getUserSubscriptionWithUsage(userId: string): Promise<User
  */
 export async function getSubscriptionUsage(
   userId: string,
-  tier: SubscriptionTierType
+  tier: SubscriptionTierType,
+  limits: TierLimits = getTierConfig(tier).limits
 ): Promise<SubscriptionUsage> {
-  const limits = getTierConfig(tier).limits;
 
   // Get project count
   const projectCount = await prisma.project.count({
@@ -213,7 +219,7 @@ export async function checkFeatureAccess(
 ): Promise<FeatureAccessResult> {
   const status = await getSubscriptionStatus(userId);
 
-  const canAccess = status.isActive && hasFeature(status.tier, featureKey);
+  const canAccess = status.isActive && (hasFeature(status.tier, featureKey) || (Boolean(status.isComplimentary) && hasFeature('STUDIO', featureKey)));
 
   // Find minimum tier for this feature
   const tiers: SubscriptionTierType[] = ['FREE', 'PRO', 'STUDIO', 'ENTERPRISE'];
@@ -292,6 +298,7 @@ export function getUpgradePrompt(
   currentTier: SubscriptionTierType,
   trigger: UpgradeTrigger
 ): UpgradePromptData | null {
+  if (DESIGNER_EARLY_ACCESS_ENABLED) return null;
   const nextTier = getNextUpgradeTier(currentTier);
   if (!nextTier) return null;
 
@@ -457,6 +464,8 @@ export async function canInviteTeamMember(userId: string): Promise<{
   upgradeRequired?: boolean;
 }> {
   const subscription = await getUserSubscription(userId);
+
+  if (subscription.status.isComplimentary) return { allowed: true };
 
   if (!isTeamTier(subscription.status.tier)) {
     return {

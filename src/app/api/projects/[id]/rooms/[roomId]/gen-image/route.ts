@@ -2,7 +2,8 @@ export const dynamic = 'force-dynamic';
 
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
-import { assertProjectAccess, getUserOrgMemberships, canGenerateImages as canGenerateImagesWithMembership } from '@/lib/permissions';
+import { assertProjectAccess, getUserOrgMemberships } from '@/lib/permissions';
+import { DESIGNER_EARLY_ACCESS_ENABLED } from '@/lib/pricing/early-access';
 import { prisma } from '@/lib/prisma';
 import { rateLimit } from '@/lib/rateLimit';
 import { buildBasePrompt, mergeModifiers } from '@/lib/boards/prompt';
@@ -41,6 +42,7 @@ export async function POST(
           select: {
             id: true,
             status: true,
+            type: true,
           }
         }
       }
@@ -50,16 +52,19 @@ export async function POST(
     if (!project?.designerOrgId || !project.designerOrg) {
       console.warn("[gen-image][permissions] Image generation not available for personal projects");
       return NextResponse.json(
-        { error: "Image generation is only available for organization projects. Please upgrade to a professional plan." },
+        { error: "Image generation is only available for design firm projects." },
         { status: 403 }
       );
     }
 
     // Check if the org is professional
-    if (project.designerOrg.status !== 'PROFESSIONAL') {
+    const complimentaryFirm = DESIGNER_EARLY_ACCESS_ENABLED && project.designerOrg.type === 'DESIGN_FIRM' && project.designerOrg.status === 'CLAIMED';
+    if (project.designerOrg.status !== 'PROFESSIONAL' && !complimentaryFirm) {
       console.warn("[gen-image][permissions] Image generation requires professional org status");
       return NextResponse.json(
-        { error: "Image generation requires a professional organization subscription." },
+        { error: DESIGNER_EARLY_ACCESS_ENABLED
+          ? "Confirm your design firm membership to generate images."
+          : "Image generation requires a professional organization subscription." },
         { status: 403 }
       );
     }

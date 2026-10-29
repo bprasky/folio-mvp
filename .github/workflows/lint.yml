@@ -124,6 +124,7 @@ jobs:
           npm run test:live:journey
       - name: Firm enrollment and posting permissions
         run: |
+          node scripts/check-designer-early-access.cjs
           node scripts/check-firm-enrollment.cjs
           node scripts/check-professional-entry.cjs
           node scripts/check-professional-routing.cjs

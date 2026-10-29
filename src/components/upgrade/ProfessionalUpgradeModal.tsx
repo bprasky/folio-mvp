@@ -19,6 +19,7 @@ import {
 import { toast } from 'sonner';
 import { OrgStatus } from '@/hooks/useUserCapabilities';
 import { TIER_CONFIGS } from '@/lib/pricing/tiers';
+import { DESIGNER_EARLY_ACCESS_ENABLED } from '@/lib/pricing/early-access';
 
 interface ProfessionalUpgradeModalProps {
   open: boolean;
@@ -117,13 +118,25 @@ export function ProfessionalUpgradeModal({
 
   const handleClaimOrg = () => {
     // Navigate to claim flow
-    window.location.href = `/professionals/join?orgId=${orgId}`;
+    window.location.href = `/professionals/join${orgId ? `?orgId=${encodeURIComponent(orgId)}` : ''}`;
   };
 
   const handleUpgrade = () => {
     // Navigate to upgrade/checkout flow
     window.location.href = `/professionals/designer/upgrade?orgId=${orgId}`;
   };
+
+  if (DESIGNER_EARLY_ACCESS_ENABLED) {
+    return (
+      <Dialog open={open} onOpenChange={onOpenChange}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader><DialogTitle>Early designer access is free</DialogTitle></DialogHeader>
+          <p className="folio-body">No payment is required. Confirm your design firm membership to use this feature.</p>
+          <Button onClick={handleClaimOrg}>Set up your firm access</Button>
+        </DialogContent>
+      </Dialog>
+    );
+  }
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -230,7 +243,8 @@ export function ProfessionalUpgradeModal({
                     />
                     <Button
                       variant="outline"
-                      size="icon"
+                      size="sm"
+                      aria-label="Close email form"
                       onClick={() => setShowShareForm(false)}
                     >
                       <X className="w-4 h-4" />

@@ -5,6 +5,7 @@
 
 import { prisma } from '@/lib/prisma';
 import type { User, Organization } from '@prisma/client';
+import { DESIGNER_EARLY_ACCESS_ENABLED } from '@/lib/pricing/early-access';
 
 // Professional roles that can appear in the designer directory
 const PROFESSIONAL_ROLES = ['DESIGNER', 'ARCHITECT', 'BUILDER'] as const;
@@ -21,6 +22,9 @@ export function isDesignerDirectoryEligible(user: Pick<User, 'role' | 'subscript
   if (!PROFESSIONAL_ROLES.includes(user.role as typeof PROFESSIONAL_ROLES[number])) {
     return false;
   }
+
+  // Early access waives payment only; the professional role check remains above.
+  if (DESIGNER_EARLY_ACCESS_ENABLED) return true;
 
   // Must be Pro tier or higher (PRO, STUDIO, or ENTERPRISE)
   const paidTiers = ['PRO', 'STUDIO', 'ENTERPRISE'];
@@ -94,7 +98,7 @@ export async function getDesignerEligibilityStatus(userId: string): Promise<{
 
   // Check grace period (7 days after subscription expires)
   let inGracePeriod = false;
-  if (user.subscriptionExpiresAt) {
+  if (!DESIGNER_EARLY_ACCESS_ENABLED && user.subscriptionExpiresAt) {
     const gracePeriodEnd = new Date(user.subscriptionExpiresAt);
     gracePeriodEnd.setDate(gracePeriodEnd.getDate() + 7);
     inGracePeriod = user.subscriptionExpiresAt < new Date() && new Date() < gracePeriodEnd;
@@ -102,7 +106,7 @@ export async function getDesignerEligibilityStatus(userId: string): Promise<{
 
   return {
     isEligible: isEligible || inGracePeriod,
-    requiresProUpgrade: isProfessionalRole && user.subscriptionTier === 'FREE',
+    requiresProUpgrade: !DESIGNER_EARLY_ACCESS_ENABLED && isProfessionalRole && user.subscriptionTier === 'FREE',
     subscriptionTier: user.subscriptionTier,
     subscriptionExpiresAt: user.subscriptionExpiresAt,
     role: user.role,

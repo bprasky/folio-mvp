@@ -1,6 +1,6 @@
 'use client';
 
-import { type TierConfig, type SubscriptionTierType } from '@/lib/pricing';
+import { type TierConfig, type SubscriptionTierType } from '@/lib/pricing/tiers';
 
 interface PricingCardProps {
   tier: TierConfig;
@@ -57,7 +57,7 @@ export function PricingCard({
       </div>
 
       <div className="mb-6">
-        {isEnterprise ? (
+        {!tier.pricing ? (
           <div className="flex items-baseline gap-1">
             <span className="text-3xl font-bold text-neutral-900">Custom</span>
           </div>
@@ -69,7 +69,7 @@ export function PricingCard({
               </span>
               <span className="text-neutral-500">/mo</span>
             </div>
-            {billingCycle === 'annually' && annualTotal && annualTotal > 0 && (
+            {billingCycle === 'annually' && annualTotal !== null && annualTotal > 0 && (
               <p className="text-sm text-neutral-500 mt-1">
                 ${annualTotal} billed annually
               </p>
@@ -94,10 +94,17 @@ export function PricingCard({
             unit="moodboard"
           />
           <LimitItem
-            label="Designer seats"
+            label="Team licenses"
             value={tier.limits.designerSeats}
-            unit="seat"
+            unit="license"
           />
+          {tier.additionalSeatPricing && (
+            <li className="folio-meta text-folio-text-secondary pl-6">
+              {billingCycle === 'monthly'
+                ? `Additional licenses: $${tier.additionalSeatPricing.monthly} / person / month`
+                : `Additional licenses: $${tier.additionalSeatPricing.annually} / person / year, billed annually`}
+            </li>
+          )}
           <LimitItem
             label="Storage"
             value={tier.limits.storageGb}
