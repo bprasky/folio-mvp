@@ -331,6 +331,7 @@
   cursor: pointer;
   transition: border-color var(--dur-fast) var(--ease), transform var(--dur-fast) var(--ease), box-shadow var(--dur-fast) var(--ease);
 }
+.auth-sso button:only-child { grid-column: 1 / -1; }
 .auth-sso button:hover:not(:disabled) {
   border-color: var(--auth-copper);
   transform: translateY(-1px);

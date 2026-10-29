@@ -22,6 +22,24 @@ export function SigninForm({ showGoogle, showApple }: SigninFormProps) {
   const [remember, setRemember] = useState(true);
   const [err, setErr] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const authError = params.get('error');
+  const displayedError = err ?? (authError
+    ? authError === 'OAuthAccountNotLinked'
+      ? 'Please sign in using the method you originally used for this account.'
+      : 'Sign-in could not be completed. Please try again or sign in with email.'
+    : null);
+
+  async function handleSso(provider: 'google' | 'apple') {
+    setErr(null);
+    setLoading(true);
+    try {
+      await signIn(provider, { callbackUrl });
+    } catch {
+      setErr('Unable to start sign-in. Please try again or sign in with email.');
+    } finally {
+      setLoading(false);
+    }
+  }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -67,7 +85,7 @@ export function SigninForm({ showGoogle, showApple }: SigninFormProps) {
               <button
                 type="button"
                 className={styles.ssoButton}
-                onClick={() => signIn('google', { callbackUrl })}
+                onClick={() => handleSso('google')}
                 disabled={loading}
               >
                 <GoogleIcon />
@@ -78,7 +96,7 @@ export function SigninForm({ showGoogle, showApple }: SigninFormProps) {
               <button
                 type="button"
                 className={styles.ssoButton}
-                onClick={() => signIn('apple', { callbackUrl })}
+                onClick={() => handleSso('apple')}
                 disabled={loading}
               >
                 <AppleIcon />
@@ -143,9 +161,9 @@ export function SigninForm({ showGoogle, showApple }: SigninFormProps) {
           <span className={styles.checkboxLabel}>Keep me signed in on this device</span>
         </label>
 
-        {err && (
+        {displayedError && (
           <div className={styles.errorBox} role="alert">
-            {err}
+            {displayedError}
           </div>
         )}
 

@@ -120,6 +120,7 @@ jobs:
           node scripts/check-professional-entry.cjs
           node scripts/check-professional-routing.cjs
           node scripts/check-professional-auth-aliases.cjs
+          node scripts/check-auth-oauth.cjs
           node scripts/check-org-join-notifications.cjs
           npx tsx --test scripts/core/firm-posting-policy.test.cjs
       - name: Publishing Studio regression checks

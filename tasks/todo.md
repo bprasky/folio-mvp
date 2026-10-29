@@ -1111,3 +1111,21 @@ The first deployment of 4829a94e reached READY but was rolled back: setting a gl
 - [x] Reconcile the audit's stale storage, middleware, source identity and release statements; preserve historical evidence and record precise remaining gates.
 
 Review: no runtime source changes were needed. Email/model/storage-policy boundaries remain synthetic in the connected runs; local services are stopped afterward. Legacy production migration, full signed-in hosted smoke, physical phones and optional provider activation remain separate. See docs/reviews/rollout-final-gap-audit/evidence/release-verification.md.
+# Google and Apple signup repair — 2026-10-28
+
+- [x] Check production provider registration, deployment settings and signup/signin behavior.
+- [x] Offer only configured providers on signup; show returned authentication errors and preserve the requested destination.
+- [x] Fix OAuth session identity so Google/Apple identifiers never replace the Folio user ID.
+- [x] Run focused regression tests and required guards; review and publish an isolated fix branch.
+
+Plan check-in: production `/api/auth/providers` exposes credentials only, and Vercel contains neither Google nor Apple credential settings. The founder confirmed neither developer-console integration is set up. Signup currently renders both buttons unconditionally; NextAuth returns unknown-provider attempts to signin. Preserve email signup and project/firm intent. OAuth enablement remains dependent on developer-console setup and credentials; this repair must not claim it enables either provider. Work starts at current `origin/main` in an isolated worktree, preserving the existing dirty checkout. No schema or database changes.
+
+### Review
+
+Focused OAuth regression passes all provider combinations, provider discovery failures, Google/Apple Folio IDs, fail-closed identity resolution, credentials/session refresh, project callbacks and returned sign-in errors. Running the same identity regression against origin/main fails because the Google ID overwrites the Folio ID. Core suite: 21 passed, 2 database-dependent skips. Professional entry and auth-alias checks, scoped lint (existing warnings only), client boundary and migration discipline pass. Local full compilation fails in the unchanged Next Google-font loader; the shared dependency junction also creates path-specific TypeScript fingerprints in unrelated festival/import files. Full clean-environment verification remains pending CI. No provider login or production enablement has been claimed.
+
+Browser verification: rendered the actual signup/signin components with synthetic auth boundaries. With no OAuth provider, neither button nor divider appears. With Google only, Google appears and Apple remains absent; failed launch stays on signup with actionable feedback. OAuth callback errors are visible on signin and its signup link retains `/projects/new`. Single-provider signup buttons span the full row. Published fix as PR #831; CI pending.
+
+Setup follow-up: founder authorized saving Google branding and accepting its User Data Policy; saved in the existing Folio Google project. Founder explicitly requested skipping Apple. Google OAuth client creation, secret installation and rollout remain pending.
+
+---
