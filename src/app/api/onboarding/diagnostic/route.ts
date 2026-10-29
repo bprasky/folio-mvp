@@ -3,7 +3,7 @@ import { getServerSession } from 'next-auth';
 import { z } from 'zod';
 import { authOptions } from '@/app/api/auth/[...nextauth]/options';
 import { prisma } from '@/lib/prisma';
-import { professionalSetupHref } from '@/lib/onboarding/professional-entry';
+import { professionalSetupHref, workspaceSetupHref } from '@/lib/onboarding/professional-entry';
 
 export const dynamic = 'force-dynamic';
 
@@ -54,6 +54,6 @@ export async function POST(request: NextRequest) {
 
   return NextResponse.json({
     ok: true,
-    nextPath: stampAll ? '/' : professionalSetupHref(role.toLowerCase()),
+    nextPath: stampAll ? '/' : professionalSetupHref(role.toLowerCase(), workspaceSetupHref()),
   });
 }

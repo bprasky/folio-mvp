@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/app/api/auth/[...nextauth]/options';
 import { prisma } from '@/lib/prisma';
+import { isWorkspaceImport } from '@/lib/workspace-import/types';
 import { ensureProductForSelection } from '@/lib/tagging/ensureProductForSelection';
 import { ROOM_TYPE_TO_ENUM } from '@/lib/import-agent/roomTypes';
 
@@ -45,6 +46,7 @@ export async function POST(
     }
 
     // Verify user owns the project
+    if (isWorkspaceImport(importSession.processingMeta)) return NextResponse.json({ error: 'Manage this import from your workspace.' }, { status: 409 });
     const project = await prisma.project.findFirst({
       where: {
         id: projectId,

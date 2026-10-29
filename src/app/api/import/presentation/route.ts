@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/app/api/auth/[...nextauth]/options';
 import { prisma } from '@/lib/prisma';
+import { isWorkspaceImport } from '@/lib/workspace-import/types';
 
 // We need to import dynamically for server-side PDF/PPTX parsing
 // These libraries don't work in Edge runtime
@@ -54,6 +55,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Fetch files from Supabase storage
+    if (isWorkspaceImport(importSession.processingMeta)) return NextResponse.json({ error: 'Manage this import from your workspace.' }, { status: 409 });
     const { supabaseAdmin } = await import('@/lib/supabaseAdmin');
     const IMPORTS_BUCKET = 'imports'; // All import files: source presentations + extracted images
 

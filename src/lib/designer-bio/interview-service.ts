@@ -26,11 +26,13 @@ export async function prepareBioQuestions(actorId: string, round: 'base' | 'foll
     }
   }
   const base = answers.filter(answer => answer.round === 'base');
+  const { readPreparedBio } = await import('@/lib/workspace-import/prepared');
+  const prepared = round === 'base' ? readPreparedBio(bio?.scrapedData, user.role || 'DESIGNER') : null;
   const questions = round === 'followup'
     ? base.length < 3 ? [] : await generateFollowUpQuestions(base, user.role || 'DESIGNER', bio?.scrapedData as Record<string, unknown> | null)
-    : bio?.scrapedData && bio.status !== 'empty'
+    : prepared ?? (bio?.scrapedData && bio.status !== 'empty'
       ? await generateWebsiteContextQuestions(bio.scrapedData as Record<string, unknown>, user.role || 'DESIGNER')
-      : getBlankSlateQuestions(user.role || 'DESIGNER');
+      : getBlankSlateQuestions(user.role || 'DESIGNER'));
   // A regenerated positional ID never renames a previously answered question.
   return questions.map(question => ({ ...question, question: answers.find(answer => answer.id === question.id && answer.round === round)?.question || question.question }));
 }

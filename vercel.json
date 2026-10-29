@@ -3,5 +3,8 @@
   "regions": ["iad1"],
   "installCommand": "npm install --legacy-peer-deps",
   "buildCommand": "prisma generate && next build",
-  "crons": [{ "path": "/api/cron/live-interviews", "schedule": "* * * * *" }]
+  "crons": [
+    { "path": "/api/cron/live-interviews", "schedule": "* * * * *" },
+    { "path": "/api/cron/workspace-imports", "schedule": "* * * * *" }
+  ]
 }

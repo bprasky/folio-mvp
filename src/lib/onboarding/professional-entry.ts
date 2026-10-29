@@ -12,6 +12,7 @@ export function safeCallbackPath(value: string | null | undefined, fallback = '/
 export function safeProfessionalCallback(value: string | null | undefined): string {
   const path = safeCallbackPath(value, '/projects/new');
   const pathname = decodeURIComponent(new URL(path, 'https://folio.invalid').pathname).replace(/\/+$/, '').toLowerCase();
+  if (pathname === '/onboarding/workspace') return path;
   if (/^\/auth\/(org-setup|signin|signup)(\/|$)/.test(pathname) || /^\/(onboarding|professionals)(\/|$)/.test(pathname)) return '/projects/new';
   return path;
 }
@@ -33,7 +34,37 @@ export function projectEntryHref(user: { role?: string | null; operatingAsOrgId?
 export function firmWorkspaceDestination(org: { id: string; type: string }, callbackUrl?: string | null): string {
   const target = safeProfessionalCallback(callbackUrl);
   const pathname = decodeURIComponent(new URL(target, 'https://folio.invalid').pathname).replace(/\/+$/, '');
+  if (pathname === '/onboarding/workspace') {
+    const url = new URL(target, 'https://folio.invalid');
+    url.searchParams.set('orgId', org.id);
+    return url.pathname + url.search;
+  }
   if (pathname !== '/projects/new' && pathname !== '/designer/create') return target;
   if (['DESIGN_FIRM', 'ARCHITECTURE_FIRM', 'CONTRACTOR'].includes(org.type)) return target;
   return '/org/' + encodeURIComponent(org.id);
+}
+
+/** New professionals see the same three steps regardless of their signup entry point. */
+export function signupDestination(intent: string, callback?: string | null, startProject = false): string {
+  const target = safeCallbackPath(callback);
+  const url = new URL(target, 'https://folio.invalid');
+  // A claim token already identifies the business; its own enrollment must run first.
+  if (url.pathname === '/auth/claim') return target;
+  if (url.pathname === '/auth/org-setup') {
+    if (['designer', 'architect', 'builder', 'vendor'].includes(intent)) url.searchParams.set('type', intent);
+    const next = safeProfessionalCallback(url.searchParams.get('callbackUrl'));
+    if (!next.startsWith('/onboarding/workspace')) url.searchParams.set('callbackUrl', workspaceSetupHref(next));
+    return url.pathname + url.search;
+  }
+  if (intent === 'browsing') {
+    if (url.pathname === '/projects/new' || url.pathname === '/designer/create')
+      return professionalSetupHref('designer', workspaceSetupHref(target));
+    return target !== '/' ? target : '/onboarding/diagnostic';
+  }
+  return professionalSetupHref(intent, workspaceSetupHref(target !== '/' ? target : startProject ? '/projects/new' : '/settings'));
+}
+
+export function workspaceSetupHref(returnTo = '/projects/new'): string {
+  const next = safeProfessionalCallback(returnTo);
+  return '/onboarding/workspace?returnTo=' + encodeURIComponent(next.startsWith('/onboarding/workspace') ? '/projects/new' : next);
 }
