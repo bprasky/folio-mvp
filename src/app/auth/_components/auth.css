@@ -517,7 +517,7 @@
   padding: 14px 20px;
   border-radius: 10px;
   background: var(--folio-ink);
-  color: #fff;
+  color: var(--surface-canvas);
   border: none;
   font-family: var(--font-body);
   font-size: 15px;
@@ -529,6 +529,7 @@
 }
 .auth-submit:hover:not(:disabled) {
   background: #2b2b27;
+  color: #fff;
   transform: translateY(-1px);
   box-shadow: var(--shadow-2);
 }

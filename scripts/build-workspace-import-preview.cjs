@@ -19,6 +19,7 @@ import {SetupProgress} from '@/components/onboarding/SetupProgress';
 import {ProfessionalSetupFrame} from '@/components/onboarding/ProfessionalSetupFrame';
 import {WorkspaceImportReadyNotice} from '@/components/onboarding/WorkspaceImportReadyNotice';
 const params=new URLSearchParams(location.search);
+document.documentElement.dataset.theme=params.get('theme')==='dark'?'dark':'light';
 const pendingKey='fixture-pending-signup';
 window.fixtureVerify=async(code)=>{
  const pending=JSON.parse(sessionStorage.getItem(pendingKey)||'null');
