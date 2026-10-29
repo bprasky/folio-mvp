@@ -3,7 +3,9 @@
 - [x] Integrate the existing organization magazine components from PR #835.
 - [x] Replace the standalone onboarding cover and cards with the shared hero and mosaic; retain materials-first navigation and private ownership checks.
 - [x] Verify saved appearance, private drafts, desktop/mobile rendering and destination controls.
-- [ ] Push the corrected PR and verify its CI.
+- [x] Push the corrected PR and start its CI; final results are recorded on the PR.
+
+Small portfolios also fill the shared mosaic: one project spans the row and two projects split it evenly, retaining the existing responsive grid for larger feeds.
 
 Review: reused the actual OrgProfileHero and FlowMosaic from #835 and removed the competing cover/card CSS. Saved introduction, portrait/logo, cover/crop, color and featured facts are respected. Automatic covers use the importing owner's eligible draft photos only in the private preview; the shared public loader remains public-only. Material-first destinations and sourcebook behavior are preserved. Import regressions, 17 organization appearance/permission regressions, scoped lint, client boundary and migration guards pass. Production compilation succeeds; TypeScript ratchet passes at 864 versus 880 without increasing its baseline. Real components with synthetic services passed desktop, 390px and 320px checks, light/dark presentation, keyboard controls, schedule/manual/project destinations, and review disclosure. No browser errors or horizontal overflow. This branch includes the existing #835 implementation as a dependency; neither PR was merged or deployed here.
 

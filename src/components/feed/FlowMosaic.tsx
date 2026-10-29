@@ -146,7 +146,7 @@ export default function FlowMosaic({ events, canEdit = false, preserveOrder = fa
             key={item.id}
             className={clsx(
               "group relative rounded-[20px] overflow-hidden",
-              className
+              events.length === 1 ? "col-span-full" : events.length === 2 ? "col-span-1 lg:col-span-2 xl:col-span-3" : className
             )}
             style={{ gridRowEnd: `span ${rowSpan}` }}
           >

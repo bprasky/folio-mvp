@@ -184,6 +184,8 @@ const rowFor = id => db.importSession.findUnique({ where: { id } });
   const publicMosaic = require('react-dom/server').renderToStaticMarkup(require('react').createElement(mosaic, { events: [{ id: 'public', title: 'Published work', href: '/project/public' }] }));
   assert.match(publicMosaic, /href="\/project\/public"/, 'existing public cards retain their links');
   assert.doesNotMatch(publicMosaic, /Private draft|<button/);
+  const pairMosaic = require('react-dom/server').renderToStaticMarkup(require('react').createElement(mosaic, { events: [{ id: 'one', title: 'One' }, { id: 'two', title: 'Two' }] }));
+  assert.equal((pairMosaic.match(/xl:col-span-3/g) || []).length, 2, 'two projects fill the row instead of leaving a third of the page empty');
   assert.equal(extraction.websiteUrl('studio.test/team/jane', 'https://studio.test'), 'https://studio.test/team/jane');
   assert.equal(extraction.extractWebsitePage(html['/about'], 'https://studio.test/about', 'Jane Designer').personalBio, undefined);
   assert.equal(extraction.extractWebsitePage('<a href="https://elsewhere.test/work/a">Other</a><a href="/news/a">News</a>', 'https://studio.test').links.length, 0);
