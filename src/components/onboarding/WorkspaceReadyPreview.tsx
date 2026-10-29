@@ -26,11 +26,11 @@ export function WorkspaceReadyPreview({ profile, personName, description, locati
   const automaticCover = workspaceCover(projects);
   const cover = profile.appearance.cover.kind === 'auto' && automaticCover ? automaticCover : profile.cover;
   const org = { ...profile.org, description, location, logo: logo ?? null };
-  const first = canContribute ? projects.find(project => !project.isPublic && project.photos.length) : undefined;
-  const action = (project: WorkspacePreviewProject) => canContribute && !project.isPublic && project.photos.length ? 'tag' : 'open';
+  const first = canContribute ? projects.find(project => !project.isPublic && project.hasSavedProgress)
+    || projects.find(project => !project.isPublic && project.photos.length) : undefined;
   const items = projects.map(project => ({
     id: project.id, title: project.title, imageUrl: project.photos[0]?.url, isDraft: !project.isPublic,
-    actionLabel: project.isPublic || !canContribute ? 'Open project' : project.photos.length ? 'Add materials' : 'Add photographs',
+    actionLabel: project.isPublic || !canContribute ? 'Open project' : project.photos.length ? 'Continue project' : 'Add photographs',
   }));
   return <section className={`workspace-preview ${profileStyles.page}`} style={profilePageStyle(profile.appearance.backgroundColor)} aria-label="Your private profile preview">
     <div className="workspace-preview__welcome">
@@ -40,20 +40,24 @@ export function WorkspaceReadyPreview({ profile, personName, description, locati
     <OrgProfileHero org={org} appearance={profile.appearance} cover={cover}
       projectCount={profile.projectCount + projects.filter(project => !project.isPublic).length} year={new Date().getFullYear()} preview />
     {first ? <div className={`workspace-preview__next ${profileStyles.neutralContent}`}>
-      <div><p className="workspace-preview__eyebrow">Next: materials & sourcebook · Then: your interview</p>
+      {first.hasSavedProgress ? <>
+        <div><p className="workspace-preview__eyebrow">Pick up where you left off</p>
+          <h2>Continue {first.title}.</h2><p>Your progress is saved. Open your project to continue from your current step.</p></div>
+        <button type="button" className="auth-submit" disabled={busy} onClick={() => onOpenProject(first.id, 'open')}>Continue project <span aria-hidden="true">↗</span></button>
+      </> : <><div><p className="workspace-preview__eyebrow">Next: materials & sourcebook · Then: your interview</p>
         <h2>Add materials to {first.title}.</h2>
         <p>Upload a finish schedule or tag products in your photos. Review and place them to build your sourcebook. Together with your photographs, those materials help us prepare a conversation about the thinking behind your work.</p>
       </div>
       <div className="workspace-preview__next-actions">
         <button type="button" className="auth-submit" disabled={busy} onClick={() => onOpenProject(first.id, 'schedule')}>Upload a finish schedule <span aria-hidden="true">↗</span></button>
         <button type="button" className="auth-secondary" disabled={busy} onClick={() => onOpenProject(first.id, 'tag')}>Tag products manually</button>
-      </div>
+      </div></>}
     </div> : <p className="workspace-preview__empty">{projects.length ? 'Your projects are here. Open one below to continue.' : 'Review your imported details, then add photographs to begin your first project.'}</p>}
     {projects.length ? <section className="workspace-preview__projects" aria-label="Your imported projects">
       <div className="workspace-preview__section-heading"><h2>Your projects</h2><p>Private drafts are yours to shape. Publish when you’re ready.</p></div>
       <FlowMosaic events={items} preserveOrder disabled={busy} onSelect={id => {
         const project = projects.find(candidate => candidate.id === id);
-        if (project) onOpenProject(id, action(project));
+        if (project) onOpenProject(id, 'open');
       }} />
     </section> : null}
     {description || bio ? <div className={`workspace-preview__about ${profileStyles.neutralContent}`}>

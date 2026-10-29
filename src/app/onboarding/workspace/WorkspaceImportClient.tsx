@@ -195,13 +195,13 @@ export function WorkspaceImportClient({ access, memberships, initialId, availabl
         {run.sections.includes('bio') && run.profile.bio ? <section className={card}><h2 className="folio-h3">Your bio, ready for a conversation</h2><p className="folio-meta text-folio-text-secondary">Review your background below. This becomes context for your profile interview; your published bio and existing answers stay as they are.</p>
           <label className="block folio-ui">Your background<textarea className={field} rows={6} maxLength={4000} value={bio} onChange={event => setBio(event.target.value)} /></label>
           <button className="auth-secondary" disabled={busy || !bio.trim()} onClick={() => apply({ action: 'bio', version: review.bioVersion, bio })}>Use as interview context</button>
-          {run.profile.bioApplied ? <Link href="/designer/profile" className="block underline folio-meta">Continue to my profile interview</Link> : null}
+          {run.profile.bioApplied ? <Link href="/designer/studio/about-me" className="block underline folio-meta">Continue to my profile interview</Link> : null}
         </section> : null}
         </div></details>
       </> : null}
       {review.canReview ? <Link className="block underline folio-meta" href={`/onboarding/workspace?orgId=${access.id}&new=1&returnTo=${encodeURIComponent(returnTo)}`}>Bring over more work from a website</Link> : null}
     </>}
-    <div className="border-t border-folio-border-subtle pt-6 space-y-3"><button type="button" disabled={busy} className="block underline folio-ui" onClick={() => void continueToFolio()}>{id ? 'Continue to Folio' : 'Set up manually for now'}</button><p className="folio-meta text-folio-text-secondary">You can return to website imports from your professional account.</p></div>
+    <div className="border-t border-folio-border-subtle pt-6 space-y-3"><button type="button" disabled={busy} className="block underline folio-ui" onClick={() => void continueToFolio()}>{id ? 'Continue to Folio' : 'Set up manually for now'}</button><p className="folio-meta text-folio-text-secondary">{access.canImportProjects ? 'Choose My Profile in your account menu to return to your saved work.' : 'You can return to website imports from your professional account.'}</p></div>
     {history.length > 0 ? <details><summary className="folio-meta cursor-pointer">Previous imports</summary><ul className="space-y-2 mt-3">{history.map(item => <li key={item.id}><Link className="folio-meta underline" href={`/onboarding/workspace?import=${item.id}`}>{new Date(item.date).toLocaleDateString()} — {item.phase === 'complete' ? 'Ready to review' : item.phase === 'blocked' ? 'Needs attention' : 'In progress'}</Link></li>)}</ul></details> : null}
   </div></ProfessionalSetupFrame>;
 }

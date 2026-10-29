@@ -19,9 +19,10 @@ export function WorkspaceImportReadyNotice() {
   useEffect(() => {
     if (!userId || suppressed) return;
     const controller = new AbortController();
-    let pending = false;
+    let pending = false, reload = false;
     async function load() {
-      if (pending || document.visibilityState === 'hidden') return;
+      if (document.visibilityState === 'hidden') return;
+      if (pending) { reload = true; return; }
       pending = true;
       try {
         const response = await fetch('/api/notifications', { cache: 'no-store', signal: controller.signal });
@@ -30,21 +31,23 @@ export function WorkspaceImportReadyNotice() {
         if (controller.signal.aborted) return;
         const next = (data.items as Notice[] | undefined)?.find(item => item.type === 'WORKSPACE_IMPORT_READY' && !item.read && !dismissed.current.has(item.id) && item.actionUrl?.startsWith('/onboarding/workspace?import='));
         setNotice(next ? { userId: userId!, item: next } : null);
-      } catch { /* The persistent notification remains in the account menu. */ }
-      finally { pending = false; }
+      } catch { /* The persistent notification remains in the header bell. */ }
+      finally { pending = false; if (reload && !controller.signal.aborted) { reload = false; void load(); } }
     }
     void load();
     const timer = setInterval(() => void load(), 60_000);
     document.addEventListener('visibilitychange', load);
     window.addEventListener('focus', load);
-    return () => { controller.abort(); clearInterval(timer); document.removeEventListener('visibilitychange', load); window.removeEventListener('focus', load); };
+    window.addEventListener('folio:notifications-changed', load);
+    return () => { controller.abort(); clearInterval(timer); document.removeEventListener('visibilitychange', load); window.removeEventListener('focus', load); window.removeEventListener('folio:notifications-changed', load); };
   }, [userId, suppressed]);
 
   if (!userId || suppressed || notice?.userId !== userId) return null;
   const item = notice.item;
   const acknowledge = () => {
     dismissed.current.add(item.id); setNotice(null);
-    void fetch('/api/notifications', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: item.id }) }).catch(() => {});
+    void fetch('/api/notifications', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: item.id }) })
+      .then(response => { if (response.ok) window.dispatchEvent(new Event('folio:notifications-changed')); }).catch(() => {});
   };
   return <aside className="workspace-ready-notice" aria-label="Your Folio is ready" role="status">
     <button type="button" className="workspace-ready-notice__dismiss" aria-label="Dismiss profile ready notice" onClick={acknowledge}>×</button>

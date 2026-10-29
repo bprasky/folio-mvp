@@ -20,7 +20,9 @@ export async function readImportReview(userId: string, id: string) {
     prisma.organization.findUniqueOrThrow({ where: { id: run.orgId }, select: { description: true, location: true, website: true, logo: true, updatedAt: true } }),
     prisma.designerBio.findUnique({ where: { userId }, select: { updatedAt: true, status: true, scrapedData: true } }),
     prisma.project.findMany({ where: { id: { in: run.projects.flatMap(project => project.projectId ? [project.projectId] : []) }, ownerId: userId, designerOrgId: run.orgId },
-      select: { id: true, title: true, description: true, isPublic: true, images: { where: { inclusion: 'INCLUDED' }, orderBy: [{ displayOrder: 'asc' }, { createdAt: 'asc' }], take: 30, select: { id: true, url: true, name: true } } } }),
+      select: { id: true, title: true, description: true, isPublic: true,
+        _count: { select: { editorialInterviews: true, images: { where: { OR: [{ noProducts: true }, { tags: { some: {} } }] } } } },
+        images: { where: { inclusion: 'INCLUDED' }, orderBy: [{ displayOrder: 'asc' }, { createdAt: 'asc' }], take: 30, select: { id: true, url: true, name: true } } } }),
     getOrgProfileAppearanceData(run.orgId),
   ]);
   // A reader sees useful progress, not the worker's lease or the notification recipient.
@@ -28,6 +30,7 @@ export async function readImportReview(userId: string, id: string) {
   const bioData = bio?.scrapedData as { bio?: unknown } | null;
   projects.sort((a, b) => run.projects.findIndex(item => item.projectId === a.id) - run.projects.findIndex(item => item.projectId === b.id));
   const previewProjects = projects.map(project => ({ id: project.id, title: project.title, description: project.description, isPublic: project.isPublic,
+    hasSavedProgress: project._count.editorialInterviews > 0 || project._count.images > 0,
     photos: project.images.map(image => {
       const source = run.projects.find(item => item.projectId === project.id)?.photos.find(photo => photo.imageId === image.id);
       return { url: image.url, alt: image.name || project.title, width: source?.width, height: source?.height };
