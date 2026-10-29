@@ -5,13 +5,13 @@
 - [x] Add owner/admin appearance settings with live preview, background color/reset, cover selection/upload and framing, logo/portrait and fact controls.
 - [x] Persist validated settings with server-side active owner/admin checks; verify uploaded images and public project eligibility.
 - [x] Verify save/reload, authorization, anonymous sharing, responsive layouts, empty states and existing navigation. Run client-import, migration and type checks.
-- [ ] Review the final diff, record results, and commit/push the isolated branch.
+- [x] Review the final diff, record results, and commit/push the isolated branch.
 
 Plan check-in: implement the approved organization cover on latest main. Retain Feed, Shop, About, Contact and their real categories, vendor variations, and the existing ProjectFlowMosaic. Default to Folio colors and existing imported identity/content; never insert prototype numbers or unsupported facts. A new nullable appearance field, if needed, follows the repository's explicit schema review gate before application. Back up schema before edits; restore and stop if schema validation/generation/migration status fails. Independently prepare the UI and tests while approval is pending. A safe public feed is required because the current design feed rejects visitors to a shared profile.
 
 ### Review
 
-Implemented on `codex/organization-magazine` from `4cde03dd`. The public cover uses the organization name, existing description/logo and eligible public project photography. Optional short cover introduction, background/reset, image crop, independent uploaded logo/portrait and up to four ordered facts save in a validated nullable appearance object. Prototype sample statistics are never inserted. Original Feed/Shop/About/Contact and vendor variants remain; project mosaic is reused. Fixed the inherited dark title color on the shared photo mosaic.
+Implemented on `codex/organization-magazine` from `4cde03dd`; pushed and opened draft PR #835 (https://github.com/bprasky/folio-mvp/pull/835). The public cover uses the organization name, existing description/logo and eligible public project photography. Optional short cover introduction, background/reset, image crop, independent uploaded logo/portrait and up to four ordered facts save in a validated nullable appearance object. Prototype sample statistics are never inserted. Original Feed/Shop/About/Contact and vendor variants remain; project mosaic is reused. Fixed the inherited dark title color on the shared photo mosaic.
 
 Appearance GET/PATCH and image uploads require active exact-organization Owner/Admin membership. Writes recheck the permission inside the transaction; uploads decode and strip metadata, keep immutable org-scoped paths, and retain existing assets on failure. Selected project photos remain references and are rechecked against current public status, inclusion and firm ownership. The design feed now accepts anonymous visitors with explicit public fields and current public exact-firm filters. Related pinned and Shop provenance use the same firm/photo eligibility.
 
