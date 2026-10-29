@@ -9,6 +9,7 @@ The pending signup uses a random HTTP-only browser secret and a keyed code hash.
 - `check-signup-verification.cjs`: actual service, routes and auth provider; PGlite runs the additive SQL twice and tests transaction rollback, concurrent consumption, replay and resend races. Covers browser binding, limits, expiry, missing configuration, email failure, recovery, consent and input validation. NextAuth's actual handler rejects missing CSRF and produces a signed session after verification. A small adapter translates the tested Prisma calls to SQL; this is not a claim of production Prisma or provider delivery testing.
 - Core journey suite, OAuth identity tests, business entry/routing/aliases and background import regressions pass.
 - Next production compilation, targeted lint, client import boundaries and migration discipline pass. The TypeScript diagnostic ratchet passes without changing its baseline or equivalences.
+- The installation guard pins the new model artifact and migration hash alongside the historical schema. Mutation checks reject altered signup fields/defaults, SQL and review artifacts while preserving all earlier protections.
 - Browser walkthrough mounts the real components with synthetic APIs. Tested signup, incorrect code, resend, page refresh, successful continuation to business setup, expired code, delivery failure and exhausted attempts. Checked desktop and mobile layout. The fixture uses `123456` and a shortened resend timer; no real account or email is created.
 
 ## Release
