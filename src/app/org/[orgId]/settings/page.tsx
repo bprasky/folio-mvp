@@ -4,10 +4,9 @@ import React, { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';
 import { RolePermissionsMatrix } from '@/components/org-profile/RolePermissionsMatrix';
+import OrgAppearanceSettings from '@/components/org-profile/OrgAppearanceSettings';
 
-// /org/[orgId]/settings is the org admin console: pending join requests
-// and member management. Profile-field editing lives at /org/[orgId]/edit,
-// reachable via the "Edit Profile" button on the org hero.
+// Organization appearance and administration are restricted to owners/admins.
 
 interface PendingJoinRequest {
   id: string;
@@ -45,7 +44,8 @@ const ROLE_LABEL: Record<OrgRole, string> = {
 export default function OrgSettingsPage() {
   const params = useParams();
   const router = useRouter();
-  const { data: session } = useSession();
+  const { data: session, status: sessionStatus } = useSession();
+  const userId = session?.user?.id;
   const orgId = params.orgId as string;
 
   const [loading, setLoading] = useState(true);
@@ -71,15 +71,19 @@ export default function OrgSettingsPage() {
   >(null);
 
   useEffect(() => {
+    const controller = new AbortController();
+    setIsAuthorized(false);
+    setLoading(true);
     async function loadOrg() {
       try {
-        const res = await fetch(`/api/orgs/${orgId}`);
+        const res = await fetch(`/api/orgs/${orgId}`, { signal: controller.signal });
         if (res.ok) {
           const data = await res.json();
+          if (controller.signal.aborted) return;
           setOrgName(data.name || '');
           setMembersCanPublish(data.membersCanPublish === true);
           const userMember = data.members?.find(
-            (m: any) => m.userId === session?.user?.id
+            (m: any) => m.userId === userId
           );
           setIsAuthorized(
             userMember && ['OWNER', 'ADMIN'].includes(userMember.role)
@@ -91,15 +95,18 @@ export default function OrgSettingsPage() {
           );
         }
       } catch (error) {
-        console.error('Failed to load org:', error);
+        if (!controller.signal.aborted) console.error('Failed to load org:', error);
       } finally {
-        setLoading(false);
+        if (!controller.signal.aborted) setLoading(false);
       }
     }
-    if (session?.user) {
+    if (userId) {
       loadOrg();
+    } else if (sessionStatus === 'unauthenticated') {
+      setLoading(false);
     }
-  }, [orgId, session, router]);
+    return () => controller.abort();
+  }, [orgId, userId, sessionStatus]);
 
   const fetchMembers = async () => {
     try {
@@ -305,7 +312,7 @@ export default function OrgSettingsPage() {
 
   return (
     <div className="min-h-screen" style={{ backgroundColor: 'var(--surface-ground)' }}>
-      <div className="max-w-2xl mx-auto px-6 py-12">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 py-12">
         <div className="mb-8">
           <h1
             className="text-3xl italic mb-2"
@@ -314,17 +321,18 @@ export default function OrgSettingsPage() {
             {orgName || 'Organization'} settings
           </h1>
           <p className="text-sm" style={{ color: '#8B8178' }}>
-            Manage members and pending requests. To edit the public profile,
-            use the &ldquo;Edit Profile&rdquo; button on the org page.
+            Customize your public page and manage your organization’s members and permissions.
           </p>
           <button
             onClick={() => router.push(`/org/${orgId}/edit`)}
             className="mt-3 text-xs transition-opacity hover:opacity-70"
             style={{ color: 'var(--folio-gold)' }}
           >
-            Go to profile editor →
+            Edit firm details and biography
           </button>
         </div>
+
+        <OrgAppearanceSettings key={orgId} orgId={orgId} />
 
         {pendingRequests.length > 0 && (
           <section

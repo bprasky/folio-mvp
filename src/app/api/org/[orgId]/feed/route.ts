@@ -1,6 +1,5 @@
+// @idor-allow: public-read reason="Organization profile feed: current public firm projects with included photos, and explicitly published org content; selected public fields only"
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/app/api/auth/[...nextauth]/options';
 import { prisma } from '@/lib/prisma';
 
 export const dynamic = 'force-dynamic';
@@ -8,7 +7,7 @@ export const dynamic = 'force-dynamic';
 interface FeedItem {
   id: string;
   type: 'project' | 'media' | 'recognition' | 'collaboration';
-  data: any;
+  data: Record<string, unknown>;
   publishedAt: Date | null;
   pinnedAt: Date | null;
   pinOrder: number | null;
@@ -20,46 +19,28 @@ export async function GET(
   { params }: { params: { orgId: string } | Promise<{ orgId: string }> }
 ) {
   try {
-    const session = await getServerSession(authOptions);
-    if (!session?.user?.id) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
-    const resolvedParams = params instanceof Promise ? await params : params;
-
-    const membership = await prisma.organizationUser.findFirst({
-      where: { userId: session.user.id, organizationId: resolvedParams.orgId, isActive: true },
-      select: { id: true },
-    });
-    if (!membership) {
-      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
-    }
-
+    const { orgId } = await params;
     const { searchParams } = new URL(request.url);
     const filter = searchParams.get('filter') || 'all';
     const sort = searchParams.get('sort') || 'featured';
     const limit = 30;
-
-    // Get org members
-    const members = await prisma.organizationUser.findMany({
-      where: { organizationId: resolvedParams.orgId, isActive: true },
-      select: { userId: true },
-    });
-    const memberIds = members.map(m => m.userId);
-
-    if (memberIds.length === 0) {
-      return NextResponse.json({ items: [] });
+    if (!['all', 'projects', 'media', 'recognition', 'collaborations'].includes(filter) ||
+        !['featured', 'recent', 'engagement'].includes(sort)) {
+      return NextResponse.json({ error: 'Choose a valid feed category and sort order.' }, { status: 400 });
     }
-
+    const organization = await prisma.organization.findUnique({ where: { id: orgId }, select: { id: true } });
+    if (!organization) return NextResponse.json({ error: 'Organization not found.' }, { status: 404 });
     const items: FeedItem[] = [];
 
     // Fetch projects
     if (filter === 'all' || filter === 'projects') {
       const projects = await prisma.project.findMany({
-        where: { designerId: { in: memberIds }, isPublic: true },
-        include: {
-          images: { take: 1, orderBy: { displayOrder: 'asc' } },
-          rooms: { select: { id: true } },
+        where: { designerOrgId: orgId, isPublic: true },
+        select: {
+          id: true, title: true, city: true, regionState: true, saves: true,
+          publishedAt: true, pinnedAt: true, pinOrder: true,
+          images: { where: { inclusion: 'INCLUDED' }, select: { url: true }, take: 1, orderBy: { displayOrder: 'asc' } },
+          _count: { select: { rooms: true } },
           post: { select: { status: true } },
         },
         orderBy: { publishedAt: 'desc' },
@@ -81,111 +62,66 @@ export async function GET(
             heroImage: p.images[0]?.url || null,
             location: [p.city, p.regionState].filter(Boolean).join(', ') || null,
             isEditorial: p.post?.status === 'PUBLISHED',
-            roomCount: p.rooms?.length || 0,
+            roomCount: p._count.rooms,
             saveCount: p.saves || 0,
           },
           publishedAt: p.publishedAt,
-          pinnedAt: (p as any).pinnedAt || null,
-          pinOrder: (p as any).pinOrder || null,
+          pinnedAt: p.pinnedAt,
+          pinOrder: p.pinOrder,
           engagement: p.saves || 0,
         }))
       );
     }
 
-    // Fetch org media (if model exists and filter matches)
+    // Explicit DTOs keep author-only metadata out of this public endpoint.
     if (filter === 'all' || filter === 'media') {
-      try {
-        const media = await (prisma as any).orgMedia?.findMany({
-          where: {
-            organizationId: resolvedParams.orgId,
-            publishedAt: { not: null },
-          },
-          orderBy: { publishedAt: 'desc' },
-          take: limit,
-        });
-
-        if (media) {
-          items.push(
-            ...media.map((m: any) => ({
-              id: m.id,
-              type: 'media' as const,
-              data: m,
-              publishedAt: m.publishedAt,
-              pinnedAt: m.pinnedAt,
-              pinOrder: m.pinOrder,
-              engagement: (m.views || 0) + (m.saves || 0),
-            }))
-          );
-        }
-      } catch {
-        // OrgMedia model might not exist yet
-      }
+      const media = await prisma.orgMedia.findMany({
+        where: { organizationId: orgId, publishedAt: { not: null } },
+        select: { id: true, type: true, title: true, thumbnailUrl: true, duration: true, views: true, saves: true,
+          publishedAt: true, pinnedAt: true, pinOrder: true },
+        orderBy: { publishedAt: 'desc' }, take: limit,
+      });
+      items.push(...media.map(m => ({
+        id: m.id, type: 'media' as const,
+        data: { id: m.id, type: m.type, title: m.title, thumbnailUrl: m.thumbnailUrl, duration: m.duration, views: m.views },
+        publishedAt: m.publishedAt, pinnedAt: m.pinnedAt, pinOrder: m.pinOrder, engagement: m.views + m.saves,
+      })));
     }
 
-    // Fetch org recognition (if model exists and filter matches)
     if (filter === 'all' || filter === 'recognition') {
-      try {
-        const recognition = await (prisma as any).orgRecognition?.findMany({
-          where: {
-            organizationId: resolvedParams.orgId,
-            publishedAt: { not: null },
-          },
-          orderBy: { date: 'desc' },
-          take: limit,
-        });
-
-        if (recognition) {
-          items.push(
-            ...recognition.map((r: any) => ({
-              id: r.id,
-              type: 'recognition' as const,
-              data: r,
-              publishedAt: r.publishedAt || r.date,
-              pinnedAt: r.pinnedAt,
-              pinOrder: r.pinOrder,
-              engagement: 0,
-            }))
-          );
-        }
-      } catch {
-        // OrgRecognition model might not exist yet
-      }
+      const recognition = await prisma.orgRecognition.findMany({
+        where: { organizationId: orgId, publishedAt: { not: null } },
+        select: { id: true, type: true, title: true, source: true, sourceLogoUrl: true, date: true,
+          url: true, imageUrl: true, excerpt: true, publishedAt: true, pinnedAt: true, pinOrder: true },
+        orderBy: { date: 'desc' }, take: limit,
+      });
+      items.push(...recognition.map(r => ({
+        id: r.id, type: 'recognition' as const,
+        data: { id: r.id, type: r.type, title: r.title, source: r.source, sourceLogoUrl: r.sourceLogoUrl,
+          date: r.date, url: publicLink(r.url), imageUrl: r.imageUrl, excerpt: r.excerpt },
+        publishedAt: r.publishedAt, pinnedAt: r.pinnedAt, pinOrder: r.pinOrder, engagement: 0,
+      })));
     }
 
-    // Fetch org collaborations (if model exists and filter matches)
     if (filter === 'all' || filter === 'collaborations') {
-      try {
-        const collaborations = await (prisma as any).orgCollaboration?.findMany({
-          where: {
-            organizationId: resolvedParams.orgId,
-            publishedAt: { not: null },
-          },
-          orderBy: { publishedAt: 'desc' },
-          take: limit,
-        });
-
-        if (collaborations) {
-          items.push(
-            ...collaborations.map((c: any) => ({
-              id: c.id,
-              type: 'collaboration' as const,
-              data: c,
-              publishedAt: c.publishedAt,
-              pinnedAt: c.pinnedAt,
-              pinOrder: c.pinOrder,
-              engagement: 0,
-            }))
-          );
-        }
-      } catch {
-        // OrgCollaboration model might not exist yet
-      }
+      const collaborations = await prisma.orgCollaboration.findMany({
+        where: { organizationId: orgId, publishedAt: { not: null } },
+        select: { id: true, type: true, title: true, description: true, partnerName: true,
+          partnerLogoUrl: true, imageUrl: true, publishedAt: true, pinnedAt: true, pinOrder: true },
+        orderBy: { publishedAt: 'desc' }, take: limit,
+      });
+      items.push(...collaborations.map(c => ({
+        id: c.id, type: 'collaboration' as const,
+        data: { id: c.id, type: c.type, title: c.title, description: c.description,
+          partnerName: c.partnerName, partnerLogoUrl: c.partnerLogoUrl, imageUrl: c.imageUrl },
+        publishedAt: c.publishedAt, pinnedAt: c.pinnedAt, pinOrder: c.pinOrder, engagement: 0,
+      })));
     }
 
     // Sort items
     const sortedItems = sortFeedItems(items, sort);
 
-    return NextResponse.json({ items: sortedItems });
+    return NextResponse.json({ items: sortedItems }, { headers: { 'Cache-Control': 'no-store' } });
   } catch (error) {
     console.error('[GET /api/org/[orgId]/feed] Error:', error);
     return NextResponse.json(
@@ -193,6 +129,12 @@ export async function GET(
       { status: 500 }
     );
   }
+}
+
+function publicLink(value: string | null): string | null {
+  if (!value) return null;
+  try { const url = new URL(value); return ['http:', 'https:'].includes(url.protocol) ? url.href : null; }
+  catch { return null; }
 }
 
 function sortFeedItems(items: FeedItem[], sort: string): FeedItem[] {

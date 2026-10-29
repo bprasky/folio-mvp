@@ -49,9 +49,9 @@ export default function FeedFilters({ activeFilter, activeSort, orgId, isAdmin, 
             aria-pressed={activeFilter === filter.id}
             className="px-4 py-1.5 text-xs rounded-full transition-all"
             style={{
-              backgroundColor: activeFilter === filter.id ? '#2C2825' : 'transparent',
-              color: activeFilter === filter.id ? 'var(--surface-ground)' : '#6B635B',
-              border: activeFilter === filter.id ? 'none' : '1px solid #D4CEC6',
+              backgroundColor: activeFilter === filter.id ? 'var(--org-page-ink, var(--folio-text-primary))' : 'transparent',
+              color: activeFilter === filter.id ? 'var(--org-page-background, var(--surface-canvas))' : 'var(--org-page-muted, var(--folio-text-secondary))',
+              border: '1px solid var(--org-page-border, var(--folio-border-strong))',
             }}
           >
             {filter.label}
@@ -61,7 +61,7 @@ export default function FeedFilters({ activeFilter, activeSort, orgId, isAdmin, 
               type="button"
               onClick={onAddRecognition}
               className="w-6 h-6 text-xs rounded-full flex items-center justify-center transition-all hover:opacity-80"
-              style={{ border: '1px solid #D4CEC6', color: '#6B635B' }}
+              style={{ border: '1px solid var(--org-page-border, var(--folio-border-strong))', color: 'var(--org-page-muted, var(--folio-text-secondary))' }}
               aria-label="Add recognition"
             >
               +
@@ -78,9 +78,9 @@ export default function FeedFilters({ activeFilter, activeSort, orgId, isAdmin, 
         onChange={e => updateParams('sort', e.target.value)}
         className="text-xs px-3 py-1.5 rounded-full border appearance-none cursor-pointer"
         style={{
-          borderColor: '#D4CEC6',
-          color: '#6B635B',
-          backgroundColor: 'transparent',
+          borderColor: 'var(--org-page-border, var(--folio-border-strong))',
+          color: 'var(--org-page-muted, var(--folio-text-secondary))',
+          backgroundColor: 'var(--org-page-background, var(--surface-canvas))',
         }}
       >
         {SORTS.map(sort => (

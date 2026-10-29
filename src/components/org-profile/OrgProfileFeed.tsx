@@ -106,9 +106,9 @@ export default function OrgProfileFeed({
             onOpenInviteModal={() => setInviteModalOpen(true)}
           />
         ) : (
-          <div className="text-center py-16">
-            <p className="text-folio-text-secondary">No content yet</p>
-            <p className="text-sm mt-2 text-folio-text-secondary">
+          <div className="text-center py-16" style={{ color: 'var(--org-page-muted, var(--folio-text-secondary))' }}>
+            <p>No content yet</p>
+            <p className="text-sm mt-2">
               Projects and media will appear here once published
             </p>
           </div>

@@ -1,5 +1,9 @@
 # Lessons Learned
 
+## 2026-10-29 — Implement the organization magazine with actual categories
+
+The founder approved implementation after the cover mockup. Lead with the firm name, use canonical Folio neutral defaults, and let active organization owners/admins configure page color, banner photograph, identity image and selected facts in Settings. Preserve the existing Feed, Shop, About and Contact navigation and the real feed categories (All, Projects, Media, Recognition, Collaborations), including vendor variations. The speculative mockup categories were suggestions, not replacement requirements. Reuse the current mosaic. No menu arrows, invented green theme or sample statistics in production. A shared profile must load for visitors without requiring organization membership.
+
 ## 2026-10-23 — About must show the publication designers receive
 
 Lead with tangible outcomes alongside the process: full editorial articles, Folio-generated ideas beyond new project uploads, and Publishing Studio for managing social content and sharing. Describe the future printed studio magazine separately and explicitly as coming soon: projects, the people behind the practice and how they design, suitable for office copies, portfolios and promotion. Do not present print or automatic social publishing as currently available.
