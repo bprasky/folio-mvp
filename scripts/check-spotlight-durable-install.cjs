@@ -62,6 +62,10 @@ const signupModel=read('docs/reviews/signup-email-verification.prisma.txt');
 assert.equal(hash(signupModel),'20224060fe14faf24e54da92b5187bee87d5f782b9c55ad68793c496cb11fe51','Reviewed signup verification schema artifact');
 assert.equal(hash(read('prisma/migrations/20261029193000_signup_email_verification/migration.sql')),'607f9a1d3caa013db66ef931d9ed03d945fbb6ffda5c2d42899aa0804db8b7a7','Reviewed signup verification SQL');
 expected+='\n'+signupModel;
+// The separately approved organization cover stores only this nullable JSON
+// field. Pin its exact SQL while retaining the full historical token comparison.
+assert.equal(hash(read('prisma/migrations/20261029120000_org_profile_appearance/migration.sql')),'8402508f17da644621be7b2762336d8f715319633691057f58cc877df072b38e','Approved organization appearance SQL');
+expected=expected.replace(/(model Organization \{[\s\S]*?followerCount\s+Int\s+@default\(0\))/,'$1\nprofileAppearance Json?');
 const tokens=s=>(s.match(/"(?:\\.|[^"\\])*"|\/\/[^\n]*|[^\s"]/g)||[]).filter(x=>!x.startsWith('//')).join('');
 assert.equal(tokens(read('prisma/schema.prisma')),tokens(expected),'Only reviewed schema tokens');
 assert.equal(JSON.parse(read('vercel.json')).git.deploymentEnabled,false);

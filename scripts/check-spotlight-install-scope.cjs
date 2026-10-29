@@ -13,6 +13,12 @@ function run(mutate = (_path, text) => text) {
   });
 }
 run();
+assert.throws(() => run((path, text) => path === 'prisma/schema.prisma'
+  ? text.replace(/profileAppearance\s+Json\?/, 'profileAppearance Json') : text), /Only reviewed schema tokens/, 'Making appearance required must fail');
+assert.throws(() => run((path, text) => path === 'prisma/schema.prisma'
+  ? text.replace(/profileAppearance\s+Json\?/, 'profileAppearance String?') : text), /Only reviewed schema tokens/, 'Changing appearance storage must fail');
+assert.throws(() => run((path, text) => path === 'prisma/migrations/20261029120000_org_profile_appearance/migration.sql'
+  ? text + '\nSELECT 1;\n' : text), /Approved organization appearance SQL/, 'Changed approved appearance SQL must fail');
 assert.throws(() => run((path, text) => path === 'prisma/migrations/20260924120000_org_member_posting_policy/migration.sql'
   ? text + '\nSELECT 1;\n' : text), /Approved firm posting policy SQL/, 'Changed approved firm SQL must fail');
 assert.throws(() => run((path, text) => path === 'prisma/schema.prisma'
