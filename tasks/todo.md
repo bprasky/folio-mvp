@@ -1,3 +1,23 @@
+# Settings appearance toggle — 2026-10-29
+
+- [x] Inspect settings and existing theme tokens; start from current main in an isolated checkout.
+- [x] Add an accessible dark/light switch, browser persistence and theme initialization before paint.
+- [x] Verify switching, reload persistence, keyboard/mobile behavior and relevant repository checks.
+
+Plan check-in: keep this small convenience change scoped to Settings and the existing global palette. Light remains the default. Save the preference in this browser, activate both the existing data-theme tokens and Tailwind dark class, and make Settings use theme-aware colors. No database or account-preference migration.
+
+### Review
+
+Added Settings → Appearance → Dark mode with a labeled keyboard-accessible switch and a 48×44px target. The preference is stored as `folio-theme` in this browser; light is the default. A small document-head script restores it before client JavaScript loads and activates the existing palette plus Tailwind dark classes. Theme storage failures do not prevent switching during the current visit.
+
+Settings now uses canonical surface/text/border tokens. Improved dark secondary text and shared ridge-card/shadow colors, including cookie consent. The signed-out settings prompt can now render instead of remaining behind its unrelated organization-loading state. No new dependency, account mutation or database change.
+
+Verified the actual Next.js route with synthetic session/API responses (no real account writes): light/dark switching, reload persistence, restoration with external client scripts blocked, soft navigation to Privacy and back, Space/Enter, 1280/390/320px layouts, 44px minimum switch target, invalid/blocked theme storage, cookie-card background and signed-out state. Browser page/hydration errors: none. Visually inspected desktop and phone screenshots. Scoped lint, client-import guard, migration-discipline guard and diff whitespace checks pass.
+
+The repository TypeScript check reports 866 diagnostics against its 880 baseline; its five flagged fingerprints refer to external dependency paths through the shared node_modules junction, outside the changed files. Normalizing only that dependency-root path passes the baseline comparison with zero new fingerprints. Baseline and compiler settings remain unchanged.
+
+---
+
 # Immersive publications and designer-selected palette — 2026-10-28
 
 - [x] Implement the approved photo-led room reader on public articles and owner previews, retaining editorial edits, products and credits.
