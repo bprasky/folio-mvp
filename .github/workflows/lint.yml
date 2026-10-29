@@ -159,6 +159,7 @@ jobs:
           node scripts/check-carousel-persistence.cjs
           node scripts/check-carousel-page.cjs
           node --import tsx scripts/check-immersive-rooms.ts
+          node scripts/check-publication-entry.cjs
           node --import tsx scripts/check-publication-presentation.ts
           node --import tsx scripts/check-publication-social.ts
           node scripts/check-social-generation.cjs
