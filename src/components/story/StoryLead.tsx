@@ -1,29 +1,16 @@
 'use client';
 
-// ============================================================================
-// The lead — headline, deck, introduction — as three components, once.
-//
-// These were written twice: StoryIntro rendered them for the portrait hero, and
-// LandscapeHero rendered its own copies inline. Making the lead editable meant
-// editing StoryIntro, which made the fields editable on portrait articles and
-// left every landscape article — the common case — with a plain <h1> and no
-// controls at all. The rooms worked, the top of the article did not, and nothing
-// failed: the second copy just kept rendering read-only markup.
-//
-// So the editability is not the point of this file. ONE implementation is. A
-// third hero variant can only get the lead by importing these, and the check in
-// scripts/check-story-editing.ts fails if anything renders `story.title`,
-// `story.subtitle` or the introduction outside this module.
-//
-// Every component here renders exactly what it rendered before when no edit
-// context is mounted, so the published article at /p/[slug] is unchanged.
-// ============================================================================
+// Shared headline, deck and introduction slots. The collapsed cover uses a
+// read-only teaser; its expanded introduction keeps the studio's inline editing.
+// Every publication surface imports these slots so editing cannot drift between
+// image orientations or page variants.
 
 import type { CSSProperties } from 'react';
 import type { StoryData } from '@/lib/story/buildRoomTiles';
 import { useStoryEdit, StoryEditRegion } from './StoryEditContext';
 import { HeadlinePicker } from './HeadlinePicker';
 import EditableParagraph from '@/components/posting/editing/EditableParagraph';
+import { capitalizeOpening } from '@/lib/story/roomSlides';
 
 /** Sentinel chapter indices the section-override API uses for lead fields. */
 const LEAD = -1;
@@ -43,11 +30,11 @@ interface SlotProps {
  * photo. The editable path always renders h2 — EditableParagraph's contract —
  * which is why the read-only path keeps whichever tag it was given.
  */
-export function LeadHeadline({ story, className, style, as = 'h1' }: SlotProps & { as?: 'h1' | 'h2' }) {
+export function LeadHeadline({ story, className, style, as = 'h1', readOnly = false }: SlotProps & { as?: 'h1' | 'h2'; readOnly?: boolean }) {
   const edit = useStoryEdit();
   const Tag = as;
 
-  if (!edit) {
+  if (!edit || readOnly) {
     return <Tag className={className} style={style}>{story.title}</Tag>;
   }
 
@@ -79,7 +66,7 @@ export function LeadDeck({ story, className, style }: SlotProps) {
   const edit = useStoryEdit();
 
   if (!edit) {
-    return story.subtitle ? <p className={className} style={style}>{story.subtitle}</p> : null;
+    return story.subtitle ? <p className={className} style={style}>{capitalizeOpening(story.subtitle)}</p> : null;
   }
 
   return (
@@ -111,9 +98,12 @@ export function LeadIntro({ story, className, style }: SlotProps) {
   const edit = useStoryEdit();
 
   if (!edit) {
-    return story.introText ? (
-      <p className={className} style={style}>{story.introText}</p>
-    ) : null;
+    // The builder uses the deck as a fallback when there is no introduction.
+    // It already has its own slot, so do not print that fallback a second time.
+    const paragraphs = story.introParagraphs.length ? story.introParagraphs
+      : story.introText && story.introText !== story.subtitle ? [story.introText] : [];
+    return <>{paragraphs.map((paragraph, index) =>
+      <p key={index} className={className} style={style}>{index === 0 ? capitalizeOpening(paragraph) : paragraph}</p>)}</>;
   }
 
   if (story.introParagraphs.length === 0) return null;
@@ -136,4 +126,9 @@ export function LeadIntro({ story, className, style }: SlotProps) {
       ))}
     </StoryEditRegion>
   );
+}
+
+/** A non-editing teaser; the expanded introduction owns all editing controls. */
+export function LeadPreview({ story, className }: SlotProps) {
+  return <span className={className}>{capitalizeOpening(story.subtitle || story.introText || '')}</span>;
 }

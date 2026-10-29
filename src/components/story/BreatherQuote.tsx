@@ -12,11 +12,13 @@ import type { EmbeddedQuoteChoice } from '@/lib/posting/schemas';
 interface BreatherQuoteProps {
   breather: BreatherData;
   reducedMotion: boolean;
+  immersive?: boolean;
 }
 
 export function BreatherQuote({
   breather,
   reducedMotion,
+  immersive = false,
 }: BreatherQuoteProps) {
   const ref = useRef<HTMLDivElement>(null);
   const [revealed, setRevealed] = useState(reducedMotion);
@@ -73,7 +75,7 @@ export function BreatherQuote({
   return (
     <div
       ref={ref}
-      className="col-span-2 py-12 md:py-16 text-center"
+      className={immersive ? 'py-6 text-center' : 'col-span-2 py-12 md:py-16 text-center'}
       style={{
         borderTop: "1px solid rgba(87, 75, 67, 0.06)",
         borderBottom: "1px solid rgba(87, 75, 67, 0.06)",
@@ -118,7 +120,7 @@ export function BreatherQuote({
           fontStyle: "italic",
           fontWeight: 'var(--w-body)',
           lineHeight: 1.45, /* folio-design-system: off-scale */
-          color: "rgba(87, 75, 67, 0.55)",
+          color: immersive ? 'inherit' : "rgba(87, 75, 67, 0.55)",
           transform: reducedMotion
             ? undefined
             : revealed
@@ -136,7 +138,7 @@ export function BreatherQuote({
         className="mt-4"
         style={{
           fontSize: 'var(--type-meta)',
-          color: "rgba(87, 75, 67, 0.35)",
+          color: immersive ? 'inherit' : "rgba(87, 75, 67, 0.35)",
           opacity: revealed ? 1 : 0,
           transition: reducedMotion
             ? undefined

@@ -9,9 +9,13 @@ export type ImportPage = {
 };
 export type ImportedProject = {
   url: string; title: string; description: string; projectId?: string;
-  photos: Array<{ url: string; alt: string; status: 'pending' | 'saved' | 'failed'; imageId?: string; savedUrl?: string; attempts: number }>;
+  photos: Array<{ url: string; alt: string; status: 'pending' | 'saved' | 'failed'; imageId?: string; savedUrl?: string; width?: number; height?: number; attempts: number }>;
   status: 'pending' | 'photos' | 'questions' | 'ready' | 'failed'; error?: string;
   preparation?: GuidedPreparation; attempts: number;
+};
+export type WorkspacePreviewProject = {
+  id: string; title: string; description: string | null; isPublic: boolean;
+  photos: Array<{ url: string; alt: string; width?: number; height?: number }>;
 };
 export type ProfileDraft = {
   description: string; location: string; website: string; foundedYear?: number;

@@ -17,12 +17,16 @@ type UIEvent = {
   startsAt?: string | null;   // ISO string ok
   startDate?: string | null;  // for alt shapes
   href?: string;
+  isDraft?: boolean;
+  actionLabel?: string;
 };
 
 export type FlowMosaicProps = {
   events: UIEvent[];
   canEdit?: boolean;
   preserveOrder?: boolean;
+  onSelect?: (id: string) => void;
+  disabled?: boolean;
 };
 
 type Size = "L" | "M" | "S";
@@ -118,7 +122,7 @@ function hasRSVP(e: UIEvent) {
   return Number.isFinite(n) && n > 0 ? n : null;
 }
 
-export default function FlowMosaic({ events, canEdit = false, preserveOrder = false }: FlowMosaicProps) {
+export default function FlowMosaic({ events, canEdit = false, preserveOrder = false, onSelect, disabled = false }: FlowMosaicProps) {
   const sized = useMemo(
     () => preserveOrder ? assignSizesInOrder(events) : assignSizes(events),
     [events, preserveOrder]
@@ -142,11 +146,14 @@ export default function FlowMosaic({ events, canEdit = false, preserveOrder = fa
             key={item.id}
             className={clsx(
               "group relative rounded-[20px] overflow-hidden",
-              className
+              events.length === 1 ? "col-span-full" : events.length === 2 ? "col-span-1 lg:col-span-2 xl:col-span-3" : className
             )}
             style={{ gridRowEnd: `span ${rowSpan}` }}
           >
-            <Link href={href} className="absolute inset-0 z-30 block" aria-label={item.title ?? "View event"} data-testid="mosaic-card-link" />
+            {onSelect ? <button type="button" disabled={disabled} onClick={() => onSelect(item.id)}
+              className="absolute inset-0 z-30 block w-full rounded-[20px] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-4px] focus-visible:outline-white"
+              aria-label={`${item.title}: ${item.actionLabel || 'Open project'}`} data-testid="mosaic-card-link" />
+              : <Link href={href} className="absolute inset-0 z-30 block" aria-label={item.title ?? "View event"} data-testid="mosaic-card-link" />}
             <div className="relative h-full">
               {/* image box: fill, cover */}
               <div className="absolute inset-0 pointer-events-none">
@@ -156,7 +163,7 @@ export default function FlowMosaic({ events, canEdit = false, preserveOrder = fa
                     alt={item.title ?? "Event"}
                     fill
                     sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, (max-width: 1280px) 33vw, 25vw"
-                    className="object-cover"
+                    className={clsx("object-cover", item.isDraft && "grayscale-[0.45] opacity-70 transition group-hover:grayscale-0 group-hover:opacity-100 group-focus-within:grayscale-0 group-focus-within:opacity-100")}
                   />
                 ) : (
                   <div className="absolute inset-0 flex items-center justify-center bg-stone-200 text-xs uppercase tracking-folio-eyebrow text-stone-500">
@@ -167,13 +174,15 @@ export default function FlowMosaic({ events, canEdit = false, preserveOrder = fa
               </div>
 
               {/* content overlay */}
+              {item.isDraft !== undefined && <span className="absolute top-4 left-4 z-20 rounded bg-black/60 px-3 py-1.5 text-xs text-white backdrop-blur-sm">{item.isDraft ? 'Private draft' : 'Published'}</span>}
               <div className="relative z-20 pointer-events-none flex h-full items-end p-3">
                 <div className="text-white w-full">
-                  <h3 className={clsx("font-semibold leading-tight",
+                  <h3 className={clsx("font-sans text-white font-semibold leading-tight",
                     size === "L" ? "text-xl" : size === "M" ? "text-lg" : "text-sm"
                   )}>
                     {item.title}
                   </h3>
+                  {item.actionLabel && <p className="mt-2 text-sm text-white">{item.actionLabel} <span aria-hidden="true">↗</span></p>}
                   {/* Meta row */}
                   {(() => {
                     const dt = fmtDateTime(item);

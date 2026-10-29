@@ -112,8 +112,9 @@ export async function readGuidedContext(projectId: string) {
         id: true, name: true, type: true, selections: { select: { id: true } },
       } },
       images: { where: { inclusion: 'INCLUDED' }, orderBy: [{ displayOrder: 'asc' }, { id: 'asc' }], select: {
-        id: true, url: true, roomId: true, room: true, aiClassification: true,
-        tags: { select: { id: true, productId: true } },
+        id: true, url: true, roomId: true, room: true, aiClassification: true, aiMaterials: true,
+        tags: { select: { id: true, productId: true, reviewedAt: true, finishRaw: true, finishConfirmed: true,
+          product: { select: { name: true, scrapeStatus: true } } } },
       } },
     },
   });
@@ -134,7 +135,8 @@ export async function readGuidedContext(projectId: string) {
     project: [project.id, project.title, project.description, project.projectType, project.clientType, project.budgetBand, project.city, project.regionState],
     rooms: rooms.map(room => [room.id, room.name, room.baseQuestions, room.maxFollowUps,
       project.rooms.find(value => value.id === room.id)?.selections.map(selection => selection.id).sort()]),
-    images: images.map(image => [image.id, image.roomId, image.url, image.aiClassification, image.tags.map(tag => [tag.id, tag.productId]).sort()]),
+    images: images.map(image => [image.id, image.roomId, image.url, image.aiClassification, image.aiMaterials,
+      image.tags.map(tag => [tag.id, tag.productId, tag.reviewedAt, tag.finishRaw, tag.finishConfirmed, tag.product?.name, tag.product?.scrapeStatus]).sort()]),
   })).digest('hex');
   return { project, images, rooms, contextFingerprint };
 }
@@ -240,9 +242,7 @@ export async function prepareGuidedRoomPlan(projectId: string, session: GuidedSe
       try {
         generated = (await generateRoomQuestions({ projectId,
           roomName: room.name, roomImages: current.images.filter(image => image.roomId === room.id).map(image => ({ url: image.url, classification: image.aiClassification as Record<string, unknown> | null })),
-          // General-room questions cannot select products. The legacy generator's
-          // subscription naming lane is deliberately empty in this pilot.
-          roomTags: [], budget: room.baseQuestions, contextLevel: context.level,
+          budget: room.baseQuestions, contextLevel: context.level,
           projectContext: { projectTitle: current.project.title, otherRoomNames: session.rooms.filter(other => other.id !== room.id).map(other => other.name),
             materialPalette: context.materialThemes, knownFacts: parsedFacts.success ? parsedFacts.data : null },
         })).questions;

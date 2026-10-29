@@ -1,0 +1,20 @@
+model SignupEmailChallenge {
+  id               String   @id @default(uuid())
+  email            String
+  name             String
+  passwordHash     String
+  secretHash       String
+  codeHash         String
+  returnTo         String
+  consentAt        DateTime
+  expiresAt        DateTime
+  purgeAt          DateTime
+  lastSentAt       DateTime
+  attempts         Int      @default(0)
+  sends            Int      @default(1)
+  deliveryAccepted Boolean  @default(false)
+  createdAt        DateTime @default(now())
+
+  @@index([purgeAt])
+  @@map("signup_email_challenges")
+}

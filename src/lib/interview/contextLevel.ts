@@ -7,7 +7,7 @@
  * Levels:
  * 0 - Nothing (generic fallback)
  * 1 - Final photos only (room-based, visual observations)
- * 2 - + Material schedule (product-specific, vendor loyalty)
+ * 2 - + Material schedule or reviewed tags (material context for visual observations)
  * 3 - + Concept presentation (vision realization, aesthetic choices)
  * 4 - + Floor plan (spatial flow, transitions, reveals)
  * 5 - + Progress presentations (decision journey, "landing on" narratives)
@@ -203,7 +203,7 @@ function computeDominantVendors(selections: SelectionContext[]): VendorInsight[]
  * Identify material themes from selections and AI classification
  */
 function computeMaterialThemes(
-  selections: SelectionContext[],
+  selections: Array<Pick<SelectionContext, 'productName'>>,
   aiMaterials: string[]
 ): string[] {
   const themes = new Set<string>();
@@ -351,6 +351,7 @@ export async function assessProjectContext(projectId: string): Promise<ProjectCo
           url: true,
           name: true,
           room: true,
+          inclusion: true,
           aiClassification: true,
           aiMaterials: true,
           aiColors: true,
@@ -438,17 +439,18 @@ export async function assessProjectContext(projectId: string): Promise<ProjectCo
 
   // For prospective projects, rich selections (3+ named products) serve the
   // same role as an uploaded material schedule — the system already knows the
-  // products, vendors, and pricing. Treat them as equivalent so Level 2
-  // product-specific questions unlock without requiring a separate file upload.
+  // materials. Treat them as equivalent context without requiring a separate
+  // file upload; this does not unlock product-specific questions.
   const richSelectionCount = project.selections.filter(
     (s) => s.productName && s.vendorName
   ).length;
   const hasSelectionsAsSchedule = isProspective && richSelectionCount >= 3;
+  const hasTaggedMaterials = project.images.some(image => image.inclusion !== 'EXCLUDED' && image.tags.some(tag => tag.product.scrapeStatus == null || !!tag.reviewedAt));
 
   // Calculate context level (sequential - each level requires previous levels)
   let level: ContextLevel = 0;
   if (hasPhotos) level = 1;
-  if (level >= 1 && (hasMaterialSchedule || hasSelectionsAsSchedule)) level = 2;
+  if (level >= 1 && (hasMaterialSchedule || hasSelectionsAsSchedule || hasTaggedMaterials)) level = 2;
   if (level >= 2 && hasConceptPresentation) level = 3;
   if (level >= 3 && hasFloorPlan) level = 4;
   if (level >= 4 && hasProgressPresentations) level = 5;
@@ -488,8 +490,15 @@ export async function assessProjectContext(projectId: string): Promise<ProjectCo
     .map((img) => img.aiClassification as { colors?: string[]; mood?: string[]; materials?: string[] } | null)
     .filter((c): c is NonNullable<typeof c> => c !== null);
 
-  const allAiMaterials = project.images.flatMap((img) => img.aiMaterials || []);
-  const materialThemes = computeMaterialThemes(selections, allAiMaterials);
+  // Tags remain complete product records in the sourcebook. For the interview,
+  // reduce accepted photo tags to material themes only: no product identities,
+  // vendor loyalty signals or extra question budget from these tags.
+  const includedImages = project.images.filter(image => image.inclusion !== 'EXCLUDED');
+  const taggedMaterials = includedImages.flatMap(image => image.tags
+    .filter(tag => tag.product.scrapeStatus == null || !!tag.reviewedAt)
+    .map(tag => ({ productName: tag.finishConfirmed && tag.finishRaw?.trim() ? tag.finishRaw : tag.product.name })));
+  const allAiMaterials = includedImages.flatMap(img => img.aiMaterials || []);
+  const materialThemes = computeMaterialThemes([...selections, ...taggedMaterials], allAiMaterials);
   const colorPalette = extractColorPalette(aiClassifications);
 
   // Build room context

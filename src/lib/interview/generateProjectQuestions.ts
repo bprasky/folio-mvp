@@ -20,7 +20,7 @@ import type { GeneratedQuestion } from './generateQuestions';
 import { MODELS } from '@/lib/ai/models';
 import { FOLIO_INTERVIEWER_PERSONA } from './prompts/persona';
 import { SHARED_RULE_BLOCK, ARRIVALS_CONTRAST_POLICY } from './prompts/rules';
-import { sourceNarrationGuide } from './prompts/sourceHandling';
+import { sourceNarrationGuide, MATERIAL_CONTEXT_POLICY } from './prompts/sourceHandling';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -139,6 +139,8 @@ export async function generateProjectQuestions(
 ${SHARED_RULE_BLOCK}
 
 ${ARRIVALS_CONTRAST_POLICY}
+
+${MATERIAL_CONTEXT_POLICY}
 
 YOUR TASK: generate the opening interview questions for an interior design editorial feature. These questions establish the narrative frame before we discuss individual rooms. You have 5 categories you MUST cover — but ask them the way someone who already read the brief and looked at the photos would, not like a form with required fields.
 

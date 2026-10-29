@@ -8,12 +8,18 @@ export function safeCallbackPath(value: string | null | undefined, fallback = '/
     return url.origin === 'https://folio.invalid' ? url.pathname + url.search + url.hash : fallback;
   } catch { return fallback; }
 }
+/** Verification can continue to enrollment, but must not restart authentication. */
+export function signupReturnTo(value?: string | null): string {
+  const target = safeCallbackPath(value, '/onboarding/diagnostic');
+  const pathname = decodeURIComponent(new URL(target, 'https://folio.invalid').pathname).toLowerCase();
+  return /^\/auth\/(signin|signup|verify-email)(\/|$)/.test(pathname) ? '/onboarding/diagnostic' : target;
+}
 /** Enrollment must finish at content, never restart authentication or enrollment. */
 export function safeProfessionalCallback(value: string | null | undefined): string {
   const path = safeCallbackPath(value, '/projects/new');
   const pathname = decodeURIComponent(new URL(path, 'https://folio.invalid').pathname).replace(/\/+$/, '').toLowerCase();
   if (pathname === '/onboarding/workspace') return path;
-  if (/^\/auth\/(org-setup|signin|signup)(\/|$)/.test(pathname) || /^\/(onboarding|professionals)(\/|$)/.test(pathname)) return '/projects/new';
+  if (/^\/auth\/(org-setup|signin|signup|verify-email)(\/|$)/.test(pathname) || /^\/(onboarding|professionals)(\/|$)/.test(pathname)) return '/projects/new';
   return path;
 }
 export function professionalSetupHref(type?: string | null, callbackUrl?: string | null): string {

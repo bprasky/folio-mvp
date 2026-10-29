@@ -4,7 +4,6 @@ import { useState, useEffect } from 'react';
 import Image from '@/components/FolioImage';
 import Link from 'next/link';
 import { FaPlus, FaSearch, FaEdit, FaTrash, FaChartLine, FaShoppingCart, FaStore, FaUser, FaToggleOn, FaToggleOff } from 'react-icons/fa';
-import VendorDashboard from '@/app/vendor/dashboard/page';
 import ProductUploader from '@/components/vendor/ProductUploader';
 import { RidgeCard } from '@/components/ui/ridge-card';
 import { Button } from '@/components/ui/button';
@@ -252,7 +251,9 @@ export default function VendorProfile() {
         )}
 
         {activeTab === 'analytics' && (role !== 'admin' || selectedVendorId) && (
-          <VendorDashboard />
+          <Link href="/vendor/dashboard" className="inline-flex rounded border px-4 py-2">
+            View analytics dashboard
+          </Link>
         )}
 
         {activeTab === 'orders' && (role !== 'admin' || selectedVendorId) && (
@@ -283,4 +284,4 @@ export default function VendorProfile() {
       )}
     </div>
   );
-} 
+}

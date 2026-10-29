@@ -4,6 +4,7 @@ import { ReactNode, useEffect } from 'react';
 import { SessionProvider } from 'next-auth/react';
 import { RoleProvider } from '../contexts/RoleContext';
 import { usePathname } from "next/navigation";
+import { WorkspaceImportReadyNotice } from '@/components/onboarding/WorkspaceImportReadyNotice';
 
 function CompactRouteFlag() {
   const pathname = usePathname();
@@ -27,8 +28,9 @@ export default function Providers({ children }: ProvidersProps) {
     <SessionProvider>
       <RoleProvider>
         <CompactRouteFlag />
+        <WorkspaceImportReadyNotice />
         {children}
       </RoleProvider>
     </SessionProvider>
   );
-} 
+}

@@ -78,6 +78,8 @@ jobs:
       - run: npm ci
       - run: npx prisma generate
       - run: npm run test:core
+      - name: Organization appearance, permissions and public profile
+        run: npx tsx --test scripts/core/org-profile-appearance-data.test.cjs scripts/core/org-profile-appearance-routes.test.cjs
       - run: npm run test:rollout
       - name: Production-mode public and protected image delivery
         run: node scripts/check-image-delivery.cjs
@@ -89,6 +91,7 @@ jobs:
       - run: npm run test:interruptions
       - name: Signup and durable workspace import
         run: |
+          node scripts/check-signup-verification.cjs
           node scripts/check-workspace-import.cjs
           node scripts/check-professional-entry.cjs
           node scripts/check-professional-routing.cjs
@@ -157,6 +160,7 @@ jobs:
           node scripts/check-carousel-persistence.cjs
           node scripts/check-carousel-page.cjs
           node --import tsx scripts/check-immersive-rooms.ts
+          node scripts/check-publication-entry.cjs
           node --import tsx scripts/check-publication-presentation.ts
           node --import tsx scripts/check-publication-social.ts
           node scripts/check-social-generation.cjs

@@ -1,57 +1,30 @@
 "use client";
 
-// StoryRenderer — Top-level orchestrator for the Folio Story Format.
-// Composes: StoryHero → StoryIntro → Mosaic → StoryCredits.
-// Manages ProductSheet state and deep link routing.
+// One publication surface, from the gated cover through every room.
 
 import { useState, useCallback, useEffect, useMemo } from "react";
-import Image from '@/components/FolioImage';
 import { useSearchParams } from "next/navigation";
-import { buildStoryData, type StoryData } from "@/lib/story/buildRoomTiles";
-import { StoryHero } from "./StoryHero";
-import { StoryIntro } from "./StoryIntro";
-import { LeadHeadline, LeadDeck, LeadIntro } from "./StoryLead";
+import { buildStoryData } from "@/lib/story/buildRoomTiles";
 import { ImmersiveRooms } from "./ImmersiveRooms";
-import { BreatherQuote } from "./BreatherQuote";
 import { ProductSheet } from "./ProductSheet";
-import { StoryCredits } from "./StoryCredits";
-import { useImageAspect } from "./useImageAspect";
-import { TaggedImage } from "@/components/project/interaction/TaggedImage";
 
 interface StoryRendererProps {
   post: any;
 }
 
 export function StoryRenderer({ post }: StoryRendererProps) {
+  return <Publication key={post.id ?? post.slug ?? post.project?.id} post={post} />;
+}
+
+function Publication({ post }: StoryRendererProps) {
   const searchParams = useSearchParams();
   const [activeProduct, setActiveProduct] = useState<any | null>(null);
 
-  // Detect reduced motion preference
-  const [reducedMotion, setReducedMotion] = useState(false);
-  useEffect(() => {
-    const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
-    setReducedMotion(mq.matches);
-    const handler = (e: MediaQueryListEvent) => setReducedMotion(e.matches);
-    mq.addEventListener("change", handler);
-    return () => mq.removeEventListener("change", handler);
-  }, []);
+  const [entered, setEntered] = useState(false);
+  const handleEntered = useCallback(() => setEntered(true), []);
 
   // Build story data from post
   const story = useMemo(() => buildStoryData(post), [post]);
-
-  // Detect hero image orientation (portrait vs landscape).
-  // Strict rule: only true portrait photos (taller than wide) get the split
-  // layout. Everything wider — including squarish landscape — stays in the
-  // immersive full-bleed stacked hero.
-  const [heroOrientation, setHeroOrientation] = useState<"landscape" | "portrait" | null>(null);
-  useEffect(() => {
-    if (!story?.heroImageUrl) return;
-    const img = new window.Image();
-    img.onload = () => {
-      setHeroOrientation(img.naturalWidth >= img.naturalHeight ? "landscape" : "portrait");
-    };
-    img.src = story.heroImageUrl;
-  }, [story?.heroImageUrl]);
 
   // Track external share discovery (Flywheel 6: UTM tracking)
   useEffect(() => {
@@ -94,7 +67,7 @@ export function StoryRenderer({ post }: StoryRendererProps) {
 
   // Auto-open product from deep link
   useEffect(() => {
-    if (autoProductId && story) {
+    if (entered && autoProductId && story) {
       for (const room of story.roomTiles) {
         const product = room.products.find((p: any) => p.id === autoProductId);
         if (product) {
@@ -103,7 +76,7 @@ export function StoryRenderer({ post }: StoryRendererProps) {
         }
       }
     }
-  }, [autoProductId, story]);
+  }, [entered, autoProductId, story]);
 
   const handleProductClick = useCallback((product: any) => {
     setActiveProduct(product);
@@ -121,51 +94,15 @@ export function StoryRenderer({ post }: StoryRendererProps) {
   }
 
   return (
-    <div
-      className="min-h-screen bg-surface-canvas"
-    >
-      <div className="w-full pb-6 md:pb-10">
-        {/* Hero + Intro: orientation-aware layout */}
-        {heroOrientation === null ? (
-          /* Skeleton while detecting orientation */
-          <div
-            className="w-full aspect-video rounded-[14px] animate-pulse"
-            style={{ background: "rgba(87, 75, 67, 0.06)" }}
-          />
-        ) : heroOrientation === "portrait" ? (
-          /* Portrait: intro left, photo right (stacks on mobile, text first) */
-          <>
-            <div className="flex flex-col md:flex-row gap-6 md:gap-10">
-              <div className="w-full md:w-[52%] flex items-center">
-                <StoryIntro story={story} compact />
-              </div>
-              <div className="w-full md:w-[48%]">
-                <StoryHero imageUrl={story.heroImageUrl} image={story.heroImage} alt={story.title} orientation="portrait" />
-              </div>
-            </div>
-            <div className="border-b mt-6" style={{ borderColor: "rgba(87, 75, 67, 0.06)" }} />
-          </>
-        ) : (
-          /* Landscape: editorial hero per E4 spec — eyebrow + title row,
-             16:9 photo flush below, caption + counter row underneath. */
-          <LandscapeHero story={story} publishedAt={post?.publishedAt ?? null} />
-        )}
-
-        {/* Direct room navigation, with the same composition in owner preview. */}
-        <div id="tagged-products" className="mt-10 scroll-mt-20">
-          <ImmersiveRooms
-            story={story}
-            projectName={post.project.title}
-            presentation={post.expandedBlocks?.presentation}
-            onProductClick={handleProductClick}
-            autoExpandRoom={autoExpandRoom}
-          />
-          {story.breathers.map(breather => <BreatherQuote key={breather.id} breather={breather} reducedMotion={reducedMotion} />)}
-        </div>
-
-        {/* Credits */}
-        <StoryCredits credits={story.credits} />
-      </div>
+    <div id="tagged-products" data-publication-view="immersive" className="w-full scroll-mt-20">
+      <ImmersiveRooms
+        story={story}
+        projectName={post.project.title}
+        presentation={post.expandedBlocks?.presentation}
+        onProductClick={handleProductClick}
+        autoExpandRoom={autoExpandRoom}
+        onEntered={handleEntered}
+      />
 
       {/* Product Sheet: side panel (desktop) / bottom sheet (mobile) */}
       <ProductSheet
@@ -174,282 +111,6 @@ export function StoryRenderer({ post }: StoryRendererProps) {
         designerName={story.designerName}
         supplementalQuotes={story.supplementalQuotes}
       />
-    </div>
-  );
-}
-
-// --- Landscape hero (E4 spec) ---
-// Centered 1168px container, 56px gutter. Eyebrow row, then 8fr/4fr title +
-// byline grid, then a flush-bottom 16:9 cover photo, then a caption + counter
-// row. Strict pixel values per spec — off the design-system type scale.
-
-const HERO_DOT = (
-  <span
-    aria-hidden
-    style={{
-      display: "inline-block",
-      width: 3, /* folio-design-system: off-scale */
-      height: 3, /* folio-design-system: off-scale */
-      borderRadius: "50%",
-      background: "rgba(87, 75, 67, 0.45)",
-      margin: "0 8px",
-      verticalAlign: "middle",
-    }}
-  />
-);
-
-function LandscapeHero({ story, publishedAt }: { story: StoryData; publishedAt: string | Date | null }) {
-  const heroAspect = useImageAspect(story.heroImageUrl);
-  const ratio = heroAspect.width && heroAspect.height ? heroAspect.width / heroAspect.height : null;
-  // Match the centered cover crop: tag coordinates still refer to the original
-  // photo, so the overlay must occupy that photo's scaled size, including overflow.
-  const tagWidth = ratio ? Math.max(100, 100 * ratio / (16 / 9)) : 100;
-  const tagHeight = ratio ? Math.max(100, 100 * (16 / 9) / ratio) : 100;
-  const dateLabel = publishedAt
-    ? new Date(publishedAt).toLocaleString("en-US", { month: "long", year: "numeric" })
-    : null;
-  const heroRoom = story.heroImage?.room || story.roomTiles[0]?.roomLabel || null;
-  // The deck used to fall through to here because it had nowhere else to go.
-  // StoryIntro renders it under the headline now, so falling back to it would
-  // print the same sentence twice whenever the hero image has no name.
-  const captionText = story.heroImage?.name || null;
-  const totalRooms = story.roomCount || story.roomTiles.length || 0;
-
-  // Four-row credit block: Rooms / Designer / Photography / Published.
-  // Each row appears at most once; rows with no value are dropped entirely.
-  const photoNames = Array.from(
-    new Set(story.credits.filter((c) => /photo/i.test(c.role)).map((c) => c.name)),
-  );
-  const stats: Array<{ label: string; value: string }> = [];
-  if (totalRooms > 0) stats.push({ label: "Rooms", value: String(totalRooms) });
-  if (story.designerName && story.designerName !== "Designer") {
-    stats.push({ label: "Designer", value: story.designerName });
-  }
-  if (photoNames.length > 0) stats.push({ label: "Photography", value: photoNames.join(", ") });
-  if (dateLabel) stats.push({ label: "Published", value: dateLabel });
-
-  return (
-    <section
-      className="mx-auto px-4 sm:px-8 lg:px-14"
-      style={{
-        maxWidth: 1168, /* folio-design-system: off-scale */
-      }}
-    >
-      {/* Title row: 8fr title + 4fr stats stack, baselined to bottom */}
-      <div
-        className="grid grid-cols-1 gap-6 md:grid-cols-[minmax(0,8fr)_minmax(0,4fr)] md:gap-14"
-        style={{
-          alignItems: "end",
-        }}
-      >
-        <div style={{ display: "flex", flexDirection: "column", gap: 12 /* folio-design-system: off-scale */ }}>
-          <LeadHeadline
-            story={story}
-            style={{
-              fontFamily: "var(--font-headline)",
-              fontStyle: "italic",
-              fontWeight: "var(--w-body)",
-              fontSize: "clamp(var(--type-h2), 5vw, 60px)", /* folio-design-system: off-scale — preserve desktop display size */
-              lineHeight: 1.02, /* folio-design-system: off-scale */
-              letterSpacing: "-0.012em" /* folio-design-system: off-scale */,
-              textWrap: "balance" as any,
-              color: "rgba(87, 75, 67, 0.92)",
-              margin: 0,
-            }}
-          />
-          <LeadDeck
-            story={story}
-            style={{
-              fontFamily: "var(--font-body)",
-              fontSize: "var(--type-h4)",
-              lineHeight: "var(--lh-body)",
-              color: "rgba(87, 75, 67, 0.7)",
-              margin: 0,
-              maxWidth: 720, /* matches --story-prose-width */
-            }}
-          />
-        </div>
-
-        <div
-          style={{
-            fontFamily: "var(--font-body)",
-            fontSize: 13, /* folio-design-system: off-scale */
-            lineHeight: 1.5, /* folio-design-system: off-scale */
-            color: "var(--folio-text-secondary)",
-            display: "flex",
-            flexDirection: "column",
-            gap: 14, /* folio-design-system: off-scale */
-          }}
-        >
-          {stats.map((s) => (
-            <BylineRow key={s.label} label={s.label} value={s.value} />
-          ))}
-        </div>
-      </div>
-
-      {/* Hero photo — 16:9 cover, flush below the title block */}
-      <div
-        style={{
-          marginTop: 36, /* folio-design-system: off-scale */
-          aspectRatio: "16 / 9",
-          position: "relative",
-          overflow: "hidden",
-          borderRadius: 12, /* matches PhotoTile / RoomExpand gallery */
-          background: "rgba(87, 75, 67, 0.04)",
-        }}
-      >
-        <Image
-          src={story.heroImageUrl}
-          alt={story.title}
-          fill
-          priority
-          sizes="(max-width: 768px) 100vw, 1168px"
-          style={{ objectFit: "cover", objectPosition: "center" }}
-        />
-        {ratio && !!story.heroImage?.tags?.length && (
-          <div className="absolute" style={{ width: `${tagWidth}%`, height: `${tagHeight}%`, left: `${(100 - tagWidth) / 2}%`, top: `${(100 - tagHeight) / 2}%` }}>
-            <TaggedImage image={story.heroImage} surface="post" forceDotsVisible />
-          </div>
-        )}
-      </div>
-
-      {/* Caption row */}
-      <div
-        style={{
-          marginTop: 14, /* folio-design-system: off-scale */
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "baseline",
-          gap: 24, /* folio-design-system: off-scale */
-        }}
-      >
-        <div style={{ display: "flex", alignItems: "baseline", gap: 8, minWidth: 0 }}>
-          {heroRoom && (
-            <span
-              style={{
-                fontSize: 10, /* folio-design-system: off-scale */
-                textTransform: "uppercase",
-                letterSpacing: "0.14em" /* folio-design-system: off-scale */,
-                color: "var(--folio-text-secondary)",
-                whiteSpace: "nowrap",
-              }}
-            >
-              {heroRoom}
-            </span>
-          )}
-          {heroRoom && captionText && HERO_DOT}
-          {captionText && (
-            <span
-              className="truncate"
-              style={{
-                fontSize: 12, /* folio-design-system: off-scale */
-                color: "var(--folio-text-secondary)",
-              }}
-            >
-              {captionText}
-            </span>
-          )}
-        </div>
-        {totalRooms > 0 && (
-          <span
-            style={{
-              fontFamily: "var(--font-mono, ui-monospace, SFMono-Regular, Menlo, monospace)",
-              fontSize: 10, /* folio-design-system: off-scale */
-              textTransform: "uppercase",
-              letterSpacing: "0.14em" /* folio-design-system: off-scale */,
-              color: "var(--folio-text-secondary)",
-              whiteSpace: "nowrap",
-            }}
-          >
-            {String(1).padStart(2, "0")} / {String(totalRooms).padStart(2, "0")}
-          </span>
-        )}
-      </div>
-
-      {/* Introduction — pull quote + lede paragraph below the caption row,
-          same container width, sized for comfortable reading. */}
-      {(story.projectPullQuote || story.introText || story.introParagraphs.length > 0) && (
-        <div
-          style={{
-            marginTop: 48, /* folio-design-system: off-scale */
-            display: "flex",
-            flexDirection: "column",
-            gap: 24, /* folio-design-system: off-scale */
-            maxWidth: 720, /* matches --story-prose-width */
-          }}
-        >
-          {story.projectPullQuote && (
-            story.projectPullQuoteIsAttributed ? (
-              <blockquote
-                style={{
-                  fontFamily: "var(--font-headline)",
-                  fontStyle: "italic",
-                  fontWeight: "var(--w-body)",
-                  fontSize: "var(--type-h4)",
-                  lineHeight: "var(--lh-body)",
-                  color: "rgba(87, 75, 67, 0.85)",
-                  margin: 0,
-                }}
-              >
-                &ldquo;{story.projectPullQuote}&rdquo;
-                <footer
-                  style={{
-                    marginTop: 8, /* folio-design-system: off-scale */
-                    fontStyle: "normal",
-                    fontSize: "var(--type-meta)",
-                    color: "var(--folio-text-secondary)",
-                  }}
-                >
-                  &mdash; {story.designerName}
-                </footer>
-              </blockquote>
-            ) : (
-              <p
-                style={{
-                  fontFamily: "var(--font-headline)",
-                  fontStyle: "italic",
-                  fontWeight: "var(--w-body)",
-                  fontSize: "var(--type-h4)",
-                  lineHeight: "var(--lh-body)",
-                  color: "rgba(87, 75, 67, 0.85)",
-                  margin: 0,
-                }}
-              >
-                {story.projectPullQuote}
-              </p>
-            )
-          )}
-          <LeadIntro
-            story={story}
-            className="whitespace-pre-line"
-            style={{
-              fontFamily: "var(--font-body)",
-              fontSize: "var(--type-ui)",
-              lineHeight: 1.65, /* folio-design-system: off-scale */
-              color: "rgba(87, 75, 67, 0.85)",
-              margin: 0,
-            }}
-          />
-        </div>
-      )}
-    </section>
-  );
-}
-
-function BylineRow({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="min-w-0 break-words" style={{ display: "flex", flexDirection: "column", gap: 2 }}>
-      <span
-        style={{
-          fontSize: 10, /* folio-design-system: off-scale */
-          textTransform: "uppercase",
-          letterSpacing: 'var(--ls-eyebrow)',
-          color: "var(--folio-text-secondary)",
-        }}
-      >
-        {label}
-      </span>
-      <span style={{ color: "rgba(87, 75, 67, 0.85)" }}>{value}</span>
     </div>
   );
 }

@@ -27,6 +27,7 @@ const component = load('src/app/auth/org-setup/_ScenarioA.tsx', {
 }).ScenarioA;
 let session, memberships, account, selected;
 const page = load('src/app/auth/org-setup/page.tsx', {
+  '@/components/onboarding/ProfessionalSetupFrame': load('src/components/onboarding/ProfessionalSetupFrame.tsx', { 'next/link': { default: Link }, './professional-setup.css': {} }),
   'next/link': { default: Link }, '../_components/auth.css': {}, './_ScenarioA': { ScenarioA: component },
   'next/navigation': { redirect: destination => { throw Object.assign(new Error('redirect'), { destination }); } },
   'next-auth': { getServerSession: async () => session }, '@/app/api/auth/[...nextauth]/options': {},

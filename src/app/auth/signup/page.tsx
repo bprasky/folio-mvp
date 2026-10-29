@@ -101,6 +101,7 @@ function SignupForm() {
         acceptedTerms: true,
         tosVersion: '2026-01-19',
         privacyVersion: '2026-01-19',
+        returnTo: destination,
       };
 
       const response = await fetch('/api/auth/signup', {
@@ -118,26 +119,8 @@ function SignupForm() {
         return;
       }
 
-      setMessage('Account created. Signing you in…');
-      setMessageType('success');
-
-      const signInResult = await signIn('credentials', {
-        redirect: false,
-        email,
-        password,
-      });
-
-      if (signInResult?.error) {
-        setMessage('Account created but sign-in failed. Please sign in manually.');
-        setMessageType('error');
-        setIsLoading(false);
-        return;
-      }
-
-      // Intent overrides the API's onboarding redirect: pros go to org setup,
-      // browsers continue to the existing onboarding diagnostic.
-      router.replace(destination);
-      router.refresh();
+      setPassword('');
+      router.replace('/auth/verify-email?callbackUrl=' + encodeURIComponent(destination));
     } catch (error) {
       console.error('Signup error:', error);
       setMessage('Error creating account. Please try again.');
@@ -247,7 +230,7 @@ function SignupForm() {
             <AuthFormField
               id="email"
               name="email"
-              label="Work email"
+              label="Email"
               type="email"
               placeholder="you@studio.com"
               autoComplete="email"
@@ -299,7 +282,7 @@ function SignupForm() {
             ) : null}
 
             <button type="submit" className="auth-submit" disabled={!canSubmit}>
-              {isLoading ? 'Creating your account…' : intent === 'browsing' && !destination.startsWith('/auth/org-setup') ? 'Create my account' : 'Create account & continue'}
+              {isLoading ? 'Preparing your verification code…' : 'Create account & verify email'}
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
                 <path d="M5 12h14" />
                 <path d="m13 6 6 6-6 6" />

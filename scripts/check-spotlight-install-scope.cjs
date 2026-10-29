@@ -13,6 +13,12 @@ function run(mutate = (_path, text) => text) {
   });
 }
 run();
+assert.throws(() => run((path, text) => path === 'prisma/schema.prisma'
+  ? text.replace(/profileAppearance\s+Json\?/, 'profileAppearance Json') : text), /Only reviewed schema tokens/, 'Making appearance required must fail');
+assert.throws(() => run((path, text) => path === 'prisma/schema.prisma'
+  ? text.replace(/profileAppearance\s+Json\?/, 'profileAppearance String?') : text), /Only reviewed schema tokens/, 'Changing appearance storage must fail');
+assert.throws(() => run((path, text) => path === 'prisma/migrations/20261029120000_org_profile_appearance/migration.sql'
+  ? text + '\nSELECT 1;\n' : text), /Approved organization appearance SQL/, 'Changed approved appearance SQL must fail');
 assert.throws(() => run((path, text) => path === 'prisma/migrations/20260924120000_org_member_posting_policy/migration.sql'
   ? text + '\nSELECT 1;\n' : text), /Approved firm posting policy SQL/, 'Changed approved firm SQL must fail');
 assert.throws(() => run((path, text) => path === 'prisma/schema.prisma'
@@ -48,4 +54,12 @@ assert.throws(() => run((path, text) => path === 'docs/reviews/live-interviews/s
   ? text.replace(/(actorId\s+)String/, '$1Int') : text), /Approved live interview schema artifact/, 'Editing the live proposal cannot authorize schema changes');
 assert.throws(() => run((path, text) => path === 'prisma/migrations/20261001120000_live_interview_private_media/migration.sql'
   ? text + '\nSELECT 1;\n' : text), /Approved live interview SQL/, 'Changed approved live SQL must fail');
-console.log('PASS exact installation scope: approved schema accepted; changed fields, inverse relations, deletion semantics, extra model and tampered approval artifacts rejected.');
+assert.throws(() => run((path, text) => path === 'prisma/schema.prisma'
+  ? text.replace(/(model SignupEmailChallenge \{[\s\S]*?codeHash\s+)String/, '$1Int') : text), /Only reviewed schema tokens/, 'Changed signup code storage must fail');
+assert.throws(() => run((path, text) => path === 'prisma/schema.prisma'
+  ? text.replace(/(model SignupEmailChallenge \{[\s\S]*?attempts\s+Int\s+@default\()0/, (_match, prefix) => prefix + '100') : text), /Only reviewed schema tokens/, 'Changed signup attempt default must fail');
+assert.throws(() => run((path, text) => path === 'docs/reviews/signup-email-verification.prisma.txt'
+  ? text.replace('secretHash', 'plaintextSecret') : text), /Reviewed signup verification schema artifact/, 'Editing the signup artifact cannot authorize schema changes');
+assert.throws(() => run((path, text) => path === 'prisma/migrations/20261029193000_signup_email_verification/migration.sql'
+  ? text + '\nSELECT 1;\n' : text), /Reviewed signup verification SQL/, 'Changed signup SQL must fail');
+console.log('PASS exact installation scope: reviewed schema accepted; changed fields, inverse relations, deletion semantics, extra model and tampered review artifacts rejected.');

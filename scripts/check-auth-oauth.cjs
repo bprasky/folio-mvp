@@ -32,6 +32,7 @@ function options(env = {}, resolveUser = async () => folioUser) {
   return load('src/app/api/auth/[...nextauth]/options.ts', {
     bcryptjs: {}, '@prisma/client': { AccountStatus: { APPROVED: 'APPROVED' } },
     '@/lib/rateLimit': {},
+    '@/lib/auth/signup-verification': {},
     '@/lib/prisma': { prisma: {
       user: { findUnique: resolveUser, upsert: async () => folioUser },
       $queryRaw: async () => [],
@@ -100,7 +101,11 @@ function find(node, predicate) {
     const auth = options();
     const user = { id: `${provider}-external-id`, email: 'PERSON@example.test' };
     const account = { provider };
-    assert.equal(await auth.callbacks.signIn({ user, account }), true);
+    const profile = { email: user.email, email_verified: provider === 'apple' ? 'true' : true };
+    assert.equal(await auth.callbacks.signIn({ user, account, profile }), true);
+    for (const badProfile of [undefined, { email: user.email }, { email: user.email, email_verified: false }, { email: 'someone-else@example.test', email_verified: true }]) {
+      assert.equal(await auth.callbacks.signIn({ user, account, profile: badProfile }), false, 'Unverified or mismatched provider email cannot create/link an account');
+    }
     const token = await auth.callbacks.jwt({ token: { sub: user.id }, user, account });
     assert.equal(token.id, folioUser.id, `${provider} token must carry Folio ID`);
     assert.equal(token.sub, folioUser.id);
