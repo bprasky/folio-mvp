@@ -1,0 +1,7 @@
+.workspace-ready-notice { position: fixed; z-index: 60; right: 24px; bottom: 24px; width: min(360px, calc(100vw - 32px)); padding: 24px; border: 1px solid var(--folio-border-subtle); border-top: 3px solid var(--folio-gold-ornament); background: var(--surface-canvas); box-shadow: var(--shadow-2); }
+.workspace-ready-notice .workspace-ready-notice__eyebrow { margin: 0 24px 10px 0; font: 10px/1.5 var(--font-body); text-transform: uppercase; letter-spacing: 0.08em; color: var(--folio-gold); }
+.workspace-ready-notice h2 { margin-bottom: 10px; font: 400 26px/1.1 var(--font-headline); color: var(--folio-text-primary); }
+.workspace-ready-notice p { font: 13px/1.6 var(--font-body); color: var(--folio-text-secondary); }
+.workspace-ready-notice a { display: inline-block; margin-top: 16px; font: 500 13px var(--font-body); color: var(--folio-text-primary); text-decoration: underline; text-underline-offset: 4px; }
+.workspace-ready-notice__dismiss { position: absolute; top: 6px; right: 6px; width: 36px; height: 36px; color: var(--folio-text-secondary); font: 24px var(--font-body); }
+@media (max-width: 480px) { .workspace-ready-notice { right: 16px; bottom: 16px; padding: 20px; } }

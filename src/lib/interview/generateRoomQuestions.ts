@@ -15,7 +15,7 @@ import { MODELS } from '@/lib/ai/models';
 import { isArrivalSafe } from './prompts/validateQuestion';
 import { FOLIO_INTERVIEWER_PERSONA } from './prompts/persona';
 import { SHARED_RULE_BLOCK, ARRIVALS_CONTRAST_POLICY } from './prompts/rules';
-import { laneContract } from './prompts/sourceHandling';
+import { laneContract, MATERIAL_CONTEXT_POLICY } from './prompts/sourceHandling';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -27,17 +27,6 @@ export interface RoomQuestionInput {
   roomImages: Array<{
     url: string;
     classification?: Record<string, unknown> | null;
-  }>;
-  roomTags: Array<{
-    productName: string;
-    vendorName?: string;
-    category?: string;
-    // Product Naming Gate (spec 20): a subscribed vendor's product may be named
-    // and spotlighted as a question subject; a non-subscribed product must be
-    // referred to by descriptor only. Defaults to descriptor-only when unset.
-    named?: boolean;
-    /** Brand-free swap text used when the product may not be named. */
-    descriptor?: string;
   }>;
   budget: number;
   contextLevel: ContextLevel;
@@ -81,31 +70,6 @@ export async function generateRoomQuestions(
     }
   }
 
-  // Build tag summary, split by naming eligibility (Product Naming Gate, spec 20).
-  // Subscribed vendors' products may be named and spotlighted; everything else is
-  // referred to by descriptor only, and only when the designer's story surfaces it.
-  const namedTags = input.roomTags.filter((t) => t.named);
-  const descriptorTags = input.roomTags.filter((t) => !t.named);
-
-  const nameableSummary = namedTags.length > 0
-    ? namedTags.map((t) => {
-        const parts = [t.productName];
-        if (t.vendorName) parts.push(`by ${t.vendorName}`);
-        if (t.category) parts.push(`(${t.category})`);
-        return `- ${parts.join(' ')}`;
-      }).join('\n')
-    : 'None.';
-
-  const descriptorSummary = descriptorTags.length > 0
-    ? descriptorTags.map((t) => {
-        // Never fall back to the product name here — this block is labeled
-        // "descriptor only", so a missing descriptor must degrade to the generic
-        // category or a bare floor, never leak the name it is meant to withhold.
-        const desc = t.descriptor?.trim() || t.category?.trim() || 'the piece';
-        return `- ${desc}`;
-      }).join('\n')
-    : 'None.';
-
   // Build classification summary from images
   const classificationNotes: string[] = [];
   for (const img of input.roomImages) {
@@ -138,7 +102,9 @@ ${SHARED_RULE_BLOCK}
 
 ${ARRIVALS_CONTRAST_POLICY}
 
-YOUR TASK: interview the designer about the ${input.roomName} in their project${input.projectContext.projectTitle ? ` "${input.projectContext.projectTitle}"` : ''}. Generate room-level questions grounded in this room's photos and tagged products.
+${MATERIAL_CONTEXT_POLICY}
+
+YOUR TASK: interview the designer about the ${input.roomName} in their project${input.projectContext.projectTitle ? ` "${input.projectContext.projectTitle}"` : ''}. Generate room-level questions grounded in this room's photos, using material themes only to corroborate visual observations.
 
 ROOM: ${input.roomName}
 IMAGES: ${input.roomImages.length} photos of this room (shown above)
@@ -147,12 +113,6 @@ CONTEXT LEVEL: ${input.contextLevel}/5
 AI-DETECTED DETAILS:
 ${classificationSummary}
 
-PRODUCTS YOU MAY NAME AND SPOTLIGHT (vendor is subscribed — name the brand/product freely and a dedicated question about one is welcome):
-${nameableSummary}
-
-PRODUCTS TO REFERENCE BY DESCRIPTOR ONLY (never name the brand or product; use the descriptor, and only raise one if the designer's own story makes it the point — never as a product spotlight):
-${descriptorSummary}
-
 ${input.projectContext.overallStyle ? `PROJECT STYLE: ${input.projectContext.overallStyle}` : ''}
 ${input.projectContext.materialPalette?.length ? `MATERIAL PALETTE: ${input.projectContext.materialPalette.join(', ')}` : ''}
 ${input.projectContext.designerName ? `DESIGNER: ${input.projectContext.designerName}` : ''}
@@ -160,12 +120,12 @@ ${knownFactsBlock}
 Generate exactly ${input.budget} interview questions for the ${input.roomName}.
 
 RULES:
-1. Every question must reference a specific product, material, or visual detail from the data above or visible in the images.
-2. NAMING: You may name — and build a dedicated question around — any product in the "MAY NAME AND SPOTLIGHT" list. For a product in the "BY DESCRIPTOR ONLY" list, refer to it by its descriptor (form / material / finish) and NEVER by its brand or product name; raise one only if the designer's own story (a standout room, a repeated material) makes it the point — never introduce it as a named product spotlight.
+1. Ground each question in a visual detail, material relationship or spatial decision visible in this room. Material themes are clues, not proof of what appears here.
+2. Keep the conversation at the design level. No product-specific questions, brand names, vendor endorsements or testimonials.
 3. Every question sets up an answer the designer would be proud to publish (arrivals/contrast policy above applies).
 4. No generic questions. "Tell us about your color choices" is NEVER acceptable. "The brass hardware against the navy millwork — walk us through that pairing" is editorial.
-5. If a vendor name is unknown, ask about the product or material itself — never say "Unknown Brand."
-6. Mix question types: 1 warm opening, then deep dives into specific products/materials/decisions, and 1 closing philosophy question if budget >= 4.
+5. Do not ask for product identification or purchasing advice.
+6. Mix question types: 1 warm opening, then exploration of materials, atmosphere and spatial decisions, and 1 closing philosophy question if budget >= 4.
 ${crossRoomInstruction ? `7. ${crossRoomInstruction}` : ''}
 
 Return ONLY a JSON object:
@@ -173,9 +133,9 @@ Return ONLY a JSON object:
   "questions": [
     {
       "text": "The full question text",
-      "type": "opening | deep_dive | vendor_loyalty | material_thread | spatial_narrative | philosophy",
-      "vendors": ["VendorName"],
-      "products": ["ProductName"],
+      "type": "opening | deep_dive | material_thread | spatial_narrative | philosophy",
+      "vendors": [],
+      "products": [],
       "boostable": false,
       "topic": "semantic_topic_slug"
     }
@@ -210,24 +170,31 @@ Return ONLY a JSON object:
 
   const typeMap: Record<string, QuestionType> = {
     opening: 'generic',
-    deep_dive: 'hero_piece',
-    vendor_loyalty: 'vendor_loyalty',
+    deep_dive: 'generic',
     material_thread: 'material_theme',
     spatial_narrative: 'spatial_narrative',
     philosophy: 'generic',
   };
 
-  const questions: GeneratedQuestion[] = parsed.questions.map((q: any) => ({
+  // A commercial response is outside this lane, even if the model ignores the
+  // prompt. Callers retain their existing fallback for incomplete room plans.
+  const candidates: unknown[] = parsed.questions;
+  const questions: GeneratedQuestion[] = candidates.filter((value): value is Record<string, unknown> & { text: string } => {
+    if (!value || typeof value !== 'object' || Array.isArray(value)) return false;
+    const q = value as Record<string, unknown>;
+    return typeof q.text === 'string' && !!q.text.trim() && q.type !== 'vendor_loyalty' && !q.boostable &&
+      !(Array.isArray(q.products) && q.products.length) && !(Array.isArray(q.vendors) && q.vendors.length);
+  }).map(q => ({
     id: randomUUID(),
-    text: q.text || '',
+    text: q.text,
     contextLevel: input.contextLevel,
-    type: typeMap[q.type] || 'hero_piece',
+    type: typeMap[String(q.type)] || 'generic',
     rooms: [input.roomName],
-    products: Array.isArray(q.products) ? q.products : [],
-    vendors: Array.isArray(q.vendors) ? q.vendors : [],
-    boostable: !!q.boostable,
-    pullQuotePotential: q.type === 'philosophy' || q.type === 'vendor_loyalty' ? 'high' as const : 'medium' as const,
-    topic: q.topic || 'general',
+    products: [],
+    vendors: [],
+    boostable: false,
+    pullQuotePotential: q.type === 'philosophy' ? 'high' as const : 'medium' as const,
+    topic: typeof q.topic === 'string' && q.topic ? q.topic : 'general',
   }));
 
   // Arrivals/contrast gate (docs/17 §3, docs/17_INTERVIEW_PROMPT_CANON.md). The live

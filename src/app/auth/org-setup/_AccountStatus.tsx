@@ -5,7 +5,7 @@ type Firm = { id: string; name: string; membershipRole: string };
 export function AccountStatus({ account, memberships }: { account: ProfessionalAccount; memberships: Firm[] }) {
   const current = memberships.find((firm) => firm.id === account.operatingAsOrgId);
   return (
-    <section aria-label="Current account" className="rounded-lg border border-folio-border-subtle p-5 space-y-4">
+    <section aria-label="Current account" className="setup-account rounded-lg border border-folio-border-subtle p-5 space-y-4">
       <dl className="space-y-4">
         <div>
           <dt className="folio-meta text-folio-text-secondary">Signed in as</dt>

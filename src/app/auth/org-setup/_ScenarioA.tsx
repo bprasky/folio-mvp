@@ -195,7 +195,7 @@ export function ScenarioA({ initialIntent, callbackUrl = '/projects/new', member
       {needsAdmin ? <a href={`mailto:support@folioad.com?subject=${encodeURIComponent(`Firm access: ${requested}`)}`} className="underline underline-offset-4">Contact Folio about this firm</a> : notificationIssue ? <p role="status" className="folio-meta text-folio-text-secondary">Your request is saved, but we couldn’t send every admin notification. You can contact your firm’s admin directly or check the request in Settings.</p> : null}
       <Link className="auth-submit" href="/">Explore Folio</Link>
       <Link className="underline underline-offset-4" href="/settings">View your access requests</Link>
-      {preparingWorkspace ? <p className="folio-body text-folio-text-secondary">Once your admin approves access, <Link className="underline" href={match ? firmWorkspaceDestination(match, destination) : destination}>return here to prepare your workspace</Link>. We can then import your website and save project drafts.</p> : null}
+      {preparingWorkspace ? <p className="folio-body text-folio-text-secondary">Once your admin approves access, <Link className="underline" href={match ? firmWorkspaceDestination(match, destination) : destination}>return here to prepare your workspace</Link>. We can then bring over your projects from your website, ready for you to review.</p> : null}
     </>
   );
 
@@ -206,7 +206,7 @@ export function ScenarioA({ initialIntent, callbackUrl = '/projects/new', member
         <p className="folio-meta text-folio-text-secondary mb-2">Professional setup</p>
         <h1 className="folio-h2">{memberships.length ? 'Add another firm' : 'What is your firm called?'}</h1>
         <p className="folio-body text-folio-text-secondary mt-3">Your personal account is ready. Posting on Folio requires a business. Find yours below, or create its page if it isn’t here yet.</p>
-        {preparingWorkspace ? <p className="folio-meta text-folio-text-secondary mt-3">Next: let Folio prepare your business details, bio, and project drafts from your website.</p> : null}
+        {preparingWorkspace ? <p className="folio-meta text-folio-text-secondary mt-3">Next, we’ll help bring over your business details, bio, and projects from your website.</p> : null}
       </div>
       {accountStatus}
       <form onSubmit={submit} className="space-y-5">

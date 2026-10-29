@@ -46,18 +46,20 @@ export default function OrgProfileTabs({ activeTab, orgId, defaultTab = 'feed', 
       ];
 
   return (
-    <div
+    <nav
+      aria-label="Organization sections"
       className="sticky top-0 z-10 border-b"
-      style={{ borderColor: '#E8E4DF', backgroundColor: 'var(--surface-ground)' }}
+      style={{ borderColor: 'var(--org-page-border, var(--folio-border-subtle))', backgroundColor: 'var(--org-page-background, var(--surface-canvas))' }}
     >
-      <div className="max-w-6xl mx-auto px-6 flex gap-8">
+      <div className="max-w-6xl mx-auto px-6 flex gap-8 overflow-x-auto">
         {tabs.map(tab => (
           <Link
             key={tab.id}
             href={createUrl(tab.id)}
-            className="py-4 text-sm relative"
+            aria-current={activeTab === tab.id ? 'page' : undefined}
+            className="py-4 text-sm relative whitespace-nowrap"
             style={{
-              color: activeTab === tab.id ? '#2C2825' : '#8B8178',
+              color: activeTab === tab.id ? 'var(--org-page-ink, var(--folio-text-primary))' : 'var(--org-page-muted, var(--folio-text-secondary))',
               fontWeight: activeTab === tab.id ? 500 : 400,
             }}
           >
@@ -65,12 +67,12 @@ export default function OrgProfileTabs({ activeTab, orgId, defaultTab = 'feed', 
             {activeTab === tab.id && (
               <div
                 className="absolute bottom-0 left-0 right-0 h-0.5"
-                style={{ backgroundColor: '#2C2825' }}
+                style={{ backgroundColor: 'var(--org-page-ink, var(--folio-text-primary))' }}
               />
             )}
           </Link>
         ))}
       </div>
-    </div>
+    </nav>
   );
 }

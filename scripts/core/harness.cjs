@@ -13,6 +13,7 @@ delete process.env.UPSTASH_REDIS_REST_URL;
 delete process.env.UPSTASH_REDIS_REST_TOKEN;
 process.env.NEXTAUTH_SECRET = 'core-regression-fixture-secret-only';
 process.env.NEXTAUTH_URL = 'http://folio.test';
+process.env.RESEND_API_KEY = 'core-fixture-key';
 process.env.NEXT_PUBLIC_SUPABASE_URL = 'https://storage.test';
 process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY = 'fixture';
 process.env.SUPABASE_SERVICE_ROLE_KEY = 'fixture';
@@ -22,6 +23,7 @@ const { NextRequest } = require('next/server');
 let database, session = null;
 const unexpectedNetwork = [];
 const modelCalls = [];
+const emails = [];
 let article = {};
 function replace(name, exports) {
   const path = require.resolve(name.startsWith('src/') ? resolve(name) : name);
@@ -73,7 +75,7 @@ class AnthropicFixture {
 replace('@anthropic-ai/sdk', AnthropicFixture);
 class OpenAIFixture { embeddings = { create: async () => ({ data: [{ embedding: Array(1536).fill(0) }] }) }; }
 replace('openai', OpenAIFixture);
-replace('resend', { Resend: class { emails = { send: async () => ({ data: { id: 'fixture-email' }, error: null }) }; } });
+replace('resend', { Resend: class { emails = { send: async input => { emails.push(input); return { data: { id: 'fixture-email' }, error: null }; } }; } });
 global.fetch = async url => {
   const parsed = new URL(String(url));
   if (parsed.origin === 'https://storage.test') {
@@ -95,5 +97,5 @@ async function login(user) {
 }
 const route = path => require(resolve(`src/app/api/${path}/route.ts`));
 const request = (body, method = 'POST', path = '/api/test') => new NextRequest(`http://folio.test${path}`, body === undefined ? { method: 'GET' } : { method, headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) });
-module.exports = { target, facade, route, request, login, authOptions, modelCalls, unexpectedNetwork,
+module.exports = { target, facade, route, request, login, authOptions, modelCalls, unexpectedNetwork, emails,
   useDatabase: db => { database = db; session = null; article = {}; modelCalls.length = 0; unexpectedNetwork.length = 0; }, anonymous: () => { session = null; }, setArticle: value => { article = value; } };

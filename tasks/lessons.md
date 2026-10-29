@@ -1,5 +1,13 @@
 # Lessons Learned
 
+## 2026-10-29 — Import completion uses the approved profile
+
+The founder rejected the separate onboarding profile design. Reuse the actual approved organization cover and mosaic from the magazine profile work, including saved appearance settings. Onboarding adds private draft status and the materials/sourcebook next step; it must not invent a second profile aesthetic. Inspect existing related work before creating a competing implementation.
+
+## 2026-10-29 — Implement the organization magazine with actual categories
+
+The founder approved implementation after the cover mockup. Lead with the firm name, use canonical Folio neutral defaults, and let active organization owners/admins configure page color, banner photograph, identity image and selected facts in Settings. Preserve the existing Feed, Shop, About and Contact navigation and the real feed categories (All, Projects, Media, Recognition, Collaborations), including vendor variations. The speculative mockup categories were suggestions, not replacement requirements. Reuse the current mosaic. No menu arrows, invented green theme or sample statistics in production. A shared profile must load for visitors without requiring organization membership.
+
 ## 2026-10-23 — About must show the publication designers receive
 
 Lead with tangible outcomes alongside the process: full editorial articles, Folio-generated ideas beyond new project uploads, and Publishing Studio for managing social content and sharing. Describe the future printed studio magazine separately and explicitly as coming soon: projects, the people behind the practice and how they design, suitable for office copies, portfolios and promotion. Do not present print or automatic social publishing as currently available.
@@ -1256,3 +1264,16 @@ The founder approved the immersive publication layout but rejected the automatic
 The founder clarified that website import is the onboarding value proposition, not just optional form autofill. After personal signup and firm enrollment, offer permission-based import of selected sections: business identity/about, the actual person's bio and separate portfolio projects. Run the work durably in the background, save private drafts, prepare useful opening questions from available source material, then email the person when their workspace is ready to begin. Closing the browser must not stop the work.
 
 Preserve one personal account and firm-based posting permissions. A firm description is not automatically its employee's personal bio, website claims are not accepted interview answers, and importing a portfolio must not publish it. Keep sections/projects reviewable and edits intact on retry. Prepare opening questions in advance; follow-ups and room questions that depend on accepted answers remain adaptive. Do not start a live voice/avatar session merely to prepare questions. Completion emails must describe committed, usable results and any missing sections truthfully. No new verification policy is implied.
+
+## 2026-10-29 — One website in, a recognizable Folio out
+
+The founder removed optional personal-bio and project-page links from onboarding. Ask for the website once and discover the selected sections automatically. Use “Your projects” in the import offer, with a separate explanation of private drafts. The setup experience should use Folio's editorial type, white canvas, gold accents, and design photography.
+
+Import completion is a handoff into the next part of the journey. Present a private profile preview with the imported business identity, personal background, project cover photography, and clearly marked draft projects. Make the next step upload a finish schedule or tag materials, followed by the interview. In-app completion notices and readiness email must return to that same preview; email retries must not withhold usable work. Show actual imported results rather than inventing an 80% completion score or promising a fixed ten-minute duration. Keep existing edits, permissions and publication controls intact.
+
+
+## 2026-10-29 — Materials before questions; tags corroborate the visual story
+
+The founder corrected the import handoff: show the prepared private profile first, then offer a finish schedule or manual product tagging. Reviewed products placed on photos fill the sourcebook. Generate project questions only when the person continues into the interview with current context. This supersedes the earlier instruction to pregenerate opening questions during website import; ignore those legacy import plans for new interviews, preserving existing answers and sessions.
+
+Tags support and cross-check the materials and finishes observed in photographs and vision analysis. They are not subjects for product-specific questions, vendor-loyalty prompts, or testimonials. Keep the standard interview about the design direction, atmosphere, spaces and decisions; retain actual product identities in the sourcebook. Future vendor boosts/testimonials are separate work, not implied by importing or tagging a product.

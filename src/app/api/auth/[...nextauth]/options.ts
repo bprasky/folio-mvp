@@ -6,6 +6,7 @@ import bcrypt from 'bcryptjs';
 import { AccountStatus } from '@prisma/client';
 import { prisma } from '@/lib/prisma';
 import { checkRateLimit, getClientIp, RateLimitPresets } from '@/lib/rateLimit';
+import { signupCookieFromHeader, verifySignup, SignupVerificationError } from '@/lib/auth/signup-verification';
 
 declare module 'next-auth' {
   interface User {
@@ -118,6 +119,22 @@ export const authOptions: NextAuthOptions = {
         ]
       : []),
     CredentialsProvider({
+      id: 'email-verification',
+      name: 'Verify signup email',
+      credentials: { code: { label: 'Verification code', type: 'text' } },
+      async authorize(credentials, request) {
+        const limit = await checkRateLimit(getClientIp(new Headers(request.headers as Record<string, string>)), {
+          ...RateLimitPresets.LOGIN_PER_IP, keyGenerator: ip => `signup-verify-ip:${ip}`,
+        });
+        if (!limit.success) throw new Error('RATE_LIMIT');
+        try {
+          return await verifySignup(signupCookieFromHeader(request.headers?.cookie), credentials?.code || '');
+        } catch (error) {
+          throw new Error(error instanceof SignupVerificationError ? error.code : 'UNAVAILABLE');
+        }
+      },
+    }),
+    CredentialsProvider({
       name: 'credentials',
       credentials: {
         email: { label: 'Email', type: 'email' },
@@ -222,9 +239,8 @@ export const authOptions: NextAuthOptions = {
     })
   ],
   callbacks: {
-    async signIn({ user, account }) {
-      // Credentials path is unchanged.
-      if (!account || account.provider === 'credentials') {
+    async signIn({ user, account, profile }) {
+      if (!account || account.provider === 'credentials' || account.provider === 'email-verification') {
         return true;
       }
       // OAuth (Google / Apple): we don't use the NextAuth Prisma adapter, so
@@ -233,6 +249,9 @@ export const authOptions: NextAuthOptions = {
       // works on first OAuth sign-in.
       if (!user?.email) return false;
       const email = user.email.toLowerCase().trim();
+      const claims = profile as { email?: string; email_verified?: boolean | string } | undefined;
+      const verified = claims?.email_verified === true || (account.provider === 'apple' && claims?.email_verified === 'true');
+      if (!['google', 'apple'].includes(account.provider) || !verified || claims?.email?.trim().toLowerCase() !== email) return false;
       const now = new Date();
       try {
         await prisma.user.upsert({
@@ -265,8 +284,9 @@ export const authOptions: NextAuthOptions = {
 
       // Credentials already carry the Folio ID. OAuth user.id belongs to the
       // external provider and must never overwrite the resolved Folio ID.
-      if (user?.id && account?.provider === 'credentials') {
+      if (user?.id && (account?.provider === 'credentials' || account?.provider === 'email-verification')) {
         token.id = user.id;
+        token.sub = user.id;
       }
 
       // For OAuth first sign-in, resolve the Folio user id by email so the

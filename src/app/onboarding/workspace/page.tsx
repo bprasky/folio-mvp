@@ -7,6 +7,7 @@ import { professionalSetupHref, safeProfessionalCallback, firmWorkspaceDestinati
 import { importAccess, ownedImport, WorkspaceImportError } from '@/lib/workspace-import/store';
 import { isWorkspaceImport, WORKSPACE_IMPORT_KIND } from '@/lib/workspace-import/types';
 import { SetupProgress } from '@/components/onboarding/SetupProgress';
+import { ProfessionalSetupFrame } from '@/components/onboarding/ProfessionalSetupFrame';
 import { WorkspaceImportClient } from './WorkspaceImportClient';
 import '../../auth/_components/auth.css';
 
@@ -32,9 +33,9 @@ export default async function WorkspacePage({ searchParams }: { searchParams: { 
   if (!orgId || !memberships.some(member => member.organization.id === orgId)) {
     const pending = await prisma.orgJoinRequest.findFirst({ where: { userId: session.user.id, status: 'PENDING', ...(orgId ? { organizationId: orgId } : {}) },
       select: { organization: { select: { name: true } } }, orderBy: { createdAt: 'desc' } });
-    if (pending) return <main className="max-w-lg mx-auto px-6 py-12 space-y-6"><Link href="/" className="folio-logo-text">Folio</Link><SetupProgress step={2} />
+    if (pending) return <ProfessionalSetupFrame stage="business"><SetupProgress step={2} />
       <h1 className="folio-h2">Your business access is pending.</h1><p className="folio-body">An admin at {pending.organization.name} needs to approve your request. Once you have access, return here to import your website and prepare your workspace.</p>
-      <Link className="auth-submit" href={here}>Check my access</Link><Link className="block underline" href="/settings">View my access requests</Link><Link className="block underline" href={professionalSetupHref(null, here)}>Join or create a different business</Link></main>;
+      <Link className="auth-submit" href={here}>Check my access</Link><Link className="block underline" href="/settings">View my access requests</Link><Link className="block underline" href={professionalSetupHref(null, here)}>Join or create a different business</Link></ProfessionalSetupFrame>;
     if (orgId) notFound();
     redirect(professionalSetupHref(null, here));
   }
@@ -46,15 +47,9 @@ export default async function WorkspacePage({ searchParams }: { searchParams: { 
     select: { id: true, createdAt: true, processingMeta: true }, orderBy: { createdAt: 'desc' }, take: 10 });
   const history = rows.filter(row => isWorkspaceImport(row.processingMeta)).map(row => ({ id: row.id, date: row.createdAt.toISOString(),
     phase: isWorkspaceImport(row.processingMeta) ? row.processingMeta.phase : 'blocked' }));
-  return <div className="auth-shell">
-    <header className="px-6 py-6 border-b border-folio-border-subtle flex justify-between"><Link href="/" className="folio-logo-text">Folio</Link><Link href="/settings" className="folio-meta underline">Account settings</Link></header>
-    <main className="w-full max-w-3xl mx-auto px-6 py-8 sm:py-12">
-      <SetupProgress step={3} />
-      <WorkspaceImportClient key={orgId + (searchParams.import || searchParams.new || '')} access={access}
-        memberships={memberships.map(member => member.organization)} history={history}
-        initialId={searchParams.import || (searchParams.new === '1' ? undefined : history[0]?.id)}
-        returnTo={access.canImportProjects ? firmWorkspaceDestination(access, returnTo) : `/org/${orgId}`}
-        available={!!process.env.CRON_SECRET && !!process.env.RESEND_API_KEY} />
-    </main>
-  </div>;
+  return <WorkspaceImportClient key={orgId + (searchParams.import || searchParams.new || '')} access={access}
+      memberships={memberships.map(member => member.organization)} history={history}
+      initialId={searchParams.import || (searchParams.new === '1' ? undefined : history[0]?.id)}
+      returnTo={access.canImportProjects ? firmWorkspaceDestination(access, returnTo) : `/org/${orgId}`}
+      available={!!process.env.CRON_SECRET && !!process.env.RESEND_API_KEY} />;
 }

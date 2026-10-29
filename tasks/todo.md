@@ -1,3 +1,16 @@
+# Import completion uses the approved profile — 2026-10-29
+
+- [x] Integrate the existing organization magazine components from PR #835.
+- [x] Replace the standalone onboarding cover and cards with the shared hero and mosaic; retain materials-first navigation and private ownership checks.
+- [x] Verify saved appearance, private drafts, desktop/mobile rendering and destination controls.
+- [x] Push the corrected PR and start its CI; final results are recorded on the PR.
+
+Small portfolios also fill the shared mosaic: one project spans the row and two projects split it evenly, retaining the existing responsive grid for larger feeds.
+
+Review: reused the actual OrgProfileHero and FlowMosaic from #835 and removed the competing cover/card CSS. Saved introduction, portrait/logo, cover/crop, color and featured facts are respected. Automatic covers use the importing owner's eligible draft photos only in the private preview; the shared public loader remains public-only. Material-first destinations and sourcebook behavior are preserved. Import regressions, 17 organization appearance/permission regressions, scoped lint, client boundary and migration guards pass. Production compilation succeeds; TypeScript ratchet passes at 864 versus 880 without increasing its baseline. Real components with synthetic services passed desktop, 390px and 320px checks, light/dark presentation, keyboard controls, schedule/manual/project destinations, and review disclosure. No browser errors or horizontal overflow. This branch includes the existing #835 implementation as a dependency; neither PR was merged or deployed here.
+
+---
+
 # Settings appearance toggle — 2026-10-29
 
 - [x] Inspect settings and existing theme tokens; start from current main in an isolated checkout.
@@ -15,6 +28,27 @@ Settings now uses canonical surface/text/border tokens. Improved dark secondary 
 Verified the actual Next.js route with synthetic session/API responses (no real account writes): light/dark switching, reload persistence, restoration with external client scripts blocked, soft navigation to Privacy and back, Space/Enter, 1280/390/320px layouts, 44px minimum switch target, invalid/blocked theme storage, cookie-card background and signed-out state. Browser page/hydration errors: none. Visually inspected desktop and phone screenshots. Scoped lint, client-import guard, migration-discipline guard and diff whitespace checks pass.
 
 The repository TypeScript check reports 866 diagnostics against its 880 baseline; its five flagged fingerprints refer to external dependency paths through the shared node_modules junction, outside the changed files. Normalizing only that dependency-root path passes the baseline comparison with zero new fingerprints. Baseline and compiler settings remain unchanged.
+
+---
+
+# Organization magazine profile implementation — 2026-10-29
+
+- [x] Audit public profile, organization permissions, image eligibility and persistent appearance storage.
+- [x] Add a neutral frosted cover with firm identity, source-backed introduction and up to four chosen facts; preserve actual tabs and mosaic.
+- [x] Add owner/admin appearance settings with live preview, background color/reset, cover selection/upload and framing, logo/portrait and fact controls.
+- [x] Persist validated settings with server-side active owner/admin checks; verify uploaded images and public project eligibility.
+- [x] Verify save/reload, authorization, anonymous sharing, responsive layouts, empty states and existing navigation. Run client-import, migration and type checks.
+- [x] Review the final diff, record results, and commit/push the isolated branch.
+
+Plan check-in: implement the approved organization cover on latest main. Retain Feed, Shop, About, Contact and their real categories, vendor variations, and the existing ProjectFlowMosaic. Default to Folio colors and existing imported identity/content; never insert prototype numbers or unsupported facts. A new nullable appearance field, if needed, follows the repository's explicit schema review gate before application. Back up schema before edits; restore and stop if schema validation/generation/migration status fails. Independently prepare the UI and tests while approval is pending. A safe public feed is required because the current design feed rejects visitors to a shared profile.
+
+### Review
+
+Implemented on `codex/organization-magazine` from `4cde03dd`; pushed and opened draft PR #835 (https://github.com/bprasky/folio-mvp/pull/835). The public cover uses the organization name, existing description/logo and eligible public project photography. Optional short cover introduction, background/reset, image crop, independent uploaded logo/portrait and up to four ordered facts save in a validated nullable appearance object. Prototype sample statistics are never inserted. Original Feed/Shop/About/Contact and vendor variants remain; project mosaic is reused. Fixed the inherited dark title color on the shared photo mosaic.
+
+Appearance GET/PATCH and image uploads require active exact-organization Owner/Admin membership. Writes recheck the permission inside the transaction; uploads decode and strip metadata, keep immutable org-scoped paths, and retain existing assets on failure. Selected project photos remain references and are rechecked against current public status, inclusion and firm ownership. The design feed now accepts anonymous visitors with explicit public fields and current public exact-firm filters. Related pinned and Shop provenance use the same firm/photo eligibility.
+
+Verification: 17 data/route regressions passed and are included in CI; actual React settings/public components passed at 1440/768/390/320px with save/reload, upload, failure recovery, color contrast/reset, fact order/empty state, actual categories/mosaic and non-admin denial. Production-mode local BP Design page returned 200 at desktop/phone sizes, displayed all four published project links, had no horizontal overflow or browser exceptions, and loaded About/Shop/Contact. Guest feed returned 200; private appearance settings returned 401. Browser writes used isolated fixtures; existing firm data and assets were not changed. Approved migration was applied and verified; see the schema review. Production compilation passed with existing unrelated import warnings. Changed-file lint has no errors; client-import guard and migration discipline pass. TypeScript ratchet passes at 866 diagnostics against 880 baseline, with no new errors: seven unchanged missing-property errors have exact full-type/source-span evidence for four diagnostic display equivalents after the additive field. Baseline was not increased; all seven guard self-tests pass. Application code is not merged or deployed by this task.
 
 ---
 
@@ -1223,3 +1257,25 @@ Remaining validation for implementation: real fresh account/signup and OAuth, bl
 The later profile-hero reference was explicitly withdrawn by the user and is not implemented here.
 
 ---
+## Signup email verification — 2026-10-29
+
+Approved scope: six-digit email ownership verification during signup; existing member login remains unchanged. Google/Apple may skip the code only with a matching verified email claim. This is not ongoing two-factor authentication.
+
+- [x] Add an isolated pending signup record, hashed code and browser secret; create the account only after verification.
+- [x] Implement expiry, persistent guess limits, resend cooldown/limits and atomic single-use consumption.
+- [x] Preserve the chosen business/import destination and support resuming the verification page.
+- [x] Test API/auth behavior, rollback/replay, delivery failures, OAuth claims and user-facing states.
+- [x] Validate the additive migration, client boundaries, lint/types and regression suites; review and open PR #836. See `docs/reviews/signup-email-verification.md` for evidence and release requirements.
+
+## Setup refinement and import handoff — 2026-10-29
+
+- [x] Reduce the import offer to one website, selected sections and explicit consent; remove the manual bio/project links and simplify project wording.
+- [x] Share Folio's editorial setup frame across business enrollment, pending access and workspace preparation; keep the form first on mobile.
+- [x] Present a private profile preview using current saved project details and imported business/bio suggestions, with a landscape cover and muted draft cards.
+- [x] Send the next action to the selected project's finish-schedule upload or manual tagging after selecting the correct business workspace; generate questions on explicit interview entry.
+- [x] Persist an idempotent in-app readiness notice with the content checkpoint; return both the notice and readiness email to the same preview, including during email retries.
+- [x] Verify ownership, current publication state, missing photos, retry/dismissal behavior, callback targets, desktop/mobile UI and production compilation. Browser fixtures use synthetic services; actual inbox delivery and deployed cron remain release smoke tests.
+
+- [x] Remove question generation from website import and ignore premature legacy import plans for new sessions.
+- [x] Use accepted photo tags as material themes alongside vision context, without adding product subjects or vendor-loyalty signals; standard room preparation excludes commercial questions.
+- [x] Verify corrected schedule/manual tagging destinations, responsive preview, prompt contract, import/sourcebook behavior and production compilation; fresh PR CI follows the final push.

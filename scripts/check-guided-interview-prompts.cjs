@@ -44,6 +44,30 @@ function ask(fixture, text, evidence = [{ answerId: fixture.turn.id, quote: fixt
     text, purpose: 'Collect the remaining part of this prepared obligation.', sourceAnswerIds: [...new Set(evidence.map(item => item.answerId))], evidence };
 }
 async function run() {
+  responses = [{ questions: [
+    null, { text: 42 },
+    { text: 'How did the stone and timber palette shape the atmosphere?', type: 'material_thread', products: [], vendors: [], boostable: false },
+    { text: 'Why did you select the Marble Table by Vendor Co?', type: 'deep_dive', products: ['Marble Table'], vendors: ['Vendor Co'], boostable: false },
+    { text: 'What keeps you returning to this supplier?', type: 'vendor_loyalty', products: [], vendors: [], boostable: false },
+  ] }]; requests = [];
+  const generalRoom = await load('src/lib/interview/generateRoomQuestions.ts').generateRoomQuestions({
+    roomName: 'Living Room', roomImages: [], budget: 3, contextLevel: 2,
+    projectContext: { materialPalette: ['natural_stone', 'warm_wood'], otherRoomNames: [] },
+  });
+  assert.equal(generalRoom.questions.length, 1, 'General prep rejects commercial product/vendor responses.');
+  assert.equal(generalRoom.questions[0].type, 'material_theme');
+  assert.equal(generalRoom.questions[0].products.length, 0); assert.equal(generalRoom.questions[0].vendors.length, 0);
+  const roomPrompt = requests[0].messages[0].content.find(block => block.type === 'text').text;
+  assert.ok(roomPrompt.includes('natural_stone')); assert.ok(roomPrompt.includes('cross-check what the photos and image analysis suggest'));
+  assert.ok(roomPrompt.includes('Do not ask about specific products')); assert.ok(!roomPrompt.includes('MAY NAME AND SPOTLIGHT'));
+  responses = [{ questions: [] }]; requests = [];
+  await load('src/lib/interview/generateProjectQuestions.ts').generateProjectQuestions({
+    representativeImages: [], roomNames: ['Living Room'], roomTypes: [], materialPalette: ['natural_stone'], contextLevel: 2,
+  });
+  assert.ok(requests[0].messages[0].content.find(block => block.type === 'text').text.includes('Do not ask about specific products'));
+  responses = []; requests = [];
+  console.log('PASS material context supports visual observations; general preparation excludes product spotlights and testimonials');
+
   const project = prep.adaptGuidedProjectQuestions([
     candidate('project-CLIENT_BRIEF-preserved', 'Who was this project for?'), null,
     { id: 'project-SCOPE_PARAMETERS-invalid', text: 12 },
@@ -439,6 +463,13 @@ async function run() {
   const scoped = await prep.readGuidedContext('p1');
   assert.equal(scoped.rooms[0].imageIds.join(','), 'photo1'); assert.equal(scoped.rooms[1].imageIds.join(','), 'photo3'); assert.equal(scoped.images[1].roomId, null);
   projectFixture.images[0].roomId = 'r2'; assert.notEqual((await prep.readGuidedContext('p1')).contextFingerprint, scoped.contextFingerprint);
+  projectFixture.images[0].tags = [{ id: 'tag1', productId: 'product1', finishRaw: 'Walnut', finishConfirmed: true, reviewedAt: null, product: { name: 'Accent table', scrapeStatus: 'PENDING' } }];
+  const materialFingerprint = (await prep.readGuidedContext('p1')).contextFingerprint;
+  projectFixture.images[0].tags[0].finishRaw = 'Oak';
+  const changedFinish = (await prep.readGuidedContext('p1')).contextFingerprint;
+  assert.notEqual(changedFinish, materialFingerprint, 'guided prep refreshes after an edited finish');
+  projectFixture.images[0].tags[0].reviewedAt = new Date();
+  assert.notEqual((await prep.readGuidedContext('p1')).contextFingerprint, changedFinish, 'guided prep refreshes after tag review');
   await assert.rejects(prep.prepareGuidedRoomPlan('p1', { projectId: 'p1', roomsPrepared: false, plan: [{ roomId: null, status: 'active' }] }), /Finish the prepared project section/);
   console.log('Guided prompt checks passed: contextual preparation/review/repair, preserved obligations and evidence, five multi-turn contexts, confirmation, corrections, skip adaptation, room transitions, semantic rejection, bounded retry and provider failure.');
 }
