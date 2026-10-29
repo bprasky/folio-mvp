@@ -18,6 +18,7 @@ import {WorkspaceImportClient} from '@/app/onboarding/workspace/WorkspaceImportC
 import {SetupProgress} from '@/components/onboarding/SetupProgress';
 import {ProfessionalSetupFrame} from '@/components/onboarding/ProfessionalSetupFrame';
 import {WorkspaceImportReadyNotice} from '@/components/onboarding/WorkspaceImportReadyNotice';
+import {defaultOrgAppearance} from '@/lib/org-profile-appearance';
 const params=new URLSearchParams(location.search);
 document.documentElement.dataset.theme=params.get('theme')==='dark'?'dark':'light';
 const pendingKey='fixture-pending-signup';
@@ -28,6 +29,7 @@ window.fixtureVerify=async(code)=>{
  sessionStorage.removeItem(pendingKey);return {ok:true};
 };
 const access={id:'firm',name:'North Studio',website:null,canEditProfile:true,canImportProjects:true,canContribute:true};
+const profilePreview={org:{id:'firm',name:'North Studio',type:'DESIGN_FIRM',logo:null,description:null,tagline:null,location:null,foundedYear:2016,specialties:[],serviceRegions:[],projectTypes:[],teamSizeRange:null},appearance:defaultOrgAppearance(),cover:null,projectCount:0};
 const profile={website:'https://studio.test',description:'North Studio designs thoughtful homes shaped by light, natural materials, and everyday life.',location:'Brooklyn, NY',bio:'Jane established North Studio after a decade working on thoughtful homes and shared places.',sourceUrl:'https://studio.test/about'};
 const previewPhoto='https://images.unsplash.com/photo-1618220179428-22790b461013?auto=format&fit=crop&w=1800&q=80';
 const previewProjects=[{id:'harbor',title:'Harbor House',description:'A bright home on the coast.',isPublic:false,photos:[{url:previewPhoto,alt:'A light-filled living room',width:1800,height:1200}]},{id:'court',title:'Court House',description:'A quiet city retreat.',isPublic:false,photos:[{url:previewPhoto,alt:'A living room with natural materials',width:1200,height:1800}]}];
@@ -73,7 +75,7 @@ window.fetch=async(input,options={})=>{
   if(!complete)sessionStorage.setItem('fixture-import-phase',String(phase+1));
   const current=structuredClone(run);current.phase=complete?'complete':['discover','profiles','projects'][phase];
   if(!complete){current.projects=[];current.notification.status='pending';}
-  return result({id:'fixture-run',run:current,access,canReview:complete,projects:complete?previewProjects:[],bioText:profile.bio,summary:{projects:complete?2:0,photos:complete?2:0,interviews:0,needsAttention:false},business:{description:profile.businessApplied?body.description:null,location:profile.businessApplied?body.location:null,logo:null,updatedAt:'2026-10-29T12:00:00.000Z'},bioVersion:profile.bioApplied?'2026-10-29T13:00:00.000Z':null});
+  return result({id:'fixture-run',run:current,access,profile:profilePreview,canReview:complete,projects:complete?previewProjects:[],bioText:profile.bio,summary:{projects:complete?2:0,photos:complete?2:0,interviews:0,needsAttention:false},business:{description:profile.businessApplied?body.description:null,location:profile.businessApplied?body.location:null,logo:null,updatedAt:'2026-10-29T12:00:00.000Z'},bioVersion:profile.bioApplied?'2026-10-29T13:00:00.000Z':null});
  }
  if(url.pathname==='/api/user/workspace-context')return result({success:true,user:{operatingAsOrg:{...access,type:'DESIGN_FIRM'}}});
  throw Error('Synthetic preview blocked unexpected API: '+url.pathname);
@@ -88,9 +90,10 @@ createRoot(document.getElementById('root')).render(location.pathname.includes('v
   await esbuild.build({ stdin: { contents: entry, resolveDir: root, sourcefile: 'workspace-preview.tsx', loader: 'tsx' }, bundle: true,
     outfile: path.join(out, 'app.js'), platform: 'browser', jsx: 'automatic', define: { 'process.env.NODE_ENV': '"development"', 'process.env': '{}' }, alias: { '@': path.join(root, 'src') },
     plugins: [{ name: 'fixture-next', setup(build) {
-      build.onResolve({ filter: /^(next\/navigation|next\/link|next-auth\/react)$/ }, args => ({ path: args.path, namespace: 'fixture' }));
+      build.onResolve({ filter: /^(next\/navigation|next\/link|next\/image|next-auth\/react)$/ }, args => ({ path: args.path, namespace: 'fixture' }));
       build.onLoad({ filter: /.*/, namespace: 'fixture' }, args => ({ loader: 'jsx', resolveDir: root, contents:
         args.path === 'next/navigation' ? 'export const useRouter=()=>({replace:url=>window.fixtureNavigate(url),push:url=>window.fixtureNavigate(url),refresh:()=>{}});export const useSearchParams=()=>new URLSearchParams(location.search);export const usePathname=()=>location.pathname;' :
+        args.path === 'next/image' ? 'import React from "react";export default React.forwardRef(function Image({fill,priority,unoptimized,style,...props},ref){return <img ref={ref} {...props} style={{...(fill?{position:"absolute",inset:0,width:"100%",height:"100%"}:{}),...style}}/>});' :
         args.path === 'next-auth/react' ? 'export const getProviders=async()=>({});export const signIn=async(provider,options)=>provider==="email-verification"?window.fixtureVerify(options.code):({ok:true});export const signOut=async()=>({});export const useSession=()=>({data:location.pathname==="/notifications-preview"?{user:{id:"fixture-user"}}:null,status:"authenticated",update:async()=>({})});' :
         'import React from "react";export default function Link({children,...props}){return <a {...props}>{children}</a>}' }));
     } }],
@@ -98,7 +101,7 @@ createRoot(document.getElementById('root')).render(location.pathname.includes('v
   const bundledCss = fs.readFileSync(path.join(out, 'app.css'), 'utf8');
   const globals = fs.readFileSync(path.join(root, 'src/app/globals.css'), 'utf8').replace(/@import\s+"([^"]+)";/g, (_, file) => file.startsWith('../styles/') ? fs.readFileSync(path.resolve(root, 'src/app', file), 'utf8') : '');
   const config = require(path.join(root, 'tailwind.config.js'));
-  config.content = [{ raw: entry, extension: 'tsx' }, path.join(root, 'src/app/auth/**/*.tsx'), path.join(root, 'src/app/onboarding/workspace/*.tsx'), path.join(root, 'src/components/onboarding/*.tsx')];
+  config.content = [{ raw: entry, extension: 'tsx' }, path.join(root, 'src/app/auth/**/*.tsx'), path.join(root, 'src/app/onboarding/workspace/*.tsx'), path.join(root, 'src/components/onboarding/*.tsx'), path.join(root, 'src/components/org-profile/**/*.tsx'), path.join(root, 'src/components/feed/FlowMosaic.tsx')];
   let css = (await postcss([tailwind(config)]).process(globals, { from: path.join(root, 'src/app/globals.css') })).css + bundledCss;
   const cssDir = path.join(root, '.next/static/css');
   let heading = 'Georgia', body = 'Arial';

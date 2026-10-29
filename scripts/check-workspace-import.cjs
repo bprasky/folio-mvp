@@ -44,6 +44,7 @@ function load(file) {
     exports, process: { env }, console, Error, Date: Clock, URL, URLSearchParams, Request, Response, Buffer, structuredClone, setTimeout, clearTimeout,
     fetch: () => { throw Error('Unexpected network request'); },
     require(name) {
+      if (name.endsWith('.module.css')) return { __esModule: true, default: new Proxy({}, { get: (_, key) => String(key) }) };
       if (name.startsWith('.')) name = '@/' + path.relative(path.resolve('src'), path.resolve(path.dirname(file), name)).replaceAll('\\', '/');
       if (name === '@/lib/prisma') return { prisma: facade };
       if (name === 'server-only') return {};
@@ -83,7 +84,7 @@ function load(file) {
         assert.deepEqual(row.processingMeta.notification.message, { to: message.to, subject: message.subject, html: message.html });
         sends.push(message); return { success: !sendFails };
       } };
-      if (name.startsWith('@/')) return load(path.resolve('src', name.slice(2)) + '.ts');
+      if (name.startsWith('@/')) { const base = path.resolve('src', name.slice(2)); return load(fs.existsSync(base + '.ts') ? base + '.ts' : base + '.tsx'); }
       if (name.startsWith('.')) return load(path.resolve(path.dirname(file), name) + '.ts');
       return require(name);
     },
@@ -150,8 +151,12 @@ const rowFor = id => db.importSession.findUnique({ where: { id } });
   assert.equal(workspaceCover([{ photos: [portrait, landscape] }]).url, '/landscape');
   assert.equal(workspaceCover([{ photos: [{ url: '/older-import' }, { url: '/next' }] }]).url, '/older-import');
   assert.equal(workspaceCover([]), undefined);
+  const { defaultOrgAppearance } = load('src/lib/org-profile-appearance.ts');
+  const previewProfile = { org: { id: 'firm', name: 'North Studio', type: 'DESIGN_FIRM', logo: null, description: null, tagline: null,
+    location: null, foundedYear: null, specialties: [], serviceRegions: [], projectTypes: [], teamSizeRange: null },
+    appearance: defaultOrgAppearance(), cover: null, projectCount: 0 };
   const renderPreview = props => require('react-dom/server').renderToStaticMarkup(require('react').createElement(WorkspaceReadyPreview, {
-    name: 'North Studio', personName: 'Jane', website: 'https://studio.test', description: '', location: '', bio: '', busy: false, canContribute: true,
+    profile: previewProfile, personName: 'Jane', description: '', location: '', bio: '', busy: false, canContribute: true,
     onOpenProject: () => {}, onReviewDetails: () => {}, ...props,
   }));
   const previewProject = { id: 'project', title: 'Harbor', isPublic: false, photos: [{ ...landscape, alt: 'Living room' }] };
@@ -163,6 +168,22 @@ const rowFor = id => db.importSession.findUnique({ where: { id } });
   assert.match(renderPreview({ projects: [{ ...previewProject, photos: [] }] }), /Add photographs/);
   assert.doesNotMatch(renderPreview({ projects: [{ ...previewProject, photos: [] }] }), /Upload a finish schedule/);
   assert.match(renderPreview({ projects: [{ ...previewProject, isPublic: true }] }), />Published</);
+  const customPreview = renderPreview({ projects: [previewProject], profile: { ...previewProfile, cover: { url: '/chosen-cover' },
+    appearance: { ...defaultOrgAppearance(), backgroundColor: '#123456', introduction: 'The saved studio introduction.',
+      cover: { kind: 'upload', url: '/chosen-cover' }, identity: { mode: 'portrait', url: '/saved-portrait' }, coverPosition: { x: 15, y: 75 }, facts: [{ key: 'location', value: 'Saved location' }] } } });
+  assert.match(customPreview, /class="glass"/, 'uses the actual shared frosted profile hero');
+  assert.match(customPreview, /The saved studio introduction/);
+  assert.match(customPreview, /Saved location/);
+  assert.match(customPreview, /--org-page-background:#123456/);
+  assert.match(customPreview, /object-position:15% 75%/);
+  assert.match(customPreview, /chosen-cover/);
+  assert.match(customPreview, /saved-portrait/);
+  assert.match(customPreview, /data-testid="mosaic-card-link"/, 'uses the actual shared project mosaic');
+  assert.doesNotMatch(renderPreview({ projects: [previewProject], profile: { ...previewProfile, appearance: { ...defaultOrgAppearance(), cover: { kind: 'none' } } } }), /class="coverPhoto"/);
+  const mosaic = load('src/components/feed/FlowMosaic.tsx').default;
+  const publicMosaic = require('react-dom/server').renderToStaticMarkup(require('react').createElement(mosaic, { events: [{ id: 'public', title: 'Published work', href: '/project/public' }] }));
+  assert.match(publicMosaic, /href="\/project\/public"/, 'existing public cards retain their links');
+  assert.doesNotMatch(publicMosaic, /Private draft|<button/);
   assert.equal(extraction.websiteUrl('studio.test/team/jane', 'https://studio.test'), 'https://studio.test/team/jane');
   assert.equal(extraction.extractWebsitePage(html['/about'], 'https://studio.test/about', 'Jane Designer').personalBio, undefined);
   assert.equal(extraction.extractWebsitePage('<a href="https://elsewhere.test/work/a">Other</a><a href="/news/a">News</a>', 'https://studio.test').links.length, 0);
@@ -193,6 +214,8 @@ const rowFor = id => db.importSession.findUnique({ where: { id } });
   assert.equal((await db.organization.findUnique({ where: { id: 'firm' } })).description, null, 'business drafts stay private until reviewed');
   assert.equal(await db.designerBio.count(), 0, 'bio is staged separately');
   let view = await review.readImportReview('owner', a); assert.equal(view.run.lease, undefined); assert.equal(view.run.notification.message, undefined);
+  assert.equal(view.profile.org.id, 'firm'); assert.equal(view.profile.cover, null, 'private imported photography must not become a public cover');
+  assert.equal(view.profile.projectCount, 0);
   assert.equal(view.projects.length, 2); assert.equal(view.projects[0].isPublic, false); assert.match(view.projects[0].photos[0].url, /^\/api\/project-photos\//);
   await review.reviewImport('owner', a, { action: 'business', version: view.business.updatedAt.toISOString(), description: 'Reviewed business description', location: 'Brooklyn', useLogo: false });
   assert.equal((await db.organization.findUnique({ where: { id: 'firm' } })).description, 'Reviewed business description');

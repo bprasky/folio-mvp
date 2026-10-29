@@ -6,11 +6,12 @@ import { useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';
 import { ProfessionalSetupFrame } from '@/components/onboarding/ProfessionalSetupFrame';
 import { SetupProgress } from '@/components/onboarding/SetupProgress';
-import { WorkspaceReadyPreview } from '@/components/onboarding/WorkspaceReadyPreview';
+import { WorkspaceReadyPreview, type WorkspaceProfilePreview } from '@/components/onboarding/WorkspaceReadyPreview';
 import { hasUnfinishedItems, IMPORT_LIMITS, type ImportedProject, type ImportSection, type WorkspaceImport, type WorkspacePreviewProject } from '@/lib/workspace-import/types';
 
 type Access = { id: string; name: string; website: string | null; canEditProfile: boolean; canImportProjects: boolean; canContribute: boolean };
 type Review = { id: string; run: WorkspaceImport; canReview: boolean; access: Access;
+  profile: WorkspaceProfilePreview | null;
   summary: { projects: number; photos: number; interviews: number; needsAttention: boolean };
   business: { description: string | null; location: string | null; logo: string | null; updatedAt: string }; bioVersion: string | null; bioText: string; projects: WorkspacePreviewProject[] };
 type Props = { access: Access; memberships: Array<{ id: string; name: string }>; initialId?: string; available: boolean; returnTo: string;
@@ -142,7 +143,7 @@ export function WorkspaceImportClient({ access, memberships, initialId, availabl
   const run = review?.run;
   const showPreview = !!review?.canReview && !!(review.projects.length || run?.profile.description || run?.profile.logo || run?.profile.bio);
   return <ProfessionalSetupFrame stage="workspace" wide={showPreview}><div className="space-y-7">
-    {showPreview && review && run ? <WorkspaceReadyPreview name={review.access.name} personName={run.personName} website={run.website}
+    {showPreview && review?.profile && run ? <WorkspaceReadyPreview profile={review.profile} personName={run.personName}
       description={description} location={location} logo={useLogo ? run.profile.logo : review.business.logo} bio={bio} projects={review.projects} busy={busy} canContribute={review.access.canContribute}
       onReviewDetails={() => setDetailsOpen(true)} onOpenProject={(projectId, action) => void continueToFolio(`/project/${encodeURIComponent(projectId)}${action === 'open' ? '' : `?view=media&step=tags&action=${action === 'schedule' ? 'import-doc' : 'tag-by-hand'}`}`)} /> : <>
     <SetupProgress step={3} />

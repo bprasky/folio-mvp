@@ -1,5 +1,9 @@
 # Lessons Learned
 
+## 2026-10-29 — Import completion uses the approved profile
+
+The founder rejected the separate onboarding profile design. Reuse the actual approved organization cover and mosaic from the magazine profile work, including saved appearance settings. Onboarding adds private draft status and the materials/sourcebook next step; it must not invent a second profile aesthetic. Inspect existing related work before creating a competing implementation.
+
 ## 2026-10-29 — Implement the organization magazine with actual categories
 
 The founder approved implementation after the cover mockup. Lead with the firm name, use canonical Folio neutral defaults, and let active organization owners/admins configure page color, banner photograph, identity image and selected facts in Settings. Preserve the existing Feed, Shop, About and Contact navigation and the real feed categories (All, Projects, Media, Recognition, Collaborations), including vendor variations. The speculative mockup categories were suggestions, not replacement requirements. Reuse the current mosaic. No menu arrows, invented green theme or sample statistics in production. A shared profile must load for visitors without requiring organization membership.

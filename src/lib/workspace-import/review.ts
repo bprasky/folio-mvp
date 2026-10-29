@@ -4,6 +4,7 @@ import { prisma } from '@/lib/prisma';
 import { bioSourceFingerprint } from './prepared';
 import { assertImportSections, importAccess, ownedImport, saveImport, WorkspaceImportError } from './store';
 import { hasUnfinishedItems, importSummary } from './types';
+import { getOrgProfileAppearanceData } from '@/lib/server/org-profile-appearance';
 
 export const reviewSchema = z.discriminatedUnion('action', [
   z.object({ action: z.literal('retry') }),
@@ -14,12 +15,13 @@ export const reviewSchema = z.discriminatedUnion('action', [
 
 export async function readImportReview(userId: string, id: string) {
   const { run } = await ownedImport(userId, id);
-  const [access, business, bio, projects] = await Promise.all([
+  const [access, business, bio, projects, profile] = await Promise.all([
     importAccess(userId, run.orgId),
     prisma.organization.findUniqueOrThrow({ where: { id: run.orgId }, select: { description: true, location: true, website: true, logo: true, updatedAt: true } }),
     prisma.designerBio.findUnique({ where: { userId }, select: { updatedAt: true, status: true, scrapedData: true } }),
     prisma.project.findMany({ where: { id: { in: run.projects.flatMap(project => project.projectId ? [project.projectId] : []) }, ownerId: userId, designerOrgId: run.orgId },
       select: { id: true, title: true, description: true, isPublic: true, images: { where: { inclusion: 'INCLUDED' }, orderBy: [{ displayOrder: 'asc' }, { createdAt: 'asc' }], take: 30, select: { id: true, url: true, name: true } } } }),
+    getOrgProfileAppearanceData(run.orgId),
   ]);
   // A reader sees useful progress, not the worker's lease or the notification recipient.
   const { lease, notification, ...visible } = run;
@@ -31,7 +33,9 @@ export async function readImportReview(userId: string, id: string) {
       return { url: image.url, alt: image.name || project.title, width: source?.width, height: source?.height };
     }) }));
   return { id, run: { ...visible, notification: { status: notification.status, error: notification.error, attempts: notification.attempts } },
-    summary: importSummary(run), access, business, projects: previewProjects, bioVersion: bio?.updatedAt || null,
+    summary: importSummary(run), access, business, projects: previewProjects,
+    profile: profile ? { org: profile.org, appearance: profile.appearance, cover: profile.cover, projectCount: profile.projectCount } : null,
+    bioVersion: bio?.updatedAt || null,
     bioText: typeof bioData?.bio === 'string' ? bioData.bio : '',
     canReview: ['notify', 'complete', 'blocked'].includes(run.phase) && (!lease || Date.parse(lease.until) <= Date.now()) };
 }

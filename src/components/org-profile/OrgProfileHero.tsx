@@ -53,7 +53,7 @@ export default function OrgProfileHero({ org, projectCount, appearance = default
               width={180} height={180} className={appearance.identity.mode === 'portrait' ? styles.portrait : styles.logo} />
               : <span className={styles.initials} aria-label={`${org.name} monogram`}>{initials}</span>}
           </div>
-          {preview ? <h3 className={styles.title}>{org.name}</h3> : <h1 className={styles.title}>{org.name}</h1>}
+          {preview ? <h2 className={styles.title}>{org.name}</h2> : <h1 className={styles.title}>{org.name}</h1>}
           {introduction && <p className={styles.introduction}>{introduction}</p>}
           {!preview && <div className={styles.coverActions}>
             {projectCount > 0 && <Link className={styles.primaryButton} href={`/org/${org.id}?tab=feed&filter=projects#profile-content`}>Explore projects</Link>}
