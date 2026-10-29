@@ -1,8 +1,10 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useId } from 'react';
 import { useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';
+import { Bell } from 'lucide-react';
+import styles from './navigation.module.css';
 
 const POLL_INTERVAL = 60000; // 60s, matching InboxButton
 
@@ -15,13 +17,13 @@ type Notif = {
   createdAt: string;
 };
 
-export function NotificationBell() {
+export function NotificationBell({ onNavigate }: { onNavigate?: () => void }) {
   const { data: session } = useSession();
   const router = useRouter();
   const [items, setItems] = useState<Notif[]>([]);
   const [unread, setUnread] = useState(0);
   const [open, setOpen] = useState(false);
-  const ref = useRef<HTMLDivElement>(null);
+  const panelId = useId();
 
   useEffect(() => {
     if (!session?.user) return;
@@ -38,14 +40,6 @@ export function NotificationBell() {
     const i = setInterval(load, POLL_INTERVAL);
     return () => clearInterval(i);
   }, [session?.user]);
-
-  useEffect(() => {
-    function onDoc(e: MouseEvent) {
-      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
-    }
-    document.addEventListener('mousedown', onDoc);
-    return () => document.removeEventListener('mousedown', onDoc);
-  }, []);
 
   if (!session?.user) return null;
 
@@ -64,7 +58,7 @@ export function NotificationBell() {
       setUnread((u) => Math.max(0, u - 1));
       setItems((prev) => prev.map((x) => (x.id === n.id ? { ...x, read: true } : x)));
     }
-    if (n.actionUrl) router.push(n.actionUrl);
+    if (n.actionUrl) { onNavigate?.(); router.push(n.actionUrl); }
   };
 
   const markAll = () => {
@@ -78,36 +72,21 @@ export function NotificationBell() {
   };
 
   return (
-    <div ref={ref} className="relative flex items-center">
+    <div>
       <button
         type="button"
         onClick={() => setOpen((o) => !o)}
-        className="relative flex h-11 w-11 sm:h-auto sm:w-auto items-center justify-center"
-        title="Notifications"
+        className={styles.menuAction}
         aria-label="Notifications"
+        aria-expanded={open}
+        aria-controls={panelId}
       >
-        <svg
-          width="20"
-          height="20"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="1.5"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          style={{ color: 'var(--text-secondary, #5C554D)' }}
-        >
-          <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
-          <path d="M13.73 21a2 2 0 0 1-3.46 0" />
-        </svg>
+        <Bell size={16} strokeWidth={1.5} aria-hidden="true" />
+        Notifications
         {unread > 0 && (
           <span
-            className="absolute -top-1 -right-1 w-4 h-4 rounded-full text-white flex items-center justify-center"
-            style={{
-              backgroundColor: '#2C2825',
-              fontSize: 'var(--type-fine)',
-              lineHeight: 'var(--lh-logo)',
-            }}
+            className={styles.unread}
+            aria-label={`${unread} unread notifications`}
           >
             {unread > 9 ? '9+' : unread}
           </span>
@@ -115,7 +94,7 @@ export function NotificationBell() {
       </button>
 
       {open && (
-        <div className="fixed left-4 right-4 top-16 sm:absolute sm:left-0 sm:right-auto sm:top-full mt-2 sm:w-80 max-h-96 overflow-y-auto rounded-xl border border-folio-border-subtle bg-surface-card shadow-xl z-50">
+        <div id={panelId} className={styles.notificationPanel}>
           <div className="flex items-center justify-between px-4 py-3 border-b border-folio-border-subtle">
             <span className="text-sm font-semibold text-folio-text-primary">Notifications</span>
             {unread > 0 && (
