@@ -144,7 +144,7 @@
 .notificationPanel { width: min(352px, calc(100vw - 32px)); padding: 0; }
 @media (max-width: 767px) {
   /* Keep the wordmark centered and the existing search/account targets on the right. */
-  .notificationRoot { position: static; width: 0; }
+  .notificationRoot { display: contents; }
   .notificationButton { position: absolute; left: 56px; top: calc((var(--masthead-height) - 44px) / 2); width: 36px; }
   .notificationPanel { top: calc(var(--masthead-height) + 8px); left: 16px; right: 16px; width: auto; }
 }
@@ -161,6 +161,7 @@
 @media (max-width: 360px) {
   .header { --masthead-logo-size: 30px; --masthead-logo-change: 6px; }
   .nav { gap: 4px; padding: 0 12px; }
+  .right { gap: 2px; }
 }
 @media (prefers-reduced-motion: reduce) {
   .surface, .surface::before, .wordmark { transition: none; }
