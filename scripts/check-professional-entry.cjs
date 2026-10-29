@@ -37,3 +37,21 @@ for (const type of ['PHOTOGRAPHY_STUDIO', 'DEVELOPER']) {
 }
 assert.equal(firmWorkspaceDestination({ id: 'firm', type: 'VENDOR' }, 'https://evil.test'), '/org/firm');
 console.log('Professional entry callback, identity and firm destination tests passed');
+const { signupDestination, workspaceSetupHref } = result;
+assert.equal(signupDestination('browsing'), '/onboarding/diagnostic');
+assert.equal(signupDestination('browsing', '/saved'), '/saved');
+assert.equal(signupDestination('designer', '/auth/claim?token=invitation'), '/auth/claim?token=invitation');
+assert.equal(signupDestination('browsing', '/projects/new?visitToken=abc'), professionalSetupHref('designer', workspaceSetupHref('/projects/new?visitToken=abc')));
+for (const role of ['designer', 'architect', 'builder', 'vendor']) {
+  const setup = new URL(signupDestination(role, '/'), 'https://folio.test');
+  assert.equal(setup.pathname, '/auth/org-setup');
+  assert.equal(setup.searchParams.get('type'), role);
+  assert.equal(setup.searchParams.get('callbackUrl'), workspaceSetupHref('/settings'));
+}
+const nested = new URL(signupDestination('browsing', professionalSetupHref('architect', '/projects/new?visitToken=abc')), 'https://folio.test');
+assert.equal(nested.searchParams.get('type'), 'architect');
+assert.equal(nested.searchParams.get('callbackUrl'), workspaceSetupHref('/projects/new?visitToken=abc'));
+const selectedWorkspace = new URL(firmWorkspaceDestination({ id: 'firm', type: 'VENDOR' }, workspaceSetupHref('/settings')), 'https://folio.test');
+assert.equal(selectedWorkspace.pathname, '/onboarding/workspace'); assert.equal(selectedWorkspace.searchParams.get('orgId'), 'firm');
+assert.equal(workspaceSetupHref('/onboarding/workspace?returnTo=/auth/signin'), workspaceSetupHref('/projects/new'));
+console.log('PASS new signup account → business → workspace continuity, intent and action callbacks');

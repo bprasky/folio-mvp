@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/app/api/auth/[...nextauth]/options';
 import { prisma } from '@/lib/prisma';
+import { isWorkspaceImport } from '@/lib/workspace-import/types';
 import type { PendingProductTag } from '@prisma/client';
 
 interface ProductAttribution {
@@ -44,6 +45,7 @@ export async function POST(
     }
 
     let tagsToProcess: PendingProductTag[];
+    if (isWorkspaceImport(importSession.processingMeta)) return NextResponse.json({ error: 'Manage this import from your workspace.' }, { status: 409 });
 
     switch (action) {
       case 'confirm_all_high_confidence':

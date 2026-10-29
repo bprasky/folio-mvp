@@ -118,7 +118,8 @@ export async function runGuidedCommand(projectId: string, actorId: string, comma
     await ensureGuidedPost(projectId, actorId);
     // Legacy evidence remains in canonical provenance; never silently count it
     // as answers to a newly prepared question without explicit confirmation.
-    const preparation = await prepareGuidedProjectPlan(projectId);
+    const { readPreparedProject } = await import('@/lib/workspace-import/prepared');
+    const preparation = await readPreparedProject(projectId) ?? await prepareGuidedProjectPlan(projectId);
     const next = createGuidedSession(projectId, preparation, command.requestId, command);
     try { return await commitGuidedSession(projectId, actorId, null, next); }
     catch (error) {

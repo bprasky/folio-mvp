@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/app/api/auth/[...nextauth]/options';
 import { prisma } from '@/lib/prisma';
+import { isWorkspaceImport } from '@/lib/workspace-import/types';
 // Import directly from process.ts to avoid barrel export issues
 import { processImportImages, processImportPdf } from '@/lib/import-agent/process';
 import type { ExtractedImage, PdfDocument } from '@/lib/import-agent/types';
@@ -42,6 +43,7 @@ export async function POST(
     }
 
     // Get stored images and PDF documents from processing meta
+    if (isWorkspaceImport(importSession.processingMeta)) return NextResponse.json({ error: 'Manage this import from your workspace.' }, { status: 409 });
     const processingMeta = importSession.processingMeta as {
       storedImages?: Array<{ pageNumber: number; url: string }>;
       pdfDocuments?: Array<{ url: string; pageCount: number; fileName: string }>;
