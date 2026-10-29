@@ -119,7 +119,7 @@ export async function verifySignup(cookie: string | undefined, code: string) {
       if (existing) throw new SignupVerificationError('EXISTS');
       return tx.user.create({ data: {
         email: challenge.email, name: challenge.name, passwordHash: challenge.passwordHash,
-        emailVerifiedAt: now, role: 'INDIVIDUAL', accountStatus: 'APPROVED',
+        role: 'INDIVIDUAL', accountStatus: 'APPROVED',
         tosAcceptedAt: challenge.consentAt, privacyAcceptedAt: challenge.consentAt,
         tosVersion: '2026-01-19', privacyVersion: '2026-01-19',
       }, select: { id: true, email: true, name: true, role: true } });

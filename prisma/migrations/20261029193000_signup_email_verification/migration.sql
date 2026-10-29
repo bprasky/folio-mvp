@@ -1,6 +1,4 @@
--- Additive: existing members retain their current login behavior.
-ALTER TABLE "users" ADD COLUMN IF NOT EXISTS "emailVerifiedAt" TIMESTAMP(3);
-
+-- Pending signups are separate from usable accounts; existing users are unchanged.
 CREATE TABLE IF NOT EXISTS "signup_email_challenges" (
   "id" TEXT NOT NULL PRIMARY KEY,
   "email" TEXT NOT NULL,

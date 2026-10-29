@@ -302,8 +302,6 @@ model User {
   liveInterviewSessions LiveInterviewSession[] @relation("LiveInterviewActor")
   interviewMediaRecords InterviewMediaRecord[] @relation("InterviewMediaActor")
 
-  emailVerifiedAt DateTime?
-
   @@map("users")
 }
 

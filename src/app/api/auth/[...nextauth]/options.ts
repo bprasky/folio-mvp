@@ -264,13 +264,12 @@ export const authOptions: NextAuthOptions = {
             passwordHash: '',
             role: 'INDIVIDUAL',
             accountStatus: AccountStatus.APPROVED,
-            emailVerifiedAt: now,
             tosAcceptedAt: now,
             privacyAcceptedAt: now,
             tosVersion: '2026-01-19',
             privacyVersion: '2026-01-19',
           },
-          update: { emailVerifiedAt: now },
+          update: {},
         });
         return true;
       } catch (err) {

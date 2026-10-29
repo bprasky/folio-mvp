@@ -39,7 +39,7 @@ async function journeys(t, database) {
     const verified = await verification({ code }, { headers: { cookie: response.headers.get('set-cookie').split(';')[0] } });
     assert.equal((await signup.POST(r({ ...input, email: email.toUpperCase() }))).status, 400);
     const saved = await db.user.findUniqueOrThrow({ where: { id: verified.id } });
-    assert.equal(saved.role, 'INDIVIDUAL'); assert.equal(saved.accountStatus, 'APPROVED'); assert.ok(saved.emailVerifiedAt);
+    assert.equal(saved.role, 'INDIVIDUAL'); assert.equal(saved.accountStatus, 'APPROVED');
     assert.notEqual(saved.passwordHash, password); assert.ok(saved.tosAcceptedAt); assert.ok(saved.privacyAcceptedAt);
     const provider = h.authOptions.providers.find(p => p.id === 'credentials' && !p.options?.id);
     const authorize = provider.options.authorize;
