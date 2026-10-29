@@ -60,7 +60,7 @@ expected+='\n'+liveAdditions.slice(liveModelsIndex).join('\n');
 // and exact migration without permitting changes to existing account models.
 const signupModel=read('docs/reviews/signup-email-verification.prisma.txt');
 assert.equal(hash(signupModel),'20224060fe14faf24e54da92b5187bee87d5f782b9c55ad68793c496cb11fe51','Reviewed signup verification schema artifact');
-assert.equal(hash(read('prisma/migrations/20261029193000_signup_email_verification/migration.sql')),'41657d4f13de47b39d8558162bc093b546fcc633e3ff0780685535bfbdcce8f2','Reviewed signup verification SQL');
+assert.equal(hash(read('prisma/migrations/20261029193000_signup_email_verification/migration.sql')),'607f9a1d3caa013db66ef931d9ed03d945fbb6ffda5c2d42899aa0804db8b7a7','Reviewed signup verification SQL');
 expected+='\n'+signupModel;
 const tokens=s=>(s.match(/"(?:\\.|[^"\\])*"|\/\/[^\n]*|[^\s"]/g)||[]).filter(x=>!x.startsWith('//')).join('');
 assert.equal(tokens(read('prisma/schema.prisma')),tokens(expected),'Only reviewed schema tokens');

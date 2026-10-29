@@ -1,4 +1,5 @@
 -- Pending signups are separate from usable accounts; existing users are unchanged.
+BEGIN;
 CREATE TABLE IF NOT EXISTS "signup_email_challenges" (
   "id" TEXT NOT NULL PRIMARY KEY,
   "email" TEXT NOT NULL,
@@ -17,3 +18,7 @@ CREATE TABLE IF NOT EXISTS "signup_email_challenges" (
   "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 CREATE INDEX IF NOT EXISTS "signup_email_challenges_purgeAt_idx" ON "signup_email_challenges"("purgeAt");
+-- Credentials and verification state are only accessible to the server.
+ALTER TABLE "signup_email_challenges" ENABLE ROW LEVEL SECURITY;
+REVOKE ALL ON TABLE "signup_email_challenges" FROM PUBLIC, anon, authenticated;
+COMMIT;

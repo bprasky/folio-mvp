@@ -85,6 +85,7 @@ const rejects = (operation, code) => assert.rejects(operation, error => error.co
   // Prisma treats TIMESTAMP(3) as UTC; PGlite's default JS parser uses local time.
   pg = new PGlite({ parsers: { 1114: text => new Date(text.replace(' ', 'T') + 'Z') } });
   await pg.exec('CREATE TABLE users (id text PRIMARY KEY,email text UNIQUE,name text,"passwordHash" text,role text,"accountStatus" text,"tosAcceptedAt" timestamp,"privacyAcceptedAt" timestamp,"tosVersion" text,"privacyVersion" text)');
+  await pg.exec('CREATE ROLE anon; CREATE ROLE authenticated; GRANT USAGE ON SCHEMA public TO anon, authenticated; ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON TABLES TO anon, authenticated;');
   const migration = fs.readFileSync('prisma/migrations/20261029193000_signup_email_verification/migration.sql', 'utf8');
   await pg.exec(migration); await pg.exec(migration); // Additive and rerunnable.
   db = adapter(pg);
@@ -99,6 +100,21 @@ const rejects = (operation, code) => assert.rejects(operation, error => error.co
   assert.equal(await count('users'), 0);
   assert.equal(await passwordLogin({ email: first.data.email, password: first.data.password }, { headers: {} }), null);
   const pending = await service.pendingSignup(first.secret);
+  assert.equal((await pg.query("SELECT relrowsecurity FROM pg_class WHERE relname = 'signup_email_challenges'")).rows[0].relrowsecurity, true);
+  for (const role of ['anon', 'authenticated']) {
+    await pg.exec('SET ROLE ' + role);
+    try { await assert.rejects(pg.query('SELECT * FROM signup_email_challenges'), error => error.code === '42501'); }
+    finally { await pg.exec('RESET ROLE'); }
+    // RLS still protects the table if a later accidental grant restores access.
+    await pg.exec('GRANT SELECT, UPDATE, DELETE ON signup_email_challenges TO ' + role + '; SET ROLE ' + role);
+    try {
+      assert.equal((await pg.query('SELECT * FROM signup_email_challenges')).rows.length, 0);
+      assert.equal((await pg.query('UPDATE signup_email_challenges SET attempts = 0')).affectedRows, 0);
+      assert.equal((await pg.query('DELETE FROM signup_email_challenges')).affectedRows, 0);
+    } finally { await pg.exec('RESET ROLE'); }
+  }
+  await pg.exec(migration); // Revoke the synthetic grants; populated replay preserves the pending signup.
+  assert.equal(await count('signup_email_challenges'), 1);
   assert.equal(pending.email, 'applicant@example.test');
   assert.notEqual(pending.passwordHash, first.data.password); assert.notEqual(pending.codeHash, first.code);
   assert.equal(await service.pendingSignup(first.secret.replace(/.$/, first.secret.endsWith('a') ? 'b' : 'a')), null);

@@ -10,6 +10,7 @@ The pending signup uses a random HTTP-only browser secret and a keyed code hash.
 - Core journey suite, OAuth identity tests, business entry/routing/aliases and background import regressions pass.
 - Next production compilation, targeted lint, client import boundaries and migration discipline pass. The TypeScript diagnostic ratchet passes without changing its baseline or equivalences.
 - The installation guard pins the new model artifact and migration hash alongside the historical schema. Mutation checks reject altered signup fields/defaults, SQL and review artifacts while preserving all earlier protections.
+- Pending credentials are private: the migration enables row-level security and revokes public/browser-role access. PostgreSQL role tests prove anonymous and authenticated clients cannot read or modify signup rows, including after simulated accidental grants.
 - Browser walkthrough mounts the real components with synthetic APIs. Tested signup, incorrect code, resend, page refresh, successful continuation to business setup, expired code, delivery failure and exhausted attempts. Checked desktop and mobile layout. The fixture uses `123456` and a shortened resend timer; no real account or email is created.
 
 ## Release
