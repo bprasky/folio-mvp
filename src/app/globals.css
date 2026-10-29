@@ -16,6 +16,7 @@
    ============================================== */
 
 :root {
+  color-scheme: light;
   /* ===========================================
      CANONICAL FOLIO PALETTE
      Three-level surface system + 3-tier text
@@ -691,18 +692,24 @@ html[data-compact="true"] main { padding-top: 0 !important; }
   --folio-card: #FFFFFF;
 }
 
-/* Dark Mode (optional) */
+/* Dark mode — selected in Settings. */
 [data-theme="dark"] {
+  color-scheme: dark;
   /* Canonical dark overrides */
   --surface-canvas: #1B1B19;
   --surface-ground: #22221F;
   --surface-elevated: #2E2E2B;
   --folio-text-primary: #F5F5F3;
-  --folio-text-secondary: #8B8B88;
-  --folio-text-tertiary: #5D5D58;
+  --folio-text-secondary: #BABAB5;
+  --folio-text-tertiary: #9B9B96;
   --folio-border-subtle: #3A3A36;
   --folio-border-strong: #4A4A46;
   --folio-gold: #9B8874;
+  --shadow-dark: #111110;
+  --shadow-light: #363632;
+  --ridge-outer: rgba(255, 255, 255, 0.12);
+  --ridge-inner: rgba(255, 255, 255, 0.06);
+  --ridge-dark: rgba(0, 0, 0, 0.18);
 
   --folio-bg: #1B1B19;
   --folio-surface: #22221F;
@@ -735,6 +742,13 @@ html[data-compact="true"] main { padding-top: 0 !important; }
   /* See the note on --accent in the light :root block above. */
   --input: var(--folio-border);
   --ring: var(--folio-stone-300);
+}
+
+/* Shared cards (including cookie consent) must follow their theme-aware text. */
+[data-theme="dark"] .ridge-card {
+  background: var(--surface-elevated);
+  border-color: var(--folio-border-subtle);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
 }
 
 @layer base {

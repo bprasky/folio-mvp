@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { Cormorant_Garamond, Instrument_Sans, IBM_Plex_Mono } from 'next/font/google';
 import './globals.css';
+import { themeInitializationScript } from '@/lib/theme';
 import { LoadingBrandProvider } from '@/components/loading/LoadingBrand';
 import Providers from './providers';
 import SessionRoleSync from '../components/SessionRoleSync';
@@ -44,7 +45,10 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" className={`${cormorant.variable} ${instrumentSans.variable} ${plexMono.variable}`}>
+    <html lang="en" suppressHydrationWarning className={`${cormorant.variable} ${instrumentSans.variable} ${plexMono.variable}`}>
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: themeInitializationScript }} />
+      </head>
       <body className="bg-surface-canvas text-folio-text-primary min-h-screen antialiased font-[var(--font-body)]">
         <Providers>
           <SessionRoleSync />
