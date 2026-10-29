@@ -1,35 +1,16 @@
 import 'server-only';
 import { createHash } from 'crypto';
-import { Prisma } from '@prisma/client';
 import { prisma } from '@/lib/prisma';
-import { assertProjectWrite } from '@/lib/authz/access';
-import { ensureGuidedPost, objectValue } from '@/lib/interview/guided/store';
-import { prepareGuidedProjectPlan, readGuidedContext } from '@/lib/interview/guided/preparation';
+import { objectValue } from '@/lib/interview/guided/store';
+import { readGuidedContext } from '@/lib/interview/guided/preparation';
 import { validatePlan } from '@/lib/interview/guided/controller';
 import type { GuidedPreparation } from '@/lib/interview/guided/types';
 import type { BioQuestion } from '@/lib/designer-bio/questions';
-import { assertImportSections } from './store';
-
-/** Preparation is not an interview start: no answers, live sessions or editorial status changes. */
-export async function savePreparedProject(projectId: string, actorId: string, orgId: string): Promise<GuidedPreparation> {
-  await assertProjectWrite(actorId, projectId);
-  const preparation = await prepareGuidedProjectPlan(projectId);
-  await assertImportSections(actorId, { orgId, sections: ['projects'] });
-  validatePlan(preparation.questions, { rooms: preparation.rooms, turns: [] });
-  const post = await ensureGuidedPost(projectId, actorId);
-  if ((await readGuidedContext(projectId)).contextFingerprint !== preparation.contextFingerprint)
-    throw new Error('The project changed while its questions were being prepared.');
-  const provenance = objectValue(post.provenance);
-  await assertProjectWrite(actorId, projectId);
-  await assertImportSections(actorId, { orgId, sections: ['projects'] });
-  const updated = await prisma.projectPost.updateMany({ where: { id: post.id, updatedAt: post.updatedAt,
-    provenance: { equals: post.provenance === null ? Prisma.DbNull : post.provenance } },
-    data: { provenance: JSON.parse(JSON.stringify({ ...provenance, workspacePreparation: preparation })) } });
-  if (!updated.count) throw new Error('The project changed while its questions were being saved.');
-  return preparation;
-}
 export async function readPreparedProject(projectId: string): Promise<GuidedPreparation | null> {
   const post = await prisma.projectPost.findUnique({ where: { projectId }, select: { provenance: true } });
+  // Earlier website imports prepared questions before product review. Start a new
+  // interview from current materials instead; existing sessions/answers remain intact.
+  if (objectValue(post?.provenance).websiteImport) return null;
   const saved = objectValue(post?.provenance).workspacePreparation as GuidedPreparation | undefined;
   if (!saved || !Array.isArray(saved.questions) || !Array.isArray(saved.rooms) ||
     (await readGuidedContext(projectId)).contextFingerprint !== saved.contextFingerprint) return null;

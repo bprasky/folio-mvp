@@ -40,7 +40,7 @@ const guidedStore = {
 function load(file) {
   file = path.resolve(file); if (cache.has(file)) return cache.get(file);
   const exports = {}; cache.set(file, exports);
-  vm.runInNewContext(ts.transpileModule(fs.readFileSync(file, 'utf8'), { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022, esModuleInterop: true } }).outputText, {
+  vm.runInNewContext(ts.transpileModule(fs.readFileSync(file, 'utf8'), { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022, jsx: ts.JsxEmit.ReactJSX, esModuleInterop: true } }).outputText, {
     exports, process: { env }, console, Error, Date: Clock, URL, URLSearchParams, Request, Response, Buffer, structuredClone, setTimeout, clearTimeout,
     fetch: () => { throw Error('Unexpected network request'); },
     require(name) {
@@ -49,9 +49,11 @@ function load(file) {
       if (name === 'server-only') return {};
       if (name === '@/lib/spotlight/legacyBoundary') return { assertLegacyInterviewAllowed: () => {} };
       if (name === '@/lib/interview') return { ...load('src/lib/interview/generateQuestions.ts'), getContextLevelDescription: () => 'Synthetic context', getContextUpgradeSuggestion: () => null };
-      if (name === '@/lib/interview/contextLevel') return { assessProjectContext: async id => { const p = await db.project.findUniqueOrThrow({ where: { id } }); return { projectTitle: p.title, projectDescription: p.description, level: 1, rooms: [], materialThemes: [], projectSize: {} }; } };
       if (name === '@/lib/interview/generateAllRoomQuestions' || name === '@/lib/interview/distillInterviewFacts') return {};
-      if (name === '@/lib/interview/generateProjectQuestions') return { generateProjectQuestions: async () => { throw Error('Cached opening questions must not call a new generator'); }, buildFallbackProjectQuestions: () => { throw Error('Expected the saved opening plan'); } };
+      if (name === '@/lib/interview/generateProjectQuestions') return { generateProjectQuestions: async options => {
+        assert.ok(options.materialPalette.includes('natural_stone'), 'question generation receives the reviewed product material context'); assert.equal(options.contextLevel, 2); generations++;
+        return { questions: ['CLIENT_BRIEF', 'SCOPE_PARAMETERS', 'DESIGN_DIRECTION', 'SIGNATURE_IDENTITY', 'SURPRISE_PIVOT'].map(category => ({ id: `project-${category}-test`, text: 'What shaped this project?', contextLevel: options.contextLevel, type: 'generic', rooms: [], products: [], vendors: [], boostable: false, pullQuotePotential: 'medium', topic: `project_${category.toLowerCase()}` })) };
+      }, buildFallbackProjectQuestions: () => { throw Error('Expected generation with current material context'); } };
       if (name === 'next-auth') return { getServerSession: async () => authUser ? { user: { id: authUser } } : null };
       if (name === '@/app/api/auth/[...nextauth]/options') return {};
       if (name === 'next/server') return { NextResponse: Response };
@@ -142,6 +144,25 @@ const request = body => new Request('https://folio.test/api/onboarding/workspace
 const rowFor = id => db.importSession.findUnique({ where: { id } });
 
 (async () => {
+  const { workspaceCover, WorkspaceReadyPreview } = load('src/components/onboarding/WorkspaceReadyPreview.tsx');
+  const portrait = { url: '/portrait', width: 1000, height: 1600 };
+  const landscape = { url: '/landscape', width: 1800, height: 1200 };
+  assert.equal(workspaceCover([{ photos: [portrait, landscape] }]).url, '/landscape');
+  assert.equal(workspaceCover([{ photos: [{ url: '/older-import' }, { url: '/next' }] }]).url, '/older-import');
+  assert.equal(workspaceCover([]), undefined);
+  const renderPreview = props => require('react-dom/server').renderToStaticMarkup(require('react').createElement(WorkspaceReadyPreview, {
+    name: 'North Studio', personName: 'Jane', website: 'https://studio.test', description: '', location: '', bio: '', busy: false, canContribute: true,
+    onOpenProject: () => {}, onReviewDetails: () => {}, ...props,
+  }));
+  const previewProject = { id: 'project', title: 'Harbor', isPublic: false, photos: [{ ...landscape, alt: 'Living room' }] };
+  assert.match(renderPreview({ projects: [previewProject] }), /Upload a finish schedule/);
+  assert.match(renderPreview({ projects: [previewProject] }), /Tag products manually/);
+  assert.doesNotMatch(renderPreview({ projects: [previewProject] }), /Start.*interview<|Begin the interview/);
+  assert.match(renderPreview({ projects: [previewProject] }), /Private draft/);
+  assert.doesNotMatch(renderPreview({ projects: [previewProject], canContribute: false }), /Upload a finish schedule|Tag products manually/);
+  assert.match(renderPreview({ projects: [{ ...previewProject, photos: [] }] }), /Add photographs/);
+  assert.doesNotMatch(renderPreview({ projects: [{ ...previewProject, photos: [] }] }), /Upload a finish schedule/);
+  assert.match(renderPreview({ projects: [{ ...previewProject, isPublic: true }] }), />Published</);
   assert.equal(extraction.websiteUrl('studio.test/team/jane', 'https://studio.test'), 'https://studio.test/team/jane');
   assert.equal(extraction.extractWebsitePage(html['/about'], 'https://studio.test/about', 'Jane Designer').personalBio, undefined);
   assert.equal(extraction.extractWebsitePage('<a href="https://elsewhere.test/work/a">Other</a><a href="/news/a">News</a>', 'https://studio.test').links.length, 0);
@@ -158,28 +179,62 @@ const rowFor = id => db.importSession.findUnique({ where: { id } });
   await Promise.all([processor.processWorkspaceImports(), processor.processWorkspaceImports()]);
   let row = await rowFor(a); assert.equal(row.status, 'COMPLETED'); assert.equal(row.processingMeta.projects.length, 2);
   assert.match(row.processingMeta.profile.logo || '', /^data:image\/png;base64,/, 'logo is decoded into a safe review candidate');
-  assert.equal(await db.project.count(), 2); assert.equal(await db.projectImage.count(), 2); assert.equal(sends.length, 1); assert.equal(generations, 2);
+  assert.equal(await db.project.count(), 2); assert.equal(await db.projectImage.count(), 2); assert.equal(sends.length, 1); assert.equal(generations, 0, 'website import must not generate questions before material review');
+  assert.ok(row.processingMeta.projects.every(p => !p.preparation));
+  let notifications = await db.notification.findMany();
+  assert.equal(notifications.length, 1); assert.equal(notifications[0].userId, 'owner'); assert.equal(notifications[0].type, 'WORKSPACE_IMPORT_READY');
+  assert.equal(notifications[0].actionUrl, `/onboarding/workspace?import=${encodeURIComponent(a)}`);
+  assert.match(notifications[0].body, /finish schedule or tag products/);
+  const emailHref = sends[0].html.match(/href="([^"]+)"/)[1].replaceAll('&amp;', '&');
+  assert.equal(new URL(emailHref).searchParams.get('callbackUrl'), notifications[0].actionUrl, 'email and in-app notice return to the same preview');
+  assert.match(sends[0].html, /Your next step/);
   for (const project of await db.project.findMany()) { assert.equal(project.status, 'draft'); assert.equal(project.timeline, null); assert.equal(project.isPublic, false); assert.equal(project.publishedAt, null); assert.equal(project.designerOrgId, 'firm'); }
   for (const post of await db.projectPost.findMany()) { assert.equal(post.status, 'DRAFT'); assert.equal(post.provenance.interview, undefined); }
   assert.equal((await db.organization.findUnique({ where: { id: 'firm' } })).description, null, 'business drafts stay private until reviewed');
   assert.equal(await db.designerBio.count(), 0, 'bio is staged separately');
   let view = await review.readImportReview('owner', a); assert.equal(view.run.lease, undefined); assert.equal(view.run.notification.message, undefined);
+  assert.equal(view.projects.length, 2); assert.equal(view.projects[0].isPublic, false); assert.match(view.projects[0].photos[0].url, /^\/api\/project-photos\//);
   await review.reviewImport('owner', a, { action: 'business', version: view.business.updatedAt.toISOString(), description: 'Reviewed business description', location: 'Brooklyn', useLogo: false });
   assert.equal((await db.organization.findUnique({ where: { id: 'firm' } })).description, 'Reviewed business description');
   await assert.rejects(review.reviewImport('owner', a, { action: 'business', version: '2000-01-01T00:00:00.000Z', description: 'Stale edit', location: '', useLogo: false }), { status: 409 });
   await review.reviewImport('owner', a, { action: 'bio', version: null, bio: row.processingMeta.profile.bio });
   assert.equal((await db.designerBio.findUnique({ where: { userId: 'owner' } })).folioBio, null);
-  const project = (await db.project.findMany())[0]; assert.ok(await prepared.readPreparedProject(project.id));
+  const project = (await db.project.findMany())[0]; assert.equal(await prepared.readPreparedProject(project.id), null);
+  const image = await db.projectImage.findFirst({ where: { projectId: project.id } });
+  const material = await db.product.create({ data: { name: 'Marble table', brand: null } });
+  await db.productTag.create({ data: { productId: material.id, imageId: image.id, x: 50, y: 50 } });
+  await db.productTag.create({ data: { productId: material.id, imageId: image.id, x: 40, y: 40 } });
+  const finishedMaterial = await db.product.create({ data: { name: 'Accent table', brand: 'Example Vendor' } });
+  await db.productTag.create({ data: { productId: finishedMaterial.id, imageId: image.id, x: 30, y: 30, finishRaw: 'Walnut', finishConfirmed: true } });
+  await db.productTag.create({ data: { productId: finishedMaterial.id, imageId: image.id, x: 35, y: 35, finishRaw: 'Steel', finishConfirmed: false } });
+  const pendingMaterial = await db.product.create({ data: { name: 'Brass lamp', scrapeStatus: 'PENDING' } });
+  await db.productTag.create({ data: { productId: pendingMaterial.id, imageId: image.id, x: 20, y: 20 } });
+  const context = await load('src/lib/interview/contextLevel.ts').assessProjectContext(project.id);
+  assert.equal(context.selections.length, 0, 'tags contribute material themes without becoming product-question subjects');
+  assert.equal(context.dominantVendors.length, 0, 'tags do not create vendor loyalty signals');
+  assert.ok(context.materialThemes.includes('natural_stone')); assert.ok(!context.materialThemes.includes('brass_hardware'));
+  assert.ok(context.materialThemes.includes('warm_wood'), 'a confirmed finish supports the material palette');
+  assert.ok(!context.materialThemes.includes('modern_metal'), 'an unconfirmed finish is not promoted into material context');
+  assert.equal(context.materialThemes.filter(theme => theme === 'natural_stone').length, 1, 'repeat pins do not duplicate themes');
+  const sourcebook = await load('src/server/queries/getSourcebookEntries.ts').getSourcebookEntries('owner');
+  assert.ok(sourcebook.some(entry => entry.productId === material.id && entry.projects.some(p => p.projectId === project.id)), 'products placed on imported project photos populate the sourcebook');
+  const post = await db.projectPost.findUnique({ where: { projectId: project.id } });
+  await db.projectPost.update({ where: { id: post.id }, data: { provenance: { ...post.provenance, workspacePreparation: { questions: [], rooms: [], contextFingerprint: await contextHash(project.id) } } } });
+  assert.equal(await prepared.readPreparedProject(project.id), null, 'ignore opening plans created by older imports before material review');
   const legacy = await load('src/lib/editorial/getInterviewQuestions.ts').getInterviewQuestionsGroupedByRoom(project.id, { phase: 'project' });
   assert.equal(legacy.rooms[0].questions.length, 5);
   assert.match(legacy.rooms[0].questions[0].id, /^project-CLIENT_BRIEF-/);
-  assert.equal(legacy.rooms[0].questions[0].questionText, (await prepared.readPreparedProject(project.id)).questions[0].text);
+  assert.equal(generations, 1, 'question generation starts on interview entry with material context');
   const source = { name: 'Jane Designer', bio: 'My background', sourceUrl: 'https://studio.test/team/jane' };
   const storedBio = (await pg.query('SELECT $1::jsonb AS data', [JSON.stringify({ ...source, _folioPreparation: { role: 'ARCHITECT', fingerprint: prepared.bioSourceFingerprint(source), questions: [{ id: 'bio-1', question: 'What shaped your practice?', round: 'base' }] } })])).rows[0].data;
   assert.equal(prepared.readPreparedBio(storedBio, 'ARCHITECT').length, 1, 'cached bio questions survive real JSONB key ordering');
   assert.equal(prepared.readPreparedBio({ ...storedBio, bio: 'Edited background' }, 'ARCHITECT'), null);
   assert.equal(prepared.readPreparedBio(storedBio, 'BUILDER'), null);
   await db.project.update({ where: { id: project.id }, data: { description: 'Changed by the owner' } }); assert.equal(await prepared.readPreparedProject(project.id), null);
+  await db.project.update({ where: { id: project.id }, data: { title: 'Updated project title', isPublic: true } });
+  view = await review.readImportReview('owner', a);
+  assert.equal(view.projects.find(p => p.id === project.id).title, 'Updated project title');
+  assert.equal(view.projects.find(p => p.id === project.id).isPublic, true, 'a published project must not be presented as a private draft');
   const again = await store.createWorkspaceImport('owner', input()); await processor.processWorkspaceImports();
   assert.equal(await db.project.count(), 2, 'another run reuses source projects'); assert.equal((await db.project.findUnique({ where: { id: project.id } })).description, 'Changed by the owner');
   assert.equal((await rowFor(again)).processingMeta.projects.filter(p => p.preparation).length, 0);
@@ -187,10 +242,15 @@ const rowFor = id => db.importSession.findUnique({ where: { id } });
 
   await fixture(); failedPage = '/work/court'; const partial = await store.createWorkspaceImport('owner', input()); await processor.processWorkspaceImports();
   row = await rowFor(partial); assert.equal(row.status, 'COMPLETED'); assert.equal(await db.project.count(), 1); assert.ok(row.processingMeta.pages.some(p => p.status === 'failed'));
+  await db.notification.updateMany({ where: { userId: 'owner' }, data: { read: true } });
   failedPage = undefined; await review.reviewImport('owner', partial, { action: 'retry' }); await processor.processWorkspaceImports();
   assert.equal(await db.project.count(), 2); assert.equal(sends.length, 1, 'manual retry does not resend accepted email');
+  assert.equal(await db.notification.count(), 1, 'recovery does not create duplicate completion notices');
+  assert.equal((await db.notification.findMany())[0].read, true, 'recovery does not resurface an acknowledged notice');
   await fixture(); sendFails = true; const mail = await store.createWorkspaceImport('owner', input()); await processor.processWorkspaceImports();
   row = await rowFor(mail); assert.equal(row.processingMeta.phase, 'notify'); assert.equal(sends.length, 1);
+  assert.equal(await db.notification.count(), 1, 'in-app handoff does not wait for successful email delivery');
+  assert.equal((await review.readImportReview('owner', mail)).canReview, true, 'saved work stays reviewable while email retries wait');
   await processor.processWorkspaceImports(); assert.equal(sends.length, 1, 'honor retry delay'); now += 6 * 60_000; sendFails = false; await processor.processWorkspaceImports();
   assert.equal(sends.length, 2); assert.deepEqual(sends[0], sends[1], 'ambiguous provider retry keeps identical payload and key');
   await fixture(); sendFails = true; const expiredMail = await store.createWorkspaceImport('owner', input()); await processor.processWorkspaceImports();
@@ -202,10 +262,12 @@ const rowFor = id => db.importSession.findUnique({ where: { id } });
   await fixture(); const interrupted = await store.createWorkspaceImport('owner', input()); row = await rowFor(interrupted);
   let run = structuredClone(row.processingMeta); run.lease = { token: 'old-worker', until: new Clock(now + 60000).toISOString() }; await store.saveImport(interrupted, row.processingMeta, run);
   await processor.processWorkspaceImports(); assert.equal(pageCalls.length, 0, 'a live lease excludes another worker');
+  assert.equal(await db.notification.count(), 0, 'unfinished imports do not send a ready notice');
   const stale = json(run); now += 7 * 60_000; await processor.processWorkspaceImports();
   assert.equal((await rowFor(interrupted)).status, 'COMPLETED'); await assert.rejects(store.saveImport(interrupted, stale, run), { status: 409 });
   await fixture(); const revoked = await store.createWorkspaceImport('owner', input()); await db.organizationUser.updateMany({ where: { userId: 'owner' }, data: { isActive: false } }); await processor.processWorkspaceImports();
   assert.equal((await rowFor(revoked)).status, 'FAILED'); assert.equal(await db.project.count(), 0); assert.equal(pageCalls.length, 0);
+  assert.equal(await db.notification.count(), 0, 'revoked access cannot create a readiness handoff');
   console.log('PASS expiring lease recovery, stale worker fencing and revoked access before external calls');
   await pg.close();
 })().catch(async error => { console.error(error); if (pg) await pg.close(); process.exitCode = 1; });

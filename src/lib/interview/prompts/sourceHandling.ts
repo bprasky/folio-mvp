@@ -12,6 +12,10 @@
  * "Hold it lightly / never narrate the source" masterclass — promoted verbatim from
  * generateProjectQuestions.ts. `${role.toLowerCase()}` becomes the `roleLower` parameter.
  */
+export const MATERIAL_CONTEXT_POLICY = `MATERIAL CONTEXT — SUPPORT THE VISUAL STORY:
+Material themes from reviewed tags and schedules are background clues to cross-check what the photos and image analysis suggest. They do not prove that every material is visible in every room. Use only themes supported by the current photos; hold uncertain or conflicting observations lightly and let the designer clarify.
+Keep questions about the overall design direction, atmosphere, palette, spatial relationships and decisions. Do not ask about specific products, named brands, vendor loyalty, product performance or testimonials. A tag is not an interview topic or an endorsement. Never turn a catalog label into the designer's stated intent.`;
+
 export function sourceNarrationGuide(roleLower: string): string {
   return `RULES FOR USING WHAT YOU KNOW (HOLD IT LIGHTLY, NEVER NARRATE IT):
 The project description is the ${roleLower}'s own shorthand — approximate, incomplete, notes-to-self. Treat every detail as a lead to open up in their own words, never a fact to recite and never a source to cite.
@@ -57,9 +61,9 @@ WHAT WE ALREADY KNOW (the designer told us this in the opening conversation abou
 ${knownFactsLines}
 
 HOW TO USE THIS BACKGROUND — THE LANE CONTRACT:
-- It informs your WORDING, never your TOPICS. This room's photos and tagged products decide what you ask about; the background only makes those questions land like they come from someone who was in the room for the opening conversation.
+- It informs your WORDING, never your TOPICS. This room's photos decide what you ask about, with material themes as supporting context; the background only makes those questions land like they come from someone who was in the room for the opening conversation.
 - Do NOT re-ask anything covered above (who the clients are, the scope, the timeline, the overall direction). That ground is covered.
-- Do NOT import themes from the background that aren't visible in this room's photos or products. If the background says "relocation" and nothing in this room relates to it, the relocation does not appear in your questions.
+- Do NOT import themes from the background that aren't visible in this room's photos. If the background says "relocation" and nothing in this room relates to it, the relocation does not appear in your questions.
 - Referencing it conversationally is fine and encouraged ("Given the pace this project ran at, ..."). Citing it as a record is not ("You mentioned in the earlier section...", "According to your answers...").
 `;
 }

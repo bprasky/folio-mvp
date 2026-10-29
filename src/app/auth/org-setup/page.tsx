@@ -1,4 +1,4 @@
-import Link from 'next/link';
+import { ProfessionalSetupFrame } from '@/components/onboarding/ProfessionalSetupFrame';
 import { redirect } from 'next/navigation';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/app/api/auth/[...nextauth]/options';
@@ -38,14 +38,9 @@ export default async function OrgSetupPage({ searchParams }: {
   const eligible = firms.filter((org) => org.membershipRole !== 'VIEWER');
   const existingOnly = !!searchParams.callbackUrl && searchParams.add !== '1' && !searchParams.orgId && eligible.length > 0;
   return (
-    <div className="auth-shell">
-      <header className="px-6 py-6 border-b border-folio-border-subtle">
-        <Link href="/" className="folio-logo-text" aria-label="Folio home">Folio</Link>
-      </header>
-      <main className="w-full max-w-lg mx-auto px-6 py-8 sm:py-12 space-y-6">
-        <ScenarioA initialIntent={type} callbackUrl={callbackUrl} memberships={firms} account={account} initialFirm={initialFirm}
-          existingOnly={existingOnly} accountOverview={!searchParams.callbackUrl && !searchParams.orgId && searchParams.add !== '1' && firms.length > 0} />
-      </main>
-    </div>
+    <ProfessionalSetupFrame stage="business">
+      <ScenarioA initialIntent={type} callbackUrl={callbackUrl} memberships={firms} account={account} initialFirm={initialFirm}
+        existingOnly={existingOnly} accountOverview={!searchParams.callbackUrl && !searchParams.orgId && searchParams.add !== '1' && firms.length > 0} />
+    </ProfessionalSetupFrame>
   );
 }

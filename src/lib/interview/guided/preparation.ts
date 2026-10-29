@@ -240,9 +240,7 @@ export async function prepareGuidedRoomPlan(projectId: string, session: GuidedSe
       try {
         generated = (await generateRoomQuestions({ projectId,
           roomName: room.name, roomImages: current.images.filter(image => image.roomId === room.id).map(image => ({ url: image.url, classification: image.aiClassification as Record<string, unknown> | null })),
-          // General-room questions cannot select products. The legacy generator's
-          // subscription naming lane is deliberately empty in this pilot.
-          roomTags: [], budget: room.baseQuestions, contextLevel: context.level,
+          budget: room.baseQuestions, contextLevel: context.level,
           projectContext: { projectTitle: current.project.title, otherRoomNames: session.rooms.filter(other => other.id !== room.id).map(other => other.name),
             materialPalette: context.materialThemes, knownFacts: parsedFacts.success ? parsedFacts.data : null },
         })).questions;

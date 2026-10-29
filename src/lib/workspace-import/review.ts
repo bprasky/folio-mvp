@@ -14,26 +14,36 @@ export const reviewSchema = z.discriminatedUnion('action', [
 
 export async function readImportReview(userId: string, id: string) {
   const { run } = await ownedImport(userId, id);
-  const [access, business, bio] = await Promise.all([
+  const [access, business, bio, projects] = await Promise.all([
     importAccess(userId, run.orgId),
     prisma.organization.findUniqueOrThrow({ where: { id: run.orgId }, select: { description: true, location: true, website: true, logo: true, updatedAt: true } }),
-    prisma.designerBio.findUnique({ where: { userId }, select: { updatedAt: true, status: true } }),
+    prisma.designerBio.findUnique({ where: { userId }, select: { updatedAt: true, status: true, scrapedData: true } }),
+    prisma.project.findMany({ where: { id: { in: run.projects.flatMap(project => project.projectId ? [project.projectId] : []) }, ownerId: userId, designerOrgId: run.orgId },
+      select: { id: true, title: true, description: true, isPublic: true, images: { where: { inclusion: 'INCLUDED' }, orderBy: [{ displayOrder: 'asc' }, { createdAt: 'asc' }], take: 30, select: { id: true, url: true, name: true } } } }),
   ]);
   // A reader sees useful progress, not the worker's lease or the notification recipient.
   const { lease, notification, ...visible } = run;
+  const bioData = bio?.scrapedData as { bio?: unknown } | null;
+  projects.sort((a, b) => run.projects.findIndex(item => item.projectId === a.id) - run.projects.findIndex(item => item.projectId === b.id));
+  const previewProjects = projects.map(project => ({ id: project.id, title: project.title, description: project.description, isPublic: project.isPublic,
+    photos: project.images.map(image => {
+      const source = run.projects.find(item => item.projectId === project.id)?.photos.find(photo => photo.imageId === image.id);
+      return { url: image.url, alt: image.name || project.title, width: source?.width, height: source?.height };
+    }) }));
   return { id, run: { ...visible, notification: { status: notification.status, error: notification.error, attempts: notification.attempts } },
-    summary: importSummary(run), access, business, bioVersion: bio?.updatedAt || null,
-    canReview: ['complete', 'blocked'].includes(run.phase) && (!lease || Date.parse(lease.until) <= Date.now()) };
+    summary: importSummary(run), access, business, projects: previewProjects, bioVersion: bio?.updatedAt || null,
+    bioText: typeof bioData?.bio === 'string' ? bioData.bio : '',
+    canReview: ['notify', 'complete', 'blocked'].includes(run.phase) && (!lease || Date.parse(lease.until) <= Date.now()) };
 }
 
 export async function reviewImport(userId: string, id: string, input: z.infer<typeof reviewSchema>) {
   const { run, row } = await ownedImport(userId, id);
-  if (!['complete', 'blocked'].includes(run.phase) || run.lease && Date.parse(run.lease.until) > Date.now())
+  if (!['notify', 'complete', 'blocked'].includes(run.phase) || run.lease && Date.parse(run.lease.until) > Date.now())
     throw new WorkspaceImportError('Your import is still saving. Review it when preparation finishes.', 409);
   if (input.action === 'retry') {
     await assertImportSections(userId, run);
-    if (!hasUnfinishedItems(run)) throw new WorkspaceImportError('There are no unfinished items to retry. Add specific page links in a new import if content is missing.');
-    if ((run.retryCount || 0) >= 3) throw new WorkspaceImportError('This import has reached its retry limit. Open the saved drafts or start a new import with specific page links.', 429);
+    if (!hasUnfinishedItems(run)) throw new WorkspaceImportError('There are no unfinished items to retry. You can add missing content in your workspace.');
+    if ((run.retryCount || 0) >= 3) throw new WorkspaceImportError('This import has reached its retry limit. Open your saved work and add any missing content there.', 429);
     run.retryCount = (run.retryCount || 0) + 1;
     run.recoveries = 0; delete run.lease;
     run.notices = [];

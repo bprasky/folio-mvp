@@ -1232,3 +1232,16 @@ Approved scope: six-digit email ownership verification during signup; existing m
 - [x] Preserve the chosen business/import destination and support resuming the verification page.
 - [x] Test API/auth behavior, rollback/replay, delivery failures, OAuth claims and user-facing states.
 - [x] Validate the additive migration, client boundaries, lint/types and regression suites; review and open PR #836. See `docs/reviews/signup-email-verification.md` for evidence and release requirements.
+
+## Setup refinement and import handoff — 2026-10-29
+
+- [x] Reduce the import offer to one website, selected sections and explicit consent; remove the manual bio/project links and simplify project wording.
+- [x] Share Folio's editorial setup frame across business enrollment, pending access and workspace preparation; keep the form first on mobile.
+- [x] Present a private profile preview using current saved project details and imported business/bio suggestions, with a landscape cover and muted draft cards.
+- [x] Send the next action to the selected project's finish-schedule upload or manual tagging after selecting the correct business workspace; generate questions on explicit interview entry.
+- [x] Persist an idempotent in-app readiness notice with the content checkpoint; return both the notice and readiness email to the same preview, including during email retries.
+- [x] Verify ownership, current publication state, missing photos, retry/dismissal behavior, callback targets, desktop/mobile UI and production compilation. Browser fixtures use synthetic services; actual inbox delivery and deployed cron remain release smoke tests.
+
+- [x] Remove question generation from website import and ignore premature legacy import plans for new sessions.
+- [x] Use accepted photo tags as material themes alongside vision context, without adding product subjects or vendor-loyalty signals; standard room preparation excludes commercial questions.
+- [x] Verify corrected schedule/manual tagging destinations, responsive preview, prompt contract, import/sourcebook behavior and production compilation; fresh PR CI follows the final push.

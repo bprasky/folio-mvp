@@ -8,11 +8,9 @@ import { fetchProjectImage } from '@/lib/server/project-image-input';
 import { saveBufferToProjectStorage } from '@/lib/storage';
 import { requestIdentity } from '@/lib/persistence/requestIdentity';
 import { createProjectOnce } from '@/lib/projects/createProject';
-import { generateWebsiteContextQuestions } from '@/lib/designer-bio/questions';
 import { sendEmail } from '@/lib/email/sendEmail';
 import { extractWebsitePage, sameWebsite, websiteUrl } from './extract';
 import { assertImportSections, importJson, saveImport, WorkspaceImportError } from './store';
-import { bioSourceFingerprint, savePreparedProject } from './prepared';
 import { IMPORT_LIMITS, WORKSPACE_IMPORT_KIND, importSummary, isWorkspaceImport, type WorkspaceImport, type ImportPage, type ImportedProject } from './types';
 
 const LEASE_MS = 6 * 60_000;
@@ -45,7 +43,7 @@ async function readPage(url: string, kind: ImportPage['kind'], includeProjects: 
     if (rendered && rendered.status >= 200 && rendered.status < 300 && sameWebsite(rendered.finalUrl, url)) return { html: rendered.html, url: rendered.finalUrl };
   }
   if (fallback) return fallback;
-  throw new Error('This page could not be read. Try a direct page link or upload files.');
+  throw new Error('This page could not be read. Try importing again or add its content manually.');
 }
 
 export function collectPage(run: WorkspaceImport, page: ImportPage, result: ReturnType<typeof extractWebsitePage>) {
@@ -65,7 +63,7 @@ export function collectPage(run: WorkspaceImport, page: ImportPage, result: Retu
     if (run.projects.length < IMPORT_LIMITS.projects) run.projects.push({ url: page.url, title: result.title || 'Imported project',
       description: result.description, status: 'pending', attempts: 0,
       photos: result.images.map(image => ({ ...image, status: 'pending', attempts: 0 })) });
-    else note(run, `We reached the ${IMPORT_LIMITS.projects}-project limit for this import. You can add more project links in another import.`);
+    else note(run, `We reached the ${IMPORT_LIMITS.projects}-project limit for this import. You can add any remaining projects in your workspace.`);
     if (result.imageCount > IMPORT_LIMITS.photos) note(run, `${result.title}: the first ${IMPORT_LIMITS.photos} photographs were selected. Add any remaining photographs in the project.`);
   }
   if (page.kind !== 'project') for (const link of result.links) {
@@ -73,9 +71,9 @@ export function collectPage(run: WorkspaceImport, page: ImportPage, result: Retu
     if ((link.kind === 'project' || link.kind === 'portfolio') && !run.sections.includes('projects')) continue;
     if (link.kind === 'about' && !run.sections.includes('business') && !run.sections.includes('bio')) continue;
     if (link.kind === 'bio' && !run.sections.includes('bio')) continue;
-    if (run.pages.length >= IMPORT_LIMITS.pages) { note(run, 'Some pages were outside this import’s page limit. Add any missing project links in another import.'); break; }
+    if (run.pages.length >= IMPORT_LIMITS.pages) { note(run, 'Some pages were outside this import’s page limit. You can add any missing work in your workspace.'); break; }
     if (link.kind === 'project' && run.pages.filter(value => value.kind === 'project').length >= IMPORT_LIMITS.projects) {
-      note(run, `We found more than ${IMPORT_LIMITS.projects} projects. Add the remaining project links in another import.`); continue;
+      note(run, `We found more than ${IMPORT_LIMITS.projects} projects. You can add the remaining work in your workspace.`); continue;
     }
     run.pages.push({ url: link.url, kind: link.kind, status: 'pending', attempts: 0 });
   }
@@ -83,7 +81,7 @@ export function collectPage(run: WorkspaceImport, page: ImportPage, result: Retu
   delete page.error;
 }
 
-async function prepareProfiles(userId: string, run: WorkspaceImport) {
+async function prepareProfiles(run: WorkspaceImport) {
   if (run.sections.includes('business') && run.profile.logoSource && !run.profile.logo) {
     try {
       const source = await fetchProjectImage(run.profile.logoSource);
@@ -91,21 +89,9 @@ async function prepareProfiles(userId: string, run: WorkspaceImport) {
       run.profile.logo = `data:image/png;base64,${logo.toString('base64')}`;
     } catch { note(run, 'The logo could not be imported. You can upload it on your business profile.'); }
   }
-  if (run.sections.includes('bio') && run.profile.bio && !run.profile.bioQuestions) {
-    const source = { name: run.personName, bio: run.profile.bio, sourceUrl: run.profile.bioSourceUrl };
-    if (!process.env.ANTHROPIC_API_KEY || process.env.ANTHROPIC_ENABLED === 'false') {
-      note(run, 'Your bio text is saved. Personalized bio questions will be prepared when you start the interview.');
-    } else {
-      const user = await prisma.user.findUniqueOrThrow({ where: { id: userId }, select: { role: true } });
-      const questions = await generateWebsiteContextQuestions(source, user.role || 'DESIGNER');
-      run.profile.bioQuestions = questions.filter(question => typeof question.question === 'string' && question.question.length <= 600).slice(0, 6);
-      run.profile.bioFingerprint = bioSourceFingerprint(source);
-      run.profile.bioRole = user.role || 'DESIGNER';
-    }
-  }
-  if (run.sections.includes('bio') && !run.profile.bio) note(run, 'We could not confidently identify your personal bio. Add a direct link to your own bio page or enter it manually.');
+  if (run.sections.includes('bio') && !run.profile.bio) note(run, 'We could not confidently identify your personal bio. You can tell us about your background in your profile interview.');
   if (run.sections.includes('business') && !run.profile.description) note(run, 'We could not find an About description. You can write one when reviewing your business details.');
-  if (run.sections.includes('projects') && !run.projects.length) note(run, 'No separate project pages were identified. Start another import with direct project links, or upload photographs.');
+  if (run.sections.includes('projects') && !run.projects.length) note(run, 'No separate project pages were identified. Add photographs in your workspace to begin a project.');
   run.profileReady = true;
   run.profileFailed = false;
   run.phase = 'projects';
@@ -141,7 +127,7 @@ async function prepareProject(userId: string, runId: string, run: WorkspaceImpor
   }
   if (item.status === 'photos') {
     const photo = item.photos.find(value => value.status === 'pending');
-    if (!photo) { item.status = 'questions'; item.attempts = 0; return; }
+    if (!photo) { item.status = 'ready'; item.attempts = 0; return; }
     photo.attempts++;
     try {
       const source = await fetchProjectImage(photo.url);
@@ -155,6 +141,12 @@ async function prepareProject(userId: string, runId: string, run: WorkspaceImpor
           create: { id: imageId, projectId: item.projectId!, url: stored.publicUrl, name: photo.alt || null }, select: { id: true, url: true } });
       }
       photo.imageId = saved.id; photo.savedUrl = saved.url; photo.status = 'saved';
+      try {
+        const metadata = await sharp(source.buffer).metadata();
+        const rotated = metadata.orientation && metadata.orientation >= 5;
+        photo.width = rotated ? metadata.height : metadata.width;
+        photo.height = rotated ? metadata.width : metadata.height;
+      } catch { /* Cover ranking is optional; a saved photograph stays usable. */ }
     } catch (error) {
       if (error instanceof WorkspaceImportError) throw error;
       if (photo.attempts >= 2) photo.status = 'failed';
@@ -163,8 +155,8 @@ async function prepareProject(userId: string, runId: string, run: WorkspaceImpor
     return;
   }
   if (item.status === 'questions') {
-    await assertImportSections(userId, run);
-    item.preparation = await savePreparedProject(item.projectId!, userId, run.orgId);
+    // Resume older imports without generating questions before materials review.
+    delete item.preparation;
     item.status = 'ready'; item.attempts = 0;
   }
 }
@@ -174,14 +166,33 @@ export function readyEmail(run: WorkspaceImport, runId: string, origin: string) 
   const useful = summary.projects > 0 || summary.business || summary.bio;
   const target = `/onboarding/workspace?import=${encodeURIComponent(runId)}`;
   const url = new URL(`/auth/signin?callbackUrl=${encodeURIComponent(target)}`, origin).href;
-  const status = useful ? 'Your Folio workspace is ready to review' : 'Your Folio import needs a little help';
+  const status = useful ? 'Your work is here. Welcome to your Folio.' : 'Your Folio import needs a little help';
   const details = [summary.business ? 'Business details and logo suggestions are saved for review.' : '',
     summary.bio ? 'Your personal bio text is saved for review.' : '',
-    summary.projects ? `${summary.projects} private project drafts and ${summary.photos} photographs are saved.` : '',
-    summary.interviews ? `${summary.interviews} project interviews have opening questions prepared.` : ''].filter(Boolean);
+    summary.projects ? `${summary.projects} projects and ${summary.photos} photographs are saved privately for you to review.` : ''].filter(Boolean);
   return { subject: status, html: `<h1>${escapeHtml(status)}</h1><p>${escapeHtml(run.orgName)}</p>${details.map(detail => `<p>${escapeHtml(detail)}</p>`).join('')}
     ${summary.needsAttention || !useful ? '<p>Some material needs your attention. Your workspace shows what was saved and what could not be imported.</p>' : ''}
-    <p>Nothing has been published. Review your imported details, then choose a project to begin.</p><p><a href="${escapeHtml(url)}">Open my workspace</a></p>` };
+    <h2>Your next step: add materials</h2><p>${summary.projects ? 'Explore your private profile preview, then choose a project. Upload a finish schedule or tag products in its photographs. Review and place the products to build your sourcebook; those materials and your photographs will help shape a conversation about the thinking behind your work when you continue to the interview.' : 'Explore the details we found for your profile. You can review them and add photographs to begin your first project, then add its materials.'}</p>
+    <p>Your projects remain private until you choose to publish. Business details are only applied when you save them.</p><p><a href="${escapeHtml(url)}">${useful ? 'See my Folio and take the next step' : 'Open my import and continue'}</a></p>` };
+}
+
+/** Content readiness and the in-app handoff commit together, independently of email delivery. */
+async function checkpointImport(userId: string, id: string, previous: unknown, run: WorkspaceImport) {
+  if (!['notify', 'complete'].includes(run.phase)) return saveImport(id, previous, run);
+  const summary = importSummary(run);
+  const useful = summary.projects > 0 || summary.business || summary.bio;
+  const notificationId = requestIdentity('workspace-ready', [userId, id]);
+  await prisma.$transaction(async tx => {
+    await assertImportSections(userId, run, tx);
+    await saveImport(id, previous, run, tx);
+    await tx.notification.upsert({ where: { id: notificationId }, update: {}, create: {
+      id: notificationId, userId, type: 'WORKSPACE_IMPORT_READY',
+      title: useful ? `${run.orgName} is ready to explore` : 'Your Folio import needs a little help',
+      body: useful ? `Your private profile preview is ready. ${summary.projects ? 'Add a finish schedule or tag products to build your sourcebook before the interview.' : 'Review your details and take the next step.'}${summary.needsAttention ? ' Some items need a little attention.' : ''}` : 'See what we found, then add any missing details or photographs to continue.',
+      actionUrl: `/onboarding/workspace?import=${encodeURIComponent(id)}`,
+      metadata: { importId: id, orgId: run.orgId, projects: summary.projects, needsAttention: summary.needsAttention },
+    } });
+  });
 }
 
 /** One bounded unit. State is checkpointed after each page, photo and preparation. */
@@ -192,12 +203,12 @@ export async function advanceImport(userId: string, id: string, run: WorkspaceIm
     if (!page) { run.phase = 'profiles'; return; }
     page.attempts++;
     try { const source = await readPage(page.url, page.kind, run.sections.includes('projects')); collectPage(run, page, extractWebsitePage(source.html, source.url, run.personName)); }
-    catch { page.error = 'This page could not be read. Add its content manually or try a direct page link.'; if (page.attempts >= 2) page.status = 'failed'; }
+    catch { page.error = 'This page could not be read. Try importing again or add its content manually.'; if (page.attempts >= 2) page.status = 'failed'; }
     return;
   }
   if (run.phase === 'profiles') {
     run.profileAttempts++;
-    try { await prepareProfiles(userId, run); }
+    try { await prepareProfiles(run); }
     catch { if (run.profileAttempts >= 2) { note(run, 'Profile text is saved, but some preparation could not finish. Review the available details.'); run.profileReady = true; run.profileFailed = true; run.phase = 'projects'; } }
     return;
   }
@@ -260,7 +271,7 @@ export async function processWorkspaceImports(budgetMs = 180_000) {
         }
         await advanceImport(row.userId, row.id, run);
         run.lease.until = new Date(Date.now() + LEASE_MS).toISOString();
-        await saveImport(row.id, previous, run); previous = importJson(run); processed++;
+        await checkpointImport(row.userId, row.id, previous, run); previous = importJson(run); processed++;
         if (run.phase === 'notify' && run.notification.nextAttemptAt && Date.parse(run.notification.nextAttemptAt) > Date.now()) break;
       }
     } catch (error) {
