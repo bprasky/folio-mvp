@@ -2,9 +2,6 @@
 
 import { useEffect, useState, useRef, useCallback } from "react";
 import { useParams, useSearchParams } from "next/navigation";
-import { PostCard } from "@/components/posting/PostCard";
-import { PostCondensed } from "@/components/posting/PostCondensed";
-import { PostExpanded } from "@/components/posting/PostExpanded";
 import { InterviewModal } from "@/components/posting/interview/InterviewModal";
 import { TagDiagnosticModal } from "@/components/posting/interview/TagDiagnosticModal";
 import { StoryRenderer } from "@/components/story/StoryRenderer";
@@ -17,7 +14,6 @@ export default function ProjectPostPreviewPage() {
   const params = useParams();
   const searchParams = useSearchParams();
   const projectId = params.id as string;
-  const [view, setView] = useState<"card" | "condensed" | "expanded" | "article">("article");
   const [post, setPost] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [initializing, setInitializing] = useState(false);
@@ -308,7 +304,6 @@ export default function ProjectPostPreviewPage() {
 
       // Success - refetch and show article
       await fetchPost();
-      setView("article");
       setShowRegenerateConfirm(false);
     } catch (error: any) {
       console.error("[preview] Error generating:", error);
@@ -444,51 +439,6 @@ export default function ProjectPostPreviewPage() {
         </div>
       )}
 
-      <div className="border-b border-folio-border-subtle mb-8">
-        <nav className="flex gap-4">
-          <button
-            onClick={() => setView("article")}
-            className={`px-4 py-2 border-b-2 ${
-              view === "article"
-                ? "border-[var(--accent)] text-[var(--accent)]"
-                : "border-transparent text-folio-text-secondary hover:text-folio-text-primary"
-            }`}
-          >
-            Article
-          </button>
-          <button
-            onClick={() => setView("card")}
-            className={`px-4 py-2 border-b-2 ${
-              view === "card"
-                ? "border-[var(--accent)] text-[var(--accent)]"
-                : "border-transparent text-folio-text-secondary hover:text-folio-text-primary"
-            }`}
-          >
-            Card
-          </button>
-          <button
-            onClick={() => setView("condensed")}
-            className={`px-4 py-2 border-b-2 ${
-              view === "condensed"
-                ? "border-[var(--accent)] text-[var(--accent)]"
-                : "border-transparent text-folio-text-secondary hover:text-folio-text-primary"
-            }`}
-          >
-            Condensed
-          </button>
-          <button
-            onClick={() => setView("expanded")}
-            className={`px-4 py-2 border-b-2 ${
-              view === "expanded"
-                ? "border-[var(--accent)] text-[var(--accent)]"
-                : "border-transparent text-folio-text-secondary hover:text-folio-text-primary"
-            }`}
-          >
-            Expanded
-          </button>
-        </nav>
-      </div>
-
       {/* Background generation in-progress banner (202 or provenance phase='generating') */}
       {generatingInBackground && (
         <div className="mb-6 rounded-lg border border-blue-200 bg-blue-50 px-4 py-3 text-sm text-blue-800 flex items-center gap-3">
@@ -539,25 +489,11 @@ export default function ProjectPostPreviewPage() {
       )}
 
       {/* Article View */}
-      {view === "article" && post.post.expandedBlocks && (
+      {post.post.expandedBlocks && (
         <StoryRenderer post={{ ...post.post, credits, project: {
           ...post.project, designer: post.designer, images: post.images ?? [],
         } }} />
       )}
-
-      {/* Legacy Views */}
-      <div className="bg-white rounded-lg border border-folio-border-subtle p-8">
-        {view === "card" && post && (
-          <PostCard
-            post={post.post}
-            project={post.project}
-            heroImage={post.heroImage}
-            designer={post.designer}
-          />
-        )}
-        {view === "condensed" && post && <PostCondensed payload={post} />}
-        {view === "expanded" && post && <PostExpanded payload={post} />}
-      </div>
 
       {post.post && (
         <div className="mt-6 flex items-center justify-between">

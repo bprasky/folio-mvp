@@ -122,8 +122,8 @@ check('NOTHING renders a lead field as text outside that module', (() => {
     !file.endsWith('StoryLead.tsx') && /^\s*\{story\.(title|subtitle|introText)\}\s*$/m.test(readFileSync(file, 'utf8')));
   return offenders.length === 0;
 })(), 'a story layout renders the lead itself instead of importing StoryLead');
-check('both hero layouts import the shared slots',
-  /LeadHeadline/.test(readFileSync('src/components/story/StoryRenderer.tsx', 'utf8'))
+check('the immersive introduction and legacy reusable intro import the shared slots',
+  /LeadHeadline/.test(readFileSync('src/components/story/PublicationIntroduction.tsx', 'utf8'))
   && /LeadHeadline/.test(readFileSync('src/components/story/StoryIntro.tsx', 'utf8')));
 check('the headline picker rides along with the headline, so it cannot be omitted',
   /<HeadlinePicker/.test(lead)
@@ -137,16 +137,20 @@ console.log('\n7. The deck is rendered, and editable');
 const intro = readFileSync('src/components/story/StoryIntro.tsx', 'utf8');
 check('readers see the deck', /story\.subtitle \? <p/.test(lead));
 check('owners can edit it in place', /edit\.save\(LEAD, 0, 'deck', t\)/.test(lead));
-check('it sits under the headline in BOTH layouts', (() => {
-  const renderer = readFileSync('src/components/story/StoryRenderer.tsx', 'utf8');
+check('it sits under the headline in the shared introduction', (() => {
+  const renderer = readFileSync('src/components/story/PublicationIntroduction.tsx', 'utf8');
   const after = (src: string) => src.indexOf('LeadDeck') > src.indexOf('LeadHeadline');
   return after(intro) && after(renderer);
 })());
 // It had nowhere else to go before; now it does, so the fallback would print the
 // same sentence twice on any article whose hero image has no name.
 const renderer = readFileSync('src/components/story/StoryRenderer.tsx', 'utf8');
-check('the hero caption no longer falls back to the deck',
-  /const captionText = story\.heroImage\?\.name \|\| null;/.test(renderer));
+check('the renderer only mounts the immersive publication; no legacy hero or intro',
+  /<ImmersiveRooms/.test(renderer) && !/StoryHero|StoryIntro|LandscapeHero|<LeadHeadline|<LeadDeck|<LeadIntro/.test(renderer));
+check('an absent introduction does not repeat the deck', /story\.introText !== story\.subtitle/.test(lead));
+const olderPreview = readFileSync('src/app/designer/projects/[id]/preview/page.tsx', 'utf8');
+check('the older preview route cannot switch back to legacy article layouts',
+  /<StoryRenderer/.test(olderPreview) && !/PostExpanded|PostCondensed|setView/.test(olderPreview));
 
 console.log(failures === 0
   ? '\nAll story-editing checks passed.\n'
