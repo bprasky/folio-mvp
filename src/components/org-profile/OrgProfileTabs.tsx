@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
+import styles from './OrgProfileAppearance.module.css';
 
 interface OrgProfileTabsProps {
   activeTab: string;
@@ -22,7 +23,7 @@ export default function OrgProfileTabs({ activeTab, orgId, defaultTab = 'feed', 
       params.set('tab', tab);
     }
     const queryString = params.toString();
-    return `/org/${orgId}${queryString ? `?${queryString}` : ''}`;
+    return `/org/${orgId}${queryString ? `?${queryString}` : ''}#profile-content`;
   };
 
   const VENDOR_ORG_TYPES = ['VENDOR', 'MANUFACTURER', 'SHOWROOM'];
@@ -48,10 +49,10 @@ export default function OrgProfileTabs({ activeTab, orgId, defaultTab = 'feed', 
   return (
     <nav
       aria-label="Organization sections"
-      className="sticky top-0 z-10 border-b"
+      className="sticky top-14 md:top-16 z-10 border-b"
       style={{ borderColor: 'var(--org-page-border, var(--folio-border-subtle))', backgroundColor: 'var(--org-page-background, var(--surface-canvas))' }}
     >
-      <div className="max-w-6xl mx-auto px-6 flex gap-8 overflow-x-auto">
+      <div className={`${styles.profileFrame} flex gap-6 sm:gap-8 overflow-x-auto`}>
         {tabs.map(tab => (
           <Link
             key={tab.id}

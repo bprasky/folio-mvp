@@ -20,6 +20,7 @@ function replace(name, exports) {
 replace('server-only', {});
 replace('src/app/api/auth/[...nextauth]/options.ts', { authOptions: {} });
 replace('next-auth', { getServerSession: async () => session });
+replace('next-auth/next', { getServerSession: async () => session });
 replace('next/cache', { revalidatePath: () => {} });
 const facade = new Proxy({}, { get: (_, key) => db[key] });
 replace('src/lib/prisma.ts', { prisma: facade });
@@ -35,11 +36,45 @@ global.fetch = async () => { throw new Error('Unexpected external request'); };
 const route = require(resolve('src/app/api/orgs/[orgId]/appearance/route.ts'));
 const uploadRoute = require(resolve('src/app/api/orgs/[orgId]/appearance/image/route.ts'));
 const feed = require(resolve('src/app/api/org/[orgId]/feed/route.ts'));
+const vendorDirectory = require(resolve('src/app/api/org/[orgId]/vendor-directory/route.ts'));
 const { defaultOrgAppearance, orgProfileAppearanceSchema, profileFacts, profilePageStyle } = require(resolve('src/lib/org-profile-appearance.ts'));
 const org = { id: orgId, name: 'Fixture Studio', type: 'DESIGN_FIRM', logo: null, description: null, tagline: null,
   location: null, foundedYear: null, specialties: [], serviceRegions: [], projectTypes: [], teamSizeRange: null };
 const request = value => new NextRequest('http://folio.test/api/appearance', { method: 'PATCH', body: JSON.stringify(value) });
 const get = () => new NextRequest('http://folio.test/api/appearance');
+
+test('vendor directory requires an active member and attributes each scan to the recorded firm', async () => {
+  session = null;
+  assert.equal((await vendorDirectory.GET(get(), context)).status, 401);
+  session = { user: { id: 'admin' } };
+  role = null;
+  assert.equal((await vendorDirectory.GET(get(), context)).status, 403);
+  role = 'MEMBER';
+  const studio = { id: orgId, type: 'DESIGN_FIRM' }, vendor = { id: 'vendor', type: 'VENDOR' };
+  const designer = { id: 'designer', name: 'Designer' }, rep = { id: 'rep', name: 'Rep' };
+  // Both people belong to this studio; the rep was operating for the vendor at the scan.
+  const ids = [designer.id, rep.id];
+  db.organizationUser.findMany = async ({ where }) => {
+    assert.deepEqual(where, { organizationId: orgId, isActive: true });
+    return ids.map(userId => ({ userId }));
+  };
+  db.visitRecord = { findMany: async ({ where }) => {
+    const types = { in: ['VENDOR', 'MANUFACTURER', 'SHOWROOM'] };
+    assert.deepEqual(where.OR, [
+      { initiatorOrgId: orgId, initiatorUserId: { in: ids }, recipientOrg: { type: types } },
+      { recipientOrgId: orgId, recipientUserId: { in: ids }, initiatorOrg: { type: types } },
+    ]);
+    const base = { createdAt: new Date(), _count: { productShares: 0 } };
+    return [
+      { ...base, id: 'out', initiatorOrgId: orgId, recipientOrgId: vendor.id, initiatorOrg: studio, recipientOrg: vendor, initiatorUserId: designer.id, initiatorUser: designer, recipientUser: rep },
+      { ...base, id: 'in', initiatorOrgId: vendor.id, recipientOrgId: orgId, initiatorOrg: vendor, recipientOrg: studio, initiatorUserId: rep.id, initiatorUser: rep, recipientUser: designer },
+    ];
+  } };
+  const { directory } = await (await vendorDirectory.GET(get(), context)).json();
+  assert.deepEqual(directory.map(entry => entry.org.id), [vendor.id]);
+  assert.deepEqual(directory[0].reps.map(user => [user.id, user.visitCount]), [[rep.id, 2]]);
+  assert.deepEqual(directory[0].reps[0].visits.map(visit => visit.metBy.id), [designer.id, designer.id]);
+});
 
 beforeEach(() => {
   session = { user: { id: 'admin' } }; role = 'ADMIN'; revoked = false; selected = true; saved = null;
@@ -168,8 +203,13 @@ test('anonymous feed uses exact firm/public/photo filters and never returns priv
     assert.deepEqual(query.where, { designerOrgId: orgId, isPublic: true });
     assert.deepEqual(query.select.images.where, { inclusion: 'INCLUDED' });
     assert.equal(query.select.description, undefined); assert.equal(query.select.images.select.aiAnalysis, undefined);
-    return [{ id: 'project', title: 'Public project', city: 'Miami', regionState: 'FL', images: [{ url: '/public.jpg' }],
-      post: { status: 'PUBLISHED' }, _count: { rooms: 2 }, saves: 0, privateNote: 'never expose' }];
+    const project = { id: 'project', title: 'Public project', city: 'Miami', regionState: 'FL', images: [{ url: '/public.jpg' }],
+      _count: { rooms: 2 }, saves: 0, privateNote: 'never expose' };
+    return [
+      { ...project, post: { status: 'PUBLISHED', slug: 'public-story' } },
+      { ...project, id: 'unpublished', post: { status: 'DRAFT', slug: 'never expose' } },
+      { ...project, id: 'no-post', post: null },
+    ];
   };
   for (const model of ['orgMedia', 'orgRecognition', 'orgCollaboration']) db[model].findMany = async query => {
     assert.deepEqual(query.where, { organizationId: orgId, publishedAt: { not: null } });
@@ -178,6 +218,9 @@ test('anonymous feed uses exact firm/public/photo filters and never returns priv
   const response = await feed.GET(new NextRequest('http://folio.test/api/feed'), context);
   assert.equal(response.status, 200); assert.match(response.headers.get('cache-control'), /no-store/);
   const data = await response.json(); assert.equal(data.items[0].data.title, 'Public project');
+  assert.equal(data.items.find(item => item.id === 'project').data.storyHref, '/p/public-story');
+  assert.equal(data.items.find(item => item.id === 'unpublished').data.storyHref, null);
+  assert.equal(data.items.find(item => item.id === 'no-post').data.storyHref, null);
   assert.equal(JSON.stringify(data).includes('never expose'), false);
 });
 

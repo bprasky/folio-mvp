@@ -1,3 +1,7 @@
+## 2026-11-04 — Vendor discovery belongs in Shop
+
+Keep “Our vendors” out of the organization profile header for every role. The founder wants to revisit vendor discovery within Shop and the profile tabs. Until that experience is designed, omit the entry. Keep cover actions relevant to visitors or members and reserve profile management for admins.
+
 # Lessons Learned
 
 ## 2026-10-29 — Import completion uses the approved profile

@@ -22,12 +22,15 @@ import Settings from './src/app/org/[orgId]/settings/page';
 import Hero from './src/components/org-profile/OrgProfileHero';
 import Tabs from './src/components/org-profile/OrgProfileTabs';
 import Feed from './src/components/org-profile/OrgProfileFeed';
+import Contact from './src/components/org-profile/OrgContactTab';
 import {profilePageStyle,resolveProfileCover} from './src/lib/org-profile-appearance';
 import styles from './src/components/org-profile/OrgProfileAppearance.module.css';
 const d=window.fixture;
+const tab=new URLSearchParams(location.search).get('tab')||'feed';
+const member=Boolean(d.role);
 function App(){return location.pathname.endsWith('/settings') ? <Settings/> : <div className={styles.page} style={profilePageStyle(d.appearance.backgroundColor)}>
-<Hero org={d.org} appearance={d.appearance} cover={resolveProfileCover(d.appearance,d.projects)} projectCount={d.projectCount} year={2026} isAdmin={d.role==='ADMIN'||d.role==='OWNER'}/>
-<div id="profile-content"><Tabs orgId="firm" activeTab="feed"/><div style={{padding:20}}><Feed orgId="firm" initialFilter={new URLSearchParams(location.search).get('filter')||'all'} initialSort="featured" projectCount={4}/></div></div></div>}
+<Hero org={d.org} appearance={d.appearance} cover={resolveProfileCover(d.appearance,d.projects)} projectCount={d.projectCount} year={2026} isMember={member} isAdmin={d.role==='ADMIN'||d.role==='OWNER'}/>
+<div id="profile-content"><Tabs orgId="firm" activeTab={tab}/><div style={{padding:20}}>{tab==='contact' ? <Contact org={d.org} isMember={member} currentUser={member?{id:'member',name:'Member'}:null}/> : <Feed orgId="firm" initialFilter={new URLSearchParams(location.search).get('filter')||'all'} initialSort="featured" projectCount={4}/>}</div></div></div>}
 createRoot(document.getElementById('root')).render(<App/>);`;
 
 async function build() {
@@ -79,7 +82,7 @@ async function main() {
       return json(res, { org, appearance: saved, projects, projectCount: 4 });
     }
     if (pathname === '/api/orgs/firm') return json(res, { name: org.name, membersCanPublish: true, members: [{ userId: 'admin', role }] });
-    if (pathname.startsWith('/api/org/firm/feed')) return json(res, { items: projects.map(project => ({ id: project.id, type: 'project', data: { id: project.id, title: project.title, heroImage: '/photo.png' } })) });
+    if (pathname.startsWith('/api/org/firm/feed')) return json(res, { items: projects.map((project, index) => ({ id: project.id, type: 'project', data: { id: project.id, title: project.title, heroImage: '/photo.png', storyHref: index < 3 ? '/p/' + project.id : null } })) });
     if (pathname.startsWith('/api/')) return json(res, { members: [], requests: [] });
     if (pathname.endsWith('/settings') || pathname === '/org/firm') {
       res.setHeader('Content-Type', 'text/html'); return res.end(`<!doctype html><html><head><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="stylesheet" href="/globals.css"><link rel="stylesheet" href="/bundle.css"></head><body><div id="root"></div><script>window.fixture=${JSON.stringify({ org, appearance: saved, projects, projectCount: 4, role })}</script><script src="/bundle.js"></script></body></html>`);
@@ -111,7 +114,9 @@ async function main() {
       await page.setViewport({ width, height: 1000 }); await go('/org/firm/settings');
       await page.waitForSelector('textarea');
       assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1), `settings overflow at ${width}`);
-      await go('/org/firm'); await page.waitForSelector('a[href="/project/project-0"]');
+      await go('/org/firm'); await page.waitForSelector('a[href="/p/project-0"]');
+      assert.equal(await page.$$eval('article', cards => cards.length), 4);
+      assert.equal(await page.$$eval('article a', links => links.length), 3, 'Projects without a published story have no reader link.');
       assert.equal(await page.$eval('article h3', node => getComputedStyle(node).color), 'rgb(255, 255, 255)', 'mosaic titles stay legible over photographs');
       assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1), `public overflow at ${width}`);
       assert.deepEqual(await page.$$eval('nav[aria-label="Organization sections"] a', nodes => nodes.map(node => node.textContent)), ['Feed', 'Shop', 'About', 'Contact']);
@@ -146,6 +151,21 @@ async function main() {
     assert.equal(saved.backgroundColor, null); assert.deepEqual(saved.facts, []); assert.equal(saved.cover.kind, 'none');
     await go('/org/firm'); assert.equal(await page.$('dl'), null);
     for (const denied of ['MEMBER', 'MANAGER', 'VIEWER', null]) { role = denied; await go('/org/firm/settings'); await page.waitForFunction(() => document.body.textContent.includes('Access Denied')); assert.equal(await page.$('textarea'), null); }
+    for (const viewer of ['ADMIN', 'MEMBER', null]) {
+      role = viewer;
+      await go('/org/firm');
+      const tools = await page.$$eval('nav[aria-label="Manage profile"] a', links => links.map(link => link.getAttribute('href')));
+      assert.deepEqual(tools, viewer === 'ADMIN' ? ['/org/firm/settings#appearance', '/org/firm/edit'] : []);
+      assert.equal(await page.$('a[href="/org/firm/vendors"]'), null);
+      assert.equal(Boolean(await page.$('section a[href*="tab=contact"]')), !viewer);
+    }
+    await page.click('section a[href*="filter=projects"]');
+    await page.waitForFunction(() => document.querySelector('button[aria-pressed="true"]')?.textContent === 'Projects');
+    await page.click('section a[href*="tab=contact"]');
+    await page.waitForSelector('a[href*="callbackUrl="]');
+    const signIn = new URL(await page.$eval('a[href*="callbackUrl="]', link => link.href));
+    assert.equal(signIn.pathname, '/auth/signin');
+    assert.equal(signIn.searchParams.get('callbackUrl'), '/org/firm?tab=contact#profile-content');
     assert.deepEqual(errors, []);
     console.log('PASS: actual settings/public components at 1440/768/390/320; save/reload, failure retry, crop/photo selection, color contrast/reset, upload, facts/order/empty, actual tabs/mosaic, and lower-role/guest settings denial.');
     console.log(`Screenshots: ${out}`);

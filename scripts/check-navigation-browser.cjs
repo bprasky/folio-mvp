@@ -238,6 +238,8 @@ async function main() {
         });
         assert.ok(notificationBounds.left >= 0 && notificationBounds.right <= width, `Notification popup remains in the viewport: ${JSON.stringify(notificationBounds)}`);
         await page.click('button[aria-label="Notifications"]');
+        assert.equal(await page.$eval('[aria-label="Account menu"]', el => el.hidden), true, 'Opening notifications dismisses the account menu.');
+        await accountToggle();
         await page.screenshot({ path: path.join(out, `${personal ? 'personal-workspace' : 'firm-member'}-${width}.png`) });
         if (width < 768) assert.equal(await hasCreate(), true, 'Active member account menu must offer Create on mobile.');
         await page.keyboard.press('Escape');

@@ -12,29 +12,29 @@ interface OrgContactTabProps {
     address?: string | null;
     serviceRegions?: string[];
   };
-  isOwner: boolean;
+  isMember: boolean;
   currentUser: { id: string; name: string } | null;
 }
 
-export default function OrgContactTab({ org, isOwner, currentUser }: OrgContactTabProps) {
+export default function OrgContactTab({ org, isMember, currentUser }: OrgContactTabProps) {
   const router = useRouter();
   const hasInfo = org.website || org.location || org.address || (org.serviceRegions && org.serviceRegions.length > 0);
 
   return (
-    <div className="max-w-lg">
+    <div className="max-w-lg mx-auto">
       {hasInfo && (
         <>
-          <h3 className="text-lg font-semibold mb-6" style={{ color: '#2C2825', fontFamily: 'Georgia, serif' }}>
+          <h3 className="text-lg font-semibold mb-6" style={{ color: 'var(--folio-text-primary)', fontFamily: 'var(--font-headline), Georgia, serif' }}>
             Get in Touch
           </h3>
 
           <div className="space-y-5">
             {(org.location || org.address) && (
               <div>
-                <div className="text-[var(--type-eyebrow)] uppercase tracking-wider mb-1.5" style={{ color: '#A69E96' }}>
+                <div className="text-[var(--type-eyebrow)] uppercase tracking-wider mb-1.5" style={{ color: 'var(--folio-text-secondary)' }}>
                   Location
                 </div>
-                <div className="text-[var(--type-body)]" style={{ color: '#2C2825' }}>
+                <div className="text-[var(--type-body)]" style={{ color: 'var(--folio-text-primary)' }}>
                   {org.address || org.location}
                 </div>
               </div>
@@ -42,7 +42,7 @@ export default function OrgContactTab({ org, isOwner, currentUser }: OrgContactT
 
             {org.serviceRegions && org.serviceRegions.length > 0 && (
               <div>
-                <div className="text-[var(--type-eyebrow)] uppercase tracking-wider mb-1.5" style={{ color: '#A69E96' }}>
+                <div className="text-[var(--type-eyebrow)] uppercase tracking-wider mb-1.5" style={{ color: 'var(--folio-text-secondary)' }}>
                   Service Area
                 </div>
                 <div className="flex flex-wrap gap-1.5">
@@ -50,7 +50,7 @@ export default function OrgContactTab({ org, isOwner, currentUser }: OrgContactT
                     <span
                       key={region}
                       className="inline-block px-3 py-1 rounded-full text-[var(--type-meta)]"
-                      style={{ backgroundColor: '#F0EDE9', color: '#5C554D' }}
+                      style={{ backgroundColor: 'var(--surface-ground)', color: 'var(--folio-text-secondary)' }}
                     >
                       {region}
                     </span>
@@ -61,7 +61,7 @@ export default function OrgContactTab({ org, isOwner, currentUser }: OrgContactT
 
             {org.website && (
               <div>
-                <div className="text-[var(--type-eyebrow)] uppercase tracking-wider mb-1.5" style={{ color: '#A69E96' }}>
+                <div className="text-[var(--type-eyebrow)] uppercase tracking-wider mb-1.5" style={{ color: 'var(--folio-text-secondary)' }}>
                   Website
                 </div>
                 <a
@@ -69,7 +69,7 @@ export default function OrgContactTab({ org, isOwner, currentUser }: OrgContactT
                   target="_blank"
                   rel="noopener noreferrer"
                   className="text-[var(--type-body)] underline underline-offset-2"
-                  style={{ color: '#2C2825' }}
+                  style={{ color: 'var(--folio-text-primary)' }}
                 >
                   {org.website.replace(/^https?:\/\//, '')}
                 </a>
@@ -77,41 +77,28 @@ export default function OrgContactTab({ org, isOwner, currentUser }: OrgContactT
             )}
           </div>
 
-          <div className="my-8" style={{ borderTop: '1px solid #E8E4DF' }} />
+          <div className="my-8" style={{ borderTop: '1px solid var(--folio-border-subtle)' }} />
         </>
       )}
 
       {/* Messaging section */}
       {!currentUser ? (
         <div className="text-center py-12">
-          <p className="text-[var(--type-body)] mb-4" style={{ color: '#5C554D' }}>
+          <p className="text-[var(--type-body)] mb-4" style={{ color: 'var(--folio-text-secondary)' }}>
             Sign in to send {org.name} a message.
           </p>
           <a
-            href={`/login?returnTo=/org/${org.id}?tab=contact`}
+            href={`/auth/signin?callbackUrl=${encodeURIComponent(`/org/${org.id}?tab=contact#profile-content`)}`}
             className="inline-block px-6 py-3 rounded-xl text-white text-sm"
-            style={{ backgroundColor: '#2C2825' }}
+            style={{ backgroundColor: 'var(--folio-text-primary)', color: 'var(--surface-canvas)' }}
           >
             Sign in to reach out
           </a>
-          {org.website && (
-            <p className="text-xs mt-6" style={{ color: '#A69E96' }}>
-              Or visit{' '}
-              <a
-                href={org.website.startsWith('http') ? org.website : `https://${org.website}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="underline"
-              >
-                {org.website.replace(/^https?:\/\//, '')}
-              </a>
-            </p>
-          )}
         </div>
-      ) : isOwner ? (
+      ) : isMember ? (
         <div className="text-center py-8">
-          <p className="text-[var(--type-meta)]" style={{ color: '#A69E96' }}>
-            This is how visitors will see your contact page and send you messages.
+          <p className="text-[var(--type-meta)]" style={{ color: 'var(--folio-text-secondary)' }}>
+            Visitors can send your team a message here.
           </p>
         </div>
       ) : (

@@ -1,3 +1,18 @@
+# Design organization profile review — 2026-11-04
+
+- [x] Trace the public, member and admin actions from the BP Design cover to their destinations.
+- [x] Remove Our vendors for every role. Reserve future vendor discovery for Shop. Align the cover, tabs and feed and improve the typography of the facts and monogram.
+- [x] Repair guest inquiry sign-in and links into published projects. Scope the existing private vendor directory to the organization recorded at the scan.
+- [x] Verify the page at desktop and mobile widths, public reader links, role-specific controls and existing profile customization.
+
+### Review
+
+The public cover now leads to Projects and Contact when work is available. Members see Projects and About; only owners and admins see profile management. No role sees a vendor-directory shortcut. The cover card is horizontally centered, narrative copy remains left aligned, and the cover, tab links and feed share a content edge. Folio’s editorial face is reserved for the firm name in the hero. The stats and compact monogram use the body face. BP Design’s fallback mark preserves BP. About and Contact now follow Folio’s theme colors.
+
+Followed BP Design’s actual guest path through Projects, Shop, About, Contact and sign-in with the encoded return to the same contact section. The previous guest sign-in returned 404. All four live cover photos decoded after scrolling. The mosaic previously linked each project to a workspace that requires an authenticated viewer. Opened all four published readers anonymously and verified Shop’s product provenance opens the corresponding reader. Public projects without a published post keep their image in the feed and omit the reader link. No account data or messages were written.
+
+Browser geometry at 1440, 1008, 768, 390 and 320px showed zero horizontal overflow, zero card centering error, and matching cover/tab/feed left edges. The profile/settings browser suite checks public, member and admin actions, appearance save/reload and error recovery with isolated fixtures. The masthead browser suite covers search, the wordmark, account controls, Create and mobile notifications. Its test now reopens the account menu after Notifications dismisses it. All 18 profile route/data regressions passed, including visitor denial, both vendor scan directions, exact firm scope, and withholding unpublished reader links. Client-boundary and migration guards passed. Changed-file lint had zero errors. The TypeScript ratchet passed with 851 diagnostics against the 862 baseline. The repository-wide IDOR scanner still reports the same 45 findings as the unmodified main revision, including 11 critical findings.
+
 # Subscription brand refresh and billing review — 2026-10-29
 
 ### Release authorization and complimentary first round

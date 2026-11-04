@@ -114,15 +114,15 @@ export function OrgAboutTab({
         {org.philosophy && (
           <div
             className="text-center py-8 mb-4"
-            style={{ borderBottom: '1px solid #E8E4DF' }}
+            style={{ borderBottom: '1px solid var(--folio-border-subtle)' }}
           >
             <blockquote
               className="text-xl md:text-2xl italic max-w-2xl mx-auto"
-              style={{ fontFamily: 'Georgia, serif', color: '#2C2825' }}
+              style={{ fontFamily: 'var(--font-headline), Georgia, serif', color: 'var(--folio-text-primary)' }}
             >
               "{org.philosophy}"
             </blockquote>
-            <p className="mt-4 text-sm" style={{ color: '#8B8178' }}>
+            <p className="mt-4 text-sm" style={{ color: 'var(--folio-text-secondary)' }}>
               — {org.name}
             </p>
           </div>
@@ -132,16 +132,16 @@ export function OrgAboutTab({
         <div>
           <h2
             className="text-xl mb-4"
-            style={{ fontFamily: 'Georgia, serif', color: '#2C2825' }}
+            style={{ fontFamily: 'var(--font-headline), Georgia, serif', color: 'var(--folio-text-primary)' }}
           >
             About
           </h2>
           {org.description ? (
-            <p className="whitespace-pre-wrap" style={{ color: '#5C564F' }}>
+            <p className="whitespace-pre-wrap" style={{ color: 'var(--folio-text-secondary)' }}>
               {org.description}
             </p>
           ) : (
-            <p style={{ color: '#8B8178' }}>No description yet.</p>
+            <p style={{ color: 'var(--folio-text-secondary)' }}>No description yet.</p>
           )}
         </div>
 
@@ -150,7 +150,7 @@ export function OrgAboutTab({
           <div className="flex items-center justify-between mb-4">
             <h2
               className="text-xl"
-              style={{ fontFamily: 'Georgia, serif', color: '#2C2825' }}
+              style={{ fontFamily: 'var(--font-headline), Georgia, serif', color: 'var(--folio-text-primary)' }}
             >
               Team
             </h2>
@@ -180,7 +180,7 @@ export function OrgAboutTab({
                 <div key={member.id} className="flex gap-4">
                   <div
                     className="w-14 h-14 rounded-full flex-shrink-0 overflow-hidden"
-                    style={{ backgroundColor: '#E8E4DF' }}
+                    style={{ backgroundColor: 'var(--surface-ground)' }}
                   >
                     {member.headshotUrl ? (
                       <SafeImage
@@ -193,23 +193,23 @@ export function OrgAboutTab({
                     ) : (
                       <div
                         className="w-full h-full flex items-center justify-center text-lg font-light"
-                        style={{ color: '#6B635B' }}
+                        style={{ color: 'var(--folio-text-secondary)' }}
                       >
                         {member.name.charAt(0).toUpperCase()}
                       </div>
                     )}
                   </div>
                   <div>
-                    <p className="text-sm font-medium" style={{ color: '#2C2825' }}>
+                    <p className="text-sm font-medium" style={{ color: 'var(--folio-text-primary)' }}>
                       {member.name}
                     </p>
-                    <p className="text-xs" style={{ color: '#8B8178' }}>
+                    <p className="text-xs" style={{ color: 'var(--folio-text-secondary)' }}>
                       {member.role}
                     </p>
                     {member.bio && (
                       <p
                         className="text-xs mt-1 line-clamp-2"
-                        style={{ color: '#6B635B' }}
+                        style={{ color: 'var(--folio-text-secondary)' }}
                       >
                         {member.bio}
                       </p>
@@ -219,7 +219,7 @@ export function OrgAboutTab({
               ))}
             </div>
           ) : (
-            <p style={{ color: '#8B8178' }}>No team members listed.</p>
+            <p style={{ color: 'var(--folio-text-secondary)' }}>No team members listed.</p>
           )}
         </div>
 
@@ -229,7 +229,7 @@ export function OrgAboutTab({
             <div className="flex items-center justify-between mb-4">
               <h2
                 className="text-xl"
-                style={{ fontFamily: 'Georgia, serif', color: '#2C2825' }}
+                style={{ fontFamily: 'var(--font-headline), Georgia, serif', color: 'var(--folio-text-primary)' }}
               >
                 Our Process
               </h2>
@@ -248,16 +248,16 @@ export function OrgAboutTab({
                 <div key={phase.id} className="flex gap-4">
                   <div
                     className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 text-sm font-medium"
-                    style={{ backgroundColor: '#E8E4DF', color: '#6B635B' }}
+                    style={{ backgroundColor: 'var(--surface-ground)', color: 'var(--folio-text-secondary)' }}
                   >
                     {index + 1}
                   </div>
                   <div>
-                    <p className="font-medium" style={{ color: '#2C2825' }}>
+                    <p className="font-medium" style={{ color: 'var(--folio-text-primary)' }}>
                       {phase.name}
                     </p>
                     {phase.description && (
-                      <p className="text-sm mt-1" style={{ color: '#6B635B' }}>
+                      <p className="text-sm mt-1" style={{ color: 'var(--folio-text-secondary)' }}>
                         {phase.description}
                       </p>
                     )}
@@ -283,7 +283,7 @@ export function OrgAboutTab({
             <div className="flex items-center justify-between mb-4">
               <h2
                 className="text-xl"
-                style={{ fontFamily: 'Georgia, serif', color: '#2C2825' }}
+                style={{ fontFamily: 'var(--font-headline), Georgia, serif', color: 'var(--folio-text-primary)' }}
               >
                 Recognition
               </h2>
@@ -302,14 +302,14 @@ export function OrgAboutTab({
                 <div
                   key={item.id}
                   className="flex items-start gap-3 py-3"
-                  style={{ borderBottom: '1px solid #E8E4DF' }}
+                  style={{ borderBottom: '1px solid var(--folio-border-subtle)' }}
                 >
-                  <Award className="w-5 h-5 flex-shrink-0" style={{ color: '#8B8178' }} />
+                  <Award className="w-5 h-5 flex-shrink-0" style={{ color: 'var(--folio-text-secondary)' }} />
                   <div>
-                    <p className="font-medium" style={{ color: '#2C2825' }}>
+                    <p className="font-medium" style={{ color: 'var(--folio-text-primary)' }}>
                       {item.title}
                     </p>
-                    <p className="text-sm" style={{ color: '#6B635B' }}>
+                    <p className="text-sm" style={{ color: 'var(--folio-text-secondary)' }}>
                       {item.source}
                       {item.date && (
                         <span>
@@ -472,10 +472,10 @@ function DetailRow({ label, value }: { label: string; value: string }) {
   return (
     <div
       className="flex justify-between py-2"
-      style={{ borderBottom: '1px solid #E8E4DF' }}
+      style={{ borderBottom: '1px solid var(--folio-border-subtle)' }}
     >
       <span style={{ color: 'var(--text-secondary)' }}>{label}</span>
-      <span className="text-right max-w-[60%]" style={{ color: '#2C2825' }}>
+      <span className="text-right max-w-[60%]" style={{ color: 'var(--folio-text-primary)' }}>
         {value}
       </span>
     </div>

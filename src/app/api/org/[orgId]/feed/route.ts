@@ -1,6 +1,7 @@
 // @idor-allow: public-read reason="Organization profile feed: current public firm projects with included photos, and explicitly published org content; selected public fields only"
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { publishedStoryHref } from '@/lib/post/published-story-href';
 
 export const dynamic = 'force-dynamic';
 
@@ -41,7 +42,7 @@ export async function GET(
           publishedAt: true, pinnedAt: true, pinOrder: true,
           images: { where: { inclusion: 'INCLUDED' }, select: { url: true }, take: 1, orderBy: { displayOrder: 'asc' } },
           _count: { select: { rooms: true } },
-          post: { select: { status: true } },
+          post: { select: { status: true, slug: true } },
         },
         orderBy: { publishedAt: 'desc' },
         take: limit,
@@ -62,6 +63,7 @@ export async function GET(
             heroImage: p.images[0]?.url || null,
             location: [p.city, p.regionState].filter(Boolean).join(', ') || null,
             isEditorial: p.post?.status === 'PUBLISHED',
+            storyHref: publishedStoryHref(p.post),
             roomCount: p._count.rooms,
             saveCount: p.saves || 0,
           },

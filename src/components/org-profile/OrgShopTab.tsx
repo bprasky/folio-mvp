@@ -15,7 +15,7 @@ export interface OrgProduct {
   projectCount: number;
   sourceImageUrl: string | null;
   projectTitle: string | null;
-  projectId: string | null;
+  storyHref: string | null;
 }
 
 interface OrgShopTabProps {
@@ -279,10 +279,10 @@ function OrgProductModal({
                 </p>
               </div>
             )}
-            {product.projectId && (
+            {product.storyHref && (
               <div className="mt-auto pt-4">
                 <a
-                  href={`/project/${product.projectId}`}
+                  href={product.storyHref}
                   className="w-full py-3 px-6 rounded-xl text-[var(--type-ui)] font-medium border text-center block no-underline transition-colors"
                   style={{ borderColor: '#E8E4DF', color: '#5C554D' }}
                 >

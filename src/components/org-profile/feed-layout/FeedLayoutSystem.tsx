@@ -26,6 +26,7 @@ function mapToFeedProject(item: FeedItem): FeedProjectItem {
     id: d.id,
     title: d.title || d.name || 'Untitled Project',
     heroImage: d.heroImage || d.images?.[0]?.url || null,
+    storyHref: d.storyHref ?? null,
     location: d.location || d.city || null,
     isEditorial: d.isEditorial || false,
     roomCount: d.roomCount || 0,
