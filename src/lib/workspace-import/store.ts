@@ -39,17 +39,19 @@ export async function createWorkspaceImport(userId: string, input: {
   const url = websiteUrl(input.website);
   await validateProductUrl(url);
   const bioUrl = input.bioUrl ? websiteUrl(input.bioUrl, url) : undefined;
-  const projectUrls = Array.from(new Set((input.projectUrls || []).map(value => websiteUrl(value, url))));
+  const projectUrls = Array.from(new Set((input.projectUrls || []).map(value => value === input.website ? url : websiteUrl(value, url))));
   if ([bioUrl, ...projectUrls].some(value => value && !sameWebsite(value, url)))
     throw new WorkspaceImportError('Use pages from the same business website.');
   if ((bioUrl && !input.sections.includes('bio')) || (projectUrls.length && !input.sections.includes('projects')))
     throw new WorkspaceImportError('Select the sections associated with these page links.');
   const id = requestIdentity('workspace-import', [userId, input.orgId, input.requestId]);
   const sections = Array.from(new Set(input.sections)).sort();
+  // An explicitly requested project page is itself the source, even on a one-page site.
+  const singleProjectPage = sections.length === 1 && sections[0] === 'projects' && projectUrls.length === 1 && projectUrls[0] === url;
   const user = await prisma.user.findUniqueOrThrow({ where: { id: userId }, select: { name: true } });
   const run: WorkspaceImport = { kind: WORKSPACE_IMPORT_KIND, orgId: input.orgId, orgName: access.name, personName: user.name || '',
     website: url, bioUrl, sections, returnTo: safeProfessionalCallback(input.returnTo).startsWith('/onboarding/workspace') ? '/projects/new' : safeProfessionalCallback(input.returnTo), consentAt: new Date().toISOString(), consentVersion: 1,
-    phase: 'discover', pages: [{ url, kind: 'home', status: 'pending', attempts: 0 },
+    phase: 'discover', pages: [{ url, kind: singleProjectPage ? 'project' : 'home', status: 'pending', attempts: 0 },
       ...(bioUrl && bioUrl !== url ? [{ url: bioUrl, kind: 'bio' as const, status: 'pending' as const, attempts: 0 }] : []),
       ...projectUrls.filter(value => value !== url && value !== bioUrl).map(value => ({ url: value, kind: 'project' as const, status: 'pending' as const, attempts: 0 }))],
     projects: [], profile: { website: url, description: '', location: '' },

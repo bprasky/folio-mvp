@@ -1,3 +1,15 @@
+# New project website import and file uploads — 2026-11-04
+
+- [x] Trace the new-project entry, private workspace importer and photo upload recovery.
+- [x] Offer a single-project website import and a separate local photo intake. Reuse the background worker, consent, private review and existing upload controls.
+- [x] Check single-page scope, retry behavior, file-only creation and the review handoff with the browser and import regression suites.
+
+### Review
+
+A designer can paste one public project page without re-entering the project's name or year, or choose portfolio discovery. The single-page import saves a private draft and opens the existing import review. My Profile still opens the firm's broader import when one exists. Local photographs use the existing upload, retry and room-sorting flow.
+
+Chromium passed 26 project guide checks, seven existing-project setup checks, desktop and mobile manual drafts, and interruption recovery. The worker regression saved one private project with its description and photograph while skipping a neighboring project. It also verified request replay, project reuse and profile navigation. These checks used synthetic data and external services.
+
 # Subscription brand refresh and billing review — 2026-10-29
 
 ### Release authorization and complimentary first round
