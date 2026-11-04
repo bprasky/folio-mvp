@@ -112,7 +112,7 @@ export function WelcomeModal() {
                 </Link>
                 <Link
                   href="/about"
-                  className={styles.signin}
+                  className={styles.about}
                   onClick={() => dismiss(true)}
                 >
                   About Folio
@@ -121,18 +121,6 @@ export function WelcomeModal() {
               <p className={styles.nextStep}>
                 Create your account, set up your firm, then bring in your first project.
               </p>
-              <div className={styles.secondaryActions}>
-                <Link href="/auth/signin" className={styles.explore} onClick={() => dismiss(true)}>
-                  Sign in
-                </Link>
-                <button
-                  type="button"
-                  className={styles.explore}
-                  onClick={() => dismiss(true)}
-                >
-                  Explore Folio
-                </button>
-              </div>
             </div>
             <Dialog.Close className={styles.close} aria-label="Close welcome" type="button">
               <X size={20} aria-hidden="true" />

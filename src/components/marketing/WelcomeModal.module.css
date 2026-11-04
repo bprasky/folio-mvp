@@ -75,7 +75,7 @@
   gap: 0.75rem;
 }
 
-.signup, .signin {
+.signup, .about {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -93,13 +93,13 @@
 
 .signup:hover { background: var(--surface-ground); }
 
-.signin {
+.about {
   background: rgb(0 0 0 / 20%);
   color: white;
   border: 1px solid rgb(255 255 255 / 65%);
 }
 
-.signin:hover { background: rgb(255 255 255 / 15%); }
+.about:hover { background: rgb(255 255 255 / 15%); }
 
 .nextStep {
   max-width: 23rem;
@@ -109,28 +109,6 @@
   font-size: var(--type-meta);
   line-height: var(--lh-meta);
 }
-
-.secondaryActions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 1.5rem;
-}
-
-.explore {
-  display: inline-flex;
-  align-items: center;
-  min-height: 2.75rem;
-  margin-top: 0.75rem;
-  color: white;
-  font-family: var(--font-body);
-  font-size: var(--type-ui);
-  font-weight: var(--w-ui);
-  line-height: var(--lh-ui);
-  text-decoration: underline;
-  text-underline-offset: 4px;
-}
-
-.explore:hover { text-decoration: none; }
 
 .close {
   position: absolute;
@@ -146,7 +124,7 @@
 }
 
 .close:hover { background: rgb(0 0 0 / 65%); }
-.signup:focus-visible, .signin:focus-visible, .explore:focus-visible, .close:focus-visible {
+.signup:focus-visible, .about:focus-visible, .close:focus-visible {
   outline: 2px solid white;
   outline-offset: 4px;
 }
@@ -157,6 +135,8 @@
     padding: 5rem 1.5rem 2rem;
   }
   .title { font-size: var(--type-h2); line-height: var(--lh-h2); }
+  .signup, .about { padding-inline: 1rem; }
+  .signup { gap: 0.75rem; }
   .photograph { object-position: 64% center; }
   .scrim {
     background: linear-gradient(0deg, rgb(0 0 0 / 84%), rgb(0 0 0 / 52%) 45%, rgb(0 0 0 / 8%) 85%);

@@ -1,3 +1,12 @@
+# Welcome dialog actions — 2026-11-04
+
+- [x] Keep Sign up and About Folio together. Remove the extra Sign in and Explore Folio row.
+- [x] Verify both navigation links, the X dismissal and sign-in access on signup and in the header.
+
+### Review
+
+In Chromium, the actions shared one row at 320, 390 and 1440 pixels. Closing the dialog exposed a working header login at each width. Sign up led to signup, its Sign in link opened sign-in, and About Folio opened the About page. Component lint passed. The broader marketing check still expects a direct project destination after firm setup. The original check reproduced the same failure because onboarding now goes through the workspace.
+
 # Subscription brand refresh and billing review — 2026-10-29
 
 ### Release authorization and complimentary first round
