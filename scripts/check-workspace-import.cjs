@@ -18,7 +18,7 @@ const html = {
   '/about': '<main><h1>About North Studio</h1><p>We are an architecture practice shaped by light, materials, and the way people live.</p></main>',
   '/team/jane': '<main><h1>Jane Designer</h1><p>Jane studied architecture and established a practice focused on generous, adaptable homes.</p></main>',
   '/work': '<main><a href="/work/harbor">Harbor House</a><a href="/work/court">Court House</a></main>',
-  '/work/harbor': '<main><h1>Harbor House</h1><p>The home opens toward the harbor through a sequence of bright, connected rooms.</p><img src="/harbor.png" alt="Harbor living room"></main>',
+  '/work/harbor': '<main><h1>Harbor House</h1><p>The home opens toward the harbor through a sequence of bright, connected rooms.</p><img src="/harbor.png" alt="Harbor living room"><a href="/work/court">Next project</a></main>',
   '/work/court': '<main><h1>Court House</h1><p>A quiet courtyard brings daylight into the center of this home in the city.</p><img src="/court.png" alt="Courtyard"></main>',
 };
 const png = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+a3foAAAAASUVORK5CYII=', 'base64');
@@ -287,6 +287,13 @@ const rowFor = id => db.importSession.findUnique({ where: { id } });
   assert.equal((await rowFor(again)).processingMeta.projects.filter(p => p.preparation).length, 0);
   await pg.query('UPDATE runs SET "createdAt" = "createdAt" + interval \'1 minute\' WHERE id = $1', [again]);
   await redirectsTo(`/onboarding/workspace?import=${encodeURIComponent(again)}`);
+  const singlePage = 'studio.test/work/harbor';
+  const singleInput = { ...input(), sections: ['projects'], website: singlePage, projectUrls: [singlePage] };
+  const singleId = await store.createWorkspaceImport('owner', singleInput);
+  await pg.query('UPDATE runs SET "createdAt" = "createdAt" + interval \'2 minutes\' WHERE id = $1', [singleId]);
+  await redirectsTo(`/onboarding/workspace?import=${encodeURIComponent(again)}`);
+  await processor.processWorkspaceImports();
+  assert.equal(await db.project.count(), 2, 'importing one previously discovered project preserves its identity');
   await db.organization.create({ data: { id: 'second', name: 'Second Studio', type: 'DESIGN_FIRM' } });
   await db.organizationUser.create({ data: { userId: 'owner', organizationId: 'second', role: 'OWNER', isActive: true } });
   await db.user.update({ where: { id: 'owner' }, data: { operatingAsOrgId: 'second' } });
@@ -302,6 +309,21 @@ const rowFor = id => db.importSession.findUnique({ where: { id } });
   await redirectsTo('/onboarding/workspace');
   console.log('PASS Profile resumes pending/completed/read imports, respects selected firms, and excludes other owners/revoked memberships');
   console.log('PASS auth, explicit consent, active business permissions, request replay, JSONB worker claims, separate private drafts, review and edit preservation');
+
+  await fixture();
+  const singleStart = await startRoute.POST(request(singleInput));
+  assert.equal(singleStart.status, 202);
+  const { id: onlyProject } = await singleStart.json();
+  assert.equal((await (await startRoute.POST(request(singleInput))).json()).id, onlyProject);
+  await processor.processWorkspaceImports();
+  const singleReview = await review.readImportReview('owner', onlyProject);
+  assert.equal(singleReview.canReview, true); assert.equal(singleReview.projects.length, 1);
+  assert.equal(singleReview.projects[0].title, 'Harbor House'); assert.match(singleReview.projects[0].description, /toward the harbor/);
+  assert.equal(singleReview.projects[0].isPublic, false); assert.equal(singleReview.projects[0].photos.length, 1);
+  assert.deepEqual(json(singleReview.run.pages.map(page => [page.kind, page.url])), [['project', 'https://studio.test/work/harbor']]);
+  assert.equal(pageCalls.some(url => new URL(url).pathname === '/work/court'), false);
+  await redirectsTo(`/onboarding/workspace?import=${encodeURIComponent(onlyProject)}`);
+  console.log('PASS explicit project page saves one private draft with its text and photo, without crawling neighboring work or replacing the full profile import');
 
   await fixture(); failedPage = '/work/court'; const partial = await store.createWorkspaceImport('owner', input()); await processor.processWorkspaceImports();
   row = await rowFor(partial); assert.equal(row.status, 'COMPLETED'); assert.equal(await db.project.count(), 1); assert.ok(row.processingMeta.pages.some(p => p.status === 'failed'));

@@ -3,7 +3,9 @@
 import { workflowRequest } from '@/lib/client/workflowRequest';
 import { useEffect, useRef, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { expertiseIntent } from '@/lib/publishing-studio/expertise-navigation';
+import Link from 'next/link';
+import { useStartWorkspaceImport } from '@/lib/workspace-import/useStartWorkspaceImport';
+import { projectExpertiseParams } from '@/lib/publishing-studio/expertise-navigation';
 import { COMPLETION_MONTHS, completionDateInputError } from '@/lib/projects/completionDate';
 import { ProjectGuideUploads } from './ProjectGuideUploads';
 
@@ -15,6 +17,14 @@ export function CreateProjectGuide(props: CreateProjectGuideProps) {
 function ProjectIntake({ actorId, workspaceId, onManual }: CreateProjectGuideProps) {
   const router = useRouter();
   const search = useSearchParams();
+  const expertise = projectExpertiseParams(search);
+  const returnTo = '/projects' + (expertise.size ? '?' + expertise : '');
+  const startImport = useStartWorkspaceImport();
+  const [website, setWebsite] = useState('');
+  const [consent, setConsent] = useState(false);
+  const [importing, setImporting] = useState(false);
+  const [importError, setImportError] = useState('');
+  const startingImport = useRef(false);
   const [title, setTitle] = useState('');
   const [year, setYear] = useState('');
   const [month, setMonth] = useState('');
@@ -44,7 +54,7 @@ function ProjectIntake({ actorId, workspaceId, onManual }: CreateProjectGuidePro
   };
   const projectHref = (id: string) => {
     const next = new URLSearchParams({ view: 'media', step: 'rooms', action: 'sort-rooms' });
-    if (search.has('expertiseTopic') || search.has('expertiseProjects')) { const intent = expertiseIntent(search.get('expertiseTopic'), search.get('expertiseProjects')); next.set('expertiseTopic', intent.topic); next.set('expertiseProjects', intent.projectIds.join(',')); }
+    expertise.forEach((value, key) => next.set(key, value));
     return `/project/${encodeURIComponent(id)}?${next}`;
   };
   const continueToProject = (id: string) => {
@@ -53,6 +63,23 @@ function ProjectIntake({ actorId, workspaceId, onManual }: CreateProjectGuidePro
     router.push(projectHref(id));
   };
   const manual = () => { if (project.current) continueToProject(project.current); else onManual(); };
+  const importWebsite = async (event: React.FormEvent) => {
+    event.preventDefault();
+    if (!consent || !website.trim() || startingImport.current || pending.current || project.current) return;
+    startingImport.current = true;
+    setImporting(true);
+    setImportError('');
+    try {
+      const url = website.trim();
+      const id = await startImport({ orgId: workspaceId, website: url, projectUrls: [url],
+        sections: ['projects'], consent, returnTo });
+      router.push(`/onboarding/workspace?import=${encodeURIComponent(id)}`);
+    } catch (error) {
+      setImportError(error instanceof Error ? error.message : 'Could not start the import. Try again or upload photos below.');
+      startingImport.current = false;
+      setImporting(false);
+    }
+  };
   const ensureProject = async () => {
     if (project.current) return project.current;
     if (!title.trim()) throw new Error('Give the project a name before adding its photographs.');
@@ -72,8 +99,26 @@ function ProjectIntake({ actorId, workspaceId, onManual }: CreateProjectGuidePro
     return creation.current;
   };
   return <main className="mx-auto max-w-5xl space-y-6 px-4 py-8 md:px-8" aria-label="Create a project with Folio">
-    <header><h1 className="font-headline text-folio-h2">Add a completed project</h1><p className="mt-3 max-w-2xl text-folio-body text-text-secondary">Name your project, add when it was completed, and upload your photos.</p></header>
-    <section className="space-y-4" aria-label="Project basics"><label className="block text-folio-meta">Project name<input aria-label="Project name" value={title} disabled={!loaded || !!createdId || creationStarted} onChange={event => { setTitle(event.target.value); persist({ title: event.target.value, year, month }); }} maxLength={80} placeholder="Name your project" className="mt-1 w-full rounded-sm border border-border bg-surface-ground px-3 py-2 text-folio-body" /></label>
+    <header><h1 className="font-headline text-folio-h2">Add a completed project</h1><p className="mt-3 max-w-2xl text-folio-body text-text-secondary">Bring in a project from your website or start with photos from your device.</p></header>
+    {loaded && !creationStarted && !createdId ? <form onSubmit={importWebsite} aria-labelledby="project-import-heading" className="space-y-4 rounded-lg border border-border bg-surface-canvas p-5">
+      <div><h2 id="project-import-heading" className="font-headline text-folio-h4">Import from your website</h2>
+        <p className="mt-1 text-folio-meta text-text-secondary">Paste the page for one project. Folio will bring its name, description and photographs into a private draft for you to review.</p></div>
+      <label className="block text-folio-meta">Project page URL
+        <input type="text" inputMode="url" required maxLength={2048} value={website} disabled={importing} onChange={event => setWebsite(event.target.value)}
+          placeholder="yourstudio.com/projects/garden-house" className="mt-1 w-full rounded-sm border border-border bg-surface-ground px-3 py-2 text-folio-body" />
+      </label>
+      <label className="flex items-start gap-2 text-folio-meta"><input type="checkbox" className="mt-1" checked={consent} disabled={importing} onChange={event => setConsent(event.target.checked)} required />
+        I’m authorized to use this page’s text and photos. Folio may save them privately and email me when the import is ready.</label>
+      <div className="flex flex-wrap items-center gap-4">
+        <button type="submit" disabled={importing || !consent || !website.trim()} className="rounded-sm bg-folio-text-primary px-4 py-2 text-folio-ui text-surface-canvas disabled:opacity-50 focus-visible:ring-2 focus-visible:ring-folio-gold">{importing ? 'Starting import…' : 'Import project'}</button>
+        {!importing && <Link href={`/onboarding/workspace?orgId=${encodeURIComponent(workspaceId)}&new=1&returnTo=${encodeURIComponent(returnTo)}`} className="text-folio-meta underline underline-offset-4">Import a whole portfolio instead</Link>}
+      </div>
+      {importError ? <p role="alert" className="text-folio-meta">{importError} <Link className="underline" href={`/onboarding/workspace?orgId=${encodeURIComponent(workspaceId)}`}>View website imports</Link></p> : null}
+    </form> : null}
+    <fieldset disabled={importing} aria-labelledby="project-files-heading" className="min-w-0 space-y-4 rounded-lg border border-border p-5">
+      <div><h2 id="project-files-heading" className="font-headline text-folio-h4">Upload from your device</h2>
+        <p className="mt-1 text-folio-meta text-text-secondary">For work that isn’t online yet, add a name, completion year and photos. You can add a finish schedule after organizing your rooms.</p></div>
+      <label className="block text-folio-meta">Project name<input aria-label="Project name" value={title} disabled={!loaded || !!createdId || creationStarted} onChange={event => { setTitle(event.target.value); persist({ title: event.target.value, year, month }); }} maxLength={80} placeholder="Name your project" className="mt-1 w-full rounded-sm border border-border bg-surface-ground px-3 py-2 text-folio-body" /></label>
       <fieldset className="space-y-2" disabled={!loaded || !!createdId || creationStarted}>
         <legend className="text-folio-meta">When was it completed?</legend>
         <div className="grid gap-3 sm:grid-cols-2">
@@ -92,7 +137,7 @@ function ProjectIntake({ actorId, workspaceId, onManual }: CreateProjectGuidePro
       {createdId ? <p role="status" className="text-folio-meta">Your project is saved. Reselect any unconfirmed photographs to retry, or continue to review saved photos. Matching photos will not be added twice.</p> : null}
       {storageError ? <p role="alert" className="text-folio-meta">Changes could not be saved on this device. Keep this page open until your project is saved.</p> : null}
       {loaded ? <ProjectGuideUploads ensureProject={ensureProject} onAdded={(id, _photos, complete) => { if (complete) continueToProject(id) }} /> : null}
-    </section>
-    <button type="button" disabled={!loaded || (creationStarted && !createdId)} className="rounded-sm px-3 py-2 text-folio-ui underline underline-offset-4 focus-visible:ring-2 focus-visible:ring-folio-gold" onClick={manual}>{createdId ? 'Continue to project' : 'Add project details first'}</button>
+    </fieldset>
+    <button type="button" disabled={!loaded || importing || (creationStarted && !createdId)} className="rounded-sm px-3 py-2 text-folio-ui underline underline-offset-4 focus-visible:ring-2 focus-visible:ring-folio-gold" onClick={manual}>{createdId ? 'Continue to project' : 'Add project details first'}</button>
   </main>;
 }

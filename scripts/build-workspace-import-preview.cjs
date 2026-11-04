@@ -39,7 +39,7 @@ const previewPhoto='https://images.unsplash.com/photo-1618220179428-22790b461013
 const previewProjects=[{id:'harbor',title:'Harbor House',description:'A bright home on the coast.',isPublic:false,photos:[{url:previewPhoto,alt:'A light-filled living room',width:1800,height:1200}]},{id:'court',title:'Court House',description:'A quiet city retreat.',isPublic:false,photos:[{url:previewPhoto,alt:'A living room with natural materials',width:1200,height:1800}]}];
 if(params.get('progress')==='1')previewProjects[0].hasSavedProgress=true;
 const run={kind:'workspace-import-v1',orgId:'firm',orgName:'North Studio',personName:'Jane Designer',website:'https://studio.test',sections:['business','bio','projects'],returnTo:'/projects/new',phase:'complete',consentAt:new Date().toISOString(),consentVersion:1,profile,notices:[],profileAttempts:1,profileReady:true,notification:{status:'accepted',attempts:1},pages:[{url:'https://studio.test',kind:'home',status:'saved',attempts:1}],projects:[{url:'https://studio.test/work/harbor',title:'Harbor House',description:'A bright home on the coast.',projectId:'harbor',status:'ready',attempts:0,photos:Array.from({length:8},(_,i)=>({url:'photo-'+i,status:'saved',attempts:1}))}]};
-const result=(data,status=200)=>({ok:status>=200&&status<300,status,json:async()=>structuredClone(data)});
+const result=(data,status=200)=>Response.json(data,{status});
 window.fetch=async(input,options={})=>{
  const url=new URL(String(input),location.origin),body=options.body?JSON.parse(options.body):{};
  await new Promise(resolve=>setTimeout(resolve,150));

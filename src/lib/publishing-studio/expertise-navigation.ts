@@ -10,3 +10,10 @@ export function expertiseReturnUrl(intent: ReturnType<typeof expertiseIntent>, p
   const query = new URLSearchParams({ expertiseTopic: intent.topic, expertiseProjects: ids.join(',') });
   return `/designer/studio?${query}#my-expertise`;
 }
+
+/** Carry only the originating Studio brief when opening an imported or uploaded project. */
+export function projectExpertiseParams(search: Pick<URLSearchParams, 'get' | 'has'>) {
+  if (!search.has('expertiseTopic') && !search.has('expertiseProjects')) return new URLSearchParams();
+  const intent = expertiseIntent(search.get('expertiseTopic'), search.get('expertiseProjects'));
+  return new URLSearchParams({ expertiseTopic: intent.topic, expertiseProjects: intent.projectIds.join(',') });
+}

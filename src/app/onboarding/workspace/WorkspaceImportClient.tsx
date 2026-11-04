@@ -4,6 +4,8 @@ import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';
+import { useStartWorkspaceImport } from '@/lib/workspace-import/useStartWorkspaceImport';
+import { projectExpertiseParams } from '@/lib/publishing-studio/expertise-navigation';
 import { ProfessionalSetupFrame } from '@/components/onboarding/ProfessionalSetupFrame';
 import { SetupProgress } from '@/components/onboarding/SetupProgress';
 import { WorkspaceReadyPreview, type WorkspaceProfilePreview } from '@/components/onboarding/WorkspaceReadyPreview';
@@ -22,7 +24,14 @@ const phaseLabels: Record<WorkspaceImport['phase'], string> = {
 };
 const counted = (count: number, noun: string) => `${count} ${noun}${count === 1 ? '' : 's'}`;
 
-function ProjectDrafts({ projects, canReview }: { projects: ImportedProject[]; canReview: boolean }) {
+function projectReviewHref(projectId: string, returnTo: string, action: 'open' | 'schedule' | 'tag' = 'open') {
+  const next = new URLSearchParams(action === 'open' ? '' : { view: 'media', step: 'tags', action: action === 'schedule' ? 'import-doc' : 'tag-by-hand' });
+  const expertise = projectExpertiseParams(new URL(returnTo, 'https://folio.invalid').searchParams);
+  expertise.forEach((value, key) => next.set(key, value));
+  return `/project/${encodeURIComponent(projectId)}${next.size ? '?' + next : ''}`;
+}
+
+function ProjectDrafts({ projects, canReview, returnTo }: { projects: ImportedProject[]; canReview: boolean; returnTo: string }) {
   if (!projects.length) return null;
   return <section className="space-y-4"><h2 className="folio-h3">Your projects</h2><p className="folio-meta text-folio-text-secondary">Saved privately for you to review, refine, and publish when you’re ready.</p>{projects.map(project => {
     const cover = project.photos.find(photo => photo.status === 'saved' && photo.savedUrl);
@@ -37,7 +46,7 @@ function ProjectDrafts({ projects, canReview }: { projects: ImportedProject[]; c
       <p className="folio-meta text-folio-text-secondary">{counted(project.photos.filter(photo => photo.status === 'saved').length, 'photograph')} saved · Add materials before your interview</p>
       {project.error ? <p className="folio-meta">{project.error}</p> : null}
       {failed ? <p className="folio-meta">{counted(failed, 'photograph')} could not be imported. Retry, or upload them in the project.</p> : null}
-      {project.projectId && canReview ? <Link href={`/project/${project.projectId}`} className="underline folio-ui">Review project</Link> : <p className="folio-meta">{project.status === 'failed' ? 'Retry this import to finish saving the project.' : 'Preparing this project…'}</p>}
+      {project.projectId && canReview ? <Link href={projectReviewHref(project.projectId, returnTo)} className="underline folio-ui">Review project</Link> : <p className="folio-meta">{project.status === 'failed' ? 'Retry this import to finish saving the project.' : 'Preparing this project…'}</p>}
     </article>;
   })}</section>;
 }
@@ -52,8 +61,7 @@ export function WorkspaceImportClient({ access, memberships, initialId, availabl
   const [consent, setConsent] = useState(false);
   const [busy, setBusy] = useState(false);
   const saving = useRef(false);
-  const requestId = useRef<string>();
-  const requestBody = useRef<string>();
+  const startImport = useStartWorkspaceImport();
   const [error, setError] = useState('');
   const [notice, setNotice] = useState('');
   const [refresh, setRefresh] = useState(0);
@@ -99,14 +107,9 @@ export function WorkspaceImportClient({ access, memberships, initialId, availabl
     event.preventDefault();
     if (saving.current) return;
     saving.current = true; setBusy(true); setError('');
-    const body = { orgId: access.id, website, sections, consent, returnTo };
-    const serialized = JSON.stringify(body);
-    if (requestBody.current !== serialized) { requestBody.current = serialized; requestId.current = crypto.randomUUID(); }
     try {
-      const response = await fetch('/api/onboarding/workspace', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ...body, requestId: requestId.current }) });
-      const data = await response.json();
-      if (!response.ok) throw new Error(data.error || 'Could not start your import.');
-      setId(data.id); router.replace(`/onboarding/workspace?import=${encodeURIComponent(data.id)}`);
+      const importId = await startImport({ orgId: access.id, website, sections, consent, returnTo });
+      setId(importId); router.replace(`/onboarding/workspace?import=${encodeURIComponent(importId)}`);
     } catch (err) { setError(err instanceof Error ? err.message : 'Could not start your import.'); }
     finally { saving.current = false; setBusy(false); }
   }
@@ -145,7 +148,7 @@ export function WorkspaceImportClient({ access, memberships, initialId, availabl
   return <ProfessionalSetupFrame stage="workspace" wide={showPreview}><div className="space-y-7">
     {showPreview && review?.profile && run ? <WorkspaceReadyPreview profile={review.profile} personName={run.personName}
       description={description} location={location} logo={useLogo ? run.profile.logo : review.business.logo} bio={bio} projects={review.projects} busy={busy} canContribute={review.access.canContribute}
-      onReviewDetails={() => setDetailsOpen(true)} onOpenProject={(projectId, action) => void continueToFolio(`/project/${encodeURIComponent(projectId)}${action === 'open' ? '' : `?view=media&step=tags&action=${action === 'schedule' ? 'import-doc' : 'tag-by-hand'}`}`)} /> : <>
+      onReviewDetails={() => setDetailsOpen(true)} onOpenProject={(projectId, action) => void continueToFolio(projectReviewHref(projectId, returnTo, action))} /> : <>
     <SetupProgress step={3} />
     <div><p className="folio-meta text-folio-text-secondary mb-2">{access.name}</p>
       <h1 className="folio-h2">{review?.canReview ? 'Your work, ready for you.' : id ? 'Your workspace is taking shape.' : 'Bring your work with you.'}</h1>
@@ -173,7 +176,7 @@ export function WorkspaceImportClient({ access, memberships, initialId, availabl
         <p className="folio-meta">{review.canReview ? 'Review the details below, then choose a project to continue.' : 'We’ll email you when preparation finishes. Your saved work stays available if part of the import needs attention.'}</p>
         {run?.notification.status === 'accepted' ? <p className="folio-meta text-folio-text-secondary">Your readiness email has been sent.</p> : run?.notification.error ? <p className="folio-meta">{run.notification.error}</p> : null}
       </section>
-      {run ? <ProjectDrafts projects={run.projects} canReview={review.canReview} /> : null}
+      {run ? <ProjectDrafts projects={run.projects} canReview={review.canReview} returnTo={returnTo} /> : null}
       </details>
       {run && run.notices.length > 0 ? <section className={card}><h2 className="folio-ui">A few things to review</h2><ul className="list-disc pl-5 space-y-2 folio-meta">{run.notices.map(message => <li key={message}>{message}</li>)}</ul></section> : null}
       {review.canReview && run ? <>

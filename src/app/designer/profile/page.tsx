@@ -24,6 +24,17 @@ export default async function DesignerProfilePage() {
       { OR: orgIds.map(orgId => ({ processingMeta: { path: ['orgId'], equals: orgId } })) },
     ] }, select: { id: true, processingMeta: true }, orderBy: { createdAt: 'desc' }, take: 10 });
   const saved = imports.find(row => isWorkspaceImport(row.processingMeta) && orgIds.includes(row.processingMeta.orgId));
-  if (saved) redirect('/onboarding/workspace?import=' + encodeURIComponent(saved.id));
+  if (saved && isWorkspaceImport(saved.processingMeta)) {
+    // A single added project has its own review link. Keep the firm's full import in My Profile.
+    if (saved.processingMeta.pages[0]?.kind === 'project') {
+      const profileImport = await prisma.importSession.findFirst({ where: { userId, AND: [
+        { processingMeta: { path: ['kind'], equals: WORKSPACE_IMPORT_KIND } },
+        { processingMeta: { path: ['orgId'], equals: saved.processingMeta.orgId } },
+        { processingMeta: { path: ['pages', '0', 'kind'], equals: 'home' } },
+      ] }, orderBy: { createdAt: 'desc' }, select: { id: true } });
+      if (profileImport) redirect('/onboarding/workspace?import=' + encodeURIComponent(profileImport.id));
+    }
+    redirect('/onboarding/workspace?import=' + encodeURIComponent(saved.id));
+  }
   redirect('/org/' + encodeURIComponent(currentOrgId || memberships[0].organizationId));
 }

@@ -5,6 +5,7 @@ const esbuild=require('esbuild'),puppeteer=require('puppeteer-core'),postcss=req
 const root=path.resolve(__dirname,'..'),out=path.join(root,'.tmp/project-guide-browser'),review=path.resolve(process.env.PROJECT_GUIDE_REVIEW_DIR||path.join(out,'review'));
 let savedAnswers=1,resetPosts=[],resetCommits=0,resetReads=0,resetFailure=null,holdReset=null,holdAnswers=false,pendingAnswers=[],restoredSessions=[];
 const resetReceipts=new Map();
+const websiteImports = [];
 async function waitFor(predicate){const deadline=Date.now()+5000;while(!predicate()){if(Date.now()>deadline)throw Error('Fixture request did not arrive');await new Promise(resolve=>setTimeout(resolve,10))}}
 let enabled=true,starts=0,creates=0,uploads=0,version=0,photos=[],actions=[],live=null,refreshNoop=false,loseControlResponse=false,failNextUpload=false;
 const sessions=new Map(),controlReceipts=new Map(),results=[],projectWrites=[];
@@ -32,7 +33,6 @@ function handler(req,res){const url=new URL(req.url,'http://local'),route=url.pa
   if(route.endsWith('/generation-context'))return json({bio:{available:false},projectHistory:{available:false,count:0}});
   if(route.endsWith('/interview/reset')){resetReads++;return json({ok:true,snapshot:{revision:String(resetCommits).padStart(64,'0'),sessionId:'guided-'+resetCommits}})}
   if(route.endsWith('/interview')){const reply=()=>json({guided:true,answers:savedAnswers?[{questionId:'saved',prompt:'Earlier question',answer:'Saved design detail.',roomId:'living'}]:[],coverage:[]});if(holdAnswers){pendingAnswers.push(reply);return}return reply()}
-  if(route==='/api/import/import-fixture')return json({status:'READY_FOR_REVIEW',processingMeta:{candidates:[{url:'http://'+req.headers.host+'/photo.svg',alt:'Imported room'}]}});
   return json({});
  }
  let body='';req.on('data',part=>body+=part);req.on('end',()=>{const data=JSON.parse(body||'{}');
@@ -47,8 +47,10 @@ function handler(req,res){const url=new URL(req.url,'http://local'),route=url.pa
   }
   if(route==='/api/projects'){projectWrites.push({method:req.method,data});if(req.method==='POST')creates++;assert.equal(data.designerOrgId,'workspace');return json({id:'project'})}
   if(route==='/api/projects/project/images'){if(failNextUpload){failNextUpload=false;return json({message:'Synthetic failed photograph'},503)}uploads++;const image={id:'photo-'+uploads,url:'/photo.svg',name:data.name||'Room',roomId:'living',room:'Living room'};photos.push(image);return json({image},201)}
-  if(route==='/api/import/website')return json({sessionId:'import-fixture'});
-  if(route==='/api/import/import-fixture')return json({ok:true});
+  if(route==='/api/onboarding/workspace'){
+    websiteImports.push(data);
+    return websiteImports.length === 1 ? json({error:'Import response interrupted.'},503) : json({id:'website-review'},202);
+  }
   if(route==='/api/live-interviews'){starts++;const guide={...metadata(data.source),workspaceStep:data.workspaceStep};live={id:'live-'+starts,status:'active',snapshot:snapshot(data.source,guide),turns:[],join:{url:'https://synthetic.daily.co/guide',token:'fixture',conversationId:'conversation-'+starts}};sessions.set(live.id,live);return json(live)}
   if(route.startsWith('/api/live-interviews/')){const current=sessions.get(route.split('/').at(-1));actions.push(data);if(['end','pause','switch_to_text'].includes(data.action)){current.status='ended';return json(current)}
    if(data.action==='link_image')return json(current);if(data.action==='prepare_text'){current.turns.push({position:current.turns.length,status:'awaiting_final',raw:data.text,inputMode:'text',requestId:data.requestId});return json({...current,textRegistration:{created:true,requestId:data.requestId}})}
@@ -65,7 +67,7 @@ async function main(){await build();const server=http.createServer(handler);awai
   await check('actual Create+ is a short upload form with no live call or microphone request',async()=>{
     await page.goto(base+'/projects/new');await page.waitForSelector('input[aria-label="Project name"]');
     assert.equal(starts,0);assert.equal(creates,0);assert.equal(await page.evaluate(()=>window.dailyCalls.length),0);assert.equal(await page.evaluate(()=>window.permissions),0);
-    assert.ok(await page.$('input[aria-label="Project or portfolio link"]'));assert.ok(await page.$('input[type=file]'));assert.equal(await page.$('section[aria-label="Live interview"]'),null);
+    assert.ok(await page.$('form[aria-labelledby="project-import-heading"] input[inputmode=url]'));assert.ok(await page.$('input[type=file]'));assert.equal(await page.$('section[aria-label="Live interview"]'),null);
     await page.screenshot({path:path.join(review,'create-desktop-synthetic.png'),fullPage:true});await page.setViewport({width:390,height:844});assert(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));await page.screenshot({path:path.join(review,'create-mobile-synthetic.png'),fullPage:true});await page.setViewport({width:1440,height:1100});
   });
   await check('upload creates one project and opens room sorting directly without a host or completion page',async()=>{
@@ -95,11 +97,21 @@ async function main(){await build();const server=http.createServer(handler);awai
     live.snapshot=snapshot(live.snapshot.source,{...live.snapshot.guide,phase:'guide',allowedActions:['resume_interview','open_upload','open_tagging'],action:'open_upload',actionId:'spoken-upload'});
     await page.waitForFunction(()=>new URLSearchParams(location.search).get('step')==='photos');await waitFor(()=>sessions.get(oldSession).status==='ended');assert.equal(starts,before);assert.equal(await page.$('section[aria-label="Live interview"]'),null);
   });
-  await check('URL intake imports selected photos without a call and Story returns to the saved conversation',async()=>{
-    const before=starts,beforeCreates=creates,beforeUploads=uploads;await page.goto(base+'/projects/new');await page.waitForSelector('input[aria-label="Project name"]');await fillCompletion();await page.type('input[aria-label="Project name"]','Portfolio project');
-    await page.type('input[aria-label="Project or portfolio link"]','https://designer.example/project');await click('Find photos');await text('Choose the photographs');await click('Add selected photos');await page.waitForFunction(()=>location.pathname==='/project/project');
-    assert.equal(creates,beforeCreates+1);assert.equal(uploads,beforeUploads+1);assert.equal(starts,before);assert.equal(await page.evaluate(()=>new URLSearchParams(location.search).get('step')),'rooms');
-    await page.evaluate(()=>document.querySelector('[aria-label="Project steps"] a[href*="view=story"]').click());await ready();assert.equal(starts,before+1);assert.equal(await page.$('input[type=file]'),null);await click('Continue our conversation');await text('What did the clients want');
+  await check('URL intake starts a consented single-project smart import and retries the same receipt',async()=>{
+    const before=starts,beforeCreates=creates,beforeUploads=uploads;
+    await page.goto(base+'/projects/new?expertiseTopic=Renovation');
+    const form='form[aria-labelledby="project-import-heading"]';
+    await page.waitForSelector(form);
+    await page.type(form+' input[inputmode=url]','designer.example/project');
+    assert.equal(await page.$eval(form+' button',b=>b.disabled),true);
+    await page.click(form+' input[type=checkbox]');await click('Import project');await text('Import response interrupted.');
+    assert.equal(await page.$eval('input[type=file]',input=>input.matches(':disabled')),false);
+    await click('Import project');await page.waitForFunction(()=>location.pathname==='/onboarding/workspace' && new URLSearchParams(location.search).get('import')==='website-review');
+    const [first,retry]=websiteImports;assert.deepEqual(first,retry);assert.ok(first.requestId);
+    assert.deepEqual(first.sections,['projects']);assert.deepEqual(first.projectUrls,['designer.example/project']);
+    assert.equal(first.website,first.projectUrls[0]);assert.equal(first.orgId,'workspace');assert.equal(first.consent,true);assert.equal(first.returnTo,'/projects?expertiseTopic=Renovation&expertiseProjects=');
+    assert.equal(creates,beforeCreates);assert.equal(uploads,beforeUploads);assert.equal(starts,before);
+    await page.goto(base+'/project/project?view=story');await ready();assert.equal(starts,before+1);assert.equal(await page.$('input[type=file]'),null);await click('Continue our conversation');await text('What did the clients want');
   });
   await check('no-op refreshed metadata does not replay speech and unsent typed draft blocks refresh',async()=>{refreshNoop=true;const before=await page.evaluate(()=>window.messages.length);await page.evaluate(()=>window.dispatchEvent(new Event('fixture-refresh')));await page.waitForFunction(()=>document.body.innerText.includes('What did the clients want'));await new Promise(r=>setTimeout(r,100));assert.equal(await page.evaluate(()=>window.messages.length),before);await page.type('textarea','An unsent detail.');const count=actions.filter(a=>a.command?.guideAction==='refresh').length;await page.evaluate(()=>window.dispatchEvent(new Event('fixture-refresh')));await new Promise(r=>setTimeout(r,100));assert.equal(actions.filter(a=>a.command?.guideAction==='refresh').length,count);assert.equal(await page.$eval('textarea',e=>e.value),'An unsent detail.');});
   await check('completed-project offered detail is editable and saves only after explicit confirmation',async()=>{await click('Clear unsent reply');const detail='We found the antique mirror in a local salvage yard.';live.snapshot=snapshot(live.snapshot.source,{...live.snapshot.guide,phase:'interview'});live.snapshot.guide.offeredDetail={text:detail,questionId:live.snapshot.currentQuestion.id};const before=actions.filter(a=>a.action==='prepare_text').length;await text('Use what I just shared');assert.equal(actions.filter(a=>a.action==='prepare_text').length,before);await click('Edit this detail');assert.equal(await page.$eval('textarea',e=>e.value),detail);await click('Clear unsent reply');await click('Use what I just shared');await page.waitForFunction(detail=>window.messages.some(m=>m.event_type==='conversation.respond'&&m.properties.text===detail),{},detail);const receipt=actions.filter(a=>a.action==='prepare_text').at(-1);assert.equal(receipt.questionId,live.snapshot.currentQuestion.id);assert.equal(receipt.version,live.snapshot.version);live.turns.at(-1).status='saved';delete live.snapshot.guide.offeredDetail;await page.waitForFunction(()=>document.querySelector('textarea').value==='');});

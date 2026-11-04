@@ -27,6 +27,7 @@ function App(){const[away,setAway]=useState(false);window.leaveIntake=()=>setAwa
 (async () => {
   await esbuild.build({ stdin: { contents: entry, loader: 'tsx', resolveDir: root }, bundle: true, platform: 'browser', jsx: 'automatic', outfile: path.join(out, 'app.js'), alias: { '@': path.join(root, 'src') }, plugins: [{ name: 'fixture-navigation', setup(build) {
     const stubs = {
+      'next/link': 'import React from "react";export default function Link(props){return <a {...props}/>}',
       '@/components/spotlight/PrivateSpotlightInterview': 'export function SpotlightSelections(){return null}',
       '@/app/actions/projectImages': 'export async function setImageNoProducts(){throw Error("Synthetic action unavailable")}',
       '@/components/project/ProductTagPicker': 'export function ProductTagPicker(){return null}',
