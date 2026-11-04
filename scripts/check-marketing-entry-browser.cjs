@@ -115,6 +115,30 @@ async function main() {
   const signin=async()=>{await page.type('#email','designer@example.test');await page.type('#password','FixturePassword123!');};
   try{
     await reset();
+    for (const width of [320, 390, 1440]) {
+      await page.setViewport({width, height: 844});
+      await go('/');
+      const dialog = await page.waitForSelector('[role=dialog]');
+      assert.deepEqual(await dialog.$$eval('a, button', elements => elements.map(element =>
+        element.getAttribute('aria-label') || element.textContent.trim()
+      )), ['Sign up', 'About Folio', 'Close welcome']);
+      const [signupTop, aboutTop] = await dialog.$$eval('a', links => links.map(link => link.getBoundingClientRect().top));
+      assert.equal(signupTop, aboutTop, 'Keep welcome actions on one row at ' + width + 'px');
+      await page.click('[role=dialog] button[aria-label="Close welcome"]');
+      await page.waitForSelector('[role=dialog]', {hidden: true});
+      await Promise.all([page.waitForNavigation(), page.click('header a[href="/auth/signin"]')]);
+      assert.equal(new URL(page.url()).pathname, '/auth/signin');
+      await reset();
+    }
+    results.push({journey:'close welcome → header login on mobile and desktop',passed:true});
+    await go('/');
+    await page.waitForSelector('[role=dialog]');
+    await clickNavigate('Sign up', '[role=dialog] a');
+    assert.equal(new URL(page.url()).pathname, '/auth/signup');
+    await clickNavigate('Sign in');
+    assert.equal(new URL(page.url()).pathname, '/auth/signin');
+    results.push({journey:'welcome → signup → sign in',passed:true});
+    await reset();
     for(const [width,height] of [[1440,1000],[1024,768],[768,1024],[390,844],[320,568]]){
       await page.setViewport({width,height});await go('/about');await page.evaluate(()=>document.fonts.ready);
       const fits=await page.evaluate(()=>({width:innerWidth,document:document.documentElement.scrollWidth,article:document.querySelector('article').scrollWidth,heading:document.querySelector('#about-title').textContent}));

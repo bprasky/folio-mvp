@@ -13,6 +13,15 @@ Followed BP Design’s actual guest path through Projects, Shop, About, Contact 
 
 Browser geometry at 1440, 1008, 768, 390 and 320px showed zero horizontal overflow, zero card centering error, and matching cover/tab/feed left edges. The profile/settings browser suite checks public, member and admin actions, appearance save/reload and error recovery with isolated fixtures. The masthead browser suite covers search, the wordmark, account controls, Create and mobile notifications. Its test now reopens the account menu after Notifications dismisses it. All 18 profile route/data regressions passed, including visitor denial, both vendor scan directions, exact firm scope, and withholding unpublished reader links. Client-boundary and migration guards passed. Changed-file lint had zero errors. The TypeScript ratchet passed with 851 diagnostics against the 862 baseline. The repository-wide IDOR scanner still reports the same 45 findings as the unmodified main revision, including 11 critical findings.
 
+# Welcome dialog actions — 2026-11-04
+
+- [x] Keep Sign up and About Folio together. Remove the extra Sign in and Explore Folio row.
+- [x] Verify both navigation links, the X dismissal and sign-in access on signup and in the header.
+
+### Review
+
+In Chromium, the actions shared one row at 320, 390 and 1440 pixels. Closing the dialog exposed a working header login at each width. Sign up led to signup, its Sign in link opened sign-in, and About Folio opened the About page. Component lint passed. The broader marketing check still expects a direct project destination after firm setup. The original check reproduced the same failure because onboarding now goes through the workspace.
+
 # Subscription brand refresh and billing review — 2026-10-29
 
 ### Release authorization and complimentary first round
