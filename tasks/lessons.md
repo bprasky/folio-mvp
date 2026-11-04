@@ -18,9 +18,9 @@ Keep About beside the welcome signup action so visitors can understand Folio bef
 
 The About project CTA must check the current session: wait for loading, preserve the existing account for signed-in visitors and offer sign-in as well as signup to signed-out visitors. Verify both authentication paths retain project creation through any required firm enrollment.
 
-## 2026-10-23 — Logged-out discovery needs visible account entry points
+## 2026-11-04 — Keep account entry points specific to each surface
 
-The welcome and persistent header must both offer explicit Sign up and Sign in actions using the existing auth routes. A dismiss-only welcome and a sign-in-only header hide onboarding. Verify the closed-modal state and narrow-screen header as well as the initial welcome; preserve an intentional option to browse.
+The welcome dialog pairs Sign up with About Folio. Its X lets visitors browse. Returning visitors can sign in from signup or use Log in in the header after closing the dialog. Check both paths when changing the welcome actions.
 
 ## 2026-10-23 — Preserve the founder's chosen landing headline
 
