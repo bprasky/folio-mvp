@@ -58,7 +58,7 @@ export default function InquiryComposer({
     >
       <h3
         className="text-sm font-medium"
-        style={{ color: '#5C554D' }}
+        style={{ color: 'var(--folio-text-secondary)' }}
       >
         Send {recipientOrg.name} a message
       </h3>
@@ -70,9 +70,9 @@ export default function InquiryComposer({
         onChange={(e) => setSubject(e.target.value)}
         className="w-full text-sm rounded-xl px-4 py-3 focus:outline-none focus:ring-1"
         style={{
-          backgroundColor: '#F5F3F0',
-          borderColor: '#E8E4DF',
-          border: '1px solid #E8E4DF',
+          backgroundColor: 'var(--surface-canvas)',
+          borderColor: 'var(--folio-border-subtle)',
+          border: '1px solid var(--folio-border-subtle)',
         }}
       />
 
@@ -83,9 +83,9 @@ export default function InquiryComposer({
         rows={5}
         className="w-full text-sm rounded-xl px-4 py-3 resize-none focus:outline-none focus:ring-1"
         style={{
-          backgroundColor: '#F5F3F0',
-          borderColor: '#E8E4DF',
-          border: '1px solid #E8E4DF',
+          backgroundColor: 'var(--surface-canvas)',
+          borderColor: 'var(--folio-border-subtle)',
+          border: '1px solid var(--folio-border-subtle)',
         }}
       />
 
@@ -99,14 +99,14 @@ export default function InquiryComposer({
         onClick={handleSend}
         disabled={!body.trim() || sending}
         className="w-full py-3 rounded-xl text-white text-sm transition-opacity disabled:opacity-40"
-        style={{ backgroundColor: '#2C2825' }}
+        style={{ backgroundColor: 'var(--folio-text-primary)', color: 'var(--surface-canvas)' }}
       >
         {sending ? 'Sending...' : 'Send message'}
       </button>
 
       <p
         className="text-xs text-center"
-        style={{ color: '#A69E96' }}
+        style={{ color: 'var(--folio-text-secondary)' }}
       >
         Messages go to {recipientOrg.name}&apos;s Folio inbox.
         They typically respond within a few days.

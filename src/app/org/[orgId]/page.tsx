@@ -4,6 +4,7 @@ import { prisma } from '@/lib/prisma';
 import { PUBLISHED_PROJECT_FILTER } from '@/server/queries/filters';
 import { getOrgProfileAppearanceData } from '@/lib/server/org-profile-appearance';
 import { profilePageStyle } from '@/lib/org-profile-appearance';
+import { publishedStoryHref } from '@/lib/post/published-story-href';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/app/api/auth/[...nextauth]/options';
 import OrgProfileHero from '@/components/org-profile/OrgProfileHero';
@@ -302,7 +303,7 @@ export default async function OrgProfilePage({ params, searchParams }: Props) {
             select: {
               projectId: true,
               url: true,
-              project: { select: { title: true } },
+              project: { select: { title: true, post: { select: { status: true, slug: true } } } },
             },
           },
         },
@@ -318,7 +319,7 @@ export default async function OrgProfilePage({ params, searchParams }: Props) {
             existing.cropUrl = tag.cropUrl;
             existing.sourceImageUrl = tag.image.url;
             existing.projectTitle = tag.image.project?.title || null;
-            existing.projectId = tag.image.projectId;
+            existing.storyHref = publishedStoryHref(tag.image.project.post);
           }
         } else {
           productMap.set(tag.productId, {
@@ -327,7 +328,7 @@ export default async function OrgProfilePage({ params, searchParams }: Props) {
             cropUrl: tag.cropUrl,
             sourceImageUrl: tag.image.url,
             projectTitle: tag.image.project?.title || null,
-            projectId: tag.image.projectId,
+            storyHref: publishedStoryHref(tag.image.project.post),
           });
         }
       });
@@ -344,7 +345,7 @@ export default async function OrgProfilePage({ params, searchParams }: Props) {
           projectCount: item.projectIds.size,
           sourceImageUrl: item.sourceImageUrl,
           projectTitle: item.projectTitle,
-          projectId: item.projectId,
+          storyHref: item.storyHref,
         }))
         .sort((a: any, b: any) => b.projectCount - a.projectCount);
     } catch (err) {
@@ -419,7 +420,7 @@ export default async function OrgProfilePage({ params, searchParams }: Props) {
       <div id="profile-content" className="scroll-mt-20">
       <OrgProfileTabs activeTab={activeTab} orgId={resolvedParams.orgId} defaultTab={defaultTab} orgType={org.type} isMember={isMember} />
 
-      <div className={`${activeTab === 'feed' ? 'mx-[calc(50%-50vw)] px-4 md:px-6 lg:px-8' : `max-w-6xl mx-auto px-6 ${styles.neutralContent}`} py-8`}>
+      <div className={`${styles.profileFrame} ${activeTab === 'feed' ? '' : `px-4 md:px-6 ${styles.neutralContent}`} py-8`}>
         {/* Vendor-specific tab content */}
         {isVendorOrg && activeTab === 'feed' && (
           <Suspense fallback={<FeedSkeleton />}>
@@ -488,7 +489,7 @@ export default async function OrgProfilePage({ params, searchParams }: Props) {
         {activeTab === 'contact' && (
           <OrgContactTab
             org={orgData}
-            isOwner={isOwner}
+            isMember={isMember}
             currentUser={session?.user ? { id: session.user.id, name: session.user.name || '' } : null}
           />
         )}
@@ -506,23 +507,30 @@ async function getPinnedItems(orgId: string) {
         designerOrgId: orgId,
         isPublic: true,
         pinnedAt: { not: null },
+        post: { status: 'PUBLISHED' },
       },
       include: {
+        post: { select: { slug: true, status: true } },
         images: { where: { inclusion: 'INCLUDED' }, take: 1, orderBy: { displayOrder: 'asc' }, select: { url: true } },
       },
       orderBy: { pinOrder: 'asc' },
       take: 5,
     });
 
-    return projects.map(p => ({
-      id: p.id,
-      type: 'project' as const,
-      data: {
-        title: p.title || 'Untitled',
-        image: p.images[0]?.url || null,
-        subtitle: `${p.city || 'Project'} · ${p.saves || 0} saves`,
-      },
-    }));
+    return projects.flatMap(p => {
+      const href = publishedStoryHref(p.post);
+      if (!href) return [];
+      return [{
+        id: p.id,
+        href,
+        type: 'project' as const,
+        data: {
+          title: p.title || 'Untitled',
+          image: p.images[0]?.url || null,
+          subtitle: `${p.city || 'Project'} · ${p.saves || 0} saves`,
+        },
+      }];
+    });
   } catch {
     // pinnedAt field might not exist in Prisma client yet
     return [];

@@ -16,7 +16,7 @@ type UIEvent = {
   eventTypes?: string[] | null;
   startsAt?: string | null;   // ISO string ok
   startDate?: string | null;  // for alt shapes
-  href?: string;
+  href?: string | null;
   isDraft?: boolean;
   actionLabel?: string;
 };
@@ -138,7 +138,7 @@ export default function FlowMosaic({ events, canEdit = false, preserveOrder = fa
     >
       {sized.map(({ item, size }) => {
         const { className, rowSpan } = tileLayout[size];
-        const href = item.href || `/events/${item.id}`;
+        const href = item.href === undefined ? `/events/${item.id}` : item.href;
         const img = pickImage(item);
 
         return (
@@ -153,7 +153,7 @@ export default function FlowMosaic({ events, canEdit = false, preserveOrder = fa
             {onSelect ? <button type="button" disabled={disabled} onClick={() => onSelect(item.id)}
               className="absolute inset-0 z-30 block w-full rounded-[20px] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-4px] focus-visible:outline-white"
               aria-label={`${item.title}: ${item.actionLabel || 'Open project'}`} data-testid="mosaic-card-link" />
-              : <Link href={href} className="absolute inset-0 z-30 block" aria-label={item.title ?? "View event"} data-testid="mosaic-card-link" />}
+              : href && <Link href={href} className="absolute inset-0 z-30 block" aria-label={item.title ?? "View event"} data-testid="mosaic-card-link" />}
             <div className="relative h-full">
               {/* image box: fill, cover */}
               <div className="absolute inset-0 pointer-events-none">

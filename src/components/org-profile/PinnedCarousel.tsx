@@ -7,6 +7,7 @@ import SafeImage from '@/components/SafeImage';
 
 interface PinnedItem {
   id: string;
+  href: string;
   type: 'project' | 'media' | 'recognition' | 'collaboration';
   data: {
     title: string;
@@ -109,18 +110,9 @@ function PinnedCard({ item }: { item: PinnedItem }) {
     }
   };
 
-  const getHref = () => {
-    switch (item.type) {
-      case 'project':
-        return `/project/${item.id}`;
-      default:
-        return '#';
-    }
-  };
-
   return (
     <Link
-      href={getHref()}
+      href={item.href}
       className="flex items-center gap-4 flex-shrink-0 cursor-pointer group"
       style={{ scrollSnapAlign: 'start', minWidth: '320px' }}
     >

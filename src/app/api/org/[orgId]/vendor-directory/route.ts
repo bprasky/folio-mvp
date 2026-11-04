@@ -4,6 +4,7 @@ import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
+import type { OrgType } from '@prisma/client';
 
 /**
  * GET /api/org/[orgId]/vendor-directory
@@ -42,15 +43,15 @@ export async function GET(
 
     // Get all visit records where any org member was the initiator or recipient
     // and the other party has a vendor-type org
-    const VENDOR_ORG_TYPES = ['VENDOR', 'MANUFACTURER', 'SHOWROOM'];
+    const VENDOR_ORG_TYPES: OrgType[] = ['VENDOR', 'MANUFACTURER', 'SHOWROOM'];
 
     const visits = await prisma.visitRecord.findMany({
       where: {
         OR: [
           // Our members initiated and scanned someone from a vendor org
-          { initiatorUserId: { in: memberIds }, recipientOrg: { type: { in: VENDOR_ORG_TYPES } } },
+          { initiatorOrgId: orgId, initiatorUserId: { in: memberIds }, recipientOrg: { type: { in: VENDOR_ORG_TYPES } } },
           // Someone from a vendor org scanned one of our members
-          { recipientUserId: { in: memberIds }, initiatorOrg: { type: { in: VENDOR_ORG_TYPES } } },
+          { recipientOrgId: orgId, recipientUserId: { in: memberIds }, initiatorOrg: { type: { in: VENDOR_ORG_TYPES } } },
         ],
       },
       include: {
@@ -86,7 +87,7 @@ export async function GET(
     }>();
 
     for (const visit of visits) {
-      const isInitiator = memberIds.includes(visit.initiatorUserId);
+      const isInitiator = visit.initiatorOrgId === orgId;
       const vendorOrg = isInitiator ? visit.recipientOrg : visit.initiatorOrg;
       const vendorUser = isInitiator ? visit.recipientUser : visit.initiatorUser;
       const ourUser = isInitiator ? visit.initiatorUser : visit.recipientUser;

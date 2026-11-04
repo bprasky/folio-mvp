@@ -9,6 +9,7 @@ export interface FeedProjectItem {
   id: string;
   title: string;
   heroImage: string | null;
+  storyHref?: string | null;
   location: string | null;
   isEditorial: boolean;
   roomCount: number;

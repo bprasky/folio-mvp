@@ -14,7 +14,7 @@ export default function ProjectFlowMosaic({ projects }: ProjectFlowMosaicProps) 
     imageUrl: project.heroImage,
     viewCount: project.saveCount,
     eventTypes: [] as string[],
-    href: `/project/${project.id}`,
+    href: project.storyHref ?? null,
   }));
 
   return <FlowMosaic events={items} preserveOrder />;
