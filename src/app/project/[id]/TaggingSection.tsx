@@ -266,14 +266,21 @@ export default function TaggingSection({
           Tag the products in your rooms
         </h2>
         <p className="folio-body text-folio-text-secondary max-w-2xl">
-          Your selections are part of your expertise. Tagging helps Folio tell the story behind
-          your work and lays the groundwork for a future shop of your selections and potential
-          paid collaborations with your vendors.
+          One project can hold 10 or 20 stories. The maker behind your lighting. The supplier
+          behind your stone. Each has a perspective on the work you brought together — and an
+          audience who could discover your project through theirs.
         </p>
         <p className="folio-meta text-folio-text-secondary max-w-2xl">
-          Your published photos start with product tags hidden; readers can choose Show products
-          to explore. Tagging is optional. Shops and paid collaboration opportunities are planned,
-          and tagging does not guarantee a partnership or earnings.
+          As Folio opens to clients, we plan to automatically invite tagged vendors and credited
+          collaborators to tell and
+          share their side of your project, with each story connected to your work. Tagging now
+          lays that groundwork, along with a future shop of your selections and potential paid
+          vendor collaborations.
+        </p>
+        <p className="folio-meta text-folio-text-secondary max-w-2xl">
+          Tagging is optional. Your published photos start with tags hidden; readers can choose
+          Show products to explore. During the pilot, tagging does not send automatic invitations.
+          Shops and paid collaboration opportunities are planned.
         </p>
         {unresolvedCount > 0 && (
           <p className="folio-meta text-folio-text-primary">

@@ -1284,3 +1284,7 @@ Tags support and cross-check the materials and finishes observed in photographs 
 ## 2026-10-29 — A dismissed notice must not dismiss the journey
 
 The founder closed the import-ready pop-up and Profile returned to the legacy page. Treat notifications as disposable entry points, not onboarding state. Profile must resolve the current membership and saved import independently of notification read status, including after refresh or a later login. Reuse the approved organization profile and the project's existing progress tracker. Audit navigation and bio links as well as the completion email before declaring the handoff complete.
+
+## 2026-11-05 — Distinguish pilot outreach from launch invitations
+
+The founder clarified that automatic invitations are deliberately withheld during the pilot. Explain the planned launch benefit: tagged vendors and credited collaborators can be invited automatically to tell their sides of a connected project. Pilot copy should explicitly say automatic invitations are not sent. Do not enable outreach as part of a copy change; launch activation is a separate decision.
