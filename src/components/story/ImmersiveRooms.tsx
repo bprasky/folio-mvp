@@ -8,6 +8,7 @@ import { buildRoomSlides, capitalizeOpening, slideLabel, type RoomPhoto } from '
 import { readPresentation, presentationTokens } from '@/lib/story/presentation';
 import { useStoryEdit } from './StoryEditContext';
 import { QuoteTile } from './QuoteTile';
+import { PublishedPhotoTags, publishablePhotoTags } from './PublishedPhotoTags';
 import { PublicationControls } from './PublicationControls';
 import { LeadHeadline, LeadPreview } from './StoryLead';
 import { PublicationIntroduction } from './PublicationIntroduction';
@@ -32,6 +33,8 @@ export function ImmersiveRooms({ story, projectName, presentation, autoExpandRoo
   const [galleryPhoto, setGalleryPhoto] = useState<RoomPhoto | null>(null);
   const [reading, setReading] = useState(false);
   const [clean, setClean] = useState(false);
+  const [showProducts, setShowProducts] = useState(false);
+  const [loadedPhoto, setLoadedPhoto] = useState<{ id: string; aspect: number } | null>(null);
   const [dimensions, setDimensions] = useState({ width: 1100, height: 620 });
   const [aspect, setAspect] = useState(1.5);
   const canvas = useRef<HTMLDivElement>(null);
@@ -100,6 +103,8 @@ export function ImmersiveRooms({ story, projectName, presentation, autoExpandRoo
     setClean(value => !value);
   }
   if (!image) return null;
+  const showsPhotograph = cover || slide?.kind === 'story' || clean;
+  const photoTags = publishablePhotoTags(image.tags);
 
   return <section className={styles.shell} aria-label={`${projectName} publication`}
     style={{ '--room-bg': tokens.background, '--room-ink': tokens.text, '--room-glass': tokens.glass, '--photo-aspect': aspect } as CSSProperties}>
@@ -125,13 +130,29 @@ export function ImmersiveRooms({ story, projectName, presentation, autoExpandRoo
       }}>
       <div className={styles.ambient} aria-hidden="true"><Image src={image.url} alt="" fill sizes="(max-width:848px) 100vw, 1200px" style={{ objectFit: 'cover' }} /></div>
       <div className={styles.sideBlur} aria-hidden="true"><Image src={image.url} alt="" fill sizes="100vw" style={{ objectFit: 'cover' }} /></div>
-      {(cover || slide?.kind === 'story' || clean) && <div className={styles.photo} aria-hidden={!ready}>
+      {showsPhotograph && <div className={styles.photo} aria-hidden={!ready}>
         <Image key={image.id} src={image.url} alt={imageRoom?.roomLabel || projectName} fill
           sizes="100vw" priority={cover} style={{ objectFit: 'contain' }}
-          onLoad={event => { const target = event.currentTarget; if (target.naturalWidth && target.naturalHeight) setAspect(target.naturalWidth / target.naturalHeight); }} />
+          onLoad={event => {
+            const target = event.currentTarget;
+            if (target.naturalWidth && target.naturalHeight) {
+              const ratio = target.naturalWidth / target.naturalHeight;
+              setAspect(ratio);
+              setLoadedPhoto({ id: image.id, aspect: ratio });
+            }
+          }} />
       </div>}
       <div className={styles.wash} aria-hidden="true" />
       <button type="button" ref={photoButton} className={styles.photoToggle} onClick={togglePhoto} aria-label={clean ? 'Show room details' : 'View full photograph without text'} disabled={!ready} tabIndex={!ready || reading ? -1 : 0} />
+      {ready && showsPhotograph && photoTags.length > 0 && <>
+        <button type="button" className={styles.productToggle} aria-pressed={showProducts}
+          onClick={() => setShowProducts(value => !value)}>
+          {showProducts ? 'Hide products' : 'Show products'}
+        </button>
+        {showProducts && loadedPhoto?.id === image.id && <PublishedPhotoTags
+          key={image.id} tags={photoTags} aspect={loadedPhoto.aspect} topAligned={mobile && !clean}
+          onProductClick={onProductClick} />}
+      </>}
       {!clean && <div className={styles.details} aria-hidden={!ready} ref={element => { if (element) element.inert = !ready; }}>
         {slide?.kind === 'gallery' && <>
           <p className={styles.galleryIdentity}>{identity.join(' · ')}</p>

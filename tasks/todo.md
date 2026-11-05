@@ -1386,3 +1386,14 @@ Approved scope: six-digit email ownership verification during signup; existing m
 - [x] Put the notification bell in the masthead, retain completion history, and synchronize read status safely.
 - [x] Verify dismiss → Profile recovery, account/org isolation, saved project continuation, and desktop/mobile notification behavior; run required checks.
 - [ ] Merge after CI and verify the production deployment. Evidence: `docs/reviews/profile-import-resume.md`.
+
+## 2026-11-05 — Published photo tags
+
+- [x] Restore coordinate-based product markers in the immersive publication, hidden until the reader chooses Show products.
+- [x] Align markers to the actual contained photograph on desktop/mobile and full-photo views; reuse the product sheet.
+- [x] Explain future shop and potential paid vendor collaborations in the canonical tagging step.
+- [x] Verify publication interactions, public data boundaries, lint and TypeScript; commit and open a PR.
+
+Review: The immersive viewer omitted the overlay even though public transport and room models retained coordinates. Added an explicit per-visit reader toggle, contained-image positioning, and tag-specific product sheets; no schema or publication privacy changes. Pending products remain excluded.
+
+Validation: production compile/type preparation passed (existing unrelated import warnings); TypeScript budget passed with a 6 GB Node heap (851 diagnostics vs 862 baseline, unchanged baseline); targeted lint passed with existing warnings. React/JSDOM publication interactions pass at desktop/mobile widths, including default-off, coordinate mapping, matching quotes, full-photo mode and stale-tag removal. All 12 serialized public-boundary scenarios, immersive room model checks, client-import guard and migration discipline passed. No live-site or real-browser visual test was performed.

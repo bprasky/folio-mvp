@@ -99,6 +99,19 @@ async function main() {
     assertPublic(result, result.expandedBlocks);
     assert.ok(post.provenance.interview.spotlightDrafts, 'Sanitizing a response must not mutate stored data');
   });
+  await check('public reader preserves placed coordinates without publishing pending products or rep details', async () => {
+    post.project.images = [{ id: 'photo', url: '/photo.jpg', inclusion: 'INCLUDED', tags: [
+      { id: 'tag', x: 0.5, y: 75, productId: 'chair', imageId: 'photo', repEmail: 'PRIVATE_REP',
+        product: { id: 'chair', name: 'Chair', isPending: false } },
+      { id: 'pending', x: 50, y: 50, product: { id: 'pending', name: 'PRIVATE_PENDING', isPending: true } },
+    ] }];
+    const result = serialize(await publicReader('story'));
+    assert.equal(result.project.images[0].tags.length, 1);
+    assert.equal(result.project.images[0].tags[0].x, 0.5);
+    assert.equal(result.project.images[0].tags[0].y, 75);
+    assert.ok(!JSON.stringify(result).includes('PRIVATE_REP'));
+    assert.ok(!JSON.stringify(result).includes('PRIVATE_PENDING'));
+  });
   await check('public server reader removes evidence and alternatives', async () => {
     const result = serialize(await publicReader('story')); assertPublic(result, result.expandedBlocks);
     assert.equal(post.expandedBlocks.galleryChapters[0].pullQuote.folio.selected.originalText, originalText);

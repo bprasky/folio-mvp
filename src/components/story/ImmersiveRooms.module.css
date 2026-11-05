@@ -175,3 +175,10 @@
   .opening,.details { transition-duration:1ms; }
   .readerPanel { animation:none; }
 }
+
+/* Tags use the same photo box, above the full-photo click target. */
+.photo.tagLayer { z-index:2; pointer-events:none; mask-image:none; }
+.productDot { position:absolute; transform:translate(-50%,-50%); width:32px; height:32px; display:grid; place-items:center; border:0; padding:0; background:none; pointer-events:auto; }
+.productDot::after { content:''; width:9px; height:9px; border:1px solid rgb(0 0 0 / .3); border-radius:50%; background:#fff; box-shadow:0 1px 5px rgb(0 0 0 / .4); }
+.productDot:hover::after,.productDot:focus-visible::after { width:12px; height:12px; }
+.productToggle { position:absolute; top:12px; left:12px; z-index:5; min-height:44px; padding:8px 14px; border:1px solid rgb(255 255 255 / .4); border-radius:24px; color:var(--room-ink); background:var(--room-glass); backdrop-filter:blur(12px); font-size:12px!important; }
