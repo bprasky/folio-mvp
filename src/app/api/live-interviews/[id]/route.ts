@@ -1,6 +1,6 @@
 import { assertLiveOrigin, LiveError } from '@/lib/live-interview/config';
 import { assertLiveBrowserActor, liveFailure, liveResponse, readLiveJson } from '@/lib/live-interview/http';
-import { controlLiveSession, endLiveSession, readLiveSession, receiveLiveEvent, recoverLiveTurn, refreshLiveReview, linkLiveImage, prepareLiveText, consentLiveRecording } from '@/lib/live-interview/service';
+import { controlLiveSession, endLiveSession, readLiveSession, receiveLiveEvent, recoverLiveTurn, refreshLiveReview, linkLiveImage, prepareLiveText, consentLiveRecording, reviseLiveAnswer } from '@/lib/live-interview/service';
 
 export const dynamic='force-dynamic';
 export const maxDuration=120;
@@ -13,6 +13,7 @@ export async function POST(request:Request,{params}:{params:{id:string}}){
     switch(body.action){
       case 'event':return liveResponse(await receiveLiveEvent(actor,params.id,body.event));
       case 'recover':return liveResponse(await recoverLiveTurn(actor,params.id,body));
+      case 'revise_answer':return liveResponse(await reviseLiveAnswer(actor,params.id,body));
       case 'refresh_review':return liveResponse(await refreshLiveReview(actor,params.id));
       case 'link_image':return liveResponse(await linkLiveImage(actor,params.id,body));
       case 'prepare_text':return liveResponse(await prepareLiveText(actor,params.id,body));

@@ -41,3 +41,12 @@ export interface LiveAdapterCommand {
   guideAction?: ProjectGuideAction | 'refresh' | 'return_guide';
   workspaceStep?: ProjectGuideStep;
 }
+/** Canonical project evidence, independent of a particular live call's transcript. */
+export interface LiveSavedAnswers {
+  sessionId: string; version: number;
+  answers: Array<{ id: string; questionId: string; questionText: string; text: string; originalText: string;
+    inputModality: 'voice' | 'text' | 'mixed'; editable: boolean }>;
+}
+export interface LiveAnswerRevision {
+  requestId: string; answerId: string; sessionId: string; version: number; text: string;
+}

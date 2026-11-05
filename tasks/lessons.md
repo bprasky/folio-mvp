@@ -4,6 +4,12 @@ Keep “Our vendors” out of the organization profile header for every role. Th
 
 # Lessons Learned
 
+## 2026-11-05 — Give first-time speakers a written safety net
+
+The founder emphasized that designers will stutter, restart thoughts and need practice. Keep accepted answers visible with their questions and offer editing or a fresh written replacement without resetting the interview. Separate retrying an uncertain save from changing the answer. Preserve the original until replacement is confirmed, retain failed drafts, and bind revisions to the saved answer rather than the current prompt. Canonical corrections can invalidate dependent follow-ups; never promise unchanged question progression. Keep voice and typing in the same interview, and distinguish fixture evidence from real provider speech verification.
+
+Follow-up: AI cleanup means removing ums/uhs and accidental filler while preserving character, facts, uncertainty, emphasis and colloquial wording. Show the proposed wording before acceptance; never silently polish or overwrite. Editing pauses listening. Make resume explicit and never imply a fully muted/ended call can hear a spoken resume command.
+
 ## 2026-11-05 — Use the founder's already-imported test workspace
 
 For the first-time designer walkthrough, the founder redirected live testing from the BP Design example account to IG Workshop, whose website and upload were already tested. Start with the specified workspace and remaining stages (tagging and interview), not another import or an example firm's unverified website. Verify the active account/firm before mutations; if the requested firm is absent from the switcher, obtain the intended session rather than changing memberships or inventing a portfolio source. Keep QA records separate from existing answers and public content.

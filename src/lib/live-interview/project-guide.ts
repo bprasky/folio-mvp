@@ -126,6 +126,13 @@ export async function refreshProjectGuideReview(actorId: string, source: LiveSou
   native.canonical = context.canonical; native.revision++;
   return buildSnapshot(source, context, previous.state, native, '', 'none', requestId);
 }
+/** A saved correction updates canonical evidence without creating a host reply or paid call. */
+export async function projectGuideCorrectionSnapshot(actorId: string, source: LiveSource, previous: LiveAdapterSnapshot, canonical: GuidedSession, requestId: string) {
+  const context = await readProjectGuideContext(actorId, source);
+  const native = nativeState(previous.state);
+  native.canonical = canonical; native.phase = 'interview'; native.revision++;
+  return buildSnapshot(source, context, previous.state, native, '', 'none', requestId);
+}
 export async function executeProjectGuide(actorId: string, source: LiveSource, previous: LiveAdapterSnapshot, command: LiveAdapterCommand): Promise<LiveAdapterSnapshot> {
   const context = await readProjectGuideContext(actorId, source);
   const state = structuredClone(previous.state); const native = nativeState(state);

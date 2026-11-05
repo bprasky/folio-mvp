@@ -1,3 +1,25 @@
+# Forgiving hybrid interview answers — 2026-11-05
+
+- [x] Trace stutters, interruptions, saved answers and canonical correction semantics.
+- [x] Expose accepted project answers in the live interview, with their original questions.
+- [x] Add Edit answer and Start again in writing, pausing capture before a separate replacement composer opens.
+- [x] Bind replacements to the saved answer, preserve originals, reject stale writes and retry uncertain saves with the same receipt.
+- [x] Offer a conservative AI filler-cleanup preview that preserves the designer's voice, with explicit acceptance and no automatic answer replacement.
+- [x] Provide explicit resume after editing; only offer spoken continuation when the designer has enabled a live microphone.
+- [x] Verify realistic disfluent speech, interruption recovery, editing, retry, cancel, reload, resume and account/source isolation.
+- [x] Review changes, run affected checks and required guards, commit and push the reviewable result.
+
+Plan check-in: keep voice as the primary conversation with a visible written safety net. A designer can read what was accepted, edit it or type a fresh replacement. Existing canonical corrections retain original exchanges and may regenerate dependent follow-ups; do not promise the exact next question remains unchanged. The replacement must never be submitted as an answer to the current question. Stop the call and capture before editing, preserve pending speech for review, and require explicit resume. The founder added optional AI cleanup: show a preview that removes fillers without rewriting their character, and require explicit acceptance/save. Reuse canonical persistence and receipt handling, with no schema, provider-setting or production configuration change. Actual live speech acceptance remains separately blocked by the production limiter outage and the unavailable IG Workshop session.
+
+### Review
+
+Accepted answers now remain visible with Edit, Start again in writing and View original wording. Editing confirms stopped transport and capture before allowing a revision. Account/source-scoped drafts survive reload; exact receipts protect uncertain retries; changed canonical answers require explicit review before rebinding. Completed interviews retain editing. Cleanup selects bounded removable spans, previews the result, supports rejection/undo and cannot rewrite prose or automatically save. Resume is explicit; spoken continuation is supported when the host is listening.
+
+Verification: 59 actual-component browser cases, 63 service/route/controller cases, 17 project-guide adapter cases, canonical controller and source-adapter suites pass. Cleanup guards/route cases pass; five real synthetic AI evaluations preserved voice/facts at 3,280 input + 53 output tokens (~$0.011). Mobile390/desktop1280 screenshots show no horizontal overflow and correct editor focus. Review found and fixed completion editing, a preview/uncertain-retry conflict, malformed200 acknowledgments, and late pause responses leaking across projects; the source-switch case fails before and passes after. Final specialist review reports no remaining findings. Production speech recognition/turn timing and IG Workshop acceptance still require the separately documented service restoration; no merge or deployment performed.
+
+Final source verification: production compile passed after the last fix, TypeScript budget 851/862 with no new fingerprints, changed-source lint zero errors (one pre-existing ref warning), client/migration guards passed, and all 26 composed project-host browser checks passed. Pushed as the hybrid-interview follow-up in draft PR #848.
+
+---
 # First-time designer journey and priority fixes — 2026-11-05
 
 - [x] Establish current main/production baseline and inventory live/test coverage.

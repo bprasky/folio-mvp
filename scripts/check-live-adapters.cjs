@@ -92,6 +92,29 @@ const answer = (source, previous, text, id = 'receipt-0001', questionId = previo
   await assert.rejects(() => answer(source, saved, 'Changed replay.', 'receipt-0001', 'g1'), /already used/);
   saved = await adapter.executeLiveCommand('owner',source,saved,{action:'answer',requestId:'typed-receipt-0002',questionId:'g2',text:'A typed design decision.',inputModality:'text'});
   assert.equal(calls.filter(([kind,command])=>kind==='guided'&&command.action==='answer').at(-1)[1].inputModality,'text','typed answer provenance reaches the canonical engine');
+  const { projectSavedAnswers } = load('src/lib/live-interview/saved-answers.ts');
+  const { acceptCommand } = load('src/lib/interview/guided/controller.ts');
+  const original = { id:'original-answer', requestId:'original-receipt', questionId:'g1', questionText:'What did the client need?',
+    text:'Um, a quieter, uh, daily rhythm.', kind:'answer', inputModality:'voice', roomId:null, sourceImageIds:[], selectedImageId:null };
+  let canonical = { ...structuredClone(guided), version:10, requestIds:[], rooms:[], activeQuestionId:'g2',
+    plan:[{...q('g1'),status:'answered',roomId:null,kind:'prepared',sourceAnswerIds:[]},{...q('g2'),status:'active',roomId:null,kind:'prepared',sourceAnswerIds:[]}], turns:[original] };
+  canonical = acceptCommand(canonical,{action:'correct',requestId:'revision-receipt-one',sessionId:canonical.id,version:10,questionId:'g1',text:'A quieter daily rhythm.',inputModality:'text'});
+  canonical = acceptCommand(canonical,{action:'correct',requestId:'revision-receipt-two',sessionId:canonical.id,version:11,questionId:'g1',text:'A quieter daily rhythm, with room for visitors.',inputModality:'text'});
+  const revisionSnapshot = adapter.guidedSnapshot({kind:'project',id:'project'},canonical,{schemaVersion:1,skipped:[],receipts:{}});
+  const projected = projectSavedAnswers(revisionSnapshot);
+  assert.equal(projected.answers.length,1,'repeated corrections project one accepted answer');
+  assert.equal(projected.answers[0].text,'A quieter daily rhythm, with room for visitors.');
+  assert.equal(projected.answers[0].originalText,original.text,'original disfluent speech survives the entire correction chain');
+  assert.equal(projected.answers[0].questionText,'Exact question g1?','accepted revision retains its canonical asked question');
+  assert.equal(projected.answers[0].editable,true);
+  assert.equal(canonical.turns.length,3,'every accepted correction and original remain durable');
+  const guideSnapshot={...revisionSnapshot,source:{kind:'project_guide',id:'project'},guide:{phase:'interview'},state:{...revisionSnapshot.state,native:{kind:'project_guide',canonical}}};
+  assert.equal(projectSavedAnswers(guideSnapshot).answers[0].editable,true);
+  assert.equal(projectSavedAnswers({...guideSnapshot,guide:{phase:'guide'}}).answers[0].editable,false,'setup replies cannot be edited as canonical answers');
+  assert.equal(projectSavedAnswers({...guideSnapshot,guide:{phase:'complete'}}).answers[0].editable,true,'completed interviews retain answer editing');
+  assert.equal(projectSavedAnswers({...revisionSnapshot,source:{kind:'expertise',id:'other'}}),null,'unsupported sources expose no correction authority');
+  assert.equal(projectSavedAnswers(revisionSnapshot,{...canonical,id:'new-after-reset'}),null,'old calls cannot project a replacement canonical session');
+  assert.equal(projectSavedAnswers(revisionSnapshot,null),null,'removed canonical state clears the client projection');
   await assert.rejects(() => adapter.prepareLiveInterview('owner', { kind: 'project', id: 'protected' }, 'start-0002'), /protected Spotlight/);
   spotlight = { ordinary: [], questions: [{ id: 's1', wording: 'Why did you choose this selected piece?', spotlightId: 'selected', eligible: true, questionVersion: 7, selectionVersion: 3, stateVersion: 2, currentAnswerNumber: null, currentAnswer: null }], spotlights: [{ id: 'selected', roomId: 'room' }] };
   source = { kind: 'spotlight', id: 'project' }; saved = await adapter.prepareLiveInterview('owner', source, 'spotlight-start'); saved = await answer(source, saved, 'It makes the corner useful.');

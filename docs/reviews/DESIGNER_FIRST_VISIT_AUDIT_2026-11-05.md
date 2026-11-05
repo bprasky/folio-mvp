@@ -53,6 +53,31 @@ P0 means the observed production service must be restored before accepting the i
 
 ## Remaining acceptance work
 
+### Hybrid interview follow-up
+
+The founder prioritized forgiving first attempts: accepted answers should stay visible, with editing, a fresh written replacement, optional light AI cleanup and an explicit way to resume. This work keeps the existing voice-led interview and its canonical evidence history. It does not reset the interview or silently rewrite testimony.
+
+The implemented boundary pauses the call and capture before editing, binds the replacement to its saved question and canonical revision, and retains the original until a correction is accepted. Retry uses the same request receipt when acknowledgement is uncertain. The AI cleanup preview is deliberately limited to removable filler spans; it must preserve meaningful wording, facts, uncertainty and emphasis. The designer chooses whether to use the preview and then saves separately. Corrections can regenerate dependent follow-up questions. Text cleanup does not edit saved audio/video.
+
+The synthetic speech checks accept “uh/um,” repeated words and a self-correction verbatim without duplicate saving. A thought continuing after an interrupted next question is retained for review rather than attributed to a question the designer did not hear. These are ingestion guarantees, not measured speech-recognition or turn-timing performance.
+
+Five bounded calls to the actual configured cleanup model (`claude-sonnet-5`) matched the expected conservative results: filler removal while retaining voice, stutter removal without flattening emphasis, facts/negation preservation, quoted filler/acronym preservation, and instruction-like speech treated as data. Total usage was 3,280 input and 53 output tokens (about $0.011 at the repository's rate table); no actual designer text or records were used. The application restricts deletion to candidate spans and explicitly protects quoted filler/acronyms. The retained local report is `.tmp/live-answer-cleanup-eval.json`.
+
+After service restoration, run this real IG Workshop acceptance sequence:
+
+1. Answer naturally with an “um,” a repeated word and a mid-sentence correction. Confirm the visible saved question and answer.
+2. Pause for several seconds mid-thought, then finish. Check whether the provider split the answer and whether any review prompt recovers the full thought accurately.
+3. Interrupt the interviewer and continue an earlier thought. Verify the text is preserved and explicitly attributed before it counts as evidence.
+4. Edit an answer, preview AI cleanup, reject it once, then accept an edited version. Confirm earlier saved answers remain and the next follow-up fits the correction.
+5. Disconnect during a replacement save; retry once, reload, and verify exactly one accepted correction with the original retained.
+6. Resume explicitly, continue by voice or typing, then leave and return. A stopped microphone must not claim to hear a spoken resume command. When the live host is listening, test “let’s continue” through its existing resume choice.
+
+Follow-up verification: 59 actual-component browser cases, 63 live service/route/controller cases, 17 guide adapter cases, canonical controller and source-adapter checks pass. Cleanup preview/authorization/model-output cases pass. Mobile390/desktop1280 screenshots show contained layout and correct editor focus. A delayed pause response leaking the previous project's state was reproduced before the fix, then all delayed pause/cleanup/save source-switch checks passed. Review also closed completed-interview editing, cleanup-preview mutation during uncertain save, and malformed200 draft-loss paths. Final review found no remaining source blockers. Live acceptance remains open.
+
+Final hybrid-source verification also passed production compilation, the TypeScript ratchet at 851/862 with no new fingerprints, source lint (zero errors, one pre-existing ref warning), client/migration guards and all 26 composed project-host browser checks. The source changes are in draft PR #848, separate from deployment and the remaining live acceptance.
+
+### Other remaining journey work
+
 1. **IG Workshop tagging and interview:** use the founder's already-imported IG Workshop account. First restore the rate-limit backend. Then confirm product tagging/placement persists, a real interview answer saves, leaving/resuming preserves it without duplication, and the provider conversation ends when leaving. Fixture checks do not close this acceptance item. Do not repeat its website import unless specifically needed to reproduce an import defect.
 2. **Consistent project status wording:** list “Drafts” currently means an empty project; the project breadcrumb uses editorial/interview readiness. A project can consequently appear “In progress” in the list and “Drafts” inside. Choose one user-facing interpretation without changing stored lifecycle semantics incidentally.
 3. **Legacy archive metadata:** an undated completed project may display the stored default “Concept” on its card. Reconcile with the canonical timeline and show an honest fallback; do not invent a completion date or bulk rewrite existing projects.
