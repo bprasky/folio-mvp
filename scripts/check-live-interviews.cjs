@@ -1,20 +1,38 @@
-// Real transport service, provider request builder and turn state; isolated DB,
-// canonical-engine and Tavus HTTP boundaries. Never loads credentials or calls a provider.
+// Real transport/route, provider request builder and turn state. Correction cases
+// also run the real canonical controller; persistence/model/Tavus boundaries are synthetic.
+// Never loads credentials or calls a provider.
 const assert=require('node:assert/strict');
 const fs=require('node:fs');const path=require('node:path');const vm=require('node:vm');const ts=require('typescript');
 const root=path.resolve(__dirname,'..');
-let sessions,approved,workspace,sourceAllowed,saves,providerCalls,saveFailure,providerFailure,providerReadFailure,storageReady,failReceiptOnce,canonicalIndex,afterConversationCreate,afterConversationRead,routeActor='owner';
+let sessions,approved,workspace,sourceAllowed,saves,providerCalls,saveFailure,providerFailure,providerReadFailure,storageReady,failReceiptOnce,canonicalIndex,afterConversationCreate,afterConversationRead,rateLimitResult,routeActor='owner';
+let canonicalReview, revisionCommands, contextRefreshOnly, failRevisionAck, guidedController;
 const env={NODE_ENV:'test',FOLIO_LIVE_INTERVIEWS:'1',FOLIO_INTERVIEW_RECORDING:'1',FOLIO_LIVE_BASE_URL:'https://folio.test',NEXTAUTH_SECRET:'synthetic-session-secret',TAVUS_API_KEY:'synthetic-provider-key'};
 const clone=structuredClone;const cache=new Map();
-function snapshot(index=1){return {source:{kind:'project',id:'project'},interviewId:'canonical',version:String(index),status:'active',currentQuestion:{id:`q${index}`,text:`Question ${index}?`,sourceImageIds:[]},sourceRefs:[],state:{schemaVersion:1,skipped:[],receipts:{},native:{rooms:[{id:'room',imageIds:['image-one','image-two']}]}}};}
+function nativeSession(index=1){return {id:'canonical',projectId:'project',schemaVersion:1,version:index,status:'active',phase:'project',turns:[],requestIds:[],requestDigests:{},plan:Array.from({length:12},(_,i)=>({id:`q${i+1}`,text:`Question ${i+1}?`,category:'CLIENT_BRIEF',roomId:null,sourceImageIds:[],sourceAnswerIds:[],status:i+1===index?'active':'pending',kind:'prepared'})),rooms:[{id:'room',imageIds:['image-one','image-two'],baseQuestions:1,maxFollowUps:1}],activeQuestionId:`q${index}`,contextFingerprint:'fixture',minimumTotalAnswers:3,roomsPrepared:false,pendingDecisionTurnId:null,notice:null,createdAt:new Date().toISOString(),updatedAt:new Date().toISOString()};}
+function snapshot(index=1){return {source:{kind:'project',id:'project'},interviewId:'canonical',version:String(index),status:'active',currentQuestion:{id:`q${index}`,text:`Question ${index}?`,sourceImageIds:[]},sourceRefs:[],state:{schemaVersion:1,skipped:[],receipts:{},native:nativeSession(index)}};}
 const mocks={
  'server-only':{},
- '@/lib/prisma':{prisma:{user:{findUnique:async()=>approved?{accountStatus:'APPROVED'}:{accountStatus:'PENDING'}}}},
- '@/lib/rateLimit':{checkRateLimit:async()=>({success:true})},
+ 'next/cache':{revalidatePath:()=>{}},
+ '@/lib/interview/guided/service':{
+  getGuidedSession:async()=>clone(canonicalReview||nativeSession(canonicalIndex)),
+  runGuidedCommand:async(_project,_actor,command)=>{
+   revisionCommands.push(clone(command));
+   if(contextRefreshOnly){canonicalReview.version++;return clone(canonicalReview);}
+   canonicalReview=guidedController.acceptCommand(canonicalReview,command);
+   if(canonicalReview.status==='deciding')guidedController.applyDecision(canonicalReview,{kind:'advance'});
+   return clone(canonicalReview);
+  },
+ },
+ '@/lib/prisma':{prisma:{user:{findUnique:async()=>approved?{accountStatus:'APPROVED'}:{accountStatus:'PENDING'}},project:{findUnique:async()=>({id:'project',title:'Fixture House',rooms:[{id:'room'}],images:[{id:'image-one',name:'room.jpg',roomId:'room',inclusion:'INCLUDED',noProducts:true,_count:{tags:0}}]})}}},
+ '@/lib/authz/access':{assertProjectWrite:async(actor,id)=>{assert.equal(actor,'owner');assert.equal(id,'project');}},
+ '@/lib/spotlight/legacyBoundary':{assertLegacyInterviewAllowed:()=>{}},
+ '@/lib/posting/loadInterviewAnswers':{loadInterviewAnswers:async()=>[]},
+ './project-guide-planner':{planProjectGuide:async()=>{throw Error('Correction must not invoke guide generation');}},
+ '@/lib/rateLimit':{checkRateLimit:async()=>rateLimitResult},
  '@/lib/publishing-studio/data':{resolvePublishingStudioContext:async()=>({id:workspace})},
  '@/lib/interview-media/storage':{assertCaptureStorageReady:async()=>{if(!storageReady)throw Error('private storage unavailable');}},
  '@/lib/live-interview/http':{
-  assertLiveBrowserActor:async()=>{if(!routeActor)throw Error('Sign in required');return routeActor;},
+  assertLiveBrowserActor:async()=>{if(!routeActor)throw Object.assign(Error('Sign in required'),{status:401});return routeActor;},
   readLiveJson:request=>request.json(),liveResponse:value=>Response.json(value),liveFailure:error=>Response.json({error:error.message},{status:error.status||503}),
  },
 };
@@ -26,12 +44,13 @@ const store={
  },
  getLiveSession:async(id)=>clone(sessions.get(id)||null),
  getLatestLiveSession:async(actor,kind,id,exclude)=>clone([...sessions.values()].filter(s=>s.id!==exclude&&s.actorId===actor&&s.sourceType===kind&&s.sourceId===id).at(-1)||null),
- mutateLiveSession:async(id,fn)=>{const value=clone(sessions.get(id));const result=fn(value)||value;if(failReceiptOnce&&result.payload.turnState.turns.at(-1)?.status==='saved'){failReceiptOnce=false;throw Error('synthetic transport receipt failure');}result.version++;sessions.set(id,result);return clone(result);},
+ mutateLiveSession:async(id,fn)=>{const value=clone(sessions.get(id));const result=fn(value)||value;if(failRevisionAck&&result.payload.turnState.turns.some(turn=>turn.reviewedText==='Replacement after response loss.')){failRevisionAck=false;throw Error('synthetic revision acknowledgement failure');}if(failReceiptOnce&&result.payload.turnState.turns.at(-1)?.status==='saved'){failReceiptOnce=false;throw Error('synthetic transport receipt failure');}result.version++;sessions.set(id,result);return clone(result);},
  findLiveSessionByCredential:async(hash)=>clone([...sessions.values()].find(s=>s.credentialHash===hash&&s.expiresAt>Date.now())||null),
  listLiveSessionsForCleanup:async()=>clone([...sessions.values()].filter(s=>['uncertain','ending'].includes(s.status)||s.expiresAt<Date.now())),
 };
 const adapters={
- authorizeLiveSource:async()=>{if(!sourceAllowed)throw Error('not allowed');},
+ guidedSnapshot:(source,canonical,state)=>({...snapshot(canonical.version),source,interviewId:canonical.id,currentQuestion:canonical.plan.find(question=>question.id===canonical.activeQuestionId)||null,state:{...state,native:clone(canonical)}}),
+ authorizeLiveSource:async()=>{if(!sourceAllowed)throw Object.assign(Error('not allowed'),{status:403});},
  prepareLiveInterview:async()=>snapshot(canonicalIndex),
  executeLiveCommand:async(_actor,_source,previous,command)=>{
   if(saveFailure)throw Error('synthetic canonical failure');
@@ -71,7 +90,8 @@ function load(file){
  return compiled.exports;
 }
 const service=load('src/lib/live-interview/service.ts');const turns=load('src/lib/live-interview/turns.ts');const provider=load('src/lib/live-interview/provider.ts');const config=load('src/lib/live-interview/config.ts');
-function reset(){sessions=new Map();approved=true;workspace='org';sourceAllowed=true;saves=[];providerCalls=[];saveFailure=false;providerFailure=false;providerReadFailure=false;storageReady=true;failReceiptOnce=false;canonicalIndex=1;afterConversationCreate=null;afterConversationRead=null;routeActor='owner';providerState.clear();env.FOLIO_LIVE_INTERVIEWS='1';}
+guidedController=load('src/lib/interview/guided/controller.ts');
+function reset(){sessions=new Map();approved=true;workspace='org';sourceAllowed=true;saves=[];providerCalls=[];saveFailure=false;providerFailure=false;providerReadFailure=false;storageReady=true;failReceiptOnce=false;canonicalIndex=1;afterConversationCreate=null;afterConversationRead=null;rateLimitResult={success:true};routeActor='owner';providerState.clear();env.FOLIO_LIVE_INTERVIEWS='1';canonicalReview=null;revisionCommands=[];contextRefreshOnly=false;failRevisionAck=false;}
 const start=()=>service.startLiveSession('owner',{source:{kind:'project',id:'project'},requestId:'synthetic-start-request',mode:'none',consentVersion:'2026-10-01',microphoneReady:true});
 const startText=()=>service.startLiveSession('owner',{source:{kind:'project',id:'project'},requestId:'synthetic-text-start',mode:'none',consentVersion:'2026-10-01',inputMode:'text'});
 const textInput=(session,text='Typed answer.',requestId='synthetic-typed-answer')=>({requestId,text,questionId:session.snapshot.currentQuestion.id,version:session.snapshot.version});
@@ -82,7 +102,92 @@ async function deliver(id,index,offset,raw='Yes.'){
  await service.receiveLiveEvent('owner',id,event(offset+3,'conversation.started_speaking','user'));
  await service.receiveLiveEvent('owner',id,event(offset+4,'conversation.utterance','user',raw));
 }
+async function revisionFixture(){
+ const live=await startText();canonicalReview=nativeSession();
+ canonicalReview=guidedController.acceptCommand(canonicalReview,{action:'answer',requestId:'original-canonical-answer',sessionId:'canonical',version:1,questionId:'q1',text:'Um, I—I moved the island eighteen inches.',inputModality:'voice',selectedImageId:'image-one'});
+ guidedController.applyDecision(canonicalReview,{kind:'advance'});
+ const original=canonicalReview.turns[0],row=sessions.get(live.id);
+ row.payload.snapshot=adapters.guidedSnapshot({kind:'project',id:'project'},canonicalReview,row.payload.snapshot.state);
+ row.payload.turnState.turns=[{position:1,raw:original.text,status:'saved',questionId:'q1',asked:'Question 1?',receipt:'original-live-receipt',snapshot:snapshot(1)}];
+ await service.endLiveSession('owner',live.id,'pause');
+ return {id:live.id,original:clone(original),input:{requestId:'synthetic-answer-revision',answerId:original.id,sessionId:canonicalReview.id,version:canonicalReview.version,text:'We moved the island eighteen inches so the clients could cook together.'}};
+}
 const cases=[];const test=(name,fn)=>cases.push([name,fn]);
+
+test('saved answer revision uses canonical target and preserves original speech, image, and stopped transport',async()=>{
+ const {id,input,original}=await revisionFixture(),calls=providerCalls.length;
+ const before=await service.readLiveSession('owner',id);assert.equal(before.snapshot.currentQuestion.id,'q2');assert.equal(before.savedAnswers.answers[0].id,input.answerId);
+ const updated=await service.reviseLiveAnswer('owner',id,input);
+ assert.equal(revisionCommands.length,1);assert.equal(revisionCommands[0].questionId,'q1');assert.equal(revisionCommands[0].inputModality,'text');assert.equal(revisionCommands[0].selectedImageId,'image-one');
+ assert.equal(updated.status,'ended');assert.equal(updated.join,undefined);assert.equal(providerCalls.length,calls);
+ assert.equal(updated.savedAnswers.answers.length,1);assert.equal(updated.savedAnswers.answers[0].text,input.text);assert.equal(updated.savedAnswers.answers[0].originalText,original.text);
+ assert.notEqual(updated.savedAnswers.answers[0].id,original.id);assert.equal(canonicalReview.turns[0].text,original.text);assert.ok(canonicalReview.turns[0].supersededBy);
+ assert.equal(updated.turns[0].raw,original.text);assert.equal(updated.turns[0].reviewedText,input.text);
+ assert.equal((await service.readLiveSession('owner',id)).savedAnswers.answers[0].text,input.text,'reload returns accepted canonical revision');
+});
+test('saved answer revision route enforces origin, account ownership, current source access and workspace',async()=>{
+ const {id,input}=await revisionFixture(),route=load('src/app/api/live-interviews/[id]/route.ts');
+ const invoke=(origin='https://folio.test')=>route.POST(new Request(`https://folio.test/api/live-interviews/${id}`,{method:'POST',headers:{origin,'content-type':'application/json'},body:JSON.stringify({action:'revise_answer',...input})}),{params:{id}});
+ assert.equal((await invoke('https://evil.test')).status,403);
+ routeActor=null;assert.equal((await invoke()).status,401);routeActor='other';assert.equal((await invoke()).status,404);routeActor='owner';
+ approved=false;assert.equal((await invoke()).status,403);approved=true;
+ sourceAllowed=false;assert.equal((await invoke()).status,403);sourceAllowed=true;
+ workspace='other';assert.equal((await invoke()).status,403);workspace='org';
+ assert.equal(revisionCommands.length,0);const result=await invoke();assert.equal(result.status,200);assert.equal((await result.json()).savedAnswers.answers[0].text,input.text);
+});
+test('saved answer revisions reject malformed input, active calls, unresolved turns and concurrent controls',async()=>{
+ const {id,input}=await revisionFixture(),row=sessions.get(id);
+ for(const patch of [{text:''},{text:'x'.repeat(2001)},{version:'2'},{version:-1},{answerId:''},{sessionId:''},{requestId:'bad'}])await assert.rejects(()=>service.reviseLiveAnswer('owner',id,{...input,...patch}),e=>e.status===400);
+ for(const status of ['active','uncertain','ending','starting']){row.status=status;await assert.rejects(()=>service.reviseLiveAnswer('owner',id,input),e=>e.status===409);}
+ row.status='ended';
+ for(const status of ['awaiting_final','saving','needs_review']){row.payload.turnState.turns[0].status=status;await assert.rejects(()=>service.reviseLiveAnswer('owner',id,input),e=>e.status===409);}
+ row.payload.turnState.turns[0].status='saved';row.payload.commandLease=Date.now()+60000;
+ await assert.rejects(()=>service.reviseLiveAnswer('owner',id,input),e=>e.status===409);row.payload.commandLease=undefined;
+ const other=clone(row);other.id='other-live-call';other.status='active';sessions.set(other.id,other);
+ await assert.rejects(()=>service.reviseLiveAnswer('owner',id,input),e=>e.status===409);assert.equal(revisionCommands.length,0);
+});
+test('saved answer revisions reject stale target/session/version and context refresh without accepting or rebinding',async()=>{
+ const {id,input}=await revisionFixture(),originalText=canonicalReview.turns[0].text;
+ for(const patch of [{version:input.version-1},{answerId:'different-answer'},{sessionId:'different-session'}])await assert.rejects(()=>service.reviseLiveAnswer('owner',id,{...input,...patch}),e=>e.status===412);
+ assert.equal(revisionCommands.length,0);
+ canonicalReview.id='reset-canonical';await assert.rejects(()=>service.reviseLiveAnswer('owner',id,input),e=>e.status===412);assert.equal((await service.readLiveSession('owner',id)).savedAnswers,null);canonicalReview.id=input.sessionId;
+ contextRefreshOnly=true;await assert.rejects(()=>service.reviseLiveAnswer('owner',id,input),e=>e.status===412);
+ assert.equal(canonicalReview.turns.length,1);assert.equal(canonicalReview.turns[0].text,originalText);assert.equal(canonicalReview.requestIds.includes(input.requestId),false);
+});
+test('saved answer revision retries a lost acknowledgement exactly once and rejects changed receipt payload',async()=>{
+ const {id,input,original}=await revisionFixture();input.text='Replacement after response loss.';failRevisionAck=true;
+ await assert.rejects(()=>service.reviseLiveAnswer('owner',id,input),/acknowledgement/);
+ assert.equal(canonicalReview.turns.length,2);assert.equal(revisionCommands.length,1);assert.equal(canonicalReview.turns[0].text,original.text);
+ const retried=await service.reviseLiveAnswer('owner',id,input);assert.equal(retried.savedAnswers.answers[0].text,input.text);assert.equal(revisionCommands.length,1);
+ for(const patch of [{text:'A different replacement.'},{answerId:retried.savedAnswers.answers[0].id},{version:input.version+1}])await assert.rejects(()=>service.reviseLiveAnswer('owner',id,{...input,...patch}),e=>e.status===409);
+ const second={...input,requestId:'second-canonical-revision',answerId:retried.savedAnswers.answers[0].id,version:retried.savedAnswers.version,text:'A later accepted replacement.'};
+ await service.reviseLiveAnswer('owner',id,second);
+ const oldReplay=await service.reviseLiveAnswer('owner',id,input);assert.equal(oldReplay.savedAnswers.answers[0].text,second.text);assert.equal(revisionCommands.length,2,'exact earlier replay cannot overwrite a later accepted correction');
+});
+test('saved answer revision rejects setup/nonproject targets and the generic project correction bypass',async()=>{
+ const {id,input}=await revisionFixture();let row=sessions.get(id);
+ row.payload.source={kind:'designer_bio',id:'owner'};await assert.rejects(()=>service.reviseLiveAnswer('owner',id,input),e=>e.status===403);
+ row.payload.source={kind:'project_guide',id:'project'};row.payload.snapshot.source=row.payload.source;row.payload.snapshot.guide={phase:'guide'};
+ await assert.rejects(()=>service.reviseLiveAnswer('owner',id,input),e=>e.status===409);
+ row.payload.source={kind:'project',id:'project'};
+ await assert.rejects(()=>service.controlLiveSession('owner',id,{action:'correct',requestId:'generic-correction-bypass',questionId:'q1',text:'Bypass'}),e=>e.status===400);
+ assert.equal(revisionCommands.length,0);
+});
+test('completed project guide corrects accepted evidence through the real guide snapshot without resuming a call',async()=>{
+ const {id,input,original}=await revisionFixture(),row=sessions.get(id);
+ canonicalReview.plan.filter(question=>question.status==='active'||question.status==='pending').forEach(question=>{question.status='skipped';});
+ canonicalReview.status='finished';canonicalReview.activeQuestionId=null;canonicalReview.pendingDecisionTurnId=null;canonicalReview.roomsPrepared=true;
+ row.sourceType='project_guide';row.payload.source={kind:'project_guide',id:'project'};
+ row.payload.snapshot={...row.payload.snapshot,source:row.payload.source,interviewId:'guide:project',currentQuestion:null,guide:{phase:'complete'},
+  state:{...row.payload.snapshot.state,native:{kind:'project_guide',phase:'complete',revision:1,workspaceStep:'story',recentTurns:[],canonical:clone(canonicalReview)}}};
+ row.payload.turnState.turns[0].snapshot.guide={phase:'interview'};
+ const before=await service.readLiveSession('owner',id),calls=providerCalls.length;assert.equal(before.savedAnswers.answers[0].editable,true);
+ const updated=await service.reviseLiveAnswer('owner',id,input);
+ assert.equal(updated.savedAnswers.answers[0].text,input.text);assert.equal(updated.savedAnswers.answers[0].originalText,original.text);
+ assert.equal(updated.turns[0].raw,original.text);assert.equal(updated.turns[0].reviewedText,input.text);
+ assert.equal(updated.status,'ended');assert.equal(updated.join,undefined);assert.equal(providerCalls.length,calls);assert.equal(revisionCommands.length,1);
+ assert.equal(sessions.get(id).payload.snapshot.state.native.kind,'project_guide');assert.equal(updated.snapshot.guide.answeredCount,1);
+});
 
 test('guide intake carries only same-owner same-workspace conversation history into the project',async()=>{
  const originalPrepare=adapters.prepareLiveInterview;
@@ -106,6 +211,27 @@ test('guide intake carries only same-owner same-workspace conversation history i
 });
 test('disabled beta, unauthorized source, unapproved account prevent paid calls',async()=>{
  env.FOLIO_LIVE_INTERVIEWS='0';await assert.rejects(start);env.FOLIO_LIVE_INTERVIEWS='1';sourceAllowed=false;await assert.rejects(start);sourceAllowed=true;approved=false;await assert.rejects(start);assert.equal(providerCalls.length,0);
+});
+
+test('unavailable rate-limit protection reports a service outage before reserving or creating a call',async()=>{
+ for(const reason of ['missing_configuration','backend_timeout','backend_outage']){
+  rateLimitResult={success:false,reason};
+  await assert.rejects(start,error=>error.status===503&&error.message==='Live interviewing is temporarily unavailable. Your saved answers are safe. Please try again later.');
+  assert.equal(sessions.size,0);assert.equal(providerCalls.length,0);assert.equal(saves.length,0);
+ }
+ rateLimitResult={success:false,reason:'rejected'};
+ await assert.rejects(start,error=>error.status===429&&error.message==='Please wait before starting again.');
+ assert.equal(sessions.size,0);assert.equal(providerCalls.length,0);
+});
+
+test('live backend turns distinguish limiter outages from quota without changing saved progress',async()=>{
+ const started=await start(),row=sessions.get(started.id),before=clone(row),calls=providerCalls.length;
+ const key=providerCalls.find(call=>call.url.endsWith('/pals')).body.layers.llm.api_key;
+ for(const reason of ['missing_configuration','backend_timeout','backend_outage','rejected']){
+  rateLimitResult={success:false,reason};
+  await assert.rejects(()=>service.assertLiveBackendAuth(started.id,`Bearer ${key}`),error=>error.status===(reason==='rejected'?429:503));
+  assert.deepEqual(sessions.get(started.id),before);assert.equal(providerCalls.length,calls);assert.equal(saves.length,0);
+ }
 });
 test('explicit readiness and recording consent required; private storage checked before paid creation',async()=>{
  for(const patch of [{microphoneReady:false},{mode:'invalid'},{consentVersion:'old'}])await assert.rejects(()=>service.startLiveSession('owner',{source:{kind:'project',id:'project'},requestId:'synthetic-start-request',mode:'none',consentVersion:'2026-10-01',microphoneReady:true,...patch}));
@@ -347,6 +473,28 @@ test('complete events corroborate a single ingestion; duplicate legacy events an
 test('identical speech on different questions is legitimate evidence',async()=>{
  const a=await start();await deliver(a.id,1,0);await service.processBackendTurn(sessions.get(a.id),['Yes.']);await deliver(a.id,2,10);await service.processBackendTurn(sessions.get(a.id),['Yes.','Yes.']);assert.equal(saves.length,2);assert.equal(saves[1].questionId,'q2');assert.notEqual(saves[0].requestId,saves[1].requestId);
 });
+test('a final disfluent answer keeps stutters and self-corrections without a lexical rejection or duplicate save',async()=>{
+ const a=await start();
+ const raw='Well, um, I—I wanted the kitchen to feel quieter. No, let me start that thought again: the clients cook together, so we moved the island back. Sorry, I mean eighteen inches, not eight.';
+ await deliver(a.id,1,0,raw);
+ assert.equal(await service.processBackendTurn(sessions.get(a.id),[raw]),'Question 2?');
+ assert.equal(await service.processBackendTurn(sessions.get(a.id),[raw]),'Question 2?');
+ assert.equal(saves.length,1);assert.equal(saves[0].text,raw);assert.equal(saves[0].questionId,'q1');
+ const turn=sessions.get(a.id).payload.turnState.turns[0];assert.equal(turn.raw,raw);assert.equal(turn.status,'saved');
+ // The provider's final text is synthetic: this proves ingestion, not acoustic endpointing.
+});
+test('a restarted thought after an interrupted question stays for review instead of answering the unheard question',async()=>{
+ const a=await start(),first='The clients cook together, so we widened the route around the island.';
+ await deliver(a.id,1,0,first);await service.processBackendTurn(sessions.get(a.id),[first]);
+ await service.receiveLiveEvent('owner',a.id,event(11,'conversation.utterance','pal','Question 2?',true,'interrupted-followup'));
+ await service.receiveLiveEvent('owner',a.id,event(12,'conversation.stopped_speaking','pal',undefined,true,'interrupted-followup'));
+ const continuation='Sorry, um—before we move on, I said widened, but we actually moved the island eighteen inches.';
+ await service.receiveLiveEvent('owner',a.id,event(13,'conversation.started_speaking','user'));
+ await service.receiveLiveEvent('owner',a.id,event(14,'conversation.utterance','user',continuation));
+ await service.processBackendTurn(sessions.get(a.id),[first,continuation]);
+ const turn=sessions.get(a.id).payload.turnState.turns[1];assert.equal(turn.status,'needs_review');assert.equal(turn.raw,continuation);
+ assert.equal(saves.length,1);assert.equal(saves[0].text,first);
+});
 test('old/history-changing retries never bind to the now-current question',async()=>{
  const a=await start();await deliver(a.id,1,0);await service.processBackendTurn(sessions.get(a.id),['Yes.']);await assert.rejects(()=>service.processBackendTurn(sessions.get(a.id),['No.']));assert.equal(saves.length,1);
 });
@@ -495,4 +643,4 @@ test('retained guide speech cannot be manually reassigned to canonical interview
  await assert.rejects(service.recoverLiveTurn('owner',a.id,{turnPosition:1,target:'current',text:'Where do I upload?'}),/cannot be reassigned/);
  assert.equal(saves.length,0);assert.equal(sessions.get(a.id).payload.turnState.turns[0].status,'needs_review');
 });
-(async()=>{for(const[name,fn]of cases){reset();await fn();console.log('PASS',name);}console.log(`${cases.length} live transport checks passed; provider, canonical and DB boundaries mocked.`);})().catch(error=>{console.error(error);process.exitCode=1;});
+(async()=>{for(const[name,fn]of cases){reset();await fn();console.log('PASS',name);}console.log(`${cases.length} live transport checks passed; corrections use the real canonical controller; persistence, model and provider boundaries synthetic.`);})().catch(error=>{console.error(error);process.exitCode=1;});

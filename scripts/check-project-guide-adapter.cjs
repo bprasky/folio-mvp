@@ -137,6 +137,17 @@ const command = (guideAction, requestId = `request-${Math.random()}`) => ({ acti
     assert.equal(canonical.version, version); assert.equal(calls.length, callCount);
     await assert.rejects(guide.executeProjectGuide('owner', source, fresh, { ...request, guideAction: 'start_over' }), /different content/);
   });
+  await test('spoken lets continue in an explicitly listening guide resumes without becoming project evidence', async () => {
+    const fresh = await guide.prepareProjectGuide('owner', source, 'spoken-resume-welcome');
+    const before = JSON.stringify(canonical.turns), callCount = calls.length;
+    planAction = 'resume_interview';
+    snapshot = await adapters.executeLiveCommand('owner', source, fresh, { action: 'answer', requestId: 'spoken-resume-request',
+      questionId: fresh.currentQuestion.id, text: 'Let’s continue.', inputModality: 'voice' });
+    assert.equal(plannerInputs.at(-1).userText, 'Let’s continue.');
+    assert.equal(calls.length, callCount + 1);assert.equal(calls.at(-1).action, 'resume');
+    assert.equal(JSON.stringify(canonical.turns), before);assert.equal(snapshot.guide.phase, 'interview');
+    assert.equal(snapshot.currentQuestion.id, canonical.activeQuestionId);planAction = 'none';
+  });
   await test('common adapter replays a committed guide skip before validating the now-changed question', async () => {
     const request = { action: 'skip', requestId: 'guide-move-on-retry', questionId: snapshot.currentQuestion.id };
     snapshot = await adapters.executeLiveCommand('owner', source, snapshot, request);

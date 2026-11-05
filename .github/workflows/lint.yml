@@ -87,6 +87,7 @@ jobs:
         run: |
           npx tsx --test scripts/core/project-draft.test.cjs
           node --experimental-vm-modules scripts/check-project-list-privacy.cjs
+          node scripts/check-project-workspace-stats.cjs
           GUIDED_TEST_BROWSER="$(command -v google-chrome || command -v chromium)" node scripts/check-project-draft-browser.cjs
       - run: npm run test:interruptions
       - name: Signup and durable workspace import
@@ -95,6 +96,7 @@ jobs:
           node scripts/check-workspace-import.cjs
           node scripts/check-professional-entry.cjs
           node scripts/check-professional-routing.cjs
+          MARKETING_TEST_BROWSER="$(command -v google-chrome || command -v chromium)" node scripts/check-marketing-entry-browser.cjs
       - name: Guided interview regression checks
         run: npm run test:guided
       - name: Live and guided browser regression checks
@@ -115,6 +117,8 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y ffmpeg fonts-dejavu-core
           node scripts/check-live-interviews.cjs
+          node scripts/check-live-answer-cleanup.cjs
+          node --import tsx --test scripts/security/rate-limit-observability.test.ts
           node scripts/check-live-cleanup.cjs
           node scripts/check-live-adapters.cjs
           npm run test:project-guide

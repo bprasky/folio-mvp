@@ -1,3 +1,56 @@
+# Forgiving hybrid interview answers — 2026-11-05
+
+- [x] Trace stutters, interruptions, saved answers and canonical correction semantics.
+- [x] Expose accepted project answers in the live interview, with their original questions.
+- [x] Add Edit answer and Start again in writing, pausing capture before a separate replacement composer opens.
+- [x] Bind replacements to the saved answer, preserve originals, reject stale writes and retry uncertain saves with the same receipt.
+- [x] Offer a conservative AI filler-cleanup preview that preserves the designer's voice, with explicit acceptance and no automatic answer replacement.
+- [x] Provide explicit resume after editing; only offer spoken continuation when the designer has enabled a live microphone.
+- [x] Verify realistic disfluent speech, interruption recovery, editing, retry, cancel, reload, resume and account/source isolation.
+- [x] Review changes, run affected checks and required guards, commit and push the reviewable result.
+
+Plan check-in: keep voice as the primary conversation with a visible written safety net. A designer can read what was accepted, edit it or type a fresh replacement. Existing canonical corrections retain original exchanges and may regenerate dependent follow-ups; do not promise the exact next question remains unchanged. The replacement must never be submitted as an answer to the current question. Stop the call and capture before editing, preserve pending speech for review, and require explicit resume. The founder added optional AI cleanup: show a preview that removes fillers without rewriting their character, and require explicit acceptance/save. Reuse canonical persistence and receipt handling, with no schema, provider-setting or production configuration change. Actual live speech acceptance remains separately blocked by the production limiter outage and the unavailable IG Workshop session.
+
+### Review
+
+Accepted answers now remain visible with Edit, Start again in writing and View original wording. Editing confirms stopped transport and capture before allowing a revision. Account/source-scoped drafts survive reload; exact receipts protect uncertain retries; changed canonical answers require explicit review before rebinding. Completed interviews retain editing. Cleanup selects bounded removable spans, previews the result, supports rejection/undo and cannot rewrite prose or automatically save. Resume is explicit; spoken continuation is supported when the host is listening.
+
+Verification: 59 actual-component browser cases, 63 service/route/controller cases, 17 project-guide adapter cases, canonical controller and source-adapter suites pass. Cleanup guards/route cases pass; five real synthetic AI evaluations preserved voice/facts at 3,280 input + 53 output tokens (~$0.011). Mobile390/desktop1280 screenshots show no horizontal overflow and correct editor focus. Review found and fixed completion editing, a preview/uncertain-retry conflict, malformed200 acknowledgments, and late pause responses leaking across projects; the source-switch case fails before and passes after. Final specialist review reports no remaining findings. Production speech recognition/turn timing and IG Workshop acceptance still require the separately documented service restoration; no merge or deployment performed.
+
+Final source verification: production compile passed after the last fix, TypeScript budget 851/862 with no new fingerprints, changed-source lint zero errors (one pre-existing ref warning), client/migration guards passed, and all 26 composed project-host browser checks passed. Pushed as the hybrid-interview follow-up in draft PR #848.
+
+Release follow-up: the founder authorized merge and production deployment. CI caught the background-cleanup VM harness rejecting new service imports; explicit fail-on-use stubs and a no-invocation assertion repair the harness without changing product code or weakening isolation. Cleanup, live adapters, project-guide planner/adapter/upload, live CSP and media rollout checks pass locally; the FFmpeg rendering group remains covered by CI's installed tools. Release uses the reviewed PR head only after green CI, then an explicit production build of the merge commit because Git auto-deployment is disabled.
+
+A subsequent CI run exposed a signup-test race: error text appeared before account refresh re-enabled the code input. A held-response reproduction confirmed dropped retry keystrokes. The test now asserts that disabled interval, waits for the enabled input and verifies the entered code before submission; existing timeouts and journey assertions remain intact.
+
+Release checklist:
+- [x] Update the database-backed live journey to use the explicit saved-answer correction contract; verify preserved originals and rejected legacy correction requests.
+- [x] Pass the full composed journey locally with real FFmpeg output, plus all 48 subsequent firm/publishing commands.
+
+The full composed test now pauses before revision, reads the accepted answer/version, preserves original speech/photo provenance and proves exact-receipt replay is idempotent. Legacy unbound project correction is rejected; the supported bio path remains covered. Temporary SHA256-verified media tools run from the isolated untracked test directory, with no dependency or system configuration change. Hosted CI, final review, exact-head merge, production deployment and smoke-check results are tracked on PR #848; real IG Workshop speech acceptance remains separate.
+
+---
+# First-time designer journey and priority fixes — 2026-11-05
+
+- [x] Establish current main/production baseline and inventory live/test coverage.
+- [x] Test signup, firm enrollment, portfolio import, profile review and return navigation with actual components and isolated persistence/provider boundaries.
+- [x] Test first project setup live; verify interview saving/resume with synthetic providers and record the real startup failure separately.
+- [x] Record prioritized findings with reproduction, impact, evidence and acceptance criteria.
+- [x] Implement bounded, verified fixes for confirmed onboarding blockers.
+- [x] Re-run affected journeys and required guards, review diff, commit and push scoped work.
+- [ ] Restore the production rate-limit backend and finish tagging/interview acceptance in the founder's already-imported IG Workshop account.
+
+Plan check-in: directly supports importing designers' archives and drawing out project context. Use an isolated current-main checkout and existing test harnesses. Live browsing is observational; stateful tests use synthetic/disposable data. Distinguish live evidence from fixture evidence. Do not alter a real designer's records, publish their work, apply migrations, or activate provider sessions as incidental QA. Prioritize blocked completion or lost work, then confusing transitions and empty/error states. Preserve prior work in the original checkout. Source merge/deployment are separate from reviewable fixes.
+
+### Review
+
+Baseline: main and production 4675da22 (Vercel READY). Fixed the inert Projects Import action, phone overflow, generic designer signup ending in Settings, missing room/photo counts, misleading profile link, pending generation opening Publish, and infrastructure failures incorrectly reported as interview quota. Repaired the onboarding browser test to include email verification and workspace import, and wired regressions into CI. See `docs/reviews/DESIGNER_FIRST_VISIT_AUDIT_2026-11-05.md` for priorities, evidence and remaining acceptance work.
+
+Verification: 24 signup/import/browser cases, 21 guided-entry cases, four count checks, 14 completion-date cases, 54 live transport cases and limiter observability pass. Existing guided/capture/host/recovery suites pass with synthetic providers. Production compile passes; source lint has zero errors (existing warnings); TypeScript budget is 851/862 with no new fingerprints; client and migration guards pass. Two specialist reviews report no blockers.
+
+The founder authorized the initial live account and then corrected the intended target to IG Workshop, whose upload is already tested. Created only private QA project `64d55224-5540-5e0b-b2b1-ab958f443631` in BP Design, using one labeled synthetic image and one room; no existing project answers/profile/publication changed. Real interview entry failed before provider creation because the limiter reported backend_outage. Sensitive production Redis variables exist but are not readable through the connector; no limits or configuration were disabled. Left Story; QA project retained for investigation. IG Workshop is absent from this account's switcher, and browser control stopped when it could not verify Chrome's URL, so the corrected live acceptance remains open.
+
+---
 # Design organization profile review — 2026-11-04
 
 - [x] Trace the public, member and admin actions from the BP Design cover to their destinations.

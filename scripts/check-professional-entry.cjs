@@ -46,7 +46,9 @@ for (const role of ['designer', 'architect', 'builder', 'vendor']) {
   const setup = new URL(signupDestination(role, '/'), 'https://folio.test');
   assert.equal(setup.pathname, '/auth/org-setup');
   assert.equal(setup.searchParams.get('type'), role);
-  assert.equal(setup.searchParams.get('callbackUrl'), workspaceSetupHref('/settings'));
+  assert.equal(setup.searchParams.get('callbackUrl'), workspaceSetupHref(role === 'vendor' ? '/settings' : '/projects'));
+  assert.equal(signupDestination(role, '/settings'), professionalSetupHref(role, workspaceSetupHref('/settings')));
+  assert.equal(signupDestination(role, undefined, true), professionalSetupHref(role, workspaceSetupHref('/projects/new')));
 }
 const nested = new URL(signupDestination('browsing', professionalSetupHref('architect', '/projects/new?visitToken=abc')), 'https://folio.test');
 assert.equal(nested.searchParams.get('type'), 'architect');

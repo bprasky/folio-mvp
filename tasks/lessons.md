@@ -4,6 +4,30 @@ Keep “Our vendors” out of the organization profile header for every role. Th
 
 # Lessons Learned
 
+## 2026-11-05 — Wait for recovery controls, not just error text
+
+A signup browser test retried when the error alert appeared, before the pending-account refresh had re-enabled the input. The browser dropped its keystrokes. For retry flows, wait for the actual enabled control and assert the entered value before submitting. Reproduce asynchronous phases with a held response; do not mask the race with a longer timeout or blind retries.
+
+## 2026-11-05 — Audit every isolated harness when shared imports change
+
+Release CI caught an older cleanup harness rejecting new imports in the live service after the focused transport/browser suites passed. Find every VM harness loading a changed shared service and run the complete affected CI group. Keep strict import allowlists: for dependencies that a background task must never invoke, use explicit fail-on-use stubs and assert no invocation, rather than adding permissive fallback imports. Record unavailable media tools separately without skipping unrelated checks in the same group.
+
+Contract changes also require the composed database-backed journey: update the caller to the actual pause/read/versioned-revision flow, assert the old unbound request is rejected, and preserve original speech, retry and media invalidation checks. Missing local media binaries are a verification gap; provision isolated temporary tools or explicitly wait for that full CI group before release.
+
+## 2026-11-05 — Give first-time speakers a written safety net
+
+The founder emphasized that designers will stutter, restart thoughts and need practice. Keep accepted answers visible with their questions and offer editing or a fresh written replacement without resetting the interview. Separate retrying an uncertain save from changing the answer. Preserve the original until replacement is confirmed, retain failed drafts, and bind revisions to the saved answer rather than the current prompt. Canonical corrections can invalidate dependent follow-ups; never promise unchanged question progression. Keep voice and typing in the same interview, and distinguish fixture evidence from real provider speech verification.
+
+Follow-up: AI cleanup means removing ums/uhs and accidental filler while preserving character, facts, uncertainty, emphasis and colloquial wording. Show the proposed wording before acceptance; never silently polish or overwrite. Editing pauses listening. Make resume explicit and never imply a fully muted/ended call can hear a spoken resume command.
+
+## 2026-11-05 — Use the founder's already-imported test workspace
+
+For the first-time designer walkthrough, the founder redirected live testing from the BP Design example account to IG Workshop, whose website and upload were already tested. Start with the specified workspace and remaining stages (tagging and interview), not another import or an example firm's unverified website. Verify the active account/firm before mutations; if the requested firm is absent from the switcher, obtain the intended session rather than changing memberships or inventing a portfolio source. Keep QA records separate from existing answers and public content.
+
+## 2026-11-05 — Freeze dependency setup before parallel verification
+
+Do not rebuild a shared or junction-backed dependency tree while another agent can invoke Next's automatic dependency installer. Prepare an isolated current-schema Prisma client before tests and explicitly coordinate any dependency maintenance. If an installer is triggered unexpectedly, stop concurrent dependency commands, restore the exact package state, and revalidate the tools; never change package versions or committed diagnostic budgets to hide an environment failure.
+
 ## 2026-10-29 — Import completion uses the approved profile
 
 The founder rejected the separate onboarding profile design. Reuse the actual approved organization cover and mosaic from the magazine profile work, including saved appearance settings. Onboarding adds private draft status and the materials/sourcebook next step; it must not invent a second profile aesthetic. Inspect existing related work before creating a competing implementation.

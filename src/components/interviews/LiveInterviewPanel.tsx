@@ -12,7 +12,14 @@ interface LiveState {
   id: string; status: string; snapshot?: Omit<LiveAdapterSnapshot, 'state'>; turns?: LiveTurn[]; notice?: string;
   join?: { url: string; token: string; conversationId: string }; recordingEnabled?: boolean;
   consent?: { mode: Mode };
+  savedAnswers?: { sessionId: string; version: number; answers: SavedAnswer[] } | null;
 }
+interface SavedAnswer { id: string; questionId: string; questionText: string; text: string; originalText: string; inputModality: 'voice' | 'text' | 'mixed'; editable: boolean }
+type ReplacementRequest = { action: 'revise_answer'; requestId: string; answerId: string; sessionId: string; version: number; text: string };
+type AnswerReplacement = {
+  sourceKey: string; liveSessionId: string; sessionId: string; version: number; answerId: string; questionId: string; questionText: string;
+  acceptedText: string; text: string; paused: boolean; request?: ReplacementRequest; rejected?: boolean;
+};
 export interface LiveStartIntent { requestId: string; consumed: boolean; inputMode?: 'voice' | 'text'; settled?: boolean }
 export interface LivePanelControls { stop: () => Promise<void>; guide: (action: ProjectGuideAction | 'refresh' | 'return_guide') => Promise<boolean>; linkPhoto: (id: string, questionId: string) => Promise<boolean> }
 interface Props { source: LiveSource; startIntent?: LiveStartIntent; onStartingChange?: (starting: boolean) => void; onCanonicalChange?: (snapshot?: Omit<LiveAdapterSnapshot,'state'>, allowGuideActions?: boolean) => void; onActiveChange?: (active: boolean) => void; beforeStart?: () => Promise<void>; selectedImageId?:string|null; onSessionChange?:(id:string)=>void;
@@ -41,6 +48,7 @@ async function liveRequest<T>(path: string, body?: unknown): Promise<T> {
 export function LiveInterviewPanel({ source, startIntent, onStartingChange, onCanonicalChange, onActiveChange, beforeStart, selectedImageId, onSessionChange, presentation = 'compact', onAvailabilityChange, onOpenWorkspace, onControlsReady, guideRefreshKey, recordingSetup = false, workspaceStep, callStage = false }: Props) {
   const fieldId = useId();
   const sourceKey = JSON.stringify(source);
+  const startIntentRef = useRef(startIntent); startIntentRef.current = startIntent;
   const workspaceStepRef = useRef(workspaceStep);
   workspaceStepRef.current = workspaceStep;
   const [available, setAvailable] = useState(false);
@@ -70,6 +78,14 @@ export function LiveInterviewPanel({ source, startIntent, onStartingChange, onCa
   const [typedQuestion, setTypedQuestion] = useState<TypedQuestion | null>(null);
   const typedReceipt = useRef<{ requestId: string; text: string } | null>(null);
   const typedStorageKey = useRef<string | null>(null);
+  const [replacement, setReplacement] = useState<AnswerReplacement | null>(null);
+  const replacementRef = useRef<AnswerReplacement | null>(null);
+  const replacementStorageKey = useRef<string | null>(null);
+  const [replacementMessage, setReplacementMessage] = useState('');
+  const [cleanupPreview, setCleanupPreview] = useState<{ original: string; text: string } | null>(null);
+  const [cleanupUndo, setCleanupUndo] = useState<string | null>(null);
+  const [replacementTarget, setReplacementTarget] = useState<{ answer: SavedAnswer; version: number } | null>(null);
+  const replacementInput = useRef<HTMLTextAreaElement>(null);
   const stateRef = useRef<LiveState | null>(null);
   const callRef = useRef<DailyCall | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
@@ -96,6 +112,12 @@ export function LiveInterviewPanel({ source, startIntent, onStartingChange, onCa
   const echoedVersions = useRef(new Set<string>());
   const lastGuide = useRef('');
   const captureStarting = useRef(false);
+
+  useEffect(() => {
+    if (!replacement?.paused || replacement.request) return;
+    replacementInput.current?.focus({ preventScroll: true });
+    replacementInput.current?.scrollIntoView({ block: 'nearest' });
+  }, [replacement?.paused, replacement?.answerId, replacement?.request]);
 
   useEffect(() => {
     if (!retryAt) return;
@@ -141,22 +163,28 @@ export function LiveInterviewPanel({ source, startIntent, onStartingChange, onCa
   const end = useCallback(async (action: 'end' | 'pause' | 'switch_to_text') => {
     if (ending.current) return;
     ending.current = true;
+    const id = stateRef.current?.id;
+    const epoch = sourceEpoch.current;
+    const endingSource = mountedSource.current;
+    const currentScope = () => mounted.current && sourceEpoch.current === epoch && mountedSource.current === endingSource && stateRef.current?.id === id;
     if (mounted.current) { setBusy(true); setError(''); }
     // Stop capture promptly; the final dataavailable precedes its stop promise.
     const finishing = captureRef.current?.stop().catch(() => {
-      progress('incomplete', 'Saved recording chunks need another upload attempt. Keep this page open to retry.');
+      if (currentScope()) progress('incomplete', 'Saved recording chunks need another upload attempt. Keep this page open to retry.');
     });
     const releasing = release();
     try {
-      const id = stateRef.current?.id;
-      if (id) setCurrent(await liveRequest<LiveState>(`/api/live-interviews/${encodeURIComponent(id)}`, { action }), false);
+      if (id) {
+        const next = await liveRequest<LiveState>(`/api/live-interviews/${encodeURIComponent(id)}`, { action });
+        if (currentScope()) setCurrent(next, false);
+      }
     } catch (failure) {
-      if (mounted.current) setError(failure instanceof Error ? failure.message : 'The end request could not be confirmed. Retry End; automatic session cleanup remains active.');
+      if (currentScope()) setError(failure instanceof Error ? failure.message : 'The end request could not be confirmed. Retry End; automatic session cleanup remains active.');
     } finally {
       await releasing; await finishing;
       ending.current = false; inFlight.current = false;
       if (mounted.current) setBusy(false);
-      callbacks.current.onCanonicalChange?.(stateRef.current?.snapshot, false);
+      if (currentScope()) callbacks.current.onCanonicalChange?.(stateRef.current?.snapshot, false);
     }
   }, [progress, release, setCurrent]);
   const endRef = useRef(end); endRef.current = end;
@@ -166,6 +194,8 @@ export function LiveInterviewPanel({ source, startIntent, onStartingChange, onCa
     sourceEpoch.current++; setReadySource(null);
     setAvailable(false);
     typedStorageKey.current = null;
+    replacementStorageKey.current = null;
+    replacementRef.current = null; setReplacement(null); setReplacementMessage(''); setCleanupPreview(null); setCleanupUndo(null); setReplacementTarget(null);
     void purgeExpiredCaptures().catch(()=>{});
     void (async () => {
       if (mountedSource.current !== sourceKey) {
@@ -181,6 +211,20 @@ export function LiveInterviewPanel({ source, startIntent, onStartingChange, onCa
           setAvailable(enabled); callbacks.current.onAvailabilityChange?.(enabled); setRecordingAvailable(result.recordingEnabled === true);
           if (enabled && result.draftScope) {
             const key = `folio.live.text.v1.${result.draftScope}`; typedStorageKey.current = key;
+            const editKey = `folio.live.replacement.v1.${result.draftScope}`; replacementStorageKey.current = editKey;
+            try {
+              const saved = JSON.parse(sessionStorage.getItem(editKey) || 'null');
+              if (saved?.sourceKey === sourceKey && typeof saved.liveSessionId === 'string' && typeof saved.sessionId === 'string'
+                && typeof saved.answerId === 'string' && typeof saved.questionId === 'string' && typeof saved.questionText === 'string' && typeof saved.acceptedText === 'string'
+                && typeof saved.text === 'string' && saved.text.length <= 2000 && Number.isSafeInteger(saved.version)) {
+                const draft: AnswerReplacement = { ...saved, paused: false };
+                if (draft.request && (draft.request.action !== 'revise_answer' || draft.request.answerId !== draft.answerId
+                  || draft.request.sessionId !== draft.sessionId || draft.request.version !== draft.version
+                  || draft.request.text !== draft.text || !/^[a-zA-Z0-9-]{16,80}$/.test(draft.request.requestId))) delete draft.request;
+                replacementRef.current = draft; setReplacement(draft);
+                if (startIntentRef.current) { startIntentRef.current.consumed = true; startIntentRef.current.settled = true; }
+              }
+            } catch { /* A malformed local draft never changes a saved answer. */ }
             try {
               const saved = JSON.parse(sessionStorage.getItem(key) || 'null');
               if (typeof saved?.text === 'string' && saved.text && typeof saved.questionId === 'string' && typeof saved.version === 'string') {
@@ -318,10 +362,10 @@ export function LiveInterviewPanel({ source, startIntent, onStartingChange, onCa
   };
 
   const start = async (fromIntent = false) => {
-    if (inFlight.current || ending.current || callRef.current || (retryAt && Date.parse(retryAt) > Date.now())) return;
+    if (replacementRef.current || inFlight.current || ending.current || callRef.current || (retryAt && Date.parse(retryAt) > Date.now())) return;
     const captureMode = fromIntent || source.kind === 'project_guide' ? 'none' : mode;
     if (captureMode !== 'none' && !consent) { setError('Confirm recording consent before starting.'); return; }
-    inFlight.current = true; setBusy(true); setError('');
+    inFlight.current = true; setBusy(true); setError(''); setReplacementMessage('');
     callbacks.current.onStartingChange?.(true);
     const epoch = sourceEpoch.current;
     const attempt = ++startEpoch.current;
@@ -463,13 +507,14 @@ export function LiveInterviewPanel({ source, startIntent, onStartingChange, onCa
   };
   const startRef = useRef(start); startRef.current = start;
   useEffect(() => {
-    if (!startIntent || startIntent.consumed || !available || readySource !== sourceKey || inFlight.current || callRef.current) return;
+    if (replacementRef.current || !startIntent || startIntent.consumed || !available || readySource !== sourceKey || inFlight.current || callRef.current) return;
     startIntent.consumed = true;
     startKey.current = startIntent.requestId;
     void startRef.current(true);
   }, [available, readySource, sourceKey, startIntent, busy]);
 
   const changeInput = async (next: 'voice' | 'text') => {
+    if (replacementRef.current) return;
     if (next === 'text' && chooseTextDuringStart.current) { chooseTextDuringStart.current(); return; }
     if (busy || next === inputMode || (next === 'voice' && !!typedDraft.trim())) return;
     setError('');
@@ -504,6 +549,7 @@ export function LiveInterviewPanel({ source, startIntent, onStartingChange, onCa
     try { if (typedStorageKey.current) sessionStorage.setItem(typedStorageKey.current, JSON.stringify({ text, ...question })); } catch { /* current input stays in memory */ }
   };
   const sendTyped = async (offered?: { text: string; questionId: string }) => {
+    if (replacementRef.current) return;
     const current = stateRef.current;
     const text = offered?.text ?? typedDraft;
     if (busy || inFlight.current || !active || !callRef.current || !current?.snapshot?.currentQuestion || !text.trim()) return;
@@ -539,7 +585,7 @@ export function LiveInterviewPanel({ source, startIntent, onStartingChange, onCa
   };
 
   const control = async (action: 'skip' | 'retry') => {
-    if (!state?.id || busy || (state.snapshot?.guide && (typedDraft.trim() || typedReceipt.current))) return;
+    if (replacementRef.current || !state?.id || busy || (state.snapshot?.guide && (typedDraft.trim() || typedReceipt.current))) return;
     if (state.snapshot?.guide) { await guideControl(action); return; }
     if (active) await end('switch_to_text');
     setBusy(true); setError('');
@@ -571,7 +617,7 @@ export function LiveInterviewPanel({ source, startIntent, onStartingChange, onCa
   };
   const guideControl = useCallback(async (action: ProjectGuideAction | 'refresh' | 'return_guide' | 'skip' | 'retry', quiet = false) => {
     const current = stateRef.current;
-    if (!current?.id || !current.snapshot?.guide || inFlight.current || typedDraft.trim() || typedReceipt.current) return false;
+    if (replacementRef.current || !current?.id || !current.snapshot?.guide || inFlight.current || typedDraft.trim() || typedReceipt.current) return false;
     if (guideReceipt.current && guideReceipt.current.action !== action) { if (!quiet) setError('Retry the previous conversation choice before choosing another.'); return false; }
     guideReceipt.current ??= { action, requestId: crypto.randomUUID(), fromVersion: current.snapshot.version, questionId: current.snapshot.currentQuestion?.id, workspaceStep: workspaceStepRef.current };
     const receipt = guideReceipt.current;
@@ -601,7 +647,7 @@ export function LiveInterviewPanel({ source, startIntent, onStartingChange, onCa
   useEffect(() => {
     onControlsReady?.({ guide: guideControl, linkPhoto: async (id, questionId) => {
       const current = stateRef.current;
-      if (!current?.id || current.snapshot?.currentQuestion?.id !== questionId || inFlight.current || typedDraft.trim() || typedReceipt.current) return false;
+      if (replacementRef.current || !current?.id || current.snapshot?.currentQuestion?.id !== questionId || inFlight.current || typedDraft.trim() || typedReceipt.current) return false;
       inFlight.current = true; setBusy(true); setError('');
       try { await eventTail.current; setCurrent(await liveRequest<LiveState>(`/api/live-interviews/${encodeURIComponent(current.id)}`, { action: 'link_image', questionId, selectedImageId: id })); return true; }
       catch (failure) { if (mounted.current) setError(failure instanceof Error ? failure.message : 'The photo could not be linked.'); return false; }
@@ -684,9 +730,123 @@ export function LiveInterviewPanel({ source, startIntent, onStartingChange, onCa
     }
   };
 
+  const keepReplacement = (draft: AnswerReplacement | null) => {
+    replacementRef.current = draft; setReplacement(draft);
+    try {
+      const key = replacementStorageKey.current;
+      if (key) { if (draft) sessionStorage.setItem(key, JSON.stringify(draft)); else sessionStorage.removeItem(key); }
+    } catch { /* The replacement remains in memory; the accepted answer stays on the server. */ }
+  };
+  const pauseForReplacement = async (draft: AnswerReplacement) => {
+    if (inFlight.current || ending.current) return;
+    const epoch = sourceEpoch.current;
+    const currentScope = () => mounted.current && sourceEpoch.current === epoch && mountedSource.current === draft.sourceKey
+      && replacementRef.current?.liveSessionId === draft.liveSessionId;
+    // Stop sending and recording speech before making any asynchronous request.
+    streamRef.current?.getAudioTracks().forEach(track => { track.enabled = false; });
+    callRef.current?.setLocalAudio(false); captureRef.current?.setMuted(true); setMuted(true);
+    inFlight.current = true; setBusy(true); setError(''); setReplacementMessage('Pausing the interview before you edit…');
+    try {
+      await end('pause');
+      if (!currentScope()) return;
+      inFlight.current = true; setBusy(true);
+      await eventTail.current;
+      const next = await liveRequest<LiveState>(`/api/live-interviews/${encodeURIComponent(draft.liveSessionId)}`);
+      if (!currentScope()) return;
+      setCurrent(next, false);
+      if (next.status.toLowerCase() !== 'ended') throw new Error('Your microphone is off. The call is still closing; retry pausing before you edit.');
+      if (next.turns?.some(turn => turn.status !== 'saved')) throw new Error('A recent reply still needs saving or review below. Your earlier answer is unchanged.');
+      const saved = next.savedAnswers;
+      const answer = saved?.answers.find(item => item.id === draft.answerId);
+      if (!draft.request && (!saved || saved.sessionId !== draft.sessionId || !answer?.editable || answer.text !== draft.acceptedText))
+        throw new Error('This saved answer changed. Keep the original below, then open the latest answer to edit it. Your replacement text is still here.');
+      keepReplacement({ ...draft, version: draft.request ? draft.version : saved!.version, paused: true });
+      setError(''); setReplacementMessage('Interview paused · microphone off. Your saved answer stays as it is until you save a replacement.');
+    } catch (failure) {
+      if (currentScope()) { setError(failure instanceof Error ? failure.message : 'The pause could not be confirmed. Retry pausing; your answer is unchanged.'); setReplacementMessage('Microphone off. Waiting to confirm that the interview has paused.'); }
+    } finally { if (currentScope()) { inFlight.current = false; setBusy(false); } }
+  };
+  const editSavedAnswer = (answer: SavedAnswer, startAgain: boolean) => {
+    const current = stateRef.current;
+    if (!current?.savedAnswers || !answer.editable || busy || inFlight.current || replacementRef.current
+      || typedDraft.trim() || typedReceipt.current || current.turns?.some(turn => turn.status !== 'saved')) return;
+    const draft: AnswerReplacement = { sourceKey, liveSessionId: current.id, sessionId: current.savedAnswers.sessionId,
+      version: current.savedAnswers.version, answerId: answer.id, questionId: answer.questionId, questionText: answer.questionText,
+      acceptedText: answer.text, text: startAgain ? '' : answer.text, paused: false };
+    setCleanupPreview(null); setCleanupUndo(null); setReplacementTarget(null); keepReplacement(draft); void pauseForReplacement(draft);
+  };
+  const cleanReplacement = async () => {
+    const draft = replacementRef.current;
+    if (!draft?.paused || draft.request || busy || inFlight.current || !draft.text.trim()) return;
+    const epoch = sourceEpoch.current;
+    const currentScope = () => mounted.current && sourceEpoch.current === epoch && mountedSource.current === draft.sourceKey
+      && replacementRef.current?.answerId === draft.answerId && replacementRef.current.text === draft.text;
+    inFlight.current = true; setBusy(true); setError(''); setCleanupPreview(null);
+    try {
+      const cleaned = await liveRequest<{ text: string }>(`/api/live-interviews/${encodeURIComponent(draft.liveSessionId)}/clean-answer`, {
+        answerId: draft.answerId, sessionId: draft.sessionId, version: draft.version, text: draft.text,
+      });
+      if (!currentScope()) return;
+      if (typeof cleaned.text !== 'string' || !cleaned.text.trim() || cleaned.text.length > 2000) throw new Error('The wording suggestion could not be read. Your words are unchanged.');
+      if (cleaned.text === draft.text) setReplacementMessage('Your wording is already clear. No cleanup was needed.');
+      else { setCleanupPreview({ original: draft.text, text: cleaned.text }); setReplacementMessage('Review the wording suggestion. Nothing changes until you choose it and save.'); }
+    } catch (failure) { if (currentScope()) setError(failure instanceof Error ? failure.message : 'Wording cleanup is unavailable. Your words are unchanged.'); }
+    finally { if (currentScope()) { inFlight.current = false; setBusy(false); } }
+  };
+  const saveReplacement = async () => {
+    const draft = replacementRef.current;
+    if (!draft?.paused || draft.rejected || busy || inFlight.current || !draft.text.trim() || cleanupPreview) return;
+    const request: ReplacementRequest = draft.request ?? { action: 'revise_answer', requestId: crypto.randomUUID(),
+      answerId: draft.answerId, sessionId: draft.sessionId, version: draft.version, text: draft.text };
+    setCleanupPreview(null); keepReplacement({ ...draft, request });
+    const epoch = sourceEpoch.current;
+    const currentScope = () => mounted.current && sourceEpoch.current === epoch && mountedSource.current === draft.sourceKey;
+    inFlight.current = true; setBusy(true); setError(''); setReplacementMessage('Saving your replacement…');
+    try {
+      const next = await liveRequest<LiveState>(`/api/live-interviews/${encodeURIComponent(draft.liveSessionId)}`, request);
+      if (!currentScope()) return;
+      if (next.id !== draft.liveSessionId || next.status !== 'ended' || next.savedAnswers?.sessionId !== draft.sessionId
+        || !Number.isSafeInteger(next.savedAnswers.version) || !Array.isArray(next.savedAnswers.answers))
+        throw new Error('The saved replacement could not be confirmed. Your text is retained; retry saving to check the same change.');
+      setCurrent(next, false); keepReplacement(null); setCleanupPreview(null); setCleanupUndo(null); setReplacementTarget(null);
+      if (startIntent) { startIntent.consumed = true; startIntent.settled = true; }
+      setReplacementMessage('Replacement saved. Resume the interview when you’re ready; follow-up questions may have changed.');
+    } catch (failure) {
+      if (currentScope()) {
+        setError(failure instanceof Error ? failure.message : 'Saving could not be confirmed. Your replacement is retained.');
+        const rejected = (failure as { status?: number }).status === 412;
+        if (rejected) keepReplacement({ ...draft, request, rejected: true });
+        setReplacementMessage(rejected ? 'The saved interview changed before this replacement could be accepted. Review the latest answer before applying your draft.' : 'Your replacement is retained. Retry saving to confirm this same change before continuing.');
+      }
+    } finally { if (currentScope()) { inFlight.current = false; setBusy(false); } }
+  };
+  const refreshSavedAnswers = async (reviewLatest = false) => {
+    const draft = replacementRef.current;
+    if (!draft || busy || inFlight.current) return;
+    const epoch = sourceEpoch.current;
+    inFlight.current = true; setBusy(true);
+    try {
+      const next = await liveRequest<LiveState>(`/api/live-interviews/${encodeURIComponent(draft.liveSessionId)}`);
+      if (!mounted.current || sourceEpoch.current !== epoch) return;
+      setCurrent(next, false);
+      if (reviewLatest && draft.rejected) {
+        const saved = next.savedAnswers;
+        const answer = saved?.answers.find(item => item.questionId === draft.questionId);
+        if (next.status.toLowerCase() !== 'ended' || saved?.sessionId !== draft.sessionId || !answer?.editable)
+          throw new Error('This answer is no longer available in the same interview. Your draft is retained here; it cannot be applied to a different question or a restarted interview.');
+        setReplacementTarget({ answer, version: saved.version }); setError('');
+        setReplacementMessage('Review the latest saved answer below. Your replacement text has not changed.');
+      } else setReplacementMessage('Saved answers refreshed. Your replacement and its save request are retained; Retry saving checks the same change.');
+    } catch (failure) { if (mounted.current && sourceEpoch.current === epoch) setError(failure instanceof Error ? failure.message : 'Saved answers could not be refreshed. Your replacement is retained.'); }
+    finally { if (mounted.current && sourceEpoch.current === epoch) { inFlight.current = false; setBusy(false); } }
+  };
+
   if (!available && !state) return null;
   const unresolved = state?.turns?.filter(turn => turn.status === 'needs_review') || [];
   const savedTurns = state?.turns?.filter(turn => turn.status === 'saved') || [];
+  const savedAnswers = state?.savedAnswers?.answers || [];
+  const latestAnswer = savedAnswers.at(-1);
+  const canEditAnswer = !busy && !replacement && !typedDraft.trim() && !typedReceipt.current && !state?.turns?.some(turn => turn.status !== 'saved');
   const pendingTyped = state?.turns?.find(turn => turn.inputMode === 'text' && turn.status !== 'saved');
   const awaitingReply = !!typedReceipt.current || !!pendingTyped;
   const draftQuestionChanged = !!typedDraft && !!typedQuestion && !!state?.snapshot
@@ -702,7 +862,7 @@ export function LiveInterviewPanel({ source, startIntent, onStartingChange, onCa
   return <section aria-label="Live interview" className={`w-full min-w-0 text-folio-body text-text-primary ${primary ? 'overflow-hidden rounded-xl border border-border bg-surface-canvas shadow-folio2' : 'rounded-sm border border-border bg-surface-canvas p-4'}`}>
     <div className={primary && active ? 'sr-only' : `flex items-start justify-between gap-3 ${primary ? 'p-4' : ''}`}>
       <div><h3 className={primary ? 'font-headline text-folio-h4' : 'text-folio-ui font-semibold'}>{active || projectHost ? 'Your Folio host' : 'Tell the story behind your work'}</h3><p className="text-folio-meta text-text-secondary">AI host · your project, in your words</p></div>
-      <span className="text-folio-meta" role="status">{active ? 'Live' : busy ? 'Connecting…' : error ? 'Connection paused' : 'Ready'}</span>
+      <span className="text-folio-meta" role="status">{replacement ? replacement.paused ? 'Paused' : 'Pausing…' : active ? 'Live' : busy ? 'Connecting…' : error ? 'Connection paused' : 'Ready'}</span>
     </div>
     {!active ? <div className={primary ? 'space-y-3 px-4 pb-4' : 'mt-3 space-y-3'}>
       {primary ? <div className="flex aspect-video flex-col items-center justify-center gap-3 rounded-lg bg-surface-ground px-6 text-center" aria-label="Interviewer preview">
@@ -725,9 +885,9 @@ export function LiveInterviewPanel({ source, startIntent, onStartingChange, onCa
       {mode !== 'none' && !projectHost ? <label className="flex items-start gap-2 text-folio-meta"><input type="checkbox" checked={consent} disabled={busy} onChange={event => setConsent(event.target.checked)} className="mt-1 accent-folio-gold" />
         <span>I consent to private capture and processing of my {mode === 'video' ? 'voice and camera footage' : 'voice'} for media preparation. Publishing requires my separate approval. My camera footage is not sent to the live interviewer.</span></label> : null}
       {mode !== 'none' ? <p className="text-folio-meta text-text-secondary">Upload recovery temporarily stores recording chunks on this device. Capture stops when pending data reaches 25 MiB, retaining the final recorder data. Uploaded chunks are removed; recovery expires after 24 hours and is cleared when Folio next opens. You can discard retained device recordings below.</p> : null}
-      {(!startIntent || (!busy && startIntent.consumed)) ? <button type="button" className={primary ? 'w-full rounded-sm bg-folio-text-primary px-4 py-3 text-folio-ui font-medium text-white disabled:opacity-50 focus-visible:ring-2 focus-visible:ring-folio-gold' : button} disabled={busy || !!retryAt || readySource !== sourceKey || (!projectHost && mode !== 'none' && !consent)} onClick={() => void start()}>{retryAt ? 'Live interview available later' : busy ? 'Preparing live interview…' : startIntent && (error || !startIntent.settled) ? 'Retry interview' : inputMode === 'text' ? 'Start with typed replies' : state ? 'Resume live interview' : 'Start live interview'}</button> : null}
+      {(!startIntent || (!busy && startIntent.consumed)) ? <button type="button" className={primary ? 'w-full rounded-sm bg-folio-text-primary px-4 py-3 text-folio-ui font-medium text-white disabled:opacity-50 focus-visible:ring-2 focus-visible:ring-folio-gold' : button} disabled={busy || !!replacement || !!retryAt || readySource !== sourceKey || (!projectHost && mode !== 'none' && !consent)} onClick={() => void start()}>{replacement ? 'Interview paused while you edit' : retryAt ? 'Live interview available later' : busy ? 'Preparing live interview…' : replacementMessage && state ? 'Resume interview' : startIntent && (error || !startIntent.settled) ? 'Retry interview' : inputMode === 'text' ? 'Start with typed replies' : state ? 'Resume live interview' : 'Start live interview'}</button> : null}
       {retryAt ? <p className="text-folio-meta" role="status">Available {new Date(retryAt).toLocaleString(undefined, { weekday: 'short', hour: 'numeric', minute: '2-digit' })}. Use the step-by-step workspace to keep working now.</p> : null}
-      <button type="button" className={`${button} ${primary ? 'w-full border-transparent underline underline-offset-4' : 'ml-2'}`} disabled={(busy && !(startInputOpen && inputMode === 'voice')) || awaitingReply || (inputMode === 'text' && !!typedDraft.trim())} onClick={() => void changeInput(inputMode === 'voice' ? 'text' : 'voice')}>{inputMode === 'voice' ? 'Type instead' : 'Use microphone instead'}</button>
+      <button type="button" className={`${button} ${primary ? 'w-full border-transparent underline underline-offset-4' : 'ml-2'}`} disabled={!!replacement || (busy && !(startInputOpen && inputMode === 'voice')) || awaitingReply || (inputMode === 'text' && !!typedDraft.trim())} onClick={() => void changeInput(inputMode === 'voice' ? 'text' : 'voice')}>{inputMode === 'voice' ? 'Type instead' : 'Use microphone instead'}</button>
       {state?.id && !['ended', 'ENDED', 'expired', 'EXPIRED'].includes(state.status) ? <button type="button" className={`${button} ml-2`} disabled={busy} onClick={() => void end('end')}>End saved live session</button> : null}
     </div> : null}
     <div className={active ? `space-y-3 ${primary ? '' : 'mt-3'}` : 'hidden'}>
@@ -779,7 +939,60 @@ export function LiveInterviewPanel({ source, startIntent, onStartingChange, onCa
       </form> : null}
       {!primary && captions && caption ? <div className="max-h-32 overflow-auto whitespace-pre-wrap text-folio-meta" aria-live="polite"><p className="text-text-secondary">Live captions</p>{caption}</div> : null}
     </div>
+    {latestAnswer ? <section className={`${primary ? 'm-4' : 'mt-4'} space-y-3 rounded-lg border border-border p-4`} aria-label="Saved interview answers">
+      <div><h4 className="text-folio-ui font-medium">Your latest saved answer</h4><p className="mt-1 text-folio-meta text-text-secondary">You don’t need a perfect first take. Edit a saved answer or start again in writing.</p></div>
+      <p className="text-folio-meta font-medium">{latestAnswer.questionText}</p>
+      <p className="max-h-48 overflow-auto whitespace-pre-wrap break-words text-folio-body">{latestAnswer.text}</p>
+      {latestAnswer.originalText !== latestAnswer.text ? <details className="text-folio-meta"><summary className="cursor-pointer focus-visible:ring-2 focus-visible:ring-folio-gold">View original wording</summary><p className="mt-2 max-h-48 overflow-auto whitespace-pre-wrap break-words">{latestAnswer.originalText}</p></details> : null}
+      {latestAnswer.editable ? <div className="flex flex-wrap gap-2">
+        <button type="button" className={button} disabled={!canEditAnswer} onClick={() => editSavedAnswer(latestAnswer, false)}>Edit answer</button>
+        <button type="button" className={button} disabled={!canEditAnswer} onClick={() => editSavedAnswer(latestAnswer, true)}>Start again in writing</button>
+      </div> : <p className="text-folio-meta text-text-secondary">Resume the project interview to edit your answers.</p>}
+      {savedAnswers.length > 1 ? <details><summary className="cursor-pointer text-folio-meta focus-visible:ring-2 focus-visible:ring-folio-gold">Earlier saved answers</summary>
+        <ol className="mt-3 max-h-80 space-y-4 overflow-auto">{savedAnswers.slice(0, -1).map(answer => <li key={answer.id} className="space-y-2 border-t border-border pt-3">
+          <p className="text-folio-meta font-medium">{answer.questionText}</p><p className="whitespace-pre-wrap break-words text-folio-meta">{answer.text}</p>
+          {answer.originalText !== answer.text ? <details className="text-folio-meta"><summary className="cursor-pointer focus-visible:ring-2 focus-visible:ring-folio-gold">View original wording</summary><p className="mt-2 whitespace-pre-wrap break-words">{answer.originalText}</p></details> : null}
+          {answer.editable ? <button type="button" className={button} disabled={!canEditAnswer} onClick={() => editSavedAnswer(answer, false)}>Edit this answer</button> : null}
+        </li>)}</ol></details> : null}
+    </section> : null}
+    {replacement ? <section className={`${primary ? 'm-4' : 'mt-4'} space-y-3 rounded-lg border border-border bg-surface-ground p-4`} aria-label="Edit saved answer">
+      <h4 className="text-folio-ui font-medium">Replace this saved answer</h4>
+      <p className="text-folio-meta font-medium">{replacement.questionText}</p>
+      <p className="text-folio-meta text-text-secondary">Write a replacement for this question. It won’t answer the current question or restart your interview. Follow-up questions may change after you save.</p>
+      <details><summary className="cursor-pointer text-folio-meta">Your currently saved answer</summary><p className="mt-2 whitespace-pre-wrap break-words text-folio-meta">{replacement.acceptedText}</p></details>
+      <label htmlFor={`${fieldId}-replacement`} className="block text-folio-meta">Your replacement</label>
+      <textarea ref={replacementInput} id={`${fieldId}-replacement`} aria-label="Replace saved answer" value={replacement.text} rows={5} maxLength={2000}
+        disabled={busy || !replacement.paused || !!replacement.request} onChange={event => { setCleanupPreview(null); setCleanupUndo(null); keepReplacement({ ...replacement, text: event.target.value }); }}
+        className="w-full rounded-sm border border-border bg-surface-canvas p-3 text-folio-body focus-visible:ring-2 focus-visible:ring-folio-gold disabled:opacity-70" />
+      {!replacement.request ? <div className="space-y-2">
+        <button type="button" className={button} disabled={busy || !replacement.paused || !replacement.text.trim()} onClick={() => void cleanReplacement()}>Clean up wording</button>
+        <p className="text-folio-meta text-text-secondary">Preview a light cleanup of filler words while keeping your phrasing and personality. Your answer is only replaced when you save.</p>
+        {cleanupUndo !== null ? <button type="button" className={`${button} border-transparent underline underline-offset-4`} disabled={busy} onClick={() => { keepReplacement({ ...replacement, text: cleanupUndo }); setCleanupUndo(null); setCleanupPreview(null); setReplacementMessage('Your earlier wording is back in the draft.'); }}>Undo wording cleanup</button> : null}
+      </div> : null}
+      {cleanupPreview ? <section aria-label="Wording suggestion" className="space-y-3 rounded-sm border border-border bg-surface-canvas p-3">
+        <h5 className="text-folio-ui font-medium">Suggested wording</h5><p className="whitespace-pre-wrap break-words text-folio-body">{cleanupPreview.text}</p>
+        <div className="flex flex-wrap gap-2"><button type="button" className={button} disabled={busy || !!replacement.request} onClick={() => { keepReplacement({ ...replacement, text: cleanupPreview.text }); setCleanupUndo(cleanupPreview.original); setCleanupPreview(null); setReplacementMessage('Suggested wording is in your draft. Read it through, then save when you’re ready.'); }}>Use this wording</button>
+          <button type="button" className={button} disabled={busy || !!replacement.request} onClick={() => { setCleanupPreview(null); setReplacementMessage('Your wording is unchanged.'); }}>Keep my wording</button></div>
+      </section> : null}
+      {replacementTarget ? <section aria-label="Latest saved answer to review" className="space-y-3 rounded-sm border border-border bg-surface-canvas p-3">
+        <p className="text-folio-meta font-medium">{replacementTarget.answer.questionText}</p><p className="whitespace-pre-wrap break-words text-folio-body">{replacementTarget.answer.text}</p>
+        <button type="button" className={button} disabled={busy} onClick={() => {
+          keepReplacement({ ...replacement, answerId: replacementTarget.answer.id, questionText: replacementTarget.answer.questionText,
+            version: replacementTarget.version, acceptedText: replacementTarget.answer.text, request: undefined, rejected: false, paused: true });
+          setReplacementTarget(null); setError(''); setReplacementMessage('Your draft now targets this reviewed answer. Save the replacement when you’re ready.');
+        }}>Use my replacement for this answer</button>
+      </section> : null}
+      <div className="flex flex-wrap gap-2">
+        {!replacement.paused ? <button type="button" className={button} disabled={busy} onClick={() => void pauseForReplacement(replacement)}>Retry pausing interview</button>
+          : replacement.rejected ? <button type="button" className={button} disabled={busy} onClick={() => void refreshSavedAnswers(true)}>Review latest saved answer</button>
+          : <button type="button" className={button} disabled={busy || !replacement.text.trim() || !!cleanupPreview} onClick={() => void saveReplacement()}>{replacement.request ? 'Retry saving' : 'Save replacement'}</button>}
+        {replacement.request && !replacement.rejected ? <button type="button" className={button} disabled={busy} onClick={() => void refreshSavedAnswers()}>Refresh saved answers</button> : null}
+        {replacement.rejected ? <button type="button" className={button} disabled={busy} onClick={() => { keepReplacement(null); setReplacementTarget(null); setError(''); setReplacementMessage('Replacement draft discarded. Your saved answers are shown above.'); }}>Discard this replacement</button> : null}
+        {!replacement.request ? <button type="button" className={button} disabled={busy} onClick={() => { keepReplacement(null); setCleanupPreview(null); setCleanupUndo(null); setError(''); setReplacementMessage('Your original answer is unchanged. Resume the interview when you’re ready.'); if (startIntent) { startIntent.consumed = true; startIntent.settled = true; } }}>Keep original answer</button> : null}
+      </div>
+    </section> : null}
     <div className={`mt-3 space-y-2 text-folio-meta text-text-secondary ${primary ? 'px-4 pb-3' : ''}`} aria-live="polite">
+      {replacementMessage ? <p role="status">{replacementMessage}</p> : null}
       {state && (!guide || guide.projectId) ? <p>{guide ? `${guide.answeredCount} project answers saved.` : `${savedTurns.length} ${savedTurns.length === 1 ? 'answer' : 'answers'} saved in this live session.`}{state.turns?.some(turn => turn.status === 'awaiting_final' || turn.status === 'saving') ? ' Latest speech is awaiting save.' : ''}</p> : null}
       {recording ? <p>{recording === 'recording' ? `Recording your ${camera ? 'voice and camera' : 'voice'}` : recording === 'uploading' ? 'Finishing private upload…' : recording === 'processing' ? 'Private recording is processing' : 'Recording needs attention'}{recordingMessage ? ` — ${recordingMessage}` : ''}</p> : null}
       {recording === 'incomplete' ? <button type="button" className={button} onClick={() => void retryRecording()}>Retry recording upload</button> : null}
@@ -802,10 +1015,10 @@ export function LiveInterviewPanel({ source, startIntent, onStartingChange, onCa
     </section> : null}
     {projectHost ? <details className="m-4 border-t border-border pt-3 text-folio-meta text-text-secondary"><summary className="cursor-pointer">{recording === 'recording' ? `Recording ${camera ? 'camera and voice' : 'voice'} privately` : 'Answers saved · recording is your choice'}</summary><p className="mt-2">Your answers are saved as you go. Recording starts only with your consent; it captures your own voice and optional camera, not the AI host. Private recordings are for media preparation, with separate approval before publication. Tavus processes your {inputMode === 'text' ? 'typed replies' : 'speech'} for the live conversation; provider processing may include retention.</p>{hasRecording ? <p className="mt-2">Upload recovery temporarily retains recording chunks on this device for up to 24 hours. Keep this page open until the upload finishes.</p> : null}</details> : null}
     {projectHost && hasRecording && state?.id ? <a href="/designer/studio/media" target="_blank" rel="noopener noreferrer" className="m-4 inline-block text-folio-meta underline underline-offset-4">Review recordings in Publishing Studio (new tab)</a> : null}
-    {savedTurns.length ? <details className={`${primary ? 'm-4' : 'mt-3'} text-folio-meta`}><summary className="cursor-pointer focus-visible:ring-2 focus-visible:ring-folio-gold">{guide ? 'Conversation so far' : 'Saved answers'}</summary>
-      <ol className="mt-2 max-h-48 space-y-2 overflow-auto">{savedTurns.map(turn => <li key={turn.position} className="whitespace-pre-wrap">{turn.raw}</li>)}</ol></details> : null}
+    {savedTurns.length && source.kind !== 'project' && source.kind !== 'project_guide' ? <details className={`${primary ? 'm-4' : 'mt-3'} text-folio-meta`}><summary className="cursor-pointer focus-visible:ring-2 focus-visible:ring-folio-gold">Saved answers</summary>
+      <ol className="mt-2 max-h-48 space-y-2 overflow-auto">{savedTurns.map(turn => <li key={turn.position} className="whitespace-pre-wrap">{turn.reviewedText || turn.raw}</li>)}</ol></details> : null}
     {unresolved.map(turn => <div key={turn.position} className={`${primary ? 'm-4' : 'mt-3'} space-y-2 border-t border-border pt-3`}>
-      <p className="text-folio-meta">This speech needs review before it can count as an answer. {turn.error}</p><p className="max-h-36 overflow-auto whitespace-pre-wrap text-folio-meta">{turn.raw}</p>
+      <p className="text-folio-meta">Let’s check this answer before saving it. {turn.error}</p><p className="max-h-36 overflow-auto whitespace-pre-wrap text-folio-meta">{turn.raw}</p>
       {turn.asked ? <p className="text-folio-meta">Originally asked: {turn.asked}</p> : null}
       <button type="button" className={button} onClick={() => setRecovery({ position: turn.position, text: turn.raw, target: 'current' })}>Review this answer</button>
       <button type="button" className={`${button} ml-2`} disabled={busy} onClick={()=>void refreshReview()}>Refresh current interview state</button>

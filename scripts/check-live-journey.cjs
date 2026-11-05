@@ -291,7 +291,37 @@ async function main() {
       await action('publish'); assert.equal(new URL((await json(await delivery('export'))).url).pathname.slice(1), output.key, 'approved export is the playable file verified above');
       assert.ok((await mediaService.publicMediaPiece(plan.id)).url);
       const corrected = `${raw} This is the corrected editorial answer.`;
-      await json(await sessionPost(current.id, { action: 'control', command: { action: 'correct', requestId: randomUUID(), questionId: firstQuestion.id, text: corrected } }));
+      const legacyCorrection = { action: 'control', command: { action: 'correct', requestId: randomUUID(), questionId: firstQuestion.id, text: corrected } };
+      if (kind === 'project') {
+        const denied = await json(await sessionPost(current.id, legacyCorrection), 400);
+        assert.match(denied.error, /Use Edit answer/, 'unbound project corrections cannot bypass the saved-answer boundary');
+        assert.equal((await delivery('export')).status, 200, 'rejected legacy correction leaves approved evidence unchanged');
+        assert.equal((await json(await sessionPost(current.id, { action: 'pause' }))).status, 'ended');
+        const review = await json(await sessionRoute.GET(new Request(`https://folio.test/api/live-interviews/${current.id}`), { params: { id: current.id } }));
+        const target = review.savedAnswers.answers.find(answer => answer.questionId === firstQuestion.id);
+        assert.ok(target?.editable, 'a fresh read exposes the accepted canonical answer across resumed calls');
+        const revision = { action: 'revise_answer', requestId: randomUUID(), answerId: target.id,
+          sessionId: review.savedAnswers.sessionId, version: review.savedAnswers.version, text: corrected };
+        assert.equal((await delivery('export')).status, 200, 'pausing and reading the answer do not invalidate approved media');
+        const createsBeforeRevision = providerCreates;
+        const revised = await json(await sessionPost(current.id, revision));
+        assert.equal(revised.status, 'ended', 'editing does not resume the stopped call');
+        const accepted = revised.savedAnswers.answers.filter(answer => answer.questionId === firstQuestion.id);
+        assert.equal(accepted.length, 1); assert.equal(accepted[0].text, corrected); assert.equal(accepted[0].originalText, raw);
+        const canonical = (await database.projectPost.findUnique({ where: { projectId: 'project' } })).provenance.interview.guided;
+        const prior = canonical.turns.find(turn => turn.id === target.id);
+        assert.equal(prior.text, target.text); assert.equal(prior.supersededBy, accepted[0].id, 'the prior accepted revision remains in history');
+        assert.equal(canonical.turns[0].text, raw); assert.equal(canonical.turns[0].selectedImageId, 'photo', 'original speech and photo provenance stay intact');
+        assert.equal(canonical.turns.find(turn => turn.id === accepted[0].id).supersedes, target.id);
+        const projected = (await database.editorialInterviewAnswer.findMany()).filter(answer => answer.questionId === firstQuestion.id);
+        assert.equal(projected.length, 1); assert.equal(projected[0].answerText, corrected, 'only the accepted replacement reaches editorial evidence');
+        const replay = await json(await sessionPost(current.id, revision));
+        assert.equal(replay.savedAnswers.version, revised.savedAnswers.version, 'an exact receipt retry does not apply a second correction');
+        assert.equal((await database.projectPost.findUnique({ where: { projectId: 'project' } })).provenance.interview.guided.turns.length, canonical.turns.length);
+        assert.equal(providerCreates, createsBeforeRevision, 'editing and replay never create a provider call');
+      } else {
+        await json(await sessionPost(current.id, legacyCorrection));
+      }
       assert.equal((await delivery('export')).status, 409, 'canonical correction invalidates approved export');
       await assert.rejects(mediaService.publicMediaPiece(plan.id), /source changed/);
       assert.equal((await mediaStore.readMedia('owner', runId)).payload.transcript[0].text, raw, 'editorial correction never rewrites stored recording transcript');

@@ -50,7 +50,7 @@ function snapshot(source: LiveSource, version: string, questions: LiveQuestion[]
     sourceRefs: [{ kind: 'interview', id: source.id, version, publicEligible: false }, ...sourceRefs] };
 }
 
-function guidedSnapshot(source: LiveSource, native: GuidedSession, state: LiveAdapterState): LiveAdapterSnapshot {
+export function guidedSnapshot(source: LiveSource, native: GuidedSession, state: LiveAdapterState): LiveAdapterSnapshot {
   const currentQuestion = native.plan.find(q => q.id === native.activeQuestionId);
   return { source, interviewId: native.id, version: String(native.version),
     status: native.status === 'deciding' ? 'needs_review' : native.status,

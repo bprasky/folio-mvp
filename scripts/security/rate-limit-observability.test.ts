@@ -10,7 +10,9 @@ test('rate-limit logs distinguish rejection, missing config, timeout and outage 
   const config = { max: 2, windowMs: 60000 };
   try {
     delete process.env.UPSTASH_REDIS_REST_URL;
-    assert.equal((await checkRateLimit('sensitive-person@example.com', config)).success, false);
+    const missing = await checkRateLimit('sensitive-person@example.com', config);
+    assert.equal(missing.success, false);
+    assert.equal(missing.reason, 'missing_configuration');
     process.env.UPSTASH_REDIS_REST_URL = 'https://example.invalid';
     process.env.UPSTASH_REDIS_REST_TOKEN = 'sensitive-test-token';
     for (const mode of ['allowed', 'rejected', 'timeout', 'outage']) {
@@ -21,7 +23,13 @@ test('rate-limit logs distinguish rejection, missing config, timeout and outage 
         const response = { result: [mode === 'allowed' ? 1 : 3, 2] };
         return new Response(JSON.stringify(Array.isArray(command[0]) ? [response] : response));
       });
-      try { assert.equal((await checkRateLimit('sensitive-person@example.com', config)).success, mode === 'allowed'); }
+      try {
+        const result = await checkRateLimit('sensitive-person@example.com', config);
+        assert.equal(result.success, mode === 'allowed');
+        assert.equal(result.reason, mode === 'allowed' ? undefined : mode === 'rejected' ? 'rejected' : `backend_${mode}`);
+        assert.equal(JSON.stringify(result).includes('sensitive'), false);
+        assert.equal(JSON.stringify(result).includes('example.invalid'), false);
+      }
       finally { transport.mock.restore(); }
     }
     assert.deepEqual(logs.map(line => JSON.parse(line.slice(line.indexOf('{'))).outcome), ['missing_configuration', 'rejected', 'backend_timeout', 'backend_outage']);

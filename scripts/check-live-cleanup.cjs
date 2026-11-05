@@ -24,6 +24,8 @@ function load(file, mocks) {
 (async () => {
   let failList = false, failDelete = false, transactionOpen = false, blockedGet = null;
   const limits = [], providerCalls = [], sessions = new Map(), conversations = new Map();
+  const browserOnlyCalls = [];
+  const browserOnly = name => () => { browserOnlyCalls.push(name); assert.fail(`Cleanup must not call ${name}`); };
   const addSession = id => {
     sessions.set(id, { id, status: 'active', expiresAt: new Date(0),
       providerIds: { conversationId: id, palId: `pal-${id}` }, payload: { sealedJoin: 'private-token' } });
@@ -52,6 +54,10 @@ function load(file, mocks) {
   class ProviderError extends Error {}
   const service = load('src/lib/live-interview/service.ts', {
     'server-only': {}, '@/lib/prisma': {}, '@/lib/rateLimit': {}, '@/lib/publishing-studio/data': {},
+    'next/cache': { revalidatePath: browserOnly('revalidatePath') },
+    '@/lib/interview/guided/service': { getGuidedSession: browserOnly('getGuidedSession'), runGuidedCommand: browserOnly('runGuidedCommand') },
+    '@/lib/interview/guided/controller': { acceptedTurns: browserOnly('acceptedTurns'), isRequestReplay: browserOnly('isRequestReplay') },
+    './saved-answers': { projectSavedAnswers: browserOnly('projectSavedAnswers'), snapshotGuidedSession: browserOnly('snapshotGuidedSession') },
     '@/lib/interview-media/storage': {}, './adapters': {}, './adapter-types': load('src/lib/live-interview/adapter-types.ts', {}), './config': {}, './turns': {}, './store': store,
     './provider': {
       ProviderError,
@@ -145,5 +151,6 @@ function load(file, mocks) {
   assert.equal(config.git.deploymentEnabled, false);
   assert.equal(config.buildCommand, 'prisma generate && next build');
   assert(fs.readFileSync('.github/workflows/lint.yml', 'utf8').includes('node scripts/check-live-cleanup.cjs'));
+  assert.deepEqual(browserOnlyCalls, [], 'machine cleanup must remain independent of browser state, canonical answers and cache invalidation');
   console.log('PASS scheduled live cleanup: fail-closed bearer auth, flags-off cleanup, one-session batch, retry/idempotency, concurrent completion, generic errors and minutely wiring.');
 })().catch(error => { console.error(error); process.exitCode = 1; });

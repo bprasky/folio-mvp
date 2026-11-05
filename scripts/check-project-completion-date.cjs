@@ -49,7 +49,7 @@ const mocks = {
         assert.equal(select.completedYear, true); assert.equal(select.completedMonth, true);
         assert.deepEqual(JSON.parse(JSON.stringify(where)), { OR: [{ designerOrgId: 'firm' }] });
         assert.equal('status' in where, false, 'author listing retains drafts');
-        return [{ id: 'project', title: 'Fixture House', ownerId: 'owner', designerOrgId: 'firm', ...savedDate }];
+        return [{ id: 'project', title: 'Fixture House', ownerId: 'owner', designerOrgId: 'firm', _count: { rooms: 0 }, ...savedDate }];
       },
     },
     projectParticipant: { findMany: async () => [] },

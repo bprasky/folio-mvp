@@ -1,12 +1,16 @@
 import 'server-only';
 import { randomBytes, randomUUID } from 'node:crypto';
+import { revalidatePath } from 'next/cache';
 import { prisma } from '@/lib/prisma';
 import { checkRateLimit } from '@/lib/rateLimit';
 import { resolvePublishingStudioContext } from '@/lib/publishing-studio/data';
 import { assertCaptureStorageReady } from '@/lib/interview-media/storage';
-import { authorizeLiveSource, executeLiveCommand, prepareLiveInterview } from './adapters';
-import { PROJECT_GUIDE_STEPS, type ProjectGuideStep, type LiveAdapterCommand, type LiveAdapterSnapshot, type LiveSource } from './adapter-types';
-import type { GuidedSession } from '@/lib/interview/guided/types';
+import { authorizeLiveSource, executeLiveCommand, guidedSnapshot, prepareLiveInterview } from './adapters';
+import { PROJECT_GUIDE_STEPS, type ProjectGuideStep, type LiveAdapterCommand, type LiveAdapterSnapshot, type LiveSource, type LiveAnswerRevision } from './adapter-types';
+import { getGuidedSession, runGuidedCommand } from '@/lib/interview/guided/service';
+import { acceptedTurns, GuidedConflict, isRequestReplay } from '@/lib/interview/guided/controller';
+import type { GuidedCommand, GuidedSession } from '@/lib/interview/guided/types';
+import { projectSavedAnswers, snapshotGuidedSession } from './saved-answers';
 import { CAPTURE_CONSENT_VERSION, CAPTURE_DISCLOSURE, LiveError, liveConfig, liveEnabled, recordingEnabled, type CaptureMode } from './config';
 import { backendHash, createConversation, createPal, deletePal, endConversation, findConversations, findPals, getConversation, openJoin, ProviderError, sealJoin } from './provider';
 import { createLiveSession, findLiveSessionByCredential, getLatestLiveSession, getLiveSession, listLiveSessionsForCleanup, mutateLiveSession, type LiveSession } from './store';
@@ -45,12 +49,13 @@ export async function liveAvailability(actorId: string, source: LiveSource) {
   return {enabled:true,recordingEnabled:!source.id.startsWith('new:') && recordingEnabled(),consentVersion:CAPTURE_CONSENT_VERSION,disclosure:CAPTURE_DISCLOSURE,
     draftScope:backendHash(JSON.stringify([actorId,source]))};
 }
-function clientState(session: LiveSession, includeJoin = false) {
+function clientState(session: LiveSession, includeJoin = false, canonical = snapshotGuidedSession(payload(session).snapshot)) {
   const p = payload(session); const snapshot = p.snapshot;
   return {id:session.id,status:session.status,expiresAt:session.expiresAt.toISOString(),
     snapshot:snapshot ? {source:snapshot.source,interviewId:snapshot.interviewId,version:snapshot.version,status:snapshot.status,
       currentQuestion:snapshot.currentQuestion,sourceRefs:snapshot.sourceRefs,notice:snapshot.notice,...(snapshot.guide?{guide:snapshot.guide}:{})} : undefined,
-    turns:p.turnState.turns.map(({position,raw,status,response,questionId,asked,error,inputMode,requestId,snapshot:askedSnapshot})=>({position,raw,status,response,questionId,asked,error,inputMode,requestId,version:askedSnapshot?.version})),
+    turns:p.turnState.turns.map(({position,raw,reviewedText,status,response,questionId,asked,error,inputMode,requestId,snapshot:askedSnapshot})=>({position,raw,reviewedText,status,response,questionId,asked,error,inputMode,requestId,version:askedSnapshot?.version})),
+    savedAnswers:projectSavedAnswers(snapshot,canonical),
     notice:p.notice,recordingEnabled:!p.source.id.startsWith('new:') && recordingEnabled(),consent:p.consent,
     ...(includeJoin && active(session) && p.sealedJoin ? {join:openJoin(p.sealedJoin)} : {})};
 }
@@ -58,12 +63,23 @@ export async function readLiveSession(actorId: string, id: string) {
   let session = await ownedSession(actorId,id);
   await authorizeActor(actorId,payload(session).source,payload(session).workspaceId);
   session = await reviewExpiredTurns(session);
-  return clientState(session);
+  const source=payload(session).source;
+  const canonical=['project','project_guide'].includes(source.kind) && !source.id.startsWith('new:')
+    ? await getGuidedSession(source.id,actorId) : null;
+  return clientState(session,false,canonical);
 }
 async function ownedSession(actorId: string, id: string) {
   const session = await getLiveSession(id);
   if (!session || session.actorId !== actorId) throw new LiveError('Interview not found.',404);
   return session;
+}
+async function assertLiveRateLimit(identifier: string, max: number, limitMessage: string) {
+  const result = await checkRateLimit(identifier, { max, windowMs: 60_000 });
+  if (result.success) return;
+  if (result.reason && result.reason !== 'rejected') {
+    throw new LiveError('Live interviewing is temporarily unavailable. Your saved answers are safe. Please try again later.', 503);
+  }
+  throw new LiveError(limitMessage, 429);
 }
 export async function startLiveSession(actorId: string, input: {source:unknown; requestId:string; mode:CaptureMode; consentVersion:string; microphoneReady?:boolean; inputMode?:'voice'|'text'; selectedImageId?:string|null; workspaceStep?:ProjectGuideStep; intakeSessionId?:string}) {
   if (!liveEnabled(actorId)) throw new LiveError('Live interviews are not available for this account.',403);
@@ -76,7 +92,7 @@ export async function startLiveSession(actorId: string, input: {source:unknown; 
   if (input.workspaceStep !== undefined && (source.kind !== 'project_guide' || !PROJECT_GUIDE_STEPS.includes(input.workspaceStep))) throw new LiveError('Choose a valid project step.',400);
   if (source.kind==='project_guide' && input.mode!=='none') throw new LiveError('Join your host, then choose recording with explicit consent.',403);
   const workspace = await authorizeActor(actorId,source); const config = liveConfig();
-  if (!(await checkRateLimit(`live-start:${actorId}`,{max:12,windowMs:60_000})).success) throw new LiveError('Please wait before starting again.',429);
+  await assertLiveRateLimit(`live-start:${actorId}`, 12, 'Please wait before starting again.');
   if (input.mode !== 'none') {
     if (!recordingEnabled()) throw new LiveError('Recording is not available. Choose an interview without recording.',403);
     await assertCaptureStorageReady();
@@ -196,7 +212,7 @@ export async function assertLiveBackendAuth(id:string,authorization:string|null)
   if (!session || session.id!==id || !active(session)) throw new LiveError('Unauthorized.',401);
   if (!liveEnabled(session.actorId)) throw new LiveError('Live interviewing is paused.',403);
   await authorizeActor(session.actorId,payload(session).source,payload(session).workspaceId);
-  if (!(await checkRateLimit(`live-turn:${id}`,{max:80,windowMs:60_000})).success) throw new LiveError('Please wait.',429);
+  await assertLiveRateLimit(`live-turn:${id}`, 80, 'Please wait.');
   return session;
 }
 export function parseUserHistory(body:unknown) {
@@ -422,10 +438,86 @@ export async function recoverLiveTurn(actorId:string,id:string,input:{turnPositi
   await saveTurn(current,turn,input.target==='previous'?'correct':'answer',input.text);
   return clientState((await getLiveSession(id))!);
 }
+
+/** Replace one accepted canonical answer after confirmed shutdown. The canonical
+ * correction journal is the sole receipt/revision authority, including retries
+ * after its commit succeeded but the transport acknowledgement was lost. */
+export async function reviseLiveAnswer(actorId:string,id:string,input:LiveAnswerRevision) {
+  if(!input || !/^[a-zA-Z0-9-]{16,80}$/.test(input.requestId??'') || typeof input.answerId!=='string' || !input.answerId || input.answerId.length>200
+    || typeof input.sessionId!=='string' || !input.sessionId || input.sessionId.length>200 || !Number.isSafeInteger(input.version) || input.version<0
+    || typeof input.text!=='string' || !input.text.trim() || input.text.length>2000)
+    throw new LiveError('Enter a replacement answer of up to 2,000 characters.',400);
+  const session=await ownedSession(actorId,id);const p=payload(session);
+  await authorizeActor(actorId,p.source,p.workspaceId);
+  if((p.source.kind!=='project' && p.source.kind!=='project_guide') || p.source.id.startsWith('new:'))
+    throw new LiveError('Saved-answer editing is available for project interviews.',403);
+  if(!p.snapshot || (p.source.kind==='project_guide' && !['interview','complete'].includes(p.snapshot.guide?.phase??'')))
+    throw new LiveError('Open the project interview before editing its saved answers.',409);
+  // A lease token, distinct from the durable request ID, fences late workers.
+  const lease=randomUUID();
+  const locked=await mutateLiveSession(id,s=>{
+    const state=payload(s);
+    if(s.status!=='ended')throw new LiveError('Pause the call and wait for it to stop before editing a saved answer.',409);
+    if((state.commandLease??0)>Date.now() || state.turnState.turns.some(turn=>turn.status!=='saved'))
+      throw new LiveError('Save or review the pending speech before editing a saved answer.',409);
+    state.commandLease=Date.now()+120_000;state.commandReceipt=lease;
+  });
+  try {
+    const snapshot=payload(locked).snapshot!;
+    if(snapshotGuidedSession(snapshot)?.id!==input.sessionId)
+      throw new LiveError('This live call belongs to an earlier interview. Reload before editing its saved answers.',412);
+    const current=await getGuidedSession(p.source.id,actorId);
+    if(!current || current.id!==input.sessionId)throw new LiveError('This interview changed. Your replacement text is retained; reload its saved answers.',412);
+    const target=current.turns.find(turn=>turn.id===input.answerId && turn.kind!=='skip');
+    if(!target)throw new LiveError('This saved answer changed. Reload it before saving your replacement.',412);
+    const command:GuidedCommand={action:'correct',requestId:input.requestId,sessionId:input.sessionId,version:input.version,
+      questionId:target.questionId,text:input.text,inputModality:'text',selectedImageId:target.selectedImageId,
+      guideCommandDigest:backendHash(JSON.stringify([id,p.source,input.requestId,input.answerId,input.sessionId,input.version,input.text]))};
+    const replay=isRequestReplay(current,command);
+    if(!replay && (current.version!==input.version || !acceptedTurns(current).some(turn=>turn.id===input.answerId)))
+      throw new LiveError('This saved answer changed. Your replacement text is retained; reload before saving.',412);
+    // Other browser tabs can hold a newer call for the same canonical project.
+    for(const kind of ['project','project_guide'] as const) {
+      const latest=await getLatestLiveSession(actorId,kind,p.source.id);
+      if(latest && latest.id!==id && !['ended','failed'].includes(latest.status))
+        throw new LiveError('Pause the other live call for this project before editing a saved answer.',409);
+    }
+    const canonical=replay ? current : await runGuidedCommand(p.source.id,actorId,command);
+    // Context refresh can legitimately return without accepting the command.
+    // Never turn that response into a successful replacement acknowledgement.
+    if(!isRequestReplay(canonical,command) || !canonical.turns.some(turn=>turn.requestId===input.requestId && turn.kind==='correction' && turn.supersedes===target.id))
+      throw new LiveError('The project context changed. Your replacement text is retained; reload its saved answers and try again.',412);
+    const next=p.source.kind==='project_guide'
+      ? await (await import('./project-guide')).projectGuideCorrectionSnapshot(actorId,p.source,snapshot,canonical,input.requestId)
+      : guidedSnapshot(p.source,canonical,snapshot.state);
+    const saved=await mutateLiveSession(id,s=>{
+      const state=payload(s);
+      if(state.commandReceipt!==lease)throw new LiveError('The answer was saved. Reload the interview to confirm its latest state.',409);
+      state.snapshot=next;delete state.imageBinding;
+      // Raw transport speech stays immutable. The canonical projection below
+      // displays one accepted revision per question, even across resumed calls.
+      for(const turn of state.turnState.turns)if(turn.status==='saved' && turn.questionId===target.questionId
+        && (p.source.kind==='project' || turn.snapshot?.guide?.phase==='interview')) {
+        const accepted=acceptedTurns(canonical).find(value=>value.questionId===target.questionId);
+        if(accepted)turn.reviewedText=accepted.text;
+      }
+      state.commandLease=undefined;state.commandReceipt=undefined;
+    });
+    revalidatePath(`/project/${p.source.id}`);revalidatePath('/designer/projects');
+    return clientState(saved,false,canonical);
+  } catch(error) {
+    if(error instanceof GuidedConflict)throw new LiveError(error.message,['STALE_VERSION','STALE_SESSION','STALE_QUESTION'].includes(error.code)?412:error.status);
+    throw error;
+  } finally {
+    await mutateLiveSession(id,s=>{const state=payload(s);if(state.commandReceipt===lease){state.commandLease=undefined;state.commandReceipt=undefined;}},{cleanup:true});
+  }
+}
 export async function controlLiveSession(actorId:string,id:string,command:LiveAdapterCommand) {
   const session=await ownedSession(actorId,id);const p=payload(session);
   await authorizeActor(actorId,p.source,p.workspaceId);
   if(!command || !['skip','reuse','retry','finish','correct','guide'].includes(command.action))throw new LiveError('Use the spoken answer flow for new answers.',400);
+  if(command.action==='correct' && ['project','project_guide'].includes(p.source.kind))
+    throw new LiveError('Use Edit answer on the saved answer, or review retained speech, before saving a correction.',400);
   if(command.action==='guide' && (p.source.kind!=='project_guide' || !['refresh','return_guide','start_interview','resume_interview','start_over','add_more','open_upload','open_rooms','open_tagging','none'].includes(command.guideAction??'')))throw new LiveError('Choose a valid project guide action.',400);
   if(command.workspaceStep !== undefined && (p.source.kind !== 'project_guide' || command.action !== 'guide' || !PROJECT_GUIDE_STEPS.includes(command.workspaceStep)))throw new LiveError('Choose a valid project step.',400);
   if(!/^[a-zA-Z0-9-]{8,100}$/.test(command.requestId??''))throw new LiveError('A control receipt is required.',400);

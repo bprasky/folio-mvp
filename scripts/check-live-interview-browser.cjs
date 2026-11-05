@@ -16,6 +16,10 @@ let starts = 0, enabled = true, eventCalls = [], actionCalls = [], uploadFailure
 let draftScope = 'a'.repeat(64), liveOwnerScope = null, recordingEnabled = true;
 const startRequests = [], textRegistrations = [], providerReplies = [];
 const startResponses = [];
+const revisionRequests = [], revisionReceipts = new Map();
+let revisionFailure = null, canonicalRevisions = 0;
+const cleanupRequests = [];
+let cleanupResult = null, cleanupFailure = false, holdHybrid = null, hybridObserved = null, releaseHybrid = null;
 let canonicalTextSaves = 0;
 let failStart = false;
 let limitStart = false;
@@ -56,6 +60,7 @@ window.recoveryData=async()=>{const db=await new Promise((resolve,reject)=>{cons
 window.seedRecovery=async records=>{const db=await new Promise((resolve,reject)=>{const request=indexedDB.open('folio-private-live-capture',1);request.onsuccess=()=>resolve(request.result);request.onerror=()=>reject(request.error)});
  try{await new Promise((resolve,reject)=>{const tx=db.transaction(['runs','chunks'],'readwrite');for(const {run,chunks} of records){tx.objectStore('runs').put(run);for(const [index,text] of chunks.entries())tx.objectStore('chunks').put({runId:run.runId,index,blob:new Blob([text],{type:run.mimeType})})}tx.oncomplete=()=>resolve();tx.onerror=()=>reject(tx.error)})}finally{db.close()}};
 window.fixtureRoot=createRoot(document.getElementById('root'));
+window.renderSource=id=>window.fixtureRoot.render(<LiveInterviewPanel source={{kind:'project',id}} presentation="primary" onActiveChange={value=>window.activeChanges.push(value)} onCanonicalChange={value=>window.canonicalChanges.push(value)} onControlsReady={value=>window.panelControls=value}/>);
 window.renderDirect=(key='direct',id='synthetic-project')=>window.fixtureRoot.render(<React.StrictMode><LiveInterviewPanel key={key} source={{kind:'project',id}} startIntent={window.entryIntent} presentation="primary" onActiveChange={value=>window.activeChanges.push(value)} onCanonicalChange={value=>window.canonicalChanges.push(value)}/></React.StrictMode>);
 window.renderGuide=(step='story')=>window.fixtureRoot.render(<LiveInterviewPanel key="guide-recording" source={{kind:'project_guide',id:'synthetic-project'}} startIntent={window.entryIntent} presentation="primary" recordingSetup={step==='story'} callStage={step==='story'} workspaceStep={step}/>);
 window.fixtureRoot.render(<LiveInterviewPanel source={{kind:'project',id:'synthetic-project'}} presentation="primary" onActiveChange={value=>window.activeChanges.push(value)} onCanonicalChange={value=>window.canonicalChanges.push(value)} onControlsReady={value=>window.panelControls=value}/>);`;
@@ -129,8 +134,42 @@ function handler(req, res) {
         return reply(live);
       }
       if (url.pathname.startsWith('/api/live-interviews/')) {
-        const session = liveSessions.get(url.pathname.split('/').at(-1)) || live;
+        const sessionId = url.pathname.endsWith('/clean-answer') ? url.pathname.split('/').at(-2) : url.pathname.split('/').at(-1);
+        const session = liveSessions.get(sessionId) || live;
+        const hybridReply = value => {
+          if (holdHybrid) { releaseHybrid = () => json(value); hybridObserved?.(); return; }
+          return json(value);
+        };
+        if (url.pathname.endsWith('/clean-answer')) {
+          cleanupRequests.push(structuredClone(body));
+          if (cleanupFailure) { cleanupFailure = false; return json({ message: 'Synthetic cleanup unavailable. Your words are unchanged.' }, 503); }
+          return hybridReply({ text: cleanupResult ?? body.text });
+        }
         actionCalls.push(body.action);
+        if (body.action === 'revise_answer') {
+          revisionRequests.push(structuredClone(body));
+          assert.equal(session.status, 'ended', 'Replacement cannot save into a running call');
+          const previous = revisionReceipts.get(body.requestId);
+          if (previous) {
+            assert.deepEqual(body, previous, 'Unknown save retries keep exactly the same receipt and payload');
+            return json(session);
+          }
+          if (revisionFailure === 'before') { revisionFailure = null; return json({ message: 'Synthetic replacement unavailable.' }, 503); }
+          if (revisionFailure === 'stale') { revisionFailure = null; return json({ message: 'Synthetic saved answer changed.' }, 412); }
+          assert.equal(body.sessionId, session.savedAnswers.sessionId);
+          assert.equal(body.version, session.savedAnswers.version);
+          const answer = session.savedAnswers.answers.find(answer => answer.id === body.answerId);
+          assert.ok(answer, 'Replacement addresses the accepted answer, not the current question');
+          assert.ok(body.text.trim());
+          revisionReceipts.set(body.requestId, structuredClone(body));canonicalRevisions++;
+          session.savedAnswers = { ...session.savedAnswers, version: session.savedAnswers.version + 1,
+            answers: session.savedAnswers.answers.map(item => item.id === answer.id ? { ...item, id: 'replacement-' + canonicalRevisions, text: body.text, inputModality: 'text' } : item) };
+          session.snapshot = { ...session.snapshot, version: String(session.savedAnswers.version),
+            currentQuestion: { id: 'replanned-followup', text: 'What changed after moving the island?', sourceImageIds: [] } };
+          if (revisionFailure === 'after') { revisionFailure = null; return json({ message: 'Synthetic replacement response lost.' }, 503); }
+          if (revisionFailure === 'malformed') { revisionFailure = null; return json({}); }
+          return hybridReply(structuredClone(session));
+        }
         if(body.action==='consent_recording') { assert.equal(body.consent,true);session.consent={mode:body.mode};return json(session); }
         if (body.action === 'event') {
           eventCalls.push(body.event);
@@ -202,7 +241,7 @@ async function main() {
   const callReady = () => page.waitForFunction(() => window.joined && window.dailyOptions && !window.left && !window.destroyed
     && [...document.querySelectorAll('button')].some(button => button.textContent === 'End' && !button.disabled && button.getBoundingClientRect().height > 0));
   const callEnded = () => page.waitForFunction(() => window.left && window.destroyed
-    && [...document.querySelectorAll('button')].some(button => ['Start with typed replies', 'Resume live interview'].includes(button.textContent) && !button.disabled && button.getBoundingClientRect().height > 0));
+    && [...document.querySelectorAll('button')].some(button => ['Start with typed replies', 'Resume live interview', 'Resume interview'].includes(button.textContent) && !button.disabled && button.getBoundingClientRect().height > 0));
   const fillReply = value => page.$eval('textarea', (element, value) => {
     Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype, 'value').set.call(element, value);
     element.dispatchEvent(new Event('input', { bubbles: true }));
@@ -216,6 +255,23 @@ async function main() {
     turns: [{ position: 1, status: 'saved', raw: 'The existing doorway set the proportions.', questionId: 'q1', receipt: 'saved-room-answer' }],
     ...(status === 'active' ? { join: { url: 'https://synthetic.daily.co/fixture', token: 'synthetic-join-token', conversationId: 'synthetic-conversation' } } : {}),
   });
+  const hybridProgress = () => ({ ...savedProgress(), savedAnswers: { sessionId: 'canonical-fixture', version: 42, answers: [
+    { id: 'accepted-earlier', questionId: 'q-earlier', questionText: 'What did the clients want?', text: 'An older accepted answer about their family.', originalText: 'An older accepted answer about their family.', inputModality: 'text', editable: true },
+    { id: 'accepted-latest', questionId: 'q1', questionText: 'What shaped this room?', text: 'The clients cook together, so we moved the island eighteen inches.', originalText: 'Um, I—I mean, we moved the island eighteen inches.', inputModality: 'voice', editable: true },
+  ] }, turns: [{ position: 1, status: 'saved', raw: 'Superseded raw transcript must not appear as the accepted answer.', questionId: 'q1', receipt: 'saved-room-answer' }] });
+  const freshHybrid = async () => {
+    revisionRequests.length = 0;revisionReceipts.clear();canonicalRevisions = 0;revisionFailure = null;
+    cleanupRequests.length = 0;cleanupResult = null;cleanupFailure = false;
+    await freshPanel();startResponses.push(hybridProgress());await click('Start live interview');await callReady();
+    await text('The clients cook together, so we moved the island eighteen inches.');
+  };
+  const replacementInput = '[aria-label="Replace saved answer"]';
+  const replacementReady = () => page.waitForFunction(selector => document.querySelector(selector) && !document.querySelector(selector).disabled, {}, replacementInput);
+  const fillReplacement = value => page.$eval(replacementInput, (element, value) => {
+    Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype, 'value').set.call(element, value);
+    element.dispatchEvent(new Event('input', { bubbles: true }));
+  }, value);
+  const replacementValue = () => page.$eval(replacementInput, element => element.value);
   const flushEvents = () => page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))));
   try {
     await page.goto(base); await text('Start live interview');
@@ -814,6 +870,182 @@ async function main() {
       assert.equal(captureRequests.filter(r=>r.action==='finalize').length,finalized+1);
       assert.equal(starts,before);assert.equal(await page.evaluate(()=>window.left),false,'Leaving Story finishes capture but keeps the host.');
       await click('End');await callEnded();
+    });
+    await check('hybrid saved answers show canonical wording and preserve original and earlier answers', async () => {
+      await freshHybrid();
+      const accepted = await page.$eval('[aria-label="Saved interview answers"]', element => element.innerText);
+      assert.ok(accepted.includes('The clients cook together, so we moved the island eighteen inches.'));
+      assert.ok(!accepted.includes('Superseded raw transcript'));
+      assert.ok(!accepted.includes('An older accepted answer'));
+      await page.$$eval('summary', nodes => nodes.find(node => node.textContent === 'View original wording').click());
+      await text('Um, I—I mean, we moved the island eighteen inches.');
+      await page.$$eval('summary', nodes => nodes.find(node => node.textContent === 'Earlier saved answers').click());
+      await text('An older accepted answer about their family.');
+      await click('Edit this answer');await replacementReady();
+      assert.equal(await replacementValue(), 'An older accepted answer about their family.');
+      await click('Keep original answer');await text('Your original answer is unchanged.');
+      assert.equal(canonicalRevisions, 0);
+    });
+    await check('hybrid edit mutes immediately waits for pause then focuses a usable mobile composer', async () => {
+      await freshHybrid();await page.setViewport({ width: 390, height: 844 });
+      const before = starts;holdPause = true;const observed = new Promise(resolve => { pauseObserved = resolve; });
+      try {
+        await click('Edit answer');await observed;
+        assert.equal(await page.evaluate(() => window.micOn), false);
+        assert.equal(await page.$eval(replacementInput, element => element.disabled), true);
+        assert.equal(revisionRequests.length, 0);
+        await text('Pausing the interview before you edit');
+      } finally { holdPause = false;pauseObserved = null;releasePause?.();releasePause = null; }
+      await replacementReady();
+      await page.waitForFunction(selector => document.activeElement === document.querySelector(selector), {}, replacementInput);
+      assert.equal(await replacementValue(), hybridProgress().savedAnswers.answers.at(-1).text);
+      const dimensions = [];
+      for (const width of [390, 1280]) {
+        await page.setViewport({ width, height: 900 });
+        const metric = await page.evaluate(() => ({ viewport: innerWidth, document: document.documentElement.scrollWidth,
+          controls: [...document.querySelectorAll('[aria-label="Edit saved answer"] button')].map(button => ({ text: button.textContent, width: button.getBoundingClientRect().width, x: button.getBoundingClientRect().x })) }));
+        assert.equal(metric.document, width, 'The replacement composer must fit the viewport');
+        assert.ok(metric.controls.every(button => button.width > 0 && button.x >= 0 && button.x + button.width <= width));
+        dimensions.push(metric);await page.screenshot({ path: path.join(out, `hybrid-composer-${width}.png`), fullPage: true });
+      }
+      fs.writeFileSync(path.join(out, 'hybrid-composer-geometry.json'), JSON.stringify(dimensions, null, 2));
+      await fillReplacement('An unsaved replacement.');await click('Keep original answer');await text('Your original answer is unchanged.');
+      assert.equal(canonicalRevisions, 0);assert.equal(starts, before);assert.equal(await page.evaluate(() => window.micOn), false);
+      assert.equal(live.savedAnswers.answers.at(-1).text, hybridProgress().savedAnswers.answers.at(-1).text);
+    });
+    await check('hybrid start again saves the selected past answer and resumes only on explicit click', async () => {
+      await freshHybrid();const before = { starts, typed: textRegistrations.length, replies: providerReplies.length };
+      await click('Start again in writing');await replacementReady();assert.equal(await replacementValue(), '');
+      await fillReplacement('We moved the island eighteen inches so the clients could cook together.');
+      await click('Save replacement');await text('Replacement saved.');
+      assert.equal(revisionRequests.length, 1);assert.equal(revisionRequests[0].answerId, 'accepted-latest');
+      assert.equal(revisionRequests[0].sessionId, 'canonical-fixture');assert.equal(revisionRequests[0].version, 42);
+      assert.equal(live.snapshot.currentQuestion.id, 'replanned-followup');
+      assert.equal(live.turns[0].raw, 'Superseded raw transcript must not appear as the accepted answer.');
+      assert.equal(live.savedAnswers.answers.at(-1).originalText, hybridProgress().savedAnswers.answers.at(-1).originalText);
+      assert.deepEqual({ starts, typed: textRegistrations.length, replies: providerReplies.length }, before);
+      assert.equal(await page.evaluate(() => window.micOn), false);
+      startResponses.push({ ...structuredClone(live), status: 'active' });
+      await click('Resume interview');await callReady();assert.equal(starts, before.starts + 1);
+      await click('End');await callEnded();
+    });
+    await check('hybrid lost save response survives refresh and reload with one immutable receipt', async () => {
+      await freshHybrid();await click('Edit answer');await replacementReady();
+      const replacement = 'The island moved eighteen inches toward the garden.';await fillReplacement(replacement);
+      revisionFailure = 'after';await click('Save replacement');await text('Synthetic replacement response lost.');
+      assert.equal(canonicalRevisions, 1);const request = structuredClone(revisionRequests[0]);
+      assert.equal(await page.$eval(replacementInput, element => element.disabled), true);
+      await click('Refresh saved answers');await text('Saved answers refreshed.');
+      assert.equal(await replacementValue(), replacement);assert.equal(revisionRequests.length, 1);
+      const before = starts;await page.reload();await text('Retry pausing interview');
+      assert.equal(starts, before);assert.equal(await page.evaluate(() => window.permissions.length), 0);
+      assert.equal(await replacementValue(), replacement);
+      await click('Retry pausing interview');await text('Retry saving');
+      await click('Retry saving');await text('Replacement saved.');
+      assert.deepEqual(revisionRequests[1], request);assert.equal(canonicalRevisions, 1);assert.equal(starts, before);
+    });
+    await check('hybrid stale target requires review and explicit rebind without losing the draft', async () => {
+      await freshHybrid();await click('Edit answer');await replacementReady();await fillReplacement('My retained correction.');
+      revisionFailure = 'stale';live.savedAnswers.version++;
+      live.savedAnswers.answers.at(-1).id = 'concurrent-replacement';live.savedAnswers.answers.at(-1).text = 'A correction made in another tab.';
+      await click('Save replacement');await text('Review latest saved answer');
+      assert.equal(canonicalRevisions, 0);assert.equal(await replacementValue(), 'My retained correction.');
+      await click('Review latest saved answer');await page.waitForSelector('[aria-label="Latest saved answer to review"]');
+      assert.equal(revisionRequests.length, 1);
+      await click('Use my replacement for this answer');await replacementReady();
+      assert.equal(revisionRequests.length, 1);await click('Save replacement');await text('Replacement saved.');
+      assert.equal(revisionRequests[1].answerId, 'concurrent-replacement');assert.equal(revisionRequests[1].version, 43);
+      assert.notEqual(revisionRequests[1].requestId, revisionRequests[0].requestId);assert.equal(canonicalRevisions, 1);
+    });
+    await check('hybrid restarted interview cannot receive an old replacement draft', async () => {
+      await freshHybrid();await click('Edit answer');await replacementReady();await fillReplacement('A draft from the earlier interview.');
+      revisionFailure = 'stale';await click('Save replacement');await text('Review latest saved answer');
+      live.savedAnswers.sessionId = 'restarted-canonical';
+      await click('Review latest saved answer');await text('cannot be applied to a different question or a restarted interview');
+      assert.equal(await page.$('[aria-label="Latest saved answer to review"]'), null);
+      assert.equal(await replacementValue(), 'A draft from the earlier interview.');assert.equal(revisionRequests.length, 1);
+      await click('Discard this replacement');await text('Replacement draft discarded.');assert.equal(canonicalRevisions, 0);
+    });
+    await check('hybrid cleanup failure preview use undo manual edit and cancel never replace the saved answer', async () => {
+      await freshHybrid();await click('Edit answer');await replacementReady();
+      const draft = 'Um, I—I wanted it warm, you know, a little wonky in a good way.';
+      const cleaned = 'I wanted it warm, a little wonky in a good way.';await fillReplacement(draft);
+      cleanupFailure = true;await click('Clean up wording');await text('Synthetic cleanup unavailable.');
+      assert.equal(await replacementValue(), draft);assert.equal(canonicalRevisions, 0);
+      await click('Clean up wording');await text('Your wording is already clear.');assert.equal(await replacementValue(), draft);
+      cleanupResult = cleaned;await click('Clean up wording');await page.waitForSelector('[aria-label="Wording suggestion"]');
+      assert.equal(await replacementValue(), draft);assert.equal(revisionRequests.length, 0);
+      await click('Keep my wording');assert.equal(await replacementValue(), draft);
+      await click('Clean up wording');await text('Suggested wording');await click('Use this wording');assert.equal(await replacementValue(), cleaned);
+      await click('Undo wording cleanup');assert.equal(await replacementValue(), draft);
+      await click('Clean up wording');await text('Suggested wording');await click('Use this wording');
+      await fillReplacement(cleaned + ' That is our character.');assert.equal(await replacementValue(), cleaned + ' That is our character.');
+      await click('Keep original answer');await text('Your original answer is unchanged.');
+      assert.equal(canonicalRevisions, 0);assert.equal(live.savedAnswers.answers.at(-1).text, hybridProgress().savedAnswers.answers.at(-1).text);
+      assert.deepEqual(cleanupRequests[0], { answerId: 'accepted-latest', sessionId: 'canonical-fixture', version: 42, text: draft });
+    });
+    await check('hybrid unknown save freezes any unaccepted cleanup suggestion through reload', async () => {
+      await freshHybrid();await click('Edit answer');await replacementReady();await fillReplacement('Um, my original draft.');
+      cleanupResult = 'My suggested draft.';await click('Clean up wording');await text('Suggested wording');
+      assert.equal(await page.$$eval('button', nodes => nodes.find(node => node.textContent === 'Save replacement').disabled), true);
+      await click('Keep my wording');
+      revisionFailure = 'before';await click('Save replacement');await text('Synthetic replacement unavailable.');
+      assert.equal(await page.$('[aria-label="Wording suggestion"]'), null, 'A pending save cannot retain mutable cleanup controls');
+      assert.equal(await replacementValue(), 'Um, my original draft.');const request = structuredClone(revisionRequests[0]);
+      await page.reload();await text('Retry pausing interview');await click('Retry pausing interview');await text('Retry saving');await click('Retry saving');await text('Replacement saved.');
+      assert.deepEqual(revisionRequests[1], request);assert.equal(canonicalRevisions, 1);
+    });
+    await check('hybrid chosen cleanup stays editable and saves only on explicit replacement', async () => {
+      await freshHybrid();await click('Edit answer');await replacementReady();await fillReplacement('Um, it is a little wonky, in a good way.');
+      cleanupResult = 'It is a little wonky, in a good way.';await click('Clean up wording');await text('Suggested wording');
+      await click('Use this wording');await fillReplacement('It is a little wonky, in a good way. We like that.');
+      assert.equal(canonicalRevisions, 0);await click('Save replacement');await text('Replacement saved.');
+      assert.equal(live.savedAnswers.answers.at(-1).text, 'It is a little wonky, in a good way. We like that.');
+      assert.equal(canonicalRevisions, 1);assert.equal(await page.evaluate(() => window.micOn), false);
+    });
+    await check('hybrid replacement drafts stay isolated between accounts and never reopen a microphone', async () => {
+      await freshHybrid();await click('Edit answer');await replacementReady();await fillReplacement('A private account A replacement.');
+      const before = starts, owner = draftScope;
+      try {
+        draftScope = 'b'.repeat(64);await page.reload();await text('Start live interview');
+        assert.equal(await page.$(replacementInput), null);assert.equal(await page.$('[aria-label="Saved interview answers"]'), null);
+        assert.equal(await page.evaluate(() => document.body.innerText.includes('A private account A replacement.')), false);
+        assert.equal(await page.evaluate(() => window.permissions.length), 0);assert.equal(starts, before);
+      } finally { draftScope = owner; }
+    });
+    await check('hybrid malformed success cannot discard the frozen draft after canonical acceptance', async () => {
+      await freshHybrid();await click('Edit answer');await replacementReady();await fillReplacement('A retained answer after malformed success.');
+      revisionFailure = 'malformed';await click('Save replacement');await text('Retry saving');
+      assert.equal(await replacementValue(), 'A retained answer after malformed success.');
+      assert.equal(await page.$eval(replacementInput, element => element.disabled), true);assert.equal(canonicalRevisions, 1);
+      const request = structuredClone(revisionRequests[0]);await click('Retry saving');await text('Replacement saved.');
+      assert.deepEqual(revisionRequests[1], request);assert.equal(canonicalRevisions, 1);
+    });
+    await check('hybrid pending speech blocks replacement until its save or review finishes', async () => {
+      revisionRequests.length = 0;
+      await freshPanel();const pending = hybridProgress();pending.turns.push({ position: 2, status: 'needs_review', raw: 'Wait, I was still explaining.', questionId: 'q-next' });
+      startResponses.push(pending);await click('Start live interview');await text('Your latest saved answer');
+      assert.equal(await page.$$eval('button', nodes => nodes.find(node => node.textContent === 'Edit answer').disabled), true);
+      assert.equal(await page.$$eval('button', nodes => nodes.find(node => node.textContent === 'Start again in writing').disabled), true);
+      assert.equal(revisionRequests.length, 0);assert.equal(await page.$(replacementInput), null);
+    });
+    await check('hybrid late pause cleanup and save responses never restore a different project', async () => {
+      for (const phase of ['pause', 'cleanup', 'save']) {
+        await freshHybrid();
+        if (phase !== 'pause') { await click('Edit answer');await replacementReady(); }
+        const observed = new Promise(resolve => { if (phase === 'pause') pauseObserved = resolve;else hybridObserved = resolve; });
+        if (phase === 'pause') holdPause = true;else holdHybrid = phase;
+        try {
+          await click(phase === 'pause' ? 'Edit answer' : phase === 'cleanup' ? 'Clean up wording' : 'Save replacement');await observed;
+          const newSourceReady = page.waitForResponse(response => response.request().method() === 'GET' && response.url().includes(encodeURIComponent('another-project')));
+          await page.evaluate(() => window.renderSource('another-project'));await newSourceReady;await flushEvents();
+          const delivered = page.waitForResponse(response => response.request().method() === 'POST' && response.url().includes('/api/live-interviews/'));
+          if (phase === 'pause') releasePause();else releaseHybrid();await delivered;await flushEvents();
+          assert.equal(await page.$('[aria-label="Saved interview answers"]'), null, `${phase} response leaked the previous project`);
+          assert.equal(await page.$(replacementInput), null);assert.equal(await page.$('[aria-label="Wording suggestion"]'), null);
+          assert.equal(await page.evaluate(() => document.body.innerText.includes('Replacement saved.')), false);
+        } finally { holdPause = false;pauseObserved = null;releasePause = null;holdHybrid = null;hybridObserved = null;releaseHybrid = null; }
+      }
     });
     await check('daily quota shows its reset time and blocks an identical retry instead of looping', async () => {
       limitStart=true;await page.evaluate(()=>{sessionStorage.clear();window.entryIntent={requestId:'limited-synthetic-entry',consumed:false};window.renderDirect('limited');});
