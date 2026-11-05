@@ -19,6 +19,8 @@ Verification: 59 actual-component browser cases, 63 service/route/controller cas
 
 Final source verification: production compile passed after the last fix, TypeScript budget 851/862 with no new fingerprints, changed-source lint zero errors (one pre-existing ref warning), client/migration guards passed, and all 26 composed project-host browser checks passed. Pushed as the hybrid-interview follow-up in draft PR #848.
 
+Release follow-up: the founder authorized merge and production deployment. CI caught the background-cleanup VM harness rejecting new service imports; explicit fail-on-use stubs and a no-invocation assertion repair the harness without changing product code or weakening isolation. Cleanup, live adapters, project-guide planner/adapter/upload, live CSP and media rollout checks pass locally; the FFmpeg rendering group remains covered by CI's installed tools. Release uses the reviewed PR head only after green CI, then an explicit production build of the merge commit because Git auto-deployment is disabled.
+
 ---
 # First-time designer journey and priority fixes — 2026-11-05
 

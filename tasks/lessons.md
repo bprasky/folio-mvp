@@ -4,6 +4,10 @@ Keep “Our vendors” out of the organization profile header for every role. Th
 
 # Lessons Learned
 
+## 2026-11-05 — Audit every isolated harness when shared imports change
+
+Release CI caught an older cleanup harness rejecting new imports in the live service after the focused transport/browser suites passed. Find every VM harness loading a changed shared service and run the complete affected CI group. Keep strict import allowlists: for dependencies that a background task must never invoke, use explicit fail-on-use stubs and assert no invocation, rather than adding permissive fallback imports. Record unavailable media tools separately without skipping unrelated checks in the same group.
+
 ## 2026-11-05 — Give first-time speakers a written safety net
 
 The founder emphasized that designers will stutter, restart thoughts and need practice. Keep accepted answers visible with their questions and offer editing or a fresh written replacement without resetting the interview. Separate retrying an uncertain save from changing the answer. Preserve the original until replacement is confirmed, retain failed drafts, and bind revisions to the saved answer rather than the current prompt. Canonical corrections can invalidate dependent follow-ups; never promise unchanged question progression. Keep voice and typing in the same interview, and distinguish fixture evidence from real provider speech verification.
