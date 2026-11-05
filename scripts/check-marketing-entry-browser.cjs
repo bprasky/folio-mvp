@@ -96,7 +96,7 @@ async function main() {
   const browser = await puppeteer.launch({executablePath,headless:true});
   const page=await browser.newPage();page.setDefaultTimeout(15000);page.setDefaultNavigationTimeout(15000);
   const url=`http://127.0.0.1:${server.address().port}`;
-  const errors=[], results=[];let signupFails=false, pendingSignup=null;
+  const errors=[], results=[];let signupFails=false, pendingSignup=null, verificationRefreshGate=null;
   if(process.env.MARKETING_TEST_DEBUG)page.on('framenavigated',frame=>{if(frame===page.mainFrame())console.log('Navigated:',frame.url());});
   page.on('pageerror',e=>errors.push(e.message));
   // Navigation now reads memberships on mount. Keep that read in its own page
@@ -129,7 +129,10 @@ async function main() {
       pendingSignup={email:body.email,returnTo:body.returnTo,expiresAt:new Date(Date.now()+600000).toISOString(),resendAt:new Date().toISOString(),attemptsRemaining:5,canResend:true,deliveryAccepted:true};
       return request.respond({status:202,contentType:'application/json',body:JSON.stringify({verificationRequired:true})});
     }
-    if(u.pathname==='/api/auth/email-verification')return json(pendingSignup);
+    if(u.pathname==='/api/auth/email-verification'){
+      if(verificationRefreshGate){verificationRefreshGate.release=()=>json(pendingSignup);return;}
+      return json(pendingSignup);
+    }
     if(u.pathname==='/api/auth/email-verification/resend')return json({deliveryAccepted:true});
     if(u.pathname==='/api/onboarding/workspace'){
       const body=JSON.parse(request.postData());
@@ -168,9 +171,18 @@ async function main() {
   const verifySignup=async()=>{
     assert.equal(new URL(page.url()).pathname,'/auth/verify-email');
     assert.equal(await page.evaluate(()=>sessionStorage.getItem('fixture-user')),null,'Signup does not sign in before verification');
+    const refreshRequested=page.waitForRequest(request=>new URL(request.url()).pathname==='/api/auth/email-verification');
+    verificationRefreshGate={release:null};
     await page.type('#verification-code','000000'); await page.click('form button[type=submit]');
     await page.waitForSelector('[role=alert]');assert.equal(new URL(page.url()).pathname,'/auth/verify-email');
+    await refreshRequested;
+    assert.equal(await page.$eval('#verification-code',e=>e.disabled),true,'The error appears while the pending-signup refresh still owns the form');
+    assert.equal(typeof verificationRefreshGate.release,'function','The rejected-code refresh is held for this check');
+    await verificationRefreshGate.release();verificationRefreshGate=null;
+    // Error visibility precedes refresh completion; typing before readiness is dropped.
+    await page.waitForSelector('#verification-code:not(:disabled)');
     await page.$eval('#verification-code',e=>{e.focus();e.select();}); await page.type('#verification-code','123456');
+    assert.equal(await page.$eval('#verification-code',e=>e.value),'123456','The replacement verification code must reach the controlled input');
     await Promise.all([page.waitForNavigation({waitUntil:'networkidle0'}),page.click('form button[type=submit]')]);
     setupCallback(true);
   };

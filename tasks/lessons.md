@@ -4,6 +4,10 @@ Keep “Our vendors” out of the organization profile header for every role. Th
 
 # Lessons Learned
 
+## 2026-11-05 — Wait for recovery controls, not just error text
+
+A signup browser test retried when the error alert appeared, before the pending-account refresh had re-enabled the input. The browser dropped its keystrokes. For retry flows, wait for the actual enabled control and assert the entered value before submitting. Reproduce asynchronous phases with a held response; do not mask the race with a longer timeout or blind retries.
+
 ## 2026-11-05 — Audit every isolated harness when shared imports change
 
 Release CI caught an older cleanup harness rejecting new imports in the live service after the focused transport/browser suites passed. Find every VM harness loading a changed shared service and run the complete affected CI group. Keep strict import allowlists: for dependencies that a background task must never invoke, use explicit fail-on-use stubs and assert no invocation, rather than adding permissive fallback imports. Record unavailable media tools separately without skipping unrelated checks in the same group.

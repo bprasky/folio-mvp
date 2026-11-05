@@ -21,6 +21,8 @@ Final source verification: production compile passed after the last fix, TypeScr
 
 Release follow-up: the founder authorized merge and production deployment. CI caught the background-cleanup VM harness rejecting new service imports; explicit fail-on-use stubs and a no-invocation assertion repair the harness without changing product code or weakening isolation. Cleanup, live adapters, project-guide planner/adapter/upload, live CSP and media rollout checks pass locally; the FFmpeg rendering group remains covered by CI's installed tools. Release uses the reviewed PR head only after green CI, then an explicit production build of the merge commit because Git auto-deployment is disabled.
 
+A subsequent CI run exposed a signup-test race: error text appeared before account refresh re-enabled the code input. A held-response reproduction confirmed dropped retry keystrokes. The test now asserts that disabled interval, waits for the enabled input and verifies the entered code before submission; existing timeouts and journey assertions remain intact.
+
 ---
 # First-time designer journey and priority fixes — 2026-11-05
 
