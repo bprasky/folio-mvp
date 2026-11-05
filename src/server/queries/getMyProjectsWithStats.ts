@@ -25,6 +25,8 @@ export type ProjectWithStats = {
   completedYear: number | null;
   completedMonth: number | null;
   coverUrl: string | null;
+  roomCount: number;
+  imageCount: number;
   taggedCount: number;
   influenceValueUsd: number;
   savesByOthers: number;
@@ -119,6 +121,7 @@ export async function getMyProjectsWithStats(operatingAsOrgId?: string | null): 
         designerId: true,
         ownerId: true,
         designerOrgId: true,
+        _count: { select: { rooms: true } },
         designerOrg: {
           select: {
             id: true,
@@ -291,6 +294,8 @@ export async function getMyProjectsWithStats(operatingAsOrgId?: string | null): 
         completedYear: project.completedYear,
         completedMonth: project.completedMonth,
         coverUrl,
+        roomCount: project._count.rooms,
+        imageCount: projectImages.length,
         taggedCount,
         influenceValueUsd,
         savesByOthers: project.saves, // Using saves field as savesByOthers

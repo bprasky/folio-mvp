@@ -67,7 +67,8 @@ export function signupDestination(intent: string, callback?: string | null, star
       return professionalSetupHref('designer', workspaceSetupHref(target));
     return target !== '/' ? target : '/onboarding/diagnostic';
   }
-  return professionalSetupHref(intent, workspaceSetupHref(target !== '/' ? target : startProject ? '/projects/new' : '/settings'));
+  const defaultReturnTo = startProject ? '/projects/new' : ['designer', 'architect', 'builder'].includes(intent) ? '/projects' : '/settings';
+  return professionalSetupHref(intent, workspaceSetupHref(target !== '/' ? target : defaultReturnTo));
 }
 
 export function workspaceSetupHref(returnTo = '/projects/new'): string {

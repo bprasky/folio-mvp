@@ -1,3 +1,24 @@
+# First-time designer journey and priority fixes — 2026-11-05
+
+- [x] Establish current main/production baseline and inventory live/test coverage.
+- [x] Test signup, firm enrollment, portfolio import, profile review and return navigation with actual components and isolated persistence/provider boundaries.
+- [x] Test first project setup live; verify interview saving/resume with synthetic providers and record the real startup failure separately.
+- [x] Record prioritized findings with reproduction, impact, evidence and acceptance criteria.
+- [x] Implement bounded, verified fixes for confirmed onboarding blockers.
+- [x] Re-run affected journeys and required guards, review diff, commit and push scoped work.
+- [ ] Restore the production rate-limit backend and finish tagging/interview acceptance in the founder's already-imported IG Workshop account.
+
+Plan check-in: directly supports importing designers' archives and drawing out project context. Use an isolated current-main checkout and existing test harnesses. Live browsing is observational; stateful tests use synthetic/disposable data. Distinguish live evidence from fixture evidence. Do not alter a real designer's records, publish their work, apply migrations, or activate provider sessions as incidental QA. Prioritize blocked completion or lost work, then confusing transitions and empty/error states. Preserve prior work in the original checkout. Source merge/deployment are separate from reviewable fixes.
+
+### Review
+
+Baseline: main and production 4675da22 (Vercel READY). Fixed the inert Projects Import action, phone overflow, generic designer signup ending in Settings, missing room/photo counts, misleading profile link, pending generation opening Publish, and infrastructure failures incorrectly reported as interview quota. Repaired the onboarding browser test to include email verification and workspace import, and wired regressions into CI. See `docs/reviews/DESIGNER_FIRST_VISIT_AUDIT_2026-11-05.md` for priorities, evidence and remaining acceptance work.
+
+Verification: 24 signup/import/browser cases, 21 guided-entry cases, four count checks, 14 completion-date cases, 54 live transport cases and limiter observability pass. Existing guided/capture/host/recovery suites pass with synthetic providers. Production compile passes; source lint has zero errors (existing warnings); TypeScript budget is 851/862 with no new fingerprints; client and migration guards pass. Two specialist reviews report no blockers.
+
+The founder authorized the initial live account and then corrected the intended target to IG Workshop, whose upload is already tested. Created only private QA project `64d55224-5540-5e0b-b2b1-ab958f443631` in BP Design, using one labeled synthetic image and one room; no existing project answers/profile/publication changed. Real interview entry failed before provider creation because the limiter reported backend_outage. Sensitive production Redis variables exist but are not readable through the connector; no limits or configuration were disabled. Left Story; QA project retained for investigation. IG Workshop is absent from this account's switcher, and browser control stopped when it could not verify Chrome's URL, so the corrected live acceptance remains open.
+
+---
 # Design organization profile review — 2026-11-04
 
 - [x] Trace the public, member and admin actions from the BP Design cover to their destinations.

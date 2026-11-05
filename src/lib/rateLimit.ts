@@ -32,6 +32,8 @@ export interface RateLimitResult {
   limit: number;
   remaining: number;
   reset: number;
+  /** Safe failure category; unavailable protection still denies the request. */
+  reason?: 'rejected' | 'missing_configuration' | 'backend_timeout' | 'backend_outage';
 }
 
 function recordRateLimitOutcome(outcome: 'rejected' | 'missing_configuration' | 'backend_timeout' | 'backend_outage') {
@@ -55,7 +57,7 @@ export async function checkRateLimit(
     const denied = { success: false, limit: config.max, remaining: 0, reset: now + config.windowMs };
     const url = process.env.UPSTASH_REDIS_REST_URL;
     const token = process.env.UPSTASH_REDIS_REST_TOKEN;
-    if (!url || !token) { recordRateLimitOutcome('missing_configuration'); return denied; }
+    if (!url || !token) { recordRateLimitOutcome('missing_configuration'); return { ...denied, reason: 'missing_configuration' }; }
     try {
       const limiter = new Ratelimit({
         redis: new Redis({ url, token, retry: { retries: 0 } }),
@@ -66,13 +68,14 @@ export async function checkRateLimit(
         timeout: 3000,
       });
       const result = await limiter.limit(key);
-      if (result.reason === 'timeout') { recordRateLimitOutcome('backend_timeout'); return denied; }
+      if (result.reason === 'timeout') { recordRateLimitOutcome('backend_timeout'); return { ...denied, reason: 'backend_timeout' }; }
       await result.pending;
       if (!result.success) recordRateLimitOutcome('rejected');
-      return { success: result.success, limit: result.limit, remaining: result.remaining, reset: result.reset };
+      return { success: result.success, limit: result.limit, remaining: result.remaining, reset: result.reset,
+        ...(!result.success ? { reason: 'rejected' as const } : {}) };
     } catch {
       recordRateLimitOutcome('backend_outage');
-      return denied;
+      return { ...denied, reason: 'backend_outage' };
     }
   }
 
@@ -107,6 +110,7 @@ export async function checkRateLimit(
     limit: config.max,
     remaining,
     reset: record.resetAt,
+    ...(!success ? { reason: 'rejected' as const } : {}),
   };
 }
 

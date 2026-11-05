@@ -65,6 +65,14 @@ async function ownedSession(actorId: string, id: string) {
   if (!session || session.actorId !== actorId) throw new LiveError('Interview not found.',404);
   return session;
 }
+async function assertLiveRateLimit(identifier: string, max: number, limitMessage: string) {
+  const result = await checkRateLimit(identifier, { max, windowMs: 60_000 });
+  if (result.success) return;
+  if (result.reason && result.reason !== 'rejected') {
+    throw new LiveError('Live interviewing is temporarily unavailable. Your saved answers are safe. Please try again later.', 503);
+  }
+  throw new LiveError(limitMessage, 429);
+}
 export async function startLiveSession(actorId: string, input: {source:unknown; requestId:string; mode:CaptureMode; consentVersion:string; microphoneReady?:boolean; inputMode?:'voice'|'text'; selectedImageId?:string|null; workspaceStep?:ProjectGuideStep; intakeSessionId?:string}) {
   if (!liveEnabled(actorId)) throw new LiveError('Live interviews are not available for this account.',403);
   const inputMode=input.inputMode ?? 'voice';
@@ -76,7 +84,7 @@ export async function startLiveSession(actorId: string, input: {source:unknown; 
   if (input.workspaceStep !== undefined && (source.kind !== 'project_guide' || !PROJECT_GUIDE_STEPS.includes(input.workspaceStep))) throw new LiveError('Choose a valid project step.',400);
   if (source.kind==='project_guide' && input.mode!=='none') throw new LiveError('Join your host, then choose recording with explicit consent.',403);
   const workspace = await authorizeActor(actorId,source); const config = liveConfig();
-  if (!(await checkRateLimit(`live-start:${actorId}`,{max:12,windowMs:60_000})).success) throw new LiveError('Please wait before starting again.',429);
+  await assertLiveRateLimit(`live-start:${actorId}`, 12, 'Please wait before starting again.');
   if (input.mode !== 'none') {
     if (!recordingEnabled()) throw new LiveError('Recording is not available. Choose an interview without recording.',403);
     await assertCaptureStorageReady();
@@ -196,7 +204,7 @@ export async function assertLiveBackendAuth(id:string,authorization:string|null)
   if (!session || session.id!==id || !active(session)) throw new LiveError('Unauthorized.',401);
   if (!liveEnabled(session.actorId)) throw new LiveError('Live interviewing is paused.',403);
   await authorizeActor(session.actorId,payload(session).source,payload(session).workspaceId);
-  if (!(await checkRateLimit(`live-turn:${id}`,{max:80,windowMs:60_000})).success) throw new LiveError('Please wait.',429);
+  await assertLiveRateLimit(`live-turn:${id}`, 80, 'Please wait.');
   return session;
 }
 export function parseUserHistory(body:unknown) {

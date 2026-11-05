@@ -132,7 +132,10 @@ function handler(req, res) {
         return json(response);
       }); return;
     }
-    if (endpoint.endsWith('/interview/generate')) { req.resume(); return json({ ok: true }); }
+    if (endpoint.endsWith('/interview/generate')) {
+      req.resume();
+      return json(scenario.generationResponse?.body ?? { ok: true }, scenario.generationResponse?.status ?? 200);
+    }
     if (endpoint.endsWith('/interview')) {
       if (req.method !== 'GET') unexpected.push(record);
       const respond = () => json({ guided: !!saved, resetId: scenario.resetId ?? resetReceipt?.response.resetId ?? null, answers: scenario.answers || (saved ? controller.canonicalGuidedAnswers(saved) : []), coverage: [{ roomId: 'living', roomName: 'Living room', answered: scenario.answers?.some(answer => answer.answer?.trim()) ? 1 : 0, total: 1, complete: true }] });
@@ -297,6 +300,26 @@ async function main() {
       assert.equal(requests.filter(request => request.endpoint.endsWith('/interview/generate')).length, 0);
       await dialogClick('Generate draft'); await page.waitForFunction(() => document.body.textContent.includes('Editable draft review'));
       assert.equal(requests.filter(request => request.endpoint.endsWith('/interview/generate')).length, 1); noGuidedCalls();
+    });
+    for (const generationResponse of [
+      { status: 202, body: { status: 'in-progress', message: 'Generation is already in progress. Please wait.' } },
+      { status: 202, body: { status: 'already_has_draft' } },
+      { status: 503, body: { error: 'Generation unavailable' } },
+      { status: 200, body: { status: 'in-progress' } },
+    ]) await capture(`Unfinished draft response ${generationResponse.status}/${generationResponse.body.status || 'error'} retains Story and allows deliberate retry`, async () => {
+      const answers = [{ questionId: 'accepted', prompt: 'What shaped this room?', answer: 'We opened the route toward the garden.', roomId: 'living' }];
+      await open('story', { answers, generationResponse }); await storyReady();
+      await click('Prepare draft'); await dialogClick('Generate draft');
+      await page.waitForSelector('[role="dialog"] [role="alert"]');
+      assert.equal(new URL(page.url()).searchParams.get('view'), 'story');
+      assert.equal(requests.filter(request => request.endpoint.endsWith('/interview/generate')).length, 1);
+      assert.deepEqual(scenario.answers, answers, 'pending or failed generation preserves accepted answers');
+      if (generationResponse.body.message) assert.equal(await page.$eval('[role="dialog"] [role="alert"]', element => element.textContent), generationResponse.body.message);
+      else assert.match(await page.$eval('[role="dialog"] [role="alert"]', element => element.textContent), /try again/i);
+      scenario.generationResponse = undefined;
+      await dialogClick('Generate draft'); await page.waitForFunction(() => document.body.textContent.includes('Editable draft review'));
+      assert.equal(requests.filter(request => request.endpoint.endsWith('/interview/generate')).length, 2);
+      noGuidedCalls();
     });
     await capture('Start over explains deletion; cancellation preserves saved answers and local drafts', async () => {
       await open('story', { saved: true }); await storyReady();

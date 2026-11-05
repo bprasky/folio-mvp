@@ -129,7 +129,11 @@ export default function StoryInterviewPanel({ projectId, projectName, images, ro
         method: "POST", headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ forceOverwriteDraft: true, mode: "recomposition", ...contextChoice, writeUpRoomIds }),
       });
-      if (!response.ok && response.status !== 202) throw new Error("Draft generation failed. Please try again.");
+      const result = await response.json().catch(() => null);
+      if (response.status === 202) {
+        throw new Error(result?.message || "Your draft has not finished generating. Please wait a moment, then try again.");
+      }
+      if (!response.ok || result?.ok !== true) throw new Error("Draft generation failed. Please try again.");
       router.push(`/project/${projectId}?view=publish`); router.refresh();
     } catch (error) { setGenerateError(error instanceof Error ? error.message : "Draft generation failed."); }
     finally { setGenerating(false); }

@@ -3,14 +3,14 @@
 const assert=require('node:assert/strict');
 const fs=require('node:fs');const path=require('node:path');const vm=require('node:vm');const ts=require('typescript');
 const root=path.resolve(__dirname,'..');
-let sessions,approved,workspace,sourceAllowed,saves,providerCalls,saveFailure,providerFailure,providerReadFailure,storageReady,failReceiptOnce,canonicalIndex,afterConversationCreate,afterConversationRead,routeActor='owner';
+let sessions,approved,workspace,sourceAllowed,saves,providerCalls,saveFailure,providerFailure,providerReadFailure,storageReady,failReceiptOnce,canonicalIndex,afterConversationCreate,afterConversationRead,rateLimitResult,routeActor='owner';
 const env={NODE_ENV:'test',FOLIO_LIVE_INTERVIEWS:'1',FOLIO_INTERVIEW_RECORDING:'1',FOLIO_LIVE_BASE_URL:'https://folio.test',NEXTAUTH_SECRET:'synthetic-session-secret',TAVUS_API_KEY:'synthetic-provider-key'};
 const clone=structuredClone;const cache=new Map();
 function snapshot(index=1){return {source:{kind:'project',id:'project'},interviewId:'canonical',version:String(index),status:'active',currentQuestion:{id:`q${index}`,text:`Question ${index}?`,sourceImageIds:[]},sourceRefs:[],state:{schemaVersion:1,skipped:[],receipts:{},native:{rooms:[{id:'room',imageIds:['image-one','image-two']}]}}};}
 const mocks={
  'server-only':{},
  '@/lib/prisma':{prisma:{user:{findUnique:async()=>approved?{accountStatus:'APPROVED'}:{accountStatus:'PENDING'}}}},
- '@/lib/rateLimit':{checkRateLimit:async()=>({success:true})},
+ '@/lib/rateLimit':{checkRateLimit:async()=>rateLimitResult},
  '@/lib/publishing-studio/data':{resolvePublishingStudioContext:async()=>({id:workspace})},
  '@/lib/interview-media/storage':{assertCaptureStorageReady:async()=>{if(!storageReady)throw Error('private storage unavailable');}},
  '@/lib/live-interview/http':{
@@ -71,7 +71,7 @@ function load(file){
  return compiled.exports;
 }
 const service=load('src/lib/live-interview/service.ts');const turns=load('src/lib/live-interview/turns.ts');const provider=load('src/lib/live-interview/provider.ts');const config=load('src/lib/live-interview/config.ts');
-function reset(){sessions=new Map();approved=true;workspace='org';sourceAllowed=true;saves=[];providerCalls=[];saveFailure=false;providerFailure=false;providerReadFailure=false;storageReady=true;failReceiptOnce=false;canonicalIndex=1;afterConversationCreate=null;afterConversationRead=null;routeActor='owner';providerState.clear();env.FOLIO_LIVE_INTERVIEWS='1';}
+function reset(){sessions=new Map();approved=true;workspace='org';sourceAllowed=true;saves=[];providerCalls=[];saveFailure=false;providerFailure=false;providerReadFailure=false;storageReady=true;failReceiptOnce=false;canonicalIndex=1;afterConversationCreate=null;afterConversationRead=null;rateLimitResult={success:true};routeActor='owner';providerState.clear();env.FOLIO_LIVE_INTERVIEWS='1';}
 const start=()=>service.startLiveSession('owner',{source:{kind:'project',id:'project'},requestId:'synthetic-start-request',mode:'none',consentVersion:'2026-10-01',microphoneReady:true});
 const startText=()=>service.startLiveSession('owner',{source:{kind:'project',id:'project'},requestId:'synthetic-text-start',mode:'none',consentVersion:'2026-10-01',inputMode:'text'});
 const textInput=(session,text='Typed answer.',requestId='synthetic-typed-answer')=>({requestId,text,questionId:session.snapshot.currentQuestion.id,version:session.snapshot.version});
@@ -106,6 +106,27 @@ test('guide intake carries only same-owner same-workspace conversation history i
 });
 test('disabled beta, unauthorized source, unapproved account prevent paid calls',async()=>{
  env.FOLIO_LIVE_INTERVIEWS='0';await assert.rejects(start);env.FOLIO_LIVE_INTERVIEWS='1';sourceAllowed=false;await assert.rejects(start);sourceAllowed=true;approved=false;await assert.rejects(start);assert.equal(providerCalls.length,0);
+});
+
+test('unavailable rate-limit protection reports a service outage before reserving or creating a call',async()=>{
+ for(const reason of ['missing_configuration','backend_timeout','backend_outage']){
+  rateLimitResult={success:false,reason};
+  await assert.rejects(start,error=>error.status===503&&error.message==='Live interviewing is temporarily unavailable. Your saved answers are safe. Please try again later.');
+  assert.equal(sessions.size,0);assert.equal(providerCalls.length,0);assert.equal(saves.length,0);
+ }
+ rateLimitResult={success:false,reason:'rejected'};
+ await assert.rejects(start,error=>error.status===429&&error.message==='Please wait before starting again.');
+ assert.equal(sessions.size,0);assert.equal(providerCalls.length,0);
+});
+
+test('live backend turns distinguish limiter outages from quota without changing saved progress',async()=>{
+ const started=await start(),row=sessions.get(started.id),before=clone(row),calls=providerCalls.length;
+ const key=providerCalls.find(call=>call.url.endsWith('/pals')).body.layers.llm.api_key;
+ for(const reason of ['missing_configuration','backend_timeout','backend_outage','rejected']){
+  rateLimitResult={success:false,reason};
+  await assert.rejects(()=>service.assertLiveBackendAuth(started.id,`Bearer ${key}`),error=>error.status===(reason==='rejected'?429:503));
+  assert.deepEqual(sessions.get(started.id),before);assert.equal(providerCalls.length,calls);assert.equal(saves.length,0);
+ }
 });
 test('explicit readiness and recording consent required; private storage checked before paid creation',async()=>{
  for(const patch of [{microphoneReady:false},{mode:'invalid'},{consentVersion:'old'}])await assert.rejects(()=>service.startLiveSession('owner',{source:{kind:'project',id:'project'},requestId:'synthetic-start-request',mode:'none',consentVersion:'2026-10-01',microphoneReady:true,...patch}));

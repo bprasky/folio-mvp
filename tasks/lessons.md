@@ -4,6 +4,14 @@ Keep “Our vendors” out of the organization profile header for every role. Th
 
 # Lessons Learned
 
+## 2026-11-05 — Use the founder's already-imported test workspace
+
+For the first-time designer walkthrough, the founder redirected live testing from the BP Design example account to IG Workshop, whose website and upload were already tested. Start with the specified workspace and remaining stages (tagging and interview), not another import or an example firm's unverified website. Verify the active account/firm before mutations; if the requested firm is absent from the switcher, obtain the intended session rather than changing memberships or inventing a portfolio source. Keep QA records separate from existing answers and public content.
+
+## 2026-11-05 — Freeze dependency setup before parallel verification
+
+Do not rebuild a shared or junction-backed dependency tree while another agent can invoke Next's automatic dependency installer. Prepare an isolated current-schema Prisma client before tests and explicitly coordinate any dependency maintenance. If an installer is triggered unexpectedly, stop concurrent dependency commands, restore the exact package state, and revalidate the tools; never change package versions or committed diagnostic budgets to hide an environment failure.
+
 ## 2026-10-29 — Import completion uses the approved profile
 
 The founder rejected the separate onboarding profile design. Reuse the actual approved organization cover and mosaic from the magazine profile work, including saved appearance settings. Onboarding adds private draft status and the materials/sourcebook next step; it must not invent a second profile aesthetic. Inspect existing related work before creating a competing implementation.

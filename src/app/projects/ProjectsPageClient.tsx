@@ -22,8 +22,8 @@ import {
 import { cn } from '@/lib/utils';
 import { useUserCapabilities } from '@/hooks/useUserCapabilities';
 import { EmptyStateHero, GuideCard, UpgradePrompt } from '@/components/projects';
-import { Button } from '@/components/ui/button';
 import { compareCompletionDates, formatCompletionDate } from '@/lib/projects/completionDate';
+import { workspaceSetupHref } from '@/lib/onboarding/professional-entry';
 
 // ============================================================================
 // TYPES
@@ -316,14 +316,15 @@ export default function ProjectsPageClient({ projectsRaw, operatingAsOrgId, pend
   const operatingAsOrg = (session?.user as any)?.operatingAsOrg;
   const studioName = operatingAsOrg?.name ?? (userName ? `${userName.split(' ')[0]} Design Studio` : 'My Studio');
   const totalForNew = sortedProjects.length;
+  const importHref = workspaceSetupHref('/projects') + (operatingAsOrgId ? `&orgId=${encodeURIComponent(operatingAsOrgId)}` : '');
 
   return (
-    <div className="min-h-screen w-full -mx-6">
-      <div className="max-w-[1280px] mx-auto px-10 pt-9 pb-24">
+    <div className="min-h-screen -mx-6 sm:w-full">
+      <div className="max-w-[1280px] mx-auto px-5 sm:px-10 pt-9 pb-24">
 
         {/* ── Page header ── */}
-        <header className="grid grid-cols-[1fr_auto] items-end gap-6 pb-7 border-b border-folio-border-subtle">
-          <div>
+        <header className="grid grid-cols-1 sm:grid-cols-[minmax(0,1fr)_auto] items-start sm:items-end gap-6 pb-7 border-b border-folio-border-subtle">
+          <div className="min-w-0">
             <div className="flex items-center gap-2.5 mb-3">
               <span className="folio-eyebrow text-folio-text-secondary">My workspace</span>
               <span className="w-1 h-1 rounded-full bg-folio-text-tertiary" aria-hidden />
@@ -332,25 +333,25 @@ export default function ProjectsPageClient({ projectsRaw, operatingAsOrgId, pend
             <h1 className={"font-headline italic font-medium text-[56px] leading-[1.02] tracking-[-0.01em] text-folio-text-primary" /* folio-design-system: off-scale */}>
               Projects
             </h1>
-            <div className="mt-2.5 flex items-center gap-4 text-sm text-folio-text-secondary">
+            <div className="mt-2.5 flex flex-wrap items-center gap-4 text-sm text-folio-text-secondary">
               <span>{summarySentence}</span>
               <span className="w-1 h-1 rounded-full bg-folio-text-tertiary" aria-hidden />
               <Link
                 href="/designer/profile"
                 className="text-folio-gold no-underline hover:text-folio-gold-hover transition-colors"
               >
-                View directory listing →
+                View my profile →
               </Link>
             </div>
           </div>
-          <div className="flex items-center gap-2.5">
-            <Button
-              variant="ridge"
-              className="inline-flex items-center gap-2 px-4 py-2.5 text-[length:var(--type-meta)] font-medium rounded-[10px]"
+          <div className="flex flex-wrap items-center gap-2.5">
+            <Link
+              href={importHref}
+              className="ridge-btn inline-flex items-center justify-center gap-2 px-4 py-2.5 text-[length:var(--type-meta)] font-medium rounded-[10px] focus-visible:ring-2 focus-visible:ring-[var(--accent)] focus-visible:ring-offset-2"
             >
               <Download className="w-3.5 h-3.5" />
               Import
-            </Button>
+            </Link>
             <Link
               href="/projects/new"
               className="accent-btn inline-flex items-center gap-2 px-4 py-2.5 text-[length:var(--type-meta)] font-medium rounded-[10px]"
@@ -411,8 +412,8 @@ export default function ProjectsPageClient({ projectsRaw, operatingAsOrgId, pend
         )}
 
         {/* ── Filter strip ── */}
-        <div className="flex items-center gap-2.5 py-5 pb-6">
-          <div role="tablist" className="inline-flex bg-surface-ground border border-folio-border-subtle rounded-full p-[3px]">
+        <div className="flex flex-wrap items-center gap-2.5 py-5 pb-6">
+          <div role="tablist" className="inline-flex flex-wrap max-w-full bg-surface-ground border border-folio-border-subtle rounded-2xl sm:rounded-full p-[3px]">
             {STATUS_TABS.map(tab => (
               <button
                 key={tab.value}
@@ -432,10 +433,10 @@ export default function ProjectsPageClient({ projectsRaw, operatingAsOrgId, pend
             ))}
           </div>
 
-          <div className="flex-1" />
+          <div className="hidden lg:block flex-1" />
 
           <label
-            className="inline-flex items-center gap-2 px-3.5 py-2 rounded-full border border-folio-border-subtle bg-surface-canvas min-w-[240px] hover:border-folio-border-strong focus-within:border-folio-border-strong transition-colors"
+            className="inline-flex min-w-0 max-w-full flex-1 sm:flex-none sm:min-w-[240px] items-center gap-2 px-3.5 py-2 rounded-full border border-folio-border-subtle bg-surface-canvas hover:border-folio-border-strong focus-within:border-folio-border-strong transition-colors"
           >
             <Search className="w-3.5 h-3.5 text-folio-text-tertiary flex-shrink-0" />
             <input
