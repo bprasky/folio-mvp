@@ -23,6 +23,12 @@ Release follow-up: the founder authorized merge and production deployment. CI ca
 
 A subsequent CI run exposed a signup-test race: error text appeared before account refresh re-enabled the code input. A held-response reproduction confirmed dropped retry keystrokes. The test now asserts that disabled interval, waits for the enabled input and verifies the entered code before submission; existing timeouts and journey assertions remain intact.
 
+Release checklist:
+- [x] Update the database-backed live journey to use the explicit saved-answer correction contract; verify preserved originals and rejected legacy correction requests.
+- [x] Pass the full composed journey locally with real FFmpeg output, plus all 48 subsequent firm/publishing commands.
+
+The full composed test now pauses before revision, reads the accepted answer/version, preserves original speech/photo provenance and proves exact-receipt replay is idempotent. Legacy unbound project correction is rejected; the supported bio path remains covered. Temporary SHA256-verified media tools run from the isolated untracked test directory, with no dependency or system configuration change. Hosted CI, final review, exact-head merge, production deployment and smoke-check results are tracked on PR #848; real IG Workshop speech acceptance remains separate.
+
 ---
 # First-time designer journey and priority fixes — 2026-11-05
 
