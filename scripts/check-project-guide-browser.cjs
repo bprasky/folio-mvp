@@ -62,6 +62,20 @@ async function main(){await build();const server=http.createServer(handler);awai
  const fillCompletion=async(month='')=>{await page.waitForSelector('input[aria-label="Completion year"]');await page.type('input[aria-label="Completion year"]','2024');if(month)await page.select('select[aria-label="Completion month"]',String(month))};
  const assertCompletedPayload=(write,status='completed_project',month=null)=>{assert.equal(write.data.timeline,'PAST');assert.equal(write.data.projectStatus,status);assert.equal(write.data.designerOrgId,'workspace');assert.equal(write.data.completedYear,2024);assert.equal(write.data.completedMonth,month)};
  try{
+  await check('switching to project details preserves entered title and completion date on both entry routes',async()=>{
+    for(const route of ['/projects/new','/designer/create']){
+      await page.goto(base+route);await page.waitForSelector('input[aria-label="Project name"]:not(:disabled)');
+      await page.type('input[aria-label="Project name"]','Archive with input');await fillCompletion(5);
+      await click('Add project details first');
+      const titleSelector=route==='/projects/new'?'input[name="title"]':'input[placeholder="e.g., Modern Coastal Living Room"]';
+      await page.waitForSelector(titleSelector);
+      assert.equal(await page.$eval(titleSelector,element=>element.value),'Archive with input');
+      assert.equal(await page.$eval('input[aria-label="Completion year"]',element=>element.value),'2024');
+      assert.equal(await page.$eval('select[aria-label="Completion month"]',element=>element.value),'5');
+      await page.evaluate(()=>{localStorage.clear();sessionStorage.clear()});
+    }
+    assert.equal(creates,0);assert.equal(starts,0);
+  });
   await check('actual Create+ is a short upload form with no live call or microphone request',async()=>{
     await page.goto(base+'/projects/new');await page.waitForSelector('input[aria-label="Project name"]');
     assert.equal(starts,0);assert.equal(creates,0);assert.equal(await page.evaluate(()=>window.dailyCalls.length),0);assert.equal(await page.evaluate(()=>window.permissions),0);
@@ -227,6 +241,28 @@ async function main(){await build();const server=http.createServer(handler);awai
     await page.screenshot({path:path.join(review,'completion-date-sorting-desktop.png'),fullPage:true});assert.equal(starts,before);
   });
   await check('project home and non-owner presentation do not create guide calls',async()=>{enabled=true;const before=starts;for(const suffix of ['view=overview','view=story&readonly=1']){await page.goto(base+'/project/project?'+suffix);await page.waitForSelector('[data-testid=existing-workspace]');assert.equal(await page.$('section[aria-label="Live interview"]'),null)}assert.equal(starts,before)});
+  await check('completed interview exposes draft preparation without restarting or ending the conversation',async()=>{
+    enabled=true;savedAnswers=1;photos=[{id:'completion-photo',url:'/photo.svg',name:'Living room',roomId:'living',room:'Living room'}];
+    await page.goto(base+'/project/project?view=story');await ready();
+    const before=starts,sessionId=live.id;
+    assert.equal(await page.evaluate(()=>document.body.innerText.includes('Review answers and prepare draft')),false);
+    live.snapshot=snapshot(live.snapshot.source,{...live.snapshot.guide,phase:'complete',stage:'interview_complete',answeredCount:1,remainingQuestionCount:0,allowedActions:['add_more','start_over'],action:'none',actionId:'completed-interview'});
+    await text('Review answers and prepare draft');
+    for(const width of [1440,390]){
+      await page.setViewport({width,height:900});
+      assert(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));
+      assert(await page.evaluate(()=>[...document.querySelectorAll('button')].some(button=>button.textContent.trim()==='Review answers and prepare draft'&&button.getBoundingClientRect().width>0)));
+    }
+    await click('Review answers and prepare draft');await text('Prepare draft');
+    assert.equal(await page.$eval('#interview-notes-project',element=>element.hidden),false);
+    await click('Prepare draft');await text('Generate draft');
+    assert.equal(starts,before);assert.equal(live.id,sessionId);assert.equal(live.status,'active');
+    assert.equal(savedAnswers,1);assert.equal(await page.evaluate(()=>window.dailyCalls.at(-1).left),undefined);
+    await page.screenshot({path:path.join(review,'completed-interview-next-step.png'),fullPage:true});
+    await page.keyboard.press('Escape');
+    live.snapshot=snapshot(live.snapshot.source,{...live.snapshot.guide,answeredCount:0,actionId:'empty-completion'});
+    await page.waitForFunction(()=>!document.body.innerText.includes('Review answers and prepare draft'));
+  });
   assert.deepEqual(errors,[]);fs.writeFileSync(path.join(review,'browser-results.json'),JSON.stringify({boundary:'Actual UI; synthetic provider/video/auth/API. No real call.',results},null,2));console.log('PASS '+results.length+' composed guide browser checks.');
  }finally{await browser.close();await new Promise(resolve=>server.close(resolve))}}
 main().catch(error=>{console.error(error);process.exitCode=1});

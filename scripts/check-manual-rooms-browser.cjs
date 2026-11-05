@@ -38,8 +38,8 @@ export const setImageNoProducts=args=>action('no-products',args);
 `;
 const entry = `
 import React,{useEffect,useState}from'react';import{createRoot}from'react-dom/client';import{useSearchParams}from'next/navigation';
-import Rooms from './src/app/project/[id]/RoomGroupedMedia';import Board from './src/app/project/[id]/DesignerBoard';import Media from './src/app/project/[id]/MediaSection';
-function App(){const search=useSearchParams();const[data,setData]=useState(null);const[revision,setRevision]=useState(0);useEffect(()=>{fetch('/api/fixture/state').then(r=>r.json()).then(setData)},[revision]);useEffect(()=>{const fn=()=>setRevision(n=>n+1);window.addEventListener('refresh',fn);return()=>window.removeEventListener('refresh',fn)},[]);if(!data)return <p>Loading fixture</p>;const project={id:'project',title:'Manual room archive',projectType:'RESIDENTIAL',clientType:'RESIDENTIAL',rooms:data.rooms};if(search.get('surface')==='board')return <Board projectId="project" project={{...project,rooms:[]}} imageCount={data.images.length} images={data.images}/>;if(search.get('surface')==='media')return <Media project={project} images={data.images} isOwner/>;return <main className="mx-auto max-w-5xl p-4"><Rooms projectId="project" isOwner images={data.images} rooms={data.rooms} selectedHeroImageId={null} onSetCover={()=>{}} onDelete={()=>{}} onChanged={()=>setRevision(n=>n+1)}/></main>}
+import Rooms from './src/app/project/[id]/RoomGroupedMedia';import Board from './src/app/project/[id]/DesignerBoard';import Media from './src/app/project/[id]/MediaSection';import{deriveTrackerState}from'./src/lib/publish/computeTrackerState';
+function App(){const search=useSearchParams();const[data,setData]=useState(null);const[revision,setRevision]=useState(0);useEffect(()=>{fetch('/api/fixture/state').then(r=>r.json()).then(setData)},[revision]);useEffect(()=>{const fn=()=>setRevision(n=>n+1);window.addEventListener('refresh',fn);return()=>window.removeEventListener('refresh',fn)},[]);if(!data)return <p>Loading fixture</p>;const project={id:'project',title:'Manual room archive',projectType:'RESIDENTIAL',clientType:'RESIDENTIAL',rooms:data.rooms};if(search.get('surface')==='board')return <Board projectId="project" project={{...project,rooms:[]}} imageCount={data.images.length} images={data.images}/>;if(search.get('surface')==='import-tags'){const tracker=deriveTrackerState({type:'completed',complete:{photos:data.images.length>0,rooms:false,tags:false,story:false,publish:false},remaining:{rooms:data.images.length},materialsExist:false,activeKey:search.get('step')||undefined});const current=tracker.steps[tracker.currentIndex].key;return <main><output data-testid="tracker-step">{current}</output><output data-testid="rooms-remaining">{tracker.steps.find(step=>step.key==='rooms').remaining}</output><Media project={project} images={data.images} isOwner initialTagging={current==='tags'}/></main>};if(search.get('surface')==='media')return <Media project={project} images={data.images} isOwner/>;return <main className="mx-auto max-w-5xl p-4"><Rooms projectId="project" isOwner images={data.images} rooms={data.rooms} selectedHeroImageId={null} onSetCover={()=>{}} onDelete={()=>{}} onChanged={()=>setRevision(n=>n+1)}/></main>}
 createRoot(document.getElementById('root')).render(<React.StrictMode><App/></React.StrictMode>);
 `;
 async function build() {
@@ -52,10 +52,12 @@ async function build() {
         contents: execFileSync('git', ['show', process.env.MANUAL_ROOMS_SOURCE_REF + ':' + path.relative(root, args.path).replaceAll('\\', '/')], { cwd: root, encoding: 'utf8' }), loader: 'tsx', resolveDir: path.dirname(args.path),
       }));
       build.onResolve({ filter: /^(next\/(navigation|link|image)|next-auth\/react|@\/app\/actions\/projectImages|@\/components\/interviews\/ProjectConversationHost)$/ }, args => ({ path: args.path, namespace: 'fixture' }));
-      build.onResolve({ filter: /(DesignerBoardRoom|GenerateDialog|GeneratedGrid|ExportSpecModal|PresentationImportModal|PdfSpecImportModal|TaggingSection|MaterialsStep|DocumentImportModal|TagReviewPanel|ProjectCreditsCard|ProfessionalUpgradeModal)$|^@\/components\/designer\/project$/ }, args => ({ path: 'off-surface', namespace: 'fixture' }));
+      build.onResolve({ filter: /TaggingSection$/ }, () => ({ path: 'tagging-surface', namespace: 'fixture' }));
+      build.onResolve({ filter: /(DesignerBoardRoom|GenerateDialog|GeneratedGrid|ExportSpecModal|PresentationImportModal|PdfSpecImportModal|MaterialsStep|DocumentImportModal|TagReviewPanel|ProjectCreditsCard|ProfessionalUpgradeModal)$|^@\/components\/designer\/project$/ }, args => ({ path: 'off-surface', namespace: 'fixture' }));
       build.onLoad({ filter: /.*/, namespace: 'fixture' }, args => ({ loader: 'jsx', resolveDir: root, contents:
         args.path === '@/app/actions/projectImages' ? actionBoundary :
         args.path === '@/components/interviews/ProjectConversationHost' ? 'export const useProjectConversation=()=>null;' :
+        args.path === 'tagging-surface' ? 'export default function Tagging(){return <section data-testid="tagging-surface">Product tagging surface</section>}' :
         args.path === 'off-surface' ? 'export default function OffSurface(){return null}export const PresentationImportModal=()=>null;export const PdfSpecImportModal=()=>null;export const BoardsEmptyState=()=>null;export const ProfessionalUpgradeModal=()=>null;' :
         args.path === 'next-auth/react' ? "export const useSession=()=>({data:{user:{id:'designer',role:'DESIGNER',operatingAsOrgId:'firm'}},status:'authenticated'});" :
         args.path === 'next/image' ? "import React from'react';export default function Image({fill,priority,unoptimized,loader,...props}){return <img {...props} style={fill?{position:'absolute',inset:0,width:'100%',height:'100%',...props.style}:props.style}/>}" : navigation,
@@ -110,6 +112,27 @@ async function check(id, name, work) {
   await work(); results.push({ id, name }); console.log('PASS ' + name);
 }
 async function retiredRoutes() {
+  await check('import-tags', 'explicit imported tagging preserves default step order and publication gates', async () => {
+    const source = fs.readFileSync(path.join(root, 'src/lib/publish/computeTrackerState.ts'), 'utf8');
+    const exports = {};
+    vm.runInNewContext(ts.transpileModule(source, { compilerOptions: { module: ts.ModuleKind.CommonJS } }).outputText, { exports });
+    const input = { type: 'completed', complete: { photos: true, rooms: false, tags: false, story: false, publish: false }, remaining: { rooms: 4 }, materialsExist: false };
+    const ordinary = exports.deriveTrackerState(input);
+    const tagging = exports.deriveTrackerState({ ...input, activeKey: 'tags' });
+    assert.equal(ordinary.steps[ordinary.currentIndex].key, 'rooms');
+    assert.equal(ordinary.steps.find(step => step.key === 'tags').locked, true);
+    assert.equal(tagging.steps[tagging.currentIndex].key, 'tags');
+    assert.equal(tagging.reachedIndex, ordinary.reachedIndex);
+    assert.equal(tagging.steps.find(step => step.key === 'rooms').remaining, 4);
+    assert.equal(tagging.steps.find(step => step.key === 'rooms').state, 'current');
+    assert.equal(tagging.steps.find(step => step.key === 'publish').locked, true);
+    const empty = exports.deriveTrackerState({ ...input, complete: { ...input.complete, photos: false }, activeKey: 'tags' });
+    assert.equal(empty.steps[empty.currentIndex].key, 'photos');
+    assert.equal(empty.steps.find(step => step.key === 'tags').locked, true);
+    const publication = exports.deriveTrackerState({ ...input, activeKey: 'publish', draftExists: true, publishBlockedByRooms: true });
+    assert.equal(publication.currentCopyOverride.action, 'sort-rooms');
+    assert.equal(input.complete.rooms, false);
+  });
   for (const route of ['analyze-images', 'detect-rooms']) await check(route, route + ' returns 410 without importing auth, AI, or database services', async () => {
     const file = path.join(root, 'src/app/api/projects/[id]', route, 'route.ts');
     const source = fs.readFileSync(file, 'utf8');
@@ -137,6 +160,18 @@ async function main() {
   const actionFor = async (photo, label) => page.$eval('select[aria-label="Room for ' + photo + '"]', (select, label) => [...select.parentElement.querySelectorAll('button')].find(button => button.textContent.trim() === label).click(), label);
   const noDetection = () => assert.deepEqual(requests.filter(request => /analyze-images|detect-rooms/.test(request.route)), []);
   try {
+    await check('import-tags', 'imported project tagging survives action consumption and refresh without completing Rooms', async () => {
+      reset(); rooms = []; images = images.map(image => ({ ...image, roomId: null, room: null }));
+      await page.goto(base + '/?surface=import-tags&view=media&step=tags&action=tag-by-hand');
+      await page.waitForSelector('[data-testid="tagging-surface"]');
+      await page.waitForFunction(() => !new URLSearchParams(location.search).has('action'));
+      console.log('Imported tagging before refresh:', await page.$eval('[data-testid="tracker-step"]', element => element.textContent));
+      await page.reload(); await page.waitForSelector('[data-testid="tracker-step"]');
+      assert.equal(await page.$eval('[data-testid="tracker-step"]', element => element.textContent), 'tags', 'the imported Tags destination must remain active after refresh');
+      assert(await page.$('[data-testid="tagging-surface"]'), 'refresh must preserve the tagging surface');
+      assert.equal(await page.$eval('[data-testid="rooms-remaining"]', element => element.textContent), String(images.length));
+      assert.deepEqual(actions, []); noDetection();
+    });
     await check('resolver', 'historical AI suggestions never preselect rooms and saved assignments remain intact', async () => {
       reset(); await page.goto(base + '/?surface=rooms'); await page.waitForSelector('#uncategorized-group select');
       assert.deepEqual(await page.$$eval('#uncategorized-group select', selects => selects.map(select => select.value)), ['', '', '']);

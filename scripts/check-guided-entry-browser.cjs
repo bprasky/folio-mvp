@@ -222,6 +222,33 @@ async function main() {
     }
   };
   try {
+    await capture('Interview primary actions stay readable in light and dark appearance', async () => {
+      const contrast = async label => {
+        for (const theme of ['light', 'dark']) {
+          const result = await page.evaluate(({ label, theme }) => {
+            document.documentElement.dataset.theme = theme;
+            const button = [...document.querySelectorAll('button')].find(element => element.textContent.trim() === label && element.getBoundingClientRect().width > 0);
+            if (!button) throw Error('Missing visible action: ' + label);
+            const style = getComputedStyle(button);
+            const luminance = color => color.match(/[\d.]+/g).slice(0, 3).map(Number).map(value => value / 255).map(value => value <= .04045 ? value / 12.92 : ((value + .055) / 1.055) ** 2.4).reduce((total, value, index) => total + value * [.2126, .7152, .0722][index], 0);
+            const values = [luminance(style.color), luminance(style.backgroundColor)].sort((a, b) => a - b);
+            return { ratio: (values[1] + .05) / (values[0] + .05), foreground: style.color, background: style.backgroundColor };
+          }, { label, theme });
+          assert.ok(result.ratio >= 4.5, `${label} in ${theme}: ${JSON.stringify(result)}`);
+        }
+      };
+      await open('story', { answers: [{ questionId: 'room-detail', prompt: 'What mattered here?', answer: 'We kept the original floor.', roomId: 'living' }] }); await storyReady();
+      await contrast('Resume interview'); await click('Prepare draft'); await contrast('Generate draft');
+      await open('story'); await storyReady(); await click('Start interview'); await guidedReady();
+      await page.type('#guided-response', 'The clients wanted a quiet place to read.'); await contrast('Send'); await click('Send');
+      await page.waitForFunction(() => [...document.querySelectorAll('button')].some(button => button.textContent.trim() === 'Finish with what I have' && !button.disabled));
+      await click('Finish with what I have'); await contrast('Prepare editable draft');
+      await open('story', { live: true }); await storyReady(); await click('Start interview');
+      await page.waitForFunction(() => window.dailyJoins === 1 && [...document.querySelectorAll('button')].some(button => button.textContent === 'End' && !button.disabled));
+      await click('End');
+      await page.waitForFunction(() => [...document.querySelectorAll('button')].some(button => button.textContent === 'Start with typed replies' && !button.disabled));
+      await contrast('Start with typed replies');
+    });
     await capture('Live original entry starts once; saved-answer review and refresh stay passive; explicit reopen starts anew', async () => {
       await open('story', { live: true }); await storyReady();
       const starts = () => requests.filter(request => request.liveStart);
@@ -275,6 +302,15 @@ async function main() {
       await open('story', { answers: [{ questionId: 'question-only', prompt: 'What shaped this room?', answer: '   ', roomId: 'living' }] });
       await storyReady(); await assertNoDraftControls();
       assert.equal(await page.$('[aria-label="Rooms with a write-up"]'), null, 'the resume screen has no room coverage dashboard');
+      noGuidedCalls();
+    });
+    await capture('Accepted project answers can prepare a draft when room questions were skipped', async () => {
+      await open('story', { answers: [{ questionId: 'project-brief', prompt: 'What did the clients want?', answer: 'A quiet home with room for their collection.', roomId: null }] });
+      await storyReady(); await click('Prepare draft');
+      assert.equal(requests.filter(request => request.endpoint.endsWith('/interview/generate')).length, 0);
+      await dialogClick('Generate draft');
+      await page.waitForFunction(() => new URLSearchParams(location.search).get('view') === 'publish');
+      assert.equal(requests.filter(request => request.endpoint.endsWith('/interview/generate')).length, 1);
       noGuidedCalls();
     });
     await capture('Saved answers have a simple resume screen; draft settings open only on request', async () => {

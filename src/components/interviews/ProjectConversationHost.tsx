@@ -126,6 +126,10 @@ export function ProjectConversationHost({ projectId, projectName, actorId, activ
             <button type="button" className="text-folio-meta text-text-secondary underline underline-offset-4" onClick={requestRestart}>Start over</button>
           </div>
         </div>
+        {guide?.phase === 'complete' && guide.answeredCount > 0 && interviewContent ? <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-border bg-surface-ground p-4">
+          <p className="text-folio-body">Your interview is saved. Turn it into a draft to review before publishing.</p>
+          <button type="button" className={button} aria-expanded={reviewOpen} aria-controls={`interview-notes-${projectId}`} onClick={() => setReviewOpen(true)}>Review answers and prepare draft</button>
+        </div> : null}
         {interviewContent ? <div id={`interview-notes-${projectId}`} hidden={!reviewOpen} className="rounded-lg border border-border bg-surface-ground p-5">{interviewContent}</div> : null}
         <div className={photo ? 'grid items-start gap-5 lg:grid-cols-[minmax(0,1.22fr)_minmax(380px,1fr)]' : 'mx-auto max-w-3xl'}>
           <div className="min-w-0 rounded-xl bg-surface-canvas lg:sticky lg:top-20 lg:col-start-2 lg:row-start-1">

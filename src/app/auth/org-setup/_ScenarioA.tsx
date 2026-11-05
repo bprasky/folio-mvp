@@ -46,11 +46,11 @@ export function ScenarioA({ initialIntent, callbackUrl = '/projects/new', member
   const key = normalizeFirmName(query);
   const ready = selected !== null || searchedQuery === key;
   const exactMatches = ready ? results.filter((org) => normalizeFirmName(org.name) === key) : [];
-  const match = selected ?? (exactMatches.length === 1 ? exactMatches[0] : ready && results.length === 1 ? results[0] : null);
+  const match = selected ?? (exactMatches.length === 1 ? exactMatches[0] : null);
   const ownMembership = match ? memberships.find((org) => org.id === match.id) : undefined;
   const viewOwnFirm = ownMembership?.membershipRole === 'VIEWER' || destination === '/settings';
   const ownFirmAction = viewOwnFirm ? 'View firm' : 'Continue with firm';
-  const ambiguous = !selected && !match && ready && results.length > 1;
+  const ambiguous = !selected && !match && ready && exactMatches.length > 1;
   const canCreate = key.length >= 2 && ready && !searchError && !match && !ambiguous;
   const busy = key.length >= 2 && !ready && !searchError;
   const options = showResults && !selected && ready ? results : [];
