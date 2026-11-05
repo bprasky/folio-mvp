@@ -1386,3 +1386,21 @@ Approved scope: six-digit email ownership verification during signup; existing m
 - [x] Put the notification bell in the masthead, retain completion history, and synchronize read status safely.
 - [x] Verify dismiss → Profile recovery, account/org isolation, saved project continuation, and desktop/mobile notification behavior; run required checks.
 - [ ] Merge after CI and verify the production deployment. Evidence: `docs/reviews/profile-import-resume.md`.
+
+# First designer workflow QA — 2026-11-05
+
+- [x] Establish the latest code/deployed version and map signup → firm/website import → review → first project → interview → publication.
+- [x] Independently review entry/auth/import, project setup/recovery, and interview/publication; reproduce actionable findings.
+- [x] Walk browser entry and responsive states, and execute existing isolated journey tests with honest live-vs-fixture distinctions.
+- [x] Fix confirmed small workflow defects and add focused regression coverage where warranted.
+- [x] Recheck changes and record prioritized findings and a founder walkthrough for this isolated branch.
+
+Plan check-in: this is core designer onboarding and archive-to-publication work. Use latest origin/main in an isolated worktree because the original checkout contains unrelated work. Preserve existing product direction. Use synthetic data for writes until a designated test account is available. No production publishing, database/schema changes or provider sessions without a concrete test target. Report blocked live boundaries explicitly rather than treating fixtures as end-to-end proof.
+
+### Review
+
+Reviewed current production commit 4675da22 from a separate checkout with independent dependencies. Three specialist reviewers plus the main live-browser pass covered the first workflow. Reproduced and fixed partial-name firm enrollment blocking, imported tagging changing screens on refresh, lost project basics on manual-form handoff, a hidden interview-to-draft next step (including project-only answers), and unreadable dark-theme interview buttons. No schema, server authorization, prompt, feature flag or production data changes.
+
+Passing evidence: firm browser regression; signup verification and professional routing; workspace import with isolated PostgreSQL JSONB; composed project/host browser 28 checks; guided entry 19; manual rooms 8; live capture 46; interruption browser 7; core 21 with 2 explicitly skipped database checks; composed local media pipeline. Final Next compile-mode production build and full lint pass with existing warnings. Client-boundary and migration guards pass. TypeScript ratchet passes at 851 existing diagnostics against the 862 baseline, without new fingerprints. Independent review found no actionable regression.
+
+The live public entry and phone signup were exercised. Read-only provider/storage/table checks passed. No designated test account/site was supplied; real email delivery, production import/cron timing, actual voice conversation and publishing remain live acceptance work. Production secret setting values were not available, so activation/allowlist status is unverified. The connected Next/PostgreSQL journey was not run without a disposable database. Existing marketing-entry harness is stale; npm run diag refers to a missing script. Detailed evidence and the founder walkthrough are in docs/reviews/FIRST_DESIGNER_WORKFLOW_QA_2026-11-05.md. This branch is for review and has not been deployed.

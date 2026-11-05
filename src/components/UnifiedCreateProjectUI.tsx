@@ -79,7 +79,10 @@ export default function UnifiedCreateProjectUI() {
     );
   }
 
-  if (!manualEntry && session?.user?.id) return <CreateProjectGuide key={`${session.user.id}:${operatingAsOrgId}`} actorId={session.user.id} workspaceId={operatingAsOrgId} onManual={() => setManualEntry(true)} />;
+  if (!manualEntry && session?.user?.id) return <CreateProjectGuide key={`${session.user.id}:${operatingAsOrgId}`} actorId={session.user.id} workspaceId={operatingAsOrgId} onManual={basics => {
+    setName(basics.title); setYear(basics.year); setMonth(basics.month);
+    setManualEntry(true);
+  }} />;
 
   return (
     <div className="min-h-screen bg-surface-ground flex items-center justify-center p-6">

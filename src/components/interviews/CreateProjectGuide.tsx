@@ -8,7 +8,7 @@ import { COMPLETION_MONTHS, completionDateInputError } from '@/lib/projects/comp
 import { ProjectGuideUploads } from './ProjectGuideUploads';
 
 /** Intake is actor-scoped. A project is created only when the designer submits real input. */
-type CreateProjectGuideProps = { actorId: string; workspaceId: string; onManual: () => void };
+type CreateProjectGuideProps = { actorId: string; workspaceId: string; onManual: (basics: { title: string; year: string; month: string }) => void };
 export function CreateProjectGuide(props: CreateProjectGuideProps) {
   return <ProjectIntake key={`${props.actorId}.${props.workspaceId}`} {...props} />;
 }
@@ -52,7 +52,7 @@ function ProjectIntake({ actorId, workspaceId, onManual }: CreateProjectGuidePro
     catch { /* Navigation must not turn confirmed persistence into a failure. */ }
     router.push(projectHref(id));
   };
-  const manual = () => { if (project.current) continueToProject(project.current); else onManual(); };
+  const manual = () => { if (project.current) continueToProject(project.current); else onManual({ title, year, month }); };
   const ensureProject = async () => {
     if (project.current) return project.current;
     if (!title.trim()) throw new Error('Give the project a name before adding its photographs.');

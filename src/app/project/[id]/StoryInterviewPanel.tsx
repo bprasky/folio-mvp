@@ -21,7 +21,7 @@ interface StoryInterviewPanelProps {
   taggedPhotoCount: number;
 }
 
-const primaryButton = "rounded-sm bg-folio-text-primary px-5 py-3 text-folio-ui font-medium text-white transition-opacity hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-folio-gold disabled:cursor-not-allowed disabled:opacity-40";
+const primaryButton = "rounded-sm bg-folio-text-primary px-5 py-3 text-folio-ui font-medium text-surface-canvas transition-opacity hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-folio-gold disabled:cursor-not-allowed disabled:opacity-40";
 const quietButton = "rounded-sm px-3 py-2 text-folio-ui text-folio-text-secondary underline underline-offset-4 hover:text-folio-text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-folio-gold disabled:opacity-40";
 const dialogClass = "fixed left-1/2 top-1/2 z-[81] max-h-[85dvh] w-[calc(100%-2rem)] max-w-lg -translate-x-1/2 -translate-y-1/2 overflow-y-auto rounded-md border border-folio-border-subtle bg-surface-canvas p-6 shadow-folio3 focus:outline-none";
 
@@ -95,7 +95,7 @@ export default function StoryInterviewPanel({ projectId, projectName, images, ro
 
   const hasAnswers = answers.length > 0;
   const writeUpRoomIds = useMemo(() => Array.from(new Set(answers.map(answer => answer.roomId).filter((id): id is string => !!id && id !== "project"))), [answers]);
-  const canPrepareDraft = writeUpRoomIds.length > 0 && !loading && !loadError;
+  const canPrepareDraft = hasAnswers && !loading && !loadError;
   const partialRooms = coverage.filter(room => writeUpRoomIds.includes(room.roomId) && room.total > room.answered);
   const contextFor = (answer: QA) => rooms.find(room => room.id === answer.roomId)?.name ?? (answer.roomId && answer.roomId !== "project" ? "Another room" : "About this project");
 

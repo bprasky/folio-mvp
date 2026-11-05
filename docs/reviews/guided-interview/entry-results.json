@@ -4,6 +4,10 @@
   "fixture": "Actual Tracker → Story → InterviewModal → GuidedInterviewWorkspace → LiveInterviewPanel and protected interview components; synthetic Next navigation/image/dynamic, loopback HTTP, Daily and microphone denial, pure guided controller, no AI or database. No deployed/authenticated Next server verification.",
   "results": [
     {
+      "name": "Interview primary actions stay readable in light and dark appearance",
+      "status": "pass"
+    },
+    {
       "name": "Live original entry starts once; saved-answer review and refresh stay passive; explicit reopen starts anew",
       "status": "pass"
     },
@@ -21,6 +25,10 @@
     },
     {
       "name": "Question-only saved rows do not unlock generation or count as room answers",
+      "status": "pass"
+    },
+    {
+      "name": "Accepted project answers can prepare a draft when room questions were skipped",
       "status": "pass"
     },
     {

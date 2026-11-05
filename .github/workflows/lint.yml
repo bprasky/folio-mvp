@@ -95,6 +95,7 @@ jobs:
           node scripts/check-workspace-import.cjs
           node scripts/check-professional-entry.cjs
           node scripts/check-professional-routing.cjs
+          GUIDED_TEST_BROWSER="$(command -v google-chrome || command -v chromium)" node scripts/check-firm-enrollment-browser.cjs
       - name: Guided interview regression checks
         run: npm run test:guided
       - name: Live and guided browser regression checks

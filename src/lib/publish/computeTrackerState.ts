@@ -513,9 +513,12 @@ export function deriveTrackerState(input: TrackerInput): TrackerState {
     }
   });
 
-  // What the designer may navigate to: anything up to what's been reached, plus
-  // the interview step.
-  const navigable = (index: number) => index <= reachedIndex || isInterviewStep(index);
+  // Onboarding links imported photographs directly to materials/tagging. Honor
+  // that explicit destination on reload without advancing the Rooms frontier or
+  // opening later steps. Ordinary entry still starts at the first unfinished step.
+  const requestedTagging = input.type === 'completed' && activeKey === 'tags' && complete.photos;
+  const navigable = (index: number) => index <= reachedIndex || isInterviewStep(index)
+    || !!(requestedTagging && def.steps[index]?.key === 'tags');
 
   // The viewed step. Stepping back to a finished step is always allowed; asking
   // for one that isn't navigable falls back to the next thing to do.

@@ -127,6 +127,7 @@ function CreateProjectForm() {
     setError,
     clearErrors,
     getValues,
+    setValue,
     formState: { errors },
   } = useForm<FormValues>({
     defaultValues: {
@@ -260,7 +261,10 @@ function CreateProjectForm() {
     );
   }
 
-  if (!manualEntry && session?.user?.id) return <CreateProjectGuide key={`${session.user.id}:${operatingAsOrgId}`} actorId={session.user.id} workspaceId={operatingAsOrgId} onManual={() => setManualEntry(true)} />;
+  if (!manualEntry && session?.user?.id) return <CreateProjectGuide key={`${session.user.id}:${operatingAsOrgId}`} actorId={session.user.id} workspaceId={operatingAsOrgId} onManual={basics => {
+    setValue('title', basics.title); setValue('year', basics.year); setValue('month', basics.month);
+    setManualEntry(true);
+  }} />;
 
   return (
     <main
