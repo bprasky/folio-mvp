@@ -1,9 +1,8 @@
 /**
  * GET /api/projects/[id]/pending-spec-tags
  *
- * List the project's unplaced finish-schedule products — PendingProductTag rows
- * (source = SPEC) that are still UNREVIEWED and not yet anchored to a photo. The
- * tagging surface renders these as a "place them on a photo" tray.
+ * List unreviewed spec products, including persisted finish-schedule processing
+ * state and proposed photo locations. Only confirmation creates real tags.
  */
 
 export const runtime = 'nodejs';
@@ -34,12 +33,13 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
       where: {
         source: 'SPEC',
         status: 'UNREVIEWED',
-        projectImageId: null,
+
         importSession: { projectId },
       },
       orderBy: { createdAt: 'asc' },
       select: {
         id: true,
+        topSuggestion: true,
         description: true,
         category: true,
         roomType: true,

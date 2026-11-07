@@ -94,6 +94,7 @@ jobs:
         run: |
           node scripts/check-signup-verification.cjs
           node scripts/check-workspace-import.cjs
+          node scripts/check-finish-schedule.cjs
           node scripts/check-professional-entry.cjs
           node scripts/check-professional-routing.cjs
           MARKETING_TEST_BROWSER="$(command -v google-chrome || command -v chromium)" node scripts/check-marketing-entry-browser.cjs
@@ -102,6 +103,7 @@ jobs:
       - name: Live and guided browser regression checks
         run: |
           export GUIDED_TEST_BROWSER="$(command -v google-chrome || command -v chromium)"
+          node scripts/check-finish-schedule-browser.cjs
           node scripts/check-live-interview-browser.cjs
           node scripts/check-project-guide-browser.cjs
           npm run test:interruptions:browser

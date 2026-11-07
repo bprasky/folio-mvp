@@ -1,145 +1,98 @@
-/**
- * POST /api/import/pending-tag/[tagId]/place
- *
- * Place a finish-schedule product (a spec PendingProductTag) onto a specific
- * project photo at the given coordinates: create/find the Product from the
- * extracted fields, create the real ProductTag, and mark the pending tag
- * CONFIRMED with resultingTagId. This is the finish-schedule counterpart to the
- * per-tag verify route, which can't place spec tags (they carry no suggestion
- * and no image). Body: { imageId, x, y } with x/y in 0–100 percent.
- */
-
+/** Confirm a schedule row on one or more project photos. Coordinates are percentages. */
 export const runtime = 'nodejs';
-
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/app/api/auth/[...nextauth]/options';
 import { assertProjectWrite } from '@/lib/authz/access';
 import { prisma } from '@/lib/prisma';
-import { ensureProductForSelection } from '@/lib/tagging/ensureProductForSelection';
+import { scheduleReview } from '@/lib/import-agent/finishScheduleReview';
+import { isDocumentImage } from '@/lib/publish/computePublishReadiness';
+import { normalizeProductUrl } from '@/lib/products/normalizeProductUrl';
+import { parseProductUrl } from '@/lib/server/safe-product-url';
 import { recordLabelEvent } from '@/lib/vision/recordLabelEvent';
 
+function validPlacements(value: unknown): value is Array<{ imageId: string; x: number; y: number }> {
+  return Array.isArray(value) && value.length > 0 && value.length <= 12 && new Set(value.map(p => p?.imageId)).size === value.length &&
+    value.every(p => typeof p?.imageId === 'string' && [p.x, p.y].every(n => typeof n === 'number' && Number.isFinite(n) && n >= 0 && n <= 100));
+}
 export async function POST(req: NextRequest, { params }: { params: Promise<{ tagId: string }> }) {
   try {
     const { tagId } = await params;
-
     const session = await getServerSession(authOptions);
-    const userId = (session?.user as { id?: string })?.id;
-    if (!userId) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
-    const { imageId, x, y } = await req.json();
-    if (!imageId || x == null || y == null) {
-      return NextResponse.json({ error: 'Missing imageId, x, or y' }, { status: 400 });
-    }
-
-    const pendingTag = await prisma.pendingProductTag.findUnique({
-      where: { id: tagId },
-      include: { importSession: true },
+    const userId = session?.user?.id;
+    if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    const body = await req.json();
+    const placements = body.placements ?? [{ imageId: body.imageId, x: body.x, y: body.y }];
+    if (!validPlacements(placements)) return NextResponse.json({ error: 'Choose valid photo positions (0–100).' }, { status: 400 });
+    const pending = await prisma.pendingProductTag.findUnique({ where: { id: tagId }, include: { importSession: true } });
+    if (!pending?.importSession.projectId || pending.source !== 'SPEC') return NextResponse.json({ error: 'Schedule item not found' }, { status: 404 });
+    const projectId = pending.importSession.projectId;
+    try { await assertProjectWrite(userId, projectId); }
+    catch { return NextResponse.json({ error: 'Not permitted' }, { status: 403 }); }
+    if (pending.status === 'CONFIRMED') return NextResponse.json({ productTagId: pending.resultingTagId, productId: pending.confirmedProductId });
+    if (pending.status !== 'UNREVIEWED') return NextResponse.json({ error: 'Item already reviewed' }, { status: 409 });
+    const photos = await prisma.projectImage.findMany({ where: { id: { in: placements.map(p => p.imageId) }, projectId, inclusion: { not: 'EXCLUDED' } }, select: { id: true, name: true } });
+    if (photos.length !== placements.length || photos.some(p => isDocumentImage(p.name ?? undefined))) return NextResponse.json({ error: 'Choose included photos in this project.' }, { status: 400 });
+    const review = scheduleReview(pending.topSuggestion);
+    const research = body.useResearch !== false && review?.research?.exact && review.research.confidence !== 'low' ? review.research : null;
+    const rawUrl = pending.extractedProductUrl || research?.productUrl;
+    let url: string | null = null;
+    try { if (rawUrl) url = normalizeProductUrl(parseProductUrl(rawUrl).href); } catch { /* unsafe source links never persist */ }
+    const brand = pending.extractedVendor || research?.brand || null;
+    const priceCents = pending.extractedPrice ?? research?.priceCents ?? null;
+    const result = await prisma.$transaction(async tx => {
+      // Claim inside the same transaction as the product/tags/counter: rollback on any failure.
+      const claimed = await tx.pendingProductTag.updateMany({ where: { id: tagId, status: 'UNREVIEWED' }, data: { status: 'CONFIRMED' } });
+      if (!claimed.count) {
+        const existing = await tx.pendingProductTag.findUniqueOrThrow({ where: { id: tagId } });
+        if (existing.status !== 'CONFIRMED') throw new Error('Item changed during confirmation');
+        return { productTagId: existing.resultingTagId, productId: existing.confirmedProductId, replay: true };
+      }
+      // Never merge unrelated brands merely because they share a product name.
+      const existing = await tx.product.findFirst({ where: url ? { url } : {
+        name: { equals: pending.description, mode: 'insensitive' }, brand: brand ? { equals: brand, mode: 'insensitive' } : null,
+      } });
+      const product = existing || await tx.product.create({ data: {
+        name: pending.description, brand, category: pending.category, url,
+        imageUrl: research?.imageUrl || null, price: priceCents === null ? null : priceCents / 100, description: research?.description || null, isPending: true,
+      } });
+      if (existing && !existing.vendorId && research) await tx.product.update({ where: { id: product.id }, data: {
+        description: existing.description || research.description, imageUrl: existing.imageUrl || research.imageUrl,
+        price: existing.price ?? (priceCents === null ? null : priceCents / 100), brand: existing.brand || brand,
+        category: existing.category || pending.category,
+      } });
+      // Product forms already read this cache. Preserve established catalog records.
+      if (url && research) await tx.cachedProduct.upsert({ where: { url }, update: {}, create: {
+        url, imageUrl: research.imageUrl, productName: pending.description, brand, priceCents, currency: 'USD',
+        description: research.description, sku: pending.extractedSku || research.sku,
+        widthIn: research.widthIn, depthIn: research.depthIn, heightIn: research.heightIn,
+        materialType: research.material, finish: research.finish, extractionConfidence: research.confidence,
+        aiResponse: { source: 'finish-schedule', productUrl: research.productUrl, research },
+      } });
+      const tags = [];
+      for (const placement of placements) {
+        const suggested = review?.matches.find(m => m.imageId === placement.imageId);
+        tags.push(await tx.productTag.create({ data: {
+          ...placement, productId: product.id, reviewedAt: new Date(),
+          aiX: suggested ? suggested.x * 100 : null, aiY: suggested ? suggested.y * 100 : null,
+          // Finish is a separate specification decision; this importer does not assert it.
+        } }));
+      }
+      await tx.projectImage.updateMany({ where: { id: { in: photos.map(p => p.id) }, projectId }, data: { noProducts: false } });
+      await tx.pendingProductTag.update({ where: { id: tagId }, data: {
+        projectImageId: placements[0].imageId, x: placements[0].x / 100, y: placements[0].y / 100,
+        confirmedProductId: product.id, resultingTagId: tags[0].id, reviewedAt: new Date(),
+      } });
+      await tx.importSession.update({ where: { id: pending.importSessionId }, data: { verifiedTags: { increment: 1 } } });
+      return { productTagId: tags[0].id, productId: product.id, replay: false };
     });
-    if (!pendingTag) {
-      return NextResponse.json({ error: 'Tag not found' }, { status: 404 });
-    }
-    if (pendingTag.status !== 'UNREVIEWED') {
-      return NextResponse.json({ error: 'Tag has already been reviewed' }, { status: 400 });
-    }
-
-    const projectId = pendingTag.importSession.projectId;
-    if (!projectId) {
-      return NextResponse.json({ error: 'Import session has no project' }, { status: 400 });
-    }
-
-    // Project write access (owner, designer, org member, or admin).
-    try {
-      await assertProjectWrite(userId, projectId);
-    } catch {
-      return NextResponse.json({ error: 'Not permitted' }, { status: 403 });
-    }
-
-    // The image must belong to this project.
-    const image = await prisma.projectImage.findFirst({
-      where: { id: imageId, projectId },
-      select: { id: true },
-    });
-    if (!image) {
-      return NextResponse.json({ error: 'Image not found in this project' }, { status: 404 });
-    }
-
-    // Create/find the Product from the extracted finish-schedule fields.
-    // extractedPrice is stored in cents; Product.price is in dollars.
-    const productId = await ensureProductForSelection({
-      productName: pendingTag.description,
-      vendorName: pendingTag.extractedVendor,
-      unitPrice: pendingTag.extractedPrice != null ? pendingTag.extractedPrice / 100 : null,
-      productUrl: pendingTag.extractedProductUrl,
-    });
-    if (!productId) {
-      return NextResponse.json({ error: 'Could not create a product for this row' }, { status: 400 });
-    }
-
-    const productTag = await prisma.productTag.create({
-      data: {
-        // Finish is deliberately NULL here (spec 21 delta D3). A tag arriving
-        // through an import has no specification event behind it, and a
-        // fabricated finish is indistinguishable from an observed one once
-        // stored. If this tag is later opened in the tagging UI it becomes a
-        // capture site like any other. Do not "fix" this by proposing a value.
-        imageId,
-        productId,
-        x: parseFloat(String(x)),
-        y: parseFloat(String(y)),
-      },
-    });
-
-    // A tagged photo cannot be "no products".
-    await prisma.projectImage.update({
-      where: { id: imageId },
-      data: { noProducts: false },
-    });
-
-    await prisma.pendingProductTag.update({
-      where: { id: tagId },
-      data: {
-        status: 'CONFIRMED',
-        projectImageId: imageId,
-        x: parseFloat(String(x)),
-        y: parseFloat(String(y)),
-        confirmedProductId: productId,
-        resultingTagId: productTag.id,
-        reviewedAt: new Date(),
-      },
-    });
-
-    await prisma.importSession.update({
-      where: { id: pendingTag.importSessionId },
-      data: { verifiedTags: { increment: 1 } },
-    });
-
-    // Best-effort provenance signal, mirroring the verify route.
-    try {
-      await recordLabelEvent({
-        projectId,
-        imageId,
-        userId,
-        source: 'HUMAN',
-        taskType: 'PRODUCT_TAG',
-        action: 'confirm',
-        value: {
-          category: pendingTag.category,
-          description: pendingTag.description,
-          x: parseFloat(String(x)),
-          y: parseFloat(String(y)),
-          confirmedProductId: productId,
-        },
-      });
-    } catch {
-      /* non-fatal */
-    }
-
-    return NextResponse.json({ productTagId: productTag.id, productId });
+    if (!result.replay) for (const placement of placements) await recordLabelEvent({ projectId, imageId: placement.imageId, userId,
+      source: 'HUMAN', taskType: 'PRODUCT_TAG', action: 'confirm',
+      value: { description: pending.description, x: placement.x, y: placement.y, confirmedProductId: result.productId },
+    }).catch(() => {});
+    return NextResponse.json(result);
   } catch (error) {
-    console.error('[pending-tag/place] error:', error);
-    return NextResponse.json({ error: 'Failed to place product' }, { status: 500 });
+    console.error('[pending-tag/place]', error);
+    return NextResponse.json({ error: 'Could not confirm this item. Please retry.' }, { status: 500 });
   }
 }
