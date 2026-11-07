@@ -7,6 +7,8 @@ const vm = require('node:vm');
 const ts = require('typescript');
 const { File } = require('node:buffer');
 const ExcelJS = require('exceljs');
+const sharp = require('sharp');
+let photoBytes, downloadedPaths = [], lastVision;
 const { memoryDatabase } = require('./core/memory-db.cjs');
 let db = memoryDatabase(), user = 'owner', aiCalls = 0, failSearch = false, failVisual = false, holdVisual = null;
 const baseCreate = db.pendingProductTag.create;
@@ -22,6 +24,9 @@ function load(file) {
     exports, console, process, Buffer, URL, Request, Response, Date, Set, Map, Object, JSON, Number, Error, setTimeout, clearTimeout,
     require(name) {
       if (name.startsWith('.')) name = '@/' + path.relative(path.resolve('src'), path.resolve(path.dirname(file), name));
+      if (name === '@/lib/supabaseAdmin') return { supabaseAdmin: { storage: { from: () => ({ download: async objectPath => {
+        downloadedPaths.push(objectPath); return { data: { size: photoBytes.length, type: 'image/png', arrayBuffer: async () => photoBytes } };
+      } }) } } };
       if (name === '@/lib/prisma') return { prisma: db };
       if (name === 'next/server') return { NextResponse: Response };
       if (name === 'next-auth') return { getServerSession: async () => user ? { user: { id: user } } : null };
@@ -36,6 +41,11 @@ function load(file) {
         if (input.tools) {
           if (failSearch) throw Error('Search unavailable');
           return { content: [{ type: 'web_search_tool_result', content: [{ type: 'web_search_result', url: 'https://vendor.test/chair' }] }, { type: 'text', text: JSON.stringify({ productUrl: 'https://vendor.test/chair', productName: 'Cognac chair', brand: 'Fixture', exact: true, price: 500, currency: 'USD', widthIn: 24, dimensions: '24 in wide', sku: 'REAL-SKU', material: 'leather', confidence: 'high' }) }] };
+        }
+        lastVision = input;
+        for (const block of input.messages[0].content.filter(b => b.type === 'image')) {
+          if (block.source.type === 'url') assert.match(block.source.url, /^https?:\/\//, 'provider cannot fetch relative URLs');
+          else { assert.equal(block.source.media_type, 'image/jpeg'); assert.equal((await sharp(Buffer.from(block.source.data, 'base64')).metadata()).format, 'jpeg'); }
         }
         if (holdVisual) await holdVisual;
         if (failVisual) throw Error('Vision unavailable');
@@ -108,6 +118,26 @@ async function check(name, fn) { await fn(); passed++; console.log('PASS', name)
     const csv = await parse(Buffer.from('Item ID,Room,Product,Brand\nA1,Kitchen,Tap,Fixture'), 'x.csv');
     assert.equal(csv[0].name, 'Tap');
     await assert.rejects(() => parse(bytes, 'legacy.xls'), /Legacy/);
+  });
+  await check('Private photo bytes reach vision as bounded JPEG, never as a browser URL', async () => {
+    photoBytes = await sharp({ create: { width: 2000, height: 1000, channels: 3, background: '#a06030' } }).png().toBuffer();
+    const project = '11111111-1111-4111-8111-111111111111';
+    const url = `/api/project-photos/${project}/default/generated/test.png`;
+    const photo = { id: 'private', projectId: project, url, room: 'Living Room', inclusion: 'INCLUDED', name: null };
+    await db.projectImage.create({ data: photo });
+    await logic.matchScheduleRow(row, [photo], project);
+    const source = lastVision.messages[0].content.find(b => b.type === 'image').source;
+    assert.equal(source.type, 'base64'); assert.ok(!JSON.stringify(lastVision).includes('/api/project-photos/'));
+    const meta = await sharp(Buffer.from(source.data, 'base64')).metadata();
+    assert.equal(meta.width, 1568); assert.equal(meta.height, 784);
+    const calls = aiCalls, downloads = downloadedPaths.length;
+    await assert.rejects(() => logic.matchScheduleRow(row, [photo], 'other'), /authorized project/);
+    await assert.rejects(() => logic.matchScheduleRow(row, [{ ...photo, url: url.replace('test.png', 'missing.png') }], project), /authorized project/);
+    assert.equal(aiCalls, calls); assert.equal(downloadedPaths.length, downloads);
+    photoBytes = Buffer.from('invalid image');
+    await assert.rejects(() => logic.matchScheduleRow(row, [photo], project));
+    assert.equal(aiCalls, calls, 'invalid bytes must fail before provider invocation');
+    await db.projectImage.deleteMany({ where: { id: 'private' } });
   });
   await db.projectImage.create({ data: { id: 'living', projectId: 'project', url: 'https://photo.test/living.jpg', room: 'Living Room' } });
   await db.projectImage.create({ data: { id: 'wrong-room', projectId: 'other', url: 'https://photo.test/bed.jpg', room: 'Bedroom' } });
