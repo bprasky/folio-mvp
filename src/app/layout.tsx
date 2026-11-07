@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import { Cormorant_Garamond, Instrument_Sans, IBM_Plex_Mono } from 'next/font/google';
+import localFont from 'next/font/local';
 import './globals.css';
 import { themeInitializationScript } from '@/lib/theme';
 import { LoadingBrandProvider } from '@/components/loading/LoadingBrand';
@@ -11,24 +11,28 @@ import { ImpersonationBanner } from '../components/admin/ImpersonationBanner';
 import { CookieConsentBanner } from '../components/CookieConsentBanner';
 
 // Folio Design System - Typography
-const cormorant = Cormorant_Garamond({
-  subsets: ['latin'],
-  weight: ['400', '500', '600'],
-  style: ['normal', 'italic'],
+const cormorant = localFont({
+  src: [
+    { path: '../../public/fonts/publication/CormorantGaramond.ttf', weight: '400 600', style: 'normal' },
+    { path: '../../public/fonts/publication/CormorantGaramond-Italic.ttf', weight: '400 600', style: 'italic' },
+  ],
   variable: '--font-headline',
   display: 'swap',
 });
 
-const instrumentSans = Instrument_Sans({
-  subsets: ['latin'],
-  weight: ['400', '500', '600'],
+const instrumentSans = localFont({
+  src: '../../public/fonts/publication/InstrumentSans.ttf',
+  weight: '400 600',
+  style: 'normal',
   variable: '--font-body',
   display: 'swap',
 });
 
-const plexMono = IBM_Plex_Mono({
-  subsets: ['latin'],
-  weight: ['400', '500'],
+const plexMono = localFont({
+  src: [
+    { path: '../../public/fonts/publication/IBMPlexMono-Regular.ttf', weight: '400', style: 'normal' },
+    { path: '../../public/fonts/publication/IBMPlexMono-Medium.ttf', weight: '500', style: 'normal' },
+  ],
   variable: '--font-mono',
   display: 'swap',
 });

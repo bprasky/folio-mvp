@@ -50,7 +50,7 @@ async function build(){fs.mkdirSync(out,{recursive:true});fs.mkdirSync(review,{r
  const globals=fs.readFileSync(path.join(root,'src/app/globals.css'),'utf8').replace(/@import\s+"([^"]+)";/g,(_,f)=>f.startsWith('../styles/')?fs.readFileSync(path.resolve(root,'src/app',f),'utf8'):'');
  let css=(await postcss([tailwind({...require(path.join(root,'tailwind.config.js')),content:[path.join(root,'src/**/*.{tsx,ts}'),{raw:entry,extension:'tsx'}]})]).process(globals,{from:path.join(root,'src/app/globals.css')})).css,heading,body;
  const fontDir=path.join(root,'.next/static/css');
- for(const f of (fs.existsSync(fontDir)?fs.readdirSync(fontDir):[]).filter(f=>f.endsWith('.css')))for(const face of fs.readFileSync(path.join(fontDir,f),'utf8').match(/@font-face\{[^}]+\}/g)||[])if(/Cormorant_Garamond|Instrument_Sans/.test(face)){css+=face;const family=face.match(/font-family:([^;]+)/)[1];if(!/Fallback/.test(family)){if(/Cormorant/.test(face))heading=family;else body=family;}}
+ for(const f of (fs.existsSync(fontDir)?fs.readdirSync(fontDir):[]).filter(f=>f.endsWith('.css')))for(const face of fs.readFileSync(path.join(fontDir,f),'utf8').match(/@font-face\{[^}]+\}/g)||[])if(/Cormorant_Garamond|Instrument_Sans|__cormorant_|__instrumentSans_/.test(face)){css+=face;const family=face.match(/font-family:([^;]+)/)[1];if(!/Fallback/.test(family)){if(/Cormorant|cormorant/.test(face))heading=family;else body=family;}}
  assert((heading&&body)||process.env.RESPONSIVE_QUICK,'Brand font cache required for visual review. Quick behavioral checks can use system fonts.');
  css+=`:root{--font-headline:${heading||'Georgia'};--font-body:${body||'Arial'}}`;fs.writeFileSync(path.join(out,'app.css'),css);
 }
@@ -60,7 +60,7 @@ let requests=[];
 function handler(req,res){const u=new URL(req.url,'http://local'),p=u.pathname;const json=(d,status=200)=>{res.writeHead(status,{'Content-Type':'application/json'});res.end(JSON.stringify(d));};
  if(p==='/app.js'||p==='/app.css'||p==='/app.bundle.css'){const f=path.join(out,p.slice(1).replace('app.bundle.css','app.css'));res.setHeader('Content-Type',p.endsWith('.js')?'application/javascript':'text/css');return fs.createReadStream(f).pipe(res);}
  if(p==='/bundle.css'){res.setHeader('Content-Type','text/css');return fs.existsSync(path.join(out,'app.css'))?res.end(fs.readFileSync(path.join(out,'bundle.css'),'utf8')):res.end('');}
- if(p.endsWith('.woff2')){res.setHeader('Content-Type','font/woff2');return fs.createReadStream(path.join(root,'.next/static/media',path.basename(p))).pipe(res);}
+ if(/\.(woff2|ttf)$/.test(p)){res.setHeader('Content-Type',p.endsWith('.ttf')?'font/ttf':'font/woff2');return fs.createReadStream(path.join(root,'.next/static/media',path.basename(p))).pipe(res);}
  if(p.endsWith('.svg')){res.setHeader('Content-Type','image/svg+xml');return res.end(scene(p.includes('portrait')));}
  if(p.startsWith('/api/')){const state=new URL(req.headers.referer||'http://local').searchParams.get('state');let body='';req.on('data',c=>body+=c);req.on('end',()=>requests.push({path:p,method:req.method,body}));
   if(p==='/api/publishing-studio'){if(state==='loading'){setTimeout(()=>json(data),5000);return;}if(state==='error')return json({error:'Your studio could not be loaded. Please try again.'},503);return json(state==='empty'?{...data,projects:[],feed:[]}:data);}
