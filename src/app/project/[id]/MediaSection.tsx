@@ -203,7 +203,7 @@ export default function MediaSection({ project, isOwner, images, projectPost, in
         const n = data.tagCount ?? 0;
         alert(
           n > 0
-            ? `Read ${n} product${n === 1 ? '' : 's'} from your finish schedule. Place them on your photos from the tray below.`
+            ? `Read ${n} product${n === 1 ? '' : 's'} from your finish schedule. Folio will suggest photo locations and research missing details in the review tray below.`
             : 'That file imported, but no product rows were found.',
         );
         router.refresh();

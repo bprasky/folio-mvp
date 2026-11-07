@@ -1,4 +1,6 @@
 'use client';
+import { FinishScheduleReview, type ScheduleTag } from '@/components/project/FinishScheduleReview';
+import { scheduleReview } from '@/lib/import-agent/finishScheduleReview';
 import { toast } from 'react-hot-toast';
 import { workflowRequest } from '@/lib/client/workflowRequest';
 import { SpotlightSelections } from '@/components/spotlight/PrivateSpotlightInterview';
@@ -9,7 +11,6 @@ import {
   FaTrash,
   FaPen,
   FaCheck,
-  FaTimes,
   FaMapMarkerAlt,
   FaCheckCircle,
   FaRegClock,
@@ -61,18 +62,7 @@ type Photo = {
 type Room = { id: string; name: string; type?: string | null };
 
 /** An unplaced finish-schedule product awaiting placement on a photo. */
-type SpecTag = {
-  id: string;
-  description: string;
-  category: string | null;
-  roomType: string | null;
-  extractedVendor: string | null;
-  extractedPrice: number | null;
-  extractedSku: string | null;
-  extractedDimensions: string | null;
-  extractedMaterial: string | null;
-  extractedProductUrl: string | null;
-};
+type SpecTag = ScheduleTag;
 
 interface TaggingSectionProps {
   projectId: string;
@@ -125,19 +115,21 @@ export default function TaggingSection({
   const refetchUnplaced = useCallback(async () => {
     try {
       const res = await fetch(`/api/projects/${projectId}/pending-spec-tags`);
+      if (!res.ok) throw new Error('Could not load finish schedule items.');
       if (res.ok) {
         const data = await res.json();
         setUnplaced(Array.isArray(data.tags) ? data.tags : []);
       }
-    } catch {
-      /* best-effort — the tray just stays as-is */
+    } catch (error) {
+      toast.error('Could not load finish schedule items. Refresh to retry.');
+      throw error;
     }
   }, [projectId]);
 
   // Load on mount and whenever the project data refreshes (e.g. after an import
   // completes or a product is placed, which re-renders with new images).
   useEffect(() => {
-    refetchUnplaced();
+    void refetchUnplaced().catch(() => {});
   }, [refetchUnplaced, images]);
 
   // Place the active finish-schedule product onto a photo at the given spot.
@@ -146,7 +138,7 @@ export default function TaggingSection({
       const res = await saveTagChange(`/api/import/pending-tag/${tagId}/place`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ imageId, x, y }),
+        body: JSON.stringify({ imageId, x, y, useResearch: placingTag?.useResearch !== false }),
       });
       if (!res.ok) {
         const d = await res.json().catch(() => ({}));
@@ -295,11 +287,23 @@ export default function TaggingSection({
 
       {/* Products parsed from a finish schedule, waiting to be placed on a photo. */}
       {isOwner && unplaced.length > 0 && (
-        <UnplacedTray
+        <FinishScheduleReview
           tags={unplaced}
-          placingId={placingTag?.id ?? null}
-          onPlace={(tag) => setPlacingTag((cur) => (cur?.id === tag.id ? null : tag))}
+          photos={images}
+          onRefresh={refetchUnplaced}
+          onPlace={(tag) => setPlacingTag(tag)}
           onDismiss={dismissUnplaced}
+          onConfirm={async (tag, useResearch) => {
+            const review = scheduleReview(tag.topSuggestion);
+            if (!review?.matches.length) return;
+            try {
+              await saveTagChange(`/api/import/pending-tag/${tag.id}/place`, {
+                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ useResearch, placements: review.matches.map(m => ({ imageId: m.imageId, x: m.x * 100, y: m.y * 100 })) }),
+              });
+              await refetchUnplaced(); onChanged();
+            } catch (error) { toast.error(error instanceof Error ? error.message : 'Could not save tags.'); }
+          }}
         />
       )}
 
@@ -509,81 +513,6 @@ function FinishBookDropZone({ onFile }: { onFile?: (file: File) => void }) {
           : "Drop your finish book — PDF, PowerPoint, or spreadsheet — and we'll pull the products out for you. Or tag by hand below."}
       </p>
     </div>
-  );
-}
-
-/**
- * The tray of finish-schedule products parsed but not yet placed on a photo.
- * "Place" arms placement for that product; the designer then clicks the photo
- * where it appears. "Dismiss" drops a row we don't want.
- */
-function UnplacedTray({
-  tags,
-  placingId,
-  onPlace,
-  onDismiss,
-}: {
-  tags: SpecTag[];
-  placingId: string | null;
-  onPlace: (tag: SpecTag) => void;
-  onDismiss: (tagId: string) => void;
-}) {
-  const fmtPrice = (cents: number | null) =>
-    cents == null ? null : `$${(cents / 100).toLocaleString(undefined, { maximumFractionDigits: 0 })}`;
-
-  return (
-    <section className="rounded-2xl border border-folio-border-subtle bg-surface-ground/60 p-4 sm:p-5 space-y-3">
-      <div>
-        <h3 className="folio-ui font-semibold text-folio-text-primary">
-          From your finish schedule · {tags.length} to place
-        </h3>
-        <p className="folio-meta text-folio-text-secondary mt-0.5">
-          Place each product on the photo where it appears. Anything you don&apos;t need, dismiss.
-        </p>
-      </div>
-      <ul className="grid grid-cols-1 md:grid-cols-2 gap-2">
-        {tags.map((tag) => {
-          const isPlacing = placingId === tag.id;
-          const meta = [tag.extractedVendor, tag.category, tag.extractedDimensions, fmtPrice(tag.extractedPrice)]
-            .filter(Boolean)
-            .join(' · ');
-          return (
-            <li
-              key={tag.id}
-              className={`flex items-center gap-3 rounded-xl border bg-surface-canvas px-3 py-2 transition-colors ${
-                isPlacing ? 'border-[var(--accent)] ring-1 ring-[var(--accent)]/30' : 'border-folio-border-subtle'
-              }`}
-            >
-              <div className="min-w-0 flex-1">
-                <p className="folio-ui font-medium text-folio-text-primary truncate">{tag.description}</p>
-                <p className="folio-meta text-folio-text-secondary truncate">
-                  {tag.roomType ? `${tag.roomType}${meta ? ' · ' : ''}` : ''}
-                  {meta || (!tag.roomType ? 'From your finish schedule' : '')}
-                </p>
-              </div>
-              <button
-                onClick={() => onPlace(tag)}
-                className={`flex-shrink-0 inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 folio-meta font-medium transition-colors ${
-                  isPlacing
-                    ? 'bg-[var(--accent)] text-white'
-                    : 'border border-folio-border-subtle text-folio-text-primary hover:border-[var(--accent)]'
-                }`}
-              >
-                <FaMapMarkerAlt className="w-3 h-3" />
-                {isPlacing ? 'Placing…' : 'Place'}
-              </button>
-              <button
-                onClick={() => onDismiss(tag.id)}
-                title="Dismiss"
-                className="flex-shrink-0 flex h-11 w-11 items-center justify-center rounded-full text-folio-text-secondary hover:text-red-600 hover:bg-red-50 transition-colors"
-              >
-                <FaTimes className="w-3 h-3" />
-              </button>
-            </li>
-          );
-        })}
-      </ul>
-    </section>
   );
 }
 

@@ -1,3 +1,4 @@
+import type { Prisma } from '@prisma/client';
 import { prisma } from '@/lib/prisma';
 import type { FinishScheduleRow } from './parseFinishSchedule';
 
@@ -24,6 +25,7 @@ function rowToTag(row: FinishScheduleRow, importSessionId: string) {
     category: row.category || 'OTHER',
     searchQuery: [row.brand, row.name].filter(Boolean).join(' ') || row.name,
     suggestions: [],
+    topSuggestion: { finishSchedule: { state: 'queued', row: { ...row }, matches: [], warnings: [] } },
     detectionConfidence: hasStructuredData ? 'high' : 'medium',
     roomType: row.room,
     extractedVendor: row.brand,
@@ -42,14 +44,15 @@ function rowToTag(row: FinishScheduleRow, importSessionId: string) {
 export async function finishScheduleToPendingTags(
   importSessionId: string,
   rows: FinishScheduleRow[],
+  db: Pick<Prisma.TransactionClient, 'pendingProductTag' | 'importSession'> = prisma,
 ): Promise<number> {
   if (rows.length === 0) return 0;
 
   const data = rows.map((row) => rowToTag(row, importSessionId));
-  const created = await prisma.pendingProductTag.createMany({ data });
+  const created = await db.pendingProductTag.createMany({ data });
 
   // Keep the session's product counter in sync for the review UI.
-  await prisma.importSession.update({
+  await db.importSession.update({
     where: { id: importSessionId },
     data: { totalProducts: { increment: created.count } },
   });

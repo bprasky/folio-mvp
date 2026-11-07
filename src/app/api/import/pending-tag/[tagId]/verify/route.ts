@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/app/api/auth/[...nextauth]/options';
+import { assertProjectWrite } from '@/lib/authz/access';
 import { prisma } from '@/lib/prisma';
 import { recordLabelEvent } from '@/lib/vision/recordLabelEvent';
 
@@ -51,7 +52,11 @@ export async function POST(
       return NextResponse.json({ error: 'Tag not found' }, { status: 404 });
     }
 
-    if (pendingTag.importSession.userId !== userId) {
+    if (pendingTag.source === 'SPEC' && pendingTag.importSession.projectId) {
+      try { await assertProjectWrite(userId, pendingTag.importSession.projectId); }
+      catch { return NextResponse.json({ error: 'Access denied' }, { status: 403 }); }
+      if (action !== 'dismiss') return NextResponse.json({ error: 'Review and place this schedule item on a photo.' }, { status: 400 });
+    } else if (pendingTag.importSession.userId !== userId) {
       return NextResponse.json({ error: 'Access denied' }, { status: 403 });
     }
 
@@ -64,14 +69,15 @@ export async function POST(
 
     // Handle dismiss
     if (action === 'dismiss') {
-      await prisma.pendingProductTag.update({
-        where: { id: tagId },
+      const dismissed = await prisma.pendingProductTag.updateMany({
+        where: { id: tagId, status: 'UNREVIEWED' },
         data: {
           status: 'DISMISSED',
           reviewedAt: new Date(),
         },
       });
 
+      if (!dismissed.count) return NextResponse.json({ error: 'Item changed during review' }, { status: 409 });
       if (pendingTag.importSession.projectId) {
         await recordLabelEvent({
           projectId: pendingTag.importSession.projectId,
@@ -257,7 +263,10 @@ export async function GET(
       return NextResponse.json({ error: 'Tag not found' }, { status: 404 });
     }
 
-    if (pendingTag.importSession.userId !== userId) {
+    if (pendingTag.source === 'SPEC' && pendingTag.importSession.projectId) {
+      try { await assertProjectWrite(userId, pendingTag.importSession.projectId); }
+      catch { return NextResponse.json({ error: 'Access denied' }, { status: 403 }); }
+    } else if (pendingTag.importSession.userId !== userId) {
       return NextResponse.json({ error: 'Access denied' }, { status: 403 });
     }
 

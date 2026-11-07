@@ -11,6 +11,9 @@
 
 export interface FinishScheduleRow {
   name: string;
+  itemId?: string | null;
+  photoHint?: string | null;
+  matchDescription?: string | null;
   brand: string | null;
   category: string | null;
   room: string | null;
@@ -29,6 +32,9 @@ type Field = keyof Omit<FinishScheduleRow, never>;
 // Header keyword → field, most specific first so "Item #" maps to sku before
 // "Item" maps to name, and "Unit Price" maps to price before anything else.
 const FIELD_KEYWORDS: Array<[Field, string[]]> = [
+  ['itemId', ['item id', 'item code', 'tag id']],
+  ['matchDescription', ['object to match', 'visual description', 'match description']],
+  ['photoHint', ['photo', 'page', 'image']],
   ['url', ['url', 'link', 'website', 'web address', 'product link', 'source link']],
   ['sku', ['sku', 'model number', 'model no', 'model #', 'item number', 'item no', 'item #', 'part number', 'part #', 'mfr #', 'catalog', 'model']],
   ['price', ['unit price', 'list price', 'price', 'cost', 'msrp', 'amount']],
@@ -116,8 +122,8 @@ function mapColumns(header: string[]): Map<number, Field> {
     const lower = header[col].toLowerCase().trim();
     if (!lower) continue;
     for (const [field, keywords] of FIELD_KEYWORDS) {
-      if (used.has(field)) continue;
       if (keywords.some((kw) => lower.includes(kw))) {
+        if (used.has(field)) break;
         map.set(col, field);
         used.add(field);
         break;
@@ -157,6 +163,9 @@ function parseSheet(rows: string[][], sheetName: string): FinishScheduleRow[] {
 
     out.push({
       name,
+      itemId: get('itemId') || null,
+      photoHint: get('photoHint') || null,
+      matchDescription: get('matchDescription') || null,
       brand: get('brand') || null,
       category: get('category') || null,
       room: get('room') || roomFallback,
@@ -181,17 +190,65 @@ async function readCsv(buffer: Buffer): Promise<string[][]> {
   return (parsed.data as unknown[][]).map((r) => (r as unknown[]).map((c) => cellToString(c)));
 }
 
+/** ExcelJS expects unprefixed SpreadsheetML element names. Some compliant
+ * exporters (including OpenXML SDK) use x: names. Normalize element names only;
+ * preserve relationship attributes, text, formulas and other namespaces. */
+async function normalizeWorkbookNamespaces(buffer: Buffer): Promise<Buffer> {
+  const JSZip = (await import('jszip')).default;
+  const { load } = await import('cheerio');
+  const zip = await JSZip.loadAsync(buffer);
+  let changed = false;
+  let expanded = 0;
+  for (const entry of Object.values(zip.files)) {
+    if (entry.dir) continue;
+    const chunks: Buffer[] = [];
+    await new Promise<void>((resolve, reject) => {
+      const stream = entry.nodeStream();
+      stream.on('data', (chunk: Buffer) => {
+        expanded += chunk.length;
+        if (expanded > 30 * 1024 * 1024) {
+          stream.pause();
+          reject(new Error('This workbook is too large. Export just the finish schedule as CSV.'));
+        } else chunks.push(chunk);
+      });
+      stream.on('error', reject);
+      stream.on('end', resolve);
+    });
+    if (!entry.name.endsWith('.xml')) continue;
+    const xml = Buffer.concat(chunks).toString('utf8');
+    if (!xml.includes('http://schemas.openxmlformats.org/spreadsheetml/2006/main')) continue;
+    const $ = load(xml, { xml: true });
+    let localChanged = false;
+    $('*').each((_, element) => {
+      if (!('name' in element) || !element.name.includes(':')) return;
+      const [prefix, local] = element.name.split(':');
+      let current: typeof element | null = element;
+      while (current) {
+        if ('attribs' in current && current.attribs[`xmlns:${prefix}`]) {
+          if (current.attribs[`xmlns:${prefix}`] === 'http://schemas.openxmlformats.org/spreadsheetml/2006/main') {
+            element.name = local; localChanged = true;
+          }
+          break;
+        }
+        current = current.parent as typeof element | null;
+      }
+    });
+    if (localChanged) { zip.file(entry.name, $.xml()); changed = true; }
+  }
+  return changed ? zip.generateAsync({ type: 'nodebuffer', compression: 'DEFLATE' }) : buffer;
+}
+
 async function readXlsx(buffer: Buffer): Promise<Array<{ name: string; rows: string[][] }>> {
   const ExcelJS = (await import('exceljs')).default;
   const wb = new ExcelJS.Workbook();
-  await wb.xlsx.load(buffer as unknown as ArrayBuffer);
+  await wb.xlsx.load(await normalizeWorkbookNamespaces(buffer) as unknown as ArrayBuffer);
   const sheets: Array<{ name: string; rows: string[][] }> = [];
   wb.eachSheet((ws) => {
     const rows: string[][] = [];
     ws.eachRow({ includeEmpty: false }, (row) => {
       // row.values is 1-indexed with a leading hole; normalize to a dense array.
       const values = Array.isArray(row.values) ? row.values.slice(1) : [];
-      rows.push(values.map((c) => cellToString(c)));
+      rows.push(Array.from(values, (c) => cellToString(c)));
     });
     if (rows.length) sheets.push({ name: ws.name, rows });
   });
