@@ -60,8 +60,19 @@ export default function ProjectCreditsCard({ projectId }: { projectId: string })
       <h2 className="font-headline text-folio-h4 text-folio-text-primary">
         Project credits
       </h2>
-      <p className="mt-0.5 mb-4 text-folio-meta text-folio-text-tertiary">
-        Who else brought this project to life? Credits appear on your published post.
+      <p className="mt-2 text-folio-body text-folio-text-secondary">
+        You brought the vision together. Your architect, builder, photographer and other
+        collaborators each have a side of the story to tell — and an audience who could
+        discover your work through theirs.
+      </p>
+      <p className="mt-2 text-folio-meta text-folio-text-secondary">
+        As Folio opens to clients, we plan to automatically invite these collaborators to
+        publish their perspectives, connected to your project. With your vendors included, one project could become
+        10 or 20 stories that bring new people back to your work.
+      </p>
+      <p className="mt-2 mb-4 text-folio-meta text-folio-text-tertiary">
+        Add the people who helped bring this project to life. Credits appear on your published
+        post now. During the pilot, adding credits does not send automatic invitations.
       </p>
       <CreditsEditor credits={credits} onChange={handleChange} saving={saving} />
     </section>
