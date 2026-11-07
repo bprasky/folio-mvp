@@ -24,6 +24,7 @@ export function FinishScheduleReview({ tags, photos, onRefresh, onPlace, onDismi
   const [omitResearch, setOmitResearch] = useState<Record<string, boolean>>({});
   const run = async (id: string, retry = false) => {
     if (busy.current.has(id) || busy.current.size >= 3) return;
+    if (retry) halted.current = false;
     busy.current.add(id); setWorking(Array.from(busy.current)); setError('');
     try {
       const response = await fetch(`/api/import/pending-tag/${id}/research`, { method: 'POST',

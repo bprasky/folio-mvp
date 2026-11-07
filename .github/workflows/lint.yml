@@ -49,6 +49,25 @@ on:
   workflow_dispatch:
 
 jobs:
+  finish-schedule:
+    name: Finish schedule import and review
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - run: npx prisma generate
+      - run: node scripts/check-finish-schedule.cjs
+      - name: Review tray in Chromium
+        run: GUIDED_TEST_BROWSER="$(command -v google-chrome || command -v chromium)" node scripts/check-finish-schedule-browser.cjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: finish-schedule-review-screenshots
+          path: .tmp/schedule-browser/*.png
   mobile-editorial:
     name: Mobile editorial layout
     runs-on: ubuntu-latest
@@ -94,7 +113,6 @@ jobs:
         run: |
           node scripts/check-signup-verification.cjs
           node scripts/check-workspace-import.cjs
-          node scripts/check-finish-schedule.cjs
           node scripts/check-professional-entry.cjs
           node scripts/check-professional-routing.cjs
           MARKETING_TEST_BROWSER="$(command -v google-chrome || command -v chromium)" node scripts/check-marketing-entry-browser.cjs
@@ -103,7 +121,6 @@ jobs:
       - name: Live and guided browser regression checks
         run: |
           export GUIDED_TEST_BROWSER="$(command -v google-chrome || command -v chromium)"
-          node scripts/check-finish-schedule-browser.cjs
           node scripts/check-live-interview-browser.cjs
           node scripts/check-project-guide-browser.cjs
           npm run test:interruptions:browser
