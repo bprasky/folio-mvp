@@ -153,3 +153,18 @@ Inspected `prisma/schema.prisma` on main and the current `/p/[slug]` and `/proje
 6. **Identify existing watch-state models** before proposing per-viewer continue-watching persistence.
 
 No schema, migration, application, or production changes in this audit.
+
+
+## Step 1 continuation — module retrieval and authorization risks (2026-11-08)
+
+Read-only inspection of current code:
+
+- `src/lib/modules/getProjectModules.ts` filters `projectId` and `publishedAt != null`; order is pinned, type, publication date. No explicit project `isPublic`/post-status condition in this helper. Callers must supply the access boundary; audit callers before reuse.
+- `src/lib/feed/getRecentProjectModules.ts` and `src/lib/feed/getUpdatesCarousel.ts` query `ProjectModule` with `publishedAt != null` and type filters **without a parent-project visibility filter**. **Potential private-project media exposure**, conditional on whether private projects can have published modules and where those helpers are exposed. Requires focused route/caller and runtime test; not asserted as a proven leak.
+- `src/lib/feed/getUpdatesCarousel.ts` already groups project STORY/SHORT_VIDEO modules into story-like circles. This is a useful UI foundation but not proof of durable watched/unwatched progress.
+- `src/components/project/ProjectMediaHub.tsx` already renders a primary LONG_VIDEO, existing article, stories rail, galleries, boards and timelines. It is a potential adaptation point; confirm whether it is wired to live public `StoryRenderer`.
+- `src/lib/authz/access.ts` resolves owner, designer, admin, firm membership and project participants. Participation confers project access, but is not itself invitation consent or editorial/publication approval. A `.catch(() => null)` fallback on participant lookup could hide schema failures; needs error-reporting review.
+- Search found no `watchProgress` identifier. This **does not prove** no watch-state exists under another name; inspect related schema/routes before designing one.
+- `Story.expiresAt` is nullable, but current module story rails use `ProjectModule`, a distinct model. Do not conflate them or assume existing `Story` records are publicly expired without inspecting callers.
+
+**Priority:** Before exposing project modules as a permanent public channel, add verified parent-project visibility/authorization conditions at the server query boundary and tests for unpublished/private projects, regardless of module `publishedAt`. This is a security review item, not a production patch in this branch.
