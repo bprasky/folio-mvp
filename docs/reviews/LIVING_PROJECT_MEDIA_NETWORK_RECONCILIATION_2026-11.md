@@ -196,3 +196,20 @@ Read-only inspection of current code:
 **Architecture decision deferred pending implementation design:** Use versioned approved editorial revisions as the publication authority and modules as possible project-channel presentation projections; do not automatically create duplicate episode stores. Episodes may include source references to authorized private media, but public projection must never reveal raw private sources unless explicitly approved.
 
 **Next proposed engineering task (separate from this documentation branch):** Add parent-project publication/visibility filtering to both public feed module queries, add negative authorization tests (private parent with published child; unpublished parent with published child), and confirm that legitimate public project updates still render. Treat this as a security fix requiring authorization to implement/merge, not an unreviewed docs change.
+
+
+## Step 2 — Editorial and episode reuse recommendation (2026-11-08)
+
+**Read-only code basis:** `src/lib/publishing-studio/story-service.ts`, `activities.ts`, `opportunities.ts`, `src/lib/post/getPostBySlug.ts`, `src/app/p/[slug]/page.tsx`, `src/components/posting/PostView.tsx`, `src/components/project/ProjectMediaHub.tsx`, `src/lib/feed/getUpdatesCarousel.ts`.
+
+1. **ProjectPost remains the canonical primary project article**, with its one-to-one project relation, approved hero and editorial blocks. Do not overload it to represent episode N.
+2. **EditorialStory + revisions provide a credible approval/versioning backbone**, but Story Activity is currently text/Q&A-oriented and its source join points to `ProjectPost`. This is not yet a native multi-asset episode store. Extend sources to private authorized project media/events with per-source public eligibility rather than changing public story reads to accept private sources indiscriminately.
+3. **ProjectModule is an existing multi-output presentation layer**, including stories, short/long video, galleries and timelines. Its `media Json` and published timestamp do not replace a versioned episode composition with source citations, contributor permissions and designer review.
+4. **StoryThread already expresses narrative opportunity signals** but its three-contributor readiness default is unsuitable as a universal episode gate. Use optional signals; episodes may have one credible narrator and one compelling event.
+5. **Current public project article is `StoryRenderer`**; `PostView/ProjectMediaHub` is a separate route/presentation path. Public channel UX should have one canonical rendering integration and one server-side approved projection, rather than two divergent experiences.
+6. **Continue watching is not verified**; it will need explicit stable episode identifiers, ordered chapter list, per-viewer progress, and anonymous fallback without leaking identity.
+7. **First milestone should be source-aware story opportunities, not automatic video cutting.** A project event can hold expected outcome, observed change, issue, resolution, time, evidence, participants and permission state. Folio proposes an arc and missing evidence; designer approves any public publication.
+
+**Suggested design layering (subject to implementation spec):** `Project` as authority → project evidence/events and interviews (private by default) → source-backed StoryOpportunity (draft) → versioned Episode/Editorial publication (designer-approved) → ProjectModule/public channel projection (only approved, authorized media). Keep the public project anchor independently approved. Preserve existing Spotlight publish-before-export rules.
+
+**Security branch status:** PR #851 merged as commit `18fd4b9f015af7168f7c15f8bb59e97883805814`; a production deployment was explicitly requested on Vercel, deployment `dpl_DKPedGpdPfAec4spHmWq9dY6jdSN`. Its state was BUILDING at last inspection, not yet READY. Do not claim live deployment until verified.
