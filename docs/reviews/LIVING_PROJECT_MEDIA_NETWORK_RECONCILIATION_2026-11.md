@@ -116,3 +116,40 @@ These decisions supersede the three provisional questions above. They do not aut
 ### Precedence
 
 This founder-confirmed product direction governs **future planning** where it conflicts with older unimplemented proposals. Existing production behavior, adopted Spotlight consent rules, security safeguards, and published contract requirements remain binding until explicitly revised and tested.
+
+
+## Step 1 — Current Prisma relationship audit (read-only, 2026-11-08)
+
+Inspected `prisma/schema.prisma` on main and the current `/p/[slug]` and `/project/[id]` routes. These are schema/code findings, **not** verification of production migration state or deployed behavior.
+
+| Entity | Verified schema facts | Channel implications |
+| --- | --- | --- |
+| `Project` | Has `timeline ProjectTimeline?`, `post ProjectPost?`, `stories Story[]`, `modules ProjectModule[]`, `participants ProjectParticipant[]`, `media Media[]`, `contributions Contribution[]`, `images`, `rooms`, `projectProductTags`, and design-journey relations. | Strong central project object. Canonical media/episode association remains undecided. |
+| `ProjectPost` | `projectId @unique`; status, slug, `heroAssetId`, `expandedBlocks`, provenance and credits; related `SupplementalQuote` and `StoryThread`. | Exactly one primary editorial post per project; don't reuse it as every episode. |
+| `ProjectModule` | Many per project, `type` enum `ARTICLE/STORY/SHORT_VIDEO/LONG_VIDEO/GALLERY/BOARD/TIMELINE`; flexible `media Json?`, `pinned`, `isPrimary`, `isAiCompiled`, `publishedAt`. | Candidate output container, but lacks formal ordered episode membership, revision approval and source provenance. |
+| `Story` | Video URL, thumbnail, duration, `createdAt`, nullable `expiresAt`, `isPinned`, designer, optional project. | Existing video story is not yet a permanent mixed-media story archive; expiration behavior must be audited in runtime. |
+| `Media` | Hosted/external URLs, transcript, quotes, project link, `publishedAt`. | Reusable media building block, but no verified episode assembly or source-timecode relationship. |
+| `EditorialStory` / `EditorialStoryRevision` | Owner/org, format, status, published revision; revisions have blocks, interview, approvals, consent scope, sources. `EditorialStorySource` joins revisions to **ProjectPost**, not arbitrary private project media. | Existing versioning and approval should be reused; in-progress project source eligibility needs explicit private access and separate publication gates. |
+| `EditorialInterview` | `projectId @unique`; interview answers support follow-ups, product/image/room context and audio timings. | One canonical project editorial interview; multi-contributor interview needs a verified parallel or extended relation. |
+| `Contribution` | User, role, topic, optional project/product, content, status, optional published post; unique `[userId, articleTopicId]`. | Useful voice system, not yet a general project event/contributor episode ledger. |
+| `ProjectParticipant` | Project, optional org/user, side and role. | Participation is not equivalent to editorial consent, invitation authorization, or rights grants. |
+| `SupplementalQuote` | Contributor role/user, question/answer, optional product tag, testimony class VOLUNTEER vs commissioned, linked to ProjectPost. | Supports attributed factual context; paid commissioned testimony already has separate provenance. |
+| `StoryThread` | Proposed angle, contributing answers, narrative tension, perspective diversity, specificity and scoring; `readyThresholds` JSON defaults to minimum 3 contributors; optional article post. | Potential story-discovery seed. Its default must not become an episode eligibility requirement; smaller projects need solo stories. |
+| `ProjectTimeline` | Actual enum `PAST/PRESENT/FUTURE`. | Supersedes historic scaffold's `ACTIVE` wording; avoid changing schema to match old docs. |
+
+### Routing verification
+
+- Public editorial route `src/app/p/[slug]/page.tsx` loads `getPostBySlug` and renders `StoryRenderer`.
+- Authenticated project workspace `src/app/project/[id]/page.tsx` uses its own project header, tabs, publishing panels, media management and published-project home.
+- Legacy `src/components/projects/ProjectDetailPage.tsx` must not be assumed to be the current public project-channel target.
+
+### Step 1 implications and proposed next investigation
+
+1. **Do not replace ProjectPost** or collapse episodes into it; keep the existing approved project editorial.
+2. **Evaluate ProjectModule vs EditorialStory** as the publication layer; preserve versioned approval, source lineage and designer anchor control.
+3. **Audit Story expiration** in queries, routes and UI before promising permanent archive migration.
+4. **Audit contribution and participant authorization** before designing contextual invitation flows.
+5. **Audit media storage and project visibility** for private in-progress story discovery; no automatic public exposure.
+6. **Identify existing watch-state models** before proposing per-viewer continue-watching persistence.
+
+No schema, migration, application, or production changes in this audit.
