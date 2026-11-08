@@ -180,3 +180,19 @@ Read-only inspection of current code:
 - The feed's module `publishedAt` must not be treated as permission to reveal a private parent project. Proposed remediation: require `project.isPublic = true` and an eligible published parent post in **public server queries**, plus tests for private/draft parent projects and published child modules. Preserve legitimate staged previews through authenticated paths.
 
 **No application fix has been applied.** Next: inspect the feed's actual access assumptions and route tests, story expiration callers, watch-state candidates, and contributor invitation/approval services.
+
+
+## Step 1 — follow-up verification: story lifecycle, staging and publishing (2026-11-08)
+
+**Confirmed from code:**
+- Public `src/app/feed/page.tsx` uses the unscoped `getRecentProjectModules()` for `/feed?mode=updates` and `getUpdatesCarousel()` for the default featured mode. Neither caller performs an additional access check. **High-priority authorization gap in query construction**, with actual private-data exposure still requiring a fixture and response test.
+- `src/app/api/posting/[slug]/route.ts` checks both published post status and `project.isPublic` before calling `getProjectModules`; retain this as a reference for public read gating.
+- `src/app/project/[id]/page.tsx` performs `assertProjectView` before rendering `PublishTabContent`, which calls `getPostForStaging`. This **known caller** supplies an authorization boundary even though `getPostForStaging` itself has no user argument. Do not expose staging helper through an unauthenticated route.
+- `src/lib/publishing-studio/story-service.ts` sources only published public projects for its Story Activity, and `publicStory` checks the approved published revision and the current visibility of every source project. This is a strong existing source-revocation pattern to reuse.
+- `Story.expiresAt` exists in schema but no direct `story.expiresAt` reference was found in indexed source search. This is insufficient to prove expiration is enforced or unused. Existing public update circles are based on `ProjectModule` instead.
+- No direct indexed matches for `watchProgress` or `watchHistory`; continue-watching should be treated as **not verified**, not categorically absent.
+- `EditorialStoryRevision` already records `approvedById`, `approvedAt`, `publishedAt`, `consentScope`, and source snapshot digests. Good candidate approval mechanics for episode revisions; `ProjectModule` does not have equivalent revision fields.
+
+**Architecture decision deferred pending implementation design:** Use versioned approved editorial revisions as the publication authority and modules as possible project-channel presentation projections; do not automatically create duplicate episode stores. Episodes may include source references to authorized private media, but public projection must never reveal raw private sources unless explicitly approved.
+
+**Next proposed engineering task (separate from this documentation branch):** Add parent-project publication/visibility filtering to both public feed module queries, add negative authorization tests (private parent with published child; unpublished parent with published child), and confirm that legitimate public project updates still render. Treat this as a security fix requiring authorization to implement/merge, not an unreviewed docs change.
