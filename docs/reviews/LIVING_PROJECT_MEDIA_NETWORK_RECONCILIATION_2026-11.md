@@ -80,4 +80,39 @@ No vendor catalog duplication; no paid product placements in independent editori
 - How much episode assembly and public anchor promotion can occur automatically versus needing designer approval? Proposed default: draft automatically, publish/promote only after approval.
 - Should free vendors be able to submit full factual corrections/context without paid branded publication? Proposed default: yes, subject to verification and moderation.
 
-These are questions for confirmation, not blockers to further audit.
+These questions were resolved by the founder decisions below.
+
+
+## Founder decisions confirmed — 2026-11-07
+
+1. **Episode format:** A media-native chapter combining video, photography, interviews, audio where available, and text. Video is not required to make a coherent episode.
+2. **Approval:** Folio can automatically analyze sources, identify storylines and prepare drafts; the designer explicitly approves publication and project-anchor changes.
+3. **Vendor boundary:** Free verified factual context and corrections improve the shared project record. Independent branded publications and commercial exploitation are paid capabilities.
+
+These decisions supersede the three provisional questions above. They do not authorize automatic invitation sending, external publication, paid promotion, or commercial image reuse.
+
+## Source-level documentation audit — second pass
+
+| Source section | Finding | Disposition |
+| --- | --- | --- |
+| `15_SUPER_ARTICLES.md` lines 21-25, 170-205 | “Only subscribers can have a voice,” boosted vendors receive in-body editorial naming, and monetary tier controls ordering. Conflicts with the confirmed free factual-context boundary and editorial independence. | **Supersede for future design**, preserve historical text and September Spotlight exception. Distinguish factual participation, branded publication, licensed assets and distribution. |
+| `15_SUPER_ARTICLES.md` lines 67-108, 206-249 | Compiled article, contributor lenses, product bank, progressive assembly and regenerations are already envisioned. | **Retain**, but make contributor additions create versioned proposed revisions subject to approval rather than silently replacing published work. |
+| `15_SUPER_ARTICLES.md` lines 287-320, 347-432 | Role-specific prompts, raw-answer preservation, and multiple media formats anticipated. | **Extend** with event/issue/resolution memory, follow-up prompts across contributors, media-native episodes, source timecodes and story gaps. |
+| `PUBLISHING_STUDIO_PRODUCT_STANDARD.md` lines 1-55 | Source-grounded concierge PR, truthful previews, one actionable question, saved publication history and external-post confirmation already required. | **Retain as current UI contract**; extend its opportunity types to episode arcs and missing-footage requests without implying existing support. |
+| `06_EDITORIAL_SYSTEM.md` lines 9-80 | Current editorial journey and authority boundaries; project post publication is distinct from drafts and other records. | **Retain** and audit model constraints before specifying multiple episodes per project. |
+| `12_INTELLIGENCE_SYSTEM.md` lines 976-1228 | Vendor analytics, content opportunities, interviews and distribution already described. | **Extend** with linked installed-work and permissioned specification intelligence; do not confuse inferred interest with actual specification or consent. |
+| `living-project-scaffold.md` lines 8-100, 199-239 | Historical project-intent fields, living flags, and automatic dynamic hero swapping. | **Audit against current Prisma and UI**. Dynamic feed-thumbnail selection must remain separate from designer-approved public editorial anchor. |
+| `17_IMAGE_PROVENANCE_GATE.md` lines 15-75, 110-127 | Strong vendor-reference image privacy gate and unknown-source fail-closed policy. | **Preserve**. It is not a complete commercial license for designer/photographer project photography. |
+| `Folio-Spotlight-and-Social-Publishing-Spec.md` sections 1-2 | Designer-selected spotlight, publication before export, vendor independence, and explicitly authorized invitations. | **Preserve as higher-priority adopted constraint within its scope**. |
+
+### Required implementation verification before editing normative specs
+
+- Determine actual public project page routing and whether the legacy ProjectDetailPage is used.
+- Inspect current Prisma relations and publication storage: `ProjectPost`, `ProjectModule`, studio story/activity models, media and contributor entities.
+- Inspect `src/lib/publishing-studio/story-service.ts`, `opportunities.ts`, `StoryActivity.tsx` and associated tests for reuse.
+- Establish how to represent watched episode progress, dated archived stories, multi-format episode assets, and milestone anchor approvals without conflating source and output.
+- Keep all migration and rollout decisions in a separate implementation plan.
+
+### Precedence
+
+This founder-confirmed product direction governs **future planning** where it conflicts with older unimplemented proposals. Existing production behavior, adopted Spotlight consent rules, security safeguards, and published contract requirements remain binding until explicitly revised and tested.
