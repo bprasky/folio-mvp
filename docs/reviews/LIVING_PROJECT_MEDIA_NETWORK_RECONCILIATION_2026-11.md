@@ -213,3 +213,8 @@ Read-only inspection of current code:
 **Suggested design layering (subject to implementation spec):** `Project` as authority → project evidence/events and interviews (private by default) → source-backed StoryOpportunity (draft) → versioned Episode/Editorial publication (designer-approved) → ProjectModule/public channel projection (only approved, authorized media). Keep the public project anchor independently approved. Preserve existing Spotlight publish-before-export rules.
 
 **Security branch status:** PR #851 merged as commit `18fd4b9f015af7168f7c15f8bb59e97883805814`; a production deployment was explicitly requested on Vercel, deployment `dpl_DKPedGpdPfAec4spHmWq9dY6jdSN`. Its state was BUILDING at last inspection, not yet READY. Do not claim live deployment until verified.
+
+
+## Data-contract proposal (2026-11-08)
+
+See [Living Project Episode Data Contracts](LIVING_PROJECT_EPISODE_DATA_CONTRACTS_2026-11.md) for source-backed ProjectEvent, StoryOpportunity, Episode, ProjectAnchor, StoryArchive/WatchProgress and contributor participation contracts, plus phased implementation and acceptance criteria. This is a proposed architecture, **not** an authorized schema migration or implementation. The recommended first slice is private project evidence → grounded event/change → useful story suggestion, preserving existing publishing and approval behavior.
