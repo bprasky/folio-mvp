@@ -33,7 +33,7 @@ export async function loadPrivateProjectDigest(actorId: string, projectId: strin
   });
   if (!project) throw new Error('NotFound');
   const evidence: ProjectEvidence[] = [];
-  for (const answer of project.editorialInterviews?.answers || []) {
+  for (const answer of project.editorialInterviews.flatMap(interview => interview.answers)) {
     const text = clean(answer.answerText);
     if (!text) continue;
     const id = `interview:${projectId}:${answer.questionId}:${answer.isFollowUp ? 'followup' : 'base'}`;
