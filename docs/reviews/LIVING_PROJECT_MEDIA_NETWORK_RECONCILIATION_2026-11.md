@@ -168,3 +168,15 @@ Read-only inspection of current code:
 - `Story.expiresAt` is nullable, but current module story rails use `ProjectModule`, a distinct model. Do not conflate them or assume existing `Story` records are publicly expired without inspecting callers.
 
 **Priority:** Before exposing project modules as a permanent public channel, add verified parent-project visibility/authorization conditions at the server query boundary and tests for unpublished/private projects, regardless of module `publishedAt`. This is a security review item, not a production patch in this branch.
+
+
+## Step 1 — Caller trace: module visibility (2026-11-08)
+
+- `getRecentProjectModules()` is called by `src/app/feed/page.tsx` for the public updates feed. The helper filters module publication/type but **does not filter parent project visibility**.
+- `getUpdatesCarousel()` is called by the same public feed page for the featured story-circle carousel. It likewise filters module publication/type but **does not filter parent project visibility**.
+- Therefore this is a **confirmed missing authorization predicate on public feed query paths**, not merely an isolated helper concern. Exposure of actual private content remains unproven without a private project + published module fixture and runtime response inspection. Severity: high-priority pre-rollout validation.
+- `getProjectModules(projectId)` is used by `src/app/api/posting/[slug]/route.ts`, which explicitly checks `post.status === PUBLISHED` and `post.project.isPublic` before returning the payload; that caller appears to enforce parent publication state. The helper is also used by staging `getPostForStaging`, whose access control must be assessed at its callers.
+- `src/components/posting/PostView.tsx` renders `ProjectMediaHub` when modules exist. The current canonical `/p/[slug]` route instead renders `StoryRenderer`; this is a **parallel presentation path**, not proof that the media hub already appears on canonical project editorials.
+- The feed's module `publishedAt` must not be treated as permission to reveal a private parent project. Proposed remediation: require `project.isPublic = true` and an eligible published parent post in **public server queries**, plus tests for private/draft parent projects and published child modules. Preserve legitimate staged previews through authenticated paths.
+
+**No application fix has been applied.** Next: inspect the feed's actual access assumptions and route tests, story expiration callers, watch-state candidates, and contributor invitation/approval services.
