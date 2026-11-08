@@ -17,7 +17,12 @@ export type UpdatesCarouselItem = {
 
 export async function getUpdatesCarousel(limitGroups = 12, perGroup = 5): Promise<UpdatesCarouselItem[]> {
   const rows = await prisma.projectModule.findMany({
-    where: { publishedAt: { not: null }, type: { in: ["STORY", "SHORT_VIDEO"] as any } },
+    where: {
+      publishedAt: { not: null },
+      type: { in: ["STORY", "SHORT_VIDEO"] as any },
+      // Match the public project-post boundary before selecting module media.
+      project: { isPublic: true, post: { is: { status: "PUBLISHED" } } },
+    },
     orderBy: { publishedAt: "desc" },
     take: 200, // enough to form groups
     select: {

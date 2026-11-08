@@ -7,6 +7,8 @@ export async function getRecentProjectModules(limit = 20) {
     where: {
       type: { in: FEED_TYPES as any },
       publishedAt: { not: null },
+      // A published module is not public unless its parent project and editorial are public.
+      project: { isPublic: true, post: { is: { status: "PUBLISHED" } } },
     },
     orderBy: { publishedAt: "desc" },
     take: limit,
