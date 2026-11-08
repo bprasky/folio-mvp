@@ -218,3 +218,7 @@ Read-only inspection of current code:
 ## Data-contract proposal (2026-11-08)
 
 See [Living Project Episode Data Contracts](LIVING_PROJECT_EPISODE_DATA_CONTRACTS_2026-11.md) for source-backed ProjectEvent, StoryOpportunity, Episode, ProjectAnchor, StoryArchive/WatchProgress and contributor participation contracts, plus phased implementation and acceptance criteria. This is a proposed architecture, **not** an authorized schema migration or implementation. The recommended first slice is private project evidence → grounded event/change → useful story suggestion, preserving existing publishing and approval behavior.
+
+## First implementation slice (2026-11-08)
+
+See [Project Memory & Story Discovery Implementation Plan](PROJECT_MEMORY_STORY_DISCOVERY_IMPLEMENTATION_PLAN_2026-11.md) for concrete code anchors, authorized source adapters, phased A0/A1/B1/B2 delivery, ten editorial fixtures, negative authorization tests, reliability gates and explicit exclusions. No application code or migration was changed in this documentation step.
