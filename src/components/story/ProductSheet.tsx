@@ -33,7 +33,7 @@ function getProductQuote(
   if (!product?.id) return null;
   // Find a supplemental quote referencing this product
   const match = supplementalQuotes.find(
-    (sq: any) => sq.productTagId && sq.answer
+    (sq: any) => sq.productTagId === product.productTagId && sq.productTagId && sq.answer
   );
   if (match) {
     return { text: match.answer, role: match.contributorRole || "Designer" };

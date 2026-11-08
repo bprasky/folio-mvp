@@ -258,8 +258,21 @@ export default function TaggingSection({
           Tag the products in your rooms
         </h2>
         <p className="folio-body text-folio-text-secondary max-w-2xl">
-          Every product you tag gives the interview a real detail to ask about — so the published
-          piece comes back sharper. Untagged photos still publish; they just stay quiet.
+          One project can hold 10 or 20 stories. The maker behind your lighting. The supplier
+          behind your stone. Each has a perspective on the work you brought together — and an
+          audience who could discover your project through theirs.
+        </p>
+        <p className="folio-meta text-folio-text-secondary max-w-2xl">
+          As Folio opens to clients, we plan to automatically invite tagged vendors and credited
+          collaborators to tell and
+          share their side of your project, with each story connected to your work. Tagging now
+          lays that groundwork, along with a future shop of your selections and potential paid
+          vendor collaborations.
+        </p>
+        <p className="folio-meta text-folio-text-secondary max-w-2xl">
+          Tagging is optional. Your published photos start with tags hidden; readers can choose
+          Show products to explore. During the pilot, tagging does not send automatic invitations.
+          Shops and paid collaboration opportunities are planned.
         </p>
         {unresolvedCount > 0 && (
           <p className="folio-meta text-folio-text-primary">
@@ -268,8 +281,7 @@ export default function TaggingSection({
               {photos.length === 1 ? 'photo' : 'photos'}
             </span>{' '}
             {unresolvedCount === 1 ? 'has' : 'have'} no products yet. You can publish without
-            them — tagging just makes those rooms read sharper and gives readers something to
-            click.
+            them. Add the selections you would like readers to discover.
           </p>
         )}
       </header>

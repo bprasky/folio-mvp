@@ -168,6 +168,55 @@ async function touch(type, x, y) {
   const anotherPost = post(); anotherPost.id = 'other-post'; anotherPost.project.title = 'Another house';
   await act(async () => reactRoot.render(React.createElement(StoryRenderer, { post: anotherPost })));
   assert.equal(phase(), 'opening', 'Navigating to a different project gets its own gate');
+  // Saved percent coordinates must survive the public transport and room model.
+  for (const viewport of [1200, 390]) {
+    const tagged = post(); tagged.heroAssetId = 'photo-0';
+    tagged.project.images[0].tags = [
+      { id: 'chair-tag', x: 25, y: 75, product: { id: 'chair', name: 'Project chair' } },
+      { id: 'edge-tag', x: 0.5, y: 0, product: { id: 'edge', name: 'Edge item' } },
+      { id: 'invalid', x: 101, y: 20, product: { id: 'invalid', name: 'Invalid item' } },
+      { id: 'pending', x: 50, y: 50, product: { id: 'pending', name: 'Pending item', isPending: true } },
+    ];
+    tagged.supplementalQuotes = [
+      { productTagId: 'different-tag', answer: 'WRONG PRODUCT QUOTE' },
+      { productTagId: 'chair-tag', answer: 'The chair we selected.' },
+    ];
+    await mount(tagged, { width: viewport });
+    assert.equal(document.querySelector('[aria-pressed=false]'), null, 'No product control before entry');
+    await click(byLabel('Begin Existing house')); await advance(650);
+    const toggle = () => [...document.querySelectorAll('button')].find(button => /^(Show|Hide) products$/.test(button.textContent));
+    assert.equal(toggle().getAttribute('aria-pressed'), 'false');
+    assert.equal(byLabel('View Project chair'), null, 'Tags are off by default');
+    const loadPhoto = async () => {
+      const img = document.querySelector('[data-publication-phase] img[alt="Existing house"], [data-publication-phase] img[alt="Room 0"]');
+      Object.defineProperties(img, { naturalWidth: { configurable: true, value: 1200 }, naturalHeight: { configurable: true, value: 800 } });
+      await act(async () => img.dispatchEvent(new Event('load')));
+    };
+    await loadPhoto(); await click(toggle());
+    const dot = byLabel('View Project chair'); assert.ok(dot);
+    assert.equal(dot.style.left, '25%'); assert.equal(dot.style.top, '75%');
+    assert.equal(byLabel('View Edge item').style.left, '0.5%', 'Sub-one DB percentages are not normalized into fractions');
+    assert.equal(byLabel('View Invalid item'), null); assert.equal(byLabel('View Pending item'), null);
+    assert.equal(dot.parentElement.style.width, '360px', 'Contained photo width excludes letterbox margins');
+    assert.equal(dot.parentElement.style.left, `${(viewport - 360) / 2}px`);
+    await click(dot);
+    assert.ok(document.querySelector('[role=dialog]').textContent.includes('The chair we selected.'));
+    assert.ok(!document.querySelector('[role=dialog]').textContent.includes('WRONG PRODUCT QUOTE'));
+    await click(byLabel('Close'));
+    await click(toggle()); assert.equal(byLabel('View Project chair'), null, 'Off removes interactive markers');
+    await click(toggle());
+    await click(byLabel('View full photograph without text'));
+    assert.ok(byLabel('View Project chair'), 'Full photograph retains opted-in markers');
+    await click(byLabel('Show room details'));
+    await click(byLabel('Next room')); await loadPhoto();
+    assert.ok(byLabel('View Project chair'), 'Room photograph supports the same tags');
+    await click(byLabel('Next room'));
+    assert.equal(toggle(), undefined, 'Untagged photos have no empty control');
+    assert.equal(byLabel('View Project chair'), null, 'Photo switching removes stale markers');
+    await mount(tagged, { width: viewport });
+    await click(byLabel('Begin Existing house')); await advance(650);
+    assert.equal(toggle().getAttribute('aria-pressed'), 'false', 'A new visit starts with tags hidden');
+  }
   await act(async () => reactRoot.unmount());
-  console.log('Publication entry checks pass: existing-project replacement, cover selection, fade lock, mobile tap/scroll/swipe, ghost clicks, repeat visits, deep links, sparse galleries, 120 rooms, reduced motion and studio editing.');
+  console.log('Publication entry checks pass: existing-project replacement, cover selection, fade lock, mobile tap/scroll/swipe, ghost clicks, repeat visits, deep links, sparse galleries, 120 rooms, reduced motion, studio editing, default-off tags, contained-image coordinates, product quote matching and photo switching.');
 })().catch(error => { console.error(error); process.exitCode = 1; });
