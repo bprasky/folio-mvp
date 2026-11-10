@@ -121,7 +121,7 @@ export default async function PostPage({
       // Media metadata alone is not a working public link.
       const playable = assets.some(asset => asset && typeof asset === 'object' && !Array.isArray(asset) &&
         typeof (asset as Record<string, unknown>).url === 'string' &&
-        /^https:\\/\\//.test((asset as Record<string, unknown>).url as string));
+        ((asset as Record<string, unknown>).url as string).startsWith('https://'));
       if (!imageUrl || !playable) return [];
       return [{ id: module.id, kind: 'media' as const, title: module.title || 'Project media',
         imageUrl, href: `/p/${encodeURIComponent(params.slug)}/media/${encodeURIComponent(module.id)}`, pinned: module.pinned }];
