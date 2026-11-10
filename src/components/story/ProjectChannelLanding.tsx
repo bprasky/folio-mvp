@@ -34,7 +34,7 @@ export function ProjectChannelLanding({ post, media = [], ownerView = false }: {
   // their feature must appear in the hero AND receive prominent mosaic placement.
   const tiles: ChannelTile[] = [
     { id: `feature-${post.slug}`, kind: 'feature', title: post.excerpt || 'The Folio Feature',
-      imageUrl: hero?.url || null, href: featureHref, pinned: true },
+      imageUrl: hero?.url || null, href: featureHref },
     ...media,
     ...spaceTiles,
   ];
