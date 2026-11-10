@@ -119,9 +119,12 @@ export default async function PostPage({
         typeof candidate.imageUrl === 'string' ? candidate.imageUrl : null);
       // Don't advertise a media player until a public playback destination exists.
       // Media metadata alone is not a working public link.
-      if (!imageUrl) return [];
+      const playable = assets.some(asset => asset && typeof asset === 'object' && !Array.isArray(asset) &&
+        typeof (asset as Record<string, unknown>).url === 'string' &&
+        /^https:\\/\\//.test((asset as Record<string, unknown>).url as string));
+      if (!imageUrl || !playable) return [];
       return [{ id: module.id, kind: 'media' as const, title: module.title || 'Project media',
-        imageUrl, href: `/p/${encodeURIComponent(params.slug)}/feature`, pinned: module.pinned }];
+        imageUrl, href: `/p/${encodeURIComponent(params.slug)}/media/${encodeURIComponent(module.id)}`, pinned: module.pinned }];
     });
     return <ProjectChannelLanding post={post} media={media} ownerView={isDirectOwner || isOrgOwner} />;
   }
