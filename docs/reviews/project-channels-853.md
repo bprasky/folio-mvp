@@ -52,7 +52,7 @@ Ranking is **deterministic**, not an image-quality assessment: explicit persiste
 | Medium: motion/performance | Slides could change before decoding; motion did not fully respect visibility/reduced-motion preferences. Load one photograph ahead, retain decoded layers (maximum five), transition only after load, skip failed candidates, and pause timers/animation when hidden or requested. | HeroPhotos and its CSS; real seven-second timing, dynamic reduced-motion, pause/resume and visibilitychange tests. |
 | Medium: analytics/sharing | Reader referral requests targeted nonexistent `/api/analytics/log`. Use the existing `/api/analytics/event`, with a distinct channel landing event and preserved UTM parameters. Correct stale export hosts. | `StoryRenderer.tsx`, `ProjectChannelShareTracking.tsx`, four legacy Instagram generators; browser request assertions and social export checks. Storage persistence is not verified. |
 
-Regression scripts: `check-project-channel.cjs`, `check-project-channel-routes.cjs`, `check-channel-public-feeds.cjs`, `check-project-channel-og.cjs`, `check-project-channel-browser.cjs`. Package commands and the existing lint workflow now run these checks. Existing public-Folio tests load the real image-provenance helper; profile browser tests recognize current generated font names and can exercise the cinematic flag. No assertions were removed to hide a defect.
+Regression scripts: `check-project-channel.cjs`, `check-project-channel-routes.cjs`, `check-channel-public-feeds.cjs`, `check-project-channel-og.cjs`, `check-project-channel-browser.cjs`. Package commands and the existing lint workflow now run these checks. Existing public-Folio and project-list privacy tests load the real image-provenance helper; the latter dependency map was corrected after hosted CI identified it. Profile browser tests recognize current generated font names and can exercise the cinematic flag. No assertions were removed to hide a defect.
 
 ## D. Remaining conditions, limitations and reproduction
 
@@ -159,6 +159,7 @@ Additional executed checks:
 - Existing publication entry, immersive rooms (300 gallery sizes and 120-room ordering), presentation, history and social export checks passed. Existing production-mode image-delivery fixture passed optimizer/access/no-store checks.
 - `npm run typecheck:prepare`, separate TypeScript ratchet and full production build executed. The final baseline is 846, reduced from 849. No TypeScript configuration or diagnostic suppression was added.
 - Repository `npm run lint`: zero errors, existing warnings remain. Client import boundary and migration discipline guards pass.
+- The first hosted Design System Discipline run identified raw size/spacing literals in the channel components. These were replaced with canonical Folio type/spacing tokens, without adding guard exemptions. The exact workflow checks and browser previews were rerun.
 - `npm run security:idor:ci`: failed identically on current/base, as documented above. It is not counted as a pass.
 
 Local detailed logs are under `.tmp/channel-audit/`; all public snapshots, downloaded assets, temporary fixtures and raw logs remain uncommitted. The committed browser scripts run with synthetic records by default. To reproduce the optional public-snapshot pass after preparing the build/fonts:

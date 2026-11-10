@@ -19,11 +19,11 @@ export function ProjectChannelMosaic({ tiles, ownerView = false }: { tiles: Chan
     <nav aria-label="Browse project content" className="mb-7 flex flex-wrap items-center gap-2">
       {available.map(tab => <button key={tab.id} type="button" aria-pressed={activeFilter === tab.id} aria-controls="channel-tiles"
         onClick={() => setFilter(tab.id)} className={`min-h-11 rounded-full px-5 text-sm transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 ${activeFilter === tab.id ? 'bg-[#eee9df] text-[#171715]' : 'border border-white/30 text-white/80 hover:border-white'}`}>{tab.label}</button>)}
-      {ownerView && <button type="button" onClick={() => setFilter('shop')} aria-pressed={activeFilter === 'shop'} aria-controls="channel-tiles" className={`min-h-11 rounded-full border px-5 text-sm ${activeFilter === 'shop' ? 'border-white text-white' : 'border-white/25 text-white/80'}`}>Shop <span className="ml-1 text-[10px] uppercase tracking-wide">Coming Soon</span></button>}
+      {ownerView && <button type="button" onClick={() => setFilter('shop')} aria-pressed={activeFilter === 'shop'} aria-controls="channel-tiles" className={`min-h-11 rounded-full border px-5 text-sm ${activeFilter === 'shop' ? 'border-white text-white' : 'border-white/25 text-white/80'}`}>Shop <span className="ml-1 text-[length:var(--type-fine)] uppercase tracking-wide">Coming Soon</span></button>}
     </nav>
     <p className="sr-only" role="status">{activeFilter === 'shop' ? 'Private designer preview' : `${filtered.length} project items`}</p>
     {activeFilter === 'shop' && ownerView ? <div id="channel-tiles" className="max-w-xl rounded-xl border border-white/20 bg-white/5 p-8">
-      <p className="text-xs uppercase tracking-[.2em] text-white/75">Private designer preview</p>
+      <p className="text-xs uppercase tracking-[var(--ls-eyebrow)] text-white/75">Private designer preview</p>
       <h2 className="mt-3 font-serif text-3xl text-[#f4efe7]">Your future project storefront</h2>
       <p className="mt-4 text-sm leading-relaxed text-white/80">Your tagged materials and products will help power a curated shop and future vendor collaborations. This is a preview only: no storefront, checkout or paid partnership is active.</p>
     </div> : <div id="channel-tiles" className="grid grid-cols-2 auto-rows-[180px] gap-3 md:grid-cols-4 md:auto-rows-[130px]">
@@ -35,7 +35,7 @@ export function ProjectChannelMosaic({ tiles, ownerView = false }: { tiles: Chan
             sizes={sparseVisuals && filtered.length === 1 ? '(max-width: 1280px) 100vw, 1200px' : tile.size === 'large' || (sparseVisuals && filtered.length === 2) ? '(max-width: 768px) 100vw, 600px' : '(max-width: 768px) 50vw, 300px'} className="object-cover transition-transform duration-700 motion-safe:group-hover:scale-[1.035]" />}
           <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent" />
           <div className="absolute bottom-0 left-0 right-0 p-4">
-            <p className="text-[10px] uppercase tracking-[.16em] text-white/80">{tile.kind === 'feature' ? 'Folio Feature' : tile.kind === 'space' ? 'Space' : tile.kind === 'credit' ? 'Credit' : 'Media'}</p>
+            <p className="text-[length:var(--type-fine)] uppercase tracking-[var(--ls-eyebrow)] text-white/80">{tile.kind === 'feature' ? 'Folio Feature' : tile.kind === 'space' ? 'Space' : tile.kind === 'credit' ? 'Credit' : 'Media'}</p>
             <h3 className="mt-1 line-clamp-3 break-words font-serif text-lg leading-tight text-white sm:text-xl">{tile.title}</h3>
           </div>
         </>;

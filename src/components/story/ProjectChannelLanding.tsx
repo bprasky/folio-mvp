@@ -73,9 +73,9 @@ export function ProjectChannelLanding({ post, media = [], ownerView = false, sea
       <div aria-hidden="true" className="pointer-events-none absolute inset-0 bg-gradient-to-r from-black/80 via-black/50 to-black/15" />
       <div aria-hidden="true" className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/75 via-transparent to-transparent" />
       <div className="pointer-events-none relative mx-auto flex min-h-[min(78vh,820px)] max-w-7xl flex-col justify-end px-5 pb-20 pt-28 sm:px-10 lg:pb-20 [&_a]:pointer-events-auto">
-        <p className="mb-4 text-[11px] uppercase tracking-[.3em] text-white/75">A Folio project</p>
-        <h1 className="max-w-3xl break-words text-[#f4efe7] font-serif text-5xl leading-[1.03] tracking-tight sm:text-7xl lg:text-8xl">{post.project.title}</h1>
-        <p className="mt-5 text-xs uppercase tracking-[.23em] text-white/85">By {designer}</p>
+        <p className="mb-4 text-[length:var(--type-eyebrow)] uppercase tracking-[var(--ls-eyebrow)] text-white/75">A Folio project</p>
+        <h1 className="max-w-3xl break-words text-[#f4efe7] font-serif text-5xl leading-[var(--lh-h1)] tracking-tight sm:text-7xl lg:text-8xl">{post.project.title}</h1>
+        <p className="mt-5 text-xs uppercase tracking-[var(--ls-eyebrow)] text-white/85">By {designer}</p>
         {(post.excerpt || post.project.description) && <p className="mt-5 max-w-lg text-base leading-relaxed text-white/85">{post.excerpt || post.project.description}</p>}
         <div className="mt-7 flex flex-wrap gap-3">
           <Link href={featureHref} className="inline-flex min-h-11 items-center rounded-full bg-[#f4efe7] px-6 text-sm font-medium text-[#171715] hover:bg-white">Read the Folio Feature</Link>
