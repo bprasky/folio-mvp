@@ -1,4 +1,4 @@
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { Suspense } from "react";
 import { Metadata } from "next";
 import { getPostBySlug } from "@/lib/post/getPostBySlug";
@@ -69,9 +69,10 @@ export async function generateMetadata({
 }
 
 export default async function PostPage({
-  params,
+  params, searchParams,
 }: {
   params: { slug: string };
+  searchParams?: { room?: string; product?: string; ref?: string };
 }) {
   const post = await getPostBySlug(params.slug);
 
@@ -79,11 +80,19 @@ export default async function PostPage({
     notFound();
   }
 
-  return (
-    <Suspense>
-      {process.env.FOLIO_EDITORIAL_CHANNELS === 'true' && <ProjectChannelLanding post={post} />}
-      <div id="project-publication" className="scroll-mt-20"><StoryRenderer post={post} /></div>
-    </Suspense>
-  );
+  if (process.env.FOLIO_EDITORIAL_CHANNELS === 'true') {
+    // Preserve existing room/product deep links by opening the nested feature.
+    if (searchParams?.room || searchParams?.product) {
+      const query = new URLSearchParams();
+      for (const key of ['room', 'product', 'ref'] as const) {
+        const value = searchParams?.[key];
+        if (value) query.set(key, value);
+      }
+      redirect(`/p/${encodeURIComponent(params.slug)}/feature?${query.toString()}`);
+    }
+    return <ProjectChannelLanding post={post} />;
+  }
+
+  return <Suspense><StoryRenderer post={post} /></Suspense>;
 }
 
