@@ -4,6 +4,7 @@ import ts from 'typescript';
 import vm from 'vm';
 import assert from 'assert/strict';
 import * as presentation from '../src/lib/story/presentation';
+import * as imageProvenance from '../src/lib/products/imageProvenance';
 
 const selectedText = 'Glass gives this room space to breathe.';
 const originalText = 'PRIVATE_ORIGINAL: We chose a glass table because the room is small.';
@@ -28,6 +29,7 @@ function reset() {
 const serialize = (value: unknown) => JSON.parse(JSON.stringify(value));
 const mocks: Record<string, any> = {
   '@/lib/story/presentation': presentation,
+  '@/lib/products/imageProvenance': imageProvenance,
   'next/server': { NextResponse: { json: (value: unknown, init?: { status?: number }) => ({ status: init?.status ?? 200, data: serialize(value) }) } },
   'next-auth': { getServerSession: async () => session },
   '@/app/api/auth/[...nextauth]/options': { authOptions: {} },
@@ -37,7 +39,7 @@ const mocks: Record<string, any> = {
     spotlightQuestion: { findMany: async ({ where }: { where: { id: { in: string[] } } }) =>
       where.id.in.includes('durable-private-id') ? [{ id: 'durable-private-id' }] : [] },
   } },
-  '@/lib/modules/getProjectModules': { getProjectModules: async () => [] },
+  '@/lib/modules/getProjectModules': { getPublicProjectModules: async () => [] },
   '@/lib/article/getRelatedProjects': { getRelatedProjects: async () => [] },
   '@/lib/authz/access': {
     assertProjectView: async () => { if (!canView) throw new Error('Forbidden'); },

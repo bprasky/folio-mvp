@@ -14,6 +14,7 @@ interface ProjectCardProps {
     saveCount?: number;
     saves?: number;
     projectType?: string;
+    storyHref?: string | null;
   };
 }
 
@@ -23,8 +24,7 @@ export default function ProjectCard({ project }: ProjectCardProps) {
   const location = [project.city, project.regionState].filter(Boolean).join(', ');
   const saves = project.saveCount || project.saves || 0;
 
-  return (
-    <Link href={`/project/${project.id}`} className="group block">
+  const content = (
       <article className="overflow-hidden rounded-xl transition-all duration-300 hover:shadow-lg">
         <div className="relative aspect-[4/3] overflow-hidden" style={{ backgroundColor: '#E8E4DF' }}>
           <SafeImage
@@ -72,8 +72,8 @@ export default function ProjectCard({ project }: ProjectCardProps) {
           </div>
         </div>
       </article>
-    </Link>
   );
+  return project.storyHref ? <Link href={project.storyHref} className="group block">{content}</Link> : <div className="group block">{content}</div>;
 }
 
 function BookmarkIcon() {

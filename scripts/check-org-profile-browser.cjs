@@ -36,7 +36,7 @@ createRoot(document.getElementById('root')).render(<App/>);`;
 async function build() {
   await esbuild.build({ stdin: { contents: source, resolveDir: root, loader: 'tsx' }, outfile: path.join(out, 'bundle.js'),
     bundle: true, platform: 'browser', jsx: 'automatic', alias: { '@': path.join(root, 'src') },
-    define: { 'process.env.NODE_ENV': '"development"', 'process.env': '{}' },
+    define: { 'process.env.NODE_ENV': '"development"', 'process.env.NEXT_PUBLIC_FOLIO_EDITORIAL_PROFILE_HERO': JSON.stringify(process.env.ORG_PROFILE_TEST_CINEMATIC || 'false'), 'process.env': '{}' },
     plugins: [{ name: 'framework-fixture', setup(b) {
       b.onResolve({ filter: /^(next-auth\/react|next\/navigation|next\/link|next\/image)$/ }, args => ({ path: args.path, namespace: 'fixture' }));
       b.onLoad({ filter: /.*/, namespace: 'fixture' }, args => ({ loader: 'jsx', resolveDir: root, contents:
@@ -54,10 +54,10 @@ async function build() {
   let headline, body;
   for (const file of fs.readdirSync(path.join(root, '.next/static/css')).filter(file => file.endsWith('.css'))) {
     for (const face of fs.readFileSync(path.join(root, '.next/static/css', file), 'utf8').match(/@font-face\{[^}]+\}/g) || []) {
-      if (!/Cormorant_Garamond|Instrument_Sans/.test(face)) continue;
+      if (!/Cormorant_Garamond|Instrument_Sans|__cormorant_|__instrumentSans_/.test(face)) continue;
       css += face; const family = face.match(/font-family:([^;]+)/)[1];
-      if (/Cormorant_Garamond/.test(face) && !/Fallback/.test(family)) headline = family;
-      if (/Instrument_Sans/.test(face) && !/Fallback/.test(family)) body = family;
+      if (/Cormorant_Garamond|__cormorant_/.test(face) && !/Fallback/.test(family)) headline = family;
+      if (/Instrument_Sans|__instrumentSans_/.test(face) && !/Fallback/.test(family)) body = family;
     }
   }
   assert.ok(headline && body, 'Run typecheck:prepare to build actual Folio fonts first.');

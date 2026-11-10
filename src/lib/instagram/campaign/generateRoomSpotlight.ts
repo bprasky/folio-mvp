@@ -58,7 +58,7 @@ async function generateCtaSlide(
         fill="${TEXT_COLOR}"
         letter-spacing="0.02em"
       >
-        folio.ad/p/${escapeXml(projectSlug)}
+        folioad.com/p/${escapeXml(encodeURIComponent(projectSlug))}
       </text>
 
       <!-- Divider Line -->

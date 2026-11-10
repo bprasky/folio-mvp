@@ -273,7 +273,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json(privateAccess ? tags : tags.map(tag => ({
       id: tag.id, imageId: tag.imageId, productId: tag.productId, x: tag.x, y: tag.y,
-      cropUrl: tag.cropUrl, finishRaw: tag.finishRaw, product: publicProduct(tag.product),
+      cropUrl: tag.cropUrl, finishRaw: tag.finishRaw, product: publicProduct(tag.product, tag.cropUrl || null),
       image: { url: tag.image.url, projectId: tag.image.projectId },
     })), { headers: { 'Cache-Control': 'private, no-store' } });
 

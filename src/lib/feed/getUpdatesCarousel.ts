@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { normalizeChannelMedia } from '@/lib/project-channel/media';
 
 export type UpdatesCarouselItem = {
   key: string; // `${designer.slug || designer.id}-${project.slug || project.id}`
@@ -18,7 +19,7 @@ export type UpdatesCarouselItem = {
 export async function getUpdatesCarousel(limitGroups = 12, perGroup = 5): Promise<UpdatesCarouselItem[]> {
   const rows = await prisma.projectModule.findMany({
     where: {
-      publishedAt: { not: null },
+      publishedAt: { not: null, lte: new Date() },
       type: { in: ["STORY", "SHORT_VIDEO"] as any },
       // Match the public project-post boundary before selecting module media.
       project: { isPublic: true, post: { is: { status: "PUBLISHED" } } },
@@ -40,6 +41,8 @@ export async function getUpdatesCarousel(limitGroups = 12, perGroup = 5): Promis
   const groups = new Map<string, UpdatesCarouselItem>();
 
   for (const r of rows) {
+    const normalized = normalizeChannelMedia(r.type, r.media);
+    if (!normalized.assets.length) continue;
     const designer = r.project?.designer || {};
     const project = { 
       id: r.project.id, 
@@ -71,13 +74,12 @@ export async function getUpdatesCarousel(limitGroups = 12, perGroup = 5): Promis
         title: r.title || null,
         description: r.description || null,
         publishedAt: r.publishedAt,
-        media: r.media,
+        media: normalized.assets,
       });
 
       // choose first available thumbnail as bubble cover
       if (!g.cover) {
-        const m = Array.isArray(r.media) ? r.media[0] : r.media;
-        g.cover = m?.thumbnailUrl || m?.poster || m?.url || null;
+        g.cover = normalized.thumbnail;
       }
     }
   }

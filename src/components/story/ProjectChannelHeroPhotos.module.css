@@ -1,0 +1,8 @@
+@keyframes drift {
+  from { transform: scale(1); }
+  to { transform: scale(1.025); }
+}
+.motion { animation: drift 8.6s linear both; }
+@media (prefers-reduced-motion: reduce) {
+  .motion { animation: none; }
+}

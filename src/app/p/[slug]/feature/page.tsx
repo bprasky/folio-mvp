@@ -3,13 +3,21 @@ import Link from 'next/link';
 import { Suspense } from 'react';
 import { getPostBySlug } from '@/lib/post/getPostBySlug';
 import { StoryRenderer } from '@/components/story/StoryRenderer';
+import { projectChannelHref, withChannelQuery, type ChannelSearchParams } from '@/lib/project-channel/links';
+import { generateMetadata as channelMetadata } from '../page';
+
+export async function generateMetadata({ params }: { params: { slug: string } }) {
+  const metadata = await channelMetadata({ params });
+  const url = `${process.env.NEXT_PUBLIC_APP_URL || 'https://folioad.com'}${projectChannelHref(params.slug)}/feature`;
+  return { ...metadata, alternates: { canonical: url }, openGraph: { ...metadata.openGraph, url } };
+}
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
-export default async function ProjectFeaturePage({ params }: { params: { slug: string } }) {
+export default async function ProjectFeaturePage({ params, searchParams }: { params: { slug: string }; searchParams?: ChannelSearchParams }) {
   // Preserve the original publication URL while the new channel is disabled.
-  if (process.env.FOLIO_EDITORIAL_CHANNELS !== 'true') redirect(`/p/${encodeURIComponent(params.slug)}`);
+  if (process.env.FOLIO_EDITORIAL_CHANNELS !== 'true') redirect(withChannelQuery(projectChannelHref(params.slug), searchParams));
   const post = await getPostBySlug(params.slug);
   if (!post) notFound();
   return (

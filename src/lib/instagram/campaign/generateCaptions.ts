@@ -71,7 +71,7 @@ export function generateCaption(input: CaptionInput): {
   hashtags: string[];
 } {
   const { postType, project, context } = input;
-  const projectLink = `folio.ad/p/${project.slug}`;
+  const projectLink = `https://folioad.com/p/${encodeURIComponent(project.slug)}`;
   const designerHandle = project.designerInstagram
     ? `@${project.designerInstagram.replace('@', '')}`
     : project.designerName;
