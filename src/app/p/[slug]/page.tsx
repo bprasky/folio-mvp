@@ -3,6 +3,7 @@ import { Suspense } from "react";
 import { Metadata } from "next";
 import { getPostBySlug } from "@/lib/post/getPostBySlug";
 import { StoryRenderer } from "@/components/story/StoryRenderer";
+import { ProjectChannelLanding } from "@/components/story/ProjectChannelLanding";
 import { titleCase } from "@/lib/utils";
 
 // A published article is mutable after it is built: the designer edits its
@@ -80,7 +81,8 @@ export default async function PostPage({
 
   return (
     <Suspense>
-      <StoryRenderer post={post} />
+      {process.env.FOLIO_EDITORIAL_CHANNELS === 'true' && <ProjectChannelLanding post={post} />}
+      <div id="project-publication" className="scroll-mt-20"><StoryRenderer post={post} /></div>
     </Suspense>
   );
 }
