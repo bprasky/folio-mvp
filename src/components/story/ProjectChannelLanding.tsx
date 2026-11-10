@@ -6,6 +6,7 @@ import type { ChannelTile } from '@/lib/project-channel/curation';
 type PublicImage = { id: string; url: string; name?: string | null; room?: string | null; roomId?: string | null };
 type ProjectChannelPost = {
   slug: string; excerpt?: string | null; heroAssetId?: string | null;
+  credits?: Array<{ role?: string | null; name?: string | null }>;
   project: { title: string; description?: string | null; city?: string | null; regionState?: string | null;
     images: PublicImage[]; designer?: { name?: string | null; studio?: string | null } | null };
 };
@@ -37,6 +38,10 @@ export function ProjectChannelLanding({ post, media = [], ownerView = false }: {
       imageUrl: hero?.url || null, href: featureHref },
     ...media,
     ...spaceTiles,
+    ...(post.credits || []).filter(credit => credit.name).map((credit, index): ChannelTile => ({
+      id: `credit-${index}`, kind: 'credit', title: `${credit.name}${credit.role ? ` · ${credit.role}` : ''}`,
+      imageUrl: null, href: '#project-mosaic',
+    })),
   ];
   return <main className="min-h-screen bg-[#171715] text-[#f4efe7]">
     <section className="relative isolate min-h-[min(78vh,820px)] overflow-hidden bg-[#292722]" aria-label={post.project.title}>
