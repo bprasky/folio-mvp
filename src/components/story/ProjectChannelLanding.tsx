@@ -1,4 +1,3 @@
-import Link from 'next/link';
 import SafeImage from '@/components/SafeImage';
 
 type PublicImage = { id: string; url: string; name?: string | null; room?: string | null; roomId?: string | null };
