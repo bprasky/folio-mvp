@@ -6,7 +6,7 @@ import Link from "next/link";
 export function UpdatesCard({ module }: { module: any }) {
   const media = Array.isArray(module.media) ? module.media[0] : module.media;
   const thumb =
-    media?.thumbnailUrl || media?.poster || media?.url || module.project?.images?.[0]?.url || null;
+    media?.thumbnailUrl || media?.poster || (media?.kind === 'image' ? media.url : null) || module.project?.images?.[0]?.url || null;
   const designer = module.project?.designer;
   const name = designer?.studio || designer?.name || "Designer";
   const slug = module.project?.post?.slug || null;
@@ -24,7 +24,7 @@ export function UpdatesCard({ module }: { module: any }) {
 
   return (
     <Link
-      href={`${projectSlug}#module-${module.id}`}
+      href={module.href || projectSlug}
       className="group rounded-[20px] ring-1 ring-black/5 bg-surface-canvas overflow-hidden flex flex-col"
     >
       <div className="relative h-[220px] bg-surface-ground">

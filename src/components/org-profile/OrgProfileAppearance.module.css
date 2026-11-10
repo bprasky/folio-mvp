@@ -86,3 +86,57 @@
   .preview { position: static; grid-row: 1; }
 }
 @media (prefers-reduced-transparency: reduce) { .glass { background: #f8f8f8; backdrop-filter: none; } }
+
+
+/* Optional editorial profile cover: keep the existing mosaic, cover picker,
+   profile tools, actions and preview behavior intact. No autoplay media. */
+.cinematicHero .cover {
+  min-height: clamp(440px, 64vh, 760px);
+  justify-content: flex-start;
+  align-items: flex-end;
+  border-radius: 18px;
+  padding: clamp(24px, 5vw, 72px);
+  background: #27241f;
+}
+.cinematicHero .cover::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: linear-gradient(90deg, rgba(12,12,11,.88), rgba(12,12,11,.36) 62%, rgba(12,12,11,.06)),
+              linear-gradient(0deg, rgba(12,12,11,.5), transparent 65%);
+  pointer-events: none;
+}
+.cinematicHero .glass {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  width: min(100%, 660px);
+  padding: 0;
+  gap: 14px;
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  color: #f5f0e8;
+}
+.cinematicHero .eyebrow { color: rgba(255,255,255,.76); letter-spacing: .23em; }
+.cinematicHero .identity { width: 62px; height: 62px; border-radius: 8px; }
+.cinematicHero .initials { border-color: rgba(255,255,255,.45); font-size: 20px; }
+.cinematicHero .title { font-size: clamp(48px, 6cqi, 92px); line-height: .99; }
+.cinematicHero .introduction { color: rgba(255,255,255,.85); max-width: 50ch; }
+.cinematicHero .primaryButton { background: #f5f0e8; color: #181716; border-radius: 999px; }
+.cinematicHero .secondaryButton { color: #f5f0e8; border: 1px solid rgba(255,255,255,.6); border-radius: 999px; }
+.cinematicHero .facts { border-color: rgba(255,255,255,.3); }
+.cinematicHero .fact dt { color: rgba(255,255,255,.7); }
+@media (max-width: 640px) {
+  .cinematicHero .cover { min-height: 520px; padding: 28px 22px 38px; }
+  .cinematicHero .title { font-size: clamp(42px, 11vw, 66px); }
+  .cinematicHero .introduction { font-size: 14px; }
+  .cinematicHero .facts { gap: 10px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .cinematicHero *, .cinematicHero *::before, .cinematicHero *::after { animation: none !important; transition: none !important; }
+}

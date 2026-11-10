@@ -21,6 +21,7 @@ interface OrgProfileHeroProps {
 
 export default function OrgProfileHero({ org, projectCount, appearance = defaultOrgAppearance(),
   cover = null, year, isAdmin = false, isMember = false, preview = false }: OrgProfileHeroProps) {
+  const cinematic = process.env.NEXT_PUBLIC_FOLIO_EDITORIAL_PROFILE_HERO === 'true' && Boolean(cover) && !preview;
   const identityUrl = appearance.identity.mode === 'initials' ? null : appearance.identity.url || org.logo;
   const words = org.name.trim().split(/\s+/);
   const initials = /^[A-Z]{2,3}$/.test(words[0]) ? words[0] : words.map(word => word[0]).join('').slice(0, 2).toUpperCase();
@@ -33,7 +34,7 @@ export default function OrgProfileHero({ org, projectCount, appearance = default
     CONTRACTOR: 'Construction & craft', VENDOR: 'Design partner', MANUFACTURER: 'Design & making', SHOWROOM: 'Showroom', DEVELOPER: 'Property development' };
 
   return (
-    <section className={styles.heroContainer} aria-label={preview ? 'Cover preview' : `${org.name} profile`}>
+    <section className={`${styles.heroContainer} ${cinematic ? styles.cinematicHero : ''}`} aria-label={preview ? 'Cover preview' : `${org.name} profile`}>
       {!preview && isAdmin && (
         <nav className={styles.profileTools} aria-label="Manage profile">
           <span>Manage profile</span>

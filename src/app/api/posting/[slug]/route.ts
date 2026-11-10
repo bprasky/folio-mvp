@@ -5,7 +5,7 @@ export const dynamic = 'force-dynamic';
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getRelatedProjects } from "@/lib/article/getRelatedProjects";
-import { getProjectModules } from "@/lib/modules/getProjectModules";
+import { getPublicProjectModules } from "@/lib/modules/getProjectModules";
 import { publicPost } from '@/lib/post/publicPost';
 
 export async function GET(
@@ -35,8 +35,10 @@ export async function GET(
               },
             },
             images: {
+              where: { inclusion: 'INCLUDED' },
               include: {
                 tags: {
+                  where: { product: { isPending: false } },
                   include: {
                     product: {
                       include: {
@@ -205,10 +207,10 @@ export async function GET(
       vendors: Array.from(vendors.values()),
       derivedMaterialsLedger: materialsLedger,
       relatedProjects: await getRelatedProjects(project.id, project.designerId),
-      modules: await getProjectModules(project.id),
+      modules: await getPublicProjectModules(project.id, slug),
     };
 
-    return NextResponse.json(payload);
+    return NextResponse.json(payload, { headers: { 'Cache-Control': 'no-store' } });
   } catch (error: any) {
     console.error("[posting/[slug]] Error:", error);
     return NextResponse.json(
