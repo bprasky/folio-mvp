@@ -13,6 +13,14 @@ function run(mutate = (_path, text) => text) {
   });
 }
 run();
+for (const [field, type] of [['portfolioPublishedAt', 'DateTime'], ['portfolioCoverImageId', 'String']]) {
+  assert.throws(() => run((path, text) => path === 'prisma/schema.prisma'
+    ? text.replace(new RegExp(field+'\\s+'+type+'\\?'), field+' '+type) : text), /Only reviewed schema tokens/, 'Making portfolio fields required must fail');
+  assert.throws(() => run((path, text) => path === 'prisma/schema.prisma'
+    ? text.replace(new RegExp(field+'\\s+'+type+'\\?'), field+' Int?') : text), /Only reviewed schema tokens/, 'Changing portfolio field types must fail');
+}
+assert.throws(() => run((path, text) => path === 'prisma/migrations/20261116213000_portfolio_publication/migration.sql'
+  ? text + '\nUPDATE "projects" SET "portfolioPublishedAt" = NOW();\n' : text), /Reviewed photo portfolio SQL/, 'Adding a consent backfill must fail');
 assert.throws(() => run((path, text) => path === 'prisma/schema.prisma'
   ? text.replace(/profileAppearance\s+Json\?/, 'profileAppearance Json') : text), /Only reviewed schema tokens/, 'Making appearance required must fail');
 assert.throws(() => run((path, text) => path === 'prisma/schema.prisma'

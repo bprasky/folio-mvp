@@ -95,6 +95,20 @@ async function main() {
     post.status = status; assert.equal((await patch()).status, 409); assert.equal(saved, null);
   });
   await check('public project cannot be edited through draft route', async () => { post.project.isPublic = true; assert.equal((await patch()).status, 409); });
+  await check('explicit photo portfolio permits private draft quote editing without publishing the feature', async () => {
+    post.project.isPublic = true;
+    post.project.portfolioPublishedAt = new Date('2026-11-16T12:00:00Z');
+    assert.equal((await patch()).status, 200);
+    assert.deepEqual(Object.keys(saved.data), ['expandedBlocks']);
+    assert.equal(saved.where.status, 'DRAFT');
+  });
+  for (const status of ['PUBLISHED', 'REVIEW', 'ARCHIVED']) await check(`${status} feature stays protected on a photo portfolio`, async () => {
+    post.project.isPublic = true;
+    post.project.portfolioPublishedAt = new Date('2026-11-16T12:00:00Z');
+    post.status = status;
+    assert.equal((await patch()).status, 409);
+    assert.equal(saved, null);
+  });
   for (const invalid of [{ ...choice, slotId: 'breather-8' }, { ...choice, attribution: 'somebody else' }, { ...choice, unexpected: true }]) {
     await check('invalid payload is rejected', async () => { assert.equal((await patch(invalid)).status, 400); assert.equal(saved, null); });
   }
@@ -108,7 +122,8 @@ async function main() {
   await check('concurrent edits and publishing use compare-and-save guards', async () => {
     conflict = true; assert.equal((await patch()).status, 409);
     assert.deepEqual(saved.where.expandedBlocks.equals, post.expandedBlocks);
-    assert.equal(saved.where.status, 'DRAFT'); assert.equal(saved.where.project.isPublic, false);
+    assert.equal(saved.where.status, 'DRAFT');
+    assert.equal(JSON.stringify(saved.where.project), JSON.stringify({ OR: [{ isPublic: false }, { portfolioPublishedAt: { not: null } }] }));
     assert.equal(revalidated.length, 0);
   });
   await check('selection persists independently of room opening, prose and other quote', async () => {
