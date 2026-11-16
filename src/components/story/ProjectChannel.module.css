@@ -24,6 +24,11 @@
 .title { max-width: 840px; margin-top: 16px; color: inherit; font-family: var(--font-headline); font-weight: var(--w-body); font-size: clamp(3rem, 6.5vw, 6.75rem); line-height: 0.96; overflow-wrap: anywhere; }
 .byline { margin-top: 24px; }
 .deck { max-width: 440px; margin-top: 18px; font-family: var(--font-headline); font-size: var(--type-quote); line-height: var(--lh-quote); font-style: italic; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+.heroCopy { display: grid; max-width: 460px; margin-top: 22px; }
+.heroCopy .copyLayer { grid-area: 1 / 1; margin: 0; visibility: hidden; opacity: 0; transition: opacity 600ms; }
+.heroCopy .copyLayer[data-active="true"] { visibility: visible; opacity: 1; }
+.quote blockquote { margin: 0; font-family: var(--font-headline); font-style: italic; font-weight: var(--w-body); font-size: 32px; line-height: var(--lh-h3); text-wrap: balance; } /* folio-design-system: off-scale — approved hero quote preview. */
+.quote figcaption { margin-top: 14px; font-family: var(--font-body); font-size: var(--type-fine); line-height: var(--lh-body); color: var(--folio-text-secondary); }
 .actions { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 24px; }
 .primaryAction, .secondaryAction { display: inline-flex; align-items: center; justify-content: center; gap: 20px; min-height: 46px; padding: 10px 24px; border-radius: 999px; font-size: var(--type-ui); }
 .primaryAction { background: var(--folio-text-primary); color: var(--surface-canvas); }
@@ -71,6 +76,8 @@
   .heroShade { background: linear-gradient(0deg, var(--surface-canvas) 2%, color-mix(in srgb, var(--surface-canvas) 96%, transparent) 25%, color-mix(in srgb, var(--surface-canvas) 80%, transparent) 48%, transparent 82%); }
   .title { font-size: clamp(2.8rem, 10vw, 4.5rem); } /* folio-design-system: off-scale — phone display title. */
   .deck { font-size: var(--type-h4); }
+  .heroCopy { max-width: 330px; }
+  .quote blockquote { font-size: var(--type-h3); }
   .mosaic { padding: 0 16px 40px; }
   .filters { gap: 0 22px; margin-bottom: 12px; }
   .filter { font-size: var(--type-body); }
@@ -82,3 +89,4 @@
   .viewerHeader h2 { font-size: var(--type-body); }
 }
 @media (prefers-reduced-motion: reduce) { .tileImage { transition: none; } .tile:is(a, button):hover .tileImage { transform: none; } }
+@media (prefers-reduced-motion: reduce) { .heroCopy .copyLayer { transition: none; } }

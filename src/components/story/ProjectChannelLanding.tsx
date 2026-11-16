@@ -4,6 +4,7 @@ import { ProjectChannelMosaic } from './ProjectChannelMosaic';
 import type { ChannelTile } from '@/lib/project-channel/curation';
 import { projectChannelHref, withChannelQuery, type ChannelSearchParams } from '@/lib/project-channel/links';
 import { buildStoryData } from '@/lib/story/buildRoomTiles';
+import { selectHeroQuotes } from '@/lib/project-channel/heroQuotes';
 import styles from './ProjectChannel.module.css';
 
 type PublicImage = { id: string; url: string; name?: string | null; room?: string | null; roomId?: string | null };
@@ -46,6 +47,8 @@ export function ProjectChannelLanding({ post, media = [], ownerView = false, sea
   const featureHref = withChannelQuery(featurePath, searchParams);
   const designer = post.project.designerOrg?.name || post.project.designer?.studio || post.project.designer?.name || 'Folio';
   const slideshow = [hero, ...images.filter(image => image.id !== hero?.id)].filter((image): image is PublicImage => Boolean(image)).slice(0, 5);
+  const quotes = selectHeroQuotes(slideshow, story?.roomTiles || []);
+  const attribution = post.project.designer?.name || post.project.designerOrg?.name || post.project.designer?.studio || null;
   const spaceTiles: ChannelTile[] = [hero, ...images.filter(image => image.id !== hero?.id)].filter((image): image is PublicImage => Boolean(image)).map(image => ({
     id: image.id, kind: 'space', title: photoRooms.get(image.id)?.label || image.room || image.name || 'Project photograph',
     imageUrl: image.url, href: hasFeature ? withChannelQuery(featurePath, { ...searchParams, room: photoRooms.get(image.id)?.key, photo: image.id }) : null,
@@ -71,21 +74,22 @@ export function ProjectChannelLanding({ post, media = [], ownerView = false, sea
     ...credits,
   ];
   return <main className={styles.channel}>
-    <section className={styles.hero} aria-label={post.project.title}>
-      {slideshow.length > 0 && <ProjectChannelHeroPhotos key={slideshow.map(image => image.id).join(':')} images={slideshow} title={post.project.title} />}
-      <div aria-hidden="true" className={styles.heroShade} />
-      <div className={styles.heroContent}>
+    <ProjectChannelHeroPhotos key={slideshow.map(image => image.id).join(':')}
+      images={slideshow.map(image => ({ id: image.id, url: image.url, quote: quotes.get(image.id) }))}
+      title={post.project.title} attribution={attribution}
+      description={hasFeature ? post.excerpt || post.project.description : post.project.description}
+      heading={<>
         <p className={styles.eyebrow}>A Folio project</p>
         <h1 className={styles.title}>{post.project.title}</h1>
         <p className={styles.byline}>By {designer}</p>
-        {(hasFeature ? post.excerpt || post.project.description : post.project.description) && <p className={styles.deck}>{hasFeature ? post.excerpt || post.project.description : post.project.description}</p>}
+      </>}
+      footer={<>
         <div className={styles.actions}>
           {hasFeature && <Link href={featureHref} className={styles.primaryAction}>Read the Folio Feature <span aria-hidden="true">↗</span></Link>}
           {spaceTiles.length > 0 && <a href="#project-mosaic" className={hasFeature ? styles.secondaryAction : styles.primaryAction}>Explore the spaces <span aria-hidden="true">↓</span></a>}
         </div>
         {(post.project.city || post.project.regionState) && <p className={styles.location}>{[post.project.city, post.project.regionState].filter(Boolean).join(', ')}</p>}
-      </div>
-    </section>
+      </>} />
     <section id="project-mosaic" className="scroll-mt-20">
       <ProjectChannelMosaic tiles={tiles} ownerView={ownerView} projectTitle={post.project.title} />
     </section>
