@@ -65,6 +65,7 @@ function load(file) {
         safeProductResource: async url => {
           pageCalls.push(url); const pathname = new URL(url).pathname;
           if (failedPage === pathname) throw Error('Synthetic unavailable page');
+          if (pathname.endsWith('/late.png')) return { status: 200, headers: { 'content-type': 'image/png' }, body: await require('sharp')({ create: { width: 2, height: 2, channels: 3, background: '#fff' } }).png().toBuffer() };
           if (pathname.endsWith('.png')) return { status: 200, headers: { 'content-type': 'image/png' }, body: png };
           return { status: html[pathname] ? 200 : 404, headers: { 'content-type': 'text/html' }, body: Buffer.from(html[pathname] || '') };
         },
@@ -162,13 +163,13 @@ const rowFor = id => db.importSession.findUnique({ where: { id } });
     onOpenProject: () => {}, onReviewDetails: () => {}, ...props,
   }));
   const previewProject = { id: 'project', title: 'Harbor', isPublic: false, photos: [{ ...landscape, alt: 'Living room' }] };
-  assert.match(renderPreview({ projects: [previewProject] }), /Upload a finish schedule/);
-  assert.match(renderPreview({ projects: [previewProject] }), /Tag products manually/);
+  assert.match(renderPreview({ projects: [previewProject] }), /Review &amp; publish project/);
+  assert.match(renderPreview({ projects: [previewProject] }), /Organize rooms, add materials and tell its story when you prepare your interview/);
   assert.doesNotMatch(renderPreview({ projects: [previewProject] }), /Start.*interview<|Begin the interview/);
   assert.match(renderPreview({ projects: [previewProject] }), /Private draft/);
-  assert.match(renderPreview({ projects: [previewProject] }), /Continue project/);
+  assert.match(renderPreview({ projects: [previewProject] }), /Review &amp; publish/);
   const resumedPreview = renderPreview({ projects: [{ ...previewProject, hasSavedProgress: true }] });
-  assert.match(resumedPreview, /Pick up where you left off/);
+  assert.match(resumedPreview, /Review &amp; publish project/);
   assert.doesNotMatch(resumedPreview, /Upload a finish schedule|Tag products manually/);
   assert.doesNotMatch(renderPreview({ projects: [previewProject], canContribute: false }), /Upload a finish schedule|Tag products manually/);
   assert.match(renderPreview({ projects: [{ ...previewProject, photos: [] }] }), /Add photographs/);
@@ -217,7 +218,7 @@ const rowFor = id => db.importSession.findUnique({ where: { id } });
   let notifications = await db.notification.findMany();
   assert.equal(notifications.length, 1); assert.equal(notifications[0].userId, 'owner'); assert.equal(notifications[0].type, 'WORKSPACE_IMPORT_READY');
   assert.equal(notifications[0].actionUrl, `/onboarding/workspace?import=${encodeURIComponent(a)}`);
-  assert.match(notifications[0].body, /finish schedule or tag products/);
+  assert.match(notifications[0].body, /title, cover and photographs/);
   const emailHref = sends[0].html.match(/href="([^"]+)"/)[1].replaceAll('&amp;', '&');
   assert.equal(new URL(emailHref).searchParams.get('callbackUrl'), notifications[0].actionUrl, 'email and in-app notice return to the same preview');
   assert.match(sends[0].html, /Your next step/);
@@ -282,6 +283,14 @@ const rowFor = id => db.importSession.findUnique({ where: { id } });
   view = await review.readImportReview('owner', a);
   assert.equal(view.projects.find(p => p.id === project.id).title, 'Updated project title');
   assert.equal(view.projects.find(p => p.id === project.id).isPublic, true, 'a published project must not be presented as a private draft');
+  const lateRun = structuredClone((await rowFor(a)).processingMeta);
+  lateRun.phase = 'projects';
+  lateRun.projects = [{ ...lateRun.projects.find(item => item.projectId === project.id), status: 'photos', attempts: 0,
+    photos: [{ url: 'https://studio.test/late.png', alt: 'Late imported photograph', status: 'pending', attempts: 0 }] }];
+  await processor.advanceImport('owner', a, lateRun);
+  assert.equal(lateRun.projects[0].photos[0].status, 'saved');
+  const latePhoto = await db.projectImage.findUniqueOrThrow({ where: { id: lateRun.projects[0].photos[0].imageId } });
+  assert.equal(latePhoto.inclusion, 'EXCLUDED', 'a late import stays private until the owner includes it');
   const again = await store.createWorkspaceImport('owner', input()); await processor.processWorkspaceImports();
   assert.equal(await db.project.count(), 2, 'another run reuses source projects'); assert.equal((await db.project.findUnique({ where: { id: project.id } })).description, 'Changed by the owner');
   assert.equal((await rowFor(again)).processingMeta.projects.filter(p => p.preparation).length, 0);

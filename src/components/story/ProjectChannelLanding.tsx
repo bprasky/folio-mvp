@@ -13,7 +13,7 @@ export type ProjectChannelPost = {
   slug?: string; status?: string; excerpt?: string | null; heroAssetId?: string | null;
   credits?: Credit[];
   expandedBlocks?: { headline?: string | null; lead?: { title?: string | null }; credits?: Credit[] };
-  project: { title: string; description?: string | null; city?: string | null; regionState?: string | null;
+  project: { title: string; description?: string | null; city?: string | null; regionState?: string | null; portfolioCoverImageId?: string | null;
     images: PublicImage[]; designer?: { name?: string | null; studio?: string | null } | null; designerOrg?: { name?: string | null } | null };
 };
 
@@ -42,7 +42,7 @@ export function ProjectChannelLanding({ post, media = [], ownerView = false, sea
       photoRooms.set(image.id, { key: room.roomId || room.roomSlug, label: room.roomLabel });
     }
   }
-  const hero = images.find(image => image.id === post.heroAssetId) || images[0];
+  const hero = images.find(image => image.id === (hasFeature ? post.heroAssetId : post.project.portfolioCoverImageId)) || images[0];
   const featurePath = hasFeature ? `${projectChannelHref(post.slug!)}/feature` : '';
   const featureHref = withChannelQuery(featurePath, searchParams);
   const designer = post.project.designerOrg?.name || post.project.designer?.studio || post.project.designer?.name || 'Folio';

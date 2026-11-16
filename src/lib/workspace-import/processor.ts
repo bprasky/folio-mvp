@@ -137,8 +137,15 @@ async function prepareProject(userId: string, runId: string, run: WorkspaceImpor
         await assertImportSections(userId, run);
         const stored = await saveBufferToProjectStorage({ projectId: item.projectId!, roomId: 'default', ...source, storageId: imageId });
         await assertImportSections(userId, run);
-        saved = await prisma.projectImage.upsert({ where: { id: imageId }, update: {},
-          create: { id: imageId, projectId: item.projectId!, url: stored.publicUrl, name: photo.alt || null }, select: { id: true, url: true } });
+        saved = await prisma.$transaction(async tx => {
+          // Coordinate with quick publish: late/retried imports are not a new
+          // decision to expose photographs on an already-public project.
+          await tx.$queryRaw`SELECT id FROM projects WHERE id = ${item.projectId!} FOR UPDATE`;
+          const project = await tx.project.findUniqueOrThrow({ where: { id: item.projectId! }, select: { isPublic: true } });
+          return tx.projectImage.upsert({ where: { id: imageId }, update: {},
+            create: { id: imageId, projectId: item.projectId!, url: stored.publicUrl, name: photo.alt || null, inclusion: project.isPublic ? 'EXCLUDED' : 'INCLUDED' },
+            select: { id: true, url: true } });
+        });
       }
       photo.imageId = saved.id; photo.savedUrl = saved.url; photo.status = 'saved';
       try {
@@ -172,7 +179,7 @@ export function readyEmail(run: WorkspaceImport, runId: string, origin: string) 
     summary.projects ? `${summary.projects} projects and ${summary.photos} photographs are saved privately for you to review.` : ''].filter(Boolean);
   return { subject: status, html: `<h1>${escapeHtml(status)}</h1><p>${escapeHtml(run.orgName)}</p>${details.map(detail => `<p>${escapeHtml(detail)}</p>`).join('')}
     ${summary.needsAttention || !useful ? '<p>Some material needs your attention. Your workspace shows what was saved and what could not be imported.</p>' : ''}
-    <h2>Your next step: add materials</h2><p>${summary.projects ? 'Explore your private profile preview, then choose a project. Upload a finish schedule or tag products in its photographs. Review and place the products to build your sourcebook; those materials and your photographs will help shape a conversation about the thinking behind your work when you continue to the interview.' : 'Explore the details we found for your profile. You can review them and add photographs to begin your first project, then add its materials.'}</p>
+    <h2>Your next step: review and publish</h2><p>${summary.projects ? 'Explore your private profile preview, then choose a project. Review its title, cover and photographs and publish when ready. Organize rooms, add materials and tell the story behind your work when you prepare your interview.' : 'Explore the details we found for your profile. You can review them and add photographs to begin your first project, then add its materials.'}</p>
     <p>Your projects remain private until you choose to publish. Business details are only applied when you save them.</p><p><a href="${escapeHtml(url)}">${useful ? 'See my Folio and take the next step' : 'Open my import and continue'}</a></p>` };
 }
 
@@ -188,7 +195,7 @@ async function checkpointImport(userId: string, id: string, previous: unknown, r
     await tx.notification.upsert({ where: { id: notificationId }, update: {}, create: {
       id: notificationId, userId, type: 'WORKSPACE_IMPORT_READY',
       title: useful ? `${run.orgName} is ready to explore` : 'Your Folio import needs a little help',
-      body: useful ? `Your private profile preview is ready. ${summary.projects ? 'Add a finish schedule or tag products to build your sourcebook before the interview.' : 'Review your details and take the next step.'}${summary.needsAttention ? ' Some items need a little attention.' : ''}` : 'See what we found, then add any missing details or photographs to continue.',
+      body: useful ? `Your private profile preview is ready. ${summary.projects ? 'Review your project title, cover and photographs, then publish when ready. Your interview comes next.' : 'Review your details and take the next step.'}${summary.needsAttention ? ' Some items need a little attention.' : ''}` : 'See what we found, then add any missing details or photographs to continue.',
       actionUrl: `/onboarding/workspace?import=${encodeURIComponent(id)}`,
       metadata: { importId: id, orgId: run.orgId, projects: summary.projects, needsAttention: summary.needsAttention },
     } });

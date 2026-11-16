@@ -1,11 +1,13 @@
 import { prisma } from '@/lib/prisma';
+import { isDocumentImage } from '@/lib/publish/computePublishReadiness';
 
 /** Reuse explicit project publication; never infer approval from an import or a draft post. */
 export async function getPublicPortfolio(projectId: string) {
-  return prisma.project.findFirst({
+  const project = await prisma.project.findFirst({
     where: { id: projectId, isPublic: true, publishedAt: { lte: new Date() } },
     select: {
       id: true, title: true, description: true, city: true, regionState: true,
+      portfolioCoverImageId: true,
       designer: { select: { name: true, studio: true } },
       designerOrg: { select: { name: true } },
       images: {
@@ -15,4 +17,14 @@ export async function getPublicPortfolio(projectId: string) {
       },
     },
   });
+  return project ? { ...project, images: project.images.filter(image => !isDocumentImage(image.name)) } : null;
+}
+
+/** Keep a shared project channel alive while its feature returns to draft. */
+export async function getPublicPortfolioBySlug(slug: string) {
+  const project = await prisma.project.findFirst({
+    where: { isPublic: true, publishedAt: { lte: new Date() }, portfolioPublishedAt: { not: null }, post: { is: { slug } } },
+    select: { id: true },
+  });
+  return project ? getPublicPortfolio(project.id) : null;
 }

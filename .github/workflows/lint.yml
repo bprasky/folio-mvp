@@ -97,6 +97,8 @@ jobs:
       - run: npm ci
       - run: npx prisma generate
       - run: npm run test:core
+      - name: Photo portfolio publication and feature privacy
+        run: node --import tsx --test scripts/core/portfolio-publish.test.cjs
       - name: Organization appearance, permissions and public profile
         run: npx tsx --test scripts/core/org-profile-appearance-data.test.cjs scripts/core/org-profile-appearance-routes.test.cjs
       - run: npm run test:rollout
@@ -240,6 +242,8 @@ jobs:
         run: npm run typecheck:prepare
       - name: Project channel and original publication in Chromium
         run: CHANNEL_TEST_BROWSER="$(command -v google-chrome || command -v chromium)" npm run test:project-channels:browser
+      - name: Photo-first publishing in Chromium
+        run: GUIDED_TEST_BROWSER="$(command -v google-chrome || command -v chromium)" node scripts/check-portfolio-publish-browser.cjs
       - name: Cinematic profile customization and existing mosaic
         run: ORG_PROFILE_TEST_CINEMATIC=true ORG_PROFILE_TEST_BROWSER="$(command -v google-chrome || command -v chromium)" node scripts/check-org-profile-browser.cjs
       - uses: actions/upload-artifact@v4
@@ -248,6 +252,7 @@ jobs:
           name: project-channel-screenshots
           path: |
             .tmp/channel-browser/*.png
+            .tmp/portfolio-browser/*.png
             .tmp/org-profile-browser/*.png
       - name: Reject new diagnostics and baseline expansion
         env:

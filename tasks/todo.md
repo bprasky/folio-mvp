@@ -1483,3 +1483,13 @@ Review: `docs/reviews/editorial-design-tokens.md`. The TypeScript baseline remai
 - [x] Verify quote selection/fallbacks and synchronized desktop/mobile behavior; record review evidence and prepare the feature branch for PR review.
 
 Review: `docs/reviews/project-channel-quote-teasers.md` includes the public-photo light/dark previews, selection rules, verification evidence and limits. No merge or deployment.
+
+# Photo-first project publication — 2026-11-16
+
+- [x] Confirm that room organization belongs after quick publication.
+- [x] Add explicit portfolio consent, reviewed photos/cover/title and existing publication permissions.
+- [x] Keep the public project live through private feature work; preserve legacy withdrawal behavior and explicit whole-project withdrawal.
+- [x] Connect import review, one-time in-app interview invitations, resumable owner prompts and public profile/channel links.
+- [x] Verify service, privacy, import, generation, migration and accessible mobile/theme behavior.
+
+Review: `docs/reviews/quick-publish-journey.md`. Bulk room grouping is the next iteration. Release requires the additive migration before deployment; no production schema change, merge or deployment in this task.

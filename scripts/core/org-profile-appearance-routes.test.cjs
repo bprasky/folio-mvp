@@ -203,24 +203,27 @@ test('anonymous feed uses exact firm/public/photo filters and never returns priv
     assert.deepEqual(query.where, { designerOrgId: orgId, isPublic: true });
     assert.deepEqual(query.select.images.where, { inclusion: 'INCLUDED' });
     assert.equal(query.select.description, undefined); assert.equal(query.select.images.select.aiAnalysis, undefined);
-    const project = { id: 'project', title: 'Public project', city: 'Miami', regionState: 'FL', images: [{ url: '/public.jpg' }],
+    const project = { id: 'project', isPublic: true, publishedAt: new Date(0), title: 'Public project', city: 'Miami', regionState: 'FL', images: [{ url: '/public.jpg' }],
       _count: { rooms: 2 }, saves: 0, privateNote: 'never expose' };
     return [
       { ...project, post: { status: 'PUBLISHED', slug: 'public-story' } },
       { ...project, id: 'unpublished', post: { status: 'DRAFT', slug: 'never expose' } },
       { ...project, id: 'no-post', post: null },
+      { ...project, id: 'portfolio', portfolioPublishedAt: new Date(0), post: { status: 'DRAFT', slug: 'never expose' } },
     ];
   };
   for (const model of ['orgMedia', 'orgRecognition', 'orgCollaboration']) db[model].findMany = async query => {
     assert.deepEqual(query.where, { organizationId: orgId, publishedAt: { not: null } });
     assert.ok(query.select); return [];
   };
+  process.env.FOLIO_EDITORIAL_CHANNELS = 'true';
   const response = await feed.GET(new NextRequest('http://folio.test/api/feed'), context);
   assert.equal(response.status, 200); assert.match(response.headers.get('cache-control'), /no-store/);
   const data = await response.json(); assert.equal(data.items[0].data.title, 'Public project');
   assert.equal(data.items.find(item => item.id === 'project').data.storyHref, '/p/public-story');
   assert.equal(data.items.find(item => item.id === 'unpublished').data.storyHref, null);
   assert.equal(data.items.find(item => item.id === 'no-post').data.storyHref, null);
+  assert.equal(data.items.find(item => item.id === 'portfolio').data.storyHref, '/project/portfolio?view=public');
   assert.equal(JSON.stringify(data).includes('never expose'), false);
 });
 

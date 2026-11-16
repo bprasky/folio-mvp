@@ -1068,6 +1068,226 @@
       "reason": "additive-organization-profile-field-display",
       "proof": "docs/reviews/org-profile-typescript-proof.json",
       "priorDisplay": "Property 'name' does not exist on type '{ owner: { name: string; id: string; email: string; }; designerOrg: { name: string; id: string; location: string; phone: string; specialties: string[]; website: string; createdAt: Date; updatedAt: Date; ... 30 more ...; dormancyThresholdDays: number; }; vendorOrg: { ...; }; rooms: ({ ...; } & { ...; })[]; selections...'."
+    },
+    {
+      "file": "src/app/actions/projects.ts",
+      "code": 2345,
+      "before": "Argument of type '(project: ProjectWithImages) => { id: string; images: { url: string; precomputedSignals: any; }[]; productTags: { product: { category: string; materials: any[]; }; }[]; rooms: { type: string; materials: any[]; }[]; description: string; }' is not assignable to parameter of type '(value: { id: string; title: string; views: number; createdAt: Date; updatedAt: Date; status: string; description: string; city: string; isPublic: boolean; designerId: string; category: string; ... 18 more ...; targetInstallDate: Date; }, index: number, array: { ...; }[]) => { ...; }'. Types of parameters 'project' and 'value' are incompatible. Type '{ id: string; title: string; views: number; createdAt: Date; updatedAt: Date; status: string; description: string; city: string; isPublic: boolean; designerId: string; category: string; ... 18 more ...; targetInstallDate: Date; }' is missing the following properties from type 'ProjectWithImages': images, rooms",
+      "after": "Argument of type '(project: ProjectWithImages) => { id: string; images: { url: string; precomputedSignals: any; }[]; productTags: { product: { category: string; materials: any[]; }; }[]; rooms: { type: string; materials: any[]; }[]; description: string; }' is not assignable to parameter of type '(value: { id: string; title: string; views: number; createdAt: Date; updatedAt: Date; ownerId: string; status: string; publishedAt: Date; description: string; city: string; isPublic: boolean; ... 22 more ...; targetInstallDate: Date; }, index: number, array: { ...; }[]) => { ...; }'. Types of parameters 'project' and 'value' are incompatible. Type '{ id: string; title: string; views: number; createdAt: Date; updatedAt: Date; ownerId: string; status: string; publishedAt: Date; description: string; city: string; isPublic: boolean; ... 22 more ...; targetInstallDate: Date; }' is missing the following properties from type 'ProjectWithImages': images, rooms",
+      "count": 1,
+      "reason": "additive-project-portfolio-fields-display",
+      "proof": "docs/reviews/quick-publish-typescript-proof.json",
+      "priorDisplay": "Argument of type '(project: ProjectWithImages) => { id: string; images: { url: string; precomputedSignals: any; }[]; productTags: { product: { category: string; materials: any[]; }; }[]; rooms: { type: string; materials: any[]; }[]; description: string; }' is not assignable to parameter of type '(value: { id: string; title: string; views: number; createdAt: Date; updatedAt: Date; ownerId: string; status: string; publishedAt: Date; description: string; city: string; isPublic: boolean; ... 20 more ...; targetInstallDate: Date; }, index: number, array: { ...; }[]) => { ...; }'. Types of parameters 'project' and 'value' are incompatible. Type '{ id: string; title: string; views: number; createdAt: Date; updatedAt: Date; ownerId: string; status: string; publishedAt: Date; description: string; city: string; isPublic: boolean; ... 20 more ...; targetInstallDate: Date; }' is missing the following properties from type 'ProjectWithImages': images, rooms"
+    },
+    {
+      "file": "src/app/api/events/[id]/scan-analytics/route.ts",
+      "code": 2615,
+      "before": "Type of property 'AND' circularly references itself in mapped type '{ [K in keyof { AND?: ProjectScalarWhereWithAggregatesInput | ProjectScalarWhereWithAggregatesInput[]; OR?: ProjectScalarWhereWithAggregatesInput[]; ... 30 more ...; targetInstallDate?: string | ... 1 more ... | DateTimeNullableWithAggregatesFilter<...>; }]: Or<...> extends 1 ? { ...; }[K] extends infer TK ? GetHavi...'.",
+      "after": "Type of property 'AND' circularly references itself in mapped type '{ [K in keyof { AND?: ProjectScalarWhereWithAggregatesInput | ProjectScalarWhereWithAggregatesInput[]; OR?: ProjectScalarWhereWithAggregatesInput[]; ... 34 more ...; targetInstallDate?: string | ... 1 more ... | DateTimeNullableWithAggregatesFilter<...>; }]: Or<...> extends 1 ? { ...; }[K] extends infer TK ? GetHavi...'.",
+      "count": 1,
+      "reason": "additive-project-portfolio-fields-display",
+      "proof": "docs/reviews/quick-publish-typescript-proof.json",
+      "priorDisplay": "Type of property 'AND' circularly references itself in mapped type '{ [K in keyof { AND?: ProjectScalarWhereWithAggregatesInput | ProjectScalarWhereWithAggregatesInput[]; OR?: ProjectScalarWhereWithAggregatesInput[]; ... 32 more ...; targetInstallDate?: string | ... 1 more ... | DateTimeNullableWithAggregatesFilter<...>; }]: Or<...> extends 1 ? { ...; }[K] extends infer TK ? GetHavi...'."
+    },
+    {
+      "file": "src/app/api/events/[id]/scan-analytics/route.ts",
+      "code": 2615,
+      "before": "Type of property 'NOT' circularly references itself in mapped type '{ [K in keyof { AND?: ProjectScalarWhereWithAggregatesInput | ProjectScalarWhereWithAggregatesInput[]; OR?: ProjectScalarWhereWithAggregatesInput[]; ... 30 more ...; targetInstallDate?: string | ... 1 more ... | DateTimeNullableWithAggregatesFilter<...>; }]: Or<...> extends 1 ? { ...; }[K] extends infer TK ? GetHavi...'.",
+      "after": "Type of property 'NOT' circularly references itself in mapped type '{ [K in keyof { AND?: ProjectScalarWhereWithAggregatesInput | ProjectScalarWhereWithAggregatesInput[]; OR?: ProjectScalarWhereWithAggregatesInput[]; ... 34 more ...; targetInstallDate?: string | ... 1 more ... | DateTimeNullableWithAggregatesFilter<...>; }]: Or<...> extends 1 ? { ...; }[K] extends infer TK ? GetHavi...'.",
+      "count": 1,
+      "reason": "additive-project-portfolio-fields-display",
+      "proof": "docs/reviews/quick-publish-typescript-proof.json",
+      "priorDisplay": "Type of property 'NOT' circularly references itself in mapped type '{ [K in keyof { AND?: ProjectScalarWhereWithAggregatesInput | ProjectScalarWhereWithAggregatesInput[]; OR?: ProjectScalarWhereWithAggregatesInput[]; ... 32 more ...; targetInstallDate?: string | ... 1 more ... | DateTimeNullableWithAggregatesFilter<...>; }]: Or<...> extends 1 ? { ...; }[K] extends infer TK ? GetHavi...'."
+    },
+    {
+      "file": "src/app/api/events/[id]/scan-analytics/route.ts",
+      "code": 2615,
+      "before": "Type of property 'OR' circularly references itself in mapped type '{ [K in keyof { AND?: ProjectScalarWhereWithAggregatesInput | ProjectScalarWhereWithAggregatesInput[]; OR?: ProjectScalarWhereWithAggregatesInput[]; ... 30 more ...; targetInstallDate?: string | ... 1 more ... | DateTimeNullableWithAggregatesFilter<...>; }]: Or<...> extends 1 ? { ...; }[K] extends infer TK ? GetHavi...'.",
+      "after": "Type of property 'OR' circularly references itself in mapped type '{ [K in keyof { AND?: ProjectScalarWhereWithAggregatesInput | ProjectScalarWhereWithAggregatesInput[]; OR?: ProjectScalarWhereWithAggregatesInput[]; ... 34 more ...; targetInstallDate?: string | ... 1 more ... | DateTimeNullableWithAggregatesFilter<...>; }]: Or<...> extends 1 ? { ...; }[K] extends infer TK ? GetHavi...'.",
+      "count": 1,
+      "reason": "additive-project-portfolio-fields-display",
+      "proof": "docs/reviews/quick-publish-typescript-proof.json",
+      "priorDisplay": "Type of property 'OR' circularly references itself in mapped type '{ [K in keyof { AND?: ProjectScalarWhereWithAggregatesInput | ProjectScalarWhereWithAggregatesInput[]; OR?: ProjectScalarWhereWithAggregatesInput[]; ... 32 more ...; targetInstallDate?: string | ... 1 more ... | DateTimeNullableWithAggregatesFilter<...>; }]: Or<...> extends 1 ? { ...; }[K] extends infer TK ? GetHavi...'."
+    },
+    {
+      "file": "src/app/api/export/spec-html/route.ts",
+      "code": 2551,
+      "before": "Property 'owner' does not exist on type '{ id: string; title: string; views: number; createdAt: Date; updatedAt: Date; status: string; description: string; city: string; isPublic: boolean; designerId: string; category: string; ... 18 more ...; targetInstallDate: Date; }'. Did you mean 'ownerId'?",
+      "after": "Property 'owner' does not exist on type '{ id: string; title: string; views: number; createdAt: Date; updatedAt: Date; ownerId: string; status: string; publishedAt: Date; description: string; city: string; isPublic: boolean; ... 22 more ...; targetInstallDate: Date; }'. Did you mean 'ownerId'?",
+      "count": 1,
+      "reason": "additive-project-portfolio-fields-display",
+      "proof": "docs/reviews/quick-publish-typescript-proof.json",
+      "priorDisplay": "Property 'owner' does not exist on type '{ id: string; title: string; views: number; createdAt: Date; updatedAt: Date; ownerId: string; status: string; publishedAt: Date; description: string; city: string; isPublic: boolean; ... 20 more ...; targetInstallDate: Date; }'. Did you mean 'ownerId'?"
+    },
+    {
+      "file": "src/app/api/export/spec-html/route.ts",
+      "code": 2339,
+      "before": "Property 'rooms' does not exist on type '{ id: string; title: string; views: number; createdAt: Date; updatedAt: Date; status: string; description: string; city: string; isPublic: boolean; designerId: string; category: string; ... 18 more ...; targetInstallDate: Date; }'.",
+      "after": "Property 'rooms' does not exist on type '{ id: string; title: string; views: number; createdAt: Date; updatedAt: Date; ownerId: string; status: string; publishedAt: Date; description: string; city: string; isPublic: boolean; ... 22 more ...; targetInstallDate: Date; }'.",
+      "count": 1,
+      "reason": "additive-project-portfolio-fields-display",
+      "proof": "docs/reviews/quick-publish-typescript-proof.json",
+      "priorDisplay": "Property 'rooms' does not exist on type '{ id: string; title: string; views: number; createdAt: Date; updatedAt: Date; ownerId: string; status: string; publishedAt: Date; description: string; city: string; isPublic: boolean; ... 20 more ...; targetInstallDate: Date; }'."
+    },
+    {
+      "file": "src/app/api/export/spec-html/route.ts",
+      "code": 2339,
+      "before": "Property 'selections' does not exist on type '{ id: string; title: string; views: number; createdAt: Date; updatedAt: Date; status: string; description: string; city: string; isPublic: boolean; designerId: string; category: string; ... 18 more ...; targetInstallDate: Date; }'.",
+      "after": "Property 'selections' does not exist on type '{ id: string; title: string; views: number; createdAt: Date; updatedAt: Date; ownerId: string; status: string; publishedAt: Date; description: string; city: string; isPublic: boolean; ... 22 more ...; targetInstallDate: Date; }'.",
+      "count": 1,
+      "reason": "additive-project-portfolio-fields-display",
+      "proof": "docs/reviews/quick-publish-typescript-proof.json",
+      "priorDisplay": "Property 'selections' does not exist on type '{ id: string; title: string; views: number; createdAt: Date; updatedAt: Date; ownerId: string; status: string; publishedAt: Date; description: string; city: string; isPublic: boolean; ... 20 more ...; targetInstallDate: Date; }'."
+    },
+    {
+      "file": "src/app/api/projects/[id]/force-delete/route.ts",
+      "code": 2339,
+      "before": "Property 'archivedAt' does not exist on type '{ id: string; title: string; views: number; createdAt: Date; updatedAt: Date; status: string; description: string; city: string; isPublic: boolean; designerId: string; category: string; ... 18 more ...; targetInstallDate: Date; }'.",
+      "after": "Property 'archivedAt' does not exist on type '{ id: string; title: string; views: number; createdAt: Date; updatedAt: Date; ownerId: string; status: string; publishedAt: Date; description: string; city: string; isPublic: boolean; ... 22 more ...; targetInstallDate: Date; }'.",
+      "count": 1,
+      "reason": "additive-project-portfolio-fields-display",
+      "proof": "docs/reviews/quick-publish-typescript-proof.json",
+      "priorDisplay": "Property 'archivedAt' does not exist on type '{ id: string; title: string; views: number; createdAt: Date; updatedAt: Date; ownerId: string; status: string; publishedAt: Date; description: string; city: string; isPublic: boolean; ... 20 more ...; targetInstallDate: Date; }'."
+    },
+    {
+      "file": "src/app/api/projects/[id]/supplemental-quotes/route.ts",
+      "code": 2339,
+      "before": "Property 'posts' does not exist on type '{ id: string; title: string; views: number; createdAt: Date; updatedAt: Date; status: string; description: string; city: string; isPublic: boolean; designerId: string; category: string; ... 18 more ...; targetInstallDate: Date; }'.",
+      "after": "Property 'posts' does not exist on type '{ id: string; title: string; views: number; createdAt: Date; updatedAt: Date; ownerId: string; status: string; publishedAt: Date; description: string; city: string; isPublic: boolean; ... 22 more ...; targetInstallDate: Date; }'.",
+      "count": 2,
+      "reason": "additive-project-portfolio-fields-display",
+      "proof": "docs/reviews/quick-publish-typescript-proof.json",
+      "priorDisplay": "Property 'posts' does not exist on type '{ id: string; title: string; views: number; createdAt: Date; updatedAt: Date; ownerId: string; status: string; publishedAt: Date; description: string; city: string; isPublic: boolean; ... 20 more ...; targetInstallDate: Date; }'."
+    },
+    {
+      "file": "src/app/api/projects/[id]/supplemental-quotes/route.ts",
+      "code": 2339,
+      "before": "Property 'userId' does not exist on type '{ id: string; title: string; views: number; createdAt: Date; updatedAt: Date; status: string; description: string; city: string; isPublic: boolean; designerId: string; category: string; ... 18 more ...; targetInstallDate: Date; }'.",
+      "after": "Property 'userId' does not exist on type '{ id: string; title: string; views: number; createdAt: Date; updatedAt: Date; ownerId: string; status: string; publishedAt: Date; description: string; city: string; isPublic: boolean; ... 22 more ...; targetInstallDate: Date; }'.",
+      "count": 1,
+      "reason": "additive-project-portfolio-fields-display",
+      "proof": "docs/reviews/quick-publish-typescript-proof.json",
+      "priorDisplay": "Property 'userId' does not exist on type '{ id: string; title: string; views: number; createdAt: Date; updatedAt: Date; ownerId: string; status: string; publishedAt: Date; description: string; city: string; isPublic: boolean; ... 20 more ...; targetInstallDate: Date; }'."
+    },
+    {
+      "file": "src/app/designer/[username]/page.tsx",
+      "code": 2339,
+      "before": "Property 'images' does not exist on type '{ id: string; title: string; views: number; createdAt: Date; updatedAt: Date; status: string; description: string; city: string; isPublic: boolean; designerId: string; category: string; ... 18 more ...; targetInstallDate: Date; }'.",
+      "after": "Property 'images' does not exist on type '{ id: string; title: string; views: number; createdAt: Date; updatedAt: Date; ownerId: string; status: string; publishedAt: Date; description: string; city: string; isPublic: boolean; ... 22 more ...; targetInstallDate: Date; }'.",
+      "count": 1,
+      "reason": "additive-project-portfolio-fields-display",
+      "proof": "docs/reviews/quick-publish-typescript-proof.json",
+      "priorDisplay": "Property 'images' does not exist on type '{ id: string; title: string; views: number; createdAt: Date; updatedAt: Date; ownerId: string; status: string; publishedAt: Date; description: string; city: string; isPublic: boolean; ... 20 more ...; targetInstallDate: Date; }'."
+    },
+    {
+      "file": "src/app/designer/[username]/page.tsx",
+      "code": 2339,
+      "before": "Property 'rooms' does not exist on type '{ id: string; title: string; views: number; createdAt: Date; updatedAt: Date; status: string; description: string; city: string; isPublic: boolean; designerId: string; category: string; ... 18 more ...; targetInstallDate: Date; }'.",
+      "after": "Property 'rooms' does not exist on type '{ id: string; title: string; views: number; createdAt: Date; updatedAt: Date; ownerId: string; status: string; publishedAt: Date; description: string; city: string; isPublic: boolean; ... 22 more ...; targetInstallDate: Date; }'.",
+      "count": 1,
+      "reason": "additive-project-portfolio-fields-display",
+      "proof": "docs/reviews/quick-publish-typescript-proof.json",
+      "priorDisplay": "Property 'rooms' does not exist on type '{ id: string; title: string; views: number; createdAt: Date; updatedAt: Date; ownerId: string; status: string; publishedAt: Date; description: string; city: string; isPublic: boolean; ... 20 more ...; targetInstallDate: Date; }'."
+    },
+    {
+      "file": "src/lib/living/gravity.ts",
+      "code": 2339,
+      "before": "Property 'livingEnabled' does not exist on type '{ id: string; title: string; views: number; createdAt: Date; updatedAt: Date; status: string; description: string; city: string; isPublic: boolean; designerId: string; category: string; ... 18 more ...; targetInstallDate: Date; }'.",
+      "after": "Property 'livingEnabled' does not exist on type '{ id: string; title: string; views: number; createdAt: Date; updatedAt: Date; ownerId: string; status: string; publishedAt: Date; description: string; city: string; isPublic: boolean; ... 22 more ...; targetInstallDate: Date; }'.",
+      "count": 2,
+      "reason": "additive-project-portfolio-fields-display",
+      "proof": "docs/reviews/quick-publish-typescript-proof.json",
+      "priorDisplay": "Property 'livingEnabled' does not exist on type '{ id: string; title: string; views: number; createdAt: Date; updatedAt: Date; ownerId: string; status: string; publishedAt: Date; description: string; city: string; isPublic: boolean; ... 20 more ...; targetInstallDate: Date; }'."
+    },
+    {
+      "file": "src/lib/living/gravity.ts",
+      "code": 2339,
+      "before": "Property 'livingOptOut' does not exist on type '{ id: string; title: string; views: number; createdAt: Date; updatedAt: Date; status: string; description: string; city: string; isPublic: boolean; designerId: string; category: string; ... 18 more ...; targetInstallDate: Date; }'.",
+      "after": "Property 'livingOptOut' does not exist on type '{ id: string; title: string; views: number; createdAt: Date; updatedAt: Date; ownerId: string; status: string; publishedAt: Date; description: string; city: string; isPublic: boolean; ... 22 more ...; targetInstallDate: Date; }'.",
+      "count": 2,
+      "reason": "additive-project-portfolio-fields-display",
+      "proof": "docs/reviews/quick-publish-typescript-proof.json",
+      "priorDisplay": "Property 'livingOptOut' does not exist on type '{ id: string; title: string; views: number; createdAt: Date; updatedAt: Date; ownerId: string; status: string; publishedAt: Date; description: string; city: string; isPublic: boolean; ... 20 more ...; targetInstallDate: Date; }'."
+    },
+    {
+      "file": "src/lib/living/rooms.ts",
+      "code": 2339,
+      "before": "Property 'intent' does not exist on type '{ id: string; title: string; views: number; createdAt: Date; updatedAt: Date; status: string; description: string; city: string; isPublic: boolean; designerId: string; category: string; ... 18 more ...; targetInstallDate: Date; }'.",
+      "after": "Property 'intent' does not exist on type '{ id: string; title: string; views: number; createdAt: Date; updatedAt: Date; ownerId: string; status: string; publishedAt: Date; description: string; city: string; isPublic: boolean; ... 22 more ...; targetInstallDate: Date; }'.",
+      "count": 1,
+      "reason": "additive-project-portfolio-fields-display",
+      "proof": "docs/reviews/quick-publish-typescript-proof.json",
+      "priorDisplay": "Property 'intent' does not exist on type '{ id: string; title: string; views: number; createdAt: Date; updatedAt: Date; ownerId: string; status: string; publishedAt: Date; description: string; city: string; isPublic: boolean; ... 20 more ...; targetInstallDate: Date; }'."
+    },
+    {
+      "file": "src/lib/living/rooms.ts",
+      "code": 2339,
+      "before": "Property 'livingEnabled' does not exist on type '{ id: string; title: string; views: number; createdAt: Date; updatedAt: Date; status: string; description: string; city: string; isPublic: boolean; designerId: string; category: string; ... 18 more ...; targetInstallDate: Date; }'.",
+      "after": "Property 'livingEnabled' does not exist on type '{ id: string; title: string; views: number; createdAt: Date; updatedAt: Date; ownerId: string; status: string; publishedAt: Date; description: string; city: string; isPublic: boolean; ... 22 more ...; targetInstallDate: Date; }'.",
+      "count": 1,
+      "reason": "additive-project-portfolio-fields-display",
+      "proof": "docs/reviews/quick-publish-typescript-proof.json",
+      "priorDisplay": "Property 'livingEnabled' does not exist on type '{ id: string; title: string; views: number; createdAt: Date; updatedAt: Date; ownerId: string; status: string; publishedAt: Date; description: string; city: string; isPublic: boolean; ... 20 more ...; targetInstallDate: Date; }'."
+    },
+    {
+      "file": "src/lib/living/rooms.ts",
+      "code": 2339,
+      "before": "Property 'livingOptOut' does not exist on type '{ id: string; title: string; views: number; createdAt: Date; updatedAt: Date; status: string; description: string; city: string; isPublic: boolean; designerId: string; category: string; ... 18 more ...; targetInstallDate: Date; }'.",
+      "after": "Property 'livingOptOut' does not exist on type '{ id: string; title: string; views: number; createdAt: Date; updatedAt: Date; ownerId: string; status: string; publishedAt: Date; description: string; city: string; isPublic: boolean; ... 22 more ...; targetInstallDate: Date; }'.",
+      "count": 1,
+      "reason": "additive-project-portfolio-fields-display",
+      "proof": "docs/reviews/quick-publish-typescript-proof.json",
+      "priorDisplay": "Property 'livingOptOut' does not exist on type '{ id: string; title: string; views: number; createdAt: Date; updatedAt: Date; ownerId: string; status: string; publishedAt: Date; description: string; city: string; isPublic: boolean; ... 20 more ...; targetInstallDate: Date; }'."
+    },
+    {
+      "file": "src/lib/living/rooms.ts",
+      "code": 2339,
+      "before": "Property 'images' does not exist on type '{ id: string; title: string; views: number; createdAt: Date; updatedAt: Date; status: string; description: string; city: string; isPublic: boolean; designerId: string; category: string; ... 18 more ...; targetInstallDate: Date; }'.",
+      "after": "Property 'images' does not exist on type '{ id: string; title: string; views: number; createdAt: Date; updatedAt: Date; ownerId: string; status: string; publishedAt: Date; description: string; city: string; isPublic: boolean; ... 22 more ...; targetInstallDate: Date; }'.",
+      "count": 1,
+      "reason": "additive-project-portfolio-fields-display",
+      "proof": "docs/reviews/quick-publish-typescript-proof.json",
+      "priorDisplay": "Property 'images' does not exist on type '{ id: string; title: string; views: number; createdAt: Date; updatedAt: Date; ownerId: string; status: string; publishedAt: Date; description: string; city: string; isPublic: boolean; ... 20 more ...; targetInstallDate: Date; }'."
+    },
+    {
+      "file": "src/lib/living/rooms.ts",
+      "code": 2339,
+      "before": "Property 'skeletonItems' does not exist on type '{ id: string; title: string; views: number; createdAt: Date; updatedAt: Date; status: string; description: string; city: string; isPublic: boolean; designerId: string; category: string; ... 18 more ...; targetInstallDate: Date; }'.",
+      "after": "Property 'skeletonItems' does not exist on type '{ id: string; title: string; views: number; createdAt: Date; updatedAt: Date; ownerId: string; status: string; publishedAt: Date; description: string; city: string; isPublic: boolean; ... 22 more ...; targetInstallDate: Date; }'.",
+      "count": 1,
+      "reason": "additive-project-portfolio-fields-display",
+      "proof": "docs/reviews/quick-publish-typescript-proof.json",
+      "priorDisplay": "Property 'skeletonItems' does not exist on type '{ id: string; title: string; views: number; createdAt: Date; updatedAt: Date; ownerId: string; status: string; publishedAt: Date; description: string; city: string; isPublic: boolean; ... 20 more ...; targetInstallDate: Date; }'."
+    },
+    {
+      "file": "src/lib/living/rooms.ts",
+      "code": 2339,
+      "before": "Property 'rooms' does not exist on type '{ id: string; title: string; views: number; createdAt: Date; updatedAt: Date; status: string; description: string; city: string; isPublic: boolean; designerId: string; category: string; ... 18 more ...; targetInstallDate: Date; }'.",
+      "after": "Property 'rooms' does not exist on type '{ id: string; title: string; views: number; createdAt: Date; updatedAt: Date; ownerId: string; status: string; publishedAt: Date; description: string; city: string; isPublic: boolean; ... 22 more ...; targetInstallDate: Date; }'.",
+      "count": 2,
+      "reason": "additive-project-portfolio-fields-display",
+      "proof": "docs/reviews/quick-publish-typescript-proof.json",
+      "priorDisplay": "Property 'rooms' does not exist on type '{ id: string; title: string; views: number; createdAt: Date; updatedAt: Date; ownerId: string; status: string; publishedAt: Date; description: string; city: string; isPublic: boolean; ... 20 more ...; targetInstallDate: Date; }'."
+    },
+    {
+      "file": "src/lib/projects/hasContent.ts",
+      "code": 2339,
+      "before": "Property '_count' does not exist on type '{ id: string; title: string; views: number; createdAt: Date; updatedAt: Date; status: string; description: string; city: string; isPublic: boolean; designerId: string; category: string; ... 18 more ...; targetInstallDate: Date; }'.",
+      "after": "Property '_count' does not exist on type '{ id: string; title: string; views: number; createdAt: Date; updatedAt: Date; ownerId: string; status: string; publishedAt: Date; description: string; city: string; isPublic: boolean; ... 22 more ...; targetInstallDate: Date; }'.",
+      "count": 1,
+      "reason": "additive-project-portfolio-fields-display",
+      "proof": "docs/reviews/quick-publish-typescript-proof.json",
+      "priorDisplay": "Property '_count' does not exist on type '{ id: string; title: string; views: number; createdAt: Date; updatedAt: Date; ownerId: string; status: string; publishedAt: Date; description: string; city: string; isPublic: boolean; ... 20 more ...; targetInstallDate: Date; }'."
+    },
+    {
+      "file": "src/lib/projects/hasContent.ts",
+      "code": 2339,
+      "before": "Property 'post' does not exist on type '{ id: string; title: string; views: number; createdAt: Date; updatedAt: Date; status: string; description: string; city: string; isPublic: boolean; designerId: string; category: string; ... 18 more ...; targetInstallDate: Date; }'.",
+      "after": "Property 'post' does not exist on type '{ id: string; title: string; views: number; createdAt: Date; updatedAt: Date; ownerId: string; status: string; publishedAt: Date; description: string; city: string; isPublic: boolean; ... 22 more ...; targetInstallDate: Date; }'.",
+      "count": 1,
+      "reason": "additive-project-portfolio-fields-display",
+      "proof": "docs/reviews/quick-publish-typescript-proof.json",
+      "priorDisplay": "Property 'post' does not exist on type '{ id: string; title: string; views: number; createdAt: Date; updatedAt: Date; ownerId: string; status: string; publishedAt: Date; description: string; city: string; isPublic: boolean; ... 20 more ...; targetInstallDate: Date; }'."
     }
   ]
 }

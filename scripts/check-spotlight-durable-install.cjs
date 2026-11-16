@@ -66,6 +66,10 @@ expected+='\n'+signupModel;
 // field. Pin its exact SQL while retaining the full historical token comparison.
 assert.equal(hash(read('prisma/migrations/20261029120000_org_profile_appearance/migration.sql')),'8402508f17da644621be7b2762336d8f715319633691057f58cc877df072b38e','Approved organization appearance SQL');
 expected=expected.replace(/(model Organization \{[\s\S]*?followerCount\s+Int\s+@default\(0\))/,'$1\nprofileAppearance Json?');
+// Photo-first publication adds only nullable consent and cover fields. Pin the
+// exact additive SQL; all historical Spotlight schema tokens remain protected.
+assert.equal(hash(read('prisma/migrations/20261116213000_portfolio_publication/migration.sql')),'c4ea9a5cd9cb83de6b348fc4004eedfd066d6d02d8caea26c823d7915c4d921c','Reviewed photo portfolio SQL');
+expected=expected.replace(/(model Project \{[\s\S]*?publishedAt\s+DateTime\?)/,'$1\nportfolioPublishedAt DateTime?\nportfolioCoverImageId String?');
 const tokens=s=>(s.match(/"(?:\\.|[^"\\])*"|\/\/[^\n]*|[^\s"]/g)||[]).filter(x=>!x.startsWith('//')).join('');
 assert.equal(tokens(read('prisma/schema.prisma')),tokens(expected),'Only reviewed schema tokens');
 assert.equal(JSON.parse(read('vercel.json')).git.deploymentEnabled,false);

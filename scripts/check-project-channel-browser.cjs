@@ -101,7 +101,12 @@ async function main() {
     const slug = url.pathname.split('/')[2];
     const original = publicPosts.find(p => p.slug === slug);
     const post = original ? publicPost(localize(original)) : fixture(Number(url.searchParams.get('count') ?? 5));
-    if (url.searchParams.get('portfolio') === '1') { post.status = 'DRAFT'; delete post.slug; }
+    if (url.searchParams.get('portfolio') === '1') {
+      post.status = 'DRAFT'; delete post.slug;
+      post.project.portfolioCoverImageId = post.heroAssetId;
+      // A private feature can choose a different cover without changing the live portfolio.
+      post.heroAssetId = 'photo-0';
+    }
     if (url.searchParams.get('gallery') === '1') post.expandedBlocks.galleryChapters = [];
     if (url.searchParams.has('folio')) post.expandedBlocks.galleryChapters.forEach(chapter => { chapter.pullQuote = { authorship: 'folio', selected: {text:'INACTIVE_VERBATIM'}, alternatives: [], folio: { selected: {text:'Editorial room summary'}, alternatives: [] } }; });
     if (url.searchParams.has('slowPhoto')) post.project.images[0].url += '&delay=1';
@@ -224,7 +229,7 @@ async function main() {
         await page.focus('[data-kind="space"]'); await page.keyboard.press('Enter');
         await page.waitForSelector('[role="dialog"]');
         assert.equal(await page.$eval('[role="dialog"]', e => getComputedStyle(e).backgroundColor), expected);
-        assert.equal(await page.$eval('[role="dialog"] img', e => new URL(e.src).searchParams.get('i')), '1', 'Viewer opens the selected approved hero');
+        assert.equal(await page.$eval('[role="dialog"] img', e => new URL(e.src).searchParams.get('i')), '1', 'Viewer opens the approved portfolio cover, independent of the private feature hero');
         assert.equal(await page.evaluate(() => document.activeElement.getAttribute('aria-label')), 'Return to project photographs');
         await page.keyboard.down('Shift'); await page.keyboard.press('Tab'); await page.keyboard.up('Shift');
         assert.equal(await page.evaluate(() => document.activeElement.getAttribute('aria-label')), 'Next photograph', 'Focus is trapped');

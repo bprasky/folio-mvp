@@ -17,9 +17,10 @@ type Props = {
   slug: string | null;
   coverUrl: string | null;
   canUseSocialTools: boolean;
+  portfolioLive?: boolean;
 };
 
-export default function PublishedProjectHome({ project, slug, coverUrl, canUseSocialTools }: Props) {
+export default function PublishedProjectHome({ project, slug, coverUrl, canUseSocialTools, portfolioLive }: Props) {
   const router = useRouter();
   const [showExportModal, setShowExportModal] = useState(false);
   const [showOverviewModal, setShowOverviewModal] = useState(false);
@@ -152,7 +153,7 @@ export default function PublishedProjectHome({ project, slug, coverUrl, canUseSo
       </div>
       <ExportSpecModal open={showExportModal} onClose={() => setShowExportModal(false)} projectId={project.id} onExport={handleExport} />
       <OverviewModal open={showOverviewModal} onClose={() => setShowOverviewModal(false)} project={project} />
-      <ConfirmDialog open={showEditDialog} title="Return this project to a draft?" description="Your story will leave public view while you edit. Your photos, story, and selections are kept. Publish again when your changes are ready." confirmText="Unpublish and edit" onConfirm={openDraft} onCancel={() => setShowEditDialog(false)} />
+      <ConfirmDialog open={showEditDialog} title="Return this feature to a draft?" description={portfolioLive ? "Your feature will leave public view while you edit. Your photo project stays live. Publish the feature again when your changes are ready." : "Your story will leave public view while you edit. Your photos, story, and selections are kept. Publish again when your changes are ready."} confirmText="Unpublish and edit" onConfirm={openDraft} onCancel={() => setShowEditDialog(false)} />
     </section>
   );
 }

@@ -1,4 +1,6 @@
-import { assertProjectView, assertProjectWrite, assertProjectPublish } from '@/lib/authz/access';
+import { PortfolioPublishPanel } from '@/components/projects/PortfolioPublishPanel';
+import { portfolioReviewVersion, hasPortfolioInterviewProgress } from '@/lib/publish/portfolio';
+import { assertProjectView, assertProjectWrite, assertProjectPublish, assertProjectUnpublish } from '@/lib/authz/access';
 import { expertiseEnabled } from '@/lib/publishing-studio/expertise/flag';
 import { ExpertiseProjectReturn } from '@/components/publishing-studio/ExpertiseProjectReturn';
 import { prisma } from '@/lib/prisma';
@@ -214,6 +216,8 @@ export default async function ProjectPage({
       timeline: true,
       isPublic: true,
       publishedAt: true,
+      portfolioPublishedAt: true,
+      portfolioCoverImageId: true,
       views: true,
       saves: true,
       shares: true,
@@ -267,14 +271,19 @@ export default async function ProjectPage({
   // Existing isOwner props control editing, while admission also permits viewers.
   let isOwner = false;
   let mayPublish = false;
+  let mayUnpublish = false;
   try { await assertProjectWrite(viewerId, base.id); isOwner = true; }
   catch (error) { if (!(error instanceof Error) || error.message !== 'Forbidden') throw error; }
   try { await assertProjectPublish(viewerId, base.id); mayPublish = true; }
   catch (error) { if (!(error instanceof Error) || error.message !== 'Forbidden') throw error; }
 
-  const interviewAnswerCount = await prisma.editorialInterviewAnswer.count({
-    where: { interview: { projectId: params.id } },
-  });
+  try { await assertProjectUnpublish(viewerId, base.id); mayUnpublish = true; }
+  catch (error) { if (!(error instanceof Error) || error.message !== 'Forbidden') throw error; }
+
+  const [interviewAnswerCount, interviewProgress] = await Promise.all([
+    prisma.editorialInterviewAnswer.count({ where: { interview: { projectId: params.id } } }),
+    base.portfolioPublishedAt ? prisma.projectPost.findUnique({ where: { projectId: params.id }, select: { provenance: true } }) : Promise.resolve(null),
+  ]);
 
   const editorialState = getEditorialState({
     post: base.post
@@ -341,7 +350,7 @@ export default async function ProjectPage({
   // Story step renders, links to `?view=story`, and the page bounces it back to
   // the Tags screen.
   const trackerType = trackerTypeForTimeline(base.timeline);
-  const inPublishingFlow = trackerType === 'completed' || hasDraftOrPublished;
+  const inPublishingFlow = trackerType === 'completed' || hasDraftOrPublished || Boolean(base.portfolioPublishedAt);
   // A project still ahead of itself: in flight or a concept, never finished work.
   const isProspective = trackerType !== 'completed';
 
@@ -563,10 +572,13 @@ export default async function ProjectPage({
           project={sanitizedProject}
           editorialState={editorialState}
         />
-        {process.env.FOLIO_EDITORIAL_CHANNELS === 'true' && base.isPublic && base.publishedAt && !isPublished && (
-          <Link href={`/project/${encodeURIComponent(base.id)}?view=public`} className="inline-block mb-4 folio-ui underline underline-offset-4">
-            View public project
-          </Link>
+        {process.env.FOLIO_EDITORIAL_CHANNELS === 'true' && (isOwner || mayPublish) && (!isPublished || base.portfolioPublishedAt) && (
+          <PortfolioPublishPanel key={portfolioReviewVersion(base)} projectId={base.id} title={base.title} description={base.description}
+            version={portfolioReviewVersion(base)} coverImageId={base.portfolioCoverImageId}
+            photos={base.images.filter(image => !isDocumentImage(image.name)).map(image => ({ id: image.id, url: image.url, name: image.name, inclusion: image.inclusion }))}
+            isPublic={base.isPublic} canPublish={mayPublish} canUnpublish={mayUnpublish} featureSlug={base.post?.slug ?? null} featureStatus={base.post?.status ?? null} editorialState={editorialState}
+            interviewStarted={interviewAnswerCount > 0 || hasPortfolioInterviewProgress(interviewProgress?.provenance)}
+            initialReview={searchParams.publish === 'photos' && !base.isPublic} />
         )}
         {isPublished && !isProjectHome && (
           <Link href={`/project/${base.id}`} className="inline-block mb-4 folio-ui underline underline-offset-4">
@@ -621,6 +633,7 @@ export default async function ProjectPage({
                 base.images.find(img => img.id === base.post?.heroAssetId)?.url ??
                 base.images.find(img => !isDocumentImage(img.name))?.url ?? null
               }
+              portfolioLive={Boolean(base.isPublic && base.portfolioPublishedAt)}
               canUseSocialTools={!!viewerId && (viewerId === base.ownerId || viewerId === designerId)}
             />
           )}

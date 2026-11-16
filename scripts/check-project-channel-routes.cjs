@@ -33,6 +33,10 @@ const prisma = {
     queries.push(query);
     assert.equal(query.where.isPublic, true);
     assert.ok(query.where.publishedAt.lte instanceof Date);
+    if (!query.select.images) {
+      assert.deepEqual(query.where.portfolioPublishedAt, { not: null });
+      return portfolio?.portfolioPublishedAt && portfolio.isPublic && portfolio.publishedAt <= query.where.publishedAt.lte && post?.slug === query.where.post.is.slug ? { id: portfolio.id } : null;
+    }
     assert.deepEqual(query.select.images.where, { inclusion: 'INCLUDED' });
     assert.equal(query.select.post, undefined, 'Never select private editorial data for a portfolio');
     assert.equal(query.select.images.select.tags, undefined, 'Portfolio DTO contains no raw product data');
@@ -205,9 +209,17 @@ function reset() {
   assert.match(portfolioHtml, /aria-haspopup="dialog"/);
   assert.equal((portfolioHtml.match(/data-kind="space"/g) || []).length, 2);
   assert.doesNotMatch(portfolioHtml, /data-hero-quote|Read the Folio Feature|Original headline|SECRET|EXCLUDED|Coming Soon|data-kind="feature"|data-kind="media"/);
+  await assert.rejects(page.default({ params: { slug: 'house' } }), /NOT_FOUND/, 'Legacy draft links do not gain portfolio publication consent');
+  portfolio.portfolioPublishedAt = new Date(0);
+  const retainedChannel = renderToStaticMarkup(await page.default({ params: { slug: 'house' }, searchParams: { photo: 'photo2' } }));
+  assert.match(retainedChannel, /aria-haspopup="dialog"/);
+  assert.doesNotMatch(retainedChannel, /Read the Folio Feature|Original headline|SECRET|data-hero-quote/);
+  assert.equal((await page.generateMetadata({ params: { slug: 'house' } })).title, 'House | Folio');
+  await assert.rejects(feature.default({ params: { slug: 'house' } }), /NOT_FOUND/);
   for (const patch of [{ isPublic: false }, { publishedAt: null }, { publishedAt: new Date(Date.now() + 86400000) }]) {
     const saved = portfolio; portfolio = { ...portfolio, ...patch };
     await assert.rejects(legacy.default({ params: { id: 'project' }, searchParams: { ownerView: 'true', view: 'public' } }), /NOT_FOUND/);
+    await assert.rejects(page.default({ params: { slug: 'house' } }), /NOT_FOUND/);
     portfolio = saved;
   }
   session = { user: { id: 'owner' } }; workspace = true;
