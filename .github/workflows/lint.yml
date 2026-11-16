@@ -240,6 +240,8 @@ jobs:
       # Next 14 compile mode emits real route types without prerendering or DB access.
       - name: Generate Prisma and Next route types
         run: npm run typecheck:prepare
+      - name: Publication reader layouts in Chromium
+        run: CHANNEL_TEST_BROWSER="$(command -v google-chrome || command -v chromium)" node scripts/check-publication-layout-browser.cjs
       - name: Project channel and original publication in Chromium
         run: CHANNEL_TEST_BROWSER="$(command -v google-chrome || command -v chromium)" npm run test:project-channels:browser
       - name: Photo-first publishing in Chromium
@@ -251,6 +253,8 @@ jobs:
         with:
           name: project-channel-screenshots
           path: |
+            .tmp/publication-layout/*.png
+            .tmp/publication-layout/results.json
             .tmp/channel-browser/*.png
             .tmp/portfolio-browser/*.png
             .tmp/org-profile-browser/*.png

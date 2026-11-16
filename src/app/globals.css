@@ -17,6 +17,11 @@
 
 :root {
   color-scheme: light;
+  /* Publication paper stays light, including when the application theme is dark. */
+  --surface-publication: #FAF8F5;
+  --publication-ink: #1a1a1a;
+  --publication-muted: #625e58;
+  --publication-rule: #e3ded6;
   /* ===========================================
      CANONICAL FOLIO PALETTE
      Three-level surface system + 3-tier text
@@ -2260,4 +2265,19 @@ body.frame-dark::before {
 /* Hover-only photo controls must remain visible on touch tablets as well as phones. */
 @media (hover: none) {
   .touch-action-visible { opacity: 1 !important; }
+}
+
+/* Scope the publication paper to its existing page, header and portal surfaces.
+   CSS restores the selected application theme immediately on route changes. */
+body:has([data-publication-view="immersive"]) {
+  --surface-canvas: var(--surface-publication);
+  --surface-ground: var(--surface-publication);
+  --surface-elevated: var(--surface-publication);
+  --surface: var(--surface-publication);
+  --folio-text-primary: var(--publication-ink);
+  --folio-text-secondary: var(--publication-muted);
+  --folio-border-subtle: var(--publication-rule);
+  color-scheme: light;
+  color: var(--publication-ink);
+  background: var(--surface-publication);
 }

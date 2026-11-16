@@ -69,11 +69,11 @@ async function mount(data = post(), options = {}) {
   const viewer = React.createElement(StoryRenderer, { post: data });
   await act(async () => reactRoot.render(options.edit ? React.createElement(StoryEditProvider, { projectId: 'project', initialOverrides: [], chapters: [] }, viewer) : viewer));
 }
-async function touch(type, x, y) {
+async function touch(type, x, y, target = document.querySelector('[data-publication-phase]')) {
   const event = new window.Event(type, { bubbles: true, cancelable: true });
   const point = { clientX: x, clientY: y };
   Object.defineProperties(event, { touches: { value: type === 'touchend' ? [] : [point] }, changedTouches: { value: [point] } });
-  await act(async () => document.querySelector('[data-publication-phase]').dispatchEvent(event));
+  await act(async () => target.dispatchEvent(event));
   return event;
 }
 
@@ -125,6 +125,9 @@ async function touch(type, x, y) {
   await advance(801);
   await touch('touchstart', 300, 200); await touch('touchend', 100, 200);
   assert.ok(byLabel('Read Room 0'), 'A subsequent side swipe advances the room');
+  await touch('touchstart', 300, 200, byLabel('All rooms'));
+  await touch('touchend', 100, 200, byLabel('All rooms'));
+  assert.ok(byLabel('Read Room 0'), 'Scrolling room thumbnails does not also advance the story');
   await mount(post(), { width: 700 });
   await touch('touchstart', 200, 400); await touch('touchend', 200, 400); await advance(650);
   assert.equal(visibleIntro(), true, 'Wide phones use the same tap gate');
