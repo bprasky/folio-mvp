@@ -23,13 +23,15 @@ function localize(value) {
   if (value && typeof value === 'object') return Object.fromEntries(Object.entries(value).map(([k, v]) => [k, localize(v)]));
   return value;
 }
+const heroQuote0 = 'A short approved quotation for space zero.';
+const heroQuote1 = 'We opened this room to the garden, giving the family a quieter place to gather throughout the day.';
 function fixture(count = 5) {
   return { id: 'fixture-post', projectId: 'fixture-project', slug: 'fixture', status: 'PUBLISHED', heroAssetId: count > 1 ? 'photo-1' : 'photo-0', excerpt: 'A photographic project with an independently published Folio feature.',
-    project: { id: 'fixture-project', title: 'Channel fixture', isPublic: true, city: 'Miami', designerOrg: { name: 'Fixture Studio' }, designer: { name: 'Fixture designer' },
+    project: { id: 'fixture-project', title: 'Channel fixture', description: 'Original project description.', isPublic: true, city: 'Miami', designerOrg: { name: 'Fixture Studio' }, designer: { name: 'Fixture designer' },
       images: Array.from({ length: count }, (_, i) => ({ id: `photo-${i}`, url: `/photo.svg?i=${i}`, name: `Photograph ${i}`, room: `Space ${Math.floor(i / 2)}`, roomId: `room-${Math.floor(i / 2)}`, inclusion: 'INCLUDED', tags: i === 0 ? [{ id: 'tag', productId: 'chair', product: { id: 'chair', name: 'Fixture chair', imageUrl: '/photo.svg', isPending: false } }] : [] })) },
     credits: [{ name: 'Fixture collaborator', role: 'Architecture' }, { name: 'Fixture collaborator', role: 'Architecture' }, { name: '' }, { name: 'Photo studio', url: 'https://example.com' }],
     expandedBlocks: { lead: { title: 'The original fixture headline', deck: 'The original fixture deck' }, introduction: ['The original introduction remains in the publication.'],
-      galleryChapters: Array.from({ length: Math.ceil(count / 2) }, (_, i) => ({ id: `room-${i}`, roomId: `room-${i}`, title: `Space ${i}`, imageIds: [`photo-${i * 2}`, `photo-${i * 2 + 1}`], body: [`Original narrative for space ${i}.`], pullQuote: 'An original approved quotation.' })) } };
+      galleryChapters: Array.from({ length: Math.ceil(count / 2) }, (_, i) => ({ id: `room-${i}`, roomId: `room-${i}`, title: `Space ${i}`, imageIds: [`photo-${i * 2}`, `photo-${i * 2 + 1}`], body: [`Original narrative for space ${i}.`], pullQuote: i === 0 ? heroQuote0 : i === 1 ? { selected: { text: heroQuote1 }, alternatives: [{text:'UNSELECTED_QUOTE'}] } : null })) } };
 }
 const media = [
   { id: 'film', kind: 'media', title: 'Project film', imageUrl: '/photo.svg', href: '/p/fixture/media/film' },
@@ -88,6 +90,8 @@ async function main() {
     const url = new URL(req.url, 'http://fixture');
     if (url.pathname === '/api/analytics/event') { let text = ''; for await (const chunk of req) text += chunk; analytics.push(JSON.parse(text)); res.end('{}'); return; }
     if (url.pathname.endsWith('.mp4')) { res.writeHead(404); res.end(); return; }
+    if (url.pathname === '/photo.svg' && url.searchParams.has('fail')) { res.writeHead(404); res.end(); return; }
+    if (url.pathname === '/photo.svg' && url.searchParams.has('delay')) await new Promise(resolve => setTimeout(resolve, 9000));
     if (url.pathname === '/playable.webm') { res.setHeader('Content-Type', 'video/webm'); res.end(playableVideo); return; }
     if (url.pathname === '/photo.svg') { res.setHeader('Content-Type', 'image/svg+xml'); res.end(`<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="1000"><rect width="1600" height="1000" fill="${Number(url.searchParams.get('i')) % 2 ? '#8d887d' : '#cbc4b7'}"/><rect x="850" y="100" width="450" height="700" fill="#eae4d9"/><path d="M0 850 L1600 650 L1600 1000 L0 1000Z" fill="#6e6659"/></svg>`); return; }
     const files = { '/bundle.js': ['bundle.js', 'text/javascript'], '/bundle.css': ['bundle.css', 'text/css'], '/globals.css': ['globals.css', 'text/css'] };
@@ -99,6 +103,9 @@ async function main() {
     const post = original ? publicPost(localize(original)) : fixture(Number(url.searchParams.get('count') ?? 5));
     if (url.searchParams.get('portfolio') === '1') { post.status = 'DRAFT'; delete post.slug; }
     if (url.searchParams.get('gallery') === '1') post.expandedBlocks.galleryChapters = [];
+    if (url.searchParams.has('folio')) post.expandedBlocks.galleryChapters.forEach(chapter => { chapter.pullQuote = { authorship: 'folio', selected: {text:'INACTIVE_VERBATIM'}, alternatives: [], folio: { selected: {text:'Editorial room summary'}, alternatives: [] } }; });
+    if (url.searchParams.has('slowPhoto')) post.project.images[0].url += '&delay=1';
+    if (url.searchParams.has('failedPhoto')) post.project.images[0].url += '&fail=1';
     const mode = url.pathname === '/settings' ? 'settings' : url.pathname.startsWith('/viewer/') ? 'viewer' : url.pathname.endsWith('/feature') ? 'feature' : url.pathname.includes('/media/') ? 'media' : url.pathname === '/profile' ? 'profile' : 'channel';
     const payload = { mode, post, owner: url.searchParams.get('owner') === '1', media: original || url.searchParams.get('photos') === '1' || url.searchParams.get('portfolio') === '1' ? [] : media,
       assets: url.pathname.endsWith('/story') ? [{ kind: 'image', url: '/photo.svg', caption: 'An image story', poster: null }] : [{ kind: 'video', url: url.pathname.endsWith('/playable') ? '/playable.webm' : '/missing.mp4', caption: null, poster: null }] };
@@ -114,6 +121,26 @@ async function main() {
     const button = async text => { await page.evaluate(t => { const b = [...document.querySelectorAll('button')].find(b => b.textContent.trim() === t); if (!b) throw Error('Missing button ' + t); b.click(); }, text); };
     const overflow = async () => assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true, 'No horizontal page overflow');
     const shot = name => page.screenshot({ path: path.join(out, name + '.png'), fullPage: true });
+    const heroLayout = () => page.evaluate(() => ['h1', 'section[aria-label="Channel fixture"] a[href*="/feature"]'].map(selector => document.querySelector(selector).getBoundingClientRect().top + scrollY));
+    const checkQuote = async (photo, quote) => {
+      await page.waitForFunction(() => {
+        const photo = document.querySelector('[data-hero-index] .opacity-100');
+        const copy = document.querySelector('[aria-live="off"] [data-active="true"]');
+        return photo && getComputedStyle(photo).opacity === '1' && copy && getComputedStyle(copy).opacity === '1';
+      });
+      assert.equal(await page.$eval('[data-hero-index] .opacity-100 img', node => new URL(node.src).searchParams.get('i')), String(photo));
+      const current = '[data-hero-quote][data-active="true"]';
+      if (quote) {
+        assert.equal(await page.$eval(current, node => node.dataset.heroQuote), `photo-${photo}`);
+        assert.equal(await page.$eval(current + ' blockquote', node => node.textContent), `“${quote}”`);
+        assert.match(await page.$eval(current + ' figcaption', node => node.textContent), /Fixture designer, from the Folio Feature/);
+        assert.equal(await page.$$eval('[data-hero-quote]', nodes => nodes.filter(node => getComputedStyle(node).visibility === 'visible' && node.getAttribute('aria-hidden') === 'false').length), 1);
+      } else {
+        assert.equal(await page.$(current), null);
+        assert.match(await page.$eval('[aria-live="off"] [data-active="true"]', node => node.textContent), /independently published Folio feature/);
+      }
+      assert.doesNotMatch(await page.$eval('main', node => node.innerText), /UNSELECTED_QUOTE|INACTIVE_VERBATIM/);
+    };
     if (!process.env.CHANNEL_PUBLIC_ONLY) {
     for (const [label, width, height] of [['desktop', 1440, 1000], ['tablet', 768, 1024], ['mobile', 390, 844]]) {
       await page.setViewport({ width, height });
@@ -190,6 +217,8 @@ async function main() {
         const expected = theme === 'dark' ? 'rgb(27, 27, 25)' : 'rgb(255, 255, 255)';
         assert.equal(await page.$eval('main', e => getComputedStyle(e).backgroundColor), expected);
         assert.equal(await page.$('a[href*="/feature"]'), null, 'No feature action or tile before publication');
+        assert.equal(await page.$('[data-hero-quote]'), null, 'Portfolio cannot expose even populated draft interview quotes');
+        assert.match(await page.$eval('section[aria-label="Channel fixture"]', node => node.innerText), /Original project description/);
         assert.equal(await page.$$eval('nav button', nodes => nodes.some(n => /Media|Credits|Shop/.test(n.textContent))), false);
         await button('Spaces');
         await page.focus('[data-kind="space"]'); await page.keyboard.press('Enter');
@@ -214,7 +243,7 @@ async function main() {
         assert.equal(await page.evaluate(() => document.activeElement.dataset.kind), 'space', 'Close restores the originating tile');
         assert.equal(await page.$eval('nav button[aria-pressed="true"]', e => e.textContent), 'Spaces');
         await shot(`portfolio-${theme}-${width}`);
-        await go('/p/fixture'); await shot(`channel-${theme}-${width}`);
+        await go('/p/fixture'); await checkQuote(1, heroQuote0); await shot(`channel-${theme}-${width}`);
         await page.reload({ waitUntil: 'networkidle0' });
         assert.equal(await page.$eval('html', e => e.dataset.theme), theme, 'Saved appearance survives navigation and reload');
       }
@@ -238,11 +267,16 @@ async function main() {
     console.log('PASS real light/dark setting persistence, OS independence, 320–1440px layouts, portfolio modal focus/return/arrows and exact feature photo links');
 
     await page.emulateMediaFeatures([{ name: 'prefers-reduced-motion', value: 'reduce' }]);
+    await page.mouse.move(-10, -10);
     await go('/p/fixture?photos=1'); const reducedIndex = await page.$eval('[data-hero-index]', e => e.dataset.heroIndex);
+    await checkQuote(1, heroQuote0);
+    const fixedLayout = await heroLayout();
     await new Promise(r => setTimeout(r, 7200)); assert.equal(await page.$eval('[data-hero-index]', e => e.dataset.heroIndex), reducedIndex);
     assert.equal(await page.$eval('[data-hero-index] img', e => getComputedStyle(e).animationName), 'none');
     await page.emulateMediaFeatures([{ name: 'prefers-reduced-motion', value: 'no-preference' }]);
     await page.waitForFunction(() => document.querySelector('[data-hero-index]').dataset.heroIndex !== '0', { timeout: 10000 });
+    await checkQuote(0, heroQuote0);
+    assert.deepEqual(await heroLayout(), fixedLayout, 'Title and feature action stay still across supporting photographs');
     await button('Pause photographs'); const paused = await page.$eval('[data-hero-index]', e => e.dataset.heroIndex);
     await new Promise(r => setTimeout(r, 7200)); assert.equal(await page.$eval('[data-hero-index]', e => e.dataset.heroIndex), paused);
     await button('Resume photographs');
@@ -250,7 +284,44 @@ async function main() {
     const hidden = await page.$eval('[data-hero-index]', e => e.dataset.heroIndex);
     await new Promise(r => setTimeout(r, 7200)); assert.equal(await page.$eval('[data-hero-index]', e => e.dataset.heroIndex), hidden);
     assert.equal(await page.$eval('[data-hero-index] .opacity-100 img', e => getComputedStyle(e).animationPlayState), 'paused');
+    await checkQuote(0, heroQuote0);
     console.log('PASS real 7s slide timing, dynamic reduced motion, user pause and visibilitychange pause');
+    await page.evaluate(() => { Object.defineProperty(document, 'hidden', { configurable: true, value: false }); document.dispatchEvent(new Event('visibilitychange')); });
+    for (const [index, photo, quote] of [[2, 2, heroQuote1], [3, 3, heroQuote1], [4, 4, null]]) {
+      await page.waitForFunction(index => document.querySelector('[data-hero-index]').dataset.heroIndex === String(index), {timeout:12000}, index);
+      await checkQuote(photo, quote);
+      assert.deepEqual(await heroLayout(), fixedLayout, 'Longer quotes and description fallback do not shift the title or actions');
+    }
+    await page.hover('section[aria-label="Channel fixture"]');
+    const hovered = await page.$eval('[data-hero-index]', node => node.dataset.heroIndex);
+    await new Promise(resolve => setTimeout(resolve, 7200));
+    assert.equal(await page.$eval('[data-hero-index]', node => node.dataset.heroIndex), hovered, 'Hover pauses photographs and copy together');
+    await page.mouse.move(-10, -10);
+    await page.focus('section[aria-label="Channel fixture"] a[href*="/feature"]');
+    await new Promise(resolve => setTimeout(resolve, 7200));
+    assert.equal(await page.$eval('[data-hero-index]', node => node.dataset.heroIndex), hovered, 'Keyboard focus pauses photographs and copy together');
+    await page.focus('nav[aria-label="Browse project content"] button');
+    await page.waitForFunction(index => document.querySelector('[data-hero-index]').dataset.heroIndex !== index, {timeout:12000}, hovered);
+    console.log('PASS short/long approved quotations, supporting photographs, description fallback, steady title/actions and hover/focus pause');
+
+    await go('/p/fixture?folio=1');
+    assert.equal(await page.$('[data-hero-quote]'), null, 'Folio editorial authorship is not a designer quotation');
+    assert.doesNotMatch(await page.$eval('section[aria-label="Channel fixture"]', node => node.textContent), /INACTIVE_VERBATIM|Editorial room summary/);
+    await go('/p/fixture?portfolio=1');
+    await page.hover('section[aria-label="Channel fixture"]');
+    await page.waitForFunction(() => document.querySelector('[data-hero-index]').dataset.heroIndex !== '0', {timeout:12000});
+    assert.equal(await page.$('[data-hero-quote]'), null, 'Portfolio retains its original photographic slideshow behavior');
+    await page.mouse.move(-10, -10);
+    await go('/p/fixture?failedPhoto=1');
+    await page.waitForFunction(() => document.querySelector('[data-hero-index]').dataset.heroIndex === '2', {timeout:12000});
+    await checkQuote(2, heroQuote1);
+    await page.goto(origin + '/p/fixture?slowPhoto=1', {waitUntil:'domcontentloaded'});
+    await page.waitForSelector('[data-hero-quote="photo-1"][data-active="true"]');
+    await new Promise(resolve => setTimeout(resolve, 7200));
+    await checkQuote(1, heroQuote0);
+    await page.waitForFunction(() => document.querySelector('[data-hero-index]').dataset.heroIndex === '1', {timeout:12000});
+    await checkQuote(0, heroQuote0);
+    console.log('PASS editorial-authorship and portfolio fallbacks, failed-photo skipping and slow-photo/quote synchronization');
     await go('/p/fixture?utm_source=folio_share&utm_medium=test&utm_campaign=channel');
     await Promise.all([page.waitForNavigation(), page.click('a[href*="/feature?"]')]);
     await page.waitForFunction(() => true); assert.ok(analytics.some(a => a.type === 'project_channel_share_landing'));
@@ -265,6 +336,12 @@ async function main() {
         for (const [width, height] of [[1440, 1000], [390, 844]]) {
           await page.setViewport({ width, height }); await go(`/p/${original.slug}`); await overflow();
           await shot(`${original.slug}-${theme}-${width}`);
+          await page.mouse.move(-10, -10);
+          await page.waitForFunction(() => document.querySelector('[data-hero-index]').dataset.heroIndex === '1', {timeout:12000});
+          await button('Pause photographs');
+          await page.waitForFunction(() => getComputedStyle(document.querySelector('[data-hero-index] .opacity-100')).opacity === '1' &&
+            (!document.querySelector('[data-hero-quote][data-active="true"]') || getComputedStyle(document.querySelector('[data-hero-quote][data-active="true"]')).opacity === '1'));
+          await shot(`${original.slug}-quote-${theme}-${width}`);
           await go(`/p/${original.slug}?portfolio=1`); await overflow();
           await shot(`${original.slug}-portfolio-${theme}-${width}`);
         }

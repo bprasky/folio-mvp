@@ -82,7 +82,7 @@ function load(relative) {
     if (name === '@/lib/utils') return { titleCase: x => x };
     if (name === 'next/link') return { __esModule: true, default: ({ children, ...props }) => React.createElement('a', props, children) };
     if (name.endsWith('/SafeImage')) return { __esModule: true, default: ({ fill, priority, unoptimized, ...props }) => React.createElement('img', props) };
-    if (name.includes('ProjectChannelHeroPhotos') || name.includes('ProjectChannelShareTracking')) return emptyImports;
+    if (name.includes('ProjectChannelShareTracking')) return emptyImports;
     if (name.includes('StoryRenderer')) return { StoryRenderer: ({ post: p }) => React.createElement('div', { 'data-original-post': p.id }, p.expandedBlocks.introduction.join(' ')) };
     if (file.replaceAll('\\', '/').endsWith('/src/app/project/[id]/page.tsx') && !name.startsWith('@/lib/project-channel/') && !name.includes('ProjectChannelLanding') && (name.startsWith('.') || name.startsWith('@/'))) return emptyImports;
     if (name.startsWith('@/lib/project-channel/') || name.startsWith('@/lib/post/') || name.startsWith('@/lib/story/presentation') || name.startsWith('@/components/story/ProjectChannel')) return load(name.replace('@/', 'src/'));
@@ -124,6 +124,20 @@ function reset() {
   assert.match(article, /data-original-post="original-post"/); assert.match(article, /Original introduction/);
   assert.match(article, /Back to project/);
   console.log('PASS public DTO, original feature identity, all photos, credit fallback/deduplication and private-prop exclusion');
+  post.expandedBlocks.galleryChapters = [{ title: 'Room', imageIds: ['photo1','photo2'], body: ['Approved room narrative.'], pullQuote: {
+    selected: { text: 'The approved designer quotation.' }, alternatives: [{ text: 'SECRET_UNSELECTED_QUOTE' }],
+  } }];
+  const quoted = renderToStaticMarkup(await page.default({ params: { slug: 'house' } }));
+  assert.match(quoted, /data-hero-quote="photo2" data-active="true"/);
+  assert.match(quoted, /The approved designer quotation\./);
+  assert.match(quoted, /<figcaption>From the Folio Feature<\/figcaption>/, 'Do not invent a speaker when identity is unavailable');
+  assert.doesNotMatch(quoted, /SECRET_UNSELECTED_QUOTE/);
+  post.expandedBlocks.galleryChapters[0].pullQuote.authorship = 'folio';
+  const editorial = renderToStaticMarkup(await page.default({ params: { slug: 'house' } }));
+  assert.doesNotMatch(editorial, /data-hero-quote|The approved designer quotation/);
+  assert.match(editorial, /Original deck/);
+  post.expandedBlocks.galleryChapters = [];
+  console.log('PASS published selected quote/photo pairing and editorial-authorship fallback without unselected alternatives');
   modules[0].isPrimary = true;
   const primary = renderToStaticMarkup(await page.default({ params: { slug: 'house' } }));
   assert.equal(primary.match(/data-kind="([^"]+)"/)[1], 'media', 'Persisted primary selection outranks automatic positions');
@@ -190,7 +204,7 @@ function reset() {
   const portfolioHtml = renderToStaticMarkup(await legacy.default({ params: { id: 'project' }, searchParams: {} }));
   assert.match(portfolioHtml, /aria-haspopup="dialog"/);
   assert.equal((portfolioHtml.match(/data-kind="space"/g) || []).length, 2);
-  assert.doesNotMatch(portfolioHtml, /Read the Folio Feature|Original headline|SECRET|EXCLUDED|Coming Soon|data-kind="feature"|data-kind="media"/);
+  assert.doesNotMatch(portfolioHtml, /data-hero-quote|Read the Folio Feature|Original headline|SECRET|EXCLUDED|Coming Soon|data-kind="feature"|data-kind="media"/);
   for (const patch of [{ isPublic: false }, { publishedAt: null }, { publishedAt: new Date(Date.now() + 86400000) }]) {
     const saved = portfolio; portfolio = { ...portfolio, ...patch };
     await assert.rejects(legacy.default({ params: { id: 'project' }, searchParams: { ownerView: 'true', view: 'public' } }), /NOT_FOUND/);

@@ -6,7 +6,34 @@ const { normalizeChannelMedia, publicMediaUrl } = require('../src/lib/project-ch
 const { withChannelQuery } = require('../src/lib/project-channel/links.ts');
 const { publicPost } = require('../src/lib/post/publicPost.ts');
 const { generateCaption } = require('../src/lib/instagram/campaign/generateCaptions.ts');
+const { selectHeroQuotes } = require('../src/lib/project-channel/heroQuotes.ts');
 const tile = (id, kind = 'space', extra = {}) => ({ id, kind, title: id, imageUrl: `https://cdn.example.com/${id}.jpg`, href: '/p/fixture/feature', ...extra });
+
+test('hero quotations use only the selected verbatim line and its exact room photos', () => {
+  const room = (id, quote, additional = []) => ({ heroImage: { id }, additionalImages: additional.map(id => ({ id })), pullQuoteSelection: quote });
+  const rooms = [
+    room('legacy', 'A saved legacy quotation.', ['supporting']),
+    room('selected', { selected: { text: '  Preserve every approved word.  ' }, alternatives: [{ text: 'UNSELECTED' }] }),
+    room('folio', { authorship: 'folio', selected: { text: 'Inactive verbatim choice' }, folio: { selected: { text: 'Editorial rewrite' } } }),
+    room('empty', { selected: null, alternatives: [{ text: 'UNSELECTED' }] }),
+    room('long', 'L'.repeat(181)), room('blank', '  '),
+    room('ambiguous', 'First room quote'), room('ambiguous', 'Different room quote'),
+    room('not-in-slideshow', 'Unavailable photo quote'),
+  ];
+  const ids = ['legacy', 'supporting', 'selected', 'folio', 'empty', 'long', 'blank', 'ambiguous', 'unmapped'];
+  const before = structuredClone(rooms);
+  assert.deepEqual([...selectHeroQuotes(ids.map(id => ({ id })), rooms)], [
+    ['legacy', 'A saved legacy quotation.'], ['supporting', 'A saved legacy quotation.'], ['selected', '  Preserve every approved word.  '],
+  ]);
+  assert.deepEqual(rooms, before);
+  assert.equal(selectHeroQuotes(ids.map(id => ({ id })), []).size, 0, 'No story means no quotation');
+});
+
+test('hero teasers keep three distinct quotes in slideshow order, including matching supporting photos', () => {
+  const rooms = ['a','b','c','d'].map(id => ({ heroImage: {id}, additionalImages: [{id: id + '-support'}], pullQuoteSelection: `Approved ${id}.` }));
+  const result = selectHeroQuotes(['d','b','a','c','d-support'].map(id => ({id})), rooms);
+  assert.deepEqual([...result], [['d','Approved d.'],['b','Approved b.'],['a','Approved a.'],['d-support','Approved d.']]);
+});
 
 test('visual media leads; a published feature stays second even among 30 videos', () => {
   const input = [tile('feature', 'feature'), ...Array.from({ length: 30 }, (_, i) => tile(`video-${i}`, 'media')), tile('room')];

@@ -1474,3 +1474,12 @@ Review: full production build, repository lint, unchanged TypeScript diagnostic 
 - [x] Prepare an isolated feature branch with before/after screenshots and a review report; no merge or deployment.
 
 Review: `docs/reviews/editorial-design-tokens.md`. The TypeScript baseline remains 846 with no additions. Parent/candidate checks preserve content order, links, tile row placement and utility frames. Existing dark label contrast and 320px designer-header overflow are documented separately. PR targets the cinematic branch so its ongoing work stays intact.
+
+# Project-channel interview teasers — 2026-11-16
+
+- [x] Inspect current main, published quote authorship, room/photo associations and site theme ownership.
+- [x] Pair up to three short selected designer quotations with the existing slideshow's relevant photos; keep portfolio projects unchanged.
+- [x] Preserve steady title/actions, appearance, publication gates, photo links, reduced motion and pause controls.
+- [x] Verify quote selection/fallbacks and synchronized desktop/mobile behavior; record review evidence and prepare the feature branch for PR review.
+
+Review: `docs/reviews/project-channel-quote-teasers.md` includes the public-photo light/dark previews, selection rules, verification evidence and limits. No merge or deployment.

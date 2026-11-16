@@ -1,9 +1,17 @@
 'use client';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 import SafeImage from '@/components/SafeImage';
 import styles from './ProjectChannelHeroPhotos.module.css';
+import channel from './ProjectChannel.module.css';
 
-export function ProjectChannelHeroPhotos({ images, title }: { images: { id: string; url: string }[]; title: string }) {
+export function ProjectChannelHeroPhotos({ images, title, attribution, description, heading, footer }: {
+  images: { id: string; url: string; quote?: string }[];
+  title: string;
+  attribution: string | null;
+  description?: string | null;
+  heading: ReactNode;
+  footer: ReactNode;
+}) {
   const [index, setIndex] = useState(0);
   const [previous, setPrevious] = useState<number | null>(null);
   const [loaded, setLoaded] = useState<Set<string>>(() => new Set());
@@ -11,6 +19,9 @@ export function ProjectChannelHeroPhotos({ images, title }: { images: { id: stri
   const [paused, setPaused] = useState(false);
   const [hidden, setHidden] = useState(false);
   const [reduced, setReduced] = useState(false);
+  const [hovered, setHovered] = useState(false);
+  const [focused, setFocused] = useState(false);
+  const hasQuotes = images.some(image => image.quote);
   useEffect(() => {
     const preference = window.matchMedia('(prefers-reduced-motion: reduce)');
     const sync = () => { setReduced(preference.matches); setHidden(document.hidden); };
@@ -25,13 +36,16 @@ export function ProjectChannelHeroPhotos({ images, title }: { images: { id: stri
     if (!failed.has(images[candidate].url)) { next = candidate; break; }
   }
   const canAdvance = next !== index && loaded.has(images[next]?.url);
+  const stopped = paused || reduced || hidden || (hasQuotes && (hovered || focused));
   useEffect(() => {
-    if (!canAdvance || paused || reduced || hidden) return;
+    if (!canAdvance || stopped) return;
     const timer = setTimeout(() => { setPrevious(index); setIndex(next); }, 7000);
     return () => clearTimeout(timer);
-  }, [canAdvance, index, next, paused, reduced, hidden]);
-  const stopped = paused || reduced || hidden;
-  return <>
+  }, [canAdvance, index, next, stopped]);
+  return <section className={channel.hero} aria-label={title}
+    onMouseEnter={hasQuotes ? () => setHovered(true) : undefined} onMouseLeave={hasQuotes ? () => setHovered(false) : undefined}
+    onFocusCapture={hasQuotes ? () => setFocused(true) : undefined}
+    onBlurCapture={hasQuotes ? event => { if (!event.currentTarget.contains(event.relatedTarget)) setFocused(false); } : undefined}>
     <div aria-hidden="true" className="absolute inset-0" data-hero-index={index}>
       {images.map((image, i) => {
         // Load one ahead. Retain decoded layers (at most five) so no-store photo
@@ -50,5 +64,19 @@ export function ProjectChannelHeroPhotos({ images, title }: { images: { id: stri
       className="absolute right-5 top-5 z-10 min-h-11 rounded-full border border-[var(--folio-border-subtle)] bg-[var(--surface-canvas)] px-4 text-xs text-[var(--folio-text-primary)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4">
       {paused ? 'Resume photographs' : 'Pause photographs'}
     </button>}
-  </>;
+    <div aria-hidden="true" className={channel.heroShade} />
+    <div className={channel.heroContent}>
+      {heading}
+      {hasQuotes ? <div className={channel.heroCopy} aria-live="off">
+        {/* Grid layers reserve the tallest copy so the title and actions stay still. */}
+        {description && <p className={`${channel.deck} ${channel.copyLayer}`} data-active={!images[index]?.quote} aria-hidden={Boolean(images[index]?.quote)}>{description}</p>}
+        {images.map((image, i) => image.quote ? <figure key={image.id} className={`${channel.quote} ${channel.copyLayer}`}
+          data-hero-quote={image.id} data-active={index === i} aria-hidden={index !== i}>
+          <blockquote>“{image.quote}”</blockquote>
+          <figcaption>{attribution ? `— ${attribution}, from the Folio Feature` : 'From the Folio Feature'}</figcaption>
+        </figure> : null)}
+      </div> : description ? <p className={channel.deck}>{description}</p> : null}
+      {footer}
+    </div>
+  </section>;
 }
