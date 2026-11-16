@@ -95,7 +95,7 @@ export function BoostReel({ items, totalTagged, postSlug }: Props) {
 
   return (
     <>
-      <div className="sm:hidden flex items-center justify-between gap-4 border-t border-folio-border-subtle pt-4 mb-3">
+      <div className="sm:hidden flex items-center justify-between gap-4 border-t border-editorial-rule pt-4 mb-3">
         <h2 className="font-serif text-xl">In this project</h2>
         <Link href={`/p/${postSlug}#tagged-products`} className="text-sm min-h-11 inline-flex items-center">View all <span aria-hidden className="ml-2">→</span></Link>
       </div>

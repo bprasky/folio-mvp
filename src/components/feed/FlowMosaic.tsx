@@ -130,10 +130,8 @@ export default function FlowMosaic({ events, canEdit = false, preserveOrder = fa
   return (
     <div
       className={clsx(
-        "grid grid-flow-dense gap-3",
-        "grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-6",
-        // force consistent row units so rowSpan works reliably
-        "auto-rows-[8px]"
+        "grid grid-flow-dense folio-editorial-microgrid",
+        "grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-6"
       )}
     >
       {sized.map(({ item, size }) => {
@@ -145,13 +143,13 @@ export default function FlowMosaic({ events, canEdit = false, preserveOrder = fa
           <article
             key={item.id}
             className={clsx(
-              "group relative rounded-[20px] overflow-hidden",
+              "group relative rounded-editorial overflow-hidden",
               events.length === 1 ? "col-span-full" : events.length === 2 ? "col-span-1 lg:col-span-2 xl:col-span-3" : className
             )}
             style={{ gridRowEnd: `span ${rowSpan}` }}
           >
             {onSelect ? <button type="button" disabled={disabled} onClick={() => onSelect(item.id)}
-              className="absolute inset-0 z-30 block w-full rounded-[20px] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-4px] focus-visible:outline-white"
+              className="absolute inset-0 z-30 block w-full rounded-[inherit] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-4px] focus-visible:outline-white"
               aria-label={`${item.title}: ${item.actionLabel || 'Open project'}`} data-testid="mosaic-card-link" />
               : href && <Link href={href} className="absolute inset-0 z-30 block" aria-label={item.title ?? "View event"} data-testid="mosaic-card-link" />}
             <div className="relative h-full">

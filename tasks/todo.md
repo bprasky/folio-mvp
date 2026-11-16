@@ -1464,3 +1464,13 @@ Plan check-in: keep the existing feature flag, global appearance initialization 
 
 
 Review: full production build, repository lint, unchanged TypeScript diagnostic budget, design-system/client/migration guards, privacy and publication suites pass. Chromium verifies light/dark persistence, OS independence, 320–1440px layouts, exact feature photo/product links and portfolio focus/return. Real public Boca Raton photography is included in the local review screenshots. See docs/reviews/project-channel-cinematic.md for evidence and limits; two disposable-database core checks remain skipped. No merge or deployment.
+
+# Shared editorial design tokens — 2026-11-16
+
+- [x] Audit the actual styling architecture and receive approval for scoped values.
+- [x] Implement opt-in 6px card / 8px hero corners, compensated 10px mosaic gaps, shared 16/32px homepage gutters and 70% decorative rules.
+- [x] Preserve the cinematic project-channel work, layout/ranking, theme selection, controls and navigation.
+- [x] Verify 48 parent/candidate component cases at 320/390/768/1440px in light/dark, plus existing channel/profile/navigation suites, build, lint, TypeScript and discipline guards.
+- [x] Prepare an isolated feature branch with before/after screenshots and a review report; no merge or deployment.
+
+Review: `docs/reviews/editorial-design-tokens.md`. The TypeScript baseline remains 846 with no additions. Parent/candidate checks preserve content order, links, tile row placement and utility frames. Existing dark label contrast and 320px designer-header overflow are documented separately. PR targets the cinematic branch so its ongoing work stays intact.

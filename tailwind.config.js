@@ -10,6 +10,9 @@ module.exports = {
   theme: {
     extend: {
       colors: {
+        editorial: {
+          rule: 'var(--editorial-rule)',
+        },
         // ========================================
         // CANONICAL FOLIO SURFACE PALETTE
         // ========================================
@@ -142,6 +145,8 @@ module.exports = {
         },
       },
       borderRadius: {
+        editorial: 'var(--editorial-radius-card)',
+        'editorial-hero': 'var(--editorial-radius-hero)',
         xl: '1.25rem',
         '2xl':'1.75rem',
         mdx: '10px',
@@ -230,4 +235,4 @@ module.exports = {
     { pattern: /col-span-(1|2|3|4|5|6)/ }
   ],
   plugins: [],
-}; 
+};

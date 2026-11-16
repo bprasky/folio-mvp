@@ -40,12 +40,12 @@ function assignSizes(products: ProfileProduct[]): { item: ProfileProduct; size: 
   return out;
 }
 
-const rowUnit = 8;
+// Row pitch is shared with the discovery mosaics.
 
 function spanFor(size: Size) {
-  if (size === 'L') return { colSpan: 2, rowSpan: 30 }; // ~240px
-  if (size === 'M') return { colSpan: 2, rowSpan: 24 }; // ~192px
-  return { colSpan: 1, rowSpan: 20 }; // ~160px
+  if (size === 'L') return { colSpan: 2, rowSpan: 30 };
+  if (size === 'M') return { colSpan: 2, rowSpan: 24 };
+  return { colSpan: 1, rowSpan: 20 };
 }
 
 /* ─── Category labels ─── */
@@ -127,7 +127,7 @@ export default function ShopFeed({ products }: ShopFeedProps) {
       )}
 
       {/* FlowMosaic-style grid */}
-      <div className="grid grid-flow-dense gap-3 grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 auto-rows-[8px]">
+      <div className="grid grid-flow-dense folio-editorial-microgrid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4">
         {sized.map(({ item, size }) => {
           const { colSpan, rowSpan } = spanFor(size);
           const displayImage = item.cropUrl || item.imageUrl || '';
@@ -135,7 +135,7 @@ export default function ShopFeed({ products }: ShopFeedProps) {
           return (
             <article
               key={item.id}
-              className={`group relative rounded-[20px] overflow-hidden cursor-pointer col-span-${colSpan}`}
+              className={`group relative rounded-editorial overflow-hidden cursor-pointer col-span-${colSpan}`}
               style={{ gridRowEnd: `span ${rowSpan}` }}
               onClick={() => setSelectedProduct(item)}
             >
