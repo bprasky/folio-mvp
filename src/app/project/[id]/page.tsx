@@ -6,6 +6,9 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { notFound, redirect } from 'next/navigation';
 import { projectChannelHref, withChannelQuery, type ChannelSearchParams } from '@/lib/project-channel/links';
+import { getPublicPortfolio } from '@/lib/project-channel/getPublicPortfolio';
+import { canPreviewProjectShop } from '@/lib/project-channel/access';
+import { ProjectChannelLanding } from '@/components/story/ProjectChannelLanding';
 import Link from 'next/link';
 import ProjectTabs from './ProjectTabs';
 import MediaSection from './MediaSection';
@@ -176,14 +179,17 @@ export default async function ProjectPage({
       try { await assertProjectView(viewerId, params.id); workspaceAccess = true; }
       catch (error) { if (!(error instanceof Error) || !['Forbidden', 'NotFound'].includes(error.message)) throw error; }
     }
-    if (!workspaceAccess) {
+    if (!workspaceAccess || searchParams.view === 'public') {
       const published = await prisma.projectPost.findFirst({
         where: { projectId: params.id, status: 'PUBLISHED', project: { isPublic: true } },
         select: { slug: true },
       });
-      if (!published) notFound();
       const publicQuery = Object.fromEntries(Object.entries(searchParams).filter(([key]) => !['view', 'step', 'manual', 'expertiseTopic', 'expertiseProjects'].includes(key)));
-      redirect(withChannelQuery(projectChannelHref(published.slug), publicQuery));
+      if (published) redirect(withChannelQuery(projectChannelHref(published.slug), publicQuery));
+      const project = await getPublicPortfolio(params.id);
+      if (!project) notFound();
+      const ownerView = await canPreviewProjectShop(project.id, viewerId);
+      return <ProjectChannelLanding post={{ project }} ownerView={ownerView} />;
     }
   }
 
@@ -557,6 +563,11 @@ export default async function ProjectPage({
           project={sanitizedProject}
           editorialState={editorialState}
         />
+        {process.env.FOLIO_EDITORIAL_CHANNELS === 'true' && base.isPublic && base.publishedAt && !isPublished && (
+          <Link href={`/project/${encodeURIComponent(base.id)}?view=public`} className="inline-block mb-4 folio-ui underline underline-offset-4">
+            View public project
+          </Link>
+        )}
         {isPublished && !isProjectHome && (
           <Link href={`/project/${base.id}`} className="inline-block mb-4 folio-ui underline underline-offset-4">
             Back to project home

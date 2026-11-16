@@ -49,6 +49,7 @@ function Publication({ post }: StoryRendererProps) {
 
   // Deep link params
   const autoExpandRoom = searchParams?.get("room") ?? null;
+  const autoPhotoId = searchParams?.get("photo") ?? null;
   const autoProductId = searchParams?.get("product") ?? null;
   const refSource = searchParams?.get("ref") ?? null;
 
@@ -101,6 +102,7 @@ function Publication({ post }: StoryRendererProps) {
         presentation={post.expandedBlocks?.presentation}
         onProductClick={handleProductClick}
         autoExpandRoom={autoExpandRoom}
+        autoPhotoId={autoPhotoId}
         onEntered={handleEntered}
       />
 

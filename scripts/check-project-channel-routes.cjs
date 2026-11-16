@@ -6,7 +6,7 @@ const ts = require('typescript');
 const React = require('react');
 const { renderToStaticMarkup } = require('react-dom/server');
 const root = path.resolve(__dirname, '..');
-let session = null, post, modules, membership = null, workspace = false;
+let session = null, post, modules, portfolio = null, membership = null, workspace = false;
 const queries = [];
 const fail = type => { throw new Error(type); };
 const navigation = { notFound: () => fail('NOT_FOUND'), redirect: href => fail(`REDIRECT:${href}`), useSearchParams: () => new URLSearchParams() };
@@ -29,7 +29,16 @@ const prisma = {
       return post?.status === 'PUBLISHED' && post.project.isPublic && query.where.projectId === post.projectId ? { slug: post.slug } : null;
     },
   },
-  project: { findUnique: async query => {
+  project: { findFirst: async query => {
+    queries.push(query);
+    assert.equal(query.where.isPublic, true);
+    assert.ok(query.where.publishedAt.lte instanceof Date);
+    assert.deepEqual(query.select.images.where, { inclusion: 'INCLUDED' });
+    assert.equal(query.select.post, undefined, 'Never select private editorial data for a portfolio');
+    assert.equal(query.select.images.select.tags, undefined, 'Portfolio DTO contains no raw product data');
+    if (!portfolio || portfolio.id !== query.where.id || !portfolio.isPublic || !portfolio.publishedAt || portfolio.publishedAt > query.where.publishedAt.lte) return null;
+    return Object.fromEntries(Object.entries({ ...portfolio, images: portfolio.images.filter(i => i.inclusion === 'INCLUDED').map(({ inclusion, ...image }) => image) }).filter(([key]) => query.select[key]));
+  }, findUnique: async query => {
     if (query.select.title) fail('WORKSPACE_REACHED');
     return { ownerId: 'owner', designerId: 'designer', designerOrgId: 'firm' };
   } },
@@ -61,6 +70,7 @@ function load(relative) {
   const mod = { exports: {} }; cache.set(file, mod);
   const code = ts.transpileModule(fs.readFileSync(file, 'utf8'), { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022, jsx: ts.JsxEmit.ReactJSX, esModuleInterop: true } }).outputText;
   const importer = name => {
+    if (name.endsWith('.module.css')) return { __esModule: true, default: new Proxy({}, { get: (_, key) => String(key) }) };
     if (name === 'next/navigation') return navigation;
     if (name === 'next-auth') return { getServerSession: async () => session };
     if (name.includes('authOptions') || name.includes('/options') || name === '@/lib/auth') return { authOptions: {} };
@@ -74,7 +84,7 @@ function load(relative) {
     if (name.endsWith('/SafeImage')) return { __esModule: true, default: ({ fill, priority, unoptimized, ...props }) => React.createElement('img', props) };
     if (name.includes('ProjectChannelHeroPhotos') || name.includes('ProjectChannelShareTracking')) return emptyImports;
     if (name.includes('StoryRenderer')) return { StoryRenderer: ({ post: p }) => React.createElement('div', { 'data-original-post': p.id }, p.expandedBlocks.introduction.join(' ')) };
-    if (file.endsWith('/src/app/project/[id]/page.tsx') && !name.startsWith('@/lib/project-channel/') && (name.startsWith('.') || name.startsWith('@/'))) return emptyImports;
+    if (file.replaceAll('\\', '/').endsWith('/src/app/project/[id]/page.tsx') && !name.startsWith('@/lib/project-channel/') && !name.includes('ProjectChannelLanding') && (name.startsWith('.') || name.startsWith('@/'))) return emptyImports;
     if (name.startsWith('@/lib/project-channel/') || name.startsWith('@/lib/post/') || name.startsWith('@/lib/story/presentation') || name.startsWith('@/components/story/ProjectChannel')) return load(name.replace('@/', 'src/'));
     if (name.startsWith('@/')) return load(name.replace('@/', 'src/'));
     if (name.startsWith('.')) return load(path.resolve(path.dirname(file), name));
@@ -91,7 +101,7 @@ const publicApi = load('src/app/api/posting/[slug]/route.ts');
 const og = load('src/app/api/og/project/[slug]/route.tsx');
 const { canPreviewProjectShop } = load('src/lib/project-channel/access.ts');
 function reset() {
-  session = null; membership = null; workspace = false; queries.length = 0;
+  session = null; membership = null; workspace = false; portfolio = null; queries.length = 0;
   post = { id: 'original-post', projectId: 'project', slug: 'house', status: 'PUBLISHED', heroAssetId: 'photo2', excerpt: 'Original deck',
     privateNotes: 'SECRET_NOTE', credits: [], expandedBlocks: { introduction: ['Original introduction'], headline: 'Original headline', lead: { title: 'Original headline' }, galleryChapters: [], credits: [{ name: ' Alice ', role: 'Architect' }, { name: 'Alice', role: 'Architect' }, { name: '  ' }, { name: 'Bob', url: 'javascript:alert(1)' }] },
     project: { id: 'project', isPublic: true, title: 'House', images: [
@@ -174,6 +184,25 @@ function reset() {
   const metadata = await feature.generateMetadata({ params: { slug: 'house' } });
   assert.equal(metadata.alternates.canonical, 'https://folioad.com/p/house/feature');
   console.log('PASS flag rollback, legacy visitor redirect, member workspace preservation, deep links, attribution and feature metadata');
+
+  reset(); post.status = 'DRAFT';
+  portfolio = { ...post.project, publishedAt: new Date(0), privateNotes: 'SECRET_PORTFOLIO', post };
+  const portfolioHtml = renderToStaticMarkup(await legacy.default({ params: { id: 'project' }, searchParams: {} }));
+  assert.match(portfolioHtml, /aria-haspopup="dialog"/);
+  assert.equal((portfolioHtml.match(/data-kind="space"/g) || []).length, 2);
+  assert.doesNotMatch(portfolioHtml, /Read the Folio Feature|Original headline|SECRET|EXCLUDED|Coming Soon|data-kind="feature"|data-kind="media"/);
+  for (const patch of [{ isPublic: false }, { publishedAt: null }, { publishedAt: new Date(Date.now() + 86400000) }]) {
+    const saved = portfolio; portfolio = { ...portfolio, ...patch };
+    await assert.rejects(legacy.default({ params: { id: 'project' }, searchParams: { ownerView: 'true', view: 'public' } }), /NOT_FOUND/);
+    portfolio = saved;
+  }
+  session = { user: { id: 'owner' } }; workspace = true;
+  assert.match(renderToStaticMarkup(await legacy.default({ params: { id: 'project' }, searchParams: { view: 'public' } })), /Coming Soon/);
+  await assert.rejects(legacy.default({ params: { id: 'project' }, searchParams: {} }), /WORKSPACE_REACHED/);
+  post.status = 'PUBLISHED';
+  await assert.rejects(legacy.default({ params: { id: 'project' }, searchParams: { view: 'public', photo: 'photo2', ref: ['a', 'b'] } }), /REDIRECT:\/p\/house\?photo=photo2&ref=a&ref=b/);
+  await assert.rejects(page.default({ params: { slug: 'house' }, searchParams: { photo: 'photo2' } }), /REDIRECT:\/p\/house\/feature\?photo=photo2/);
+  console.log('PASS public portfolio without editorial leakage, included images only, private/unpublished/future gates, owner preview, workspace preservation and later feature upgrade');
 
   reset();
   modules[0].privateNotes = 'SECRET_RAW_MODULE';

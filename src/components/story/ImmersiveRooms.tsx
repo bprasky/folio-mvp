@@ -14,8 +14,8 @@ import { PublicationIntroduction } from './PublicationIntroduction';
 import { usePublicationEntry } from './usePublicationEntry';
 import styles from './ImmersiveRooms.module.css';
 
-export function ImmersiveRooms({ story, projectName, presentation, autoExpandRoom, onProductClick, onEntered }: {
-  story: StoryData; projectName: string; presentation: unknown; autoExpandRoom?: string | null; onProductClick: (product: any) => void; onEntered?: () => void;
+export function ImmersiveRooms({ story, projectName, presentation, autoExpandRoom, autoPhotoId, onProductClick, onEntered }: {
+  story: StoryData; projectName: string; presentation: unknown; autoExpandRoom?: string | null; autoPhotoId?: string | null; onProductClick: (product: any) => void; onEntered?: () => void;
 }) {
   const edit = useStoryEdit();
   const serialized = JSON.stringify(readPresentation(presentation));
@@ -82,12 +82,25 @@ export function ImmersiveRooms({ story, projectName, presentation, autoExpandRoo
     else if (galleryPhoto) galleryButtons.current.get(galleryPhoto.image.id)?.focus({ preventScroll: true });
   }, [clean, galleryPhoto]);
   useEffect(() => {
-    if (!ready || !autoExpandRoom || deepLinked.current === autoExpandRoom) return;
-    const found = slides.find(candidate => candidate.kind === 'story'
+    const key = JSON.stringify([autoExpandRoom, autoPhotoId]);
+    if ((!autoExpandRoom && !autoPhotoId) || deepLinked.current === key) return;
+    // Photo identity wins when a room has several images or shares a gallery slide.
+    const byPhoto = autoPhotoId ? slides.find(candidate => candidate.kind === 'story'
+      ? [candidate.room.heroImage, ...candidate.room.additionalImages].some(photo => photo.id === autoPhotoId)
+      : candidate.photos.some(photo => photo.image.id === autoPhotoId)) : undefined;
+    const found = byPhoto || (autoExpandRoom ? slides.find(candidate => candidate.kind === 'story'
       ? candidate.room.roomSlug === autoExpandRoom || candidate.room.roomId === autoExpandRoom
-      : candidate.photos.some(photo => photo.room.roomSlug === autoExpandRoom || photo.room.roomId === autoExpandRoom));
-    if (found) { setSelectedId(found.id); setReading(found.kind === 'story'); deepLinked.current = autoExpandRoom; }
-  }, [ready, autoExpandRoom, slides]);
+      : candidate.photos.some(photo => photo.room.roomSlug === autoExpandRoom || photo.room.roomId === autoExpandRoom)) : undefined);
+    if (!found) return;
+    // A valid direct link is already an invitation to enter this room.
+    if (!ready) { begin(); return; }
+    setSelectedId(found.id);
+    setPhotoIndex(found.kind === 'story' ? Math.max(0, [found.room.heroImage, ...found.room.additionalImages].findIndex(photo => photo.id === autoPhotoId)) : 0);
+    setGalleryPhoto(found.kind === 'gallery' && byPhoto ? found.photos.find(photo => photo.image.id === autoPhotoId) ?? null : null);
+    setClean(found.kind === 'gallery' && !!byPhoto);
+    setReading(found.kind === 'story');
+    deepLinked.current = key;
+  }, [ready, autoExpandRoom, autoPhotoId, slides, begin]);
 
   function select(nextIndex: number) {
     if (!ready || edit?.anyFieldOpen || nextIndex < -1 || nextIndex >= slides.length) return;
@@ -104,7 +117,7 @@ export function ImmersiveRooms({ story, projectName, presentation, autoExpandRoo
   return <section className={styles.shell} aria-label={`${projectName} publication`}
     style={{ '--room-bg': tokens.background, '--room-ink': tokens.text, '--room-glass': tokens.glass, '--photo-aspect': aspect } as CSSProperties}>
     <PublicationControls rooms={story.roomTiles} value={preferences} saved={saved} onChange={setPreferences} />
-    <div ref={canvas} tabIndex={-1} data-publication-phase={phase} data-publication-reading={reading} className={[styles.canvas, clean ? styles.clean : '', slide?.kind === 'gallery' ? styles.galleryMode : '', cover ? styles.cover : ''].join(' ')}
+    <div ref={canvas} tabIndex={-1} data-publication-phase={phase} data-publication-photo={image.id} data-publication-reading={reading} className={[styles.canvas, clean ? styles.clean : '', slide?.kind === 'gallery' ? styles.galleryMode : '', cover ? styles.cover : ''].join(' ')}
       style={{ '--photo-end': `${photoWidth}px`, '--photo-left': `${mobile && !clean ? (dimensions.width - photoWidth) / 2 : 0}px`, '--photo-height': `${photoHeight}px`, '--arrow-y': `${Math.max(100, photoHeight * .5)}px`, '--mobile-quote-size': quote && quote.length > 180 ? '20px' : '25px' } as CSSProperties}
       onClickCapture={event => { if (Date.now() < suppressClickUntil.current) { event.preventDefault(); event.stopPropagation(); } }}
       onKeyDown={event => {
