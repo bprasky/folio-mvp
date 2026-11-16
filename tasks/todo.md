@@ -1,12 +1,21 @@
 # Publication reader refresh - 2026-11-16
 
 - [x] Review the current article and approved desktop, portrait and square renders.
-- [ ] Replace dark blurred framing with sharp photography, an ivory reading surface and compact navigation.
-- [ ] Preserve room/photo links, quotations, editing, products and saved ordering/accent choices.
-- [ ] Verify responsive geometry, long-form reading and existing behavior; run source guards and TypeScript checks.
-- [ ] Push the scoped change for review and record verification limits.
+- [x] Replace dark blurred framing with sharp photography, an ivory reading surface and compact navigation.
+- [x] Preserve room/photo links, quotations, editing, products and saved ordering/accent choices.
+- [x] Verify responsive geometry, long-form reading and existing behavior; run source guards and TypeScript checks.
+- [x] Push the scoped change for review and record verification limits.
 
-Plan: improve the existing reader without changing publication data or authorization. Keep photos uncropped in the reader, use a side column on desktop and document-flow reading on phones. Existing saved accents become a subtle paper tint; social export remains unchanged. Main verified at 94ab0d6958a33bade7fb1bb89a7611fb1c5d1ed2 using GitHub because local Git metadata is outside this workspace.
+Plan: improve the existing reader without changing publication data or authorization. Keep photos uncropped in the reader, use a side column on desktop and document-flow reading on phones. Existing saved accents become a subtle paper tint; social export remains unchanged. The branch is based on main 89abb11e after the interview update; its task notes are preserved. GitHub supplies source operations because local Git metadata is outside this workspace.
+
+
+### Review
+
+Implemented in PR #859. Removed duplicated blurred images, photo washes and glass reading cards; made the reader and compact masthead ivory, with sharp uncropped photos, restrained typography and a smaller room strip. Phones and portrait tablets use document-flow reading. Saved accent choices provide a subtle paper tint; the existing export renderer remains unchanged. Thumbnail-strip gestures no longer advance the room, and Escape restores an expanded article after viewing its full photo.
+
+Verified source 81bbccfb: CI production compile and the new Chromium suite pass all 18 viewport/photo-shape combinations, including the real masthead, long articles, photo/gallery controls, saved accents and restoration of the app theme. Local publication entry/editing and 24 presentation tests, TypeScript ratchet (846 existing, no new diagnostics), scoped lint, client and migration guards pass. Hosted design, quote, record, mobile layout, lint and disposable-database guards passed; remaining broad regression jobs were still running at documentation time.
+
+Local full build was blocked by OneDrive filesystem permissions. Local browser launch also failed, and Computer Use stopped because it could not verify Chrome's URL; browser assertions were therefore verified in hosted Chromium. No production records, schema, merge or deployment were changed.
 
 ---
 # Forgiving hybrid interview answers — 2026-11-05
