@@ -32,7 +32,7 @@ export function ImmersiveRooms({ story, projectName, presentation, autoExpandRoo
   const [galleryPhoto, setGalleryPhoto] = useState<RoomPhoto | null>(null);
   const [reading, setReading] = useState(false);
   const [clean, setClean] = useState(false);
-  const [dimensions, setDimensions] = useState({ width: 1100, height: 620 });
+  const [width, setWidth] = useState(1100);
   const [aspect, setAspect] = useState(1.5);
   const canvas = useRef<HTMLDivElement>(null);
   const reader = useRef<HTMLDivElement>(null);
@@ -53,14 +53,14 @@ export function ImmersiveRooms({ story, projectName, presentation, autoExpandRoo
   // Keep the photograph and label stacked until the reader has enough room
   // for the desktop text column, including wide phones and portrait tablets.
   // Match the container breakpoint in ImmersiveRooms.module.css.
-  const mobile = dimensions.width <= 800;
+  const mobile = width <= 800;
   const { phase, begin, suppressClickUntil } = usePublicationEntry(canvas, mobile, onEntered);
   const ready = phase === 'ready';
 
   useEffect(() => {
     const target = canvas.current;
     if (!target) return;
-    const observer = new ResizeObserver(([entry]) => setDimensions({ width: entry.contentRect.width, height: entry.contentRect.height }));
+    const observer = new ResizeObserver(([entry]) => setWidth(entry.contentRect.width));
     observer.observe(target); return () => observer.disconnect();
   }, []);
   useEffect(() => {
@@ -119,7 +119,12 @@ export function ImmersiveRooms({ story, projectName, presentation, autoExpandRoo
           event.preventDefault(); select(index + (event.key === 'ArrowRight' ? 1 : -1));
         }
       }}
-      onTouchStart={event => { swipeEnded.current = false; const touch = event.touches[0]; touchStart.current = { x: touch.clientX, y: touch.clientY, gated: !ready }; }}
+      onTouchStart={event => {
+        swipeEnded.current = false;
+        // Scrolling the room strip must not also advance the publication.
+        if ((event.target as HTMLElement).closest('[aria-label="All rooms"],select')) { touchStart.current = null; return; }
+        const touch = event.touches[0]; touchStart.current = { x: touch.clientX, y: touch.clientY, gated: !ready };
+      }}
       onTouchCancel={() => { touchStart.current = null; }}
       onTouchEnd={event => {
         if (!ready || !touchStart.current || touchStart.current.gated || reading || clean) return;
