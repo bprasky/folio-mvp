@@ -3,6 +3,8 @@ import { prisma } from '@/lib/prisma';
 import { assertProjectWrite, assertProjectPublish, assertProjectUnpublish } from '@/lib/authz/access';
 import { computePublishReadiness, isDocumentImage } from '@/lib/publish/computePublishReadiness';
 import { makeSlug } from '@/lib/posting/slug';
+import { editorialProjectVisibility } from '@/lib/publish/portfolioVisibility';
+import { requestIdentity } from '@/lib/persistence/requestIdentity';
 
 export type EditorialAction = 'submit' | 'approve' | 'reject' | 'publish' | 'unpublish' | 'archive';
 
@@ -102,14 +104,13 @@ export async function transitionEditorial(input: {
           // Older writers could leave visibility out of sync. An authorized
           // retry restores the same result without changing review identity or
           // the post's original publication timestamp.
-          const project = await tx.project.findUniqueOrThrow({ where: { id: projectId }, select: { isPublic: true, publishedAt: true, status: true } });
+          const project = await tx.project.findUniqueOrThrow({ where: { id: projectId }, select: { isPublic: true, publishedAt: true, status: true, portfolioPublishedAt: true } });
           const publishing = targets[action] === 'PUBLISHED';
-          if (!publishing && project.isPublic && !mayHidePublicProject) throw new EditorialError(403, 'Publishing permission required');
-          const projectStatus = publishing ? 'published' : 'draft';
-          if (project.isPublic !== publishing || project.status !== projectStatus || (!publishing && project.publishedAt)) {
+          const visibility = editorialProjectVisibility(project, publishing, post.publishedAt ?? new Date());
+          if (!visibility.isPublic && project.isPublic && !mayHidePublicProject) throw new EditorialError(403, 'Publishing permission required');
+          if (project.isPublic !== visibility.isPublic || project.status !== visibility.status || project.publishedAt?.getTime() !== visibility.publishedAt?.getTime()) {
             await tx.project.update({ where: { id: projectId }, data: {
-              isPublic: publishing, status: projectStatus,
-              publishedAt: publishing ? project.publishedAt ?? post.publishedAt ?? new Date() : null,
+              ...visibility,
             } });
           }
           return { ...post, changed: false };
@@ -128,7 +129,7 @@ export async function transitionEditorial(input: {
           include: { images: { orderBy: { createdAt: 'desc' }, include: { tags: { select: { productId: true } } } }, designer: { select: { name: true } } },
         });
         const blocks = jsonObject(post.expandedBlocks);
-        if (!publishing && project.isPublic && !mayHidePublicProject) {
+        if (!publishing && project.isPublic && !project.portfolioPublishedAt && !mayHidePublicProject) {
           throw new EditorialError(403, 'Publishing permission is required to withdraw this public project for review');
         }
         const chapters = Array.isArray(blocks.galleryChapters) ? blocks.galleryChapters.map(jsonObject) : [];
@@ -144,7 +145,7 @@ export async function transitionEditorial(input: {
         if ((publishing || action === 'submit') && !post.expandedBlocks) {
           throw new EditorialError(422, 'Generate the editorial content first');
         }
-        if (publishing && !project.isPublic) {
+        if (publishing && (!project.isPublic || project.portfolioPublishedAt)) {
           const readiness = computePublishReadiness({
             photos: project.images.filter(image => !isDocumentImage(image.name))
               .map(image => ({ ...image, tagCount: image.tags.length })),
@@ -189,7 +190,10 @@ export async function transitionEditorial(input: {
         if (write.count !== 1) throw new EditorialError(409, 'The post changed. Reload and try again.');
         await tx.project.update({
           where: { id: projectId },
-          data: { isPublic: publishing, publishedAt: publishing ? project.publishedAt ?? now : null, status: publishing ? 'published' : 'draft' },
+          data: editorialProjectVisibility(project, publishing, now),
+        });
+        if (publishing && project.portfolioPublishedAt) await tx.notification.updateMany({
+          where: { id: requestIdentity('portfolio-interview', [projectId]), read: false }, data: { read: true, readAt: now },
         });
         return { ...await tx.projectPost.findUniqueOrThrow({ where: { projectId } }), changed: true };
       }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable });

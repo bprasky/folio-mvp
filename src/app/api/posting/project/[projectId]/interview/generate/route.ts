@@ -1,3 +1,4 @@
+import { editorialProjectVisibility } from '@/lib/publish/portfolioVisibility';
 import { legacyInterviewBoundary } from '@/lib/spotlight/legacyBoundary';
 import { stripPrivateInterviewData } from '@/lib/spotlight/privacy';
 export const dynamic = 'force-dynamic';
@@ -509,7 +510,7 @@ export async function POST(
     if (post?.status === 'REVIEW' || post?.status === 'ARCHIVED') {
       return NextResponse.json({ error: 'Return the post to draft before regenerating' }, { status: 409 });
     }
-    if (post?.status === 'PUBLISHED' || projectData.isPublic) await assertProjectPublish(session.user.id, projectId);
+    if (post?.status === 'PUBLISHED' || (projectData.isPublic && !projectData.portfolioPublishedAt)) await assertProjectPublish(session.user.id, projectId);
     const draftExists = post && post.status === "DRAFT" && post.expandedBlocks;
     if (draftExists && !forceOverwriteDraft && !debugEcho) {
       console.log('[AUDIT] lock:return-202 (draft exists & no force)');
@@ -1580,7 +1581,7 @@ export async function POST(
       // answers removed by a correction or explicit reset.
       const freshAnswers = Array.isArray(existingPayload.answers) ? existingPayload.answers : (interview?.payload?.answers ?? answersOverride ?? []);
       const freshFollowups = Array.isArray(existingPayload.followups) ? existingPayload.followups : (interview?.payload?.followups ?? []);
-      const visibility = await tx.project.findUniqueOrThrow({ where: { id: projectId }, select: { isPublic: true } });
+      const visibility = await tx.project.findUniqueOrThrow({ where: { id: projectId }, select: { isPublic: true, publishedAt: true, portfolioPublishedAt: true } });
       if (current.status === 'REVIEW' || current.status === 'ARCHIVED' || (post && current.status !== post.status) || (visibility.isPublic && !projectData.isPublic)) {
         throw Object.assign(new Error('Publication state changed during generation. Retry from the current draft.'), { status: 409 });
       }
@@ -1629,7 +1630,7 @@ export async function POST(
         } as any,
       },
       });
-      await tx.project.update({ where: { id: projectId }, data: { isPublic: false, publishedAt: null, status: 'draft' } });
+      await tx.project.update({ where: { id: projectId, isPublic: visibility.isPublic, portfolioPublishedAt: visibility.portfolioPublishedAt }, data: editorialProjectVisibility(visibility, false) });
       return result;
     });
 

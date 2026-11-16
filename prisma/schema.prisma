@@ -434,6 +434,10 @@ model Project {
   stage                     ProjectStage               @default(concept)
   isPublic                  Boolean                    @default(false)
   publishedAt               DateTime?
+  // Explicit photo-portfolio consent, independent of editorial publication.
+  // Never backfill from legacy article publication or import state.
+  portfolioPublishedAt      DateTime?
+  portfolioCoverImageId     String?
   isAIEnabled               Boolean                    @default(false)
   views                     Int                        @default(0)
   saves                     Int                        @default(0)

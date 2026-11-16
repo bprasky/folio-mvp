@@ -6,6 +6,7 @@ const ts = require('typescript');
 require('tsx/cjs');
 const { savedEmbeddedQuoteChoices } = require('../src/lib/posting/embeddedQuotes.ts');
 const { preservePresentation } = require('../src/lib/story/presentation.ts');
+const { editorialProjectVisibility } = require('../src/lib/publish/portfolioVisibility.ts');
 
 const route = fs.readFileSync('src/app/api/posting/project/[projectId]/interview/generate/route.ts', 'utf8');
 const start = route.indexOf('const validatedBlocks = composed;');
@@ -30,7 +31,7 @@ const fixture = {
   // The hook shifts the index and the empty room is absent from it.
   pullQuotes: [{ text: 'Every room needed its own character.' }, { text: selection.selected.text, sourceSection: 'Dining Room' }],
 };
-async function persist(source, { currentProvenance = {}, sourceInterview = { payload: {} }, acquireLock = false, verifyWrite } = {}) {
+async function persist(source, { currentProvenance = {}, sourceInterview = { payload: {} }, acquireLock = false, verifyWrite, currentVisibility = { isPublic: false }, verifyVisibility } = {}) {
   let written;
   const post = { id: 'post', slug: 'story', status: 'DRAFT', updatedAt: new Date(0), provenance: currentProvenance,
     expandedBlocks: { presentation: { version: 1, accent: '#715A44', roomOrder: ['dining'] },
@@ -41,16 +42,16 @@ async function persist(source, { currentProvenance = {}, sourceInterview = { pay
       verifyWrite?.(data);
       written = JSON.parse(JSON.stringify(data.expandedBlocks)); return { ...post, ...data };
     } },
-    project: { findUniqueOrThrow: async () => ({ isPublic: false }), update: async () => ({}) },
+    project: { findUniqueOrThrow: async () => currentVisibility, update: async ({ where, data }) => { assert.equal(where.isPublic, currentVisibility.isPublic); assert.equal(where.portfolioPublishedAt, currentVisibility.portfolioPublishedAt); verifyVisibility?.(data); return {}; } },
   };
   const context = {
-    composed: structuredClone(fixture), post, projectId: 'project', projectData: { isPublic: false, images: [] },
+    composed: structuredClone(fixture), post, projectId: 'project', projectData: { ...currentVisibility, images: [] },
     validImages: [], normalizedAnswers: [], normalizedFollowUps: [], allSelections: [], imageOrder: [],
     frozenChapters: [], existingOverrides: [], existingHistory: [],
     designerBio: null, projectHistory: null, atelierSummary: null, duration: 1, _cid: 'test',
     interview: sourceInterview, generationResetId: sourceInterview.resetId ?? null, answersOverride: [], acquireLock,
     verifyProductAccuracy: () => ({ warnings: [] }),
-    savedEmbeddedQuoteChoices, preservePresentation,
+    savedEmbeddedQuoteChoices, preservePresentation, editorialProjectVisibility,
     session: { user: { id: 'owner' } },
     assertProjectWrite: async (actorId, projectId) => { assert.equal(actorId, 'owner'); assert.equal(projectId, 'project'); },
     jsonObject: value => value && typeof value === 'object' && !Array.isArray(value) ? value : {},
@@ -95,6 +96,8 @@ async function main() {
   assert.deepEqual(regenerated.galleryChapters[1].pullQuote, selection);
   console.log('PASS explicit full regeneration replaces removed selection with verified default and alternatives');
   assertCanonical(await persist(savePath));
+  await persist(savePath, { currentVisibility: { isPublic: true, portfolioPublishedAt: new Date(0), publishedAt: new Date(0) }, verifyVisibility: data => { assert.equal(data.isPublic, true); assert.equal(+data.publishedAt, 0); } });
+  console.log('PASS actual generation persistence keeps an explicit photo portfolio live and compares visibility before writing');
   console.log('PASS route persistence retains null room, multi-option selection and provenance with hook index');
   const guided = { id: 'guided-session', version: 3, turns: [{ id: 'original' }, { id: 'correction', supersedes: 'original' }] };
   await persist(savePath, {

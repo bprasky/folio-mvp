@@ -2,6 +2,7 @@ import { notFound, redirect } from "next/navigation";
 import { Suspense } from "react";
 import { Metadata } from "next";
 import { getPostBySlug } from "@/lib/post/getPostBySlug";
+import { getPublicPortfolioBySlug } from '@/lib/project-channel/getPublicPortfolio';
 import { StoryRenderer } from "@/components/story/StoryRenderer";
 import { ProjectChannelLanding } from "@/components/story/ProjectChannelLanding";
 import { titleCase } from "@/lib/utils";
@@ -37,6 +38,13 @@ export async function generateMetadata({
   const post = await getPostBySlug(params.slug);
 
   if (!post) {
+    const portfolio = process.env.FOLIO_EDITORIAL_CHANNELS === 'true' ? await getPublicPortfolioBySlug(params.slug) : null;
+    if (portfolio) {
+      const title = `${portfolio.title} | Folio`;
+      const description = portfolio.description || 'A photographic project on Folio.';
+      const cover = portfolio.images.find(image => image.id === portfolio.portfolioCoverImageId) || portfolio.images[0];
+      return { title, description, openGraph: { title, description, images: cover ? [{ url: cover.url }] : [] } };
+    }
     return {
       title: "Project Not Found | Folio",
     };
@@ -86,6 +94,12 @@ export default async function PostPage({
   const post = await getPostBySlug(params.slug);
 
   if (!post) {
+    const project = process.env.FOLIO_EDITORIAL_CHANNELS === 'true' ? await getPublicPortfolioBySlug(params.slug) : null;
+    if (project) {
+      const session = await getServerSession(authOptions);
+      const ownerView = await canPreviewProjectShop(project.id, session?.user?.id);
+      return <ProjectChannelLanding post={{ project }} ownerView={ownerView} />;
+    }
     notFound();
   }
 

@@ -4,7 +4,7 @@ import { prisma } from '@/lib/prisma';
 import { PUBLISHED_PROJECT_FILTER } from '@/server/queries/filters';
 import { getOrgProfileAppearanceData } from '@/lib/server/org-profile-appearance';
 import { profilePageStyle } from '@/lib/org-profile-appearance';
-import { publishedStoryHref } from '@/lib/post/published-story-href';
+import { publishedStoryHref, publishedProjectHref } from '@/lib/post/published-story-href';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/app/api/auth/[...nextauth]/options';
 import OrgProfileHero from '@/components/org-profile/OrgProfileHero';
@@ -507,7 +507,7 @@ async function getPinnedItems(orgId: string) {
         designerOrgId: orgId,
         isPublic: true,
         pinnedAt: { not: null },
-        post: { status: 'PUBLISHED' },
+        OR: [{ post: { status: 'PUBLISHED' } }, ...(process.env.FOLIO_EDITORIAL_CHANNELS === 'true' ? [{ portfolioPublishedAt: { not: null } }] : [])],
       },
       include: {
         post: { select: { slug: true, status: true } },
@@ -518,7 +518,7 @@ async function getPinnedItems(orgId: string) {
     });
 
     return projects.flatMap(p => {
-      const href = publishedStoryHref(p.post);
+      const href = publishedProjectHref(p);
       if (!href) return [];
       return [{
         id: p.id,

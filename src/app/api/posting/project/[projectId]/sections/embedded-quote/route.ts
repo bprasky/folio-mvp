@@ -23,12 +23,12 @@ export async function PATCH(request: NextRequest, { params }: { params: { projec
     const choice = parsed.data;
     const post = await prisma.projectPost.findUnique({ where: { projectId }, select: {
       id: true, status: true, slug: true, expandedBlocks: true,
-      project: { select: { isPublic: true, designerOrg: { select: { name: true } },
+      project: { select: { isPublic: true, portfolioPublishedAt: true, designerOrg: { select: { name: true } },
         designer: { select: { name: true, studio: true } }, images: { select: { id: true, url: true } } } },
       supplementalQuotes: { select: { id: true, answer: true, contributorRole: true, pinned: true }, orderBy: { createdAt: 'asc' } },
     } });
     if (!post?.expandedBlocks) return NextResponse.json({ error: 'Post not found' }, { status: 404 });
-    if (post.status !== 'DRAFT' || post.project.isPublic) return NextResponse.json({ error: 'Return the article to draft before editing quotes.' }, { status: 409 });
+    if (post.status !== 'DRAFT' || (post.project.isPublic && !post.project.portfolioPublishedAt)) return NextResponse.json({ error: 'Return the article to draft before editing quotes.' }, { status: 409 });
     const slot = buildStoryData(post)?.breathers.find(quote => quote.id === choice.slotId);
     const selected = slot?.options.find(option => option.sourceId === choice.sourceId && option.text === choice.text);
     if (!slot || !selected) return NextResponse.json({ error: 'This quote is no longer available. Refresh and choose another.' }, { status: 422 });
@@ -40,7 +40,7 @@ export async function PATCH(request: NextRequest, { params }: { params: { projec
     const blocks = structuredClone(post.expandedBlocks) as Record<string, unknown>;
     blocks.embeddedQuotes = [...savedEmbeddedQuoteChoices(blocks).filter(item => item.slotId !== choice.slotId), choice];
     const saved = await prisma.projectPost.updateMany({
-      where: { id: post.id, status: 'DRAFT', project: { isPublic: false }, expandedBlocks: { equals: post.expandedBlocks } },
+      where: { id: post.id, status: 'DRAFT', project: { OR: [{ isPublic: false }, { portfolioPublishedAt: { not: null } }] }, expandedBlocks: { equals: post.expandedBlocks } },
       data: { expandedBlocks: blocks as Prisma.InputJsonValue },
     });
     if (!saved.count) return NextResponse.json({ error: 'The article changed. Refresh and try again.' }, { status: 409 });

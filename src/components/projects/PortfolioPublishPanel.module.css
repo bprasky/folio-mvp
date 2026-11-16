@@ -1,0 +1,20 @@
+.panel { margin-block: 1rem 1.5rem; padding: clamp(1rem, 3vw, 2rem); border: 1px solid var(--folio-border-subtle); border-radius: 1rem; background: var(--surface-canvas); color: var(--folio-text-primary); }
+.panel p { max-width: 70ch; margin-top: .5rem; }
+.actions { display: flex; flex-wrap: wrap; gap: .75rem; margin-top: 1rem; }
+.primary, .secondary { display: inline-flex; align-items: center; justify-content: center; min-height: 44px; padding: .625rem 1rem; border: 1px solid var(--folio-border-subtle); border-radius: .5rem; font-size: var(--type-ui); }
+.primary { background: var(--folio-text-primary); color: var(--surface-canvas); }
+.secondary { background: var(--surface-canvas); color: var(--folio-text-primary); }
+.primary:disabled, .secondary:disabled { opacity: .55; cursor: not-allowed; }
+.panel :focus-visible, .dialog :focus-visible { outline: 2px solid var(--folio-text-primary); outline-offset: 3px; }
+.dialog { position: relative; z-index: 100; color: var(--folio-text-primary); }
+.backdrop { position: fixed; inset: 0; background: rgb(0 0 0 / .5); }
+.viewport { position: fixed; inset: 0; overflow-y: auto; padding: clamp(.5rem, 3vw, 2rem); }
+.review { width: 100%; max-width: 60rem; margin: auto; padding: clamp(1rem, 3vw, 2rem); border-radius: 1rem; background: var(--surface-canvas); }
+.titleField { display: grid; gap: .5rem; margin-block: 1.5rem; font-size: var(--type-ui); }
+.titleField input { width: 100%; padding: .75rem; background: var(--surface-canvas); color: var(--folio-text-primary); border: 1px solid var(--folio-border-subtle); border-radius: .5rem; }
+.photos { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1rem; }
+.photos legend { margin-bottom: 1rem; font-size: var(--type-meta); }
+.photo { min-width: 0; }
+.photo img { width: 100%; aspect-ratio: 4 / 3; object-fit: cover; border-radius: .5rem; }
+.photo label { display: flex; align-items: center; gap: .5rem; min-height: 44px; font-size: var(--type-ui); }
+@media (max-width: 640px) { .photos { grid-template-columns: repeat(2, minmax(0, 1fr)); } .photo label { font-size: var(--type-meta); } }
