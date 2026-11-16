@@ -1452,3 +1452,15 @@ Scope: audit the existing PR branch, preserve the approved profile mosaic and im
 - [x] Commit and push to the existing PR branch; confirm final SHA and check state without merging or deploying.
 
 Review: see `docs/reviews/project-channels-853.md` and its committed screenshots. Four real public publications were checked read-only and rendered through the PR components. Scoped regression checks and full local builds pass; TypeScript debt falls from 849 to 846. The existing IDOR scanner has the same 45 findings as main. Database-backed authenticated integration remains a rollout condition, and portfolio-first channels are explicitly future work. No publishing gates were bypassed.
+# Cinematic project channels — 2026-11-16
+
+- [x] Inspect current main, approved design context, theme architecture, public routes and publication gates.
+- [x] Replace forced dark styling with one theme-aware cinematic hero and compact filterable mosaic.
+- [x] Preserve exact feature photo/room/product links; add a keyboard-accessible portfolio photo viewer on the existing public project route.
+- [x] Verify privacy, publication, slideshow, theme persistence, responsive layouts and reader regressions.
+- [x] Record evidence and prepare the feature branch for PR review. No merge or deployment.
+
+Plan check-in: keep the existing feature flag, global appearance initialization and immersive reader. Use a narrow public portfolio projection on `/project/[id]`, admitted only by existing public publication state; preserve member workspaces. Do not create publication records, routes, migrations or change lifecycle behavior.
+
+
+Review: full production build, repository lint, unchanged TypeScript diagnostic budget, design-system/client/migration guards, privacy and publication suites pass. Chromium verifies light/dark persistence, OS independence, 320–1440px layouts, exact feature photo/product links and portfolio focus/return. Real public Boca Raton photography is included in the local review screenshots. See docs/reviews/project-channel-cinematic.md for evidence and limits; two disposable-database core checks remain skipped. No merge or deployment.

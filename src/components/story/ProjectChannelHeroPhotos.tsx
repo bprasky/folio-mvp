@@ -47,7 +47,7 @@ export function ProjectChannelHeroPhotos({ images, title }: { images: { id: stri
       })}
     </div>
     {images.length > 1 && !reduced && <button type="button" onClick={() => setPaused(value => !value)} aria-pressed={paused}
-      className="absolute right-5 top-5 z-10 min-h-11 rounded-full border border-white/50 bg-black/60 px-4 text-xs text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4">
+      className="absolute right-5 top-5 z-10 min-h-11 rounded-full border border-[var(--folio-border-subtle)] bg-[var(--surface-canvas)] px-4 text-xs text-[var(--folio-text-primary)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4">
       {paused ? 'Resume photographs' : 'Pause photographs'}
     </button>}
   </>;

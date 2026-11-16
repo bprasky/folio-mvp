@@ -91,7 +91,7 @@ export default async function PostPage({
 
   if (process.env.FOLIO_EDITORIAL_CHANNELS === 'true') {
     // Preserve existing room/product deep links by opening the nested feature.
-    if (searchParams?.room || searchParams?.product) {
+    if (searchParams?.room || searchParams?.product || searchParams?.photo) {
       redirect(withChannelQuery(`${projectChannelHref(params.slug)}/feature`, searchParams));
     }
     const [modules, session] = await Promise.all([

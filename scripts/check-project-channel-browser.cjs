@@ -10,6 +10,7 @@ const postcss = require('postcss');
 const tailwind = require('tailwindcss');
 require('tsx/cjs');
 const { publicPost } = require('../src/lib/post/publicPost.ts');
+const { themeInitializationScript } = require('../src/lib/theme.ts');
 const root = path.resolve(__dirname, '..');
 const out = path.join(root, '.tmp/channel-browser');
 fs.mkdirSync(out, { recursive: true });
@@ -45,12 +46,13 @@ import {StoryViewer} from './src/components/feed/stories/StoryViewer';
 import Hero from './src/components/org-profile/OrgProfileHero';
 import ProjectFlowMosaic from './src/components/org-profile/feed-layout/ProjectFlowMosaic';
 import {defaultOrgAppearance} from './src/lib/org-profile-appearance';
+import {ThemeToggle} from './src/components/ThemeToggle';
 const f=window.fixture;const query=Object.fromEntries(new URLSearchParams(location.search));
 window.story=buildStoryData(f.post);
 const back=<nav aria-label="Project navigation" className="sticky top-0 z-20 flex min-h-14 items-center bg-[#171715] px-5 text-[#f4efe7]"><a href={'/p/'+f.post.slug} className="inline-flex min-h-11 items-center">← Back to project</a></nav>;
 const profile=<main style={{background:'#f4efe7',padding:20}}><Hero org={{id:'fixture',name:'Fixture Design Studio',type:'DESIGN_FIRM',description:'Interiors shaped by light and material.',logo:null}} appearance={defaultOrgAppearance()} cover={{url:f.post.project.images[0]?.url,projectTitle:f.post.project.title}} projectCount={3} year={2026} isAdmin={f.owner} isMember={f.owner}/><ProjectFlowMosaic projects={[{id:'one',title:f.post.project.title,heroImage:f.post.project.images[0]?.url,storyHref:'/p/'+f.post.slug,saveCount:0}]}/></main>;
 const viewer=<StoryViewer index={0} onClose={()=>location.assign('/p/fixture')} groups={[{key:'fixture',designer:{id:'designer',name:'Fixture'},project:{id:f.post.projectId,title:'Fixture',slug:'fixture'},cover:null,items:f.assets.map((asset,i)=>({id:String(i),type:'STORY',title:'Image or video story',description:null,publishedAt:new Date(),media:[asset]}))}]}/>;
-createRoot(document.getElementById('root')).render(f.mode==='viewer'?viewer:f.mode==='profile'?profile:f.mode==='feature'?<main>{back}<StoryRenderer post={f.post}/></main>:f.mode==='media'?<main className="min-h-screen bg-[#171715] px-5 py-8 text-[#f4efe7]">{back}<h1 className="font-serif text-4xl">Project media</h1><ProjectChannelMedia assets={f.assets} title="Project media"/></main>:<><ProjectChannelShareTracking projectId={f.post.project.id} slug={f.post.slug}/><ProjectChannelLanding post={f.post} media={f.media} ownerView={f.owner} searchParams={query}/></>);`;
+createRoot(document.getElementById('root')).render(f.mode==='settings'?<ThemeToggle/>:f.mode==='viewer'?viewer:f.mode==='profile'?profile:f.mode==='feature'?<main>{back}<StoryRenderer post={f.post}/></main>:f.mode==='media'?<main className="min-h-screen bg-[var(--surface-canvas)] px-5 py-8 text-[var(--folio-text-primary)]">{back}<h1 className="font-serif text-4xl">Project media</h1><ProjectChannelMedia assets={f.assets} title="Project media"/></main>:<><ProjectChannelShareTracking projectId={f.post.project.id} slug={f.post.slug}/><ProjectChannelLanding post={f.post} media={f.media} ownerView={f.owner} searchParams={query}/></>);`;
 async function build() {
   await esbuild.build({ stdin: { contents: source, resolveDir: root, loader: 'tsx' }, outfile: path.join(out, 'bundle.js'), bundle: true, platform: 'browser', jsx: 'automatic', alias: { '@': path.join(root, 'src') },
     define: { 'process.env.NODE_ENV': '"development"', 'process.env.NEXT_PUBLIC_FOLIO_EDITORIAL_PROFILE_HERO': '"true"', 'process.env': '{}' },
@@ -94,11 +96,13 @@ async function main() {
     if (url.pathname.startsWith('/public-assets/') && process.env.PUBLIC_ASSET_FIXTURES) { res.setHeader('Content-Type', 'image/jpeg'); res.end(fs.readFileSync(path.join(process.env.PUBLIC_ASSET_FIXTURES, path.basename(url.pathname)))); return; }
     const slug = url.pathname.split('/')[2];
     const original = publicPosts.find(p => p.slug === slug);
-    const post = original ? publicPost(localize(original)) : fixture(Number(url.searchParams.get('count') || 5));
-    const mode = url.pathname.startsWith('/viewer/') ? 'viewer' : url.pathname.endsWith('/feature') ? 'feature' : url.pathname.includes('/media/') ? 'media' : url.pathname === '/profile' ? 'profile' : 'channel';
-    const payload = { mode, post, owner: url.searchParams.get('owner') === '1', media: original || url.searchParams.get('photos') === '1' ? [] : media,
+    const post = original ? publicPost(localize(original)) : fixture(Number(url.searchParams.get('count') ?? 5));
+    if (url.searchParams.get('portfolio') === '1') { post.status = 'DRAFT'; delete post.slug; }
+    if (url.searchParams.get('gallery') === '1') post.expandedBlocks.galleryChapters = [];
+    const mode = url.pathname === '/settings' ? 'settings' : url.pathname.startsWith('/viewer/') ? 'viewer' : url.pathname.endsWith('/feature') ? 'feature' : url.pathname.includes('/media/') ? 'media' : url.pathname === '/profile' ? 'profile' : 'channel';
+    const payload = { mode, post, owner: url.searchParams.get('owner') === '1', media: original || url.searchParams.get('photos') === '1' || url.searchParams.get('portfolio') === '1' ? [] : media,
       assets: url.pathname.endsWith('/story') ? [{ kind: 'image', url: '/photo.svg', caption: 'An image story', poster: null }] : [{ kind: 'video', url: url.pathname.endsWith('/playable') ? '/playable.webm' : '/missing.mp4', caption: null, poster: null }] };
-    res.setHeader('Content-Type', 'text/html; charset=utf-8'); res.end(`<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="stylesheet" href="/globals.css"><link rel="stylesheet" href="/bundle.css"><title>Channel verification fixture</title></head><body><div id="root"></div><script>window.fixture=${JSON.stringify(payload).replaceAll('<', '\\u003c')}</script><script src="/bundle.js"></script></body></html>`);
+    res.setHeader('Content-Type', 'text/html; charset=utf-8'); res.end(`<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><script>${themeInitializationScript}</script><link rel="stylesheet" href="/globals.css"><link rel="stylesheet" href="/bundle.css"><title>Channel verification fixture</title></head><body><div id="root"></div><script>window.fixture=${JSON.stringify(payload).replaceAll('<', '\\u003c')}</script><script src="/bundle.js"></script></body></html>`);
   });
   await new Promise(r => server.listen(0, '127.0.0.1', r)); server.unref();
   const browser = await puppeteer.launch({ executablePath: process.env.CHANNEL_TEST_BROWSER || '/usr/bin/chromium', headless: true, args: ['--no-sandbox', '--disable-dev-shm-usage'] });
@@ -110,13 +114,14 @@ async function main() {
     const button = async text => { await page.evaluate(t => { const b = [...document.querySelectorAll('button')].find(b => b.textContent.trim() === t); if (!b) throw Error('Missing button ' + t); b.click(); }, text); };
     const overflow = async () => assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true, 'No horizontal page overflow');
     const shot = name => page.screenshot({ path: path.join(out, name + '.png'), fullPage: true });
+    if (!process.env.CHANNEL_PUBLIC_ONLY) {
     for (const [label, width, height] of [['desktop', 1440, 1000], ['tablet', 768, 1024], ['mobile', 390, 844]]) {
       await page.setViewport({ width, height });
       await go('/p/fixture'); await overflow();
       assert.equal(await page.$$eval('a', nodes => nodes.filter(n => n.textContent.includes('Read the Folio Feature')).length), 1);
       assert.equal(await page.$eval('[data-hero-index] img', e => new URL(e.src).searchParams.get('i')), '1');
       assert.equal(await page.$$eval('video', n => n.length), 0);
-      assert.equal(await page.$eval('h1', e => getComputedStyle(e).color), 'rgb(244, 239, 231)', 'Hero title retains contrast against the photograph');
+      assert.equal(await page.$eval('h1', e => getComputedStyle(e).color), 'rgb(26, 26, 26)', 'Light is the site default');
       assert.equal(await page.$eval('[data-kind]', e => e.dataset.kind), 'media');
       assert.equal(await page.$$eval('[data-kind]', n => n.findIndex(x => x.dataset.kind === 'feature')), 1);
       assert.equal(await page.$$eval('button', n => n.some(x => /Shop/.test(x.textContent))), false);
@@ -137,7 +142,7 @@ async function main() {
       await shot(`feature-${label}`);
       await Promise.all([page.waitForNavigation(), page.click('nav[aria-label="Project navigation"] a')]);
       await go('/p/fixture/feature?room=room-0&product=chair');
-      await page.click('[aria-label="Begin Channel fixture"]'); await page.waitForSelector('[role="dialog"]');
+      await page.waitForSelector('[role="dialog"]');
       assert.match(await page.$eval('[role="dialog"]', e => e.innerText), /Fixture chair/);
       await go('/profile?owner=1'); await overflow(); assert.ok(await page.$('[aria-label="Manage profile"]')); await shot(`profile-${label}`);
       console.log(`PASS ${label}: filters, feature prominence, photo order, original reader, product deep link, return link and profile mosaic`);
@@ -150,12 +155,15 @@ async function main() {
     await page.$eval('video', e => e.load()); await page.waitForFunction(() => document.body.innerText.includes('currently unavailable'));
     playableVideo = Buffer.from(await page.evaluate(async () => {
       const canvas = document.createElement('canvas'); canvas.width = 128; canvas.height = 72;
-      const context = canvas.getContext('2d'), stream = canvas.captureStream(10), chunks = [];
+      // Explicit frames also work when headless Chromium throttles animation.
+      document.body.appendChild(canvas);
+      const context = canvas.getContext('2d'), stream = canvas.captureStream(0), chunks = [];
       const recorder = new MediaRecorder(stream, { mimeType: 'video/webm;codecs=vp8' });
       const complete = new Promise(resolve => { recorder.onstop = resolve; });
-      recorder.ondataavailable = event => chunks.push(event.data); recorder.start();
-      for (let i = 0; i < 10; i++) { context.fillStyle = i % 2 ? '#827967' : '#e1ded8'; context.fillRect(0, 0, 128, 72); await new Promise(r => setTimeout(r, 100)); }
-      recorder.stop(); await complete; stream.getTracks().forEach(track => track.stop());
+      recorder.ondataavailable = event => chunks.push(event.data);
+      recorder.start();
+      for (let i = 0; i < 10; i++) { context.fillStyle = i % 2 ? '#827967' : '#e1ded8'; context.fillRect(0, 0, 128, 72); stream.getVideoTracks()[0].requestFrame(); await new Promise(r => setTimeout(r, 100)); }
+      recorder.stop(); await complete; stream.getTracks().forEach(track => track.stop()); canvas.remove();
       return Array.from(new Uint8Array(await new Blob(chunks).arrayBuffer()));
     }));
     await go('/p/fixture/media/playable');
@@ -167,6 +175,64 @@ async function main() {
     await page.$eval('video', e => e.play()); await page.waitForFunction(() => document.querySelector('video').currentTime > 0);
     console.log('PASS sparse/dense photo collections, private preview UI, image stories and unavailable video recovery without autoplay');
     console.log('PASS decoded video after deliberate playback in channel media and legacy feed viewer; image stories use images');
+
+    // The actual site setting owns appearance, including first paint and browser reloads.
+    await page.emulateMediaFeatures([{ name: 'prefers-color-scheme', value: 'dark' }]);
+    await go('/p/fixture');
+    assert.equal(await page.$eval('html', e => e.dataset.theme), 'light', 'OS preference must not override the light default');
+    await go('/settings'); await page.click('[role="switch"]');
+    assert.equal(await page.evaluate(() => localStorage.getItem('folio-theme')), 'dark');
+    for (const theme of ['dark', 'light']) {
+      for (const [width, height] of [[1440, 1000], [768, 1024], [390, 844], [320, 740]]) {
+        await page.setViewport({ width, height });
+        await go('/p/fixture?portfolio=1'); await overflow();
+        assert.equal(await page.$eval('html', e => e.dataset.theme), theme);
+        const expected = theme === 'dark' ? 'rgb(27, 27, 25)' : 'rgb(255, 255, 255)';
+        assert.equal(await page.$eval('main', e => getComputedStyle(e).backgroundColor), expected);
+        assert.equal(await page.$('a[href*="/feature"]'), null, 'No feature action or tile before publication');
+        assert.equal(await page.$$eval('nav button', nodes => nodes.some(n => /Media|Credits|Shop/.test(n.textContent))), false);
+        await button('Spaces');
+        await page.focus('[data-kind="space"]'); await page.keyboard.press('Enter');
+        await page.waitForSelector('[role="dialog"]');
+        assert.equal(await page.$eval('[role="dialog"]', e => getComputedStyle(e).backgroundColor), expected);
+        assert.equal(await page.$eval('[role="dialog"] img', e => new URL(e.src).searchParams.get('i')), '1', 'Viewer opens the selected approved hero');
+        assert.equal(await page.evaluate(() => document.activeElement.getAttribute('aria-label')), 'Return to project photographs');
+        await page.keyboard.down('Shift'); await page.keyboard.press('Tab'); await page.keyboard.up('Shift');
+        assert.equal(await page.evaluate(() => document.activeElement.getAttribute('aria-label')), 'Next photograph', 'Focus is trapped');
+        await page.keyboard.press('Tab');
+        assert.equal(await page.evaluate(() => document.activeElement.getAttribute('aria-label')), 'Return to project photographs');
+        await page.keyboard.press('ArrowRight');
+        const nextPhoto = await page.$eval('[role="dialog"] img', e => e.src);
+        assert.equal(new URL(nextPhoto).searchParams.get('i'), '2', 'Viewer order follows diverse mosaic order');
+        await page.click('[aria-label="Previous photograph"]');
+        assert.equal(await page.$eval('[role="dialog"] img', e => new URL(e.src).searchParams.get('i')), '1');
+        await shot(`portfolio-viewer-${theme}-${width}`);
+        await page.keyboard.press('Escape'); await page.waitForSelector('[role="dialog"]', { hidden: true });
+        assert.equal(await page.evaluate(() => document.activeElement.dataset.kind), 'space', 'Close restores the originating tile');
+        assert.equal(await page.$eval('nav button[aria-pressed="true"]', e => e.textContent), 'Spaces');
+        await shot(`portfolio-${theme}-${width}`);
+        await go('/p/fixture'); await shot(`channel-${theme}-${width}`);
+        await page.reload({ waitUntil: 'networkidle0' });
+        assert.equal(await page.$eval('html', e => e.dataset.theme), theme, 'Saved appearance survives navigation and reload');
+      }
+      if (theme === 'dark') { await go('/settings'); await page.click('[role="switch"]'); }
+    }
+    await go('/p/fixture?portfolio=1&count=1');
+    await page.click('[data-kind="space"]'); await page.waitForSelector('[role="dialog"]');
+    assert.equal(await page.$('[aria-label="Next photograph"]'), null);
+    await page.click('[aria-label="Return to project photographs"]');
+    await page.waitForSelector('[role="dialog"]', { hidden: true });
+    for (const gallery of [false, true]) {
+      await go(`/p/fixture/feature?room=room-0&photo=photo-1${gallery ? '&gallery=1' : ''}`);
+      await page.waitForSelector('[data-publication-phase="ready"][data-publication-photo="photo-1"]');
+      assert.equal(await page.$eval('[data-publication-phase]', e => e.dataset.publicationPhoto), 'photo-1', 'Supporting and shared-gallery photos open exactly');
+    }
+    await go('/p/fixture'); await button('Spaces');
+    const target = await page.$eval('[data-kind="space"]', e => e.getAttribute('href'));
+    assert.equal(new URL(target, origin).searchParams.get('photo'), 'photo-1');
+    await Promise.all([page.waitForNavigation(), page.click('[data-kind="space"]')]);
+    await page.waitForSelector('[data-publication-photo="photo-1"][data-publication-phase="ready"]');
+    console.log('PASS real light/dark setting persistence, OS independence, 320–1440px layouts, portfolio modal focus/return/arrows and exact feature photo links');
 
     await page.emulateMediaFeatures([{ name: 'prefers-reduced-motion', value: 'reduce' }]);
     await go('/p/fixture?photos=1'); const reducedIndex = await page.$eval('[data-hero-index]', e => e.dataset.heroIndex);
@@ -187,8 +253,19 @@ async function main() {
     await page.waitForFunction(() => true); assert.ok(analytics.some(a => a.type === 'project_channel_share_landing'));
     assert.ok(analytics.some(a => a.type === 'article_share_landing' && a.payload.utmCampaign === 'channel'));
     console.log('PASS channel and original publication referral requests reach the existing analytics endpoint');
+    }
 
+    await go('/p/fixture');
     for (const original of publicPosts) {
+      for (const theme of ['dark', 'light']) {
+        await page.evaluate(value => localStorage.setItem('folio-theme', value), theme);
+        for (const [width, height] of [[1440, 1000], [390, 844]]) {
+          await page.setViewport({ width, height }); await go(`/p/${original.slug}`); await overflow();
+          await shot(`${original.slug}-${theme}-${width}`);
+          await go(`/p/${original.slug}?portfolio=1`); await overflow();
+          await shot(`${original.slug}-portfolio-${theme}-${width}`);
+        }
+      }
       for (const [label, width, height] of [['desktop', 1440, 1000], ['mobile', 390, 844]]) {
         await page.setViewport({ width, height }); await go(`/p/${original.slug}`); await overflow();
         const hero = original.project.images.find(i => i.id === original.heroAssetId) || original.project.images[0];
@@ -207,7 +284,6 @@ async function main() {
         if (room) {
           const product = room.products[0];
           await go(`/p/${original.slug}/feature?room=${encodeURIComponent(room.roomId)}${product ? '&product=' + encodeURIComponent(product.id) : ''}`);
-          await page.click(`[aria-label=${JSON.stringify('Begin ' + original.project.title)}]`);
           await page.waitForSelector('[data-publication-reading="true"]');
           const roomText = await page.$eval(`[role="region"][aria-label=${JSON.stringify(room.roomLabel + ' article')}]`, e => e.textContent);
           for (const paragraph of room.editorialParagraphs) assert.ok(roomText.includes(paragraph.slice(1)), `${original.slug}: preserved room narrative`);
