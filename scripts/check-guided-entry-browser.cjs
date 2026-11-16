@@ -225,26 +225,24 @@ async function main() {
     }
   };
   try {
-    await capture('Live original entry starts once; saved-answer review and refresh stay passive; explicit reopen starts anew', async () => {
+    await capture('Story entry stays inline and never starts live media, including after pause and resume', async () => {
       await open('story', { live: true }); await storyReady();
       const starts = () => requests.filter(request => request.liveStart);
       assert.equal(starts().length, 0); assert.equal(await page.evaluate(() => window.microphoneRequests), 0);
-      await click('Start interview');
-      await page.waitForFunction(() => window.dailyJoins === 1 && [...document.querySelectorAll('button')].some(button => button.textContent === 'End' && !button.disabled && button.getBoundingClientRect().height > 0));
-      assert.equal(starts().length, 1); assert.equal(starts()[0].liveStart.inputMode, 'text');
-      assert.equal(starts()[0].liveStart.microphoneReady, false);
-      assert.ok(!(await page.evaluate(() => document.body.innerText)).includes('Start live interview'));
-      const firstRequestId = starts()[0].liveStart.requestId;
-      await click('Review saved answers'); await guidedReady();
-      assert.equal(starts().length, 1); assert.equal([...liveSessions.values()][0].status, 'ended');
-      await click('Pause & close'); await page.waitForSelector('[role="dialog"]', { hidden: true }); await storyReady();
+      await click('Start interview'); await guidedReady();
+      assert.equal(await page.$('[role="dialog"]'), null);
+      assert.ok(await page.$('[aria-label="Project interview workspace"]'));
+      assert.equal(starts().length, 0); assert.equal(await page.evaluate(() => window.dailyJoins), 0);
+      assert.equal(await page.evaluate(() => window.microphoneRequests), 0);
+      assert.equal(requests.filter(request => request.command?.action === 'start').length, 1);
+      await click('Pause interview'); await page.waitForSelector('#guided-response', { hidden: true }); await storyReady();
       await page.reload(); await storyReady();
-      assert.equal(starts().length, 1); assert.equal(await page.evaluate(() => window.microphoneRequests), 0);
-      await click('Resume interview');
-      await page.waitForFunction(() => window.dailyJoins === 1 && [...document.querySelectorAll('button')].some(button => button.textContent === 'End' && !button.disabled && button.getBoundingClientRect().height > 0));
-      assert.equal(starts().length, 2); assert.notEqual(starts()[1].liveStart.requestId, firstRequestId);
-      assert.equal(saved.turns.length, 0, 'connection verification never fabricates interview answers');
-      await click('End');
+      assert.equal(starts().length, 0); assert.equal(await page.evaluate(() => window.microphoneRequests), 0);
+      await click('Resume interview'); await guidedReady();
+      assert.equal(starts().length, 0); assert.equal(await page.evaluate(() => window.dailyJoins), 0);
+      assert.equal(requests.filter(request => request.command?.action === 'start').length, 1);
+      assert.equal(saved.turns.length, 0, 'opening and resuming never fabricate interview answers');
+      await click('Pause interview'); await storyReady();
     });
     await capture('Lifecycle Start interview opens the first question while the saved-only Story read is pending', async () => {
       await open('overview', { holdRead: true }); await click('Start interview'); await guidedReady();
@@ -263,7 +261,7 @@ async function main() {
       await page.click('[aria-label="Send response"]');
       await page.waitForFunction(first => document.querySelector('[data-testid="guided-current-question"]')?.textContent !== first, {}, firstQuestion);
       const questionId = saved.activeQuestionId;
-      await click('Pause & close'); await page.waitForSelector('#guided-response', { hidden: true }); await storyReady();
+      await click('Pause interview'); await page.waitForSelector('#guided-response', { hidden: true }); await storyReady();
       assert.equal(new URL(page.url()).searchParams.has('action'), false);
       await page.reload(); await storyReady(); assert.equal(await page.$('#guided-response'), null);
       await click('Resume interview'); await guidedReady();
@@ -354,7 +352,7 @@ async function main() {
       assert.deepEqual(saved, old); assert.equal(await page.$('#guided-response'), null);
       assert.equal(await page.evaluate(key => JSON.parse(localStorage.getItem(key)).text, draftKey), staleDraft.text);
       const failedCommand = requests.find(request => request.endpoint.endsWith('/interview/reset') && request.method === 'POST').command;
-      scenario.resetFailure = false; await dialogClick('Retry'); await guidedReady();
+      scenario.resetFailure = false; await click('Retry'); await guidedReady();
       assert.equal(await page.$eval('[data-testid="guided-current-question"]', el => el.textContent), firstQuestion);
       assert.notEqual(saved.id, old.id); assert.ok(saved.version > old.version); assert.equal(saved.turns.length, 0);
       const resetPosts = requests.filter(request => request.endpoint.endsWith('/interview/reset') && request.method === 'POST');
@@ -362,7 +360,7 @@ async function main() {
       assert.equal(await page.$eval('#guided-response', el => el.value), '');
       assert.ok(await page.evaluate((key, id) => !JSON.parse(localStorage.getItem(key) || 'null')?.text && !localStorage.getItem('interviewDraft:' + id) && !localStorage.getItem('folio.interview.qcache.flat.' + id) && !sessionStorage.getItem('folio.interview.validation.' + id), draftKey, projectId));
       const newSessionId = saved.id, firstId = saved.activeQuestionId;
-      await click('Pause & close'); await storyReady(); await page.reload(); await storyReady();
+      await click('Pause interview'); await storyReady(); await page.reload(); await storyReady();
       await page.evaluate((key, value) => localStorage.setItem(key, JSON.stringify(value)), draftKey, staleDraft);
       const beforeResume = requests.length;
       await click('Resume interview'); await guidedReady();
@@ -370,7 +368,7 @@ async function main() {
       assert.equal(await page.$eval('#guided-response', el => el.value), '');
       assert.ok(!requests.slice(beforeResume).some(request => request.command?.requestId === staleDraft.pending.requestId), 'a stale local pending request is discarded before transport');
       assert.equal(requests.filter(request => request.endpoint.endsWith('/interview/reset') && request.method === 'POST').length, 2);
-      await click('Pause & close'); await storyReady();
+      await click('Pause interview'); await storyReady();
       const unboundDraft = structuredClone(staleDraft); delete unboundDraft.sessionId; delete unboundDraft.pending.sessionId;
       unboundDraft.pending.requestId = 'old-unbound-pending-response';
       await page.evaluate((key, value) => localStorage.setItem(key, JSON.stringify(value)), draftKey, unboundDraft);
