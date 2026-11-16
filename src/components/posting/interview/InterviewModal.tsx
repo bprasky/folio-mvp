@@ -37,6 +37,7 @@ import type { InterviewResetRequest } from '@/lib/interview/reset';
 const GuidedInterviewWorkspace = dynamic(() => import('./GuidedInterviewWorkspace').then(module => module.GuidedInterviewWorkspace), { ssr: false });
 
 interface InterviewModalProps {
+  presentation?: 'modal' | 'inline';
   disableLive?: boolean;
   preferLegacy?: boolean;
   open: boolean;
@@ -3126,8 +3127,8 @@ export function InterviewModal(props: InterviewModalProps) {
     return () => { active = false; };
   }, [props.open, props.projectId, props.initialIntent, attempt, restartRequested]);
   if (!props.open) return null;
-  if (!gate || (gate.enrolled && !gate.enabled)) return <div role="dialog" aria-label="Interview access" className="fixed inset-0 z-[100] bg-white p-8"><button onClick={() => props.onOpenChange(false)}>Close</button><p role={error ? 'alert' : 'status'}>{error || (gate ? 'Private interviews are paused for this project or account.' : startingOver ? 'Starting a new interview…' : 'Checking interview access…')}</p>{error && <button onClick={() => setAttempt(value => value + 1)}>Retry</button>}</div>;
+  if (!gate || (gate.enrolled && !gate.enabled)) return <div role={props.presentation === 'inline' ? 'region' : 'dialog'} aria-label="Interview access" className={props.presentation === 'inline' ? 'bg-surface-canvas p-8' : 'fixed inset-0 z-[100] bg-white p-8'}><button onClick={() => props.onOpenChange(false)}>Close</button><p role={error ? 'alert' : 'status'}>{error || (gate ? 'Private interviews are paused for this project or account.' : startingOver ? 'Starting a new interview…' : 'Checking interview access…')}</p>{error && <button onClick={() => setAttempt(value => value + 1)}>Retry</button>}</div>;
   if (gate.enrolled) return <PrivateSpotlightInterview projectId={props.projectId} actorId={gate.actorId} onClose={() => props.onOpenChange(false)} />;
-  if (!props.preferLegacy && (flags.guidedInterview || gate.guidedAvailable)) return <GuidedInterviewWorkspace key={props.projectId} projectId={props.projectId} actorId={gate.actorId} projectName={props.projectName} images={props.images} disableLive={props.disableLive} liveStartIntent={liveEntry.current || undefined} initialRoomId={props.initialIntent === 'restart' || restartRequested ? null : props.initialRoomId} onClose={() => props.onOpenChange(false)} onDraftGenerated={props.onDraftGenerated} />;
+  if (!props.preferLegacy && (flags.guidedInterview || gate.guidedAvailable)) return <GuidedInterviewWorkspace key={props.projectId} projectId={props.projectId} actorId={gate.actorId} projectName={props.projectName} images={props.images} presentation={props.presentation} disableLive={props.disableLive} liveStartIntent={liveEntry.current || undefined} initialRoomId={props.initialIntent === 'restart' || restartRequested ? null : props.initialRoomId} onClose={() => props.onOpenChange(false)} onDraftGenerated={props.onDraftGenerated} />;
   return <LegacyInterviewModal {...props} onRestartRequested={() => setRestartRequested(true)} initialIntent={props.initialIntent === 'restart' || restartRequested ? 'resume' : props.initialIntent} initialRoomId={props.initialIntent === 'restart' || restartRequested ? null : props.initialRoomId} />;
 }

@@ -34,19 +34,16 @@ Make a bounded next-turn proposal for an active conversation. Read the FULL acce
 conversation before replying. The latest answer can also answer later questions.
 The application owns question identities, room scope, progression and coverage.
 Compose in this order: purpose, evidence, sourceAnswerIds, then kind, questionId,
-reaction if useful, and text. In purpose, first state what accepted answers already
+and text. Do not generate a reaction; a separate fast observer owns that sentence.
+In purpose, first state what accepted answers already
 establish for the intended obligation and the actual remaining required gap; if
 there is no gap, explicitly say the obligation is fully covered. Select supporting
 evidence before choosing the action and writing the displayed question.
-React briefly when it helps show understanding (one concrete, unembellished sentence),
-then ask ONE question. A reaction is optional: no ritual praise or repetitive summary.
-Omit a reaction by default when the question already makes the connection. A useful
-reaction states a connection, not an evaluation such as "a clear brief", "a nice
-tension", or "an interesting boundary". Do not turn redesigning rooms into "opening
-up the interiors": that invents a spatial change. Paraphrases must preserve meaning.
+Ask ONE substantive question without an acknowledgment sentence or preamble.
 Use the designer's actual language to make the next question specific. Do not
 reinterpret their motives, style, emotions or relationships. Corrections replace
-old premises; acknowledge the corrected fact briefly only if useful, then continue.
+old premises. The separate observation never asks for or receives another answer;
+your next question must stand on its own using the same accepted conversation.
 
 Prefer the next useful prepared obligation over an extra follow-up. For a pending
 question, compare its intent with ALL accepted answers: ask only the missing detail,
@@ -74,14 +71,12 @@ Kinds:
   prepared question just because its content was already answered: confirm it.
 
 For every non-advance reply cite exact spans from acceptedConversation. sourceAnswerIds
-must equal the unique evidence answerIds. Cite all answers needed to ground the wording
-and reaction; do not merely cite an unrelated true phrase. A project question may cite
+must equal the unique evidence answerIds. Cite all answers needed to ground the wording; do not merely cite an unrelated true phrase. A project question may cite
 project answers only; a room question may cite project answers and that room's answers.
 The current room's answer need not be cited when transitioning to another room; a
 neutral transition plus a next-room question can cite a prior project answer.
-Only ask_prepared may use empty sourceAnswerIds and evidence when its wording and
-reaction make no factual claim beyond supplied room labels and the pending question.
-With empty evidence, omit reaction and put any neutral room transition in text.
+Only ask_prepared may use empty sourceAnswerIds and evidence when its wording makes no factual claim beyond supplied room labels and the pending question.
+With empty evidence, put any neutral room transition in text.
 For a skipped current question, use earlier accepted answers to adapt the next obligation;
 do not react to the skip as if it contained an answer or ask a follow-up on it.
 Skip means skip ONLY that question. It is not a request to end the interview or advance
@@ -93,7 +88,7 @@ Return ONLY JSON: {"kind":"advance"} or
 {"purpose":"Known content and the actual remaining required gap, or fully covered.",
 "evidence":[{"answerId":"answer ID","quote":"exact span"}],"sourceAnswerIds":["answer ID"],
 "kind":"ask_prepared","questionId":"eligible ID",
-"reaction":"Optional brief grounded reaction.","text":"One question?"}.
+"text":"One question?"}.
 confirm_coverage uses the same shape with one source. followup/clarification omit questionId.
 
 Decision order (apply before writing):
@@ -123,8 +118,8 @@ Decision order (apply before writing):
    forward. A complete spatial explanation needs no extra example. At a room boundary,
    move into the next room's pending question. A volunteered object is never a detour.
 Do not repeat the broad fallback question with an added introductory clause. Keep the
-question concise. Reactions can acknowledge the answer without judging its quality;
-omit a reaction if it would only praise, embellish or restate an entire answer.`;
+question concise. Return only the substantive question, without a separate
+reaction, acknowledgment or invitation to respond before that question.`;
 
 export const GUIDED_REVIEW_PROMPT = `${GUIDED_CONTENT_POLICY}
 
@@ -391,7 +386,7 @@ export function guidedDecisionContext(session: GuidedSession, parent: GuidedQues
 
 function decisionOutputFormat(questionIds: string[], allowFollowup: boolean, podcast: boolean, allowPrepared = true) {
   const grammar = guidedDecisionOutputSchema(questionIds, allowFollowup, allowPrepared);
-  const format = zodOutputFormat(podcast ? grammar.omit({ reaction: true }) : grammar);
+  const format = zodOutputFormat(grammar.omit({ reaction: true }));
   if (podcast) {
     // SDK 0.115 moves enums into descriptions although the API supports them.
     // Keep legal actions/IDs in the actual provider grammar as well as local Zod.

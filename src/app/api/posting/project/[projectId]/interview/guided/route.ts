@@ -8,12 +8,14 @@ import { assertLegacyInterviewAllowed } from '@/lib/spotlight/legacyBoundary';
 import { SpotlightConflict } from '@/lib/spotlight/gate';
 import { GuidedConflict } from '@/lib/interview/guided/controller';
 import { getGuidedSession, runGuidedCommand } from '@/lib/interview/guided/service';
+import { streamGuidedCommand } from '@/lib/interview/guided/stream';
 
 export const dynamic = 'force-dynamic';
 export const maxDuration = 120;
 
 const commandSchema = z.object({
-  action: z.enum(['start', 'answer', 'confirm', 'skip', 'skip_room', 'section', 'pause', 'resume', 'retry', 'finish', 'correct']),
+  action: z.enum(['start', 'answer', 'confirm', 'skip', 'skip_room', 'section', 'revisit_room', 'pause', 'resume', 'retry', 'finish', 'correct']),
+  roomCheckpoints: z.boolean().optional(),
   requestId: z.string().min(8).max(100), version: z.number().int().nonnegative(),
   sessionId: z.string().uuid().optional(),
   questionId: z.string().min(1).max(200).optional(), text: z.string().max(2000).optional(),
@@ -62,10 +64,15 @@ export async function POST(request: NextRequest, { params }: { params: { project
     // Rollback stops new sessions. Saved sessions retain their safe writer.
     if (process.env.NEXT_PUBLIC_FLAG_GUIDED_INTERVIEW !== '1' && !await getGuidedSession(params.projectId, actorId))
       throw new GuidedConflict('PILOT_DISABLED', 'New guided interviews are not enabled.', 404);
+    const completed = () => {
+      revalidatePath(`/project/${params.projectId}`);
+      revalidatePath('/designer/projects');
+      revalidatePath(`/designer/projects/${params.projectId}/preview`);
+    };
+    if (request.headers.get('accept')?.includes('application/x-ndjson'))
+      return streamGuidedCommand(params.projectId, actorId, command, failure, completed);
     const session = await runGuidedCommand(params.projectId, actorId, command);
-    revalidatePath(`/project/${params.projectId}`);
-    revalidatePath('/designer/projects');
-    revalidatePath(`/designer/projects/${params.projectId}/preview`);
+    completed();
     return NextResponse.json({ ok: true, session }, { headers: { 'Cache-Control': 'no-store' } });
   } catch (error) { return failure(error); }
 }

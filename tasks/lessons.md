@@ -1308,3 +1308,10 @@ Tags support and cross-check the materials and finishes observed in photographs 
 ## 2026-10-29 — A dismissed notice must not dismiss the journey
 
 The founder closed the import-ready pop-up and Profile returned to the legacy page. Treat notifications as disposable entry points, not onboarding state. Profile must resolve the current membership and saved import independently of notification read status, including after refresh or a later login. Reuse the approved organization profile and the project's existing progress tracker. Audit navigation and bio links as well as the completion email before declaring the handoff complete.
+## 2026-11-16 — A quick interview reaction must not become another turn
+
+The founder corrected the proposed small-model follow-up: a reaction that invites an answer makes the concurrently prepared substantive question stale. Use one observational statement anchored only in the accepted answer, never a question, instruction to elaborate, invented comparison or request for confirmation. Keep the composer unavailable until the checked question arrives. Both models read the same accepted answer; neither waits for a second answer. A missing or late observation must not delay the question. Keep text and dictation together; optional short video opportunities reuse story context later.
+
+## 2026-11-16 — Invite a specific omission at room boundaries
+
+The founder rejected “Add something” because it gives no direction. Ask “Did we miss anything you wanted to mention about this room?” and let the designer name the missing topic. Keep a direct Continue button; no required negative answer. This invitation is a separate optional turn with an enabled composer, unlike the non-interactive quick reaction. A complete volunteered explanation does not require another question.

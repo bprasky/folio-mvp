@@ -57,6 +57,9 @@ export const MODEL_FOR = {
    */
   interview: MODELS.sonnet,
 
+  /** A short optional observation; never chooses questions or changes coverage. */
+  interviewReaction: MODELS.haiku,
+
   /** Spoken-premise entailment: the isolated eight-case evaluation rejected
    * unsupported constraints and causes that Sonnet accepted. Generation stays
    * on Sonnet; this narrower audit trades additional latency/cost for grounding. */

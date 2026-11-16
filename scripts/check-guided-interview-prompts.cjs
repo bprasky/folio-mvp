@@ -117,6 +117,7 @@ async function run() {
     const fixture = fixtures[index]; responses = [replies[index], goodReview]; requests = [];
     const result = await decision.proposeGuidedNext(fixture.session, fixture.parent, fixture.turn);
     assert.equal(result.text, replies[index].text); assert.equal(requests.length, 2, 'Independent review runs after proposal validation.');
+    assert.equal('reaction' in requests[0].output_config.format.schema.properties, false, 'The main model no longer owns the reaction.');
     const input = JSON.parse(requests[0].messages[0].content);
     assert.equal(Object.keys(requests[0].output_config.format.schema.properties).slice(0, 3).join(','), 'purpose,evidence,sourceAnswerIds', 'The provider assesses coverage and selects evidence before composing its action or wording.');
     assert.equal(input.acceptedConversation.length, fixture.session.turns.filter(turn => !turn.supersededBy).length);

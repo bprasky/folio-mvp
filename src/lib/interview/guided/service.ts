@@ -5,6 +5,13 @@ import { guidedTurnWantsToMoveOn, proposeGuidedNext } from './decision';
 import { adaptGuidedRoomQuestions, prepareGuidedProjectPlan, prepareGuidedRoomPlan, readGuidedContext } from './preparation';
 import { commitGuidedSession, ensureGuidedPost, loadGuidedPost, savedGuidedSession } from './store';
 import type { GuidedCommand, GuidedSession } from './types';
+import { declinesRoomInvitation, isRoomCheckpoint, isRoomInvitation } from './roomCheckpoint';
+import { proposeRoomDetail } from './roomDetail';
+
+export interface GuidedCommandObserver {
+  onSaved: (session: GuidedSession) => void;
+  observation: () => { turnId: string; text: string } | null;
+}
 
 /** Source changes never silently reuse pending wording or move an answer's room. */
 async function refreshContext(session: GuidedSession, actorId: string) {
@@ -58,7 +65,7 @@ export async function getGuidedSession(projectId: string, actorId: string) {
   return savedGuidedSession((await loadGuidedPost(projectId))?.provenance);
 }
 
-async function finishDecision(session: GuidedSession, actorId: string): Promise<GuidedSession> {
+async function finishDecision(session: GuidedSession, actorId: string, observer?: GuidedCommandObserver): Promise<GuidedSession> {
   if (session.status !== 'deciding') return session;
   const next = structuredClone(session);
   try {
@@ -79,8 +86,18 @@ async function finishDecision(session: GuidedSession, actorId: string): Promise<
     // naturally into the first room using the complete accepted conversation.
     if (!next.roomsPrepared && projectPhaseComplete(next) && (!parent || !followUpAllowed(next, parent)))
       await prepareRooms();
+    const roomDetail = async () => {
+      if (!turn || !parent || turn.kind === 'skip' || !followUpAllowed(next, parent)) return { kind: 'advance' as const };
+      const context = await readGuidedContext(next.projectId);
+      const photos = context.images.filter(image => image.roomId === parent.roomId)
+        .sort((a, b) => Number(b.id === turn.selectedImageId) - Number(a.id === turn.selectedImageId)).slice(0, 3)
+        .map(image => ({ id: image.id, selected: image.id === turn.selectedImageId,
+          classification: JSON.stringify(image.aiClassification ?? null).slice(0, 1800),
+          materials: JSON.stringify(image.aiMaterials ?? null).slice(0, 1200) }));
+      return proposeRoomDetail(next, parent, turn, photos);
+    };
     const proposal = turn && parent
-      ? await proposeGuidedNext(next, parent, turn)
+      ? isRoomCheckpoint(parent) ? await roomDetail() : await proposeGuidedNext(next, parent, turn)
       : { kind: 'advance' as const };
     applyDecision(next, proposal);
     if (!next.roomsPrepared && projectPhaseComplete(next) && !next.activeQuestionId) {
@@ -89,6 +106,8 @@ async function finishDecision(session: GuidedSession, actorId: string): Promise<
     }
     const changedContext = await refreshContext(session, actorId);
     if (changedContext) return changedContext;
+    const observation = observer?.observation();
+    if (turn && observation?.turnId === turn.id) turn.observation = observation.text;
     next.version++;
     next.updatedAt = new Date().toISOString();
     return await commitGuidedSession(next.projectId, actorId, session.version, next);
@@ -107,10 +126,15 @@ async function finishDecision(session: GuidedSession, actorId: string): Promise<
   }
 }
 
-export async function runGuidedCommand(projectId: string, actorId: string, command: GuidedCommand): Promise<GuidedSession> {
+export async function runGuidedCommand(projectId: string, actorId: string, command: GuidedCommand, observer?: GuidedCommandObserver): Promise<GuidedSession> {
   assertLegacyInterviewAllowed(projectId);
   await assertProjectWrite(actorId, projectId);
   let current = await getGuidedSession(projectId, actorId);
+  if (current && command.action === 'answer') {
+    // Replayed negative replies must normalize identically after the active question moves.
+    const target = current.plan.find(q => q.id === command.questionId);
+    if (isRoomInvitation(target) && declinesRoomInvitation(command.text ?? '')) command = { ...command, action: 'skip' };
+  }
   if (current && command.sessionId && command.sessionId !== current.id)
     throw new GuidedConflict('STALE_SESSION', 'This interview was started over in another tab. Reload to continue with the new interview.');
   if (!current) {
@@ -142,6 +166,7 @@ export async function runGuidedCommand(projectId: string, actorId: string, comma
     // becomes fabricated designer evidence or an answer to the active question.
     const accepted = acceptCommand(current, command);
     current = await commitGuidedSession(projectId, actorId, current.version, accepted);
+    observer?.onSaved(current);
   }
-  return finishDecision(current, actorId);
+  return finishDecision(current, actorId, observer);
 }

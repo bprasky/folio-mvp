@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import { acceptCommand, acceptedTurns, appendRoomPlan, applyDecision, canonicalGuidedAnswers, completionState, createGuidedSession, currentQuestion, followUpAllowed, GuidedConflict, projectPhaseComplete } from '../src/lib/interview/guided/controller';
 import { PROJECT_CATEGORIES, type GuidedCommand, type GuidedPreparation, type GuidedQuestion, type GuidedSession } from '../src/lib/interview/guided/types';
+import { isRoomInvitation, declinesRoomInvitation } from '../src/lib/interview/guided/roomCheckpoint';
 
 const preparation: GuidedPreparation = {
   rooms: [{ id: 'room-a', name: 'Living room', imageIds: ['photo-a'], baseQuestions: 3, maxFollowUps: 1 }, { id: 'room-b', name: 'Kitchen', imageIds: ['photo-b'], baseQuestions: 3, maxFollowUps: 1 }],
@@ -267,3 +268,71 @@ assert.deepEqual(canonicalGuidedAnswers(completed).slice(0, beforeDetail.length)
 assert.equal(canonicalGuidedAnswers(completed).at(-1)?.answer, 'An additional detail that belongs in the saved interview.');
 assert.throws(() => acceptCommand(initial(), { action: 'add_detail', requestId: 'too-soon-detail', version: 1 }), /Resume the remaining/);
 console.log('PASS podcast chain depth/section budget and additive completed interview evidence preserve the canonical backbone');
+
+// Room checkpoints reuse the versioned question/answer path, but never create
+// coverage obligations or silently change the prepared plan.
+{
+  let roomSession = initial(); roomSession.roomCheckpoints = true;
+  for (let i = 0; i < 5; i++) { roomSession = acceptCommand(roomSession, command(roomSession, {})); applyDecision(roomSession, { kind: 'advance' }); }
+  appendRoomPlan(roomSession, roomPlan(roomSession));
+  const preparedIds = roomSession.plan.filter(q => q.kind === 'prepared').map(q => q.id);
+  for (let i = 0; i < 3; i++) { roomSession = acceptCommand(roomSession, command(roomSession, {})); applyDecision(roomSession, { kind: 'advance' }); }
+  const invitation = currentQuestion(roomSession)!;
+  assert.ok(isRoomInvitation(invitation));
+  assert.match(invitation.text, /Before we move to Kitchen, did we miss anything you wanted to mention about Living room\?/);
+  assert.equal(invitation.checkpointReturnQuestionId, 'room-b-q-0');
+  assert.equal(canonicalGuidedAnswers(roomSession).length, 8, 'an invitation is not designer testimony');
+  assert.equal(currentQuestion(JSON.parse(JSON.stringify(roomSession)))?.id, invitation.id, 'refresh restores the exact invitation');
+  assert.throws(() => acceptCommand(roomSession, command(roomSession, { selectedImageId: 'photo-b' })), /photograph/);
+  let detail = acceptCommand(roomSession, command(roomSession, { text: 'We never discussed why we kept the niche.', selectedImageId: 'photo-a', inputModality: 'voice' }));
+  const turn = detail.turns.at(-1)!;
+  assert.ok(followUpAllowed(detail, detail.plan.find(q => q.id === invitation.id)!));
+  applyDecision(detail, { kind: 'followup', text: 'What made that niche worth keeping?', purpose: 'Explore the reason behind the volunteered decision.', sourceAnswerIds: [turn.id], evidence: [{ answerId: turn.id, quote: 'we kept the niche' }] });
+  assert.equal(currentQuestion(detail)?.roomId, 'room-a');
+  assert.equal(currentQuestion(detail)?.checkpointReturnQuestionId, 'room-b-q-0');
+  detail = acceptCommand(detail, command(detail, { text: 'It preserved a place for the family to gather without narrowing circulation.' }));
+  assert.equal(followUpAllowed(detail, detail.plan.find(q => q.id === detail.turns.at(-1)!.questionId)!), false, 'one optional follow-up, not a chain');
+  applyDecision(detail, { kind: 'advance' });
+  assert.equal(currentQuestion(detail)?.id, 'room-b-q-0');
+  assert.deepEqual(detail.plan.filter(q => q.kind === 'prepared').map(q => q.id), preparedIds);
+  assert.equal(canonicalGuidedAnswers(detail).find(a => a.answer.includes('kept the niche'))?.linkedImageId, 'photo-a');
+  const standalone = acceptCommand(roomSession, command(roomSession, { text: 'We kept the niche because it gives the family a gathering point without narrowing circulation.' }));
+  applyDecision(standalone, { kind: 'advance' });
+  assert.equal(currentQuestion(standalone)?.id, 'room-b-q-0', 'a complete explanation needs no follow-up');
+  const continueCommand = command(roomSession, { action: 'skip' });
+  roomSession = acceptCommand(roomSession, continueCommand); applyDecision(roomSession, { kind: 'advance' });
+  assert.equal(acceptCommand(roomSession, continueCommand), roomSession, 'continue replay is idempotent');
+  assert.equal(currentQuestion(roomSession)?.id, 'room-b-q-0');
+  assert.equal(canonicalGuidedAnswers(roomSession).length, 8, 'continuing does not add a negative answer');
+  const returnId = roomSession.activeQuestionId;
+  let skippedWholeRoom = structuredClone(roomSession);
+  for (let i = 0; i < 2; i++) { skippedWholeRoom = acceptCommand(skippedWholeRoom, command(skippedWholeRoom, {})); applyDecision(skippedWholeRoom, { kind: 'advance' }); }
+  skippedWholeRoom = acceptCommand(skippedWholeRoom, command(skippedWholeRoom, { action: 'skip_room' }));
+  applyDecision(skippedWholeRoom, { kind: 'advance' });
+  assert.equal(skippedWholeRoom.status, 'ready', 'skip room must not introduce a checkpoint even with just one remaining question');
+  const revisit = command(roomSession, { action: 'revisit_room', roomId: 'room-a' });
+  roomSession = acceptCommand(roomSession, revisit);
+  assert.ok(isRoomInvitation(currentQuestion(roomSession)));
+  assert.equal(currentQuestion(roomSession)?.checkpointReturnQuestionId, returnId);
+  assert.equal(acceptCommand(roomSession, revisit), roomSession);
+  assert.throws(() => acceptCommand(roomSession, command(roomSession, { action: 'revisit_room', roomId: 'room-b' })), /remaining questions/);
+  roomSession = acceptCommand(roomSession, command(roomSession, { action: 'skip' })); applyDecision(roomSession, { kind: 'advance' });
+  assert.equal(roomSession.activeQuestionId, returnId, 'revisiting returns to the original place');
+  const correctedDetail = acceptCommand(detail, command(detail, { action: 'correct', questionId: invitation.id,
+    text: 'We kept the niche to preserve the original plan, not for gathering.' }));
+  assert.ok(correctedDetail.turns.some(t => t.id === turn.id && t.supersededBy));
+  assert.ok(correctedDetail.plan.some(q => q.parentQuestionId === invitation.id && q.status === 'invalidated'));
+  applyDecision(correctedDetail, { kind: 'advance' });
+  assert.equal(correctedDetail.activeQuestionId, 'room-b-q-0', 'correcting a volunteered detail restores the current position');
+  assert.equal(canonicalGuidedAnswers(correctedDetail).some(a => a.answer.includes('gathering point')), false, 'dependent follow-up evidence cannot survive a corrected premise');
+  for (let i = 0; i < 3; i++) { roomSession = acceptCommand(roomSession, command(roomSession, {})); applyDecision(roomSession, { kind: 'advance' }); }
+  assert.ok(isRoomInvitation(currentQuestion(roomSession)), 'last room has an optional checkpoint too');
+  assert.equal(completionState(roomSession).complete, true, 'unanswered optional invitations do not make coverage partial');
+  roomSession = acceptCommand(roomSession, command(roomSession, { action: 'skip' })); applyDecision(roomSession, { kind: 'advance' });
+  assert.equal(roomSession.status, 'ready');
+  assert.equal(completionState(roomSession).complete, true);
+  assert.equal(canonicalGuidedAnswers(roomSession).length, 11);
+  assert.ok(declinesRoomInvitation('No thanks.'));
+  assert.equal(declinesRoomInvitation('No, but we never discussed the windows.'), false);
+  console.log('Room checkpoint checks passed: durable invitation, scoped voice/photo evidence, bounded follow-up, direct continue, revisit, replay and optional coverage.');
+}

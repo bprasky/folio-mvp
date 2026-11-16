@@ -18,7 +18,8 @@ const environment = {
   SPOTLIGHT_PROJECT_IDS: '', SPOTLIGHT_ACTOR_IDS: '', SPOTLIGHT_INTERVIEW_V1: 'false',
 };
 let database, authUser = 'owner', providerCalls = [], networkCalls = 0;
-let decisionMode = 'advance', pendingModel = null, decisionEntered = null;
+let decisionMode = 'advance', pendingModel = null, decisionEntered = null, reactionMode = 'normal', reactionGate = null;
+let roomDetailMode = 'advance';
 let failNextCas = false, failProjection = false, failNextDecisionCommit = false, failResetProjection = false;
 const cache = new Map();
 const PROJECT_TEXT = [
@@ -39,6 +40,26 @@ class AnthropicFixture {
   messages = { create: async input => {
     providerCalls.push(input);
     const text = JSON.stringify(input.messages);
+    if (String(input.system || '').includes('This designer was asked whether we missed anything')) {
+      const context = JSON.parse(input.messages[0].content);
+      if (input.system.includes('Independently review this candidate')) return fixtureResponse({ valid: true, reason: 'Fits the designer-selected topic and exact evidence.' });
+      const stored = (await database.projectPost.findUnique({ where: { projectId: 'project' } })).provenance.interview.guided;
+      assert.ok(stored.turns.some(turn => turn.id === context.currentAnswer.id && turn.text === context.currentAnswer.text));
+      assert.deepEqual(context.photoContext.map(photo => photo.id), ['photo']);
+      if (roomDetailMode === 'fail') throw new Error('synthetic room-detail outage');
+      if (roomDetailMode === 'followup') return fixtureResponse({ kind: 'followup', text: 'What made that niche worth keeping?',
+        purpose: 'Explore why the designer kept the niche they mentioned.', sourceAnswerIds: [context.currentAnswer.id],
+        evidence: [{ answerId: context.currentAnswer.id, quote: 'We kept the niche' }] });
+      return fixtureResponse({ kind: 'advance' });
+    }
+    if (String(input.system || '').includes('optional first sentence')) {
+      const answer = JSON.parse(input.messages[0].content).answer;
+      const stored = (await database.projectPost.findUnique({ where: { projectId: 'project' } })).provenance.interview.guided;
+      assert.ok(stored.turns.some(turn => turn.text === answer), 'Reaction must follow durable acceptance.');
+      if (reactionMode === 'fail') throw new Error('synthetic observation failure');
+      if (reactionMode === 'defer') await reactionGate.promise;
+      return fixtureResponse({ text: 'You kept the original walls.', quote: 'We kept the original walls' });
+    }
     if (String(input.system || '').includes('Review a guided preparation batch')) {
       const { candidates } = JSON.parse(input.messages[0].content);
       return fixtureResponse({ reviews: candidates.map(candidate => ({ id: candidate.id, valid: true, reason: 'Neutral question fits the prepared topic.', evidence: [] })) });
@@ -105,7 +126,7 @@ function load(file) {
   } }).outputText;
   vm.runInNewContext(code, {
     exports, process: { env: environment }, console, Error, SyntaxError, TypeError, Date, URL, Request, Response,
-    structuredClone, Buffer, setTimeout, clearTimeout,
+    structuredClone, Buffer, setTimeout, clearTimeout, ReadableStream, TextEncoder, AbortController,
     fetch: async () => { networkCalls++; throw new Error('Network is forbidden in this fixture'); },
     require(name) {
       if (name === '@/lib/prisma') return { prisma: facade };
@@ -125,7 +146,8 @@ function load(file) {
 }
 
 async function fixture() {
-  database = memoryDatabase(); authUser = 'owner'; providerCalls = []; decisionMode = 'advance';
+  roomDetailMode = 'advance';
+  database = memoryDatabase(); authUser = 'owner'; providerCalls = []; decisionMode = 'advance'; reactionMode = 'normal'; reactionGate = null;
   failNextCas = false; failProjection = false; failNextDecisionCommit = false; failResetProjection = false;
   environment.NEXT_PUBLIC_FLAG_GUIDED_INTERVIEW = '1'; environment.SPOTLIGHT_PROJECT_IDS = '';
   const postModel = database.projectPost;
@@ -197,6 +219,67 @@ async function resetInterview(command) {
 }
 
 async function run() {
+  {
+  // Actual NDJSON route, canonical writer/controller and provider boundary double.
+  const streamPost = command => route.POST(new Request('http://folio.test/interview/guided', {
+    method: 'POST', headers: { 'Content-Type': 'application/json', Accept: 'application/x-ndjson' }, body: JSON.stringify(command),
+  }), params);
+  const readEvent = async reader => JSON.parse(new TextDecoder().decode((await reader.read()).value).trim());
+  await fixture();
+  const streamingSession = await start();
+  const streamingCommand = { action: 'answer', version: streamingSession.version, sessionId: streamingSession.id,
+    questionId: streamingSession.activeQuestionId, requestId: requestId(), text: 'We kept the original walls and put most of the budget into lighting.' };
+  decisionMode = 'defer'; decisionEntered = deferred();
+  const streamed = await streamPost(streamingCommand);
+  assert.match(streamed.headers.get('content-type'), /ndjson/);
+  const reader = streamed.body.getReader();
+  const savedEvent = await readEvent(reader);
+  assert.equal(savedEvent.type, 'saved');
+  await decisionEntered.promise;
+  const observed = await readEvent(reader);
+  assert.equal(observed.type, 'reaction');
+  assert.equal(observed.sessionId, savedEvent.session.id);
+  assert.equal((await saved()).status, 'deciding', 'The real question is still running when the observation arrives.');
+  const nextTarget = savedEvent.session.plan.find(q => q.status === 'pending');
+  pendingModel.resolve({ kind: 'ask_prepared', questionId: nextTarget.id, text: nextTarget.text,
+    purpose: 'Ask the next unaddressed obligation.', sourceAnswerIds: [], evidence: [] });
+  const complete = await readEvent(reader);
+  assert.equal(complete.type, 'complete');
+  assert.equal(complete.session.turns.at(-1).observation, observed.text);
+  assert.equal((await database.editorialInterviewAnswer.findMany())[0].answerText, streamingCommand.text, 'Observation is never article evidence.');
+  const reactionsBeforeReplay = providerCalls.filter(p => String(p.system).includes('optional first sentence')).length;
+  decisionMode = 'advance';
+  const replay = (await (await streamPost(streamingCommand)).text()).trim().split('\n').map(JSON.parse);
+  assert.equal(replay.length, 1); assert.equal(replay[0].type, 'complete');
+  assert.equal(providerCalls.filter(p => String(p.system).includes('optional first sentence')).length, reactionsBeforeReplay);
+  console.log('PASS stream saves before reaction, prepares question concurrently, excludes observation from evidence and adds no replay call');
+
+  for (const mode of ['fail', 'defer']) {
+    await fixture(); const current = await start(); reactionMode = mode; reactionGate = deferred();
+    const events = (await (await streamPost({ ...streamingCommand, version: current.version, sessionId: current.id,
+      questionId: current.activeQuestionId, requestId: requestId() })).text()).trim().split('\n').map(JSON.parse);
+    assert.equal(events.at(-1).type, 'complete'); assert.ok(events.every(event => event.type !== 'reaction'));
+    reactionGate.resolve();
+  }
+  console.log('PASS failed or slow observations never delay or block a completed question');
+
+  await fixture(); const beforePause = await start(); decisionMode = 'defer'; decisionEntered = deferred();
+  reactionMode = 'defer'; reactionGate = deferred();
+  const interrupted = await streamPost({ ...streamingCommand, version: beforePause.version, sessionId: beforePause.id,
+    questionId: beforePause.activeQuestionId, requestId: requestId() });
+  const interruptedReader = interrupted.body.getReader(); const accepted = await readEvent(interruptedReader);
+  await decisionEntered.promise;
+  await post({ action: 'pause', version: accepted.session.version, sessionId: accepted.session.id, requestId: requestId() });
+  reactionGate.resolve();
+  const pausedTarget = accepted.session.plan.find(q => q.status === 'pending');
+  pendingModel.resolve({ kind: 'ask_prepared', questionId: pausedTarget.id, text: pausedTarget.text, purpose: 'Continue the next obligation.', sourceAnswerIds: [], evidence: [] });
+  const interruptedEvents = [];
+  for (;;) { const value = await interruptedReader.read(); if (value.done) break; interruptedEvents.push(...new TextDecoder().decode(value.value).trim().split('\n').map(JSON.parse)); }
+  assert.ok(interruptedEvents.every(event => event.type !== 'reaction'));
+  assert.equal(interruptedEvents.at(-1).session.status, 'paused');
+  console.log('PASS a newer pause invalidates the old reaction and model result');
+  }
+
   await fixture();
   authUser = null;
   assert.equal((await post({ action: 'start', version: 0, requestId: requestId() })).status, 401);
@@ -544,6 +627,43 @@ async function run() {
   assert.equal((await database.editorialInterview.findUnique({ where: { projectId: 'project' } })).status, 'COMPLETED');
   assert.equal(networkCalls, 0);
   console.log('PASS lossless rejection of oversized text, skip provenance, staged five-category/room plan, attributable canonical draft payload, and explicit partial completion without publication');
+  {
+    await fixture();
+    let roomSession = (await post({ action: 'start', version: 0, requestId: requestId(), roomCheckpoints: true })).session;
+    for (let i = 0; i < 8; i++) roomSession = (await answer(roomSession, 'We planned the rooms around daily movement.')).session;
+    let invitation = roomSession.plan.find(q => q.id === roomSession.activeQuestionId);
+    assert.equal(invitation.category, 'room_wrapup');
+    assert.equal((await saved()).activeQuestionId, invitation.id);
+    const callsBeforeContinue = providerCalls.length;
+    const noCommand = { action: 'answer', questionId: invitation.id, version: roomSession.version, requestId: requestId(), text: 'No thanks.' };
+    roomSession = (await post(noCommand)).session;
+    assert.equal(roomSession.status, 'ready'); assert.equal(providerCalls.length, callsBeforeContinue, 'direct continue is free of model calls');
+    assert.equal((await post(noCommand)).status, 200, 'normalized negative replay restores the accepted state');
+    assert.equal(await database.editorialInterviewAnswer.count(), 8, 'negative checkpoint reply is not article testimony');
+    const reopen = async () => {
+      roomSession = (await post({ action: 'revisit_room', roomId: 'room', version: roomSession.version, requestId: requestId(), roomCheckpoints: true })).session;
+      invitation = roomSession.plan.find(q => q.id === roomSession.activeQuestionId);
+    };
+    await reopen(); roomDetailMode = 'fail';
+    roomSession = (await answer(roomSession, 'We kept the niche and never discussed why.', { inputModality: 'voice', selectedImageId: 'photo' })).session;
+    assert.equal(roomSession.status, 'deciding'); assert.match(roomSession.notice, /answer is saved/i);
+    const detailId = roomSession.turns.at(-1).id;
+    assert.equal(await database.editorialInterviewAnswer.count(), 9);
+    roomDetailMode = 'followup';
+    roomSession = (await post({ action: 'retry', version: roomSession.version, requestId: requestId() })).session;
+    assert.equal(roomSession.plan.find(q => q.id === roomSession.activeQuestionId).parentAnswerId, detailId);
+    const callsBeforeFollowupAnswer = providerCalls.length;
+    roomSession = (await answer(roomSession, 'It gave the family a gathering point without narrowing circulation.')).session;
+    assert.equal(roomSession.status, 'ready'); assert.equal(providerCalls.length, callsBeforeFollowupAnswer, 'one optional question cannot create an endless chain');
+    const projected = (await database.projectPost.findUnique({ where: { projectId: 'project' } })).provenance.interview.payload;
+    const niche = [...projected.answers, ...(projected.followups || [])].find(a => a.answer.startsWith('We kept the niche'));
+    assert.equal(niche.linkedImageId, 'photo'); assert.equal(niche.inputModality, 'voice');
+    await reopen(); roomDetailMode = 'advance';
+    roomSession = (await answer(roomSession, 'We kept the niche because it gave the family a gathering point without narrowing circulation.')).session;
+    assert.equal(roomSession.status, 'ready', 'a complete explanation can stand on its own');
+    assert.equal(networkCalls, 0);
+    console.log('PASS room invitation persistence, free continue, normalized replay, scoped photo/voice evidence, detail retry and one optional reviewed follow-up');
+  }
   console.log('Guided HTTP/service/store integration checks passed. PostgreSQL isolation, actual transcription, and editorial model generation are not simulated as verified.');
 }
 run().catch(error => { console.error(error); process.exitCode = 1; });

@@ -28,6 +28,8 @@ export interface GuidedQuestion {
   kind: 'prepared' | 'followup' | 'clarification';
   parentQuestionId?: string;
   parentAnswerId?: string;
+  /** Optional room invitation (and its follow-up) returns to this prepared question. */
+  checkpointReturnQuestionId?: string | null;
   purpose?: string;
   invalidationReason?: string;
   wordingHistory?: Array<{ text: string; reaction?: string; sourceAnswerIds?: string[]; correctedAnswerId?: string }>;
@@ -48,6 +50,8 @@ export interface GuidedTurn {
   questionId: string;
   questionText: string;
   reaction?: string;
+  /** Folio's response after this answer, never designer/article evidence. */
+  observation?: string;
   reusedFromAnswerId?: string;
   confirmationText?: string;
   text: string;
@@ -79,6 +83,8 @@ export interface GuidedSession {
   schemaVersion: 1;
   projectId: string;
   conversationStyle?: 'podcast';
+  roomCheckpoints?: boolean;
+  skippedRoomCheckpoints?: string[];
   /** Present after an explicit reset, also invalidates older unbound local drafts. */
   resetId?: string;
   version: number;
@@ -124,9 +130,10 @@ export type GuidedNextProposal = { kind: 'advance' } | {
 };
 
 export interface GuidedCommand {
-  action: 'start' | 'answer' | 'confirm' | 'skip' | 'skip_room' | 'section' | 'pause' | 'resume' | 'retry' | 'finish' | 'correct' | 'add_detail';
+  action: 'start' | 'answer' | 'confirm' | 'skip' | 'skip_room' | 'section' | 'revisit_room' | 'pause' | 'resume' | 'retry' | 'finish' | 'correct' | 'add_detail';
   requestId: string;
   conversationStyle?: 'podcast';
+  roomCheckpoints?: boolean;
   /** Binds a live guide transition to its exact originating command, never answer evidence. */
   guideCommandDigest?: string;
   version: number;
@@ -139,3 +146,9 @@ export interface GuidedCommand {
   selectedImageId?: string | null;
   confirmPartial?: boolean;
 }
+
+export type GuidedProgressEvent =
+  | { type: 'saved'; session: GuidedSession }
+  | { type: 'reaction'; sessionId: string; version: number; turnId: string; text: string }
+  | { type: 'complete'; session: GuidedSession }
+  | { type: 'error'; status: number; message: string; code?: string };
