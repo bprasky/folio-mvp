@@ -74,6 +74,7 @@ async function load(name) {
     route: 'src/app/api/projects/route.ts',
     '@/lib/permissions': 'src/lib/permissions.ts',
     '@/lib/post/publicPost': 'src/lib/post/publicPost.ts',
+    '@/lib/products/imageProvenance': 'src/lib/products/imageProvenance.ts',
     '@/lib/story/presentation': 'src/lib/story/presentation.ts',
     '@/server/queries/filters': 'src/server/queries/filters.ts',
   }[name];

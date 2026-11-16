@@ -30,7 +30,7 @@ function Publication({ post }: StoryRendererProps) {
   useEffect(() => {
     const utmSource = searchParams?.get("utm_source");
     if (utmSource === "folio_share" && post?.projectId) {
-      fetch("/api/analytics/log", {
+      fetch("/api/analytics/event", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

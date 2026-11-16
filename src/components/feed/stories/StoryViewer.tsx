@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import type { UpdatesCarouselItem } from "@/lib/feed/getUpdatesCarousel";
 import { getMonographUrl } from "@/lib/utils/getMonographUrl";
@@ -40,14 +40,11 @@ export function StoryViewer({ groups, index: startIndex, onClose }: Props) {
     setIidx(0);
   }, [gidx]);
 
-  // Play video when current item changes
+  // Reset playback on navigation; playback is always a deliberate user action.
   useEffect(() => {
     const v = videoRef.current;
     if (v && current) {
       v.load();
-      v.play().catch(() => {
-        // Auto-play may fail, that's okay
-      });
     }
   }, [current]);
 
@@ -95,7 +92,7 @@ export function StoryViewer({ groups, index: startIndex, onClose }: Props) {
               <div key={k} className="h-1 w-full rounded bg-white/30 overflow-hidden">
                 <div 
                   className={`h-full ${
-                    k < iidx ? "w-full" : k === iidx ? "animate-[story_5s_linear_forwards]" : "w-0"
+                  k <= iidx ? "w-full" : "w-0"
                   } bg-white`} 
                 />
               </div>
@@ -104,14 +101,19 @@ export function StoryViewer({ groups, index: startIndex, onClose }: Props) {
 
           {/* VIDEO */}
           <div className="absolute inset-0 flex items-center justify-center">
-            {src ? (
+            {src && media?.kind === 'image' ? (
+              // Published, normalized media may use an external CDN.
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={src} alt={media.caption || current?.title || 'Project story'} className="max-h-[80vh] max-w-full object-contain" />
+            ) : src && media?.kind === 'external' ? (
+              <a href={src} target="_blank" rel="noopener noreferrer" className="relative z-10 rounded-full bg-white px-6 py-3 text-black">Watch on {new URL(src).hostname}</a>
+            ) : src ? (
               <video
                 ref={videoRef}
                 src={src}
-                autoPlay
                 playsInline
-                muted
-                controls={false}
+                controls
+                preload="none"
                 className={`max-h-[88vh] ${isVertical ? "h-[88vh] w-auto" : "w-full"} object-contain rounded-2xl shadow-2xl`}
               />
             ) : (
@@ -121,7 +123,7 @@ export function StoryViewer({ groups, index: startIndex, onClose }: Props) {
 
           {/* TAP/CLICK ZONES */}
           <button 
-            className="absolute left-0 top-0 bottom-0 w-1/3" 
+            className="absolute bottom-0 left-0 min-h-11 rounded-full bg-white/90 px-5 text-black"
             onClick={() => {
               if (iidx > 0) {
                 setIidx(iidx - 1);
@@ -130,10 +132,10 @@ export function StoryViewer({ groups, index: startIndex, onClose }: Props) {
                 setIidx(groups[gidx - 1].items.length - 1);
               }
             }} 
-            aria-label="Prev" 
-          />
+            aria-label="Previous media"
+          >Previous</button>
           <button 
-            className="absolute right-0 top-0 bottom-0 w-1/3" 
+            className="absolute bottom-0 right-0 min-h-11 rounded-full bg-white/90 px-5 text-black"
             onClick={() => {
               if (iidx < items.length - 1) {
                 setIidx(iidx + 1);
@@ -144,8 +146,8 @@ export function StoryViewer({ groups, index: startIndex, onClose }: Props) {
                 onClose();
               }
             }} 
-            aria-label="Next" 
-          />
+            aria-label="Next media"
+          >Next</button>
         </div>
       </div>
       <style jsx global>{`

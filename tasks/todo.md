@@ -1439,3 +1439,16 @@ Approved scope: six-digit email ownership verification during signup; existing m
 - [x] Put the notification bell in the masthead, retain completion history, and synchronize read status safely.
 - [x] Verify dismiss → Profile recovery, account/org isolation, saved project continuation, and desktop/mobile notification behavior; run required checks.
 - [ ] Merge after CI and verify the production deployment. Evidence: `docs/reviews/profile-import-resume.md`.
+## PR #853 — project channel audit and hardening (2026-11-10)
+
+Scope: audit the existing PR branch, preserve the approved profile mosaic and immersive publication, fix bounded defects, add regression coverage, and push improvements. No merge, deployment, publication, editorial generation, production data mutation, or schema changes.
+
+- [x] Trace routing, public data transport, project/media publication gates and Shop authorization.
+- [x] Verify representative public production publications read-only; record any unavailable integration evidence.
+- [x] Harden deterministic curation, media normalization/destinations, deep links, credits and cinematic motion.
+- [x] Run focused fixtures, existing publishing/privacy checks, ESLint, TypeScript ratchet and production build.
+- [x] Review desktop/tablet/mobile journeys in Chromium, including reduced motion and failure states.
+- [x] Record portfolio-first architectural gap, remaining blockers and exact evidence in docs/reviews/project-channels-853.md.
+- [x] Commit and push to the existing PR branch; confirm final SHA and check state without merging or deploying.
+
+Review: see `docs/reviews/project-channels-853.md` and its committed screenshots. Four real public publications were checked read-only and rendered through the PR components. Scoped regression checks and full local builds pass; TypeScript debt falls from 849 to 846. The existing IDOR scanner has the same 45 findings as main. Database-backed authenticated integration remains a rollout condition, and portfolio-first channels are explicitly future work. No publishing gates were bypassed.

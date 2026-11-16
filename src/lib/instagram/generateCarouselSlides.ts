@@ -396,10 +396,10 @@ async function createCTASlide(
   projectId?: string
 ): Promise<Buffer> {
   const shortlink = projectSlug 
-    ? `folio.com/p/${projectSlug}` 
+    ? `folioad.com/p/${encodeURIComponent(projectSlug)}`
     : projectId 
-    ? `link.bio/folio/${projectId.substring(0, 8)}`
-    : 'link.bio/folio';
+    ? `folioad.com/project/${encodeURIComponent(projectId)}`
+    : 'folioad.com';
 
   // Generate QR code if qrcode library is available (only if space)
   let qrCodeSvg = '';

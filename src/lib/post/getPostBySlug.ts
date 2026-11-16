@@ -26,6 +26,7 @@ export async function getPostBySlug(slug: string) {
             },
             images: {
               where: { inclusion: 'INCLUDED' },
+              orderBy: [{ displayOrder: 'asc' }, { createdAt: 'asc' }, { id: 'asc' }],
               select: {
                 id: true, url: true, name: true, room: true, roomId: true, displayOrder: true,
                 // Exclude tags pointing at pending/unclaimed products so they

@@ -2,7 +2,9 @@ import { ImageResponse } from '@vercel/og';
 import { NextRequest } from 'next/server';
 import { prisma } from '@/lib/prisma';
 
-export const runtime = 'edge';
+export const runtime = 'nodejs';
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
 
 export async function GET(
   request: NextRequest,
@@ -12,9 +14,10 @@ export async function GET(
     const { slug } = params;
 
     // Fetch project data
-    const post = await prisma.projectPost.findUnique({
-      where: { slug },
+    const post = await prisma.projectPost.findFirst({
+      where: { slug, status: 'PUBLISHED', project: { isPublic: true } },
       select: {
+        heroAssetId: true,
         excerpt: true,
         project: {
           select: {
@@ -27,14 +30,15 @@ export async function GET(
               },
             },
             images: {
+              where: { inclusion: 'INCLUDED' },
               select: {
+                id: true,
                 url: true,
                 displayOrder: true,
               },
               orderBy: {
                 displayOrder: 'asc',
               },
-              take: 1,
             },
           },
         },
@@ -42,14 +46,14 @@ export async function GET(
     });
 
     if (!post) {
-      return new Response('Not found', { status: 404 });
+      return new Response('Not found', { status: 404, headers: { 'Cache-Control': 'no-store' } });
     }
 
     const { project } = post;
-    const heroImage = project.images[0]?.url;
-    const designerName = project.designer.studio || project.designer.name;
+    const heroImage = (project.images.find(image => image.id === post.heroAssetId) || project.images[0])?.url;
+    const designerName = project.designer?.studio || project.designer?.name || 'Folio';
 
-    return new ImageResponse(
+    const response = new ImageResponse(
       (
         <div
           style={{
@@ -99,17 +103,16 @@ export async function GET(
               padding: '60px 80px',
               gap: '16px',
               position: 'relative',
-              zIndex: 10,
             }}
           >
             {/* Project Title */}
             <div
               style={{
                 fontSize: 72, /* folio-design-system: off-scale */
-                fontWeight: 'var(--w-body)',
+                fontWeight: 400,
                 color: '#FFFFFF',
-                letterSpacing: 'var(--ls-tight)',
-                lineHeight: 'var(--lh-h1)',
+                letterSpacing: '-0.02em',
+                lineHeight: 1.1,
                 fontFamily: 'Georgia, serif',
                 textShadow: '0 4px 24px rgba(0,0,0,0.3)',
               }}
@@ -120,8 +123,8 @@ export async function GET(
             {/* Designer Attribution */}
             <div
               style={{
-                fontSize: 'var(--type-stat)',
-                fontWeight: 'var(--w-body)',
+                fontSize: 32,
+                fontWeight: 400,
                 color: 'rgba(255,255,255,0.9)',
                 letterSpacing: '0.01em', /* folio-design-system: off-scale */
                 fontFamily: 'system-ui, -apple-system, sans-serif',
@@ -136,10 +139,10 @@ export async function GET(
                 position: 'absolute',
                 bottom: 60,
                 right: 80,
-                fontSize: 'var(--type-quote)',
+                fontSize: 28,
                 fontWeight: 300, /* folio-design-system: off-scale */
                 color: 'rgba(255,255,255,0.6)',
-                letterSpacing: 'var(--ls-wide)',
+                letterSpacing: '0.15em',
                 fontFamily: 'system-ui, -apple-system, sans-serif',
               }}
             >
@@ -153,8 +156,12 @@ export async function GET(
         height: 630,
       }
     );
+    // ImageResponse appends supplied cache headers to its one-year default.
+    // Replace that default so a later withdrawal cannot serve cached artwork.
+    response.headers.set('Cache-Control', 'no-store');
+    return response;
   } catch (error) {
     console.error('Error generating OG image:', error);
-    return new Response('Internal Server Error', { status: 500 });
+    return new Response('Internal Server Error', { status: 500, headers: { 'Cache-Control': 'no-store' } });
   }
 }

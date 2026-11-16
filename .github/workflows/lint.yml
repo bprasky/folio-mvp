@@ -100,6 +100,8 @@ jobs:
       - name: Organization appearance, permissions and public profile
         run: npx tsx --test scripts/core/org-profile-appearance-data.test.cjs scripts/core/org-profile-appearance-routes.test.cjs
       - run: npm run test:rollout
+      - name: Project channel publication, privacy, routing and curation
+        run: npm run test:project-channels
       - name: Production-mode public and protected image delivery
         run: node scripts/check-image-delivery.cjs
       - name: Project draft persistence and listing privacy
@@ -236,6 +238,17 @@ jobs:
       # Next 14 compile mode emits real route types without prerendering or DB access.
       - name: Generate Prisma and Next route types
         run: npm run typecheck:prepare
+      - name: Project channel and original publication in Chromium
+        run: CHANNEL_TEST_BROWSER="$(command -v google-chrome || command -v chromium)" npm run test:project-channels:browser
+      - name: Cinematic profile customization and existing mosaic
+        run: ORG_PROFILE_TEST_CINEMATIC=true ORG_PROFILE_TEST_BROWSER="$(command -v google-chrome || command -v chromium)" node scripts/check-org-profile-browser.cjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: project-channel-screenshots
+          path: |
+            .tmp/channel-browser/*.png
+            .tmp/org-profile-browser/*.png
       - name: Reject new diagnostics and baseline expansion
         env:
           # Full-project compiler analysis exceeds Node's default 2 GiB heap.

@@ -45,6 +45,7 @@ export const getPublishedProjectPosts = cache(async (opts?: { take?: number }) =
             id: true,
             title: true,
             images: {
+              where: { inclusion: 'INCLUDED' },
               select: {
                 id: true,
                 url: true,

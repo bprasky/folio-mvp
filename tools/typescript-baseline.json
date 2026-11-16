@@ -1,9 +1,9 @@
 {
   "version": 1,
-  "baselineCommit": "bf9ead5b3a842def601884221bab566481e8ecf4",
+  "baselineCommit": "9b6f885415505b6d5bc5cb7fed7b8adc3168b3cf",
   "compilerVersion": "5.9.3",
   "command": "tsc --noEmit --pretty false --incremental false",
-  "total": 849,
+  "total": 846,
   "diagnostics": [
     ["src/app/actions/projects.ts",2345,"Argument of type '(project: ProjectWithImages) => { id: string; images: { url: string; precomputedSignals: any; }[]; productTags: { product: { category: string; materials: any[]; }; }[]; rooms: { type: string; materials: any[]; }[]; description: string; }' is not assignable to parameter of type '(value: { id: string; title: string; views: number; createdAt: Date; updatedAt: Date; ownerId: string; status: string; publishedAt: Date; description: string; city: string; isPublic: boolean; ... 20 more ...; targetInstallDate: Date; }, index: number, array: { ...; }[]) => { ...; }'. Types of parameters 'project' and 'value' are incompatible. Type '{ id: string; title: string; views: number; createdAt: Date; updatedAt: Date; ownerId: string; status: string; publishedAt: Date; description: string; city: string; isPublic: boolean; ... 20 more ...; targetInstallDate: Date; }' is missing the following properties from type 'ProjectWithImages': images, rooms",1],
     ["src/app/actions/projects.ts",2353,"Object literal may only specify known properties, and 'imageSignals' does not exist in type 'ProjectImageSelect<DefaultArgs>'.",1],
@@ -450,10 +450,7 @@
     ["src/lib/events/visibility.ts",2551,"Property 'parentFestival' does not exist on type '{ id: string; location: string; title: string; createdAt: Date; updatedAt: Date; organizationId: string; description: string; city: string; state: string; country: string; startDate: Date; ... 32 more ...; hostProfileId: string; }'. Did you mean 'parentFestivalId'?",5],
     ["src/lib/feed/getUpdatesCarousel.ts",2339,"Property 'id' does not exist on type '{}'.",2],
     ["src/lib/feed/getUpdatesCarousel.ts",2339,"Property 'name' does not exist on type '{}'.",1],
-    ["src/lib/feed/getUpdatesCarousel.ts",2339,"Property 'poster' does not exist on type 'JsonValue'. Property 'poster' does not exist on type 'string'.",1],
     ["src/lib/feed/getUpdatesCarousel.ts",2339,"Property 'studio' does not exist on type '{}'.",1],
-    ["src/lib/feed/getUpdatesCarousel.ts",2339,"Property 'thumbnailUrl' does not exist on type 'JsonValue'. Property 'thumbnailUrl' does not exist on type 'string'.",1],
-    ["src/lib/feed/getUpdatesCarousel.ts",2339,"Property 'url' does not exist on type 'JsonValue'. Property 'url' does not exist on type 'string'.",1],
     ["src/lib/fetchFestivals.ts",2322,"Type '{ id: string; location: string; title: string; createdAt: Date; updatedAt: Date; description: string; startDate: Date; endDate: Date; imageUrl: string; rsvps: { id: string; ... 9 more ...; checkInMethod: string; }[]; createdBy: { ...; }; subevents: { ...; }[]; }[]' is not assignable to type 'Festival[]'. Type '{ id: string; location: string; title: string; createdAt: Date; updatedAt: Date; description: string; startDate: Date; endDate: Date; imageUrl: string; rsvps: { id: string; ... 9 more ...; checkInMethod: string; }[]; createdBy: { ...; }; subevents: { ...; }[]; }' is missing the following properties from type 'Festival': eventTypes, isPublic, isApproved",1],
     ["src/lib/fibonacciUtils.ts",2339,"Property 'boostLevel' does not exist on type 'Event'.",2],
     ["src/lib/fibonacciUtils.ts",2339,"Property 'createdAt' does not exist on type 'Event'.",1],

@@ -4,7 +4,8 @@ import { ExpertiseProjectReturn } from '@/components/publishing-studio/Expertise
 import { prisma } from '@/lib/prisma';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
-import { notFound } from 'next/navigation';
+import { notFound, redirect } from 'next/navigation';
+import { projectChannelHref, withChannelQuery, type ChannelSearchParams } from '@/lib/project-channel/links';
 import Link from 'next/link';
 import ProjectTabs from './ProjectTabs';
 import MediaSection from './MediaSection';
@@ -160,12 +161,31 @@ export default async function ProjectPage({
   searchParams,
 }: {
   params: { id: string };
-  searchParams: { view?: string; step?: string; manual?: string; expertiseTopic?: string; expertiseProjects?: string };
+  searchParams: ChannelSearchParams & { view?: string; step?: string; manual?: string; expertiseTopic?: string; expertiseProjects?: string };
 }) {
   const session = await getServerSession(authOptions);
   const viewerId = session?.user?.id ?? null;
   const viewerRole = (session as any)?.user?.role ?? 'GUEST';
   const operatingAsOrgId = (session as any)?.user?.operatingAsOrgId ?? null;
+
+  // Public legacy links resolve before loading any workspace-only data. Members
+  // retain their existing workspace, including explicit editing destinations.
+  if (process.env.FOLIO_EDITORIAL_CHANNELS === 'true') {
+    let workspaceAccess = false;
+    if (viewerId) {
+      try { await assertProjectView(viewerId, params.id); workspaceAccess = true; }
+      catch (error) { if (!(error instanceof Error) || !['Forbidden', 'NotFound'].includes(error.message)) throw error; }
+    }
+    if (!workspaceAccess) {
+      const published = await prisma.projectPost.findFirst({
+        where: { projectId: params.id, status: 'PUBLISHED', project: { isPublic: true } },
+        select: { slug: true },
+      });
+      if (!published) notFound();
+      const publicQuery = Object.fromEntries(Object.entries(searchParams).filter(([key]) => !['view', 'step', 'manual', 'expertiseTopic', 'expertiseProjects'].includes(key)));
+      redirect(withChannelQuery(projectChannelHref(published.slug), publicQuery));
+    }
+  }
 
   const base = await prisma.project.findUnique({
     where: { id: params.id },

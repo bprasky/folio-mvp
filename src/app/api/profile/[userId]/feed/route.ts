@@ -47,8 +47,12 @@ export async function GET(
         designerId: resolvedParams.userId,
         isPublic: true,
       },
-      include: {
-        images: { take: 1, orderBy: { displayOrder: 'asc' } },
+      select: {
+        id: true, title: true, city: true, regionState: true, category: true,
+        projectType: true, completedYear: true, completedMonth: true,
+        saves: true, views: true, publishedAt: true, pinnedAt: true, pinOrder: true,
+        images: { where: { inclusion: 'INCLUDED' }, select: { id: true, url: true }, take: 1, orderBy: { displayOrder: 'asc' } },
+        post: { select: { status: true, slug: true } },
       },
       orderBy: { publishedAt: 'desc' },
       take: limit,
@@ -89,7 +93,10 @@ export async function GET(
       id: p.id,
       type: 'project' as const,
       data: {
-        ...p,
+        id: p.id, title: p.title, city: p.city, regionState: p.regionState, category: p.category,
+        projectType: p.projectType, completedYear: p.completedYear, completedMonth: p.completedMonth,
+        saves: p.saves, views: p.views, images: p.images,
+        storyHref: p.post?.status === 'PUBLISHED' ? `/p/${encodeURIComponent(p.post.slug)}` : null,
         imageUrl: p.images?.[0]?.url,
         saveCount: p.saves || 0,
       },

@@ -1,4 +1,5 @@
 import { readPresentation } from '@/lib/story/presentation';
+import { isPubliclyDisplayable, resolveProductImage } from '@/lib/products/imageProvenance';
 
 /** Explicit publication transport. Never serialize Prisma records or interview state. */
 const pick = <K extends string>(value: any, keys: K[]): Record<K, any> => Object.fromEntries(
@@ -14,9 +15,14 @@ const quote = (value: any, approved: Set<string>): any => typeof value === 'stri
   ...(value.folio ? { folio: { selected: value.folio.selected ? { text: text(value.folio.selected.text) } : null, alternatives: [] } } : {}),
 } : null;
 
-export function publicProduct(product: any) {
+export function publicProduct(product: any, insituCropUrl: string | null = null) {
+  const publicImages = product?.displayScope !== 'INTERNAL' && isPubliclyDisplayable(product?.imageSource);
   return {
-    ...pick(product, ['id', 'name', 'description', 'brand', 'category', 'price', 'url', 'imageUrl', 'primaryImageUrl', 'thumbnailUrl', 'cutoutImageUrl', 'imageSource', 'vendorId']),
+    ...pick(product, ['id', 'name', 'description', 'brand', 'category', 'price', 'url', 'imageSource', 'vendorId']),
+    // Apply the existing provenance gate before RSC/API serialization. Hiding a
+    // reference image in the sheet would still leak its URL in page props.
+    imageUrl: publicImages ? resolveProductImage(product, insituCropUrl, 'PUBLIC') : insituCropUrl,
+    ...(publicImages ? pick(product, ['primaryImageUrl', 'thumbnailUrl', 'cutoutImageUrl']) : {}),
     vendor: product?.vendor ? pick(product.vendor, ['id', 'name', 'companyName', 'website']) : null,
   };
 }
@@ -30,7 +36,7 @@ export function publicProject(project: any) {
       id: image.id, url: image.url, name: image.name, room: image.room, roomId: image.roomId, displayOrder: image.displayOrder,
       tags: list(image.tags).filter(tag => tag.product && !tag.product.isPending).map(tag => ({
         id: tag.id, x: tag.x, y: tag.y, productId: tag.productId, imageId: tag.imageId, cropUrl: tag.cropUrl, finishRaw: tag.finishRaw,
-        product: publicProduct(tag.product),
+        product: publicProduct(tag.product, tag.cropUrl || null),
       })),
     })),
   };

@@ -14,7 +14,7 @@ for (const reader of readers) {
   const query = source.match(/prisma\.projectModule\.findMany\(\{([\s\S]*?)\n\s*orderBy:/);
   assert.ok(query, `${reader}: expected a module findMany query`);
   const where = query[1];
-  assert.match(where, /publishedAt:\s*\{\s*not:\s*null\s*\}/, `${reader}: must require published module`);
+  assert.match(where, /publishedAt:\s*\{\s*not:\s*null,\s*lte:\s*new Date\(\)\s*\}/, `${reader}: must require already published module and exclude future publication dates`);
   assert.match(where, /project:\s*\{\s*isPublic:\s*true\s*,\s*post:\s*\{\s*is:\s*\{\s*status:\s*["']PUBLISHED["']\s*\}\s*\}\s*\}/,
     `${reader}: parent must be public with published post`);
   console.log(`PASS ${reader}: published module + public project + published post`);
