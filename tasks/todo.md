@@ -1,3 +1,14 @@
+# Publication reader refresh - 2026-11-16
+
+- [x] Review the current article and approved desktop, portrait and square renders.
+- [ ] Replace dark blurred framing with sharp photography, an ivory reading surface and compact navigation.
+- [ ] Preserve room/photo links, quotations, editing, products and saved ordering/accent choices.
+- [ ] Verify responsive geometry, long-form reading and existing behavior; run source guards and TypeScript checks.
+- [ ] Push the scoped change for review and record verification limits.
+
+Plan: improve the existing reader without changing publication data or authorization. Keep photos uncropped in the reader, use a side column on desktop and document-flow reading on phones. Existing saved accents become a subtle paper tint; social export remains unchanged. Main verified at 94ab0d6958a33bade7fb1bb89a7611fb1c5d1ed2 using GitHub because local Git metadata is outside this workspace.
+
+---
 # Forgiving hybrid interview answers — 2026-11-05
 
 - [x] Trace stutters, interruptions, saved answers and canonical correction semantics.

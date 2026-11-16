@@ -166,3 +166,23 @@
 @media (prefers-reduced-motion: reduce) {
   .surface, .surface::before, .wordmark { transition: none; }
 }
+
+/* Compact, opaque masthead for the publication reader only. */
+:global(body:has([data-publication-view="immersive"])) .header {
+  --masthead-rest-height: 72px;
+  --masthead-height-change: 0px;
+  --masthead-logo-size: 38px;
+  --masthead-logo-change: 0px;
+}
+:global(body:has([data-publication-view="immersive"])) .surface::before {
+  background: var(--surface-publication);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  opacity: 1;
+}
+@media (max-width: 767px) {
+  :global(body:has([data-publication-view="immersive"])) .header {
+    --masthead-rest-height: 60px;
+    --masthead-logo-size: 32px;
+  }
+}

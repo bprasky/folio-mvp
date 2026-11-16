@@ -22,7 +22,7 @@ export default async function ProjectFeaturePage({ params, searchParams }: { par
   if (!post) notFound();
   return (
     <main className="min-h-screen">
-      <nav aria-label="Project navigation" className="sticky top-0 z-20 flex min-h-14 items-center border-b border-[var(--folio-border-subtle)] bg-[var(--surface-canvas)] px-5 text-[var(--folio-text-primary)] sm:px-10">
+      <nav aria-label="Project navigation" className="flex min-h-12 items-center border-b border-[var(--folio-border-subtle)] bg-[var(--surface-canvas)] px-5 text-[var(--folio-text-primary)] sm:px-10">
         <Link href={`/p/${encodeURIComponent(params.slug)}`} className="inline-flex min-h-11 items-center text-sm hover:underline focus-visible:outline focus-visible:outline-2">
           <span aria-hidden="true" className="mr-3">←</span> Back to project
         </Link>

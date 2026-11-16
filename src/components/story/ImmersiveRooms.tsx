@@ -5,7 +5,7 @@ import Image from '@/components/FolioImage';
 import { ChevronDown, ChevronUp, ChevronLeft, ChevronRight, Expand } from 'lucide-react';
 import type { StoryData } from '@/lib/story/buildRoomTiles';
 import { buildRoomSlides, capitalizeOpening, slideLabel, type RoomPhoto } from '@/lib/story/roomSlides';
-import { readPresentation, presentationTokens } from '@/lib/story/presentation';
+import { readPresentation } from '@/lib/story/presentation';
 import { useStoryEdit } from './StoryEditContext';
 import { QuoteTile } from './QuoteTile';
 import { PublicationControls } from './PublicationControls';
@@ -35,14 +35,12 @@ export function ImmersiveRooms({ story, projectName, presentation, autoExpandRoo
   const [dimensions, setDimensions] = useState({ width: 1100, height: 620 });
   const [aspect, setAspect] = useState(1.5);
   const canvas = useRef<HTMLDivElement>(null);
-  const label = useRef<HTMLDivElement>(null);
   const reader = useRef<HTMLDivElement>(null);
   const expandButton = useRef<HTMLButtonElement>(null);
   const photoButton = useRef<HTMLButtonElement>(null);
   const galleryButtons = useRef(new Map<string, HTMLButtonElement>());
   const touchStart = useRef<{ x: number; y: number; gated: boolean } | null>(null);
   const swipeEnded = useRef(false);
-  const [labelHeight, setLabelHeight] = useState(260);
   const readerId = useId();
   const deepLinked = useRef<string | null>(null);
 
@@ -52,16 +50,12 @@ export function ImmersiveRooms({ story, projectName, presentation, autoExpandRoo
   const quote = room?.pullQuote;
   const folioAuthored = !!room?.pullQuoteSelection && typeof room.pullQuoteSelection !== 'string' && room.pullQuoteSelection.authorship === 'folio';
   const identity = [projectName, story.designerStudio || story.designerName, story.location].filter(Boolean);
-  const tokens = presentationTokens(preferences.accent);
   // Keep the photograph and label stacked until the reader has enough room
   // for the desktop text column, including wide phones and portrait tablets.
   // Match the container breakpoint in ImmersiveRooms.module.css.
   const mobile = dimensions.width <= 800;
   const { phase, begin, suppressClickUntil } = usePublicationEntry(canvas, mobile, onEntered);
   const ready = phase === 'ready';
-  const availablePhotoHeight = Math.max(150, reading ? dimensions.height * .42 : dimensions.height - labelHeight + 36);
-  const photoWidth = clean ? dimensions.width : mobile ? Math.min(dimensions.width, availablePhotoHeight * aspect) : dimensions.width * .64;
-  const photoHeight = clean ? dimensions.height : mobile ? Math.min(dimensions.width / aspect, availablePhotoHeight) : dimensions.height;
 
   useEffect(() => {
     const target = canvas.current;
@@ -69,11 +63,6 @@ export function ImmersiveRooms({ story, projectName, presentation, autoExpandRoo
     const observer = new ResizeObserver(([entry]) => setDimensions({ width: entry.contentRect.width, height: entry.contentRect.height }));
     observer.observe(target); return () => observer.disconnect();
   }, []);
-  useEffect(() => {
-    if (!label.current) return;
-    const observer = new ResizeObserver(([entry]) => setLabelHeight(entry.contentRect.height + 40));
-    observer.observe(label.current); return () => observer.disconnect();
-  }, [slide?.id, reading, phase]);
   useEffect(() => {
     if (reading) { reader.current?.focus({ preventScroll: true }); reader.current?.scrollTo(0, 0); }
   }, [reading]);
@@ -105,6 +94,9 @@ export function ImmersiveRooms({ story, projectName, presentation, autoExpandRoo
   function select(nextIndex: number) {
     if (!ready || edit?.anyFieldOpen || nextIndex < -1 || nextIndex >= slides.length) return;
     setSelectedId(slides[nextIndex]?.id ?? null); setReading(false); setClean(false); setPhotoIndex(0); setGalleryPhoto(null);
+    if (mobile && canvas.current && canvas.current.getBoundingClientRect().top < 0) {
+      canvas.current.scrollIntoView({ block: 'start', behavior: 'instant' });
+    }
   }
   function closeReader() { if (!ready || edit?.anyFieldOpen) return; setReading(false); requestAnimationFrame(() => expandButton.current?.focus({ preventScroll: true })); }
   function togglePhoto() {
@@ -115,15 +107,14 @@ export function ImmersiveRooms({ story, projectName, presentation, autoExpandRoo
   if (!image) return null;
 
   return <section className={styles.shell} aria-label={`${projectName} publication`}
-    style={{ '--room-bg': tokens.background, '--room-ink': tokens.text, '--room-glass': tokens.glass, '--photo-aspect': aspect } as CSSProperties}>
+    style={{ '--room-bg': preferences.accent ? `color-mix(in srgb, ${preferences.accent} 5%, var(--surface-publication))` : 'var(--surface-publication)', '--room-ink': 'var(--publication-ink)', '--photo-aspect': aspect } as CSSProperties}>
     <PublicationControls rooms={story.roomTiles} value={preferences} saved={saved} onChange={setPreferences} />
     <div ref={canvas} tabIndex={-1} data-publication-phase={phase} data-publication-photo={image.id} data-publication-reading={reading} className={[styles.canvas, clean ? styles.clean : '', slide?.kind === 'gallery' ? styles.galleryMode : '', cover ? styles.cover : ''].join(' ')}
-      style={{ '--photo-end': `${photoWidth}px`, '--photo-left': `${mobile && !clean ? (dimensions.width - photoWidth) / 2 : 0}px`, '--photo-height': `${photoHeight}px`, '--arrow-y': `${Math.max(100, photoHeight * .5)}px`, '--mobile-quote-size': quote && quote.length > 180 ? '20px' : '25px' } as CSSProperties}
       onClickCapture={event => { if (Date.now() < suppressClickUntil.current) { event.preventDefault(); event.stopPropagation(); } }}
       onKeyDown={event => {
         if (!ready) return;
         if ((event.target as HTMLElement).closest('input,textarea,select,[contenteditable=true]')) return;
-        if (event.key === 'Escape') { if (reading) closeReader(); else setClean(false); }
+        if (event.key === 'Escape') { if (clean) setClean(false); else if (reading) closeReader(); }
         if (!reading && !edit?.anyFieldOpen && ['ArrowLeft', 'ArrowRight'].includes(event.key)) {
           event.preventDefault(); select(index + (event.key === 'ArrowRight' ? 1 : -1));
         }
@@ -136,15 +127,13 @@ export function ImmersiveRooms({ story, projectName, presentation, autoExpandRoo
         touchStart.current = null;
         if (Math.abs(dx) > 55 && Math.abs(dx) > Math.abs(dy) * 1.4) { swipeEnded.current = true; select(index + (dx < 0 ? 1 : -1)); }
       }}>
-      <div className={styles.ambient} aria-hidden="true"><Image src={image.url} alt="" fill sizes="(max-width:848px) 100vw, 1200px" style={{ objectFit: 'cover' }} /></div>
-      <div className={styles.sideBlur} aria-hidden="true"><Image src={image.url} alt="" fill sizes="100vw" style={{ objectFit: 'cover' }} /></div>
-      {(cover || slide?.kind === 'story' || clean) && <div className={styles.photo} aria-hidden={!ready}>
+      {(cover || slide?.kind === 'story' || clean) && <div className={styles.photo} data-publication-image aria-hidden={!ready}>
         <Image key={image.id} src={image.url} alt={imageRoom?.roomLabel || projectName} fill
           sizes="100vw" priority={cover} style={{ objectFit: 'contain' }}
           onLoad={event => { const target = event.currentTarget; if (target.naturalWidth && target.naturalHeight) setAspect(target.naturalWidth / target.naturalHeight); }} />
       </div>}
       <div className={styles.wash} aria-hidden="true" />
-      <button type="button" ref={photoButton} className={styles.photoToggle} onClick={togglePhoto} aria-label={clean ? 'Show room details' : 'View full photograph without text'} disabled={!ready} tabIndex={!ready || reading ? -1 : 0} />
+      {(cover || slide?.kind === 'story' || clean) && <button type="button" ref={photoButton} className={styles.photoToggle} onClick={togglePhoto} aria-label={clean ? 'Show room details' : 'View full photograph without text'} disabled={!ready} tabIndex={!ready ? -1 : 0} />}
       {!clean && <div className={styles.details} aria-hidden={!ready} ref={element => { if (element) element.inert = !ready; }}>
         {slide?.kind === 'gallery' && <>
           <p className={styles.galleryIdentity}>{identity.join(' · ')}</p>
@@ -157,7 +146,7 @@ export function ImmersiveRooms({ story, projectName, presentation, autoExpandRoo
             </button>)}
           </div>
         </>}
-        {cover && !reading && <div className={`${styles.presentation} ${styles.introduction}`} ref={label}>
+        {cover && !reading && <div className={`${styles.presentation} ${styles.introduction}`}>
           <p className={styles.identity}>{identity.map((part, i) => <span key={i}>{part}</span>)}</p>
           <LeadHeadline story={story} as="h2" readOnly />
           <button type="button" ref={expandButton} className={styles.expand} aria-label="Read project introduction" aria-expanded={false} aria-controls={readerId}
@@ -166,7 +155,7 @@ export function ImmersiveRooms({ story, projectName, presentation, autoExpandRoo
             <LeadPreview story={story} className={styles.preview} />
           </button>
         </div>}
-        {room && !reading && <div className={styles.presentation} ref={label}>
+        {room && !reading && <div className={styles.presentation}>
           <p className={styles.identity}>{identity.map((part, i) => <span key={i}>{part}</span>)}</p>
           <h2 title={room.roomLabel}>{room.roomLabel}<ChevronDown className={styles.mobileExpandArrow} size={22} aria-hidden="true" /></h2>
           {quote && <>
@@ -179,13 +168,13 @@ export function ImmersiveRooms({ story, projectName, presentation, autoExpandRoo
             <span className={styles.preview}>{capitalizeOpening(room.editorialNarrative || '')}</span>
           </button>
         </div>}
-        {(cover || room) && reading && <div className={styles.readerPanel} id={readerId}>
+        {(cover || room) && reading && <div className={styles.readerPanel} data-publication-text id={readerId}>
           <div className={styles.readerHead}><p className={styles.identity}>{identity.join(' · ')}</p>
             <button type="button" onClick={closeReader} disabled={!!edit?.anyFieldOpen} aria-label={cover ? "Collapse project introduction" : "Collapse room article"}><ChevronUp size={22} /> <span>Collapse</span></button></div>
           <div className={styles.copy} ref={reader} tabIndex={0} role="region" aria-label={cover ? "Project introduction" : `${room?.roomLabel} article`}>
             {cover ? <PublicationIntroduction story={story} /> : room && <>
             <h2>{room.roomLabel}</h2>
-            {quote && (folioAuthored ? <p className={styles.readingQuote}>{quote}</p> : <blockquote className={styles.readingQuote}>
+            {quote && (folioAuthored ? <div><p className={styles.readingQuote}>{quote}</p><p className={styles.attribution}>Written by Folio</p></div> : <blockquote className={styles.readingQuote}>
               “{quote}”<cite className={styles.quoteCredit}>— {room.attribution}</cite>
             </blockquote>)}
             {(room.editorialParagraphs.length ? room.editorialParagraphs : [room.editorialNarrative || '']).filter(paragraph => paragraph.trim()).map((paragraph, i) =>
@@ -195,7 +184,7 @@ export function ImmersiveRooms({ story, projectName, presentation, autoExpandRoo
             </>}
           </div>
         </div>}
-        {ready && !reading && <div className={styles.navigation}>
+        {ready && <div className={styles.navigation}>
           <div className={styles.roomPicker}><span aria-hidden="true">Rooms</span><select aria-label="Go to room" value={slide?.id ?? ''} disabled={!!edit?.anyFieldOpen}
             onChange={event => select(slides.findIndex(item => item.id === event.target.value))}>
             <option value="">Introduction</option>
@@ -207,6 +196,19 @@ export function ImmersiveRooms({ story, projectName, presentation, autoExpandRoo
             <button type="button" aria-label="Next room" disabled={index === slides.length - 1 || !!edit?.anyFieldOpen} onClick={() => select(index + 1)}><ChevronRight size={21} /></button>
           </div>
         </div>}
+      </div>}
+      {ready && !clean && <div className={styles.strip} aria-label="All rooms">
+        <button type="button" aria-pressed={cover} disabled={!!edit?.anyFieldOpen} onClick={() => select(-1)}>
+          <span className={styles.thumbnail}><Image src={story.heroImageUrl} alt="" fill sizes="200px" style={{ objectFit: 'cover' }} /></span>
+          <span>Introduction</span>
+        </button>
+        {slides.map((item, i) => {
+          const thumb = item.kind === 'story' ? item.room.heroImage : item.photos[0].image;
+          return <button type="button" key={item.id} aria-pressed={index === i} disabled={!!edit?.anyFieldOpen} onClick={() => select(i)}>
+            <span className={styles.thumbnail}><Image src={thumb.url} alt="" fill sizes="(max-width:900px) 25vw, 200px" style={{ objectFit: 'cover' }} /></span>
+            <span>{slideLabel(item)}</span>
+          </button>;
+        })}
       </div>}
       {!ready && <div className={styles.opening} aria-hidden={phase !== 'opening'}>
         <Image src={story.heroImageUrl} alt={projectName} fill priority sizes="100vw" style={{ objectFit: 'cover' }} />
@@ -223,19 +225,6 @@ export function ImmersiveRooms({ story, projectName, presentation, autoExpandRoo
           <Image src={photo.url} alt="" width={96} height={64} style={{ objectFit: 'cover' }} />
         </button>)}
       </div>}
-      <div className={styles.strip} aria-label="All rooms">
-        <button type="button" aria-pressed={cover} disabled={!!edit?.anyFieldOpen} onClick={() => select(-1)}>
-          <span className={styles.thumbnail}><Image src={story.heroImageUrl} alt="" fill sizes="200px" style={{ objectFit: 'cover' }} /></span>
-          <span>Introduction</span>
-        </button>
-        {slides.map((item, i) => {
-          const thumb = item.kind === 'story' ? item.room.heroImage : item.photos[0].image;
-          return <button type="button" key={item.id} aria-pressed={index === i} disabled={!!edit?.anyFieldOpen} onClick={() => select(i)}>
-            <span className={styles.thumbnail}><Image src={thumb.url} alt="" fill sizes="(max-width:900px) 25vw, 200px" style={{ objectFit: 'cover' }} /></span>
-            <span>{slideLabel(item)}</span>
-          </button>;
-        })}
-      </div>
       {slide?.kind === 'gallery' && <div className={styles.galleryProducts}>
         {Array.from(new Map(slide.photos.flatMap(photo => photo.room.products).map(product => [product.id, product])).values()).map(product =>
           <button type="button" key={product.id} onClick={() => onProductClick(product)}>{product.name} ↗</button>)}
