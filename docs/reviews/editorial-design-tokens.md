@@ -89,6 +89,9 @@ conversation attachments.
 - Existing navigation browser suite passes. Its font discovery now recognizes
   the current self-hosted Next font names, matching the other browser suites;
   navigation application code is unchanged.
+- The responsive journey harness waits for a visible, stable nested-dialog
+  opener before clicking. Its existing focus, Escape and unsaved-text assertions
+  are retained; dialog application code is unchanged.
 
 These are actual components and styles, served locally with fixture content and
 framework/auth/API adapters. Links and ranking results are compared with the

@@ -38,9 +38,11 @@ module.exports = async function interactions({ page, go, capture, requests, resu
     assert.equal(await page.evaluate(() => document.activeElement.id), 'opener');
   });
   await check('Nested dialog closes only its own layer and a controlled unsaved-work guard retains text', async () => {
-    await go('nested-dialog'); await page.click('#outer-opener');
+    await go('nested-dialog'); await page.locator('#outer-opener').click();
+    await page.waitForSelector('#guarded-value', { visible: true });
     await page.type('#guarded-value', 'Keep my unsaved room');
-    await page.click('#inner-opener'); await page.waitForSelector('input[aria-label="Nested search"]');
+    // Wait for a stable, visible hit target after the outer dialog's autofocus/layout.
+    await page.locator('#inner-opener').click(); await page.waitForSelector('input[aria-label="Nested search"]');
     await page.type('input[aria-label="Nested search"]', 'A chair with space');
     await page.keyboard.press('Escape'); await page.waitForSelector('input[aria-label="Nested search"]', { hidden: true });
     await page.waitForFunction(() => document.activeElement.id === 'inner-opener', { timeout: 2000 });
