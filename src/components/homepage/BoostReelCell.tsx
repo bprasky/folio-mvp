@@ -70,7 +70,7 @@ export function BoostReelCell({ item, onClick }: ProductCellProps) {
       data-slot={item.slotPosition}
       data-boosted={item.isBoosted ? "true" : "false"}
     >
-      <div className="relative aspect-square rounded-md sm:rounded-xl overflow-hidden bg-surface-ground">
+      <div className="relative aspect-square rounded-editorial overflow-hidden bg-surface-ground">
         <BoostReelCellLayer layer={layer} item={item} onError={advance} />
 
         {item.isBoosted && (
@@ -196,7 +196,7 @@ export function BoostReelViewAllCell({ count, postSlug }: ViewAllCellProps) {
       className="relative block group"
     >
       <div
-        className="relative aspect-square rounded-md sm:rounded-xl overflow-hidden flex items-center justify-center"
+        className="relative aspect-square rounded-editorial overflow-hidden flex items-center justify-center"
         style={{
           background: "var(--surface-ground)",
           border: "1px solid var(--folio-border-subtle)",

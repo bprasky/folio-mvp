@@ -6,7 +6,7 @@
 //
 // Uses FlowMosaic-style grid with:
 // - Varied tile sizes creating visual hierarchy
-// - Card styling with 20px border-radius
+// - Shared editorial card geometry
 // - Fills left-to-right naturally
 // - Tight spacing matching festivals page
 
@@ -55,8 +55,7 @@ function assignSizes(items: MagazineMosaicItem[]): { item: MagazineMosaicItem; s
   return out;
 }
 
-// Row units: 8px (matching FlowMosaic)
-const rowUnit = 8;
+// Row pitch is shared with FlowMosaic via .folio-editorial-microgrid.
 
 function spanFor(size: Size, cols: number) {
   if (size === "L") {
@@ -112,9 +111,8 @@ export default function MagazineMosaicGrid({ items }: Props) {
   return (
     <div
       className={clsx(
-        "grid grid-flow-dense gap-3",
-        "grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-6",
-        "auto-rows-[8px]"
+        "grid grid-flow-dense folio-editorial-microgrid",
+        "grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-6"
       )}
     >
       {sized.map(({ item, size }) => {
@@ -139,7 +137,7 @@ export default function MagazineMosaicGrid({ items }: Props) {
           <article
             key={item.id}
             className={clsx(
-              "group relative rounded-[20px] overflow-hidden transition-transform duration-300 hover:scale-[1.01]",
+              "group relative rounded-editorial overflow-hidden transition-transform duration-300 hover:scale-[1.01]",
               `col-span-${colSpan}`
             )}
             style={{ gridRowEnd: `span ${rowSpan}` }}

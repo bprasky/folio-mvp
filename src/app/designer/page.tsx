@@ -298,7 +298,7 @@ export default function DesignerProfile() {
     return (
       <article
         key={project.id}
-        className={`group relative rounded-[20px] overflow-hidden col-span-${colSpan}`}
+        className={`group relative rounded-editorial overflow-hidden col-span-${colSpan}`}
         style={{ gridRowEnd: `span ${rowSpan}` }}
       >
         <Link href={href} className="absolute inset-0 z-30 block" aria-label={name} />
@@ -396,7 +396,7 @@ export default function DesignerProfile() {
   const renderMosaicGrid = (projectList: any[], linkBase: string) => {
     const gridSized = assignProjectSizes(projectList);
     return (
-      <div className="grid grid-flow-dense gap-3 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-6 auto-rows-[8px]">
+      <div className="grid grid-flow-dense folio-editorial-microgrid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-6">
         {gridSized.map(({ project, size }) => renderMosaicCard(project, size, linkBase))}
       </div>
     );

@@ -31,7 +31,7 @@ export async function HomepagePage() {
 
       {/* Boost reel — tethered 16px below the hero on desktop, 12px on mobile */}
       {data.hero && data.reel.items.length > 0 && (
-        <section className="px-4 sm:px-10 mt-6 sm:mt-4 max-w-[1440px] mx-auto">
+        <section className="folio-editorial-container mt-6 sm:mt-4">
           <BoostReel
             items={data.reel.items}
             totalTagged={data.reel.totalTagged}
@@ -42,15 +42,15 @@ export async function HomepagePage() {
 
       {/* Filter chip row — sits directly above the mosaic feed it controls. */}
       <div
-        className={`border-y border-folio-border-subtle ${data.hero ? "mt-6 sm:mt-12" : "mt-6 sm:mt-8"}`}
+        className={`border-y border-editorial-rule ${data.hero ? "mt-6 sm:mt-12" : "mt-6 sm:mt-8"}`}
       >
-        <div className="max-w-[1440px] mx-auto px-4 sm:px-10 py-3 sm:py-4">
+        <div className="folio-editorial-container py-3 sm:py-4">
           <HomepageFilterChips isOut={isOut} />
         </div>
       </div>
 
       {/* L/M/S mosaic feed */}
-      <section className="px-4 sm:px-10 max-w-[1440px] mx-auto mt-6 sm:mt-8">
+      <section className="folio-editorial-container mt-6 sm:mt-8">
         <HomepageMosaicSection
           initialPosts={data.feedPosts}
           initialNextCursor={data.nextCursor}

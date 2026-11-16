@@ -62,11 +62,11 @@ async function build() {
   let faces = '', heading, body;
   for (const file of fs.readdirSync(path.join(assets, '.next/static/css')).filter(file => file.endsWith('.css'))) {
     for (const face of fs.readFileSync(path.join(assets, '.next/static/css', file), 'utf8').match(/@font-face\{[^}]+\}/g) || []) {
-      if (!/Cormorant_Garamond|Instrument_Sans/.test(face)) continue;
+      if (!/Cormorant_Garamond|Instrument_Sans|__cormorant_|__instrumentSans_/.test(face)) continue;
       faces += face;
       const family = face.match(/font-family:([^;]+)/)[1];
-      if (/Cormorant_Garamond/.test(face) && !/Fallback/.test(family)) heading = family;
-      if (/Instrument_Sans/.test(face) && !/Fallback/.test(family)) body = family;
+      if (/Cormorant_Garamond|__cormorant_/.test(face) && !/Fallback/.test(family)) heading = family;
+      if (/Instrument_Sans|__instrumentSans_/.test(face) && !/Fallback/.test(family)) body = family;
     }
   }
   assert.ok(heading && body, 'Cache Folio fonts in a Next build, or set NAVIGATION_TEST_ASSETS to an existing build root.');

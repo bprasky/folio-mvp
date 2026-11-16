@@ -17,9 +17,9 @@ export default function Loading() {
             <div className="flex gap-2 flex-wrap"><Block className="h-9 w-52 rounded-full" /><Block className="h-9 w-36 rounded-full" /></div>
           </div>
           <div className="mx-[calc(50%-50vw)] px-4 md:px-6 lg:px-8">
-            <div className="grid grid-flow-dense gap-3 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-6 auto-rows-[8px]">
-              {/* FlowMosaic uses 8px rows with 12px gaps: 34/26/18-row tiles. */}
-              {[34, 26, 18, 26, 18, 26].map((rows, i) => <Block key={i} className={`rounded-[20px] ${rows === 34 ? 'col-span-1 sm:col-span-2 lg:col-span-3 xl:col-span-4' : rows === 26 ? 'col-span-1 sm:col-span-2' : 'col-span-1'}`} style={{ gridRowEnd: `span ${rows}` }} />)}
+            <div className="grid grid-flow-dense folio-editorial-microgrid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-6">
+              {/* FlowMosaic uses the shared editorial row pitch: 34/26/18-row tiles. */}
+              {[34, 26, 18, 26, 18, 26].map((rows, i) => <Block key={i} className={`rounded-editorial ${rows === 34 ? 'col-span-1 sm:col-span-2 lg:col-span-3 xl:col-span-4' : rows === 26 ? 'col-span-1 sm:col-span-2' : 'col-span-1'}`} style={{ gridRowEnd: `span ${rows}` }} />)}
             </div>
           </div>
         </section>
