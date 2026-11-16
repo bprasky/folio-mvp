@@ -1,6 +1,7 @@
 import { createHash, randomUUID } from 'crypto';
 import { InterviewAnswerSchema, type InterviewAnswer } from '@/lib/posting/interviewSchemas';
 import { isArrivalSafe } from '@/lib/interview/prompts/validateQuestion';
+import { ROOM_CHECKPOINT_CATEGORY, isRoomCheckpoint, roomCheckpointPrompt } from './roomCheckpoint';
 import { GUIDED_ANSWER_LIMIT, PROJECT_CATEGORIES, type GuidedCommand, type GuidedEvidence, type GuidedNextProposal, type GuidedPreparation, type GuidedQuestion, type GuidedSession, type GuidedTurn } from './types';
 
 export class GuidedConflict extends Error {
@@ -11,6 +12,7 @@ export function commandDigest(command: GuidedCommand) {
   return createHash('sha256').update(JSON.stringify({
     action: command.action, version: command.version, questionId: command.questionId ?? null,
     ...(command.conversationStyle ? { conversationStyle: command.conversationStyle } : {}),
+    ...(command.roomCheckpoints ? { roomCheckpoints: true } : {}),
     ...(command.guideCommandDigest ? { guideCommandDigest: command.guideCommandDigest } : {}),
     ...(command.sessionId !== undefined ? { sessionId: command.sessionId } : {}),
     text: command.text ?? null, inputModality: command.inputModality ?? 'text',
@@ -60,6 +62,7 @@ export function createGuidedSession(projectId: string, preparation: GuidedPrepar
   const session: GuidedSession = {
     id: randomUUID(), schemaVersion: 1, projectId, version: 1, status: 'active', phase: 'project',
     ...(startCommand?.conversationStyle === 'podcast' ? { conversationStyle: 'podcast' as const } : {}),
+    ...(startCommand?.roomCheckpoints ? { roomCheckpoints: true } : {}),
     plan: preparation.questions.map(q => ({ ...q, status: 'pending' })), rooms: preparation.rooms,
     turns: [], activeQuestionId: null, roomsPrepared: false, contextFingerprint: preparation.contextFingerprint,
     minimumTotalAnswers: preparation.minimumTotalAnswers, pendingDecisionTurnId: null,
@@ -97,6 +100,8 @@ export function appendRoomPlan(session: GuidedSession, questions: GuidedQuestion
 }
 
 export function followUpAllowed(session: GuidedSession, parent: GuidedQuestion) {
+  if (isRoomCheckpoint(parent)) return parent.status === 'answered' && !parent.parentQuestionId &&
+    !session.plan.some(q => q.parentQuestionId === parent.id && q.status !== 'invalidated');
   if (session.conversationStyle === 'podcast') {
     if (parent.status !== 'answered' || session.plan.some(q => q.parentQuestionId === parent.id) || (parent.roomId === null && session.roomsPrepared && parent.category !== 'additional_detail')) return false;
     let root = parent; let depth = 0;
@@ -118,6 +123,8 @@ export function followUpAllowed(session: GuidedSession, parent: GuidedQuestion) 
 
 /** The model can choose a remaining obligation only within the current section. */
 export function eligiblePreparedQuestions(session: GuidedSession) {
+  const decidingParent = session.plan.find(q => q.id === session.turns.find(t => t.id === session.pendingDecisionTurnId)?.questionId);
+  if (isRoomCheckpoint(decidingParent)) return [];
   const pending = session.plan.filter(q => q.kind === 'prepared' && q.status === 'pending');
   const project = pending.filter(q => q.roomId === null);
   if (project.length) return project;
@@ -149,7 +156,7 @@ function resetGroundedQuestion(question: GuidedQuestion, correctedAnswerId?: str
 }
 
 /** Validated wording may adapt the plan; only designer actions accept evidence. */
-export function applyDecision(session: GuidedSession, proposal: GuidedNextProposal) {
+function applyNextDecision(session: GuidedSession, proposal: GuidedNextProposal) {
   const turn = session.turns.find(t => t.id === session.pendingDecisionTurnId);
   const parent = turn && session.plan.find(q => q.id === turn.questionId);
   if (proposal.kind === 'ask_prepared' || proposal.kind === 'confirm_coverage') {
@@ -184,6 +191,7 @@ export function applyDecision(session: GuidedSession, proposal: GuidedNextPropos
       id: randomUUID(), text: proposal.text, reaction: proposal.reaction, category: parent.category, roomId: parent.roomId,
       sourceImageIds: [...parent.sourceImageIds], sourceAnswerIds: proposal.sourceAnswerIds,
       status: 'active', kind: proposal.kind, parentQuestionId: parent.id, parentAnswerId: turn.id, purpose: proposal.purpose,
+      ...(isRoomCheckpoint(parent) ? { checkpointReturnQuestionId: parent.checkpointReturnQuestionId ?? null } : {}),
     };
     if ((proposal.reaction?.length ?? 0) > 400) throw new GuidedConflict('INVALID_FOLLOWUP', 'The follow-up needs to be retried.', 422);
     for (const evidence of proposal.evidence ?? []) evidenceSource(session, followup, evidence);
@@ -196,12 +204,41 @@ export function applyDecision(session: GuidedSession, proposal: GuidedNextPropos
     return;
   }
   session.pendingDecisionTurnId = null;
+  if (parent && isRoomCheckpoint(parent)) {
+    const target = session.plan.find(q => q.id === parent.checkpointReturnQuestionId && q.status === 'pending');
+    if (target) { target.status = 'active'; session.activeQuestionId = target.id; session.status = 'active'; session.phase = target.roomId ? 'rooms' : 'project'; return; }
+  }
   activateNext(session);
+}
+
+function openRoomCheckpoint(session: GuidedSession, roomId: string, id: string) {
+  const room = session.rooms.find(value => value.id === roomId)!;
+  const next = currentQuestion(session);
+  const nextRoom = session.rooms.find(value => value.id === next?.roomId);
+  if (next?.status === 'active') next.status = 'pending';
+  const invitation: GuidedQuestion = { id, text: roomCheckpointPrompt(room.name, nextRoom?.name),
+    category: ROOM_CHECKPOINT_CATEGORY, roomId, sourceImageIds: [...room.imageIds], sourceAnswerIds: [],
+    status: 'active', kind: 'clarification', checkpointReturnQuestionId: next?.id ?? null };
+  session.plan.push(invitation); session.activeQuestionId = invitation.id; session.status = 'active'; session.phase = 'rooms'; session.pendingDecisionTurnId = null;
+}
+
+/** A room invitation is a real saved question, independent of the optional reaction. */
+export function applyDecision(session: GuidedSession, proposal: GuidedNextProposal) {
+  const turn = session.turns.find(t => t.id === session.pendingDecisionTurnId);
+  const parent = session.plan.find(q => q.id === turn?.questionId);
+  applyNextDecision(session, proposal);
+  const roomId = parent?.roomId;
+  if (!session.roomCheckpoints || session.conversationStyle === 'podcast' || !roomId || isRoomCheckpoint(parent) ||
+      !['active', 'ready'].includes(session.status) || currentQuestion(session)?.roomId === roomId ||
+      session.skippedRoomCheckpoints?.includes(roomId) ||
+      session.plan.some(q => q.roomId === roomId && (['pending', 'active'].includes(q.status) || isRoomCheckpoint(q) && q.status !== 'invalidated')) ||
+      !acceptedTurns(session).some(answer => answer.roomId === roomId)) return;
+  openRoomCheckpoint(session, roomId, `room-checkpoint-${turn!.id}`);
 }
 
 export function roomProgress(session: GuidedSession) {
   return Object.fromEntries(session.rooms.map(room => {
-    const questions = session.plan.filter(q => q.roomId === room.id && q.status !== 'invalidated');
+    const questions = session.plan.filter(q => q.roomId === room.id && q.status !== 'invalidated' && !isRoomCheckpoint(q));
     const answeredCount = questions.filter(q => q.status === 'answered').length;
     const pending = questions.some(q => q.status === 'active' || q.status === 'pending');
     return [room.id, {
@@ -213,7 +250,7 @@ export function roomProgress(session: GuidedSession) {
 
 export function completionState(session: GuidedSession) {
   const answers = acceptedTurns(session);
-  const complete = session.roomsPrepared && !session.plan.some(q => q.status === 'active' || q.status === 'pending') &&
+  const complete = session.roomsPrepared && !session.plan.some(q => !isRoomCheckpoint(q) && (q.status === 'active' || q.status === 'pending')) &&
     answers.length >= session.minimumTotalAnswers && answers.some(t => session.plan.find(q => q.id === t.questionId)?.kind === 'prepared');
   // The existing modal explicitly permits generation with partial material after confirmation.
   return { complete, canFinishPartial: answers.some(t => session.plan.find(q => q.id === t.questionId)?.kind === 'prepared') };
@@ -224,10 +261,18 @@ export function acceptCommand(original: GuidedSession, command: GuidedCommand): 
   if (isRequestReplay(original, command)) return original;
   if (command.version !== original.version) throw new GuidedConflict('STALE_VERSION', 'This interview changed in another tab. Your text is still here; reload the saved interview.');
   const session = structuredClone(original);
+  if (command.roomCheckpoints) session.roomCheckpoints = true;
   if (command.conversationStyle === 'podcast' && ['resume', 'add_detail'].includes(command.action)) session.conversationStyle = 'podcast';
   session.notice = null;
   const q = currentQuestion(session);
-  if (command.action === 'add_detail') {
+  if (command.action === 'revisit_room') {
+    if (!session.roomCheckpoints || session.conversationStyle === 'podcast' || !['active', 'ready', 'finished'].includes(session.status) ||
+        !command.roomId || !session.rooms.some(room => room.id === command.roomId) ||
+        !session.plan.some(p => p.roomId === command.roomId && p.kind === 'prepared') ||
+        session.plan.some(p => p.roomId === command.roomId && ['active', 'pending'].includes(p.status)))
+      throw new GuidedConflict('ROOM_UNAVAILABLE', 'Finish this room’s remaining questions before revisiting it.');
+    openRoomCheckpoint(session, command.roomId, `room-checkpoint-${command.requestId}`);
+  } else if (command.action === 'add_detail') {
     if (!['ready', 'finished'].includes(session.status) || session.plan.some(p => ['active', 'pending'].includes(p.status)))
       throw new GuidedConflict('DETAIL_UNAVAILABLE', 'Resume the remaining questions before adding another detail.');
     const detail: GuidedQuestion = { id: `detail-${command.requestId}`, text: 'What else would you like to add about this project?',
@@ -247,6 +292,7 @@ export function acceptCommand(original: GuidedSession, command: GuidedCommand): 
   } else if (command.action === 'skip_room') {
     if (!q?.roomId || session.status !== 'active' || (command.roomId !== undefined && command.roomId !== q.roomId))
       throw new GuidedConflict('ROOM_UNAVAILABLE', 'Open a room question before skipping that room.');
+    session.skippedRoomCheckpoints = Array.from(new Set([...(session.skippedRoomCheckpoints ?? []), q.roomId]));
     for (const pending of session.plan.filter(p => p.roomId === q.roomId && ['pending', 'active'].includes(p.status))) {
       session.turns.push({ id: randomUUID(), requestId: command.requestId, questionId: pending.id,
         questionText: pending.text, text: '', roomId: pending.roomId, sourceImageIds: [...pending.sourceImageIds],
@@ -304,6 +350,7 @@ export function acceptCommand(original: GuidedSession, command: GuidedCommand): 
       ...(command.recordingId ? { recordingId: command.recordingId } : {}),
     };
     if (prior) {
+      if (isRoomCheckpoint(target) && q?.id !== target.id) target.checkpointReturnQuestionId = q?.id ?? null;
       prior.supersededBy = turn.id;
       const invalidSources = new Set([prior.id]);
       const reset = new Set<string>();

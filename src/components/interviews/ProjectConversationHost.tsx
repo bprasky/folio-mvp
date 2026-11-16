@@ -16,12 +16,12 @@ export const useProjectConversation = () => useContext(GuideContext);
 const button = 'rounded-sm border border-border px-4 py-2 text-folio-ui hover:bg-surface-ground disabled:opacity-50 focus-visible:ring-2 focus-visible:ring-folio-gold';
 
 /** The page keeps this context across steps; only Story mounts a live call. */
-export function ProjectConversationHost({ projectId, projectName, actorId, activeView, images, refreshKey, children, interviewContent, stepNavigation, workspaceStep, initiallyManual = false, canHost = true }: {
+export function ProjectConversationHost({ projectId, projectName, actorId, activeView, images, refreshKey, children, interviewContent, stepNavigation, workspaceStep, initiallyManual = false, canHost = true, textInterview = false }: {
   projectId: string; projectName: string; actorId: string; activeView: string;
-  images: GuidePhoto[]; refreshKey: string; children: ReactNode; interviewContent?: ReactNode; stepNavigation?: ReactNode; workspaceStep?: ProjectGuideStep; initiallyManual?: boolean; canHost?: boolean;
+  images: GuidePhoto[]; refreshKey: string; children: ReactNode; interviewContent?: ReactNode; stepNavigation?: ReactNode; workspaceStep?: ProjectGuideStep; initiallyManual?: boolean; canHost?: boolean; textInterview?: boolean;
 }) {
   const router = useRouter();
-  const eligible = canHost && activeView === 'story';
+  const eligible = canHost && !textInterview && activeView === 'story';
   const [manual, setManual] = useState(initiallyManual);
   const [available, setAvailable] = useState<boolean | null>(null);
   const [guide, setGuide] = useState<ProjectGuideMetadata | null>(null);

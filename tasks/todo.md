@@ -1493,3 +1493,34 @@ Review: `docs/reviews/project-channel-quote-teasers.md` includes the public-phot
 - [x] Verify service, privacy, import, generation, migration and accessible mobile/theme behavior.
 
 Review: `docs/reviews/quick-publish-journey.md`. Bulk room grouping is the next iteration. Release requires the additive migration before deployment; no production schema change, merge or deployment in this task.
+
+# Conversational project interview — 2026-11-16
+
+- [x] Keep the canonical questions, coverage, corrections, article generation and saved-answer receipts.
+- [x] Make the guided Story interview inline and text/dictation first, without starting an avatar call.
+- [x] Stream save confirmation and an optional bounded small-model observation while the existing next-question engine runs. One answer, one assistant turn; the observation never asks for another answer.
+- [x] Keep input visibly unavailable until the checked question is ready. Preserve drafts and exact retry identity across disconnects; omit late/failed reactions without blocking the question.
+- [ ] Verify authorization, durable-save-before-reaction, replay/correction races, stream failures, existing guided journeys and responsive browser behavior. Run required type/client/migration checks.
+- [ ] Commit and push a reviewable PR. Report measured checks separately from real-provider latency/quality acceptance. No merge or deployment in this change.
+
+Plan check-in: the founder approved continuing with hosted models and the conversational text/voice-to-text direction. Reuse the existing SDK and task registry; do not migrate provider infrastructure or weaken question reviews. Initial scope excludes synthesized playback and optional post-interview video opportunities. No schema change is required.
+
+## Room checkpoints — 2026-11-16
+
+- [x] Add a persisted optional room-end invitation with direct continue, preserving prepared questions, exact retries and accepted evidence.
+- [x] Support review/correction and revisiting completed rooms without losing the current place or unsent text.
+- [x] Use the room's saved photo analysis and the designer's specific omission for at most one reviewed follow-up; a complete explanation can proceed directly.
+- [x] Verify room transitions, single-question whole-room skips, corrections, refresh/retry, scoped photo/voice evidence and direct continue using controller and HTTP/service/store checks.
+- [x] Run production compilation, scoped lint, client/migration guards and existing guided/live regressions.
+- [x] Finish TypeScript ratchet (846 baseline / 846 current, no new diagnostics) and commit locally.
+- [ ] Run the added responsive browser scenarios in an environment where Chromium can launch, and evaluate actual-model question quality.
+
+Plan check-in: use “Before we move to [next room], did we miss anything you wanted to mention about [this room]?” with an open text/dictation composer, Review room and Continue controls. No generic Add something button or required “no.” Checkpoint wording is deterministic; no model call solely to announce a transition. Existing provider-backed question review remains in place. GitHub publication remains blocked pending explicit authorization; do not retry the push.
+
+Review checkpoint: canonical server/stream/transport/controller/prompt/provenance and live-adapter/answer-cleanup checks pass with synthetic providers. TypeScript ratchet remains 846/846, scoped lint has no errors, and client/migration guards pass. Browser regressions are added; local Chromium cannot create its process-singleton socket, and the shared browser cannot reach this workspace server. Production compile passed with the same unrelated import warnings as baseline. Hosted browser CI and actual-model observation quality/latency remain acceptance checks. The changes are committed locally. Automatic approval review rejected the push to bprasky/folio-mvp because it requires explicit user authorization for that repository publication; no push, PR, merge or deployment was completed.
+
+Room-checkpoint review: rebased onto main 94ab0d6 before implementation. No schema or publication change. The optional invitation and a single follow-up reuse the versioned writer and canonical evidence. Production compilation retains the previously observed unrelated import warnings. Browser fixture compilation succeeds, but Chromium launch still fails with process-singleton socket EPERM; no visual/mobile pass is claimed. Model behavior is verified through provider doubles, not live provider calls. The branch remains local pending the previously requested GitHub authorization.
+
+## Authorized interview release — PR #858
+
+The founder explicitly authorized push, merge and deployment. The connected GitHub upload exactly matches tested tree 6d45a5556b601c5aa274f923ec2ac98b8775e05f. Hosted CI passes the new inline-chat/room-checkpoint browser scenarios, including responsive widths, saved drafts and corrections. The older entry suite still expected video-first Story entry, modal pause labels and a dialog-scoped reset retry; update those assertions for the approved inline surface while retaining reset-receipt/data-preservation checks. Re-run hosted CI before merging. No runtime workaround or gate removal.

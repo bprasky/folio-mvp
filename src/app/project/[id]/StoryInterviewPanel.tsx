@@ -139,6 +139,10 @@ export default function StoryInterviewPanel({ projectId, projectName, images, ro
     finally { setGenerating(false); }
   }
 
+  if (interview) return <InterviewModal open presentation="inline" disableLive onOpenChange={closeInterview}
+    projectId={projectId} projectName={projectName} images={images.map(image => ({ ...image, name: image.name ?? undefined }))}
+    initialIntent={interview.intent} initialRoomId={interview.roomId ?? null} />;
+
   return (
     <section aria-label="Your interview" className="max-w-3xl space-y-6">
       <div className={conversation?.managed ? 'space-y-3' : 'rounded-md border border-folio-border-subtle bg-surface-ground p-6 sm:p-8'}>
@@ -146,7 +150,7 @@ export default function StoryInterviewPanel({ projectId, projectName, images, ro
         <p className="mt-2 text-folio-body text-folio-text-secondary" aria-live="polite">
           {loading ? "Loading your answers…" : loadError ? "Your saved answers could not be loaded." : hasAnswers
             ? `${answers.length} ${answers.length === 1 ? "answer" : "answers"} saved. Pick up where you left off.`
-            : "Tell the story behind this project. You can pause whenever you like."}
+            : "Tell the story behind this project in a conversation with Folio. Type or dictate your answers, and pause whenever you like."}
         </p>
         <div className="mt-6 flex flex-wrap items-center gap-3">
           {!conversation?.managed ? <button type="button" className={primaryButton} disabled={generating} onClick={() => setInterview({ intent: "resume" })}>
@@ -214,8 +218,6 @@ export default function StoryInterviewPanel({ projectId, projectName, images, ro
         </Dialog.Root>
       )}
 
-      {interview && <InterviewModal open onOpenChange={closeInterview} projectId={projectId} projectName={projectName}
-        images={images.map(image => ({ ...image, name: image.name ?? undefined }))} disableLive={conversation?.manual} initialIntent={interview.intent} initialRoomId={interview.roomId ?? null} initialMode={interview.mode} />}
       {editing && <AnswerModal contextLabel={contextFor(editing)} position={{ index: answers.indexOf(editing) + 1, total: answers.length }} question={editing.q} initialValue={editing.a} saving={saving}
         onCancel={() => setEditing(null)} onSave={saveEdit} onReRecord={() => { setInterview({ intent: "resume", roomId: editing.roomId, mode: "realtime" }); setEditing(null); }} />}
     </section>

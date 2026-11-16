@@ -32,6 +32,7 @@ let stalledSave = false;
 let saved = null, failSave = false, loseReply = false, failTranscription = false, transcript = 'The two doorways leave a clear path through the room.', generationCalls = 0;
 let holdGuidedResponse = true, heldResponse = null;
 let responseHeld;
+let streamFixture = false, releaseStream = null;
 const waitForHeldResponse = () => heldResponse ? Promise.resolve() : new Promise((resolve, reject) => {
   const timeout = setTimeout(() => reject(new Error('Expected a real pending guided HTTP response')), 10000);
   responseHeld = () => { clearTimeout(timeout); resolve(); };
@@ -46,7 +47,7 @@ Object.defineProperty(navigator,'mediaDevices',{value:{getUserMedia:async()=>{wi
 class Recorder {static isTypeSupported(type){return type==='audio/webm'};state='inactive';mimeType='audio/webm';start(){this.state='recording'};stop(){this.state='inactive';setTimeout(()=>{this.ondataavailable?.({data:new Blob(['fixture recording'],{type:'audio/webm'})});this.onstop?.()},40)}}
 window.MediaRecorder=Recorder;
 const photos=[{id:'living-photo',url:'/living.svg',name:'Living room, looking toward the windows',roomId:'living',displayOrder:0},{id:'kitchen-photo',url:'/kitchen.svg',name:'Kitchen, looking toward the doorway',roomId:'kitchen',displayOrder:1}];
-function App(){const[open,setOpen]=useState(true);return <><button onClick={()=>setOpen(true)}>Resume guided interview</button><p>Local synthetic review fixture</p>{open&&<GuidedInterviewWorkspace projectId="fixture-project" actorId="fixture-designer" projectName="The Orchard House" images={photos} onClose={()=>setOpen(false)} onDraftGenerated={()=>{document.getElementById('destination').textContent='Editable draft review';}}/>}<output id="destination"/></>};
+function App(){const[open,setOpen]=useState(true);return <><button onClick={()=>setOpen(true)}>Resume guided interview</button><p>Local synthetic review fixture</p>{open&&<GuidedInterviewWorkspace projectId="fixture-project" actorId="fixture-designer" projectName="The Orchard House" presentation={new URLSearchParams(location.search).has('inline')?'inline':'modal'} disableLive={new URLSearchParams(location.search).has('inline')} images={photos} onClose={()=>setOpen(false)} onDraftGenerated={()=>{document.getElementById('destination').textContent='Editable draft review';}}/>}<output id="destination"/></>};
 createRoot(document.getElementById('root')).render(<App/>);`;
 
 async function build() {
@@ -122,8 +123,9 @@ function serverHandler(req, res) {
         const command = JSON.parse(body); requests.push(command);
         if (stalledSave) { stalledSave = false; return; }
         if (failSave) { const status = typeof failSave === 'number' ? failSave : 503; failSave = false; return json({ message: 'Fixture save unavailable' }, status); }
-        if (!saved) saved = controller.createGuidedSession('fixture-project', prepared, command.requestId);
+        if (!saved) saved = controller.createGuidedSession('fixture-project', prepared, command.requestId, command);
         else if (command.action !== 'start') saved = controller.acceptCommand(saved, command);
+        const savedForStream = structuredClone(saved);
         if (saved.status === 'deciding') {
           const turn = saved.turns.find(turn => turn.id === saved.pendingDecisionTurnId);
           const q = saved.plan.find(q => q.id === turn?.questionId);
@@ -131,6 +133,16 @@ function serverHandler(req, res) {
             ? { kind: 'followup', text: 'What is one moment in the project that best shows that idea in practice?', reaction: followupReaction, purpose: 'Ground the stated idea.', sourceAnswerIds: [turn.id], evidence: [{ answerId: turn.id, quote: turn.text }] } : { kind: 'advance' });
           if (!saved.roomsPrepared && controller.projectPhaseComplete(saved) && !saved.activeQuestionId) controller.appendRoomPlan(saved, roomPlan());
           saved.version++;
+        }
+        if (streamFixture && command.action === 'answer') {
+          streamFixture = false;
+          const turn = saved.turns.find(t => t.requestId === command.requestId);
+          turn.observation = 'You kept the walls and made lighting the main investment.';
+          res.writeHead(200, { 'Content-Type': 'application/x-ndjson', 'Cache-Control': 'no-store' });
+          res.write(JSON.stringify({ type: 'saved', session: savedForStream }) + '\n');
+          res.write(JSON.stringify({ type: 'reaction', sessionId: savedForStream.id, version: savedForStream.version, turnId: turn.id, text: turn.observation }) + '\n');
+          releaseStream = () => { res.end(JSON.stringify({ type: 'complete', session: saved }) + '\n'); releaseStream = null; };
+          return;
         }
         if (loseReply) { loseReply = false; return json({ message: 'Fixture lost the successful save acknowledgement' }, 503); }
         if (holdGuidedResponse) { holdGuidedResponse = false; heldResponse = () => { json({ ok: true, session: saved }); heldResponse = null; }; responseHeld?.(); responseHeld = null; return; }
@@ -410,7 +422,78 @@ async function main() {
       await page.waitForFunction(() => document.body.textContent.includes('Prepare editable draft'));
       assert.equal(await page.$('[data-testid="live-layout-fixture"]'), null, 'finished questions return to the draft review');
     });
+    await capture('Inline Story chat shows a saved observation while input waits for the full question', async () => {
+      await page.evaluate(() => { localStorage.clear(); sessionStorage.clear(); });
+      saved = controller.createGuidedSession('fixture-project', prepared, 'inline-chat-start');
+      await page.setViewport({ width: 1280, height: 900 });
+      await page.goto(base + '/?inline=1&live-layout=1'); await idle();
+      assert.equal(await page.$('[role="dialog"]'), null);
+      assert.equal(await page.$('[data-testid="live-layout-fixture"]'), null);
+      assert.equal(await page.evaluate(() => window.microphoneStarts), 0);
+      streamFixture = true;
+      await fill('We kept the original walls and put most of the budget into lighting.');
+      await page.click('[aria-label="Send response"]');
+      await page.waitForSelector('[data-testid="guided-observation"]');
+      assert.equal(await page.$eval('#guided-response', el => el.disabled), true);
+      assert.equal(await page.$eval('[aria-label="Send response"]', el => el.disabled), true);
+      assert.equal(await page.$('[data-testid="guided-current-question"]'), null);
+      assert.match(await page.$eval('#guided-save-status', el => el.textContent), /Answer saved/);
+      assert.ok(!await page.evaluate(() => document.body.textContent.includes('Your unsent response belongs to an earlier question')));
+      assert.equal(saved.turns.length, 1);
+      await page.screenshot({ path: path.join(fixtureOut, 'inline-reaction.png'), fullPage: true });
+      releaseStream(); await idle();
+      assert.equal((await page.$$('[data-testid="guided-observation"]')).length, 1);
+      assert.equal(saved.turns.length, 1);
+      await page.reload(); await idle();
+      assert.equal((await page.$$('[data-testid="guided-observation"]')).length, 1);
+    });
+    await capture('Inline chat preserves photos and input at desktop, tablet and mobile widths', async () => {
+      for (const width of [1280, 768, 390, 320]) {
+        await page.setViewport({ width, height: 900 });
+        assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth));
+        assert.ok(await page.$('[aria-label="Project photographs"]'));
+        assert.ok(await page.$('#guided-response'));
+        await page.screenshot({ path: path.join(fixtureOut, `inline-${width}.png`), fullPage: true });
+      }
+    });
     assert.deepEqual(errors, []);
+    await capture('Room checkpoint supports review, preserved drafts, free continue and completed-room revisit', async () => {
+      saved = controller.createGuidedSession('fixture-project', prepared, 'room-review-start', { action: 'start', version: 0, requestId: 'room-review-start', roomCheckpoints: true });
+      for (let i = 0; i < 7; i++) {
+        saved = controller.acceptCommand(saved, { action: 'answer', version: saved.version, requestId: `room-review-answer-${i}`, questionId: saved.activeQuestionId, text: `The room supports daily routines, detail ${i}.` });
+        controller.applyDecision(saved, { kind: 'advance' });
+        if (!saved.roomsPrepared && controller.projectPhaseComplete(saved)) controller.appendRoomPlan(saved, roomPlan());
+      }
+      await page.evaluate(() => { localStorage.clear(); sessionStorage.clear(); });
+      await page.setViewport({ width: 390, height: 844 });
+      await page.goto(base + '/?inline=1'); await idle();
+      await page.waitForSelector('[data-testid="guided-room-checkpoint"]');
+      assert.match(await page.$eval('[data-testid="guided-current-question"]', el => el.textContent), /Before we move to Kitchen, did we miss anything/);
+      assert.ok(await page.$('[aria-label="Start microphone recording"]'));
+      await fill('We never discussed the niche.');
+      await clickText('Review Living room');
+      await page.waitForSelector('[data-testid="guided-room-review"]');
+      assert.equal(await page.$('#guided-response'), null);
+      assert.match(await page.$eval('[role="log"]', el => el.textContent), /detail 5/);
+      await clickText('Back to conversation'); await idle();
+      assert.equal(await page.$eval('#guided-response', el => el.value), 'We never discussed the niche.');
+      await page.reload(); await idle();
+      assert.equal(await page.$eval('#guided-response', el => el.value), 'We never discussed the niche.');
+      await fill(''); await clickText('Continue to Kitchen'); await idle();
+      const kitchenQuestion = saved.activeQuestionId;
+      await page.click('summary'); await clickText('Living room: 2 answered');
+      await clickText('Did we miss anything here?'); await idle();
+      await fill('We kept the niche because it supports family routines without narrowing circulation.');
+      await page.click('[aria-label="Send response"]'); await idle();
+      assert.equal(saved.activeQuestionId, kitchenQuestion, 'a completed explanation returns to the same prepared question');
+      assert.equal(saved.turns.filter(turn => turn.text.startsWith('We kept the niche')).length, 1);
+      await page.click('summary'); await clickText('Living room: 2 answered');
+      await clickText('Correct this answer'); await fill('The living room supports quiet reading as well as daily routines.');
+      await page.click('[aria-label="Save correction"]'); await idle();
+      assert.ok(saved.turns.some(turn => turn.supersededBy), 'room review corrections retain original history');
+      assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth));
+      await page.screenshot({ path: path.join(fixtureOut, 'inline-room-review.png'), fullPage: true });
+    });
     fs.writeFileSync(path.join(out, 'browser-results.json'), JSON.stringify({ fixture: 'Actual React component + controller; synthetic API, model, microphone and memory persistence; no production data.', passed: results }, null, 2));
   } catch (error) {
     await page.screenshot({ path: path.join(out, 'failure.png'), fullPage: true });

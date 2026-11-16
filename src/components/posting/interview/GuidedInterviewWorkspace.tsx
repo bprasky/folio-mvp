@@ -1,6 +1,7 @@
 'use client';
 
 import { workflowRequest } from '@/lib/client/workflowRequest';
+import { sendGuidedCommand } from './guidedTransport';
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import * as Dialog from '@radix-ui/react-dialog';
@@ -8,6 +9,7 @@ import Image from '@/components/FolioImage';
 import { useRouter } from 'next/navigation';
 import { ArrowDown, ArrowUp, Check, ChevronLeft, ChevronRight, Loader2, Mic, Pause, Square, X } from 'lucide-react';
 import { GUIDED_ANSWER_LIMIT, type GuidedCommand, type GuidedSession, type GuidedTurn } from '@/lib/interview/guided/types';
+import { checkpointDestination, isRoomCheckpoint, isRoomInvitation } from '@/lib/interview/guided/roomCheckpoint';
 import GenerationContextOptions, { useGenerationContext } from '@/components/posting/GenerationContextOptions';
 import { useVoiceRecording } from './useVoiceRecording';
 import type { RoomPhotoImage } from './RoomPhoto';
@@ -15,6 +17,7 @@ import { appendTranscript, emptyGuidedDraft, guidedTextIntent, resolvePhotoTrans
 import { LiveInterviewPanel, type LiveStartIntent } from '@/components/interviews/LiveInterviewPanel';
 
 interface GuidedInterviewWorkspaceProps {
+  presentation?: 'modal' | 'inline';
   disableLive?: boolean;
   projectId: string;
   actorId: string;
@@ -28,8 +31,12 @@ interface GuidedInterviewWorkspaceProps {
 
 const buttonClass = 'rounded-sm px-3 py-2 text-folio-meta font-medium transition-colors hover:bg-surface-ground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-folio-gold disabled:cursor-not-allowed disabled:opacity-50';
 
-export function GuidedInterviewWorkspace({ projectId, actorId, projectName = 'Your project', images, onClose, onDraftGenerated, initialRoomId, liveStartIntent, disableLive = false }: GuidedInterviewWorkspaceProps) {
+export function GuidedInterviewWorkspace({ projectId, actorId, projectName = 'Your project', images, onClose, onDraftGenerated, initialRoomId, liveStartIntent, disableLive = false, presentation = 'modal' }: GuidedInterviewWorkspaceProps) {
   const router = useRouter();
+  const inline = presentation === 'inline';
+  const Heading = inline ? 'h2' : Dialog.Title;
+  const Description = inline ? 'p' : Dialog.Description;
+  const [observation, setObservation] = useState<{ turnId: string; text: string } | null>(null);
   const [session, setSession] = useState<GuidedSession | null>(null);
   const sessionRef = useRef<GuidedSession | null>(null);
   const [draft, setDraft] = useState<GuidedLocalDraft>(emptyGuidedDraft);
@@ -51,6 +58,7 @@ export function GuidedInterviewWorkspace({ projectId, actorId, projectName = 'Yo
   const [correcting, setCorrecting] = useState<GuidedTurn | null>(null);
   const [showFinish, setShowFinish] = useState(false);
   const [showSkipRoom, setShowSkipRoom] = useState(false);
+  const [reviewRoomId, setReviewRoomId] = useState<string | null | undefined>(undefined);
   const [generating, setGenerating] = useState(false);
   const [contextChoice, setContextChoice] = useState({ includeBio: true, includeProjectHistory: true });
   const contextAvailability = useGenerationContext(projectId);
@@ -75,7 +83,11 @@ export function GuidedInterviewWorkspace({ projectId, actorId, projectName = 'Yo
   const photo = photos.find(image => image.id === selectedImageId) ?? photos[0];
   const roomName = (roomId: string | null | undefined) => session?.rooms.find(room => room.id === roomId)?.name ?? (roomId ? 'Project room' : 'About this project');
   const activeRoomName = roomName(activeQuestion?.roomId);
-  const staleDraft = !!draft.text && draft.questionId !== activeQuestion?.id;
+  const roomInvitation = isRoomInvitation(activeQuestion) && !correcting;
+  const nextRoomName = session && activeQuestion ? checkpointDestination(session, activeQuestion) : undefined;
+  const roomContinueLabel = nextRoomName ? `Continue to ${nextRoomName}` : 'Continue to review';
+  const draftAccepted = !!draft.pending && !!session?.requestIds.includes(draft.pending.requestId);
+  const staleDraft = !!draft.text && draft.questionId !== activeQuestion?.id && !commandBusy && !draftAccepted;
 
   const saveDraft = useCallback((next: GuidedLocalDraft) => {
     next = { ...next, sessionId: sessionRef.current?.id ?? next.sessionId };
@@ -95,8 +107,8 @@ export function GuidedInterviewWorkspace({ projectId, actorId, projectName = 'Yo
     },
   });
   const voiceBusy = voice.isRecording || voice.isTranscribing || voice.status === 'paused';
-  const reviewVisible = showFinish || (session && ['ready', 'finished'].includes(session.status));
-  const readyToAnswer = activeQuestion && session?.status === 'active' && !reviewVisible && !showSkipRoom;
+  const reviewVisible = !correcting && (showFinish || (session && ['ready', 'finished'].includes(session.status)));
+  const readyToAnswer = activeQuestion && session?.status === 'active' && !reviewVisible && !showSkipRoom && reviewRoomId === undefined;
   const liveEligible = !disableLive && loaded && !loadingSession && !!readyToAnswer && !draft.text && !draft.pending
     && !voiceBusy && !voice.hasRecording && !correcting && !commandBusy;
   // Canonical progress may temporarily have no active question while the next one
@@ -135,13 +147,22 @@ export function GuidedInterviewWorkspace({ projectId, actorId, projectName = 'Yo
 
   const sendCommand = useCallback(async (command: GuidedCommand): Promise<GuidedSession | null> => {
     if (inFlight.current) return null;
-    inFlight.current = true; setBusy(true); setWorkingCommand(command); setError('');
+    inFlight.current = true; setBusy(true); setWorkingCommand(command); setError(''); setObservation(null);
     saveDraft({ ...draftRef.current, pending: command });
     try {
-      const response = await workflowRequest(endpoint, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(command) });
-      const data = await response.json();
+      const data = await sendGuidedCommand(endpoint, command, event => {
+        if (!mounted.current) return;
+        if (event.type === 'saved' && event.session.requestIds.includes(command.requestId)) {
+          acceptSession(event.session);
+        } else if (event.type === 'reaction') {
+          const current = sessionRef.current;
+          if (current?.id === event.sessionId && current.version === event.version && current.status === 'deciding'
+            && current.pendingDecisionTurnId === event.turnId) setObservation({ turnId: event.turnId, text: event.text });
+        }
+      });
+      const response = data;
       if (!mounted.current) return null;
-      if (data.session) acceptSession(data.session);
+      if (data.session) { acceptSession(data.session); setObservation(null); }
       if (!response.ok) {
         if ([400, 409, 422].includes(response.status)) saveDraft({ ...draftRef.current, pending: null });
         if (response.status === 409) {
@@ -171,8 +192,9 @@ export function GuidedInterviewWorkspace({ projectId, actorId, projectName = 'Yo
   }, [acceptSession, endpoint, saveDraft]);
 
   const command = useCallback((action: GuidedCommand['action'], extra: Partial<GuidedCommand> = {}) => sendCommand({
-    action, requestId: crypto.randomUUID(), version: sessionRef.current?.version ?? 0, sessionId: sessionRef.current?.id, ...extra,
-  }), [sendCommand]);
+    action, requestId: crypto.randomUUID(), version: sessionRef.current?.version ?? 0, sessionId: sessionRef.current?.id,
+    ...(inline ? { roomCheckpoints: true } : {}), ...extra,
+  }), [inline, sendCommand]);
 
   const loadSession = useCallback(async () => {
     setError(''); setLoadingSession(true);
@@ -237,8 +259,16 @@ export function GuidedInterviewWorkspace({ projectId, actorId, projectName = 'Yo
 
   useEffect(() => {
     const container = conversationRef.current;
-    if (container && followBottom.current) container.scrollTop = container.scrollHeight;
-  }, [session?.version, correcting, busy, loadingSession]);
+    if (container && reviewRoomId !== undefined) container.scrollTop = 0;
+    else if (container && followBottom.current) container.scrollTop = container.scrollHeight;
+  }, [session?.version, correcting, busy, loadingSession, observation, reviewRoomId]);
+
+  useEffect(() => {
+    if (!correcting || reviewRoomId !== undefined) return;
+    followBottom.current = true;
+    composerRef.current?.focus();
+    if (conversationRef.current) conversationRef.current.scrollTop = conversationRef.current.scrollHeight;
+  }, [correcting, reviewRoomId]);
 
   useEffect(() => {
     const container = conversationRef.current;
@@ -303,7 +333,8 @@ export function GuidedInterviewWorkspace({ projectId, actorId, projectName = 'Yo
   };
 
   const startCorrection = (turn: GuidedTurn) => {
-    if (draft.text || busy || voiceBusy || draft.pending) { setError('Save or clear your current response before correcting an earlier answer.'); return; }
+    if (draft.text || busy || voiceBusy || voice.hasRecording || draft.pending) { setError('Save or clear your current response and recording before correcting an earlier answer.'); return; }
+    setReviewRoomId(undefined);
     setCorrecting(turn);
     saveDraft({ questionId: turn.questionId, text: turn.text, inputModality: 'text', selectedImageId: turn.selectedImageId, correctingTurnId: turn.id, pending: null });
     composerRef.current?.focus();
@@ -339,25 +370,32 @@ export function GuidedInterviewWorkspace({ projectId, actorId, projectName = 'Yo
     ? { command: pendingCommand, question: pendingQuestion } : null;
   const preparingReply = loadingSession || !!(pendingCommand && !['pause', 'finish'].includes(pendingCommand.action));
   const answers = currentTurns.filter(turn => turn.kind !== 'skip' && !turn.supersededBy && session?.plan.some(question => question.id === turn.questionId && question.status === 'answered'));
-  const unfinished = session?.plan.filter(question => ['active', 'pending'].includes(question.status)).length ?? 0;
-  const skipped = session?.plan.filter(question => question.status === 'skipped').length ?? 0;
+  const unfinished = session?.plan.filter(question => !isRoomCheckpoint(question) && ['active', 'pending'].includes(question.status)).length ?? 0;
+  const skipped = session?.plan.filter(question => !isRoomCheckpoint(question) && question.status === 'skipped').length ?? 0;
   const shorterCoverage = unfinished > 0 || skipped > 0 || !session?.roomsPrepared || answers.length < (session?.minimumTotalAnswers ?? 0);
   const photoInScope = photo && activeQuestion && (!activeQuestion.roomId || session?.rooms.find(room => room.id === activeQuestion.roomId)?.imageIds.includes(photo.id));
   const photoIndex = photo ? photos.findIndex(image => image.id === photo.id) : 0;
-  const savedLabel = generating ? 'Preparing your draft…' : busy ? pendingAnswer ? 'Awaiting save confirmation' : 'Updating your interview…' : loadingSession ? 'Loading your interview…' : voice.isTranscribing ? 'Transcribing…' : draft.pending ? 'Save not confirmed — retry' : draft.text ? storageError ? 'Response not saved on this device' : 'Unsent response · saved on this device' : session ? 'All accepted answers saved' : 'Interview not loaded';
+  const reviewPending = session?.plan.some(question => question.roomId === reviewRoomId && ['active', 'pending'].includes(question.status));
+  const openRoomReview = (roomId: string | null) => {
+    followBottom.current = false; setEarlierTurns(false); setReviewRoomId(roomId);
+    const firstPhoto = photos.find(image => image.roomId === roomId);
+    if (firstPhoto) browse(firstPhoto.id);
+  };
+  const closeRoomReview = () => {
+    setReviewRoomId(undefined); followBottom.current = true;
+    const firstPhoto = photos.find(image => image.roomId === activeQuestion?.roomId);
+    if (firstPhoto) browse(firstPhoto.id);
+  };
+  const savedLabel = generating ? 'Preparing your draft…' : busy ? pendingAnswer ? 'Awaiting save confirmation' : session?.status === 'deciding' ? 'Answer saved · preparing your next question…' : 'Updating your interview…' : loadingSession ? 'Loading your interview…' : voice.isTranscribing ? 'Transcribing…' : draft.pending ? draftAccepted ? 'Answer saved · retry the next question' : 'Save not confirmed — retry' : draft.text ? storageError ? 'Response not saved on this device' : 'Unsent response · saved on this device' : session ? 'All accepted answers saved' : 'Interview not loaded';
 
-  return <Dialog.Root open onOpenChange={open => { if (!open) void pause(); }}>
-    <Dialog.Portal>
-      <Dialog.Overlay className="fixed inset-0 z-[100] bg-folio-text-primary/30" />
-      <Dialog.Content onEscapeKeyDown={event => { event.preventDefault(); void pause(); }}
-        className="fixed inset-0 z-[101] flex h-[100dvh] flex-col bg-surface-canvas text-folio-text-primary focus:outline-none">
+  const content = <>
         <header className="flex shrink-0 items-center justify-between gap-3 border-b border-folio-border-subtle px-4 py-3 md:px-7">
-          <div className="min-w-0"><Dialog.Title className="truncate font-headline text-folio-h4">{projectName}</Dialog.Title>
-            <Dialog.Description className="text-folio-meta text-folio-text-secondary">Project photographs · Guided interview</Dialog.Description></div>
-          <button type="button" disabled={liveActive && !liveStarting} onClick={() => void pause()} className={`${buttonClass} flex shrink-0 items-center gap-2`}><Pause size={15} aria-hidden />Pause & close</button>
+          <div className="min-w-0"><Heading className="truncate font-headline text-folio-h4">{projectName}</Heading>
+            <Description className="text-folio-meta text-folio-text-secondary">The decisions, surprises and details behind your project. Type or dictate your answers.</Description></div>
+          <button type="button" disabled={liveActive && !liveStarting} onClick={() => void pause()} className={`${buttonClass} flex shrink-0 items-center gap-2`}><Pause size={15} aria-hidden />{inline ? 'Pause interview' : 'Pause & close'}</button>
         </header>
 
-        <div className={`grid min-h-0 flex-1 grid-rows-[minmax(120px,30dvh)_minmax(0,1fr)] gap-3 p-3 md:grid-rows-1 md:gap-6 md:p-6 ${showLive ? 'md:grid-cols-[minmax(0,1fr)_minmax(320px,45%)] lg:grid-cols-[minmax(0,1fr)_480px] xl:grid-cols-[minmax(0,1fr)_520px]' : 'md:grid-cols-[minmax(0,1fr)_390px] lg:grid-cols-[minmax(0,1fr)_420px]'}`}>
+        <div className={`grid min-h-0 flex-1 grid-rows-[minmax(120px,30dvh)_minmax(0,1fr)] gap-3 p-3 md:grid-rows-1 md:gap-6 md:p-6 ${showLive ? 'md:grid-cols-[minmax(0,1fr)_minmax(320px,45%)] lg:grid-cols-[minmax(0,1fr)_480px] xl:grid-cols-[minmax(0,1fr)_520px]' : 'md:grid-cols-[minmax(0,1fr)_minmax(340px,1fr)]'}`}>
           <section aria-label="Project photographs" className="flex min-h-0 min-w-0 flex-col gap-2">
             <div className="relative min-h-0 flex-1 overflow-hidden rounded-lg bg-surface-ground">
               {photo ? <Image src={photo.url} alt={photo.name || `${roomName(photo.roomId)} photograph`} fill unoptimized sizes="(min-width: 768px) 65vw, 100vw" className="object-contain" />
@@ -380,10 +418,10 @@ export function GuidedInterviewWorkspace({ projectId, actorId, projectName = 'Yo
             </div>
           </section>
 
-          <section aria-label="Conversation with Folio" className={`flex min-h-0 min-w-0 flex-col overflow-hidden rounded-lg border border-folio-border-subtle bg-surface-canvas shadow-folio2 ${showLive ? '' : 'md:max-h-[min(720px,100%)] md:self-end'}`}>
+          <section aria-label="Conversation with Folio" className={`flex min-h-0 min-w-0 flex-col overflow-hidden rounded-lg border border-folio-border-subtle bg-surface-canvas shadow-folio2 ${showLive ? '' : 'md:self-stretch'}`}>
             <div className="flex shrink-0 items-start justify-between gap-2 border-b border-folio-border-subtle px-4 py-3">
               <div><p className="font-headline text-folio-h4">Folio <span className="font-body text-folio-meta text-folio-text-secondary">AI interviewer</span></p>
-                <p className="text-folio-meta text-folio-text-secondary">{activeRoomName}</p></div>
+                <p className="text-folio-meta text-folio-text-secondary">{reviewRoomId === undefined ? activeRoomName : `Reviewing ${roomName(reviewRoomId)}`}</p></div>
               {session && <details className="relative text-folio-meta"><summary className="cursor-pointer rounded-sm px-2 py-1 focus-visible:ring-2 focus-visible:ring-folio-gold">Sections</summary>
                 <ul className="absolute right-0 top-full z-10 mt-2 max-h-56 w-60 overflow-auto rounded-sm border border-folio-border-subtle bg-surface-canvas p-3 shadow-folio2">
                   {[{ id: null, name: 'About this project' }, ...session.rooms.filter(room => room.id !== 'project')].map(room => {
@@ -391,8 +429,8 @@ export function GuidedInterviewWorkspace({ projectId, actorId, projectName = 'Yo
                     const answered = questions.filter(question => question.status === 'answered').length;
                     const skipped = questions.filter(question => question.status === 'skipped').length;
                     const pending = questions.some(question => ['pending', 'active'].includes(question.status));
-                    return <li key={room.id || 'project'} className="py-1"><button className={`${buttonClass} w-full text-left`} disabled={!pending || busy || voiceBusy || voice.hasRecording || !!draft.text || !!draft.pending || session.status !== 'active'}
-                      onClick={event => { event.currentTarget.closest('details')?.removeAttribute('open'); setShowFinish(false); setShowSkipRoom(false); void command('section', { roomId: room.id }); }}>{room.name}: {answered} answered{skipped ? `, ${skipped} skipped` : ''}{!questions.length ? ' · not prepared yet' : ''}</button></li>;
+                    return <li key={room.id || 'project'} className="py-1"><button className={`${buttonClass} w-full text-left`} disabled={inline ? busy || voiceBusy || !questions.length : !pending || busy || voiceBusy || voice.hasRecording || !!draft.text || !!draft.pending || session.status !== 'active'}
+                      onClick={event => { event.currentTarget.closest('details')?.removeAttribute('open'); if (inline) { openRoomReview(room.id); return; } setShowFinish(false); setShowSkipRoom(false); void command('section', { roomId: room.id }); }}>{room.name}: {answered} answered{skipped ? `, ${skipped} skipped` : ''}{!questions.length ? ' · not prepared yet' : ''}</button></li>;
                   })}
                 </ul>
               </details>}
@@ -407,13 +445,24 @@ export function GuidedInterviewWorkspace({ projectId, actorId, projectName = 'Yo
                 selectedImageId={draft.selectedImageId} onSessionChange={setLiveSessionId} />}
             </div>
             {!showLive && <>
+            {reviewRoomId !== undefined && <div className="shrink-0 border-b border-folio-border-subtle px-4 py-3" data-testid="guided-room-review">
+              <p className="text-folio-body">Review {roomName(reviewRoomId)}</p>
+              <div className="mt-2 flex flex-wrap gap-1">
+                <button className={buttonClass} onClick={closeRoomReview}>Back to conversation</button>
+                {reviewPending ? <button className={buttonClass} disabled={busy || voiceBusy || voice.hasRecording || !!draft.text || !!draft.pending || session?.status !== 'active'}
+                  onClick={() => { void command('section', { roomId: reviewRoomId }).then(next => { if (next) { setShowFinish(false); setShowSkipRoom(false); closeRoomReview(); } }); }}>Continue this room</button>
+                  : reviewRoomId && <button className={buttonClass} disabled={busy || voiceBusy || voice.hasRecording || !!draft.text || !!draft.pending}
+                    onClick={() => { void command('revisit_room', { roomId: reviewRoomId }).then(next => { if (next) { setShowFinish(false); closeRoomReview(); } }); }}>Did we miss anything here?</button>}
+              </div>
+              {!!draft.text && <p className="mt-2 text-folio-meta">Your unsent response is kept. Return to the conversation to finish it.</p>}
+            </div>}
             {liveAvailable && liveEligible && <button type="button" className={`${buttonClass} mx-4 mt-3 self-start`} onClick={() => { setWorkspaceRequested(false); setEarlierTurns(false); }}>Return to live interview</button>}
             <div ref={conversationRef} className="min-h-0 flex-1 space-y-5 overflow-y-auto overscroll-contain px-4 py-4 md:min-h-40" role="log" aria-label="Interview conversation"
               onScroll={event => { if (resizingConversation.current) return; const el = event.currentTarget; followBottom.current = el.scrollHeight - el.scrollTop - el.clientHeight < 70; setEarlierTurns(!followBottom.current); }}>
               {initialRoomId && !session?.roomsPrepared && <p className="text-folio-meta text-folio-text-secondary">We’ll finish the project context before preparing the room questions.</p>}
-              {currentTurns.map(turn => {
+              {currentTurns.filter(turn => (reviewRoomId === undefined || turn.roomId === reviewRoomId) && !(turn.kind === 'skip' && isRoomCheckpoint(session?.plan.find(q => q.id === turn.questionId)))).map(turn => {
                 const question = session?.plan.find(value => value.id === turn.questionId);
-                return <ConversationTurn key={turn.id} turn={turn} roomName={roomName(turn.roomId)} excluded={question?.status === 'invalidated'} onCorrect={() => startCorrection(turn)} canCorrect={!busy && !voiceBusy && !turn.supersededBy && turn.kind !== 'skip' && question?.status === 'answered'} />;
+                return <ConversationTurn key={turn.id} turn={turn} roomName={roomName(turn.roomId)} excluded={question?.status === 'invalidated'} observation={observation?.turnId === turn.id ? observation.text : undefined} onCorrect={() => startCorrection(turn)} canCorrect={!busy && !voiceBusy && !turn.supersededBy && turn.kind !== 'skip' && question?.status === 'answered'} />;
               })}
               {pendingAnswer && <article data-testid="guided-pending-answer">
                 <p className="mb-1 text-folio-eyebrow text-folio-text-secondary">{roomName(pendingAnswer.question.roomId)}</p>
@@ -428,12 +477,17 @@ export function GuidedInterviewWorkspace({ projectId, actorId, projectName = 'Yo
               {preparingReply && <InterviewerWorking />}
               {!session && loaded && error && <p className="text-folio-body text-folio-text-secondary">Your interview is still here. Reconnect to continue.</p>}
               {session?.notice && <p role="status" className="text-folio-meta text-folio-text-secondary">{session.notice}</p>}
-              {session?.status === 'deciding' && !busy && <button type="button" className={buttonClass} onClick={() => void command('retry')}>Retry next question</button>}
+              {session?.status === 'deciding' && !busy && !draft.pending && <button type="button" className={buttonClass} onClick={() => void command('retry')}>Retry next question</button>}
               {session?.status === 'paused' && !busy && <button type="button" className={buttonClass} onClick={() => void command('resume')}>Resume interview</button>}
-              {activeQuestion && !reviewVisible && !preparingReply && <article key={activeQuestion.id} aria-live="polite">
+              {activeQuestion && !reviewVisible && !preparingReply && reviewRoomId === undefined && <article key={activeQuestion.id} aria-live="polite">
                 {correcting && <p className="mb-2 text-folio-meta text-folio-text-secondary">Correct your earlier answer</p>}
                 {activeQuestion.reaction && <p className="mb-2 text-folio-body" data-testid="guided-reaction">{activeQuestion.reaction}</p>}
                 <p className="text-folio-body" data-testid="guided-current-question">{activeQuestion.text}</p>
+                {roomInvitation && <div className="mt-3 flex flex-wrap gap-2" data-testid="guided-room-checkpoint">
+                  <button className={`${buttonClass} bg-folio-text-primary text-white hover:bg-folio-text-primary/90`} disabled={busy || voiceBusy || voice.hasRecording || !!draft.text || !!draft.pending}
+                    onClick={() => void command('skip', { questionId: activeQuestion.id })}>{roomContinueLabel}</button>
+                  <button className={buttonClass} disabled={busy || voiceBusy} onClick={() => openRoomReview(activeQuestion.roomId)}>Review {activeRoomName}</button>
+                </div>}
                 {activeQuestion.confirmation && !correcting && <div className="mt-3 space-y-2">
                   <p className="text-folio-meta text-folio-text-secondary">From your earlier answer:</p>
                   <blockquote data-testid="guided-confirmation-source" className="border-l-2 border-folio-gold pl-3 whitespace-pre-wrap break-words text-folio-body">{activeQuestion.confirmation.quote}</blockquote>
@@ -444,7 +498,7 @@ export function GuidedInterviewWorkspace({ projectId, actorId, projectName = 'Yo
               </article>}
               {session?.status === 'needs_review' && <div><p className="text-folio-body text-folio-text-secondary">Project context has changed. Your earlier answers are preserved; review the updated questions before continuing.</p><button className={buttonClass} disabled={busy || !!draft.text} onClick={() => void command('resume')}>Continue with updated context</button></div>}
               {showSkipRoom && <div className="space-y-3 rounded-sm bg-surface-ground p-3"><p className="text-folio-body">Skip the remaining questions for {activeRoomName}? Your existing answers will still be used. A room with no answers will appear as photographs.</p><button className={buttonClass} disabled={busy} onClick={() => void command('skip_room').then(next => { if (next) setShowSkipRoom(false); })}>Skip remaining room questions</button><button className={buttonClass} disabled={busy} onClick={() => setShowSkipRoom(false)}>Keep this room</button></div>}
-              {reviewVisible && <div className="space-y-4">
+              {reviewVisible && reviewRoomId === undefined && <div className="space-y-4">
                 <h2 className="font-headline text-folio-h4">Ready for a first draft?</h2>
                 <p className="text-folio-body text-folio-text-secondary">{answers.length} saved {answers.length === 1 ? 'answer' : 'answers'}.{shorterCoverage ? ` ${skipped ? `${skipped} questions were skipped. ` : ''}This draft will have shorter coverage. Rooms with less material will be shorter; rooms without answers appear as photographs.` : ' You can review and edit the writing before choosing to publish.'}</p>
                 <GenerationContextOptions availability={contextAvailability} value={contextChoice} onChange={setContextChoice} bioMissingHint={false} />
@@ -455,22 +509,22 @@ export function GuidedInterviewWorkspace({ projectId, actorId, projectName = 'Yo
               </div>}
             </div>
 
-            {earlierTurns && <button className={`${buttonClass} mx-4 flex items-center justify-center gap-2`} onClick={() => { followBottom.current = true; setEarlierTurns(false); if (conversationRef.current) conversationRef.current.scrollTop = conversationRef.current.scrollHeight; }}><ArrowDown size={14} />Latest question</button>}
+            {earlierTurns && reviewRoomId === undefined && <button className={`${buttonClass} mx-4 flex items-center justify-center gap-2`} onClick={() => { followBottom.current = true; setEarlierTurns(false); if (conversationRef.current) conversationRef.current.scrollTop = conversationRef.current.scrollHeight; }}><ArrowDown size={14} />Latest question</button>}
             <div className="shrink-0 border-t border-folio-border-subtle p-3">
               {(error || voice.error) && <div role="alert" className="mb-3 rounded-sm border border-folio-border-strong bg-surface-ground p-3 text-folio-meta">
                 <p>{error || voice.error}</p>
-                {draft.pending ? <button className={buttonClass} disabled={busy} onClick={() => void sendCommand(draft.pending!)}>Retry save</button> : !session ? <button className={buttonClass} onClick={() => void loadSession()}>Retry connection</button> : null}
+                {draft.pending ? <button className={buttonClass} disabled={busy} onClick={() => void sendCommand(draft.pending!)}>{draftAccepted ? 'Retry next question' : 'Retry save'}</button> : !session ? <button className={buttonClass} onClick={() => void loadSession()}>Retry connection</button> : null}
                 {voice.hasRecording && !voiceBusy && <><button className={buttonClass} onClick={() => void voice.transcribeRecording(projectId, activeQuestion?.id ?? '')}>Retry transcription</button><button className={buttonClass} onClick={voice.cancelRecording}>Discard recording</button></>}
                 {!voiceBusy && !voice.hasRecording && !busy && !storageError && <button className={buttonClass} onClick={onClose}>Close for now</button>}
                 <button aria-label="Dismiss message" className={buttonClass} onClick={() => setError('')}><X size={14} /></button>
               </div>}
               {staleDraft && <div className="mb-3 rounded-sm bg-surface-ground p-3 text-folio-meta" role="status"><p>Your unsent response belongs to an earlier question. It has not been applied to this one.</p><details><summary>Show unsent response</summary><p className="mt-2 whitespace-pre-wrap">{draft.text}</p></details><button className={buttonClass} onClick={() => void navigator.clipboard.writeText(draft.text).catch(() => setError('Select the response text to copy it.'))}>Copy response</button><button className={buttonClass} onClick={() => saveDraft(emptyGuidedDraft())}>Discard unsent response</button></div>}
-              {(readyToAnswer || correcting) && !staleDraft && <>
+              {(readyToAnswer || correcting || (preparingReply && session)) && !staleDraft && reviewRoomId === undefined && <>
                 {draft.selectedImageId && <p className="mb-2 text-folio-meta text-folio-text-secondary">Answer linked to {photos.find(image => image.id === draft.selectedImageId)?.name || 'the selected photograph'}<button className={buttonClass} disabled={voiceBusy || commandBusy || !!draft.pending} onClick={() => void linkPhoto(null)}>Unlink</button></p>}
                 <label className="sr-only" htmlFor="guided-response">Your response</label>
-                <textarea id="guided-response" ref={composerRef} value={pendingAnswer ? '' : draft.text} rows={2} disabled={busy || voiceBusy || !!draft.pending}
+                <textarea id="guided-response" ref={composerRef} value={preparingReply && workingCommand && ['answer', 'correct'].includes(workingCommand.action) ? '' : draft.text} rows={2} disabled={busy || voiceBusy || !!draft.pending}
                   aria-describedby="guided-input-help guided-save-status" aria-invalid={draft.text.length > GUIDED_ANSWER_LIMIT}
-                  placeholder="Tell Folio about the project…" className="max-h-56 min-h-20 w-full resize-y rounded-sm border border-folio-border-subtle bg-surface-ground p-3 text-folio-body focus:outline-none focus:ring-2 focus:ring-folio-gold disabled:opacity-70"
+                  placeholder={preparingReply ? 'Folio is preparing your next question…' : roomInvitation ? 'Tell us what we missed about this room…' : 'Tell Folio about the project…'} className="max-h-56 min-h-20 w-full resize-y rounded-sm border border-folio-border-subtle bg-surface-ground p-3 text-folio-body focus:outline-none focus:ring-2 focus:ring-folio-gold disabled:opacity-70"
                   onChange={event => saveDraft({ ...draftRef.current, questionId: activeQuestion?.id ?? null, text: event.target.value, inputModality: draftRef.current.inputModality === 'voice' || draftRef.current.inputModality === 'mixed' ? 'mixed' : 'text' })}
                   onKeyDown={event => { if ((event.ctrlKey || event.metaKey) && event.key === 'Enter' && !event.nativeEvent.isComposing) { event.preventDefault(); void submit(); } }} />
                 <div id="guided-input-help" className="mt-1 text-folio-meta text-folio-text-secondary">{draft.text.length > GUIDED_ANSWER_LIMIT ? `Your full response is retained. Shorten it to ${GUIDED_ANSWER_LIMIT.toLocaleString()} characters before sending.` : `Up to ${GUIDED_ANSWER_LIMIT.toLocaleString()} characters · Ctrl/⌘ + Enter to send`}</div>
@@ -480,23 +534,28 @@ export function GuidedInterviewWorkspace({ projectId, actorId, projectName = 'Yo
                       : <button type="button" aria-label="Start microphone recording" disabled={busy || voiceBusy || !!draft.pending || voice.hasRecording} className={buttonClass} onClick={() => void voice.startRecording()}>{voice.isTranscribing ? <Loader2 size={18} className="animate-spin" /> : <Mic size={18} />}</button>}
                     {voice.isRecording && <button type="button" className={buttonClass} onClick={voice.cancelRecording}>Discard</button>}
                     {correcting ? <button className={buttonClass} disabled={busy || voiceBusy} onClick={() => { setCorrecting(null); saveDraft(emptyGuidedDraft()); }}>Cancel correction</button>
-                      : <><button type="button" className={buttonClass} disabled={busy || voiceBusy || !!draft.text || !!draft.pending || voice.hasRecording} onClick={() => void command('skip', { questionId: activeQuestion?.id })}>Skip question</button>{activeQuestion?.roomId && <button type="button" className={buttonClass} disabled={busy || voiceBusy || !!draft.text || !!draft.pending || voice.hasRecording} onClick={() => setShowSkipRoom(true)}>Skip room</button>}</>}
+                      : !roomInvitation && <><button type="button" className={buttonClass} disabled={busy || voiceBusy || !!draft.text || !!draft.pending || voice.hasRecording} onClick={() => void command('skip', { questionId: activeQuestion?.id })}>Skip question</button>{activeQuestion?.roomId && !isRoomCheckpoint(activeQuestion) && <button type="button" className={buttonClass} disabled={busy || voiceBusy || !!draft.text || !!draft.pending || voice.hasRecording} onClick={() => setShowSkipRoom(true)}>Skip room</button>}</>}
                   </div>
                   <button type="button" aria-label={correcting ? 'Save correction' : 'Send response'} disabled={busy || voiceBusy || voice.hasRecording || !!draft.pending || !draft.text.trim() || draft.text.length > GUIDED_ANSWER_LIMIT} onClick={() => void submit()} className="flex items-center gap-2 rounded-sm bg-folio-text-primary px-4 py-2 text-folio-ui font-medium text-white focus-visible:ring-2 focus-visible:ring-folio-gold disabled:opacity-40">{busy ? <Loader2 className="animate-spin" size={16} /> : <ArrowUp size={16} />}{correcting ? 'Save' : 'Send'}</button>
                 </div>
               </>}
               <div className="mt-2 flex flex-wrap items-center justify-between gap-1"><p id="guided-save-status" role="status" aria-live="polite" className="flex items-center gap-1 text-folio-meta text-folio-text-secondary">{!busy && !loadingSession && session && !draft.text && !draft.pending && <Check size={12} aria-hidden />}{savedLabel}</p>
-                {answers.length > 0 && !reviewVisible && <button className={buttonClass} disabled={busy || voiceBusy || !!draft.text || !!draft.pending} onClick={() => setShowFinish(true)}>Finish with what I have</button>}</div>
+                {answers.length > 0 && !reviewVisible && reviewRoomId === undefined && <button className={buttonClass} disabled={busy || voiceBusy || !!draft.text || !!draft.pending} onClick={() => setShowFinish(true)}>Finish with what I have</button>}</div>
             </div>
             </>}
           </section>
         </div>
-      </Dialog.Content>
+  </>;
+  if (inline) return <section aria-label="Project interview workspace" className="flex h-[max(680px,calc(100dvh-180px))] max-h-[1000px] min-w-0 flex-col bg-surface-canvas text-folio-text-primary">{content}</section>;
+  return <Dialog.Root open onOpenChange={open => { if (!open) void pause(); }}>
+    <Dialog.Portal>
+      <Dialog.Overlay className="fixed inset-0 z-[100] bg-folio-text-primary/30" />
+      <Dialog.Content onEscapeKeyDown={event => { event.preventDefault(); void pause(); }} className="fixed inset-0 z-[101] flex h-[100dvh] flex-col bg-surface-canvas text-folio-text-primary focus:outline-none">{content}</Dialog.Content>
     </Dialog.Portal>
   </Dialog.Root>;
 }
 
-function ConversationTurn({ turn, roomName, onCorrect, canCorrect, excluded }: { turn: GuidedTurn; roomName: string; onCorrect: () => void; canCorrect: boolean; excluded?: boolean }) {
+function ConversationTurn({ turn, roomName, onCorrect, canCorrect, excluded, observation }: { turn: GuidedTurn; roomName: string; onCorrect: () => void; canCorrect: boolean; excluded?: boolean; observation?: string }) {
   return <article className={turn.supersededBy ? 'opacity-70' : ''}>
     <p className="mb-1 text-folio-eyebrow text-folio-text-secondary">{roomName}</p>
     {turn.reaction && <p className="mb-2 text-folio-body" data-testid="guided-turn-reaction">{turn.reaction}</p>}
@@ -508,6 +567,7 @@ function ConversationTurn({ turn, roomName, onCorrect, canCorrect, excluded }: {
       {excluded && <p className="mt-2 text-folio-meta text-folio-text-secondary">Excluded from the draft after a correction or source change.</p>}
       {canCorrect && <button type="button" className={`${buttonClass} -ml-3 mt-1`} onClick={onCorrect}>Correct this answer</button>}
     </div>
+    {!turn.supersededBy && !excluded && (turn.observation || observation) && <p className="mt-4 text-folio-body" data-testid="guided-observation">{turn.observation || observation}</p>}
   </article>;
 }
 
