@@ -208,6 +208,9 @@ async function main() {
         assert.equal(await page.$eval('[role="dialog"] img', e => new URL(e.src).searchParams.get('i')), '1');
         await shot(`portfolio-viewer-${theme}-${width}`);
         await page.keyboard.press('Escape'); await page.waitForSelector('[role="dialog"]', { hidden: true });
+        // Radix restores focus in a deferred unmount callback, after the dialog
+        // disappears. Observe that outcome rather than racing the callback in CI.
+        await page.waitForFunction(() => document.activeElement?.getAttribute('data-kind') === 'space');
         assert.equal(await page.evaluate(() => document.activeElement.dataset.kind), 'space', 'Close restores the originating tile');
         assert.equal(await page.$eval('nav button[aria-pressed="true"]', e => e.textContent), 'Spaces');
         await shot(`portfolio-${theme}-${width}`);
