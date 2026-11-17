@@ -27,9 +27,9 @@ const heroQuote0 = 'A short approved quotation for space zero.';
 const heroQuote1 = 'We opened this room to the garden, giving the family a quieter place to gather throughout the day.';
 function fixture(count = 5) {
   return { id: 'fixture-post', projectId: 'fixture-project', slug: 'fixture', status: 'PUBLISHED', heroAssetId: count > 1 ? 'photo-1' : 'photo-0', excerpt: 'A photographic project with an independently published Folio feature.',
-    project: { id: 'fixture-project', title: 'Channel fixture', description: 'Original project description.', isPublic: true, city: 'Miami', designerOrg: { name: 'Fixture Studio' }, designer: { name: 'Fixture designer' },
+    project: { id: 'fixture-project', title: 'Channel fixture', description: 'Original project description.', isPublic: true, city: 'Miami', designerOrg: { id: 'fixture-studio', name: 'Fixture Studio' }, designer: { id: 'fixture-designer', name: 'Fixture designer' },
       images: Array.from({ length: count }, (_, i) => ({ id: `photo-${i}`, url: `/photo.svg?i=${i}`, name: `Photograph ${i}`, room: `Space ${Math.floor(i / 2)}`, roomId: `room-${Math.floor(i / 2)}`, inclusion: 'INCLUDED', tags: i === 0 ? [{ id: 'tag', productId: 'chair', product: { id: 'chair', name: 'Fixture chair', imageUrl: '/photo.svg', isPending: false } }] : [] })) },
-    credits: [{ name: 'Fixture collaborator', role: 'Architecture' }, { name: 'Fixture collaborator', role: 'Architecture' }, { name: '' }, { name: 'Photo studio', url: 'https://example.com' }],
+    credits: [{ name: 'Fixture collaborator', role: 'Architecture', organizationId: 'fixture-architect' }, { name: 'Fixture collaborator', role: 'Architecture', organizationId: 'fixture-architect' }, { name: '' }, { name: 'Photo studio', url: 'https://example.com' }],
     expandedBlocks: { lead: { title: 'The original fixture headline', deck: 'The original fixture deck' }, introduction: ['The original introduction remains in the publication.'],
       galleryChapters: Array.from({ length: Math.ceil(count / 2) }, (_, i) => ({ id: `room-${i}`, roomId: `room-${i}`, title: `Space ${i}`, imageIds: [`photo-${i * 2}`, `photo-${i * 2 + 1}`], body: [`Original narrative for space ${i}.`], pullQuote: i === 0 ? heroQuote0 : i === 1 ? { selected: { text: heroQuote1 }, alternatives: [{text:'UNSELECTED_QUOTE'}] } : null })) } };
 }
@@ -160,7 +160,9 @@ async function main() {
       await shot(`channel-${label}`);
       await button('Spaces'); assert.equal(await page.$$eval('[data-kind]', n => n.length), 5); await overflow();
       await button('Media'); assert.equal(await page.$$eval('[data-kind]', n => n.length), 3);
+      assert.ok(await page.$('a[href="/org/fixture-studio"]'), 'Landing byline links to the design firm');
       await button('Credits'); assert.equal(await page.$$eval('[data-kind="credit"]', n => n.length), 2);
+      assert.ok(await page.$('[data-kind="credit"][href="/org/fixture-architect"]'), 'Linked collaborator credit opens the organization profile');
       assert.equal(await page.$$eval('[data-kind="credit"]', n => n.every(x => getComputedStyle(x).gridRowEnd === 'span 1')), true, 'Supporting credits never occupy large photo tiles');
       assert.equal(await page.$$eval('a[href="#project-mosaic"][data-kind="credit"]', n => n.length), 0);
       await button('All');

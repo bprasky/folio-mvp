@@ -11,7 +11,7 @@ export async function getPostBySlug(slug: string) {
         project: {
           select: {
             id: true, title: true, description: true, city: true, regionState: true, isPublic: true,
-            designerOrg: { select: { name: true } },
+            designerOrg: { select: { id: true, name: true } },
             designer: {
               select: {
                 id: true,

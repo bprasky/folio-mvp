@@ -7,11 +7,14 @@
 import { useRef } from "react";
 import Image from '@/components/FolioImage';
 import * as Dialog from "@radix-ui/react-dialog";
+import { PublicationText } from './PublicationText';
+import type { ProfileReference } from '@/lib/story/profileLinks';
 
 interface ProductSheetProps {
   product: any | null;
   onClose: () => void;
   designerName: string;
+  profiles?: ProfileReference[];
   supplementalQuotes: any[];
 }
 
@@ -45,6 +48,7 @@ export function ProductSheet({
   product,
   onClose,
   designerName,
+  profiles,
   supplementalQuotes,
 }: ProductSheetProps) {
   const previousFocus = useRef<HTMLElement | null>(null);
@@ -70,7 +74,7 @@ export function ProductSheet({
           onPointerUp={event => { if (swipeStart.current !== null && event.clientY - swipeStart.current > 100) onClose(); swipeStart.current = null; }}>
           <div className="h-1 w-10 rounded-full bg-folio-border-strong" />
         </div>
-        <SheetContent product={product} imageUrl={imageUrl} vendorName={vendorName} vendorUrl={vendorUrl} designerName={designerName} quote={quote} onClose={onClose} />
+        <SheetContent product={product} imageUrl={imageUrl} vendorName={vendorName} vendorUrl={vendorUrl} designerName={designerName} profiles={profiles} quote={quote} onClose={onClose} />
       </Dialog.Content>
     </Dialog.Portal>
   </Dialog.Root>;
@@ -82,6 +86,7 @@ function SheetContent({
   vendorName,
   vendorUrl,
   designerName,
+  profiles,
   quote,
   onClose,
 }: {
@@ -90,6 +95,7 @@ function SheetContent({
   vendorName: string | null;
   vendorUrl: string | null;
   designerName: string;
+  profiles?: ProfileReference[];
   quote: { text: string; role: string } | null;
   onClose: () => void;
 }) {
@@ -159,7 +165,7 @@ function SheetContent({
             color: "var(--folio-text-secondary)",
           }}
         >
-          &ldquo;{quote.text}&rdquo;
+          &ldquo;<PublicationText text={quote.text} profiles={profiles} />&rdquo;
           <footer
             className="mt-1 not-italic"
             style={{
@@ -167,7 +173,7 @@ function SheetContent({
               color: "var(--folio-text-secondary)"
             }}
           >
-            &mdash; {designerName}, {quote.role}
+            &mdash; <PublicationText text={designerName} profiles={profiles} />, {quote.role}
           </footer>
         </blockquote>
       )}

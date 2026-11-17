@@ -8,8 +8,8 @@ export async function getPublicPortfolio(projectId: string) {
     select: {
       id: true, title: true, description: true, city: true, regionState: true,
       portfolioCoverImageId: true,
-      designer: { select: { name: true, studio: true } },
-      designerOrg: { select: { name: true } },
+      designer: { select: { id: true, name: true, studio: true } },
+      designerOrg: { select: { id: true, name: true } },
       images: {
         where: { inclusion: 'INCLUDED' },
         orderBy: [{ displayOrder: 'asc' }, { createdAt: 'asc' }, { id: 'asc' }],

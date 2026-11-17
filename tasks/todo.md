@@ -1,3 +1,14 @@
+# Publication profile references - 2026-11-17
+
+- [x] Preserve existing public person and organization IDs through the article/portfolio DTOs.
+- [x] Link bylines, quote attributions, credits and exact unambiguous names in published prose.
+- [x] Preserve external/plain-text credits when no Folio profile is associated; never infer a profile slug.
+- [x] Verify public/private field boundaries, same-name ambiguity, mobile tap targets and desktop links.
+- [ ] Complete final hosted CI and confirm the merged release on production.
+
+Review: actual-component entry, public route/privacy and story editing checks pass. The 48 browser layout/theme cases pass with desktop and mobile profile navigation. The responsive journey suite passes locally (27 captures, no overflow or browser errors); the previous hosted nested-dialog timeout did not reproduce. Scoped ESLint has no errors. Full quote verification needs the Linux CI shell. Final hosted compile, TypeScript ratchet and channel browser integration remain required before release.
+
+---
 # Publication themes and desktop reading - 2026-11-17
 
 - [x] Trace forced light mode and the desktop entry/expansion steps.

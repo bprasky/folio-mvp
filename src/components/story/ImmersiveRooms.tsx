@@ -13,6 +13,7 @@ import { LeadHeadline, LeadPreview } from './StoryLead';
 import { PublicationIntroduction } from './PublicationIntroduction';
 import { usePublicationEntry } from './usePublicationEntry';
 import styles from './ImmersiveRooms.module.css';
+import { PublicationText } from './PublicationText';
 
 export function ImmersiveRooms({ story, projectName, presentation, autoExpandRoom, autoPhotoId, onProductClick, onEntered }: {
   story: StoryData; projectName: string; presentation: unknown; autoExpandRoom?: string | null; autoPhotoId?: string | null; onProductClick: (product: any) => void; onEntered?: () => void;
@@ -109,6 +110,7 @@ export function ImmersiveRooms({ story, projectName, presentation, autoExpandRoo
     setClean(value => !value);
   }
   if (!image) return null;
+  const linkedText = (text: string) => <PublicationText text={text} profiles={story.profileLinks} />;
 
   return <section className={styles.shell} aria-label={`${projectName} publication`}
     style={{ '--room-bg': preferences.accent ? `color-mix(in srgb, ${preferences.accent} 5%, var(--surface-publication))` : 'var(--surface-publication)', '--room-ink': 'var(--publication-ink)', '--photo-aspect': aspect } as CSSProperties}>
@@ -145,7 +147,7 @@ export function ImmersiveRooms({ story, projectName, presentation, autoExpandRoo
       {(cover || slide?.kind === 'story' || clean) && <button type="button" ref={photoButton} className={styles.photoToggle} onClick={togglePhoto} aria-label={clean ? 'Show room details' : 'View full photograph without text'} disabled={!ready} tabIndex={!ready ? -1 : 0} />}
       {!clean && <div className={styles.details} aria-hidden={!ready} ref={element => { if (element) element.inert = !ready; }}>
         {slide?.kind === 'gallery' && <>
-          <p className={styles.galleryIdentity}>{identity.join(' · ')}</p>
+          <p className={styles.galleryIdentity}>{linkedText(identity.join(' · '))}</p>
           <div className={styles.gallery} data-count={slide.photos.length}>
             {slide.photos.map(photo => <button type="button" key={photo.image.id} aria-label={`View full photograph of ${photo.room.roomLabel}`}
               ref={element => { if (element) galleryButtons.current.set(photo.image.id, element); else galleryButtons.current.delete(photo.image.id); }}
@@ -156,7 +158,7 @@ export function ImmersiveRooms({ story, projectName, presentation, autoExpandRoo
           </div>
         </>}
         {cover && !reading && <div className={`${styles.presentation} ${styles.introduction}`}>
-          <p className={styles.identity}>{identity.map((part, i) => <span key={i}>{part}</span>)}</p>
+          <p className={styles.identity}>{identity.map((part, i) => <span key={i}>{linkedText(part)}</span>)}</p>
           <LeadHeadline story={story} as="h2" readOnly />
           <button type="button" ref={expandButton} className={styles.expand} aria-label="Read project introduction" aria-expanded={false} aria-controls={readerId}
             disabled={!ready} onClick={() => setReading(true)}>
@@ -165,11 +167,11 @@ export function ImmersiveRooms({ story, projectName, presentation, autoExpandRoo
           </button>
         </div>}
         {room && !reading && <div className={styles.presentation}>
-          <p className={styles.identity}>{identity.map((part, i) => <span key={i}>{part}</span>)}</p>
+          <p className={styles.identity}>{identity.map((part, i) => <span key={i}>{linkedText(part)}</span>)}</p>
           <h2 title={room.roomLabel}>{room.roomLabel}<ChevronDown className={styles.mobileExpandArrow} size={22} aria-hidden="true" /></h2>
           {quote && <>
-            {folioAuthored ? <p className={styles.quote}>{quote}</p> : <blockquote className={styles.quote}>“{quote}”</blockquote>}
-            <p className={styles.attribution}>{folioAuthored ? 'Written by Folio' : `— ${room.attribution}`}</p>
+            {folioAuthored ? <p className={styles.quote}>{linkedText(quote)}</p> : <blockquote className={styles.quote}>&ldquo;{linkedText(quote)}&rdquo;</blockquote>}
+            <p className={styles.attribution}>{folioAuthored ? 'Written by Folio' : <>&mdash; {linkedText(room.attribution)}</>}</p>
           </>}
           <button type="button" ref={expandButton} className={styles.expand} aria-label={`Read ${room.roomLabel}`} aria-expanded={false} aria-controls={readerId}
             onClick={() => { if (swipeEnded.current) { swipeEnded.current = false; return; } setReading(true); }}>
@@ -178,16 +180,16 @@ export function ImmersiveRooms({ story, projectName, presentation, autoExpandRoo
           </button>
         </div>}
         {(cover || room) && reading && <div className={styles.readerPanel} data-publication-text id={readerId}>
-          <div className={styles.readerHead}><p className={styles.identity}>{identity.join(' · ')}</p>
+          <div className={styles.readerHead}><p className={styles.identity}>{linkedText(identity.join(' · '))}</p>
             <button type="button" onClick={closeReader} disabled={!!edit?.anyFieldOpen} aria-label={cover ? "Collapse project introduction" : "Collapse room article"}><ChevronUp size={22} /> <span>Collapse</span></button></div>
           <div className={styles.copy} ref={reader} tabIndex={0} role="region" aria-label={cover ? "Project introduction" : `${room?.roomLabel} article`}>
             {cover ? <PublicationIntroduction story={story} /> : room && <>
             <h2>{room.roomLabel}</h2>
-            {quote && (folioAuthored ? <div><p className={styles.readingQuote}>{quote}</p><p className={styles.attribution}>Written by Folio</p></div> : <blockquote className={styles.readingQuote}>
-              “{quote}”<cite className={styles.quoteCredit}>— {room.attribution}</cite>
+            {quote && (folioAuthored ? <div><p className={styles.readingQuote}>{linkedText(quote)}</p><p className={styles.attribution}>Written by Folio</p></div> : <blockquote className={styles.readingQuote}>
+              &ldquo;{linkedText(quote)}&rdquo;<cite className={styles.quoteCredit}>&mdash; {linkedText(room.attribution)}</cite>
             </blockquote>)}
             {(room.editorialParagraphs.length ? room.editorialParagraphs : [room.editorialNarrative || '']).filter(paragraph => paragraph.trim()).map((paragraph, i) =>
-              <p key={i}>{i === 0 ? capitalizeOpening(paragraph) : paragraph}</p>)}
+              <p key={i}>{linkedText(i === 0 ? capitalizeOpening(paragraph) : paragraph)}</p>)}
             {!!room.products.length && <div className={styles.products}><h3>In this room</h3>{room.products.map(product =>
               <button type="button" key={product.id} onClick={() => onProductClick(product)}>{product.name} ↗</button>)}</div>}
             </>}

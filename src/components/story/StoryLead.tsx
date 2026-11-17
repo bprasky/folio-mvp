@@ -11,6 +11,7 @@ import { useStoryEdit, StoryEditRegion } from './StoryEditContext';
 import { HeadlinePicker } from './HeadlinePicker';
 import EditableParagraph from '@/components/posting/editing/EditableParagraph';
 import { capitalizeOpening } from '@/lib/story/roomSlides';
+import { PublicationText } from './PublicationText';
 
 /** Sentinel chapter indices the section-override API uses for lead fields. */
 const LEAD = -1;
@@ -35,7 +36,7 @@ export function LeadHeadline({ story, className, style, as = 'h1', readOnly = fa
   const Tag = as;
 
   if (!edit || readOnly) {
-    return <Tag className={className} style={style}>{story.title}</Tag>;
+    return <Tag className={className} style={style}><PublicationText text={story.title} profiles={story.profileLinks} /></Tag>;
   }
 
   return (
@@ -66,7 +67,7 @@ export function LeadDeck({ story, className, style }: SlotProps) {
   const edit = useStoryEdit();
 
   if (!edit) {
-    return story.subtitle ? <p className={className} style={style}>{capitalizeOpening(story.subtitle)}</p> : null;
+    return story.subtitle ? <p className={className} style={style}><PublicationText text={capitalizeOpening(story.subtitle)} profiles={story.profileLinks} /></p> : null;
   }
 
   return (
@@ -103,7 +104,7 @@ export function LeadIntro({ story, className, style }: SlotProps) {
     const paragraphs = story.introParagraphs.length ? story.introParagraphs
       : story.introText && story.introText !== story.subtitle ? [story.introText] : [];
     return <>{paragraphs.map((paragraph, index) =>
-      <p key={index} className={className} style={style}>{index === 0 ? capitalizeOpening(paragraph) : paragraph}</p>)}</>;
+      <p key={index} className={className} style={style}><PublicationText text={index === 0 ? capitalizeOpening(paragraph) : paragraph} profiles={story.profileLinks} /></p>)}</>;
   }
 
   if (story.introParagraphs.length === 0) return null;

@@ -1322,3 +1322,8 @@ The founder rejected “Add something” because it gives no direction. Ask “D
 The article refresh forced ivory surfaces even when the reader had selected dark mode. A light mockup approves the composition, not an exception to saved appearance preferences. Keep publication surfaces, text, borders, masthead and native controls theme-aware. Test light and dark, saved initialization, switching/reloading and leaving the article; never encode a theme override as the expected regression result unless explicitly requested.
 
 Desktop reading follow-up: reserving a reading column should not require a cover click and another expand click. Open the introduction and room narrative on arrival, retain deliberate photo-only viewing, and keep mobile entry independent. Measure the displayed photograph, not just its wrapper, before reallocating space; preserve the full image and cap text line length instead of stretching prose across every available pixel.
+
+
+## 2026-11-17 — Publication attribution should lead to the credited profile
+
+Retain known public person/organization IDs through sanitized publication DTOs and use them for bylines, credits, quote attribution and exact names in prose. Do not guess usernames from names or turn ambiguous same-name credits into links. Keep unregistered credits external or plain text. Verify real mobile taps above reading overlays and keep inactive slideshow copy out of keyboard focus.

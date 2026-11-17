@@ -27,10 +27,10 @@ const heroQuote0 = 'A short approved quotation for space zero.';
 const heroQuote1 = 'We opened this room to the garden, giving the family a quieter place to gather throughout the day.';
 function fixture(count = 5) {
   return { id: 'fixture-post', projectId: 'fixture-project', slug: 'fixture', status: 'PUBLISHED', heroAssetId: count > 1 ? 'photo-1' : 'photo-0', excerpt: 'A photographic project with an independently published Folio feature.',
-    project: { id: 'fixture-project', title: 'Channel fixture', description: 'Original project description.', isPublic: true, city: 'Miami', designerOrg: { name: 'Fixture Studio' }, designer: { name: 'Fixture designer' },
+    project: { id: 'fixture-project', title: 'Channel fixture', description: 'Original project description.', isPublic: true, city: 'Miami', designerOrg: { id:'fixture-studio', name: 'Fixture Studio' }, designer: { id:'fixture-designer', name: 'Fixture designer' },
       images: Array.from({ length: count }, (_, i) => ({ id: `photo-${i}`, url: `/photo.svg?i=${i}`, name: `Photograph ${i}`, room: `Space ${Math.floor(i / 2)}`, roomId: `room-${Math.floor(i / 2)}`, inclusion: 'INCLUDED', tags: i === 0 ? [{ id: 'tag', productId: 'chair', product: { id: 'chair', name: 'Fixture chair', imageUrl: '/photo.svg', isPending: false } }] : [] })) },
-    credits: [{ name: 'Fixture collaborator', role: 'Architecture' }, { name: 'Fixture collaborator', role: 'Architecture' }, { name: '' }, { name: 'Photo studio', url: 'https://example.com' }],
-    expandedBlocks: { lead: { title: 'The original fixture headline', deck: 'The original fixture deck' }, introduction: ['The original introduction remains in the publication.'],
+    credits: [{ name: 'Fixture collaborator', role: 'Architecture', organizationId:'fixture-architect' }, { name: 'Fixture collaborator', role: 'Architecture', organizationId:'fixture-architect' }, { name: '' }, { name: 'Photo studio', url: 'https://example.com' }],
+    expandedBlocks: { lead: { title: 'The original fixture headline', deck: 'The original fixture deck' }, introduction: ['The original introduction remains in the publication. Fixture designer worked with Fixture collaborator.'],
       galleryChapters: Array.from({ length: Math.ceil(count / 2) }, (_, i) => ({ id: `room-${i}`, roomId: `room-${i}`, title: `Space ${i}`, imageIds: [`photo-${i * 2}`, `photo-${i * 2 + 1}`], body: [`Original narrative for space ${i}.`], pullQuote: i === 0 ? heroQuote0 : i === 1 ? { selected: { text: heroQuote1 }, alternatives: [{text:'UNSELECTED_QUOTE'}] } : null })) } };
 }
 const source = `import React from 'react';import {createRoot} from 'react-dom/client';
@@ -181,12 +181,20 @@ async function main() {
       assert.equal(await page.$('[aria-label^="Begin "]'),null,'Desktop arrival has no gate');
       assert.equal(await page.$('[aria-label="Read project introduction"]'),null);
       assert.ok(await page.$eval('[aria-label="Project introduction"]',e=>e.innerText.includes('The original introduction')));
+      assert.ok(await page.$('[aria-label="Project introduction"] a[href="/profile/fixture-designer"]'),'Named designer in prose links to their profile');
+      assert.ok(await page.$('[aria-label="Project introduction"] a[href="/org/fixture-architect"]'),'Credited collaborator links to their firm');
       await page.screenshot({path:path.join(out,'introduction-desktop-'+theme+'.png')});
+      await Promise.all([page.waitForNavigation(),page.click('[data-publication-text] a[href="/org/fixture-studio"]')]);
+      assert.equal(new URL(page.url()).pathname,'/org/fixture-studio','Desktop byline opens its profile');
     }
     await page.setViewport({width:390,height:844});await page.goto(origin+'/p/fixture/feature',{waitUntil:'networkidle0'});
     assert.ok(await page.$('[aria-label="Begin Channel fixture"]'),'Mobile retains its cover');
     await page.setViewport({width:1440,height:1000});await page.waitForSelector('[aria-label="Project introduction"]');
     assert.equal(await page.$('[aria-label="Begin Channel fixture"]'),null,'Widening to desktop removes the gate');
+    await page.setViewport({width:390,height:844});await page.goto(origin+'/p/fixture/feature',{waitUntil:'networkidle0'});
+    await page.click('[aria-label="Begin Channel fixture"]');await page.waitForSelector('[data-publication-phase="ready"]');
+    await Promise.all([page.waitForNavigation(),page.click('[data-publication-view] a[href="/org/fixture-studio"]')]);
+    assert.equal(new URL(page.url()).pathname,'/org/fixture-studio','Mobile byline stays clickable above the expansion target');
     for(const post of publicPosts){
       for(const [width,height] of [[1440,1000],[1024,1024],[390,844]]){
         await page.setViewport({width,height});await page.goto(origin+'/p/'+post.slug+'/feature',{waitUntil:'networkidle0'});

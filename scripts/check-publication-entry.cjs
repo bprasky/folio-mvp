@@ -13,7 +13,7 @@ fs.mkdirSync(out, { recursive: true });
 fs.writeFileSync(path.join(out, 'image.jsx'), `import React from 'react';export default function Image({fill,priority,unoptimized,quality,sizes,...props}){return <img {...props}/>}`);
 fs.writeFileSync(path.join(out, 'navigation.js'), `export const useSearchParams=()=>new URLSearchParams(location.search);const router={refresh(){},push(){}};export const useRouter=()=>router;export const usePathname=()=>location.pathname;`);
 fs.writeFileSync(path.join(out, 'link.jsx'), `import React from 'react';export default function Link(props){return <a {...props}/>}`);
-buildSync({ stdin: { contents: `export { StoryRenderer } from './src/components/story/StoryRenderer';export { StoryEditProvider } from './src/components/story/StoryEditContext';`, resolveDir: root },
+buildSync({ stdin: { contents: `export { StoryRenderer } from './src/components/story/StoryRenderer';export { StoryEditProvider } from './src/components/story/StoryEditContext';export { publicPost } from './src/lib/post/publicPost';export { publicationProfiles, creditProfileHref } from './src/lib/story/profileLinks';`, resolveDir: root },
   bundle: true, platform: 'node', format: 'cjs', jsx: 'automatic', packages: 'external', outfile: path.join(out, 'components.cjs'),
   alias: { '@': path.join(root, 'src'), 'next/navigation': path.join(out, 'navigation.js'), 'next/image': path.join(out, 'image.jsx'), 'next/link': path.join(out, 'link.jsx') },
 });
@@ -41,7 +41,7 @@ globalThis.fetch = async () => ({ ok: true, json: async () => ({ presentation: {
 const React = require('react');
 const { createRoot } = require('react-dom/client');
 const act = React.act || require('react-dom/test-utils').act;
-const { StoryRenderer, StoryEditProvider } = require(path.join(out, 'components.cjs'));
+const { StoryRenderer, StoryEditProvider, publicPost, publicationProfiles, creditProfileHref } = require(path.join(out, 'components.cjs'));
 let reactRoot;
 const byLabel = label => document.querySelector(`[aria-label="${label}"]`);
 const phase = () => document.querySelector('[data-publication-phase]')?.dataset.publicationPhase;
@@ -186,6 +186,37 @@ async function touch(type, x, y, target = document.querySelector('[data-publicat
   await act(async () => reactRoot.render(React.createElement(StoryRenderer, { post: anotherPost })));
   assert.equal(phase(), 'ready', 'Navigating to a different desktop project opens its introduction');
   assert.ok(byLabel('Project introduction'));
+  const linked = post(3);
+  linked.project.designer = { id:'designer-1',name:'Mira Vale',studio:'Atelier Vale',email:'PRIVATE_DESIGNER_EMAIL' };
+  linked.project.designerOrg = { id:'studio-1',name:'Atelier Vale',billingEmail:'PRIVATE_BILLING_EMAIL' };
+  linked.credits = [
+    {role:'Architect',name:'Reed Architecture',organizationId:'architect-1',email:'PRIVATE_CREDIT_EMAIL'},
+    {role:'Photographer',name:'Ari Reed',userId:'photographer-1',url:'https://example.com'},
+    {role:'Builder',name:'Unregistered Builder',url:'javascript:alert(1)'},
+    {role:'Stylist',name:'External Studio',url:'https://example.com/studio'},
+  ];
+  linked.expandedBlocks.lead.deck = 'Mira Vale of Atelier Vale invited Reed Architecture.';
+  linked.expandedBlocks.introduction = ['Mira Vale and Ari Reed worked with Reed Architecture. Mira Valence is another person.'];
+  linked.expandedBlocks.galleryChapters[0].body = ['Mira Vale worked with Ari Reed and Reed Architecture.'];
+  linked.expandedBlocks.galleryChapters[0].pullQuote = 'Mira Vale saw the opportunity.';
+  const transport = publicPost(linked);
+  assert.equal(transport.project.designerOrg.id,'studio-1');assert.equal(transport.credits[0].organizationId,'architect-1');assert.equal(transport.credits[1].userId,'photographer-1');
+  assert.ok(!JSON.stringify(transport).includes('PRIVATE_'),'Profile links do not expose private contact fields');
+  await mount(transport);
+  const intro = byLabel('Project introduction');
+  for(const href of ['/profile/designer-1','/org/studio-1','/org/architect-1','/profile/photographer-1'])assert.ok(intro.querySelector(`a[href="${href}"]`),href+' appears in the introduction/credits');
+  assert.ok(intro.textContent.includes(linked.expandedBlocks.introduction[0]),'Linking preserves published wording');
+  assert.equal([...intro.querySelectorAll('a')].some(a=>a.textContent.includes('Mira Valence')),false,'Names never match inside longer words');
+  assert.equal(intro.querySelector('a[href^="javascript:"]'),null);
+  assert.equal(intro.querySelector('a[href="https://example.com/studio"]').target,'_blank','Unregistered external credits remain external');
+  assert.equal(intro.querySelector('a[href="/profile/photographer-1"]').target,'','Registered people use the real Folio profile, not a guessed photographer slug');
+  assert.equal(creditProfileHref({url:'https://folioad.com.evil.test/profile/id'}),null);
+  assert.equal(creditProfileHref({url:'//evil.test/profile/id'}),null);
+  assert.equal(creditProfileHref({url:'https://folioad.com/org/known-firm'}),'/org/known-firm');
+  assert.deepEqual(publicationProfiles(null,[{name:'Same Name',userId:'one'},{name:'Same Name',userId:'two'}]),[],'Ambiguous credits stay unlinked');
+  await click(byLabel('Next room'));
+  assert.ok(byLabel('Room 0 article').querySelector('cite a[href="/org/studio-1"]'),'Room quote attribution links to the credited firm');
+  assert.ok(byLabel('Room 0 article').querySelector('p a[href="/profile/photographer-1"]'),'Names within room prose link to their credited profiles');
   await act(async () => reactRoot.unmount());
   console.log('Publication entry checks pass: desktop immediate introduction and rooms, photo restoration, mobile cover selection/fade/tap/scroll/swipe, ghost clicks, repeat visits, deep links, sparse galleries, 120 rooms, reduced motion and studio editing.');
 })().catch(error => { console.error(error); process.exitCode = 1; });
