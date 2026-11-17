@@ -23,8 +23,11 @@ export default function RoleBasedLayout({ children }: RoleBasedLayoutProps) {
     return <>{children}</>;
   }
 
+  // About supplies its own publication masthead, main landmark and colophon.
+  if (pathname === '/about') return <>{children}</>;
+
   // Marketing pages render full-width without SimpleLayout chrome or loading skeleton.
-  const MARKETING_ROUTES = ['/about', '/for-designers'];
+  const MARKETING_ROUTES = ['/for-designers'];
   const isMarketingRoute = MARKETING_ROUTES.some(route => pathname?.startsWith(route));
 
   if (isMarketingRoute) {

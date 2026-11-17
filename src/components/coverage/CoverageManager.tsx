@@ -83,6 +83,7 @@ export function CoverageManager({ scope, autoDiscover = false, sweepId }: { scop
         body: body ? JSON.stringify(body) : undefined });
       const result = await response.json();
       if (!response.ok) throw new Error(result.error || 'Could not save this feature. Please try again.');
+      if (!Array.isArray(result.items) || !Array.isArray(result.projects)) throw new Error('Could not load your coverage. Please reload the review.');
       if (current !== generation.current) return;
       setData(result);
       if (method === 'POST') setNotice(result.found ? 'Your finds are saved privately below. Review each before adding it to Folio.' : 'No matching features found. You can add a publication link below.');
