@@ -73,17 +73,19 @@ function handler(req, res) {
   const browser=await require('puppeteer-core').launch({executablePath:process.env.GUIDED_TEST_BROWSER||'/usr/bin/chromium',headless:true,args:['--no-sandbox','--disable-dev-shm-usage']});
   const page=await browser.newPage();page.setDefaultTimeout(10000);const errors=[];page.on('pageerror',error=>errors.push(error.message));
   await page.setRequestInterception(true);page.on('request',r=>r.url().startsWith(base)||r.url().startsWith('data:')?r.continue():r.abort());
-  const click=async name=>{await page.waitForFunction(name=>[...document.querySelectorAll('button')].some(e=>e.textContent.trim()===name&&!e.disabled),{},name);for(const el of await page.$$('button'))if((await el.evaluate(e=>e.textContent.trim()))===name){await el.click();return}throw Error(name)};
+  const click=async name=>{await page.waitForFunction(name=>[...document.querySelectorAll('button')].some(e=>e.textContent.trim()===name&&!e.disabled),{},name);for(const el of await page.$$('button'))if((await el.evaluate(e=>e.textContent.trim()))===name){await el.click();return el}throw Error(name)};
   const visit=async(screen,theme='light')=>page.goto(base+'?screen='+screen+'&theme='+theme,{waitUntil:'networkidle0'});
   const geometry=async()=>assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1),'no horizontal overflow');
   try {
     for(const width of [1440,390,320])for(const theme of ['light','dark']){
       await page.setViewport({width,height:900});
       for(const screen of ['intake','workspace','credits','product','website','document','presentation','pdf','publishing']){
+        console.log('Checking',screen,width,theme);
         await visit(screen,theme);
-        if(screen==='credits')await click('Add Credit');
-        else if(screen==='publishing')await click('Review & publish project');
-        else if(!['intake','workspace'].includes(screen))await click('Open '+screen);
+        let opener;
+        if(screen==='credits')opener=await click('Add Credit');
+        else if(screen==='publishing')opener=await click('Review & publish project');
+        else if(!['intake','workspace'].includes(screen))opener=await click('Open '+screen);
         await geometry();
         if(!['intake','workspace'].includes(screen)){
           await page.waitForSelector('[role="dialog"]');
@@ -91,7 +93,9 @@ function handler(req, res) {
           assert.ok(d.width<=width+1);assert.notEqual(d.color,d.bg,'readable sheet');
           await page.screenshot({path:path.join(out,screen+'-'+width+'-'+theme+'.png'),fullPage:true});
           await page.keyboard.press('Escape');await page.waitForFunction(()=>!document.querySelector('[role="dialog"]'));
-          assert.equal(await page.evaluate(()=>document.activeElement?.tagName),'BUTTON','focus returns to opener');
+          // Radix restores focus in a deferred unmount callback; wait for the
+          // exact opener instead of racing that callback immediately after removal.
+          await page.waitForFunction(button=>document.activeElement===button,{},opener);
         }
         if(['intake','workspace'].includes(screen))await page.screenshot({path:path.join(out,screen+'-'+width+'-'+theme+'.png'),fullPage:true});
       }
