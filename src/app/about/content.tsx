@@ -130,7 +130,7 @@ export function AboutPageContent() {
           </section>
 
           <section className={styles.close} aria-labelledby="close-title">
-            <h2 id="close-title">What could your next client discover?</h2>
+            <h2 id="close-title">Could a past project bring you your next client?</h2>
             <Link {...entryProps} className={styles.primary}>Create your Folio <ArrowUpRight aria-hidden="true" /></Link>
           </section>
         </article>
