@@ -32,6 +32,10 @@ const { ReadinessStudio } = load('src/components/publishing-studio/ReadinessStud
 const make = (index, readiness = 'ready', blockers = []) => ({ ...candidate, id: `candidate-${index}`, readiness, blockers, thesis: `Story thesis ${index}`,
   draft: { ...candidate.draft, headline: `Prepared story ${index}`, caption: `Prepared caption ${index}` },
   visuals: [{ ...candidate.visuals[0], id: `image-${index}`, url: `https://fixture.test/${index}.jpg` }] });
+params=new URLSearchParams('project=photos');
+const lockedHtml=renderToStaticMarkup(React.createElement(ReadinessStudio,{projectInvitations:[{id:'photos',title:'Photo home',photosOnProfile:true,status:'Interview needed',action:'Start interview',href:'/project/photos?view=story'}]}));
+assert.match(lockedHtml,/Start interview/);assert.doesNotMatch(lockedHtml,/Stories you can start|Refresh suggestions|No stories ready/);
+params=new URLSearchParams();
 let html = renderToStaticMarkup(React.createElement(configurator.CandidateConfigurator, { candidate, onChange() {}, onClose() {} }));
 assert.match(html, /What changed/); assert.match(html, /We changed the plan/); assert.match(html, /Photography: Photographer/);
 assert.match(html, /disabled="">Download post/); assert.match(html, /does not publish to social media/);
