@@ -1338,3 +1338,5 @@ The founder rejected a rigid, boxed form mockup as resembling old Windows. Use F
 
 ## 2026-11-17 - Broad room vocabulary, small inline results
 The founder wants a large curated room-name catalog precisely because room sorting is autocomplete, not a dropdown. Include specialist residential, landscape, hospitality and commercial spaces; show only a few matching names while typing. Custom names remain unrestricted and only an explicit save adds them to that account's private future options. Never crowdsource user names into the shared catalog.
+
+- Production migration connection failures need credential-safe error codes. On 2026-11-17, DIRECT_URL returned Prisma P1000 while the already configured application credentials passed on the approved Supabase session pooler (5432). Use the validated application connection in session mode for the scoped release; never migrate through transaction pooling (6543).
