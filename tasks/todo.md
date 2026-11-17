@@ -1,15 +1,19 @@
-# Publication theme preference - 2026-11-17
+# Publication themes and desktop reading - 2026-11-17
 
-- [x] Trace the forced light palette and existing saved theme initialization.
-- [x] Make publication colors and native controls follow the selected theme.
-- [x] Verify both themes across reader layouts, live switches, reloads and route exit.
-- [ ] Release the scoped correction after green CI and verify production.
+- [x] Trace forced light mode and the desktop entry/expansion steps.
+- [x] Respect saved appearance preferences across publication surfaces and controls.
+- [x] Remove desktop entry gating and open introductions/room text automatically.
+- [x] Fit the image column to photograph proportions and bound the reading measure.
+- [x] Verify real public-project layouts, both themes, mobile entry and studio editing.
+- [ ] Complete final CI, release the scoped correction and verify production.
 
-Plan: retain the approved composition and sharp photography. Use theme-aware publication tokens and inherited color-scheme, without changing saved preferences or adding a second theme system. The actual-component Chromium suite now covers both themes. The founder's subsequent desktop reading/proportion feedback is being reviewed separately from this theme correction.
+Plan: retain sharp, uncropped photography and the existing mobile cover. Use the existing saved theme and initialization; no second preference system. Desktop should land directly on the full introduction and keep room articles open when navigating. Give square/portrait images the width they need and use a wider, bounded reading column instead of large gaps beside narrow copy. No publication data, schema or authorization changes.
 
 ### Review
 
-36 viewport/photo-shape/theme combinations passed locally in Chromium, including the actual Settings switch, saved initialization and reload, native controls, masthead, strong text contrast, saved accent tints and route exit. No production data or schema changes. CI and release evidence will be recorded on the pull request.
+Actual-component Chromium verification passed 36 initial viewport/photo-shape/theme combinations, saved theme initialization, the real Settings switch and reload, native controls, masthead, text contrast, accent tints and route exit. Desktop entry, mobile gestures/deep links, photo restoration and studio editing checks pass; scoped ESLint has zero errors and the existing any warning. The TypeScript ratchet reports 846 existing diagnostics and no additions. Expanded final coverage includes 48 viewport/photo-shape/theme combinations, short laptops, wide desktops, automatic introductions and room reading, actual image-column fit, bounded text measure and responsive entry changes. Public Boca Raton screenshots were inspected for spacing and preserved content. The channel browser suite requires generated Next CSS unavailable in the local incomplete build; hosted CI supplies the full production compile and that integration suite.
+
+Release evidence and the completed final validation will be recorded on PR #860. The earlier #859 task entry is historical.
 
 ---
 # Publication reader refresh - 2026-11-16

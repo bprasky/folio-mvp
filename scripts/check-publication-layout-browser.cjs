@@ -119,7 +119,7 @@ async function main() {
       assert.ok((Math.max(ink,paper)+.05)/(Math.min(ink,paper)+.05)>=7,'Reading text retains strong contrast, including saved accents');
       return colors;
     };
-    for(const [width,height] of [[1440,1000],[1024,1024],[820,1180],[768,1024],[390,844],[320,640]]){
+    for(const [width,height] of [[1920,1080],[1440,1000],[1280,720],[1024,1024],[820,1180],[768,1024],[390,844],[320,640]]){
       await page.setViewport({width,height});
       for(const shape of ['landscape','portrait','square']){
        for(const theme of ['light','dark']){
@@ -129,18 +129,24 @@ async function main() {
           const rect=e=>{const r=e.getBoundingClientRect();return {x:r.x,y:r.y,width:r.width,height:r.height,bottom:r.bottom,right:r.right}};
           const image=document.querySelector('[data-publication-image]'),text=document.querySelector('[data-publication-text]'),copy=document.querySelector('[role="region"]'),strip=document.querySelector('[aria-label="All rooms"]');
           const blurred=[...document.querySelectorAll('[data-publication-view] *')].filter(e=>getComputedStyle(e).filter.includes('blur')||getComputedStyle(e).backdropFilter!=='none');
-          return {image:rect(image),text:rect(text),strip:rect(strip),header:rect(document.querySelector('header')),photoFit:getComputedStyle(image.querySelector('img')).objectFit,copyOverflow:getComputedStyle(copy).overflowY,bodyColor:getComputedStyle(document.body).backgroundColor,blurred:blurred.length,overflow:document.documentElement.scrollWidth>innerWidth};
+          return {image:rect(image),text:rect(text),copy:rect(copy),strip:rect(strip),header:rect(document.querySelector('header')),photoFit:getComputedStyle(image.querySelector('img')).objectFit,photoAspect:image.querySelector('img').naturalWidth/image.querySelector('img').naturalHeight,copyOverflow:getComputedStyle(copy).overflowY,bodyColor:getComputedStyle(document.body).backgroundColor,blurred:blurred.length,overflow:document.documentElement.scrollWidth>innerWidth};
         });
         assert.equal(layout.overflow,false,'No horizontal overflow '+width+' '+shape);
         assert.equal(layout.blurred,0,'No blurred reader layers');assert.equal(layout.photoFit,'contain','Original image remains uncropped');
         assert.equal(layout.bodyColor,palette[theme].background,'Publication respects '+theme+' preference');
         assert.equal(layout.header.height,width<768?60:72,'Compact real masthead');
         if(width<=800){assert.ok(layout.text.y>=layout.image.bottom,'Reading follows image');assert.ok(layout.strip.y>=layout.image.bottom&&layout.strip.bottom<=layout.text.y+1,'Room strip sits between image and story');assert.equal(layout.copyOverflow,'visible','Phone article scrolls with document');}
-        else {assert.ok(layout.text.x>=layout.image.right-1,'Reading beside photo');assert.equal(layout.text.y,layout.image.y);assert.equal(layout.copyOverflow,'auto');}
+        else {
+          assert.ok(layout.text.x>=layout.image.right-1,'Reading beside photo');assert.equal(layout.text.y,layout.image.y);assert.equal(layout.copyOverflow,'auto');
+          const photoWidth=Math.min(layout.image.width,layout.image.height*layout.photoAspect);
+          assert.ok(layout.image.width-photoWidth<2,'Image column fits the actual photograph without horizontal dead space');
+          assert.ok(layout.copy.width<=540,'Reading line length remains bounded');
+          if(width>=1024)assert.ok(layout.copy.width>=310,'Reading column is not cramped');
+        }
         await page.$eval('[role="region"]',e=>e.scrollTop=e.scrollHeight);
         assert.equal(await page.$eval('[data-publication-image]',e=>getComputedStyle(e.querySelector('img')).objectFit),'contain');
         await page.$eval('[role="region"]',e=>e.scrollTop=0);
-        if(shape==='landscape'||width===1024)await page.screenshot({path:path.join(out,'reader-'+width+'-'+shape+'-'+theme+'.png'),fullPage:width<=800});
+        if(shape==='landscape'||width===1024||width===1440)await page.screenshot({path:path.join(out,'reader-'+width+'-'+shape+'-'+theme+'.png'),fullPage:width<=800});
         results.push({width,height,shape,theme,...layout});
        }
       }
@@ -150,7 +156,7 @@ async function main() {
     await page.keyboard.press('Escape');await page.waitForSelector('[data-publication-text]');assert.ok(await page.$('[aria-label="Space 0 article"]'),'Escape restores the open article');
     await page.click('[aria-label="Collapse room article"]');await page.click('[aria-label="Read Space 0"]');
     const nextRoom=await page.$eval('[aria-label="Go to room"]',e=>e.options[2].value);await page.select('[aria-label="Go to room"]',nextRoom);
-    await page.waitForSelector('[aria-label="Read Space 1"]');await page.click('[aria-label="Read Space 1"]');
+    await page.waitForSelector('[aria-label="Space 1 article"]');assert.equal(await page.$('[aria-label="Read Space 1"]'),null,'Desktop room changes open the article');
     await page.click('[aria-label="Space 1, photograph 2"]');assert.equal(await page.$eval('[data-publication-phase]',e=>e.dataset.publicationPhoto),'photo-3');
     await go('gallery=1');await page.click('[aria-label="View full photograph of Space 0"]');await page.waitForSelector('[aria-label="Show room details"]');await page.click('[aria-label="Show room details"]');
     for(const theme of ['light','dark']){await go('accent=1&theme='+theme);await verifyTheme(theme,{accent:true});}
@@ -166,16 +172,31 @@ async function main() {
       assert.equal(await page.$eval('body',e=>getComputedStyle(e).backgroundColor),theme==='dark'?palette.dark.background:'rgb(255, 255, 255)','Leaving reader preserves app theme');
       assert.equal(await page.evaluate(key=>localStorage.getItem(key),THEME_STORAGE_KEY),theme);
     }
+    for(const theme of ['light','dark']){
+      await page.goto(origin+'/p/fixture/feature?theme='+theme,{waitUntil:'networkidle0'});
+      await page.waitForSelector('[aria-label="Project introduction"]');await settle();await verifyTheme(theme);
+      assert.equal(await page.$('[aria-label^="Begin "]'),null,'Desktop arrival has no gate');
+      assert.equal(await page.$('[aria-label="Read project introduction"]'),null);
+      assert.ok(await page.$eval('[aria-label="Project introduction"]',e=>e.innerText.includes('The original introduction')));
+      await page.screenshot({path:path.join(out,'introduction-desktop-'+theme+'.png')});
+    }
+    await page.setViewport({width:390,height:844});await page.goto(origin+'/p/fixture/feature',{waitUntil:'networkidle0'});
+    assert.ok(await page.$('[aria-label="Begin Channel fixture"]'),'Mobile retains its cover');
+    await page.setViewport({width:1440,height:1000});await page.waitForSelector('[aria-label="Project introduction"]');
+    assert.equal(await page.$('[aria-label="Begin Channel fixture"]'),null,'Widening to desktop removes the gate');
     for(const post of publicPosts){
       for(const [width,height] of [[1440,1000],[1024,1024],[390,844]]){
-        await page.setViewport({width,height});await page.goto(origin+'/p/'+post.slug+'/feature',{waitUntil:'networkidle0'});await page.click('[aria-label="Begin '+post.project.title+'"]');await page.waitForSelector('[data-publication-phase="ready"]');
+        await page.setViewport({width,height});await page.goto(origin+'/p/'+post.slug+'/feature',{waitUntil:'networkidle0'});
+        if(width<=800)await page.click('[aria-label="Begin '+post.project.title+'"]');
+        await page.waitForSelector('[data-publication-phase="ready"]');
+        if(width>800){await page.waitForSelector('[aria-label="Project introduction"]');await settle();await page.screenshot({path:path.join(out,'public-intro-'+post.slug+'-'+width+'.png')});}
         const room=await page.$eval('[aria-label="Go to room"]',e=>e.options[1].value);await page.select('[aria-label="Go to room"]',room);
         const read=await page.$('[aria-label^="Read "]');if(read)await read.click();
         await settle();await page.screenshot({path:path.join(out,'public-'+post.slug+'-'+width+'.png'),fullPage:width<=800});
       }
     }
     assert.deepEqual(errors,[]);fs.writeFileSync(path.join(out,'results.json'),JSON.stringify(results,null,2));
-    console.log('PASS 36 viewport/photo-shape/theme combinations, saved theme before render, real theme switch and reload, themed masthead/controls, text contrast, no blur/overflow, long reading, collapse/restore, exact photos, galleries, saved accents and route exit.');
+    console.log('PASS 48 viewport/photo-shape/theme combinations, immediate desktop reading, photo-aware proportions, saved theme before render, real theme switch/reload, themed controls, text contrast, no blur/overflow, mobile entry, long reading, collapse/restore, exact photos, galleries, saved accents and route exit.');
   }finally{await browser.close();await new Promise(r=>server.close(r));}
 }
 main().catch(e=>{console.error(e);process.exitCode=1});

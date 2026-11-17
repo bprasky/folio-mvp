@@ -30,9 +30,9 @@ export function ImmersiveRooms({ story, projectName, presentation, autoExpandRoo
   const room = slide?.kind === 'story' ? slide.room : null;
   const [photoIndex, setPhotoIndex] = useState(0);
   const [galleryPhoto, setGalleryPhoto] = useState<RoomPhoto | null>(null);
-  const [reading, setReading] = useState(false);
+  const [expanded, setReading] = useState<boolean | null>(null);
   const [clean, setClean] = useState(false);
-  const [width, setWidth] = useState(1100);
+  const [width, setWidth] = useState<number | null>(null);
   const [aspect, setAspect] = useState(1.5);
   const canvas = useRef<HTMLDivElement>(null);
   const reader = useRef<HTMLDivElement>(null);
@@ -53,7 +53,8 @@ export function ImmersiveRooms({ story, projectName, presentation, autoExpandRoo
   // Keep the photograph and label stacked until the reader has enough room
   // for the desktop text column, including wide phones and portrait tablets.
   // Match the container breakpoint in ImmersiveRooms.module.css.
-  const mobile = width <= 800;
+  const mobile = width === null || width <= 800;
+  const reading = expanded ?? !mobile;
   const { phase, begin, suppressClickUntil } = usePublicationEntry(canvas, mobile, onEntered);
   const ready = phase === 'ready';
 
@@ -64,8 +65,11 @@ export function ImmersiveRooms({ story, projectName, presentation, autoExpandRoo
     observer.observe(target); return () => observer.disconnect();
   }, []);
   useEffect(() => {
-    if (reading) { reader.current?.focus({ preventScroll: true }); reader.current?.scrollTo(0, 0); }
-  }, [reading]);
+    if (reading) {
+      reader.current?.scrollTo(0, 0);
+      if (mobile && expanded) reader.current?.focus({ preventScroll: true });
+    }
+  }, [reading, selectedId, mobile, expanded]);
   useEffect(() => {
     if (clean) photoButton.current?.focus({ preventScroll: true });
     else if (galleryPhoto) galleryButtons.current.get(galleryPhoto.image.id)?.focus({ preventScroll: true });
@@ -93,7 +97,7 @@ export function ImmersiveRooms({ story, projectName, presentation, autoExpandRoo
 
   function select(nextIndex: number) {
     if (!ready || edit?.anyFieldOpen || nextIndex < -1 || nextIndex >= slides.length) return;
-    setSelectedId(slides[nextIndex]?.id ?? null); setReading(false); setClean(false); setPhotoIndex(0); setGalleryPhoto(null);
+    setSelectedId(slides[nextIndex]?.id ?? null); setReading(null); setClean(false); setPhotoIndex(0); setGalleryPhoto(null);
     if (mobile && canvas.current && canvas.current.getBoundingClientRect().top < 0) {
       canvas.current.scrollIntoView({ block: 'start', behavior: 'instant' });
     }

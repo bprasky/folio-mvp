@@ -79,6 +79,23 @@ async function touch(type, x, y, target = document.querySelector('[data-publicat
 
 (async () => {
   await mount();
+  assert.equal(phase(), 'ready', 'Desktop opens without a cover gate');
+  assert.equal(byLabel('Begin Existing house'), null);
+  assert.equal(byLabel('Read project introduction'), null, 'Desktop introduction needs no expand click');
+  assert.ok(byLabel('Project introduction').textContent.includes('The original introduction.'));
+  assert.ok(byLabel('Project introduction').textContent.includes('A deck with its own place.'));
+  assert.notEqual(document.activeElement, byLabel('Project introduction'), 'Automatic reading does not steal focus');
+  await click(byLabel('Next room'));
+  assert.ok(byLabel('Room 0 article'), 'Desktop rooms open their full article immediately');
+  assert.equal(byLabel('Read Room 0'), null);
+  await click(byLabel('View full photograph without text'));
+  assert.equal(byLabel('Room 0 article'), null);
+  await click(byLabel('Show room details'));
+  assert.ok(byLabel('Room 0 article'), 'Returning from the photograph restores the open article');
+  await click(byLabel('Previous room'));
+  assert.ok(byLabel('Project introduction'));
+
+  await mount(post(), { width: 390 });
   assert.equal(document.querySelectorAll('[data-publication-view]').length, 1);
   assert.equal(phase(), 'opening');
   assert.equal(document.querySelector('h1').textContent, 'Existing house');
@@ -89,8 +106,6 @@ async function touch(type, x, y, target = document.querySelector('[data-publicat
   assert.equal(visibleIntro(), false);
   assert.equal(document.querySelector('[data-publication-view]').children.length, 1, 'No old title, hero, intro or credits stack beside the viewer');
   assert.equal(byLabel('Folio'), null, 'The site navigation supplies publication branding');
-  await act(async () => document.querySelector('[data-publication-phase]').dispatchEvent(new window.WheelEvent('wheel', { deltaY: 100, bubbles: true, cancelable: true })));
-  assert.equal(phase(), 'opening', 'Desktop scrolling does not dismiss the click gate');
   await act(async () => document.querySelector('[data-publication-phase]').dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowRight', bubbles: true })));
   assert.equal(byLabel('Go to room'), null, 'Arrow keys cannot skip the gate');
   await click(byLabel('Begin Existing house'));
@@ -133,15 +148,17 @@ async function touch(type, x, y, target = document.querySelector('[data-publicat
   assert.equal(visibleIntro(), true, 'Wide phones use the same tap gate');
 
   await mount(post(), { query: '?room=room-1&product=chair' });
-  assert.equal(byLabel('Room 1 article'), null);
-  assert.equal(document.querySelector('[role=dialog]'), null);
-  await click(byLabel('Begin Existing house')); await advance(650);
-  assert.ok(byLabel('Room 1 article'), 'Room deep link opens only after entry');
-  assert.ok(document.querySelector('[role=dialog]').textContent.includes('Project chair'), 'Product deep link opens only after entry');
+  assert.ok(byLabel('Room 1 article'), 'Desktop room deep link opens immediately');
+  assert.ok(document.querySelector('[role=dialog]').textContent.includes('Project chair'), 'Desktop product deep link opens immediately');
+  await mount(post(), { width: 390, query: '?room=room-1&product=chair' });
+  assert.equal(byLabel('Room 1 article'), null);assert.equal(document.querySelector('[role=dialog]'), null);
+  await advance(650);
+  assert.ok(byLabel('Room 1 article'), 'Mobile deep link enters the exact room after its transition');
+  assert.ok(document.querySelector('[role=dialog]').textContent.includes('Project chair'));
 
   const sparse = post(7); sparse.expandedBlocks.galleryChapters.forEach(chapter => chapter.body = []);
   sparse.project.images[0].inclusion = 'EXCLUDED'; sparse.project.images[1].url = '';
-  await mount(sparse, { reducedMotion: true });
+  await mount(sparse, { width: 390, reducedMotion: true });
   assert.equal(document.querySelector('h1').parentElement.querySelector('img').getAttribute('src'), '/photo-2.jpg');
   await click(byLabel('Begin Existing house')); await advance(1);
   assert.equal(phase(), 'ready', 'Reduced motion removes the lengthy fade');
@@ -152,14 +169,11 @@ async function touch(type, x, y, target = document.querySelector('[data-publicat
   assert.equal(document.querySelectorAll('[data-count] button').length, 2);
 
   await mount(post(120));
-  await click(byLabel('Begin Existing house')); await advance(650);
   assert.equal(byLabel('Go to room').options.length, 121);
   await act(async () => { byLabel('Go to room').value = 'room-119'; byLabel('Go to room').dispatchEvent(new Event('change', { bubbles: true })); });
-  assert.ok(byLabel('Read Room 119'));
+  assert.ok(byLabel('Room 119 article'));
 
   await mount(post(), { edit: true });
-  await click(byLabel('Begin Existing house')); await advance(650);
-  await click(byLabel('Read project introduction'));
   assert.ok(document.querySelector('[data-story-edit]'), 'Studio introduction keeps the actual inline editors');
   await click(byLabel('Project introduction').querySelector('h2'));
   assert.ok(document.querySelector('textarea'), 'The headline opens its inline editor');
@@ -170,7 +184,8 @@ async function touch(type, x, y, target = document.querySelector('[data-publicat
   await click(byLabel('Collapse project introduction'));
   const anotherPost = post(); anotherPost.id = 'other-post'; anotherPost.project.title = 'Another house';
   await act(async () => reactRoot.render(React.createElement(StoryRenderer, { post: anotherPost })));
-  assert.equal(phase(), 'opening', 'Navigating to a different project gets its own gate');
+  assert.equal(phase(), 'ready', 'Navigating to a different desktop project opens its introduction');
+  assert.ok(byLabel('Project introduction'));
   await act(async () => reactRoot.unmount());
-  console.log('Publication entry checks pass: existing-project replacement, cover selection, fade lock, mobile tap/scroll/swipe, ghost clicks, repeat visits, deep links, sparse galleries, 120 rooms, reduced motion and studio editing.');
+  console.log('Publication entry checks pass: desktop immediate introduction and rooms, photo restoration, mobile cover selection/fade/tap/scroll/swipe, ghost clicks, repeat visits, deep links, sparse galleries, 120 rooms, reduced motion and studio editing.');
 })().catch(error => { console.error(error); process.exitCode = 1; });

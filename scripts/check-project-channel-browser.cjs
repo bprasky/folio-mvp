@@ -169,8 +169,11 @@ async function main() {
       assert.equal(await page.$eval('nav[aria-label="Browse project content"] button[aria-pressed="true"]', e => e.textContent), 'Spaces');
       await button('All');
       await Promise.all([page.waitForNavigation(), page.click('a[href="/p/fixture/feature"]')]);
-      await page.click('[aria-label="Begin Channel fixture"]'); await page.waitForSelector('[data-publication-phase="ready"]');
-      await page.click('[aria-label="Read project introduction"]'); assert.match(await page.$eval('body', e => e.innerText), /The original introduction/);
+      if(width<=800)await page.click('[aria-label="Begin Channel fixture"]');
+      else assert.equal(await page.$('[aria-label="Begin Channel fixture"]'),null,'Desktop feature opens without a gate');
+      await page.waitForSelector('[data-publication-phase="ready"]');
+      if(width<=800)await page.click('[aria-label="Read project introduction"]');
+      await page.waitForSelector('[aria-label="Project introduction"]');assert.match(await page.$eval('body', e => e.innerText), /The original introduction/);
       await shot(`feature-${label}`);
       await Promise.all([page.waitForNavigation(), page.click('nav[aria-label="Project navigation"] a')]);
       await go('/p/fixture/feature?room=room-0&product=chair');
@@ -358,12 +361,14 @@ async function main() {
         assert.ok(await page.$(`a[href="/p/${original.slug}/feature"]`));
         await shot(`${original.slug}-${label}`);
         await Promise.all([page.waitForNavigation(), page.click(`a[href="/p/${original.slug}/feature"]`)]);
-        await page.click(`[aria-label=${JSON.stringify('Begin ' + original.project.title)}]`); await page.waitForSelector('[data-publication-phase="ready"]');
+        if(width<=800)await page.click(`[aria-label=${JSON.stringify('Begin ' + original.project.title)}]`);
+        await page.waitForSelector('[data-publication-phase="ready"]');
         assert.equal(await page.evaluate(() => window.fixture.post.id), original.id);
         const originalTitle = original.expandedBlocks.lead?.title || original.expandedBlocks.lead?.kicker;
         if (originalTitle) assert.ok((await page.$eval('body', e => e.textContent)).includes(originalTitle), 'Original published headline');
         const intro = await page.$('[aria-label="Read project introduction"]');
-        if (intro) { await intro.click(); await page.waitForSelector('[aria-label="Project introduction"]', {visible:true}); const text = await page.$eval('[aria-label="Project introduction"]', e => e.textContent); const first = original.expandedBlocks.introduction[0]; if (first && !text.includes(first)) fs.writeFileSync(path.join(out, original.slug+'-intro-diff.json'), JSON.stringify({expected:first,actual:text},null,2)); if (first) assert.ok(text.includes(first), `${original.slug}: original introduction`); }
+        if (intro) await intro.click();
+        await page.waitForSelector('[aria-label="Project introduction"]', {visible:true}); const text = await page.$eval('[aria-label="Project introduction"]', e => e.textContent); const first = original.expandedBlocks.introduction[0]; if (first && !text.includes(first)) fs.writeFileSync(path.join(out, original.slug+'-intro-diff.json'), JSON.stringify({expected:first,actual:text},null,2)); if (first) assert.ok(text.includes(first), `${original.slug}: original introduction`);
         await shot(`${original.slug}-feature-${label}`);
         const room = await page.evaluate(() => window.story.roomTiles.find(r => r.editorialNarrative && r.products.length) || window.story.roomTiles.find(r => r.editorialNarrative));
         if (room) {
