@@ -202,7 +202,7 @@ async function main() {
     }
     await clickNavigate('Import');await page.waitForSelector('input[placeholder="yourstudio.com"]');
     await page.type('input[placeholder="yourstudio.com"]','https://studio.test');await page.click('form input[required][type=checkbox]');
-    await Promise.all([page.waitForNavigation({waitUntil:'networkidle0'}),page.click('form button.auth-submit')]);
+    await clickNavigate('Prepare my workspace','button');
     await page.waitForSelector('[aria-label="Your private profile preview"]');
     assert.equal(await page.$eval('h1',e=>e.textContent),'Your work, already taking shape.');
     await go('/projects');await clickNavigate('Import');await page.waitForSelector('[aria-label="Your private profile preview"]');
