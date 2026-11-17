@@ -4,7 +4,14 @@ const { PGlite } = require('@electric-sql/pglite');
 const { applyMigration, assertTarget, migration } = require('./release-private-room-names.cjs');
 const sql = fs.readFileSync(`prisma/migrations/${migration}/migration.sql`);
 const env = { DIRECT_URL: 'postgresql://postgres:synthetic@db.gwdkhgejsyvynqzolyau.supabase.co:5432/postgres', DATABASE_URL: 'postgresql://postgres.gwdkhgejsyvynqzolyau:synthetic@aws-0-us-east-1.pooler.supabase.com:6543/postgres' };
-assertTarget(env);
+const selected = new URL(assertTarget({ ...env, DATABASE_URL: env.DATABASE_URL + '?pgbouncer=true&schema=public' }));
+assert.equal(selected.hostname, new URL(env.DATABASE_URL).hostname);
+assert.equal(selected.username, new URL(env.DATABASE_URL).username);
+assert.equal(selected.password, new URL(env.DATABASE_URL).password);
+assert.equal(selected.port, '5432');
+assert.equal(selected.searchParams.has('pgbouncer'), false);
+assert.equal(selected.searchParams.get('schema'), 'public');
+assert.equal(assertTarget({ ...env, DATABASE_URL: env.DIRECT_URL }), env.DIRECT_URL);
 for (const changed of [
   { DIRECT_URL: env.DIRECT_URL.replace(':5432', ':6543') },
   { DIRECT_URL: env.DIRECT_URL + '?pgbouncer=true' },

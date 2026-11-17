@@ -21,6 +21,13 @@ function assertTarget(env) {
   assert.equal(direct.pathname, app.pathname, 'Application and migration databases must match');
   assert.equal(direct.port || '5432', '5432', 'Migration requires a direct or session connection');
   assert.notEqual(direct.searchParams.get('pgbouncer'), 'true', 'Transaction pooling is not allowed for migration');
+  // Use the application's known-working credentials on the shared session pooler.
+  // Port 5432 preserves the migration transaction; never migrate through port 6543.
+  if (app.hostname.endsWith('.pooler.supabase.com')) {
+    app.port = '5432';
+    app.searchParams.delete('pgbouncer');
+    return app.toString();
+  }
   return direct.toString();
 }
 
@@ -92,6 +99,6 @@ async function main() {
 module.exports = { applyMigration, assertTarget, migration, verifyTable };
 if (require.main === module) main().catch(error => {
   // Provider errors can contain connection details. Print only our own assertion messages.
-  console.error('[room-names release] Failed:', error.code === 'ERR_ASSERTION' ? error.message : (error.code || 'database preflight/apply error'));
+  console.error('[room-names release] Failed:', error.code === 'ERR_ASSERTION' ? error.message : (error.code || error.errorCode || error.name || 'database preflight/apply error'));
   process.exitCode = 1;
 });
