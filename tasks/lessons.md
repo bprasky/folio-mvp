@@ -1332,3 +1332,6 @@ Retain known public person/organization IDs through sanitized publication DTOs a
 ### Property sale flow — 2026-11-16
 - Review new public features inside the actual branded page, with the production typefaces and photography. An isolated functional fixture is not evidence of visual quality.
 - Treat the actual property listing as the source and primary action: require its URL before publicly offering a home for sale; put the listing action beside the price. Keep private interview intent separate.
+## 2026-11-17 — Carry editorial quality into the working forms
+
+The founder rejected a rigid, boxed form mockup as resembling old Windows. Use Folio’s existing editorial type, open canvas, softly filled fields, pill actions and contextual sheets across intake and review. Respect the active light/dark theme; do not hardcode cream or white into fields. Keep optional description writing out of the primary intake path. Clearly distinguish a visual mockup from implemented application code and from a deployed release.

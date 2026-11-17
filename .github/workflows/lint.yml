@@ -236,6 +236,8 @@ jobs:
         run: npm ci
       - name: Test the diagnostic guard
         run: npm run typecheck:test
+      - name: Editorial workflow forms in Chromium
+        run: GUIDED_TEST_BROWSER="$(command -v google-chrome || command -v chromium)" node scripts/check-workflow-forms-browser.cjs
       - name: Render folder routes with their provider
         run: node scripts/check-folder-prerender.cjs
       # Next 14 compile mode emits real route types without prerendering or DB access.
@@ -260,6 +262,7 @@ jobs:
             .tmp/publication-layout/results.json
             .tmp/channel-browser/*.png
             .tmp/portfolio-browser/*.png
+            .tmp/workflow-forms/*.png
             .tmp/org-profile-browser/*.png
             .tmp/property-sale-browser/*.png
       - name: Reject new diagnostics and baseline expansion

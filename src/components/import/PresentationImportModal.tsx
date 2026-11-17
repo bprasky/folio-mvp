@@ -1,8 +1,8 @@
 'use client';
 
 import { useState, useCallback, useEffect, useRef } from 'react';
-import { GlassModal, GlassModalHeader, GlassModalBody } from '@/components/ui/glass-modal';
-import { Button } from '@/components/ui/button';
+import { WorkflowImportSheet, WorkflowImportHeader, WorkflowImportBody } from '@/components/ui/WorkflowImportSheet';
+import styles from '@/components/ui/WorkflowForms.module.css';
 import { FaCloudUploadAlt, FaCheck, FaSpinner, FaTimes, FaImage, FaDoorOpen, FaTag, FaExclamationTriangle } from 'react-icons/fa';
 import { createClient } from '@supabase/supabase-js';
 
@@ -531,18 +531,19 @@ export function PresentationImportModal({
   );
 
   return (
-    <GlassModal title="Import a presentation" open={open} onOpenChange={handleClose} size="xl">
-      <GlassModalHeader>
+    <WorkflowImportSheet title="Import a presentation" open={open} onOpenChange={handleClose}>
+      <WorkflowImportHeader>
         <div className="flex items-center justify-between">
           <div>
-            <h2 className="text-xl font-serif text-stone-900">Import Presentation</h2>
-            <p className="text-sm text-stone-500 mt-1">
+            <h2 className={styles.sheetTitle}>Import Presentation</h2>
+            <p className="text-sm text-folio-text-secondary mt-1">
               {projectTitle}
             </p>
           </div>
           <button
             onClick={handleClose}
-            className="text-stone-400 hover:text-stone-600 transition-colors"
+            className={styles.close}
+            aria-label="Close document review"
           >
             <FaTimes className="w-5 h-5" />
           </button>
@@ -558,7 +559,7 @@ export function PresentationImportModal({
                     ? 'bg-[var(--accent)] text-white'
                     : ['upload', 'extracting', 'analyzing', 'review', 'creating'].indexOf(step) > i
                     ? 'bg-emerald-500 text-white'
-                    : 'bg-stone-200 text-stone-500'
+                    : 'bg-surface-elevated text-folio-text-secondary'
                 }`}
               >
                 {['upload', 'extracting', 'analyzing', 'review', 'creating'].indexOf(step) > i ? (
@@ -567,13 +568,13 @@ export function PresentationImportModal({
                   i + 1
                 )}
               </div>
-              {i < 4 && <div className="w-8 h-px bg-stone-300 mx-1" />}
+              {i < 4 && <div className="w-4 sm:w-8 h-px bg-surface-elevated mx-1" />}
             </div>
           ))}
         </div>
-      </GlassModalHeader>
+      </WorkflowImportHeader>
 
-      <GlassModalBody>
+      <WorkflowImportBody>
         {error && (
           <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg flex items-start gap-2">
             <FaExclamationTriangle className="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" />
@@ -592,14 +593,13 @@ export function PresentationImportModal({
         {/* Upload step */}
         {step === 'upload' && (
           <div className="space-y-6">
-            <p className="text-stone-600">
+            <p className="text-folio-text-secondary">
               Upload your presentation file (PDF or PPTX). Our AI will analyze the images,
               detect products, and help you create rooms with tagged items.
             </p>
 
-            <div
-              className="border-2 border-dashed border-stone-300 rounded-xl p-12 text-center cursor-pointer hover:border-[var(--accent)] hover:bg-[var(--accent)]/5 transition-all"
-              onClick={() => fileInputRef.current?.click()}
+            <label
+              className={styles.uploadChooser}
               onDragOver={(e) => { e.preventDefault(); e.stopPropagation(); }}
               onDrop={handleDrop}
             >
@@ -608,16 +608,17 @@ export function PresentationImportModal({
                 type="file"
                 accept=".pdf,.pptx"
                 onChange={handleFileSelect}
-                className="hidden"
+                className="sr-only"
+                aria-label="Choose a document"
               />
-              <FaCloudUploadAlt className="w-16 h-16 text-stone-400 mx-auto mb-4" />
-              <p className="text-lg text-stone-700 mb-2">
+              <FaCloudUploadAlt className="w-8 h-8 text-folio-text-secondary mx-auto mb-4" />
+              <p className="text-lg text-folio-text-primary mb-2">
                 Drop your presentation here
               </p>
-              <p className="text-sm text-stone-500">
+              <p className="text-sm text-folio-text-secondary">
                 or click to browse • PDF or PPTX up to 50MB
               </p>
-            </div>
+            </label>
           </div>
         )}
 
@@ -625,39 +626,39 @@ export function PresentationImportModal({
         {(step === 'extracting' || step === 'analyzing') && (
           <div className="space-y-6 py-8 text-center">
             <div className="w-20 h-20 mx-auto relative">
-              <div className="absolute inset-0 rounded-full border-4 border-stone-200" />
+              <div className="absolute inset-0 rounded-full border-4 border-folio-border-subtle" />
               <div
                 className="absolute inset-0 rounded-full border-4 border-[var(--accent)] border-t-transparent animate-spin"
               />
             </div>
 
             <div>
-              <h3 className="text-lg font-medium text-stone-900 mb-2">
+              <h3 className="text-lg font-medium text-folio-text-primary mb-2">
                 {step === 'extracting' ? 'Extracting images...' : 'Analyzing with AI...'}
               </h3>
-              <p className="text-stone-500">
+              <p className="text-folio-text-secondary">
                 {progress.message}
               </p>
             </div>
 
             <div className="max-w-xs mx-auto">
-              <div className="h-2 bg-stone-200 rounded-full overflow-hidden">
+              <div className="h-2 bg-surface-elevated rounded-full overflow-hidden">
                 <div
                   className="h-full bg-[var(--accent)] transition-all duration-300"
                   style={{ width: `${progress.current}%` }}
                 />
               </div>
-              <p className="text-sm text-stone-400 mt-2">{Math.round(progress.current)}%</p>
+              <p className="text-sm text-folio-text-secondary mt-2">{Math.round(progress.current)}%</p>
             </div>
 
             {stats.totalImages > 0 && (
               <div className="flex justify-center gap-8 text-sm">
                 <div>
-                  <span className="text-stone-500">Images:</span>{' '}
+                  <span className="text-folio-text-secondary">Images:</span>{' '}
                   <span className="font-medium">{stats.analyzedImages}/{stats.totalImages}</span>
                 </div>
                 <div>
-                  <span className="text-stone-500">Products found:</span>{' '}
+                  <span className="text-folio-text-secondary">Products found:</span>{' '}
                   <span className="font-medium">{stats.totalProducts}</span>
                 </div>
               </div>
@@ -669,35 +670,34 @@ export function PresentationImportModal({
         {step === 'review' && (
           <div className="space-y-6">
             {/* Summary */}
-            <div className="flex items-center justify-between p-4 bg-stone-50 rounded-lg">
+            <div className="flex items-center justify-between p-4 bg-surface-ground rounded-lg">
               <div>
-                <p className="text-stone-900 font-medium">
+                <p className="text-folio-text-primary font-medium">
                   Found {stats.totalProducts} products in {detectedRooms.length} rooms
                 </p>
-                <p className="text-sm text-stone-500">
+                <p className="text-sm text-folio-text-secondary">
                   {totalSelectedProducts} selected • {withSpecDataCount > 0 ? `${withSpecDataCount} with specs` : `${highConfidenceCount} high confidence`}
                 </p>
               </div>
               {highConfidenceCount > 0 && (
-                <Button
-                  variant="ridge"
-                  size="sm"
+                <button type="button"
+                  className={styles.secondary}
                   onClick={selectAllHighConfidence}
                 >
                   Select All High Confidence
-                </Button>
+                </button>
               )}
             </div>
 
             {/* Rooms list */}
             <div className="space-y-4 max-h-[400px] overflow-y-auto">
               {detectedRooms.map((room) => (
-                <div key={room.id} className="border border-stone-200 rounded-lg overflow-hidden">
-                  <div className="p-3 bg-stone-50 flex items-center gap-3">
+                <div key={room.id} className="border border-folio-border-subtle rounded-lg overflow-hidden">
+                  <div className="p-3 bg-surface-ground flex items-center gap-3">
                     <FaDoorOpen className="w-5 h-5 text-[var(--accent)]" />
                     <div className="flex-1">
-                      <h4 className="font-medium text-stone-900">{room.displayName}</h4>
-                      <p className="text-sm text-stone-500">
+                      <h4 className="font-medium text-folio-text-primary">{room.displayName}</h4>
+                      <p className="text-sm text-folio-text-secondary">
                         {room.images.length} images • {room.products.length} products
                       </p>
                     </div>
@@ -710,7 +710,7 @@ export function PresentationImportModal({
                         className={`p-3 rounded-lg border cursor-pointer transition-colors ${
                           product.selected
                             ? 'border-[var(--accent)] bg-[var(--accent)]/5'
-                            : 'border-stone-200 hover:border-stone-300'
+                            : 'border-folio-border-subtle hover:border-folio-border-subtle'
                         }`}
                         onClick={() => toggleProductSelection(product.id)}
                       >
@@ -719,7 +719,7 @@ export function PresentationImportModal({
                             className={`w-5 h-5 rounded border flex items-center justify-center flex-shrink-0 mt-0.5 ${
                               product.selected
                                 ? 'bg-[var(--accent)] border-[var(--accent)]'
-                                : 'border-stone-300'
+                                : 'border-folio-border-subtle'
                             }`}
                           >
                             {product.selected && (
@@ -728,11 +728,11 @@ export function PresentationImportModal({
                           </div>
                           <div className="flex-1 min-w-0">
                             {/* Product description or extracted vendor */}
-                            <p className="text-stone-900 text-sm font-medium">
+                            <p className="text-folio-text-primary text-sm font-medium">
                               {product.extractedVendor || product.description}
                             </p>
                             {product.extractedVendor && (
-                              <p className="text-stone-600 text-xs mt-0.5">{product.description}</p>
+                              <p className="text-folio-text-secondary text-xs mt-0.5">{product.description}</p>
                             )}
 
                             {/* Extracted spec data row */}
@@ -744,12 +744,12 @@ export function PresentationImportModal({
                                   </span>
                                 )}
                                 {product.extractedDimensions && (
-                                  <span className="text-xs text-stone-600 bg-stone-100 px-1.5 py-0.5 rounded">
+                                  <span className="text-xs text-folio-text-secondary bg-surface-ground px-1.5 py-0.5 rounded">
                                     {product.extractedDimensions}
                                   </span>
                                 )}
                                 {product.extractedSku && (
-                                  <span className="text-xs text-stone-500">
+                                  <span className="text-xs text-folio-text-secondary">
                                     SKU: {product.extractedSku}
                                   </span>
                                 )}
@@ -758,14 +758,14 @@ export function PresentationImportModal({
 
                             {/* Category and confidence badges */}
                             <div className="flex items-center gap-2 mt-1.5">
-                              <span className="text-xs text-stone-500">{product.category}</span>
+                              <span className="text-xs text-folio-text-secondary">{product.category}</span>
                               <span
                                 className={`text-xs px-2 py-0.5 rounded-full ${
                                   product.confidence === 'high'
                                     ? 'bg-emerald-100 text-emerald-700'
                                     : product.confidence === 'medium'
                                     ? 'bg-amber-100 text-amber-700'
-                                    : 'bg-stone-100 text-stone-500'
+                                    : 'bg-surface-ground text-folio-text-secondary'
                                 }`}
                               >
                                 {product.confidence === 'high' ? 'spec match' : product.confidence === 'medium' ? 'partial spec' : 'visual only'}
@@ -774,14 +774,14 @@ export function PresentationImportModal({
 
                             {/* Material if extracted */}
                             {product.extractedMaterial && (
-                              <p className="text-xs text-stone-500 mt-1">
+                              <p className="text-xs text-folio-text-secondary mt-1">
                                 Materials: {product.extractedMaterial}
                               </p>
                             )}
 
                             {/* Suggestion match (fallback if no extracted data) */}
                             {product.suggestion && !product.extractedVendor && (
-                              <p className="text-xs text-stone-500 mt-1">
+                              <p className="text-xs text-folio-text-secondary mt-1">
                                 Match: {product.suggestion.productName} by {product.suggestion.vendorName}
                               </p>
                             )}
@@ -795,9 +795,9 @@ export function PresentationImportModal({
 
               {detectedRooms.length === 0 && (
                 <div className="text-center py-8">
-                  <FaImage className="w-12 h-12 text-stone-300 mx-auto mb-3" />
-                  <p className="text-stone-500">No products were detected in this presentation.</p>
-                  <p className="text-sm text-stone-400 mt-1">
+                  <FaImage className="w-12 h-12 text-folio-text-secondary mx-auto mb-3" />
+                  <p className="text-folio-text-secondary">No products were detected in this presentation.</p>
+                  <p className="text-sm text-folio-text-secondary mt-1">
                     Try uploading a presentation with more interior photos.
                   </p>
                 </div>
@@ -805,19 +805,19 @@ export function PresentationImportModal({
             </div>
 
             {/* Actions */}
-            <div className="flex justify-between items-center pt-4 border-t border-stone-200">
-              <Button variant="ridge" onClick={() => setStep('upload')}>
+            <div className={`${styles.actions} justify-between pt-4`}>
+              <button type="button" className={styles.secondary} onClick={() => setStep('upload')}>
                 Upload Different File
-              </Button>
-              <Button
-                variant="accent"
+              </button>
+              <button type="button"
+                className={styles.primary}
                 onClick={handleCreateRoomsAndTags}
                 disabled={totalSelectedProducts === 0}
               >
                 <FaTag className="w-4 h-4 mr-2" />
                 Create {detectedRooms.filter(r => r.products.some(p => p.selected)).length} Rooms
                 {totalSelectedProducts > 0 && ` with ${totalSelectedProducts} Tags`}
-              </Button>
+              </button>
             </div>
           </div>
         )}
@@ -827,16 +827,16 @@ export function PresentationImportModal({
           <div className="space-y-6 py-8 text-center">
             <FaSpinner className="w-12 h-12 text-[var(--accent)] mx-auto animate-spin" />
             <div>
-              <h3 className="text-lg font-medium text-stone-900 mb-2">
+              <h3 className="text-lg font-medium text-folio-text-primary mb-2">
                 Creating rooms and tags...
               </h3>
-              <p className="text-stone-500">
+              <p className="text-folio-text-secondary">
                 {progress.message}
               </p>
             </div>
           </div>
         )}
-      </GlassModalBody>
-    </GlassModal>
+      </WorkflowImportBody>
+    </WorkflowImportSheet>
   );
 }

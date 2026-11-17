@@ -1,3 +1,5 @@
+import styles from "@/components/ui/WorkflowForms.module.css";
+
 // Shared product-field helpers used by the manual tagging surfaces.
 //
 // Lifted verbatim out of ProjectImageTagger so the extracted ProductTagPicker
@@ -28,8 +30,7 @@ export function splitList(v: string): string[] {
 }
 
 /**
- * One labeled, editable field in a confirm panel. Empty values are highlighted
- * so a designer can see at a glance what the scrape missed.
+ * One labeled, theme-aware field shared by product review and manual editing.
  */
 export function renderPreviewField(
   label: string,
@@ -37,17 +38,10 @@ export function renderPreviewField(
   onChange: (v: string) => void,
   multiline = false,
 ) {
-  const missing = !value.trim();
-  const ring = missing
-    ? "ring-1 ring-amber-300 bg-amber-50/50"
-    : "ring-1 ring-folio-border-subtle bg-white";
-  const cls = `w-full rounded-md px-2 py-1.5 text-sm ${ring} focus:outline-none focus:ring-2 focus:ring-[var(--accent)]`;
+  const cls = styles.field;
   return (
-    <label className="block">
-      <span className="flex items-center gap-1.5 text-[length:var(--type-eyebrow)] font-medium text-folio-text-secondary mb-1">
-        {label}
-        {missing && <span className="text-amber-600 text-[length:var(--type-fine)]">• missing</span>}
-      </span>
+    <label className={styles.label}>
+      <span>{label}</span>
       {multiline ? (
         <textarea value={value} onChange={(e) => onChange(e.target.value)} rows={3} className={cls} />
       ) : (

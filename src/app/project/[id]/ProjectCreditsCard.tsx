@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import styles from "@/components/ui/WorkflowForms.module.css";
 import { CreditsEditor } from "@/components/posting/CreditsEditor";
 import type { CreditEntry } from "@/lib/posting/creditsSchema";
 
@@ -56,11 +57,8 @@ export default function ProjectCreditsCard({ projectId }: { projectId: string })
   }
 
   return (
-    <section className="rounded-md border border-folio-border-subtle bg-surface-ground p-6 shadow-folio1">
-      <h2 className="font-headline text-folio-h4 text-folio-text-primary">
-        Project credits
-      </h2>
-      <p className="mt-0.5 mb-4 text-folio-meta text-folio-text-tertiary">
+    <section className={styles.section}>
+      <p className={`${styles.help} mt-2 mb-6`}>
         Who else brought this project to life? Credits appear on your published post.
       </p>
       <CreditsEditor credits={credits} onChange={handleChange} saving={saving} />
