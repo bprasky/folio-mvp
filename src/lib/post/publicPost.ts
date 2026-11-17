@@ -32,7 +32,7 @@ export function publicProject(project: any) {
   return {
     ...pick(project, ['id', 'title', 'description', 'city', 'regionState', 'projectType', 'category', 'timeline', 'completedYear', 'completedMonth', 'isPublic', 'publishedAt', 'status', 'views', 'saves', 'shares', 'createdAt', 'updatedAt', 'designerId']),
     designer: project?.designer ? pick(project.designer, ['id', 'name', 'studio', 'profileImage', 'bio', 'website', 'instagram', 'linkedin']) : null,
-    designerOrg: project?.designerOrg ? pick(project.designerOrg, ['name']) : null,
+    designerOrg: project?.designerOrg ? pick(project.designerOrg, ['id', 'name']) : null,
     images: list(project?.images).filter(image => image.inclusion !== 'EXCLUDED').map(image => ({
       id: image.id, url: image.url, name: image.name, room: image.room, roomId: image.roomId, displayOrder: image.displayOrder,
       tags: list(image.tags).filter(tag => tag.product && !tag.product.isPending).map(tag => ({
@@ -49,7 +49,7 @@ export function publicPost(post: any) {
   const tagIds = new Set(project.images.flatMap(image => image.tags.map(tag => tag.id)));
   const blocks = post.expandedBlocks || {};
   const approved = new Set<string>(list(blocks.embeddedQuotes).filter(choice => choice.sourceId === 'designer').map(choice => choice.text));
-  const credits = (value: any) => list(value).map(entry => pick(entry, ['role', 'name', 'url']));
+  const credits = (value: any) => list(value).map(entry => pick(entry, ['role', 'name', 'url', 'userId', 'organizationId']));
   return {
     ...pick(post, ['id', 'projectId', 'slug', 'status', 'variant', 'excerpt', 'keywords', 'publishedAt']),
     heroAssetId: imageIds.has(post.heroAssetId) ? post.heroAssetId : null,

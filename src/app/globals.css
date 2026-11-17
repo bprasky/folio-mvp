@@ -17,7 +17,7 @@
 
 :root {
   color-scheme: light;
-  /* Publication paper stays light, including when the application theme is dark. */
+  /* Publication palette follows the selected application theme. */
   --surface-publication: #FAF8F5;
   --publication-ink: #1a1a1a;
   --publication-muted: #625e58;
@@ -731,6 +731,10 @@ html[data-compact="true"] main { padding-top: 0 !important; }
 /* Dark mode — selected in Settings. */
 [data-theme="dark"] {
   color-scheme: dark;
+  --surface-publication: #1B1B19;
+  --publication-ink: #F5F5F3;
+  --publication-muted: #BABAB5;
+  --publication-rule: #3A3A36;
   /* Canonical dark overrides */
   --surface-canvas: #1B1B19;
   --surface-ground: #22221F;
@@ -2267,8 +2271,8 @@ body.frame-dark::before {
   .touch-action-visible { opacity: 1 !important; }
 }
 
-/* Scope the publication paper to its existing page, header and portal surfaces.
-   CSS restores the selected application theme immediately on route changes. */
+/* Scope the theme-aware publication palette to its page, header and portals.
+   The selected theme remains authoritative during reading and on route changes. */
 body:has([data-publication-view="immersive"]) {
   --surface-canvas: var(--surface-publication);
   --surface-ground: var(--surface-publication);
@@ -2277,7 +2281,7 @@ body:has([data-publication-view="immersive"]) {
   --folio-text-primary: var(--publication-ink);
   --folio-text-secondary: var(--publication-muted);
   --folio-border-subtle: var(--publication-rule);
-  color-scheme: light;
+  color-scheme: inherit;
   color: var(--publication-ink);
   background: var(--surface-publication);
 }

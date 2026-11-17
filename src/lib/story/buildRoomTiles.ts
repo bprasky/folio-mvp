@@ -11,6 +11,7 @@ import { normalizeTitleAlternatives, type TitleAlternative } from "@/lib/posting
 import { hasWeakPredicate } from "@/lib/interview/prompts/headlineFrames";
 import { embeddedQuoteOptions, embeddedQuoteCredits, embeddedQuoteAttribution, savedEmbeddedQuoteChoices, type EmbeddedQuoteOption } from '@/lib/posting/embeddedQuotes';
 import type { EmbeddedQuoteChoice } from '@/lib/posting/schemas';
+import { publicationProfiles, type ProfileReference } from './profileLinks';
 
 // --- Types ---
 
@@ -71,7 +72,8 @@ export interface StoryData {
   introParagraphs: string[];
   /** Headline options the owner cycles through. Empty on the published page. */
   titleAlternatives: TitleAlternative[];
-  credits: Array<{ role: string; name: string; url?: string }>;
+  credits: Array<{ role: string; name: string; url?: string; userId?: string; organizationId?: string }>;
+  profileLinks?: ProfileReference[];
   designerName: string;
   designerStudio: string | null;
   designerProfileImage: string | null;
@@ -326,13 +328,13 @@ export function buildStoryData(post: any): StoryData | null {
   }
 
   // Credits
-  const credits: Array<{ role: string; name: string; url?: string }> = [];
+  const credits: StoryData['credits'] = [];
   const savedCredits = Array.isArray(post.credits) && post.credits.length ? post.credits : blocks?.credits;
   if (Array.isArray(savedCredits)) {
     credits.push(...savedCredits.filter((credit: any) => credit?.name));
   }
   if (designer?.name && !credits.some((c) => c.name === designer.name)) {
-    credits.unshift({ role: "Designer", name: designer.name, url: designer.website });
+    credits.unshift({ role: "Designer", name: designer.name, userId: designer.id, url: designer.website });
   }
 
   // Location
@@ -432,6 +434,7 @@ export function buildStoryData(post: any): StoryData | null {
     titleAlternatives,
     credits,
     designerName,
+    profileLinks: publicationProfiles(project, credits),
     designerStudio: project.designerOrg?.name ?? designer?.studio ?? null,
     designerProfileImage: designer?.profileImage ?? null,
     location,

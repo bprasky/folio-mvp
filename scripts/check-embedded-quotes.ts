@@ -169,6 +169,7 @@ async function main() {
   const originalLoad = (Module as any)._load;
   (Module as any)._load = function(id: string, ...args: any[]) {
     if (id === './StoryEditContext') return { useStoryEdit: () => edit, StoryEditRegion: ({ children }: any) => React.createElement('div', null, children) };
+    if (id === './PublicationText.module.css') return { link: 'profile-link' };
     return originalLoad.call(this, id, ...args);
   };
   const { BreatherQuote } = require('../src/components/story/BreatherQuote');
@@ -181,8 +182,9 @@ async function main() {
     return { ok: !failed, json: async () => failed ? { error: 'The article changed. Refresh and try again.' } : { choice: requests.at(-1).body } };
   };
   await check('preview/public displays organization credit with no editor controls', () => {
-    const html = renderToStaticMarkup(React.createElement(BreatherQuote, { breather: buildStoryData(post)!.breathers[0], reducedMotion: true }));
+    const html = renderToStaticMarkup(React.createElement(BreatherQuote, { breather: buildStoryData(post)!.breathers[0], reducedMotion: true, profiles: [{ name: 'Example Studio', href: '/org/example-studio' }] }));
     assert.ok(html.includes('Example Studio')); assert.ok(!html.includes('<button')); assert.ok(!html.includes('<select'));
+    assert.match(html, /href="\/org\/example-studio"[^>]*>Example Studio<\/a>/);
   });
   await check('real edit controls save quote and attribution; failures retain saved display', async () => {
     edit = { projectId: 'project', refresh: () => { refreshes++; } };

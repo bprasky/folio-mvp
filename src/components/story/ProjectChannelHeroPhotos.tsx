@@ -3,11 +3,14 @@ import { useEffect, useState, type ReactNode } from 'react';
 import SafeImage from '@/components/SafeImage';
 import styles from './ProjectChannelHeroPhotos.module.css';
 import channel from './ProjectChannel.module.css';
+import { PublicationText } from './PublicationText';
+import type { ProfileReference } from '@/lib/story/profileLinks';
 
-export function ProjectChannelHeroPhotos({ images, title, attribution, description, heading, footer }: {
+export function ProjectChannelHeroPhotos({ images, title, attribution, profiles, description, heading, footer }: {
   images: { id: string; url: string; quote?: string }[];
   title: string;
   attribution: string | null;
+  profiles?: ProfileReference[];
   description?: string | null;
   heading: ReactNode;
   footer: ReactNode;
@@ -69,13 +72,13 @@ export function ProjectChannelHeroPhotos({ images, title, attribution, descripti
       {heading}
       {hasQuotes ? <div className={channel.heroCopy} aria-live="off">
         {/* Grid layers reserve the tallest copy so the title and actions stay still. */}
-        {description && <p className={`${channel.deck} ${channel.copyLayer}`} data-active={!images[index]?.quote} aria-hidden={Boolean(images[index]?.quote)}>{description}</p>}
+        {description && <p className={`${channel.deck} ${channel.copyLayer}`} data-active={!images[index]?.quote} aria-hidden={Boolean(images[index]?.quote)} ref={element => { if (element) element.inert = Boolean(images[index]?.quote); }}><PublicationText text={description} profiles={profiles} /></p>}
         {images.map((image, i) => image.quote ? <figure key={image.id} className={`${channel.quote} ${channel.copyLayer}`}
-          data-hero-quote={image.id} data-active={index === i} aria-hidden={index !== i}>
-          <blockquote>“{image.quote}”</blockquote>
-          <figcaption>{attribution ? `— ${attribution}, from the Folio Feature` : 'From the Folio Feature'}</figcaption>
+          data-hero-quote={image.id} data-active={index === i} aria-hidden={index !== i} ref={element => { if (element) element.inert = index !== i; }}>
+          <blockquote>&ldquo;<PublicationText text={image.quote} profiles={profiles} />&rdquo;</blockquote>
+          <figcaption>{attribution ? <>&mdash; <PublicationText text={attribution} profiles={profiles} />, from the Folio Feature</> : 'From the Folio Feature'}</figcaption>
         </figure> : null)}
-      </div> : description ? <p className={channel.deck}>{description}</p> : null}
+      </div> : description ? <p className={channel.deck}><PublicationText text={description} profiles={profiles} /></p> : null}
       {footer}
     </div>
   </section>;

@@ -27,9 +27,9 @@ const heroQuote0 = 'A short approved quotation for space zero.';
 const heroQuote1 = 'We opened this room to the garden, giving the family a quieter place to gather throughout the day.';
 function fixture(count = 5) {
   return { id: 'fixture-post', projectId: 'fixture-project', slug: 'fixture', status: 'PUBLISHED', heroAssetId: count > 1 ? 'photo-1' : 'photo-0', excerpt: 'A photographic project with an independently published Folio feature.',
-    project: { id: 'fixture-project', title: 'Channel fixture', description: 'Original project description.', isPublic: true, city: 'Miami', designerOrg: { name: 'Fixture Studio' }, designer: { name: 'Fixture designer' },
+    project: { id: 'fixture-project', title: 'Channel fixture', description: 'Original project description.', isPublic: true, city: 'Miami', designerOrg: { id: 'fixture-studio', name: 'Fixture Studio' }, designer: { id: 'fixture-designer', name: 'Fixture designer' },
       images: Array.from({ length: count }, (_, i) => ({ id: `photo-${i}`, url: `/photo.svg?i=${i}`, name: `Photograph ${i}`, room: `Space ${Math.floor(i / 2)}`, roomId: `room-${Math.floor(i / 2)}`, inclusion: 'INCLUDED', tags: i === 0 ? [{ id: 'tag', productId: 'chair', product: { id: 'chair', name: 'Fixture chair', imageUrl: '/photo.svg', isPending: false } }] : [] })) },
-    credits: [{ name: 'Fixture collaborator', role: 'Architecture' }, { name: 'Fixture collaborator', role: 'Architecture' }, { name: '' }, { name: 'Photo studio', url: 'https://example.com' }],
+    credits: [{ name: 'Fixture collaborator', role: 'Architecture', organizationId: 'fixture-architect' }, { name: 'Fixture collaborator', role: 'Architecture', organizationId: 'fixture-architect' }, { name: '' }, { name: 'Photo studio', url: 'https://example.com' }],
     expandedBlocks: { lead: { title: 'The original fixture headline', deck: 'The original fixture deck' }, introduction: ['The original introduction remains in the publication.'],
       galleryChapters: Array.from({ length: Math.ceil(count / 2) }, (_, i) => ({ id: `room-${i}`, roomId: `room-${i}`, title: `Space ${i}`, imageIds: [`photo-${i * 2}`, `photo-${i * 2 + 1}`], body: [`Original narrative for space ${i}.`], pullQuote: i === 0 ? heroQuote0 : i === 1 ? { selected: { text: heroQuote1 }, alternatives: [{text:'UNSELECTED_QUOTE'}] } : null })) } };
 }
@@ -160,7 +160,9 @@ async function main() {
       await shot(`channel-${label}`);
       await button('Spaces'); assert.equal(await page.$$eval('[data-kind]', n => n.length), 5); await overflow();
       await button('Media'); assert.equal(await page.$$eval('[data-kind]', n => n.length), 3);
+      assert.ok(await page.$('a[href="/org/fixture-studio"]'), 'Landing byline links to the design firm');
       await button('Credits'); assert.equal(await page.$$eval('[data-kind="credit"]', n => n.length), 2);
+      assert.ok(await page.$('[data-kind="credit"][href="/org/fixture-architect"]'), 'Linked collaborator credit opens the organization profile');
       assert.equal(await page.$$eval('[data-kind="credit"]', n => n.every(x => getComputedStyle(x).gridRowEnd === 'span 1')), true, 'Supporting credits never occupy large photo tiles');
       assert.equal(await page.$$eval('a[href="#project-mosaic"][data-kind="credit"]', n => n.length), 0);
       await button('All');
@@ -169,8 +171,11 @@ async function main() {
       assert.equal(await page.$eval('nav[aria-label="Browse project content"] button[aria-pressed="true"]', e => e.textContent), 'Spaces');
       await button('All');
       await Promise.all([page.waitForNavigation(), page.click('a[href="/p/fixture/feature"]')]);
-      await page.click('[aria-label="Begin Channel fixture"]'); await page.waitForSelector('[data-publication-phase="ready"]');
-      await page.click('[aria-label="Read project introduction"]'); assert.match(await page.$eval('body', e => e.innerText), /The original introduction/);
+      if(width<=800)await page.click('[aria-label="Begin Channel fixture"]');
+      else assert.equal(await page.$('[aria-label="Begin Channel fixture"]'),null,'Desktop feature opens without a gate');
+      await page.waitForSelector('[data-publication-phase="ready"]');
+      if(width<=800)await page.click('[aria-label="Read project introduction"]');
+      await page.waitForSelector('[aria-label="Project introduction"]');assert.match(await page.$eval('body', e => e.innerText), /The original introduction/);
       await shot(`feature-${label}`);
       await Promise.all([page.waitForNavigation(), page.click('nav[aria-label="Project navigation"] a')]);
       await go('/p/fixture/feature?room=room-0&product=chair');
@@ -358,12 +363,14 @@ async function main() {
         assert.ok(await page.$(`a[href="/p/${original.slug}/feature"]`));
         await shot(`${original.slug}-${label}`);
         await Promise.all([page.waitForNavigation(), page.click(`a[href="/p/${original.slug}/feature"]`)]);
-        await page.click(`[aria-label=${JSON.stringify('Begin ' + original.project.title)}]`); await page.waitForSelector('[data-publication-phase="ready"]');
+        if(width<=800)await page.click(`[aria-label=${JSON.stringify('Begin ' + original.project.title)}]`);
+        await page.waitForSelector('[data-publication-phase="ready"]');
         assert.equal(await page.evaluate(() => window.fixture.post.id), original.id);
         const originalTitle = original.expandedBlocks.lead?.title || original.expandedBlocks.lead?.kicker;
         if (originalTitle) assert.ok((await page.$eval('body', e => e.textContent)).includes(originalTitle), 'Original published headline');
         const intro = await page.$('[aria-label="Read project introduction"]');
-        if (intro) { await intro.click(); await page.waitForSelector('[aria-label="Project introduction"]', {visible:true}); const text = await page.$eval('[aria-label="Project introduction"]', e => e.textContent); const first = original.expandedBlocks.introduction[0]; if (first && !text.includes(first)) fs.writeFileSync(path.join(out, original.slug+'-intro-diff.json'), JSON.stringify({expected:first,actual:text},null,2)); if (first) assert.ok(text.includes(first), `${original.slug}: original introduction`); }
+        if (intro) await intro.click();
+        await page.waitForSelector('[aria-label="Project introduction"]', {visible:true}); const text = await page.$eval('[aria-label="Project introduction"]', e => e.textContent); const first = original.expandedBlocks.introduction[0]; if (first && !text.includes(first)) fs.writeFileSync(path.join(out, original.slug+'-intro-diff.json'), JSON.stringify({expected:first,actual:text},null,2)); if (first) assert.ok(text.includes(first), `${original.slug}: original introduction`);
         await shot(`${original.slug}-feature-${label}`);
         const room = await page.evaluate(() => window.story.roomTiles.find(r => r.editorialNarrative && r.products.length) || window.story.roomTiles.find(r => r.editorialNarrative));
         if (room) {
