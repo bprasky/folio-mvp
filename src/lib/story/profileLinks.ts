@@ -39,7 +39,7 @@ export function publicationProfiles(project?: { designer?: Identity | null; desi
   add(project?.designerOrg?.name, firm || person);
   add(project?.designer?.studio, firm || person);
   for (const credit of credits) add(credit.name, creditProfileHref(credit));
-  return [...refs.values()].filter((value): value is ProfileReference => !!value);
+  return Array.from(refs.values()).filter((value): value is ProfileReference => !!value);
 }
 
 export function namedProfileHref(name: string, refs: ProfileReference[] = []): string | null {
