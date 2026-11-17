@@ -20,3 +20,8 @@ Exercise validation, private/public serialization, inactive/stale listings, publ
 
 ## Visual review
 Use the existing project hero/mosaic, production Cormorant Garamond and Instrument Sans fonts, and a restrained sale strip directly below the hero. Place View listing beside the price; optional agent and press details stay secondary. The editor uses compact disclosures for optional agent/press fields. The local design review uses actual production components with fictional project data and illustrative photography, not a separate production page or a real listing.
+
+## Release verification — 2026-11-17
+The founder authorized merge and production deployment through PR #861. Hosted checks identified an outdated dependency fixture in the public-reader suite. The corrected suite exercises the real sale projection and additionally verifies public, shared-viewer and vendor boundaries. Shared project viewers now omit private sale drafts and permission receipts; editors retain their workspace data. The public slug API exposes only the approved sale projection. All 14 serialized-reader scenarios, 10 targeted sale tests and project-channel route checks pass locally.
+
+Production environment inspection found neither `RENDER_WORKER_URL` nor `RENDER_WORKER_API_KEY`. Static listing metadata import and manual entry are available; browser-render fallback is inactive until the separately scoped renderer is accepted and connected. This release does not configure that service or claim screenshot extraction.

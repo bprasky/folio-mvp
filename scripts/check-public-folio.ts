@@ -5,6 +5,7 @@ import vm from 'vm';
 import assert from 'assert/strict';
 import * as presentation from '../src/lib/story/presentation';
 import * as imageProvenance from '../src/lib/products/imageProvenance';
+import * as propertySale from '../src/lib/property-sale/schema';
 
 const selectedText = 'Glass gives this room space to breathe.';
 const originalText = 'PRIVATE_ORIGINAL: We chose a glass table because the room is small.';
@@ -30,12 +31,18 @@ const serialize = (value: unknown) => JSON.parse(JSON.stringify(value));
 const mocks: Record<string, any> = {
   '@/lib/story/presentation': presentation,
   '@/lib/products/imageProvenance': imageProvenance,
+  '@/lib/property-sale/schema': propertySale,
   'next/server': { NextResponse: { json: (value: unknown, init?: { status?: number }) => ({ status: init?.status ?? 200, data: serialize(value) }) } },
   'next-auth': { getServerSession: async () => session },
   '@/app/api/auth/[...nextauth]/options': { authOptions: {} },
   '@/lib/prisma': { prisma: {
     projectPost: { findUnique: async () => structuredClone(post) },
-    inContextBoost: { findMany: async () => [{ id: 'boost', productTag: { image: { project: { post: structuredClone(post) } } } }] },
+    inContextBoost: { findMany: async (query: any) => {
+      const fields = query.include.productTag.select.image.select.project.select.post.select;
+      assert.equal(fields.provenance, undefined, 'Vendor query must not request private post provenance');
+      const selectedPost = Object.fromEntries(Object.keys(fields).map(key => [key, structuredClone(post[key])]));
+      return [{ id: 'boost', productTag: { image: { project: { post: selectedPost } } } }];
+    } },
     spotlightQuestion: { findMany: async ({ where }: { where: { id: { in: string[] } } }) =>
       where.id.in.includes('durable-private-id') ? [{ id: 'durable-private-id' }] : [] },
   } },
@@ -79,6 +86,51 @@ async function check(name: string, run: () => Promise<void>) {
   reset(); await run(); passed++; console.log(`  PASS ${name}`);
 }
 async function main() {
+  await check('private sale details stay out of public, shared-viewer and vendor responses', async () => {
+    const now = new Date().toISOString();
+    post.provenance.propertySale = { schemaVersion: 1, version: 1, updatedAt: now, confirmedAt: now,
+      updatedBy: 'PRIVATE_SALE_ACTOR', requestId: 'PRIVATE_SALE_RECEIPT',
+      details: { ...propertySale.emptyPropertySale(), currentlyForSale: true,
+        listingUrl: 'https://listing.test/PRIVATE_LISTING', askingPrice: '41000000', address: 'PRIVATE_PROPERTY_ADDRESS' } };
+    session.user.id = 'shared-viewer'; canWrite = false;
+    const responses = [
+      await publicReader('story'),
+      (await publicApi({}, { params: { slug: 'story' } })).data,
+      (await projectApi({}, { params: { projectId: 'project' } })).data,
+      (await boostApi({ url: 'https://example.test/api/products/product/in-context-boosts' }, { params: { productId: 'product' } })).data,
+    ];
+    for (const response of responses) {
+      const json = JSON.stringify(response);
+      for (const secret of ['PRIVATE_SALE_ACTOR', 'PRIVATE_SALE_RECEIPT', 'PRIVATE_LISTING', 'PRIVATE_PROPERTY_ADDRESS', '41000000'])
+        assert.ok(!json.includes(secret), `Public response leaked ${secret}`);
+    }
+  });
+  await check('project editors retain private sale details for their workspace', async () => {
+    const now = new Date().toISOString();
+    post.provenance.propertySale = { schemaVersion: 1, version: 1, updatedAt: now, confirmedAt: null,
+      updatedBy: 'owner', requestId: 'editor-receipt',
+      details: { ...propertySale.emptyPropertySale(), currentlyForSale: true, address: 'PRIVATE_PROPERTY_ADDRESS' } };
+    const result = await projectApi({}, { params: { projectId: 'project' } });
+    assert.equal(result.status, 200);
+    assert.equal(result.data.post.provenance.propertySale.details.address, 'PRIVATE_PROPERTY_ADDRESS');
+    assert.equal(result.data.post.provenance.propertySale.requestId, 'editor-receipt');
+  });
+  await check('approved sale details retain the listing without private address or approval receipts', async () => {
+    const now = new Date().toISOString();
+    post.provenance.propertySale = { schemaVersion: 1, version: 1, updatedAt: now, confirmedAt: now,
+      updatedBy: 'PRIVATE_SALE_ACTOR', requestId: 'PRIVATE_SALE_RECEIPT',
+      details: { ...propertySale.emptyPropertySale(), currentlyForSale: true, publicationPermission: true,
+        listingUrl: 'https://listing.test/home', askingPrice: '41000000', address: 'PRIVATE_PROPERTY_ADDRESS' } };
+    session = null;
+    const responses = [await publicReader('story'), (await publicApi({}, { params: { slug: 'story' } })).data];
+    for (const response of responses) {
+      assert.equal(response.project.propertySale.listing.listingUrl, 'https://listing.test/home');
+      assert.equal(response.project.propertySale.listing.askingPrice, '41000000');
+      assert.equal(response.project.propertySale.address, null);
+      for (const secret of ['PRIVATE_SALE_ACTOR', 'PRIVATE_SALE_RECEIPT', 'PRIVATE_PROPERTY_ADDRESS'])
+        assert.ok(!JSON.stringify(response).includes(secret), `Approved response leaked ${secret}`);
+    }
+  });
   await check('public loader strips Spotlight drafts and durable identities from serialized provenance', async () => {
     post.provenance = { interview: {
       spotlightDrafts: { proposal: { answer: 'PRIVATE_DRAFT_TEXT' } },

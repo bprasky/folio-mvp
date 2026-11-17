@@ -152,6 +152,7 @@ export async function GET(
         city: project.city,
         regionState: project.regionState,
         projectType: project.projectType,
+        propertySale: project.propertySale,
       },
       heroImage: heroImage ? {
         id: heroImage.id,
