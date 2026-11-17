@@ -1,3 +1,4 @@
+import { PROPERTY_SALE_INTERVIEW_DIRECTION } from '@/lib/property-sale/schema';
 import Anthropic from '@anthropic-ai/sdk';
 import { zodOutputFormat } from '@anthropic-ai/sdk/helpers/zod';
 import { MODEL_FOR } from '@/lib/ai/models';
@@ -372,6 +373,7 @@ export function hasOneGuidedQuestion(text: string, reaction?: string): boolean {
 export function guidedDecisionContext(session: GuidedSession, parent: GuidedQuestion, turn: GuidedTurn) {
   const eligible = eligiblePreparedQuestions(session);
   return {
+    ...(session.currentlyForSale ? { propertyStoryPurpose: PROPERTY_SALE_INTERVIEW_DIRECTION } : {}),
     scope: parent.roomId ? 'room' : 'project', category: parent.category,
     question: parent.text, currentAnswer: { id: turn.id, text: turn.text, kind: turn.kind },
     currentRoomId: parent.roomId, rooms: session.rooms.map(room => ({ id: room.id, name: room.name })),

@@ -60,7 +60,8 @@ export function createGuidedSession(projectId: string, preparation: GuidedPrepar
       throw new GuidedConflict('INCOMPLETE_PLAN', 'The prepared project questions are incomplete.', 422);
   }
   const session: GuidedSession = {
-    id: randomUUID(), schemaVersion: 1, projectId, version: 1, status: 'active', phase: 'project',
+    id: randomUUID(), schemaVersion: 1, projectId, version: 1,
+    ...(preparation.currentlyForSale ? { currentlyForSale: true } : {}), status: 'active', phase: 'project',
     ...(startCommand?.conversationStyle === 'podcast' ? { conversationStyle: 'podcast' as const } : {}),
     ...(startCommand?.roomCheckpoints ? { roomCheckpoints: true } : {}),
     plan: preparation.questions.map(q => ({ ...q, status: 'pending' })), rooms: preparation.rooms,

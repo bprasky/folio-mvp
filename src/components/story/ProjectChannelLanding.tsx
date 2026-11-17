@@ -1,3 +1,5 @@
+import { PropertySaleSection } from '@/components/property-sale/PropertySaleSection';
+import type { PublicPropertySale } from '@/lib/property-sale/schema';
 import Link from 'next/link';
 import { ProjectChannelHeroPhotos } from './ProjectChannelHeroPhotos';
 import { ProjectChannelMosaic } from './ProjectChannelMosaic';
@@ -13,7 +15,7 @@ export type ProjectChannelPost = {
   slug?: string; status?: string; excerpt?: string | null; heroAssetId?: string | null;
   credits?: Credit[];
   expandedBlocks?: { headline?: string | null; lead?: { title?: string | null }; credits?: Credit[] };
-  project: { title: string; description?: string | null; city?: string | null; regionState?: string | null; portfolioCoverImageId?: string | null;
+  project: { propertySale?: PublicPropertySale | null; title: string; description?: string | null; city?: string | null; regionState?: string | null; portfolioCoverImageId?: string | null;
     images: PublicImage[]; designer?: { name?: string | null; studio?: string | null } | null; designerOrg?: { name?: string | null } | null };
 };
 
@@ -90,6 +92,7 @@ export function ProjectChannelLanding({ post, media = [], ownerView = false, sea
         </div>
         {(post.project.city || post.project.regionState) && <p className={styles.location}>{[post.project.city, post.project.regionState].filter(Boolean).join(', ')}</p>}
       </>} />
+    <PropertySaleSection sale={post.project.propertySale} />
     <section id="project-mosaic" className="scroll-mt-20">
       <ProjectChannelMosaic tiles={tiles} ownerView={ownerView} projectTitle={post.project.title} />
     </section>

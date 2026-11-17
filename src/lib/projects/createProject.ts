@@ -1,3 +1,4 @@
+import { emptyPropertySale, readPropertySale } from '@/lib/property-sale/schema';
 import { isDeepStrictEqual } from 'node:util';
 import { prisma } from '@/lib/prisma';
 import { requestIdentity } from '@/lib/persistence/requestIdentity';
@@ -24,9 +25,10 @@ export async function createProjectOnce(userId: string, orgId: string, requestId
     status: input.projectStatus === 'completed_project' ? 'active' : 'draft',
   };
   const replay = async () => {
-    const saved = await prisma.project.findUnique({ where: { id }, include: { post: { select: { credits: true } } } });
+    const saved = await prisma.project.findUnique({ where: { id }, include: { post: { select: { credits: true, provenance: true } } } });
     if (!saved) return null;
     if (!Object.entries(data).every(([key, value]) => saved[key as keyof typeof data] === value)
+      || (readPropertySale(saved.post?.provenance)?.details.currentlyForSale ?? false) !== (input.currentlyForSale ?? false)
       || !isDeepStrictEqual(saved.post?.credits ?? [], input.credits ?? [])) throw new CreationConflict(id);
     return { id, replayed: true };
   };
@@ -36,8 +38,11 @@ export async function createProjectOnce(userId: string, orgId: string, requestId
     await prisma.$transaction(async tx => {
       await tx.project.create({ data: { id, ...data, isPublic: false, publishedAt: null,
         isAIEnabled: false, views: 0, saves: 0, shares: 0 } });
-      if (input.credits?.length) await tx.projectPost.create({ data: {
-        projectId: id, slug: makeSlug(input.title, id), status: 'DRAFT', credits: input.credits,
+      if (input.credits?.length || input.currentlyForSale) await tx.projectPost.create({ data: {
+        projectId: id, slug: makeSlug(input.title, id), status: 'DRAFT', credits: input.credits ?? [],
+        ...(input.currentlyForSale ? { provenance: { propertySale: { schemaVersion: 1, version: 1,
+          updatedAt: new Date().toISOString(), confirmedAt: null, updatedBy: userId, requestId,
+          details: { ...emptyPropertySale(), currentlyForSale: true } } } } : {}),
       } });
     });
     return { id, replayed: false };

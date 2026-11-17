@@ -83,6 +83,7 @@ export interface GuidedSession {
   schemaVersion: 1;
   projectId: string;
   conversationStyle?: 'podcast';
+  currentlyForSale?: boolean;
   roomCheckpoints?: boolean;
   skippedRoomCheckpoints?: string[];
   /** Present after an explicit reset, also invalidates older unbound local drafts. */
@@ -106,6 +107,7 @@ export interface GuidedSession {
 }
 
 export interface GuidedPreparation {
+  currentlyForSale?: boolean;
   questions: GuidedQuestion[];
   rooms: GuidedRoom[];
   contextFingerprint: string;

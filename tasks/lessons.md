@@ -1315,3 +1315,7 @@ The founder corrected the proposed small-model follow-up: a reaction that invite
 ## 2026-11-16 — Invite a specific omission at room boundaries
 
 The founder rejected “Add something” because it gives no direction. Ask “Did we miss anything you wanted to mention about this room?” and let the designer name the missing topic. Keep a direct Continue button; no required negative answer. This invitation is a separate optional turn with an enabled composer, unlike the non-interactive quick reaction. A complete volunteered explanation does not require another question.
+
+### Property sale flow — 2026-11-16
+- Review new public features inside the actual branded page, with the production typefaces and photography. An isolated functional fixture is not evidence of visual quality.
+- Treat the actual property listing as the source and primary action: require its URL before publicly offering a home for sale; put the listing action beside the price. Keep private interview intent separate.

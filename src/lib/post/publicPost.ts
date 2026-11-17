@@ -1,3 +1,4 @@
+import { publicPropertySale } from '@/lib/property-sale/schema';
 import { readPresentation } from '@/lib/story/presentation';
 import { isPubliclyDisplayable, resolveProductImage } from '@/lib/products/imageProvenance';
 
@@ -53,7 +54,7 @@ export function publicPost(post: any) {
     ...pick(post, ['id', 'projectId', 'slug', 'status', 'variant', 'excerpt', 'keywords', 'publishedAt']),
     heroAssetId: imageIds.has(post.heroAssetId) ? post.heroAssetId : null,
     credits: credits(post.credits),
-    project,
+    project: { ...project, propertySale: publicPropertySale(post.provenance) },
     expandedBlocks: {
       presentation: readPresentation(blocks.presentation),
       headline: text(blocks.headline),

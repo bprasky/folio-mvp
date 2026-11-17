@@ -58,6 +58,7 @@ export const CanonicalCreateSchema = z.object({
   regionState: z.string().optional().nullable(), // ← optional for now
   description: z.string().optional().nullable(),
   timeline: z.enum(['PAST', 'PRESENT', 'FUTURE']).optional().nullable(), // project timeline orientation
+  currentlyForSale: z.boolean().optional(),
   ...CompletionDateFields,
   credits: z.array(CreditSchema).optional(),     // ← credits for ProjectPost
 }).superRefine(validateCompletionDate);
@@ -72,6 +73,7 @@ const LegacySchema = z.object({
   images: z.any().optional(),                 // ignored by create API
   credits: z.array(CreditSchema).optional(),  // ← credits for ProjectPost
   detailsCore: z.any().optional(),            // advanced details from form
+  currentlyForSale: z.boolean().optional(),
   ...CompletionDateFields,
   // no stage/budget/city/region in legacy
 }).superRefine(validateCompletionDate);
@@ -113,6 +115,7 @@ export function normalizeCreatePayload(raw: unknown) {
 
     const candidate: any = {
       title: l.name,
+      currentlyForSale: l.currentlyForSale,
       projectStatus: l.projectStatus,
       description: l.description ?? null,
       clientType,

@@ -1,3 +1,4 @@
+import { readPropertySale, PROPERTY_SALE_OPENING } from '@/lib/property-sale/schema';
 import { assertLegacyInterviewAllowed } from '@/lib/spotlight/legacyBoundary';
 import {
   toInterviewQuestion,
@@ -154,6 +155,7 @@ async function buildProjectGroup(
       regionState: true,
       projectType: true,
       clientType: true,
+      post: { select: { provenance: true } },
       designer: { select: { name: true, studio: true } },
       // Org-posted projects carry designerOrg (set from the operating org at
       // creation). The interview byline belongs to the brand being published,
@@ -196,6 +198,7 @@ async function buildProjectGroup(
         materialPalette: context.materialThemes,
         contextLevel: context.level,
         respondentRole: 'DESIGNER',
+        currentlyForSale: readPropertySale(projectMeta?.post?.provenance)?.details.currentlyForSale ?? false,
       });
       projectGenQuestions = result.questions;
     }
@@ -205,6 +208,11 @@ async function buildProjectGroup(
 
   if (projectGenQuestions.length === 0) {
     projectGenQuestions = buildFallbackProjectQuestions(context.level);
+  }
+
+  if (readPropertySale(projectMeta?.post?.provenance)?.details.currentlyForSale) {
+    const signature = projectGenQuestions.find(q => q.topic === 'project_signature_identity' || q.id.startsWith('project-SIGNATURE_IDENTITY-'));
+    if (signature) projectGenQuestions = [{ ...signature, text: PROPERTY_SALE_OPENING }, ...projectGenQuestions.filter(q => q !== signature)];
   }
 
   const projectInterviewQuestions: InterviewQuestion[] = projectGenQuestions.map((q) => {

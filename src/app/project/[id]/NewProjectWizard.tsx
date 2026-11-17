@@ -1,13 +1,15 @@
 'use client';
 
+import { PropertySaleEditor } from '@/components/property-sale/PropertySaleEditor';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { ProjectGuideUploads } from '@/components/interviews/ProjectGuideUploads';
 
 /** Empty completed projects enter the same room workspace as the short create form. */
-export default function NewProjectWizard({ project, canScrape }: {
+export default function NewProjectWizard({ project, canScrape, canPublish }: {
   project: { id: string; title: string };
   canScrape: boolean;
+  canPublish: boolean;
 }) {
   const router = useRouter();
   const search = useSearchParams();
@@ -19,6 +21,7 @@ export default function NewProjectWizard({ project, canScrape }: {
         <h1 className="font-headline text-folio-h2">{project.title}</h1>
         <p className="mt-3 folio-body text-folio-text-secondary">Add your photos, then organize them into rooms.</p>
       </header>
+      <PropertySaleEditor projectId={project.id} canPublish={canPublish} />
       <ProjectGuideUploads
         projectId={project.id}
         canImport={canScrape}
