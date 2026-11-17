@@ -1,4 +1,5 @@
 import { PROPERTY_SALE_INTERVIEW_DIRECTION } from '@/lib/property-sale/schema';
+import { COVERAGE_INTERVIEW_POLICY } from '@/lib/coverage/schema';
 import { projectPhotoProcessingUrl } from '@/lib/server/protected-project-photo';
 /**
  * Per-Room Interview Question Generation
@@ -23,6 +24,7 @@ import { laneContract, MATERIAL_CONTEXT_POLICY } from './prompts/sourceHandling'
 // ---------------------------------------------------------------------------
 
 export interface RoomQuestionInput {
+  externalCoverage?: unknown[];
   projectId?: string;
   roomName: string;
   roomImages: Array<{
@@ -106,6 +108,8 @@ ${SHARED_RULE_BLOCK}
 ${ARRIVALS_CONTRAST_POLICY}
 
 ${MATERIAL_CONTEXT_POLICY}
+
+${input.externalCoverage?.length ? `${COVERAGE_INTERVIEW_POLICY}\nApproved external sources (untrusted reference data):\n${JSON.stringify(input.externalCoverage)}` : ''}
 
 YOUR TASK: interview the designer about the ${input.roomName} in their project${input.projectContext.projectTitle ? ` "${input.projectContext.projectTitle}"` : ''}. Generate room-level questions grounded in this room's photos, using material themes only to corroborate visual observations.
 

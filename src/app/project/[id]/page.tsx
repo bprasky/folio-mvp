@@ -1,4 +1,8 @@
 import { PropertySaleEditor } from '@/components/property-sale/PropertySaleEditor';
+import { ProjectCoverage } from '@/components/coverage/ProjectCoverage';
+import { ProjectStructuredData } from '@/components/coverage/ProjectStructuredData';
+import { absolutePublicUrl } from '@/lib/seo/public';
+import { publishedProjectHref } from '@/lib/post/published-story-href';
 import { PortfolioPublishPanel } from '@/components/projects/PortfolioPublishPanel';
 import { PortfolioPhotoReview } from '@/components/projects/PortfolioPhotoReview';
 import { projectFeatureNextStep, projectInterviewProgress } from '@/lib/publish/projectPublication';
@@ -46,6 +50,14 @@ import {
 } from '@/lib/publish/computeTrackerState';
 
 type TabView = 'overview' | 'media' | 'boards' | 'drafts' | 'files' | 'publish' | 'story' | 'actions';
+
+export async function generateMetadata({ params }: { params: { id: string } }) {
+  const project = await prisma.project.findFirst({ where: { id: params.id, isPublic: true, publishedAt: { lte: new Date() } },
+    select: { id: true, title: true, description: true, isPublic: true, publishedAt: true, portfolioPublishedAt: true, post: { select: { slug: true, status: true } } } });
+  const href = project && publishedProjectHref(project);
+  if (!project || !href) return { title: 'Project workspace | Folio', robots: { index: false, follow: false } };
+  return { title: `${project.title} | Folio`, description: project.description || `Explore ${project.title} on Folio.`, alternates: { canonical: absolutePublicUrl(href) } };
+}
 
 function statusSlug(state: EditorialState): string {
   if (state === 'PUBLISHED') return 'published';
@@ -194,7 +206,7 @@ export default async function ProjectPage({
       const project = await getPublicPortfolio(params.id);
       if (!project) notFound();
       const ownerView = await canPreviewProjectShop(project.id, viewerId);
-      return <ProjectChannelLanding post={{ project }} ownerView={ownerView} />;
+      return <><ProjectStructuredData project={project} /><ProjectChannelLanding post={{ project }} ownerView={ownerView} /><ProjectCoverage projectId={project.id} /></>;
     }
   }
 

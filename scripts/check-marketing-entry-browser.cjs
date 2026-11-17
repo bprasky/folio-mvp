@@ -144,6 +144,8 @@ async function main() {
       return json({id:'fixture-run'});
     }
     if(u.pathname==='/api/onboarding/workspace/fixture-run')return json(importedReview);
+    if(u.pathname==='/api/onboarding/workspace/fixture-run/publish')return json({profileHref:'/org/fixture-firm',projects:[]});
+    if(u.pathname==='/api/coverage')return json({items:[],projects:[],found:0});
     if(u.pathname==='/api/onboarding/firm/search')return json({results:u.searchParams.get('q')?.startsWith('Existing')?[{id:'existing',name:'Existing Studio',type:'DESIGN_FIRM',location:null}]:[]});
     if(u.pathname==='/api/orgs/existing/join')return json({notifications:{inApp:true,email:'sent'}});
     if(u.pathname==='/api/auth/org-setup'){

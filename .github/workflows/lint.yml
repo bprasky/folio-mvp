@@ -118,6 +118,15 @@ jobs:
       - run: npx prisma generate
       - run: npm run test:core
       - run: npm run test:property-sale
+      - name: Coverage discovery and imported-photo publication
+        run: npm run test:coverage
+      - name: Bulk import approval and coverage review in Chromium
+        run: GUIDED_TEST_BROWSER="$(command -v google-chrome || command -v chromium)" node scripts/check-coverage-browser.cjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: coverage-review-screenshots
+          path: .tmp/coverage-browser/*.png
       - name: Photo portfolio publication and feature privacy
         run: node --import tsx --test scripts/core/portfolio-publish.test.cjs
       - name: Profile approval entry and Studio publication boundaries
@@ -292,4 +301,3 @@ jobs:
           NODE_OPTIONS: --max-old-space-size=4096
           TYPESCRIPT_BUDGET_BASE_REF: ${{ github.event.pull_request.base.sha || github.event.before || 'origin/main' }}
         run: npm run typecheck
-

@@ -45,6 +45,7 @@ export async function POST(
     }
 
     let tagsToProcess: PendingProductTag[];
+    if (importSession.id.startsWith('coverage-')) return NextResponse.json({ error: 'Manage coverage from your profile.' }, { status: 409 });
     if (isWorkspaceImport(importSession.processingMeta)) return NextResponse.json({ error: 'Manage this import from your workspace.' }, { status: 409 });
 
     switch (action) {

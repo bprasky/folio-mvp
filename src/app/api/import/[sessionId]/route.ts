@@ -38,6 +38,8 @@ export async function GET(
       return NextResponse.json({ error: 'Session not found' }, { status: 404 });
     }
 
+    if (importSession.id.startsWith('coverage-')) return NextResponse.json({ error: 'Manage coverage from your profile.' }, { status: 409 });
+
     if (isWorkspaceImport(importSession.processingMeta)) return NextResponse.json({ error: 'Open this import in your workspace.', href: `/onboarding/workspace?import=${sessionId}` }, { status: 409 });
     // Get status breakdown
     const statusCounts = await prisma.pendingProductTag.groupBy({
@@ -95,6 +97,8 @@ export async function DELETE(
       return NextResponse.json({ error: 'Session not found' }, { status: 404 });
     }
 
+    if (importSession.id.startsWith('coverage-')) return NextResponse.json({ error: 'Manage coverage from your profile.' }, { status: 409 });
+
     if (isWorkspaceImport(importSession.processingMeta)) return NextResponse.json({ error: 'Manage this import from your workspace.' }, { status: 409 });
     // Delete session (pending tags will cascade delete)
     await prisma.importSession.delete({
@@ -142,6 +146,8 @@ export async function PATCH(
     if (!importSession) {
       return NextResponse.json({ error: 'Session not found' }, { status: 404 });
     }
+
+    if (importSession.id.startsWith('coverage-')) return NextResponse.json({ error: 'Manage coverage from your profile.' }, { status: 409 });
 
     if (isWorkspaceImport(importSession.processingMeta)) return NextResponse.json({ error: 'Manage this import from your workspace.' }, { status: 409 });
     const updateData: { status?: string; projectId?: string; completedAt?: Date } = {};

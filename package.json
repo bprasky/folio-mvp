@@ -6,6 +6,7 @@
     "node": ">=18.0.0"
   },
   "scripts": {
+    "test:coverage": "node --import tsx scripts/check-coverage.cjs && node --import tsx scripts/check-import-publication.cjs && node scripts/check-coverage-ssr.cjs && node scripts/check-coverage-browser.cjs --build-only",
     "test:editorial-styling": "node scripts/check-editorial-styling-browser.cjs",
     "test:project-channels": "node --import tsx scripts/check-project-channel.cjs && node scripts/check-project-channel-routes.cjs && node --import tsx scripts/check-channel-public-feeds.cjs && node scripts/check-project-channel-og.cjs && node scripts/check-editorial-channel-boundaries.cjs && node scripts/check-public-module-feed-visibility.cjs",
     "test:project-channels:browser": "node scripts/check-project-channel-browser.cjs",

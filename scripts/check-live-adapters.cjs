@@ -15,6 +15,7 @@ let guided, spotlight, expertise, story, latestBio = null, routeActor = 'owner';
 const env = { NEXT_PUBLIC_FLAG_GUIDED_INTERVIEW: '1' };
 const q = id => ({ id, text: `Exact question ${id}?`, sourceImageIds: [] });
 const mocks = {
+  '@/lib/coverage/service': { getPersonalCoverageInterviewContext: async () => [] },
   'server-only': {}, 'next/cache': { revalidatePath: path => calls.push(['revalidate', path]) },
   'next/server': { NextResponse: { json: (body, init) => ({ status: init?.status || 200, json: async () => body }) } },
   'next-auth': { getServerSession: async () => ({ user: { id: routeActor } }) },

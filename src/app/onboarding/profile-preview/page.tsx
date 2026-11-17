@@ -1,3 +1,4 @@
+import { CoverageManager } from '@/components/coverage/CoverageManager';
 import { redirect } from 'next/navigation';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/app/api/auth/[...nextauth]/options';
@@ -90,6 +91,7 @@ export default async function ProfilePreviewPage() {
           )}
         </div>
 
+        <CoverageManager scope={{ type: 'person', id: user.id }} />
         <ProfilePreviewActions
           alreadyCompleted={!!user.onboardingProfilePreviewAt}
           canPublishProjects={canPublishProjects}

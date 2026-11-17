@@ -40,6 +40,8 @@ export async function GET(
       return NextResponse.json({ error: 'Session not found' }, { status: 404 });
     }
 
+    if (importSession.id.startsWith('coverage-')) return NextResponse.json({ error: 'Manage coverage from your profile.' }, { status: 409 });
+
     const where: {
       importSessionId: string;
       status?: PendingTagStatus;

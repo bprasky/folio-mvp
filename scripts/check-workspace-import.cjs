@@ -46,6 +46,7 @@ function load(file) {
     require(name) {
       if (name.endsWith('.module.css')) return { __esModule: true, default: new Proxy({}, { get: (_, key) => String(key) }) };
       if (name.startsWith('.')) name = '@/' + path.relative(path.resolve('src'), path.resolve(path.dirname(file), name)).replaceAll('\\', '/');
+      if (name === '@/lib/coverage/service') return { getCoverageInterviewContext: async () => [] };
       if (name === '@/lib/prisma') return { prisma: facade };
       if (name === 'server-only') return {};
       if (name === '@/lib/spotlight/legacyBoundary') return { assertLegacyInterviewAllowed: () => {} };

@@ -1,3 +1,7 @@
+import { getOrgProfileFeed } from '@/lib/profile/org-feed';
+import { CoverageManager } from '@/components/coverage/CoverageManager';
+import { ProfileDetails } from '@/components/profile/ProfileDetails';
+import { profileMetadata, identityStructuredData, serializeJsonLd } from '@/lib/seo/public';
 import { Suspense } from 'react';
 import { notFound, redirect } from 'next/navigation';
 import { prisma } from '@/lib/prisma';
@@ -38,17 +42,14 @@ export async function generateMetadata({ params }: Props) {
   try {
     const org = await prisma.organization.findUnique({
       where: { id: resolvedParams.orgId },
-      select: { name: true, description: true },
+      select: { id: true, name: true, description: true, logo: true, location: true, website: true, specialties: true },
     });
 
     if (!org) {
       return { title: 'Organization Not Found | Folio' };
     }
 
-    return {
-      title: `${org.name} | Folio`,
-      description: org.description || `${org.name}'s professional profile on Folio`,
-    };
+    return profileMetadata({ ...org, kind: 'Organization', image: org.logo });
   } catch (err) {
     console.error('[OrgProfilePage] Error generating metadata:', err);
     return { title: 'Organization | Folio' };
@@ -180,7 +181,7 @@ export default async function OrgProfilePage({ params, searchParams }: Props) {
   let recognition: any[] = [];
   try {
     recognition = await (prisma as any).orgRecognition?.findMany?.({
-      where: { organizationId: resolvedParams.orgId },
+      where: { organizationId: resolvedParams.orgId, publishedAt: { lte: new Date() } },
       orderBy: { date: 'desc' },
     }) || [];
   } catch {
@@ -380,7 +381,8 @@ export default async function OrgProfilePage({ params, searchParams }: Props) {
   }
 
   // Default to About tab when no published projects (empty profile is a dead end on Feed)
-  const defaultTab = projectCount === 0 ? 'about' : 'feed';
+  const initialItems = await getOrgProfileFeed(resolvedParams.orgId, resolvedSearchParams.filter || 'all', resolvedSearchParams.sort || 'featured');
+  const defaultTab = projectCount === 0 && initialItems.length === 0 ? 'about' : 'feed';
   const activeTab = resolvedSearchParams.tab || defaultTab;
   const activeFilter = resolvedSearchParams.filter || 'all';
   const activeSort = resolvedSearchParams.sort || 'featured';
@@ -397,6 +399,7 @@ export default async function OrgProfilePage({ params, searchParams }: Props) {
 
   return (
     <div className={`min-h-screen ${styles.page}`} style={profilePageStyle(profileData.appearance.backgroundColor)}>
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: serializeJsonLd(identityStructuredData({ ...org, kind: 'Organization', image: org.logo })) }} />
       <OrgProfileHero
         org={orgData}
         projectCount={projectCount}
@@ -417,6 +420,8 @@ export default async function OrgProfilePage({ params, searchParams }: Props) {
 
       {pinnedItems.length > 0 && <PinnedCarousel items={pinnedItems} />}
 
+      {activeTab !== 'about' && <ProfileDetails organization name={org.name} description={org.description} philosophy={org.philosophy} location={org.location} website={org.website} specialties={org.specialties} services={org.services} serviceRegions={org.serviceRegions} />}
+      {isAdmin && !isVendorOrg && <div className="max-w-6xl mx-auto px-6"><CoverageManager scope={{ type: 'organization', id: org.id }} /></div>}
       <div id="profile-content" className="scroll-mt-20">
       <OrgProfileTabs activeTab={activeTab} orgId={resolvedParams.orgId} defaultTab={defaultTab} orgType={org.type} isMember={isMember} />
 
@@ -440,6 +445,7 @@ export default async function OrgProfilePage({ params, searchParams }: Props) {
         {!isVendorOrg && activeTab === 'feed' && (
           <Suspense fallback={<FeedSkeleton />}>
             <OrgProfileFeed
+              initialItems={initialItems}
               orgId={resolvedParams.orgId}
               initialFilter={activeFilter}
               initialSort={activeSort}

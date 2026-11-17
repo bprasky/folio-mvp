@@ -11,8 +11,8 @@ interface FeedItem {
   id: string;
   type: 'project' | 'media' | 'recognition' | 'collaboration';
   data: any;
-  publishedAt?: string;
-  pinnedAt?: string;
+  publishedAt?: string | null;
+  pinnedAt?: string | null;
   engagement?: number;
 }
 
@@ -24,6 +24,7 @@ interface SetupState {
 }
 
 interface OrgProfileFeedProps {
+  initialItems?: FeedItem[];
   orgId: string;
   initialFilter: string;
   initialSort: string;
@@ -34,6 +35,7 @@ interface OrgProfileFeedProps {
 }
 
 export default function OrgProfileFeed({
+  initialItems,
   orgId,
   initialFilter,
   initialSort,
@@ -42,8 +44,8 @@ export default function OrgProfileFeed({
   projectCount = 0,
   setupState,
 }: OrgProfileFeedProps) {
-  const [items, setItems] = useState<FeedItem[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [items, setItems] = useState<FeedItem[]>(initialItems || []);
+  const [loading, setLoading] = useState(!initialItems);
   const [error, setError] = useState('');
   const [attempt, setAttempt] = useState(0);
   const [filter, setFilter] = useState(initialFilter);
@@ -52,6 +54,9 @@ export default function OrgProfileFeed({
   const [inviteModalOpen, setInviteModalOpen] = useState(false);
 
   useEffect(() => {
+    if (initialItems && filter === initialFilter && sort === initialSort && attempt === 0) {
+      setItems(initialItems); setLoading(false); setError(''); return;
+    }
     let cancelled = false;
     async function loadFeed() {
       setLoading(true);
@@ -73,7 +78,7 @@ export default function OrgProfileFeed({
     }
     loadFeed();
     return () => { cancelled = true; };
-  }, [orgId, filter, sort, attempt]);
+  }, [orgId, filter, sort, attempt, initialItems, initialFilter, initialSort]);
 
   // Update filter/sort from URL changes
   useEffect(() => {

@@ -1,4 +1,7 @@
 import { PropertySaleSection } from '@/components/property-sale/PropertySaleSection';
+import { ProjectCoverage } from '@/components/coverage/ProjectCoverage';
+import { ProjectStructuredData } from '@/components/coverage/ProjectStructuredData';
+import { absolutePublicUrl } from '@/lib/seo/public';
 import { notFound, redirect } from "next/navigation";
 import { Suspense } from "react";
 import { Metadata } from "next";
@@ -44,7 +47,8 @@ export async function generateMetadata({
       const title = `${portfolio.title} | Folio`;
       const description = portfolio.description || 'A photographic project on Folio.';
       const cover = portfolio.images.find(image => image.id === portfolio.portfolioCoverImageId) || portfolio.images[0];
-      return { title, description, openGraph: { title, description, images: cover ? [{ url: cover.url }] : [] } };
+      const url = absolutePublicUrl(`/project/${encodeURIComponent(portfolio.id)}?view=public`);
+      return { title, description, alternates: { canonical: url }, openGraph: { title, description, url, images: cover ? [{ url: cover.url }] : [] } };
     }
     return {
       title: "Project Not Found | Folio",
@@ -99,7 +103,7 @@ export default async function PostPage({
     if (project) {
       const session = await getServerSession(authOptions);
       const ownerView = await canPreviewProjectShop(project.id, session?.user?.id);
-      return <ProjectChannelLanding post={{ project }} ownerView={ownerView} />;
+      return <><ProjectStructuredData project={project} /><ProjectChannelLanding post={{ project }} ownerView={ownerView} /><ProjectCoverage projectId={project.id} /></>;
     }
     notFound();
   }
@@ -117,9 +121,10 @@ export default async function PostPage({
     const media: ChannelTile[] = modules.map(module => ({ id: module.id, kind: 'media', title: module.title || 'Project media',
       imageUrl: module.thumbnail, href: module.href, pinned: module.pinned || module.isPrimary, unoptimized: true }));
     return <><Suspense><ProjectChannelShareTracking projectId={post.project.id} slug={post.slug} /></Suspense>
-      <ProjectChannelLanding post={post} media={media} ownerView={ownerView} searchParams={searchParams} /></>;
+      <ProjectStructuredData project={post.project} slug={post.slug} />
+      <ProjectChannelLanding post={post} media={media} ownerView={ownerView} searchParams={searchParams} /><ProjectCoverage projectId={post.project.id} /></>;
   }
 
-  return <><PropertySaleSection sale={post.project.propertySale} /><Suspense><StoryRenderer post={post} /></Suspense></>;
+  return <><ProjectStructuredData project={post.project} slug={post.slug} excerpt={post.excerpt} publishedAt={post.publishedAt} article /><PropertySaleSection sale={post.project.propertySale} /><Suspense><StoryRenderer post={post} /></Suspense><ProjectCoverage projectId={post.project.id} /></>;
 }
 

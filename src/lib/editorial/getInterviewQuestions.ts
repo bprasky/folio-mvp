@@ -184,7 +184,7 @@ async function buildProjectGroup(
   try {
     if (!projectGenQuestions.length) {
       const locationParts = [projectMeta?.city, projectMeta?.regionState].filter(Boolean);
-      const result = await generateProjectQuestions({ projectId,
+      const result = await generateProjectQuestions({ projectId, externalCoverage: await getCoverageInterviewContext(projectId),
         projectTitle: context.projectTitle,
         projectDescription: context.projectDescription,
         designerName: brandIdentity,
@@ -687,3 +687,4 @@ export async function getInterviewQuestionsGroupedByRoom(
     projectSize: context.projectSize,
   };
 }
+import { getCoverageInterviewContext } from '@/lib/coverage/service';

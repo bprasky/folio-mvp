@@ -1635,3 +1635,17 @@ Authorized release — 2026-11-17: the founder explicitly approved push, merge a
 - [x] Check responsive geometry, images and signup behavior with the marketing browser checks.
 
 Review: The marketing browser suite passed all 24 layout and enrollment checks with synthetic sessions. At 320, 390, 768, 1024 and 1440 pixels the About page fits the viewport, all five local photographs decode, and the two article actions lead into professional enrollment. Both Folio themes were checked. Scoped ESLint and the professional-entry and firm-enrollment regressions passed.
+# Media discovery and search-readable publishing — 2026-11-17
+
+- [x] Audit public profiles, feed delivery, coverage models, interview context and crawl routes.
+- [x] Define one reviewable coverage record and explicit public/private projections.
+- [x] Implement discovery, review, withdrawal and profile/project incorporation.
+- [x] Feed approved readable sources into question preparation without changing answer provenance.
+- [x] Deliver server-rendered feeds, identity metadata, useful profile details and sitemap/robots.
+- [ ] Verify source/permission boundaries, SSR, responsive review and required repository checks.
+- [ ] Publish a scoped review branch with findings and remaining activation limits.
+
+Plan: `docs/MEDIA_DISCOVERY_AND_SEARCH.md`. Isolated source snapshot of main ed5d2355; other worktrees remain untouched. Reuse existing import review storage and AI/search transport. No schema migration, production data changes or automatic invitations.
+
+
+Media discovery checkpoint: bulk imported-photo approval and per-project partial-result recovery implemented. Background media sweep suggests project links for owner confirmation; checked interview consent reads accessible text during approval. Coverage security, import publication, portfolio, workspace, guided interview, live adapter, profile publication, public-channel and organization tests pass. Actual server-rendered profile feed anchors and disclosures pass. Browser UI bundle passes; interactive review and full hosted compile remain pending. Local Windows build fails creating .next output directories (EPERM); do not merge/deploy on this local result. No migrations or production data writes.

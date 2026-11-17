@@ -1,6 +1,8 @@
 'use client';
 
 import styles from '@/components/ui/WorkflowForms.module.css';
+import { ImportPhotoApproval } from '@/components/onboarding/ImportPhotoApproval';
+import { CoverageManager } from '@/components/coverage/CoverageManager';
 
 import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
@@ -24,7 +26,7 @@ const phaseLabels: Record<WorkspaceImport['phase'], string> = {
 };
 const counted = (count: number, noun: string) => `${count} ${noun}${count === 1 ? '' : 's'}`;
 
-function ProjectDrafts({ projects, canReview }: { projects: ImportedProject[]; canReview: boolean }) {
+function ProjectDrafts({ projects, canReview, publishedIds }: { projects: ImportedProject[]; canReview: boolean; publishedIds: string[] }) {
   if (!projects.length) return null;
   return <section className="space-y-4"><h2 className="folio-h3">Your projects</h2><p className="folio-meta text-folio-text-secondary">Saved privately for you to review, refine, and publish when you’re ready.</p>{projects.map(project => {
     const cover = project.photos.find(photo => photo.status === 'saved' && photo.savedUrl);
@@ -35,11 +37,11 @@ function ProjectDrafts({ projects, canReview }: { projects: ImportedProject[]; c
         // eslint-disable-next-line @next/next/no-img-element
         <img src={cover.savedUrl} alt={cover.alt || project.title} className="w-full h-48 object-cover rounded-lg" loading="lazy" />
       ) : null}
-      <div className="flex justify-between gap-3"><h3 className="folio-ui">{project.title}</h3><span className="folio-meta text-folio-text-secondary">Private</span></div>
+      <div className="flex justify-between gap-3"><h3 className="folio-ui">{project.title}</h3><span className="folio-meta text-folio-text-secondary">{project.projectId && publishedIds.includes(project.projectId) ? 'On your profile' : 'Private'}</span></div>
       <p className="folio-meta text-folio-text-secondary">{counted(project.photos.filter(photo => photo.status === 'saved').length, 'photograph')} saved · Add photos to your profile; interview later for a Folio Feature</p>
       {project.error ? <p className="folio-meta">{project.error}</p> : null}
       {failed ? <p className="folio-meta">{counted(failed, 'photograph')} could not be imported. Retry, or upload them in the project.</p> : null}
-      {project.projectId && canReview ? <Link href={`/project/${project.projectId}?publish=photos`} className="underline folio-ui">Review profile photographs</Link> : <p className="folio-meta">{project.status === 'failed' ? 'Retry this import to finish saving the project.' : 'Preparing this project…'}</p>}
+      {project.projectId && canReview ? <Link href={`/project/${project.projectId}?publish=photos`} className="underline folio-ui">{publishedIds.includes(project.projectId) ? 'Manage profile photographs' : 'Review profile photographs'}</Link> : <p className="folio-meta">{project.status === 'failed' ? 'Retry this import to finish saving the project.' : 'Preparing this project…'}</p>}
     </article>;
   })}</section>;
 }
@@ -146,6 +148,7 @@ export function WorkspaceImportClient({ access, memberships, initialId, availabl
   const showPreview = !!review?.canReview && !!(review.projects.length || run?.profile.description || run?.profile.logo || run?.profile.bio);
   return <ProfessionalSetupFrame stage="workspace" wide={showPreview}><div className="space-y-7">
     {showPreview && review?.profile && run ? <WorkspaceReadyPreview profile={review.profile} personName={run.personName}
+      publicationActions={<ImportPhotoApproval importId={review.id} onPublished={() => setRefresh(value => value + 1)} />}
       description={description} location={location} logo={useLogo ? run.profile.logo : review.business.logo} bio={bio} projects={review.projects} busy={busy} canContribute={review.access.canContribute}
       onReviewDetails={() => setDetailsOpen(true)} onOpenProject={(projectId, action) => void continueToFolio(`/project/${encodeURIComponent(projectId)}${action === 'open' ? '?publish=photos' : `?view=media&step=tags&action=${action === 'schedule' ? 'import-doc' : 'tag-by-hand'}`}`)} /> : <>
     <SetupProgress step={3} />
@@ -164,7 +167,7 @@ export function WorkspaceImportClient({ access, memberships, initialId, availabl
           <label className="import-choice"><input type="checkbox" className="mt-1" checked={sections.includes('bio')} onChange={() => toggle('bio')} /><span><strong className="folio-ui">Your bio</strong><span className="block folio-meta text-folio-text-secondary">We’ll look for your background on the site, using your name.</span></span></label>
           {access.canImportProjects ? <label className="import-choice"><input type="checkbox" className="mt-1" checked={sections.includes('projects')} onChange={() => toggle('projects')} /><span><strong className="folio-ui">Your projects</strong><span className="block folio-meta text-folio-text-secondary">Photographs and descriptions, ready to add to your public profile. Add rooms, materials and your interview later for a Folio Feature.</span></span></label> : null}
         </fieldset>
-        <p className="import-assurance folio-meta text-folio-text-secondary">Nothing is published automatically. Review your details and keep your projects private until you choose to publish.</p>
+        <p className="import-assurance folio-meta text-folio-text-secondary">When the import finishes, add the projects and photographs to your public profile with one confirmation. You can exclude anything first. We’ll also look for media coverage for you to review.</p>
         <label className="flex items-start gap-3 folio-meta"><input type="checkbox" className="mt-1" checked={consent} onChange={event => setConsent(event.target.checked)} required /><span>I’m authorized to use this content. Folio may read my website, privately save the selected text and images, and email me when it’s ready.</span></label>
         <button className={styles.primary} disabled={busy || !consent || !sections.length}>{busy ? 'Starting your import…' : 'Prepare my workspace'}</button>
         <p className="folio-meta text-folio-text-secondary import-footer">Leave it with us. We’ll email you when it’s ready to review.</p>
@@ -172,17 +175,19 @@ export function WorkspaceImportClient({ access, memberships, initialId, availabl
       </form>}
     </> : !review ? <p role="status">Loading your saved progress…</p> : <>
       <details open={!showPreview} className="folio-meta"><summary className="cursor-pointer">Import progress and results</summary><section className={`${card} mt-3`} aria-label="Import progress"><div role="status" aria-live="polite"><h2 className="folio-ui">{phaseLabels[review.run.phase]}</h2><p className="folio-meta text-folio-text-secondary mt-2">{counted(review.run.pages.filter(page => page.status === 'saved').length, 'page')} read · {counted(review.summary.projects, 'project')} · {counted(review.summary.photos, 'photograph')} saved</p></div>
-        <p className="folio-meta">{review.canReview ? 'Review the details below, then choose a project to continue.' : 'We’ll email you when preparation finishes. Your saved work stays available if part of the import needs attention.'}</p>
+        <p className="folio-meta">{review.canReview ? 'Confirm your photographs together, then review your media coverage. Interviews come next.' : 'We’ll email you when preparation finishes. Your saved work stays available if part of the import needs attention.'}</p>
         {run?.notification.status === 'accepted' ? <p className="folio-meta text-folio-text-secondary">Your readiness email has been sent.</p> : run?.notification.error ? <p className="folio-meta">{run.notification.error}</p> : null}
       </section>
-      {run ? <ProjectDrafts projects={run.projects} canReview={review.canReview} /> : null}
+      {run ? <ProjectDrafts projects={run.projects} canReview={review.canReview} publishedIds={review.projects.filter(project => project.isPublic).map(project => project.id)} /> : null}
       </details>
       {run && run.notices.length > 0 ? <section className={card}><h2 className="folio-ui">A few things to review</h2><ul className="list-disc pl-5 space-y-2 folio-meta">{run.notices.map(message => <li key={message}>{message}</li>)}</ul></section> : null}
       {review.canReview && run ? <>
+        {!showPreview && <ImportPhotoApproval importId={review.id} onPublished={() => setRefresh(value => value + 1)} />}
+        {review.access.canEditProfile && <CoverageManager scope={{ type: 'organization', id: access.id }} autoDiscover sweepId={review.id} />}
         {hasUnfinishedItems(run) && (run.retryCount || 0) < 3 ? <button type="button" className={styles.secondary} disabled={busy} onClick={() => apply({ action: 'retry' })}>Retry unfinished items</button> : null}
         {run.pages.some(page => page.status === 'failed') ? <section className={card}><h2 className="folio-ui">Pages we couldn’t read</h2><ul className="space-y-2 folio-meta">{run.pages.filter(page => page.status === 'failed').map(page => <li key={page.url} className="break-words"><a href={page.url} className="underline" target="_blank" rel="noreferrer">{page.url}</a><p>{page.error}</p></li>)}</ul></section> : null}
         <details id="profile-details" className="workspace-review-details" open={detailsOpen || !showPreview} onToggle={event => setDetailsOpen(event.currentTarget.open)}><summary>Review your profile details</summary><div className="workspace-review-details__body space-y-6">
-        <p className="folio-meta text-folio-text-secondary">This is your private preview. Save business details when you’re happy with them; projects stay private until you publish each one.</p>
+        <p className="folio-meta text-folio-text-secondary">This is your private preview. Save business details when you’re happy with them; confirm the selected photographs together to make them visible on your profile.</p>
         {run.sections.includes('business') && review.access.canEditProfile ? <section className={card}><h2 className="folio-h3">Review your business details</h2>
           <p className="folio-meta text-folio-text-secondary">Saving updates your business’s public profile. Your existing details remain until you save.</p>
           {run.profile.sourceUrl ? <a href={run.profile.sourceUrl} target="_blank" rel="noreferrer" className="folio-meta underline">View source page</a> : null}

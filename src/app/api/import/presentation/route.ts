@@ -55,6 +55,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Fetch files from Supabase storage
+    if (importSession.id.startsWith('coverage-')) return NextResponse.json({ error: 'Manage coverage from your profile.' }, { status: 409 });
     if (isWorkspaceImport(importSession.processingMeta)) return NextResponse.json({ error: 'Manage this import from your workspace.' }, { status: 409 });
     const { supabaseAdmin } = await import('@/lib/supabaseAdmin');
     const IMPORTS_BUCKET = 'imports'; // All import files: source presentations + extracted images
