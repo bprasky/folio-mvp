@@ -1,10 +1,20 @@
 {
-  "git": { "deploymentEnabled": false },
-  "regions": ["iad1"],
+  "git": {
+    "deploymentEnabled": false
+  },
+  "regions": [
+    "iad1"
+  ],
   "installCommand": "npm install --legacy-peer-deps",
-  "buildCommand": "prisma generate && node scripts/release-private-room-names.cjs && next build",
+  "buildCommand": "prisma generate && node scripts/diagnose-private-room-connection.cjs",
   "crons": [
-    { "path": "/api/cron/live-interviews", "schedule": "* * * * *" },
-    { "path": "/api/cron/workspace-imports", "schedule": "* * * * *" }
+    {
+      "path": "/api/cron/live-interviews",
+      "schedule": "* * * * *"
+    },
+    {
+      "path": "/api/cron/workspace-imports",
+      "schedule": "* * * * *"
+    }
   ]
 }
