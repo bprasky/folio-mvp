@@ -67,6 +67,7 @@ function load(file, mocks) {
     editorialDraft: { findMany: async () => [] }, instagramCampaign: { findMany: async () => [] }, instagramExport: { findMany: async () => [] },
   };
   const integrationImports = { 'server-only': {}, crypto: require('node:crypto'), '@prisma/client': { Prisma: {} },
+    '@/lib/publish/projectPublication': require('./studio-publication-test-import.cjs')('@/lib/publish/projectPublication'),
     '@/lib/prisma': { prisma: integratedDb }, '@/lib/permissions': { canAccessDesignerTools: () => true },
     './publication-history': { readPublicationHistory: async () => integrationHistory }, './history': pure,
     './publication-headlines': require('./studio-publication-test-import.cjs')('./publication-headlines'),

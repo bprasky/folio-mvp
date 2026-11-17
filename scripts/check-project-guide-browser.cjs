@@ -81,7 +81,7 @@ async function main(){await build();const server=http.createServer(handler);awai
     const before=starts,oldSession=live.id;const call=await page.evaluate(()=>window.dailyCalls.length);
     for(const step of ['photos','rooms','tags','publish']){
       await page.evaluate(step=>{const href=step==='publish'?'view=publish':'step='+step;document.querySelector('[aria-label="Project steps"] a[href*="'+href+'"]').click()},step);
-      await page.waitForFunction(step=>document.querySelector('[aria-label="Project steps"] [aria-current="step"]')?.textContent.toLowerCase()===step,{},step);
+      await page.waitForFunction(step=>document.querySelector('[aria-label="Project steps"] [aria-current="step"]')?.textContent.toLowerCase()===(step==='publish'?'feature':step),{},step);
       assert.equal(await page.$('section[aria-label="Live interview"]'),null);assert.equal(starts,before);assert.equal(await page.$$eval('h1',nodes=>nodes.length),1);
       if(step==='rooms')await page.screenshot({path:path.join(review,'rooms-without-host-desktop.png'),fullPage:true});
     }

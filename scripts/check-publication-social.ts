@@ -8,7 +8,7 @@ import { publicationPhotos, publicationRevision, publicationPhotoLayout, wrapPub
 import { renderPublicationPhoto } from '../src/lib/instagram-export/render-publication-photo';
 
 const images = [{ id: 'dining', url: 'https://photos.example/dining.jpg', room: 'Dining room', roomId: 'room-dining' }, { id: 'gallery', url: 'https://photos.example/gallery.jpg', room: 'Staircase' }];
-const project = { id: 'project', ownerId: 'owner', title: 'La Gorce', city: 'Miami Beach', regionState: null, designerOrg: { name: 'BP Design' } };
+const project = { id: 'project', isPublic: true, ownerId: 'owner', title: 'La Gorce', city: 'Miami Beach', regionState: null, designerOrg: { name: 'BP Design' } };
 const designer = { name: 'Diano Matto', studio: 'BP Design', companyName: null, title: null, profileImage: null };
 const post = { status: 'PUBLISHED', expandedBlocks: { presentation: { version: 1, accent: null, roomOrder: [] }, galleryChapters: [
   { title: 'Dining room', roomId: 'room-dining', body: ['The room opens toward the garden.'], imageIds: ['dining'], pullQuote: { authorship: 'folio', selected: { text: 'Unused direct quote' }, folio: { selected: { text: 'The glass table keeps the room open to the garden.' }, alternatives: [] } } },
