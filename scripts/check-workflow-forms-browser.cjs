@@ -100,7 +100,10 @@ function handler(req, res) {
         if(['intake','workspace'].includes(screen))await page.screenshot({path:path.join(out,screen+'-'+width+'-'+theme+'.png'),fullPage:true});
       }
       await visit('intake',theme);await click('Add project details first');await page.waitForSelector('input[name="title"]');await geometry();
-      assert.equal(await page.$eval('textarea[name="description"]',e=>e.getBoundingClientRect().height),0,'optional writing is collapsed');
+      assert.equal(await page.$eval('textarea[name="description"]',e=>e.closest('details')?.open),false,'optional writing is collapsed');
+      assert.equal(await page.$eval('textarea[name="description"]',e=>e.checkVisibility()),false,'description is not rendered while collapsed');
+      await page.click('details > summary');
+      assert.equal(await page.$eval('textarea[name="description"]',e=>e.checkVisibility()),true,'description is available after expanding details');
     }
     await page.setViewport({width:1280,height:900});await visit('credits');await click('Add Credit');
     await page.select('[role="dialog"] select','Architect');await page.type('[role="dialog"] input[type="text"]','Preview Architect');await click('Save credit');
