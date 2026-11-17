@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react';
 import OrgProfileHero from '@/components/org-profile/OrgProfileHero';
 import FlowMosaic from '@/components/feed/FlowMosaic';
 import { profilePageStyle, type OrgAppearanceData } from '@/lib/org-profile-appearance';
@@ -7,6 +8,7 @@ import type { WorkspacePreviewProject } from '@/lib/workspace-import/types';
 export type WorkspaceProfilePreview = Pick<OrgAppearanceData, 'org' | 'appearance' | 'cover' | 'projectCount'>;
 
 type Props = {
+  publicationActions?: ReactNode;
   profile: WorkspaceProfilePreview; personName: string; description: string; location: string;
   logo?: string | null; bio: string; projects: WorkspacePreviewProject[]; busy: boolean; canContribute: boolean;
   onOpenProject: (id: string, action: 'open' | 'schedule' | 'tag') => void;
@@ -22,7 +24,7 @@ export function workspaceCover(projects: WorkspacePreviewProject[]) {
   return photos.reduce<typeof photos[number] | undefined>((best, photo) => !best || score(photo) > score(best) ? photo : best, undefined);
 }
 
-export function WorkspaceReadyPreview({ profile, personName, description, location, logo, bio, projects, busy, canContribute, onOpenProject, onReviewDetails }: Props) {
+export function WorkspaceReadyPreview({ profile, personName, description, location, logo, bio, projects, busy, canContribute, onOpenProject, onReviewDetails, publicationActions }: Props) {
   const automaticCover = workspaceCover(projects);
   const cover = profile.appearance.cover.kind === 'auto' && automaticCover ? automaticCover : profile.cover;
   const org = { ...profile.org, description, location, logo: logo ?? null };
@@ -39,7 +41,7 @@ export function WorkspaceReadyPreview({ profile, personName, description, locati
     </div>
     <OrgProfileHero org={org} appearance={profile.appearance} cover={cover}
       projectCount={profile.projectCount + projects.filter(project => !project.isPublic).length} year={new Date().getFullYear()} preview />
-    {first ? <div className={`workspace-preview__next ${profileStyles.neutralContent}`}>
+    {publicationActions ?? (first ? <div className={`workspace-preview__next ${profileStyles.neutralContent}`}>
       <div><p className="workspace-preview__eyebrow">Next: complete your Folio profile</p>
         <h2>Review {first.title}.</h2>
         <p>Choose your title, cover and photographs. Add them to your profile now; tell the story later.</p>
@@ -47,7 +49,7 @@ export function WorkspaceReadyPreview({ profile, personName, description, locati
       <div className="workspace-preview__next-actions">
         <button type="button" className="auth-submit" disabled={busy} onClick={() => onOpenProject(first.id, 'open')}>Add photos to my profile <span aria-hidden="true">↗</span></button>
       </div>
-    </div> : <p className="workspace-preview__empty">{projects.length ? 'Your projects are here. Open one below to continue.' : 'Review your imported details, then add photographs to begin your first project.'}</p>}
+    </div> : <p className="workspace-preview__empty">{projects.length ? 'Your projects are here. Open one below to continue.' : 'Review your imported details, then add photographs to begin your first project.'}</p>)}
     {projects.length ? <section className="workspace-preview__projects" aria-label="Your imported projects">
       <div className="workspace-preview__section-heading"><h2>Your projects</h2><p>Choose which photographs to share on your profile. Interviews come later.</p></div>
       <FlowMosaic events={items} preserveOrder disabled={busy} onSelect={id => {

@@ -1607,3 +1607,17 @@ Review: public sale status requires a listing URL. Listing import uses explicit 
 Release checkpoint: production compile passed with baseline unrelated import warnings. Final local tests and TypeScript ratchet pass. Automatic approval review rejected the push to bprasky/folio-mvp because implementation approval did not explicitly authorize publishing source and review images to the repository. No push retry, PR, merge or deployment was performed. Hosted browser CI remains pending publication authorization.
 
 Authorized release — 2026-11-17: the founder explicitly approved push, merge and production deployment. Recovered the scoped source onto current main 065812588f927c4413176f84fffbeebd97b9cb19; targeted property-sale tests pass 10/10. Publish the PR, require green hosted checks, merge the verified head and explicitly deploy the merged commit. No schema migration is required.
+# Media discovery and search-readable publishing — 2026-11-17
+
+- [x] Audit public profiles, feed delivery, coverage models, interview context and crawl routes.
+- [x] Define one reviewable coverage record and explicit public/private projections.
+- [x] Implement discovery, review, withdrawal and profile/project incorporation.
+- [x] Feed approved readable sources into question preparation without changing answer provenance.
+- [x] Deliver server-rendered feeds, identity metadata, useful profile details and sitemap/robots.
+- [ ] Verify source/permission boundaries, SSR, responsive review and required repository checks.
+- [ ] Publish a scoped review branch with findings and remaining activation limits.
+
+Plan: `docs/MEDIA_DISCOVERY_AND_SEARCH.md`. Isolated source snapshot of main ed5d2355; other worktrees remain untouched. Reuse existing import review storage and AI/search transport. No schema migration, production data changes or automatic invitations.
+
+
+Media discovery checkpoint: bulk imported-photo approval and per-project partial-result recovery implemented. Background media sweep suggests project links for owner confirmation; checked interview consent reads accessible text during approval. Coverage security, import publication, portfolio, workspace, guided interview, live adapter, profile publication, public-channel and organization tests pass. Actual server-rendered profile feed anchors and disclosures pass. Browser UI bundle passes; interactive review and full hosted compile remain pending. Local Windows build fails creating .next output directories (EPERM); do not merge/deploy on this local result. No migrations or production data writes.

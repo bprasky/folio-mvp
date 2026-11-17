@@ -19,6 +19,9 @@ const EXEMPT_ROUTES = [
   '/designer/',
   '/_next',
   '/favicon.ico',
+  '/robots.txt',
+  '/sitemap.xml',
+  '/sitemaps/',
 ];
 
 // Roles that should never be funnelled through the guided onboarding sequence.

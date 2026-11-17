@@ -1,4 +1,5 @@
 import 'server-only';
+import { getPersonalCoverageInterviewContext } from '@/lib/coverage/service';
 import { createHash } from 'crypto';
 import { Prisma } from '@prisma/client';
 import { prisma } from '@/lib/prisma';
@@ -26,12 +27,13 @@ export async function prepareBioQuestions(actorId: string, round: 'base' | 'foll
     }
   }
   const base = answers.filter(answer => answer.round === 'base');
+  const externalCoverage = await getPersonalCoverageInterviewContext(actorId);
   const { readPreparedBio } = await import('@/lib/workspace-import/prepared');
-  const prepared = round === 'base' ? readPreparedBio(bio?.scrapedData, user.role || 'DESIGNER') : null;
+  const prepared = round === 'base' && !externalCoverage.length ? readPreparedBio(bio?.scrapedData, user.role || 'DESIGNER') : null;
   const questions = round === 'followup'
-    ? base.length < 3 ? [] : await generateFollowUpQuestions(base, user.role || 'DESIGNER', bio?.scrapedData as Record<string, unknown> | null)
-    : prepared ?? (bio?.scrapedData && bio.status !== 'empty'
-      ? await generateWebsiteContextQuestions(bio.scrapedData as Record<string, unknown>, user.role || 'DESIGNER')
+    ? base.length < 3 ? [] : await generateFollowUpQuestions(base, user.role || 'DESIGNER', bio?.scrapedData as Record<string, unknown> | null, externalCoverage)
+    : prepared ?? (externalCoverage.length || bio?.scrapedData && bio.status !== 'empty'
+      ? await generateWebsiteContextQuestions((bio?.scrapedData || {}) as Record<string, unknown>, user.role || 'DESIGNER', externalCoverage)
       : getBlankSlateQuestions(user.role || 'DESIGNER'));
   // A regenerated positional ID never renames a previously answered question.
   return questions.map(question => ({ ...question, question: answers.find(answer => answer.id === question.id && answer.round === round)?.question || question.question }));

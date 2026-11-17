@@ -43,6 +43,7 @@ export async function POST(
     }
 
     // Get stored images and PDF documents from processing meta
+    if (importSession.id.startsWith('coverage-')) return NextResponse.json({ error: 'Manage coverage from your profile.' }, { status: 409 });
     if (isWorkspaceImport(importSession.processingMeta)) return NextResponse.json({ error: 'Manage this import from your workspace.' }, { status: 409 });
     const processingMeta = importSession.processingMeta as {
       storedImages?: Array<{ pageNumber: number; url: string }>;

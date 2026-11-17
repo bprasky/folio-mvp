@@ -9,6 +9,7 @@
  */
 
 import Anthropic from '@anthropic-ai/sdk';
+import { COVERAGE_INTERVIEW_POLICY } from '@/lib/coverage/schema';
 import { callLLM } from '@/lib/posting/llmClient';
 import type { InterviewAnswer } from './constants';
 import { MODELS } from '@/lib/ai/models';
@@ -127,7 +128,8 @@ export function getBlankSlateQuestions(role: string): BioQuestion[] {
  */
 export async function generateWebsiteContextQuestions(
   scrapedData: Record<string, unknown>,
-  role: string
+  role: string,
+  externalCoverage: unknown[] = [],
 ): Promise<BioQuestion[]> {
   const anthropic = new Anthropic();
 
@@ -145,6 +147,8 @@ export async function generateWebsiteContextQuestions(
 ${SHARED_RULE_BLOCK}
 
 ${ARRIVALS_CONTRAST_POLICY}
+
+${externalCoverage.length ? `${COVERAGE_INTERVIEW_POLICY}\nSeparately supplied external reporting:\n${JSON.stringify(externalCoverage)}` : ''}
 
 You've read a ${roleLabel}'s website and need to generate interview questions that go DEEPER than what the website already tells us. (The website is the ${roleLabel}'s own PUBLIC bio — referencing what it says or leaves unsaid is correct here; the "never narrate the source" rule is about private notes, not public evidence.)
 
@@ -204,7 +208,8 @@ Return a JSON array of objects: [{ "id": "web-q-1", "question": "..." }, ...]`,
 export async function generateFollowUpQuestions(
   baseAnswers: InterviewAnswer[],
   role: string,
-  scrapedData?: Record<string, unknown> | null
+  scrapedData?: Record<string, unknown> | null,
+  externalCoverage: unknown[] = [],
 ): Promise<BioQuestion[]> {
   if (baseAnswers.length < 3) {
     return [];
@@ -235,6 +240,8 @@ ${SHARED_RULE_BLOCK}
 ${ARRIVALS_CONTRAST_POLICY}
 
 You've just heard a ${roleLabel}'s initial answers and now need to generate follow-up questions that dig deeper into the most interesting threads.
+
+${externalCoverage.length ? `${COVERAGE_INTERVIEW_POLICY}\nSeparately supplied external reporting:\n${JSON.stringify(externalCoverage)}` : ''}
 
 Guidelines:
 - Reference specific things the designer said in their answers

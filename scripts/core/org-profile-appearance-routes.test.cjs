@@ -81,6 +81,7 @@ beforeEach(() => {
   uploadFailure = false; uploads = []; removals = [];
   let membershipChecks = 0;
   db = {
+    importSession: { findMany: async () => [] },
     organizationUser: { findFirst: async query => {
       assert.deepEqual(query.where, { userId: 'admin', organizationId: orgId, isActive: true });
       membershipChecks++;
@@ -200,7 +201,8 @@ test('permission lost during upload removes only the newly uploaded asset', asyn
 test('anonymous feed uses exact firm/public/photo filters and never returns private metadata', async () => {
   session = null;
   db.project.findMany = async query => {
-    assert.deepEqual(query.where, { designerOrgId: orgId, isPublic: true });
+    assert.ok(query.where.publishedAt.lte instanceof Date);
+    assert.deepEqual(query.where, { designerOrgId: orgId, isPublic: true, publishedAt: { lte: query.where.publishedAt.lte } });
     assert.deepEqual(query.select.images.where, { inclusion: 'INCLUDED' });
     assert.equal(query.select.description, undefined); assert.equal(query.select.images.select.aiAnalysis, undefined);
     const project = { id: 'project', isPublic: true, publishedAt: new Date(0), title: 'Public project', city: 'Miami', regionState: 'FL', images: [{ url: '/public.jpg' }],
@@ -213,7 +215,8 @@ test('anonymous feed uses exact firm/public/photo filters and never returns priv
     ];
   };
   for (const model of ['orgMedia', 'orgRecognition', 'orgCollaboration']) db[model].findMany = async query => {
-    assert.deepEqual(query.where, { organizationId: orgId, publishedAt: { not: null } });
+    assert.ok(query.where.publishedAt.lte instanceof Date);
+    assert.deepEqual(query.where, { organizationId: orgId, publishedAt: { lte: query.where.publishedAt.lte } });
     assert.ok(query.select); return [];
   };
   process.env.FOLIO_EDITORIAL_CHANNELS = 'true';

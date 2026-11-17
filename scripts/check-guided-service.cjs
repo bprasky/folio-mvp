@@ -129,7 +129,8 @@ function load(file) {
     structuredClone, Buffer, setTimeout, clearTimeout, ReadableStream, TextEncoder, AbortController,
     fetch: async () => { networkCalls++; throw new Error('Network is forbidden in this fixture'); },
     require(name) {
-      if (name === '@/lib/prisma') return { prisma: facade };
+      if (name === '@/lib/coverage/service') return { getCoverageInterviewContext: async () => [] };
+    if (name === '@/lib/prisma') return { prisma: facade };
       if (name === 'next-auth') return { getServerSession: async () => authUser ? { user: { id: authUser } } : null };
       if (name === '@/app/api/auth/[...nextauth]/options') return { authOptions: {} };
       if (name === 'next/server') return { NextRequest: Request, NextResponse: { json: (body, options) => Response.json(body, options) } };

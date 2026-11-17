@@ -12,6 +12,7 @@ function load(file) {
   const exports = {}; cache.set(file, exports);
   const code = ts.transpileModule(fs.readFileSync(file, 'utf8'), { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022, esModuleInterop: true } }).outputText;
   vm.runInNewContext(code, { exports, process: { env: environment }, console, Error, structuredClone, setTimeout, clearTimeout, require(name) {
+    if (name === '@/lib/coverage/service') return { getCoverageInterviewContext: async () => [] };
     if (name === '@/lib/prisma') return { prisma: { project: { findUnique: async () => projectFixture } } };
     if (name === '@/lib/ai/cost') return { anthropicCostUsd: () => 0, recordCostEvent: async () => {} };
     if (name === '@anthropic-ai/sdk') return class { messages = { create: async request => {

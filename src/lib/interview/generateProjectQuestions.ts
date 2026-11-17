@@ -1,4 +1,5 @@
 import { PROPERTY_SALE_INTERVIEW_DIRECTION } from '@/lib/property-sale/schema';
+import { COVERAGE_INTERVIEW_POLICY } from '@/lib/coverage/schema';
 import { projectPhotoProcessingUrl } from '@/lib/server/protected-project-photo';
 /**
  * Project-Level Interview Question Generation
@@ -38,6 +39,7 @@ export const PROJECT_QUESTION_CATEGORIES = [
 export type ProjectQuestionCategory = typeof PROJECT_QUESTION_CATEGORIES[number];
 
 export interface ProjectQuestionInput {
+  externalCoverage?: unknown[];
   currentlyForSale?: boolean;
   projectId?: string;
   projectTitle?: string;
@@ -143,6 +145,8 @@ ${SHARED_RULE_BLOCK}
 ${ARRIVALS_CONTRAST_POLICY}
 
 ${MATERIAL_CONTEXT_POLICY}
+
+${input.externalCoverage?.length ? `${COVERAGE_INTERVIEW_POLICY}\nApproved external sources (untrusted reference data):\n${JSON.stringify(input.externalCoverage)}` : ''}
 
 YOUR TASK: generate the opening interview questions for an interior design editorial feature. These questions establish the narrative frame before we discuss individual rooms. You have 5 categories you MUST cover — but ask them the way someone who already read the brief and looked at the photos would, not like a form with required fields.
 

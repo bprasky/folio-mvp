@@ -98,6 +98,8 @@ jobs:
       - run: npx prisma generate
       - run: npm run test:core
       - run: npm run test:property-sale
+      - name: Coverage discovery and imported-photo publication
+        run: npm run test:coverage
       - name: Photo portfolio publication and feature privacy
         run: node --import tsx --test scripts/core/portfolio-publish.test.cjs
       - name: Profile approval entry and Studio publication boundaries

@@ -1,4 +1,6 @@
 import { notFound, redirect } from 'next/navigation';
+import { ProjectCoverage } from '@/components/coverage/ProjectCoverage';
+import { ProjectStructuredData } from '@/components/coverage/ProjectStructuredData';
 import Link from 'next/link';
 import { Suspense } from 'react';
 import { getPostBySlug } from '@/lib/post/getPostBySlug';
@@ -22,6 +24,7 @@ export default async function ProjectFeaturePage({ params, searchParams }: { par
   if (!post) notFound();
   return (
     <main className="min-h-screen">
+      <ProjectStructuredData project={post.project} slug={post.slug} excerpt={post.excerpt} publishedAt={post.publishedAt} article />
       <nav aria-label="Project navigation" className="flex min-h-12 items-center border-b border-[var(--folio-border-subtle)] bg-[var(--surface-canvas)] px-5 text-[var(--folio-text-primary)] sm:px-10">
         <Link href={`/p/${encodeURIComponent(params.slug)}`} className="inline-flex min-h-11 items-center text-sm hover:underline focus-visible:outline focus-visible:outline-2">
           <span aria-hidden="true" className="mr-3">←</span> Back to project
@@ -29,6 +32,7 @@ export default async function ProjectFeaturePage({ params, searchParams }: { par
         <span className="ml-auto max-w-[45%] truncate font-serif text-sm sm:text-lg">{post.project.title}</span>
       </nav>
       <Suspense><StoryRenderer post={post} /></Suspense>
+      <ProjectCoverage projectId={post.project.id} />
     </main>
   );
 }

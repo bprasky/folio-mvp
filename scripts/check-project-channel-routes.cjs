@@ -78,6 +78,7 @@ function load(relative) {
     if (name === 'next/navigation') return navigation;
     if (name === 'next-auth') return { getServerSession: async () => session };
     if (name.includes('authOptions') || name.includes('/options') || name === '@/lib/auth') return { authOptions: {} };
+    if (name === '@/components/coverage/ProjectCoverage') return { ProjectCoverage: () => null };
     if (name === '@/lib/prisma') return { prisma };
     if (name === '@/lib/article/getRelatedProjects') return { getRelatedProjects: async () => [] };
     if (name === '@vercel/og') return { ImageResponse: class extends Response { constructor(element, options) { super(renderToStaticMarkup(element), options); } } };

@@ -1,0 +1,18 @@
+.offer { padding-block: 1.5rem; color: var(--folio-text-primary); font-family: var(--font-body); }
+.intro { max-width: 42rem; margin-bottom: 1rem; }
+.title { font-family: var(--font-headline); font-size: var(--type-h3); line-height: var(--lh-h3); margin-bottom: .5rem; }
+.copy, .meta { font-size: var(--type-meta); line-height: var(--lh-body); color: var(--folio-text-secondary); }
+.grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1.5rem; }
+.card { min-width: 0; overflow: hidden; background: var(--surface-canvas); color: var(--folio-text-primary); break-inside: avoid; }
+.cardBody { padding: clamp(1.25rem, 3vw, 2rem); }
+.image { position: relative; aspect-ratio: 4 / 3; }
+.eyebrow { font-family: var(--font-body); font-size: var(--type-eyebrow); letter-spacing: var(--ls-eyebrow); text-transform: uppercase; color: var(--folio-text-secondary); overflow-wrap: anywhere; }
+.headline { font-family: var(--font-headline); font-size: var(--type-h3); line-height: var(--lh-h3); margin-block: 1rem; overflow-wrap: anywhere; }
+.sourceLink, .projectLink { display: block; width: fit-content; margin-top: 1rem; font-family: var(--font-body); font-size: var(--type-meta); text-decoration: underline; text-underline-offset: .3em; }
+.projectLink { color: var(--folio-text-secondary); }
+.card a:focus-visible { outline: 2px solid var(--folio-gold); outline-offset: 4px; }
+.review { display: grid; gap: 1.25rem; padding-block: 1.5rem; border-bottom: 1px solid var(--folio-border-subtle); }
+.check { display: flex; gap: .75rem; align-items: start; font-size: var(--type-meta); line-height: var(--lh-body); }
+.check input { margin-top: .25rem; width: 1.15rem; height: 1.15rem; accent-color: var(--folio-gold); }
+.projectSection { width: min(100%, 72rem); margin-inline: auto; padding: 3rem 1.5rem; }
+@media (max-width: 640px) { .grid { grid-template-columns: minmax(0, 1fr); } }

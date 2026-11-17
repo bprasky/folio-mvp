@@ -1,3 +1,7 @@
+import { getPersonProfileFeed } from '@/lib/profile/person-feed';
+import { CoverageManager } from '@/components/coverage/CoverageManager';
+import { ProfileDetails } from '@/components/profile/ProfileDetails';
+import { profileMetadata, identityStructuredData, serializeJsonLd } from '@/lib/seo/public';
 import { expertiseEnabled } from '@/lib/publishing-studio/expertise/flag';
 import { Suspense } from 'react';
 import { notFound } from 'next/navigation';
@@ -25,17 +29,14 @@ export async function generateMetadata({ params }: Props) {
 
   const user = await prisma.user.findUnique({
     where: { id: resolvedParams.userId },
-    select: { name: true, title: true, bio: true },
+    select: { id: true, name: true, bio: true, location: true, profileImage: true, website: true, specialties: true },
   });
 
   if (!user) {
     return { title: 'Profile Not Found | Folio' };
   }
 
-  return {
-    title: `${user.name} | Folio`,
-    description: user.bio || `${user.name}'s professional profile on Folio`,
-  };
+  return profileMetadata({ ...user, kind: 'Person', description: user.bio, image: user.profileImage });
 }
 
 export default async function ProfilePage({ params, searchParams }: Props) {
@@ -44,16 +45,20 @@ export default async function ProfilePage({ params, searchParams }: Props) {
 
   const user = await prisma.user.findUnique({
     where: { id: resolvedParams.userId },
-    include: {
-      profileInterview: true,
+    select: {
+      id: true, name: true, bio: true, title: true, location: true, website: true, instagram: true, linkedin: true,
+      profileImage: true, specialties: true, followers: true, createdAt: true,
+      architectLicenseNumber: true, architectLicensedStates: true, architectProjectScale: true, architectSpecializations: true,
+      builderProjectTypes: true, builderSquareFootageRange: true, builderSpecialtyTrades: true, builderYearsInBusiness: true,
+      profileInterview: { select: { status: true, generatedBio: true, shortBio: true, pullQuotes: true, philosophyStatement: true, processDescription: true } },
       organizationUsers: {
         where: { isActive: true },
-        include: {
+        select: {
           organization: {
-            include: {
+            select: { id: true, name: true, type: true, logo: true,
               teamMembers: {
                 orderBy: { displayOrder: 'asc' },
-                include: {
+                select: { id: true, name: true, role: true, headshotUrl: true, bio: true,
                   linkedUser: {
                     select: {
                       id: true,
@@ -81,9 +86,15 @@ export default async function ProfilePage({ params, searchParams }: Props) {
     where: { followerId_followingId: { followerId: session.user.id, followingId: user.id } }, select: { id: true },
   }));
 
+  // Private Q&A and unpublished generated bios never cross the public client boundary.
+  const publicUser = { ...user, profileInterview: user.profileInterview?.status === 'PUBLISHED' ? {
+    ...user.profileInterview, pullQuotes: Array.isArray(user.profileInterview.pullQuotes) ? user.profileInterview.pullQuotes.filter((value): value is string => typeof value === 'string') : [],
+  } : null };
   const activeTab = resolvedSearchParams.tab || 'feed';
   const activeFilter = resolvedSearchParams.filter || 'all';
   const activeSort = resolvedSearchParams.sort || 'featured';
+
+  const initialItems = activeTab === 'feed' ? await getPersonProfileFeed(user.id, activeFilter, activeSort, session?.user?.role) : [];
 
   // Get project count
   const projectCount = await prisma.project.count({
@@ -93,7 +104,7 @@ export default async function ProfilePage({ params, searchParams }: Props) {
   // Get featured count
   const featuredCount = await prisma.projectPost.count({
     where: {
-      project: { designerId: resolvedParams.userId },
+      project: { designerId: resolvedParams.userId, ...PUBLISHED_PROJECT_FILTER },
       status: 'PUBLISHED',
     },
   });
@@ -107,14 +118,17 @@ export default async function ProfilePage({ params, searchParams }: Props) {
 
   return (
     <div className="min-h-screen" style={{ backgroundColor: 'var(--surface-ground)' }}>
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: serializeJsonLd(identityStructuredData({ ...user, kind: 'Person', description: user.bio, image: user.profileImage })) }} />
       <ProfileHero
-        user={user}
+        user={publicUser}
         projectCount={projectCount}
         featuredCount={featuredCount}
         isOwner={isOwner}
         initiallyFollowing={initiallyFollowing}
       />
 
+      {activeTab !== 'about' && <ProfileDetails name={user.name} description={user.bio} location={user.location} specialties={user.specialties} website={user.website} />}
+      {isOwner && <div className="max-w-6xl mx-auto px-6"><CoverageManager scope={{ type: 'person', id: user.id }} /></div>}
       {pinnedItems.length > 0 && <PinnedCarousel items={pinnedItems} />}
 
       {activeTab !== 'about' && <PublishedStudioStories userId={resolvedParams.userId} />}
@@ -125,6 +139,7 @@ export default async function ProfilePage({ params, searchParams }: Props) {
         {activeTab === 'feed' && (
           <Suspense fallback={<FeedSkeleton />}>
             <ProfileFeed
+              initialItems={initialItems}
               userId={resolvedParams.userId}
               initialFilter={activeFilter}
               initialSort={activeSort}
@@ -139,7 +154,7 @@ export default async function ProfilePage({ params, searchParams }: Props) {
         {activeTab === 'about' && (
           <>
           <ProfileAbout
-            user={user}
+            user={publicUser}
             team={team}
             organization={
               primaryOrg
@@ -163,14 +178,16 @@ export default async function ProfilePage({ params, searchParams }: Props) {
 async function getPinnedItems(userId: string) {
   const [projects, media, recognition, collaborations] = await Promise.all([
     prisma.project.findMany({
-      where: { designerId: userId, pinnedAt: { not: null }, isPublic: true },
+      where: { designerId: userId, pinnedAt: { not: null }, ...PUBLISHED_PROJECT_FILTER },
       orderBy: { pinOrder: 'asc' },
-      include: {
-        images: { take: 1, orderBy: { displayOrder: 'asc' } },
+      select: {
+        id: true, title: true, city: true, saves: true, pinOrder: true,
+        images: { where: { inclusion: 'INCLUDED' }, select: { url: true }, take: 1, orderBy: { displayOrder: 'asc' } },
       },
     }),
     prisma.media.findMany({
       where: { userId, pinnedAt: { not: null }, publishedAt: { not: null } },
+      select: { id: true, title: true, type: true, thumbnailUrl: true, sourceUrl: true, duration: true, views: true, pinOrder: true },
       orderBy: { pinOrder: 'asc' },
     }),
     prisma.recognition.findMany({

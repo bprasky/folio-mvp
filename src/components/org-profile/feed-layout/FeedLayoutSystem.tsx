@@ -6,6 +6,7 @@ import ProjectFlowMosaic from './ProjectFlowMosaic';
 import MediaCard from '../feed-cards/MediaCard';
 import RecognitionCard from '../feed-cards/RecognitionCard';
 import CollaborationCard from '../feed-cards/CollaborationCard';
+import { CoverageCard } from '@/components/coverage/CoverageCard';
 
 interface FeedItem {
   id: string;
@@ -35,6 +36,7 @@ function mapToFeedProject(item: FeedItem): FeedProjectItem {
 }
 
 function renderNonProjectCard(item: FeedItem) {
+  if (item.data.coverage) return <CoverageCard item={item.data.coverage} />;
   switch (item.type) {
     case 'media':
       return <MediaCard media={item.data} />;

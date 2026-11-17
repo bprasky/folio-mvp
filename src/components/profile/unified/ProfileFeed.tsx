@@ -7,6 +7,7 @@ import ProjectCard from './feed-cards/ProjectCard';
 import MediaCard from './feed-cards/MediaCard';
 import RecognitionCard from './feed-cards/RecognitionCard';
 import CollaborationCard from './feed-cards/CollaborationCard';
+import { CoverageCard } from '@/components/coverage/CoverageCard';
 
 interface FeedItem {
   id: string;
@@ -18,24 +19,29 @@ interface FeedItem {
 }
 
 interface ProfileFeedProps {
+  initialItems?: FeedItem[];
   userId: string;
   initialFilter?: string;
   initialSort?: string;
 }
 
 export default function ProfileFeed({
+  initialItems,
   userId,
   initialFilter = 'all',
   initialSort = 'featured',
 }: ProfileFeedProps) {
   const [retry, setRetry] = useState(0);
-  const [items, setItems] = useState<FeedItem[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [items, setItems] = useState<FeedItem[]>(initialItems || []);
+  const [loading, setLoading] = useState(!initialItems);
   const [error, setError] = useState<string | null>(null);
   const [filter, setFilter] = useState(initialFilter);
   const [sort, setSort] = useState(initialSort);
 
   useEffect(() => {
+    if (initialItems && filter === initialFilter && sort === initialSort && retry === 0) {
+      setItems(initialItems); setLoading(false); setError(null); return;
+    }
     let active = true;
     const fetchFeed = async () => {
       setLoading(true);
@@ -63,7 +69,7 @@ export default function ProfileFeed({
 
     fetchFeed();
     return () => { active = false; };
-  }, [userId, filter, sort, retry]);
+  }, [userId, filter, sort, retry, initialItems, initialFilter, initialSort]);
 
   // Update state when URL params change
   useEffect(() => {
@@ -108,6 +114,7 @@ export default function ProfileFeed({
 }
 
 function FeedCard({ item }: { item: FeedItem }) {
+  if (item.data.coverage) return <CoverageCard item={item.data.coverage} />;
   switch (item.type) {
     case 'project':
       return <ProjectCard project={item.data} />;

@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/app/api/auth/[...nextauth]/options';
 import { prisma } from '@/lib/prisma';
-import type { ImportSourceType } from '@prisma/client';
+import { ImportSessionStatus, type ImportSourceType, type Prisma } from '@prisma/client';
 
 /**
  * POST /api/import/session
@@ -92,9 +92,11 @@ export async function GET(req: NextRequest) {
     const limit = parseInt(url.searchParams.get('limit') || '20');
     const offset = parseInt(url.searchParams.get('offset') || '0');
 
-    const where: { userId: string; status?: string } = { userId };
+    const where: Prisma.ImportSessionWhereInput = { userId, NOT: { id: { startsWith: 'coverage-' } } };
     if (status) {
-      where.status = status;
+      if (!Object.values(ImportSessionStatus).includes(status as ImportSessionStatus))
+        return NextResponse.json({ error: 'Choose a valid import status.' }, { status: 400 });
+      where.status = status as ImportSessionStatus;
     }
 
     const [sessions, total] = await Promise.all([

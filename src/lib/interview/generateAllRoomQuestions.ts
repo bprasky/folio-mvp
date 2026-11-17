@@ -1,4 +1,5 @@
 import { readPropertySale } from '@/lib/property-sale/schema';
+import { getCoverageInterviewContext } from '@/lib/coverage/service';
 import { assertLegacyInterviewAllowed } from '@/lib/spotlight/legacyBoundary';
 /**
  * Orchestrator for Per-Room Interview Question Generation
@@ -132,13 +133,14 @@ export async function generateAllRoomQuestions(
   // story. Product identities and commercial eligibility stay out of prep.
 
   // 5. Fire parallel LLM calls
+  const externalCoverage = await getCoverageInterviewContext(projectId);
   const promises = roomBudgets.map((rb) => {
     const otherRoomNames = allRoomNames.filter((n) => n !== rb.room.name);
     const roomImages = rb.images.map((img) => ({
       url: img.url,
       classification: img.aiClassification as Record<string, unknown> | null,
     }));
-    return generateRoomQuestions({ projectId,
+    return generateRoomQuestions({ projectId, externalCoverage,
       roomName: rb.room.name,
       roomImages,
       budget: rb.budget,
