@@ -8,17 +8,21 @@ import { useRef, useEffect, useState } from "react";
 import { useStoryEdit, StoryEditRegion } from './StoryEditContext';
 import type { BreatherData } from '@/lib/story/buildRoomTiles';
 import type { EmbeddedQuoteChoice } from '@/lib/posting/schemas';
+import type { ProfileReference } from '@/lib/story/profileLinks';
+import { PublicationText } from './PublicationText';
 
 interface BreatherQuoteProps {
   breather: BreatherData;
   reducedMotion: boolean;
   immersive?: boolean;
+  profiles?: ProfileReference[];
 }
 
 export function BreatherQuote({
   breather,
   reducedMotion,
   immersive = false,
+  profiles,
 }: BreatherQuoteProps) {
   const ref = useRef<HTMLDivElement>(null);
   const [revealed, setRevealed] = useState(reducedMotion);
@@ -132,7 +136,7 @@ export function BreatherQuote({
             : "opacity 700ms ease, transform 700ms ease",
         }}
       >
-        &ldquo;{choice.text}&rdquo;
+        &ldquo;<PublicationText text={choice.text} profiles={profiles} />&rdquo;
       </blockquote>
       <footer
         className="mt-4"
@@ -145,7 +149,7 @@ export function BreatherQuote({
             : "opacity 500ms ease 300ms"
         }}
       >
-        &mdash; {attribution}
+        &mdash; <PublicationText text={attribution} profiles={profiles} />
       </footer>
     </div>
   );

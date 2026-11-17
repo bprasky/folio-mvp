@@ -8,15 +8,17 @@ import { projectChannelHref, withChannelQuery, type ChannelSearchParams } from '
 import { buildStoryData } from '@/lib/story/buildRoomTiles';
 import { selectHeroQuotes } from '@/lib/project-channel/heroQuotes';
 import styles from './ProjectChannel.module.css';
+import { creditProfileHref, namedProfileHref, publicationProfiles } from '@/lib/story/profileLinks';
+import { PublicationText } from './PublicationText';
 
 type PublicImage = { id: string; url: string; name?: string | null; room?: string | null; roomId?: string | null };
-type Credit = { role?: string | null; name?: string | null; url?: string | null };
+type Credit = { role?: string | null; name?: string | null; url?: string | null; userId?: string; organizationId?: string };
 export type ProjectChannelPost = {
   slug?: string; status?: string; excerpt?: string | null; heroAssetId?: string | null;
   credits?: Credit[];
   expandedBlocks?: { headline?: string | null; lead?: { title?: string | null }; credits?: Credit[] };
   project: { propertySale?: PublicPropertySale | null; title: string; description?: string | null; city?: string | null; regionState?: string | null; portfolioCoverImageId?: string | null;
-    images: PublicImage[]; designer?: { name?: string | null; studio?: string | null } | null; designerOrg?: { name?: string | null } | null };
+    images: PublicImage[]; designer?: { id?: string; name?: string | null; studio?: string | null } | null; designerOrg?: { id?: string; name?: string | null } | null };
 };
 
 function creditLink(value?: string | null): string | null {
@@ -58,13 +60,14 @@ export function ProjectChannelLanding({ post, media = [], ownerView = false, sea
   }));
   const seenCredits = new Set<string>();
   const approvedCredits = hasFeature ? (post.credits?.length ? post.credits : post.expandedBlocks?.credits || []) : [];
+  const profiles = publicationProfiles(post.project, approvedCredits);
   const credits = approvedCredits.flatMap((credit, index): ChannelTile[] => {
     const name = typeof credit.name === 'string' ? credit.name.trim() : '';
     const role = typeof credit.role === 'string' ? credit.role.trim() : '';
     const key = `${name?.toLowerCase()}|${role?.toLowerCase() || ''}`;
     if (!name || seenCredits.has(key)) return [];
     seenCredits.add(key);
-    return [{ id: `credit-${index}`, kind: 'credit', title: `${name}${role ? ` · ${role}` : ''}`, imageUrl: null, href: creditLink(credit.url) }];
+    return [{ id: `credit-${index}`, kind: 'credit', title: `${name}${role ? ` · ${role}` : ''}`, imageUrl: null, href: creditProfileHref(credit) || namedProfileHref(name, profiles) || creditLink(credit.url) }];
   });
   // Existing approved interviews are already PUBLISHED in the canonical post model:
   // their feature must appear in the hero AND receive prominent mosaic placement.
@@ -78,12 +81,12 @@ export function ProjectChannelLanding({ post, media = [], ownerView = false, sea
   return <main className={styles.channel}>
     <ProjectChannelHeroPhotos key={slideshow.map(image => image.id).join(':')}
       images={slideshow.map(image => ({ id: image.id, url: image.url, quote: quotes.get(image.id) }))}
-      title={post.project.title} attribution={attribution}
+      title={post.project.title} attribution={attribution} profiles={profiles}
       description={hasFeature ? post.excerpt || post.project.description : post.project.description}
       heading={<>
         <p className={styles.eyebrow}>A Folio project</p>
         <h1 className={styles.title}>{post.project.title}</h1>
-        <p className={styles.byline}>By {designer}</p>
+        <p className={styles.byline}>By <PublicationText text={designer} profiles={profiles} /></p>
       </>}
       footer={<>
         <div className={styles.actions}>

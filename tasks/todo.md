@@ -1,9 +1,38 @@
+# Publication profile references - 2026-11-17
+
+- [x] Preserve existing public person and organization IDs through the article/portfolio DTOs.
+- [x] Link bylines, quote attributions, credits and exact unambiguous names in published prose.
+- [x] Preserve external/plain-text credits when no Folio profile is associated; never infer a profile slug.
+- [x] Verify public/private field boundaries, same-name ambiguity, mobile tap targets and desktop links.
+- [ ] Complete final hosted CI and confirm the merged release on production.
+
+Review: actual-component entry, public route/privacy and story editing checks pass. The 48 browser layout/theme cases pass with desktop and mobile profile navigation. The responsive journey suite passes locally (27 captures, no overflow or browser errors); the previous hosted nested-dialog timeout did not reproduce. Scoped ESLint has no errors. Full quote verification needs the Linux CI shell. Final hosted compile, TypeScript ratchet and channel browser integration remain required before release.
+
+---
+# Publication themes and desktop reading - 2026-11-17
+
+- [x] Trace forced light mode and the desktop entry/expansion steps.
+- [x] Respect saved appearance preferences across publication surfaces and controls.
+- [x] Remove desktop entry gating and open introductions/room text automatically.
+- [x] Fit the image column to photograph proportions and bound the reading measure.
+- [x] Verify real public-project layouts, both themes, mobile entry and studio editing.
+- [ ] Complete final CI, release the scoped correction and verify production.
+
+Plan: retain sharp, uncropped photography and the existing mobile cover. Use the existing saved theme and initialization; no second preference system. Desktop should land directly on the full introduction and keep room articles open when navigating. Give square/portrait images the width they need and use a wider, bounded reading column instead of large gaps beside narrow copy. No publication data, schema or authorization changes.
+
+### Review
+
+Actual-component Chromium verification passed 36 initial viewport/photo-shape/theme combinations, saved theme initialization, the real Settings switch and reload, native controls, masthead, text contrast, accent tints and route exit. Desktop entry, mobile gestures/deep links, photo restoration and studio editing checks pass; scoped ESLint has zero errors and the existing any warning. The TypeScript ratchet reports 846 existing diagnostics and no additions. Expanded final coverage includes 48 viewport/photo-shape/theme combinations, short laptops, wide desktops, automatic introductions and room reading, actual image-column fit, bounded text measure and responsive entry changes. Public Boca Raton screenshots were inspected for spacing and preserved content. The channel browser suite requires generated Next CSS unavailable in the local incomplete build; hosted CI supplies the full production compile and that integration suite.
+
+Release evidence and the completed final validation will be recorded on PR #860. The earlier #859 task entry is historical.
+
+---
 # Consistent editorial project forms — 2026-11-17
 
 - [x] Establish shared theme-aware form, action and side-sheet styles.
 - [x] Apply to project intake, photo upload/import, workspace review, credits, product details and photo publishing.
 - [ ] Verify existing save/retry flows, keyboard access, responsive layouts and both themes.
-- [ ] Review the diff, run required checks and push a reviewable PR.
+- [x] Review the diff, run required local checks and push PR #862.
 
 Plan: continue the approved white-canvas editorial direction using Folio’s existing fonts and theme tokens, open spacing, soft filled fields, pill actions, sharp photography and contextual sheets. Keep authentication, persistence, import limits and publishing semantics intact. No invitation sending or new background services in this visual pass. Based on main 06581258 in a fresh checkout; prior workspace files are preserved.
 
@@ -14,7 +43,7 @@ Implemented locally across project intake/manual creation, photo uploads and web
 
 Verification: clean locked dependency install; production compile passes with existing warnings; TypeScript ratchet passes at 846/846 with no new diagnostics; scoped ESLint has zero errors (28 existing warnings); actual form-component/CSS/font bundle compiles; upload interruption, publication entry, client import and migration discipline checks pass. The new Chromium suite covers 54 screen/theme/viewport combinations plus sheet dismissal/focus, credit save/cancel, product save and partial import retry, but has NOT executed: local Chromium cannot create its process socket, and the shared browser cannot reach the isolated preview server. No visual approval is claimed.
 
-Push is blocked by automatic approval review, which requires explicit user authorization to transmit the changes to GitHub. No remote branch, PR, merge or deployment was created. The prepared hosted browser checks must run and their screenshots be reviewed after push authorization, before this is treated as release-ready. Prior worktrees and production data were preserved.
+The initial push was blocked by automatic approval review. The founder then explicitly authorized merge and deployment. PR #862 is published; release remains gated on the hosted browser checks and screenshot review. Integrated the latest property-sale and publication/theme/profile-link releases. Existing onboarding and unpublish tests now target action text instead of removed CSS classes or button order. Final validation and production deployment evidence will be recorded on PR #862. Prior worktrees and production data were preserved.
 
 ---
 # Publication reader refresh - 2026-11-16
@@ -1563,6 +1592,7 @@ Room-checkpoint review: rebased onto main 94ab0d6 before implementation. No sche
 ## Authorized interview release — PR #858
 
 The founder explicitly authorized push, merge and deployment. The connected GitHub upload exactly matches tested tree 6d45a5556b601c5aa274f923ec2ac98b8775e05f. Hosted CI passes the new inline-chat/room-checkpoint browser scenarios, including responsive widths, saved drafts and corrections. The older entry suite still expected video-first Story entry, modal pause labels and a dialog-scoped reset retry; update those assertions for the approved inline surface while retaining reset-receipt/data-preservation checks. Re-run hosted CI before merging. No runtime workaround or gate removal.
+
 
 ## Property sale story — 2026-11-16
 - [x] Scope first release and later property/media-discovery phases in docs/property-sale-story.md.

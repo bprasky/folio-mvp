@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState, type RefObject } from 'react';
 
-/** The first gesture belongs to the cover; it must never also advance a room. */
+/** Desktop starts reading immediately; mobile's entry gesture belongs to the cover. */
 export function usePublicationEntry(canvas: RefObject<HTMLDivElement>, mobile: boolean, onEntered?: () => void) {
   const [phase, setPhase] = useState<'opening' | 'revealing' | 'ready'>('opening');
   const phaseRef = useRef(phase);
@@ -12,6 +12,15 @@ export function usePublicationEntry(canvas: RefObject<HTMLDivElement>, mobile: b
     phaseRef.current = 'revealing';
     setPhase('revealing');
   }, []);
+
+  useEffect(() => {
+    if (mobile || phaseRef.current === 'ready') return;
+    // Width is measured before desktop is selected. Do not consume a gesture,
+    // delay the text with a cover fade, or move keyboard focus on arrival.
+    phaseRef.current = 'ready';
+    setPhase('ready');
+    onEntered?.();
+  }, [mobile, onEntered]);
 
   useEffect(() => {
     if (phase !== 'revealing') return;

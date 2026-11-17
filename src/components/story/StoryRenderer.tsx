@@ -111,6 +111,7 @@ function Publication({ post }: StoryRendererProps) {
         product={activeProduct}
         onClose={handleProductClose}
         designerName={story.designerName}
+        profiles={story.profileLinks}
         supplementalQuotes={story.supplementalQuotes}
       />
     </div>
