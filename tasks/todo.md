@@ -1544,3 +1544,17 @@ Room-checkpoint review: rebased onto main 94ab0d6 before implementation. No sche
 ## Authorized interview release — PR #858
 
 The founder explicitly authorized push, merge and deployment. The connected GitHub upload exactly matches tested tree 6d45a5556b601c5aa274f923ec2ac98b8775e05f. Hosted CI passes the new inline-chat/room-checkpoint browser scenarios, including responsive widths, saved drafts and corrections. The older entry suite still expected video-first Story entry, modal pause labels and a dialog-scoped reset retry; update those assertions for the approved inline surface while retaining reset-receipt/data-preservation checks. Re-run hosted CI before merging. No runtime workaround or gate removal.
+
+## Property sale story — 2026-11-16
+- [x] Scope first release and later property/media-discovery phases in docs/property-sale-story.md.
+- [x] Implement permission-aware sale details, durable storage and project entry points.
+- [x] Integrate sale purpose into existing interview budgets and article introduction.
+- [x] Render approved sale/press information and withdrawal/stale states.
+- [x] Verify local behavior, branded desktop/mobile layouts, and commit.
+- [ ] Push and open a PR after explicit repository-publication authorization.
+
+Review: public sale status requires a listing URL. Listing import uses explicit metadata and the existing protected browser renderer when configured; it does not bypass explicit challenges or run screenshot/vision extraction. Existing user entries and publication/address choices are preserved. Ten targeted tests plus 27 core/privacy tests pass (two existing conditional skips); guided/controller/service/provenance and public-channel regressions pass. TypeScript remains 846 baseline / 846 current with no new diagnostics; scoped lint and client/migration guards pass. Live browser review confirms the production project components, typefaces, mobile listing/price placement, import preservation and separate address permission, using an isolated synthetic record. Screenshots are in docs/reviews/property-sale. Hosted end-to-end listing/provider checks remain unavailable locally; the repeatable browser suite is included in CI.
+
+Release checkpoint: production compile passed with baseline unrelated import warnings. Final local tests and TypeScript ratchet pass. Automatic approval review rejected the push to bprasky/folio-mvp because implementation approval did not explicitly authorize publishing source and review images to the repository. No push retry, PR, merge or deployment was performed. Hosted browser CI remains pending publication authorization.
+
+Authorized release — 2026-11-17: the founder explicitly approved push, merge and production deployment. Recovered the scoped source onto current main 065812588f927c4413176f84fffbeebd97b9cb19; targeted property-sale tests pass 10/10. Publish the PR, require green hosted checks, merge the verified head and explicitly deploy the merged commit. No schema migration is required.

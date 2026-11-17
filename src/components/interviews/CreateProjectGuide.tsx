@@ -18,6 +18,7 @@ function ProjectIntake({ actorId, workspaceId, onManual }: CreateProjectGuidePro
   const [title, setTitle] = useState('');
   const [year, setYear] = useState('');
   const [month, setMonth] = useState('');
+  const [currentlyForSale, setCurrentlyForSale] = useState(false);
   const [creationStarted, setCreationStarted] = useState(false);
   const [createdId, setCreatedId] = useState<string | null>(null);
   const storageKey = `folio.project-intake.v1.${actorId}.${workspaceId}`;
@@ -30,7 +31,7 @@ function ProjectIntake({ actorId, workspaceId, onManual }: CreateProjectGuidePro
     try {
       const saved = JSON.parse(sessionStorage.getItem(storageKey) || localStorage.getItem(storageKey) || 'null');
       if (saved && typeof saved.title === 'string' && typeof saved.year === 'string' && typeof saved.month === 'string') {
-        setTitle(saved.title || ''); setYear(saved.year || ''); setMonth(saved.month || '');
+        setTitle(saved.title || ''); setYear(saved.year || ''); setMonth(saved.month || ''); setCurrentlyForSale(saved.currentlyForSale === true);
         pending.current = saved.pending && typeof saved.pending.requestId === 'string' ? saved.pending : null;
         setCreationStarted(!!pending.current);
         project.current = typeof saved.createdId === 'string' ? saved.createdId : null; setCreatedId(project.current);
@@ -38,8 +39,8 @@ function ProjectIntake({ actorId, workspaceId, onManual }: CreateProjectGuidePro
     } catch { setStorageError(true); }
     setLoaded(true);
   }, [storageKey]);
-  const persist = (values: { title: string; year: string; month: string }, id = project.current) => {
-    try { const saved = JSON.stringify({ ...values, createdId: id, pending: pending.current }); sessionStorage.setItem(storageKey, saved); localStorage.setItem(storageKey, saved); setStorageError(false); }
+  const persist = (values: { title: string; year: string; month: string; currentlyForSale?: boolean }, id = project.current) => {
+    try { const saved = JSON.stringify({ currentlyForSale, ...values, createdId: id, pending: pending.current }); sessionStorage.setItem(storageKey, saved); localStorage.setItem(storageKey, saved); setStorageError(false); }
     catch { setStorageError(true); }
   };
   const projectHref = (id: string) => {
@@ -59,7 +60,7 @@ function ProjectIntake({ actorId, workspaceId, onManual }: CreateProjectGuidePro
     const dateError = completionDateInputError(year, month);
     if (dateError) throw new Error(dateError);
     if (!creation.current) creation.current = (async () => {
-      if (!pending.current) pending.current = { requestId: crypto.randomUUID(), title: title.trim(), timeline: 'PAST', projectStatus: 'completed_project', projectType: 'UNSPECIFIED', completedYear: Number(year), completedMonth: month ? Number(month) : null, designerOrgId: workspaceId };
+      if (!pending.current) pending.current = { requestId: crypto.randomUUID(), title: title.trim(), currentlyForSale, timeline: 'PAST', projectStatus: 'completed_project', projectType: 'UNSPECIFIED', completedYear: Number(year), completedMonth: month ? Number(month) : null, designerOrgId: workspaceId };
       setCreationStarted(true);
       persist({ title, year, month });
       const response = await workflowRequest('/api/projects', { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' },
@@ -89,6 +90,8 @@ function ProjectIntake({ actorId, workspaceId, onManual }: CreateProjectGuidePro
         </div>
         <p className="text-folio-meta text-text-secondary">For older projects, the year alone is fine.</p>
       </fieldset>
+      <label className="flex items-start gap-3 text-folio-body"><input type="checkbox" className="mt-1" disabled={!loaded || creationStarted} checked={currentlyForSale} onChange={event => { setCurrentlyForSale(event.target.checked); persist({ title, year, month, currentlyForSale: event.target.checked }); }} />This property is currently for sale</label>
+      {currentlyForSale && <p className="text-folio-meta text-text-secondary">We’ll help tell the story behind the home so prospective buyers can understand what makes it special. Add listing details and publication permission in your project.</p>}
       {createdId ? <p role="status" className="text-folio-meta">Your project is saved. Reselect any unconfirmed photographs to retry, or continue to review saved photos. Matching photos will not be added twice.</p> : null}
       {storageError ? <p role="alert" className="text-folio-meta">Changes could not be saved on this device. Keep this page open until your project is saved.</p> : null}
       {loaded ? <ProjectGuideUploads ensureProject={ensureProject} onAdded={(id, _photos, complete) => { if (complete) continueToProject(id) }} /> : null}

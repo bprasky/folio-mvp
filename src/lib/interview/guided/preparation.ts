@@ -1,3 +1,5 @@
+import { readPropertySale, PROPERTY_SALE_OPENING } from '@/lib/property-sale/schema';
+import { withPropertySaleOpening } from '@/lib/property-sale/interview';
 import { createHash, randomUUID } from 'crypto';
 import { zodOutputFormat } from '@anthropic-ai/sdk/helpers/zod';
 import { prisma } from '@/lib/prisma';
@@ -33,7 +35,7 @@ const ROOM_FALLBACKS = [
 export function isGuidedPreparedWordingSafe(text: string, projectCategory?: string): boolean {
   if (!hasOneGuidedQuestion(text)) return false;
   return projectCategory
-    ? text === PROJECT_FALLBACKS[projectCategory as keyof typeof PROJECT_FALLBACKS]
+    ? text === PROJECT_FALLBACKS[projectCategory as keyof typeof PROJECT_FALLBACKS] || (projectCategory === 'SIGNATURE_IDENTITY' && text === PROPERTY_SALE_OPENING)
     : ROOM_FALLBACKS.some(([, wording]) => text === wording);
 }
 
@@ -107,6 +109,7 @@ export async function readGuidedContext(projectId: string) {
     select: {
       id: true, title: true, description: true, projectType: true, clientType: true,
       budgetBand: true, city: true, regionState: true,
+      post: { select: { provenance: true } },
       designer: { select: { name: true } }, designerOrg: { select: { name: true } },
       rooms: { orderBy: [{ createdAt: 'asc' }, { id: 'asc' }], select: {
         id: true, name: true, type: true, selections: { select: { id: true } },
@@ -119,6 +122,7 @@ export async function readGuidedContext(projectId: string) {
     },
   });
   if (!project) throw new Error('Project is unavailable.');
+  const currentlyForSale = readPropertySale(project.post?.provenance)?.details.currentlyForSale === true;
   const roomIds = new Set(project.rooms.map(room => room.id));
   // Legacy values are accepted only when they contain an actual persisted room
   // ID. A display name cannot establish question or answer attribution.
@@ -132,13 +136,15 @@ export async function readGuidedContext(projectId: string) {
     return { id: room.id, name: room.name, imageIds: sourceImages.map(image => image.id), ...computeRoomBudget(sourceImages.length, tagCount) };
   });
   const contextFingerprint = createHash('sha256').update(JSON.stringify({
+    ...(currentlyForSale ? { currentlyForSale: true } : {}),
     project: [project.id, project.title, project.description, project.projectType, project.clientType, project.budgetBand, project.city, project.regionState],
     rooms: rooms.map(room => [room.id, room.name, room.baseQuestions, room.maxFollowUps,
       project.rooms.find(value => value.id === room.id)?.selections.map(selection => selection.id).sort()]),
     images: images.map(image => [image.id, image.roomId, image.url, image.aiClassification, image.aiMaterials,
       image.tags.map(tag => [tag.id, tag.productId, tag.reviewedAt, tag.finishRaw, tag.finishConfirmed, tag.product?.name, tag.product?.scrapeStatus]).sort()]),
   })).digest('hex');
-  return { project, images, rooms, contextFingerprint };
+  const { post: _privatePost, ...projectContext } = project;
+  return { project: projectContext, currentlyForSale, images, rooms, contextFingerprint };
 }
 
 function candidates(raw: unknown) {
@@ -197,13 +203,13 @@ export function adaptGuidedRoomQuestions(raw: unknown, room: GuidedRoom, reviewe
 
 export async function prepareGuidedProjectPlan(projectId: string): Promise<GuidedPreparation> {
   const current = await readGuidedContext(projectId);
-  const { project, rooms, images, contextFingerprint } = current;
+  const { project, rooms, images, contextFingerprint, currentlyForSale } = current;
   const context = await assessProjectContext(projectId);
   const representativeImages = images.filter(image => image.roomId).slice(0, 3);
   let generated: unknown = [];
   if (process.env.ANTHROPIC_API_KEY && process.env.ANTHROPIC_ENABLED !== 'false') {
     try {
-      generated = (await generateProjectQuestions({ projectId,
+      generated = (await generateProjectQuestions({ projectId, currentlyForSale,
         projectTitle: project.title, projectDescription: project.description ?? undefined,
         designerName: project.designer?.name ?? undefined, studioName: project.designerOrg?.name ?? undefined,
         location: [project.city, project.regionState].filter(Boolean).join(', '),
@@ -221,7 +227,7 @@ export async function prepareGuidedProjectPlan(projectId: string): Promise<Guide
     // Descriptions/private notes are deliberately not evidence in review.
   }, projectId);
   const gates = computeGlobalGates(rooms.map(room => ({ roomId: room.id, roomName: room.name, imageCount: room.imageIds.length, tagCount: 0 })));
-  return { questions: adaptGuidedProjectQuestions(generated, representativeImages.map(image => image.id), reviewed), rooms, contextFingerprint, minimumTotalAnswers: gates.minimumTotalAnswers };
+  return { currentlyForSale, questions: withPropertySaleOpening(adaptGuidedProjectQuestions(generated, representativeImages.map(image => image.id), reviewed), currentlyForSale), rooms, contextFingerprint, minimumTotalAnswers: gates.minimumTotalAnswers };
 }
 
 export async function prepareGuidedRoomPlan(projectId: string, session: GuidedSession): Promise<GuidedQuestion[]> {
@@ -243,7 +249,9 @@ export async function prepareGuidedRoomPlan(projectId: string, session: GuidedSe
         generated = (await generateRoomQuestions({ projectId,
           roomName: room.name, roomImages: current.images.filter(image => image.roomId === room.id).map(image => ({ url: image.url, classification: image.aiClassification as Record<string, unknown> | null })),
           budget: room.baseQuestions, contextLevel: context.level,
-          projectContext: { projectTitle: current.project.title, otherRoomNames: session.rooms.filter(other => other.id !== room.id).map(other => other.name),
+          projectContext: { currentlyForSale: current.currentlyForSale,
+            propertyStoryAnswers: current.currentlyForSale ? accepted.map(turn => ({ question: turn.questionText, answer: turn.text })) : undefined,
+            projectTitle: current.project.title, otherRoomNames: session.rooms.filter(other => other.id !== room.id).map(other => other.name),
             materialPalette: context.materialThemes, knownFacts: parsedFacts.success ? parsedFacts.data : null },
         })).questions;
       } catch { /* Retain the room's complete budget when one model call fails. */ }

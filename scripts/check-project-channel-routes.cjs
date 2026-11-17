@@ -38,7 +38,7 @@ const prisma = {
       return portfolio?.portfolioPublishedAt && portfolio.isPublic && portfolio.publishedAt <= query.where.publishedAt.lte && post?.slug === query.where.post.is.slug ? { id: portfolio.id } : null;
     }
     assert.deepEqual(query.select.images.where, { inclusion: 'INCLUDED' });
-    assert.equal(query.select.post, undefined, 'Never select private editorial data for a portfolio');
+    assert.deepEqual(query.select.post, { select: { provenance: true } }, 'Property metadata is read only for the explicit approved-field projection');
     assert.equal(query.select.images.select.tags, undefined, 'Portfolio DTO contains no raw product data');
     if (!portfolio || portfolio.id !== query.where.id || !portfolio.isPublic || !portfolio.publishedAt || portfolio.publishedAt > query.where.publishedAt.lte) return null;
     return Object.fromEntries(Object.entries({ ...portfolio, images: portfolio.images.filter(i => i.inclusion === 'INCLUDED').map(({ inclusion, ...image }) => image) }).filter(([key]) => query.select[key]));

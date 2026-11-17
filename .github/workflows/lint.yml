@@ -97,6 +97,7 @@ jobs:
       - run: npm ci
       - run: npx prisma generate
       - run: npm run test:core
+      - run: npm run test:property-sale
       - name: Photo portfolio publication and feature privacy
         run: node --import tsx --test scripts/core/portfolio-publish.test.cjs
       - name: Organization appearance, permissions and public profile
@@ -246,6 +247,8 @@ jobs:
         run: CHANNEL_TEST_BROWSER="$(command -v google-chrome || command -v chromium)" npm run test:project-channels:browser
       - name: Photo-first publishing in Chromium
         run: GUIDED_TEST_BROWSER="$(command -v google-chrome || command -v chromium)" node scripts/check-portfolio-publish-browser.cjs
+      - name: Property sale editor and public section in Chromium
+        run: GUIDED_TEST_BROWSER="$(command -v google-chrome || command -v chromium)" node scripts/check-property-sale-browser.cjs
       - name: Cinematic profile customization and existing mosaic
         run: ORG_PROFILE_TEST_CINEMATIC=true ORG_PROFILE_TEST_BROWSER="$(command -v google-chrome || command -v chromium)" node scripts/check-org-profile-browser.cjs
       - uses: actions/upload-artifact@v4
@@ -258,6 +261,7 @@ jobs:
             .tmp/channel-browser/*.png
             .tmp/portfolio-browser/*.png
             .tmp/org-profile-browser/*.png
+            .tmp/property-sale-browser/*.png
       - name: Reject new diagnostics and baseline expansion
         env:
           # Full-project compiler analysis exceeds Node's default 2 GiB heap.

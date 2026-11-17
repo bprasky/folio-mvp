@@ -1,3 +1,4 @@
+import { withPropertySaleOpening } from '@/lib/property-sale/interview';
 import { createHash, randomUUID } from 'crypto';
 import { Prisma } from '@prisma/client';
 import { prisma } from '@/lib/prisma';
@@ -55,7 +56,8 @@ export async function resetProjectInterview(projectId: string, actorId: string, 
   const context = await readGuidedContext(projectId);
   const session = current || process.env.NEXT_PUBLIC_FLAG_GUIDED_INTERVIEW === '1'
     ? createGuidedSession(projectId, {
-      questions: adaptGuidedProjectQuestions([], context.images.filter(image => image.roomId).slice(0, 3).map(image => image.id)),
+      questions: withPropertySaleOpening(adaptGuidedProjectQuestions([], context.images.filter(image => image.roomId).slice(0, 3).map(image => image.id)), context.currentlyForSale),
+      currentlyForSale: context.currentlyForSale,
       rooms: context.rooms, contextFingerprint: context.contextFingerprint,
       minimumTotalAnswers: Math.max(8, context.rooms.length * 3),
     }, request.requestId) : null;

@@ -1,3 +1,4 @@
+import { PROPERTY_SALE_OPENING } from '@/lib/property-sale/schema';
 import { assertProjectWrite } from '@/lib/authz/access';
 import { assertLegacyInterviewAllowed } from '@/lib/spotlight/legacyBoundary';
 import { acceptCommand, appendRoomPlan, applyDecision, createGuidedSession, followUpAllowed, GuidedConflict, isRequestReplay, projectPhaseComplete } from './controller';
@@ -30,13 +31,16 @@ async function refreshContext(session: GuidedSession, actorId: string) {
       Object.assign(q, { text: refreshed.text, sourceImageIds: refreshed.sourceImageIds, sourceAnswerIds: refreshed.sourceAnswerIds });
     } else {
       q.sourceImageIds = context.images.filter(image => image.roomId).slice(0, 3).map(image => image.id);
-      q.text = q.baselineText ?? q.text;
+      q.text = q.category === 'SIGNATURE_IDENTITY' && q.kind === 'prepared'
+        ? context.currentlyForSale ? PROPERTY_SALE_OPENING : 'What in this project is most recognizably yours?'
+        : q.baselineText ?? q.text;
     }
     delete q.reaction;
     delete q.adaptation;
     delete q.confirmation;
     delete q.baselineText;
   }
+  next.currentlyForSale = context.currentlyForSale;
   next.rooms = context.rooms;
   if (next.roomsPrepared) {
     for (const room of next.rooms) {

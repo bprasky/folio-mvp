@@ -1,3 +1,4 @@
+import { readPropertySale } from '@/lib/property-sale/schema';
 import { assertLegacyInterviewAllowed } from '@/lib/spotlight/legacyBoundary';
 /**
  * Orchestrator for Per-Room Interview Question Generation
@@ -49,6 +50,7 @@ export async function generateAllRoomQuestions(
     where: { id: projectId },
     select: {
       title: true,
+      post: { select: { provenance: true } },
       rooms: {
         select: {
           id: true,
@@ -142,6 +144,7 @@ export async function generateAllRoomQuestions(
       budget: rb.budget,
       contextLevel: context.level,
       projectContext: {
+        currentlyForSale: readPropertySale(project.post?.provenance)?.details.currentlyForSale ?? false,
         projectTitle: project.title || undefined,
         overallStyle,
         materialPalette,
