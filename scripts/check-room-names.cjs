@@ -21,6 +21,12 @@ async function main() {
   assert.equal(suggestRoomNames('butlers p', options).matches[0].name, "Butler's Pantry");
   assert.equal(suggestRoomNames('cafe', options).matches[0].name, 'Café');
   assert.equal(suggestRoomNames('walk in cl', options).matches[0].name, 'Walk-in Closet');
+  assert.equal(suggestRoomNames('kit', options).completion.name, 'Kitchen', 'a typed prefix completes on Enter');
+  for (const [typed, offered] of [['Cellar', 'Wine Cellar'], ['Suite', 'Primary Suite'], ['Nook', 'Breakfast Nook'], ['Guest', 'Guest Suite'], ['Hall', 'Hallway']]) {
+    const result = suggestRoomNames(typed, options);
+    assert.ok(result.matches.some(option => option.name === offered), `${typed} still offers ${offered}`);
+    assert.equal(result.completion, undefined, `${typed} is a complete custom name, not a prefix of ${offered}`);
+  }
   console.log('PASS prefix, private options, normalization, typo and custom-name matching');
 
   const db = memoryDatabase(); h.useDatabase(db); const f = factories(db);

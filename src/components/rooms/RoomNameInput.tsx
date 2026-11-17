@@ -69,7 +69,7 @@ export default function RoomNameInput({ rooms, label, initialValue = '', actionL
   const [active, setActive] = useState(-1);
   const [keepSpelling, setKeepSpelling] = useState(false);
   const options = useMemo(() => roomNameOptions(rooms, saved.names), [rooms, saved.names]);
-  const { exact, matches, correction } = suggestRoomNames(value, options);
+  const { exact, matches, completion, correction } = suggestRoomNames(value, options);
   const choices = correction && !keepSpelling ? [correction] : matches;
   const visible = focused && choices.length > 0;
   const isSaved = saved.names.some(name => roomNameKey(name) === roomNameKey(value));
@@ -78,7 +78,11 @@ export default function RoomNameInput({ rooms, label, initialValue = '', actionL
 
   async function submit(name: string, roomId?: string, deliberate = false) {
     if (locked || inFlight.current || !cleanRoomName(name)) return;
-    if (correction && !keepSpelling && !deliberate) { setFocused(true); input.current?.focus(); return; }
+    if (correction && !keepSpelling && !deliberate) {
+      setFocused(true); input.current?.focus();
+      setError(`Choose “${correction.name}” or keep “${cleanRoomName(name)}” to continue.`);
+      return;
+    }
     inFlight.current = true; setBusy(true); setError('');
     try { await onSubmit(cleanRoomName(name), roomId); setFocused(false); }
     catch (err) { setError(err instanceof Error ? err.message : 'Could not assign this room. Try again.'); }
@@ -115,7 +119,7 @@ export default function RoomNameInput({ rooms, label, initialValue = '', actionL
           if (event.key === 'Enter') {
             event.preventDefault();
             if (visible && active >= 0) accept(active);
-            else if (visible && matches.length) accept(0);
+            else if (visible && completion) void submit(completion.name, completion.roomId);
             else void submit(exact?.name || value, exact?.roomId);
           }
           if (event.key === 'Escape') { event.preventDefault(); if (visible) { setFocused(false); setActive(-1); } else onCancel?.(); }
@@ -128,8 +132,8 @@ export default function RoomNameInput({ rooms, label, initialValue = '', actionL
         {isSaved ? <Check className="h-4 w-4" /> : <Plus className="h-4 w-4" />}
       </button>}
       <button type="button" disabled={locked || !value.trim()} onClick={() => {
-        const choice = exact || matches[Math.max(0, active)];
-        void submit(choice?.name || value, choice?.roomId);
+        const choice = active >= 0 ? choices[active] : exact || completion;
+        void submit(choice?.name || value, choice?.roomId, active >= 0);
       }}
         className={`${forms.primary} shrink-0`}>{busy ? 'Saving…' : actionLabel}</button>
     </div>
@@ -142,7 +146,7 @@ export default function RoomNameInput({ rooms, label, initialValue = '', actionL
           {option.name}{option.source === 'project' ? ' · In this project' : option.source === 'saved' ? ' · Saved by you' : ''}
         </button>)}
       </div>
-      {correction && !keepSpelling && <button type="button" disabled={locked} onClick={() => { setKeepSpelling(true); input.current?.focus(); }}
+      {correction && !keepSpelling && <button type="button" disabled={locked} onMouseDown={event => event.preventDefault()} onClick={() => { setKeepSpelling(true); setError(''); input.current?.focus(); }}
         className="min-h-11 max-w-full break-words text-left folio-meta text-folio-text-secondary">Keep “{cleanRoomName(value)}”</button>}
     </div>}
     {(notice || (focused && saved.error)) && <p role="status" className="folio-meta text-folio-text-secondary">{notice || saved.error}</p>}
