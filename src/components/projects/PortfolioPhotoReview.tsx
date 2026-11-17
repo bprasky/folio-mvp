@@ -16,6 +16,8 @@ export type PortfolioPhotoReviewProps = {
 
 /** Focused approval step: the full project workspace begins after this page. */
 export function PortfolioPhotoReview(props: PortfolioPhotoReviewProps) {
+  // A background refresh must not silently approve a newer photo set than the one reviewed.
+  const [reviewVersion] = useState(props.version);
   const [title, setTitle] = useState(props.title);
   const [included, setIncluded] = useState(() => props.photos.filter(photo => photo.inclusion !== 'EXCLUDED').map(photo => photo.id));
   const [cover, setCover] = useState(() => included.includes(props.coverImageId || '') ? props.coverImageId! : included[0] || '');
@@ -36,9 +38,9 @@ export function PortfolioPhotoReview(props: PortfolioPhotoReviewProps) {
     if (saving.current) return;
     saving.current = true; setBusy(true); setError('');
     try {
-      const roomAssignments = props.photos.filter(photo => included.includes(photo.id) && roomNames[photo.id].trim() !== (photo.roomName || ''))
-        .map(photo => ({ imageId: photo.id, roomName: roomNames[photo.id].trim() || null }));
-      await publishPortfolioAction({ projectId: props.projectId, title, coverImageId: cover, includedImageIds: included, version: props.version,
+      const roomAssignments = props.photos.filter(photo => included.includes(photo.id) && (roomNames[photo.id] || '').trim() !== (photo.roomName || ''))
+        .map(photo => ({ imageId: photo.id, roomName: (roomNames[photo.id] || '').trim() || null }));
+      await publishPortfolioAction({ projectId: props.projectId, title, coverImageId: cover, includedImageIds: included, version: reviewVersion,
         ...(roomAssignments.length ? { roomAssignments } : {}) });
       setApproved(true);
       toast.success('Your project photos are now visible on your Folio profile.', { style: { background: 'var(--surface-canvas)', color: 'var(--folio-text-primary)' } });
@@ -83,7 +85,7 @@ export function PortfolioPhotoReview(props: PortfolioPhotoReviewProps) {
             <input type="checkbox" checked={included.includes(photo.id)} onChange={() => toggle(photo.id)} /><span className="sr-only">Include photograph {index + 1}</span>
           </label>
           <label className={styles.coverChoice}><input type="radio" name="cover" checked={cover === photo.id} disabled={!included.includes(photo.id) || busy} onChange={() => setCover(photo.id)} />{cover === photo.id ? 'Cover photograph' : 'Use as cover'}<span className="sr-only">, photograph {index + 1}</span></label>
-          {organizing && <label className={styles.roomField}>Room<span className="sr-only"> for photograph {index + 1}</span><input className={styles.input} list={`rooms-${props.projectId}`} value={roomNames[photo.id]} placeholder="Unsorted" maxLength={120} disabled={!included.includes(photo.id)} onChange={event => setRoomNames(current => ({ ...current, [photo.id]: event.target.value }))} /></label>}
+          {organizing && <label className={styles.roomField}>Room<span className="sr-only"> for photograph {index + 1}</span><input className={styles.input} list={`rooms-${props.projectId}`} value={roomNames[photo.id] || ''} placeholder="Unsorted" maxLength={120} disabled={!included.includes(photo.id)} onChange={event => setRoomNames(current => ({ ...current, [photo.id]: event.target.value }))} /></label>}
         </div>)}
       </fieldset>
       <footer className={styles.approval}>
