@@ -1,3 +1,17 @@
+# Publication theme preference - 2026-11-17
+
+- [x] Trace the forced light palette and existing saved theme initialization.
+- [x] Make publication colors and native controls follow the selected theme.
+- [x] Verify both themes across reader layouts, live switches, reloads and route exit.
+- [ ] Release the scoped correction after green CI and verify production.
+
+Plan: retain the approved composition and sharp photography. Use theme-aware publication tokens and inherited color-scheme, without changing saved preferences or adding a second theme system. The actual-component Chromium suite now covers both themes. The founder's subsequent desktop reading/proportion feedback is being reviewed separately from this theme correction.
+
+### Review
+
+36 viewport/photo-shape/theme combinations passed locally in Chromium, including the actual Settings switch, saved initialization and reload, native controls, masthead, strong text contrast, saved accent tints and route exit. No production data or schema changes. CI and release evidence will be recorded on the pull request.
+
+---
 # Publication reader refresh - 2026-11-16
 
 - [x] Review the current article and approved desktop, portrait and square renders.

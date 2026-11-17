@@ -1315,3 +1315,8 @@ The founder corrected the proposed small-model follow-up: a reaction that invite
 ## 2026-11-16 — Invite a specific omission at room boundaries
 
 The founder rejected “Add something” because it gives no direction. Ask “Did we miss anything you wanted to mention about this room?” and let the designer name the missing topic. Keep a direct Continue button; no required negative answer. This invitation is a separate optional turn with an enabled composer, unlike the non-interactive quick reaction. A complete volunteered explanation does not require another question.
+
+
+## 2026-11-17 - Editorial redesigns must preserve the reader's theme
+
+The article refresh forced ivory surfaces even when the reader had selected dark mode. A light mockup approves the composition, not an exception to saved appearance preferences. Keep publication surfaces, text, borders, masthead and native controls theme-aware. Test light and dark, saved initialization, switching/reloading and leaving the article; never encode a theme override as the expected regression result unless explicitly requested.

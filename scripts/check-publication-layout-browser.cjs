@@ -10,7 +10,7 @@ const postcss = require('postcss');
 const tailwind = require('tailwindcss');
 require('tsx/cjs');
 const { publicPost } = require('../src/lib/post/publicPost.ts');
-const { themeInitializationScript } = require('../src/lib/theme.ts');
+const { themeInitializationScript, THEME_STORAGE_KEY } = require('../src/lib/theme.ts');
 const root = path.resolve(__dirname, '..');
 const out = path.join(root, '.tmp/publication-layout');
 fs.mkdirSync(out, { recursive: true });
@@ -36,10 +36,11 @@ function fixture(count = 5) {
 const source = `import React from 'react';import {createRoot} from 'react-dom/client';
 import {StoryRenderer} from './src/components/story/StoryRenderer';
 import {EditorialMasthead} from './src/components/navigation/EditorialMasthead';
+import {ThemeToggle} from './src/components/ThemeToggle';
 const f=window.fixture;
 createRoot(document.getElementById('root')).render(<><EditorialMasthead/><main>
 <nav aria-label="Project navigation" className="flex min-h-12 items-center border-b border-[var(--folio-border-subtle)] bg-[var(--surface-canvas)] px-5 text-[var(--folio-text-primary)] sm:px-10"><a href="/p/fixture" className="inline-flex min-h-11 items-center text-sm">← Back to project</a><span className="ml-auto font-serif">{f.post.project.title}</span></nav>
-<StoryRenderer post={f.post}/></main></>);`;
+<StoryRenderer post={f.post}/></main>{new URLSearchParams(location.search).has('themeControls')&&<aside><ThemeToggle/></aside>}</>);`;
 async function build() {
   await esbuild.build({ stdin: { contents: source, resolveDir: root, loader: 'tsx' }, outfile: path.join(out, 'bundle.js'), bundle: true, platform: 'browser', jsx: 'automatic', alias: { '@': path.join(root, 'src') },
     define: { 'process.env.NODE_ENV': '"development"', 'process.env.NEXT_PUBLIC_FOLIO_EDITORIAL_PROFILE_HERO': '"true"', 'process.env': '{}' },
@@ -79,8 +80,9 @@ async function main() {
       if(url.searchParams.has('gallery'))post.expandedBlocks.galleryChapters=[];
       if(url.searchParams.has('accent'))post.expandedBlocks.presentation={version:1,accent:'#52624F',roomOrder:[]};
     }
-    const theme=url.searchParams.get('theme')||'light';
-    res.setHeader('Content-Type','text/html');res.end('<!doctype html><html data-theme="'+theme+'" class="'+(theme==='dark'?'dark':'')+'"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="stylesheet" href="/globals.css"><link rel="stylesheet" href="/bundle.css"></head><body><div id="root"></div><script>window.fixture='+JSON.stringify({post}).replaceAll('<','\u003c')+'</script><script src="/bundle.js"></script></body></html>');
+    const theme=url.searchParams.get('theme');
+    const initialize=(theme?`localStorage.setItem('${THEME_STORAGE_KEY}',${JSON.stringify(theme)});`:'')+themeInitializationScript+'window.initialTheme=document.documentElement.dataset.theme;';
+    res.setHeader('Content-Type','text/html');res.end('<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><script>'+initialize+'</script><link rel="stylesheet" href="/globals.css"><link rel="stylesheet" href="/bundle.css"></head><body><div id="root"></div><script>window.fixture='+JSON.stringify({post}).replaceAll('<','\u003c')+'</script><script src="/bundle.js"></script></body></html>');
   });
   await new Promise(r=>server.listen(Number(process.env.PUBLICATION_PREVIEW_PORT||0),'127.0.0.1',r));
   const origin='http://127.0.0.1:'+server.address().port;
@@ -91,11 +93,38 @@ async function main() {
   const results=[],errors=[];
   try{
     const page=await browser.newPage();page.on('pageerror',e=>errors.push(e.message));
-    const go=async query=>{await page.goto(origin+'/p/fixture/feature?room=room-0&'+query,{waitUntil:'networkidle0'});await page.waitForSelector('[data-publication-phase="ready"]');await page.evaluate(()=>document.fonts.ready);};
+    const settle=async()=>{await page.evaluate(()=>document.fonts.ready);await page.waitForFunction(()=>{const panel=document.querySelector('[data-publication-text]');return !panel||getComputedStyle(panel).opacity==='1';});};
+    const go=async query=>{await page.goto(origin+'/p/fixture/feature?room=room-0&'+query,{waitUntil:'networkidle0'});await page.waitForSelector('[data-publication-phase="ready"]');await settle();};
+    const palette={light:{background:'rgb(250, 248, 245)',ink:'rgb(26, 26, 26)',rule:'rgb(227, 222, 214)'},dark:{background:'rgb(27, 27, 25)',ink:'rgb(245, 245, 243)',rule:'rgb(58, 58, 54)'}};
+    const verifyTheme=async(theme,{accent=false,initial=true}={})=>{
+      const colors=await page.evaluate(key=>{
+        const style=selector=>getComputedStyle(document.querySelector(selector));
+        const masthead=getComputedStyle(document.querySelector('header > div'),'::before');
+        return {theme:document.documentElement.dataset.theme,initial:window.initialTheme,saved:localStorage.getItem(key),body:style('body').backgroundColor,scheme:style('body').colorScheme,header:masthead.backgroundColor,blur:masthead.backdropFilter,nav:style('[aria-label="Project navigation"]').backgroundColor,navInk:style('[aria-label="Project navigation"]').color,text:style('[data-publication-text]').color,panel:style('[data-publication-text]').backgroundColor,select:style('[aria-label="Go to room"]').backgroundColor,rule:style('[aria-label="Project navigation"]').borderBottomColor};
+      },THEME_STORAGE_KEY);
+      const expected=palette[theme];
+      assert.equal(colors.theme,theme);assert.equal(colors.saved,theme,'Reader preserves saved preference');
+      if(initial)assert.equal(colors.initial,theme,'Saved theme is applied before React renders');
+      assert.equal(colors.scheme,theme,'Native controls follow theme');
+      for(const surface of ['body','header','nav'])assert.equal(colors[surface],expected.background,surface+' follows '+theme);
+      for(const text of ['text','navInk'])assert.equal(colors[text],expected.ink,text+' follows '+theme);
+      assert.equal(colors.rule,expected.rule);assert.equal(colors.blur,'none','Masthead remains crisp in either theme');
+      if(!accent){assert.equal(colors.panel,expected.background);assert.equal(colors.select,expected.background);}
+      else assert.notEqual(colors.panel,expected.background,'Saved accent still supplies a subtle tint');
+      const luminance=color=>{
+        const channels=color.startsWith('color(srgb')?color.slice(11,-1).trim().split(/\s+/).map(Number):color.match(/[\d.]+/g).slice(0,3).map(n=>Number(n)/255);
+        return channels.map(v=>v<=.04045?v/12.92:((v+.055)/1.055)**2.4).reduce((sum,v,i)=>sum+v*[.2126,.7152,.0722][i],0);
+      };
+      const ink=luminance(colors.text),paper=luminance(colors.panel);
+      assert.ok((Math.max(ink,paper)+.05)/(Math.min(ink,paper)+.05)>=7,'Reading text retains strong contrast, including saved accents');
+      return colors;
+    };
     for(const [width,height] of [[1440,1000],[1024,1024],[820,1180],[768,1024],[390,844],[320,640]]){
       await page.setViewport({width,height});
       for(const shape of ['landscape','portrait','square']){
-        await go('shape='+shape+'&theme=dark&long=1');
+       for(const theme of ['light','dark']){
+        await go('shape='+shape+'&theme='+theme+'&long=1');
+        await verifyTheme(theme);
         const layout=await page.evaluate(()=>{
           const rect=e=>{const r=e.getBoundingClientRect();return {x:r.x,y:r.y,width:r.width,height:r.height,bottom:r.bottom,right:r.right}};
           const image=document.querySelector('[data-publication-image]'),text=document.querySelector('[data-publication-text]'),copy=document.querySelector('[role="region"]'),strip=document.querySelector('[aria-label="All rooms"]');
@@ -104,15 +133,16 @@ async function main() {
         });
         assert.equal(layout.overflow,false,'No horizontal overflow '+width+' '+shape);
         assert.equal(layout.blurred,0,'No blurred reader layers');assert.equal(layout.photoFit,'contain','Original image remains uncropped');
-        assert.equal(layout.bodyColor,'rgb(250, 248, 245)','Publication stays ivory in dark app theme');
+        assert.equal(layout.bodyColor,palette[theme].background,'Publication respects '+theme+' preference');
         assert.equal(layout.header.height,width<768?60:72,'Compact real masthead');
         if(width<=800){assert.ok(layout.text.y>=layout.image.bottom,'Reading follows image');assert.ok(layout.strip.y>=layout.image.bottom&&layout.strip.bottom<=layout.text.y+1,'Room strip sits between image and story');assert.equal(layout.copyOverflow,'visible','Phone article scrolls with document');}
         else {assert.ok(layout.text.x>=layout.image.right-1,'Reading beside photo');assert.equal(layout.text.y,layout.image.y);assert.equal(layout.copyOverflow,'auto');}
         await page.$eval('[role="region"]',e=>e.scrollTop=e.scrollHeight);
         assert.equal(await page.$eval('[data-publication-image]',e=>getComputedStyle(e.querySelector('img')).objectFit),'contain');
         await page.$eval('[role="region"]',e=>e.scrollTop=0);
-        if(shape==='landscape'||width===1024)await page.screenshot({path:path.join(out,'reader-'+width+'-'+shape+'.png'),fullPage:width<=800});
-        results.push({width,height,shape,...layout});
+        if(shape==='landscape'||width===1024)await page.screenshot({path:path.join(out,'reader-'+width+'-'+shape+'-'+theme+'.png'),fullPage:width<=800});
+        results.push({width,height,shape,theme,...layout});
+       }
       }
     }
     await page.setViewport({width:1440,height:1000});await go('shape=portrait');
@@ -123,18 +153,29 @@ async function main() {
     await page.waitForSelector('[aria-label="Read Space 1"]');await page.click('[aria-label="Read Space 1"]');
     await page.click('[aria-label="Space 1, photograph 2"]');assert.equal(await page.$eval('[data-publication-phase]',e=>e.dataset.publicationPhoto),'photo-3');
     await go('gallery=1');await page.click('[aria-label="View full photograph of Space 0"]');await page.waitForSelector('[aria-label="Show room details"]');await page.click('[aria-label="Show room details"]');
-    await go('accent=1');assert.notEqual(await page.$eval('[data-publication-text]',e=>getComputedStyle(e).backgroundColor),'rgb(250, 248, 245)','Saved accent supplies a subtle tint');
-    await go('theme=dark');await page.evaluate(()=>document.querySelector('[data-publication-view]').remove());assert.notEqual(await page.$eval('body',e=>getComputedStyle(e).backgroundColor),'rgb(250, 248, 245)','App theme restored when leaving reader');
+    for(const theme of ['light','dark']){await go('accent=1&theme='+theme);await verifyTheme(theme,{accent:true});}
+    await go('theme=light&themeControls=1');await verifyTheme('light');
+    // Use the actual Settings switch, then the production head initializer on reload.
+    await page.evaluate(()=>history.replaceState(null,'','?room=room-0&themeControls=1'));
+    for(const theme of ['dark','light']){
+      await page.click('[role="switch"]');await verifyTheme(theme,{initial:false});
+      await page.reload({waitUntil:'networkidle0'});await page.waitForSelector('[data-publication-text]');await verifyTheme(theme);
+    }
+    for(const theme of ['light','dark']){
+      await go('theme='+theme);await page.evaluate(()=>document.querySelector('[data-publication-view]').remove());
+      assert.equal(await page.$eval('body',e=>getComputedStyle(e).backgroundColor),theme==='dark'?palette.dark.background:'rgb(255, 255, 255)','Leaving reader preserves app theme');
+      assert.equal(await page.evaluate(key=>localStorage.getItem(key),THEME_STORAGE_KEY),theme);
+    }
     for(const post of publicPosts){
       for(const [width,height] of [[1440,1000],[1024,1024],[390,844]]){
         await page.setViewport({width,height});await page.goto(origin+'/p/'+post.slug+'/feature',{waitUntil:'networkidle0'});await page.click('[aria-label="Begin '+post.project.title+'"]');await page.waitForSelector('[data-publication-phase="ready"]');
         const room=await page.$eval('[aria-label="Go to room"]',e=>e.options[1].value);await page.select('[aria-label="Go to room"]',room);
         const read=await page.$('[aria-label^="Read "]');if(read)await read.click();
-        await page.screenshot({path:path.join(out,'public-'+post.slug+'-'+width+'.png'),fullPage:width<=800});
+        await settle();await page.screenshot({path:path.join(out,'public-'+post.slug+'-'+width+'.png'),fullPage:width<=800});
       }
     }
     assert.deepEqual(errors,[]);fs.writeFileSync(path.join(out,'results.json'),JSON.stringify(results,null,2));
-    console.log('PASS 18 viewport/photo-shape combinations, ivory dark-theme scope, real masthead, no blur/overflow, long reading, collapse/restore, exact photos, galleries, saved accent and theme restoration.');
+    console.log('PASS 36 viewport/photo-shape/theme combinations, saved theme before render, real theme switch and reload, themed masthead/controls, text contrast, no blur/overflow, long reading, collapse/restore, exact photos, galleries, saved accents and route exit.');
   }finally{await browser.close();await new Promise(r=>server.close(r));}
 }
 main().catch(e=>{console.error(e);process.exitCode=1});
