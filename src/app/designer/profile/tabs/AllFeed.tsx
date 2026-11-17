@@ -162,7 +162,7 @@ export default function AllFeed(props: AllFeedProps) {
     return (
       <div className="text-center py-16">
         <p className="folio-body" style={{ color: 'var(--text-tertiary)' }}>
-          Publish your first project to start building your portfolio.
+          Add project photographs to make your Folio profile ready to share. Complete an interview and publish a Folio Feature later for the main feed and Publishing Studio tools.
         </p>
       </div>
     );

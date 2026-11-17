@@ -5,7 +5,9 @@ const { PGlite } = require('@electric-sql/pglite');
 const h = require('./harness.cjs');
 const { memoryDatabase } = require('./memory-db.cjs');
 const { factories } = require('./fixtures.cjs');
-const { publishPortfolio, unpublishPortfolio, portfolioReviewVersion, hasPortfolioInterviewProgress } = require('../../src/lib/publish/portfolio.ts');
+const { publishPortfolio, unpublishPortfolio, portfolioReviewVersion, hasPortfolioInterviewProgress, nextPortfolioProject } = require('../../src/lib/publish/portfolio.ts');
+const { getStudioProjectInvitations } = require('../../src/lib/publishing-studio/project-invitations.ts');
+const { expertiseSources } = require('../../src/lib/publishing-studio/expertise/sources.ts');
 const { editorialProjectVisibility } = require('../../src/lib/publish/portfolioVisibility.ts');
 const { transitionEditorial } = require('../../src/lib/editorial/lifecycle.ts');
 const { getPublicPortfolio } = require('../../src/lib/project-channel/getPublicPortfolio.ts');
@@ -93,4 +95,77 @@ test('portfolio migration is additive, repeatable and never backfills consent', 
     assert.ok(rows.every(row => row.portfolioPublishedAt === null && row.portfolioCoverImageId === null));
     assert.equal(rows[0].isPublic, true); assert.equal(rows[1].isPublic, false);
   } finally { await pg.close(); }
+});
+
+test('optional room grouping saves with approval, keeps tagged selections aligned, and retries without duplicates', async () => {
+  const db = memoryDatabase(); h.useDatabase(db); const f = factories(db);
+  const owner = await f.user(), org = await f.organization(); await f.membership(owner.id, org.id);
+  const project = await f.project(owner.id, { isPublic: false, designerOrgId: org.id });
+  const a = await f.image(project.id), b = await f.image(project.id), excluded = await f.image(project.id);
+  const product = await f.product();
+  const tag = await db.productTag.create({ data: { imageId: a.id, productId: product.id, x: 20, y: 30 } });
+  const selection = await db.selection.create({ data: { projectId: project.id, productTagId: tag.id, roomId: null } });
+  const read = () => db.project.findUniqueOrThrow({ where: { id: project.id }, include: { images: true, post: { select: { status: true } } } });
+  const input = { projectId: project.id, title: project.title, coverImageId: a.id, includedImageIds: [a.id, b.id], version: portfolioReviewVersion(await read()),
+    roomAssignments: [{ imageId: a.id, roomName: 'Living room' }, { imageId: b.id, roomName: ' living ROOM ' }] };
+  await assert.rejects(publishPortfolio(owner.id, { ...input, roomAssignments: [{ imageId: excluded.id, roomName: 'Kitchen' }] }), /included photographs/);
+  assert.equal(await db.room.count(), 0);
+  await publishPortfolio(owner.id, input); await publishPortfolio(owner.id, input);
+  const rooms = await db.room.findMany({ where: { projectId: project.id } });
+  assert.equal(rooms.length, 1, 'Repeated approval and case variants share one room');
+  const row = await read(); assert.equal(row.isPublic, true);
+  assert.equal(row.images.find(image => image.id === a.id).roomId, rooms[0].id);
+  assert.equal(row.images.find(image => image.id === b.id).roomId, rooms[0].id);
+  assert.equal((await db.selection.findUnique({ where: { id: selection.id } })).roomId, rooms[0].id);
+  const stale = { ...input, roomAssignments: [{ imageId: a.id, roomName: null }], version: portfolioReviewVersion(row) };
+  await db.projectImage.update({ where: { id: a.id }, data: { roomId: null } });
+  await assert.rejects(publishPortfolio(owner.id, { ...stale, title: 'Changed title' }), /changed/);
+  await publishPortfolio(owner.id, { ...stale, version: portfolioReviewVersion(await read()), title: 'New title' });
+  assert.equal((await db.selection.findUnique({ where: { id: selection.id } })).roomId, null);
+  assert.equal(await db.notification.count(), 1);
+});
+
+test('next project stays in the authorized firm and skips public work, features in review and documents', async () => {
+  const db = memoryDatabase(); h.useDatabase(db); const f = factories(db);
+  const owner = await f.user(), stranger = await f.user(), org = await f.organization(); await f.membership(owner.id, org.id);
+  const current = await f.project(owner.id, { designerOrgId: org.id, isPublic: false });
+  const next = await f.project(owner.id, { designerOrgId: org.id, isPublic: false }); await f.image(next.id);
+  const foreign = await f.project(stranger.id, { isPublic: false }); await f.image(foreign.id);
+  const publicProject = await f.project(owner.id, { designerOrgId: org.id, isPublic: true }); await f.image(publicProject.id);
+  const draft = await f.project(owner.id, { designerOrgId: org.id, isPublic: false }); await f.image(draft.id);
+  await db.projectPost.create({ data: { projectId: draft.id, slug: 'draft', status: 'REVIEW', expandedBlocks: { lead: 'PRIVATE_PROSE' } } });
+  const docs = await f.project(owner.id, { designerOrgId: org.id, isPublic: false }); await f.image(docs.id, { name: 'Private.pdf' });
+  await assert.rejects(nextPortfolioProject(stranger.id, current.id), /Forbidden/);
+  assert.deepEqual(await nextPortfolioProject(owner.id, current.id), { id: next.id, title: next.title });
+  await db.project.update({ where: { id: next.id }, data: { isPublic: true } });
+  assert.equal(await nextPortfolioProject(owner.id, current.id), null, 'No fake next link after the last photo project');
+  await db.projectPost.update({ where: { projectId: draft.id }, data: { status: 'DRAFT' } });
+  assert.equal((await nextPortfolioProject(owner.id, current.id)).id, draft.id, 'An unpublished feature draft can still add photos to the profile');
+});
+
+test('Studio stays available with invitations until a public feature is published, scoped to current membership', async () => {
+  const db = memoryDatabase(); h.useDatabase(db); const f = factories(db);
+  const org = await f.organization(), owner = await f.user({ operatingAsOrgId: org.id }); await f.membership(owner.id, org.id);
+  const p = await f.project(owner.id, { designerOrgId: org.id, isPublic: true }); await f.image(p.id);
+  const q = await f.project(owner.id, { designerOrgId: null, isPublic: false }); await f.image(q.id);
+  const post = await db.projectPost.create({ data: { projectId: p.id, slug: 'invite', status: 'DRAFT', provenance: { interview: { payload: { answers: ['PRIVATE_ANSWER'] }, guided: { id: 'guided', status: 'active' } } } } });
+  let invitations = await getStudioProjectInvitations(owner.id);
+  assert.equal(invitations.length, 1); assert.equal(invitations[0].action, 'Continue interview');
+  assert.equal(invitations[0].photosOnProfile, true);
+  assert.equal((await expertiseSources(owner.id)).projects.length, 0, 'Expertise tools wait for feature publication too');
+  assert.doesNotMatch(JSON.stringify(invitations), /PRIVATE_ANSWER|provenance|expandedBlocks/);
+  await db.projectPost.update({ where: { id: post.id }, data: { provenance: { interview: { guided: { id: 'guided', status: 'finished' } } } } });
+  assert.equal((await getStudioProjectInvitations(owner.id))[0].action, 'Create Folio Feature', 'Finishing the interview alone does not unlock tools');
+  await db.projectPost.update({ where: { id: post.id }, data: { expandedBlocks: { lead: 'PRIVATE_DRAFT' } } });
+  assert.equal((await getStudioProjectInvitations(owner.id))[0].action, 'Review & publish feature');
+  await db.projectPost.update({ where: { id: post.id }, data: { status: 'REVIEW' } });
+  assert.equal((await getStudioProjectInvitations(owner.id))[0].action, 'View feature review');
+  await db.projectPost.update({ where: { id: post.id }, data: { status: 'PUBLISHED' } });
+  assert.deepEqual(await getStudioProjectInvitations(owner.id), []);
+  assert.equal((await expertiseSources(owner.id)).projects.length, 1);
+  await db.project.update({ where: { id: p.id }, data: { isPublic: false } });
+  assert.equal((await getStudioProjectInvitations(owner.id)).length, 1, 'Withdrawing a project relocks its tools');
+  assert.equal((await expertiseSources(owner.id)).projects.length, 0);
+  await db.organizationUser.updateMany({ where: { userId: owner.id }, data: { isActive: false } });
+  await assert.rejects(getStudioProjectInvitations(owner.id), /access is no longer/);
 });

@@ -140,7 +140,7 @@ export const TRACKER_TYPES: Record<TrackerType, TypeDef> = {
       { key: 'rooms', label: 'Rooms' },
       { key: 'tags', label: 'Tags' },
       { key: 'story', label: 'Story' },
-      { key: 'publish', label: 'Publish' },
+      { key: 'publish', label: 'Feature' },
     ],
     materialsKey: 'tags',
     copy: {
@@ -174,10 +174,10 @@ export const TRACKER_TYPES: Record<TrackerType, TypeDef> = {
         secondary: 'Skip story for now',
       },
       publish: {
-        eyebrow: 'Publish',
-        headline: 'Send it to the world',
-        body: 'Everything is in place. Publish to make this project public, shareable, and ready to earn.',
-        cta: 'Publish project',
+        eyebrow: 'Folio Feature',
+        headline: 'Publish the story behind your project',
+        body: 'Review and publish your Folio Feature to unlock this project’s Publishing Studio tools and eligibility for the main feed.',
+        cta: 'Publish Folio Feature',
         action: 'publish',
         ready: true,
       },
@@ -192,7 +192,7 @@ export const TRACKER_TYPES: Record<TrackerType, TypeDef> = {
       { key: 'products', label: 'Products' },
     ],
     materialsKey: 'products',
-    endCap: 'Publishing unlocks once you mark the project complete.',
+    endCap: 'You can add photographs to your profile now. Prepare a Folio Feature when the project is complete.',
     copy: {
       photos: {
         eyebrow: 'Add photos',

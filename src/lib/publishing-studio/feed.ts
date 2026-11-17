@@ -67,7 +67,7 @@ export function buildStudioFeed(projects: Project[], saved: Saved[], campaigns: 
   const feed: StudioFeedCard[] = [];
   const sourceProposals = new Map<string, StudioFeedCard>();
   const byId = new Map(projects.map(p => [p.id, p]));
-  const canWrite = (p: Project) => p.post?.status === 'PUBLISHED' && (orgWrite || p.ownerId === userId || p.designerId === userId);
+  const canWrite = (p: Project) => p.isPublic && p.post?.status === 'PUBLISHED' && (orgWrite || p.ownerId === userId || p.designerId === userId);
   const sourceKeys = new Set(saved.map(s => configObject(s.config).studioCardId).filter((v): v is string => typeof v === 'string'));
   for (const p of projects) {
     if (!p.isPublic || p.post?.status !== 'PUBLISHED') continue;

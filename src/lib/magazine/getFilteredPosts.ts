@@ -30,7 +30,7 @@ export async function getFilteredPosts(params: {
   const { filter, cursor, followedDesignerIds } = params;
 
   // Build the where clause
-  const where: any = { status: "PUBLISHED" };
+  const where: any = { status: "PUBLISHED", project: { isPublic: true } };
 
   if (filter) {
     switch (filter.type) {
@@ -48,6 +48,7 @@ export async function getFilteredPosts(params: {
         break;
       case "location":
         where.project = {
+          ...where.project,
           OR: [
             { city: { contains: filter.value, mode: "insensitive" } },
             { regionState: { contains: filter.value, mode: "insensitive" } },

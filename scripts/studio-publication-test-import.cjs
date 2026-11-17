@@ -2,6 +2,8 @@ const fs = require('node:fs'), vm = require('node:vm'), path = require('node:pat
 /** Pure publication renderers used by the existing VM-based UI harnesses. */
 module.exports = function publicationImport(name) {
   const files = {
+    '@/lib/publish/projectPublication': 'src/lib/publish/projectPublication.ts',
+    './StudioProjectInvitations': 'src/components/publishing-studio/StudioProjectInvitations.tsx',
     '@/lib/instagram-export/publication-photo': 'src/lib/instagram-export/publication-photo.ts',
     '@/lib/story/presentation': 'src/lib/story/presentation.ts',
     '@/lib/posting/schemas': 'src/lib/posting/schemas.ts',
@@ -18,6 +20,7 @@ module.exports = function publicationImport(name) {
     '@/lib/instagram-export/svg-templates': 'src/lib/instagram-export/svg-templates.ts',
     './StudioWorkspace': 'src/components/publishing-studio/StudioWorkspace.tsx',
   };
+  if (name === './StudioProjectInvitations.module.css') return { default: {} };
   if (!files[name]) return undefined;
   const exports = {};
   vm.runInNewContext(ts.transpileModule(fs.readFileSync(files[name], 'utf8'), {compilerOptions:{module:ts.ModuleKind.CommonJS,jsx:ts.JsxEmit.ReactJSX,target:ts.ScriptTarget.ES2022}}).outputText, {

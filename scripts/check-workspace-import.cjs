@@ -163,13 +163,13 @@ const rowFor = id => db.importSession.findUnique({ where: { id } });
     onOpenProject: () => {}, onReviewDetails: () => {}, ...props,
   }));
   const previewProject = { id: 'project', title: 'Harbor', isPublic: false, photos: [{ ...landscape, alt: 'Living room' }] };
-  assert.match(renderPreview({ projects: [previewProject] }), /Review &amp; publish project/);
-  assert.match(renderPreview({ projects: [previewProject] }), /Organize rooms, add materials and tell its story when you prepare your interview/);
+  assert.match(renderPreview({ projects: [previewProject] }), /Add photos to my profile/);
+  assert.match(renderPreview({ projects: [previewProject] }), /Add them to your profile now; tell the story later/);
   assert.doesNotMatch(renderPreview({ projects: [previewProject] }), /Start.*interview<|Begin the interview/);
   assert.match(renderPreview({ projects: [previewProject] }), /Private draft/);
-  assert.match(renderPreview({ projects: [previewProject] }), /Review &amp; publish/);
+  assert.match(renderPreview({ projects: [previewProject] }), /Add photos to profile/);
   const resumedPreview = renderPreview({ projects: [{ ...previewProject, hasSavedProgress: true }] });
-  assert.match(resumedPreview, /Review &amp; publish project/);
+  assert.match(resumedPreview, /Add photos to my profile/);
   assert.doesNotMatch(resumedPreview, /Upload a finish schedule|Tag products manually/);
   assert.doesNotMatch(renderPreview({ projects: [previewProject], canContribute: false }), /Upload a finish schedule|Tag products manually/);
   assert.match(renderPreview({ projects: [{ ...previewProject, photos: [] }] }), /Add photographs/);

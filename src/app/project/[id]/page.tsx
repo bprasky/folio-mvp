@@ -1,6 +1,8 @@
 import { PropertySaleEditor } from '@/components/property-sale/PropertySaleEditor';
 import { PortfolioPublishPanel } from '@/components/projects/PortfolioPublishPanel';
-import { portfolioReviewVersion, hasPortfolioInterviewProgress } from '@/lib/publish/portfolio';
+import { PortfolioPhotoReview } from '@/components/projects/PortfolioPhotoReview';
+import { projectFeatureNextStep, projectInterviewProgress } from '@/lib/publish/projectPublication';
+import { portfolioReviewVersion, hasPortfolioInterviewProgress, nextPortfolioProject } from '@/lib/publish/portfolio';
 import { assertProjectView, assertProjectWrite, assertProjectPublish, assertProjectUnpublish } from '@/lib/authz/access';
 import { expertiseEnabled } from '@/lib/publishing-studio/expertise/flag';
 import { ExpertiseProjectReturn } from '@/components/publishing-studio/ExpertiseProjectReturn';
@@ -211,6 +213,7 @@ export default async function ProjectPage({
       targetInstallDate: true,
       updatedAt: true,
       ownerId: true,
+      designerOrgId: true,
       createdAt: true,
       category: true,
       status: true,
@@ -281,9 +284,18 @@ export default async function ProjectPage({
   try { await assertProjectUnpublish(viewerId, base.id); mayUnpublish = true; }
   catch (error) { if (!(error instanceof Error) || error.message !== 'Forbidden') throw error; }
 
-  const [interviewAnswerCount, interviewProgress] = await Promise.all([
+  const profileHref = base.designerOrgId ? `/org/${base.designerOrgId}` : `/profile/${designerId || base.ownerId}`;
+  const portfolioPhotos = base.images.filter(image => image.url && !isDocumentImage(image.name));
+  const canReviewPortfolio = process.env.FOLIO_EDITORIAL_CHANNELS === 'true' && mayPublish && portfolioPhotos.length > 0 && (!base.post || base.post.status === 'DRAFT');
+  // Keep approval at a stable URL so a successful save stays on its next-step screen.
+  if (canReviewPortfolio && !base.isPublic && !base.post?.expandedBlocks && !searchParams.view && !searchParams.step && !searchParams.publish) {
+    redirect(`/project/${encodeURIComponent(base.id)}?publish=photos`);
+  }
+
+  const [interviewAnswerCount, interviewProgress, completedInterview] = await Promise.all([
     prisma.editorialInterviewAnswer.count({ where: { interview: { projectId: params.id } } }),
-    base.portfolioPublishedAt ? prisma.projectPost.findUnique({ where: { projectId: params.id }, select: { provenance: true } }) : Promise.resolve(null),
+    prisma.projectPost.findUnique({ where: { projectId: params.id }, select: { provenance: true } }),
+    prisma.editorialInterview.findFirst({ where: { projectId: params.id, status: { in: ['COMPLETED', 'PUBLISHED'] } }, select: { id: true } }),
   ]);
 
   const editorialState = getEditorialState({
@@ -298,6 +310,19 @@ export default async function ProjectPage({
   });
 
   const isPublished = editorialState === 'PUBLISHED';
+  if (canReviewPortfolio && searchParams.publish === 'photos') {
+    const feature = projectFeatureNextStep({ id: base.id, isPublic: base.isPublic, featureStatus: base.post?.status,
+      hasDraft: base.post?.expandedBlocks != null,
+      interviewStarted: interviewAnswerCount > 0 || hasPortfolioInterviewProgress(interviewProgress?.provenance),
+      interviewComplete: Boolean(completedInterview) || projectInterviewProgress(interviewProgress?.provenance).complete });
+    return <PortfolioPhotoReview key={base.id} projectId={base.id} title={base.title} version={portfolioReviewVersion(base)}
+      coverImageId={base.portfolioCoverImageId} isPublic={base.isPublic} profileHref={profileHref}
+      rooms={base.rooms.map(room => ({ name: room.name }))}
+      photos={portfolioPhotos.map(image => ({ id: image.id, url: image.url, name: image.name, inclusion: image.inclusion,
+        roomName: base.rooms.find(room => room.id === image.roomId)?.name ?? image.room ?? null }))}
+      nextProject={await nextPortfolioProject(viewerId, base.id)} featureHref={feature.href}
+      featureAction={feature.step === 'draft' ? 'Review my feature' : feature.status === 'Interview in progress' ? 'Continue my feature' : 'Create my feature'} />;
+  }
   const hasDraftOrPublished = (
     ['GENERATED', 'PUBLISHED', 'UNPUBLISHED'] as EditorialState[]
   ).includes(editorialState);
@@ -574,12 +599,8 @@ export default async function ProjectPage({
           editorialState={editorialState}
         />
         {process.env.FOLIO_EDITORIAL_CHANNELS === 'true' && (isOwner || mayPublish) && (!isPublished || base.portfolioPublishedAt) && (
-          <PortfolioPublishPanel key={portfolioReviewVersion(base)} projectId={base.id} title={base.title} description={base.description}
-            version={portfolioReviewVersion(base)} coverImageId={base.portfolioCoverImageId}
-            photos={base.images.filter(image => !isDocumentImage(image.name)).map(image => ({ id: image.id, url: image.url, name: image.name, inclusion: image.inclusion }))}
-            isPublic={base.isPublic} canPublish={mayPublish} canUnpublish={mayUnpublish} featureSlug={base.post?.slug ?? null} featureStatus={base.post?.status ?? null} editorialState={editorialState}
-            interviewStarted={interviewAnswerCount > 0 || hasPortfolioInterviewProgress(interviewProgress?.provenance)}
-            initialReview={searchParams.publish === 'photos' && !base.isPublic} />
+          <PortfolioPublishPanel projectId={base.id} isPublic={base.isPublic} canPublish={mayPublish} canUnpublish={mayUnpublish}
+            featureStatus={base.post?.status ?? null} profileHref={profileHref} />
         )}
         {isPublished && !isProjectHome && (
           <Link href={`/project/${base.id}`} className="inline-block mb-4 folio-ui underline underline-offset-4">

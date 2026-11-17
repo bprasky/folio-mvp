@@ -53,6 +53,7 @@ function load(file, mocks = {}) {
       'next/navigation': { redirect: path => { throw Error(`redirect:${path}`); } },
       'next/link': ({ children, ...props }) => React.createElement('a', props, children),
       '@/lib/interview-media/store': store,
+      '@/lib/publishing-studio/project-invitations': { getStudioProjectInvitations: async () => [] },
       '@/lib/publishing-studio/expertise/flag': { expertiseEnabled: () => false },
       '@/components/publishing-studio/PublishingStudio': { PublishingStudio: () => React.createElement('p', null, 'Saved Studio work') },
       '@/components/publishing-studio/ReadinessStudio': { ReadinessStudio: () => React.createElement('p', null, 'Studio suggestions') },

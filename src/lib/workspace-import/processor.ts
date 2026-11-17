@@ -179,7 +179,7 @@ export function readyEmail(run: WorkspaceImport, runId: string, origin: string) 
     summary.projects ? `${summary.projects} projects and ${summary.photos} photographs are saved privately for you to review.` : ''].filter(Boolean);
   return { subject: status, html: `<h1>${escapeHtml(status)}</h1><p>${escapeHtml(run.orgName)}</p>${details.map(detail => `<p>${escapeHtml(detail)}</p>`).join('')}
     ${summary.needsAttention || !useful ? '<p>Some material needs your attention. Your workspace shows what was saved and what could not be imported.</p>' : ''}
-    <h2>Your next step: review and publish</h2><p>${summary.projects ? 'Explore your private profile preview, then choose a project. Review its title, cover and photographs and publish when ready. Organize rooms, add materials and tell the story behind your work when you prepare your interview.' : 'Explore the details we found for your profile. You can review them and add photographs to begin your first project, then add its materials.'}</p>
+    <h2>Your next step: add photos to your profile</h2><p>${summary.projects ? 'Explore your private profile preview, then choose a project. Review its title, cover and photographs to make your profile ready to share. Complete the interview and publish its Folio Feature later to unlock Publishing Studio tools and eligibility for the main feed.' : 'Explore the details we found for your profile. You can review them and add photographs to begin your first project, then add its materials.'}</p>
     <p>Your projects remain private until you choose to publish. Business details are only applied when you save them.</p><p><a href="${escapeHtml(url)}">${useful ? 'See my Folio and take the next step' : 'Open my import and continue'}</a></p>` };
 }
 
@@ -195,7 +195,7 @@ async function checkpointImport(userId: string, id: string, previous: unknown, r
     await tx.notification.upsert({ where: { id: notificationId }, update: {}, create: {
       id: notificationId, userId, type: 'WORKSPACE_IMPORT_READY',
       title: useful ? `${run.orgName} is ready to explore` : 'Your Folio import needs a little help',
-      body: useful ? `Your private profile preview is ready. ${summary.projects ? 'Review your project title, cover and photographs, then publish when ready. Your interview comes next.' : 'Review your details and take the next step.'}${summary.needsAttention ? ' Some items need a little attention.' : ''}` : 'See what we found, then add any missing details or photographs to continue.',
+      body: useful ? `Your private profile preview is ready. ${summary.projects ? 'Review your title, cover and photographs, then add them to your public profile. Interview and publish a Folio Feature next for Publishing Studio and the main feed.' : 'Review your details and take the next step.'}${summary.needsAttention ? ' Some items need a little attention.' : ''}` : 'See what we found, then add any missing details or photographs to continue.',
       actionUrl: `/onboarding/workspace?import=${encodeURIComponent(id)}`,
       metadata: { importId: id, orgId: run.orgId, projects: summary.projects, needsAttention: summary.needsAttention },
     } });

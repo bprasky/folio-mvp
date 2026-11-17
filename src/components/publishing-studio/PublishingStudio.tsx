@@ -1,4 +1,6 @@
 'use client';
+import { StudioProjectInvitations } from './StudioProjectInvitations';
+import type { ProjectPublicationInvitation } from '@/lib/publish/projectPublication';
 
 import { useState } from 'react';
 import Link from 'next/link';
@@ -21,7 +23,7 @@ const CampaignWizard = dynamic(() => import('@/components/instagram/CampaignWiza
 const fieldClass = 'max-w-full min-w-0 rounded-full border border-folio-border-subtle bg-surface-canvas px-4 py-2 folio-ui';
 const actionClass = 'folio-ui underline underline-offset-4 disabled:opacity-50';
 
-export function PublishingStudio({ embedded = false, expertiseEnabled = false }: { embedded?: boolean; expertiseEnabled?: boolean } = {}) {
+export function PublishingStudio({ embedded = false, expertiseEnabled = false, projectInvitations = [] }: { embedded?: boolean; expertiseEnabled?: boolean; projectInvitations?: ProjectPublicationInvitation[] } = {}) {
   const router = useRouter();
   const params = useSearchParams();
   const project = params.get('project') === 'studio-wide' ? '' : params.get('project') || '';
@@ -105,7 +107,7 @@ export function PublishingStudio({ embedded = false, expertiseEnabled = false }:
     finally { setPending(null); }
   }
 
-  if (error || !data) return <section className="mx-auto max-w-6xl px-5 py-12"><h1 className="folio-h1">Publishing Studio</h1><p role={error ? 'alert' : 'status'} className="mt-6 folio-body">{error || 'Gathering ideas from your work…'}</p>{error && <button onClick={reload} className={`${actionClass} mt-5`}>Try again</button>}</section>;
+  if (error || !data) return <section className="mx-auto max-w-6xl px-5 py-12"><h1 className="folio-h1">Publishing Studio</h1>{!embedded && <StudioProjectInvitations projects={projectInvitations} subject={subject} />}<p role={error ? 'alert' : 'status'} className="mt-6 folio-body">{error || 'Gathering ideas from your work…'}</p>{error && <button onClick={reload} className={`${actionClass} mt-5`}>Try again</button>}</section>;
   if (embedded && !data.feed.length && !data.campaigns.length) return null;
   const projectName = (id: string) => data.projects.find(item => item.id === id)?.title || 'Project';
   const activeCampaign = data.projects.find(item => item.id === campaignProject);
@@ -134,7 +136,7 @@ export function PublishingStudio({ embedded = false, expertiseEnabled = false }:
 
   return <section className={embedded ? 'space-y-6' : 'mx-auto max-w-6xl px-4 py-5 sm:px-6 md:py-8'}>
     {removingDraft && <section aria-label="Confirm draft removal" className="mb-6 rounded-xl border border-folio-border-subtle p-5"><h2 className="folio-h3">Remove “{removingDraft.title || 'Untitled draft'}”?</h2><p className="folio-body mt-2">This discards the saved draft and its changes. The original suggestion can return if its source is still available.</p><div className="mt-4 flex flex-wrap gap-4"><button type="button" className={actionClass} disabled={pending !== null} onClick={() => setRemovingDraft(null)}>Keep draft</button><button type="button" className={actionClass} disabled={pending !== null} onClick={removeDraft}>{pending === removingDraft.id ? 'Removing…' : 'Remove saved draft'}</button></div></section>}
-    {!embedded && <><StudioIntro /><StudioTabs value={tab} onChange={value => navigate({ tab: value, item: null })} /></>}
+    {!embedded && <><StudioIntro /><StudioProjectInvitations projects={projectInvitations} subject={subject} /><StudioTabs value={tab} onChange={value => navigate({ tab: value, item: null })} /></>}
 
     <div className="mb-6 flex flex-wrap items-center gap-3">
     {!embedded && <StudioDiscovery onClear={() => navigate({ subject: null, project: null, format: null, type: null, item: null })} projects={data.projects} subject={subject} format={format} onSubject={value => navigate({ subject: value === 'about-me' ? value : null, project: value === 'about-me' ? null : value, format: null, item: null })} onFormat={value => navigate({ format: value, type: null, item: null })} />}

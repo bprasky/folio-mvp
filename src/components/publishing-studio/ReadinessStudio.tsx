@@ -1,4 +1,6 @@
 'use client';
+import { StudioProjectInvitations } from './StudioProjectInvitations';
+import type { ProjectPublicationInvitation } from '@/lib/publish/projectPublication';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
@@ -53,7 +55,7 @@ export function CandidateCard({ candidate, projectNames, onOpen, onDismiss, port
   </div>;
 }
 
-export function ReadinessStudio({ expertiseEnabled = false }: { expertiseEnabled?: boolean } = {}) {
+export function ReadinessStudio({ expertiseEnabled = false, projectInvitations = [] }: { expertiseEnabled?: boolean; projectInvitations?: ProjectPublicationInvitation[] } = {}) {
   const params=useSearchParams(),router=useRouter();
   const {introduction,error:introductionError,reload:reloadIntroduction}=usePersonalIntroduction();
   const project=params.get('project')||'';
@@ -91,6 +93,7 @@ export function ReadinessStudio({ expertiseEnabled = false }: { expertiseEnabled
   const work=tab==='progress'?data?.inProgress||[]:data?.exports||[];
   return <main className="mx-auto max-w-6xl space-y-6 px-4 py-6 text-folio-text-primary sm:px-6 sm:py-8">
     <StudioIntro/>
+    <StudioProjectInvitations projects={projectInvitations} subject={subject} />
     {removeDraft&&<div role="alert" className="space-y-3 border border-folio-border-subtle bg-surface-ground p-4"><p className="folio-body">Remove “{removeDraft.draft.headline}” from In progress? Your saved version will remain available under Dismissed suggestions.</p><div className="flex gap-3"><button className={studioAction} onClick={()=>void dismiss(removeDraft,'other')}>Remove from In progress</button><button className={quietAction} onClick={()=>setRemoveDraft(null)}>Keep draft</button></div></div>}
     {!selected&&<StudioTabs value={tab} onChange={value=>{navigate({tab:value==='suggestions'?null:value,candidate:null,candidateVersion:null})}}/>}
     {error&&<div role="alert" className="folio-body"><p>{error}</p><button className={`${quietAction} mt-2`} onClick={()=>{setError('');void reload().catch(err=>setError(err.message))}}>Reload stories</button></div>}

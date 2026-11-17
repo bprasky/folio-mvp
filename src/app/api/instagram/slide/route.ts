@@ -10,6 +10,7 @@ import { authOptions } from '@/app/api/auth/[...nextauth]/options';
 import { prisma } from '@/lib/prisma';
 import { assertProjectView } from '@/lib/authz/access';
 import { generateSingleSlide } from '@/lib/instagram/generateSingleSlide';
+import { hasPublishedProjectFeature, PROJECT_FEATURE_REQUIRED } from '@/lib/publish/projectPublication';
 import { z } from 'zod';
 
 // Route segment config
@@ -76,6 +77,7 @@ export async function POST(request: NextRequest) {
       where: { id: projectId },
       select: {
         id: true,
+        isPublic: true,
         title: true,
         description: true,
         images: {
@@ -91,6 +93,7 @@ export async function POST(request: NextRequest) {
         post: {
           select: {
             expandedBlocks: true,
+            status: true,
             heroAssetId: true,
             slug: true,
           },
@@ -106,6 +109,10 @@ export async function POST(request: NextRequest) {
           headers: { 'Content-Type': 'application/json' }
         }
       );
+    }
+
+    if (!hasPublishedProjectFeature(project)) {
+      return NextResponse.json({ error: PROJECT_FEATURE_REQUIRED }, { status: 409 });
     }
 
     // Reorder images according to orderedImageIds (maintain the order from the array)
@@ -194,6 +201,9 @@ export async function POST(request: NextRequest) {
       }
     );
   } catch (error: any) {
+    if (error?.message === 'Forbidden' || error?.message === 'NotFound') {
+      return NextResponse.json({ error: error.message }, { status: 403 });
+    }
     console.error('[instagram-slide] Unhandled error:', error);
     
     // Ensure we always return JSON, never HTML
