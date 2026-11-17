@@ -1,6 +1,8 @@
 'use client';
 
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useState } from 'react';
+import { Dialog, DialogContent, DialogTitle, DialogDescription } from '@/components/ui/dialog';
+import styles from '@/components/ui/WorkflowForms.module.css';
 import { FileText, X } from 'lucide-react';
 
 interface DocumentImportModalProps {
@@ -24,7 +26,6 @@ export default function DocumentImportModal({
   onSelect,
 }: DocumentImportModalProps) {
   const [isDragOver, setIsDragOver] = useState(false);
-  const inputRef = useRef<HTMLInputElement>(null);
 
   const handleFile = useCallback(
     (file: File | undefined) => {
@@ -42,72 +43,20 @@ export default function DocumentImportModal({
     [handleFile],
   );
 
-  if (!open) return null;
-
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      <div className="absolute inset-0 glass-backdrop" onClick={onClose} />
-
-      <div className="relative warm-mesh rounded-2xl bg-surface-ground border border-folio-border-subtle shadow-2xl max-w-lg w-full overflow-hidden">
-        <div className="relative z-[1] p-7">
-          <button
-            onClick={onClose}
-            aria-label="Close"
-            className="absolute top-4 right-4 p-1.5 text-folio-text-tertiary hover:text-folio-text-secondary transition-colors"
-          >
-            <X className="w-5 h-5" />
-          </button>
-
-          <h2 className="font-headline italic text-3xl text-folio-text-primary">
-            Import a document
-          </h2>
-          <p className="folio-body text-folio-text-secondary mt-1.5 mb-6">
-            Drop a presentation, a PDF, or a spec sheet. We read the file and pull the
-            products out for you.
-          </p>
-
-          <div
-            onDragEnter={e => {
-              e.preventDefault();
-              setIsDragOver(true);
-            }}
-            onDragOver={e => e.preventDefault()}
-            onDragLeave={e => {
-              e.preventDefault();
-              setIsDragOver(false);
-            }}
-            onDrop={handleDrop}
-            onClick={() => inputRef.current?.click()}
-            className={`relative cursor-pointer rounded-xl border-2 border-dashed p-8 text-center transition-colors ${
-              isDragOver
-                ? 'border-[var(--accent)] bg-[var(--accent)]/5'
-                : 'border-folio-border-subtle hover:border-[var(--folio-gold)] bg-surface-canvas'
-            }`}
-          >
-            <input
-              ref={inputRef}
-              type="file"
-              accept={ACCEPT}
-              className="hidden"
-              onChange={e => {
-                handleFile(e.target.files?.[0]);
-                e.target.value = '';
-              }}
-            />
-            <FileText
-              className={`mx-auto mb-3 h-10 w-10 ${
-                isDragOver ? 'text-[var(--accent)]' : 'text-folio-text-tertiary'
-              }`}
-            />
-            <p className="folio-ui font-medium text-folio-text-primary">
-              {isDragOver ? 'Drop to import' : 'Drag a file here, or click to browse'}
-            </p>
-            <p className={"mt-1 font-metricsMono text-[12px] tracking-tight text-folio-text-tertiary" /* folio-design-system: off-scale */}>
-              PDF · PPTX · XLSX · CSV
-            </p>
-          </div>
-        </div>
+  return <Dialog open={open} onOpenChange={value => { if (!value) onClose(); }} placement="right" backdropClassName="bg-black/40">
+    <DialogContent placement="right" className={styles.sheet}>
+      <div className={styles.sheetHeader}>
+        <div><p className={styles.eyebrow}>The details are already in your work</p><DialogTitle className={styles.sheetTitle}>Import a document</DialogTitle><DialogDescription className={`${styles.help} mt-3`}>Drop a presentation, a PDF, or a spec sheet. We read the file and pull the products out for you.</DialogDescription></div>
+        <button type="button" onClick={onClose} className={styles.close} aria-label="Close document import"><X size={18} /></button>
       </div>
-    </div>
-  );
+      <div className={styles.sheetBody}>
+        <label onDragEnter={event => { event.preventDefault(); setIsDragOver(true); }} onDragOver={event => event.preventDefault()} onDragLeave={event => { event.preventDefault(); setIsDragOver(false); }} onDrop={handleDrop} className={`${styles.uploadChooser} ${isDragOver ? 'ring-2 ring-folio-gold' : ''}`}>
+          <input type="file" accept={ACCEPT} aria-label="Choose a presentation or finish schedule" className="sr-only" onChange={event => { handleFile(event.target.files?.[0]); event.target.value = ''; }} />
+          <FileText size={32} strokeWidth={1.25} aria-hidden />
+          <span className={styles.secondary}>{isDragOver ? 'Drop to import' : 'Choose a document'}</span>
+          <span className={styles.help}>Or drag a file here · PDF, PPTX, XLSX or CSV</span>
+        </label>
+      </div>
+    </DialogContent>
+  </Dialog>;
 }

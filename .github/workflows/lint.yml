@@ -249,6 +249,8 @@ jobs:
         run: GUIDED_TEST_BROWSER="$(command -v google-chrome || command -v chromium)" node scripts/check-portfolio-publish-browser.cjs
       - name: Property sale editor and public section in Chromium
         run: GUIDED_TEST_BROWSER="$(command -v google-chrome || command -v chromium)" node scripts/check-property-sale-browser.cjs
+      - name: Editorial workflow forms in Chromium
+        run: GUIDED_TEST_BROWSER="$(command -v google-chrome || command -v chromium)" node scripts/check-workflow-forms-browser.cjs
       - name: Cinematic profile customization and existing mosaic
         run: ORG_PROFILE_TEST_CINEMATIC=true ORG_PROFILE_TEST_BROWSER="$(command -v google-chrome || command -v chromium)" node scripts/check-org-profile-browser.cjs
       - uses: actions/upload-artifact@v4
@@ -260,6 +262,7 @@ jobs:
             .tmp/publication-layout/results.json
             .tmp/channel-browser/*.png
             .tmp/portfolio-browser/*.png
+            .tmp/workflow-forms/*.png
             .tmp/org-profile-browser/*.png
             .tmp/property-sale-browser/*.png
       - name: Reject new diagnostics and baseline expansion

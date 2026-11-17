@@ -1,5 +1,7 @@
 'use client';
 
+import styles from '@/components/ui/WorkflowForms.module.css';
+import { ImagePlus } from 'lucide-react';
 import { workflowRequest } from '@/lib/client/workflowRequest';
 
 import { originalPhotoError, prepareProjectPhoto } from '@/lib/files/prepareProjectPhoto';
@@ -7,7 +9,7 @@ import { useEffect, useRef, useState } from 'react';
 
 type Candidate = { url: string; alt?: string };
 export type GuidePhoto = { id: string; url: string; name?: string | null; room?: string | null; roomId?: string | null };
-const button = 'rounded-sm border border-border px-4 py-2 text-folio-ui hover:bg-surface-ground disabled:opacity-50 focus-visible:ring-2 focus-visible:ring-folio-gold';
+const button = styles.secondary;
 
 async function request(path: string, body?: unknown) {
   const response = await workflowRequest(path, { method: body ? 'POST' : 'GET', credentials: 'same-origin', cache: 'no-store',
@@ -102,18 +104,18 @@ export function ProjectGuideUploads({ projectId, ensureProject, canImport = true
     if (failed.length) throw new Error('Some photos could not be added. Your saved photos are safe; retry the remaining selection.');
     setPartialProject(null);
   });
-  return <section className="space-y-4 rounded-lg border border-border bg-surface-canvas p-5" aria-label="Add project photographs">
-    <div><h3 className="font-headline text-folio-h4">Add project photos</h3><p className="mt-1 text-folio-meta text-text-secondary">Import from a project link or upload files. Next, organize them into rooms.</p></div>
-    {canImport ? <form className="flex flex-wrap gap-2" onSubmit={event => { event.preventDefault(); void importUrl(); }}>
-      <label className="min-w-0 flex-1 text-folio-meta">Project or portfolio link<input aria-label="Project or portfolio link" type="url" required value={url} onChange={event => setUrl(event.target.value)} disabled={busy} placeholder="https://…" className="mt-1 w-full rounded-sm border border-border bg-surface-ground px-3 py-2 text-folio-body" /></label>
-      <button className={`${button} self-end`} disabled={busy || !url.trim()}>{busy ? 'Working…' : 'Find photos'}</button>
+  return <section className={styles.upload} aria-label="Add project photographs">
+    <div><h3 className={styles.sectionTitle}>Add project photos</h3><p className="mt-1 text-folio-meta text-text-secondary">Import from a project link or upload files. Next, organize them into rooms.</p></div>
+    {canImport ? <form className={styles.linkRow} onSubmit={event => { event.preventDefault(); void importUrl(); }}>
+      <label className={styles.label}>Project or portfolio link<input aria-label="Project or portfolio link" type="url" required value={url} onChange={event => setUrl(event.target.value)} disabled={busy} placeholder="https://…" className={styles.field} /></label>
+      <button className={styles.primary} disabled={busy || !url.trim()}>{busy ? 'Working…' : 'Find photos'}</button>
     </form> : <p className="text-folio-meta text-text-secondary">Website import is available with Pro. Upload your photographs below.</p>}
-    <label className={`${button} flex max-w-full cursor-pointer flex-wrap items-center gap-2`}>Upload photos<input aria-label="Upload project photos" type="file" accept="image/jpeg,image/png,image/webp" multiple disabled={busy} className="min-w-0 max-w-full text-folio-meta" onChange={event => { const files = Array.from(event.target.files || []); event.target.value = ''; if (files.length) void upload(files); }} /></label>
-    {candidates.length ? <div className="space-y-3"><p className="text-folio-meta">Choose the photographs to add.</p><div className="grid max-h-64 grid-cols-3 gap-2 overflow-auto sm:grid-cols-5">{candidates.map(item => <label key={item.url} className="relative cursor-pointer"><img src={item.url} alt={item.alt || 'Imported photograph'} className="aspect-square w-full rounded-sm object-cover" /><input type="checkbox" aria-label={`Select ${item.alt || 'photograph'}`} checked={selected.includes(item.url)} disabled={busy} onChange={event => setSelected(current => event.target.checked ? [...current, item.url] : current.filter(url => url !== item.url))} className="absolute left-2 top-2 accent-folio-gold" /></label>)}</div><button type="button" className={button} disabled={busy || !selected.length} onClick={() => void saveSelected()}>Add selected photos</button></div> : null}
+    <label className={styles.uploadChooser}><ImagePlus size={28} strokeWidth={1.25} aria-hidden /><span className={styles.secondary}>Upload photos</span><span className={styles.help}>Choose photographs from your device</span><input aria-label="Upload project photos" type="file" accept="image/jpeg,image/png,image/webp" multiple disabled={busy} className="sr-only" onChange={event => { const files = Array.from(event.target.files || []); event.target.value = ''; if (files.length) void upload(files); }} /></label>
+    {candidates.length ? <div className="space-y-3"><p className="text-folio-meta">Choose the photographs to add.</p><div className={styles.photoGrid}>{candidates.map(item => <label key={item.url} className={styles.photoOption}><img src={item.url} alt={item.alt || 'Imported photograph'} className="aspect-square w-full rounded-sm object-cover" /><input type="checkbox" aria-label={`Select ${item.alt || 'photograph'}`} checked={selected.includes(item.url)} disabled={busy} onChange={event => setSelected(current => event.target.checked ? [...current, item.url] : current.filter(url => url !== item.url))}  /></label>)}</div><button type="button" className={button} disabled={busy || !selected.length} onClick={() => void saveSelected()}>Add selected photos</button></div> : null}
     <p className="text-folio-meta text-text-secondary">JPEG, PNG or WebP originals up to 32 MiB and 40 megapixels. Larger files are prepared as high-quality JPEG copies for upload.</p>
     {preparationNotes.map(note => <p key={note} role="status" className="text-folio-meta">{note}</p>)}
     {busy ? <p role="status" className="text-folio-meta">Adding your project photographs…</p> : null}
-    {error ? <p role="alert" className="text-folio-meta">{error}</p> : null}
+    {error ? <p role="alert" className={styles.notice}>{error}</p> : null}
     {failedFiles.length ? <div className="space-y-2 text-folio-meta"><p>Still to upload: {failedFiles.map(file => file.name).join(', ')}</p><button type="button" className={button} disabled={busy} onClick={() => void upload(failedFiles)}>Retry failed photos</button></div> : null}
     {partialProject ? <button type="button" className={button} disabled={busy} onClick={() => void onAdded(partialProject, [], true)}>Continue with saved photos</button> : null}
   </section>;

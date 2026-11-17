@@ -1,5 +1,6 @@
 "use client";
 
+import styles from "@/components/ui/WorkflowForms.module.css";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { useEffect, useState } from "react";
 import { FaTimes, FaImage, FaExternalLinkAlt, FaExclamationCircle } from "react-icons/fa";
@@ -216,15 +217,15 @@ export function ProductEditModal({ productId, tagId = null, onClose, onSaved }: 
   };
 
   return (
-    <Dialog open onOpenChange={open => { if (!open && !editSaving) onClose(); }} backdropClassName="bg-black/40">
-      <DialogContent aria-describedby={undefined} className="ridge-card w-full max-w-md flex flex-col overflow-hidden">
-        <div className="flex items-center justify-between px-5 py-4 border-b border-folio-border-subtle">
-          <DialogTitle className="folio-ui text-folio-text-primary">Edit product details</DialogTitle>
+    <Dialog open placement="right" onOpenChange={open => { if (!open && !editSaving) onClose(); }} backdropClassName="bg-black/40">
+      <DialogContent placement="right" aria-describedby={undefined} className={styles.sheet}>
+        <div className={styles.sheetHeader}>
+          <DialogTitle className={styles.sheetTitle}>Edit product details</DialogTitle>
           <button
             onClick={onClose}
             disabled={editSaving}
             aria-label="Close product details"
-            className="flex h-11 w-11 items-center justify-center text-folio-text-secondary hover:text-folio-text-primary"
+            className={styles.close}
             title="Close"
           >
             <FaTimes className="w-4 h-4" />
@@ -240,9 +241,9 @@ export function ProductEditModal({ productId, tagId = null, onClose, onSaved }: 
           </div>
         ) : (
           <>
-            <div className="flex-1 min-h-0 px-5 py-4 space-y-3 overflow-y-auto">
+            <div className={`${styles.sheetBody} space-y-6`}>
               {editError && (
-                <div role="alert" className="flex items-start gap-2 rounded-md bg-red-50 text-red-600 px-2 py-1.5 text-xs">
+                <div role="alert" className={`${styles.notice} flex items-start gap-2`}>
                   <FaExclamationCircle className="w-3.5 h-3.5 mt-0.5 flex-shrink-0" />
                   <span>{editError}</span>
                 </div>
@@ -259,8 +260,8 @@ export function ProductEditModal({ productId, tagId = null, onClose, onSaved }: 
                 });
                 if (h.flags.length === 0) return null;
                 return (
-                  <div className="rounded-md bg-amber-50 px-2.5 py-2 space-y-1">
-                    <div className="flex items-center gap-1.5 text-[length:var(--type-eyebrow)] font-medium text-amber-700">
+                  <div className={styles.notice}>
+                    <div className="flex items-center gap-1.5 text-[length:var(--type-eyebrow)] font-medium text-folio-text-secondary">
                       <FaExclamationCircle className="w-3 h-3" />
                       This product&apos;s details look incomplete or off:
                     </div>
@@ -268,7 +269,7 @@ export function ProductEditModal({ productId, tagId = null, onClose, onSaved }: 
                       <div
                         key={i}
                         className={`pl-4.5 text-[length:var(--type-eyebrow)] ${
-                          f.severity === "suspicious" ? "text-red-600" : "text-amber-700"
+                          f.severity === "suspicious" ? "text-folio-text-primary" : "text-folio-text-secondary"
                         }`}
                       >
                         • {f.message}
@@ -279,7 +280,7 @@ export function ProductEditModal({ productId, tagId = null, onClose, onSaved }: 
               })()}
 
               {/* Autofill rescue — paste the product copy or drop a screenshot. */}
-              <div className="rounded-lg border border-folio-border-subtle bg-surface-ground p-3 space-y-2.5">
+              <details className={styles.disclosure}><summary>Autofill options</summary><div className="space-y-4">
                 <div className="flex items-center justify-between">
                   <span className="folio-meta font-medium text-folio-text-primary">
                     Autofill from the product page
@@ -301,7 +302,7 @@ export function ProductEditModal({ productId, tagId = null, onClose, onSaved }: 
                   onChange={(e) => setEditPasteText(e.target.value)}
                   placeholder="Paste the product name, specs, price… from the page"
                   rows={3}
-                  className="w-full px-3 py-2 ridge-input text-sm resize-y"
+                  className={styles.field}
                 />
                 <div className="flex flex-wrap gap-2">
                   {editTarget.url && (
@@ -310,7 +311,7 @@ export function ProductEditModal({ productId, tagId = null, onClose, onSaved }: 
                       onClick={rescrapeProduct}
                       disabled={rescraping}
                       title="Re-scrape the product page and overwrite the stored details"
-                      className="px-3 py-1.5 rounded-lg bg-[var(--accent)] text-white folio-meta font-medium disabled:opacity-50 hover:opacity-90 transition-opacity inline-flex items-center gap-1.5"
+                      className={styles.secondary}
                     >
                       {rescraping ? "Refreshing…" : "Refresh from the web"}
                     </button>
@@ -319,11 +320,11 @@ export function ProductEditModal({ productId, tagId = null, onClose, onSaved }: 
                     type="button"
                     onClick={handleEditParseText}
                     disabled={editParsing !== null || !editPasteText.trim()}
-                    className="px-3 py-1.5 rounded-lg bg-surface-canvas border border-folio-border-subtle text-folio-text-primary folio-meta font-medium disabled:opacity-50 hover:bg-surface-ground transition-colors"
+                    className={styles.secondary}
                   >
                     {editParsing === "text" ? "Reading…" : "Autofill from text"}
                   </button>
-                  <label className="relative flex min-h-11 items-center gap-2 px-3 py-1.5 rounded-lg border border-dashed border-folio-border-subtle cursor-pointer hover:bg-surface-canvas focus-within:ring-2 focus-within:ring-folio-gold transition-colors folio-meta text-folio-text-secondary">
+                  <label className={`${styles.secondary} focus-within:ring-2 focus-within:ring-folio-gold`}>
                     <FaImage className="w-3.5 h-3.5" />
                     {editParsing === "image" ? "Reading screenshot…" : "Upload a screenshot"}
                     <input
@@ -337,10 +338,10 @@ export function ProductEditModal({ productId, tagId = null, onClose, onSaved }: 
                     />
                   </label>
                 </div>
-              </div>
+              </div></details>
 
               {renderPreviewField("Name", editTarget.name, (v) => updateEdit({ name: v }))}
-              <div className="grid grid-cols-2 gap-3">
+              <div className={styles.row}>
                 {renderPreviewField("Brand", editTarget.brand, (v) => updateEdit({ brand: v }))}
                 {renderPreviewField("Price", editTarget.price, (v) => updateEdit({ price: v }))}
               </div>
@@ -353,18 +354,18 @@ export function ProductEditModal({ productId, tagId = null, onClose, onSaved }: 
               )}
               {renderPreviewField("Image URL", editTarget.imageUrl, (v) => updateEdit({ imageUrl: v }))}
             </div>
-            <div className="flex gap-3 px-5 py-4 border-t border-folio-border-subtle">
+            <div className={styles.sheetFooter}>
               <button
                 onClick={onClose}
                 disabled={editSaving}
-                className="flex-1 px-4 py-2 ridge-card text-sm font-medium text-folio-text-primary hover:bg-surface-ground transition-colors text-center disabled:opacity-50"
+                className={styles.secondary}
               >
                 Cancel
               </button>
               <button
                 onClick={saveEditProduct}
                 disabled={editSaving}
-                className="flex-1 px-4 py-2 rounded-lg bg-[var(--accent)] text-white text-sm font-medium hover:opacity-90 transition-opacity disabled:opacity-50"
+                className={styles.primary}
               >
                 {editSaving ? "Saving…" : "Save"}
               </button>

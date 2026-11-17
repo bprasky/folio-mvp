@@ -1,5 +1,6 @@
 'use client';
 
+import styles from '@/components/ui/WorkflowForms.module.css';
 import { workflowRequest } from '@/lib/client/workflowRequest';
 import { useEffect, useRef, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
@@ -72,17 +73,17 @@ function ProjectIntake({ actorId, workspaceId, onManual }: CreateProjectGuidePro
     })().catch(error => { creation.current = null; throw error; });
     return creation.current;
   };
-  return <main className="mx-auto max-w-5xl space-y-6 px-4 py-8 md:px-8" aria-label="Create a project with Folio">
-    <header><h1 className="font-headline text-folio-h2">Add a completed project</h1><p className="mt-3 max-w-2xl text-folio-body text-text-secondary">Name your project, add when it was completed, and upload your photos.</p></header>
-    <section className="space-y-4" aria-label="Project basics"><label className="block text-folio-meta">Project name<input aria-label="Project name" value={title} disabled={!loaded || !!createdId || creationStarted} onChange={event => { setTitle(event.target.value); persist({ title: event.target.value, year, month }); }} maxLength={80} placeholder="Name your project" className="mt-1 w-full rounded-sm border border-border bg-surface-ground px-3 py-2 text-folio-body" /></label>
+  return <main className={styles.page} aria-label="Create a project with Folio">
+    <header className={styles.header}><p className={styles.eyebrow}>Your work on Folio</p><h1 className={styles.title}>Add a completed project</h1><p className={styles.lede}>Name your project, add when it was completed, and upload your photos.</p></header>
+    <div className={styles.intake}><section className={styles.stack} aria-label="Project basics"><label className={styles.label}>Project name<input aria-label="Project name" value={title} disabled={!loaded || !!createdId || creationStarted} onChange={event => { setTitle(event.target.value); persist({ title: event.target.value, year, month }); }} maxLength={80} placeholder="Name your project" className={styles.field} /></label>
       <fieldset className="space-y-2" disabled={!loaded || !!createdId || creationStarted}>
         <legend className="text-folio-meta">When was it completed?</legend>
-        <div className="grid gap-3 sm:grid-cols-2">
-          <label className="block text-folio-meta">Year
-            <input aria-label="Completion year" type="number" inputMode="numeric" min={1800} max={new Date().getUTCFullYear()} required value={year} onChange={event => { setYear(event.target.value); persist({ title, year: event.target.value, month }); }} placeholder="e.g., 2024" className="mt-1 w-full rounded-sm border border-border bg-surface-ground px-3 py-2 text-folio-body" />
+        <div className={styles.row}>
+          <label className={styles.label}>Year
+            <input aria-label="Completion year" type="number" inputMode="numeric" min={1800} max={new Date().getUTCFullYear()} required value={year} onChange={event => { setYear(event.target.value); persist({ title, year: event.target.value, month }); }} placeholder="e.g., 2024" className={styles.field} />
           </label>
-          <label className="block text-folio-meta">Month, if known
-            <select aria-label="Completion month" value={month} onChange={event => { setMonth(event.target.value); persist({ title, year, month: event.target.value }); }} className="mt-1 w-full rounded-sm border border-border bg-surface-ground px-3 py-2 text-folio-body">
+          <label className={styles.label}>Month, if known
+            <select aria-label="Completion month" value={month} onChange={event => { setMonth(event.target.value); persist({ title, year, month: event.target.value }); }} className={styles.field}>
               <option value="">Month unknown</option>
               {COMPLETION_MONTHS.map((label, index) => <option key={label} value={index + 1}>{label}</option>)}
             </select>
@@ -94,8 +95,9 @@ function ProjectIntake({ actorId, workspaceId, onManual }: CreateProjectGuidePro
       {currentlyForSale && <p className="text-folio-meta text-text-secondary">We’ll help tell the story behind the home so prospective buyers can understand what makes it special. Add listing details and publication permission in your project.</p>}
       {createdId ? <p role="status" className="text-folio-meta">Your project is saved. Reselect any unconfirmed photographs to retry, or continue to review saved photos. Matching photos will not be added twice.</p> : null}
       {storageError ? <p role="alert" className="text-folio-meta">Changes could not be saved on this device. Keep this page open until your project is saved.</p> : null}
-      {loaded ? <ProjectGuideUploads ensureProject={ensureProject} onAdded={(id, _photos, complete) => { if (complete) continueToProject(id) }} /> : null}
     </section>
-    <button type="button" disabled={!loaded || (creationStarted && !createdId)} className="rounded-sm px-3 py-2 text-folio-ui underline underline-offset-4 focus-visible:ring-2 focus-visible:ring-folio-gold" onClick={manual}>{createdId ? 'Continue to project' : 'Add project details first'}</button>
+      {loaded ? <ProjectGuideUploads ensureProject={ensureProject} onAdded={(id, _photos, complete) => { if (complete) continueToProject(id) }} /> : null}
+    </div>
+    <div className="mt-8"><button type="button" disabled={!loaded || (creationStarted && !createdId)} className={styles.quiet} onClick={manual}>{createdId ? 'Continue to project' : 'Add project details first'}</button></div>
   </main>;
 }

@@ -72,13 +72,13 @@ export function PortfolioPublishPanel(props: PortfolioPublishPanelProps) {
     <Dialog open={open || withdrawing} onClose={() => { if (!busy) { setOpen(false); setWithdrawing(false); } }} className={styles.dialog}>
       <DialogBackdrop className={styles.backdrop} />
       <div className={styles.viewport}><DialogPanel className={styles.review}>
-        <DialogTitle className="folio-h3">{withdrawing ? 'Unpublish this project?' : 'Review your project'}</DialogTitle>
+        <div className={styles.heading}><DialogTitle className={styles.title}>{withdrawing ? 'Unpublish this project?' : 'Review your project'}</DialogTitle><button type="button" className={styles.close} aria-label="Close publishing review" disabled={busy} onClick={() => { setOpen(false); setWithdrawing(false); }}><span aria-hidden>×</span></button></div>
         <Description className="folio-meta text-folio-text-secondary">{withdrawing
           ? 'This hides the public project and its feature. Your photographs and interview stay saved privately.'
           : 'Only the included photographs and project details will be public. Your interview and feature draft stay private.'}</Description>
         {error && <p ref={errorRef} tabIndex={-1} role="alert" className="folio-meta">{error}</p>}
         {!withdrawing && <form onSubmit={event => { event.preventDefault(); void save(); }}>
-          <label className={styles.titleField}>Project title<input value={title} onChange={event => setTitle(event.target.value)} maxLength={200} required disabled={busy} /></label>
+          <label className={styles.titleField}>Project title<input className={styles.input} value={title} onChange={event => setTitle(event.target.value)} maxLength={200} required disabled={busy} /></label>
           {props.description && <p className="folio-meta text-folio-text-secondary">{props.description}</p>}
           <fieldset disabled={busy} className={styles.photos}><legend>{included.length} {included.length === 1 ? 'photograph' : 'photographs'} included · Choose a cover</legend>
             {props.photos.map((photo, index) => <div key={photo.id} className={styles.photo}>
@@ -89,7 +89,7 @@ export function PortfolioPublishPanel(props: PortfolioPublishPanelProps) {
               <label><input type="radio" name="cover" checked={cover === photo.id} disabled={!included.includes(photo.id) || busy} onChange={() => setCover(photo.id)} />Use as cover<span className="sr-only">, photograph {index + 1}</span></label>
             </div>)}
           </fieldset>
-          <div className={styles.actions}><button className={styles.primary} type="submit" disabled={busy || !title.trim() || !included.length || !cover}>{busy ? 'Publishing…' : props.isPublic ? 'Save public project' : 'Publish project'}</button>
+          <div className={styles.footer}><button className={styles.primary} type="submit" disabled={busy || !title.trim() || !included.length || !cover}>{busy ? 'Publishing…' : props.isPublic ? 'Save public project' : 'Publish project'}</button>
             <button className={styles.secondary} type="button" disabled={busy} onClick={() => setOpen(false)}>Cancel</button></div>
         </form>}
         {withdrawing && <div className={styles.actions}><button className={styles.primary} type="button" disabled={busy} onClick={() => void save(true)}>{busy ? 'Unpublishing…' : 'Unpublish project'}</button>

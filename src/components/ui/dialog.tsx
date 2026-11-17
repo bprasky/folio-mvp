@@ -9,14 +9,15 @@ interface DialogProps {
   onOpenChange: (open: boolean) => void;
   children: React.ReactNode;
   backdropClassName?: string;
+  placement?: 'center' | 'right';
   /** Decorative only; interactive children belong in DialogContent. */
   backgroundLayer?: React.ReactNode;
 }
 
-export function Dialog({ open, onOpenChange, children, backdropClassName = 'glass-backdrop', backgroundLayer }: DialogProps) {
+export function Dialog({ open, onOpenChange, children, backdropClassName = 'glass-backdrop', placement = 'center', backgroundLayer }: DialogProps) {
   return <DialogPrimitive.Root open={open} onOpenChange={onOpenChange}>
     <DialogPrimitive.Portal>
-      <DialogPrimitive.Overlay className={cn('fixed inset-0 z-[70] grid place-items-center overflow-y-auto overscroll-contain p-4 md:p-8 lg:p-12', backdropClassName)}>
+      <DialogPrimitive.Overlay className={cn('fixed inset-0 z-[70] grid overflow-y-auto overscroll-contain', placement === 'right' ? 'justify-items-end' : 'place-items-center p-4 md:p-8 lg:p-12', backdropClassName)}>
         {backgroundLayer && <div className="pointer-events-none absolute inset-0" aria-hidden>{backgroundLayer}</div>}
         {children}
       </DialogPrimitive.Overlay>
@@ -26,15 +27,15 @@ export function Dialog({ open, onOpenChange, children, backdropClassName = 'glas
 
 export const DialogContent = React.forwardRef<
   React.ElementRef<typeof DialogPrimitive.Content>,
-  React.ComponentPropsWithoutRef<typeof DialogPrimitive.Content>
->(({ className, onOpenAutoFocus, onCloseAutoFocus, ...props }, ref) => {
+  React.ComponentPropsWithoutRef<typeof DialogPrimitive.Content> & { placement?: 'center' | 'right' }
+>(({ className, placement = 'center', onOpenAutoFocus, onCloseAutoFocus, ...props }, ref) => {
   const previousFocus = React.useRef<HTMLElement | null>(null);
   return <DialogPrimitive.Content
     ref={ref}
-    className={cn('glass-overlay relative w-full min-w-0 max-w-lg overflow-y-auto overscroll-contain focus:outline-none', className)}
+    className={cn('relative min-w-0 overscroll-contain focus:outline-none', placement === 'right' ? 'overflow-hidden' : 'glass-overlay w-full max-w-lg overflow-y-auto', className)}
     {...props}
     // Bound caller-supplied vh heights as the viewport gets shorter, too.
-    style={{ ...props.style, maxHeight: 'calc(100dvh - clamp(2rem, 8vw, 6rem))' }}
+    style={{ ...props.style, maxHeight: placement === 'right' ? '100dvh' : 'calc(100dvh - clamp(2rem, 8vw, 6rem))' }}
     onOpenAutoFocus={event => {
       previousFocus.current = document.activeElement instanceof HTMLElement ? document.activeElement : null;
       onOpenAutoFocus?.(event);

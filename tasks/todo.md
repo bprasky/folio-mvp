@@ -1,3 +1,22 @@
+# Consistent editorial project forms — 2026-11-17
+
+- [x] Establish shared theme-aware form, action and side-sheet styles.
+- [x] Apply to project intake, photo upload/import, workspace review, credits, product details and photo publishing.
+- [ ] Verify existing save/retry flows, keyboard access, responsive layouts and both themes.
+- [ ] Review the diff, run required checks and push a reviewable PR.
+
+Plan: continue the approved white-canvas editorial direction using Folio’s existing fonts and theme tokens, open spacing, soft filled fields, pill actions, sharp photography and contextual sheets. Keep authentication, persistence, import limits and publishing semantics intact. No invitation sending or new background services in this visual pass. Based on main 06581258 in a fresh checkout; prior workspace files are preserved.
+
+
+### Review
+
+Implemented locally across project intake/manual creation, photo uploads and website import, workspace import/review, credits, product editing, document selection/PDF/presentation review, and photo publishing. Shared styles follow the active theme and include visible labels, accessible file pickers, pill actions and right-side sheets. Optional project description is collapsed under Additional details. The website importer reuses the existing resilient upload component. Authentication, save routes, publishing boundaries and backend pipelines are unchanged.
+
+Verification: clean locked dependency install; production compile passes with existing warnings; TypeScript ratchet passes at 846/846 with no new diagnostics; scoped ESLint has zero errors (28 existing warnings); actual form-component/CSS/font bundle compiles; upload interruption, publication entry, client import and migration discipline checks pass. The new Chromium suite covers 54 screen/theme/viewport combinations plus sheet dismissal/focus, credit save/cancel, product save and partial import retry, but has NOT executed: local Chromium cannot create its process socket, and the shared browser cannot reach the isolated preview server. No visual approval is claimed.
+
+Push is blocked by automatic approval review, which requires explicit user authorization to transmit the changes to GitHub. No remote branch, PR, merge or deployment was created. The prepared hosted browser checks must run and their screenshots be reviewed after push authorization, before this is treated as release-ready. Prior worktrees and production data were preserved.
+
+---
 # Publication reader refresh - 2026-11-16
 
 - [x] Review the current article and approved desktop, portrait and square renders.

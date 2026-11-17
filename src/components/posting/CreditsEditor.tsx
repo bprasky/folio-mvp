@@ -1,7 +1,9 @@
 "use client";
 
-import { useState, useCallback, useEffect, useRef } from "react";
+import { useState, useCallback, useEffect, useRef, useId } from "react";
 import { Plus, Pencil, Trash2, Check, X, Lock } from "lucide-react";
+import { Dialog, DialogContent, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import styles from "@/components/ui/WorkflowForms.module.css";
 import { CREDIT_ROLE_OPTIONS, type CreditEntry } from "@/lib/posting/creditsSchema";
 
 /**
@@ -114,114 +116,38 @@ export function CreditsEditor({ credits, onChange, saving }: CreditsEditorProps)
     return role.length > 0 && form.name.trim().length > 0;
   })();
 
-  return (
-    <div className="space-y-3">
-      <div className="flex items-center justify-between">
-        <h3 className="text-sm font-semibold text-folio-text-primary uppercase tracking-wider">
-          Credits
-        </h3>
-        {saving && (
-          <span className="text-xs text-folio-text-secondary">Saving...</span>
-        )}
-      </div>
-
-      {/* Credit list */}
-      <div className="space-y-2">
-        {credits.map((credit, idx) => {
-          const locked = isDesigner(credit);
-          const isEditing = editingIndex === idx;
-
-          if (isEditing) {
-            return (
-              <CreditForm
-                key={idx}
-                form={form}
-                onChange={setForm}
-                onSave={handleSave}
-                onCancel={handleCancel}
-                canSave={canSaveForm}
-              />
-            );
-          }
-
-          return (
-            <div
-              key={idx}
-              className="flex items-center justify-between gap-3 rounded-lg border border-folio-border-subtle px-3 py-2 text-sm"
-            >
-              <div className="flex items-center gap-2 min-w-0">
-                <span className="font-medium text-folio-text-primary shrink-0">
-                  {credit.role}:
-                </span>
-                <span className="text-folio-text-secondary truncate">
-                  {credit.name}
-                </span>
-                {credit.url && (
-                  <a
-                    href={credit.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-[var(--accent)] text-xs hover:underline shrink-0"
-                  >
-                    link
-                  </a>
-                )}
-                {credit.instagram && (
-                  <span className="text-folio-text-tertiary text-xs shrink-0">
-                    @{credit.instagram.replace(/^@/, "")}
-                  </span>
-                )}
-              </div>
-              <div className="flex items-center gap-1 shrink-0">
-                {locked ? (
-                  <Lock className="w-3.5 h-3.5 text-folio-text-tertiary" />
-                ) : (
-                  <>
-                    <button
-                      onClick={() => handleEdit(idx)}
-                      className="p-1 rounded hover:bg-surface-ground text-folio-text-secondary hover:text-folio-text-primary transition-colors"
-                      title="Edit credit"
-                    >
-                      <Pencil className="w-3.5 h-3.5" />
-                    </button>
-                    <button
-                      onClick={() => handleRemove(idx)}
-                      className="p-1 rounded hover:bg-red-50 text-folio-text-secondary hover:text-red-600 transition-colors"
-                      title="Remove credit"
-                    >
-                      <Trash2 className="w-3.5 h-3.5" />
-                    </button>
-                  </>
-                )}
-              </div>
-            </div>
-          );
-        })}
-      </div>
-
-      {/* Add form */}
-      {adding && (
-        <CreditForm
-          form={form}
-          onChange={setForm}
-          onSave={handleSave}
-          onCancel={handleCancel}
-          canSave={canSaveForm}
-        />
-      )}
-
-      {/* Add button */}
-      {!adding && editingIndex === null && (
-        <button
-          onClick={handleAdd}
-          className="flex items-center gap-1.5 text-sm text-[var(--accent)] hover:text-[var(--accent-hover)] transition-colors"
-        >
-          <Plus className="w-4 h-4" />
-          Add Credit
-        </button>
-      )}
+  return <div className={styles.stack}>
+    <div className="flex items-center justify-between gap-3">
+      <h3 className={styles.sectionTitle}>Credits</h3>
+      {saving && <span role="status" className={styles.help}>Saving...</span>}
     </div>
-  );
+    <div>
+      {credits.map((credit, idx) => <div key={idx} className={styles.creditRow}>
+        <div className={styles.creditIdentity}>
+          <span className={styles.help}>{credit.role}</span>
+          <span className="folio-body text-folio-text-primary">{credit.name}</span>
+          {credit.url && <a href={credit.url} target="_blank" rel="noopener noreferrer" className={`${styles.help} underline underline-offset-4`}>Website</a>}
+          {credit.instagram && <span className={styles.help}>@{credit.instagram.replace(/^@/, "")}</span>}
+        </div>
+        <div className={styles.creditTools}>
+          {isDesigner(credit) ? <Lock size={16} aria-label="Project designer" className="text-folio-text-secondary" /> : <>
+            <button type="button" onClick={() => handleEdit(idx)} disabled={saving} className={styles.close} aria-label={`Edit credit for ${credit.name}`} title="Edit credit"><Pencil size={16} /></button>
+            <button type="button" onClick={() => handleRemove(idx)} disabled={saving} className={styles.close} aria-label={`Remove credit for ${credit.name}`} title="Remove credit"><Trash2 size={16} /></button>
+          </>}
+        </div>
+      </div>)}
+    </div>
+    <div><button type="button" disabled={saving} onClick={handleAdd} className={styles.secondary}><Plus size={16} aria-hidden />Add Credit</button></div>
+    <Dialog open={adding || editingIndex !== null} onOpenChange={open => { if (!open) handleCancel(); }} placement="right" backdropClassName="bg-black/40">
+      <DialogContent placement="right" className={styles.sheet}>
+        <div className={styles.sheetHeader}>
+          <div><p className={styles.eyebrow}>The people behind the project</p><DialogTitle className={styles.sheetTitle}>{editingIndex !== null ? 'Edit credit' : 'Add a collaborator'}</DialogTitle><DialogDescription className={`${styles.help} mt-3`}>Give the people who brought this project to life a place alongside the work.</DialogDescription></div>
+          <button type="button" onClick={handleCancel} className={styles.close} aria-label="Close credits"><X size={18} /></button>
+        </div>
+        {(adding || editingIndex !== null) && <CreditForm form={form} onChange={setForm} onSave={handleSave} onCancel={handleCancel} canSave={canSaveForm && !saving} />}
+      </DialogContent>
+    </Dialog>
+  </div>;
 }
 
 /** Typeahead suggestion from user search */
@@ -244,6 +170,7 @@ function CreditForm({
   onCancel: () => void;
   canSave: boolean;
 }) {
+  const id = useId();
   const showPhotographerFields = isPhotographerRole(form.role);
   const [suggestions, setSuggestions] = useState<UserSuggestion[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
@@ -293,105 +220,30 @@ function CreditForm({
     setSuggestions([]);
   };
 
-  return (
-    <div className="rounded-lg border border-[var(--accent)]/30 bg-surface-ground p-3 space-y-2">
-      <div className="flex gap-2">
-        <select
-          value={form.role}
-          onChange={(e) => onChange({ ...form, role: e.target.value, customRole: "", instagram: "", userId: undefined })}
-          className="flex-1 rounded-md border border-folio-border-subtle bg-white px-2 py-1.5 text-sm text-folio-text-primary focus:outline-none focus:ring-1 focus:ring-[var(--accent)]"
-        >
-          <option value="">Select role...</option>
-          {ROLE_OPTIONS.map((role) => (
-            <option key={role} value={role}>
-              {role}
-            </option>
-          ))}
+  return <form className="flex min-h-0 flex-1 flex-col" onSubmit={event => { event.preventDefault(); if (canSave) onSave(); }}>
+    <div className={`${styles.sheetBody} ${styles.stack}`}>
+      <label className={styles.label}>Their role
+        <select value={form.role} required onChange={e => onChange({ ...form, role: e.target.value, customRole: "", instagram: "", userId: undefined })} className={styles.field}>
+          <option value="">Select role...</option>{ROLE_OPTIONS.map(role => <option key={role} value={role}>{role}</option>)}
         </select>
-        {form.role === "Other" && (
-          <input
-            type="text"
-            value={form.customRole}
-            onChange={(e) => onChange({ ...form, customRole: e.target.value })}
-            placeholder="Custom role..."
-            className="flex-1 rounded-md border border-folio-border-subtle bg-white px-2 py-1.5 text-sm text-folio-text-primary placeholder:text-folio-text-tertiary focus:outline-none focus:ring-1 focus:ring-[var(--accent)]"
-            maxLength={60}
-          />
-        )}
-      </div>
-
-      {/* Name field with typeahead for photographers */}
+      </label>
+      {form.role === "Other" && <label className={styles.label}>Role<input type="text" required value={form.customRole} onChange={e => onChange({ ...form, customRole: e.target.value })} className={styles.field} maxLength={60} /></label>}
       <div className="relative" ref={suggestionsRef}>
-        <input
-          type="text"
-          value={form.name}
-          onChange={(e) => onChange({ ...form, name: e.target.value, userId: undefined })}
-          placeholder={showPhotographerFields ? "Search photographer or enter name..." : "Name..."}
-          className="w-full rounded-md border border-folio-border-subtle bg-white px-2 py-1.5 text-sm text-folio-text-primary placeholder:text-folio-text-tertiary focus:outline-none focus:ring-1 focus:ring-[var(--accent)]"
-          maxLength={100}
-          onFocus={() => suggestions.length > 0 && setShowSuggestions(true)}
-        />
-        {form.userId && (
-          <span className="absolute right-2 top-1/2 -translate-y-1/2 text-xs text-green-600 font-medium">
-            Linked
-          </span>
-        )}
-        {showSuggestions && suggestions.length > 0 && (
-          <div className="absolute z-10 mt-1 w-full rounded-md border border-folio-border-subtle bg-white shadow-lg max-h-40 overflow-y-auto">
-            {suggestions.map((user) => (
-              <button
-                key={user.id}
-                type="button"
-                onClick={() => handleSelectSuggestion(user)}
-                className="w-full text-left px-3 py-2 text-sm hover:bg-surface-ground transition-colors flex items-center gap-2"
-              >
-                {user.profileImage && (
-                  <img src={user.profileImage} alt="" className="w-5 h-5 rounded-full object-cover" />
-                )}
-                <span className="text-folio-text-primary">{user.name}</span>
-              </button>
-            ))}
-          </div>
-        )}
+        <label className={styles.label} htmlFor={`${id}-name`}>{showPhotographerFields ? 'Photographer' : 'Person or company name'}</label>
+        <input id={`${id}-name`} type="text" required value={form.name} onChange={e => onChange({ ...form, name: e.target.value, userId: undefined })} placeholder={showPhotographerFields ? "Search photographer or enter name..." : "Name..."} className={`${styles.field} mt-2`} maxLength={100} onFocus={() => suggestions.length > 0 && setShowSuggestions(true)} />
+        {form.userId && <p className={`${styles.help} mt-2`}>Linked to their Folio profile</p>}
+        {showSuggestions && suggestions.length > 0 && <div className="absolute z-10 mt-1 w-full rounded-lg border border-folio-border-subtle bg-surface-canvas shadow-lg max-h-40 overflow-y-auto" aria-label="Matching photographers">
+          {suggestions.map(user => <button key={user.id} type="button" onClick={() => handleSelectSuggestion(user)} className="w-full min-h-11 text-left px-4 py-3 folio-ui hover:bg-surface-ground focus-visible:ring-2 focus-visible:ring-folio-gold flex items-center gap-2">
+            {user.profileImage && <img src={user.profileImage} alt="" className="w-6 h-6 rounded-full object-cover" />}<span>{user.name}</span>
+          </button>)}
+        </div>}
       </div>
-
-      <input
-        type="url"
-        value={form.url}
-        onChange={(e) => onChange({ ...form, url: e.target.value })}
-        placeholder="Website URL (optional)"
-        className="w-full rounded-md border border-folio-border-subtle bg-white px-2 py-1.5 text-sm text-folio-text-primary placeholder:text-folio-text-tertiary focus:outline-none focus:ring-1 focus:ring-[var(--accent)]"
-      />
-
-      {/* Instagram field — shown for Photographer role */}
-      {showPhotographerFields && (
-        <input
-          type="text"
-          value={form.instagram}
-          onChange={(e) => onChange({ ...form, instagram: e.target.value })}
-          placeholder="Instagram handle (optional)"
-          className="w-full rounded-md border border-folio-border-subtle bg-white px-2 py-1.5 text-sm text-folio-text-primary placeholder:text-folio-text-tertiary focus:outline-none focus:ring-1 focus:ring-[var(--accent)]"
-          maxLength={100}
-        />
-      )}
-
-      <div className="flex justify-end gap-2">
-        <button
-          onClick={onCancel}
-          className="flex items-center gap-1 px-2 py-1 text-xs text-folio-text-secondary hover:text-folio-text-primary transition-colors"
-        >
-          <X className="w-3.5 h-3.5" />
-          Cancel
-        </button>
-        <button
-          onClick={onSave}
-          disabled={!canSave}
-          className="flex items-center gap-1 px-3 py-1 text-xs font-medium text-white bg-[var(--accent)] rounded-md hover:bg-[var(--accent-hover)] disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-        >
-          <Check className="w-3.5 h-3.5" />
-          Save
-        </button>
-      </div>
+      <label className={styles.label}>Website <span className={styles.help}>Optional</span><input type="url" value={form.url} onChange={e => onChange({ ...form, url: e.target.value })} placeholder="https://…" className={styles.field} /></label>
+      {showPhotographerFields && <label className={styles.label}>Instagram <span className={styles.help}>Optional</span><input type="text" value={form.instagram} onChange={e => onChange({ ...form, instagram: e.target.value })} placeholder="@name" className={styles.field} maxLength={100} /></label>}
     </div>
-  );
+    <div className={styles.sheetFooter}>
+      <button type="button" onClick={onCancel} className={styles.secondary}>Cancel</button>
+      <button type="submit" disabled={!canSave} className={styles.primary}><Check size={16} aria-hidden />Save credit</button>
+    </div>
+  </form>;
 }

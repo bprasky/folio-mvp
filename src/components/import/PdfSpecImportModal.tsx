@@ -7,8 +7,8 @@
  */
 
 import { useState, useCallback, useRef, useEffect } from 'react';
-import { GlassModal, GlassModalHeader, GlassModalBody } from '@/components/ui/glass-modal';
-import { Button } from '@/components/ui/button';
+import { WorkflowImportSheet, WorkflowImportHeader, WorkflowImportBody } from '@/components/ui/WorkflowImportSheet';
+import styles from '@/components/ui/WorkflowForms.module.css';
 import { FaCloudUploadAlt, FaCheck, FaSpinner, FaTimes, FaExclamationTriangle, FaFileAlt, FaMagic, FaSearch } from 'react-icons/fa';
 import type { ExtractionResult, ExtractedItem } from '@/lib/pdf';
 
@@ -373,23 +373,24 @@ export function PdfSpecImportModal({
   ).sort((a, b) => a.localeCompare(b));
 
   return (
-    <GlassModal title="Import a finish schedule" open={open} onOpenChange={handleClose} size="xl">
-      <GlassModalHeader>
+    <WorkflowImportSheet title="Import a finish schedule" open={open} onOpenChange={handleClose}>
+      <WorkflowImportHeader>
         <div className="flex items-center justify-between">
           <div>
-            <h2 className="text-xl font-serif text-stone-900">Import PDF Specifications</h2>
-            <p className="text-sm text-stone-500 mt-1">{projectTitle}</p>
+            <h2 className={styles.sheetTitle}>Import PDF Specifications</h2>
+            <p className="text-sm text-folio-text-secondary mt-1">{projectTitle}</p>
           </div>
           <button
             onClick={handleClose}
-            className="text-stone-400 hover:text-stone-600 transition-colors"
+            className={styles.close}
+            aria-label="Close document review"
           >
             <FaTimes className="w-5 h-5" />
           </button>
         </div>
-      </GlassModalHeader>
+      </WorkflowImportHeader>
 
-      <GlassModalBody>
+      <WorkflowImportBody>
         {error && (
           <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg flex items-start gap-2">
             <FaExclamationTriangle className="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" />
@@ -405,14 +406,13 @@ export function PdfSpecImportModal({
         {/* Upload step */}
         {step === 'upload' && (
           <div className="space-y-6">
-            <p className="text-stone-600">
+            <p className="text-folio-text-secondary">
               Upload a PDF presentation to extract product specifications. Our AI will identify
               brands, prices, dimensions, and materials from the text.
             </p>
 
-            <div
-              className="border-2 border-dashed border-stone-300 rounded-xl p-12 text-center cursor-pointer hover:border-[var(--accent)] hover:bg-[var(--accent)]/5 transition-all"
-              onClick={() => fileInputRef.current?.click()}
+            <label
+              className={styles.uploadChooser}
               onDragOver={(e) => { e.preventDefault(); e.stopPropagation(); }}
               onDrop={handleDrop}
             >
@@ -421,12 +421,13 @@ export function PdfSpecImportModal({
                 type="file"
                 accept=".pdf"
                 onChange={handleFileSelect}
-                className="hidden"
+                className="sr-only"
+                aria-label="Choose a document"
               />
-              <FaFileAlt className="w-16 h-16 text-stone-400 mx-auto mb-4" />
-              <p className="text-lg text-stone-700 mb-2">Drop your PDF here</p>
-              <p className="text-sm text-stone-500">or click to browse • PDF up to 50MB</p>
-            </div>
+              <FaFileAlt className="w-8 h-8 text-folio-text-secondary mx-auto mb-4" />
+              <p className="text-lg text-folio-text-primary mb-2">Drop your PDF here</p>
+              <p className="text-sm text-folio-text-secondary">or click to browse • PDF up to 50MB</p>
+            </label>
 
             <div className="p-4 bg-[var(--accent)]/5 rounded-lg">
               <h4 className="font-medium text-blue-900 mb-2">What we extract:</h4>
@@ -446,15 +447,15 @@ export function PdfSpecImportModal({
         {step === 'extracting' && (
           <div className="space-y-6 py-8 text-center">
             <div className="w-20 h-20 mx-auto relative">
-              <div className="absolute inset-0 rounded-full border-4 border-stone-200" />
+              <div className="absolute inset-0 rounded-full border-4 border-folio-border-subtle" />
               <div className="absolute inset-0 rounded-full border-4 border-[var(--accent)] border-t-transparent animate-spin" />
             </div>
             <div>
-              <h3 className="text-lg font-medium text-stone-900 mb-2">Extracting specifications...</h3>
-              <p className="text-stone-500">{progress.message}</p>
+              <h3 className="text-lg font-medium text-folio-text-primary mb-2">Extracting specifications...</h3>
+              <p className="text-folio-text-secondary">{progress.message}</p>
             </div>
             <div className="max-w-xs mx-auto">
-              <div className="h-2 bg-stone-200 rounded-full overflow-hidden">
+              <div className="h-2 bg-surface-elevated rounded-full overflow-hidden">
                 <div
                   className="h-full bg-[var(--accent)] transition-all duration-300"
                   style={{ width: `${progress.current}%` }}
@@ -468,12 +469,12 @@ export function PdfSpecImportModal({
         {step === 'review' && (
           <div className="space-y-6">
             {/* Stats summary */}
-            <div className="flex items-center justify-between p-4 bg-stone-50 rounded-lg">
+            <div className="flex items-center justify-between p-4 bg-surface-ground rounded-lg">
               <div>
-                <p className="text-stone-900 font-medium">
+                <p className="text-folio-text-primary font-medium">
                   Found {stats?.specificationsFound || 0} specifications, {stats?.inspirationImages || 0} inspiration images
                 </p>
-                <p className="text-sm text-stone-500">
+                <p className="text-sm text-folio-text-secondary">
                   {selected.size} of {totalItems} selected
                 </p>
               </div>
@@ -497,19 +498,19 @@ export function PdfSpecImportModal({
             </div>
 
             {/* Auto-sort summary — each product goes to its own room from the PDF */}
-            <div className="p-3 bg-stone-50 border border-stone-200 rounded-lg">
-              <p className="text-sm font-medium text-stone-700">Sorted into rooms automatically</p>
+            <div className="p-3 bg-surface-ground border border-folio-border-subtle rounded-lg">
+              <p className="text-sm font-medium text-folio-text-primary">Sorted into rooms automatically</p>
               {sortRooms.length > 0 ? (
-                <p className="text-xs text-stone-500 mt-1">
+                <p className="text-xs text-folio-text-secondary mt-1">
                   {sortRooms.length} room{sortRooms.length === 1 ? '' : 's'}: {sortRooms.join(' · ')}
                   {hasUnroomed ? ' · General' : ''}
                 </p>
               ) : (
-                <p className="text-xs text-stone-500 mt-1">
+                <p className="text-xs text-folio-text-secondary mt-1">
                   These items don&apos;t name a room, so they&apos;ll go to a “General” room.
                 </p>
               )}
-              <p className="text-xs text-stone-400 mt-1">
+              <p className="text-xs text-folio-text-secondary mt-1">
                 Change any product&apos;s room below. Rooms are matched by name and created if new.
               </p>
             </div>
@@ -575,24 +576,24 @@ export function PdfSpecImportModal({
 
               {totalItems === 0 && (
                 <div className="text-center py-8">
-                  <FaFileAlt className="w-12 h-12 text-stone-300 mx-auto mb-3" />
-                  <p className="text-stone-500">No specifications found in this PDF.</p>
+                  <FaFileAlt className="w-12 h-12 text-folio-text-secondary mx-auto mb-3" />
+                  <p className="text-folio-text-secondary">No specifications found in this PDF.</p>
                 </div>
               )}
             </div>
 
             {/* Actions */}
-            <div className="flex justify-between items-center pt-4 border-t border-stone-200">
-              <Button variant="ridge" onClick={() => setStep('upload')}>
+            <div className={`${styles.actions} justify-between pt-4`}>
+              <button type="button" className={styles.secondary} onClick={() => setStep('upload')}>
                 Upload Different File
-              </Button>
-              <Button
-                variant="accent"
+              </button>
+              <button type="button"
+                className={styles.primary}
                 onClick={handleImport}
                 disabled={selected.size === 0}
               >
                 Import {selected.size} Items
-              </Button>
+              </button>
             </div>
           </div>
         )}
@@ -602,13 +603,13 @@ export function PdfSpecImportModal({
           <div className="space-y-6 py-8 text-center">
             <FaSpinner className="w-12 h-12 text-[var(--accent)] mx-auto animate-spin" />
             <div>
-              <h3 className="text-lg font-medium text-stone-900 mb-2">Creating items...</h3>
-              <p className="text-stone-500">{progress.message}</p>
+              <h3 className="text-lg font-medium text-folio-text-primary mb-2">Creating items...</h3>
+              <p className="text-folio-text-secondary">{progress.message}</p>
             </div>
           </div>
         )}
-      </GlassModalBody>
-    </GlassModal>
+      </WorkflowImportBody>
+    </WorkflowImportSheet>
   );
 }
 
@@ -650,13 +651,13 @@ function ItemSection({
     <div className="border rounded-lg overflow-hidden">
       <button
         onClick={() => setExpanded(!expanded)}
-        className="w-full p-3 bg-stone-50 flex items-center justify-between hover:bg-stone-100"
+        className="w-full p-3 bg-surface-ground flex items-center justify-between hover:bg-surface-ground"
       >
         <div className="text-left">
-          <h4 className="font-medium text-stone-900">{title}</h4>
-          <p className="text-sm text-stone-500">{subtitle} • {items.filter(i => selected.has(i.id)).length}/{items.length} selected</p>
+          <h4 className="font-medium text-folio-text-primary">{title}</h4>
+          <p className="text-sm text-folio-text-secondary">{subtitle} • {items.filter(i => selected.has(i.id)).length}/{items.length} selected</p>
         </div>
-        <svg className={`w-5 h-5 text-stone-500 transition-transform ${expanded ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <svg className={`w-5 h-5 text-folio-text-secondary transition-transform ${expanded ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
         </svg>
       </button>
@@ -720,21 +721,21 @@ function ExtractedItemRow({
   return (
     <div
       className={`p-3 rounded-lg border cursor-pointer transition-colors ${
-        selected ? 'border-[var(--accent)] bg-[var(--accent)]/5' : 'border-stone-200 hover:border-stone-300'
+        selected ? 'border-[var(--accent)] bg-[var(--accent)]/5' : 'border-folio-border-subtle hover:border-folio-border-subtle'
       } ${loading ? 'opacity-60' : ''}`}
       onClick={onToggle}
     >
       <div className="flex items-start gap-3">
         {/* Checkbox */}
         <div className={`w-5 h-5 rounded border flex items-center justify-center flex-shrink-0 mt-0.5 ${
-          selected ? 'bg-[var(--accent)] border-[var(--accent)]' : 'border-stone-300'
+          selected ? 'bg-[var(--accent)] border-[var(--accent)]' : 'border-folio-border-subtle'
         }`}>
           {selected && <FaCheck className="w-3 h-3 text-white" />}
         </div>
 
         {/* Image thumbnail */}
         {item.imageData && (
-          <div className="w-16 h-16 flex-shrink-0 rounded overflow-hidden bg-stone-100">
+          <div className="w-16 h-16 flex-shrink-0 rounded overflow-hidden bg-surface-ground">
             <img
               src={`data:image/png;base64,${item.imageData}`}
               alt=""
@@ -749,18 +750,18 @@ function ExtractedItemRow({
             <div>
               {isInspiration ? (
                 <>
-                  <p className="font-medium text-stone-900 text-sm">Inspiration Image</p>
-                  <p className="text-xs text-stone-600 line-clamp-2">{item.searchQuery || item.description}</p>
+                  <p className="font-medium text-folio-text-primary text-sm">Inspiration Image</p>
+                  <p className="text-xs text-folio-text-secondary line-clamp-2">{item.searchQuery || item.description}</p>
                 </>
               ) : (
                 <>
-                  <p className="font-medium text-stone-900 text-sm">{item.productName || 'Unknown Product'}</p>
-                  {item.brand && <p className="text-xs text-stone-600">{item.brand}</p>}
+                  <p className="font-medium text-folio-text-primary text-sm">{item.productName || 'Unknown Product'}</p>
+                  {item.brand && <p className="text-xs text-folio-text-secondary">{item.brand}</p>}
                 </>
               )}
             </div>
             {item.price && (
-              <span className="text-sm font-medium text-stone-900">
+              <span className="text-sm font-medium text-folio-text-primary">
                 ${(item.price / 100).toLocaleString(undefined, { minimumFractionDigits: 2 })}
               </span>
             )}
@@ -768,18 +769,18 @@ function ExtractedItemRow({
 
           {/* Room selector — change where this product imports to */}
           {!isInspiration && (
-            <div className="mt-2 flex items-center gap-1.5" onClick={(e) => e.stopPropagation()}>
-              <span className="text-xs text-stone-500">Room</span>
+            <label className={`${styles.label} mt-3`} onClick={(e) => e.stopPropagation()}>
+              <span className="text-xs text-folio-text-secondary">Room</span>
               <select
                 value={room}
                 onChange={(e) => onChangeRoom(e.target.value)}
-                className="text-xs border border-stone-300 rounded px-1.5 py-0.5 bg-white max-w-[180px]"
+                className={styles.field}
               >
                 {(roomOptions.includes(room) ? roomOptions : [room, ...roomOptions]).map(r => (
                   <option key={r} value={r}>{r}</option>
                 ))}
               </select>
-            </div>
+            </label>
           )}
 
           {/* Duplicate indicator + per-item action */}
@@ -799,7 +800,7 @@ function ExtractedItemRow({
                       className={`text-xs px-2 py-0.5 rounded border ${
                         dupAction === a
                           ? 'bg-amber-600 text-white border-amber-600'
-                          : 'border-stone-300 text-stone-600 hover:bg-stone-50'
+                          : 'border-folio-border-subtle text-folio-text-secondary hover:bg-surface-ground'
                       }`}
                     >
                       {a === 'merge' ? 'Merge (recommended)' : a === 'skip' ? 'Skip' : 'Keep both'}
@@ -817,7 +818,7 @@ function ExtractedItemRow({
               {item.material && <span className="text-xs px-1.5 py-0.5 rounded bg-green-100 text-green-700">Material</span>}
               {item.sku && <span className="text-xs px-1.5 py-0.5 rounded bg-green-100 text-green-700">SKU</span>}
               {item.missingFields.slice(0, 3).map(f => (
-                <span key={f} className="text-xs px-1.5 py-0.5 rounded bg-stone-100 text-stone-500">{f}</span>
+                <span key={f} className="text-xs px-1.5 py-0.5 rounded bg-surface-ground text-folio-text-secondary">{f}</span>
               ))}
             </div>
           )}
@@ -838,7 +839,7 @@ function ExtractedItemRow({
           )}
 
           {isInspiration && (
-            <p className="mt-1 text-xs text-stone-500 flex items-center gap-1">
+            <p className="mt-1 text-xs text-folio-text-secondary flex items-center gap-1">
               <FaSearch className="w-3 h-3" /> Will save as search placeholder
             </p>
           )}
