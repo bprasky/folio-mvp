@@ -75,7 +75,7 @@ export const STANDARD_ROOM_NAMES = [
 
 export const cleanRoomName = (name: string) => name.trim().replace(/\s+/g, ' ');
 export const roomNameKey = (name: string) => cleanRoomName(name).normalize('NFKC').replace(/[‘’]/g, "'").toLocaleLowerCase('en-US');
-const searchKey = (name: string) => roomNameKey(name).normalize('NFD').replace(/\p{M}/gu, '').replace(/'/g, '').replace(/[-–—]/g, ' ');
+const searchKey = (name: string) => roomNameKey(name).normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/'/g, '').replace(/[-–—]/g, ' ');
 export type RoomNameOption = { name: string; roomId?: string; source: 'project' | 'saved' | 'standard' };
 
 export function roomNameOptions(rooms: { id: string; name: string }[], saved: string[]): RoomNameOption[] {
@@ -86,7 +86,7 @@ export function roomNameOptions(rooms: { id: string; name: string }[], saved: st
     ...STANDARD_ROOM_NAMES.map(name => ({ name, source: 'standard' as const })),
   ];
   for (const option of options) if (!unique.has(roomNameKey(option.name))) unique.set(roomNameKey(option.name), option);
-  return [...unique.values()];
+  return Array.from(unique.values());
 }
 
 // Damerau-Levenshtein catches missing letters and adjacent transpositions locally.

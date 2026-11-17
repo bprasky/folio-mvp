@@ -49,6 +49,25 @@ on:
   workflow_dispatch:
 
 jobs:
+  room-sorting:
+    name: Room autocomplete and private saved names
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - run: npx prisma generate
+      - run: node --import tsx scripts/check-room-names.cjs
+      - name: Room sorting in Chromium
+        run: GUIDED_TEST_BROWSER="$(command -v google-chrome || command -v chromium)" node scripts/check-manual-rooms-browser.cjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: room-sorting-review
+          path: .tmp/manual-rooms-browser/review/
   finish-schedule:
     name: Finish schedule import and review
     runs-on: ubuntu-latest
@@ -131,8 +150,6 @@ jobs:
           npm run test:interruptions:browser
           node scripts/check-project-setup-browser.cjs
           node scripts/check-rollout-recovery-browser.cjs
-          node --import tsx scripts/check-room-names.cjs
-          node scripts/check-manual-rooms-browser.cjs
           RESPONSIVE_QUICK=1 RESPONSIVE_BROWSER="$GUIDED_TEST_BROWSER" node scripts/check-responsive-journey.cjs
           node scripts/check-project-completion-date.cjs
           LOADING_TEST_BROWSER="$GUIDED_TEST_BROWSER" node scripts/check-editorial-loading.cjs
