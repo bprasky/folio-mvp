@@ -302,6 +302,8 @@ model User {
   liveInterviewSessions LiveInterviewSession[] @relation("LiveInterviewActor")
   interviewMediaRecords InterviewMediaRecord[] @relation("InterviewMediaActor")
 
+  savedRoomNames UserRoomName[]
+
   @@map("users")
 }
 
@@ -8276,4 +8278,16 @@ model SignupEmailChallenge {
 
   @@index([purgeAt])
   @@map("signup_email_challenges")
+}
+
+// Private autocomplete vocabulary. Never exposed through public profiles.
+model UserRoomName {
+  userId         String
+  normalizedName String
+  name           String
+  createdAt      DateTime @default(now())
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([userId, normalizedName])
+  @@map("user_room_names")
 }

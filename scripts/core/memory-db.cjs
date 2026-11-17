@@ -28,7 +28,7 @@ function memoryDatabase() {
       if (key === 'NOT') return ![value].flat().some(w => matches(model, row, w));
       const field = model.fields.find(f => f.name === key);
       if (!field) {
-        if (model.uniqueFields.some(fields => fields.join('_') === key)) return matches(model, row, value);
+        if (model.uniqueFields.some(fields => fields.join('_') === key) || model.primaryKey?.fields.join('_') === key) return matches(model, row, value);
         throw Error(`Unknown query field ${model.name}.${key}`);
       }
       const actual = field.kind === 'object' ? relation(model, row, field) : row[key];

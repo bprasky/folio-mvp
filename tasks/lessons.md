@@ -1335,3 +1335,6 @@ Retain known public person/organization IDs through sanitized publication DTOs a
 ## 2026-11-17 — Carry editorial quality into the working forms
 
 The founder rejected a rigid, boxed form mockup as resembling old Windows. Use Folio’s existing editorial type, open canvas, softly filled fields, pill actions and contextual sheets across intake and review. Respect the active light/dark theme; do not hardcode cream or white into fields. Keep optional description writing out of the primary intake path. Clearly distinguish a visual mockup from implemented application code and from a deployed release.
+
+## 2026-11-17 - Broad room vocabulary, small inline results
+The founder wants a large curated room-name catalog precisely because room sorting is autocomplete, not a dropdown. Include specialist residential, landscape, hospitality and commercial spaces; show only a few matching names while typing. Custom names remain unrestricted and only an explicit save adds them to that account's private future options. Never crowdsource user names into the shared catalog.

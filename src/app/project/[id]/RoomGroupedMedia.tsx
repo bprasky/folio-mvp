@@ -1,6 +1,8 @@
 'use client';
 
 import { createRoom } from '@/lib/client/createRoom';
+import RoomNameInput, { RoomNameProvider } from '@/components/rooms/RoomNameInput';
+import { Dialog, DialogContent, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 
 import { useState, useMemo, useTransition, useEffect } from 'react';
 import Image from '@/components/FolioImage';
@@ -46,6 +48,12 @@ interface RoomLite {
   id: string;
   name: string;
   type?: string | null;
+}
+
+async function resolveRoom(projectId: string, name: string, roomId?: string) {
+  if (roomId) return roomId;
+  const result = await createRoom({ projectId, name, reuseExisting: true });
+  return result.room.id as string;
 }
 
 interface RoomGroupedMediaProps {
@@ -158,6 +166,7 @@ export default function RoomGroupedMedia({
   }
 
   return (
+    <RoomNameProvider enabled={isOwner}>
     <DndContext
       sensors={sensors}
       collisionDetection={pointerWithin}
@@ -177,7 +186,7 @@ export default function RoomGroupedMedia({
                   Sort your photos
                 </h3>
                 <p className="folio-meta text-folio-text-secondary mt-1">
-                  Drag a photo onto a room, or use the menu below each one.
+                  Type a room name below each photo, or drag it into a room.
                   <span className="ml-1 text-folio-text-secondary">
                     ({uncategorized.length} left)
                   </span>
@@ -205,7 +214,6 @@ export default function RoomGroupedMedia({
                       rooms={rooms}
                       projectId={projectId}
                       disabled={isPending}
-                      onAssign={(roomId) => run(() => assignImageToRoom({ imageId: img.id, roomId }))}
                       onExclude={() => run(() => excludeImage({ imageId: img.id }))}
                       onChanged={onChanged}
                     />
@@ -254,13 +262,14 @@ export default function RoomGroupedMedia({
                       onDelete={onDelete}
                       onExpand={() => openExpand(img.id)}
                     />
-                    {isOwner && <label className="mt-2 block folio-meta text-folio-text-secondary">Move to room
-                      <select aria-label={`Room for ${img.name || 'photo'}`} value={img.roomId || ''} disabled={isPending}
-                        onChange={event => run(() => assignImageToRoom({ imageId: img.id, roomId: event.target.value }))}
-                        className="mt-1 min-h-11 w-full min-w-0 rounded-lg border border-folio-border-subtle bg-surface-canvas px-3 py-2">
-                        {rooms.map(room => <option key={room.id} value={room.id}>{room.name}</option>)}
-                      </select>
-                    </label>}
+                    {isOwner && <div className="mt-2" onPointerDown={event => event.stopPropagation()}>
+                      <RoomNameInput rooms={rooms} label={`Move ${img.name || 'photo'} to room`} actionLabel="Move" disabled={isPending}
+                        onSubmit={async (name, existingId) => {
+                          const roomId = await resolveRoom(projectId, name, existingId);
+                          await assignImageToRoom({ imageId: img.id, roomId });
+                          onChanged();
+                        }} />
+                    </div>}
                   </DraggablePhoto>
                 ))}
               </div>
@@ -270,7 +279,7 @@ export default function RoomGroupedMedia({
 
         {/* Add room inline */}
         {isOwner && (
-          <AddRoomAffordance projectId={projectId} disabled={isPending} onCreated={onChanged} />
+          <AddRoomAffordance projectId={projectId} rooms={rooms} disabled={isPending} onCreated={onChanged} />
         )}
 
         {/* Excluded — collapsed, restorable */}
@@ -341,6 +350,7 @@ export default function RoomGroupedMedia({
       {namingForImageId && (
         <NewRoomNamer
           projectId={projectId}
+          rooms={rooms}
           imageId={namingForImageId}
           onClose={() => setNamingForImageId(null)}
           onDone={onChanged}
@@ -357,6 +367,7 @@ export default function RoomGroupedMedia({
         />
       )}
     </DndContext>
+    </RoomNameProvider>
   );
 }
 
@@ -482,71 +493,28 @@ function OverlayTile({
   );
 }
 
-function NewRoomNamer({
-  projectId,
-  imageId,
-  onClose,
-  onDone,
-}: {
+function NewRoomNamer({ projectId, imageId, rooms, onClose, onDone }: {
   projectId: string;
   imageId: string;
+  rooms: RoomLite[];
   onClose: () => void;
   onDone: () => void;
 }) {
-  const [name, setName] = useState('');
-  const [busy, setBusy] = useState(false);
-
-  async function create() {
-    if (!name.trim()) return;
-    setBusy(true);
-    try {
-      const res = await createRoom({ projectId, name: name.trim() });
-      if (res?.room?.id) {
-        await assignImageToRoom({ imageId, roomId: res.room.id });
-      }
-      onDone();
-      onClose();
-    } catch (err) {
-      console.error('[NewRoomNamer] create+assign failed:', err);
-      alert(err instanceof Error ? err.message : 'Failed to add room');
-    } finally {
-      setBusy(false);
-    }
-  }
-
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      <div className="absolute inset-0 glass-backdrop" onClick={onClose} />
-      <div className="relative warm-mesh rounded-2xl bg-surface-ground border border-folio-border-subtle shadow-2xl max-w-sm w-full p-6">
-        <div className="relative z-[1]">
-          <h3 className="font-headline italic text-2xl text-folio-text-primary mb-1">Name the room</h3>
-          <p className="folio-meta text-folio-text-secondary mb-4">
-            This photo moves in, and the name appears in your article.
-          </p>
-          <div className="flex items-center gap-2">
-            <input
-              autoFocus
-              value={name}
-              onChange={e => setName(e.target.value)}
-              onKeyDown={e => {
-                if (e.key === 'Enter') create();
-                if (e.key === 'Escape') onClose();
-              }}
-              placeholder="e.g. Primary Bath"
-              className="flex-1 min-w-0 px-3 py-2 folio-ui rounded-xl border border-folio-border-subtle bg-surface-canvas focus:outline-none focus:border-[var(--accent)]"
-            />
-            <button
-              onClick={create}
-              disabled={busy || !name.trim()}
-              className="px-4 py-2 folio-ui font-semibold text-white bg-[var(--accent)] rounded-xl hover:bg-[var(--accent-hover)] disabled:opacity-50"
-            >
-              Create
-            </button>
-          </div>
-        </div>
+  return <Dialog open onOpenChange={open => { if (!open) onClose(); }}>
+    <DialogContent className="rounded-2xl bg-surface-ground border border-folio-border-subtle max-w-lg w-full p-6">
+      <div className="flex items-center justify-between gap-3 mb-1">
+        <DialogTitle className="font-headline italic text-2xl text-folio-text-primary">Name the room</DialogTitle>
+        <button type="button" onClick={onClose} aria-label="Cancel room assignment" className="inline-flex h-11 w-11 items-center justify-center text-folio-text-secondary"><X className="h-4 w-4" /></button>
       </div>
-    </div>
-  );
+      <DialogDescription className="folio-meta text-folio-text-secondary mb-4">Choose a familiar room or use your own name. This photo moves with it.</DialogDescription>
+      <RoomNameInput rooms={rooms} label="Room for dragged photo" autoFocus onCancel={onClose}
+        onSubmit={async (name, existingId) => {
+          const roomId = await resolveRoom(projectId, name, existingId);
+          await assignImageToRoom({ imageId, roomId });
+          onDone(); onClose();
+        }} />
+    </DialogContent>
+  </Dialog>;
 }
 
 function RoomHeader({
@@ -730,182 +698,40 @@ function PhotoCard({
   );
 }
 
-function UncategorizedResolver({
-  img,
-  rooms,
-  projectId,
-  disabled,
-  onAssign,
-  onExclude,
-  onChanged,
-}: {
+function UncategorizedResolver({ img, rooms, projectId, disabled, onExclude, onChanged }: {
   img: WorkspaceImage;
   rooms: RoomLite[];
   projectId: string;
   disabled: boolean;
-  onAssign: (roomId: string) => void;
   onExclude: () => void;
   onChanged: () => void;
 }) {
-  const [selected, setSelected] = useState('');
-  const [creating, setCreating] = useState(false);
-  const [newName, setNewName] = useState('');
-  const [busy, setBusy] = useState(false);
-
-  async function handleCreateAndAssign() {
-    if (!newName.trim()) return;
-    setBusy(true);
-    try {
-      const res = await createRoom({ projectId, name: newName.trim() });
-      if (res?.room?.id) {
-        await assignImageToRoom({ imageId: img.id, roomId: res.room.id });
-      }
-      setCreating(false);
-      setNewName('');
-      onChanged();
-    } catch (err) {
-      console.error('[UncategorizedResolver] create+assign failed:', err);
-      alert(err instanceof Error ? err.message : 'Failed to add room');
-    } finally {
-      setBusy(false);
-    }
-  }
-
-  if (creating) {
-    return (
-      <div className="flex items-center gap-2">
-        <input
-          autoFocus
-          value={newName}
-          onChange={e => setNewName(e.target.value)}
-          onKeyDown={e => e.key === 'Enter' && handleCreateAndAssign()}
-          placeholder="New room name"
-          className="flex-1 min-w-0 px-2.5 py-1.5 folio-meta rounded-lg border border-folio-border-subtle bg-surface-canvas focus:outline-none focus:border-[var(--accent)]"
-        />
-        <button
-          onClick={handleCreateAndAssign}
-          disabled={busy || !newName.trim()}
-          className="px-2.5 py-1.5 folio-meta font-medium text-white bg-[var(--accent)] rounded-lg hover:bg-[var(--accent-hover)] disabled:opacity-50"
-        >
-          Add
-        </button>
-        <button
-          onClick={() => { setCreating(false); setNewName(''); }}
-          className="p-1.5 text-folio-text-secondary hover:text-folio-text-secondary"
-          aria-label="Cancel"
-        >
-          <X className="w-4 h-4" />
-        </button>
-      </div>
-    );
-  }
-
-  return (
-    <div className="space-y-1.5">
-      <div className="flex items-center gap-2">
-        <select
-          aria-label={`Room for ${img.name || 'photo'}`}
-          value={selected}
-          onChange={e => {
-            if (e.target.value === '__new__') {
-              setCreating(true);
-            } else {
-              setSelected(e.target.value);
-            }
-          }}
-          className="flex-1 min-w-0 px-2.5 py-1.5 folio-meta rounded-lg border border-folio-border-subtle bg-surface-canvas focus:outline-none focus:border-[var(--accent)]"
-        >
-          <option value="">Choose a room…</option>
-          {rooms.map(r => (
-            <option key={r.id} value={r.id}>{r.name}</option>
-          ))}
-          <option value="__new__">+ New room…</option>
-        </select>
-        <button
-          onClick={() => selected && onAssign(selected)}
-          disabled={disabled || !selected}
-          className="px-2.5 py-1.5 folio-meta font-medium text-white bg-[var(--accent)] rounded-lg hover:bg-[var(--accent-hover)] disabled:opacity-50"
-        >
-          Assign
-        </button>
-        <button
-          onClick={onExclude}
-          disabled={disabled}
-          className="px-2.5 py-1.5 folio-meta font-medium text-folio-text-secondary border border-folio-border-subtle rounded-lg hover:bg-surface-ground transition-colors disabled:opacity-50 whitespace-nowrap"
-        >
-          Leave out
-        </button>
-      </div>
-    </div>
-  );
+  return <div className="space-y-1">
+    <RoomNameInput rooms={rooms} label={'Room for ' + (img.name || 'photo')} disabled={disabled}
+      onSubmit={async (name, existingId) => {
+        const roomId = await resolveRoom(projectId, name, existingId);
+        await assignImageToRoom({ imageId: img.id, roomId });
+        onChanged();
+      }} />
+    <button type="button" onClick={onExclude} disabled={disabled}
+      className="min-h-11 folio-meta text-folio-text-secondary hover:text-folio-text-primary disabled:opacity-50">Leave out</button>
+  </div>;
 }
 
-function AddRoomAffordance({
-  projectId,
-  disabled,
-  onCreated,
-}: {
+function AddRoomAffordance({ projectId, rooms, disabled, onCreated }: {
   projectId: string;
+  rooms: RoomLite[];
   disabled: boolean;
   onCreated: () => void;
 }) {
   const [open, setOpen] = useState(false);
-  const [name, setName] = useState('');
-  const [busy, setBusy] = useState(false);
-
-  async function handleCreate() {
-    if (!name.trim()) return;
-    setBusy(true);
-    try {
-      await createRoom({ projectId, name: name.trim() });
-      setName('');
-      setOpen(false);
-      onCreated();
-    } catch (err) {
-      console.error('[AddRoomAffordance] create failed:', err);
-      alert(err instanceof Error ? err.message : 'Failed to add room');
-    } finally {
-      setBusy(false);
-    }
-  }
-
-  if (!open) {
-    return (
-      <button
-        onClick={() => setOpen(true)}
-        disabled={disabled}
-        className="inline-flex items-center gap-2 px-4 py-2.5 folio-ui font-medium text-folio-text-secondary border border-dashed border-folio-border-subtle rounded-2xl hover:border-[var(--accent)] hover:text-folio-text-primary transition-colors disabled:opacity-50"
-      >
-        <Plus className="w-4 h-4" />
-        Add room
-      </button>
-    );
-  }
-
-  return (
-    <div className="flex items-center gap-2 max-w-sm">
-      <input
-        autoFocus
-        value={name}
-        onChange={e => setName(e.target.value)}
-        onKeyDown={e => e.key === 'Enter' && handleCreate()}
-        placeholder="Room name"
-        className="flex-1 min-w-0 px-3 py-2 folio-ui rounded-xl border border-folio-border-subtle bg-surface-canvas focus:outline-none focus:border-[var(--accent)]"
-      />
-      <button
-        onClick={handleCreate}
-        disabled={busy || !name.trim()}
-        className="px-4 py-2 folio-ui font-medium text-white bg-[var(--accent)] rounded-xl hover:bg-[var(--accent-hover)] disabled:opacity-50"
-      >
-        Add room
-      </button>
-      <button
-        onClick={() => { setOpen(false); setName(''); }}
-        className="p-2 text-folio-text-secondary hover:text-folio-text-secondary"
-        aria-label="Cancel"
-      >
-        <X className="w-4 h-4" />
-      </button>
-    </div>
-  );
+  if (!open) return <button type="button" onClick={() => setOpen(true)} disabled={disabled}
+    className="inline-flex min-h-11 items-center gap-2 px-4 py-2.5 folio-ui text-folio-text-secondary border border-dashed border-folio-border-subtle rounded-full hover:text-folio-text-primary disabled:opacity-50">
+    <Plus className="w-4 h-4" />Add room
+  </button>;
+  return <div className="max-w-lg space-y-1">
+    <RoomNameInput rooms={rooms} label="New room name" autoFocus actionLabel="Add room" disabled={disabled} onCancel={() => setOpen(false)}
+      onSubmit={async (name, roomId) => { await resolveRoom(projectId, name, roomId); setOpen(false); onCreated(); }} />
+    <button type="button" onClick={() => setOpen(false)} className="min-h-11 folio-meta text-folio-text-secondary">Cancel</button>
+  </div>;
 }
