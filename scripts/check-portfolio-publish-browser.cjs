@@ -69,7 +69,7 @@ window.draw=()=>root.render(<PortfolioPublishPanel key={window.props.version} {.
       await clickText('Review project photos'); await page.waitForSelector('[role="dialog"]'); await page.keyboard.press('Escape'); await page.waitForSelector('[role="dialog"]', { hidden: true });
       assert.equal(await page.evaluate(() => document.activeElement.textContent), 'Review project photos');
       await clickText('Unpublish project'); await page.waitForSelector('[role="dialog"]');
-      await page.$eval('[role="dialog"] button', button => button.click());
+      await page.$eval('[role="dialog"]', dialog => [...dialog.querySelectorAll('button')].find(button => button.textContent.trim() === 'Unpublish project').click());
       await page.waitForFunction(() => document.body.innerText.includes('Publish your photos. Tell the story next.'));
       console.log(`PASS ${theme} ${width}px: photo review, cover/exclusion, failure recovery, publishing, interview prompt, keyboard return and withdrawal`);
     }
