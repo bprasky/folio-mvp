@@ -51,7 +51,7 @@ const view = pathname === '/auth/signup' ? <Signup/> :
   pathname === '/projects' ? <main className="px-6"><Projects projectsRaw={[]} operatingAsOrgId={user?.operatingAsOrgId}/></main> :
   pathname === '/projects/new' ? <h1>Project upload boundary</h1> :
   pathname === '/onboarding/diagnostic' ? <h1>Browsing onboarding</h1> :
-  <><EditorialMasthead/>{pathname === '/about' ? <AboutPageContent/> : <WelcomeModal/>}</>;
+  pathname === '/about' ? <AboutPageContent/> : <><EditorialMasthead/><WelcomeModal/></>;
 createRoot(document.getElementById('root')).render(view);
 `;
 
@@ -75,6 +75,7 @@ async function main() {
   let css = (await postcss([tailwind(config)]).process(globals, { from: path.join(root, 'src/app/globals.css') })).css;
   css += `
     @font-face{font-family:FolioFixtureHeadline;src:url(/CormorantGaramond.ttf) format('truetype');font-style:normal;font-weight:300 700;font-display:swap}
+    @font-face{font-family:FolioFixtureHeadline;src:url(/CormorantGaramond-Italic.ttf) format('truetype');font-style:italic;font-weight:300 700;font-display:swap}
     @font-face{font-family:FolioFixtureBody;src:url(/InstrumentSans.ttf) format('truetype');font-style:normal;font-weight:400 700;font-display:swap}
     :root{--font-headline:FolioFixtureHeadline;--font-body:FolioFixtureBody}
   `;
@@ -84,10 +85,10 @@ async function main() {
     const pathname = new URL(req.url, 'http://localhost').pathname;
     if (pathname === '/auth/logout') {res.setHeader('Content-Type','application/json');return res.end('{}');}
     if (!pathname.includes('.') && !pathname.startsWith('/_next/')) { res.setHeader('Content-Type', 'text/html'); return res.end(html); }
-    const file = pathname.endsWith('.ttf') ? path.join(root, 'public/fonts/publication', path.basename(pathname)) : pathname.startsWith('/_next/static/media/') || pathname.startsWith('/static/media/') || pathname.startsWith('/media/')
+    const file = /^\/about\/[a-z-]+\.webp$/.test(pathname) ? path.join(root, 'public/about', path.basename(pathname)) : pathname.endsWith('.ttf') ? path.join(root, 'public/fonts/publication', path.basename(pathname)) : pathname.startsWith('/_next/static/media/') || pathname.startsWith('/static/media/') || pathname.startsWith('/media/')
       ? path.join(assets, '.next/static/media', path.basename(pathname)) : path.join(out, path.basename(pathname));
     if (!fs.existsSync(file)) { res.writeHead(404); return res.end(); }
-    res.setHeader('Content-Type', file.endsWith('.css') ? 'text/css' : file.endsWith('.woff2') ? 'font/woff2' : file.endsWith('.ttf') ? 'font/ttf' : 'application/javascript');
+    res.setHeader('Content-Type', file.endsWith('.webp') ? 'image/webp' : file.endsWith('.css') ? 'text/css' : file.endsWith('.woff2') ? 'font/woff2' : file.endsWith('.ttf') ? 'font/ttf' : 'application/javascript');
     fs.createReadStream(file).pipe(res);
   });
   await new Promise(resolve => server.listen(0, '127.0.0.1', resolve));
@@ -245,14 +246,28 @@ async function main() {
       await page.setViewport({width,height});await go('/about');await page.evaluate(()=>document.fonts.ready);
       const fits=await page.evaluate(()=>({width:innerWidth,document:document.documentElement.scrollWidth,article:document.querySelector('article').scrollWidth,heading:document.querySelector('#about-title').textContent}));
       assert.ok(fits.document<=width,JSON.stringify(fits));
-      assert.equal(await page.$$eval('article h1',a=>a.length),1);
+      assert.equal(fits.heading.trim(), 'Put your past projects to work.');
+      assert.equal(await page.$$eval('article h1', a => a.length), 1);
+      const actions = await page.$$eval('article a', links => links.map(link => link.textContent.trim()));
+      assert.deepEqual(actions, ['Create your Folio', 'Create your Folio']);
+      const themes = await page.evaluate(() => {
+        const surface = document.querySelector('header').parentElement;
+        const light = getComputedStyle(surface).backgroundColor;
+        document.documentElement.dataset.theme = 'dark';
+        const dark = getComputedStyle(surface).backgroundColor;
+        document.documentElement.dataset.theme = 'light';
+        return { light, dark };
+      });
+      assert.notEqual(themes.light, themes.dark, 'About follows the saved Folio theme');
+      await page.$$eval('article img', images => Promise.all(images.map(image => { image.loading = 'eager'; return image.decode(); })));
+      assert.equal(await page.$$eval('article img', images => images.length), 5);
       await page.screenshot({path:path.join(out,`about-${width}.png`),fullPage:true});results.push({layout:width,passed:true});
     }
     await page.setViewport({width:390,height:844});await go('/');await page.waitForSelector('[role=dialog]');
     assert.equal(await page.$eval('[role=dialog] a',a=>document.activeElement===a),true);
     await page.screenshot({path:path.join(out,'welcome-390.png')});
     await clickNavigate('About Folio');assert.equal(new URL(page.url()).pathname,'/about');
-    await clickNavigate('Start your first project');
+    await clickNavigate('Create your Folio');
     assert.equal(await page.$eval('input[name=intent]:checked',e=>e.value),'designer');
     const signinHref=await page.$eval('.auth-form-foot a',a=>a.href);
     const callback=new URL(new URL(signinHref).searchParams.get('callbackUrl'),url);assert.equal(callback.pathname,'/auth/org-setup');const workspaceCallback=new URL(callback.searchParams.get('callbackUrl'),url);assert.equal(workspaceCallback.pathname,'/onboarding/workspace');assert.equal(workspaceCallback.searchParams.get('returnTo'),'/projects/new');
@@ -263,9 +278,9 @@ async function main() {
     await reset(null,true);await go('/about');await clickNavigate('Already have an account? Sign in');await signin();await Promise.all([page.waitForNavigation({waitUntil:'networkidle0'}),page.click('form button[type=submit]')]);setupCallback();
     await clickNavigate('Fixture Studio','button');assert.equal(new URL(page.url()).pathname,'/projects/new');results.push({journey:'about → signin → existing firm → project upload',passed:true});
 
-    for(const active of [false,true]){await reset(active?{...person,operatingAsOrgId:'fixture-firm'}:person,true);await go('/about');await clickNavigate('Start your first project');if(active)assert.equal(new URL(page.url()).pathname,'/projects/new');else setupCallback();results.push({signedIn:active?'active firm':'firm selection',passed:true});}
-    await reset();await page.evaluate(()=>sessionStorage.setItem('fixture-loading','1'));await go('/about');await clickText('Start your first project');assert.equal(new URL(page.url()).pathname,'/about');
-    await page.evaluate(p=>{sessionStorage.removeItem('fixture-loading');sessionStorage.setItem('fixture-user',JSON.stringify({...p,operatingAsOrgId:'fixture-firm'}));window.dispatchEvent(new Event('authchange'));},person);await page.waitForFunction(()=>[...document.querySelectorAll('a')].find(a=>a.textContent.trim()==='Start your first project').getAttribute('href')==='/projects/new');results.push({auth:'loading waits, then uses resolved session',passed:true});
+    for(const active of [false,true]){await reset(active?{...person,operatingAsOrgId:'fixture-firm'}:person,true);await go('/about');await clickNavigate('Create your Folio');if(active)assert.equal(new URL(page.url()).pathname,'/projects/new');else setupCallback();results.push({signedIn:active?'active firm':'firm selection',passed:true});}
+    await reset();await page.evaluate(()=>sessionStorage.setItem('fixture-loading','1'));await go('/about');await clickText('Create your Folio');assert.equal(new URL(page.url()).pathname,'/about');
+    await page.evaluate(p=>{sessionStorage.removeItem('fixture-loading');sessionStorage.setItem('fixture-user',JSON.stringify({...p,operatingAsOrgId:'fixture-firm'}));window.dispatchEvent(new Event('authchange'));},person);await page.waitForFunction(()=>[...document.querySelectorAll('a')].find(a=>a.textContent.trim()==='Create your Folio').getAttribute('href')==='/projects/new');results.push({auth:'loading waits, then uses resolved session',passed:true});
 
     await reset();await go('/auth/signup?type=designer&next=project');await clickNavigate('Sign in');await clickNavigate('Sign up');await signup();await Promise.all([page.waitForNavigation({waitUntil:'networkidle0'}),page.click('form button[type=submit]')]);await verifySignup();results.push({journey:'signup ↔ signin preserves first project',passed:true});
     for(const provider of ['Google','Apple']){await reset();await go('/auth/signup?type=designer&next=project');await Promise.all([page.waitForNavigation({waitUntil:'networkidle0'}),page.click('[aria-label="Continue with '+provider+'"]')]);setupCallback(true);results.push({oauth:provider,passed:true});}
