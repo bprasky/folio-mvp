@@ -1625,3 +1625,11 @@ Review: public sale status requires a listing URL. Listing import uses explicit 
 Release checkpoint: production compile passed with baseline unrelated import warnings. Final local tests and TypeScript ratchet pass. Automatic approval review rejected the push to bprasky/folio-mvp because implementation approval did not explicitly authorize publishing source and review images to the repository. No push retry, PR, merge or deployment was performed. Hosted browser CI remains pending publication authorization.
 
 Authorized release — 2026-11-17: the founder explicitly approved push, merge and production deployment. Recovered the scoped source onto current main 065812588f927c4413176f84fffbeebd97b9cb19; targeted property-sale tests pass 10/10. Publish the PR, require green hosted checks, merge the verified head and explicitly deploy the merged commit. No schema migration is required.
+
+## 2026-11-17 — Replace the About page with the approved design
+
+- [x] Rebuild the supplied editorial layout on the existing About route with its original artwork.
+- [x] Keep the professional enrollment path and omit the secondary designer-profile link.
+- [x] Check responsive geometry, images and signup behavior with the marketing browser checks.
+
+Review: The marketing browser suite passed all 24 layout and enrollment checks with synthetic sessions. At 320, 390, 768, 1024 and 1440 pixels the About page fits the viewport, all five local photographs decode, and the two article actions lead into professional enrollment. Both Folio themes were checked. Scoped ESLint and the professional-entry and firm-enrollment regressions passed.
