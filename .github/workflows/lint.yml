@@ -61,6 +61,7 @@ jobs:
       - run: npm ci
       - run: npx prisma generate
       - run: node --import tsx scripts/check-room-names.cjs
+      - run: node scripts/check-private-room-release.cjs
       - name: Room sorting in Chromium
         run: GUIDED_TEST_BROWSER="$(command -v google-chrome || command -v chromium)" node scripts/check-manual-rooms-browser.cjs
       - uses: actions/upload-artifact@v4
