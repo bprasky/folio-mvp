@@ -11,6 +11,7 @@ import { authOptions } from '@/app/api/auth/[...nextauth]/options';
 import { prisma } from '@/lib/prisma';
 import { assertProjectView } from '@/lib/authz/access';
 import { generateCaption } from '@/lib/instagram/generateCaption';
+import { hasPublishedProjectFeature, PROJECT_FEATURE_REQUIRED } from '@/lib/publish/projectPublication';
 import { z } from 'zod';
 
 const CaptionRequestSchema = z.object({
@@ -36,6 +37,7 @@ export async function POST(request: NextRequest) {
       where: { id: projectId },
       select: {
         id: true,
+        isPublic: true,
         title: true,
         description: true,
         city: true,
@@ -59,6 +61,7 @@ export async function POST(request: NextRequest) {
         post: {
           select: {
             expandedBlocks: true,
+            status: true,
           },
         },
       },
@@ -66,6 +69,10 @@ export async function POST(request: NextRequest) {
 
     if (!project) {
       return NextResponse.json({ error: 'Project not found' }, { status: 404 });
+    }
+
+    if (!hasPublishedProjectFeature(project)) {
+      return NextResponse.json({ error: PROJECT_FEATURE_REQUIRED }, { status: 409 });
     }
 
     // Generate caption

@@ -6,7 +6,7 @@ class StudioAccessError extends Error {}
 let studioCalls = 0;
 let studioError = null;
 let savedConfig = {studioCardId:'suggestion:p1:r1',headline:'Edited headline',selectedImageUrls:['edited.jpg'],pitch:'Edited pitch'};
-const project = {id:'p1',ownerId:'u1',designerId:'u1',title:'Home',post:{id:'post',status:'PUBLISHED',slug:'home'},images:[],rooms:[]};
+const project = {id:'p1',isPublic:true,ownerId:'u1',designerId:'u1',title:'Home',post:{id:'post',status:'PUBLISHED',slug:'home'},images:[],rooms:[]};
 const code = ts.transpileModule(fs.readFileSync('src/app/designer/projects/[id]/instagram/page.tsx','utf8'),{compilerOptions:{jsx:ts.JsxEmit.ReactJSX,module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2020}}).outputText;
 const mod = {exports:{}};
 vm.runInNewContext(code,{module:mod,exports:mod.exports,require(id){

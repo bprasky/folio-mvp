@@ -13,22 +13,22 @@ import {WebsiteImportModal} from './src/components/import/WebsiteImportModal';
 import {PresentationImportModal} from './src/components/import/PresentationImportModal';
 import {PdfSpecImportModal} from './src/components/import/PdfSpecImportModal';
 import DocumentImportModal from './src/app/project/[id]/DocumentImportModal';
-import {PortfolioPublishPanel} from './src/components/projects/PortfolioPublishPanel';
+import {PortfolioPhotoReview} from './src/components/projects/PortfolioPhotoReview';
 import {WorkspaceImportClient} from './src/app/onboarding/workspace/WorkspaceImportClient';
 import styles from './src/components/ui/WorkflowForms.module.css';
 const mode=new URLSearchParams(location.search).get('screen')||'intake';
 function App(){const [open,setOpen]=useState(false),[credits,setCredits]=useState([{role:'Designer',name:'Preview Studio'}]);
 return <><EditorialMasthead/><p className="px-5 py-2 folio-meta text-folio-text-secondary">Development preview · Synthetic project · No live saves</p>
-{mode==='intake'?<CreateProjectPage/>:mode==='workspace'?<WorkspaceImportClient access={{id:'firm',name:'Preview Studio',website:null,canEditProfile:true,canImportProjects:true,canContribute:true}} memberships={[{id:'firm',name:'Preview Studio'}]} available returnTo="/projects" history={[]}/>:<main className={styles.page}>
-<header className={styles.header}><p className={styles.eyebrow}>Project workspace</p><h1 className={styles.title}>A home by the water</h1><p className={styles.lede}>Photographs, people and the story behind the work.</p></header>
-{mode==='credits'?<CreditsEditor credits={credits} onChange={setCredits}/>:mode==='publishing'?<PortfolioPublishPanel projectId="project" title="A home by the water" version={'a'.repeat(64)} coverImageId="photo-1" isPublic={false} canPublish canUnpublish featureStatus="DRAFT" editorialState="NOT_STARTED" photos={[0,1,2,3,4,5].map(i=>({id:'photo-'+i,url:'/photo.svg?i='+i,name:'Project photograph '+(i+1),inclusion:'INCLUDED'}))}/>:<><button className={styles.primary} onClick={()=>setOpen(true)}>Open {mode}</button>
+{mode==='intake'?<CreateProjectPage/>:mode==='workspace'?<WorkspaceImportClient access={{id:'firm',name:'Preview Studio',website:null,canEditProfile:true,canImportProjects:true,canContribute:true}} memberships={[{id:'firm',name:'Preview Studio'}]} available returnTo="/projects" history={[]}/>:<div className={styles.page}>
+{mode!=='publishing'&&<header className={styles.header}><p className={styles.eyebrow}>Project workspace</p><h1 className={styles.title}>A home by the water</h1><p className={styles.lede}>Photographs, people and the story behind the work.</p></header>}
+{mode==='credits'?<CreditsEditor credits={credits} onChange={setCredits}/>:mode==='publishing'?<PortfolioPhotoReview projectId="project" title="A home by the water" version={'a'.repeat(64)} coverImageId="photo-1" isPublic={false} profileHref="/org/firm" featureHref="/project/project?view=story" featureAction="Create my feature" rooms={[]} nextProject={null} photos={[0,1,2,3,4,5].map(i=>({id:'photo-'+i,url:'/photo.svg?i='+i,name:'Project photograph '+(i+1),inclusion:'INCLUDED',roomName:null}))}/>:<><button className={styles.primary} onClick={()=>setOpen(true)}>Open {mode}</button>
 {mode==='product'&&open&&<ProductEditModal productId="product" onClose={()=>setOpen(false)} onSaved={()=>{}}/>}
 {mode==='website'&&<WebsiteImportModal open={open} onOpenChange={setOpen} projectId="project" onComplete={()=>{}}/>}
 {mode==='document'&&<DocumentImportModal open={open} onClose={()=>setOpen(false)} onSelect={file=>{window.chosenDocument=file.name;setOpen(false)}}/>}
 {mode==='presentation'&&<PresentationImportModal open={open} onOpenChange={setOpen} projectId="project" projectTitle="A home by the water" onComplete={()=>{}}/>}
 {mode==='pdf'&&<PdfSpecImportModal open={open} onOpenChange={setOpen} projectId="project" projectTitle="A home by the water" rooms={[]} onComplete={()=>{}}/>}
 </>}
-</main>}</>};createRoot(document.getElementById('root')).render(<App/>);`;
+</div>}</>};createRoot(document.getElementById('root')).render(<App/>);`;
 async function build() {
   fs.mkdirSync(out, { recursive: true });
   await esbuild.build({ stdin: { contents: source, resolveDir: root, loader: 'tsx' }, outfile: path.join(out, 'bundle.js'), bundle: true, platform: 'browser', jsx: 'automatic', alias: { '@': path.join(root, 'src') }, define: { 'process.env.NODE_ENV': '"development"', 'process.env': '{}' }, plugins: [{ name: 'framework-boundaries', setup(b) {
@@ -84,10 +84,9 @@ function handler(req, res) {
         await visit(screen,theme);
         let opener;
         if(screen==='credits')opener=await click('Add Credit');
-        else if(screen==='publishing')opener=await click('Review & publish project');
-        else if(!['intake','workspace'].includes(screen))opener=await click('Open '+screen);
+        else if(!['intake','workspace','publishing'].includes(screen))opener=await click('Open '+screen);
         await geometry();
-        if(!['intake','workspace'].includes(screen)){
+        if(!['intake','workspace','publishing'].includes(screen)){
           await page.waitForSelector('[role="dialog"]');
           const d=await page.$eval('[role="dialog"]',e=>({width:e.getBoundingClientRect().width,color:getComputedStyle(e).color,bg:getComputedStyle(e).backgroundColor}));
           assert.ok(d.width<=width+1);assert.notEqual(d.color,d.bg,'readable sheet');
@@ -97,7 +96,7 @@ function handler(req, res) {
           // exact opener instead of racing that callback immediately after removal.
           await page.waitForFunction(button=>document.activeElement===button,{},opener);
         }
-        if(['intake','workspace'].includes(screen))await page.screenshot({path:path.join(out,screen+'-'+width+'-'+theme+'.png'),fullPage:true});
+        if(['intake','workspace','publishing'].includes(screen))await page.screenshot({path:path.join(out,screen+'-'+width+'-'+theme+'.png'),fullPage:true});
       }
       await visit('intake',theme);await click('Add project details first');await page.waitForSelector('input[name="title"]');await geometry();
       assert.equal(await page.$eval('textarea[name="description"]',e=>e.closest('details')?.open),false,'optional writing is collapsed');

@@ -14,7 +14,7 @@ export default function ProjectsFeed({ projects }: ProjectsFeedProps) {
     return (
       <div className="text-center py-16">
         <p className="folio-body" style={{ color: 'var(--text-tertiary)' }}>
-          Publish your first project to showcase your work here.
+          Add project photographs to your profile to showcase your work here. You can complete the interview for a Folio Feature later.
         </p>
       </div>
     );

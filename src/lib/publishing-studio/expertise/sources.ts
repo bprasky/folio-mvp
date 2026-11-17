@@ -21,7 +21,7 @@ export async function expertiseOwner(actor: string, db: Prisma.TransactionClient
   return { workspace, identity: { name: user.name || 'The designer', profileUrl: `/profile/${actor}`, portraitUrl: user.profileImage || undefined, logoUrl: user.brandProfile?.logoImageUrl || undefined } };
 }
 
-/** Author corpus: private owned work remains usable in interviews, never implicitly publishable. */
+/** Project publishing tools use work with a published Folio Feature. */
 export async function expertiseSources(actor: string, db: Prisma.TransactionClient = prisma) {
   const owner = await expertiseOwner(actor, db);
   return { ...owner, ...await portfolioEvidence(actor, owner.workspace.id, db) };
@@ -29,7 +29,7 @@ export async function expertiseSources(actor: string, db: Prisma.TransactionClie
 
 /** Caller supplies the persisted workspace for public reads, never the owner's current UI selection. */
 export async function portfolioEvidence(actor: string, workspace: string | null, db: Prisma.TransactionClient = prisma) {
-  const projects = await db.project.findMany({ where: { designerOrgId: workspace, OR: [{ ownerId: actor }, { designerId: actor }] },
+  const projects = await db.project.findMany({ where: { designerOrgId: workspace, isPublic: true, post: { is: { status: 'PUBLISHED' } }, OR: [{ ownerId: actor }, { designerId: actor }] },
     select: { id: true, title: true, isPublic: true, updatedAt: true,
       post: { select: { id: true, status: true, expandedBlocks: true, credits: true, updatedAt: true } },
       rooms: { select: { id: true, name: true } },

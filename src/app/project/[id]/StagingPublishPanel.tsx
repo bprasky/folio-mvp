@@ -261,7 +261,7 @@ export default function StagingPublishPanel({
               <>
                 <span className="flex items-center gap-1.5">
                   <span className="w-2 h-2 rounded-full bg-[rgb(74,44,59)]" />
-                  <span className="folio-ui font-medium text-folio-text-primary">Published</span>
+                  <span className="folio-ui font-medium text-folio-text-primary">Folio Feature published</span>
                 </span>
                 {slug && (
                   <a
@@ -278,7 +278,7 @@ export default function StagingPublishPanel({
               <span className="flex items-center gap-1.5">
                 <span className="w-2 h-2 rounded-full border-2 border-[var(--text-tertiary)] bg-transparent" />
                 <span className="folio-ui font-medium text-folio-text-primary">
-                  {isPreview ? 'Preview — saved draft' : 'Draft — not yet published'}
+                  {isPreview ? 'Preview — feature draft' : 'Folio Feature draft — not yet published'}
                 </span>
               </span>
             )}
@@ -390,6 +390,7 @@ export default function StagingPublishPanel({
       {/* STAGING FOOTER — sticky at bottom */}
       {isOwner && !isPreview && <div className="sticky bottom-0 z-50 border-t border-folio-border-subtle bg-surface-ground/95 backdrop-blur-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3">
+          {!isPublishedStatus && <p className="folio-meta text-folio-text-secondary mb-3">Publishing this Folio Feature unlocks this project’s Publishing Studio tools and eligibility for the main feed. Profile photographs can be shared separately.</p>}
           {/* Readiness summary + action */}
           <div className="flex items-center justify-between">
             <button
@@ -454,7 +455,7 @@ export default function StagingPublishPanel({
                   )}
                   <button onClick={handleSubmit} disabled={isSubmitting || isPublishing || !initialPostData?.expandedBlocks}
                     className="px-4 py-2 folio-ui border rounded-lg disabled:opacity-50">
-                    {isSubmitting ? 'Submitting…' : 'Submit for review'}
+                    {isSubmitting ? 'Submitting…' : 'Submit feature for review'}
                   </button>
                   <button
                     onClick={handlePublish}
@@ -464,8 +465,8 @@ export default function StagingPublishPanel({
                     {isPublishing
                       ? "Publishing..."
                       : editorialState === 'UNPUBLISHED'
-                      ? "Re-Publish to Folio"
-                      : "Publish to Folio"}
+                      ? "Republish Folio Feature"
+                      : "Publish Folio Feature"}
                   </button>
                 </>
               ) : (

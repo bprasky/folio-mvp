@@ -33,8 +33,8 @@ export default async function InstagramExportPage({
     },
   });
 
-  if (!project || !project.post || project.post.status !== 'PUBLISHED') {
-    redirect('/designer');
+  if (!project || !project.isPublic || !project.post || project.post.status !== 'PUBLISHED') {
+    redirect(`/designer/studio?project=${encodeURIComponent(params.id)}`);
   }
 
   try {

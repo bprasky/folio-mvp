@@ -1,4 +1,6 @@
 'use client';
+import { StudioProjectInvitations } from './StudioProjectInvitations';
+import type { ProjectPublicationInvitation } from '@/lib/publish/projectPublication';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
@@ -53,7 +55,7 @@ export function CandidateCard({ candidate, projectNames, onOpen, onDismiss, port
   </div>;
 }
 
-export function ReadinessStudio({ expertiseEnabled = false }: { expertiseEnabled?: boolean } = {}) {
+export function ReadinessStudio({ expertiseEnabled = false, projectInvitations = [] }: { expertiseEnabled?: boolean; projectInvitations?: ProjectPublicationInvitation[] } = {}) {
   const params=useSearchParams(),router=useRouter();
   const {introduction,error:introductionError,reload:reloadIntroduction}=usePersonalIntroduction();
   const project=params.get('project')||'';
@@ -71,6 +73,7 @@ export function ReadinessStudio({ expertiseEnabled = false }: { expertiseEnabled
   const developing=(data?.developing||[]).filter(candidate=>subject!=='about-me'&&matches(candidate)&&matchesStoryFormat(candidate,format));
   const projects=(data?.projects||[]).map(item=>({...item,thumbnail:[...(data?.candidates||[]),...(data?.developing||[])].flatMap(candidate=>candidate.visuals).find(image=>image.projectId===item.id)?.url}));
   const selectedProject=projects.find(item=>item.id===project);
+  const projectLocked=projectInvitations.some(item=>item.id===subject);
   const primary=sections.primary.slice(0,!subject&&!format?2:3);
   const more=[...sections.primary.slice(primary.length),...sections.more];
   const projectName=(id:string)=>projects.find(item=>item.id===id)?.title||ranked.find(item=>item.projectIds.length===1&&item.projectIds[0]===id)?.source?.title||'Project';
@@ -91,13 +94,14 @@ export function ReadinessStudio({ expertiseEnabled = false }: { expertiseEnabled
   const work=tab==='progress'?data?.inProgress||[]:data?.exports||[];
   return <main className="mx-auto max-w-6xl space-y-6 px-4 py-6 text-folio-text-primary sm:px-6 sm:py-8">
     <StudioIntro/>
+    <StudioProjectInvitations projects={projectInvitations} subject={subject} />
     {removeDraft&&<div role="alert" className="space-y-3 border border-folio-border-subtle bg-surface-ground p-4"><p className="folio-body">Remove “{removeDraft.draft.headline}” from In progress? Your saved version will remain available under Dismissed suggestions.</p><div className="flex gap-3"><button className={studioAction} onClick={()=>void dismiss(removeDraft,'other')}>Remove from In progress</button><button className={quietAction} onClick={()=>setRemoveDraft(null)}>Keep draft</button></div></div>}
     {!selected&&<StudioTabs value={tab} onChange={value=>{navigate({tab:value==='suggestions'?null:value,candidate:null,candidateVersion:null})}}/>}
     {error&&<div role="alert" className="folio-body"><p>{error}</p><button className={`${quietAction} mt-2`} onClick={()=>{setError('');void reload().catch(err=>setError(err.message))}}>Reload stories</button></div>}
     {selected?<><CandidateConfigurator key={`${selected.id}:${readOnly?selected.version:'current'}`}  candidate={selected} readOnly={readOnly} onChange={candidate=>{setSelected(candidate);void reload().catch(err=>setError(err.message))}} onClose={()=>{navigate({candidate:null,candidateVersion:null});setSelected(null);void reload().catch(err=>setError(err.message))}}/>{readOnly&&<p className="folio-body">Your saved version is retained for reference. {selected.projectIds.map(id=><Link key={id} href={`/project/${encodeURIComponent(id)}`} className={quietAction}>Open project </Link>)}</p>}</>:<section id="studio-panel" role="tabpanel" aria-labelledby={`studio-tab-${tab === 'exports' ? 'progress' : tab}`} tabIndex={0} className="space-y-6 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4">
       {tab==='suggestions'?<>
         <StudioDiscovery onClear={() => navigate({ subject: null, project: null, format: null, type: null, item: null })} projects={projects} subject={subject} format={format} onSubject={value=>navigate({subject:value==='about-me'?value:null,project:value==='about-me'?null:value,format:null})} onFormat={value=>navigate({format:value})}/>
-
+        {!projectLocked&&<>
         {subject!=='about-me'&&format!=='twenty_questions'&&<div className="flex flex-wrap items-end justify-between gap-3"><div><h2 className="folio-h3 sm:folio-h2">{project||format?'Stories to explore':'Recommended for you'}</h2></div><button className={quietAction} disabled={pending} onClick={refresh}>{pending?'Reviewing stories…':'Refresh suggestions'}</button></div>}
         {!data&&!error&&<p role="status" className="folio-body py-8">Opening your stories…</p>}
         {data&&subject!=='about-me'&&format!=='twenty_questions'&&!ranked.length&&<div className="bg-surface-ground p-6"><h3 className="folio-h3">No stories ready for review yet</h3><p className="folio-body mt-2">Refresh suggestions to review your published work. Your saved drafts remain in In progress.</p></div>}
@@ -108,6 +112,7 @@ export function ReadinessStudio({ expertiseEnabled = false }: { expertiseEnabled
         {(more.length > 0 || sections.portfolio) && <section aria-label="From your projects"><h2 className="folio-h2 mb-5">From your projects</h2><div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">{more.map(card)}{sections.portfolio && <CandidateCard candidate={sections.portfolio} projectNames={projectName} portfolio onOpen={() => open(sections.portfolio!)} onDismiss={reason => void dismiss(sections.portfolio!, reason)} />}</div></section>}
         {!!developing.length&&<section className="border-t border-folio-border-subtle pt-5"><h2 className="folio-h3">More opportunities to develop ({developing.length})</h2><div className="mt-4 space-y-5">{developing.map(candidate=><article key={candidate.id}><h3 className="folio-h3">{candidate.thesis||candidate.source?.title}</h3><p className="folio-body mt-2">This story needs more source material or editorial development.</p><button className={`${quietAction} mt-2`} onClick={()=>open(candidate)}>Review saved material</button></article>)}</div></section>}
         {!!data?.dismissed?.filter(matches).length&&<details className="border-t border-folio-border-subtle pt-5"><summary className="cursor-pointer folio-meta text-folio-text-secondary">Dismissed suggestions</summary>{data.dismissed.filter(matches).map(candidate=><div key={candidate.id} className="mt-3 flex flex-wrap items-center justify-between gap-3"><span className="folio-body">{candidate.thesis}</span><button className={quietAction} onClick={()=>restore(candidate)}>Restore</button></div>)}</details>}
+        </>}
       </>:<>
         <div><h2 className="folio-h2">{tab==='progress'?'Pick up where you left off':'Your exports'}</h2><p className="folio-body mt-1">{tab==='progress'?'Your saved words, selected images, and started stories.':'Previously prepared downloads. Exporting does not confirm publication.'}</p></div>
         <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-3">{work.filter(item=>matches(item.candidate)).map(item=><div key={`${item.candidate.id}:${item.candidate.version}`}>

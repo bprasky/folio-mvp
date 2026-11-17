@@ -30,7 +30,7 @@ export function WorkspaceReadyPreview({ profile, personName, description, locati
     || projects.find(project => !project.isPublic && project.photos.length) : undefined;
   const items = projects.map(project => ({
     id: project.id, title: project.title, imageUrl: project.photos[0]?.url, isDraft: !project.isPublic,
-    actionLabel: project.isPublic || !canContribute ? 'Open project' : project.photos.length ? 'Review & publish' : 'Add photographs',
+    actionLabel: project.isPublic || !canContribute ? 'Open project' : project.photos.length ? 'Add photos to profile' : 'Add photographs',
   }));
   return <section className={`workspace-preview ${profileStyles.page}`} style={profilePageStyle(profile.appearance.backgroundColor)} aria-label="Your private profile preview">
     <div className="workspace-preview__welcome">
@@ -40,16 +40,16 @@ export function WorkspaceReadyPreview({ profile, personName, description, locati
     <OrgProfileHero org={org} appearance={profile.appearance} cover={cover}
       projectCount={profile.projectCount + projects.filter(project => !project.isPublic).length} year={new Date().getFullYear()} preview />
     {first ? <div className={`workspace-preview__next ${profileStyles.neutralContent}`}>
-      <div><p className="workspace-preview__eyebrow">Next: publish your photographs</p>
+      <div><p className="workspace-preview__eyebrow">Next: complete your Folio profile</p>
         <h2>Review {first.title}.</h2>
-        <p>Choose your title, cover and photographs, then publish your project. Organize rooms, add materials and tell its story when you prepare your interview.</p>
+        <p>Choose your title, cover and photographs. Add them to your profile now; tell the story later.</p>
       </div>
       <div className="workspace-preview__next-actions">
-        <button type="button" className="auth-submit" disabled={busy} onClick={() => onOpenProject(first.id, 'open')}>Review &amp; publish project <span aria-hidden="true">↗</span></button>
+        <button type="button" className="auth-submit" disabled={busy} onClick={() => onOpenProject(first.id, 'open')}>Add photos to my profile <span aria-hidden="true">↗</span></button>
       </div>
     </div> : <p className="workspace-preview__empty">{projects.length ? 'Your projects are here. Open one below to continue.' : 'Review your imported details, then add photographs to begin your first project.'}</p>}
     {projects.length ? <section className="workspace-preview__projects" aria-label="Your imported projects">
-      <div className="workspace-preview__section-heading"><h2>Your projects</h2><p>Private drafts are yours to shape. Publish when you’re ready.</p></div>
+      <div className="workspace-preview__section-heading"><h2>Your projects</h2><p>Choose which photographs to share on your profile. Interviews come later.</p></div>
       <FlowMosaic events={items} preserveOrder disabled={busy} onSelect={id => {
         const project = projects.find(candidate => candidate.id === id);
         if (project) onOpenProject(id, 'open');

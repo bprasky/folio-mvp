@@ -6,6 +6,7 @@ import { buildStudioFeed } from './feed';
 import { readPublicationHistory } from './publication-history';
 import { shouldSuppressPublication } from './history';
 import { publicationHeadlines } from './publication-headlines';
+import { hasPublishedProjectFeature } from '@/lib/publish/projectPublication';
 
 export class StudioAccessError extends Error {
   constructor(message: string, public readonly status: number) { super(message); }
@@ -136,9 +137,9 @@ export async function getStudioData(userId: string, projectId?: string): Promise
     workspace,
     projects: scoped.map(p => ({ id: p.id, title: p.title || 'Untitled project',
       publishedAt: p.publishedAt?.toISOString() ?? null,
-      thumbnail: p.images.find(image => image.inclusion === 'INCLUDED')?.url ?? null, published: p.post?.status === 'PUBLISHED',
-      canCreateCampaign: p.post?.status === 'PUBLISHED' && (workspace.canWriteCampaigns || p.ownerId === userId || p.designerId === userId),
-      canCreate: p.post?.status === 'PUBLISHED' && (p.ownerId === userId || p.designerId === userId) })),
+      thumbnail: p.images.find(image => image.inclusion === 'INCLUDED')?.url ?? null, published: hasPublishedProjectFeature(p),
+      canCreateCampaign: hasPublishedProjectFeature(p) && (workspace.canWriteCampaigns || p.ownerId === userId || p.designerId === userId),
+      canCreate: hasPublishedProjectFeature(p) && (p.ownerId === userId || p.designerId === userId) })),
     editorials: scoped.flatMap(p => p.post ? [{ id: p.post.id, projectId: p.id, title: p.title || 'Untitled project',
       slug: p.post.slug, status: p.post.status.toLowerCase(), format: p.post.variant,
       updatedAt: p.post.updatedAt.toISOString() }] : []),

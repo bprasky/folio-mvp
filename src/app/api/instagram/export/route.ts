@@ -11,6 +11,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/app/api/auth/[...nextauth]/options';
 import { prisma } from '@/lib/prisma';
 import { assertProjectView } from '@/lib/authz/access';
+import { hasPublishedProjectFeature, PROJECT_FEATURE_REQUIRED } from '@/lib/publish/projectPublication';
 import { extractQuotes } from '@/lib/instagram/extractQuotes';
 import { generateCarouselSlides } from '@/lib/instagram/generateCarouselSlides';
 import { generateCaption } from '@/lib/instagram/generateCaption';
@@ -48,6 +49,7 @@ export async function POST(request: NextRequest) {
       where: { id: projectId },
       select: {
         id: true,
+        isPublic: true,
         title: true,
         description: true,
         city: true,
@@ -66,6 +68,7 @@ export async function POST(request: NextRequest) {
         post: {
           select: {
             expandedBlocks: true,
+            status: true,
             heroAssetId: true,
             slug: true,
           },
@@ -81,6 +84,10 @@ export async function POST(request: NextRequest) {
           headers: { 'Content-Type': 'application/json' }
         }
       );
+    }
+
+    if (!hasPublishedProjectFeature(project)) {
+      return NextResponse.json({ error: PROJECT_FEATURE_REQUIRED }, { status: 409 });
     }
 
     // Reorder images according to orderedImageIds

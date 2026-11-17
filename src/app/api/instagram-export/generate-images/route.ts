@@ -44,7 +44,7 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    if (!project || !project.post || project.post.status !== 'PUBLISHED') {
+    if (!project || !project.isPublic || !project.post || project.post.status !== 'PUBLISHED') {
       return NextResponse.json({ error: 'Published project not found' }, { status: 404 });
     }
 
