@@ -54,8 +54,8 @@ function handler(req,res){const url=new URL(req.url,'http://fixture');const json
     const click=async text=>{console.log('Click:',text);await page.locator('button::-p-text('+text+')').click()};
     for(const theme of ['light','dark'])for(const width of [390,1440]){
       await page.setViewport({width,height:1000});await page.goto(base+'?reset=1&theme='+theme,{waitUntil:'networkidle0'});
-      // Session storage guards the background sweep across visits; explicit search remains available.
-      await page.evaluate(()=>sessionStorage.clear());if(!searches){await click('Find & manage coverage');await click('Find my coverage');await page.click('[aria-label="Close coverage review"]')}
+      // Local storage guards the background sweep across tabs and visits; explicit search remains available.
+      await page.evaluate(()=>localStorage.clear());if(!searches){await click('Find & manage coverage');await click('Find my coverage');await page.click('[aria-label="Close coverage review"]')}
       await click('Add 2 projects to my profile');await page.waitForFunction(()=>document.body.textContent.includes('1 project is now visible'));
       assert.equal(live.size,1);assert.equal(payloads[0].projects.length,2);assert.equal(payloads[0].projects[0].includedImageIds.length,2);
       await click('Reload photographs');await click('Add 1 project to my profile');await page.waitForFunction(()=>window.approvals===2);assert.equal(live.size,2);
