@@ -109,7 +109,7 @@ export default function ProjectTabs({
     },
     {
       id: 'publish' as TabView,
-      label: 'Publish',
+      label: 'Feature',
       Icon: Share2,
       count: undefined,
       visible: showPublish,

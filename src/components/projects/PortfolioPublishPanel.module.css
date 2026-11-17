@@ -1,24 +1,44 @@
-.panel { padding-block: clamp(1.5rem, 3vw, 2.5rem); color: var(--folio-text-primary); }
-.panel p { max-width: 70ch; margin-top: .75rem; }
-.actions { composes: actions from '../ui/WorkflowForms.module.css'; margin-top: 1.5rem; }
+.page { max-width: 64rem; margin-inline: auto; padding: 1.5rem clamp(1.25rem, 4vw, 3rem) 3rem; color: var(--folio-text-primary); }
+.page :focus-visible, .summary :focus-visible, .dialog :focus-visible { outline: 2px solid var(--folio-gold); outline-offset: 3px; }
+.pageHeading { max-width: 42rem; margin-block: 2rem; }
+.pageHeading > p:last-child { margin-top: 1rem; }
+.eyebrow { font-size: var(--type-meta); color: var(--folio-text-secondary); margin-bottom: .75rem; }
+.summary { border-block: 1px solid var(--folio-border-subtle); padding-block: .75rem; margin-block: 1rem; }
+.summary .actions { margin-top: 0; }
+.quiet { composes: quiet from '../ui/WorkflowForms.module.css'; padding-inline: 0; }
+.actions { composes: actions from '../ui/WorkflowForms.module.css'; margin-top: 1rem; }
 .primary { composes: primary from '../ui/WorkflowForms.module.css'; }
 .secondary { composes: secondary from '../ui/WorkflowForms.module.css'; }
-.panel :focus-visible, .dialog :focus-visible { outline: 2px solid var(--folio-gold); outline-offset: 3px; }
-.dialog { position: relative; z-index: 100; color: var(--folio-text-primary); }
-.backdrop { position: fixed; inset: 0; background: rgb(0 0 0 / .4); }
-.viewport { position: fixed; inset: 0; overflow-y: auto; overscroll-behavior: contain; }
-.review { width: min(100%, 68rem); min-height: 100dvh; margin-left: auto; padding: max(2rem, env(safe-area-inset-top)) clamp(1.25rem, 4vw, 3rem) max(2rem, env(safe-area-inset-bottom)); background: var(--surface-canvas); box-shadow: -1rem 0 4rem rgb(0 0 0 / .12); }
-.heading { display: flex; justify-content: space-between; align-items: start; gap: 1rem; margin-bottom: 1rem; }
-.title { composes: sheetTitle from '../ui/WorkflowForms.module.css'; }
-.close { composes: close from '../ui/WorkflowForms.module.css'; }
-.titleField { composes: label from '../ui/WorkflowForms.module.css'; max-width: 38rem; margin-block: 2rem; }
+.titleField { composes: label from '../ui/WorkflowForms.module.css'; max-width: 38rem; margin-block: 1.5rem; }
 .input { composes: field from '../ui/WorkflowForms.module.css'; }
+.organize { composes: disclosure from '../ui/WorkflowForms.module.css'; }
+.organize p { max-width: 60ch; font-size: var(--type-meta); color: var(--folio-text-secondary); }
 .photos { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1.5rem 1rem; margin-top: 1.5rem; }
 .photos legend { margin-bottom: 1rem; font-size: var(--type-meta); color: var(--folio-text-secondary); }
 .photo { min-width: 0; }
-.photo img { width: 100%; aspect-ratio: 4 / 3; object-fit: cover; border-radius: .375rem; }
-.photo label { display: flex; align-items: center; gap: .5rem; min-height: 44px; font-size: var(--type-meta); cursor: pointer; }
-.photo input { width: 1.15rem; height: 1.15rem; flex-shrink: 0; accent-color: var(--folio-gold); }
-.footer { composes: actions; position: sticky; bottom: 0; padding-block: 1rem; background: var(--surface-canvas); }
-@media (max-width: 640px) { .photos { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem .75rem; } .footer > button { flex: 1; } }
-@media (max-width: 360px) { .photos { grid-template-columns: minmax(0, 1fr); } }
+.photoSelection { position: relative; display: block; cursor: pointer; }
+.photoSelection img { width: 100%; aspect-ratio: 4 / 3; object-fit: cover; border-radius: .375rem; }
+.photoSelection input { position: absolute; top: .75rem; left: .75rem; width: 1.5rem; height: 1.5rem; accent-color: var(--folio-gold); outline: 2px solid var(--surface-canvas); outline-offset: 1px; }
+.photoSelection:has(input:not(:checked)) img { opacity: .45; }
+.photoSelection:has(input:focus-visible) { outline: 2px solid var(--folio-gold); outline-offset: 3px; border-radius: .375rem; }
+.coverChoice { display: flex; align-items: center; gap: .5rem; min-height: 44px; font-size: var(--type-meta); cursor: pointer; }
+.coverChoice input { width: 1.15rem; height: 1.15rem; accent-color: var(--folio-gold); flex-shrink: 0; }
+.roomField { composes: label from '../ui/WorkflowForms.module.css'; margin-top: .5rem; }
+.approval { margin-top: 1.5rem; display: flex; align-items: center; justify-content: space-between; gap: 1.5rem; padding-block: 1rem; background: var(--surface-canvas); border-top: 1px solid var(--folio-border-subtle); }
+.approval p { max-width: 43ch; font-size: var(--type-meta); color: var(--folio-text-secondary); }
+.approval button { flex-shrink: 0; }
+.success { max-width: 52rem; padding-top: clamp(3rem, 8vw, 7rem); }
+.success > p { margin-block: 1rem; }
+.choices { display: grid; margin-top: 2rem; border-top: 1px solid var(--folio-border-subtle); }
+.choice { display: grid; gap: .75rem; padding-block: 1.5rem; border-bottom: 1px solid var(--folio-border-subtle); }
+.choice > span:last-child { color: var(--folio-text-secondary); font-size: var(--type-meta); }
+.choice:hover > span:first-child { color: var(--folio-gold); }
+.error { composes: notice from '../ui/WorkflowForms.module.css'; }
+.dialog { position: relative; z-index: 100; color: var(--folio-text-primary); }
+.backdrop { position: fixed; inset: 0; background: rgb(0 0 0 / .4); }
+.viewport { position: fixed; inset: 0; overflow-y: auto; overscroll-behavior: contain; }
+.review { width: min(100%, 40rem); min-height: 100dvh; margin-left: auto; padding: max(2rem, env(safe-area-inset-top)) clamp(1.25rem, 4vw, 3rem) max(2rem, env(safe-area-inset-bottom)); background: var(--surface-canvas); box-shadow: -1rem 0 4rem rgb(0 0 0 / .12); }
+.heading { display: flex; justify-content: space-between; align-items: start; gap: 1rem; margin-bottom: 1rem; }
+.title { composes: sheetTitle from '../ui/WorkflowForms.module.css'; }
+.close { composes: close from '../ui/WorkflowForms.module.css'; }
+@media (max-width: 640px) { .photos { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem .75rem; } .approval { flex-direction: column; align-items: stretch; gap: .75rem; } }

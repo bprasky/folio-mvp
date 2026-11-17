@@ -134,7 +134,7 @@ export function computePublishReadiness(input: ReadinessInput): PublishReadiness
     ctaLabel = 'Start interview';
     ctaAction = 'startInterview';
   } else {
-    ctaLabel = 'Publish project';
+    ctaLabel = 'Publish Folio Feature';
     ctaAction = 'publish';
   }
 

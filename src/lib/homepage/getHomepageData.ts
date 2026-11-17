@@ -140,7 +140,7 @@ async function selectXlHero(): Promise<HomepageHero | null> {
   //    the homepage degrades gracefully instead of going blank.
   if (PINNED_HERO_POST_SLUG) {
     const pinned = await prisma.projectPost.findFirst({
-      where: { slug: PINNED_HERO_POST_SLUG, status: "PUBLISHED" },
+      where: { slug: PINNED_HERO_POST_SLUG, status: "PUBLISHED", project: { isPublic: true } },
       select: heroSelect,
     });
     if (pinned) {
@@ -154,6 +154,7 @@ async function selectXlHero(): Promise<HomepageHero | null> {
     where: {
       status: "PUBLISHED",
       homepageXlStartsAt: { lte: now },
+      project: { isPublic: true },
       homepageXlEndsAt: { gte: now },
     },
     orderBy: { homepageXlStartsAt: "desc" },
@@ -177,6 +178,7 @@ async function selectXlHero(): Promise<HomepageHero | null> {
     where: {
       status: "PUBLISHED",
       publishedAt: { gte: since },
+      project: { isPublic: true },
     },
     orderBy: { publishedAt: "desc" },
     select: heroSelect,

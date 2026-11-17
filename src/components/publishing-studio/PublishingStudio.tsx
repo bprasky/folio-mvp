@@ -1,4 +1,6 @@
 'use client';
+import { StudioProjectInvitations } from './StudioProjectInvitations';
+import type { ProjectPublicationInvitation } from '@/lib/publish/projectPublication';
 
 import { useState } from 'react';
 import Link from 'next/link';
@@ -21,7 +23,7 @@ const CampaignWizard = dynamic(() => import('@/components/instagram/CampaignWiza
 const fieldClass = 'max-w-full min-w-0 rounded-full border border-folio-border-subtle bg-surface-canvas px-4 py-2 folio-ui';
 const actionClass = 'folio-ui underline underline-offset-4 disabled:opacity-50';
 
-export function PublishingStudio({ embedded = false, expertiseEnabled = false }: { embedded?: boolean; expertiseEnabled?: boolean } = {}) {
+export function PublishingStudio({ embedded = false, expertiseEnabled = false, projectInvitations = [] }: { embedded?: boolean; expertiseEnabled?: boolean; projectInvitations?: ProjectPublicationInvitation[] } = {}) {
   const router = useRouter();
   const params = useSearchParams();
   const project = params.get('project') === 'studio-wide' ? '' : params.get('project') || '';
@@ -105,11 +107,12 @@ export function PublishingStudio({ embedded = false, expertiseEnabled = false }:
     finally { setPending(null); }
   }
 
-  if (error || !data) return <section className="mx-auto max-w-6xl px-5 py-12"><h1 className="folio-h1">Publishing Studio</h1><p role={error ? 'alert' : 'status'} className="mt-6 folio-body">{error || 'Gathering ideas from your work…'}</p>{error && <button onClick={reload} className={`${actionClass} mt-5`}>Try again</button>}</section>;
+  if (error || !data) return <section className="mx-auto max-w-6xl px-5 py-12"><h1 className="folio-h1">Publishing Studio</h1>{!embedded && <StudioProjectInvitations projects={projectInvitations} subject={subject} />}<p role={error ? 'alert' : 'status'} className="mt-6 folio-body">{error || 'Gathering ideas from your work…'}</p>{error && <button onClick={reload} className={`${actionClass} mt-5`}>Try again</button>}</section>;
   if (embedded && !data.feed.length && !data.campaigns.length) return null;
   const projectName = (id: string) => data.projects.find(item => item.id === id)?.title || 'Project';
   const activeCampaign = data.projects.find(item => item.id === campaignProject);
   const selectedProject = data.projects.find(item => item.id === project);
+  const projectLocked = subject !== 'about-me' && Boolean(project) && (projectInvitations.some(item => item.id === project) || selectedProject?.published === false);
   const feed = data.feed.filter(item => (!data.readinessEnabled || ['carousel', 'campaign'].includes(item.kind)) && matchesStudioItem({ ...item, title: `${item.title} ${item.caption} ${item.projectIds.map(projectName).join(' ')}` }, { project, query, status }) && (!kind || item.kind === kind) && (tab !== 'suggestions' || (subject !== 'about-me' && matchesStoryFormat(item, format))) && (status || item.status !== 'dismissed'));
   const selected = data.feed.find(item => item.id === params.get('item') || item.id === `idea:${params.get('item')}` || item.exportId === params.get('item') || item.campaignId === params.get('item'));
   const campaign = selected?.campaignId ? data.campaigns.find(item => item.id === selected.campaignId) : undefined;
@@ -134,7 +137,7 @@ export function PublishingStudio({ embedded = false, expertiseEnabled = false }:
 
   return <section className={embedded ? 'space-y-6' : 'mx-auto max-w-6xl px-4 py-5 sm:px-6 md:py-8'}>
     {removingDraft && <section aria-label="Confirm draft removal" className="mb-6 rounded-xl border border-folio-border-subtle p-5"><h2 className="folio-h3">Remove “{removingDraft.title || 'Untitled draft'}”?</h2><p className="folio-body mt-2">This discards the saved draft and its changes. The original suggestion can return if its source is still available.</p><div className="mt-4 flex flex-wrap gap-4"><button type="button" className={actionClass} disabled={pending !== null} onClick={() => setRemovingDraft(null)}>Keep draft</button><button type="button" className={actionClass} disabled={pending !== null} onClick={removeDraft}>{pending === removingDraft.id ? 'Removing…' : 'Remove saved draft'}</button></div></section>}
-    {!embedded && <><StudioIntro /><StudioTabs value={tab} onChange={value => navigate({ tab: value, item: null })} /></>}
+    {!embedded && <><StudioIntro /><StudioProjectInvitations projects={projectInvitations} subject={subject} /><StudioTabs value={tab} onChange={value => navigate({ tab: value, item: null })} /></>}
 
     <div className="mb-6 flex flex-wrap items-center gap-3">
     {!embedded && <StudioDiscovery onClear={() => navigate({ subject: null, project: null, format: null, type: null, item: null })} projects={data.projects} subject={subject} format={format} onSubject={value => navigate({ subject: value === 'about-me' ? value : null, project: value === 'about-me' ? null : value, format: null, item: null })} onFormat={value => navigate({ format: value, type: null, item: null })} />}
@@ -147,7 +150,7 @@ export function PublishingStudio({ embedded = false, expertiseEnabled = false }:
     {notice && <p role="status" className="mb-5 folio-ui">{notice}</p>}{actionError && <p role="alert" className="mb-5 folio-ui">{actionError}</p>}
     {selected && <section aria-label={selected.title} className="mb-6 rounded-xl border border-folio-border-subtle p-5"><div className="flex items-start justify-between gap-4"><h2 className="folio-h3">{selected.title}</h2><button className={actionClass} onClick={() => navigate({ item: null })}>Close</button></div><p className="folio-body mt-3 whitespace-pre-wrap">{selected.caption}</p>{campaign && <ol className="mt-5 space-y-4">{campaign.posts.map(post => <li key={post.id}><h3 className="folio-ui">{post.sequenceNum}. {post.title}</h3><p className="folio-body mt-1 whitespace-pre-wrap text-folio-text-secondary">{post.caption}</p></li>)}</ol>}{idea && <><p className="folio-meta mt-4 text-folio-text-secondary">This direction needs your perspective before it becomes a finished post.</p>{idea.prompts.map(prompt => <p key={prompt.id} className="folio-body mt-3">{prompt.prompt}{prompt.optionA && prompt.optionB && <span className="mt-1 block folio-meta">{prompt.optionA} or {prompt.optionB}</span>}</p>)}<div className="mt-4 flex flex-wrap gap-4">{idea.status === 'recommended' && <button disabled={pending !== null} className={actionClass} onClick={() => updateIdea(idea.id, 'in_progress')}>Keep this direction</button>}{['recommended', 'in_progress'].includes(idea.status) && <button disabled={pending !== null} className={actionClass} onClick={() => updateIdea(idea.id, 'dismissed')}>Dismiss</button>}{idea.status === 'dismissed' && <button disabled={pending !== null} className={actionClass} onClick={() => updateIdea(idea.id, 'recommended')}>Restore</button>}</div></>}{!selected.canPolish && selected.kind === 'suggestion' && <p className="folio-meta mt-3">Editing this project’s social posts is not available for your account.</p>}</section>}
     <div role={embedded ? undefined : "tabpanel"} id={embedded ? undefined : "studio-panel"} aria-labelledby={embedded ? undefined : `studio-tab-${tab === 'exports' ? 'progress' : tab}`} className="space-y-8">
-      {tab === 'suggestions' && <>
+      {tab === 'suggestions' && !projectLocked && <>
         {subject !== 'about-me' && format !== 'twenty_questions' && <section aria-label="Your next stories"><header className="mb-5"><h2 className="folio-h3 sm:folio-h2">{project || format ? 'Stories to explore' : 'Recommended for you'}</h2></header>
           {primary.length || releaseGroups.length || (!subject && !format) ? <div className="grid grid-cols-1 items-start gap-5 sm:grid-cols-2 lg:grid-cols-3">{!embedded&&<StudioReleaseOpportunities cardsOnly onHistory={id => setHistoryItem(data.feed.find(item => item.id === id) || null)} opportunities={releaseGroups.slice(0,1)}/>}
             {!subject && !format && <AboutMeInvitation compact introduction={introduction?.status==='published'?null:introduction} />}{primary.map(renderCard)}</div> : <p className="folio-body text-folio-text-secondary">{project || kind || query || status ? 'No posts match this selection. Try another project or clear your filters.' : 'No prepared stories yet. Useful introductions need a coherent published overview and suitable photography; focused stories need supported detail.'}</p>}

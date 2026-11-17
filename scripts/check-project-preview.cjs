@@ -126,10 +126,10 @@ async function main() {
     await page.screenshot({ path: screenshot });
     console.log('Fixture screenshot:', screenshot);
     await click('Back to editing');
-    await click('Publish to Folio');
+    await click('Publish Folio Feature');
     assert.deepEqual(await page.evaluate(() => window.fixture.navigations), []);
     await page.evaluate(() => { window.fixture.publishSucceeds = true; });
-    await click('Publish to Folio');
+    await click('Publish Folio Feature');
     await page.waitForFunction(() => window.fixture.navigations.length === 1);
     assert.deepEqual(await page.evaluate(() => window.fixture.navigations), ['/project/fixture-project']);
     assert.deepEqual(errors, []);
@@ -202,10 +202,10 @@ async function checkDom(bundle) {
     await click('Preview');
     assert.equal(document.querySelector('[data-fixture-article="reader"] h1').textContent, 'Unsaved fixture title');
     await click('Back to editing');
-    await click('Publish to Folio');
+    await click('Publish Folio Feature');
     assert.equal(window.fixture.navigations.length, 0);
     window.fixture.publishSucceeds = true;
-    await click('Publish to Folio');
+    await click('Publish Folio Feature');
     assert.deepEqual([...window.fixture.navigations], ['/project/fixture-project']);
     console.log('PASS saved preview refresh and failed/successful publish navigation');
   } finally { dom.window.close(); }

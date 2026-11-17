@@ -71,7 +71,7 @@ export async function getMagazineData(
   // Fetch published project posts (similar to getPublishedProjectPosts)
   // This mirrors the existing feed logic
   const posts = await prisma.projectPost.findMany({
-    where: { status: "PUBLISHED" },
+    where: { status: "PUBLISHED", project: { isPublic: true } },
     orderBy: { publishedAt: "desc" },
     take: 40,
     select: {

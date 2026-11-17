@@ -1,0 +1,13 @@
+.section { border-block: 1px solid var(--folio-border-subtle); padding-block: 1.5rem; margin-block: 1.5rem; }
+.heading p { max-width: 70ch; margin-top: .75rem; }
+.projects { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1.5rem; padding: 0; margin: 1.5rem 0 0; list-style: none; }
+.project { display: flex; align-items: start; gap: 1rem; min-width: 0; }
+.photo { flex: 0 0 5rem; }
+.photo img { width: 100%; aspect-ratio: 4 / 5; object-fit: cover; border-radius: .25rem; }
+.copy { min-width: 0; overflow-wrap: anywhere; }
+.copy p { margin-top: .5rem; }
+.action { display: inline-flex; align-items: center; min-height: 44px; margin-top: .5rem; font-size: var(--type-meta); text-decoration: underline; text-underline-offset: .25em; }
+.action:focus-visible, .more summary:focus-visible { outline: 2px solid var(--folio-gold); outline-offset: 3px; }
+.more { margin-top: 1.5rem; font-size: var(--type-meta); }
+.more summary { cursor: pointer; min-height: 44px; }
+@media (max-width: 900px) { .projects { grid-template-columns: minmax(0, 1fr); } }

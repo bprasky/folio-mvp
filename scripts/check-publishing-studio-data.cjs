@@ -116,6 +116,14 @@ async function main() {
   let data = await f.getStudioData('me');
   assert.deepEqual(plain(data.projects.map(p => p.id)), ['p1', 'p2']);
   assert.equal(data.projects.find(p => p.id === 'p2').canCreate, false);
+  assert.equal(data.projects.find(p => p.id === 'p2').canCreateCampaign, false);
+  assert.ok(!data.feed.some(card => card.kind === 'suggestion' && card.projectIds.includes('p2')), 'Photo portfolios do not produce Studio suggestions');
+  f.projects[0].isPublic = false;
+  const withdrawn = await f.getStudioData('me');
+  assert.equal(withdrawn.projects[0].canCreate, false);
+  assert.equal(withdrawn.projects[0].canCreateCampaign, false);
+  assert.equal(withdrawn.feed.find(card => card.id === 'carousel:carousel-p1').canPolish, false, 'Saved work remains visible but tools relock');
+  f.projects[0].isPublic = true;
   assert.deepEqual(plain(data.ideas.map(p => p.id)), ['mine', 'dismissed', 'published']);
   assert.equal(data.feed.find(card => card.id === 'idea:dismissed')?.status, 'dismissed', 'Dismissed cards remain available to the status filter and restore action');
   assert.equal(data.campaigns[0].postCount, 1);
