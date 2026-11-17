@@ -116,8 +116,9 @@ module.exports = async function interactions({ page, go, capture, requests, resu
   await check('Room actions are visible without hover and assigned photos have keyboard/tap room controls', async () => {
     await go('rooms');
     assert(await page.$eval('[aria-label="View full photo"]', e => getComputedStyle(e).opacity === '1'));
-    assert(await page.$eval('[aria-label="Room for Photo 1"]', e => e.options.length === 2));
-    await page.select('[aria-label="Room for Photo 1"]', 'kitchen');
+    assert(await page.$eval('[aria-label="Move Photo 1 to room"]', e => e.getAttribute('role') === 'combobox'));
+    await page.type('[aria-label="Move Photo 1 to room"]', 'kit');
+    await page.keyboard.press('Enter');
     assert(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth));
     await page.setViewport({width:768,height:1024,hasTouch:true});
     assert(await page.$eval('[aria-label="View full photo"]', e => getComputedStyle(e).opacity === '1'));

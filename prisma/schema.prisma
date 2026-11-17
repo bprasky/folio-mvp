@@ -10,6 +10,7 @@ datasource db {
 }
 
 model User {
+  savedRoomNames       UserRoomName[]
   studioStories        EditorialStory[]         @relation("StudioStoryOwner")
   studioStoryApprovals EditorialStoryRevision[] @relation("StudioStoryApprover")
   studioStoryAnswers   EditorialStoryAnswer[]   @relation("StudioStoryAnswerer")
@@ -303,6 +304,18 @@ model User {
   interviewMediaRecords InterviewMediaRecord[] @relation("InterviewMediaActor")
 
   @@map("users")
+}
+
+// Private autocomplete vocabulary. Never exposed through public profiles.
+model UserRoomName {
+  userId         String
+  normalizedName String
+  name           String
+  createdAt      DateTime @default(now())
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([userId, normalizedName])
+  @@map("user_room_names")
 }
 
 model Event {

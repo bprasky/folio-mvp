@@ -1,4 +1,17 @@
-# Publication profile references - 2026-11-17
+# Fast, private room-name suggestions — 2026-11-17
+
+- [x] Add standard room-name suggestions, conservative typo prompts and free custom names.
+- [x] Make create-and-assign reuse an existing project room, including retries and concurrent requests.
+- [x] Add explicit private saved room names, scoped to the authenticated account.
+- [x] Integrate unsorted photos, moving photos, drag-created rooms and Add room.
+- [ ] Verify matching, authorization, persistence/retry behavior, keyboard/mobile/theme UI, lint and TypeScript.
+- [ ] Commit and push the scoped work with release requirements documented.
+
+Plan: short inline suggestions while typing, no room dropdown or pre-created empty rooms. Enter selects a visible completion; Tab completes its text. Names stay custom unless the user chooses a suggestion. Likely typos offer a correction and an explicit Keep choice. + saves only to the current account; removing that saved option never changes project rooms. Reuse the existing authorized room-create and photo-assign paths.
+
+Database: introduce user_room_names, keyed by userId + normalizedName, with a cascading user foreign key and RLS. Production metadata reconnaissance was attempted but connection failed in this sandbox; verify users.id is TEXT and migration bookkeeping before application. No production migration is authorized or executed in this task. Schema backup: .tmp/schema-prisma-room-names-backup.prisma; restore and stop if schema validation/generation fails. Existing migrations and unrelated working checkouts remain untouched.
+
+---# Publication profile references - 2026-11-17
 
 - [x] Preserve existing public person and organization IDs through the article/portfolio DTOs.
 - [x] Link bylines, quote attributions, credits and exact unambiguous names in published prose.
@@ -1607,3 +1620,5 @@ Review: public sale status requires a listing URL. Listing import uses explicit 
 Release checkpoint: production compile passed with baseline unrelated import warnings. Final local tests and TypeScript ratchet pass. Automatic approval review rejected the push to bprasky/folio-mvp because implementation approval did not explicitly authorize publishing source and review images to the repository. No push retry, PR, merge or deployment was performed. Hosted browser CI remains pending publication authorization.
 
 Authorized release — 2026-11-17: the founder explicitly approved push, merge and production deployment. Recovered the scoped source onto current main 065812588f927c4413176f84fffbeebd97b9cb19; targeted property-sale tests pass 10/10. Publish the PR, require green hosted checks, merge the verified head and explicitly deploy the merged commit. No schema migration is required.
+
+Review: 325 unique built-in names; typo matching, numbered/custom names, private account list/save/remove, project-scoped room reuse, and migration replay/unique-key/RLS/cascade checks pass. Core regression: 21 passed, 2 intentionally skipped. Persistence: 34 passed. Scoped ESLint, client-import guard and migration discipline pass. Windows Chromium launch and Next compile are blocked by host permissions; full hosted compile, TypeScript and browser verification remain required. The new SQL has only run in disposable PGlite, never production.
