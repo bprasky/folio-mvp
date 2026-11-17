@@ -70,4 +70,14 @@ assert.throws(() => run((path, text) => path === 'docs/reviews/signup-email-veri
   ? text.replace('secretHash', 'plaintextSecret') : text), /Reviewed signup verification schema artifact/, 'Editing the signup artifact cannot authorize schema changes');
 assert.throws(() => run((path, text) => path === 'prisma/migrations/20261029193000_signup_email_verification/migration.sql'
   ? text + '\nSELECT 1;\n' : text), /Reviewed signup verification SQL/, 'Changed signup SQL must fail');
+
+assert.throws(() => run((path, text) => path === 'prisma/schema.prisma'
+  ? text.replace(/(model UserRoomName \{[\s\S]*?userId\s+)String/, '$1Int') : text), /Only reviewed schema tokens/, 'Private room names must retain their owner field');
+assert.throws(() => run((path, text) => path === 'prisma/schema.prisma'
+  ? text.replace(/savedRoomNames\s+UserRoomName\[\]/, 'savedRoomNames UserRoomName?') : text), /Only reviewed schema tokens/, 'Private room name inverse relation must remain a list');
+assert.throws(() => run((path, text) => path === 'prisma/schema.prisma'
+  ? text.replace(/(model UserRoomName \{[\s\S]*?onDelete: )Cascade/, '$1NoAction') : text), /Only reviewed schema tokens/, 'Private room deletion semantics must remain intact');
+assert.throws(() => run((path, text) => path === 'prisma/migrations/20261117170000_private_room_names/migration.sql'
+  ? text.replace('ENABLE ROW LEVEL SECURITY', 'DISABLE ROW LEVEL SECURITY') : text), /Private room names SQL/, 'Private room name RLS cannot be disabled');
+
 console.log('PASS exact installation scope: reviewed schema accepted; changed fields, inverse relations, deletion semantics, extra model and tampered review artifacts rejected.');
