@@ -49,7 +49,9 @@ function handler(req,res){const url=new URL(req.url,'http://fixture');const json
   const base='http://127.0.0.1:'+server.address().port;if(process.argv.includes('--serve'))return console.log('Coverage review fixture: '+base);
   let browser;try{browser=await require('puppeteer-core').launch({executablePath:process.env.GUIDED_TEST_BROWSER||'/usr/bin/chromium',headless:true,args:['--no-sandbox','--disable-dev-shm-usage']});const page=await browser.newPage();const errors=[];page.on('pageerror',e=>errors.push(e.message));page.setDefaultTimeout(10000);
     await page.setRequestInterception(true);page.on('request',r=>r.url().startsWith(base)||r.url().startsWith('data:')?r.continue():r.abort());
-    const click=async text=>{await page.waitForFunction(t=>[...document.querySelectorAll('button')].some(e=>e.textContent.trim()===t&&!e.disabled),{},text);for(const button of await page.$$('button'))if(await button.evaluate((e,t)=>e.textContent.trim()===t,text)){await button.click();return}throw Error(text)};
+    // A reload replaces the button after the fetch resolves. Locators re-resolve
+    // the element and wait for a stable, enabled control before the real click.
+    const click=async text=>{console.log('Click:',text);await page.locator('button::-p-text('+text+')').click()};
     for(const theme of ['light','dark'])for(const width of [390,1440]){
       await page.setViewport({width,height:1000});await page.goto(base+'?reset=1&theme='+theme,{waitUntil:'networkidle0'});
       // Session storage guards the background sweep across visits; explicit search remains available.
