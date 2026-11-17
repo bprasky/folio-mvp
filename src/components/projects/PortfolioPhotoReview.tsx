@@ -62,7 +62,11 @@ export function PortfolioPhotoReview(props: PortfolioPhotoReviewProps) {
   </main>;
 
   return <main className={styles.page}>
-    <Link className={styles.quiet} href={props.profileHref}>← Back to my profile</Link>
+    <nav className="flex flex-wrap gap-x-6 gap-y-1" aria-label="Before publishing">
+      <Link className={styles.quiet} href={props.profileHref}>← Back to my profile</Link>
+      {/* Sorting rooms, tagging and the interview must stay reachable without publishing photographs. */}
+      <Link className={styles.quiet} href={`/project/${encodeURIComponent(props.projectId)}?view=media`}>Open the workspace without publishing →</Link>
+    </nav>
     <header className={styles.pageHeading}>
       <p className={styles.eyebrow}>Your Folio profile</p>
       <h1 className="folio-h1">{props.isPublic ? 'Update your photographs.' : 'Make your work visible.'}</h1>

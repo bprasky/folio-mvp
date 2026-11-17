@@ -1,3 +1,19 @@
+# Sweep fixes: five high-impact hiccups — 2026-11-17
+
+- [x] Photo approval: add a workspace link so designers can sort rooms, tag and interview before publishing.
+- [x] Room names: Enter and the action button complete only strict prefix matches; word matches never replace a typed name; Keep works in Safari; a blocked submit explains itself.
+- [x] Guided interview: room preparation without a decision turn no longer orphans the first room question.
+- [x] Guided interview: approving or editing coverage no longer resets prepared questions to template wording.
+- [x] Coverage sweep: one background search per import run per browser, skipped when a search already saved results.
+- [x] Verify with the controller, room-name, coverage and portfolio checks, scoped ESLint and the TypeScript ratchet; commit and push.
+
+
+### Review
+
+Photo approval keeps its stable URL; a second quiet link opens `?view=media`, which the server redirect already honours. Room naming completes on Enter only for a partly typed word ("kit" → Kitchen); a finished room word ("Guest", "Hall", "Cellar") is kept, longer options stay as suggestions, Keep gets the mousedown guard, and a blocked submit now says what to do. The guided controller never advances past a question that is still active, which also covered the project-phase skip path; the regression test fails on the previous controller. Coverage left the interview fingerprint. The background coverage sweep stops when a search already saved results and remembers completion per browser, not per tab.
+
+Verified: guided controller, guided service, guided browser, room-name (API + disposable PostgreSQL), manual-rooms browser (11), coverage browser and portfolio publish browser (6 viewport/theme cases, after blurring Chrome's native datalist popup in the harness) all pass; scoped ESLint has zero errors; the TypeScript ratchet stays at 843 with no additions. Not changed: "Hall"-style whole words no longer autocomplete on Enter, so Tab, arrow keys or a tap pick the longer option.
+---
 # Fast, private room-name suggestions — 2026-11-17
 
 - [x] Add 325 curated room-name suggestions, conservative typo prompts and free custom names.

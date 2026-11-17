@@ -74,6 +74,10 @@ export function createGuidedSession(projectId: string, preparation: GuidedPrepar
 }
 
 function activateNext(session: GuidedSession) {
+  // A question already waiting for its answer keeps the turn; advancing past it
+  // would orphan it as 'active' with no way to ask or complete it.
+  const waiting = session.plan.find(q => q.id === session.activeQuestionId && q.status === 'active');
+  if (waiting) { session.status = 'active'; return; }
   const next = session.plan.find(q => q.status === 'pending' && (session.roomsPrepared || q.roomId === null));
   session.activeQuestionId = next?.id ?? null;
   if (next) { next.status = 'active'; session.phase = next.roomId ? 'rooms' : 'project'; session.status = 'active'; }

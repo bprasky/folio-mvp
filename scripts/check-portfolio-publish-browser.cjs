@@ -62,7 +62,10 @@ window.draw=()=>root.render(<><Toaster/>{window.mode==='studio'?<StudioProjectIn
       assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1), true);
       assert.equal(await page.$eval('html', node => node.dataset.theme), theme);
       await page.screenshot({ path: path.join(out, `review-${theme}-${width}.png`), fullPage: true });
-      await page.evaluate(() => { window.fail = true; window.props = { ...window.props, version: 'd'.repeat(64) }; window.draw(); }); await clickText('Approve & add to profile'); await page.waitForSelector('[role="alert"]');
+      await page.evaluate(() => { window.fail = true; window.props = { ...window.props, version: 'd'.repeat(64) }; window.draw(); });
+      // The typed room name leaves Chrome's native datalist popup open; a real tap dismisses it, the harness must blur first.
+      await page.evaluate(() => document.activeElement instanceof HTMLElement && document.activeElement.blur());
+      await clickText('Approve & add to profile'); await page.waitForSelector('[role="alert"]');
       assert.equal(await page.evaluate(() => window.saved.version), 'a'.repeat(64), 'Background refresh cannot replace the reviewed version');
       await page.waitForFunction(() => document.activeElement.getAttribute('role') === 'alert');
       await page.evaluate(() => { window.fail = false; }); await clickText('Approve & add to profile');

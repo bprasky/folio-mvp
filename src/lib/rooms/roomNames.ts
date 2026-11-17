@@ -103,16 +103,21 @@ function distance(a: string, b: string): number {
 export function suggestRoomNames(value: string, options: RoomNameOption[]) {
   const query = roomNameKey(value);
   const exact = options.find(option => roomNameKey(option.name) === query);
-  if (!query || exact) return { exact, matches: [] as RoomNameOption[], correction: undefined as RoomNameOption | undefined };
+  if (!query || exact) return { exact, matches: [] as RoomNameOption[], completion: undefined as RoomNameOption | undefined, correction: undefined as RoomNameOption | undefined };
   const search = searchKey(value);
   const prefix = options.filter(option => searchKey(option.name).startsWith(search));
   const words = options.filter(option => !prefix.includes(option) && searchKey(option.name).split(' ').some(word => word.startsWith(search)));
   const matches = [...prefix, ...words].slice(0, 3);
-  if (matches.length || query.length < 4 || query.length > 120) return { exact, matches, correction: undefined };
+  // Only a partly typed word completes on Enter ("kit" → Kitchen). A finished room
+  // word ("Guest", "Hall", "Cellar") is a name of its own: longer options are
+  // offered as suggestions but never replace what was typed.
+  const wholeWord = options.some(option => searchKey(option.name).split(' ').includes(search));
+  const completion = prefix[0] && !wholeWord ? prefix[0] : undefined;
+  if (matches.length || query.length < 4 || query.length > 120) return { exact, matches, completion, correction: undefined };
   const ranked = options.filter(option => (query.match(/\d+/g) || []).join(',') === (option.name.match(/\d+/g) || []).join(','))
     .map(option => ({ option, distance: distance(query, roomNameKey(option.name)) }))
     .filter(item => item.distance <= (query.length >= 9 ? 2 : 1)).sort((a, b) => a.distance - b.distance);
   // Ambiguous guesses never block a custom name.
   const correction = ranked.length && (!ranked[1] || ranked[0].distance < ranked[1].distance) ? ranked[0].option : undefined;
-  return { exact, matches, correction };
+  return { exact, matches, completion, correction };
 }

@@ -64,9 +64,11 @@ export function CoverageManager({ scope, autoDiscover = false, sweepId }: { scop
     let cancelled = false;
     const key = `folio-coverage-sweep:${scopeKey}:${sweepId || 'profile'}`;
     void request('GET').then(result => {
-      if (cancelled || !result || (!sweepId && result.items.length)) return;
-      try { if (sessionStorage.getItem(key)) return; } catch { /* Storage can be unavailable. */ }
-      void request('POST', { scope }).then(found => { if (found) { try { sessionStorage.setItem(key, 'complete'); } catch { /* Review remains saved on the server. */ } } });
+      // A saved search result proves the sweep already ran for this profile; the
+      // browser marker covers searches that found nothing. Neither repeats per tab.
+      if (cancelled || !result || result.items.some(item => item.discoveredBy === 'search') || (!sweepId && result.items.length)) return;
+      try { if (localStorage.getItem(key)) return; } catch { /* Storage can be unavailable. */ }
+      void request('POST', { scope }).then(found => { if (found) { try { localStorage.setItem(key, 'complete'); } catch { /* Review remains saved on the server. */ } } });
     });
     return () => { cancelled = true; };
     // The sweep starts once for this authorized profile, independent of panel toggles.

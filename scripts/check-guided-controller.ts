@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { acceptCommand, acceptedTurns, appendRoomPlan, applyDecision, canonicalGuidedAnswers, completionState, createGuidedSession, currentQuestion, followUpAllowed, GuidedConflict, projectPhaseComplete } from '../src/lib/interview/guided/controller';
+import { acceptCommand, acceptedTurns, appendRoomPlan, applyDecision, canonicalGuidedAnswers, completionState, createGuidedSession, currentQuestion, followUpAllowed, GuidedConflict, projectPhaseComplete, roomProgress } from '../src/lib/interview/guided/controller';
 import { PROJECT_CATEGORIES, type GuidedCommand, type GuidedPreparation, type GuidedQuestion, type GuidedSession } from '../src/lib/interview/guided/types';
 import { isRoomInvitation, declinesRoomInvitation } from '../src/lib/interview/guided/roomCheckpoint';
 
@@ -335,4 +335,26 @@ console.log('PASS podcast chain depth/section budget and additive completed inte
   assert.ok(declinesRoomInvitation('No thanks.'));
   assert.equal(declinesRoomInvitation('No, but we never discussed the windows.'), false);
   console.log('Room checkpoint checks passed: durable invitation, scoped voice/photo evidence, bounded follow-up, direct continue, revisit, replay and optional coverage.');
+}
+
+{
+  // Rooms prepared without a pending decision turn (every project question skipped)
+  // must hand the turn to exactly one room question instead of orphaning the first.
+  let skipped = initial();
+  while (!projectPhaseComplete(skipped)) { skipped = acceptCommand(skipped, command(skipped, { action: 'skip' })); applyDecision(skipped, { kind: 'advance' }); }
+  assert.equal(skipped.pendingDecisionTurnId, null);
+  appendRoomPlan(skipped, roomPlan(skipped));
+  applyDecision(skipped, { kind: 'advance' });
+  const active = skipped.plan.filter(q => q.status === 'active');
+  assert.equal(active.length, 1, 'room preparation leaves exactly one active question');
+  assert.equal(active[0].id, skipped.activeQuestionId);
+  assert.equal(active[0].id, 'room-a-q-0', 'the first room question is asked first');
+  for (let i = 0; i < 12 && currentQuestion(skipped); i++) {
+    skipped = acceptCommand(skipped, command(skipped, isRoomInvitation(currentQuestion(skipped)) ? { action: 'skip' } : {}));
+    applyDecision(skipped, { kind: 'advance' });
+  }
+  assert.equal(skipped.status, 'ready');
+  assert.equal(skipped.plan.filter(q => q.kind === 'prepared' && ['active', 'pending'].includes(q.status)).length, 0, 'every prepared room question was asked');
+  assert.deepEqual(Object.values(roomProgress(skipped)).map(room => room.status), ['complete', 'complete'], 'both rooms read complete');
+  console.log('Orphaned room question check passed: skipping every project question still asks each room question once.');
 }
