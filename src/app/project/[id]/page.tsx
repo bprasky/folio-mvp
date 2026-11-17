@@ -1,3 +1,4 @@
+import { PropertySaleEditor } from '@/components/property-sale/PropertySaleEditor';
 import { PortfolioPublishPanel } from '@/components/projects/PortfolioPublishPanel';
 import { portfolioReviewVersion, hasPortfolioInterviewProgress } from '@/lib/publish/portfolio';
 import { assertProjectView, assertProjectWrite, assertProjectPublish, assertProjectUnpublish } from '@/lib/authz/access';
@@ -520,7 +521,7 @@ export default async function ProjectPage({
     // Completed ("PAST") projects get the guided New Project Wizard in every context.
     // Checked before the org/individual split so individual designers get it too.
     if (sanitizedProject.timeline === 'PAST') {
-      return <ProjectConversationHost key={conversationKey} {...conversationProps}>{expertiseReturn}<NewProjectWizard project={sanitizedProject} canScrape={canScrape} /></ProjectConversationHost>;
+      return <ProjectConversationHost key={conversationKey} {...conversationProps}>{expertiseReturn}<NewProjectWizard project={sanitizedProject} canScrape={canScrape} canPublish={mayPublish} /></ProjectConversationHost>;
     }
     const isOrganizationContext = !!operatingAsOrgId;
     if (isOrganizationContext) {
@@ -616,6 +617,8 @@ export default async function ProjectPage({
           />
         )}
       </div>
+
+      {isOwner && ['media', 'overview', 'publish'].includes(view) && <div className="mx-auto max-w-[1280px] px-4 sm:px-10"><PropertySaleEditor projectId={base.id} canPublish={mayPublish} /></div>}
 
       {/* PUBLISH tab — full-bleed immersive preview */}
       {view === 'publish' && (

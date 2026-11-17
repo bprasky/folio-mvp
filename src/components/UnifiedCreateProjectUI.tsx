@@ -22,6 +22,7 @@ export default function UnifiedCreateProjectUI() {
   const [name, setName] = useState('');
   const [year, setYear] = useState('');
   const [month, setMonth] = useState('');
+  const [currentlyForSale, setCurrentlyForSale] = useState(false);
   const [description, setDescription] = useState('');
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [clientType, setClientType] = useState<'Residential' | 'Commercial'>('Residential');
@@ -41,7 +42,7 @@ export default function UnifiedCreateProjectUI() {
 
     try {
       const id = await writer({
-        title: name.trim(), description, projectStatus: 'completed_project', timeline: 'PAST',
+        title: name.trim(), description, currentlyForSale, projectStatus: 'completed_project', timeline: 'PAST',
         clientType: clientType === 'Residential' ? 'RESIDENTIAL' : 'COMMERCIAL',
         city: locationCity, regionState: locationRegion, designerOrgId: operatingAsOrgId,
         completedYear: Number(year), completedMonth: month ? Number(month) : null,
@@ -128,6 +129,9 @@ export default function UnifiedCreateProjectUI() {
               rows={3}
             />
           </div>
+
+          <label className="flex items-start gap-3 text-folio-body"><input type="checkbox" className="mt-1" checked={currentlyForSale} onChange={event => setCurrentlyForSale(event.target.checked)} />This property is currently for sale</label>
+          {currentlyForSale && <p className="text-folio-meta text-folio-text-secondary">We’ll help tell the story behind the home so prospective buyers can understand what makes it special. Add listing details and publication permission in your project.</p>}
 
           {/* Advanced Details Accordion */}
           <div className="border border-folio-border-subtle rounded-lg bg-white">

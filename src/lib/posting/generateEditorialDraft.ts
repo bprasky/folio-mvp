@@ -1230,6 +1230,8 @@ ${toTypographicQuotes(input.projectHistory)}` : ''}${input.atelierSummary ? `
 ## Designer Voice & Philosophy (from their Folio profile — use to inform tone, do not quote directly)
 ${toTypographicQuotes(input.atelierSummary)}` : ''}
 
+PROPERTY STORY: If the designer explained what a future owner would miss in listing photographs, weave that accepted answer into the introduction and develop it through the relevant rooms. Keep the designer's perspective and supporting specifics. Never invent amenities, benefits, price justifications or investment returns. Keep current sale status, asking price, listing links, agent contacts and street addresses out of the evergreen editorial; approved listing details are rendered separately and can change without rewriting the story.
+
 PROJECT-LEVEL ANSWERS — USE IN TWO WAYS:
 The interview may begin with project-level questions (tagged [SOURCE: PROJECT]) about the client, the brief, the design direction, and the designer's signature.
 1. OPENING SECTION (the "introduction" array): Use these answers as the PRIMARY source for the 2-3 paragraph introduction that establishes the project before room sections begin. This is where the client story, scope, and design thesis live.

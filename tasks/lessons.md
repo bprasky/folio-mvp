@@ -1327,3 +1327,8 @@ Desktop reading follow-up: reserving a reading column should not require a cover
 ## 2026-11-17 — Publication attribution should lead to the credited profile
 
 Retain known public person/organization IDs through sanitized publication DTOs and use them for bylines, credits, quote attribution and exact names in prose. Do not guess usernames from names or turn ambiguous same-name credits into links. Keep unregistered credits external or plain text. Verify real mobile taps above reading overlays and keep inactive slideshow copy out of keyboard focus.
+
+
+### Property sale flow — 2026-11-16
+- Review new public features inside the actual branded page, with the production typefaces and photography. An isolated functional fixture is not evidence of visual quality.
+- Treat the actual property listing as the source and primary action: require its URL before publicly offering a home for sale; put the listing action beside the price. Keep private interview intent separate.

@@ -65,6 +65,12 @@ export async function GET(
     } catch (error) {
       if (!(error instanceof Error) || error.message !== 'Forbidden') throw error;
       post.expandedBlocks = publicFolioBlocks(post.expandedBlocks);
+      // Sale drafts and permission receipts are only for project editors.
+      if (post.provenance && typeof post.provenance === 'object' && !Array.isArray(post.provenance)) {
+        const sharedProvenance = { ...post.provenance };
+        delete sharedProvenance.propertySale;
+        post.provenance = sharedProvenance;
+      }
     }
     return NextResponse.json({ post: await stripPrivateInterviewData(post) });
   } catch (error: any) {

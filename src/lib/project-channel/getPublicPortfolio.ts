@@ -1,3 +1,4 @@
+import { publicPropertySale } from '@/lib/property-sale/schema';
 import { prisma } from '@/lib/prisma';
 import { isDocumentImage } from '@/lib/publish/computePublishReadiness';
 
@@ -8,6 +9,7 @@ export async function getPublicPortfolio(projectId: string) {
     select: {
       id: true, title: true, description: true, city: true, regionState: true,
       portfolioCoverImageId: true,
+      post: { select: { provenance: true } },
       designer: { select: { id: true, name: true, studio: true } },
       designerOrg: { select: { id: true, name: true } },
       images: {
@@ -17,7 +19,9 @@ export async function getPublicPortfolio(projectId: string) {
       },
     },
   });
-  return project ? { ...project, images: project.images.filter(image => !isDocumentImage(image.name)) } : null;
+  if (!project) return null;
+  const { post, ...publicProject } = project;
+  return { ...publicProject, propertySale: publicPropertySale(post?.provenance), images: project.images.filter(image => !isDocumentImage(image.name)) };
 }
 
 /** Keep a shared project channel alive while its feature returns to draft. */

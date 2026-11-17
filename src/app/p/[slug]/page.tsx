@@ -1,3 +1,4 @@
+import { PropertySaleSection } from '@/components/property-sale/PropertySaleSection';
 import { notFound, redirect } from "next/navigation";
 import { Suspense } from "react";
 import { Metadata } from "next";
@@ -119,6 +120,6 @@ export default async function PostPage({
       <ProjectChannelLanding post={post} media={media} ownerView={ownerView} searchParams={searchParams} /></>;
   }
 
-  return <Suspense><StoryRenderer post={post} /></Suspense>;
+  return <><PropertySaleSection sale={post.project.propertySale} /><Suspense><StoryRenderer post={post} /></Suspense></>;
 }
 
