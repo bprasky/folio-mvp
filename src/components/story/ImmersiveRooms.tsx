@@ -54,7 +54,7 @@ export function ImmersiveRooms({ story, projectName, presentation, autoExpandRoo
   // for the desktop text column, including wide phones and portrait tablets.
   // Match the container breakpoint in ImmersiveRooms.module.css.
   const mobile = width === null || width <= 800;
-  const reading = expanded ?? !mobile;
+  const reading = (cover || !!room) && (expanded ?? !mobile);
   const { phase, begin, suppressClickUntil } = usePublicationEntry(canvas, mobile, onEntered);
   const ready = phase === 'ready';
 

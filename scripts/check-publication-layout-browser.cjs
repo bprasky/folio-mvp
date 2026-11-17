@@ -158,7 +158,7 @@ async function main() {
     const nextRoom=await page.$eval('[aria-label="Go to room"]',e=>e.options[2].value);await page.select('[aria-label="Go to room"]',nextRoom);
     await page.waitForSelector('[aria-label="Space 1 article"]');assert.equal(await page.$('[aria-label="Read Space 1"]'),null,'Desktop room changes open the article');
     await page.click('[aria-label="Space 1, photograph 2"]');assert.equal(await page.$eval('[data-publication-phase]',e=>e.dataset.publicationPhoto),'photo-3');
-    await go('gallery=1');await page.click('[aria-label="View full photograph of Space 0"]');await page.waitForSelector('[aria-label="Show room details"]');await page.click('[aria-label="Show room details"]');
+    await go('gallery=1');assert.equal(await page.$eval('[data-publication-phase]',e=>e.dataset.publicationReading),'false','Photo-only galleries have no reading pane');await page.click('[aria-label="View full photograph of Space 0"]');await page.waitForSelector('[aria-label="Show room details"]');await page.click('[aria-label="Show room details"]');
     for(const theme of ['light','dark']){await go('accent=1&theme='+theme);await verifyTheme(theme,{accent:true});}
     await go('theme=light&themeControls=1');await verifyTheme('light');
     // Use the actual Settings switch, then the production head initializer on reload.
