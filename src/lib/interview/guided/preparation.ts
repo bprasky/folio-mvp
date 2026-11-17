@@ -141,8 +141,9 @@ export async function readGuidedContext(projectId: string) {
     const tagCount = Math.max(room.selections.length, sourceImages.reduce((sum, image) => sum + image.tags.length, 0));
     return { id: room.id, name: room.name, imageIds: sourceImages.map(image => image.id), ...computeRoomBudget(sourceImages.length, tagCount) };
   });
+  // Coverage informs question generation but is not part of the fingerprint:
+  // approving or retitling a feature must not reset prepared questions to templates.
   const contextFingerprint = createHash('sha256').update(JSON.stringify({
-    ...(externalCoverage.length ? { externalCoverage } : {}),
     ...(currentlyForSale ? { currentlyForSale: true } : {}),
     project: [project.id, project.title, project.description, project.projectType, project.clientType, project.budgetBand, project.city, project.regionState],
     rooms: rooms.map(room => [room.id, room.name, room.baseQuestions, room.maxFollowUps,
