@@ -1,3 +1,23 @@
+# Fast, private room-name suggestions — 2026-11-17
+
+- [x] Add 325 curated room-name suggestions, conservative typo prompts and free custom names.
+- [x] Reuse existing project rooms, including assignment retries and concurrent name-based creation.
+- [x] Add explicit private saved room names scoped to the authenticated account.
+- [x] Integrate unsorted photos, moving photos, drag-created rooms and Add room.
+- [x] Verify matching, authorization, persistence, keyboard/mobile/theme UI, lint and TypeScript.
+- [x] Commit and push the scoped implementation as PR #864.
+- [ ] Complete final repository-wide CI and production release separately.
+
+Release continuation (founder authorized fixes, merge and deploy): the integrated f6cbb051 passed all twelve applicable hosted checks; Supabase Preview was intentionally skipped. The responsive suite also passed locally with 27 captures, no overflow and no browser errors. Incorporated current main including the approved About page. A production-only, hash-pinned release runner now validates the approved Supabase target, users.id type, migration bookkeeping, exact columns/keys and default-deny RLS. It applies only 20261117170000_private_room_names and records its checksum in the same transaction, preserving existing saved names on replay. It refuses drift or failed migration state and does not run on previews. Disposable PostgreSQL verification covers safe target binding, retry, data preservation, schema/security/checksum mismatch and atomic rollback. The normal Vercel build runs this gate after Prisma generation and before Next builds; credentials stay in Vercel. Final hosted checks, merge, production build and live smoke verification remain to be recorded on PR #864.
+
+Behavior: at most three inline suggestions while typing, no room dropdown or pre-created empty rooms. Enter accepts a completion; Tab completes its text. Custom names and room numbers stay intact. Likely typos offer a correction and an explicit Keep choice. + saves only to the current account; removing an option never changes project rooms.
+
+Verification at ba927013: all 11 actual-component Chromium room checks pass, including 360/390/768/1440px and both themes, private save/reload/account isolation, save retry and partial assignment recovery. Matching/private API checks and real SQL replay, unique-key, RLS and cascade tests pass. Hosted full compile, TypeScript diagnostic ratchet, ESLint, form/publication/profile browser jobs, migration discipline, design and client import checks pass. Local core: 21 passed, 2 intentional skips; persistence: 34 passed. Broader CI surfaced the historical full-schema installation guard (extended here with exact room SQL/model tokens and adversarial tests) and a separate nested-dialog timeout awaiting rerun. Screenshots were captured by CI; local retrieval failed, so no manual screenshot review is claimed.
+
+Release: additive migration 20261117170000_private_room_names has run only in disposable PostgreSQL. Production metadata reconnaissance could not connect; confirm users.id is TEXT and inspect migration bookkeeping before application. No production migration, merge or deployment performed. Saved-option read/write failures are visible without blocking standard suggestions or photo sorting.
+
+---
+
 # Publication profile references - 2026-11-17
 
 - [x] Preserve existing public person and organization IDs through the article/portfolio DTOs.

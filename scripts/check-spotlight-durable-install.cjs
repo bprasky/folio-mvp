@@ -70,6 +70,11 @@ expected=expected.replace(/(model Organization \{[\s\S]*?followerCount\s+Int\s+@
 // exact additive SQL; all historical Spotlight schema tokens remain protected.
 assert.equal(hash(read('prisma/migrations/20261116213000_portfolio_publication/migration.sql')),'c4ea9a5cd9cb83de6b348fc4004eedfd066d6d02d8caea26c823d7915c4d921c','Reviewed photo portfolio SQL');
 expected=expected.replace(/(model Project \{[\s\S]*?publishedAt\s+DateTime\?)/,'$1\nportfolioPublishedAt DateTime?\nportfolioCoverImageId String?');
+// Private room suggestions add only this account-owned model and User inverse.
+// Pin exact SQL, including RLS, without relaxing any historical schema/hash guard.
+assert.equal(read('prisma/migrations/20261117170000_private_room_names/migration.sql'),"-- Private per-account autocomplete names; no shared or public vocabulary writes.\nCREATE TABLE IF NOT EXISTS \"user_room_names\" (\n    \"userId\" TEXT NOT NULL,\n    \"normalizedName\" TEXT NOT NULL,\n    \"name\" TEXT NOT NULL,\n    \"createdAt\" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,\n    CONSTRAINT \"user_room_names_pkey\" PRIMARY KEY (\"userId\", \"normalizedName\"),\n    CONSTRAINT \"user_room_names_userId_fkey\" FOREIGN KEY (\"userId\") REFERENCES \"users\"(\"id\") ON DELETE CASCADE ON UPDATE CASCADE\n);\n\n-- Access is through authenticated server routes; no anonymous Supabase access.\nALTER TABLE \"user_room_names\" ENABLE ROW LEVEL SECURITY;\n",'Private room names SQL');
+expected=expected.replace(/(model User \{[\s\S]*?)(\n\s*@@map\("users"\)\s*\n\})/,'$1\nsavedRoomNames UserRoomName[]\n$2');
+expected+='\n'+"model UserRoomName {\n  userId         String\n  normalizedName String\n  name           String\n  createdAt      DateTime @default(now())\n  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)\n\n  @@id([userId, normalizedName])\n  @@map(\"user_room_names\")\n}";
 const tokens=s=>(s.match(/"(?:\\.|[^"\\])*"|\/\/[^\n]*|[^\s"]/g)||[]).filter(x=>!x.startsWith('//')).join('');
 assert.equal(tokens(read('prisma/schema.prisma')),tokens(expected),'Only reviewed schema tokens');
 assert.equal(JSON.parse(read('vercel.json')).git.deploymentEnabled,false);

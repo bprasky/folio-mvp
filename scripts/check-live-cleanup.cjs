@@ -149,7 +149,9 @@ function load(file, mocks) {
   const config = JSON.parse(fs.readFileSync('vercel.json', 'utf8'));
   assert.deepEqual(config.crons.filter(job => job.path === '/api/cron/live-interviews'), [{ path: '/api/cron/live-interviews', schedule: '* * * * *' }]);
   assert.equal(config.git.deploymentEnabled, false);
-  assert.equal(config.buildCommand, 'prisma generate && next build');
+  // The only release-time SQL is the reviewed, hash-pinned private-room migration.
+  // Keep this exact so a generic migrate-deploy or unrelated command cannot slip in.
+  assert.equal(config.buildCommand, 'prisma generate && node scripts/release-private-room-names.cjs && next build');
   assert(fs.readFileSync('.github/workflows/lint.yml', 'utf8').includes('node scripts/check-live-cleanup.cjs'));
   assert.deepEqual(browserOnlyCalls, [], 'machine cleanup must remain independent of browser state, canonical answers and cache invalidation');
   console.log('PASS scheduled live cleanup: fail-closed bearer auth, flags-off cleanup, one-session batch, retry/idempotency, concurrent completion, generic errors and minutely wiring.');
