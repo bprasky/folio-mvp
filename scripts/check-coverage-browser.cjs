@@ -65,8 +65,8 @@ function handler(req,res){const url=new URL(req.url,'http://fixture');const json
       assert.ok(await page.$('input[type="checkbox"]'));assert.equal(coverage[0].useForInterview,false);
       assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1),'No horizontal overflow');
       await page.screenshot({path:path.join(out,`${theme}-${width}.png`),fullPage:true});
-      await click('This is our work - add to Folio');await page.waitForFunction(()=>document.body.textContent.includes('On your Folio'));assert.equal(coverage[0].state,'approved');
-      await page.keyboard.press('Escape');assert.equal(await page.$('[role="dialog"]'),null);
+      await click('This is our work \u2014 add to Folio');await page.waitForFunction(()=>document.body.textContent.includes('On your Folio'));assert.equal(coverage[0].state,'approved');
+      await page.keyboard.press('Escape');await page.waitForSelector('[role="dialog"]',{hidden:true});assert.equal(await page.$('[role="dialog"]'),null);
     }
     assert.deepEqual(errors,[]);console.log('PASS actual UI: bulk publication, partial recovery, background sweep, review/read/approve, initial feed links, keyboard close and mobile/desktop light/dark layouts');
   }finally{if(browser)await browser.close();await new Promise(r=>server.close(r))}

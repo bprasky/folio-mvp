@@ -39,9 +39,9 @@ Primary guidance: https://developers.google.com/search/docs/appearance/ai-featur
 
 - Synthetic coverage service/HTTP checks: verified-result URLs, redirect safety, permissions, version conflicts, consent, public projection, withdrawal and legacy import isolation.
 - Bulk import orchestration, existing portfolio publisher (6 tests), workspace import, guided interviews, live adapters, project channel, and organization profile regression suites exercised.
-- Actual review components compile with production CSS and fonts. Interactive browser review remains unverified: local Chrome launch failed, then Computer Use stopped because it could not confidently determine the Windows browser URL.
-- Full Next compilation is blocked locally by Windows EPERM errors creating output folders. Hosted compile and TypeScript route-type validation remain release gates. No live search-provider quality, PostgreSQL isolation, production indexing, ranking or AI-citation outcome is claimed.
-- Rebased overlapping implementation onto main 5d0d7c7 (photo approval step). No migration or production write.
+- Actual review components compile with production CSS and fonts. Hosted Chromium exercises bulk approval, partial recovery, coverage reading/approval and small/large light/dark layouts; screenshots are retained by the lint workflow. The local Windows browser remains unavailable.
+- Hosted Next compile succeeds and the Vercel preview is READY. Full compiler comparison against main 68051a9 proves 93 changed fingerprints retain the same source spans and constraints: 91 property display order changes and two string-literal union order changes. Complete proof is recorded in `docs/reviews/media-discovery-typescript-proof.json`; the guard retains exact-message and occurrence checks. Diagnostics decrease from 846 to 843; no baseline expansion.
+- Incorporated main 68051a9 (the approved About page), preserving the photo approval step from 5d0d7c7. Final hosted checks are required before merge. No schema migration is needed. Live search-provider quality, indexing, ranking and AI-citation outcomes are not established by fixtures.
 
 ## Next discovery work
 
