@@ -17,12 +17,17 @@ export const complete=renderToStaticMarkup(<StudioProfileTools orgId="studio" is
 export const contributor=renderToStaticMarkup(<StudioProfileTools orgId="studio" isAdmin={false} canInvite={false} next={next}/>);
 export const ownerAbout=renderToStaticMarkup(<OrgAboutTab org={{id:'studio',name:'Studio',description:'Saved studio biography',specialties:['Courtyard homes']}} team={[]} isOwner/>);
 export const publicAbout=renderToStaticMarkup(<OrgAboutTab org={{id:'studio',name:'Studio',description:'Saved studio biography'}} team={[]} isOwner={false}/>);
+const project=id=>({id,type:'project',data:{id,title:id,storyHref:'/project/'+id}});
+export const mixed=renderToStaticMarkup(<OrgProfileFeed orgId="studio" initialFilter="all" initialSort="recent" initialItems={[project('first-house'),item,project('second-house')]}/>);
 export const details=renderToStaticMarkup(<ProfileDetails name="Studio" description="Miami courtyard interiors" specialties={['Natural stone']} organization/>);
 export const structured=renderToStaticMarkup(<ProjectStructuredData project={{id:'house',title:'</script><script>evil</script>',designerOrg:{id:'studio',name:'Studio'}}}/>);`;
 (async()=>{await esbuild.build({stdin:{contents:source,loader:'tsx',resolveDir:root},bundle:true,outfile:out,platform:'node',format:'cjs',jsx:'automatic',external:['react','react-dom/server'],alias:{'@':path.join(root,'src')},plugins:[{name:'framework-boundaries',setup(b){
   b.onResolve({filter:/\.module\.css$|^next\/(navigation|link|image)$|^next-auth\/react$/},a=>({path:a.path,namespace:'fixture'}));
   b.onLoad({filter:/.*/,namespace:'fixture'},a=>({loader:'tsx',resolveDir:root,contents:a.path.endsWith('.css')?`export default new Proxy({},{get:(_,k)=>String(k)});`:a.path==='next/navigation'?`export const useRouter=()=>({push(){},replace(){},refresh(){}});export const useSearchParams=()=>new URLSearchParams();export const usePathname=()=>'/profile/owner';`:a.path==='next-auth/react'?`export const useSession=()=>({data:null,status:'unauthenticated'});`:`import React from'react';export default({children,href,...p})=>href?<a href={href}>{children}</a>:<img {...p}/>;`}));
 }}]});const result=require(out);for(const key of ['person','studio']){assert.match(result[key],/href="https:\/\/press.example\/story"/);assert.match(result[key],/href="\/project\/house\?view=public"/);assert.match(result[key],/Courtyard House/)}
+assert.ok(result.mixed.indexOf('href="/project/first-house"') >= 0);
+assert.ok(result.mixed.indexOf('href="/project/first-house"') < result.mixed.indexOf('href="https://press.example/story"'));
+assert.ok(result.mixed.indexOf('href="https://press.example/story"') < result.mixed.indexOf('href="/project/second-house"'));
 assert.match(result.setup,/Your next step/);
 assert.match(result.setup,/href="\/onboarding\/workspace\?import=saved"/);
 assert.match(result.setup,/<details[^>]*><summary>Manage profile<\/summary>[\s\S]*Find &amp; manage coverage[\s\S]*Team notices<\/details>/);

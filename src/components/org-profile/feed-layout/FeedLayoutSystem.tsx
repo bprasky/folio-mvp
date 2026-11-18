@@ -55,30 +55,34 @@ export default function FeedLayoutSystem({
   orgId,
   isMember,
 }: FeedLayoutSystemProps) {
-  const projectItems = items.filter(i => i.type === 'project');
-  const otherItems = items.filter(i => i.type !== 'project');
-  const projects = projectItems.map(mapToFeedProject);
+  // The query has already applied pins and the selected sort. Keep adjacent
+  // projects in a mosaic without moving coverage out of its editorial position.
+  const sections: Array<{ key: string; projects: FeedProjectItem[] } | { key: string; item: FeedItem }> = [];
+  for (const item of items) {
+    const previous = sections[sections.length - 1];
+    if (item.type !== 'project') {
+      sections.push({ key: item.type + '-' + item.id, item });
+    } else if (previous && 'projects' in previous) {
+      previous.projects.push(mapToFeedProject(item));
+    } else {
+      sections.push({ key: 'projects-' + item.id, projects: [mapToFeedProject(item)] });
+    }
+  }
 
   return (
     <div className="relative">
-      <MosaicActivationToast
-        orgId={orgId}
-        projectCount={projectCount}
-        isMember={isMember}
-      />
-
-      {projects.length > 0 && <ProjectFlowMosaic projects={projects} />}
-
-      {/* Non-project items */}
-      {otherItems.length > 0 && (
-        <div className={`columns-1 sm:columns-2 gap-4 ${projects.length > 0 ? 'mt-8' : ''}`}>
-          {otherItems.map(item => (
-            <div key={item.id} className="mb-4 break-inside-avoid rounded-lg bg-surface-canvas">
-              {renderNonProjectCard(item)}
-            </div>
-          ))}
-        </div>
-      )}
+      <MosaicActivationToast orgId={orgId} projectCount={projectCount} isMember={isMember} />
+      <div className="grid grid-cols-1 gap-5 md:grid-cols-2 md:gap-7">
+        {sections.map(section => 'projects' in section ? (
+          <div key={section.key} className={section.projects.length > 1 || sections.length === 1 ? 'min-w-0 md:col-span-2' : 'min-w-0'}>
+            <ProjectFlowMosaic projects={section.projects} />
+          </div>
+        ) : (
+          <div key={section.key} className="min-w-0 self-start">
+            {renderNonProjectCard(section.item)}
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
