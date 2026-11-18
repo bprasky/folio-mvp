@@ -1,5 +1,7 @@
 'use client';
 
+import controls from '@/components/org-profile/ProfileControls.module.css';
+
 import { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -112,7 +114,7 @@ export function RecognitionModal({
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-lg">
+      <DialogContent className={`${controls.dialog} sm:max-w-lg`}>
         <DialogHeader>
           <DialogTitle style={{ fontFamily: 'Georgia, serif' }}>Add Recognition</DialogTitle>
           <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>
@@ -208,7 +210,7 @@ export function RecognitionModal({
           <Button variant="ghost" onClick={onClose}>
             Cancel
           </Button>
-          <Button onClick={handleSubmit} disabled={isSubmitting}>
+          <Button className={controls.primary} onClick={handleSubmit} disabled={isSubmitting}>
             {isSubmitting && <Loader2 className="w-4 h-4 animate-spin mr-2" />}
             Add Recognition
           </Button>

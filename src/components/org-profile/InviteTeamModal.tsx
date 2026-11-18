@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback, useRef } from 'react';
+import controls from '@/components/org-profile/ProfileControls.module.css';
 import { GlassModal, GlassModalHeader, GlassModalBody, GlassModalFooter } from '@/components/ui/glass-modal';
 
 interface InviteTeamModalProps {
@@ -170,8 +171,8 @@ export default function InviteTeamModal({
   };
 
   return (
-    <GlassModal open={open} onOpenChange={onOpenChange} size="md">
-      <GlassModalHeader>
+    <GlassModal title="Invite your team" className={controls.dialog} open={open} onOpenChange={onOpenChange} size="md">
+      <GlassModalHeader className={controls.bar}>
         <div className="flex items-center justify-between">
           <h3
             className="text-lg font-medium text-folio-text-primary"
@@ -181,6 +182,7 @@ export default function InviteTeamModal({
           </h3>
           <button
             onClick={() => onOpenChange(false)}
+            aria-label="Close dialog"
             className="text-sm hover:opacity-70 text-folio-text-secondary"
           >
             &#10005;
@@ -275,8 +277,8 @@ export default function InviteTeamModal({
                 onChange={(e) => setRole(e.target.value)}
                 className="text-xs px-3 py-1.5 rounded-full border appearance-none cursor-pointer text-folio-text-secondary"
                 style={{
-                  borderColor: '#D4CEC6',
-                  backgroundColor: 'transparent',
+                  borderColor: 'var(--folio-border-strong)',
+                  backgroundColor: 'var(--surface-canvas)',
                 }}
               >
                 {ROLES.map((r) => (

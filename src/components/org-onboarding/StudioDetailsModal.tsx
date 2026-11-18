@@ -1,5 +1,7 @@
 'use client';
 
+import controls from '@/components/org-profile/ProfileControls.module.css';
+
 import { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -136,7 +138,7 @@ export function StudioDetailsModal({
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className={`${controls.dialog} sm:max-w-xl max-h-[90vh] overflow-y-auto`}>
         <DialogHeader>
           <DialogTitle style={{ fontFamily: 'Georgia, serif' }}>Studio Details</DialogTitle>
         </DialogHeader>
@@ -270,7 +272,7 @@ export function StudioDetailsModal({
           <Button variant="ghost" onClick={onClose}>
             Cancel
           </Button>
-          <Button onClick={handleSubmit} disabled={isSubmitting}>
+          <Button className={controls.primary} onClick={handleSubmit} disabled={isSubmitting}>
             {isSubmitting && <Loader2 className="w-4 h-4 animate-spin mr-2" />}
             Save Details
           </Button>

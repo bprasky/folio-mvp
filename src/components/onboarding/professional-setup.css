@@ -137,3 +137,5 @@
 .workspace-preview__list button { display: flex; width: 100%; text-align: left; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 6px 16px; padding: 12px 0; font: 16px var(--font-body); overflow-wrap: anywhere; }
 .workspace-preview__list small, .workspace-preview__list button > span:last-child { display: block; margin-top: 4px; color: var(--org-page-muted, var(--folio-text-secondary)); font: 13px/1.5 var(--font-body); }
 .workspace-preview__projects { padding-bottom: 32px; }
+
+.workspace-review-panel button:disabled { opacity: 1; color: var(--folio-text-secondary); background: var(--surface-ground); border-color: var(--folio-border-subtle); }

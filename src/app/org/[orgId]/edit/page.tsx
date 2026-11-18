@@ -201,7 +201,7 @@ export default function OrgEditPage() {
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: 'var(--surface-ground)' }}>
-        <p className="text-sm" style={{ color: '#8B8178' }}>Loading...</p>
+        <p className="text-sm" style={{ color: 'var(--folio-text-secondary)' }}>Loading...</p>
       </div>
     );
   }
@@ -210,14 +210,14 @@ export default function OrgEditPage() {
     return (
       <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: 'var(--surface-ground)' }}>
         <div className="text-center">
-          <h3 className="text-lg font-medium mb-2" style={{ color: '#2C2825' }}>Access Denied</h3>
-          <p className="text-sm mb-4" style={{ color: '#8B8178' }}>
+          <h3 className="text-lg font-medium mb-2" style={{ color: 'var(--folio-text-primary)' }}>Access Denied</h3>
+          <p className="text-sm mb-4" style={{ color: 'var(--folio-text-secondary)' }}>
             You need admin or owner access to edit this organization.
           </p>
           <button
             onClick={() => router.push(`/org/${orgId}`)}
             className="px-5 py-2 text-sm rounded-full transition-all hover:opacity-80"
-            style={{ backgroundColor: '#2C2825', color: 'var(--surface-ground)' }}
+            style={{ backgroundColor: 'var(--folio-text-primary)', color: 'var(--surface-canvas)' }}
           >
             Go Back
           </button>
@@ -232,11 +232,11 @@ export default function OrgEditPage() {
         <div className="mb-8">
           <h1
             className="text-3xl italic mb-2"
-            style={{ fontFamily: 'var(--font-headline)', color: '#2C2825', fontWeight: 'var(--w-body)' }}
+            style={{ fontFamily: 'var(--font-headline)', color: 'var(--folio-text-primary)', fontWeight: 'var(--w-body)' }}
           >
             {profileSourced ? 'Review What We Heard' : 'Studio Profile'}
           </h1>
-          <p className="text-sm" style={{ color: '#8B8178' }}>
+          <p className="text-sm" style={{ color: 'var(--folio-text-secondary)' }}>
             {profileSourced
               ? 'These fields were populated from your interview. Edit anything that needs adjusting.'
               : 'This is what designers, vendors, and clients see when they visit your profile.'}
@@ -268,7 +268,7 @@ export default function OrgEditPage() {
             ) : (
               <div
                 className="w-20 h-20 rounded-full flex items-center justify-center text-2xl font-light"
-                style={{ backgroundColor: '#E8E4DF', color: '#6B635B' }}
+                style={{ backgroundColor: 'var(--surface-elevated)', color: 'var(--folio-text-secondary)' }}
               >
                 {initials}
               </div>
@@ -289,8 +289,8 @@ export default function OrgEditPage() {
             />
           </div>
           <div>
-            <p className="text-sm font-medium" style={{ color: '#2C2825' }}>Studio Logo</p>
-            <p className="text-xs" style={{ color: '#8B8178' }}>Click to upload (JPEG, PNG, or WebP, max 5MB)</p>
+            <p className="text-sm font-medium" style={{ color: 'var(--folio-text-primary)' }}>Studio Logo</p>
+            <p className="text-xs" style={{ color: 'var(--folio-text-secondary)' }}>Click to upload (JPEG, PNG, or WebP, max 5MB)</p>
           </div>
         </div>
 
@@ -362,21 +362,21 @@ export default function OrgEditPage() {
             <div className="flex items-center justify-between mb-1.5">
               <label
                 className="text-xs font-medium"
-                style={{ color: '#6B635B' }}
+                style={{ color: 'var(--folio-text-secondary)' }}
               >
                 Specialties
               </label>
               {fieldSources['specialties']?.source === 'INTERVIEW_EXTRACTED' && (
                 <span
                   className="text-xs italic flex items-center gap-1"
-                  style={{ color: '#B8B0A6' }}
+                  style={{ color: 'var(--folio-text-secondary)' }}
                 >
                   <Mic size={10} />
                   From your interview
                 </span>
               )}
               {fieldSources['specialties']?.source === 'INTERVIEW_THEN_EDITED' && (
-                <span className="text-xs italic" style={{ color: '#B8B0A6' }}>
+                <span className="text-xs italic" style={{ color: 'var(--folio-text-secondary)' }}>
                   Edited
                 </span>
               )}
@@ -386,13 +386,13 @@ export default function OrgEditPage() {
                 <span
                   key={s}
                   className="inline-flex items-center gap-1 px-3 py-1 text-xs rounded-full"
-                  style={{ backgroundColor: '#E8E4DF', color: '#2C2825' }}
+                  style={{ backgroundColor: 'var(--surface-elevated)', color: 'var(--folio-text-primary)' }}
                 >
                   {s}
                   <button
                     onClick={() => removeSpecialty(s)}
                     className="ml-1 hover:opacity-70"
-                    style={{ color: '#8B8178' }}
+                    style={{ color: 'var(--folio-text-secondary)' }}
                   >
                     &times;
                   </button>
@@ -408,15 +408,15 @@ export default function OrgEditPage() {
                 placeholder="Add a specialty..."
                 className="flex-1 px-4 py-2.5 text-sm rounded-xl border outline-none transition-colors focus:border-[var(--folio-gold)]"
                 style={{
-                  borderColor: '#E8E4DF',
+                  borderColor: 'var(--folio-border-subtle)',
                   backgroundColor: 'var(--surface-ground)',
-                  color: '#2C2825'
+                  color: 'var(--folio-text-primary)'
                   }}
               />
               <button
                 onClick={addSpecialty}
                 className="px-4 py-2.5 text-sm rounded-xl transition-all hover:opacity-80"
-                style={{ border: '1px solid #D4CEC6', color: '#6B635B' }}
+                style={{ border: '1px solid var(--folio-border-strong)', color: 'var(--folio-text-secondary)' }}
               >
                 Add
               </button>
@@ -424,11 +424,11 @@ export default function OrgEditPage() {
           </div>
         </div>
 
-        <div className="flex justify-end gap-3 mt-10 pt-6 border-t" style={{ borderColor: '#E8E4DF' }}>
+        <div className="flex justify-end gap-3 mt-10 pt-6 border-t" style={{ borderColor: 'var(--folio-border-subtle)' }}>
           <button
             onClick={() => router.push(`/org/${orgId}`)}
             className="px-6 py-2.5 text-sm rounded-full transition-all hover:opacity-80"
-            style={{ color: '#6B635B', border: '1px solid #D4CEC6' }}
+            style={{ color: 'var(--folio-text-secondary)', border: '1px solid var(--folio-border-strong)' }}
           >
             Cancel
           </button>
@@ -436,7 +436,7 @@ export default function OrgEditPage() {
             onClick={handleSave}
             disabled={saving}
             className="px-6 py-2.5 text-sm rounded-full transition-all hover:opacity-80 disabled:opacity-50"
-            style={{ backgroundColor: '#2C2825', color: 'var(--surface-ground)' }}
+            style={{ backgroundColor: 'var(--folio-text-primary)', color: 'var(--surface-canvas)' }}
           >
             {saving ? 'Saving...' : 'Save Profile'}
           </button>

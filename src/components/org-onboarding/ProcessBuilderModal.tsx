@@ -1,5 +1,7 @@
 'use client';
 
+import controls from '@/components/org-profile/ProfileControls.module.css';
+
 import { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -126,7 +128,7 @@ export function ProcessBuilderModal({
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className={`${controls.dialog} sm:max-w-xl max-h-[90vh] overflow-y-auto`}>
         <DialogHeader>
           <DialogTitle style={{ fontFamily: 'Georgia, serif' }}>Design Process</DialogTitle>
           <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>
@@ -157,7 +159,7 @@ export function ProcessBuilderModal({
                   <Plus className="w-4 h-4 mr-2" />
                   Add Phase
                 </Button>
-                <Button onClick={useTemplate}>Use Template</Button>
+                <Button className={controls.primary} onClick={useTemplate}>Use Template</Button>
               </div>
             </div>
           )}
@@ -230,7 +232,7 @@ export function ProcessBuilderModal({
           <Button variant="ghost" onClick={onClose}>
             Cancel
           </Button>
-          <Button onClick={handleSubmit} disabled={isSubmitting || phases.length === 0}>
+          <Button className={controls.primary} onClick={handleSubmit} disabled={isSubmitting || phases.length === 0}>
             {isSubmitting && <Loader2 className="w-4 h-4 animate-spin mr-2" />}
             Save Process
           </Button>

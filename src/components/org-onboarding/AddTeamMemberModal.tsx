@@ -1,5 +1,7 @@
 'use client';
 
+import controls from '@/components/org-profile/ProfileControls.module.css';
+
 import { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -118,7 +120,7 @@ export function AddTeamMemberModal({
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-lg">
+      <DialogContent className={`${controls.dialog} sm:max-w-lg`}>
         <DialogHeader>
           <DialogTitle style={{ fontFamily: 'Georgia, serif' }}>Add Team Member</DialogTitle>
         </DialogHeader>
@@ -270,7 +272,7 @@ export function AddTeamMemberModal({
           <Button variant="ghost" onClick={onClose}>
             Cancel
           </Button>
-          <Button onClick={handleSubmit} disabled={isSubmitDisabled}>
+          <Button className={controls.primary} onClick={handleSubmit} disabled={isSubmitDisabled}>
             {isSubmitting && <Loader2 className="w-4 h-4 animate-spin mr-2" />}
             {method === 'invite' ? 'Send Invite' : 'Add to Team'}
           </Button>

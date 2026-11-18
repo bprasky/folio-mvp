@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
+import forms from '@/components/ui/WorkflowForms.module.css';
 
 interface MissingMember {
   userId: string;
@@ -113,7 +114,7 @@ export function OrgMemberNotices({
               return (
                 <li
                   key={m.userId}
-                  className="flex items-center gap-3 p-2 rounded-xl"
+                  className="flex flex-wrap items-center gap-3 p-2 rounded-xl"
                   style={{ backgroundColor: 'var(--surface-canvas)' }}
                 >
                   <div
@@ -152,8 +153,7 @@ export function OrgMemberNotices({
                     type="button"
                     onClick={() => handleAdd(m.userId)}
                     disabled={isActioning}
-                    className="px-3 py-1.5 text-xs rounded-full transition-all hover:opacity-80 disabled:opacity-50 shrink-0"
-                    style={{ backgroundColor: 'var(--folio-text-primary)', color: 'var(--surface-canvas)' }}
+                    className={forms.primary}
                   >
                     {isActioning ? 'Adding…' : 'Add to team'}
                   </button>
@@ -191,16 +191,14 @@ export function OrgMemberNotices({
           </div>
           <Link
             href="/profile"
-            className="px-3 py-1.5 text-xs rounded-full whitespace-nowrap shrink-0"
-            style={{ backgroundColor: 'var(--folio-text-primary)', color: 'var(--surface-canvas)' }}
+            className={forms.primary}
           >
             Complete
           </Link>
           <button
             type="button"
             onClick={() => setDismissedSelfNudge(true)}
-            className="text-xs px-2 py-1.5 rounded-full shrink-0"
-            style={{ color: 'var(--folio-text-secondary)' }}
+            className={forms.quiet}
             aria-label="Dismiss"
           >
             Later

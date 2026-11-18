@@ -1,0 +1,8 @@
+/* Portaled profile dialogs establish their own surface, including over custom studio colors. */
+.dialog[role='dialog'] { background: var(--surface-canvas); color: var(--folio-text-primary); border-color: var(--folio-border-subtle); }
+.dialog .bar { background: var(--surface-ground); border-color: var(--folio-border-subtle); }
+.dialog .primary, .dialog .primary:hover { background: var(--folio-text-primary); color: var(--surface-canvas); }
+.dialog .primary:hover:not(:disabled) { text-decoration: underline; text-underline-offset: .2em; }
+
+.dialog button:disabled { opacity: 1; color: var(--folio-text-secondary); background: var(--surface-ground); border-color: var(--folio-border-subtle); cursor: not-allowed; }
+.dialog :is(button, a, select):focus-visible { outline: 2px solid var(--folio-text-primary); outline-offset: 2px; }

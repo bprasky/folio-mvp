@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useCallback } from 'react';
+import controls from '@/components/org-profile/ProfileControls.module.css';
 import { GlassModal, GlassModalHeader, GlassModalBody, GlassModalFooter } from '@/components/ui/glass-modal';
 
 interface AddRecognitionModalProps {
@@ -102,8 +103,8 @@ export default function AddRecognitionModal({
   }, [orgId, title, type, url, source, excerpt, imageUrl, date, resetForm, onOpenChange, onSuccess]);
 
   return (
-    <GlassModal open={open} onOpenChange={onOpenChange} size="md">
-      <GlassModalHeader>
+    <GlassModal title="Add a recognition" className={controls.dialog} open={open} onOpenChange={onOpenChange} size="md">
+      <GlassModalHeader className={controls.bar}>
         <div className="flex items-center justify-between">
           <h3
             className="text-lg font-medium text-folio-text-primary"
@@ -113,6 +114,7 @@ export default function AddRecognitionModal({
           </h3>
           <button
             onClick={() => onOpenChange(false)}
+            aria-label="Close dialog"
             className="text-sm hover:opacity-70 text-folio-text-secondary"
           >
             &#10005;
@@ -179,12 +181,13 @@ export default function AddRecognitionModal({
               {RECOGNITION_TYPES.map((t) => (
                 <button
                   key={t.id}
+                  aria-pressed={type === t.id}
                   onClick={() => setType(t.id)}
                   className="px-4 py-1.5 text-xs rounded-full transition-all"
                   style={{
-                    backgroundColor: type === t.id ? '#2C2825' : 'transparent',
-                    color: type === t.id ? 'var(--surface-ground)' : '#6B635B',
-                    border: type === t.id ? 'none' : '1px solid #D4CEC6',
+                    backgroundColor: type === t.id ? 'var(--folio-text-primary)' : 'transparent',
+                    color: type === t.id ? 'var(--surface-ground)' : 'var(--folio-text-secondary)',
+                    border: type === t.id ? 'none' : '1px solid var(--folio-border-strong)',
                   }}
                 >
                   {t.label}
@@ -238,7 +241,7 @@ export default function AddRecognitionModal({
         </div>
       </GlassModalBody>
 
-      <GlassModalFooter>
+      <GlassModalFooter className={controls.bar}>
         <div className="flex justify-end gap-3">
           <button
             onClick={() => {
@@ -246,7 +249,7 @@ export default function AddRecognitionModal({
               onOpenChange(false);
             }}
             className="px-5 py-2 text-sm rounded-full transition-all hover:opacity-80 text-folio-text-secondary"
-            style={{ border: '1px solid #D4CEC6' }}
+            style={{ border: '1px solid var(--folio-border-strong)' }}
           >
             Cancel
           </button>

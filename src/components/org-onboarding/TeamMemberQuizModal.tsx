@@ -1,5 +1,7 @@
 'use client';
 
+import controls from '@/components/org-profile/ProfileControls.module.css';
+
 import { useState, useMemo } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -145,7 +147,7 @@ export function TeamMemberQuizModal({
   if (isGenerating) {
     return (
       <Dialog open={open} onOpenChange={() => {}}>
-        <DialogContent className="sm:max-w-lg">
+        <DialogContent className={`${controls.dialog} sm:max-w-lg`}>
           <DialogTitle className="sr-only">Creating your team profile</DialogTitle>
           <div className="flex flex-col items-center justify-center py-12 space-y-4">
             <Sparkles className="w-12 h-12 text-amber-600 animate-pulse" />
@@ -165,7 +167,7 @@ export function TeamMemberQuizModal({
   if (isComplete && generatedContent) {
     return (
       <Dialog open={open} onOpenChange={onClose}>
-        <DialogContent className="sm:max-w-lg">
+        <DialogContent className={`${controls.dialog} sm:max-w-lg`}>
           <DialogHeader>
             <DialogTitle style={{ fontFamily: 'Georgia, serif' }}>
               Your team profile is ready!
@@ -250,7 +252,7 @@ export function TeamMemberQuizModal({
             <Button variant="ghost" onClick={() => setIsComplete(false)}>
               Edit Answers
             </Button>
-            <Button onClick={handleFinish}>Save & Finish</Button>
+            <Button className={controls.primary} onClick={handleFinish}>Save & Finish</Button>
           </div>
         </DialogContent>
       </Dialog>
@@ -259,7 +261,7 @@ export function TeamMemberQuizModal({
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-xl">
+      <DialogContent className={`${controls.dialog} sm:max-w-xl`}>
         <DialogHeader>
           <DialogTitle style={{ fontFamily: 'Georgia, serif' }}>Team Member Profile</DialogTitle>
           <div className="flex items-center gap-2 mt-2">
@@ -358,7 +360,7 @@ export function TeamMemberQuizModal({
               <ChevronLeft className="w-4 h-4 mr-1" />
               Back
             </Button>
-            <Button onClick={handleNext} disabled={isSubmitting}>
+            <Button className={controls.primary} onClick={handleNext} disabled={isSubmitting}>
               {currentIndex === allQuestions.length - 1 ? 'Generate Profile' : 'Next'}
               <ChevronRight className="w-4 h-4 ml-1" />
             </Button>
