@@ -152,3 +152,12 @@ export function isOrgRole(value: unknown): value is OrgRole {
 export function canCreateFirmProject(role: OrgRole | null | undefined, orgType: string): boolean {
   return ['DESIGN_FIRM', 'ARCHITECTURE_FIRM', 'CONTRACTOR'].includes(orgType) && can(role, 'create_and_edit_projects');
 }
+
+/** Evaluate posting access with the firm and active membership already loaded. */
+export function firmPostingGate(firm: { status: string; membersCanPublish: boolean } | null, role: string | undefined) {
+  if (!firm) return { ok: false, reason: 'org_not_found' } as const;
+  if (!role) return { ok: false, reason: 'not_a_member' } as const;
+  if (firm.status !== 'CLAIMED' && firm.status !== 'PROFESSIONAL') return { ok: false, reason: 'org_unclaimed' } as const;
+  if (!isOrgRole(role) || !can(role, 'publish_projects', firm)) return { ok: false, reason: 'posting_restricted' } as const;
+  return { ok: true } as const;
+}

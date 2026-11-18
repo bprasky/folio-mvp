@@ -18,7 +18,7 @@ const mocks = {
   'next-auth': { getServerSession: async () => actor ? { user: { id: actor, role: 'DESIGNER' } } : null },
   '@/app/api/auth/[...nextauth]/options': { authOptions: {} },
   '@/lib/permissions': { normalizeRole: role => role },
-  '@/lib/orgPermissions': { canCreateFirmProject: () => canCreate, can: () => true, isOrgRole: () => true },
+  '@/lib/orgPermissions': { canCreateFirmProject: () => canCreate, can: () => true, isOrgRole: () => true, firmPostingGate: () => ({ ok: true }) },
   '@/lib/analytics': { logPassiveEvent: async () => {} },
   '@/lib/dbEnv': { logDbEnv: () => {} },
   '@/lib/authz/access': { assertProjectWrite: async (userId, id) => {

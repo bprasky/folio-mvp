@@ -8,7 +8,7 @@
 import { prisma } from '@/lib/prisma';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/app/api/auth/[...nextauth]/options';
-import { can, isOrgRole } from '@/lib/orgPermissions';
+import { can, isOrgRole, firmPostingGate } from '@/lib/orgPermissions';
 
 export type ProjectWithStats = {
   id: string;
@@ -39,6 +39,8 @@ export type ProjectWithStats = {
   // Whether the current viewer may delete this project outright. When false, the
   // UI offers "Request deletion" instead (org Owner/Admin must approve).
   canDelete: boolean;
+  canPublish: boolean;
+  canUnpublish: boolean;
 };
 
 export async function getMyProjectsWithStats(operatingAsOrgId?: string | null): Promise<ProjectWithStats[]> {
@@ -126,6 +128,8 @@ export async function getMyProjectsWithStats(operatingAsOrgId?: string | null): 
           select: {
             id: true,
             name: true,
+            status: true,
+            membersCanPublish: true,
           },
         },
       },
@@ -138,11 +142,9 @@ export async function getMyProjectsWithStats(operatingAsOrgId?: string | null): 
 
     let projectIds = projects.map(p => p.id);
 
-    // Deletion capability + "hide my pending requests" context.
-    // Mirrors assertProjectCapability(delete_projects): global admin, non-org
-    // owner/designer, org role with the capability, or a project-level OWNER grant.
+    // Resolve card actions from the same active roles and project grants as the server gates.
     let visibleProjects = projects;
-    let canDeleteByProject = new Map<string, boolean>();
+    const capabilities = new Map<string, Pick<ProjectWithStats, 'canDelete' | 'canPublish' | 'canUnpublish'>>();
     try {
       const viewer = await prisma.user.findUnique({
         where: { id: userId },
@@ -163,16 +165,14 @@ export async function getMyProjectsWithStats(operatingAsOrgId?: string | null): 
       const ownerGrantIds = new Set(ownerGrants.map(g => g.projectId));
 
       for (const p of projects) {
-        let allowed: boolean;
-        if (isGlobalAdmin) {
-          allowed = true;
-        } else if (!p.designerOrgId) {
-          allowed = p.ownerId === userId || p.designerId === userId;
-        } else {
-          const role = roleByOrg.get(p.designerOrgId);
-          allowed = (isOrgRole(role) && can(role, 'delete_projects')) || ownerGrantIds.has(p.id);
-        }
-        canDeleteByProject.set(p.id, allowed);
+        const role = p.designerOrgId ? roleByOrg.get(p.designerOrgId) : undefined;
+        const projectOwner = p.designerOrgId ? ownerGrantIds.has(p.id) : p.ownerId === userId || p.designerId === userId;
+        const canManage = isGlobalAdmin || projectOwner;
+        capabilities.set(p.id, {
+          canDelete: canManage || (isOrgRole(role) && can(role, 'delete_projects')),
+          canPublish: firmPostingGate(p.designerOrg, role).ok,
+          canUnpublish: canManage || (isOrgRole(role) && can(role, 'publish_projects')),
+        });
       }
 
       // Hide projects this viewer has already requested deletion for ("hide for you").
@@ -186,9 +186,8 @@ export async function getMyProjectsWithStats(operatingAsOrgId?: string | null): 
         projectIds = visibleProjects.map(p => p.id);
       }
     } catch (error) {
-      console.warn('[getMyProjectsWithStats] Deletion-context computation failed:', error);
-      // Fail-soft: default to no direct delete (UI offers request flow).
-      for (const p of projects) canDeleteByProject.set(p.id, false);
+      console.warn('[getMyProjectsWithStats] Project permissions could not be loaded:', error);
+      capabilities.clear();
     }
 
     if (visibleProjects.length === 0) {
@@ -302,7 +301,7 @@ export async function getMyProjectsWithStats(operatingAsOrgId?: string | null): 
         ownershipContext,
         organizationId: project.designerOrgId,
         organizationName: project.designerOrg?.name || null,
-        canDelete: canDeleteByProject.get(project.id) ?? false,
+        ...(capabilities.get(project.id) ?? { canDelete: false, canPublish: false, canUnpublish: false }),
       };
     });
 

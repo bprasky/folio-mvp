@@ -20,6 +20,7 @@ import {
   X,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { UnpublishProjectDialog } from '@/components/projects/UnpublishProjectDialog';
 import { useUserCapabilities } from '@/hooks/useUserCapabilities';
 import { EmptyStateHero, GuideCard, UpgradePrompt } from '@/components/projects';
 import { compareCompletionDates, formatCompletionDate } from '@/lib/projects/completionDate';
@@ -73,6 +74,8 @@ export type ProjectLite = {
   // False when the viewer can't delete directly (org Member/Manager/Viewer);
   // the card then offers "Request deletion" instead of "Delete".
   canDelete?: boolean;
+  canPublish: boolean;
+  canUnpublish: boolean;
 };
 
 // A pending deletion request the current user (an org Owner/Admin) can resolve.
@@ -90,6 +93,7 @@ type SortOption = 'Recent' | 'Completion date' | 'Name A–Z' | 'Most items';
 
 interface ProjectsPageClientProps {
   projectsRaw: ProjectLite[];
+  unpublishAction: (projectId: string) => Promise<void>;
   operatingAsOrgId?: string | null;
   pendingDeletionRequests?: DeletionRequestLite[];
 }
@@ -122,11 +126,13 @@ function coverGradient(id: string): string {
 // MAIN CLIENT COMPONENT
 // ============================================================================
 
-export default function ProjectsPageClient({ projectsRaw, operatingAsOrgId, pendingDeletionRequests = [] }: ProjectsPageClientProps) {
+export default function ProjectsPageClient({ projectsRaw, unpublishAction, operatingAsOrgId, pendingDeletionRequests = [] }: ProjectsPageClientProps) {
   const { data: session } = useSession();
   const capabilities = useUserCapabilities();
   const [projectsState, setProjectsState] = useState<ProjectLite[]>(projectsRaw);
   const [deletionRequests, setDeletionRequests] = useState<DeletionRequestLite[]>(pendingDeletionRequests);
+  const [projectToUnpublish, setProjectToUnpublish] = useState<ProjectLite | null>(null);
+  const [publicationNotice, setPublicationNotice] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
   const [statusTab, setStatusTab] = useState<StatusTab>('all');
   const [sort, setSort] = useState<SortOption>('Recent');
@@ -520,6 +526,7 @@ export default function ProjectsPageClient({ projectsRaw, operatingAsOrgId, pend
               <ProjectSection
                 title="Published"
                 projects={visibleGroups.PUBLISHED}
+                onRequestUnpublish={setProjectToUnpublish}
                 showNewTile={false}
                 onRename={handleRename}
                 onDelete={handleDelete}
@@ -549,6 +556,18 @@ export default function ProjectsPageClient({ projectsRaw, operatingAsOrgId, pend
         )}
       </div>
 
+      <p className="sr-only" role="status">{publicationNotice}</p>
+      {projectToUnpublish && <UnpublishProjectDialog
+        projectTitle={projectToUnpublish.title}
+        onClose={() => setProjectToUnpublish(null)}
+        onConfirm={async () => {
+          await unpublishAction(projectToUnpublish.id);
+          setProjectsState(current => current.map(project => project.id === projectToUnpublish.id
+            ? { ...project, isPublic: false, publishedAt: null, status: 'draft' }
+            : project));
+          setPublicationNotice(projectToUnpublish.title + ' is now private.');
+        }}
+      />}
       <FolioIndexDrawer projects={projects} />
     </div>
   );
@@ -664,6 +683,7 @@ function ProjectSection({
   title,
   projects,
   showNewTile,
+  onRequestUnpublish,
   onRename,
   onDelete,
   onForceDelete,
@@ -672,6 +692,7 @@ function ProjectSection({
   title: string;
   projects: ProjectLite[];
   showNewTile?: boolean;
+  onRequestUnpublish?: (project: ProjectLite) => void;
   onRename?: (id: string, t: string) => void;
   onDelete?: (id: string) => void;
   onForceDelete?: (id: string) => void;
@@ -684,7 +705,7 @@ function ProjectSection({
       <ProjectsSectionHead title={title} count={projects.length} />
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-6 gap-y-7">
         {projects.map(p => (
-          <ProjectCard key={p.id} p={p} onRename={onRename} onDelete={onDelete} onForceDelete={onForceDelete} onRequestDeletion={onRequestDeletion} />
+          <ProjectCard key={p.id} p={p} onRequestUnpublish={onRequestUnpublish} onRename={onRename} onDelete={onDelete} onForceDelete={onForceDelete} onRequestDeletion={onRequestDeletion} />
         ))}
         {showNewTile && <NewProjectTile />}
       </div>
@@ -830,8 +851,9 @@ function SortMenu({ value, onChange }: { value: SortOption; onChange: (v: SortOp
 // PROJECT CARD
 // ============================================================================
 
-function ProjectCard({ p, onRename, onDelete, onForceDelete, onRequestDeletion }: {
+function ProjectCard({ p, onRequestUnpublish, onRename, onDelete, onForceDelete, onRequestDeletion }: {
   p: ProjectLite;
+  onRequestUnpublish?: (project: ProjectLite) => void;
   onRename?: (id: string, t: string) => void;
   onDelete?: (id: string) => void;
   onForceDelete?: (id: string) => void;
@@ -842,14 +864,13 @@ function ProjectCard({ p, onRename, onDelete, onForceDelete, onRequestDeletion }
   const [newTitle, setNewTitle] = useState(p.title);
   const [isDeleting, setIsDeleting] = useState(false);
   const [isRequesting, setIsRequesting] = useState(false);
-  const [isPublishing, setIsPublishing] = useState(false);
   // Members of an org who lack delete rights can't delete directly.
   const canDelete = p.canDelete !== false;
   const menuRef = useRef<HTMLDivElement>(null);
   const renameInputRef = useRef<HTMLInputElement>(null);
 
   const isArchived = p.lifecycle === 'ARCHIVED' || p.status === 'archived';
-  const isPublished = !!(p.isPublic || p.publishedAt || p.status === 'published');
+  const isPublished = p.isPublic;
   const isDraft = p.lifecycle === 'DRAFT';
 
   const statusLabel = isPublished ? 'Published' : isDraft ? 'Draft' : 'In progress';
@@ -940,40 +961,24 @@ function ProjectCard({ p, onRename, onDelete, onForceDelete, onRequestDeletion }
     }
   };
 
-  const doTogglePublish = async () => {
-    try {
-      setIsPublishing(true);
-      const response = await fetch(`/api/projects/${p.id}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ isPublic: !p.isPublic }),
-      });
-      if (!response.ok) throw new Error('Failed to update publish status');
-      window.location.reload();
-    } catch {
-      alert('Failed to update publish status. Please try again.');
-      setIsPublishing(false);
-    }
-  };
-
   return (
     <article
-      className="group transition-transform duration-[220ms] hover:-translate-y-0.5"
+      className={cn("group relative transition-transform duration-[220ms] hover:-translate-y-0.5", isMenuOpen && "z-30")}
       aria-label={`${p.title}, ${statusLabel}, ${itemCount} items`}
     >
-      <Link href={`/project/${p.id}`} className="block">
+      <div>
         {/* Cover */}
-        <div className="relative aspect-[4/3] rounded-xl overflow-hidden border border-folio-border-subtle transition-shadow duration-[220ms] group-hover:shadow-[0_6px_24px_rgba(22,22,20,0.08)]">
+        <div className="relative aspect-[4/3] rounded-xl border border-folio-border-subtle transition-shadow duration-[220ms] group-hover:shadow-[0_6px_24px_rgba(22,22,20,0.08)]">
           {p.coverUrl ? (
             <Image
               src={p.coverUrl}
               alt=""
               fill
-              className="object-cover"
+              className="rounded-xl object-cover"
               sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
             />
           ) : (
-            <div className={cn('absolute inset-0', coverGradient(p.id))}>
+            <div className={cn('absolute inset-0 overflow-hidden rounded-xl', coverGradient(p.id))}>
               <div
                 className="absolute inset-0 opacity-[0.06]"
                 style={{ backgroundImage: 'repeating-linear-gradient(135deg, #fff 0px, #fff 1px, transparent 1px, transparent 8px)' }}
@@ -996,7 +1001,9 @@ function ProjectCard({ p, onRename, onDelete, onForceDelete, onRequestDeletion }
           >
             <button
               onClick={e => { e.preventDefault(); e.stopPropagation(); setIsMenuOpen(!isMenuOpen); }}
-              className="p-1.5 bg-black/60 hover:bg-black/80 text-white rounded-full transition-all opacity-0 group-hover:opacity-100"
+              className="p-1.5 bg-black/60 hover:bg-black/80 text-white rounded-full transition-all sm:opacity-0 sm:group-hover:opacity-100 sm:group-focus-within:opacity-100 [@media(hover:none)]:opacity-100"
+              type="button"
+              aria-expanded={isMenuOpen}
               title="Project options"
             >
               <MoreVertical className="w-4 h-4" />
@@ -1020,15 +1027,22 @@ function ProjectCard({ p, onRename, onDelete, onForceDelete, onRequestDeletion }
                     >
                       <ExternalLink className="w-4 h-4" /> Preview
                     </Link>
-                    {!isArchived && (
+                    {!isArchived && isPublished && p.canUnpublish && onRequestUnpublish && (
                       <button
-                        onClick={e => { e.preventDefault(); e.stopPropagation(); doTogglePublish(); setIsMenuOpen(false); }}
-                        disabled={isPublishing}
-                        className="w-full text-left px-3 py-2 folio-ui hover:bg-surface-canvas text-folio-text-primary flex items-center gap-2 disabled:opacity-50"
+                        type="button"
+                        onClick={() => { setIsMenuOpen(false); onRequestUnpublish(p); }}
+                        className="w-full text-left px-3 py-2 folio-ui hover:bg-surface-canvas text-folio-text-primary flex items-center gap-2"
                       >
-                        {p.isPublic ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                        {isPublishing ? 'Updating…' : p.isPublic ? 'Unpublish' : 'Publish'}
+                        <EyeOff className="w-4 h-4" /> Unpublish
                       </button>
+                    )}
+                    {!isArchived && !isPublished && p.canPublish && (
+                      <Link
+                        href={`/project/${p.id}?publish=photos`}
+                        className="w-full text-left px-3 py-2 folio-ui hover:bg-surface-canvas text-folio-text-primary flex items-center gap-2"
+                      >
+                        <Eye className="w-4 h-4" /> Review for publishing
+                      </Link>
                     )}
                     <button
                       onClick={e => { e.preventDefault(); e.stopPropagation(); setIsRenaming(true); }}
@@ -1105,7 +1119,7 @@ function ProjectCard({ p, onRename, onDelete, onForceDelete, onRequestDeletion }
         <div className="pt-3.5 px-1 flex justify-between items-start gap-3">
           <div className="min-w-0">
             <div className={"font-headline font-medium text-[19px] leading-tight text-folio-text-primary mb-1 truncate" /* folio-design-system: off-scale */}>
-              {p.title}
+              <Link href={`/project/${p.id}`} className="after:absolute after:inset-0 after:rounded-xl focus-visible:after:outline">{p.title}</Link>
             </div>
             {completionDate && <p className="mb-1 text-xs text-folio-text-secondary">{completionDate}</p>}
             <div className="flex items-center gap-2 text-xs text-folio-text-tertiary">
@@ -1118,7 +1132,7 @@ function ProjectCard({ p, onRename, onDelete, onForceDelete, onRequestDeletion }
             {itemCount} items
           </span>
         </div>
-      </Link>
+      </div>
     </article>
   );
 }
@@ -1209,7 +1223,7 @@ function computeLifecycle(p: ProjectLite): Lifecycle {
 }
 
 function computeOverlays(p: ProjectLite): Overlays {
-  const isPublished = Boolean(p.isPublic || p.publishedAt);
+  const isPublished = p.isPublic;
   const saves = p.savesByOthers ?? 0;
   const tagged = p.taggedCount ?? 0;
   const isEditorialCandidate = isPublished && saves >= EDITORIAL_SAVES_THRESHOLD && tagged >= EDITORIAL_TAGGED_THRESHOLD;
