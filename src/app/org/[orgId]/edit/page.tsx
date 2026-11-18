@@ -1,5 +1,7 @@
 'use client';
 
+import controls from '@/components/org-profile/ProfileControls.module.css';
+
 import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';
@@ -244,7 +246,7 @@ export default function OrgEditPage() {
           {interviewCompleted && (
             <button
               onClick={() => router.push(`/org/${orgId}/settings/about-interview?returnTo=profile`)}
-              className="mt-3 flex items-center gap-2 text-xs transition-opacity hover:opacity-70"
+              className="mt-3 flex items-center gap-2 text-xs transition-opacity hover:underline"
               style={{ color: 'var(--folio-gold)' }}
             >
               <RefreshCw size={12} />
@@ -391,7 +393,7 @@ export default function OrgEditPage() {
                   {s}
                   <button
                     onClick={() => removeSpecialty(s)}
-                    className="ml-1 hover:opacity-70"
+                    className="ml-1 hover:underline"
                     style={{ color: 'var(--folio-text-secondary)' }}
                   >
                     &times;
@@ -435,8 +437,7 @@ export default function OrgEditPage() {
           <button
             onClick={handleSave}
             disabled={saving}
-            className="px-6 py-2.5 text-sm rounded-full transition-all hover:opacity-80 disabled:opacity-50"
-            style={{ backgroundColor: 'var(--folio-text-primary)', color: 'var(--surface-canvas)' }}
+            className={`px-6 py-2.5 text-sm rounded-full transition-all ${controls.primary}`}
           >
             {saving ? 'Saving...' : 'Save Profile'}
           </button>

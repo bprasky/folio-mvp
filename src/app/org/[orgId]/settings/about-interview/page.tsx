@@ -1,5 +1,7 @@
 'use client';
 
+import controls from '@/components/org-profile/ProfileControls.module.css';
+
 import { useState, useRef, useEffect } from 'react';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { LiveInterviewPanel } from '@/components/interviews/LiveInterviewPanel';
@@ -291,7 +293,7 @@ export default function OrgAboutInterviewPage() {
         <div className="flex items-center justify-between px-8 py-4 border-b" style={{ borderColor: 'var(--folio-border-subtle)' }}>
           <button
             onClick={() => router.back()}
-            className="p-1 rounded-full transition-colors hover:opacity-70"
+            className="p-1 rounded-full transition-colors hover:underline"
             style={{ color: 'var(--folio-text-secondary)' }}
             aria-label="Close"
           >
@@ -328,7 +330,7 @@ export default function OrgAboutInterviewPage() {
 
               <button
                 onClick={handleStartFromScratch}
-                className="text-sm underline underline-offset-4 transition-opacity hover:opacity-70"
+                className="text-sm underline underline-offset-4 transition-opacity hover:underline"
                 style={{ color: 'var(--folio-text-secondary)' }}
               >
                 Start from scratch
@@ -347,7 +349,7 @@ export default function OrgAboutInterviewPage() {
         <div className="flex items-center justify-between px-8 py-4 border-b" style={{ borderColor: 'var(--folio-border-subtle)' }}>
           <button
             onClick={() => setStep('choose-path')}
-            className="p-1 rounded-full transition-colors hover:opacity-70"
+            className="p-1 rounded-full transition-colors hover:underline"
             style={{ color: 'var(--folio-text-secondary)' }}
             aria-label="Back"
           >
@@ -408,8 +410,7 @@ export default function OrgAboutInterviewPage() {
                 <button
                   onClick={handleFetchUrl}
                   disabled={fetchingUrl || !bioUrl.trim()}
-                  className="px-4 py-2.5 text-sm rounded-xl transition-all hover:opacity-80 disabled:opacity-40"
-                  style={{ border: '1px solid var(--folio-border-strong)', color: 'var(--folio-text-secondary)' }}
+                  className={`px-4 py-2.5 text-sm rounded-xl transition-all ${controls.secondary}`}
                 >
                   {fetchingUrl ? (
                     <Loader2 className="w-4 h-4 animate-spin" />
@@ -446,8 +447,7 @@ export default function OrgAboutInterviewPage() {
               <button
                 onClick={handleAnalyzeBio}
                 disabled={!bioText.trim()}
-                className="flex items-center gap-2 px-8 py-3 rounded-full text-sm font-medium transition-all hover:opacity-90 disabled:opacity-40"
-                style={{ backgroundColor: 'var(--folio-text-primary)', color: 'var(--surface-canvas)' }}
+                className={`flex items-center gap-2 px-8 py-3 rounded-full text-sm font-medium transition-all ${controls.primary}`}
               >
                 <FileText className="w-4 h-4" />
                 Analyze my bio
@@ -531,7 +531,7 @@ export default function OrgAboutInterviewPage() {
         <div className="flex items-center justify-between px-8 py-4 border-b" style={{ borderColor: 'var(--folio-border-subtle)' }}>
           <button
             onClick={() => setStep('import-bio')}
-            className="p-1 rounded-full transition-colors hover:opacity-70"
+            className="p-1 rounded-full transition-colors hover:underline"
             style={{ color: 'var(--folio-text-secondary)' }}
             aria-label="Back"
           >
@@ -668,7 +668,7 @@ export default function OrgAboutInterviewPage() {
               router.back();
             }
           }}
-          className="p-1 rounded-full transition-colors hover:opacity-70"
+          className="p-1 rounded-full transition-colors hover:underline"
           style={{ color: 'var(--folio-text-secondary)' }}
           aria-label="Close"
         >
@@ -767,8 +767,7 @@ export default function OrgAboutInterviewPage() {
         <button
           onClick={handleBack}
           disabled={currentIndex === 0}
-          className="flex items-center gap-2 px-4 py-2 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-          style={{ color: 'var(--folio-text-secondary)' }}
+          className={`flex items-center gap-2 px-4 py-2 transition-colors ${controls.quiet}`}
         >
           <ChevronLeft className="w-5 h-5" />
           <span>Back</span>
@@ -777,8 +776,7 @@ export default function OrgAboutInterviewPage() {
         <button
           onClick={handleNext}
           disabled={isSubmitting}
-          className="flex items-center gap-2 px-6 py-3 rounded-full text-sm font-medium transition-all hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed"
-          style={{ backgroundColor: 'var(--folio-text-primary)', color: 'var(--surface-canvas)' }}
+          className={`flex items-center gap-2 px-6 py-3 rounded-full text-sm font-medium transition-all ${controls.primary}`}
         >
           <span>
             {currentIndex === activeQuestions.length - 1 ? 'Generate Profile' : 'Continue'}

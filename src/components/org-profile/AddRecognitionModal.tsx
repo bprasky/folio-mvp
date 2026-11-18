@@ -256,7 +256,7 @@ export default function AddRecognitionModal({
           <button
             onClick={handleSubmit}
             disabled={!title.trim() || saving}
-            className="px-5 py-2 text-sm rounded-full transition-all hover:opacity-80 disabled:opacity-50 bg-folio-text-primary text-surface-ground"
+            className={`px-5 py-2 text-sm rounded-full transition-colors ${controls.primary}`}
           >
             {saving ? 'Adding...' : 'Add Recognition'}
           </button>

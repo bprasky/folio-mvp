@@ -1,5 +1,7 @@
 'use client';
 
+import controls from '@/components/org-profile/ProfileControls.module.css';
+
 import React, { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';
@@ -325,7 +327,7 @@ export default function OrgSettingsPage() {
           </p>
           <button
             onClick={() => router.push(`/org/${orgId}/edit`)}
-            className="mt-3 text-xs transition-opacity hover:opacity-70"
+            className="mt-3 text-xs transition-opacity hover:underline"
             style={{ color: 'var(--folio-gold)' }}
           >
             Edit firm details and biography
@@ -404,8 +406,7 @@ export default function OrgSettingsPage() {
                         type="button"
                         onClick={() => handleRequestAction(req.id, 'reject')}
                         disabled={isPending}
-                        className="px-3 py-1.5 text-xs rounded-full transition-all hover:opacity-80 disabled:opacity-50"
-                        style={{ color: 'var(--folio-text-secondary)', border: '1px solid var(--folio-border-strong)' }}
+                        className={`px-3 py-1.5 text-xs rounded-full transition-all ${controls.secondary}`}
                       >
                         {isPending ? '…' : 'Decline'}
                       </button>
@@ -413,8 +414,7 @@ export default function OrgSettingsPage() {
                         type="button"
                         onClick={() => handleRequestAction(req.id, 'approve')}
                         disabled={isPending}
-                        className="px-3 py-1.5 text-xs rounded-full transition-all hover:opacity-80 disabled:opacity-50"
-                        style={{ backgroundColor: 'var(--folio-text-primary)', color: 'var(--surface-canvas)' }}
+                        className={`px-3 py-1.5 text-xs rounded-full transition-all ${controls.primary}`}
                       >
                         {isPending ? 'Saving…' : 'Approve'}
                       </button>
@@ -425,7 +425,7 @@ export default function OrgSettingsPage() {
             </ul>
 
             {requestError ? (
-              <p className="text-xs mt-3" style={{ color: '#A14040' }} role="alert">
+              <p className="text-xs mt-3" style={{ color: 'var(--folio-text-primary)' }} role="alert">
                 {requestError}
               </p>
             ) : null}
@@ -503,7 +503,7 @@ export default function OrgSettingsPage() {
                           value={m.orgRole}
                           onChange={(e) => handleRoleChange(m, e.target.value as OrgRole)}
                           disabled={isPending}
-                          className="text-xs rounded-full px-3 py-1.5 border outline-none disabled:opacity-50"
+                          className="text-xs rounded-full px-3 py-1.5 border outline-none disabled:border-dashed disabled:cursor-not-allowed"
                           style={{
                             borderColor: 'var(--folio-border-strong)',
                             backgroundColor: 'var(--surface-ground)',
@@ -533,8 +533,7 @@ export default function OrgSettingsPage() {
                           type="button"
                           onClick={() => handleRemoveMember(m)}
                           disabled={isPending}
-                          className="px-3 py-1.5 text-xs rounded-full transition-all hover:opacity-80 disabled:opacity-50"
-                          style={{ color: 'var(--folio-text-secondary)', border: '1px solid var(--folio-border-strong)' }}
+                          className={`px-3 py-1.5 text-xs rounded-full transition-all ${controls.secondary}`}
                         >
                           {isPending ? '…' : isSelf ? 'Leave' : 'Remove'}
                         </button>
@@ -546,7 +545,7 @@ export default function OrgSettingsPage() {
             </ul>
 
             {memberError ? (
-              <p className="text-xs mt-3" style={{ color: '#A14040' }} role="alert">
+              <p className="text-xs mt-3" style={{ color: 'var(--folio-text-primary)' }} role="alert">
                 {memberError}
               </p>
             ) : null}
@@ -599,8 +598,7 @@ export default function OrgSettingsPage() {
                   <button
                     type="submit"
                     disabled={inviteSubmitting || !inviteEmail.trim()}
-                    className="px-4 py-2 text-xs rounded-full transition-all hover:opacity-80 disabled:opacity-50"
-                    style={{ backgroundColor: 'var(--folio-text-primary)', color: 'var(--surface-canvas)' }}
+                    className={`px-4 py-2 text-xs rounded-full transition-all ${controls.primary}`}
                   >
                     {inviteSubmitting ? 'Adding…' : 'Add'}
                   </button>
@@ -608,7 +606,7 @@ export default function OrgSettingsPage() {
                 {inviteMessage ? (
                   <p
                     className="text-xs"
-                    style={{ color: inviteMessage.tone === 'success' ? '#3A6B47' : '#A14040' }}
+                    style={{ color: 'var(--folio-text-primary)' }}
                     role={inviteMessage.tone === 'error' ? 'alert' : 'status'}
                   >
                     {inviteMessage.text}
